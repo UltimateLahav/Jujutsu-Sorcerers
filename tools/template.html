@@ -41,6 +41,9 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 .pb{pointer-events:auto;touch-action:none;width:21vh;height:21vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1vh;padding:0;font-size:clamp(14px,7vh,34px);opacity:.78}
 .pb span{font-size:clamp(6px,2vh,10px);color:var(--dim)}
 .pb.on{background:#2a1f4a;border-color:var(--acc);opacity:1}
+.col{display:flex;flex-direction:column;gap:2vh}
+#atk{border-color:#6fb4ff}
+#atk svg{width:6vh;height:6vh}
 #up{border-color:var(--acc)}
 #up i{font-style:normal;display:block;transform:rotate(-90deg)}      /* the same chunky chevron as BACK / FWD, turned to point up */
 #rotate{position:fixed;inset:0;z-index:9;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--bg);text-align:center;line-height:1.6;font-size:12px}
@@ -76,7 +79,10 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <button id="bk" class="pb" aria-label="Walk backward">&lt;<span>BACK</span></button>
     <button id="fw" class="pb" aria-label="Walk forward">&gt;<span>FWD</span></button>
   </div>
-  <button id="up" class="pb" aria-label="Jump"><i>&gt;</i><span>JUMP</span></button>
+  <div class="col">
+    <button id="atk" class="pb" aria-label="Attack"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M3 0h2v8H3zM0 3h8v2H0zM1 1h1v1H1zM6 1h1v1H6zM1 6h1v1H1zM6 6h1v1H6z"/></svg><span id="atkl">R.HOOK</span></button>
+    <button id="up" class="pb" aria-label="Jump"><i>&gt;</i><span>JUMP</span></button>
+  </div>
 </div>
 <div id="rotate"><div>&#128241;</div>ROTATE YOUR PHONE<br>TO LANDSCAPE</div>
 
@@ -87,6 +93,8 @@ __SFX__
 const D = __SPR__;                 // palette + idle / walk-forward / walk-back / jump / double-jump (teleport) sprite frames (rows of palette letters)
 const HEROES = __HEROES__;         // title key art: 0 eye open ... 4 eye fully closed
 const IDLE_FPS = 12, WALK_FPS = 15, JUMP_FPS = 15, TELE_FPS = 20;   // animation speeds in frames per second (15 walk frames = 1 s per cycle = one step every half second; 15 jump frames = 1 s; 15 teleport frames = 0.75 s)
+const ATK_FPS = [30, 30, 30, 24], ATK_IMPACT = [7, 7, 7, 8], ATK_SWING = [4, 4, 4, 5], COMBO_MS = 1400;   // 15 frames per attack; the next press within COMBO_MS continues the combo
+const ATK_NAMES = ['R.HOOK', 'L.HOOK', 'ELBOW', 'KICK'];
 const FWD_SPEED = 44, BACK_SPEED = 30;         // world pixels per second (matched to the slower stride so his feet do not skate)
 const BLINK_STEP = 70, BLINK_HOLD = 500;       // ms per blink frame, ms the eye stays shut
 const $ = id => document.getElementById(id);
@@ -106,7 +114,7 @@ const mk = set => set.frames.map(rows => {
   });
   return c;
 });
-const idleF = mk(D.idle), fwdF = mk(D.fwd), backF = mk(D.back), jumpF = mk(D.jump), teleF = mk(D.tele);
+const idleF = mk(D.idle), fwdF = mk(D.fwd), backF = mk(D.back), jumpF = mk(D.jump), teleF = mk(D.tele), atkF = [0, 1, 2, 3].map(k => mk(D['atk' + k]));
 pv.width = D.idle.w; pv.height = D.idle.h;
 const heroImgs = HEROES.map(src => { const im = new Image(); im.src = src; return im; });
 
@@ -115,7 +123,7 @@ const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
 let state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
 let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1;
-let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0;
+let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, lastCombo = -1, shakeUntil = 0, shakeAmp = 0;
 const STRIP = 480;
 
 // ---------------------------------------------------------------- sound (all synthesised in sfx.js, no audio files)
@@ -168,7 +176,7 @@ function show(s) {
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll();
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
-  if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = -1; }
+  if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; comboUntil = 0; }
   if (s === 'title') planBlink(performance.now(), 1200);
 }
 
@@ -240,19 +248,38 @@ function drawScene(now, dt) {
     tf = Math.floor(Math.max(0, now - teleAt) * TELE_FPS / 1000);
     if (tf >= teleF.length) { teleAt = -1; tf = -1; }
   }
-  if (jumpReq) {                              // one press = one action; presses while spawning in, crouching or landing are ignored
+  let af = -1;                                // attack frame 0-14 (the combo: right hook, left hook, right elbow, roundhouse kick)
+  if (atkAt >= 0) {
+    af = Math.floor(Math.max(0, now - atkAt) * ATK_FPS[atkK] / 1000);
+    if (af >= 15) {                           // swing finished: chain into the next hit if a press was queued, otherwise open the combo window
+      if (atkQ) { atkQ = false; atkK = combo; combo = (atkK + 1) % 4; atkAt = now; af = 0; }
+      else { atkAt = -1; af = -1; comboUntil = now + COMBO_MS; }
+    }
+  }
+  if (atkReq) {                               // ground only; a press during a swing is remembered and chained
+    atkReq = false;
+    if (t >= 1 && jf < 0 && tf < 0) {
+      if (af >= 0) atkQ = true;
+      else { if (now > comboUntil) combo = 0; atkK = combo; combo = (atkK + 1) % 4; atkAt = now; af = 0; atkQ = false; }
+    }
+  }
+  if (af < 0 && combo !== 0 && now > comboUntil) combo = 0;   // waited too long: back to the first hit
+  if (combo !== lastCombo) { lastCombo = combo; $('atkl').textContent = ATK_NAMES[combo]; }
+  if (jumpReq) {                              // one press = one action; presses while spawning in, crouching, landing or attacking are ignored
     jumpReq = false;
     if (t >= 1) {
-      if (jf < 0 && tf < 0) { jumpAt = now; jf = 0; }                            // from the ground: jump
+      if (jf < 0 && tf < 0) { if (af < 0) { jumpAt = now; jf = 0; } }                            // from the ground: jump
       else if (tf < 0 && jf >= 4 && jf <= 11) { teleL0 = D.jump.lift[jf]; teleAt = now; tf = 0; jumpAt = -1; jf = -1; }   // again in mid-air: teleport up, then fall
     }
   }
-  const steer = t >= 1 && ((jf < 0 && tf < 0) || (jf >= 3 && jf <= 11) || (tf >= 0 && tf <= 11));   // no walking while spawning in, crouching or landing
+  const steer = t >= 1 && ((jf < 0 && tf < 0 && af < 0) || (jf >= 3 && jf <= 11) || (tf >= 0 && tf <= 11));   // no walking while spawning in, crouching or landing
   const dir = steer ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0;
-  const nm = tf >= 0 ? 'tele' : jf >= 0 ? 'jump' : dir > 0 ? 'fwd' : dir < 0 ? 'back' : 'idle';
+  const nm = tf >= 0 ? 'tele' : jf >= 0 ? 'jump' : af >= 0 ? 'atk' : dir > 0 ? 'fwd' : dir < 0 ? 'back' : 'idle';
   if (nm !== mode) { mode = nm; modeAt = now; stepN = -1; }
   wx += dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * dt;
 
+  ctx.save();
+  if (now < shakeUntil) ctx.translate(Math.round((Math.random() * 2 - 1) * shakeAmp), Math.round((Math.random() * 2 - 1) * shakeAmp));   // tiny shake on impact
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(bg, 0, 0);
   layer(far, 0.25); layer(near, 0.55);
@@ -278,10 +305,18 @@ function drawScene(now, dt) {
     if (evT < 0 && tf >= 0) snd('charge'); if (evT < 2 && tf >= 2) snd('vanish'); if (evT < 3 && tf >= 3) snd('arrive');
     if (evT < 8 && tf >= 8) snd('fall'); if (evT < 12 && tf >= 12) snd('land', 1.6); evT = tf;
   }
-  const tele = tf >= 0, jumping = jf >= 0, idle = mode === 'idle';
-  const set = tele ? teleF : jumping ? jumpF : idle ? idleF : mode === 'fwd' ? fwdF : backF;
-  const info = tele ? D.tele : jumping ? D.jump : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
-  const fi = tele ? tf : jumping ? jf : Math.floor(Math.max(0, now - (idle ? spawnAt : modeAt)) / (1000 / (idle ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail performance.now() by a hair
+  if (af !== evA) {                           // swing whoosh and impact are locked to their animation frames
+    if (af < evA) evA = -1;                   // a chained hit restarted the counter
+    if (af >= 0) {
+      if (evA < ATK_SWING[atkK] && af >= ATK_SWING[atkK]) snd('swing', atkK);
+      if (evA < ATK_IMPACT[atkK] && af >= ATK_IMPACT[atkK]) { snd('hit', atkK); shakeUntil = now + 90; shakeAmp = atkK === 3 ? 2 : 1; }
+    }
+    evA = af;
+  }
+  const tele = tf >= 0, jumping = jf >= 0, atkOn = af >= 0, idle = mode === 'idle';
+  const set = tele ? teleF : jumping ? jumpF : atkOn ? atkF[atkK] : idle ? idleF : mode === 'fwd' ? fwdF : backF;
+  const info = tele ? D.tele : jumping ? D.jump : atkOn ? D['atk' + atkK] : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
+  const fi = tele ? tf : jumping ? jf : atkOn ? af : Math.floor(Math.max(0, now - (idle ? spawnAt : modeAt)) / (1000 / (idle ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail performance.now() by a hair
   const lk = tele ? info.lift_k[tf] : 0;      // teleport: stays where he vanished (null), then the fixed height he reappears at, falling back to the ground
   const lift = tele ? (lk === null ? teleL0 : Math.round(Math.min(34, gy - 66) * lk)) : jumping ? info.lift[jf] : 0;   // how far the sprite is raised off the ground
   const cx = Math.round(VW / 2), x = cx - (info.cx - info.x0), y = gy - 60 - info.top - lift;
@@ -308,6 +343,7 @@ function drawScene(now, dt) {
     ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')';
     ctx.fillRect(0, 0, VW, VH);
   }
+  ctx.restore();
 }
 
 function tick(now) {
@@ -322,8 +358,8 @@ function tick(now) {
 
 // ---------------------------------------------------------------- input
 function releaseAll() {
-  keyL = keyR = padL = padR = jumpReq = false;
-  $('bk').classList.remove('on'); $('fw').classList.remove('on'); $('up').classList.remove('on');
+  keyL = keyR = padL = padR = jumpReq = atkReq = false;
+  $('bk').classList.remove('on'); $('fw').classList.remove('on'); $('up').classList.remove('on'); $('atk').classList.remove('on');
 }
 function bindPad(id, set) {                   // hold-to-walk touch buttons (multi-touch safe)
   const b = $(id);
@@ -338,12 +374,13 @@ function bindPad(id, set) {                   // hold-to-walk touch buttons (mul
 bindPad('bk', v => { padL = v; });
 bindPad('fw', v => { padR = v; });
 bindPad('up', v => { if (v) jumpReq = true; });           // tap to jump
+bindPad('atk', v => { if (v) atkReq = true; });          // tap to attack (each tap is the next hit of the combo)
 
-const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U' };
+const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U', KeyJ: 'A', KeyF: 'A' };
 addEventListener('keydown', e => {
   const k = KEYS[e.code];
   if (k) {
-    if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (state === 'play' && !e.repeat) jumpReq = true;
+    if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (state === 'play' && !e.repeat) { if (k === 'A') atkReq = true; else jumpReq = true; }
     if (state === 'play') e.preventDefault();
     return;
   }

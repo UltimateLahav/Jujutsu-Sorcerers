@@ -185,15 +185,107 @@ def tele_fx(f, i):
         for x, ln in ((28, n), (32, n + 2), (36, n + 1), (39, n - 1)):
             for k in range(ln): f.set(x, top - 2 - k, 'h' if k % 3 == 0 else 'g')
 
+# ---------------------------------------------------------------- 4-hit attack combo: right hook, left hook, right elbow (blue hands), roundhouse kick (red hands)
+RED = {'r': '#ff3b3b', 'm': '#b0122a', 'n': '#ffc9b8'}      # Reversal Red
+PAL.update(RED)
+BLUE_FX, RED_FX = ('g', 'j', 'h'), ('r', 'm', 'n')          # outline, outer glow, highlight
+UA, FA = 7.3, 7.0                                           # upper arm / forearm length (the pocket pose of the idle arm is exactly UA at -16 deg and FA at 45 deg)
+POCKET = (-16, 45)
+def ease(t, m): return t * t if m == 'in' else 1 - (1 - t) ** 2 if m == 'out' else t * t * (3 - 2 * t) if m == 'io' else t
+def keyframe(keys, i):                                            # smooth interpolation between key poses (the easing belongs to the segment that ends at that key)
+    for (f0, v0, _), (f1, v1, m) in zip(keys, keys[1:]):
+        if f0 <= i <= f1:
+            t = ease((i - f0) / (f1 - f0), m); return tuple(a + (b - a) * t for a, b in zip(v0, v1))
+    return keys[-1][1]
+# pose = (hips forward px, hips down px, torso lean px, near thigh, near knee, near foot, near upper arm, near forearm, far upper arm, far forearm, glow 0-1); angles in degrees, 0 = hanging down, + = forward/up
+I0 = (0, 0, 0, 4, 0, 0, -16, 45, -16, 45, 0)
+K = lambda f, v, m='io': (f, v, m)
+ATK = {
+    0: [K(0, I0), K(2, (-1, 1, -1, 4, 0, 0, 0, 105, -16, 45, .35)), K(4, (-2, 2, -2, 4, 0, 0, -55, -125, -16, 45, .6)),       # right hook: hand out, cock back, whip through, follow, return
+        K(6, (1, 1, 1, 4, 0, 0, 35, 125, -16, 45, .9), 'in'), K(7, (3, 1, 3, 4, 0, 0, 72, 100, -16, 45, 1), 'in'),
+        K(9, (4, 1, 3, 4, 0, 0, 100, 112, -16, 45, .85), 'out'), K(11, (2, 1, 1, 4, 0, 0, 30, 110, -16, 45, .4)), K(14, I0)],
+    1: [K(0, I0), K(2, (-1, 1, -1, 4, 0, 0, 15, 135, 0, 105, .35)), K(4, (-2, 2, -2, 4, 0, 0, 15, 135, -55, -125, .6)),      # left hook: far arm swings, near hand guards the chin
+        K(6, (1, 1, 1, 4, 0, 0, 12, 132, 35, 125, .9), 'in'), K(7, (3, 1, 3, 4, 0, 0, 10, 130, 72, 100, 1), 'in'),
+        K(9, (4, 1, 3, 4, 0, 0, 12, 132, 100, 112, .85), 'out'), K(11, (2, 1, 1, 4, 0, 0, 12, 130, 30, 110, .4)), K(14, I0)],
+    2: [K(0, I0), K(2, (-1, 1, -1, 4, 0, 0, 20, 160, -16, 45, .35)), K(4, (-3, 2, -2, 4, 0, 0, -40, 105, -16, 45, .6)),       # right elbow: fist by the chin, elbow drives forward
+        K(6, (0, 1, 1, 4, 0, 0, 50, 150, -16, 45, .9), 'in'), K(7, (4, 1, 3, 4, 0, 0, 88, 188, -16, 45, 1), 'in'),
+        K(9, (5, 1, 3, 4, 0, 0, 95, 195, -16, 45, .85), 'out'), K(11, (2, 1, 1, 4, 0, 0, 30, 140, -16, 45, .4)), K(14, I0)],
+    3: [K(0, I0), K(2, (-1, 0, -1, 30, 60, 15, -40, -10, 20, 120, .35)), K(4, (-2, 1, -2, 88, 120, 25, -70, -30, 30, 130, .6)),   # roundhouse: knee up, leg whips round, arms out for balance
+        K(6, (-2, 1, -3, 108, 80, 15, -75, -35, 35, 135, .85), 'in'), K(8, (-1, 1, -4, 118, 8, -5, -80, -40, 40, 140, 1), 'in'),
+        K(9, (-1, 1, -4, 120, 10, -5, -80, -40, 40, 140, .9), 'out'), K(11, (-1, 1, -2, 80, 100, 10, -60, -20, 25, 125, .5)),
+        K(13, (0, 0, -1, 20, 25, 0, -30, 0, 0, 80, .15)), K(14, I0)],
+}
+ATK_HANDS = {0: 'n', 1: 'f', 2: 'n', 3: 'nf'}               # which hand(s) glow
+ATK_IMPACT = [7, 7, 7, 8]
+PT = {}                                                     # attack point (fist / elbow / toe) per frame, for the motion trails
+
+def glowring(f, cells, gl, fx):
+    c1, c2, _ = fx; n4 = ((1, 0), (-1, 0), (0, 1), (0, -1))
+    r1 = {(x + dx, y + dy) for x, y in cells for dx, dy in n4} - cells; r2 = {(x + dx, y + dy) for x, y in r1 for dx, dy in n4} - cells - r1
+    if gl > .15:
+        for x, y in r2:
+            if (x + y) % 2 == 0 or gl > .8: f.set(x, y, c2)
+    if gl > .45:
+        for x, y in r1: f.set(x, y, c1)
+def draw_arm(f, S, ua, fa, near, gl, fx):                   # shoulder -> elbow -> wrist -> fist; returns elbow and fist centre
+    a, b = rad(ua), rad(fa)
+    E = (S[0] + UA * sin(a), S[1] + UA * cos(a)); W = (E[0] + FA * sin(b), E[1] + FA * cos(b)); H = (W[0] + 2.0 * sin(b), W[1] + 2.0 * cos(b))
+    body = seg(S, E, 4.2, 3.6) | seg(E, W, 3.4, 2.6) | disc(E[0], E[1], 2.0)
+    base, lit = ('B', 'C') if near else ('A', 'A')          # the far arm is darker so it reads as behind the body
+    f.fill(body, base); f.bands(body, base, lit, 'A'); f.rim(body, 'O')
+    if near: f.line([(S[0] + 1, S[1] + 2), (E[0] + 1, E[1] - 1)], 'D'); f.line([(E[0] + 2, E[1] + 2), (W[0] - 1, W[1] - 1)], 'D')
+    if abs(ua - POCKET[0]) + abs(fa - POCKET[1]) > 12 or gl > 0:      # hand out of the pocket: a fist with the glow around it
+        fist = disc(H[0], H[1], 2.3); f.fill(fist, 'S')
+        for x, y in fist:
+            d = (x - H[0]) + (y - H[1]); f.set(x, y, 'T' if d < -1.3 else 'U' if d > 1.4 else 'S')
+        if gl > .45: glowring(f, fist, gl, fx)
+        else: f.rim(fist, 'V'); glowring(f, fist, gl, fx)
+        if gl > .8:
+            for k in range(3): ang = rad(120 * k + 47 * ((ua + 360) % 7)); f.set(H[0] + 4.2 * cos(ang), H[1] + 4.2 * sin(ang), fx[2])
+    elif near: f.set(W[0] + 1, W[1], 'S'); f.set(W[0] + 1, W[1] + 1, 'U')          # hand still in the pocket
+    return E, H
+def burst_fx(f, i, k, fx):                                  # impact flash, then a ring that expands and fades
+    c1, c2, c3 = fx; imp = ATK_IMPACT[k]
+    if i < imp or i > imp + 2: return
+    x, y = PT[(k, imp)]
+    if i == imp:
+        for d in range(-6, 7): f.set(x + d, y, c3 if abs(d) > 2 else 'k'); f.set(x, y + d, c3 if abs(d) > 2 else 'k')
+        for d in range(1, 4):
+            for sx, sy in ((1, 1), (1, -1), (-1, 1), (-1, -1)): f.set(x + sx * d, y + sy * d, c1)
+        f.set(x, y, 'k')
+    else:
+        r = 5 + 3 * (i - imp)
+        for a in range(0, 360, 10 if i == imp + 1 else 18):
+            if (a // 10) % 2 == 0: f.set(x + r * cos(rad(a)), y + r * sin(rad(a)), c1 if i == imp + 1 else c2)
+def atk_fx(f, i, k, an, foot, nfp, E, Hn, Hf, gl):
+    fx = RED_FX if k == 3 else BLUE_FX
+    ph = foot
+    if k == 3: pt = (an[0] + 7 * cos(ph) - 2.5 * sin(ph), an[1] + 7 * sin(ph) + 2.5 * cos(ph))     # toe of the kicking foot
+    elif k == 2: pt = (E[0] + 2.4 * sin(rad(nfp)), E[1] + 2.4 * cos(rad(nfp)))                       # tip of the elbow
+    else: pt = Hf if k == 1 else Hn
+    PT[(k, i)] = pt
+    for back, col in ((1, fx[0]), (2, fx[1])):               # motion trail while the strike is fast and glowing
+        if i - back >= 0 and gl > .55 and ATK_IMPACT[k] - 2 <= i <= ATK_IMPACT[k] + 1:
+            p0, p1 = PT[(k, i - back)], PT[(k, i - back + 1)]
+            if 2.5 < math.hypot(p1[0] - p0[0], p1[1] - p0[1]) < 18: f.line([p0, p1], col)
+    burst_fx(f, i, k, fx)
+
 def build(kind, i):
     idx = i                               # (i is reused for the head loop below)
     f = F(); u = F()                      # f: legs, u: everything above the hips
     hx, foot, lean = 33, None, 0
+    atk = kind.startswith('atk'); foot2 = None
     if kind == 'idle':
         L = [.15, .35, .55, .7, .5, .25][i]; bob = [0, 0, 0, 1, 1, 0][i]
         thn, kn_, thf, kf, swn, swf = rad(4), 0, rad(-8), 0, False, False; p = i / 6
     elif kind in ('jump', 'tele'):
         hx, hy, thn, kn_, thf, kf, foot, lean = (jump_pose if kind == 'jump' else tele_pose)(i); swn = swf = False; L = 0; bob = 0; p = 0
+    elif atk:
+        k_ = int(kind[3:]); dx, dy, lean, nth, nk, nf, nua, nfa, fua, ffa, gl = pv = keyframe(ATK[k_], i)
+        hx, hy = 33 + dx, 38 + TOP + round(dy); swn = swf = False; L = 0; bob = 0; p = 0; foot = 0.0
+        thf, kf = ik(hx, hy, 29.7, GROUND)
+        if k_ == 3: thn, kn_, foot2 = rad(nth), rad(nk), rad(nf)
+        else: thn, kn_ = ik(hx, hy, 33.7, GROUND)
     else:
         amp, kmax = (26, 50) if kind == 'fwd' else (20, 40)
         p = i / NW if kind == 'fwd' else ((-i) % NW) / NW
@@ -201,12 +293,12 @@ def build(kind, i):
         thn, kn_ = gait(qn, amp, kmax); thf, kf = gait(qf, amp, kmax); swn, swf = qn >= .5, qf >= .5
         L = .8 + .25 * sin(2 * math.pi * i / NW) if kind == 'fwd' else max(-.2, .05 + .12 * sin(2 * math.pi * i / NW)); bob = 0
     drop = lambda th, k: L1 * cos(th) + L2 * cos(th - k)
-    if kind not in ('jump', 'tele'): hy = round(58 + TOP - max(drop(thn, kn_), drop(thf, kf)))
+    if kind not in ('jump', 'tele') and not atk: hy = round(58 + TOP - max(drop(thn, kn_), drop(thf, kf)))
     dxb = round(hx - 33)                                   # the body follows the hips (the planted feet stay put)
     oy = hy - 34; hb = bob
     wave = round(sin(2 * math.pi * 2 * i / NW)) if kind in ('fwd', 'back') else [0, 1, 0, -1, 0, 1][i % 6]      # tail sway: whole cycles per loop, so the walk loops without a pop
     leg(f, hx, hy, thf, kf, swf, False, foot)
-    kn, an = leg(f, hx, hy, thn, kn_, swn, True, foot)
+    kn, an = leg(f, hx, hy, thn, kn_, swn, True, foot if foot2 is None else foot2)
 
     # jacket (+ flap trailing behind in the wind)
     jk = set()
@@ -214,13 +306,14 @@ def build(kind, i):
         a, b = (31, 35) if y == 17 else (30, 36) if y < 23 else (30, 35) if y < 30 else (30, 36)
         jk |= {(x, y + oy) for x in range(a, b + 1)}
     u.fill(jk, 'B'); u.bands(jk, 'B', 'C', 'A'); u.rim(jk, 'O')                 # lower clothes stay still: no flap, no billow
-    # near arm, hand in the pocket
-    sw = round(1.2 * sin(2 * math.pi * p)) * (-1 if kind == 'back' else 1) if kind in ('fwd', 'back') else 0
-    S, E, P = (32, 18 + oy), (30 + sw, 25 + oy), (35, 30 + oy)
-    arm = seg(S, E, 4.2, 3.6) | seg(E, P, 3.4, 2.6) | disc(E[0], E[1], 2.0)
-    u.fill(arm, 'B'); u.bands(arm, 'B', 'C', 'A'); u.rim(arm, 'O')
-    u.line([(S[0] + 1, S[1] + 2), (E[0] + 1, E[1] - 1)], 'D'); u.line([(E[0] + 2, E[1] + 2), (P[0] - 1, P[1] - 1)], 'D')
-    u.set(P[0] + 1, P[1], 'S'); u.set(P[0] + 1, P[1] + 1, 'U')
+    # near arm, hand in the pocket (the attacks draw their own arms further down)
+    if not atk:
+        sw = round(1.2 * sin(2 * math.pi * p)) * (-1 if kind == 'back' else 1) if kind in ('fwd', 'back') else 0
+        S, E, P = (32, 18 + oy), (30 + sw, 25 + oy), (35, 30 + oy)
+        arm = seg(S, E, 4.2, 3.6) | seg(E, P, 3.4, 2.6) | disc(E[0], E[1], 2.0)
+        u.fill(arm, 'B'); u.bands(arm, 'B', 'C', 'A'); u.rim(arm, 'O')
+        u.line([(S[0] + 1, S[1] + 2), (E[0] + 1, E[1] - 1)], 'D'); u.line([(E[0] + 2, E[1] + 2), (P[0] - 1, P[1] - 1)], 'D')
+        u.set(P[0] + 1, P[1], 'S'); u.set(P[0] + 1, P[1] + 1, 'U')
     # jacket sheen
     u.line([(32, 17 + oy), (35, 17 + oy)], 'D'); u.set(34, 17 + oy, 'E')
     u.line([(35, 19 + oy), (35, 22 + oy)], 'D'); u.line([(32, 24 + oy), (34, 27 + oy)], 'D')
@@ -236,7 +329,7 @@ def build(kind, i):
         for x, y in pts: u.set(x, y, 'X'); u.set(x + 1, y, 'X')
         u.set(*pts[1], 'Y')
     # head, hand-drawn (x = 22 + column, y = 1 + row): static face/band first, then the hair on top, sheared by the wind
-    tip = {'idle': [0, 0, 1, 1, 0, -1], 'fwd': [round(sin(2 * math.pi * 2 * k / NW)) for k in range(NW)], 'back': [round(sin(2 * math.pi * (2 * k + 4) / NW)) for k in range(NW)], 'jump': [0, 0, 1, 1, 0, -1] * 3, 'tele': [0, 0, 1, 1, 0, -1] * 3}[kind][i]
+    tip = {'idle': [0, 0, 1, 1, 0, -1], 'fwd': [round(sin(2 * math.pi * 2 * k / NW)) for k in range(NW)], 'back': [round(sin(2 * math.pi * (2 * k + 4) / NW)) for k in range(NW)], 'jump': [0, 0, 1, 1, 0, -1] * 3, 'tele': [0, 0, 1, 1, 0, -1] * 3, **{f'atk{j}': [0, 0, 1, 1, 0, -1] * 3 for j in range(4)}}[kind][i]
     sh = lambda y: tip if y <= 1 else 0                        # hair stays upright; only the tip pixels flutter
     hair = []
     for x, top in CROWN.items():                              # crown: white, lavender toward the band
@@ -252,25 +345,34 @@ def build(kind, i):
     for x, y, ch in hair: u.set(x, y, ch)
     for x, y, ch in hair:                                    # re-outline any edge the shear exposed
         if ch != 'M' and any(u.at(x + dx, y + dy) == '.' for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))): u.set(x, y, 'M')
+    if atk:                                               # the far arm goes first so the torso covers its shoulder
+        Sy = hy - 16; Sx = 32 + dxb + round(.8 * lean); fxc = RED_FX if k_ == 3 else BLUE_FX
+        _, Hf = draw_arm(f, (Sx - 1, Sy), fua, ffa, False, gl if 'f' in ATK_HANDS[k_] else 0, fxc)
     for y in range(NH):                                                   # lean the torso/head forward and slide it over the planted feet
         for x in range(N):
             c = u.g[y][x]
             if c != '.': f.set(x + dxb + round(lean * max(0.0, (34 + oy - y) / 20.0)), y, c)
+    if atk:                                               # near arm in front of everything, then glow trail and impact flash
+        E, Hn = draw_arm(f, (Sx, Sy), nua, nfa, True, gl if 'n' in ATK_HANDS[k_] else 0, fxc)
+        atk_fx(f, idx, k_, an, foot2 if foot2 is not None else 0.0, nua, E, Hn, Hf, gl)
     if kind == 'tele': tele_fx(f, idx)
     return f
 
 def rows(f, x0, w): return [''.join(r[x0:x0 + w]) for r in f.g]
 
-sets = {k: [build(k, i) for i in range(NW if k in ('fwd', 'back') else 15 if k in ('jump', 'tele') else 6)] for k in ('idle', 'fwd', 'back', 'jump', 'tele')}
+sets = {k: [build(k, i) for i in range(NW if k in ('fwd', 'back') else 15 if k in ('jump', 'tele') or k.startswith('atk') else 6)] for k in ('idle', 'fwd', 'back', 'jump', 'tele', 'atk0', 'atk1', 'atk2', 'atk3')}
 for k in ('idle', 'fwd', 'back'):
     for f in sets[k]: f.g = f.g[TOP:TOP + N]
-cells = [(x, y) for fs in sets.values() for f in fs for y in range(len(f.g)) for x in range(N) if f.g[y][x] != '.']
+cells = [(x, y) for k, fs in sets.items() if not k.startswith('atk') for f in fs for y in range(len(f.g)) for x in range(N) if f.g[y][x] != '.']
+acx = [x for k, fs in sets.items() if k.startswith('atk') for f in fs for r in f.g for x, c in enumerate(r) if c != '.']
+ax0, ax1 = min(acx) - 1, max(acx) + 1        # one window for the four attack sets (they reach further forward than the others)
 x0, x1 = min(x for x, y in cells) - 1, max(x for x, y in cells) + 1
 print('bbox cols', x0 + 1, x1 - 1, 'rows', min(y for x, y in cells), max(y for x, y in cells))
 bad = {c for f in (f for fs in sets.values() for f in fs) for r in f.g for c in r} - set(PAL) - {'.'}
 assert not bad, bad
-json.dump({k: {'x0': x0, 'w': x1 - x0 + 1, 'h': len(fs[0].g), 'top': TOP if k in ('jump', 'tele') else 0, 'cx': 33, 'frames': [rows(f, x0, x1 - x0 + 1) for f in fs], **({'lift': JUMP_LIFT} if k == 'jump' else {}), **({'lift_k': TELE_K} if k == 'tele' else {})} for k, fs in sets.items()}, open('side.json', 'w'))
-d_ = json.load(open('side.json')); d_['pal_extra'] = GLOW; json.dump(d_, open('side.json', 'w'))
+def win(k): return (ax0, ax1) if k.startswith('atk') else (x0, x1)
+json.dump({k: {'x0': win(k)[0], 'w': win(k)[1] - win(k)[0] + 1, 'h': len(fs[0].g), 'top': TOP if k in ('jump', 'tele') or k.startswith('atk') else 0, 'cx': 33, 'frames': [rows(f, win(k)[0], win(k)[1] - win(k)[0] + 1) for f in fs], **({'lift': JUMP_LIFT} if k == 'jump' else {}), **({'lift_k': TELE_K} if k == 'tele' else {})} for k, fs in sets.items()}, open('side.json', 'w'))
+d_ = json.load(open('side.json')); d_['pal_extra'] = {**GLOW, **RED}; json.dump(d_, open('side.json', 'w'))
 
 def render(f, sc, bg):
     H = len(f.g); im = Image.new('RGB', ((x1 - x0 + 1) * sc, H * sc), bg); px = im.load()
