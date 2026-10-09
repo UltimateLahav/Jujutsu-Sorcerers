@@ -127,14 +127,72 @@ def jump_pose(i):                  # -> hip x, hip y, near thigh, near knee, far
     a, b, c, d, fa = AIR[i]
     return (33, 38 + TOP, rad(a), rad(b), rad(c), rad(d), rad(fa), AIR_LEAN[i])
 
+TELE_POSE = {                                          # frame: near thigh, near knee, far thigh, far knee, foot (deg), torso lean
+    **{i: (98, 122, 84, 108, 22, 1) for i in range(7)},  # 0-6: the tucked pose from the top of the jump (charge, vanish, flash, arrive)
+    7: (82, 102, 66, 88, 24, 0), 8: (60, 78, 44, 62, 28, 0), 9: (36, 50, 20, 34, 30, 0), 10: (14, 20, 2, 10, 34, 0), 11: (6, 8, -4, 6, 38, 0)}
+TELE_SQUAT = {13: (8, 5, 3), 14: (3, 1.5, 0)}          # heavier landing than the normal jump: hips down, hips back, lean
+TELE_K = [None, None, None, 1, 1, 1, 1, .972, .889, .75, .556, .306, 0, 0, 0]   # height as a fraction of the teleport height (None = where he vanished)
+
+def tele_pose(i):
+    if i == 12: return jump_pose(12)
+    if i in TELE_SQUAT:
+        drop, back, lean = TELE_SQUAT[i]; hx, hy = 33 - back, 38 + TOP + round(drop)
+        return (hx, hy, *ik(hx, hy, 33.7, GROUND), *ik(hx, hy, 29.7, GROUND), 0.0, lean)
+    a, b, c, d, fa, lean = TELE_POSE[i]
+    return (33, 38 + TOP, rad(a), rad(b), rad(c), rad(d), rad(fa), lean)
+
+GLOW = {'g': '#59b8ff', 'h': '#c8f2ff', 'j': '#2060d8', 'k': '#ffffff'}      # Six Eyes blues, same as the glowing eye on the title art
+PAL.update(GLOW)
+def cells_of(f): return [(x, y) for y in range(NH) for x in range(N) if f.g[y][x] != '.']
+def lum(c): h = PAL[c].lstrip('#'); return sum(int(h[i:i + 2], 16) for i in (0, 2, 4))
+def energy(f):                                         # the whole sprite as a blue-white energy silhouette
+    for x, y in cells_of(f): f.g[y][x] = 'k' if lum(f.g[y][x]) >= 520 else 'h' if lum(f.g[y][x]) >= 300 else 'g' if lum(f.g[y][x]) >= 150 else 'j'
+def warp(f, sx, sy, cx, cy):                           # squash / stretch about (cx, cy), inverse-mapped so there are no holes
+    src = [r[:] for r in f.g]; f.g = [['.'] * N for _ in range(NH)]
+    for y in range(NH):
+        for x in range(N):
+            ox, oy = round(cx + (x - cx) / sx), round(cy + (y - cy) / sy)
+            if 0 <= ox < N and 0 <= oy < NH: f.g[y][x] = src[oy][ox]
+def aura(f, c1='h', c2='g'):                           # bright 1px outline plus a dithered second ring
+    body = set(cells_of(f)); n4 = ((1, 0), (-1, 0), (0, 1), (0, -1))
+    ring = {(x + dx, y + dy) for x, y in body for dx, dy in n4} - body
+    ring2 = {(x + dx, y + dy) for x, y in ring for dx, dy in n4} - body - ring
+    for x, y in ring2:
+        if (x + y) % 2 == 0: f.set(x, y, c2)
+    for x, y in ring: f.set(x, y, c1)
+def star(f, cx, cy, r, c, c2):                         # four-point sparkle: cross + short diagonals
+    for k in range(-r, r + 1): f.set(cx + k, cy, c); f.set(cx, cy + k, c)
+    for k in range(1, r // 2 + 1):
+        for a_, b_ in ((1, 1), (1, -1), (-1, 1), (-1, -1)): f.set(cx + a_ * k, cy + b_ * k, c2)
+    f.set(cx, cy, 'k')
+
+def tele_fx(f, i):
+    top = min(y for x, y in cells_of(f)); cy = top + 22
+    if i == 0:   aura(f); star(f, 25, top + 6, 2, 'h', 'g'); star(f, 42, top + 16, 2, 'h', 'g'); star(f, 27, cy + 8, 1, 'h', 'g')     # charging
+    elif i == 1: energy(f); warp(f, .62, 1.05, 33, cy); aura(f); star(f, 41, top + 4, 2, 'h', 'g')                                   # collapsing into light
+    elif i == 2: energy(f); warp(f, .22, 1.12, 33, cy); aura(f, 'g', 'j'); star(f, 33, cy, 7, 'k', 'h')                              # a sliver and a pop: gone
+    elif i == 3:                                                                                                                      # flash + light column where he arrives
+        f.g = [['.'] * N for _ in range(NH)]
+        for y in range(top - 2, top + 56): f.set(33, y, 'h' if (y // 2) % 2 == 0 else 'g'); f.set(34, y, 'g' if (y // 2) % 2 == 0 else 'j')
+        star(f, 33, cy, 9, 'k', 'h')
+        for x, y in ((24, cy - 9), (43, cy - 6), (26, cy + 14), (41, cy + 12)): star(f, x, y, 2, 'h', 'g')
+    elif i == 4: energy(f); warp(f, .34, 1.1, 33, cy); aura(f, 'g', 'j'); star(f, 33, cy, 5, 'k', 'h')                              # thin sliver stepping out
+    elif i == 5: energy(f); warp(f, .8, 1.02, 33, cy); aura(f)                                                                       # filling out
+    elif i == 6: aura(f); star(f, 26, top + 3, 1, 'h', 'g'); star(f, 41, cy - 4, 1, 'h', 'g')                                        # arrived, still glowing
+    elif 8 <= i <= 11:                                                                                                                # speed streaks above him while he drops
+        n = [3, 5, 7, 9][i - 8]
+        for x, ln in ((28, n), (32, n + 2), (36, n + 1), (39, n - 1)):
+            for k in range(ln): f.set(x, top - 2 - k, 'h' if k % 3 == 0 else 'g')
+
 def build(kind, i):
+    idx = i                               # (i is reused for the head loop below)
     f = F(); u = F()                      # f: legs, u: everything above the hips
     hx, foot, lean = 33, None, 0
     if kind == 'idle':
         L = [.15, .35, .55, .7, .5, .25][i]; bob = [0, 0, 0, 1, 1, 0][i]
         thn, kn_, thf, kf, swn, swf = rad(4), 0, rad(-8), 0, False, False; p = i / 6
-    elif kind == 'jump':
-        hx, hy, thn, kn_, thf, kf, foot, lean = jump_pose(i); swn = swf = False; L = 0; bob = 0; p = 0
+    elif kind in ('jump', 'tele'):
+        hx, hy, thn, kn_, thf, kf, foot, lean = (jump_pose if kind == 'jump' else tele_pose)(i); swn = swf = False; L = 0; bob = 0; p = 0
     else:
         amp, kmax = (26, 50) if kind == 'fwd' else (20, 40)
         p = i / 6 if kind == 'fwd' else ((-i) % 6) / 6
@@ -142,7 +200,7 @@ def build(kind, i):
         thn, kn_ = gait(qn, amp, kmax); thf, kf = gait(qf, amp, kmax); swn, swf = qn >= .5, qf >= .5
         L = .8 + .25 * sin(2 * math.pi * i / 6) if kind == 'fwd' else max(-.2, .05 + .12 * sin(2 * math.pi * i / 6)); bob = 0
     drop = lambda th, k: L1 * cos(th) + L2 * cos(th - k)
-    if kind != 'jump': hy = round(58 + TOP - max(drop(thn, kn_), drop(thf, kf)))
+    if kind not in ('jump', 'tele'): hy = round(58 + TOP - max(drop(thn, kn_), drop(thf, kf)))
     dxb = round(hx - 33)                                   # the body follows the hips (the planted feet stay put)
     oy = hy - 34; hb = bob
     wave = [0, 1, 0, -1, 0, 1][i % 6]
@@ -177,7 +235,7 @@ def build(kind, i):
         for x, y in pts: u.set(x, y, 'X'); u.set(x + 1, y, 'X')
         u.set(*pts[1], 'Y')
     # head, hand-drawn (x = 22 + column, y = 1 + row): static face/band first, then the hair on top, sheared by the wind
-    tip = {'idle': [0, 0, 1, 1, 0, -1], 'fwd': [0, 1, 0, -1, 0, 1], 'back': [0, -1, 0, 0, 1, 0], 'jump': [0, 0, 1, 1, 0, -1] * 3}[kind][i]
+    tip = {'idle': [0, 0, 1, 1, 0, -1], 'fwd': [0, 1, 0, -1, 0, 1], 'back': [0, -1, 0, 0, 1, 0], 'jump': [0, 0, 1, 1, 0, -1] * 3, 'tele': [0, 0, 1, 1, 0, -1] * 3}[kind][i]
     sh = lambda y: tip if y <= 1 else 0                        # hair stays upright; only the tip pixels flutter
     hair = []
     for x, top in CROWN.items():                              # crown: white, lavender toward the band
@@ -197,11 +255,12 @@ def build(kind, i):
         for x in range(N):
             c = u.g[y][x]
             if c != '.': f.set(x + dxb + round(lean * max(0.0, (34 + oy - y) / 20.0)), y, c)
+    if kind == 'tele': tele_fx(f, idx)
     return f
 
 def rows(f, x0, w): return [''.join(r[x0:x0 + w]) for r in f.g]
 
-sets = {k: [build(k, i) for i in range(15 if k == 'jump' else 6)] for k in ('idle', 'fwd', 'back', 'jump')}
+sets = {k: [build(k, i) for i in range(15 if k in ('jump', 'tele') else 6)] for k in ('idle', 'fwd', 'back', 'jump', 'tele')}
 for k in ('idle', 'fwd', 'back'):
     for f in sets[k]: f.g = f.g[TOP:TOP + N]
 cells = [(x, y) for fs in sets.values() for f in fs for y in range(len(f.g)) for x in range(N) if f.g[y][x] != '.']
@@ -209,7 +268,8 @@ x0, x1 = min(x for x, y in cells) - 1, max(x for x, y in cells) + 1
 print('bbox cols', x0 + 1, x1 - 1, 'rows', min(y for x, y in cells), max(y for x, y in cells))
 bad = {c for f in (f for fs in sets.values() for f in fs) for r in f.g for c in r} - set(PAL) - {'.'}
 assert not bad, bad
-json.dump({k: {'x0': x0, 'w': x1 - x0 + 1, 'h': len(fs[0].g), 'top': TOP if k == 'jump' else 0, 'cx': 33, 'frames': [rows(f, x0, x1 - x0 + 1) for f in fs], **({'lift': JUMP_LIFT} if k == 'jump' else {})} for k, fs in sets.items()}, open('side.json', 'w'))
+json.dump({k: {'x0': x0, 'w': x1 - x0 + 1, 'h': len(fs[0].g), 'top': TOP if k in ('jump', 'tele') else 0, 'cx': 33, 'frames': [rows(f, x0, x1 - x0 + 1) for f in fs], **({'lift': JUMP_LIFT} if k == 'jump' else {}), **({'lift_k': TELE_K} if k == 'tele' else {})} for k, fs in sets.items()}, open('side.json', 'w'))
+d_ = json.load(open('side.json')); d_['pal_extra'] = GLOW; json.dump(d_, open('side.json', 'w'))
 
 def render(f, sc, bg):
     H = len(f.g); im = Image.new('RGB', ((x1 - x0 + 1) * sc, H * sc), bg); px = im.load()

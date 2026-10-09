@@ -36,7 +36,8 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 .lock span{font-size:8vh;margin-top:6vh}
 #hud{position:fixed;left:calc(env(safe-area-inset-left) + 10px);top:calc(env(safe-area-inset-top) + 10px);display:none;align-items:center;gap:12px;font-size:clamp(8px,2.6vh,13px);text-shadow:2px 2px 0 #000}
 #hud button{padding:1vh 1.6vh;font-size:inherit}
-#pad{position:fixed;left:0;bottom:0;display:none;gap:2vh;align-items:flex-end;padding:0 0 calc(env(safe-area-inset-bottom) + 3vh) calc(env(safe-area-inset-left) + 3vh);pointer-events:none}
+#pad{position:fixed;left:0;right:0;bottom:0;display:none;justify-content:space-between;align-items:flex-end;padding:0 calc(env(safe-area-inset-right) + 3vh) calc(env(safe-area-inset-bottom) + 3vh) calc(env(safe-area-inset-left) + 3vh);pointer-events:none}
+.grp{display:flex;gap:2vh}
 .pb{pointer-events:auto;touch-action:none;width:21vh;height:21vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1vh;padding:0;font-size:clamp(14px,7vh,34px);opacity:.78}
 .pb span{font-size:clamp(6px,2vh,10px);color:var(--dim)}
 .pb.on{background:#2a1f4a;border-color:var(--acc);opacity:1}
@@ -71,8 +72,10 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 
 <div id="hud"><button id="back">&lt; MENU</button><span>GOJO SATORU</span></div>
 <div id="pad">
-  <button id="bk" class="pb" aria-label="Walk backward">&lt;<span>BACK</span></button>
-  <button id="fw" class="pb" aria-label="Walk forward">&gt;<span>FWD</span></button>
+  <div class="grp">
+    <button id="bk" class="pb" aria-label="Walk backward">&lt;<span>BACK</span></button>
+    <button id="fw" class="pb" aria-label="Walk forward">&gt;<span>FWD</span></button>
+  </div>
   <button id="up" class="pb" aria-label="Jump"><i>&gt;</i><span>JUMP</span></button>
 </div>
 <div id="rotate"><div>&#128241;</div>ROTATE YOUR PHONE<br>TO LANDSCAPE</div>
@@ -80,9 +83,9 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 <script>
 (() => {
 'use strict';
-const D = __SPR__;                 // palette + idle / walk-forward / walk-back / jump sprite frames (rows of palette letters)
+const D = __SPR__;                 // palette + idle / walk-forward / walk-back / jump / double-jump (teleport) sprite frames (rows of palette letters)
 const HEROES = __HEROES__;         // title key art: 0 eye open ... 4 eye fully closed
-const IDLE_FPS = 12, WALK_FPS = 10, JUMP_FPS = 15;   // animation speeds in frames per second (15 jump frames = exactly one second)
+const IDLE_FPS = 12, WALK_FPS = 10, JUMP_FPS = 15, TELE_FPS = 20;   // animation speeds in frames per second (15 jump frames = 1 s, 15 teleport frames = 0.75 s)
 const FWD_SPEED = 72, BACK_SPEED = 50;         // world pixels per second
 const BLINK_STEP = 70, BLINK_HOLD = 500;       // ms per blink frame, ms the eye stays shut
 const $ = id => document.getElementById(id);
@@ -102,7 +105,7 @@ const mk = set => set.frames.map(rows => {
   });
   return c;
 });
-const idleF = mk(D.idle), fwdF = mk(D.fwd), backF = mk(D.back), jumpF = mk(D.jump);
+const idleF = mk(D.idle), fwdF = mk(D.fwd), backF = mk(D.back), jumpF = mk(D.jump), teleF = mk(D.tele);
 pv.width = D.idle.w; pv.height = D.idle.h;
 const heroImgs = HEROES.map(src => { const im = new Image(); im.src = src; return im; });
 
@@ -111,7 +114,7 @@ const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
 let state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
 let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0;
-let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1;
+let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0;
 const STRIP = 480;
 
 // ---------------------------------------------------------------- title blink
@@ -143,7 +146,7 @@ function show(s) {
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll();
-  if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = -1; }
+  if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = -1; }
   if (s === 'title') planBlink(performance.now(), 1200);
 }
 
@@ -206,15 +209,25 @@ function layer(c, k) {                        // parallax: far layers move less 
 
 function drawScene(now, dt) {
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3);
-  if (jumpReq) { if (t >= 1 && jumpAt < 0) jumpAt = now; jumpReq = false; }     // one jump at a time, none while spawning in
-  let jf = -1;                                // jump frame 0..14: 0-2 crouch, 3 push-off, 4-11 airborne, 12 touchdown, 13-14 absorb + stand up
+  let jf = -1, tf = -1;                       // jump frame 0-14 (0-2 crouch, 3 push-off, 4-11 airborne, 12-14 land) / teleport frame 0-14 (0-6 vanish + arrive, 7-11 fall, 12-14 land)
   if (jumpAt >= 0) {
     jf = Math.floor(Math.max(0, now - jumpAt) * JUMP_FPS / 1000);                // clamp: rAF time can trail performance.now() by a hair
     if (jf >= jumpF.length) { jumpAt = -1; jf = -1; }                            // landed
   }
-  const steer = t >= 1 && (jf < 0 || (jf >= 3 && jf <= 11));                     // no walking while spawning in, crouching or landing
+  if (teleAt >= 0) {
+    tf = Math.floor(Math.max(0, now - teleAt) * TELE_FPS / 1000);
+    if (tf >= teleF.length) { teleAt = -1; tf = -1; }
+  }
+  if (jumpReq) {                              // one press = one action; presses while spawning in, crouching or landing are ignored
+    jumpReq = false;
+    if (t >= 1) {
+      if (jf < 0 && tf < 0) { jumpAt = now; jf = 0; }                            // from the ground: jump
+      else if (tf < 0 && jf >= 4 && jf <= 11) { teleL0 = D.jump.lift[jf]; teleAt = now; tf = 0; jumpAt = -1; jf = -1; }   // again in mid-air: teleport up, then fall
+    }
+  }
+  const steer = t >= 1 && ((jf < 0 && tf < 0) || (jf >= 3 && jf <= 11) || (tf >= 0 && tf <= 11));   // no walking while spawning in, crouching or landing
   const dir = steer ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0;
-  const nm = jf >= 0 ? 'jump' : dir > 0 ? 'fwd' : dir < 0 ? 'back' : 'idle';
+  const nm = tf >= 0 ? 'tele' : jf >= 0 ? 'jump' : dir > 0 ? 'fwd' : dir < 0 ? 'back' : 'idle';
   if (nm !== mode) { mode = nm; modeAt = now; }
   wx += dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * dt;
 
@@ -233,11 +246,12 @@ function drawScene(now, dt) {
     ctx.fillRect(p.x | 0, p.y | 0, p.l, 1);
   }
 
-  const jumping = jf >= 0, idle = mode === 'idle';
-  const set = jumping ? jumpF : idle ? idleF : mode === 'fwd' ? fwdF : backF;
-  const info = jumping ? D.jump : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
-  const fi = jumping ? jf : Math.floor(Math.max(0, now - (idle ? spawnAt : modeAt)) / (1000 / (idle ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail performance.now() by a hair
-  const lift = jumping ? info.lift[jf] : 0;   // how far the jump sprite is raised off the ground
+  const tele = tf >= 0, jumping = jf >= 0, idle = mode === 'idle';
+  const set = tele ? teleF : jumping ? jumpF : idle ? idleF : mode === 'fwd' ? fwdF : backF;
+  const info = tele ? D.tele : jumping ? D.jump : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
+  const fi = tele ? tf : jumping ? jf : Math.floor(Math.max(0, now - (idle ? spawnAt : modeAt)) / (1000 / (idle ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail performance.now() by a hair
+  const lk = tele ? info.lift_k[tf] : 0;      // teleport: stays where he vanished (null), then the fixed height he reappears at, falling back to the ground
+  const lift = tele ? (lk === null ? teleL0 : Math.round(Math.min(34, gy - 66) * lk)) : jumping ? info.lift[jf] : 0;   // how far the sprite is raised off the ground
   const cx = Math.round(VW / 2), x = cx - (info.cx - info.x0), y = gy - 60 - info.top - lift;
 
   const sw = Math.max(5, Math.round(9 * (1 - lift / 48))), sv = Math.round(sw * 2 / 3);   // ground shadow stays put and shrinks while he is in the air
@@ -251,6 +265,7 @@ function drawScene(now, dt) {
   ctx.drawImage(set[fi], x, y);
   ctx.restore();
 
+  if (tele && (tf === 2 || tf === 3)) { ctx.fillStyle = 'rgba(160,220,255,0.12)'; ctx.fillRect(0, 0, VW, VH); }   // soft blue flash on the teleport
   if (t < 1) {                                // spawn ring + flash
     const R = 6 + t * 70;
     ctx.fillStyle = 'rgba(120,170,255,' + (1 - t) + ')';
