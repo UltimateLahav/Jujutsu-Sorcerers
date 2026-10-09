@@ -1,7 +1,10 @@
 # Jujutsu Sorcerers
 
-Landscape pixel-art mobile game prototype. Title screen, character select (Gojo + locked slots), then spawn in and
-watch Gojo's idle: hands in pockets, 6 frames at 12 FPS, hair and clothes moving in the wind. No movement yet.
+Landscape pixel-art mobile game prototype.
+
+- **Title screen:** Gojo lifts his blindfold and his one glowing eye blinks (4 closing frames, held shut for 0.5 s, then the same frames in reverse).
+- **Character select** (Gojo + locked slots), then he spawns in on a rooftop and idles in the wind (6 frames, 12 FPS).
+- **Move:** hold the on-screen `<` BACK / `>` FWD buttons, or use the arrow keys / A and D. Forward and backward each have their own 6-frame walk cycle (he keeps facing right) and the city scrolls with parallax.
 
 | Path | What it is |
 |---|---|

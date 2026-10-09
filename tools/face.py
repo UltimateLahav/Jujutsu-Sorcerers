@@ -94,51 +94,60 @@ poly(hd, [(17, 27), (20, 28), (17, 31)], 'X')                                   
 rim(hd, 'V')
 img.alpha_composite(hd)
 
-# ---- glow around the exposed left eye (stepped, pixel-art bloom)
+# ---- blink frames: 0 open, 1 starting to close (25%), 2 half, 3 three-quarters, 4 fully closed
+base = img.copy()
 CX, CY = 26.5, 33.5
-glow = new()
-for y in range(N):
-    for x in range(N):
-        d = math.hypot(x + .5 - CX, (y + .5 - CY) / 0.9)
-        k = max(0.0, 1 - d / 8.0) ** 1.3 * 0.9 + max(0.0, 1 - d / 17.0) ** 2 * 0.35
-        lv = round(k * 6) / 6                               # quantised -> stepped pixel-art bloom
-        if lv > 0:
-            r, g, b, a = img.getpixel((x, y))
-            if a:
-                img.putpixel((x, y), tuple(min(255, int(c + gc * lv * 0.85)) for c, gc in zip((r, g, b), (60, 150, 255))) + (255,))
-            else:
-                img.putpixel((x, y), GLOW + (int(210 * lv),))
+YE = [30, 32, 34, 36, 37]                   # row where the upper lid edge (lashes) sits
+OPEN = [1.0, 0.75, 0.5, 0.25, 0.0]          # how much of the eye (and its glow) is left
 
-# ---- the eye itself (drawn after the glow so it stays crisp)
-ex, ey, rx, ry = 26.5, 33.5, 6.6, 3.7
-for y in range(28, 39):
-    for x in range(18, 36):
-        nx, ny = (x + .5 - ex) / rx, (y + .5 - ey) / ry
-        if nx * nx + ny * ny <= 1:
-            d = math.hypot(x + .5 - ex, y + .5 - ey)
-            if d < 1.1: c = '#0a2a6a'
-            elif d < 2.2: c = '#c8f2ff'
-            elif d < 3.0: c = '#59b8ff'
-            elif d < 3.7: c = '#2060d8'
-            else: c = '#eaf2ff'
-            put(img, x, y, c)
-for x in range(21, 33): put(img, x, 30, 'H')                  # thick white lashes, upper lid
-for x in range(20, 34): put(img, x, 29, 'M')
-for p in ((19, 30), (18, 31), (34, 30), (35, 31), (20, 28), (33, 28), (22, 28), (31, 28)): put(img, *p, 'M')
-for x in range(22, 32): put(img, x, 37, 'U')                  # lower lid
-put(img, 25, 32, 'W'); put(img, 26, 32, 'W'); put(img, 25, 33, 'W')   # specular
+def eye_frame(lid):
+    im = base.copy(); ye = YE[lid]; op = OPEN[lid]
+    for y in range(N):                                         # stepped glow, fades as the lid drops
+        for x in range(N):
+            d = math.hypot(x + .5 - CX, (y + .5 - CY) / 0.9)
+            k = (max(0.0, 1 - d / 8.0) ** 1.3 * 0.9 + max(0.0, 1 - d / 17.0) ** 2 * 0.35) * (0.1 + 0.9 * op)
+            lv = round(k * 6) / 6
+            if lv > 0:
+                r, g, b, a = im.getpixel((x, y))
+                if a: im.putpixel((x, y), tuple(min(255, int(c + gc * lv * 0.85)) for c, gc in zip((r, g, b), (60, 150, 255))) + (255,))
+                else: im.putpixel((x, y), GLOW + (int(210 * lv),))
+    ex, ey, rx, ry = 26.5, 33.5, 6.6, 3.7
+    for y in range(28, 39):
+        for x in range(18, 36):
+            nx, ny = (x + .5 - ex) / rx, (y + .5 - ey) / ry
+            if nx * nx + ny * ny <= 1:
+                if y < ye or lid == 4:
+                    put(im, x, y, 'U' if y <= 31 else 'S')       # eyelid skin
+                else:
+                    d = math.hypot(x + .5 - ex, y + .5 - ey)
+                    c = ('#0a2a6a' if d < 1.1 else '#c8f2ff' if d < 2.2 else '#59b8ff' if d < 3.0 else '#2060d8' if d < 3.7 else '#eaf2ff')
+                    put(im, x, y, c)
+    if lid < 4:
+        for x in range(21, 33): put(im, x, ye, 'H')                      # thick white lashes on the lid edge
+        for x in range(20, 34): put(im, x, ye - 1, 'M')
+        for dx, dy in ((19, 0), (18, 1), (34, 0), (35, 1), (20, -2), (33, -2), (22, -2), (31, -2)): put(im, dx, ye + dy, 'M')
+        for x in range(22, 32): put(im, x, 37, 'U') if ye < 37 else None
+        if ye <= 32: put(im, 25, 32, 'W'); put(im, 26, 32, 'W'); put(im, 25, 33, 'W')
+    else:                                                                # fully closed: lash line along the bottom of the eye
+        for x in range(21, 33): put(im, x, 37, 'H')
+        for x in range(22, 32): put(im, x, 38, 'M')
+        for p in ((20, 36), (33, 36), (19, 35), (34, 35)): put(im, *p, 'M')
+    if op >= 0.5:                                                        # light streak + sparkle only while the eye is open
+        for x in range(10, 44):
+            a = int(170 * max(0, 1 - abs(x - CX) / 17) * op)
+            if a > 12:
+                r = im.getpixel((x, 34)); f = a / 255
+                im.putpixel((x, 34), tuple(int(r[i] * (1 - f) + (200, 235, 255)[i] * f) for i in range(3)) + (max(r[3], a),))
+        for dx, dy in ((0, 0), (1, 0), (-1, 0), (2, 0), (-2, 0), (0, 1), (0, -1), (0, 2), (0, -2)): put(im, 22 + dx, 29 + dy, 'W')
+    return im
 
-# ---- light streak + sparkle
-for x in range(10, 44):
-    a = int(170 * max(0, 1 - abs(x - CX) / 17))
-    if a > 12:
-        r = img.getpixel((x, 34)); f = a / 255
-        img.putpixel((x, 34), tuple(int(r[i] * (1 - f) + (200, 235, 255)[i] * f) for i in range(3)) + (max(r[3], a),))
-for dx, dy in ((0, 0), (1, 0), (-1, 0), (2, 0), (-2, 0), (0, 1), (0, -1), (0, 2), (0, -2)):
-    put(img, 22 + dx, 29 + dy, 'W')
-
-img.save('face_art.png')
-bg = Image.new('RGBA', (N, N), hx('#140c26'))
-bg.alpha_composite(img)
-bg.resize((512, 512), Image.NEAREST).save('face_preview.png')
-print('ok')
+frames = [eye_frame(i) for i in range(5)]
+for i, f in enumerate(frames): f.save(f'face_art_{i}.png')
+frames[0].save('face_art.png')
+sheet = Image.new('RGBA', (5 * 64 * 3 + 40, 64 * 3), hx('#140c26'))
+for i, f in enumerate(frames):
+    bg = Image.new('RGBA', (N, N), hx('#140c26')); bg.alpha_composite(f)
+    sheet.paste(bg.resize((192, 192), Image.NEAREST), (i * 202, 0))
+sheet.save('face_blink_sheet.png')
+bg = Image.new('RGBA', (N, N), hx('#140c26')); bg.alpha_composite(frames[0]); bg.resize((512, 512), Image.NEAREST).save('face_preview.png')
+print('blink frames ok')
