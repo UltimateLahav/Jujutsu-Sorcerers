@@ -44,6 +44,12 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 .col{display:flex;flex-direction:column;gap:2vh}
 #atk{border-color:#6fb4ff}
 #atk svg{width:6vh;height:6vh}
+#settings.screen{z-index:5;background:rgba(13,10,23,.95);gap:2vh}
+#vols{display:grid;grid-template-columns:1fr 1fr;gap:1.6vh 5vh;width:min(92vw,820px);text-align:left}
+#vols label{display:grid;grid-template-columns:1fr auto;gap:.8vh 1vh;font-size:clamp(7px,2.2vh,12px)}
+#vols input{grid-column:1/3;width:100%;height:3.4vh;accent-color:var(--acc)}
+#vols b{font-weight:normal;color:var(--acc)}
+.row{display:flex;gap:2.4vh}
 #up{border-color:var(--acc)}
 #up i{font-style:normal;display:block;transform:rotate(-90deg)}      /* the same chunky chevron as BACK / FWD, turned to point up */
 #rotate{position:fixed;inset:0;z-index:9;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--bg);text-align:center;line-height:1.6;font-size:12px}
@@ -73,7 +79,14 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
   </div>
 </section>
 
-<div id="hud"><button id="back">&lt; MENU</button><span>GOJO SATORU</span><button id="snd">SND ON</button></div>
+<section id="settings" class="screen">
+  <h2>SETTINGS</h2>
+  <small>VOLUME OF EACH SOUND (100% = DEFAULT, UP TO 200%)</small>
+  <div id="vols"></div>
+  <div class="row"><button id="dummyBtn">SPAWN DUMMY</button><button id="setClose">CLOSE</button></div>
+</section>
+
+<div id="hud"><button id="back">&lt; MENU</button><span>GOJO SATORU</span><button id="snd">SND ON</button><button id="setBtn">SET</button></div>
 <div id="pad">
   <div class="grp">
     <button id="bk" class="pb" aria-label="Walk backward">&lt;<span>BACK</span></button>
@@ -95,6 +108,7 @@ const HEROES = __HEROES__;         // title key art: 0 eye open ... 4 eye fully 
 const IDLE_FPS = 12, WALK_FPS = 15, JUMP_FPS = 15, TELE_FPS = 20;   // animation speeds in frames per second (15 walk frames = 1 s per cycle = one step every half second; 15 jump frames = 1 s; 15 teleport frames = 0.75 s)
 const ATK_FPS = [30, 30, 30, 24], ATK_IMPACT = [7, 7, 7, 8], ATK_SWING = [4, 4, 4, 5], COMBO_MS = 1400;   // 15 frames per attack; the next press within COMBO_MS continues the combo
 const ATK_NAMES = ['R.HOOK', 'L.HOOK', 'ELBOW', 'KICK'];
+const REACH = [17, 17, 15, 26], KNOCK = [26, 26, 34, 80], DMG = [12, 14, 18, 35];   // per hit: how far it reaches from his hips (px), how hard it shoves the dummy (px/s), damage number
 const FWD_SPEED = 44, BACK_SPEED = 30;         // world pixels per second (matched to the slower stride so his feet do not skate)
 const BLINK_STEP = 70, BLINK_HOLD = 500;       // ms per blink frame, ms the eye stays shut
 const $ = id => document.getElementById(id);
@@ -103,18 +117,22 @@ const pv = $('pv'), pctx = pv.getContext('2d');
 const hero = $('hero'), hctx = hero.getContext('2d');
 
 // turn a sprite set's text rows into tiny offscreen canvases
-const mk = set => set.frames.map(rows => {
+const mk = (set, pal = D.pal) => set.frames.map(rows => {
   const c = document.createElement('canvas'); c.width = set.w; c.height = set.h;
   const g = c.getContext('2d');
   rows.forEach((row, y) => {
     for (let x = 0; x < row.length; x++) {
       const ch = row[x];
-      if (ch !== '.') { g.fillStyle = D.pal[ch]; g.fillRect(x, y, 1, 1); }
+      if (ch !== '.') { g.fillStyle = pal[ch]; g.fillRect(x, y, 1, 1); }
     }
   });
   return c;
 });
 const idleF = mk(D.idle), fwdF = mk(D.fwd), backF = mk(D.back), jumpF = mk(D.jump), teleF = mk(D.tele), atkF = [0, 1, 2, 3].map(k => mk(D['atk' + k]));
+const inv = h => '#' + [1, 3, 5].map(i => (255 - parseInt(h.substr(i, 2), 16)).toString(16).padStart(2, '0')).join('');
+const invPal = {}, whitePal = {};
+for (const k in D.pal) { invPal[k] = inv(D.pal[k]); whitePal[k] = '#ffffff'; }
+const dumF = mk(D.idle, invPal), dumW = mk(D.idle, whitePal);      // the training dummy: Gojo with inverted colours
 pv.width = D.idle.w; pv.height = D.idle.h;
 const heroImgs = HEROES.map(src => { const im = new Image(); im.src = src; return im; });
 
@@ -123,7 +141,7 @@ const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
 let state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
 let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1;
-let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, lastCombo = -1, shakeUntil = 0, shakeAmp = 0;
+let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, lastCombo = -1, shakeUntil = 0, shakeAmp = 0, dummy = null, popups = [];
 const STRIP = 480;
 
 // ---------------------------------------------------------------- sound (all synthesised in sfx.js, no audio files)
@@ -134,7 +152,7 @@ function audio() {                            // browsers only allow sound after
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
     try { sfx = makeSfx(new AC()); } catch (e) { sfx = null; return null; }
-    sfx.setOn(soundOn);
+    sfx.setOn(soundOn); applyVols();
     if (state === 'play') sfx.windOn();
   }
   if (sfx.ac.state === 'suspended' && !document.hidden) sfx.ac.resume();
@@ -145,6 +163,19 @@ function snd(name, a, b) {                    // play one cue (and log it when a
   if (sfx && soundOn && sfx.ac.state === 'running') sfx[name](a, b);
 }
 window.__audio = on => { if (!sfx) return; if (on) audio(); else sfx.ac.suspend(); };   // called by the Android app when it goes to / comes back from the background
+
+// ---------------------------------------------------------------- settings: a volume slider for every sound
+const VOLS = [['master', 'MASTER'], ['steps', 'FOOTSTEPS'], ['wind', 'WIND'], ['jump', 'JUMP + LANDING'], ['tele', 'TELEPORT'], ['atk', 'ATTACKS']];
+const vol = { master: 100, steps: 100, wind: 100, jump: 100, tele: 100, atk: 100 };
+try { Object.assign(vol, JSON.parse(localStorage.getItem('js_vol') || '{}')); } catch (e) { /* storage blocked: defaults */ }
+function applyVols() { if (sfx) for (const [k] of VOLS) sfx.setVol(k, vol[k] / 100); }
+function preview(k) {                         // let go of a slider and you hear that sound (the wind is already playing underneath)
+  if (!audio() || k === 'wind') return;
+  if (k === 'jump') { sfx.jump(); setTimeout(() => sfx.land(1), 380); }
+  else if (k === 'tele') { sfx.vanish(); setTimeout(() => sfx.arrive(), 120); }
+  else if (k === 'atk') { sfx.swing(0); setTimeout(() => { sfx.hit(0); sfx.smack(0); }, 140); }
+  else { sfx.step(0, false); setTimeout(() => sfx.step(1, false), 500); }
+}
 
 // ---------------------------------------------------------------- title blink
 let heroShown = -1, blinkSeq = [], blinkIdx = 0, blinkAt = 0;
@@ -174,9 +205,9 @@ function show(s) {
   cv.style.display = s === 'play' ? 'block' : 'none';
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
-  releaseAll();
+  releaseAll(); $('settings').classList.remove('on');
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
-  if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; comboUntil = 0; }
+  if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; comboUntil = 0; dummy = null; popups = []; }
   if (s === 'title') planBlink(performance.now(), 1200);
 }
 
@@ -235,6 +266,41 @@ function buildLayer(col, hh, w0, sd) {        // a skyline strip that tiles seam
 function layer(c, k) {                        // parallax: far layers move less than the ground
   const off = Math.round((((-wx * k) % STRIP) + STRIP) % STRIP);
   for (let x = off - STRIP; x < VW; x += STRIP) ctx.drawImage(c, x, 0);
+}
+
+function spawnDummy(now) { dummy = { x: wx + 32, born: now, vx: 0, hitAt: -9999 }; }
+function hitDummy(k, now) {                   // called on the impact frame: a hit lands if the dummy is in front of him and within reach
+  if (!dummy || now - dummy.born < 600) return;
+  const gap = dummy.x - wx;                   // the dummy's centre relative to Gojo's hips; his body is about 12 px wide
+  if (gap - 6 > REACH[k] || gap + 6 < 3) return;
+  dummy.hitAt = now; dummy.vx += KNOCK[k]; shakeUntil = now + 110; shakeAmp = k === 3 ? 3 : 2;
+  popups.push({ born: now, x: dummy.x, txt: '' + (DMG[k] + ((Math.random() * 5) | 0)), col: k === 3 ? '#ff5a5a' : '#7fc4ff' });
+  snd('smack', k);
+}
+function drawDummy(now, dt) {
+  if (!dummy) return;
+  dummy.x += dummy.vx * dt; dummy.vx *= Math.exp(-7 * dt);                    // knock-back slide with friction
+  const cx = Math.round(VW / 2), sx = Math.round(cx + dummy.x - wx);
+  if (sx < -50 || sx > VW + 50) return;
+  const t = Math.min(1, (now - dummy.born) / 650), e = 1 - Math.pow(1 - t, 3), hitT = now - dummy.hitAt;
+  const fi = Math.floor(now / (1000 / IDLE_FPS)) % dumF.length, w = D.idle.w, h = D.idle.h, hx = D.idle.cx - D.idle.x0, y = gy - 60;
+  ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(sx - 9, gy + 3, 18, 2); ctx.fillRect(sx - 6, gy + 2, 12, 1); ctx.fillRect(sx - 6, gy + 5, 12, 1);
+  const src = hitT < 70 ? dumW[fi] : dumF[fi], lean = hitT < 320 ? 5 * Math.sin(Math.PI * hitT / 320) : 0;   // white flash, then leans away for a moment
+  ctx.save(); ctx.translate(sx, 0); ctx.scale(-1, 1);                          // he faces Gojo (to the left)
+  ctx.beginPath(); ctx.rect(-hx - 2, y + Math.round(h * (1 - e)), w + 4, h); ctx.clip();   // materialises from the feet up
+  ctx.globalAlpha = Math.min(1, t * 2);
+  for (let r = 0; r < h; r += 2) ctx.drawImage(src, 0, r, w, 2, -hx - Math.round(lean * (1 - r / h)), y + r, w, 2);   // 2px strips: the head leans further than the feet
+  ctx.restore();
+  if (t < 1) { const R = 4 + t * 36; ctx.fillStyle = 'rgba(255,170,90,' + (1 - t) + ')'; for (let a = 0; a < 40; a++) { const th = a / 40 * 6.2832; ctx.fillRect(Math.round(sx + Math.cos(th) * R), Math.round(y + 60 + Math.sin(th) * R * 0.25), 1, 1); } }
+}
+function drawPopups(now) {                    // damage numbers float up from the dummy and fade
+  popups = popups.filter(p => now - p.born < 800);
+  ctx.font = '8px "Press Start 2P"'; ctx.textAlign = 'center';
+  for (const p of popups) {
+    const k = (now - p.born) / 800, x = Math.round(Math.round(VW / 2) + p.x - wx), y = Math.round(gy - 66 - 16 * Math.sqrt(k));
+    ctx.globalAlpha = Math.min(1, 2.2 * (1 - k)); ctx.fillStyle = '#000'; ctx.fillText(p.txt, x + 1, y + 1); ctx.fillStyle = p.col; ctx.fillText(p.txt, x, y);
+  }
+  ctx.globalAlpha = 1;
 }
 
 function drawScene(now, dt) {
@@ -309,10 +375,11 @@ function drawScene(now, dt) {
     if (af < evA) evA = -1;                   // a chained hit restarted the counter
     if (af >= 0) {
       if (evA < ATK_SWING[atkK] && af >= ATK_SWING[atkK]) snd('swing', atkK);
-      if (evA < ATK_IMPACT[atkK] && af >= ATK_IMPACT[atkK]) { snd('hit', atkK); shakeUntil = now + 90; shakeAmp = atkK === 3 ? 2 : 1; }
+      if (evA < ATK_IMPACT[atkK] && af >= ATK_IMPACT[atkK]) { snd('hit', atkK); shakeUntil = now + 90; shakeAmp = atkK === 3 ? 2 : 1; hitDummy(atkK, now); }
     }
     evA = af;
   }
+  drawDummy(now, dt);                         // behind Gojo, so his fists and kicks overlap it
   const tele = tf >= 0, jumping = jf >= 0, atkOn = af >= 0, idle = mode === 'idle';
   const set = tele ? teleF : jumping ? jumpF : atkOn ? atkF[atkK] : idle ? idleF : mode === 'fwd' ? fwdF : backF;
   const info = tele ? D.tele : jumping ? D.jump : atkOn ? D['atk' + atkK] : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
@@ -343,6 +410,7 @@ function drawScene(now, dt) {
     ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')';
     ctx.fillRect(0, 0, VW, VH);
   }
+  drawPopups(now);
   ctx.restore();
 }
 
@@ -378,6 +446,7 @@ bindPad('atk', v => { if (v) atkReq = true; });          // tap to attack (each 
 
 const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U', KeyJ: 'A', KeyF: 'A' };
 addEventListener('keydown', e => {
+  if (settingsOn()) { if (e.key === 'Escape') closeSettings(); return; }      // the settings screen takes the keyboard while it is open
   const k = KEYS[e.code];
   if (k) {
     if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (state === 'play' && !e.repeat) { if (k === 'A') atkReq = true; else jumpReq = true; }
@@ -406,6 +475,22 @@ const inApp = /; wv\)/.test(navigator.userAgent);   // inside the Android app th
 $('start').addEventListener('click', () => { audio(); if (!inApp && matchMedia('(pointer:coarse)').matches) goFullscreen(); show('select'); });
 $('gojo').addEventListener('click', () => show('play'));
 $('back').addEventListener('click', () => show('select'));
+VOLS.forEach(([k, name]) => {
+  const row = document.createElement('label');
+  row.innerHTML = '<span>' + name + '</span><b></b><input type="range" min="0" max="200" step="5" aria-label="' + name + ' volume">';
+  const inp = row.querySelector('input'), val = row.querySelector('b'); inp.value = vol[k]; val.textContent = vol[k] + '%';
+  inp.addEventListener('input', () => {
+    vol[k] = +inp.value; val.textContent = vol[k] + '%'; if (sfx) sfx.setVol(k, vol[k] / 100);
+    if (window.__sfxlog) window.__sfxlog.push(['vol', Math.round(performance.now()), k, vol[k]]);
+  });
+  inp.addEventListener('change', () => { try { localStorage.setItem('js_vol', JSON.stringify(vol)); } catch (e) { /* storage blocked */ } preview(k); });
+  $('vols').appendChild(row);
+});
+const settingsOn = () => $('settings').classList.contains('on');
+const closeSettings = () => $('settings').classList.remove('on');
+$('setBtn').addEventListener('click', () => { releaseAll(); audio(); $('dummyBtn').textContent = dummy ? 'REMOVE DUMMY' : 'SPAWN DUMMY'; $('settings').classList.add('on'); });
+$('setClose').addEventListener('click', closeSettings);
+$('dummyBtn').addEventListener('click', () => { if (dummy) dummy = null; else spawnDummy(performance.now()); closeSettings(); });
 const sndLabel = () => { $('snd').textContent = soundOn ? 'SND ON' : 'SND OFF'; };
 sndLabel();
 $('snd').addEventListener('click', () => {    // mute / unmute (remembered)
@@ -417,6 +502,7 @@ addEventListener('resize', resize);
 addEventListener('orientationchange', () => setTimeout(resize, 250));
 
 window.__back = () => {                       // Android back button: step back through the menus, otherwise let the app close
+  if (settingsOn()) { closeSettings(); return true; }
   if (state === 'play') { show('select'); return true; }
   if (state === 'select') { show('title'); return true; }
   return false;

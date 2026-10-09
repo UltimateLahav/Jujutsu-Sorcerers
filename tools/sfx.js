@@ -24,13 +24,18 @@ function makeSfx(ac) {
   }
   const rev = ac.createConvolver(); rev.buffer = ir;
   const wet = ac.createGain(); wet.gain.value = 0.5; rev.connect(wet); wet.connect(master);
-  function bus(gain, send, lp) {                         // gain, reverb send amount, optional low-pass cutoff
+  const vol = { master: 1, steps: 1, wind: 1, jump: 1, tele: 1, atk: 1 }, C = {}, st = { on: true, windMul: 1 };   // 1 = the designed level, 2 = twice as loud
+  function bus(gain, send, lp, cat) {                    // gain, reverb send amount, optional low-pass cutoff, volume category
     const g = ac.createGain(); g.gain.value = gain; let n = g;
     if (lp) { n = ac.createBiquadFilter(); n.type = 'lowpass'; n.frequency.value = lp; n.Q.value = 0.5; g.connect(n); }
-    n.connect(dry); const s = ac.createGain(); s.gain.value = send; n.connect(s); s.connect(rev);
+    n.connect(cat.dry); const s = ac.createGain(); s.gain.value = send; n.connect(s); s.connect(cat.wet);
     return g;
   }
-  const stepBus = bus(2, 0.2), deepBus = bus(0.8, 0.16), softBus = bus(0.5, 0.2, 1400);
+  for (const name of ['steps', 'jump', 'tele', 'atk']) {   // footsteps | jump + landing | teleport | attacks
+    const cat = { dry: ac.createGain(), wet: ac.createGain() }; cat.dry.connect(dry); cat.wet.connect(rev);
+    C[name] = { cat, step: bus(2, 0.2, 0, cat), deep: bus(0.8, 0.16, 0, cat), soft: bus(0.5, 0.2, 1400, cat) };
+  }
+  const applyMaster = () => master.gain.setTargetAtTime(st.on ? LEVEL.master * vol.master : 0, ac.currentTime, 0.04);
 
   // ---- building blocks: filtered noise bursts and pitch-gliding tones with click-free envelopes
   const nlen = (2 * sr) | 0, nbuf = ac.createBuffer(1, nlen, sr), nd = nbuf.getChannelData(0);
@@ -80,65 +85,76 @@ function makeSfx(ac) {
   return {
     ac, master,
     step(alt, back, at) {                                // calm, heavy footstep: heel lands with a dull "tok" and a deep thump, the forefoot rolls down a beat later ("da-dum")
-      const t = T(at), v = R(0.9, 1) * (back ? 0.8 : 1), f = R(0.94, 1.06) * (alt ? 1.05 : 0.95) * (back ? 0.94 : 1);
-      burst(stepBus, t, { dur: 0.085, f: 440 * f, q: 0.9, gain: 1.6 * v, atk: 0.002 });                 // heel body (low mids, no bright click)
-      burst(stepBus, t, { dur: 0.022, f: 1150 * f, q: 1.0, gain: 0.3 * v, atk: 0.001 });                // faint contact, much softer and lower than before
-      tone(stepBus, t, { type: 'triangle', f: 118 * f, f2: 52 * f, dur: 0.19, gain: 0.22 * v, atk: 0.004 });   // heavy thump
-      tone(stepBus, t, { f: 205 * f, f2: 100 * f, dur: 0.07, gain: 0.08 * v, atk: 0.003 });             // knock
-      burst(stepBus, t + 0.095, { dur: 0.07, f: 320 * f, q: 0.9, gain: 0.9 * v, atk: 0.005 });          // forefoot rolling down
-      tone(stepBus, t + 0.095, { f: 88 * f, f2: 54 * f, dur: 0.11, gain: 0.09 * v, atk: 0.006 });
+      const t = T(at), B = C.steps, v = R(0.9, 1) * (back ? 0.8 : 1), f = R(0.94, 1.06) * (alt ? 1.05 : 0.95) * (back ? 0.94 : 1);
+      burst(B.step, t, { dur: 0.085, f: 440 * f, q: 0.9, gain: 1.6 * v, atk: 0.002 });                 // heel body (low mids, no bright click)
+      burst(B.step, t, { dur: 0.022, f: 1150 * f, q: 1.0, gain: 0.3 * v, atk: 0.001 });                // faint contact, much softer and lower than before
+      tone(B.step, t, { type: 'triangle', f: 118 * f, f2: 52 * f, dur: 0.19, gain: 0.22 * v, atk: 0.004 });   // heavy thump
+      tone(B.step, t, { f: 205 * f, f2: 100 * f, dur: 0.07, gain: 0.08 * v, atk: 0.003 });             // knock
+      burst(B.step, t + 0.095, { dur: 0.07, f: 320 * f, q: 0.9, gain: 0.9 * v, atk: 0.005 });          // forefoot rolling down
+      tone(B.step, t + 0.095, { f: 88 * f, f2: 54 * f, dur: 0.11, gain: 0.09 * v, atk: 0.006 });
     },
     jump(at) {                                           // push-off: deep thump + a soft rising and falling whoosh
-      const t = T(at);
-      tone(deepBus, t, { type: 'triangle', f: 122, f2: 62, dur: 0.24, gain: 0.55, atk: 0.004 });
-      tone(deepBus, t, { f: 230, f2: 130, dur: 0.09, gain: 0.12, atk: 0.003 });
-      burst(softBus, t, { type: 'lowpass', f: 300, f2: 1100, q: 0.6, dur: 0.22, gain: 0.2, atk: 0.03 });
-      burst(softBus, t + 0.12, { type: 'lowpass', f: 1100, f2: 350, q: 0.6, dur: 0.2, gain: 0.12, atk: 0.02 });
+      const t = T(at), B = C.jump;
+      tone(B.deep, t, { type: 'triangle', f: 122, f2: 62, dur: 0.24, gain: 0.55, atk: 0.004 });
+      tone(B.deep, t, { f: 230, f2: 130, dur: 0.09, gain: 0.12, atk: 0.003 });
+      burst(B.soft, t, { type: 'lowpass', f: 300, f2: 1100, q: 0.6, dur: 0.22, gain: 0.2, atk: 0.03 });
+      burst(B.soft, t + 0.12, { type: 'lowpass', f: 1100, f2: 350, q: 0.6, dur: 0.2, gain: 0.12, atk: 0.02 });
     },
     land(p, at) {                                        // p = 1 normal, 1.6 for the heavy landing after the teleport
-      const t = T(at); p = p || 1;
-      tone(deepBus, t, { type: 'triangle', f: 138 - 8 * p, f2: 62, dur: 0.2 + 0.08 * p, gain: 0.42 + 0.1 * p, atk: 0.003 });
-      tone(deepBus, t, { f: 250, f2: 125, dur: 0.1 + 0.02 * p, gain: 0.3 + 0.05 * p, atk: 0.002 });
-      burst(softBus, t, { type: 'lowpass', f: 900, f2: 300, q: 0.7, dur: 0.09 + 0.04 * p, gain: 3.2 + 0.8 * p, atk: 0.001 });
-      if (p > 1) tone(deepBus, t + 0.02, { f: 72, f2: 40, dur: 0.4, gain: 0.2 * (p - 1), atk: 0.01 });
+      const t = T(at), B = C.jump; p = p || 1;
+      tone(B.deep, t, { type: 'triangle', f: 138 - 8 * p, f2: 62, dur: 0.2 + 0.08 * p, gain: 0.42 + 0.1 * p, atk: 0.003 });
+      tone(B.deep, t, { f: 250, f2: 125, dur: 0.1 + 0.02 * p, gain: 0.3 + 0.05 * p, atk: 0.002 });
+      burst(B.soft, t, { type: 'lowpass', f: 900, f2: 300, q: 0.7, dur: 0.09 + 0.04 * p, gain: 3.2 + 0.8 * p, atk: 0.001 });
+      if (p > 1) tone(B.deep, t + 0.02, { f: 72, f2: 40, dur: 0.4, gain: 0.2 * (p - 1), atk: 0.01 });
     },
     charge(at) {                                         // teleport 1: warm energy swells up
-      const t = T(at);
-      tone(deepBus, t, { type: 'triangle', f: 65, f2: 150, dur: 0.14, gain: 0.22, atk: 0.03, cur: 1 });
-      tone(softBus, t, { type: 'sawtooth', f: 130, f2: 300, dur: 0.14, gain: 0.25, atk: 0.04, cur: 1 });
+      const t = T(at), B = C.tele;
+      tone(B.deep, t, { type: 'triangle', f: 65, f2: 150, dur: 0.14, gain: 0.22, atk: 0.03, cur: 1 });
+      tone(B.soft, t, { type: 'sawtooth', f: 130, f2: 300, dur: 0.14, gain: 0.25, atk: 0.04, cur: 1 });
     },
     vanish(at) {                                         // teleport 2: he folds into a point (pitch dive + air rushing in)
-      const t = T(at);
-      tone(deepBus, t, { f: 240, f2: 52, dur: 0.16, gain: 0.5, atk: 0.002, cur: 0.85 });
-      burst(softBus, t, { f: 1400, f2: 300, q: 1.4, dur: 0.12, gain: 0.45, atk: 0.004 });
+      const t = T(at), B = C.tele;
+      tone(B.deep, t, { f: 240, f2: 52, dur: 0.16, gain: 0.5, atk: 0.002, cur: 0.85 });
+      burst(B.soft, t, { f: 1400, f2: 300, q: 1.4, dur: 0.12, gain: 0.45, atk: 0.004 });
     },
     arrive(at) {                                         // teleport 3: deep boom where he reappears, with a faint shimmer
-      const t = T(at);
-      tone(deepBus, t, { type: 'triangle', f: 128, f2: 42, dur: 0.5, gain: 0.42, atk: 0.004 });
-      tone(deepBus, t, { f: 256, f2: 84, dur: 0.2, gain: 0.2, atk: 0.003 });
-      burst(softBus, t, { type: 'lowpass', f: 1200, f2: 250, q: 0.7, dur: 0.14, gain: 0.55, atk: 0.002 });
-      tone(softBus, t + 0.03, { f: 523, dur: 0.55, gain: 0.08, atk: 0.02 }); tone(softBus, t + 0.05, { f: 784, dur: 0.5, gain: 0.05, atk: 0.02 });
+      const t = T(at), B = C.tele;
+      tone(B.deep, t, { type: 'triangle', f: 128, f2: 42, dur: 0.5, gain: 0.42, atk: 0.004 });
+      tone(B.deep, t, { f: 256, f2: 84, dur: 0.2, gain: 0.2, atk: 0.003 });
+      burst(B.soft, t, { type: 'lowpass', f: 1200, f2: 250, q: 0.7, dur: 0.14, gain: 0.55, atk: 0.002 });
+      tone(B.soft, t + 0.03, { f: 523, dur: 0.55, gain: 0.08, atk: 0.02 }); tone(B.soft, t + 0.05, { f: 784, dur: 0.5, gain: 0.05, atk: 0.02 });
     },
     fall(at) {                                           // teleport 4: soft falling whoosh
-      const t = T(at);
-      burst(softBus, t, { type: 'lowpass', f: 1000, f2: 160, q: 0.8, dur: 0.36, gain: 0.7, atk: 0.08 });
-      tone(deepBus, t, { f: 120, f2: 58, dur: 0.34, gain: 0.12, atk: 0.06 });
+      const t = T(at), B = C.tele;
+      burst(B.soft, t, { type: 'lowpass', f: 1000, f2: 160, q: 0.8, dur: 0.36, gain: 0.7, atk: 0.08 });
+      tone(B.deep, t, { f: 120, f2: 58, dur: 0.34, gain: 0.12, atk: 0.06 });
     },
     swing(k, at) {                                       // air rushing past the fist / leg: soft rising whoosh (a little deeper for the kick)
-      const t = T(at), kick = k === 3;
-      burst(softBus, t, { f: kick ? 380 : 650, f2: kick ? 1100 : 1700, q: 0.8, dur: kick ? 0.22 : 0.16, gain: kick ? 0.9 : 0.8, atk: 0.04 });
-      tone(deepBus, t, { type: 'triangle', f: kick ? 90 : 120, f2: kick ? 60 : 85, dur: 0.16, gain: 0.1, atk: 0.05 });
+      const t = T(at), B = C.atk, kick = k === 3;
+      burst(B.soft, t, { f: kick ? 380 : 650, f2: kick ? 1100 : 1700, q: 0.8, dur: kick ? 0.22 : 0.16, gain: kick ? 0.9 : 0.8, atk: 0.04 });
+      tone(B.deep, t, { type: 'triangle', f: kick ? 90 : 120, f2: kick ? 60 : 85, dur: 0.16, gain: 0.1, atk: 0.05 });
     },
     hit(k, at) {                                         // impact: deep thump + dull slap + a crackle of cursed energy (red = heavier and longer)
-      const t = T(at), red = k === 3;
-      tone(deepBus, t, { type: 'triangle', f: red ? 128 : 150, f2: red ? 52 : 62, dur: red ? 0.4 : 0.26, gain: red ? 0.46 : 0.34, atk: 0.003 });
-      tone(deepBus, t, { f: 240, f2: 110, dur: 0.09, gain: 0.3, atk: 0.002 });
-      burst(softBus, t, { f: red ? 500 : 900, f2: red ? 160 : 300, q: 0.9, dur: red ? 0.2 : 0.14, gain: red ? 2.8 : 2.2, atk: 0.001 });
-      tone(softBus, t, { type: 'sawtooth', f: red ? 330 : 560, f2: red ? 90 : 160, dur: red ? 0.3 : 0.18, gain: 0.12, atk: 0.004 });
+      const t = T(at), B = C.atk, red = k === 3;
+      tone(B.deep, t, { type: 'triangle', f: red ? 128 : 150, f2: red ? 52 : 62, dur: red ? 0.4 : 0.26, gain: red ? 0.46 : 0.34, atk: 0.003 });
+      tone(B.deep, t, { f: 240, f2: 110, dur: 0.09, gain: 0.3, atk: 0.002 });
+      burst(B.soft, t, { f: red ? 500 : 900, f2: red ? 160 : 300, q: 0.9, dur: red ? 0.2 : 0.14, gain: red ? 2.8 : 2.2, atk: 0.001 });
+      tone(B.soft, t, { type: 'sawtooth', f: red ? 330 : 560, f2: red ? 90 : 160, dur: red ? 0.3 : 0.18, gain: 0.12, atk: 0.004 });
     },
-    windOn(at) { if (!windBuilt) buildWind(); windOnNow = true; windGain.gain.setTargetAtTime(LEVEL.wind, T(at), 0.7); },
+    smack(k, at) {                                       // the body blow when a hit lands on something: deep thump + dull slap
+      const t = T(at), B = C.atk, red = k === 3;
+      tone(B.deep, t, { type: 'triangle', f: red ? 100 : 124, f2: 46, dur: red ? 0.34 : 0.22, gain: red ? 0.5 : 0.38, atk: 0.003 });
+      burst(B.soft, t, { f: red ? 450 : 700, f2: 180, q: 0.8, dur: 0.12, gain: red ? 3.0 : 2.4, atk: 0.001 });
+    },
+    setVol(name, v) {                                    // per-sound volume, 0 = silent, 1 = designed level, 2 = twice as loud
+      vol[name] = v;
+      if (name === 'master') applyMaster();
+      else if (name === 'wind') { if (windOnNow) windGain.gain.setTargetAtTime(LEVEL.wind * v * st.windMul, ac.currentTime, 0.1); }
+      else if (C[name]) { C[name].cat.dry.gain.setTargetAtTime(v, ac.currentTime, 0.03); C[name].cat.wet.gain.setTargetAtTime(v, ac.currentTime, 0.03); }
+    },
+    windOn(at) { if (!windBuilt) buildWind(); windOnNow = true; windGain.gain.setTargetAtTime(LEVEL.wind * vol.wind * st.windMul, T(at), 0.7); },
     windOff(at) { windOnNow = false; windGain.gain.setTargetAtTime(0, T(at), 0.15); },
-    windPush(k) { if (windBuilt) windGain.gain.setTargetAtTime(LEVEL.wind * (windOnNow ? k : 0), ac.currentTime, 0.4); },   // a bit more wind when he walks into it
-    setOn(on) { master.gain.setTargetAtTime(on ? LEVEL.master : 0, ac.currentTime, 0.04); },
+    windPush(k) { if (k !== st.windMul) { st.windMul = k; if (windBuilt && windOnNow) windGain.gain.setTargetAtTime(LEVEL.wind * vol.wind * k, ac.currentTime, 0.4); } },   // a bit more wind when he walks into it
+    setOn(on) { st.on = on; applyMaster(); },
   };
 }

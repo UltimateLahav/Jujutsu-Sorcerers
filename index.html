@@ -44,6 +44,12 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 .col{display:flex;flex-direction:column;gap:2vh}
 #atk{border-color:#6fb4ff}
 #atk svg{width:6vh;height:6vh}
+#settings.screen{z-index:5;background:rgba(13,10,23,.95);gap:2vh}
+#vols{display:grid;grid-template-columns:1fr 1fr;gap:1.6vh 5vh;width:min(92vw,820px);text-align:left}
+#vols label{display:grid;grid-template-columns:1fr auto;gap:.8vh 1vh;font-size:clamp(7px,2.2vh,12px)}
+#vols input{grid-column:1/3;width:100%;height:3.4vh;accent-color:var(--acc)}
+#vols b{font-weight:normal;color:var(--acc)}
+.row{display:flex;gap:2.4vh}
 #up{border-color:var(--acc)}
 #up i{font-style:normal;display:block;transform:rotate(-90deg)}      /* the same chunky chevron as BACK / FWD, turned to point up */
 #rotate{position:fixed;inset:0;z-index:9;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--bg);text-align:center;line-height:1.6;font-size:12px}
@@ -73,7 +79,14 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
   </div>
 </section>
 
-<div id="hud"><button id="back">&lt; MENU</button><span>GOJO SATORU</span><button id="snd">SND ON</button></div>
+<section id="settings" class="screen">
+  <h2>SETTINGS</h2>
+  <small>VOLUME OF EACH SOUND (100% = DEFAULT, UP TO 200%)</small>
+  <div id="vols"></div>
+  <div class="row"><button id="dummyBtn">SPAWN DUMMY</button><button id="setClose">CLOSE</button></div>
+</section>
+
+<div id="hud"><button id="back">&lt; MENU</button><span>GOJO SATORU</span><button id="snd">SND ON</button><button id="setBtn">SET</button></div>
 <div id="pad">
   <div class="grp">
     <button id="bk" class="pb" aria-label="Walk backward">&lt;<span>BACK</span></button>
@@ -115,13 +128,18 @@ function makeSfx(ac) {
   }
   const rev = ac.createConvolver(); rev.buffer = ir;
   const wet = ac.createGain(); wet.gain.value = 0.5; rev.connect(wet); wet.connect(master);
-  function bus(gain, send, lp) {                         // gain, reverb send amount, optional low-pass cutoff
+  const vol = { master: 1, steps: 1, wind: 1, jump: 1, tele: 1, atk: 1 }, C = {}, st = { on: true, windMul: 1 };   // 1 = the designed level, 2 = twice as loud
+  function bus(gain, send, lp, cat) {                    // gain, reverb send amount, optional low-pass cutoff, volume category
     const g = ac.createGain(); g.gain.value = gain; let n = g;
     if (lp) { n = ac.createBiquadFilter(); n.type = 'lowpass'; n.frequency.value = lp; n.Q.value = 0.5; g.connect(n); }
-    n.connect(dry); const s = ac.createGain(); s.gain.value = send; n.connect(s); s.connect(rev);
+    n.connect(cat.dry); const s = ac.createGain(); s.gain.value = send; n.connect(s); s.connect(cat.wet);
     return g;
   }
-  const stepBus = bus(2, 0.2), deepBus = bus(0.8, 0.16), softBus = bus(0.5, 0.2, 1400);
+  for (const name of ['steps', 'jump', 'tele', 'atk']) {   // footsteps | jump + landing | teleport | attacks
+    const cat = { dry: ac.createGain(), wet: ac.createGain() }; cat.dry.connect(dry); cat.wet.connect(rev);
+    C[name] = { cat, step: bus(2, 0.2, 0, cat), deep: bus(0.8, 0.16, 0, cat), soft: bus(0.5, 0.2, 1400, cat) };
+  }
+  const applyMaster = () => master.gain.setTargetAtTime(st.on ? LEVEL.master * vol.master : 0, ac.currentTime, 0.04);
 
   // ---- building blocks: filtered noise bursts and pitch-gliding tones with click-free envelopes
   const nlen = (2 * sr) | 0, nbuf = ac.createBuffer(1, nlen, sr), nd = nbuf.getChannelData(0);
@@ -171,66 +189,77 @@ function makeSfx(ac) {
   return {
     ac, master,
     step(alt, back, at) {                                // calm, heavy footstep: heel lands with a dull "tok" and a deep thump, the forefoot rolls down a beat later ("da-dum")
-      const t = T(at), v = R(0.9, 1) * (back ? 0.8 : 1), f = R(0.94, 1.06) * (alt ? 1.05 : 0.95) * (back ? 0.94 : 1);
-      burst(stepBus, t, { dur: 0.085, f: 440 * f, q: 0.9, gain: 1.6 * v, atk: 0.002 });                 // heel body (low mids, no bright click)
-      burst(stepBus, t, { dur: 0.022, f: 1150 * f, q: 1.0, gain: 0.3 * v, atk: 0.001 });                // faint contact, much softer and lower than before
-      tone(stepBus, t, { type: 'triangle', f: 118 * f, f2: 52 * f, dur: 0.19, gain: 0.22 * v, atk: 0.004 });   // heavy thump
-      tone(stepBus, t, { f: 205 * f, f2: 100 * f, dur: 0.07, gain: 0.08 * v, atk: 0.003 });             // knock
-      burst(stepBus, t + 0.095, { dur: 0.07, f: 320 * f, q: 0.9, gain: 0.9 * v, atk: 0.005 });          // forefoot rolling down
-      tone(stepBus, t + 0.095, { f: 88 * f, f2: 54 * f, dur: 0.11, gain: 0.09 * v, atk: 0.006 });
+      const t = T(at), B = C.steps, v = R(0.9, 1) * (back ? 0.8 : 1), f = R(0.94, 1.06) * (alt ? 1.05 : 0.95) * (back ? 0.94 : 1);
+      burst(B.step, t, { dur: 0.085, f: 440 * f, q: 0.9, gain: 1.6 * v, atk: 0.002 });                 // heel body (low mids, no bright click)
+      burst(B.step, t, { dur: 0.022, f: 1150 * f, q: 1.0, gain: 0.3 * v, atk: 0.001 });                // faint contact, much softer and lower than before
+      tone(B.step, t, { type: 'triangle', f: 118 * f, f2: 52 * f, dur: 0.19, gain: 0.22 * v, atk: 0.004 });   // heavy thump
+      tone(B.step, t, { f: 205 * f, f2: 100 * f, dur: 0.07, gain: 0.08 * v, atk: 0.003 });             // knock
+      burst(B.step, t + 0.095, { dur: 0.07, f: 320 * f, q: 0.9, gain: 0.9 * v, atk: 0.005 });          // forefoot rolling down
+      tone(B.step, t + 0.095, { f: 88 * f, f2: 54 * f, dur: 0.11, gain: 0.09 * v, atk: 0.006 });
     },
     jump(at) {                                           // push-off: deep thump + a soft rising and falling whoosh
-      const t = T(at);
-      tone(deepBus, t, { type: 'triangle', f: 122, f2: 62, dur: 0.24, gain: 0.55, atk: 0.004 });
-      tone(deepBus, t, { f: 230, f2: 130, dur: 0.09, gain: 0.12, atk: 0.003 });
-      burst(softBus, t, { type: 'lowpass', f: 300, f2: 1100, q: 0.6, dur: 0.22, gain: 0.2, atk: 0.03 });
-      burst(softBus, t + 0.12, { type: 'lowpass', f: 1100, f2: 350, q: 0.6, dur: 0.2, gain: 0.12, atk: 0.02 });
+      const t = T(at), B = C.jump;
+      tone(B.deep, t, { type: 'triangle', f: 122, f2: 62, dur: 0.24, gain: 0.55, atk: 0.004 });
+      tone(B.deep, t, { f: 230, f2: 130, dur: 0.09, gain: 0.12, atk: 0.003 });
+      burst(B.soft, t, { type: 'lowpass', f: 300, f2: 1100, q: 0.6, dur: 0.22, gain: 0.2, atk: 0.03 });
+      burst(B.soft, t + 0.12, { type: 'lowpass', f: 1100, f2: 350, q: 0.6, dur: 0.2, gain: 0.12, atk: 0.02 });
     },
     land(p, at) {                                        // p = 1 normal, 1.6 for the heavy landing after the teleport
-      const t = T(at); p = p || 1;
-      tone(deepBus, t, { type: 'triangle', f: 138 - 8 * p, f2: 62, dur: 0.2 + 0.08 * p, gain: 0.42 + 0.1 * p, atk: 0.003 });
-      tone(deepBus, t, { f: 250, f2: 125, dur: 0.1 + 0.02 * p, gain: 0.3 + 0.05 * p, atk: 0.002 });
-      burst(softBus, t, { type: 'lowpass', f: 900, f2: 300, q: 0.7, dur: 0.09 + 0.04 * p, gain: 3.2 + 0.8 * p, atk: 0.001 });
-      if (p > 1) tone(deepBus, t + 0.02, { f: 72, f2: 40, dur: 0.4, gain: 0.2 * (p - 1), atk: 0.01 });
+      const t = T(at), B = C.jump; p = p || 1;
+      tone(B.deep, t, { type: 'triangle', f: 138 - 8 * p, f2: 62, dur: 0.2 + 0.08 * p, gain: 0.42 + 0.1 * p, atk: 0.003 });
+      tone(B.deep, t, { f: 250, f2: 125, dur: 0.1 + 0.02 * p, gain: 0.3 + 0.05 * p, atk: 0.002 });
+      burst(B.soft, t, { type: 'lowpass', f: 900, f2: 300, q: 0.7, dur: 0.09 + 0.04 * p, gain: 3.2 + 0.8 * p, atk: 0.001 });
+      if (p > 1) tone(B.deep, t + 0.02, { f: 72, f2: 40, dur: 0.4, gain: 0.2 * (p - 1), atk: 0.01 });
     },
     charge(at) {                                         // teleport 1: warm energy swells up
-      const t = T(at);
-      tone(deepBus, t, { type: 'triangle', f: 65, f2: 150, dur: 0.14, gain: 0.22, atk: 0.03, cur: 1 });
-      tone(softBus, t, { type: 'sawtooth', f: 130, f2: 300, dur: 0.14, gain: 0.25, atk: 0.04, cur: 1 });
+      const t = T(at), B = C.tele;
+      tone(B.deep, t, { type: 'triangle', f: 65, f2: 150, dur: 0.14, gain: 0.22, atk: 0.03, cur: 1 });
+      tone(B.soft, t, { type: 'sawtooth', f: 130, f2: 300, dur: 0.14, gain: 0.25, atk: 0.04, cur: 1 });
     },
     vanish(at) {                                         // teleport 2: he folds into a point (pitch dive + air rushing in)
-      const t = T(at);
-      tone(deepBus, t, { f: 240, f2: 52, dur: 0.16, gain: 0.5, atk: 0.002, cur: 0.85 });
-      burst(softBus, t, { f: 1400, f2: 300, q: 1.4, dur: 0.12, gain: 0.45, atk: 0.004 });
+      const t = T(at), B = C.tele;
+      tone(B.deep, t, { f: 240, f2: 52, dur: 0.16, gain: 0.5, atk: 0.002, cur: 0.85 });
+      burst(B.soft, t, { f: 1400, f2: 300, q: 1.4, dur: 0.12, gain: 0.45, atk: 0.004 });
     },
     arrive(at) {                                         // teleport 3: deep boom where he reappears, with a faint shimmer
-      const t = T(at);
-      tone(deepBus, t, { type: 'triangle', f: 128, f2: 42, dur: 0.5, gain: 0.42, atk: 0.004 });
-      tone(deepBus, t, { f: 256, f2: 84, dur: 0.2, gain: 0.2, atk: 0.003 });
-      burst(softBus, t, { type: 'lowpass', f: 1200, f2: 250, q: 0.7, dur: 0.14, gain: 0.55, atk: 0.002 });
-      tone(softBus, t + 0.03, { f: 523, dur: 0.55, gain: 0.08, atk: 0.02 }); tone(softBus, t + 0.05, { f: 784, dur: 0.5, gain: 0.05, atk: 0.02 });
+      const t = T(at), B = C.tele;
+      tone(B.deep, t, { type: 'triangle', f: 128, f2: 42, dur: 0.5, gain: 0.42, atk: 0.004 });
+      tone(B.deep, t, { f: 256, f2: 84, dur: 0.2, gain: 0.2, atk: 0.003 });
+      burst(B.soft, t, { type: 'lowpass', f: 1200, f2: 250, q: 0.7, dur: 0.14, gain: 0.55, atk: 0.002 });
+      tone(B.soft, t + 0.03, { f: 523, dur: 0.55, gain: 0.08, atk: 0.02 }); tone(B.soft, t + 0.05, { f: 784, dur: 0.5, gain: 0.05, atk: 0.02 });
     },
     fall(at) {                                           // teleport 4: soft falling whoosh
-      const t = T(at);
-      burst(softBus, t, { type: 'lowpass', f: 1000, f2: 160, q: 0.8, dur: 0.36, gain: 0.7, atk: 0.08 });
-      tone(deepBus, t, { f: 120, f2: 58, dur: 0.34, gain: 0.12, atk: 0.06 });
+      const t = T(at), B = C.tele;
+      burst(B.soft, t, { type: 'lowpass', f: 1000, f2: 160, q: 0.8, dur: 0.36, gain: 0.7, atk: 0.08 });
+      tone(B.deep, t, { f: 120, f2: 58, dur: 0.34, gain: 0.12, atk: 0.06 });
     },
     swing(k, at) {                                       // air rushing past the fist / leg: soft rising whoosh (a little deeper for the kick)
-      const t = T(at), kick = k === 3;
-      burst(softBus, t, { f: kick ? 380 : 650, f2: kick ? 1100 : 1700, q: 0.8, dur: kick ? 0.22 : 0.16, gain: kick ? 0.9 : 0.8, atk: 0.04 });
-      tone(deepBus, t, { type: 'triangle', f: kick ? 90 : 120, f2: kick ? 60 : 85, dur: 0.16, gain: 0.1, atk: 0.05 });
+      const t = T(at), B = C.atk, kick = k === 3;
+      burst(B.soft, t, { f: kick ? 380 : 650, f2: kick ? 1100 : 1700, q: 0.8, dur: kick ? 0.22 : 0.16, gain: kick ? 0.9 : 0.8, atk: 0.04 });
+      tone(B.deep, t, { type: 'triangle', f: kick ? 90 : 120, f2: kick ? 60 : 85, dur: 0.16, gain: 0.1, atk: 0.05 });
     },
     hit(k, at) {                                         // impact: deep thump + dull slap + a crackle of cursed energy (red = heavier and longer)
-      const t = T(at), red = k === 3;
-      tone(deepBus, t, { type: 'triangle', f: red ? 128 : 150, f2: red ? 52 : 62, dur: red ? 0.4 : 0.26, gain: red ? 0.46 : 0.34, atk: 0.003 });
-      tone(deepBus, t, { f: 240, f2: 110, dur: 0.09, gain: 0.3, atk: 0.002 });
-      burst(softBus, t, { f: red ? 500 : 900, f2: red ? 160 : 300, q: 0.9, dur: red ? 0.2 : 0.14, gain: red ? 2.8 : 2.2, atk: 0.001 });
-      tone(softBus, t, { type: 'sawtooth', f: red ? 330 : 560, f2: red ? 90 : 160, dur: red ? 0.3 : 0.18, gain: 0.12, atk: 0.004 });
+      const t = T(at), B = C.atk, red = k === 3;
+      tone(B.deep, t, { type: 'triangle', f: red ? 128 : 150, f2: red ? 52 : 62, dur: red ? 0.4 : 0.26, gain: red ? 0.46 : 0.34, atk: 0.003 });
+      tone(B.deep, t, { f: 240, f2: 110, dur: 0.09, gain: 0.3, atk: 0.002 });
+      burst(B.soft, t, { f: red ? 500 : 900, f2: red ? 160 : 300, q: 0.9, dur: red ? 0.2 : 0.14, gain: red ? 2.8 : 2.2, atk: 0.001 });
+      tone(B.soft, t, { type: 'sawtooth', f: red ? 330 : 560, f2: red ? 90 : 160, dur: red ? 0.3 : 0.18, gain: 0.12, atk: 0.004 });
     },
-    windOn(at) { if (!windBuilt) buildWind(); windOnNow = true; windGain.gain.setTargetAtTime(LEVEL.wind, T(at), 0.7); },
+    smack(k, at) {                                       // the body blow when a hit lands on something: deep thump + dull slap
+      const t = T(at), B = C.atk, red = k === 3;
+      tone(B.deep, t, { type: 'triangle', f: red ? 100 : 124, f2: 46, dur: red ? 0.34 : 0.22, gain: red ? 0.5 : 0.38, atk: 0.003 });
+      burst(B.soft, t, { f: red ? 450 : 700, f2: 180, q: 0.8, dur: 0.12, gain: red ? 3.0 : 2.4, atk: 0.001 });
+    },
+    setVol(name, v) {                                    // per-sound volume, 0 = silent, 1 = designed level, 2 = twice as loud
+      vol[name] = v;
+      if (name === 'master') applyMaster();
+      else if (name === 'wind') { if (windOnNow) windGain.gain.setTargetAtTime(LEVEL.wind * v * st.windMul, ac.currentTime, 0.1); }
+      else if (C[name]) { C[name].cat.dry.gain.setTargetAtTime(v, ac.currentTime, 0.03); C[name].cat.wet.gain.setTargetAtTime(v, ac.currentTime, 0.03); }
+    },
+    windOn(at) { if (!windBuilt) buildWind(); windOnNow = true; windGain.gain.setTargetAtTime(LEVEL.wind * vol.wind * st.windMul, T(at), 0.7); },
     windOff(at) { windOnNow = false; windGain.gain.setTargetAtTime(0, T(at), 0.15); },
-    windPush(k) { if (windBuilt) windGain.gain.setTargetAtTime(LEVEL.wind * (windOnNow ? k : 0), ac.currentTime, 0.4); },   // a bit more wind when he walks into it
-    setOn(on) { master.gain.setTargetAtTime(on ? LEVEL.master : 0, ac.currentTime, 0.04); },
+    windPush(k) { if (k !== st.windMul) { st.windMul = k; if (windBuilt && windOnNow) windGain.gain.setTargetAtTime(LEVEL.wind * vol.wind * k, ac.currentTime, 0.4); } },   // a bit more wind when he walks into it
+    setOn(on) { st.on = on; applyMaster(); },
   };
 }
 
@@ -239,6 +268,7 @@ const HEROES = ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqa
 const IDLE_FPS = 12, WALK_FPS = 15, JUMP_FPS = 15, TELE_FPS = 20;   // animation speeds in frames per second (15 walk frames = 1 s per cycle = one step every half second; 15 jump frames = 1 s; 15 teleport frames = 0.75 s)
 const ATK_FPS = [30, 30, 30, 24], ATK_IMPACT = [7, 7, 7, 8], ATK_SWING = [4, 4, 4, 5], COMBO_MS = 1400;   // 15 frames per attack; the next press within COMBO_MS continues the combo
 const ATK_NAMES = ['R.HOOK', 'L.HOOK', 'ELBOW', 'KICK'];
+const REACH = [17, 17, 15, 26], KNOCK = [26, 26, 34, 80], DMG = [12, 14, 18, 35];   // per hit: how far it reaches from his hips (px), how hard it shoves the dummy (px/s), damage number
 const FWD_SPEED = 44, BACK_SPEED = 30;         // world pixels per second (matched to the slower stride so his feet do not skate)
 const BLINK_STEP = 70, BLINK_HOLD = 500;       // ms per blink frame, ms the eye stays shut
 const $ = id => document.getElementById(id);
@@ -247,18 +277,22 @@ const pv = $('pv'), pctx = pv.getContext('2d');
 const hero = $('hero'), hctx = hero.getContext('2d');
 
 // turn a sprite set's text rows into tiny offscreen canvases
-const mk = set => set.frames.map(rows => {
+const mk = (set, pal = D.pal) => set.frames.map(rows => {
   const c = document.createElement('canvas'); c.width = set.w; c.height = set.h;
   const g = c.getContext('2d');
   rows.forEach((row, y) => {
     for (let x = 0; x < row.length; x++) {
       const ch = row[x];
-      if (ch !== '.') { g.fillStyle = D.pal[ch]; g.fillRect(x, y, 1, 1); }
+      if (ch !== '.') { g.fillStyle = pal[ch]; g.fillRect(x, y, 1, 1); }
     }
   });
   return c;
 });
 const idleF = mk(D.idle), fwdF = mk(D.fwd), backF = mk(D.back), jumpF = mk(D.jump), teleF = mk(D.tele), atkF = [0, 1, 2, 3].map(k => mk(D['atk' + k]));
+const inv = h => '#' + [1, 3, 5].map(i => (255 - parseInt(h.substr(i, 2), 16)).toString(16).padStart(2, '0')).join('');
+const invPal = {}, whitePal = {};
+for (const k in D.pal) { invPal[k] = inv(D.pal[k]); whitePal[k] = '#ffffff'; }
+const dumF = mk(D.idle, invPal), dumW = mk(D.idle, whitePal);      // the training dummy: Gojo with inverted colours
 pv.width = D.idle.w; pv.height = D.idle.h;
 const heroImgs = HEROES.map(src => { const im = new Image(); im.src = src; return im; });
 
@@ -267,7 +301,7 @@ const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
 let state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
 let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1;
-let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, lastCombo = -1, shakeUntil = 0, shakeAmp = 0;
+let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, lastCombo = -1, shakeUntil = 0, shakeAmp = 0, dummy = null, popups = [];
 const STRIP = 480;
 
 // ---------------------------------------------------------------- sound (all synthesised in sfx.js, no audio files)
@@ -278,7 +312,7 @@ function audio() {                            // browsers only allow sound after
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
     try { sfx = makeSfx(new AC()); } catch (e) { sfx = null; return null; }
-    sfx.setOn(soundOn);
+    sfx.setOn(soundOn); applyVols();
     if (state === 'play') sfx.windOn();
   }
   if (sfx.ac.state === 'suspended' && !document.hidden) sfx.ac.resume();
@@ -289,6 +323,19 @@ function snd(name, a, b) {                    // play one cue (and log it when a
   if (sfx && soundOn && sfx.ac.state === 'running') sfx[name](a, b);
 }
 window.__audio = on => { if (!sfx) return; if (on) audio(); else sfx.ac.suspend(); };   // called by the Android app when it goes to / comes back from the background
+
+// ---------------------------------------------------------------- settings: a volume slider for every sound
+const VOLS = [['master', 'MASTER'], ['steps', 'FOOTSTEPS'], ['wind', 'WIND'], ['jump', 'JUMP + LANDING'], ['tele', 'TELEPORT'], ['atk', 'ATTACKS']];
+const vol = { master: 100, steps: 100, wind: 100, jump: 100, tele: 100, atk: 100 };
+try { Object.assign(vol, JSON.parse(localStorage.getItem('js_vol') || '{}')); } catch (e) { /* storage blocked: defaults */ }
+function applyVols() { if (sfx) for (const [k] of VOLS) sfx.setVol(k, vol[k] / 100); }
+function preview(k) {                         // let go of a slider and you hear that sound (the wind is already playing underneath)
+  if (!audio() || k === 'wind') return;
+  if (k === 'jump') { sfx.jump(); setTimeout(() => sfx.land(1), 380); }
+  else if (k === 'tele') { sfx.vanish(); setTimeout(() => sfx.arrive(), 120); }
+  else if (k === 'atk') { sfx.swing(0); setTimeout(() => { sfx.hit(0); sfx.smack(0); }, 140); }
+  else { sfx.step(0, false); setTimeout(() => sfx.step(1, false), 500); }
+}
 
 // ---------------------------------------------------------------- title blink
 let heroShown = -1, blinkSeq = [], blinkIdx = 0, blinkAt = 0;
@@ -318,9 +365,9 @@ function show(s) {
   cv.style.display = s === 'play' ? 'block' : 'none';
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
-  releaseAll();
+  releaseAll(); $('settings').classList.remove('on');
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
-  if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; comboUntil = 0; }
+  if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; comboUntil = 0; dummy = null; popups = []; }
   if (s === 'title') planBlink(performance.now(), 1200);
 }
 
@@ -379,6 +426,41 @@ function buildLayer(col, hh, w0, sd) {        // a skyline strip that tiles seam
 function layer(c, k) {                        // parallax: far layers move less than the ground
   const off = Math.round((((-wx * k) % STRIP) + STRIP) % STRIP);
   for (let x = off - STRIP; x < VW; x += STRIP) ctx.drawImage(c, x, 0);
+}
+
+function spawnDummy(now) { dummy = { x: wx + 32, born: now, vx: 0, hitAt: -9999 }; }
+function hitDummy(k, now) {                   // called on the impact frame: a hit lands if the dummy is in front of him and within reach
+  if (!dummy || now - dummy.born < 600) return;
+  const gap = dummy.x - wx;                   // the dummy's centre relative to Gojo's hips; his body is about 12 px wide
+  if (gap - 6 > REACH[k] || gap + 6 < 3) return;
+  dummy.hitAt = now; dummy.vx += KNOCK[k]; shakeUntil = now + 110; shakeAmp = k === 3 ? 3 : 2;
+  popups.push({ born: now, x: dummy.x, txt: '' + (DMG[k] + ((Math.random() * 5) | 0)), col: k === 3 ? '#ff5a5a' : '#7fc4ff' });
+  snd('smack', k);
+}
+function drawDummy(now, dt) {
+  if (!dummy) return;
+  dummy.x += dummy.vx * dt; dummy.vx *= Math.exp(-7 * dt);                    // knock-back slide with friction
+  const cx = Math.round(VW / 2), sx = Math.round(cx + dummy.x - wx);
+  if (sx < -50 || sx > VW + 50) return;
+  const t = Math.min(1, (now - dummy.born) / 650), e = 1 - Math.pow(1 - t, 3), hitT = now - dummy.hitAt;
+  const fi = Math.floor(now / (1000 / IDLE_FPS)) % dumF.length, w = D.idle.w, h = D.idle.h, hx = D.idle.cx - D.idle.x0, y = gy - 60;
+  ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(sx - 9, gy + 3, 18, 2); ctx.fillRect(sx - 6, gy + 2, 12, 1); ctx.fillRect(sx - 6, gy + 5, 12, 1);
+  const src = hitT < 70 ? dumW[fi] : dumF[fi], lean = hitT < 320 ? 5 * Math.sin(Math.PI * hitT / 320) : 0;   // white flash, then leans away for a moment
+  ctx.save(); ctx.translate(sx, 0); ctx.scale(-1, 1);                          // he faces Gojo (to the left)
+  ctx.beginPath(); ctx.rect(-hx - 2, y + Math.round(h * (1 - e)), w + 4, h); ctx.clip();   // materialises from the feet up
+  ctx.globalAlpha = Math.min(1, t * 2);
+  for (let r = 0; r < h; r += 2) ctx.drawImage(src, 0, r, w, 2, -hx - Math.round(lean * (1 - r / h)), y + r, w, 2);   // 2px strips: the head leans further than the feet
+  ctx.restore();
+  if (t < 1) { const R = 4 + t * 36; ctx.fillStyle = 'rgba(255,170,90,' + (1 - t) + ')'; for (let a = 0; a < 40; a++) { const th = a / 40 * 6.2832; ctx.fillRect(Math.round(sx + Math.cos(th) * R), Math.round(y + 60 + Math.sin(th) * R * 0.25), 1, 1); } }
+}
+function drawPopups(now) {                    // damage numbers float up from the dummy and fade
+  popups = popups.filter(p => now - p.born < 800);
+  ctx.font = '8px "Press Start 2P"'; ctx.textAlign = 'center';
+  for (const p of popups) {
+    const k = (now - p.born) / 800, x = Math.round(Math.round(VW / 2) + p.x - wx), y = Math.round(gy - 66 - 16 * Math.sqrt(k));
+    ctx.globalAlpha = Math.min(1, 2.2 * (1 - k)); ctx.fillStyle = '#000'; ctx.fillText(p.txt, x + 1, y + 1); ctx.fillStyle = p.col; ctx.fillText(p.txt, x, y);
+  }
+  ctx.globalAlpha = 1;
 }
 
 function drawScene(now, dt) {
@@ -453,10 +535,11 @@ function drawScene(now, dt) {
     if (af < evA) evA = -1;                   // a chained hit restarted the counter
     if (af >= 0) {
       if (evA < ATK_SWING[atkK] && af >= ATK_SWING[atkK]) snd('swing', atkK);
-      if (evA < ATK_IMPACT[atkK] && af >= ATK_IMPACT[atkK]) { snd('hit', atkK); shakeUntil = now + 90; shakeAmp = atkK === 3 ? 2 : 1; }
+      if (evA < ATK_IMPACT[atkK] && af >= ATK_IMPACT[atkK]) { snd('hit', atkK); shakeUntil = now + 90; shakeAmp = atkK === 3 ? 2 : 1; hitDummy(atkK, now); }
     }
     evA = af;
   }
+  drawDummy(now, dt);                         // behind Gojo, so his fists and kicks overlap it
   const tele = tf >= 0, jumping = jf >= 0, atkOn = af >= 0, idle = mode === 'idle';
   const set = tele ? teleF : jumping ? jumpF : atkOn ? atkF[atkK] : idle ? idleF : mode === 'fwd' ? fwdF : backF;
   const info = tele ? D.tele : jumping ? D.jump : atkOn ? D['atk' + atkK] : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
@@ -487,6 +570,7 @@ function drawScene(now, dt) {
     ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')';
     ctx.fillRect(0, 0, VW, VH);
   }
+  drawPopups(now);
   ctx.restore();
 }
 
@@ -522,6 +606,7 @@ bindPad('atk', v => { if (v) atkReq = true; });          // tap to attack (each 
 
 const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U', KeyJ: 'A', KeyF: 'A' };
 addEventListener('keydown', e => {
+  if (settingsOn()) { if (e.key === 'Escape') closeSettings(); return; }      // the settings screen takes the keyboard while it is open
   const k = KEYS[e.code];
   if (k) {
     if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (state === 'play' && !e.repeat) { if (k === 'A') atkReq = true; else jumpReq = true; }
@@ -550,6 +635,22 @@ const inApp = /; wv\)/.test(navigator.userAgent);   // inside the Android app th
 $('start').addEventListener('click', () => { audio(); if (!inApp && matchMedia('(pointer:coarse)').matches) goFullscreen(); show('select'); });
 $('gojo').addEventListener('click', () => show('play'));
 $('back').addEventListener('click', () => show('select'));
+VOLS.forEach(([k, name]) => {
+  const row = document.createElement('label');
+  row.innerHTML = '<span>' + name + '</span><b></b><input type="range" min="0" max="200" step="5" aria-label="' + name + ' volume">';
+  const inp = row.querySelector('input'), val = row.querySelector('b'); inp.value = vol[k]; val.textContent = vol[k] + '%';
+  inp.addEventListener('input', () => {
+    vol[k] = +inp.value; val.textContent = vol[k] + '%'; if (sfx) sfx.setVol(k, vol[k] / 100);
+    if (window.__sfxlog) window.__sfxlog.push(['vol', Math.round(performance.now()), k, vol[k]]);
+  });
+  inp.addEventListener('change', () => { try { localStorage.setItem('js_vol', JSON.stringify(vol)); } catch (e) { /* storage blocked */ } preview(k); });
+  $('vols').appendChild(row);
+});
+const settingsOn = () => $('settings').classList.contains('on');
+const closeSettings = () => $('settings').classList.remove('on');
+$('setBtn').addEventListener('click', () => { releaseAll(); audio(); $('dummyBtn').textContent = dummy ? 'REMOVE DUMMY' : 'SPAWN DUMMY'; $('settings').classList.add('on'); });
+$('setClose').addEventListener('click', closeSettings);
+$('dummyBtn').addEventListener('click', () => { if (dummy) dummy = null; else spawnDummy(performance.now()); closeSettings(); });
 const sndLabel = () => { $('snd').textContent = soundOn ? 'SND ON' : 'SND OFF'; };
 sndLabel();
 $('snd').addEventListener('click', () => {    // mute / unmute (remembered)
@@ -561,6 +662,7 @@ addEventListener('resize', resize);
 addEventListener('orientationchange', () => setTimeout(resize, 250));
 
 window.__back = () => {                       // Android back button: step back through the menus, otherwise let the app close
+  if (settingsOn()) { closeSettings(); return true; }
   if (state === 'play') { show('select'); return true; }
   if (state === 'select') { show('title'); return true; }
   return false;
