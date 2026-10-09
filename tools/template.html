@@ -36,10 +36,12 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 .lock span{font-size:8vh;margin-top:6vh}
 #hud{position:fixed;left:calc(env(safe-area-inset-left) + 10px);top:calc(env(safe-area-inset-top) + 10px);display:none;align-items:center;gap:12px;font-size:clamp(8px,2.6vh,13px);text-shadow:2px 2px 0 #000}
 #hud button{padding:1vh 1.6vh;font-size:inherit}
-#pad{position:fixed;left:0;right:0;bottom:0;display:none;justify-content:space-between;align-items:flex-end;padding:0 calc(env(safe-area-inset-right) + 3vh) calc(env(safe-area-inset-bottom) + 3vh) calc(env(safe-area-inset-left) + 3vh);pointer-events:none}
+#pad{position:fixed;left:0;bottom:0;display:none;gap:2vh;align-items:flex-end;padding:0 0 calc(env(safe-area-inset-bottom) + 3vh) calc(env(safe-area-inset-left) + 3vh);pointer-events:none}
 .pb{pointer-events:auto;touch-action:none;width:21vh;height:21vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1vh;padding:0;font-size:clamp(14px,7vh,34px);opacity:.78}
 .pb span{font-size:clamp(6px,2vh,10px);color:var(--dim)}
 .pb.on{background:#2a1f4a;border-color:var(--acc);opacity:1}
+#up{border-color:var(--acc)}
+#up i{font-style:normal;display:block;transform:rotate(-90deg)}      /* the same chunky chevron as BACK / FWD, turned to point up */
 #rotate{position:fixed;inset:0;z-index:9;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--bg);text-align:center;line-height:1.6;font-size:12px}
 #rotate div{font-size:56px;animation:r 2s ease-in-out infinite}
 @keyframes r{0%,30%{transform:rotate(0)}70%,100%{transform:rotate(-90deg)}}
@@ -71,15 +73,16 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 <div id="pad">
   <button id="bk" class="pb" aria-label="Walk backward">&lt;<span>BACK</span></button>
   <button id="fw" class="pb" aria-label="Walk forward">&gt;<span>FWD</span></button>
+  <button id="up" class="pb" aria-label="Jump"><i>&gt;</i><span>JUMP</span></button>
 </div>
 <div id="rotate"><div>&#128241;</div>ROTATE YOUR PHONE<br>TO LANDSCAPE</div>
 
 <script>
 (() => {
 'use strict';
-const D = __SPR__;                 // palette + idle / walk-forward / walk-back sprite frames (rows of palette letters)
+const D = __SPR__;                 // palette + idle / walk-forward / walk-back / jump sprite frames (rows of palette letters)
 const HEROES = __HEROES__;         // title key art: 0 eye open ... 4 eye fully closed
-const IDLE_FPS = 12, WALK_FPS = 10;            // animation speeds in frames per second
+const IDLE_FPS = 12, WALK_FPS = 10, JUMP_FPS = 15;   // animation speeds in frames per second (15 jump frames = exactly one second)
 const FWD_SPEED = 72, BACK_SPEED = 50;         // world pixels per second
 const BLINK_STEP = 70, BLINK_HOLD = 500;       // ms per blink frame, ms the eye stays shut
 const $ = id => document.getElementById(id);
@@ -99,7 +102,7 @@ const mk = set => set.frames.map(rows => {
   });
   return c;
 });
-const idleF = mk(D.idle), fwdF = mk(D.fwd), backF = mk(D.back);
+const idleF = mk(D.idle), fwdF = mk(D.fwd), backF = mk(D.back), jumpF = mk(D.jump);
 pv.width = D.idle.w; pv.height = D.idle.h;
 const heroImgs = HEROES.map(src => { const im = new Image(); im.src = src; return im; });
 
@@ -108,7 +111,7 @@ const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
 let state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
 let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0;
-let keyL = false, keyR = false, padL = false, padR = false;
+let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1;
 const STRIP = 480;
 
 // ---------------------------------------------------------------- title blink
@@ -140,7 +143,7 @@ function show(s) {
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll();
-  if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; }
+  if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = -1; }
   if (s === 'title') planBlink(performance.now(), 1200);
 }
 
@@ -203,8 +206,15 @@ function layer(c, k) {                        // parallax: far layers move less 
 
 function drawScene(now, dt) {
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3);
-  const dir = t >= 1 ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0;   // no walking while spawning in
-  const nm = dir > 0 ? 'fwd' : dir < 0 ? 'back' : 'idle';
+  if (jumpReq) { if (t >= 1 && jumpAt < 0) jumpAt = now; jumpReq = false; }     // one jump at a time, none while spawning in
+  let jf = -1;                                // jump frame 0..14: 0-2 crouch, 3 push-off, 4-11 airborne, 12 touchdown, 13-14 absorb + stand up
+  if (jumpAt >= 0) {
+    jf = Math.floor(Math.max(0, now - jumpAt) * JUMP_FPS / 1000);                // clamp: rAF time can trail performance.now() by a hair
+    if (jf >= jumpF.length) { jumpAt = -1; jf = -1; }                            // landed
+  }
+  const steer = t >= 1 && (jf < 0 || (jf >= 3 && jf <= 11));                     // no walking while spawning in, crouching or landing
+  const dir = steer ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0;
+  const nm = jf >= 0 ? 'jump' : dir > 0 ? 'fwd' : dir < 0 ? 'back' : 'idle';
   if (nm !== mode) { mode = nm; modeAt = now; }
   wx += dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * dt;
 
@@ -223,13 +233,16 @@ function drawScene(now, dt) {
     ctx.fillRect(p.x | 0, p.y | 0, p.l, 1);
   }
 
-  const idle = mode === 'idle', set = idle ? idleF : mode === 'fwd' ? fwdF : backF;
-  const info = idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
-  const fi = Math.floor(Math.max(0, now - (idle ? spawnAt : modeAt)) / (1000 / (idle ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail performance.now() by a hair
-  const cx = Math.round(VW / 2), x = cx - (info.cx - info.x0), y = gy - 60;
+  const jumping = jf >= 0, idle = mode === 'idle';
+  const set = jumping ? jumpF : idle ? idleF : mode === 'fwd' ? fwdF : backF;
+  const info = jumping ? D.jump : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
+  const fi = jumping ? jf : Math.floor(Math.max(0, now - (idle ? spawnAt : modeAt)) / (1000 / (idle ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail performance.now() by a hair
+  const lift = jumping ? info.lift[jf] : 0;   // how far the jump sprite is raised off the ground
+  const cx = Math.round(VW / 2), x = cx - (info.cx - info.x0), y = gy - 60 - info.top - lift;
 
-  ctx.fillStyle = 'rgba(0,0,0,0.4)';          // ground shadow
-  ctx.fillRect(cx - 9, gy + 3, 18, 2); ctx.fillRect(cx - 6, gy + 2, 12, 1); ctx.fillRect(cx - 6, gy + 5, 12, 1);
+  const sw = Math.max(5, Math.round(9 * (1 - lift / 48))), sv = Math.round(sw * 2 / 3);   // ground shadow stays put and shrinks while he is in the air
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1);
 
   const ry = Math.round(info.h * (1 - e));    // spawn: materialise from the feet up
   ctx.save();
@@ -262,8 +275,8 @@ function tick(now) {
 
 // ---------------------------------------------------------------- input
 function releaseAll() {
-  keyL = keyR = padL = padR = false;
-  $('bk').classList.remove('on'); $('fw').classList.remove('on');
+  keyL = keyR = padL = padR = jumpReq = false;
+  $('bk').classList.remove('on'); $('fw').classList.remove('on'); $('up').classList.remove('on');
 }
 function bindPad(id, set) {                   // hold-to-walk touch buttons (multi-touch safe)
   const b = $(id);
@@ -277,11 +290,16 @@ function bindPad(id, set) {                   // hold-to-walk touch buttons (mul
 }
 bindPad('bk', v => { padL = v; });
 bindPad('fw', v => { padR = v; });
+bindPad('up', v => { if (v) jumpReq = true; });           // tap to jump
 
-const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R' };
+const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U' };
 addEventListener('keydown', e => {
   const k = KEYS[e.code];
-  if (k) { if (k === 'L') keyL = true; else keyR = true; if (state === 'play') e.preventDefault(); return; }
+  if (k) {
+    if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (state === 'play' && !e.repeat) jumpReq = true;
+    if (state === 'play') e.preventDefault();
+    return;
+  }
   if (e.key !== 'Escape') return;
   if (state === 'play') show('select'); else if (state === 'select') show('title');
 });

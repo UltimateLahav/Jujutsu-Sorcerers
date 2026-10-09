@@ -3,7 +3,7 @@ import base64, json, sys
 out_path = sys.argv[1] if len(sys.argv) > 1 else '../index.html'
 b64 = lambda p: base64.b64encode(open(p, 'rb').read()).decode()
 side, pal = json.load(open('side.json')), json.load(open('frames.json'))['pal']
-D = {'pal': pal, 'idle': side['idle'], 'fwd': side['fwd'], 'back': side['back']}     # side-view idle + both walks
+D = {'pal': pal, 'idle': side['idle'], 'fwd': side['fwd'], 'back': side['back'], 'jump': side['jump']}     # side-view idle, both walks and the 15-frame jump
 heroes = ['data:image/png;base64,' + b64(f'face_art_{i}.png') for i in range(5)]
 t = open('template.html').read()
 out = (t.replace('__SPR__', json.dumps(D, separators=(',', ':'))).replace('__HEROES__', json.dumps(heroes))

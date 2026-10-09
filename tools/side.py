@@ -9,25 +9,27 @@ import gojo
 
 PAL = gojo.PAL
 N = 64
+TOP, BOT = 4, 4                                 # jump frames get extra rows above/below the usual 64
+NH = TOP + N + BOT
 L1 = L2 = 10.0
 sin, cos, rad = math.sin, math.cos, math.radians
 
 def pm(pts):                                     # polygon -> set of pixels (aliased)
-    im = Image.new('L', (N, N), 0)
+    im = Image.new('L', (N, NH), 0)
     ImageDraw.Draw(im).polygon([(round(x), round(y)) for x, y in pts], fill=255)
-    a = im.load(); return {(x, y) for y in range(N) for x in range(N) if a[x, y]}
-def disc(cx, cy, r): return {(x, y) for y in range(N) for x in range(N) if (x - cx) ** 2 + (y - cy) ** 2 <= r * r}
+    a = im.load(); return {(x, y) for y in range(NH) for x in range(N) if a[x, y]}
+def disc(cx, cy, r): return {(x, y) for y in range(NH) for x in range(N) if (x - cx) ** 2 + (y - cy) ** 2 <= r * r}
 def seg(p0, p1, w0, w1):
     dx, dy = p1[0] - p0[0], p1[1] - p0[1]; l = math.hypot(dx, dy) or 1; nx, ny = -dy / l, dx / l
     return pm([(p0[0] + nx * w0 / 2, p0[1] + ny * w0 / 2), (p1[0] + nx * w1 / 2, p1[1] + ny * w1 / 2),
                (p1[0] - nx * w1 / 2, p1[1] - ny * w1 / 2), (p0[0] - nx * w0 / 2, p0[1] - ny * w0 / 2)])
 
-class F:                                         # one 64x64 frame of palette letters
-    def __init__(s): s.g = [['.'] * N for _ in range(N)]
+class F:                                         # one frame of palette letters (64 wide, NH tall)
+    def __init__(s): s.g = [['.'] * N for _ in range(NH)]
     def set(s, x, y, c):
         x, y = round(x), round(y)
-        if 0 <= x < N and 0 <= y < N: s.g[y][x] = c
-    def at(s, x, y): return s.g[y][x] if 0 <= x < N and 0 <= y < N else '.'
+        if 0 <= x < N and 0 <= y < NH: s.g[y][x] = c
+    def at(s, x, y): return s.g[y][x] if 0 <= x < N and 0 <= y < NH else '.'
     def fill(s, m, c):
         for x, y in m: s.set(x, y, c)
     def rim(s, m, c='O'):                        # 1px outline just outside a part, over whatever is below it
@@ -51,12 +53,14 @@ def gait(q, amp, kmax):                          # hip angle (forward +) and kne
     k = kmax * sin(2 * math.pi * (q - .5)) if q >= .5 else .12 * kmax * sin(2 * math.pi * q)
     return rad(th), rad(k)
 
-def leg(f, hx, hy, th, k, swing, near):
+SHOE = ((-2, -1), (2, -1), (4, 1), (7, 2), (7, 3), (-2, 3))
+
+def leg(f, hx, hy, th, k, swing, near, foot=None):
     kn = (hx + L1 * sin(th), hy + L1 * cos(th)); al = th - k
     an = (kn[0] + L2 * sin(al), kn[1] + L2 * cos(al))
     body = seg((hx, hy), kn, 5.2, 4.4) | seg(kn, an, 4.4, 3.2) | disc(kn[0], kn[1], 2.3)
-    ph = .55 * k if swing else 0
-    shoe = pm([(an[0] + x * cos(ph) - y * sin(ph), an[1] + x * sin(ph) + y * cos(ph)) for x, y in ((-2, -1), (2, -1), (4, 1), (7, 2), (7, 3), (-2, 3))])
+    ph = foot if foot is not None else (.55 * k if swing else 0)
+    shoe = pm([(an[0] + x * cos(ph) - y * sin(ph), an[1] + x * sin(ph) + y * cos(ph)) for x, y in SHOE])
     f.fill(body, 'B'); f.fill(shoe, 'Q' if near else 'P')
     f.bands(body, 'B', 'C' if near else 'B', 'A')
     f.rim(body | shoe, 'O')
@@ -68,7 +72,7 @@ def leg(f, hx, hy, th, k, swing, near):
         sd = (sin(al), cos(al)); f.line([(kn[0] + sd[0] * 5 + .6, kn[1] + sd[1] * 5), (an[0] - sd[0] * 2 + .6, an[1] - sd[1] * 2)], 'D')
         for x, y in shoe:
             if (x, y - 1) not in shoe and (x - an[0]) > -1 and (x - an[0]) < 6: f.set(x, y, 'R')
-        f.set(an[0] + 4, an[1] + 1, 'Z')
+        if foot is None or f.at(round(an[0] + 4), round(an[1] + 1)) == 'Q': f.set(an[0] + 4, an[1] + 1, 'Z')     # sole detail stays on the shoe when the foot is turned
     return kn, an
 
 TIPS = [(27, 3), (30, 1), (33, 1), (36, 3)]
@@ -92,11 +96,45 @@ STRAND = {(32, 2): 'I', (32, 3): 'I', (35, 1): 'I', (35, 2): 'I', (35, 3): 'I', 
 SHINE = {(33, 5): 'W', (35, 4): 'W', (30, 7): 'W', (36, 7): 'W', (33, 8): 'W'}
 assert all(len(r) == 19 for r in HEAD), [len(r) for r in HEAD]
 
+def sole(ph): return max(x * sin(ph) + y * cos(ph) for x, y in SHOE)      # how far below the ankle a foot turned by ph reaches
+def ik(hx, hy, ax, ay):                                                    # two-bone leg onto a planted ankle, knee in front -> thigh angle, knee flex
+    d = min(math.hypot(ax - hx, ay - hy), L1 + L2 - 1e-6); a, b = math.atan2(ax - hx, ay - hy), math.acos(d / (L1 + L2))
+    return a + b, 2 * b
+
+GROUND = 58 + TOP                                                          # ankle row of a flat foot on the ground (its sole outline lands on row 62)
+SQUAT = {0: (1, 1, 0), 1: (3, 2.5, 1), 2: (6, 4.5, 2), 13: (6, 4, 2), 14: (2, 1, 0)}    # frame: (hips down px, hips back px, torso lean px), feet flat and planted
+AIR = {                                                                    # frame: near thigh, near knee, far thigh, far knee, foot (degrees)
+    4: (-4, 6, -12, 10, 36),       # just left the ground, legs trailing, toes pointed
+    5: (36, 54, 20, 34, 30),       # knees start to lift
+    6: (70, 90, 50, 68, 26),       # knees rising
+    7: (94, 118, 80, 104, 22),     # knees up to the crotch
+    8: (98, 122, 84, 108, 22),     # top of the jump, fully tucked
+    9: (82, 102, 66, 88, 24),      # starting to fall, knees lowering
+    10: (44, 62, 28, 44, 30),      # legs reaching for the floor
+    11: (12, 14, 0, 8, 36),        # legs long, toes pointed
+}
+AIR_LEAN = {4: 0, 5: 0, 6: 1, 7: 1, 8: 1, 9: 1, 10: 0, 11: 0}
+JUMP_LIFT = [0, 0, 0, 0, 10, 16, 20, 22, 22, 20, 16, 10, 0, 0, 0]       # hip height gained per frame (the game moves the sprite up by this); feet-on-ground frames carry their own height
+
+def jump_pose(i):                  # -> hip x, hip y, near thigh, near knee, far thigh, far knee, foot angle, torso lean
+    if i in SQUAT:
+        drop, back, lean = SQUAT[i]; hx, hy = 33 - back, 38 + TOP + drop
+        return (hx, hy, *ik(hx, hy, 33.7, GROUND), *ik(hx, hy, 29.7, GROUND), 0.0, lean)
+    if i in (3, 12):               # 3: push-off on the toes, back leg trailing.  12: touchdown on the toes, legs long
+        ph = rad(32 if i == 3 else 28); ay = 61 + TOP - sole(ph); hx = 32.4 if i == 3 else 33; hy = round(ay - 19.6)
+        far = (rad(-9), rad(18)) if i == 3 else ik(hx, hy, 30.3, ay)
+        return (hx, hy, *ik(hx, hy, 33.7 if i == 3 else 34.3, ay), *far, ph, 1 if i == 3 else 0)
+    a, b, c, d, fa = AIR[i]
+    return (33, 38 + TOP, rad(a), rad(b), rad(c), rad(d), rad(fa), AIR_LEAN[i])
+
 def build(kind, i):
-    f = F()
+    f = F(); u = F()                      # f: legs, u: everything above the hips
+    hx, foot, lean = 33, None, 0
     if kind == 'idle':
         L = [.15, .35, .55, .7, .5, .25][i]; bob = [0, 0, 0, 1, 1, 0][i]
         thn, kn_, thf, kf, swn, swf = rad(4), 0, rad(-8), 0, False, False; p = i / 6
+    elif kind == 'jump':
+        hx, hy, thn, kn_, thf, kf, foot, lean = jump_pose(i); swn = swf = False; L = 0; bob = 0; p = 0
     else:
         amp, kmax = (26, 50) if kind == 'fwd' else (20, 40)
         p = i / 6 if kind == 'fwd' else ((-i) % 6) / 6
@@ -104,40 +142,42 @@ def build(kind, i):
         thn, kn_ = gait(qn, amp, kmax); thf, kf = gait(qf, amp, kmax); swn, swf = qn >= .5, qf >= .5
         L = .8 + .25 * sin(2 * math.pi * i / 6) if kind == 'fwd' else max(-.2, .05 + .12 * sin(2 * math.pi * i / 6)); bob = 0
     drop = lambda th, k: L1 * cos(th) + L2 * cos(th - k)
-    hy = round(58 - max(drop(thn, kn_), drop(thf, kf))); oy = hy - 34; hb = bob
+    if kind != 'jump': hy = round(58 + TOP - max(drop(thn, kn_), drop(thf, kf)))
+    dxb = round(hx - 33)                                   # the body follows the hips (the planted feet stay put)
+    oy = hy - 34; hb = bob
     wave = [0, 1, 0, -1, 0, 1][i % 6]
-    leg(f, 33, hy, thf, kf, swf, False)
-    kn, an = leg(f, 33, hy, thn, kn_, swn, True)
+    leg(f, hx, hy, thf, kf, swf, False, foot)
+    kn, an = leg(f, hx, hy, thn, kn_, swn, True, foot)
 
     # jacket (+ flap trailing behind in the wind)
     jk = set()
     for y in range(17, 35):
         a, b = (31, 35) if y == 17 else (30, 36) if y < 23 else (30, 35) if y < 30 else (30, 36)
         jk |= {(x, y + oy) for x in range(a, b + 1)}
-    f.fill(jk, 'B'); f.bands(jk, 'B', 'C', 'A'); f.rim(jk, 'O')                 # lower clothes stay still: no flap, no billow
+    u.fill(jk, 'B'); u.bands(jk, 'B', 'C', 'A'); u.rim(jk, 'O')                 # lower clothes stay still: no flap, no billow
     # near arm, hand in the pocket
-    sw = round(1.2 * sin(2 * math.pi * p)) * (-1 if kind == 'back' else 1) if kind != 'idle' else 0
+    sw = round(1.2 * sin(2 * math.pi * p)) * (-1 if kind == 'back' else 1) if kind in ('fwd', 'back') else 0
     S, E, P = (32, 18 + oy), (30 + sw, 25 + oy), (35, 30 + oy)
     arm = seg(S, E, 4.2, 3.6) | seg(E, P, 3.4, 2.6) | disc(E[0], E[1], 2.0)
-    f.fill(arm, 'B'); f.bands(arm, 'B', 'C', 'A'); f.rim(arm, 'O')
-    f.line([(S[0] + 1, S[1] + 2), (E[0] + 1, E[1] - 1)], 'D'); f.line([(E[0] + 2, E[1] + 2), (P[0] - 1, P[1] - 1)], 'D')
-    f.set(P[0] + 1, P[1], 'S'); f.set(P[0] + 1, P[1] + 1, 'U')
+    u.fill(arm, 'B'); u.bands(arm, 'B', 'C', 'A'); u.rim(arm, 'O')
+    u.line([(S[0] + 1, S[1] + 2), (E[0] + 1, E[1] - 1)], 'D'); u.line([(E[0] + 2, E[1] + 2), (P[0] - 1, P[1] - 1)], 'D')
+    u.set(P[0] + 1, P[1], 'S'); u.set(P[0] + 1, P[1] + 1, 'U')
     # jacket sheen
-    f.line([(32, 17 + oy), (35, 17 + oy)], 'D'); f.set(34, 17 + oy, 'E')
-    f.line([(35, 19 + oy), (35, 22 + oy)], 'D'); f.line([(32, 24 + oy), (34, 27 + oy)], 'D')
-    f.line([(31, 25 + oy), (31, 28 + oy)], 'D'); f.line([(31, 33 + oy), (35, 33 + oy)], 'D')
+    u.line([(32, 17 + oy), (35, 17 + oy)], 'D'); u.set(34, 17 + oy, 'E')
+    u.line([(35, 19 + oy), (35, 22 + oy)], 'D'); u.line([(32, 24 + oy), (34, 27 + oy)], 'D')
+    u.line([(31, 25 + oy), (31, 28 + oy)], 'D'); u.line([(31, 33 + oy), (35, 33 + oy)], 'D')
     # collar (high, black, sheen strips)
     col = pm([(31, 12 + oy + hb), (32, 13 + oy + hb), (34, 15 + oy + hb), (37, 15 + oy + hb), (37, 19 + oy), (31, 19 + oy)])
-    f.fill(col, 'B'); f.bands(col, 'B', 'C', 'A'); f.rim(col, 'O')
-    f.line([(32, 16 + oy + hb), (34, 17 + oy + hb)], 'D'); f.line([(35, 18 + oy), (36, 18 + oy)], 'D'); f.set(31, 14 + oy + hb, 'D')
+    u.fill(col, 'B'); u.bands(col, 'B', 'C', 'A'); u.rim(col, 'O')
+    u.line([(32, 16 + oy + hb), (34, 17 + oy + hb)], 'D'); u.line([(35, 18 + oy), (36, 18 + oy)], 'D'); u.set(31, 14 + oy + hb, 'D')
     # blindfold tails first (they emerge from under the hair at the back and trail in the wind)
-    for y, a_ in ((11, 29), (12, 29), (13, 29)): f.fill({(x, y + oy - 4 + hb) for x in range(a_, 40)}, 'X')
+    for y, a_ in ((11, 29), (12, 29), (13, 29)): u.fill({(x, y + oy - 4 + hb) for x in range(a_, 40)}, 'X')
     for k, dx0 in enumerate((0, 1)):                             # short blindfold tails hang behind the head (tiny sway)
         pts = [(27 - dx0 - (j + 1) // 2 + (wave if j >= 1 else 0), 12 + oy - 4 + hb + j + k) for j in range(3)]
-        for x, y in pts: f.set(x, y, 'X'); f.set(x + 1, y, 'X')
-        f.set(*pts[1], 'Y')
+        for x, y in pts: u.set(x, y, 'X'); u.set(x + 1, y, 'X')
+        u.set(*pts[1], 'Y')
     # head, hand-drawn (x = 22 + column, y = 1 + row): static face/band first, then the hair on top, sheared by the wind
-    tip = {'idle': [0, 0, 1, 1, 0, -1], 'fwd': [0, 1, 0, -1, 0, 1], 'back': [0, -1, 0, 0, 1, 0]}[kind][i]
+    tip = {'idle': [0, 0, 1, 1, 0, -1], 'fwd': [0, 1, 0, -1, 0, 1], 'back': [0, -1, 0, 0, 1, 0], 'jump': [0, 0, 1, 1, 0, -1] * 3}[kind][i]
     sh = lambda y: tip if y <= 1 else 0                        # hair stays upright; only the tip pixels flutter
     hair = []
     for x, top in CROWN.items():                              # crown: white, lavender toward the band
@@ -149,25 +189,31 @@ def build(kind, i):
             if ch == '.': continue
             x, y = 22 + i, 11 + r
             if ch in 'MHIJW': hair.append((x + sh(y), y + oy - 4 + hb, ch))
-            else: f.set(x, y + oy - 4 + hb, ch)
-    for x, y, ch in hair: f.set(x, y, ch)
+            else: u.set(x, y + oy - 4 + hb, ch)
+    for x, y, ch in hair: u.set(x, y, ch)
     for x, y, ch in hair:                                    # re-outline any edge the shear exposed
-        if ch != 'M' and any(f.at(x + dx, y + dy) == '.' for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))): f.set(x, y, 'M')
+        if ch != 'M' and any(u.at(x + dx, y + dy) == '.' for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))): u.set(x, y, 'M')
+    for y in range(NH):                                                   # lean the torso/head forward and slide it over the planted feet
+        for x in range(N):
+            c = u.g[y][x]
+            if c != '.': f.set(x + dxb + round(lean * max(0.0, (34 + oy - y) / 20.0)), y, c)
     return f
 
-def rows(f, x0, w): return [''.join(f.g[y][x0:x0 + w]) for y in range(N)]
+def rows(f, x0, w): return [''.join(r[x0:x0 + w]) for r in f.g]
 
-sets = {k: [build(k, i) for i in range(6)] for k in ('idle', 'fwd', 'back')}
-cells = [(x, y) for fs in sets.values() for f in fs for y in range(N) for x in range(N) if f.g[y][x] != '.']
+sets = {k: [build(k, i) for i in range(15 if k == 'jump' else 6)] for k in ('idle', 'fwd', 'back', 'jump')}
+for k in ('idle', 'fwd', 'back'):
+    for f in sets[k]: f.g = f.g[TOP:TOP + N]
+cells = [(x, y) for fs in sets.values() for f in fs for y in range(len(f.g)) for x in range(N) if f.g[y][x] != '.']
 x0, x1 = min(x for x, y in cells) - 1, max(x for x, y in cells) + 1
 print('bbox cols', x0 + 1, x1 - 1, 'rows', min(y for x, y in cells), max(y for x, y in cells))
 bad = {c for f in (f for fs in sets.values() for f in fs) for r in f.g for c in r} - set(PAL) - {'.'}
 assert not bad, bad
-json.dump({k: {'x0': x0, 'w': x1 - x0 + 1, 'h': N, 'cx': 33, 'frames': [rows(f, x0, x1 - x0 + 1) for f in fs]} for k, fs in sets.items()}, open('side.json', 'w'))
+json.dump({k: {'x0': x0, 'w': x1 - x0 + 1, 'h': len(fs[0].g), 'top': TOP if k == 'jump' else 0, 'cx': 33, 'frames': [rows(f, x0, x1 - x0 + 1) for f in fs], **({'lift': JUMP_LIFT} if k == 'jump' else {})} for k, fs in sets.items()}, open('side.json', 'w'))
 
 def render(f, sc, bg):
-    im = Image.new('RGB', ((x1 - x0 + 1) * sc, N * sc), bg); px = im.load()
-    for y in range(N):
+    H = len(f.g); im = Image.new('RGB', ((x1 - x0 + 1) * sc, H * sc), bg); px = im.load()
+    for y in range(H):
         for x in range(x0, x1 + 1):
             c = f.g[y][x]
             if c != '.':
@@ -185,3 +231,12 @@ render(sets['idle'][0], 8, (110, 110, 128)).save('side_idle0.png'); print('sheet
 trio = Image.new('RGB', (3 * (W * 6 + 6), N * 6), (110, 110, 128))
 for j, (k, i) in enumerate((('idle', 3), ('fwd', 1), ('back', 2))): trio.paste(render(sets[k][i], 6, (110, 110, 128)), (j * (W * 6 + 6), 0))
 trio.save('side_trio.png')
+
+jsheet = Image.new('RGB', (8 * (W * 3 + 4), 2 * (NH * 3 + 4)), (110, 110, 128))
+for i, f in enumerate(sets['jump']): jsheet.paste(render(f, 3, (110, 110, 128)), ((i % 8) * (W * 3 + 4), (i // 8) * (NH * 3 + 4)))
+jsheet.save('jump_sheet.png')
+sc2, PADY = 2, 26                                                          # motion strip: every frame at its real height above the ground line
+strip = Image.new('RGB', (15 * (W * sc2 + 2), (NH + PADY) * sc2), (110, 110, 128)); dr = ImageDraw.Draw(strip)
+gl = (PADY + TOP + 63) * sc2; dr.line([(0, gl), (strip.width, gl)], fill=(240, 220, 120), width=1)
+for i, f in enumerate(sets['jump']): strip.paste(render(f, sc2, (110, 110, 128)), (i * (W * sc2 + 2), (PADY - JUMP_LIFT[i]) * sc2))
+strip.save('jump_strip.png'); print('jump sheet', jsheet.size, 'strip', strip.size)
