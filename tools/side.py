@@ -76,20 +76,20 @@ HAIR_TOP = {x: min(6, min(t + 2 * abs(x - tx) for tx, t in TIPS)) for x in range
 HAIR_TOP[25] = 7
 HAIR_BOT = {25: 9, 26: 10, 27: 9, 28: 8, **{x: 6 for x in range(29, 39)}}
 
-HEAD = [                      # x = 22..40, y = 7..14 (band, hair lock behind the ear, ear, nose, lips, chin)
-    "..MJJJJJXXXXJXJXJX.",
-    "..MJJJJJJXXYXXXXXX.",
-    "...MJJJJJXXXXXXXXX.",
-    "....MJJJJUUSSSSSST.",
-    ".....MJJJVUSSSSSSST",
-    "......MJMSSSSSSVUV.",
+HEAD = [                      # x = 22..40, y = 7..14: band, tight hair behind the ear, ear, nose, lips, chin
+    ".....MIIXXXXJXJXJX.",
+    ".....MIIIXXYXXXXXX.",
+    ".....MIIIXXXXXXXXX.",
+    ".....MIIIUUSSSSSST.",
+    "......MIIVUSSSSSSST",
+    ".......MMSSSSSSVUV.",
     "..........VUUSSSV..",
     "............VVVV...",
 ]
-TIPS = [(25, 4), (28, 2), (31, 0), (34, 1), (37, 3)]          # upright spikes: tall in the middle, shorter to the sides
-CROWN = {x: min(6, min(t + 2 * abs(x - tx) for tx, t in TIPS)) for x in range(24, 39)}
-STRAND = {(31, 2): 'I', (31, 3): 'I', (28, 3): 'I', (34, 3): 'I', (30, 4): 'I', (36, 5): 'I', (26, 5): 'I', (33, 4): 'I'}
-SHINE = {(31, 1): 'W', (28, 3): 'W', (34, 2): 'W', (29, 5): 'W', (32, 3): 'W'}
+TIPS = [(27, 4), (30, 2), (33, 0), (36, 2), (38, 4)]          # upright spikes centred over the skull, tallest in the middle
+CROWN = {x: min(6, min(t + 2 * abs(x - tx) for tx, t in TIPS)) for x in range(27, 39)}
+STRAND = {(33, 2): 'I', (33, 3): 'I', (30, 3): 'I', (36, 3): 'I', (31, 5): 'I', (35, 5): 'I', (28, 5): 'I', (32, 4): 'I'}
+SHINE = {(32, 3): 'W', (34, 3): 'W', (29, 5): 'W', (36, 4): 'W', (33, 1): 'W'}
 assert all(len(r) == 19 for r in HEAD), [len(r) for r in HEAD]
 
 def build(kind, i):
@@ -132,16 +132,13 @@ def build(kind, i):
     f.line([(32, 14 + oy + hb), (34, 15 + oy + hb)], 'D'); f.line([(35, 16 + oy), (36, 16 + oy)], 'D'); f.set(31, 12 + oy + hb, 'D')
     # blindfold tails first (they emerge from under the hair at the back and trail in the wind)
     for y, a_ in ((7, 29), (8, 30), (9, 30)): f.fill({(x, y + oy - 2 + hb) for x in range(a_, 40)}, 'X')
-    tl = {'idle': 5, 'fwd': 6, 'back': 4}[kind]; lock = 0          # tails grow out from under the hair lock
-    for k, dy0 in enumerate((0, 2)):
-        pts = [(27 + lock - j, 9 + oy - 2 + hb + dy0 + round(.6 * sin(j * .8 + wave + k * 1.7))) for j in range(0, tl)]
-        for x, y in pts: f.set(x, y, 'X'); f.set(x, y + 1, 'X')
-        f.set(*pts[len(pts) // 2], 'Y')
+    for k, dx0 in enumerate((0, 2)):                             # blindfold tails hang down behind the head (tiny sway)
+        pts = [(26 - dx0 // 2 - (j + 1) // 2 + (wave if j >= 2 else 0), 9 + oy - 2 + hb + j + k) for j in range(4)]
+        for x, y in pts: f.set(x, y, 'X'); f.set(x + 1, y, 'X')
+        f.set(*pts[1], 'Y')
     # head, hand-drawn (x = 22 + column, y = 1 + row): static face/band first, then the hair on top, sheared by the wind
-    HS = {'idle': [(0, 0, 0), (0, 0, 0), (-1, 0, 0), (-1, -1, 0), (-1, 0, 0), (0, 0, 0)],
-          'fwd': [(-1, 0, 0), (-1, -1, 0), (-1, 0, 0), (-1, 0, 0), (-1, -1, 0), (-1, 0, 0)],
-          'back': [(0, 0, 0), (0, 0, 0), (0, 0, 0), (-1, 0, 0), (0, 0, 0), (0, 0, 0)]}[kind][i]
-    sh = lambda y: HS[0 if y <= 1 else 1 if y == 2 else 2] if y <= 3 else 0
+    tip = {'idle': [0, 0, 1, 1, 0, -1], 'fwd': [0, 1, 0, -1, 0, 1], 'back': [0, -1, 0, 0, 1, 0]}[kind][i]
+    sh = lambda y: tip if y <= 1 else 0                        # hair stays upright; only the tip pixels flutter
     hair = []
     for x, top in CROWN.items():                              # crown: white, lavender toward the band
         for y in range(top, 7):
