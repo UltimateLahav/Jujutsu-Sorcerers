@@ -10,13 +10,15 @@ Landscape pixel-art mobile game prototype.
 - **While jumping:** you can steer left/right in the air (including through the teleport and the fall), but not while he crouches or lands; presses during those moments, or while he is still spawning in, are ignored. The ground shadow shrinks while he is up.
 - **Controls:** `<` BACK and `>` FWD (hold to walk) sit side by side at the bottom-left; `^` JUMP (tap, tap again in the air) is in the bottom-right corner. On a keyboard: arrow keys or A / D to walk, Up / W / Space to jump. The city scrolls with parallax.
 
+- **Sound** (all synthesised in code by `tools/sfx.js`, no audio files; the sound starts after the first tap): leather-on-concrete **footsteps** locked to the walk animation (one step every 3 walk frames, the frames where a foot lands, alternating feet, slightly different every time), a very quiet looping **wind** (a little stronger when he walks into it), and deep **jump**, **landing** and **teleport** sounds (charge, vanish, arrive, fall, heavy landing). The jump / landing / teleport sounds keep their deep bass at normal strength while the air and noise parts are softened. A small room reverb gives them space. The **SND ON/OFF** button in the game bar mutes everything (remembered), and the Android app silences the game while it is in the background. Levels live in the `LEVEL` constants at the top of `tools/sfx.js` (rebuild with `tools/build_html.py`).
+
 | Path | What it is |
 |---|---|
 | `index.html` | The whole game, one file, works offline in any browser |
 | `dist/JujutsuSorcerers.apk` | Android app (Android 5.0+). Debug-signed, for sideloading |
 | `android/` | App wrapper: full-screen landscape WebView. `android/build.sh` rebuilds the APK (needs a JDK, Android SDK `platforms;android-34` and `build-tools;34.0.0`) |
 | `art/` | Launcher icon + face art |
-| `tools/` | Python scripts that generate the sprite frames and icons (`side.py` for the in-game sprites incl. the jump and the teleport double jump, `face.py` for the title art, `icons.py`, then `build_html.py`) |
+| `tools/` | Python scripts that generate the sprite frames and icons (`side.py` for the in-game sprites incl. the jump and the teleport double jump, `sfx.js` for the sound effects, `face.py` for the title art, `icons.py`, then `build_html.py`) |
 
 **Install on Android:** copy the APK to the phone, open it, and allow "install unknown apps" if asked.
 The APK uses a throwaway debug key (`android/debug.keystore`); publishing to Google Play needs your own release key.

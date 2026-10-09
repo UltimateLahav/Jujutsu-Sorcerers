@@ -8,7 +8,7 @@ D = {'pal': pal, 'idle': side['idle'], 'fwd': side['fwd'], 'back': side['back'],
 heroes = ['data:image/png;base64,' + b64(f'face_art_{i}.png') for i in range(5)]
 t = open('template.html').read()
 out = (t.replace('__SPR__', json.dumps(D, separators=(',', ':'))).replace('__HEROES__', json.dumps(heroes))
-        .replace('__FONT__', open('font.b64').read()))
-assert '__SPR__' not in out and '__HEROES__' not in out and '__FONT__' not in out
+        .replace('__FONT__', open('font.b64').read()).replace('__SFX__', open('sfx.js').read()))
+assert '__SPR__' not in out and '__HEROES__' not in out and '__FONT__' not in out and '__SFX__' not in out
 open(out_path, 'w').write(out)
 print('wrote', out_path, len(out), 'bytes')

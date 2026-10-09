@@ -70,7 +70,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
   </div>
 </section>
 
-<div id="hud"><button id="back">&lt; MENU</button><span>GOJO SATORU</span></div>
+<div id="hud"><button id="back">&lt; MENU</button><span>GOJO SATORU</span><button id="snd">SND ON</button></div>
 <div id="pad">
   <div class="grp">
     <button id="bk" class="pb" aria-label="Walk backward">&lt;<span>BACK</span></button>
@@ -83,6 +83,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 <script>
 (() => {
 'use strict';
+__SFX__
 const D = __SPR__;                 // palette + idle / walk-forward / walk-back / jump / double-jump (teleport) sprite frames (rows of palette letters)
 const HEROES = __HEROES__;         // title key art: 0 eye open ... 4 eye fully closed
 const IDLE_FPS = 12, WALK_FPS = 10, JUMP_FPS = 15, TELE_FPS = 20;   // animation speeds in frames per second (15 jump frames = 1 s, 15 teleport frames = 0.75 s)
@@ -113,9 +114,29 @@ let seed = 7;
 const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
 let state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
-let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0;
+let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1;
 let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0;
 const STRIP = 480;
+
+// ---------------------------------------------------------------- sound (all synthesised in sfx.js, no audio files)
+let sfx = null, soundOn = true;
+try { soundOn = localStorage.getItem('js_snd') !== '0'; } catch (e) { /* storage blocked: stay on */ }
+function audio() {                            // browsers only allow sound after a tap, so this is first called from the TAP TO START button
+  if (!sfx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    try { sfx = makeSfx(new AC()); } catch (e) { sfx = null; return null; }
+    sfx.setOn(soundOn);
+    if (state === 'play') sfx.windOn();
+  }
+  if (sfx.ac.state === 'suspended' && !document.hidden) sfx.ac.resume();
+  return sfx;
+}
+function snd(name, a, b) {                    // play one cue (and log it when a test harness asks for that)
+  if (window.__sfxlog) window.__sfxlog.push([name, Math.round(performance.now()), a, b]);
+  if (sfx && soundOn && sfx.ac.state === 'running') sfx[name](a, b);
+}
+window.__audio = on => { if (!sfx) return; if (on) audio(); else sfx.ac.suspend(); };   // called by the Android app when it goes to / comes back from the background
 
 // ---------------------------------------------------------------- title blink
 let heroShown = -1, blinkSeq = [], blinkIdx = 0, blinkAt = 0;
@@ -146,6 +167,7 @@ function show(s) {
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll();
+  if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
   if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = -1; }
   if (s === 'title') planBlink(performance.now(), 1200);
 }
@@ -228,7 +250,7 @@ function drawScene(now, dt) {
   const steer = t >= 1 && ((jf < 0 && tf < 0) || (jf >= 3 && jf <= 11) || (tf >= 0 && tf <= 11));   // no walking while spawning in, crouching or landing
   const dir = steer ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0;
   const nm = tf >= 0 ? 'tele' : jf >= 0 ? 'jump' : dir > 0 ? 'fwd' : dir < 0 ? 'back' : 'idle';
-  if (nm !== mode) { mode = nm; modeAt = now; }
+  if (nm !== mode) { mode = nm; modeAt = now; stepN = -1; }
   wx += dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * dt;
 
   ctx.imageSmoothingEnabled = false;
@@ -246,6 +268,16 @@ function drawScene(now, dt) {
     ctx.fillRect(p.x | 0, p.y | 0, p.l, 1);
   }
 
+  if (mode === 'fwd' || mode === 'back') {   // sound cues are locked to the animation: a foot lands on walk frames 0 and 3 = one step every 3 frames
+    const st = Math.floor(Math.max(0, now - modeAt) / (3000 / WALK_FPS));
+    if (st !== stepN) { stepN = st; snd('step', st & 1, mode === 'back'); }
+    if (sfx) sfx.windPush(mode === 'fwd' ? 1.3 : 1);
+  } else { stepN = -1; if (sfx) sfx.windPush(1); }
+  if (jf !== evJ) { if (evJ < 3 && jf >= 3) snd('jump'); if (evJ < 12 && jf >= 12) snd('land', 1); evJ = jf; }
+  if (tf !== evT) {
+    if (evT < 0 && tf >= 0) snd('charge'); if (evT < 2 && tf >= 2) snd('vanish'); if (evT < 3 && tf >= 3) snd('arrive');
+    if (evT < 8 && tf >= 8) snd('fall'); if (evT < 12 && tf >= 12) snd('land', 1.6); evT = tf;
+  }
   const tele = tf >= 0, jumping = jf >= 0, idle = mode === 'idle';
   const set = tele ? teleF : jumping ? jumpF : idle ? idleF : mode === 'fwd' ? fwdF : backF;
   const info = tele ? D.tele : jumping ? D.jump : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
@@ -323,7 +355,8 @@ addEventListener('keyup', e => {
   if (k === 'L') keyL = false; else if (k === 'R') keyR = false;
 });
 addEventListener('blur', releaseAll);
-document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAll(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { releaseAll(); if (sfx) sfx.ac.suspend(); } else if (sfx) audio(); });
+['pointerdown', 'keydown'].forEach(e => addEventListener(e, audio, true));   // any first tap or key also unlocks sound
 
 function goFullscreen() {                     // best effort; ignored where unsupported (e.g. iPhone)
   try {
@@ -333,9 +366,16 @@ function goFullscreen() {                     // best effort; ignored where unsu
   } catch (e) { /* not available */ }
 }
 const inApp = /; wv\)/.test(navigator.userAgent);   // inside the Android app the activity already handles fullscreen + landscape
-$('start').addEventListener('click', () => { if (!inApp && matchMedia('(pointer:coarse)').matches) goFullscreen(); show('select'); });
+$('start').addEventListener('click', () => { audio(); if (!inApp && matchMedia('(pointer:coarse)').matches) goFullscreen(); show('select'); });
 $('gojo').addEventListener('click', () => show('play'));
 $('back').addEventListener('click', () => show('select'));
+const sndLabel = () => { $('snd').textContent = soundOn ? 'SND ON' : 'SND OFF'; };
+sndLabel();
+$('snd').addEventListener('click', () => {    // mute / unmute (remembered)
+  soundOn = !soundOn; audio(); if (sfx) sfx.setOn(soundOn);
+  try { localStorage.setItem('js_snd', soundOn ? '1' : '0'); } catch (e) { /* storage blocked */ }
+  sndLabel();
+});
 addEventListener('resize', resize);
 addEventListener('orientationchange', () => setTimeout(resize, 250));
 

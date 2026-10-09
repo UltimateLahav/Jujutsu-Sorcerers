@@ -61,7 +61,8 @@ public class MainActivity extends Activity implements View.OnLongClickListener {
 
     @Override public boolean onLongClick(View v) { return true; }   // swallow long-press (no text-selection popups)
 
-    @Override protected void onPause()  { super.onPause();  web.onPause(); }
-    @Override protected void onResume() { super.onResume(); web.onResume(); hideSystemUi(); }
+    // the game's sound is silenced while the app is in the background
+    @Override protected void onPause()  { super.onPause();  web.evaluateJavascript("window.__audio && window.__audio(false)", null); web.onPause(); }
+    @Override protected void onResume() { super.onResume(); web.onResume(); web.evaluateJavascript("window.__audio && window.__audio(true)", null); hideSystemUi(); }
     @Override protected void onDestroy() { web.destroy(); super.onDestroy(); }
 }
