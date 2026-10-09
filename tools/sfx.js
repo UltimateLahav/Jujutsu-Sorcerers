@@ -79,12 +79,14 @@ function makeSfx(ac) {
 
   return {
     ac, master,
-    step(alt, back, at) {                                // leather sole on rooftop concrete; alternates left/right, never twice the same
-      const t = T(at), v = R(0.88, 1) * (back ? 0.78 : 1), f = R(0.93, 1.08) * (alt ? 1.07 : 0.96) * (back ? 0.94 : 1);
-      burst(stepBus, t, { dur: 0.03, f: 2300 * f, q: 1.1, gain: 0.8 * v, atk: 0.0006 });              // crisp heel tick
-      burst(stepBus, t, { dur: 0.09, f: 850 * f, q: 0.8, gain: 1.1 * v, atk: 0.0012 });                // sole slap
-      burst(stepBus, t + 0.002, { dur: 0.04, type: 'highpass', f: 4200, gain: 0.1 * v });              // a little grit
-      tone(stepBus, t, { f: 170 * f, f2: 70 * f, dur: 0.1, gain: 0.1 * v, atk: 0.0025 });             // weight
+    step(alt, back, at) {                                // calm, heavy footstep: heel lands with a dull "tok" and a deep thump, the forefoot rolls down a beat later ("da-dum")
+      const t = T(at), v = R(0.9, 1) * (back ? 0.8 : 1), f = R(0.94, 1.06) * (alt ? 1.05 : 0.95) * (back ? 0.94 : 1);
+      burst(stepBus, t, { dur: 0.085, f: 440 * f, q: 0.9, gain: 1.6 * v, atk: 0.002 });                 // heel body (low mids, no bright click)
+      burst(stepBus, t, { dur: 0.022, f: 1150 * f, q: 1.0, gain: 0.3 * v, atk: 0.001 });                // faint contact, much softer and lower than before
+      tone(stepBus, t, { type: 'triangle', f: 118 * f, f2: 52 * f, dur: 0.19, gain: 0.22 * v, atk: 0.004 });   // heavy thump
+      tone(stepBus, t, { f: 205 * f, f2: 100 * f, dur: 0.07, gain: 0.08 * v, atk: 0.003 });             // knock
+      burst(stepBus, t + 0.095, { dur: 0.07, f: 320 * f, q: 0.9, gain: 0.9 * v, atk: 0.005 });          // forefoot rolling down
+      tone(stepBus, t + 0.095, { f: 88 * f, f2: 54 * f, dur: 0.11, gain: 0.09 * v, atk: 0.006 });
     },
     jump(at) {                                           // push-off: deep thump + a soft rising and falling whoosh
       const t = T(at);

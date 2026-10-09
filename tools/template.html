@@ -86,8 +86,8 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 __SFX__
 const D = __SPR__;                 // palette + idle / walk-forward / walk-back / jump / double-jump (teleport) sprite frames (rows of palette letters)
 const HEROES = __HEROES__;         // title key art: 0 eye open ... 4 eye fully closed
-const IDLE_FPS = 12, WALK_FPS = 10, JUMP_FPS = 15, TELE_FPS = 20;   // animation speeds in frames per second (15 jump frames = 1 s, 15 teleport frames = 0.75 s)
-const FWD_SPEED = 72, BACK_SPEED = 50;         // world pixels per second
+const IDLE_FPS = 12, WALK_FPS = 15, JUMP_FPS = 15, TELE_FPS = 20;   // animation speeds in frames per second (15 walk frames = 1 s per cycle = one step every half second; 15 jump frames = 1 s; 15 teleport frames = 0.75 s)
+const FWD_SPEED = 44, BACK_SPEED = 30;         // world pixels per second (matched to the slower stride so his feet do not skate)
 const BLINK_STEP = 70, BLINK_HOLD = 500;       // ms per blink frame, ms the eye stays shut
 const $ = id => document.getElementById(id);
 const cv = $('game'), ctx = cv.getContext('2d');
@@ -268,8 +268,8 @@ function drawScene(now, dt) {
     ctx.fillRect(p.x | 0, p.y | 0, p.l, 1);
   }
 
-  if (mode === 'fwd' || mode === 'back') {   // sound cues are locked to the animation: a foot lands on walk frames 0 and 3 = one step every 3 frames
-    const st = Math.floor(Math.max(0, now - modeAt) / (3000 / WALK_FPS));
+  if (mode === 'fwd' || mode === 'back') {   // sound cues are locked to the animation: a foot lands at frame 0 and again half a cycle later = one step every half cycle
+    const st = Math.floor(Math.max(0, now - modeAt) / (fwdF.length * 500 / WALK_FPS));
     if (st !== stepN) { stepN = st; snd('step', st & 1, mode === 'back'); }
     if (sfx) sfx.windPush(mode === 'fwd' ? 1.3 : 1);
   } else { stepN = -1; if (sfx) sfx.windPush(1); }

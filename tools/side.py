@@ -11,6 +11,7 @@ PAL = gojo.PAL
 N = 64
 TOP, BOT = 4, 4                                 # jump frames get extra rows above/below the usual 64
 NH = TOP + N + BOT
+NW = 15                                              # frames in each walk cycle (idle has 6)
 L1 = L2 = 10.0
 sin, cos, rad = math.sin, math.cos, math.radians
 
@@ -195,15 +196,15 @@ def build(kind, i):
         hx, hy, thn, kn_, thf, kf, foot, lean = (jump_pose if kind == 'jump' else tele_pose)(i); swn = swf = False; L = 0; bob = 0; p = 0
     else:
         amp, kmax = (26, 50) if kind == 'fwd' else (20, 40)
-        p = i / 6 if kind == 'fwd' else ((-i) % 6) / 6
+        p = i / NW if kind == 'fwd' else ((-i) % NW) / NW
         qn, qf = p % 1, (p + .5) % 1
         thn, kn_ = gait(qn, amp, kmax); thf, kf = gait(qf, amp, kmax); swn, swf = qn >= .5, qf >= .5
-        L = .8 + .25 * sin(2 * math.pi * i / 6) if kind == 'fwd' else max(-.2, .05 + .12 * sin(2 * math.pi * i / 6)); bob = 0
+        L = .8 + .25 * sin(2 * math.pi * i / NW) if kind == 'fwd' else max(-.2, .05 + .12 * sin(2 * math.pi * i / NW)); bob = 0
     drop = lambda th, k: L1 * cos(th) + L2 * cos(th - k)
     if kind not in ('jump', 'tele'): hy = round(58 + TOP - max(drop(thn, kn_), drop(thf, kf)))
     dxb = round(hx - 33)                                   # the body follows the hips (the planted feet stay put)
     oy = hy - 34; hb = bob
-    wave = [0, 1, 0, -1, 0, 1][i % 6]
+    wave = round(sin(2 * math.pi * 2 * i / NW)) if kind in ('fwd', 'back') else [0, 1, 0, -1, 0, 1][i % 6]      # tail sway: whole cycles per loop, so the walk loops without a pop
     leg(f, hx, hy, thf, kf, swf, False, foot)
     kn, an = leg(f, hx, hy, thn, kn_, swn, True, foot)
 
@@ -235,7 +236,7 @@ def build(kind, i):
         for x, y in pts: u.set(x, y, 'X'); u.set(x + 1, y, 'X')
         u.set(*pts[1], 'Y')
     # head, hand-drawn (x = 22 + column, y = 1 + row): static face/band first, then the hair on top, sheared by the wind
-    tip = {'idle': [0, 0, 1, 1, 0, -1], 'fwd': [0, 1, 0, -1, 0, 1], 'back': [0, -1, 0, 0, 1, 0], 'jump': [0, 0, 1, 1, 0, -1] * 3, 'tele': [0, 0, 1, 1, 0, -1] * 3}[kind][i]
+    tip = {'idle': [0, 0, 1, 1, 0, -1], 'fwd': [round(sin(2 * math.pi * 2 * k / NW)) for k in range(NW)], 'back': [round(sin(2 * math.pi * (2 * k + 4) / NW)) for k in range(NW)], 'jump': [0, 0, 1, 1, 0, -1] * 3, 'tele': [0, 0, 1, 1, 0, -1] * 3}[kind][i]
     sh = lambda y: tip if y <= 1 else 0                        # hair stays upright; only the tip pixels flutter
     hair = []
     for x, top in CROWN.items():                              # crown: white, lavender toward the band
@@ -260,7 +261,7 @@ def build(kind, i):
 
 def rows(f, x0, w): return [''.join(r[x0:x0 + w]) for r in f.g]
 
-sets = {k: [build(k, i) for i in range(15 if k in ('jump', 'tele') else 6)] for k in ('idle', 'fwd', 'back', 'jump', 'tele')}
+sets = {k: [build(k, i) for i in range(NW if k in ('fwd', 'back') else 15 if k in ('jump', 'tele') else 6)] for k in ('idle', 'fwd', 'back', 'jump', 'tele')}
 for k in ('idle', 'fwd', 'back'):
     for f in sets[k]: f.g = f.g[TOP:TOP + N]
 cells = [(x, y) for fs in sets.values() for f in fs for y in range(len(f.g)) for x in range(N) if f.g[y][x] != '.']
@@ -282,14 +283,14 @@ def render(f, sc, bg):
                     for dx in range(sc): px[(x - x0) * sc + dx, y * sc + dy] = rgb
     return im
 sc, W = 3, x1 - x0 + 1
-sheet = Image.new('RGB', (6 * (W * sc + 4), 3 * (N * sc + 4)), (110, 110, 128))
-for r, k in enumerate(('idle', 'fwd', 'back')):
-    for i, f in enumerate(sets[k]): sheet.paste(render(f, sc, (110, 110, 128)), (i * (W * sc + 4), r * (N * sc + 4)))
+sheet = Image.new('RGB', (8 * (W * sc + 4), 4 * (N * sc + 4)), (110, 110, 128))      # fwd frames 1-15 in rows 1-2, back frames 1-15 in rows 3-4
+for r, k in enumerate(('fwd', 'back')):
+    for i, f in enumerate(sets[k]): sheet.paste(render(f, sc, (110, 110, 128)), ((i % 8) * (W * sc + 4), (r * 2 + i // 8) * (N * sc + 4)))
 sheet.save('side_sheet.png')
 render(sets['idle'][0], 8, (110, 110, 128)).save('side_idle0.png'); print('sheet', sheet.size)
 
 trio = Image.new('RGB', (3 * (W * 6 + 6), N * 6), (110, 110, 128))
-for j, (k, i) in enumerate((('idle', 3), ('fwd', 1), ('back', 2))): trio.paste(render(sets[k][i], 6, (110, 110, 128)), (j * (W * 6 + 6), 0))
+for j, (k, i) in enumerate((('idle', 3), ('fwd', 2), ('back', 5))): trio.paste(render(sets[k][i], 6, (110, 110, 128)), (j * (W * 6 + 6), 0))
 trio.save('side_trio.png')
 
 jsheet = Image.new('RGB', (8 * (W * 3 + 4), 2 * (NH * 3 + 4)), (110, 110, 128))
