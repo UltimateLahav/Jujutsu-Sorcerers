@@ -9,7 +9,7 @@ import gojo
 
 PAL = gojo.PAL
 N = 64
-L1 = L2 = 12.0
+L1 = L2 = 11.0
 sin, cos, rad = math.sin, math.cos, math.radians
 
 def pm(pts):                                     # polygon -> set of pixels (aliased)
@@ -54,18 +54,18 @@ def gait(q, amp, kmax):                          # hip angle (forward +) and kne
 def leg(f, hx, hy, th, k, swing, near):
     kn = (hx + L1 * sin(th), hy + L1 * cos(th)); al = th - k
     an = (kn[0] + L2 * sin(al), kn[1] + L2 * cos(al))
-    body = seg((hx, hy), kn, 7, 5.5) | seg(kn, an, 5.5, 3.8) | disc(kn[0], kn[1], 2.8)
+    body = seg((hx, hy), kn, 5.2, 4.4) | seg(kn, an, 4.4, 3.2) | disc(kn[0], kn[1], 2.3)
     ph = .55 * k if swing else 0
-    shoe = pm([(an[0] + x * cos(ph) - y * sin(ph), an[1] + x * sin(ph) + y * cos(ph)) for x, y in ((-3, -1), (2, -1), (4, 1), (8, 2), (8, 3), (-3, 3))])
+    shoe = pm([(an[0] + x * cos(ph) - y * sin(ph), an[1] + x * sin(ph) + y * cos(ph)) for x, y in ((-2, -1), (2, -1), (4, 1), (7, 2), (7, 3), (-2, 3))])
     f.fill(body, 'B'); f.fill(shoe, 'Q' if near else 'P')
     f.bands(body, 'B', 'C' if near else 'B', 'A')
     f.rim(body | shoe, 'O')
     f.fill(shoe, 'Q' if near else 'P')
     if near:                                     # sheen: thigh edge, knee crescent, shin dash, shoe gloss
         d = (sin(th), cos(th)); nf = (cos(th), -sin(th))
-        f.line([(hx + nf[0] * 2.2 + d[0] * 3, hy + nf[1] * 2.2 + d[1] * 3), (kn[0] + nf[0] * 1.8 - d[0] * 3, kn[1] + nf[1] * 1.8 - d[1] * 3)], 'D')
-        for dx, dy, c in ((1.8, -1, 'D'), (2.2, 0, 'E'), (1.8, 1, 'D'), (.6, 2, 'D')): f.set(kn[0] + nf[0] * dx + d[0] * dy, kn[1] + nf[1] * dx + d[1] * dy, c)
-        sd = (sin(al), cos(al)); f.line([(kn[0] + sd[0] * 5 + 1, kn[1] + sd[1] * 5), (an[0] - sd[0] * 2 + 1, an[1] - sd[1] * 2)], 'D')
+        f.line([(hx + nf[0] * 1.6 + d[0] * 3, hy + nf[1] * 1.6 + d[1] * 3), (kn[0] + nf[0] * 1.4 - d[0] * 3, kn[1] + nf[1] * 1.4 - d[1] * 3)], 'D')
+        for dx, dy, c in ((1.4, -1, 'D'), (1.8, 0, 'E'), (1.4, 1, 'D'), (.4, 2, 'D')): f.set(kn[0] + nf[0] * dx + d[0] * dy, kn[1] + nf[1] * dx + d[1] * dy, c)
+        sd = (sin(al), cos(al)); f.line([(kn[0] + sd[0] * 5 + .6, kn[1] + sd[1] * 5), (an[0] - sd[0] * 2 + .6, an[1] - sd[1] * 2)], 'D')
         for x, y in shoe:
             if (x, y - 1) not in shoe and (x - an[0]) > -1 and (x - an[0]) < 6: f.set(x, y, 'R')
         f.set(an[0] + 4, an[1] + 1, 'Z')
@@ -76,20 +76,21 @@ HAIR_TOP = {x: min(6, min(t + 2 * abs(x - tx) for tx, t in TIPS)) for x in range
 HAIR_TOP[25] = 7
 HAIR_BOT = {25: 9, 26: 10, 27: 9, 28: 8, **{x: 6 for x in range(29, 39)}}
 
-HEAD = [                      # x = 22..40
+HEAD = [                      # x = 22..40, y = 1..14 (round skull: hair wraps down behind the ear, band shows ear-to-nose)
     ".......M..M........",
     "....M.MHMMHM.M.....",
     "...MHHIHHIHHIHM....",
-    "..MHHWHIHHHHIHHM...",
-    ".MIHIHIHIHIHIHIHM..",
-    ".MJIJIJIJIJIJIJIM..",
-    ".MJJJJJXXXXXJXJXJ..",
-    "..MJJJXXXXXYXXXXX..",
-    "...MJM..SUUSSSSSS..",
-    "....MM..SUVSSSSSTT.",
-    "........UUUSSSSVUV.",
-    ".........VUUUSSSV..",
-    "..........VUUUUV...",
+    "...MHWHIHHHHIHHM...",
+    "..MIHIHIHIHIHIHIM..",
+    "..MJIJIJIJIJIJIJIM.",
+    "..MJJJJJXXXXJXJXJX.",
+    "..MJJJJJJXXYXXXXXX.",
+    "...MJJJJJXXXXXXXXX.",
+    "....MJJJJUUSSSSSST.",
+    ".....MJJJVUSSSSSSST",
+    "......MJMSSSSSSVUV.",
+    "..........VUUSSSV..",
+    "............VVVV...",
 ]
 assert all(len(r) == 19 for r in HEAD), [len(r) for r in HEAD]
 
@@ -105,42 +106,37 @@ def build(kind, i):
         thn, kn_ = gait(qn, amp, kmax); thf, kf = gait(qf, amp, kmax); swn, swf = qn >= .5, qf >= .5
         L = .8 + .25 * sin(2 * math.pi * i / 6) if kind == 'fwd' else max(-.2, .05 + .12 * sin(2 * math.pi * i / 6)); bob = 0
     drop = lambda th, k: L1 * cos(th) + L2 * cos(th - k)
-    hy = round(58 - max(drop(thn, kn_), drop(thf, kf))); oy = hy - 34 + bob
+    hy = round(58 - max(drop(thn, kn_), drop(thf, kf))); oy = hy - 34; hb = bob
     wave = [0, 1, 0, -1, 0, 1][i % 6]
-    leg(f, 32, hy, thf, kf, swf, False)
-    kn, an = leg(f, 32, hy, thn, kn_, swn, True)
+    leg(f, 33, hy, thf, kf, swf, False)
+    kn, an = leg(f, 33, hy, thn, kn_, swn, True)
 
     # jacket (+ flap trailing behind in the wind)
     jk = set()
     for y in range(15, 35):
-        a, b = (30, 35) if y == 15 else (29, 36) if y < 23 else (29, 35) if y < 30 else (29, 37)
+        a, b = (31, 35) if y == 15 else (30, 36) if y < 23 else (30, 35) if y < 30 else (30, 36)
         jk |= {(x, y + oy) for x in range(a, b + 1)}
-    fl = round(L * 3.5)
-    flap = pm([(29, 27 + oy), (27 - fl, 28 + oy), (25 - fl * 2, 31 + oy), (25 - fl * 2, 33 + oy), (27 - fl, 34 + oy), (29, 34 + oy)]) if fl > 0 else set()
-    f.fill(jk | flap, 'B'); f.bands(jk, 'B', 'C', 'A'); f.rim(jk | flap, 'O')
-    for x, y in flap:
-        if (x, y) not in jk: f.set(x, y, 'B')
-    f.line([(27 - fl, 29 + oy), (28, 28 + oy)], 'D') if fl > 1 else None
+    f.fill(jk, 'B'); f.bands(jk, 'B', 'C', 'A'); f.rim(jk, 'O')                 # lower clothes stay still: no flap, no billow
     # near arm, hand in the pocket
     sw = round(1.2 * sin(2 * math.pi * p)) * (-1 if kind == 'back' else 1) if kind != 'idle' else 0
-    S, E, P = (31, 16 + oy), (29 + sw, 26 + oy), (35, 31 + oy)
-    arm = seg(S, E, 5, 4.4) | seg(E, P, 4.2, 3) | disc(E[0], E[1], 2.3)
+    S, E, P = (32, 16 + oy), (30 + sw, 25 + oy), (35, 30 + oy)
+    arm = seg(S, E, 4.2, 3.6) | seg(E, P, 3.4, 2.6) | disc(E[0], E[1], 2.0)
     f.fill(arm, 'B'); f.bands(arm, 'B', 'C', 'A'); f.rim(arm, 'O')
     f.line([(S[0] + 1, S[1] + 2), (E[0] + 1, E[1] - 1)], 'D'); f.line([(E[0] + 2, E[1] + 2), (P[0] - 1, P[1] - 1)], 'D')
     f.set(P[0] + 1, P[1], 'S'); f.set(P[0] + 1, P[1] + 1, 'U')
     # jacket sheen
-    f.line([(31, 15 + oy), (35, 15 + oy)], 'D'); f.set(33, 15 + oy, 'E')
-    f.line([(34, 18 + oy), (35, 22 + oy)], 'D'); f.line([(32, 24 + oy), (34, 27 + oy)], 'D')
-    f.line([(30, 25 + oy), (30, 28 + oy)], 'D'); f.line([(31, 33 + oy), (34, 33 + oy)], 'D')
+    f.line([(32, 15 + oy), (35, 15 + oy)], 'D'); f.set(34, 15 + oy, 'E')
+    f.line([(35, 18 + oy), (35, 22 + oy)], 'D'); f.line([(32, 24 + oy), (34, 27 + oy)], 'D')
+    f.line([(31, 25 + oy), (31, 28 + oy)], 'D'); f.line([(31, 33 + oy), (35, 33 + oy)], 'D')
     # collar (high, black, sheen strips)
-    col = pm([(29, 10 + oy), (31, 11 + oy), (34, 13 + oy), (37, 13 + oy), (37, 17 + oy), (30, 17 + oy), (29, 13 + oy)])
+    col = pm([(31, 10 + oy + hb), (32, 11 + oy + hb), (34, 13 + oy + hb), (37, 13 + oy + hb), (37, 17 + oy), (31, 17 + oy)])
     f.fill(col, 'B'); f.bands(col, 'B', 'C', 'A'); f.rim(col, 'O')
-    f.line([(31, 13 + oy), (33, 14 + oy)], 'D'); f.line([(34, 15 + oy), (36, 15 + oy)], 'D'); f.set(30, 12 + oy, 'D')
+    f.line([(32, 14 + oy + hb), (34, 15 + oy + hb)], 'D'); f.line([(35, 16 + oy), (36, 16 + oy)], 'D'); f.set(31, 12 + oy + hb, 'D')
     # blindfold tails first (they emerge from under the hair at the back and trail in the wind)
-    for y, a_ in ((7, 29), (8, 28)): f.fill({(x, y + oy) for x in range(a_, 39)}, 'X')
-    tl = 3 + round(L * 6)
+    for y, a_ in ((7, 29), (8, 30), (9, 30)): f.fill({(x, y + oy - 2 + hb) for x in range(a_, 40)}, 'X')
+    tl = 4 + round(L * 4); lock = -round(L * 1.4)          # tails grow out from under the hair lock
     for k, dy0 in enumerate((0, 2)):
-        pts = [(28 - j, 8 + oy + dy0 + round(.9 * sin(j * .9 + wave + k * 1.7))) for j in range(1, tl + 1)]
+        pts = [(27 + lock - j, 9 + oy - 2 + hb + dy0 + round(.6 * sin(j * .8 + wave + k * 1.7))) for j in range(0, tl)]
         for x, y in pts: f.set(x, y, 'X'); f.set(x, y + 1, 'X')
         f.set(*pts[len(pts) // 2], 'Y')
     # head, hand-drawn (x = 22 + column, y = 1 + row): static face/band first, then the hair on top, sheared by the wind
@@ -150,8 +146,8 @@ def build(kind, i):
         for i, ch in enumerate(row):
             if ch == '.': continue
             x, y = 22 + i, 1 + r
-            if ch in 'MHIJW': hair.append((x + sh(y), y + oy, ch))
-            else: f.set(x, y + oy, ch)
+            if ch in 'MHIJW': hair.append((x + sh(y), y + oy - 2 + hb, ch))
+            else: f.set(x, y + oy - 2 + hb, ch)
     for x, y, ch in hair: f.set(x, y, ch)
     for x, y, ch in hair:                                    # re-outline any edge the shear exposed
         if ch != 'M' and any(f.at(x + dx, y + dy) == '.' for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))): f.set(x, y, 'M')
@@ -165,7 +161,7 @@ x0, x1 = min(x for x, y in cells) - 1, max(x for x, y in cells) + 1
 print('bbox cols', x0 + 1, x1 - 1, 'rows', min(y for x, y in cells), max(y for x, y in cells))
 bad = {c for f in (f for fs in sets.values() for f in fs) for r in f.g for c in r} - set(PAL) - {'.'}
 assert not bad, bad
-json.dump({k: {'x0': x0, 'w': x1 - x0 + 1, 'h': N, 'cx': 32, 'frames': [rows(f, x0, x1 - x0 + 1) for f in fs]} for k, fs in sets.items()}, open('side.json', 'w'))
+json.dump({k: {'x0': x0, 'w': x1 - x0 + 1, 'h': N, 'cx': 33, 'frames': [rows(f, x0, x1 - x0 + 1) for f in fs]} for k, fs in sets.items()}, open('side.json', 'w'))
 
 def render(f, sc, bg):
     im = Image.new('RGB', ((x1 - x0 + 1) * sc, N * sc), bg); px = im.load()
