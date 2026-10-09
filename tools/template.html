@@ -216,8 +216,12 @@ function drawScene(now, dt) {
     const o = (((-wx % 28) + 28) % 28) + (r % 2) * 14;
     for (let x = o - 28; x < VW; x += 28) ctx.fillRect(Math.round(x), y, 1, 10);
   }
-  ctx.fillStyle = 'rgba(220,210,255,0.35)';   // wind streaks, blowing to the right
-  for (const p of parts) { p.x += p.v * dt; if (p.x > VW) p.x = -p.l; ctx.fillRect(p.x | 0, p.y | 0, p.l, 1); }
+  ctx.fillStyle = 'rgba(220,210,255,0.35)';   // wind streaks
+  for (const p of parts) {                    // headwind: blows right-to-left, faster when he walks into it
+    p.x -= (p.v + dir * 45) * dt;
+    if (p.x < -p.l) p.x = VW; else if (p.x > VW) p.x = -p.l;
+    ctx.fillRect(p.x | 0, p.y | 0, p.l, 1);
+  }
 
   const idle = mode === 'idle', set = idle ? idleF : mode === 'fwd' ? fwdF : backF;
   const info = idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
