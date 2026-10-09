@@ -9,7 +9,7 @@ import gojo
 
 PAL = gojo.PAL
 N = 64
-L1 = L2 = 11.0
+L1 = L2 = 10.0
 sin, cos, rad = math.sin, math.cos, math.radians
 
 def pm(pts):                                     # polygon -> set of pixels (aliased)
@@ -76,20 +76,20 @@ HAIR_TOP = {x: min(6, min(t + 2 * abs(x - tx) for tx, t in TIPS)) for x in range
 HAIR_TOP[25] = 7
 HAIR_BOT = {25: 9, 26: 10, 27: 9, 28: 8, **{x: 6 for x in range(29, 39)}}
 
-HEAD = [                      # x = 22..40, y = 7..14: band, tight hair behind the ear, ear, nose, lips, chin
-    ".....MIIXXXXJXJXJX.",
-    ".....MIIIXXYXXXXXX.",
-    ".....MIIIXXXXXXXXX.",
-    ".....MIIIUUSSSSSST.",
-    "......MIIVUSSSSSSST",
-    ".......MMSSSSSSVUV.",
+HEAD = [                      # x = 22..40, y = 9..16: band, thin hair strip behind the ear, ear, nose, lips, chin
+    "......MIXXXXJXJXJX.",
+    "......MIXXXYXXXXXX.",
+    "......MIXXXXXXXXXX.",
+    "......MISUUSSSSSST.",
+    "......MMUVUSSSSSSST",
+    ".........SSSSSSVUV.",
     "..........VUUSSSV..",
     "............VVVV...",
 ]
-TIPS = [(27, 4), (30, 2), (33, 0), (36, 2), (38, 4)]          # upright spikes centred over the skull, tallest in the middle
-CROWN = {x: min(6, min(t + 2 * abs(x - tx) for tx, t in TIPS)) for x in range(27, 39)}
-STRAND = {(33, 2): 'I', (33, 3): 'I', (30, 3): 'I', (36, 3): 'I', (31, 5): 'I', (35, 5): 'I', (28, 5): 'I', (32, 4): 'I'}
-SHINE = {(32, 3): 'W', (34, 3): 'W', (29, 5): 'W', (36, 4): 'W', (33, 1): 'W'}
+TIPS = [(29, 3), (32, 0), (35, 1), (38, 4)]                      # four separate upright spikes, tallest near the middle
+CROWN = {x: min(8, round(min(t + 2.5 * abs(x - tx) for tx, t in TIPS))) for x in range(28, 39)}
+STRAND = {(33, 2): 'I', (33, 3): 'I', (33, 4): 'I', (31, 3): 'I', (35, 3): 'I', (31, 5): 'I', (35, 5): 'I', (30, 6): 'I', (36, 6): 'I', (33, 6): 'I'}
+SHINE = {(32, 4): 'W', (34, 4): 'W', (31, 6): 'W', (35, 6): 'W', (33, 5): 'W'}
 assert all(len(r) == 19 for r in HEAD), [len(r) for r in HEAD]
 
 def build(kind, i):
@@ -131,9 +131,9 @@ def build(kind, i):
     f.fill(col, 'B'); f.bands(col, 'B', 'C', 'A'); f.rim(col, 'O')
     f.line([(32, 14 + oy + hb), (34, 15 + oy + hb)], 'D'); f.line([(35, 16 + oy), (36, 16 + oy)], 'D'); f.set(31, 12 + oy + hb, 'D')
     # blindfold tails first (they emerge from under the hair at the back and trail in the wind)
-    for y, a_ in ((7, 29), (8, 30), (9, 30)): f.fill({(x, y + oy - 2 + hb) for x in range(a_, 40)}, 'X')
-    for k, dx0 in enumerate((0, 2)):                             # blindfold tails hang down behind the head (tiny sway)
-        pts = [(26 - dx0 // 2 - (j + 1) // 2 + (wave if j >= 2 else 0), 9 + oy - 2 + hb + j + k) for j in range(4)]
+    for y, a_ in ((9, 30), (10, 30), (11, 30)): f.fill({(x, y + oy - 4 + hb) for x in range(a_, 40)}, 'X')
+    for k, dx0 in enumerate((0, 1)):                             # short blindfold tails hang behind the head (tiny sway)
+        pts = [(27 - dx0 - (j + 1) // 2 + (wave if j >= 1 else 0), 10 + oy - 4 + hb + j + k) for j in range(3)]
         for x, y in pts: f.set(x, y, 'X'); f.set(x + 1, y, 'X')
         f.set(*pts[1], 'Y')
     # head, hand-drawn (x = 22 + column, y = 1 + row): static face/band first, then the hair on top, sheared by the wind
@@ -141,15 +141,15 @@ def build(kind, i):
     sh = lambda y: tip if y <= 1 else 0                        # hair stays upright; only the tip pixels flutter
     hair = []
     for x, top in CROWN.items():                              # crown: white, lavender toward the band
-        for y in range(top, 7):
-            c = SHINE.get((x, y)) or STRAND.get((x, y)) or ('H' if y <= 4 else ('H' if (x + y) % 2 == 0 else 'I') if y == 5 else ('I' if (x + y) % 2 == 0 else 'J'))
-            hair.append((x + sh(y), y + oy - 2 + hb, c))
+        for y in range(top, 9):
+            c = SHINE.get((x, y)) or STRAND.get((x, y)) or ('H' if y <= 6 else ('H' if (x + y) % 2 == 0 else 'I') if y == 7 else ('I' if (x + y) % 2 == 0 else 'J'))
+            hair.append((x + sh(y), y + oy - 4 + hb, c))
     for r, row in enumerate(HEAD):
         for i, ch in enumerate(row):
             if ch == '.': continue
-            x, y = 22 + i, 7 + r
-            if ch in 'MHIJW': hair.append((x + sh(y), y + oy - 2 + hb, ch))
-            else: f.set(x, y + oy - 2 + hb, ch)
+            x, y = 22 + i, 9 + r
+            if ch in 'MHIJW': hair.append((x + sh(y), y + oy - 4 + hb, ch))
+            else: f.set(x, y + oy - 4 + hb, ch)
     for x, y, ch in hair: f.set(x, y, ch)
     for x, y, ch in hair:                                    # re-outline any edge the shear exposed
         if ch != 'M' and any(f.at(x + dx, y + dy) == '.' for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))): f.set(x, y, 'M')
