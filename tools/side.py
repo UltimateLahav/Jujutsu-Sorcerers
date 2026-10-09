@@ -76,20 +76,20 @@ HAIR_TOP = {x: min(6, min(t + 2 * abs(x - tx) for tx, t in TIPS)) for x in range
 HAIR_TOP[25] = 7
 HAIR_BOT = {25: 9, 26: 10, 27: 9, 28: 8, **{x: 6 for x in range(29, 39)}}
 
-HEAD = [                      # x = 22..40, y = 9..16: band, thin hair strip behind the ear, ear, nose, lips, chin
-    "......MIXXXXJXJXJX.",
-    "......MIXXXYXXXXXX.",
-    "......MIXXXXXXXXXX.",
-    "......MISUUSSSSSST.",
+HEAD = [                      # x = 22..40, y = 11..18: band, tiny hair strip behind the ear, ear, nose, lips, chin
+    "......MXXXXXJXJXJX.",
+    "......MXXXXYXXXXXX.",
+    "......MXXXXXXXXXXX.",
+    "......MIIUUSSSSSST.",
     "......MMUVUSSSSSSST",
-    ".........SSSSSSVUV.",
+    ".......VSSSSSSVUV..",
     "..........VUUSSSV..",
     "............VVVV...",
 ]
-TIPS = [(29, 3), (32, 0), (35, 1), (38, 4)]                      # four separate upright spikes, tallest near the middle
-CROWN = {x: min(8, round(min(t + 2.5 * abs(x - tx) for tx, t in TIPS))) for x in range(28, 39)}
-STRAND = {(33, 2): 'I', (33, 3): 'I', (33, 4): 'I', (31, 3): 'I', (35, 3): 'I', (31, 5): 'I', (35, 5): 'I', (30, 6): 'I', (36, 6): 'I', (33, 6): 'I'}
-SHINE = {(32, 4): 'W', (34, 4): 'W', (31, 6): 'W', (35, 6): 'W', (33, 5): 'W'}
+TIPS = [(29, 4), (32, 1), (35, 0), (38, 3)]                     # four upright spikes, tallest just forward of the middle
+CROWN = {x: min(10, round(min(t + 2.5 * abs(x - tx) for tx, t in TIPS))) for x in range(28, 39)}
+STRAND = {(32, 2): 'I', (32, 3): 'I', (35, 1): 'I', (35, 2): 'I', (35, 3): 'I', (29, 5): 'I', (33, 6): 'I', (37, 6): 'I', (31, 8): 'I', (34, 8): 'I', (36, 8): 'I'}
+SHINE = {(33, 5): 'W', (35, 4): 'W', (30, 7): 'W', (36, 7): 'W', (33, 8): 'W'}
 assert all(len(r) == 19 for r in HEAD), [len(r) for r in HEAD]
 
 def build(kind, i):
@@ -111,29 +111,29 @@ def build(kind, i):
 
     # jacket (+ flap trailing behind in the wind)
     jk = set()
-    for y in range(15, 35):
-        a, b = (31, 35) if y == 15 else (30, 36) if y < 23 else (30, 35) if y < 30 else (30, 36)
+    for y in range(17, 35):
+        a, b = (31, 35) if y == 17 else (30, 36) if y < 23 else (30, 35) if y < 30 else (30, 36)
         jk |= {(x, y + oy) for x in range(a, b + 1)}
     f.fill(jk, 'B'); f.bands(jk, 'B', 'C', 'A'); f.rim(jk, 'O')                 # lower clothes stay still: no flap, no billow
     # near arm, hand in the pocket
     sw = round(1.2 * sin(2 * math.pi * p)) * (-1 if kind == 'back' else 1) if kind != 'idle' else 0
-    S, E, P = (32, 16 + oy), (30 + sw, 25 + oy), (35, 30 + oy)
+    S, E, P = (32, 18 + oy), (30 + sw, 25 + oy), (35, 30 + oy)
     arm = seg(S, E, 4.2, 3.6) | seg(E, P, 3.4, 2.6) | disc(E[0], E[1], 2.0)
     f.fill(arm, 'B'); f.bands(arm, 'B', 'C', 'A'); f.rim(arm, 'O')
     f.line([(S[0] + 1, S[1] + 2), (E[0] + 1, E[1] - 1)], 'D'); f.line([(E[0] + 2, E[1] + 2), (P[0] - 1, P[1] - 1)], 'D')
     f.set(P[0] + 1, P[1], 'S'); f.set(P[0] + 1, P[1] + 1, 'U')
     # jacket sheen
-    f.line([(32, 15 + oy), (35, 15 + oy)], 'D'); f.set(34, 15 + oy, 'E')
-    f.line([(35, 18 + oy), (35, 22 + oy)], 'D'); f.line([(32, 24 + oy), (34, 27 + oy)], 'D')
+    f.line([(32, 17 + oy), (35, 17 + oy)], 'D'); f.set(34, 17 + oy, 'E')
+    f.line([(35, 19 + oy), (35, 22 + oy)], 'D'); f.line([(32, 24 + oy), (34, 27 + oy)], 'D')
     f.line([(31, 25 + oy), (31, 28 + oy)], 'D'); f.line([(31, 33 + oy), (35, 33 + oy)], 'D')
     # collar (high, black, sheen strips)
-    col = pm([(31, 10 + oy + hb), (32, 11 + oy + hb), (34, 13 + oy + hb), (37, 13 + oy + hb), (37, 17 + oy), (31, 17 + oy)])
+    col = pm([(31, 12 + oy + hb), (32, 13 + oy + hb), (34, 15 + oy + hb), (37, 15 + oy + hb), (37, 19 + oy), (31, 19 + oy)])
     f.fill(col, 'B'); f.bands(col, 'B', 'C', 'A'); f.rim(col, 'O')
-    f.line([(32, 14 + oy + hb), (34, 15 + oy + hb)], 'D'); f.line([(35, 16 + oy), (36, 16 + oy)], 'D'); f.set(31, 12 + oy + hb, 'D')
+    f.line([(32, 16 + oy + hb), (34, 17 + oy + hb)], 'D'); f.line([(35, 18 + oy), (36, 18 + oy)], 'D'); f.set(31, 14 + oy + hb, 'D')
     # blindfold tails first (they emerge from under the hair at the back and trail in the wind)
-    for y, a_ in ((9, 30), (10, 30), (11, 30)): f.fill({(x, y + oy - 4 + hb) for x in range(a_, 40)}, 'X')
+    for y, a_ in ((11, 29), (12, 29), (13, 29)): f.fill({(x, y + oy - 4 + hb) for x in range(a_, 40)}, 'X')
     for k, dx0 in enumerate((0, 1)):                             # short blindfold tails hang behind the head (tiny sway)
-        pts = [(27 - dx0 - (j + 1) // 2 + (wave if j >= 1 else 0), 10 + oy - 4 + hb + j + k) for j in range(3)]
+        pts = [(27 - dx0 - (j + 1) // 2 + (wave if j >= 1 else 0), 12 + oy - 4 + hb + j + k) for j in range(3)]
         for x, y in pts: f.set(x, y, 'X'); f.set(x + 1, y, 'X')
         f.set(*pts[1], 'Y')
     # head, hand-drawn (x = 22 + column, y = 1 + row): static face/band first, then the hair on top, sheared by the wind
@@ -141,13 +141,13 @@ def build(kind, i):
     sh = lambda y: tip if y <= 1 else 0                        # hair stays upright; only the tip pixels flutter
     hair = []
     for x, top in CROWN.items():                              # crown: white, lavender toward the band
-        for y in range(top, 9):
-            c = SHINE.get((x, y)) or STRAND.get((x, y)) or ('H' if y <= 6 else ('H' if (x + y) % 2 == 0 else 'I') if y == 7 else ('I' if (x + y) % 2 == 0 else 'J'))
+        for y in range(top, 11):
+            c = SHINE.get((x, y)) or STRAND.get((x, y)) or ('H' if y <= 8 else ('H' if (x + y) % 2 == 0 else 'I') if y == 9 else ('I' if (x + y) % 2 == 0 else 'J'))
             hair.append((x + sh(y), y + oy - 4 + hb, c))
     for r, row in enumerate(HEAD):
         for i, ch in enumerate(row):
             if ch == '.': continue
-            x, y = 22 + i, 9 + r
+            x, y = 22 + i, 11 + r
             if ch in 'MHIJW': hair.append((x + sh(y), y + oy - 4 + hb, ch))
             else: f.set(x, y + oy - 4 + hb, ch)
     for x, y, ch in hair: f.set(x, y, ch)
