@@ -249,6 +249,13 @@ function makeSfx(ac) {
       tone(B.deep, t, { type: 'triangle', f: 300, f2: 90, dur: 0.3, gain: 0.25, atk: 0.003 });
       tone(B.deep, t, { f: 1200, f2: 800, dur: 0.15, gain: 0.08, atk: 0.002 });
     },
+    splat(at) {                                          // a body bursts: a wet thud, a low squelch, then drops pattering down
+      const t = T(at), B = C.atk;
+      tone(B.deep, t, { type: 'triangle', f: 92, f2: 34, dur: 0.34, gain: 0.46, atk: 0.003 });
+      burst(B.soft, t, { f: 420, f2: 130, q: 0.7, dur: 0.22, gain: 3.0, atk: 0.001 });
+      burst(B.soft, t + 0.04, { f: 280, f2: 80, q: 3.4, dur: 0.2, gain: 1.5, atk: 0.004 });
+      for (let k = 0; k < 7; k++) burst(B.soft, t + 0.1 + k * 0.045 + R(0, 0.02), { f: R(500, 1400), q: 2.6, dur: R(0.02, 0.05), gain: R(0.6, 1.3), atk: 0.001 });
+    },
     redboom(at) {                                        // RED explodes: a deep boom and a burst of crackle
       const t = T(at), B = C.ce;
       tone(B.deep, t, { type: 'triangle', f: 120, f2: 32, dur: 0.7, gain: 0.5, atk: 0.003 });
