@@ -37,17 +37,13 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #hud{position:fixed;left:calc(env(safe-area-inset-left) + 10px);top:calc(env(safe-area-inset-top) + 10px);display:none;align-items:center;gap:12px;font-size:clamp(8px,2.6vh,13px);text-shadow:2px 2px 0 #000}
 #hud button{padding:1vh 1.6vh;font-size:inherit}
 #pad{position:fixed;left:0;right:0;bottom:0;display:none;justify-content:space-between;align-items:flex-end;padding:0 calc(env(safe-area-inset-right) + 3vh) calc(env(safe-area-inset-bottom) + 3vh) calc(env(safe-area-inset-left) + 3vh);pointer-events:none}
-.grp{display:flex;gap:2vh}
 .pb{pointer-events:auto;touch-action:none;width:21vh;height:21vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1vh;padding:0;font-size:clamp(14px,7vh,34px);opacity:.78}
 .pb span{font-size:clamp(6px,2vh,10px);color:var(--dim)}
 .pb.on{background:#2a1f4a;border-color:var(--acc);opacity:1}
 .col{display:flex;flex-direction:column;gap:2vh;align-items:flex-end}
-.rowb{display:flex;gap:2vh}
-#lap{border-color:#59b8ff}
+#lap{border-color:#59b8ff;margin-right:14vh}      /* BLUE sits above-left of ATTACK so both reach the right thumb */
 #lap svg{width:6vh;height:6vh}
-#cr i{font-style:normal;display:block;transform:rotate(90deg)}
-#cr{border-color:var(--acc)}
-#atk{border-color:#6fb4ff}
+#atk{border-color:#6fb4ff;width:25vh;height:25vh}
 #atk svg{width:6vh;height:6vh}
 #settings.screen{z-index:5;background:rgba(13,10,23,.95);gap:2vh}
 #vols{display:grid;grid-template-columns:1fr 1fr;gap:1.6vh 5vh;width:min(92vw,820px);text-align:left}
@@ -55,8 +51,14 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #vols input{grid-column:1/3;width:100%;height:3.4vh;accent-color:var(--acc)}
 #vols b{font-weight:normal;color:var(--acc)}
 .row{display:flex;gap:2.4vh}
-#up{border-color:var(--acc)}
-#up i{font-style:normal;display:block;transform:rotate(-90deg)}      /* the same chunky chevron as BACK / FWD, turned to point up */
+#joy{pointer-events:auto;touch-action:none;position:relative;width:40vh;height:40vh;flex:none}      /* the joystick: left / right walk, up jumps, down crouches */
+#joy .jb{position:absolute;inset:0;width:100%;height:100%;opacity:.85}
+#joy .jbase{fill:#1a1330;stroke:#6d56a0;stroke-width:3}
+#joy .jarr{fill:#8f86b0}
+#knob{position:absolute;left:50%;top:50%;width:15vh;height:15vh;margin:-7.5vh 0 0 -7.5vh;transform:translate(var(--kx,0px),var(--ky,0px));filter:drop-shadow(3px 3px 0 #000)}
+#knob path{fill:#2a1f4a;stroke:#8f7ac4;stroke-width:2}
+#joy.on .jbase{stroke:#8f7ac4}
+#joy.on #knob path{fill:#3d2f6e;stroke:#b9a8ee}
 #rotate{position:fixed;inset:0;z-index:9;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--bg);text-align:center;line-height:1.6;font-size:12px}
 #rotate div{font-size:56px;animation:r 2s ease-in-out infinite}
 @keyframes r{0%,30%{transform:rotate(0)}70%,100%{transform:rotate(-90deg)}}
@@ -93,17 +95,16 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 
 <div id="hud"><button id="back">&lt; MENU</button><span>GOJO SATORU</span><button id="snd">SND ON</button><button id="setBtn">SET</button></div>
 <div id="pad">
-  <div class="grp">
-    <button id="bk" class="pb" aria-label="Walk backward">&lt;<span>BACK</span></button>
-    <button id="fw" class="pb" aria-label="Walk forward">&gt;<span>FWD</span></button>
+  <div id="joy" role="application" aria-label="Joystick: push left or right to walk, up to jump, down to crouch">
+    <svg class="jb" viewBox="0 0 84 84" shape-rendering="crispEdges" aria-hidden="true">
+      <path class="jbase" d="M30 6h24l24 24v24L54 78H30L6 54V30z"/>
+      <path class="jarr" d="M42 12l7 9H35zM42 72l7-9H35zM12 42l9-7v14zM72 42l-9-7v14z"/>
+    </svg>
+    <svg id="knob" viewBox="0 0 32 32" shape-rendering="crispEdges" aria-hidden="true"><path d="M10 2h12l8 8v12l-8 8H10l-8-8V10z"/></svg>
   </div>
   <div class="col">
+    <button id="lap" class="pb" aria-label="Lapse Blue"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M2 1h4v1h1v4h-1v1h-4v-1h-1v-4h1z"/></svg><span>BLUE</span></button>
     <button id="atk" class="pb" aria-label="Attack"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M3 0h2v8H3zM0 3h8v2H0zM1 1h1v1H1zM6 1h1v1H6zM1 6h1v1H1zM6 6h1v1H6z"/></svg><span id="atkl">R.HOOK</span></button>
-    <div class="rowb">
-      <button id="lap" class="pb" aria-label="Lapse Blue"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M2 1h4v1h1v4h-1v1h-4v-1h-1v-4h1z"/></svg><span>BLUE</span></button>
-      <button id="up" class="pb" aria-label="Jump"><i>&gt;</i><span>JUMP</span></button>
-    </div>
-    <button id="cr" class="pb" aria-label="Crouch"><i>&gt;</i><span id="crl">CROUCH</span></button>
   </div>
 </div>
 <div id="rotate"><div>&#128241;</div>ROTATE YOUR PHONE<br>TO LANDSCAPE</div>
@@ -374,7 +375,7 @@ const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
 let state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
 let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1;
-let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, lastStance = '', evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', flashUntil = 0, flashMs = 1, flashA = 0;
+let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', flashUntil = 0, flashMs = 1, flashA = 0, stickX = 0, stickY = 0, stickUp = false, stickDown = false, stickCr = false, stickDownEnd = -9999, jumpFromStick = false, joyId = null;
 const STRIP = 480;
 
 // ---------------------------------------------------------------- sound (all synthesised in sfx.js, no audio files)
@@ -443,7 +444,7 @@ function show(s) {
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll(); $('settings').classList.remove('on');
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
-  if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; comboUntil = 0; dummy = null; popups = []; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
+  if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; comboUntil = 0; dummy = null; popups = []; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(performance.now(), 1200);
 }
 
@@ -782,25 +783,30 @@ function drawScene(now, dt) {
   }
   if (af < 0 && (combo !== 0 || cpIdx !== 0) && now > comboUntil) { combo = 0; cpIdx = 0; }   // waited too long: back to the first hit (standing and crouched)
   const lab = stance === 'crouch' ? ['R.JAB', 'L.UPPR'][cpIdx] : ATK_NAMES[combo]; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; }
-  if (crReq) {                                // tap CROUCH: down in 10 frames; tap again to stand up
+  if (crReq) {                                // keyboard S / Down / C: tap to go down (10 frames), tap again to stand up (the joystick crouches while it is held down)
     crReq = false;
     if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0) { if (stance === 'stand') { stance = 'down'; stAt = now; sf = 0; } else if (stance === 'crouch') { stance = 'up'; stAt = now; sf = 0; } }
   }
-  if (lpReq) {                                // LAPSE BLUE: walking forward = stand and pull the enemy in (stuns 0.4 s); otherwise blink forward to the enemy
+  if (lpReq) {                                // BLUE: in mid-air = teleport up, then fall. On the ground: walking forward = stand and pull the enemy in (stuns 0.4 s); otherwise blink forward to the enemy; crouched = Max Blue
     lpReq = false;
-    if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && now > lpReady) {
+    if (t >= 1 && tf < 0 && jf >= 4 && jf <= 11) { teleL0 = (jumpC ? D.cjump : D.jump).lift[jf]; teleAt = now; tf = 0; jumpAt = -1; jf = -1; }
+    else if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && now > lpReady) {
       if (stance === 'stand') { lpK = (keyR || padR) ? 0 : 1; lpAt = now; lf = 0; atkQ = false; }
       else if (stance === 'crouch' && !orb) { stance = 'up'; stAt = now; sf = 0; mbPending = true; }          // crouched: stand up first, then summon MAX BLUE (not while the last orb is still out)
     }
   }
-  if (stance !== lastStance) { lastStance = stance; $('crl').textContent = stance === 'crouch' || stance === 'down' ? 'STAND' : 'CROUCH'; }
   if (jumpReq) {                              // one press = one action; presses while spawning in, crouching down, landing, attacking or casting are ignored
     jumpReq = false;
     if (t >= 1) {
       if (jf < 0 && tf < 0) { if (af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0) { jumpC = stance === 'crouch'; if (jumpC) stance = 'stand'; jumpAt = now; jf = 0; } }          // from a crouch he springs higher                            // from the ground: jump
-      else if (tf < 0 && jf >= 4 && jf <= 11) { teleL0 = (jumpC ? D.cjump : D.jump).lift[jf]; teleAt = now; tf = 0; jumpAt = -1; jf = -1; }   // again in mid-air: teleport up, then fall
+      else if (!jumpFromStick && tf < 0 && jf >= 4 && jf <= 11) { teleL0 = (jumpC ? D.cjump : D.jump).lift[jf]; teleAt = now; tf = 0; jumpAt = -1; jf = -1; }   // keyboard only: jump again in mid-air = teleport up (on the stick, up in the air does nothing: BLUE is the teleport)
     }
   }
+  if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0) {      // the stick's down position crouches him for as long as it is held
+    if (stickDown && stance === 'stand') { stance = 'down'; stAt = now; sf = 0; stickCr = true; }
+    else if (!stickDown && stickCr && stance === 'crouch' && now - stickDownEnd > 140) { stance = 'up'; stAt = now; sf = 0; }     // let go and he stands up (a short grace so a quick down-then-up flick still springs into a crouch jump)
+  }
+  if (stance === 'stand') stickCr = false;
   const steer = t >= 1 && ((jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0) || (jf >= 3 && jf <= 11) || (tf >= 0 && tf <= 11));   // no walking while spawning in, crouching or landing
   const dir = steer ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0;
   const crch = stance === 'crouch';
@@ -919,7 +925,7 @@ function tick(now) {
 // ---------------------------------------------------------------- input
 function releaseAll() {
   keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = false;
-  $('bk').classList.remove('on'); $('fw').classList.remove('on'); $('up').classList.remove('on'); $('atk').classList.remove('on'); $('lap').classList.remove('on'); $('cr').classList.remove('on');
+  $('atk').classList.remove('on'); $('lap').classList.remove('on'); joyRelease();
 }
 function bindPad(id, set) {                   // hold-to-walk touch buttons (multi-touch safe)
   const b = $(id);
@@ -931,19 +937,39 @@ function bindPad(id, set) {                   // hold-to-walk touch buttons (mul
   ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => b.addEventListener(t, () => { set(false); b.classList.remove('on'); }));
   b.addEventListener('contextmenu', e => e.preventDefault());
 }
-bindPad('bk', v => { padL = v; });
-bindPad('fw', v => { padR = v; });
-bindPad('up', v => { if (v) jumpReq = true; });           // tap to jump
 bindPad('atk', v => { if (v) atkReq = true; });
 bindPad('lap', v => { if (v) lpReq = true; });           // tap for Lapse Blue (hold FWD while you tap it to pull the enemy in instead of blinking to him)
-bindPad('cr', v => { if (v) crReq = true; });            // tap to crouch, tap again to stand          // tap to attack (each tap is the next hit of the combo)
+// THE JOYSTICK (bottom left): push left / right to walk back / forward, up to jump (one jump per push), down to crouch (he stays crouched while you hold it)
+const joy = $('joy'), knob = $('knob');
+function setStick(dx, dy) {
+  const m = Math.hypot(dx, dy), v = m ? dy / m : 0;                                          // v = -1 straight up ... +1 straight down
+  const up = m > (stickUp ? 0.3 : 0.55) && v < (stickUp ? -0.35 : -0.5), down = m > (stickDown ? 0.3 : 0.55) && v > (stickDown ? 0.35 : 0.5);      // up / down only when the stick points 30+ degrees above / below sideways, so a thumb that drifts a little while walking does not jump or crouch; the lower numbers are hysteresis so a finger on an edge does not flicker
+  padL = dx < (padL ? -0.25 : -0.4); padR = dx > (padR ? 0.25 : 0.4);
+  if (up && !stickUp) { jumpReq = true; jumpFromStick = true; }
+  if (stickDown && !down) stickDownEnd = performance.now();
+  stickX = dx; stickY = dy; stickUp = up; stickDown = down;
+}
+function joyMove(e) {
+  const r = joy.getBoundingClientRect(), R = r.width * 0.3; let dx = (e.clientX - (r.left + r.width / 2)) / R, dy = (e.clientY - (r.top + r.height / 2)) / R; const m = Math.hypot(dx, dy);
+  if (m > 1) { dx /= m; dy /= m; }
+  knob.style.setProperty('--kx', (dx * R) + 'px'); knob.style.setProperty('--ky', (dy * R) + 'px'); setStick(dx, dy);
+}
+function joyRelease() { joyId = null; joy.classList.remove('on'); knob.style.setProperty('--kx', '0px'); knob.style.setProperty('--ky', '0px'); setStick(0, 0); }
+joy.addEventListener('pointerdown', e => {
+  e.preventDefault(); if (joyId !== null) return;
+  joyId = e.pointerId; try { joy.setPointerCapture(e.pointerId); } catch (err) { /* older WebViews */ }
+  joy.classList.add('on'); joyMove(e);
+});
+joy.addEventListener('pointermove', e => { if (e.pointerId === joyId) joyMove(e); });
+['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => joy.addEventListener(n, e => { if (e.pointerId === joyId) joyRelease(); }));
+joy.addEventListener('contextmenu', e => e.preventDefault());
 
 const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U', KeyJ: 'A', KeyF: 'A', ArrowDown: 'C', KeyS: 'C', KeyC: 'C', KeyL: 'B' };
 addEventListener('keydown', e => {
   if (settingsOn()) { if (e.key === 'Escape') closeSettings(); return; }      // the settings screen takes the keyboard while it is open
   const k = KEYS[e.code];
   if (k) {
-    if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (state === 'play' && !e.repeat) { if (k === 'A') atkReq = true; else if (k === 'C') crReq = true; else if (k === 'B') lpReq = true; else jumpReq = true; }
+    if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (state === 'play' && !e.repeat) { if (k === 'A') atkReq = true; else if (k === 'C') crReq = true; else if (k === 'B') lpReq = true; else { jumpReq = true; jumpFromStick = false; } }
     if (state === 'play') e.preventDefault();
     return;
   }
@@ -999,7 +1025,7 @@ addEventListener('resize', resize);
 addEventListener('orientationchange', () => setTimeout(resize, 250));
 
 window.__dummy = () => dummy ? { gap: dummy.x - wx, hp: dummy.hp, ko: dummy.ko, kos, hits: { n: hits.n, dmg: hits.dmg, seq: hits.seq }, rx: dummy.rx, mode: dummy.mode, ai: dummy.ai, cap: dummy.cap ? { mode: dummy.cap.mode, r: dummy.cap.r, y: dummy.cap.py, rot: dummy.cap.rot, front: dummy.cap.front } : null, stun: Math.max(0, dummy.stunUntil - performance.now()), smoke: smoke.length } : null;
-window.__state = () => ({ stance, jumpC, mode, wx, lapse: lpAt >= 0 ? lpK : -1, mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests
+window.__state = () => ({ stance, jumpC, mode, wx, stick: { x: stickX, y: stickY, up: stickUp, down: stickDown, held: stickCr }, lapse: lpAt >= 0 ? lpK : -1, mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests
 window.__back = () => {                       // Android back button: step back through the menus, otherwise let the app close
   if (settingsOn()) { closeSettings(); return true; }
   if (state === 'play') { show('select'); return true; }
