@@ -503,7 +503,7 @@ function hitDummy(k, now) {                   // called on the impact frame: a h
   if (window.__sfxlog) window.__sfxlog.push(['rx', Math.round(now), dummy.rx]);
   say('' + dmg, dummy.x, popCol(), 8, now);
   snd('smack', k);
-  if (dummy.hp <= 0) { dummy.ko = now; dummy.vx += 70; shakeUntil = now + 260; shakeAmp = 4; kos++; say('K.O.', dummy.x, '#ffd34d', 16, now + 120); snd('ko'); }
+  if (dummy.hp <= 0) koDummy(now);            // (a normal punch or kick that finishes him ends the round in a match too)
 }
 function gojoHit(k, now) {                    // the attacking dummy's swing connects with Gojo
   if (dgAt >= 0 && now - dgAt < 11 * 1000 / DASH_FPS) return;       // he is dashing: the swing misses
@@ -555,7 +555,7 @@ function drawDummy(now, dt) {
     if (c.mode === 'fly') { drawCaught(now); drawBar(sx - 13, Math.max(4, Math.round(c.py) - 42)); } else if (!c.front) drawCaught(now);
     return;
   }
-  const t = Math.min(1, (now - dummy.born) / 650), e = 1 - Math.pow(1 - t, 3), hitT = now - dummy.hitAt, kt = dummy.ko >= 0 ? now - dummy.ko : -1;
+  const t = Math.min(1, (now - dummy.born) / 650), e = 1 - Math.pow(1 - t, 3), hitT = now - dummy.hitAt, kt = dummy.ko >= 0 ? Math.max(0, now - (dummy.koAt || dummy.ko)) : -1;
   const reacting = kt < 0 && now - dummy.rxAt < RX_DUR[dummy.rx], mirror = !(dummy.mode === 'fighter' && gap < -4);   // he faces Gojo (left), or right if Gojo got behind the attacker
   let src, info, fi, lift = 0;                // what he is doing: reeling from a hit, swinging, stepping, or standing about
   if (reacting) { fi = Math.min(9, Math.floor((now - dummy.rxAt) * RX_FPS[dummy.rx] / 1000)); info = D['rx' + dummy.rx]; src = (hitT < 70 ? rxW : rxI)[dummy.rx][fi]; lift = info.lift ? info.lift[fi] : 0; }
@@ -589,19 +589,19 @@ function drawPopups(now) {                    // damage numbers float up from th
   ctx.globalAlpha = 1;
 }
 function drawHits(now) {                      // top right: hit counter, damage total and the 4-pip combo meter (right hook, left hook, elbow blue; kick red); KO count below
-  const left = hits.until - now, rx = VW - 8; let y = 16;
-  ctx.textAlign = 'right'; ctx.font = '8px "Press Start 2P"';
+  const left = hits.until - now, rx = vs ? 6 : VW - 8; let y = vs ? 50 : 16;       // (in a match it sits at the left under Gojo's name, clear of the enemy's bar and name, and without the K.O. count)
+  ctx.textAlign = vs ? 'left' : 'right'; ctx.font = '8px "Press Start 2P"';
   if (left > 0) {
     ctx.globalAlpha = Math.min(1, left / 400);
     const line = (s, col) => { ctx.fillStyle = '#000'; ctx.fillText(s, rx + 1, y + 1); ctx.fillStyle = col; ctx.fillText(s, rx, y); y += 10; };
     line(hits.n === 1 ? '1 HIT' : hits.n + ' HITS', '#ffffff'); line(hits.dmg + ' DMG', '#b9a8ee');
     for (let i = 0; i < 4; i++) {
-      const px = rx - 26 + i * 7; ctx.fillStyle = '#000'; ctx.fillRect(px - 1, y - 1, 7, 7);
+      const px = (vs ? rx + 1 : rx - 26) + i * 7; ctx.fillStyle = '#000'; ctx.fillRect(px - 1, y - 1, 7, 7);
       ctx.fillStyle = i < hits.seq ? (now - hits.perfect < 600 ? '#ffd34d' : '#59b8ff') : '#2a2040'; ctx.fillRect(px, y, 5, 5);
     }
     y += 14; ctx.globalAlpha = 1;
   }
-  if (kos > 0) { ctx.fillStyle = '#000'; ctx.fillText('KO ' + kos, rx + 1, y + 1); ctx.fillStyle = '#ffd34d'; ctx.fillText('KO ' + kos, rx, y); }
+  if (kos > 0 && !vs) { ctx.fillStyle = '#000'; ctx.fillText('KO ' + kos, rx + 1, y + 1); ctx.fillStyle = '#ffd34d'; ctx.fillText('KO ' + kos, rx, y); }
 }
 
 function pullEnemy(now) {                     // Lapse Blue: the enemy is dragged to just in front of Gojo, then stunned for 0.4 s
@@ -628,7 +628,12 @@ function drawSmoke(now, dt) {                 // dust along the ground behind an
   }
 }
 
-function koDummy(now) { if (vs) endRound('player', 'ko', now); dummy.ko = now; dummy.vx += 70; shakeUntil = now + 260; shakeAmp = 4; kos++; say('K.O.', dummy.x, '#ffd34d', 16, now + 120); snd('ko'); }
+function koDummy(now) {                       // the enemy goes down (every way of finishing him ends here): in a match the round ends and Gojo gets the point
+  if (dummy.ko >= 0) return;                  // (only once, even if two hits finish him in the same moment)
+  if (vs) endRound('player', 'ko', now);
+  dummy.ko = now; dummy.koAt = Math.max(now, holdUntil);        // he starts to topple when the hit-stop is over, so the fall is seen
+  dummy.vx += 70; shakeUntil = now + 260; shakeAmp = 4; kos++; if (!vs) say('K.O.', dummy.x, '#ffd34d', 16, now + 120); snd('ko');      // (a match has its own big K.O. banner)
+}
 function flash(now, ms, a) { flashUntil = now + ms; flashMs = ms; flashA = a; }               // a pale-blue flash over the whole screen that fades out
 const STONE = ['#5b516b', '#9a8fb0', '#3d3548', '#6d5f86'];                                      // the greys of the rooftop rubble
 function spawnOrb(now) {                      // MAX BLUE: the orb leaves his palm, grows into a huge pixelated sphere in front of him and pulls everything in
@@ -894,6 +899,7 @@ const GRADES = [
   { name: 'GRADE 1', hp: 1.7, dmg: 1.3, spd: 1.15, react: 160, aggr: 0.85, blk: 0.58, dodge: 0.36, combo: 3, smart: 2 },
   { name: 'SPECIAL GRADE', hp: 2.3, dmg: 1.6, spd: 1.25, react: 90, aggr: 1.0, blk: 0.78, dodge: 0.5, combo: 4, smart: 3 }];
 const PHP = 300;                              // Gojo's health in a match
+const KO_HOLD = 450, KO_MS = 2500;            // a K.O.: the picture freezes for 0.45 s, then the loser topples; 2.5 s after it the next round starts (or the result shows)
 let vs = null, vsSel = 0;
 const pcMe = $('pvMe').getContext('2d'), pcFoe = $('pvFoe').getContext('2d'); $('pvMe').width = $('pvFoe').width = D.idle.w; $('pvMe').height = $('pvFoe').height = D.idle.h;
 const vsLoad = () => { try { const st = JSON.parse(localStorage.getItem('jsv_stars') || '[]'); return { un: Math.max(0, Math.min(5, +localStorage.getItem('jsv_unlock') || 0)), st: [0, 1, 2, 3, 4, 5].map(i => +st[i] || 0) }; } catch (e) { return { un: 0, st: [0, 0, 0, 0, 0, 0] }; } };
@@ -906,8 +912,8 @@ function buildGrades() {                       // the six grade buttons: locked 
 function startMatch(gi) { vs = { gi, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: 60000, hp: PHP, sh: PHP, hist: [], res: null }; beginRound(performance.now()); }
 function beginRound(now) {                     // a fresh round: the scene is reset, the enemy steps in, "ROUND n" and "FIGHT!"
   const keep = vs; show('play'); vs = keep; const t = performance.now(), G = GRADES[vs.gi];
-  Object.assign(vs, { ph: 'intro', t0: t, tl: 60000, hp: PHP, sh: PHP, hist: [], seenAtk: -1, seenAt: 0, seenK: 0, rolled: true, whiffAt: -1, prevAtk: -1, hitAt: -9999, why: '', who: '' });
-  spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + 90; $('vsres').classList.remove('on');
+  Object.assign(vs, { ph: 'intro', t0: t, tl: 60000, hp: PHP, sh: PHP, hist: [], seenAtk: -1, seenAt: 0, seenK: 0, rolled: true, whiffAt: -1, prevAtk: -1, hitAt: -9999, why: '', who: '', koAt: 0 });
+  spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(50, Math.min(90, (VW >> 1) - 60)); $('vsres').classList.remove('on');      // (he starts in the clear, not behind the touch buttons)
 }
 function vsTick(now, dt) {
   if (!vs) return; const a = now - vs.t0;
@@ -917,14 +923,14 @@ function vsTick(now, dt) {
     if (atkAt < 0 && vs.prevAtk >= 0 && dummy && dummy.hitAt < vs.prevAtk) vs.whiffAt = now;      // Gojo's swing ended without hitting: he is open for a moment
     vs.prevAtk = atkAt;
     if (vs.tl <= 0) endRound(vs.hp / PHP > (dummy ? dummy.hp / dummy.max : 0) ? 'player' : 'enemy', 'time', now);
-  } else if (vs.ph === 'ko' && a >= 2300) { if (vs.pw >= 2 || vs.ew >= 2) finishMatch(now); else { vs.round++; beginRound(now); return; } }
+  } else if (vs.ph === 'ko' && a >= KO_MS) { if (vs.pw >= 2 || vs.ew >= 2) finishMatch(now); else { vs.round++; beginRound(now); return; } }      // the round is over: whoever got the point, the next round starts fresh (full health, new positions)
   if (now - vs.hitAt > 350) vs.sh += (vs.hp - vs.sh) * Math.min(1, dt * 4);
   if (vs.ph !== 'fight') { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = false; }      // no control before FIGHT! and after the K.O.
 }
 function vsHurt(dm, now) { vs.hp = Math.max(0, vs.hp - dm); vs.hitAt = now; if (vs.hp <= 0) endRound('enemy', 'ko', now); }
 function endRound(who, why, now) {
   if (!vs || vs.ph !== 'fight') return; vs.ph = 'ko'; vs.t0 = now; vs.who = who; vs.why = why; if (who === 'player') vs.pw++; else vs.ew++;
-  if (why === 'ko') holdUntil = Math.max(holdUntil, now + 650); snd(who === 'player' ? 'finisher' : 'ko');
+  if (why === 'ko') holdUntil = Math.max(holdUntil, now + KO_HOLD); vs.koAt = Math.max(now, holdUntil); snd(who === 'player' ? 'finisher' : 'ko');      // (koAt: when the loser starts to topple)
 }
 function finishMatch(now) {
   vs.ph = 'over'; const win = vs.pw >= 2, pf = vs.hp / PHP, stars = win ? (pf >= 0.7 ? 3 : pf >= 0.35 ? 2 : 1) : 0, sv = vsLoad(), gi = vs.gi;
@@ -980,10 +986,17 @@ function drawVs(now) {                         // health bars, names, the grade,
   bar(6, 20, pf, ps, false); bar(VW - 6 - W, 20, ef, es, true);
   vsTxt('GOJO', 6, 36, '#ffffff', 6); vsTxt('GOJO (INV.)', VW - 6, 36, '#ffffff', 6, 'right'); vsTxt(GRADES[vs.gi].name, VW - 6, 45, '#ffd34d', 6, 'right');
   vsTxt(String(Math.max(0, Math.ceil(vs.tl / 1000))), VW / 2, 16, vs.tl < 10000 ? '#ff6a5a' : '#ffffff', 10, 'center');
-  for (let i = 0; i < 2; i++) { ctx.fillStyle = i < vs.pw ? '#ffd34d' : '#3a3050'; ctx.fillRect(Math.round(VW / 2) - 14 - i * 8, 22, 6, 6); ctx.fillStyle = i < vs.ew ? '#ffd34d' : '#3a3050'; ctx.fillRect(Math.round(VW / 2) + 8 + i * 8, 22, 6, 6); }
-  const b = vs.ph === 'intro' ? (a < 1300 ? ['ROUND ' + vs.round, 14] : ['FIGHT!', 18]) : vs.ph === 'ko' ? [vs.why === 'time' ? 'TIME!' : 'K.O.', 20] : null; if (b) vsTxt(b[0], VW / 2, gy - 62, '#ffe9a0', b[1], 'center');
+  const kob = vs.ph === 'ko';
+  for (let i = 0; i < 2; i++) {               // the round points (a pip lights up for every round won); the point that was just won blinks
+    const bl = c => kob && vs.who === c && i === (c === 'player' ? vs.pw : vs.ew) - 1 && ((now / 100) | 0) % 2 === 0;
+    ctx.fillStyle = '#000'; ctx.fillRect(6 + W - 7 - i * 8, 11, 8, 8); ctx.fillRect(VW - 6 - W - 1 + i * 8, 11, 8, 8);      // (just above the inner ends of the two bars, where no banner covers them)
+    ctx.fillStyle = bl('player') ? '#ffffff' : i < vs.pw ? '#ffd34d' : '#3a3050'; ctx.fillRect(6 + W - 6 - i * 8, 12, 6, 6);
+    ctx.fillStyle = bl('enemy') ? '#ffffff' : i < vs.ew ? '#ffd34d' : '#3a3050'; ctx.fillRect(VW - 6 - W + i * 8, 12, 6, 6);
+  }
+  const b = vs.ph === 'intro' ? (a < 1300 ? ['ROUND ' + vs.round, 14] : ['FIGHT!', 18]) : kob ? [vs.why === 'time' ? 'TIME!' : 'K.O.', 20] : null; if (b) vsTxt(b[0], VW / 2, gy - 62, '#ffe9a0', b[1], 'center');
+  if (kob) { const me = vs.who === 'player', tx = me ? 'YOU GET THE POINT' : 'ENEMY GETS THE POINT'; vsTxt(tx, VW / 2, gy + 20, me ? '#7dff9a' : '#ff8a7a', Math.max(5, Math.min(8, Math.floor((VW - 120) / tx.length))), 'center'); }      // who got the point (the round restarts in a moment); it stays between the touch controls, so the letters shrink on a narrow screen
 }
-window.__vs = () => vs && ({ gi: vs.gi, ph: vs.ph, round: vs.round, pw: vs.pw, ew: vs.ew, hp: vs.hp, tl: vs.tl, ehp: dummy ? dummy.hp : -1, emax: dummy ? dummy.max : -1, ai: dummy ? dummy.ai : '', res: vs.res, whiffAt: vs.whiffAt, now: performance.now() });
+window.__vs = () => vs && ({ gi: vs.gi, ph: vs.ph, round: vs.round, pw: vs.pw, ew: vs.ew, hp: vs.hp, tl: vs.tl, ehp: dummy ? dummy.hp : -1, emax: dummy ? dummy.max : -1, ai: dummy ? dummy.ai : '', res: vs.res, who: vs.who, why: vs.why, whiffAt: vs.whiffAt, now: performance.now() });
 window.__grades = () => GRADES; window.__vsSet = o => vs && Object.assign(vs, o); window.__vsEnemy = o => dummy && Object.assign(dummy, o);
 window.__vsKo = () => { if (dummy && vs) { dummy.hp = 0; koDummy(performance.now()); } };
 function drawBoom(now) {                      // the explosion: 15 frames at 30 FPS: a white-hot flash, a red shock ring racing out, flying sparks
@@ -1225,12 +1238,16 @@ function drawScene(now, dt) {
   ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1);
 
   const ry = Math.round(info.h * (1 - e));    // spawn: materialise from the feet up
+  const gko = vs && vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // the enemy finished him in a match: after the hit-stop he topples backwards (like the enemy does) and stays down until the next round
   ctx.save();
-  ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip();
-  ctx.globalAlpha = Math.min(1, t * 2);
-  ctx.drawImage((ceOn && (cm === 2 ? HOMAPR : HOMAP).get(set) || set)[fi], x, y);        // cursed energy on: both hands out of the pockets
+  if (gko >= 0) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); ctx.drawImage(idleF[0], -(D.idle.cx - D.idle.x0), -62); }
+  else {
+    ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip();
+    ctx.globalAlpha = Math.min(1, t * 2);
+    ctx.drawImage((ceOn && (cm === 2 ? HOMAPR : HOMAP).get(set) || set)[fi], x, y);        // cursed energy on: both hands out of the pockets
+  }
   ctx.restore();
-  if (t >= 1) { drawCE(now, x, y, info, fi); drawRedFx(now, dt, x, y, info, fi, mbing && mbK === 1, mf); }
+  if (t >= 1 && gko < 0) { drawCE(now, x, y, info, fi); drawRedFx(now, dt, x, y, info, fi, mbing && mbK === 1, mf); }
 
   if (tele && (tf === 2 || tf === 3)) { ctx.fillStyle = 'rgba(160,220,255,0.12)'; ctx.fillRect(0, 0, VW, VH); }   // soft blue flash on the teleport
   if (t < 1) {                                // spawn ring + flash
