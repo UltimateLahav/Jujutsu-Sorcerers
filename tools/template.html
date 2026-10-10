@@ -189,7 +189,7 @@ const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
 let state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
 let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1;
-let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', flashUntil = 0, flashMs = 1, flashA = 0, stickX = 0, stickY = 0, stickUp = false, stickDown = false, stickCr = false, stickDownEnd = -9999, jumpFromStick = false, joyId = null, dashReq = false, dgAt = -1, dgK = 0, dgFrom = 0, dgTo = 0, dgAir = false, dgUsed = false, dgCr = false, dgReady = 0, blockHeld = false, blkAt = -1, blkEnd = -1, blkFrom = 4, wcIdx = 0, ceOn = false, ceAt = -9999, ceAmt = 0, ceNext = 0, ceReq = false, cm = 0, rdIdx = 0, mbK = 0, rdOrb = null, boom = null, holdUntil = 0;
+let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', flashUntil = 0, flashMs = 1, flashA = 0, stickX = 0, stickY = 0, stickUp = false, stickDown = false, stickCr = false, stickDownEnd = -9999, jumpFromStick = false, joyId = null, dashReq = false, dgAt = -1, dgK = 0, dgFrom = 0, dgTo = 0, dgAir = false, dgUsed = false, dgCr = false, dgReady = 0, blockHeld = false, blkAt = -1, blkEnd = -1, blkFrom = 4, wcIdx = 0, ceOn = false, ceAt = -9999, ceAmt = 0, ceNext = 0, ceReq = false, cm = 0, rdIdx = 0, mbK = 0, rdOrb = null, boom = null, holdUntil = 0, rdSlow = false, ride = null;
 const ceDmg = n => cm === 1 ? Math.round(n * CE_DMG) : n;      // only cursed energy mode hits harder; red mode has no damage bonus
 const popCol = () => cm === 1 ? '#4ff5e8' : cm === 2 ? '#ff8a7a' : '#7fc4ff';
 const STRIP = 480;
@@ -260,7 +260,7 @@ function show(s) {
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll(); $('settings').classList.remove('on');
-  cm = 0; ceOn = false; ceAmt = 0; mbK = 0; rdOrb = null; boom = null; rdIdx = 0; setModeUI();
+  cm = 0; ceOn = false; ceAmt = 0; mbK = 0; rdOrb = null; boom = null; rdIdx = 0; ride = null; setModeUI();
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
   if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(performance.now(), 1200);
@@ -356,7 +356,7 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   }
   if (stance !== 'stand') return;                                                     // crouched (or going down / getting up): nothing can hit him      // already reeling, just recovered, or jumped / teleported out of the way
   hurtK = (Math.random() * 10) | 0; hurtAt = now;                                    // one of ten reactions, picked at random
-  atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; dgAt = -1; blkAt = -1; blkEnd = -1; wxv -= KNOCK_G[k] * 0.9; shakeUntil = now + 120; shakeAmp = k === 3 ? 3 : 2;
+  atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; wxv -= KNOCK_G[k] * 0.9; shakeUntil = now + 120; shakeAmp = k === 3 ? 3 : 2;
   say('' + (DMG[k] + ((Math.random() * 5) | 0)), wx, '#ff9a5a', 8, now);
   snd('hurt', hurtK);
 }
@@ -586,12 +586,18 @@ function cycleMode(now) {                     // MODE button / E: normal -> curs
   setModeUI(); snd(cm ? 'ceon' : 'ceoff');
 }
 function fireRed(now) {                       // RED, frame 20: the orb leaves his fingers and flies forward
-  const a = D.atk22.hn[20], i = D.atk22; rdOrb = { x: wx + a[0] - (i.cx - i.x0) + 7, y: gy - 60 - i.top + a[1], trail: [] }; snd('redfire');
+  const a = D.atk22.hn[20], i = D.atk22; const x0 = wx + a[0] - (i.cx - i.x0) + 7; rdOrb = { x: x0, x0, y: gy - 60 - i.top + a[1], trail: [], slow: rdSlow, v: rdSlow ? 70 : 280, coat: false }; snd('redfire');      // pressed while walking back: it flies slowly (70 px/s instead of 280)
 }
-function explodeRed(now, hit) {               // RED hits (or reaches the end of its range): a blast, hit-stop, and on a hit damage + a hard shove
-  const o = rdOrb; rdOrb = null; boom = { x: o.x, y: o.y, born: now, big: hit }; snd('redboom'); shakeUntil = now + 220; shakeAmp = hit ? 4 : 2; holdUntil = now + 90;
+function explodeRed(now, hit) {               // RED hits (or reaches the end of its range): a blast, hit-stop, and on a hit damage + a hard shove. A blue-coated orb is a smaller blast that stuns the enemy for 0.6 s instead of shoving him
+  const o = rdOrb, c = o.coat; rdOrb = null; boom = { x: o.x, y: o.y, born: now, big: hit && !c }; snd('redboom'); shakeUntil = now + 220; shakeAmp = hit && !c ? 4 : 2; holdUntil = now + 90;
+  if (ride) { ride.phase = 'drop'; ride.dropAt = now; }          // (Gojo falls off the burst orb and lands right next to the enemy)
   if (!hit || !dummy) return;
   if (dummy.mode === 'blocker' && dummy.x - wx > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx]) { boom.big = false; dummy.vx += 40; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); return; }      // blockable, like Lapse Blue
+  if (c) {
+    const dmg = 30 + ((Math.random() * 8) | 0);
+    dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += 25; dummy.stunUntil = now + 600; dummy.pull = null; dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = 800;      // stunned for 0.6 s (he flashes blue) and stays right there
+    say('STUN', dummy.x, '#59b8ff', 8, now); say('' + dmg, dummy.x, '#ff8a7a', 10, now + 90); snd('stun'); if (dummy.hp <= 0) koDummy(now); return;
+  }
   const dmg = 55 + ((Math.random() * 10) | 0);
   dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += 260; dummy.stunUntil = now + 700; dummy.rx = (Math.random() * 10) | 0; dummy.rxAt = now; dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = 900;
   say('' + dmg, dummy.x, '#ff8a7a', 10, now); if (dummy.hp <= 0) koDummy(now);
@@ -604,13 +610,36 @@ function drawBoom(now) {                      // the explosion: 15 frames at 30 
   for (let a = 0; a < 56; a++) { const th = a / 56 * 6.2832; ctx.fillRect(Math.round(sx + Math.cos(th) * R), Math.round(sy + Math.sin(th) * R * 0.8), 2, 2); }
   ctx.fillStyle = '#ffb08a'; for (let j = 0; j < 22; j++) { const th = j * 2.399 + 0.5, v = (10 + (j * 7) % 13) * z, u = i / 14; ctx.fillRect(Math.round(sx + Math.cos(th) * v * i * 0.55), Math.round(sy + Math.sin(th) * v * i * 0.45 + 18 * u * u * z), 1, 1); }
 }
+function startCoat(now) {                      // BLUE while walking back with a slow red orb flying: the orb gets a blue outline and Gojo leaps onto it
+  rdOrb.coat = true; ride = { at: now, x0: wx, phase: 'leap', lift: 0, set: jumpF, info: D.jump, fi: 3 }; mbAt = now; mbK = 2; atkQ = false; snd('charge'); snd('jump');
+}
+function updateRide(now) {                     // Gojo on the coated orb: leap onto it, stand on it while it carries him to the enemy, drop off when it bursts
+  const r = ride, o = rdOrb, k = Math.min(1, (now - r.at) / 380);
+  if (r.phase === 'leap') {
+    if (!o) { r.phase = 'drop'; r.dropAt = now; return updateRide(now); }
+    wx = r.x0 + (o.x - 3 - r.x0) * (1 - Math.pow(1 - k, 2)); r.lift = 45 * k + 16 * Math.sin(Math.PI * k); r.set = jumpF; r.info = D.jump; r.fi = Math.min(8, 3 + Math.floor(k * 6));
+    if (k >= 1) r.phase = 'ride';
+  } else if (r.phase === 'ride') {
+    if (!o) { r.phase = 'drop'; r.dropAt = now; return updateRide(now); }
+    wx = o.x - 3; r.lift = 45 + Math.round(Math.sin(now / 90)); r.set = idleF; r.info = D.idle; r.fi = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length;
+  } else {
+    const d = Math.min(1, (now - r.dropAt) / 130); r.lift = Math.max(0, 45 * (1 - d * d)); r.set = jumpF; r.info = D.jump; r.fi = d < 1 ? 10 : Math.min(14, 12 + Math.floor((now - r.dropAt - 130) / 30));
+    if (now - r.dropAt > 220) { ride = null;      // (he is back in control after 0.22 s, with most of the 0.6 s stun left to hit the enemy)
+       mbAt = -1; mbK = 0; lpReady = now + 300; }
+  }
+}
 function drawRedFx(now, dt, x, y, info, fi, charging, mf) {      // the red orb growing above his raised fingers, flying (with a glowing trail), and the explosion
-  const k = Math.floor(now * 20 / 1000) % 15, ob = (n, sx, sy, s) => ctx.drawImage(orbR[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(orbR[0].width * s), Math.round(orbR[0].height * s));
+  const k = Math.floor(now * 20 / 1000) % 15, ob = (n, sx, sy, s, set = orbR) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));
   if (charging && mf < 20) { const a = info.hn[fi]; if (a) ob(k, x + a[0] + 2, y + a[1] - 8, 0.1 + 0.3 * Math.min(1, mf / 19)); }
   if (rdOrb) {
-    const o = rdOrb, gap = dummy ? dummy.x - o.x : 999; o.x += 280 * dt; o.trail.push([o.x, o.y]); if (o.trail.length > 9) o.trail.shift();
-    if (dummy && dummy.ko < 0 && !dummy.cap && gap < 9 && gap > -16) explodeRed(now, true); else if (o.x - wx > 210) explodeRed(now, false);
-    else { const cx = Math.round(VW / 2); o.trail.forEach(([tx, ty], j) => { ctx.globalAlpha = 0.12 + 0.4 * j / 9; ob(k + j, cx + tx - wx, ty, 0.1 + 0.22 * j / 9); }); ctx.globalAlpha = 1; ob(k, cx + o.x - wx, o.y, 0.42); }
+    const o = rdOrb, gap = dummy ? dummy.x - o.x : 999; o.x += o.v * dt; o.trail.push([o.x, o.y]); if (o.trail.length > 9) o.trail.shift();
+    if (dummy && dummy.ko < 0 && !dummy.cap && gap < 9 && gap > -16) explodeRed(now, true); else if (o.x - o.x0 > 210) explodeRed(now, false);
+    else {
+      const cx = Math.round(VW / 2), tr = o.coat ? orbF : orbR;      // a coated orb leaves a blue trail
+      o.trail.forEach(([tx, ty], j) => { ctx.globalAlpha = 0.12 + 0.4 * j / 9; ob(k + j, cx + tx - wx, ty, 0.1 + 0.22 * j / 9, tr); }); ctx.globalAlpha = 1;
+      if (o.coat) ob(k, cx + o.x - wx, o.y, 0.5, orbF);      // ...and a blue outline around the red ball
+      ob(k, cx + o.x - wx, o.y, 0.42);
+    }
   }
   drawBoom(now);
 }
@@ -653,7 +682,7 @@ function drawScene(now, dt) {
   let hf = -1;                                // hurt frame 0-9: Gojo's reaction when the attacking dummy lands a hit
   if (hurtAt >= 0) { hf = Math.floor(Math.max(0, now - hurtAt) * RX_FPS[hurtK] / 1000); if (hf >= 10) { hurtAt = -1; hf = -1; hurtEnd = now; } }
   let mf = -1;                                // Max Blue summon frame 0-39 (20 FPS)
-  if (mbAt >= 0) { mf = Math.floor(Math.max(0, now - mbAt) * MB_FPS / 1000); if (mf >= (mbK ? 30 : 40)) { mbAt = -1; mf = -1; lpReady = now + 900; } }
+  if (mbAt >= 0) { mf = Math.floor(Math.max(0, now - mbAt) * MB_FPS / 1000); if (mf >= (mbK === 2 ? 1e9 : mbK ? 30 : 40)) { mbAt = -1; mf = -1; lpReady = now + 900; } }
   let df = -1;                                // dash frame 0-14 (30 FPS)
   if (dgAt >= 0) { df = Math.floor(Math.max(0, now - dgAt) * DASH_FPS / 1000); if (df >= 15) { dgAt = -1; df = -1; dgReady = now + 150; } }
   if (jf < 0 && tf < 0) dgUsed = false;       // one air dash per jump
@@ -689,7 +718,8 @@ function drawScene(now, dt) {
   }
   if (lpReq) {                                // BLUE: in mid-air = teleport up, then fall. On the ground: walking forward = stand and pull the enemy in (stuns 0.4 s); otherwise blink forward to the enemy; crouched = Max Blue
     lpReq = false;
-    if (cm === 2) { if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0 && now > lpReady && stance === 'stand') { mbK = 1; mbAt = now; mf = 0; atkQ = false; } }      // RED: standing only; no teleport, Lapse Blue or Max Blue in red mode
+    if (rdOrb && rdOrb.slow && !rdOrb.coat && cm !== 2 && (keyL || padL) && t >= 1 && jf < 0 && tf < 0 && df < 0 && hf < 0 && lf < 0 && sf < 0 && af < 0 && bf < 0 && (mf < 0 || mbK === 1)) { startCoat(now); mf = 0; }      // a slow red orb is flying: BLUE while walking back coats it in blue and he jumps on it
+    else if (cm === 2) { if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0 && now > lpReady && stance === 'stand') { mbK = 1; mbAt = now; mf = 0; atkQ = false; rdSlow = !!(keyL || padL); } }      // RED: standing only; no teleport, Lapse Blue or Max Blue in red mode
     else if (t >= 1 && tf < 0 && df < 0 && bf < 0 && jf >= 4 && jf <= 11) { teleL0 = (jumpC ? D.cjump : D.jump).lift[jf]; teleAt = now; tf = 0; jumpAt = -1; jf = -1; }
     else if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0 && now > lpReady) {
       if (stance === 'stand') { lpK = (keyR || padR) ? 0 : 1; lpAt = now; lf = 0; atkQ = false; }
@@ -728,7 +758,7 @@ function drawScene(now, dt) {
   wx += dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * (crch ? 0.6 : 1) * (bf >= 0 ? 0.3 : 1) * dt;      // crouch-walking is slower, and walking while blocking is much slower still
   if (dash) { const k = Math.min(1, (now - dash.at) / dash.ms); wx = dash.from + (dash.to - dash.from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) dash = null; }   // Lapse Blue blink: a very fast dash
   if (df >= 0) { const k = Math.min(1, Math.max(0, (now - dgAt - 2000 / DASH_FPS) / 300)); wx = dgFrom + (dgTo - dgFrom) * (1 - Math.pow(1 - k, 3)); }      // the dash itself: fast at first, over frames 3-12
-  wx += wxv * dt; wxv *= Math.exp(-7 * dt);                    // knocked back by the attacking dummy: the world slides past, then friction stops it
+  wx += wxv * dt; wxv *= Math.exp(-7 * dt); if (ride) updateRide(now);                    // knocked back by the attacking dummy: the world slides past, then friction stops it
 
   ctx.save();
   if (now < shakeUntil) ctx.translate(Math.round((Math.random() * 2 - 1) * shakeAmp), Math.round((Math.random() * 2 - 1) * shakeAmp));   // tiny shake on impact
@@ -784,7 +814,7 @@ function drawScene(now, dt) {
   }
   if (mf !== evM) {                           // MAX BLUE cues: the swell builds from frame 3, the orb is released from his palm on frame 17
     if (mf < evM) evM = -1;
-    if (mf >= 0) { if (mbK) { if (evM < 1 && mf >= 1) snd('redcharge'); if (evM < 20 && mf >= 20) fireRed(now); } else { if (evM < 3 && mf >= 3) snd('mbcharge'); if (evM < 17 && mf >= 17) spawnOrb(now); } }
+    if (mf >= 0) { if (mbK === 1) { if (evM < 1 && mf >= 1) snd('redcharge'); if (evM < 20 && mf >= 20) fireRed(now); } else if (!mbK) { if (evM < 3 && mf >= 3) snd('mbcharge'); if (evM < 17 && mf >= 17) spawnOrb(now); } }
     evM = mf;
   }
   drawSmoke(now, dt);
@@ -797,11 +827,11 @@ function drawScene(now, dt) {
     if (!crch) { if (dir > 0) { bset = wblkF; binfo = D.wfb; bfi = slow % 15; } else if (dir < 0) { bset = wblkB; binfo = D.wbb; bfi = slow % 15; } else { bset = atkF[11]; binfo = D.atk11; bfi = bf; } }
     else if (dir > 0) { bset = crF.fblk; binfo = D.cfb; bfi = slow % 15; } else if (dir < 0) { bset = crF.bblk; binfo = D.cbb; bfi = slow % 15; } else { bset = crF.blk; binfo = D.cb; bfi = Math.floor(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)) % 15; }
   }
-  const set = hurting ? (now - hurtAt < 70 ? rxW : rxN)[hurtK] : dodging ? atkF[9 + dgK + (dgCr ? 3 : 0)] : blocking ? bset : tele ? teleF : jumping ? (jumpC ? crF.jump : jumpF) : mbing ? (mbK ? redF : mbF) : lapsing ? lapseF[lpK] : atkOn ? atkF[atkK] : mode === 'cdn' ? crF.dn : mode === 'cidle' ? crF.idle : mode === 'cfwd' ? crF.fwd : mode === 'cback' ? crF.back : idle ? idleF : mode === 'fwd' ? fwdF : backF;
-  const info = hurting ? D['rx' + hurtK] : dodging ? D['atk' + (9 + dgK + (dgCr ? 3 : 0))] : blocking ? binfo : tele ? D.tele : jumping ? (jumpC ? D.cjump : D.jump) : mbing ? (mbK ? D.atk22 : D.atk8) : lapsing ? D['atk' + (4 + lpK)] : atkOn ? D['atk' + atkK] : mode === 'cdn' ? D.cdn : mode === 'cidle' ? D.cidle : mode === 'cfwd' ? D.cfwd : mode === 'cback' ? D.cback : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
-  const fi = hurting ? hf : dodging ? df : blocking ? bfi : tele ? tf : jumping ? jf : mbing ? mf : lapsing ? lf : atkOn ? af : mode === 'cdn' ? (stance === 'down' ? sf : 14 - sf) : Math.floor(Math.max(0, now - (idle || mode === 'cidle' ? spawnAt : modeAt)) / (1000 / (idle || mode === 'cidle' ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail performance.now() by a hair
+  const riding = !!ride, set = riding ? ride.set : hurting ? (now - hurtAt < 70 ? rxW : rxN)[hurtK] : dodging ? atkF[9 + dgK + (dgCr ? 3 : 0)] : blocking ? bset : tele ? teleF : jumping ? (jumpC ? crF.jump : jumpF) : mbing ? (mbK ? redF : mbF) : lapsing ? lapseF[lpK] : atkOn ? atkF[atkK] : mode === 'cdn' ? crF.dn : mode === 'cidle' ? crF.idle : mode === 'cfwd' ? crF.fwd : mode === 'cback' ? crF.back : idle ? idleF : mode === 'fwd' ? fwdF : backF;
+  const info = riding ? ride.info : hurting ? D['rx' + hurtK] : dodging ? D['atk' + (9 + dgK + (dgCr ? 3 : 0))] : blocking ? binfo : tele ? D.tele : jumping ? (jumpC ? D.cjump : D.jump) : mbing ? (mbK ? D.atk22 : D.atk8) : lapsing ? D['atk' + (4 + lpK)] : atkOn ? D['atk' + atkK] : mode === 'cdn' ? D.cdn : mode === 'cidle' ? D.cidle : mode === 'cfwd' ? D.cfwd : mode === 'cback' ? D.cback : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
+  const fi = riding ? ride.fi : hurting ? hf : dodging ? df : blocking ? bfi : tele ? tf : jumping ? jf : mbing ? mf : lapsing ? lf : atkOn ? af : mode === 'cdn' ? (stance === 'down' ? sf : 14 - sf) : Math.floor(Math.max(0, now - (idle || mode === 'cidle' ? spawnAt : modeAt)) / (1000 / (idle || mode === 'cidle' ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail performance.now() by a hair
   const lk = tele ? info.lift_k[tf] : 0;      // teleport: stays where he vanished (null), then the fixed height he reappears at, falling back to the ground
-  const lift = tele ? (lk === null ? teleL0 : Math.round(Math.min(34, gy - 66) * lk)) : jumping ? (jumpC ? D.cjump : D.jump).lift[jf] : hurting && info.lift ? info.lift[hf] : 0;   // how far the sprite is raised off the ground
+  const lift = riding ? ride.lift : tele ? (lk === null ? teleL0 : Math.round(Math.min(34, gy - 66) * lk)) : jumping ? (jumpC ? D.cjump : D.jump).lift[jf] : hurting && info.lift ? info.lift[hf] : 0;   // how far the sprite is raised off the ground
   gojoLift = lift; gojoGone = tele && tf < 6;   // the attacking dummy misses him while he is up in the air or vanished
   const cx = Math.round(VW / 2), x = cx - (info.cx - info.x0), y = gy - 60 - info.top - lift;
 
@@ -953,7 +983,7 @@ addEventListener('orientationchange', () => setTimeout(resize, 250));
 window.__dummy = () => dummy ? { gap: dummy.x - wx, hp: dummy.hp, ko: dummy.ko, kos, hits: { n: hits.n, dmg: hits.dmg, seq: hits.seq }, rx: dummy.rx, mode: dummy.mode, ai: dummy.ai, cap: dummy.cap ? { mode: dummy.cap.mode, r: dummy.cap.r, y: dummy.cap.py, rot: dummy.cap.rot, front: dummy.cap.front } : null, stun: Math.max(0, dummy.stunUntil - performance.now()), smoke: smoke.length } : null;
 window.__ceDmg = n => ceDmg(n);                              // test hook: what a hit of n damage does right now (x1.3 while cursed energy is on)
 window.__hit = k => gojoHit(k, performance.now());           // test hook: the attacker's swing k lands on Gojo right now (a dash dodges it)
-window.__state = () => ({ cmode: cm, redOrb: !!rdOrb, boom: !!boom, ce: ceOn, ceAmt: +ceAmt.toFixed(2), ho: HOMAP.size, stance, jumpC, mode, wx, stick: { x: stickX, y: stickY, up: stickUp, down: stickDown, held: stickCr }, lapse: lpAt >= 0 ? lpK : -1, dash: dgAt >= 0 ? dgK : -1, dashAir: dgAir, block: blkAt >= 0 ? (blkEnd < 0 ? 1 : 2) : 0, guard: guardUp(performance.now()), mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests
+window.__state = () => ({ cmode: cm, redOrb: !!rdOrb, orbV: rdOrb ? rdOrb.v : 0, coat: rdOrb ? !!rdOrb.coat : false, ride: ride ? ride.phase : '', lift: gojoLift, boom: !!boom, ce: ceOn, ceAmt: +ceAmt.toFixed(2), ho: HOMAP.size, stance, jumpC, mode, wx, stick: { x: stickX, y: stickY, up: stickUp, down: stickDown, held: stickCr }, lapse: lpAt >= 0 ? lpK : -1, dash: dgAt >= 0 ? dgK : -1, dashAir: dgAir, block: blkAt >= 0 ? (blkEnd < 0 ? 1 : 2) : 0, guard: guardUp(performance.now()), mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests
 window.__back = () => {                       // Android back button: step back through the menus, otherwise let the app close
   if (settingsOn()) { closeSettings(); return true; }
   if (state === 'play') { show('select'); return true; }
