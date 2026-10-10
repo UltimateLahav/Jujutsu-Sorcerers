@@ -146,6 +146,23 @@ function makeSfx(ac) {
       tone(B.deep, t, { type: 'triangle', f: red ? 100 : 124, f2: 46, dur: red ? 0.34 : 0.22, gain: red ? 0.5 : 0.38, atk: 0.003 });
       burst(B.soft, t, { f: red ? 450 : 700, f2: 180, q: 0.8, dur: 0.12, gain: red ? 3.0 : 2.4, atk: 0.001 });
     },
+    ko(at) {                                             // the dummy goes down: a heavy hit, a whoosh as he topples, then the thud on the floor
+      const t = T(at), B = C.atk;
+      tone(B.deep, t, { type: 'triangle', f: 150, f2: 44, dur: 0.55, gain: 0.5, atk: 0.004 });
+      burst(B.soft, t, { f: 1100, f2: 200, q: 0.8, dur: 0.45, gain: 1.2, atk: 0.03 });
+      tone(B.deep, t + 0.4, { type: 'triangle', f: 112, f2: 40, dur: 0.45, gain: 0.45, atk: 0.003 });
+      burst(B.soft, t + 0.4, { f: 600, f2: 160, q: 0.8, dur: 0.18, gain: 3.2, atk: 0.001 });
+    },
+    finisher(at) {                                       // all four hits landed in order: a low swell with a faint shimmer
+      const t = T(at), B = C.atk;
+      tone(B.deep, t, { type: 'triangle', f: 80, f2: 200, dur: 0.36, gain: 0.3, atk: 0.05 });
+      tone(B.soft, t + 0.05, { f: 392, dur: 0.5, gain: 0.07, atk: 0.03 }); tone(B.soft, t + 0.1, { f: 523, dur: 0.5, gain: 0.05, atk: 0.03 });
+    },
+    hurt(k, at) {                                        // Gojo takes a hit: a dull thump and slap (a different, softer voice than the hit he deals)
+      const t = T(at), B = C.atk;
+      tone(B.deep, t, { type: 'triangle', f: 112, f2: 50, dur: 0.3, gain: 0.45, atk: 0.003 });
+      burst(B.soft, t, { f: 520, f2: 160, q: 0.8, dur: 0.14, gain: 2.6, atk: 0.001 });
+    },
     setVol(name, v) {                                    // per-sound volume, 0 = silent, 1 = designed level, 2 = twice as loud
       vol[name] = v;
       if (name === 'master') applyMaster();

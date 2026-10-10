@@ -270,16 +270,55 @@ def atk_fx(f, i, k, an, foot, nfp, E, Hn, Hf, gl):
             if 2.5 < math.hypot(p1[0] - p0[0], p1[1] - p0[1]) < 18: f.line([p0, p1], col)
     burst_fx(f, i, k, fx)
 
+# ---------------------------------------------------------------- 10 hit reactions x 10 frames (Gojo's own pose, normal colours; the game also uses them inverted for the dummy)
+RX_ORDER = ('dx', 'dy', 'lean', 'hs', 'rot', 'sx', 'nax', 'nl', 'fax', 'fl', 'nua', 'nfa', 'fua', 'ffa')     # hips fwd, hips down, torso lean, head shift, body rotation, horizontal scale, feet x / lift (near, far), arm angles
+def P(**kw):
+    v = dict(dx=0, dy=0, lean=0, hs=0, rot=0, sx=1, nax=0, nl=0, fax=0, fl=0, nua=-16, nfa=45, fua=-16, ffa=45); v.update(kw); return tuple(v[k] for k in RX_ORDER)
+RX = {
+    0: [K(0, P(lean=-1, hs=-5)), K(1, P(dx=-1, lean=-3, hs=-9)), K(3, P(dx=-1, lean=-2, hs=-6)), K(6, P(lean=-1, hs=-2)), K(9, P())],                                  # head snaps back
+    1: [K(0, P(dx=-1, dy=1, lean=2, hs=2, nua=-10, nfa=90)), K(2, P(dx=-2, dy=3, lean=6, hs=5, nua=-10, nfa=90)), K(4, P(dx=-2, dy=4, lean=7, hs=6, nua=-10, nfa=90)),
+        K(6, P(dx=-1, dy=3, lean=5, hs=3, nua=-10, nfa=90)), K(8, P(dy=1, lean=2, hs=1)), K(9, P())],                                                                      # doubled over
+    2: [K(0, P(dx=-1, lean=-2, hs=-2, fax=-3, fl=3)), K(2, P(dx=-3, lean=-3, hs=-2, nax=-4, nl=4, fax=-6)), K(4, P(dx=-5, lean=-3, hs=-1, nax=-8, fax=-9, fl=3)),
+        K(6, P(dx=-4, lean=-2, nax=-6, fax=-9)), K(8, P(dx=-1, lean=-1, nax=-2, fax=-3)), K(9, P())],                                                                      # staggers back
+    3: [K(0, P(lean=-1)), K(1, P(sx=.55, lean=-1)), K(2, P(sx=.1)), K(3, P(sx=-.55)), K(4, P(sx=-1)), K(5, P(sx=-.55)), K(6, P(sx=.1)), K(7, P(sx=.6)), K(8, P(sx=.9)), K(9, P())],   # spins right round
+    4: [K(0, P(dx=-1, lean=-3, hs=-3, rot=-8)), K(1, P(dx=-2, dy=1, lean=-4, hs=-2, rot=-25, nl=1, fl=1)), K(2, P(dx=-3, dy=2, lean=-4, rot=-45, nl=2, fl=2)),
+        K(3, P(dx=-4, dy=4, lean=-3, rot=-62, nl=2, fl=2)), K(4, P(dx=-5, dy=6, lean=-2, rot=-72)), K(5, P(dx=-5, dy=6, rot=-74)), K(6, P(dx=-5, dy=6, rot=-72)),
+        K(7, P(dx=-3, dy=4, rot=-55)), K(8, P(dx=-1, dy=3, rot=-25)), K(9, P())],                                                                                          # knocked flat, gets up
+    5: [K(0, P(lean=-2, hs=-1, nax=-1, fax=-1, nua=0, nfa=50, fua=0, ffa=50)), K(2, P(dx=-2, lean=-4, hs=-2, nax=-6, fax=-6, nua=35, nfa=60, fua=35, ffa=60)),
+        K(5, P(dx=-3, lean=-4, hs=-1, nax=-8, fax=-8, nua=35, nfa=60, fua=35, ffa=60)), K(7, P(dx=-1, lean=-2, nax=-4, fax=-4, nua=15, nfa=50, fua=15, ffa=50)), K(9, P())],   # skids back on his heels
+    6: [K(0, P(lean=-1)), K(1, P(dx=-1, dy=1, lean=-1, nua=35, nfa=160, fua=20, ffa=150)), K(3, P(dx=-2, dy=2, lean=-3, hs=-1, nua=35, nfa=160, fua=20, ffa=150)),
+        K(6, P(dx=-1, dy=1, lean=-1, nua=25, nfa=150, fua=15, ffa=140)), K(9, P())],                                                                                       # arms up to guard
+    7: [K(0, P(lean=-2, hs=-1)), K(1, P(dx=-1, lean=-4, hs=-2, nl=3, fl=3)), K(3, P(dx=-1, lean=-4, hs=-2, nl=5, fl=5, nua=45, nfa=80, fua=45, ffa=80)),
+        K(6, P(dx=-1, dy=1, lean=-2, hs=-1, nl=2, fl=2, nua=30, nfa=70, fua=30, ffa=70)), K(8, P(dy=2)), K(9, P())],                                                      # hops backwards
+    8: [K(0, P(lean=-2, hs=-2)), K(1, P(dy=1, lean=2, hs=2)), K(2, P(lean=-3, hs=-3)), K(3, P(dy=1, lean=3, hs=3)), K(4, P(lean=-3, hs=-2)), K(5, P(dy=1, lean=3, hs=2)),
+        K(6, P(lean=-2, hs=-2)), K(7, P(dy=1, lean=2, hs=1)), K(8, P(lean=-1, hs=-1)), K(9, P())],                                                                         # dizzy wobble
+    9: [K(0, P(dx=-1, dy=1, lean=1)), K(2, P(dx=-2, dy=5, lean=3, hs=2, fax=-8, fl=5, nua=40, nfa=25)), K(4, P(dx=-3, dy=9, lean=5, hs=4, fax=-12, fl=9, nua=40, nfa=25)),
+        K(6, P(dx=-3, dy=9, lean=5, hs=4, fax=-12, fl=9, nua=40, nfa=25)), K(8, P(dx=-1, dy=4, lean=2, hs=1, fax=-5, fl=3)), K(9, P())],                                  # drops to one knee
+}
+RX_SH = [8, 8, 10, 8, 23, 12, 8, 10, 8, 10]                 # each reaction is drawn this many px right of the usual spot so a backwards fall fits in the canvas
+RX_LIFT = {7: [0, 4, 8, 10, 10, 8, 5, 2, 0, 0]}              # the hop: height above the ground per frame (applied by the game)
+def rot(f, deg, px, py):                                    # rotate a finished frame about (px, py), inverse-mapped so there are no holes
+    a = rad(deg); ca, sa = cos(a), sin(a); src = [r[:] for r in f.g]; f.g = [['.'] * N for _ in range(NH)]
+    for y in range(NH):
+        for x in range(N):
+            ox, oy = round(px + (x - px) * ca + (y - py) * sa), round(py - (x - px) * sa + (y - py) * ca)
+            if 0 <= ox < N and 0 <= oy < NH: f.g[y][x] = src[oy][ox]
+
 def build(kind, i):
     idx = i                               # (i is reused for the head loop below)
     f = F(); u = F()                      # f: legs, u: everything above the hips
     hx, foot, lean = 33, None, 0
-    atk = kind.startswith('atk'); foot2 = None
+    atk = kind.startswith('atk'); rxk = kind.startswith('rx'); foot2 = None; hs = 0; sx_ = 1; rot_ = 0
     if kind == 'idle':
         L = [.15, .35, .55, .7, .5, .25][i]; bob = [0, 0, 0, 1, 1, 0][i]
         thn, kn_, thf, kf, swn, swf = rad(4), 0, rad(-8), 0, False, False; p = i / 6
     elif kind in ('jump', 'tele'):
         hx, hy, thn, kn_, thf, kf, foot, lean = (jump_pose if kind == 'jump' else tele_pose)(i); swn = swf = False; L = 0; bob = 0; p = 0
+    elif rxk:
+        k_ = int(kind[2:]); SH = RX_SH[k_]; gl = 0
+        dx, dy, lean, hs, rot_, sx_, nax, nl, fax, fl, nua, nfa, fua, ffa = keyframe(RX[k_], i)
+        hx, hy = 33 + SH + dx, 38 + TOP + round(dy); swn = swf = False; L = 0; bob = 0; p = 0; foot = 0.0
+        thn, kn_ = ik(hx, hy, 33.7 + SH + nax, GROUND - nl); thf, kf = ik(hx, hy, 29.7 + SH + fax, GROUND - fl)
     elif atk:
         k_ = int(kind[3:]); dx, dy, lean, nth, nk, nf, nua, nfa, fua, ffa, gl = pv = keyframe(ATK[k_], i)
         hx, hy = 33 + dx, 38 + TOP + round(dy); swn = swf = False; L = 0; bob = 0; p = 0; foot = 0.0
@@ -293,7 +332,7 @@ def build(kind, i):
         thn, kn_ = gait(qn, amp, kmax); thf, kf = gait(qf, amp, kmax); swn, swf = qn >= .5, qf >= .5
         L = .8 + .25 * sin(2 * math.pi * i / NW) if kind == 'fwd' else max(-.2, .05 + .12 * sin(2 * math.pi * i / NW)); bob = 0
     drop = lambda th, k: L1 * cos(th) + L2 * cos(th - k)
-    if kind not in ('jump', 'tele') and not atk: hy = round(58 + TOP - max(drop(thn, kn_), drop(thf, kf)))
+    if kind not in ('jump', 'tele') and not atk and not rxk: hy = round(58 + TOP - max(drop(thn, kn_), drop(thf, kf)))
     dxb = round(hx - 33)                                   # the body follows the hips (the planted feet stay put)
     oy = hy - 34; hb = bob
     wave = round(sin(2 * math.pi * 2 * i / NW)) if kind in ('fwd', 'back') else [0, 1, 0, -1, 0, 1][i % 6]      # tail sway: whole cycles per loop, so the walk loops without a pop
@@ -307,7 +346,7 @@ def build(kind, i):
         jk |= {(x, y + oy) for x in range(a, b + 1)}
     u.fill(jk, 'B'); u.bands(jk, 'B', 'C', 'A'); u.rim(jk, 'O')                 # lower clothes stay still: no flap, no billow
     # near arm, hand in the pocket (the attacks draw their own arms further down)
-    if not atk:
+    if not (atk or rxk):
         sw = round(1.2 * sin(2 * math.pi * p)) * (-1 if kind == 'back' else 1) if kind in ('fwd', 'back') else 0
         S, E, P = (32, 18 + oy), (30 + sw, 25 + oy), (35, 30 + oy)
         arm = seg(S, E, 4.2, 3.6) | seg(E, P, 3.4, 2.6) | disc(E[0], E[1], 2.0)
@@ -329,7 +368,7 @@ def build(kind, i):
         for x, y in pts: u.set(x, y, 'X'); u.set(x + 1, y, 'X')
         u.set(*pts[1], 'Y')
     # head, hand-drawn (x = 22 + column, y = 1 + row): static face/band first, then the hair on top, sheared by the wind
-    tip = {'idle': [0, 0, 1, 1, 0, -1], 'fwd': [round(sin(2 * math.pi * 2 * k / NW)) for k in range(NW)], 'back': [round(sin(2 * math.pi * (2 * k + 4) / NW)) for k in range(NW)], 'jump': [0, 0, 1, 1, 0, -1] * 3, 'tele': [0, 0, 1, 1, 0, -1] * 3, **{f'atk{j}': [0, 0, 1, 1, 0, -1] * 3 for j in range(4)}}[kind][i]
+    tip = {'idle': [0, 0, 1, 1, 0, -1], 'fwd': [round(sin(2 * math.pi * 2 * k / NW)) for k in range(NW)], 'back': [round(sin(2 * math.pi * (2 * k + 4) / NW)) for k in range(NW)], 'jump': [0, 0, 1, 1, 0, -1] * 3, 'tele': [0, 0, 1, 1, 0, -1] * 3, **{f'atk{j}': [0, 0, 1, 1, 0, -1] * 3 for j in range(4)}, **{f'rx{j}': [0, 0, 1, 1, 0, -1] * 2 for j in range(10)}}[kind][i]
     sh = lambda y: tip if y <= 1 else 0                        # hair stays upright; only the tip pixels flutter
     hair = []
     for x, top in CROWN.items():                              # crown: white, lavender toward the band
@@ -345,33 +384,37 @@ def build(kind, i):
     for x, y, ch in hair: u.set(x, y, ch)
     for x, y, ch in hair:                                    # re-outline any edge the shear exposed
         if ch != 'M' and any(u.at(x + dx, y + dy) == '.' for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))): u.set(x, y, 'M')
-    if atk:                                               # the far arm goes first so the torso covers its shoulder
-        Sy = hy - 16; Sx = 32 + dxb + round(.8 * lean); fxc = RED_FX if k_ == 3 else BLUE_FX
-        _, Hf = draw_arm(f, (Sx - 1, Sy), fua, ffa, False, gl if 'f' in ATK_HANDS[k_] else 0, fxc)
+    if atk or rxk:                                        # the far arm goes first so the torso covers its shoulder
+        Sy = hy - 16; Sx = 32 + dxb + round(.8 * lean); fxc = RED_FX if (atk and k_ == 3) else BLUE_FX
+        _, Hf = draw_arm(f, (Sx - 1, Sy), fua, ffa, False, gl if atk and 'f' in ATK_HANDS[k_] else 0, fxc)
     for y in range(NH):                                                   # lean the torso/head forward and slide it over the planted feet
         for x in range(N):
             c = u.g[y][x]
-            if c != '.': f.set(x + dxb + round(lean * max(0.0, (34 + oy - y) / 20.0)), y, c)
-    if atk:                                               # near arm in front of everything, then glow trail and impact flash
-        E, Hn = draw_arm(f, (Sx, Sy), nua, nfa, True, gl if 'n' in ATK_HANDS[k_] else 0, fxc)
-        atk_fx(f, idx, k_, an, foot2 if foot2 is not None else 0.0, nua, E, Hn, Hf, gl)
+            if c != '.': f.set(x + dxb + round(lean * max(0.0, (34 + oy - y) / 20.0)) + (round(hs) if y < oy + 15 else 0), y, c)
+    if atk or rxk:                                        # near arm in front of everything, then (attacks) glow trail and impact flash
+        E, Hn = draw_arm(f, (Sx, Sy), nua, nfa, True, gl if atk and 'n' in ATK_HANDS[k_] else 0, fxc)
+        if atk: atk_fx(f, idx, k_, an, foot2 if foot2 is not None else 0.0, nua, E, Hn, Hf, gl)
+    if rxk:                                               # spin (squash about the body axis) and fall (rotate about the feet)
+        if sx_ != 1: warp(f, sx_ if abs(sx_) > .08 else .08, 1, hx, 30)
+        if rot_: rot(f, rot_, 33.7 + SH, GROUND + 3)
     if kind == 'tele': tele_fx(f, idx)
     return f
 
 def rows(f, x0, w): return [''.join(r[x0:x0 + w]) for r in f.g]
 
-sets = {k: [build(k, i) for i in range(NW if k in ('fwd', 'back') else 15 if k in ('jump', 'tele') or k.startswith('atk') else 6)] for k in ('idle', 'fwd', 'back', 'jump', 'tele', 'atk0', 'atk1', 'atk2', 'atk3')}
+sets = {k: [build(k, i) for i in range(NW if k in ('fwd', 'back') else 15 if k in ('jump', 'tele') or k.startswith('atk') else 10 if k.startswith('rx') else 6)] for k in ('idle', 'fwd', 'back', 'jump', 'tele', 'atk0', 'atk1', 'atk2', 'atk3', *['rx%d' % j for j in range(10)])}
 for k in ('idle', 'fwd', 'back'):
     for f in sets[k]: f.g = f.g[TOP:TOP + N]
-cells = [(x, y) for k, fs in sets.items() if not k.startswith('atk') for f in fs for y in range(len(f.g)) for x in range(N) if f.g[y][x] != '.']
+cells = [(x, y) for k, fs in sets.items() if not k.startswith(('atk', 'rx')) for f in fs for y in range(len(f.g)) for x in range(N) if f.g[y][x] != '.']
 acx = [x for k, fs in sets.items() if k.startswith('atk') for f in fs for r in f.g for x, c in enumerate(r) if c != '.']
 ax0, ax1 = min(acx) - 1, max(acx) + 1        # one window for the four attack sets (they reach further forward than the others)
 x0, x1 = min(x for x, y in cells) - 1, max(x for x, y in cells) + 1
 print('bbox cols', x0 + 1, x1 - 1, 'rows', min(y for x, y in cells), max(y for x, y in cells))
 bad = {c for f in (f for fs in sets.values() for f in fs) for r in f.g for c in r} - set(PAL) - {'.'}
 assert not bad, bad
-def win(k): return (ax0, ax1) if k.startswith('atk') else (x0, x1)
-json.dump({k: {'x0': win(k)[0], 'w': win(k)[1] - win(k)[0] + 1, 'h': len(fs[0].g), 'top': TOP if k in ('jump', 'tele') or k.startswith('atk') else 0, 'cx': 33, 'frames': [rows(f, win(k)[0], win(k)[1] - win(k)[0] + 1) for f in fs], **({'lift': JUMP_LIFT} if k == 'jump' else {}), **({'lift_k': TELE_K} if k == 'tele' else {})} for k, fs in sets.items()}, open('side.json', 'w'))
+RXWIN = {k: (max(0, min(xs) - 1), min(N - 1, max(xs) + 1)) for k, fs in sets.items() if k.startswith('rx') for xs in [[x for f in fs for r in f.g for x, c in enumerate(r) if c != '.']]}
+def win(k): return (ax0, ax1) if k.startswith('atk') else RXWIN[k] if k.startswith('rx') else (x0, x1)
+json.dump({k: {'x0': win(k)[0], 'w': win(k)[1] - win(k)[0] + 1, 'h': len(fs[0].g), 'top': TOP if k in ('jump', 'tele') or k.startswith(('atk', 'rx')) else 0, 'cx': 33 + RX_SH[int(k[2:])] if k.startswith('rx') else 33, 'frames': [rows(f, win(k)[0], win(k)[1] - win(k)[0] + 1) for f in fs], **({'lift': JUMP_LIFT} if k == 'jump' else {}), **({'lift': RX_LIFT[int(k[2:])]} if k.startswith('rx') and int(k[2:]) in RX_LIFT else {}), **({'lift_k': TELE_K} if k == 'tele' else {})} for k, fs in sets.items()}, open('side.json', 'w'))
 d_ = json.load(open('side.json')); d_['pal_extra'] = {**GLOW, **RED}; json.dump(d_, open('side.json', 'w'))
 
 def render(f, sc, bg):
