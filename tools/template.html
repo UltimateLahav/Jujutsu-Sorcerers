@@ -161,7 +161,7 @@ const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
 let state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
 let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1;
-let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', flashUntil = 0, flashMs = 1, flashA = 0, stickX = 0, stickY = 0, stickUp = false, stickDown = false, stickCr = false, stickDownEnd = -9999, jumpFromStick = false, joyId = null, dashReq = false, dgAt = -1, dgK = 0, dgFrom = 0, dgTo = 0, dgAir = false, dgUsed = false, dgReady = 0, blockHeld = false, blkAt = -1, blkEnd = -1, blkFrom = 4, fieldHit = -9999;
+let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', flashUntil = 0, flashMs = 1, flashA = 0, stickX = 0, stickY = 0, stickUp = false, stickDown = false, stickCr = false, stickDownEnd = -9999, jumpFromStick = false, joyId = null, dashReq = false, dgAt = -1, dgK = 0, dgFrom = 0, dgTo = 0, dgAir = false, dgUsed = false, dgReady = 0, blockHeld = false, blkAt = -1, blkEnd = -1, blkFrom = 4;
 const STRIP = 480;
 
 // ---------------------------------------------------------------- sound (all synthesised in sfx.js, no audio files)
@@ -292,19 +292,7 @@ function layer(c, k) {                        // parallax: far layers move less 
 }
 
 function spawnDummy(now, mode) {
-  dummy = { mode: mode || 'dummy', x: wx + (mode === 'fighter' ? 78 : 32), born: now, vx: 0, hitAt: -9999, hp: DUMMY_HP, shown: DUMMY_HP, ko: -1, rx: 0, rxAt: -9999, stunUntil: 0, pull: null, smokeUntil: 0, fieldAt: -9999, ai: 'rest', aiAt: now, restFor: 1200, k: 0, hitDone: true, swung: true };
-}
-function drawField(sx, cy, dir, a, now, hitAt) {   // the forcefield in front of someone who is blocking: a shimmering blue barrier bulging forward (dir +1 = facing right, -1 = left); a = 0..1 how far up it is; it flares when it takes a hit
-  if (a <= 0) return;
-  const fl = Math.floor(now / 90), flare = Math.max(0, 1 - (now - hitAt) / 320), ea = Math.min(1, a) * (0.8 + 0.2 * flare);
-  for (let y = -26; y <= 26; y++) {
-    const ox = 16 + Math.round(9 * Math.cos(y / 28 * 1.5708)), px = sx + dir * ox, py = Math.round(cy + y);
-    ctx.fillStyle = 'rgba(' + (flare > 0.05 ? '255,255,255' : '190,238,255') + ',' + ea + ')'; ctx.fillRect(px, py, 1, 1);                    // the edge
-    if (flare > 0.05) { ctx.fillStyle = 'rgba(160,225,255,' + (flare * 0.8 * a) + ')'; ctx.fillRect(px + dir * 2, py, 1, 1); ctx.fillRect(px + dir * 3, py, 1, 1); }
-    ctx.fillStyle = 'rgba(110,190,255,' + (0.28 * a + 0.3 * flare * a) + ')';
-    for (let x = 7; x < ox; x++) if ((x + y + fl) % 3 === 0) ctx.fillRect(sx + dir * x, py, 1, 1);                                           // the shimmering pane
-    if (y % 2 === 0) { ctx.fillStyle = 'rgba(140,215,255,' + (0.5 * a) + ')'; ctx.fillRect(sx + dir * (ox - 1), py, 1, 1); }
-  }
+  dummy = { mode: mode || 'dummy', x: wx + (mode === 'fighter' ? 78 : 32), born: now, vx: 0, hitAt: -9999, hp: DUMMY_HP, shown: DUMMY_HP, ko: -1, rx: 0, rxAt: -9999, stunUntil: 0, pull: null, smokeUntil: 0, ai: 'rest', aiAt: now, restFor: 1200, k: 0, hitDone: true, swung: true };
 }
 function guardUp(now) { return blkAt >= 0 && blkEnd < 0 && now - blkAt >= 2000 / BLK_FPS; }       // hands are up (from the 3rd frame): attacks from the front bounce off
 function say(txt, x, col, size, now) { popups.push({ born: now, x, txt, col, size: size || 8 }); }
@@ -312,8 +300,8 @@ function hitDummy(k, now) {                   // called on the impact frame: a h
   if (!dummy || dummy.ko >= 0 || dummy.cap || now - dummy.born < 600) return;     // (an enemy caught by Max Blue is out of reach)
   const gap = dummy.x - wx;                   // the dummy's centre relative to Gojo's hips; his body is about 12 px wide
   if (gap - 6 > REACH[k] || gap + 6 < 3) return;
-  if (dummy.mode === 'blocker' && gap > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx]) {      // the blocker's guard faces Gojo: normal punches bounce off the forcefield (from behind they land)
-    dummy.fieldAt = now; dummy.vx += KNOCK[k] * 0.3; shakeUntil = now + 70; shakeAmp = 1; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); return;
+  if (dummy.mode === 'blocker' && gap > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx]) {      // the blocker's guard faces Gojo: normal punches are blocked (from behind they land)
+    dummy.vx += KNOCK[k] * 0.3; shakeUntil = now + 70; shakeAmp = 1; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); return;
   }
   let dmg = DMG[k] + ((Math.random() * 5) | 0);
   if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; }                    // the counter restarts after 1.6 s without a landed hit
@@ -330,8 +318,8 @@ function hitDummy(k, now) {                   // called on the impact frame: a h
 function gojoHit(k, now) {                    // the attacking dummy's swing connects with Gojo
   if (dgAt >= 0 && now - dgAt < 11 * 1000 / DASH_FPS) return;       // he is dashing: the swing misses
   if (hurtAt >= 0 || now - hurtEnd < 350 || gojoLift > 12 || gojoGone) return;
-  if (guardUp(now) && dummy && dummy.x > wx) {  // his guard is up and the attacker is in front of him: the swing bounces off the forcefield (a hit from behind still lands)
-    fieldHit = now; wxv -= KNOCK_G[k] * 0.3; shakeUntil = now + 80; shakeAmp = 1; say('BLOCKED', wx + 14, '#9fd8ff', 8, now); snd('block');
+  if (guardUp(now) && dummy && dummy.x > wx) {  // his guard is up and the attacker is in front of him: the swing is blocked (a hit from behind still lands)
+    wxv -= KNOCK_G[k] * 0.3; shakeUntil = now + 80; shakeAmp = 1; say('BLOCKED', wx + 14, '#9fd8ff', 8, now); snd('block');
     return;
   }
   if (stance !== 'stand' && k !== 3) return;                                          // crouching ducks the hooks and the elbow, but not the low kick      // already reeling, just recovered, or jumped / teleported out of the way
@@ -396,7 +384,6 @@ function drawDummy(now, dt) {
     ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, -hx, y);
   }
   ctx.restore();
-  if (kt < 0 && dummy.mode === 'blocker' && !reacting) drawField(sx, gy - 32, -1, Math.min(1, t * 2), now, dummy.fieldAt);      // his forcefield
   if (kt < 0 && t < 1) { const R = 4 + t * 36; ctx.fillStyle = 'rgba(255,170,90,' + (1 - t) + ')'; for (let a = 0; a < 40; a++) { const th = a / 40 * 6.2832; ctx.fillRect(Math.round(sx + Math.cos(th) * R), Math.round(gy + 2 + Math.sin(th) * R * 0.25), 1, 1); } }
   if (kt < 0 && t >= 0.4) drawBar(sx - 13, gy - 68);   // health bar above his head
 }
@@ -431,7 +418,7 @@ function pullEnemy(now) {                     // Lapse Blue: the enemy is dragge
   if (gap < 3 || gap > 140) return;           // nothing in front of him within range
   dummy.pull = { from: dummy.x, to: wx + 15, at: now, ms: 260 }; dummy.vx = 0;
   dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = 700;
-  if (dummy.mode === 'blocker') { dummy.fieldAt = now; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); }      // blockable: he is still dragged in, but the guard holds, so no stun
+  if (dummy.mode === 'blocker') { say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); }      // blockable: he is still dragged in, but the guard holds, so no stun
   else { dummy.stunUntil = now + 260 + 400; say('STUN', dummy.x, '#59b8ff', 8, now); snd('stun'); }
 }
 function startBlink(now) {                    // Lapse Blue: blink forward to the enemy (or 50 px ahead if there is none)
@@ -613,7 +600,7 @@ function drawScene(now, dt) {
       else if (stance === 'crouch' && !orb) { stance = 'up'; stAt = now; sf = 0; mbPending = true; }          // crouched: stand up first, then summon MAX BLUE (not while the last orb is still out)
     }
   }
-  if (blockHeld && blkAt < 0 && t >= 1 && stance === 'stand' && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && mf < 0 && df < 0 && sf < 0) { blkAt = now; blkEnd = -1; bf = 0; atkQ = false; }      // BLOCK (hold): hands up, forcefield in front
+  if (blockHeld && blkAt < 0 && t >= 1 && stance === 'stand' && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && mf < 0 && df < 0 && sf < 0) { blkAt = now; blkEnd = -1; bf = 0; atkQ = false; }      // BLOCK (hold): his signature pose, one hand up with two fingers raised; hits from the front are blocked
   if (!blockHeld && blkAt >= 0 && blkEnd < 0) blkEnd = now;
   if (dashReq) {                              // DASH (evade): the way he is walking is the way he dashes; standing still = back. On the ground, crouched, or (once per jump) in mid-air: hold a direction, then press
     dashReq = false;
@@ -726,7 +713,6 @@ function drawScene(now, dt) {
   ctx.drawImage(set[fi], x, y);
   ctx.restore();
 
-  if (bf >= 0) drawField(cx, gy - 32, 1, Math.min(1, bf / 4), now, fieldHit);       // the forcefield in front of Gojo
   if (tele && (tf === 2 || tf === 3)) { ctx.fillStyle = 'rgba(160,220,255,0.12)'; ctx.fillRect(0, 0, VW, VH); }   // soft blue flash on the teleport
   if (t < 1) {                                // spawn ring + flash
     const R = 6 + t * 70;

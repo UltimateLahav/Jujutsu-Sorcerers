@@ -485,9 +485,18 @@ def dash_fx(f, i, k):                                          # blue afterimage
             y = row + TOP + (i + j) % 2
             if 0 <= x < N and f.g[y][x] == '.': f.set(x, y, 'h' if t % 4 < 3 else 'g')
 ATK_HANDS[9] = ATK_HANDS[10] = ''; ATK_IMPACT.extend([99, 99])
-# ---------------------------------------------------------------- BLOCK (guard): 10 frames; 0-4 the hands come up out of the pocket, 5-9 the held guard (loops, fists a hair up and down); lowering plays 4..0
-G0 = (0, 1, -1, 4, 0, 0, 40, 165, 30, 160, 0); G1 = (0, 1, -1, 4, 0, 0, 42, 167, 32, 162, 0); G2 = (0, 2, -1, 4, 0, 0, 38, 163, 28, 158, 0)
-ATK[11] = [K(0, I0), K(2, (0, 1, 0, 4, 0, 0, 20, 100, 12, 90, 0)), K(4, G0), K(5, G1), K(7, G2), K(9, G1)]
+# ---------------------------------------------------------------- BLOCK: his signature pose, 10 frames; the near hand comes out of the pocket and rises beside his face with two fingers up (frames 0-4), holds (5-9, loops, a hair of sway), lowering plays 4..0; the far hand stays in the pocket
+G0 = (0, 0, -1, 4, 0, 0, 68, 170, -16, 45, 0); G1 = (0, 0, -1, 4, 0, 0, 70, 173, -16, 45, 0); G2 = (0, 1, -1, 4, 0, 0, 66, 168, -16, 45, 0)
+ATK[11] = [K(0, I0), K(2, (0, 0, 0, 4, 0, 0, 40, 95, -16, 45, 0)), K(4, G0), K(5, G1), K(7, G2), K(9, G1)]
+def peace_hand(f, H, fa):                                   # an open hand with the index and middle fingers pointing up along the forearm (the other fingers stay curled)
+    b = rad(fa); dx, dy = sin(b), cos(b); px, py = cos(b), -sin(b)
+    for side in (-1.0, 0.0, 1.0): f.set(H[0] + dx * 1.6 + px * side, H[1] + dy * 1.6 + py * side, 'V')       # the knuckle line where the two fingers leave the palm
+    for t in range(1, 7):
+        for side, c in ((-0.5, 'T'), (0.5, 'S')):
+            x, y = H[0] + dx * (1.6 + t) + px * side, H[1] + dy * (1.6 + t) + py * side
+            f.set(x, y, 'V' if t == 6 else c)
+    for t in range(1, 6):                                  # a thin outline down both sides of the two fingers
+        for side in (-1.5, 1.5): f.set(H[0] + dx * (1.6 + t) + px * side, H[1] + dy * (1.6 + t) + py * side, 'V')
 ATK_HANDS[11] = ''; ATK_IMPACT.extend([99])
 
 def build(kind, i):
@@ -585,6 +594,7 @@ def build(kind, i):
             if c != '.': f.set(x + dxb + round(lean * max(0.0, (34 + oy - y) / 20.0)) + (round(hs) if y < oy + 15 else 0), y, c)
     if atk or rxk:                                        # near arm in front of everything, then (attacks) glow trail and impact flash
         E, Hn = draw_arm(f, (Sx, Sy), nua, nfa, True, gl if atk and 'n' in ATK_HANDS[k_] else 0, fxc)
+        if atk and k_ == 11: peace_hand(f, Hn, nfa)
         if atk and k_ in (9, 10): dash_fx(f, idx, k_)
         elif atk: atk_fx(f, idx, k_, an, foot2 if foot2 is not None else 0.0, nua, E, Hn, Hf, gl)
     if rxk:                                               # spin (squash about the body axis) and fall (rotate about the feet)
