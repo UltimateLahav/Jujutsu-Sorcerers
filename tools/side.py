@@ -56,7 +56,7 @@ def gait(q, amp, kmax):                          # hip angle (forward +) and kne
 
 SHOE = ((-2, -1), (2, -1), (4, 1), (7, 2), (7, 3), (-2, 3))
 
-def leg(f, hx, hy, th, k, swing, near, foot=None):
+def leg(f, hx, hy, th, k, swing, near, foot=None, rimc='O'):
     kn = (hx + L1 * sin(th), hy + L1 * cos(th)); al = th - k
     an = (kn[0] + L2 * sin(al), kn[1] + L2 * cos(al))
     body = seg((hx, hy), kn, 5.2, 4.4) | seg(kn, an, 4.4, 3.2) | disc(kn[0], kn[1], 2.3)
@@ -64,7 +64,7 @@ def leg(f, hx, hy, th, k, swing, near, foot=None):
     shoe = pm([(an[0] + x * cos(ph) - y * sin(ph), an[1] + x * sin(ph) + y * cos(ph)) for x, y in SHOE])
     f.fill(body, 'B'); f.fill(shoe, 'Q' if near else 'P')
     f.bands(body, 'B', 'C' if near else 'B', 'A')
-    f.rim(body | shoe, 'O')
+    f.rim(body | shoe, rimc)
     f.fill(shoe, 'Q' if near else 'P')
     if near:                                     # sheen: thigh edge, knee crescent, shin dash, shoe gloss
         d = (sin(th), cos(th)); nf = (cos(th), -sin(th))
@@ -227,12 +227,12 @@ def glowring(f, cells, gl, fx):
             if (x + y) % 2 == 0 or gl > .8: f.set(x, y, c2)
     if gl > .45:
         for x, y in r1: f.set(x, y, c1)
-def draw_arm(f, S, ua, fa, near, gl, fx):                   # shoulder -> elbow -> wrist -> fist; returns elbow and fist centre
+def draw_arm(f, S, ua, fa, near, gl, fx, rimc='O'):                   # shoulder -> elbow -> wrist -> fist; returns elbow and fist centre
     a, b = rad(ua), rad(fa)
     E = (S[0] + UA * sin(a), S[1] + UA * cos(a)); W = (E[0] + FA * sin(b), E[1] + FA * cos(b)); H = (W[0] + 2.0 * sin(b), W[1] + 2.0 * cos(b))
     body = seg(S, E, 4.2, 3.6) | seg(E, W, 3.4, 2.6) | disc(E[0], E[1], 2.0)
     base, lit = ('B', 'C') if near else ('A', 'A')          # the far arm is darker so it reads as behind the body
-    f.fill(body, base); f.bands(body, base, lit, 'A'); f.rim(body, 'O')
+    f.fill(body, base); f.bands(body, base, lit, 'A'); f.rim(body, rimc)
     if near: f.line([(S[0] + 1, S[1] + 2), (E[0] + 1, E[1] - 1)], 'D'); f.line([(E[0] + 2, E[1] + 2), (W[0] - 1, W[1] - 1)], 'D')
     if abs(ua - POCKET[0]) + abs(fa - POCKET[1]) > 12 or gl > 0:      # hand out of the pocket: a fist with the glow around it
         fist = disc(H[0], H[1], 2.3); f.fill(fist, 'S')
@@ -259,11 +259,11 @@ def burst_fx(f, i, k, fx):                                  # impact flash, then
             if (a // 10) % 2 == 0: f.set(x + r * cos(rad(a)), y + r * sin(rad(a)), c1 if i == imp + 1 else c2)
 def atk_fx(f, i, k, an, foot, nfp, E, Hn, Hf, gl):
     if k in (4, 5, 8): lapse_fx(f, i, k, Hn); return
-    fx = RED_FX if k == 3 else BLUE_FX
+    fx = BLUE_FX
     ph = foot
-    if k == 3: pt = (an[0] + 7 * cos(ph) - 2.5 * sin(ph), an[1] + 7 * sin(ph) + 2.5 * cos(ph))     # toe of the kicking foot
+    if k in (3, 15, 17): pt = (an[0] + 7 * cos(ph) - 2.5 * sin(ph), an[1] + 7 * sin(ph) + 2.5 * cos(ph))     # toe of the kicking foot
     elif k == 2: pt = (E[0] + 2.4 * sin(rad(nfp)), E[1] + 2.4 * cos(rad(nfp)))                       # tip of the elbow
-    else: pt = Hf if k in (1, 7) else Hn
+    else: pt = Hf if k in (1, 7, 16) else Hn
     PT[(k, i)] = pt
     for back, col in ((1, fx[0]), (2, fx[1])):               # motion trail while the strike is fast and glowing
         if i - back >= 0 and gl > .55 and ATK_IMPACT[k] - 2 <= i <= ATK_IMPACT[k] + 1:
@@ -499,6 +499,16 @@ def peace_hand(f, H, fa):                                   # an open hand with 
         for side in (-1.5, 1.5): f.set(H[0] + dx * (1.6 + t) + px * side, H[1] + dy * (1.6 + t) + py * side, 'V')
 ATK_HANDS[11] = ''; ATK_IMPACT.extend([99])
 ATK_HANDS[12] = ATK_HANDS[13] = ''; ATK_IMPACT.extend([99, 99])
+ATK[14] = [K(0, I0), K(1, (-1, 1, -1, 4, 0, 0, 25, 125, -16, 45, .3)), K(3, (3, 1, 3, 4, 0, 0, 88, 98, -16, 45, 1), 'in'), K(5, (4, 1, 4, 4, 0, 0, 92, 100, -16, 45, 1)),
+           K(8, (2, 1, 2, 4, 0, 0, 45, 115, -16, 45, .5), 'out'), K(11, (1, 1, 0, 4, 0, 0, 10, 80, -16, 45, .2)), K(14, I0)]                                 # 14: a quick straight jab with the near hand
+ATK[15] = [K(0, I0), K(2, (-1, 1, -1, 62, 100, 12, -16, 45, -16, 45, .3)), K(5, (-2, 1, -3, 90, 6, -8, -16, 45, -16, 45, 1), 'in'), K(8, (-2, 1, -3, 92, 6, -8, -16, 45, -16, 45, .9)),
+           K(11, (-1, 1, -1, 60, 70, 10, -16, 45, -16, 45, .3)), K(14, I0)]                                                                                 # 15: a front kick with the near leg
+ATK[16] = [K(0, I0), K(1, (-1, 1, -1, 4, 0, 0, -16, 45, 25, 125, .3)), K(3, (3, 1, 3, 4, 0, 0, -16, 45, 88, 98, 1), 'in'), K(5, (4, 1, 4, 4, 0, 0, -16, 45, 92, 100, 1)),
+           K(8, (2, 1, 2, 4, 0, 0, -16, 45, 45, 115, .5), 'out'), K(11, (1, 1, 0, 4, 0, 0, -16, 45, 10, 80, .2)), K(14, I0)]                                 # 16: a straight punch with the other (far) hand
+ATK[17] = [K(0, I0), K(2, (-1, 1, -1, 62, 100, 12, -16, 45, -16, 45, .3)), K(5, (-2, 1, -3, 92, 6, -6, -16, 45, -16, 45, 1), 'in'), K(8, (-2, 1, -3, 94, 6, -6, -16, 45, -16, 45, .9)),
+           K(11, (-1, 1, -1, 60, 70, 10, -16, 45, -16, 45, .3)), K(14, I0)]                                                                                 # 17: a kick with the other (far) leg (its three leg angles are the far leg's)
+ATK_HANDS.update({14: 'n', 15: '', 16: 'f', 17: ''}); ATK_IMPACT.extend([4, 6, 4, 6])
+STRIKES = (0, 1, 2, 3, 6, 7, 14, 15, 16, 17)                  # the attacks whose hitting limbs get a blue outline
 BLK_MAP = {'wfb': 'fwd', 'wbb': 'back', 'cb': 'cidle', 'cfb': 'cfwd', 'cbb': 'cback'}      # blocking while walking / crouched / crouch-walking: the same bodies with the near hand raised (two fingers up)
 
 def build(kind, i):
@@ -528,10 +538,12 @@ def build(kind, i):
             if k_ in (6, 7): dy += CR_DY - 9
         hx, hy = 33 + dx, 38 + TOP + round(dy); swn = swf = False; L = 0; bob = 0; p = 0; foot = 0.0
         if k_ not in (9, 10, 12, 13): thf, kf = ik(hx, hy, 29.7, GROUND)
+        rc_n = rc_f = 'O'
         hs = 2 if k_ in (6, 7) else 0
         if k_ == 11: thn, kn_, thf, kf, foot = rad(4), 0, rad(-8), 0, None       # the idle pose's legs, exactly: no pop when the block starts or ends and nothing moves in the legs while it is held
         elif k_ in (9, 10, 12, 13): pass
-        elif k_ == 3: thn, kn_, foot2 = rad(nth), rad(nk), rad(nf)
+        elif k_ in (3, 15): thn, kn_, foot2 = rad(nth), rad(nk), rad(nf); rc_n = 'j' if gl > .25 else 'O'
+        elif k_ == 17: thf, kf, foot = rad(nth), rad(nk), rad(nf); thn, kn_ = ik(hx, hy, 33.7, GROUND); foot2 = 0.0; rc_f = 'j' if gl > .25 else 'O'
         else: thn, kn_ = ik(hx, hy, 33.7, GROUND)
     else:
         amp, kmax = (26, 50) if kind == 'fwd' else (20, 40)
@@ -544,8 +556,8 @@ def build(kind, i):
     dxb = round(hx - 33)                                   # the body follows the hips (the planted feet stay put)
     oy = hy - 34; hb = bob
     wave = round(sin(2 * math.pi * 2 * i / NW)) if kind in ('fwd', 'back') else [0, 1, 0, -1, 0, 1][i % 6]      # tail sway: whole cycles per loop, so the walk loops without a pop
-    leg(f, hx, hy, thf, kf, swf, False, foot)
-    kn, an = leg(f, hx, hy, thn, kn_, swn, True, foot if foot2 is None else foot2)
+    kf_, af_ = leg(f, hx, hy, thf, kf, swf, False, foot, rc_f if atk else 'O')
+    kn, an = leg(f, hx, hy, thn, kn_, swn, True, foot if foot2 is None else foot2, rc_n if atk else 'O')
 
     # jacket (+ flap trailing behind in the wind)
     jk = set()
@@ -593,18 +605,20 @@ def build(kind, i):
     for x, y, ch in hair:                                    # re-outline any edge the shear exposed
         if ch != 'M' and any(u.at(x + dx, y + dy) == '.' for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))): u.set(x, y, 'M')
     if atk or rxk or blkk:                                # the far arm goes first so the torso covers its shoulder
-        Sy = hy - 16; Sx = 32 + dxb + round(.8 * lean); fxc = RED_FX if (atk and k_ == 3) else BLUE_FX
-        _, Hf = draw_arm(f, (Sx - 1, Sy), fua, ffa, False, gl if atk and 'f' in ATK_HANDS[k_] else 0, fxc)
+        Sy = hy - 16; Sx = 32 + dxb + round(.8 * lean); fxc = BLUE_FX
+        gf = gl if atk and 'f' in ATK_HANDS[k_] else 0
+        _, Hf = draw_arm(f, (Sx - 1, Sy), fua, ffa, False, gf, fxc, 'j' if (atk and k_ in STRIKES and gf > .25) else 'O')
     for y in range(NH):                                                   # lean the torso/head forward and slide it over the planted feet
         for x in range(N):
             c = u.g[y][x]
             if c != '.': f.set(x + dxb + round(lean * max(0.0, (34 + oy - y) / 20.0)) + (round(hs) if y < oy + 15 else 0), y, c)
     if atk or rxk or blkk:                                # near arm in front of everything, then (attacks) glow trail and impact flash
-        E, Hn = draw_arm(f, (Sx, Sy), nua, nfa, True, gl if atk and 'n' in ATK_HANDS[k_] else 0, fxc)
+        gn = gl if atk and 'n' in ATK_HANDS[k_] else 0
+        E, Hn = draw_arm(f, (Sx, Sy), nua, nfa, True, gn, fxc, 'j' if (atk and k_ in STRIKES and gn > .25) else 'O')
         if atk and k_ == 11: peace_hand(f, Hn, nfa)
         if blkk: peace_hand(f, Hn, nfa)
         if atk and k_ in (9, 10, 12, 13): dash_fx(f, idx, k_ if k_ < 11 else k_ - 3)
-        elif atk: atk_fx(f, idx, k_, an, foot2 if foot2 is not None else 0.0, nua, E, Hn, Hf, gl)
+        elif atk: atk_fx(f, idx, k_, af_ if k_ == 17 else an, foot if k_ == 17 else (foot2 if foot2 is not None else 0.0), nua, E, Hn, Hf, gl)
     if rxk:                                               # spin (squash about the body axis) and fall (rotate about the feet)
         if sx_ != 1: warp(f, sx_ if abs(sx_) > .08 else .08, 1, hx, 30)
         if rot_: rot(f, rot_, 33.7 + SH, GROUND + 3)
@@ -614,7 +628,7 @@ def build(kind, i):
 def rows(f, x0, w): return [''.join(r[x0:x0 + w]) for r in f.g]
 
 def NFR(k): return NW if k in ('fwd', 'back', 'cfwd', 'cback', 'wfb', 'wbb', 'cfb', 'cbb') else 40 if k == 'atk8' else 10 if k == 'atk11' else 15 if k in ('jump', 'tele', 'cjump', 'cdn', 'cidle', 'cb') or k.startswith('atk') else 10 if k.startswith('rx') else 6
-sets = {k: [build(k, i) for i in range(NFR(k))] for k in ('idle', 'fwd', 'back', 'jump', 'tele', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'wfb', 'wbb', 'cb', 'cfb', 'cbb', 'cdn', 'cidle', 'cfwd', 'cback', 'cjump', *['rx%d' % j for j in range(10)])}
+sets = {k: [build(k, i) for i in range(NFR(k))] for k in ('idle', 'fwd', 'back', 'jump', 'tele', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'atk15', 'atk16', 'atk17', 'wfb', 'wbb', 'cb', 'cfb', 'cbb', 'cdn', 'cidle', 'cfwd', 'cback', 'cjump', *['rx%d' % j for j in range(10)])}
 for k in ('idle', 'fwd', 'back', 'wfb', 'wbb'):
     for f in sets[k]: f.g = f.g[TOP:TOP + N]
 cells = [(x, y) for k, fs in sets.items() if not k.startswith(('atk', 'rx', 'orb')) for f in fs for y in range(len(f.g)) for x in range(N) if f.g[y][x] != '.']

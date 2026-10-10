@@ -119,10 +119,10 @@ __SFX__
 const D = __SPR__;                 // palette + idle / walk-forward / walk-back / jump / double-jump (teleport) sprite frames (rows of palette letters)
 const HEROES = __HEROES__;         // title key art: 0 eye open ... 4 eye fully closed
 const IDLE_FPS = 12, WALK_FPS = 15, JUMP_FPS = 15, TELE_FPS = 20;   // animation speeds in frames per second (15 walk frames = 1 s per cycle = one step every half second; 15 jump frames = 1 s; 15 teleport frames = 0.75 s)
-const ATK_FPS = [30, 30, 30, 24, 24, 24, 30, 30], ATK_IMPACT = [7, 7, 7, 8, 8, 6, 6, 7], ATK_SWING = [4, 4, 4, 5, 0, 0, 3, 3], COMBO_MS = 1400, MB_FPS = 20, ORB_MS = 3400, DASH_FPS = 30, DASH_FWD = 50, DASH_BACK = 42, BLK_FPS = 24;   // 15 frames per attack; the next press within COMBO_MS continues the combo. Index 4 and 5 are Lapse Blue (not combo hits), 6 and 7 are the crouch punches; Max Blue: 40 summon frames at 20 FPS, the orb lives 3.4 s
-const ATK_NAMES = ['R.HOOK', 'L.HOOK', 'ELBOW', 'KICK'], CR_FPS = 36, LAPSE_FPS = 24;   // hooks and the elbow nudge the enemy (so the combo keeps connecting); the kick sends him sliding with a smoke trail
+const ATK_FPS = [30, 30, 30, 24, 24, 24, 30, 30, 0, 0, 0, 0, 0, 0, 36, 30, 32, 28], ATK_IMPACT = [7, 7, 7, 8, 8, 6, 6, 7, 0, 0, 0, 0, 0, 0, 4, 6, 4, 6], ATK_SWING = [4, 4, 4, 5, 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 1, 3, 2, 3], COMBO_MS = 1400, MB_FPS = 20, ORB_MS = 3400, DASH_FPS = 30, DASH_FWD = 50, DASH_BACK = 42, BLK_FPS = 24;   // 15 frames per attack; the next press within COMBO_MS continues the combo. Index 4 and 5 are Lapse Blue (not combo hits), 6 and 7 are the crouch punches; Max Blue: 40 summon frames at 20 FPS, the orb lives 3.4 s
+const ATK_NAMES = ['R.HOOK', 'L.HOOK', 'ELBOW', 'KICK'], WALK_NAMES = ['JAB', 'KICK', 'CROSS', 'KICK2'], CR_FPS = 36, LAPSE_FPS = 24;   // hooks and the elbow nudge the enemy (so the combo keeps connecting); the kick sends him sliding with a smoke trail
 const DUMMY_HP = 300, RX_FPS = [16, 16, 16, 18, 12, 16, 16, 16, 12, 14], RX_DUR = RX_FPS.map(f => 10000 / f);      // 10 reactions, 10 frames each
-const REACH = [17, 17, 15, 26, 0, 0, 16, 16], KNOCK = [9, 9, 11, 100, 0, 0, 8, 8], KNOCK_G = [26, 26, 34, 80, 0, 0, 20, 20], DMG = [12, 14, 18, 35, 0, 0, 10, 13];   // per hit: how far it reaches from his hips (px), how hard it shoves the dummy (px/s), damage number
+const REACH = [17, 17, 15, 26, 0, 0, 16, 16, 0, 0, 0, 0, 0, 0, 19, 25, 19, 27], KNOCK = [9, 9, 11, 100, 0, 0, 8, 8, 0, 0, 0, 0, 0, 0, 8, 14, 9, 40], KNOCK_G = [26, 26, 34, 80, 0, 0, 20, 20, 0, 0, 0, 0, 0, 0, 20, 30, 22, 45], DMG = [12, 14, 18, 35, 0, 0, 10, 13, 0, 0, 0, 0, 0, 0, 10, 16, 13, 22];      // 14-17 = the walking combo: jab, kick, cross with the other hand, kick with the other leg   // per hit: how far it reaches from his hips (px), how hard it shoves the dummy (px/s), damage number
 const FWD_SPEED = 44, BACK_SPEED = 30;         // world pixels per second (matched to the slower stride so his feet do not skate)
 const BLINK_STEP = 70, BLINK_HOLD = 500;       // ms per blink frame, ms the eye stays shut
 const $ = id => document.getElementById(id);
@@ -144,7 +144,7 @@ const mk = (set, pal = D.pal) => {
 const idleF = mk(D.idle), fwdF = mk(D.fwd), backF = mk(D.back), jumpF = mk(D.jump), teleF = mk(D.tele), atkF = [0, 1, 2, 3].map(k => mk(D['atk' + k]));
 const crF = { dn: mk(D.cdn), idle: mk(D.cidle), fwd: mk(D.cfwd), back: mk(D.cback), jump: mk(D.cjump), blk: mk(D.cb), fblk: mk(D.cfb), bblk: mk(D.cbb) }, lapseF = [4, 5].map(k => mk(D['atk' + k]));
 const wblkF = mk(D.wfb), wblkB = mk(D.wbb);                    // walking forward / back while blocking (15 frames each, played slowly)
-const mbF = mk(D.atk8), orbF = mk(D.orb); atkF[6] = mk(D.atk6); atkF[7] = mk(D.atk7); atkF[9] = mk(D.atk9); atkF[10] = mk(D.atk10); atkF[11] = mk(D.atk11); atkF[12] = mk(D.atk12); atkF[13] = mk(D.atk13);      // atk12 / atk13 = the crouch dash forward / back      // atk11 = the guard (10 frames)      // atk9 = dash forward, atk10 = dash back (15 frames each)      // crouch (down, idle, walks, spring jump), Lapse Blue (pull, blink), crouch punches, the Max Blue summon (40 frames) and the orb (20-frame loop)
+const mbF = mk(D.atk8), orbF = mk(D.orb); atkF[6] = mk(D.atk6); atkF[7] = mk(D.atk7); atkF[9] = mk(D.atk9); atkF[10] = mk(D.atk10); atkF[11] = mk(D.atk11); atkF[12] = mk(D.atk12); atkF[13] = mk(D.atk13); for (let k = 14; k <= 17; k++) atkF[k] = mk(D['atk' + k]);      // the walking combo      // atk12 / atk13 = the crouch dash forward / back      // atk11 = the guard (10 frames)      // atk9 = dash forward, atk10 = dash back (15 frames each)      // crouch (down, idle, walks, spring jump), Lapse Blue (pull, blink), crouch punches, the Max Blue summon (40 frames) and the orb (20-frame loop)
 const inv = h => '#' + [1, 3, 5].map(i => (255 - parseInt(h.substr(i, 2), 16)).toString(16).padStart(2, '0')).join('');
 const invPal = {}, whitePal = {};
 const bluePal = {};                           // the stunned look: recoloured in blues by brightness
@@ -162,7 +162,7 @@ const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
 let state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
 let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1;
-let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', flashUntil = 0, flashMs = 1, flashA = 0, stickX = 0, stickY = 0, stickUp = false, stickDown = false, stickCr = false, stickDownEnd = -9999, jumpFromStick = false, joyId = null, dashReq = false, dgAt = -1, dgK = 0, dgFrom = 0, dgTo = 0, dgAir = false, dgUsed = false, dgCr = false, dgReady = 0, blockHeld = false, blkAt = -1, blkEnd = -1, blkFrom = 4;
+let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', flashUntil = 0, flashMs = 1, flashA = 0, stickX = 0, stickY = 0, stickUp = false, stickDown = false, stickCr = false, stickDownEnd = -9999, jumpFromStick = false, joyId = null, dashReq = false, dgAt = -1, dgK = 0, dgFrom = 0, dgTo = 0, dgAir = false, dgUsed = false, dgCr = false, dgReady = 0, blockHeld = false, blkAt = -1, blkEnd = -1, blkFrom = 4, wcIdx = 0;
 const STRIP = 480;
 
 // ---------------------------------------------------------------- sound (all synthesised in sfx.js, no audio files)
@@ -231,7 +231,7 @@ function show(s) {
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll(); $('settings').classList.remove('on');
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
-  if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; comboUntil = 0; dummy = null; popups = []; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
+  if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(performance.now(), 1200);
 }
 
@@ -306,13 +306,13 @@ function hitDummy(k, now) {                   // called on the impact frame: a h
   }
   let dmg = DMG[k] + ((Math.random() * 5) | 0);
   if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; }                    // the counter restarts after 1.6 s without a landed hit
-  hits.seq = k === hits.seq ? hits.seq + 1 : k === 0 ? 1 : 0;                          // the meter fills while the hits land in order: right hook, left hook, elbow, kick
+  const ko = k <= 3 ? k : k >= 14 ? k - 14 : -1; hits.seq = ko === hits.seq ? hits.seq + 1 : ko === 0 ? 1 : 0;                          // the meter fills while the hits land in order: right hook, left hook, elbow, kick
   if (hits.seq === 4) { dmg += 25; hits.perfect = now; snd('finisher'); say('COMBO!', dummy.x, '#ffd34d', 8, now + 90); }
   hits.n++; hits.dmg += dmg; hits.until = now + 1600;
-  dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += KNOCK[k]; if (k === 3) { dummy.smokeUntil = now + 520; puff(dummy.x, 8); } shakeUntil = now + 110; shakeAmp = k === 3 ? 3 : 2;
+  dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += KNOCK[k]; if (k === 3 || k === 17) { dummy.smokeUntil = now + 520; puff(dummy.x, 8); } shakeUntil = now + 110; shakeAmp = (k === 3 || k === 15 || k === 17) ? 3 : 2;
   dummy.rx = (Math.random() * 10) | 0; dummy.rxAt = now;                                // one of ten reactions, picked at random
   if (window.__sfxlog) window.__sfxlog.push(['rx', Math.round(now), dummy.rx]);
-  say('' + dmg, dummy.x, k === 3 ? '#ff5a5a' : '#7fc4ff', 8, now);
+  say('' + dmg, dummy.x, '#7fc4ff', 8, now);
   snd('smack', k);
   if (dummy.hp <= 0) { dummy.ko = now; dummy.vx += 70; shakeUntil = now + 260; shakeAmp = 4; kos++; say('K.O.', dummy.x, '#ffd34d', 16, now + 120); snd('ko'); }
 }
@@ -406,7 +406,7 @@ function drawHits(now) {                      // top right: hit counter, damage 
     line(hits.n === 1 ? '1 HIT' : hits.n + ' HITS', '#ffffff'); line(hits.dmg + ' DMG', '#b9a8ee');
     for (let i = 0; i < 4; i++) {
       const px = rx - 26 + i * 7; ctx.fillStyle = '#000'; ctx.fillRect(px - 1, y - 1, 7, 7);
-      ctx.fillStyle = i < hits.seq ? (now - hits.perfect < 600 ? '#ffd34d' : i === 3 ? '#ff4a4a' : '#59b8ff') : '#2a2040'; ctx.fillRect(px, y, 5, 5);
+      ctx.fillStyle = i < hits.seq ? (now - hits.perfect < 600 ? '#ffd34d' : '#59b8ff') : '#2a2040'; ctx.fillRect(px, y, 5, 5);
     }
     y += 14; ctx.globalAlpha = 1;
   }
@@ -545,6 +545,11 @@ function drawOrb(now, dt) {
   }
 }
 
+function pickAtk() {                          // crouched: the low jab and the uppercut; walking forward: the walking combo (jab, kick, cross with the other hand, kick with the other leg); otherwise the normal combo
+  if (stance === 'crouch') { const k = 6 + cpIdx; cpIdx ^= 1; return k; }
+  if (keyR || padR) { const k = 14 + wcIdx; wcIdx = (wcIdx + 1) % 4; return k; }
+  const k = combo; combo = (k + 1) % 4; return k;
+}
 function drawScene(now, dt) {
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3);
   let jf = -1, tf = -1;                       // jump frame 0-14 (0-2 crouch, 3 push-off, 4-11 airborne, 12-14 land) / teleport frame 0-14 (0-6 vanish + arrive, 7-11 fall, 12-14 land)
@@ -576,7 +581,7 @@ function drawScene(now, dt) {
   if (atkAt >= 0) {
     af = Math.floor(Math.max(0, now - atkAt) * ATK_FPS[atkK] / 1000);
     if (af >= 15) {                           // swing finished: chain into the next hit if a press was queued, otherwise open the combo window
-      if (atkQ) { atkQ = false; if (stance === 'crouch') { atkK = 6 + cpIdx; cpIdx ^= 1; } else { atkK = combo; combo = (atkK + 1) % 4; } atkAt = now; af = 0; }
+      if (atkQ) { atkQ = false; atkK = pickAtk(); atkAt = now; af = 0; }
       else { atkAt = -1; af = -1; comboUntil = now + COMBO_MS; }
     }
   }
@@ -584,11 +589,11 @@ function drawScene(now, dt) {
     atkReq = false;
     if (t >= 1 && jf < 0 && tf < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0 && (stance === 'stand' || stance === 'crouch')) {
       if (af >= 0) atkQ = true;
-      else { if (now > comboUntil) { combo = 0; cpIdx = 0; } if (stance === 'crouch') { atkK = 6 + cpIdx; cpIdx ^= 1; } else { atkK = combo; combo = (atkK + 1) % 4; } atkAt = now; af = 0; atkQ = false; }       // crouched: the low punch and the uppercut alternate
+      else { if (now > comboUntil) { combo = 0; cpIdx = 0; wcIdx = 0; } atkK = pickAtk(); atkAt = now; af = 0; atkQ = false; }       // crouched: the low punch and the uppercut alternate
     }
   }
-  if (af < 0 && (combo !== 0 || cpIdx !== 0) && now > comboUntil) { combo = 0; cpIdx = 0; }   // waited too long: back to the first hit (standing and crouched)
-  const lab = stance === 'crouch' ? ['R.JAB', 'L.UPPR'][cpIdx] : ATK_NAMES[combo]; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; }
+  if (af < 0 && (combo !== 0 || cpIdx !== 0 || wcIdx !== 0) && now > comboUntil) { combo = 0; cpIdx = 0; wcIdx = 0; }   // waited too long: back to the first hit (standing and crouched)
+  const lab = stance === 'crouch' ? ['R.JAB', 'L.UPPR'][cpIdx] : (stance === 'stand' && (keyR || padR)) ? WALK_NAMES[wcIdx] : ATK_NAMES[combo]; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; }
   if (crReq) {                                // keyboard S / Down / C: tap to go down (10 frames), tap again to stand up (the joystick crouches while it is held down)
     crReq = false;
     if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0) { if (stance === 'stand') { stance = 'down'; stAt = now; sf = 0; } else if (stance === 'crouch') { stance = 'up'; stAt = now; sf = 0; } }
@@ -629,6 +634,7 @@ function drawScene(now, dt) {
   const crch = stance === 'crouch';
   const nm = hf >= 0 ? 'hurt' : df >= 0 ? 'dodge' : bf >= 0 && sf < 0 ? 'block' : tf >= 0 ? 'tele' : jf >= 0 ? 'jump' : mf >= 0 ? 'maxblue' : lf >= 0 ? 'lapse' : af >= 0 ? 'atk' : sf >= 0 ? 'cdn' : crch ? (dir > 0 ? 'cfwd' : dir < 0 ? 'cback' : 'cidle') : dir > 0 ? 'fwd' : dir < 0 ? 'back' : 'idle';
   if (nm !== mode) { mode = nm; modeAt = now; stepN = -1; }
+  if (af >= 0 && atkK >= 14 && af <= 9 && !(dummy && dummy.ko < 0 && dummy.x - wx < 14 && dummy.x - wx > -4)) wx += 24 * dt;          // the walking combo lunges forward a little with each strike (but not through the enemy)
   wx += dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * (crch ? 0.6 : 1) * (bf >= 0 ? 0.3 : 1) * dt;      // crouch-walking is slower, and walking while blocking is much slower still
   if (dash) { const k = Math.min(1, (now - dash.at) / dash.ms); wx = dash.from + (dash.to - dash.from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) dash = null; }   // Lapse Blue blink: a very fast dash
   if (df >= 0) { const k = Math.min(1, Math.max(0, (now - dgAt - 2000 / DASH_FPS) / 300)); wx = dgFrom + (dgTo - dgFrom) * (1 - Math.pow(1 - k, 3)); }      // the dash itself: fast at first, over frames 3-12
@@ -674,7 +680,7 @@ function drawScene(now, dt) {
     if (af < evA) evA = -1;                   // a chained hit restarted the counter
     if (af >= 0) {
       if (evA < ATK_SWING[atkK] && af >= ATK_SWING[atkK]) snd('swing', atkK);
-      if (evA < ATK_IMPACT[atkK] && af >= ATK_IMPACT[atkK]) { snd('hit', atkK); shakeUntil = now + 90; shakeAmp = atkK === 3 ? 2 : 1; hitDummy(atkK, now); }
+      if (evA < ATK_IMPACT[atkK] && af >= ATK_IMPACT[atkK]) { snd('hit', atkK); shakeUntil = now + 90; shakeAmp = (atkK === 3 || atkK === 15 || atkK === 17) ? 2 : 1; hitDummy(atkK, now); }
     }
     evA = af;
   }

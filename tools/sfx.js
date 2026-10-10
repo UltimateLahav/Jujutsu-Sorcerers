@@ -130,19 +130,19 @@ function makeSfx(ac) {
       tone(B.deep, t, { f: 120, f2: 58, dur: 0.34, gain: 0.12, atk: 0.06 });
     },
     swing(k, at) {                                       // air rushing past the fist / leg: soft rising whoosh (a little deeper for the kick)
-      const t = T(at), B = C.atk, kick = k === 3;
+      const t = T(at), B = C.atk, kick = k === 3 || k === 15 || k === 17;
       burst(B.soft, t, { f: kick ? 380 : 650, f2: kick ? 1100 : 1700, q: 0.8, dur: kick ? 0.22 : 0.16, gain: kick ? 0.9 : 0.8, atk: 0.04 });
       tone(B.deep, t, { type: 'triangle', f: kick ? 90 : 120, f2: kick ? 60 : 85, dur: 0.16, gain: 0.1, atk: 0.05 });
     },
     hit(k, at) {                                         // impact: deep thump + dull slap + a crackle of cursed energy (red = heavier and longer)
-      const t = T(at), B = C.atk, red = k === 3;
+      const t = T(at), B = C.atk, red = k === 3 || k === 15 || k === 17;
       tone(B.deep, t, { type: 'triangle', f: red ? 128 : 150, f2: red ? 52 : 62, dur: red ? 0.4 : 0.26, gain: red ? 0.46 : 0.34, atk: 0.003 });
       tone(B.deep, t, { f: 240, f2: 110, dur: 0.09, gain: 0.3, atk: 0.002 });
       burst(B.soft, t, { f: red ? 500 : 900, f2: red ? 160 : 300, q: 0.9, dur: red ? 0.2 : 0.14, gain: red ? 2.8 : 2.2, atk: 0.001 });
       tone(B.soft, t, { type: 'sawtooth', f: red ? 330 : 560, f2: red ? 90 : 160, dur: red ? 0.3 : 0.18, gain: 0.12, atk: 0.004 });
     },
     smack(k, at) {                                       // the body blow when a hit lands on something: deep thump + dull slap
-      const t = T(at), B = C.atk, red = k === 3;
+      const t = T(at), B = C.atk, red = k === 3 || k === 15 || k === 17;
       tone(B.deep, t, { type: 'triangle', f: red ? 100 : 124, f2: 46, dur: red ? 0.34 : 0.22, gain: red ? 0.5 : 0.38, atk: 0.003 });
       burst(B.soft, t, { f: red ? 450 : 700, f2: 180, q: 0.8, dur: 0.12, gain: red ? 3.0 : 2.4, atk: 0.001 });
     },
