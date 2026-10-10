@@ -486,8 +486,8 @@ def dash_fx(f, i, k):                                          # blue afterimage
             if 0 <= x < N and f.g[y][x] == '.': f.set(x, y, 'h' if t % 4 < 3 else 'g')
 ATK_HANDS[9] = ATK_HANDS[10] = ''; ATK_IMPACT.extend([99, 99])
 # ---------------------------------------------------------------- BLOCK: his signature pose, 10 frames; the near hand comes out of the pocket and rises beside his face with two fingers up (frames 0-4), holds (5-9, loops, a hair of sway), lowering plays 4..0; the far hand stays in the pocket
-G0 = (0, 0, -1, 4, 0, 0, 68, 170, -16, 45, 0); G1 = (0, 0, -1, 4, 0, 0, 70, 173, -16, 45, 0); G2 = (0, 1, -1, 4, 0, 0, 66, 168, -16, 45, 0)
-ATK[11] = [K(0, I0), K(2, (0, 0, 0, 4, 0, 0, 40, 95, -16, 45, 0)), K(4, G0), K(5, G1), K(7, G2), K(9, G1)]
+G0 = (0, 0, 0, 4, 0, 0, 68, 170, -16, 45, 0)                  # the held pose; frames 4-9 are all exactly this, so nothing moves while he blocks (only the hair tips)
+ATK[11] = [K(0, I0), K(2, (0, 0, 0, 4, 0, 0, 40, 95, -16, 45, 0)), K(4, G0), K(9, G0)]
 def peace_hand(f, H, fa):                                   # an open hand with the index and middle fingers pointing up along the forearm (the other fingers stay curled)
     b = rad(fa); dx, dy = sin(b), cos(b); px, py = cos(b), -sin(b)
     for side in (-1.0, 0.0, 1.0): f.set(H[0] + dx * 1.6 + px * side, H[1] + dy * 1.6 + py * side, 'V')       # the knuckle line where the two fingers leave the palm
@@ -523,7 +523,8 @@ def build(kind, i):
         hx, hy = 33 + dx, 38 + TOP + round(dy); swn = swf = False; L = 0; bob = 0; p = 0; foot = 0.0
         if k_ not in (9, 10): thf, kf = ik(hx, hy, 29.7, GROUND)
         hs = 2 if k_ in (6, 7) else 0
-        if k_ in (9, 10): pass
+        if k_ == 11: thn, kn_, thf, kf, foot = rad(4), 0, rad(-8), 0, None       # the idle pose's legs, exactly: no pop when the block starts or ends and nothing moves in the legs while it is held
+        elif k_ in (9, 10): pass
         elif k_ == 3: thn, kn_, foot2 = rad(nth), rad(nk), rad(nf)
         else: thn, kn_ = ik(hx, hy, 33.7, GROUND)
     else:
@@ -533,7 +534,7 @@ def build(kind, i):
         thn, kn_ = gait(qn, amp, kmax); thf, kf = gait(qf, amp, kmax); swn, swf = qn >= .5, qf >= .5
         L = .8 + .25 * sin(2 * math.pi * i / NW) if kind == 'fwd' else max(-.2, .05 + .12 * sin(2 * math.pi * i / NW)); bob = 0
     drop = lambda th, k: L1 * cos(th) + L2 * cos(th - k)
-    if kind not in ('jump', 'tele', 'cjump') and not (atk or rxk or crk): hy = round(58 + TOP - max(drop(thn, kn_), drop(thf, kf)))
+    if (kind not in ('jump', 'tele', 'cjump') and not (atk or rxk or crk)) or kind == 'atk11': hy = round(58 + TOP - max(drop(thn, kn_), drop(thf, kf)))
     dxb = round(hx - 33)                                   # the body follows the hips (the planted feet stay put)
     oy = hy - 34; hb = bob
     wave = round(sin(2 * math.pi * 2 * i / NW)) if kind in ('fwd', 'back') else [0, 1, 0, -1, 0, 1][i % 6]      # tail sway: whole cycles per loop, so the walk loops without a pop

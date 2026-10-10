@@ -564,7 +564,7 @@ function drawScene(now, dt) {
   if (jf < 0 && tf < 0) dgUsed = false;       // one air dash per jump
   let bf = -1;                                // block frame: 0-4 the hands come up, 5-9 the held guard (loops), then 4..0 as they go down again
   if (blkAt >= 0) {
-    if (blkEnd < 0) { const e = Math.floor(Math.max(0, now - blkAt) * BLK_FPS / 1000); bf = e < 5 ? e : 5 + (e - 5) % 5; blkFrom = Math.min(4, e); }
+    if (blkEnd < 0) { const e = Math.floor(Math.max(0, now - blkAt) * BLK_FPS / 1000); bf = e < 5 ? e : 5 + Math.floor((now - blkAt - 5000 / BLK_FPS) * 8 / 1000) % 5; blkFrom = Math.min(4, e); }      // the raise runs at 24 FPS; the held pose is the same picture with a gentle hair-tip sway, played slowly (8 FPS) so nothing twitches
     else { bf = blkFrom - Math.floor(Math.max(0, now - blkEnd) * BLK_FPS / 1000); if (bf < 0) { blkAt = -1; blkEnd = -1; bf = -1; } }
   }
   let sf = -1;                                // crouch transition frame 0-9 (going down; standing up plays the same frames backwards)
