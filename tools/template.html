@@ -48,12 +48,14 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #ce.lit span{color:#d8fffb}
 #ce.red{background:#3a0d12;border-color:#ff8a7a;opacity:1;color:#ff8a7a;box-shadow:0 0 1.8vh #ff4a3a,0 0 .5vh #ff4a3a inset,4px 4px 0 #000}      /* red mode */
 #ce.red span{color:#ffd9d2}
+#dom{grid-area:1/1;position:relative;overflow:hidden;border-color:#8c8cff;color:#9fb0ff}#dom span{color:#b8c4ff}#dom::after{content:'';position:absolute;left:0;right:0;bottom:0;height:var(--cd,0%);background:rgba(140,140,255,.38);pointer-events:none}      /* DOMAIN EXPANSION: the fill counts the 30 s cooldown down */
+#dom.on{background:#1a1a4a;border-color:#dfe6ff;color:#fff;opacity:1;box-shadow:0 0 1.8vh #8c8cff,4px 4px 0 #000}#dom.cd{opacity:.6}
 #lap.red{border-color:#ff5a4a;color:#ff7a6a}
 #lap.red span{color:#ffb4a8}
 #lap{border-color:#59b8ff}
 #dash{border-color:#7bd9a3}
 #blk{border-color:#9f8cff}
-#lap svg,#dash svg,#blk svg,#atk svg,#ce svg{width:4.5vh;height:4.5vh}
+#lap svg,#dash svg,#blk svg,#atk svg,#ce svg,#dom svg{width:4.5vh;height:4.5vh}
 #atk{border-color:#6fb4ff;width:17vh;height:17vh}
 #settings.screen{z-index:5;background:rgba(13,10,23,.95);gap:2vh}
 #vols{display:grid;grid-template-columns:1fr 1fr;gap:1.6vh 5vh;width:min(92vw,820px);text-align:left}
@@ -113,6 +115,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <svg id="knob" viewBox="0 0 32 32" shape-rendering="crispEdges" aria-hidden="true"><path d="M10 2h12l8 8v12l-8 8H10l-8-8V10z"/></svg>
   </div>
   <div class="col">
+    <button id="dom" class="pb" aria-label="Domain expansion: Infinite Void"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M2 1h4v1H2zM1 2h1v1H1zM6 2h1v1H6zM0 3h1v2H0zM7 3h1v2H7zM3 3h2v2H3zM1 5h1v1H1zM6 5h1v1H6zM2 6h4v1H2z"/></svg><span>DOMAIN</span></button>
     <button id="ce" class="pb" aria-label="Mode: tap to switch between normal, cursed energy and red" aria-pressed="false"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M3 0h1v1H3zM3 1h2v1H3zM6 1h1v1H6zM2 2h3v1H2zM6 2h1v1H6zM2 3h5v1H2zM1 4h7v1H1zM1 5h2v1H1zM4 5h4v1H4zM1 6h6v1H1zM2 7h4v1H2z"/></svg><span id="cel">MODE<br>OFF</span></button>
     <button id="blk" class="pb" aria-label="Block (hold)"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M0 0h8v4H7v1H6v1H5v1H4v1H3V7H2V6H1V5H0z"/></svg><span>BLOCK</span></button>
     <button id="lap" class="pb" aria-label="Lapse Blue"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M2 1h4v1h1v4h-1v1h-4v-1h-1v-4h1z"/></svg><span id="lapl">BLUE</span></button>
@@ -191,7 +194,7 @@ const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 let state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
 let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1;
 let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', flashUntil = 0, flashMs = 1, flashA = 0, stickX = 0, stickY = 0, stickUp = false, stickDown = false, stickCr = false, stickDownEnd = -9999, jumpFromStick = false, joyId = null, dashReq = false, dgAt = -1, dgK = 0, dgFrom = 0, dgTo = 0, dgAir = false, dgUsed = false, dgCr = false, dgReady = 0, blockHeld = false, blkAt = -1, blkEnd = -1, blkFrom = 4, wcIdx = 0, ceOn = false, ceAt = -9999, ceAmt = 0, ceNext = 0, ceReq = false, cm = 0, rdIdx = 0, mbK = 0, rdOrb = null, boom = null, holdUntil = 0, rdSlow = false, ride = null;
-const ceDmg = n => cm === 1 ? Math.round(n * CE_DMG) : n;      // only cursed energy mode hits harder; red mode has no damage bonus
+const ceDmg = n => (cm === 1 ? Math.round(n * CE_DMG) : n) * (voidOn() ? 2 : 1);      // x1.3 in cursed energy mode, and everything hits twice as hard inside the Infinite Void      // only cursed energy mode hits harder; red mode has no damage bonus
 const popCol = () => cm === 1 ? '#4ff5e8' : cm === 2 ? '#ff8a7a' : '#7fc4ff';
 const STRIP = 480;
 
@@ -261,7 +264,7 @@ function show(s) {
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll(); $('settings').classList.remove('on');
-  resetPeds(s === 'play'); cm = 0; ceOn = false; ceAmt = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; rdIdx = 0; ride = null; setModeUI();
+  resetPeds(s === 'play'); cm = 0; ceOn = false; ceAmt = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); rdIdx = 0; ride = null; setModeUI();
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
   if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(performance.now(), 1200);
@@ -292,7 +295,7 @@ function scarePeds(x, now) {                  // somebody just died: everybody w
   }
 }
 function updatePeds(now, dt) {
-  if (!pedsOn()) return; pedT += dt; updateGore(now, dt);
+  if (!pedsOn()) return; pedT += dt; updateGore(now, dt); if (domFrozen()) return;      // during the domain the people stand perfectly still
   for (const p of peds) {
     const gap = p.x - wx, T = HUM[p.t];
     if (p.mode === 'shock' && pedT >= p.shockUntil) p.mode = 'run';
@@ -774,6 +777,91 @@ function drawPBoom(now) {                     // the purple blast: a white-viole
   const R = (8 + i * 5.5) * z; ctx.fillStyle = i < 9 ? '#a85cff' : '#4a1f86'; for (let a = 0; a < 72; a++) { const th = a / 72 * 6.2832; ctx.fillRect(Math.round(sx + Math.cos(th) * R), Math.round(sy + Math.sin(th) * R * 0.8), 3, 3); }
   for (let j = 0; j < 30; j++) { const th = j * 2.399 + 0.5, v = (12 + (j * 7) % 15) * z, u = i / 19; ctx.fillStyle = j % 2 ? '#ff6a5a' : '#59b8ff'; ctx.fillRect(Math.round(sx + Math.cos(th) * v * i * 0.6), Math.round(sy + Math.sin(th) * v * i * 0.5 + 22 * u * u * z), 2, 2); }
 }
+// ---------------------------------------------------------------- DOMAIN EXPANSION: INFINITE VOID (the DOMAIN button next to MODE, key V)
+// Gojo raises his hand into the block pose and holds its last frame, everybody freezes, a pixel-art version of the reference GIF plays (40 frames: the face, then the push-in on the eyes),
+// a wide shot of the crossing with the people standing still, the lights fail, a white burst opens the domain and the scene becomes the Infinite Void. Inside it the enemy is frozen and
+// everything hits twice as hard; the void then collapses back to the crossing and the button cools down for 30 s.
+const DOMAIN_IMG = '__DOMAINIMG__', DF_N = 40, DF_W = 320, DF_H = 130, DF_FPS = 8, DOM_CD = 30000;
+const domImg = new Image(); domImg.src = DOMAIN_IMG;
+const DOM_ORDER = ['pose', 'face', 'wide', 'burst', 'void', 'collapse'], DOM_MS = { pose: 900, face: DF_N * 1000 / DF_FPS, wide: 1500, burst: 1900, void: 10000, collapse: 1400 };
+let dom = null, domHold = false, domReq = false, domReadyAt = 0, voidCv = null, voidG = null, GAL = null, STARS = null;
+function domFrozen() { return !!dom && dom.ph !== 'collapse'; }
+function domLock() { return !!dom && dom.ph !== 'void' && dom.ph !== 'collapse'; }
+function voidOn() { return !!dom && dom.ph === 'void'; }
+function domBgOff(now) { return !!dom && (dom.ph === 'void' || (dom.ph === 'burst' && now - dom.p0 >= 350)); }
+const domR = () => Math.hypot(VW, VH);
+function setDomUI(now) { const b = $('dom'); if (!b) return; const cd = dom ? 0 : Math.max(0, (domReadyAt - now) / DOM_CD); b.style.setProperty('--cd', Math.round(cd * 100) + '%'); b.classList.toggle('on', !!dom); b.classList.toggle('cd', !dom && cd > 0); }
+function domReset() { if (dom) snd('voidoff'); dom = null; domHold = false; domReq = false; domReadyAt = 0; setDomUI(0); }
+function startDomain(now) {
+  dom = { ph: 'pose', p0: now, zoomed: false, burst: false, ping: now + 1500 }; domHold = true; snd('domainstart');
+  if (dummy && dummy.ko < 0) { const tot = DOM_MS.pose + DOM_MS.face + DOM_MS.wide + DOM_MS.burst + DOM_MS.void; dummy.stunUntil = now + tot; dummy.pull = null; dummy.vx = 0; dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = tot + 300; }      // the enemy is frozen (a swing in progress is cancelled) until the void ends
+}
+function domTick(now) {
+  if (dom || domReadyAt > now) setDomUI(now);
+  if (!dom) return;
+  const a = now - dom.p0;
+  if (dom.ph === 'face' && !dom.zoomed && a >= 22 * 1000 / DF_FPS) { dom.zoomed = true; snd('domainzoom'); }
+  if (dom.ph === 'burst' && !dom.burst && a >= 500) { dom.burst = true; snd('domainburst'); shakeUntil = now + 500; shakeAmp = 2; }
+  if (dom.ph === 'void' && now >= dom.ping) { dom.ping = now + 500 + Math.random() * 900; snd('voidping'); }
+  if (a >= DOM_MS[dom.ph]) {
+    const i = DOM_ORDER.indexOf(dom.ph) + 1;
+    if (i >= DOM_ORDER.length) { dom = null; domHold = false; domReadyAt = now + DOM_CD; setDomUI(now); return; }
+    dom.ph = DOM_ORDER[i]; dom.p0 = now;
+    if (dom.ph === 'face') snd('domainface'); else if (dom.ph === 'void') { domHold = false; snd('voidon'); } else if (dom.ph === 'collapse') { snd('voidoff'); snd('domainend'); }
+  }
+  if (domLock()) { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = false; }      // no control during the opening
+}
+function initVoid() {
+  if (GAL) return; let s = 11; const r = () => (s = (s * 16807) % 2147483647) / 2147483647; GAL = [];
+  for (let i = 0; i < 900; i++) GAL.push({ arm: i % 3, r: Math.pow(r(), 0.8), a: (r() - 0.5) * 0.55, z: r() });
+  STARS = [90, 60, 40].map(n => Array.from({ length: n }, () => ({ x: r(), y: r(), tw: r() * 7 })));
+}
+function drawVoid(g, now, W, H) {              // deep space: banded dark blue, three layers of stars, a slowly turning spiral galaxy, streams of light (information) racing across
+  initVoid(); const t = now / 1000, cx = W * 0.56, cy = gy - 44, bands = ['#020208', '#03031a', '#06052a', '#09073a', '#0b0946', '#08062c'];
+  for (let i = 0; i < bands.length; i++) { g.fillStyle = bands[i]; g.fillRect(0, Math.floor(H * i / bands.length), W, Math.ceil(H / bands.length) + 1); }
+  STARS.forEach((L, li) => { const f = [0.05, 0.12, 0.25][li], sp = [1, 2.5, 5][li]; for (const st of L) { g.fillStyle = (t * 2 + st.tw) % 7 < 0.25 ? '#ffffff' : ['#6a70c8', '#9aa4ff', '#cfd8ff'][li]; g.fillRect(Math.floor((((st.x * W - wx * f - t * sp) % W) + W) % W), Math.floor(st.y * H), li === 2 ? 2 : 1, li === 2 ? 2 : 1); } });
+  const cols = ['#f6f2ff', '#bfe4ff', '#7ab8ff', '#8f6bff', '#d45cff', '#5a2e9a'];
+  for (const p of GAL) { const ang = p.a + p.arm * 2.0944 + p.r * 3.4 + t * 0.14 * (1.2 - p.r), rr = p.r * 150; g.fillStyle = cols[Math.min(5, Math.floor(p.r * 6))]; g.fillRect(Math.round(cx + Math.cos(ang) * rr), Math.round(cy + Math.sin(ang) * rr * 0.4), p.z > 0.8 ? 2 : 1, 1); }
+  for (const [r, c] of [[44, 'rgba(120,90,255,0.10)'], [28, 'rgba(170,150,255,0.14)'], [14, 'rgba(230,225,255,0.24)']]) { g.fillStyle = c; for (let yy = -r * 0.5; yy <= r * 0.5; yy++) { const w = Math.floor(r * Math.sqrt(1 - yy * yy / (r * r * 0.25))); g.fillRect(Math.round(cx) - w, Math.round(cy + yy), 2 * w + 1, 1); } }      // the glowing heart of the galaxy
+  g.fillStyle = '#ffffff'; g.fillRect(Math.round(cx) - 2, Math.round(cy), 5, 1); g.fillRect(Math.round(cx), Math.round(cy) - 1, 1, 3);
+  for (let i = 0; i < 9; i++) { const sp = 90 + i * 37, x0 = ((t * sp + i * 97) % (W + 120)) - 60, y0 = (i * 53 + 17) % H, L = 26 + (i * 13) % 30, col = ['#59f0ff', '#ffffff', '#ff5ad8'][i % 3]; for (let k = 0; k < L; k++) { g.fillStyle = k > L * 0.6 ? '#2a3a8a' : col; g.fillRect(Math.round(x0 - k), Math.round(y0 + k * 0.35), 1, 1); } }
+  for (let i = 0; i < 24; i++) { g.fillStyle = i % 2 ? '#bfe4ff' : '#59f0ff'; g.fillRect((Math.random() * W) | 0, (Math.random() * H) | 0, 1 + (Math.random() < 0.3), 1 + (Math.random() < 0.3)); }      // data flickers
+}
+function domVoidLayer(now) {                   // the void inside a hard-edged circle that grows out of the burst (and shrinks away when the domain collapses)
+  if (!dom) return; const a = now - dom.p0; let R = 0;
+  if (dom.ph === 'burst') R = a < 1100 ? 0 : Math.min(1, (a - 1100) / 800) * domR() * 1.05; else if (dom.ph === 'void') R = domR() * 1.2; else if (dom.ph === 'collapse') R = Math.max(0, 1 - a / DOM_MS.collapse) * domR() * 1.05;
+  if (R <= 0) return;
+  if (!voidCv || voidCv.width !== VW || voidCv.height !== VH) { voidCv = document.createElement('canvas'); voidCv.width = VW; voidCv.height = VH; voidG = voidCv.getContext('2d'); }
+  drawVoid(voidG, now, VW, VH); const cx = Math.round(VW / 2), cy = gy - 38, full = R >= domR() * 1.1;
+  if (full) ctx.drawImage(voidCv, 0, 0); else for (let y = 0; y < VH; y++) { const w2 = R * R - (y - cy) * (y - cy); if (w2 <= 0) continue; const w = Math.floor(Math.sqrt(w2)), x0 = Math.max(0, cx - w), x1 = Math.min(VW, cx + w + 1); if (x1 > x0) ctx.drawImage(voidCv, x0, y, x1 - x0, 1, x0, y, x1 - x0, 1); }
+  if (!full) { ctx.fillStyle = '#e8f0ff'; for (let i = 0; i < 140; i++) { const th = i / 140 * 6.2832, rr = R + Math.sin(th * 7 + now / 90) * 2; ctx.fillRect(Math.round(cx + Math.cos(th) * rr), Math.round(cy + Math.sin(th) * rr), 2, 2); } }      // the glowing, rippling edge
+  const t = now / 1000, gx = cx; ctx.fillStyle = 'rgba(160,180,255,0.10)';
+  for (let k = 1; k <= 4; k++) { const rx = 12 + k * 5, ry = 30 + k * 6; for (let yy = -ry; yy <= ry; yy++) { const w = Math.floor(rx * Math.sqrt(1 - yy * yy / (ry * ry))); ctx.fillRect(gx - w, gy - 30 + yy, 2 * w + 1, 1); } }      // Gojo's glow
+  if (R > 20) for (let k = 0; k < 4; k++) { const r = ((t * 34 + k * 30) % 120) + 6, al = 1 - r / 126; ctx.fillStyle = al > 0.55 ? '#c9b8ff' : al > 0.3 ? '#8f6bff' : '#4a2e9a'; for (let i = 0; i < 64; i++) { const th = i / 64 * 6.2832; ctx.fillRect(Math.round(gx + Math.cos(th) * r), Math.round(gy + 2 + Math.sin(th) * r * 0.16), 1, 1); } }      // ripples on the floor of nothing
+}
+function domOverlay(now) {                     // darkness, the white burst, the cut-in, the title and the cinema bars
+  if (!dom) return; const a = now - dom.p0, cx = Math.round(VW / 2), cy = gy - 38, full = (al) => { ctx.fillStyle = al; ctx.fillRect(-8, -8, VW + 16, VH + 16); };
+  if (dom.ph === 'wide') full('rgba(0,0,12,' + (0.38 * a / DOM_MS.wide).toFixed(2) + ')');
+  if (dom.ph === 'burst') {
+    if (a < 350) full('rgba(0,0,10,' + (0.38 + 0.5 * a / 350).toFixed(2) + ')');
+    else { ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(110,160,255,0.07)'; for (let k = 1; k <= 5; k++) { const r = k * 22 * Math.min(1, (a - 350) / 600); for (let yy = -r; yy <= r; yy++) { const w = Math.floor(Math.sqrt(Math.max(0, r * r - yy * yy))); ctx.fillRect(cx - w, cy + yy, 2 * w + 1, 1); } } ctx.globalCompositeOperation = 'source-over'; }
+    if (a >= 600) {
+      const k = Math.min(1, (a - 600) / 700); ctx.fillStyle = '#ffffff';
+      for (let i = 0; i < 16; i++) { const th = i / 16 * 6.2832 + a / 900, len = (i % 2 ? 60 : 120) * k; for (let s = 0; s < len; s += 2) { const sz = Math.max(1, Math.round(4 * (1 - s / len))); ctx.fillRect(Math.round(cx + Math.cos(th) * s) - 1, Math.round(cy + Math.sin(th) * s * 0.9) - 1, sz, sz); } }
+      const r = 6 + 34 * k; for (let yy = -r; yy <= r; yy++) { const w = Math.floor(Math.sqrt(r * r - yy * yy)); ctx.fillRect(cx - w, cy + yy, 2 * w + 1, 1); }
+      for (let j = 0; j < 2; j++) { const rr = Math.max(0, (a - 700 - j * 220) / 900) * domR(); if (rr > 0) { ctx.fillStyle = j ? '#9fc8ff' : '#e8f4ff'; for (let i = 0; i < 90; i++) { const th = i / 90 * 6.2832; ctx.fillRect(Math.round(cx + Math.cos(th) * rr), Math.round(cy + Math.sin(th) * rr * 0.9), 3, 3); } } }
+    }
+    const fl = a < 900 ? 0 : a < 1250 ? (a - 900) / 350 : Math.max(0, 1 - (a - 1250) / 650); if (fl > 0) full('rgba(255,255,255,' + Math.min(1, fl).toFixed(2) + ')');
+  }
+  if (dom.ph === 'face' && domImg.complete && domImg.naturalWidth) {
+    const i = Math.min(DF_N - 1, Math.floor(a * DF_FPS / 1000)); full('#000'); ctx.drawImage(domImg, 0, i * DF_H, DF_W, DF_H, Math.round((VW - DF_W) / 2), Math.round((VH - DF_H) / 2), DF_W, DF_H);
+    ctx.globalCompositeOperation = 'lighter'; full('rgba(90,170,255,' + (0.04 + 0.03 * Math.sin(a / 160)).toFixed(3) + ')'); ctx.globalCompositeOperation = 'source-over'; if (a < 160) full('rgba(255,255,255,' + (0.8 * (1 - a / 160)).toFixed(2) + ')');
+  }
+  const bh = Math.round(VH * 0.11); let bk = 0; if (dom.ph === 'face') bk = Math.min(1, a / 300); else if (dom.ph === 'wide' || dom.ph === 'burst') bk = 1; else if (dom.ph === 'void') bk = Math.max(0, 1 - a / 300);
+  if (bk > 0) { const h = Math.round(bh * bk); ctx.fillStyle = '#000'; ctx.fillRect(-8, -8, VW + 16, h + 8); ctx.fillRect(-8, VH - h, VW + 16, h + 8); }
+  const title = dom.ph === 'burst' && a >= 700 ? ['DOMAIN EXPANSION', Math.min(1, (a - 700) / 300) * Math.min(1, (DOM_MS.burst - a) / 300)] : dom.ph === 'void' && a < 2600 ? ['INFINITE VOID', Math.min(1, a / 400) * Math.min(1, (2600 - a) / 500)] : null;
+  if (title && title[1] > 0) { ctx.textAlign = 'center'; ctx.font = (dom.ph === 'void' ? 12 : 8) + 'px "Press Start 2P"'; ctx.globalAlpha = title[1]; ctx.fillStyle = '#000'; ctx.fillText(title[0], VW / 2 + 1, 25); ctx.fillStyle = dom.ph === 'void' ? '#d8e4ff' : '#ffffff'; ctx.fillText(title[0], VW / 2, 24); ctx.globalAlpha = 1; }
+}
 function drawBoom(now) {                      // the explosion: 15 frames at 30 FPS: a white-hot flash, a red shock ring racing out, flying sparks
   if (!boom) return; const i = Math.floor((now - boom.born) * 30 / 1000); if (i >= 15) { boom = null; return; }
   const sx = Math.round(Math.round(VW / 2) + boom.x - wx), sy = Math.round(boom.y), z = boom.big ? 1 : 0.6;
@@ -838,6 +926,7 @@ function pickAtk() {                          // crouched: the low jab and the u
   const k = combo; combo = (k + 1) % 4; return k;
 }
 function drawScene(now, dt) {
+  domTick(now);
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3);
   if (mbAt < 0) mbK = 0;
   if (ceReq) { ceReq = false; if (t >= 1) cycleMode(now); }        // CURSED ENERGY button / key: on <-> off
@@ -861,7 +950,7 @@ function drawScene(now, dt) {
   if (jf < 0 && tf < 0) dgUsed = false;       // one air dash per jump
   let bf = -1;                                // block frame: 0-4 the hands come up, 5-9 the held guard (loops), then 4..0 as they go down again
   if (blkAt >= 0) {
-    if (blkEnd < 0) { const e = Math.floor(Math.max(0, now - blkAt) * BLK_FPS / 1000); bf = e < 5 ? e : 5 + Math.floor((now - blkAt - 5000 / BLK_FPS) * 8 / 1000) % 5; blkFrom = Math.min(4, e); }      // the raise runs at 24 FPS; the held pose is the same picture with a gentle hair-tip sway, played slowly (8 FPS) so nothing twitches
+    if (blkEnd < 0) { const e = Math.floor(Math.max(0, now - blkAt) * BLK_FPS / 1000); bf = e < 5 ? e : domHold ? 4 : 5 + Math.floor((now - blkAt - 5000 / BLK_FPS) * 8 / 1000) % 5; blkFrom = Math.min(4, e); }      // the raise runs at 24 FPS; the held pose is the same picture with a gentle hair-tip sway, played slowly (8 FPS) so nothing twitches
     else { bf = blkFrom - Math.floor(Math.max(0, now - blkEnd) * BLK_FPS / 1000); if (bf < 0) { blkAt = -1; blkEnd = -1; bf = -1; } }
   }
   let sf = -1;                                // crouch transition frame 0-9 (going down; standing up plays the same frames backwards)
@@ -889,6 +978,7 @@ function drawScene(now, dt) {
     crReq = false;
     if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0) { if (stance === 'stand') { stance = 'down'; stAt = now; sf = 0; } else if (stance === 'crouch') { stance = 'up'; stAt = now; sf = 0; } }
   }
+  if (domReq) { domReq = false; if (!dom && now >= domReadyAt && t >= 1 && stance === 'stand' && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0 && hurtAt < 0) startDomain(now); }      // DOMAIN: only while he stands and nothing else is going on
   if (lpReq) {                                // BLUE: in mid-air = teleport up, then fall. On the ground: walking forward = stand and pull the enemy in (stuns 0.4 s); otherwise blink forward to the enemy; crouched = Max Blue
     lpReq = false;
     if (rdOrb && rdOrb.slow && !rdOrb.coat && cm !== 2 && (keyL || padL) && t >= 1 && jf < 0 && tf < 0 && df < 0 && hf < 0 && lf < 0 && sf < 0 && af < 0 && bf < 0 && (mf < 0 || mbK === 1)) { startCoat(now); mf = 0; }      // a slow red orb is flying: BLUE while walking back coats it in blue and he jumps on it
@@ -899,8 +989,8 @@ function drawScene(now, dt) {
       else if (stance === 'crouch' && !orb) { stance = 'up'; stAt = now; sf = 0; mbPending = true; }          // crouched: stand up first, then summon MAX BLUE (not while the last orb is still out)
     }
   }
-  if (blockHeld && blkAt < 0 && t >= 1 && (stance === 'stand' || stance === 'crouch') && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && mf < 0 && df < 0 && sf < 0) { blkAt = now; blkEnd = -1; bf = 0; atkQ = false; }      // BLOCK (hold): his signature pose, one hand up with two fingers raised; hits from the front are blocked
-  if (!blockHeld && blkAt >= 0 && blkEnd < 0) { if (stance !== 'stand' || keyL || keyR || padL || padR) { blkAt = -1; bf = -1; } else blkEnd = now; }      // the hand lowers smoothly only when he stands still; otherwise it just drops
+  if ((blockHeld || domHold) && blkAt < 0 && t >= 1 && (stance === 'stand' || stance === 'crouch') && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && mf < 0 && df < 0 && sf < 0) { blkAt = now; blkEnd = -1; bf = 0; atkQ = false; }      // BLOCK (hold): his signature pose, one hand up with two fingers raised; hits from the front are blocked
+  if (!blockHeld && !domHold && blkAt >= 0 && blkEnd < 0) { if (stance !== 'stand' || keyL || keyR || padL || padR) { blkAt = -1; bf = -1; } else blkEnd = now; }      // the hand lowers smoothly only when he stands still; otherwise it just drops
   if (dashReq) {                              // DASH (evade): the way he is walking is the way he dashes; standing still = back. On the ground, crouched, or (once per jump) in mid-air: hold a direction, then press
     dashReq = false;
     const air = jf >= 3 && jf <= 11 && tf < 0, grounded = jf < 0 && tf < 0 && sf < 0 && (stance === 'stand' || stance === 'crouch');
@@ -936,9 +1026,11 @@ function drawScene(now, dt) {
   ctx.save();
   if (now < shakeUntil) ctx.translate(Math.round((Math.random() * 2 - 1) * shakeAmp), Math.round((Math.random() * 2 - 1) * shakeAmp));   // tiny shake on impact
   ctx.imageSmoothingEnabled = false;
-  ctx.save(); ctx.translate(0, -FAR); ctx.drawImage(bg, 0, 0);
+  if (domBgOff(now)) { ctx.fillStyle = '#000'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }
+  else { ctx.save(); ctx.translate(0, -FAR); ctx.drawImage(bg, 0, 0);
   layer(far, 0.25); layer(near, 0.55);
-  drawProps(now); ctx.restore(); drawGround(); drawBlood(now);               // traffic lights and lamps, then the zebra crossing under his feet (it scrolls with the world)
+  drawProps(now); ctx.restore(); drawGround(); drawBlood(now); }
+  domVoidLayer(now);               // traffic lights and lamps, then the zebra crossing under his feet (it scrolls with the world)
   const rush = df >= 2 && df <= 11 ? (dgK === 0 ? 700 : -500) : 0;        // the wind streaks race past during a dash
   const op = orb ? orbPose(now) : null;       // Max Blue: the sky dims and the wind is sucked into the orb
   if (op) { ctx.fillStyle = 'rgba(6,8,36,' + (0.3 * Math.min(1, op.age / 500, (ORB_MS - op.age) / 500)) + ')'; ctx.fillRect(0, 0, VW, VH); }
@@ -1027,7 +1119,7 @@ function drawScene(now, dt) {
     ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')';
     ctx.fillRect(0, 0, VW, VH);
   }
-  drawPeds(now, dt, 1); drawGibs(now); drawPopups(now);
+  drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); domOverlay(now);
   ctx.restore();
   if (now < flashUntil) { ctx.fillStyle = 'rgba(190,225,255,' + (flashA * (flashUntil - now) / flashMs) + ')'; ctx.fillRect(0, 0, VW, VH); }
   drawHits(now);
@@ -1061,7 +1153,8 @@ function bindPad(id, set) {                   // hold-to-walk touch buttons (mul
 bindPad('atk', v => { if (v) atkReq = true; });
 bindPad('dash', v => { if (v) dashReq = true; });
 bindPad('blk', v => { blockHeld = v; });                    // hold to block           // tap to dash the way you are walking (back when standing still)
-bindPad('ce', v => { if (v) ceReq = true; });               // tap to turn cursed energy on or off
+bindPad('ce', v => { if (v) ceReq = true; });
+bindPad('dom', v => { if (v) domReq = true; });                 // DOMAIN EXPANSION: Infinite Void (key V)               // tap to turn cursed energy on or off
 bindPad('lap', v => { if (v) lpReq = true; });           // tap for Lapse Blue (hold FWD while you tap it to pull the enemy in instead of blinking to him)
 // THE JOYSTICK (bottom left): push left / right to walk back / forward, up to jump (one jump per push), down to crouch (he stays crouched while you hold it)
 const joy = $('joy'), knob = $('knob');
@@ -1088,12 +1181,12 @@ joy.addEventListener('pointermove', e => { if (e.pointerId === joyId) joyMove(e)
 ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => joy.addEventListener(n, e => { if (e.pointerId === joyId) joyRelease(); }));
 joy.addEventListener('contextmenu', e => e.preventDefault());
 
-const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U', KeyJ: 'A', KeyF: 'A', ArrowDown: 'C', KeyS: 'C', KeyC: 'C', KeyL: 'B', KeyK: 'D', ShiftLeft: 'D', ShiftRight: 'D', KeyB: 'G', KeyE: 'E' };
+const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U', KeyJ: 'A', KeyF: 'A', ArrowDown: 'C', KeyS: 'C', KeyC: 'C', KeyL: 'B', KeyK: 'D', ShiftLeft: 'D', ShiftRight: 'D', KeyB: 'G', KeyE: 'E', KeyV: 'V' };
 addEventListener('keydown', e => {
   if (settingsOn()) { if (e.key === 'Escape') closeSettings(); return; }      // the settings screen takes the keyboard while it is open
   const k = KEYS[e.code];
   if (k) {
-    if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (k === 'G') blockHeld = true; else if (state === 'play' && !e.repeat) { if (k === 'A') atkReq = true; else if (k === 'C') crReq = true; else if (k === 'B') lpReq = true; else if (k === 'D') dashReq = true; else if (k === 'E') ceReq = true; else { jumpReq = true; jumpFromStick = false; } }
+    if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (k === 'G') blockHeld = true; else if (state === 'play' && !e.repeat) { if (k === 'A') atkReq = true; else if (k === 'C') crReq = true; else if (k === 'B') lpReq = true; else if (k === 'D') dashReq = true; else if (k === 'E') ceReq = true; else if (k === 'V') domReq = true; else { jumpReq = true; jumpFromStick = false; } }
     if (state === 'play') e.preventDefault();
     return;
   }
@@ -1159,6 +1252,8 @@ window.__humInfo = () => HUM && HUM.map(T => { const px = c => c.getContext('2d'
 window.__purple = () => purple && ({ hp: purple.hp, age: performance.now() - purple.born, x: purple.x });
 window.__hitPurple = d => damagePurple(d, performance.now());
 window.__dummyAt = x => { if (dummy) { dummy.x = wx + x; dummy.vx = 0; dummy.ai = 'rest'; dummy.aiAt = performance.now(); dummy.restFor = 4000; } };
+window.__domain = () => ({ ph: dom ? dom.ph : '', age: dom ? performance.now() - dom.p0 : 0, hold: domHold, cd: Math.max(0, domReadyAt - performance.now()), img: [domImg.naturalWidth, domImg.naturalHeight], lock: domLock(), voidOn: voidOn() });
+window.__domJump = ph => { if (dom && DOM_ORDER.includes(ph)) { dom.ph = ph; dom.p0 = performance.now(); } };
 window.__fill = () => { while (peds.length < 5) peds.push(newPed(wx + 150 + peds.length * 12)); };
 window.__hit = k => gojoHit(k, performance.now());           // test hook: the attacker's swing k lands on Gojo right now (a dash dodges it)
 window.__state = () => ({ cmode: cm, redOrb: !!rdOrb, orbV: rdOrb ? rdOrb.v : 0, coat: rdOrb ? !!rdOrb.coat : false, ride: ride ? ride.phase : '', lift: gojoLift, boom: !!boom, ce: ceOn, ceAmt: +ceAmt.toFixed(2), ho: HOMAP.size, stance, jumpC, mode, wx, stick: { x: stickX, y: stickY, up: stickUp, down: stickDown, held: stickCr }, lapse: lpAt >= 0 ? lpK : -1, dash: dgAt >= 0 ? dgK : -1, dashAir: dgAir, block: blkAt >= 0 ? (blkEnd < 0 ? 1 : 2) : 0, guard: guardUp(performance.now()), mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests

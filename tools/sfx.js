@@ -249,6 +249,47 @@ function makeSfx(ac) {
       tone(B.deep, t, { type: 'triangle', f: 300, f2: 90, dur: 0.3, gain: 0.25, atk: 0.003 });
       tone(B.deep, t, { f: 1200, f2: 800, dur: 0.15, gain: 0.08, atk: 0.002 });
     },
+    domainstart(at) {                                    // DOMAIN: the hand rises. A deep swell and two heartbeats
+      const t = T(at), B = C.ce;
+      tone(B.deep, t, { f: 38, f2: 62, dur: 0.95, gain: 0.3, atk: 0.35, cur: 1 });
+      burst(B.soft, t, { type: 'highpass', f: 400, f2: 3200, q: 0.7, dur: 0.95, gain: 0.25, atk: 0.5 });
+      for (const k of [0.15, 0.5]) tone(B.deep, t + k, { f: 78, f2: 38, dur: 0.2, gain: 0.45, atk: 0.004 });
+    },
+    domainface(at) {                                     // the cut-in: two slow heartbeats, a breathy whisper and a glassy shimmer that grows
+      const t = T(at), B = C.ce;
+      for (const k of [0, 0.5]) { tone(B.deep, t + k, { f: 70, f2: 34, dur: 0.24, gain: 0.55, atk: 0.004 }); tone(B.deep, t + k + 0.13, { f: 60, f2: 32, dur: 0.2, gain: 0.35, atk: 0.004 }); }
+      burst(B.soft, t + 0.2, { f: 1500, f2: 2600, q: 0.5, dur: 2.6, gain: 0.5, atk: 1.2 });
+      [880, 1320, 1760].forEach((f, i) => tone(B.soft, t + 0.3 + i * 0.25, { f, f2: f * 1.01, dur: 2.2, gain: 0.04, atk: 1.1, cur: 1 }));
+    },
+    domainzoom(at) {                                     // the push-in on the eyes: a riser that climbs for 1.7 s
+      const t = T(at), B = C.ce;
+      tone(B.deep, t, { type: 'sawtooth', f: 70, f2: 1500, dur: 1.7, gain: 0.06, atk: 1.2, cur: 1 });
+      tone(B.deep, t, { f: 40, f2: 90, dur: 1.7, gain: 0.28, atk: 1.2, cur: 1 });
+      burst(B.soft, t, { type: 'highpass', f: 500, f2: 6500, q: 0.7, dur: 1.7, gain: 0.4, atk: 1.3 });
+      for (let k = 0; k < 6; k++) tone(B.deep, t + 0.25 + k * 0.25, { f: 90, f2: 40, dur: 0.15, gain: 0.35, atk: 0.004 });
+    },
+    domainburst(at) {                                    // the domain opens: a colossal boom, a bright shimmer and a long tail of sparkles
+      const t = T(at), B = C.ce;
+      tone(B.deep, t, { type: 'triangle', f: 80, f2: 20, dur: 1.8, gain: 0.7, atk: 0.003 });
+      tone(B.deep, t, { f: 180, f2: 45, dur: 0.6, gain: 0.35, atk: 0.002 });
+      burst(B.deep, t, { f: 3000, f2: 120, q: 0.6, dur: 1.4, gain: 0.9, atk: 0.002 });
+      burst(B.soft, t + 0.05, { type: 'highpass', f: 2500, f2: 900, q: 0.6, dur: 1.8, gain: 0.5, atk: 0.04 });
+      for (let k = 0; k < 20; k++) tone(B.soft, t + 0.08 + k * 0.07, { f: R(1800, 5200), f2: R(1500, 4000), dur: R(0.15, 0.4), gain: R(0.02, 0.06), atk: 0.003 });
+    },
+    voidon() {                                           // the Infinite Void: a low drifting drone that fades in (voidoff() fades it out)
+      if (st.voidN) return; const t = ac.currentTime, g = ac.createGain(), nodes = []; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.14, t + 1.5); g.connect(C.ce.deep);
+      [[55, 'sine', 0], [82.4, 'sine', 3], [110.3, 'triangle', -4], [164.8, 'sine', 5]].forEach(([f, ty, d], i) => { const o = ac.createOscillator(), og = ac.createGain(), lfo = ac.createOscillator(), lg = ac.createGain(); o.type = ty; o.frequency.value = f; o.detune.value = d; og.gain.value = 0.5 / (1 + i * 0.6); lfo.frequency.value = 0.07 + i * 0.05; lg.gain.value = 0.25; lfo.connect(lg); lg.connect(og.gain); o.connect(og); og.connect(g); o.start(t); lfo.start(t); nodes.push(o, lfo); });
+      const ns = ac.createBufferSource(), nf = ac.createBiquadFilter(), ng = ac.createGain(); ns.buffer = nbuf; ns.loop = true; nf.type = 'bandpass'; nf.frequency.value = 900; nf.Q.value = 0.6; ng.gain.value = 0.12; ns.connect(nf); nf.connect(ng); ng.connect(g); ns.start(t); nodes.push(ns);
+      st.voidN = { g, nodes };
+    },
+    voidoff() { const v = st.voidN; if (!v) return; st.voidN = null; const t = ac.currentTime; v.g.gain.cancelScheduledValues(t); v.g.gain.setValueAtTime(Math.max(0.0001, v.g.gain.value), t); v.g.gain.linearRampToValueAtTime(0.0001, t + 0.7); v.nodes.forEach(n => { try { n.stop(t + 0.8); } catch (e) { } }); },
+    voidping(at) { const t = T(at), B = C.ce, f = R(1500, 4200); tone(B.soft, t, { f, f2: f * 0.98, dur: R(0.3, 0.6), gain: 0.05, atk: 0.003 }); },
+    domainend(at) {                                      // the domain collapses: a reverse rush, a thump and a shatter
+      const t = T(at), B = C.ce;
+      burst(B.soft, t, { type: 'highpass', f: 7000, f2: 300, q: 0.7, dur: 0.8, gain: 0.7, atk: 0.5 });
+      tone(B.deep, t + 0.7, { type: 'triangle', f: 90, f2: 28, dur: 0.7, gain: 0.5, atk: 0.003 });
+      for (let k = 0; k < 10; k++) burst(B.soft, t + 0.7 + k * 0.03, { f: R(2500, 7000), q: 2.4, dur: R(0.02, 0.05), gain: R(0.2, 0.5), atk: 0.001 });
+    },
     purple(at) {                                         // red meets blue: a violet hum that rises and shakes during the 1.4 s fuse, with a crackle
       const t = T(at), B = C.ce;
       for (let k = 0; k < 4; k++) { tone(B.deep, t + 0.35 * k, { type: 'sawtooth', f: 80 + 55 * k, f2: 100 + 70 * k, dur: 0.5, gain: 0.045 + 0.027 * k, atk: 0.04 }); tone(B.deep, t + 0.35 * k, { type: 'triangle', f: 160 + 110 * k, f2: 190 + 130 * k, dur: 0.5, gain: 0.063 + 0.036 * k, atk: 0.04 }); }
