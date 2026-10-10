@@ -781,7 +781,7 @@ function drawPBoom(now) {                     // the purple blast: a white-viole
 // Gojo raises his hand into the block pose and holds its last frame, everybody freezes, a pixel-art version of the reference GIF plays (40 frames: the face, then the push-in on the eyes),
 // a wide shot of the crossing with the people standing still, the lights fail, a white burst opens the domain and the scene becomes the Infinite Void. Inside it the enemy is frozen and
 // everything hits twice as hard; the void then collapses back to the crossing and the button cools down for 30 s.
-const DOMAIN_IMG = '__DOMAINIMG__', DF_N = 40, DF_W = 320, DF_H = 130, DF_FPS = 8, DOM_CD = 30000;
+const DOMAIN_IMG = '__DOMAINIMG__', DF_N = 40, DF_W = 64, DF_H = 64, DF_FPS = 8, DOM_CD = 30000;      // the cut-in: 40 frames of 64 x 64, 16 colours, shown at 2x
 const domImg = new Image(); domImg.src = DOMAIN_IMG;
 const DOM_ORDER = ['pose', 'face', 'wide', 'burst', 'void', 'collapse'], DOM_MS = { pose: 900, face: DF_N * 1000 / DF_FPS, wide: 1500, burst: 1900, void: 10000, collapse: 1400 };
 let dom = null, domHold = false, domReq = false, domReadyAt = 0, voidCv = null, voidG = null, GAL = null, STARS = null;
@@ -800,7 +800,7 @@ function domTick(now) {
   if (dom || domReadyAt > now) setDomUI(now);
   if (!dom) return;
   const a = now - dom.p0;
-  if (dom.ph === 'face' && !dom.zoomed && a >= 22 * 1000 / DF_FPS) { dom.zoomed = true; snd('domainzoom'); }
+  if (dom.ph === 'face' && !dom.zoomed && a >= 17 * 1000 / DF_FPS) { dom.zoomed = true; snd('domainzoom'); }
   if (dom.ph === 'burst' && !dom.burst && a >= 500) { dom.burst = true; snd('domainburst'); shakeUntil = now + 500; shakeAmp = 2; }
   if (dom.ph === 'void' && now >= dom.ping) { dom.ping = now + 500 + Math.random() * 900; snd('voidping'); }
   if (a >= DOM_MS[dom.ph]) {
@@ -854,10 +854,15 @@ function domOverlay(now) {                     // darkness, the white burst, the
     const fl = a < 900 ? 0 : a < 1250 ? (a - 900) / 350 : Math.max(0, 1 - (a - 1250) / 650); if (fl > 0) full('rgba(255,255,255,' + Math.min(1, fl).toFixed(2) + ')');
   }
   if (dom.ph === 'face' && domImg.complete && domImg.naturalWidth) {
-    const i = Math.min(DF_N - 1, Math.floor(a * DF_FPS / 1000)); full('#000'); ctx.drawImage(domImg, 0, i * DF_H, DF_W, DF_H, Math.round((VW - DF_W) / 2), Math.round((VH - DF_H) / 2), DF_W, DF_H);
+    const i = Math.min(DF_N - 1, Math.floor(a * DF_FPS / 1000)), pw = DF_W * 2, ph2 = DF_H * 2, px = Math.round((VW - pw) / 2), py = Math.round((VH - ph2) / 2);
+    drawVoid(ctx, now, VW, VH); full('rgba(0,0,12,0.78)');                                                       // a dim backdrop of deep space with drifting streaks of light
+    ctx.drawImage(domImg, 0, i * DF_H, DF_W, DF_H, px, py, pw, ph2);                                              // the 64 x 64 picture at 2x (every picture pixel is 2 x 2 game pixels)
+    ctx.fillStyle = '#16123a'; ctx.fillRect(px, py, pw, 2); ctx.fillRect(px, py + ph2 - 2, pw, 2); ctx.fillRect(px, py, 2, ph2); ctx.fillRect(px + pw - 2, py, 2, ph2);      // a pixel frame
+    ctx.fillStyle = '#8c8cff'; ctx.fillRect(px + 2, py + 2, pw - 4, 1); ctx.fillRect(px + 2, py + ph2 - 3, pw - 4, 1); ctx.fillRect(px + 2, py + 2, 1, ph2 - 4); ctx.fillRect(px + pw - 3, py + 2, 1, ph2 - 4);
+    ctx.fillStyle = '#ffffff'; for (const [cx2, cy2] of [[px, py], [px + pw - 3, py], [px, py + ph2 - 3], [px + pw - 3, py + ph2 - 3]]) ctx.fillRect(cx2, cy2, 3, 3);
     ctx.globalCompositeOperation = 'lighter'; full('rgba(90,170,255,' + (0.04 + 0.03 * Math.sin(a / 160)).toFixed(3) + ')'); ctx.globalCompositeOperation = 'source-over'; if (a < 160) full('rgba(255,255,255,' + (0.8 * (1 - a / 160)).toFixed(2) + ')');
   }
-  const bh = Math.round(VH * 0.11); let bk = 0; if (dom.ph === 'face') bk = Math.min(1, a / 300); else if (dom.ph === 'wide' || dom.ph === 'burst') bk = 1; else if (dom.ph === 'void') bk = Math.max(0, 1 - a / 300);
+  const bh = Math.round(VH * 0.11); let bk = 0; if (dom.ph === 'face') bk = 0; else if (dom.ph === 'wide' || dom.ph === 'burst') bk = 1; else if (dom.ph === 'void') bk = Math.max(0, 1 - a / 300);
   if (bk > 0) { const h = Math.round(bh * bk); ctx.fillStyle = '#000'; ctx.fillRect(-8, -8, VW + 16, h + 8); ctx.fillRect(-8, VH - h, VW + 16, h + 8); }
   const title = dom.ph === 'burst' && a >= 700 ? ['DOMAIN EXPANSION', Math.min(1, (a - 700) / 300) * Math.min(1, (DOM_MS.burst - a) / 300)] : dom.ph === 'void' && a < 2600 ? ['INFINITE VOID', Math.min(1, a / 400) * Math.min(1, (2600 - a) / 500)] : null;
   if (title && title[1] > 0) { ctx.textAlign = 'center'; ctx.font = (dom.ph === 'void' ? 12 : 8) + 'px "Press Start 2P"'; ctx.globalAlpha = title[1]; ctx.fillStyle = '#000'; ctx.fillText(title[0], VW / 2 + 1, 25); ctx.fillStyle = dom.ph === 'void' ? '#d8e4ff' : '#ffffff'; ctx.fillText(title[0], VW / 2, 24); ctx.globalAlpha = 1; }
@@ -1253,6 +1258,7 @@ window.__purple = () => purple && ({ hp: purple.hp, age: performance.now() - pur
 window.__hitPurple = d => damagePurple(d, performance.now());
 window.__dummyAt = x => { if (dummy) { dummy.x = wx + x; dummy.vx = 0; dummy.ai = 'rest'; dummy.aiAt = performance.now(); dummy.restFor = 4000; } };
 window.__domain = () => ({ ph: dom ? dom.ph : '', age: dom ? performance.now() - dom.p0 : 0, hold: domHold, cd: Math.max(0, domReadyAt - performance.now()), img: [domImg.naturalWidth, domImg.naturalHeight], lock: domLock(), voidOn: voidOn() });
+window.__domColors = () => { const c = document.createElement('canvas'); c.width = domImg.naturalWidth; c.height = domImg.naturalHeight; const g = c.getContext('2d'); g.drawImage(domImg, 0, 0); const d = g.getImageData(0, 0, c.width, c.height).data, u = new Set(); for (let i = 0; i < d.length; i += 4) u.add((d[i] << 16) | (d[i + 1] << 8) | d[i + 2]); return u.size; };
 window.__domJump = ph => { if (dom && DOM_ORDER.includes(ph)) { dom.ph = ph; dom.p0 = performance.now(); } };
 window.__fill = () => { while (peds.length < 5) peds.push(newPed(wx + 150 + peds.length * 12)); };
 window.__hit = k => gojoHit(k, performance.now());           // test hook: the attacker's swing k lands on Gojo right now (a dash dodges it)
