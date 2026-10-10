@@ -63,6 +63,16 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #vols input{grid-column:1/3;width:100%;height:3.4vh;accent-color:var(--acc)}
 #vols b{font-weight:normal;color:var(--acc)}
 .row{display:flex;gap:2.4vh;flex-wrap:wrap;justify-content:center}
+#vsBtn{border-color:#ff8a7a;color:#ffd0c8}      /* VERSUS: pick the fighters and a grade */
+.vsrow{display:flex;align-items:center;gap:2vh}.vsrow small{width:16vh;text-align:right}
+.mini .card{width:13vh;height:17vh;padding:.8vh}.mini .card canvas{height:10vh;width:auto}.mini .lock span{font-size:5vh;margin-top:3vh}
+.card.sel{border-color:var(--acc);background:#2a1f4a}
+#grades{display:grid;grid-template-columns:repeat(3,auto);gap:1.2vh 1.6vh}
+.gr{padding:1vh 1.6vh;font-size:clamp(7px,2.1vh,12px);min-width:22vh}.gr small{display:block;margin-top:.7vh}
+.gr.sel{border-color:var(--acc);background:#2a1f4a}.gr.lk{opacity:.4;border-style:dashed}
+.star{display:inline-block;width:1.6em;height:1.6em;margin:0 .15em;background:#ffd34d;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}.star.off{background:#3a3050}
+#vsres.screen{z-index:6;background:rgba(13,10,23,.93)}#vsStars{font-size:6vh;height:7vh}#vsInfo{font-size:clamp(9px,3vh,16px)}
+#settings.vsOn #dummyBtn,#settings.vsOn #fighterBtn,#settings.vsOn #blockerBtn{display:none}
 #joy{pointer-events:auto;touch-action:none;position:relative;width:40vh;height:40vh;flex:none}      /* the joystick: left / right walk, up jumps, down crouches */
 #joy .jb{position:absolute;inset:0;width:100%;height:100%;opacity:.85}
 #joy .jbase{fill:#1a1330;stroke:#6d56a0;stroke-width:3}
@@ -96,6 +106,21 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <div class="card lock"><span>?</span><b>LOCKED</b></div>
     <div class="card lock"><span>?</span><b>LOCKED</b></div>
   </div>
+  <button id="vsBtn">VERSUS MODE</button>
+</section>
+
+<section id="versus" class="screen">
+  <h2>VERSUS</h2>
+  <div class="vsrow"><small>YOUR FIGHTER</small><div class="cards mini"><button class="card sel" id="vsMe"><canvas id="pvMe"></canvas><b>GOJO</b></button><div class="card lock"><span>?</span><b>LOCKED</b></div><div class="card lock"><span>?</span><b>LOCKED</b></div></div></div>
+  <div class="vsrow"><small>ENEMY FIGHTER</small><div class="cards mini"><button class="card sel" id="vsFoe"><canvas id="pvFoe"></canvas><b>GOJO<br>(INV.)</b></button><div class="card lock"><span>?</span><b>LOCKED</b></div><div class="card lock"><span>?</span><b>LOCKED</b></div></div></div>
+  <small>DIFFICULTY: BEAT A GRADE TO UNLOCK THE NEXT</small>
+  <div id="grades"></div>
+  <div class="row"><button id="vsGo">FIGHT!</button><button id="vsBack">BACK</button></div>
+</section>
+
+<section id="vsres" class="screen">
+  <h2 id="vsTitle">VICTORY</h2><div id="vsInfo"></div><div id="vsStars"></div>
+  <div class="row"><button id="vsNext">NEXT GRADE</button><button id="vsAgain">REMATCH</button><button id="vsMenu">MENU</button></div>
 </section>
 
 <section id="settings" class="screen">
@@ -717,7 +742,8 @@ function drawHero(i) {
 
 // ---------------------------------------------------------------- screens
 function show(s) {
-  state = s;
+  state = s; if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
+  $('versus').classList.toggle('on', s === 'versus');
   $('title').classList.toggle('on', s === 'title');
   $('select').classList.toggle('on', s === 'select');
   cv.style.display = s === 'play' ? 'block' : 'none';
@@ -741,7 +767,7 @@ ORG.int = mkc(12, 4, g => { for (let x = 0; x < 12; x++) { const y = 1 + Math.ro
 ORG.rib = mkc(7, 3, g => { g.fillStyle = '#efe6d8'; g.fillRect(1, 0, 5, 1); g.fillRect(0, 1, 2, 1); g.fillRect(5, 1, 2, 1); g.fillStyle = '#c8bca8'; g.fillRect(0, 2, 1, 1); g.fillRect(6, 2, 1, 1); });
 const laid = (cv, f) => (cv.L || (cv.L = [0, 1].map(m => mkc(cv.height, cv.width, g => { g.translate(m ? cv.height : 0, m ? 0 : cv.width); g.rotate(m ? Math.PI / 2 : -Math.PI / 2); g.drawImage(cv, 0, 0); }))))[f ? 1 : 0];      // the same piece lying on its side
 let peds = [], gibs = [], drops = [], decals = [], pools = [], fount = [], flashes = [], kills = 0, pedNext = 0, pedT = 0;
-const pedsOn = () => !navigator.webdriver || window.__pedsOn;      // (the automatic tests run with no bystanders unless a test asks for them)
+const pedsOn = () => !vs && (!navigator.webdriver || window.__pedsOn);      // (the automatic tests run with no bystanders unless a test asks for them)
 function newPed(x, dir) {
   const used = peds.map(p => p.t), pool = [0, 1, 2, 3, 4].filter(i => !used.includes(i)), t = (pool.length ? pool : [0, 1, 2, 3, 4])[(rnd() * (pool.length || 5)) | 0], T = HUM[t], ly = peds.filter(q => q.layer === 0).length <= peds.filter(q => q.layer === 1).length ? 0 : 1;
   return { t, x, dir: dir || (rnd() < 0.5 ? 1 : -1), layer: ly, lane: ly ? 8 + ((rnd() * 8) | 0) : -10 + ((rnd() * 7) | 0), sp: T.sp * (0.9 + rnd() * 0.2), rs: T.rs * (0.9 + rnd() * 0.2), mode: 'walk', turnAt: pedT + 3 + rnd() * 4, ph: rnd(), shockUntil: 0, panicUntil: 0, yellAt: 0, scAt: 0 };
@@ -919,9 +945,12 @@ function guardUp(now) { return blkAt >= 0 && blkEnd < 0 && now - blkAt >= 2000 /
 function say(txt, x, col, size, now) { popups.push({ born: now, x, txt, col, size: size || 8 }); }
 function hitDummy(k, now) {                   // called on the impact frame: a hit lands if the dummy is standing in front of him and within reach
   if (!dummy || dummy.ko >= 0 || dummy.cap || now - dummy.born < 600) return;     // (an enemy caught by Max Blue is out of reach)
+  if (vs && vs.ph !== 'fight') return;
+  if (now < (dummy.dodgeUntil || 0)) { say('MISS', dummy.x, '#9fd8ff', 8, now); return; }      // the smart enemy stepped back out of the swing
   const gap = dummy.x - wx;                   // the dummy's centre relative to Gojo's hips; his body is about 12 px wide
   if (gap - 6 > REACH[k] || gap + 6 < 3) return;
-  if (dummy.mode === 'blocker' && gap > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx]) {      // the blocker's guard faces Gojo: normal punches are blocked (from behind they land)
+  if (dBlocks() && gap > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx]) {      // (a smart enemy that blocked: he answers with a counter)
+    if (vs) dummy.counter = now;      // the blocker's guard faces Gojo: normal punches are blocked (from behind they land)
     dummy.vx += KNOCK[k] * 0.3; shakeUntil = now + 70; shakeAmp = 1; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); return;
   }
   let dmg = DMG[k] + ((Math.random() * 5) | 0);
@@ -946,7 +975,8 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   if (stance !== 'stand') return;                                                     // crouched (or going down / getting up): nothing can hit him      // already reeling, just recovered, or jumped / teleported out of the way
   hurtK = (Math.random() * 10) | 0; hurtAt = now;                                    // one of ten reactions, picked at random
   atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; wxv -= KNOCK_G[k] * 0.9; shakeUntil = now + 120; shakeAmp = k === 3 ? 3 : 2;
-  say('' + (DMG[k] + ((Math.random() * 5) | 0)), wx, '#ff9a5a', 8, now);
+  const dm = Math.round((DMG[k] + ((Math.random() * 5) | 0)) * (vs ? GRADES[vs.gi].dmg : 1)); say('' + dm, wx, '#ff9a5a', 8, now);
+  if (vs && vs.ph === 'fight') vsHurt(dm, now);
   snd('hurt', hurtK);
 }
 function updateFighter(now, dt) {             // the attacking dummy: walks up to Gojo, swings a random hit of the combo, rests, repeats; flinches when he is hit
@@ -965,15 +995,15 @@ function updateFighter(now, dt) {             // the attacking dummy: walks up t
     if (f >= 15) { d.ai = 'rest'; d.aiAt = now; d.restFor = 700 + Math.random() * 900; }
   }
 }
-function drawBar(bx, by) {                    // health bar: green (red when low) with a pale trail showing the damage just taken
-  const f = Math.max(0, dummy.hp) / DUMMY_HP, g = Math.max(0, dummy.shown) / DUMMY_HP;
+function drawBar(bx, by) {                    // (in a match the big bars at the top are used instead)  health bar: green (red when low) with a pale trail showing the damage just taken
+  if (vs) return; const mx = dummy.max || DUMMY_HP, f = Math.max(0, dummy.hp) / mx, g = Math.max(0, dummy.shown) / mx;
   ctx.fillStyle = '#000'; ctx.fillRect(bx - 1, by - 1, 28, 5); ctx.fillStyle = '#3a1a2a'; ctx.fillRect(bx, by, 26, 3);
   ctx.fillStyle = '#ffd27a'; ctx.fillRect(bx, by, Math.round(26 * g), 3); ctx.fillStyle = f > 0.3 ? '#52e08a' : '#ff4a4a'; ctx.fillRect(bx, by, Math.round(26 * f), 3);
 }
 function drawDummy(now, dt) {
   if (!dummy) return;
-  if (dummy.ko >= 0 && now - dummy.ko > 2300) spawnDummy(now, dummy.mode);            // knocked out: a fresh one steps in after a moment
-  if (dummy.mode === 'fighter') updateFighter(now, dt);
+  if (dummy.ko >= 0 && now - dummy.ko > 2300 && !vs) spawnDummy(now, dummy.mode);            // knocked out: a fresh one steps in after a moment
+  if (dummy.mode === 'fighter') { if (vs) updateFighterVs(now, dt); else updateFighter(now, dt); }
   if (dummy.pull) { const k = Math.min(1, (now - dummy.pull.at) / dummy.pull.ms); dummy.x = dummy.pull.from + (dummy.pull.to - dummy.pull.from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) dummy.pull = null; }
   dummy.x += dummy.vx * dt; dummy.vx *= Math.exp(-7 * dt);                              // knock-back slide with friction
   if (now - dummy.hitAt > 350) dummy.shown += (dummy.hp - dummy.shown) * Math.min(1, dt * 4);     // the pale "recent damage" part of the health bar catches up
@@ -989,8 +1019,9 @@ function drawDummy(now, dt) {
   const reacting = kt < 0 && now - dummy.rxAt < RX_DUR[dummy.rx], mirror = !(dummy.mode === 'fighter' && gap < -4);   // he faces Gojo (left), or right if Gojo got behind the attacker
   let src, info, fi, lift = 0;                // what he is doing: reeling from a hit, swinging, stepping, or standing about
   if (reacting) { fi = Math.min(9, Math.floor((now - dummy.rxAt) * RX_FPS[dummy.rx] / 1000)); info = D['rx' + dummy.rx]; src = (hitT < 70 ? rxW : rxI)[dummy.rx][fi]; lift = info.lift ? info.lift[fi] : 0; }
-  else if (kt < 0 && dummy.mode === 'fighter' && dummy.ai === 'attack') { fi = Math.min(14, Math.floor((now - dummy.aiAt) * ATK_FPS[dummy.k] / 1000)); info = D['atk' + dummy.k]; src = atkI[dummy.k][fi]; }
+  else if (kt < 0 && dummy.mode === 'fighter' && dummy.ai === 'attack') { fi = Math.min(14, Math.floor((now - dummy.aiAt) * ATK_FPS[dummy.k] * (dummy.spd || 1) / 1000)); info = D['atk' + dummy.k]; src = atkI[dummy.k][fi]; }
   else if (kt < 0 && dummy.mode === 'fighter' && dummy.ai === 'walk') { fi = Math.floor(now * WALK_FPS / 1000) % dumWalk.length; info = D.fwd; src = dumWalk[fi]; }
+  else if (kt < 0 && dummy.mode === 'fighter' && (dummy.ai === 'block' || dummy.ai === 'dodge')) { fi = 5 + Math.floor(now / 125) % 5; info = D.atk11; src = blkI[fi]; }       // the smart enemy: guard up (also while he steps back)
   else if (kt < 0 && dummy.mode === 'blocker') { fi = 5 + Math.floor(now / 125) % 5; info = D.atk11; src = blkI[fi]; }       // guard up: the hands-up loop
   else { fi = Math.floor(now / (1000 / IDLE_FPS)) % dumF.length; info = D.idle; src = (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) ? dumW[fi] : (kt < 0 && now < dummy.stunUntil && ((now / 70) | 0) % 2 === 0) ? dumB[fi] : dumF[fi]; }   // white flicker while he goes down
   const w = info.w, h = info.h, hx = info.cx - info.x0, y = gy - 60 - (info.top || 0) - lift, fade = kt > 1200 ? Math.max(0, 1 - (kt - 1200) / 700) : 1;
@@ -1039,7 +1070,7 @@ function pullEnemy(now) {                     // Lapse Blue: the enemy is dragge
   if (gap < 3 || gap > 140) return;           // nothing in front of him within range
   dummy.pull = { from: dummy.x, to: wx + 15, at: now, ms: 260 }; dummy.vx = 0;
   dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = 700;
-  if (dummy.mode === 'blocker') { say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); }      // blockable: he is still dragged in, but the guard holds, so no stun
+  if (dBlocks()) { say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); }      // blockable: he is still dragged in, but the guard holds, so no stun
   else { dummy.stunUntil = now + 260 + 400; say('STUN', dummy.x, '#59b8ff', 8, now); snd('stun'); }
 }
 function startBlink(now) {                    // Lapse Blue: blink forward to the enemy (or 50 px ahead if there is none)
@@ -1057,7 +1088,7 @@ function drawSmoke(now, dt) {                 // dust along the ground behind an
   }
 }
 
-function koDummy(now) { dummy.ko = now; dummy.vx += 70; shakeUntil = now + 260; shakeAmp = 4; kos++; say('K.O.', dummy.x, '#ffd34d', 16, now + 120); snd('ko'); }
+function koDummy(now) { if (vs) endRound('player', 'ko', now); dummy.ko = now; dummy.vx += 70; shakeUntil = now + 260; shakeAmp = 4; kos++; say('K.O.', dummy.x, '#ffd34d', 16, now + 120); snd('ko'); }
 function flash(now, ms, a) { flashUntil = now + ms; flashMs = ms; flashA = a; }               // a pale-blue flash over the whole screen that fades out
 const STONE = ['#5b516b', '#9a8fb0', '#3d3548', '#6d5f86'];                                      // the greys of the rooftop rubble
 function spawnOrb(now) {                      // MAX BLUE: the orb leaves his palm, grows into a huge pixelated sphere in front of him and pulls everything in
@@ -1182,7 +1213,7 @@ function explodeRed(now, hit) {               // RED hits (or reaches the end of
   const o = rdOrb, c = o.coat; rdOrb = null; boom = { x: o.x, y: o.y, born: now, big: hit && !c }; snd('redboom'); blastPeds(o.x, c ? 24 : 40, now); shakeUntil = now + 220; shakeAmp = hit && !c ? 4 : 2; holdUntil = now + 90;
   if (ride) { ride.phase = 'drop'; ride.dropAt = now; }          // (Gojo falls off the burst orb and lands right next to the enemy)
   if (!hit || !dummy) return;
-  if (dummy.mode === 'blocker' && dummy.x - wx > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx]) { boom.big = false; dummy.vx += 40; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); return; }      // blockable, like Lapse Blue
+  if (dBlocks() && dummy.x - wx > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx]) { boom.big = false; dummy.vx += 40; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); return; }      // blockable, like Lapse Blue
   if (c) {
     const dmg = 30 + ((Math.random() * 8) | 0);
     dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += 25; dummy.stunUntil = now + 600; dummy.pull = null; dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = 800;      // stunned for 0.6 s (he flashes blue) and stays right there
@@ -1313,6 +1344,106 @@ function domOverlay(now) {                     // darkness, the white burst, the
   const title = dom.ph === 'burst' && a >= 700 ? ['DOMAIN EXPANSION', Math.min(1, (a - 700) / 300) * Math.min(1, (DOM_MS.burst - a) / 300)] : dom.ph === 'void' && a < 2600 ? ['INFINITE VOID', Math.min(1, a / 400) * Math.min(1, (2600 - a) / 500)] : null;
   if (title && title[1] > 0) { ctx.textAlign = 'center'; ctx.font = (dom.ph === 'void' ? 12 : 8) + 'px "Press Start 2P"'; ctx.globalAlpha = title[1]; ctx.fillStyle = '#000'; ctx.fillText(title[0], VW / 2 + 1, 25); ctx.fillStyle = dom.ph === 'void' ? '#d8e4ff' : '#ffffff'; ctx.fillText(title[0], VW / 2, 24); ctx.globalAlpha = 1; }
 }
+// ---------------------------------------------------------------- VERSUS MODE: pick the fighters and a grade, health bars, best of 3 rounds, a 60 s timer, stars; the enemy gets stronger AND smarter with every grade
+// Grade 4 is slow and passive; Special Grade reacts in 90 ms, blocks and dodges, reads what you repeat, punishes every miss, keeps its distance and leaves the way of your orbs.
+const GRADES = [
+  { name: 'GRADE 4', hp: 0.6, dmg: 0.5, spd: 0.75, react: 700, aggr: 0.25, blk: 0, dodge: 0, combo: 1, smart: 0 },
+  { name: 'GRADE 3', hp: 0.8, dmg: 0.7, spd: 0.85, react: 520, aggr: 0.4, blk: 0.12, dodge: 0, combo: 2, smart: 0 },
+  { name: 'GRADE 2', hp: 1.0, dmg: 0.9, spd: 0.95, react: 380, aggr: 0.55, blk: 0.28, dodge: 0.12, combo: 2, smart: 1 },
+  { name: 'SEMI-GRADE 1', hp: 1.3, dmg: 1.1, spd: 1.05, react: 260, aggr: 0.7, blk: 0.42, dodge: 0.22, combo: 3, smart: 1 },
+  { name: 'GRADE 1', hp: 1.7, dmg: 1.3, spd: 1.15, react: 160, aggr: 0.85, blk: 0.58, dodge: 0.36, combo: 3, smart: 2 },
+  { name: 'SPECIAL GRADE', hp: 2.3, dmg: 1.6, spd: 1.25, react: 90, aggr: 1.0, blk: 0.78, dodge: 0.5, combo: 4, smart: 3 }];
+const PHP = 300;                              // Gojo's health in a match
+let vs = null, vsSel = 0;
+const pcMe = $('pvMe').getContext('2d'), pcFoe = $('pvFoe').getContext('2d'); $('pvMe').width = $('pvFoe').width = D.idle.w; $('pvMe').height = $('pvFoe').height = D.idle.h;
+const vsLoad = () => { try { const st = JSON.parse(localStorage.getItem('jsv_stars') || '[]'); return { un: Math.max(0, Math.min(5, +localStorage.getItem('jsv_unlock') || 0)), st: [0, 1, 2, 3, 4, 5].map(i => +st[i] || 0) }; } catch (e) { return { un: 0, st: [0, 0, 0, 0, 0, 0] }; } };
+const vsStore = (un, st) => { try { localStorage.setItem('jsv_unlock', String(un)); localStorage.setItem('jsv_stars', JSON.stringify(st)); } catch (e) { } };
+const dBlocks = () => !!dummy && (dummy.mode === 'blocker' || dummy.ai === 'block');
+function buildGrades() {                       // the six grade buttons: locked until the grade before has been beaten, with the stars earned
+  const sv = vsLoad(), box = $('grades'); box.innerHTML = ''; if (vsSel > sv.un) vsSel = sv.un;
+  GRADES.forEach((g, i) => { const b = document.createElement('button'); b.className = 'gr' + (i === vsSel ? ' sel' : '') + (i > sv.un ? ' lk' : ''); b.disabled = i > sv.un; b.dataset.g = i; b.innerHTML = g.name + '<small>' + (i > sv.un ? 'LOCKED' : [0, 1, 2].map(k => '<span class="star' + (k < sv.st[i] ? '' : ' off') + '"></span>').join('')) + '</small>'; b.addEventListener('click', () => { vsSel = i; buildGrades(); }); box.appendChild(b); });
+}
+function startMatch(gi) { vs = { gi, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: 60000, hp: PHP, sh: PHP, hist: [], res: null }; beginRound(performance.now()); }
+function beginRound(now) {                     // a fresh round: the scene is reset, the enemy steps in, "ROUND n" and "FIGHT!"
+  const keep = vs; show('play'); vs = keep; const t = performance.now(), G = GRADES[vs.gi];
+  Object.assign(vs, { ph: 'intro', t0: t, tl: 60000, hp: PHP, sh: PHP, hist: [], seenAtk: -1, seenAt: 0, seenK: 0, rolled: true, whiffAt: -1, prevAtk: -1, hitAt: -9999, why: '', who: '' });
+  spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + 90; $('vsres').classList.remove('on');
+}
+function vsTick(now, dt) {
+  if (!vs) return; const a = now - vs.t0;
+  if (vs.ph === 'intro' && a >= 2200) { vs.ph = 'fight'; vs.t0 = now; }
+  else if (vs.ph === 'fight') {
+    if (!domLock()) vs.tl -= dt * 1000;
+    if (atkAt < 0 && vs.prevAtk >= 0 && dummy && dummy.hitAt < vs.prevAtk) vs.whiffAt = now;      // Gojo's swing ended without hitting: he is open for a moment
+    vs.prevAtk = atkAt;
+    if (vs.tl <= 0) endRound(vs.hp / PHP > (dummy ? dummy.hp / dummy.max : 0) ? 'player' : 'enemy', 'time', now);
+  } else if (vs.ph === 'ko' && a >= 2300) { if (vs.pw >= 2 || vs.ew >= 2) finishMatch(now); else { vs.round++; beginRound(now); return; } }
+  if (now - vs.hitAt > 350) vs.sh += (vs.hp - vs.sh) * Math.min(1, dt * 4);
+  if (vs.ph !== 'fight') { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = false; }      // no control before FIGHT! and after the K.O.
+}
+function vsHurt(dm, now) { vs.hp = Math.max(0, vs.hp - dm); vs.hitAt = now; if (vs.hp <= 0) endRound('enemy', 'ko', now); }
+function endRound(who, why, now) {
+  if (!vs || vs.ph !== 'fight') return; vs.ph = 'ko'; vs.t0 = now; vs.who = who; vs.why = why; if (who === 'player') vs.pw++; else vs.ew++;
+  if (why === 'ko') holdUntil = Math.max(holdUntil, now + 650); snd(who === 'player' ? 'finisher' : 'ko');
+}
+function finishMatch(now) {
+  vs.ph = 'over'; const win = vs.pw >= 2, pf = vs.hp / PHP, stars = win ? (pf >= 0.7 ? 3 : pf >= 0.35 ? 2 : 1) : 0, sv = vsLoad(), gi = vs.gi;
+  if (win) { sv.un = Math.max(sv.un, Math.min(5, gi + 1)); sv.st[gi] = Math.max(sv.st[gi], stars); vsStore(sv.un, sv.st); }
+  vs.res = { win, stars }; $('vsTitle').textContent = win ? 'VICTORY' : 'DEFEAT'; $('vsInfo').textContent = GRADES[gi].name + '  -  ROUNDS ' + vs.pw + ' : ' + vs.ew;
+  $('vsStars').innerHTML = win ? [0, 1, 2].map(i => '<span class="star' + (i < stars ? '' : ' off') + '"></span>').join('') : ''; $('vsNext').style.display = win && gi < 5 ? '' : 'none'; $('vsres').classList.add('on'); snd(win ? 'finisher' : 'ko');
+}
+function updateFighterVs(now, dt) {            // the grade AI (see GRADES): reaction time, block, dodge, combos, and from Grade 2 up it reads and punishes
+  const d = dummy, G = GRADES[vs.gi], gap = d.x - wx, ag = Math.abs(gap), toward = gap > 0 ? -1 : 1;
+  if (d.ko >= 0 || vs.ph !== 'fight' || now < d.stunUntil) return;
+  if (now - d.rxAt < RX_DUR[d.rx]) { d.ai = 'hurt'; return; }
+  if (d.ai === 'hurt') { d.ai = 'think'; d.aiAt = now; d.chain = 0; }
+  if (atkAt >= 0 && vs.seenAtk !== atkAt) { vs.seenAtk = atkAt; vs.seenAt = now; vs.seenK = atkK; vs.hist.push(atkK); if (vs.hist.length > 8) vs.hist.shift(); vs.rolled = false; }       // Gojo started a swing
+  if ((d.ai === 'block' || d.ai === 'dodge') && now >= d.until) { d.ai = 'think'; d.aiAt = now; }
+  if (d.ai === 'dodge') return;
+  const dodge = ms => { d.ai = 'dodge'; d.aiAt = now; d.until = now + ms; d.dodgeUntil = now + ms; d.vx += (gap > 0 ? 1 : -1) * 250; puff(d.x, 4); say('DODGE', d.x, '#9fd8ff', 8, now); };
+  // 1. a swing is coming: after his reaction time he steps out of it or raises his guard; a move you keep repeating is read (Grade 2 and up) and answered more and more
+  if (atkAt >= 0 && !vs.rolled && d.ai !== 'attack' && gap > 0 && now - vs.seenAt >= G.react * (0.8 + Math.random() * 0.4) && now < atkAt + ATK_IMPACT[vs.seenK] * 1000 / ATK_FPS[vs.seenK] && ag - 6 <= REACH[vs.seenK] + 4) {
+    vs.rolled = true; const habit = vs.hist.slice(-5).filter(k => k === vs.seenK).length, r = Math.random(), blk = Math.min(0.95, G.blk + (G.smart >= 1 ? 0.12 * Math.max(0, habit - 1) : 0));
+    if (r < G.dodge) { dodge(300); return; }
+    if (r < G.dodge + blk) { d.ai = 'block'; d.aiAt = now; d.until = now + 650; }
+  }
+  // 2. the smartest enemy sidesteps a red orb and walks out of Max Blue / the purple orb
+  if (G.smart >= 3 && !d.cap && d.ai !== 'attack') {
+    if (rdOrb && Math.abs(rdOrb.x - d.x) < 60 && now > (d.nextDodge || 0)) { d.nextDodge = now + 900; dodge(350); return; }
+    const ox = orb ? orb.x1 : purple ? purple.x : null; if (ox !== null && Math.abs(d.x - ox) < 70) { d.x += (d.x >= ox ? 1 : -1) * 70 * dt; d.ai = 'walk'; return; }
+  }
+  // 3. a swing in progress (chained into a combo of up to G.combo hits)
+  if (d.ai === 'attack') {
+    const f = Math.floor((now - d.aiAt) * ATK_FPS[d.k] * G.spd / 1000);
+    if (!d.swung && f >= ATK_SWING[d.k]) { d.swung = true; snd('f:swing', d.k); }
+    if (!d.hitDone && f >= ATK_IMPACT[d.k]) { d.hitDone = true; snd('f:hit', d.k); if (ag - 6 <= REACH[d.k]) gojoHit(d.k, now); if (purple && Math.abs(d.x - purple.x) - 8 <= REACH[d.k]) damagePurple((DMG[d.k] || 12) + ((Math.random() * 5) | 0), now); }
+    if (f >= 15) { d.chain = (d.chain || 0) + 1; if (d.chain < G.combo && Math.random() < 0.8) { d.k = (d.k + 1) % 4; d.aiAt = now; d.hitDone = false; d.swung = false; } else { d.ai = 'rest'; d.aiAt = now; d.restFor = (650 + Math.random() * 850) / (0.45 + G.aggr * 0.9); } }
+    return;
+  }
+  if (d.ai === 'rest') { if (now - d.aiAt > d.restFor && now - d.born > 900) d.ai = 'think'; else return; }
+  // 4. thinking: walk in (the smartest one stays just outside Gojo's reach and baits), and decide when to strike
+  const want = G.smart >= 3 ? 40 : REACH[0]; let move = 0;
+  if (ag > want + 4) move = toward; else if (G.smart >= 3 && ag < want - 6 && ag > 20) move = -toward;
+  const punish = G.smart >= 2 && vs.whiffAt > 0 && now - vs.whiffAt < 450 && gap > 0 && ag < REACH[3] + 12 && Math.random() < [0, 0, 0.25, 0.5, 0.8, 1][vs.gi] * dt * 14;      // Gojo just missed: strike while he is open
+  const counter = G.smart >= 2 && d.counter && now - d.counter < 500 && gap > 0 && ag < REACH[0] + 14;      // he just blocked: answer at once
+  let go = punish || counter;
+  if (!go && ag - 6 <= REACH[d.k] - 1 && now >= (d.nextDecide || 0)) { d.nextDecide = now + 250; go = Math.random() < G.aggr; }
+  if (go) { d.k = (punish || counter) && ag - 6 <= REACH[3] - 1 ? 3 : (Math.random() * 4) | 0; if (ag - 6 > REACH[d.k] - 1) d.k = 0; d.ai = 'attack'; d.aiAt = now; d.hitDone = false; d.swung = false; d.chain = 0; d.counter = 0; return; }
+  if (move) { d.x += move * 30 * G.spd * dt; d.ai = 'walk'; } else d.ai = 'think';
+}
+function vsTxt(t, x, y, col, size, al) { ctx.textAlign = al || 'left'; ctx.font = size + 'px "Press Start 2P"'; ctx.fillStyle = '#000'; ctx.fillText(t, x + 1, y + 1); ctx.fillStyle = col; ctx.fillText(t, x, y); }
+function drawVs(now) {                         // health bars, names, the grade, the timer, the round points and the big banners
+  if (!vs) return; const W = 96, a = now - vs.t0, ef = dummy ? Math.max(0, dummy.hp) / dummy.max : 0, es = dummy ? Math.max(0, dummy.shown) / dummy.max : 0, pf = Math.max(0, vs.hp) / PHP, ps = Math.max(0, vs.sh) / PHP;
+  const bar = (x, y, f, g, right) => { ctx.fillStyle = '#000'; ctx.fillRect(x - 1, y - 1, W + 2, 8); ctx.fillStyle = '#3a1a2a'; ctx.fillRect(x, y, W, 6); const w1 = Math.round(W * g), w2 = Math.round(W * f); ctx.fillStyle = '#ffd27a'; ctx.fillRect(right ? x + W - w1 : x, y, w1, 6); ctx.fillStyle = f > 0.3 ? '#52e08a' : '#ff4a4a'; ctx.fillRect(right ? x + W - w2 : x, y, w2, 6); };
+  bar(6, 20, pf, ps, false); bar(VW - 6 - W, 20, ef, es, true);
+  vsTxt('GOJO', 6, 36, '#ffffff', 6); vsTxt('GOJO (INV.)', VW - 6, 36, '#ffffff', 6, 'right'); vsTxt(GRADES[vs.gi].name, VW - 6, 45, '#ffd34d', 6, 'right');
+  vsTxt(String(Math.max(0, Math.ceil(vs.tl / 1000))), VW / 2, 16, vs.tl < 10000 ? '#ff6a5a' : '#ffffff', 10, 'center');
+  for (let i = 0; i < 2; i++) { ctx.fillStyle = i < vs.pw ? '#ffd34d' : '#3a3050'; ctx.fillRect(Math.round(VW / 2) - 14 - i * 8, 22, 6, 6); ctx.fillStyle = i < vs.ew ? '#ffd34d' : '#3a3050'; ctx.fillRect(Math.round(VW / 2) + 8 + i * 8, 22, 6, 6); }
+  const b = vs.ph === 'intro' ? (a < 1300 ? ['ROUND ' + vs.round, 14] : ['FIGHT!', 18]) : vs.ph === 'ko' ? [vs.why === 'time' ? 'TIME!' : 'K.O.', 20] : null; if (b) vsTxt(b[0], VW / 2, gy - 62, '#ffe9a0', b[1], 'center');
+}
+window.__vs = () => vs && ({ gi: vs.gi, ph: vs.ph, round: vs.round, pw: vs.pw, ew: vs.ew, hp: vs.hp, tl: vs.tl, ehp: dummy ? dummy.hp : -1, emax: dummy ? dummy.max : -1, ai: dummy ? dummy.ai : '', res: vs.res, whiffAt: vs.whiffAt });
+window.__grades = () => GRADES; window.__vsSet = o => vs && Object.assign(vs, o); window.__vsEnemy = o => dummy && Object.assign(dummy, o);
+window.__vsKo = () => { if (dummy && vs) { dummy.hp = 0; koDummy(performance.now()); } };
 function drawBoom(now) {                      // the explosion: 15 frames at 30 FPS: a white-hot flash, a red shock ring racing out, flying sparks
   if (!boom) return; const i = Math.floor((now - boom.born) * 30 / 1000); if (i >= 15) { boom = null; return; }
   const sx = Math.round(Math.round(VW / 2) + boom.x - wx), sy = Math.round(boom.y), z = boom.big ? 1 : 0.6;
@@ -1344,7 +1475,7 @@ function drawRedFx(now, dt, x, y, info, fi, charging, mf) {      // the red orb 
   if (charging && mf < 20) { const a = info.hn[fi]; if (a) ob(k, x + a[0] + 2, y + a[1] - 8, 0.1 + 0.3 * Math.min(1, mf / 19)); }
   if (rdOrb) {
     const o = rdOrb, gap = dummy ? dummy.x - o.x : 999; o.x += o.v * dt; o.trail.push([o.x, o.y]); if (o.trail.length > 9) o.trail.shift();
-    if (dummy && dummy.ko < 0 && !dummy.cap && gap < 9 && gap > -16) explodeRed(now, true); else if (orb && !purple && Math.abs(o.x - orbPose(now).xo) < 13 && orbPose(now).age > 200 && orbPose(now).age < ORB_MS - 350) fusePurple(now);
+    if (dummy && dummy.ko < 0 && !dummy.cap && gap < 9 && gap > -16 && now >= (dummy.dodgeUntil || 0)) explodeRed(now, true); else if (orb && !purple && Math.abs(o.x - orbPose(now).xo) < 13 && orbPose(now).age > 200 && orbPose(now).age < ORB_MS - 350) fusePurple(now);
     else if (o.x - o.x0 > 210 || peds.some(p => Math.abs(p.x - o.x) < 12)) explodeRed(now, false);
     else {
       const cx = Math.round(VW / 2), tr = o.coat ? orbF : orbR;      // a coated orb leaves a blue trail
@@ -1377,7 +1508,7 @@ function pickAtk() {                          // crouched: the low jab and the u
   const k = combo; combo = (k + 1) % 4; return k;
 }
 function drawScene(now, dt) {
-  domTick(now);
+  domTick(now); vsTick(now, dt);
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3);
   if (mbAt < 0) mbK = 0;
   if (ceReq) { ceReq = false; if (t >= 1) cycleMode(now); }        // CURSED ENERGY button / key: on <-> off
@@ -1570,7 +1701,7 @@ function drawScene(now, dt) {
     ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')';
     ctx.fillRect(0, 0, VW, VH);
   }
-  drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); domOverlay(now);
+  drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); drawVs(now); domOverlay(now);
   ctx.restore();
   if (now < flashUntil) { ctx.fillStyle = 'rgba(190,225,255,' + (flashA * (flashUntil - now) / flashMs) + ')'; ctx.fillRect(0, 0, VW, VH); }
   drawHits(now);
@@ -1580,6 +1711,7 @@ function tick(now) {
   requestAnimationFrame(tick);                // schedule first so one bad frame can't stop the loop
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
   if (state === 'play') { if (now < holdUntil) last = now; else drawScene(now, dt); }      // hit-stop: the picture freezes for a split second when the red orb explodes
+  else if (state === 'versus') { const fr = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length; pcMe.clearRect(0, 0, 200, 200); pcMe.drawImage(idleF[fr], 0, 0); pcFoe.clearRect(0, 0, 200, 200); pcFoe.drawImage(dumF[fr % dumF.length], 0, 0); }
   else if (state === 'select') {
     pctx.clearRect(0, 0, pv.width, pv.height);
     pctx.drawImage(idleF[Math.floor(now / (1000 / IDLE_FPS)) % idleF.length], 0, 0);
@@ -1662,6 +1794,12 @@ function goFullscreen() {                     // best effort; ignored where unsu
 const inApp = /; wv\)/.test(navigator.userAgent);   // inside the Android app the activity already handles fullscreen + landscape
 $('start').addEventListener('click', () => { audio(); if (!inApp && matchMedia('(pointer:coarse)').matches) goFullscreen(); show('select'); });
 $('gojo').addEventListener('click', () => show('play'));
+$('vsBtn').addEventListener('click', () => { buildGrades(); show('versus'); });
+$('vsBack').addEventListener('click', () => show('select'));
+$('vsGo').addEventListener('click', () => startMatch(vsSel));
+$('vsNext').addEventListener('click', () => { const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
+$('vsAgain').addEventListener('click', () => startMatch(vs ? vs.gi : vsSel));
+$('vsMenu').addEventListener('click', () => { buildGrades(); show('versus'); });
 $('back').addEventListener('click', () => show('select'));
 VOLS.forEach(([k, name]) => {
   const row = document.createElement('label');
@@ -1677,7 +1815,7 @@ VOLS.forEach(([k, name]) => {
 const settingsOn = () => $('settings').classList.contains('on');
 const closeSettings = () => $('settings').classList.remove('on');
 const dummyLabels = () => { $('dummyBtn').textContent = dummy && dummy.mode === 'dummy' ? 'REMOVE DUMMY' : 'SPAWN DUMMY'; $('fighterBtn').textContent = dummy && dummy.mode === 'fighter' ? 'REMOVE ATTACKER' : 'SPAWN ATTACKER'; $('blockerBtn').textContent = dummy && dummy.mode === 'blocker' ? 'REMOVE BLOCKER' : 'SPAWN BLOCKER'; };
-$('setBtn').addEventListener('click', () => { releaseAll(); audio(); dummyLabels(); $('settings').classList.add('on'); });
+$('setBtn').addEventListener('click', () => { releaseAll(); audio(); dummyLabels(); $('settings').classList.toggle('vsOn', !!vs); $('settings').classList.add('on'); });
 $('setClose').addEventListener('click', closeSettings);
 const toggleDummy = mode => { if (dummy && dummy.mode === mode) dummy = null; else spawnDummy(performance.now(), mode); closeSettings(); };
 $('dummyBtn').addEventListener('click', () => toggleDummy('dummy'));      // a punching bag that reacts to every hit
