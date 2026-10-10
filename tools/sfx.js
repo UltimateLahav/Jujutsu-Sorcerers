@@ -249,6 +249,19 @@ function makeSfx(ac) {
       tone(B.deep, t, { type: 'triangle', f: 300, f2: 90, dur: 0.3, gain: 0.25, atk: 0.003 });
       tone(B.deep, t, { f: 1200, f2: 800, dur: 0.15, gain: 0.08, atk: 0.002 });
     },
+    purple(at) {                                         // red meets blue: a violet hum that rises and shakes during the 1.4 s fuse, with a crackle
+      const t = T(at), B = C.ce;
+      for (let k = 0; k < 4; k++) { tone(B.deep, t + 0.35 * k, { type: 'sawtooth', f: 80 + 55 * k, f2: 100 + 70 * k, dur: 0.5, gain: 0.045 + 0.027 * k, atk: 0.04 }); tone(B.deep, t + 0.35 * k, { type: 'triangle', f: 160 + 110 * k, f2: 190 + 130 * k, dur: 0.5, gain: 0.063 + 0.036 * k, atk: 0.04 }); }
+      burst(B.soft, t, { type: 'highpass', f: 900, f2: 4200, q: 0.8, dur: 1.4, gain: 0.25, atk: 0.25 });
+      for (let k = 0; k < 14; k++) burst(B.deep, t + 0.1 + k * 0.095, { f: R(2000, 5200), q: 2.4, dur: R(0.015, 0.04), gain: R(0.1, 0.3), atk: 0.001 });
+    },
+    purpleboom(at) {                                     // the purple orb explodes: a huge low boom, a long rumble and a cracking burst
+      const t = T(at), B = C.ce;
+      tone(B.deep, t, { type: 'triangle', f: 95, f2: 24, dur: 1.2, gain: 0.5, atk: 0.003 });
+      tone(B.deep, t, { f: 210, f2: 50, dur: 0.4, gain: 0.25, atk: 0.002 });
+      burst(B.deep, t, { f: 2400, f2: 150, q: 0.7, dur: 0.9, gain: 0.8, atk: 0.002 });
+      for (let k = 0; k < 9; k++) burst(B.deep, t + 0.04 + k * 0.05, { f: R(1400, 4200), q: 2.2, dur: R(0.02, 0.05), gain: R(0.18, 0.36), atk: 0.001 });
+    },
     scream(v, kind) {                                    // a person screams. v = voice (0 businessman, 1 office woman, 2 old man, 3 jogger, 4 tourist); kind 0 = long scream when somebody dies, 1 = short yell while running, 2 = the victim's last cut-off yell
       const V = [[140, 480, 5.5, 0.02, 760, 1250], [250, 900, 6, 0.02, 900, 1750], [125, 370, 7.5, 0.07, 650, 1100], [165, 620, 5.5, 0.02, 800, 1350], [285, 1050, 6.5, 0.025, 950, 1850]][v % 5], t = T(), B = C.atk.deep;
       const dur = kind === 0 ? R(0.95, 1.2) : kind === 1 ? R(0.4, 0.6) : 0.17, pk = V[1] * (kind === 1 ? 0.8 : kind === 2 ? 0.85 : 1) * R(0.94, 1.06), end = t + dur;

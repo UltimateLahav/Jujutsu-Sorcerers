@@ -130,7 +130,7 @@ __HUMAN__
 const D = __SPR__;                 // palette + idle / walk-forward / walk-back / jump / double-jump (teleport) sprite frames (rows of palette letters)
 const HEROES = __HEROES__;         // title key art: 0 eye open ... 4 eye fully closed
 const IDLE_FPS = 12, WALK_FPS = 15, JUMP_FPS = 15, TELE_FPS = 20;   // animation speeds in frames per second (15 walk frames = 1 s per cycle = one step every half second; 15 jump frames = 1 s; 15 teleport frames = 0.75 s)
-const ATK_FPS = [30, 30, 30, 24, 24, 24, 30, 30, 0, 0, 0, 0, 0, 0, 36, 30, 32, 28, 28, 30, 34, 22], ATK_IMPACT = [7, 7, 7, 8, 8, 6, 6, 7, 0, 0, 0, 0, 0, 0, 4, 6, 4, 6, 6, 5, 4, 7], ATK_SWING = [4, 4, 4, 5, 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 1, 3, 2, 3, 2, 2, 1, 4], COMBO_MS = 1400, MB_FPS = 20, ORB_MS = 3400, DASH_FPS = 30, DASH_FWD = 50, DASH_BACK = 42, BLK_FPS = 24;   // 15 frames per attack; the next press within COMBO_MS continues the combo. Index 4 and 5 are Lapse Blue (not combo hits), 6 and 7 are the crouch punches; Max Blue: 40 summon frames at 20 FPS, the orb lives 3.4 s
+const ATK_FPS = [30, 30, 30, 24, 24, 24, 30, 30, 0, 0, 0, 0, 0, 0, 36, 30, 32, 28, 28, 30, 34, 22], ATK_IMPACT = [7, 7, 7, 8, 8, 6, 6, 7, 0, 0, 0, 0, 0, 0, 4, 6, 4, 6, 6, 5, 4, 7], ATK_SWING = [4, 4, 4, 5, 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 1, 3, 2, 3, 2, 2, 1, 4], COMBO_MS = 1400, MB_FPS = 20, ORB_MS = 4400, DASH_FPS = 30, DASH_FWD = 50, DASH_BACK = 42, BLK_FPS = 24;   // 15 frames per attack; the next press within COMBO_MS continues the combo. Index 4 and 5 are Lapse Blue (not combo hits), 6 and 7 are the crouch punches; Max Blue: 40 summon frames at 20 FPS, the orb lives 3.4 s
 const ATK_NAMES = ['R.HOOK', 'L.HOOK', 'ELBOW', 'KICK'], WALK_NAMES = ['JAB', 'KICK', 'CROSS', 'KICK2'], RED_NAMES = ['NECK', 'GUT', 'PUNCH', 'SMASH'], CR_FPS = 36, LAPSE_FPS = 24;   // hooks and the elbow nudge the enemy (so the combo keeps connecting); the kick sends him sliding with a smoke trail
 const DUMMY_HP = 300, RX_FPS = [16, 16, 16, 18, 12, 16, 16, 16, 12, 14], RX_DUR = RX_FPS.map(f => 10000 / f);      // 10 reactions, 10 frames each
 const REACH = [17, 17, 15, 26, 0, 0, 16, 16, 0, 0, 0, 0, 0, 0, 19, 25, 19, 27, 25, 24, 18, 20], KNOCK = [9, 9, 11, 100, 0, 0, 8, 8, 0, 0, 0, 0, 0, 0, 8, 14, 9, 40, 12, 14, 9, 170], KNOCK_G = [26, 26, 34, 80, 0, 0, 20, 20, 0, 0, 0, 0, 0, 0, 20, 30, 22, 45, 26, 28, 20, 60], DMG = [12, 14, 18, 35, 0, 0, 10, 13, 0, 0, 0, 0, 0, 0, 10, 16, 13, 22, 14, 14, 12, 30];      // 14-17 = the walking combo: jab, kick, cross with the other hand, kick with the other leg   // per hit: how far it reaches from his hips (px), how hard it shoves the dummy (px/s), damage number
@@ -261,7 +261,7 @@ function show(s) {
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll(); $('settings').classList.remove('on');
-  resetPeds(s === 'play'); cm = 0; ceOn = false; ceAmt = 0; mbK = 0; rdOrb = null; boom = null; rdIdx = 0; ride = null; setModeUI();
+  resetPeds(s === 'play'); cm = 0; ceOn = false; ceAmt = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; rdIdx = 0; ride = null; setModeUI();
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
   if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(performance.now(), 1200);
@@ -280,8 +280,8 @@ const laid = (cv, f) => (cv.L || (cv.L = [0, 1].map(m => mkc(cv.height, cv.width
 let peds = [], gibs = [], drops = [], decals = [], pools = [], fount = [], flashes = [], kills = 0, pedNext = 0, pedT = 0;
 const pedsOn = () => !navigator.webdriver || window.__pedsOn;      // (the automatic tests run with no bystanders unless a test asks for them)
 function newPed(x, dir) {
-  const used = peds.map(p => p.t), pool = [0, 1, 2, 3, 4].filter(i => !used.includes(i)), t = (pool.length ? pool : [0, 1, 2, 3, 4])[(rnd() * (pool.length || 5)) | 0], T = HUM[t];
-  return { t, x, dir: dir || (rnd() < 0.5 ? 1 : -1), lane: 3 + ((rnd() * 10) | 0), sp: T.sp * (0.9 + rnd() * 0.2), rs: T.rs * (0.9 + rnd() * 0.2), mode: 'walk', turnAt: pedT + 3 + rnd() * 4, ph: rnd(), shockUntil: 0, panicUntil: 0, yellAt: 0, scAt: 0 };
+  const used = peds.map(p => p.t), pool = [0, 1, 2, 3, 4].filter(i => !used.includes(i)), t = (pool.length ? pool : [0, 1, 2, 3, 4])[(rnd() * (pool.length || 5)) | 0], T = HUM[t], ly = peds.filter(q => q.layer === 0).length <= peds.filter(q => q.layer === 1).length ? 0 : 1;
+  return { t, x, dir: dir || (rnd() < 0.5 ? 1 : -1), layer: ly, lane: ly ? 8 + ((rnd() * 8) | 0) : -10 + ((rnd() * 7) | 0), sp: T.sp * (0.9 + rnd() * 0.2), rs: T.rs * (0.9 + rnd() * 0.2), mode: 'walk', turnAt: pedT + 3 + rnd() * 4, ph: rnd(), shockUntil: 0, panicUntil: 0, yellAt: 0, scAt: 0 };
 }
 function resetPeds(on) { peds = []; gibs = []; drops = []; decals = []; pools = []; fount = []; flashes = []; kills = 0; pedNext = 0; if (on && pedsOn()) { if (!HUM) HUM = makeHumans(document); seed = 5; [-115, -50, 70, 100, 135].forEach(dx => peds.push(newPed(dx))); /* a new game always starts at world x = 0 */ } }
 let lastYell = 0;
@@ -309,7 +309,7 @@ function updatePeds(now, dt) {
 }
 function addDecal(x, fl, s, c) { decals.push({ x, y: fl, s, c }); if (decals.length > 450) decals.splice(0, 50); }
 function splash(x, fl, n) { for (let i = 0; i < n; i++) addDecal(x + rnd() * 16 - 8, fl + ((rnd() * 5 - 2) | 0), rnd() < 0.35 ? 2 : 1, BLD[2 + ((rnd() * 2) | 0)]); }
-function spawnDrop(x, y, vx, vy, fl) { drops.push({ x, y, vx, vy, fl: Math.max(1, fl + ((rnd() * 7 - 3) | 0)), s: rnd() < 0.25 ? 2 : 1, c: BLD[(rnd() * 3) | 0] }); }
+function spawnDrop(x, y, vx, vy, fl) { drops.push({ x, y, vx, vy, fl: fl + ((rnd() * 7 - 3) | 0), s: rnd() < 0.25 ? 2 : 1, c: BLD[(rnd() * 3) | 0] }); }
 function killPed(p, now, dir, pw) {           // one hit and he bursts: head, torso, arms and legs fly off with organs, ribs and a fountain of blood; the road keeps the pools
   const i = peds.indexOf(p); if (i < 0) return; peds.splice(i, 1); kills++; pedNext = Math.max(pedNext, now + 2000 + rnd() * 1000);
   const G = HUM[p.t].parts, fl = p.lane, bx = p.x;
@@ -353,9 +353,9 @@ function drawGibs(now) {                      // the flying pieces, the blood in
   for (const d of drops) { ctx.fillStyle = d.c; ctx.fillRect(Math.round(cx + d.x), Math.round(gy + d.y), d.s, d.s); }
   for (let i = flashes.length - 1; i >= 0; i--) { const f = flashes[i], a = now - f.born; if (a > 140) { flashes.splice(i, 1); continue; } const r = 4 + a / 140 * 9, sx = Math.round(cx + f.x), sy = Math.round(gy + f.y); ctx.fillStyle = a < 50 ? '#ff9a88' : a < 100 ? '#e8242c' : '#8e0c18'; for (let yy = -Math.round(r); yy <= r; yy++) { const w = Math.floor(Math.sqrt(r * r - yy * yy)); ctx.fillRect(sx - w, sy + yy, 2 * w + 1, 1); } }
 }
-function drawPeds(now, dt) {
+function drawPeds(now, dt, ly) {
   if (!pedsOn()) return; const cx = Math.round(VW / 2);
-  for (const p of peds.slice().sort((a, b) => a.lane - b.lane)) {
+  for (const p of peds.filter(q => q.layer === ly).sort((a, b) => a.lane - b.lane)) {
     const sx = Math.round(cx + p.x - wx), fy = gy + p.lane, T = HUM[p.t], f = p.mode === 'shock' ? T.shock : (p.mode === 'run' ? T.run : T.walk)[Math.floor(p.ph * 8) % 8];
     if (sx < -40 || sx > VW + 40) continue;
     ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(sx - 9, fy + 1, 18, 2);
@@ -421,8 +421,9 @@ function buildMid() {                         // the shops across the road: glas
   return c;
 }
 let gTile = null;
+const FAR = 12;                                // the crossing reaches 12 px further back than Gojo's lane: people walk in an upper lane behind him and a lower lane in front of him
 function buildGround() {                      // one 14 px slice of the zebra crossing: slanted white bars on dark asphalt (drawn again and again, scrolling with the world)
-  const H = VH - gy; gTile = document.createElement('canvas'); gTile.width = 14; gTile.height = H; const g = gTile.getContext('2d');
+  const H = VH - gy + FAR; gTile = document.createElement('canvas'); gTile.width = 14; gTile.height = H; const g = gTile.getContext('2d');
   for (let y = 0; y < H; y++) {
     const k = y / Math.max(1, H - 1), a = 5 - Math.round(5 * k);        // the bars lean: the far (top) end sits 5 px to the right of the near end
     g.fillStyle = k < 0.5 ? '#14152a' : '#101120'; g.fillRect(0, y, 14, 1);
@@ -430,7 +431,7 @@ function buildGround() {                      // one 14 px slice of the zebra cr
     for (let i = 0; i < 8; i++) g.fillRect((a + i) % 14, y, 1, 1);
   }
 }
-function drawGround() { const o = Math.round(((-wx % 14) + 14) % 14); for (let x = o - 14; x < VW; x += 14) ctx.drawImage(gTile, x, gy); }
+function drawGround() { const o = Math.round(((-wx % 14) + 14) % 14); for (let x = o - 14; x < VW; x += 14) ctx.drawImage(gTile, x, gy - FAR); }
 function drawProps(now) {                     // traffic lights and street lamps on the far sidewalk (they scroll a little slower than the road); the traffic lights change colour
   const P = 120, par = 0.8, off = (((-wx * par) % P) + P) % P, base = gy - 2;
   for (let sx = off - P; sx < VW + P; sx += P) {
@@ -497,7 +498,7 @@ function updateFighter(now, dt) {             // the attacking dummy: walks up t
   } else if (d.ai === 'attack') {
     const f = Math.floor((now - d.aiAt) * ATK_FPS[d.k] / 1000);
     if (!d.swung && f >= ATK_SWING[d.k]) { d.swung = true; snd('f:swing', d.k); }
-    if (!d.hitDone && f >= ATK_IMPACT[d.k]) { d.hitDone = true; snd('f:hit', d.k); if (Math.abs(gap) - 6 <= REACH[d.k]) gojoHit(d.k, now); }
+    if (!d.hitDone && f >= ATK_IMPACT[d.k]) { d.hitDone = true; snd('f:hit', d.k); if (Math.abs(gap) - 6 <= REACH[d.k]) gojoHit(d.k, now); if (purple && Math.abs(dummy.x - purple.x) - 8 <= REACH[d.k]) damagePurple((DMG[d.k] || 12) + ((Math.random() * 5) | 0), now); }
     if (f >= 15) { d.ai = 'rest'; d.aiAt = now; d.restFor = 700 + Math.random() * 900; }
   }
 }
@@ -728,6 +729,51 @@ function explodeRed(now, hit) {               // RED hits (or reaches the end of
   dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += 260; dummy.stunUntil = now + 700; dummy.rx = (Math.random() * 10) | 0; dummy.rxAt = now; dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = 900;
   say('' + dmg, dummy.x, '#ff8a7a', 10, now); if (dummy.hp <= 0) koDummy(now);
 }
+// ---------------------------------------------------------------- PURPLE: red fired into Max Blue fuses with it into a violently shaking violet orb with 100 HP. If it is not broken within 1.4 s it explodes for half of the enemy's health
+const orbP = mk(D.orb, { ...D.pal, a: '#12062a', b: '#26104e', c: '#4a1f86', d: '#7a3bd0', e: '#a85cff', f: '#d79bff', i: '#f4dcff', l: '#c07aff' });
+let purple = null, pboom = null;
+function fusePurple(now) {                    // the red orb reaches the blue orb: both are gone, a purple one takes their place
+  const a = orbPose(now); purple = { x: a.xo, born: now, hp: 100 };
+  if (dummy && dummy.ko < 0 && dummy.cap) releaseCap(now);
+  orb = null; debris = []; rdOrb = null; if (ride) { ride.phase = 'drop'; ride.dropAt = now; }
+  snd('purple'); flash(now, 160, 0.7); holdUntil = Math.max(holdUntil, now + 90); shakeUntil = now + 300; shakeAmp = 3;
+}
+function damagePurple(dmg, now) {             // Gojo's or the enemy's swing hits the purple orb; at 0 HP it breaks without exploding
+  if (!purple) return; purple.hp -= dmg; say('' + dmg, purple.x, '#d79bff', 8, now); snd('smack', 0);
+  if (purple.hp <= 0) { say('BROKEN', purple.x, '#f4dcff', 10, now + 90); snd('stun'); shakeUntil = now + 200; shakeAmp = 3; flash(now, 120, 0.4); pboom = { x: purple.x, born: now, small: true }; purple = null; }
+}
+function hitPurple(k, now) { if (!purple || !REACH[k]) return; const gap = purple.x - wx; if (gap - 8 <= REACH[k] && gap + 8 >= 3) damagePurple(ceDmg(DMG[k] + ((Math.random() * 5) | 0)), now); }
+function explodePurple(now) {                 // the fuse is out: a huge blast. The enemy loses half of his health, bystanders in it burst
+  const P = purple; purple = null; pboom = { x: P.x, born: now };
+  snd('purpleboom'); flash(now, 320, 0.9); holdUntil = Math.max(holdUntil, now + 150); shakeUntil = now + 520; shakeAmp = 6;
+  blastPeds(P.x, 70, now);
+  if (dummy && dummy.ko < 0 && Math.abs(dummy.x - P.x) < 70) {
+    if (dummy.cap) releaseCap(now);
+    const dmg = Math.max(1, Math.round(dummy.hp * 0.5)); dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += 200 * (dummy.x >= P.x ? 1 : -1); dummy.stunUntil = now + 700; dummy.rx = (Math.random() * 10) | 0; dummy.rxAt = now; dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = 900;
+    say('' + dmg, dummy.x, '#d79bff', 12, now + 90); if (dummy.hp <= 0) koDummy(now);
+  }
+}
+function drawPurple(now, dt) {
+  if (!purple) return; const P = purple, age = now - P.born;
+  if (age >= 1400) { explodePurple(now); return; }
+  const k = age / 1400, J = 0.8 + 3.4 * k;                                    // the shake gets more violent as the fuse burns down
+  shakeUntil = Math.max(shakeUntil, now + 40); shakeAmp = Math.max(shakeAmp, 1 + Math.round(2.5 * k));
+  const ox = Math.round(VW / 2) + P.x - wx + Math.round((Math.random() * 2 - 1) * J), oy = gy - 53 + Math.round((Math.random() * 2 - 1) * J), s = 0.95 + 0.25 * k, f = orbP[Math.floor(age * 24 / 1000) % orbP.length], hx = D.orb.cx - D.orb.x0;
+  ctx.fillStyle = 'rgba(168,92,255,0.16)'; for (let yy = -26; yy <= 26; yy++) { const w = Math.floor(Math.sqrt(676 - yy * yy)); ctx.fillRect(ox - w, oy + yy, 2 * w + 1, 1); }
+  ctx.imageSmoothingEnabled = false; ctx.drawImage(f, Math.round(ox - hx * s), Math.round(oy - 36 * s), Math.round(f.width * s), Math.round(f.height * s));
+  for (let b = 0; b < 4 + Math.round(5 * k); b++) {                           // purple lightning with a white core
+    let x = ox, y = oy, a = Math.random() * 6.2832; const n = 6, len = (16 + Math.random() * 28) / n;
+    for (let i = 0; i < n; i++) { const nx = x + Math.cos(a) * len, ny = y + Math.sin(a) * len * 0.85, m = Math.max(1, Math.ceil(len)); for (let j = 0; j < m; j++) { ctx.fillStyle = (j + i) % 2 ? '#f4dcff' : '#a85cff'; ctx.fillRect(Math.round(x + (nx - x) * j / m), Math.round(y + (ny - y) * j / m), 1, 1); } x = nx; y = ny; a += (Math.random() - 0.5) * 1.7; }
+  }
+  for (let j = 0; j < 8; j++) { ctx.fillStyle = j % 2 ? '#ff4a3a' : '#59b8ff'; ctx.fillRect(Math.round(ox + (Math.random() * 2 - 1) * 30), Math.round(oy + (Math.random() * 2 - 1) * 26), 2, 2); }      // red and blue flecks
+}
+function drawPBoom(now) {                     // the purple blast: a white-violet flash, a violet shock ring, red and blue sparks (a broken orb only gives a small pop)
+  if (!pboom) return; const i = Math.floor((now - pboom.born) * 30 / 1000), z = pboom.small ? 0.4 : 1; if (i >= 20) { pboom = null; return; }
+  const sx = Math.round(Math.round(VW / 2) + pboom.x - wx), sy = gy - 53;
+  if (i < 5) { ctx.fillStyle = i < 2 ? '#fff4ff' : '#d79bff'; const r = Math.round((30 - 5 * i) * z); for (let yy = -r; yy <= r; yy++) { const w = Math.floor(Math.sqrt(r * r - yy * yy)); ctx.fillRect(sx - w, sy + yy, 2 * w + 1, 1); } }
+  const R = (8 + i * 5.5) * z; ctx.fillStyle = i < 9 ? '#a85cff' : '#4a1f86'; for (let a = 0; a < 72; a++) { const th = a / 72 * 6.2832; ctx.fillRect(Math.round(sx + Math.cos(th) * R), Math.round(sy + Math.sin(th) * R * 0.8), 3, 3); }
+  for (let j = 0; j < 30; j++) { const th = j * 2.399 + 0.5, v = (12 + (j * 7) % 15) * z, u = i / 19; ctx.fillStyle = j % 2 ? '#ff6a5a' : '#59b8ff'; ctx.fillRect(Math.round(sx + Math.cos(th) * v * i * 0.6), Math.round(sy + Math.sin(th) * v * i * 0.5 + 22 * u * u * z), 2, 2); }
+}
 function drawBoom(now) {                      // the explosion: 15 frames at 30 FPS: a white-hot flash, a red shock ring racing out, flying sparks
   if (!boom) return; const i = Math.floor((now - boom.born) * 30 / 1000); if (i >= 15) { boom = null; return; }
   const sx = Math.round(Math.round(VW / 2) + boom.x - wx), sy = Math.round(boom.y), z = boom.big ? 1 : 0.6;
@@ -759,7 +805,8 @@ function drawRedFx(now, dt, x, y, info, fi, charging, mf) {      // the red orb 
   if (charging && mf < 20) { const a = info.hn[fi]; if (a) ob(k, x + a[0] + 2, y + a[1] - 8, 0.1 + 0.3 * Math.min(1, mf / 19)); }
   if (rdOrb) {
     const o = rdOrb, gap = dummy ? dummy.x - o.x : 999; o.x += o.v * dt; o.trail.push([o.x, o.y]); if (o.trail.length > 9) o.trail.shift();
-    if (dummy && dummy.ko < 0 && !dummy.cap && gap < 9 && gap > -16) explodeRed(now, true); else if (o.x - o.x0 > 210 || peds.some(p => Math.abs(p.x - o.x) < 12)) explodeRed(now, false);
+    if (dummy && dummy.ko < 0 && !dummy.cap && gap < 9 && gap > -16) explodeRed(now, true); else if (orb && !purple && Math.abs(o.x - orbPose(now).xo) < 13 && orbPose(now).age > 200 && orbPose(now).age < ORB_MS - 350) fusePurple(now);
+    else if (o.x - o.x0 > 210 || peds.some(p => Math.abs(p.x - o.x) < 12)) explodeRed(now, false);
     else {
       const cx = Math.round(VW / 2), tr = o.coat ? orbF : orbR;      // a coated orb leaves a blue trail
       o.trail.forEach(([tx, ty], j) => { ctx.globalAlpha = 0.12 + 0.4 * j / 9; ob(k + j, cx + tx - wx, ty, 0.1 + 0.22 * j / 9, tr); }); ctx.globalAlpha = 1;
@@ -767,7 +814,7 @@ function drawRedFx(now, dt, x, y, info, fi, charging, mf) {      // the red orb 
       ob(k, cx + o.x - wx, o.y, 0.42);
     }
   }
-  drawBoom(now);
+  drawBoom(now); drawPBoom(now);
 }
 function drawCE(now, x, y, info, fi) {       // CURSED ENERGY: unstable cyan flames on both fists (the far hand first, so the near one is on top). x, y = where Gojo's sprite is drawn
   if (ceAmt <= 0.02 || cm === 2) return;      // red mode has no flames: its hands just have a red outline (drawn in its sprites)
@@ -889,9 +936,9 @@ function drawScene(now, dt) {
   ctx.save();
   if (now < shakeUntil) ctx.translate(Math.round((Math.random() * 2 - 1) * shakeAmp), Math.round((Math.random() * 2 - 1) * shakeAmp));   // tiny shake on impact
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(bg, 0, 0);
+  ctx.save(); ctx.translate(0, -FAR); ctx.drawImage(bg, 0, 0);
   layer(far, 0.25); layer(near, 0.55);
-  drawProps(now); drawGround(); drawBlood(now);               // traffic lights and lamps, then the zebra crossing under his feet (it scrolls with the world)
+  drawProps(now); ctx.restore(); drawGround(); drawBlood(now);               // traffic lights and lamps, then the zebra crossing under his feet (it scrolls with the world)
   const rush = df >= 2 && df <= 11 ? (dgK === 0 ? 700 : -500) : 0;        // the wind streaks race past during a dash
   const op = orb ? orbPose(now) : null;       // Max Blue: the sky dims and the wind is sucked into the orb
   if (op) { ctx.fillStyle = 'rgba(6,8,36,' + (0.3 * Math.min(1, op.age / 500, (ORB_MS - op.age) / 500)) + ')'; ctx.fillRect(0, 0, VW, VH); }
@@ -922,7 +969,7 @@ function drawScene(now, dt) {
     if (af < evA) evA = -1;                   // a chained hit restarted the counter
     if (af >= 0) {
       if (evA < ATK_SWING[atkK] && af >= ATK_SWING[atkK]) snd('swing', atkK);
-      if (evA < ATK_IMPACT[atkK] && af >= ATK_IMPACT[atkK]) { snd('hit', atkK); shakeUntil = now + 90; shakeAmp = [3, 15, 17, 18, 19, 21].includes(atkK) ? 2 : 1; hitDummy(atkK, now); hitPeds(atkK, now); }
+      if (evA < ATK_IMPACT[atkK] && af >= ATK_IMPACT[atkK]) { snd('hit', atkK); shakeUntil = now + 90; shakeAmp = [3, 15, 17, 18, 19, 21].includes(atkK) ? 2 : 1; hitDummy(atkK, now); hitPeds(atkK, now); hitPurple(atkK, now); }
     }
     evA = af;
   }
@@ -940,8 +987,8 @@ function drawScene(now, dt) {
     evM = mf;
   }
   drawSmoke(now, dt);
-  drawDummy(now, dt); updatePeds(now, dt); drawPeds(now, dt);                         // behind Gojo, so his fists and kicks overlap it
-  drawOrb(now, dt);
+  drawDummy(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);                         // behind Gojo, so his fists and kicks overlap it
+  drawOrb(now, dt); drawPurple(now, dt);
   const tele = tf >= 0, jumping = jf >= 0, atkOn = af >= 0, hurting = hf >= 0, dodging = df >= 0, blocking = bf >= 0 && sf < 0, lapsing = lf >= 0, mbing = mf >= 0, idle = mode === 'idle';
   let bset = null, binfo = null, bfi = 0;       // the blocking sprite: hand-raise (standing still), or the walking / crouching versions with the hand already up
   if (blocking) {
@@ -980,7 +1027,7 @@ function drawScene(now, dt) {
     ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')';
     ctx.fillRect(0, 0, VW, VH);
   }
-  drawGibs(now); drawPopups(now);
+  drawPeds(now, dt, 1); drawGibs(now); drawPopups(now);
   ctx.restore();
   if (now < flashUntil) { ctx.fillStyle = 'rgba(190,225,255,' + (flashA * (flashUntil - now) / flashMs) + ')'; ctx.fillRect(0, 0, VW, VH); }
   drawHits(now);
@@ -1109,6 +1156,9 @@ window.__gore = () => ({ gibs: gibs.length, rest: gibs.filter(g => g.rest).lengt
 window.__humInfo = () => HUM && HUM.map(T => { const px = c => c.getContext('2d').getImageData(0, 0, 64, 64).data, hs = a => { let h = 0; for (let i = 0; i < a.length; i++) h = (h * 31 + a[i]) | 0; return h; };
   const d = px(T.walk[0]); let top = 64, bot = -1, n = 0; for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (d[(y * 64 + x) * 4 + 3]) { n++; if (y < top) top = y; bot = y; }
   return { w: T.walk[0].width, h: T.walk[0].height, nw: T.walk.length, nr: T.run.length, dw: new Set(T.walk.map(c => hs(px(c)))).size, dr: new Set(T.run.map(c => hs(px(c)))).size, scared: hs(px(T.shock)) !== hs(px(T.walk[0])), top, bot, n, parts: Object.keys(T.parts).length }; });
+window.__purple = () => purple && ({ hp: purple.hp, age: performance.now() - purple.born, x: purple.x });
+window.__hitPurple = d => damagePurple(d, performance.now());
+window.__dummyAt = x => { if (dummy) { dummy.x = wx + x; dummy.vx = 0; dummy.ai = 'rest'; dummy.aiAt = performance.now(); dummy.restFor = 4000; } };
 window.__fill = () => { while (peds.length < 5) peds.push(newPed(wx + 150 + peds.length * 12)); };
 window.__hit = k => gojoHit(k, performance.now());           // test hook: the attacker's swing k lands on Gojo right now (a dash dodges it)
 window.__state = () => ({ cmode: cm, redOrb: !!rdOrb, orbV: rdOrb ? rdOrb.v : 0, coat: rdOrb ? !!rdOrb.coat : false, ride: ride ? ride.phase : '', lift: gojoLift, boom: !!boom, ce: ceOn, ceAmt: +ceAmt.toFixed(2), ho: HOMAP.size, stance, jumpC, mode, wx, stick: { x: stickX, y: stickY, up: stickUp, down: stickDown, held: stickCr }, lapse: lpAt >= 0 ? lpK : -1, dash: dgAt >= 0 ? dgK : -1, dashAir: dgAir, block: blkAt >= 0 ? (blkEnd < 0 ? 1 : 2) : 0, guard: guardUp(performance.now()), mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests
