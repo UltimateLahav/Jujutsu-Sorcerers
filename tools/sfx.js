@@ -249,6 +249,19 @@ function makeSfx(ac) {
       tone(B.deep, t, { type: 'triangle', f: 300, f2: 90, dur: 0.3, gain: 0.25, atk: 0.003 });
       tone(B.deep, t, { f: 1200, f2: 800, dur: 0.15, gain: 0.08, atk: 0.002 });
     },
+    scream(v, kind) {                                    // a person screams. v = voice (0 businessman, 1 office woman, 2 old man, 3 jogger, 4 tourist); kind 0 = long scream when somebody dies, 1 = short yell while running, 2 = the victim's last cut-off yell
+      const V = [[140, 480, 5.5, 0.02, 760, 1250], [250, 900, 6, 0.02, 900, 1750], [125, 370, 7.5, 0.07, 650, 1100], [165, 620, 5.5, 0.02, 800, 1350], [285, 1050, 6.5, 0.025, 950, 1850]][v % 5], t = T(), B = C.atk.deep;
+      const dur = kind === 0 ? R(0.95, 1.2) : kind === 1 ? R(0.4, 0.6) : 0.17, pk = V[1] * (kind === 1 ? 0.8 : kind === 2 ? 0.85 : 1) * R(0.94, 1.06), end = t + dur;
+      if (!st.curve) { st.curve = new Float32Array(1025); for (let i = 0; i < 1025; i++) st.curve[i] = Math.tanh((i / 512 - 1) * 1.8); }
+      const out = ac.createGain(), ws = ac.createWaveShaper(), am = ac.createGain(), mix = ac.createGain(), lfo = ac.createOscillator(), lg = ac.createGain(), rough = ac.createOscillator(), rg = ac.createGain();
+      const P = (kind === 2 ? 0.5 : 0.42) * [1, 0.7, 0.9, 1, 0.7][v % 5]; out.gain.setValueAtTime(0.0001, t); out.gain.linearRampToValueAtTime(P, t + 0.02); out.gain.setValueAtTime(P * 0.9, t + dur * 0.65); out.gain.exponentialRampToValueAtTime(0.0001, end);      // a scream holds its level, then drops at the end
+      ws.curve = st.curve; am.gain.value = 0.72; rough.type = 'sawtooth'; rough.frequency.value = R(62, 80); rg.gain.value = 0.28; rough.connect(rg); rg.connect(am.gain);      // the rasp of a scream: the voice is chopped ~70 times a second
+      lfo.frequency.value = V[2]; lg.gain.value = pk * V[3]; lfo.connect(lg);                                                                                                                       // vibrato (the old man's voice shakes more)
+      for (const dt of [1, 1.015]) { const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(V[0] * 1.15, t); o.frequency.exponentialRampToValueAtTime(pk * dt, t + 0.09); o.frequency.exponentialRampToValueAtTime(pk * dt * 0.82, end); lg.connect(o.frequency); o.connect(ws); o.start(t); o.stop(end + 0.05); }
+      ws.connect(am); [[V[4], 5, 1], [V[5], 6, 0.7]].forEach(([fr, q, g], i) => { const bp = ac.createBiquadFilter(), gg = ac.createGain(); bp.type = 'bandpass'; bp.Q.value = q; bp.frequency.setValueAtTime(fr, t); if (i) bp.frequency.exponentialRampToValueAtTime(fr * 1.15, t + 0.12); gg.gain.value = g; am.connect(bp); bp.connect(gg); gg.connect(mix); });   // two vowel formants: the "aah"
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600; lp.Q.value = 0.5; mix.connect(lp); lp.connect(out); out.connect(B); lfo.start(t); lfo.stop(end + 0.05); rough.start(t); rough.stop(end + 0.05);
+      burst(B, t, { type: 'highpass', f: 2600, q: 0.7, dur: Math.min(dur, 0.5), gain: 0.18, atk: 0.01 });                                                                                          // a little breath
+    },
     splat(at) {                                          // a body bursts: a wet thud, a low squelch, then drops pattering down
       const t = T(at), B = C.atk;
       tone(B.deep, t, { type: 'triangle', f: 92, f2: 34, dur: 0.34, gain: 0.46, atk: 0.003 });

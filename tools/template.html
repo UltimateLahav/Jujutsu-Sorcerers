@@ -126,6 +126,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 (() => {
 'use strict';
 __SFX__
+__HUMAN__
 const D = __SPR__;                 // palette + idle / walk-forward / walk-back / jump / double-jump (teleport) sprite frames (rows of palette letters)
 const HEROES = __HEROES__;         // title key art: 0 eye open ... 4 eye fully closed
 const IDLE_FPS = 12, WALK_FPS = 15, JUMP_FPS = 15, TELE_FPS = 20;   // animation speeds in frames per second (15 walk frames = 1 s per cycle = one step every half second; 15 jump frames = 1 s; 15 teleport frames = 0.75 s)
@@ -269,99 +270,64 @@ function show(s) {
 // ---------------------------------------------------------------- world
 // pixel-perfect sizing: whole device pixels per art pixel, ~128 art pixels tall
 // ---------------------------------------------------------------- BYSTANDERS: five humans who walk the crossing, panic and run from Gojo, and die in one hit (the body bursts into gibs, blood stays on the road)
-const OUTC = '#0d0b14', HCFG = [
-  { skin: '#e0b090', hair: '#1c1a22', hs: 0, top: '#2a2f4a', tl: '#3a4066', ts: '#1e2236', bot: '#262a40', bl: '#323858', shoe: '#14121a', acc: 'case' },      // businessman
-  { skin: '#f0c4a8', hair: '#3a2418', hs: 1, top: '#6a5a78', tl: '#7e6e8e', ts: '#4c4058', bot: '#2d2b3a', bl: '#3e3b50', shoe: '#2a1c1c', acc: 'dress' },      // office woman
-  { skin: '#d9a888', hair: '#b8b4b0', hs: 2, top: '#5a6048', tl: '#6e7658', ts: '#424832', bot: '#4a4036', bl: '#5c5044', shoe: '#2a2018', acc: 'cane' },      // old man
-  { skin: '#c98a62', hair: '#2a1a14', hs: 3, top: '#7a7f86', tl: '#8e939a', ts: '#5c6168', bot: '#2a3a4a', bl: '#38485a', shoe: '#d8d8d8', acc: 'shorts' },      // jogger
-  { skin: '#f2d0b4', hair: '#c8a45a', hs: 4, top: '#6a8a6a', tl: '#7e9e7e', ts: '#4e6a4e', bot: '#8a7a60', bl: '#9c8c72', shoe: '#4a3a2a', acc: 'pack' }];      // tourist
-function makeHuman(c) {                       // a 24x52 sprite in Gojo's style (dark outline, lit and shaded sides): frame 0 stands, frames 1-6 are a walk cycle (played faster to run)
-  const W = 24, H = 52, fr = [], skS = '#c08868', lc = c.acc === 'dress' || c.acc === 'shorts';
-  for (let f = 0; f < 7; f++) {
-    const g = new Array(W * H).fill(null), P = (x, y, col) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && x < W && y >= 0 && y < H) g[y * W + x] = col; };
-    const R = (x, y, w, h, col) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) P(x + i, y + j, col); };
-    const ph = f ? (f - 1) / 6 * 6.2832 : 0, sw = f ? Math.sin(ph) : 0, up = f ? Math.cos(ph) : 0, hy = 28 - (f ? Math.round(Math.abs(sw)) : 0);
-    const limb = (x0, y0, x1, y1, w, col, lit) => { const n = Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) * 2) + 1; for (let k = 0; k <= n; k++) { const t = k / n; for (let i = 0; i < w; i++) P(x0 + (x1 - x0) * t - w / 2 + i, y0 + (y1 - y0) * t, i === 0 ? lit : col); } };
-    const leg = (fx, fy, col, lit) => { limb(12, hy, fx, fy - 2, 4, col, lit); R(Math.round(fx) - 2, Math.round(fy) - 2, 7, 3, c.shoe); };
-    limb(13, 14, 13 - sw * 5, 27, 3, c.ts, c.ts); R(Math.round(13 - sw * 5) - 1, 27, 3, 3, skS);                                    // far arm and far leg (behind the body)
-    leg(12 - sw * 6, 51 - (up < -0.3 ? 2 : 0), lc ? skS : c.bot, lc ? skS : c.bl); leg(12 + sw * 6, 51 - (up > 0.3 ? 2 : 0), lc ? c.skin : c.bot, lc ? c.skin : c.bl);
-    if (c.acc === 'shorts') R(8, hy - 1, 8, 8, c.bot); if (c.acc === 'dress') for (let j = 0; j < 9; j++) R(8 - (j >> 2), hy - 2 + j, 8 + 2 * (j >> 2), 1, c.top);
-    if (c.acc === 'pack') R(4, 13, 5, 11, '#5a4a3a');
-    R(8, 12, 8, hy - 11, c.top); R(8, 12, 1, hy - 11, c.tl); R(15, 12, 1, hy - 11, c.ts);                                           // torso
-    if (c.acc === 'case') { R(11, 12, 3, 5, '#e8e4dc'); R(12, 13, 1, 8, '#7a2a3a'); }
-    R(11, 10, 3, 3, skS); R(8, 1, 9, 10, c.skin); R(8, 1, 1, 10, c.skin); R(16, 1, 1, 10, skS); P(8, 1, null); P(16, 1, null); P(8, 10, null); P(16, 10, null);   // neck and head
-    P(14, 6, '#1a1620'); P(17, 7, c.skin); P(14, 9, '#a0605a'); P(8, 6, skS);                                                          // eye, nose, mouth, ear
-    if (c.hs === 0) { R(8, 0, 9, 3, c.hair); R(7, 2, 2, 5, c.hair); } else if (c.hs === 1) { R(8, 0, 9, 3, c.hair); R(6, 2, 3, 14, c.hair); } else if (c.hs === 2) { R(8, 1, 9, 2, c.hair); R(7, 3, 2, 4, c.hair); }
-    else if (c.hs === 3) { R(8, 0, 9, 3, c.hair); R(7, 2, 2, 4, c.hair); R(8, 3, 9, 1, '#dcdcdc'); } else { R(8, 0, 9, 3, '#8a7a4a'); R(15, 2, 5, 1, '#8a7a4a'); R(7, 2, 2, 4, c.hair); }
-    const nx = 11 + sw * 5; limb(11, 14, nx, 27, 3, c.top, c.tl); R(Math.round(nx) - 1, 27, 3, 3, c.skin);                       // near arm and what it carries
-    if (c.acc === 'case') R(Math.round(nx) - 2, 29, 6, 5, '#6a4a30'); if (c.acc === 'cane') limb(nx + 1, 30, nx + 3, 51, 1, '#5a3a22', '#5a3a22');
-    const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const x2 = cv.getContext('2d'), im = x2.createImageData(W, H), u = new Uint32Array(im.data.buffer);
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const v = g[y * W + x]; if (v) u[y * W + x] = rgbOf(v); else if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => x + a >= 0 && x + a < W && y + b >= 0 && y + b < H && g[(y + b) * W + x + a])) u[y * W + x] = rgbOf(OUTC); }
-    x2.putImageData(im, 0, 0); fr.push(cv);
-  }
-  return fr;
-}
-const HUM = HCFG.map(makeHuman);
+let HUM = null;                               // the five 64x64 people (tools/human.js), built the first time a game starts
 const blob = (w, h, base, lit, dark) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d'); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const dx = (x + .5 - w / 2) / (w / 2), dy = (y + .5 - h / 2) / (h / 2); if (dx * dx + dy * dy <= 1) { g.fillStyle = dx + dy < -0.7 ? lit : dx + dy > 0.8 ? dark : base; g.fillRect(x, y, 1, 1); } } return cv; };
 const ORG = { heart: blob(5, 5, '#a3121a', '#d8404a', '#5e0a12'), lung: blob(5, 6, '#e08a9a', '#f4b4c0', '#a8485a'), liver: blob(6, 4, '#6e1a2a', '#8e2a3c', '#420e18'), gut: blob(4, 2, '#e58ea0', '#f6bcc8', '#a8404f'), stomach: blob(4, 4, '#d8a0a0', '#eec4c4', '#a06068'), flesh: blob(3, 3, '#b8323c', '#e0606a', '#7a1620'), bone: blob(1, 4, '#efe6d8', '#ffffff', '#c8bca8') };
 const BLD = ['#d4141f', '#b3121f', '#8e0c18', '#6e0a12'], mkc = (w, h, fn) => { const k = document.createElement('canvas'); k.width = w; k.height = h; fn(k.getContext('2d')); return k; };
 ORG.int = mkc(12, 4, g => { for (let x = 0; x < 12; x++) { const y = 1 + Math.round(Math.sin(x * 0.9)); g.fillStyle = '#e58ea0'; g.fillRect(x, y, 1, 2); g.fillStyle = '#a8404f'; g.fillRect(x, y + 2, 1, 1); } });
 ORG.rib = mkc(7, 3, g => { g.fillStyle = '#efe6d8'; g.fillRect(1, 0, 5, 1); g.fillRect(0, 1, 2, 1); g.fillRect(5, 1, 2, 1); g.fillStyle = '#c8bca8'; g.fillRect(0, 2, 1, 1); g.fillRect(6, 2, 1, 1); });
-function makeParts(c, f0) {                   // the pieces he bursts into, in the same pixel style: head (cut from his own sprite), torso, arm, leg, each with a torn red end and a bone
-  const lc = c.acc === 'dress' || c.acc === 'shorts', R = (g, col, x, y, w, h) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
-  const cut = (g, x, y, w, top) => { const o = top ? 0 : 1; R(g, '#8e0c18', x, y, w, 2); R(g, '#d4141f', x + 1, y + o, w - 3, 1); R(g, '#efe6d8', x + (w >> 1), y + o, 1, 1); R(g, '#5a0710', x + w - 2, y + 1 - o, 1, 1); };
-  return {
-    head: mkc(14, 12, g => { g.drawImage(f0, -5, 0); cut(g, 5, 10, 5, false); }),
-    torso: mkc(11, 17, g => { R(g, OUTC, 0, 0, 11, 17); R(g, c.top, 1, 1, 9, 15); R(g, c.tl, 1, 1, 1, 15); R(g, c.ts, 9, 1, 1, 15); cut(g, 1, 0, 9, true); cut(g, 1, 15, 9, false); R(g, '#d4141f', 4, 5, 3, 2); R(g, '#8e0c18', 5, 8, 2, 3); }),
-    arm: mkc(5, 14, g => { R(g, OUTC, 0, 0, 5, 14); R(g, c.top, 1, 1, 3, 9); R(g, c.tl, 1, 1, 1, 9); R(g, c.skin, 1, 10, 3, 3); cut(g, 1, 0, 3, true); }),
-    leg: mkc(7, 22, g => { R(g, OUTC, 0, 0, 7, 22); R(g, lc ? c.skin : c.bot, 1, 1, 5, 17); if (!lc) R(g, c.bl, 1, 1, 1, 17); R(g, c.shoe, 1, 18, 5, 3); cut(g, 1, 0, 5, true); }) };
-}
 const laid = (cv, f) => (cv.L || (cv.L = [0, 1].map(m => mkc(cv.height, cv.width, g => { g.translate(m ? cv.height : 0, m ? 0 : cv.width); g.rotate(m ? Math.PI / 2 : -Math.PI / 2); g.drawImage(cv, 0, 0); }))))[f ? 1 : 0];      // the same piece lying on its side
-const HUMG = HCFG.map((c, t) => makeParts(c, HUM[t][0]));
 let peds = [], gibs = [], drops = [], decals = [], pools = [], fount = [], flashes = [], kills = 0, pedNext = 0, pedT = 0;
 const pedsOn = () => !navigator.webdriver || window.__pedsOn;      // (the automatic tests run with no bystanders unless a test asks for them)
 function newPed(x, dir) {
-  const used = peds.map(p => p.t), pool = [0, 1, 2, 3, 4].filter(i => !used.includes(i)), t = (pool.length ? pool : [0, 1, 2, 3, 4])[(rnd() * (pool.length || 5)) | 0];
-  return { t, x, dir: dir || (rnd() < 0.5 ? 1 : -1), lane: 3 + ((rnd() * 10) | 0), sp: 16 + rnd() * 8, rs: 58 + rnd() * 16, mode: 'walk', turnAt: pedT + 3 + rnd() * 4, clock: rnd() * 5, nt: false, reactAt: 0, runT: 0 };
+  const used = peds.map(p => p.t), pool = [0, 1, 2, 3, 4].filter(i => !used.includes(i)), t = (pool.length ? pool : [0, 1, 2, 3, 4])[(rnd() * (pool.length || 5)) | 0], T = HUM[t];
+  return { t, x, dir: dir || (rnd() < 0.5 ? 1 : -1), lane: 3 + ((rnd() * 10) | 0), sp: T.sp * (0.9 + rnd() * 0.2), rs: T.rs * (0.9 + rnd() * 0.2), mode: 'walk', turnAt: pedT + 3 + rnd() * 4, ph: rnd(), shockUntil: 0, panicUntil: 0, yellAt: 0, scAt: 0 };
 }
-function resetPeds(on) { peds = []; gibs = []; drops = []; decals = []; pools = []; fount = []; flashes = []; kills = 0; pedNext = 0; if (on && pedsOn()) { seed = 5; [-115, -50, 70, 100, 135].forEach(dx => peds.push(newPed(dx))); /* a new game always starts at world x = 0 */ } }
+function resetPeds(on) { peds = []; gibs = []; drops = []; decals = []; pools = []; fount = []; flashes = []; kills = 0; pedNext = 0; if (on && pedsOn()) { if (!HUM) HUM = makeHumans(document); seed = 5; [-115, -50, 70, 100, 135].forEach(dx => peds.push(newPed(dx))); /* a new game always starts at world x = 0 */ } }
+let lastYell = 0;
+function scarePeds(x, now) {                  // somebody just died: everybody within 120 px freezes in shock for half a second (hands up), then screams and runs away from Gojo for ~8 s
+  for (const p of peds) if (Math.abs(p.x - x) < 120) {
+    if (p.mode === 'walk') { p.mode = 'shock'; p.shockUntil = pedT + 0.5 + rnd() * 0.2; p.scAt = pedT + rnd() * 0.25; p.yellAt = pedT + 1.6 + rnd(); }
+    p.panicUntil = pedT + 8.5;
+  }
+}
 function updatePeds(now, dt) {
   if (!pedsOn()) return; pedT += dt; updateGore(now, dt);
   for (const p of peds) {
-    const gap = p.x - wx, ag = Math.abs(gap), danger = ag < 42 || ((atkAt >= 0 || orb || rdOrb) && ag < 95);      // too close, or he is attacking / has an orb out nearby
-    if (p.mode !== 'run') {
-      if (danger && !p.nt) { p.nt = true; p.reactAt = pedT + 0.3 + rnd() * 0.25; say('!', p.x, '#ff6a6a', 8, now); }      // he notices, and needs a moment to react (so a quick strike can still catch him)
-      else if (!danger) p.nt = false;
-      if (p.nt && pedT >= p.reactAt) { p.mode = 'run'; p.runT = pedT + 1.5; }
-    } else if (!danger && ag > 120 && pedT > p.runT) { p.mode = 'walk'; p.nt = false; p.turnAt = pedT + 2 + rnd() * 3; }
+    const gap = p.x - wx, T = HUM[p.t];
+    if (p.mode === 'shock' && pedT >= p.shockUntil) p.mode = 'run';
+    if (p.mode === 'run' && pedT >= p.panicUntil) { p.mode = 'walk'; p.turnAt = pedT + 2 + rnd() * 3; }
+    if (p.scAt && pedT >= p.scAt) { p.scAt = 0; snd('scream', p.t, 0); }
+    if (p.mode === 'run' && pedT >= p.yellAt) { p.yellAt = pedT + 1.3 + rnd() * 1.2; if (Math.abs(gap) < VW / 2 + 60 && now - lastYell > 160) { lastYell = now; snd('scream', p.t, 1); } }
     if (p.mode === 'walk' && pedT > p.turnAt) { p.dir = -p.dir; p.turnAt = pedT + 3 + rnd() * 4; }
-    if (p.mode === 'run') p.dir = gap >= 0 ? 1 : -1;
-    p.x += p.dir * (p.mode === 'run' ? p.rs : p.sp) * dt; p.clock += dt * (p.mode === 'run' ? 14 : 8);
+    if (p.mode === 'run') p.dir = gap >= 0 ? 1 : -1; else if (p.mode === 'shock') p.dir = gap >= 0 ? -1 : 1;      // they run from him, but in shock they stare at him
+    const v = p.mode === 'shock' ? 0 : p.mode === 'run' ? p.rs : p.sp;
+    p.x += p.dir * v * dt; p.ph = (p.ph + v / (p.mode === 'run' ? T.rl : T.wl) * dt) % 1;
   }
   for (let i = peds.length - 1; i >= 0; i--) if (Math.abs(peds[i].x - wx) > VW / 2 + 160) peds.splice(i, 1);      // left the area: somebody new takes the place
-  if (peds.length < 5 && now >= pedNext) { const side = rnd() < 0.5 ? -1 : 1; peds.push(newPed(wx + side * (VW / 2 + 22), -side)); pedNext = now + 1200 + rnd() * 1500; }
+  if (peds.length < 5 && now >= pedNext) { const side = rnd() < 0.5 ? -1 : 1; peds.push(newPed(wx + side * (VW / 2 + 36), -side)); pedNext = now + 1200 + rnd() * 1500; }
 }
 function addDecal(x, fl, s, c) { decals.push({ x, y: fl, s, c }); if (decals.length > 450) decals.splice(0, 50); }
 function splash(x, fl, n) { for (let i = 0; i < n; i++) addDecal(x + rnd() * 16 - 8, fl + ((rnd() * 5 - 2) | 0), rnd() < 0.35 ? 2 : 1, BLD[2 + ((rnd() * 2) | 0)]); }
 function spawnDrop(x, y, vx, vy, fl) { drops.push({ x, y, vx, vy, fl: Math.max(1, fl + ((rnd() * 7 - 3) | 0)), s: rnd() < 0.25 ? 2 : 1, c: BLD[(rnd() * 3) | 0] }); }
 function killPed(p, now, dir, pw) {           // one hit and he bursts: head, torso, arms and legs fly off with organs, ribs and a fountain of blood; the road keeps the pools
   const i = peds.indexOf(p); if (i < 0) return; peds.splice(i, 1); kills++; pedNext = Math.max(pedNext, now + 2000 + rnd() * 1000);
-  const G = HUMG[p.t], fl = p.lane, bx = p.x;
+  const G = HUM[p.t].parts, fl = p.lane, bx = p.x;
   const gib = (cv, h, sp, lay) => { const th = -Math.PI * (0.05 + rnd() * 0.9), v = sp * (0.55 + rnd() * 0.9) * pw; gibs.push({ x: bx + rnd() * 6 - 3, y: fl - h, vx: Math.cos(th) * v + dir * 36 * pw, vy: Math.sin(th) * v, cv, hw: cv.width / 2, hh: cv.height / 2, fl, rest: false, l: 0, lay }); };
-  gib(G.head, 46, 130, 1); gib(G.torso, 33, 75, 1); gib(G.arm, 32, 140, 1); gib(G.arm, 32, 140, 1); gib(G.leg, 12, 100, 1); gib(G.leg, 12, 100, 1);
-  gib(ORG.heart, 33, 160); gib(ORG.lung, 35, 150); gib(ORG.lung, 35, 150); gib(ORG.liver, 29, 150); gib(ORG.stomach, 27, 150); gib(ORG.int, 24, 150); gib(ORG.int, 22, 130); gib(ORG.rib, 34, 170); gib(ORG.rib, 31, 170);
-  for (let k = 0; k < 9; k++) gib(ORG.flesh, 18 + rnd() * 22, 170); for (let k = 0; k < 5; k++) gib(ORG.bone, 18 + rnd() * 22, 160, 1);
-  for (let k = 0; k < 90; k++) { const th = -Math.PI * (0.02 + rnd() * 0.96), v = (40 + rnd() * 150) * pw; spawnDrop(bx + rnd() * 8 - 4, fl - (14 + rnd() * 32), Math.cos(th) * v + dir * 30, Math.sin(th) * v, fl); }
+  gib(G.head, 52, 130, 1); gib(G.torso, 38, 75, 1); gib(G.arm, 36, 140, 1); gib(G.arm, 36, 140, 1); gib(G.leg, 15, 100, 1); gib(G.leg, 15, 100, 1);
+  gib(ORG.heart, 38, 160); gib(ORG.lung, 40, 150); gib(ORG.lung, 40, 150); gib(ORG.liver, 33, 150); gib(ORG.stomach, 31, 150); gib(ORG.int, 28, 150); gib(ORG.int, 26, 130); gib(ORG.rib, 39, 170); gib(ORG.rib, 36, 170);
+  for (let k = 0; k < 9; k++) gib(ORG.flesh, 20 + rnd() * 26, 170); for (let k = 0; k < 5; k++) gib(ORG.bone, 20 + rnd() * 26, 160, 1);
+  for (let k = 0; k < 90; k++) { const th = -Math.PI * (0.02 + rnd() * 0.96), v = (40 + rnd() * 150) * pw; spawnDrop(bx + rnd() * 8 - 4, fl - (16 + rnd() * 38), Math.cos(th) * v + dir * 30, Math.sin(th) * v, fl); }
   pools.push({ x: bx, y: fl + 1, rx: 9 + rnd() * 4, ry: 3 + rnd(), born: now, g: 900 }, { x: bx + dir * (8 + rnd() * 6), y: fl + 2, rx: 4 + rnd() * 3, ry: 2, born: now + 120, g: 600 }); if (pools.length > 24) pools.splice(0, pools.length - 24);
-  fount.push({ x: bx, fl, until: now + 650 }); flashes.push({ x: bx, y: fl - 30, born: now }); splash(bx, fl, 14);
+  fount.push({ x: bx, fl, until: now + 650 }); flashes.push({ x: bx, y: fl - 36, born: now }); splash(bx, fl, 14);
   if (gibs.length > 150) { let n = gibs.length - 150; for (let j = 0; j < gibs.length && n > 0; j++) if (gibs[j].rest) { gibs.splice(j--, 1); n--; } }
-  holdUntil = Math.max(holdUntil, now + 90); shakeUntil = now + 130; shakeAmp = 2; snd('splat');
+  holdUntil = Math.max(holdUntil, now + 90); shakeUntil = now + 130; shakeAmp = 2; snd('scream', p.t, 2); snd('splat', sfx ? sfx.ac.currentTime + 0.07 : undefined); scarePeds(bx, now);
 }
-function hitPeds(k, now) { if (!pedsOn() || !REACH[k]) return; for (const p of peds.slice()) { const gap = p.x - wx; if (gap - 5 <= REACH[k] && gap + 5 >= 3) killPed(p, now, 1, k === 3 || k === 17 || k === 21 ? 1.6 : 1); } }      // a landed swing bursts every bystander in reach in front of him
+function hitPeds(k, now) { if (!pedsOn() || !REACH[k]) return; for (const p of peds.slice()) { const gap = p.x - wx; if (gap - 6 <= REACH[k] && gap + 6 >= 3) killPed(p, now, 1, k === 3 || k === 17 || k === 21 ? 1.6 : 1); } }      // a landed swing bursts every bystander in reach in front of him
 function blastPeds(x, r, now) { for (const p of peds.slice()) if (Math.abs(p.x - x) < r) killPed(p, now, p.x >= x ? 1 : -1, 1.7); }
 function updateGore(now, dt) {
   const G = 520;
-  for (let i = fount.length - 1; i >= 0; i--) { const f = fount[i]; if (now > f.until) { fount.splice(i, 1); continue; } for (let n = 0; n < 3; n++) spawnDrop(f.x + rnd() * 4 - 2, f.fl - 26 - rnd() * 10, (rnd() - 0.5) * 80, -(80 + rnd() * 100), f.fl); }      // the stump of the body keeps spurting
+  for (let i = fount.length - 1; i >= 0; i--) { const f = fount[i]; if (now > f.until) { fount.splice(i, 1); continue; } for (let n = 0; n < 3; n++) spawnDrop(f.x + rnd() * 4 - 2, f.fl - 32 - rnd() * 10, (rnd() - 0.5) * 80, -(80 + rnd() * 100), f.fl); }      // the stump of the body keeps spurting
   for (const g of gibs) {
     if (g.rest) continue; g.vy += G * dt; g.x += g.vx * dt; g.y += g.vy * dt;
     if (g.cv.width > 4 && rnd() < 0.12) spawnDrop(g.x, g.y, g.vx * 0.2, 0, g.fl);
@@ -390,10 +356,10 @@ function drawGibs(now) {                      // the flying pieces, the blood in
 function drawPeds(now, dt) {
   if (!pedsOn()) return; const cx = Math.round(VW / 2);
   for (const p of peds.slice().sort((a, b) => a.lane - b.lane)) {
-    const sx = Math.round(cx + p.x - wx), fy = gy + p.lane, f = HUM[p.t][1 + (Math.floor(p.clock) % 6)];
-    if (sx < -20 || sx > VW + 20) continue;
-    ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(sx - 6, fy + 1, 12, 2);
-    ctx.save(); ctx.translate(sx, fy - 51); if (p.dir < 0) ctx.scale(-1, 1); ctx.drawImage(f, -12, 0); ctx.restore();
+    const sx = Math.round(cx + p.x - wx), fy = gy + p.lane, T = HUM[p.t], f = p.mode === 'shock' ? T.shock : (p.mode === 'run' ? T.run : T.walk)[Math.floor(p.ph * 8) % 8];
+    if (sx < -40 || sx > VW + 40) continue;
+    ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(sx - 9, fy + 1, 18, 2);
+    ctx.save(); ctx.translate(sx, fy); if (p.dir < 0) ctx.scale(-1, 1); ctx.drawImage(f, -32, -62); ctx.restore();
   }
 }
 function resize() {
@@ -1140,6 +1106,9 @@ window.__dummy = () => dummy ? { gap: dummy.x - wx, hp: dummy.hp, ko: dummy.ko, 
 window.__ceDmg = n => ceDmg(n);                              // test hook: what a hit of n damage does right now (x1.3 while cursed energy is on)
 window.__peds = () => peds; window.__decals = () => decals; window.__kill = (i, d, pw) => { const p = peds[i]; if (p) killPed(p, performance.now(), d || 1, pw || 1); };
 window.__gore = () => ({ gibs: gibs.length, rest: gibs.filter(g => g.rest).length, drops: drops.length, decals: decals.length, pools: pools.length, kills, hold: Math.max(0, holdUntil - performance.now()) });
+window.__humInfo = () => HUM && HUM.map(T => { const px = c => c.getContext('2d').getImageData(0, 0, 64, 64).data, hs = a => { let h = 0; for (let i = 0; i < a.length; i++) h = (h * 31 + a[i]) | 0; return h; };
+  const d = px(T.walk[0]); let top = 64, bot = -1, n = 0; for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (d[(y * 64 + x) * 4 + 3]) { n++; if (y < top) top = y; bot = y; }
+  return { w: T.walk[0].width, h: T.walk[0].height, nw: T.walk.length, nr: T.run.length, dw: new Set(T.walk.map(c => hs(px(c)))).size, dr: new Set(T.run.map(c => hs(px(c)))).size, scared: hs(px(T.shock)) !== hs(px(T.walk[0])), top, bot, n, parts: Object.keys(T.parts).length }; });
 window.__fill = () => { while (peds.length < 5) peds.push(newPed(wx + 150 + peds.length * 12)); };
 window.__hit = k => gojoHit(k, performance.now());           // test hook: the attacker's swing k lands on Gojo right now (a dash dodges it)
 window.__state = () => ({ cmode: cm, redOrb: !!rdOrb, orbV: rdOrb ? rdOrb.v : 0, coat: rdOrb ? !!rdOrb.coat : false, ride: ride ? ride.phase : '', lift: gojoLift, boom: !!boom, ce: ceOn, ceAmt: +ceAmt.toFixed(2), ho: HOMAP.size, stance, jumpC, mode, wx, stick: { x: stickX, y: stickY, up: stickUp, down: stickDown, held: stickCr }, lapse: lpAt >= 0 ? lpK : -1, dash: dgAt >= 0 ? dgK : -1, dashAir: dgAir, block: blkAt >= 0 ? (blkEnd < 0 ? 1 : 2) : 0, guard: guardUp(performance.now()), mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests
