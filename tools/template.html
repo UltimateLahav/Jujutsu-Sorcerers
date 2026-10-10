@@ -40,11 +40,16 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 .pb{pointer-events:auto;touch-action:none;width:15vh;height:15vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6vh;padding:0;font-size:clamp(10px,5vh,24px);opacity:.78}
 .pb span{font-size:clamp(5px,1.7vh,9px);color:var(--dim)}
 .pb.on{background:#2a1f4a;border-color:var(--acc);opacity:1}
-.col{display:grid;grid-template-columns:auto auto;gap:1.6vh;align-items:end;justify-items:end}      /* BLOCK BLUE / DASH ATTACK */
+.col{display:grid;grid-template-columns:auto auto;gap:1.6vh;align-items:end;justify-items:end}      /* CURSED ENERGY above BLUE, then BLOCK BLUE / DASH ATTACK */
+#ce{grid-area:1/2;border-color:#35e8d8;color:#35e8d8}
+#blk{grid-area:2/1}#lap{grid-area:2/2}#dash{grid-area:3/1}#atk{grid-area:3/2}
+#ce span{color:#7fe9df}
+#ce.lit{background:#0b3a3d;border-color:#9ffff6;opacity:1;color:#9ffff6;box-shadow:0 0 1.8vh #35e8d8,0 0 .5vh #35e8d8 inset,4px 4px 0 #000}      /* cursed energy is on */
+#ce.lit span{color:#d8fffb}
 #lap{border-color:#59b8ff}
 #dash{border-color:#7bd9a3}
 #blk{border-color:#9f8cff}
-#lap svg,#dash svg,#blk svg,#atk svg{width:4.5vh;height:4.5vh}
+#lap svg,#dash svg,#blk svg,#atk svg,#ce svg{width:4.5vh;height:4.5vh}
 #atk{border-color:#6fb4ff;width:17vh;height:17vh}
 #settings.screen{z-index:5;background:rgba(13,10,23,.95);gap:2vh}
 #vols{display:grid;grid-template-columns:1fr 1fr;gap:1.6vh 5vh;width:min(92vw,820px);text-align:left}
@@ -104,6 +109,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <svg id="knob" viewBox="0 0 32 32" shape-rendering="crispEdges" aria-hidden="true"><path d="M10 2h12l8 8v12l-8 8H10l-8-8V10z"/></svg>
   </div>
   <div class="col">
+    <button id="ce" class="pb" aria-label="Cursed energy (tap to turn it on or off)" aria-pressed="false"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M3 0h1v1H3zM3 1h2v1H3zM6 1h1v1H6zM2 2h3v1H2zM6 2h1v1H6zM2 3h5v1H2zM1 4h7v1H1zM1 5h2v1H1zM4 5h4v1H4zM1 6h6v1H1zM2 7h4v1H2z"/></svg><span>CURSED<br>ENERGY</span></button>
     <button id="blk" class="pb" aria-label="Block (hold)"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M0 0h8v4H7v1H6v1H5v1H4v1H3V7H2V6H1V5H0z"/></svg><span>BLOCK</span></button>
     <button id="lap" class="pb" aria-label="Lapse Blue"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M2 1h4v1h1v4h-1v1h-4v-1h-1v-4h1z"/></svg><span>BLUE</span></button>
     <button id="dash" class="pb" aria-label="Dash"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M0 1h2l3 3-3 3H0l3-3zM4 1h2l2 3-2 3H4l3-3z"/></svg><span>DASH</span></button>
@@ -123,6 +129,7 @@ const ATK_FPS = [30, 30, 30, 24, 24, 24, 30, 30, 0, 0, 0, 0, 0, 0, 36, 30, 32, 2
 const ATK_NAMES = ['R.HOOK', 'L.HOOK', 'ELBOW', 'KICK'], WALK_NAMES = ['JAB', 'KICK', 'CROSS', 'KICK2'], CR_FPS = 36, LAPSE_FPS = 24;   // hooks and the elbow nudge the enemy (so the combo keeps connecting); the kick sends him sliding with a smoke trail
 const DUMMY_HP = 300, RX_FPS = [16, 16, 16, 18, 12, 16, 16, 16, 12, 14], RX_DUR = RX_FPS.map(f => 10000 / f);      // 10 reactions, 10 frames each
 const REACH = [17, 17, 15, 26, 0, 0, 16, 16, 0, 0, 0, 0, 0, 0, 19, 25, 19, 27], KNOCK = [9, 9, 11, 100, 0, 0, 8, 8, 0, 0, 0, 0, 0, 0, 8, 14, 9, 40], KNOCK_G = [26, 26, 34, 80, 0, 0, 20, 20, 0, 0, 0, 0, 0, 0, 20, 30, 22, 45], DMG = [12, 14, 18, 35, 0, 0, 10, 13, 0, 0, 0, 0, 0, 0, 10, 16, 13, 22];      // 14-17 = the walking combo: jab, kick, cross with the other hand, kick with the other leg   // per hit: how far it reaches from his hips (px), how hard it shoves the dummy (px/s), damage number
+const CE_FPS = 20, CE_DMG = 1.3;               // cursed energy: its 15 frames play at 20 FPS (frames per second = how many pictures are shown each second); while it is on, every hit he lands does 1.3 times the damage
 const FWD_SPEED = 44, BACK_SPEED = 30;         // world pixels per second (matched to the slower stride so his feet do not skate)
 const BLINK_STEP = 70, BLINK_HOLD = 500;       // ms per blink frame, ms the eye stays shut
 const $ = id => document.getElementById(id);
@@ -145,6 +152,19 @@ const idleF = mk(D.idle), fwdF = mk(D.fwd), backF = mk(D.back), jumpF = mk(D.jum
 const crF = { dn: mk(D.cdn), idle: mk(D.cidle), fwd: mk(D.cfwd), back: mk(D.cback), jump: mk(D.cjump), blk: mk(D.cb), fblk: mk(D.cfb), bblk: mk(D.cbb) }, lapseF = [4, 5].map(k => mk(D['atk' + k]));
 const wblkF = mk(D.wfb), wblkB = mk(D.wbb);                    // walking forward / back while blocking (15 frames each, played slowly)
 const mbF = mk(D.atk8), orbF = mk(D.orb); atkF[6] = mk(D.atk6); atkF[7] = mk(D.atk7); atkF[9] = mk(D.atk9); atkF[10] = mk(D.atk10); atkF[11] = mk(D.atk11); atkF[12] = mk(D.atk12); atkF[13] = mk(D.atk13); for (let k = 14; k <= 17; k++) atkF[k] = mk(D['atk' + k]);      // the walking combo      // atk12 / atk13 = the crouch dash forward / back      // atk11 = the guard (10 frames)      // atk9 = dash forward, atk10 = dash back (15 frames each)      // crouch (down, idle, walks, spring jump), Lapse Blue (pull, blink), crouch punches, the Max Blue summon (40 frames) and the orb (20-frame loop)
+for (const k in D) if (k.startsWith('h_')) D[k.slice(2)].ho = D[k];      // each normal set carries its hands-out data (the changed pixels and the fist positions)
+const ceF = mk(D.ce);                                                    // CURSED ENERGY: 15 frames of unstable cyan flame, drawn over both fists
+const mkH = k => {                                                       // the hands-out version of a set: the normal rows with the changed pixels put in (three characters each: x and y as characters counted from '0', then the new letter)
+  const b = D[k], dl = D['h_' + k].dl;
+  return mk({ w: b.w, h: b.h, frames: b.frames.map((rows, i) => {
+    const g = rows.map(r => r.split('')), s = dl[i];
+    for (let j = 0; j < s.length; j += 3) g[s.charCodeAt(j + 1) - 48][s.charCodeAt(j) - 48] = s[j + 2];
+    return g.map(r => r.join(''));
+  }) });
+};
+const HOMAP = new Map();                                                 // normal frames -> hands-out frames, used while cursed energy is on (built one set at a time in the background just after start-up, so the game opens as fast as before)
+const HOJOBS = [[idleF, 'idle'], [fwdF, 'fwd'], [backF, 'back'], [jumpF, 'jump'], [teleF, 'tele'], [crF.jump, 'cjump'], [crF.dn, 'cdn'], [crF.idle, 'cidle'], [crF.fwd, 'cfwd'], [crF.back, 'cback'], [crF.blk, 'cb'], [crF.fblk, 'cfb'], [crF.bblk, 'cbb'], [wblkF, 'wfb'], [wblkB, 'wbb'], [mbF, 'atk8'], [lapseF[0], 'atk4'], [lapseF[1], 'atk5'], ...[6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17].map(k => [atkF[k], 'atk' + k])];
+function buildHO() { const j = HOJOBS.shift(); if (j) { HOMAP.set(j[0], mkH(j[1])); setTimeout(buildHO, 6); } }
 const inv = h => '#' + [1, 3, 5].map(i => (255 - parseInt(h.substr(i, 2), 16)).toString(16).padStart(2, '0')).join('');
 const invPal = {}, whitePal = {};
 const bluePal = {};                           // the stunned look: recoloured in blues by brightness
@@ -162,7 +182,8 @@ const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
 let state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
 let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1;
-let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', flashUntil = 0, flashMs = 1, flashA = 0, stickX = 0, stickY = 0, stickUp = false, stickDown = false, stickCr = false, stickDownEnd = -9999, jumpFromStick = false, joyId = null, dashReq = false, dgAt = -1, dgK = 0, dgFrom = 0, dgTo = 0, dgAir = false, dgUsed = false, dgCr = false, dgReady = 0, blockHeld = false, blkAt = -1, blkEnd = -1, blkFrom = 4, wcIdx = 0;
+let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', flashUntil = 0, flashMs = 1, flashA = 0, stickX = 0, stickY = 0, stickUp = false, stickDown = false, stickCr = false, stickDownEnd = -9999, jumpFromStick = false, joyId = null, dashReq = false, dgAt = -1, dgK = 0, dgFrom = 0, dgTo = 0, dgAir = false, dgUsed = false, dgCr = false, dgReady = 0, blockHeld = false, blkAt = -1, blkEnd = -1, blkFrom = 4, wcIdx = 0, ceOn = false, ceAt = -9999, ceAmt = 0, ceNext = 0, ceReq = false;
+const ceDmg = n => ceOn ? Math.round(n * CE_DMG) : n;
 const STRIP = 480;
 
 // ---------------------------------------------------------------- sound (all synthesised in sfx.js, no audio files)
@@ -189,8 +210,8 @@ function snd(name, a, b) {                    // play one cue (and log it when a
 window.__audio = on => { if (!sfx) return; if (on) audio(); else sfx.ac.suspend(); };   // called by the Android app when it goes to / comes back from the background
 
 // ---------------------------------------------------------------- settings: a volume slider for every sound
-const VOLS = [['master', 'MASTER'], ['steps', 'FOOTSTEPS'], ['wind', 'WIND'], ['jump', 'JUMP + LANDING'], ['tele', 'TELE + BLUE'], ['atk', 'ATTACKS']];
-const vol = { master: 100, steps: 100, wind: 100, jump: 100, tele: 100, atk: 100 };
+const VOLS = [['master', 'MASTER'], ['steps', 'FOOTSTEPS'], ['wind', 'WIND'], ['jump', 'JUMP + LANDING'], ['tele', 'TELE + BLUE'], ['atk', 'ATTACKS'], ['ce', 'CURSED ENERGY']];
+const vol = { master: 100, steps: 100, wind: 100, jump: 100, tele: 100, atk: 100, ce: 100 };
 try { Object.assign(vol, JSON.parse(localStorage.getItem('js_vol') || '{}')); } catch (e) { /* storage blocked: defaults */ }
 function applyVols() { if (sfx) for (const [k] of VOLS) sfx.setVol(k, vol[k] / 100); }
 function preview(k) {                         // let go of a slider and you hear that sound (the wind is already playing underneath)
@@ -198,6 +219,7 @@ function preview(k) {                         // let go of a slider and you hear
   if (k === 'jump') { sfx.jump(); setTimeout(() => sfx.land(1), 380); }
   else if (k === 'tele') { sfx.vanish(); setTimeout(() => sfx.arrive(), 120); }
   else if (k === 'atk') { sfx.swing(0); setTimeout(() => { sfx.hit(0); sfx.smack(0); }, 140); }
+  else if (k === 'ce') { sfx.ceon(); setTimeout(() => sfx.cecrackle(), 420); }
   else { sfx.step(0, false); setTimeout(() => sfx.step(1, false), 500); }
 }
 
@@ -230,6 +252,7 @@ function show(s) {
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll(); $('settings').classList.remove('on');
+  ceOn = false; ceAmt = 0; $('ce').classList.remove('lit'); $('ce').setAttribute('aria-pressed', 'false');
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
   if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(performance.now(), 1200);
@@ -308,11 +331,11 @@ function hitDummy(k, now) {                   // called on the impact frame: a h
   if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; }                    // the counter restarts after 1.6 s without a landed hit
   const ko = k <= 3 ? k : k >= 14 ? k - 14 : -1; hits.seq = ko === hits.seq ? hits.seq + 1 : ko === 0 ? 1 : 0;                          // the meter fills while the hits land in order: right hook, left hook, elbow, kick
   if (hits.seq === 4) { dmg += 25; hits.perfect = now; snd('finisher'); say('COMBO!', dummy.x, '#ffd34d', 8, now + 90); }
-  hits.n++; hits.dmg += dmg; hits.until = now + 1600;
+  dmg = ceDmg(dmg); hits.n++; hits.dmg += dmg; hits.until = now + 1600;
   dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += KNOCK[k]; if (k === 3 || k === 17) { dummy.smokeUntil = now + 520; puff(dummy.x, 8); } shakeUntil = now + 110; shakeAmp = (k === 3 || k === 15 || k === 17) ? 3 : 2;
   dummy.rx = (Math.random() * 10) | 0; dummy.rxAt = now;                                // one of ten reactions, picked at random
   if (window.__sfxlog) window.__sfxlog.push(['rx', Math.round(now), dummy.rx]);
-  say('' + dmg, dummy.x, '#7fc4ff', 8, now);
+  say('' + dmg, dummy.x, ceOn ? '#4ff5e8' : '#7fc4ff', 8, now);
   snd('smack', k);
   if (dummy.hp <= 0) { dummy.ko = now; dummy.vx += 70; shakeUntil = now + 260; shakeAmp = 4; kos++; say('K.O.', dummy.x, '#ffd34d', 16, now + 120); snd('ko'); }
 }
@@ -483,7 +506,7 @@ function releaseCap(now) {                    // the orb collapses: the blast fl
   const vy0 = Math.max(-150, Math.min(0, c.vy * 0.5 + dy * 100 - 110)), drop = (gy - REST_Y) - c.py, T = (-vy0 + Math.sqrt(vy0 * vy0 + 2 * 560 * Math.max(0, drop))) / 560;      // an upward kick; T = how long he stays in the air
   c.mode = 'fly'; c.at = now; c.vy = vy0; c.vx = Math.max(40, Math.min(220, (wx + 85 + Math.random() * 24 - 12 - c.px) / Math.max(0.2, T)));        // he is always blown away from Gojo and lands about 85 px in front of him, wherever he was flung from
   c.rot0 = Math.atan2(Math.sin(c.rot), Math.cos(c.rot));                                                     // the spin angle folded into -180..180 degrees: he straightens up the short way
-  dummy.hp = Math.max(0, dummy.hp - 25); dummy.hitAt = now; say('25', dummy.x, '#9fd8ff', 8, now);
+  const bl = ceDmg(25); dummy.hp = Math.max(0, dummy.hp - bl); dummy.hitAt = now; say('' + bl, dummy.x, '#9fd8ff', 8, now);
   if (dummy.hp <= 0) c.ko = true;             // he goes down when he lands
 }
 function landCap(now) {
@@ -520,8 +543,8 @@ function drawOrb(now, dt) {
   }
   catchDummy(now);                            // (an enemy that stepped in later is caught too)
   if (dummy && dummy.ko < 0 && dummy.cap && dummy.cap.mode === 'orbit' && now > orb.tick && age < ORB_MS - 400) {   // it grinds him down; only the blast at the end can finish him
-    orb.tick = now + 230; const dmg = Math.min(4 + ((Math.random() * 3) | 0), dummy.hp - 1);
-    if (dmg > 0) { dummy.hp -= dmg; dummy.hitAt = now; orb.acc += dmg; orb.n++; if (orb.n % 2 === 0) { say('' + orb.acc, dummy.x, '#7fc4ff', 8, now); orb.acc = 0; } }   // the numbers pop up every second tick so they stay readable
+    orb.tick = now + 230; const dmg = Math.min(ceDmg(4 + ((Math.random() * 3) | 0)), dummy.hp - 1);
+    if (dmg > 0) { dummy.hp -= dmg; dummy.hitAt = now; orb.acc += dmg; orb.n++; if (orb.n % 2 === 0) { say('' + orb.acc, dummy.x, ceOn ? '#4ff5e8' : '#7fc4ff', 8, now); orb.acc = 0; } }   // the numbers pop up every second tick so they stay readable
   }
   if (age < ORB_MS - 500) while (debris.length < 70 && Math.random() < 0.9) addDebris();
   for (const p of debris) {                   // rubble spirals in on a flattened ellipse, faster and faster
@@ -540,18 +563,41 @@ function drawOrb(now, dt) {
   if (age >= ORB_MS) {                        // it collapses in a blast that throws the enemy away
     snd('orbend'); flash(now, 260, 0.6); shakeUntil = now + 300; shakeAmp = 3;
     if (dummy && dummy.ko < 0 && dummy.cap) releaseCap(now);
-    else if (dummy && dummy.ko < 0) { dummy.vx += 170; dummy.hp = Math.max(0, dummy.hp - 25); dummy.hitAt = now; dummy.rx = (Math.random() * 10) | 0; dummy.rxAt = now; dummy.stunUntil = 0; say('25', dummy.x, '#9fd8ff', 8, now); if (dummy.hp <= 0) koDummy(now); }
+    else if (dummy && dummy.ko < 0) { dummy.vx += 170; const bl = ceDmg(25); dummy.hp = Math.max(0, dummy.hp - bl); dummy.hitAt = now; dummy.rx = (Math.random() * 10) | 0; dummy.rxAt = now; dummy.stunUntil = 0; say('' + bl, dummy.x, '#9fd8ff', 8, now); if (dummy.hp <= 0) koDummy(now); }
     orb = null; debris = [];
   }
 }
 
-function pickAtk() {                          // crouched: the low jab and the uppercut; walking forward: the walking combo (jab, kick, cross with the other hand, kick with the other leg); otherwise the normal combo
+function toggleCE(now) {                      // CURSED ENERGY: tap to turn it on (the hands come out of the pockets and burn), tap again to turn it off
+  ceOn = !ceOn; ceAt = now; ceNext = now + 500 + Math.random() * 400;
+  $('ce').classList.toggle('lit', ceOn); $('ce').setAttribute('aria-pressed', ceOn ? 'true' : 'false');
+  snd(ceOn ? 'ceon' : 'ceoff');
+}
+function drawCE(now, x, y, info, fi) {       // CURSED ENERGY: unstable cyan flames on both fists (the far hand first, so the near one is on top). x, y = where Gojo's sprite is drawn
+  if (ceAmt <= 0.02) return;
+  const A = ceOn && info.ho ? info.ho : info, k = Math.floor(now * CE_FPS / 1000) % 15, cx = D.ce.cx, cy = D.ce.cy, ig = now - ceAt;
+  for (const [pt, off] of [[A.hf[fi], 7], [A.hn[fi], 0]]) {
+    if (!pt) continue;                         // (no hands to light while he turns into a streak of light)
+    const n = (k + off) % 15, h = Math.imul(n * 2654435761 + off * 40503 + 17, 2246822519) >>> 0;      // a different tiny shake and flicker on every frame: it is never still
+    ctx.globalAlpha = ceAmt * (0.82 + 0.18 * ((h >> 9) % 4) / 3);
+    ctx.drawImage(ceF[n], Math.round(x + pt[0]) - cx + (h % 3) - 1, Math.round(y + pt[1]) - cy + ((h >> 4) % 3) - 1);
+    ctx.globalAlpha = 1;
+    if (ceOn && ig < 360) {                    // switching on: a ring of sparks races out from each fist
+      const R = 4 + ig / 360 * 24; ctx.fillStyle = 'rgba(95,244,230,' + (1 - ig / 360) + ')';
+      for (let a = 0; a < 28; a++) { const th = a / 28 * 6.2832; ctx.fillRect(Math.round(x + pt[0] + Math.cos(th) * R), Math.round(y + pt[1] + Math.sin(th) * R * 0.8), 1, 1); }
+    }
+  }
+}
+function pickAtk() {                          // crouched: the low jab and the uppercut; cursed energy on: the 4-hit combo (jab, kick, cross with the other hand, kick with the other leg); otherwise the normal combo
   if (stance === 'crouch') { const k = 6 + cpIdx; cpIdx ^= 1; return k; }
-  if (keyR || padR) { const k = 14 + wcIdx; wcIdx = (wcIdx + 1) % 4; return k; }
+  if (ceOn) { const k = 14 + wcIdx; wcIdx = (wcIdx + 1) % 4; return k; }
   const k = combo; combo = (k + 1) % 4; return k;
 }
 function drawScene(now, dt) {
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3);
+  if (ceReq) { ceReq = false; if (t >= 1) toggleCE(now); }        // CURSED ENERGY button / key: on <-> off
+  ceAmt += ((ceOn ? 1 : 0) - ceAmt) * Math.min(1, dt * (ceOn ? 16 : 10)); if (!ceOn && ceAmt < 0.03) ceAmt = 0;      // the flames swell in quickly and die away a little slower
+  if (ceOn && now >= ceNext) { snd('cecrackle'); ceNext = now + 260 + Math.random() * 700; }      // a quiet crackle at random moments while it is on
   let jf = -1, tf = -1;                       // jump frame 0-14 (0-2 crouch, 3 push-off, 4-11 airborne, 12-14 land) / teleport frame 0-14 (0-6 vanish + arrive, 7-11 fall, 12-14 land)
   if (jumpAt >= 0) {
     jf = Math.floor(Math.max(0, now - jumpAt) * JUMP_FPS / 1000);                // clamp: rAF time can trail performance.now() by a hair
@@ -593,7 +639,7 @@ function drawScene(now, dt) {
     }
   }
   if (af < 0 && (combo !== 0 || cpIdx !== 0 || wcIdx !== 0) && now > comboUntil) { combo = 0; cpIdx = 0; wcIdx = 0; }   // waited too long: back to the first hit (standing and crouched)
-  const lab = stance === 'crouch' ? ['R.JAB', 'L.UPPR'][cpIdx] : (stance === 'stand' && (keyR || padR)) ? WALK_NAMES[wcIdx] : ATK_NAMES[combo]; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; }
+  const lab = stance === 'crouch' ? ['R.JAB', 'L.UPPR'][cpIdx] : (stance === 'stand' && ceOn) ? WALK_NAMES[wcIdx] : ATK_NAMES[combo]; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; }
   if (crReq) {                                // keyboard S / Down / C: tap to go down (10 frames), tap again to stand up (the joystick crouches while it is held down)
     crReq = false;
     if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0) { if (stance === 'stand') { stance = 'down'; stAt = now; sf = 0; } else if (stance === 'crouch') { stance = 'up'; stAt = now; sf = 0; } }
@@ -723,8 +769,9 @@ function drawScene(now, dt) {
   ctx.save();
   ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip();
   ctx.globalAlpha = Math.min(1, t * 2);
-  ctx.drawImage(set[fi], x, y);
+  ctx.drawImage((ceOn && HOMAP.get(set) || set)[fi], x, y);        // cursed energy on: both hands out of the pockets
   ctx.restore();
+  if (t >= 1) drawCE(now, x, y, info, fi);
 
   if (tele && (tf === 2 || tf === 3)) { ctx.fillStyle = 'rgba(160,220,255,0.12)'; ctx.fillRect(0, 0, VW, VH); }   // soft blue flash on the teleport
   if (t < 1) {                                // spawn ring + flash
@@ -755,8 +802,8 @@ function tick(now) {
 
 // ---------------------------------------------------------------- input
 function releaseAll() {
-  keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = blockHeld = false;
-  $('atk').classList.remove('on'); $('lap').classList.remove('on'); $('dash').classList.remove('on'); $('blk').classList.remove('on'); joyRelease();
+  keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = blockHeld = false;
+  $('ce').classList.remove('on'); $('atk').classList.remove('on'); $('lap').classList.remove('on'); $('dash').classList.remove('on'); $('blk').classList.remove('on'); joyRelease();
 }
 function bindPad(id, set) {                   // hold-to-walk touch buttons (multi-touch safe)
   const b = $(id);
@@ -771,6 +818,7 @@ function bindPad(id, set) {                   // hold-to-walk touch buttons (mul
 bindPad('atk', v => { if (v) atkReq = true; });
 bindPad('dash', v => { if (v) dashReq = true; });
 bindPad('blk', v => { blockHeld = v; });                    // hold to block           // tap to dash the way you are walking (back when standing still)
+bindPad('ce', v => { if (v) ceReq = true; });               // tap to turn cursed energy on or off
 bindPad('lap', v => { if (v) lpReq = true; });           // tap for Lapse Blue (hold FWD while you tap it to pull the enemy in instead of blinking to him)
 // THE JOYSTICK (bottom left): push left / right to walk back / forward, up to jump (one jump per push), down to crouch (he stays crouched while you hold it)
 const joy = $('joy'), knob = $('knob');
@@ -797,12 +845,12 @@ joy.addEventListener('pointermove', e => { if (e.pointerId === joyId) joyMove(e)
 ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => joy.addEventListener(n, e => { if (e.pointerId === joyId) joyRelease(); }));
 joy.addEventListener('contextmenu', e => e.preventDefault());
 
-const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U', KeyJ: 'A', KeyF: 'A', ArrowDown: 'C', KeyS: 'C', KeyC: 'C', KeyL: 'B', KeyK: 'D', ShiftLeft: 'D', ShiftRight: 'D', KeyB: 'G' };
+const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U', KeyJ: 'A', KeyF: 'A', ArrowDown: 'C', KeyS: 'C', KeyC: 'C', KeyL: 'B', KeyK: 'D', ShiftLeft: 'D', ShiftRight: 'D', KeyB: 'G', KeyE: 'E' };
 addEventListener('keydown', e => {
   if (settingsOn()) { if (e.key === 'Escape') closeSettings(); return; }      // the settings screen takes the keyboard while it is open
   const k = KEYS[e.code];
   if (k) {
-    if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (k === 'G') blockHeld = true; else if (state === 'play' && !e.repeat) { if (k === 'A') atkReq = true; else if (k === 'C') crReq = true; else if (k === 'B') lpReq = true; else if (k === 'D') dashReq = true; else { jumpReq = true; jumpFromStick = false; } }
+    if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (k === 'G') blockHeld = true; else if (state === 'play' && !e.repeat) { if (k === 'A') atkReq = true; else if (k === 'C') crReq = true; else if (k === 'B') lpReq = true; else if (k === 'D') dashReq = true; else if (k === 'E') ceReq = true; else { jumpReq = true; jumpFromStick = false; } }
     if (state === 'play') e.preventDefault();
     return;
   }
@@ -859,8 +907,9 @@ addEventListener('resize', resize);
 addEventListener('orientationchange', () => setTimeout(resize, 250));
 
 window.__dummy = () => dummy ? { gap: dummy.x - wx, hp: dummy.hp, ko: dummy.ko, kos, hits: { n: hits.n, dmg: hits.dmg, seq: hits.seq }, rx: dummy.rx, mode: dummy.mode, ai: dummy.ai, cap: dummy.cap ? { mode: dummy.cap.mode, r: dummy.cap.r, y: dummy.cap.py, rot: dummy.cap.rot, front: dummy.cap.front } : null, stun: Math.max(0, dummy.stunUntil - performance.now()), smoke: smoke.length } : null;
+window.__ceDmg = n => ceDmg(n);                              // test hook: what a hit of n damage does right now (x1.3 while cursed energy is on)
 window.__hit = k => gojoHit(k, performance.now());           // test hook: the attacker's swing k lands on Gojo right now (a dash dodges it)
-window.__state = () => ({ stance, jumpC, mode, wx, stick: { x: stickX, y: stickY, up: stickUp, down: stickDown, held: stickCr }, lapse: lpAt >= 0 ? lpK : -1, dash: dgAt >= 0 ? dgK : -1, dashAir: dgAir, block: blkAt >= 0 ? (blkEnd < 0 ? 1 : 2) : 0, guard: guardUp(performance.now()), mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests
+window.__state = () => ({ ce: ceOn, ceAmt: +ceAmt.toFixed(2), ho: HOMAP.size, stance, jumpC, mode, wx, stick: { x: stickX, y: stickY, up: stickUp, down: stickDown, held: stickCr }, lapse: lpAt >= 0 ? lpK : -1, dash: dgAt >= 0 ? dgK : -1, dashAir: dgAir, block: blkAt >= 0 ? (blkEnd < 0 ? 1 : 2) : 0, guard: guardUp(performance.now()), mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests
 window.__back = () => {                       // Android back button: step back through the menus, otherwise let the app close
   if (settingsOn()) { closeSettings(); return true; }
   if (state === 'play') { show('select'); return true; }
@@ -872,6 +921,7 @@ resize();
 planBlink(performance.now(), 1200);
 last = performance.now();
 requestAnimationFrame(tick);
+setTimeout(buildHO, 250);
 })();
 </script>
 </body>

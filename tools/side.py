@@ -5,7 +5,7 @@ Wind is a headwind (blows right->left): hair, blindfold tails and jacket trail b
 import math, json, sys, os, random
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from PIL import Image, ImageDraw
-import gojo
+import gojo, ce
 
 PAL = gojo.PAL
 N = 64
@@ -509,15 +509,45 @@ ATK[17] = [K(0, I0), K(2, (-1, 1, -1, 62, 100, 12, -16, 45, -16, 45, .3)), K(5, 
            K(11, (-1, 1, -1, 60, 70, 10, -16, 45, -16, 45, .3)), K(14, I0)]                                                                                 # 17: a kick with the other (far) leg (its three leg angles are the far leg's)
 ATK_HANDS.update({14: 'n', 15: '', 16: 'f', 17: ''}); ATK_IMPACT.extend([4, 6, 4, 6])
 STRIKES = (0, 1, 2, 3, 6, 7, 14, 15, 16, 17)                  # the attacks whose hitting limbs get a blue outline
+# ---------------------------------------------------------------- HANDS OUT (used while cursed energy is on): the same animations with both hands out of the pockets
+HO = False                                                    # build() draws the hands-out version of every pose while this is True
+HO_N, HO_F = (14, 44), (-24, -4)                              # relaxed arms: the near hand hangs forward and low, the far hand trails behind him (upper arm, forearm angles)
+HO_BAL = ((-32, -6), (42, 72))                                # the kicks: arms out for balance (the near arm back, the far arm forward and up, clear of the leg)
+HO_ARMS = {15: HO_BAL, 17: HO_BAL}
+def ho_tbl(tbl, near, far):                                   # an attack table with every arm that sat in the pocket swapped for the relaxed hands-out arm
+    out = []
+    for f, v, m in tbl:
+        v = list(v)
+        if (v[6], v[7]) == POCKET: v[6], v[7] = near
+        if (v[8], v[9]) == POCKET: v[8], v[9] = far
+        out.append((f, tuple(v), m))
+    return out
+ATK_H = {k: ho_tbl(t, *HO_ARMS.get(k, (HO_N, HO_F))) for k, t in ATK.items()}
+JARMS = [K(0, (*HO_N, *HO_F)), K(2, (-30, -8, -40, -12)), K(3, (45, 40, 30, 30)), K(5, (62, 50, 48, 40)), K(8, (70, 55, 55, 45)), K(11, (40, 45, 25, 35)), K(12, (20, 46, 0, 30)), K(14, (*HO_N, *HO_F))]       # jump: arms swing back as he squats, up as he leaves the ground, down as he lands
+TARMS = [K(0, (25, 60, 10, 50)), K(6, (30, 70, 15, 60)), K(8, (55, 50, 40, 40)), K(11, (35, 45, 20, 35)), K(12, (20, 46, 0, 30)), K(14, (*HO_N, *HO_F))]                                    # teleport: hugged in while he vanishes, then the same fall as the jump
+def ho_arms(kind, i):                                         # the arms for the hands-out versions of the standing / walking / crouching / jumping poses -> near upper arm, near forearm, far upper arm, far forearm
+    if kind in ('jump', 'cjump'): return keyframe(JARMS, i)
+    if kind == 'tele': return keyframe(TARMS, i)
+    if kind in ('fwd', 'back', 'cfwd', 'cback'):
+        p = i / NW if kind in ('fwd', 'cfwd') else ((-i) % NW) / NW; amp = 18 if kind in ('fwd', 'back') else 8
+        cn, cf = cos(2 * math.pi * p), cos(2 * math.pi * ((p + .5) % 1))             # +1 = that leg is forward, so its arm swings back
+        sn, sf = (1 - cn) / 2, (1 - cf) / 2                                          # 0 = the arm is back ... 1 = the arm is forward
+        return (HO_N[0] - 2 - amp * cn, 26 + 20 * sn, HO_F[0] + 14 - 1.3 * amp * cf, 10 + 28 * sf)
+    return (*HO_N, *HO_F)
+def hand_at(S, ua, fa):                                       # where the fist ends up (the same geometry draw_arm uses)
+    a, b = rad(ua), rad(fa); E = (S[0] + UA * sin(a), S[1] + UA * cos(a)); W = (E[0] + FA * sin(b), E[1] + FA * cos(b))
+    return (W[0] + 2.0 * sin(b), W[1] + 2.0 * cos(b))
+ANCH = {}                                                     # (hands out?, kind, frame) -> near hand x, y, far hand x, y in canvas pixels (None = no cursed energy on this frame)
 BLK_MAP = {'wfb': 'fwd', 'wbb': 'back', 'cb': 'cidle', 'cfb': 'cfwd', 'cbb': 'cback'}      # blocking while walking / crouched / crouch-walking: the same bodies with the near hand raised (two fingers up)
 
 def build(kind, i):
-    blkk = kind in BLK_MAP; kind = BLK_MAP.get(kind, kind)
-    if blkk: nua, nfa, fua, ffa, gl, k_ = 68, 170, -16, 45, 0, 11
+    okind = kind; blkk = kind in BLK_MAP; kind = BLK_MAP.get(kind, kind); gl = 0
+    if blkk: (nua, nfa), (fua, ffa), gl, k_ = (68, 170), HO_F if HO else POCKET, 0, 11
     idx = i                               # (i is reused for the head loop below)
     f = F(); u = F()                      # f: legs, u: everything above the hips
     hx, foot, lean = 33, None, 0
     atk = kind.startswith('atk'); rxk = kind.startswith('rx'); crk = kind in CR_KINDS; foot2 = None; hs = 0; sx_ = 1; rot_ = 0
+    hoa = HO and not (atk or rxk or blkk)                 # the standing / walking / crouching / jumping poses with both hands out (the attacks get theirs from ATK_H)
     if kind == 'idle':
         L = [.15, .35, .55, .7, .5, .25][i]; bob = [0, 0, 0, 1, 1, 0][i]
         thn, kn_, thf, kf, swn, swf = rad(4), 0, rad(-8), 0, False, False; p = i / 6
@@ -532,9 +562,9 @@ def build(kind, i):
         thn, kn_ = ik(hx, hy, 33.7 + SH + nax, GROUND - nl); thf, kf = ik(hx, hy, 29.7 + SH + fax, GROUND - fl)
     elif atk:
         k_ = int(kind[3:])
-        if k_ in (9, 10, 12, 13): dx, dy, lean, (thn, kn_), (thf, kf) = dash_pose(k_ if k_ < 11 else k_ - 3, i, 0 if k_ < 11 else 10); nua, nfa, fua, ffa, gl = -16, 45, -16, 45, 0; nth = nk = nf = 0
+        if k_ in (9, 10, 12, 13): dx, dy, lean, (thn, kn_), (thf, kf) = dash_pose(k_ if k_ < 11 else k_ - 3, i, 0 if k_ < 11 else 10); (nua, nfa), (fua, ffa) = (HO_N, HO_F) if HO else (POCKET, POCKET); gl = 0; nth = nk = nf = 0
         else:
-            dx, dy, lean, nth, nk, nf, nua, nfa, fua, ffa, gl = pv = keyframe(ATK[k_], i)
+            dx, dy, lean, nth, nk, nf, nua, nfa, fua, ffa, gl = pv = keyframe((ATK_H if HO else ATK)[k_], i)
             if k_ in (6, 7): dy += CR_DY - 9
         hx, hy = 33 + dx, 38 + TOP + round(dy); swn = swf = False; L = 0; bob = 0; p = 0; foot = 0.0
         if k_ not in (9, 10, 12, 13): thf, kf = ik(hx, hy, 29.7, GROUND)
@@ -555,6 +585,7 @@ def build(kind, i):
     if (kind not in ('jump', 'tele', 'cjump') and not (atk or rxk or crk)) or kind == 'atk11': hy = round(58 + TOP - max(drop(thn, kn_), drop(thf, kf)))
     dxb = round(hx - 33)                                   # the body follows the hips (the planted feet stay put)
     oy = hy - 34; hb = bob
+    if hoa: nua, nfa, fua, ffa = ho_arms(kind, i)
     wave = round(sin(2 * math.pi * 2 * i / NW)) if kind in ('fwd', 'back') else [0, 1, 0, -1, 0, 1][i % 6]      # tail sway: whole cycles per loop, so the walk loops without a pop
     kf_, af_ = leg(f, hx, hy, thf, kf, swf, False, foot, rc_f if atk else 'O')
     kn, an = leg(f, hx, hy, thn, kn_, swn, True, foot if foot2 is None else foot2, rc_n if atk else 'O')
@@ -566,7 +597,7 @@ def build(kind, i):
         jk |= {(x, y + oy) for x in range(a, b + 1)}
     u.fill(jk, 'B'); u.bands(jk, 'B', 'C', 'A'); u.rim(jk, 'O')                 # lower clothes stay still: no flap, no billow
     # near arm, hand in the pocket (the attacks draw their own arms further down)
-    if not (atk or rxk or blkk):
+    if not (atk or rxk or blkk or hoa):
         sw = round(1.2 * sin(2 * math.pi * p)) * (-1 if kind == 'back' else 1) if kind in ('fwd', 'back') else 0
         S, E, P = (32, 18 + oy), (30 + sw, 25 + oy), (35, 30 + oy)
         arm = seg(S, E, 4.2, 3.6) | seg(E, P, 3.4, 2.6) | disc(E[0], E[1], 2.0)
@@ -604,7 +635,7 @@ def build(kind, i):
     for x, y, ch in hair: u.set(x, y, ch)
     for x, y, ch in hair:                                    # re-outline any edge the shear exposed
         if ch != 'M' and any(u.at(x + dx, y + dy) == '.' for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))): u.set(x, y, 'M')
-    if atk or rxk or blkk:                                # the far arm goes first so the torso covers its shoulder
+    if atk or rxk or blkk or hoa:                         # the far arm goes first so the torso covers its shoulder
         Sy = hy - 16; Sx = 32 + dxb + round(.8 * lean); fxc = BLUE_FX
         gf = gl if atk and 'f' in ATK_HANDS[k_] else 0
         _, Hf = draw_arm(f, (Sx - 1, Sy), fua, ffa, False, gf, fxc, 'j' if (atk and k_ in STRIKES and gf > .25) else 'O')
@@ -612,37 +643,72 @@ def build(kind, i):
         for x in range(N):
             c = u.g[y][x]
             if c != '.': f.set(x + dxb + round(lean * max(0.0, (34 + oy - y) / 20.0)) + (round(hs) if y < oy + 15 else 0), y, c)
-    if atk or rxk or blkk:                                # near arm in front of everything, then (attacks) glow trail and impact flash
+    if atk or rxk or blkk or hoa:                         # near arm in front of everything, then (attacks) glow trail and impact flash
         gn = gl if atk and 'n' in ATK_HANDS[k_] else 0
         E, Hn = draw_arm(f, (Sx, Sy), nua, nfa, True, gn, fxc, 'j' if (atk and k_ in STRIKES and gn > .25) else 'O')
         if atk and k_ == 11: peace_hand(f, Hn, nfa)
         if blkk: peace_hand(f, Hn, nfa)
         if atk and k_ in (9, 10, 12, 13): dash_fx(f, idx, k_ if k_ < 11 else k_ - 3)
         elif atk: atk_fx(f, idx, k_, af_ if k_ == 17 else an, foot if k_ == 17 else (foot2 if foot2 is not None else 0.0), nua, E, Hn, Hf, gl)
+    if atk or rxk or blkk or hoa: an_n, an_f = Hn, Hf                          # where the fists are (final canvas pixels; hit reactions are moved along with the body below)
+    else:                                                                       # the hands are in the pockets: the same spot, carried through the lean of the upper body like the pixels are
+        u2f = lambda x, y: (x + dxb + round(lean * max(0.0, (34 + oy - round(y)) / 20.0)) + (round(hs) if round(y) < oy + 15 else 0), y)
+        an_n, an_f = u2f(*hand_at((32, 18 + oy), *POCKET)), u2f(*hand_at((31, 18 + oy), *POCKET))
+    if blkk or (atk and k_ == 11): an_n = (an_n[0] + 3 * sin(rad(nfa)), an_n[1] + 3 * cos(rad(nfa)))      # on the raised hand the energy sits up among the two fingers
     if rxk:                                               # spin (squash about the body axis) and fall (rotate about the feet)
-        if sx_ != 1: warp(f, sx_ if abs(sx_) > .08 else .08, 1, hx, 30)
-        if rot_: rot(f, rot_, 33.7 + SH, GROUND + 3)
+        if sx_ != 1:
+            sq = sx_ if abs(sx_) > .08 else .08; an_n, an_f = [(hx + (x - hx) * sq, y) for x, y in (an_n, an_f)]; warp(f, sq, 1, hx, 30)
+        if rot_:
+            ca, sa = cos(rad(rot_)), sin(rad(rot_)); qx, qy = 33.7 + SH, GROUND + 3
+            an_n, an_f = [(qx + (x - qx) * ca - (y - qy) * sa, qy + (x - qx) * sa + (y - qy) * ca) for x, y in (an_n, an_f)]; rot(f, rot_, qx, qy)
     if kind == 'tele': tele_fx(f, idx)
+    ANCH[(HO, okind, idx)] = None if (kind == 'tele' and 1 <= idx <= 5) or (kind == 'atk5' and 3 <= idx <= 11) else (*an_n, *an_f)       # (while he turns into a streak of light or vanishes there are no hands to light)
     return f
 
 def rows(f, x0, w): return [''.join(r[x0:x0 + w]) for r in f.g]
 
 def NFR(k): return NW if k in ('fwd', 'back', 'cfwd', 'cback', 'wfb', 'wbb', 'cfb', 'cbb') else 40 if k == 'atk8' else 10 if k == 'atk11' else 15 if k in ('jump', 'tele', 'cjump', 'cdn', 'cidle', 'cb') or k.startswith('atk') else 10 if k.startswith('rx') else 6
 sets = {k: [build(k, i) for i in range(NFR(k))] for k in ('idle', 'fwd', 'back', 'jump', 'tele', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'atk15', 'atk16', 'atk17', 'wfb', 'wbb', 'cb', 'cfb', 'cbb', 'cdn', 'cidle', 'cfwd', 'cback', 'cjump', *['rx%d' % j for j in range(10)])}
+HO_KINDS = ('idle', 'fwd', 'back', 'jump', 'tele', 'cjump', 'cdn', 'cidle', 'cfwd', 'cback', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'atk15', 'atk16', 'atk17', 'wfb', 'wbb', 'cb', 'cfb', 'cbb')     # every pose he can be in while cursed energy is on (the normal combo and the hit reactions keep the pockets)
+HO = True
+hsets = {k: [build(k, i) for i in range(NFR(k))] for k in HO_KINDS}                 # the same poses with both hands out of the pockets
+HO = False
 for k in ('idle', 'fwd', 'back', 'wfb', 'wbb'):
-    for f in sets[k]: f.g = f.g[TOP:TOP + N]
-cells = [(x, y) for k, fs in sets.items() if not k.startswith(('atk', 'rx', 'orb')) for f in fs for y in range(len(f.g)) for x in range(N) if f.g[y][x] != '.']
-acx = [x for k, fs in sets.items() if k.startswith('atk') for f in fs for r in f.g for x, c in enumerate(r) if c != '.']
+    for f in sets[k] + hsets[k]: f.g = f.g[TOP:TOP + N]
+allsets = {**sets, **{'h_' + k: v for k, v in hsets.items()}}
+cells = [(x, y) for k, fs in allsets.items() if not k.startswith(('atk', 'rx', 'orb', 'h_atk')) for f in fs for y in range(len(f.g)) for x in range(N) if f.g[y][x] != '.']
+acx = [x for k, fs in allsets.items() if k.startswith(('atk', 'h_atk')) for f in fs for r in f.g for x, c in enumerate(r) if c != '.']
 ax0, ax1 = max(0, min(acx) - 1), max(acx) + 1        # one window for the four attack sets (they reach further forward than the others)
 x0, x1 = min(x for x, y in cells) - 1, max(x for x, y in cells) + 1
 print('bbox cols', x0 + 1, x1 - 1, 'rows', min(y for x, y in cells), max(y for x, y in cells))
-bad = {c for f in (f for fs in sets.values() for f in fs) for r in f.g for c in r} - set(PAL) - {'.'}
+bad = {c for f in (f for fs in allsets.values() for f in fs) for r in f.g for c in r} - set(PAL) - {'.'}
 assert not bad, bad
 sets['orb'] = [orb_frame(i) for i in range(ORB_N)]
 RXWIN = {k: (max(0, min(xs) - 1), min(N - 1, max(xs) + 1)) for k, fs in sets.items() if k.startswith(('rx', 'orb')) for xs in [[x for f in fs for r in f.g for x, c in enumerate(r) if c != '.']]}
 def win(k): return (ax0, ax1) if k.startswith('atk') else RXWIN[k] if k.startswith(('rx', 'orb')) else (x0, x1)
-json.dump({k: {'x0': win(k)[0], 'w': win(k)[1] - win(k)[0] + 1, 'h': len(fs[0].g), 'top': TOP if k in ('jump', 'tele', 'cjump', 'cdn', 'cidle', 'cfwd', 'cback', 'cb', 'cfb', 'cbb') or k.startswith(('atk', 'rx')) else 0, 'cx': 33 + RX_SH[int(k[2:])] if k.startswith('rx') else 32 if k == 'orb' else 33, 'frames': [rows(f, win(k)[0], win(k)[1] - win(k)[0] + 1) for f in fs], **({'lift': JUMP_LIFT} if k == 'jump' else {}), **({'lift': CJ_LIFT} if k == 'cjump' else {}), **({'lift': RX_LIFT[int(k[2:])]} if k.startswith('rx') and int(k[2:]) in RX_LIFT else {}), **({'lift_k': TELE_K} if k == 'tele' else {})} for k, fs in sets.items()}, open('side.json', 'w'))
-d_ = json.load(open('side.json')); d_['pal_extra'] = {**GLOW, **RED, **DEB, **ORB}; json.dump(d_, open('side.json', 'w'))
+CROPPED = ('idle', 'fwd', 'back', 'wfb', 'wbb')                  # these sets drop the top TOP rows of the canvas
+def meta(k, fs):                                                  # everything about a set except its pixels
+    return {'x0': win(k)[0], 'w': win(k)[1] - win(k)[0] + 1, 'h': len(fs[0].g), 'top': TOP if k in ('jump', 'tele', 'cjump', 'cdn', 'cidle', 'cfwd', 'cback', 'cb', 'cfb', 'cbb') or k.startswith(('atk', 'rx')) else 0, 'cx': 33 + RX_SH[int(k[2:])] if k.startswith('rx') else 32 if k == 'orb' else 33}
+def anchors(k, fs, h):                                            # per frame: [x, y] of the near and of the far fist inside the set's window (null = nothing to light)
+    out = ([], [])
+    for i in range(len(fs)):
+        a = ANCH.get((h, k, i))
+        for j in (0, 1):
+            out[j].append(None if a is None else [round(a[2 * j] - win(k)[0], 1), round(a[2 * j + 1] - (TOP if k in CROPPED else 0), 1)])
+    return out
+def delta(base, ho):                                              # the pixels that differ: x, y (as characters from '0') and the new letter, three characters each
+    return ''.join(chr(48 + x) + chr(48 + y) + b for y, (r0, r1) in enumerate(zip(base, ho)) for x, (a, b) in enumerate(zip(r0, r1)) if a != b)
+out = {}
+for k, fs in sets.items():
+    out[k] = {**meta(k, fs), 'frames': [rows(f, win(k)[0], win(k)[1] - win(k)[0] + 1) for f in fs], **({'lift': JUMP_LIFT} if k == 'jump' else {}), **({'lift': CJ_LIFT} if k == 'cjump' else {}), **({'lift': RX_LIFT[int(k[2:])]} if k.startswith('rx') and int(k[2:]) in RX_LIFT else {}), **({'lift_k': TELE_K} if k == 'tele' else {})}
+    out[k]['hn'], out[k]['hf'] = anchors(k, fs, False)
+for k, fs in hsets.items():                                       # hands-out versions: only what differs from the normal frame, plus the fist positions
+    w0, w1 = win(k); assert all(w0 <= x <= w1 for f in fs for y in range(len(f.g)) for x in range(N) if f.g[y][x] != '.'), ('hands-out pixels outside the window', k)
+    hn, hf = anchors(k, fs, True)
+    out['h_' + k] = {'dl': [delta(b, rows(f, w0, w1 - w0 + 1)) for b, f in zip(out[k]['frames'], fs)], 'hn': hn, 'hf': hf}
+out['ce'] = {'x0': 0, 'w': ce.CEW, 'h': ce.CEH, 'top': 0, 'cx': ce.CECX, 'cy': ce.CECY, 'frames': ce.ce_frames()}          # the 15-frame cursed energy that is drawn over the fists
+out['pal_extra'] = {**GLOW, **RED, **DEB, **ORB, **ce.CE_PAL}
+json.dump(out, open('side.json', 'w'))
 
 def render(f, sc, bg):
     H = len(f.g); im = Image.new('RGB', ((x1 - x0 + 1) * sc, H * sc), bg); px = im.load()

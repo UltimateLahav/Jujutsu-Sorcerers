@@ -24,14 +24,14 @@ function makeSfx(ac) {
   }
   const rev = ac.createConvolver(); rev.buffer = ir;
   const wet = ac.createGain(); wet.gain.value = 0.5; rev.connect(wet); wet.connect(master);
-  const vol = { master: 1, steps: 1, wind: 1, jump: 1, tele: 1, atk: 1 }, C = {}, st = { on: true, windMul: 1 };   // 1 = the designed level, 2 = twice as loud
+  const vol = { master: 1, steps: 1, wind: 1, jump: 1, tele: 1, atk: 1, ce: 1 }, C = {}, st = { on: true, windMul: 1 };   // 1 = the designed level, 2 = twice as loud
   function bus(gain, send, lp, cat) {                    // gain, reverb send amount, optional low-pass cutoff, volume category
     const g = ac.createGain(); g.gain.value = gain; let n = g;
     if (lp) { n = ac.createBiquadFilter(); n.type = 'lowpass'; n.frequency.value = lp; n.Q.value = 0.5; g.connect(n); }
     n.connect(cat.dry); const s = ac.createGain(); s.gain.value = send; n.connect(s); s.connect(cat.wet);
     return g;
   }
-  for (const name of ['steps', 'jump', 'tele', 'atk']) {   // footsteps | jump + landing | teleport | attacks
+  for (const name of ['steps', 'jump', 'tele', 'atk', 'ce']) {   // footsteps | jump + landing | teleport | attacks | cursed energy
     const cat = { dry: ac.createGain(), wet: ac.createGain() }; cat.dry.connect(dry); cat.wet.connect(rev);
     C[name] = { cat, step: bus(2, 0.2, 0, cat), deep: bus(0.8, 0.16, 0, cat), soft: bus(0.5, 0.2, 1400, cat) };
   }
@@ -215,6 +215,26 @@ function makeSfx(ac) {
       const t = T(at), B = C.tele;
       tone(B.deep, t, { type: 'triangle', f: 130, f2: 30, dur: 0.8, gain: 0.62, atk: 0.003 });
       burst(B.soft, t, { f: 1400, f2: 180, q: 0.8, dur: 0.6, gain: 1.6, atk: 0.003 });
+    },
+    ceon(at) {                                           // CURSED ENERGY on: a low swell and a rising hum with air rushing in, then it ignites with a crack and a few dry ticks (kept in the mid range so phone speakers play it, and well below the harsh treble)
+      const t = T(at), B = C.ce;
+      tone(B.deep, t, { type: 'triangle', f: 55, f2: 165, dur: 0.5, gain: 0.26, atk: 0.12, cur: 1 });
+      tone(B.deep, t, { type: 'triangle', f: 180, f2: 520, dur: 0.45, gain: 0.15, atk: 0.1, cur: 1 });
+      burst(B.deep, t, { f: 600, f2: 2800, q: 1.2, dur: 0.42, gain: 0.4, atk: 0.1 });
+      tone(B.deep, t + 0.36, { type: 'triangle', f: 130, f2: 58, dur: 0.3, gain: 0.3, atk: 0.003 });
+      burst(B.deep, t + 0.36, { f: 1700, q: 0.9, dur: 0.1, gain: 0.5, atk: 0.001 });
+      for (let k = 0; k < 4; k++) burst(B.deep, t + 0.4 + k * 0.06 + R(0, 0.03), { f: R(1500, 3600), q: 2.2, dur: R(0.015, 0.03), gain: R(0.22, 0.38), atk: 0.001 });
+    },
+    ceoff(at) {                                          // CURSED ENERGY off: the energy drains away (a falling hum and a short falling hiss)
+      const t = T(at), B = C.ce;
+      tone(B.deep, t, { type: 'triangle', f: 420, f2: 110, dur: 0.3, gain: 0.1, atk: 0.005 });
+      tone(B.deep, t, { type: 'triangle', f: 120, f2: 45, dur: 0.3, gain: 0.2, atk: 0.005 });
+      burst(B.deep, t, { f: 2200, f2: 400, q: 1.0, dur: 0.28, gain: 0.28, atk: 0.004 });
+    },
+    cecrackle(at) {                                      // while it burns: two to four dry electric ticks, now and then with a thin buzz under them (quiet)
+      const t = T(at), B = C.ce; let u = 0;
+      for (let k = 0, n = 2 + ((Math.random() * 3) | 0); k < n; k++) { u += R(0.025, 0.09); burst(B.deep, t + u, { f: R(1500, 3500), q: 2.4, dur: R(0.012, 0.028), gain: R(0.13, 0.27), atk: 0.001 }); }
+      if (Math.random() < 0.5) tone(B.deep, t, { type: 'triangle', f: R(150, 240), f2: R(80, 120), dur: 0.07, gain: 0.045, atk: 0.003 });
     },
     setVol(name, v) {                                    // per-sound volume, 0 = silent, 1 = designed level, 2 = twice as loud
       vol[name] = v;
