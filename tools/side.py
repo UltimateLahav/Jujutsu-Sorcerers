@@ -258,6 +258,7 @@ def burst_fx(f, i, k, fx):                                  # impact flash, then
         for a in range(0, 360, 10 if i == imp + 1 else 18):
             if (a // 10) % 2 == 0: f.set(x + r * cos(rad(a)), y + r * sin(rad(a)), c1 if i == imp + 1 else c2)
 def atk_fx(f, i, k, an, foot, nfp, E, Hn, Hf, gl):
+    if k >= 4: lapse_fx(f, i, k, Hn); return
     fx = RED_FX if k == 3 else BLUE_FX
     ph = foot
     if k == 3: pt = (an[0] + 7 * cos(ph) - 2.5 * sin(ph), an[1] + 7 * sin(ph) + 2.5 * cos(ph))     # toe of the kicking foot
@@ -304,16 +305,70 @@ def rot(f, deg, px, py):                                    # rotate a finished 
             ox, oy = round(px + (x - px) * ca + (y - py) * sa), round(py - (x - px) * sa + (y - py) * ca)
             if 0 <= ox < N and 0 <= oy < NH: f.g[y][x] = src[oy][ox]
 
+# ---------------------------------------------------------------- crouch (down 10, idle 6, walk 15 + 15, crouch-jump 15) and Lapse Blue (pull 15, blink 15)
+CR_KINDS = ('cdn', 'cidle', 'cfwd', 'cback')
+CR_DY, CR_LEAN, CR_HS = 9, 4, 2
+def cr_pose(kind, i):                            # -> hip x, hip y, near thigh, near knee, far thigh, far knee, foot, torso lean, head shift
+    nax = fax = nl = fl = 0.0
+    if kind == 'cdn':                            # standing -> crouching: ease down with a small overshoot, then settle
+        t = i / 9; k = t * t * (3 - 2 * t) + (0.1 * sin(math.pi * t) if t > .5 else 0)
+        dy, lean, hs, nax, fax = CR_DY * k, CR_LEAN * k, CR_HS * k, 1.5 * k, -1.5 * k
+    elif kind == 'cidle':
+        dy, lean, hs, nax, fax = CR_DY + [0, 0, 0, 1, 1, 0][i], CR_LEAN, CR_HS + [0, 0, 1, 1, 0, 0][i], 1.5, -1.5
+    else:                                        # short low stride: the feet pass each other, the hips bob a little
+        p = i / NW if kind == 'cfwd' else ((-i) % NW) / NW
+        dy, lean, hs = CR_DY - 0.5 + 0.7 * cos(4 * math.pi * p), CR_LEAN, CR_HS
+        stride = lambda q: (4.5 * cos(2 * math.pi * q), 3.2 * sin(math.pi * (q - .5) / .5) if q >= .5 else 0.0)
+        (nax, nl), (fax, fl) = stride(p % 1), stride((p + .5) % 1)
+    hx, hy = 33, 38 + TOP + round(dy)
+    return (hx, hy, *ik(hx, hy, 33.7 + nax, GROUND - nl), *ik(hx, hy, 29.7 + fax, GROUND - fl), 0.0, lean, hs)
+CJ_SQUAT = {0: (9, 3, 3), 1: (11, 5, 4), 2: (5, 3, 2), 13: (6, 4, 2), 14: (2, 1, 0)}      # frame: (hips down, hips back, lean); starts from the crouch, lands standing
+CJ_AIR = {4: (-2, 14, -10, 20, 36), 5: (26, 70, 14, 52, 30), 6: (40, 104, 26, 84, 22), 7: (46, 122, 34, 106, 16), 8: (46, 122, 34, 106, 16),
+          9: (34, 92, 22, 74, 20), 10: (18, 50, 8, 32, 28), 11: (8, 14, 0, 8, 36)}       # heels tucked up behind him at the top (the normal jump tucks the knees forward)
+CJ_LIFT = [0, 0, 0, 0, 12, 21, 27, 30, 30, 27, 21, 12, 0, 0, 0]                              # a higher spring than the normal jump (22)
+def cjump_pose(i):
+    if i in CJ_SQUAT:
+        drop, back, lean = CJ_SQUAT[i]; hx, hy = 33 - back, 38 + TOP + drop
+        return (hx, hy, *ik(hx, hy, 33.7, GROUND), *ik(hx, hy, 29.7, GROUND), 0.0, lean)
+    if i in (3, 12): return jump_pose(i)         # push-off on the toes / touchdown on the toes, as in the normal jump
+    a, b, c, d, fa = CJ_AIR[i]; return (33, 38 + TOP, rad(a), rad(b), rad(c), rad(d), rad(fa), 1 if 6 <= i <= 9 else 0)
+ATK[4] = [K(0, I0), K(2, (0, 0, 0, 4, 0, 0, 20, 70, -16, 45, .3)), K(4, (-1, 1, 1, 4, 0, 0, 70, 90, -16, 45, .6)), K(7, (-1, 1, 1, 4, 0, 0, 78, 92, -16, 45, 1)),
+          K(9, (0, 0, -1, 4, 0, 0, 40, 150, -16, 45, .8), 'in'), K(11, (0, 0, 0, 4, 0, 0, 5, 110, -16, 45, .4)), K(14, I0)]       # Lapse Blue (pull): hand out of the pocket, orb gathers, hand drags back
+ATK[5] = [K(0, I0), K(3, (0, 0, 0, 4, 0, 0, 40, 150, -16, 45, .6)), K(8, (0, 0, 0, 4, 0, 0, 45, 155, -16, 45, 1)), K(11, (0, 0, 0, 4, 0, 0, 10, 100, -16, 45, .4)), K(14, I0)]   # Lapse Blue (blink): hand raised
+ATK_HANDS[4] = ATK_HANDS[5] = 'n'; ATK_IMPACT.extend([8, 6])
+def lapse_fx(f, i, k, H):
+    if k == 4:                                   # an orb of blue light in front of the open hand grows, spins, then is dragged in
+        r = [0, 0, 1, 2, 3, 4, 5, 5.5, 5, 3.5, 2, 1, 0, 0, 0][i]; cx, cy = H[0] + 5, H[1] - 1
+        if r > 0:
+            for x, y in disc(cx, cy, r + 1.6): f.set(x, y, 'j')
+            for x, y in disc(cx, cy, r): f.set(x, y, 'g')
+            for x, y in disc(cx, cy, max(0, r - 2)): f.set(x, y, 'h')
+            if r >= 3: f.set(cx, cy, 'k')
+            for a in range(0, 360, 90): f.set(cx + (r + 3) * cos(rad(a + i * 30)), cy + (r + 3) * sin(rad(a + i * 30)), 'h')
+        if 8 <= i <= 10:                         # suction lines racing into the orb while it is pulled
+            for a in range(0, 360, 45):
+                u, v = cos(rad(a)), sin(rad(a)); f.line([(cx + u * 13, cy + v * 13), (cx + u * (9 - 2 * (i - 8)), cy + v * (9 - 2 * (i - 8)))], 'g')
+    else:                                        # blink: body aura, collapse into blue light, a flat blue streak, re-form
+        top = min(y for x, y in cells_of(f)); cy = top + 22; sx = [1, 1, 1, 1, .6, .25, 2.6, 3.0, 2.4, .3, .7, 1, 1, 1, 1][i]
+        if i <= 2: aura(f, 'g', 'j')
+        elif i <= 11:
+            energy(f)
+            if sx != 1: warp(f, sx, 1 if sx < 1 else .45, 33, cy)
+            aura(f, 'g', 'j')
+        elif i <= 13: aura(f, 'h', 'g')
+
 def build(kind, i):
     idx = i                               # (i is reused for the head loop below)
     f = F(); u = F()                      # f: legs, u: everything above the hips
     hx, foot, lean = 33, None, 0
-    atk = kind.startswith('atk'); rxk = kind.startswith('rx'); foot2 = None; hs = 0; sx_ = 1; rot_ = 0
+    atk = kind.startswith('atk'); rxk = kind.startswith('rx'); crk = kind in CR_KINDS; foot2 = None; hs = 0; sx_ = 1; rot_ = 0
     if kind == 'idle':
         L = [.15, .35, .55, .7, .5, .25][i]; bob = [0, 0, 0, 1, 1, 0][i]
         thn, kn_, thf, kf, swn, swf = rad(4), 0, rad(-8), 0, False, False; p = i / 6
-    elif kind in ('jump', 'tele'):
-        hx, hy, thn, kn_, thf, kf, foot, lean = (jump_pose if kind == 'jump' else tele_pose)(i); swn = swf = False; L = 0; bob = 0; p = 0
+    elif kind in ('jump', 'tele', 'cjump'):
+        hx, hy, thn, kn_, thf, kf, foot, lean = {'jump': jump_pose, 'tele': tele_pose, 'cjump': cjump_pose}[kind](i); swn = swf = False; L = 0; bob = 0; p = 0
+    elif crk:
+        hx, hy, thn, kn_, thf, kf, foot, lean, hs = cr_pose(kind, i); swn = swf = False; L = 0; bob = 0; p = 0
     elif rxk:
         k_ = int(kind[2:]); SH = RX_SH[k_]; gl = 0
         dx, dy, lean, hs, rot_, sx_, nax, nl, fax, fl, nua, nfa, fua, ffa = keyframe(RX[k_], i)
@@ -332,7 +387,7 @@ def build(kind, i):
         thn, kn_ = gait(qn, amp, kmax); thf, kf = gait(qf, amp, kmax); swn, swf = qn >= .5, qf >= .5
         L = .8 + .25 * sin(2 * math.pi * i / NW) if kind == 'fwd' else max(-.2, .05 + .12 * sin(2 * math.pi * i / NW)); bob = 0
     drop = lambda th, k: L1 * cos(th) + L2 * cos(th - k)
-    if kind not in ('jump', 'tele') and not atk and not rxk: hy = round(58 + TOP - max(drop(thn, kn_), drop(thf, kf)))
+    if kind not in ('jump', 'tele', 'cjump') and not (atk or rxk or crk): hy = round(58 + TOP - max(drop(thn, kn_), drop(thf, kf)))
     dxb = round(hx - 33)                                   # the body follows the hips (the planted feet stay put)
     oy = hy - 34; hb = bob
     wave = round(sin(2 * math.pi * 2 * i / NW)) if kind in ('fwd', 'back') else [0, 1, 0, -1, 0, 1][i % 6]      # tail sway: whole cycles per loop, so the walk loops without a pop
@@ -368,7 +423,7 @@ def build(kind, i):
         for x, y in pts: u.set(x, y, 'X'); u.set(x + 1, y, 'X')
         u.set(*pts[1], 'Y')
     # head, hand-drawn (x = 22 + column, y = 1 + row): static face/band first, then the hair on top, sheared by the wind
-    tip = {'idle': [0, 0, 1, 1, 0, -1], 'fwd': [round(sin(2 * math.pi * 2 * k / NW)) for k in range(NW)], 'back': [round(sin(2 * math.pi * (2 * k + 4) / NW)) for k in range(NW)], 'jump': [0, 0, 1, 1, 0, -1] * 3, 'tele': [0, 0, 1, 1, 0, -1] * 3, **{f'atk{j}': [0, 0, 1, 1, 0, -1] * 3 for j in range(4)}, **{f'rx{j}': [0, 0, 1, 1, 0, -1] * 2 for j in range(10)}}[kind][i]
+    tip = {'idle': [0, 0, 1, 1, 0, -1], 'fwd': [round(sin(2 * math.pi * 2 * k / NW)) for k in range(NW)], 'back': [round(sin(2 * math.pi * (2 * k + 4) / NW)) for k in range(NW)], 'jump': [0, 0, 1, 1, 0, -1] * 3, 'tele': [0, 0, 1, 1, 0, -1] * 3, **{f'atk{j}': [0, 0, 1, 1, 0, -1] * 3 for j in range(4)}, **{f'rx{j}': [0, 0, 1, 1, 0, -1] * 2 for j in range(10)}}.get(kind, [0, 0, 1, 1, 0, -1] * 3)[i]
     sh = lambda y: tip if y <= 1 else 0                        # hair stays upright; only the tip pixels flutter
     hair = []
     for x, top in CROWN.items():                              # crown: white, lavender toward the band
@@ -402,7 +457,7 @@ def build(kind, i):
 
 def rows(f, x0, w): return [''.join(r[x0:x0 + w]) for r in f.g]
 
-sets = {k: [build(k, i) for i in range(NW if k in ('fwd', 'back') else 15 if k in ('jump', 'tele') or k.startswith('atk') else 10 if k.startswith('rx') else 6)] for k in ('idle', 'fwd', 'back', 'jump', 'tele', 'atk0', 'atk1', 'atk2', 'atk3', *['rx%d' % j for j in range(10)])}
+sets = {k: [build(k, i) for i in range(NW if k in ('fwd', 'back', 'cfwd', 'cback') else 15 if k in ('jump', 'tele', 'cjump') or k.startswith('atk') else 10 if k.startswith('rx') or k == 'cdn' else 6)] for k in ('idle', 'fwd', 'back', 'jump', 'tele', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'cdn', 'cidle', 'cfwd', 'cback', 'cjump', *['rx%d' % j for j in range(10)])}
 for k in ('idle', 'fwd', 'back'):
     for f in sets[k]: f.g = f.g[TOP:TOP + N]
 cells = [(x, y) for k, fs in sets.items() if not k.startswith(('atk', 'rx')) for f in fs for y in range(len(f.g)) for x in range(N) if f.g[y][x] != '.']
@@ -414,7 +469,7 @@ bad = {c for f in (f for fs in sets.values() for f in fs) for r in f.g for c in 
 assert not bad, bad
 RXWIN = {k: (max(0, min(xs) - 1), min(N - 1, max(xs) + 1)) for k, fs in sets.items() if k.startswith('rx') for xs in [[x for f in fs for r in f.g for x, c in enumerate(r) if c != '.']]}
 def win(k): return (ax0, ax1) if k.startswith('atk') else RXWIN[k] if k.startswith('rx') else (x0, x1)
-json.dump({k: {'x0': win(k)[0], 'w': win(k)[1] - win(k)[0] + 1, 'h': len(fs[0].g), 'top': TOP if k in ('jump', 'tele') or k.startswith(('atk', 'rx')) else 0, 'cx': 33 + RX_SH[int(k[2:])] if k.startswith('rx') else 33, 'frames': [rows(f, win(k)[0], win(k)[1] - win(k)[0] + 1) for f in fs], **({'lift': JUMP_LIFT} if k == 'jump' else {}), **({'lift': RX_LIFT[int(k[2:])]} if k.startswith('rx') and int(k[2:]) in RX_LIFT else {}), **({'lift_k': TELE_K} if k == 'tele' else {})} for k, fs in sets.items()}, open('side.json', 'w'))
+json.dump({k: {'x0': win(k)[0], 'w': win(k)[1] - win(k)[0] + 1, 'h': len(fs[0].g), 'top': TOP if k in ('jump', 'tele', 'cjump', 'cdn', 'cidle', 'cfwd', 'cback') or k.startswith(('atk', 'rx')) else 0, 'cx': 33 + RX_SH[int(k[2:])] if k.startswith('rx') else 33, 'frames': [rows(f, win(k)[0], win(k)[1] - win(k)[0] + 1) for f in fs], **({'lift': JUMP_LIFT} if k == 'jump' else {}), **({'lift': CJ_LIFT} if k == 'cjump' else {}), **({'lift': RX_LIFT[int(k[2:])]} if k.startswith('rx') and int(k[2:]) in RX_LIFT else {}), **({'lift_k': TELE_K} if k == 'tele' else {})} for k, fs in sets.items()}, open('side.json', 'w'))
 d_ = json.load(open('side.json')); d_['pal_extra'] = {**GLOW, **RED}; json.dump(d_, open('side.json', 'w'))
 
 def render(f, sc, bg):

@@ -163,6 +163,17 @@ function makeSfx(ac) {
       tone(B.deep, t, { type: 'triangle', f: 112, f2: 50, dur: 0.3, gain: 0.45, atk: 0.003 });
       burst(B.soft, t, { f: 520, f2: 160, q: 0.8, dur: 0.14, gain: 2.6, atk: 0.001 });
     },
+    pull(at) {                                           // Lapse Blue: a low hum swells as the orb gathers, air is sucked in, a deep thump as the enemy is dragged to him
+      const t = T(at), B = C.tele;
+      tone(B.deep, t, { type: 'triangle', f: 70, f2: 170, dur: 0.34, gain: 0.3, atk: 0.12, cur: 1 });
+      burst(B.soft, t, { f: 1500, f2: 260, q: 1.2, dur: 0.34, gain: 0.8, atk: 0.1 });
+      tone(B.deep, t + 0.2, { type: 'triangle', f: 150, f2: 50, dur: 0.3, gain: 0.4, atk: 0.004 });
+    },
+    stun(at) {                                           // the enemy is caught: a short crackle of blue energy
+      const t = T(at), B = C.tele;
+      tone(B.soft, t, { type: 'sawtooth', f: 520, f2: 130, dur: 0.22, gain: 0.14, atk: 0.004 });
+      burst(B.soft, t, { f: 1200, f2: 300, q: 1.0, dur: 0.16, gain: 0.9, atk: 0.002 });
+    },
     setVol(name, v) {                                    // per-sound volume, 0 = silent, 1 = designed level, 2 = twice as loud
       vol[name] = v;
       if (name === 'master') applyMaster();
