@@ -2,7 +2,7 @@
 """Gojo in side view (facing right), same 64x64 16-bit style as the front idle.
 6-frame wind idle + 6-frame walk forward + 6-frame walk backward -> side.json, side_sheet.png.
 Wind is a headwind (blows right->left): hair, blindfold tails and jacket trail behind him."""
-import math, json, sys, os
+import math, json, sys, os, random
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from PIL import Image, ImageDraw
 import gojo
@@ -384,39 +384,78 @@ def lapse_fx(f, i, k, H):
     if 14 <= i <= 34: aura(f, 'j', 'j')                                                                                      # deep-blue outline while he channels
     if 17 <= i <= 33:
         for a in range(0, 360, 60): f.set(cx + 9 * cos(rad(a + i * 40)), cy + 9 * sin(rad(a + i * 40)), 'h')
-def bdisc(f, cx, cy, r, c):                                 # a disc made of 2x2 blocks: the chunky "pixelated" look
-    for y in range(int(cy - r) - 2, int(cy + r) + 3, 2):
-        for x in range(int(cx - r) - 2, int(cx + r) + 3, 2):
-            if math.hypot(x + 1 - cx, y + 1 - cy) <= r:
-                for dx in (0, 1):
-                    for dy in (0, 1): f.set(x + dx, y + dy, c)
-def orb_frame(i):                                           # 20-frame loop (seamless): three spiral arms turn 18 degrees a frame (3 x 120 = a full turn after 20 frames), rubble spirals in and vanishes inside the orb
-    f = F(); cx, cy = 32, 36; R = 20 + 1.0 * sin(2 * math.pi * i / 20); spin = rad(i * 18)
-    for x, y in disc(cx, cy, R + 5):
-        d = math.hypot(x - cx, y - cy)
-        if d > R + 1.5 and (x + y + i) % 2 == 0: f.set(x, y, 'j')                       # shimmering glow
-        elif d > R + 3.5 and (x - y + i) % 4 == 0: f.set(x, y, 'g')                     # a few brighter flecks further out
-    for y in range(int(cy - R) - 2, int(cy + R) + 3, 2):                                # the body: 2x2 blocks, coloured by where the spiral arms are
-        for x in range(int(cx - R) - 2, int(cx + R) + 3, 2):
-            dx, dy = x + 1 - cx, y + 1 - cy; r = math.hypot(dx, dy)
-            if r > R + 1.5: continue
-            v = cos(3 * (math.atan2(dy, dx) - spin - rad(13) * r))                      # +1 on an arm's crest, -1 in the gap between two arms
-            if r > R - 1.5: c = 'j'
-            elif r < R * .22: c = 'k'
-            elif v > .62: c = 'k' if r < R * .6 else 'h'
-            elif v > .12: c = 'h'
-            elif v > -.42: c = 'g'
-            else: c = 'j'
-            if r > R * .8: c = {'k': 'h', 'h': 'g'}.get(c, c)                             # limb darkening: the arms fade towards the rim so it reads as a ball
-            for ddx in (0, 1):
-                for ddy in (0, 1): f.set(x + ddx, y + ddy, c)
-    for c in range(8):                                      # rubble: visible while outside the orb, hidden once absorbed, so the wrap is invisible
-        p = ((i / 20) + c / 8) % 1; r_ = 31 - 22 * p; th = rad(c * 45 + 450 * p)
-        if r_ > R + 2:
-            x, y = cx + r_ * cos(th), cy + r_ * sin(th) * .85
-            cells = ((0, 0), (1, 0), (0, 1), (1, 1)) if c % 2 == 0 else ((0, 0), (1, 0), (2, 0), (1, 1))
-            for dx, dy in cells: f.set(x + dx, y + dy, 'u')
-            f.set(x, y, 'v'); f.set(x + 1, y + 1, 'w')
+ORB = {'a': '#07153a', 'b': '#0e2c70', 'c': '#1a4fb4', 'd': '#2f7fe0', 'e': '#62b4f5', 'f': '#a2dcfb', 'i': '#d6f5ff', 'l': '#7ee4ff'}      # the big orb's blues (white is the glow 'k')
+PAL.update(ORB)
+ORB_N = 15                                                  # frames in the orb loop
+RAMP = 'abcdefik'                                           # the orb's shades from dark navy to white
+BAY = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
+def hashf(ix, iy, seed):
+    n = (ix * 374761393 + iy * 668265263 + seed * 1442695041) & 0xffffffff
+    n = ((n ^ (n >> 13)) * 1274126177) & 0xffffffff
+    n ^= n >> 16
+    return (n & 0xffff) / 65536.0
+def vnoise(x, y, seed):
+    ix, iy = math.floor(x), math.floor(y); fx, fy = x - ix, y - iy
+    u = fx * fx * (3 - 2 * fx); v = fy * fy * (3 - 2 * fy)
+    a, b, c, d = hashf(ix, iy, seed), hashf(ix + 1, iy, seed), hashf(ix, iy + 1, seed), hashf(ix + 1, iy + 1, seed)
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v
+def fbm(x, y, seed, octs=3):
+    s = tot = 0; amp = .5; f = 1
+    for o in range(octs): s += amp * vnoise(x * f, y * f, seed + o * 17); tot += amp; amp *= .5; f *= 2.03
+    return s / tot
+def smooth(a, b, x): t = max(0, min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t)
+OW, OH, CX, CY = 64, 72, 32, 36
+rnd = random.Random(7)
+ARCS = []                                # thin streaks hugging the rim in small groups of parallel arcs: (radius, start angle, length, sway, sway phase, colour)
+for n in range(9):                       # nine groups spread evenly round the ball
+    a0, r0 = n * 40 + rnd.uniform(-10, 10), rnd.uniform(.94, 1.04); ph0 = rnd.uniform(0, 6.28)
+    for j in range(rnd.choice((2, 2, 3))):
+        ARCS.append((r0 + (j - 1) * rnd.uniform(.105, .125), a0 + rnd.uniform(-9, 9), rnd.uniform(14, 34) * (1 - .25 * j), rnd.uniform(2, 6), ph0 + j * .5, 'l' if j else rnd.choice('lli')))
+def orb_rows(i, R0=20.0):
+    ph = 2 * math.pi * i / ORB_N; A = 1.25
+    ox, oy = A * math.cos(ph), A * math.sin(ph)                 # the noise field travels on a circle: the clouds boil and the loop is seamless
+    R = R0 + .7 * math.sin(ph)
+    g = [['.'] * OW for _ in range(OH)]
+    def put(x, y, c):
+        if 0 <= x < OW and 0 <= y < OH: g[y][x] = c
+    for y in range(OH):
+        for x in range(OW):
+            dx, dy = x + .5 - CX, y + .5 - CY; rr = math.hypot(dx, dy); th = math.atan2(dy, dx)
+            edge = R * (.93 + .1 * (fbm(math.cos(th) * 1.6 + ox * .8 + 5, math.sin(th) * 1.6 + oy * .8 + 5, 91, 2) - .5) * 2)   # ragged rim
+            if rr > edge: continue
+            bay = (BAY[y % 4][x % 4] + .5) / 16
+            if rr > edge: continue
+            r = rr / R
+            b0 = 1 - smooth(.38, 1.04, r) * .93
+            cl = fbm(dx * .10 + ox + 20, dy * .10 + oy + 20, 3); fine = fbm(dx * .30 + ox + 33, dy * .30 + oy + 33, 12, 2)
+            wv = 1 - abs(2 * fbm(dx * .07 + ox * .9 + 40, dy * .07 + oy * .9 + 40, 8, 3) - 1)           # ridged noise: thin curly veins
+            wv2 = 1 - abs(2 * fbm(dx * .115 + ox * .7 + 90, dy * .115 + oy * .7 + 90, 21, 2) - 1)
+            B = b0 * .80 + (cl - .5) * .62 * smooth(.12, .55, r) * (1 - smooth(.92, 1.0, r)) + (fine - .5) * .16 + math.exp(-(r / .26) ** 2) * .30
+            B += (smooth(.915, .985, wv) * .42 + smooth(.93, .99, wv2) * .30) * max(0, 1 - r) ** .45 * smooth(.04, .25, r)          # veins brighten only the inside of the ball
+            B -= smooth(.80, 1.0, r) * .30
+            if r > .88: B -= (1 - fbm(dx * .22 + ox + 70, dy * .22 + oy + 70, 5)) * .30               # the rim is a dark, blotchy navy
+            B = max(0, min(1, B)); v = B * 7 + (bay - .5) * .9
+            g[y][x] = RAMP[max(0, min(7, int(v + .5)))]
+    for k, (rad, a0, ln, wob, wph, col) in enumerate(ARCS):                              # thin cyan arcs along the rim, gently swaying
+        a_s = a0 + wob * math.sin(ph + wph); rrad = R * rad + .6 * math.sin(ph * 2 + wph)
+        if (k + i) % 7 == 0 and k % 3 == 0: continue                                     # a few flicker off
+        steps = int(ln * 2.2)
+        for s_ in range(steps + 1):
+            a = math.radians(a_s + ln * s_ / steps)
+            put(int(math.floor(CX + rrad * math.cos(a))), int(math.floor(CY + rrad * math.sin(a))), col)
+    for k, (rr_, seg) in enumerate(((.74, 12), (.86, 10))):                                # two faint broken white rings inside
+        rad = R * rr_ + .8 * math.sin(ph + k * 2)
+        for s_ in range(180):
+            if (s_ // seg + k) % 3 != 0: continue
+            a = math.radians(s_ * 2 + 40 * k)
+            x, y = int(math.floor(CX + rad * math.cos(a))), int(math.floor(CY + rad * math.sin(a)))
+            if 0 <= x < OW and 0 <= y < OH and g[y][x] in 'cdef': g[y][x] = 'i'
+    return [''.join(r) for r in g]
+def orb_frame(i):                                           # MAX BLUE orb, one frame of the 15-frame loop: a soft cloudy ball with a white-hot core, a dark ragged rim and thin cyan arcs
+    f = F()
+    for y, r in enumerate(orb_rows(i)):
+        for x, c in enumerate(r):
+            if c != '.': f.set(x, y, c)
     return f
 
 def build(kind, i):
@@ -529,11 +568,11 @@ x0, x1 = min(x for x, y in cells) - 1, max(x for x, y in cells) + 1
 print('bbox cols', x0 + 1, x1 - 1, 'rows', min(y for x, y in cells), max(y for x, y in cells))
 bad = {c for f in (f for fs in sets.values() for f in fs) for r in f.g for c in r} - set(PAL) - {'.'}
 assert not bad, bad
-sets['orb'] = [orb_frame(i) for i in range(20)]
+sets['orb'] = [orb_frame(i) for i in range(ORB_N)]
 RXWIN = {k: (max(0, min(xs) - 1), min(N - 1, max(xs) + 1)) for k, fs in sets.items() if k.startswith(('rx', 'orb')) for xs in [[x for f in fs for r in f.g for x, c in enumerate(r) if c != '.']]}
 def win(k): return (ax0, ax1) if k.startswith('atk') else RXWIN[k] if k.startswith(('rx', 'orb')) else (x0, x1)
 json.dump({k: {'x0': win(k)[0], 'w': win(k)[1] - win(k)[0] + 1, 'h': len(fs[0].g), 'top': TOP if k in ('jump', 'tele', 'cjump', 'cdn', 'cidle', 'cfwd', 'cback') or k.startswith(('atk', 'rx')) else 0, 'cx': 33 + RX_SH[int(k[2:])] if k.startswith('rx') else 32 if k == 'orb' else 33, 'frames': [rows(f, win(k)[0], win(k)[1] - win(k)[0] + 1) for f in fs], **({'lift': JUMP_LIFT} if k == 'jump' else {}), **({'lift': CJ_LIFT} if k == 'cjump' else {}), **({'lift': RX_LIFT[int(k[2:])]} if k.startswith('rx') and int(k[2:]) in RX_LIFT else {}), **({'lift_k': TELE_K} if k == 'tele' else {})} for k, fs in sets.items()}, open('side.json', 'w'))
-d_ = json.load(open('side.json')); d_['pal_extra'] = {**GLOW, **RED, **DEB}; json.dump(d_, open('side.json', 'w'))
+d_ = json.load(open('side.json')); d_['pal_extra'] = {**GLOW, **RED, **DEB, **ORB}; json.dump(d_, open('side.json', 'w'))
 
 def render(f, sc, bg):
     H = len(f.g); im = Image.new('RGB', ((x1 - x0 + 1) * sc, H * sc), bg); px = im.load()
