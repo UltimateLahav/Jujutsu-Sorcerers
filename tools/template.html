@@ -157,9 +157,9 @@ const crF = { dn: mk(D.cdn), idle: mk(D.cidle), fwd: mk(D.cfwd), back: mk(D.cbac
 const wblkF = mk(D.wfb), wblkB = mk(D.wbb);                    // walking forward / back while blocking (15 frames each, played slowly)
 const mbF = mk(D.atk8), orbF = mk(D.orb); atkF[6] = mk(D.atk6); atkF[7] = mk(D.atk7); atkF[9] = mk(D.atk9); atkF[10] = mk(D.atk10); atkF[11] = mk(D.atk11); atkF[12] = mk(D.atk12); atkF[13] = mk(D.atk13); for (let k = 14; k <= 21; k++) atkF[k] = mk(D['atk' + k]);      // the walking combo      // atk12 / atk13 = the crouch dash forward / back      // atk11 = the guard (10 frames)      // atk9 = dash forward, atk10 = dash back (15 frames each)      // crouch (down, idle, walks, spring jump), Lapse Blue (pull, blink), crouch punches, the Max Blue summon (40 frames) and the orb (20-frame loop)
 for (const k in D) if (k.startsWith('h_')) D[k.slice(2)].ho = D[k];      // each normal set carries its hands-out data (the changed pixels and the fist positions)
-const redPal = { ...D.pal, g: '#ff6b5e', j: '#a8132b', h: '#ffd9cf', 2: '#5e1015', 3: '#8a1a1e', 4: '#d12a2a', 5: '#ff4a3a', 6: '#ffa08a', 7: '#fff0ea' };      // red mode: the blue glows / outlines and the cyan flames recoloured
+const redPal = { ...D.pal, g: '#ff6b5e', j: '#a8132b', h: '#ffd9cf', y: '#ff3b3b' };      // red mode: the blue glows / outlines and the cyan flames recoloured
 const orbR = mk(D.orb, { ...D.pal, a: '#2a0508', b: '#4a0a10', c: '#7a1018', d: '#b41c22', e: '#e8402e', f: '#ff8a62', i: '#ffd0b0', l: '#ff6a4a' }), OHX = D.orb.cx - D.orb.x0, redF = mk(D.atk22);      // the red orb (the Max Blue orb in red) and the 30-frame RED pose
-const ceFR = mk(D.ce, redPal), ceF = mk(D.ce);                                                    // CURSED ENERGY: 15 frames of unstable cyan flame, drawn over both fists
+const ceF = mk(D.ce);                                                    // CURSED ENERGY: 15 frames of unstable cyan flame, drawn over both fists
 const mkH = (k, pal) => {                                                       // the hands-out version of a set: the normal rows with the changed pixels put in (three characters each: x and y as characters counted from '0', then the new letter)
   const b = D[k], dl = D['h_' + k].dl;
   return mk({ w: b.w, h: b.h, frames: b.frames.map((rows, i) => {
@@ -615,16 +615,16 @@ function drawRedFx(now, dt, x, y, info, fi, charging, mf) {      // the red orb 
   drawBoom(now);
 }
 function drawCE(now, x, y, info, fi) {       // CURSED ENERGY: unstable cyan flames on both fists (the far hand first, so the near one is on top). x, y = where Gojo's sprite is drawn
-  if (ceAmt <= 0.02) return;
+  if (ceAmt <= 0.02 || cm === 2) return;      // red mode has no flames: its hands just have a red outline (drawn in its sprites)
   const A = ceOn && info.ho ? info.ho : info, k = Math.floor(now * CE_FPS / 1000) % 15, cx = D.ce.cx, cy = D.ce.cy, ig = now - ceAt;
   for (const [pt, off] of [[A.hf[fi], 7], [A.hn[fi], 0]]) {
     if (!pt) continue;                         // (no hands to light while he turns into a streak of light)
     const n = (k + off) % 15, h = Math.imul(n * 2654435761 + off * 40503 + 17, 2246822519) >>> 0;      // a different tiny shake and flicker on every frame: it is never still
     ctx.globalAlpha = ceAmt * (0.82 + 0.18 * ((h >> 9) % 4) / 3);
-    ctx.drawImage((cm === 2 ? ceFR : ceF)[n], Math.round(x + pt[0]) - cx + (h % 3) - 1, Math.round(y + pt[1]) - cy + ((h >> 4) % 3) - 1);
+    ctx.drawImage(ceF[n], Math.round(x + pt[0]) - cx + (h % 3) - 1, Math.round(y + pt[1]) - cy + ((h >> 4) % 3) - 1);
     ctx.globalAlpha = 1;
     if (ceOn && ig < 360) {                    // switching on: a ring of sparks races out from each fist
-      const R = 4 + ig / 360 * 24; ctx.fillStyle = (cm === 2 ? 'rgba(255,100,80,' : 'rgba(95,244,230,') + (1 - ig / 360) + ')';
+      const R = 4 + ig / 360 * 24; ctx.fillStyle = 'rgba(95,244,230,' + (1 - ig / 360) + ')';
       for (let a = 0; a < 28; a++) { const th = a / 28 * 6.2832; ctx.fillRect(Math.round(x + pt[0] + Math.cos(th) * R), Math.round(y + pt[1] + Math.sin(th) * R * 0.8), 1, 1); }
     }
   }
@@ -640,7 +640,7 @@ function drawScene(now, dt) {
   if (mbAt < 0) mbK = 0;
   if (ceReq) { ceReq = false; if (t >= 1) cycleMode(now); }        // CURSED ENERGY button / key: on <-> off
   ceAmt += ((ceOn ? 1 : 0) - ceAmt) * Math.min(1, dt * (ceOn ? 16 : 10)); if (!ceOn && ceAmt < 0.03) ceAmt = 0;      // the flames swell in quickly and die away a little slower
-  if (ceOn && now >= ceNext) { snd('cecrackle'); ceNext = now + 260 + Math.random() * 700; }      // a quiet crackle at random moments while it is on
+  if (cm === 1 && now >= ceNext) { snd('cecrackle'); ceNext = now + 260 + Math.random() * 700; }      // a quiet crackle at random moments while it is on
   let jf = -1, tf = -1;                       // jump frame 0-14 (0-2 crouch, 3 push-off, 4-11 airborne, 12-14 land) / teleport frame 0-14 (0-6 vanish + arrive, 7-11 fall, 12-14 land)
   if (jumpAt >= 0) {
     jf = Math.floor(Math.max(0, now - jumpAt) * JUMP_FPS / 1000);                // clamp: rAF time can trail performance.now() by a hair

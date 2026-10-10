@@ -188,7 +188,8 @@ def tele_fx(f, i):
 # ---------------------------------------------------------------- 4-hit attack combo: right hook, left hook, right elbow (blue hands), roundhouse kick (red hands)
 RED = {'r': '#ff3b3b', 'm': '#b0122a', 'n': '#ffc9b8'}      # Reversal Red
 PAL.update(RED)
-BLUE_FX, RED_FX = ('g', 'j', 'h'), ('r', 'm', 'n')          # outline, outer glow, highlight
+BLUE_FX, RED_FX = ('g', 'j', 'h'), ('r', 'm', 'n')
+PAL['y'] = PAL['V']                                          # the outline of a hand that is out, drawn with its own letter in the hands-out poses so red mode can make it red (the same colour as before otherwise)          # outline, outer glow, highlight
 UA, FA = 7.3, 7.0                                           # upper arm / forearm length (the pocket pose of the idle arm is exactly UA at -16 deg and FA at 45 deg)
 POCKET = (-16, 45)
 def ease(t, m): return t * t if m == 'in' else 1 - (1 - t) ** 2 if m == 'out' else t * t * (3 - 2 * t) if m == 'io' else t
@@ -239,7 +240,7 @@ def draw_arm(f, S, ua, fa, near, gl, fx, rimc='O'):                   # shoulder
         for x, y in fist:
             d = (x - H[0]) + (y - H[1]); f.set(x, y, 'T' if d < -1.3 else 'U' if d > 1.4 else 'S')
         if gl > .45: glowring(f, fist, gl, fx)
-        else: f.rim(fist, 'V'); glowring(f, fist, gl, fx)
+        else: f.rim(fist, 'y' if HO else 'V'); glowring(f, fist, gl, fx)
         if gl > .8:
             for k in range(3): ang = rad(120 * k + 47 * ((ua + 360) % 7)); f.set(H[0] + 4.2 * cos(ang), H[1] + 4.2 * sin(ang), fx[2])
     elif near: f.set(W[0] + 1, W[1], 'S'); f.set(W[0] + 1, W[1] + 1, 'U')          # hand still in the pocket
@@ -489,14 +490,15 @@ ATK_HANDS[9] = ATK_HANDS[10] = ''; ATK_IMPACT.extend([99, 99])
 G0 = (0, 0, 0, 4, 0, 0, 68, 170, -16, 45, 0)                  # the held pose; frames 4-9 are all exactly this, so nothing moves while he blocks (only the hair tips)
 ATK[11] = [K(0, I0), K(2, (0, 0, 0, 4, 0, 0, 40, 95, -16, 45, 0)), K(4, G0), K(9, G0)]
 def peace_hand(f, H, fa):                                   # an open hand with the index and middle fingers pointing up along the forearm (the other fingers stay curled)
+    OV = 'y' if HO else 'V'                                 # (the outline of the raised hand is red in red mode too)
     b = rad(fa); dx, dy = sin(b), cos(b); px, py = cos(b), -sin(b)
-    for side in (-1.0, 0.0, 1.0): f.set(H[0] + dx * 1.6 + px * side, H[1] + dy * 1.6 + py * side, 'V')       # the knuckle line where the two fingers leave the palm
+    for side in (-1.0, 0.0, 1.0): f.set(H[0] + dx * 1.6 + px * side, H[1] + dy * 1.6 + py * side, OV)       # the knuckle line where the two fingers leave the palm
     for t in range(1, 7):
         for side, c in ((-0.5, 'T'), (0.5, 'S')):
             x, y = H[0] + dx * (1.6 + t) + px * side, H[1] + dy * (1.6 + t) + py * side
-            f.set(x, y, 'V' if t == 6 else c)
+            f.set(x, y, OV if t == 6 else c)
     for t in range(1, 6):                                  # a thin outline down both sides of the two fingers
-        for side in (-1.5, 1.5): f.set(H[0] + dx * (1.6 + t) + px * side, H[1] + dy * (1.6 + t) + py * side, 'V')
+        for side in (-1.5, 1.5): f.set(H[0] + dx * (1.6 + t) + px * side, H[1] + dy * (1.6 + t) + py * side, OV)
 ATK_HANDS[11] = ''; ATK_IMPACT.extend([99])
 ATK_HANDS[12] = ATK_HANDS[13] = ''; ATK_IMPACT.extend([99, 99])
 ATK[14] = [K(0, I0), K(1, (-1, 1, -1, 4, 0, 0, 25, 125, -16, 45, .3)), K(3, (3, 1, 3, 4, 0, 0, 88, 98, -16, 45, 1), 'in'), K(5, (4, 1, 4, 4, 0, 0, 92, 100, -16, 45, 1)),
@@ -724,7 +726,7 @@ for k, fs in hsets.items():                                       # hands-out ve
     hn, hf = anchors(k, fs, True)
     out['h_' + k] = {'dl': [delta(b, rows(f, w0, w1 - w0 + 1)) for b, f in zip(out[k]['frames'], fs)], 'hn': hn, 'hf': hf}
 out['ce'] = {'x0': 0, 'w': ce.CEW, 'h': ce.CEH, 'top': 0, 'cx': ce.CECX, 'cy': ce.CECY, 'frames': ce.ce_frames()}          # the 15-frame cursed energy that is drawn over the fists
-out['pal_extra'] = {**GLOW, **RED, **DEB, **ORB, **ce.CE_PAL}
+out['pal_extra'] = {**GLOW, **RED, **DEB, **ORB, **ce.CE_PAL, 'y': PAL['V']}
 json.dump(out, open('side.json', 'w'))
 
 def render(f, sc, bg):
