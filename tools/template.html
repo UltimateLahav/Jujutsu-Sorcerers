@@ -781,10 +781,12 @@ function drawPBoom(now) {                     // the purple blast: a white-viole
 // Gojo raises his hand into the block pose and holds its last frame, everybody freezes, a pixel-art version of the reference GIF plays (40 frames: the face, then the push-in on the eyes),
 // a wide shot of the crossing with the people standing still, the lights fail, a white burst opens the domain and the scene becomes the Infinite Void. Inside it the enemy is frozen and
 // everything hits twice as hard; the void then collapses back to the crossing and the button cools down for 30 s.
-const DOMAIN_IMG = '__DOMAINIMG__', DF_N = 40, DF_W = 64, DF_H = 64, DF_FPS = 8, DOM_CD = 30000;      // the cut-in: 40 frames of 64 x 64, 16 colours, shown at 2x
+const DOMAIN_IMG = '__DOMAINIMG__', DF_N = 40, DF_W = 160, DF_H = 64, DF_FPS = 8, DOM_CD = 30000;      // the cut-in: 40 frames of 160 x 64 (64 tall, as wide as the screen), 16 colours, shown at 2x so it fills the whole screen
 const domImg = new Image(); domImg.src = DOMAIN_IMG;
+const VOID_IMG = '__VOIDIMG__', VF_N = 12, VF_W = 160, VF_H = 64, VF_FPS = 6;      // the Infinite Void backdrop (your blue-ring picture): 12 frames of 160 x 64, 16 colours, shown at 2x
+const voidImg = new Image(); voidImg.src = VOID_IMG; let domBox = null;
 const DOM_ORDER = ['pose', 'face', 'wide', 'burst', 'void', 'collapse'], DOM_MS = { pose: 900, face: DF_N * 1000 / DF_FPS, wide: 1500, burst: 1900, void: 10000, collapse: 1400 };
-let dom = null, domHold = false, domReq = false, domReadyAt = 0, voidCv = null, voidG = null, GAL = null, STARS = null;
+let dom = null, domHold = false, domReq = false, domReadyAt = 0, voidCv = null, voidG = null;
 function domFrozen() { return !!dom && dom.ph !== 'collapse'; }
 function domLock() { return !!dom && dom.ph !== 'void' && dom.ph !== 'collapse'; }
 function voidOn() { return !!dom && dom.ph === 'void'; }
@@ -811,21 +813,9 @@ function domTick(now) {
   }
   if (domLock()) { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = false; }      // no control during the opening
 }
-function initVoid() {
-  if (GAL) return; let s = 11; const r = () => (s = (s * 16807) % 2147483647) / 2147483647; GAL = [];
-  for (let i = 0; i < 900; i++) GAL.push({ arm: i % 3, r: Math.pow(r(), 0.8), a: (r() - 0.5) * 0.55, z: r() });
-  STARS = [90, 60, 40].map(n => Array.from({ length: n }, () => ({ x: r(), y: r(), tw: r() * 7 })));
-}
-function drawVoid(g, now, W, H) {              // deep space: banded dark blue, three layers of stars, a slowly turning spiral galaxy, streams of light (information) racing across
-  initVoid(); const t = now / 1000, cx = W * 0.56, cy = gy - 44, bands = ['#020208', '#03031a', '#06052a', '#09073a', '#0b0946', '#08062c'];
-  for (let i = 0; i < bands.length; i++) { g.fillStyle = bands[i]; g.fillRect(0, Math.floor(H * i / bands.length), W, Math.ceil(H / bands.length) + 1); }
-  STARS.forEach((L, li) => { const f = [0.05, 0.12, 0.25][li], sp = [1, 2.5, 5][li]; for (const st of L) { g.fillStyle = (t * 2 + st.tw) % 7 < 0.25 ? '#ffffff' : ['#6a70c8', '#9aa4ff', '#cfd8ff'][li]; g.fillRect(Math.floor((((st.x * W - wx * f - t * sp) % W) + W) % W), Math.floor(st.y * H), li === 2 ? 2 : 1, li === 2 ? 2 : 1); } });
-  const cols = ['#f6f2ff', '#bfe4ff', '#7ab8ff', '#8f6bff', '#d45cff', '#5a2e9a'];
-  for (const p of GAL) { const ang = p.a + p.arm * 2.0944 + p.r * 3.4 + t * 0.14 * (1.2 - p.r), rr = p.r * 150; g.fillStyle = cols[Math.min(5, Math.floor(p.r * 6))]; g.fillRect(Math.round(cx + Math.cos(ang) * rr), Math.round(cy + Math.sin(ang) * rr * 0.4), p.z > 0.8 ? 2 : 1, 1); }
-  for (const [r, c] of [[44, 'rgba(120,90,255,0.10)'], [28, 'rgba(170,150,255,0.14)'], [14, 'rgba(230,225,255,0.24)']]) { g.fillStyle = c; for (let yy = -r * 0.5; yy <= r * 0.5; yy++) { const w = Math.floor(r * Math.sqrt(1 - yy * yy / (r * r * 0.25))); g.fillRect(Math.round(cx) - w, Math.round(cy + yy), 2 * w + 1, 1); } }      // the glowing heart of the galaxy
-  g.fillStyle = '#ffffff'; g.fillRect(Math.round(cx) - 2, Math.round(cy), 5, 1); g.fillRect(Math.round(cx), Math.round(cy) - 1, 1, 3);
-  for (let i = 0; i < 9; i++) { const sp = 90 + i * 37, x0 = ((t * sp + i * 97) % (W + 120)) - 60, y0 = (i * 53 + 17) % H, L = 26 + (i * 13) % 30, col = ['#59f0ff', '#ffffff', '#ff5ad8'][i % 3]; for (let k = 0; k < L; k++) { g.fillStyle = k > L * 0.6 ? '#2a3a8a' : col; g.fillRect(Math.round(x0 - k), Math.round(y0 + k * 0.35), 1, 1); } }
-  for (let i = 0; i < 24; i++) { g.fillStyle = i % 2 ? '#bfe4ff' : '#59f0ff'; g.fillRect((Math.random() * W) | 0, (Math.random() * H) | 0, 1 + (Math.random() < 0.3), 1 + (Math.random() < 0.3)); }      // data flickers
+function drawVoid(g, now, W, H) {              // the Infinite Void: the 16-colour pixel-art recreation of the blue ring, the white splatters and the sparkles, drawn at 2x over the whole screen (the ring turns, the splatters breathe, the sparkles flicker)
+  g.fillStyle = '#050a14'; g.fillRect(0, 0, W, H); if (!(voidImg.complete && voidImg.naturalWidth)) return;
+  const pw = VF_W * 2, ph = VF_H * 2; g.imageSmoothingEnabled = false; g.drawImage(voidImg, 0, (Math.floor(now * VF_FPS / 1000) % VF_N) * VF_H, VF_W, VF_H, Math.round((W - pw) / 2), Math.round((H - ph) / 2), pw, ph);
 }
 function domVoidLayer(now) {                   // the void inside a hard-edged circle that grows out of the burst (and shrinks away when the domain collapses)
   if (!dom) return; const a = now - dom.p0; let R = 0;
@@ -837,7 +827,7 @@ function domVoidLayer(now) {                   // the void inside a hard-edged c
   if (!full) { ctx.fillStyle = '#e8f0ff'; for (let i = 0; i < 140; i++) { const th = i / 140 * 6.2832, rr = R + Math.sin(th * 7 + now / 90) * 2; ctx.fillRect(Math.round(cx + Math.cos(th) * rr), Math.round(cy + Math.sin(th) * rr), 2, 2); } }      // the glowing, rippling edge
   const t = now / 1000, gx = cx; ctx.fillStyle = 'rgba(160,180,255,0.10)';
   for (let k = 1; k <= 4; k++) { const rx = 12 + k * 5, ry = 30 + k * 6; for (let yy = -ry; yy <= ry; yy++) { const w = Math.floor(rx * Math.sqrt(1 - yy * yy / (ry * ry))); ctx.fillRect(gx - w, gy - 30 + yy, 2 * w + 1, 1); } }      // Gojo's glow
-  if (R > 20) for (let k = 0; k < 4; k++) { const r = ((t * 34 + k * 30) % 120) + 6, al = 1 - r / 126; ctx.fillStyle = al > 0.55 ? '#c9b8ff' : al > 0.3 ? '#8f6bff' : '#4a2e9a'; for (let i = 0; i < 64; i++) { const th = i / 64 * 6.2832; ctx.fillRect(Math.round(gx + Math.cos(th) * r), Math.round(gy + 2 + Math.sin(th) * r * 0.16), 1, 1); } }      // ripples on the floor of nothing
+  if (R > 20) for (let k = 0; k < 4; k++) { const r = ((t * 34 + k * 30) % 120) + 6, al = 1 - r / 126; ctx.fillStyle = al > 0.55 ? '#bfe0ff' : al > 0.3 ? '#4f86c8' : '#1d3f78'; for (let i = 0; i < 64; i++) { const th = i / 64 * 6.2832; ctx.fillRect(Math.round(gx + Math.cos(th) * r), Math.round(gy + 2 + Math.sin(th) * r * 0.16), 1, 1); } }      // ripples on the floor of nothing
 }
 function domOverlay(now) {                     // darkness, the white burst, the cut-in, the title and the cinema bars
   if (!dom) return; const a = now - dom.p0, cx = Math.round(VW / 2), cy = gy - 38, full = (al) => { ctx.fillStyle = al; ctx.fillRect(-8, -8, VW + 16, VH + 16); };
@@ -854,12 +844,8 @@ function domOverlay(now) {                     // darkness, the white burst, the
     const fl = a < 900 ? 0 : a < 1250 ? (a - 900) / 350 : Math.max(0, 1 - (a - 1250) / 650); if (fl > 0) full('rgba(255,255,255,' + Math.min(1, fl).toFixed(2) + ')');
   }
   if (dom.ph === 'face' && domImg.complete && domImg.naturalWidth) {
-    const i = Math.min(DF_N - 1, Math.floor(a * DF_FPS / 1000)), pw = DF_W * 2, ph2 = DF_H * 2, px = Math.round((VW - pw) / 2), py = Math.round((VH - ph2) / 2);
-    drawVoid(ctx, now, VW, VH); full('rgba(0,0,12,0.78)');                                                       // a dim backdrop of deep space with drifting streaks of light
-    ctx.drawImage(domImg, 0, i * DF_H, DF_W, DF_H, px, py, pw, ph2);                                              // the 64 x 64 picture at 2x (every picture pixel is 2 x 2 game pixels)
-    ctx.fillStyle = '#16123a'; ctx.fillRect(px, py, pw, 2); ctx.fillRect(px, py + ph2 - 2, pw, 2); ctx.fillRect(px, py, 2, ph2); ctx.fillRect(px + pw - 2, py, 2, ph2);      // a pixel frame
-    ctx.fillStyle = '#8c8cff'; ctx.fillRect(px + 2, py + 2, pw - 4, 1); ctx.fillRect(px + 2, py + ph2 - 3, pw - 4, 1); ctx.fillRect(px + 2, py + 2, 1, ph2 - 4); ctx.fillRect(px + pw - 3, py + 2, 1, ph2 - 4);
-    ctx.fillStyle = '#ffffff'; for (const [cx2, cy2] of [[px, py], [px + pw - 3, py], [px, py + ph2 - 3], [px + pw - 3, py + ph2 - 3]]) ctx.fillRect(cx2, cy2, 3, 3);
+    const i = Math.min(DF_N - 1, Math.floor(a * DF_FPS / 1000)), pw = DF_W * 2, ph2 = DF_H * 2, px = Math.round((VW - pw) / 2), py = Math.round((VH - ph2) / 2); domBox = [px, py, pw, ph2];
+    full('#000'); ctx.drawImage(domImg, 0, i * DF_H, DF_W, DF_H, px, py, pw, ph2);      // the 160 x 64 picture at 2x: it fills the whole screen
     ctx.globalCompositeOperation = 'lighter'; full('rgba(90,170,255,' + (0.04 + 0.03 * Math.sin(a / 160)).toFixed(3) + ')'); ctx.globalCompositeOperation = 'source-over'; if (a < 160) full('rgba(255,255,255,' + (0.8 * (1 - a / 160)).toFixed(2) + ')');
   }
   const bh = Math.round(VH * 0.11); let bk = 0; if (dom.ph === 'face') bk = 0; else if (dom.ph === 'wide' || dom.ph === 'burst') bk = 1; else if (dom.ph === 'void') bk = Math.max(0, 1 - a / 300);
@@ -1257,8 +1243,9 @@ window.__humInfo = () => HUM && HUM.map(T => { const px = c => c.getContext('2d'
 window.__purple = () => purple && ({ hp: purple.hp, age: performance.now() - purple.born, x: purple.x });
 window.__hitPurple = d => damagePurple(d, performance.now());
 window.__dummyAt = x => { if (dummy) { dummy.x = wx + x; dummy.vx = 0; dummy.ai = 'rest'; dummy.aiAt = performance.now(); dummy.restFor = 4000; } };
-window.__domain = () => ({ ph: dom ? dom.ph : '', age: dom ? performance.now() - dom.p0 : 0, hold: domHold, cd: Math.max(0, domReadyAt - performance.now()), img: [domImg.naturalWidth, domImg.naturalHeight], lock: domLock(), voidOn: voidOn() });
-window.__domColors = () => { const c = document.createElement('canvas'); c.width = domImg.naturalWidth; c.height = domImg.naturalHeight; const g = c.getContext('2d'); g.drawImage(domImg, 0, 0); const d = g.getImageData(0, 0, c.width, c.height).data, u = new Set(); for (let i = 0; i < d.length; i += 4) u.add((d[i] << 16) | (d[i + 1] << 8) | d[i + 2]); return u.size; };
+window.__domain = () => ({ ph: dom ? dom.ph : '', age: dom ? performance.now() - dom.p0 : 0, hold: domHold, cd: Math.max(0, domReadyAt - performance.now()), img: [domImg.naturalWidth, domImg.naturalHeight], lock: domLock(), voidOn: voidOn(), box: domBox });
+window.__voidImg = () => [voidImg.naturalWidth, voidImg.naturalHeight];
+window.__domColors = which => { const im = which === 'void' ? voidImg : domImg, c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; const g = c.getContext('2d'); g.drawImage(im, 0, 0); const d = g.getImageData(0, 0, c.width, c.height).data, u = new Set(); for (let i = 0; i < d.length; i += 4) u.add((d[i] << 16) | (d[i + 1] << 8) | d[i + 2]); return u.size; };
 window.__domJump = ph => { if (dom && DOM_ORDER.includes(ph)) { dom.ph = ph; dom.p0 = performance.now(); } };
 window.__fill = () => { while (peds.length < 5) peds.push(newPed(wx + 150 + peds.length * 12)); };
 window.__hit = k => gojoHit(k, performance.now());           // test hook: the attacker's swing k lands on Gojo right now (a dash dodges it)
