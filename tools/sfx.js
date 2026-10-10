@@ -130,19 +130,19 @@ function makeSfx(ac) {
       tone(B.deep, t, { f: 120, f2: 58, dur: 0.34, gain: 0.12, atk: 0.06 });
     },
     swing(k, at) {                                       // air rushing past the fist / leg: soft rising whoosh (a little deeper for the kick)
-      const t = T(at), B = C.atk, kick = k === 3 || k === 15 || k === 17;
+      const t = T(at), B = C.atk, kick = [3, 15, 17, 18, 19, 21].includes(k);
       burst(B.soft, t, { f: kick ? 380 : 650, f2: kick ? 1100 : 1700, q: 0.8, dur: kick ? 0.22 : 0.16, gain: kick ? 0.9 : 0.8, atk: 0.04 });
       tone(B.deep, t, { type: 'triangle', f: kick ? 90 : 120, f2: kick ? 60 : 85, dur: 0.16, gain: 0.1, atk: 0.05 });
     },
     hit(k, at) {                                         // impact: deep thump + dull slap + a crackle of cursed energy (red = heavier and longer)
-      const t = T(at), B = C.atk, red = k === 3 || k === 15 || k === 17;
+      const t = T(at), B = C.atk, red = [3, 15, 17, 18, 19, 21].includes(k);
       tone(B.deep, t, { type: 'triangle', f: red ? 128 : 150, f2: red ? 52 : 62, dur: red ? 0.4 : 0.26, gain: red ? 0.46 : 0.34, atk: 0.003 });
       tone(B.deep, t, { f: 240, f2: 110, dur: 0.09, gain: 0.3, atk: 0.002 });
       burst(B.soft, t, { f: red ? 500 : 900, f2: red ? 160 : 300, q: 0.9, dur: red ? 0.2 : 0.14, gain: red ? 2.8 : 2.2, atk: 0.001 });
       tone(B.soft, t, { type: 'sawtooth', f: red ? 330 : 560, f2: red ? 90 : 160, dur: red ? 0.3 : 0.18, gain: 0.12, atk: 0.004 });
     },
     smack(k, at) {                                       // the body blow when a hit lands on something: deep thump + dull slap
-      const t = T(at), B = C.atk, red = k === 3 || k === 15 || k === 17;
+      const t = T(at), B = C.atk, red = [3, 15, 17, 18, 19, 21].includes(k);
       tone(B.deep, t, { type: 'triangle', f: red ? 100 : 124, f2: 46, dur: red ? 0.34 : 0.22, gain: red ? 0.5 : 0.38, atk: 0.003 });
       burst(B.soft, t, { f: red ? 450 : 700, f2: 180, q: 0.8, dur: 0.12, gain: red ? 3.0 : 2.4, atk: 0.001 });
     },
@@ -235,6 +235,26 @@ function makeSfx(ac) {
       const t = T(at), B = C.ce; let u = 0;
       for (let k = 0, n = 2 + ((Math.random() * 3) | 0); k < n; k++) { u += R(0.025, 0.09); burst(B.deep, t + u, { f: R(1500, 3500), q: 2.4, dur: R(0.012, 0.028), gain: R(0.13, 0.27), atk: 0.001 }); }
       if (Math.random() < 0.5) tone(B.deep, t, { type: 'triangle', f: R(150, 240), f2: R(80, 120), dur: 0.07, gain: 0.045, atk: 0.003 });
+    },
+    redcharge(at) {                                      // RED: a low hum that climbs for a second while the orb gathers, with a quickening pulse
+      const t = T(at), B = C.ce;
+      tone(B.deep, t, { type: 'triangle', f: 70, f2: 210, dur: 1.0, gain: 0.3, atk: 0.5, cur: 1 });
+      tone(B.deep, t, { type: 'sawtooth', f: 140, f2: 420, dur: 1.0, gain: 0.07, atk: 0.6, cur: 1 });
+      burst(B.deep, t, { f: 500, f2: 2600, q: 1.1, dur: 1.0, gain: 0.3, atk: 0.6 });
+      for (let k = 0; k < 6; k++) tone(B.deep, t + 0.2 + k * (0.16 - k * 0.015), { type: 'triangle', f: 110, f2: 70, dur: 0.1, gain: 0.12 + 0.03 * k, atk: 0.004 });
+    },
+    redfire(at) {                                        // RED released: a sharp whoosh and a bright ping
+      const t = T(at), B = C.ce;
+      burst(B.deep, t, { f: 500, f2: 3500, q: 0.9, dur: 0.25, gain: 0.5, atk: 0.01 });
+      tone(B.deep, t, { type: 'triangle', f: 300, f2: 90, dur: 0.3, gain: 0.25, atk: 0.003 });
+      tone(B.deep, t, { f: 1200, f2: 800, dur: 0.15, gain: 0.08, atk: 0.002 });
+    },
+    redboom(at) {                                        // RED explodes: a deep boom and a burst of crackle
+      const t = T(at), B = C.ce;
+      tone(B.deep, t, { type: 'triangle', f: 120, f2: 32, dur: 0.7, gain: 0.5, atk: 0.003 });
+      tone(B.deep, t, { f: 240, f2: 70, dur: 0.25, gain: 0.25, atk: 0.002 });
+      burst(B.deep, t, { f: 1800, f2: 200, q: 0.8, dur: 0.5, gain: 0.7, atk: 0.002 });
+      for (let k = 0; k < 6; k++) burst(B.deep, t + 0.05 + k * 0.05, { f: R(1500, 3600), q: 2.2, dur: R(0.015, 0.03), gain: R(0.2, 0.4), atk: 0.001 });
     },
     setVol(name, v) {                                    // per-sound volume, 0 = silent, 1 = designed level, 2 = twice as loud
       vol[name] = v;

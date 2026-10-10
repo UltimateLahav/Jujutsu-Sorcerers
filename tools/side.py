@@ -261,9 +261,9 @@ def atk_fx(f, i, k, an, foot, nfp, E, Hn, Hf, gl):
     if k in (4, 5, 8): lapse_fx(f, i, k, Hn); return
     fx = BLUE_FX
     ph = foot
-    if k in (3, 15, 17): pt = (an[0] + 7 * cos(ph) - 2.5 * sin(ph), an[1] + 7 * sin(ph) + 2.5 * cos(ph))     # toe of the kicking foot
+    if k in (3, 15, 17, 18, 19): pt = (an[0] + 7 * cos(ph) - 2.5 * sin(ph), an[1] + 7 * sin(ph) + 2.5 * cos(ph))     # toe of the kicking foot
     elif k == 2: pt = (E[0] + 2.4 * sin(rad(nfp)), E[1] + 2.4 * cos(rad(nfp)))                       # tip of the elbow
-    else: pt = Hf if k in (1, 7, 16) else Hn
+    else: pt = Hf if k in (1, 7, 16, 20) else Hn
     PT[(k, i)] = pt
     for back, col in ((1, fx[0]), (2, fx[1])):               # motion trail while the strike is fast and glowing
         if i - back >= 0 and gl > .55 and ATK_IMPACT[k] - 2 <= i <= ATK_IMPACT[k] + 1:
@@ -508,12 +508,24 @@ ATK[16] = [K(0, I0), K(1, (-1, 1, -1, 4, 0, 0, -16, 45, 25, 125, .3)), K(3, (3, 
 ATK[17] = [K(0, I0), K(2, (-1, 1, -1, 62, 100, 12, -16, 45, -16, 45, .3)), K(5, (-2, 1, -3, 92, 6, -6, -16, 45, -16, 45, 1), 'in'), K(8, (-2, 1, -3, 94, 6, -6, -16, 45, -16, 45, .9)),
            K(11, (-1, 1, -1, 60, 70, 10, -16, 45, -16, 45, .3)), K(14, I0)]                                                                                 # 17: a kick with the other (far) leg (its three leg angles are the far leg's)
 ATK_HANDS.update({14: 'n', 15: '', 16: 'f', 17: ''}); ATK_IMPACT.extend([4, 6, 4, 6])
-STRIKES = (0, 1, 2, 3, 6, 7, 14, 15, 16, 17)                  # the attacks whose hitting limbs get a blue outline
+ATK[18] = [K(0, I0), K(2, (-1, 1, -2, 70, 110, 12, -16, 45, -16, 45, .3)), K(4, (-2, 1, -4, 125, 12, -8, -16, 45, -16, 45, .7), 'in'), K(6, (-3, 1, -5, 140, 2, -10, -16, 45, -16, 45, 1), 'in'),
+           K(9, (-3, 1, -5, 138, 4, -10, -16, 45, -16, 45, .8)), K(12, (-1, 1, -2, 80, 60, 5, -16, 45, -16, 45, .3)), K(14, I0)]                              # 18 (red combo 1): a high kick to the neck with the near leg
+ATK[19] = [K(0, I0), K(2, (-1, 1, -1, 62, 100, 12, -16, 45, -16, 45, .3)), K(4, (-2, 1, -3, 98, 12, -6, -16, 45, -16, 45, .8), 'in'), K(5, (-2, 1, -3, 104, 6, -6, -16, 45, -16, 45, 1)),
+           K(8, (-2, 1, -3, 102, 8, -6, -16, 45, -16, 45, .9)), K(11, (-1, 1, -1, 60, 70, 10, -16, 45, -16, 45, .3)), K(14, I0)]                              # 19: a kick to the stomach with the other (far) leg
+ATK[20] = [K(0, I0), K(1, (-1, 1, -1, 4, 0, 0, -16, 45, 25, 125, .3)), K(3, (3, 1, 3, 4, 0, 0, -16, 45, 88, 98, 1), 'in'), K(4, (4, 1, 4, 4, 0, 0, -16, 45, 92, 100, 1)),
+           K(8, (2, 1, 2, 4, 0, 0, -16, 45, 45, 115, .5), 'out'), K(11, (1, 1, 0, 4, 0, 0, -16, 45, 10, 80, .2)), K(14, I0)]                                 # 20: a straight punch with the far hand
+ATK[21] = [K(0, I0), K(3, (-3, 2, -3, 4, 0, 0, -55, -120, -16, 45, .5)), K(5, (-4, 3, -4, 4, 0, 0, -75, -150, -16, 45, .8)), K(7, (4, 2, 6, 4, 0, 0, 88, 100, -16, 45, 1), 'in'),
+           K(9, (6, 2, 7, 4, 0, 0, 95, 105, -16, 45, 1)), K(11, (4, 1, 4, 4, 0, 0, 60, 110, -16, 45, .5), 'out'), K(14, I0)]                                 # 21: a hard punch: long wind-up, the whole body goes into it
+ATK[22] = [K(0, I0), K(5, (0, 0, -2, 4, 0, 0, 75, 165, -16, 45, 0)), K(8, (0, 0, -2, 4, 0, 0, 79, 168, -16, 45, 0)), K(11, (0, 0, -2, 4, 0, 0, 75, 164, -16, 45, 0)), K(14, (0, 0, -2, 4, 0, 0, 79, 169, -16, 45, 0)),
+           K(17, (0, 0, -3, 4, 0, 0, 76, 165, -16, 45, 0)), K(19, (0, 0, -3, 4, 0, 0, 80, 170, -16, 45, 0)), K(20, (0, 0, 2, 4, 0, 0, 88, 110, -16, 45, 0), 'in'), K(22, (0, 0, 4, 4, 0, 0, 92, 98, -16, 45, 0)),
+           K(26, (0, 0, 2, 4, 0, 0, 70, 105, -16, 45, 0), 'out'), K(29, I0)]       # 22 (RED): the remastered block pose: the hand comes up with two fingers raised (frames 0-5), holds and trembles while the orb grows (6-19), then snaps forward and fires (20-29)
+ATK_HANDS.update({18: '', 19: '', 20: 'f', 21: 'n', 22: ''}); ATK_IMPACT.extend([6, 5, 4, 7, 99])
+STRIKES = (0, 1, 2, 3, 6, 7, 14, 15, 16, 17, 18, 19, 20, 21)                  # the attacks whose hitting limbs get a blue outline
 # ---------------------------------------------------------------- HANDS OUT (used while cursed energy is on): the same animations with both hands out of the pockets
 HO = False                                                    # build() draws the hands-out version of every pose while this is True
 HO_N, HO_F = (14, 44), (-24, -4)                              # relaxed arms: the near hand hangs forward and low, the far hand trails behind him (upper arm, forearm angles)
 HO_BAL = ((-32, -6), (42, 72))                                # the kicks: arms out for balance (the near arm back, the far arm forward and up, clear of the leg)
-HO_ARMS = {15: HO_BAL, 17: HO_BAL}
+HO_ARMS = {15: HO_BAL, 17: HO_BAL, 18: HO_BAL, 19: HO_BAL}
 def ho_tbl(tbl, near, far):                                   # an attack table with every arm that sat in the pocket swapped for the relaxed hands-out arm
     out = []
     for f, v, m in tbl:
@@ -570,10 +582,10 @@ def build(kind, i):
         if k_ not in (9, 10, 12, 13): thf, kf = ik(hx, hy, 29.7, GROUND)
         rc_n = rc_f = 'O'
         hs = 2 if k_ in (6, 7) else 0
-        if k_ == 11: thn, kn_, thf, kf, foot = rad(4), 0, rad(-8), 0, None       # the idle pose's legs, exactly: no pop when the block starts or ends and nothing moves in the legs while it is held
+        if k_ in (11, 22): thn, kn_, thf, kf, foot = rad(4), 0, rad(-8), 0, None       # the idle pose's legs, exactly: no pop when the block starts or ends and nothing moves in the legs while it is held
         elif k_ in (9, 10, 12, 13): pass
-        elif k_ in (3, 15): thn, kn_, foot2 = rad(nth), rad(nk), rad(nf); rc_n = 'j' if gl > .25 else 'O'
-        elif k_ == 17: thf, kf, foot = rad(nth), rad(nk), rad(nf); thn, kn_ = ik(hx, hy, 33.7, GROUND); foot2 = 0.0; rc_f = 'j' if gl > .25 else 'O'
+        elif k_ in (3, 15, 18): thn, kn_, foot2 = rad(nth), rad(nk), rad(nf); rc_n = 'j' if gl > .25 else 'O'
+        elif k_ in (17, 19): thf, kf, foot = rad(nth), rad(nk), rad(nf); thn, kn_ = ik(hx, hy, 33.7, GROUND); foot2 = 0.0; rc_f = 'j' if gl > .25 else 'O'
         else: thn, kn_ = ik(hx, hy, 33.7, GROUND)
     else:
         amp, kmax = (26, 50) if kind == 'fwd' else (20, 40)
@@ -582,7 +594,7 @@ def build(kind, i):
         thn, kn_ = gait(qn, amp, kmax); thf, kf = gait(qf, amp, kmax); swn, swf = qn >= .5, qf >= .5
         L = .8 + .25 * sin(2 * math.pi * i / NW) if kind == 'fwd' else max(-.2, .05 + .12 * sin(2 * math.pi * i / NW)); bob = 0
     drop = lambda th, k: L1 * cos(th) + L2 * cos(th - k)
-    if (kind not in ('jump', 'tele', 'cjump') and not (atk or rxk or crk)) or kind == 'atk11': hy = round(58 + TOP - max(drop(thn, kn_), drop(thf, kf)))
+    if (kind not in ('jump', 'tele', 'cjump') and not (atk or rxk or crk)) or kind in ('atk11', 'atk22'): hy = round(58 + TOP - max(drop(thn, kn_), drop(thf, kf)))
     dxb = round(hx - 33)                                   # the body follows the hips (the planted feet stay put)
     oy = hy - 34; hb = bob
     if hoa: nua, nfa, fua, ffa = ho_arms(kind, i)
@@ -646,15 +658,15 @@ def build(kind, i):
     if atk or rxk or blkk or hoa:                         # near arm in front of everything, then (attacks) glow trail and impact flash
         gn = gl if atk and 'n' in ATK_HANDS[k_] else 0
         E, Hn = draw_arm(f, (Sx, Sy), nua, nfa, True, gn, fxc, 'j' if (atk and k_ in STRIKES and gn > .25) else 'O')
-        if atk and k_ == 11: peace_hand(f, Hn, nfa)
+        if atk and k_ in (11, 22): peace_hand(f, Hn, nfa)
         if blkk: peace_hand(f, Hn, nfa)
         if atk and k_ in (9, 10, 12, 13): dash_fx(f, idx, k_ if k_ < 11 else k_ - 3)
-        elif atk: atk_fx(f, idx, k_, af_ if k_ == 17 else an, foot if k_ == 17 else (foot2 if foot2 is not None else 0.0), nua, E, Hn, Hf, gl)
+        elif atk: atk_fx(f, idx, k_, af_ if k_ in (17, 19) else an, foot if k_ in (17, 19) else (foot2 if foot2 is not None else 0.0), nua, E, Hn, Hf, gl)
     if atk or rxk or blkk or hoa: an_n, an_f = Hn, Hf                          # where the fists are (final canvas pixels; hit reactions are moved along with the body below)
     else:                                                                       # the hands are in the pockets: the same spot, carried through the lean of the upper body like the pixels are
         u2f = lambda x, y: (x + dxb + round(lean * max(0.0, (34 + oy - round(y)) / 20.0)) + (round(hs) if round(y) < oy + 15 else 0), y)
         an_n, an_f = u2f(*hand_at((32, 18 + oy), *POCKET)), u2f(*hand_at((31, 18 + oy), *POCKET))
-    if blkk or (atk and k_ == 11): an_n = (an_n[0] + 3 * sin(rad(nfa)), an_n[1] + 3 * cos(rad(nfa)))      # on the raised hand the energy sits up among the two fingers
+    if blkk or (atk and k_ in (11, 22)): an_n = (an_n[0] + 3 * sin(rad(nfa)), an_n[1] + 3 * cos(rad(nfa)))      # on the raised hand the energy sits up among the two fingers
     if rxk:                                               # spin (squash about the body axis) and fall (rotate about the feet)
         if sx_ != 1:
             sq = sx_ if abs(sx_) > .08 else .08; an_n, an_f = [(hx + (x - hx) * sq, y) for x, y in (an_n, an_f)]; warp(f, sq, 1, hx, 30)
@@ -667,8 +679,13 @@ def build(kind, i):
 
 def rows(f, x0, w): return [''.join(r[x0:x0 + w]) for r in f.g]
 
-def NFR(k): return NW if k in ('fwd', 'back', 'cfwd', 'cback', 'wfb', 'wbb', 'cfb', 'cbb') else 40 if k == 'atk8' else 10 if k == 'atk11' else 15 if k in ('jump', 'tele', 'cjump', 'cdn', 'cidle', 'cb') or k.startswith('atk') else 10 if k.startswith('rx') else 6
+def NFR(k): return NW if k in ('fwd', 'back', 'cfwd', 'cback', 'wfb', 'wbb', 'cfb', 'cbb') else 40 if k == 'atk8' else 10 if k == 'atk11' else 30 if k == 'atk22' else 15 if k in ('jump', 'tele', 'cjump', 'cdn', 'cidle', 'cb') or k.startswith('atk') else 10 if k.startswith('rx') else 6
 sets = {k: [build(k, i) for i in range(NFR(k))] for k in ('idle', 'fwd', 'back', 'jump', 'tele', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'atk15', 'atk16', 'atk17', 'wfb', 'wbb', 'cb', 'cfb', 'cbb', 'cdn', 'cidle', 'cfwd', 'cback', 'cjump', *['rx%d' % j for j in range(10)])}
+HO = True                                                    # the red combo and the red technique only exist with the hands out: they are built that way, so they need no separate hands-out version
+for k in ('atk18', 'atk19', 'atk20', 'atk21', 'atk22'):
+    sets[k] = [build(k, i) for i in range(NFR(k))]
+    for i in range(NFR(k)): ANCH[(False, k, i)] = ANCH[(True, k, i)]
+HO = False
 HO_KINDS = ('idle', 'fwd', 'back', 'jump', 'tele', 'cjump', 'cdn', 'cidle', 'cfwd', 'cback', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'atk15', 'atk16', 'atk17', 'wfb', 'wbb', 'cb', 'cfb', 'cbb')     # every pose he can be in while cursed energy is on (the normal combo and the hit reactions keep the pockets)
 HO = True
 hsets = {k: [build(k, i) for i in range(NFR(k))] for k in HO_KINDS}                 # the same poses with both hands out of the pockets
