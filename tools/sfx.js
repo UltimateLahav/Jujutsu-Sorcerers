@@ -174,6 +174,12 @@ function makeSfx(ac) {
       tone(B.soft, t, { type: 'sawtooth', f: 520, f2: 130, dur: 0.22, gain: 0.14, atk: 0.004 });
       burst(B.soft, t, { f: 1200, f2: 300, q: 1.0, dur: 0.16, gain: 0.9, atk: 0.002 });
     },
+    dash(k, at) {                                        // DASH: a quick push-off thump, a rushing whoosh and a scuff as he skids (k: 0 forward, 1 back = a little lower and softer)
+      const t = T(at), B = C.jump, b = k ? 0.85 : 1;
+      tone(B.deep, t, { type: 'triangle', f: 150 * b, f2: 70 * b, dur: 0.14, gain: 0.45, atk: 0.004 });
+      burst(B.soft, t, { type: 'bandpass', f: 500 * b, f2: 2600 * b, q: 0.7, dur: 0.26, gain: 0.55, atk: 0.03 });
+      burst(B.soft, t + 0.2, { f: 900, f2: 300, q: 0.9, dur: 0.16, gain: 0.35, atk: 0.01 });
+    },
     mbcharge(at) {                                       // MAX BLUE 1: a long rising swell with air rushing in as the orb forms
       const t = T(at), B = C.tele;
       tone(B.deep, t, { type: 'triangle', f: 60, f2: 180, dur: 1.4, gain: 0.3, atk: 0.9, cur: 1 });

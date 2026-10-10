@@ -458,6 +458,34 @@ def orb_frame(i):                                           # MAX BLUE orb, one 
             if c != '.': f.set(x, y, c)
     return f
 
+# ---------------------------------------------------------------- DASH (evade): 15 frames forward (atk9) and backward (atk10); the game also plays them in the air and from a crouch
+DASH = {   # per frame: hips down / forward, torso lean, near and far foot (forward distance, height off the ground)
+    9: dict(dy=[1, 4, 6, 7, 7, 7, 7, 7, 7, 6, 5, 4, 3, 1, 0], dx=[0, 1, 2, 3, 3, 3, 3, 3, 3, 2, 1, 0, 0, 0, 0], lean=[1, 3, 5, 7, 8, 8, 8, 8, 8, 7, 6, 4, 2, 1, 0],
+            nx=[0, 2, 5, 8, 9, 9, 9, 9, 8, 7, 5, 3, 1, 0, 0], nl=[0, 0, 1, 2, 3, 3, 3, 3, 2, 1, 0, 0, 0, 0, 0], fx=[0, 2, 4, 6, 8, 9, 9, 9, 8, 6, 4, 2, 1, 0, 0], fl=[0, 0, 2, 4, 5, 5, 5, 5, 4, 3, 1, 0, 0, 0, 0]),
+    10: dict(dy=[1, 3, 4, 5, 5, 5, 5, 5, 5, 4, 3, 2, 1, 0, 0], dx=[0, 0, -1, -2, -2, -2, -2, -2, -2, -1, -1, 0, 0, 0, 0], lean=[1, 0, -2, -4, -5, -5, -5, -5, -4, -3, -2, -1, 0, 0, 0],
+             nx=[0, 1, 3, 5, 6, 6, 6, 6, 5, 4, 3, 1, 0, 0, 0], nl=[0, 0, 2, 4, 4, 4, 4, 4, 3, 2, 0, 0, 0, 0, 0], fx=[0, 1, 2, 3, 4, 4, 4, 4, 3, 2, 1, 0, 0, 0, 0], fl=[0, 0, 2, 3, 3, 3, 3, 3, 2, 1, 0, 0, 0, 0, 0]),
+}
+def dash_pose(k, i):                                           # -> hip x shift, hip drop, lean, near leg (thigh, knee), far leg (thigh, knee)
+    d = DASH[k]; hx, hy = 33 + d['dx'][i], 38 + TOP + d['dy'][i]; sg = -1 if k == 9 else 1       # the far foot trails behind him (forward dash) or leads ahead (back dash)
+    return d['dx'][i], d['dy'][i], d['lean'][i], ik(hx, hy, 33.7 + d['nx'][i], GROUND - d['nl'][i]), ik(hx, hy, 29.7 + sg * d['fx'][i], GROUND - d['fl'][i])
+def dash_fx(f, i, k):                                          # blue afterimages and speed streaks trailing behind the way he is moving
+    a = [0, 0, 1, 2, 3, 3, 3, 3, 3, 2, 2, 1, 0, 0, 0][i]
+    if not a: return
+    sg = -1 if k == 9 else 1
+    cells = [(x, y) for y in range(NH) for x in range(N) if f.g[y][x] != '.']
+    for L in range(a, 0, -1):
+        for x, y in cells:
+            x2 = x + sg * 6 * L
+            if 0 <= x2 < N and (x + y + L) % (L + 1) == 0 and f.g[y][x2] == '.': f.set(x2, y, 'g' if L == 1 else 'j')
+    for j, (row, ln) in enumerate(((22, 12), (31, 16), (40, 10), (49, 15), (56, 11))):      # speed streaks, a little different every frame
+        n = ln + ((i + j) % 3) * 2; x0 = 38 + sg * 12 if k == 9 else 29 + 12
+        x0 = 21 if k == 9 else 44
+        for t in range(n):
+            x = x0 + sg * t if sg < 0 else x0 + t
+            y = row + TOP + (i + j) % 2
+            if 0 <= x < N and f.g[y][x] == '.': f.set(x, y, 'h' if t % 4 < 3 else 'g')
+ATK_HANDS[9] = ATK_HANDS[10] = ''; ATK_IMPACT.extend([99, 99])
+
 def build(kind, i):
     idx = i                               # (i is reused for the head loop below)
     f = F(); u = F()                      # f: legs, u: everything above the hips
@@ -476,10 +504,14 @@ def build(kind, i):
         hx, hy = 33 + SH + dx, 38 + TOP + round(dy); swn = swf = False; L = 0; bob = 0; p = 0; foot = 0.0
         thn, kn_ = ik(hx, hy, 33.7 + SH + nax, GROUND - nl); thf, kf = ik(hx, hy, 29.7 + SH + fax, GROUND - fl)
     elif atk:
-        k_ = int(kind[3:]); dx, dy, lean, nth, nk, nf, nua, nfa, fua, ffa, gl = pv = keyframe(ATK[k_], i)
+        k_ = int(kind[3:])
+        if k_ in (9, 10): dx, dy, lean, (thn, kn_), (thf, kf) = dash_pose(k_, i); nua, nfa, fua, ffa, gl = -16, 45, -16, 45, 0; nth = nk = nf = 0
+        else: dx, dy, lean, nth, nk, nf, nua, nfa, fua, ffa, gl = pv = keyframe(ATK[k_], i)
         hx, hy = 33 + dx, 38 + TOP + round(dy); swn = swf = False; L = 0; bob = 0; p = 0; foot = 0.0
-        thf, kf = ik(hx, hy, 29.7, GROUND); hs = 2 if k_ in (6, 7) else 0
-        if k_ == 3: thn, kn_, foot2 = rad(nth), rad(nk), rad(nf)
+        if k_ not in (9, 10): thf, kf = ik(hx, hy, 29.7, GROUND)
+        hs = 2 if k_ in (6, 7) else 0
+        if k_ in (9, 10): pass
+        elif k_ == 3: thn, kn_, foot2 = rad(nth), rad(nk), rad(nf)
         else: thn, kn_ = ik(hx, hy, 33.7, GROUND)
     else:
         amp, kmax = (26, 50) if kind == 'fwd' else (20, 40)
@@ -549,7 +581,8 @@ def build(kind, i):
             if c != '.': f.set(x + dxb + round(lean * max(0.0, (34 + oy - y) / 20.0)) + (round(hs) if y < oy + 15 else 0), y, c)
     if atk or rxk:                                        # near arm in front of everything, then (attacks) glow trail and impact flash
         E, Hn = draw_arm(f, (Sx, Sy), nua, nfa, True, gl if atk and 'n' in ATK_HANDS[k_] else 0, fxc)
-        if atk: atk_fx(f, idx, k_, an, foot2 if foot2 is not None else 0.0, nua, E, Hn, Hf, gl)
+        if atk and k_ in (9, 10): dash_fx(f, idx, k_)
+        elif atk: atk_fx(f, idx, k_, an, foot2 if foot2 is not None else 0.0, nua, E, Hn, Hf, gl)
     if rxk:                                               # spin (squash about the body axis) and fall (rotate about the feet)
         if sx_ != 1: warp(f, sx_ if abs(sx_) > .08 else .08, 1, hx, 30)
         if rot_: rot(f, rot_, 33.7 + SH, GROUND + 3)
@@ -558,12 +591,12 @@ def build(kind, i):
 
 def rows(f, x0, w): return [''.join(r[x0:x0 + w]) for r in f.g]
 
-sets = {k: [build(k, i) for i in range(NW if k in ('fwd', 'back', 'cfwd', 'cback') else 40 if k == 'atk8' else 15 if k in ('jump', 'tele', 'cjump') or k.startswith('atk') else 10 if k.startswith('rx') or k == 'cdn' else 6)] for k in ('idle', 'fwd', 'back', 'jump', 'tele', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'cdn', 'cidle', 'cfwd', 'cback', 'cjump', *['rx%d' % j for j in range(10)])}
+sets = {k: [build(k, i) for i in range(NW if k in ('fwd', 'back', 'cfwd', 'cback') else 40 if k == 'atk8' else 15 if k in ('jump', 'tele', 'cjump') or k.startswith('atk') else 10 if k.startswith('rx') or k == 'cdn' else 6)] for k in ('idle', 'fwd', 'back', 'jump', 'tele', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'cdn', 'cidle', 'cfwd', 'cback', 'cjump', *['rx%d' % j for j in range(10)])}
 for k in ('idle', 'fwd', 'back'):
     for f in sets[k]: f.g = f.g[TOP:TOP + N]
 cells = [(x, y) for k, fs in sets.items() if not k.startswith(('atk', 'rx', 'orb')) for f in fs for y in range(len(f.g)) for x in range(N) if f.g[y][x] != '.']
 acx = [x for k, fs in sets.items() if k.startswith('atk') for f in fs for r in f.g for x, c in enumerate(r) if c != '.']
-ax0, ax1 = min(acx) - 1, max(acx) + 1        # one window for the four attack sets (they reach further forward than the others)
+ax0, ax1 = max(0, min(acx) - 1), max(acx) + 1        # one window for the four attack sets (they reach further forward than the others)
 x0, x1 = min(x for x, y in cells) - 1, max(x for x, y in cells) + 1
 print('bbox cols', x0 + 1, x1 - 1, 'rows', min(y for x, y in cells), max(y for x, y in cells))
 bad = {c for f in (f for fs in sets.values() for f in fs) for r in f.g for c in r} - set(PAL) - {'.'}
