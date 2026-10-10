@@ -485,6 +485,10 @@ def dash_fx(f, i, k):                                          # blue afterimage
             y = row + TOP + (i + j) % 2
             if 0 <= x < N and f.g[y][x] == '.': f.set(x, y, 'h' if t % 4 < 3 else 'g')
 ATK_HANDS[9] = ATK_HANDS[10] = ''; ATK_IMPACT.extend([99, 99])
+# ---------------------------------------------------------------- BLOCK (guard): 10 frames; 0-4 the hands come up out of the pocket, 5-9 the held guard (loops, fists a hair up and down); lowering plays 4..0
+G0 = (0, 1, -1, 4, 0, 0, 40, 165, 30, 160, 0); G1 = (0, 1, -1, 4, 0, 0, 42, 167, 32, 162, 0); G2 = (0, 2, -1, 4, 0, 0, 38, 163, 28, 158, 0)
+ATK[11] = [K(0, I0), K(2, (0, 1, 0, 4, 0, 0, 20, 100, 12, 90, 0)), K(4, G0), K(5, G1), K(7, G2), K(9, G1)]
+ATK_HANDS[11] = ''; ATK_IMPACT.extend([99])
 
 def build(kind, i):
     idx = i                               # (i is reused for the head loop below)
@@ -591,7 +595,7 @@ def build(kind, i):
 
 def rows(f, x0, w): return [''.join(r[x0:x0 + w]) for r in f.g]
 
-sets = {k: [build(k, i) for i in range(NW if k in ('fwd', 'back', 'cfwd', 'cback') else 40 if k == 'atk8' else 15 if k in ('jump', 'tele', 'cjump') or k.startswith('atk') else 10 if k.startswith('rx') or k == 'cdn' else 6)] for k in ('idle', 'fwd', 'back', 'jump', 'tele', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'cdn', 'cidle', 'cfwd', 'cback', 'cjump', *['rx%d' % j for j in range(10)])}
+sets = {k: [build(k, i) for i in range(NW if k in ('fwd', 'back', 'cfwd', 'cback') else 40 if k == 'atk8' else 10 if k == 'atk11' else 15 if k in ('jump', 'tele', 'cjump') or k.startswith('atk') else 10 if k.startswith('rx') or k == 'cdn' else 6)] for k in ('idle', 'fwd', 'back', 'jump', 'tele', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'cdn', 'cidle', 'cfwd', 'cback', 'cjump', *['rx%d' % j for j in range(10)])}
 for k in ('idle', 'fwd', 'back'):
     for f in sets[k]: f.g = f.g[TOP:TOP + N]
 cells = [(x, y) for k, fs in sets.items() if not k.startswith(('atk', 'rx', 'orb')) for f in fs for y in range(len(f.g)) for x in range(N) if f.g[y][x] != '.']
