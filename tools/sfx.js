@@ -48,7 +48,7 @@ function makeSfx(ac) {
     s.buffer = nbuf; f.type = o.type || 'bandpass'; f.Q.value = o.q || 1;
     f.frequency.setValueAtTime(o.f, t); if (o.f2) f.frequency.exponentialRampToValueAtTime(o.f2, t + o.dur);
     env(g, t, o.atk || 0.001, o.dur, o.gain);
-    s.connect(f); f.connect(g); g.connect(out); s.start(t, R(0, 1.9 - o.dur)); s.stop(t + o.dur + 0.03);
+    s.connect(f); f.connect(g); g.connect(out); s.loop = o.dur > 1.8; s.start(t, R(0, o.dur > 1.8 ? 1.9 : 1.9 - o.dur)); s.stop(t + o.dur + 0.03);   // the noise clip is 2 s long: longer sounds loop it
   }
   function tone(out, t, o) {
     const s = ac.createOscillator(), g = ac.createGain(); s.type = o.type || 'sine';
@@ -173,6 +173,36 @@ function makeSfx(ac) {
       const t = T(at), B = C.tele;
       tone(B.soft, t, { type: 'sawtooth', f: 520, f2: 130, dur: 0.22, gain: 0.14, atk: 0.004 });
       burst(B.soft, t, { f: 1200, f2: 300, q: 1.0, dur: 0.16, gain: 0.9, atk: 0.002 });
+    },
+    mbcharge(at) {                                       // MAX BLUE 1: a long rising swell with air rushing in as the orb forms
+      const t = T(at), B = C.tele;
+      tone(B.deep, t, { type: 'triangle', f: 60, f2: 180, dur: 1.4, gain: 0.3, atk: 0.9, cur: 1 });
+      tone(B.soft, t, { type: 'sawtooth', f: 120, f2: 360, dur: 1.4, gain: 0.2, atk: 1.0, cur: 1 });
+      burst(B.soft, t, { f: 300, f2: 2000, q: 1.0, dur: 1.4, gain: 0.7, atk: 0.9 });
+    },
+    orbstart(at) {                                       // MAX BLUE 2: the orb is released: a deep boom
+      const t = T(at), B = C.tele;
+      tone(B.deep, t, { type: 'triangle', f: 92, f2: 34, dur: 0.7, gain: 0.55, atk: 0.004 });
+      burst(B.soft, t, { f: 1200, f2: 200, q: 0.8, dur: 0.4, gain: 1.4, atk: 0.003 });
+    },
+    orb(dur, at) {                                       // MAX BLUE 3: while the orb lives: a deep swelling hum, a buzzing mid layer phones can actually play, and air rushing in
+      const t = T(at), B = C.tele; dur = dur || 3.4;
+      const swell = (g, peak) => { g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + 0.5); g.gain.setValueAtTime(peak, t + Math.max(0.6, dur - 0.5)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); };
+      for (const [f, g] of [[55, 0.17], [82, 0.1], [110, 0.05]]) {
+        const o = ac.createOscillator(), gn = ac.createGain(); o.type = 'triangle';
+        o.frequency.setValueAtTime(f * 0.8, t); o.frequency.linearRampToValueAtTime(f, t + 0.6); swell(gn, g);
+        o.connect(gn); gn.connect(B.deep); o.start(t); o.stop(t + dur + 0.05);
+      }
+      const lp = ac.createBiquadFilter(), lg = ac.createGain(), lfo = ac.createOscillator(), ld = ac.createGain();   // two slightly detuned saws beat against each other, the filter breathes
+      lp.type = 'lowpass'; lp.frequency.value = 640; lp.Q.value = 1.1; swell(lg, 0.07); lfo.frequency.value = 0.9; ld.gain.value = 220; lfo.connect(ld); ld.connect(lp.frequency);
+      for (const f of [110, 111.6, 165]) { const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.connect(lp); o.start(t); o.stop(t + dur + 0.05); }
+      lp.connect(lg); lg.connect(B.soft); lfo.start(t); lfo.stop(t + dur + 0.05);
+      burst(B.soft, t, { f: 450, f2: 1700, q: 0.7, dur, gain: 0.4, atk: 0.7 });   // the pull: a long, slowly rising rush of air
+    },
+    orbend(at) {                                         // MAX BLUE 4: the orb collapses in a heavy blast
+      const t = T(at), B = C.tele;
+      tone(B.deep, t, { type: 'triangle', f: 130, f2: 30, dur: 0.8, gain: 0.62, atk: 0.003 });
+      burst(B.soft, t, { f: 1400, f2: 180, q: 0.8, dur: 0.6, gain: 1.6, atk: 0.003 });
     },
     setVol(name, v) {                                    // per-sound volume, 0 = silent, 1 = designed level, 2 = twice as loud
       vol[name] = v;

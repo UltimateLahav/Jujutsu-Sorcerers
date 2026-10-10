@@ -115,10 +115,10 @@ __SFX__
 const D = __SPR__;                 // palette + idle / walk-forward / walk-back / jump / double-jump (teleport) sprite frames (rows of palette letters)
 const HEROES = __HEROES__;         // title key art: 0 eye open ... 4 eye fully closed
 const IDLE_FPS = 12, WALK_FPS = 15, JUMP_FPS = 15, TELE_FPS = 20;   // animation speeds in frames per second (15 walk frames = 1 s per cycle = one step every half second; 15 jump frames = 1 s; 15 teleport frames = 0.75 s)
-const ATK_FPS = [30, 30, 30, 24], ATK_IMPACT = [7, 7, 7, 8], ATK_SWING = [4, 4, 4, 5], COMBO_MS = 1400;   // 15 frames per attack; the next press within COMBO_MS continues the combo
+const ATK_FPS = [30, 30, 30, 24, 24, 24, 30, 30], ATK_IMPACT = [7, 7, 7, 8, 8, 6, 6, 7], ATK_SWING = [4, 4, 4, 5, 0, 0, 3, 3], COMBO_MS = 1400, MB_FPS = 20, ORB_MS = 3400;   // 15 frames per attack; the next press within COMBO_MS continues the combo. Index 4 and 5 are Lapse Blue (not combo hits), 6 and 7 are the crouch punches; Max Blue: 40 summon frames at 20 FPS, the orb lives 3.4 s
 const ATK_NAMES = ['R.HOOK', 'L.HOOK', 'ELBOW', 'KICK'], CR_FPS = 24, LAPSE_FPS = 24;   // hooks and the elbow nudge the enemy (so the combo keeps connecting); the kick sends him sliding with a smoke trail
 const DUMMY_HP = 300, RX_FPS = [16, 16, 16, 18, 12, 16, 16, 16, 12, 14], RX_DUR = RX_FPS.map(f => 10000 / f);      // 10 reactions, 10 frames each
-const REACH = [17, 17, 15, 26], KNOCK = [9, 9, 11, 100], KNOCK_G = [26, 26, 34, 80], DMG = [12, 14, 18, 35];   // per hit: how far it reaches from his hips (px), how hard it shoves the dummy (px/s), damage number
+const REACH = [17, 17, 15, 26, 0, 0, 16, 16], KNOCK = [9, 9, 11, 100, 0, 0, 8, 8], KNOCK_G = [26, 26, 34, 80, 0, 0, 20, 20], DMG = [12, 14, 18, 35, 0, 0, 10, 13];   // per hit: how far it reaches from his hips (px), how hard it shoves the dummy (px/s), damage number
 const FWD_SPEED = 44, BACK_SPEED = 30;         // world pixels per second (matched to the slower stride so his feet do not skate)
 const BLINK_STEP = 70, BLINK_HOLD = 500;       // ms per blink frame, ms the eye stays shut
 const $ = id => document.getElementById(id);
@@ -138,7 +138,8 @@ const mk = (set, pal = D.pal) => {
   });
 };
 const idleF = mk(D.idle), fwdF = mk(D.fwd), backF = mk(D.back), jumpF = mk(D.jump), teleF = mk(D.tele), atkF = [0, 1, 2, 3].map(k => mk(D['atk' + k]));
-const crF = { dn: mk(D.cdn), idle: mk(D.cidle), fwd: mk(D.cfwd), back: mk(D.cback), jump: mk(D.cjump) }, lapseF = [4, 5].map(k => mk(D['atk' + k]));   // crouch (down, idle, walks, spring jump) and Lapse Blue (pull, blink)
+const crF = { dn: mk(D.cdn), idle: mk(D.cidle), fwd: mk(D.cfwd), back: mk(D.cback), jump: mk(D.cjump) }, lapseF = [4, 5].map(k => mk(D['atk' + k]));
+const mbF = mk(D.atk8), orbF = mk(D.orb); atkF[6] = mk(D.atk6); atkF[7] = mk(D.atk7);      // crouch (down, idle, walks, spring jump), Lapse Blue (pull, blink), crouch punches, the Max Blue summon (40 frames) and the orb (20-frame loop)
 const inv = h => '#' + [1, 3, 5].map(i => (255 - parseInt(h.substr(i, 2), 16)).toString(16).padStart(2, '0')).join('');
 const invPal = {}, whitePal = {};
 const bluePal = {};                           // the stunned look: recoloured in blues by brightness
@@ -155,7 +156,7 @@ const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
 let state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
 let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1;
-let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, lastCombo = -1, shakeUntil = 0, shakeAmp = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, lastStance = '';
+let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, lastStance = '', evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', flashUntil = 0, flashMs = 1, flashA = 0;
 const STRIP = 480;
 
 // ---------------------------------------------------------------- sound (all synthesised in sfx.js, no audio files)
@@ -174,12 +175,15 @@ function audio() {                            // browsers only allow sound after
 }
 function snd(name, a, b) {                    // play one cue (and log it when a test harness asks for that)
   if (window.__sfxlog) window.__sfxlog.push([name, Math.round(performance.now()), a, b]);
-  if (sfx && soundOn && sfx.ac.state === 'running') sfx[name.split(':').pop()](a, b);     // 'f:hit' = the attacking dummy's hit (same sound, own log name)
+  if (sfx && soundOn && sfx.ac.state === 'running') {
+    try { sfx[name.split(':').pop()](a, b); }     // 'f:hit' = the attacking dummy's hit (same sound, own log name)
+    catch (e) { if (window.__sfxlog) console.error('sound ' + name + ': ' + e); }     // a sound problem must never stop the game; the tests still report it
+  }
 }
 window.__audio = on => { if (!sfx) return; if (on) audio(); else sfx.ac.suspend(); };   // called by the Android app when it goes to / comes back from the background
 
 // ---------------------------------------------------------------- settings: a volume slider for every sound
-const VOLS = [['master', 'MASTER'], ['steps', 'FOOTSTEPS'], ['wind', 'WIND'], ['jump', 'JUMP + LANDING'], ['tele', 'TELEPORT'], ['atk', 'ATTACKS']];
+const VOLS = [['master', 'MASTER'], ['steps', 'FOOTSTEPS'], ['wind', 'WIND'], ['jump', 'JUMP + LANDING'], ['tele', 'TELE + BLUE'], ['atk', 'ATTACKS']];
 const vol = { master: 100, steps: 100, wind: 100, jump: 100, tele: 100, atk: 100 };
 try { Object.assign(vol, JSON.parse(localStorage.getItem('js_vol') || '{}')); } catch (e) { /* storage blocked: defaults */ }
 function applyVols() { if (sfx) for (const [k] of VOLS) sfx.setVol(k, vol[k] / 100); }
@@ -221,7 +225,7 @@ function show(s) {
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll(); $('settings').classList.remove('on');
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
-  if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; comboUntil = 0; dummy = null; popups = []; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; lpAt = -1; dash = null; smoke = []; }
+  if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; comboUntil = 0; dummy = null; popups = []; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(performance.now(), 1200);
 }
 
@@ -306,7 +310,7 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   if (hurtAt >= 0 || now - hurtEnd < 350 || gojoLift > 12 || gojoGone) return;
   if (stance !== 'stand' && k !== 3) return;                                          // crouching ducks the hooks and the elbow, but not the low kick      // already reeling, just recovered, or jumped / teleported out of the way
   hurtK = (Math.random() * 10) | 0; hurtAt = now;                                    // one of ten reactions, picked at random
-  atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; wxv -= KNOCK_G[k] * 0.9; shakeUntil = now + 120; shakeAmp = k === 3 ? 3 : 2;
+  atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; wxv -= KNOCK_G[k] * 0.9; shakeUntil = now + 120; shakeAmp = k === 3 ? 3 : 2;
   say('' + (DMG[k] + ((Math.random() * 5) | 0)), wx, '#ff9a5a', 8, now);
   snd('hurt', hurtK);
 }
@@ -409,6 +413,71 @@ function drawSmoke(now, dt) {                 // dust along the ground behind an
   }
 }
 
+function koDummy(now) { dummy.ko = now; dummy.vx += 70; shakeUntil = now + 260; shakeAmp = 4; kos++; say('K.O.', dummy.x, '#ffd34d', 16, now + 120); snd('ko'); }
+function flash(now, ms, a) { flashUntil = now + ms; flashMs = ms; flashA = a; }               // a pale-blue flash over the whole screen that fades out
+const STONE = ['#5b516b', '#9a8fb0', '#3d3548', '#6d5f86'];                                      // the greys of the rooftop rubble
+function spawnOrb(now) {                      // MAX BLUE: the orb leaves his palm, grows into a huge pixelated sphere in front of him and pulls everything in
+  orb = { born: now, x0: wx + 10, x1: wx + 42, tick: now + 500, acc: 0, n: 0 }; debris = [];
+  snd('orbstart'); snd('orb', ORB_MS / 1000); shakeUntil = now + 220; shakeAmp = 2; flash(now, 110, 0.4);
+  for (let i = 0; i < 40; i++) addDebris();
+}
+function addDebris() {                        // a chunk of the rooftop that is about to be dragged in
+  const big = Math.random() < 0.2;
+  debris.push({ a: Math.random() * 6.2832, d: 55 + Math.random() * 100, w: big ? 3 + ((Math.random() * 2) | 0) : 1 + ((Math.random() * 2) | 0), slab: Math.random() < 0.4, col: STONE[(Math.random() * 4) | 0], x: -99, y: -99, x1: -99, y1: -99, x2: -99, y2: -99 });
+}
+function orbPose(now) {                       // where the orb is on screen, how big it is (1 = full size) and how old
+  const age = now - orb.born, k = Math.min(1, age / 450), e = 1 - Math.pow(1 - k, 3);
+  return { age, ox: Math.round(Math.round(VW / 2) + orb.x0 + (orb.x1 - orb.x0) * e - wx), oy: Math.round(gy - 53 + 14 * e),     // it starts exactly where the small orb sat above his palm, then floats out in front of him
+    s: age < 450 ? 0.33 + 0.67 * e : age > ORB_MS - 450 ? Math.max(0.15, 1 - (age - (ORB_MS - 450)) / 450 * 0.85) : 1 };       // grows in 0.45 s, collapses over the last 0.45 s
+}
+function drawDebris(front) {                  // pieces on the far half of the swirl pass behind the orb, the near half in front of it; each leaves a short streak
+  for (const p of debris) {
+    if ((Math.sin(p.a) > 0) !== front) continue;
+    const bw = p.w + (p.slab ? 2 : 0);
+    ctx.fillStyle = p.d < 28 ? '#e8f6ff' : p.d < 48 ? '#8fd0ff' : p.col;                      // chunks glow blue as the orb catches them
+    ctx.globalAlpha = 0.3; ctx.fillRect(p.x2, p.y2, bw, p.w); ctx.globalAlpha = 0.6; ctx.fillRect(p.x1, p.y1, bw, p.w);
+    ctx.globalAlpha = 1; ctx.fillRect(p.x, p.y, bw, p.w);
+  }
+}
+function drawOrb(now, dt) {
+  if (!orb) return;
+  const { age, ox, oy, s } = orbPose(now), late = age > ORB_MS - 400;
+  if (age % 160 < 20 && age < ORB_MS - 400) { if (now >= shakeUntil) shakeAmp = 1; shakeUntil = Math.max(shakeUntil, now + 30); }   // a faint rumble while it hums
+  if (age > 300 && age < ORB_MS - 300) {      // suction rings on the floor shrink in towards the orb
+    for (let r = 0; r < 3; r++) {
+      const ph = (age / 800 + r / 3) % 1, R = 8 + 84 * (1 - ph);
+      ctx.fillStyle = 'rgba(130,200,255,' + (0.6 * Math.sin(ph * Math.PI)) + ')';
+      for (let a = 0; a < 56; a++) { const th = a / 56 * 6.2832; ctx.fillRect(Math.round(ox + Math.cos(th) * R), Math.round(gy + 4 + Math.sin(th) * R * 0.2), 1, 1); }
+    }
+  }
+  if (dummy && dummy.ko < 0) {                // it drags the enemy in, holds him stunned and grinds him down
+    dummy.pull = null; dummy.vx = 0; dummy.x += (orb.x1 - dummy.x) * Math.min(1, dt * 5); dummy.stunUntil = now + 250; dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = 400;
+    if (now > orb.tick && age < ORB_MS - 400) {
+      orb.tick = now + 230; const dmg = 4 + ((Math.random() * 3) | 0); orb.acc += dmg; orb.n++;
+      dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now;
+      if (orb.n % 2 === 0) { say('' + orb.acc, dummy.x, '#7fc4ff', 8, now); orb.acc = 0; }          // the numbers pop up every second tick so they stay readable
+      if (dummy.hp <= 0) koDummy(now);
+    }
+  }
+  if (age < ORB_MS - 500) while (debris.length < 70 && Math.random() < 0.9) addDebris();
+  for (const p of debris) {                   // rubble spirals in on a flattened ellipse, faster and faster
+    p.d -= (24 + 1800 / (p.d + 16)) * dt * (late ? 0.4 : 1); p.a += (1 + 150 / (p.d + 14)) * dt;
+    p.x2 = p.x1; p.y2 = p.y1; p.x1 = p.x; p.y1 = p.y;
+    p.x = Math.round(ox + Math.cos(p.a) * p.d * s); p.y = Math.min(gy + 5, Math.round(oy + Math.sin(p.a) * p.d * 0.42 * s + 8));
+    if (p.x1 === -99) { p.x1 = p.x2 = p.x; p.y1 = p.y2 = p.y; }
+  }
+  debris = debris.filter(p => p.d > 17);      // swallowed
+  drawDebris(false);
+  const f = orbF[Math.floor(age * 20 / 1000) % orbF.length], hx = D.orb.cx - D.orb.x0;      // the 20-frame loop at 20 FPS
+  ctx.imageSmoothingEnabled = false; ctx.drawImage(f, Math.round(ox - hx * s), Math.round(oy - 36 * s), Math.round(f.width * s), Math.round(f.height * s));
+  drawDebris(true);
+  if (age >= ORB_MS) {                        // it collapses in a blast that throws the enemy away
+    snd('orbend'); flash(now, 260, 0.6); shakeUntil = now + 300; shakeAmp = 3;
+    if (dummy && dummy.ko < 0) { dummy.vx += 170; dummy.hp = Math.max(0, dummy.hp - 25); dummy.hitAt = now; dummy.rx = (Math.random() * 10) | 0; dummy.rxAt = now; dummy.stunUntil = 0; say('25', dummy.x, '#9fd8ff', 8, now); if (dummy.hp <= 0) koDummy(now); }
+    orb = null; debris = [];
+  }
+}
+
 function drawScene(now, dt) {
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3);
   let jf = -1, tf = -1;                       // jump frame 0-14 (0-2 crouch, 3 push-off, 4-11 airborne, 12-14 land) / teleport frame 0-14 (0-6 vanish + arrive, 7-11 fall, 12-14 land)
@@ -422,47 +491,52 @@ function drawScene(now, dt) {
   }
   let hf = -1;                                // hurt frame 0-9: Gojo's reaction when the attacking dummy lands a hit
   if (hurtAt >= 0) { hf = Math.floor(Math.max(0, now - hurtAt) * RX_FPS[hurtK] / 1000); if (hf >= 10) { hurtAt = -1; hf = -1; hurtEnd = now; } }
+  let mf = -1;                                // Max Blue summon frame 0-39 (20 FPS)
+  if (mbAt >= 0) { mf = Math.floor(Math.max(0, now - mbAt) * MB_FPS / 1000); if (mf >= 40) { mbAt = -1; mf = -1; lpReady = now + 900; } }
   let sf = -1;                                // crouch transition frame 0-9 (going down; standing up plays the same frames backwards)
-  if (stance === 'down' || stance === 'up') { sf = Math.floor(Math.max(0, now - stAt) * CR_FPS / 1000); if (sf >= 10) { stance = stance === 'down' ? 'crouch' : 'stand'; sf = -1; } }
+  if (stance === 'down' || stance === 'up') { sf = Math.floor(Math.max(0, now - stAt) * CR_FPS / 1000); if (sf >= 10) { const was = stance; stance = was === 'down' ? 'crouch' : 'stand'; sf = -1; if (was === 'up' && mbPending) { mbPending = false; mbAt = now; mf = 0; } } }       // crouched + Lapse Blue: he stands up, then summons Max Blue
   let lf = -1;                                // Lapse Blue frame 0-14 (lpK 0 = pull the enemy in, 1 = blink to the enemy)
   if (lpAt >= 0) { lf = Math.floor(Math.max(0, now - lpAt) * LAPSE_FPS / 1000); if (lf >= 15) { lpAt = -1; lf = -1; lpReady = now + 700; } }
   let af = -1;                                // attack frame 0-14 (the combo: right hook, left hook, right elbow, roundhouse kick)
   if (atkAt >= 0) {
     af = Math.floor(Math.max(0, now - atkAt) * ATK_FPS[atkK] / 1000);
     if (af >= 15) {                           // swing finished: chain into the next hit if a press was queued, otherwise open the combo window
-      if (atkQ) { atkQ = false; atkK = combo; combo = (atkK + 1) % 4; atkAt = now; af = 0; }
+      if (atkQ) { atkQ = false; if (stance === 'crouch') { atkK = 6 + cpIdx; cpIdx ^= 1; } else { atkK = combo; combo = (atkK + 1) % 4; } atkAt = now; af = 0; }
       else { atkAt = -1; af = -1; comboUntil = now + COMBO_MS; }
     }
   }
   if (atkReq) {                               // ground only; a press during a swing is remembered and chained
     atkReq = false;
-    if (t >= 1 && jf < 0 && tf < 0 && hf < 0 && lf < 0 && sf < 0 && stance === 'stand') {
+    if (t >= 1 && jf < 0 && tf < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && (stance === 'stand' || stance === 'crouch')) {
       if (af >= 0) atkQ = true;
-      else { if (now > comboUntil) combo = 0; atkK = combo; combo = (atkK + 1) % 4; atkAt = now; af = 0; atkQ = false; }
+      else { if (now > comboUntil) { combo = 0; cpIdx = 0; } if (stance === 'crouch') { atkK = 6 + cpIdx; cpIdx ^= 1; } else { atkK = combo; combo = (atkK + 1) % 4; } atkAt = now; af = 0; atkQ = false; }       // crouched: the low punch and the uppercut alternate
     }
   }
-  if (af < 0 && combo !== 0 && now > comboUntil) combo = 0;   // waited too long: back to the first hit
-  if (combo !== lastCombo) { lastCombo = combo; $('atkl').textContent = ATK_NAMES[combo]; }
+  if (af < 0 && (combo !== 0 || cpIdx !== 0) && now > comboUntil) { combo = 0; cpIdx = 0; }   // waited too long: back to the first hit (standing and crouched)
+  const lab = stance === 'crouch' ? ['R.JAB', 'L.UPPR'][cpIdx] : ATK_NAMES[combo]; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; }
   if (crReq) {                                // tap CROUCH: down in 10 frames; tap again to stand up
     crReq = false;
-    if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0) { if (stance === 'stand') { stance = 'down'; stAt = now; sf = 0; } else if (stance === 'crouch') { stance = 'up'; stAt = now; sf = 0; } }
+    if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0) { if (stance === 'stand') { stance = 'down'; stAt = now; sf = 0; } else if (stance === 'crouch') { stance = 'up'; stAt = now; sf = 0; } }
   }
   if (lpReq) {                                // LAPSE BLUE: walking forward = stand and pull the enemy in (stuns 0.4 s); otherwise blink forward to the enemy
     lpReq = false;
-    if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && stance === 'stand' && now > lpReady) { lpK = (keyR || padR) ? 0 : 1; lpAt = now; lf = 0; atkQ = false; }
+    if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && now > lpReady) {
+      if (stance === 'stand') { lpK = (keyR || padR) ? 0 : 1; lpAt = now; lf = 0; atkQ = false; }
+      else if (stance === 'crouch' && !orb) { stance = 'up'; stAt = now; sf = 0; mbPending = true; }          // crouched: stand up first, then summon MAX BLUE (not while the last orb is still out)
+    }
   }
   if (stance !== lastStance) { lastStance = stance; $('crl').textContent = stance === 'crouch' || stance === 'down' ? 'STAND' : 'CROUCH'; }
   if (jumpReq) {                              // one press = one action; presses while spawning in, crouching down, landing, attacking or casting are ignored
     jumpReq = false;
     if (t >= 1) {
-      if (jf < 0 && tf < 0) { if (af < 0 && hf < 0 && lf < 0 && sf < 0) { jumpC = stance === 'crouch'; if (jumpC) stance = 'stand'; jumpAt = now; jf = 0; } }          // from a crouch he springs higher                            // from the ground: jump
+      if (jf < 0 && tf < 0) { if (af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0) { jumpC = stance === 'crouch'; if (jumpC) stance = 'stand'; jumpAt = now; jf = 0; } }          // from a crouch he springs higher                            // from the ground: jump
       else if (tf < 0 && jf >= 4 && jf <= 11) { teleL0 = (jumpC ? D.cjump : D.jump).lift[jf]; teleAt = now; tf = 0; jumpAt = -1; jf = -1; }   // again in mid-air: teleport up, then fall
     }
   }
-  const steer = t >= 1 && ((jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0) || (jf >= 3 && jf <= 11) || (tf >= 0 && tf <= 11));   // no walking while spawning in, crouching or landing
+  const steer = t >= 1 && ((jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0) || (jf >= 3 && jf <= 11) || (tf >= 0 && tf <= 11));   // no walking while spawning in, crouching or landing
   const dir = steer ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0;
   const crch = stance === 'crouch';
-  const nm = hf >= 0 ? 'hurt' : tf >= 0 ? 'tele' : jf >= 0 ? 'jump' : lf >= 0 ? 'lapse' : af >= 0 ? 'atk' : sf >= 0 ? 'cdn' : crch ? (dir > 0 ? 'cfwd' : dir < 0 ? 'cback' : 'cidle') : dir > 0 ? 'fwd' : dir < 0 ? 'back' : 'idle';
+  const nm = hf >= 0 ? 'hurt' : tf >= 0 ? 'tele' : jf >= 0 ? 'jump' : mf >= 0 ? 'maxblue' : lf >= 0 ? 'lapse' : af >= 0 ? 'atk' : sf >= 0 ? 'cdn' : crch ? (dir > 0 ? 'cfwd' : dir < 0 ? 'cback' : 'cidle') : dir > 0 ? 'fwd' : dir < 0 ? 'back' : 'idle';
   if (nm !== mode) { mode = nm; modeAt = now; stepN = -1; }
   wx += dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * (crch ? 0.6 : 1) * dt;                    // crouch-walking is slower
   if (dash) { const k = Math.min(1, (now - dash.at) / dash.ms); wx = dash.from + (dash.to - dash.from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) dash = null; }   // Lapse Blue blink: a very fast dash
@@ -478,10 +552,18 @@ function drawScene(now, dt) {
     const o = (((-wx % 28) + 28) % 28) + (r % 2) * 14;
     for (let x = o - 28; x < VW; x += 28) ctx.fillRect(Math.round(x), y, 1, 10);
   }
+  const op = orb ? orbPose(now) : null;       // Max Blue: the sky dims and the wind is sucked into the orb
+  if (op) { ctx.fillStyle = 'rgba(6,8,36,' + (0.3 * Math.min(1, op.age / 500, (ORB_MS - op.age) / 500)) + ')'; ctx.fillRect(0, 0, VW, VH); }
   ctx.fillStyle = 'rgba(220,210,255,0.35)';   // wind streaks
   for (const p of parts) {                    // headwind: blows right-to-left, faster when he walks into it
-    p.x -= (p.v + dir * 45) * dt;
-    if (p.x < -p.l) p.x = VW; else if (p.x > VW) p.x = -p.l;
+    if (op && op.s > 0.5) {
+      const dx = op.ox - p.x, dy = op.oy - p.y, d = Math.max(6, Math.hypot(dx, dy)), v = 60 + 2400 / d;      // faster the closer they get
+      p.x += dx / d * v * dt; p.y += dy / d * v * dt;
+      if (d < 12) { p.x = Math.random() < 0.5 ? -p.l : VW; p.y = Math.random() * gy; }                          // swallowed: it starts again at the edge of the screen
+    } else {
+      p.x -= (p.v + dir * 45) * dt;
+      if (p.x < -p.l) p.x = VW; else if (p.x > VW) p.x = -p.l;
+    }
     ctx.fillRect(p.x | 0, p.y | 0, p.l, 1);
   }
 
@@ -511,12 +593,18 @@ function drawScene(now, dt) {
     }
     evL = lf;
   }
+  if (mf !== evM) {                           // MAX BLUE cues: the swell builds from frame 3, the orb is released from his palm on frame 17
+    if (mf < evM) evM = -1;
+    if (mf >= 0) { if (evM < 3 && mf >= 3) snd('mbcharge'); if (evM < 17 && mf >= 17) spawnOrb(now); }
+    evM = mf;
+  }
   drawSmoke(now, dt);
   drawDummy(now, dt);                         // behind Gojo, so his fists and kicks overlap it
-  const tele = tf >= 0, jumping = jf >= 0, atkOn = af >= 0, hurting = hf >= 0, lapsing = lf >= 0, idle = mode === 'idle';
-  const set = hurting ? (now - hurtAt < 70 ? rxW : rxN)[hurtK] : tele ? teleF : jumping ? (jumpC ? crF.jump : jumpF) : lapsing ? lapseF[lpK] : atkOn ? atkF[atkK] : mode === 'cdn' ? crF.dn : mode === 'cidle' ? crF.idle : mode === 'cfwd' ? crF.fwd : mode === 'cback' ? crF.back : idle ? idleF : mode === 'fwd' ? fwdF : backF;
-  const info = hurting ? D['rx' + hurtK] : tele ? D.tele : jumping ? (jumpC ? D.cjump : D.jump) : lapsing ? D['atk' + (4 + lpK)] : atkOn ? D['atk' + atkK] : mode === 'cdn' ? D.cdn : mode === 'cidle' ? D.cidle : mode === 'cfwd' ? D.cfwd : mode === 'cback' ? D.cback : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
-  const fi = hurting ? hf : tele ? tf : jumping ? jf : lapsing ? lf : atkOn ? af : mode === 'cdn' ? (stance === 'down' ? sf : 9 - sf) : Math.floor(Math.max(0, now - (idle || mode === 'cidle' ? spawnAt : modeAt)) / (1000 / (idle || mode === 'cidle' ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail performance.now() by a hair
+  drawOrb(now, dt);
+  const tele = tf >= 0, jumping = jf >= 0, atkOn = af >= 0, hurting = hf >= 0, lapsing = lf >= 0, mbing = mf >= 0, idle = mode === 'idle';
+  const set = hurting ? (now - hurtAt < 70 ? rxW : rxN)[hurtK] : tele ? teleF : jumping ? (jumpC ? crF.jump : jumpF) : mbing ? mbF : lapsing ? lapseF[lpK] : atkOn ? atkF[atkK] : mode === 'cdn' ? crF.dn : mode === 'cidle' ? crF.idle : mode === 'cfwd' ? crF.fwd : mode === 'cback' ? crF.back : idle ? idleF : mode === 'fwd' ? fwdF : backF;
+  const info = hurting ? D['rx' + hurtK] : tele ? D.tele : jumping ? (jumpC ? D.cjump : D.jump) : mbing ? D.atk8 : lapsing ? D['atk' + (4 + lpK)] : atkOn ? D['atk' + atkK] : mode === 'cdn' ? D.cdn : mode === 'cidle' ? D.cidle : mode === 'cfwd' ? D.cfwd : mode === 'cback' ? D.cback : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
+  const fi = hurting ? hf : tele ? tf : jumping ? jf : mbing ? mf : lapsing ? lf : atkOn ? af : mode === 'cdn' ? (stance === 'down' ? sf : 9 - sf) : Math.floor(Math.max(0, now - (idle || mode === 'cidle' ? spawnAt : modeAt)) / (1000 / (idle || mode === 'cidle' ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail performance.now() by a hair
   const lk = tele ? info.lift_k[tf] : 0;      // teleport: stays where he vanished (null), then the fixed height he reappears at, falling back to the ground
   const lift = tele ? (lk === null ? teleL0 : Math.round(Math.min(34, gy - 66) * lk)) : jumping ? info.lift[jf] : hurting && info.lift ? info.lift[hf] : 0;   // how far the sprite is raised off the ground
   gojoLift = lift; gojoGone = tele && tf < 6;   // the attacking dummy misses him while he is up in the air or vanished
@@ -546,6 +634,7 @@ function drawScene(now, dt) {
   }
   drawPopups(now);
   ctx.restore();
+  if (now < flashUntil) { ctx.fillStyle = 'rgba(190,225,255,' + (flashA * (flashUntil - now) / flashMs) + ')'; ctx.fillRect(0, 0, VW, VH); }
   drawHits(now);
 }
 
@@ -642,7 +731,7 @@ addEventListener('resize', resize);
 addEventListener('orientationchange', () => setTimeout(resize, 250));
 
 window.__dummy = () => dummy ? { gap: dummy.x - wx, hp: dummy.hp, ko: dummy.ko, kos, hits: { n: hits.n, dmg: hits.dmg, seq: hits.seq }, rx: dummy.rx, mode: dummy.mode, ai: dummy.ai, stun: Math.max(0, dummy.stunUntil - performance.now()), smoke: smoke.length } : null;
-window.__state = () => ({ stance, jumpC, mode, wx, lapse: lpAt >= 0 ? lpK : -1 });   // read-only view for the tests
+window.__state = () => ({ stance, jumpC, mode, wx, lapse: lpAt >= 0 ? lpK : -1, mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests
 window.__back = () => {                       // Android back button: step back through the menus, otherwise let the app close
   if (settingsOn()) { closeSettings(); return true; }
   if (state === 'play') { show('select'); return true; }

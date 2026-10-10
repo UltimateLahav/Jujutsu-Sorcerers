@@ -258,12 +258,12 @@ def burst_fx(f, i, k, fx):                                  # impact flash, then
         for a in range(0, 360, 10 if i == imp + 1 else 18):
             if (a // 10) % 2 == 0: f.set(x + r * cos(rad(a)), y + r * sin(rad(a)), c1 if i == imp + 1 else c2)
 def atk_fx(f, i, k, an, foot, nfp, E, Hn, Hf, gl):
-    if k >= 4: lapse_fx(f, i, k, Hn); return
+    if k in (4, 5, 8): lapse_fx(f, i, k, Hn); return
     fx = RED_FX if k == 3 else BLUE_FX
     ph = foot
     if k == 3: pt = (an[0] + 7 * cos(ph) - 2.5 * sin(ph), an[1] + 7 * sin(ph) + 2.5 * cos(ph))     # toe of the kicking foot
     elif k == 2: pt = (E[0] + 2.4 * sin(rad(nfp)), E[1] + 2.4 * cos(rad(nfp)))                       # tip of the elbow
-    else: pt = Hf if k == 1 else Hn
+    else: pt = Hf if k in (1, 7) else Hn
     PT[(k, i)] = pt
     for back, col in ((1, fx[0]), (2, fx[1])):               # motion trail while the strike is fast and glowing
         if i - back >= 0 and gl > .55 and ATK_IMPACT[k] - 2 <= i <= ATK_IMPACT[k] + 1:
@@ -357,6 +357,68 @@ def lapse_fx(f, i, k, H):
             aura(f, 'g', 'j')
         elif i <= 13: aura(f, 'h', 'g')
 
+# ---------------------------------------------------------------- crouch punches (atk6 right low punch, atk7 left uppercut), the 40-frame MAX BLUE summon (atk8) and the 20-frame orb loop
+DEB = {'u': '#5b516b', 'v': '#9a8fb0', 'w': '#3d3548'}      # stone and rubble for the debris
+PAL.update(DEB)
+C0 = (0, 9, 4, 4, 0, 0, -16, 45, -16, 45, 0)                # the crouch as a starting pose (arms in the pockets)
+ATK[6] = [K(0, C0), K(2, (-1, 10, 3, 4, 0, 0, -20, 100, -16, 45, .4)), K(4, (-2, 11, 2, 4, 0, 0, -45, -100, -16, 45, .7)), K(6, (2, 10, 5, 4, 0, 0, 70, 100, -16, 45, 1), 'in'),
+          K(8, (3, 10, 5, 4, 0, 0, 90, 110, -16, 45, .85), 'out'), K(11, (1, 9, 4, 4, 0, 0, 30, 100, -16, 45, .4)), K(14, C0)]                       # right low punch from the crouch
+ATK[7] = [K(0, C0), K(2, (-1, 10, 3, 4, 0, 0, 15, 135, -25, 10, .4)), K(4, (-2, 12, 2, 4, 0, 0, 15, 135, -40, -10, .7)), K(6, (1, 8, 5, 4, 0, 0, 12, 132, 55, 140, .95), 'in'),
+          K(7, (2, 6, 6, 4, 0, 0, 10, 130, 85, 175, 1), 'in'), K(9, (2, 5, 6, 4, 0, 0, 12, 132, 100, 190, .85), 'out'), K(11, (1, 8, 4, 4, 0, 0, 12, 130, 30, 120, .4)), K(14, C0)]   # left uppercut from the crouch
+ATK[8] = [K(0, I0), K(4, (0, 0, 0, 4, 0, 0, 30, 120, -16, 45, .4)), K(9, (-1, 0, -1, 4, 0, 0, 80, 175, -16, 45, .7)), K(16, (-1, 1, -2, 4, 0, 0, 88, 182, -16, 45, 1)),
+          K(22, (-2, 1, -3, 4, 0, 0, 90, 185, -16, 45, 1)), K(28, (-2, 1, -1, 4, 0, 0, 92, 190, -16, 45, 1)), K(33, (-1, 0, -1, 4, 0, 0, 70, 160, -16, 45, .7)),
+          K(37, (0, 0, 0, 4, 0, 0, 25, 100, -16, 45, .3)), K(39, I0)]                                                                              # MAX BLUE summon: hand up, orb forms, braced channel, release
+ATK_HANDS[6] = 'n'; ATK_HANDS[7] = 'f'; ATK_HANDS[8] = 'n'; ATK_IMPACT.extend([6, 7, 18])
+def draw_orb(f, cx, cy, r, i):
+    if r <= 0: return
+    for x, y in disc(cx, cy, r + 1.6): f.set(x, y, 'j')
+    for x, y in disc(cx, cy, r): f.set(x, y, 'g')
+    for x, y in disc(cx, cy, max(0, r - 2)): f.set(x, y, 'h')
+    if r >= 3: f.set(cx, cy, 'k')
+    for a in range(0, 360, 90): f.set(cx + (r + 3) * cos(rad(a + i * 30)), cy + (r + 3) * sin(rad(a + i * 30)), 'h')
+_lapse_fx = lapse_fx
+def lapse_fx(f, i, k, H):
+    if k != 8: return _lapse_fx(f, i, k, H)
+    r = ([0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 6, 3, 1, 0] + [0] * 40)[i]; cx, cy = H[0] + 7, H[1] - 7      # a small orb above the raised palm; the big one takes over in the world
+    draw_orb(f, cx, cy, r, i)
+    if 14 <= i <= 34: aura(f, 'j', 'j')                                                                                      # deep-blue outline while he channels
+    if 17 <= i <= 33:
+        for a in range(0, 360, 60): f.set(cx + 9 * cos(rad(a + i * 40)), cy + 9 * sin(rad(a + i * 40)), 'h')
+def bdisc(f, cx, cy, r, c):                                 # a disc made of 2x2 blocks: the chunky "pixelated" look
+    for y in range(int(cy - r) - 2, int(cy + r) + 3, 2):
+        for x in range(int(cx - r) - 2, int(cx + r) + 3, 2):
+            if math.hypot(x + 1 - cx, y + 1 - cy) <= r:
+                for dx in (0, 1):
+                    for dy in (0, 1): f.set(x + dx, y + dy, c)
+def orb_frame(i):                                           # 20-frame loop (seamless): three spiral arms turn 18 degrees a frame (3 x 120 = a full turn after 20 frames), rubble spirals in and vanishes inside the orb
+    f = F(); cx, cy = 32, 36; R = 20 + 1.0 * sin(2 * math.pi * i / 20); spin = rad(i * 18)
+    for x, y in disc(cx, cy, R + 5):
+        d = math.hypot(x - cx, y - cy)
+        if d > R + 1.5 and (x + y + i) % 2 == 0: f.set(x, y, 'j')                       # shimmering glow
+        elif d > R + 3.5 and (x - y + i) % 4 == 0: f.set(x, y, 'g')                     # a few brighter flecks further out
+    for y in range(int(cy - R) - 2, int(cy + R) + 3, 2):                                # the body: 2x2 blocks, coloured by where the spiral arms are
+        for x in range(int(cx - R) - 2, int(cx + R) + 3, 2):
+            dx, dy = x + 1 - cx, y + 1 - cy; r = math.hypot(dx, dy)
+            if r > R + 1.5: continue
+            v = cos(3 * (math.atan2(dy, dx) - spin - rad(13) * r))                      # +1 on an arm's crest, -1 in the gap between two arms
+            if r > R - 1.5: c = 'j'
+            elif r < R * .22: c = 'k'
+            elif v > .62: c = 'k' if r < R * .6 else 'h'
+            elif v > .12: c = 'h'
+            elif v > -.42: c = 'g'
+            else: c = 'j'
+            if r > R * .8: c = {'k': 'h', 'h': 'g'}.get(c, c)                             # limb darkening: the arms fade towards the rim so it reads as a ball
+            for ddx in (0, 1):
+                for ddy in (0, 1): f.set(x + ddx, y + ddy, c)
+    for c in range(8):                                      # rubble: visible while outside the orb, hidden once absorbed, so the wrap is invisible
+        p = ((i / 20) + c / 8) % 1; r_ = 31 - 22 * p; th = rad(c * 45 + 450 * p)
+        if r_ > R + 2:
+            x, y = cx + r_ * cos(th), cy + r_ * sin(th) * .85
+            cells = ((0, 0), (1, 0), (0, 1), (1, 1)) if c % 2 == 0 else ((0, 0), (1, 0), (2, 0), (1, 1))
+            for dx, dy in cells: f.set(x + dx, y + dy, 'u')
+            f.set(x, y, 'v'); f.set(x + 1, y + 1, 'w')
+    return f
+
 def build(kind, i):
     idx = i                               # (i is reused for the head loop below)
     f = F(); u = F()                      # f: legs, u: everything above the hips
@@ -377,7 +439,7 @@ def build(kind, i):
     elif atk:
         k_ = int(kind[3:]); dx, dy, lean, nth, nk, nf, nua, nfa, fua, ffa, gl = pv = keyframe(ATK[k_], i)
         hx, hy = 33 + dx, 38 + TOP + round(dy); swn = swf = False; L = 0; bob = 0; p = 0; foot = 0.0
-        thf, kf = ik(hx, hy, 29.7, GROUND)
+        thf, kf = ik(hx, hy, 29.7, GROUND); hs = 2 if k_ in (6, 7) else 0
         if k_ == 3: thn, kn_, foot2 = rad(nth), rad(nk), rad(nf)
         else: thn, kn_ = ik(hx, hy, 33.7, GROUND)
     else:
@@ -423,7 +485,7 @@ def build(kind, i):
         for x, y in pts: u.set(x, y, 'X'); u.set(x + 1, y, 'X')
         u.set(*pts[1], 'Y')
     # head, hand-drawn (x = 22 + column, y = 1 + row): static face/band first, then the hair on top, sheared by the wind
-    tip = {'idle': [0, 0, 1, 1, 0, -1], 'fwd': [round(sin(2 * math.pi * 2 * k / NW)) for k in range(NW)], 'back': [round(sin(2 * math.pi * (2 * k + 4) / NW)) for k in range(NW)], 'jump': [0, 0, 1, 1, 0, -1] * 3, 'tele': [0, 0, 1, 1, 0, -1] * 3, **{f'atk{j}': [0, 0, 1, 1, 0, -1] * 3 for j in range(4)}, **{f'rx{j}': [0, 0, 1, 1, 0, -1] * 2 for j in range(10)}}.get(kind, [0, 0, 1, 1, 0, -1] * 3)[i]
+    tip = {'idle': [0, 0, 1, 1, 0, -1], 'fwd': [round(sin(2 * math.pi * 2 * k / NW)) for k in range(NW)], 'back': [round(sin(2 * math.pi * (2 * k + 4) / NW)) for k in range(NW)], 'jump': [0, 0, 1, 1, 0, -1] * 3, 'tele': [0, 0, 1, 1, 0, -1] * 3, **{f'atk{j}': [0, 0, 1, 1, 0, -1] * 3 for j in range(4)}, **{f'rx{j}': [0, 0, 1, 1, 0, -1] * 2 for j in range(10)}}.get(kind, [0, 0, 1, 1, 0, -1] * 7)[i]
     sh = lambda y: tip if y <= 1 else 0                        # hair stays upright; only the tip pixels flutter
     hair = []
     for x, top in CROWN.items():                              # crown: white, lavender toward the band
@@ -457,20 +519,21 @@ def build(kind, i):
 
 def rows(f, x0, w): return [''.join(r[x0:x0 + w]) for r in f.g]
 
-sets = {k: [build(k, i) for i in range(NW if k in ('fwd', 'back', 'cfwd', 'cback') else 15 if k in ('jump', 'tele', 'cjump') or k.startswith('atk') else 10 if k.startswith('rx') or k == 'cdn' else 6)] for k in ('idle', 'fwd', 'back', 'jump', 'tele', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'cdn', 'cidle', 'cfwd', 'cback', 'cjump', *['rx%d' % j for j in range(10)])}
+sets = {k: [build(k, i) for i in range(NW if k in ('fwd', 'back', 'cfwd', 'cback') else 40 if k == 'atk8' else 15 if k in ('jump', 'tele', 'cjump') or k.startswith('atk') else 10 if k.startswith('rx') or k == 'cdn' else 6)] for k in ('idle', 'fwd', 'back', 'jump', 'tele', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'cdn', 'cidle', 'cfwd', 'cback', 'cjump', *['rx%d' % j for j in range(10)])}
 for k in ('idle', 'fwd', 'back'):
     for f in sets[k]: f.g = f.g[TOP:TOP + N]
-cells = [(x, y) for k, fs in sets.items() if not k.startswith(('atk', 'rx')) for f in fs for y in range(len(f.g)) for x in range(N) if f.g[y][x] != '.']
+cells = [(x, y) for k, fs in sets.items() if not k.startswith(('atk', 'rx', 'orb')) for f in fs for y in range(len(f.g)) for x in range(N) if f.g[y][x] != '.']
 acx = [x for k, fs in sets.items() if k.startswith('atk') for f in fs for r in f.g for x, c in enumerate(r) if c != '.']
 ax0, ax1 = min(acx) - 1, max(acx) + 1        # one window for the four attack sets (they reach further forward than the others)
 x0, x1 = min(x for x, y in cells) - 1, max(x for x, y in cells) + 1
 print('bbox cols', x0 + 1, x1 - 1, 'rows', min(y for x, y in cells), max(y for x, y in cells))
 bad = {c for f in (f for fs in sets.values() for f in fs) for r in f.g for c in r} - set(PAL) - {'.'}
 assert not bad, bad
-RXWIN = {k: (max(0, min(xs) - 1), min(N - 1, max(xs) + 1)) for k, fs in sets.items() if k.startswith('rx') for xs in [[x for f in fs for r in f.g for x, c in enumerate(r) if c != '.']]}
-def win(k): return (ax0, ax1) if k.startswith('atk') else RXWIN[k] if k.startswith('rx') else (x0, x1)
-json.dump({k: {'x0': win(k)[0], 'w': win(k)[1] - win(k)[0] + 1, 'h': len(fs[0].g), 'top': TOP if k in ('jump', 'tele', 'cjump', 'cdn', 'cidle', 'cfwd', 'cback') or k.startswith(('atk', 'rx')) else 0, 'cx': 33 + RX_SH[int(k[2:])] if k.startswith('rx') else 33, 'frames': [rows(f, win(k)[0], win(k)[1] - win(k)[0] + 1) for f in fs], **({'lift': JUMP_LIFT} if k == 'jump' else {}), **({'lift': CJ_LIFT} if k == 'cjump' else {}), **({'lift': RX_LIFT[int(k[2:])]} if k.startswith('rx') and int(k[2:]) in RX_LIFT else {}), **({'lift_k': TELE_K} if k == 'tele' else {})} for k, fs in sets.items()}, open('side.json', 'w'))
-d_ = json.load(open('side.json')); d_['pal_extra'] = {**GLOW, **RED}; json.dump(d_, open('side.json', 'w'))
+sets['orb'] = [orb_frame(i) for i in range(20)]
+RXWIN = {k: (max(0, min(xs) - 1), min(N - 1, max(xs) + 1)) for k, fs in sets.items() if k.startswith(('rx', 'orb')) for xs in [[x for f in fs for r in f.g for x, c in enumerate(r) if c != '.']]}
+def win(k): return (ax0, ax1) if k.startswith('atk') else RXWIN[k] if k.startswith(('rx', 'orb')) else (x0, x1)
+json.dump({k: {'x0': win(k)[0], 'w': win(k)[1] - win(k)[0] + 1, 'h': len(fs[0].g), 'top': TOP if k in ('jump', 'tele', 'cjump', 'cdn', 'cidle', 'cfwd', 'cback') or k.startswith(('atk', 'rx')) else 0, 'cx': 33 + RX_SH[int(k[2:])] if k.startswith('rx') else 32 if k == 'orb' else 33, 'frames': [rows(f, win(k)[0], win(k)[1] - win(k)[0] + 1) for f in fs], **({'lift': JUMP_LIFT} if k == 'jump' else {}), **({'lift': CJ_LIFT} if k == 'cjump' else {}), **({'lift': RX_LIFT[int(k[2:])]} if k.startswith('rx') and int(k[2:]) in RX_LIFT else {}), **({'lift_k': TELE_K} if k == 'tele' else {})} for k, fs in sets.items()}, open('side.json', 'w'))
+d_ = json.load(open('side.json')); d_['pal_extra'] = {**GLOW, **RED, **DEB}; json.dump(d_, open('side.json', 'w'))
 
 def render(f, sc, bg):
     H = len(f.g); im = Image.new('RGB', ((x1 - x0 + 1) * sc, H * sc), bg); px = im.load()
