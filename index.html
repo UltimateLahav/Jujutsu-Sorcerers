@@ -1397,15 +1397,15 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
   if (d.ko >= 0 || vs.ph !== 'fight' || now < d.stunUntil) return;
   if (now - d.rxAt < RX_DUR[d.rx]) { d.ai = 'hurt'; return; }
   if (d.ai === 'hurt') { d.ai = 'think'; d.aiAt = now; d.chain = 0; }
-  if (atkAt >= 0 && vs.seenAtk !== atkAt) { vs.seenAtk = atkAt; vs.seenAt = now; vs.seenK = atkK; vs.hist.push(atkK); if (vs.hist.length > 8) vs.hist.shift(); vs.rolled = false; }       // Gojo started a swing
+  if (atkAt >= 0 && vs.seenAtk !== atkAt) { vs.seenAtk = atkAt; vs.seenAt = now; vs.seenK = atkK; vs.hist.push(atkK); if (vs.hist.length > 8) vs.hist.shift(); vs.rolled = false; vs.defended = false; }       // Gojo started a swing
   if ((d.ai === 'block' || d.ai === 'dodge') && now >= d.until) { d.ai = 'think'; d.aiAt = now; }
-  if (d.ai === 'dodge') return;
+  if (d.ai === 'dodge' || d.ai === 'block') return;      // (guard up / stepping back: nothing else until it is over)
   const dodge = ms => { d.ai = 'dodge'; d.aiAt = now; d.until = now + ms; d.dodgeUntil = now + ms; d.vx += (gap > 0 ? 1 : -1) * 250; puff(d.x, 4); say('DODGE', d.x, '#9fd8ff', 8, now); };
   // 1. a swing is coming: after his reaction time he steps out of it or raises his guard; a move you keep repeating is read (Grade 2 and up) and answered more and more
   if (atkAt >= 0 && !vs.rolled && d.ai !== 'attack' && gap > 0 && now - vs.seenAt >= G.react * (0.8 + Math.random() * 0.4) && now < atkAt + ATK_IMPACT[vs.seenK] * 1000 / ATK_FPS[vs.seenK] && ag - 6 <= REACH[vs.seenK] + 4) {
     vs.rolled = true; const habit = vs.hist.slice(-5).filter(k => k === vs.seenK).length, r = Math.random(), blk = Math.min(0.95, G.blk + (G.smart >= 1 ? 0.12 * Math.max(0, habit - 1) : 0));
-    if (r < G.dodge) { dodge(300); return; }
-    if (r < G.dodge + blk) { d.ai = 'block'; d.aiAt = now; d.until = now + 650; }
+    if (r < G.dodge) { vs.defended = true; dodge(300); return; }
+    if (r < G.dodge + blk) { vs.defended = true; d.ai = 'block'; d.aiAt = now; d.until = now + 650; return; }
   }
   // 2. the smartest enemy sidesteps a red orb and walks out of Max Blue / the purple orb
   if (G.smart >= 3 && !d.cap && d.ai !== 'attack') {
@@ -1417,7 +1417,8 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
     const f = Math.floor((now - d.aiAt) * ATK_FPS[d.k] * G.spd / 1000);
     if (!d.swung && f >= ATK_SWING[d.k]) { d.swung = true; snd('f:swing', d.k); }
     if (!d.hitDone && f >= ATK_IMPACT[d.k]) { d.hitDone = true; snd('f:hit', d.k); if (ag - 6 <= REACH[d.k]) gojoHit(d.k, now); if (purple && Math.abs(d.x - purple.x) - 8 <= REACH[d.k]) damagePurple((DMG[d.k] || 12) + ((Math.random() * 5) | 0), now); }
-    if (f >= 15) { d.chain = (d.chain || 0) + 1; if (d.chain < G.combo && Math.random() < 0.8) { d.k = (d.k + 1) % 4; d.aiAt = now; d.hitDone = false; d.swung = false; } else { d.ai = 'rest'; d.aiAt = now; d.restFor = (650 + Math.random() * 850) / (0.45 + G.aggr * 0.9); } }
+    if (f >= 15) { d.chain = (d.chain || 0) + 1; if (d.chain < G.combo && Math.random() < 0.8 && !(G.smart >= 2 && atkAt >= 0 && gap > 0 && ag - 6 <= REACH[atkK] + 4)) {      // (from Grade 2 up he does not keep chaining into a swing of yours: he drops the combo and defends)
+       d.k = (d.k + 1) % 4; d.aiAt = now; d.hitDone = false; d.swung = false; } else { d.ai = 'rest'; d.aiAt = now; d.restFor = (650 + Math.random() * 850) / (0.45 + G.aggr * 0.9); } }
     return;
   }
   if (d.ai === 'rest') { if (now - d.aiAt > d.restFor && now - d.born > 900) d.ai = 'think'; else return; }
@@ -1426,8 +1427,9 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
   if (ag > want + 4) move = toward; else if (G.smart >= 3 && ag < want - 6 && ag > 20) move = -toward;
   const punish = G.smart >= 2 && vs.whiffAt > 0 && now - vs.whiffAt < 450 && gap > 0 && ag < REACH[3] + 12 && Math.random() < [0, 0, 0.25, 0.5, 0.8, 1][vs.gi] * dt * 14;      // Gojo just missed: strike while he is open
   const counter = G.smart >= 2 && d.counter && now - d.counter < 500 && gap > 0 && ag < REACH[0] + 14;      // he just blocked: answer at once
+  const hold = G.smart >= 1 && atkAt >= 0 && gap > 0 && ag - 6 <= REACH[vs.seenK] + 4 && now < atkAt + ATK_IMPACT[vs.seenK] * 1000 / ATK_FPS[vs.seenK] && !(vs.rolled && !vs.defended);      // a smart enemy does not start his own swing while yours is coming: he defends first (if the defence fails he trades)
   let go = punish || counter;
-  if (!go && ag - 6 <= REACH[d.k] - 1 && now >= (d.nextDecide || 0)) { d.nextDecide = now + 250; go = Math.random() < G.aggr; }
+  if (!go && !hold && ag - 6 <= REACH[d.k] - 1 && now >= (d.nextDecide || 0)) { d.nextDecide = now + 250; go = Math.random() < G.aggr; }
   if (go) { d.k = (punish || counter) && ag - 6 <= REACH[3] - 1 ? 3 : (Math.random() * 4) | 0; if (ag - 6 > REACH[d.k] - 1) d.k = 0; d.ai = 'attack'; d.aiAt = now; d.hitDone = false; d.swung = false; d.chain = 0; d.counter = 0; return; }
   if (move) { d.x += move * 30 * G.spd * dt; d.ai = 'walk'; } else d.ai = 'think';
 }
@@ -1441,7 +1443,7 @@ function drawVs(now) {                         // health bars, names, the grade,
   for (let i = 0; i < 2; i++) { ctx.fillStyle = i < vs.pw ? '#ffd34d' : '#3a3050'; ctx.fillRect(Math.round(VW / 2) - 14 - i * 8, 22, 6, 6); ctx.fillStyle = i < vs.ew ? '#ffd34d' : '#3a3050'; ctx.fillRect(Math.round(VW / 2) + 8 + i * 8, 22, 6, 6); }
   const b = vs.ph === 'intro' ? (a < 1300 ? ['ROUND ' + vs.round, 14] : ['FIGHT!', 18]) : vs.ph === 'ko' ? [vs.why === 'time' ? 'TIME!' : 'K.O.', 20] : null; if (b) vsTxt(b[0], VW / 2, gy - 62, '#ffe9a0', b[1], 'center');
 }
-window.__vs = () => vs && ({ gi: vs.gi, ph: vs.ph, round: vs.round, pw: vs.pw, ew: vs.ew, hp: vs.hp, tl: vs.tl, ehp: dummy ? dummy.hp : -1, emax: dummy ? dummy.max : -1, ai: dummy ? dummy.ai : '', res: vs.res, whiffAt: vs.whiffAt });
+window.__vs = () => vs && ({ gi: vs.gi, ph: vs.ph, round: vs.round, pw: vs.pw, ew: vs.ew, hp: vs.hp, tl: vs.tl, ehp: dummy ? dummy.hp : -1, emax: dummy ? dummy.max : -1, ai: dummy ? dummy.ai : '', res: vs.res, whiffAt: vs.whiffAt, now: performance.now() });
 window.__grades = () => GRADES; window.__vsSet = o => vs && Object.assign(vs, o); window.__vsEnemy = o => dummy && Object.assign(dummy, o);
 window.__vsKo = () => { if (dummy && vs) { dummy.hp = 0; koDummy(performance.now()); } };
 function drawBoom(now) {                      // the explosion: 15 frames at 30 FPS: a white-hot flash, a red shock ring racing out, flying sparks
