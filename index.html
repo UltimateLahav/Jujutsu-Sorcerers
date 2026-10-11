@@ -55,6 +55,12 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #lap{border-color:#59b8ff}
 #dash{border-color:#7bd9a3}
 #blk{border-color:#9f8cff}
+#fat{display:none;grid-area:2/1;border-color:#ff4a3a;color:#ff6a5a;opacity:.38}#fat span{color:#ffb4a8}#fat svg{width:4.5vh;height:4.5vh}      /* FATALITY: only in a match, to the left of BLOCK; dark until Gojo or the enemy is at 20% health or less and the enemy is close, then it glows */
+.col.vs{grid-template-columns:auto auto auto}.col.vs #fat{display:flex}
+.col.vs #dom{grid-area:1/2}.col.vs #ce{grid-area:1/3}.col.vs #blk{grid-area:2/2}.col.vs #lap{grid-area:2/3}.col.vs #dash{grid-area:3/2}.col.vs #atk{grid-area:3/3}
+#fat.rdy{opacity:1;background:#3a0d12;border-color:#ff8a7a;color:#fff;box-shadow:0 0 1.8vh #ff4a3a,0 0 .5vh #ff4a3a inset,4px 4px 0 #000;animation:fatglow .5s steps(2) infinite}
+@keyframes fatglow{50%{box-shadow:0 0 3.2vh #ff2a2a,0 0 .9vh #ff2a2a inset,4px 4px 0 #000}}
+#pad.cine{visibility:hidden}      /* the controls hide while the FATALITY cutscene plays */
 #lap svg,#dash svg,#blk svg,#atk svg,#ce svg,#dom svg{width:4.5vh;height:4.5vh}
 #atk{border-color:#6fb4ff;width:17vh;height:17vh}
 #settings.screen{z-index:5;background:rgba(13,10,23,.95);gap:2vh}
@@ -143,6 +149,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <button id="dom" class="pb" aria-label="Domain expansion: Infinite Void"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M2 1h4v1H2zM1 2h1v1H1zM6 2h1v1H6zM0 3h1v2H0zM7 3h1v2H7zM3 3h2v2H3zM1 5h1v1H1zM6 5h1v1H6zM2 6h4v1H2z"/></svg><span>DOMAIN</span></button>
     <button id="ce" class="pb" aria-label="Mode: tap to switch between normal, cursed energy and red" aria-pressed="false"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M3 0h1v1H3zM3 1h2v1H3zM6 1h1v1H6zM2 2h3v1H2zM6 2h1v1H6zM2 3h5v1H2zM1 4h7v1H1zM1 5h2v1H1zM4 5h4v1H4zM1 6h6v1H1zM2 7h4v1H2z"/></svg><span id="cel">MODE<br>OFF</span></button>
     <button id="blk" class="pb" aria-label="Block (hold)"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M0 0h8v4H7v1H6v1H5v1H4v1H3V7H2V6H1V5H0z"/></svg><span>BLOCK</span></button>
+    <button id="fat" class="pb" aria-label="Fatality finisher (needs the enemy close and Gojo or the enemy at 20 percent health or less)"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M2 0h4v1H2zM1 1h6v1H1zM0 2h8v1H0zM0 3h1v2H0zM3 3h2v2H3zM7 3h1v2H7zM0 5h8v1H0zM1 6h6v1H1zM1 7h1v1H1zM3 7h2v1H3zM6 7h1v1H6z"/></svg><span>FATAL</span></button>
     <button id="lap" class="pb" aria-label="Lapse Blue"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M2 1h4v1h1v4h-1v1h-4v-1h-1v-4h1z"/></svg><span id="lapl">BLUE</span></button>
     <button id="dash" class="pb" aria-label="Dash"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M0 1h2l3 3-3 3H0l3-3zM4 1h2l2 3-2 3H4l3-3z"/></svg><span>DASH</span></button>
     <button id="atk" class="pb" aria-label="Attack"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M3 0h2v8H3zM0 3h8v2H0zM1 1h1v1H1zM6 1h1v1H6zM1 6h1v1H1zM6 6h1v1H6z"/></svg><span id="atkl">R.HOOK</span></button>
@@ -191,6 +198,11 @@ function makeSfx(ac) {
     C[name] = { cat, step: bus(2, 0.2, 0, cat), deep: bus(0.8, 0.16, 0, cat), soft: bus(0.5, 0.2, 1400, cat) };
   }
   const applyMaster = () => master.gain.setTargetAtTime(st.on ? LEVEL.master * vol.master : 0, ac.currentTime, 0.04);
+  let slowF = null;                                      // slow motion: the whole mix goes through a low-pass filter; it is only put into the signal path the first time it is needed
+  function slowLp(on, t) {
+    if (!slowF) { slowF = ac.createBiquadFilter(); slowF.type = 'lowpass'; slowF.Q.value = 0.6; slowF.frequency.value = 22000; lim.disconnect(); lim.connect(slowF); slowF.connect(ac.destination); }
+    slowF.frequency.cancelScheduledValues(t); slowF.frequency.setValueAtTime(Math.max(300, slowF.frequency.value), t); slowF.frequency.exponentialRampToValueAtTime(on ? 1100 : 22000, t + 0.15);
+  }
 
   // ---- building blocks: filtered noise bursts and pitch-gliding tones with click-free envelopes
   const nlen = (2 * sr) | 0, nbuf = ac.createBuffer(1, nlen, sr), nd = nbuf.getChannelData(0);
@@ -485,6 +497,50 @@ function makeSfx(ac) {
       burst(B.deep, t, { f: 1800, f2: 200, q: 0.8, dur: 0.5, gain: 0.7, atk: 0.002 });
       for (let k = 0; k < 6; k++) burst(B.deep, t + 0.05 + k * 0.05, { f: R(1500, 3600), q: 2.2, dur: R(0.015, 0.03), gain: R(0.2, 0.4), atk: 0.001 });
     },
+    fatalstart(at) {                                     // FATALITY begins: two heavy heartbeats and a rising rush of air
+      const t = T(at), B = C.ce;
+      tone(B.deep, t, { type: 'triangle', f: 78, f2: 40, dur: 0.55, gain: 0.5, atk: 0.004 });
+      tone(B.deep, t + 0.42, { type: 'triangle', f: 86, f2: 38, dur: 0.6, gain: 0.55, atk: 0.004 });
+      burst(B.soft, t, { type: 'highpass', f: 600, f2: 4200, q: 0.7, dur: 0.9, gain: 0.3, atk: 0.35 });
+    },
+    slowin(at) {                                         // slow motion starts: the sound sinks (a pitch dive) and the highs are cut
+      const t = T(at), B = C.ce;
+      tone(B.soft, t, { type: 'sawtooth', f: 900, f2: 70, dur: 0.35, cur: 1, gain: 0.22, atk: 0.01 });
+      burst(B.soft, t, { type: 'lowpass', f: 3000, f2: 200, q: 0.7, dur: 0.3, gain: 1.1, atk: 0.005 });
+      slowLp(true, t);
+    },
+    slowout(at) {                                        // slow motion ends: a quick pitch climb and the highs come back
+      const t = T(at), B = C.ce;
+      tone(B.soft, t, { type: 'sawtooth', f: 90, f2: 900, dur: 0.25, cur: 1, gain: 0.18, atk: 0.01 });
+      burst(B.soft, t, { type: 'highpass', f: 400, f2: 3000, q: 0.7, dur: 0.25, gain: 0.6, atk: 0.1 });
+      slowLp(false, t);
+    },
+    fatalscream(at) {                                    // FATALITY: the enemy's long, cracking scream as the purple orb goes off: a low voice that climbs, with a heavy rasp and a vowel that opens from "oo" to "aah"
+      const t = T(at), B = C.atk.deep, dur = 1.9, end = t + dur;
+      if (!st.curve) { st.curve = new Float32Array(1025); for (let i = 0; i < 1025; i++) st.curve[i] = Math.tanh((i / 512 - 1) * 1.8); }
+      const out = ac.createGain(), ws = ac.createWaveShaper(), am = ac.createGain(), mix = ac.createGain(), lfo = ac.createOscillator(), lg = ac.createGain(), rough = ac.createOscillator(), rg = ac.createGain();
+      out.gain.setValueAtTime(0.0001, t); out.gain.linearRampToValueAtTime(0.5, t + 0.06); out.gain.setValueAtTime(0.46, t + dur * 0.72); out.gain.exponentialRampToValueAtTime(0.0001, end);
+      ws.curve = st.curve; am.gain.value = 0.72; rough.type = 'sawtooth'; rough.frequency.value = 71; rg.gain.value = 0.3; rough.connect(rg); rg.connect(am.gain);      // the rasp: the voice is chopped ~70 times a second
+      lfo.frequency.value = 6.5; lg.gain.value = 24; lfo.connect(lg);
+      for (const d of [1, 1.012]) { const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(115, t); o.frequency.exponentialRampToValueAtTime(420 * d, t + 0.3); o.frequency.exponentialRampToValueAtTime(590 * d, t + 1.15); o.frequency.exponentialRampToValueAtTime(400 * d, end); lg.connect(o.frequency); o.connect(ws); o.start(t); o.stop(end + 0.05); }
+      ws.connect(am); [[360, 800, 5, 1], [820, 1350, 6, 0.7]].forEach(([f0, f1, q, g]) => { const bp = ac.createBiquadFilter(), gg = ac.createGain(); bp.type = 'bandpass'; bp.Q.value = q; bp.frequency.setValueAtTime(f0, t); bp.frequency.exponentialRampToValueAtTime(f1, t + 0.7); gg.gain.value = g; am.connect(bp); bp.connect(gg); gg.connect(mix); });
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2800; lp.Q.value = 0.5; mix.connect(lp); lp.connect(out); out.connect(B); lfo.start(t); lfo.stop(end + 0.05); rough.start(t); rough.stop(end + 0.05);
+      burst(B, t, { type: 'highpass', f: 2600, q: 0.7, dur: 0.6, gain: 0.2, atk: 0.02 });
+    },
+    fatalbang(at) {                                      // the screen turns white: a colossal boom, a crack, a long rumble and a ringing in the ears
+      const t = T(at), B = C.ce;
+      tone(B.deep, t, { type: 'triangle', f: 62, f2: 18, dur: 2.2, gain: 0.7, atk: 0.003 });
+      tone(B.deep, t, { f: 180, f2: 40, dur: 0.6, gain: 0.35, atk: 0.002 });
+      burst(B.deep, t, { f: 3200, f2: 120, q: 0.6, dur: 1.2, gain: 1.0, atk: 0.001 });
+      burst(B.deep, t, { type: 'lowpass', f: 400, f2: 40, q: 0.7, dur: 1.6, gain: 0.9, atk: 0.004 });
+      for (let k = 0; k < 12; k++) burst(B.deep, t + 0.03 + k * 0.045, { f: R(1200, 5200), q: 2.2, dur: R(0.02, 0.06), gain: R(0.2, 0.4), atk: 0.001 });
+      tone(B.soft, t + 0.08, { f: 3150, f2: 3100, dur: 2.6, gain: 0.05, atk: 0.2 });
+    },
+    fataltitle(at) {                                     // the word FATALITY hits the screen: a deep gong
+      const t = T(at), B = C.ce;
+      [[55, 0.5], [110, 0.3], [164, 0.22], [233, 0.16], [331, 0.1]].forEach(([f, g], i) => tone(B.deep, t, { f, f2: f * 0.985, dur: 2.2 - i * 0.25, gain: g, atk: 0.004 }));
+      burst(B.soft, t, { f: 1800, f2: 400, q: 1.2, dur: 0.3, gain: 0.4, atk: 0.001 });
+    },
     setVol(name, v) {                                    // per-sound volume, 0 = silent, 1 = designed level, 2 = twice as loud
       vol[name] = v;
       if (name === 'master') applyMaster();
@@ -750,7 +806,7 @@ function show(s) {
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll(); $('settings').classList.remove('on');
-  resetPeds(s === 'play'); cm = 0; ceOn = false; ceAmt = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); rdIdx = 0; ride = null; setModeUI();
+  resetPeds(s === 'play'); cm = 0; ceOn = false; ceAmt = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); rdIdx = 0; ride = null; setModeUI();
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
   if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(performance.now(), 1200);
@@ -1039,11 +1095,11 @@ function drawDummy(now, dt) {
   if (kt < 0 && t < 1) { const R = 4 + t * 36; ctx.fillStyle = 'rgba(255,170,90,' + (1 - t) + ')'; for (let a = 0; a < 40; a++) { const th = a / 40 * 6.2832; ctx.fillRect(Math.round(sx + Math.cos(th) * R), Math.round(gy + 2 + Math.sin(th) * R * 0.25), 1, 1); } }
   if (kt < 0 && t >= 0.4) drawBar(sx - 13, gy - 68);   // health bar above his head
 }
-function drawPopups(now) {                    // damage numbers float up from the dummy and fade
+function drawPopups(now, dy) {                    // damage numbers float up from the dummy and fade
   popups = popups.filter(p => now - p.born < 800);
   ctx.textAlign = 'center';
   for (const p of popups) {
-    const k = Math.max(0, now - p.born) / 800, x = Math.round(Math.round(VW / 2) + p.x - wx), y = Math.round(gy - 76 - 16 * Math.sqrt(k));
+    const k = Math.max(0, now - p.born) / 800, x = Math.round(Math.round(VW / 2) + p.x - wx), y = Math.round(gy - 76 + (dy || 0) - 16 * Math.sqrt(k));
     ctx.font = p.size + 'px "Press Start 2P"'; ctx.globalAlpha = Math.min(1, 2.2 * (1 - k)); ctx.fillStyle = '#000'; ctx.fillText(p.txt, x + 1, y + 1); ctx.fillStyle = p.col; ctx.fillText(p.txt, x, y);
   }
   ctx.globalAlpha = 1;
@@ -1257,7 +1313,10 @@ function drawPurple(now, dt) {
   if (age >= 1400) { explodePurple(now); return; }
   const k = age / 1400, J = 0.8 + 3.4 * k;                                    // the shake gets more violent as the fuse burns down
   shakeUntil = Math.max(shakeUntil, now + 40); shakeAmp = Math.max(shakeAmp, 1 + Math.round(2.5 * k));
-  const ox = Math.round(VW / 2) + P.x - wx + Math.round((Math.random() * 2 - 1) * J), oy = gy - 53 + Math.round((Math.random() * 2 - 1) * J), s = 0.95 + 0.25 * k, f = orbP[Math.floor(age * 24 / 1000) % orbP.length], hx = D.orb.cx - D.orb.x0;
+  paintPurple(Math.round(VW / 2) + P.x - wx + Math.round((Math.random() * 2 - 1) * J), gy - 53 + Math.round((Math.random() * 2 - 1) * J), 0.95 + 0.25 * k, k, age);
+}
+function paintPurple(ox, oy, s, k, age) {     // the violet orb with its aura, lightning and flecks (ox, oy = its centre, s = size, k = how far the fuse has burned 0-1, age in ms)
+  const f = orbP[Math.floor(age * 24 / 1000) % orbP.length], hx = D.orb.cx - D.orb.x0;
   ctx.fillStyle = 'rgba(168,92,255,0.16)'; for (let yy = -26; yy <= 26; yy++) { const w = Math.floor(Math.sqrt(676 - yy * yy)); ctx.fillRect(ox - w, oy + yy, 2 * w + 1, 1); }
   ctx.imageSmoothingEnabled = false; ctx.drawImage(f, Math.round(ox - hx * s), Math.round(oy - 36 * s), Math.round(f.width * s), Math.round(f.height * s));
   for (let b = 0; b < 4 + Math.round(5 * k); b++) {                           // purple lightning with a white core
@@ -1373,7 +1432,7 @@ function startMatch(gi) { vs = { gi, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0,
 function beginRound(now) {                     // a fresh round: the scene is reset, the enemy steps in, "ROUND n" and "FIGHT!"
   const keep = vs; show('play'); vs = keep; const t = performance.now(), G = GRADES[vs.gi];
   Object.assign(vs, { ph: 'intro', t0: t, tl: 60000, hp: PHP, sh: PHP, hist: [], seenAtk: -1, seenAt: 0, seenK: 0, rolled: true, whiffAt: -1, prevAtk: -1, hitAt: -9999, why: '', who: '', koAt: 0 });
-  spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(50, Math.min(90, (VW >> 1) - 60)); $('vsres').classList.remove('on');      // (he starts in the clear, not behind the touch buttons)
+  spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); $('vsres').classList.remove('on');      // (he starts in the clear, not behind the touch buttons)
 }
 function vsTick(now, dt) {
   if (!vs) return; const a = now - vs.t0;
@@ -1453,12 +1512,192 @@ function drawVs(now) {                         // health bars, names, the grade,
     ctx.fillStyle = bl('player') ? '#ffffff' : i < vs.pw ? '#ffd34d' : '#3a3050'; ctx.fillRect(6 + W - 6 - i * 8, 12, 6, 6);
     ctx.fillStyle = bl('enemy') ? '#ffffff' : i < vs.ew ? '#ffd34d' : '#3a3050'; ctx.fillRect(VW - 6 - W + i * 8, 12, 6, 6);
   }
-  const b = vs.ph === 'intro' ? (a < 1300 ? ['ROUND ' + vs.round, 14] : ['FIGHT!', 18]) : kob ? [vs.why === 'time' ? 'TIME!' : 'K.O.', 20] : null; if (b) vsTxt(b[0], VW / 2, gy - 62, '#ffe9a0', b[1], 'center');
+  const b = vs.ph === 'intro' ? (a < 1300 ? ['ROUND ' + vs.round, 14] : ['FIGHT!', 18]) : kob ? (vs.why === 'fatal' ? ['FATALITY', 10] : [vs.why === 'time' ? 'TIME!' : 'K.O.', 20]) : null; if (b) vsTxt(b[0], VW / 2, gy - 62, '#ffe9a0', b[1], 'center');
   if (kob) { const me = vs.who === 'player', tx = me ? 'YOU GET THE POINT' : 'ENEMY GETS THE POINT'; vsTxt(tx, VW / 2, gy + 20, me ? '#7dff9a' : '#ff8a7a', Math.max(5, Math.min(8, Math.floor((VW - 120) / tx.length))), 'center'); }      // who got the point (the round restarts in a moment); it stays between the touch controls, so the letters shrink on a narrow screen
 }
 window.__vs = () => vs && ({ gi: vs.gi, ph: vs.ph, round: vs.round, pw: vs.pw, ew: vs.ew, hp: vs.hp, tl: vs.tl, ehp: dummy ? dummy.hp : -1, emax: dummy ? dummy.max : -1, ai: dummy ? dummy.ai : '', res: vs.res, who: vs.who, why: vs.why, whiffAt: vs.whiffAt, now: performance.now() });
 window.__grades = () => GRADES; window.__vsSet = o => vs && Object.assign(vs, o); window.__vsEnemy = o => dummy && Object.assign(dummy, o);
 window.__vsKo = () => { if (dummy && vs) { dummy.hp = 0; koDummy(performance.now()); } };
+// ---------------------------------------------------------------- FATALITY: the finisher cutscene (Versus mode). When Gojo or the enemy is at 20% health or less and the enemy is close, the FATALITY button starts a scripted scene with its own clock (so it can slow down): a 2-second barrage, a kick that throws him up while Max Blue charges, a kick that sends him down, a RED that seems aimed at him but is fired up into the blue, the purple blast, his scream, a white-out and the title. Gojo wins the round.
+const FAT_RANGE = 44, FAT_LOW = 0.2, FAT_SEQ = [14, 15, 16, 14, 15, 16, 14], FAT_RX = [0, 3, 5, 1, 8, 6, 2];      // the barrage: jab, kick, cross, jab, kick, cross, jab (about 2 s); the reaction the enemy shows to each blow
+const FEX = 17, FEX2 = 60, FLIFT = 72, FOY = 84;      // px right of Gojo: where the enemy stands for the barrage / after he has been thrown and kicked down; how high Gojo is in the air for the kick down; how high the orbs hang
+const fatH = tau => 165 * tau - 110 * tau * tau;       // his height (px above the floor) after the kick: thrown up, he hangs at the top for about 0.75 s
+const FSW = [];                                        // the barrage's swings: when each starts, how long it lasts (11 of its 15 frames, 15% faster), when its whoosh and its blow come
+{ let t = 0; for (const k of FAT_SEQ) { const sp = ATK_FPS[k] * 1.15; FSW.push({ k, t0: t, d: 11 / sp, hit: t + ATK_IMPACT[k] / sp, sw: t + ATK_SWING[k] / sp }); t += 11 / sp; } FSW.end = t; }
+const FP = (() => {                                    // the timeline, in seconds of cutscene time
+  const TB = 0.5, TK = TB + FSW.end, TL = TK + 8 / 24, TV = TL + 0.55, TA = TL + 0.75, TD = TA + 3 / 24, TS = TD + 0.17, TLD = TD + 0.43, TR = TLD + 0.2, TF = TR + 1.0, TU = TF + 0.4, TBL = TU + 1.3, TT = TBL + 0.4, TE = TBL + 2.0, TX = TBL + 2.8;
+  return { TB, TK, TL, TV, TA, TD, TS, TLD, TR, TF, TU, TBL, TT, TE, TX };      // barrage | big kick | he is thrown | Gojo blinks | appears | kicks down | slam | lands | RED charge | RED fires | the fuse | the blast | the title | round ends | over
+})();
+const FAT_SLOW = [[FP.TL - 0.12, FP.TL + 0.4, 0.35], [FP.TD - 0.1, FP.TS + 0.05, 0.35], [FP.TF - 0.06, FP.TU, 0.45], [FP.TU, FP.TBL - 0.25, 0.75], [FP.TBL - 0.25, FP.TBL + 0.15, 0.3]];      // slow motion: [from, to, speed]
+let fat = null, fatReq = 0;                            // fat = the running cutscene (null when there is none); fatReq = until when a press of the FATALITY button is remembered
+const orbAt = (set, n, sx, sy, s) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));      // an orb frame centred on (sx, sy)
+function fatState(now) {                               // 0 = ready; 1 = nobody is at 20% health or less; 2 = the enemy is too far away; 3 = not possible right now
+  if (!vs || vs.ph !== 'fight' || fat || dom || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || now - spawnAt < 900) return 3;
+  if (!(dummy.hp <= dummy.max * FAT_LOW || vs.hp <= PHP * FAT_LOW)) return 1;
+  if (Math.abs(dummy.x - wx) > FAT_RANGE) return 2;
+  return hurtAt >= 0 || gojoGone ? 3 : 0;
+}
+function fatUI(now) {                                  // the button: only in a match, dark until it can be used, then it glows
+  const col = $('fat').parentNode; col.classList.toggle('vs', !!vs); if (vs) $('fat').classList.toggle('rdy', fatState(now) === 0);
+}
+function pressFat() { fatReq = performance.now() + 500; }      // (a press is remembered for half a second, e.g. while he is still reeling)
+function fatStart(now) {
+  const d = dummy;
+  fat = { t: 0, rate: 1, freeze: 0, slow: false, blastAt: 0, pan: 0, ev: {}, fx: [], trail: [], ex0: Math.min(FAT_RANGE, Math.abs(d.x - wx)), invUntil: 0, linesUntil: 0, focus: [0, 0], deb: Array.from({ length: 26 }, (_, i) => ({ a: i * 2.4 + Math.random(), d: 60 + Math.random() * 60, w: 1 + ((Math.random() * 2) | 0), col: STONE[i % 4] })) };
+  atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; hurtAt = -1; wxv = 0;      // everything Gojo and the world were doing is cancelled
+  orb = null; debris = []; rdOrb = null; purple = null; boom = null; pboom = null; popups = []; smoke = []; hits.until = 0;
+  d.ai = 'rest'; d.pull = null; d.vx = 0; releaseAll(); $('pad').classList.add('cine');
+}
+function fatReset() { fat = null; fatReq = 0; $('pad').classList.remove('cine'); }
+function fatSpark(x, y, n) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.2832, v = 40 + Math.random() * 110; fat.fx.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 30, life: 0.3 + Math.random() * 0.35, age: 0, col: ['#ffffff', '#ffe9a0', '#9fd8ff'][i % 3], s: i % 4 ? 1 : 2 }); } }
+function fatBig(now, x, y, shake, sparks) {            // a big blow: screen shake, sparks, a black-and-white flash frame and speed lines
+  shakeUntil = now + 130; shakeAmp = shake; fatSpark(x, y, sparks); fat.invUntil = now + 75; fat.linesUntil = now + 150; fat.focus = [x, y];
+}
+function fatHit(i, now) {                              // one blow of the barrage
+  const sw = FSW[i], kick = sw.k === 15, ex = Math.round(VW / 2) + FEX;
+  snd('hit', sw.k); snd('smack', kick ? 3 : 0); shakeUntil = now + 90; shakeAmp = kick ? 3 : 2; fatSpark(ex - 5, gy - 36, kick ? 14 : 8);
+  say('' + (DMG[sw.k] + 3 * i), wx + FEX - 2, popCol(), 8, now); fat.freeze = Math.max(fat.freeze, now + (kick ? 55 : 30));
+  if (kick || i === FSW.length - 1) { fat.invUntil = now + 75; fat.linesUntil = now + 140; fat.focus = [ex - 5, gy - 36]; }
+}
+function fatFinish(now) {                              // the white fades: the enemy is gone, Gojo wins the round
+  if (!vs || vs.ph !== 'fight') return;
+  dummy.hp = 0; dummy.shown = 0; dummy.ko = now - 3000; dummy.koAt = dummy.ko; kos++; endRound('player', 'fatal', now);
+}
+function fatEvents(now, t) {
+  const f = fat, P = FP, mx = Math.round(VW / 2), at = (k, T, fn) => { if (!f.ev[k] && t >= T) { f.ev[k] = 1; fn(); } };
+  at('go', 0, () => { snd('fatalstart'); f.invUntil = now + 90; shakeUntil = now + 200; shakeAmp = 2; f.focus = [mx + FEX, gy - 36]; f.linesUntil = now + 140; });
+  FSW.forEach((sw, i) => { at('sw' + i, P.TB + sw.sw, () => snd('swing', sw.k)); at('h' + i, P.TB + sw.hit, () => fatHit(i, now)); });
+  at('kick', P.TK + 5 / 24, () => { snd('swing', 3); snd('mbcharge'); });
+  at('launch', P.TL, () => { snd('hit', 3); snd('smack', 3); snd('orbstart'); snd('orb', 3.4); fatBig(now, mx + FEX + 4, gy - 34, 4, 16); });
+  at('blink', P.TV, () => snd('vanish'));
+  at('arrive', P.TA, () => { snd('arrive'); fatSpark(mx + 20, gy - FLIFT + 4, 10); });
+  at('kdown', P.TD, () => { snd('hit', 3); snd('smack', 3); fatBig(now, mx + FEX + 36, gy - FLIFT + 2, 4, 16); });
+  at('slam', P.TS, () => { snd('land', 1.6); snd('ko'); puff(wx + FEX2, 9); fatBig(now, mx + FEX2, gy - 6, 6, 20); say('' + 35, wx + FEX2, popCol(), 10, now); });
+  at('land', P.TLD, () => { snd('land', 1); puff(wx + 2, 4); shakeUntil = now + 100; shakeAmp = 2; });
+  at('red', P.TR, () => { popups = []; snd('redcharge'); f.invUntil = now + 90; f.linesUntil = now + 150; f.focus = [mx + 19, gy - 42]; });
+  at('fire', P.TF, () => { snd('redfire'); fatSpark(mx + 20, gy - 42, 8); });
+  at('fuse', P.TU, () => { snd('purple'); f.invUntil = now + 80; f.linesUntil = now + 140; f.focus = [mx + FEX2, gy - FOY]; shakeUntil = now + 300; shakeAmp = 3; });
+  at('scream', P.TU + 0.1, () => snd('fatalscream'));
+  at('blast', P.TBL, () => { f.blastAt = now; snd('purpleboom'); snd('fatalbang'); shakeUntil = now + 700; shakeAmp = 6; });
+  at('title', P.TT, () => snd('fataltitle'));
+  at('end', P.TE, () => fatFinish(now));
+}
+function fatEnemy(t, now) {                            // where the enemy is and what he looks like at cutscene time t (lift = px above the floor; the sprite turns about the point pv px above his feet)
+  const P = FP, f = fat, mx = Math.round(VW / 2), E = { x: mx + FEX, lift: 0, rot: 0, pv: 32, vis: true, src: null, info: D.idle }, ix = Math.floor(now / (1000 / IDLE_FPS)) % dumF.length;
+  if (t >= P.TBL) { E.vis = false; return E; }                                                    // vaporised
+  if (t < P.TB) { E.x = mx + f.ex0 + (FEX - f.ex0) * (1 - Math.pow(1 - Math.min(1, t / 0.4), 3)); E.src = dumF[ix]; return E; }      // pulled in front of Gojo
+  if (t < P.TL) {                                                                                 // the barrage: each blow makes him flinch (one of the ten reactions) and shoves him a little
+    let i = -1; for (let j = 0; j < FSW.length; j++) if (t >= P.TB + FSW[j].hit) i = j;
+    if (i < 0) { E.src = dumF[ix]; return E; }
+    const lt = t - P.TB - FSW[i].hit, rx = FAT_RX[i], fi = Math.min(t < P.TK ? 4 : 9, Math.floor(lt * RX_FPS[rx])), inf = D['rx' + rx], kick = FSW[i].k === 15;
+    E.info = inf; E.src = (lt < 0.07 ? rxW : rxI)[rx][fi]; E.pv = 0; E.lift = (inf.lift ? inf.lift[fi] : 0) + (kick ? 4 * Math.exp(-lt * 10) : 0); E.x = mx + FEX + (kick ? 7 : 4) * Math.exp(-lt * 14); return E;
+  }
+  const tau = t - P.TL, xK = mx + FEX + 35, hK = fatH(P.TD - P.TL), rK = (7.5 * (P.TD - P.TL)) % 6.2832;
+  if (t < P.TD) { E.lift = fatH(tau); E.x = mx + FEX + 35 * tau / (P.TD - P.TL); E.rot = 7.5 * tau; E.src = tau < 0.08 ? dumW[ix] : (Math.floor(now / 70) % 2 ? dumB[ix] : dumF[ix]); return E; }      // thrown up, tumbling, caught in the pull
+  if (t < P.TS) { const u = (t - P.TD) / (P.TS - P.TD); E.lift = hK * (1 - u * u) - 22 * u * u; E.x = xK + (mx + FEX2 - xK) * u; E.rot = rK + (1.4 - rK) * u; E.src = dumF[ix]; return E; }      // kicked down
+  E.x = mx + FEX2; const k = t - P.TS;
+  if (k < 0.3) { E.lift = -22 + 6 * Math.exp(-k * 22); E.rot = 1.4; E.src = k < 0.15 ? dumW[ix] : dumF[ix]; return E; }      // lying where he hit the floor
+  if (k < 0.55) { const u = (k - 0.3) / 0.25, e = u * u * (3 - 2 * u); E.lift = -22 * (1 - e); E.rot = 1.4 * (1 - e); E.src = dumB[ix]; return E; }      // he gets up, dazed
+  E.src = t >= P.TU ? dumF[ix] : Math.floor(now / 70) % 2 ? dumB[ix] : dumF[ix];
+  if (t >= P.TU + 0.1) { const s = Math.min(1, (t - P.TU) / 0.3); E.x += Math.round((Math.random() - 0.5) * 4 * s); E.lift = Math.min(10, (t - P.TU) * 14) + Math.round((Math.random() - 0.5) * 2); if (Math.floor(now / 90) % 3 === 0) E.src = dumW[ix]; }      // in the grip of the purple orb: shaking, lifted off the floor, screaming
+  return E;
+}
+function fatGojo(t, now) {                             // Gojo's pose and place at cutscene time t
+  const P = FP, mx = Math.round(VW / 2), G = { set: idleF, info: D.idle, fi: Math.floor(now / (1000 / IDLE_FPS)) % idleF.length, x: mx, lift: 0, vis: true }, pick = (set, info, fi, x, lift) => { G.set = set; G.info = info; G.fi = fi; if (x !== undefined) G.x = x; if (lift) G.lift = lift; return G; };
+  if (t >= P.TB && t < P.TK) { let i = 0; for (let j = 0; j < FSW.length; j++) if (t >= P.TB + FSW[j].t0) i = j; const k = FSW[i].k; return pick(atkF[k], D['atk' + k], Math.min(14, Math.floor((t - P.TB - FSW[i].t0) * ATK_FPS[k] * 1.15))); }      // the barrage
+  if (t >= P.TK && t < P.TK + 15 / 24) return pick(atkF[3], D.atk3, Math.min(14, Math.floor((t - P.TK) * 24)));      // the big kick
+  if (t >= P.TV && t < P.TA) { if (t < P.TV + 0.15) return pick(teleF, D.tele, Math.min(2, Math.floor((t - P.TV) * 20))); G.vis = false; return G; }      // he folds into light and is gone
+  if (t >= P.TA && t < P.TD + 0.13) return pick(atkF[3], D.atk3, Math.min(14, 5 + Math.floor((t - P.TA) * 24)), mx + 20, FLIFT);      // the kick in the air
+  if (t >= P.TD + 0.13 && t < P.TLD) { const k = (t - P.TD - 0.13) / (P.TLD - P.TD - 0.13); return pick(teleF, D.tele, 8 + Math.floor(now / 66) % 4, Math.round(mx + 20 * (1 - k)), FLIFT * (1 - k * k)); }      // falling back down
+  if (t >= P.TLD && t < P.TLD + 0.15) return pick(teleF, D.tele, Math.min(14, 12 + Math.floor((t - P.TLD) * 20)));      // landing
+  if (t >= P.TR && t < P.TF) return pick(redF, D.atk22, Math.min(19, Math.floor((t - P.TR) * 20)));                  // RED: the fingers go up and the orb gathers
+  if (t >= P.TF && t < P.TBL + 0.3) return pick(redF, D.atk22, Math.min(26, 20 + Math.floor((t - P.TF) * 20)));     // RED is released: the arm points
+  return G;
+}
+function fatRedPos(t) {                                // the red orb: straight at the enemy for 0.2 s, then it swerves up into the blue orb
+  const mx = Math.round(VW / 2), S = [mx + 19.6, gy - 41.8], A = [mx + FEX2 - 8, gy - 38], C = [mx + FEX2 + 6, gy - 34], O = [mx + FEX2, gy - FOY], u = Math.max(0, Math.min(1, (t - FP.TF) / (FP.TU - FP.TF)));
+  if (u < 0.5) { const w = u / 0.5; return [S[0] + (A[0] - S[0]) * w, S[1] + (A[1] - S[1]) * w]; }
+  const v = (u - 0.5) / 0.5, m = 1 - v; return [m * m * A[0] + 2 * m * v * C[0] + v * v * O[0], m * m * A[1] + 2 * m * v * C[1] + v * v * O[1]];
+}
+function fatShadow(x, lift, wide) { const a = 0.4 * Math.max(0, 1 - lift / 70), w = wide ? 30 : 9; ctx.fillStyle = 'rgba(0,0,0,' + a.toFixed(2) + ')'; ctx.fillRect(x - w, gy + 3, w * 2, 2); ctx.fillRect(x - w + 3, gy + 2, w * 2 - 6, 1); ctx.fillRect(x - w + 3, gy + 5, w * 2 - 6, 1); }
+function fatDisc(x, y, R) { for (let yy = Math.max(-R, -y); yy <= Math.min(R, VH - y); yy++) { const w = Math.floor(Math.sqrt(R * R - yy * yy)); ctx.fillRect(x - w, y + yy, 2 * w + 1, 1); } }
+function fatTitle(k, a) {                              // the word FATALITY: it slams in huge, drops to its size in three steps, then shakes a little
+  const base = Math.max(8, Math.min(32, Math.floor((VW - 12) / 64) * 8)), sz = k < 0.06 ? base * 2 : k < 0.12 ? base * 1.5 : base, j = k < 0.9 ? Math.round((Math.random() - 0.5) * 2) : 0, x = Math.round(VW / 2) + j, y = Math.round(VH / 2) + Math.round(sz / 2) - 6 + j;
+  ctx.globalAlpha = a; ctx.textAlign = 'center'; ctx.font = sz + 'px "Press Start 2P"';
+  ctx.fillStyle = '#2a0408'; for (const [dx, dy] of [[-2, 0], [2, 0], [0, -2], [0, 2], [3, 3]]) ctx.fillText('FATALITY', x + dx, y + dy);
+  ctx.fillStyle = '#d8101c'; ctx.fillText('FATALITY', x, y); ctx.globalAlpha = 1;
+}
+function fatFrame(now, dt) {                           // one frame of the cutscene (it replaces the normal scene while it plays)
+  const f = fat, P = FP;
+  keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = false; fatReq = 0;      // no control
+  if (now >= f.freeze) f.t += dt * f.rate;               // (a hit-stop holds the clock for a moment)
+  let tr = 1; for (const [a, b, r] of FAT_SLOW) if (f.t >= a && f.t < b) tr = r;
+  f.rate += (tr - f.rate) * Math.min(1, dt * 16);
+  if (tr < 1 && !f.slow) { f.slow = true; snd('slowin'); } else if (tr === 1 && f.slow) { f.slow = false; snd('slowout'); }
+  const t = f.t, sdt = dt * f.rate, mx = Math.round(VW / 2), my = Math.round(VH / 2);
+  fatEvents(now, t);
+  if (!fat) return;
+  const en = fatEnemy(t, now), go = fatGojo(t, now);
+  // ---- the camera: wide (it tilts up to follow him when he is thrown), then pushed in 2x on the two of them from the RED charge to the blast
+  const push = t >= P.TR - 0.02 && t < P.TBL + 0.05, z = push ? 2 : 1, px = push ? mx + 36 : mx, hT = t < P.TD + 0.05 ? Math.max(en.vis ? en.lift : 0, go.vis ? go.lift : 0) : (en.vis ? en.lift : 0);
+  f.pan += (Math.max(0, Math.min(50, hT - 20)) - f.pan) * Math.min(1, dt * 10); const py = push ? gy - 58 : my - Math.round(f.pan);      // (the picture tilts up with whoever is highest; after the kick down it follows him to the floor)
+  f.z = z; ctx.save(); ctx.imageSmoothingEnabled = false;
+  if (now < shakeUntil) ctx.translate(Math.round((Math.random() * 2 - 1) * shakeAmp), Math.round((Math.random() * 2 - 1) * shakeAmp));
+  ctx.translate(mx, my); if (z !== 1) ctx.scale(z, z); ctx.translate(-px, -py);
+  ctx.fillStyle = '#070b1e'; ctx.fillRect(-VW, -400, VW * 3, 400 + gy);        // (sky above and beside the picture when the camera tilts)
+  drawBackdrop(now); ctx.fillStyle = 'rgba(10,6,30,0.3)'; ctx.fillRect(-VW, -400, VW * 3, 900);      // the world darkens a little around the two of them
+  drawSmoke(now, sdt);
+  // the blue orb (Max Blue): it grows in the sky above where he lands; rubble spirals in, rings on the floor shrink towards it
+  const ox = mx + FEX2, oy = gy - FOY;
+  if (t >= P.TK + 0.1 && t < P.TU) {
+    const age = (t - P.TK - 0.1) * 1000, k = Math.min(1, age / 1000), s = 0.2 + 0.7 * (1 - Math.pow(1 - k, 3));
+    if (age > 300) for (let r = 0; r < 3; r++) { const ph = (age / 800 + r / 3) % 1, R = 8 + 70 * (1 - ph); ctx.fillStyle = 'rgba(130,200,255,' + (0.5 * Math.sin(ph * Math.PI)).toFixed(2) + ')'; for (let a = 0; a < 48; a++) { const th = a / 48 * 6.2832; ctx.fillRect(Math.round(ox + Math.cos(th) * R), Math.round(gy + 4 + Math.sin(th) * R * 0.2), 1, 1); } }
+    f.deb.forEach((p, i) => { const ph = (age / 1700 + i / f.deb.length) % 1, d = (10 + p.d * (1 - ph)) * s, a = p.a + ph * 7; ctx.fillStyle = d < 24 ? '#e8f6ff' : d < 42 ? '#8fd0ff' : p.col; ctx.fillRect(Math.round(ox + Math.cos(a) * d), Math.round(oy + Math.sin(a) * d * 0.42 + 6), p.w, p.w); });
+    orbAt(orbF, Math.floor(age * 20 / 1000), ox, oy, s);
+  }
+  if (t >= P.TU && t < P.TBL) {
+    const k = (t - P.TU) / (P.TBL - P.TU), J = 0.8 + 3.4 * k; shakeUntil = Math.max(shakeUntil, now + 40); shakeAmp = Math.max(shakeAmp, 1 + Math.round(2.5 * k));
+    paintPurple(ox + Math.round((Math.random() * 2 - 1) * J), oy + Math.round((Math.random() * 2 - 1) * J), 1.0 + 0.3 * k, k, (t - P.TU) * 1000);
+  }
+  // the fighters
+  if (en.vis) {
+    fatShadow(en.x, Math.max(0, en.lift), en.rot > 0.6); const hx = en.info.cx - en.info.x0;
+    ctx.save(); ctx.translate(en.x, gy + 2 - Math.round(en.lift) - en.pv); if (en.rot) ctx.rotate(en.rot); ctx.scale(-1, 1); ctx.drawImage(en.src, -hx, -62 - (en.info.top || 0) + en.pv); ctx.restore();
+    if (t >= P.TU + 0.1 && t < P.TBL) for (let i = 0; i < 3; i++) { const R = 12 + i * 10 + ((now / 24) % 10), hy = gy - 54 - Math.round(en.lift); ctx.fillStyle = 'rgba(255,255,255,' + (0.9 - i * 0.22).toFixed(2) + ')'; for (let a = 0; a < 24; a++) { const th = 3.1416 + (a / 23 - 0.5) * 1.5; ctx.fillRect(Math.round(en.x + Math.cos(th) * R), Math.round(hy + Math.sin(th) * R), 2, 2); } }      // his scream: waves race out towards Gojo
+  }
+  if (go.vis) {
+    fatShadow(go.x, go.lift, false); const gx = go.x - (go.info.cx - go.info.x0), gyy = gy - 60 - go.info.top - Math.round(go.lift);
+    ctx.drawImage(go.set[go.fi], gx, gyy);
+    if (t >= P.TR && t < P.TF) { const a = go.info.hn[go.fi]; if (a) orbAt(orbR, Math.floor(now * 20 / 1000), gx + a[0] + 2, gyy + a[1] - 8, 0.1 + 0.3 * Math.min(1, (t - P.TR) / 0.95)); }      // the red orb grows above his raised fingers
+  }
+  if (t >= P.TV && t < P.TA) { const k = (t - P.TV) / (P.TA - P.TV); ctx.fillStyle = 'rgba(160,220,255,' + (0.8 * (1 - k)).toFixed(2) + ')'; for (let i = 0; i < 18; i++) { const yy = gy - 20 - Math.round((gy - 20 - (gy - FLIFT)) * k * (i / 17)); ctx.fillRect(mx + 8 + Math.round(12 * k * (i / 17)), yy, 1, 3); } }      // a streak of blue light up to the place he arrives
+  // RED: it flies at him, then swerves up into the blue orb; the two fuse into the purple orb
+  if (t >= P.TF && t < P.TU) {
+    const [rx, ry] = fatRedPos(t); f.trail.push([rx, ry]); if (f.trail.length > 9) f.trail.shift(); const k = Math.floor(now * 20 / 1000);
+    f.trail.forEach(([tx, ty], j) => { ctx.globalAlpha = 0.12 + 0.4 * j / 9; orbAt(orbR, k + j, tx, ty, 0.1 + 0.22 * j / 9); }); ctx.globalAlpha = 1; orbAt(orbR, k, rx, ry, 0.42);
+  }
+  // sparks, then the damage numbers
+  f.fx = f.fx.filter(p => (p.age += sdt) < p.life); for (const p of f.fx) { p.x += p.vx * sdt; p.y += p.vy * sdt; p.vy += 260 * sdt; ctx.fillStyle = p.col; ctx.fillRect(Math.round(p.x), Math.round(p.y), p.s, p.s); }
+  drawPopups(now, 34);
+  ctx.restore();
+  // ---- on the screen itself: the flash frame, the speed lines, the white-out, the title, the cinema bars
+  if (now < f.invUntil) { ctx.globalCompositeOperation = 'difference'; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, VW, VH); ctx.globalCompositeOperation = 'source-over'; }
+  if (now < f.linesUntil) {
+    const fx = Math.round(mx + (f.focus[0] - px) * z), fy = Math.round(my + (f.focus[1] - py) * z), seed = (now / 45) | 0; ctx.fillStyle = '#fff';
+    for (let i = 0; i < 30; i++) { const h = Math.imul(i * 7919 + seed * 104729 + 17, 2246822519) >>> 0, a = i / 30 * 6.2832 + (h % 100) * 0.001, r0 = 18 + (h >> 8) % 16, r1 = r0 + 40 + (h >> 12) % 70; for (let r = r0; r < r1; r += 1) ctx.fillRect(Math.round(fx + Math.cos(a) * r), Math.round(fy + Math.sin(a) * r * 0.8), 1, 1); }
+  }
+  if (t >= P.TBL) {
+    const k = Math.min(1, (now - f.blastAt) / 160), fade = t >= P.TE ? 1 - Math.min(1, (t - P.TE) / 0.8) : 1, bx = Math.round(mx + (ox - px) * z), by = Math.round(my + (oy - py) * z);
+    ctx.globalAlpha = fade; ctx.fillStyle = '#fff'; if (k < 1) fatDisc(bx, by, Math.round(k * Math.hypot(VW, VH))); else ctx.fillRect(0, 0, VW, VH); ctx.globalAlpha = 1;
+    if (t >= P.TT) fatTitle(t - P.TT, t >= P.TE ? Math.max(0, 1 - (t - P.TE) / 0.6) : 1);
+  }
+  if (t >= P.TE) { ctx.globalAlpha = Math.min(1, (t - P.TE) / 0.6); drawVs(now); ctx.globalAlpha = 1; }      // the match display comes back
+  const bh = Math.round(VH * 0.11), bk = Math.min(1, t / 0.3), bo = Math.max(0, Math.min(1, (t - (P.TX - 0.45)) / 0.45)), b = bh * (bk * bk * (3 - 2 * bk)) * (1 - bo * bo * (3 - 2 * bo));
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, Math.round(b)); ctx.fillRect(0, VH - Math.round(b), VW, Math.round(b));
+  if (t >= P.TX) fatReset();
+}
+window.__fat = () => fat && ({ t: +fat.t.toFixed(3), rate: +fat.rate.toFixed(2), z: fat.z, now: performance.now() });
+window.__fatState = () => fatState(performance.now()); window.__fatJump = t => { if (fat) fat.t = t; }; window.__fatTimes = () => FP; window.__fatPress = () => pressFat();
 function drawBoom(now) {                      // the explosion: 15 frames at 30 FPS: a white-hot flash, a red shock ring racing out, flying sparks
   if (!boom) return; const i = Math.floor((now - boom.born) * 30 / 1000); if (i >= 15) { boom = null; return; }
   const sx = Math.round(Math.round(VW / 2) + boom.x - wx), sy = Math.round(boom.y), z = boom.big ? 1 : 0.6;
@@ -1522,8 +1761,22 @@ function pickAtk() {                          // crouched: the low jab and the u
   if (cm === 2) { const k = 18 + rdIdx; rdIdx = (rdIdx + 1) % 4; return k; }      // red: kick to the neck, kick to the stomach, punch, hard punch
   const k = combo; combo = (k + 1) % 4; return k;
 }
+function drawBackdrop(now) {                  // everything behind the fighters (also used by the FATALITY cutscene)
+  if (domBgOff(now)) { ctx.fillStyle = '#000'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }
+  else { ctx.save(); ctx.translate(0, -FAR); ctx.drawImage(bg, 0, 0);
+  layer(far, 0.25); layer(near, 0.55);
+  drawProps(now); ctx.restore(); drawGround(); drawBlood(now); }
+  domVoidLayer(now);
+}
 function drawScene(now, dt) {
+  fatUI(now);
+  if (fat) { fatFrame(now, dt); return; }       // the FATALITY cutscene replaces the whole scene while it plays
   domTick(now); vsTick(now, dt);
+  if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
+    const fs = fatState(now);
+    if (fs === 0) { fatReq = 0; fatStart(now); fatFrame(now, dt); return; }
+    if (now > fatReq) { fatReq = 0; if (fs === 1 || fs === 2) say(fs === 1 ? 'NEED 20% HEALTH' : 'GET CLOSER', wx, '#ff8a7a', 8, now); }
+  }
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3);
   if (mbAt < 0) mbK = 0;
   if (ceReq) { ceReq = false; if (t >= 1) cycleMode(now); }        // CURSED ENERGY button / key: on <-> off
@@ -1623,11 +1876,7 @@ function drawScene(now, dt) {
   ctx.save();
   if (now < shakeUntil) ctx.translate(Math.round((Math.random() * 2 - 1) * shakeAmp), Math.round((Math.random() * 2 - 1) * shakeAmp));   // tiny shake on impact
   ctx.imageSmoothingEnabled = false;
-  if (domBgOff(now)) { ctx.fillStyle = '#000'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }
-  else { ctx.save(); ctx.translate(0, -FAR); ctx.drawImage(bg, 0, 0);
-  layer(far, 0.25); layer(near, 0.55);
-  drawProps(now); ctx.restore(); drawGround(); drawBlood(now); }
-  domVoidLayer(now);               // traffic lights and lamps, then the zebra crossing under his feet (it scrolls with the world)
+  drawBackdrop(now);               // the sky, the city, traffic lights and lamps, then the zebra crossing under his feet (it scrolls with the world)
   const rush = df >= 2 && df <= 11 ? (dgK === 0 ? 700 : -500) : 0;        // the wind streaks race past during a dash
   const op = orb ? orbPose(now) : null;       // Max Blue: the sky dims and the wind is sucked into the orb
   if (op) { ctx.fillStyle = 'rgba(6,8,36,' + (0.3 * Math.min(1, op.age / 500, (ORB_MS - op.age) / 500)) + ')'; ctx.fillRect(0, 0, VW, VH); }
@@ -1740,7 +1989,7 @@ function tick(now) {
 // ---------------------------------------------------------------- input
 function releaseAll() {
   keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = blockHeld = false;
-  $('ce').classList.remove('on'); $('atk').classList.remove('on'); $('lap').classList.remove('on'); $('dash').classList.remove('on'); $('blk').classList.remove('on'); joyRelease();
+  $('ce').classList.remove('on'); $('atk').classList.remove('on'); $('lap').classList.remove('on'); $('dash').classList.remove('on'); $('blk').classList.remove('on'); $('fat').classList.remove('on'); joyRelease();
 }
 function bindPad(id, set) {                   // hold-to-walk touch buttons (multi-touch safe)
   const b = $(id);
@@ -1757,6 +2006,7 @@ bindPad('dash', v => { if (v) dashReq = true; });
 bindPad('blk', v => { blockHeld = v; });                    // hold to block           // tap to dash the way you are walking (back when standing still)
 bindPad('ce', v => { if (v) ceReq = true; });
 bindPad('dom', v => { if (v) domReq = true; });                 // DOMAIN EXPANSION: Infinite Void (key V)               // tap to turn cursed energy on or off
+bindPad('fat', v => { if (v) pressFat(); });                 // FATALITY (key H): only in a match, only when Gojo or the enemy is at 20% health or less and the enemy is close
 bindPad('lap', v => { if (v) lpReq = true; });           // tap for Lapse Blue (hold FWD while you tap it to pull the enemy in instead of blinking to him)
 // THE JOYSTICK (bottom left): push left / right to walk back / forward, up to jump (one jump per push), down to crouch (he stays crouched while you hold it)
 const joy = $('joy'), knob = $('knob');
@@ -1783,12 +2033,12 @@ joy.addEventListener('pointermove', e => { if (e.pointerId === joyId) joyMove(e)
 ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => joy.addEventListener(n, e => { if (e.pointerId === joyId) joyRelease(); }));
 joy.addEventListener('contextmenu', e => e.preventDefault());
 
-const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U', KeyJ: 'A', KeyF: 'A', ArrowDown: 'C', KeyS: 'C', KeyC: 'C', KeyL: 'B', KeyK: 'D', ShiftLeft: 'D', ShiftRight: 'D', KeyB: 'G', KeyE: 'E', KeyV: 'V' };
+const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U', KeyJ: 'A', KeyF: 'A', ArrowDown: 'C', KeyS: 'C', KeyC: 'C', KeyL: 'B', KeyK: 'D', ShiftLeft: 'D', ShiftRight: 'D', KeyB: 'G', KeyE: 'E', KeyV: 'V', KeyH: 'H' };
 addEventListener('keydown', e => {
   if (settingsOn()) { if (e.key === 'Escape') closeSettings(); return; }      // the settings screen takes the keyboard while it is open
   const k = KEYS[e.code];
   if (k) {
-    if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (k === 'G') blockHeld = true; else if (state === 'play' && !e.repeat) { if (k === 'A') atkReq = true; else if (k === 'C') crReq = true; else if (k === 'B') lpReq = true; else if (k === 'D') dashReq = true; else if (k === 'E') ceReq = true; else if (k === 'V') domReq = true; else { jumpReq = true; jumpFromStick = false; } }
+    if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (k === 'G') blockHeld = true; else if (state === 'play' && !e.repeat) { if (k === 'A') atkReq = true; else if (k === 'C') crReq = true; else if (k === 'B') lpReq = true; else if (k === 'D') dashReq = true; else if (k === 'E') ceReq = true; else if (k === 'V') domReq = true; else if (k === 'H') pressFat(); else { jumpReq = true; jumpFromStick = false; } }
     if (state === 'play') e.preventDefault();
     return;
   }

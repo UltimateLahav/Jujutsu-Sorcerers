@@ -36,6 +36,11 @@ function makeSfx(ac) {
     C[name] = { cat, step: bus(2, 0.2, 0, cat), deep: bus(0.8, 0.16, 0, cat), soft: bus(0.5, 0.2, 1400, cat) };
   }
   const applyMaster = () => master.gain.setTargetAtTime(st.on ? LEVEL.master * vol.master : 0, ac.currentTime, 0.04);
+  let slowF = null;                                      // slow motion: the whole mix goes through a low-pass filter; it is only put into the signal path the first time it is needed
+  function slowLp(on, t) {
+    if (!slowF) { slowF = ac.createBiquadFilter(); slowF.type = 'lowpass'; slowF.Q.value = 0.6; slowF.frequency.value = 22000; lim.disconnect(); lim.connect(slowF); slowF.connect(ac.destination); }
+    slowF.frequency.cancelScheduledValues(t); slowF.frequency.setValueAtTime(Math.max(300, slowF.frequency.value), t); slowF.frequency.exponentialRampToValueAtTime(on ? 1100 : 22000, t + 0.15);
+  }
 
   // ---- building blocks: filtered noise bursts and pitch-gliding tones with click-free envelopes
   const nlen = (2 * sr) | 0, nbuf = ac.createBuffer(1, nlen, sr), nd = nbuf.getChannelData(0);
@@ -329,6 +334,50 @@ function makeSfx(ac) {
       tone(B.deep, t, { f: 240, f2: 70, dur: 0.25, gain: 0.25, atk: 0.002 });
       burst(B.deep, t, { f: 1800, f2: 200, q: 0.8, dur: 0.5, gain: 0.7, atk: 0.002 });
       for (let k = 0; k < 6; k++) burst(B.deep, t + 0.05 + k * 0.05, { f: R(1500, 3600), q: 2.2, dur: R(0.015, 0.03), gain: R(0.2, 0.4), atk: 0.001 });
+    },
+    fatalstart(at) {                                     // FATALITY begins: two heavy heartbeats and a rising rush of air
+      const t = T(at), B = C.ce;
+      tone(B.deep, t, { type: 'triangle', f: 78, f2: 40, dur: 0.55, gain: 0.5, atk: 0.004 });
+      tone(B.deep, t + 0.42, { type: 'triangle', f: 86, f2: 38, dur: 0.6, gain: 0.55, atk: 0.004 });
+      burst(B.soft, t, { type: 'highpass', f: 600, f2: 4200, q: 0.7, dur: 0.9, gain: 0.3, atk: 0.35 });
+    },
+    slowin(at) {                                         // slow motion starts: the sound sinks (a pitch dive) and the highs are cut
+      const t = T(at), B = C.ce;
+      tone(B.soft, t, { type: 'sawtooth', f: 900, f2: 70, dur: 0.35, cur: 1, gain: 0.22, atk: 0.01 });
+      burst(B.soft, t, { type: 'lowpass', f: 3000, f2: 200, q: 0.7, dur: 0.3, gain: 1.1, atk: 0.005 });
+      slowLp(true, t);
+    },
+    slowout(at) {                                        // slow motion ends: a quick pitch climb and the highs come back
+      const t = T(at), B = C.ce;
+      tone(B.soft, t, { type: 'sawtooth', f: 90, f2: 900, dur: 0.25, cur: 1, gain: 0.18, atk: 0.01 });
+      burst(B.soft, t, { type: 'highpass', f: 400, f2: 3000, q: 0.7, dur: 0.25, gain: 0.6, atk: 0.1 });
+      slowLp(false, t);
+    },
+    fatalscream(at) {                                    // FATALITY: the enemy's long, cracking scream as the purple orb goes off: a low voice that climbs, with a heavy rasp and a vowel that opens from "oo" to "aah"
+      const t = T(at), B = C.atk.deep, dur = 1.9, end = t + dur;
+      if (!st.curve) { st.curve = new Float32Array(1025); for (let i = 0; i < 1025; i++) st.curve[i] = Math.tanh((i / 512 - 1) * 1.8); }
+      const out = ac.createGain(), ws = ac.createWaveShaper(), am = ac.createGain(), mix = ac.createGain(), lfo = ac.createOscillator(), lg = ac.createGain(), rough = ac.createOscillator(), rg = ac.createGain();
+      out.gain.setValueAtTime(0.0001, t); out.gain.linearRampToValueAtTime(0.5, t + 0.06); out.gain.setValueAtTime(0.46, t + dur * 0.72); out.gain.exponentialRampToValueAtTime(0.0001, end);
+      ws.curve = st.curve; am.gain.value = 0.72; rough.type = 'sawtooth'; rough.frequency.value = 71; rg.gain.value = 0.3; rough.connect(rg); rg.connect(am.gain);      // the rasp: the voice is chopped ~70 times a second
+      lfo.frequency.value = 6.5; lg.gain.value = 24; lfo.connect(lg);
+      for (const d of [1, 1.012]) { const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(115, t); o.frequency.exponentialRampToValueAtTime(420 * d, t + 0.3); o.frequency.exponentialRampToValueAtTime(590 * d, t + 1.15); o.frequency.exponentialRampToValueAtTime(400 * d, end); lg.connect(o.frequency); o.connect(ws); o.start(t); o.stop(end + 0.05); }
+      ws.connect(am); [[360, 800, 5, 1], [820, 1350, 6, 0.7]].forEach(([f0, f1, q, g]) => { const bp = ac.createBiquadFilter(), gg = ac.createGain(); bp.type = 'bandpass'; bp.Q.value = q; bp.frequency.setValueAtTime(f0, t); bp.frequency.exponentialRampToValueAtTime(f1, t + 0.7); gg.gain.value = g; am.connect(bp); bp.connect(gg); gg.connect(mix); });
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2800; lp.Q.value = 0.5; mix.connect(lp); lp.connect(out); out.connect(B); lfo.start(t); lfo.stop(end + 0.05); rough.start(t); rough.stop(end + 0.05);
+      burst(B, t, { type: 'highpass', f: 2600, q: 0.7, dur: 0.6, gain: 0.2, atk: 0.02 });
+    },
+    fatalbang(at) {                                      // the screen turns white: a colossal boom, a crack, a long rumble and a ringing in the ears
+      const t = T(at), B = C.ce;
+      tone(B.deep, t, { type: 'triangle', f: 62, f2: 18, dur: 2.2, gain: 0.7, atk: 0.003 });
+      tone(B.deep, t, { f: 180, f2: 40, dur: 0.6, gain: 0.35, atk: 0.002 });
+      burst(B.deep, t, { f: 3200, f2: 120, q: 0.6, dur: 1.2, gain: 1.0, atk: 0.001 });
+      burst(B.deep, t, { type: 'lowpass', f: 400, f2: 40, q: 0.7, dur: 1.6, gain: 0.9, atk: 0.004 });
+      for (let k = 0; k < 12; k++) burst(B.deep, t + 0.03 + k * 0.045, { f: R(1200, 5200), q: 2.2, dur: R(0.02, 0.06), gain: R(0.2, 0.4), atk: 0.001 });
+      tone(B.soft, t + 0.08, { f: 3150, f2: 3100, dur: 2.6, gain: 0.05, atk: 0.2 });
+    },
+    fataltitle(at) {                                     // the word FATALITY hits the screen: a deep gong
+      const t = T(at), B = C.ce;
+      [[55, 0.5], [110, 0.3], [164, 0.22], [233, 0.16], [331, 0.1]].forEach(([f, g], i) => tone(B.deep, t, { f, f2: f * 0.985, dur: 2.2 - i * 0.25, gain: g, atk: 0.004 }));
+      burst(B.soft, t, { f: 1800, f2: 400, q: 1.2, dur: 0.3, gain: 0.4, atk: 0.001 });
     },
     setVol(name, v) {                                    // per-sound volume, 0 = silent, 1 = designed level, 2 = twice as loud
       vol[name] = v;
