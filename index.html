@@ -1519,7 +1519,7 @@ window.__vs = () => vs && ({ gi: vs.gi, ph: vs.ph, round: vs.round, pw: vs.pw, e
 window.__grades = () => GRADES; window.__vsSet = o => vs && Object.assign(vs, o); window.__vsEnemy = o => dummy && Object.assign(dummy, o);
 window.__vsKo = () => { if (dummy && vs) { dummy.hp = 0; koDummy(performance.now()); } };
 // ---------------------------------------------------------------- FATALITY: the finisher cutscene (Versus mode). When Gojo or the enemy is at 20% health or less and the enemy is close, the FATALITY button starts a scripted scene with its own clock (so it can slow down): a 2-second barrage, a kick that throws him up while Max Blue charges, a kick that sends him down, a RED that seems aimed at him but is fired up into the blue, the purple blast, his scream, a white-out and the title. Gojo wins the round.
-const FAT_RANGE = 44, FAT_LOW = 0.2, FAT_SEQ = [14, 15, 16, 14, 15, 16, 14], FAT_RX = [0, 3, 5, 1, 8, 6, 2];      // the barrage: jab, kick, cross, jab, kick, cross, jab (about 2 s); the reaction the enemy shows to each blow
+const FAT_RANGE = 44, FAT_LOW = 0.2, FAT_ONE = 39, FAT_SEQ = [14, 15, 16, 14, 15, 16, 14], FAT_RX = [0, 3, 5, 1, 8, 6, 2];      // the barrage: jab, kick, cross, jab, kick, cross, jab (about 2 s); the reaction the enemy shows to each blow
 const FEX = 17, FEX2 = 60, FLIFT = 72, FOY = 84;      // px right of Gojo: where the enemy stands for the barrage / after he has been thrown and kicked down; how high Gojo is in the air for the kick down; how high the orbs hang
 const fatH = tau => 165 * tau - 110 * tau * tau;       // his height (px above the floor) after the kick: thrown up, he hangs at the top for about 0.75 s
 const FSW = [];                                        // the barrage's swings: when each starts, how long it lasts (11 of its 15 frames, 15% faster), when its whoosh and its blow come
@@ -1533,7 +1533,7 @@ let fat = null, fatReq = 0;                            // fat = the running cuts
 const orbAt = (set, n, sx, sy, s) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));      // an orb frame centred on (sx, sy)
 function fatState(now) {                               // 0 = ready; 1 = nobody is at 20% health or less; 2 = the enemy is too far away; 3 = not possible right now
   if (!vs || vs.ph !== 'fight' || fat || dom || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || now - spawnAt < 900) return 3;
-  if (!(dummy.hp <= dummy.max * FAT_LOW || vs.hp <= PHP * FAT_LOW)) return 1;
+  if (!(dummy.hp <= Math.max(dummy.max * FAT_LOW, FAT_ONE) || vs.hp <= PHP * FAT_LOW)) return 1;      // the enemy at 20% or less (or one blow from dying: 39 is the hardest normal blow, the kick), or Gojo at 20% or less
   if (Math.abs(dummy.x - wx) > FAT_RANGE) return 2;
   return hurtAt >= 0 || gojoGone ? 3 : 0;
 }
