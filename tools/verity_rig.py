@@ -3,7 +3,7 @@ anim(name) -> 15 frames. run: python3 verity_rig.py  ->  verity_anims.json (name
 import math, io, json, base64, copy
 from PIL import Image, ImageDraw
 S = 64; BASE, LIT, HI, SH, DK, OL, RIB, CLAW = (172,156,48), (206,192,80), (232,218,134), (128,114,38), (88,76,26), (26,18,6), (104,90,26), (62,52,16)
-STAND = dict(hx=32, hy=6.5, sy=17, hp=36, lean=0, m=0, aL=((21,34),(20.5,52)), aR=((43,34),(43.5,52)), lL=((29.5,47),(30,59)), lR=((34.5,47),(34,59)), fade=0, glitch=0, ribs=1)
+STAND = dict(hx=32, hy=6.5, sy=17, hp=36, lean=0, m=0, aL=((21,34),(20.5,52)), aR=((43,34),(43.5,52)), lL=((29.5,47),(30,59)), lR=((34.5,47),(34,59)), fade=0, glitch=0, ribs=1, bl=0)
 mix = lambda a, b, t: tuple(mix(x, y, t) for x, y in zip(a, b)) if isinstance(a, tuple) else a + (b - a) * t
 ease = lambda t: t * t * (3 - 2 * t)
 def pose(**kw): p = copy.deepcopy(STAND); p.update(kw); return p
@@ -49,10 +49,17 @@ def render(p):
     dot([(x + bx, y + by) for x in (29, 30, 34, 35) for y in (3, 4)], (10, 4, 3)); dot([(28 + bx, by + y) for y in range(5, 9)] + [(36 + bx, by + y) for y in range(5, 9)], SH)
     for xs, st in (((29, 30, 34, 35), 7), ((31, 32, 33), 8)):
         for x in xs:
-            for k, c in enumerate([(84, 8, 18), (252, 248, 236)] + [(70, 6, 14)] * (1 + g) + [(252, 248, 236), (84, 8, 18)]): dot([(x + bx, st + by + k)], c)
+            for k, c in enumerate([(84, 8, 18), (252, 248, 236)] + [(70, 6, 14)] * (1 + g) + [(252, 248, 236), (84, 8, 18)]):
+                if p['bl'] and c == (252, 248, 236) and (x * 3 + k * 5 + st) % 7 < 5 * p['bl']: c = (176, 14, 26)      # bloody teeth
+                dot([(x + bx, st + by + k)], c)
     for y in range(S):
         for x in range(S):
             if not on(x, y) and any(on(x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))): o[x, y] = OL + (255,)
+    if p['bl']:
+        for x, n in ((29, 4), (31, 6), (33, 3), (35, 5)):                                                                   # blood drips from his chin
+            for j in range(int(n * p['bl'])):
+                xx, yy = x + bx, 14 + g + by + j
+                if 0 <= xx < S and 0 <= yy < S: o[xx, yy] = (150, 10, 22, 255) if j % 2 else (190, 16, 30, 255)
     if p['glitch'] or p['fade']:                                                                                           # teleport: rows slide sideways and pixels drop out
         src = img.copy().load(); img = Image.new('RGBA', (S, S), (0, 0, 0, 0)); o = img.load(); B = [[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]]
         for y in range(S):
@@ -70,6 +77,7 @@ FOLD = dict(hx=33, hy=36, sy=42, hp=55, lean=1, ribs=0, aL=((21, 53), (18, 61)),
 CROUCH = [(0, pose()), (14, pose(**FOLD))]
 CLAW1 = [(0, pose(**FOLD)), (4, pose(**{**FOLD, 'aR': ((48, 52), (53, 52))}) ), (6, pose(**{**FOLD, 'lean': 4, 'aR': ((52, 50), (60, 55))})), (9, pose(**{**FOLD, 'lean': 3, 'aR': ((52, 54), (59, 61))})), (14, pose(**FOLD))]
 CLAW2 = [(0, pose(**FOLD)), (4, pose(**{**FOLD, 'aL': ((17, 52), (12, 52))})), (6, pose(**{**FOLD, 'lean': 4, 'aL': ((22, 50), (58, 54))})), (9, pose(**{**FOLD, 'lean': 3, 'aL': ((24, 54), (57, 61))})), (14, pose(**FOLD))]
+SEIZE = ((52, 22), (61, 28))      # the right arm straight out: the hand is where Gojo's throat is
 A = {
  'idle': idlep, 'walk': walkp,
  'm0': lambda f: keys([(0, pose()), (3, pose(lean=-3, aR=((46, 28), (52, 12)))), (6, pose(lean=2, aR=((50, 26), (56, 16)))), (7, pose(lean=5, aR=((54, 32), (60, 40)))), (9, pose(lean=5, aR=((54, 34), (59, 44)))), (14, pose())], f),
@@ -80,6 +88,7 @@ A = {
  'block': lambda f: keys([(0, pose()), (5, pose(aL=((22, 26), (31, 12)), aR=((42, 26), (33, 12)))), (14, pose(aL=((22, 26), (31, 12)), aR=((42, 26), (33, 12))))], f),
  'bite': lambda f: keys([(0, pose()), (5, pose(lean=-3, hx=30, hy=5, m=1, aL=((18, 34), (14, 50)), aR=((46, 34), (50, 50)))), (8, pose(lean=9, hx=44, hy=11, m=1, aL=((18, 34), (14, 50)), aR=((46, 34), (52, 48)))), (10, pose(lean=9, hx=45, hy=12, m=0.2)), (14, pose())], f),
  'hurt': lambda f: keys([(0, pose()), (3, pose(lean=-6, hx=29, hy=8, m=0.6, aL=((16, 28), (10, 22)), aR=((48, 28), (54, 22)))), (8, pose(lean=-5, hx=30, hy=8, m=0.4, aL=((17, 30), (12, 28)), aR=((47, 30), (52, 28)))), (14, pose())], f),
+ 'seize': lambda f: keys([(0, pose()), (3, pose(lean=3, hy=7.5, aR=((50, 26), (60, 30)))), (5, pose(lean=3, hy=7.5, aR=SEIZE)), (7, pose(lean=-3, hx=29, hy=5, m=1, aR=SEIZE)), (9, pose(lean=10, hx=50, hy=14, m=1, aR=SEIZE)), (10, pose(lean=11, hx=55, hy=16, m=0, bl=1, aR=SEIZE)), (12, pose(lean=8, hx=50, hy=13, m=0.15, bl=1, aR=SEIZE)), (14, pose(lean=2, hx=40, hy=9, m=0.3, bl=1, aR=((46, 28), (50, 38))))], f),      # the DEATH: the arm reaches out and grips Gojo's throat (5), the head draws back, jaws wide (7), lunges (9) and the jaws shut on his head (10), pulls back, bloody (12), lets go (14)
  'talk': lambda f: {**idlep(f), 'm': 0.6 * (0.5 - 0.5 * math.cos(2 * math.pi * f / 15))},      # (the idle sway and breathing, with the mouth opening and closing)
  'tele': lambda f: pose(glitch=(0, .6, 1.2, 1.8, 2.4, 3, 3.5, 0, 3.5, 3, 2.4, 1.8, 1.2, .6, 0)[f], fade=(0, .1, .25, .4, .55, .7, .85, 1, .85, .7, .55, .4, .25, .1, 0)[f]),
 }
