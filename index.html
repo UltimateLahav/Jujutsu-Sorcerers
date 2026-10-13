@@ -55,7 +55,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #lap{border-color:#59b8ff}
 #dash{border-color:#7bd9a3}
 #blk{border-color:#9f8cff}
-#fat{display:none;grid-area:2/1;border-color:#ff4a3a;color:#ff6a5a;opacity:.38}#fat span{color:#ffb4a8}#fat svg{width:4.5vh;height:4.5vh}      /* FATALITY: only in a match, to the left of BLOCK; dark until Gojo or the enemy is at 20% health or less and the enemy is close, then it glows */
+#fat{display:none;grid-area:2/1;border-color:#ff4a3a;color:#ff6a5a;opacity:.38}#fat span{color:#ffb4a8}#fat svg{width:4.5vh;height:4.5vh}      /* FATALITY: only in a match, to the left of BLOCK; dark until the enemy is at 20% health or less and close, then it glows */
 .col.vs{grid-template-columns:auto auto auto}.col.vs #fat{display:flex}
 .col.vs #dom{grid-area:1/2}.col.vs #ce{grid-area:1/3}.col.vs #blk{grid-area:2/2}.col.vs #lap{grid-area:2/3}.col.vs #dash{grid-area:3/2}.col.vs #atk{grid-area:3/3}
 #fat.rdy{opacity:1;background:#3a0d12;border-color:#ff8a7a;color:#fff;box-shadow:0 0 1.8vh #ff4a3a,0 0 .5vh #ff4a3a inset,4px 4px 0 #000;animation:fatglow .5s steps(2) infinite}
@@ -149,7 +149,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <button id="dom" class="pb" aria-label="Domain expansion: Infinite Void"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M2 1h4v1H2zM1 2h1v1H1zM6 2h1v1H6zM0 3h1v2H0zM7 3h1v2H7zM3 3h2v2H3zM1 5h1v1H1zM6 5h1v1H6zM2 6h4v1H2z"/></svg><span>DOMAIN</span></button>
     <button id="ce" class="pb" aria-label="Mode: tap to switch between normal, cursed energy and red" aria-pressed="false"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M3 0h1v1H3zM3 1h2v1H3zM6 1h1v1H6zM2 2h3v1H2zM6 2h1v1H6zM2 3h5v1H2zM1 4h7v1H1zM1 5h2v1H1zM4 5h4v1H4zM1 6h6v1H1zM2 7h4v1H2z"/></svg><span id="cel">MODE<br>OFF</span></button>
     <button id="blk" class="pb" aria-label="Block (hold)"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M0 0h8v4H7v1H6v1H5v1H4v1H3V7H2V6H1V5H0z"/></svg><span>BLOCK</span></button>
-    <button id="fat" class="pb" aria-label="Fatality finisher (needs the enemy close and Gojo or the enemy at 20 percent health or less)"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M2 0h4v1H2zM1 1h6v1H1zM0 2h8v1H0zM0 3h1v2H0zM3 3h2v2H3zM7 3h1v2H7zM0 5h8v1H0zM1 6h6v1H1zM1 7h1v1H1zM3 7h2v1H3zM6 7h1v1H6z"/></svg><span>FATAL</span></button>
+    <button id="fat" class="pb" aria-label="Fatality finisher (needs the enemy close and at 20 percent health or less)"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M2 0h4v1H2zM1 1h6v1H1zM0 2h8v1H0zM0 3h1v2H0zM3 3h2v2H3zM7 3h1v2H7zM0 5h8v1H0zM1 6h6v1H1zM1 7h1v1H1zM3 7h2v1H3zM6 7h1v1H6z"/></svg><span>FATAL</span></button>
     <button id="lap" class="pb" aria-label="Lapse Blue"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M2 1h4v1h1v4h-1v1h-4v-1h-1v-4h1z"/></svg><span id="lapl">BLUE</span></button>
     <button id="dash" class="pb" aria-label="Dash"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M0 1h2l3 3-3 3H0l3-3zM4 1h2l2 3-2 3H4l3-3z"/></svg><span>DASH</span></button>
     <button id="atk" class="pb" aria-label="Attack"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M3 0h2v8H3zM0 3h8v2H0zM1 1h1v1H1zM6 1h1v1H6zM1 6h1v1H1zM6 6h1v1H6z"/></svg><span id="atkl">R.HOOK</span></button>
@@ -1519,31 +1519,40 @@ window.__vs = () => vs && ({ gi: vs.gi, ph: vs.ph, round: vs.round, pw: vs.pw, e
 window.__grades = () => GRADES; window.__vsSet = o => vs && Object.assign(vs, o); window.__vsEnemy = o => dummy && Object.assign(dummy, o);
 window.__vsKo = () => { if (dummy && vs) { dummy.hp = 0; koDummy(performance.now()); } };
 // ---------------------------------------------------------------- FATALITY: the finisher cutscene (Versus mode). When Gojo or the enemy is at 20% health or less and the enemy is close, the FATALITY button starts a scripted scene with its own clock (so it can slow down): a 2-second barrage, a kick that throws him up while Max Blue charges, a kick that sends him down, a RED that seems aimed at him but is fired up into the blue, the purple blast, his scream, a white-out and the title. Gojo wins the round.
-const FAT_RANGE = 44, FAT_LOW = 0.2, FAT_ONE = 39, FAT_SEQ = [14, 15, 16, 14, 15, 16, 14], FAT_RX = [0, 3, 5, 1, 8, 6, 2];      // the barrage: jab, kick, cross, jab, kick, cross, jab (about 2 s); the reaction the enemy shows to each blow
+const FAT_RANGE = 44, FAT_LOW = 0.2, FAT_AI_GRADE = 3, FAT_SEQ = [14, 15, 16, 14, 15, 16, 14], FAT_RX = [0, 3, 5, 1, 8, 6, 2];      // the barrage: jab, kick, cross, jab, kick, cross, jab (about 2 s); the reaction the enemy shows to each blow
 const FEX = 17, FEX2 = 60, FLIFT = 72, FOY = 84;      // px right of Gojo: where the enemy stands for the barrage / after he has been thrown and kicked down; how high Gojo is in the air for the kick down; how high the orbs hang
 const fatH = tau => 165 * tau - 110 * tau * tau;       // his height (px above the floor) after the kick: thrown up, he hangs at the top for about 0.75 s
 const FSW = [];                                        // the barrage's swings: when each starts, how long it lasts (11 of its 15 frames, 15% faster), when its whoosh and its blow come
 { let t = 0; for (const k of FAT_SEQ) { const sp = ATK_FPS[k] * 1.15; FSW.push({ k, t0: t, d: 11 / sp, hit: t + ATK_IMPACT[k] / sp, sw: t + ATK_SWING[k] / sp }); t += 11 / sp; } FSW.end = t; }
 const FP = (() => {                                    // the timeline, in seconds of cutscene time
-  const TB = 0.5, TK = TB + FSW.end, TL = TK + 8 / 24, TV = TL + 0.55, TA = TL + 0.75, TD = TA + 3 / 24, TS = TD + 0.17, TLD = TD + 0.43, TR = TLD + 0.2, TF = TR + 1.0, TU = TF + 0.4, TBL = TU + 1.3, TT = TBL + 0.4, TE = TBL + 2.0, TX = TBL + 2.8;
-  return { TB, TK, TL, TV, TA, TD, TS, TLD, TR, TF, TU, TBL, TT, TE, TX };      // barrage | big kick | he is thrown | Gojo blinks | appears | kicks down | slam | lands | RED charge | RED fires | the fuse | the blast | the title | round ends | over
+  const TW = 0.35, TP = TW + 0.5, THIT = TP + 1 / 30, TB = TP + 0.3, TK = TB + FSW.end, TL = TK + 8 / 24, TV = TL + 0.55, TA = TL + 0.75, TD = TA + 3 / 24, TS = TD + 0.17, TLD = TD + 0.43, TR = TLD + 0.2, TF = TR + 1.0, TU = TF + 0.4, TBL = TU + 1.3, TT = TBL + 0.4, TE = TBL + 2.0, TX = TBL + 2.8;
+  return { TW, TP, THIT, TB, TK, TL, TV, TA, TD, TS, TLD, TR, TF, TU, TBL, TT, TE, TX };      // wind-up | punch | it lands | barrage | big kick | he is thrown | Gojo blinks | appears | kicks down | slam | lands | RED charge | RED fires | the fuse | the blast | the title | round ends | over
 })();
-const FAT_SLOW = [[FP.TL - 0.12, FP.TL + 0.4, 0.35], [FP.TD - 0.1, FP.TS + 0.05, 0.35], [FP.TF - 0.06, FP.TU, 0.45], [FP.TU, FP.TBL - 0.25, 0.75], [FP.TBL - 0.25, FP.TBL + 0.15, 0.3]];      // slow motion: [from, to, speed]
+const FAT_SLOW = [[FP.TW, FP.TP, 0.45], [FP.TP - 0.02, FP.TP + 0.12, 0.3], [FP.TL - 0.12, FP.TL + 0.4, 0.35], [FP.TD - 0.1, FP.TS + 0.05, 0.35], [FP.TF - 0.06, FP.TU, 0.45], [FP.TU, FP.TBL - 0.25, 0.75], [FP.TBL - 0.25, FP.TBL + 0.15, 0.3]];      // slow motion: [from, to, speed]
+let FINV = null;                                       // the inverted-colour copies of Gojo's moves the enemy needs for his own FATALITY (built the first time it is needed)
+function fatSets(rev) {                                // the pictures of the attacker (idle, moves, blink, RED) and of the victim (idle, reactions); rev = the enemy is the attacker
+  if (rev && !FINV) FINV = { atk: { 0: atkI[0], 3: atkI[3], 14: mk(D.atk14, invPal), 15: mk(D.atk15, invPal), 16: mk(D.atk16, invPal) }, tele: mk(D.tele, invPal), red: mk(D.atk22, invPal) };
+  return rev ? { idle: dumF, atk: FINV.atk, tele: FINV.tele, red: FINV.red, vF: idleF, vRx: rxN } : { idle: idleF, atk: atkF, tele: teleF, red: redF, vF: dumF, vRx: rxI };
+}
 let fat = null, fatReq = 0;                            // fat = the running cutscene (null when there is none); fatReq = until when a press of the FATALITY button is remembered
 const orbAt = (set, n, sx, sy, s) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));      // an orb frame centred on (sx, sy)
-function fatState(now) {                               // 0 = ready; 1 = nobody is at 20% health or less; 2 = the enemy is too far away; 3 = not possible right now
+function fatState(now) {                               // Gojo's FATALITY. 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far away; 3 = not possible right now
   if (!vs || vs.ph !== 'fight' || fat || dom || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || now - spawnAt < 900) return 3;
-  if (!(dummy.hp <= Math.max(dummy.max * FAT_LOW, FAT_ONE) || vs.hp <= PHP * FAT_LOW)) return 1;      // the enemy at 20% or less (or one blow from dying: 39 is the hardest normal blow, the kick), or Gojo at 20% or less
+  if (!(dummy.hp <= dummy.max * FAT_LOW)) return 1;      // Gojo's FATALITY: only when the enemy is at 20% health or less
   if (Math.abs(dummy.x - wx) > FAT_RANGE) return 2;
   return hurtAt >= 0 || gojoGone ? 3 : 0;
+}
+function fatAiState(now) {                             // the enemy's own FATALITY on Gojo: from SEMI-GRADE 1 up, the moment Gojo is at 20% health or less and the enemy is close (no warning; being in the air, dashing or out of reach saves him)
+  if (!vs || vs.ph !== 'fight' || fat || dom || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || now < dummy.stunUntil || now - spawnAt < 900) return false;
+  return vs.hp <= PHP * FAT_LOW && Math.abs(dummy.x - wx) <= FAT_RANGE && !gojoGone && gojoLift <= 12 && dgAt < 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
 }
 function fatUI(now) {                                  // the button: only in a match, dark until it can be used, then it glows
   const col = $('fat').parentNode; col.classList.toggle('vs', !!vs); if (vs) $('fat').classList.toggle('rdy', fatState(now) === 0);
 }
 function pressFat() { fatReq = performance.now() + 500; }      // (a press is remembered for half a second, e.g. while he is still reeling)
-function fatStart(now) {
+function fatStart(now, rev) {                          // rev = the enemy does it to Gojo
   const d = dummy;
-  fat = { t: 0, rate: 1, freeze: 0, slow: false, blastAt: 0, pan: 0, ev: {}, fx: [], trail: [], ex0: Math.min(FAT_RANGE, Math.abs(d.x - wx)), invUntil: 0, linesUntil: 0, focus: [0, 0], deb: Array.from({ length: 26 }, (_, i) => ({ a: i * 2.4 + Math.random(), d: 60 + Math.random() * 60, w: 1 + ((Math.random() * 2) | 0), col: STONE[i % 4] })) };
+  fat = { rev: !!rev, S: fatSets(!!rev), t: 0, rate: 1, freeze: 0, slow: false, blastAt: 0, pan: 0, ev: {}, fx: [], trail: [], ex0: Math.min(FAT_RANGE, Math.abs(d.x - wx)), invUntil: 0, linesUntil: 0, focus: [0, 0], deb: Array.from({ length: 26 }, (_, i) => ({ a: i * 2.4 + Math.random(), d: 60 + Math.random() * 60, w: 1 + ((Math.random() * 2) | 0), col: STONE[i % 4] })) };
   atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; hurtAt = -1; wxv = 0;      // everything Gojo and the world were doing is cancelled
   orb = null; debris = []; rdOrb = null; purple = null; boom = null; pboom = null; popups = []; smoke = []; hits.until = 0;
   d.ai = 'rest'; d.pull = null; d.vx = 0; releaseAll(); $('pad').classList.add('cine');
@@ -1559,13 +1568,18 @@ function fatHit(i, now) {                              // one blow of the barrag
   say('' + (DMG[sw.k] + 3 * i), wx + FEX - 2, popCol(), 8, now); fat.freeze = Math.max(fat.freeze, now + (kick ? 55 : 30));
   if (kick || i === FSW.length - 1) { fat.invUntil = now + 75; fat.linesUntil = now + 140; fat.focus = [ex - 5, gy - 36]; }
 }
-function fatFinish(now) {                              // the white fades: the enemy is gone, Gojo wins the round
+function fatFinish(now) {                              // the white fades: the victim is gone and the attacker wins the round
   if (!vs || vs.ph !== 'fight') return;
+  if (fat.rev) { vs.hp = 0; vs.sh = 0; vs.hitAt = now; endRound('enemy', 'fatal', now); return; }
   dummy.hp = 0; dummy.shown = 0; dummy.ko = now - 3000; dummy.koAt = dummy.ko; kos++; endRound('player', 'fatal', now);
 }
 function fatEvents(now, t) {
   const f = fat, P = FP, mx = Math.round(VW / 2), at = (k, T, fn) => { if (!f.ev[k] && t >= T) { f.ev[k] = 1; fn(); } };
   at('go', 0, () => { snd('fatalstart'); f.invUntil = now + 90; shakeUntil = now + 200; shakeAmp = 2; f.focus = [mx + FEX, gy - 36]; f.linesUntil = now + 140; });
+  at('wind', P.TW, () => { snd('ceon'); f.invUntil = now + 80; f.linesUntil = now + 140; f.focus = [mx + 5, gy - 40]; });      // the cut in to the close-up: the fist is pulled back and the energy gathers
+  at('punch', P.TP, () => snd('swing', 0));
+  at('heavy', P.THIT, () => { snd('hit', 0); snd('smack', 3); fatBig(now, mx + FEX - 4, gy - 38, 5, 20); say('' + 40, wx + FEX - 2, popCol(), 10, now); f.freeze = Math.max(f.freeze, now + 90); });      // the punch lands: a big flash, a hard shove, a hit-stop
+  at('back', P.TB - 0.03, () => { f.invUntil = now + 70; });                                      // the cut back to the wide shot for the barrage
   FSW.forEach((sw, i) => { at('sw' + i, P.TB + sw.sw, () => snd('swing', sw.k)); at('h' + i, P.TB + sw.hit, () => fatHit(i, now)); });
   at('kick', P.TK + 5 / 24, () => { snd('swing', 3); snd('mbcharge'); });
   at('launch', P.TL, () => { snd('hit', 3); snd('smack', 3); snd('orbstart'); snd('orb', 3.4); fatBig(now, mx + FEX + 4, gy - 34, 4, 16); });
@@ -1583,35 +1597,38 @@ function fatEvents(now, t) {
   at('end', P.TE, () => fatFinish(now));
 }
 function fatEnemy(t, now) {                            // where the enemy is and what he looks like at cutscene time t (lift = px above the floor; the sprite turns about the point pv px above his feet)
-  const P = FP, f = fat, mx = Math.round(VW / 2), E = { x: mx + FEX, lift: 0, rot: 0, pv: 32, vis: true, src: null, info: D.idle }, ix = Math.floor(now / (1000 / IDLE_FPS)) % dumF.length;
+  const P = FP, f = fat, mx = Math.round(VW / 2), E = { x: mx + FEX, lift: 0, rot: 0, pv: 32, vis: true, src: null, info: D.idle }, ix = Math.floor(now / (1000 / IDLE_FPS)) % dumF.length, S = f.S, vF = S.vF;
   if (t >= P.TBL) { E.vis = false; return E; }                                                    // vaporised
-  if (t < P.TB) { E.x = mx + f.ex0 + (FEX - f.ex0) * (1 - Math.pow(1 - Math.min(1, t / 0.4), 3)); E.src = dumF[ix]; return E; }      // pulled in front of Gojo
+  if (t < P.THIT) { E.x = mx + f.ex0 + (FEX - f.ex0) * (1 - Math.pow(1 - Math.min(1, t / 0.4), 3)); E.src = vF[ix]; return E; }      // pulled in front of Gojo, waiting for the wind-up punch
+  const heavy = () => { const lt = t - P.THIT, fi = Math.min(9, Math.floor(lt * RX_FPS[3])); E.info = D.rx3; E.src = (lt < 0.07 ? rxW : S.vRx)[3][fi]; E.pv = 0; E.lift = (D.rx3.lift ? D.rx3.lift[fi] : 0) + 5 * Math.exp(-lt * 8); E.x = mx + FEX + 14 * Math.exp(-lt * 9); return E; };      // the wind-up punch lands: a hard shove and the strongest reaction
   if (t < P.TL) {                                                                                 // the barrage: each blow makes him flinch (one of the ten reactions) and shoves him a little
     let i = -1; for (let j = 0; j < FSW.length; j++) if (t >= P.TB + FSW[j].hit) i = j;
-    if (i < 0) { E.src = dumF[ix]; return E; }
+    if (i < 0) return heavy();
     const lt = t - P.TB - FSW[i].hit, rx = FAT_RX[i], fi = Math.min(t < P.TK ? 4 : 9, Math.floor(lt * RX_FPS[rx])), inf = D['rx' + rx], kick = FSW[i].k === 15;
-    E.info = inf; E.src = (lt < 0.07 ? rxW : rxI)[rx][fi]; E.pv = 0; E.lift = (inf.lift ? inf.lift[fi] : 0) + (kick ? 4 * Math.exp(-lt * 10) : 0); E.x = mx + FEX + (kick ? 7 : 4) * Math.exp(-lt * 14); return E;
+    E.info = inf; E.src = (lt < 0.07 ? rxW : S.vRx)[rx][fi]; E.pv = 0; E.lift = (inf.lift ? inf.lift[fi] : 0) + (kick ? 4 * Math.exp(-lt * 10) : 0); E.x = mx + FEX + (kick ? 7 : 4) * Math.exp(-lt * 14); return E;
   }
   const tau = t - P.TL, xK = mx + FEX + 35, hK = fatH(P.TD - P.TL), rK = (7.5 * (P.TD - P.TL)) % 6.2832;
-  if (t < P.TD) { E.lift = fatH(tau); E.x = mx + FEX + 35 * tau / (P.TD - P.TL); E.rot = 7.5 * tau; E.src = tau < 0.08 ? dumW[ix] : (Math.floor(now / 70) % 2 ? dumB[ix] : dumF[ix]); return E; }      // thrown up, tumbling, caught in the pull
-  if (t < P.TS) { const u = (t - P.TD) / (P.TS - P.TD); E.lift = hK * (1 - u * u) - 22 * u * u; E.x = xK + (mx + FEX2 - xK) * u; E.rot = rK + (1.4 - rK) * u; E.src = dumF[ix]; return E; }      // kicked down
+  if (t < P.TD) { E.lift = fatH(tau); E.x = mx + FEX + 35 * tau / (P.TD - P.TL); E.rot = 7.5 * tau; E.src = tau < 0.08 ? dumW[ix] : (Math.floor(now / 70) % 2 ? dumB[ix] : vF[ix]); return E; }      // thrown up, tumbling, caught in the pull
+  if (t < P.TS) { const u = (t - P.TD) / (P.TS - P.TD); E.lift = hK * (1 - u * u) - 22 * u * u; E.x = xK + (mx + FEX2 - xK) * u; E.rot = rK + (1.4 - rK) * u; E.src = vF[ix]; return E; }      // kicked down
   E.x = mx + FEX2; const k = t - P.TS;
-  if (k < 0.3) { E.lift = -22 + 6 * Math.exp(-k * 22); E.rot = 1.4; E.src = k < 0.15 ? dumW[ix] : dumF[ix]; return E; }      // lying where he hit the floor
+  if (k < 0.3) { E.lift = -22 + 6 * Math.exp(-k * 22); E.rot = 1.4; E.src = k < 0.15 ? dumW[ix] : vF[ix]; return E; }      // lying where he hit the floor
   if (k < 0.55) { const u = (k - 0.3) / 0.25, e = u * u * (3 - 2 * u); E.lift = -22 * (1 - e); E.rot = 1.4 * (1 - e); E.src = dumB[ix]; return E; }      // he gets up, dazed
-  E.src = t >= P.TU ? dumF[ix] : Math.floor(now / 70) % 2 ? dumB[ix] : dumF[ix];
+  E.src = t >= P.TU ? vF[ix] : Math.floor(now / 70) % 2 ? dumB[ix] : vF[ix];
   if (t >= P.TU + 0.1) { const s = Math.min(1, (t - P.TU) / 0.3); E.x += Math.round((Math.random() - 0.5) * 4 * s); E.lift = Math.min(10, (t - P.TU) * 14) + Math.round((Math.random() - 0.5) * 2); if (Math.floor(now / 90) % 3 === 0) E.src = dumW[ix]; }      // in the grip of the purple orb: shaking, lifted off the floor, screaming
   return E;
 }
 function fatGojo(t, now) {                             // Gojo's pose and place at cutscene time t
-  const P = FP, mx = Math.round(VW / 2), G = { set: idleF, info: D.idle, fi: Math.floor(now / (1000 / IDLE_FPS)) % idleF.length, x: mx, lift: 0, vis: true }, pick = (set, info, fi, x, lift) => { G.set = set; G.info = info; G.fi = fi; if (x !== undefined) G.x = x; if (lift) G.lift = lift; return G; };
-  if (t >= P.TB && t < P.TK) { let i = 0; for (let j = 0; j < FSW.length; j++) if (t >= P.TB + FSW[j].t0) i = j; const k = FSW[i].k; return pick(atkF[k], D['atk' + k], Math.min(14, Math.floor((t - P.TB - FSW[i].t0) * ATK_FPS[k] * 1.15))); }      // the barrage
-  if (t >= P.TK && t < P.TK + 15 / 24) return pick(atkF[3], D.atk3, Math.min(14, Math.floor((t - P.TK) * 24)));      // the big kick
-  if (t >= P.TV && t < P.TA) { if (t < P.TV + 0.15) return pick(teleF, D.tele, Math.min(2, Math.floor((t - P.TV) * 20))); G.vis = false; return G; }      // he folds into light and is gone
-  if (t >= P.TA && t < P.TD + 0.13) return pick(atkF[3], D.atk3, Math.min(14, 5 + Math.floor((t - P.TA) * 24)), mx + 20, FLIFT);      // the kick in the air
-  if (t >= P.TD + 0.13 && t < P.TLD) { const k = (t - P.TD - 0.13) / (P.TLD - P.TD - 0.13); return pick(teleF, D.tele, 8 + Math.floor(now / 66) % 4, Math.round(mx + 20 * (1 - k)), FLIFT * (1 - k * k)); }      // falling back down
-  if (t >= P.TLD && t < P.TLD + 0.15) return pick(teleF, D.tele, Math.min(14, 12 + Math.floor((t - P.TLD) * 20)));      // landing
-  if (t >= P.TR && t < P.TF) return pick(redF, D.atk22, Math.min(19, Math.floor((t - P.TR) * 20)));                  // RED: the fingers go up and the orb gathers
-  if (t >= P.TF && t < P.TBL + 0.3) return pick(redF, D.atk22, Math.min(26, 20 + Math.floor((t - P.TF) * 20)));     // RED is released: the arm points
+  const P = FP, S = fat.S, mx = Math.round(VW / 2), G = { set: S.idle, info: D.idle, fi: Math.floor(now / (1000 / IDLE_FPS)) % S.idle.length, x: mx, lift: 0, vis: true }, pick = (set, info, fi, x, lift) => { G.set = set; G.info = info; G.fi = fi; if (x !== undefined) G.x = x; if (lift) G.lift = lift; return G; };
+  if (t >= P.TW && t < P.TP) { const k = (t - P.TW) / (P.TP - P.TW); pick(S.atk[0], D.atk0, 1 + Math.min(4, Math.floor(k / 0.6 * 5))); if (k > 0.6) G.x += Math.round((Math.random() - 0.5) * 2); return G; }      // the wind-up punch: the fist is pulled back (frames 1-5) and held, shaking, while the energy gathers
+  if (t >= P.TP && t < P.TB) return pick(S.atk[0], D.atk0, Math.min(14, 6 + Math.floor((t - P.TP) * 30)));      // ...and thrown (it lands on frame 7)
+  if (t >= P.TB && t < P.TK) { let i = 0; for (let j = 0; j < FSW.length; j++) if (t >= P.TB + FSW[j].t0) i = j; const k = FSW[i].k; return pick(S.atk[k], D['atk' + k], Math.min(14, Math.floor((t - P.TB - FSW[i].t0) * ATK_FPS[k] * 1.15))); }      // the barrage
+  if (t >= P.TK && t < P.TK + 15 / 24) return pick(S.atk[3], D.atk3, Math.min(14, Math.floor((t - P.TK) * 24)));      // the big kick
+  if (t >= P.TV && t < P.TA) { if (t < P.TV + 0.15) return pick(S.tele, D.tele, Math.min(2, Math.floor((t - P.TV) * 20))); G.vis = false; return G; }      // he folds into light and is gone
+  if (t >= P.TA && t < P.TD + 0.13) return pick(S.atk[3], D.atk3, Math.min(14, 5 + Math.floor((t - P.TA) * 24)), mx + 20, FLIFT);      // the kick in the air
+  if (t >= P.TD + 0.13 && t < P.TLD) { const k = (t - P.TD - 0.13) / (P.TLD - P.TD - 0.13); return pick(S.tele, D.tele, 8 + Math.floor(now / 66) % 4, Math.round(mx + 20 * (1 - k)), FLIFT * (1 - k * k)); }      // falling back down
+  if (t >= P.TLD && t < P.TLD + 0.15) return pick(S.tele, D.tele, Math.min(14, 12 + Math.floor((t - P.TLD) * 20)));      // landing
+  if (t >= P.TR && t < P.TF) return pick(S.red, D.atk22, Math.min(19, Math.floor((t - P.TR) * 20)));                  // RED: the fingers go up and the orb gathers
+  if (t >= P.TF && t < P.TBL + 0.3) return pick(S.red, D.atk22, Math.min(26, 20 + Math.floor((t - P.TF) * 20)));     // RED is released: the arm points
   return G;
 }
 function fatRedPos(t) {                                // the red orb: straight at the enemy for 0.2 s, then it swerves up into the blue orb
@@ -1639,8 +1656,8 @@ function fatFrame(now, dt) {                           // one frame of the cutsc
   if (!fat) return;
   const en = fatEnemy(t, now), go = fatGojo(t, now);
   // ---- the camera: wide (it tilts up to follow him when he is thrown), then pushed in 2x on the two of them from the RED charge to the blast
-  const push = t >= P.TR - 0.02 && t < P.TBL + 0.05, z = push ? 2 : 1, px = push ? mx + 36 : mx, hT = t < P.TD + 0.05 ? Math.max(en.vis ? en.lift : 0, go.vis ? go.lift : 0) : (en.vis ? en.lift : 0);
-  f.pan += (Math.max(0, Math.min(50, hT - 20)) - f.pan) * Math.min(1, dt * 10); const py = push ? gy - 58 : my - Math.round(f.pan);      // (the picture tilts up with whoever is highest; after the kick down it follows him to the floor)
+  const shotA = t >= P.TW && t < P.TB - 0.03, push = t >= P.TR - 0.02 && t < P.TBL + 0.05, z = shotA || push ? 2 : 1, px = shotA ? mx + 10 : push ? mx + 36 : mx, hT = t < P.TD + 0.05 ? Math.max(en.vis ? en.lift : 0, go.vis ? go.lift : 0) : (en.vis ? en.lift : 0);
+  f.pan += (Math.max(0, Math.min(50, hT - 20)) - f.pan) * Math.min(1, dt * 10); const py = shotA ? gy - 38 : push ? gy - 58 : my - Math.round(f.pan);      // (the picture tilts up with whoever is highest; after the kick down it follows him to the floor)
   f.z = z; ctx.save(); ctx.imageSmoothingEnabled = false;
   if (now < shakeUntil) ctx.translate(Math.round((Math.random() * 2 - 1) * shakeAmp), Math.round((Math.random() * 2 - 1) * shakeAmp));
   ctx.translate(mx, my); if (z !== 1) ctx.scale(z, z); ctx.translate(-px, -py);
@@ -1668,6 +1685,7 @@ function fatFrame(now, dt) {                           // one frame of the cutsc
   if (go.vis) {
     fatShadow(go.x, go.lift, false); const gx = go.x - (go.info.cx - go.info.x0), gyy = gy - 60 - go.info.top - Math.round(go.lift);
     ctx.drawImage(go.set[go.fi], gx, gyy);
+    if (t >= P.TW && t < P.TP) { const a = go.info.hn[go.fi], k = (t - P.TW) / (P.TP - P.TW); if (a) { const hx = gx + a[0], hy = gyy + a[1]; orbAt(f.rev ? orbR : orbF, Math.floor(now * 20 / 1000), hx, hy, 0.08 + 0.3 * k); ctx.fillStyle = f.rev ? '#ffb08a' : '#9fd8ff'; for (let i = 0; i < 9; i++) { const th = now / 90 + i * 0.7, R = 4 + (1 - k) * 18 * (0.5 + 0.5 * Math.sin(i * 2.3 + now / 60)); ctx.fillRect(Math.round(hx + Math.cos(th) * R), Math.round(hy + Math.sin(th) * R), 1, 1); } } }
     if (t >= P.TR && t < P.TF) { const a = go.info.hn[go.fi]; if (a) orbAt(orbR, Math.floor(now * 20 / 1000), gx + a[0] + 2, gyy + a[1] - 8, 0.1 + 0.3 * Math.min(1, (t - P.TR) / 0.95)); }      // the red orb grows above his raised fingers
   }
   if (t >= P.TV && t < P.TA) { const k = (t - P.TV) / (P.TA - P.TV); ctx.fillStyle = 'rgba(160,220,255,' + (0.8 * (1 - k)).toFixed(2) + ')'; for (let i = 0; i < 18; i++) { const yy = gy - 20 - Math.round((gy - 20 - (gy - FLIFT)) * k * (i / 17)); ctx.fillRect(mx + 8 + Math.round(12 * k * (i / 17)), yy, 1, 3); } }      // a streak of blue light up to the place he arrives
@@ -1696,7 +1714,8 @@ function fatFrame(now, dt) {                           // one frame of the cutsc
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, Math.round(b)); ctx.fillRect(0, VH - Math.round(b), VW, Math.round(b));
   if (t >= P.TX) fatReset();
 }
-window.__fat = () => fat && ({ t: +fat.t.toFixed(3), rate: +fat.rate.toFixed(2), z: fat.z, now: performance.now() });
+window.__fat = () => fat && ({ t: +fat.t.toFixed(3), rate: +fat.rate.toFixed(2), z: fat.z, rev: fat.rev, now: performance.now() });
+window.__fatAi = () => fatAiState(performance.now());
 window.__fatState = () => fatState(performance.now()); window.__fatJump = t => { if (fat) fat.t = t; }; window.__fatTimes = () => FP; window.__fatPress = () => pressFat();
 function drawBoom(now) {                      // the explosion: 15 frames at 30 FPS: a white-hot flash, a red shock ring racing out, flying sparks
   if (!boom) return; const i = Math.floor((now - boom.born) * 30 / 1000); if (i >= 15) { boom = null; return; }
@@ -1775,8 +1794,9 @@ function drawScene(now, dt) {
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
     const fs = fatState(now);
     if (fs === 0) { fatReq = 0; fatStart(now); fatFrame(now, dt); return; }
-    if (now > fatReq) { fatReq = 0; if (fs === 1 || fs === 2) say(fs === 1 ? 'NEED 20% HEALTH' : 'GET CLOSER', wx, '#ff8a7a', 8, now); }
+    if (now > fatReq) { fatReq = 0; if (fs === 1 || fs === 2) say(fs === 1 ? 'ENEMY BELOW 20%' : 'GET CLOSER', wx, '#ff8a7a', 8, now); }
   }
+  if (fatAiState(now)) { fatStart(now, true); fatFrame(now, dt); return; }      // the top grades do it to Gojo
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3);
   if (mbAt < 0) mbK = 0;
   if (ceReq) { ceReq = false; if (t >= 1) cycleMode(now); }        // CURSED ENERGY button / key: on <-> off
@@ -1942,21 +1962,22 @@ function drawScene(now, dt) {
   gojoLift = lift; gojoGone = tele && tf < 6;   // the attacking dummy misses him while he is up in the air or vanished
   const cx = Math.round(VW / 2), x = cx - (info.cx - info.x0), y = gy - 60 - info.top - lift;
 
+  const vap = vs && vs.who === 'enemy' && vs.why === 'fatal' && (vs.ph === 'ko' || vs.ph === 'over');      // the enemy's FATALITY: Gojo is gone until the next round
   const sw = Math.max(5, Math.round(9 * (1 - lift / 48))), sv = Math.round(sw * 2 / 3);   // ground shadow stays put and shrinks while he is in the air
   ctx.fillStyle = 'rgba(0,0,0,0.4)';
-  ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1);
+  if (!vap) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
 
   const ry = Math.round(info.h * (1 - e));    // spawn: materialise from the feet up
   const gko = vs && vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // the enemy finished him in a match: after the hit-stop he topples backwards (like the enemy does) and stays down until the next round
   ctx.save();
-  if (gko >= 0) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); ctx.drawImage(idleF[0], -(D.idle.cx - D.idle.x0), -62); }
+  if (vap) { /* gone */ } else if (gko >= 0) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); ctx.drawImage(idleF[0], -(D.idle.cx - D.idle.x0), -62); }
   else {
     ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip();
     ctx.globalAlpha = Math.min(1, t * 2);
     ctx.drawImage((ceOn && (cm === 2 ? HOMAPR : HOMAP).get(set) || set)[fi], x, y);        // cursed energy on: both hands out of the pockets
   }
   ctx.restore();
-  if (t >= 1 && gko < 0) { drawCE(now, x, y, info, fi); drawRedFx(now, dt, x, y, info, fi, mbing && mbK === 1, mf); }
+  if (t >= 1 && gko < 0 && !vap) { drawCE(now, x, y, info, fi); drawRedFx(now, dt, x, y, info, fi, mbing && mbK === 1, mf); }
 
   if (tele && (tf === 2 || tf === 3)) { ctx.fillStyle = 'rgba(160,220,255,0.12)'; ctx.fillRect(0, 0, VW, VH); }   // soft blue flash on the teleport
   if (t < 1) {                                // spawn ring + flash
