@@ -74,6 +74,7 @@ def vface(m):
     d.line((12, 28, 12, 38), fill=SH); d.line((52, 28, 52, 38), fill=SH)
     shade(im, {BASE: ((120, 106, 34), (232, 218, 128))}); outline(im, (26, 18, 6)); return im
 art['verityFace'] = [url(vface(m)) for m in (0, 1, 2)]
+import sys; sys.path.insert(0, '.'); import verity_rig; art['vanim'] = verity_rig.strips(sm)      # Verity's 15-frame animations (tools/verity_rig.py)
 json.dump(art, open('story_art.json', 'w'), separators=(',', ':'))
 sheet = Image.new('RGB', (4 * 200, 3 * 200), (30, 22, 52)); ims = [v, bite, sm] + [Image.open(io.BytesIO(base64.b64decode(u.split(',')[1]))) for u in art['gojoFace'] + art['verityFace']]
 for i, im in enumerate(ims): t = im.convert('RGBA').resize((192, 192), Image.NEAREST); sheet.paste(t, ((i % 4) * 200 + 4, (i // 4) * 200 + 4), t)

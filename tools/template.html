@@ -518,6 +518,7 @@ function hitDummy(k, now) {                   // called on the impact frame: a h
   if (!dummy || dummy.ko >= 0 || dummy.cap || now - dummy.born < 600) return;     // (an enemy caught by Max Blue is out of reach)
   if (vs && vs.ph !== 'fight') return;
   if (dummy.vform && dummy.vform !== 'verity') { say('IMMUNE', dummy.x, '#ffe9a0', 8, now); return; }      // the smiley form cannot be hit
+  if (dummy.vact && dummy.vact.type === 'crouch' && ![3, 6, 7].includes(k)) { say('MISS', dummy.x, '#9fd8ff', 8, now); return; }      // folded up he is below every swing except the low kick and the crouching punches
   if (now < (dummy.dodgeUntil || 0)) { say('MISS', dummy.x, '#9fd8ff', 8, now); return; }      // the smart enemy stepped back out of the swing
   const gap = dummy.x - wx;                   // the dummy's centre relative to Gojo's hips; his body is about 12 px wide
   if (gap - 6 > REACH[k] || gap + 6 < 3) return;
@@ -1057,7 +1058,7 @@ function drawVs(now, ux = 0, uy = 0) {         // health bars, names, the grade,
   bar(6, 20, pf, ps, false); bar(VW - 6 - W, 20, ef, es, true);
   const cw = Math.round(W * Math.max(0, Math.min(100, ce)) / 100), bad = now - ceFlash < 500;      // Gojo's cursed energy bar right under his health bar (it flashes red when a move is refused)
   ctx.fillStyle = '#000'; ctx.fillRect(5, 28, W + 2, 6); ctx.fillStyle = '#0b2a3a'; ctx.fillRect(6, 29, W, 4); ctx.fillStyle = bad ? '#ff4a4a' : '#2fe3ff'; ctx.fillRect(6, 29, cw, 4); ctx.fillStyle = bad ? '#ffb0b0' : '#b8f8ff'; ctx.fillRect(6, 29, cw, 1);
-  pxt('GOJO', 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', 46, 45, bad ? '#ff6a5a' : '#7df0ff', 8); pxt(vs.story ? 'VERITY' : 'GOJO (INV.)', VW - 6, 45, '#ffffff', 8, 'right'); pxt(vs.story ? 'SPECIAL GRADE' : GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
+  pxt('GOJO', 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', 46, 45, bad ? '#ff6a5a' : '#7df0ff', 8); if (vs.bleed) pxt('BLEED', 108, 45, '#ff4a4a', 8); pxt(vs.story ? 'VERITY' : 'GOJO (INV.)', VW - 6, 45, '#ffffff', 8, 'right'); pxt(vs.story ? 'SPECIAL GRADE' : GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
   if (!vs.story) pxt(String(Math.max(0, Math.ceil(vs.tl / 1000))), VW / 2, 18, vs.tl < 10000 ? '#ff6a5a' : '#ffffff', 16, 'center');
   const kob = vs.ph === 'ko';
   for (let i = 0; i < (vs.story ? 0 : 2); i++) {               // the round points (a pip lights up for every round won); the point that was just won blinks
@@ -1093,7 +1094,7 @@ function fatSets(rev) {                                // the pictures of the at
 let fat = null, fatReq = 0;                            // fat = the running cutscene (null when there is none); fatReq = until when a press of the FATALITY button is remembered
 const orbAt = (set, n, sx, sy, s) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));      // an orb frame centred on (sx, sy)
 function fatState(now) {                               // Gojo's FATALITY. 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far away; 3 = not possible right now
-  if (!vs || vs.ph !== 'fight' || fat || dom || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || now - spawnAt < 900) return 3;
+  if (!vs || vs.story || vs.ph !== 'fight' || fat || dom || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || now - spawnAt < 900) return 3;      // (no FATALITY in the story fight: his ending is a Reversal Red)
   if (!(dummy.hp <= dummy.max * FAT_LOW)) return 1;      // Gojo's FATALITY: only when the enemy is at 20% health or less
   if (Math.abs(dummy.x - wx) > FAT_RANGE) return 2;
   return hurtAt >= 0 || gojoGone ? 3 : 0;
@@ -1349,7 +1350,7 @@ function drawBackdrop(now) {                  // everything behind the fighters 
 function drawScene(now, dt) {
   fatUI(now);
   if (fat) { fatFrame(now, dt); return; }       // the FATALITY cutscene replaces the whole scene while it plays
-  domTick(now); vsTick(now, dt); ceTick(now, dt); if (vs && vs.story) storyBattleTick(now);
+  domTick(now); vsTick(now, dt); ceTick(now, dt); if (vs && vs.story) storyBattleTick(now, dt);
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
     const fs = fatState(now);
     if (fs === 0) { fatReq = 0; if (ceSpend(CE_COST.fatal, now)) { fatStart(now); fatFrame(now, dt); return; } }      // (his own FATALITY costs 50% cursed energy; the enemy's is free)
@@ -1557,7 +1558,7 @@ function drawScene(now, dt) {
 
 // ---------------------------------------------------------------- STORY MODE, chapter 1 (the alley). STORY MODE > CHOOSE A SAVE (3 slots kept on this device) > START: a cutscene (the mission, Gojo looks around, Verity jumps him, the close-ups, the red VERITY), then the fight in the alley.
 const STORYART = __STORYART__;
-const SIMG = {}; for (const k in STORYART) { const mkI = u => { const i = new Image(); i.src = u; return i; }; SIMG[k] = Array.isArray(STORYART[k]) ? STORYART[k].map(mkI) : mkI(STORYART[k]); }
+const SIMG = {}; for (const k in STORYART) { const mkI = u => { const i = new Image(); i.src = u; return i; }, a = STORYART[k]; SIMG[k] = Array.isArray(a) ? a.map(mkI) : typeof a === 'object' ? Object.fromEntries(Object.entries(a).map(([n, u]) => [n, mkI(u)])) : mkI(a); }
 const SAVE_KEY = 'jsv_saves'; let svSel = -1;
 function loadSaves() { try { const a = JSON.parse(localStorage.getItem(SAVE_KEY)); if (Array.isArray(a) && a.length === 3) return a; } catch (e) { } return [null, null, null]; }
 function storeSaves(a) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(a)); } catch (e) { } }
@@ -1622,8 +1623,8 @@ function alleyScene(now, dt, T, gx) {
   if (T >= 10.85) { const k = Math.min(1, (T - 10.85) / 0.65); sx = gx - 50 * (1 - (1 - k) * (1 - k)); if (k < 1) { set = jumpF; info = D.jump; fi = Math.min(set.length - 1, Math.floor(k * 14)); lift = info.lift ? info.lift[fi] : 0; } flip = k < 0.5; }      // the dodge: a jump away, turning to face Verity in the air
   shadow(sx, 9); sprAt(set[fi % set.length], info, Math.round(sx), lift, flip);
   if (T >= 10.0) {
-    let vx, img = SIMG.verity, vl = 0;
-    if (T < 10.9) { const k = (T - 10.0) / 0.9; vx = VW + 40 + (gx + 26 - VW - 40) * k; vl = Math.round(Math.abs(Math.sin(T * 16)) * 3); } else if (T < 11.15) { vx = gx + 26 - 34 * (T - 10.9) / 0.25; img = SIMG.bite; } else vx = gx - 8;      // he rushes in from the right and lunges with his jaws open
+    let vx, img = vfr('idle', now / 100, true), vl = 0;
+    if (T < 10.9) { const k = (T - 10.0) / 0.9; vx = VW + 40 + (gx + 26 - VW - 40) * k; img = vfr('walk', T * 24, true); } else if (T < 11.15) { vx = gx + 26 - 34 * (T - 10.9) / 0.25; img = vfr('bite', 5 + (T - 10.9) / 0.25 * 3.5); } else vx = gx - 8;      // he rushes in from the right and lunges with his jaws open
     shadow(vx, 9); vsp(img, Math.round(vx), vl, true);
   }
   if (T >= 10.05 && T < 10.6) pxt('!', Math.round(gx), gy - 74, '#ff3a3a', 16, 'center');
@@ -1646,25 +1647,63 @@ function faceScene(now, dt, T) {
 const once2 = (k, f) => { if (story && !story.ev[k]) { story.ev[k] = 1; f(); } };
 // the fight: the stand-in enemy looks like Verity; at half health he turns into the smiley ball (smoke, 5 s, cannot be hit and cannot act), then smoke again and he is back
 const WCACHE = new Map();
-function whiteOf(img) { let c = WCACHE.get(img); if (c) return c; c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.drawImage(img, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = '#fff'; g.fillRect(0, 0, 64, 64); if (img.complete && img.naturalWidth) WCACHE.set(img, c); return c; }
-function storyLook(now, reacting, hitT, kt) {
-  const d = dummy, f = d.vform || 'verity', info = { w: 64, h: 64, cx: 32, x0: 0, top: 0 }; let img = SIMG.verity, lift = 0;
-  if (f === 'smiley') { img = SIMG.smiley; lift = 10 + Math.round(2.5 * Math.sin(now / 260)); }
-  else if (f === 'smoke1' || f === 'smoke2') { const half = now - d.vAt < 350; img = (f === 'smoke1') === half ? SIMG.verity : SIMG.smiley; lift = (f === 'smoke1') === half ? 0 : 10; }
-  else if (kt < 0 && d.ai === 'attack') { const k = (now - d.aiAt) * ATK_FPS[d.k] * (d.spd || 1) / 1000; img = k >= 3 && k <= 11 ? SIMG.bite : SIMG.verity; }
-  else if (kt < 0 && d.ai === 'walk') lift = Math.round(Math.abs(Math.sin(now / 110)) * 2);
-  if ((kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) || (kt < 0 && reacting && hitT < 70)) img = whiteOf(img);
-  return { src: img, info, lift };
+function whiteOf(img) { let c = WCACHE.get(img); if (c) return c; c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.drawImage(img, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = '#fff'; g.fillRect(0, 0, 64, 64); if (!(img instanceof HTMLImageElement) || (img.complete && img.naturalWidth)) WCACHE.set(img, c); return c; }
+const VFC = new Map();      // Verity's pictures: one 64x64 canvas per frame, cut out of the 15-frame strips the first time it is needed
+function vfr(name, fi, loop) {
+  fi = loop ? ((Math.floor(fi) % 15) + 15) % 15 : Math.max(0, Math.min(14, Math.floor(fi))); const key = name + fi, hit = VFC.get(key); if (hit) return hit;
+  const s = SIMG.vanim && SIMG.vanim[name]; if (!s || !s.complete || !s.naturalWidth) return SIMG.verity;
+  const c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(s, fi * 64, 0, 64, 64, 0, 0, 64, 64); VFC.set(key, c); return c;
 }
-function storyBattleTick(now) {
+function storyLook(now, reacting, hitT, kt) {      // what the story enemy looks like: every move has its own 15-frame animation
+  const d = dummy, f = d.vform || 'verity', info = { w: 64, h: 64, cx: 32, x0: 0, top: 0 }; let name = 'idle', fi = now / 100, loop = true, lift = 0;
+  if (f === 'smiley') { name = 'smiley'; fi = now / 80; lift = 10; }
+  else if (f === 'smoke1' || f === 'smoke2') { const half = now - d.vAt < 350; name = (f === 'smoke1') === half ? 'idle' : 'smiley'; fi = name === 'smiley' ? now / 80 : 0; lift = name === 'smiley' ? 10 : 0; }
+  else if (kt >= 0) fi = 0;
+  else if (d.vact) { name = d.vact.anim; fi = d.vact.fi; loop = false; }
+  else if (reacting) { name = 'hurt'; fi = (now - d.rxAt) / RX_DUR[d.rx] * 15; loop = false; }
+  else if (d.ai === 'attack') { name = 'm' + d.k; fi = (now - d.aiAt) * ATK_FPS[d.k] * (d.spd || 1) / 1000; loop = false; }
+  else if (d.ai === 'dodge') { name = 'tele'; fi = (now - d.aiAt) / Math.max(1, d.until - d.aiAt) * 15; loop = false; }
+  else if (d.ai === 'block') { const t = now - d.aiAt; name = 'block'; fi = t < 250 ? t / 50 : 5 + (now / 125) % 5; loop = false; }
+  else if (d.ai === 'walk') { name = 'walk'; fi = now * WALK_FPS / 1000; }
+  d.anim = name; let src = vfr(name, fi, loop);
+  if ((kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) || (kt < 0 && reacting && hitT < 70)) src = whiteOf(src);
+  return { src, info, lift };
+}
+// Verity's own moves run beside the grade AI, which rests while one lasts: the BITE (the head draws back, lunges, the jaws shut on frame 8; Gojo bleeds 1 damage every 0.1 s for 4 s) and the CROUCH (the legs fold up to his head, two claws, then he rises; every swing of Gojo's passes over him except the low kick and the crouching punches)
+function vStart(d, type, now) { d.vact = { type, at: now, hit: 0, anim: type === 'bite' ? 'bite' : 'crouch', fi: 0 }; d.ai = 'rest'; d.aiAt = now; d.restFor = 99999; snd('f:swing', 3); }
+function vEnd(d, now) { d.vact = null; d.ai = 'think'; d.aiAt = now; d.vNext = now + 1500 + Math.random() * 1800; }
+function vActTick(d, now, dt) {
+  const a = d.vact, t = now - a.at, ag = Math.abs(d.x - wx), toward = d.x > wx ? -1 : 1;
+  if (d.rxAt > a.at) { vEnd(d, now); return; }      // he was hit: the move is over
+  if (a.type === 'bite') {
+    a.anim = 'bite'; a.fi = t * 18 / 1000; if (a.fi >= 5 && a.fi < 9 && ag > 14) d.x += toward * 80 * dt;
+    if (!a.hit && a.fi >= 8) { a.hit = 1; snd('f:hit', 3); if (ag - 6 <= 26) { const h = hurtAt; gojoHit(0, now); if (hurtAt !== h) vs.bleed = { until: now + 4000, next: now + 100 }; } }
+    if (a.fi >= 15) vEnd(d, now);
+  } else if (t < 700) { a.anim = 'crouch'; a.fi = t / 700 * 14; }
+  else if (t < 1200) { a.anim = 'c0'; a.fi = (t - 700) / 500 * 14; if (!a.hit && a.fi >= 6) { a.hit = 1; snd('f:hit', 0); if (ag - 6 <= 20) gojoHit(0, now); } }
+  else if (t < 1700) { a.anim = 'c1'; a.fi = (t - 1200) / 500 * 14; if (a.hit < 2 && a.fi >= 6) { a.hit = 2; snd('f:hit', 1); if (ag - 6 <= 20) gojoHit(1, now); } }
+  else if (t < 2000) { a.anim = 'crouch'; a.fi = 14; }
+  else if (t < 2600) { a.anim = 'crouch'; a.fi = 14 - (t - 2000) / 600 * 14; }
+  else vEnd(d, now);
+}
+function storyBattleTick(now, dt) {
+  if (vs.bleed) { const b = vs.bleed; if (vs.ph !== 'fight') vs.bleed = null; else { while (vs.bleed && b.next <= now && b.next <= b.until) { vsHurt(1, b.next); b.next += 100; } if (now >= b.until) vs.bleed = null; } }      // the bite's bleeding: 1 damage every 0.1 s for 4 s
   const d = dummy; if (!d || d.ko >= 0) return; if (!d.vform) d.vform = 'verity';
-  if (d.vform === 'verity') { if (!vs.morphed && vs.ph === 'fight' && d.hp <= d.max * 0.5) { vs.morphed = true; d.vform = 'smoke1'; d.vAt = now; d.lock = d.hp; snd('vanish'); } }
+  if (d.vform === 'verity') { if (!vs.morphed && vs.ph === 'fight' && d.hp <= d.max * 0.5) { vs.morphed = true; d.vform = 'smoke1'; d.vAt = now; d.lock = d.hp; d.vact = null; snd('vanish'); } }
   else if (d.vform === 'smoke1' && now - d.vAt >= 700) { d.vform = 'smiley'; d.vAt = now; snd('arrive'); }
   else if (d.vform === 'smiley' && now - d.vAt >= 5000) { d.vform = 'smoke2'; d.vAt = now; snd('vanish'); }
   else if (d.vform === 'smoke2' && now - d.vAt >= 700) { d.vform = 'verity'; d.ai = 'think'; d.aiAt = now; snd('arrive'); }
-  if (d.vform !== 'verity') { d.hp = d.shown = d.lock; d.vx = 0; d.stunUntil = 0; d.ai = 'rest'; d.rxAt = -9999; }      // nothing hurts him and he does nothing
+  if (d.vform !== 'verity') { d.hp = d.shown = d.lock; d.vx = 0; d.stunUntil = 0; d.ai = 'rest'; d.rxAt = -9999; return; }      // as the smiley ball nothing hurts him and he does nothing
+  if (d.vact && (d.ai === 'dodge' || d.ai === 'block')) d.vact = null;      // the AI saw a swing coming: it takes over
+  if (d.vact) { vActTick(d, now, dt); return; }
+  if (d.ai === 'dodge') {      // the dodge is a teleport: he vanishes, and half way through he appears again behind or beside Gojo
+    if (d.tpFor !== d.aiAt) { d.tpFor = d.aiAt; d.tpDone = false; } d.vx = 0;
+    if (!d.tpDone && now - d.aiAt >= (d.until - d.aiAt) / 2) { d.tpDone = true; const away = d.x > wx ? 1 : -1; d.x = Math.random() < 0.6 ? d.x + away * 48 : wx + away * Math.max(12, Math.abs(d.x - wx) - 44); snd('arrive'); }
+  } else if (vs.ph === 'fight' && (d.ai === 'think' || d.ai === 'walk') && now >= (d.vNext || 0)) {      // now and then he chooses a move of his own
+    d.vNext = now + 400; const ag = Math.abs(d.x - wx), r = Math.random(); if (ag < 30 && r < 0.28) vStart(d, 'bite', now); else if (ag < 70 && r > 0.88) vStart(d, 'crouch', now);
+  }
 }
-window.__story = () => story ? ({ T: +(story.T || 0).toFixed(2), battle: !!story.battle, slot: story.slot, state }) : null; window.__storyJump = t => { if (story && !story.battle) story.t0 = performance.now() - t * 1000; }; window.__saves = loadSaves;      // test hooks
+window.__story = () => story ? ({ T: +(story.T || 0).toFixed(2), battle: !!story.battle, slot: story.slot, state }) : null; window.__storyJump = t => { if (story && !story.battle) story.t0 = performance.now() - t * 1000; }; window.__saves = loadSaves; window.__simg = () => SIMG; window.__hd = k => hitDummy(k, performance.now()); window.__vact = t => { if (dummy && vs) vStart(dummy, t, performance.now()); }; window.__vanim = () => dummy ? ({ anim: dummy.anim || '', act: dummy.vact ? dummy.vact.type : '', fi: dummy.vact ? +dummy.vact.fi.toFixed(1) : -1, x: dummy.x - wx, hp: vs ? vs.hp : -1 }) : null; window.__bleed = () => vs && vs.bleed ? ({ until: vs.bleed.until }) : null;      // test hooks
 
 function tick(now) {
   requestAnimationFrame(tick);                // schedule first so one bad frame can't stop the loop
