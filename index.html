@@ -347,6 +347,11 @@ function makeSfx(ac) {
       tone(B.soft, t, { f: 1500, f2: 900, dur: 0.2, gain: 0.25, atk: 0.002 });
       burst(B.soft, t, { type: 'highpass', f: 3200, q: 0.6, dur: 0.14, gain: 0.5, atk: 0.001 });
     },
+    noce(at) {                                           // NO CURSED ENERGY: a dull, falling two-note buzz (the move is refused)
+      const t = T(at), B = C.atk;
+      tone(B.deep, t, { type: 'square', f: 230, f2: 160, dur: 0.09, gain: 0.14, atk: 0.003 });
+      tone(B.deep, t + 0.11, { type: 'square', f: 175, f2: 105, dur: 0.12, gain: 0.14, atk: 0.003 });
+    },
     dash(k, at) {                                        // DASH: a quick push-off thump, a rushing whoosh and a scuff as he skids (k: 0 forward, 1 back = a little lower and softer)
       const t = T(at), B = C.jump, b = k ? 0.85 : 1;
       tone(B.deep, t, { type: 'triangle', f: 150 * b, f2: 70 * b, dur: 0.14, gain: 0.45, atk: 0.004 });
@@ -1125,7 +1130,7 @@ function drawPopups(now, dy) {                    // damage numbers float up fro
   ctx.globalAlpha = 1;
 }
 function drawHits(now) {                      // top right: hit counter, damage total and the 4-pip combo meter (right hook, left hook, elbow blue; kick red); KO count below
-  const left = hits.until - now, rx = vs ? 6 : VW - 8; let y = vs ? 50 : 16;       // (in a match it sits at the left under Gojo's name, clear of the enemy's bar and name, and without the K.O. count)
+  const left = hits.until - now, rx = vs ? 6 : VW - 8; let y = vs ? 57 : 16;       // (in a match it sits at the left under Gojo's name, clear of the enemy's bar and name, and without the K.O. count)
   if (left > 0) {
     ctx.globalAlpha = Math.min(1, left / 400);
     const line = (s, col) => { pxt(s, rx, y, col, 8, vs ? 'left' : 'right'); y += 10; };
@@ -1281,8 +1286,12 @@ function setModeUI() {                        // the MODE button (OFF / CURSED /
   $('ce').classList.toggle('lit', cm === 1); $('ce').classList.toggle('red', cm === 2); $('ce').setAttribute('aria-pressed', cm ? 'true' : 'false');
   $('cel').innerHTML = 'MODE<br>' + ['OFF', 'CURSED', 'RED'][cm]; $('lap').classList.toggle('red', cm === 2); $('lapl').textContent = cm === 2 ? 'RED' : 'BLUE'; $('lap').setAttribute('aria-label', cm === 2 ? 'Red' : 'Lapse Blue');
 }
-function cycleMode(now) {                     // MODE button / E: normal -> cursed energy -> red -> normal
-  cm = (cm + 1) % 3; ceOn = cm > 0; ceAt = now; ceNext = now + 500 + Math.random() * 400; combo = cpIdx = wcIdx = rdIdx = 0; comboUntil = 0;
+function cycleMode(now) {                     // MODE button / E: normal -> cursed energy -> red -> normal (in Versus the cursed mode needs some energy: with none left the tap skips it)
+  let m = (cm + 1) % 3; if (m === 1 && vs && ce < 1) { ceDeny(now); m = 2; }
+  setMode(m, now);
+}
+function setMode(m, now) {
+  cm = m; ceOn = cm > 0; ceAt = now; ceNext = now + 500 + Math.random() * 400; combo = cpIdx = wcIdx = rdIdx = 0; comboUntil = 0;
   if (mbAt >= 0 && mbK && cm !== 2) { mbAt = -1; mbK = 0; }               // leaving red cancels an orb that is still charging
   setModeUI(); snd(cm ? 'ceon' : 'ceoff');
 }
@@ -1449,7 +1458,7 @@ function buildGrades() {                       // the six grade buttons: locked 
 }
 function startMatch(gi) { vs = { gi, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: 60000, hp: PHP, sh: PHP, hist: [], res: null }; beginRound(performance.now()); }
 function beginRound(now) {                     // a fresh round: the scene is reset, the enemy steps in, "ROUND n" and "FIGHT!"
-  const keep = vs; show('play'); vs = keep; const t = performance.now(), G = GRADES[vs.gi];
+  const keep = vs; show('play'); vs = keep; ceReset(); const t = performance.now(), G = GRADES[vs.gi];
   Object.assign(vs, { ph: 'intro', t0: t, tl: 60000, hp: PHP, sh: PHP, hist: [], seenAtk: -1, seenAt: 0, seenK: 0, rolled: true, whiffAt: -1, prevAtk: -1, hitAt: -9999, why: '', who: '', koAt: 0 });
   spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); $('vsres').classList.remove('on');      // (he starts in the clear, not behind the touch buttons)
 }
@@ -1517,12 +1526,26 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
   if (go) { d.k = (punish || counter) && ag - 6 <= REACH[3] - 1 ? 3 : (Math.random() * 4) | 0; if (ag - 6 > REACH[d.k] - 1) d.k = 0; d.ai = 'attack'; d.aiAt = now; d.hitDone = false; d.swung = false; d.chain = 0; d.counter = 0; return; }
   if (move) { d.x += move * 30 * G.spd * dt; d.ai = 'walk'; } else d.ai = 'think';
 }
+// ---------------------------------------------------------------- CURSED ENERGY (Versus mode only): a cyan bar under Gojo's health bar. It starts every round at 100%, each energy move costs some of it, it refills 1% per second once a second has passed without such a move, and the cursed energy mode drains 1% per second (no refill) and switches itself off at 0%.
+const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30, purple: 50, domain: 67 }, CE_WAIT = 1000;      // what each move costs in % of the bar (slowRed = RED fired while walking back, coat = the BLUE leap onto that slow orb, tele = BLUE in the air, purple = the RED shot fired while Max Blue is out, it costs this instead of the plain RED price); the refill waits 1 s after the last paid move
+let ce = 100, ceLast = -1e9, ceFlash = -1e9;      // the energy in %, when a move last cost some, when a move was last refused (the bar flashes red)
+function ceReset() { ce = 100; ceLast = ceFlash = -1e9; }
+function ceDeny(now) { if (now - ceFlash < 150) return; ceFlash = now; snd('noce'); }      // a refused move: the bar flashes red and says NO CE for a moment (one refusal per press, even if the press falls through to another move that is refused too)
+function ceSpend(cost, now) { if (!vs) return true; if (ce + 1e-6 < cost) { ceDeny(now); return false; } ce = Math.max(0, ce - cost); ceLast = now; return true; }      // pays for a move (free outside Versus mode); false = not enough energy, the move does not start
+function ceTick(now, dt) {                    // the refill and the cursed mode's drain (only while a round is being fought)
+  if (!vs || vs.ph !== 'fight') return;
+  if (cm === 1) { ce = Math.max(0, ce - dt); if (ce <= 0) { ceDeny(now); setMode(0, now); } }
+  else if (now - ceLast >= CE_WAIT) ce = Math.min(100, ce + dt);
+}
+window.__ce = () => ({ ce, last: ceLast, flash: ceFlash, now: performance.now() }); window.__ceSet = o => { if (o.ce !== undefined) ce = o.ce; if (o.last !== undefined) ceLast = o.last; }; window.__ceCost = () => CE_COST;      // test hooks
 function drawVs(now, ux = 0, uy = 0) {         // health bars, names, the grade, the timer, the round points and the big banners (ux, uy: undoes this frame's screen shake for everything except the banners)
   if (!vs) return; const W = Math.max(60, Math.min(96, (VW - 52) >> 1)), a = now - vs.t0, ef = dummy ? Math.max(0, dummy.hp) / dummy.max : 0, es = dummy ? Math.max(0, dummy.shown) / dummy.max : 0, pf = Math.max(0, vs.hp) / PHP, ps = Math.max(0, vs.sh) / PHP;
   const bar = (x, y, f, g, right) => { ctx.fillStyle = '#000'; ctx.fillRect(x - 1, y - 1, W + 2, 8); ctx.fillStyle = '#3a1a2a'; ctx.fillRect(x, y, W, 6); const w1 = Math.round(W * g), w2 = Math.round(W * f); ctx.fillStyle = '#ffd27a'; ctx.fillRect(right ? x + W - w1 : x, y, w1, 6); ctx.fillStyle = f > 0.3 ? '#52e08a' : '#ff4a4a'; ctx.fillRect(right ? x + W - w2 : x, y, w2, 6); };
   ctx.save(); ctx.translate(ux, uy);
   bar(6, 20, pf, ps, false); bar(VW - 6 - W, 20, ef, es, true);
-  pxt('GOJO', 6, 38, '#ffffff', 8); pxt('GOJO (INV.)', VW - 6, 38, '#ffffff', 8, 'right'); pxt(GRADES[vs.gi].name, VW - 6, 48, '#ffd34d', 8, 'right');
+  const cw = Math.round(W * Math.max(0, Math.min(100, ce)) / 100), bad = now - ceFlash < 500;      // Gojo's cursed energy bar right under his health bar (it flashes red when a move is refused)
+  ctx.fillStyle = '#000'; ctx.fillRect(5, 28, W + 2, 6); ctx.fillStyle = '#0b2a3a'; ctx.fillRect(6, 29, W, 4); ctx.fillStyle = bad ? '#ff4a4a' : '#2fe3ff'; ctx.fillRect(6, 29, cw, 4); ctx.fillStyle = bad ? '#ffb0b0' : '#b8f8ff'; ctx.fillRect(6, 29, cw, 1);
+  pxt('GOJO', 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', 46, 45, bad ? '#ff6a5a' : '#7df0ff', 8); pxt('GOJO (INV.)', VW - 6, 45, '#ffffff', 8, 'right'); pxt(GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
   pxt(String(Math.max(0, Math.ceil(vs.tl / 1000))), VW / 2, 18, vs.tl < 10000 ? '#ff6a5a' : '#ffffff', 16, 'center');
   const kob = vs.ph === 'ko';
   for (let i = 0; i < 2; i++) {               // the round points (a pip lights up for every round won); the point that was just won blinks
@@ -1813,7 +1836,7 @@ function drawBackdrop(now) {                  // everything behind the fighters 
 function drawScene(now, dt) {
   fatUI(now);
   if (fat) { fatFrame(now, dt); return; }       // the FATALITY cutscene replaces the whole scene while it plays
-  domTick(now); vsTick(now, dt);
+  domTick(now); vsTick(now, dt); ceTick(now, dt);
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
     const fs = fatState(now);
     if (fs === 0) { fatReq = 0; fatStart(now); fatFrame(now, dt); return; }
@@ -1871,15 +1894,15 @@ function drawScene(now, dt) {
     crReq = false;
     if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0) { if (stance === 'stand') { stance = 'down'; stAt = now; sf = 0; } else if (stance === 'crouch') { stance = 'up'; stAt = now; sf = 0; } }
   }
-  if (domReq) { domReq = false; if (!dom && now >= domReadyAt && t >= 1 && stance === 'stand' && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0 && hurtAt < 0) startDomain(now); }      // DOMAIN: only while he stands and nothing else is going on
+  if (domReq) { domReq = false; if (!dom && now >= domReadyAt && t >= 1 && stance === 'stand' && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0 && hurtAt < 0 && ceSpend(CE_COST.domain, now)) startDomain(now); }      // DOMAIN: only while he stands and nothing else is going on
   if (lpReq) {                                // BLUE: in mid-air = teleport up, then fall. On the ground: walking forward = stand and pull the enemy in (stuns 0.4 s); otherwise blink forward to the enemy; crouched = Max Blue
     lpReq = false;
-    if (rdOrb && rdOrb.slow && !rdOrb.coat && cm !== 2 && (keyL || padL) && t >= 1 && jf < 0 && tf < 0 && df < 0 && hf < 0 && lf < 0 && sf < 0 && af < 0 && bf < 0 && (mf < 0 || mbK === 1)) { startCoat(now); mf = 0; }      // a slow red orb is flying: BLUE while walking back coats it in blue and he jumps on it
-    else if (cm === 2) { if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0 && now > lpReady && stance === 'stand') { mbK = 1; mbAt = now; mf = 0; atkQ = false; rdSlow = !!(keyL || padL); } }      // RED: standing only; no teleport, Lapse Blue or Max Blue in red mode
-    else if (t >= 1 && tf < 0 && df < 0 && bf < 0 && jf >= 4 && jf <= 11) { teleL0 = (jumpC ? D.cjump : D.jump).lift[jf]; teleAt = now; tf = 0; jumpAt = -1; jf = -1; }
+    if (rdOrb && rdOrb.slow && !rdOrb.coat && cm !== 2 && (keyL || padL) && t >= 1 && jf < 0 && tf < 0 && df < 0 && hf < 0 && lf < 0 && sf < 0 && af < 0 && bf < 0 && (mf < 0 || mbK === 1) && ceSpend(CE_COST.coat, now)) { startCoat(now); mf = 0; }      // a slow red orb is flying: BLUE while walking back coats it in blue and he jumps on it
+    else if (cm === 2) { if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0 && now > lpReady && stance === 'stand' && ceSpend(orb && !purple ? CE_COST.purple : (keyL || padL) ? CE_COST.slowRed : CE_COST.red, now)) { mbK = 1; mbAt = now; mf = 0; atkQ = false; rdSlow = !!(keyL || padL); } }      // RED: standing only; no teleport, Lapse Blue or Max Blue in red mode
+    else if (t >= 1 && tf < 0 && df < 0 && bf < 0 && jf >= 4 && jf <= 11 && ceSpend(CE_COST.tele, now)) { teleL0 = (jumpC ? D.cjump : D.jump).lift[jf]; teleAt = now; tf = 0; jumpAt = -1; jf = -1; }
     else if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0 && now > lpReady) {
-      if (stance === 'stand') { lpK = (keyR || padR) ? 0 : 1; lpAt = now; lf = 0; atkQ = false; }
-      else if (stance === 'crouch' && !orb) { stance = 'up'; stAt = now; sf = 0; mbPending = true; }          // crouched: stand up first, then summon MAX BLUE (not while the last orb is still out)
+      if (stance === 'stand') { if (ceSpend(CE_COST.blue, now)) { lpK = (keyR || padR) ? 0 : 1; lpAt = now; lf = 0; atkQ = false; } }
+      else if (stance === 'crouch' && !orb) { if (ceSpend(CE_COST.maxBlue, now)) { stance = 'up'; stAt = now; sf = 0; mbPending = true; } }          // crouched: stand up first, then summon MAX BLUE (not while the last orb is still out)
     }
   }
   if ((blockHeld || domHold) && blkAt < 0 && t >= 1 && (stance === 'stand' || stance === 'crouch') && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && mf < 0 && df < 0 && sf < 0) { blkAt = now; blkEnd = -1; bf = 0; atkQ = false; }      // BLOCK (hold): his signature pose, one hand up with two fingers raised; hits from the front are blocked
@@ -1897,7 +1920,7 @@ function drawScene(now, dt) {
     jumpReq = false;
     if (t >= 1) {
       if (jf < 0 && tf < 0) { if (af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0) { jumpC = stance === 'crouch'; if (jumpC) stance = 'stand'; jumpAt = now; jf = 0; } }          // from a crouch he springs higher                            // from the ground: jump
-      else if (!jumpFromStick && tf < 0 && df < 0 && bf < 0 && jf >= 4 && jf <= 11) { teleL0 = (jumpC ? D.cjump : D.jump).lift[jf]; teleAt = now; tf = 0; jumpAt = -1; jf = -1; }   // keyboard only: jump again in mid-air = teleport up (on the stick, up in the air does nothing: BLUE is the teleport)
+      else if (!jumpFromStick && tf < 0 && df < 0 && bf < 0 && jf >= 4 && jf <= 11 && ceSpend(CE_COST.tele, now)) { teleL0 = (jumpC ? D.cjump : D.jump).lift[jf]; teleAt = now; tf = 0; jumpAt = -1; jf = -1; }   // keyboard only: jump again in mid-air = teleport up (on the stick, up in the air does nothing: BLUE is the teleport)
     }
   }
   if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0) {      // the stick's down position crouches him for as long as it is held

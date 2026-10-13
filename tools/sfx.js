@@ -185,6 +185,11 @@ function makeSfx(ac) {
       tone(B.soft, t, { f: 1500, f2: 900, dur: 0.2, gain: 0.25, atk: 0.002 });
       burst(B.soft, t, { type: 'highpass', f: 3200, q: 0.6, dur: 0.14, gain: 0.5, atk: 0.001 });
     },
+    noce(at) {                                           // NO CURSED ENERGY: a dull, falling two-note buzz (the move is refused)
+      const t = T(at), B = C.atk;
+      tone(B.deep, t, { type: 'square', f: 230, f2: 160, dur: 0.09, gain: 0.14, atk: 0.003 });
+      tone(B.deep, t + 0.11, { type: 'square', f: 175, f2: 105, dur: 0.12, gain: 0.14, atk: 0.003 });
+    },
     dash(k, at) {                                        // DASH: a quick push-off thump, a rushing whoosh and a scuff as he skids (k: 0 forward, 1 back = a little lower and softer)
       const t = T(at), B = C.jump, b = k ? 0.85 : 1;
       tone(B.deep, t, { type: 'triangle', f: 150 * b, f2: 70 * b, dur: 0.14, gain: 0.45, atk: 0.004 });
