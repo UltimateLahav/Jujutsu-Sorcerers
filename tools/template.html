@@ -73,7 +73,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 .vsrow{display:flex;align-items:center;gap:2vh}.vsrow small{width:16vh;text-align:right}
 .mini .card{width:13vh;height:20vh;padding:.8vh}.mini .card b{font-size:.78em;line-height:1.3}.mini .card canvas{height:10vh;width:auto}.mini .lock span{font-size:5vh;margin-top:3vh}
 .card.sel{border-color:var(--acc);background:#2a1f4a}
-#modes .cards{gap:4vh}#modes .card{width:32vh}#modes .card,#modes h2{font-size:var(--fs-btn,clamp(8px,2.4vh,13px))}.mode span{font-size:8vh;margin-top:6vh;color:#ff8a7a}.mode.lock span{color:var(--ink)}
+#modes .cards{gap:4vh}#modes .card{width:32vh}#modes .card,#modes h2,#saves .card,#saves h2{font-size:var(--fs-btn,clamp(8px,2.4vh,13px))}#saves .cards{gap:3vh}#saves .card{width:26vh}button:disabled{opacity:.4;cursor:default}.mode span{font-size:8vh;margin-top:6vh;color:#ff8a7a}.mode.lock span{color:var(--ink)}
 @keyframes shk{0%{transform:translateX(0)}25%{transform:translateX(-.8vh)}50%{transform:translateX(.8vh)}75%{transform:translateX(-.5vh)}100%{transform:translateX(0)}}.shake{animation:shk .35s steps(6)}.shake i{color:#ff8a7a}      /* STORY MODE: not made yet, the card shakes */
 #grades{display:grid;grid-template-columns:repeat(3,auto);gap:1.2vh 1.6vh}
 .gr{padding:1vh 1.6vh;font-size:clamp(7px,2.1vh,12px);min-width:22vh}.gr small{display:block;margin-top:.7vh}
@@ -111,9 +111,19 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
   <h2>CHOOSE A MODE</h2>
   <div class="cards">
     <button id="battles" class="card mode"><span>VS</span><b>BATTLES</b><i>FIGHT THE ENEMY</i></button>
-    <button id="story" class="card lock mode"><span>?</span><b>STORY MODE</b><i>COMING SOON</i></button>
+    <button id="story" class="card mode"><span>?</span><b>STORY MODE</b><i>CHAPTER 1</i></button>
   </div>
   <button id="modesBack">BACK</button>
+</section>
+
+<section id="saves" class="screen">
+  <h2>CHOOSE A SAVE</h2>
+  <div class="cards">
+    <button id="sv0" class="card mode"><span>1</span><b>SAVE 1</b><i>EMPTY</i></button>
+    <button id="sv1" class="card mode"><span>2</span><b>SAVE 2</b><i>EMPTY</i></button>
+    <button id="sv2" class="card mode"><span>3</span><b>SAVE 3</b><i>EMPTY</i></button>
+  </div>
+  <div class="row"><button id="svStart" disabled>START</button><button id="svBack">BACK</button></div>
 </section>
 
 <section id="select" class="screen">
@@ -234,7 +244,7 @@ const heroImgs = HEROES.map(src => { const im = new Image(); im.src = src; retur
 let seed = 7;
 const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
-let state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
+let story = null, alley = false, state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
 let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1;
 let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, shkX = 0, shkY = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', flashUntil = 0, flashMs = 1, flashA = 0, stickX = 0, stickY = 0, stickUp = false, stickDown = false, stickCr = false, stickDownEnd = -9999, jumpFromStick = false, joyId = null, dashReq = false, dgAt = -1, dgK = 0, dgFrom = 0, dgTo = 0, dgAir = false, dgUsed = false, dgCr = false, dgReady = 0, blockHeld = false, blkAt = -1, blkEnd = -1, blkFrom = 4, wcIdx = 0, ceOn = false, ceAt = -9999, ceAmt = 0, ceNext = 0, ceReq = false, cm = 0, rdIdx = 0, mbK = 0, rdOrb = null, boom = null, holdUntil = 0, rdSlow = false, ride = null;
 const ceDmg = n => (cm === 1 ? Math.round(n * CE_DMG) : n) * (voidOn() ? 2 : 1);      // x1.3 in cursed energy mode, and everything hits twice as hard inside the Infinite Void      // only cursed energy mode hits harder; red mode has no damage bonus
@@ -300,12 +310,12 @@ function drawHero(i) {
 
 // ---------------------------------------------------------------- screens
 function show(s) {
-  state = s; if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
+  state = s; if (s !== 'play' && s !== 'story') { alley = false; story = null; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
   $('versus').classList.toggle('on', s === 'versus');
   $('title').classList.toggle('on', s === 'title');
   $('select').classList.toggle('on', s === 'select');
-  $('modes').classList.toggle('on', s === 'modes');
-  cv.style.display = s === 'play' ? 'block' : 'none';
+  $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves');
+  cv.style.display = s === 'play' || s === 'story' ? 'block' : 'none';
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll(); $('settings').classList.remove('on');
@@ -507,6 +517,7 @@ function say(txt, x, col, size, now) { popups.push({ born: now, x, txt, col, siz
 function hitDummy(k, now) {                   // called on the impact frame: a hit lands if the dummy is standing in front of him and within reach
   if (!dummy || dummy.ko >= 0 || dummy.cap || now - dummy.born < 600) return;     // (an enemy caught by Max Blue is out of reach)
   if (vs && vs.ph !== 'fight') return;
+  if (dummy.vform && dummy.vform !== 'verity') { say('IMMUNE', dummy.x, '#ffe9a0', 8, now); return; }      // the smiley form cannot be hit
   if (now < (dummy.dodgeUntil || 0)) { say('MISS', dummy.x, '#9fd8ff', 8, now); return; }      // the smart enemy stepped back out of the swing
   const gap = dummy.x - wx;                   // the dummy's centre relative to Gojo's hips; his body is about 12 px wide
   if (gap - 6 > REACH[k] || gap + 6 < 3) return;
@@ -564,7 +575,7 @@ function drawBar(bx, by) {                    // (in a match the big bars at the
 function drawDummy(now, dt) {
   if (!dummy) return;
   if (dummy.ko >= 0 && now - dummy.ko > 2300 && !vs) spawnDummy(now, dummy.mode);            // knocked out: a fresh one steps in after a moment
-  if (dummy.mode === 'fighter') { if (vs) updateFighterVs(now, dt); else updateFighter(now, dt); }
+  if (dummy.mode === 'fighter' && !(dummy.vform && dummy.vform !== 'verity')) { if (vs) updateFighterVs(now, dt); else updateFighter(now, dt); }      // (as the smiley ball he does nothing)
   if (dummy.pull) { const k = Math.min(1, (now - dummy.pull.at) / dummy.pull.ms); dummy.x = dummy.pull.from + (dummy.pull.to - dummy.pull.from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) dummy.pull = null; }
   dummy.x += dummy.vx * dt; dummy.vx *= Math.exp(-7 * dt);                              // knock-back slide with friction
   if (now - dummy.hitAt > 350) dummy.shown += (dummy.hp - dummy.shown) * Math.min(1, dt * 4);     // the pale "recent damage" part of the health bar catches up
@@ -585,6 +596,7 @@ function drawDummy(now, dt) {
   else if (kt < 0 && dummy.mode === 'fighter' && (dummy.ai === 'block' || dummy.ai === 'dodge')) { fi = 5 + Math.floor(now / 125) % 5; info = D.atk11; src = blkI[fi]; }       // the smart enemy: guard up (also while he steps back)
   else if (kt < 0 && dummy.mode === 'blocker') { fi = 5 + Math.floor(now / 125) % 5; info = D.atk11; src = blkI[fi]; }       // guard up: the hands-up loop
   else { fi = Math.floor(now / (1000 / IDLE_FPS)) % dumF.length; info = D.idle; src = (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) ? dumW[fi] : (kt < 0 && now < dummy.stunUntil && ((now / 70) | 0) % 2 === 0) ? dumB[fi] : dumF[fi]; }   // white flicker while he goes down
+  if (vs && vs.story) { const L = storyLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; }      // the story enemy is Verity
   const w = info.w, h = info.h, hx = info.cx - info.x0, y = gy - 60 - (info.top || 0) - lift, fade = kt > 1200 ? Math.max(0, 1 - (kt - 1200) / 700) : 1;
   ctx.fillStyle = 'rgba(0,0,0,' + 0.4 * fade + ')'; ctx.fillRect(sx - 9, gy + 3, 18, 2); ctx.fillRect(sx - 6, gy + 2, 12, 1); ctx.fillRect(sx - 6, gy + 5, 12, 1);
   ctx.save();
@@ -597,6 +609,7 @@ function drawDummy(now, dt) {
     ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, -hx, y);
   }
   ctx.restore();
+  if (vs && vs.story && (dummy.vform === 'smoke1' || dummy.vform === 'smoke2')) smokePuffs(sx, gy - 28, (now - dummy.vAt) / 700);
   if (kt < 0 && t < 1) { const R = 4 + t * 36; ctx.fillStyle = 'rgba(255,170,90,' + (1 - t) + ')'; for (let a = 0; a < 40; a++) { const th = a / 40 * 6.2832; ctx.fillRect(Math.round(sx + Math.cos(th) * R), Math.round(gy + 2 + Math.sin(th) * R * 0.25), 1, 1); } }
   if (kt < 0 && t >= 0.4) drawBar(sx - 13, gy - 68);   // health bar above his head
 }
@@ -954,10 +967,10 @@ function buildGrades() {                       // the six grade buttons: locked 
   const sv = vsLoad(), box = $('grades'); box.innerHTML = ''; if (vsSel > sv.un) vsSel = sv.un;
   GRADES.forEach((g, i) => { const b = document.createElement('button'); b.className = 'gr' + (i === vsSel ? ' sel' : '') + (i > sv.un ? ' lk' : ''); b.disabled = i > sv.un; b.dataset.g = i; b.innerHTML = g.name + '<small>' + (i > sv.un ? 'LOCKED' : [0, 1, 2].map(k => '<span class="star' + (k < sv.st[i] ? '' : ' off') + '"></span>').join('')) + '</small>'; b.addEventListener('click', () => { vsSel = i; buildGrades(); }); box.appendChild(b); });
 }
-function startMatch(gi) { vs = { gi, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: 60000, hp: PHP, sh: PHP, hist: [], res: null }; beginRound(performance.now()); }
+function startMatch(gi, story) { vs = { story: !!story, gi, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: story ? 1e9 : 60000, hp: PHP, sh: PHP, hist: [], res: null }; beginRound(performance.now()); }
 function beginRound(now) {                     // a fresh round: the scene is reset, the enemy steps in, "ROUND n" and "FIGHT!"
   const keep = vs; show('play'); vs = keep; ceReset(); const t = performance.now(), G = GRADES[vs.gi];
-  Object.assign(vs, { ph: 'intro', t0: t, tl: 60000, hp: PHP, sh: PHP, hist: [], seenAtk: -1, seenAt: 0, seenK: 0, rolled: true, whiffAt: -1, prevAtk: -1, hitAt: -9999, why: '', who: '', koAt: 0 });
+  Object.assign(vs, { ph: 'intro', t0: t, tl: vs.story ? 1e9 : 60000, hp: PHP, sh: PHP, hist: [], seenAtk: -1, seenAt: 0, seenK: 0, rolled: true, whiffAt: -1, prevAtk: -1, hitAt: -9999, why: '', who: '', koAt: 0 });
   spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); $('vsres').classList.remove('on');      // (he starts in the clear, not behind the touch buttons)
 }
 function vsTick(now, dt) {
@@ -968,7 +981,7 @@ function vsTick(now, dt) {
     if (atkAt < 0 && vs.prevAtk >= 0 && dummy && dummy.hitAt < vs.prevAtk) vs.whiffAt = now;      // Gojo's swing ended without hitting: he is open for a moment
     vs.prevAtk = atkAt;
     if (vs.tl <= 0) endRound(vs.hp / PHP > (dummy ? dummy.hp / dummy.max : 0) ? 'player' : 'enemy', 'time', now);
-  } else if (vs.ph === 'ko' && a >= KO_MS) { if (vs.pw >= 2 || vs.ew >= 2) finishMatch(now); else { vs.round++; beginRound(now); return; } }      // the round is over: whoever got the point, the next round starts fresh (full health, new positions)
+  } else if (vs.ph === 'ko' && a >= KO_MS) { if (vs.story || vs.pw >= 2 || vs.ew >= 2) finishMatch(now); else { vs.round++; beginRound(now); return; } }      // the round is over: whoever got the point, the next round starts fresh (full health, new positions)
   if (now - vs.hitAt > 350) vs.sh += (vs.hp - vs.sh) * Math.min(1, dt * 4);
   if (vs.ph !== 'fight') { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = false; }      // no control before FIGHT! and after the K.O.
 }
@@ -978,10 +991,11 @@ function endRound(who, why, now) {
   if (why === 'ko') holdUntil = Math.max(holdUntil, now + KO_HOLD); vs.koAt = Math.max(now, holdUntil); snd(who === 'player' ? 'finisher' : 'ko');      // (koAt: when the loser starts to topple)
 }
 function finishMatch(now) {
-  vs.ph = 'over'; const win = vs.pw >= 2, pf = vs.hp / PHP, stars = win ? (pf >= 0.7 ? 3 : pf >= 0.35 ? 2 : 1) : 0, sv = vsLoad(), gi = vs.gi;
-  if (win) { sv.un = Math.max(sv.un, Math.min(5, gi + 1)); sv.st[gi] = Math.max(sv.st[gi], stars); vsStore(sv.un, sv.st); }
+  vs.ph = 'over'; const win = vs.story ? vs.pw >= 1 : vs.pw >= 2, pf = vs.hp / PHP, stars = win ? (pf >= 0.7 ? 3 : pf >= 0.35 ? 2 : 1) : 0, sv = vsLoad(), gi = vs.gi;
+  if (win && !vs.story) { sv.un = Math.max(sv.un, Math.min(5, gi + 1)); sv.st[gi] = Math.max(sv.st[gi], stars); vsStore(sv.un, sv.st); }
   vs.res = { win, stars }; $('vsTitle').textContent = win ? 'VICTORY' : 'DEFEAT'; $('vsInfo').textContent = GRADES[gi].name + '  -  ROUNDS ' + vs.pw + ' : ' + vs.ew;
   $('vsStars').innerHTML = win ? [0, 1, 2].map(i => '<span class="star' + (i < stars ? '' : ' off') + '"></span>').join('') : ''; $('vsNext').style.display = win && gi < 5 ? '' : 'none'; $('vsres').classList.add('on'); snd(win ? 'finisher' : 'ko');
+  if (vs.story) { $('vsTitle').textContent = win ? 'TO BE CONTINUED' : 'DEFEAT'; $('vsInfo').textContent = win ? 'CHAPTER 1: VERITY' : 'VERITY WAS TOO STRONG'; $('vsStars').innerHTML = ''; $('vsNext').style.display = 'none'; if (win) storyDone(); }
 }
 function updateFighterVs(now, dt) {            // the grade AI (see GRADES): reaction time, block, dodge, combos, and from Grade 2 up it reads and punishes
   const d = dummy, G = GRADES[vs.gi], gap = d.x - wx, ag = Math.abs(gap), toward = gap > 0 ? -1 : 1;
@@ -1043,21 +1057,21 @@ function drawVs(now, ux = 0, uy = 0) {         // health bars, names, the grade,
   bar(6, 20, pf, ps, false); bar(VW - 6 - W, 20, ef, es, true);
   const cw = Math.round(W * Math.max(0, Math.min(100, ce)) / 100), bad = now - ceFlash < 500;      // Gojo's cursed energy bar right under his health bar (it flashes red when a move is refused)
   ctx.fillStyle = '#000'; ctx.fillRect(5, 28, W + 2, 6); ctx.fillStyle = '#0b2a3a'; ctx.fillRect(6, 29, W, 4); ctx.fillStyle = bad ? '#ff4a4a' : '#2fe3ff'; ctx.fillRect(6, 29, cw, 4); ctx.fillStyle = bad ? '#ffb0b0' : '#b8f8ff'; ctx.fillRect(6, 29, cw, 1);
-  pxt('GOJO', 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', 46, 45, bad ? '#ff6a5a' : '#7df0ff', 8); pxt('GOJO (INV.)', VW - 6, 45, '#ffffff', 8, 'right'); pxt(GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
-  pxt(String(Math.max(0, Math.ceil(vs.tl / 1000))), VW / 2, 18, vs.tl < 10000 ? '#ff6a5a' : '#ffffff', 16, 'center');
+  pxt('GOJO', 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', 46, 45, bad ? '#ff6a5a' : '#7df0ff', 8); pxt(vs.story ? 'VERITY' : 'GOJO (INV.)', VW - 6, 45, '#ffffff', 8, 'right'); pxt(vs.story ? 'SPECIAL GRADE' : GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
+  if (!vs.story) pxt(String(Math.max(0, Math.ceil(vs.tl / 1000))), VW / 2, 18, vs.tl < 10000 ? '#ff6a5a' : '#ffffff', 16, 'center');
   const kob = vs.ph === 'ko';
-  for (let i = 0; i < 2; i++) {               // the round points (a pip lights up for every round won); the point that was just won blinks
+  for (let i = 0; i < (vs.story ? 0 : 2); i++) {               // the round points (a pip lights up for every round won); the point that was just won blinks
     const bl = c => kob && vs.who === c && i === (c === 'player' ? vs.pw : vs.ew) - 1 && ((now / 100) | 0) % 2 === 0;
     ctx.fillStyle = '#000'; ctx.fillRect(6 + W - 7 - i * 8, 11, 8, 8); ctx.fillRect(VW - 6 - W - 1 + i * 8, 11, 8, 8);      // (just above the inner ends of the two bars, where no banner covers them)
     ctx.fillStyle = bl('player') ? '#ffffff' : i < vs.pw ? '#ffd34d' : '#3a3050'; ctx.fillRect(6 + W - 6 - i * 8, 12, 6, 6);
     ctx.fillStyle = bl('enemy') ? '#ffffff' : i < vs.ew ? '#ffd34d' : '#3a3050'; ctx.fillRect(VW - 6 - W + i * 8, 12, 6, 6);
   }
-  if (kob) { const me = vs.who === 'player'; pxt(me ? 'YOU GET THE POINT' : 'ENEMY GETS THE POINT', VW / 2, gy + 20, me ? '#7dff9a' : '#ff8a7a', 8, 'center'); }      // who got the point (the round restarts in a moment); it stays between the touch controls
+  if (kob && !vs.story) { const me = vs.who === 'player'; pxt(me ? 'YOU GET THE POINT' : 'ENEMY GETS THE POINT', VW / 2, gy + 20, me ? '#7dff9a' : '#ff8a7a', 8, 'center'); }      // who got the point (the round restarts in a moment); it stays between the touch controls
   ctx.restore();
-  const bt = vs.ph === 'intro' ? (a < 1300 ? ['ROUND ' + vs.round, '#ffe9a0', a] : ['FIGHT!', '#ff4a3a', a - 1300]) : kob ? (vs.why === 'fatal' ? ['FATALITY', '#ff3a3a', a] : vs.why === 'time' ? ['TIME!', '#9fd8ff', a] : ['K.O.', '#ffe9a0', a]) : null;
+  const bt = vs.ph === 'intro' ? (vs.story ? ['FIGHT!', '#ff4a3a', a] : a < 1300 ? ['ROUND ' + vs.round, '#ffe9a0', a] : ['FIGHT!', '#ff4a3a', a - 1300]) : kob ? (vs.why === 'fatal' ? ['FATALITY', '#ff3a3a', a] : vs.why === 'time' ? ['TIME!', '#9fd8ff', a] : ['K.O.', '#ffe9a0', a]) : null;
   if (bt) { const kk = bt[2] / 1000, j = kk < 0.4 ? Math.round((Math.random() - 0.5) * 2) : 0; pxt(bt[0], VW / 2 + j, gy - 26 + j, bt[1], kk < 0.06 ? 48 : kk < 0.12 ? 32 : 24, 'center'); }      // the big banners (ROUND n, FIGHT!, K.O., TIME!, FATALITY) slam in huge and drop to 24 px in two steps, then shake a little, like the FATALITY title
 }
-window.__vs = () => vs && ({ gi: vs.gi, ph: vs.ph, round: vs.round, pw: vs.pw, ew: vs.ew, hp: vs.hp, tl: vs.tl, ehp: dummy ? dummy.hp : -1, emax: dummy ? dummy.max : -1, ai: dummy ? dummy.ai : '', res: vs.res, who: vs.who, why: vs.why, whiffAt: vs.whiffAt, now: performance.now() });
+window.__vs = () => vs && ({ story: !!vs.story, gi: vs.gi, ph: vs.ph, round: vs.round, pw: vs.pw, ew: vs.ew, hp: vs.hp, tl: vs.tl, ehp: dummy ? dummy.hp : -1, emax: dummy ? dummy.max : -1, ai: dummy ? dummy.ai : '', res: vs.res, who: vs.who, why: vs.why, whiffAt: vs.whiffAt, now: performance.now() });
 window.__grades = () => GRADES; window.__vsSet = o => vs && Object.assign(vs, o); window.__vsEnemy = o => dummy && Object.assign(dummy, o);
 window.__vsKo = () => { if (dummy && vs) { dummy.hp = 0; koDummy(performance.now()); } };
 // ---------------------------------------------------------------- FATALITY: the finisher cutscene (Versus mode). When Gojo or the enemy is at 20% health or less and the enemy is close, the FATALITY button starts a scripted scene with its own clock (so it can slow down): a 2-second barrage, a kick that throws him up while Max Blue charges, a kick that sends him down, a RED that seems aimed at him but is fired up into the blue, the purple blast, his scream, a white-out and the title. Gojo wins the round.
@@ -1085,7 +1099,7 @@ function fatState(now) {                               // Gojo's FATALITY. 0 = r
   return hurtAt >= 0 || gojoGone ? 3 : 0;
 }
 function fatAiState(now) {                             // the enemy's own FATALITY on Gojo: from SEMI-GRADE 1 up, the moment Gojo is at 20% health or less and the enemy is close (no warning; being in the air, dashing or out of reach saves him)
-  if (!vs || vs.ph !== 'fight' || fat || dom || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || now < dummy.stunUntil || now - spawnAt < 900) return false;
+  if (!vs || vs.story || vs.ph !== 'fight' || fat || dom || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || now < dummy.stunUntil || now - spawnAt < 900) return false;
   return vs.hp <= PHP * FAT_LOW && Math.abs(dummy.x - wx) <= FAT_RANGE && !gojoGone && gojoLift <= 12 && dgAt < 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
 }
 function fatUI(now) {                                  // the button: only in a match, dark until it can be used, then it glows
@@ -1326,6 +1340,7 @@ function pickAtk() {                          // crouched: the low jab and the u
 }
 function drawBackdrop(now) {                  // everything behind the fighters (also used by the FATALITY cutscene)
   if (domBgOff(now)) { ctx.fillStyle = '#000'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }
+  else if (alley) drawAlley(now);
   else { ctx.save(); ctx.translate(0, -FAR); ctx.drawImage(bg, 0, 0);
   layer(far, 0.25); layer(near, 0.55);
   drawProps(now); ctx.restore(); drawGround(); drawBlood(now); }
@@ -1334,7 +1349,7 @@ function drawBackdrop(now) {                  // everything behind the fighters 
 function drawScene(now, dt) {
   fatUI(now);
   if (fat) { fatFrame(now, dt); return; }       // the FATALITY cutscene replaces the whole scene while it plays
-  domTick(now); vsTick(now, dt); ceTick(now, dt);
+  domTick(now); vsTick(now, dt); ceTick(now, dt); if (vs && vs.story) storyBattleTick(now);
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
     const fs = fatState(now);
     if (fs === 0) { fatReq = 0; if (ceSpend(CE_COST.fatal, now)) { fatStart(now); fatFrame(now, dt); return; } }      // (his own FATALITY costs 50% cursed energy; the enemy's is free)
@@ -1540,11 +1555,123 @@ function drawScene(now, dt) {
   drawHits(now);
 }
 
+// ---------------------------------------------------------------- STORY MODE, chapter 1 (the alley). STORY MODE > CHOOSE A SAVE (3 slots kept on this device) > START: a cutscene (the mission, Gojo looks around, Verity jumps him, the close-ups, the red VERITY), then the fight in the alley.
+const STORYART = __STORYART__;
+const SIMG = {}; for (const k in STORYART) { const mkI = u => { const i = new Image(); i.src = u; return i; }; SIMG[k] = Array.isArray(STORYART[k]) ? STORYART[k].map(mkI) : mkI(STORYART[k]); }
+const SAVE_KEY = 'jsv_saves'; let svSel = -1;
+function loadSaves() { try { const a = JSON.parse(localStorage.getItem(SAVE_KEY)); if (Array.isArray(a) && a.length === 3) return a; } catch (e) { } return [null, null, null]; }
+function storeSaves(a) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(a)); } catch (e) { } }
+function renderSaves() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].beat ? 'VERITY BEATEN' : 'CHAPTER 1') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
+function startStory(slot) { const a = loadSaves(); if (!a[slot]) a[slot] = { ch: 1 }; storeSaves(a); audio(); show('story'); story = { slot, t0: performance.now(), battle: false, T: 0, ev: {} }; alley = true; wx = 0; }
+function storyDone() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].beat = true; storeSaves(a); }
+function storySkip() { if (!story || story.battle) return; const n = [6.9, 12.0, 15.3, 19.0].find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = performance.now() - n * 1000; }      // a tap: on to the next part of the cutscene
+function startStoryBattle() { story.battle = true; startMatch(3, true); }
+// the alley: dark brick under a thin strip of night sky, a dumpster, crates, a barrel, a door and a street lamp along the wall, cracked wet asphalt
+let alleyBg = null, alleyProps = null, alleyTile = null, alleyKey = '';
+function buildAlley() {
+  const key = VW + 'x' + VH + 'x' + gy; if (alleyBg && alleyKey === key) return; alleyKey = key;
+  const mkc = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')]; };
+  let hs = 11; const rn = () => { hs = (hs * 1103515245 + 12345) & 0x7fffffff; return hs / 0x7fffffff; };
+  let g; [alleyBg, g] = mkc(VW, VH);
+  g.fillStyle = '#04050d'; g.fillRect(0, 0, VW, VH); ['#0a1030', '#0e1740', '#141f52', '#1b2760'].forEach((c, i) => { g.fillStyle = c; g.fillRect(0, i * 4, VW, 4); });
+  g.fillStyle = '#020309'; for (let x = 0; x < VW; x += 9) g.fillRect(x, 0, 5 + (x * 7) % 6, 3 + (x * 13) % 9);
+  g.fillStyle = '#120a12'; g.fillRect(0, 16, VW, gy - 16);
+  for (let y = 16; y < gy - 8; y += 6) for (let x = -(((y / 6) | 0) % 2) * 6; x < VW; x += 12) { const r = rn(); g.fillStyle = r < .3 ? '#2d1b28' : r < .7 ? '#261722' : '#1f121b'; g.fillRect(x + 1, y + 1, 11, 5); }
+  const gr = g.createLinearGradient(0, 16, 0, gy); gr.addColorStop(0, 'rgba(0,0,12,0.6)'); gr.addColorStop(1, 'rgba(0,0,12,0)'); g.fillStyle = gr; g.fillRect(0, 16, VW, gy - 16);
+  g.fillStyle = '#15121e'; g.fillRect(0, gy - 12, VW, VH - gy + 12);
+  [alleyProps, g] = mkc(STRIP, VH); const base = gy - 12, box = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+  box(60, base - 26, 46, 26, '#1d3a30'); box(58, base - 29, 50, 4, '#14281f'); box(64, base - 20, 38, 2, '#27493b'); box(62, base - 10, 2, 10, '#3a2a1c'); box(100, base - 10, 2, 10, '#3a2a1c');
+  box(170, base - 16, 18, 16, '#3a2a1c'); box(188, base - 12, 14, 12, '#33251a'); box(174, base - 30, 16, 14, '#44301f'); box(170, base - 9, 18, 1, '#251a10');
+  box(250, base - 24, 14, 24, '#2a2f3a'); box(250, base - 20, 14, 2, '#1a1e28'); box(250, base - 8, 14, 2, '#1a1e28');
+  box(330, base - 46, 26, 46, '#0a0810'); box(333, base - 1, 20, 1, '#c9a43a');
+  box(400, base - 80, 3, 80, '#0a0b14'); box(396, base - 84, 11, 5, '#0a0b14'); box(397, base - 80, 9, 2, '#ffd678');
+  const gl = g.createRadialGradient(401, base - 78, 2, 401, base - 56, 46); gl.addColorStop(0, 'rgba(255,214,120,0.30)'); gl.addColorStop(1, 'rgba(255,214,120,0)'); g.fillStyle = gl; g.fillRect(350, base - 96, 100, 100);
+  [alleyTile, g] = mkc(28, VH - gy + 12); g.fillStyle = '#17141f'; g.fillRect(0, 0, 28, g.canvas.height);
+  for (let i = 0; i < 22; i++) { g.fillStyle = rn() < .5 ? '#1e1a2a' : '#100e18'; g.fillRect((rn() * 28) | 0, (rn() * g.canvas.height) | 0, 1 + ((rn() * 2) | 0), 1); }
+  box(4, 8, 10, 1, '#0b0910'); box(13, 9, 6, 1, '#0b0910'); box(18, 10, 5, 1, '#0b0910'); box(6, 20, 14, 3, '#1a2640'); box(8, 20, 8, 1, '#26365c');
+}
+function drawAlley(now) {
+  buildAlley(); ctx.drawImage(alleyBg, 0, 0); layer(alleyProps, 0.55);
+  const o = Math.round(((-wx % 28) + 28) % 28); for (let x = o - 28; x < VW; x += 28) ctx.drawImage(alleyTile, x, gy - 12);
+  drawBlood(now); if ((now / 1000) % 3.3 < 0.08) { ctx.fillStyle = 'rgba(0,0,12,0.35)'; ctx.fillRect(0, 0, VW, VH); }      // the lamp flickers now and then
+}
+// drawing helpers for the cutscene
+const shadow = (sx, w) => { sx = Math.round(sx); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(sx - w, gy + 3, w * 2, 2); ctx.fillRect(sx - w + 3, gy + 2, w * 2 - 6, 1); ctx.fillRect(sx - w + 3, gy + 5, w * 2 - 6, 1); };
+function sprAt(src, info, sx, lift, flip) { const hx = info.cx - info.x0, y = gy - 60 - (info.top || 0) - lift; ctx.save(); ctx.translate(sx, 0); ctx.scale(flip ? -1 : 1, 1); ctx.drawImage(src, -hx, y); ctx.restore(); }
+function vsp(img, sx, lift, flip) { ctx.save(); ctx.translate(sx, 0); ctx.scale(flip ? -1 : 1, 1); ctx.drawImage(img, -32, gy + 2 - 62 - lift); ctx.restore(); }
+function windStreaks(dt, m) { ctx.fillStyle = 'rgba(176,176,214,0.35)'; for (const p of parts) { p.x -= p.v * dt * m; if (p.x < -p.l) { p.x = VW + rnd() * 30; p.y = rnd() * gy; } ctx.fillRect(Math.round(p.x), Math.round(p.y), p.l, 1); } }
+function dlg(name, text, n) {      // a dialogue box at the bottom with a name tag; n letters of the text are shown so far
+  const x = 6, w = VW - 12, h = 20, y = VH - h - 4; ctx.fillStyle = 'rgba(8,6,22,0.92)'; ctx.fillRect(x, y, w, h); ctx.fillStyle = '#9d8cff'; ctx.fillRect(x, y, w, 2); ctx.fillRect(x, y + h - 2, w, 2); ctx.fillRect(x, y, 2, h); ctx.fillRect(x + w - 2, y, 2, h);
+  ctx.fillStyle = '#2a2060'; ctx.fillRect(x, y - 10, name.length * 8 + 10, 10); ctx.fillStyle = '#9d8cff'; ctx.fillRect(x, y - 10, name.length * 8 + 10, 2); pxt(name, x + 5, y - 2, '#ffd34d', 8); pxt(text.slice(0, Math.max(0, n)), x + 8, y + 14, '#ffffff', 8);
+}
+function smokePuffs(sx, y, k) {      // a cloud of grey puffs that grows and thins out around (sx, y); k runs from 0 to 1
+  k = Math.max(0, Math.min(1, k)); for (let i = 0; i < 16; i++) { const a = i * 2.399, d = (6 + 20 * k) * (0.35 + (i % 5) / 5), px = Math.round(sx + Math.cos(a) * d * 1.1), py = Math.round(y + Math.sin(a * 1.3) * d * 1.4 - 8 * k), r = Math.round(3 + 8 * Math.min(1, k * 1.6) * (0.6 + (i % 3) / 5)), al = Math.sin(Math.PI * Math.min(1, k * 1.05)) * 0.55;
+    ctx.fillStyle = 'rgba(' + (i % 2 ? '205,203,222' : '160,158,184') + ',' + al.toFixed(2) + ')'; for (let yy = -r; yy <= r; yy++) { const w = Math.round(Math.sqrt(r * r - yy * yy)); ctx.fillRect(px - w, py + yy, 2 * w, 1); } }
+}
+// the cutscene: the alley scene until 12 s, then the close-ups
+function storyFrame(now, dt) {
+  const T = (now - story.t0) / 1000; story.T = T;
+  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
+  if (T < 12.0) alleyScene(now, dt, T, Math.round(VW * 0.42)); else faceScene(now, dt, T);
+  const fa = T < 0.7 ? 1 - T / 0.7 : T > 19.0 ? Math.min(1, (T - 19.0) / 0.7) : 0; if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  ctx.restore(); if (T >= 19.8 && !story.battle) startStoryBattle();
+}
+function alleyScene(now, dt, T, gx) {
+  wx = 0; drawBackdrop(now); windStreaks(dt, 1.4); const once = (k, f) => { if (!story.ev[k]) { story.ev[k] = 1; f(); } };
+  let sx = gx, set = idleF, info = D.idle, fi = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length, lift = 0, flip = (T >= 3.6 && T < 4.6) || (T >= 5.5 && T < 6.3) || T >= 9.5;      // he looks left and right, then turns his back on the alley
+  if (T >= 10.85) { const k = Math.min(1, (T - 10.85) / 0.65); sx = gx - 50 * (1 - (1 - k) * (1 - k)); if (k < 1) { set = jumpF; info = D.jump; fi = Math.min(set.length - 1, Math.floor(k * 14)); lift = info.lift ? info.lift[fi] : 0; } flip = k < 0.5; }      // the dodge: a jump away, turning to face Verity in the air
+  shadow(sx, 9); sprAt(set[fi % set.length], info, Math.round(sx), lift, flip);
+  if (T >= 10.0) {
+    let vx, img = SIMG.verity, vl = 0;
+    if (T < 10.9) { const k = (T - 10.0) / 0.9; vx = VW + 40 + (gx + 26 - VW - 40) * k; vl = Math.round(Math.abs(Math.sin(T * 16)) * 3); } else if (T < 11.15) { vx = gx + 26 - 34 * (T - 10.9) / 0.25; img = SIMG.bite; } else vx = gx - 8;      // he rushes in from the right and lunges with his jaws open
+    shadow(vx, 9); vsp(img, Math.round(vx), vl, true);
+  }
+  if (T >= 10.05 && T < 10.6) pxt('!', Math.round(gx), gy - 74, '#ff3a3a', 16, 'center');
+  if (T >= 1.2) once('msg', () => snd('ceon')); if (T >= 10.05) once('alert', () => snd('stun')); if (T >= 10.9) once('bite', () => snd('smack', 3));
+  if (T > 1.2 && T < 4.8) { const k = Math.min(1, (T - 1.2) / 0.3, (4.8 - T) / 0.3), y = Math.round(-44 + 50 * k), x = VW - 174; ctx.fillStyle = '#0b0a1e'; ctx.fillRect(x, y, 166, 40); ctx.fillStyle = '#8f7cff'; ctx.fillRect(x, y, 166, 2); ctx.fillRect(x, y + 38, 166, 2); ctx.fillRect(x, y, 2, 40); ctx.fillRect(x + 164, y, 2, 40);
+    pxt('NEW MISSION', x + 8, y + 14, '#ffd34d', 8); pxt('SPECIAL GRADE CURSE', x + 8, y + 25, '#ffffff', 8); pxt('SPOTTED NEARBY.', x + 8, y + 35, '#ffffff', 8); }      // the message that comes in
+  if (T >= 6.9 && T < 9.4) dlg('GOJO', 'WHERE IS THE SPECIAL GRADE?', Math.floor((T - 6.9) * 22));
+}
+function faceScene(now, dt, T) {
+  ctx.fillStyle = '#0a0814'; ctx.fillRect(0, 0, VW, VH); windStreaks(dt, 3.2); const sh = T >= 16.9 && T < 19 ? 2 : 0; if (sh) ctx.translate(Math.round((Math.random() * 2 - 1) * sh), Math.round((Math.random() * 2 - 1) * sh));
+  const pan = Math.min(1, Math.max(0, (T - 14.8) / 0.5)), ox = -Math.round(pan * pan * (3 - 2 * pan) * VW), talk = on => on ? [1, 2, 1, 0][Math.floor(T * 10) % 4] : 0;
+  const gj = SIMG.gojoFace[(Math.floor(T * 7) % 2) * 3 + talk(T >= 12.4 && T < 13.4)], vf = SIMG.verityFace[talk((T >= 15.6 && T < 16.6) || T >= 16.9)];
+  if (gj.complete) ctx.drawImage(gj, Math.round(VW / 2 - 64 + ox), -8, 128, 128); if (vf.complete) ctx.drawImage(vf, Math.round(VW / 2 - 64 + VW + ox), -8, 128, 128);
+  if (T >= 12.3 && T < 14.8) dlg('GOJO', 'WHO ARE YOU?', Math.floor((T - 12.4) * 14));
+  if (T >= 15.3) {
+    dlg(T >= 16.9 ? 'VERITY' : '???', 'HEY ITS ME,', Math.floor((T - 15.6) * 12));
+    if (T >= 16.9) { const jx = () => Math.round((Math.random() - 0.5) * 4); pxt('VERITY', 14 + 12 * 8 + jx(), VH - 10 + jx(), '#ff2a2a', 8); pxt('VERITY', Math.round(VW / 2) + jx(), 28 + jx(), '#ff2a2a', 24, 'center'); once2('verity', () => snd('fatalstart')); }      // the name: red and shaking
+  }
+}
+const once2 = (k, f) => { if (story && !story.ev[k]) { story.ev[k] = 1; f(); } };
+// the fight: the stand-in enemy looks like Verity; at half health he turns into the smiley ball (smoke, 5 s, cannot be hit and cannot act), then smoke again and he is back
+const WCACHE = new Map();
+function whiteOf(img) { let c = WCACHE.get(img); if (c) return c; c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.drawImage(img, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = '#fff'; g.fillRect(0, 0, 64, 64); if (img.complete && img.naturalWidth) WCACHE.set(img, c); return c; }
+function storyLook(now, reacting, hitT, kt) {
+  const d = dummy, f = d.vform || 'verity', info = { w: 64, h: 64, cx: 32, x0: 0, top: 0 }; let img = SIMG.verity, lift = 0;
+  if (f === 'smiley') { img = SIMG.smiley; lift = 10 + Math.round(2.5 * Math.sin(now / 260)); }
+  else if (f === 'smoke1' || f === 'smoke2') { const half = now - d.vAt < 350; img = (f === 'smoke1') === half ? SIMG.verity : SIMG.smiley; lift = (f === 'smoke1') === half ? 0 : 10; }
+  else if (kt < 0 && d.ai === 'attack') { const k = (now - d.aiAt) * ATK_FPS[d.k] * (d.spd || 1) / 1000; img = k >= 3 && k <= 11 ? SIMG.bite : SIMG.verity; }
+  else if (kt < 0 && d.ai === 'walk') lift = Math.round(Math.abs(Math.sin(now / 110)) * 2);
+  if ((kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) || (kt < 0 && reacting && hitT < 70)) img = whiteOf(img);
+  return { src: img, info, lift };
+}
+function storyBattleTick(now) {
+  const d = dummy; if (!d || d.ko >= 0) return; if (!d.vform) d.vform = 'verity';
+  if (d.vform === 'verity') { if (!vs.morphed && vs.ph === 'fight' && d.hp <= d.max * 0.5) { vs.morphed = true; d.vform = 'smoke1'; d.vAt = now; d.lock = d.hp; snd('vanish'); } }
+  else if (d.vform === 'smoke1' && now - d.vAt >= 700) { d.vform = 'smiley'; d.vAt = now; snd('arrive'); }
+  else if (d.vform === 'smiley' && now - d.vAt >= 5000) { d.vform = 'smoke2'; d.vAt = now; snd('vanish'); }
+  else if (d.vform === 'smoke2' && now - d.vAt >= 700) { d.vform = 'verity'; d.ai = 'think'; d.aiAt = now; snd('arrive'); }
+  if (d.vform !== 'verity') { d.hp = d.shown = d.lock; d.vx = 0; d.stunUntil = 0; d.ai = 'rest'; d.rxAt = -9999; }      // nothing hurts him and he does nothing
+}
+window.__story = () => story ? ({ T: +(story.T || 0).toFixed(2), battle: !!story.battle, slot: story.slot, state }) : null; window.__storyJump = t => { if (story && !story.battle) story.t0 = performance.now() - t * 1000; }; window.__saves = loadSaves;      // test hooks
+
 function tick(now) {
   requestAnimationFrame(tick);                // schedule first so one bad frame can't stop the loop
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
   if (state === 'play') { if (now < holdUntil) last = now; else drawScene(now, dt); }      // hit-stop: the picture freezes for a split second when the red orb explodes
   else if (state === 'versus') { const fr = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length; pcMe.clearRect(0, 0, 200, 200); pcMe.drawImage(idleF[fr], 0, 0); pcFoe.clearRect(0, 0, 200, 200); pcFoe.drawImage(dumF[fr % dumF.length], 0, 0); }
+  else if (state === 'story') storyFrame(now, dt);
   else if (state === 'select') {
     pctx.clearRect(0, 0, pv.width, pv.height);
     pctx.drawImage(idleF[Math.floor(now / (1000 / IDLE_FPS)) % idleF.length], 0, 0);
@@ -1633,11 +1760,15 @@ $('vsBack').addEventListener('click', () => show('select'));
 $('battles').addEventListener('click', () => { audio(); show('select'); });
 $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
-$('story').addEventListener('click', () => { audio(); snd('noce'); const b = $('story'); b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); });      // STORY MODE is not made yet: the card shakes and buzzes
+$('story').addEventListener('click', () => { audio(); svSel = -1; renderSaves(); show('saves'); });
+['sv0', 'sv1', 'sv2'].forEach((id, i) => $(id).addEventListener('click', () => { svSel = i; renderSaves(); }));
+$('svStart').addEventListener('click', () => { if (svSel >= 0) startStory(svSel); });
+$('svBack').addEventListener('click', () => show('modes'));
+addEventListener('pointerdown', () => { if (state === 'story') storySkip(); });      // a tap skips to the next part of the cutscene
 $('vsGo').addEventListener('click', () => startMatch(vsSel));
 $('vsNext').addEventListener('click', () => { const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
-$('vsAgain').addEventListener('click', () => startMatch(vs ? vs.gi : vsSel));
-$('vsMenu').addEventListener('click', () => { buildGrades(); show('versus'); });
+$('vsAgain').addEventListener('click', () => startMatch(vs ? vs.gi : vsSel, vs && vs.story));
+$('vsMenu').addEventListener('click', () => { if (vs && vs.story) { show('saves'); renderSaves(); } else { buildGrades(); show('versus'); } });
 $('back').addEventListener('click', () => show('select'));
 VOLS.forEach(([k, name]) => {
   const row = document.createElement('label');
@@ -1669,7 +1800,7 @@ $('snd').addEventListener('click', () => {    // mute / unmute (remembered)
 addEventListener('resize', resize);
 addEventListener('orientationchange', () => setTimeout(resize, 250));
 
-window.__dummy = () => dummy ? { gap: dummy.x - wx, hp: dummy.hp, ko: dummy.ko, kos, hits: { n: hits.n, dmg: hits.dmg, seq: hits.seq }, rx: dummy.rx, mode: dummy.mode, ai: dummy.ai, cap: dummy.cap ? { mode: dummy.cap.mode, r: dummy.cap.r, y: dummy.cap.py, rot: dummy.cap.rot, front: dummy.cap.front } : null, stun: Math.max(0, dummy.stunUntil - performance.now()), smoke: smoke.length } : null;
+window.__dummy = () => dummy ? { vform: dummy.vform || '', gap: dummy.x - wx, hp: dummy.hp, ko: dummy.ko, kos, hits: { n: hits.n, dmg: hits.dmg, seq: hits.seq }, rx: dummy.rx, mode: dummy.mode, ai: dummy.ai, cap: dummy.cap ? { mode: dummy.cap.mode, r: dummy.cap.r, y: dummy.cap.py, rot: dummy.cap.rot, front: dummy.cap.front } : null, stun: Math.max(0, dummy.stunUntil - performance.now()), smoke: smoke.length } : null;
 window.__ceDmg = n => ceDmg(n);                              // test hook: what a hit of n damage does right now (x1.3 while cursed energy is on)
 window.__peds = () => peds; window.__decals = () => decals; window.__kill = (i, d, pw) => { const p = peds[i]; if (p) killPed(p, performance.now(), d || 1, pw || 1); };
 window.__gore = () => ({ gibs: gibs.length, rest: gibs.filter(g => g.rest).length, drops: drops.length, decals: decals.length, pools: pools.length, kills, hold: Math.max(0, holdUntil - performance.now()) });
@@ -1689,6 +1820,8 @@ window.__state = () => ({ cmode: cm, redOrb: !!rdOrb, orbV: rdOrb ? rdOrb.v : 0,
 window.__back = () => {                       // Android back button: step back through the menus, otherwise let the app close
   if (settingsOn()) { closeSettings(); return true; }
   if (state === 'play') { show('select'); return true; }
+  if (state === 'story') { show('saves'); renderSaves(); return true; }
+  if (state === 'saves') { show('modes'); return true; }
   if (state === 'select') { show('modes'); return true; }
   if (state === 'modes') { show('title'); return true; }
   return false;
