@@ -2385,11 +2385,7 @@ function seFrame(now, dt) {
   if (now < s.inv) { ctx.globalCompositeOperation = 'difference'; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, VW, VH); ctx.globalCompositeOperation = 'source-over'; }
   if (now < s.lines) { const [lx, ly] = ph === 'in' ? [Math.round(VW / 2), Math.round(VH / 2)] : scr(ox, oy); actionLines(lx, ly, now, ph === 'in' ? 30 : 18); }
   const bb = Math.round(VH * 0.11 * ease3((now - s.t0) / 300)); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, bb); ctx.fillRect(0, VH - bb, VW, bb);      // the cinema bars slide in
-  if (ph === 'mash' && t > 0.1) pxt('MASH THE RED BUTTON!', Math.round(VW / 2), 27, '#ffd34d', 8, 'center');
-  if (ph === 'rev') dlg('GOJO', 'REVERSAL...', n);
-  if (ph === 'hold') { pxt('HOLD...', Math.round(VW / 2), 27, '#ffd34d', 8, 'center'); pxt(VW >= 250 ? 'LET GO WHEN THE RING TOUCHES!' : 'LET GO ON THE TOUCH!', Math.round(VW / 2), 37, '#ffffff', 8, 'center'); }
-  if (ph === 'fire' && s.delAt && now - s.delAt > 500) { const j = Math.round((Math.random() - 0.5) * 2); pxt('DELETED', Math.round(VW / 2) + j, 70 + j, '#ffffff', 16, 'center'); }
-  if (ph === 'miss' && t < 1.7) { const j = Math.round((Math.random() - 0.5) * 2); if (t < 0.9) pxt(s.res + '!', Math.round(VW / 2) + j, 44 + j, '#ff3a3a', 16, 'center'); else pxt('HE DODGED!', Math.round(VW / 2) + j, 44 + j, '#ffffff', 16, 'center'); }
+  if (ph === 'rev') dlg('GOJO', 'REVERSAL...', n);      // (no captions in the cutscene: the only words are the ones people say)
   const fa = ph === 'fire' ? Math.max(0, Math.min(1, (t - 2.4) / 0.6)) : ph === 'miss' ? Math.max(0, Math.min(1, (t - 2.6) / 0.6)) : 0; if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
   seUI(now);
 }
