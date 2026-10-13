@@ -60,7 +60,11 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 .col.vs #dom{grid-area:1/2}.col.vs #ce{grid-area:1/3}.col.vs #blk{grid-area:2/2}.col.vs #lap{grid-area:2/3}.col.vs #dash{grid-area:3/2}.col.vs #atk{grid-area:3/3}
 #fat.rdy{opacity:1;background:#3a0d12;border-color:#ff8a7a;color:#fff;box-shadow:0 0 1.8vh #ff4a3a,0 0 .5vh #ff4a3a inset,4px 4px 0 #000;animation:fatglow .5s steps(2) infinite}
 @keyframes fatglow{50%{box-shadow:0 0 3.2vh #ff2a2a,0 0 .9vh #ff2a2a inset,4px 4px 0 #000}}
-#pad.cine{visibility:hidden}      /* the controls hide while the FATALITY cutscene plays */
+#pad.cine,#hud.cine{visibility:hidden}      /* the controls hide while a cutscene plays (the FATALITY, the red ending) */
+#qte{position:fixed;inset:0;z-index:4;display:none;pointer-events:none}#qte.show{display:block}      /* the quick-time event of the red ending: the red button, and the ring that closes on it */
+#qBtn,#qRing{position:absolute;border-radius:50%}
+#qBtn{display:none;pointer-events:auto;touch-action:none;padding:0;font-size:var(--fs-q,12px);white-space:nowrap;align-items:center;justify-content:center;background:#d8281c;border:.9vh solid #ffd0b0;color:#fff;text-shadow:2px 2px 0 #000;box-shadow:0 0 2.4vh #ff3a2a,0 0 .8vh #ffd0b0 inset,.5vh .5vh 0 #000}#qBtn.show{display:flex}#qBtn.on{background:#ff5a42;box-shadow:0 0 3.6vh #ff6a4a,0 0 1.2vh #fff inset,.2vh .2vh 0 #000}
+#qRing{display:none;pointer-events:none;background:none;border:.8vh solid #ffe9a0;box-shadow:0 0 1.6vh #ff6a4a}#qRing.show{display:block}#qRing.now{border-color:#fff;box-shadow:0 0 3vh #fff,0 0 1vh #fff inset}
 #lap svg,#dash svg,#blk svg,#atk svg,#ce svg,#dom svg{width:4.5vh;height:4.5vh}
 #atk{border-color:#6fb4ff;width:17vh;height:17vh}
 #settings.screen{z-index:5;background:rgba(13,10,23,.95);gap:2vh}
@@ -176,6 +180,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <button id="atk" class="pb" aria-label="Attack"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M3 0h2v8H3zM0 3h8v2H0zM1 1h1v1H1zM6 1h1v1H6zM1 6h1v1H1zM6 6h1v1H6z"/></svg><span id="atkl">R.HOOK</span></button>
   </div>
 </div>
+<div id="qte"><div id="qRing"></div><button id="qBtn" aria-label="Red: tap quickly, then hold and let go when the ring touches the circle"><b id="qT">MASH!</b></button></div>
 <div id="rotate"><div>&#128241;</div>ROTATE YOUR PHONE<br>TO LANDSCAPE</div>
 
 <script>
@@ -319,7 +324,7 @@ function show(s) {
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll(); $('settings').classList.remove('on');
-  resetPeds(s === 'play'); cm = 0; ceOn = false; ceAmt = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); rdIdx = 0; ride = null; setModeUI();
+  resetPeds(s === 'play'); cm = 0; ceOn = false; ceAmt = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
   if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(performance.now(), 1200);
@@ -426,7 +431,7 @@ function resize() {
   VW = Math.ceil(w * dpr / S); VH = Math.ceil(h * dpr / S);
   cv.width = VW; cv.height = VH;
   const q = 8 / dpr, fs = (frac, lo, hi, maxPx) => { let n = Math.max(1, Math.round(Math.max(lo, Math.min(hi, frac * h)) / q)); if (maxPx) n = Math.min(n, Math.max(1, Math.floor(maxPx / q))); return (n * q).toFixed(3) + 'px'; }, rs = document.documentElement.style;      // the pixel font is only sharp at multiples of 8 device pixels: q = the CSS size of 8 device pixels
-  rs.setProperty('--fs-hud', fs(0.026, 8, 13, (0.34 * w - 3 * (0.032 * h + 6) - 24) / 15)); rs.setProperty('--fs-pb', fs(0.017, 5, 9, 0.15 * h / 6.5)); rs.setProperty('--fs-h1', fs(0.08, 14, 44)); rs.setProperty('--fs-btn', fs(0.03, 9, 16));      // (the top-left buttons may use about a third of the width, so they never run into the timer)
+  rs.setProperty('--fs-hud', fs(0.026, 8, 13, (0.34 * w - 3 * (0.032 * h + 6) - 24) / 15)); rs.setProperty('--fs-pb', fs(0.017, 5, 9, 0.15 * h / 6.5)); rs.setProperty('--fs-h1', fs(0.08, 14, 44)); rs.setProperty('--fs-btn', fs(0.03, 9, 16)); rs.setProperty('--fs-q', fs(0.04, 8, 24, (0.24 * h - 8) / 5));      // (the top-left buttons may use about a third of the width, so they never run into the timer)
   cv.style.width = (VW * S / dpr) + 'px'; cv.style.height = (VH * S / dpr) + 'px';
   gy = Math.floor(VH * 0.78);
   buildBg();
@@ -817,7 +822,6 @@ function explodeRed(now, hit) {               // RED hits (or reaches the end of
   const o = rdOrb, c = o.coat; rdOrb = null; boom = { x: o.x, y: o.y, born: now, big: hit && !c }; snd('redboom'); blastPeds(o.x, c ? 24 : 40, now); shakeUntil = now + 220; shakeAmp = hit && !c ? 4 : 2; holdUntil = now + 90;
   if (ride) { ride.phase = 'drop'; ride.dropAt = now; }          // (Gojo falls off the burst orb and lands right next to the enemy)
   if (!hit || !dummy) return;
-  if (vs && vs.story && vs.end && vs.end.stage === 'red') { verityDelete(now); return; }      // the ending: the red deletes Verity
   if (dBlocks() && dummy.x - wx > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx]) { boom.big = false; dummy.vx += 40; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); return; }      // blockable, like Lapse Blue
   if (c) {
     const dmg = 30 + ((Math.random() * 8) | 0);
@@ -1114,9 +1118,11 @@ function pressFat() { fatReq = performance.now() + 500; }      // (a press is re
 function fatStart(now, rev) {                          // rev = the enemy does it to Gojo
   const d = dummy;
   fat = { rev: !!rev, S: fatSets(!!rev), t: 0, rate: 1, freeze: 0, slow: false, blastAt: 0, pan: 0, ev: {}, fx: [], trail: [], ex0: Math.min(FAT_RANGE, Math.abs(d.x - wx)), invUntil: 0, linesUntil: 0, focus: [0, 0], deb: Array.from({ length: 26 }, (_, i) => ({ a: i * 2.4 + Math.random(), d: 60 + Math.random() * 60, w: 1 + ((Math.random() * 2) | 0), col: STONE[i % 4] })) };
-  atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; hurtAt = -1; wxv = 0;      // everything Gojo and the world were doing is cancelled
-  orb = null; debris = []; rdOrb = null; purple = null; boom = null; pboom = null; popups = []; smoke = []; hits.until = 0;
-  d.ai = 'rest'; d.pull = null; d.vx = 0; releaseAll(); $('pad').classList.add('cine');
+  cineClear(); d.ai = 'rest'; d.pull = null; d.vx = 0; $('pad').classList.add('cine');
+}
+function cineClear() {                                 // everything Gojo and the world were doing is cancelled (a cutscene begins)
+  atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; hurtAt = -1; wxv = 0;
+  orb = null; debris = []; rdOrb = null; purple = null; boom = null; pboom = null; popups = []; smoke = []; hits.until = 0; releaseAll();
 }
 function fatReset() { fat = null; fatReq = 0; $('pad').classList.remove('cine'); }
 function fatSpark(x, y, n) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.2832, v = 40 + Math.random() * 110; fat.fx.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 30, life: 0.3 + Math.random() * 0.35, age: 0, col: ['#ffffff', '#ffe9a0', '#9fd8ff'][i % 3], s: i % 4 ? 1 : 2 }); } }
@@ -1205,6 +1211,10 @@ function fatTitle(k, a) {                              // the word FATALITY: it 
   ctx.fillStyle = '#2a0408'; for (const [dx, dy] of [[-2, 0], [2, 0], [0, -2], [0, 2], [3, 3]]) ctx.fillText('FATALITY', x + dx, y + dy);
   ctx.fillStyle = '#d8101c'; ctx.fillText('FATALITY', x, y); ctx.globalAlpha = 1;
 }
+function actionLines(fx, fy, now, n = 30) {              // white speed lines racing out from (fx, fy) in screen pixels; they change their look every 45 ms
+  const seed = (now / 45) | 0; ctx.fillStyle = '#fff';
+  for (let i = 0; i < n; i++) { const h = Math.imul(i * 7919 + seed * 104729 + 17, 2246822519) >>> 0, a = i / n * 6.2832 + (h % 100) * 0.001, r0 = 18 + (h >> 8) % 16, r1 = r0 + 40 + (h >> 12) % 70; for (let r = r0; r < r1; r += 1) ctx.fillRect(Math.round(fx + Math.cos(a) * r), Math.round(fy + Math.sin(a) * r * 0.8), 1, 1); }
+}
 function fatFrame(now, dt) {                           // one frame of the cutscene (it replaces the normal scene while it plays)
   const f = fat, P = FP;
   keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = false; fatReq = 0;      // no control
@@ -1262,8 +1272,7 @@ function fatFrame(now, dt) {                           // one frame of the cutsc
   // ---- on the screen itself: the flash frame, the speed lines, the white-out, the title, the cinema bars
   if (now < f.invUntil) { ctx.globalCompositeOperation = 'difference'; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, VW, VH); ctx.globalCompositeOperation = 'source-over'; }
   if (now < f.linesUntil) {
-    const fx = Math.round(mx + (f.focus[0] - px) * z), fy = Math.round(my + (f.focus[1] - py) * z), seed = (now / 45) | 0; ctx.fillStyle = '#fff';
-    for (let i = 0; i < 30; i++) { const h = Math.imul(i * 7919 + seed * 104729 + 17, 2246822519) >>> 0, a = i / 30 * 6.2832 + (h % 100) * 0.001, r0 = 18 + (h >> 8) % 16, r1 = r0 + 40 + (h >> 12) % 70; for (let r = r0; r < r1; r += 1) ctx.fillRect(Math.round(fx + Math.cos(a) * r), Math.round(fy + Math.sin(a) * r * 0.8), 1, 1); }
+    actionLines(Math.round(mx + (f.focus[0] - px) * z), Math.round(my + (f.focus[1] - py) * z), now);
   }
   if (t >= P.TBL) {
     const k = Math.min(1, (now - f.blastAt) / 160), fade = t >= P.TE ? 1 - Math.min(1, (t - P.TE) / 0.8) : 1, bx = Math.round(mx + (ox - px) * z), by = Math.round(my + (oy - py) * z);
@@ -1354,6 +1363,7 @@ function drawBackdrop(now) {                  // everything behind the fighters 
 function drawScene(now, dt) {
   fatUI(now);
   if (fat) { fatFrame(now, dt); return; }       // the FATALITY cutscene replaces the whole scene while it plays
+  if (se) { seFrame(now, dt); return; }         // ...and so does the red ending of the story
   domTick(now); vsTick(now, dt); ceTick(now, dt); if (vs && vs.story) storyBattleTick(now, dt);
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
     const fs = fatState(now);
@@ -1554,9 +1564,10 @@ function drawScene(now, dt) {
     ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')';
     ctx.fillRect(0, 0, VW, VH);
   }
-  drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); if (vs && vs.end) storyEndFx(now); drawVs(now, -shkX, -shkY); domOverlay(now);
+  drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); drawVs(now, -shkX, -shkY); domOverlay(now);
   ctx.restore();
   if (now < flashUntil) { ctx.fillStyle = 'rgba(190,225,255,' + (flashA * (flashUntil - now) / flashMs) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  if (now < blackUntil) { ctx.fillStyle = 'rgba(0,0,0,' + ((blackUntil - now) / 600).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (coming out of the red ending: from black)
   drawHits(now);
 }
 
@@ -1569,7 +1580,7 @@ function storeSaves(a) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(a))
 function renderSaves() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].beat ? 'VERITY BEATEN' : 'CHAPTER 1') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
 function startStory(slot) { const a = loadSaves(); if (!a[slot]) a[slot] = { ch: 1 }; storeSaves(a); audio(); show('story'); story = { slot, t0: performance.now(), battle: false, T: 0, ev: {} }; alley = true; wx = 0; }
 function storyDone() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].beat = true; storeSaves(a); }
-function storySkip() { if (!story || story.battle) return; const n = [6.9, 12.0, 15.3, 19.0].find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = performance.now() - n * 1000; }      // a tap: on to the next part of the cutscene
+function storySkip() { if (!story || story.battle) return; const n = [6.9, 10.0, CUT.slowEnd, CUT.fade].find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = performance.now() - n * 1000; }      // a tap: on to the next part of the cutscene (the dialogue, Verity's attack, the close-up of Verity, the fade)
 function startStoryBattle() { story.battle = true; startMatch(3, true); }
 // the alley: dark brick under a thin strip of night sky, a dumpster, crates, a barrel, a door and a street lamp along the wall, cracked wet asphalt
 let alleyBg = null, alleyProps = null, alleyTile = null, alleyKey = '';
@@ -1602,7 +1613,17 @@ function drawAlley(now) {
 }
 // drawing helpers for the cutscene
 const shadow = (sx, w) => { sx = Math.round(sx); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(sx - w, gy + 3, w * 2, 2); ctx.fillRect(sx - w + 3, gy + 2, w * 2 - 6, 1); ctx.fillRect(sx - w + 3, gy + 5, w * 2 - 6, 1); };
-function sprAt(src, info, sx, lift, flip) { const hx = info.cx - info.x0, y = gy - 60 - (info.top || 0) - lift; ctx.save(); ctx.translate(sx, 0); ctx.scale(flip ? -1 : 1, 1); ctx.drawImage(src, -hx, y); ctx.restore(); }
+const MOUTHS = new Map();      // per picture: where Gojo's mouth is (found once, from his blindfold: the mouth is 5 rows under its top edge, 3 pixels wide, ending under the blindfold's right end)
+function mouthOf(c) {
+  if (MOUTHS.has(c)) return MOUTHS.get(c); const w = c.width, h = Math.min(c.height, 40), p = c.getContext('2d').getImageData(0, 0, w, h).data; let r = null;
+  for (let y = 0; y < h && !r; y++) { let n = 0, xr = -1; for (let x = 0; x < w; x++) { const i = (y * w + x) * 4; if (p[i + 3] && p[i] < 20 && p[i + 1] < 16 && p[i + 2] < 24) { n++; xr = x; } } if (n >= 8) r = { x: xr - 3, y: y + 5 }; }
+  MOUTHS.set(c, r); return r;
+}
+function sprAt(src, info, sx, lift, flip, mouth) {      // Gojo's picture at (sx, floor); mouth: 0 closed (the picture as it is), 1 / 2 = a dark gap 1 / 2 pixels tall cut into the face (he is speaking)
+  const hx = info.cx - info.x0, y = gy - 60 - (info.top || 0) - lift; ctx.save(); ctx.translate(sx, 0); ctx.scale(flip ? -1 : 1, 1); ctx.drawImage(src, -hx, y);
+  if (mouth) { const m = mouthOf(src); if (m) { ctx.fillStyle = '#3a0c14'; ctx.fillRect(-hx + m.x, y + m.y, 3, mouth); } }
+  ctx.restore();
+}
 function vsp(img, sx, lift, flip) { ctx.save(); ctx.translate(sx, 0); ctx.scale(flip ? -1 : 1, 1); ctx.drawImage(img, -32, gy + 2 - 62 - lift); ctx.restore(); }
 function windStreaks(dt, m) { ctx.fillStyle = 'rgba(176,176,214,0.35)'; for (const p of parts) { p.x -= p.v * dt * m; if (p.x < -p.l) { p.x = VW + rnd() * 30; p.y = rnd() * gy; } ctx.fillRect(Math.round(p.x), Math.round(p.y), p.l, 1); } }
 function dlg(name, text, n) {      // a dialogue box at the bottom with a name tag; n letters of the text are shown so far
@@ -1613,39 +1634,65 @@ function smokePuffs(sx, y, k) {      // a cloud of grey puffs that grows and thi
   k = Math.max(0, Math.min(1, k)); for (let i = 0; i < 16; i++) { const a = i * 2.399, d = (6 + 20 * k) * (0.35 + (i % 5) / 5), px = Math.round(sx + Math.cos(a) * d * 1.1), py = Math.round(y + Math.sin(a * 1.3) * d * 1.4 - 8 * k), r = Math.round(3 + 8 * Math.min(1, k * 1.6) * (0.6 + (i % 3) / 5)), al = Math.sin(Math.PI * Math.min(1, k * 1.05)) * 0.55;
     ctx.fillStyle = 'rgba(' + (i % 2 ? '205,203,222' : '160,158,184') + ',' + al.toFixed(2) + ')'; for (let yy = -r; yy <= r; yy++) { const w = Math.round(Math.sqrt(r * r - yy * yy)); ctx.fillRect(px - w, py + yy, 2 * w, 1); } }
 }
-// the cutscene: the alley scene until 12 s, then the close-ups
+// the cutscene (T = seconds): 10.0 Verity runs in, 10.05 Gojo senses him, 10.3 the camera pushes in on Gojo's face (the same sprite in the same place), 10.85-13.8 slow motion: he jumps back and never lands while he asks WHO ARE YOU? (his mouth moves), 13.8 the camera glides over to Verity: HEY ITS ME, VERITY (the same sprite, his mouth moves, VERITY red and shaking), 17.7 the fade, 18.8 the fight
+const CUT = { see: 10.05, zoom: 10.3, slow: 10.85, slowEnd: 13.8, ask: 11.6, askCps: 6, reply: 14.6, name: 15.9, fade: 17.7, fight: 18.8, rate: 0.25, Z: 4 };
+const wclock = T => T < CUT.slow ? T : T < CUT.slowEnd ? CUT.slow + (T - CUT.slow) * CUT.rate : CUT.slow + (CUT.slowEnd - CUT.slow) * CUT.rate + (T - CUT.slowEnd);      // the world's clock: it crawls (a quarter of the speed) while the slow motion lasts
+const ease3 = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
 function storyFrame(now, dt) {
   const T = (now - story.t0) / 1000; story.T = T;
   ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
-  if (T < 12.0) alleyScene(now, dt, T, Math.round(VW * 0.42)); else faceScene(now, dt, T);
-  const fa = T < 0.7 ? 1 - T / 0.7 : T > 19.0 ? Math.min(1, (T - 19.0) / 0.7) : 0; if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
-  ctx.restore(); if (T >= 19.8 && !story.battle) startStoryBattle();
+  alleyScene(now, dt, T, Math.round(VW * 0.42));
+  const fa = T < 0.7 ? 1 - T / 0.7 : T > CUT.fade ? Math.min(1, (T - CUT.fade) / 0.7) : 0; if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  ctx.restore(); if (T >= CUT.fight && !story.battle) startStoryBattle();
+}
+function gojoAt(W, T, gx) {      // Gojo at world time W (T = real time): his picture, place and face. He looks around, turns his back on the alley, looks back when he senses Verity; then (slow motion) he jumps away, rises and hangs in the air for good
+  let sx = gx, set = idleF, info = D.idle, fi = Math.floor(W * IDLE_FPS) % idleF.length, lift = 0, flip = (T >= 3.6 && T < 4.6) || (T >= 5.5 && T < 6.3) || (T >= 9.5 && T < CUT.zoom);
+  if (W >= CUT.slow) {
+    const k = (W - CUT.slow) / 0.65, f = Math.min(8, k * 14), a = Math.floor(f); set = jumpF; info = D.jump; flip = false;
+    if (f < 8) { fi = a; lift = Math.round(info.lift[a] + (info.lift[a + 1] - info.lift[a]) * (f - a)); }      // he pushes off and rises (smoothly: the slow motion shows every pixel)
+    else { fi = [8, 7, 8, 9][Math.floor((k - 8 / 14) * 3.2) % 4]; lift = info.lift[fi] + Math.round(Math.sin(W * 5)); }      // ...and then he just hangs there
+    sx = gx - 48 * Math.pow(Math.min(1, k), 1.5) - 8 * Math.min(2, Math.max(0, k - 1));
+  }
+  const src = set[fi % set.length], m = mouthOf(src), hx = info.cx - info.x0, top = info.top || 0;
+  const face = m ? [sx + (flip ? -1 : 1) * (m.x - 2 - hx), gy - 60 - top - lift + m.y - 4] : [sx + (flip ? -1.5 : 1.5), gy - 47 - lift];      // the middle of his blindfold
+  return { sx, set, info, fi, lift, flip, src, face };
 }
 function alleyScene(now, dt, T, gx) {
-  wx = 0; drawBackdrop(now); windStreaks(dt, 1.4); const once = (k, f) => { if (!story.ev[k]) { story.ev[k] = 1; f(); } };
-  let sx = gx, set = idleF, info = D.idle, fi = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length, lift = 0, flip = (T >= 3.6 && T < 4.6) || (T >= 5.5 && T < 6.3) || T >= 9.5;      // he looks left and right, then turns his back on the alley
-  if (T >= 10.85) { const k = Math.min(1, (T - 10.85) / 0.65); sx = gx - 50 * (1 - (1 - k) * (1 - k)); if (k < 1) { set = jumpF; info = D.jump; fi = Math.min(set.length - 1, Math.floor(k * 14)); lift = info.lift ? info.lift[fi] : 0; } flip = k < 0.5; }      // the dodge: a jump away, turning to face Verity in the air
-  shadow(sx, 9); sprAt(set[fi % set.length], info, Math.round(sx), lift, flip);
-  if (T >= 10.0) {
-    let vx, img = vfr('idle', now / 100, true), vl = 0;
-    if (T < 10.9) { const k = (T - 10.0) / 0.9; vx = VW + 40 + (gx + 26 - VW - 40) * k; img = vfr('walk', T * 24, true); } else if (T < 11.15) { vx = gx + 26 - 34 * (T - 10.9) / 0.25; img = vfr('bite', 5 + (T - 10.9) / 0.25 * 3.5); } else vx = gx - 8;      // he rushes in from the right and lunges with his jaws open
-    shadow(vx, 9); vsp(img, Math.round(vx), vl, true);
+  wx = 0; const W = wclock(T), once = (k, t0, f) => { if (!story.ev[k]) { story.ev[k] = 1; if (T - t0 < 0.6) f(); } }, ask = 'WHO ARE YOU?', askN = Math.floor((T - CUT.ask) * CUT.askCps);
+  const G = gojoAt(W, T, gx), { sx, info, fi, lift, flip } = G, talk = T >= CUT.ask && askN < ask.length && ask[askN] !== ' ' ? 1 + (askN % 2) : 0;      // (his mouth opens on every letter of WHO ARE YOU?)
+  // Verity: runs in from the right (10.0), leaps at Gojo with his jaws open (10.9) and snaps them shut right beside where Gojo's face was; then he straightens up
+  let vx = null, vimg = null, vl = 0, vf = -1;
+  if (W >= 10.0) {
+    const fb = gojoAt(11.15, 11.15, gx).face, vxE = fb[0] + 22, vlA = Math.max(0, gy - 53 - (fb[1] + 7)) / Math.sin(Math.PI * 0.675);      // (the place and the height where the jaws shut)
+    vimg = vfr('idle', W * 10, true); vx = vxE;
+    if (W < 10.9) { vx = VW + 40 + (gx + 26 - VW - 40) * (W - 10.0) / 0.9; vimg = vfr('walk', W * 24, true); }
+    else if (W < 11.55) { const u = Math.min(1, (W - 10.9) / 0.25); vx = gx + 26 + (vxE - gx - 26) * u; vimg = vfr('bite', 5 + (W - 10.9) / 0.65 * 9.9); }      // (the BITE strip: the jaws shut on frame 8, then he straightens up)
+    const u2 = (W - 10.88) / 0.4; if (u2 > 0 && u2 < 1) vl = Math.round(vlA * Math.sin(Math.PI * u2));
+    if (T >= CUT.reply - 0.1) { const n = Math.floor((T - CUT.reply) * 12); vf = T >= CUT.name ? (Math.floor(T * 10) % 2 ? 8 : 5) : T >= CUT.reply && n < 11 ? (n % 2 ? 7 : 3) : 0; vimg = vfr('talk', vf); }      // (his mouth moves with every letter)
   }
-  if (T >= 10.05 && T < 10.6) pxt('!', Math.round(gx), gy - 74, '#ff3a3a', 16, 'center');
-  if (T >= 1.2) once('msg', () => snd('ceon')); if (T >= 10.05) once('alert', () => snd('stun')); if (T >= 10.9) once('bite', () => snd('smack', 3));
+  // the camera: a push-in on Gojo's face (it follows him, so the face stays where it is on the screen), then a glide to Verity's face
+  const ze = ease3((T - CUT.zoom) / 0.55), pan = ease3((T - CUT.slowEnd) / 0.5), cm = story.cam, z = 1 + (CUT.Z - 1) * ze;
+  let tx = VW / 2 + (G.face[0] + 12 - VW / 2) * ze, ty = VH / 2 + (G.face[1] + 3 - VH / 2) * ze;
+  if (pan > 0 && vx !== null) { tx += (vx - tx) * pan; ty += (gy - 51 - ty) * pan; }
+  const kf = !cm || T < CUT.zoom ? 1 : 1 - Math.exp(-dt * 14), fx0 = cm ? cm.fx : tx, fy0 = cm ? cm.fy : ty;      // (the camera trails a little behind the face)
+  let fx = fx0 + (tx - fx0) * kf, fy = fy0 + (ty - fy0) * kf;
+  fx = Math.max(VW / (2 * z), Math.min(VW - VW / (2 * z), fx)); fy = Math.max(VH / (2 * z), Math.min(VH - VH / (2 * z), fy)); story.cam = { z, fx, fy }; story.g = { sx, lift, fi, W, flip, vx, vl, talk, face: G.face, vf };
+  const shake = T >= CUT.name && T < CUT.fade ? () => Math.round((Math.random() * 2 - 1) * 2) : () => 0;      // VERITY is shouted: the picture shakes
+  ctx.save(); ctx.translate(Math.round(VW / 2 - fx * z) + shake(), Math.round(VH / 2 - fy * z) + shake()); if (z !== 1) ctx.scale(z, z);
+  drawBackdrop(now);
+  if (vimg) { shadow(vx, 9); vsp(vimg, Math.round(vx), vl, true); }
+  shadow(sx, Math.max(3, 9 - lift / 3)); sprAt(G.src, info, Math.round(sx), lift, flip, talk);      // (Gojo is in front, so Verity's jaws never hide his mouth)
+  if (T >= CUT.see && T < CUT.see + 0.4) pxt('!', Math.round(gx), gy - 74, '#ff3a3a', 16, 'center');
+  ctx.restore();
+  windStreaks(dt * (T >= CUT.slow && T < CUT.slowEnd ? CUT.rate : 1), 1.4 + 1.6 * ze);      // (the wind is drawn on the screen itself, so it stays fine however far the camera is in)
+  if (T >= 1.2) once('msg', 1.2, () => snd('ceon')); if (T >= CUT.see) once('alert', CUT.see, () => snd('stun')); if (T >= CUT.slow) once('slow', CUT.slow, () => snd('slowin')); if (W >= 11.15) once('bite', CUT.slow + (11.15 - CUT.slow) / CUT.rate, () => snd('smack', 3)); if (T >= CUT.slowEnd) once('slowend', CUT.slowEnd, () => snd('slowout'));
   if (T > 1.2 && T < 4.8) { const k = Math.min(1, (T - 1.2) / 0.3, (4.8 - T) / 0.3), y = Math.round(-44 + 50 * k), x = VW - 174; ctx.fillStyle = '#0b0a1e'; ctx.fillRect(x, y, 166, 40); ctx.fillStyle = '#8f7cff'; ctx.fillRect(x, y, 166, 2); ctx.fillRect(x, y + 38, 166, 2); ctx.fillRect(x, y, 2, 40); ctx.fillRect(x + 164, y, 2, 40);
     pxt('NEW MISSION', x + 8, y + 14, '#ffd34d', 8); pxt('SPECIAL GRADE CURSE', x + 8, y + 25, '#ffffff', 8); pxt('SPOTTED NEARBY.', x + 8, y + 35, '#ffffff', 8); }      // the message that comes in
   if (T >= 6.9 && T < 9.4) dlg('GOJO', 'WHERE IS THE SPECIAL GRADE?', Math.floor((T - 6.9) * 22));
-}
-function faceScene(now, dt, T) {
-  ctx.fillStyle = '#0a0814'; ctx.fillRect(0, 0, VW, VH); windStreaks(dt, 3.2); const sh = T >= 16.9 && T < 19 ? 2 : 0; if (sh) ctx.translate(Math.round((Math.random() * 2 - 1) * sh), Math.round((Math.random() * 2 - 1) * sh));
-  const pan = Math.min(1, Math.max(0, (T - 14.8) / 0.5)), ox = -Math.round(pan * pan * (3 - 2 * pan) * VW), talk = on => on ? [1, 2, 1, 0][Math.floor(T * 10) % 4] : 0;
-  const gj = SIMG.gojoFace[(Math.floor(T * 7) % 2) * 3 + talk(T >= 12.4 && T < 13.4)], vf = SIMG.verityFace[talk((T >= 15.6 && T < 16.6) || T >= 16.9)];
-  if (gj.complete) ctx.drawImage(gj, Math.round(VW / 2 - 64 + ox), -8, 128, 128); if (vf.complete) ctx.drawImage(vf, Math.round(VW / 2 - 64 + VW + ox), -8, 128, 128);
-  if (T >= 12.3 && T < 14.8) dlg('GOJO', 'WHO ARE YOU?', Math.floor((T - 12.4) * 14));
-  if (T >= 15.3) {
-    dlg(T >= 16.9 ? 'VERITY' : '???', 'HEY ITS ME,', Math.floor((T - 15.6) * 12));
-    if (T >= 16.9) { const jx = () => Math.round((Math.random() - 0.5) * 4); pxt('VERITY', 14 + 12 * 8 + jx(), VH - 10 + jx(), '#ff2a2a', 8); pxt('VERITY', Math.round(VW / 2) + jx(), 28 + jx(), '#ff2a2a', 24, 'center'); once2('verity', () => snd('fatalstart')); }      // the name: red and shaking
+  if (T >= CUT.ask - 0.1 && T < CUT.slowEnd) dlg('GOJO', ask, askN);
+  if (T >= CUT.reply - 0.1) {
+    dlg(T >= CUT.name ? 'VERITY' : '???', 'HEY ITS ME,', Math.floor((T - CUT.reply) * 12));
+    if (T >= CUT.name) { const jx = () => Math.round((Math.random() - 0.5) * 4); pxt('VERITY', 14 + 12 * 8 + jx(), VH - 10 + jx(), '#ff2a2a', 8); pxt('VERITY', Math.round(VW / 2) + jx(), 28 + jx(), '#ff2a2a', 24, 'center'); if (T < CUT.name + 0.6) once2('verity', () => snd('fatalstart')); }      // the name: red and shaking
   }
 }
 const once2 = (k, f) => { if (story && !story.ev[k]) { story.ev[k] = 1; f(); } };
@@ -1709,28 +1756,118 @@ function storyBattleTick(now, dt) {
     d.vNext = now + 400; const ag = Math.abs(d.x - wx), r = Math.random(); if (ag < 30 && r < 0.28) vStart(d, 'bite', now); else if (ag < 70 && r > 0.88) vStart(d, 'crouch', now);
   }
 }
-// the ending: Verity's health runs out, he does not fall. Gojo goes into red mode (free of charge), fires the real RED, and where it hits Verity is deleted, pixel by pixel. Then the K.O. and TO BE CONTINUED.
 const EMPTY = document.createElement('canvas'); EMPTY.width = EMPTY.height = 64; const BAY = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
 function dissolve(src, k) {      // k 0..1: the picture is erased in a dither pattern, from the top down, and what is left turns red
   const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.drawImage(src, 0, 0); const im = g.getImageData(0, 0, 64, 64), p = im.data;
   for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) { const i = (y * 64 + x) * 4; if (!p[i + 3]) continue; if ((BAY[y & 3][x & 3] + 0.5) / 16 < k * 1.1 + (63 - y) / 64 * 0.3 * k) p[i + 3] = 0; else { p[i] = Math.min(255, p[i] + k * 140); p[i + 1] *= 1 - k * 0.6; p[i + 2] *= 1 - k * 0.6; } }
   g.putImageData(im, 0, 0); return c;
 }
-function storyEndStart(now) { const d = dummy; vs.end = { stage: 'wait', at: now }; vs.bleed = null; d.vform = 'end'; d.lock = d.hp = d.shown = 1; d.vact = null; d.ai = 'rest'; d.vx = 0; d.vAt = now; if (d.x < wx + 24) d.x = wx + 46; }      // (he is put in front of Gojo, where the red will go)
-function verityDelete(now) { dummy.del = now; vs.end = { stage: 'del', at: now }; flash(now, 420, 0.8); snd('purpleboom'); }
-function storyEndTick(now) {
-  const e = vs.end; keyL = keyR = padL = padR = jumpReq = atkReq = crReq = dashReq = ceReq = domReq = blockHeld = false;      // Gojo only does the red
-  if (e.stage === 'wait') { if (cm !== 2) setMode(2, now); if (mbAt >= 0 && mbK === 1) { e.stage = 'red'; e.at = now; } else lpReq = true; }      // (he presses RED until he is free to start it)
-  else if (e.stage === 'red' && now - e.at > 3500) verityDelete(now);      // (if the orb somehow missed, he is deleted anyway)
-  else if (e.stage === 'del' && now - e.at > 1700) { e.stage = 'done'; vs.endGo = true; koDummy(now); }
+// ---------------------------------------------------------------- the ending, a QUICK-TIME EVENT. Verity's health runs out and he does not fall: Gojo's last move ends and he backs away (a dash) if he is close; then the CUTSCENE cuts in with action lines and every button gone. A red button: MASH it (the red orb grows and the camera pushes in on it). Gojo says "REVERSAL..."; the button goes and a HOLD button comes with a big empty ring closing on it: let go the moment the ring touches the circle and Gojo fires RED, which deletes Verity (then the K.O. and TO BE CONTINUED). Let go too early or too late (or never) and storyMiss() runs.
+const SE = { mark: 62, step: 1 / 22, decay: 0.3, ring: 2400, early: 220, late: 260, hold: 350 };      // mark: how far (px) he backs away from Verity; step: how much one tap fills the orb (1 = full); decay: how much of it leaks away each second once he stops; ring: ms the ring needs to close; early / late: how many ms before / after the touch letting go still counts; hold: the shortest hold (ms) before the touch
+let se = null, blackUntil = 0;      // se = the running quick-time event (null when there is none)
+const SE_KEYS = new Set(['Space', 'Enter', 'KeyJ', 'KeyK', 'KeyL', 'KeyF']);      // (the keyboard can mash and hold too)
+function storyEndStart(now) {      // Verity is at 0: he stays on his feet, held up, at 1 health; Gojo's last move runs out and he backs away
+  const d = dummy; vs.end = { stage: 'back', at: now }; vs.bleed = null; d.vform = 'end'; d.lock = d.hp = d.shown = 1; d.vact = null; d.ai = 'rest'; d.vx = 0; d.vAt = now;
 }
-function storyEndFx(now) {      // a dark red dusk while the red is made, its name, and DELETED
-  const e = vs.end, k = Math.min(1, (now - e.at) / 500); ctx.fillStyle = 'rgba(40,0,12,' + (e.stage === 'wait' ? 0 : 0.28 * k).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH);
-  if (e.stage === 'red' || e.stage === 'del') { const j = Math.round((Math.random() - 0.5) * 2); pxt(e.stage === 'red' ? 'REVERSAL RED' : 'DELETED', Math.round(VW / 2) + j, 66 + j, e.stage === 'red' ? '#ff3a3a' : '#ffffff', 16, 'center'); }
+function storyEndTick(now) {      // the first part of the ending, in the normal scene: no control; his move finishes and he dashes away from Verity (the way he pushes is the way he dashes; nothing = back = left)
+  const e = vs.end; keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false;
+  if (e.stage !== 'back') return;
+  const free = jumpAt < 0 && teleAt < 0 && atkAt < 0 && lpAt < 0 && mbAt < 0 && dgAt < 0 && hurtAt < 0 && blkAt < 0 && stance === 'stand' && !dash && !ride, gap = dummy.x - wx;
+  if (now - e.at > 2600 || (free && now - e.at > 400 && Math.abs(gap) >= SE.mark)) { seStart(now); return; }
+  if (stance === 'crouch') crReq = true; else if (free && now > dgReady) { dashReq = true; if (gap < 0) keyR = true; }
+}
+function seStart(now) {      // the cut: action lines, the buttons vanish
+  cineClear(); domReset(); closeSettings(); vs.end.stage = 'cine'; vs.end.at = now; dummy.vact = null;
+  se = { t0: now, at: now, ph: 'in', lvl: 0, shown: 0, taps: 0, tapAt: -1e9, pulse: -1e9, down: false, held: false, holdAt: 0, ringAt: 0, z: 1, fx: VW / 2, fy: VH / 2, res: '', ev: {}, lay: '', delAt: 0, inv: now + 80, lines: now + 600, trail: [] };
+  $('pad').classList.add('cine'); $('hud').classList.add('cine'); $('qte').classList.add('show'); snd('fatalstart');
+}
+function seReset() {      // the buttons come back; nothing of the quick-time event is left
+  se = null; $('pad').classList.remove('cine'); $('hud').classList.remove('cine'); $('qte').classList.remove('show'); $('qBtn').classList.remove('show', 'on'); $('qRing').classList.remove('show', 'now');
+}
+function sePress(down) {      // the red button (or a key) went down / up
+  if (!se) return; const now = performance.now();
+  if (down) {
+    if (se.ph === 'mash') { se.lvl = Math.min(1, se.lvl + SE.step); se.taps++; se.tapAt = se.pulse = now; se.lines = now + 90; snd('cecrackle'); }
+    else if (se.ph === 'hold' && !se.held && now <= se.ringAt + SE.ring - SE.hold) { se.held = true; se.holdAt = now; snd('ceon'); }      // (it has to be held for a while before the ring touches)
+    se.down = true;
+  } else { se.down = false; if (se.ph === 'hold' && se.held) seRelease(now); }
+}
+function seRelease(now) {      // he let go: the moment the ring touches the circle is the target
+  const off = now - (se.ringAt + SE.ring); se.held = false;
+  if (off >= -SE.early && off <= SE.late) { se.ph = 'fire'; se.at = now; se.off = Math.round(off); snd('redfire'); } else seMiss(now, off < 0 ? 'TOO EARLY' : 'TOO LATE');
+}
+function seMiss(now, why) { se.ph = 'miss'; se.at = now; se.res = why; snd('noce'); }
+function storyMiss() {      // the red was let go too early / too late (or never): for now the whole story starts over (what really happens is decided later, so it is all here)
+  const slot = story ? story.slot : 0; seReset(); startStory(slot);
+}
+function seEnd(now) {      // the cutscene is over: the buttons are back and the real K.O. follows (Verity is already gone)
+  seReset(); dummy.del = now - 1800; vs.end.stage = 'done'; vs.endGo = true; blackUntil = now + 1100; koDummy(now);
+}
+function seUI(now) {      // the red button and the ring: in the middle of the picture, below the orb and well clear of Gojo (who stands at the left)
+  const s = se, r = cv.getBoundingClientRect(), d = Math.round(r.height * 0.24), x = Math.round(r.left + r.width * 0.52), y = Math.round(r.top + r.height * 0.66), key = [d, x, y].join(), b = $('qBtn'), g = $('qRing'), hold = s.ph === 'hold';
+  if (key !== s.lay) { s.lay = key; for (const e of [b, g]) { e.style.left = x + 'px'; e.style.top = y + 'px'; } b.style.width = b.style.height = d + 'px'; b.style.margin = -d / 2 + 'px 0 0 ' + -d / 2 + 'px'; s.d = d; }
+  b.classList.toggle('show', s.ph === 'mash' || hold); g.classList.toggle('show', hold); const lab = hold ? 'HOLD' : 'MASH!'; if ($('qT').textContent !== lab) $('qT').textContent = lab; b.classList.toggle('on', s.down);
+  if (hold) { const u = (now - s.ringAt) / SE.ring, D = Math.round(s.d * (1 + 1.4 * (1 - Math.min(1.12, u)))), off = now - (s.ringAt + SE.ring); g.style.width = g.style.height = D + 'px'; g.style.margin = -D / 2 + 'px 0 0 ' + -D / 2 + 'px'; g.classList.toggle('now', off >= -SE.early && off <= SE.late); }
+}
+function seFrame(now, dt) {
+  const s = se, mx = VW / 2, GX = Math.round(VW * 0.27), VX = Math.round(VW * 0.73), I = D.atk22, away = s.prev ? now - s.prev : 0; s.prev = now; keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false;
+  if (away > 400) { for (const k of ['t0', 'at', 'ringAt', 'holdAt', 'tapAt', 'pulse', 'inv', 'lines', 'delAt', 'shake']) if (s[k] > 0) s[k] += away; if (s.delAt) dummy.del = s.delAt; }      // (the app was in the background: the clocks wait)
+  // ---- the phases: IN (the cut, 0.5 s) > MASH (until the orb is full) > REV ("REVERSAL...", 1.5 s) > HOLD (the ring closes) > FIRE (red, the deletion) | MISS (it starts over)
+  if (s.ph === 'in' && now - s.at >= 500) { s.ph = 'mash'; s.at = now; snd('redcharge'); }
+  else if (s.ph === 'mash') { if (now - s.tapAt > 400) s.lvl = Math.max(0, s.lvl - SE.decay * dt); if (s.lvl >= 1 && s.shown > 0.97) { s.ph = 'rev'; s.at = now; s.inv = now + 80; s.lines = now + 450; snd('ceon'); snd('domainface'); } }
+  else if (s.ph === 'rev' && now - s.at >= 1500) { s.ph = 'hold'; s.at = s.ringAt = now; s.held = false; snd('fatalstart'); }
+  else if (s.ph === 'hold' && now > s.ringAt + SE.ring + SE.late) seMiss(now, s.held ? 'TOO LATE' : 'TOO SLOW');
+  else if (s.ph === 'fire' && now - s.at >= 3000) { seEnd(now); return; }
+  else if (s.ph === 'miss' && now - s.at >= 2000) { storyMiss(); return; }
+  const ph = s.ph, t = (now - s.at) / 1000; if (ph === 'miss') s.lvl = Math.max(0, s.lvl - dt * 1.4); s.shown += (s.lvl - s.shown) * Math.min(1, dt * 14);
+  // ---- Gojo's picture (the RED pose: frames 0-19 the fingers go up and the orb gathers, 20-26 the arm points, 27-29 it comes down), his hand, and the orb
+  const gfi = ph === 'in' ? Math.min(19, Math.floor((now - s.at) / 500 * 19)) : ph === 'fire' ? 20 + Math.min(6, Math.floor(t * 20)) : ph === 'miss' ? Math.min(29, 27 + Math.floor(t * 8)) : 15 + Math.floor(now / 90) % 5;
+  const hn = I.hn[gfi], hx = GX - (I.cx - I.x0) + hn[0], hy = gy - 60 - I.top + hn[1], os = 0.08 + 0.62 * s.shown + 0.06 * Math.max(0, 1 - (now - s.pulse) / 130);
+  let ox = hx + 4 + 22 * os, oy = hy - 6 - 6 * os, oS = os; const tgx = VX - 10, tgy = gy - 40;
+  if (ph === 'in') { oS = 0.05; ox = hx + 4; oy = hy - 6; }
+  if (ph === 'fire') { if (!s.fo) s.fo = [ox, oy, os]; const u = Math.max(0, Math.min(1, (t - 0.12) / 0.3)), e = u * u; ox = s.fo[0] + (tgx - s.fo[0]) * e; oy = s.fo[1] + (tgy - s.fo[1]) * e; oS = s.fo[2] * (1 - 0.35 * e); if (!s.delAt) { s.trail.push([ox, oy, oS]); if (s.trail.length > 7) s.trail.shift(); }
+    if (u >= 1 && !s.delAt) { s.delAt = now; dummy.del = now; s.trail = []; s.inv = now + 90; s.lines = now + 200; s.shake = now + 500; boom = { x: wx + tgx - Math.round(VW / 2), y: tgy, born: now, big: true }; snd('redboom'); snd('purpleboom'); flash(now, 420, 0.8); } }
+  // ---- the camera: wide at first; it pushes in on the orb as it grows (up to 3x), pulls back as the red flies and settles on Verity
+  const ez = ease3(s.shown); let zt = 1, fxT = mx, fyT = VH / 2;
+  if (ph === 'mash' || ph === 'rev' || ph === 'hold' || ph === 'miss') { zt = 1 + 2 * ez; fxT = mx + (ox + 0.1 * VW / zt - mx) * ez; fyT = VH / 2 + (oy + 0.14 * VH / zt - VH / 2) * ez; }
+  else if (ph === 'fire') { const k = ease3(t / 0.5), v = ease3((t - 0.08) / 0.34); zt = 3 - k; fxT = ox + 0.1 * VW / 3; fyT = oy + 0.14 * VH / 3; fxT += ((GX + VX) / 2 - fxT) * k; fyT += (gy - 48 - fyT) * k; fxT += (VX - 6 - fxT) * v; fyT += (gy - 46 - fyT) * v; }
+  s.z += (zt - s.z) * Math.min(1, dt * 9); s.fx += (fxT - s.fx) * Math.min(1, dt * 9); s.fy += (fyT - s.fy) * Math.min(1, dt * 9);
+  const z = s.z, fx = Math.max(VW / (2 * z), Math.min(VW - VW / (2 * z), s.fx)), fy = Math.max(VH / (2 * z), Math.min(VH - VH / (2 * z), s.fy));
+  const sh = ph === 'fire' ? (now < s.shake ? 4 : 0) : ph === 'mash' || ph === 'rev' || ph === 'hold' ? Math.round(1.4 * s.shown + (ph === 'hold' ? 0.7 : 0)) : 0, jx = () => sh ? Math.round((Math.random() * 2 - 1) * sh) : 0;
+  const scr = (wxp, wyp) => [Math.round(VW / 2 + (wxp - fx) * z), Math.round(VH / 2 + (wyp - fy) * z)];      // where a point of the scene is on the screen
+  // ---- draw
+  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
+  ctx.translate(Math.round(VW / 2 - fx * z) + jx(), Math.round(VH / 2 - fy * z) + jx()); if (z !== 1) ctx.scale(z, z);
+  drawBackdrop(now);
+  let vimg = ph === 'miss' ? vfr('idle', now / 100, true) : vfr('hurt', 8); if (s.delAt) { const k = (now - s.delAt) / 1400; vimg = k >= 1 ? EMPTY : dissolve(vimg, k); }
+  if (!s.delAt || now - s.delAt < 1700) { if (!s.delAt) shadow(VX, 9); vsp(vimg, VX + (ph === 'mash' || ph === 'rev' || ph === 'hold' ? jx() : 0), 0, true); }
+  if (s.delAt) delSparks(VX, now);
+  const n = Math.floor((now - s.at) / 1000 * 14), mouth = ph === 'rev' && n < 11 ? 1 + n % 2 : 0;
+  shadow(GX, 9); sprAt(redF[gfi], I, GX, 0, false, mouth);
+  if (ph !== 'in' || oS > 0.05) {
+    if (ph === 'fire') s.trail.forEach(([tx, ty, ts], j) => { ctx.globalAlpha = 0.12 + 0.4 * j / 7; orbAt(orbR, Math.floor(now * 20 / 1000) + j, tx, ty, ts * (0.5 + 0.5 * j / 7)); }); ctx.globalAlpha = 1;
+    if (!(ph === 'fire' && s.delAt)) orbAt(orbR, Math.floor(now * 20 / 1000), ox, oy, oS);
+    if (ph === 'mash' || ph === 'rev' || ph === 'hold') { ctx.fillStyle = '#ffb08a'; for (let i = 0; i < 10; i++) { const th = now / 140 + i * 0.63, R = 8 + 20 * oS * (0.7 + 0.3 * Math.sin(i * 2.3 + now / 70)); ctx.fillRect(Math.round(ox + Math.cos(th) * R), Math.round(oy + Math.sin(th) * R), 1, 1); } }      // sparks race around the orb
+  }
+  drawBoom(now);
+  ctx.restore();
+  // ---- on the screen itself: the dusk, the flash frame, the action lines, the bars, the words
+  ctx.fillStyle = 'rgba(40,0,12,' + (ph === 'in' ? 0.12 : 0.16 + 0.22 * s.shown).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH);
+  if (now < s.inv) { ctx.globalCompositeOperation = 'difference'; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, VW, VH); ctx.globalCompositeOperation = 'source-over'; }
+  if (now < s.lines) { const [lx, ly] = ph === 'in' ? [Math.round(VW / 2), Math.round(VH / 2)] : scr(ox, oy); actionLines(lx, ly, now, ph === 'in' ? 30 : 18); }
+  const bb = Math.round(VH * 0.11 * ease3((now - s.t0) / 300)); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, bb); ctx.fillRect(0, VH - bb, VW, bb);      // the cinema bars slide in
+  if (ph === 'mash' && t > 0.1) pxt('MASH THE RED BUTTON!', Math.round(VW / 2), 27, '#ffd34d', 8, 'center');
+  if (ph === 'rev') dlg('GOJO', 'REVERSAL...', n);
+  if (ph === 'hold') { pxt('HOLD...', Math.round(VW / 2), 27, '#ffd34d', 8, 'center'); pxt(VW >= 250 ? 'LET GO WHEN THE RING TOUCHES!' : 'LET GO ON THE TOUCH!', Math.round(VW / 2), 37, '#ffffff', 8, 'center'); }
+  if (ph === 'fire' && s.delAt && now - s.delAt > 500) { const j = Math.round((Math.random() - 0.5) * 2); pxt('DELETED', Math.round(VW / 2) + j, 70 + j, '#ffffff', 16, 'center'); }
+  if (ph === 'miss') { const j = Math.round((Math.random() - 0.5) * 2); pxt(s.res + '!', Math.round(VW / 2) + j, 66 + j, '#ff3a3a', 16, 'center'); pxt('THE STORY STARTS OVER...', Math.round(VW / 2), 84, '#ffffff', 8, 'center'); }
+  const fa = ph === 'fire' ? Math.max(0, Math.min(1, (t - 2.4) / 0.6)) : ph === 'miss' ? Math.max(0, Math.min(1, (t - 1.4) / 0.6)) : 0; if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  seUI(now);
 }
 function delSparks(sx, now) { const k = (now - dummy.del) / 1700; for (let i = 0; i < 36; i++) { const h = Math.imul(i + 1, 2654435761) >>> 0, a = (1 - k).toFixed(2); ctx.fillStyle = i % 3 ? 'rgba(255,60,50,' + a + ')' : 'rgba(255,230,220,' + a + ')'; ctx.fillRect(Math.round(sx + ((h % 41) - 20) + Math.sin(i + now / 90) * 2), Math.round(gy - 8 - ((h >> 8) % 56) * (0.4 + k) - k * 24), 2, 2); } }
-window.__end = () => vs && vs.end ? ({ stage: vs.end.stage, del: dummy && dummy.del ? 1 : 0 }) : null;
-window.__story = () => story ? ({ T: +(story.T || 0).toFixed(2), battle: !!story.battle, slot: story.slot, state }) : null; window.__storyJump = t => { if (story && !story.battle) story.t0 = performance.now() - t * 1000; }; window.__saves = loadSaves; window.__simg = () => SIMG; window.__hd = k => hitDummy(k, performance.now()); window.__vact = t => { if (dummy && vs) vStart(dummy, t, performance.now()); }; window.__vanim = () => dummy ? ({ anim: dummy.anim || '', act: dummy.vact ? dummy.vact.type : '', fi: dummy.vact ? +dummy.vact.fi.toFixed(1) : -1, x: dummy.x - wx, hp: vs ? vs.hp : -1 }) : null; window.__bleed = () => vs && vs.bleed ? ({ until: vs.bleed.until }) : null;      // test hooks
+window.__end = () => vs && vs.end ? ({ stage: vs.end.stage, del: dummy && dummy.del ? 1 : 0 }) : null; window.__SE = SE;
+window.__se = () => se ? ({ ph: se.ph, lvl: +se.lvl.toFixed(3), shown: +se.shown.toFixed(3), z: +se.z.toFixed(2), taps: se.taps, held: se.held, down: se.down, res: se.res, off: se.off, now: performance.now(), at: se.at, ringAt: se.ringAt, touch: se.ringAt + SE.ring, del: se.delAt ? 1 : 0, btn: $('qBtn').classList.contains('show'), ring: $('qRing').classList.contains('show'), now2: $('qRing').classList.contains('now'), bx: $('qBtn').getBoundingClientRect().toJSON(), padHidden: getComputedStyle($('pad')).visibility === 'hidden', hudHidden: getComputedStyle($('hud')).visibility === 'hidden' }) : null; window.__sePress = d => sePress(d); window.__seSet = o => { if (se) Object.assign(se, o); };
+window.__story = () => story ? ({ T: +(story.T || 0).toFixed(2), battle: !!story.battle, slot: story.slot, state, cam: story.cam || null, g: story.g || null }) : null; window.__storyJump = t => { if (story && !story.battle) story.t0 = performance.now() - t * 1000; }; window.__saves = loadSaves; window.__simg = () => SIMG; window.__mouths = () => { const chk = c => { const m = mouthOf(c); if (!m) return null; const d = c.getContext('2d').getImageData(m.x, m.y, 3, 2).data; let skin = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] && d[i] > 140 && d[i + 1] > 90 && d[i + 2] > 80) skin++; return { x: m.x, y: m.y, skin }; }; return { idle: idleF.map(chk), jump: jumpF.map(chk), red: redF.map(chk) }; }; window.__hd = k => hitDummy(k, performance.now()); window.__vact = t => { if (dummy && vs) vStart(dummy, t, performance.now()); }; window.__vanim = () => dummy ? ({ anim: dummy.anim || '', act: dummy.vact ? dummy.vact.type : '', fi: dummy.vact ? +dummy.vact.fi.toFixed(1) : -1, x: dummy.x - wx, hp: vs ? vs.hp : -1 }) : null; window.__bleed = () => vs && vs.bleed ? ({ until: vs.bleed.until }) : null;      // test hooks
 
 function tick(now) {
   requestAnimationFrame(tick);                // schedule first so one bad frame can't stop the loop
@@ -1765,7 +1902,8 @@ bindPad('blk', v => { blockHeld = v; });                    // hold to block    
 bindPad('ce', v => { if (v) ceReq = true; });
 bindPad('dom', v => { if (v) domReq = true; });                 // DOMAIN EXPANSION: Infinite Void (key V)               // tap to turn cursed energy on or off
 bindPad('fat', v => { if (v) pressFat(); });                 // FATALITY (key H): only in a match, only when Gojo or the enemy is at 20% health or less and the enemy is close
-bindPad('lap', v => { if (v) lpReq = true; });           // tap for Lapse Blue (hold FWD while you tap it to pull the enemy in instead of blinking to him)
+bindPad('lap', v => { if (v) lpReq = true; });
+bindPad('qBtn', v => sePress(v));                              // the red button of the story ending: mash it, then hold it           // tap for Lapse Blue (hold FWD while you tap it to pull the enemy in instead of blinking to him)
 // THE JOYSTICK (bottom left): push left / right to walk back / forward, up to jump (one jump per push), down to crouch (he stays crouched while you hold it)
 const joy = $('joy'), knob = $('knob');
 function setStick(dx, dy) {
@@ -1794,6 +1932,7 @@ joy.addEventListener('contextmenu', e => e.preventDefault());
 const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U', KeyJ: 'A', KeyF: 'A', ArrowDown: 'C', KeyS: 'C', KeyC: 'C', KeyL: 'B', KeyK: 'D', ShiftLeft: 'D', ShiftRight: 'D', KeyB: 'G', KeyE: 'E', KeyV: 'V', KeyH: 'H' };
 addEventListener('keydown', e => {
   if (settingsOn()) { if (e.key === 'Escape') closeSettings(); return; }      // the settings screen takes the keyboard while it is open
+  if (se && SE_KEYS.has(e.code)) { e.preventDefault(); if (!e.repeat) sePress(true); return; }      // (in the red ending the keys mash and hold)
   const k = KEYS[e.code];
   if (k) {
     if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (k === 'G') blockHeld = true; else if (state === 'play' && !e.repeat) { if (k === 'A') atkReq = true; else if (k === 'C') crReq = true; else if (k === 'B') lpReq = true; else if (k === 'D') dashReq = true; else if (k === 'E') ceReq = true; else if (k === 'V') domReq = true; else if (k === 'H') pressFat(); else { jumpReq = true; jumpFromStick = false; } }
@@ -1804,6 +1943,7 @@ addEventListener('keydown', e => {
   if (state === 'play') show('select'); else if (state === 'select') show('title');
 });
 addEventListener('keyup', e => {
+  if (se && SE_KEYS.has(e.code)) sePress(false);
   const k = KEYS[e.code];
   if (k === 'L') keyL = false; else if (k === 'R') keyR = false; else if (k === 'G') blockHeld = false;
 });
