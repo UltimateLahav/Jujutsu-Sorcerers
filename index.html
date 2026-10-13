@@ -73,6 +73,8 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 .vsrow{display:flex;align-items:center;gap:2vh}.vsrow small{width:16vh;text-align:right}
 .mini .card{width:13vh;height:20vh;padding:.8vh}.mini .card b{font-size:.78em;line-height:1.3}.mini .card canvas{height:10vh;width:auto}.mini .lock span{font-size:5vh;margin-top:3vh}
 .card.sel{border-color:var(--acc);background:#2a1f4a}
+#modes .cards{gap:4vh}#modes .card{width:32vh}#modes .card,#modes h2{font-size:var(--fs-btn,clamp(8px,2.4vh,13px))}.mode span{font-size:8vh;margin-top:6vh;color:#ff8a7a}.mode.lock span{color:var(--ink)}
+@keyframes shk{0%{transform:translateX(0)}25%{transform:translateX(-.8vh)}50%{transform:translateX(.8vh)}75%{transform:translateX(-.5vh)}100%{transform:translateX(0)}}.shake{animation:shk .35s steps(6)}.shake i{color:#ff8a7a}      /* STORY MODE: not made yet, the card shakes */
 #grades{display:grid;grid-template-columns:repeat(3,auto);gap:1.2vh 1.6vh}
 .gr{padding:1vh 1.6vh;font-size:clamp(7px,2.1vh,12px);min-width:22vh}.gr small{display:block;margin-top:.7vh}
 .gr.sel{border-color:var(--acc);background:#2a1f4a}.gr.lk{opacity:.4;border-style:dashed}
@@ -105,6 +107,15 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
   </div>
 </section>
 
+<section id="modes" class="screen">
+  <h2>CHOOSE A MODE</h2>
+  <div class="cards">
+    <button id="battles" class="card mode"><span>VS</span><b>BATTLES</b><i>FIGHT THE ENEMY</i></button>
+    <button id="story" class="card lock mode"><span>?</span><b>STORY MODE</b><i>COMING SOON</i></button>
+  </div>
+  <button id="modesBack">BACK</button>
+</section>
+
 <section id="select" class="screen">
   <h2>CHOOSE YOUR SORCERER</h2>
   <div class="cards">
@@ -112,7 +123,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <div class="card lock"><span>?</span><b>LOCKED</b></div>
     <div class="card lock"><span>?</span><b>LOCKED</b></div>
   </div>
-  <button id="vsBtn">VERSUS MODE</button>
+  <div class="row"><button id="vsBtn">VERSUS MODE</button><button id="selBack">BACK</button></div>
 </section>
 
 <section id="versus" class="screen">
@@ -807,6 +818,7 @@ function show(s) {
   $('versus').classList.toggle('on', s === 'versus');
   $('title').classList.toggle('on', s === 'title');
   $('select').classList.toggle('on', s === 'select');
+  $('modes').classList.toggle('on', s === 'modes');
   cv.style.display = s === 'play' ? 'block' : 'none';
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
@@ -1527,7 +1539,7 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
   if (move) { d.x += move * 30 * G.spd * dt; d.ai = 'walk'; } else d.ai = 'think';
 }
 // ---------------------------------------------------------------- CURSED ENERGY (Versus mode only): a cyan bar under Gojo's health bar. It starts every round at 100%, each energy move costs some of it, it refills 1% per second once a second has passed without such a move, and the cursed energy mode drains 1% per second (no refill) and switches itself off at 0%.
-const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30, purple: 50, domain: 67 }, CE_WAIT = 1000;      // what each move costs in % of the bar (slowRed = RED fired while walking back, coat = the BLUE leap onto that slow orb, tele = BLUE in the air, purple = the RED shot fired while Max Blue is out, it costs this instead of the plain RED price); the refill waits 1 s after the last paid move
+const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30, purple: 50, domain: 67, fatal: 50 }, CE_WAIT = 1000;      // what each move costs in % of the bar (slowRed = RED fired while walking back, coat = the BLUE leap onto that slow orb, tele = BLUE in the air, purple = the RED shot fired while Max Blue is out, it costs this instead of the plain RED price); the refill waits 1 s after the last paid move
 let ce = 100, ceLast = -1e9, ceFlash = -1e9;      // the energy in %, when a move last cost some, when a move was last refused (the bar flashes red)
 function ceReset() { ce = 100; ceLast = ceFlash = -1e9; }
 function ceDeny(now) { if (now - ceFlash < 150) return; ceFlash = now; snd('noce'); }      // a refused move: the bar flashes red and says NO CE for a moment (one refusal per press, even if the press falls through to another move that is refused too)
@@ -1839,7 +1851,7 @@ function drawScene(now, dt) {
   domTick(now); vsTick(now, dt); ceTick(now, dt);
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
     const fs = fatState(now);
-    if (fs === 0) { fatReq = 0; fatStart(now); fatFrame(now, dt); return; }
+    if (fs === 0) { fatReq = 0; if (ceSpend(CE_COST.fatal, now)) { fatStart(now); fatFrame(now, dt); return; } }      // (his own FATALITY costs 50% cursed energy; the enemy's is free)
     if (now > fatReq) { fatReq = 0; if (fs === 1 || fs === 2) say(fs === 1 ? 'ENEMY BELOW 20%' : 'GET CLOSER', wx, '#ff8a7a', 8, now); }
   }
   if (fatAiState(now)) { fatStart(now, true); fatFrame(now, dt); return; }      // the top grades do it to Gojo
@@ -2128,10 +2140,14 @@ function goFullscreen() {                     // best effort; ignored where unsu
   } catch (e) { /* not available */ }
 }
 const inApp = /; wv\)/.test(navigator.userAgent);   // inside the Android app the activity already handles fullscreen + landscape
-$('start').addEventListener('click', () => { audio(); if (!inApp && matchMedia('(pointer:coarse)').matches) goFullscreen(); show('select'); });
+$('start').addEventListener('click', () => { audio(); if (!inApp && matchMedia('(pointer:coarse)').matches) goFullscreen(); show('modes'); });
 $('gojo').addEventListener('click', () => show('play'));
 $('vsBtn').addEventListener('click', () => { buildGrades(); show('versus'); });
 $('vsBack').addEventListener('click', () => show('select'));
+$('battles').addEventListener('click', () => { audio(); show('select'); });
+$('selBack').addEventListener('click', () => show('modes'));
+$('modesBack').addEventListener('click', () => show('title'));
+$('story').addEventListener('click', () => { audio(); snd('noce'); const b = $('story'); b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); });      // STORY MODE is not made yet: the card shakes and buzzes
 $('vsGo').addEventListener('click', () => startMatch(vsSel));
 $('vsNext').addEventListener('click', () => { const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
 $('vsAgain').addEventListener('click', () => startMatch(vs ? vs.gi : vsSel));
@@ -2187,7 +2203,8 @@ window.__state = () => ({ cmode: cm, redOrb: !!rdOrb, orbV: rdOrb ? rdOrb.v : 0,
 window.__back = () => {                       // Android back button: step back through the menus, otherwise let the app close
   if (settingsOn()) { closeSettings(); return true; }
   if (state === 'play') { show('select'); return true; }
-  if (state === 'select') { show('title'); return true; }
+  if (state === 'select') { show('modes'); return true; }
+  if (state === 'modes') { show('title'); return true; }
   return false;
 };
 
