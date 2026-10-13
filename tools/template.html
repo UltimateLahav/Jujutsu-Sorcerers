@@ -598,6 +598,7 @@ function drawDummy(now, dt) {
   else if (kt < 0 && dummy.mode === 'blocker') { fi = 5 + Math.floor(now / 125) % 5; info = D.atk11; src = blkI[fi]; }       // guard up: the hands-up loop
   else { fi = Math.floor(now / (1000 / IDLE_FPS)) % dumF.length; info = D.idle; src = (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) ? dumW[fi] : (kt < 0 && now < dummy.stunUntil && ((now / 70) | 0) % 2 === 0) ? dumB[fi] : dumF[fi]; }   // white flicker while he goes down
   if (vs && vs.story) { const L = storyLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; }      // the story enemy is Verity
+  if (dummy.del && now - dummy.del > 1700) return;      // deleted: nothing of him is left
   const w = info.w, h = info.h, hx = info.cx - info.x0, y = gy - 60 - (info.top || 0) - lift, fade = kt > 1200 ? Math.max(0, 1 - (kt - 1200) / 700) : 1;
   ctx.fillStyle = 'rgba(0,0,0,' + 0.4 * fade + ')'; ctx.fillRect(sx - 9, gy + 3, 18, 2); ctx.fillRect(sx - 6, gy + 2, 12, 1); ctx.fillRect(sx - 6, gy + 5, 12, 1);
   ctx.save();
@@ -611,6 +612,7 @@ function drawDummy(now, dt) {
   }
   ctx.restore();
   if (vs && vs.story && (dummy.vform === 'smoke1' || dummy.vform === 'smoke2')) smokePuffs(sx, gy - 28, (now - dummy.vAt) / 700);
+  if (dummy.del) delSparks(sx, now);
   if (kt < 0 && t < 1) { const R = 4 + t * 36; ctx.fillStyle = 'rgba(255,170,90,' + (1 - t) + ')'; for (let a = 0; a < 40; a++) { const th = a / 40 * 6.2832; ctx.fillRect(Math.round(sx + Math.cos(th) * R), Math.round(gy + 2 + Math.sin(th) * R * 0.25), 1, 1); } }
   if (kt < 0 && t >= 0.4) drawBar(sx - 13, gy - 68);   // health bar above his head
 }
@@ -682,6 +684,7 @@ function drawSmoke(now, dt) {                 // dust along the ground behind an
 
 function koDummy(now) {                       // the enemy goes down (every way of finishing him ends here): in a match the round ends and Gojo gets the point
   if (dummy.ko >= 0) return;                  // (only once, even if two hits finish him in the same moment)
+  if (vs && vs.story && !vs.endGo) { if (!vs.end) storyEndStart(performance.now()); return; }      // the story fight does not end with a fall: it ends with the Reversal Red
   if (vs) endRound('player', 'ko', now);
   dummy.ko = now; dummy.koAt = Math.max(now, holdUntil);        // he starts to topple when the hit-stop is over, so the fall is seen
   dummy.vx += 70; shakeUntil = now + 260; shakeAmp = 4; kos++; if (!vs) say('K.O.', dummy.x, '#ffd34d', 16, now + 120); snd('ko');      // (a match has its own big K.O. banner)
@@ -814,6 +817,7 @@ function explodeRed(now, hit) {               // RED hits (or reaches the end of
   const o = rdOrb, c = o.coat; rdOrb = null; boom = { x: o.x, y: o.y, born: now, big: hit && !c }; snd('redboom'); blastPeds(o.x, c ? 24 : 40, now); shakeUntil = now + 220; shakeAmp = hit && !c ? 4 : 2; holdUntil = now + 90;
   if (ride) { ride.phase = 'drop'; ride.dropAt = now; }          // (Gojo falls off the burst orb and lands right next to the enemy)
   if (!hit || !dummy) return;
+  if (vs && vs.story && vs.end && vs.end.stage === 'red') { verityDelete(now); return; }      // the ending: the red deletes Verity
   if (dBlocks() && dummy.x - wx > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx]) { boom.big = false; dummy.vx += 40; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); return; }      // blockable, like Lapse Blue
   if (c) {
     const dmg = 30 + ((Math.random() * 8) | 0);
@@ -1044,7 +1048,7 @@ const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30,
 let ce = 100, ceLast = -1e9, ceFlash = -1e9;      // the energy in %, when a move last cost some, when a move was last refused (the bar flashes red)
 function ceReset() { ce = 100; ceLast = ceFlash = -1e9; }
 function ceDeny(now) { if (now - ceFlash < 150) return; ceFlash = now; snd('noce'); }      // a refused move: the bar flashes red and says NO CE for a moment (one refusal per press, even if the press falls through to another move that is refused too)
-function ceSpend(cost, now) { if (!vs) return true; if (ce + 1e-6 < cost) { ceDeny(now); return false; } ce = Math.max(0, ce - cost); ceLast = now; return true; }      // pays for a move (free outside Versus mode); false = not enough energy, the move does not start
+function ceSpend(cost, now) { if (!vs || vs.end) return true; if (ce + 1e-6 < cost) { ceDeny(now); return false; } ce = Math.max(0, ce - cost); ceLast = now; return true; }      // pays for a move (free outside Versus mode); false = not enough energy, the move does not start
 function ceTick(now, dt) {                    // the refill and the cursed mode's drain (only while a round is being fought)
   if (!vs || vs.ph !== 'fight') return;
   if (cm === 1) { ce = Math.max(0, ce - dt); if (ce <= 0) { ceDeny(now); setMode(0, now); } }
@@ -1550,7 +1554,7 @@ function drawScene(now, dt) {
     ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')';
     ctx.fillRect(0, 0, VW, VH);
   }
-  drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); drawVs(now, -shkX, -shkY); domOverlay(now);
+  drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); if (vs && vs.end) storyEndFx(now); drawVs(now, -shkX, -shkY); domOverlay(now);
   ctx.restore();
   if (now < flashUntil) { ctx.fillStyle = 'rgba(190,225,255,' + (flashA * (flashUntil - now) / flashMs) + ')'; ctx.fillRect(0, 0, VW, VH); }
   drawHits(now);
@@ -1658,6 +1662,7 @@ function storyLook(now, reacting, hitT, kt) {      // what the story enemy looks
   const d = dummy, f = d.vform || 'verity', info = { w: 64, h: 64, cx: 32, x0: 0, top: 0 }; let name = 'idle', fi = now / 100, loop = true, lift = 0;
   if (f === 'smiley') { name = 'smiley'; fi = now / 80; lift = 10; }
   else if (f === 'smoke1' || f === 'smoke2') { const half = now - d.vAt < 350; name = (f === 'smoke1') === half ? 'idle' : 'smiley'; fi = name === 'smiley' ? now / 80 : 0; lift = name === 'smiley' ? 10 : 0; }
+  else if (f === 'end') { name = 'hurt'; fi = 8; loop = false; }      // the ending: he staggers, held up, until the red comes
   else if (kt >= 0) fi = 0;
   else if (d.vact) { name = d.vact.anim; fi = d.vact.fi; loop = false; }
   else if (reacting) { name = 'hurt'; fi = (now - d.rxAt) / RX_DUR[d.rx] * 15; loop = false; }
@@ -1665,7 +1670,7 @@ function storyLook(now, reacting, hitT, kt) {      // what the story enemy looks
   else if (d.ai === 'dodge') { name = 'tele'; fi = (now - d.aiAt) / Math.max(1, d.until - d.aiAt) * 15; loop = false; }
   else if (d.ai === 'block') { const t = now - d.aiAt; name = 'block'; fi = t < 250 ? t / 50 : 5 + (now / 125) % 5; loop = false; }
   else if (d.ai === 'walk') { name = 'walk'; fi = now * WALK_FPS / 1000; }
-  d.anim = name; let src = vfr(name, fi, loop);
+  d.anim = name; let src = vfr(name, fi, loop); if (d.del) { const k = (now - d.del) / 1400; src = k >= 1 ? EMPTY : dissolve(src, k); }      // deleted: erased in a red dither
   if ((kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) || (kt < 0 && reacting && hitT < 70)) src = whiteOf(src);
   return { src, info, lift };
 }
@@ -1687,6 +1692,7 @@ function vActTick(d, now, dt) {
   else vEnd(d, now);
 }
 function storyBattleTick(now, dt) {
+  if (vs.end && vs.ph === 'fight' && vs.end.stage !== 'done') storyEndTick(now);
   if (vs.bleed) { const b = vs.bleed; if (vs.ph !== 'fight') vs.bleed = null; else { while (vs.bleed && b.next <= now && b.next <= b.until) { vsHurt(1, b.next); b.next += 100; } if (now >= b.until) vs.bleed = null; } }      // the bite's bleeding: 1 damage every 0.1 s for 4 s
   const d = dummy; if (!d || d.ko >= 0) return; if (!d.vform) d.vform = 'verity';
   if (d.vform === 'verity') { if (!vs.morphed && vs.ph === 'fight' && d.hp <= d.max * 0.5) { vs.morphed = true; d.vform = 'smoke1'; d.vAt = now; d.lock = d.hp; d.vact = null; snd('vanish'); } }
@@ -1703,6 +1709,27 @@ function storyBattleTick(now, dt) {
     d.vNext = now + 400; const ag = Math.abs(d.x - wx), r = Math.random(); if (ag < 30 && r < 0.28) vStart(d, 'bite', now); else if (ag < 70 && r > 0.88) vStart(d, 'crouch', now);
   }
 }
+// the ending: Verity's health runs out, he does not fall. Gojo goes into red mode (free of charge), fires the real RED, and where it hits Verity is deleted, pixel by pixel. Then the K.O. and TO BE CONTINUED.
+const EMPTY = document.createElement('canvas'); EMPTY.width = EMPTY.height = 64; const BAY = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+function dissolve(src, k) {      // k 0..1: the picture is erased in a dither pattern, from the top down, and what is left turns red
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.drawImage(src, 0, 0); const im = g.getImageData(0, 0, 64, 64), p = im.data;
+  for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) { const i = (y * 64 + x) * 4; if (!p[i + 3]) continue; if ((BAY[y & 3][x & 3] + 0.5) / 16 < k * 1.1 + (63 - y) / 64 * 0.3 * k) p[i + 3] = 0; else { p[i] = Math.min(255, p[i] + k * 140); p[i + 1] *= 1 - k * 0.6; p[i + 2] *= 1 - k * 0.6; } }
+  g.putImageData(im, 0, 0); return c;
+}
+function storyEndStart(now) { const d = dummy; vs.end = { stage: 'wait', at: now }; vs.bleed = null; d.vform = 'end'; d.lock = d.hp = d.shown = 1; d.vact = null; d.ai = 'rest'; d.vx = 0; d.vAt = now; if (d.x < wx + 24) d.x = wx + 46; }      // (he is put in front of Gojo, where the red will go)
+function verityDelete(now) { dummy.del = now; vs.end = { stage: 'del', at: now }; flash(now, 420, 0.8); snd('purpleboom'); }
+function storyEndTick(now) {
+  const e = vs.end; keyL = keyR = padL = padR = jumpReq = atkReq = crReq = dashReq = ceReq = domReq = blockHeld = false;      // Gojo only does the red
+  if (e.stage === 'wait') { if (cm !== 2) setMode(2, now); if (mbAt >= 0 && mbK === 1) { e.stage = 'red'; e.at = now; } else lpReq = true; }      // (he presses RED until he is free to start it)
+  else if (e.stage === 'red' && now - e.at > 3500) verityDelete(now);      // (if the orb somehow missed, he is deleted anyway)
+  else if (e.stage === 'del' && now - e.at > 1700) { e.stage = 'done'; vs.endGo = true; koDummy(now); }
+}
+function storyEndFx(now) {      // a dark red dusk while the red is made, its name, and DELETED
+  const e = vs.end, k = Math.min(1, (now - e.at) / 500); ctx.fillStyle = 'rgba(40,0,12,' + (e.stage === 'wait' ? 0 : 0.28 * k).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH);
+  if (e.stage === 'red' || e.stage === 'del') { const j = Math.round((Math.random() - 0.5) * 2); pxt(e.stage === 'red' ? 'REVERSAL RED' : 'DELETED', Math.round(VW / 2) + j, 66 + j, e.stage === 'red' ? '#ff3a3a' : '#ffffff', 16, 'center'); }
+}
+function delSparks(sx, now) { const k = (now - dummy.del) / 1700; for (let i = 0; i < 36; i++) { const h = Math.imul(i + 1, 2654435761) >>> 0, a = (1 - k).toFixed(2); ctx.fillStyle = i % 3 ? 'rgba(255,60,50,' + a + ')' : 'rgba(255,230,220,' + a + ')'; ctx.fillRect(Math.round(sx + ((h % 41) - 20) + Math.sin(i + now / 90) * 2), Math.round(gy - 8 - ((h >> 8) % 56) * (0.4 + k) - k * 24), 2, 2); } }
+window.__end = () => vs && vs.end ? ({ stage: vs.end.stage, del: dummy && dummy.del ? 1 : 0 }) : null;
 window.__story = () => story ? ({ T: +(story.T || 0).toFixed(2), battle: !!story.battle, slot: story.slot, state }) : null; window.__storyJump = t => { if (story && !story.battle) story.t0 = performance.now() - t * 1000; }; window.__saves = loadSaves; window.__simg = () => SIMG; window.__hd = k => hitDummy(k, performance.now()); window.__vact = t => { if (dummy && vs) vStart(dummy, t, performance.now()); }; window.__vanim = () => dummy ? ({ anim: dummy.anim || '', act: dummy.vact ? dummy.vact.type : '', fi: dummy.vact ? +dummy.vact.fi.toFixed(1) : -1, x: dummy.x - wx, hp: vs ? vs.hp : -1 }) : null; window.__bleed = () => vs && vs.bleed ? ({ until: vs.bleed.until }) : null;      // test hooks
 
 function tick(now) {
