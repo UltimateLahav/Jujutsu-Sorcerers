@@ -2413,7 +2413,7 @@ function ultHit(dm, now, big) {      // one knee (3) or the throw (5)
 function ultTick(now, dt) {      // the ULTIMATE's clock: the glove lands (frame 6 of the grab), the pull (frames 8-13), 15 knees, the throw (it lets go on frame 9 of the throw)
   const u = ult; if (!u) return; const d = dummy, mine = u.who === 'player';
   if (!vs || vs.ph !== 'fight' || !d || d.ko >= 0) { ultCancel(now); return; }
-  if (!mine && !u.held && d.rxAt > u.at) { ultCancel(now); return; }      // (the enemy Cat was hit before his glove landed)
+  if (!mine && !u.held && (d.rxAt > u.at || now < d.stunUntil || !d.cact || d.cact.type !== 'ult')) { ultCancel(now); return; }      // (the enemy Cat was hit, stunned or grabbed before his glove landed)
   const t = (now - u.at) / 1000, fr = ULT.grab / 15;
   if (!u.grabbed && t >= 6 * fr) {      // the glove lands
     u.grabbed = true;
@@ -2536,7 +2536,7 @@ function drawGiantNow(who) {      // the HUGE Cat of CARTOON ATTACK: his own 15 
 function catScene(now, dt) {      // one frame of a Versus match with the Cartoon Cat as the player: the controls, then the picture (the enemy, the HUD and the effects are the shared ones)
   const c = cp || (cp = cpNew()), el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3), cx = Math.round(VW / 2), dizzy = now < (vs.cStun || 0), fear = now < pStun;      // (fear: the enemy's JUMPSCARE has him; dizzy: he got up after 5 s on the floor)
   let jf = -1, hf = -1, df = -1, sf = -1, af = -1, lf = -1;      // jump 0-14 (15 FPS), hurt 0-9, push dash 0-14 (30 FPS), smash flat / stand up 0-14 (25 FPS), swing 0-14, CARTOON ATTACK 0-14 (24 FPS)
-  const ulting = !!(ult && ult.who === 'player'); setDomUI(now);      // (his ULTIMATE is going on; the DOMAIN button's fill counts the wait for the next one)
+  let ulting = !!(ult && ult.who === 'player'); setDomUI(now);      // (his ULTIMATE is going on; the DOMAIN button's fill counts the wait for the next one)
   if (jumpAt >= 0) { jf = Math.floor(Math.max(0, now - jumpAt) * JUMP_FPS / 1000); if (jf >= 15) { jumpAt = -1; jf = -1; } }
   if (hurtAt >= 0) { hf = Math.floor(Math.max(0, now - hurtAt) * RX_FPS[hurtK] / 1000); if (hf >= 10) { hurtAt = -1; hf = -1; hurtEnd = now; } }
   if (dgAt >= 0) { df = Math.floor(Math.max(0, now - dgAt) * DASH_FPS / 1000); if (df >= 15) { dgAt = -1; df = -1; dgReady = now + 150; } }
@@ -2551,7 +2551,7 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   if (lpReq) { lpReq = false; if (free() && stance === 'stand' && now > lpReady && ceSpend(CE_COST.cToon, now)) { lpAt = now; lf = 0; atkQ = false; snd('boing'); } }      // CARTOON ATTACK (the BLUE button): costs 30% of the energy
   if (domReq) {      // the ULTIMATE (the DOMAIN button): the enemy in front and within the glove's reach, 67% of the energy, 30 s between two
     domReq = false;
-    if (free() && stance === 'stand' && now >= domReadyAt && !ult) { if (!ultTarget(now)) { const gp = dummy ? dummy.x - wx : 999; say(gp <= pHit(30) && gp >= -4 ? 'CANT GRAB' : 'TOO FAR', wx, '#ff8a7a', 8, now); } else if (ceSpend(CE_COST.cUlt, now)) ultStart(now, 'player'); }
+    if (free() && stance === 'stand' && now >= domReadyAt && !ult) { if (!ultTarget(now)) { const gp = dummy ? dummy.x - wx : 999; say(gp <= pHit(30) && gp >= -4 ? 'CANT GRAB' : 'TOO FAR', wx, '#ff8a7a', 8, now); } else if (ceSpend(CE_COST.cUlt, now)) { ultStart(now, 'player'); ulting = true; } }
   }
   if (atkReq) { atkReq = false; if (can() && (stance === 'stand' || stance === 'crouch')) { if (af >= 0) atkQ = true; else { if (now > comboUntil) combo = 0; atkK = ctPick(); atkAt = now; af = 0; atkQ = false; } } }      // (flat: only the punch up)
   if (af < 0 && combo !== 0 && now > comboUntil) combo = 0;
