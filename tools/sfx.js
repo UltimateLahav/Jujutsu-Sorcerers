@@ -346,6 +346,14 @@ function makeSfx(ac) {
       tone(B.deep, t + 0.42, { type: 'triangle', f: 86, f2: 38, dur: 0.6, gain: 0.55, atk: 0.004 });
       burst(B.soft, t, { type: 'highpass', f: 600, f2: 4200, q: 0.7, dur: 0.9, gain: 0.3, atk: 0.35 });
     },
+    scare(at) {                                          // the JUMPSCARE: a crushing boom and a rush of noise, then a long shaking shriek (rasping saws gliding up and down) that tears off at the end
+      const t = T(at), B = C.ce;
+      tone(B.deep, t, { type: 'triangle', f: 96, f2: 28, dur: 0.8, gain: 0.8, atk: 0.003 });
+      burst(B.soft, t, { f: 1400, f2: 260, q: 0.6, dur: 0.55, gain: 3.2, atk: 0.001 });
+      for (let i = 0; i < 13; i++) { const f0 = 700 + i * 45 + (i % 2 ? 260 : -120); tone(B.soft, t + 0.12 + i * 0.13, { type: 'sawtooth', f: f0, f2: f0 * (i % 2 ? 0.8 : 1.25), dur: 0.2, gain: 0.15, atk: 0.012 }); tone(B.soft, t + 0.12 + i * 0.13, { type: 'square', f: f0 * 1.51, f2: f0 * 1.9, dur: 0.18, gain: 0.05, atk: 0.01 }); }
+      burst(B.soft, t + 0.1, { type: 'bandpass', f: 2200, f2: 3600, q: 1.4, dur: 1.8, gain: 1.1, atk: 0.06 });
+      burst(B.soft, t + 1.6, { type: 'highpass', f: 800, f2: 5000, q: 0.7, dur: 0.5, gain: 0.8, atk: 0.01 });
+    },
     slowin(at) {                                         // slow motion starts: the sound sinks (a pitch dive) and the highs are cut
       const t = T(at), B = C.ce;
       tone(B.soft, t, { type: 'sawtooth', f: 900, f2: 70, dur: 0.35, cur: 1, gain: 0.22, atk: 0.01 });

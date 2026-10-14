@@ -79,6 +79,7 @@ CLAW1 = [(0, pose(**FOLD)), (4, pose(**{**FOLD, 'aR': ((48, 52), (53, 52))}) ), 
 CLAW2 = [(0, pose(**FOLD)), (4, pose(**{**FOLD, 'aL': ((17, 52), (12, 52))})), (6, pose(**{**FOLD, 'lean': 4, 'aL': ((22, 50), (58, 54))})), (9, pose(**{**FOLD, 'lean': 3, 'aL': ((24, 54), (57, 61))})), (14, pose(**FOLD))]
 JUMPC = dict(hy=14, sy=25, hp=44, lean=2, aL=((20, 38), (19, 50)), aR=((44, 38), (45, 50)), lL=((36, 53), (31, 59)), lR=((38, 53), (36, 59)))      # crouched for the jump
 JUMPA = dict(hy=5.5, lean=-1, aL=((17, 24), (12, 12)), aR=((47, 24), (52, 12)), lL=((31, 44), (27, 51)), lR=((35, 44), (37, 51)))      # in the air: arms up, legs tucked
+GRAB = ((51, 17), (61, 16))      # the JUMPSCARE grab: the arm straight out at shoulder height, the hand where a standing fighter's throat is
 SEIZE = ((52, 22), (61, 28))      # the right arm straight out: the hand is where Gojo's throat is
 A = {
  'idle': idlep, 'walk': walkp,
@@ -93,12 +94,56 @@ A = {
  'seize': lambda f: keys([(0, pose()), (3, pose(lean=3, hy=7.5, aR=((50, 26), (60, 30)))), (5, pose(lean=3, hy=7.5, aR=SEIZE)), (7, pose(lean=-3, hx=29, hy=5, m=1, aR=SEIZE)), (9, pose(lean=10, hx=50, hy=14, m=1, aR=SEIZE)), (10, pose(lean=11, hx=55, hy=16, m=0, bl=1, aR=SEIZE)), (12, pose(lean=8, hx=50, hy=13, m=0.15, bl=1, aR=SEIZE)), (14, pose(lean=2, hx=40, hy=9, m=0.3, bl=1, aR=((46, 28), (50, 38))))], f),      # the DEATH: the arm reaches out and grips Gojo's throat (5), the head draws back, jaws wide (7), lunges (9) and the jaws shut on his head (10), pulls back, bloody (12), lets go (14)
  'jump': lambda f: keys([(0, pose()), (3, pose(**JUMPC)), (5, pose(**JUMPA)), (10, pose(**{**JUMPA, 'lean': 1})), (12, pose(**JUMPC)), (14, pose())], f),      # (playable Verity: crouch, push off, in the air with the arms up and the legs tucked, land)
  'talk': lambda f: {**idlep(f), 'm': 0.6 * (0.5 - 0.5 * math.cos(2 * math.pi * f / 15))},      # (the idle sway and breathing, with the mouth opening and closing)
+ 'scare_grab': lambda f: keys([(0, pose()), (3, pose(lean=-4, hy=7.5, m=0.3, aR=((44, 26), (38, 12)))), (6, pose(lean=7, hy=9, m=0.7, aR=((54, 18), (62, 17)), aL=((18, 30), (12, 40)))), (8, pose(lean=8, hx=34, hy=9, m=1, aR=GRAB)), (10, pose(lean=-1, hx=30, hy=4.5, m=1, aR=GRAB)), (12, pose(lean=-4, hx=29, hy=4, m=1, aR=GRAB)), (14, pose(lean=-3, hx=30, hy=4.5, m=1, aR=GRAB))], f),      # (the JUMPSCARE grab: the wind-up, the lunge, the grip on the throat, the head thrown back while the jaws open)
  'tele': lambda f: pose(glitch=(0, .6, 1.2, 1.8, 2.4, 3, 3.5, 0, 3.5, 3, 2.4, 1.8, 1.2, .6, 0)[f], fade=(0, .1, .25, .4, .55, .7, .85, 1, .85, .7, .55, .4, .25, .1, 0)[f]),
 }
+
+def scare_face(f):
+    """the JUMPSCARE close-up, 64x64: the long egg-shaped head with two black eyes, the huge grin with the jaws stretched wide open (the skin drawn down with them) and rows of teeth, the neck, the gaunt ribs and the long arms (frame f of 15: the head jerks and rolls, the jaw opens and quivers)"""
+    m = min(1.0, 0.35 + f * 0.13) if f < 5 else 0.78 + 0.22 * math.sin(f * 1.7)
+    jx, jy = round(2 * math.sin(f * 2.3)), round(1.6 * math.sin(f * 1.9 + 1)); tilt = 0.10 * math.sin(f * 0.84); z = 1 + 0.05 * math.sin(f * 0.7 + 0.5)
+    hx, hy = 32 + jx, 18 + jy; by = -round(jy * 0.5); rx, ry = 12 * z, 16 * z; bot = hy + 12 * z + 15 * m      # bot: how far down the stretched jaw reaches
+    mask = Image.new('L', (S, S), 0); d = ImageDraw.Draw(mask); sh = lambda x, y: x + (y - hy) * tilt
+    d.polygon([(sh(hx + rx * math.sin(t) * (1 - 0.10 * math.cos(t)), hy - ry * math.cos(t)), hy - ry * math.cos(t)) for t in [i * math.pi / 18 for i in range(36)]], fill=255)      # the head: narrow at the top, wide at the cheeks
+    d.polygon([(sh(hx - 11 * z, hy + 7), hy + 7), (sh(hx + 11 * z, hy + 7), hy + 7), (sh(hx + 9 * z, bot), bot), (sh(hx, bot + 5), bot + 5), (sh(hx - 9 * z, bot), bot)], fill=255)      # the skin of the face is pulled down with the jaw
+    d.polygon([(11, 47 + by), (22, 43 + by), (42, 43 + by), (53, 47 + by), (51, 64), (13, 64)], fill=255)      # shoulders and the gaunt chest
+    d.polygon([(sh(hx - 4, hy + ry - 2), hy + ry - 2), (sh(hx + 4, hy + ry - 2), hy + ry - 2), (37, 46 + by), (27, 46 + by)], fill=255)      # the neck
+    d.line([(12, 46 + by), (8 + (f % 3 - 1), 64)], fill=255, width=4); d.line([(52, 46 + by), (56 - (f % 3 - 1), 64)], fill=255, width=4)      # the long arms
+    mk = mask.load(); img = Image.new('RGBA', (S, S), (0, 0, 0, 0)); o = img.load()
+    for y in range(S):
+        x = 0
+        while x < S:
+            if not mk[x, y]: x += 1; continue
+            a0 = x
+            while x < S and mk[x, y]: x += 1
+            b0 = x - 1
+            for xx in range(a0, b0 + 1):
+                t = (xx - a0) / max(1, b0 - a0); o[xx, y] = (HI if t < .12 else LIT if t < .3 else BASE if t < .62 else SH if t < .85 else DK) + (255,)
+    dot = lambda pts, c: [o.__setitem__((int(round(x)), int(round(y))), c + (255,)) for x, y in pts if 0 <= int(round(x)) < S and 0 <= int(round(y)) < S]
+    for yy in (49, 53, 57, 61):      # the ribs and the breastbone
+        dot([(20 + i, yy + (i > 5) + by) for i in range(10)] + [(44 - i, yy + (i > 5) + by) for i in range(10)], RIB)
+    dot([(32, y + by) for y in range(50, 63)] + [(23 + i, 45 + by + i // 3) for i in range(7)] + [(41 - i, 45 + by + i // 3) for i in range(7)], DK)      # breastbone, collarbones
+    for cx, cy in [(sh(hx - 6.5 * z, hy - 6), hy - 6), (sh(hx + 6.5 * z, hy - 6), hy - 6)]:      # the eyes: two black ovals with a speck of light
+        ImageDraw.Draw(img).ellipse((cx - 2.3, cy - 2.8, cx + 2.3, cy + 2.8), fill=(8, 3, 2, 255)); dot([(cx - 1, cy - 2)], (150, 130, 90))
+    top = lambda x: hy + 5 + 4.5 * (1 - ((x - hx) / (11 * z)) ** 2) * -1 + 4.5      # the smile line: the corners are high, the middle hangs low
+    mouth = [(sh(hx - 11.5 * z, hy + 4), hy + 4)] + [(sh(hx + (i - 5) * 2.3 * z, 0), top(hx + (i - 5) * 2.3 * z)) for i in range(11)] + [(sh(hx + 11.5 * z, hy + 4), hy + 4)]
+    for i in range(1, 14):      # then down round a tall oval: the open mouth reaches the chest
+        a = i * math.pi / 14; yy = hy + 6 + (bot - hy - 6) * math.sin(a); mouth.append((sh(hx + 11 * z * math.cos(a) * (1 - 0.22 * math.sin(a)), yy), yy))
+    md = ImageDraw.Draw(img); md.polygon([(round(x), round(y)) for x, y in mouth], fill=(84, 8, 18, 255))
+    md.polygon([(round(x * 0.55 + hx * 0.45), round(y * 0.7 + (hy + 12) * 0.3)) for x, y in mouth], fill=(48, 3, 10, 255))      # the dark throat
+    md.ellipse((hx - 4, bot - 6, hx + 4, bot - 1), fill=(150, 40, 60, 255))                                                  # the tongue
+    for i in range(-5, 6):      # the upper teeth (pink gum, then teeth hanging from the smile line) and a few lower ones standing on the jaw
+        x = hx + i * 2.0 * z; ty = top(x); dot([(sh(x, ty), ty - 1)], (190, 110, 130)); dot([(sh(x, ty), ty), (sh(x, ty), ty + 1), (sh(x, ty), ty + 2 + (abs(i) < 3))], (252, 248, 236))
+        if abs(i) <= 3: dot([(sh(x, bot - 2), bot - 2 - (abs(i) < 2)), (sh(x, bot - 3), bot - 3)], (236, 230, 220))
+    mo = img.copy().load()      # (read from an untouched copy, so the outline does not spread while it is drawn)
+    for y in range(S):
+        for x in range(S):
+            if mo[x, y][3] == 0 and any(0 <= x + dx < S and 0 <= y + dy < S and mo[x + dx, y + dy][3] > 0 for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))): o[x, y] = OL + (255,)
+    return img
 def sheet_png(frames): im = Image.new('RGBA', (S * 15, S), (0, 0, 0, 0)); [im.paste(fr, (i * S, 0)) for i, fr in enumerate(frames)]; return im
 def url(im): b = io.BytesIO(); im.save(b, 'PNG'); return 'data:image/png;base64,' + base64.b64encode(b.getvalue()).decode()
 def strips(sm):                                     # every animation as a 15-frame strip (data URL), plus the smiley ball bobbing and squashing
     out = {n: url(sheet_png([render(fn(f)) for f in range(15)])) for n, fn in A.items()}; disc = sm.crop((7, 9, 58, 60)); fr = []
     for f in range(15):
         s = math.sin(2 * math.pi * f / 15); w, h = round(51 * (1 + .05 * s)), round(51 * (1 - .05 * s)); im = Image.new('RGBA', (S, S), (0, 0, 0, 0)); d2 = disc.resize((w, h), Image.NEAREST); im.paste(d2, (32 - w // 2, round(34 - h / 2 + 2 * s)), d2); fr.append(im)
-    out['smiley'] = url(sheet_png(fr)); return out
+    out['smiley'] = url(sheet_png(fr)); out['scare'] = url(sheet_png([scare_face(f) for f in range(15)])); return out      # (scare = the JUMPSCARE close-up, 15 frames)
