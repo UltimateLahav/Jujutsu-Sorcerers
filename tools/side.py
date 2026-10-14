@@ -542,6 +542,9 @@ TARMS = [K(0, (25, 60, 10, 50)), K(6, (30, 70, 15, 60)), K(8, (55, 50, 40, 40)),
 def ho_arms(kind, i):                                         # the arms for the hands-out versions of the standing / walking / crouching / jumping poses -> near upper arm, near forearm, far upper arm, far forearm
     if kind in ('jump', 'cjump'): return keyframe(JARMS, i)
     if kind == 'tele': return keyframe(TARMS, i)
+    if kind == 'run':                                                             # RUN: the arms pump with bent elbows (the arm opposite the leg that is forward swings forward)
+        p = i / NW; cn, cf = cos(2 * math.pi * p), cos(2 * math.pi * ((p + .5) % 1)); sn, sf = (1 - cn) / 2, (1 - cf) / 2
+        return (-30 + 80 * sn, 70 + 34 * sn, -30 + 80 * sf, 70 + 34 * sf)
     if kind in ('fwd', 'back', 'cfwd', 'cback'):
         p = i / NW if kind in ('fwd', 'cfwd') else ((-i) % NW) / NW; amp = 18 if kind in ('fwd', 'back') else 8
         cn, cf = cos(2 * math.pi * p), cos(2 * math.pi * ((p + .5) % 1))             # +1 = that leg is forward, so its arm swings back
@@ -561,7 +564,7 @@ def build(kind, i):
     f = F(); u = F()                      # f: legs, u: everything above the hips
     hx, foot, lean = 33, None, 0
     atk = kind.startswith('atk'); rxk = kind.startswith('rx'); crk = kind in CR_KINDS; foot2 = None; hs = 0; sx_ = 1; rot_ = 0
-    hoa = HO and not (atk or rxk or blkk)                 # the standing / walking / crouching / jumping poses with both hands out (the attacks get theirs from ATK_H)
+    hoa = (HO or kind == 'run') and not (atk or rxk or blkk)                 # the standing / walking / crouching / jumping poses with both hands out (the attacks get theirs from ATK_H)
     if kind == 'idle':
         L = [.15, .35, .55, .7, .5, .25][i]; bob = [0, 0, 0, 1, 1, 0][i]
         thn, kn_, thf, kf, swn, swf = rad(4), 0, rad(-8), 0, False, False; p = i / 6
@@ -590,13 +593,15 @@ def build(kind, i):
         elif k_ in (17, 19): thf, kf, foot = rad(nth), rad(nk), rad(nf); thn, kn_ = ik(hx, hy, 33.7, GROUND); foot2 = 0.0; rc_f = 'j' if gl > .25 else 'O'
         else: thn, kn_ = ik(hx, hy, 33.7, GROUND)
     else:
-        amp, kmax = (26, 50) if kind == 'fwd' else (20, 40)
-        p = i / NW if kind == 'fwd' else ((-i) % NW) / NW
+        amp, kmax = (26, 50) if kind == 'fwd' else (42, 95) if kind == 'run' else (20, 40)
+        p = i / NW if kind in ('fwd', 'run') else ((-i) % NW) / NW
         qn, qf = p % 1, (p + .5) % 1
         thn, kn_ = gait(qn, amp, kmax); thf, kf = gait(qf, amp, kmax); swn, swf = qn >= .5, qf >= .5
-        L = .8 + .25 * sin(2 * math.pi * i / NW) if kind == 'fwd' else max(-.2, .05 + .12 * sin(2 * math.pi * i / NW)); bob = 0
+        L = .8 + .25 * sin(2 * math.pi * i / NW) if kind in ('fwd', 'run') else max(-.2, .05 + .12 * sin(2 * math.pi * i / NW)); bob = 0
+        if kind == 'run': lean = 6; FLY = round(3.4 * max(0.0, cos(4 * math.pi * p)) ** 1.4)      # RUN: the whole body leans forward and leaves the ground at the two moments of the stride when the legs are fully open
     drop = lambda th, k: L1 * cos(th) + L2 * cos(th - k)
     if (kind not in ('jump', 'tele', 'cjump') and not (atk or rxk or crk)) or kind in ('atk11', 'atk22'): hy = round(58 + TOP - max(drop(thn, kn_), drop(thf, kf)))
+    if kind == 'run': hy -= FLY                            # (in flight both feet are off the ground)
     dxb = round(hx - 33)                                   # the body follows the hips (the planted feet stay put)
     oy = hy - 34; hb = bob
     if hoa: nua, nfa, fua, ffa = ho_arms(kind, i)
@@ -681,8 +686,8 @@ def build(kind, i):
 
 def rows(f, x0, w): return [''.join(r[x0:x0 + w]) for r in f.g]
 
-def NFR(k): return NW if k in ('fwd', 'back', 'cfwd', 'cback', 'wfb', 'wbb', 'cfb', 'cbb') else 40 if k == 'atk8' else 10 if k == 'atk11' else 30 if k == 'atk22' else 15 if k in ('jump', 'tele', 'cjump', 'cdn', 'cidle', 'cb') or k.startswith('atk') else 10 if k.startswith('rx') else 6
-sets = {k: [build(k, i) for i in range(NFR(k))] for k in ('idle', 'fwd', 'back', 'jump', 'tele', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'atk15', 'atk16', 'atk17', 'wfb', 'wbb', 'cb', 'cfb', 'cbb', 'cdn', 'cidle', 'cfwd', 'cback', 'cjump', *['rx%d' % j for j in range(10)])}
+def NFR(k): return NW if k in ('fwd', 'back', 'run', 'cfwd', 'cback', 'wfb', 'wbb', 'cfb', 'cbb') else 40 if k == 'atk8' else 10 if k == 'atk11' else 30 if k == 'atk22' else 15 if k in ('jump', 'tele', 'cjump', 'cdn', 'cidle', 'cb') or k.startswith('atk') else 10 if k.startswith('rx') else 6
+sets = {k: [build(k, i) for i in range(NFR(k))] for k in ('idle', 'fwd', 'back', 'run', 'jump', 'tele', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'atk15', 'atk16', 'atk17', 'wfb', 'wbb', 'cb', 'cfb', 'cbb', 'cdn', 'cidle', 'cfwd', 'cback', 'cjump', *['rx%d' % j for j in range(10)])}
 HO = True                                                    # the red combo and the red technique only exist with the hands out: they are built that way, so they need no separate hands-out version
 for k in ('atk18', 'atk19', 'atk20', 'atk21', 'atk22'):
     sets[k] = [build(k, i) for i in range(NFR(k))]
@@ -707,7 +712,7 @@ RXWIN = {k: (max(0, min(xs) - 1), min(N - 1, max(xs) + 1)) for k, fs in sets.ite
 def win(k): return (ax0, ax1) if k.startswith('atk') else RXWIN[k] if k.startswith(('rx', 'orb')) else (x0, x1)
 CROPPED = ('idle', 'fwd', 'back', 'wfb', 'wbb')                  # these sets drop the top TOP rows of the canvas
 def meta(k, fs):                                                  # everything about a set except its pixels
-    return {'x0': win(k)[0], 'w': win(k)[1] - win(k)[0] + 1, 'h': len(fs[0].g), 'top': TOP if k in ('jump', 'tele', 'cjump', 'cdn', 'cidle', 'cfwd', 'cback', 'cb', 'cfb', 'cbb') or k.startswith(('atk', 'rx')) else 0, 'cx': 33 + RX_SH[int(k[2:])] if k.startswith('rx') else 32 if k == 'orb' else 33}
+    return {'x0': win(k)[0], 'w': win(k)[1] - win(k)[0] + 1, 'h': len(fs[0].g), 'top': TOP if k in ('run', 'jump', 'tele', 'cjump', 'cdn', 'cidle', 'cfwd', 'cback', 'cb', 'cfb', 'cbb') or k.startswith(('atk', 'rx')) else 0, 'cx': 33 + RX_SH[int(k[2:])] if k.startswith('rx') else 32 if k == 'orb' else 33}
 def anchors(k, fs, h):                                            # per frame: [x, y] of the near and of the far fist inside the set's window (null = nothing to light)
     out = ([], [])
     for i in range(len(fs)):

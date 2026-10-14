@@ -3,7 +3,7 @@ anim(name) -> 15 frames. run: python3 verity_rig.py  ->  verity_anims.json (name
 import math, io, json, base64, copy
 from PIL import Image, ImageDraw
 S = 64; BASE, LIT, HI, SH, DK, OL, RIB, CLAW = (172,156,48), (206,192,80), (232,218,134), (128,114,38), (88,76,26), (26,18,6), (104,90,26), (62,52,16)
-STAND = dict(hx=32, hy=6.5, sy=17, hp=36, lean=0, m=0, aL=((21,34),(20.5,52)), aR=((43,34),(43.5,52)), lL=((29.5,47),(30,59)), lR=((34.5,47),(34,59)), fade=0, glitch=0, ribs=1, bl=0)
+STAND = dict(hx=32, hy=6.5, sy=17, hp=36, lean=0, m=0, aL=((21,34),(20.5,52)), aR=((43,34),(43.5,52)), lL=((29.5,47),(30,59)), lR=((34.5,47),(34,59)), fade=0, glitch=0, ribs=1, bl=0, nohead=0)
 mix = lambda a, b, t: tuple(mix(x, y, t) for x, y in zip(a, b)) if isinstance(a, tuple) else a + (b - a) * t
 ease = lambda t: t * t * (3 - 2 * t)
 def pose(**kw): p = copy.deepcopy(STAND); p.update(kw); return p
@@ -17,8 +17,10 @@ def render(p):
     m = Image.new('L', (S, S), 0); d = ImageDraw.Draw(m); hx, hy, sy, hp, ln = p['hx'], p['hy'], p['sy'], p['hp'], p['lean']
     sh = lambda y: ln * max(0.0, min(1.2, (hp - y) / 20))
     ty = lambda y: (sy - 2) + (y - 15) * (hp - (sy - 2)) / 21
-    g = int(round(p['m'] * 4)); d.ellipse((hx - 4, hy - 5.5, hx + 4, hy + 5.5 + g * 0.7), fill=255)                       # head (the jaw drops when the mouth opens)
-    d.polygon([(hx - 2, hy + 3.5), (hx + 2, hy + 3.5), (33 + sh(sy), sy - 1), (31 + sh(sy), sy - 1)], fill=255)          # neck
+    g = int(round(p['m'] * 4))
+    if not p['nohead']:
+        d.ellipse((hx - 4, hy - 5.5, hx + 4, hy + 5.5 + g * 0.7), fill=255)                                                # head (the jaw drops when the mouth opens)
+        d.polygon([(hx - 2, hy + 3.5), (hx + 2, hy + 3.5), (33 + sh(sy), sy - 1), (31 + sh(sy), sy - 1)], fill=255)      # neck
     T = [(30,15),(34,15),(40,17),(37,19),(37,24),(36,29),(35,33),(36,36),(28,36),(29,33),(28,29),(27,24),(27,19),(24,17)]
     d.polygon([(x + sh(ty(y)), ty(y)) for x, y in T], fill=255)                                                           # shoulders, ribcage, belly
     for k, (E, H) in (('L', p['aL']), ('R', p['aR'])):
@@ -45,17 +47,26 @@ def render(p):
     if p['ribs'] and hp - sy >= 17:
         for yy in (20, 22, 24, 26): dot([(29 + i + sh(ty(yy)), ty(yy) + (i > 1)) for i in range(3)] + [(35 - i + sh(ty(yy)), ty(yy) + (i > 1)) for i in range(3)], RIB)
         dot([(32 + sh(ty(y)), ty(y)) for y in range(18, 29)] + [(31 - i + sh(sy), ty(17)) for i in range(6)] + [(33 + i + sh(sy), ty(17)) for i in range(6)], RIB); dot([(30 + i + sh(ty(31)), ty(31) + i % 2) for i in range(5)], DK)
-    bx, by = int(round(hx)) - 32, int(round(hy - 0.5)) - 6                                                                 # the face, relative to the head
-    dot([(x + bx, y + by) for x in (29, 30, 34, 35) for y in (3, 4)], (10, 4, 3)); dot([(28 + bx, by + y) for y in range(5, 9)] + [(36 + bx, by + y) for y in range(5, 9)], SH)
-    for xs, st in (((29, 30, 34, 35), 7), ((31, 32, 33), 8)):
-        for x in xs:
-            for k, c in enumerate([(84, 8, 18), (252, 248, 236)] + [(70, 6, 14)] * (1 + g) + [(252, 248, 236), (84, 8, 18)]):
-                if p['bl'] and c == (252, 248, 236) and (x * 3 + k * 5 + st) % 7 < 5 * p['bl']: c = (176, 14, 26)      # bloody teeth
-                dot([(x + bx, st + by + k)], c)
+    if not p['nohead']:
+        bx, by = int(round(hx)) - 32, int(round(hy - 0.5)) - 6                                                                 # the face, relative to the head
+        dot([(x + bx, y + by) for x in (29, 30, 34, 35) for y in (3, 4)], (10, 4, 3)); dot([(28 + bx, by + y) for y in range(5, 9)] + [(36 + bx, by + y) for y in range(5, 9)], SH)
+        for xs, st in (((29, 30, 34, 35), 7), ((31, 32, 33), 8)):
+            for x in xs:
+                for k, c in enumerate([(84, 8, 18), (252, 248, 236)] + [(70, 6, 14)] * (1 + g) + [(252, 248, 236), (84, 8, 18)]):
+                    if p['bl'] and c == (252, 248, 236) and (x * 3 + k * 5 + st) % 7 < 5 * p['bl']: c = (176, 14, 26)      # bloody teeth
+                    dot([(x + bx, st + by + k)], c)
     for y in range(S):
         for x in range(S):
             if not on(x, y) and any(on(x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))): o[x, y] = OL + (255,)
-    if p['bl']:
+    if p['nohead']:                                                                                                         # the cut neck: a red stump on the shoulders and blood running down the chest
+        for k, (xx, n) in enumerate(((31, 7), (33, 10), (35, 5))):
+            for j in range(n):
+                X, Y = xx + round(sh(ty(17 + j * 0.9))), round(sy - 1 + j)
+                if 0 <= X < S and 0 <= Y < S: o[X, Y] = ((190, 16, 30, 255) if (j + k) % 2 else (150, 10, 22, 255))
+        for xx in range(30, 37):
+            X = xx + round(sh(sy)); Y = round(sy - 2)
+            if 0 <= X < S and 0 <= Y < S: o[X, Y] = (176, 14, 26, 255)
+    if p['bl'] and not p['nohead']:
         for x, n in ((29, 4), (31, 6), (33, 3), (35, 5)):                                                                   # blood drips from his chin
             for j in range(int(n * p['bl'])):
                 xx, yy = x + bx, 14 + g + by + j
@@ -81,6 +92,18 @@ JUMPC = dict(hy=14, sy=25, hp=44, lean=2, aL=((20, 38), (19, 50)), aR=((44, 38),
 JUMPA = dict(hy=5.5, lean=-1, aL=((17, 24), (12, 12)), aR=((47, 24), (52, 12)), lL=((31, 44), (27, 51)), lR=((35, 44), (37, 51)))      # in the air: arms up, legs tucked
 GRAB = ((51, 17), (61, 16))      # the JUMPSCARE grab: the arm straight out at shoulder height, the hand where a standing fighter's throat is
 SEIZE = ((52, 22), (61, 28))      # the right arm straight out: the hand is where Gojo's throat is
+# ---------------------------------------------------------------- the FATALITY (Verity's own): the wind-up and the neck grab, the punch, the sprinter's start position, the run, the leap in front of the runner, the catch of the arm, the grip on the shoulders, the bite; and the victim's headless body
+HOLD = ((51, 15), (61, 13))                                                                   # the right hand lifts the victim by the neck
+CROUCHP = dict(hx=50, hy=21, sy=30, hp=48, lean=16, m=0.1, aL=((47, 45), (50, 60)), aR=((55, 46), (58, 60)), lL=((25, 57), (13, 60)), lR=((46, 50), (39, 60)))      # the SPRINTER'S START: one knee down, the back leg stretched out, the front foot flat, both hands on the ground, the head up and looking ahead
+LEAPP = dict(hx=54, hy=17, sy=25, hp=41, lean=15, m=1, aL=((52, 30), (62, 28)), aR=((50, 33), (60, 36)), lL=((24, 47), (11, 52)), lR=((31, 49), (20, 57)))              # in the air: stretched out flat, the arms reaching ahead, the legs trailing
+AIMS = dict(m=1, aL=((46, 24), (60, 18)), aR=((54, 20), (62, 17)))                          # both hands out at shoulder height
+def runp(f):
+    w = 2 * math.pi * f / 15; s, c = math.sin(w), math.cos(w); b = 1.3 * abs(s); up = lambda v: -8 * max(0, v)
+    return pose(lean=8, hx=36, hy=7 + b, sy=17 + b, hp=36 + 0.4 * b, aL=((26 + 7 * s, 29 + b), (26 + 15 * s, 37 - 4 * abs(s))), aR=((39 - 7 * s, 29 + b), (39 - 15 * s, 37 - 4 * abs(s))),
+                lL=((29.5 - 9 * s, 46 + up(-c)), (30 - 15 * s, 58 + up(s) * 1.3)), lR=((34.5 + 9 * s, 46 + up(c)), (34 + 15 * s, 58 - up(s) * 1.3)))
+def headp(f):      # the headless body: it sways and the arms twitch (the heart still pumps)
+    w = 2 * math.pi * f / 15; s = math.sin(w); t = math.sin(w * 3 + 1)
+    return {**idlep(f), 'nohead': 1, 'aL': ((21 + 1.5 * t, 34), (20 + 3 * t, 52 - 2 * abs(s))), 'aR': ((43 - 1.5 * t, 34), (44 - 3 * t, 52 - 2 * abs(t)))}
 A = {
  'idle': idlep, 'walk': walkp,
  'm0': lambda f: keys([(0, pose()), (3, pose(lean=-3, aR=((46, 28), (52, 12)))), (6, pose(lean=2, aR=((50, 26), (56, 16)))), (7, pose(lean=5, aR=((54, 32), (60, 40)))), (9, pose(lean=5, aR=((54, 34), (59, 44)))), (14, pose())], f),
@@ -95,6 +118,15 @@ A = {
  'jump': lambda f: keys([(0, pose()), (3, pose(**JUMPC)), (5, pose(**JUMPA)), (10, pose(**{**JUMPA, 'lean': 1})), (12, pose(**JUMPC)), (14, pose())], f),      # (playable Verity: crouch, push off, in the air with the arms up and the legs tucked, land)
  'talk': lambda f: {**idlep(f), 'm': 0.6 * (0.5 - 0.5 * math.cos(2 * math.pi * f / 15))},      # (the idle sway and breathing, with the mouth opening and closing)
  'scare_grab': lambda f: keys([(0, pose()), (3, pose(lean=-4, hy=7.5, m=0.3, aR=((44, 26), (38, 12)))), (6, pose(lean=7, hy=9, m=0.7, aR=((54, 18), (62, 17)), aL=((18, 30), (12, 40)))), (8, pose(lean=8, hx=34, hy=9, m=1, aR=GRAB)), (10, pose(lean=-1, hx=30, hy=4.5, m=1, aR=GRAB)), (12, pose(lean=-4, hx=29, hy=4, m=1, aR=GRAB)), (14, pose(lean=-3, hx=30, hy=4.5, m=1, aR=GRAB))], f),      # (the JUMPSCARE grab: the wind-up, the lunge, the grip on the throat, the head thrown back while the jaws open)
+ 'fx_grab': lambda f: keys([(0, pose()), (4, pose(lean=-5, hy=7.5, m=0.4, aR=((43, 22), (36, 8)), aL=((20, 32), (15, 44)))), (7, pose(lean=8, hy=9, m=0.8, aR=((54, 18), (62, 17)), aL=((18, 30), (12, 40)))), (9, pose(lean=7, hy=8.5, m=1, aR=GRAB)), (12, pose(lean=5, hx=31, hy=7, m=1, aR=HOLD)), (14, pose(lean=5, hx=31, hy=7, m=1, aR=HOLD))], f),      # (wind-up, lunge, the grip on the throat, lifting him)
+ 'fx_punch': lambda f: keys([(0, pose(lean=5, hy=7.5, m=0.8, aR=HOLD)), (4, pose(lean=2, hy=8, m=0.8, aR=HOLD, aL=((17, 26), (9, 22)))), (7, pose(lean=7, hy=9, m=1, aR=HOLD, aL=((40, 16), (60, 10)))), (9, pose(lean=7, hy=9, m=1, aR=HOLD, aL=((42, 17), (61, 11)))), (12, pose(lean=4, hy=8, m=0.6, aR=((51, 19), (60, 20)), aL=((30, 28), (34, 38)))), (14, pose(lean=2, hy=7.5, m=0.3, aR=((46, 26), (48, 36)), aL=((24, 32), (24, 46))))], f),      # (the left fist cocks back and drives into his face while the right hand holds him, then he is let go)
+ 'fx_crouch': lambda f: keys([(0, pose(lean=2, m=0.3, aR=((46, 26), (48, 36)))), (5, pose(**{**CROUCHP, 'hy': 15, 'lean': 8, 'sy': 25, 'hp': 44, 'hx': 40, 'aL': ((38, 34), (42, 48)), 'aR': ((48, 36), (52, 50)), 'lL': ((27, 52), (20, 59)), 'lR': ((42, 49), (38, 59))})), (10, pose(**CROUCHP)), (12, pose(**{**CROUCHP, 'hy': 20, 'hp': 47, 'sy': 29.5})), (14, pose(**CROUCHP))], f),      # (he drops into the start position and holds it, breathing)
+ 'run': runp,
+ 'fx_leap': lambda f: keys([(0, pose(**CROUCHP)), (3, pose(**{**CROUCHP, 'lean': 21, 'hx': 55, 'hy': 21, 'sy': 27, 'hp': 44, 'lL': ((30, 52), (17, 60)), 'lR': ((45, 51), (38, 60)), 'aL': ((52, 41), (56, 55)), 'aR': ((59, 42), (61, 55))})), (5, pose(**LEAPP)), (8, pose(**{**LEAPP, 'hy': 18, 'lean': 14})), (10, pose(**JUMPC)), (12, pose(**{**JUMPC, 'lean': -1, 'hy': 12, 'sy': 22})), (14, pose())], f),      # (he explodes out of the start position, flies flat through the air and lands in a crouch)
+ 'fx_catch': lambda f: keys([(0, pose(lean=2, aR=((46, 28), (52, 30)))), (3, pose(lean=4, hy=8, m=0.5, aR=((52, 22), (60, 22)), aL=((20, 34), (18, 46)))), (5, pose(lean=6, hy=8, m=0.8, aR=((53, 21), (62, 20)), aL=((20, 34), (18, 46)))), (8, pose(lean=7, hy=8.5, m=0.9, aR=((53, 22), (62, 21)), aL=((22, 34), (22, 46)))), (11, pose(lean=6, hy=8, m=0.9, aR=((53, 20), (62, 19)), aL=((20, 34), (18, 46)))), (14, pose(lean=7, hy=8.5, m=1, aR=((53, 21), (62, 20)), aL=((22, 33), (22, 45))))], f),      # (his hand shoots out and closes on the arm that is swinging at him, then he holds it)
+ 'fx_shoulders': lambda f: keys([(0, pose(lean=7, hy=8.5, m=1, aR=((53, 21), (62, 20)))), (4, pose(lean=7, hy=8.5, **{**AIMS, 'm': 0.8})), (8, pose(lean=9, hx=34, hy=9, **AIMS)), (11, pose(lean=6, hx=31, hy=6, **AIMS)), (14, pose(lean=4, hx=30, hy=4, **AIMS))], f),      # (both hands on his shoulders, pulling him in, the head going back)
+ 'fx_bite': lambda f: keys([(0, pose(lean=4, hx=30, hy=4, **AIMS)), (3, pose(lean=-3, hx=28, hy=3, **AIMS)), (6, pose(lean=9, hx=46, hy=13, **AIMS)), (8, pose(lean=11, hx=52, hy=15, **{**AIMS, 'm': 0.2}, bl=1)), (11, pose(lean=7, hx=46, hy=10, **{**AIMS, 'm': 0.5}, bl=1)), (14, pose(lean=5, hx=40, hy=8, m=0.15, bl=1, aL=((46, 28), (54, 34)), aR=((50, 28), (56, 36))))], f),      # (the head draws back, lunges, the jaws shut on frame 8, he pulls back with blood on his mouth)
+ 'headless': headp,
  'tele': lambda f: pose(glitch=(0, .6, 1.2, 1.8, 2.4, 3, 3.5, 0, 3.5, 3, 2.4, 1.8, 1.2, .6, 0)[f], fade=(0, .1, .25, .4, .55, .7, .85, 1, .85, .7, .55, .4, .25, .1, 0)[f]),
 }
 

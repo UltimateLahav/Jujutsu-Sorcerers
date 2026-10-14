@@ -57,7 +57,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #blk{border-color:#9f8cff}
 #fat{display:none;grid-area:2/1;border-color:#ff4a3a;color:#ff6a5a;opacity:.38}#fat span{color:#ffb4a8}#fat svg{width:4.5vh;height:4.5vh}      /* FATALITY: only in a match, to the left of BLOCK; dark until the enemy is at 20% health or less and close, then it glows */
 .col.vs{grid-template-columns:auto auto auto}.col.vs #fat{display:flex}
-.col.vy #fat{display:none}.col.vy #dom{border-color:#ff5a5a;color:#ff8a8a}.col.vy #dom span{color:#ffb4b4}.col.vy #dom::after{background:rgba(255,80,80,.38)}.col.vy #dom.on{border-color:#ffd0d0;color:#fff}      /* playing Verity there is no FATALITY, and the DOMAIN button is his JUMPSCARE (red, with the same wait-fill) */
+.col.vy #dom{border-color:#ff5a5a;color:#ff8a8a}.col.vy #dom span{color:#ffb4b4}.col.vy #dom::after{background:rgba(255,80,80,.38)}.col.vy #dom.on{border-color:#ffd0d0;color:#fff}      /* playing Verity the DOMAIN button is his JUMPSCARE (red, with the same wait-fill); the FATAL button is the same as Gojo's */
 .col.vs #dom{grid-area:1/2}.col.vs #ce{grid-area:1/3}.col.vs #blk{grid-area:2/2}.col.vs #lap{grid-area:2/3}.col.vs #dash{grid-area:3/2}.col.vs #atk{grid-area:3/3}
 #fat.rdy{opacity:1;background:#3a0d12;border-color:#ff8a7a;color:#fff;box-shadow:0 0 1.8vh #ff4a3a,0 0 .5vh #ff4a3a inset,4px 4px 0 #000;animation:fatglow .5s steps(2) infinite}
 @keyframes fatglow{50%{box-shadow:0 0 3.2vh #ff2a2a,0 0 .9vh #ff2a2a inset,4px 4px 0 #000}}
@@ -254,7 +254,7 @@ let seed = 7;
 const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
 let story = null, alley = false, state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
-let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1, vp = null, js = null, pStun = 0;
+let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1, vp = null, js = null, pStun = 0, vf = null;
 let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, shkX = 0, shkY = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', flashUntil = 0, flashMs = 1, flashA = 0, stickX = 0, stickY = 0, stickUp = false, stickDown = false, stickCr = false, stickDownEnd = -9999, jumpFromStick = false, joyId = null, dashReq = false, dgAt = -1, dgK = 0, dgFrom = 0, dgTo = 0, dgAir = false, dgUsed = false, dgCr = false, dgReady = 0, blockHeld = false, blkAt = -1, blkEnd = -1, blkFrom = 4, wcIdx = 0, ceOn = false, ceAt = -9999, ceAmt = 0, ceNext = 0, ceReq = false, cm = 0, rdIdx = 0, mbK = 0, rdOrb = null, boom = null, holdUntil = 0, rdSlow = false, ride = null;
 const ceDmg = n => (cm === 1 ? Math.round(n * CE_DMG) : n) * (voidOn() ? 2 : 1);      // x1.3 in cursed energy mode, and everything hits twice as hard inside the Infinite Void      // only cursed energy mode hits harder; red mode has no damage bonus
 const popCol = () => cm === 1 ? '#4ff5e8' : cm === 2 ? '#ff8a7a' : '#7fc4ff';
@@ -328,7 +328,7 @@ function show(s) {
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll(); $('settings').classList.remove('on');
-  js = null; pStun = 0; resetPeds(s === 'play'); cm = 0; ceOn = false; ceAmt = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
+  js = null; vf = null; pStun = 0; resetPeds(s === 'play'); cm = 0; ceOn = false; ceAmt = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
   if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(performance.now(), 1200);
@@ -1007,7 +1007,7 @@ function beginRound(now) {                     // a fresh round: the scene is re
   const keep = vs; show('play'); vs = keep; ceReset(); const t = performance.now(), G = GRADES[vs.gi];
   Object.assign(vs, { ph: 'intro', t0: t, tl: vs.story ? 1e9 : 60000, hp: PHP, sh: PHP, hist: [], seenAtk: -1, seenAt: 0, seenK: 0, rolled: true, whiffAt: -1, prevAtk: -1, hitAt: -9999, why: '', who: '', koAt: 0 });
   spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); $('vsres').classList.remove('on');      // (he starts in the clear, not behind the touch buttons)
-  vp = vpNew(); js = null; pStun = 0; cpIdx = 0; dgReady = 0; lastLabel = ''; setModeUI();      // (playing Verity: back in his own form, the button labels set)
+  vp = vpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; lastLabel = ''; setModeUI();      // (playing Verity: back in his own form, the button labels set)
   if (vs.retry) { vs.round = 1 + vs.retry; vs.hp = vs.sh = PHP / 2; dummy.hp = dummy.shown = dummy.lock = 1; vs.morphed = true; blackUntil = t + 700; } else blackUntil = 0;      // after a failed red: Gojo at half health, Verity as he was (1 health left, so no smoke change); the picture comes up from black
 }
 function vsTick(now, dt) {
@@ -1131,17 +1131,18 @@ function fatSets(rev) {                                // the pictures of the at
 let fat = null, fatReq = 0;                            // fat = the running cutscene (null when there is none); fatReq = until when a press of the FATALITY button is remembered
 const orbAt = (set, n, sx, sy, s) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));      // an orb frame centred on (sx, sy)
 function fatState(now) {                               // Gojo's FATALITY. 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far away; 3 = not possible right now
-  if (!vs || vs.story || vs.me === 'verity' || vs.foe === 'verity' || vs.ph !== 'fight' || fat || dom || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || now - spawnAt < 900) return 3;      // (no FATALITY in the story fight: his ending is a Reversal Red)
+  if (!vs || vs.story || (vs.me === 'gojo' && vs.foe === 'verity') || vs.ph !== 'fight' || js || vf || fat || dom || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (Verity has his own FATALITY: the same rules; Gojo has none on a Verity)      // (no FATALITY in the story fight: his ending is a Reversal Red)
   if (!(dummy.hp <= dummy.max * FAT_LOW)) return 1;      // Gojo's FATALITY: only when the enemy is at 20% health or less
   if (Math.abs(dummy.x - wx) > FAT_RANGE) return 2;
   return hurtAt >= 0 || gojoGone ? 3 : 0;
 }
 function fatAiState(now) {                             // the enemy's own FATALITY on Gojo: from SEMI-GRADE 1 up, the moment Gojo is at 20% health or less and the enemy is close (no warning; being in the air, dashing or out of reach saves him)
-  if (!vs || vs.story || vs.me === 'verity' || vs.foe === 'verity' || vs.ph !== 'fight' || fat || dom || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || now < dummy.stunUntil || now - spawnAt < 900) return false;
+  if (!vs || vs.story || (vs.me === 'verity' && vs.foe === 'gojo') || vs.ph !== 'fight' || js || vf || fat || dom || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
   return vs.hp <= PHP * FAT_LOW && Math.abs(dummy.x - wx) <= FAT_RANGE && !gojoGone && gojoLift <= 12 && dgAt < 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
 }
+function fatGo(now, dt, rev) { if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's FATALITY is its own cutscene)
 function fatUI(now) {                                  // the button: only in a match, dark until it can be used, then it glows
-  const col = $('fat').parentNode; col.classList.toggle('vs', !!vs && vs.me !== 'verity'); col.classList.toggle('vy', !!vs && vs.me === 'verity'); $('hud').classList.toggle('vs', !!vs); if (vs) $('fat').classList.toggle('rdy', fatState(now) === 0);
+  const col = $('fat').parentNode; col.classList.toggle('vs', !!vs); col.classList.toggle('vy', !!vs && vs.me === 'verity'); $('hud').classList.toggle('vs', !!vs); if (vs) $('fat').classList.toggle('rdy', fatState(now) === 0);
 }
 function pressFat() { fatReq = performance.now() + 500; }      // (a press is remembered for half a second, e.g. while he is still reeling)
 function fatStart(now, rev) {                          // rev = the enemy does it to Gojo
@@ -1397,7 +1398,7 @@ function jsTarget(now) {      // the enemy can be grabbed: in front of Verity, w
   const d = dummy; return !!d && !!vs && vs.ph === 'fight' && d.ko < 0 && !d.cap && !(d.vform && d.vform !== 'verity') && !(d.vact && d.vact.type === 'crouch') && now >= d.stunUntil && now - d.born >= 900 && d.x - wx <= JS.reach && d.x - wx >= -4;
 }
 function jsVictimOk(now) {      // the player can be grabbed (a jump, a teleport, a dash, a crouch, being hurt or turning into the ball saves him)
-  return !!vs && vs.ph === 'fight' && !js && !de && !se && !fat && !dom && now >= pStun && !gojoGone && gojoLift <= 12 && dgAt < 0 && hurtAt < 0 && now - hurtEnd >= 350 && stance === 'stand' && !!dummy && dummy.x >= wx - 4;
+  return !!vs && vs.ph === 'fight' && !js && !vf && !de && !se && !fat && !dom && now >= pStun && !gojoGone && gojoLift <= 12 && dgAt < 0 && hurtAt < 0 && now - hurtEnd >= 350 && stance === 'stand' && !!dummy && dummy.x >= wx - 4;
 }
 function jsAiReady(d, now) { if (d.jsReady === undefined) d.jsReady = now + 6000; return now >= d.jsReady && jsVictimOk(now); }
 function jsBegin(now, who) { cineClear(); closeSettings(); stickDown = false; $('pad').classList.add('cine'); $('hud').classList.add('cine'); snd('scare'); js = { t: 0, who }; }      // who = 'player' (Verity is the player, the enemy is grabbed) or 'enemy'
@@ -1425,6 +1426,104 @@ function jsFrame(now, dt) {      // the cutscene: a white flash, then the scream
   const fade = (t - (JS.cut - 0.3)) / 0.3; if (fade > 0) { ctx.fillStyle = 'rgba(0,0,0,' + Math.min(1, fade).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }
   ctx.restore();
   if (t >= JS.cut) jsEnd(now);
+}
+// ---------------------------------------------------------------- VERITY'S FATALITY (the FATAL button for Verity, the same rules as Gojo's: the enemy at 20% health or less and close, 50% of the yellow bar; the enemy Verity does it to the player from SEMI-GRADE 1 up). A scripted cutscene with its own clock and camera, nine beats, each a 15-frame animation: 1 he winds up and grabs the victim by the neck (fx_grab), 2 punches him (fx_punch), 3 drops into the sprinter's START POSITION (fx_crouch) while the victim stumbles away and RUNS (the run cycles), 4 explodes out of the start position and flies in front of the runner (fx_leap), 5 the runner swings at him and he CATCHES THE ARM (fx_catch), 6 grabs both SHOULDERS (fx_shoulders), 7 BITES THE HEAD OFF (fx_bite, the headless body, the blood spray), 8 lets go and the body falls, 9 the title. The attacker is always on the left in the scene; when the enemy is the attacker the whole picture is mirrored.
+const RUNF = mk(D.run);      // Gojo's run cycle (15 frames)
+const VFT = { grab: 0.35, punch: 1.30, crouch: 2.15, run: 2.70, leap: 3.40, catch: 4.50, shoulders: 5.35, bite: 6.20, bt: 0.95, title: 8.6, end: 10.2 };      // when each beat starts (seconds of the cutscene); bt = how long into the bite beat the jaws shut; the title shows from 8.6 s and the screen fades out from 9.7 s
+const VFL = 4.20, VFB = 16 + 95 * (4.20 - 2.70), VFE = VFB + 8, VFG = -28;      // when he lands, where the runner stops, where the runner has skidded to, the distance of the grip
+const clamp01 = k => Math.max(0, Math.min(1, k)), lerp = (a, b, k) => a + (b - a) * k;
+function vfPos(t, g0) {      // where the two of them are (the victim stands at 0 at the start; positions grow towards the way the runner runs)
+  let vx; if (t < 1.70) vx = 0; else if (t < VFT.run) vx = 16 * ease3(clamp01((t - 1.70) / 0.45)); else if (t < VFL) vx = 16 + 95 * (t - VFT.run); else vx = VFB + 8 * ease3(clamp01((t - VFL) / 0.25));
+  if (t >= VFT.shoulders + 0.2) vx = VFE + 12 * ease3(clamp01((t - VFT.shoulders - 0.2) / 0.4)) + 8 * ease3(clamp01((t - VFT.bite) / 0.7));      // (pulled in by the shoulders, then in again for the bite)
+  const k = (t - VFT.grab) / 0.95, a0 = -g0, aL = VFE + 46; let ax;
+  if (t < VFT.grab) ax = a0; else if (t < VFT.punch) ax = k < 0.3 ? lerp(a0, a0 - 8, ease3(k / 0.3)) : k < 0.55 ? lerp(a0 - 8, VFG, ease3((k - 0.3) / 0.25)) : VFG;
+  else if (t < 3.70) ax = VFG; else if (t < VFL) ax = lerp(VFG, aL, ease3((t - 3.70) / 0.5)); else ax = aL;
+  return { ax, vx };
+}
+function vfStart(now, rev) {      // rev = the enemy does it to the player
+  const d = dummy; cineClear(); closeSettings(); stickDown = false; d.ai = 'rest'; d.pull = null; d.vx = 0; d.vact = null; $('pad').classList.add('cine'); $('hud').classList.add('cine'); snd('fatalstart');
+  vf = { rev: !!rev, t: 0, ev: {}, g0: Math.max(20, Math.min(FAT_RANGE, Math.abs(d.x - wx))), cam: 0, z: 1, fx: 0, fy: 0, shake: 0, freeze: 0, flash: 0, parts: [], splats: [], wx0: wx, gv: rev ? vs.me === 'gojo' : vs.foe === 'gojo', inv: !rev && vs.inv, ainv: !!rev && vs.inv };      // gv: the victim is Gojo (else a Verity); the colours are inverted only for the inverted Verity (the enemy): the victim when the player does it, the attacker when the enemy does it
+}
+function vfReset() { vf = null; $('pad').classList.remove('cine'); $('hud').classList.remove('cine'); }
+function vfEnd(now) {      // the victim is gone and the attacker wins the round (like Gojo's FATALITY)
+  const rev = vf.rev; wx = vf.wx0; vfReset(); blackUntil = now + 500; if (!vs || vs.ph !== 'fight') return;
+  if (rev) { vs.hp = 0; vs.sh = 0; vs.hitAt = now; endRound('enemy', 'fatal', now); return; }
+  dummy.hp = 0; dummy.shown = 0; dummy.ko = now - 3000; dummy.koAt = dummy.ko; kos++; endRound('player', 'fatal', now);
+}
+function vfFrame(now, dt) {
+  const s = vf, T = VFT; keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; fatReq = 0;
+  const live = now >= s.freeze; if (live) s.t += dt; const t = s.t, sdt = live ? dt : 0, at = (k, tt, f) => { if (!s.ev[k] && t >= tt) { s.ev[k] = 1; f(); } }, f15 = (t0, d) => Math.max(0, Math.min(14, Math.floor((t - t0) / d * 15))), tb = t - T.bite, bitten = tb >= T.bt;
+  const P = vfPos(t, s.g0), mx = VW / 2, GX = Math.round(mx + P.vx - s.cam), VX = Math.round(mx + P.ax - s.cam), gojo = s.gv;      // (screen places of the victim and of Verity, the camera is s.cam)
+  // ---- the events: sounds, shakes, flashes, the spray of blood
+  at('swing', T.grab + 0.30, () => snd('swing', 3)); at('grip', T.grab + 0.52, () => { snd('hit', 0); snd('smack', 0); s.shake = now + 100; });
+  at('punch', 1.70, () => { snd('hit', 3); snd('smack', 3); s.freeze = now + 90; s.flash = now + 90 + 60; s.shake = now + 90 + 200; });
+  at('crouch', T.crouch + 0.1, () => snd('charge')); at('leap', 3.70, () => { snd('dash', 0); snd('swing', 3); }); at('land', VFL, () => { snd('land', 1.6); s.shake = now + 160; });
+  at('catch', 4.78, () => { snd('block'); snd('smack', 1); s.shake = now + 130; }); at('shoulders', T.shoulders + 0.30, () => { snd('hit', 0); snd('smack', 1); });
+  at('draw', T.bite + 0.3, () => snd('domainface'));
+  const spurt = (n, pw, sx, sy) => { for (let i = 0; i < n; i++) { const a = (Math.random() - 0.5) * 1.5, sp = pw * (0.5 + Math.random() * 0.6); s.parts.push({ x: sx, y: sy, vx: Math.sin(a) * sp - 20, vy: -Math.cos(a) * sp, c: BLD[(Math.random() * 4) | 0], z: Math.random() < 0.3 ? 2 : 1 }); } };
+  // ---- the victim's picture and the place of the neck (where the head was)
+  const trem = fearOff(now);
+  let vimg, vinfo = null, vflip = false, vlift = 0, vox = 0, hid = false, neck = null;      // vinfo: Gojo's picture info (null for Verity: 64x64 pictures)
+  const gsrc = (set, i) => set[Math.max(0, Math.min(set.length - 1, i))];
+  if (gojo) {
+    vinfo = D.idle; vimg = idleF[Math.floor(now / (1000 / IDLE_FPS)) % idleF.length]; vflip = true;
+    if (t >= T.grab + 0.52 && t < 1.70) { vinfo = D.rx0; vimg = rxN[0][4]; vlift = 5; vox = trem[0]; }                                  // held by the neck
+    else if (t >= 1.70 && t < 2.15) { vinfo = D.rx0; vimg = gsrc(rxN[0], Math.floor((t - 1.70) / 0.45 * 10)); vlift = 5 * (1 - clamp01((t - 1.70) / 0.2)); }    // the punch: his head snaps back
+    else if (t >= 2.15 && t < T.run) { vinfo = D.rx1; vimg = gsrc(rxN[1], Math.floor((t - 2.15) / 0.55 * 10)); }                      // he staggers
+    else if (t >= T.run && t < VFL + 0.25) { vinfo = D.run; vimg = RUNF[Math.floor(t * 30) % 15]; vflip = false; }                  // RUNS
+    else if (t >= VFL + 0.25 && t < T.catch + 0.05) { vinfo = D.run; vimg = RUNF[6]; vflip = false; }
+    else if (t >= T.catch + 0.05 && t < T.shoulders) { vinfo = D.atk0; vimg = gsrc(atkF[0], Math.min(8, Math.floor((t - T.catch - 0.05) / 0.3 * 9))); vflip = false; }          // his swing: the arm is caught on its way and stays caught
+    else if (t >= T.shoulders) { vinfo = D.rx0; vimg = rxN[0][3]; vflip = false; vox = trem[0]; vlift = 0; }                                           // held by the shoulders
+    if (bitten) { hid = true; }
+  } else {
+    const iv = s.inv; vimg = vfr('idle', now / 100, true, iv); vflip = true;
+    if (t >= T.grab + 0.52 && t < 1.70) { vimg = vfr('hurt', 3, false, iv); vlift = 5; vox = trem[0]; }
+    else if (t >= 1.70 && t < 2.15) { vimg = vfr('hurt', (t - 1.70) / 0.45 * 15, false, iv); vlift = 5 * (1 - clamp01((t - 1.70) / 0.2)); }
+    else if (t >= 2.15 && t < T.run) { vimg = vfr('hurt', 9 + (t - 2.15) / 0.55 * 5, false, iv); }
+    else if (t >= T.run && t < VFL + 0.25) { vimg = vfr('run', t * 30, true, iv); vflip = false; }
+    else if (t >= VFL + 0.25 && t < T.catch + 0.05) { vimg = vfr('run', 6, false, iv); vflip = false; }
+    else if (t >= T.catch + 0.05 && t < T.shoulders) { vimg = vfr('m0', Math.min(8, (t - T.catch - 0.05) / 0.3 * 9), false, iv); vflip = false; }
+    else if (t >= T.shoulders) { vimg = vfr('hurt', 3, false, iv); vflip = false; vox = trem[0]; }
+    if (bitten) { vimg = vfr('headless', (t - T.bite) * 20, true, iv); vflip = false; }
+  }
+  // ---- the bite: the head is gone (a red stump, the spray of blood), later he lets go and the body falls backwards
+  const tLet = T.bite + T.bt + 0.9, fell = clamp01((t - tLet) / 0.55), th = -1.5 * fell * fell;
+  let body = vimg;
+  if (gojo && bitten) { const base = rxN[0][3]; body = headless(base); }
+  const hxs = gojo ? vinfo.cx - vinfo.x0 : 32, topY = gojo ? gy - 60 - (vinfo.top || 0) : gy - 60, vy0 = topY - vlift, m = gojo ? (mouthOf(rxN[0][3]) || { x: 20, y: 16 }) : null;
+  const stump = gojo ? [GX - hxs + m.x - 3, vy0 + m.y + 3] : [GX + 1, vy0 + 16], PV = [GX, gy + 2], R = (x, y) => [PV[0] + Math.cos(th) * (x - PV[0]) - Math.sin(th) * (y - PV[1]), PV[1] + Math.sin(th) * (x - PV[0]) + Math.cos(th) * (y - PV[1])], st = R(stump[0], stump[1]);
+  at('bite', T.bite + T.bt, () => { s.freeze = now + 170; s.flash = now + 170 + 100; s.shake = now + 170 + 420; snd('hit', 3); snd('smack', 3); snd('splat'); snd('purpleboom'); spurt(90, 190, st[0], st[1]); });
+  if (bitten) for (const [k, tt, n, pw] of [[1, 0.12, 40, 150], [2, 0.3, 30, 150], [3, 0.5, 24, 130], [4, 0.75, 18, 120], [5, 1.05, 12, 100], [6, 1.4, 8, 90]]) at('sp' + k, T.bite + T.bt + tt, () => spurt(n, pw, st[0], st[1]));
+  at('let', tLet, () => snd('land', 1.6)); at('thud', tLet + 0.5, () => { snd('ko'); s.shake = now + 250; }); at('title', T.title, () => snd('finisher'));
+  for (const q of s.parts) { q.x += q.vx * sdt; q.y += q.vy * sdt; q.vy += 420 * sdt; if (q.y >= gy + 3 && !q.dead) { q.dead = 1; if (s.splats.length < 260) s.splats.push({ x: Math.round(q.x), y: gy + 3 + ((Math.random() * 3) | 0), w: 1 + ((Math.random() * 2) | 0), c: q.c }); } } s.parts = s.parts.filter(q => !q.dead);
+  // ---- the camera: wide, following the action; pushed in on the two of them for the shoulders and the bite, back out for the fall
+  const camT = (P.ax + P.vx) / 2, e1 = ease3((t - 5.0) / 0.9), e2 = ease3((t - tLet) / 0.8), zt = 1 + 1.9 * e1 - 1.9 * e2 + (t >= T.bite + T.bt && t < T.bite + T.bt + 0.25 && live ? 0.25 : 0);
+  s.cam += (camT - s.cam) * Math.min(1, dt * (t > 3.6 && t < 4.5 ? 14 : 6)); s.z += (zt - s.z) * Math.min(1, dt * 9); const z = s.z, fy = lerp(VH / 2, gy - 38, clamp01((z - 1) / 1.6)), jx = () => now < s.shake ? Math.round((Math.random() * 2 - 1) * 4) : 0;
+  wx = s.wx0 + s.cam;      // (the world scrolls with the camera: the backdrop, the smoke and the popups use it)
+  // ---- draw (when the enemy is the attacker the whole picture is turned round)
+  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
+  if (s.rev) { ctx.translate(VW, 0); ctx.scale(-1, 1); }
+  ctx.translate(Math.round(VW / 2 - mx * z) + jx(), Math.round(VH / 2 - fy * z) + jx()); if (z !== 1) ctx.scale(z, z);
+  drawBackdrop(now); ctx.fillStyle = 'rgba(30,0,8,0.22)'; ctx.fillRect(-VW, 0, VW * 3, VH); drawSmoke(now, sdt);
+  for (const b of s.splats) { ctx.fillStyle = b.c; ctx.fillRect(b.x, b.y, b.w, 1); }
+  if (fell >= 1) { const k = Math.min(1, (t - tLet - 0.5) / 1.5), w = 5 + 28 * k, cx = st[0] + 4; for (let i = 0; i < 4; i++) { const ww = Math.round(w * (1 - i * 0.18)); ctx.fillStyle = BLD[i === 0 ? 3 : i === 1 ? 2 : i === 2 ? 2 : 1]; ctx.fillRect(Math.round(cx - ww), gy + 2 + i, ww * 2, 1); } }
+  if (fell < 1) shadow(GX, 9);
+  ctx.save(); ctx.translate(GX + vox, gy + 2); if (th) ctx.rotate(th); if (vflip) ctx.scale(-1, 1);
+  ctx.drawImage(body, -hxs, -62 - (gojo ? (vinfo.top || 0) : 0) - vlift); ctx.restore();
+  let an = 'idle', af = now / 100, aloop = true, afl = t >= VFL;
+  if (t >= T.grab && t < T.punch) { an = 'fx_grab'; af = f15(T.grab, 0.95); aloop = false; } else if (t >= T.punch && t < T.crouch) { an = 'fx_punch'; af = f15(T.punch, 0.85); aloop = false; }
+  else if (t >= T.crouch && t < T.leap) { an = 'fx_crouch'; af = f15(T.crouch, 0.9); aloop = false; } else if (t >= T.leap && t < T.catch) { an = 'fx_leap'; af = f15(T.leap, 1.05); aloop = false; }
+  else if (t >= T.catch && t < T.shoulders) { an = 'fx_catch'; af = f15(T.catch, 0.85); aloop = false; } else if (t >= T.shoulders && t < T.bite) { an = 'fx_shoulders'; af = f15(T.shoulders, 0.85); aloop = false; }
+  else if (t >= T.bite) { an = 'fx_bite'; af = tb < 0.7 ? tb / 0.7 * 3 : tb < 0.85 ? 3 + (tb - 0.7) / 0.15 * 3 : tb < T.bt ? 6 + (tb - 0.85) / 0.1 * 2 : 8 + Math.min(6, (tb - T.bt) / 1.0 * 6); aloop = false; }
+  shadow(VX, 9); vsp(vfr(an, af, aloop, s.ainv), VX, 0, afl);
+  for (const q of s.parts) { ctx.fillStyle = q.c; ctx.fillRect(Math.round(q.x), Math.round(q.y), q.z, q.z); }
+  ctx.restore();
+  // ---- on the screen itself: the dusk, the flash frames, the title, the bars, the fade
+  if (now < s.flash && now >= s.freeze - 1) { ctx.globalCompositeOperation = 'difference'; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, VW, VH); ctx.globalCompositeOperation = 'source-over'; }
+  if (t >= T.title) { ctx.fillStyle = 'rgba(0,0,0,' + (0.55 * clamp01((t - T.title) / 0.3)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); fatTitle(t - T.title, 1); }
+  const bh = Math.round(VH * 0.11), bk = clamp01(t / 0.3), b = bh * ease3(bk) * (1 - ease3((t - (T.end - 0.5)) / 0.4)); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, Math.round(b)); ctx.fillRect(0, VH - Math.round(b), VW, Math.round(b));
+  const fa = clamp01((t - (T.end - 0.5)) / 0.5); if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  if (t >= T.end) vfEnd(now);
 }
 // ---------------------------------------------------------------- PLAYABLE VERITY (Versus mode: YOUR FIGHTER > CURSED SPIRITS). He is steered with the same stick and buttons as Gojo and shares Gojo's state variables (position, hurt, block, crouch, the swing in progress), so the enemy, its AI and every hit rule work exactly as they do against Gojo. The buttons: ATTACK = the four claw moves (CLAW, CLAW 2, GRAB, PUNCH; crouched: two claw swipes from the folded pose), BLUE = BITE (the enemy bleeds 1 damage every 0.1 s for 4 s, costs 20%), DASH = TELEPORT (vanish and appear behind or in front, can not be hit while he is gone, costs 10%), MODE = BALL (a ball the size of Gojo's head drops from head height and bounces; nothing can hit it, it can do nothing, it turns back after 5 s or when MODE is tapped, in a huge cloud of smoke; costs 20%), BLOCK = both arms guard the upper body. The yellow energy bar is his cursed energy: it refills like Gojo's.
 const vpNew = () => ({ form: 'verity', fAt: -1e9, bAt: 0, bSnd: true, back: false, tpDone: true });      // form: 'verity' | 'smoke1' (small puff, the ball drops) | 'ball' | 'smoke2' (the huge smoke, Verity is back inside it); fAt = when the form began, bAt = when the ball starts to fall
@@ -1542,10 +1641,11 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   else src = vfr('idle', Math.max(0, now - spawnAt) / (1000 / IDLE_FPS), true);
   const x = cx - (info.cx - info.x0) + ox, y = gy - 60 - (info.top || 0) - py + oy;
   const sw = Math.max(ballOn ? 3 : 5, Math.round((ballOn ? 6 : 9) * (1 - py / (ballOn ? 60 : 48)))), sv = Math.round(sw * 2 / 3);      // the ground shadow stays put and shrinks while he is in the air
-  ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1);
+  const vap = vs.who === 'enemy' && vs.why === 'fatal' && (vs.ph === 'ko' || vs.ph === 'over');      // (the enemy's FATALITY: he is gone until the next round)
+  ctx.fillStyle = 'rgba(0,0,0,0.4)'; if (!vap) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
   const ry = Math.round(info.h * (1 - e)), gko = vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // (spawn: he materialises from the feet up; beaten: he topples backwards and stays down until the next round)
   ctx.save();
-  if (gko >= 0) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); ctx.drawImage(vfr('idle', 0, false), -32, -62); }
+  if (vap) { /* gone */ } else if (gko >= 0) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); ctx.drawImage(vfr('idle', 0, false), -32, -62); }
   else { ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, x, y); if (stun && hf < 0) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(src), x, y); } }
   ctx.restore();
   if (v.form === 'smoke1') smokePuffs(cx, gy - 28, fa / 450); else if (v.form === 'smoke2') smokeBig(cx, fa / 1000);
@@ -1562,6 +1662,8 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
 }
 window.__vp = () => ({ form: vp ? vp.form : '', mode, stance, atkK, atkAt, wx, lift: gojoLift, gone: gojoGone, hurt: hurtAt, dg: dgAt, blk: blkAt, bleed: dummy && dummy.bleed ? dummy.bleed.until - performance.now() : 0, ball: vp && vp.form !== 'verity' ? +ballH(Math.max(0, performance.now() - vp.bAt) / 1000).toFixed(1) : -1, now: performance.now() });      // test hooks
 window.__vpSet = o => vp && Object.assign(vp, o);
+window.__runFrames = () => RUNF;      // test hook: Gojo's run cycle
+window.__vf = () => vf ? { t: +vf.t.toFixed(2), rev: vf.rev, gv: vf.gv, g0: vf.g0 } : null; window.__vfJump = t => { if (vf) vf.t = t; };      // test hooks: Verity's FATALITY
 window.__js = () => { const n = performance.now(); return { on: !!js, t: js ? +js.t.toFixed(2) : 0, who: js ? js.who : '', stun: Math.max(0, pStun - n), dfear: dummy && dummy.fear ? dummy.fear.until - n : 0, vfear: vs && vs.fear ? vs.fear.until - n : 0, ready: domReadyAt - n, jsReady: dummy && dummy.jsReady !== undefined ? dummy.jsReady - n : null, steps: FEAR_X.length, now: n }; };      // test hook: the JUMPSCARE
 window.__vsPick = o => Object.assign(vsPick, o);
 function drawScene(now, dt) {
@@ -1570,13 +1672,14 @@ function drawScene(now, dt) {
   if (se) { seFrame(now, dt); return; }         // ...and so does the red ending of the story
   if (de) { deFrame(now, dt); return; }         // ...and Gojo's death
   if (js) { jsFrame(now, dt); return; }         // ...and the JUMPSCARE
+  if (vf) { vfFrame(now, dt); return; }         // ...and Verity's FATALITY
   domTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); if (vs && vs.foe === 'verity') storyBattleTick(now, dt);
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
     const fs = fatState(now);
-    if (fs === 0) { fatReq = 0; if (ceSpend(CE_COST.fatal, now)) { fatStart(now); fatFrame(now, dt); return; } }      // (his own FATALITY costs 50% cursed energy; the enemy's is free)
+    if (fs === 0) { fatReq = 0; if (ceSpend(CE_COST.fatal, now)) { fatGo(now, dt, false); return; } }      // (his own FATALITY costs 50% cursed energy; the enemy's is free)
     if (now > fatReq) { fatReq = 0; if (fs === 1 || fs === 2) say(fs === 1 ? 'ENEMY BELOW 20%' : 'GET CLOSER', wx, '#ff8a7a', 8, now); }
   }
-  if (fatAiState(now)) { fatStart(now, true); fatFrame(now, dt); return; }      // the top grades do it to Gojo
+  if (fatAiState(now)) { fatGo(now, dt, true); return; }      // the top grades do it to the player
   if (vs && vs.me === 'verity') { verityScene(now, dt); return; }      // YOUR FIGHTER is Verity: his own controls and pictures (below)
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3);
   if (mbAt < 0) mbK = 0;
