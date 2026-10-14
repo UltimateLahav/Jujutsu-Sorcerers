@@ -306,6 +306,21 @@ function makeSfx(ac) {
       burst(B.soft, t, { type: 'highpass', f: 900, f2: 4200, q: 0.8, dur: 1.4, gain: 0.25, atk: 0.25 });
       for (let k = 0; k < 14; k++) burst(B.deep, t + 0.1 + k * 0.095, { f: R(2000, 5200), q: 2.4, dur: R(0.015, 0.04), gain: R(0.1, 0.3), atk: 0.001 });
     },
+    door(at) {                                           // the BIG door slides open: a long low wooden scrape, a deep rumble under it, creaks, and a soft thud when the leaves stop
+      const t = T(at), B = C.jump;
+      burst(B.soft, t, { type: 'bandpass', f: 170, f2: 330, q: 0.9, dur: 2.7, gain: 1.1, atk: 0.3 });
+      burst(B.soft, t + 0.1, { type: 'lowpass', f: 720, f2: 230, q: 0.6, dur: 2.5, gain: 0.5, atk: 0.4 });
+      tone(B.deep, t, { type: 'triangle', f: 58, f2: 46, dur: 2.8, gain: 0.35, atk: 0.3 });
+      for (let k = 0; k < 7; k++) burst(B.soft, t + 0.3 + k * 0.33 + R(0, 0.1), { f: R(900, 2200), q: 3, dur: R(0.02, 0.05), gain: R(0.1, 0.22), atk: 0.001 });
+      tone(B.deep, t + 2.7, { type: 'triangle', f: 98, f2: 40, dur: 0.35, gain: 0.45, atk: 0.003 }); burst(B.soft, t + 2.7, { type: 'lowpass', f: 700, f2: 200, q: 0.7, dur: 0.12, gain: 1.4, atk: 0.001 });
+    },
+    quake(at) {                                          // the roof is hit: a huge low boom, a long shaking rumble and stones and splinters falling
+      const t = T(at), B = C.ce;
+      tone(B.deep, t, { type: 'triangle', f: 80, f2: 22, dur: 1.6, gain: 0.6, atk: 0.004 });
+      burst(B.deep, t, { type: 'lowpass', f: 600, f2: 90, q: 0.7, dur: 3.4, gain: 0.9, atk: 0.02 });
+      tone(B.deep, t + 0.3, { f: 46, f2: 30, dur: 3.2, gain: 0.3, atk: 0.4 });
+      for (let k = 0; k < 28; k++) burst(B.deep, t + 0.15 + k * 0.11 + R(0, 0.06), { f: R(500, 3200), q: 1.6, dur: R(0.03, 0.09), gain: R(0.12, 0.35), atk: 0.001 });
+    },
     purpleboom(at) {                                     // the purple orb explodes: a huge low boom, a long rumble and a cracking burst
       const t = T(at), B = C.ce;
       tone(B.deep, t, { type: 'triangle', f: 95, f2: 24, dur: 1.2, gain: 0.5, atk: 0.003 });

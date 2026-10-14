@@ -1080,7 +1080,8 @@ function endRound(who, why, now) {
   if (why === 'ko') holdUntil = Math.max(holdUntil, now + KO_HOLD); vs.koAt = Math.max(now, holdUntil); snd(who === 'player' ? 'finisher' : 'ko');      // (koAt: when the loser starts to topple)
 }
 function finishMatch(now) {
-  vs.ph = 'over'; const win = vs.story ? vs.pw >= 1 : vs.pw >= 2, pf = vs.hp / PHP, stars = win ? (pf >= 0.7 ? 3 : pf >= 0.35 ? 2 : 1) : 0, sv = vsLoad(), gi = vs.gi;
+  vs.ph = 'over'; if (vs.story && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; storyDone(); story.toOutro = true; return; }      // (beating Verity: the report to the higher-ups follows, started by the main loop)
+  const win = vs.story ? vs.pw >= 1 : vs.pw >= 2, pf = vs.hp / PHP, stars = win ? (pf >= 0.7 ? 3 : pf >= 0.35 ? 2 : 1) : 0, sv = vsLoad(), gi = vs.gi;
   if (win && !vs.story) { sv.un = Math.max(sv.un, Math.min(5, gi + 1)); sv.st[gi] = Math.max(sv.st[gi], stars); vsStore(sv.un, sv.st); }
   vs.res = { win, stars }; $('vsTitle').textContent = win ? 'VICTORY' : 'DEFEAT'; $('vsInfo').textContent = GRADES[gi].name + '  -  ROUNDS ' + vs.pw + ' : ' + vs.ew;
   $('vsStars').innerHTML = win ? [0, 1, 2].map(i => '<span class="star' + (i < stars ? '' : ' off') + '"></span>').join('') : ''; $('vsNext').style.display = win && gi < 5 ? '' : 'none'; $('vsres').classList.add('on'); snd(win ? 'finisher' : 'ko');
@@ -1967,10 +1968,13 @@ const SIMG = {}; for (const k in STORYART) { const mkI = u => { const i = new Im
 const SAVE_KEY = 'jsv_saves'; let svSel = -1;
 function loadSaves() { try { const a = JSON.parse(localStorage.getItem(SAVE_KEY)); if (Array.isArray(a) && a.length === 3) return a; } catch (e) { } return [null, null, null]; }
 function storeSaves(a) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(a)); } catch (e) { } }
-function renderSaves() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].beat ? 'VERITY BEATEN' : 'CHAPTER 1') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
+function renderSaves() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].ch1 ? 'CHAPTER 1 DONE' : a[i].beat ? 'VERITY BEATEN' : 'CHAPTER 1') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
 function startStory(slot) { const a = loadSaves(); if (!a[slot]) a[slot] = { ch: 1 }; storeSaves(a); audio(); show('story'); story = { slot, t0: performance.now(), battle: false, T: 0, ev: {} }; alley = true; wx = 0; }
 function storyDone() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].beat = true; storeSaves(a); }
-function storySkip() { if (!story || story.battle) return; const n = [6.9, 10.0, CUT.slowEnd, CUT.fade].find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = performance.now() - n * 1000; }      // a tap: on to the next part of the cutscene (the dialogue, Verity's attack, the close-up of Verity, the fade)
+function storySkip() {
+  if (!story || story.battle) return;
+  if (story.outro) { const n = OUT_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = performance.now() - n * 1000; else if (story.T >= OUT.card + 1.2) { show('saves'); renderSaves(); } return; }      // (the ending: on to the next cut; at the very end back to the saves)
+  const n = [6.9, 10.0, CUT.slowEnd, CUT.fade].find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = performance.now() - n * 1000; }      // a tap: on to the next part of the cutscene (the dialogue, Verity's attack, the close-up of Verity, the fade)
 function startStoryBattle() { story.battle = true; startMatch(3, true); }
 // the alley: dark brick under a thin strip of night sky, a dumpster, crates, a barrel, a door and a street lamp along the wall, cracked wet asphalt
 let alleyBg = null, alleyProps = null, alleyTile = null, alleyKey = '';
@@ -2020,6 +2024,11 @@ function dlg(name, text, n) {      // a dialogue box at the bottom with a name t
   const x = 6, w = VW - 12, h = 20, y = VH - h - 4; ctx.fillStyle = 'rgba(8,6,22,0.92)'; ctx.fillRect(x, y, w, h); ctx.fillStyle = '#9d8cff'; ctx.fillRect(x, y, w, 2); ctx.fillRect(x, y + h - 2, w, 2); ctx.fillRect(x, y, 2, h); ctx.fillRect(x + w - 2, y, 2, h);
   ctx.fillStyle = '#2a2060'; ctx.fillRect(x, y - 10, name.length * 8 + 10, 10); ctx.fillStyle = '#9d8cff'; ctx.fillRect(x, y - 10, name.length * 8 + 10, 2); pxt(name, x + 5, y - 2, '#ffd34d', 8); pxt(text.slice(0, Math.max(0, n)), x + 8, y + 14, '#ffffff', 8);
 }
+function dlg2(name, l1, l2, n, col) {      // a taller dialogue box: two lines of text (n letters of the two lines are shown so far); col = the colour of the name tag
+  const x = 6, w = VW - 12, h = 30, y = VH - h - 4; ctx.fillStyle = 'rgba(8,6,22,0.94)'; ctx.fillRect(x, y, w, h); ctx.fillStyle = '#9d8cff'; ctx.fillRect(x, y, w, 2); ctx.fillRect(x, y + h - 2, w, 2); ctx.fillRect(x, y, 2, h); ctx.fillRect(x + w - 2, y, 2, h);
+  ctx.fillStyle = '#2a2060'; ctx.fillRect(x, y - 10, name.length * 8 + 10, 10); ctx.fillStyle = '#9d8cff'; ctx.fillRect(x, y - 10, name.length * 8 + 10, 2); pxt(name, x + 5, y - 2, col || '#ffd34d', 8);
+  pxt(l1.slice(0, Math.max(0, n)), x + 8, y + 13, '#ffffff', 8); if (l2) pxt(l2.slice(0, Math.max(0, n - l1.length)), x + 8, y + 24, '#ffffff', 8);
+}
 function smokePuffs(sx, y, k) {      // a cloud of grey puffs that grows and thins out around (sx, y); k runs from 0 to 1
   k = Math.max(0, Math.min(1, k)); for (let i = 0; i < 16; i++) { const a = i * 2.399, d = (6 + 20 * k) * (0.35 + (i % 5) / 5), px = Math.round(sx + Math.cos(a) * d * 1.1), py = Math.round(y + Math.sin(a * 1.3) * d * 1.4 - 8 * k), r = Math.round(3 + 8 * Math.min(1, k * 1.6) * (0.6 + (i % 3) / 5)), al = Math.sin(Math.PI * Math.min(1, k * 1.05)) * 0.55;
     ctx.fillStyle = 'rgba(' + (i % 2 ? '205,203,222' : '160,158,184') + ',' + al.toFixed(2) + ')'; for (let yy = -r; yy <= r; yy++) { const w = Math.round(Math.sqrt(r * r - yy * yy)); ctx.fillRect(px - w, py + yy, 2 * w, 1); } }
@@ -2041,6 +2050,7 @@ const CUT = { see: 10.05, zoom: 10.3, slow: 10.85, slowEnd: 13.8, ask: 11.6, ask
 const wclock = T => T < CUT.slow ? T : T < CUT.slowEnd ? CUT.slow + (T - CUT.slow) * CUT.rate : CUT.slow + (CUT.slowEnd - CUT.slow) * CUT.rate + (T - CUT.slowEnd);      // the world's clock: it crawls (a quarter of the speed) while the slow motion lasts
 const ease3 = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
 function storyFrame(now, dt) {
+  if (story.outro) { outroFrame(now, dt); return; }      // (the ending of the chapter, after the fight)
   const T = (now - story.t0) / 1000; story.T = T;
   ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
   alleyScene(now, dt, T, Math.round(VW * 0.42));
@@ -2098,6 +2108,134 @@ function alleyScene(now, dt, T, gx) {
   }
 }
 const once2 = (k, f) => { if (story && !story.ev[k]) { story.ev[k] = 1; f(); } };
+// ---------------------------------------------------------------- CHAPTER 1, the ending (after the Red). The alley in the wind: Gojo stands with his head bowed, his hair streaming, red embers drifting off the spot where Verity stood; he remembers the report and teleports to Jujutsu High. The corridor: the BIG door (the camera tilts up its whole height), he slides it open. The higher-ups' room (your picture, in pixel style): they talk about the special grades, the roof is hit, they send him to look. END OF CHAPTER 1. T = seconds on the cutscene's own clock; a tap skips to the next cut.
+const OUT = { think: 7.0, tele: 12.0, hall: 14.0, up0: 17.0, up1: 20.2, dn0: 22.0, dn1: 25.0, joke: 25.2, walk: 27.6, open: 30.2, openEnd: 33.2, enter: 33.4, white: 34.6, room: 36.6, quake: 63.0, quakeEnd: 66.8, fadeOut: 74.8, card: 76.0, tilt: 142 };
+const OUT_TALK = [      // [from, to, who speaks, line 1, line 2, which higher-up (0 = left, 1 = right, -1 = Gojo)]
+  [41.0, 44.6, 'HIGHER-UP', 'YOU ARE LATE, GOJO.', 'WE CALLED YOU HOURS AGO.', 0],
+  [45.0, 49.4, 'GOJO', 'SORRY, A SPECIAL GRADE GOT', 'IN MY WAY. IT IS GONE NOW.', -1],
+  [49.8, 54.6, 'HIGHER-UP', 'SPECIAL GRADE CURSES HAVE', 'BEEN RISING IN RECENT YEARS.', 1],
+  [55.0, 59.0, 'HIGHER-UP', 'EXTERMINATE THEM ALL, GOJO.', 'EVERY LAST ONE OF THEM.', 0],
+  [59.6, 62.6, 'GOJO', 'ALL OF THEM? ...FINE.', 'LEAVE IT TO ME.', -1],
+  [64.4, 66.8, 'HIGHER-UP', 'WHAT WAS THAT?!', '', 1],
+  [67.2, 71.8, 'HIGHER-UP', 'SOMETHING HIT THE ROOF.', 'GOJO, GO AND SEE WHAT IT WAS.', 0],
+  [72.2, 74.4, 'GOJO', '...ON IT.', '', -1]];
+const OUT_CUTS = [OUT.think, OUT.tele, OUT.hall, OUT.joke, OUT.open, OUT.room, 41.0, 45.0, 49.8, 55.0, 59.6, OUT.quake, 64.4, 67.2, 72.2, OUT.card];
+function startOutro(now) {      // Verity is gone: the report to the higher-ups
+  show('story'); story.outro = true; story.battle = false; story.t0 = now; story.T = 0; story.ev = {}; story.fx = []; story.deb = []; story.cam = null; alley = true; wx = 0;
+}
+function outroFrame(now, dt) {
+  const T = (now - story.t0) / 1000; story.T = T; ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
+  if (T < OUT.hall) outroAlley(now, dt, T); else if (T < OUT.room) outroHall(now, dt, T); else if (T < OUT.card) outroRoom(now, dt, T); else outroCard(now, dt, T);
+  ctx.restore();
+}
+function gojoWind(src, info, sx, t, bow) {      // Gojo standing in the wind: his hair streams backwards and ripples (the top rows move most); with bow his head is bowed a little (the head rows lean forward and drop one pixel)
+  const hx = info.cx - info.x0, x = Math.round(sx) - hx, y = gy - 60 - (info.top || 0), w = src.width;
+  for (let r = 0; r < src.height; r++) {
+    let dx = 0, dy = 0;
+    if (r < 16) { const k = (16 - r) / 16; dx -= Math.round(k * (2.2 + 1.8 * Math.sin(t * 6.5 + r * 0.6)) + k * 0.8); }
+    if (bow && r < 24) { dx += Math.round((24 - r) * 0.09); dy = 1; }
+    ctx.drawImage(src, 0, r, w, 1, x + dx, y + r + dy, w, 1);
+  }
+}
+function outroEmbers(dt, T, x0) {      // red sparks lift off the spot where Verity stood and are blown away
+  const f = story.fx;
+  if (T < OUT.tele + 0.6 && f.length < 80 && Math.random() < dt * 30) f.push({ x: x0 + (Math.random() - 0.5) * 20, y: gy + 1 - Math.random() * 3, vx: -(16 + Math.random() * 30), vy: -(5 + Math.random() * 18), life: 1.5 + Math.random() * 2, age: 0, c: ['#ff3a2a', '#c4121c', '#ff7a3a', '#ffd34d'][(Math.random() * 4) | 0] });
+  for (let i = f.length - 1; i >= 0; i--) {
+    const p = f[i]; p.age += dt; if (p.age >= p.life) { f.splice(i, 1); continue; }
+    p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= Math.exp(-0.4 * dt); ctx.globalAlpha = Math.min(1, 2 * (1 - p.age / p.life)); ctx.fillStyle = p.c; ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 1); if (p.age < 0.5 * p.life) ctx.fillRect(Math.round(p.x) + 1, Math.round(p.y), 1, 1);
+  }
+  ctx.globalAlpha = 1;
+}
+function outroAlley(now, dt, T) {      // scene 1: the alley in the wind, then the teleport
+  wx = 0; once2('wind', () => { if (sfx) sfx.windOn(); });
+  const gx = Math.round(VW * 0.42), ze = ease3((T - 2.0) / 4.4), zb = ease3((T - OUT.tele - 0.2) / 1.0), z = 1 + 1.7 * ze - 0.9 * zb;
+  let fx = VW / 2 + (gx + 9 - VW / 2) * ze, fy = VH / 2 + (gy - 46 - VH / 2) * ze;      // the camera pushes in on his bowed head
+  fx = Math.max(VW / (2 * z), Math.min(VW - VW / (2 * z), fx)); fy = Math.max(VH / (2 * z), Math.min(VH - VH / (2 * z), fy));
+  ctx.save(); ctx.translate(Math.round(VW / 2 - fx * z), Math.round(VH / 2 - fy * z)); ctx.scale(z, z);
+  drawBackdrop(now);
+  ctx.fillStyle = 'rgba(110,8,18,0.45)'; ctx.fillRect(gx + 40, gy + 2, 24, 2); ctx.fillRect(gx + 44, gy + 4, 16, 1);      // the stain on the ground where Verity stood
+  outroEmbers(dt, T, gx + 52);
+  const tt = T - OUT.tele - 0.3;
+  if (tt < 0) { shadow(gx, 9); gojoWind(idleF[Math.floor(T * IDLE_FPS) % idleF.length], D.idle, gx, T, T > 1.2); }
+  else if (tt < 0.15) { shadow(gx, 9); sprAt(teleF[Math.min(2, Math.floor(tt * 20))], D.tele, gx, 0, false, 0); }      // (he folds into light and is gone)
+  ctx.restore();
+  windStreaks(dt, 2.4 + 1.2 * ze);
+  if (T >= OUT.tele - 0.3) once2('charge', () => snd('charge')); if (T >= OUT.tele + 0.3) once2('vanish', () => { snd('vanish'); if (sfx) sfx.windOff(); });
+  if (tt >= -0.05 && tt < 0.6) { const k = (tt + 0.05) / 0.65, X = Math.round(VW / 2 + (gx - fx) * z); ctx.fillStyle = 'rgba(190,230,255,' + (0.9 * (1 - k)).toFixed(2) + ')'; ctx.fillRect(X - 2, 0, 5, VH); ctx.fillStyle = 'rgba(255,255,255,' + (0.5 * (1 - k)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }      // a streak of light where he stood
+  if (T >= OUT.think && T < OUT.tele - 0.2) dlg2('GOJO', '...OH RIGHT. I STILL HAVE TO', 'REPORT THIS TO THE HIGHER-UPS.', Math.floor((T - OUT.think) * 15), '#ffd34d');
+  const fa = T < 1.0 ? 1 - T : T > OUT.tele + 0.9 ? clamp01((T - OUT.tele - 0.9) / 0.8) : 0; if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  if (T >= OUT.tele + 1.7) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); }
+}
+function outroHall(now, dt, T) {      // scene 2: the corridor with the BIG door (the camera tilts up its whole height and down again), Gojo slides it open and walks into the light
+  const O = SIMG.outro; if (!(O && ['hall', 'doorL', 'doorR'].every(k => O[k] && O[k].complete && O[k].naturalWidth))) return;
+  once2('windoff', () => { if (sfx) sfx.windOff(); });      // (the wind of the alley stops, also when the cut was skipped)
+  const ox = Math.round((VW - 400) / 2), top = gy - 270, dx = ox + 186, dy = top + 64, tilt = Math.round(OUT.tilt * (ease3((T - OUT.up0) / (OUT.up1 - OUT.up0)) - ease3((T - OUT.dn0) / (OUT.dn1 - OUT.dn0))));
+  const op = ease3((T - OUT.open) / (OUT.openEnd - OUT.open)), slide = Math.round(62 * op), sx0 = Math.round(VW * 0.14), stop = dx - 28, wT = Math.max(1, Math.abs(stop - sx0) / 36);
+  let sx = sx0, walk = false;      // Gojo stands where he arrived, walks up to the door (16 px before its post), waits while it opens and walks in
+  if (T >= OUT.walk) { const k = clamp01((T - OUT.walk) / wT); sx = Math.round(sx0 + (stop - sx0) * k); walk = k < 1; }
+  if (T >= OUT.enter) { const k = clamp01((T - OUT.enter) / 2.6); sx = Math.round(stop + (dx + 65 - stop) * k); walk = k < 1; }
+  ctx.save(); ctx.translate(0, tilt);
+  const gr = ctx.createLinearGradient(0, dy, 0, dy + 206); gr.addColorStop(0, '#fff6d4'); gr.addColorStop(1, '#ffc470'); ctx.fillStyle = gr; ctx.fillRect(dx, dy, 131, 206);      // the light of the room behind the leaves
+  ctx.drawImage(O.doorL, dx - slide, dy); ctx.drawImage(O.doorR, dx + 65 + slide, dy); ctx.drawImage(O.hall, ox, top);
+  if (op > 0) { ctx.globalCompositeOperation = 'lighter'; const g2 = ctx.createRadialGradient(dx + 65, gy + 6, 4, dx + 65, gy + 6, 120); g2.addColorStop(0, 'rgba(255,170,70,' + (0.55 * op).toFixed(3) + ')'); g2.addColorStop(1, 'rgba(255,170,70,0)'); ctx.fillStyle = g2; ctx.fillRect(dx - 130, gy - 60, 270, 90); ctx.globalCompositeOperation = 'source-over'; }      // ...spilling over the floor when it opens
+  const ta = OUT.hall + 0.9;      // he arrives: a column of light drops where he will stand, then he is there
+  if (T >= ta - 0.3 && T < ta) { const k = (T - ta + 0.3) / 0.3; ctx.fillStyle = 'rgba(190,230,255,0.9)'; ctx.fillRect(sx0 - 1, 0, 3, Math.round((gy + 4) * k)); }
+  else if (T >= ta) {
+    shadow(sx, 9); const a = T - ta;
+    if (a < 0.15) sprAt(teleF[Math.min(14, 12 + Math.floor(a * 20))], D.tele, sx, 0, false, 0);
+    else if (walk) sprAt(fwdF[Math.floor(now * WALK_FPS / 1000) % 15], D.fwd, sx, 0, false, 0);
+    else sprAt(idleF[Math.floor(T * IDLE_FPS) % idleF.length], D.idle, sx, 0, false, T >= OUT.joke && T < OUT.joke + 1.8 ? 1 + (Math.floor(T * 8) % 2) : 0);
+  }
+  ctx.restore();
+  if (T >= ta) once2('arrive', () => snd('arrive')); if (T >= OUT.open) once2('door', () => snd('door'));
+  if (walk && T >= OUT.walk) { const n = Math.floor((now - story.t0) / 280); if (story.stepN !== n) { story.stepN = n; snd('step', n % 2, false); } }
+  if (T >= ta - 0.3 && T < ta + 0.2) { ctx.fillStyle = 'rgba(255,255,255,' + (0.5 * (1 - Math.abs(T - ta) / 0.3)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  if (op > 0) { ctx.fillStyle = 'rgba(255,190,110,' + (0.2 * op).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  const cap = T - (OUT.hall + 1.2); if (cap > 0 && cap < 3.4) { ctx.globalAlpha = Math.min(1, cap / 0.5, (3.4 - cap) / 0.5); pxt('JUJUTSU HIGH', Math.round(VW / 2), 22, '#ffd34d', 16, 'center'); ctx.globalAlpha = 1; }      // (where he is)
+  if (T >= OUT.joke && T < OUT.joke + 2.4) dlg('GOJO', 'BIG DOOR. BIG EGOS.', Math.floor((T - OUT.joke) * 14));
+  const wa = clamp01((T - OUT.white) / 1.4); if (wa > 0) { ctx.fillStyle = 'rgba(255,244,214,' + wa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  const fa = 1 - (T - OUT.hall) / 0.7; if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+}
+function tinyGojo(x, y, s, step) {      // Gojo in the middle of the room, seen from behind and above, small: white hair, black uniform, a warm rim from the light (x, y = his feet, s = size)
+  const r = (ax, ay, aw, ah, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x + ax * s), Math.round(y + ay * s), Math.max(1, Math.round(aw * s)), Math.max(1, Math.round(ah * s))); };
+  ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(Math.round(x - 5 * s), Math.round(y - 0.5 * s), Math.max(2, Math.round(10 * s)), Math.max(1, Math.round(1.5 * s)));
+  r(-2.5, -4 + step, 2, 4 - step, '#100d1a'); r(0.5, -3 - step, 2, 3 + step, '#100d1a');          // legs (they take turns while he walks)
+  r(-4, -11, 8, 7, '#1b1730'); r(-4, -11, 8, 1, '#322c58'); r(-4, -5, 8, 1, '#7a4a28');         // the black uniform, a lighter shoulder line, the warm rim at the bottom edge
+  r(-5, -10, 1, 5, '#120f1d'); r(4, -10, 1, 5, '#120f1d');                                       // arms
+  r(-2.5, -15, 5, 5, '#ece8f8'); r(-2.5, -11, 5, 1, '#b9b3d4'); r(-3.5, -14, 1, 3, '#d6d0ea'); r(2.5, -14, 1, 3, '#d6d0ea');   // the white hair
+  r(-3, -15, 6, 1, '#ff9a40');                                                                    // the rim on the hair
+}
+function outroDebris(dt, T) {      // the roof is hit: pieces fall through the picture
+  const f = story.deb, qt = T - OUT.quake;
+  if (qt < OUT.quakeEnd - OUT.quake && Math.random() < dt * 60) f.push({ x: Math.random() * VW, y: -4, vx: (Math.random() - 0.5) * 20, vy: 20 + Math.random() * 50, w: 1 + ((Math.random() * 3) | 0), c: ['#2a1a12', '#4a3020', '#6a4a30', '#8a6a48', '#1a100c'][(Math.random() * 5) | 0] });
+  for (let i = f.length - 1; i >= 0; i--) { const p = f[i]; p.vy += 300 * dt; p.x += p.vx * dt; p.y += p.vy * dt; if (p.y > VH + 4) { f.splice(i, 1); continue; } ctx.fillStyle = p.c; ctx.fillRect(Math.round(p.x), Math.round(p.y), p.w, p.w + (p.w > 1 ? 1 : 0)); }
+}
+function outroRoom(now, dt, T) {      // scene 3: the higher-ups' room
+  const O = SIMG.outro, img = O && O.room; if (!(img && img.complete && img.naturalWidth)) return;
+  const sc = VH / 128, dw = Math.round(320 * sc), X0 = Math.round((VW - dw) / 2), P = x => X0 + x * sc, tl = ease3((T - 38.6) / 1.6) * 26 * sc;      // the picture is as tall as the screen; before the talking the camera tilts down so the two higher-ups stay above the dialogue box
+  const qt = T - OUT.quake, qk = qt >= 0 && qt < OUT.quakeEnd - OUT.quake ? 1 - qt / (OUT.quakeEnd - OUT.quake) : 0, amp = 5 * qk, L = OUT_TALK.find(l => T >= l[0] && T < l[1]);
+  ctx.save(); ctx.translate(Math.round((Math.random() * 2 - 1) * amp), Math.round(-tl + (Math.random() * 2 - 1) * amp));
+  ctx.drawImage(img, X0, 0, dw, VH);
+  if (L && L[5] >= 0) { const cx = P(46 + (L[5] ? 134 : 94)), fl = L[5] ? -1 : 1, pl = 0.45 + 0.35 * Math.sin(now / 80); ctx.fillStyle = 'rgba(255,176,96,' + pl.toFixed(2) + ')'; ctx.fillRect(Math.round(cx + 6 * fl * sc), Math.round(108 * sc), 1, Math.round(18 * sc)); ctx.fillRect(Math.round(cx + 5 * fl * sc), Math.round(100 * sc), 1, Math.round(4 * sc)); }      // the higher-up who speaks: his warm rim flares
+  const ga = ease3((T - 37.2) / 3.0), step = ga < 1 ? (Math.floor(T * 5) % 2) : 0;
+  tinyGojo(P(160), (118 - 46 * ga) * sc, (1 + 0.4 * (1 - ga)) * sc, step);      // Gojo walks in from the bottom of the picture to the middle of the lit circle
+  if (ga < 1 && Math.floor(T * 5) !== story.stepN) { story.stepN = Math.floor(T * 5); snd('step', story.stepN % 2, false); }
+  if (qk > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(255,140,40,' + (0.04 + 0.12 * Math.random() * qk).toFixed(3) + ')'; ctx.fillRect(X0, 0, dw, Math.round(VH * 0.6)); ctx.globalCompositeOperation = 'source-over'; }      // the panels flicker
+  if (T >= OUT.quake + 0.2 && T < OUT.quake + 2.6) pxt('!', P(160), 48 * sc, '#ff3a3a', 8, 'center');      // (he looks up: a red !)
+  ctx.restore();
+  if (T >= OUT.quake) once2('quake', () => snd('quake'));
+  if (T >= OUT.quake) { outroDebris(dt, T); const da = 0.3 * clamp01(qt / 0.4) * (1 - clamp01((qt - 1.6) / 3.4)); if (da > 0) { ctx.fillStyle = 'rgba(96,70,50,' + da.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); } }
+  if (L) dlg2(L[2], L[3], L[4], Math.floor((T - L[0]) * 18), L[2] === 'GOJO' ? '#ffd34d' : '#ff8a7a');
+  const wa = 1 - (T - OUT.room) / 0.9; if (wa > 0) { ctx.fillStyle = 'rgba(255,244,214,' + wa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  const fa = clamp01((T - OUT.fadeOut) / 1.0); if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+}
+function outroCard(now, dt, T) {      // scene 4: END OF CHAPTER 1 (the save slot is marked, a tap goes back)
+  const t = T - OUT.card; once2('chdone', () => { const a = loadSaves(); if (a[story.slot]) { a[story.slot].ch1 = true; storeSaves(a); } snd('finisher'); });
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); ctx.globalAlpha = clamp01(t / 1.2);
+  pxt('END OF CHAPTER 1', VW / 2, Math.round(VH / 2) - 2, '#ffffff', 16, 'center'); pxt('TO BE CONTINUED', VW / 2, Math.round(VH / 2) + 20, '#ffd34d', 8, 'center');
+  if (t > 2.2 && Math.floor(now / 600) % 2 === 0) pxt('TAP TO CONTINUE', VW / 2, VH - 8, '#9d8cff', 8, 'center');
+  ctx.globalAlpha = 1;
+}
 // the fight: the stand-in enemy looks like Verity; at half health he turns into the smiley ball (smoke, 5 s, cannot be hit and cannot act), then smoke again and he is back
 const WCACHE = new Map();
 function whiteOf(img) { let c = WCACHE.get(img); if (c) return c; c = document.createElement('canvas'); c.width = img.naturalWidth || img.width || 64; c.height = img.naturalHeight || img.height || 64; const g = c.getContext('2d'); g.drawImage(img, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); if (!(img instanceof HTMLImageElement) || (img.complete && img.naturalWidth)) WCACHE.set(img, c); return c; }
@@ -2373,6 +2511,7 @@ window.__story = () => story ? ({ T: +(story.T || 0).toFixed(2), battle: !!story
 function tick(now) {
   requestAnimationFrame(tick);                // schedule first so one bad frame can't stop the loop
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
+  if (story && story.toOutro) { story.toOutro = false; startOutro(now); }      // (the fight against Verity is won: the ending of the chapter starts)
   if (state === 'play') { if (now < holdUntil) last = now; else drawScene(now, dt); }      // hit-stop: the picture freezes for a split second when the red orb explodes
   else if (state === 'versus') { const fr = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length; for (const q of vsPv) { q.g.clearRect(0, 0, 64, 64); q.g.drawImage(q.who === 'gojo' ? (q.inv ? dumF : idleF)[fr] : q.who === 'yuji' ? (q.inv ? YUF.inv : YUF.norm).idle[fr % 15] : vfr('idle', now / 100, true, q.inv), 0, 0); } }
   else if (state === 'story') storyFrame(now, dt);
