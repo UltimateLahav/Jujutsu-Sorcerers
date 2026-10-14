@@ -1326,8 +1326,8 @@ function setModeUI() {                        // the MODE button (OFF / CURSED /
   $('ce').classList.toggle('lit', cm === 1); $('ce').classList.toggle('red', cm === 2); $('ce').setAttribute('aria-pressed', cm ? 'true' : 'false');
   $('cel').innerHTML = 'MODE<br>' + ['OFF', 'CURSED', 'RED'][cm]; $('lap').classList.toggle('red', cm === 2); $('lapl').textContent = cm === 2 ? 'RED' : 'BLUE'; $('lap').setAttribute('aria-label', cm === 2 ? 'Red' : 'Lapse Blue');
   const vy = !!vs && vs.me === 'verity', ball = vy && !!vp && vp.form !== 'verity';      // playing Verity: MODE switches between OFF and the BALL, BLUE is the BITE and DASH is the TELEPORT
-  $('dashl').textContent = vy ? 'TELE' : 'DASH'; $('dash').setAttribute('aria-label', vy ? 'Teleport dodge' : 'Dash');
-  if (vy) { $('ce').classList.toggle('lit', ball); $('ce').setAttribute('aria-pressed', ball ? 'true' : 'false'); $('cel').innerHTML = 'MODE<br>' + (ball ? 'BALL' : 'OFF'); $('lapl').textContent = 'BITE'; $('lap').setAttribute('aria-label', 'Bite: the enemy bleeds for 4 seconds'); $('ce').setAttribute('aria-label', 'Mode: tap to turn into the ball and back'); }
+  $('dashl').textContent = vy ? 'TELE' : 'DASH'; $('dash').setAttribute('aria-label', vy ? 'Teleport dodge' : 'Dash'); $('ce').setAttribute('aria-label', vy ? 'Mode: tap to turn into the ball and back' : 'Mode: tap to switch between normal, cursed energy and red');
+  if (vy) { $('ce').classList.toggle('lit', ball); $('ce').setAttribute('aria-pressed', ball ? 'true' : 'false'); $('cel').innerHTML = 'MODE<br>' + (ball ? 'BALL' : 'OFF'); $('lapl').textContent = 'BITE'; $('lap').setAttribute('aria-label', 'Bite: the enemy bleeds for 4 seconds'); }
 }
 function cycleMode(now) {                     // MODE button / E: normal -> cursed energy -> red -> normal (in Versus the cursed mode needs some energy: with none left the tap skips it)
   let m = (cm + 1) % 3; if (m === 1 && vs && ce < 1) { ceDeny(now); m = 2; }
