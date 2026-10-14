@@ -214,7 +214,14 @@ def dash(i, k):                                                                 
                  lb=tuple(round(v) for v in kv({0: (30 if cr else 31, GR, 0), 2: (31, GR, 0), 4: (26 if cr else 25, GR-(0 if cr else 3), 15), 8: (22, GR-(0 if cr else 1), 10), 12: (27, GR, 0), 14: (30 if cr else 31, GR, 0)}, i)),
                  na=kv({0: GUARD_N if cr else IDLE_N, 3: GUARD_N, 12: GUARD_N, 14: GUARD_N if cr else IDLE_N}, i), fa=kv({0: GUARD_F if cr else IDLE_F, 3: GUARD_F, 12: GUARD_F, 14: GUARD_F if cr else IDLE_F}, i), hp=i*1.2, hback=0, blink=False)
     r = figure(P); streaks(r[0], not fwd, i); return r
-MOVES = (('cdn', cdn, 0, 44), ('cidle', cidle, 0, 44), ('cfwd', cwalk, 0, 44), ('cjump', cjump, 4, 44), ('dash0', lambda i: dash(i, 0), 0, 44), ('dash1', lambda i: dash(i, 1), 0, 44), ('dash2', lambda i: dash(i, 2), 0, 44), ('dash3', lambda i: dash(i, 3), 0, 44))
+def yrun(i):                                                                    # a flat-out sprint (Verity's FATALITY victim runs away with it): long strides, high knees, pumping arms, a forward lean
+    ph = i/15; S = 6.5; L = 6.0; sw = math.sin(2*math.pi*ph)
+    def foot(p, base):
+        p %= 1.0; return (base + S*math.cos(2*math.pi*p), GR - L*max(0.0, -math.sin(2*math.pi*p)), 25 if 0.36 <= p < 0.5 else (-15 if 0.5 <= p < 0.9 else 0))
+    FWD_A, BACK_A = ((5, 2), (9, -2)), ((-4, 4), (-7, 8)); mixa = lambda t: mix(BACK_A, FWD_A, t)
+    P = dict(by=1 + round(.5 + .5*math.cos(4*math.pi*ph)), ln=4, hx=2, lf=foot(ph, 36), lb=foot(ph + .5, 31), na=mixa((sw + 1)/2), fa=mixa((1 - sw)/2), hp=i*1.3, hback=1, blink=False)
+    return figure(P)
+MOVES = (('cdn', cdn, 0, 44), ('cidle', cidle, 0, 44), ('cfwd', cwalk, 0, 44), ('cjump', cjump, 4, 44), ('dash0', lambda i: dash(i, 0), 0, 44), ('dash1', lambda i: dash(i, 1), 0, 44), ('dash2', lambda i: dash(i, 2), 0, 44), ('dash3', lambda i: dash(i, 3), 0, 44), ('run', yrun, 0, 44))
 def pack(fn, x0, w, top):
     frames, hn, hf = [], [], []; sh = top
     for i in range(15):
@@ -233,10 +240,10 @@ if __name__ == '__main__':
         fr, hn, hf = pack(fn, X0, 44, 0); out[k] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}
         if k == 'atk3': out[k]['lift'] = KICK_LIFT
     json.dump(out, open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'yuji.json'), 'w'), separators=(',', ':'))
-    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3'): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct')
+    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run'): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct')
     if len(sys.argv) > 1:                                                  # contact sheets: python3 -B yuji_art.py sheets <dir>
         d = sys.argv[2]; z = 2
-        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3'):
+        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run'):
             s = out[k]; sheet = Image.new('RGB', (15*s['w']*z, s['h']*z), (40, 40, 70)); px = {c: tuple(int(PAL[c][j:j+2], 16) for j in (1, 3, 5)) for c in PAL}
             for n, rows in enumerate(s['frames']):
                 for y, row in enumerate(rows):

@@ -250,8 +250,21 @@ const FOE_INV = { rx: rxI, atk: atkI, walk: dumWalk, blk: blkI, idle: dumF, fear
 const foeSet = () => vs && !vs.inv ? FOE_NORM : FOE_INV;      // in a match the enemy Gojo is inverted only when you are Gojo too
 const YU = __YUJI__, yuInv = p => { const o = {}; for (const k in p) o[k] = inv(p[k]); return o; };      // YUJI (tools/yuji_art.py): an idle, a walk (played backwards for walking back) and a jump, 15 frames each; the inverted one has the colours flipped
 const YUF = { norm: {}, inv: {} }, YINFO = { idle: YU.idle, fwd: YU.fwd, back: { ...YU.fwd, hn: YU.fwd.hn.slice().reverse(), hf: YU.fwd.hf.slice().reverse() }, jump: YU.jump };
-for (const [k, pal] of [['norm', YU.pal], ['inv', yuInv(YU.pal)]]) { for (const n of ['idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'cjump']) YUF[k][n] = mk(YU[n], pal); YUF[k].back = YUF[k].fwd.slice().reverse(); YUF[k].cback = YUF[k].cfwd.slice().reverse(); YUF[k].atk = [0, 1, 2, 3].map(j => mk(YU['atk' + j], pal)); YUF[k].dash = [0, 1, 2, 3].map(j => mk(YU['dash' + j], pal)); }
+for (const [k, pal] of [['norm', YU.pal], ['inv', yuInv(YU.pal)]]) { for (const n of ['idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'cjump', 'run']) YUF[k][n] = mk(YU[n], pal); YUF[k].back = YUF[k].fwd.slice().reverse(); YUF[k].cback = YUF[k].cfwd.slice().reverse(); YUF[k].atk = [0, 1, 2, 3].map(j => mk(YU['atk' + j], pal)); YUF[k].dash = [0, 1, 2, 3].map(j => mk(YU['dash' + j], pal)); }
 YU.atk = [0, 1, 2, 3].map(j => YU['atk' + j]); YU.dash = [0, 1, 2, 3].map(j => YU['dash' + j]); YINFO.cback = { ...YU.cfwd, hn: YU.cfwd.hn.slice().reverse(), hf: YU.cfwd.hf.slice().reverse() };
+const YHL = new Map();
+function headlessY(c) {      // Yuji's picture without the head (Verity's bite): everything above the red collar is gone, a red stump stands on the collar and blood runs down the collar and the chest
+  let r = YHL.get(c); if (r) return r; r = document.createElement('canvas'); r.width = c.width; r.height = c.height; const g = r.getContext('2d'); g.drawImage(c, 0, 0); g.clearRect(0, 0, c.width, 24);
+  g.fillStyle = BLD[0]; g.fillRect(17, 21, 5, 1); g.fillStyle = BLD[1]; g.fillRect(16, 22, 7, 1); g.fillStyle = BLD[2]; g.fillRect(16, 23, 7, 1);
+  g.globalCompositeOperation = 'source-atop'; for (const [x, n, i] of [[16, 8, 1], [18, 12, 0], [20, 7, 2], [22, 10, 1]]) { g.fillStyle = BLD[i]; g.fillRect(x, 24, 1, n); }
+  YHL.set(c, r); return r;
+}
+let YUV = null;
+function yuVictim() {      // Yuji as the victim of Gojo's FATALITY: his idle (and its white and blue flash versions) stands in for every reaction; the infos are Gojo's reaction infos (the hop and the shove) with Yuji's picture size
+  if (YUV) return YUV; const idle = YUF.norm.idle, W = idle.map(c => whiteOf(c)), Bl = idle.map(c => { const r = document.createElement('canvas'); r.width = c.width; r.height = c.height; const g = r.getContext('2d'); g.drawImage(c, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(70,130,255,0.6)'; g.fillRect(0, 0, c.width, c.height); return r; });
+  const infos = Array.from({ length: 10 }, (_, k) => ({ ...D['rx' + k], x0: YU.idle.x0, cx: YU.idle.cx, w: YU.idle.w, h: YU.idle.h, top: 0 }));
+  return YUV = { vF: idle, vRx: Array(10).fill(idle), vRxW: Array(10).fill(W), vW: W, vB: Bl, vi: k => k < 0 ? YU.idle : infos[k] };
+}
 function yujiPick(a) {      // YUJI's picture for the player: the frame set, its info, the frame and how high he is lifted (an attack, being launched, a dash, a jump, crouching down / up, crouched, walking, standing)
   const N = YUF.norm, FW = Math.floor(Math.max(0, a.now - a.modeAt) / (1000 / WALK_FPS)) % 15, FI = Math.floor(Math.max(0, a.now - a.spawnAt) / (1000 / IDLE_FPS)) % 15, jl = () => (a.jumpC ? YU.cjump : YU.jump).lift[a.jf];
   if (a.atkOn) { const I = YU.atk[a.atkK], f = Math.min(14, a.af); return { set: N.atk[a.atkK], info: I, fi: f, lift: I.lift ? I.lift[f] : 0 }; }
@@ -1156,19 +1169,21 @@ const FP = (() => {                                    // the timeline, in secon
 const FAT_SLOW = [[FP.TW, FP.TP, 0.45], [FP.TP - 0.02, FP.TP + 0.12, 0.3], [FP.TL - 0.12, FP.TL + 0.4, 0.35], [FP.TD - 0.1, FP.TS + 0.05, 0.35], [FP.TF - 0.06, FP.TU, 0.45], [FP.TU, FP.TBL - 0.25, 0.75], [FP.TBL - 0.25, FP.TBL + 0.15, 0.3]];      // slow motion: [from, to, speed]
 let FINV = null;                                       // the inverted-colour copies of Gojo's moves the enemy needs for his own FATALITY (built the first time it is needed)
 function fatSets(rev) {                                // the pictures of the attacker (idle, moves, blink, RED) and of the victim (idle, reactions); rev = the enemy is the attacker
-  if (rev && !FINV) FINV = { atk: { 0: atkI[0], 3: atkI[3], 14: mk(D.atk14, invPal), 15: mk(D.atk15, invPal), 16: mk(D.atk16, invPal) }, tele: mk(D.tele, invPal), red: mk(D.atk22, invPal) };
-  return rev ? { idle: dumF, atk: FINV.atk, tele: FINV.tele, red: FINV.red, vF: idleF, vRx: rxN } : { idle: idleF, atk: atkF, tele: teleF, red: redF, vF: dumF, vRx: rxI };
+  if (rev && vs.inv && !FINV) FINV = { atk: { 0: atkI[0], 3: atkI[3], 14: mk(D.atk14, invPal), 15: mk(D.atk15, invPal), 16: mk(D.atk16, invPal) }, tele: mk(D.tele, invPal), red: mk(D.atk22, invPal) };
+  const yv = rev ? vs.me === 'yuji' : vs.foe === 'yuji', S = rev && vs.inv ? { idle: dumF, atk: FINV.atk, tele: FINV.tele, red: FINV.red, ainv: true } : { idle: idleF, atk: atkF, tele: teleF, red: redF };      // (the enemy Gojo is inverted only in a mirror match; a Yuji you play or fight is never inverted)
+  if (yv) return { ...S, ...yuVictim() };
+  return rev ? { ...S, vF: idleF, vRx: rxN } : { ...S, vF: dumF, vRx: rxI };
 }
 let fat = null, fatReq = 0;                            // fat = the running cutscene (null when there is none); fatReq = until when a press of the FATALITY button is remembered
 const orbAt = (set, n, sx, sy, s) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));      // an orb frame centred on (sx, sy)
 function fatState(now) {                               // Gojo's FATALITY. 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far away; 3 = not possible right now
-  if (!vs || vs.story || (vs.me === 'gojo' && vs.foe === 'verity') || vs.me === 'yuji' || vs.foe === 'yuji' || vs.ph !== 'fight' || js || vf || fat || dom || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (Verity has his own FATALITY: the same rules; Gojo has none on a Verity)      // (no FATALITY in the story fight: his ending is a Reversal Red)
+  if (!vs || vs.story || (vs.me === 'gojo' && vs.foe === 'verity') || vs.me === 'yuji' || vs.ph !== 'fight' || js || vf || fat || dom || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (Verity has his own FATALITY: the same rules; Gojo has none on a Verity)      // (no FATALITY in the story fight: his ending is a Reversal Red)
   if (!(dummy.hp <= dummy.max * FAT_LOW)) return 1;      // Gojo's FATALITY: only when the enemy is at 20% health or less
   if (Math.abs(dummy.x - wx) > FAT_RANGE) return 2;
   return hurtAt >= 0 || gojoGone ? 3 : 0;
 }
 function fatAiState(now) {                             // the enemy's own FATALITY on Gojo: from SEMI-GRADE 1 up, the moment Gojo is at 20% health or less and the enemy is close (no warning; being in the air, dashing or out of reach saves him)
-  if (!vs || vs.story || (vs.me === 'verity' && vs.foe === 'gojo') || vs.me === 'yuji' || vs.foe === 'yuji' || vs.ph !== 'fight' || js || vf || fat || dom || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
+  if (!vs || vs.story || (vs.me === 'verity' && vs.foe === 'gojo') || vs.foe === 'yuji' || vs.ph !== 'fight' || js || vf || fat || dom || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
   return vs.hp <= PHP * FAT_LOW && Math.abs(dummy.x - wx) <= FAT_RANGE && !gojoGone && gojoLift <= 12 && dgAt < 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
 }
 function fatGo(now, dt, rev) { if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's FATALITY is its own cutscene)
@@ -1226,23 +1241,24 @@ function fatEvents(now, t) {
 }
 function fatEnemy(t, now) {                            // where the enemy is and what he looks like at cutscene time t (lift = px above the floor; the sprite turns about the point pv px above his feet)
   const P = FP, f = fat, mx = Math.round(VW / 2), E = { x: mx + FEX, lift: 0, rot: 0, pv: 32, vis: true, src: null, info: D.idle }, ix = Math.floor(now / (1000 / IDLE_FPS)) % dumF.length, S = f.S, vF = S.vF;
+  const vW = S.vW || dumW, vB = S.vB || dumB, vRW = S.vRxW || rxW; if (S.vi) E.info = S.vi(-1);
   if (t >= P.TBL) { E.vis = false; return E; }                                                    // vaporised
   if (t < P.THIT) { E.x = mx + f.ex0 + (FEX - f.ex0) * (1 - Math.pow(1 - Math.min(1, t / 0.4), 3)); E.src = vF[ix]; return E; }      // pulled in front of Gojo, waiting for the wind-up punch
-  const heavy = () => { const lt = t - P.THIT, fi = Math.min(9, Math.floor(lt * RX_FPS[3])); E.info = D.rx3; E.src = (lt < 0.07 ? rxW : S.vRx)[3][fi]; E.pv = 0; E.lift = (D.rx3.lift ? D.rx3.lift[fi] : 0) + 5 * Math.exp(-lt * 8); E.x = mx + FEX + 14 * Math.exp(-lt * 9); return E; };      // the wind-up punch lands: a hard shove and the strongest reaction
+  const heavy = () => { const lt = t - P.THIT, fi = Math.min(9, Math.floor(lt * RX_FPS[3])); E.info = S.vi ? S.vi(3) : D.rx3; E.src = (lt < 0.07 ? vRW : S.vRx)[3][fi]; E.pv = 0; E.lift = (D.rx3.lift ? D.rx3.lift[fi] : 0) + 5 * Math.exp(-lt * 8); E.x = mx + FEX + 14 * Math.exp(-lt * 9); return E; };      // the wind-up punch lands: a hard shove and the strongest reaction
   if (t < P.TL) {                                                                                 // the barrage: each blow makes him flinch (one of the ten reactions) and shoves him a little
     let i = -1; for (let j = 0; j < FSW.length; j++) if (t >= P.TB + FSW[j].hit) i = j;
     if (i < 0) return heavy();
-    const lt = t - P.TB - FSW[i].hit, rx = FAT_RX[i], fi = Math.min(t < P.TK ? 4 : 9, Math.floor(lt * RX_FPS[rx])), inf = D['rx' + rx], kick = FSW[i].k === 15;
-    E.info = inf; E.src = (lt < 0.07 ? rxW : S.vRx)[rx][fi]; E.pv = 0; E.lift = (inf.lift ? inf.lift[fi] : 0) + (kick ? 4 * Math.exp(-lt * 10) : 0); E.x = mx + FEX + (kick ? 7 : 4) * Math.exp(-lt * 14); return E;
+    const lt = t - P.TB - FSW[i].hit, rx = FAT_RX[i], fi = Math.min(t < P.TK ? 4 : 9, Math.floor(lt * RX_FPS[rx])), inf = S.vi ? S.vi(rx) : D['rx' + rx], kick = FSW[i].k === 15;
+    E.info = inf; E.src = (lt < 0.07 ? vRW : S.vRx)[rx][fi]; E.pv = 0; E.lift = (inf.lift ? inf.lift[fi] : 0) + (kick ? 4 * Math.exp(-lt * 10) : 0); E.x = mx + FEX + (kick ? 7 : 4) * Math.exp(-lt * 14); return E;
   }
   const tau = t - P.TL, xK = mx + FEX + 35, hK = fatH(P.TD - P.TL), rK = (7.5 * (P.TD - P.TL)) % 6.2832;
-  if (t < P.TD) { E.lift = fatH(tau); E.x = mx + FEX + 35 * tau / (P.TD - P.TL); E.rot = 7.5 * tau; E.src = tau < 0.08 ? dumW[ix] : (Math.floor(now / 70) % 2 ? dumB[ix] : vF[ix]); return E; }      // thrown up, tumbling, caught in the pull
+  if (t < P.TD) { E.lift = fatH(tau); E.x = mx + FEX + 35 * tau / (P.TD - P.TL); E.rot = 7.5 * tau; E.src = tau < 0.08 ? vW[ix] : (Math.floor(now / 70) % 2 ? vB[ix] : vF[ix]); return E; }      // thrown up, tumbling, caught in the pull
   if (t < P.TS) { const u = (t - P.TD) / (P.TS - P.TD); E.lift = hK * (1 - u * u) - 22 * u * u; E.x = xK + (mx + FEX2 - xK) * u; E.rot = rK + (1.4 - rK) * u; E.src = vF[ix]; return E; }      // kicked down
   E.x = mx + FEX2; const k = t - P.TS;
-  if (k < 0.3) { E.lift = -22 + 6 * Math.exp(-k * 22); E.rot = 1.4; E.src = k < 0.15 ? dumW[ix] : vF[ix]; return E; }      // lying where he hit the floor
-  if (k < 0.55) { const u = (k - 0.3) / 0.25, e = u * u * (3 - 2 * u); E.lift = -22 * (1 - e); E.rot = 1.4 * (1 - e); E.src = dumB[ix]; return E; }      // he gets up, dazed
-  E.src = t >= P.TU ? vF[ix] : Math.floor(now / 70) % 2 ? dumB[ix] : vF[ix];
-  if (t >= P.TU + 0.1) { const s = Math.min(1, (t - P.TU) / 0.3); E.x += Math.round((Math.random() - 0.5) * 4 * s); E.lift = Math.min(10, (t - P.TU) * 14) + Math.round((Math.random() - 0.5) * 2); if (Math.floor(now / 90) % 3 === 0) E.src = dumW[ix]; }      // in the grip of the purple orb: shaking, lifted off the floor, screaming
+  if (k < 0.3) { E.lift = -22 + 6 * Math.exp(-k * 22); E.rot = 1.4; E.src = k < 0.15 ? vW[ix] : vF[ix]; return E; }      // lying where he hit the floor
+  if (k < 0.55) { const u = (k - 0.3) / 0.25, e = u * u * (3 - 2 * u); E.lift = -22 * (1 - e); E.rot = 1.4 * (1 - e); E.src = vB[ix]; return E; }      // he gets up, dazed
+  E.src = t >= P.TU ? vF[ix] : Math.floor(now / 70) % 2 ? vB[ix] : vF[ix];
+  if (t >= P.TU + 0.1) { const s = Math.min(1, (t - P.TU) / 0.3); E.x += Math.round((Math.random() - 0.5) * 4 * s); E.lift = Math.min(10, (t - P.TU) * 14) + Math.round((Math.random() - 0.5) * 2); if (Math.floor(now / 90) % 3 === 0) E.src = vW[ix]; }      // in the grip of the purple orb: shaking, lifted off the floor, screaming
   return E;
 }
 function fatGojo(t, now) {                             // Gojo's pose and place at cutscene time t
@@ -1317,7 +1333,7 @@ function fatFrame(now, dt) {                           // one frame of the cutsc
   if (go.vis) {
     fatShadow(go.x, go.lift, false); const gx = go.x - (go.info.cx - go.info.x0), gyy = gy - 60 - go.info.top - Math.round(go.lift);
     ctx.drawImage(go.set[go.fi], gx, gyy);
-    if (t >= P.TW && t < P.TP) { const a = go.info.hn[go.fi], k = (t - P.TW) / (P.TP - P.TW); if (a) { const hx = gx + a[0], hy = gyy + a[1]; orbAt(f.rev ? orbR : orbF, Math.floor(now * 20 / 1000), hx, hy, 0.08 + 0.3 * k); ctx.fillStyle = f.rev ? '#ffb08a' : '#9fd8ff'; for (let i = 0; i < 9; i++) { const th = now / 90 + i * 0.7, R = 4 + (1 - k) * 18 * (0.5 + 0.5 * Math.sin(i * 2.3 + now / 60)); ctx.fillRect(Math.round(hx + Math.cos(th) * R), Math.round(hy + Math.sin(th) * R), 1, 1); } } }
+    if (t >= P.TW && t < P.TP) { const a = go.info.hn[go.fi], k = (t - P.TW) / (P.TP - P.TW); if (a) { const hx = gx + a[0], hy = gyy + a[1]; orbAt(f.S.ainv ? orbR : orbF, Math.floor(now * 20 / 1000), hx, hy, 0.08 + 0.3 * k); ctx.fillStyle = f.S.ainv ? '#ffb08a' : '#9fd8ff'; for (let i = 0; i < 9; i++) { const th = now / 90 + i * 0.7, R = 4 + (1 - k) * 18 * (0.5 + 0.5 * Math.sin(i * 2.3 + now / 60)); ctx.fillRect(Math.round(hx + Math.cos(th) * R), Math.round(hy + Math.sin(th) * R), 1, 1); } } }
     if (t >= P.TR && t < P.TF) { const a = go.info.hn[go.fi]; if (a) orbAt(orbR, Math.floor(now * 20 / 1000), gx + a[0] + 2, gyy + a[1] - 8, 0.1 + 0.3 * Math.min(1, (t - P.TR) / 0.95)); }      // the red orb grows above his raised fingers
   }
   if (t >= P.TV && t < P.TA) { const k = (t - P.TV) / (P.TA - P.TV); ctx.fillStyle = 'rgba(160,220,255,' + (0.8 * (1 - k)).toFixed(2) + ')'; for (let i = 0; i < 18; i++) { const yy = gy - 20 - Math.round((gy - 20 - (gy - FLIFT)) * k * (i / 17)); ctx.fillRect(mx + 8 + Math.round(12 * k * (i / 17)), yy, 1, 3); } }      // a streak of blue light up to the place he arrives
@@ -1474,7 +1490,7 @@ function vfPos(t, g0) {      // where the two of them are (the victim stands at 
 }
 function vfStart(now, rev) {      // rev = the enemy does it to the player
   const d = dummy; cineClear(); closeSettings(); stickDown = false; d.ai = 'rest'; d.pull = null; d.vx = 0; d.vact = null; $('pad').classList.add('cine'); $('hud').classList.add('cine'); snd('fatalstart');
-  vf = { rev: !!rev, t: 0, ev: {}, g0: Math.max(20, Math.min(FAT_RANGE, Math.abs(d.x - wx))), cam: 0, z: 1, fx: 0, fy: 0, shake: 0, freeze: 0, flash: 0, parts: [], splats: [], wx0: wx, gv: rev ? vs.me === 'gojo' : vs.foe === 'gojo', inv: !rev && vs.inv, ainv: !!rev && vs.inv };      // gv: the victim is Gojo (else a Verity); the colours are inverted only for the inverted Verity (the enemy): the victim when the player does it, the attacker when the enemy does it
+  vf = { rev: !!rev, t: 0, ev: {}, g0: Math.max(20, Math.min(FAT_RANGE, Math.abs(d.x - wx))), cam: 0, z: 1, fx: 0, fy: 0, shake: 0, freeze: 0, flash: 0, parts: [], splats: [], wx0: wx, gv: rev ? vs.me === 'gojo' : vs.foe === 'gojo', yv: rev ? vs.me === 'yuji' : vs.foe === 'yuji', inv: !rev && vs.inv, ainv: !!rev && vs.inv };      // gv: the victim is Gojo (else a Verity); the colours are inverted only for the inverted Verity (the enemy): the victim when the player does it, the attacker when the enemy does it
 }
 function vfReset() { vf = null; $('pad').classList.remove('cine'); $('hud').classList.remove('cine'); }
 function vfEnd(now) {      // the victim is gone and the attacker wins the round (like Gojo's FATALITY)
@@ -1485,7 +1501,7 @@ function vfEnd(now) {      // the victim is gone and the attacker wins the round
 function vfFrame(now, dt) {
   const s = vf, T = VFT; keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; fatReq = 0;
   const live = now >= s.freeze; if (live) s.t += dt; const t = s.t, sdt = live ? dt : 0, at = (k, tt, f) => { if (!s.ev[k] && t >= tt) { s.ev[k] = 1; f(); } }, f15 = (t0, d) => Math.max(0, Math.min(14, Math.floor((t - t0) / d * 15))), tb = t - T.bite, bitten = tb >= T.bt;
-  const P = vfPos(t, s.g0), mx = VW / 2, GX = Math.round(mx + P.vx - s.cam), VX = Math.round(mx + P.ax - s.cam), gojo = s.gv;      // (screen places of the victim and of Verity, the camera is s.cam)
+  const P = vfPos(t, s.g0), mx = VW / 2, GX = Math.round(mx + P.vx - s.cam), VX = Math.round(mx + P.ax - s.cam), gojo = s.gv, yuji = s.yv;      // (screen places of the victim and of Verity, the camera is s.cam)
   // ---- the events: sounds, shakes, flashes, the spray of blood
   at('swing', T.grab + 0.30, () => snd('swing', 3)); at('grip', T.grab + 0.52, () => { snd('hit', 0); snd('smack', 0); s.shake = now + 100; });
   at('punch', 1.70, () => { snd('hit', 3); snd('smack', 3); s.freeze = now + 90; s.flash = now + 90 + 60; s.shake = now + 90 + 200; });
@@ -1507,6 +1523,16 @@ function vfFrame(now, dt) {
     else if (t >= T.catch + 0.05 && t < T.shoulders) { vinfo = D.atk0; vimg = gsrc(atkF[0], Math.min(8, Math.floor((t - T.catch - 0.05) / 0.3 * 9))); vflip = false; }          // his swing: the arm is caught on its way and stays caught
     else if (t >= T.shoulders) { vinfo = D.rx0; vimg = rxN[0][3]; vflip = false; vox = trem[0]; vlift = 0; }                                           // held by the shoulders
     if (bitten) { hid = true; }
+  } else if (yuji) {      // YUJI: his idle held by the neck (with a tremble), a white flash for the punch, the stagger, the 15-frame run, the swing the arm is caught on, held by the shoulders
+    const Y = YUF.norm, yi = Math.floor(now / (1000 / IDLE_FPS)) % 15, ys = (a, i) => a[Math.max(0, Math.min(a.length - 1, i))];
+    vinfo = YU.idle; vimg = Y.idle[yi]; vflip = true;
+    if (t >= T.grab + 0.52 && t < 1.70) { vimg = Y.idle[0]; vlift = 5; vox = trem[0]; }
+    else if (t >= 1.70 && t < 2.15) { vimg = (t - 1.70) < 0.07 ? whiteOf(Y.idle[0]) : Y.idle[0]; vlift = 5 * (1 - clamp01((t - 1.70) / 0.2)); vox = Math.round(3 * Math.exp(-(t - 1.70) * 9)); }
+    else if (t >= 2.15 && t < T.run) { vimg = ys(Y.idle, Math.floor((t - 2.15) * 14)); }
+    else if (t >= T.run && t < VFL + 0.25) { vinfo = YU.run; vimg = Y.run[Math.floor(t * 30) % 15]; vflip = false; }
+    else if (t >= VFL + 0.25 && t < T.catch + 0.05) { vinfo = YU.run; vimg = Y.run[6]; vflip = false; }
+    else if (t >= T.catch + 0.05 && t < T.shoulders) { vinfo = YU.atk[0]; vimg = ys(Y.atk[0], Math.min(8, Math.floor((t - T.catch - 0.05) / 0.3 * 9))); vflip = false; }
+    else if (t >= T.shoulders) { vimg = Y.idle[0]; vflip = false; vox = trem[0]; vlift = 0; }
   } else {
     const iv = s.inv; vimg = vfr('idle', now / 100, true, iv); vflip = true;
     if (t >= T.grab + 0.52 && t < 1.70) { vimg = vfr('hurt', 3, false, iv); vlift = 5; vox = trem[0]; }
@@ -1521,9 +1547,9 @@ function vfFrame(now, dt) {
   // ---- the bite: the head is gone (a red stump, the spray of blood), later he lets go and the body falls backwards
   const tLet = T.bite + T.bt + 0.9, fell = clamp01((t - tLet) / 0.55), th = -1.5 * fell * fell;
   let body = vimg;
-  if (gojo && bitten) { const base = rxN[0][3]; body = headless(base); }
-  const hxs = gojo ? vinfo.cx - vinfo.x0 : 32, topY = gojo ? gy - 60 - (vinfo.top || 0) : gy - 60, vy0 = topY - vlift, m = gojo ? (mouthOf(rxN[0][3]) || { x: 20, y: 16 }) : null;
-  const stump = gojo ? [GX - hxs + m.x - 3, vy0 + m.y + 3] : [GX + 1, vy0 + 16], PV = [GX, gy + 2], R = (x, y) => [PV[0] + Math.cos(th) * (x - PV[0]) - Math.sin(th) * (y - PV[1]), PV[1] + Math.sin(th) * (x - PV[0]) + Math.cos(th) * (y - PV[1])], st = R(stump[0], stump[1]);
+  if (gojo && bitten) { const base = rxN[0][3]; body = headless(base); } else if (yuji && bitten) body = headlessY(vimg);
+  const sp = gojo || yuji, hxs = sp ? vinfo.cx - vinfo.x0 : 32, topY = sp ? gy - 60 - (vinfo.top || 0) : gy - 60, vy0 = topY - vlift, m = gojo ? (mouthOf(rxN[0][3]) || { x: 20, y: 16 }) : yuji ? { x: 22, y: 19 } : null;
+  const stump = sp ? [GX - hxs + m.x - 3, vy0 + m.y + 3] : [GX + 1, vy0 + 16], PV = [GX, gy + 2], R = (x, y) => [PV[0] + Math.cos(th) * (x - PV[0]) - Math.sin(th) * (y - PV[1]), PV[1] + Math.sin(th) * (x - PV[0]) + Math.cos(th) * (y - PV[1])], st = R(stump[0], stump[1]);
   at('bite', T.bite + T.bt, () => { s.freeze = now + 170; s.flash = now + 170 + 100; s.shake = now + 170 + 420; snd('hit', 3); snd('smack', 3); snd('splat'); snd('purpleboom'); spurt(90, 190, st[0], st[1]); });
   if (bitten) for (const [k, tt, n, pw] of [[1, 0.12, 40, 150], [2, 0.3, 30, 150], [3, 0.5, 24, 130], [4, 0.75, 18, 120], [5, 1.05, 12, 100], [6, 1.4, 8, 90]]) at('sp' + k, T.bite + T.bt + tt, () => spurt(n, pw, st[0], st[1]));
   at('let', tLet, () => snd('land', 1.6)); at('thud', tLet + 0.5, () => { snd('ko'); s.shake = now + 250; }); at('title', T.title, () => snd('finisher'));
@@ -1541,7 +1567,7 @@ function vfFrame(now, dt) {
   if (fell >= 1) { const k = Math.min(1, (t - tLet - 0.5) / 1.5), w = 5 + 28 * k, cx = st[0] + 4; for (let i = 0; i < 4; i++) { const ww = Math.round(w * (1 - i * 0.18)); ctx.fillStyle = BLD[i === 0 ? 3 : i === 1 ? 2 : i === 2 ? 2 : 1]; ctx.fillRect(Math.round(cx - ww), gy + 2 + i, ww * 2, 1); } }
   if (fell < 1) shadow(GX, 9);
   ctx.save(); ctx.translate(GX + vox, gy + 2); if (th) ctx.rotate(th); if (vflip) ctx.scale(-1, 1);
-  ctx.drawImage(body, -hxs, -62 - (gojo ? (vinfo.top || 0) : 0) - vlift); ctx.restore();
+  ctx.drawImage(body, -hxs, -62 - (sp ? (vinfo.top || 0) : 0) - vlift); ctx.restore();
   let an = 'idle', af = now / 100, aloop = true, afl = t >= VFL;
   if (t >= T.grab && t < T.punch) { an = 'fx_grab'; af = f15(T.grab, 0.95); aloop = false; } else if (t >= T.punch && t < T.crouch) { an = 'fx_punch'; af = f15(T.punch, 0.85); aloop = false; }
   else if (t >= T.crouch && t < T.leap) { an = 'fx_crouch'; af = f15(T.crouch, 0.9); aloop = false; } else if (t >= T.leap && t < T.catch) { an = 'fx_leap'; af = f15(T.leap, 1.05); aloop = false; }
