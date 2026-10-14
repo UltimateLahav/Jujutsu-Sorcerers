@@ -2109,7 +2109,7 @@ function alleyScene(now, dt, T, gx) {
 }
 const once2 = (k, f) => { if (story && !story.ev[k]) { story.ev[k] = 1; f(); } };
 // ---------------------------------------------------------------- CHAPTER 1, the ending (after the Red). The alley in the wind: Gojo stands with his head bowed, his hair streaming, red embers drifting off the spot where Verity stood; he remembers the report and teleports to Jujutsu High. The corridor: the BIG door (the camera tilts up its whole height), he slides it open. The higher-ups' room (your picture, in pixel style): they talk about the special grades, the roof is hit, they send him to look. END OF CHAPTER 1. T = seconds on the cutscene's own clock; a tap skips to the next cut.
-const OUT = { think: 7.0, tele: 12.0, hall: 14.0, up0: 17.0, up1: 20.2, dn0: 22.0, dn1: 25.0, joke: 25.2, walk: 27.6, open: 30.2, openEnd: 33.2, enter: 33.4, white: 34.6, room: 36.6, quake: 63.0, quakeEnd: 66.8, fadeOut: 74.8, card: 76.0, tilt: 142 };
+const OUT = { think: 7.0, tele: 12.0, hall: 14.0, up0: 17.0, up1: 20.2, dn0: 22.0, dn1: 25.0, walk: 27.0, open: 30.2, openEnd: 33.2, enter: 33.4, white: 34.6, room: 36.6, quake: 63.0, quakeEnd: 66.8, fadeOut: 74.8, card: 76.0, tilt: 142 };
 const OUT_TALK = [      // [from, to, who speaks, line 1, line 2, which higher-up (0 = left, 1 = right, -1 = Gojo)]
   [41.0, 44.6, 'HIGHER-UP', 'YOU ARE LATE, GOJO.', 'WE CALLED YOU HOURS AGO.', 0],
   [45.0, 49.4, 'GOJO', 'SORRY, A SPECIAL GRADE GOT', 'IN MY WAY. IT IS GONE NOW.', -1],
@@ -2119,7 +2119,7 @@ const OUT_TALK = [      // [from, to, who speaks, line 1, line 2, which higher-u
   [64.4, 66.8, 'HIGHER-UP', 'WHAT WAS THAT?!', '', 1],
   [67.2, 71.8, 'HIGHER-UP', 'SOMETHING HIT THE ROOF.', 'GOJO, GO AND SEE WHAT IT WAS.', 0],
   [72.2, 74.4, 'GOJO', '...ON IT.', '', -1]];
-const OUT_CUTS = [OUT.think, OUT.tele, OUT.hall, OUT.joke, OUT.open, OUT.room, 41.0, 45.0, 49.8, 55.0, 59.6, OUT.quake, 64.4, 67.2, 72.2, OUT.card];
+const OUT_CUTS = [OUT.think, OUT.tele, OUT.hall, OUT.walk, OUT.open, OUT.room, 41.0, 45.0, 49.8, 55.0, 59.6, OUT.quake, 64.4, 67.2, 72.2, OUT.card];
 function startOutro(now) {      // Verity is gone: the report to the higher-ups
   show('story'); story.outro = true; story.battle = false; story.t0 = now; story.T = 0; story.ev = {}; story.fx = []; story.deb = []; story.cam = null; alley = true; wx = 0;
 }
@@ -2184,7 +2184,7 @@ function outroHall(now, dt, T) {      // scene 2: the corridor with the BIG door
     shadow(sx, 9); const a = T - ta;
     if (a < 0.15) sprAt(teleF[Math.min(14, 12 + Math.floor(a * 20))], D.tele, sx, 0, false, 0);
     else if (walk) sprAt(fwdF[Math.floor(now * WALK_FPS / 1000) % 15], D.fwd, sx, 0, false, 0);
-    else sprAt(idleF[Math.floor(T * IDLE_FPS) % idleF.length], D.idle, sx, 0, false, T >= OUT.joke && T < OUT.joke + 1.8 ? 1 + (Math.floor(T * 8) % 2) : 0);
+    else sprAt(idleF[Math.floor(T * IDLE_FPS) % idleF.length], D.idle, sx, 0, false, 0);      // (he looks at the big door and says nothing)
   }
   ctx.restore();
   if (T >= ta) once2('arrive', () => snd('arrive')); if (T >= OUT.open) once2('door', () => snd('door'));
@@ -2192,18 +2192,14 @@ function outroHall(now, dt, T) {      // scene 2: the corridor with the BIG door
   if (T >= ta - 0.3 && T < ta + 0.2) { ctx.fillStyle = 'rgba(255,255,255,' + (0.5 * (1 - Math.abs(T - ta) / 0.3)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }
   if (op > 0) { ctx.fillStyle = 'rgba(255,190,110,' + (0.2 * op).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
   const cap = T - (OUT.hall + 1.2); if (cap > 0 && cap < 3.4) { ctx.globalAlpha = Math.min(1, cap / 0.5, (3.4 - cap) / 0.5); pxt('JUJUTSU HIGH', Math.round(VW / 2), 22, '#ffd34d', 16, 'center'); ctx.globalAlpha = 1; }      // (where he is)
-  if (T >= OUT.joke && T < OUT.joke + 2.4) dlg('GOJO', 'BIG DOOR. BIG EGOS.', Math.floor((T - OUT.joke) * 14));
   const wa = clamp01((T - OUT.white) / 1.4); if (wa > 0) { ctx.fillStyle = 'rgba(255,244,214,' + wa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
   const fa = 1 - (T - OUT.hall) / 0.7; if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
 }
-function tinyGojo(x, y, s, step) {      // Gojo in the middle of the room, seen from behind and above, small: white hair, black uniform, a warm rim from the light (x, y = his feet, s = size)
-  const r = (ax, ay, aw, ah, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x + ax * s), Math.round(y + ay * s), Math.max(1, Math.round(aw * s)), Math.max(1, Math.round(ah * s))); };
-  ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(Math.round(x - 5 * s), Math.round(y - 0.5 * s), Math.max(2, Math.round(10 * s)), Math.max(1, Math.round(1.5 * s)));
-  r(-2.5, -4 + step, 2, 4 - step, '#100d1a'); r(0.5, -3 - step, 2, 3 + step, '#100d1a');          // legs (they take turns while he walks)
-  r(-4, -11, 8, 7, '#1b1730'); r(-4, -11, 8, 1, '#322c58'); r(-4, -5, 8, 1, '#7a4a28');         // the black uniform, a lighter shoulder line, the warm rim at the bottom edge
-  r(-5, -10, 1, 5, '#120f1d'); r(4, -10, 1, 5, '#120f1d');                                       // arms
-  r(-2.5, -15, 5, 5, '#ece8f8'); r(-2.5, -11, 5, 1, '#b9b3d4'); r(-3.5, -14, 1, 3, '#d6d0ea'); r(2.5, -14, 1, 3, '#d6d0ea');   // the white hair
-  r(-3, -15, 6, 1, '#ff9a40');                                                                    // the rim on the hair
+function roomGojo(O, x, y, T, wk, now) {      // Gojo in the higher-ups' room, seen from behind and above (tools/room_gojo.py: 15 frames of 32x44 per strip, the middle of his feet at column 16, row 39; x, y = where his feet are): he walks in, stands (breathing, the hair stirs), and looks up when the roof is hit
+  let s = O.rgIdle, f = Math.floor(now / 125) % 15;
+  if (wk >= 0 && wk < 45) { s = O.rgWalk; f = Math.floor(wk) % 15; }
+  else if (T >= OUT.quake + 0.15) { s = O.rgUp; f = Math.min(14, Math.floor((T - OUT.quake - 0.15) * 20)); }
+  ctx.drawImage(s, f * 32, 0, 32, 44, Math.round(x - 16.5), Math.round(y - 39), 32, 44);
 }
 function outroDebris(dt, T) {      // the roof is hit: pieces fall through the picture
   const f = story.deb, qt = T - OUT.quake;
@@ -2211,17 +2207,17 @@ function outroDebris(dt, T) {      // the roof is hit: pieces fall through the p
   for (let i = f.length - 1; i >= 0; i--) { const p = f[i]; p.vy += 300 * dt; p.x += p.vx * dt; p.y += p.vy * dt; if (p.y > VH + 4) { f.splice(i, 1); continue; } ctx.fillStyle = p.c; ctx.fillRect(Math.round(p.x), Math.round(p.y), p.w, p.w + (p.w > 1 ? 1 : 0)); }
 }
 function outroRoom(now, dt, T) {      // scene 3: the higher-ups' room
-  const O = SIMG.outro, img = O && O.room; if (!(img && img.complete && img.naturalWidth)) return;
+  const O = SIMG.outro, img = O && O.room; if (!(O && ['room', 'rgIdle', 'rgWalk', 'rgUp'].every(k => O[k] && O[k].complete && O[k].naturalWidth))) return;
   const sc = VH / 128, dw = Math.round(320 * sc), X0 = Math.round((VW - dw) / 2), P = x => X0 + x * sc, tl = ease3((T - 38.6) / 1.6) * 26 * sc;      // the picture is as tall as the screen; before the talking the camera tilts down so the two higher-ups stay above the dialogue box
   const qt = T - OUT.quake, qk = qt >= 0 && qt < OUT.quakeEnd - OUT.quake ? 1 - qt / (OUT.quakeEnd - OUT.quake) : 0, amp = 5 * qk, L = OUT_TALK.find(l => T >= l[0] && T < l[1]);
   ctx.save(); ctx.translate(Math.round((Math.random() * 2 - 1) * amp), Math.round(-tl + (Math.random() * 2 - 1) * amp));
   ctx.drawImage(img, X0, 0, dw, VH);
   if (L && L[5] >= 0) { const cx = P(46 + (L[5] ? 134 : 94)), fl = L[5] ? -1 : 1, pl = 0.45 + 0.35 * Math.sin(now / 80); ctx.fillStyle = 'rgba(255,176,96,' + pl.toFixed(2) + ')'; ctx.fillRect(Math.round(cx + 6 * fl * sc), Math.round(108 * sc), 1, Math.round(18 * sc)); ctx.fillRect(Math.round(cx + 5 * fl * sc), Math.round(100 * sc), 1, Math.round(4 * sc)); }      // the higher-up who speaks: his warm rim flares
-  const ga = ease3((T - 37.2) / 3.0), step = ga < 1 ? (Math.floor(T * 5) % 2) : 0;
-  tinyGojo(P(160), (118 - 46 * ga) * sc, (1 + 0.4 * (1 - ga)) * sc, step);      // Gojo walks in from the bottom of the picture to the middle of the lit circle
-  if (ga < 1 && Math.floor(T * 5) !== story.stepN) { story.stepN = Math.floor(T * 5); snd('step', story.stepN % 2, false); }
+  const wk = (T - 37.2) * 15;      // Gojo walks in from the door (the bottom of the picture) to the middle of the lit circle: three walk cycles of 15 frames = 3 s, his feet touch down on frames 4 and 11 of every cycle
+  roomGojo(O, P(160), (120 - 38 * clamp01(wk / 45)) * sc, T, wk, now);
+  if (wk >= 0 && wk < 45 && Math.floor(wk) !== story.stepN) { story.stepN = Math.floor(wk); const f = story.stepN % 15; if (f === 4 || f === 11) snd('step', f === 4 ? 0 : 1, false); }
   if (qk > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(255,140,40,' + (0.04 + 0.12 * Math.random() * qk).toFixed(3) + ')'; ctx.fillRect(X0, 0, dw, Math.round(VH * 0.6)); ctx.globalCompositeOperation = 'source-over'; }      // the panels flicker
-  if (T >= OUT.quake + 0.2 && T < OUT.quake + 2.6) pxt('!', P(160), 48 * sc, '#ff3a3a', 8, 'center');      // (he looks up: a red !)
+  if (T >= OUT.quake + 0.2 && T < OUT.quake + 2.6) pxt('!', P(160), 44 * sc, '#ff3a3a', 8, 'center');      // (he looks up: a red ! over his head)
   ctx.restore();
   if (T >= OUT.quake) once2('quake', () => snd('quake'));
   if (T >= OUT.quake) { outroDebris(dt, T); const da = 0.3 * clamp01(qt / 0.4) * (1 - clamp01((qt - 1.6) / 3.4)); if (da > 0) { ctx.fillStyle = 'rgba(96,70,50,' + da.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); } }
