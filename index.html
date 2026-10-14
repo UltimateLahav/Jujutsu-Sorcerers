@@ -1989,9 +1989,10 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   }
   if (!hum) lpReq = atkReq = dashReq = jumpReq = crReq = false;      // as a ball he can do nothing
   if (lpReq) { lpReq = false; if (free && stance === 'stand' && ceSpend(CE_COST.vBite, now)) { atkK = 22; atkAt = now; af = 0; atkQ = false; } }      // BITE: its own swing (number 22)
+  // (a refused grab says TOO FAR when he is out of reach and CANT GRAB when he is in reach but folded up, a ball, stunned or beaten)
   if (domReq) {      // JUMPSCARE (the DOMAIN button): the grab, swing number 23. It needs the enemy in front and within 40 px, 67% of the energy and 30 s since the last one; the enemy is frozen from the first moment
     domReq = false;
-    if (free && stance === 'stand' && now >= domReadyAt) { if (!jsTarget(now)) say('TOO FAR', wx, '#ff8a7a', 8, now); else if (ceSpend(CE_COST.vScare, now)) { atkK = 23; atkAt = now; af = 0; atkQ = false; domReadyAt = now + JS.cd; dummy.stunUntil = now + 900; dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = 900; dummy.vact = null; dummy.vx = 0; snd('f:swing', 3); } }
+    if (free && stance === 'stand' && now >= domReadyAt) { if (!jsTarget(now)) { const gp = dummy ? dummy.x - wx : 999; say(gp <= JS.reach && gp >= -4 ? 'CANT GRAB' : 'TOO FAR', wx, '#ff8a7a', 8, now); } else if (ceSpend(CE_COST.vScare, now)) { atkK = 23; atkAt = now; af = 0; atkQ = false; domReadyAt = now + JS.cd; dummy.stunUntil = now + 900; dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = 900; dummy.vact = null; dummy.vx = 0; snd('f:swing', 3); } }
   }
   if (atkReq) {
     atkReq = false;
