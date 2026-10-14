@@ -3,7 +3,7 @@ anim(name) -> 15 frames. run: python3 verity_rig.py  ->  verity_anims.json (name
 import math, io, json, base64, copy
 from PIL import Image, ImageDraw
 S = 64; BASE, LIT, HI, SH, DK, OL, RIB, CLAW = (172,156,48), (206,192,80), (232,218,134), (128,114,38), (88,76,26), (26,18,6), (104,90,26), (62,52,16)
-STAND = dict(hx=32, hy=6.5, sy=17, hp=36, lean=0, m=0, aL=((21,34),(20.5,52)), aR=((43,34),(43.5,52)), lL=((29.5,47),(30,59)), lR=((34.5,47),(34,59)), fade=0, glitch=0, ribs=1, bl=0, nohead=0)
+STAND = dict(hx=32, hy=6.5, sy=17, hp=36, lean=0, m=0, aL=((21,34),(20.5,52)), aR=((43,34),(43.5,52)), lL=((29.5,47),(30,59)), lR=((34.5,47),(34,59)), fade=0, glitch=0, vg=0, ribs=1, bl=0, nohead=0)
 mix = lambda a, b, t: tuple(mix(x, y, t) for x, y in zip(a, b)) if isinstance(a, tuple) else a + (b - a) * t
 ease = lambda t: t * t * (3 - 2 * t)
 def pose(**kw): p = copy.deepcopy(STAND); p.update(kw); return p
@@ -71,12 +71,18 @@ def render(p):
             for j in range(int(n * p['bl'])):
                 xx, yy = x + bx, 14 + g + by + j
                 if 0 <= xx < S and 0 <= yy < S: o[xx, yy] = (150, 10, 22, 255) if j % 2 else (190, 16, 30, 255)
-    if p['glitch'] or p['fade']:                                                                                           # teleport: rows slide sideways and pixels drop out
+    if p['glitch'] or p['fade'] or p['vg']:                                                                                           # teleport: rows slide sideways and pixels drop out
         src = img.copy().load(); img = Image.new('RGBA', (S, S), (0, 0, 0, 0)); o = img.load(); B = [[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]]
         for y in range(S):
             sx = int(round(((y * 7) % 5 - 2) * p['glitch']))
             for x in range(S):
                 if 0 <= x - sx < S and src[x - sx, y][3] and B[y % 4][x % 4] / 16 >= p['fade']: o[x, y] = src[x - sx, y]
+        if p['vg']:                                                                                                        # teleport UP: the columns slide up and down
+            src = img.copy().load(); img = Image.new('RGBA', (S, S), (0, 0, 0, 0)); o = img.load()
+            for x in range(S):
+                sy_ = int(round(((x * 5) % 7 - 3) * p['vg']))
+                for y in range(S):
+                    if 0 <= y - sy_ < S and src[x, y - sy_][3]: o[x, y] = src[x, y - sy_]
     return img
 def walkp(f):
     w = 2 * math.pi * f / 15; s, c = math.sin(w), math.cos(w); up = lambda v: -2.2 * max(0, v)
@@ -127,6 +133,8 @@ A = {
  'fx_shoulders': lambda f: keys([(0, pose(lean=7, hy=8.5, m=1, aR=((53, 21), (62, 20)))), (4, pose(lean=7, hy=8.5, **{**AIMS, 'm': 0.8})), (8, pose(lean=9, hx=34, hy=9, **AIMS)), (11, pose(lean=6, hx=31, hy=6, **AIMS)), (14, pose(lean=4, hx=30, hy=4, **AIMS))], f),      # (both hands on his shoulders, pulling him in, the head going back)
  'fx_bite': lambda f: keys([(0, pose(lean=4, hx=30, hy=4, **AIMS)), (3, pose(lean=-3, hx=28, hy=3, **AIMS)), (6, pose(lean=9, hx=46, hy=13, **AIMS)), (8, pose(lean=11, hx=52, hy=15, **{**AIMS, 'm': 0.2}, bl=1)), (11, pose(lean=7, hx=46, hy=10, **{**AIMS, 'm': 0.5}, bl=1)), (14, pose(lean=5, hx=40, hy=8, m=0.15, bl=1, aL=((46, 28), (54, 34)), aR=((50, 28), (56, 36))))], f),      # (the head draws back, lunges, the jaws shut on frame 8, he pulls back with blood on his mouth)
  'headless': headp,
+ 'tele_up': lambda f: {**keys([(0, pose(**JUMPA)), (6, pose(**{**JUMPA, 'aL': ((16, 18), (10, 4)), 'aR': ((48, 18), (54, 4)), 'lL': ((30, 47), (28, 57)), 'lR': ((35, 47), (36, 57))})), (8, pose(**{**JUMPA, 'aL': ((16, 18), (10, 4)), 'aR': ((48, 18), (54, 4)), 'lL': ((30, 47), (28, 57)), 'lR': ((35, 47), (36, 57))})), (14, pose(**{**JUMPA, 'lean': 1}))], f),
+                   'fade': (0, .12, .26, .42, .58, .74, .9, 1, .9, .74, .58, .42, .26, .12, 0)[f], 'glitch': (0, .4, .8, 1.2, 1.6, 2, 2.4, 0, 2.4, 2, 1.6, 1.2, .8, .4, 0)[f], 'vg': (0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 3, 2.5, 2, 1.5, 1, .5, 0)[f]},      # (Verity's double jump: in the air he vanishes, the columns of his body sliding up and down, and he is back higher up from frame 8)
  'tele': lambda f: pose(glitch=(0, .6, 1.2, 1.8, 2.4, 3, 3.5, 0, 3.5, 3, 2.4, 1.8, 1.2, .6, 0)[f], fade=(0, .1, .25, .4, .55, .7, .85, 1, .85, .7, .55, .4, .25, .1, 0)[f]),
 }
 

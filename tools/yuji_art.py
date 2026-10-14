@@ -172,6 +172,49 @@ def kick3(i):                                      # a jump, then ONE leg kicks 
     P = dict(by=by, ln=ln, hx=hx, lf=lf, lb=lb, na=kv({0: IDLE_N, 2: GUARD_N, 4: ((-3, 5), (-5, 9)), 12: ((-3, 5), (-5, 9)), 14: IDLE_N}, i), fa=kv({0: IDLE_F, 2: GUARD_F, 4: ((3, 3), (7, -1)), 12: ((3, 3), (7, -1)), 14: IDLE_F}, i), hp=i*.9, hup=1 if air else 0, hback=1 if 4 <= i <= 12 else 0, blink=False)
     return figure(P)
 ATTACKS = (('atk0', lambda i: hook(i, False)), ('atk1', lambda i: hook(i, True)), ('atk2', knee), ('atk3', kick3))
+# ---------------------------------------------------------------- crouch, crouch walk, crouch jump and the four dashes (15 frames each)
+CR = 7                                                                          # how far the hips drop in a crouch (the leg IK folds the knees by itself)
+def cdn(i):                                                                     # standing -> crouched (standing up plays it backwards)
+    P = dict(by=round(kv({0: 0, 4: 2, 9: 6, 14: CR}, i)), ln=round(kv({0: 0, 14: 2}, i)), lf=(round(kv({0: 34, 14: 37}, i)), GR, 0), lb=(round(kv({0: 31, 14: 30}, i)), GR, 0),
+             na=kv({0: IDLE_N, 5: GUARD_N, 14: GUARD_N}, i), fa=kv({0: IDLE_F, 5: GUARD_F, 14: GUARD_F}, i), hp=i*.8, blink=False)
+    return figure(P)
+def cidle(i):                                                                   # crouched, guard up, breathing
+    ph = 2*math.pi*i/15; bob = round(.7*math.sin(ph + .5))
+    P = dict(by=CR + round(.6*math.sin(ph - 1.2)), ln=2 + round(.6*math.sin(ph + 1)), lf=(37, GR, 0), lb=(30, GR, 0), na=((3, 4+bob), (6, bob)), fa=((1.5, 4.5-bob), (4, 1-bob)), hp=i*1.1, blink=i in (9, 10), hup=1 if i in (2, 3, 4) else 0)
+    return figure(P)
+def cwalk(i):                                                                   # crouch-walking forward: small shuffling steps, guard up (the game plays it backwards for walking back)
+    ph = i/15; S = 3.0; L = 2.2; sw = round(math.sin(2*math.pi*ph))
+    def foot(p, base):
+        p %= 1.0; return (base + S*math.cos(2*math.pi*p), GR - L*max(0.0, -math.sin(2*math.pi*p)), 0)
+    P = dict(by=CR - 1 + round(.5 + .5*math.cos(4*math.pi*ph)), ln=2, lf=foot(ph, 37), lb=foot(ph + .5, 30), na=((3, 4+sw), (6, sw)), fa=((1.5, 4.5-sw), (4, 1-sw)), hp=ph*4*math.pi, hback=0, blink=False)
+    return figure(P)
+CJ_LIFT = [0, 0, 0, 0, 12, 21, 27, 30, 30, 27, 21, 12, 0, 0, 0]                 # a crouch jump springs higher than the normal one (the same curve as Gojo's)
+def cjump(i):                                                                   # deep crouch, spring, knees tucked, reach for the ground, land
+    T = {0: (7, 2, (37, GR), (30, GR), 0, ((3, 4), (6, 0))), 1: (9, 3, (37, GR), (30, GR), 0, ((-2, 5), (-4, 9))), 2: (10, 3, (37, GR), (30, GR), 0, ((-3, 5), (-5, 9))), 3: (8, 2, (36, GR), (31, GR), 0, ((-1, 4), (-2, 8))),
+         4: (-3, 0, (35, GR), (32, GR), 38, ((4, -2), (6, -8))), 5: (-2, 0, (38, GR-5), (32, GR-4), 20, ((4, -2), (6, -8))), 6: (-2, 0, (39, GR-8), (33, GR-7), 10, ((4, -1), (6, -7))), 7: (-2, 0, (40, GR-10), (34, GR-9), 0, ((3, 0), (5, -6))),
+         8: (-2, 0, (40, GR-10), (33, GR-8), 0, ((3, 0), (5, -6))), 9: (-2, 0, (39, GR-8), (33, GR-6), 0, ((3, 1), (5, -4))), 10: (-1, 0, (38, GR-5), (32, GR-4), 10, ((3, 2), (5, -2))), 11: (-1, 0, (37, GR-1), (31, GR-1), 25, ((2, 3), (4, 0))),
+         12: (3, 1, (36, GR), (30, GR), 0, ((3, 4), (6, 0))), 13: (8, 2, (37, GR), (29, GR), 0, ((3, 4), (6, 0))), 14: (5, 2, (37, GR), (30, GR), 0, ((3, 4), (6, 0)))}
+    by, ln, lf, lb, ph, nar = T[i]
+    return figure(dict(by=by, ln=ln, lf=lf + (ph,), lb=lb + (ph*.6,), na=nar, fa=(((nar[0][0]-1.5, nar[0][1]+.5), (nar[1][0]-2, nar[1][1]+1))), hp=i*.9, hup=1 if 4 <= i <= 10 else 0, hback=1 if 4 <= i <= 9 else 0, blink=False))
+def streaks(f, ahead, i):                                                       # speed lines trailing the body (behind him in a forward dash, in front in a backward one)
+    if not 3 <= i <= 11: return
+    for k in range(4):
+        y = 30 + k*6 + (i + k) % 3; n = 5 + (i*2 + k*3) % 6; x1 = 47 + (k % 2)*3 if ahead else 28 - (k % 2)*3; c = 'W' if (k + i) % 2 else 'E'
+        for x in range(n): f.set(x1 + x if ahead else x1 - x, y, c if x < n - 2 else 'D')
+def dash(i, k):                                                                 # k: 0 forward, 1 back, 2 crouched forward, 3 crouched back; frames 2-11 are the burst (the game moves him then)
+    cr = k >= 2; fwd = k % 2 == 0; B = CR if cr else 0
+    if fwd:
+        P = dict(by=round(kv({0: B+1, 2: B+3, 4: B+1, 10: B+1, 14: B}, i)), ln=round(kv({0: 2 if cr else 0, 2: 1 if cr else -1, 4: 5 if cr else 4, 11: 5 if cr else 4, 14: 2 if cr else 0}, i)), hx=round(kv({0: 0, 2: -1, 4: 3, 11: 3, 14: 0}, i)),
+                 lf=tuple(round(v) for v in kv({0: (37 if cr else 34, GR, 0), 2: (36 if cr else 33, GR, 0), 4: (42, GR-(0 if cr else 4), -15), 6: (44, GR-(0 if cr else 2), -8), 8: (45, GR-(0 if cr else 1), 0), 10: (43, GR-(0 if cr else 3), -12), 12: (39, GR, 0), 14: (37 if cr else 34, GR, 0)}, i)),
+                 lb=tuple(round(v) for v in kv({0: (30 if cr else 31, GR, 0), 2: (30, GR, 0), 4: (26 if cr else 25, GR-(2 if cr else 5), 30), 6: (23, GR-(1 if cr else 4), 30), 8: (22, GR-(1 if cr else 2), 25), 10: (25, GR-(2 if cr else 5), 30), 12: (29, GR, 0), 14: (30 if cr else 31, GR, 0)}, i)),
+                 na=kv({0: GUARD_N if cr else IDLE_N, 2: ((-2, 4), (-4, 8)), 4: ((-5, 3), (-9, 6)), 11: ((-5, 3), (-9, 6)), 14: GUARD_N if cr else IDLE_N}, i), fa=kv({0: GUARD_F if cr else IDLE_F, 2: ((-2, 4), (-4, 7)), 4: ((-4, 3), (-8, 6)), 11: ((-4, 3), (-8, 6)), 14: GUARD_F if cr else IDLE_F}, i), hp=i*1.2, hback=1 if 3 <= i <= 12 else 0, blink=False)
+    else:
+        P = dict(by=round(kv({0: B+1, 2: B+2, 4: B+1, 10: B+1, 14: B}, i)), ln=round(kv({0: 2 if cr else 0, 2: 3 if cr else 1, 4: 0 if cr else -3, 11: 0 if cr else -3, 14: 2 if cr else 0}, i)), hx=round(kv({0: 0, 2: 1, 4: -3, 11: -3, 14: 0}, i)),
+                 lf=tuple(round(v) for v in kv({0: (37 if cr else 34, GR, 0), 2: (38 if cr else 35, GR, 0), 4: (35 if cr else 33, GR-(0 if cr else 2), 10), 8: (32 if cr else 30, GR-(0 if cr else 1), 5), 12: (35 if cr else 32, GR, 0), 14: (37 if cr else 34, GR, 0)}, i)),
+                 lb=tuple(round(v) for v in kv({0: (30 if cr else 31, GR, 0), 2: (31, GR, 0), 4: (26 if cr else 25, GR-(0 if cr else 3), 15), 8: (22, GR-(0 if cr else 1), 10), 12: (27, GR, 0), 14: (30 if cr else 31, GR, 0)}, i)),
+                 na=kv({0: GUARD_N if cr else IDLE_N, 3: GUARD_N, 12: GUARD_N, 14: GUARD_N if cr else IDLE_N}, i), fa=kv({0: GUARD_F if cr else IDLE_F, 3: GUARD_F, 12: GUARD_F, 14: GUARD_F if cr else IDLE_F}, i), hp=i*1.2, hback=0, blink=False)
+    r = figure(P); streaks(r[0], not fwd, i); return r
+MOVES = (('cdn', cdn, 0, 44), ('cidle', cidle, 0, 44), ('cfwd', cwalk, 0, 44), ('cjump', cjump, 4, 44), ('dash0', lambda i: dash(i, 0), 0, 44), ('dash1', lambda i: dash(i, 1), 0, 44), ('dash2', lambda i: dash(i, 2), 0, 44), ('dash3', lambda i: dash(i, 3), 0, 44))
 def pack(fn, x0, w, top):
     frames, hn, hf = [], [], []; sh = top
     for i in range(15):
@@ -183,14 +226,17 @@ if __name__ == '__main__':
     for k, fn, top in (('idle', idle, 0), ('fwd', walk, 0), ('jump', jump, 4)):
         fr, hn, hf = pack(fn, X0, W, top); out[k] = {'x0': X0, 'w': W, 'h': N + (2*top), 'top': top, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}
         if k == 'jump': out[k]['lift'] = JL
+    for k, fn, top, w in MOVES:
+        fr, hn, hf = pack(fn, X0, w, top); out[k] = {'x0': X0, 'w': w, 'h': N + 2*top, 'top': top, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}
+        if k == 'cjump': out[k]['lift'] = CJ_LIFT
     for k, fn in ATTACKS:
         fr, hn, hf = pack(fn, X0, 44, 0); out[k] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}
         if k == 'atk3': out[k]['lift'] = KICK_LIFT
     json.dump(out, open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'yuji.json'), 'w'), separators=(',', ':'))
-    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3'): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct')
+    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3'): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct')
     if len(sys.argv) > 1:                                                  # contact sheets: python3 -B yuji_art.py sheets <dir>
         d = sys.argv[2]; z = 2
-        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3'):
+        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3'):
             s = out[k]; sheet = Image.new('RGB', (15*s['w']*z, s['h']*z), (40, 40, 70)); px = {c: tuple(int(PAL[c][j:j+2], 16) for j in (1, 3, 5)) for c in PAL}
             for n, rows in enumerate(s['frames']):
                 for y, row in enumerate(rows):
