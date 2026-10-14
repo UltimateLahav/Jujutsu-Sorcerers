@@ -51,13 +51,18 @@ def shoe(f, ax, ay, near, ph=0):
 def limb(f, p0, p1, p2, w, base, lit, shade):
     m = seg(p0, p1, w[0], w[1]) | seg(p1, p2, w[1], w[2]) | disc(p1[0], p1[1], w[1]/2+.3)
     f.fill(m, base); f.bands(m, base, lit, shade); f.rim(m, 'O'); f.fill(m, base); f.bands(m, base, lit, shade)
+def unit(dx, dy):
+    l = math.hypot(dx, dy) or 1; return (dx/l, dy/l)
 def ik(H, A, L1=8.7, L2=7.4):                    # two-bone leg: the knee bends forward (towards +x)
     dx, dy = A[0]-H[0], A[1]-H[1]; d = max(abs(L1-L2)+.05, min(math.hypot(dx, dy), L1+L2-.05)); a = math.atan2(dy, dx)
     b = math.acos(max(-1, min(1, (L1*L1 + d*d - L2*L2) / (2*L1*d)))); k1 = (H[0] + L1*math.cos(a+b), H[1] + L1*math.sin(a+b)); k2 = (H[0] + L1*math.cos(a-b), H[1] + L1*math.sin(a-b))
     return k1 if k1[0] > k2[0] else k2
-def leg(f, H, A, near, ph, base, lit, shade):
-    k = ik(H, A); w = (4.6, 4.0, 3.4) if near else (4.2, 3.8, 3.2)
-    limb(f, H, k, (A[0], A[1]-1), w, base, lit, shade); f.fill(seg((A[0], A[1]-3.5), (A[0], A[1]), 3.5, 3.5), 'A'); shoe(f, A[0], A[1], near, ph)
+def leg(f, H, A, near, ph, base, lit, shade, knee=None):
+    k = knee or ik(H, A); w = (4.6, 4.0, 3.4) if near else (4.2, 3.8, 3.2)
+    if knee:
+        d = unit(A[0]-k[0], A[1]-k[1]); limb(f, H, k, (A[0]-d[0], A[1]-d[1]), w, base, lit, shade); f.fill(seg((A[0]-d[0]*3.5, A[1]-d[1]*3.5), (A[0], A[1]), 3.5, 3.5), 'A')
+    else: limb(f, H, k, (A[0], A[1]-1), w, base, lit, shade); f.fill(seg((A[0], A[1]-3.5), (A[0], A[1]), 3.5, 3.5), 'A')
+    shoe(f, A[0], A[1], near, ph)
 def head_block(P):                               # hood, face and hair, drawn at the usual place; the caller shifts it
     f = F(); hp = P.get('hp', 0.0); up = P.get('hup', 0); back = P.get('hback', 0)
     Hd = pm([(32, 21), (36, 21), (37, 23), (37, 26), (32, 26), (31, 23)]); f.fill(Hd, 'r'); f.rim(Hd, 'O'); f.fill(Hd, 'r')
@@ -89,21 +94,31 @@ def head_block(P):                               # hood, face and hair, drawn at
 def figure(P):
     by, ln = P.get('by', 0), P.get('ln', 0); nf, ff = P.get('nf', (0, 0)), P.get('ff', (0, 0)); f = F()
     sx, sy = ln, by                                                       # shoulders and head move with the lean and the bob
-    fx, fy = 35.5 + sx + ff[0], 38.0 + sy + ff[1]                         # far arm: behind the body, only its fist shows in front of the chest
-    limb(f, (36+sx, 31+sy), (35.5+sx+ff[0]*.5, 36+sy+ff[1]*.5), (fx, fy), (2.8, 2.8, 2.6), 'B', 'C', 'A'); fist = disc(fx+.8, fy+.6, 1.7); f.fill(fist, 'U'); f.rim(fist, 'O'); f.fill(fist, 'U')
+    if P.get('fa'):                                                       # an explicit far arm: elbow and wrist relative to its shoulder
+        S0 = (36+sx, 31+sy); fe = (S0[0]+P['fa'][0][0], S0[1]+P['fa'][0][1]); fw = (S0[0]+P['fa'][1][0], S0[1]+P['fa'][1][1]); d = unit(fw[0]-fe[0], fw[1]-fe[1])
+        limb(f, S0, fe, fw, (3.2, 3.0, 2.8), 'B', 'C', 'A'); f.fill(seg((fw[0]-d[0]*2.4, fw[1]-d[1]*2.4), (fw[0]-d[0]*.4, fw[1]-d[1]*.4), 3.0, 3.0), 't'); fc = (fw[0]+d[0]*1.6, fw[1]+d[1]*1.6)
+        fist = disc(fc[0], fc[1], 1.8); f.fill(fist, 'U'); f.rim(fist, 'O'); f.fill(fist, 'U'); far_h = (fc[0], fc[1]-1)
+    else:
+        fx, fy = 35.5 + sx + ff[0], 38.0 + sy + ff[1]                     # far arm: behind the body, only its fist shows in front of the chest
+        limb(f, (36+sx, 31+sy), (35.5+sx+ff[0]*.5, 36+sy+ff[1]*.5), (fx, fy), (2.8, 2.8, 2.6), 'B', 'C', 'A'); fist = disc(fx+.8, fy+.6, 1.7); f.fill(fist, 'U'); f.rim(fist, 'O'); f.fill(fist, 'U'); far_h = (fx+1.0, fy+.6-1)
     lb, lf = P['lb'], P['lf']; hipB, hipF = (32 + P.get('hx', 0), 44 + by), (34 + P.get('hx', 0), 44 + by)
-    leg(f, hipB, lb[:2], False, lb[2], 'B', 'C', 'A')
+    leg(f, hipB, lb[:2], False, lb[2], 'B', 'C', 'A', P.get('kb'))
     T = pm([(32+sx, 29+sy), (37+sx, 29+sy), (37, 40+by), (36, 44+by), (32, 44+by)]); f.fill(T, 'C'); f.bands(T, 'C', 'D', 'B'); f.rim(T, 'O'); f.fill(T, 'C'); f.bands(T, 'C', 'D', 'B')
     f.line([(32, 44+by), (36, 44+by)], 'A'); f.line([(33+sx, 31+sy), (33, 41+by)], 'D'); f.set(36, 35+sy, 'g')
-    leg(f, hipF, lf[:2], True, lf[2], 'B', 'C', 'A')
+    leg(f, hipF, lf[:2], True, lf[2], 'B', 'C', 'A', P.get('kf'))
     f.blit(head_block(P), sx, sy + 3)
-    wx, wy = 34.6 + sx + nf[0], 41.0 + sy + nf[1]                         # near arm: down the side of the body, forearm forward to a fist at the belt
-    limb(f, (34+sx, 31+sy), (34+sx+nf[0]*.5, 37.5+sy+nf[1]*.5), (wx, wy), (3.4, 3.0, 2.8), 'C', 'D', 'B'); f.fill(seg((wx-.8, wy-2.0), (wx+.1, wy-.4), 3.0, 3.0), 's')
-    fist = disc(wx+.9, wy+.9, 1.8); f.fill(fist, 'S'); f.rim(fist, 'O'); f.fill(fist, 'S'); f.line([(wx+.2, wy+2.3), (wx+2.0, wy+2.3)], 'U'); f.set(wx+.2, wy-.7, 'T')
+    if P.get('na'):                                                       # an explicit near arm: elbow and wrist relative to its shoulder
+        S0 = (34+sx, 31+sy); ne = (S0[0]+P['na'][0][0], S0[1]+P['na'][0][1]); nw = (S0[0]+P['na'][1][0], S0[1]+P['na'][1][1]); d = unit(nw[0]-ne[0], nw[1]-ne[1])
+        limb(f, S0, ne, nw, (3.4, 3.0, 2.8), 'C', 'D', 'B'); f.fill(seg((nw[0]-d[0]*2.4, nw[1]-d[1]*2.4), (nw[0]-d[0]*.4, nw[1]-d[1]*.4), 3.0, 3.0), 's'); fc = (nw[0]+d[0]*1.6, nw[1]+d[1]*1.6)
+        fist = disc(fc[0], fc[1], 1.9); f.fill(fist, 'S'); f.rim(fist, 'O'); f.fill(fist, 'S'); f.set(fc[0]-.4, fc[1]-1.3, 'T'); f.set(fc[0]+.3, fc[1]+1.4, 'U'); near_h = (fc[0], fc[1]-1)
+    else:
+        wx, wy = 34.6 + sx + nf[0], 41.0 + sy + nf[1]                     # near arm: down the side of the body, forearm forward to a fist at the belt
+        limb(f, (34+sx, 31+sy), (34+sx+nf[0]*.5, 37.5+sy+nf[1]*.5), (wx, wy), (3.4, 3.0, 2.8), 'C', 'D', 'B'); f.fill(seg((wx-.8, wy-2.0), (wx+.1, wy-.4), 3.0, 3.0), 's')
+        fist = disc(wx+.9, wy+.9, 1.8); f.fill(fist, 'S'); f.rim(fist, 'O'); f.fill(fist, 'S'); f.line([(wx+.2, wy+2.3), (wx+2.0, wy+2.3)], 'U'); f.set(wx+.2, wy-.7, 'T'); near_h = (wx+.9, wy+.9-1)
     out = [(x, y) for y in range(N) for x in range(N) if f.g[y][x] == '.' and any(f.at(x+dx, y+dy) != '.' for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))]
     for x, y in out: f.set(x, y, 'O')
     f.g = f.g[1:] + [['.']*N]                                             # feet on row 62, as in Gojo's sprites
-    return f, (wx+.9, wy+.9-1), (fx+1.0, fy+.6-1)
+    return f, near_h, far_h
 GR = 59                                                                    # ankle row on the ground
 def idle(i):
     ph = 2*math.pi*i/15
@@ -126,6 +141,37 @@ def jump(i):
          12: (3, 1, (34, G), (30, G), 0, 2, 0), 13: (4, 2, (36, G), (29, G), 0, 3, 0), 14: (1, 0, (34, G), (31, G), 0, 1, 0)}
     by, ln, lf, lb, ph, fy, up = T[i]
     return figure(dict(by=by, ln=ln, lf=lf + (ph,), lb=lb + (ph*.6,), nf=(0, fy), ff=(0, fy), hp=i*.9, hup=up, hback=1 if 4 <= i <= 9 else 0))
+def mix(a, b, t):
+    return tuple(mix(x, y, t) for x, y in zip(a, b)) if isinstance(a, tuple) else a + (b - a)*t
+def kv(keys, i):                                  # keyframes {frame: value} -> the value at frame i, eased between the keys (tuples are mixed part by part)
+    ks = sorted(keys.items())
+    if i <= ks[0][0]: return ks[0][1]
+    for (a, va), (b, vb) in zip(ks, ks[1:]):
+        if a <= i <= b: t = (i-a)/(b-a); return mix(va, vb, t*t*(3-2*t))
+    return ks[-1][1]
+IDLE_N, IDLE_F = ((0.0, 6.5), (0.6, 10.0)), ((-.5, 5), (-.5, 7)); GUARD_N, GUARD_F = ((3, 4), (6, 0)), ((1.5, 4.5), (4, 1))
+HOOK = {0: IDLE_N, 2: GUARD_N, 4: ((-4, 3), (-3, -4)), 5: ((0, -1), (3, -7)), 6: ((5, -2), (9, -5)), 7: ((7, -1), (12, -4)), 8: ((7.5, -.5), (12.5, -3.5)), 9: ((6, 1), (10, -1)), 10: ((4, 3), (8, 2)), 12: ((2, 5), (3, 3)), 14: IDLE_N}      # a hook: the elbow comes up and round, the bent arm swings at head height
+def hook(i, far):                                  # right hook (the near arm) or left hook (the far arm): wind back, swing round, snap back; the impact is frame 7
+    g = {0: IDLE_F if far else IDLE_N, 2: GUARD_N if far else GUARD_F, 12: GUARD_N if far else GUARD_F, 14: IDLE_N if far else IDLE_F}
+    P = dict(by=round(kv({0: 0, 3: 1, 7: 0, 14: 0}, i)), ln=round(kv({0: 0, 3: -1, 5: 0, 7: 2, 10: 1, 14: 0}, i)), hx=round(kv({0: 0, 3: -1, 7: 1, 10: 0, 14: 0}, i)), lf=(round(kv({0: 34, 5: 34, 7: 36, 10: 35, 14: 34}, i)), GR, 0), lb=(round(kv({0: 31, 7: 30, 14: 31}, i)), GR, 0),
+             hp=i*.8, hback=1 if 5 <= i <= 9 else 0, blink=False)
+    P['fa'], P['na'] = (kv(HOOK, i), kv(g, i)) if far else (kv(g, i), kv(HOOK, i)); P['fa'], P['na'] = (P['fa'], P['na']) if far else (P['na'], P['fa'])
+    return figure(P)
+def knee(i):                                       # both fists up, then the near knee drives up and forward into the enemy; the impact is frame 7
+    kn = {3: (37, 48), 5: (40, 44), 7: (43, 41), 8: (43, 41), 10: (40, 45), 12: (37, 50)}; an = {3: (35, 56, 10), 5: (37, 53, 30), 7: (38, 50, 40), 8: (38, 50, 40), 10: (36, 54, 25), 12: (35, 57, 10)}
+    up = 3 <= i <= 12; hp = {0: 0, 4: 0, 7: 2, 10: 1, 14: 0}
+    P = dict(by=round(kv({0: 0, 3: 1, 7: -1, 10: 0, 14: 0}, i)), ln=round(kv({0: 0, 3: -1, 7: 2, 10: 1, 14: 0}, i)), hx=round(kv(hp, i)), lf=tuple(round(v) for v in kv(an, i)) if up else (34, GR, 0), kf=tuple(kv(kn, i)) if up else None, lb=(31, GR, 0),
+             na=kv({0: IDLE_N, 2: GUARD_N, 5: GUARD_N, 7: ((6, 3), (10, 2)), 10: GUARD_N, 13: IDLE_N, 14: IDLE_N}, i), fa=kv({0: IDLE_F, 2: GUARD_F, 5: GUARD_F, 7: ((5, 2), (9, 0)), 10: GUARD_F, 13: IDLE_F, 14: IDLE_F}, i), hp=i*.7, hback=0, blink=False)
+    return figure(P)
+KICK = {0: (1, 0, 0, (34, GR, 0), (31, GR, 0)), 1: (4, 1, 0, (34, GR, 0), (30, GR, 0)), 2: (3, 1, 0, (34, GR, 0), (30, GR, 0)), 3: (-2, 0, 0, (36, 56, 20), (31, 56, 10)), 4: (-2, -1, 1, (38, 49, -10), (33, 51, 10)),
+        5: (-2, -3, 2, (45, 28, -55), (33, 51, 10)), 6: (-2, -2, 2, (41, 40, -20), (33, 51, 10)), 7: (-2, -1, 2, (40, 44, -10), (33, 51, 10)), 8: (-2, 0, 2, (46, 42, -5), (33, 50, 10)), 9: (-2, 0, 2, (51, 41, -5), (33, 50, 10)),
+        10: (-2, 0, 2, (43, 47, 10), (33, 50, 10)), 11: (-2, 1, 2, (41, 50, 20), (33, 51, 10)), 12: (-1, 2, 3, (48, 54, 35), (33, 52, 10)), 13: (1, 1, 2, (40, 57, 20), (31, 57, 10)), 14: (2, 0, 1, (35, GR, 0), (31, GR, 0))}
+KICK_LIFT = [0, 0, 0, 4, 9, 12, 12, 11, 11, 12, 12, 12, 10, 4, 0]    # the jump (the game raises the sprite by this many px); the kicks land on frames 5, 9 and 12
+def kick3(i):                                      # a jump, then ONE leg kicks three times: high (the head), middle (the stomach), low (the legs); the arms balance
+    by, ln, hx, lf, lb = KICK[i]; air = 3 <= i <= 12
+    P = dict(by=by, ln=ln, hx=hx, lf=lf, lb=lb, na=kv({0: IDLE_N, 2: GUARD_N, 4: ((-3, 5), (-5, 9)), 12: ((-3, 5), (-5, 9)), 14: IDLE_N}, i), fa=kv({0: IDLE_F, 2: GUARD_F, 4: ((3, 3), (7, -1)), 12: ((3, 3), (7, -1)), 14: IDLE_F}, i), hp=i*.9, hup=1 if air else 0, hback=1 if 4 <= i <= 12 else 0, blink=False)
+    return figure(P)
+ATTACKS = (('atk0', lambda i: hook(i, False)), ('atk1', lambda i: hook(i, True)), ('atk2', knee), ('atk3', kick3))
 def pack(fn, x0, w, top):
     frames, hn, hf = [], [], []; sh = top
     for i in range(15):
@@ -137,11 +183,14 @@ if __name__ == '__main__':
     for k, fn, top in (('idle', idle, 0), ('fwd', walk, 0), ('jump', jump, 4)):
         fr, hn, hf = pack(fn, X0, W, top); out[k] = {'x0': X0, 'w': W, 'h': N + (2*top), 'top': top, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}
         if k == 'jump': out[k]['lift'] = JL
+    for k, fn in ATTACKS:
+        fr, hn, hf = pack(fn, X0, 44, 0); out[k] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}
+        if k == 'atk3': out[k]['lift'] = KICK_LIFT
     json.dump(out, open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'yuji.json'), 'w'), separators=(',', ':'))
-    for k in ('idle', 'fwd', 'jump'): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct')
+    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3'): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct')
     if len(sys.argv) > 1:                                                  # contact sheets: python3 -B yuji_art.py sheets <dir>
         d = sys.argv[2]; z = 2
-        for k in ('idle', 'fwd', 'jump'):
+        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3'):
             s = out[k]; sheet = Image.new('RGB', (15*s['w']*z, s['h']*z), (40, 40, 70)); px = {c: tuple(int(PAL[c][j:j+2], 16) for j in (1, 3, 5)) for c in PAL}
             for n, rows in enumerate(s['frames']):
                 for y, row in enumerate(rows):
