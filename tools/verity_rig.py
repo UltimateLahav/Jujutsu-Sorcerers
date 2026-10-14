@@ -77,6 +77,8 @@ FOLD = dict(hx=33, hy=36, sy=42, hp=55, lean=1, ribs=0, aL=((21, 53), (18, 61)),
 CROUCH = [(0, pose()), (14, pose(**FOLD))]
 CLAW1 = [(0, pose(**FOLD)), (4, pose(**{**FOLD, 'aR': ((48, 52), (53, 52))}) ), (6, pose(**{**FOLD, 'lean': 4, 'aR': ((52, 50), (60, 55))})), (9, pose(**{**FOLD, 'lean': 3, 'aR': ((52, 54), (59, 61))})), (14, pose(**FOLD))]
 CLAW2 = [(0, pose(**FOLD)), (4, pose(**{**FOLD, 'aL': ((17, 52), (12, 52))})), (6, pose(**{**FOLD, 'lean': 4, 'aL': ((22, 50), (58, 54))})), (9, pose(**{**FOLD, 'lean': 3, 'aL': ((24, 54), (57, 61))})), (14, pose(**FOLD))]
+JUMPC = dict(hy=14, sy=25, hp=44, lean=2, aL=((20, 38), (19, 50)), aR=((44, 38), (45, 50)), lL=((36, 53), (31, 59)), lR=((38, 53), (36, 59)))      # crouched for the jump
+JUMPA = dict(hy=5.5, lean=-1, aL=((17, 24), (12, 12)), aR=((47, 24), (52, 12)), lL=((31, 44), (27, 51)), lR=((35, 44), (37, 51)))      # in the air: arms up, legs tucked
 SEIZE = ((52, 22), (61, 28))      # the right arm straight out: the hand is where Gojo's throat is
 A = {
  'idle': idlep, 'walk': walkp,
@@ -89,6 +91,7 @@ A = {
  'bite': lambda f: keys([(0, pose()), (5, pose(lean=-3, hx=30, hy=5, m=1, aL=((18, 34), (14, 50)), aR=((46, 34), (50, 50)))), (8, pose(lean=9, hx=44, hy=11, m=1, aL=((18, 34), (14, 50)), aR=((46, 34), (52, 48)))), (10, pose(lean=9, hx=45, hy=12, m=0.2)), (14, pose())], f),
  'hurt': lambda f: keys([(0, pose()), (3, pose(lean=-6, hx=29, hy=8, m=0.6, aL=((16, 28), (10, 22)), aR=((48, 28), (54, 22)))), (8, pose(lean=-5, hx=30, hy=8, m=0.4, aL=((17, 30), (12, 28)), aR=((47, 30), (52, 28)))), (14, pose())], f),
  'seize': lambda f: keys([(0, pose()), (3, pose(lean=3, hy=7.5, aR=((50, 26), (60, 30)))), (5, pose(lean=3, hy=7.5, aR=SEIZE)), (7, pose(lean=-3, hx=29, hy=5, m=1, aR=SEIZE)), (9, pose(lean=10, hx=50, hy=14, m=1, aR=SEIZE)), (10, pose(lean=11, hx=55, hy=16, m=0, bl=1, aR=SEIZE)), (12, pose(lean=8, hx=50, hy=13, m=0.15, bl=1, aR=SEIZE)), (14, pose(lean=2, hx=40, hy=9, m=0.3, bl=1, aR=((46, 28), (50, 38))))], f),      # the DEATH: the arm reaches out and grips Gojo's throat (5), the head draws back, jaws wide (7), lunges (9) and the jaws shut on his head (10), pulls back, bloody (12), lets go (14)
+ 'jump': lambda f: keys([(0, pose()), (3, pose(**JUMPC)), (5, pose(**JUMPA)), (10, pose(**{**JUMPA, 'lean': 1})), (12, pose(**JUMPC)), (14, pose())], f),      # (playable Verity: crouch, push off, in the air with the arms up and the legs tucked, land)
  'talk': lambda f: {**idlep(f), 'm': 0.6 * (0.5 - 0.5 * math.cos(2 * math.pi * f / 15))},      # (the idle sway and breathing, with the mouth opening and closing)
  'tele': lambda f: pose(glitch=(0, .6, 1.2, 1.8, 2.4, 3, 3.5, 0, 3.5, 3, 2.4, 1.8, 1.2, .6, 0)[f], fade=(0, .1, .25, .4, .55, .7, .85, 1, .85, .7, .55, .4, .25, .1, 0)[f]),
 }

@@ -43,6 +43,17 @@ for i in range(0, 131):                                                         
     th = math.radians(25 + i); x = 32 + 19 * math.cos(th); y = 32 + 14 * math.sin(th) + 3; w = 1 + 2.4 * math.sin(i / 130 * math.pi); d.ellipse((x - w / 2, y - w / 2, x + w / 2, y + w / 2), fill=(10, 6, 0))
 d.line((15, 41, 13, 39), fill=(10, 6, 0), width=2); d.line((49, 41, 51, 39), fill=(10, 6, 0), width=2)
 art['smiley'] = url(sm)
+# Verity's ball (13x13, the size of Gojo's head): a yellow smiley with a dark rim, two eyes and a wide smile
+def ball13():
+    S = 13; im = Image.new('RGBA', (S, S), (0, 0, 0, 0)); o = im.load(); c = (S - 1) / 2
+    OL, HI, LIT, BASE, SH = (40, 28, 0), (255, 246, 170), (255, 222, 60), (255, 204, 18), (206, 150, 8)
+    for y in range(S):
+        for x in range(S):
+            d = ((x - c) ** 2 + (y - c) ** 2) ** 0.5
+            if d <= 6.3: o[x, y] = (OL if d > 5.3 else HI if x + y < 7 and d < 4.6 else LIT if x + y < 11 else BASE if x + y < 14 else SH) + (255,)
+    for xy in [(4, 3), (4, 4), (8, 3), (8, 4)] + [(3, 7), (4, 8), (5, 9), (6, 9), (7, 9), (8, 8), (9, 7)]: o[xy] = (20, 12, 0, 255)
+    return im
+art['ball'] = url(ball13())
 import sys; sys.path.insert(0, '.'); import verity_rig; art['vanim'] = verity_rig.strips(sm)      # Verity's 15-frame animations (tools/verity_rig.py)
 json.dump(art, open('story_art.json', 'w'), separators=(',', ':'))
 sheet = Image.new('RGB', (4 * 200, 3 * 200), (30, 22, 52)); ims = [v, bite, sm]
