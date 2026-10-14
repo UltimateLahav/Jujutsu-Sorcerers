@@ -18,7 +18,7 @@ BELLY = [(148, 148, 158), (112, 112, 124), (76, 76, 88)]
 
 # ---------------------------------------------------------------- poses (x is relative to the anchor column, y is the picture row; his feet are on row 62)
 STAND = dict(lean=0.0, hx=0.0, hy=9.6, hrot=0.0, sy=19.0, hp=44.0, aL=[(-7.4, 33), (-8.2, 46)], aR=[(7.4, 33), (8.2, 46)], gL=0.0, gR=0.0,
-             lL=[(-2.2, 53), (-2.4, 60)], lR=[(2.2, 53), (2.4, 60)], eyes=0, mouth=0, sx=1.0, sz=1.0, rot=0.0, tx=0.0, ty=0.0, piv=(0.0, 62.0), belly=1, fl=0.0)
+             lL=[(-2.2, 53), (-2.4, 60)], lR=[(2.2, 53), (2.4, 60)], eyes=0, mouth=0, sx=1.0, sz=1.0, rot=0.0, tx=0.0, ty=0.0, piv=(0.0, 62.0), belly=1, fl=0.0, nk=None, nw=4.8)
 def pose(**kw): p = copy.deepcopy(STAND); p.update(kw); return p
 mix = lambda a, b, t: [mix(x, y, t) for x, y in zip(a, b)] if isinstance(a, (list, tuple)) else a + (b - a) * t
 ease = lambda t: t * t * (3 - 2 * t)
@@ -82,7 +82,12 @@ def render(p, W=64, ax=32, Hc=64, oy=0):
     # torso and neck
     chest, waist = 5.8, 4.7
     layer(lambda c: c.poly(TL([(-chest + up(sy), sy), (chest + up(sy), sy), (waist + up(36), 36), (4.9, hp), (-4.9, hp), (-waist + up(36), 36)])), BODY)
-    layer(lambda c: c.poly(TL([(-2.4 + up(sy), sy + 1.5), (2.4 + up(sy), sy + 1.5), (2.4 + hx, hy + 5), (-2.4 + hx, hy + 5)])), BODY)
+    if p.get('nk'):                                                                                       # (a stretched rubber neck: a tube along the points nk from the top of the body to the chin, 4.8 thick at the body and nw thick at the head)
+        npts = TL(p['nk']); nn = len(npts) - 1
+        def tube(c):
+            for k in range(nn): c.line(npts[k:k + 2], 4.8 + (p['nw'] - 4.8) * (k + 0.5) / nn)
+        layer(tube, BODY)
+    else: layer(lambda c: c.poly(TL([(-2.4 + up(sy), sy + 1.5), (2.4 + up(sy), sy + 1.5), (2.4 + hx, hy + 5), (-2.4 + hx, hy + 5)])), BODY)
     # the head: a wide box with rounded corners and two ears
     hr = math.radians(p['hrot']); H0 = lambda a, b: (a * math.cos(hr) - b * math.sin(hr) + hx, a * math.sin(hr) + b * math.cos(hr) + hy)
     HEAD = [(-7.0, -7.2), (7.0, -7.2), (7.7, -3.0), (7.4, 2.6), (5.6, 6.6), (2.6, 8.0), (-2.6, 8.0), (-5.6, 6.6), (-7.4, 2.6), (-7.7, -3.0)]
@@ -119,7 +124,10 @@ def render(p, W=64, ax=32, Hc=64, oy=0):
     def dot(x, y, col):
         X, Y = int(math.floor(ax + 0.5 + x)), int(math.floor(y)) + oy
         if 0 <= X < W and 0 <= Y < Hc and out[Y, X, 3]: out[Y, X] = col + (255,) if len(col) == 3 else col
-    def hd(a, b, col): x, y = T(*H0(a, b)); dot(x, y, col)      # a point on the head, from its own centre
+    def hd(a, b, col):                                                       # a point on the head, from its own centre (when the figure is stretched the next row or column of the head can be two pixels away: the gap gets this point's colour)
+        x, y = T(*H0(a, b)); dot(x, y, col); x2, y2 = T(*H0(a, b + 1)); x3, y3 = T(*H0(a + 1, b))
+        if int(math.floor(y2)) - int(math.floor(y)) >= 2: dot((x + x2) / 2, (y + y2) / 2, col)
+        if int(math.floor(x3)) - int(math.floor(x)) >= 2: dot((x + x3) / 2, (y + y3) / 2, col)
     if p['belly']:                                                          # the pale smudge on the belly
         for yy in range(31, 45):
             for xx in range(-4, 5):
@@ -134,17 +142,24 @@ def render(p, W=64, ax=32, Hc=64, oy=0):
             for dx in (-1, 0, 1): hd(ex + dx, -5.0, EYE2)
         elif e == 1:
             for k in range(-2, 3): hd(ex + k, -4.0 + k * 0.8, EYE); hd(ex + k, -4.0 - k * 0.8, EYE)
+        elif e == 3:                                                        # bulging (shock): two big white discs, each with a tiny dark pupil looking forward
+            for dy, w in enumerate((1, 2, 2, 2, 1)):
+                for dx in range(-w, w + 1): hd(ex + dx, -6.0 + dy, EYE)
+            hd(ex + 1, -4.0, OL[:3]); hd(ex + 1, -3.0, OL[:3])
         else:
             for dx in range(-2, 3): hd(ex + dx, -3.0, EYE)
             for dx in range(-2, 3): hd(ex + dx, -4.0, EYE2)
     hd(-1, 0.0, NOSE); hd(0, 0.0, NOSE)                                      # the nose
     m = p['mouth']; mw = 4 + (1 if m == 1 else 0)
-    for dx in range(-mw, mw + 1):                                           # the grin: a row of teeth over gums over a row of teeth, the corners curl up (open: a dark mouth between them)
+    for dx in (range(-mw, mw + 1) if m != 2 else ()):                       # the grin: a row of teeth over gums over a row of teeth, the corners curl up (open: a dark mouth between them)
         yo = 3.0 - (1.0 if abs(dx) >= mw else 0.0)
         hd(dx, yo, TEETH); hd(dx, yo + 1, MOUTH if m == 1 else GUM)
         if abs(dx) < mw: hd(dx, yo + 2, MOUTH if m == 1 else TEETH)
         if m == 1 and abs(dx) < mw - 1: hd(dx, yo + 3, MOUTH); hd(dx, yo + 4, TEETH)
-    for dx in range(-mw + 1, mw, 2): hd(dx, 3.0, (176, 160, 134))                      # (the gaps between the teeth)
+    for dx in (range(-mw + 1, mw, 2) if m != 2 else ()): hd(dx, 3.0, (176, 160, 134))                      # (the gaps between the teeth)
+    if m == 2:                                                              # SHOCK: the grin drops into a big round O (a row of teeth along the top, the tongue at the bottom)
+        for dy, w in enumerate((2, 3, 3, 3, 2, 1)):
+            for dx in range(-w, w + 1): hd(dx, 3.0 + dy, TEETH if dy == 0 else GUM if dy == 4 else MOUTH)
     if p.get('face', 1) == 0:                                                # (seen from the back: no face)
         for a_ in range(-6, 7):
             for b_ in range(-5, 8): hd(a_, b_, BODY[2])
@@ -328,6 +343,35 @@ def a_run(i):                                                                 # 
     b = 1.6 * abs(math.cos(t))
     return pose(lean=7.0, hp=44 - b, sy=19 - b, hy=9.6 - b, hrot=2.5 * math.sin(t), mouth=1, aL=[(-6.0 + 5.0 * math.sin(t + math.pi), 33), (-3.0 + 11.0 * math.sin(t + math.pi), 40 - 4.0 * abs(math.sin(t)))], aR=[(6.0 + 5.0 * math.sin(t), 33), (3.0 + 11.0 * math.sin(t), 40 - 4.0 * abs(math.sin(t)))], gL=0.4, gR=0.4, **legs)
 
+SNAP_HX, SNAP_HY = 44.0, 16.0                                                 # where the head is when it smashes into Gojo: this far in front of the body, at the height of his face
+def neck(hx, hy, lean, sag, n=16):                                            # the points of a stretched rubber neck: a curve from the top of the body to the chin, sagging by sag pixels in the middle (a negative sag arches it up)
+    b = (lean * 25.0 / 26.0, 20.5); e = (hx + lean, hy + 5.0); c = ((b[0] + e[0]) / 2, (b[1] + e[1]) / 2 + 2.0 * sag); pts = []
+    for k in range(n): t = k / (n - 1.0); pts.append(((1 - t) ** 2 * b[0] + 2 * (1 - t) * t * c[0] + t * t * e[0], (1 - t) ** 2 * b[1] + 2 * (1 - t) * t * c[1] + t * t * e[1]))
+    return pts
+def a_shock(i):                                                               # SHOCK (he sees his shield cut in two): he squashes down, springs up with a take, hops, the eyes pop and the jaw drops, the arms fly up; then he stands trembling (frames 8-14 are a tremble that the game repeats)
+    f = float(i); u = seg(f, 2.5, 4.5); air = math.sin(math.pi * seg(f, 3.0, 7.5)); tr = seg(f, 6.0, 8.0); sh = math.sin(f * 5.3); kn = math.sin(f * 4.6) * tr
+    sz = sc(f, [(0, 1.0), (2.5, 0.88), (4.5, 1.2), (6.5, 1.04), (14, 1.04)])
+    return pose(sz=sz, sx=1.0 + (1.0 - sz) * 0.6, ty=-7.0 * air, lean=-3.0 * u, hrot=5.0 * math.sin(f * 4.1) * tr, tx=0.7 * math.sin(f * 6.2) * tr, eyes=3 if f >= 2.5 else 0, mouth=2 if f >= 3.0 else 0, gL=1.0 * u, gR=1.0 * u,
+                aL=[(-8.0 - 5.0 * u, 33 - 13.0 * u), (-9.0 - 6.0 * u + sh * tr, 46 - 42.0 * u + math.cos(f * 4.4) * tr)], aR=[(8.0 + 5.0 * u, 33 - 13.0 * u), (9.0 + 6.0 * u - sh * tr, 46 - 42.0 * u - math.cos(f * 4.4) * tr)],
+                lL=[(-2.2 - 1.5 * air + kn, 53 - 3.0 * air), (-2.4 - 1.5 * air + kn * 1.5, 60 - 6.0 * air)], lR=[(2.2 + 1.5 * air - kn, 53 - 3.0 * air), (2.4 + 1.5 * air - kn * 1.5, 60 - 6.0 * air)])
+def a_kickb(i):                                                               # KICKED IN THE FACE: the head shoots backwards on a rubber neck up to 170 px long, bounces on the end of it and hangs there shaking (frames 11-14 are a vibration that the game repeats); the arms flail, the knees knock
+    f = float(i)
+    u = sc(f, [(0, 0.0), (1, 0.05), (3, 0.42), (5, 0.84), (7, 1.07)]) if f < 7 else 1.0 + 0.07 * math.cos((f - 7) * math.pi / 2) * (0.35 + 0.65 * math.exp(-0.35 * (f - 7)))
+    hx, hy = -2.0 - 160.0 * u, 10.8 - 16.0 * min(1.0, u); lean = -4.5 * seg(f, 0, 4); fl = seg(f, 1, 4); sw, cw = math.sin(f * 1.9), math.cos(f * 2.3)
+    sag = 9.0 * u * u * (1.0 + 0.25 * math.sin(f * 1.6) * seg(f, 6, 9)); kn = math.sin(f * 2.2)
+    return pose(lean=lean, hx=hx, hy=hy, hrot=-27.0 * seg(f, 0, 1.5) + 14.0 * math.sin(f * 1.1) * seg(f, 2, 9), nk=neck(hx, hy, lean, sag), nw=4.8 - 1.3 * min(1.0, u), sz=1.04 - 0.04 * seg(f, 0, 6), eyes=3 if f < 1.5 else 1, mouth=2 if f < 1.5 else 1, gL=1.0, gR=1.0,
+                aL=[(-13.0, 20.0), (-15.0 + 2.0 * sw * fl, 4.0 + 3.0 * cw * fl)], aR=[(13.0, 20.0), (15.0 - 2.0 * sw * fl, 4.0 - 3.0 * cw * fl)],
+                lL=[(-2.2 + 1.5 * kn, 53), (-2.4 + 2.0 * math.sin(f * 2.2 + 0.5), 60)], lR=[(2.2 - 1.5 * kn, 53), (2.4 - 2.0 * math.sin(f * 2.2 + 0.5), 60)])
+def a_snap(i):                                                                # THE SNAP: the head is pulled back even further (frames 0-3), then it whips back over the body on its rubber neck and smashes into whatever stands in front of him (impact: frame 10, the head is SNAP_HX px in front of the body at face height), bounces back a little and hangs there; the body is dragged forward
+    f = float(i); wd = ease(seg(f, 0, 3)); s = seg(f, 3.0, 9.6) ** 1.7; rec = max(0.0, f - 10.0); k = seg(f, 6, 10); st = ease(seg(f, 2, 9))
+    if f < 3.0: hx, hy = -162.0 - 24.0 * wd, -5.2 - 2.0 * wd
+    elif f <= 10.0: hx, hy = lerp(-186.0, SNAP_HX, s), lerp(-7.2, SNAP_HY, s) - 22.0 * math.sin(math.pi * s)
+    else: hx, hy = SNAP_HX - 7.0 * math.sin(rec * math.pi / 2.5) * math.exp(-0.45 * rec), SNAP_HY + 1.5 * math.sin(rec * 1.4) * math.exp(-0.4 * rec)
+    lean = 3.5 * wd + 4.5 * seg(f, 8, 10) - 1.5 * seg(f, 11, 14); sag = lerp(9.0, -22.0, seg(f, 3, 6.5)) if f < 6.5 else lerp(-22.0, 2.0, seg(f, 6.5, 10))
+    return pose(lean=lean, hx=hx, hy=hy, hrot=-8.0 * wd * (1 - seg(f, 3, 4)) + 22.0 * math.sin(math.pi * seg(f, 3.0, 10.0)), nk=neck(hx, hy, lean, sag), nw=3.5 + 1.3 * s, sz=1.0 - 0.03 * st, eyes=1 if f < 2 else 0, mouth=1, gL=1.0, gR=1.0,
+                aL=[(-9.0 - 2.0 * wd, 31), (-11.0 - 4.0 * wd + 14.0 * k, 42 - 10.0 * k)], aR=[(8.0 + 6.0 * k, 30 - 2.0 * k), (9.0 + 14.0 * k, 36 - 8.0 * k)],
+                lL=[(-2.2 - 2.5 * st, 53), (-2.4 - 3.5 * st, 60)], lR=[(2.2 + 3.5 * st, 53), (2.4 + 4.5 * st, 60)])
+
 def pose_of(name, i):
     if name == 'idle': return a_idle(i)
     if name == 'walk': return a_walk(i)
@@ -358,8 +402,11 @@ def pose_of(name, i):
     if name == 'ult1': return a_ult1(i)
     if name == 'ult2': return a_ult2(i)
     if name == 'run': return a_run(i)
+    if name == 'shock': return a_shock(i)
+    if name == 'kickb': return a_kickb(i)
+    if name == 'snap': return a_snap(i)
     raise KeyError(name)
-CELL = {'idle': (64, 32, 64, 0), 'walk': (64, 32, 64, 0), 'stun': (64, 32, 64, 0), 'smash': (64, 32, 80, 16), 'unsmash': (64, 32, 80, 16), 'flat': (64, 32, 64, 0), 'flatwalk': (64, 32, 64, 0), 'flatpunch': (64, 32, 64, 0), 'm0': WIDE + (64, 0), 'm1': WIDE + (64, 0), 'm3': WIDE + (64, 0), 'dashf': WIDE + (64, 0), 'dashb': WIDE + (64, 0), 'rx0': REACT + (64, 0), 'rx1': REACT + (64, 0), 'rx2': REACT + (64, 0), 'rx4': REACT + (64, 0), 'jump': (64, 32, 72, 8), 'toon': (64, 32, 64, 0), 'huge': WIDE + (64, 0), 'rx3': REACT + (64, 0), 'rx5': REACT + (64, 0), 'rx6': REACT + (64, 0), 'rx7': REACT + (64, 0), 'rx8': REACT + (64, 0), 'rx9': REACT + (64, 0), 'ult1': WIDE + (64, 0), 'ult2': WIDE + (64, 0), 'run': (64, 32, 64, 0)}
+CELL = {'idle': (64, 32, 64, 0), 'walk': (64, 32, 64, 0), 'stun': (64, 32, 64, 0), 'smash': (64, 32, 80, 16), 'unsmash': (64, 32, 80, 16), 'flat': (64, 32, 64, 0), 'flatwalk': (64, 32, 64, 0), 'flatpunch': (64, 32, 64, 0), 'm0': WIDE + (64, 0), 'm1': WIDE + (64, 0), 'm3': WIDE + (64, 0), 'dashf': WIDE + (64, 0), 'dashb': WIDE + (64, 0), 'rx0': REACT + (64, 0), 'rx1': REACT + (64, 0), 'rx2': REACT + (64, 0), 'rx4': REACT + (64, 0), 'jump': (64, 32, 72, 8), 'toon': (64, 32, 64, 0), 'huge': WIDE + (64, 0), 'rx3': REACT + (64, 0), 'rx5': REACT + (64, 0), 'rx6': REACT + (64, 0), 'rx7': REACT + (64, 0), 'rx8': REACT + (64, 0), 'rx9': REACT + (64, 0), 'ult1': WIDE + (64, 0), 'ult2': WIDE + (64, 0), 'run': (64, 32, 64, 0), 'shock': (64, 32, 96, 32), 'kickb': (288, 196, 100, 36), 'snap': (288, 196, 100, 36)}
 def frame(name, i):
     W, ax, H, oy = CELL[name]; p = pose_of(name, i)
     if p.get('squash'):                                                    # a cartoon squash: the picture itself is scaled (wider, much lower), standing on the floor
@@ -390,5 +437,5 @@ def sheet(d, names, zoom=2, cols=None):                                      # c
     return out
 if __name__ == '__main__':
     d = sys.argv[1] if len(sys.argv) > 1 else '.'
-    for nm, names in (('a', ['idle', 'walk', 'stun']), ('b', ['smash', 'flat', 'flatwalk', 'flatpunch']), ('c', ['m0', 'm1', 'm3']), ('d', ['dashf', 'dashb']), ('e', ['rx0', 'rx1', 'rx2', 'rx4']), ('f', ['jump', 'toon', 'huge']), ('g', ['rx3', 'rx5', 'rx6']), ('h', ['rx7', 'rx8', 'rx9']), ('i', ['ult1', 'ult2', 'run'])):
+    for nm, names in (('a', ['idle', 'walk', 'stun']), ('b', ['smash', 'flat', 'flatwalk', 'flatpunch']), ('c', ['m0', 'm1', 'm3']), ('d', ['dashf', 'dashb']), ('e', ['rx0', 'rx1', 'rx2', 'rx4']), ('f', ['jump', 'toon', 'huge']), ('g', ['rx3', 'rx5', 'rx6']), ('h', ['rx7', 'rx8', 'rx9']), ('i', ['ult1', 'ult2', 'run']), ('j', ['shock', 'kickb', 'snap'])):
         sheet(d, names, 1).save(os.path.join(d, 'cat_%s.png' % nm))

@@ -202,7 +202,7 @@ const YU_ATK = { base: 24, names: ['R.HOOK', 'L.HOOK', 'KNEE', '3 KICKS'], fps: 
 // THE CARTOON CAT (chapter 2, tools/cat_rig.py). His M1 (15 frames each): 1. GRAB: the arm stretches out, grabs Gojo and pulls him in (hit 30), 2. PUNCH with the other hand while the first still holds on (31), 3. GRAB again (32, the same animation as the first), 4. KICK that sends Gojo away (33); 4 + 8 + 4 + 14 = 30 damage. Hit 34 = the punch up from the floor. Hit 35 = the HUGE Cat's kick (CARTOON ATTACK: 25 damage). CAT_RXLIFT: how high the hop of his hit reaction 7 lifts him. CT: the playable Cat's numbers (smashFps = how fast he smashes himself flat, flatMul = his walking speed while flat, flatMax = ms flat before he gets up dizzy, stunMs = how long he is dizzy, toonFps / toonHit = the speed and the impact frame of CARTOON ATTACK, back = how many px behind the summoner the giant stands, hold = ms his glove keeps its grip). CAT_CELL: every strip's cell: [width, height, anchor column, rows above the usual 64]
 const CAT_ATK = { base: 30, names: ['GRAB', 'PUNCH', 'GRAB', 'KICK', 'UPPER'], strip: ['m0', 'm1', 'm0', 'm3', 'flatpunch'], fps: [24, 30, 24, 28, 30], swing: [[3], [4], [3], [4], [3]], imp: [[6], [7], [6], [8], [6]], hit: [[30], [31], [32], [33], [34]], snd: [0, 1, 2, 3, 0] };      // (index 4 = the punch up from the floor: only the playable Cat uses it)
 const CAT_RXLIFT = { 7: [0, 3, 6, 9, 10, 10, 10, 9, 7, 5, 3, 2, 1, 0, 0] }, CT = { smashFps: 25, flatMul: 3, flatMax: 5000, stunMs: 1000, toonFps: 24, toonHit: 10, back: 64, hold: 1300 };
-const CAT_CELL = { idle: [64, 64, 32, 0], walk: [64, 64, 32, 0], stun: [64, 64, 32, 0], smash: [64, 80, 32, 16], unsmash: [64, 80, 32, 16], flat: [64, 64, 32, 0], flatwalk: [64, 64, 32, 0], flatpunch: [64, 64, 32, 0], m0: [128, 64, 36, 0], m1: [128, 64, 36, 0], m3: [128, 64, 36, 0], dashf: [128, 64, 36, 0], dashb: [128, 64, 36, 0], rx0: [96, 64, 64, 0], rx1: [96, 64, 64, 0], rx2: [96, 64, 64, 0], rx3: [96, 64, 64, 0], rx4: [96, 64, 64, 0], rx5: [96, 64, 64, 0], rx6: [96, 64, 64, 0], rx7: [96, 64, 64, 0], rx8: [96, 64, 64, 0], rx9: [96, 64, 64, 0], jump: [64, 72, 32, 8], toon: [64, 64, 32, 0], huge: [128, 64, 36, 0], ult1: [128, 64, 36, 0], ult2: [128, 64, 36, 0], run: [64, 64, 32, 0], maw: [128, 128, 64, 0] };
+const CAT_CELL = { idle: [64, 64, 32, 0], walk: [64, 64, 32, 0], stun: [64, 64, 32, 0], smash: [64, 80, 32, 16], unsmash: [64, 80, 32, 16], flat: [64, 64, 32, 0], flatwalk: [64, 64, 32, 0], flatpunch: [64, 64, 32, 0], m0: [128, 64, 36, 0], m1: [128, 64, 36, 0], m3: [128, 64, 36, 0], dashf: [128, 64, 36, 0], dashb: [128, 64, 36, 0], rx0: [96, 64, 64, 0], rx1: [96, 64, 64, 0], rx2: [96, 64, 64, 0], rx3: [96, 64, 64, 0], rx4: [96, 64, 64, 0], rx5: [96, 64, 64, 0], rx6: [96, 64, 64, 0], rx7: [96, 64, 64, 0], rx8: [96, 64, 64, 0], rx9: [96, 64, 64, 0], jump: [64, 72, 32, 8], toon: [64, 64, 32, 0], huge: [128, 64, 36, 0], ult1: [128, 64, 36, 0], ult2: [128, 64, 36, 0], run: [64, 64, 32, 0], maw: [128, 128, 64, 0], shock: [64, 96, 32, 32], kickb: [288, 100, 196, 36], snap: [288, 100, 196, 36] };
 const ATK_NAMES = ['R.HOOK', 'L.HOOK', 'ELBOW', 'KICK'], WALK_NAMES = ['JAB', 'KICK', 'CROSS', 'KICK2'], RED_NAMES = ['NECK', 'GUT', 'PUNCH', 'SMASH'], CR_FPS = 36, LAPSE_FPS = 24;   // hooks and the elbow nudge the enemy (so the combo keeps connecting); the kick sends him sliding with a smoke trail
 const DUMMY_HP = 300, RX_FPS = [16, 16, 16, 18, 12, 16, 16, 16, 12, 14], RX_DUR = RX_FPS.map(f => 10000 / f);      // 10 reactions, 10 frames each
 const RXF15 = RX_FPS.map(f => f * 1.5);      // Yuji's and Verity's 10 hit reactions have 15 frames each: they play at 1.5x Gojo's frame rate, so a reaction lasts exactly as long as his
@@ -309,7 +309,7 @@ let seed = 7;
 const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
 let story = null, alley = false, state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
-let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1, vp = null, js = null, pStun = 0, vf = null, ult = null, cf = null;
+let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1, vp = null, js = null, pStun = 0, vf = null, ult = null, cf = null, ke = null;
 let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, shkX = 0, shkY = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', flashUntil = 0, flashMs = 1, flashA = 0, stickX = 0, stickY = 0, stickUp = false, stickDown = false, stickCr = false, stickDownEnd = -9999, jumpFromStick = false, joyId = null, dashReq = false, dgAt = -1, dgK = 0, dgFrom = 0, dgTo = 0, dgAir = false, dgUsed = false, dgCr = false, dgReady = 0, blockHeld = false, blkAt = -1, blkEnd = -1, blkFrom = 4, wcIdx = 0, ceOn = false, ceAt = -9999, ceAmt = 0, ceNext = 0, ceReq = false, cm = 0, rdIdx = 0, mbK = 0, rdOrb = null, boom = null, holdUntil = 0, rdSlow = false, ride = null;
 const ceDmg = n => (cm === 1 ? Math.round(n * CE_DMG) : n) * (voidOn() ? 2 : 1);      // x1.3 in cursed energy mode, and everything hits twice as hard inside the Infinite Void      // only cursed energy mode hits harder; red mode has no damage bonus
 const popCol = () => cm === 1 ? '#4ff5e8' : cm === 2 ? '#ff8a7a' : '#7fc4ff';
@@ -383,7 +383,7 @@ function show(s) {
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll(); $('settings').classList.remove('on');
-  js = null; vf = null; if (cf) cfReset(); ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; ceOn = false; ceAmt = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
+  js = null; vf = null; if (cf) cfReset(); if (ke) keReset(); ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; ceOn = false; ceAmt = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
   if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(performance.now(), 1200);
@@ -667,7 +667,7 @@ function drawBar(bx, by) {                    // (in a match the big bars at the
   ctx.fillStyle = '#ffd27a'; ctx.fillRect(bx, by, Math.round(26 * g), 3); ctx.fillStyle = f > 0.3 ? '#52e08a' : '#ff4a4a'; ctx.fillRect(bx, by, Math.round(26 * f), 3);
 }
 function drawDummy(now, dt) {
-  pendingGiants.length = 0; pendingEnemy = null; if (!dummy) return;
+  pendingGiants.length = 0; pendingEnemy = null; if (!dummy || dummy.gone) return;
   if (dummy.ko >= 0 && now - dummy.ko > 2300 && !vs) spawnDummy(now, dummy.mode);            // knocked out: a fresh one steps in after a moment
   if (dummy.mode === 'fighter' && !(dummy.vform && dummy.vform !== 'verity')) { if (vs) updateFighterVs(now, dt); else updateFighter(now, dt); }      // (as the smiley ball he does nothing)
   if (dummy.pull) { const k = Math.min(1, (now - dummy.pull.at) / dummy.pull.ms); dummy.x = dummy.pull.from + (dummy.pull.to - dummy.pull.from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) dummy.pull = null; }
@@ -793,6 +793,7 @@ function drawSmoke(now, dt) {                 // dust along the ground behind an
 function koDummy(now) {                       // the enemy goes down (every way of finishing him ends here): in a match the round ends and Gojo gets the point
   if (dummy.ko >= 0) return;                  // (only once, even if two hits finish him in the same moment)
   if (vs && vs.story && vs.foe === 'verity' && !vs.endGo) { if (!vs.end) storyEndStart(performance.now()); return; }      // the story fight does not end with a fall: it ends with the Reversal Red
+  if (vs && vs.story && vs.foe === 'cat' && !vs.endGo) { if (!vs.end) catEndStart(performance.now()); return; }      // ...and the one with the Cat ends with a cutscene (see keFrame)
   if (vs) endRound('player', 'ko', now);
   dummy.ko = now; dummy.koAt = Math.max(now, holdUntil);        // he starts to topple when the hit-stop is over, so the fall is seen
   dummy.vx += 70; shakeUntil = now + 260; shakeAmp = 4; kos++; if (!vs) say('K.O.', dummy.x, '#ffd34d', 16, now + 120); snd('ko');      // (a match has its own big K.O. banner)
@@ -1960,6 +1961,119 @@ function cfFrame(now, dt) {
   const fa = clamp01((t - (T.end - 0.5)) / 0.5); if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
   if (t >= T.end) cfEnd(now);
 }
+// ---------------------------------------------------------------- THE CAT'S END (chapter 2, the story fight: when the Cat's health runs out he stays on his feet, dazed, and this cutscene takes over; about 30 s with its slow motions). Gojo walks up slowly. The Cat snatches a survivor with his rubber arm and holds him up as a shield. Gojo cuts the human in two from far away with a blade of Blue and the Cat is shocked. Gojo runs up and kicks his face: the head shoots away on a rubber neck as long as the screen, then snaps back and smashes into Gojo, who meets it with a full BLUE that cuts the Cat into thousands of single pixels. He is dead; Gojo says one last line and the TO BE CONTINUED card follows.
+const KE = { gx0: -56, walk: 6.0, wake: 3.0, grab: 3.8, say1: 4.9, cast: 7.4, slice: 8.35, shock: 8.6, say2: 8.95, rush: 10.9, kick: 11.35, raise: 13.4, face: 14.5, snap: 15.55, fcut: 15.8, slide: 36, who: 4, hx: 44 };      // (times on the cutscene's own clock, in seconds; slide = how far the kick pushes the Cat; who = which of the five people is the survivor; hx = where the snapped head ends up in front of the Cat's body, see SNAP_HX in tools/cat_rig.py)
+KE.imp = KE.kick + 8 / 24; KE.hit = KE.snap + 10 / 24; KE.burst = KE.hit + 0.7; KE.calm = KE.burst + 0.9; KE.say3 = KE.burst + 2.7; KE.end = KE.say3 + 4.4;
+const KB = ['#0b3fd8', '#2f7bff', '#7fd0ff', '#ffffff'], KBU = [0xffd83f0b, 0xffff7b2f, 0xffffd07f, 0xffffffff];      // the colours of Blue (as text, and as ABGR numbers for the pieces)
+const KSL = [[-50, -30, 40, 14], [-40, 22, 50, -34], [-60, -4, 60, 4], [-20, -40, 20, 40], [10, -40, 14, 44], [-50, 28, 60, -26], [-30, -34, 54, 36], [-10, 36, 52, -36], [-56, -18, 50, 20], [30, -42, -4, 42]];      // the ten cuts of the last BLUE: from and to, counted from the middle of the Cat
+function bline(x0, y0, x1, y1, c, w) { const n = Math.max(1, Math.round(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)))); ctx.fillStyle = c; for (let i = 0; i <= n; i++) ctx.fillRect(Math.round(x0 + (x1 - x0) * i / n), Math.round(y0 + (y1 - y0) * i / n), w, w); }      // a line of whole pixels
+function blueOrb(x, y, r) { ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(x, y, 1, x, y, r * 1.8); g.addColorStop(0, 'rgba(160,220,255,0.9)'); g.addColorStop(0.45, 'rgba(47,123,255,0.55)'); g.addColorStop(1, 'rgba(11,63,216,0)'); ctx.fillStyle = g; ctx.fillRect(Math.round(x - r * 2), Math.round(y - r * 2), Math.round(r * 4), Math.round(r * 4)); ctx.globalCompositeOperation = 'source-over'; }      // the glow of the orb
+function catEndStart(now) {      // the Cat's health ran out: he stays on his feet at 1 health, dizzy, while Gojo's last move runs out; then the cutscene begins
+  const d = dummy; if (ult) ultCancel(now); vs.end = { stage: 'back', at: now }; vs.bleed = null; vs.catHold = 0; d.lock = d.hp = d.shown = 1; d.cact = null; d.cheld = null; d.held = null; d.vact = null; d.pull = null; d.ai = 'rest'; d.aiAt = now; d.restFor = 99999; d.vx = 0; d.stunUntil = now + 8000; d.catStunAt = now;
+}
+function catEndTick(now) {      // before the cut: no control; the Cat stays at 1 health and dizzy; the cutscene starts when Gojo's move has run out
+  const e = vs.end, d = dummy; keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; d.hp = d.shown = 1; d.cact = null; d.vact = null; d.ai = 'rest'; d.stunUntil = Math.max(d.stunUntil, now + 200);
+  if (now - e.at > 2600 || (jumpAt < 0 && teleAt < 0 && atkAt < 0 && lpAt < 0 && mbAt < 0 && dgAt < 0 && hurtAt < 0 && blkAt < 0 && stance === 'stand' && !dash && !ride && now - e.at > 900)) keStart(now);
+}
+function keStart(now) {      // the cut: every button goes and the court is shown again with the two of them in it
+  if (!HUM) HUM = makeHumans(document); cineClear(); domReset(); closeSettings(); stickDown = false; vs.end.stage = 'cine'; vs.end.at = now; dummy.vact = null; dummy.cact = null; $('pad').classList.add('cine'); $('hud').classList.add('cine'); snd('fatalstart');
+  ke = { t: 0, ev: {}, wx0: wx, shake: 0, freeze: 0, flash: 0, px: null, stepN: 0 };
+}
+function keReset() { ke = null; $('pad').classList.remove('cine'); $('hud').classList.remove('cine'); }
+function keEnd(now) {      // it is over: nothing of the Cat is left, Gojo wins the round and the TO BE CONTINUED card follows
+  const w0 = ke.wx0; keReset(); wx = w0; blackUntil = now + 700; vs.end.stage = 'done'; vs.endGo = true; dummy.gone = true; dummy.hp = dummy.shown = 0; koDummy(now);
+}
+function keBurst(s, cx, bx, by) {      // the Cat's picture becomes single pixels: every pixel of it is a piece (about 2500) and there are sparks and dust besides; the pieces nearest the head let go first, so the break runs down the neck to the body
+  const img = cfr('snap', 14, false), I = CAT_CELL.snap, P = { x: [], y: [], vx: [], vy: [], c: [], d: [], life: [], age: 0 }; if (!img.getContext) return;
+  const px = img.getContext('2d').getImageData(0, 0, I[0], I[1]).data, hx = cx - KE.hx, hy = gy - 44, add = (x, y, vx, vy, c, d, life) => { P.x.push(x); P.y.push(y); P.vx.push(vx); P.vy.push(vy); P.c.push(c); P.d.push(d); P.life.push(life); };
+  for (let j = 0; j < I[1]; j++) for (let i = 0; i < I[0]; i++) {
+    const o = (j * I[0] + i) * 4; if (px[o + 3] < 128) continue; const x = cx + I[2] - 1 - i, y = gy - 60 - I[3] + j, a = Math.atan2(y - by, x - bx) + (Math.random() - 0.5) * 1.5, v = 25 + Math.random() * 120;
+    add(x, y, Math.cos(a) * v + 18, Math.sin(a) * v - 25 - Math.random() * 40, ((255 << 24) | (px[o + 2] << 16) | (px[o + 1] << 8) | px[o]) >>> 0, Math.hypot(x - hx, y - hy) / 230 + Math.random() * 0.06, 1.6 + Math.random() * 1.8);
+  }
+  const n = P.x.length;
+  for (let k = 0; k < 1200; k++) { const a = Math.random() * 6.2832, v = 40 + Math.random() * 190, r = Math.random() * 14; add(bx + Math.cos(a) * r, by + Math.sin(a) * r, Math.cos(a) * v, Math.sin(a) * v - 30, KBU[k % 4], Math.random() * 0.25, 0.5 + Math.random() * 0.9); }      // (sparks of Blue)
+  for (let k = 0; k < 700 && n; k++) { const q = (Math.random() * n) | 0; add(P.x[q], P.y[q], (Math.random() - 0.5) * 60 + 12, -Math.random() * 80, 0xffdcc8c8, P.d[q] + Math.random() * 0.1, 1.2 + Math.random() * 1.6); }      // (pale dust)
+  s.px = P;
+}
+function keDust(s, sdt) {      // moves the pieces and draws them: they are single pixels written into one picture the size of the screen
+  const P = s.px; if (!P) return; if (!P.cv || P.cv.width !== VW || P.cv.height !== VH) { P.cv = document.createElement('canvas'); P.cv.width = VW; P.cv.height = VH; P.g = P.cv.getContext('2d'); P.im = P.g.createImageData(VW, VH); P.u = new Uint32Array(P.im.data.buffer); }
+  P.age += sdt; const u = P.u, n = P.x.length, ex = Math.exp(-0.8 * sdt); u.fill(0);
+  for (let i = 0; i < n; i++) {
+    const a = P.age - P.d[i], L = P.life[i]; if (a >= L) continue;
+    if (a > 0) { P.vy[i] += 190 * sdt; P.x[i] += P.vx[i] * sdt; P.y[i] += P.vy[i] * sdt; P.vx[i] *= ex; const fl = gy + 3 + (i & 3); if (P.y[i] > fl) { P.y[i] = fl; P.vy[i] *= -0.22; P.vx[i] *= 0.5; } }      // (before its turn a piece stays where it was in the picture)
+    const x = Math.round(P.x[i]), y = Math.round(P.y[i]); if (x < 0 || y < 0 || x >= VW || y >= VH) continue;
+    const k = a > L * 0.55 ? 1 - (a - L * 0.55) / (L * 0.45) : 1; u[y * VW + x] = (((k * 255) << 24) | (P.c[i] & 0xffffff)) >>> 0;
+  }
+  P.g.putImageData(P.im, 0, 0); ctx.drawImage(P.cv, 0, 0);
+}
+function keFrame(now, dt) {
+  const s = ke, T = KE; keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; fatReq = 0;
+  const live = now >= s.freeze, sp = s.t >= T.fcut && s.t < T.hit ? 0.25 : s.t >= T.hit && s.t < T.calm ? 0.35 : 1, sdt = live ? dt * sp : 0; if (live) s.t += sdt;
+  const t = s.t, at = (k, tt, f) => { if (!s.ev[k] && t >= tt) { s.ev[k] = 1; f(); } };
+  const mx = Math.round(VW / 2), CX = Math.round(VW * 0.58), HX0 = CX - 70, HX1 = CX - 22, GXS = CX - 122, GKS = CX - 78, GKE = CX - 28, W0 = x => x - mx;      // (screen places: the Cat, the survivor before and after the grab, Gojo where he stops, where his kick starts and where it ends)
+  const catX = t >= T.imp ? CX + Math.round(T.slide * (1 - Math.pow(1 - Math.min(1, (t - T.imp) / 0.7), 2))) : CX;
+  // ---- Gojo: where he is and which of his pictures
+  let gx = GXS, gs = 'idle', gf = 0, gl = 0;
+  if (t < T.walk) { gx = lerp(T.gx0, GXS, t / T.walk); gs = 'walk'; gf = (gx - T.gx0) / 44 * 15; }      // (he walks slowly: one step for every 22 px, as in his normal walk)
+  else if (t < T.rush) { const f = t < T.slice ? Math.min(8, (t - T.cast) * 24) : t < T.slice + 0.3 ? 8 : 8 + (t - T.slice - 0.3) * 24; if (t >= T.cast && f < 15) { gs = 'cast'; gf = f; } }      // (Lapse Blue: the orb grows in his palm, holds, then the arm comes back)
+  else if (t < T.kick) { gx = lerp(GXS, GKS, (t - T.rush) / (T.kick - T.rush)); gs = 'run'; gf = (t - T.rush) * 30; }
+  else {
+    const k = t - T.kick; gx = GKS + (GKE - GKS) * ease3(k / 0.4); if (k * 24 < 15) { gs = 'kick'; gf = k * 24; gl = Math.round(17 * Math.sin(Math.min(1, k / 0.62) * Math.PI)); }      // (the flying kick: it lands on frame 8 with him at the top of the leap)
+    if (t >= T.raise) { gs = 'blue'; gf = t < T.burst ? Math.min(17, (t - T.raise) * 20) : Math.min(39, 17 + (t - T.burst) * 14); }      // (the last BLUE: the orb swells until the head arrives, then the arm lowers)
+    if (t >= T.hit) gx -= Math.round(7 * (1 - Math.exp(-(t - T.hit) * 14)));      // (the head's blow pushes him back)
+  }
+  if (gs === 'walk') { const st = Math.floor(gf / 7.5); if (st !== s.stepN) { s.stepN = st; snd('step', st % 2, false); } }
+  // ---- the Cat: dizzy, wakes up, grabs (hits his hold on frame 13), is shocked, is kicked (the head flies off), the head snaps back
+  let cn = 'idle', cf = t * 8, cl = true;
+  if (t < T.wake) { cn = 'stun'; cf = t * 15; } else if (t < T.grab) cf = t * 8;
+  else if (t < T.shock) { cn = 'm0'; cf = Math.min(13, (t - T.grab) * 24); cl = false; }
+  else if (t < T.imp) { const f = (t - T.shock) * 15; cn = 'shock'; cf = f < 15 ? f : 8 + ((f - 15) % 7); cl = false; }
+  else if (t < T.snap) { const f = (t - T.imp) * 22; cn = 'kickb'; cf = f < 15 ? f : 11 + ((f - 15) % 4); cl = false; }
+  else { cn = 'snap'; cf = (t - T.snap) * 24; cl = false; }
+  // ---- the events
+  at('in', 0, () => { s.flash = now + 150; });
+  at('wake', T.wake, () => snd('boing')); at('grab', T.grab + 0.25, () => { snd('swing', 3); snd('scream', T.who, 1); }); at('laugh', T.say1, () => snd('laugh')); at('pull', T.cast, () => snd('pull')); at('slice', T.slice, () => snd('slice'));
+  at('cut', T.slice + 0.1, () => { goreKill('halve', W0(HX1), 4, 1, T.who, now); s.shake = now + 350; s.flash = now + 90; });
+  at('imp', T.imp, () => { s.freeze = now + 110; s.flash = now + 210; s.shake = now + 460; snd('smack', 3); snd('finisher'); puff(W0(GKE + 28), 10); });
+  at('twang', T.imp + 0.1, () => { snd('boing'); snd('twang'); }); at('mbc', T.raise, () => snd('mbcharge')); at('whip', T.snap, () => snd('whip'));
+  at('hit', T.hit, () => { s.freeze = now + 350; s.flash = now + 450; s.shake = now + 900; snd('purpleboom'); snd('smack', 3); snd('hit', 3); });
+  KSL.forEach((l, k) => at('sl' + k, T.hit + 0.15 + 0.05 * k, () => { if (k % 2 === 0) snd('slice', k); }));
+  at('burst', T.burst, () => { keBurst(s, catX, Math.round(gx) + 12, gy - 52); s.freeze = now + 150; s.flash = now + 450; s.shake = now + 700; snd('shatter'); snd('purpleboom'); });
+  // ---- the picture (the court as in the fight; the camera does not move)
+  wx = 0; const jx = () => now < s.shake ? Math.round((Math.random() * 2 - 1) * 3) : 0;
+  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); ctx.translate(jx(), jx());
+  updateGore(now, sdt); drawBackdrop(now); ctx.fillStyle = 'rgba(10,6,30,0.25)'; ctx.fillRect(-8, 0, VW + 16, VH); drawSmoke(now, sdt);
+  shadow(gx, 9); if (gs === 'walk') sprAt(fwdF[Math.floor(gf) % 15], D.fwd, Math.round(gx), 0, false, 0); else if (gs === 'run') sprAt(RUNF[Math.floor(gf) % 15], D.run, Math.round(gx), 0, false, 0); else if (gs === 'cast') sprAt(lapseF[0][Math.min(14, Math.floor(gf))], D.atk4, Math.round(gx), 0, false, 0);
+  else if (gs === 'kick') sprAt(atkF[3][Math.min(14, Math.floor(gf))], D.atk3, Math.round(gx), gl, false, 0); else if (gs === 'blue') sprAt(mbF[Math.min(39, Math.floor(gf))], D.atk8, Math.round(gx), 0, false, 0); else sprAt(idleF[Math.floor(t * IDLE_FPS) % idleF.length], D.idle, Math.round(gx), 0, false, 0);
+  if (t < T.slice + 0.1) {      // the survivor: cowering, then snatched by the glove (frame 6 lands, frame 8 pulls) and held up facing Gojo, until the blade
+    const hx = HX0 + (HX1 - HX0) * ease3((t - T.grab - 8 / 24) / 0.25), held = t >= T.grab + 6 / 24; ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(Math.round(hx) - 9, gy + 5, 18, 2);
+    ctx.save(); ctx.translate(Math.round(hx + (held ? 0 : Math.sin(t * 40) * 0.6)), gy + 4); if (held) ctx.scale(-1, 1); ctx.drawImage(HUM[T.who].shock, -32, -62 - (held ? 5 : 0)); ctx.restore();
+  }
+  if (t < T.burst) { const I = CAT_CELL[cn]; shadow(catX, 9); ctx.save(); ctx.translate(catX, 0); ctx.scale(-1, 1); ctx.drawImage(cfr(cn, cf, cl), -I[2], gy - 60 - I[3]); ctx.restore(); }
+  if (t >= T.wake && t < T.grab) pxt('!', catX, gy - 70, '#ff3a3a', 16, 'center'); else if (t >= T.shock && t < T.shock + 0.9) pxt('!!', catX, gy - 72, '#ffffff', 16, 'center');
+  // ---- Blue: the orb in Gojo's hand, the blade that cuts the survivor, the ten cuts that tear the Cat up, then the pieces
+  if (gs === 'cast' && gf >= 5) blueOrb(Math.round(gx) + 19, gy - 37, 7 + 2 * Math.sin(t * 30));
+  if (gs === 'blue' && t < T.burst) blueOrb(Math.round(gx) + 12, gy - 52, 8 + 4 * Math.min(1, (t - T.raise) / 0.8) + (t >= T.hit ? 5 : 0));
+  if (t >= T.slice && t < T.slice + 0.4) {
+    const u = t - T.slice, x0 = Math.round(gx) + 19, x1 = Math.round(Math.min(HX1 + 16, x0 + u / 0.1 * (HX1 + 16 - x0))); bline(x0, gy - 34, x1, gy - 34, KB[0], 3); bline(x0, gy - 34, x1, gy - 34, KB[2], 2); bline(x0, gy - 34, x1, gy - 34, KB[3], 1);
+    if (u >= 0.1 && u < 0.3) { bline(HX1 - 14, gy - 42, HX1 + 14, gy - 26, KB[1], 3); bline(HX1 - 14, gy - 42, HX1 + 14, gy - 26, KB[3], 1); }
+  }
+  KSL.forEach((l, k) => { const tt = T.hit + 0.15 + 0.05 * k; if (t >= tt && t < tt + 0.2) { const m = catX - 14, n = gy - 36; bline(m + l[0], n + l[1], m + l[2], n + l[3], KB[1], 3); bline(m + l[0], n + l[1], m + l[2], n + l[3], KB[3], 1); } });
+  if (t >= T.burst) keDust(s, sdt);
+  drawGibs(now); ctx.restore();
+  // ---- on the screen itself: the close-up of Gojo's face (the Domain's picture), the flash, the bars, the words, the fade
+  if (t >= T.face && t < T.fcut) {
+    const u = (t - T.face) / (T.fcut - T.face), fi = u < 0.8 ? Math.floor(u / 0.8 * 13) : 17 + Math.min(2, Math.floor((u - 0.8) / 0.2 * 3)), pw = DF_W * 2, ph = DF_H * 2; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
+    if (domImg.complete && domImg.naturalWidth) ctx.drawImage(domImg, 0, fi * DF_H, DF_W, DF_H, Math.round((VW - pw) / 2), Math.round((VH - ph) / 2), pw, ph);
+    ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(60,130,255,' + (0.1 + 0.08 * Math.sin(t * 30)).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); ctx.globalCompositeOperation = 'source-over'; at('fz', T.face + (T.fcut - T.face) * 0.8, () => snd('domainzoom'));
+  }
+  if (now < s.flash && now >= s.freeze - 1) { ctx.globalCompositeOperation = 'difference'; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, VW, VH); ctx.globalCompositeOperation = 'source-over'; }
+  const bh = Math.round(VH * 0.11), b = Math.round(bh * ease3(t / 0.3) * (1 - ease3((t - (T.end - 0.9)) / 0.5))); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, b); ctx.fillRect(0, VH - b, VW, b);
+  const say = (nm, txt, t0) => { if (t >= t0 && t < t0 + 1.4 + txt.length / 16) dlg(nm, txt, Math.floor((t - t0) * 16)); };
+  say('CARTOON CAT', 'HEH HEH... GO ON. TRY IT.', T.say1); say('CARTOON CAT', 'W-WHAT?!', T.say2); say('GOJO', 'YOU PICKED THE WRONG SHIELD.', T.say3);
+  const fa = clamp01((t - (T.end - 0.8)) / 0.8); if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  if (t >= T.end) keEnd(now);
+}
 // ---------------------------------------------------------------- PLAYABLE CARTOON CAT (Versus mode: YOUR FIGHTER > CURSED SPIRITS). Like Verity he is steered with the same stick and buttons and shares Gojo's state variables (position, hurt, crouch, the swing in progress), so the enemy, its AI and every hit rule work exactly as they do against Gojo. ATTACK = his M1: GRAB (the arm stretches out, grabs the enemy and pulls him close), PUNCH (the other hand hits his face while the first still holds on), GRAB again, KICK (sends him away): 4 + 8 + 4 + 14 = 30 damage. DASH = he pushes himself along the ground with his hands (forward, or back when he stands still; free). DOWN = he smashes himself flat into a strip 2 px thin (nothing can hit him), walks 3 times faster, and can only punch UP (10 damage); tap DOWN again to stand; flat for more than 5 s and he gets up dizzy: stunned for 1 s. BLUE = CARTOON ATTACK (30% of the energy): a HUGE Cat appears behind him and kicks the enemy away (25 damage, about 100 px of reach; a jump or a crouch gets out of it). No MODE and no BLOCK button. His ULTIMATE (the DOMAIN button) and his FATALITY come in the next release.
 const cpNew = () => ({ flatAt: 0, tired: false, stunAt: -1e9 });      // flatAt = when he finished smashing himself flat, tired = he is getting up because he was flat for too long (he is dizzy for 1 s once he stands), stunAt = when the dizziness began
 let cp = null;
@@ -2095,6 +2209,7 @@ function drawScene(now, dt) {
   if (js) { jsFrame(now, dt); return; }         // ...and the JUMPSCARE
   if (vf) { vfFrame(now, dt); return; }         // ...and Verity's FATALITY
   if (cf) { cfFrame(now, dt); return; }         // ...and the Cat's FATALITY
+  if (ke) { keFrame(now, dt); return; }         // ...and the end of the Cat in the story
   domTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); if (vs && vs.foe === 'verity') storyBattleTick(now, dt); else if (vs && vs.foe === 'cat') catTick(now, dt); ultTick(now, dt);
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
     const fs = fatState(now);
@@ -2739,7 +2854,7 @@ function catLook(now, reacting, hitT, kt) {      // what the Cat looks like: eve
 function cStart(d, type, now) { d.cact = { type, at: now, ph: type === 'flat' ? 'smash' : type === 'toon' ? 'toon' : 'dash', anim: type === 'flat' ? 'smash' : type === 'toon' ? 'toon' : 'dashf', fi: 0, flat: false, hit: 0, loop: false }; d.ai = 'rest'; d.aiAt = now; d.restFor = 99999; if (type === 'toon') snd('boing'); else snd('f:swing', 3); }
 function cEnd(d, now) { d.cact = null; d.ai = 'think'; d.aiAt = now; d.vNext = now + 1800 + Math.random() * 1800; }
 function catTick(now, dt) {
-  updateGore(now, dt); const d = dummy; if (!d || d.ko >= 0 || vs.ph !== 'fight') return; const a = d.cact, G = GRADES[vs.gi], ag = Math.abs(d.x - wx), toward = d.x > wx ? -1 : 1;
+  updateGore(now, dt); const d = dummy; if (!d || d.ko >= 0 || vs.ph !== 'fight') return; if (vs.end) { if (vs.end.stage === 'back') catEndTick(now); return; } const a = d.cact, G = GRADES[vs.gi], ag = Math.abs(d.x - wx), toward = d.x > wx ? -1 : 1;
   if (a) {
     if (a.type === 'ult') { if (!ult) cEnd(d, now); return; }      // (his ULTIMATE runs by itself: see ultTick)
     if (d.rxAt > a.at || now < d.stunUntil) { cEnd(d, now); return; }      // he was hit (only possible when he is not flat) or frozen (a stun, the JUMPSCARE): the move is over

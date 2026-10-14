@@ -331,6 +331,28 @@ function makeSfx(ac) {
       for (let k = 0; k < 14; k++) burst(B.deep, t + 0.02 + k * 0.035 + R(0, 0.03), { f: R(300, 2600), q: 2, dur: R(0.03, 0.08), gain: R(0.25, 0.5), atk: 0.001 });
       for (let k = 0; k < 22; k++) burst(B.deep, t + 0.45 + k * 0.09 + R(0, 0.05), { f: R(500, 3000), q: 1.4, dur: R(0.03, 0.08), gain: R(0.1, 0.3), atk: 0.001 });
     },
+    slice(at) {                                          // a blade of Blue: a thin zing that drops, a crackle and a low thud
+      const t = T(at), B = C.ce;
+      tone(B.soft, t, { type: 'sawtooth', f: 3400, f2: 700, dur: 0.18, gain: 0.16, atk: 0.002 });
+      burst(B.soft, t, { f: 6200, f2: 2400, q: 3, dur: 0.12, gain: 0.55, atk: 0.001 });
+      tone(B.deep, t + 0.02, { type: 'triangle', f: 220, f2: 90, dur: 0.18, gain: 0.3, atk: 0.003 });
+    },
+    twang(at) {                                          // the rubber neck stretches and quivers: a rising stretch, then a wobble that dies away
+      const t = T(at), B = C.atk;
+      tone(B.soft, t, { type: 'sine', f: 180, f2: 900, dur: 0.35, gain: 0.3, atk: 0.01 });
+      for (let k = 0; k < 8; k++) tone(B.soft, t + 0.35 + k * 0.09, { type: 'sine', f: 520 - k * 22, f2: 470 - k * 22, dur: 0.1, gain: 0.2 * (1 - k / 9), atk: 0.004 });
+    },
+    whip(at) {                                           // the head snaps back: a rising whoosh that ends in a crack
+      const t = T(at), B = C.atk;
+      burst(B.soft, t, { f: 300, f2: 3800, q: 1.2, dur: 0.4, gain: 0.8, atk: 0.2 });
+      tone(B.soft, t + 0.34, { type: 'square', f: 900, f2: 120, dur: 0.1, gain: 0.25, atk: 0.001 });
+    },
+    shatter(at) {                                        // the Cat comes apart into thousands of pieces: a low boom, a bright rushing hiss and a long trickle of tiny clicks
+      const t = T(at), B = C.ce;
+      tone(B.deep, t, { type: 'triangle', f: 160, f2: 30, dur: 0.8, gain: 0.6, atk: 0.003 });
+      burst(B.soft, t, { f: 5200, f2: 900, q: 0.7, dur: 1.0, gain: 0.8, atk: 0.003 });
+      for (let k = 0; k < 60; k++) burst(B.soft, t + 0.05 + k * 0.03 + R(0, 0.02), { f: R(2500, 7000), q: 3, dur: R(0.01, 0.03), gain: R(0.15, 0.4) * (1 - k / 70), atk: 0.001 });
+    },
     quake(at) {                                          // the roof is hit: a huge low boom, a long shaking rumble and stones and splinters falling
       const t = T(at), B = C.ce;
       tone(B.deep, t, { type: 'triangle', f: 80, f2: 22, dur: 1.6, gain: 0.6, atk: 0.004 });
