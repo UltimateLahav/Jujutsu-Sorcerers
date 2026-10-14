@@ -57,7 +57,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #blk{border-color:#9f8cff}
 #fat{display:none;grid-area:2/1;border-color:#ff4a3a;color:#ff6a5a;opacity:.38}#fat span{color:#ffb4a8}#fat svg{width:4.5vh;height:4.5vh}      /* FATALITY: only in a match, to the left of BLOCK; dark until the enemy is at 20% health or less and close, then it glows */
 .col.vs{grid-template-columns:auto auto auto}.col.vs #fat{display:flex}
-.col.vy #dom{border-color:#ff5a5a;color:#ff8a8a}.col.vy #dom span{color:#ffb4b4}.col.vy #dom::after{background:rgba(255,80,80,.38)}.col.vy #dom.on{border-color:#ffd0d0;color:#fff}      /* playing Verity the DOMAIN button is his JUMPSCARE (red, with the same wait-fill); the FATAL button is the same as Gojo's */
+.col.yj .pb{opacity:.3}.col.vy #dom{border-color:#ff5a5a;color:#ff8a8a}.col.vy #dom span{color:#ffb4b4}.col.vy #dom::after{background:rgba(255,80,80,.38)}.col.vy #dom.on{border-color:#ffd0d0;color:#fff}      /* playing Verity the DOMAIN button is his JUMPSCARE (red, with the same wait-fill); the FATAL button is the same as Gojo's */
 .col.vs #dom{grid-area:1/2}.col.vs #ce{grid-area:1/3}.col.vs #blk{grid-area:2/2}.col.vs #lap{grid-area:2/3}.col.vs #dash{grid-area:3/2}.col.vs #atk{grid-area:3/3}
 #fat.rdy{opacity:1;background:#3a0d12;border-color:#ff8a7a;color:#fff;box-shadow:0 0 1.8vh #ff4a3a,0 0 .5vh #ff4a3a inset,4px 4px 0 #000;animation:fatglow .5s steps(2) infinite}
 @keyframes fatglow{50%{box-shadow:0 0 3.2vh #ff2a2a,0 0 .9vh #ff2a2a inset,4px 4px 0 #000}}
@@ -247,6 +247,9 @@ const blkI = mk(D.atk11, invPal);                                  // the blocki
 const dumWalk = mk(D.fwd, invPal), atkI = [0, 1, 2, 3].map(k => mk(D['atk' + k], invPal));      // the attacking dummy walks and swings in inverted colours too
 const FOE_INV = { rx: rxI, atk: atkI, walk: dumWalk, blk: blkI, idle: dumF, fear: cidleI }, FOE_NORM = { rx: rxN, atk: [0, 1, 2, 3].map(k => atkF[k]), walk: fwdF, blk: atkF[11], idle: idleF, fear: crF.idle };      // (the white and blue flash pictures are plain silhouettes, so they serve both)
 const foeSet = () => vs && !vs.inv ? FOE_NORM : FOE_INV;      // in a match the enemy Gojo is inverted only when you are Gojo too
+const YU = __YUJI__, yuInv = p => { const o = {}; for (const k in p) o[k] = inv(p[k]); return o; };      // YUJI (tools/yuji_art.py): an idle, a walk (played backwards for walking back) and a jump, 15 frames each; the inverted one has the colours flipped
+const YUF = { norm: {}, inv: {} }, YINFO = { idle: YU.idle, fwd: YU.fwd, back: { ...YU.fwd, hn: YU.fwd.hn.slice().reverse(), hf: YU.fwd.hf.slice().reverse() }, jump: YU.jump };
+for (const [k, pal] of [['norm', YU.pal], ['inv', yuInv(YU.pal)]]) { for (const n of ['idle', 'fwd', 'jump']) YUF[k][n] = mk(YU[n], pal); YUF[k].back = YUF[k].fwd.slice().reverse(); }
 pv.width = D.idle.w; pv.height = D.idle.h;
 const heroImgs = HEROES.map(src => { const im = new Image(); im.src = src; return im; });
 
@@ -609,6 +612,7 @@ function drawDummy(now, dt) {
   else if (kt < 0 && dummy.fear) { fi = Math.floor(now / (1000 / IDLE_FPS)) % 15; info = D.cidle; src = FS.fear[fi]; const o = fearOff(now); ox = o[0]; oy = o[1]; }      // JUMPSCARE: stunned, he cowers and shakes
   else { fi = Math.floor(now / (1000 / IDLE_FPS)) % FS.idle.length; info = D.idle; src = (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) ? dumW[fi] : (kt < 0 && now < dummy.stunUntil && ((now / 70) | 0) % 2 === 0) ? dumB[fi] : FS.idle[fi]; }   // white flicker while he goes down
   if (vs && vs.foe === 'verity') { const L = storyLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox || 0; oy = L.oy || 0; }      // the enemy is Verity
+  if (vs && vs.foe === 'yuji') { const ys = vs.inv ? YUF.inv : YUF.norm, wk = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'walk'; fi = Math.floor(wk ? now * WALK_FPS / 1000 : now / (1000 / IDLE_FPS)) % 15; src = (wk ? ys.fwd : ys.idle)[fi]; info = wk ? YU.fwd : YU.idle; lift = 0; ox = oy = 0; if ((reacting && hitT < 70) || (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0)) src = whiteOf(src); }      // the enemy is Yuji
   if (dummy.del && now - dummy.del > 1700) return;      // deleted: nothing of him is left
   const w = info.w, h = info.h, hx = info.cx - info.x0, y = gy - 60 - (info.top || 0) - lift, fade = kt > 1200 ? Math.max(0, 1 - (kt - 1200) / 700) : 1;
   ctx.fillStyle = 'rgba(0,0,0,' + 0.4 * fade + ')'; ctx.fillRect(sx - 9, gy + 3, 18, 2); ctx.fillRect(sx - 6, gy + 2, 12, 1); ctx.fillRect(sx - 6, gy + 5, 12, 1);
@@ -981,17 +985,21 @@ const GRADES = [
 const PHP = 300;                              // Gojo's health in a match
 const KO_HOLD = 450, KO_MS = 2500;            // a K.O.: the picture freezes for 0.45 s, then the loser topples; 2.5 s after it the next round starts (or the result shows)
 let vs = null, vsSel = 0;
-const vsPick = { me: 'gojo', foe: 'gojo' }, FIGHTERS = [['SORCERERS', 'gojo', 'GOJO'], ['CURSED SPIRITS', 'verity', 'VERITY']]; let vsPv = [];      // who you and the enemy have picked, the two sections, and the little pictures on the cards
+const vsPick = { me: 'gojo', foe: 'gojo' }, FIGHTERS = [['SORCERERS', [['gojo', 'GOJO'], ['yuji', 'YUJI']]], ['CURSED SPIRITS', [['verity', 'VERITY']]]], NAMES = { gojo: 'GOJO', verity: 'VERITY', yuji: 'YUJI' }; let vsPv = [];      // who you and the enemy have picked, the two sections, and the little pictures on the cards
 function buildFighters() {      // YOUR FIGHTER / ENEMY FIGHTER, each with a SORCERERS section (Gojo) and a CURSED SPIRITS section (Verity); the enemy is drawn inverted only when he is the same fighter as you
   vsPv = [];
   for (const [row, id] of [['me', 'vsMeRow'], ['foe', 'vsFoeRow']]) {
     const box = $(id); box.innerHTML = '';
-    for (const [sec, who, nm] of FIGHTERS) {
-      const inv = row === 'foe' && vsPick.me === who, g = document.createElement('div'), cards = document.createElement('div'), b = document.createElement('button'), lk = document.createElement('div');
-      g.className = 'fg'; g.innerHTML = '<span class="gl">' + sec + '</span>'; cards.className = 'cards mini'; lk.className = 'card lock'; lk.innerHTML = '<span>?</span><b>LOCKED</b>';
-      b.className = 'card' + (vsPick[row] === who ? ' sel' : ''); b.dataset.row = row; b.dataset.who = who; b.innerHTML = '<canvas></canvas><b>' + nm + (inv ? '<br>(INV.)' : '') + '</b>';
-      const c = b.querySelector('canvas'); c.width = who === 'gojo' ? D.idle.w : 64; c.height = 64; vsPv.push({ c, g: c.getContext('2d'), who, inv });
-      b.addEventListener('click', () => { vsPick[row] = who; buildFighters(); }); cards.append(b, lk); g.appendChild(cards); box.appendChild(g);
+    for (const [sec, list] of FIGHTERS) {
+      const g = document.createElement('div'), cards = document.createElement('div'); g.className = 'fg'; g.innerHTML = '<span class="gl">' + sec + '</span>'; cards.className = 'cards mini';
+      for (const [who, nm] of list) {
+        const inv = row === 'foe' && vsPick.me === who, b = document.createElement('button');
+        b.className = 'card' + (vsPick[row] === who ? ' sel' : ''); b.dataset.row = row; b.dataset.who = who; b.innerHTML = '<canvas></canvas><b>' + nm + (inv ? '<br>(INV.)' : '') + '</b>';
+        const c = b.querySelector('canvas'); c.width = who === 'gojo' ? D.idle.w : who === 'yuji' ? YU.idle.w : 64; c.height = 64; vsPv.push({ c, g: c.getContext('2d'), who, inv });
+        b.addEventListener('click', () => { vsPick[row] = who; buildFighters(); }); cards.appendChild(b);
+      }
+      if (list.length < 2) { const lk = document.createElement('div'); lk.className = 'card lock'; lk.innerHTML = '<span>?</span><b>LOCKED</b>'; cards.appendChild(lk); }
+      g.appendChild(cards); box.appendChild(g);
     }
   }
 }
@@ -1022,6 +1030,7 @@ function vsTick(now, dt) {
   if (now - vs.hitAt > 350) vs.sh += (vs.hp - vs.sh) * Math.min(1, dt * 4);
   if (vs.ph !== 'fight') { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = false; }      // no control before FIGHT! and after the K.O.
   if (now < pStun) { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; stickDown = false; }      // ...and none while he is stunned by the JUMPSCARE
+  if (vs.me === 'yuji') atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false;      // Yuji can only walk and jump for now
 }
 function vsHurt(dm, now) { vs.hp = Math.max(0, vs.hp - dm); vs.hitAt = now; if (vs.hp <= 0) { if (!vs.story) endRound('enemy', 'ko', now); else if (!de && !se) deathStart(now); } }      // (in the story fight Gojo's death is a cutscene)
 function endRound(who, why, now) {
@@ -1073,6 +1082,7 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
   const hold = G.smart >= 1 && atkAt >= 0 && gap > 0 && ag - 6 <= REACH[vs.seenK] + 4 && now < atkAt + ATK_IMPACT[vs.seenK] * 1000 / ATK_FPS[vs.seenK] && !(vs.rolled && !vs.defended);      // a smart enemy does not start his own swing while yours is coming: he defends first (if the defence fails he trades)
   let go = punish || counter;
   if (!go && !hold && ag - 6 <= REACH[d.k] - 1 && now >= (d.nextDecide || 0)) { d.nextDecide = now + 250; go = Math.random() < G.aggr; }
+  if (vs.foe === 'yuji') go = false;      // (the enemy Yuji has no attacks yet)
   if (go) { d.k = (punish || counter) && ag - 6 <= REACH[3] - 1 ? 3 : (Math.random() * 4) | 0; if (ag - 6 > REACH[d.k] - 1) d.k = 0; d.ai = 'attack'; d.aiAt = now; d.hitDone = false; d.swung = false; d.chain = 0; d.counter = 0; return; }
   if (move) { d.x += move * 30 * G.spd * dt; d.ai = 'walk'; } else d.ai = 'think';
 }
@@ -1093,9 +1103,9 @@ function drawVs(now, ux = 0, uy = 0) {         // health bars, names, the grade,
   const bar = (x, y, f, g, right) => { ctx.fillStyle = '#000'; ctx.fillRect(x - 1, y - 1, W + 2, 8); ctx.fillStyle = '#3a1a2a'; ctx.fillRect(x, y, W, 6); const w1 = Math.round(W * g), w2 = Math.round(W * f); ctx.fillStyle = '#ffd27a'; ctx.fillRect(right ? x + W - w1 : x, y, w1, 6); ctx.fillStyle = f > 0.3 ? '#52e08a' : '#ff4a4a'; ctx.fillRect(right ? x + W - w2 : x, y, w2, 6); };
   ctx.save(); ctx.translate(ux, uy);
   bar(6, 20, pf, ps, false); bar(VW - 6 - W, 20, ef, es, true);
-  const cw = Math.round(W * Math.max(0, Math.min(100, ce)) / 100), bad = now - ceFlash < 500, vy = vs.me === 'verity', nx = 6 + (vy ? 56 : 40), foeName = (vs.foe === 'verity' ? 'VERITY' : 'GOJO') + (vs.inv ? ' (INV.)' : '');      // the cursed energy bar right under the health bar (cyan for Gojo, yellow for Verity; it flashes red when a move is refused)
+  const cw = Math.round(W * Math.max(0, Math.min(100, ce)) / 100), bad = now - ceFlash < 500, vy = vs.me === 'verity', nx = 6 + (vy ? 56 : 40), foeName = NAMES[vs.foe] + (vs.inv ? ' (INV.)' : '');      // the cursed energy bar right under the health bar (cyan for Gojo, yellow for Verity; it flashes red when a move is refused)
   ctx.fillStyle = '#000'; ctx.fillRect(5, 28, W + 2, 6); ctx.fillStyle = vy ? '#2a2208' : '#0b2a3a'; ctx.fillRect(6, 29, W, 4); ctx.fillStyle = bad ? '#ff4a4a' : vy ? '#ffd34d' : '#2fe3ff'; ctx.fillRect(6, 29, cw, 4); ctx.fillStyle = bad ? '#ffb0b0' : vy ? '#fff3b0' : '#b8f8ff'; ctx.fillRect(6, 29, cw, 1);
-  pxt(vy ? 'VERITY' : 'GOJO', 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', nx, 45, bad ? '#ff6a5a' : vy ? '#ffe37d' : '#7df0ff', 8); let lx = nx + 62; if (vs.bleed) { pxt('BLEED', lx, 45, '#ff4a4a', 8); lx += 48; } if (vs.fear) pxt('FEAR', lx, 45, '#c77dff', 8); pxt(vs.story ? 'VERITY' : foeName, VW - 6, 45, '#ffffff', 8, 'right'); let rx2 = VW - 6; if (dummy && dummy.bleed) { pxt('BLEED', rx2, 37, '#ff4a4a', 8, 'right'); rx2 -= 48; } if (dummy && dummy.fear) pxt('FEAR', rx2, 37, '#c77dff', 8, 'right'); pxt(vs.story ? 'SPECIAL GRADE' : GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
+  pxt(NAMES[vs.me], 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', nx, 45, bad ? '#ff6a5a' : vy ? '#ffe37d' : '#7df0ff', 8); let lx = nx + 62; if (vs.bleed) { pxt('BLEED', lx, 45, '#ff4a4a', 8); lx += 48; } if (vs.fear) pxt('FEAR', lx, 45, '#c77dff', 8); pxt(vs.story ? 'VERITY' : foeName, VW - 6, 45, '#ffffff', 8, 'right'); let rx2 = VW - 6; if (dummy && dummy.bleed) { pxt('BLEED', rx2, 37, '#ff4a4a', 8, 'right'); rx2 -= 48; } if (dummy && dummy.fear) pxt('FEAR', rx2, 37, '#c77dff', 8, 'right'); pxt(vs.story ? 'SPECIAL GRADE' : GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
   if (!vs.story) pxt(String(Math.max(0, Math.ceil(vs.tl / 1000))), VW / 2, 18, vs.tl < 10000 ? '#ff6a5a' : '#ffffff', 16, 'center');
   const kob = vs.ph === 'ko';
   for (let i = 0; i < (vs.story ? 0 : 2); i++) {               // the round points (a pip lights up for every round won); the point that was just won blinks
@@ -1109,6 +1119,7 @@ function drawVs(now, ux = 0, uy = 0) {         // health bars, names, the grade,
   const bt = vs.ph === 'intro' ? (vs.story ? ['FIGHT!', '#ff4a3a', a] : a < 1300 ? ['ROUND ' + vs.round, '#ffe9a0', a] : ['FIGHT!', '#ff4a3a', a - 1300]) : kob ? (vs.why === 'fatal' ? ['FATALITY', '#ff3a3a', a] : vs.why === 'time' ? ['TIME!', '#9fd8ff', a] : ['K.O.', '#ffe9a0', a]) : null;
   if (bt) { const kk = bt[2] / 1000, j = kk < 0.4 ? Math.round((Math.random() - 0.5) * 2) : 0; pxt(bt[0], VW / 2 + j, gy - 26 + j, bt[1], kk < 0.06 ? 48 : kk < 0.12 ? 32 : 24, 'center'); }      // the big banners (ROUND n, FIGHT!, K.O., TIME!, FATALITY) slam in huge and drop to 24 px in two steps, then shake a little, like the FATALITY title
 }
+window.__yuji = () => ({ idle: YUF.norm.idle.length, fwd: YUF.norm.fwd.length, back: YUF.norm.back.length, jump: YUF.norm.jump.length, inv: YUF.inv.idle.length, w: YU.idle.w, lift: YU.jump.lift.length, pick: JSON.stringify(vsPick) });
 window.__vs = () => vs && ({ me: vs.me, foe: vs.foe, inv: !!vs.inv, story: !!vs.story, retry: vs.retry | 0, morphed: !!vs.morphed, gi: vs.gi, ph: vs.ph, round: vs.round, pw: vs.pw, ew: vs.ew, hp: vs.hp, tl: vs.tl, ehp: dummy ? dummy.hp : -1, emax: dummy ? dummy.max : -1, ai: dummy ? dummy.ai : '', res: vs.res, who: vs.who, why: vs.why, whiffAt: vs.whiffAt, now: performance.now() });
 window.__grades = () => GRADES; window.__vsSet = o => vs && Object.assign(vs, o); window.__vsEnemy = o => dummy && Object.assign(dummy, o);
 window.__vsKo = () => { if (dummy && vs) { dummy.hp = 0; koDummy(performance.now()); } };
@@ -1131,18 +1142,18 @@ function fatSets(rev) {                                // the pictures of the at
 let fat = null, fatReq = 0;                            // fat = the running cutscene (null when there is none); fatReq = until when a press of the FATALITY button is remembered
 const orbAt = (set, n, sx, sy, s) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));      // an orb frame centred on (sx, sy)
 function fatState(now) {                               // Gojo's FATALITY. 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far away; 3 = not possible right now
-  if (!vs || vs.story || (vs.me === 'gojo' && vs.foe === 'verity') || vs.ph !== 'fight' || js || vf || fat || dom || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (Verity has his own FATALITY: the same rules; Gojo has none on a Verity)      // (no FATALITY in the story fight: his ending is a Reversal Red)
+  if (!vs || vs.story || (vs.me === 'gojo' && vs.foe === 'verity') || vs.me === 'yuji' || vs.foe === 'yuji' || vs.ph !== 'fight' || js || vf || fat || dom || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (Verity has his own FATALITY: the same rules; Gojo has none on a Verity)      // (no FATALITY in the story fight: his ending is a Reversal Red)
   if (!(dummy.hp <= dummy.max * FAT_LOW)) return 1;      // Gojo's FATALITY: only when the enemy is at 20% health or less
   if (Math.abs(dummy.x - wx) > FAT_RANGE) return 2;
   return hurtAt >= 0 || gojoGone ? 3 : 0;
 }
 function fatAiState(now) {                             // the enemy's own FATALITY on Gojo: from SEMI-GRADE 1 up, the moment Gojo is at 20% health or less and the enemy is close (no warning; being in the air, dashing or out of reach saves him)
-  if (!vs || vs.story || (vs.me === 'verity' && vs.foe === 'gojo') || vs.ph !== 'fight' || js || vf || fat || dom || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
+  if (!vs || vs.story || (vs.me === 'verity' && vs.foe === 'gojo') || vs.me === 'yuji' || vs.foe === 'yuji' || vs.ph !== 'fight' || js || vf || fat || dom || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
   return vs.hp <= PHP * FAT_LOW && Math.abs(dummy.x - wx) <= FAT_RANGE && !gojoGone && gojoLift <= 12 && dgAt < 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
 }
 function fatGo(now, dt, rev) { if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's FATALITY is its own cutscene)
 function fatUI(now) {                                  // the button: only in a match, dark until it can be used, then it glows
-  const col = $('fat').parentNode; col.classList.toggle('vs', !!vs); col.classList.toggle('vy', !!vs && vs.me === 'verity'); $('hud').classList.toggle('vs', !!vs); if (vs) $('fat').classList.toggle('rdy', fatState(now) === 0);
+  const col = $('fat').parentNode; col.classList.toggle('vs', !!vs); col.classList.toggle('vy', !!vs && vs.me === 'verity'); col.classList.toggle('yj', !!vs && vs.me === 'yuji'); $('hud').classList.toggle('vs', !!vs); if (vs) $('fat').classList.toggle('rdy', fatState(now) === 0);
 }
 function pressFat() { fatReq = performance.now() + 500; }      // (a press is remembered for half a second, e.g. while he is still reeling)
 function fatStart(now, rev) {                          // rev = the enemy does it to Gojo
@@ -1395,10 +1406,10 @@ const JS = { reach: 40, stun: 5000, tick: 100, dmg: 3, cd: 30000, cut: 2.3 };
 const FEAR_X = [0, 1, -1, 1, 0, -1, 1, -1, 0, 1, -1, 0, 1, -1, 0], FEAR_Y = [0, 0, 1, 0, -1, 0, 0, 1, 0, -1, 0, 1, 0, 0, -1];      // the 15 steps of the victim's trembling (30 FPS)
 const fearOff = now => { const k = Math.floor(now / 33) % 15; return [FEAR_X[k], FEAR_Y[k]]; };
 function jsTarget(now) {      // the enemy can be grabbed: in front of Verity, within reach, standing in the open
-  const d = dummy; return !!d && !!vs && vs.ph === 'fight' && d.ko < 0 && !d.cap && !(d.vform && d.vform !== 'verity') && !(d.vact && d.vact.type === 'crouch') && now >= d.stunUntil && now - d.born >= 900 && d.x - wx <= JS.reach && d.x - wx >= -4;
+  const d = dummy; return !!d && !!vs && vs.foe !== 'yuji' && vs.ph === 'fight' && d.ko < 0 && !d.cap && !(d.vform && d.vform !== 'verity') && !(d.vact && d.vact.type === 'crouch') && now >= d.stunUntil && now - d.born >= 900 && d.x - wx <= JS.reach && d.x - wx >= -4;
 }
 function jsVictimOk(now) {      // the player can be grabbed (a jump, a teleport, a dash, a crouch, being hurt or turning into the ball saves him)
-  return !!vs && vs.ph === 'fight' && !js && !vf && !de && !se && !fat && !dom && now >= pStun && !gojoGone && gojoLift <= 12 && dgAt < 0 && hurtAt < 0 && now - hurtEnd >= 350 && stance === 'stand' && !!dummy && dummy.x >= wx - 4;
+  return !!vs && vs.me !== 'yuji' && vs.ph === 'fight' && !js && !vf && !de && !se && !fat && !dom && now >= pStun && !gojoGone && gojoLift <= 12 && dgAt < 0 && hurtAt < 0 && now - hurtEnd >= 350 && stance === 'stand' && !!dummy && dummy.x >= wx - 4;
 }
 function jsAiReady(d, now) { if (d.jsReady === undefined) d.jsReady = now + 6000; return now >= d.jsReady && jsVictimOk(now); }
 function jsBegin(now, who) { cineClear(); closeSettings(); stickDown = false; $('pad').classList.add('cine'); $('hud').classList.add('cine'); snd('scare'); js = { t: 0, who }; }      // who = 'player' (Verity is the player, the enemy is grabbed) or 'enemy'
@@ -1838,11 +1849,11 @@ function drawScene(now, dt) {
     if (!crch) { if (dir > 0) { bset = wblkF; binfo = D.wfb; bfi = slow % 15; } else if (dir < 0) { bset = wblkB; binfo = D.wbb; bfi = slow % 15; } else { bset = atkF[11]; binfo = D.atk11; bfi = bf; } }
     else if (dir > 0) { bset = crF.fblk; binfo = D.cfb; bfi = slow % 15; } else if (dir < 0) { bset = crF.bblk; binfo = D.cbb; bfi = slow % 15; } else { bset = crF.blk; binfo = D.cb; bfi = Math.floor(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)) % 15; }
   }
-  const fearing = now < pStun && !hurting, riding = !!ride, set = riding ? ride.set : hurting ? (now - hurtAt < 70 ? rxW : rxN)[hurtK] : fearing ? crF.idle : dodging ? atkF[9 + dgK + (dgCr ? 3 : 0)] : blocking ? bset : tele ? teleF : jumping ? (jumpC ? crF.jump : jumpF) : mbing ? (mbK ? redF : mbF) : lapsing ? lapseF[lpK] : atkOn ? atkF[atkK] : mode === 'cdn' ? crF.dn : mode === 'cidle' ? crF.idle : mode === 'cfwd' ? crF.fwd : mode === 'cback' ? crF.back : idle ? idleF : mode === 'fwd' ? fwdF : backF;
-  const info = riding ? ride.info : hurting ? D['rx' + hurtK] : fearing ? D.cidle : dodging ? D['atk' + (9 + dgK + (dgCr ? 3 : 0))] : blocking ? binfo : tele ? D.tele : jumping ? (jumpC ? D.cjump : D.jump) : mbing ? (mbK ? D.atk22 : D.atk8) : lapsing ? D['atk' + (4 + lpK)] : atkOn ? D['atk' + atkK] : mode === 'cdn' ? D.cdn : mode === 'cidle' ? D.cidle : mode === 'cfwd' ? D.cfwd : mode === 'cback' ? D.cback : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
-  const fi = riding ? ride.fi : hurting ? hf : fearing ? Math.floor(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)) % 15 : dodging ? df : blocking ? bfi : tele ? tf : jumping ? jf : mbing ? mf : lapsing ? lf : atkOn ? af : mode === 'cdn' ? (stance === 'down' ? sf : 14 - sf) : Math.floor(Math.max(0, now - (idle || mode === 'cidle' ? spawnAt : modeAt)) / (1000 / (idle || mode === 'cidle' ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail performance.now() by a hair
+  const fearing = now < pStun && !hurting, riding = !!ride, yj = vs && vs.me === 'yuji' ? (jumping ? { set: YUF.norm.jump, info: YU.jump, fi: jf, lift: YU.jump.lift[jf] } : !idle && mode === 'fwd' ? { set: YUF.norm.fwd, info: YU.fwd, fi: Math.floor(Math.max(0, now - modeAt) / (1000 / WALK_FPS)) % 15, lift: 0 } : !idle && mode === 'back' ? { set: YUF.norm.back, info: YINFO.back, fi: Math.floor(Math.max(0, now - modeAt) / (1000 / WALK_FPS)) % 15, lift: 0 } : { set: YUF.norm.idle, info: YU.idle, fi: Math.floor(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)) % 15, lift: 0 }) : null, set = yj ? yj.set : riding ? ride.set : hurting ? (now - hurtAt < 70 ? rxW : rxN)[hurtK] : fearing ? crF.idle : dodging ? atkF[9 + dgK + (dgCr ? 3 : 0)] : blocking ? bset : tele ? teleF : jumping ? (jumpC ? crF.jump : jumpF) : mbing ? (mbK ? redF : mbF) : lapsing ? lapseF[lpK] : atkOn ? atkF[atkK] : mode === 'cdn' ? crF.dn : mode === 'cidle' ? crF.idle : mode === 'cfwd' ? crF.fwd : mode === 'cback' ? crF.back : idle ? idleF : mode === 'fwd' ? fwdF : backF;
+  const info = yj ? yj.info : riding ? ride.info : hurting ? D['rx' + hurtK] : fearing ? D.cidle : dodging ? D['atk' + (9 + dgK + (dgCr ? 3 : 0))] : blocking ? binfo : tele ? D.tele : jumping ? (jumpC ? D.cjump : D.jump) : mbing ? (mbK ? D.atk22 : D.atk8) : lapsing ? D['atk' + (4 + lpK)] : atkOn ? D['atk' + atkK] : mode === 'cdn' ? D.cdn : mode === 'cidle' ? D.cidle : mode === 'cfwd' ? D.cfwd : mode === 'cback' ? D.cback : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
+  const fi = yj ? yj.fi : riding ? ride.fi : hurting ? hf : fearing ? Math.floor(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)) % 15 : dodging ? df : blocking ? bfi : tele ? tf : jumping ? jf : mbing ? mf : lapsing ? lf : atkOn ? af : mode === 'cdn' ? (stance === 'down' ? sf : 14 - sf) : Math.floor(Math.max(0, now - (idle || mode === 'cidle' ? spawnAt : modeAt)) / (1000 / (idle || mode === 'cidle' ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail performance.now() by a hair
   const lk = tele ? info.lift_k[tf] : 0;      // teleport: stays where he vanished (null), then the fixed height he reappears at, falling back to the ground
-  const lift = riding ? ride.lift : tele ? (lk === null ? teleL0 : Math.round(Math.min(34, gy - 66) * lk)) : jumping ? (jumpC ? D.cjump : D.jump).lift[jf] : hurting && info.lift ? info.lift[hf] : 0;   // how far the sprite is raised off the ground
+  const lift = yj ? yj.lift : riding ? ride.lift : tele ? (lk === null ? teleL0 : Math.round(Math.min(34, gy - 66) * lk)) : jumping ? (jumpC ? D.cjump : D.jump).lift[jf] : hurting && info.lift ? info.lift[hf] : 0;   // how far the sprite is raised off the ground
   gojoLift = lift; gojoGone = tele && tf < 6;   // the attacking dummy misses him while he is up in the air or vanished
   const cx = Math.round(VW / 2), fo = fearing ? fearOff(now) : [0, 0], x = cx - (info.cx - info.x0) + fo[0], y = gy - 60 - info.top - lift + fo[1];
 
@@ -1854,11 +1865,11 @@ function drawScene(now, dt) {
   const ry = Math.round(info.h * (1 - e));    // spawn: materialise from the feet up
   const gko = vs && vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // the enemy finished him in a match: after the hit-stop he topples backwards (like the enemy does) and stays down until the next round
   ctx.save();
-  if (vap) { /* gone */ } else if (gko >= 0) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); ctx.drawImage(idleF[0], -(D.idle.cx - D.idle.x0), -62); }
+  if (vap) { /* gone */ } else if (gko >= 0) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); ctx.drawImage((yj ? YUF.norm.idle : idleF)[0], -((yj ? YU.idle : D.idle).cx - (yj ? YU.idle : D.idle).x0), -62); }
   else {
     ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip();
     ctx.globalAlpha = Math.min(1, t * 2);
-    ctx.drawImage((ceOn && (cm === 2 ? HOMAPR : HOMAP).get(set) || set)[fi], x, y);        // cursed energy on: both hands out of the pockets
+    ctx.drawImage((ceOn && (cm === 2 ? HOMAPR : HOMAP).get(set) || set)[fi], x, y); if (yj && hurting && now - hurtAt < 70) ctx.drawImage(whiteOf(set[fi]), x, y);        // cursed energy on: both hands out of the pockets
     if (fearing) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(set[fi]), x, y); }      // (JUMPSCARE: a pale pulse)
   }
   ctx.restore();
@@ -2285,7 +2296,7 @@ function tick(now) {
   requestAnimationFrame(tick);                // schedule first so one bad frame can't stop the loop
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
   if (state === 'play') { if (now < holdUntil) last = now; else drawScene(now, dt); }      // hit-stop: the picture freezes for a split second when the red orb explodes
-  else if (state === 'versus') { const fr = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length; for (const q of vsPv) { q.g.clearRect(0, 0, 64, 64); q.g.drawImage(q.who === 'gojo' ? (q.inv ? dumF : idleF)[fr] : vfr('idle', now / 100, true, q.inv), 0, 0); } }
+  else if (state === 'versus') { const fr = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length; for (const q of vsPv) { q.g.clearRect(0, 0, 64, 64); q.g.drawImage(q.who === 'gojo' ? (q.inv ? dumF : idleF)[fr] : q.who === 'yuji' ? (q.inv ? YUF.inv : YUF.norm).idle[fr % 15] : vfr('idle', now / 100, true, q.inv), 0, 0); } }
   else if (state === 'story') storyFrame(now, dt);
   else if (state === 'select') {
     pctx.clearRect(0, 0, pv.width, pv.height);
