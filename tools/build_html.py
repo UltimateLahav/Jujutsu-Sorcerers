@@ -8,7 +8,7 @@ D = {'pal': pal, 'idle': side['idle'], 'fwd': side['fwd'], 'back': side['back'],
 heroes = ['data:image/png;base64,' + b64(f'face_art_{i}.png') for i in range(5)]
 t = open('template.html').read()
 out = (t.replace('__SPR__', json.dumps(D, separators=(',', ':'))).replace('__HEROES__', json.dumps(heroes))
-        .replace('__FONT__', open('font.b64').read()).replace('__SFX__', open('sfx.js').read()).replace('__STORYART__', open('story_art.json').read()).replace('__YUJI__', open('yuji.json').read()).replace('__HUMAN__', open('human.js').read()).replace('__DOMAINIMG__', 'data:image/png;base64,' + __import__('base64').b64encode(open('domain_cut.png', 'rb').read()).decode()).replace('__VOIDIMG__', 'data:image/png;base64,' + __import__('base64').b64encode(open('void_cut.png', 'rb').read()).decode()))
-assert '__SPR__' not in out and '__HEROES__' not in out and '__FONT__' not in out and '__SFX__' not in out and '__STORYART__' not in out and '__YUJI__' not in out and '__HUMAN__' not in out and '__DOMAINIMG__' not in out and '__VOIDIMG__' not in out
+        .replace('__FONT__', open('font.b64').read()).replace('__SFX__', open('sfx.js').read()).replace('__STORYART__', open('story_art.json').read()).replace('__YUJI__', open('yuji.json').read()).replace('__HIT__', open('hitboxes.json').read()).replace('__HUMAN__', open('human.js').read()).replace('__DOMAINIMG__', 'data:image/png;base64,' + __import__('base64').b64encode(open('domain_cut.png', 'rb').read()).decode()).replace('__VOIDIMG__', 'data:image/png;base64,' + __import__('base64').b64encode(open('void_cut.png', 'rb').read()).decode()))
+assert '__SPR__' not in out and '__HEROES__' not in out and '__FONT__' not in out and '__SFX__' not in out and '__STORYART__' not in out and '__YUJI__' not in out and '__HIT__' not in out and '__HUMAN__' not in out and '__DOMAINIMG__' not in out and '__VOIDIMG__' not in out
 open(out_path, 'w').write(out)
 print('wrote', out_path, len(out), 'bytes')

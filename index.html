@@ -721,6 +721,10 @@ const ATK_NAMES = ['R.HOOK', 'L.HOOK', 'ELBOW', 'KICK'], WALK_NAMES = ['JAB', 'K
 const DUMMY_HP = 300, RX_FPS = [16, 16, 16, 18, 12, 16, 16, 16, 12, 14], RX_DUR = RX_FPS.map(f => 10000 / f);      // 10 reactions, 10 frames each
 const RXF15 = RX_FPS.map(f => f * 1.5);      // Yuji's and Verity's 10 hit reactions have 15 frames each: they play at 1.5x Gojo's frame rate, so a reaction lasts exactly as long as his
 const REACH = [17, 17, 15, 26, 0, 0, 16, 16, 0, 0, 0, 0, 0, 0, 19, 25, 19, 27, 25, 24, 18, 20, 26, 40, 17, 17, 17, 26, 27, 28], KNOCK = [9, 9, 11, 100, 0, 0, 8, 8, 0, 0, 0, 0, 0, 0, 8, 14, 9, 40, 12, 14, 9, 170, 9, 0, 9, 10, 14, 12, 14, 480], KNOCK_G = [26, 26, 34, 80, 0, 0, 20, 20, 0, 0, 0, 0, 0, 0, 20, 30, 22, 45, 26, 28, 20, 60, 26, 0, 26, 30, 40, 30, 34, 420], DMG = [12, 14, 18, 35, 0, 0, 10, 13, 0, 0, 0, 0, 0, 0, 10, 16, 13, 22, 14, 14, 12, 30, 12, 0, 11, 13, 15, 6, 6, 8];      // 14-17 = the walking combo: jab, kick, cross with the other hand, kick with the other leg   // per hit: how far it reaches from his hips (px), how hard it shoves the dummy (px/s), damage number
+const HIT = {"gojo":{"0":{"gojo":29,"yuji":33,"verity":35},"1":{"gojo":28,"yuji":32,"verity":34},"2":{"gojo":23,"yuji":25,"verity":28},"3":{"gojo":28,"yuji":31,"verity":38},"6":{"gojo":29,"yuji":31,"verity":38},"7":{"gojo":27,"yuji":30,"verity":31},"14":{"gojo":30,"yuji":34,"verity":37},"15":{"gojo":30,"yuji":33,"verity":39},"16":{"gojo":29,"yuji":33,"verity":36},"17":{"gojo":30,"yuji":33,"verity":39},"18":{"gojo":23,"yuji":25,"verity":31},"19":{"gojo":29,"yuji":32,"verity":38},"20":{"gojo":29,"yuji":33,"verity":36},"21":{"gojo":33,"yuji":36,"verity":40}},"yuji":{"24":{"gojo":26,"yuji":28,"verity":34},"25":{"gojo":26,"yuji":28,"verity":34},"26":{"gojo":22,"yuji":25,"verity":31},"27":{"gojo":26,"yuji":29,"verity":30},"28":{"gojo":29,"yuji":32,"verity":39},"29":{"gojo":26,"yuji":30,"verity":36}},"verity":{"0":{"gojo":36,"yuji":39,"verity":46},"1":{"gojo":36,"yuji":39,"verity":46},"2":{"gojo":36,"yuji":38,"verity":45},"3":{"gojo":36,"yuji":41,"verity":46},"6":{"gojo":41,"yuji":42,"verity":48},"7":{"gojo":40,"yuji":41,"verity":48},"22":{"gojo":29,"yuji":34,"verity":40}}};      // tools/hitbox_art.py measures the pictures: HIT[attacker][hit number][target] = the gap (px between the two characters' hips) up to which that move really touches that body: the limb as drawn at the moment of impact against the body as drawn, row by row
+const reachFor = (att, k, tgt) => { const r = HIT[att] && HIT[att][k] && HIT[att][k][tgt]; return r === undefined ? REACH[k] + 6 : r; };      // (a move that was not measured keeps its old reach)
+const moveReach = (att, tgt, k) => att === 'yuji' && YU_ATK.hit[k] ? Math.min(...YU_ATK.hit[k].map(h => reachFor(att, h, tgt))) : reachFor(att, k, tgt);      // the reach of a whole move (Yuji's move k lands the hits YU_ATK.hit[k]: its shortest hit counts)
+const pHit = k => reachFor(vs ? vs.me : 'gojo', k, vs ? vs.foe : 'gojo'), eHit = k => reachFor(vs ? vs.foe : 'gojo', k, vs ? vs.me : 'gojo'), pMove = k => moveReach(vs ? vs.me : 'gojo', vs ? vs.foe : 'gojo', k), eMove = k => moveReach(vs ? vs.foe : 'gojo', vs ? vs.me : 'gojo', k);      // your hit / move on the enemy, the enemy's hit / move on you
 const CE_FPS = 20, CE_DMG = 1.3;               // cursed energy: its 15 frames play at 20 FPS (frames per second = how many pictures are shown each second); while it is on, every hit he lands does 1.3 times the damage
 const FWD_SPEED = 44, BACK_SPEED = 30;         // world pixels per second (matched to the slower stride so his feet do not skate)
 const BLINK_STEP = 70, BLINK_HOLD = 500;       // ms per blink frame, ms the eye stays shut
@@ -1088,8 +1092,8 @@ function hitDummy(k, now) {                   // called on the impact frame: a h
   if (dummy.vform && dummy.vform !== 'verity') { say('IMMUNE', dummy.x, '#ffe9a0', 8, now); return; }      // the smiley form cannot be hit
   if (dummy.vact && dummy.vact.type === 'crouch' && ![3, 6, 7, 29].includes(k)) { say('MISS', dummy.x, '#9fd8ff', 8, now); return; }      // folded up he is below every swing except the low kick and the crouching punches
   if (now < (dummy.dodgeUntil || 0)) { say('MISS', dummy.x, '#9fd8ff', 8, now); return; }      // the smart enemy stepped back out of the swing
-  const gap = dummy.x - wx;                   // the dummy's centre relative to Gojo's hips; his body is about 12 px wide
-  if (gap - 6 > REACH[k] || gap + 6 < 3) return;
+  const gap = dummy.x - wx;                   // the dummy's centre relative to Gojo's hips
+  if (gap > pHit(k) || gap < -3) return;      // (pHit: how far the drawn limb of this move really reaches into the drawn body of this enemy; behind you nothing lands)
   if (dBlocks() && gap > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx]) {      // (a smart enemy that blocked: he answers with a counter)
     if (vs) dummy.counter = now;      // the blocker's guard faces Gojo: normal punches are blocked (from behind they land)
     dummy.vx += KNOCK[k] * 0.3; shakeUntil = now + 70; shakeAmp = 1; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); return;
@@ -1129,11 +1133,11 @@ function updateFighter(now, dt) {             // the attacking dummy: walks up t
   if (d.ai === 'hurt') { d.ai = 'rest'; d.aiAt = now; d.restFor = 500 + Math.random() * 500; }
   if (d.ai === 'rest') { if (now - d.aiAt > d.restFor && now - d.born > 900) { d.k = (Math.random() * 4) | 0; d.ai = 'walk'; } }
   else if (d.ai === 'walk') {
-    if (Math.abs(gap) - 6 > REACH[d.k] - 3) d.x += (gap > 0 ? -1 : 1) * 30 * dt; else { d.ai = 'attack'; d.aiAt = now; d.hitDone = false; d.swung = false; }
+    if (Math.abs(gap) > eHit(d.k) - 3) d.x += (gap > 0 ? -1 : 1) * 30 * dt; else { d.ai = 'attack'; d.aiAt = now; d.hitDone = false; d.swung = false; }
   } else if (d.ai === 'attack') {
     const f = Math.floor((now - d.aiAt) * ATK_FPS[d.k] / 1000);
     if (!d.swung && f >= ATK_SWING[d.k]) { d.swung = true; snd('f:swing', d.k); }
-    if (!d.hitDone && f >= ATK_IMPACT[d.k]) { d.hitDone = true; snd('f:hit', d.k); if (Math.abs(gap) - 6 <= REACH[d.k]) gojoHit(d.k, now); if (purple && Math.abs(dummy.x - purple.x) - 8 <= REACH[d.k]) damagePurple((DMG[d.k] || 12) + ((Math.random() * 5) | 0), now); }
+    if (!d.hitDone && f >= ATK_IMPACT[d.k]) { d.hitDone = true; snd('f:hit', d.k); if (Math.abs(gap) <= eHit(d.k)) gojoHit(d.k, now); if (purple && Math.abs(dummy.x - purple.x) - 8 <= REACH[d.k]) damagePurple((DMG[d.k] || 12) + ((Math.random() * 5) | 0), now); }
     if (f >= 15) { d.ai = 'rest'; d.aiAt = now; d.restFor = 700 + Math.random() * 900; }
   }
 }
@@ -1614,7 +1618,7 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
   if (d.ai === 'dodge' || d.ai === 'block') return;      // (guard up / stepping back: nothing else until it is over)
   const dodge = ms => { d.ai = 'dodge'; d.aiAt = now; d.until = now + ms; d.dodgeUntil = now + ms; d.vx += (gap > 0 ? 1 : -1) * 250; puff(d.x, 4); say('DODGE', d.x, '#9fd8ff', 8, now); };
   // 1. a swing is coming: after his reaction time he steps out of it or raises his guard; a move you keep repeating is read (Grade 2 and up) and answered more and more
-  if (atkAt >= 0 && !vs.rolled && d.ai !== 'attack' && gap > 0 && now - vs.seenAt >= G.react * (0.8 + Math.random() * 0.4) && now < atkAt + ATK_IMPACT[vs.seenK] * 1000 / ATK_FPS[vs.seenK] && ag - 6 <= REACH[vs.seenK] + 4) {
+  if (atkAt >= 0 && !vs.rolled && d.ai !== 'attack' && gap > 0 && now - vs.seenAt >= G.react * (0.8 + Math.random() * 0.4) && now < atkAt + ATK_IMPACT[vs.seenK] * 1000 / ATK_FPS[vs.seenK] && ag <= pMove(vs.seenK) + 4) {
     vs.rolled = true; const habit = vs.hist.slice(-5).filter(k => k === vs.seenK).length, r = Math.random(), blk = Math.min(0.95, G.blk + (G.smart >= 1 ? 0.12 * Math.max(0, habit - 1) : 0));
     if (r < G.dodge) { vs.defended = true; dodge(300); return; }
     if (r < G.dodge + blk) { vs.defended = true; d.ai = 'block'; d.aiAt = now; d.until = now + 650; return; }
@@ -1628,22 +1632,22 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
   if (d.ai === 'attack') {
     const Y = vs.foe === 'yuji', f = Math.floor((now - d.aiAt) * (Y ? YU_ATK.fps : ATK_FPS)[d.k] * G.spd / 1000);
     if (!d.swung && f >= (Y ? YU_ATK.swing[d.k][0] : ATK_SWING[d.k])) { d.swung = true; snd('f:swing', d.k); }
-    if (Y) { const im = YU_ATK.imp[d.k]; for (let j = d.hitN || 0; j < im.length && f >= im[j]; j++) { d.hitN = j + 1; const hk = YU_ATK.hit[d.k][j]; snd('f:hit', YU_ATK.snd[hk - 24]); if (ag - 6 <= REACH[hk]) gojoHit(hk, now); if (d.hitN === im.length) d.hitDone = true; } }
-    else if (!d.hitDone && f >= ATK_IMPACT[d.k]) { d.hitDone = true; snd('f:hit', d.k); if (ag - 6 <= REACH[d.k]) gojoHit(d.k, now); if (purple && Math.abs(d.x - purple.x) - 8 <= REACH[d.k]) damagePurple((DMG[d.k] || 12) + ((Math.random() * 5) | 0), now); }
-    if (f >= 15) { d.chain = (d.chain || 0) + 1; if (d.chain < G.combo && Math.random() < 0.8 && !(G.smart >= 2 && atkAt >= 0 && gap > 0 && ag - 6 <= REACH[atkK] + 4)) {      // (from Grade 2 up he does not keep chaining into a swing of yours: he drops the combo and defends)
+    if (Y) { const im = YU_ATK.imp[d.k]; for (let j = d.hitN || 0; j < im.length && f >= im[j]; j++) { d.hitN = j + 1; const hk = YU_ATK.hit[d.k][j]; snd('f:hit', YU_ATK.snd[hk - 24]); if (ag <= eHit(hk)) gojoHit(hk, now); if (d.hitN === im.length) d.hitDone = true; } }
+    else if (!d.hitDone && f >= ATK_IMPACT[d.k]) { d.hitDone = true; snd('f:hit', d.k); if (ag <= eHit(d.k)) gojoHit(d.k, now); if (purple && Math.abs(d.x - purple.x) - 8 <= REACH[d.k]) damagePurple((DMG[d.k] || 12) + ((Math.random() * 5) | 0), now); }
+    if (f >= 15) { d.chain = (d.chain || 0) + 1; if (d.chain < G.combo && Math.random() < 0.8 && !(G.smart >= 2 && atkAt >= 0 && gap > 0 && ag <= pMove(atkK) + 4)) {      // (from Grade 2 up he does not keep chaining into a swing of yours: he drops the combo and defends)
        d.k = (d.k + 1) % 4; d.aiAt = now; d.hitDone = false; d.swung = false; d.hitN = 0; if (vs.foe === 'yuji' && d.k === 3) d.vx -= 100; } else { d.ai = 'rest'; d.aiAt = now; d.restFor = (650 + Math.random() * 850) / (0.45 + G.aggr * 0.9); } }
     return;
   }
   if (d.ai === 'rest') { if (now - d.aiAt > d.restFor && now - d.born > 900) d.ai = 'think'; else return; }
   // 4. thinking: walk in (the smartest one stays just outside Gojo's reach and baits), and decide when to strike
-  const want = G.smart >= 3 ? 40 : REACH[0]; let move = 0;
+  const want = G.smart >= 3 ? Math.max(pMove(0), pMove(1), pMove(2), pMove(3)) + 8 : eMove(0) - 6; let move = 0;      // (the smartest one stays just outside the longest move you have; the others come as close as their first move reaches)
   if (ag > want + 4) move = toward; else if (G.smart >= 3 && ag < want - 6 && ag > 20) move = -toward;
-  const punish = G.smart >= 2 && vs.whiffAt > 0 && now - vs.whiffAt < 450 && gap > 0 && ag < REACH[3] + 12 && Math.random() < [0, 0, 0.25, 0.5, 0.8, 1][vs.gi] * dt * 14;      // Gojo just missed: strike while he is open
-  const counter = G.smart >= 2 && d.counter && now - d.counter < 500 && gap > 0 && ag < REACH[0] + 14;      // he just blocked: answer at once
-  const hold = G.smart >= 1 && atkAt >= 0 && gap > 0 && ag - 6 <= REACH[vs.seenK] + 4 && now < atkAt + ATK_IMPACT[vs.seenK] * 1000 / ATK_FPS[vs.seenK] && !(vs.rolled && !vs.defended);      // a smart enemy does not start his own swing while yours is coming: he defends first (if the defence fails he trades)
+  const punish = G.smart >= 2 && vs.whiffAt > 0 && now - vs.whiffAt < 450 && gap > 0 && ag < eMove(3) + 6 && Math.random() < [0, 0, 0.25, 0.5, 0.8, 1][vs.gi] * dt * 14;      // Gojo just missed: strike while he is open
+  const counter = G.smart >= 2 && d.counter && now - d.counter < 500 && gap > 0 && ag < eMove(0) + 8;      // he just blocked: answer at once
+  const hold = G.smart >= 1 && atkAt >= 0 && gap > 0 && ag <= pMove(vs.seenK) + 4 && now < atkAt + ATK_IMPACT[vs.seenK] * 1000 / ATK_FPS[vs.seenK] && !(vs.rolled && !vs.defended);      // a smart enemy does not start his own swing while yours is coming: he defends first (if the defence fails he trades)
   let go = punish || counter;
-  if (!go && !hold && ag - 6 <= REACH[d.k] - 1 && now >= (d.nextDecide || 0)) { d.nextDecide = now + 250; go = Math.random() < G.aggr; }
-  if (go) { d.k = (punish || counter) && ag - 6 <= REACH[3] - 1 ? 3 : (Math.random() * 4) | 0; if (ag - 6 > REACH[d.k] - 1) d.k = 0; d.ai = 'attack'; d.aiAt = now; d.hitDone = false; d.swung = false; d.hitN = 0; d.chain = 0; d.counter = 0; if (vs.foe === 'yuji' && d.k === 3) d.vx -= 100; return; }
+  if (!go && !hold && ag <= eMove(d.k) - 1 && now >= (d.nextDecide || 0)) { d.nextDecide = now + 250; go = Math.random() < G.aggr; }
+  if (go) { d.k = (punish || counter) && ag <= eMove(3) - 1 ? 3 : (Math.random() * 4) | 0; if (ag > eMove(d.k) - 1) d.k = 0; d.ai = 'attack'; d.aiAt = now; d.hitDone = false; d.swung = false; d.hitN = 0; d.chain = 0; d.counter = 0; if (vs.foe === 'yuji' && d.k === 3) d.vx -= 100; return; }
   if (move) { d.x += move * 30 * G.spd * dt; d.ai = 'walk'; } else d.ai = 'think';
 }
 // ---------------------------------------------------------------- CURSED ENERGY (Versus mode only): a cyan bar under Gojo's health bar. It starts every round at 100%, each energy move costs some of it, it refills 1% per second once a second has passed without such a move, and the cursed energy mode drains 1% per second (no refill) and switches itself off at 0%.
@@ -2662,15 +2666,15 @@ function vActTick(d, now, dt) {
   if (d.rxAt > a.at) { vEnd(d, now); return; }      // he was hit: the move is over
   if (a.type === 'bite') {
     a.anim = 'bite'; a.fi = t * 18 / 1000; if (a.fi >= 5 && a.fi < 9 && ag > 14) d.x += toward * 80 * dt;
-    if (!a.hit && a.fi >= 8) { a.hit = 1; snd('f:hit', 3); if (ag - 6 <= 26) { const h = hurtAt; gojoHit(0, now); if (hurtAt !== h) vs.bleed = { until: now + 4000, next: now + 100 }; } }
+    if (!a.hit && a.fi >= 8) { a.hit = 1; snd('f:hit', 3); if (ag <= eHit(22)) { const h = hurtAt; gojoHit(0, now); if (hurtAt !== h) vs.bleed = { until: now + 4000, next: now + 100 }; } }
     if (a.fi >= 15) vEnd(d, now);
   } else if (a.type === 'scare') {      // JUMPSCARE: the wind-up, the lunge (frames 4-7), the grip (12): if the victim is still within reach the cutscene starts; a jump or a teleport during the wind-up saves him
     a.anim = 'scare_grab'; a.fi = t * 24 / 1000; if (a.fi >= 4 && a.fi < 8 && ag > 28) d.x += toward * 130 * dt;
     if (!a.hit && a.fi >= 12) { a.hit = 1; if (jsVictimOk(now) && ag - 6 <= JS.reach) { jsBegin(now, 'enemy'); return; } say('MISS', wx, '#9fd8ff', 8, now); d.jsReady = now + 4000; vEnd(d, now); return; }
     if (a.fi >= 15) vEnd(d, now);
   } else if (t < 700) { a.anim = 'crouch'; a.fi = t / 700 * 14; }
-  else if (t < 1200) { a.anim = 'c0'; a.fi = (t - 700) / 500 * 14; if (!a.hit && a.fi >= 6) { a.hit = 1; snd('f:hit', 0); if (ag - 6 <= 20) gojoHit(0, now); } }
-  else if (t < 1700) { a.anim = 'c1'; a.fi = (t - 1200) / 500 * 14; if (a.hit < 2 && a.fi >= 6) { a.hit = 2; snd('f:hit', 1); if (ag - 6 <= 20) gojoHit(1, now); } }
+  else if (t < 1200) { a.anim = 'c0'; a.fi = (t - 700) / 500 * 14; if (!a.hit && a.fi >= 6) { a.hit = 1; snd('f:hit', 0); if (ag <= eHit(6)) gojoHit(0, now); } }
+  else if (t < 1700) { a.anim = 'c1'; a.fi = (t - 1200) / 500 * 14; if (a.hit < 2 && a.fi >= 6) { a.hit = 2; snd('f:hit', 1); if (ag <= eHit(7)) gojoHit(1, now); } }
   else if (t < 2000) { a.anim = 'crouch'; a.fi = 14; }
   else if (t < 2600) { a.anim = 'crouch'; a.fi = 14 - (t - 2000) / 600 * 14; }
   else vEnd(d, now);
