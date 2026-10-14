@@ -197,6 +197,7 @@ const ATK_FPS = [30, 30, 30, 24, 24, 24, 30, 30, 0, 0, 0, 0, 0, 0, 36, 30, 32, 2
 const YU_ATK = { names: ['R.HOOK', 'L.HOOK', 'KNEE', '3 KICKS'], fps: [30, 30, 30, 24], swing: [[5], [5], [4], [4, 8, 11]], imp: [[7], [7], [7], [5, 9, 12]], hit: [[24], [25], [26], [27, 28, 29]], snd: [0, 1, 2, 0, 1, 3], reach: [17, 17, 17, 28] };      // YUJI's M1 (15 frames each): right hook, left hook, knee, then a jump and ONE leg kicks three times (head, stomach, legs; the last kick sends the enemy flying): frames per second, whoosh frames, impact frames, which hit index lands on each impact (24-29 in REACH / KNOCK / DMG), sound variants
 const ATK_NAMES = ['R.HOOK', 'L.HOOK', 'ELBOW', 'KICK'], WALK_NAMES = ['JAB', 'KICK', 'CROSS', 'KICK2'], RED_NAMES = ['NECK', 'GUT', 'PUNCH', 'SMASH'], CR_FPS = 36, LAPSE_FPS = 24;   // hooks and the elbow nudge the enemy (so the combo keeps connecting); the kick sends him sliding with a smoke trail
 const DUMMY_HP = 300, RX_FPS = [16, 16, 16, 18, 12, 16, 16, 16, 12, 14], RX_DUR = RX_FPS.map(f => 10000 / f);      // 10 reactions, 10 frames each
+const RXF15 = RX_FPS.map(f => f * 1.5);      // Yuji's and Verity's 10 hit reactions have 15 frames each: they play at 1.5x Gojo's frame rate, so a reaction lasts exactly as long as his
 const REACH = [17, 17, 15, 26, 0, 0, 16, 16, 0, 0, 0, 0, 0, 0, 19, 25, 19, 27, 25, 24, 18, 20, 26, 40, 17, 17, 17, 26, 27, 28], KNOCK = [9, 9, 11, 100, 0, 0, 8, 8, 0, 0, 0, 0, 0, 0, 8, 14, 9, 40, 12, 14, 9, 170, 9, 0, 9, 10, 14, 12, 14, 480], KNOCK_G = [26, 26, 34, 80, 0, 0, 20, 20, 0, 0, 0, 0, 0, 0, 20, 30, 22, 45, 26, 28, 20, 60, 26, 0, 26, 30, 40, 30, 34, 420], DMG = [12, 14, 18, 35, 0, 0, 10, 13, 0, 0, 0, 0, 0, 0, 10, 16, 13, 22, 14, 14, 12, 30, 12, 0, 11, 13, 15, 6, 6, 8];      // 14-17 = the walking combo: jab, kick, cross with the other hand, kick with the other leg   // per hit: how far it reaches from his hips (px), how hard it shoves the dummy (px/s), damage number
 const CE_FPS = 20, CE_DMG = 1.3;               // cursed energy: its 15 frames play at 20 FPS (frames per second = how many pictures are shown each second); while it is on, every hit he lands does 1.3 times the damage
 const FWD_SPEED = 44, BACK_SPEED = 30;         // world pixels per second (matched to the slower stride so his feet do not skate)
@@ -250,8 +251,8 @@ const FOE_INV = { rx: rxI, atk: atkI, walk: dumWalk, blk: blkI, idle: dumF, fear
 const foeSet = () => vs && !vs.inv ? FOE_NORM : FOE_INV;      // in a match the enemy Gojo is inverted only when you are Gojo too
 const YU = __YUJI__, yuInv = p => { const o = {}; for (const k in p) o[k] = inv(p[k]); return o; };      // YUJI (tools/yuji_art.py): an idle, a walk (played backwards for walking back) and a jump, 15 frames each; the inverted one has the colours flipped
 const YUF = { norm: {}, inv: {} }, YINFO = { idle: YU.idle, fwd: YU.fwd, back: { ...YU.fwd, hn: YU.fwd.hn.slice().reverse(), hf: YU.fwd.hf.slice().reverse() }, jump: YU.jump };
-for (const [k, pal] of [['norm', YU.pal], ['inv', yuInv(YU.pal)]]) { for (const n of ['idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'cjump', 'run']) YUF[k][n] = mk(YU[n], pal); YUF[k].back = YUF[k].fwd.slice().reverse(); YUF[k].cback = YUF[k].cfwd.slice().reverse(); YUF[k].atk = [0, 1, 2, 3].map(j => mk(YU['atk' + j], pal)); YUF[k].dash = [0, 1, 2, 3].map(j => mk(YU['dash' + j], pal)); }
-YU.atk = [0, 1, 2, 3].map(j => YU['atk' + j]); YU.dash = [0, 1, 2, 3].map(j => YU['dash' + j]); YINFO.cback = { ...YU.cfwd, hn: YU.cfwd.hn.slice().reverse(), hf: YU.cfwd.hf.slice().reverse() };
+for (const [k, pal] of [['norm', YU.pal], ['inv', yuInv(YU.pal)]]) { for (const n of ['idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'cjump', 'run']) YUF[k][n] = mk(YU[n], pal); YUF[k].back = YUF[k].fwd.slice().reverse(); YUF[k].cback = YUF[k].cfwd.slice().reverse(); YUF[k].atk = [0, 1, 2, 3].map(j => mk(YU['atk' + j], pal)); YUF[k].dash = [0, 1, 2, 3].map(j => mk(YU['dash' + j], pal)); YUF[k].rx = Array.from({ length: 10 }, (_, j) => mk(YU['rx' + j], pal)); }
+YU.atk = [0, 1, 2, 3].map(j => YU['atk' + j]); YU.dash = [0, 1, 2, 3].map(j => YU['dash' + j]); YU.rx = Array.from({ length: 10 }, (_, j) => YU['rx' + j]); YINFO.cback = { ...YU.cfwd, hn: YU.cfwd.hn.slice().reverse(), hf: YU.cfwd.hf.slice().reverse() };
 const YHL = new Map();
 function headlessY(c) {      // Yuji's picture without the head (Verity's bite): everything above the red collar is gone, a red stump stands on the collar and blood runs down the collar and the chest
   let r = YHL.get(c); if (r) return r; r = document.createElement('canvas'); r.width = c.width; r.height = c.height; const g = r.getContext('2d'); g.drawImage(c, 0, 0); g.clearRect(0, 0, c.width, 24);
@@ -259,16 +260,20 @@ function headlessY(c) {      // Yuji's picture without the head (Verity's bite):
   g.globalCompositeOperation = 'source-atop'; for (const [x, n, i] of [[16, 8, 1], [18, 12, 0], [20, 7, 2], [22, 10, 1]]) { g.fillStyle = BLD[i]; g.fillRect(x, 24, 1, n); }
   YHL.set(c, r); return r;
 }
-let YUV = null;
-function yuVictim() {      // Yuji as the victim of Gojo's FATALITY: his idle (and its white and blue flash versions) stands in for every reaction; the infos are Gojo's reaction infos (the hop and the shove) with Yuji's picture size
-  if (YUV) return YUV; const idle = YUF.norm.idle, W = idle.map(c => whiteOf(c)), Bl = idle.map(c => { const r = document.createElement('canvas'); r.width = c.width; r.height = c.height; const g = r.getContext('2d'); g.drawImage(c, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(70,130,255,0.6)'; g.fillRect(0, 0, c.width, c.height); return r; });
-  const infos = Array.from({ length: 10 }, (_, k) => ({ ...D['rx' + k], x0: YU.idle.x0, cx: YU.idle.cx, w: YU.idle.w, h: YU.idle.h, top: 0 }));
-  return YUV = { vF: idle, vRx: Array(10).fill(idle), vRxW: Array(10).fill(W), vW: W, vB: Bl, vi: k => k < 0 ? YU.idle : infos[k] };
+const blueOf = c => { const r = document.createElement('canvas'); r.width = c.width; r.height = c.height; const g = r.getContext('2d'); g.drawImage(c, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(70,130,255,0.6)'; g.fillRect(0, 0, c.width, c.height); return r; };
+function victimKit(idle, rx, info) {      // a victim of Gojo's FATALITY that is not Gojo: his idle (with a white flash copy and a blue stun copy) and his ten hit reactions of 15 frames each; info(k) = the picture info of reaction k (info(-1): of the idle); fs = frames per Gojo frame
+  return { vF: idle, vRx: rx, vRxW: rx.map(set => set.map(c => whiteOf(c))), vW: idle.map(c => whiteOf(c)), vB: idle.map(blueOf), vi: info, fs: 1.5 };
+}
+let YUV = null, VEV = null;
+function yuVictim() { return YUV || (YUV = victimKit(YUF.norm.idle, YUF.norm.rx, k => k < 0 ? YU.idle : YU.rx[k])); }
+function veVictim() {      // (kept only once the strips are loaded: until then the pictures are stand-ins)
+  if (VEV) return VEV; const kit = victimKit(Array.from({ length: 15 }, (_, i) => vfr('idle', i, false)), Array.from({ length: 10 }, (_, k) => Array.from({ length: 15 }, (_, i) => vrx(k, i, false))), k => k < 0 ? VINFO : VRXIN[k]), sm = SIMG.vanim && SIMG.vanim.rx9;
+  if (sm && sm.complete && sm.naturalWidth) VEV = kit; return kit;
 }
 function yujiPick(a) {      // YUJI's picture for the player: the frame set, its info, the frame and how high he is lifted (an attack, being launched, a dash, a jump, crouching down / up, crouched, walking, standing)
   const N = YUF.norm, FW = Math.floor(Math.max(0, a.now - a.modeAt) / (1000 / WALK_FPS)) % 15, FI = Math.floor(Math.max(0, a.now - a.spawnAt) / (1000 / IDLE_FPS)) % 15, jl = () => (a.jumpC ? YU.cjump : YU.jump).lift[a.jf];
+  if (a.hurting) { const r = a.hurtK, I = YU.rx[r], f = Math.min(14, Math.floor(Math.max(0, a.now - a.hurtAt) * RXF15[r] / 1000)); return { set: N.rx[r], info: I, fi: f, lift: I.lift ? I.lift[f] : 0 }; }      // one of his ten hit reactions (picked at random when he is hit)
   if (a.atkOn) { const I = YU.atk[a.atkK], f = Math.min(14, a.af); return { set: N.atk[a.atkK], info: I, fi: f, lift: I.lift ? I.lift[f] : 0 }; }
-  if (a.hurting && a.hurtK === 4) return { set: N.idle, info: YU.idle, fi: FI, lift: Math.round(14 * Math.sin(Math.PI * Math.min(1, a.hf / 9))) };
   if (a.dodging) { const n = a.dgK + (a.dgCr ? 2 : 0); return { set: N.dash[n], info: YU.dash[n], fi: Math.min(14, a.df), lift: a.jumping ? jl() : 0 }; }      // (a dash in mid-air stays up there)
   if (a.jumping) return { set: a.jumpC ? N.cjump : N.jump, info: a.jumpC ? YU.cjump : YU.jump, fi: a.jf, lift: jl() };
   if (a.mode === 'cdn') return { set: N.cdn, info: YU.cdn, fi: a.stance === 'down' ? a.sf : 14 - a.sf, lift: 0 };
@@ -643,7 +648,8 @@ function drawDummy(now, dt) {
   if (vs && vs.foe === 'verity') { const L = storyLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox || 0; oy = L.oy || 0; }      // the enemy is Verity
   if (vs && vs.foe === 'yuji') { const ys = vs.inv ? YUF.inv : YUF.norm, wk = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'walk', at = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'attack'; ox = oy = 0; lift = 0;      // the enemy is Yuji
     if (at) { fi = Math.min(14, Math.floor((now - dummy.aiAt) * YU_ATK.fps[dummy.k] * (dummy.spd || 1) / 1000)); src = ys.atk[dummy.k][fi]; info = YU.atk[dummy.k]; lift = info.lift ? info.lift[fi] : 0; }
-    else { fi = Math.floor(wk ? now * WALK_FPS / 1000 : now / (1000 / IDLE_FPS)) % 15; src = (wk ? ys.fwd : ys.idle)[fi]; info = wk ? YU.fwd : YU.idle; if (reacting && dummy.rx === 4) lift = Math.round(14 * Math.sin(Math.PI * Math.min(1, (now - dummy.rxAt) / RX_DUR[4]))); }
+    else if (reacting) { const r = dummy.rx; fi = Math.min(14, Math.floor((now - dummy.rxAt) * RXF15[r] / 1000)); src = ys.rx[r][fi]; info = YU.rx[r]; lift = info.lift ? info.lift[fi] : 0; }      // one of his ten hit reactions
+    else { fi = Math.floor(wk ? now * WALK_FPS / 1000 : now / (1000 / IDLE_FPS)) % 15; src = (wk ? ys.fwd : ys.idle)[fi]; info = wk ? YU.fwd : YU.idle; }
     if ((reacting && hitT < 70) || (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0)) src = whiteOf(src); }
   if (dummy.del && now - dummy.del > 1700) return;      // deleted: nothing of him is left
   const w = info.w, h = info.h, hx = info.cx - info.x0, y = gy - 60 - (info.top || 0) - lift, fade = kt > 1200 ? Math.max(0, 1 - (kt - 1200) / 700) : 1;
@@ -1170,20 +1176,21 @@ const FAT_SLOW = [[FP.TW, FP.TP, 0.45], [FP.TP - 0.02, FP.TP + 0.12, 0.3], [FP.T
 let FINV = null;                                       // the inverted-colour copies of Gojo's moves the enemy needs for his own FATALITY (built the first time it is needed)
 function fatSets(rev) {                                // the pictures of the attacker (idle, moves, blink, RED) and of the victim (idle, reactions); rev = the enemy is the attacker
   if (rev && vs.inv && !FINV) FINV = { atk: { 0: atkI[0], 3: atkI[3], 14: mk(D.atk14, invPal), 15: mk(D.atk15, invPal), 16: mk(D.atk16, invPal) }, tele: mk(D.tele, invPal), red: mk(D.atk22, invPal) };
-  const yv = rev ? vs.me === 'yuji' : vs.foe === 'yuji', S = rev && vs.inv ? { idle: dumF, atk: FINV.atk, tele: FINV.tele, red: FINV.red, ainv: true } : { idle: idleF, atk: atkF, tele: teleF, red: redF };      // (the enemy Gojo is inverted only in a mirror match; a Yuji you play or fight is never inverted)
-  if (yv) return { ...S, ...yuVictim() };
+  const vk = rev ? vs.me : vs.foe, S = rev && vs.inv ? { idle: dumF, atk: FINV.atk, tele: FINV.tele, red: FINV.red, ainv: true } : { idle: idleF, atk: atkF, tele: teleF, red: redF };      // (the enemy Gojo is inverted only in a mirror match; a Yuji or Verity you play or fight is never inverted)
+  if (vk === 'yuji') return { ...S, ...yuVictim() };
+  if (vk === 'verity') return { ...S, ...veVictim() };
   return rev ? { ...S, vF: idleF, vRx: rxN } : { ...S, vF: dumF, vRx: rxI };
 }
 let fat = null, fatReq = 0;                            // fat = the running cutscene (null when there is none); fatReq = until when a press of the FATALITY button is remembered
 const orbAt = (set, n, sx, sy, s) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));      // an orb frame centred on (sx, sy)
-function fatState(now) {                               // Gojo's FATALITY. 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far away; 3 = not possible right now
-  if (!vs || vs.story || (vs.me === 'gojo' && vs.foe === 'verity') || vs.me === 'yuji' || vs.ph !== 'fight' || js || vf || fat || dom || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (Verity has his own FATALITY: the same rules; Gojo has none on a Verity)      // (no FATALITY in the story fight: his ending is a Reversal Red)
+function fatState(now) {                               // Gojo's FATALITY (and Verity's). 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far away; 3 = not possible right now
+  if (!vs || vs.story || vs.me === 'yuji' || vs.ph !== 'fight' || js || vf || fat || dom || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (Verity has his own FATALITY: the same rules; Yuji has none)      // (no FATALITY in the story fight: his ending is a Reversal Red)
   if (!(dummy.hp <= dummy.max * FAT_LOW)) return 1;      // Gojo's FATALITY: only when the enemy is at 20% health or less
   if (Math.abs(dummy.x - wx) > FAT_RANGE) return 2;
   return hurtAt >= 0 || gojoGone ? 3 : 0;
 }
 function fatAiState(now) {                             // the enemy's own FATALITY on Gojo: from SEMI-GRADE 1 up, the moment Gojo is at 20% health or less and the enemy is close (no warning; being in the air, dashing or out of reach saves him)
-  if (!vs || vs.story || (vs.me === 'verity' && vs.foe === 'gojo') || vs.foe === 'yuji' || vs.ph !== 'fight' || js || vf || fat || dom || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
+  if (!vs || vs.story || vs.foe === 'yuji' || vs.ph !== 'fight' || js || vf || fat || dom || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
   return vs.hp <= PHP * FAT_LOW && Math.abs(dummy.x - wx) <= FAT_RANGE && !gojoGone && gojoLift <= 12 && dgAt < 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
 }
 function fatGo(now, dt, rev) { if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's FATALITY is its own cutscene)
@@ -1192,7 +1199,7 @@ function fatUI(now) {                                  // the button: only in a 
 }
 function pressFat() { fatReq = performance.now() + 500; }      // (a press is remembered for half a second, e.g. while he is still reeling)
 function fatStart(now, rev) {                          // rev = the enemy does it to Gojo
-  const d = dummy;
+  const d = dummy; d.vact = null;      // (a Verity enemy in the middle of a move of his own: it is cancelled)
   fat = { rev: !!rev, S: fatSets(!!rev), t: 0, rate: 1, freeze: 0, slow: false, blastAt: 0, pan: 0, ev: {}, fx: [], trail: [], ex0: Math.min(FAT_RANGE, Math.abs(d.x - wx)), invUntil: 0, linesUntil: 0, focus: [0, 0], deb: Array.from({ length: 26 }, (_, i) => ({ a: i * 2.4 + Math.random(), d: 60 + Math.random() * 60, w: 1 + ((Math.random() * 2) | 0), col: STONE[i % 4] })) };
   cineClear(); d.ai = 'rest'; d.pull = null; d.vx = 0; $('pad').classList.add('cine');
 }
@@ -1241,14 +1248,14 @@ function fatEvents(now, t) {
 }
 function fatEnemy(t, now) {                            // where the enemy is and what he looks like at cutscene time t (lift = px above the floor; the sprite turns about the point pv px above his feet)
   const P = FP, f = fat, mx = Math.round(VW / 2), E = { x: mx + FEX, lift: 0, rot: 0, pv: 32, vis: true, src: null, info: D.idle }, ix = Math.floor(now / (1000 / IDLE_FPS)) % dumF.length, S = f.S, vF = S.vF;
-  const vW = S.vW || dumW, vB = S.vB || dumB, vRW = S.vRxW || rxW; if (S.vi) E.info = S.vi(-1);
+  const vW = S.vW || dumW, vB = S.vB || dumB, vRW = S.vRxW || rxW, fs = S.fs || 1; if (S.vi) E.info = S.vi(-1);
   if (t >= P.TBL) { E.vis = false; return E; }                                                    // vaporised
   if (t < P.THIT) { E.x = mx + f.ex0 + (FEX - f.ex0) * (1 - Math.pow(1 - Math.min(1, t / 0.4), 3)); E.src = vF[ix]; return E; }      // pulled in front of Gojo, waiting for the wind-up punch
-  const heavy = () => { const lt = t - P.THIT, fi = Math.min(9, Math.floor(lt * RX_FPS[3])); E.info = S.vi ? S.vi(3) : D.rx3; E.src = (lt < 0.07 ? vRW : S.vRx)[3][fi]; E.pv = 0; E.lift = (D.rx3.lift ? D.rx3.lift[fi] : 0) + 5 * Math.exp(-lt * 8); E.x = mx + FEX + 14 * Math.exp(-lt * 9); return E; };      // the wind-up punch lands: a hard shove and the strongest reaction
+  const heavy = () => { const lt = t - P.THIT, fi = Math.min(fs > 1 ? 14 : 9, Math.floor(lt * RX_FPS[3] * fs)); E.info = S.vi ? S.vi(3) : D.rx3; E.src = (lt < 0.07 ? vRW : S.vRx)[3][fi]; E.pv = 0; E.lift = (D.rx3.lift ? D.rx3.lift[fi] : 0) + 5 * Math.exp(-lt * 8); E.x = mx + FEX + 14 * Math.exp(-lt * 9); return E; };      // the wind-up punch lands: a hard shove and the strongest reaction
   if (t < P.TL) {                                                                                 // the barrage: each blow makes him flinch (one of the ten reactions) and shoves him a little
     let i = -1; for (let j = 0; j < FSW.length; j++) if (t >= P.TB + FSW[j].hit) i = j;
     if (i < 0) return heavy();
-    const lt = t - P.TB - FSW[i].hit, rx = FAT_RX[i], fi = Math.min(t < P.TK ? 4 : 9, Math.floor(lt * RX_FPS[rx])), inf = S.vi ? S.vi(rx) : D['rx' + rx], kick = FSW[i].k === 15;
+    const lt = t - P.TB - FSW[i].hit, rx = FAT_RX[i], fi = Math.min(fs > 1 ? (t < P.TK ? 6 : 14) : (t < P.TK ? 4 : 9), Math.floor(lt * RX_FPS[rx] * fs)), inf = S.vi ? S.vi(rx) : D['rx' + rx], kick = FSW[i].k === 15;
     E.info = inf; E.src = (lt < 0.07 ? vRW : S.vRx)[rx][fi]; E.pv = 0; E.lift = (inf.lift ? inf.lift[fi] : 0) + (kick ? 4 * Math.exp(-lt * 10) : 0); E.x = mx + FEX + (kick ? 7 : 4) * Math.exp(-lt * 14); return E;
   }
   const tau = t - P.TL, xK = mx + FEX + 35, hK = fatH(P.TD - P.TL), rK = (7.5 * (P.TD - P.TL)) % 6.2832;
@@ -1523,12 +1530,12 @@ function vfFrame(now, dt) {
     else if (t >= T.catch + 0.05 && t < T.shoulders) { vinfo = D.atk0; vimg = gsrc(atkF[0], Math.min(8, Math.floor((t - T.catch - 0.05) / 0.3 * 9))); vflip = false; }          // his swing: the arm is caught on its way and stays caught
     else if (t >= T.shoulders) { vinfo = D.rx0; vimg = rxN[0][3]; vflip = false; vox = trem[0]; vlift = 0; }                                           // held by the shoulders
     if (bitten) { hid = true; }
-  } else if (yuji) {      // YUJI: his idle held by the neck (with a tremble), a white flash for the punch, the stagger, the 15-frame run, the swing the arm is caught on, held by the shoulders
+  } else if (yuji) {      // YUJI: held by the neck (his head back, with a tremble), the punch (a white flash, his head snaps back), the stagger (doubled over), the 15-frame run, the swing the arm is caught on, held by the shoulders
     const Y = YUF.norm, yi = Math.floor(now / (1000 / IDLE_FPS)) % 15, ys = (a, i) => a[Math.max(0, Math.min(a.length - 1, i))];
     vinfo = YU.idle; vimg = Y.idle[yi]; vflip = true;
-    if (t >= T.grab + 0.52 && t < 1.70) { vimg = Y.idle[0]; vlift = 5; vox = trem[0]; }
-    else if (t >= 1.70 && t < 2.15) { vimg = (t - 1.70) < 0.07 ? whiteOf(Y.idle[0]) : Y.idle[0]; vlift = 5 * (1 - clamp01((t - 1.70) / 0.2)); vox = Math.round(3 * Math.exp(-(t - 1.70) * 9)); }
-    else if (t >= 2.15 && t < T.run) { vimg = ys(Y.idle, Math.floor((t - 2.15) * 14)); }
+    if (t >= T.grab + 0.52 && t < 1.70) { vinfo = YU.rx[0]; vimg = Y.rx[0][4]; vlift = 5; vox = trem[0]; }      // held by the neck: his head is back (his first reaction)
+    else if (t >= 1.70 && t < 2.15) { vinfo = YU.rx[0]; vimg = ys(Y.rx[0], Math.floor((t - 1.70) / 0.45 * 15)); if (t - 1.70 < 0.07) vimg = whiteOf(vimg); vlift = 5 * (1 - clamp01((t - 1.70) / 0.2)); vox = Math.round(3 * Math.exp(-(t - 1.70) * 9)); }      // the punch: his head snaps back
+    else if (t >= 2.15 && t < T.run) { vinfo = YU.rx[1]; vimg = ys(Y.rx[1], Math.floor((t - 2.15) / 0.55 * 15)); }      // he staggers (doubled over)
     else if (t >= T.run && t < VFL + 0.25) { vinfo = YU.run; vimg = Y.run[Math.floor(t * 30) % 15]; vflip = false; }
     else if (t >= VFL + 0.25 && t < T.catch + 0.05) { vinfo = YU.run; vimg = Y.run[6]; vflip = false; }
     else if (t >= T.catch + 0.05 && t < T.shoulders) { vinfo = YU.atk[0]; vimg = ys(Y.atk[0], Math.min(8, Math.floor((t - T.catch - 0.05) / 0.3 * 9))); vflip = false; }
@@ -1691,7 +1698,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   let src, info = VINFO, py = lift, ox = 0, oy = 0;
   if (ballOn) { src = SIMG.ball; info = BALL.info; py = ballH(Math.max(0, (now - v.bAt) / 1000)); }
   else if (!hum) src = vfr('idle', 0, false);
-  else if (hf >= 0) { src = vfr('hurt', (now - hurtAt) / RX_DUR[hurtK] * 15, false); if (now - hurtAt < 70) src = whiteOf(src); }
+  else if (hf >= 0) { const q = (now - hurtAt) / RX_DUR[hurtK] * 15; src = vrx(hurtK, q, false); info = VRXIN[hurtK]; if (info.lift) py += info.lift[Math.min(14, Math.floor(q))]; if (now - hurtAt < 70) src = whiteOf(src); }      // one of his ten hit reactions
   else if (stun) { src = vfr('crouch', 14, false); const o = fearOff(now); ox = o[0]; oy = o[1]; }      // the enemy's JUMPSCARE has him: folded up and shaking
   else if (tu >= 0) src = vfr('tele_up', tu, false);
   else if (df >= 0) src = vfr('tele', df, false);
@@ -1906,7 +1913,7 @@ function drawScene(now, dt) {
     if (!crch) { if (dir > 0) { bset = wblkF; binfo = D.wfb; bfi = slow % 15; } else if (dir < 0) { bset = wblkB; binfo = D.wbb; bfi = slow % 15; } else { bset = atkF[11]; binfo = D.atk11; bfi = bf; } }
     else if (dir > 0) { bset = crF.fblk; binfo = D.cfb; bfi = slow % 15; } else if (dir < 0) { bset = crF.bblk; binfo = D.cbb; bfi = slow % 15; } else { bset = crF.blk; binfo = D.cb; bfi = Math.floor(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)) % 15; }
   }
-  const fearing = now < pStun && !hurting, riding = !!ride, yj = vs && vs.me === 'yuji' ? yujiPick({ now, atkOn, atkK, af, hurting, hurtK, hf, dodging, dgK, dgCr, df, jumping, jumpC, jf, mode, idle, sf, stance, spawnAt, modeAt }) : null, set = yj ? yj.set : riding ? ride.set : hurting ? (now - hurtAt < 70 ? rxW : rxN)[hurtK] : fearing ? crF.idle : dodging ? atkF[9 + dgK + (dgCr ? 3 : 0)] : blocking ? bset : tele ? teleF : jumping ? (jumpC ? crF.jump : jumpF) : mbing ? (mbK ? redF : mbF) : lapsing ? lapseF[lpK] : atkOn ? atkF[atkK] : mode === 'cdn' ? crF.dn : mode === 'cidle' ? crF.idle : mode === 'cfwd' ? crF.fwd : mode === 'cback' ? crF.back : idle ? idleF : mode === 'fwd' ? fwdF : backF;
+  const fearing = now < pStun && !hurting, riding = !!ride, yj = vs && vs.me === 'yuji' ? yujiPick({ now, atkOn, atkK, af, hurting, hurtK, hurtAt, hf, dodging, dgK, dgCr, df, jumping, jumpC, jf, mode, idle, sf, stance, spawnAt, modeAt }) : null, set = yj ? yj.set : riding ? ride.set : hurting ? (now - hurtAt < 70 ? rxW : rxN)[hurtK] : fearing ? crF.idle : dodging ? atkF[9 + dgK + (dgCr ? 3 : 0)] : blocking ? bset : tele ? teleF : jumping ? (jumpC ? crF.jump : jumpF) : mbing ? (mbK ? redF : mbF) : lapsing ? lapseF[lpK] : atkOn ? atkF[atkK] : mode === 'cdn' ? crF.dn : mode === 'cidle' ? crF.idle : mode === 'cfwd' ? crF.fwd : mode === 'cback' ? crF.back : idle ? idleF : mode === 'fwd' ? fwdF : backF;
   const info = yj ? yj.info : riding ? ride.info : hurting ? D['rx' + hurtK] : fearing ? D.cidle : dodging ? D['atk' + (9 + dgK + (dgCr ? 3 : 0))] : blocking ? binfo : tele ? D.tele : jumping ? (jumpC ? D.cjump : D.jump) : mbing ? (mbK ? D.atk22 : D.atk8) : lapsing ? D['atk' + (4 + lpK)] : atkOn ? D['atk' + atkK] : mode === 'cdn' ? D.cdn : mode === 'cidle' ? D.cidle : mode === 'cfwd' ? D.cfwd : mode === 'cback' ? D.cback : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
   const fi = yj ? yj.fi : riding ? ride.fi : hurting ? hf : fearing ? Math.floor(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)) % 15 : dodging ? df : blocking ? bfi : tele ? tf : jumping ? jf : mbing ? mf : lapsing ? lf : atkOn ? af : mode === 'cdn' ? (stance === 'down' ? sf : 14 - sf) : Math.floor(Math.max(0, now - (idle || mode === 'cidle' ? spawnAt : modeAt)) / (1000 / (idle || mode === 'cidle' ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail performance.now() by a hair
   const lk = tele ? info.lift_k[tf] : 0;      // teleport: stays where he vanished (null), then the fixed height he reappears at, falling back to the ground
@@ -2089,7 +2096,7 @@ function alleyScene(now, dt, T, gx) {
 const once2 = (k, f) => { if (story && !story.ev[k]) { story.ev[k] = 1; f(); } };
 // the fight: the stand-in enemy looks like Verity; at half health he turns into the smiley ball (smoke, 5 s, cannot be hit and cannot act), then smoke again and he is back
 const WCACHE = new Map();
-function whiteOf(img) { let c = WCACHE.get(img); if (c) return c; c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.drawImage(img, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = '#fff'; g.fillRect(0, 0, 64, 64); if (!(img instanceof HTMLImageElement) || (img.complete && img.naturalWidth)) WCACHE.set(img, c); return c; }
+function whiteOf(img) { let c = WCACHE.get(img); if (c) return c; c = document.createElement('canvas'); c.width = img.naturalWidth || img.width || 64; c.height = img.naturalHeight || img.height || 64; const g = c.getContext('2d'); g.drawImage(img, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); if (!(img instanceof HTMLImageElement) || (img.complete && img.naturalWidth)) WCACHE.set(img, c); return c; }
 const VFC = new Map();      // Verity's pictures: one 64x64 canvas per frame, cut out of the 15-frame strips the first time it is needed
 function vfr(name, fi, loop, inv) {      // inv: the colours inverted (an enemy Verity fighting a Verity)
   fi = loop ? ((Math.floor(fi) % 15) + 15) % 15 : Math.max(0, Math.min(14, Math.floor(fi))); const key = name + fi + (inv ? 'i' : ''), hit = VFC.get(key); if (hit) return hit;
@@ -2098,21 +2105,31 @@ function vfr(name, fi, loop, inv) {      // inv: the colours inverted (an enemy 
   if (inv) { const im = g.getImageData(0, 0, 64, 64), d = im.data; for (let i = 0; i < d.length; i += 4) if (d[i + 3]) { d[i] = 255 - d[i]; d[i + 1] = 255 - d[i + 1]; d[i + 2] = 255 - d[i + 2]; } g.putImageData(im, 0, 0); }
   VFC.set(key, c); return c;
 }
+const VRXI = { w: 96, h: 64, cx: 64, x0: 0, top: 0 }, VRX_LIFT = { 7: [0, 3, 6, 9, 10, 10, 10, 9, 7, 5, 3, 2, 1, 0, 0] }, VRXIN = Array.from({ length: 10 }, (_, k) => VRX_LIFT[k] ? { ...VRXI, lift: VRX_LIFT[k] } : VRXI), VRC = new Map();      // (the hop of reaction 7 is raised by the game)
+function vrx(k, fi, inv) {      // Verity's hit reaction k (0-9), frame fi (0-14): a 96x64 picture cut out of the strip rx<k>; the colours inverted for the enemy Verity fighting a Verity
+  fi = Math.max(0, Math.min(14, Math.floor(fi))); const key = k + ':' + fi + (inv ? 'i' : ''), hit = VRC.get(key); if (hit) return hit;
+  const s = SIMG.vanim && SIMG.vanim['rx' + k], c = document.createElement('canvas'); c.width = 96; c.height = 64; const g = c.getContext('2d');
+  if (!s || !s.complete || !s.naturalWidth) { g.drawImage(vfr('hurt', fi, false, inv), 32, 0); return c; }      // (not loaded yet: his old hurt picture in the same place, not kept)
+  g.drawImage(s, fi * 96, 0, 96, 64, 0, 0, 96, 64);
+  if (inv) { const im = g.getImageData(0, 0, 96, 64), d = im.data; for (let i = 0; i < d.length; i += 4) if (d[i + 3]) { d[i] = 255 - d[i]; d[i + 1] = 255 - d[i + 1]; d[i + 2] = 255 - d[i + 2]; } g.putImageData(im, 0, 0); }
+  VRC.set(key, c); return c;
+}
 function storyLook(now, reacting, hitT, kt) {      // what the story enemy looks like: every move has its own 15-frame animation
-  const d = dummy, f = d.vform || 'verity', info = { w: 64, h: 64, cx: 32, x0: 0, top: 0 }; let name = 'idle', fi = now / 100, loop = true, lift = 0, ox = 0, oy = 0;
+  const d = dummy, f = d.vform || 'verity', info = { w: 64, h: 64, cx: 32, x0: 0, top: 0 }; let name = 'idle', fi = now / 100, loop = true, lift = 0, ox = 0, oy = 0, rk = -1;
   if (f === 'smiley' || (f === 'smoke1' && now - d.vAt >= 200) || (f === 'smoke2' && now - d.vAt < 400)) return { src: SIMG.ball, info: BALL.info, lift: ballH(Math.max(0, (now - (d.bAt || d.vAt)) / 1000)) };      // the ball: head size, falls and bounces (while the smoke hides the change, Verity or the ball is swapped in)
   else if (f === 'smoke1' || f === 'smoke2') { name = 'idle'; fi = 0; }
   else if (f === 'end') { name = 'hurt'; fi = 8; loop = false; }      // the ending: he staggers, held up, until the red comes
   else if (kt >= 0) fi = 0;
   else if (d.vact) { name = d.vact.anim; fi = d.vact.fi; loop = false; }
-  else if (reacting) { name = 'hurt'; fi = (now - d.rxAt) / RX_DUR[d.rx] * 15; loop = false; }
+  else if (reacting) { name = 'hurt'; rk = d.rx; fi = (now - d.rxAt) / RX_DUR[d.rx] * 15; loop = false; }      // one of his ten hit reactions
   else if (d.fear) { name = 'crouch'; fi = 14; loop = false; const o = fearOff(now); ox = o[0]; oy = o[1]; }      // JUMPSCARE: stunned, he is folded up and shaking
   else if (d.ai === 'attack') { name = 'm' + d.k; fi = (now - d.aiAt) * ATK_FPS[d.k] * (d.spd || 1) / 1000; loop = false; }
   else if (d.ai === 'dodge') { name = 'tele'; fi = (now - d.aiAt) / Math.max(1, d.until - d.aiAt) * 15; loop = false; }
   else if (d.ai === 'block') { const t = now - d.aiAt; name = 'block'; fi = t < 250 ? t / 50 : 5 + (now / 125) % 5; loop = false; }
   else if (d.ai === 'walk') { name = 'walk'; fi = now * WALK_FPS / 1000; }
-  d.anim = name; let src = vfr(name, fi, loop, vs && vs.inv); if (d.del) { const k = (now - d.del) / 1400; src = k >= 1 ? EMPTY : dissolve(src, k); }      // deleted: erased in a red dither
+  d.anim = name; let src = rk >= 0 ? vrx(rk, fi, vs && vs.inv) : vfr(name, fi, loop, vs && vs.inv); if (d.del) { const k = (now - d.del) / 1400; src = k >= 1 ? EMPTY : dissolve(src, k); }      // deleted: erased in a red dither
   if ((kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) || (kt < 0 && reacting && hitT < 70)) src = whiteOf(src);
+  if (rk >= 0) { const I = VRXIN[rk]; return { src, info: I, lift: I.lift ? I.lift[Math.min(14, Math.max(0, Math.floor(fi)))] : 0, ox, oy }; }
   return { src, info, lift, ox, oy };
 }
 // Verity's own moves run beside the grade AI, which rests while one lasts: the BITE (the head draws back, lunges, the jaws shut on frame 8; Gojo bleeds 1 damage every 0.1 s for 4 s) and the CROUCH (the legs fold up to his head, two claws, then he rises; every swing of Gojo's passes over him except the low kick and the crouching punches)

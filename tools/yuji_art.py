@@ -90,6 +90,7 @@ def head_block(P):                               # hood, face and hair, drawn at
     if P.get('blink'): f.set(37, 14, 'S'); f.set(38, 14, 'S'); f.set(37, 15, 'e'); f.set(38, 15, 'e')
     else: f.set(37, 14, 'W'); f.set(38, 14, 'e'); f.set(38, 15, 'e')
     f.set(39, 18, 'V'); f.set(40, 18, 'V')
+    if P.get('mo'): f.set(39, 18, 'e'); f.set(40, 18, 'e'); f.set(39, 19, 'e')                  # a pained, open mouth
     return f
 def figure(P):
     by, ln = P.get('by', 0), P.get('ln', 0); nf, ff = P.get('nf', (0, 0)), P.get('ff', (0, 0)); f = F()
@@ -106,7 +107,7 @@ def figure(P):
     T = pm([(32+sx, 29+sy), (37+sx, 29+sy), (37, 40+by), (36, 44+by), (32, 44+by)]); f.fill(T, 'C'); f.bands(T, 'C', 'D', 'B'); f.rim(T, 'O'); f.fill(T, 'C'); f.bands(T, 'C', 'D', 'B')
     f.line([(32, 44+by), (36, 44+by)], 'A'); f.line([(33+sx, 31+sy), (33, 41+by)], 'D'); f.set(36, 35+sy, 'g')
     leg(f, hipF, lf[:2], True, lf[2], 'B', 'C', 'A', P.get('kf'))
-    f.blit(head_block(P), sx, sy + 3)
+    f.blit(head_block(P), sx + P.get('hs', 0), sy + 3)
     if P.get('na'):                                                       # an explicit near arm: elbow and wrist relative to its shoulder
         S0 = (34+sx, 31+sy); ne = (S0[0]+P['na'][0][0], S0[1]+P['na'][0][1]); nw = (S0[0]+P['na'][1][0], S0[1]+P['na'][1][1]); d = unit(nw[0]-ne[0], nw[1]-ne[1])
         limb(f, S0, ne, nw, (3.4, 3.0, 2.8), 'C', 'D', 'B'); f.fill(seg((nw[0]-d[0]*2.4, nw[1]-d[1]*2.4), (nw[0]-d[0]*.4, nw[1]-d[1]*.4), 3.0, 3.0), 's'); fc = (nw[0]+d[0]*1.6, nw[1]+d[1]*1.6)
@@ -222,6 +223,82 @@ def yrun(i):                                                                    
     P = dict(by=1 + round(.5 + .5*math.cos(4*math.pi*ph)), ln=4, hx=2, lf=foot(ph, 36), lb=foot(ph + .5, 31), na=mixa((sw + 1)/2), fa=mixa((1 - sw)/2), hp=i*1.3, hback=1, blink=False)
     return figure(P)
 MOVES = (('cdn', cdn, 0, 44), ('cidle', cidle, 0, 44), ('cfwd', cwalk, 0, 44), ('cjump', cjump, 4, 44), ('dash0', lambda i: dash(i, 0), 0, 44), ('dash1', lambda i: dash(i, 1), 0, 44), ('dash2', lambda i: dash(i, 2), 0, 44), ('dash3', lambda i: dash(i, 3), 0, 44), ('run', yrun, 0, 44))
+# ---------------------------------------------------------------- the ten hit reactions: the same ten as Gojo's (tools/side.py, RX), 15 frames each; the game picks one at random whenever he is hit (and plays 15 frames in the time Gojo's 10 take)
+OFF, W96 = 32, 96                                                               # they are drawn on a 96-wide grid: the usual 64-grid pasted OFF px to the right, so there is room to fall backwards
+AX = 34.5 + OFF                                                                 # the body axis (the spin turns about it) and the feet (the fall turns about them)
+PX, PY = 34 + OFF, 62
+def wide(f): return [['.']*OFF + r + ['.']*(W96 - OFF - N) for r in f.g]
+def g_shift(g, dx, dy):
+    out = [['.']*W96 for _ in range(N)]
+    for y in range(N):
+        for x in range(W96):
+            sx_, sy_ = x - dx, y - dy
+            if 0 <= sx_ < W96 and 0 <= sy_ < N: out[y][x] = g[sy_][sx_]
+    return out
+def g_warp(g, sq, ax):                                                          # the spin: squashed about the vertical axis (a negative factor shows him from behind), nearest neighbour
+    sq = sq if abs(sq) >= .12 else (.12 if sq >= 0 else -.12); out = [['.']*W96 for _ in range(N)]
+    for y in range(N):
+        for x in range(W96):
+            sx_ = round(ax + (x - ax)/sq)
+            if 0 <= sx_ < W96: out[y][x] = g[y][sx_]
+    return out
+def g_rot(g, deg, px, py):                                                      # the fall: rotated about the feet, inverse-mapped so there are no holes (like rot() in side.py)
+    a = math.radians(deg); ca, sa = math.cos(a), math.sin(a); out = [['.']*W96 for _ in range(N)]
+    for y in range(N):
+        for x in range(W96):
+            ox, oy = round(px + (x - px)*ca + (y - py)*sa), round(py - (x - px)*sa + (y - py)*ca)
+            if 0 <= ox < W96 and 0 <= oy < N: out[y][x] = g[oy][ox]
+    return out
+def p_rot(p, deg, px, py):
+    a = math.radians(deg); ca, sa = math.cos(a), math.sin(a); return (px + (p[0]-px)*ca - (p[1]-py)*sa, py + (p[0]-px)*sa + (p[1]-py)*ca)
+A_UP_N, A_UP_F = ((3, -1), (6, -6)), ((2, -1), (5, -7))                          # both arms thrown up in front
+BELLY_N, BELLY_F = ((1.5, 5), (4, 8.5)), ((1, 4.5), (3.5, 8))                    # both arms across the stomach
+GUARD_HI_N, GUARD_HI_F = ((4, 1), (7, -11)), ((3, 1), (6, -12))                  # both forearms up in front of the face
+RXK = {
+ 0: dict(ln={0: -1, 2: -4, 5: -3, 9: -1, 13: 0}, hs={0: -3, 2: -9, 5: -6, 9: -2, 13: 0}, gx={0: 0, 2: -1, 5: -1, 9: 0}, bl={0: 0, 1: 1, 8: 1, 9: 0}, mo={0: 0, 1: 1, 6: 1, 7: 0}, hbk={0: 1, 8: 1, 9: 0},
+         na={0: IDLE_N, 3: ((-1, 6), (-2, 9.5)), 12: IDLE_N}, fa={0: IDLE_F, 3: ((-1.5, 4.5), (-2.5, 6.5)), 12: IDLE_F}),                                                                      # head snaps back
+ 1: dict(by={0: 0, 3: 3, 6: 4, 10: 3, 14: 0}, ln={0: 0, 3: 5, 6: 7, 10: 4, 14: 0}, hs={0: 0, 3: 3, 6: 5, 10: 2, 14: 0}, gx={0: 0, 3: -2, 6: -2, 12: -1, 14: 0}, lfx={0: 34, 4: 33, 14: 34}, bl={0: 0, 1: 1, 11: 1, 12: 0}, mo={0: 0, 1: 1, 8: 1, 9: 0},
+         na={0: IDLE_N, 2: BELLY_N, 11: BELLY_N, 13: IDLE_N}, fa={0: IDLE_F, 2: BELLY_F, 11: BELLY_F, 13: IDLE_F}),                                                                               # doubled over
+ 2: dict(gx={0: 0, 2: -2, 4: -5, 6: -7, 9: -8, 12: -3, 14: 0}, ln={0: -1, 3: -3, 9: -3, 14: 0}, hs={0: -2, 3: -3, 9: -1, 14: 0}, by={0: 0, 5: 1, 10: 1, 14: 0}, hbk={0: 1, 10: 1, 11: 0}, bl={0: 0, 1: 1, 6: 1, 7: 0}, mo={0: 0, 1: 1, 5: 1, 6: 0},
+         lfx={0: 34, 3: 31, 6: 29, 9: 31, 12: 34, 14: 34}, lfy={0: GR, 3: GR - 4, 5: GR - 1, 7: GR, 14: GR}, lbx={0: 31, 2: 28, 5: 25, 8: 27, 11: 30, 14: 31}, lby={0: GR, 2: GR - 3, 4: GR, 14: GR},
+         na={0: IDLE_N, 3: ((-2, 4), (-5, 6)), 8: ((3, 3), (6, 1)), 13: IDLE_N}, fa={0: IDLE_F, 3: ((-1, 4), (-3, 8)), 8: ((2, 3), (5, 2)), 13: IDLE_F}),                                                          # staggers back
+ 3: dict(sq={0: 1, 1: 1, 4: 0, 7: -1, 10: .1, 13: 1, 14: 1}, by={0: 0, 3: 1, 11: 1, 14: 0}, hbk={0: 1, 13: 1, 14: 0}, hpx={0: 1.6, 14: 1.6},
+         na={0: IDLE_N, 3: ((3, 2), (7, 0)), 11: ((3, 2), (7, 0)), 13: IDLE_N}, fa={0: IDLE_F, 3: ((-3, 2), (-7, 0)), 11: ((-3, 2), (-7, 0)), 13: IDLE_F}),                                                         # spins right round
+ 4: dict(rot={0: -6, 2: -25, 3: -45, 5: -62, 6: -72, 7: -74, 9: -72, 11: -55, 13: -22, 14: 0}, by={0: 0, 3: 2, 6: 4, 9: 4, 12: 2, 14: 0}, gx={0: 0, 3: -2, 6: -3, 9: -3, 12: -1, 14: 0}, bl={0: 0, 1: 1, 11: 1, 12: 0}, mo={0: 0, 1: 1, 5: 1, 6: 0}, hbk={0: 1, 11: 1, 12: 0},
+         na={0: IDLE_N, 3: ((-3, -2), (-6, -6)), 7: ((-4, 1), (-8, 4)), 11: ((1, 4), (3, 7)), 13: IDLE_N}, fa={0: IDLE_F, 3: ((-2, -2), (-5, -7)), 7: ((-3, 1), (-7, 5)), 11: ((0, 4), (2, 7)), 13: IDLE_F}),                    # knocked flat, gets up
+ 5: dict(gx={0: 0, 3: -3, 6: -5, 9: -5, 12: -2, 14: 0}, ln={0: -2, 3: -4, 9: -4, 14: 0}, hs={0: -1, 3: -2, 9: -1, 14: 0}, hbk={0: 1, 11: 1, 12: 0}, bl={0: 0, 1: 1, 5: 1, 6: 0}, mo={0: 0, 1: 1, 7: 1, 8: 0},
+         lfa={0: 0, 3: 18, 9: 18, 12: 0, 14: 0}, lba={0: 0, 3: 12, 9: 12, 12: 0, 14: 0}, lfx={0: 34, 3: 35, 9: 35, 12: 34, 14: 34}, lby={0: GR, 3: GR, 14: GR},
+         na={0: IDLE_N, 3: ((3, -3), (6, -6)), 8: ((3, -3), (6, -6)), 12: IDLE_N}, fa={0: IDLE_F, 3: ((2, -3), (5, -7)), 8: ((2, -3), (5, -7)), 12: IDLE_F}),                                                           # skids back on his heels
+ 6: dict(gx={0: 0, 2: -2, 5: -2, 9: -1, 12: 0}, ln={0: 0, 2: -1, 11: -1, 14: 0}, by={0: 0, 2: 1, 11: 1, 14: 0}, hs={0: 0, 3: 1, 11: 1, 14: 0},
+         na={0: IDLE_N, 2: GUARD_HI_N, 11: GUARD_HI_N, 13: IDLE_N}, fa={0: IDLE_F, 2: GUARD_HI_F, 11: GUARD_HI_F, 13: IDLE_F}, bl={0: 0, 1: 1, 10: 1, 11: 0}),                                                          # arms up to guard
+ 7: dict(gx={0: 0, 3: -2, 8: -4, 12: -1, 14: 0}, ln={0: -1, 3: -3, 9: -2, 14: 0}, hs={0: -1, 3: -2, 9: -1, 14: 0}, hbk={0: 1, 11: 1, 12: 0}, bl={0: 0, 1: 1, 5: 1, 6: 0}, mo={0: 0, 1: 1, 7: 1, 8: 0},
+         lfx={0: 34, 3: 36, 10: 36, 13: 34}, lfy={0: GR, 3: GR - 5, 10: GR - 4, 13: GR}, lfa={0: 0, 3: 20, 10: 15, 13: 0}, lbx={0: 31, 3: 32, 10: 32, 13: 31}, lby={0: GR, 3: GR - 4, 10: GR - 3, 13: GR}, lba={0: 0, 3: 15, 10: 10, 13: 0},
+         na={0: IDLE_N, 3: A_UP_N, 10: A_UP_N, 13: IDLE_N}, fa={0: IDLE_F, 3: A_UP_F, 10: A_UP_F, 13: IDLE_F}),                                                                                     # hops backwards
+ 8: dict(ln={0: -2, 2: 3, 4: -4, 6: 4, 8: -3, 10: 3, 12: -1, 14: 0}, hs={0: -2, 2: 4, 4: -5, 6: 5, 8: -4, 10: 3, 12: -1, 14: 0}, by={0: 0, 2: 1, 4: 0, 6: 1, 8: 0, 10: 1, 12: 0, 14: 0}, gx={0: 0, 2: 1, 4: -1, 6: 1, 8: -1, 10: 1, 12: 0}, bl={0: 0, 1: 1, 12: 1, 13: 0}, mo={0: 0, 2: 1, 9: 1, 10: 0},
+         na={0: IDLE_N, 2: ((2, 5.5), (4, 9)), 5: ((-2, 6), (-3, 9.5)), 8: ((2, 5.5), (4, 9)), 11: ((-1, 6), (-1, 9.5)), 13: IDLE_N}, fa={0: IDLE_F, 3: ((-2, 4.5), (-3, 7)), 7: ((1, 4.5), (2, 7)), 11: ((-1, 4.5), (-2, 7)), 13: IDLE_F}),         # dizzy wobble
+ 9: dict(by={0: 0, 2: 3, 4: 8, 10: 8, 13: 2, 14: 0}, ln={0: 0, 3: 2, 5: 3, 10: 3, 14: 0}, hs={0: 0, 4: 2, 10: 2, 14: 0}, gx={0: 0, 3: -1, 5: -2, 10: -2, 14: 0}, bl={0: 0, 1: 1, 10: 1, 11: 0}, mo={0: 0, 1: 1, 6: 1, 7: 0},
+         lfx={0: 34, 4: 37, 10: 37, 14: 34}, lbx={0: 31, 4: 22, 10: 22, 14: 31}, lby={0: GR, 4: GR - 1, 10: GR - 1, 14: GR}, lba={0: 0, 4: 60, 10: 60, 13: 0},
+         na={0: IDLE_N, 4: ((4, 4), (6, 8)), 10: ((4, 4), (6, 8)), 13: IDLE_N}, fa={0: IDLE_F, 4: ((2, 4), (3, 9)), 10: ((2, 4), (3, 9)), 13: IDLE_F}),                                                                    # drops to one knee
+}
+RX_LIFT_Y = {7: [0, 3, 6, 9, 10, 10, 10, 9, 7, 5, 3, 2, 1, 0, 0]}                # the hop: height above the ground per frame (applied by the game)
+def rxf(k, i):                                                                  # -> (grid rows 64 x 96, near hand, far hand)
+    if i == 14:                                                                 # the last frame is exactly his idle (no pop when the reaction ends)
+        f, nh, fh = idle(0); return wide(f), (nh[0] + OFF, nh[1]), (fh[0] + OFF, fh[1])
+    K = RXK[k]; g = lambda n, d: kv(K[n], i) if n in K else d
+    P = dict(by=round(g('by', 0)), ln=round(g('ln', 0)), hs=round(g('hs', 0)), lf=(g('lfx', 34), g('lfy', GR), g('lfa', 0)), lb=(g('lbx', 31), g('lby', GR), g('lba', 0)), hp=i*g('hpx', .8), hback=1 if g('hbk', 0) > .5 else 0, blink=g('bl', 0) > .5, mo=g('mo', 0) > .5)
+    if 'na' in K: P['na'], P['fa'] = g('na', IDLE_N), g('fa', IDLE_F)
+    f, nh, fh = figure(P); gr = wide(f); nh, fh = (nh[0] + OFF, nh[1]), (fh[0] + OFF, fh[1])
+    if 'sq' in K:
+        sq = g('sq', 1); gr = g_warp(gr, sq, AX); nh, fh = [(AX + (p[0] - AX)*sq, p[1]) for p in (nh, fh)]
+    if 'rot' in K:
+        d = g('rot', 0); gr = g_rot(gr, d, PX, PY); nh, fh = [p_rot(p, d, PX, PY) for p in (nh, fh)]
+    dx = round(g('gx', 0))
+    if dx: gr = g_shift(gr, dx, 0); nh, fh = (nh[0] + dx, nh[1]), (fh[0] + dx, fh[1])
+    return gr, nh, fh
+def pack_rx(k):
+    fr = [rxf(k, i) for i in range(15)]; xs = [x for g, _, _ in fr for r in g for x, c in enumerate(r) if c != '.']; x0 = max(0, min(xs) - 1); x1 = min(W96 - 1, max(xs) + 1); w = x1 - x0 + 1
+    return {'x0': x0, 'w': w, 'h': N, 'top': 0, 'cx': 34 + OFF, 'frames': [[''.join(r[x0:x0 + w]) for r in g] for g, _, _ in fr], 'hn': [[round(n[0] - x0, 1), round(n[1], 1)] for _, n, _ in fr], 'hf': [[round(h[0] - x0, 1), round(h[1], 1)] for _, _, h in fr],
+            **({'lift': RX_LIFT_Y[k]} if k in RX_LIFT_Y else {})}
 def pack(fn, x0, w, top):
     frames, hn, hf = [], [], []; sh = top
     for i in range(15):
@@ -239,11 +316,12 @@ if __name__ == '__main__':
     for k, fn in ATTACKS:
         fr, hn, hf = pack(fn, X0, 44, 0); out[k] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}
         if k == 'atk3': out[k]['lift'] = KICK_LIFT
+    for k in range(10): out['rx%d' % k] = pack_rx(k)
     json.dump(out, open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'yuji.json'), 'w'), separators=(',', ':'))
-    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run'): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct')
+    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct', 'x0', out[k]['x0'], 'w', out[k]['w'])
     if len(sys.argv) > 1:                                                  # contact sheets: python3 -B yuji_art.py sheets <dir>
         d = sys.argv[2]; z = 2
-        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run'):
+        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]):
             s = out[k]; sheet = Image.new('RGB', (15*s['w']*z, s['h']*z), (40, 40, 70)); px = {c: tuple(int(PAL[c][j:j+2], 16) for j in (1, 3, 5)) for c in PAL}
             for n, rows in enumerate(s['frames']):
                 for y, row in enumerate(rows):
