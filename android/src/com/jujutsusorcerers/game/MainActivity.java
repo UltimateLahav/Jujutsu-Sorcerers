@@ -12,11 +12,15 @@ import android.webkit.WebViewClient;
 
 /** Hosts the game (assets/index.html) in a full-screen, landscape WebView. No internet needed. */
 public class MainActivity extends Activity implements View.OnLongClickListener {
+    /** Ownership notice: nothing is shown on screen, it lives in the code, the app info (AndroidManifest) and assets/OWNER.txt of the APK. */
+    public static final String OWNER = "This APK file is owned by Lahav. All rights reserved.";
+
     private WebView web;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        android.util.Log.i("JujutsuSorcerers", OWNER);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         web = new WebView(this);

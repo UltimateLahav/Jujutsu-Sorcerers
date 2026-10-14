@@ -10,6 +10,10 @@
         android:allowBackup="false"
         android:hardwareAccelerated="true">
 
+        <!-- Ownership notice (the compiled app info of the APK keeps these two entries) -->
+        <meta-data android:name="owner" android:value="Lahav" />
+        <meta-data android:name="copyright" android:value="This APK file is owned by Lahav. All rights reserved." />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

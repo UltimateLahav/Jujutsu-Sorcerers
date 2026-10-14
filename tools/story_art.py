@@ -54,7 +54,7 @@ def ball13():
     for xy in [(4, 3), (4, 4), (8, 3), (8, 4)] + [(3, 7), (4, 8), (5, 9), (6, 9), (7, 9), (8, 8), (9, 7)]: o[xy] = (20, 12, 0, 255)
     return im
 art['ball'] = url(ball13())
-import sys; sys.path.insert(0, '.'); import verity_rig; art['vanim'] = verity_rig.strips(sm); import outro_art, room_gojo, cat_rig; art['cat'] = cat_rig.strips(); art['outro'] = {**outro_art.build(), **room_gojo.strips()}      # Verity's 15-frame animations (tools/verity_rig.py); the chapter 1 ending art: the corridor, the big door and the higher-ups' room (tools/outro_art.py) and Gojo in that room: idle, walk and look-up strips (tools/room_gojo.py)
+import sys; sys.path.insert(0, '.'); import verity_rig; art['vanim'] = verity_rig.strips(sm); import outro_art, room_gojo, cat_rig, cat_maw; art['cat'] = {**cat_rig.strips(), **cat_maw.strips()}; art['outro'] = {**outro_art.build(), **room_gojo.strips()}      # Verity's 15-frame animations (tools/verity_rig.py); the chapter 1 ending art: the corridor, the big door and the higher-ups' room (tools/outro_art.py) and Gojo in that room: idle, walk and look-up strips (tools/room_gojo.py)
 json.dump(art, open('story_art.json', 'w'), separators=(',', ':'))
 sheet = Image.new('RGB', (4 * 200, 3 * 200), (30, 22, 52)); ims = [v, bite, sm]
 for i, im in enumerate(ims): t = im.convert('RGBA').resize((192, 192), Image.NEAREST); sheet.paste(t, ((i % 4) * 200 + 4, (i // 4) * 200 + 4), t)

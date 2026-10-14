@@ -307,6 +307,27 @@ def a_rx9(i):                                                                 # 
     f = float(i); k = sc(f, [(0, 0), (4, 1), (10, 1), (14, 0)])
     return pose(hp=44 + 10 * k, sy=19 + 10 * k, hy=9.6 + 11 * k, lean=2.5 * k, hrot=8 * k, eyes=1 if k > 0.4 else 0, mouth=1, aL=[(-7.4, 33 + 10 * k), (-8.4, 46 + 8 * k)], aR=[(7.4 + 2 * k, 33 + 10 * k), (8.4 + 4 * k, 46 + 8 * k)], lL=[(-2.2 - 5 * k, 53 + 3 * k), (-2.4 - 3 * k, 60)], lR=[(2.2 + 2 * k, 53 + 5 * k), (2.4 - 6 * k, 60 + 1.0 * k)])
 
+def a_ult1(i):                                                                # ULTIMATE, the knees: a loop of 6 knees in 15 frames (the game plays it at about 29 FPS, so 15 knees take 1.3 s). The near arm holds the enemy up by the neck, the knees drive into his gut, right, left, right ... (the impacts are on frames 0.75 + 2.5 j)
+    f = float(i); k = [max(0.0, 1.0 - abs(((f - (0.75 + 2.5 * j) + 7.5) % 15.0) - 7.5) / 1.25) for j in range(6)]
+    kR, kL = k[0] + k[2] + k[4], k[1] + k[3] + k[5]; kk = kR + kL; S = (5.4, 20.8); H = (22.5, 22.0 + 0.5 * math.sin(f * 2.1))
+    return pose(lean=4.0 + 2.2 * kk, ty=-1.0 * kk, hrot=3.0 + 1.5 * kk, mouth=1, aR=[bend(S, H), H], gR=0.15, aL=[(-9.0, 31 - 2 * kk), (-13.0 + math.sin(f * 1.3), 39 - 4 * kk)], gL=0.5,
+                lR=[(lerp(2.2, 15.0, kR), lerp(53, 38.0, kR)), (lerp(2.4, 11.0, kR), lerp(60, 50.0, kR))], lL=[(lerp(-2.2, 13.0, kL), lerp(53, 40.0, kL)), (lerp(-2.4, 9.5, kL), lerp(60, 51.0, kL))])
+def a_ult2(i):                                                                # ULTIMATE, the throw (he lets go on frame 9): he heaves the enemy, hanging from his hand by the neck, back, then thrusts the arm forward and opens the glove (the game flings the enemy away)
+    f = float(i); S = (5.4, 20.8)
+    H = hand(f, [(0, (22.5, 22.0)), (5, (22.5, 22.0)), (7, (20.0, 25.0)), (9, (35.0, 14.0)), (11, (37.0, 13.0)), (14, (9.0, 44.0))])
+    op = 0.15 if f < 8 else lerp(0.15, 1.0, seg(f, 8, 9.5)) if f < 11 else lerp(1.0, 0.3, seg(f, 11, 14))
+    lean = lerp(4.0, -8.0, seg(f, 0, 6)) if f < 7 else lerp(-8.0, 9.0, seg(f, 7, 9.5)) if f < 10 else lerp(9.0, 0.0, seg(f, 10, 14))
+    sz = lerp(1.0, 0.95, seg(f, 0, 6)) if f < 7 else lerp(0.95, 1.04, seg(f, 7, 9.5)) if f < 11 else lerp(1.04, 1.0, seg(f, 11, 14))
+    return pose(lean=lean, sz=sz, hrot=lerp(3.0, -6.0, seg(f, 0, 6)) if f < 7 else lerp(-6.0, 6.0, seg(f, 7, 9.5)) if f < 12 else lerp(6.0, 0.0, seg(f, 12, 14)), mouth=1 if 6 <= f <= 12 else 0, aR=[bend(S, H), H], gR=op,
+                aL=[(-9.0 - 2 * seg(f, 0, 6), 31), (-13.0 - 4 * seg(f, 0, 6) + 6 * seg(f, 7, 10), 39 - 6 * seg(f, 7, 10))], gL=0.5, lR=[(2.2 + 1.0 * seg(f, 7, 9.5), 53), (2.4 + 3.0 * seg(f, 7, 9.5) - 3 * seg(f, 11, 14), 60)])
+def a_run(i):                                                                 # a cartoon sprint (the victim of Verity's FATALITY runs away from him): long strides, the arms pump, he leans into it
+    t = 2 * math.pi * i / N; legs = {}
+    for key, ph, sg in (('lL', t, -1), ('lR', t + math.pi, 1)):
+        x = 8.5 * math.sin(ph); lift = 9.0 * max(0.0, math.cos(ph)); ank = (sg * 2.2 + x, 60 - lift); hip = (sg * 2.2, 44); kn = ((hip[0] + ank[0]) / 2 + 2.4 + 0.7 * lift, (hip[1] + ank[1]) / 2 + 0.5 - 0.3 * lift)
+        legs[key] = [kn, ank]
+    b = 1.6 * abs(math.cos(t))
+    return pose(lean=7.0, hp=44 - b, sy=19 - b, hy=9.6 - b, hrot=2.5 * math.sin(t), mouth=1, aL=[(-6.0 + 5.0 * math.sin(t + math.pi), 33), (-3.0 + 11.0 * math.sin(t + math.pi), 40 - 4.0 * abs(math.sin(t)))], aR=[(6.0 + 5.0 * math.sin(t), 33), (3.0 + 11.0 * math.sin(t), 40 - 4.0 * abs(math.sin(t)))], gL=0.4, gR=0.4, **legs)
+
 def pose_of(name, i):
     if name == 'idle': return a_idle(i)
     if name == 'walk': return a_walk(i)
@@ -334,8 +355,11 @@ def pose_of(name, i):
     if name == 'rx7': return a_rx7(i)
     if name == 'rx8': return a_rx8(i)
     if name == 'rx9': return a_rx9(i)
+    if name == 'ult1': return a_ult1(i)
+    if name == 'ult2': return a_ult2(i)
+    if name == 'run': return a_run(i)
     raise KeyError(name)
-CELL = {'idle': (64, 32, 64, 0), 'walk': (64, 32, 64, 0), 'stun': (64, 32, 64, 0), 'smash': (64, 32, 80, 16), 'unsmash': (64, 32, 80, 16), 'flat': (64, 32, 64, 0), 'flatwalk': (64, 32, 64, 0), 'flatpunch': (64, 32, 64, 0), 'm0': WIDE + (64, 0), 'm1': WIDE + (64, 0), 'm3': WIDE + (64, 0), 'dashf': WIDE + (64, 0), 'dashb': WIDE + (64, 0), 'rx0': REACT + (64, 0), 'rx1': REACT + (64, 0), 'rx2': REACT + (64, 0), 'rx4': REACT + (64, 0), 'jump': (64, 32, 72, 8), 'toon': (64, 32, 64, 0), 'huge': WIDE + (64, 0), 'rx3': REACT + (64, 0), 'rx5': REACT + (64, 0), 'rx6': REACT + (64, 0), 'rx7': REACT + (64, 0), 'rx8': REACT + (64, 0), 'rx9': REACT + (64, 0)}
+CELL = {'idle': (64, 32, 64, 0), 'walk': (64, 32, 64, 0), 'stun': (64, 32, 64, 0), 'smash': (64, 32, 80, 16), 'unsmash': (64, 32, 80, 16), 'flat': (64, 32, 64, 0), 'flatwalk': (64, 32, 64, 0), 'flatpunch': (64, 32, 64, 0), 'm0': WIDE + (64, 0), 'm1': WIDE + (64, 0), 'm3': WIDE + (64, 0), 'dashf': WIDE + (64, 0), 'dashb': WIDE + (64, 0), 'rx0': REACT + (64, 0), 'rx1': REACT + (64, 0), 'rx2': REACT + (64, 0), 'rx4': REACT + (64, 0), 'jump': (64, 32, 72, 8), 'toon': (64, 32, 64, 0), 'huge': WIDE + (64, 0), 'rx3': REACT + (64, 0), 'rx5': REACT + (64, 0), 'rx6': REACT + (64, 0), 'rx7': REACT + (64, 0), 'rx8': REACT + (64, 0), 'rx9': REACT + (64, 0), 'ult1': WIDE + (64, 0), 'ult2': WIDE + (64, 0), 'run': (64, 32, 64, 0)}
 def frame(name, i):
     W, ax, H, oy = CELL[name]; p = pose_of(name, i)
     if p.get('squash'):                                                    # a cartoon squash: the picture itself is scaled (wider, much lower), standing on the floor
@@ -366,5 +390,5 @@ def sheet(d, names, zoom=2, cols=None):                                      # c
     return out
 if __name__ == '__main__':
     d = sys.argv[1] if len(sys.argv) > 1 else '.'
-    for nm, names in (('a', ['idle', 'walk', 'stun']), ('b', ['smash', 'flat', 'flatwalk', 'flatpunch']), ('c', ['m0', 'm1', 'm3']), ('d', ['dashf', 'dashb']), ('e', ['rx0', 'rx1', 'rx2', 'rx4']), ('f', ['jump', 'toon', 'huge']), ('g', ['rx3', 'rx5', 'rx6']), ('h', ['rx7', 'rx8', 'rx9'])):
+    for nm, names in (('a', ['idle', 'walk', 'stun']), ('b', ['smash', 'flat', 'flatwalk', 'flatpunch']), ('c', ['m0', 'm1', 'm3']), ('d', ['dashf', 'dashb']), ('e', ['rx0', 'rx1', 'rx2', 'rx4']), ('f', ['jump', 'toon', 'huge']), ('g', ['rx3', 'rx5', 'rx6']), ('h', ['rx7', 'rx8', 'rx9']), ('i', ['ult1', 'ult2', 'run'])):
         sheet(d, names, 1).save(os.path.join(d, 'cat_%s.png' % nm))

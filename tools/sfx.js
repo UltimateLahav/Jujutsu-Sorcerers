@@ -324,6 +324,13 @@ function makeSfx(ac) {
       const t = T(at), B = C.atk;
       for (let k = 0; k < 4; k++) { const q = t + k * 0.19; tone(B.soft, q, { type: 'sawtooth', f: 150 - k * 6, f2: 105, dur: 0.12, gain: 0.2, atk: 0.01 }); burst(B.soft, q, { f: 1500, f2: 800, q: 2.0, dur: 0.1, gain: 0.5, atk: 0.005 }); }
     },
+    chomp(at) {                                          // the HUGE Cat's jaws slam shut on the ground: a huge low boom, a crunch of stone and bone, then rubble raining down
+      const t = T(at), B = C.ce;
+      tone(B.deep, t, { type: 'triangle', f: 120, f2: 28, dur: 0.9, gain: 0.7, atk: 0.003 });
+      burst(B.deep, t, { type: 'lowpass', f: 900, f2: 120, q: 0.8, dur: 1.4, gain: 1.0, atk: 0.004 });
+      for (let k = 0; k < 14; k++) burst(B.deep, t + 0.02 + k * 0.035 + R(0, 0.03), { f: R(300, 2600), q: 2, dur: R(0.03, 0.08), gain: R(0.25, 0.5), atk: 0.001 });
+      for (let k = 0; k < 22; k++) burst(B.deep, t + 0.45 + k * 0.09 + R(0, 0.05), { f: R(500, 3000), q: 1.4, dur: R(0.03, 0.08), gain: R(0.1, 0.3), atk: 0.001 });
+    },
     quake(at) {                                          // the roof is hit: a huge low boom, a long shaking rumble and stones and splinters falling
       const t = T(at), B = C.ce;
       tone(B.deep, t, { type: 'triangle', f: 80, f2: 22, dur: 1.6, gain: 0.6, atk: 0.004 });
