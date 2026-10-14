@@ -1,5 +1,5 @@
 """Verity's 15-frame animations (64x64, facing right; the game mirrors them). A little rig of joints is drawn with polygons, shaded, detailed and outlined like the first-form sprite.
-anim(name) -> 15 frames. run: python3 verity_rig.py  ->  verity_anims.json (name -> png strip, 15 frames wide) and verity_sheet.png"""
+anim(name) -> 15 frames. run: python3 verity_rig.py  ->  verity_anims.json (name -> png strip, 15 frames wide) and verity_sheet.png. The ten hit reactions rx0..rx9 are 15 cells of 96x64 (not 64x64): the figure is pasted 32 px to the right, so his centre column lands on x=64."""
 import math, io, json, base64, copy
 from PIL import Image, ImageDraw
 S = 64; BASE, LIT, HI, SH, DK, OL, RIB, CLAW = (172,156,48), (206,192,80), (232,218,134), (128,114,38), (88,76,26), (26,18,6), (104,90,26), (62,52,16)
@@ -183,8 +183,8 @@ def scare_face(f):
 def sheet_png(frames, w=S): im = Image.new('RGBA', (w * 15, S), (0, 0, 0, 0)); [im.paste(fr, (i * w, 0)) for i, fr in enumerate(frames)]; return im      # (w: the width of one cell, 64 or, for the hit reactions, 96)
 def url(im): b = io.BytesIO(); im.save(b, 'PNG'); return 'data:image/png;base64,' + base64.b64encode(b.getvalue()).decode()
 # ---------------------------------------------------------------- the 10 HIT REACTIONS rx0..rx9 (the same ten as Gojo's, drawn for Verity), 15 frames each. The cells are 96x64, not 64x64: the usual 64 cell is pasted 32 px to the right (his centre column x=32 lands on x=64), so there are 64 px of room on the left for a fall backwards
-CW, FEET = 96, (64, 62)
-def P(**kw): return pose(**{'dx': 0, 'dy': 0, 'rot': 0, 'sx': 1, **kw})      # + what the rig cannot do, done on the finished picture: dx / dy shift it, rot turns it about the feet (deg, negative = backwards), sx squashes it about his axis (negative = mirrored = turned round)
+CW, FEET = 96, (64, 62)      # (the cell width; the row of the soles and the usual column of his feet: the pivot of a fall)
+def P(**kw): return pose(**{'dx': 0, 'dy': 0, 'rot': 0, 'sx': 1, **kw})      # + what the rig cannot do, done on the finished picture: dx / dy shift it, rot turns it about the back of his feet (deg, negative = backwards; the pivot is the left-most sole pixel, so nothing can sink below the ground), sx squashes it about his axis (negative = mirrored = turned round)
 sc = lambda kf, f: keys([(a, {'v': v}) for a, v in kf], f)['v']                # a plain number eased through (frame, value) keys
 def nn(im, fn):                                                                # nearest neighbour only, inverse-mapped (no holes, no smoothing): fn(x, y) -> the source pixel
     s = im.load(); out = Image.new('RGBA', im.size, (0, 0, 0, 0)); o = out.load(); W, H = im.size
@@ -192,6 +192,14 @@ def nn(im, fn):                                                                #
         for x in range(W):
             a, b = fn(x, y)
             if 0 <= a < W and 0 <= b < H: o[x, y] = s[a, b]
+    return out
+def squash(im, q, cx):                                                         # the spin: squash about the column cx (mirrored when q < 0). Each output column copies the opaque source pixel nearest to the spot it looks at among the 1/|q| source columns it covers, so thin arms and legs survive (still only existing pixels: no blending)
+    s = im.load(); out = Image.new('RGBA', im.size, (0, 0, 0, 0)); o = out.load(); W, H = im.size; h = .5 / abs(q)
+    for x in range(W):
+        c = cx + (x - cx) / q; cols = sorted(range(math.ceil(c - h), math.floor(c + h) + 1), key=lambda a: abs(a - c))
+        for y in range(H):
+            for a in cols:
+                if 0 <= a < W and s[a, y][3]: o[x, y] = s[a, y]; break
     return out
 def outline(im, add):                                                          # drop the 1 px outline (a squash / rotation breaks it) and, if add, draw it again round whatever is opaque
     o = im.load(); W, H = im.size
@@ -202,44 +210,60 @@ def outline(im, add):                                                          #
         new = [(x, y) for y in range(H) for x in range(W) if not o[x, y][3] and any(0 <= x + a < W and 0 <= y + b < H and o[x + a, y + b][3] for a, b in ((1, 0), (-1, 0), (0, 1), (0, -1)))]
         for q in new: o[q] = OL + (255,)
     return im
-def cell(p):                                                                   # pose -> one 96x64 cell
-    im = Image.new('RGBA', (CW, S), (0, 0, 0, 0)); im.paste(render({**p, 'back': p['sx'] < 0}), (32, 0)); sx, r = p['sx'], p['rot']      # (turned round: the back of his skull, no face)
+def cell(p):                                                                   # pose -> one 96x64 cell (everything is done on a padded canvas, and nothing may be lost at the cell's edges: that is asserted)
+    r64 = render({**p, 'back': p['sx'] < 0}); bb = r64.getchannel('A').getbbox(); assert bb[0] > 0 and bb[2] < S, 'a limb is clipped by the 64 px render'      # (turned round: the back of his skull, no face)
+    PX, PY = 40, 28; im = Image.new('RGBA', (CW + 2 * PX, S + 2 * PY), (0, 0, 0, 0)); im.paste(r64, (32 + PX, PY)); sx, r = p['sx'], p['rot']
     if sx != 1 or r:
         outline(im, False)
-        if sx != 1: q = sx if abs(sx) > .08 else .08; im = nn(im, lambda x, y: (round(64 + (x - 64) / q), y))
-        if r: a = math.radians(r); ca, sa = math.cos(a), math.sin(a); px, py = FEET; im = nn(im, lambda x, y: (round(px + (x - px) * ca + (y - py) * sa), round(py - (x - px) * sa + (y - py) * ca)))
+        if sx != 1: im = squash(im, sx if abs(sx) > .08 else .08, 64 + PX)
+        if r: a = math.radians(r); ca, sa = math.cos(a), math.sin(a); fb = im.crop((0, PY + 60, im.size[0], PY + 63)).getchannel('A').getbbox(); px, py = (fb[0] if fb else FEET[0] + PX), FEET[1] + PY; im = nn(im, lambda x, y: (round(px + (x - px) * ca + (y - py) * sa), round(py - (x - px) * sa + (y - py) * ca)))
         outline(im, True)
-    if round(p['dx']) or round(p['dy']): im = nn(im, lambda x, y: (x - round(p['dx']), y - round(p['dy'])))
-    return im
+    dx, dy = round(p['dx']), round(p['dy']); box = (PX - dx, PY - dy, PX - dx + CW, PY - dy + S); a = im.getchannel('A').getbbox()
+    assert box[0] <= a[0] and a[2] <= box[2] and box[1] <= a[1] and a[3] <= box[3], 'something is clipped by the edge of the cell: %s %s' % (a, box)
+    return im.crop(box)
 part = lambda pk, t: blend(P(), pk, t)                                         # a reaction pose t of the way from standing to its peak pose pk
-def stride(X, k=10):                                                           # the legs of a stagger / skid, tied to how far the body has travelled (X px; one full step cycle per k px)
+def stride(X, k=10):                                                           # the legs of a stagger, tied to how far the body has travelled (X px; one full step cycle per k px)
     w = -2 * math.pi * X / k; s, c = math.sin(w), math.cos(w); up = lambda v: -5 * max(0, v)
     return dict(lL=((29.5 - 3 * s, 47 + up(-c)), (30 - 5 * s, 59 + up(s))), lR=((34.5 + 3 * s, 47 + up(c)), (34 + 5 * s, 59 + up(-s))))
-def rx0(f): return keys([(0, P(hx=29.5, hy=7, lean=-2, m=.5, dx=-1)), (2, P(hx=22.5, hy=6.5, lean=-6, m=1, dx=-2, aL=((16, 32), (10, 41)), aR=((48, 31), (54, 40)))),
-    (4, P(hx=23.5, hy=7, lean=-5.5, m=.9, dx=-2, aL=((17, 33), (12, 43)), aR=((47, 32), (52, 42)))), (8, P(hx=28.5, hy=7, lean=-2.5, m=.35, dx=-1, aL=((20, 34), (17, 49)), aR=((44, 34), (47, 49)))),
+def rx0(f): return keys([(0, P(hx=29.5, hy=7, lean=-2, m=.5, dx=-1)), (2, P(hx=22.5, hy=6.5, lean=-6, m=1, dx=-2, aL=((18, 33), (13, 43)), aR=((47, 32), (52, 42)))),
+    (4, P(hx=23.5, hy=7, lean=-5.5, m=.9, dx=-2, aL=((18, 34), (14, 46)), aR=((46, 33), (50, 46)))), (8, P(hx=28.5, hy=7, lean=-2.5, m=.35, dx=-1, aL=((20, 34), (17, 49)), aR=((44, 34), (47, 49)))),
     (11, P(hx=31, hy=6.8, lean=-.8, m=.1)), (14, P())], f)                                                                          # head snaps back (and the arms flare), then settles
-DB = P(hx=39, hy=17, sy=24, hp=39, lean=9, m=.8, dx=-2, aL=((28, 37), (38, 34)), aR=((44, 38), (33, 37)), lL=((27, 49), (29.5, 59)), lR=((37, 49), (34.5, 59)))
-def rx1(f): return keys([(0, part(DB, .35)), (2, DB), (4, blend(DB, P(hx=40, hy=18, sy=25, hp=39, lean=10, m=.7, dx=-2, aL=((28, 38), (38, 35)), aR=((44, 39), (33, 38)), lL=((27, 49), (29.5, 59)), lR=((37, 49), (34.5, 59))), 1)),
-    (7, part(DB, .85)), (10, part(DB, .45)), (12, part(DB, .2)), (14, P())], f)                                                       # doubled over: arms across the belly, head down
+DB = P(hx=41, hy=19, sy=25, hp=39, lean=12, m=.8, dx=-2, aL=((30, 38), (40, 36)), aR=((46, 40), (35, 38)), lL=((32, 49), (29.5, 59)), lR=((38, 49), (34.5, 59)))
+DB2 = P(hx=42, hy=20, sy=26, hp=39.5, lean=13, m=.7, dx=-2, aL=((30, 39), (40, 37)), aR=((46, 41), (35, 39)), lL=((32, 49), (29.5, 59)), lR=((38, 49), (34.5, 59)))
+def rx1(f): return keys([(0, part(DB, .35)), (2, DB), (4, DB2), (7, part(DB, .85)), (10, part(DB, .45)), (12, part(DB, .2)), (14, P())], f)      # doubled over: arms across the belly, head down
+UPL, OUTL, UPR, OUTR = ((15, 26), (9, 13)), ((14, 33), (8, 41)), ((49, 25), (56, 12)), ((50, 32), (56, 40))      # the arms of a stagger: flung up or out
 def rx2(f):
     X = sc([(0, -2), (2, -7), (4, -12), (6, -14.5), (8, -13), (10, -9), (12, -4), (14, 0)], f); e = sc([(0, .5), (2, 1), (10, 1), (14, 0)], f); fl = sc([(0, .3), (2, 1), (5, .9), (8, 1), (11, .4), (14, 0)], f); wb = math.sin(f * 1.7)
-    return P(dx=X, hx=32 - 4 * e, hy=7.5, lean=-4 * e - wb, m=.9 * e, aL=((21 - 7 * fl, 34 - 9 * fl), (20.5 - 12 * fl, 52 - 36 * fl + 3 * wb * fl)), aR=((43 + 7 * fl, 34 - 10 * fl), (43.5 + 12 * fl, 52 - 38 * fl - 3 * wb * fl)), **{k: mix(v, P()[k], 1 - e) for k, v in stride(X).items()})      # staggers back in steps, arms flung
+    u = .5 + .5 * math.sin(-2 * math.pi * X / 10 + 1)      # (one arm up while the other is out, swapping with the steps)
+    return P(dx=X, hx=32 - 4 * e, hy=6.5 + e, lean=-(4 + wb) * e, m=.9 * e, aL=mix(STAND['aL'], mix(OUTL, UPL, u), fl), aR=mix(STAND['aR'], mix(OUTR, UPR, 1 - u), fl), **{k: mix(P()[k], v, e) for k, v in stride(X).items()})      # staggers back in steps, arms flung
 def rx3(f):
-    th = 2 * math.pi * sc([(0, 0), (1, 0), (11, 1), (14, 1)], f); c = math.cos(th); o = abs(math.sin(th)); w = sc([(0, 1), (2, .4), (11, .4), (14, 0)], f)
-    return P(sx=c, lean=-3 * sc([(0, 1), (1, 0)], f) + 1.5 * math.sin(f * 2) * (f > 11), hy=6.5 + sc([(0, 1), (1, 0)], f), m=.6 * w, aL=((21 - 5 * o * w, 34 - 3 * o), (20.5 - 8 * o * w, 52 - 11 * o)), aR=((43 + 5 * o * w, 34 - 3 * o), (43.5 + 8 * o * w, 52 - 11 * o)))      # spins right round (squashed through zero width, mirrored, back again)
+    th = 2 * math.pi * sc([(0, 0), (1, 0), (11, 1), (14, 1)], f); c = math.cos(th); o = abs(math.sin(th)); w = sc([(0, .5), (3, 1), (6, .8), (9, .45), (11, .25), (14, 0)], f)
+    return P(sx=c, lean=-3 * sc([(0, 1), (1, 0)], f) + 2 * math.sin(f * 2.2) * max(0, 14 - f) / 3 * (f > 10), hy=6.5 + sc([(0, 1), (1, 0)], f), m=.6 * w, aL=((21 - 5 * o * w, 34 - 3 * o), (20.5 - 8 * o * w, 52 - 11 * o)), aR=((43 + 5 * o * w, 34 - 3 * o), (43.5 + 8 * o * w, 52 - 11 * o)))      # spins right round (squashed through zero width, mirrored, back again)
+RXF = P(hx=26, hy=8, lean=-3, m=1, aL=((33, 25), (43, 16)), aR=((47, 27), (56, 21)), lL=((34, 47), (38, 59)), lR=((39, 47), (44, 59)))      # rx4: falling: the feet shoot forward, the arms are thrown up
+RXL = P(hx=29, hy=7.5, lean=-1, m=.1, aL=((29, 33), (32, 45)), aR=((41, 35), (43, 50)), lL=((34, 47), (38, 59)), lR=((39, 47), (44, 59)))      # ... lying: the arms at his sides
+RXU = P(hx=30, hy=9, sy=19, lean=3, m=.5, aL=((29, 33), (32, 45)), aR=((41, 34), (43, 49)), lL=((34, 47), (38, 59)), lR=((39, 47), (44, 59)))      # ... getting up
 def rx4(f):
-    r = sc([(0, -6), (1, -24), (2, -46), (3, -66), (4, -74), (5, -71), (6, -75), (7, -74), (8, -74), (9, -70), (10, -56), (11, -38), (12, -20), (13, -8), (14, 0)], f); tw = math.sin(f * 2.3)
-    pk = P(hx=26, hy=8, lean=-3, m=1, aL=((17, 31), (11, 40)), aR=((48, 30), (56, 36)))
-    return {**blend(P(), pk, sc([(0, .5), (1, 1), (8, 1), (9, .6), (12, .2), (14, 0)], f)), 'rot': r}      # knocked flat on his back (turned about the feet), lies a moment, gets up
-rx5p = P(hx=29, hy=7.5, lean=-4, m=.7, hp=37, aL=((32, 22), (46, 11)), aR=((50, 22), (60, 10)), lL=((31, 48), (35, 59)), lR=((37, 48), (43, 59)))
-def rx5(f): return {**blend(P(), rx5p, sc([(0, .4), (2, 1), (7, 1), (10, .5), (12, .2), (14, 0)], f)), 'dx': sc([(0, -1.5), (2, -8.5), (4, -12), (7, -13), (9, -9), (11, -5), (13, -1.5), (14, 0)], f)}      # skids back on his heels, arms flung up and forward
-rx6p = P(hx=35, hy=10, sy=19.5, hp=37, lean=4, m=.2, dx=-3, aL=((38, 31), (42, 15)), aR=((48, 30), (50, 14)), lL=((29, 48), (29.5, 59)), lR=((36, 48), (36, 59)))
-def rx6(f): return keys([(0, part(rx6p, .5)), (1, part(rx6p, 1.1)), (3, rx6p), (8, P(**{**rx6p, 'hy': 10.5, 'dx': -2})), (11, part(rx6p, .5)), (14, P())], f)      # arms up to guard (both forearms in front of the face, hunched)
-rx7p = P(hx=29.5, hy=7, lean=-4, m=.7, dx=-4, aL=((17, 24), (11, 12)), aR=((47, 26), (53, 13)), lL=((31, 44), (27, 51)), lR=((36, 44), (38, 51)))
-def rx7(f): return keys([(0, P(lean=-2, hx=31, m=.3, dx=-1)), (1, part(rx7p, .5)), (2, rx7p), (9, P(**{**rx7p, 'dx': -5})), (10, part(rx7p, .55)), (11, P(hy=9, sy=19, hp=38, lean=-2, m=.3, dx=-3, aL=((20, 30), (17, 44)), aR=((44, 30), (47, 44)), lL=((28, 48), (29.5, 59)), lR=((36, 48), (34.5, 59)))), (14, P())], f)      # hops backwards: knees tucked, arms up (the game lifts the sprite)
+    r = sc([(0, -5), (1, -26), (2, -50), (3, -70), (4, -78), (5, -75), (6, -79), (7, -78), (8, -78), (9, -72), (10, -57), (11, -38), (12, -20), (13, -8), (14, 0)], f)
+    p = keys([(0, part(RXF, .7)), (1, RXF), (3, RXF), (4, RXL), (8, RXL), (9, RXU), (11, RXU), (12, part(RXU, .55)), (13, part(RXU, .2)), (14, P())], f)
+    p['hx'] += (f in (5, 6)) - 1.5 * (f == 8); p['m'] += .15 * math.sin(f * 2.3) * (4 <= f <= 8); p['rot'] = r
+    return p      # knocked flat on his back (turned about the feet), lies a moment, gets up
+rx5p = P(hx=29, hy=7.5, lean=-4, m=.7, hp=37, aL=((32, 22), (46, 11)), aR=((47, 22), (56, 10)), lL=((31, 48), (35, 59)), lR=((37, 48), (43, 59)))
+def rx5(f):
+    p = blend(P(), rx5p, sc([(0, .4), (2, 1), (7, 1), (10, .5), (12, .2), (14, 0)], f)); p['dx'] = sc([(0, -1.5), (2, -8.5), (4, -12), (7, -13), (9, -9), (11, -5), (13, -1.5), (14, 0)], f); fl = 1.2 * math.sin(f * 2.1) * (3 <= f <= 8)      # (the hands flutter)
+    p['aL'] = (p['aL'][0], (p['aL'][1][0], p['aL'][1][1] + fl)); p['aR'] = (p['aR'][0], (p['aR'][1][0], p['aR'][1][1] - fl)); return p      # skids back on his heels, arms flung up and forward
+rx6p = P(hx=34, hy=11, sy=20, hp=37.5, lean=5, m=.15, dx=-3, aL=((39, 30), (41, 12)), aR=((46, 29), (47, 11)), lL=((29, 48), (29.5, 59)), lR=((37, 48), (36, 59)))
+def rx6(f):
+    p = keys([(0, part(rx6p, .45)), (1, part(rx6p, 1.1)), (3, rx6p), (8, P(**{**rx6p, 'hy': 10.5, 'dx': -2})), (11, part(rx6p, .5)), (14, P())], f); ta = sc([(0, .8), (1, 1), (9, 1), (11, .25), (13, 0)], f); p['lean'] += .7 * math.sin(f * 2.4) * (2 <= f <= 9)      # (a tremble)
+    p['aL'] = mix(STAND['aL'], rx6p['aL'], ta); p['aR'] = mix(STAND['aR'], rx6p['aR'], ta); return p      # arms up to guard (both forearms in front of the face, hunched): the arms go up first and come down before the hunch relaxes
+rx7p = P(hx=27, hy=7, lean=-6, m=.7, dx=-4, aL=((15, 24), (7, 14)), aR=((46, 22), (51, 10)), lL=((35, 41), (28, 47)), lR=((43, 44), (37, 50)))      # rx7: in the air: knees tucked, arms up (the game raises the whole sprite by VRX_LIFT: frames 1..12)
+RX7E = P(hx=29, hy=7, lean=-3, m=.4, dx=-3, aL=((19, 30), (13, 41)), aR=((45, 30), (50, 41)))                                                                              # ... the legs reach down again for the landing
+RX7L = P(hy=9, sy=19, hp=38, lean=-2, m=.3, dx=-2, aL=((20, 30), (17, 44)), aR=((44, 30), (47, 44)), lL=((28, 48), (29.5, 59)), lR=((36, 48), (34.5, 59)))                  # ... the landing: a crouch
+def rx7(f):
+    p = keys([(0, P(lean=-2, hx=31, m=.3, dx=-1)), (1, part(rx7p, .5)), (2, rx7p), (8, P(**{**rx7p, 'dx': -5.5})), (11, RX7E), (12, part(RX7L, .45)), (13, RX7L), (14, P())], f); fl = 1.5 * math.sin(f * 1.9) * (3 <= f <= 9)      # (the hands flap)
+    p['aL'] = (p['aL'][0], (p['aL'][1][0], p['aL'][1][1] + fl)); p['aR'] = (p['aR'][0], (p['aR'][1][0], p['aR'][1][1] - fl)); return p      # hops backwards: knees tucked, arms up
 def rx8(f):
-    a = sc([(0, 1.1), (3, 1), (10, .6), (14, 0)], f); w = 2 * math.pi * f / 5.2; s = math.sin(w); l = 4.5 * a * s; hl = math.sin(w - .9)
-    return P(lean=l, hx=32 + .95 * l + 4.5 * a * hl, hy=6.5 + 1.8 * a * abs(hl), m=.35 * a + .1 * math.sin(2 * w), dx=-1.5 * a * s, aL=((21 + 2.5 * a * math.sin(w + 1.2), 34), (20.5 + 6 * a * math.sin(w + 1.9), 52 - 1.5 * a * abs(math.sin(w + 1.9)))), aR=((43 + 2.5 * a * math.sin(w + 1.2), 34), (43.5 + 6 * a * math.sin(w + 1.9), 52 - 1.5 * a * abs(math.sin(w + 1.9)))))      # dizzy: sways left and right, head lolling
+    a = sc([(0, 1.1), (3, 1), (10, .6), (14, 0)], f); w = 2 * math.pi * f / 5.2; s = math.sin(w); l = 7 * a * s; hl = math.sin(w - .9)
+    return P(lean=l, hx=32 + .95 * l + 5 * a * hl, hy=6.5 + 2.2 * a * abs(hl), m=.35 * a + .1 * math.sin(2 * w), dx=-2 * a * s, aL=((21 + 3 * a * math.sin(w + 1.2), 34), (20.5 + 7 * a * math.sin(w + 1.9), 52 - 1.5 * a * abs(math.sin(w + 1.9)))), aR=((43 + 3 * a * math.sin(w + 1.2), 34), (43.5 + 7 * a * math.sin(w + 1.9), 52 - 1.5 * a * abs(math.sin(w + 1.9)))))      # dizzy: sways left and right, head lolling
 rx9p = P(hx=36, hy=15.5, sy=26, hp=45.5, lean=4, m=.9, dx=-2, aL=((20, 40), (22, 53)), aR=((47, 41), (51, 56)), lL=((27, 58), (18, 59)), lR=((43, 48), (40, 59)))
 def rx9(f): return keys([(0, part(rx9p, .25)), (2, part(rx9p, .8)), (4, rx9p), (6, P(**{**rx9p, 'hy': 16, 'lean': 4.5, 'm': .7})), (8, P(**{**rx9p, 'hy': 15.5, 'm': .5})), (11, part(rx9p, .5)), (13, part(rx9p, .15)), (14, P())], f)      # drops to one knee, a hand toward the ground
 RX = [rx0, rx1, rx2, rx3, rx4, rx5, rx6, rx7, rx8, rx9]
