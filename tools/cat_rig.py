@@ -145,6 +145,9 @@ def render(p, W=64, ax=32, Hc=64, oy=0):
         if abs(dx) < mw: hd(dx, yo + 2, MOUTH if m == 1 else TEETH)
         if m == 1 and abs(dx) < mw - 1: hd(dx, yo + 3, MOUTH); hd(dx, yo + 4, TEETH)
     for dx in range(-mw + 1, mw, 2): hd(dx, 3.0, (176, 160, 134))                      # (the gaps between the teeth)
+    if p.get('face', 1) == 0:                                                # (seen from the back: no face)
+        for a_ in range(-6, 7):
+            for b_ in range(-5, 8): hd(a_, b_, BODY[2])
     # ---- the outline
     a = out[..., 3] > 0; edge = np.zeros_like(a)
     edge[1:, :] |= a[:-1, :]; edge[:-1, :] |= a[1:, :]; edge[:, 1:] |= a[:, :-1]; edge[:, :-1] |= a[:, 1:]
@@ -272,6 +275,38 @@ def a_rx4(i):                                                                 # 
     f = float(i); rot = sc(f, [(0, -6), (1, -25), (2, -52), (3, -76), (4, -90), (9, -90), (14, 0)]); tx = sc(f, [(0, -2), (4, -24), (6, -26), (9, -26), (14, -10)]); ty = sc(f, [(0, 0), (1, -8), (2, -15), (3, -11), (4, 8), (5, 10), (6, 12), (9, 12), (14, 0)])
     return pose(rot=rot, piv=(0.0, 44.0), tx=tx, ty=ty, eyes=1 if f <= 11 else 0, mouth=1 if f <= 11 else 0, aL=[(-10, 30), (-13, 24 + (2 if f > 5 else 0))], aR=[(10, 30), (13, 24)], gL=0.9, gR=0.9, hrot=-8 if 4 <= f <= 10 else 0.0)
 
+def a_jump(i):                                                                # JUMP (the game lifts him on its jump curve): he squashes down, springs up stretched with his arms over his head, tucks his legs at the top, falls stretched and lands in a squash
+    f = float(i); sz = sc(f, [(0, 1.0), (2, 0.86), (3, 1.0), (5, 1.1), (9, 1.04), (11, 1.08), (12.5, 1.0), (13, 0.88), (14, 1.0)]); sx = sc(f, [(0, 1.0), (2, 1.1), (3, 1.0), (5, 0.94), (11, 0.95), (13, 1.1), (14, 1.0)])
+    up = sc(f, [(0, 0), (3, 0), (5, 1), (10, 1), (12, 0.2), (14, 0)]); tuck = sc(f, [(0, 0), (5, 0), (7, 1), (9, 1), (11, 0), (14, 0)])
+    return pose(sz=sz, sx=sx, mouth=1 if 3 <= f <= 12 else 0, aL=[(-7.4 - 3 * up, 33 - 12 * up), (-8.4 - 4 * up, 46 - 36 * up)], aR=[(7.4 + 3 * up, 33 - 12 * up), (8.4 + 4 * up, 46 - 36 * up)], gL=0.8 * up, gR=0.8 * up,
+                lL=[(-2.2 - tuck, 53 - 5 * tuck), (-2.4 - 1.5 * tuck, 60 - 9 * tuck)], lR=[(2.2 + tuck, 53 - 5 * tuck), (2.4 + 1.5 * tuck, 60 - 9 * tuck)])
+def a_toon(i):                                                                # CARTOON ATTACK (the summoning): he raises both arms with a wide grin, trembles, and lowers them
+    f = float(i); up = sc(f, [(0, 0), (4, 1), (11, 1), (14, 0)]); sh = math.sin(f * 2.4) * up
+    return pose(ty=-1.5 * up, lean=-1.0 * up + 0.8 * sh, hrot=4 * sh, mouth=1, eyes=2 if 5 <= f <= 11 else 0, aL=[(-8 - 3 * up, 33 - 10 * up), (-9 - 5 * up + sh, 46 - 34 * up)], aR=[(8 + 3 * up, 33 - 10 * up), (9 + 5 * up - sh, 46 - 34 * up)], gL=0.9 * up, gR=0.9 * up)
+def a_huge(i):                                                                # the HUGE Cat of CARTOON ATTACK (the game draws him 3 times as big): he stands, leans back, and a low sweeping kick shoots out along the floor (impact: frame 10)
+    f = float(i); hip = (2.2, 43)
+    A = hand(f, [(0, (2.4, 60)), (5, (2.4, 60)), (8, (7.0, 54)), (10, (52.0, 51)), (12, (52.0, 51)), (14, (2.4, 60))])      # (his rubbery leg stretches out 52 px: the giant's kick reaches over 100 px
+    K = ((hip[0] + A[0]) / 2 + 1.5 * (1 - seg(f, 8, 10)) * seg(f, 5, 8), (hip[1] + A[1]) / 2 - 4.0 * seg(f, 5, 8) * (1 - seg(f, 9, 11)))
+    return pose(lean=sc(f, [(0, 0), (6, -4), (10, -6), (13, -2), (14, 0)]), hrot=-4 * seg(f, 4, 9), mouth=1 if 8 <= f <= 12 else 0, lR=[K, A], lL=[(-2.2, 53), (-2.6, 60)], aL=[(-10, 30), (-14 - 2 * seg(f, 5, 9), 38)], aR=[(9, 29), (13, 36)], gL=0.6, gR=0.6)
+def a_rx3(i):                                                                 # hit reaction 3: he spins right round (his back comes to the picture, then his face again)
+    f = float(i); k = sc(f, [(0, 0), (2, 1), (12, 1), (14, 0)]); cs = math.cos(2 * math.pi * (f - 2) / 10.0) if 2 <= f <= 12 else 1.0; sxv = cs if abs(cs) >= 0.12 else (0.12 if cs >= 0 else -0.12)
+    return pose(sx=sxv, face=1 if cs >= 0 else 0, lean=-2.5 * k, hrot=-8 * k, eyes=1, mouth=1, aL=[(-9, 31), (-12, 25)], aR=[(9, 31), (12, 25)], gL=0.8, gR=0.8)
+def a_rx5(i):                                                                 # hit reaction 5: he skids back on his heels, leaning away with his arms out, and shuffles back to where he stood
+    f = float(i); k = sc(f, [(0, 0), (3, 1), (9, 1), (14, 0)]); tx = sc(f, [(0, 0), (4, -14), (9, -16), (14, 0)])
+    return pose(tx=tx, lean=-7 * k, hrot=-10 * k, eyes=1 if k > 0.4 else 0, mouth=1, aL=[(-9 - 3 * k, 32), (-13 - 6 * k, 36 - 3 * k)], aR=[(9 + 2 * k, 32), (13 + 4 * k, 34 - 2 * k)], gL=0.7 * k, gR=0.7 * k, lL=[(-2.2 + 3 * k, 52), (-2.4 + 7 * k, 58 - 1.5 * k)], lR=[(2.2 + 4 * k, 52), (2.4 + 9 * k, 58 - 3 * k)])
+def a_rx6(i):                                                                 # hit reaction 6: both arms up in front of his face to guard, ducking and shaking
+    f = float(i); k = sc(f, [(0, 0), (3, 1), (11, 1), (14, 0)]); sh = math.sin(f * 3.2) * k
+    return pose(hp=44 + 2 * k, sy=19 + 2 * k, hy=9.6 + 2 * k, lean=3 * k + 0.6 * sh, hrot=6 * k, eyes=1 if k > 0.5 else 0, mouth=1, aL=[(lerp(-7.4, -4, k), 31), (lerp(-8.4, 0, k), lerp(46, 13, k))], aR=[(lerp(7.4, 6, k), 31), (lerp(8.4, 6, k), lerp(46, 13, k))], gL=0.3 * k, gR=0.3 * k, lL=[(-3.5, 53), (-4, 60)], lR=[(3.5, 53), (4.2, 60)])
+def a_rx7(i):                                                                 # hit reaction 7: he hops backwards (the game lifts him), knees tucked, arms out
+    f = float(i); k = sc(f, [(0, 0), (2, 1), (12, 1), (14, 0)]); tx = sc(f, [(0, 0), (6, -10), (11, -10), (14, 0)])
+    return pose(tx=tx, lean=-4 * k, hrot=-6 * k, eyes=1 if 1 <= f <= 11 else 0, mouth=1, aL=[(-10 * k - 7.4 * (1 - k), 30), (-14 * k - 8.2 * (1 - k), 32 + 14 * (1 - k))], aR=[(10 * k + 7.4 * (1 - k), 30), (14 * k + 8.2 * (1 - k), 32 + 14 * (1 - k))], gL=0.8 * k, gR=0.8 * k, lL=[(-2.2 - k, 53 - 4 * k), (-2.4 - 2 * k, 60 - 7 * k)], lR=[(2.2 + k, 53 - 4 * k), (2.4 + 2 * k, 60 - 7 * k)])
+def a_rx8(i):                                                                 # hit reaction 8: dizzy, he wobbles from side to side with crossed eyes
+    f = float(i); t = 2 * math.pi * f / 14.0; k = sc(f, [(0, 0), (2, 1), (12, 1), (14, 0)]); s = math.sin(t * 2) * k
+    return pose(lean=4.5 * s, hrot=12 * math.sin(t * 2 + 0.6) * k, hy=10.2 + 0.6 * math.sin(t * 4) * k, eyes=1 if k > 0.3 else 0, mouth=1, aL=[(-8 + 2.5 * s, 33), (-9 + 5 * s, 47)], aR=[(8 + 2.5 * s, 33), (9 + 5 * s, 47)], lL=[(-3.2 + s, 53), (-2.6 + 2 * s, 60)], lR=[(3.2 + s, 53), (2.6 + 2 * s, 60)])
+def a_rx9(i):                                                                 # hit reaction 9: he drops to one knee, head bowed, then gets up
+    f = float(i); k = sc(f, [(0, 0), (4, 1), (10, 1), (14, 0)])
+    return pose(hp=44 + 10 * k, sy=19 + 10 * k, hy=9.6 + 11 * k, lean=2.5 * k, hrot=8 * k, eyes=1 if k > 0.4 else 0, mouth=1, aL=[(-7.4, 33 + 10 * k), (-8.4, 46 + 8 * k)], aR=[(7.4 + 2 * k, 33 + 10 * k), (8.4 + 4 * k, 46 + 8 * k)], lL=[(-2.2 - 5 * k, 53 + 3 * k), (-2.4 - 3 * k, 60)], lR=[(2.2 + 2 * k, 53 + 5 * k), (2.4 - 6 * k, 60 + 1.0 * k)])
+
 def pose_of(name, i):
     if name == 'idle': return a_idle(i)
     if name == 'walk': return a_walk(i)
@@ -290,8 +325,17 @@ def pose_of(name, i):
     if name == 'rx1': return a_rx1(i)
     if name == 'rx2': return a_rx2(i)
     if name == 'rx4': return a_rx4(i)
+    if name == 'jump': return a_jump(i)
+    if name == 'toon': return a_toon(i)
+    if name == 'huge': return a_huge(i)
+    if name == 'rx3': return a_rx3(i)
+    if name == 'rx5': return a_rx5(i)
+    if name == 'rx6': return a_rx6(i)
+    if name == 'rx7': return a_rx7(i)
+    if name == 'rx8': return a_rx8(i)
+    if name == 'rx9': return a_rx9(i)
     raise KeyError(name)
-CELL = {'idle': (64, 32, 64, 0), 'walk': (64, 32, 64, 0), 'stun': (64, 32, 64, 0), 'smash': (64, 32, 80, 16), 'unsmash': (64, 32, 80, 16), 'flat': (64, 32, 64, 0), 'flatwalk': (64, 32, 64, 0), 'flatpunch': (64, 32, 64, 0), 'm0': WIDE + (64, 0), 'm1': WIDE + (64, 0), 'm3': WIDE + (64, 0), 'dashf': WIDE + (64, 0), 'dashb': WIDE + (64, 0), 'rx0': REACT + (64, 0), 'rx1': REACT + (64, 0), 'rx2': REACT + (64, 0), 'rx4': REACT + (64, 0)}
+CELL = {'idle': (64, 32, 64, 0), 'walk': (64, 32, 64, 0), 'stun': (64, 32, 64, 0), 'smash': (64, 32, 80, 16), 'unsmash': (64, 32, 80, 16), 'flat': (64, 32, 64, 0), 'flatwalk': (64, 32, 64, 0), 'flatpunch': (64, 32, 64, 0), 'm0': WIDE + (64, 0), 'm1': WIDE + (64, 0), 'm3': WIDE + (64, 0), 'dashf': WIDE + (64, 0), 'dashb': WIDE + (64, 0), 'rx0': REACT + (64, 0), 'rx1': REACT + (64, 0), 'rx2': REACT + (64, 0), 'rx4': REACT + (64, 0), 'jump': (64, 32, 72, 8), 'toon': (64, 32, 64, 0), 'huge': WIDE + (64, 0), 'rx3': REACT + (64, 0), 'rx5': REACT + (64, 0), 'rx6': REACT + (64, 0), 'rx7': REACT + (64, 0), 'rx8': REACT + (64, 0), 'rx9': REACT + (64, 0)}
 def frame(name, i):
     W, ax, H, oy = CELL[name]; p = pose_of(name, i)
     if p.get('squash'):                                                    # a cartoon squash: the picture itself is scaled (wider, much lower), standing on the floor
@@ -322,5 +366,5 @@ def sheet(d, names, zoom=2, cols=None):                                      # c
     return out
 if __name__ == '__main__':
     d = sys.argv[1] if len(sys.argv) > 1 else '.'
-    for nm, names in (('a', ['idle', 'walk', 'stun']), ('b', ['smash', 'flat', 'flatwalk', 'flatpunch']), ('c', ['m0', 'm1', 'm3']), ('d', ['dashf', 'dashb']), ('e', ['rx0', 'rx1', 'rx2', 'rx4'])):
+    for nm, names in (('a', ['idle', 'walk', 'stun']), ('b', ['smash', 'flat', 'flatwalk', 'flatpunch']), ('c', ['m0', 'm1', 'm3']), ('d', ['dashf', 'dashb']), ('e', ['rx0', 'rx1', 'rx2', 'rx4']), ('f', ['jump', 'toon', 'huge']), ('g', ['rx3', 'rx5', 'rx6']), ('h', ['rx7', 'rx8', 'rx9'])):
         sheet(d, names, 1).save(os.path.join(d, 'cat_%s.png' % nm))
