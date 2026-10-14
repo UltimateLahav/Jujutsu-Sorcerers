@@ -11,6 +11,7 @@ IMPACT = json.loads(re.search(r'ATK_IMPACT = (\[[^\]]*\])', tpl).group(1))      
 YU_IMP = json.loads(re.search(r'const YU_ATK = \{.*?imp: (\[\[.*?\]\]),', tpl).group(1))          # Yuji's impact frames per move ...
 YU_HIT = json.loads(re.search(r'const YU_ATK = \{.*?hit: (\[\[.*?\]\]),', tpl).group(1))          # ... and the hit numbers they land
 GOJO, YUJI, ART = json.load(open(P('side.json'))), json.load(open(P('yuji.json'))), json.load(open(P('story_art.json')))['vanim']
+CATART = json.load(open(P('story_art.json')))['cat']                                                 # the Cartoon Cat's strips (tools/cat_rig.py)
 FX = set('ghjk')                                                                                  # Gojo's glow letters: sparks, not limbs
 
 def grid_rows(S, fi, skip=''):                                                                    # a letter-grid frame -> {row on the screen (feet at 62): how far in front of the anchor its farthest pixel is}
@@ -20,6 +21,13 @@ def grid_rows(S, fi, skip=''):                                                  
         if xs: out[r - S['top'] - lf] = max(xs) - a
     return out
 def strip(name): return Image.open(io.BytesIO(base64.b64decode(ART[name].split(',')[1]))).convert('RGBA')
+def cat_strip(name): return Image.open(io.BytesIO(base64.b64decode(CATART[name].split(',')[1]))).convert('RGBA')
+def cat_rows(im, fi, W, ax):                                                                      # a cell of the Cat's strips (W wide, his anchor on column ax): how far in front of the anchor the farthest pixel of every row is
+    c = im.crop((fi * W, 0, fi * W + W, 64)).load(); out = {}
+    for y in range(64):
+        xs = [x for x in range(W) if c[x, y][3]]
+        if xs: out[y] = max(xs) - ax
+    return out
 def img_rows(im, fi):                                                                             # a 64x64 cell of one of Verity's strips (his anchor is column 32)
     c = im.crop((fi * 64, 0, fi * 64 + 64, 64)).load(); out = {}
     for y in range(64):
@@ -34,10 +42,12 @@ def widest(rows):                                                               
 
 BODY = {'gojo': widest(grid_rows(GOJO['idle'], f, FX) for f in range(len(GOJO['idle']['frames']))),
         'yuji': widest(grid_rows(YUJI['idle'], f) for f in range(len(YUJI['idle']['frames']))),
-        'verity': widest(img_rows(strip('idle'), f) for f in range(15))}
+        'verity': widest(img_rows(strip('idle'), f) for f in range(15)),
+        'cat': widest(cat_rows(cat_strip('idle'), f, 64, 32) for f in range(15))}
 MOVES = {'gojo': {k: (lambda f, S=GOJO['atk%d' % k]: grid_rows(S, f, FX), IMPACT[k], len(GOJO['atk%d' % k]['frames'])) for k in (0, 1, 2, 3, 6, 7, 14, 15, 16, 17, 18, 19, 20, 21)},
          'yuji': {hk: (lambda f, S=YUJI['atk%d' % j]: grid_rows(S, f), YU_IMP[j][i], 15) for j, hits in enumerate(YU_HIT) for i, hk in enumerate(hits)},
-         'verity': {k: (lambda f, im=strip(n): img_rows(im, f), IMPACT[k], 15) for k, n in ((0, 'm0'), (1, 'm1'), (2, 'm2'), (3, 'm3'), (6, 'c0'), (7, 'c1'), (22, 'bite'))}}
+         'verity': {k: (lambda f, im=strip(n): img_rows(im, f), IMPACT[k], 15) for k, n in ((0, 'm0'), (1, 'm1'), (2, 'm2'), (3, 'm3'), (6, 'c0'), (7, 'c1'), (22, 'bite'))},
+         'cat': {k: (lambda f, im=cat_strip(n), W=W, a=a: cat_rows(im, f, W, a), imp, 15) for k, n, W, a, imp in ((30, 'm0', 128, 36, 6), (31, 'm1', 128, 36, 7), (32, 'm0', 128, 36, 6), (33, 'm3', 128, 36, 8), (34, 'flatpunch', 64, 32, 6))}}      # (hits 30-34: the stretching grab, the punch, the grab again, the kick, the punch up from the floor)
 out = {}
 for att, moves in MOVES.items():
     out[att] = {}
@@ -52,4 +62,4 @@ json.dump(out, open(P('hitboxes.json'), 'w'), separators=(',', ':'))
 OLD = [17, 17, 15, 26, 0, 0, 16, 16, 0, 0, 0, 0, 0, 0, 19, 25, 19, 27, 25, 24, 18, 20, 26, 40, 17, 17, 17, 26, 27, 28]                    # the old fixed reach (the gap was REACH + 6)
 print('body half-widths (front, widest row):', {t: max(b.values()) for t, b in BODY.items()})
 for att, moves in out.items():
-    for k, v in moves.items(): print('%-6s hit %2d  old %2d | gap now: vs gojo %2d  vs yuji %2d  vs verity %2d' % (att, k, OLD[k] + 6, v['gojo'], v['yuji'], v['verity']))
+    for k, v in moves.items(): print('%-6s hit %2d  old %2d | gap now: vs gojo %2d  vs yuji %2d  vs verity %2d' % (att, k, OLD[k] + 6 if k < len(OLD) else 0, v['gojo'], v['yuji'], v['verity']))

@@ -314,6 +314,16 @@ function makeSfx(ac) {
       for (let k = 0; k < 7; k++) burst(B.soft, t + 0.3 + k * 0.33 + R(0, 0.1), { f: R(900, 2200), q: 3, dur: R(0.02, 0.05), gain: R(0.1, 0.22), atk: 0.001 });
       tone(B.deep, t + 2.7, { type: 'triangle', f: 98, f2: 40, dur: 0.35, gain: 0.45, atk: 0.003 }); burst(B.soft, t + 2.7, { type: 'lowpass', f: 700, f2: 200, q: 0.7, dur: 0.12, gain: 1.4, atk: 0.001 });
     },
+    boing(at) {                                          // the Cat's rubber arm or leg stretching: a quick springy wobble that sweeps up, then down
+      const t = T(at), B = C.atk;
+      tone(B.soft, t, { type: 'sine', f: 180, f2: 620, dur: 0.16, gain: 0.3, atk: 0.004 });
+      tone(B.soft, t + 0.15, { type: 'sine', f: 620, f2: 140, dur: 0.28, gain: 0.26, atk: 0.004 });
+      tone(B.soft, t + 0.05, { type: 'triangle', f: 360, f2: 1240, dur: 0.12, gain: 0.1, atk: 0.003 });
+    },
+    laugh(at) {                                          // the Cat's laugh: "heh heh heh heh", four hoarse pulses
+      const t = T(at), B = C.atk;
+      for (let k = 0; k < 4; k++) { const q = t + k * 0.19; tone(B.soft, q, { type: 'sawtooth', f: 150 - k * 6, f2: 105, dur: 0.12, gain: 0.2, atk: 0.01 }); burst(B.soft, q, { f: 1500, f2: 800, q: 2.0, dur: 0.1, gain: 0.5, atk: 0.005 }); }
+    },
     quake(at) {                                          // the roof is hit: a huge low boom, a long shaking rumble and stones and splinters falling
       const t = T(at), B = C.ce;
       tone(B.deep, t, { type: 'triangle', f: 80, f2: 22, dur: 1.6, gain: 0.6, atk: 0.004 });
