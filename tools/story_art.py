@@ -55,7 +55,7 @@ def ball13():
     return im
 art['ball'] = url(ball13())
 import sys; sys.path.insert(0, '.'); import verity_rig; art['vanim'] = verity_rig.strips(sm); import outro_art, room_gojo, cat_rig, cat_maw; art['cat'] = {**cat_rig.strips(), **cat_maw.strips()}; art['outro'] = {**outro_art.build(), **room_gojo.strips()}      # Verity's 15-frame animations (tools/verity_rig.py); the chapter 1 ending art: the corridor, the big door and the higher-ups' room (tools/outro_art.py) and Gojo in that room: idle, walk and look-up strips (tools/room_gojo.py)
-import face_close; art['gface'] = face_close.strips()
+import io, base64; art['gface'] = {'pull': 'data:image/png;base64,' + base64.b64encode(open('gojo_pull.png', 'rb').read()).decode()}      # (the blindfold close-up: tools/face_gif.py made it from the reference GIF)
 json.dump(art, open('story_art.json', 'w'), separators=(',', ':'))
 sheet = Image.new('RGB', (4 * 200, 3 * 200), (30, 22, 52)); ims = [v, bite, sm]
 for i, im in enumerate(ims): t = im.convert('RGBA').resize((192, 192), Image.NEAREST); sheet.paste(t, ((i % 4) * 200 + 4, (i // 4) * 200 + 4), t)
