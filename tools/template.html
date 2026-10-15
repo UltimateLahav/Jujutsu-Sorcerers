@@ -383,7 +383,7 @@ function show(s) {
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll(); $('settings').classList.remove('on');
-  js = null; vf = null; if (cf) cfReset(); if (ke) keReset(); ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; ceOn = false; ceAmt = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
+  js = null; vf = null; if (cf) cfReset(); if (ke) keReset(); blindOff = false; bfo = null; bfp = false; ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; ceOn = false; ceAmt = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
   if (s === 'play') { spawnAt = performance.now(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(performance.now(), 1200);
@@ -999,7 +999,7 @@ const DOMAIN_IMG = '__DOMAINIMG__', DF_N = 40, DF_W = 160, DF_H = 64, DF_FPS = 8
 const domImg = new Image(); domImg.src = DOMAIN_IMG;
 const VOID_IMG = '__VOIDIMG__', VF_N = 12, VF_W = 160, VF_H = 64, VF_FPS = 6;      // the Infinite Void backdrop (your blue-ring picture): 12 frames of 160 x 64, 16 colours, shown at 2x
 const voidImg = new Image(); voidImg.src = VOID_IMG; let domBox = null;
-const DOM_ORDER = ['pose', 'face', 'wide', 'burst', 'void', 'collapse'], DOM_MS = { pose: 900, face: DF_N * 1000 / DF_FPS, wide: 1500, burst: 1900, void: 10000, collapse: 1400 };
+const DOM_ORDER = ['blind', 'pose', 'face', 'wide', 'burst', 'void', 'collapse', 'reblind'], DOM_MS = { blind: 1500, pose: 900, face: DF_N * 1000 / DF_FPS, wide: 1500, burst: 1900, void: 10000, collapse: 1400, reblind: 900 };      // (blind: the blindfold comes down, reblind: it goes back on; both are close-ups of his face)
 let dom = null, domHold = false, domReq = false, domReadyAt = 0, voidCv = null, voidG = null;
 function domFrozen() { return !!dom && dom.ph !== 'collapse'; }
 function domLock() { return !!dom && dom.ph !== 'void' && dom.ph !== 'collapse'; }
@@ -1007,22 +1007,67 @@ function voidOn() { return !!dom && dom.ph === 'void'; }
 function domBgOff(now) { return !!dom && (dom.ph === 'void' || (dom.ph === 'burst' && now - dom.p0 >= 350)); }
 const domR = () => Math.hypot(VW, VH);
 function setDomUI(now) { const b = $('dom'); if (!b) return; const cd = dom ? 0 : Math.max(0, (domReadyAt - now) / DOM_CD); b.style.setProperty('--cd', Math.round(cd * 100) + '%'); b.classList.toggle('on', !!dom); b.classList.toggle('cd', !dom && cd > 0); }
-function domReset() { if (dom) snd('voidoff'); dom = null; domHold = false; domReq = false; domReadyAt = 0; setDomUI(0); }
+function domReset() { if (dom) snd('voidoff'); dom = null; domHold = false; domReq = false; domReadyAt = 0; blindOff = false; bfo = null; bfp = false; setDomUI(0); }
+// ---------------------------------------------------------------- THE BLINDFOLD. DOMAIN EXPANSION: before it starts Gojo hooks the blindfold with one hand and pulls it down to his neck (a full-screen close-up of his face, 1.5 s, his eyes open and glow) and he fights with it down for as long as the domain lasts; when the domain has collapsed it goes back on (a close-up of 0.9 s). HOLLOW PURPLE (RED fired into Max Blue): the blindfold comes off before the red is fired (a close-up of 1 s; the orb and its captive wait for him) and once the purple is over it goes back on if the enemy is still standing (in training: always). While it is down every picture of Gojo is redrawn (blindData): his eyes glow blue and the band hangs round his neck.
+const BF = { purple: 1000, on: 900 };      // ms of the two quicker close-ups (the DOMAIN's own are DOM_MS.blind and DOM_MS.reblind)
+let blindOff = false, bfo = null, bfp = false, bfAt = 0;      // blindOff = the blindfold is down; bfo = the close-up that is playing over the fight { kind: 'off' | 'on', t0, ms, after }; bfp = a Purple pull is waiting for its blast to be over; bfAt = when the red cast began
+function blindData(d, w, h) {      // Gojo's picture with the blindfold down: the black band across his eyes (the first rows that are mostly near-black, found like his mouth in mouthOf) becomes skin with two glowing blue eyes, the loose end behind his head goes and a black band hangs round his neck. Returns false when the picture has no blindfold (it is then left alone)
+  const lim = Math.min(h, 40), px = (x, y) => (y * w + x) * 4, dk = i => d[i + 3] > 0 && d[i] < 20 && d[i + 1] < 16 && d[i + 2] < 24, dim = i => d[i + 3] > 0 && d[i] < 64 && d[i + 1] < 56 && d[i + 2] < 80, sk = i => d[i + 3] > 0 && d[i] > 140 && d[i + 1] > 90 && d[i + 2] > 85 && d[i] - d[i + 2] > 25;
+  const put = (x, y, r, g, b) => { const i = px(x, y); d[i] = r; d[i + 1] = g; d[i + 2] = b; d[i + 3] = 255; };
+  let y0 = -1; for (let y = 0; y < lim && y0 < 0; y++) { let n = 0; for (let x = 0; x < w; x++) if (dk(px(x, y))) n++; if (n >= 8) y0 = y; }
+  if (y0 < 0) return false;
+  let y1 = y0, xa = w, xb = -1; for (let y = y0; y < lim; y++) { let n = 0, a = w, b = -1; for (let x = 0; x < w; x++) if (dk(px(x, y))) { n++; if (x < a) a = x; if (x > b) b = x; } if (y > y0 && n < 5) break; y1 = y; xa = Math.min(xa, a); xb = Math.max(xb, b); }      // (the band: rows y0-y1, columns xa-xb)
+  let skin = [238, 199, 180], hair = [179, 169, 217];
+  for (let x = xb; x >= xa + 5; x--) { const i = px(x, Math.min(h - 1, y1 + 1)); if (d[i + 3] > 0 && d[i] > 200 && d[i + 1] > 150 && d[i + 2] > 130) { skin = [d[i], d[i + 1], d[i + 2]]; break; } }      // (the skin colour is taken from the cheek under the band, the hair colour from above its back end)
+  for (let x = xa; x <= xa + 3; x++) { const i = px(x, Math.max(0, y0 - 1)); if (d[i + 3] > 0 && d[i] > 150) { hair = [d[i], d[i + 1], d[i + 2]]; break; } }
+  for (let y = y0; y <= y1; y++) for (let x = xa; x <= xb; x++) if (dim(px(x, y))) { if (x >= xa + 5) put(x, y, skin[0], skin[1], skin[2]); else put(x, y, hair[0], hair[1], hair[2]); }
+  for (let y = y1 + 1; y <= Math.min(h - 1, y1 + 3); y++) for (let x = 0; x <= xa + 3; x++) if (dim(px(x, y))) d[px(x, y) + 3] = 0;      // (the loose end of the band behind his head)
+  const ey = y1 - y0 >= 2 ? y0 + 1 : y0; for (const e of [xb - 6, xb - 2]) if (e >= xa + 4 && e + 1 < w) { put(e, ey, 255, 255, 255); put(e + 1, ey, 150, 226, 255); put(e, ey + 1, 64, 150, 255); put(e + 1, ey + 1, 127, 212, 255); }      // (two eyes: white and light blue above, blue below)
+  let yc = -1; for (let y = y1 + 1; y <= Math.min(h - 1, y1 + 10); y++) { let n = 0; for (let x = xa + 4; x <= xb + 1 && x < w; x++) if (sk(px(x, y))) n++; if (n >= 3) yc = y; }      // (yc = the lowest row of face and neck)
+  if (yc > 0) for (let y = yc - 1; y <= yc; y++) { let a = w, b = -1; for (let x = xa + 3; x <= xb + 1 && x < w; x++) if (sk(px(x, y))) { if (x < a) a = x; if (x > b) b = x; } if (b - a >= 3) for (let x = a; x <= b; x++) { if (y === yc - 1) put(x, y, 78, 68, 108); else put(x, y, 14, 11, 18); } }
+  return true;
+}
+const BDC = new Map();
+function blindDown(src) {      // the same picture with the blindfold down (made once per picture)
+  let r = BDC.get(src); if (r) return r; const w = src.width, h = src.height; r = src;
+  if (w && h && w * h < 20000) { const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.drawImage(src, 0, 0); const im = g.getImageData(0, 0, w, h); if (blindData(im.data, w, h)) { g.putImageData(im, 0, 0); r = c; } }
+  BDC.set(src, r); return r;
+}
+function drawFaceClose(k, rev) {      // his face close-up (tools/face_close.py: 24 frames, 320 x 128), full screen: k = how far the move is (0-1), rev = played backwards (the blindfold goes back on)
+  const g = SIMG.gface && SIMG.gface.pull; ctx.fillStyle = '#000'; ctx.fillRect(-8, -8, VW + 16, VH + 16); if (!g || !g.complete || !g.naturalWidth) return;
+  ctx.drawImage(g, Math.max(0, Math.min(23, Math.floor((rev ? 1 - k : k) * 24))) * 320, 0, 320, 128, Math.round((VW - 320) / 2), Math.round((VH - 128) / 2), 320, 128);
+  if (!rev && k < 0.12) { ctx.fillStyle = 'rgba(255,255,255,' + (0.6 * (1 - k / 0.12)).toFixed(2) + ')'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }
+}
+function bfStart(now, kind, ms, after) {      // a close-up plays over the fight: Gojo cannot act, the enemy is held and the Max Blue orb waits
+  bfo = { kind, t0: now, ms, after, eyes: false }; snd('cloth'); const d = dummy; if (d && d.ko < 0) { d.stunUntil = Math.max(d.stunUntil, now + ms + 100); d.pull = null; d.vx = 0; d.ai = 'rest'; d.aiAt = now; d.restFor = ms + 400; } if (orb) orb.tick = 1e15;
+}
+function bfTick(now) {
+  if (bfo) {
+    keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; const o = bfo, a = now - o.t0;
+    if (o.kind === 'off' && !o.eyes && a >= o.ms * 0.58) { o.eyes = true; snd('sixeyes'); }
+    if (a >= o.ms) { bfo = null; blindOff = o.kind === 'off'; if (orb) { orb.born += Math.max(0, Math.min(o.ms, now - orb.born - 450)); orb.tick = now + 230; } if (dummy && dummy.cap) dummy.cap.t0 += o.ms; if (o.after) o.after(now); }      // (the orb and its captive carry on where they stopped)
+    return;
+  }
+  if (bfp && blindOff && !dom && !rdOrb && !purple && !pboom && now > bfAt + 900) { bfp = false; if (!vs || (dummy && dummy.ko < 0 && vs.ph === 'fight')) bfStart(now, 'on', BF.on, null); }      // the Purple is over: the blindfold goes back on if the enemy is still standing
+}
+function bfOverlay(now) { if (bfo) drawFaceClose(Math.min(1, (now - bfo.t0) / bfo.ms), bfo.kind === 'on'); }
 function startDomain(now) {
-  dom = { ph: 'pose', p0: now, zoomed: false, burst: false, ping: now + 1500 }; domHold = true; snd('domainstart');
-  if (dummy && dummy.ko < 0) { const tot = DOM_MS.pose + DOM_MS.face + DOM_MS.wide + DOM_MS.burst + DOM_MS.void; dummy.stunUntil = now + tot; dummy.pull = null; dummy.vx = 0; dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = tot + 300; }      // the enemy is frozen (a swing in progress is cancelled) until the void ends
+  dom = { ph: blindOff ? 'pose' : 'blind', p0: now, zoomed: false, burst: false, eyes: false, ping: now + 1500 + (blindOff ? 0 : DOM_MS.blind) }; domHold = true; snd('domainstart'); if (dom.ph === 'blind') snd('cloth');
+  if (dummy && dummy.ko < 0) { const tot = (dom.ph === 'blind' ? DOM_MS.blind : 0) + DOM_MS.pose + DOM_MS.face + DOM_MS.wide + DOM_MS.burst + DOM_MS.void; dummy.stunUntil = now + tot; dummy.pull = null; dummy.vx = 0; dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = tot + 300; }      // the enemy is frozen (a swing in progress is cancelled) until the void ends
 }
 function domTick(now) {
   if (dom || domReadyAt > now) setDomUI(now);
   if (!dom) return;
   const a = now - dom.p0;
+  if (dom.ph === 'blind' && !dom.eyes && a >= DOM_MS.blind * 0.58) { dom.eyes = true; snd('sixeyes'); }
   if (dom.ph === 'face' && !dom.zoomed && a >= 17 * 1000 / DF_FPS) { dom.zoomed = true; snd('domainzoom'); }
   if (dom.ph === 'burst' && !dom.burst && a >= 500) { dom.burst = true; snd('domainburst'); shakeUntil = now + 500; shakeAmp = 2; }
   if (dom.ph === 'void' && now >= dom.ping) { dom.ping = now + 500 + Math.random() * 900; snd('voidping'); }
   if (a >= DOM_MS[dom.ph]) {
     const i = DOM_ORDER.indexOf(dom.ph) + 1;
-    if (i >= DOM_ORDER.length) { dom = null; domHold = false; domReadyAt = now + DOM_CD; setDomUI(now); return; }
-    dom.ph = DOM_ORDER[i]; dom.p0 = now;
+    if (i >= DOM_ORDER.length) { dom = null; domHold = false; blindOff = false; domReadyAt = now + DOM_CD; setDomUI(now); return; }      // (the blindfold is back on)
+    dom.ph = DOM_ORDER[i]; dom.p0 = now; if (dom.ph === 'pose') blindOff = true;
+    if (dom.ph === 'reblind') { snd('cloth'); const d = dummy; if (d && d.ko < 0) { d.stunUntil = Math.max(d.stunUntil, now + DOM_MS.reblind + 200); d.pull = null; d.vx = 0; d.ai = 'rest'; d.aiAt = now; d.restFor = DOM_MS.reblind + 500; } }      // (the close-up hides the fight: the enemy is held for it)
     if (dom.ph === 'face') snd('domainface'); else if (dom.ph === 'void') { domHold = false; snd('voidon'); } else if (dom.ph === 'collapse') { snd('voidoff'); snd('domainend'); }
   }
   if (domLock()) { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = false; }      // no control during the opening
@@ -1045,6 +1090,7 @@ function domVoidLayer(now) {                   // the void inside a hard-edged c
 }
 function domOverlay(now) {                     // darkness, the white burst, the cut-in, the title and the cinema bars
   if (!dom) return; const a = now - dom.p0, cx = Math.round(VW / 2), cy = gy - 38, full = (al) => { ctx.fillStyle = al; ctx.fillRect(-8, -8, VW + 16, VH + 16); };
+  if (dom.ph === 'blind' || dom.ph === 'reblind') { drawFaceClose(Math.min(1, a / DOM_MS[dom.ph]), dom.ph === 'reblind'); return; }      // (the blindfold comes down / goes back on: his face, full screen)
   if (dom.ph === 'wide') full('rgba(0,0,12,' + (0.38 * a / DOM_MS.wide).toFixed(2) + ')');
   if (dom.ph === 'burst') {
     if (a < 350) full('rgba(0,0,10,' + (0.38 + 0.5 * a / 350).toFixed(2) + ')');
@@ -1107,7 +1153,7 @@ function buildGrades() {                       // the six grade buttons: locked 
 function startMatch(gi, story, retry, foe) { vs = { story: !!story, gi, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: story ? 1e9 : 60000, hp: PHP, sh: PHP, hist: [], res: null, retry: retry | 0, me: story ? 'gojo' : vsPick.me, foe: story ? (foe || 'verity') : vsPick.foe }; vs.inv = !story && vs.me === vs.foe; beginRound(performance.now()); }      // (retry: the story fight again after a failed red)
 function beginRound(now) {                     // a fresh round: the scene is reset, the enemy steps in, "ROUND n" and "FIGHT!"
   const keep = vs, gore = keep.story && keep.foe === 'cat' ? [gibs, drops, decals, pools] : null; show('play'); vs = keep; if (gore) [gibs, drops, decals, pools] = gore; ceReset(); const t = performance.now(), G = GRADES[vs.gi];
-  Object.assign(vs, { ph: 'intro', t0: t, tl: vs.story ? 1e9 : 60000, hp: PHP, sh: PHP, hist: [], seenAtk: -1, seenAt: 0, seenK: 0, rolled: true, whiffAt: -1, prevAtk: -1, hitAt: -9999, why: '', who: '', koAt: 0, crater: null });
+  Object.assign(vs, { ph: 'intro', t0: t, tl: vs.story ? 1e9 : 60000, hp: PHP, sh: PHP, hist: [], seenAtk: -1, seenAt: 0, seenK: 0, rolled: true, whiffAt: -1, prevAtk: -1, hitAt: -9999, why: '', who: '', koAt: 0, crater: null }); blindOff = false; bfo = null; bfp = false;
   spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); $('vsres').classList.remove('on');      // (he starts in the clear, not behind the touch buttons)
   vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; lastLabel = ''; vs.cStun = 0; setModeUI();      // (playing Verity: back in his own form, the button labels set)
   if (vs.retry) { vs.round = 1 + vs.retry; vs.hp = vs.sh = PHP / 2; dummy.hp = dummy.shown = dummy.lock = 1; vs.morphed = true; blackUntil = t + 700; } else blackUntil = 0;      // after a failed red: Gojo at half health, Verity as he was (1 health left, so no smoke change); the picture comes up from black
@@ -1267,7 +1313,7 @@ function fatStart(now, rev) {                          // rev = the enemy does i
   cineClear(); d.ai = 'rest'; d.pull = null; d.vx = 0; $('pad').classList.add('cine');
 }
 function cineClear() {                                 // everything Gojo and the world were doing is cancelled (a cutscene begins)
-  if (ult) ultCancel(performance.now());
+  if (ult) ultCancel(performance.now()); blindOff = false; bfo = null; bfp = false;
   atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; hurtAt = -1; wxv = 0;
   orb = null; debris = []; rdOrb = null; purple = null; boom = null; pboom = null; popups = []; smoke = []; hits.until = 0; releaseAll();
 }
@@ -1963,7 +2009,7 @@ function cfFrame(now, dt) {
 }
 // ---------------------------------------------------------------- THE CAT'S END (chapter 2, the story fight: when the Cat's health runs out he stays on his feet, dazed, and this cutscene takes over; about 30 s with its slow motions). Gojo walks up slowly. The Cat snatches a survivor with his rubber arm and holds him up as a shield. Gojo cuts the human in two from far away with a blade of Blue and the Cat is shocked. Gojo runs up and kicks his face: the head shoots away on a rubber neck as long as the screen, then snaps back and smashes into Gojo, who meets it with a full BLUE that cuts the Cat into thousands of single pixels. He is dead; Gojo says one last line and the TO BE CONTINUED card follows.
 const KE = { gx0: -56, walk: 6.0, wake: 3.0, grab: 3.8, say1: 4.9, cast: 7.4, slice: 8.35, shock: 8.6, say2: 8.95, rush: 10.9, kick: 11.35, raise: 13.4, face: 14.5, snap: 15.55, fcut: 15.8, slide: 36, who: 4, hx: 44 };      // (times on the cutscene's own clock, in seconds; slide = how far the kick pushes the Cat; who = which of the five people is the survivor; hx = where the snapped head ends up in front of the Cat's body, see SNAP_HX in tools/cat_rig.py)
-KE.imp = KE.kick + 8 / 24; KE.hit = KE.snap + 10 / 24; KE.burst = KE.hit + 0.7; KE.calm = KE.burst + 0.9; KE.say3 = KE.burst + 2.7; KE.end = KE.say3 + 4.4;
+KE.imp = KE.kick + 8 / 24; KE.hit = KE.snap + 10 / 24; KE.burst = KE.hit + 0.7; KE.calm = KE.burst + 0.9; KE.end = KE.burst + 5.2;
 const KB = ['#0b3fd8', '#2f7bff', '#7fd0ff', '#ffffff'], KBU = [0xffd83f0b, 0xffff7b2f, 0xffffd07f, 0xffffffff];      // the colours of Blue (as text, and as ABGR numbers for the pieces)
 const KSL = [[-50, -30, 40, 14], [-40, 22, 50, -34], [-60, -4, 60, 4], [-20, -40, 20, 40], [10, -40, 14, 44], [-50, 28, 60, -26], [-30, -34, 54, 36], [-10, 36, 52, -36], [-56, -18, 50, 20], [30, -42, -4, 42]];      // the ten cuts of the last BLUE: from and to, counted from the middle of the Cat
 function bline(x0, y0, x1, y1, c, w) { const n = Math.max(1, Math.round(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)))); ctx.fillStyle = c; for (let i = 0; i <= n; i++) ctx.fillRect(Math.round(x0 + (x1 - x0) * i / n), Math.round(y0 + (y1 - y0) * i / n), w, w); }      // a line of whole pixels
@@ -2062,15 +2108,15 @@ function keFrame(now, dt) {
   if (t >= T.burst) keDust(s, sdt);
   drawGibs(now); ctx.restore();
   // ---- on the screen itself: the close-up of Gojo's face (the Domain's picture), the flash, the bars, the words, the fade
-  if (t >= T.face && t < T.fcut) {
-    const u = (t - T.face) / (T.fcut - T.face), fi = u < 0.8 ? Math.floor(u / 0.8 * 13) : 17 + Math.min(2, Math.floor((u - 0.8) / 0.2 * 3)), pw = DF_W * 2, ph = DF_H * 2; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
-    if (domImg.complete && domImg.naturalWidth) ctx.drawImage(domImg, 0, fi * DF_H, DF_W, DF_H, Math.round((VW - pw) / 2), Math.round((VH - ph) / 2), pw, ph);
-    ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(60,130,255,' + (0.1 + 0.08 * Math.sin(t * 30)).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); ctx.globalCompositeOperation = 'source-over'; at('fz', T.face + (T.fcut - T.face) * 0.8, () => snd('domainzoom'));
+  if (t >= T.face && t < T.fcut) {      // the close-up of his face with the blindfold on (frame 0 of his face strip), pushing in slowly and lit more and more by the Blue in his palm
+    const u = (t - T.face) / (T.fcut - T.face), g = SIMG.gface && SIMG.gface.pull; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
+    if (g && g.complete && g.naturalWidth) { ctx.save(); ctx.translate(Math.round(VW / 2), Math.round(VH / 2)); ctx.scale(1 + 0.14 * u, 1 + 0.14 * u); ctx.drawImage(g, 0, 0, 320, 128, -160, -64, 320, 128); ctx.restore(); }
+    ctx.globalCompositeOperation = 'lighter'; const gr = ctx.createRadialGradient(VW / 2 + 40, VH / 2 + 10, 4, VW / 2 + 40, VH / 2 + 10, 150); gr.addColorStop(0, 'rgba(90,170,255,' + (0.25 + 0.5 * u + 0.1 * Math.sin(t * 30)).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(20,60,200,0)'); ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH); ctx.globalCompositeOperation = 'source-over'; at('fz', T.face + (T.fcut - T.face) * 0.8, () => snd('domainzoom'));
   }
   if (now < s.flash && now >= s.freeze - 1) { ctx.globalCompositeOperation = 'difference'; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, VW, VH); ctx.globalCompositeOperation = 'source-over'; }
   const bh = Math.round(VH * 0.11), b = Math.round(bh * ease3(t / 0.3) * (1 - ease3((t - (T.end - 0.9)) / 0.5))); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, b); ctx.fillRect(0, VH - b, VW, b);
   const say = (nm, txt, t0) => { if (t >= t0 && t < t0 + 1.4 + txt.length / 16) dlg(nm, txt, Math.floor((t - t0) * 16)); };
-  say('CARTOON CAT', 'HEH HEH... GO ON. TRY IT.', T.say1); say('CARTOON CAT', 'W-WHAT?!', T.say2); say('GOJO', 'YOU PICKED THE WRONG SHIELD.', T.say3);
+  say('CARTOON CAT', 'HEH HEH... GO ON. TRY IT.', T.say1); say('CARTOON CAT', 'W-WHAT?!', T.say2);
   const fa = clamp01((t - (T.end - 0.8)) / 0.8); if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
   if (t >= T.end) keEnd(now);
 }
@@ -2210,7 +2256,7 @@ function drawScene(now, dt) {
   if (vf) { vfFrame(now, dt); return; }         // ...and Verity's FATALITY
   if (cf) { cfFrame(now, dt); return; }         // ...and the Cat's FATALITY
   if (ke) { keFrame(now, dt); return; }         // ...and the end of the Cat in the story
-  domTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); if (vs && vs.foe === 'verity') storyBattleTick(now, dt); else if (vs && vs.foe === 'cat') catTick(now, dt); ultTick(now, dt);
+  domTick(now); bfTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); if (vs && vs.foe === 'verity') storyBattleTick(now, dt); else if (vs && vs.foe === 'cat') catTick(now, dt); ultTick(now, dt);
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
     const fs = fatState(now);
     if (fs === 0) { fatReq = 0; if (ceSpend(CE_COST.fatal, now)) { fatGo(now, dt, false); return; } }      // (his own FATALITY costs 50% cursed energy; the enemy's is free)
@@ -2274,7 +2320,7 @@ function drawScene(now, dt) {
   if (lpReq) {                                // BLUE: in mid-air = teleport up, then fall. On the ground: walking forward = stand and pull the enemy in (stuns 0.4 s); otherwise blink forward to the enemy; crouched = Max Blue
     lpReq = false;
     if (rdOrb && rdOrb.slow && !rdOrb.coat && cm !== 2 && (keyL || padL) && t >= 1 && jf < 0 && tf < 0 && df < 0 && hf < 0 && lf < 0 && sf < 0 && af < 0 && bf < 0 && (mf < 0 || mbK === 1) && ceSpend(CE_COST.coat, now)) { startCoat(now); mf = 0; }      // a slow red orb is flying: BLUE while walking back coats it in blue and he jumps on it
-    else if (cm === 2) { if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0 && now > lpReady && stance === 'stand' && ceSpend(orb && !purple ? CE_COST.purple : (keyL || padL) ? CE_COST.slowRed : CE_COST.red, now)) { mbK = 1; mbAt = now; mf = 0; atkQ = false; rdSlow = !!(keyL || padL); } }      // RED: standing only; no teleport, Lapse Blue or Max Blue in red mode
+    else if (cm === 2) { if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0 && now > lpReady && stance === 'stand' && ceSpend(orb && !purple ? CE_COST.purple : (keyL || padL) ? CE_COST.slowRed : CE_COST.red, now)) { rdSlow = !!(keyL || padL); atkQ = false; if (orb && !purple && !blindOff && !bfo) { bfp = true; bfStart(now, 'off', BF.purple, t2 => { mbK = 1; mbAt = t2; bfAt = t2; }); } else { mbK = 1; mbAt = now; mf = 0; } } }      // RED (into Max Blue it is HOLLOW PURPLE: first the blindfold comes off, see bfStart): standing only; no teleport, Lapse Blue or Max Blue in red mode
     else if (t >= 1 && tf < 0 && df < 0 && bf < 0 && jf >= 4 && jf <= 11 && ceSpend(CE_COST.tele, now)) { teleL0 = (jumpC ? D.cjump : D.jump).lift[jf]; teleAt = now; tf = 0; jumpAt = -1; jf = -1; }
     else if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0 && now > lpReady) {
       if (stance === 'stand') { if (ceSpend(CE_COST.blue, now)) { lpK = (keyR || padR) ? 0 : 1; lpAt = now; lf = 0; atkQ = false; } }
@@ -2401,7 +2447,7 @@ function drawScene(now, dt) {
   else {
     ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip();
     ctx.globalAlpha = Math.min(1, t * 2);
-    ctx.drawImage((ceOn && (cm === 2 ? HOMAPR : HOMAP).get(set) || set)[fi], x, y); if (yj && hurting && now - hurtAt < 70) ctx.drawImage(whiteOf(set[fi]), x, y);        // cursed energy on: both hands out of the pockets
+    { const gp = (ceOn && (cm === 2 ? HOMAPR : HOMAP).get(set) || set)[fi]; ctx.drawImage(blindOff && !yj ? blindDown(gp) : gp, x, y); } if (yj && hurting && now - hurtAt < 70) ctx.drawImage(whiteOf(set[fi]), x, y);        // cursed energy on: both hands out of the pockets
     if (fearing) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(set[fi]), x, y); }      // (JUMPSCARE: a pale pulse)
   }
   ctx.restore(); drawGiantNow('foe');
@@ -2418,7 +2464,7 @@ function drawScene(now, dt) {
     ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')';
     ctx.fillRect(0, 0, VW, VH);
   }
-  drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); drawVs(now, -shkX, -shkY); domOverlay(now);
+  drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); drawVs(now, -shkX, -shkY); domOverlay(now); bfOverlay(now);
   ctx.restore();
   if (now < flashUntil) { ctx.fillStyle = 'rgba(190,225,255,' + (flashA * (flashUntil - now) / flashMs) + ')'; ctx.fillRect(0, 0, VW, VH); }
   if (now < blackUntil) { ctx.fillStyle = 'rgba(0,0,0,' + ((blackUntil - now) / 600).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (coming out of the red ending: from black)

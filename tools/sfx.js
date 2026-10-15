@@ -353,6 +353,17 @@ function makeSfx(ac) {
       burst(B.soft, t, { f: 5200, f2: 900, q: 0.7, dur: 1.0, gain: 0.8, atk: 0.003 });
       for (let k = 0; k < 60; k++) burst(B.soft, t + 0.05 + k * 0.03 + R(0, 0.02), { f: R(2500, 7000), q: 3, dur: R(0.01, 0.03), gain: R(0.15, 0.4) * (1 - k / 70), atk: 0.001 });
     },
+    cloth(at) {                                          // the blindfold is pulled down or put back on: a soft rustle of cloth and a tiny snap
+      const t = T(at), B = C.atk;
+      burst(B.soft, t, { f: 1800, f2: 600, q: 0.8, dur: 0.28, gain: 0.5, atk: 0.04 });
+      burst(B.soft, t + 0.22, { f: 3000, f2: 1500, q: 2, dur: 0.03, gain: 0.3, atk: 0.001 });
+    },
+    sixeyes(at) {                                        // his eyes light up: a clear rising shimmer
+      const t = T(at), B = C.ce;
+      tone(B.soft, t, { type: 'sine', f: 520, f2: 1560, dur: 0.5, gain: 0.22, atk: 0.05 });
+      tone(B.soft, t + 0.05, { type: 'triangle', f: 1040, f2: 2080, dur: 0.45, gain: 0.1, atk: 0.05 });
+      for (let k = 0; k < 8; k++) tone(B.soft, t + 0.1 + k * 0.05, { type: 'sine', f: R(2200, 4200), f2: R(1800, 3000), dur: 0.08, gain: 0.07, atk: 0.003 });
+    },
     quake(at) {                                          // the roof is hit: a huge low boom, a long shaking rumble and stones and splinters falling
       const t = T(at), B = C.ce;
       tone(B.deep, t, { type: 'triangle', f: 80, f2: 22, dur: 1.6, gain: 0.6, atk: 0.004 });
