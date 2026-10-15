@@ -110,7 +110,7 @@ public class LanNet {
             Socket c;
             try { c = srv.accept(); } catch (IOException e) { return; }
             try {
-                c.setSoTimeout(4000);
+                c.setSoTimeout(4000); c.setTcpNoDelay(true);                  // (no waiting to batch small messages: the fight sends 25 a second)
                 BufferedReader in = new BufferedReader(new InputStreamReader(c.getInputStream(), U8));
                 PrintWriter w = new PrintWriter(new OutputStreamWriter(c.getOutputStream(), U8), true);
                 String hello = in.readLine();
@@ -198,7 +198,7 @@ public class LanNet {
                 Socket c = new Socket();
                 try {
                     c.connect(new InetSocketAddress(ip, port), 4000);
-                    c.setSoTimeout(4000);
+                    c.setSoTimeout(4000); c.setTcpNoDelay(true);
                     BufferedReader in = new BufferedReader(new InputStreamReader(c.getInputStream(), U8));
                     PrintWriter w = new PrintWriter(new OutputStreamWriter(c.getOutputStream(), U8), true);
                     w.println("HELLO|" + device);

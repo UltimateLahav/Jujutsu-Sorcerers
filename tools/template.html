@@ -88,6 +88,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #lanSel{gap:2vh}#lsMain{display:flex;align-items:center;gap:3vh}.lsCol{display:flex;flex-direction:column;align-items:center;gap:1vh}#lsMain .card{width:24vh;height:36vh}#lsFoe{pointer-events:none}#lsFoePv{transform:scaleX(-1)}
 #lsMoves{display:grid;grid-template-columns:max-content 1fr;gap:.9vh 2vh;padding:1.6vh 2vh;border:3px solid var(--line);background:#120d22;text-align:left;font-size:clamp(6px,1.85vh,10px);line-height:1.4;align-content:start}#lsMoves h3{grid-column:1/3;margin:0 0 .6vh;font-size:clamp(7px,2.2vh,12px);font-weight:normal;color:var(--acc)}#lsMoves b{font-weight:normal;color:#59b8ff}
 #lsInfo{min-height:9vh;font-size:clamp(7px,2.3vh,12px);line-height:1.8;white-space:pre-line;color:var(--dim)}      /* the character select of a Wi-Fi room: you, Gojo's moves, the opponent */
+.col.nt #ce,.col.nt #dom,.col.nt #fat{opacity:.25}      /* the Wi-Fi fight: MODE, DOMAIN and FATAL are off for now */
 @keyframes shk{0%{transform:translateX(0)}25%{transform:translateX(-.8vh)}50%{transform:translateX(.8vh)}75%{transform:translateX(-.5vh)}100%{transform:translateX(0)}}.shake{animation:shk .35s steps(6)}.shake i{color:#ff8a7a}      /* STORY MODE: not made yet, the card shakes */
 #grades{display:grid;grid-template-columns:repeat(3,auto);gap:1.2vh 1.6vh}
 .gr{padding:1vh 1.6vh;font-size:clamp(7px,2.1vh,12px);min-width:22vh}.gr small{display:block;margin-top:.7vh}
@@ -162,7 +163,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <div class="lsCol"><small>OPPONENT</small><button id="lsFoe" class="card" tabindex="-1" aria-hidden="true"><canvas id="lsFoePv"></canvas><b>GOJO</b><i id="lsFoeTag">CHOOSING</i></button></div>
   </div>
   <div id="lsInfo"></div>
-  <div class="row"><button id="lsAgain">PICK AGAIN</button><button id="lsBack">LEAVE</button></div>
+  <div class="row"><button id="lsFight">FIGHT</button><button id="lsAgain">PICK AGAIN</button><button id="lsBack">LEAVE</button></div>
 </section>
 
 <section id="saves" class="screen">
@@ -426,7 +427,7 @@ function drawHero(i) {
 // ---------------------------------------------------------------- WI-FI ROOMS: rooms between phones on the same Wi-Fi. The Android app gives the page window.AndroidLan (android/src/com/jujutsusorcerers/game/LanNet.java: a UDP broadcast finds the rooms, a TCP link carries the messages and measures the ping)
 const LAN = window.AndroidLan;                // missing in a normal browser
 let lanRole = '', lanHost = false, lanName = '', lanSig = null, lanTimer = 0, lanPing = -1, lanNoteUntil = 0;      // lanRole: '' (start) | host (waiting for a player) | browse | join | in (connected: the character select)
-let lanPhase = 'pick', lanMeReady = false, lanFoeReady = false, lanMeInv = false, lanRollAt = 0;      // the character select: pick (each player chooses Gojo) -> roll (the host decides who gets the inverted Gojo) -> done
+let lanPhase = 'pick', lanMeReady = false, lanFoeReady = false, lanMeInv = false, lanRollAt = 0, lanFightMe = false, lanFightFoe = false;      // the character select: pick (each player chooses Gojo) -> roll (the host decides who gets the inverted Gojo) -> done
 const LAN_ROLL_MS = 1800, lsPvC = $('lsPv'), lsFoeC = $('lsFoePv');
 lsPvC.width = lsFoeC.width = D.idle.w; lsPvC.height = lsFoeC.height = 64;
 const lanSay = (t, bad) => { $('lanInfo').textContent = t; $('lanInfo').classList.toggle('bad', !!bad); };
@@ -439,7 +440,7 @@ function lanUi() {
 function lanStop(msg) {                       // closes the room / the search / the link and goes back to the start of the lobby
   clearInterval(lanTimer); lanTimer = 0;
   if (LAN) { try { LAN.stop(); } catch (e) { /* the bridge is gone */ } }
-  lanRole = ''; lanHost = false; lanSig = null; lanPing = -1; lanNoteUntil = 0; lanPhase = 'pick'; lanMeReady = lanFoeReady = false; $('lanList').textContent = '';
+  lanRole = ''; lanHost = false; lanSig = null; lanPing = -1; lanNoteUntil = 0; lanPhase = 'pick'; lanMeReady = lanFoeReady = lanFightMe = lanFightFoe = false; $('lanList').textContent = '';
   lanUi(); lanSay(msg || (LAN ? 'MAKE A ROOM, OR LOOK FOR ONE ON THIS WI-FI' : 'WI-FI ROOMS NEED THE ANDROID APP'), !LAN);
 }
 const lanGo = () => { clearInterval(lanTimer); lanTimer = setInterval(lanTick, 150); };
@@ -456,10 +457,10 @@ function lanBrowse() {
 }
 function lanJoin(r) { lanRole = 'join'; lanUi(); lanSay('JOINING "' + r.name + '"...'); LAN.join(r.ip, r.port); }
 function lanIn() {                            // two phones are connected: the character select opens on both
-  lanRole = 'in'; lanPhase = 'pick'; lanMeReady = lanFoeReady = lanMeInv = false; lanPing = -1; show('lansel'); lsRender();
+  lanRole = 'in'; lanPhase = 'pick'; lanMeReady = lanFoeReady = lanMeInv = lanFightMe = lanFightFoe = false; lanPing = -1; show('lansel'); lsRender();
 }
 function lanEnd(msg) {                        // the other player is gone: the host opens the room again, a guest goes back to the start
-  if (state === 'lansel') show('lan');
+  if (state === 'lansel' || state === 'play') show('lan');
   if (lanHost && !LAN.host(lanName)) { lanRole = 'host'; lanPhase = 'pick'; lanMeReady = lanFoeReady = false; lanUi(); lanSay(msg + '\nWAITING FOR A PLAYER...', true); }
   else { lanStop(); lanSay(msg, true); }
 }
@@ -473,10 +474,17 @@ function lanEvent(e) {
 }
 // The character select talks in four short messages: C|gojo (I have chosen) and C| (I changed my mind); X|1 or X|0 (the HOST rolled the dice: 1 = the host gets the inverted Gojo, 0 = the guest does); N| (pick again)
 function lanMsg(m) {
-  const [c, a] = m.split('|');
+  const p = m.split('|'), c = p[0], a = p[1], now = pnow();
+  if (c === 'P') { netPoseIn(p); return; }                                 // (the fight: his picture, place and health, 25 times a second)
+  if (c === 'W') { netSwing(+a, +p[2], now); return; }                    // (his swing reaches me: my phone decides what it does)
+  if (c === 'R') { netResult(+a, p[2], +p[3], now); return; }             // (...and the answer to my swing)
+  if (c === 'K') { netKo(now); return; }                                  // (I knocked him out)
+  if (c === 'T') { netTime(a, now); return; }                             // (the host says who had more health when the 60 s ran out)
   if (c === 'C' && lanPhase === 'pick') { lanFoeReady = a === 'gojo'; lanCheck(); }
   else if (c === 'X' && !lanHost && lanPhase === 'pick') { lanMeReady = lanFoeReady = true; lanStartRoll(a === '0'); }
-  else if (c === 'N' && lanPhase !== 'pick') { lanAgain(false); lanSend('C|'); }      // (and I tell the other phone I am not ready, in case my own tap crossed their PICK AGAIN)
+  else if (c === 'F' && lanPhase === 'done') { lanFightFoe = a === '1'; lanGoCheck(); }
+  else if (c === 'S' && !lanHost && lanPhase === 'done') lanStartFight();
+  else if (c === 'N' && lanPhase !== 'pick') { lanAgain(false); lanSend('C|'); if (state === 'play') show('lansel'); }      // (and I tell the other phone I am not ready, in case my own tap crossed their PICK AGAIN)
   lsRender();
 }
 function lanCheck() {                         // the host rolls as soon as both have chosen: one of the two players gets the inverted Gojo, 50 / 50
@@ -485,14 +493,14 @@ function lanCheck() {                         // the host rolls as soon as both 
 }
 function lanStartRoll(meInv) { lanPhase = 'roll'; lanMeInv = meInv; lanRollAt = performance.now(); }
 function lanChoose() { if (lanRole !== 'in' || lanPhase !== 'pick') return; lanMeReady = !lanMeReady; lanSend('C|' + (lanMeReady ? 'gojo' : '')); lanCheck(); lsRender(); }
-function lanAgain(tell) { if (tell) lanSend('N|'); lanPhase = 'pick'; lanMeReady = lanFoeReady = false; lsRender(); }
+function lanAgain(tell) { if (tell) lanSend('N|'); lanPhase = 'pick'; lanMeReady = lanFoeReady = lanFightMe = lanFightFoe = false; lsRender(); }
 function lsRender() {                         // the texts of the character select
   const pick = lanPhase === 'pick', done = lanPhase === 'done';
   $('lsGojo').classList.toggle('sel', lanMeReady); $('lsFoe').classList.toggle('sel', lanFoeReady);
   $('lsTag').textContent = pick ? (lanMeReady ? 'READY' : 'TAP HERE') : done ? (lanMeInv ? 'INVERTED' : 'NORMAL') : '...';
   $('lsFoeTag').textContent = pick ? (lanFoeReady ? 'READY' : 'CHOOSING') : done ? (lanMeInv ? 'NORMAL' : 'INVERTED') : '...';
-  $('lsInfo').textContent = (pick ? (lanMeReady ? 'WAITING FOR THE OTHER PLAYER...' : 'TAP GOJO TO CHOOSE HIM') : done ? (lanMeInv ? 'YOU GOT THE INVERTED GOJO' : 'THE OTHER PLAYER GOT THE INVERTED GOJO') + '\nTHE FIGHT ITSELF COMES NEXT' : 'WHO GETS THE INVERTED GOJO?') + '\n' + (lanPing < 0 ? 'PING ...' : 'PING ' + lanPing + ' MS');
-  $('lsAgain').style.display = done ? '' : 'none';
+  $('lsInfo').textContent = (pick ? (lanMeReady ? 'WAITING FOR THE OTHER PLAYER...' : 'TAP GOJO TO CHOOSE HIM') : done ? (lanMeInv ? 'YOU GOT THE INVERTED GOJO' : 'THE OTHER PLAYER GOT THE INVERTED GOJO') + '\n' + (lanFightMe ? 'WAITING FOR THE OTHER PLAYER...' : lanFightFoe ? 'THE OTHER PLAYER IS READY: TAP FIGHT' : 'TAP FIGHT WHEN YOU ARE READY') : 'WHO GETS THE INVERTED GOJO?') + '\n' + (lanPing < 0 ? 'PING ...' : 'PING ' + lanPing + ' MS');
+  $('lsAgain').style.display = $('lsFight').style.display = done ? '' : 'none'; $('lsFight').textContent = lanFightMe ? 'READY...' : 'FIGHT';
 }
 function lanSelDraw(now) {                    // the two Gojos on the cards (the opponent faces you); while the dice roll they flip between normal and inverted, slower and slower
   const a = performance.now() - lanRollAt;
@@ -520,12 +528,91 @@ function lanTick() {
   if (lanRole === 'browse') lanShow(rooms);
   if (lanRole === 'in' && p !== lanPing) { lanPing = p; lsRender(); }
 }
+// ---------------------------------------------------------------- THE WI-FI FIGHT: Gojo against Gojo like the offline Versus (best of 3 rounds, 60 s, health bars). Each phone runs its OWN fighter with the normal game code and sends its picture, place and health 25 times a second (P|); the other fighter on the screen is only that picture (drawRemote). A swing that reaches him is sent (W|); HIS phone decides what it does to him with the offline rules (gojoHit: guard, dash, jump, crouch, hit-stun) and answers (R|). Works: walking, jumping, teleporting up, crouching, dashing, blocking, the 4-hit combo and the crouch punches. Off for now: BLUE on the ground, MODE, DOMAIN, FATAL.
+const NET_G0 = 70, NET_LEASH = 150;           // the two fighters start 70 px apart and never get more than 150 px apart, so both stay on both screens
+let netK = -1, netBonus = 0, netSentAt = 0;
+const GPOSE = [], GPOSE_ID = new Map();       // every picture set a fighter can show, in a fixed order, so a picture is just a number (both phones run the same code)
+{
+  const add = (set, info, white) => { if (set && info) { GPOSE_ID.set(set, GPOSE.length); GPOSE.push([set, info, !!white]); } };
+  add(idleF, D.idle); add(fwdF, D.fwd); add(backF, D.back); add(jumpF, D.jump); add(teleF, D.tele); add(crF.dn, D.cdn); add(crF.idle, D.cidle); add(crF.fwd, D.cfwd); add(crF.back, D.cback); add(crF.jump, D.cjump); add(crF.blk, D.cb); add(crF.fblk, D.cfb); add(crF.bblk, D.cbb); add(wblkF, D.wfb); add(wblkB, D.wbb); add(mbF, D.atk8); add(redF, D.atk22);
+  lapseF.forEach((s, k) => add(s, D['atk' + (4 + k)])); atkF.forEach((s, k) => add(s, D['atk' + k])); rxN.forEach((s, k) => add(s, D['rx' + k])); rxW.forEach((s, k) => add(s, D['rx' + k], true));
+}
+const INV_CACHE = new WeakMap();
+function invOf(c) {                           // the same picture in inverted colours (the colours of the inverted Gojo)
+  let r = INV_CACHE.get(c); if (r) return r;
+  r = document.createElement('canvas'); r.width = c.width; r.height = c.height;
+  const im = c.getContext('2d').getImageData(0, 0, c.width, c.height), d = im.data;
+  for (let i = 0; i < d.length; i += 4) if (d[i + 3]) { d[i] = 255 - d[i]; d[i + 1] = 255 - d[i + 1]; d[i + 2] = 255 - d[i + 2]; }
+  r.getContext('2d').putImageData(im, 0, 0); INV_CACHE.set(c, r); return r;
+}
+function lanFight() { if (lanPhase !== 'done') return; lanFightMe = !lanFightMe; lanSend('F|' + (lanFightMe ? 1 : 0)); lanGoCheck(); lsRender(); }
+function lanGoCheck() { if (lanHost && lanPhase === 'done' && lanFightMe && lanFightFoe) { lanSend('S|'); lanStartFight(); } }      // both tapped FIGHT: the host says go
+function lanStartFight() {
+  lanPhase = 'fight'; lanFightMe = lanFightFoe = false;
+  vs = { story: false, gi: 2, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: 60000, hp: PHP, sh: PHP, hist: [], res: null, retry: 0, me: 'gojo', foe: 'gojo', net: true, meInv: lanMeInv, inv: !lanMeInv };      // (inv: the OTHER Gojo is the inverted one; meInv: I am)
+  beginRound(pnow());
+}
+function netPose(set, fi, lift) {             // every frame of my own scene: what I look like and where I am, sent every 40 ms
+  const t = performance.now(), id = GPOSE_ID.get(set); if (t - netSentAt < 40 || id === undefined) return; netSentAt = t;
+  lanSend('P|' + Math.round(wx * 10) + '|' + id + '|' + fi + '|' + Math.round(lift) + '|' + Math.round(vs.hp));
+}
+function netPoseIn(p) {                       // P|x10|picture|frame|lift|health: his picture and place (his advance towards me: the gap is 70 minus both advances)
+  if (!vs || !vs.net || !dummy || !dummy.net) return;
+  const z = GPOSE[+p[2]]; if (z) dummy.pose = { set: z[0], info: z[1], white: z[2], fi: +p[3] | 0, lift: +p[4] || 0 };
+  dummy.tx = NET_G0 - (+p[1]) / 10; if (dummy.ko < 0) dummy.hp = Math.max(0, Math.min(PHP, +p[5] || 0));
+}
+function netAttack(k, now) {                  // my swing reaches him (the reach is checked here, on my screen): his phone decides if it hurts him
+  const seq = now > hits.until ? 0 : hits.seq; lanSend('W|' + k + '|' + (seq === 3 && gKo(k) === 3 ? 25 : 0));      // (the 4th hit of a perfect combo hits 25 harder)
+}
+const gKo = k => k <= 3 ? k : k >= 18 && k <= 21 ? k - 18 : k >= 14 && k <= 17 ? k - 14 : -1;      // which hit of the 4-hit combo a swing number is (standing 0-3, walking 14-17, crouch-walking 18-21)
+const nres = (r, dm, rx) => { if (netK >= 0) { lanSend('R|' + netK + '|' + r + '|' + (dm | 0) + '|' + (rx | 0)); netK = -1; } };      // (gojoHit says what became of the swing)
+function netSwing(k, bonus, now) {            // W|: his swing k reaches me: the offline rules decide (gojoHit), the answer goes back as R|
+  if (!vs || !vs.net || vs.ph !== 'fight' || !dummy) { lanSend('R|' + k + '|m|0|0'); return; }
+  netK = k; netBonus = bonus | 0; gojoHit(k, now); if (netK >= 0) nres('m'); netK = -1;
+}
+function netResult(k, r, dm, now) {           // R|: what my swing did on his phone: popups, sound, shake, the combo meter
+  if (!vs || !vs.net || !dummy || vs.ph !== 'fight') return;
+  if (r === 'h') {
+    if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; }
+    const ko = gKo(k); hits.seq = ko === hits.seq ? hits.seq + 1 : ko === 0 ? 1 : 0; if (hits.seq === 4) { hits.perfect = now; snd('finisher'); say('COMBO!', dummy.x, '#ffd34d', 8, now + 90); }
+    hits.n++; hits.dmg += dm; hits.until = now + 1600; dummy.hitAt = now; shakeUntil = now + 110; shakeAmp = k === 21 ? 4 : k === 3 || k === 15 || k === 17 || k === 18 || k === 19 ? 3 : 2; say('' + dm, dummy.x, popCol(), 8, now); snd('smack', k);
+    if (k === 3 || k === 17 || k === 21) { dummy.smokeUntil = now + 520; puff(dummy.x, 8); }
+  } else if (r === 'b') { shakeUntil = now + 70; shakeAmp = 1; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); }
+  else say('MISS', dummy.x, '#9fd8ff', 8, now);
+}
+function netKo(now) {                         // K|: he ran out of health on his phone: I win the round and he topples
+  if (!vs || !vs.net || vs.ph !== 'fight' || !dummy) return;
+  dummy.hp = 0; dummy.ko = now; endRound('player', 'ko', now); dummy.koAt = vs.koAt;
+}
+function netTimeUp(now) {                     // the 60 s are over: the HOST decides who had more health (a tie is a coin toss) and tells the guest
+  if (!lanHost || vs.toSent) return; vs.toSent = true;
+  const mine = vs.hp / PHP, his = dummy ? dummy.hp / dummy.max : 0, w = mine === his ? Math.random() < 0.5 : mine > his;
+  lanSend('T|' + (w ? 'h' : 'g')); endRound(w ? 'player' : 'enemy', 'time', now);
+}
+function netTime(a, now) { if (vs && vs.net && vs.ph === 'fight') endRound(a === (lanHost ? 'h' : 'g') ? 'player' : 'enemy', 'time', now); }
+function netOver(now) {                       // best of 3 is decided: the result overlay of the offline Versus, with REMATCH (back to the character select) and MENU (leave the room)
+  vs.ph = 'over'; const win = vs.pw >= 2; vs.res = { win, stars: 0 };
+  $('vsTitle').textContent = win ? 'VICTORY' : 'DEFEAT'; $('vsInfo').textContent = 'WI-FI FIGHT  -  ROUNDS ' + vs.pw + ' : ' + vs.ew; $('vsStars').innerHTML = ''; $('vsNext').style.display = 'none'; $('vsres').classList.add('on'); snd(win ? 'finisher' : 'ko');
+}
+const netRematch = () => { lanAgain(true); show('lansel'); lsRender(); };
+function drawRemote(now, dt) {                // the other player: the picture his phone sent, facing me, flashing white when I hit him
+  const d = dummy; pendingGiants.length = 0; pendingEnemy = null;
+  if (now - d.hitAt > 350) d.shown += (d.hp - d.shown) * Math.min(1, dt * 4);
+  d.x += (d.tx - d.x) * Math.min(1, dt * 16);                  // (he glides to where his phone says he is)
+  const cx = Math.round(VW / 2), sx = Math.round(cx + d.x - wx); if (sx < -60 || sx > VW + 60) return;
+  const kt = d.ko >= 0 ? Math.max(0, now - (d.koAt || d.ko)) : -1, P = d.pose || { set: idleF, info: D.idle, fi: 0, lift: 0, white: false }, hx = P.info.cx - P.info.x0, pic = P.set[Math.max(0, Math.min(P.fi, P.set.length - 1))];
+  const sw = Math.max(5, Math.round(9 * (1 - P.lift / 48))), sv = Math.round(sw * 2 / 3); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(sx - sw, gy + 3, sw * 2, 2); ctx.fillRect(sx - sv, gy + 2, sv * 2, 1); ctx.fillRect(sx - sv, gy + 5, sv * 2, 1);
+  ctx.save(); ctx.translate(sx, 0); ctx.scale(-1, 1);
+  if (kt >= 0) { ctx.translate(0, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, kt / 520), 2)); ctx.drawImage(vs.inv ? invOf(idleF[0]) : idleF[0], -(D.idle.cx - D.idle.x0), -62); }
+  else { const y = gy - 60 - P.info.top - P.lift; ctx.drawImage(vs.inv && !P.white ? invOf(pic) : pic, -hx, y); if (now - d.hitAt < 70) ctx.drawImage(whiteOf(pic), -hx, y); }
+  ctx.restore();
+}
 const lanBack = () => { if (lanRole) lanStop(); else show('modes'); };
 
 // ---------------------------------------------------------------- screens
 function show(s) {
   state = s; if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
-  $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); if (s !== 'lan' && s !== 'lansel' && lanTimer) lanStop();
+  $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); if (s !== 'lan' && s !== 'lansel' && !(s === 'play' && vs && vs.net) && lanTimer) lanStop();
   $('versus').classList.toggle('on', s === 'versus');
   $('title').classList.toggle('on', s === 'title');
   $('select').classList.toggle('on', s === 'select');
@@ -829,7 +916,7 @@ function hitDummy(k, now) {                   // called on the impact frame: a h
   if (dummy.cact && dummy.cact.flat) { say('MISS', dummy.x, '#9fd8ff', 8, now); return; }      // the Cat smashed flat is two pixels thin: every swing passes over him
   if (now < (dummy.dodgeUntil || 0)) { say('MISS', dummy.x, '#9fd8ff', 8, now); return; }      // the smart enemy stepped back out of the swing
   const gap = dummy.x - wx;                   // the dummy's centre relative to Gojo's hips
-  if (gap > pHit(k) || gap < -3) return;      // (pHit: how far the drawn limb of this move really reaches into the drawn body of this enemy; behind you nothing lands)
+  if (gap > pHit(k) || gap < -3) return; if (dummy.net) { netAttack(k, now); return; }      // (pHit: how far the drawn limb of this move really reaches into the drawn body of this enemy; behind you nothing lands)
   if (isD1(k)) divP = { at: now, k };      // (DIVERGENT FIST: the fist has reached him, landed or blocked: the second impact follows 0.17 s later)
   const broke = (k === 42 || k === 46) && gap > 0 && dBlocks();      // (CONCENTRATED FIST and its crouched version, the UPPERCUT: nothing stops them, they break the guard of a blocking enemy)
   if (dBlocks() && gap > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx] && k !== 42 && k !== 46) {      // (a smart enemy that blocked: he answers with a counter)
@@ -860,27 +947,27 @@ function hitDummy(k, now) {                   // called on the impact frame: a h
   if (dummy.hp <= 0) koDummy(now);            // (a normal punch or kick that finishes him ends the round in a match too)
 }
 function gojoHit(k, now) {                    // the attacking dummy's swing connects with Gojo
-  if (dom) return;      // (the DOMAIN freezes everyone, whatever they were doing: nothing of the enemy's touches you until it is over)
+  if (dom) { nres('m'); return; }      // (the DOMAIN freezes everyone, whatever they were doing: nothing of the enemy's touches you until it is over)
   if (isD2(k)) { gojoDiv2(now); return; }      // (DIVERGENT FIST's second impact, normal or RUSH: see gojoDiv2)
-  if (dgAt >= 0 && now - dgAt < 11 * 1000 / DASH_FPS) return;       // he is dashing: the swing misses
+  if (dgAt >= 0 && now - dgAt < 11 * 1000 / DASH_FPS) { nres('m'); return; }       // he is dashing: the swing misses
   const held = vs && vs.foe === 'cat' && k >= 30 && k <= 33 && now < (vs.catHold || 0);      // (inside the Cat's glove the combo cannot miss because Gojo is 'still reeling')
   const foeWho = vs ? vs.foe : 'gojo', downed = now < gDownUntil;      // (whose swing this is; and after a DOWNSLAM or a SWEEP you are on the floor: only a kick reaches you there, even while you reel)
   const airMe = !!gAir && gAir.kind === 'up';      // you are launched: everything can hit you up there, the hit-stun and the height do not protect you
-  if (airMe ? gojoGone : downed ? (!isKick(foeWho, k) || gojoLift > 12 || gojoGone) : ((!held && (hurtAt >= 0 || now - hurtEnd < 350)) || gojoLift > 12 || gojoGone)) return;
+  if (airMe ? gojoGone : downed ? (!isKick(foeWho, k) || gojoLift > 12 || gojoGone) : ((!held && (hurtAt >= 0 || now - hurtEnd < 350)) || gojoLift > 12 || gojoGone)) { nres('m'); return; }
   const guardWas = guardUp(now) && !!dummy && dummy.x > wx;
   if (guardWas && k !== 42 && k !== 46) {  // his guard is up and the attacker is in front of him: the swing is blocked (a hit from behind still lands; CONCENTRATED FIST breaks the guard)
     wxv -= KNOCK_G[k] * 0.3; shakeUntil = now + 80; shakeAmp = 1; say('BLOCKED', wx + 14, '#9fd8ff', 8, now); snd('block'); if (isD1(k)) { dummy.divOk = now; dummy.divK = k; }      // (the fist was blocked: the second impact still comes)
-    return;
+    nres('b'); return;
   }
-  if (stance !== 'stand' && (!!vs && vs.me === 'cat' || (!isKick(foeWho, k) && k !== 46))) return;      // crouched (or going down / getting up): only a kick can hit him (punches pass over); the Cat smashed flat is two pixels thin, nothing hits him (already reeling, just recovered, or jumped / teleported out of the way: see above)
+  if (stance !== 'stand' && !(netK >= 0 && (k === 6 || k === 7)) && (!!vs && vs.me === 'cat' || (!isKick(foeWho, k) && k !== 46))) { nres('m'); return; }      // crouched (or going down / getting up): only a kick can hit him (punches pass over); the Cat smashed flat is two pixels thin, nothing hits him (already reeling, just recovered, or jumped / teleported out of the way: see above)
   if (k === 30 || k === 32) { catGrab(k, now); return; }      // the Cat's grab: no reaction, Gojo is held and pulled in
   if (isD1(k)) { dummy.divOk = now; dummy.divK = k; }      // (DIVERGENT FIST: the fist reached you, the second impact follows)
   if (!(airMe && k !== 47)) { hurtK = isD1(k) ? 0 : k === 29 || k === 33 || k === 35 || k >= 40 ? 4 : (Math.random() * 10) | 0; hurtAt = now; if (k === 46) { hurtK = AIR_RX; gAir = airMake(now, 0, AIR_V, AIR_G, 'up'); } else if (k === 47) gAir = airMe ? airMake(now, gAirH, -80, 900, 'drop') : null; }      // (a hit on you while you are in the air keeps your flight and your pose; the UPPERCUT launches you, the FACE KICK knocks you out of the air)
   if ((k === 33 || k === 35) && vs) vs.catHold = 0;                                    // one of ten reactions, picked at random
   atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; wxv -= KNOCK_G[k] * 0.9; shakeUntil = now + 120; shakeAmp = k === 35 || k === 42 ? 4 : k === 3 || k === 29 || k === 33 || k === 40 || k === 41 ? 3 : 2; if (k === 40 || k === 43 || k === 48) gDownUntil = now + RX_DUR[4];
-  const dm = Math.round((DMG[k] + (k >= 27 ? 0 : (Math.random() * 5) | 0)) * (vs ? GRADES[vs.gi].dmg : 1)); say('' + dm, wx, '#ff9a5a', 8, now);
+  const dm = Math.round((DMG[k] + (k >= 27 ? 0 : (Math.random() * 5) | 0) + (netK >= 0 ? netBonus : 0)) * (vs && !vs.net ? GRADES[vs.gi].dmg : 1)); say('' + dm, wx, '#ff9a5a', 8, now);
   if (vs && vs.ph === 'fight') vsHurt(dm, now);
-  snd('hurt', hurtK);
+  snd('hurt', hurtK); nres('h', dm, hurtK);
   if (k === 42) { concFx(now, wx); if (guardWas) say('GUARD BREAK', wx, '#ffd34d', 8, now + 90); }      // (CONCENTRATED FIST: the shock, and your guard is broken)
   if (k === 46) { upFx(now, wx); if (guardWas) say('GUARD BREAK', wx, '#ffd34d', 8, now + 90); } if (k === 47) kickFx(now, wx, dummy && dummy.x >= wx ? -1 : 1);      // (the UPPERCUT and the FACE KICK on you)
 }
@@ -911,7 +998,7 @@ function drawBar(bx, by) {                    // (in a match the big bars at the
   ctx.fillStyle = '#ffd27a'; ctx.fillRect(bx, by, Math.round(26 * g), 3); ctx.fillStyle = f > 0.3 ? '#52e08a' : '#ff4a4a'; ctx.fillRect(bx, by, Math.round(26 * f), 3);
 }
 function drawDummy(now, dt) {
-  pendingGiants.length = 0; pendingEnemy = null; if (!dummy || dummy.gone) return;
+  pendingGiants.length = 0; pendingEnemy = null; if (!dummy || dummy.gone) return; if (dummy.net) { drawRemote(now, dt); return; }
   if (dummy.ko >= 0 && now - dummy.ko > 2300 && !vs) spawnDummy(now, dummy.mode);            // knocked out: a fresh one steps in after a moment
   airStepDummy(now);      // (an enemy in the air: his height and the frame of his reaction)
   if (dummy.mode === 'fighter' && !dom && !(dummy.vform && dummy.vform !== 'verity')) { if (vs) updateFighterVs(now, dt); else updateFighter(now, dt); }      // (as the smiley ball he does nothing)
@@ -1453,7 +1540,7 @@ function startMatch(gi, story, retry, foe) { vs = { story: !!story, gi, round: 1
 function beginRound(now) {                     // a fresh round: the scene is reset, the enemy steps in, "ROUND n" and "FIGHT!"
   const keep = vs, gore = keep.story && keep.foe === 'cat' ? [gibs, drops, decals, pools] : null; show('play'); vs = keep; if (gore) [gibs, drops, decals, pools] = gore; ceReset(); const t = pnow(), G = GRADES[vs.gi];
   Object.assign(vs, { ph: 'intro', t0: t, tl: vs.story ? 1e9 : 60000, hp: PHP, sh: PHP, hist: [], seenAtk: -1, seenAt: 0, seenK: 0, rolled: true, whiffAt: -1, prevAtk: -1, hitAt: -9999, why: '', who: '', koAt: 0, crater: null }); blindOff = false; bfo = null; bfp = false;
-  spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); $('vsres').classList.remove('on');      // (he starts in the clear, not behind the touch buttons)
+  spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); if (vs.net) { dummy.net = true; dummy.max = dummy.hp = dummy.shown = PHP; dummy.x = dummy.tx = wx + NET_G0; dummy.pose = null; vs.toSent = false; }      // (the Wi-Fi fight: the other player, drawn from his phone's pictures) $('vsres').classList.remove('on');      // (he starts in the clear, not behind the touch buttons)
   vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; lastLabel = ''; vs.cStun = 0; setModeUI();      // (playing Verity: back in his own form, the button labels set)
   if (vs.retry) { vs.round = 1 + vs.retry; vs.hp = vs.sh = PHP / 2; dummy.hp = dummy.shown = dummy.lock = 1; vs.morphed = true; blackUntil = t + 700; } else blackUntil = 0;      // after a failed red: Gojo at half health, Verity as he was (1 health left, so no smoke change); the picture comes up from black
 }
@@ -1464,20 +1551,22 @@ function vsTick(now, dt) {
     if (!domLock()) vs.tl -= dt * 1000;
     if (atkAt < 0 && vs.prevAtk >= 0 && dummy && dummy.hitAt < vs.prevAtk) vs.whiffAt = now;      // Gojo's swing ended without hitting: he is open for a moment
     vs.prevAtk = atkAt;
-    if (vs.tl <= 0) endRound(vs.hp / PHP > (dummy ? dummy.hp / dummy.max : 0) ? 'player' : 'enemy', 'time', now);
+    if (vs.tl <= 0) { if (vs.net) netTimeUp(now); else endRound(vs.hp / PHP > (dummy ? dummy.hp / dummy.max : 0) ? 'player' : 'enemy', 'time', now); }
   } else if (vs.ph === 'ko' && a >= KO_MS) { if (vs.story || vs.pw >= 2 || vs.ew >= 2) finishMatch(now); else { vs.round++; beginRound(now); return; } }      // the round is over: whoever got the point, the next round starts fresh (full health, new positions)
   if (now - vs.hitAt > 350) vs.sh += (vs.hp - vs.sh) * Math.min(1, dt * 4);
   if (vs.ph !== 'fight') { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = false; }      // no control before FIGHT! and after the K.O.
   if (now < pStun || now < (vs.catHold || 0) || now < (vs.cStun || 0)) { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; stickDown = false; }      // ...and none while he is stunned by the JUMPSCARE, held in the Cat's glove or dizzy (the Cat after 5 s flat)
+  if (vs.net) { ceReq = domReq = false; fatReq = 0; }      // (the Wi-Fi fight: no MODE, DOMAIN or FATAL for now)
   if (vs.me === 'cat') { ceReq = false; if (stance !== 'stand') blockHeld = false; }      // the Cat has no MODE; he blocks standing only (flat nothing can hit him anyway)
   if (vs.me === 'yuji') { domReq = false; if (stance !== 'stand') { atkReq = blockHeld = false; if (stance !== 'crouch') lpReq = false; } }      // Yuji has his M1 combo, BLUE (DIVERGENT FIST standing, CONCENTRATED FIST in cursed energy mode, crouched: the SWEEP in normal mode and the UPPERCUT, then the FACE KICK, in cursed energy mode), the cursed energy MODE (off <-> on, no red mode), block, walking, jumping, crouching and dashing (no DOMAIN, and no punches while crouched)
 }
-function vsHurt(dm, now) { if (dom) return; vs.hp = Math.max(0, vs.hp - dm); vs.hitAt = now; if (vs.hp <= 0) { if (!vs.story || vs.foe === 'cat') endRound('enemy', 'ko', now); else if (!de && !se) deathStart(now); } }      // (in the story fight Gojo's death is a cutscene)
+function vsHurt(dm, now) { if (dom) return; vs.hp = Math.max(0, vs.hp - dm); vs.hitAt = now; if (vs.hp <= 0) { if (!vs.story || vs.foe === 'cat') { endRound('enemy', 'ko', now); if (vs.net && vs.ph === 'ko' && vs.who === 'enemy') lanSend('K|'); } else if (!de && !se) deathStart(now); } }      // (in the story fight Gojo's death is a cutscene)
 function endRound(who, why, now) {
   if (!vs || vs.ph !== 'fight') return; vs.ph = 'ko'; vs.t0 = now; vs.who = who; vs.why = why; if (who === 'player') vs.pw++; else vs.ew++;
   if (why === 'ko') holdUntil = Math.max(holdUntil, now + KO_HOLD); vs.koAt = Math.max(now, holdUntil); snd(who === 'player' ? 'finisher' : 'ko');      // (koAt: when the loser starts to topple)
 }
 function finishMatch(now) {
+  if (vs.net) { netOver(now); return; }
   vs.ph = 'over'; if (vs.story && vs.foe === 'verity' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; storyDone(); story.toOutro = true; return; }      // (beating Verity: the report to the higher-ups follows, started by the main loop)
   const win = vs.story ? vs.pw >= 1 : vs.pw >= 2, pf = vs.hp / PHP, stars = win ? (pf >= 0.7 ? 3 : pf >= 0.35 ? 2 : 1) : 0, sv = vsLoad(), gi = vs.gi;
   if (win && !vs.story) { sv.un = Math.max(sv.un, Math.min(5, gi + 1)); sv.st[gi] = Math.max(sv.st[gi], stars); vsStore(sv.un, sv.st); }
@@ -1571,9 +1660,9 @@ function drawVs(now, ux = 0, uy = 0) {         // health bars, names, the grade,
   const bar = (x, y, f, g, right) => { ctx.fillStyle = '#000'; ctx.fillRect(x - 1, y - 1, W + 2, 8); ctx.fillStyle = '#3a1a2a'; ctx.fillRect(x, y, W, 6); const w1 = Math.round(W * g), w2 = Math.round(W * f); ctx.fillStyle = '#ffd27a'; ctx.fillRect(right ? x + W - w1 : x, y, w1, 6); ctx.fillStyle = f > 0.3 ? '#52e08a' : '#ff4a4a'; ctx.fillRect(right ? x + W - w2 : x, y, w2, 6); };
   ctx.save(); ctx.translate(ux, uy);
   bar(6, 20, pf, ps, false); bar(VW - 6 - W, 20, ef, es, true);
-  const cw = Math.round(W * Math.max(0, Math.min(100, ce)) / 100), bad = now - ceFlash < 500, cc = CEC[vs.me] || CEC.gojo, nx = 6 + NAMES[vs.me].length * 8 + 8, foeName = NAMES[vs.foe] + (vs.inv ? ' (INV.)' : '');      // the cursed energy bar right under the health bar (cyan for Gojo, yellow for Verity; it flashes red when a move is refused)
+  const cw = Math.round(W * Math.max(0, Math.min(100, ce)) / 100), bad = now - ceFlash < 500, cc = CEC[vs.me] || CEC.gojo, nx = 6 + (NAMES[vs.me].length + (vs.meInv ? 7 : 0)) * 8 + 8, foeName = NAMES[vs.foe] + (vs.inv ? ' (INV.)' : '');      // the cursed energy bar right under the health bar (cyan for Gojo, yellow for Verity; it flashes red when a move is refused)
   ctx.fillStyle = '#000'; ctx.fillRect(5, 28, W + 2, 6); ctx.fillStyle = cc[0]; ctx.fillRect(6, 29, W, 4); ctx.fillStyle = bad ? '#ff4a4a' : cc[1]; ctx.fillRect(6, 29, cw, 4); ctx.fillStyle = bad ? '#ffb0b0' : cc[2]; ctx.fillRect(6, 29, cw, 1);
-  pxt(NAMES[vs.me], 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', nx, 45, bad ? '#ff6a5a' : cc[3], 8); let lx = nx + 62; if (vs.bleed) { pxt('BLEED', lx, 45, '#ff4a4a', 8); lx += 48; } if (vs.fear) pxt('FEAR', lx, 45, '#c77dff', 8); pxt(vs.story ? (vs.foe === 'cat' ? 'CARTOON CAT' : 'VERITY') : foeName, VW - 6, 45, '#ffffff', 8, 'right'); let rx2 = VW - 6; if (dummy && dummy.bleed) { pxt('BLEED', rx2, 37, '#ff4a4a', 8, 'right'); rx2 -= 48; } if (dummy && dummy.fear) pxt('FEAR', rx2, 37, '#c77dff', 8, 'right'); pxt(vs.story ? 'SPECIAL GRADE' : GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
+  pxt(NAMES[vs.me] + (vs.meInv ? ' (INV.)' : ''), 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', nx, 45, bad ? '#ff6a5a' : cc[3], 8); let lx = nx + 62; if (vs.bleed) { pxt('BLEED', lx, 45, '#ff4a4a', 8); lx += 48; } if (vs.fear) pxt('FEAR', lx, 45, '#c77dff', 8); pxt(vs.story ? (vs.foe === 'cat' ? 'CARTOON CAT' : 'VERITY') : foeName, VW - 6, 45, '#ffffff', 8, 'right'); let rx2 = VW - 6; if (dummy && dummy.bleed) { pxt('BLEED', rx2, 37, '#ff4a4a', 8, 'right'); rx2 -= 48; } if (dummy && dummy.fear) pxt('FEAR', rx2, 37, '#c77dff', 8, 'right'); pxt(vs.story ? 'SPECIAL GRADE' : vs.net ? 'WI-FI' : GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
   if (!vs.story) pxt(String(Math.max(0, Math.ceil(vs.tl / 1000))), VW / 2, 18, vs.tl < 10000 ? '#ff6a5a' : '#ffffff', 16, 'center');
   const kob = vs.ph === 'ko';
   for (let i = 0; i < (vs.story ? 0 : 2); i++) {               // the round points (a pip lights up for every round won); the point that was just won blinks
@@ -1626,7 +1715,7 @@ function fatAiState(now) {                             // the enemy's own FATALI
 }
 function fatGo(now, dt, rev) { if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else if (rev ? vs.foe === 'cat' : vs.me === 'cat') { cfStart(now, rev); cfFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's and the Cat's FATALITY are their own cutscenes)
 function fatUI(now) {                                  // the button: only in a match, dark until it can be used, then it glows
-  const col = $('fat').parentNode; col.classList.toggle('vs', !!vs); col.classList.toggle('vy', !!vs && vs.me === 'verity'); col.classList.toggle('yj', !!vs && vs.me === 'yuji'); col.classList.toggle('ct', !!vs && vs.me === 'cat'); $('hud').classList.toggle('vs', !!vs); if (vs) $('fat').classList.toggle('rdy', fatState(now) === 0);
+  const col = $('fat').parentNode; col.classList.toggle('vs', !!vs); col.classList.toggle('vy', !!vs && vs.me === 'verity'); col.classList.toggle('yj', !!vs && vs.me === 'yuji'); col.classList.toggle('ct', !!vs && vs.me === 'cat'); col.classList.toggle('nt', !!vs && !!vs.net); $('hud').classList.toggle('vs', !!vs); if (vs) $('fat').classList.toggle('rdy', fatState(now) === 0);
 }
 function pressFat() { fatReq = pnow() + 500; }      // (a press is remembered for half a second, e.g. while he is still reeling)
 function fatStart(now, rev) {                          // rev = the enemy does it to Gojo
@@ -2682,6 +2771,7 @@ function drawScene(now, dt) {
     if (now - kickBuf > 300 || cm !== 1 || stance !== 'crouch') kickBuf = 0;
     else if (atkK === 13 && af >= 8) { kickBuf = 0; if (airUp(dummy) && dummy.ko < 0 && t >= 1 && hf < 0 && ceSpend(CE_COST.yKick, now)) { atkK = 14; atkAt = now; af = 0; atkQ = false; divP = null; snd('concgather'); } }
   }
+  if (vs && vs.net && !(jf >= 0)) lpReq = false;      // (the Wi-Fi fight: BLUE only in the air for now = teleport up)
   if (lpReq) {                                // BLUE: in mid-air = teleport up, then fall. On the ground: walking forward = stand and pull the enemy in (stuns 0.4 s); otherwise blink forward to the enemy; crouched = Max Blue
     lpReq = false;
     if (rdOrb && rdOrb.slow && !rdOrb.coat && cm !== 2 && (keyL || padL) && t >= 1 && jf < 0 && tf < 0 && df < 0 && hf < 0 && lf < 0 && sf < 0 && af < 0 && bf < 0 && (mf < 0 || mbK === 1) && ceSpend(CE_COST.coat, now)) { startCoat(now); mf = 0; }      // a slow red orb is flying: BLUE while walking back coats it in blue and he jumps on it
@@ -2725,7 +2815,7 @@ function drawScene(now, dt) {
   wx += dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * (crch ? 0.6 : 1) * (bf >= 0 ? 0.3 : 1) * dt;      // crouch-walking is slower, and walking while blocking is much slower still
   if (dash) { const k = Math.min(1, (now - dash.at) / dash.ms); wx = dash.from + (dash.to - dash.from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) dash = null; }   // Lapse Blue blink: a very fast dash
   if (df >= 0) { const k = Math.min(1, Math.max(0, (now - dgAt - 2000 / DASH_FPS) / 300)); wx = dgFrom + (dgTo - dgFrom) * (1 - Math.pow(1 - k, 3)); }      // the dash itself: fast at first, over frames 3-12
-  wx += wxv * dt; wxv *= Math.exp(-7 * dt); if (ride) updateRide(now);                    // knocked back by the attacking dummy: the world slides past, then friction stops it
+  wx += wxv * dt; wxv *= Math.exp(-7 * dt); if (ride) updateRide(now); if (vs && vs.net && dummy) wx = Math.max(dummy.x - NET_LEASH, Math.min(dummy.x - 14, wx));                    // knocked back by the attacking dummy: the world slides past, then friction stops it
 
   ctx.save();
   shkX = shkY = 0; if (now < shakeUntil) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }   // tiny shake on impact (the bars, names and timer are drawn back where they belong, so they stay still)
@@ -2803,6 +2893,7 @@ function drawScene(now, dt) {
   const fi = rmvK ? rmvF : yj ? yj.fi : riding ? ride.fi : hurting ? hf : fearing ? Math.floor(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)) % 15 : dodging ? df : blocking ? bfi : tele ? tf : jumping ? jf : mbing ? mf : lapsing ? lf : atkOn ? af : mode === 'cdn' ? (stance === 'down' ? sf : 14 - sf) : Math.floor(Math.max(0, now - (idle || mode === 'cidle' ? spawnAt : modeAt)) / (1000 / (idle || mode === 'cidle' ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail pnow() by a hair
   const lk = tele ? info.lift_k[tf] : 0;      // teleport: stays where he vanished (null), then the fixed height he reappears at, falling back to the ground
   const lift = gAir ? gAirH : yj ? yj.lift : riding ? ride.lift : tele ? (lk === null ? teleL0 : Math.round(Math.min(34, gy - 66) * lk)) : jumping ? (jumpC ? D.cjump : D.jump).lift[jf] : hurting && info.lift ? info.lift[hf] : 0;   // how far the sprite is raised off the ground
+  if (vs && vs.net) netPose(set, fi, lift);
   gojoLift = lift; gojoGone = tele && tf < 6;   // the attacking dummy misses him while he is up in the air or vanished
   const cx = Math.round(VW / 2), fo = fearing ? fearOff(now) : ultHeldOff(now), x = cx - (info.cx - info.x0) + fo[0], y = gy - 60 - info.top - lift + fo[1];
 
@@ -2815,11 +2906,11 @@ function drawScene(now, dt) {
   const gko = vs && vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // the enemy finished him in a match: after the hit-stop he topples backwards (like the enemy does) and stays down until the next round
   const paintMe = again => {      // (Gojo's picture: painted here, and once more on top of everything the DOMAIN shows)
   ctx.save();
-  if (vap) { /* gone */ } else if (gko >= 0) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); ctx.drawImage((yj ? YUF.norm.idle : idleF)[0], -((yj ? YU.idle : D.idle).cx - (yj ? YU.idle : D.idle).x0), -62); }
+  if (vap) { /* gone */ } else if (gko >= 0) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); { const ki = (yj ? YUF.norm.idle : idleF)[0]; ctx.drawImage(vs && vs.meInv ? invOf(ki) : ki, -((yj ? YU.idle : D.idle).cx - (yj ? YU.idle : D.idle).x0), -62); } }
   else {
     ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip();
     ctx.globalAlpha = Math.min(1, t * 2);
-    { const gp = (ceOn && (cm === 2 ? HOMAPR : HOMAP).get(set) || set)[fi]; ctx.drawImage(rmvK ? rmvPic(gp, rmvI) : blindOff && !yj ? blindDown(gp) : gp, x, y); } if (yj && hurting && now - hurtAt < 70) ctx.drawImage(whiteOf(set[fi]), x, y);        // cursed energy on: both hands out of the pockets
+    { const gp = (ceOn && (cm === 2 ? HOMAPR : HOMAP).get(set) || set)[fi]; const pp = rmvK ? rmvPic(gp, rmvI) : blindOff && !yj ? blindDown(gp) : gp; ctx.drawImage(vs && vs.meInv && !(hurting && now - hurtAt < 70) ? invOf(pp) : pp, x, y); } if (yj && hurting && now - hurtAt < 70) ctx.drawImage(whiteOf(set[fi]), x, y);        // cursed energy on: both hands out of the pockets
     if (fearing) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(blindOff && !yj ? blindDown(set[fi]) : set[fi]), x, y); }      // (JUMPSCARE: a pale pulse; with the blindfold down it follows the redrawn head)
   }
   ctx.restore(); if (!again) drawGiantNow('foe');
@@ -3529,6 +3620,7 @@ function tick(t) {
   else if (slowFin) { slowFin = false; snd('slowout'); }
   const now = t - vOff;
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
+  if (lanRole === 'in' && state === 'play') lanTick();      // (the Wi-Fi fight: his pictures are picked up every frame, not every 0.15 s)
   if (story && story.toOutro) { story.toOutro = false; startOutro(now); }      // (the fight against Verity is won: the ending of the chapter starts)
   if (state === 'play') { if (now < holdUntil) last = now; else drawScene(now, dt); }      // hit-stop: the picture freezes for a split second when the red orb explodes
   else if (state === 'versus') { const fr = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length; for (const q of vsPv) { q.g.clearRect(0, 0, 64, 64); q.g.drawImage(q.who === 'gojo' ? (q.inv ? dumF : idleF)[fr] : q.who === 'yuji' ? (q.inv ? YUF.inv : YUF.norm).idle[fr % 15] : q.who === 'cat' ? cfr('idle', now / 100, true, q.inv) : vfr('idle', now / 100, true, q.inv), 0, 0); } }
@@ -3600,7 +3692,7 @@ addEventListener('keydown', e => {
     return;
   }
   if (e.key !== 'Escape') return;
-  if (state === 'play') show('select'); else if (state === 'select') show('title');
+  if (state === 'play') { if (vs && vs.net) lanLeave(); else show('select'); } else if (state === 'select') show('title');
 });
 addEventListener('keyup', e => {
   if (e.target.id === 'lanName') return;
@@ -3636,14 +3728,15 @@ $('lanCreate').addEventListener('click', lanCreate);
 $('lanBrowse').addEventListener('click', lanBrowse);
 $('lanBack').addEventListener('click', lanBack);
 $('lsGojo').addEventListener('click', lanChoose);
+$('lsFight').addEventListener('click', lanFight);
 $('lsAgain').addEventListener('click', () => lanAgain(true));
 $('lsBack').addEventListener('click', lanLeave);
 addEventListener('pointerdown', () => { if (state === 'story') storySkip(); });      // a tap skips to the next part of the cutscene
 $('vsGo').addEventListener('click', () => startMatch(vsSel));
 $('vsNext').addEventListener('click', () => { const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
-$('vsAgain').addEventListener('click', () => startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe));
-$('vsMenu').addEventListener('click', () => { if (vs && vs.story) { show('saves'); renderSaves(); } else { buildGrades(); buildFighters(); show('versus'); } });
-$('back').addEventListener('click', () => show('select'));
+$('vsAgain').addEventListener('click', () => vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe));
+$('vsMenu').addEventListener('click', () => { if (vs && vs.net) { lanLeave(); return; } if (vs && vs.story) { show('saves'); renderSaves(); } else { buildGrades(); buildFighters(); show('versus'); } });
+$('back').addEventListener('click', () => { if (vs && vs.net) lanLeave(); else show('select'); });
 VOLS.forEach(([k, name]) => {
   const row = document.createElement('label');
   row.innerHTML = '<span>' + name + '</span><b></b><input type="range" min="0" max="200" step="5" aria-label="' + name + ' volume">';
@@ -3693,7 +3786,7 @@ window.__hit = k => gojoHit(k, pnow());           // test hook: the attacker's s
 window.__state = () => ({ cmode: cm, redOrb: !!rdOrb, orbV: rdOrb ? rdOrb.v : 0, coat: rdOrb ? !!rdOrb.coat : false, ride: ride ? ride.phase : '', lift: gojoLift, boom: !!boom, ce: ceOn, ceAmt: +ceAmt.toFixed(2), ho: HOMAP.size, stance, jumpC, mode, wx, stick: { x: stickX, y: stickY, up: stickUp, down: stickDown, held: stickCr }, lapse: lpAt >= 0 ? lpK : -1, dash: dgAt >= 0 ? dgK : -1, dashAir: dgAir, block: blkAt >= 0 ? (blkEnd < 0 ? 1 : 2) : 0, guard: guardUp(pnow()), mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests
 window.__back = () => {                       // Android back button: step back through the menus, otherwise let the app close
   if (settingsOn()) { closeSettings(); return true; }
-  if (state === 'play') { show('select'); return true; }
+  if (state === 'play') { if (vs && vs.net) lanLeave(); else show('select'); return true; }
   if (state === 'story') { show('saves'); renderSaves(); return true; }
   if (state === 'saves') { show('modes'); return true; }
   if (state === 'lansel') { lanLeave(); return true; }
