@@ -1170,6 +1170,27 @@ function blindMid(src, p) {      // the picture with the blindfold pulled p (0-1
   for (let y = ay; y < ay + 3 && y + k < h; y++) for (let x = x0; x <= x1; x++) { const i = (y * w + x) * 4, j = ((y + k) * w + x) * 4; if (isB(i)) { od[j] = sd[i]; od[j + 1] = sd[i + 1]; od[j + 2] = sd[i + 2]; od[j + 3] = 255; } }      // (the band itself, k rows lower)
   g.putImageData(out, 0, 0); m[k] = c; return c;
 }
+const RMK = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 6, 6], RMW = [null, null, [-1, 22], [0, 18], [1, 13], [2, 8], [2, 4], [2, 2], [2, 2], [2, 3], [2, 4], [2, 5], [2, 6], [2, 7], [2, 8], [2, 8], [1, 12], [0, 17], [-1, 21], null];      // the 20 frames of the blindfold: how far down the band is (0-6 rows) and where his far hand is (dx from the band's front end, dy from its top row; null = out of sight in the pocket)
+const RMC = new Map(), BRC = new Map();
+function bandRef(gp) {      // where the band is in a picture that still has it: [its top row, the x of its front end]
+  if (BRC.has(gp)) return BRC.get(gp); let r = null;
+  if (gp.getContext) { const w = gp.width, h = gp.height, d = gp.getContext('2d').getImageData(0, 0, w, h).data, isX = (x, y) => { const i = (y * w + x) * 4; return d[i] === 14 && d[i + 1] === 11 && d[i + 2] === 18 && d[i + 3] === 255; };
+    for (let y = 0; y < h && !r; y++) { let n = 0; for (let x = 0; x < w; x++) if (isX(x, y)) n++; if (n >= 4) { let x1 = 0; for (let yy = y; yy < y + 3 && yy < h; yy++) for (let x = 0; x < w; x++) if (isX(x, yy) && x > x1) x1 = x; r = [y, x1]; } } }
+  BRC.set(gp, r); return r;
+}
+function rmvPic(gp, i) {      // frame i (0-19) of Gojo taking the blindfold off with his OTHER hand (the far one): the sleeve and hand come out of the pocket, rise along his front to the front end of the band, hook it, pull it down his face to his neck (the glowing eyes appear), let go and go back down; made once per (picture, frame)
+  let m = RMC.get(gp); if (!m) RMC.set(gp, m = []); if (m[i]) return m[i];
+  const w = gp.width, h = gp.height, c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(blindMid(gp, RMK[i] / 6), 0, 0);
+  const ref = bandRef(gp), W = RMW[i];
+  if (ref && W) {
+    const wx = ref[1] + W[0], wy = ref[0] + W[1], ex = ref[1] - 2, ey = ref[0] + 20, line = (x0, y0, x1, y1, th, col) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1); g.fillStyle = col; for (let q = 0; q <= n; q++) g.fillRect(Math.round(x0 + (x1 - x0) * q / n - th / 2), Math.round(y0 + (y1 - y0) * q / n - th / 2), th, th); };
+    g.globalCompositeOperation = i >= 16 ? 'destination-over' : 'source-over';      // (while the near hand rises, the far one goes down behind it)
+    line(ex, ey, wx, wy + 1, 4, '#0f0b14'); line(ex, ey, wx, wy + 1, 2, '#3b3050'); line(ex, ey, wx, wy + 1, 1, '#6d56a0');      // the sleeve: outline, cloth, a lit seam
+    g.fillStyle = '#0f0b14'; g.fillRect(wx - 2, wy - 3, 6, 6); g.fillStyle = '#eec7b4'; g.fillRect(wx - 1, wy - 2, 4, 4); g.fillStyle = '#fbe3d4'; g.fillRect(wx - 1, wy - 2, 4, 1); g.fillStyle = '#d1a08f'; g.fillRect(wx - 1, wy + 1, 4, 1); if (i >= 7 && i <= 15) { g.fillStyle = '#0f0b14'; g.fillRect(wx - 4, wy - 3, 3, 4); g.fillStyle = '#eec7b4'; g.fillRect(wx - 3, wy - 2, 2, 1); g.fillRect(wx - 3, wy, 2, 1); }      // (the hand; two fingers pinch the band while he pulls)
+    g.globalCompositeOperation = 'source-over';
+  }
+  m[i] = c; return c;
+}
 const FACE_N = 29;      // frames of the blindfold close-up (tools/gojo_pull.png: 320 x 128 each, stacked downwards)
 function drawFaceClose(k, rev) {      // the blindfold close-up (the reference GIF, cut out and pixelated by tools/face_gif.py), full screen: k = how far the move is (0-1), rev = played backwards (the blindfold goes back on)
   const g = SIMG.gface && SIMG.gface.pull; ctx.fillStyle = '#000'; ctx.fillRect(-8, -8, VW + 16, VH + 16); if (!g || !g.complete || !g.naturalWidth) return;      // (the picture keeps the GIF's own background and fills the screen)
@@ -2629,10 +2650,10 @@ function drawScene(now, dt) {
     if (!crch) { if (dir > 0) { bset = wblkF; binfo = D.wfb; bfi = slow % 15; } else if (dir < 0) { bset = wblkB; binfo = D.wbb; bfi = slow % 15; } else { bset = atkF[11]; binfo = D.atk11; bfi = bf; } }
     else if (dir > 0) { bset = crF.fblk; binfo = D.cfb; bfi = slow % 15; } else if (dir < 0) { bset = crF.bblk; binfo = D.cbb; bfi = slow % 15; } else { bset = crF.blk; binfo = D.cb; bfi = Math.floor(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)) % 15; }
   }
-  let rmvK = 0, rmvF = 0, rmvP = 0;      // THE BLINDFOLD (the domain's first and last second, and Hollow Purple's): Gojo himself takes it off / puts it back on, over exactly the time the close-up GIF used to take (2.2 s, 1 s, 1.4 s, 1 s): 0-35% the hand rises (the block pose's first five frames), 35-85% the band slides down his face, then it hangs at his neck; putting it on plays the same backwards. After Hollow Purple's the hand comes back down at the end
+  let rmvK = 0, rmvF = 0, rmvI = 0;      // THE BLINDFOLD (the domain's first and last second, and Hollow Purple's): Gojo himself takes it off / puts it back on, over exactly the time the close-up GIF used to take (2.2 s, 1 s, 1.4 s, 1 s): 20 frames (rmvPic): his OTHER (far) hand comes out of the pocket, rises to the band, pulls it down his face to his neck and goes back down, and in the last four frames the near hand rises into the domain pose (after Hollow Purple's it stays down); putting it on plays the same 20 frames backwards
   if (!(vs && vs.me === 'yuji') && (bfo || (dom && (dom.ph === 'blind' || dom.ph === 'reblind')))) {
     const on = bfo ? bfo.kind === 'on' : dom.ph === 'reblind', t0 = bfo ? bfo.t0 : dom.p0, ms = bfo ? bfo.ms : DOM_MS[dom.ph], T = Math.max(0, Math.min(1, (now - t0) / ms)), u = on ? 1 - T : T;
-    rmvK = on ? -1 : 1; rmvP = Math.max(0, Math.min(1, (u - 0.35) / 0.5)); rmvF = Math.round(4 * (bfo && u > 0.8 ? 1 - (u - 0.8) / 0.2 : Math.min(1, u / 0.35)));
+    rmvK = on ? -1 : 1; rmvI = Math.max(0, Math.min(19, Math.floor(u * 20))); rmvF = !bfo && rmvI >= 16 ? rmvI - 15 : 0;
   }
   const fearing = now < pStun && !hurting, riding = !!ride, yj = vs && vs.me === 'yuji' ? yujiPick({ now, atkOn, atkK, af, hurting, hurtK, hurtAt, hf, dodging, dgK, dgCr, df, jumping, jumpC, jf, mode, idle, sf, stance, spawnAt, modeAt, blocking, bf, dir }) : null, set = rmvK ? atkF[11] : yj ? yj.set : riding ? ride.set : hurting ? (now - hurtAt < 70 ? rxW : rxN)[hurtK] : fearing ? crF.idle : dodging ? atkF[9 + dgK + (dgCr ? 3 : 0)] : blocking ? bset : tele ? teleF : jumping ? (jumpC ? crF.jump : jumpF) : mbing ? (mbK ? redF : mbF) : lapsing ? lapseF[lpK] : atkOn ? atkF[atkK] : mode === 'cdn' ? crF.dn : mode === 'cidle' ? crF.idle : mode === 'cfwd' ? crF.fwd : mode === 'cback' ? crF.back : idle ? idleF : mode === 'fwd' ? fwdF : backF;
   const info = rmvK ? D.atk11 : yj ? yj.info : riding ? ride.info : hurting ? D['rx' + hurtK] : fearing ? D.cidle : dodging ? D['atk' + (9 + dgK + (dgCr ? 3 : 0))] : blocking ? binfo : tele ? D.tele : jumping ? (jumpC ? D.cjump : D.jump) : mbing ? (mbK ? D.atk22 : D.atk8) : lapsing ? D['atk' + (4 + lpK)] : atkOn ? D['atk' + atkK] : mode === 'cdn' ? D.cdn : mode === 'cidle' ? D.cidle : mode === 'cfwd' ? D.cfwd : mode === 'cback' ? D.cback : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
@@ -2655,7 +2676,7 @@ function drawScene(now, dt) {
   else {
     ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip();
     ctx.globalAlpha = Math.min(1, t * 2);
-    { const gp = (ceOn && (cm === 2 ? HOMAPR : HOMAP).get(set) || set)[fi]; ctx.drawImage(rmvK ? blindMid(gp, rmvP) : blindOff && !yj ? blindDown(gp) : gp, x, y); } if (yj && hurting && now - hurtAt < 70) ctx.drawImage(whiteOf(set[fi]), x, y);        // cursed energy on: both hands out of the pockets
+    { const gp = (ceOn && (cm === 2 ? HOMAPR : HOMAP).get(set) || set)[fi]; ctx.drawImage(rmvK ? rmvPic(gp, rmvI) : blindOff && !yj ? blindDown(gp) : gp, x, y); } if (yj && hurting && now - hurtAt < 70) ctx.drawImage(whiteOf(set[fi]), x, y);        // cursed energy on: both hands out of the pockets
     if (fearing) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(blindOff && !yj ? blindDown(set[fi]) : set[fi]), x, y); }      // (JUMPSCARE: a pale pulse; with the blindfold down it follows the redrawn head)
   }
   ctx.restore(); if (!again) drawGiantNow('foe');
