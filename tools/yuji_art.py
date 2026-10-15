@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Yuji Itadori in side view (facing right), 64x64 16-bit style like Gojo's sprites.
-Writes yuji.json (also atk0-atk3 = the M1, atk4 = DIVERGENT FIST, atk5-atk8 = the cursed energy M1 (roundhouse, elbow, downslam, push kick), atk9 = CONCENTRATED FIST, atk10 = the SWEEP, atk11 = the POWER-UP (switching cursed energy on), atk12 = RUSH FIST (the super fast DIVERGENT FIST on the run), atk13 = the UPPERCUT (crouched CONCENTRATED FIST: launches the enemy), atk14 = the FACE KICK (the flying kick into the launched enemy), blk = BLOCK (10 frames) and bfwd = walking with the guard up): idle (15 frames), fwd (15-frame walk; the game plays it backwards for walking back), jump (15 frames + the lift per frame).
+Writes yuji.json (also atk0-atk3 = the M1, atk4 = DIVERGENT FIST, atk5-atk8 = the cursed energy M1 (roundhouse, elbow, downslam, push kick), atk9 = CONCENTRATED FIST, atk10 = the SWEEP, atk11 = the POWER-UP (switching cursed energy on), atk12 = RUSH FIST (the super fast DIVERGENT FIST on the run), atk13 = the UPPERCUT (crouched CONCENTRATED FIST: launches the enemy), atk14 = the FACE KICK (the flying kick into the launched enemy), atk15 = the SPIN ELBOW (BLUE in the air in cursed energy mode: a spin, then an elbow down onto the enemy), blk = BLOCK (10 frames) and bfwd = walking with the guard up): idle (15 frames), fwd (15-frame walk; the game plays it backwards for walking back), jump (15 frames + the lift per frame).
 Every frame is drawn from joints: hips, a two-bone IK for each leg, shoulders, a boxer's guard for the arms, hair tufts that move."""
 import json, math, os, sys
 from PIL import Image, ImageDraw
@@ -469,6 +469,26 @@ def pack_rx(k):
     fr = [rxf(k, i) for i in range(15)]; xs = [x for g, _, _ in fr for r in g for x, c in enumerate(r) if c != '.']; x0 = max(0, min(xs) - 1); x1 = min(W96 - 1, max(xs) + 1); w = x1 - x0 + 1
     return {'x0': x0, 'w': w, 'h': N, 'top': 0, 'cx': 34 + OFF, 'frames': [[''.join(r[x0:x0 + w]) for r in g] for g, _, _ in fr], 'hn': [[round(n[0] - x0, 1), round(n[1], 1)] for _, n, _ in fr], 'hf': [[round(h[0] - x0, 1), round(h[1], 1)] for _, _, h in fr],
             **({'lift': RX_LIFT_Y[k]} if k in RX_LIFT_Y else {})}
+# ---------------------------------------------------------------- the SPIN ELBOW (atk15, hit 48; cursed energy mode, BLUE while jumping): he leaps (frames 0-2, the enemy Yuji starts here; the player starts on frame 3 from his own jump), spins once in the air (3-8: the picture is squashed about his vertical axis like the spin reaction), unfolds leaning forward with the elbow cocked (9-10), drives the elbow down onto the enemy (the impact is frame 11) and lands in a crouch (12-14). 96-wide grid like the reactions (pack_sp)
+SP_LIFT = [0, 6, 14, 20, 24, 26, 26, 24, 22, 20, 17, 14, 8, 2, 0]
+SP_SQ = {4: .31, 5: -.81, 6: -.81, 7: .31}
+def sp_params(i):
+    if i == 0: P = dict(by=4, ln=1, lf=(36, GR, 0), lb=(30, GR, 0), na=GUARD_N, fa=GUARD_F)
+    elif i == 1: P = dict(by=-1, ln=0, lf=(35, GR - 3, 25), lb=(31, GR - 4, 30), na=((2, -2), (4, -7)), fa=((1, -2), (3, -6)), hup=1)
+    elif i <= 8: P = dict(by=-2, ln=0, hx=1, lf=(36, 52, 20), kf=(41, 47), lb=(31, 52, 25), kb=(36, 48), na=((4, 3), (2, 0)), fa=((3, 3), (1, 0)), hup=1, mo=i >= 4)
+    elif i <= 11: P = dict(by=-1, ln=(5, 7, 8)[i - 9], hx=1, lf=(33, 49, 5), lb=(28, 47, -10), na=((6, 8), (3, 1)) if i >= 10 else ((3, 2), (4, -5)), fa=((3, 4), (6, 1)), hup=1, mo=True)
+    else: P = dict(by=(6, 3, 0)[i - 12], ln=(3, 1, 0)[i - 12], lf=(36, GR, 0), lb=(30, GR, 0), na=GUARD_N if i < 14 else IDLE_N, fa=GUARD_F if i < 14 else IDLE_F)
+    P.update(hp=i*.9, blink=False); return P
+def spinf(i):
+    P = sp_params(i); f, nh, fh = figure(P)
+    if 4 <= i <= 7: streak(f, [(22, 37), (34, 29), (47, 37), (34, 45)], (1, 3, 3, 1), (0, .6, .9, .3), True)               # the white arc of the spin round him
+    if i in (10, 11): sx, sy = 34 + P['ln'], 31 + P['by']; burst(f, round(sx + P['na'][0][0] + 2), round(sy + P['na'][0][1] + 1), 4 if i == 11 else 2)   # the elbow's blow
+    gr = wide(f); nh, fh = (nh[0] + OFF, nh[1]), (fh[0] + OFF, fh[1]); sq = SP_SQ.get(i, 1)
+    if sq != 1: gr = g_warp(gr, sq, AX); nh, fh = [(AX + (p[0] - AX)*sq, p[1]) for p in (nh, fh)]
+    return gr, nh, fh
+def pack_sp():
+    fr = [spinf(i) for i in range(15)]; xs = [x for g, _, _ in fr for r in g for x, c in enumerate(r) if c != '.']; x0 = max(0, min(xs) - 1); x1 = min(W96 - 1, max(xs) + 1); w = x1 - x0 + 1
+    return {'x0': x0, 'w': w, 'h': N, 'top': 0, 'cx': 34 + OFF, 'frames': [[''.join(r[x0:x0 + w]) for r in g] for g, _, _ in fr], 'hn': [[round(n[0] - x0, 1), round(n[1], 1)] for _, n, _ in fr], 'hf': [[round(h[0] - x0, 1), round(h[1], 1)] for _, _, h in fr], 'lift': SP_LIFT}
 def pack(fn, x0, w, top, n=15):
     frames, hn, hf = [], [], []; sh = top
     for i in range(n):
@@ -489,13 +509,14 @@ if __name__ == '__main__':
         if k == 'atk13': out[k]['lift'] = UP_LIFT
         if k == 'atk14': out[k]['lift'] = FK_LIFT
     for k in range(10): out['rx%d' % k] = pack_rx(k)
+    out['atk15'] = pack_sp()                                                  # the SPIN ELBOW
     fr, hn, hf = pack(block, X0, 44, 0, 10); out['blk'] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}      # BLOCK (10 frames)
     fr, hn, hf = pack(bwalk, X0, 44, 0); out['bfwd'] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}      # walking with the guard up
     json.dump(out, open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'yuji.json'), 'w'), separators=(',', ':'))
-    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct', 'x0', out[k]['x0'], 'w', out[k]['w'])
+    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'atk15', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct', 'x0', out[k]['x0'], 'w', out[k]['w'])
     if len(sys.argv) > 1:                                                  # contact sheets: python3 -B yuji_art.py sheets <dir>
         d = sys.argv[2]; z = 2
-        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]):
+        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'atk15', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]):
             s = out[k]; sheet = Image.new('RGB', (15*s['w']*z, s['h']*z), (40, 40, 70)); px = {c: tuple(int(PAL[c][j:j+2], 16) for j in (1, 3, 5)) for c in PAL}
             for n, rows in enumerate(s['frames']):
                 for y, row in enumerate(rows):
