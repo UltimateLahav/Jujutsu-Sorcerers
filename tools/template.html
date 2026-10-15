@@ -654,7 +654,7 @@ function dummyDiv2(now) {      // the second impact on the enemy: it only needs 
   if (d.hp <= 0) koDummy(now);
 }
 function gojoDiv2(now) {      // the second impact on you (the enemy's DIVERGENT FIST): nothing you do after the first impact stops it, not even a block
-  const d = dummy; if (!d || !(d.divOk && now - d.divOk < 900) || gojoGone) return; d.divOk = 0; const k2 = d.divK === 44 ? 45 : 37;
+  const d = dummy; if (dom || !d || !(d.divOk && now - d.divOk < 900) || gojoGone) return; d.divOk = 0; const k2 = d.divK === 44 ? 45 : 37;
   hurtK = 1; hurtAt = now; atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; wxv -= KNOCK_G[k2] * 0.9;
   const dm = Math.round(DMG[k2] * (vs ? GRADES[vs.gi].dmg : 1)); say('' + dm, wx, '#ff9a5a', 8, now);
   if (vs && vs.ph === 'fight') vsHurt(dm, now); snd('hurt', 1); divSecond(now, wx, !vs || vs.hp > 0);
@@ -720,6 +720,7 @@ function hitDummy(k, now) {                   // called on the impact frame: a h
   if (dummy.hp <= 0) koDummy(now);            // (a normal punch or kick that finishes him ends the round in a match too)
 }
 function gojoHit(k, now) {                    // the attacking dummy's swing connects with Gojo
+  if (dom) return;      // (the DOMAIN freezes everyone, whatever they were doing: nothing of the enemy's touches you until it is over)
   if (isD2(k)) { gojoDiv2(now); return; }      // (DIVERGENT FIST's second impact, normal or RUSH: see gojoDiv2)
   if (dgAt >= 0 && now - dgAt < 11 * 1000 / DASH_FPS) return;       // he is dashing: the swing misses
   const held = vs && vs.foe === 'cat' && k >= 30 && k <= 33 && now < (vs.catHold || 0);      // (inside the Cat's glove the combo cannot miss because Gojo is 'still reeling')
@@ -773,7 +774,7 @@ function drawDummy(now, dt) {
   pendingGiants.length = 0; pendingEnemy = null; if (!dummy || dummy.gone) return;
   if (dummy.ko >= 0 && now - dummy.ko > 2300 && !vs) spawnDummy(now, dummy.mode);            // knocked out: a fresh one steps in after a moment
   airStepDummy(now);      // (an enemy in the air: his height and the frame of his reaction)
-  if (dummy.mode === 'fighter' && !(dummy.vform && dummy.vform !== 'verity')) { if (vs) updateFighterVs(now, dt); else updateFighter(now, dt); }      // (as the smiley ball he does nothing)
+  if (dummy.mode === 'fighter' && !dom && !(dummy.vform && dummy.vform !== 'verity')) { if (vs) updateFighterVs(now, dt); else updateFighter(now, dt); }      // (as the smiley ball he does nothing)
   if (dummy.pull) { const k = Math.min(1, (now - dummy.pull.at) / dummy.pull.ms); dummy.x = dummy.pull.from + (dummy.pull.to - dummy.pull.from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) dummy.pull = null; }
   dummy.x += dummy.vx * dt; dummy.vx *= Math.exp(-7 * dt);                              // knock-back slide with friction
   if (vs && vs.foe === 'yuji') { const on = !!dummy.ce && now >= (dummy.ceFlame || 0); dummy.ceA = (dummy.ceA || 0) + ((on ? 1 : 0) - (dummy.ceA || 0)) * Math.min(1, dt * (on ? 16 : 10)); if (!on && dummy.ceA < 0.03) dummy.ceA = 0; }      // (the enemy Yuji's flames swell in quickly and die away a little slower, as yours do)
@@ -1113,7 +1114,7 @@ const VOID_IMG = '__VOIDIMG__', VF_N = 12, VF_W = 160, VF_H = 64, VF_FPS = 6;   
 const voidImg = new Image(); voidImg.src = VOID_IMG; let domBox = null;
 const DOM_ORDER = ['blind', 'pose', 'face', 'wide', 'burst', 'void', 'collapse', 'reblind'], DOM_MS = { blind: 2200, pose: 900, face: DF_N * 1000 / DF_FPS, wide: 1500, burst: 1900, void: 10000, collapse: 1400, reblind: 1000 };      // (blind: the blindfold comes down, reblind: it goes back on; both are close-ups of his face)
 let dom = null, domHold = false, domReq = false, domReadyAt = 0, voidCv = null, voidG = null;
-function domFrozen() { return !!dom && dom.ph !== 'collapse'; }
+function domFrozen() { return !!dom; }      // (the people stand still for the whole domain, the collapse too)
 function domLock() { return !!dom && dom.ph !== 'void' && dom.ph !== 'collapse'; }
 function voidOn() { return !!dom && dom.ph === 'void'; }
 function domBgOff(now) { return !!dom && (dom.ph === 'void' || (dom.ph === 'burst' && now - dom.p0 >= 350)); }
@@ -1176,7 +1177,7 @@ function bfTick(now) {
 function bfOverlay(now) { if (bfo) drawFaceClose(Math.min(1, (now - bfo.t0) / bfo.ms), bfo.kind === 'on'); }
 function startDomain(now) {
   dom = { ph: blindOff ? 'pose' : 'blind', p0: now, zoomed: false, burst: false, eyes: false, ping: now + 1500 + (blindOff ? 0 : DOM_MS.blind) }; domHold = true; snd('domainstart'); if (dom.ph === 'blind') snd('cloth');
-  if (dummy && dummy.ko < 0) { const tot = (dom.ph === 'blind' ? DOM_MS.blind : 0) + DOM_MS.pose + DOM_MS.face + DOM_MS.wide + DOM_MS.burst + DOM_MS.void; dummy.stunUntil = now + tot; dummy.pull = null; dummy.vx = 0; dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = tot + 300; }      // the enemy is frozen (a swing in progress is cancelled) until the void ends
+  if (dummy && dummy.ko < 0) { const tot = (dom.ph === 'blind' ? DOM_MS.blind : 0) + DOM_MS.pose + DOM_MS.face + DOM_MS.wide + DOM_MS.burst + DOM_MS.void; dummy.stunUntil = now + tot; dummy.pull = null; dummy.vx = 0; dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = tot + 300; dummy.cact = null; dummy.vact = null; dummy.held = null; dummy.cheld = null; dummy.dodgeUntil = 0; dummy.hitDone = true; dummy.swung = true; if (vs) vs.catHold = 0; if (ult) ultCancel(now); }      // the enemy is frozen (a swing in progress is cancelled) until the void ends
 }
 function domTick(now) {
   if (dom || domReadyAt > now) setDomUI(now);
@@ -1188,7 +1189,7 @@ function domTick(now) {
   if (dom.ph === 'void' && now >= dom.ping) { dom.ping = now + 500 + Math.random() * 900; snd('voidping'); }
   if (a >= DOM_MS[dom.ph]) {
     const i = DOM_ORDER.indexOf(dom.ph) + 1;
-    if (i >= DOM_ORDER.length) { dom = null; domHold = false; blindOff = false; domReadyAt = now + DOM_CD; setDomUI(now); return; }      // (the blindfold is back on)
+    if (i >= DOM_ORDER.length) { dom = null; domHold = false; blindOff = false; domReadyAt = now + DOM_CD; setDomUI(now); const dd = dummy; if (dd && dd.ko < 0) { dd.stunUntil = now; dd.ai = 'rest'; dd.aiAt = now; dd.restFor = 500; } return; }      // (the blindfold is back on; the enemy wakes up)
     dom.ph = DOM_ORDER[i]; dom.p0 = now; if (dom.ph === 'pose') blindOff = true;
     if (dom.ph === 'reblind') { snd('cloth'); const d = dummy; if (d && d.ko < 0) { d.stunUntil = Math.max(d.stunUntil, now + DOM_MS.reblind + 200); d.pull = null; d.vx = 0; d.ai = 'rest'; d.aiAt = now; d.restFor = DOM_MS.reblind + 500; } }      // (the close-up hides the fight: the enemy is held for it)
     if (dom.ph === 'face') snd('domainface'); else if (dom.ph === 'void') { domHold = false; snd('voidon'); } else if (dom.ph === 'collapse') { snd('voidoff'); snd('domainend'); }
@@ -1296,7 +1297,7 @@ function vsTick(now, dt) {
   if (vs.me === 'cat') { ceReq = false; if (stance !== 'stand') blockHeld = false; }      // the Cat has no MODE; he blocks standing only (flat nothing can hit him anyway)
   if (vs.me === 'yuji') { domReq = false; if (stance !== 'stand') { atkReq = blockHeld = false; if (stance !== 'crouch') lpReq = false; } }      // Yuji has his M1 combo, BLUE (DIVERGENT FIST standing, CONCENTRATED FIST in cursed energy mode, crouched: the SWEEP in normal mode and the UPPERCUT, then the FACE KICK, in cursed energy mode), the cursed energy MODE (off <-> on, no red mode), block, walking, jumping, crouching and dashing (no DOMAIN, and no punches while crouched)
 }
-function vsHurt(dm, now) { vs.hp = Math.max(0, vs.hp - dm); vs.hitAt = now; if (vs.hp <= 0) { if (!vs.story || vs.foe === 'cat') endRound('enemy', 'ko', now); else if (!de && !se) deathStart(now); } }      // (in the story fight Gojo's death is a cutscene)
+function vsHurt(dm, now) { if (dom) return; vs.hp = Math.max(0, vs.hp - dm); vs.hitAt = now; if (vs.hp <= 0) { if (!vs.story || vs.foe === 'cat') endRound('enemy', 'ko', now); else if (!de && !se) deathStart(now); } }      // (in the story fight Gojo's death is a cutscene)
 function endRound(who, why, now) {
   if (!vs || vs.ph !== 'fight') return; vs.ph = 'ko'; vs.t0 = now; vs.who = who; vs.why = why; if (who === 'player') vs.pw++; else vs.ew++;
   if (why === 'ko') holdUntil = Math.max(holdUntil, now + KO_HOLD); vs.koAt = Math.max(now, holdUntil); snd(who === 'player' ? 'finisher' : 'ko');      // (koAt: when the loser starts to topple)
@@ -2417,7 +2418,7 @@ function drawScene(now, dt) {
   if (vf) { vfFrame(now, dt); return; }         // ...and Verity's FATALITY
   if (cf) { cfFrame(now, dt); return; }         // ...and the Cat's FATALITY
   if (ke) { keFrame(now, dt); return; }         // ...and the end of the Cat in the story
-  domTick(now); bfTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); if (vs && vs.foe === 'verity') storyBattleTick(now, dt); else if (vs && vs.foe === 'cat') catTick(now, dt); ultTick(now, dt);
+  domTick(now); bfTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); if (!dom) { if (vs && vs.foe === 'verity') storyBattleTick(now, dt); else if (vs && vs.foe === 'cat') catTick(now, dt); ultTick(now, dt); }      // (the DOMAIN freezes everyone: none of the enemy's own clocks run while it lasts)
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
     const fs = fatState(now);
     if (fs === 0) { fatReq = 0; if (ceSpend(CE_COST.fatal, now)) { fatGo(now, dt, false); return; } }      // (his own FATALITY costs 50% cursed energy; the enemy's is free)
@@ -2629,6 +2630,7 @@ function drawScene(now, dt) {
 
   const ry = Math.round(info.h * (1 - e));    // spawn: materialise from the feet up
   const gko = vs && vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // the enemy finished him in a match: after the hit-stop he topples backwards (like the enemy does) and stays down until the next round
+  const paintMe = again => {      // (Gojo's picture: painted here, and once more on top of everything the DOMAIN shows)
   ctx.save();
   if (vap) { /* gone */ } else if (gko >= 0) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); ctx.drawImage((yj ? YUF.norm.idle : idleF)[0], -((yj ? YU.idle : D.idle).cx - (yj ? YU.idle : D.idle).x0), -62); }
   else {
@@ -2637,9 +2639,10 @@ function drawScene(now, dt) {
     { const gp = (ceOn && (cm === 2 ? HOMAPR : HOMAP).get(set) || set)[fi]; ctx.drawImage(blindOff && !yj ? blindDown(gp) : gp, x, y); } if (yj && hurting && now - hurtAt < 70) ctx.drawImage(whiteOf(set[fi]), x, y);        // cursed energy on: both hands out of the pockets
     if (fearing) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(blindOff && !yj ? blindDown(set[fi]) : set[fi]), x, y); }      // (JUMPSCARE: a pale pulse; with the blindfold down it follows the redrawn head)
   }
-  ctx.restore(); drawGiantNow('foe');
+  ctx.restore(); if (!again) drawGiantNow('foe');
   if (yj && atkOn && (atkK === 4 || atkK === 9 || atkK === 12 || atkK === 13) && info.hn && !vap) divGlow(x + info.hn[fi][0], y + info.hn[fi][1], fi, now, atkK === 9 || atkK === 13);      // (DIVERGENT FIST and CONCENTRATED FIST: the cursed energy round your fist)
-  if (t >= 1 && gko < 0 && !vap) { drawCE(now, x, y, info, fi); drawRedFx(now, dt, x, y, info, fi, mbing && mbK === 1, mf); }
+  if (t >= 1 && gko < 0 && !vap) { drawCE(now, x, y, info, fi); if (!again) drawRedFx(now, dt, x, y, info, fi, mbing && mbK === 1, mf); }
+  }; paintMe(false);
 
   if (tele && (tf === 2 || tf === 3)) { ctx.fillStyle = 'rgba(160,220,255,0.12)'; ctx.fillRect(0, 0, VW, VH); }   // soft blue flash on the teleport
   if (t < 1) {                                // spawn ring + flash
@@ -2652,7 +2655,7 @@ function drawScene(now, dt) {
     ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')';
     ctx.fillRect(0, 0, VW, VH);
   }
-  drawDivFx(now); drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); drawVs(now, -shkX, -shkY); domOverlay(now); bfOverlay(now);
+  drawDivFx(now); drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); drawVs(now, -shkX, -shkY); domOverlay(now); bfOverlay(now); if (dom || bfo) paintMe(true);      // (everything the DOMAIN shows, even its pop-up and the blindfold close-up, is a layer UNDER Gojo: he is painted again on top of it)
   ctx.restore();
   if (now < flashUntil) { ctx.fillStyle = 'rgba(190,225,255,' + (flashA * (flashUntil - now) / flashMs) + ')'; ctx.fillRect(0, 0, VW, VH); }
   if (now < blackUntil) { ctx.fillStyle = 'rgba(0,0,0,' + ((blackUntil - now) / 600).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (coming out of the red ending: from black)
