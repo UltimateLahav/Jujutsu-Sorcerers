@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Yuji Itadori in side view (facing right), 64x64 16-bit style like Gojo's sprites.
-Writes yuji.json (also atk0-atk3 = the M1, atk4 = DIVERGENT FIST, atk5-atk8 = the cursed energy M1 (roundhouse, elbow, downslam, push kick), atk9 = CONCENTRATED FIST, atk10 = the SWEEP, atk11 = the POWER-UP (switching cursed energy on), atk12 = RUSH FIST (the super fast DIVERGENT FIST on the run), blk = BLOCK (10 frames) and bfwd = walking with the guard up): idle (15 frames), fwd (15-frame walk; the game plays it backwards for walking back), jump (15 frames + the lift per frame).
+Writes yuji.json (also atk0-atk3 = the M1, atk4 = DIVERGENT FIST, atk5-atk8 = the cursed energy M1 (roundhouse, elbow, downslam, push kick), atk9 = CONCENTRATED FIST, atk10 = the SWEEP, atk11 = the POWER-UP (switching cursed energy on), atk12 = RUSH FIST (the super fast DIVERGENT FIST on the run), atk13 = the UPPERCUT (crouched CONCENTRATED FIST: launches the enemy), atk14 = the FACE KICK (the flying kick into the launched enemy), blk = BLOCK (10 frames) and bfwd = walking with the guard up): idle (15 frames), fwd (15-frame walk; the game plays it backwards for walking back), jump (15 frames + the lift per frame).
 Every frame is drawn from joints: hips, a two-bone IK for each leg, shoulders, a boxer's guard for the arms, hair tufts that move."""
 import json, math, os, sys
 from PIL import Image, ImageDraw
@@ -291,7 +291,58 @@ def powerup(i):                                    # CURSED ENERGY ON: both hand
         pn, pf = figure(pu_params(i - 1))[1:]
         streak(f, [pf, fh], (1.0, 3.4), (0, 1), False); streak(f, [pn, nh], (1.0, 3.4), (0, 1), False)
     return f, nh, fh
-ATTACKS = (('atk0', lambda i: hook(i, False)), ('atk1', lambda i: hook(i, True)), ('atk2', knee), ('atk3', kick3), ('atk4', divergent), ('atk5', rkick, 16, 48), ('atk6', elbow), ('atk7', downslam), ('atk8', pushkick), ('atk9', conc), ('atk10', sweep, 12, 52), ('atk11', powerup), ('atk12', rush, 16, 48))
+# ---------------------------------------------------------------- the CROUCHED CONCENTRATED FIST (cursed energy mode, BLUE while crouched): the UPPERCUT (atk13, hit 46) launches the enemy into the air, and pressing it again within the air time throws the FACE KICK (atk14, hit 47): a flying kick up into the airborne enemy's face. Both start and end in the crouch (cidle) so the stance never pops.
+UP_N = {0: ((3, 4), (6, 0)), 1: ((0, 6), (-1.5, 11)), 2: ((-2, 7), (-3, 13.5)), 3: ((-1, 8), (0, 14.5)), 4: ((3, 7), (6.5, 11.5)), 5: ((6, 2.5), (9.5, -1.5)), 6: ((5.5, -4), (8, -11.5)), 7: ((5, -4.5), (7.5, -12.5)), 9: ((5, -4), (7.5, -11.5)), 10: ((4.5, -1.5), (7.5, -6.5)), 11: ((4, 1.5), (7.5, -2)), 12: ((3.5, 3.5), (6.5, -.5)), 13: ((3, 4), (6, 0)), 14: ((3, 4), (6, 0))}
+UP_F = {0: ((1.5, 4.5), (4, 1)), 2: ((2, 4.5), (5, 1)), 4: ((0, 5), (1, 8)), 6: ((-2.5, 3.5), (-6, 6)), 9: ((-2.5, 3.5), (-6, 6)), 11: ((0, 4.5), (1, 5)), 13: ((1.5, 4.5), (4, 1)), 14: ((1.5, 4.5), (4, 1))}
+UP_LF = {0: (37, GR, 0), 3: (37, GR, 0), 4: (37, GR - 1, 5), 5: (36, GR - 3, 20), 6: (36, GR - 4, 28), 9: (36, GR - 3, 25), 11: (37, GR - 1, 10), 12: (37, GR, 0), 14: (37, GR, 0)}
+UP_LB = {0: (30, GR, 0), 3: (30, GR, 0), 4: (30, GR - 1, 5), 5: (30, GR - 4, 30), 6: (29, GR - 6, 38), 9: (30, GR - 4, 32), 11: (30, GR - 1, 10), 12: (30, GR, 0), 14: (30, GR, 0)}
+UP_LIFT = [0, 0, 0, 0, 1, 3, 4, 4, 4, 3, 2, 0, 0, 0, 0]                           # the little hop of the rising punch (the game raises the sprite by this many px)
+def up_params(i):
+    return dict(by=round(kv({0: CR, 1: 9, 2: 11, 3: 10, 4: 6, 5: 1, 6: -2, 8: -2, 9: 0, 10: 2, 11: 4, 12: 6, 13: CR, 14: CR}, i)), ln=round(kv({0: 2, 1: 0, 2: -2, 3: -1, 4: 1, 5: 3, 6: 4, 8: 4, 9: 3, 10: 3, 11: 2, 14: 2}, i)), hx=round(kv({0: 0, 2: -1, 4: 0, 6: 2, 8: 2, 10: 1, 12: 0, 14: 0}, i)),
+                hs=round(kv({0: 0, 6: 1, 9: 1, 12: 0, 14: 0}, i)), hd=round(kv({0: 0, 2: 2, 4: 0, 14: 0}, i)), lf=tuple(round(v) for v in kv(UP_LF, i)), lb=tuple(round(v) for v in kv(UP_LB, i)),
+                na=kv(UP_N, i), fa=kv(UP_F, i), hp=i*.9, hup=1 if 4 <= i <= 9 else 0, hback=1 if 5 <= i <= 9 else 0, mo=5 <= i <= 9, blink=False)
+def uppercut(i):                                   # UPPERCUT: from the crouch he sinks and coils with the near fist dragged back low behind his hip (frames 1-3, the energy gathers), then drives up out of the crouch, the fist rising in front of him in a long arc (4-5) and ends high in front of the chin (the impact is frame 6) with a hop, a white trail behind the fist, a star at the hit and speed lines rising off it; he holds it (7-8), comes down (9-11) and sinks back into his crouch (12-14)
+    f, nh, fh = figure(up_params(i))
+    if 3 <= i <= 9:                                                            # the cursed energy trail: the path the fist has just taken
+        pts = [figure(up_params(j))[1] for j in (max(0, i - 3), max(0, i - 2), max(0, i - 1), i)]
+        if i <= 9 and pts[0] != pts[-1]: streak(f, pts, (.8, 1.8, 3.0, 4.2), (0, .3, .7, 1), False)
+    if i in (6, 7): burst(f, round(nh[0]) + 2, round(nh[1]) - 2, 4 if i == 6 else 3)
+    if 6 <= i <= 9:                                                            # speed lines rising off the fist
+        for k, dx in enumerate((-3, 0, 3)):
+            n = 9 - 2*abs(dx)//2 - (i - 6)
+            for y in range(max(0, n)):
+                x, yy = round(nh[0]) + dx, round(nh[1]) - 5 - y - k
+                if 0 <= yy < N and f.at(x, yy) == '.': f.set(x, yy, 'W' if y < n - 3 else 'E')
+    if 3 <= i <= 5:
+        for dx in (-9, 9): puff(f, 34 + dx, 61, 2 if i < 5 else 1)             # dust kicked up as he pushes off
+    return f, nh, fh
+FK_KN = {0: None, 3: (38, 44), 4: (42, 42), 5: (44, 38), 6: (46, 36), 7: (47, 35), 9: (46, 36), 10: (44, 39), 11: (42, 43), 12: None}
+FK_LF = {0: (37, GR, 0), 1: (37, GR, 0), 2: (36, GR - 1, 10), 3: (37, GR - 4, 25), 4: (39, 49, 25), 5: (49, 36, -15), 6: (52, 32, -32), 7: (54, 30, -40), 9: (53, 31, -38), 10: (47, 38, -10), 11: (41, 47, 10), 12: (38, GR - 5, 15), 13: (37, GR, 0), 14: (37, GR, 0)}
+FK_LB = {0: (30, GR, 0), 1: (30, GR, 0), 2: (31, GR - 2, 15), 3: (30, GR - 5, 30), 4: (30, 53, 40), 6: (31, 51, 45), 9: (31, 51, 45), 11: (30, 54, 30), 12: (31, GR - 4, 20), 13: (30, GR, 0), 14: (30, GR, 0)}
+FK_KB = {3: None, 4: (35, 51), 6: (36, 47), 9: (36, 47), 11: (34, 50), 12: None}
+FK_LIFT = [0, 0, 6, 16, 28, 38, 44, 46, 46, 42, 34, 24, 12, 4, 0]                  # the flying jump: the game raises the sprite by this many px (the face kick lands on frame 7 at the top, where the launched enemy hangs)
+def fk_params(i):
+    up = 3 <= i <= 11; kf = kv({a: b for a, b in FK_KN.items() if b}, i) if up and 3 <= i <= 11 else None
+    kb = kv({a: b for a, b in FK_KB.items() if b}, i) if 4 <= i <= 11 else None
+    return dict(by=round(kv({0: CR, 1: 10, 2: 6, 3: 2, 4: 1, 5: 0, 7: 1, 9: 1, 10: 2, 11: 3, 12: 5, 13: 9, 14: CR}, i)), ln=round(kv({0: 2, 1: 0, 2: 0, 4: -1, 6: -3, 8: -4, 10: -2, 12: 0, 13: 1, 14: 2}, i)), hx=round(kv({0: 0, 2: -1, 6: 2, 9: 2, 11: 1, 13: 0, 14: 0}, i)),
+                hs=round(kv({0: 0, 6: -1, 9: -1, 12: 0, 14: 0}, i)), hd=round(kv({0: 0, 1: 2, 3: 0, 14: 0}, i)), lf=tuple(round(v) for v in kv(FK_LF, i)), lb=tuple(round(v) for v in kv(FK_LB, i)), kf=tuple(kf) if kf else None, kb=tuple(kb) if kb else None,
+                na=kv({0: ((3, 4), (6, 0)), 1: ((-1, 6), (-2, 10)), 2: ((2, 1), (5, -3)), 4: ((3, -1), (6, -6)), 7: ((-3, 3), (-7, 6)), 10: ((-1, 4), (-3, 7)), 12: ((2, 2), (5, -1)), 13: ((3, 4), (6, 0)), 14: ((3, 4), (6, 0))}, i),
+                fa=kv({0: ((1.5, 4.5), (4, 1)), 1: ((0, 5), (-1, 9)), 2: ((1, 2), (4, -2)), 4: ((2, -1), (5, -5)), 7: ((-2, 4), (-6, 7)), 10: ((0, 4), (-2, 7)), 12: ((1.5, 3), (4, 0)), 13: ((1.5, 4.5), (4, 1)), 14: ((1.5, 4.5), (4, 1))}, i), hp=i*.9, hup=1 if 3 <= i <= 10 else 0, hback=1 if 4 <= i <= 10 else 0, mo=4 <= i <= 9, blink=False)
+def fkick(i):                                      # FACE KICK: from the crouch he coils (frame 1), springs up (2-3) and chambers the front knee (4), whips the leg out up into the air (5-6) and lands the sole on the launched enemy's face (the impact is frame 7), the whole body leaning back, with a white swoosh behind the foot, a star at the hit and a column of speed lines under him; he holds it (8-9), pulls the leg in (10-11), drops (12) and lands back in his crouch (13-14). The game raises the sprite up to 46 px (FK_LIFT) and the enemy floats about 30 px up when the foot arrives
+    f, nh, fh = figure(fk_params(i))
+    if 4 <= i <= 9:                                                            # the foot's path (the ankle of the front leg)
+        pts = [fk_params(j)['lf'][:2] for j in (max(0, i - 3), max(0, i - 2), max(0, i - 1), i)]; pts = [(x + 1.5, y - 1.5) for x, y in pts]
+        if pts[0] != pts[-1]: streak(f, pts, (.8, 1.8, 3.0, 4.4), (0, .3, .7, 1), False)
+    if i in (7, 8): burst(f, 57, 28, 4 if i == 7 else 3)
+    if 2 <= i <= 6:                                                            # speed lines under him as he shoots up
+        for k, dx in enumerate((-4, 0, 4)):
+            n = 6 + k % 2*2
+            for y in range(n):
+                x, yy = 34 + dx, 62 - y - (i - 2)*2
+                if 0 <= yy < N and f.at(x, yy) == '.': f.set(x, yy, 'W' if y < n - 3 else 'E')
+    if i in (1, 2): puff(f, 28, 61, 2); puff(f, 40, 61, 2)
+    return f, nh, fh
+ATTACKS = (('atk0', lambda i: hook(i, False)), ('atk1', lambda i: hook(i, True)), ('atk2', knee), ('atk3', kick3), ('atk4', divergent), ('atk5', rkick, 16, 48), ('atk6', elbow), ('atk7', downslam), ('atk8', pushkick), ('atk9', conc), ('atk10', sweep, 12, 52), ('atk11', powerup), ('atk12', rush, 16, 48), ('atk13', uppercut, 16, 48), ('atk14', fkick, 16, 48))
 # ---------------------------------------------------------------- crouch, crouch walk, crouch jump and the four dashes (15 frames each)
 CR = 7                                                                          # how far the hips drop in a crouch (the leg IK folds the knees by itself)
 def cdn(i):                                                                     # standing -> crouched (standing up plays it backwards)
@@ -435,14 +486,16 @@ if __name__ == '__main__':
     for k, fn, *xw in ATTACKS:                                              # (a move that reaches further than the usual 44 px strip has its own start column and width)
         x0, w = xw or (X0, 44); fr, hn, hf = pack(fn, x0, w, 0); out[k] = {'x0': x0, 'w': w, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}
         if k == 'atk3': out[k]['lift'] = KICK_LIFT
+        if k == 'atk13': out[k]['lift'] = UP_LIFT
+        if k == 'atk14': out[k]['lift'] = FK_LIFT
     for k in range(10): out['rx%d' % k] = pack_rx(k)
     fr, hn, hf = pack(block, X0, 44, 0, 10); out['blk'] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}      # BLOCK (10 frames)
     fr, hn, hf = pack(bwalk, X0, 44, 0); out['bfwd'] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}      # walking with the guard up
     json.dump(out, open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'yuji.json'), 'w'), separators=(',', ':'))
-    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct', 'x0', out[k]['x0'], 'w', out[k]['w'])
+    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct', 'x0', out[k]['x0'], 'w', out[k]['w'])
     if len(sys.argv) > 1:                                                  # contact sheets: python3 -B yuji_art.py sheets <dir>
         d = sys.argv[2]; z = 2
-        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]):
+        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]):
             s = out[k]; sheet = Image.new('RGB', (15*s['w']*z, s['h']*z), (40, 40, 70)); px = {c: tuple(int(PAL[c][j:j+2], 16) for j in (1, 3, 5)) for c in PAL}
             for n, rows in enumerate(s['frames']):
                 for y, row in enumerate(rows):
