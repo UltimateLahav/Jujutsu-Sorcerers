@@ -1022,7 +1022,7 @@ function blindData(d, w, h) {      // Gojo's picture with the blindfold down: th
   for (let x = xa; x <= xa + 3; x++) { const i = px(x, Math.max(0, y0 - 1)); if (d[i + 3] > 0 && d[i] > 150) { hair = [d[i], d[i + 1], d[i + 2]]; break; } }
   for (let y = y0; y <= y1; y++) for (let x = xa; x <= xb; x++) if (dim(px(x, y))) { if (x >= xa + 5) put(x, y, skin[0], skin[1], skin[2]); else put(x, y, hair[0], hair[1], hair[2]); }
   for (let y = y1 + 1; y <= Math.min(h - 1, y1 + 3); y++) for (let x = 0; x <= xa + 3; x++) if (dim(px(x, y))) d[px(x, y) + 3] = 0;      // (the loose end of the band behind his head)
-  const ey = y1 - y0 >= 2 ? y0 + 1 : y0; for (const e of [xb - 6, xb - 2]) if (e >= xa + 4 && e + 1 < w) { put(e, ey, 255, 255, 255); put(e + 1, ey, 150, 226, 255); put(e, ey + 1, 64, 150, 255); put(e + 1, ey + 1, 127, 212, 255); }      // (two eyes: white and light blue above, blue below)
+  const ey = y1 - y0 >= 2 ? y0 + 1 : y0; for (const e of [xb - 7, xb - 3]) if (e >= xa + 4 && e + 2 < w) { put(e, ey, 255, 255, 255); put(e + 1, ey, 150, 226, 255); put(e + 2, ey, 255, 255, 255); put(e, ey + 1, 64, 150, 255); put(e + 1, ey + 1, 22, 84, 200); put(e + 2, ey + 1, 127, 212, 255); if (ey > y0) for (let k = 0; k < 3; k++) put(e + k, y0, 232, 238, 255); }      // (two eyes 3 px wide: white and light blue above, blue with a dark centre below, and a white brow over each)
   let yc = -1; for (let y = y1 + 1; y <= Math.min(h - 1, y1 + 10); y++) { let n = 0; for (let x = xa + 4; x <= xb + 1 && x < w; x++) if (sk(px(x, y))) n++; if (n >= 3) yc = y; }      // (yc = the lowest row of face and neck)
   if (yc > 0) for (let y = yc - 1; y <= yc; y++) { let a = w, b = -1; for (let x = xa + 3; x <= xb + 1 && x < w; x++) if (sk(px(x, y))) { if (x < a) a = x; if (x > b) b = x; } if (b - a >= 3) for (let x = a; x <= b; x++) { if (y === yc - 1) put(x, y, 78, 68, 108); else put(x, y, 14, 11, 18); } }
   return true;
@@ -1034,7 +1034,7 @@ function blindDown(src) {      // the same picture with the blindfold down (made
   BDC.set(src, r); return r;
 }
 function drawFaceClose(k, rev) {      // his face close-up (tools/face_close.py: 24 frames, 320 x 128), full screen: k = how far the move is (0-1), rev = played backwards (the blindfold goes back on)
-  const g = SIMG.gface && SIMG.gface.pull; ctx.fillStyle = '#000'; ctx.fillRect(-8, -8, VW + 16, VH + 16); if (!g || !g.complete || !g.naturalWidth) return;
+  const g = SIMG.gface && SIMG.gface.pull; ctx.fillStyle = 'rgba(0,0,12,0.3)'; ctx.fillRect(-8, -8, VW + 16, VH + 16); if (!g || !g.complete || !g.naturalWidth) return;      // (the picture has a see-through background: the map shows behind him, dimmed)
   ctx.drawImage(g, Math.max(0, Math.min(23, Math.floor((rev ? 1 - k : k) * 24))) * 320, 0, 320, 128, Math.round((VW - 320) / 2), Math.round((VH - 128) / 2), 320, 128);
   if (!rev && k < 0.12) { ctx.fillStyle = 'rgba(255,255,255,' + (0.6 * (1 - k / 0.12)).toFixed(2) + ')'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }
 }
@@ -2109,7 +2109,7 @@ function keFrame(now, dt) {
   drawGibs(now); ctx.restore();
   // ---- on the screen itself: the close-up of Gojo's face (the Domain's picture), the flash, the bars, the words, the fade
   if (t >= T.face && t < T.fcut) {      // the close-up of his face with the blindfold on (frame 0 of his face strip), pushing in slowly and lit more and more by the Blue in his palm
-    const u = (t - T.face) / (T.fcut - T.face), g = SIMG.gface && SIMG.gface.pull; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
+    const u = (t - T.face) / (T.fcut - T.face), g = SIMG.gface && SIMG.gface.pull; ctx.fillStyle = 'rgba(0,0,12,0.35)'; ctx.fillRect(0, 0, VW, VH);
     if (g && g.complete && g.naturalWidth) { ctx.save(); ctx.translate(Math.round(VW / 2), Math.round(VH / 2)); ctx.scale(1 + 0.14 * u, 1 + 0.14 * u); ctx.drawImage(g, 0, 0, 320, 128, -160, -64, 320, 128); ctx.restore(); }
     ctx.globalCompositeOperation = 'lighter'; const gr = ctx.createRadialGradient(VW / 2 + 40, VH / 2 + 10, 4, VW / 2 + 40, VH / 2 + 10, 150); gr.addColorStop(0, 'rgba(90,170,255,' + (0.25 + 0.5 * u + 0.1 * Math.sin(t * 30)).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(20,60,200,0)'); ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH); ctx.globalCompositeOperation = 'source-over'; at('fz', T.face + (T.fcut - T.face) * 0.8, () => snd('domainzoom'));
   }
