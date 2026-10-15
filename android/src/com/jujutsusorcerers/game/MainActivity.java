@@ -16,6 +16,7 @@ public class MainActivity extends Activity implements View.OnLongClickListener {
     public static final String OWNER = "This APK file is owned by Lahav. All rights reserved.";
 
     private WebView web;
+    private LanBridge lan;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +43,8 @@ public class MainActivity extends Activity implements View.OnLongClickListener {
 
         web.setWebViewClient(new WebViewClient());   // keep all navigation inside the app
         web.setWebChromeClient(new WebChromeClient());
+        lan = new LanBridge(this);
+        web.addJavascriptInterface(lan, "AndroidLan");   // WI-FI ROOMS (rooms on the same Wi-Fi)
         setContentView(web);
         web.loadUrl("file:///android_asset/index.html");
     }
@@ -68,5 +71,5 @@ public class MainActivity extends Activity implements View.OnLongClickListener {
     // the game's sound is silenced while the app is in the background
     @Override protected void onPause()  { super.onPause();  web.evaluateJavascript("window.__audio && window.__audio(false)", null); web.onPause(); }
     @Override protected void onResume() { super.onResume(); web.onResume(); web.evaluateJavascript("window.__audio && window.__audio(true)", null); hideSystemUi(); }
-    @Override protected void onDestroy() { web.destroy(); super.onDestroy(); }
+    @Override protected void onDestroy() { lan.stop(); web.destroy(); super.onDestroy(); }
 }
