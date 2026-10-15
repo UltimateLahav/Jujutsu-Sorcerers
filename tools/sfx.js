@@ -364,6 +364,20 @@ function makeSfx(ac) {
       tone(B.soft, t + 0.05, { type: 'triangle', f: 1040, f2: 2080, dur: 0.45, gain: 0.1, atk: 0.05 });
       for (let k = 0; k < 8; k++) tone(B.soft, t + 0.1 + k * 0.05, { type: 'sine', f: R(2200, 4200), f2: R(1800, 3000), dur: 0.08, gain: 0.07, atk: 0.003 });
     },
+    divgather(at) {                                      // DIVERGENT FIST 1: cursed energy gathers in the fist: a rising, shimmering hum with a fine crackle on top
+      const t = T(at), B = C.ce;
+      tone(B.soft, t, { type: 'sine', f: 220, f2: 880, dur: 0.3, cur: 1, gain: 0.2, atk: 0.04 });
+      tone(B.soft, t + 0.04, { type: 'triangle', f: 440, f2: 1760, dur: 0.26, cur: 1, gain: 0.08, atk: 0.05 });
+      burst(B.soft, t, { type: 'highpass', f: 1500, f2: 4500, q: 0.8, dur: 0.28, gain: 0.5, atk: 0.1 });
+    },
+    divboom(at) {                                        // DIVERGENT FIST 2: the delayed impact in the stomach: a deep boom, a thud of air, two ringing echoes and a crystal shimmer
+      const t = T(at), B = C.atk;
+      tone(B.deep, t, { type: 'triangle', f: 110, f2: 34, dur: 0.7, gain: 0.6, atk: 0.003 });
+      burst(B.soft, t, { f: 500, f2: 90, q: 0.7, dur: 0.3, gain: 3.4, atk: 0.001 });
+      tone(B.soft, t + 0.02, { type: 'sine', f: 1320, f2: 660, dur: 0.6, cur: 1, gain: 0.16, atk: 0.005 });
+      tone(B.soft, t + 0.09, { type: 'sine', f: 1980, f2: 990, dur: 0.5, cur: 1, gain: 0.1, atk: 0.005 });
+      burst(B.soft, t + 0.03, { type: 'highpass', f: 2000, f2: 6000, q: 0.7, dur: 0.4, gain: 0.7, atk: 0.02 });
+    },
     quake(at) {                                          // the roof is hit: a huge low boom, a long shaking rumble and stones and splinters falling
       const t = T(at), B = C.ce;
       tone(B.deep, t, { type: 'triangle', f: 80, f2: 22, dur: 1.6, gain: 0.6, atk: 0.004 });

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Hitboxes, measured from the pictures themselves.
-For every move of Gojo, Yuji and Verity (the hit numbers of the game: 0-3 the M1 combo, 6-7 the crouch punches / Verity's claws, 14-21 Gojo's walking and red combos, 22 Verity's bite, 24-29 Yuji's M1) and for every body it can land on, this finds how far apart the two characters' anchors (the middle of the hips) can be while the limb the attacker has stretched out at the moment of impact (the two frames from the impact frame on) still overlaps the drawn body of the target. Both are compared ROW BY ROW, because a fist at chest height, a hanging arm and a foot all stop at different distances. Glow effects (Gojo's blue sparks) are not part of a limb. The target is its standing picture (the widest its idle animation gets in each row).
+For every move of Gojo, Yuji and Verity (the hit numbers of the game: 0-3 the M1 combo, 6-7 the crouch punches / Verity's claws, 14-21 Gojo's walking and red combos, 22 Verity's bite, 24-29 Yuji's M1, 36-37 his DIVERGENT FIST) and for every body it can land on, this finds how far apart the two characters' anchors (the middle of the hips) can be while the limb the attacker has stretched out at the moment of impact (the two frames from the impact frame on) still overlaps the drawn body of the target. Both are compared ROW BY ROW, because a fist at chest height, a hanging arm and a foot all stop at different distances. Glow effects (Gojo's blue sparks) are not part of a limb. The target is its standing picture (the widest its idle animation gets in each row).
 Writes hitboxes.json: {attacker: {hit number: {target: the gap in px}}}; the game (HIT in tools/template.html) lands a hit when the gap is at most that.
 Run from the tools folder, after the art and tools/template.html are final:  python3 -B hitbox_art.py"""
 import base64, io, json, os, re
@@ -58,6 +58,7 @@ for att, moves in MOVES.items():
             # contact = the attacker's farthest pixel in a row reaches the target's nearest pixel in the same row (the target is drawn mirrored, so its pixel columns count from the other side: +1)
             d = [tip[r] + body[r] + 1 for r in tip if r in body]
             out[att][k][tgt] = max(d)
+out['yuji'][37] = out['yuji'][36]                                                              # DIVERGENT FIST's second impact (hit 37) has no limb: it is a delayed shock that lands if the first impact (36) reached, so the AI plans with the first one's reach
 json.dump(out, open(P('hitboxes.json'), 'w'), separators=(',', ':'))
 OLD = [17, 17, 15, 26, 0, 0, 16, 16, 0, 0, 0, 0, 0, 0, 19, 25, 19, 27, 25, 24, 18, 20, 26, 40, 17, 17, 17, 26, 27, 28]                    # the old fixed reach (the gap was REACH + 6)
 print('body half-widths (front, widest row):', {t: max(b.values()) for t, b in BODY.items()})

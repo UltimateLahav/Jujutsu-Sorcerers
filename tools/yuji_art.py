@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Yuji Itadori in side view (facing right), 64x64 16-bit style like Gojo's sprites.
-Writes yuji.json: idle (15 frames), fwd (15-frame walk; the game plays it backwards for walking back), jump (15 frames + the lift per frame).
+Writes yuji.json (also atk0-atk3 = the M1 and atk4 = DIVERGENT FIST): idle (15 frames), fwd (15-frame walk; the game plays it backwards for walking back), jump (15 frames + the lift per frame).
 Every frame is drawn from joints: hips, a two-bone IK for each leg, shoulders, a boxer's guard for the arms, hair tufts that move."""
 import json, math, os, sys
 from PIL import Image, ImageDraw
@@ -172,7 +172,13 @@ def kick3(i):                                      # a jump, then ONE leg kicks 
     by, ln, hx, lf, lb = KICK[i]; air = 3 <= i <= 12
     P = dict(by=by, ln=ln, hx=hx, lf=lf, lb=lb, na=kv({0: IDLE_N, 2: GUARD_N, 4: ((-3, 5), (-5, 9)), 12: ((-3, 5), (-5, 9)), 14: IDLE_N}, i), fa=kv({0: IDLE_F, 2: GUARD_F, 4: ((3, 3), (7, -1)), 12: ((3, 3), (7, -1)), 14: IDLE_F}, i), hp=i*.9, hup=1 if air else 0, hback=1 if 4 <= i <= 12 else 0, blink=False)
     return figure(P)
-ATTACKS = (('atk0', lambda i: hook(i, False)), ('atk1', lambda i: hook(i, True)), ('atk2', knee), ('atk3', kick3))
+DIV_N = {0: GUARD_N, 1: ((-1, 5.5), (-1.5, 8.0)), 3: ((-3, 6), (-4, 8.5)), 4: ((-1.5, 4), (0, 5.5)), 5: ((3, 1.5), (7, 1.3)), 6: ((7, .2), (14.5, -.6)), 8: ((7.2, .2), (14.8, -.7)), 9: ((6, .6), (12, -.4)), 10: ((3.5, 2), (7, .6)), 11: ((2.5, 3.2), (5.5, 0)), 12: GUARD_N, 14: IDLE_N}
+DIV_F = {0: GUARD_F, 3: ((4, 3.5), (8, .5)), 5: ((3, 4), (6.5, 2)), 6: ((2.5, 4.5), (5.5, 3)), 9: ((3, 4), (6, 1.5)), 12: GUARD_F, 14: IDLE_F}
+def divergent(i):                                  # DIVERGENT FIST: the near fist is pulled back to the hip (cursed energy gathers in it), drives straight forward into the enemy (the first impact is frame 6), stays pressed in, then is pulled back (the second impact lands on frame 10 while it comes back)
+    P = dict(by=round(kv({0: 0, 2: 1, 4: 1, 6: -1, 8: -1, 10: 0, 14: 0}, i)), ln=round(kv({0: 0, 3: -1, 5: 1, 6: 3, 8: 3, 10: 1, 12: 0, 14: 0}, i)), hx=round(kv({0: 0, 3: -1, 6: 2, 8: 2, 10: 1, 12: 0, 14: 0}, i)),
+             lf=(round(kv({0: 34, 3: 34, 6: 38, 8: 38, 11: 36, 14: 34}, i)), GR, 0), lb=(round(kv({0: 31, 3: 30, 6: 28, 8: 28, 11: 30, 14: 31}, i)), GR, 0), na=kv(DIV_N, i), fa=kv(DIV_F, i), hp=i*.8, hback=0, blink=False)
+    return figure(P)
+ATTACKS = (('atk0', lambda i: hook(i, False)), ('atk1', lambda i: hook(i, True)), ('atk2', knee), ('atk3', kick3), ('atk4', divergent))
 # ---------------------------------------------------------------- crouch, crouch walk, crouch jump and the four dashes (15 frames each)
 CR = 7                                                                          # how far the hips drop in a crouch (the leg IK folds the knees by itself)
 def cdn(i):                                                                     # standing -> crouched (standing up plays it backwards)
@@ -318,10 +324,10 @@ if __name__ == '__main__':
         if k == 'atk3': out[k]['lift'] = KICK_LIFT
     for k in range(10): out['rx%d' % k] = pack_rx(k)
     json.dump(out, open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'yuji.json'), 'w'), separators=(',', ':'))
-    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct', 'x0', out[k]['x0'], 'w', out[k]['w'])
+    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct', 'x0', out[k]['x0'], 'w', out[k]['w'])
     if len(sys.argv) > 1:                                                  # contact sheets: python3 -B yuji_art.py sheets <dir>
         d = sys.argv[2]; z = 2
-        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]):
+        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]):
             s = out[k]; sheet = Image.new('RGB', (15*s['w']*z, s['h']*z), (40, 40, 70)); px = {c: tuple(int(PAL[c][j:j+2], 16) for j in (1, 3, 5)) for c in PAL}
             for n, rows in enumerate(s['frames']):
                 for y, row in enumerate(rows):
