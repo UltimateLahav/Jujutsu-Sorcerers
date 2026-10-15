@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Yuji Itadori in side view (facing right), 64x64 16-bit style like Gojo's sprites.
-Writes yuji.json (also atk0-atk3 = the M1, atk4 = DIVERGENT FIST, atk5-atk8 = the cursed energy M1 (roundhouse, elbow, downslam, push kick), atk9 = CONCENTRATED FIST, atk10 = the SWEEP, atk11 = the POWER-UP (switching cursed energy on), blk = BLOCK (10 frames) and bfwd = walking with the guard up): idle (15 frames), fwd (15-frame walk; the game plays it backwards for walking back), jump (15 frames + the lift per frame).
+Writes yuji.json (also atk0-atk3 = the M1, atk4 = DIVERGENT FIST, atk5-atk8 = the cursed energy M1 (roundhouse, elbow, downslam, push kick), atk9 = CONCENTRATED FIST, atk10 = the SWEEP, atk11 = the POWER-UP (switching cursed energy on), atk12 = RUSH FIST (the super fast DIVERGENT FIST on the run), blk = BLOCK (10 frames) and bfwd = walking with the guard up): idle (15 frames), fwd (15-frame walk; the game plays it backwards for walking back), jump (15 frames + the lift per frame).
 Every frame is drawn from joints: hips, a two-bone IK for each leg, shoulders, a boxer's guard for the arms, hair tufts that move."""
 import json, math, os, sys
 from PIL import Image, ImageDraw
@@ -178,6 +178,15 @@ def divergent(i):                                  # DIVERGENT FIST: the near fi
     P = dict(by=round(kv({0: 0, 2: 1, 4: 1, 6: -1, 8: -1, 10: 0, 14: 0}, i)), ln=round(kv({0: 0, 3: -1, 5: 1, 6: 3, 8: 3, 10: 1, 12: 0, 14: 0}, i)), hx=round(kv({0: 0, 3: -1, 6: 2, 8: 2, 10: 1, 12: 0, 14: 0}, i)),
              lf=(round(kv({0: 34, 3: 34, 6: 38, 8: 38, 11: 36, 14: 34}, i)), GR, 0), lb=(round(kv({0: 31, 3: 30, 6: 28, 8: 28, 11: 30, 14: 31}, i)), GR, 0), na=kv(DIV_N, i), fa=kv(DIV_F, i), hp=i*.8, hback=0, blink=False)
     return figure(P)
+RUSH_F = {0: GUARD_F, 2: ((2, 4.5), (4, 2)), 4: ((-2, 4), (-5, 7)), 5: ((-1, 4), (-3, 6)), 6: ((2.5, 4.5), (5.5, 3)), 9: ((3, 4), (6, 1.5)), 12: GUARD_F, 14: IDLE_F}
+def rush(i):                                       # RUSH FIST (forward + BLUE): a super fast DIVERGENT FIST on the run: he crouches into the stride and pulls the fist back (frames 1-3), sprints forward leaning right over (4-5), plants his front foot and drives the fist straight out (the first impact is frame 6), holds it (7-9), the second impact lands on frame 10 as he recoils, then he straightens up; the game plays it at twice the speed and slides him forward while it runs; speed lines and a puff of dust trail behind him
+    P = dict(by=round(kv({0: 0, 2: 2, 4: 1, 6: -1, 9: -1, 11: 0, 14: 0}, i)), ln=round(kv({0: 0, 2: 2, 4: 5, 6: 7, 9: 7, 11: 3, 13: 1, 14: 0}, i)), hx=round(kv({0: 0, 2: -1, 4: 2, 6: 4, 9: 4, 11: 2, 14: 0}, i)),
+             lf=tuple(round(v) for v in kv({0: (34, GR, 0), 2: (33, GR, 0), 3: (38, GR - 4, -15), 4: (43, GR - 3, -15), 5: (45, GR - 1, -8), 6: (44, GR, 0), 9: (44, GR, 0), 11: (40, GR, 0), 14: (34, GR, 0)}, i)),
+             lb=tuple(round(v) for v in kv({0: (31, GR, 0), 2: (29, GR, 0), 3: (27, GR - 2, 20), 4: (24, GR - 6, 30), 5: (22, GR - 5, 28), 6: (24, GR - 3, 20), 9: (26, GR - 1, 10), 11: (29, GR, 0), 14: (31, GR, 0)}, i)),
+             na=kv(DIV_N, i), fa=kv(RUSH_F, i), hp=i*1.1, hback=1 if 3 <= i <= 10 else 0, mo=5 <= i <= 9, blink=False)
+    f, nh, fh = figure(P); streaks(f, False, i)
+    if 3 <= i <= 5: puff(f, 26 - (i - 3)*2, 61, 2 if i < 5 else 1)
+    return f, nh, fh
 BLK_N, BLK_F = ((5.5, 3.5), (7.5, -5.5)), ((4, 3.5), (7, -8))                # BLOCK: both forearms up tight in front of the face, the elbows tucked in front of the ribs (the far fist peeks out above the near one)
 def block(i):                                      # BLOCK, 10 frames: 0-4 the guard comes up (the game plays them in a quarter of a second), 5-9 held with a slow breathing sway (that part loops); the knees bend, the shoulders hunch, the head ducks behind the fists
     r = kv({0: 0, 4: 1}, i); sw = math.sin((i - 5)*2*math.pi/5) if i >= 5 else 0.0
@@ -282,7 +291,7 @@ def powerup(i):                                    # CURSED ENERGY ON: both hand
         pn, pf = figure(pu_params(i - 1))[1:]
         streak(f, [pf, fh], (1.0, 3.4), (0, 1), False); streak(f, [pn, nh], (1.0, 3.4), (0, 1), False)
     return f, nh, fh
-ATTACKS = (('atk0', lambda i: hook(i, False)), ('atk1', lambda i: hook(i, True)), ('atk2', knee), ('atk3', kick3), ('atk4', divergent), ('atk5', rkick, 16, 48), ('atk6', elbow), ('atk7', downslam), ('atk8', pushkick), ('atk9', conc), ('atk10', sweep, 12, 52), ('atk11', powerup))
+ATTACKS = (('atk0', lambda i: hook(i, False)), ('atk1', lambda i: hook(i, True)), ('atk2', knee), ('atk3', kick3), ('atk4', divergent), ('atk5', rkick, 16, 48), ('atk6', elbow), ('atk7', downslam), ('atk8', pushkick), ('atk9', conc), ('atk10', sweep, 12, 52), ('atk11', powerup), ('atk12', rush, 16, 48))
 # ---------------------------------------------------------------- crouch, crouch walk, crouch jump and the four dashes (15 frames each)
 CR = 7                                                                          # how far the hips drop in a crouch (the leg IK folds the knees by itself)
 def cdn(i):                                                                     # standing -> crouched (standing up plays it backwards)
@@ -430,10 +439,10 @@ if __name__ == '__main__':
     fr, hn, hf = pack(block, X0, 44, 0, 10); out['blk'] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}      # BLOCK (10 frames)
     fr, hn, hf = pack(bwalk, X0, 44, 0); out['bfwd'] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}      # walking with the guard up
     json.dump(out, open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'yuji.json'), 'w'), separators=(',', ':'))
-    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct', 'x0', out[k]['x0'], 'w', out[k]['w'])
+    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct', 'x0', out[k]['x0'], 'w', out[k]['w'])
     if len(sys.argv) > 1:                                                  # contact sheets: python3 -B yuji_art.py sheets <dir>
         d = sys.argv[2]; z = 2
-        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]):
+        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]):
             s = out[k]; sheet = Image.new('RGB', (15*s['w']*z, s['h']*z), (40, 40, 70)); px = {c: tuple(int(PAL[c][j:j+2], 16) for j in (1, 3, 5)) for c in PAL}
             for n, rows in enumerate(s['frames']):
                 for y, row in enumerate(rows):
