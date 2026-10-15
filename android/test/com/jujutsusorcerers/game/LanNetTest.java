@@ -14,10 +14,10 @@ public class LanNetTest {
 
     static void ok(boolean c, String what) { checks++; if (!c) throw new AssertionError(what); }
 
-    /** Polls until the text returned by f contains want (up to 6 s). */
+    /** Polls until the text returned by f contains want (up to 10 s). */
     static String wait(java.util.concurrent.Callable<String> f, String want, String what) throws Exception {
         String s = "";
-        for (int i = 0; i < 60; i++) {
+        for (int i = 0; i < 100; i++) {
             s = f.call();
             if (s.contains(want)) { checks++; return s; }
             Thread.sleep(100);
@@ -55,6 +55,9 @@ public class LanNetTest {
         ok(guest.send("R|1.5"), "the guest sends");
         wait(host::events, "\"t\":\"msg\",\"d\":\"R|1.5\"", "the host gets the guest's message");
 
+        wait(() -> String.valueOf(host.ping() >= 0 && guest.ping() >= 0), "true", "both phones measure the ping themselves, without the game's screen");
+        ok(host.ping() < 1000 && !host.events().contains("PING") && !guest.events().contains("PONG"), "the ping is small here and never shows up as a game message");
+
         third.join(ip, port);
         wait(third::events, "THAT ROOM IS FULL", "a second guest is told the room is full");
         ok(host.send("still here"), "the first guest is not kicked out by the full-room answer");
@@ -75,6 +78,24 @@ public class LanNetTest {
         wait(guest::events, "COULD NOT REACH THAT ROOM", "joining a closed room says so");
         guest.join("not an address", 5);
         wait(guest::events, "\"t\":\"error\"", "a nonsense address says so too");
+
+        // a phone that goes silent (Wi-Fi switched off, app frozen) is dropped after 6 seconds
+        final LanNet seeker = new LanNet("PHONE-E", 47999, null);
+        ok(host.host("SILENT").isEmpty(), "the room opens again");
+        ok(seeker.browse().isEmpty(), "a new search starts");
+        Matcher m2 = Pattern.compile("\"ip\":\"([^\"]+)\",\"port\":(\\d+)").matcher(wait(seeker::rooms, "SILENT", "the new room is found"));
+        ok(m2.find(), "the new room has an address");
+        java.net.Socket raw = new java.net.Socket(m2.group(1), Integer.parseInt(m2.group(2)));
+        java.io.PrintWriter rw = new java.io.PrintWriter(raw.getOutputStream(), true);
+        java.io.BufferedReader rr = new java.io.BufferedReader(new java.io.InputStreamReader(raw.getInputStream()));
+        rw.println("HELLO|RAW");
+        ok(rr.readLine().startsWith("WELCOME|SILENT"), "the silent phone is welcomed");
+        wait(host::events, "\"t\":\"joined\",\"name\":\"RAW\"", "the host sees it join");
+        long t0 = System.currentTimeMillis();
+        wait(host::events, "\"t\":\"left\",\"why\":\"timeout\"", "the host drops a phone that has gone silent");
+        long dt = System.currentTimeMillis() - t0;
+        ok(dt > 4500 && dt < 9000, "...after about 6 seconds (" + dt + " ms)");
+        raw.close(); seeker.stop();
 
         guest.stop(); third.stop(); host.stop();
         System.out.println("LanNetTest OK (" + checks + " checks)");

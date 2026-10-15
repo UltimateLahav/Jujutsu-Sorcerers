@@ -33,5 +33,6 @@ public class LanBridge {
     @JavascriptInterface public void join(String ip, int port) { grab(); net.join(ip, port); }
     @JavascriptInterface public boolean send(String text) { return net.send(text); }
     @JavascriptInterface public String events() { return net.events(); }
+    @JavascriptInterface public int ping() { return net.ping(); }
     @JavascriptInterface public void stop() { net.stop(); drop(); }
 }

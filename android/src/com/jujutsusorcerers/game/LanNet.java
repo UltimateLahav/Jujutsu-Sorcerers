@@ -38,6 +38,7 @@ public class LanNet {
     private static final String MAGIC = "JJS1";
     private static final Charset U8 = Charset.forName("UTF-8");
     private static final long ROOM_TTL_MS = 4500;
+    private static final int BEAT_MS = 1000, DEAD_MS = 6000;               // each side sends a PING every second; 6 s with nothing heard from the other phone ends the link
 
     private static final class Room { String name, ip, host; int port; long seen; }
 
@@ -54,6 +55,7 @@ public class LanNet {
     private volatile DatagramSocket annSock, browseSock;
     private Socket sock;                                                    // the link to the other phone (null = nobody); sock and out are only touched inside lock
     private PrintWriter out;
+    private volatile long pingMs = -1;                                      // the last measured round trip in milliseconds (-1 = none yet)
 
     public LanNet(String device, int discoPort, List<InetAddress> targets) {
         this.device = clean(device, 18, "PHONE");
@@ -122,7 +124,7 @@ public class LanNet {
                 if (stale) { close(c); return; }
                 if (taken) { w.println("FULL"); close(c); continue; }
                 w.println("WELCOME|" + room + "|" + device);
-                c.setSoTimeout(0);
+                c.setSoTimeout(DEAD_MS);
                 push("joined", "name", clean(hello.substring(6), 18, "PLAYER"));
                 startReader(c, in, g);
             } catch (IOException e) {
@@ -209,7 +211,7 @@ public class LanNet {
                     if (stale) { close(c); return; }
                     if (ok) {
                         String[] f = r.split("\\|", 3);
-                        c.setSoTimeout(0);
+                        c.setSoTimeout(DEAD_MS);
                         push("connected", "room", f.length > 1 ? clean(f[1], 18, "ROOM") : "ROOM", "host", f.length > 2 ? clean(f[2], 18, "PHONE") : "PHONE");
                         startReader(c, in, g);
                     } else {
@@ -226,34 +228,54 @@ public class LanNet {
     }
 
     private void startReader(final Socket c, final BufferedReader in, final long g) {
+        pingMs = -1;
         Thread t = new Thread(new Runnable() {
             public void run() {
+                String why = "closed";
                 try {
                     String line;
                     while ((line = in.readLine()) != null) {
                         if (line.startsWith("MSG|")) push("msg", "d", line.substring(4));
+                        else if (line.startsWith("PING|")) rawSend("PONG|" + line.substring(5));          // answered right here, so the ping is the network's own time and never waits for the game's screen
+                        else if (line.startsWith("PONG|")) {
+                            try { pingMs = Math.max(0, (System.nanoTime() - Long.parseLong(line.substring(5).trim())) / 1000000); } catch (NumberFormatException ignored) { }
+                        }
                     }
-                } catch (IOException ignored) { }
+                } catch (SocketTimeoutException e) { why = "timeout"; } catch (IOException ignored) { }
                 boolean mine;
                 synchronized (lock) {
                     mine = sock == c;
                     if (mine) { sock = null; out = null; }
                 }
                 close(c);
-                if (mine && gen == g) push("left");
+                if (mine && gen == g) { pingMs = -1; push("left", "why", why); }
             }
         }, "jjs-read");
-        t.setDaemon(true); t.start();
+        Thread p = new Thread(new Runnable() {
+            public void run() {
+                while (gen == g) {
+                    synchronized (lock) { if (sock != c) return; }
+                    rawSend("PING|" + System.nanoTime());
+                    try { Thread.sleep(BEAT_MS); } catch (InterruptedException e) { return; }
+                }
+            }
+        }, "jjs-ping");
+        t.setDaemon(true); p.setDaemon(true); t.start(); p.start();
     }
 
-    /** Sends one line of text to the other phone. */
-    public boolean send(String text) {
+    private boolean rawSend(String line) {
         synchronized (lock) {
             if (out == null) return false;
-            out.println("MSG|" + text.replace('\n', ' ').replace('\r', ' '));
+            out.println(line);
             return !out.checkError();
         }
     }
+
+    /** Sends one line of text to the other phone. */
+    public boolean send(String text) { return rawSend("MSG|" + text.replace('\n', ' ').replace('\r', ' ')); }
+
+    /** The round trip to the other phone in milliseconds (a message there and back), or -1 before the first answer. */
+    public int ping() { return (int) pingMs; }
 
     /** What happened since the last call, as a JSON array of {"t":"joined|connected|left|error|msg", ...}. */
     public String events() {

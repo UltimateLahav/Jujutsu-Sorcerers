@@ -85,6 +85,9 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #modes .cards{gap:4vh}#modes .card{width:32vh}#modes .card,#modes h2,#saves .card,#saves h2{font-size:var(--fs-btn,clamp(8px,2.4vh,13px))}#saves .cards{gap:3vh}#saves .card{width:26vh}button:disabled{opacity:.4;cursor:default}.mode span{font-size:8vh;margin-top:6vh;color:#ff8a7a}.mode.lock span{color:var(--ink)}
 #lanMode span{font-size:5.4vh;margin-top:7vh;color:#59b8ff}#lan{gap:2vh}#lan input{font:inherit;font-size:var(--fs-btn,clamp(9px,3vh,16px));color:var(--ink);background:#120d22;border:3px solid var(--line);padding:1.6vh 2vh;width:34vh;text-transform:uppercase;user-select:text;-webkit-user-select:text;outline:none}#lan input:focus{border-color:var(--acc)}
 #lanList{display:flex;flex-direction:column;gap:1.2vh;width:min(86vw,64vh);max-height:36vh;overflow-y:auto}.lanRoom{display:flex;justify-content:space-between;align-items:center;gap:2vh;text-align:left}.lanRoom small{flex:none}#lanInfo{min-height:8vh;font-size:clamp(7px,2.3vh,12px);line-height:1.8;white-space:pre-line;color:var(--dim)}#lanInfo.bad{color:#ff8a7a}      /* WI-FI ROOMS: rooms on the same Wi-Fi */
+#lanSel{gap:2vh}#lsMain{display:flex;align-items:center;gap:3vh}.lsCol{display:flex;flex-direction:column;align-items:center;gap:1vh}#lsMain .card{width:24vh;height:36vh}#lsFoe{pointer-events:none}#lsFoePv{transform:scaleX(-1)}
+#lsMoves{display:grid;grid-template-columns:max-content 1fr;gap:.9vh 2vh;padding:1.6vh 2vh;border:3px solid var(--line);background:#120d22;text-align:left;font-size:clamp(6px,1.85vh,10px);line-height:1.4;align-content:start}#lsMoves h3{grid-column:1/3;margin:0 0 .6vh;font-size:clamp(7px,2.2vh,12px);font-weight:normal;color:var(--acc)}#lsMoves b{font-weight:normal;color:#59b8ff}
+#lsInfo{min-height:9vh;font-size:clamp(7px,2.3vh,12px);line-height:1.8;white-space:pre-line;color:var(--dim)}      /* the character select of a Wi-Fi room: you, Gojo's moves, the opponent */
 @keyframes shk{0%{transform:translateX(0)}25%{transform:translateX(-.8vh)}50%{transform:translateX(.8vh)}75%{transform:translateX(-.5vh)}100%{transform:translateX(0)}}.shake{animation:shk .35s steps(6)}.shake i{color:#ff8a7a}      /* STORY MODE: not made yet, the card shakes */
 #grades{display:grid;grid-template-columns:repeat(3,auto);gap:1.2vh 1.6vh}
 .gr{padding:1vh 1.6vh;font-size:clamp(7px,2.1vh,12px);min-width:22vh}.gr small{display:block;margin-top:.7vh}
@@ -138,6 +141,28 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
   <div id="lanList"></div>
   <div id="lanInfo"></div>
   <button id="lanBack">BACK</button>
+</section>
+
+<section id="lanSel" class="screen">
+  <h2>CHOOSE YOUR SORCERER</h2>
+  <div id="lsMain">
+    <div class="lsCol"><small>YOU</small><button id="lsGojo" class="card"><canvas id="lsPv"></canvas><b>GOJO</b><i id="lsTag">TAP HERE</i></button></div>
+    <div id="lsMoves">
+      <h3>GOJO'S MOVES</h3>
+      <b>COMBO</b><span>ATTACK, 4 HITS</span>
+      <b>LAPSE BLUE</b><span>BLUE</span>
+      <b>MAX BLUE</b><span>CROUCH + BLUE</span>
+      <b>TELEPORT UP</b><span>BLUE IN THE AIR</span>
+      <b>CURSED ENERGY</b><span>MODE BUTTON</span>
+      <b>REVERSAL RED</b><span>RED MODE, THEN RED</span>
+      <b>HOLLOW PURPLE</b><span>RED INTO MAX BLUE</span>
+      <b>INFINITE VOID</b><span>DOMAIN</span>
+      <b>FATALITY</b><span>FATAL AT 20% HEALTH</span>
+    </div>
+    <div class="lsCol"><small>OPPONENT</small><button id="lsFoe" class="card" tabindex="-1" aria-hidden="true"><canvas id="lsFoePv"></canvas><b>GOJO</b><i id="lsFoeTag">CHOOSING</i></button></div>
+  </div>
+  <div id="lsInfo"></div>
+  <div class="row"><button id="lsAgain">PICK AGAIN</button><button id="lsBack">LEAVE</button></div>
 </section>
 
 <section id="saves" class="screen">
@@ -1014,23 +1039,26 @@ function drawHero(i) {
   hctx.clearRect(0, 0, 64, 64); hctx.drawImage(im, 0, 0); heroShown = i;
 }
 
-// ---------------------------------------------------------------- WI-FI ROOMS: rooms between phones on the same Wi-Fi. The Android app gives the page window.AndroidLan (android/src/com/jujutsusorcerers/game/LanNet.java: a UDP broadcast finds the rooms, a TCP link carries the messages)
+// ---------------------------------------------------------------- WI-FI ROOMS: rooms between phones on the same Wi-Fi. The Android app gives the page window.AndroidLan (android/src/com/jujutsusorcerers/game/LanNet.java: a UDP broadcast finds the rooms, a TCP link carries the messages and measures the ping)
 const LAN = window.AndroidLan;                // missing in a normal browser
-let lanRole = '', lanHost = false, lanName = '', lanTitle = '', lanSig = null, lanTimer = 0, lanPingAt = 0, lanHeard = 0, lanPing = -1, lanNoteUntil = 0;      // lanRole: '' (start) | host (waiting for a player) | browse | join | in (connected)
+let lanRole = '', lanHost = false, lanName = '', lanSig = null, lanTimer = 0, lanPing = -1, lanNoteUntil = 0;      // lanRole: '' (start) | host (waiting for a player) | browse | join | in (connected: the character select)
+let lanPhase = 'pick', lanMeReady = false, lanFoeReady = false, lanMeInv = false, lanRollAt = 0;      // the character select: pick (each player chooses Gojo) -> roll (the host decides who gets the inverted Gojo) -> done
+const LAN_ROLL_MS = 1800, lsPvC = $('lsPv'), lsFoeC = $('lsFoePv');
+lsPvC.width = lsFoeC.width = D.idle.w; lsPvC.height = lsFoeC.height = 64;
 const lanSay = (t, bad) => { $('lanInfo').textContent = t; $('lanInfo').classList.toggle('bad', !!bad); };
-const lanLine = () => lanSay(lanTitle + '\nPING ' + (lanPing < 0 ? '...' : lanPing + ' MS'));
+const lanSend = m => { try { LAN.send(m); } catch (e) { /* the bridge is gone */ } };
 function lanUi() {
   $('lanRow').style.display = lanRole ? 'none' : '';
   $('lanList').style.display = lanRole === 'browse' ? '' : 'none';
-  $('lanBack').textContent = { host: 'CLOSE ROOM', join: 'CANCEL', in: 'LEAVE' }[lanRole] || 'BACK';
+  $('lanBack').textContent = { host: 'CLOSE ROOM', join: 'CANCEL' }[lanRole] || 'BACK';
 }
-function lanStop(msg) {                       // closes the room / the search / the link and goes back to the start of the screen
+function lanStop(msg) {                       // closes the room / the search / the link and goes back to the start of the lobby
   clearInterval(lanTimer); lanTimer = 0;
   if (LAN) { try { LAN.stop(); } catch (e) { /* the bridge is gone */ } }
-  lanRole = ''; lanHost = false; lanSig = null; lanPing = -1; lanNoteUntil = 0; $('lanList').textContent = '';
+  lanRole = ''; lanHost = false; lanSig = null; lanPing = -1; lanNoteUntil = 0; lanPhase = 'pick'; lanMeReady = lanFoeReady = false; $('lanList').textContent = '';
   lanUi(); lanSay(msg || (LAN ? 'MAKE A ROOM, OR LOOK FOR ONE ON THIS WI-FI' : 'WI-FI ROOMS NEED THE ANDROID APP'), !LAN);
 }
-const lanGo = () => { clearInterval(lanTimer); lanTimer = setInterval(lanTick, 400); };
+const lanGo = () => { clearInterval(lanTimer); lanTimer = setInterval(lanTick, 150); };
 function lanCreate() {
   lanName = ($('lanName').value.trim() || 'ROOM').toUpperCase().slice(0, 18);
   const err = LAN.host(lanName);
@@ -1043,21 +1071,50 @@ function lanBrowse() {
   lanRole = 'browse'; lanHost = false; lanSig = null; lanNoteUntil = 0; $('lanList').textContent = ''; lanUi(); lanSay('LOOKING FOR ROOMS ON THIS WI-FI...'); lanGo();
 }
 function lanJoin(r) { lanRole = 'join'; lanUi(); lanSay('JOINING "' + r.name + '"...'); LAN.join(r.ip, r.port); }
-function lanIn() { lanRole = 'in'; lanHeard = lanPingAt = performance.now(); lanPing = -1; lanUi(); lanLine(); }
+function lanIn() {                            // two phones are connected: the character select opens on both
+  lanRole = 'in'; lanPhase = 'pick'; lanMeReady = lanFoeReady = lanMeInv = false; lanPing = -1; show('lansel'); lsRender();
+}
 function lanEnd(msg) {                        // the other player is gone: the host opens the room again, a guest goes back to the start
-  if (lanHost && !LAN.host(lanName)) { lanRole = 'host'; lanUi(); lanSay(msg + '\nWAITING FOR A PLAYER...', true); }
+  if (state === 'lansel') show('lan');
+  if (lanHost && !LAN.host(lanName)) { lanRole = 'host'; lanPhase = 'pick'; lanMeReady = lanFoeReady = false; lanUi(); lanSay(msg + '\nWAITING FOR A PLAYER...', true); }
   else { lanStop(); lanSay(msg, true); }
 }
+const lanLeave = () => { lanStop(); show('lan'); };
 function lanEvent(e) {
-  if (e.t === 'joined' && lanRole === 'host') { lanTitle = '"' + e.name + '" JOINED "' + lanName + '"'; lanIn(); }
-  else if (e.t === 'connected' && lanRole === 'join') { lanTitle = 'YOU JOINED "' + e.room + '" (' + e.host + ')'; lanIn(); }
-  else if (e.t === 'msg' && lanRole === 'in') {         // P = "are you there?" (answered with R); the answer time is the PING
-    lanHeard = performance.now();
-    const p = String(e.d).split('|');
-    if (p[0] === 'P') LAN.send('R|' + p[1]); else if (p[0] === 'R') { lanPing = Math.max(0, Math.round(lanHeard - +p[1])); lanLine(); }
-  }
-  else if (e.t === 'left' && lanRole === 'in') lanEnd('THE OTHER PLAYER LEFT');
+  if (e.t === 'joined' && lanRole === 'host') lanIn();
+  else if (e.t === 'connected' && lanRole === 'join') lanIn();
+  else if (e.t === 'msg' && lanRole === 'in') lanMsg(String(e.d));
+  else if (e.t === 'left' && lanRole === 'in') lanEnd(e.why === 'timeout' ? 'LOST THE OTHER PLAYER' : 'THE OTHER PLAYER LEFT');
   else if (e.t === 'error' && lanRole === 'join') { lanBrowse(); lanSay(e.msg, true); lanNoteUntil = performance.now() + 4000; }      // (the error line stays up for 4 s while the search starts again)
+}
+// The character select talks in four short messages: C|gojo (I have chosen) and C| (I changed my mind); X|1 or X|0 (the HOST rolled the dice: 1 = the host gets the inverted Gojo, 0 = the guest does); N| (pick again)
+function lanMsg(m) {
+  const [c, a] = m.split('|');
+  if (c === 'C' && lanPhase === 'pick') { lanFoeReady = a === 'gojo'; lanCheck(); }
+  else if (c === 'X' && !lanHost && lanPhase === 'pick') { lanMeReady = lanFoeReady = true; lanStartRoll(a === '0'); }
+  else if (c === 'N' && lanPhase !== 'pick') { lanAgain(false); lanSend('C|'); }      // (and I tell the other phone I am not ready, in case my own tap crossed their PICK AGAIN)
+  lsRender();
+}
+function lanCheck() {                         // the host rolls as soon as both have chosen: one of the two players gets the inverted Gojo, 50 / 50
+  if (!lanHost || lanPhase !== 'pick' || !lanMeReady || !lanFoeReady) return;
+  const hostInv = Math.random() < 0.5; lanSend('X|' + (hostInv ? 1 : 0)); lanStartRoll(hostInv);
+}
+function lanStartRoll(meInv) { lanPhase = 'roll'; lanMeInv = meInv; lanRollAt = performance.now(); }
+function lanChoose() { if (lanRole !== 'in' || lanPhase !== 'pick') return; lanMeReady = !lanMeReady; lanSend('C|' + (lanMeReady ? 'gojo' : '')); lanCheck(); lsRender(); }
+function lanAgain(tell) { if (tell) lanSend('N|'); lanPhase = 'pick'; lanMeReady = lanFoeReady = false; lsRender(); }
+function lsRender() {                         // the texts of the character select
+  const pick = lanPhase === 'pick', done = lanPhase === 'done';
+  $('lsGojo').classList.toggle('sel', lanMeReady); $('lsFoe').classList.toggle('sel', lanFoeReady);
+  $('lsTag').textContent = pick ? (lanMeReady ? 'READY' : 'TAP HERE') : done ? (lanMeInv ? 'INVERTED' : 'NORMAL') : '...';
+  $('lsFoeTag').textContent = pick ? (lanFoeReady ? 'READY' : 'CHOOSING') : done ? (lanMeInv ? 'NORMAL' : 'INVERTED') : '...';
+  $('lsInfo').textContent = (pick ? (lanMeReady ? 'WAITING FOR THE OTHER PLAYER...' : 'TAP GOJO TO CHOOSE HIM') : done ? (lanMeInv ? 'YOU GOT THE INVERTED GOJO' : 'THE OTHER PLAYER GOT THE INVERTED GOJO') + '\nTHE FIGHT ITSELF COMES NEXT' : 'WHO GETS THE INVERTED GOJO?') + '\n' + (lanPing < 0 ? 'PING ...' : 'PING ' + lanPing + ' MS');
+  $('lsAgain').style.display = done ? '' : 'none';
+}
+function lanSelDraw(now) {                    // the two Gojos on the cards (the opponent faces you); while the dice roll they flip between normal and inverted, slower and slower
+  const a = performance.now() - lanRollAt;
+  if (lanPhase === 'roll' && a >= LAN_ROLL_MS) { lanPhase = 'done'; lsRender(); snd('ceon'); }
+  const fr = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length, meInv = lanPhase === 'roll' ? Math.floor(Math.pow(a / LAN_ROLL_MS, 0.6) * 11) % 2 === 0 : lanPhase === 'done' && lanMeInv;
+  for (const [c, inv] of [[lsPvC, meInv], [lsFoeC, lanPhase !== 'pick' && !meInv]]) { const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.drawImage((inv ? dumF : idleF)[fr], 0, 0); }
 }
 function lanShow(rooms) {
   if (lanNoteUntil && performance.now() > lanNoteUntil) { lanNoteUntil = 0; lanSig = null; }      // (the error line has been up long enough: the hint comes back)
@@ -1073,22 +1130,18 @@ function lanShow(rooms) {
   });
 }
 function lanTick() {
-  let ev = [], rooms = [];
-  try { ev = JSON.parse(LAN.events()); if (lanRole === 'browse') rooms = JSON.parse(LAN.rooms()); } catch (e) { return; }
+  let ev, rooms = [], p = lanPing;
+  try { ev = JSON.parse(LAN.events()); if (lanRole === 'browse') rooms = JSON.parse(LAN.rooms()); if (lanRole === 'in') p = LAN.ping(); } catch (e) { return; }
   ev.forEach(lanEvent);
   if (lanRole === 'browse') lanShow(rooms);
-  if (lanRole === 'in') {                     // both phones send P once a second: silence for 6 s means the link is dead
-    const n = performance.now();
-    if (n - lanHeard > 6000) lanEnd('LOST THE OTHER PLAYER');
-    else if (n - lanPingAt >= 1000) { lanPingAt = n; LAN.send('P|' + n); }
-  }
+  if (lanRole === 'in' && p !== lanPing) { lanPing = p; lsRender(); }
 }
 const lanBack = () => { if (lanRole) lanStop(); else show('modes'); };
 
 // ---------------------------------------------------------------- screens
 function show(s) {
   state = s; if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
-  $('lan').classList.toggle('on', s === 'lan'); if (s !== 'lan' && lanTimer) lanStop();
+  $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); if (s !== 'lan' && s !== 'lansel' && lanTimer) lanStop();
   $('versus').classList.toggle('on', s === 'versus');
   $('title').classList.toggle('on', s === 'title');
   $('select').classList.toggle('on', s === 'select');
@@ -4095,6 +4148,7 @@ function tick(t) {
   if (story && story.toOutro) { story.toOutro = false; startOutro(now); }      // (the fight against Verity is won: the ending of the chapter starts)
   if (state === 'play') { if (now < holdUntil) last = now; else drawScene(now, dt); }      // hit-stop: the picture freezes for a split second when the red orb explodes
   else if (state === 'versus') { const fr = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length; for (const q of vsPv) { q.g.clearRect(0, 0, 64, 64); q.g.drawImage(q.who === 'gojo' ? (q.inv ? dumF : idleF)[fr] : q.who === 'yuji' ? (q.inv ? YUF.inv : YUF.norm).idle[fr % 15] : q.who === 'cat' ? cfr('idle', now / 100, true, q.inv) : vfr('idle', now / 100, true, q.inv), 0, 0); } }
+  else if (state === 'lansel') lanSelDraw(now);
   else if (state === 'story') storyFrame(now, dt);
   else if (state === 'select') {
     pctx.clearRect(0, 0, pv.width, pv.height);
@@ -4197,6 +4251,9 @@ $('lanMode').addEventListener('click', () => { audio(); show('lan'); lanStop(); 
 $('lanCreate').addEventListener('click', lanCreate);
 $('lanBrowse').addEventListener('click', lanBrowse);
 $('lanBack').addEventListener('click', lanBack);
+$('lsGojo').addEventListener('click', lanChoose);
+$('lsAgain').addEventListener('click', () => lanAgain(true));
+$('lsBack').addEventListener('click', lanLeave);
 addEventListener('pointerdown', () => { if (state === 'story') storySkip(); });      // a tap skips to the next part of the cutscene
 $('vsGo').addEventListener('click', () => startMatch(vsSel));
 $('vsNext').addEventListener('click', () => { const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
@@ -4255,6 +4312,7 @@ window.__back = () => {                       // Android back button: step back 
   if (state === 'play') { show('select'); return true; }
   if (state === 'story') { show('saves'); renderSaves(); return true; }
   if (state === 'saves') { show('modes'); return true; }
+  if (state === 'lansel') { lanLeave(); return true; }
   if (state === 'lan') { lanBack(); return true; }
   if (state === 'select') { show('modes'); return true; }
   if (state === 'modes') { show('title'); return true; }
