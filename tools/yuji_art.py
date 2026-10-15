@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Yuji Itadori in side view (facing right), 64x64 16-bit style like Gojo's sprites.
-Writes yuji.json (also atk0-atk3 = the M1, atk4 = DIVERGENT FIST, blk = BLOCK (10 frames) and bfwd = walking with the guard up): idle (15 frames), fwd (15-frame walk; the game plays it backwards for walking back), jump (15 frames + the lift per frame).
+Writes yuji.json (also atk0-atk3 = the M1, atk4 = DIVERGENT FIST, atk5-atk8 = the cursed energy M1 (roundhouse, elbow, downslam, push kick), atk9 = CONCENTRATED FIST, atk10 = the SWEEP, atk11 = the POWER-UP (switching cursed energy on), blk = BLOCK (10 frames) and bfwd = walking with the guard up): idle (15 frames), fwd (15-frame walk; the game plays it backwards for walking back), jump (15 frames + the lift per frame).
 Every frame is drawn from joints: hips, a two-bone IK for each leg, shoulders, a boxer's guard for the arms, hair tufts that move."""
 import json, math, os, sys
 from PIL import Image, ImageDraw
@@ -191,7 +191,98 @@ def bwalk(i):                                      # walking with the guard up (
         p %= 1.0; return (base + S*math.cos(2*math.pi*p), GR - L*max(0.0, -math.sin(2*math.pi*p)), 0)
     P = dict(by=2 + round(.5 + .5*math.cos(4*math.pi*ph)) - 1, ln=1, hx=-1, hs=1, hd=2, lf=foot(ph, 35), lb=foot(ph + .5, 30), na=BLK_N, fa=BLK_F, hp=ph*4*math.pi, hback=0, blink=False)
     return figure(P)
-ATTACKS = (('atk0', lambda i: hook(i, False)), ('atk1', lambda i: hook(i, True)), ('atk2', knee), ('atk3', kick3), ('atk4', divergent))
+# ---------------------------------------------------------------- CURSED ENERGY MODE moves (15 frames each; the hit numbers are 38-43): the 4-hit M1 = R.KICK (roundhouse), ELBOW, DOWNSLAM, PUSH KICK; the CONCENTRATED FIST (BLUE in the mode); the SWEEP (BLUE while crouched, normal mode)
+def rkick(i):                                      # R.KICK: a standing roundhouse; the front leg chambers, whips out to chest height (the impact is frame 7) and snaps back; the other leg carries him, the body leans away, the arms balance
+    kn = {0: None, 2: (40, 42), 4: (42, 39), 6: (44, 38), 7: (44, 37), 8: (44, 37), 10: (42, 40), 12: (38, 46)}
+    ft = {0: (34, GR, 0), 2: (36, 50, 30), 4: (39, 46, 20), 6: (49, 36, -15), 7: (52, 35, -35), 8: (52, 35, -35), 10: (44, 44, 0), 12: (36, 52, 10), 14: (34, GR, 0)}
+    up = 2 <= i <= 12; f = tuple(round(v) for v in kv(ft, i)); k = kv({a: b for a, b in kn.items() if b}, i) if up else None
+    P = dict(by=round(kv({0: 0, 3: 1, 7: -1, 11: 0, 14: 0}, i)), ln=round(kv({0: 0, 3: -1, 7: -3, 11: -1, 14: 0}, i)), hx=round(kv({0: 0, 7: -2, 12: 0, 14: 0}, i)), lf=f, kf=k, lb=(round(kv({0: 31, 7: 29, 12: 30, 14: 31}, i)), GR, 0),
+             na=kv({0: IDLE_N, 3: GUARD_N, 6: ((-3, 5), (-5, 9)), 9: ((-3, 5), (-5, 9)), 12: GUARD_N, 14: IDLE_N}, i), fa=kv({0: IDLE_F, 3: GUARD_F, 6: ((3, 3), (7, -1)), 9: ((3, 3), (7, -1)), 12: GUARD_F, 14: IDLE_F}, i), hp=i*.9, hback=1 if 5 <= i <= 10 else 0, blink=False)
+    return figure(P)
+def elbow(i):                                      # ELBOW: a step in and a short, hard elbow at head height (the impact is frame 7): the upper arm points straight at the enemy and the forearm is folded back against the shoulder
+    P = dict(by=round(kv({0: 0, 3: 1, 7: 0, 14: 0}, i)), ln=round(kv({0: 0, 3: -2, 6: 2, 7: 4, 10: 3, 14: 0}, i)), hx=round(kv({0: 0, 3: -1, 7: 2, 11: 1, 14: 0}, i)), hs=round(kv({0: 0, 7: 1, 14: 0}, i)),
+             lf=(round(kv({0: 34, 3: 34, 7: 39, 11: 37, 14: 34}, i)), GR, 0), lb=(round(kv({0: 31, 3: 30, 7: 28, 11: 29, 14: 31}, i)), GR, 0),
+             na=kv({0: IDLE_N, 2: GUARD_N, 4: ((-3, 4), (-1, -3)), 6: ((6, 1), (3, -4.5)), 7: ((9, .5), (5, -5.5)), 9: ((9, .5), (5, -5.5)), 12: GUARD_N, 14: IDLE_N}, i), fa=kv({0: IDLE_F, 2: GUARD_F, 7: ((1.5, 4), (4, 1)), 12: GUARD_F, 14: IDLE_F}, i), hp=i*.8, hback=0, blink=False)
+    return figure(P)
+def downslam(i):                                   # DOWNSLAM: both fists up over the head (frames 2-4), then the whole body drops into a hammer blow that ends low in front of him (the impact is frame 7)
+    P = dict(by=round(kv({0: 0, 3: -1, 5: 0, 7: 4, 10: 4, 14: 0}, i)), ln=round(kv({0: 0, 3: -2, 5: 1, 7: 6, 10: 5, 14: 0}, i)), hx=round(kv({0: 0, 3: -1, 7: 2, 11: 1, 14: 0}, i)), hs=round(kv({0: 0, 7: 2, 14: 0}, i)), hd=round(kv({0: 0, 4: 0, 7: 3, 11: 2, 14: 0}, i)),
+             lf=(round(kv({0: 34, 3: 35, 7: 38, 11: 36, 14: 34}, i)), GR, 0), lb=(round(kv({0: 31, 3: 29, 7: 28, 11: 29, 14: 31}, i)), GR, 0),
+             na=kv({0: IDLE_N, 2: ((2, -6), (3, -13)), 4: ((2, -6.5), (3, -14)), 6: ((6, 0), (10, 5)), 7: ((8, 5), (13, 15)), 10: ((8, 5), (13, 15)), 13: GUARD_N, 14: IDLE_N}, i),
+             fa=kv({0: IDLE_F, 2: ((1.5, -6), (2, -13)), 4: ((1.5, -6.5), (2.5, -14)), 6: ((5, 0), (9, 5)), 7: ((7, 5), (12, 15)), 10: ((7, 5), (12, 15)), 13: GUARD_F, 14: IDLE_F}, i), hp=i*.8, hup=1 if 2 <= i <= 5 else 0, hback=0, blink=False)
+    return figure(P)
+def pushkick(i):                                   # PUSH KICK: the knee comes up, then the whole leg drives straight out with the sole first at hip height (the impact is frame 7); he leans right back to throw his weight into it
+    kn = {0: None, 2: (41, 40), 4: (43, 41), 7: (44, 42), 9: (44, 42), 11: (42, 44), 12: (38, 47)}
+    ft = {0: (34, GR, 0), 2: (37, 49, 40), 4: (45, 43, -45), 7: (53, 42, -80), 9: (53, 42, -80), 11: (43, 47, -20), 12: (37, 52, 10), 14: (34, GR, 0)}
+    up = 2 <= i <= 12; f = tuple(round(v) for v in kv(ft, i)); k = kv({a: b for a, b in kn.items() if b}, i) if up else None
+    P = dict(by=round(kv({0: 0, 3: 1, 7: 0, 11: 0, 14: 0}, i)), ln=round(kv({0: 0, 3: -1, 7: -4, 11: -2, 14: 0}, i)), hx=round(kv({0: 0, 7: -3, 12: -1, 14: 0}, i)), lf=f, kf=k, lb=(round(kv({0: 31, 7: 28, 12: 30, 14: 31}, i)), GR, 0),
+             na=kv({0: IDLE_N, 3: GUARD_N, 6: ((-4, 3), (-8, 5)), 10: ((-4, 3), (-8, 5)), 12: GUARD_N, 14: IDLE_N}, i), fa=kv({0: IDLE_F, 3: GUARD_F, 6: ((3, 3), (8, 1)), 10: ((3, 3), (8, 1)), 12: GUARD_F, 14: IDLE_F}, i), hp=i*.9, hback=1 if 5 <= i <= 10 else 0, blink=False)
+    return figure(P)
+CONC_N = {0: GUARD_N, 1: ((-1.5, 5.5), (-2.5, 8)), 4: ((-4, 6), (-6, 8.5)), 5: ((-4, 5.5), (-6, 8)), 6: ((3, 2), (9, .5)), 7: ((7.5, .5), (16, -1)), 9: ((7.5, .5), (16, -1)), 10: ((6.5, 1), (13, -.5)), 12: GUARD_N, 14: IDLE_N}
+CONC_F = {0: GUARD_F, 4: ((3.5, 4), (7, 1)), 6: ((2.5, 4.5), (5.5, 3)), 9: ((3, 4), (6, 1.5)), 12: GUARD_F, 14: IDLE_F}
+def conc(i):                                       # CONCENTRATED FIST: he sinks and coils with the fist drawn right back (frames 1-5, the energy gathers), then lunges and drives it straight out, arm fully stretched (the impact is frame 7), holds it there and comes back
+    P = dict(by=round(kv({0: 0, 3: 2, 5: 2, 7: -1, 10: -1, 14: 0}, i)), ln=round(kv({0: 0, 4: -2, 5: -2, 6: 2, 7: 4, 10: 3, 14: 0}, i)), hx=round(kv({0: 0, 4: -1, 7: 3, 10: 2, 14: 0}, i)), hs=round(kv({0: 0, 7: 1, 14: 0}, i)),
+             lf=(round(kv({0: 34, 4: 33, 6: 37, 7: 40, 11: 38, 14: 34}, i)), GR, 0), lb=(round(kv({0: 31, 4: 29, 7: 27, 11: 29, 14: 31}, i)), GR, 0), na=kv(CONC_N, i), fa=kv(CONC_F, i), hp=i*.8, hback=0, blink=False)
+    return figure(P)
+def streak(f, pts, ws, ts, over):                  # a ribbon along the points (tail first) with a width and a brightness (0 dark tail .. 1 white head) at each: every pixel near the line is painted by its distance to it (white core, light edge; dark when faint); over=True paints it over the body, otherwise only on empty pixels (behind him)
+    xs = [p[0] for p in pts]; ys = [p[1] for p in pts]; pad = max(ws)/2 + 1
+    for y in range(max(0, int(min(ys) - pad)), min(N, int(max(ys) + pad) + 2)):
+        for x in range(max(0, int(min(xs) - pad)), min(N, int(max(xs) + pad) + 2)):
+            best = None
+            for j in range(len(pts) - 1):
+                (x0, y0), (x1, y1) = pts[j], pts[j+1]; dx, dy = x1 - x0, y1 - y0; l2 = dx*dx + dy*dy or 1; u = max(0.0, min(1.0, ((x - x0)*dx + (y - y0)*dy)/l2)); d = math.hypot(x - (x0 + u*dx), y - (y0 + u*dy))
+                if best is None or d < best[0]: best = (d, ws[j] + (ws[j+1] - ws[j])*u, ts[j] + (ts[j+1] - ts[j])*u)
+            d, w, t = best
+            if d <= w/2 and (over or f.at(x, y) == '.'): f.set(x, y, ('W' if d <= w*.22 else 'E') if t > .5 else ('E' if d <= w*.22 else 'D'))
+def ring(xh, length, R=19.5, cx=35.5, yf=53.5, ry=7.0, n=44):             # the foot's path round him on the floor, an oval seen from the side (the lower half is the near side): the swoosh ends at the foot (x = xh) and trails back along the path for `length` radians; returns the far part (it goes behind him) and the near part (it goes over him)
+    th_h = math.acos(max(-1.0, min(1.0, (xh - cx)/R))); th_t = th_h + max(0.0, min(length, 2*math.pi - th_h)); far, near = ([], []), ([], [])
+    for q in range(n + 1):
+        th = th_t + (th_h - th_t)*q/n; t = q/n; part = far if math.sin(th) < 0 else near
+        part[0].append((cx + R*math.cos(th), yf + ry*math.sin(th))); part[1].append((.8 + 3.4*t**1.3, t))
+    return far, near
+def swoosh(f, xh, length):
+    for (pts, wt), over in zip(ring(xh, length), (False, True)):
+        if len(pts) > 2: streak(f, pts, [w for w, t in wt], [t for w, t in wt], over)
+def burst(f, x, y, r):                              # a white star: a cross and a diagonal cross
+    for k in range(-r, r + 1):
+        f.set(x + k, y, 'W' if abs(k) < r else 'E'); f.set(x, y + k, 'W' if abs(k) < r else 'E')
+        if abs(k) <= r - 1 and k: f.set(x + k, y + k, 'E'); f.set(x + k, y - k, 'E')
+def puff(f, x, y, n):                               # a small cloud of dust on the floor (n = 1..3)
+    for dx, dy in ((0, 0), (1, 0), (-1, 0), (0, -1), (1, -1), (2, 0), (-2, 0), (0, -2), (-1, -1), (3, 0), (-3, 0), (2, -1), (-2, -1), (1, -2))[:(3, 7, 14)[n - 1]]:
+        if f.at(x + dx, y + dy) == '.': f.set(x + dx, y + dy, 'E' if (dx + dy) % 2 else 'D')
+SW_X = {0: 37, 1: 31, 2: 20, 3: 27, 4: 39, 5: 50, 6: 55, 7: 56, 8: 56, 9: 54, 10: 49, 11: 43, 12: 39, 13: 38, 14: 37}                                  # where the sweeping foot is, frame by frame
+SW_Y = {0: GR, 1: GR, 2: GR - 1, 3: GR, 4: GR, 5: GR - 1, 6: GR - 1, 7: GR - 1, 8: GR - 1, 9: GR - 1, 10: GR - 1, 11: GR, 12: GR, 13: GR, 14: GR}
+SW_A = {0: 0, 1: 10, 2: 25, 3: 0, 4: -20, 5: -45, 6: -70, 7: -75, 8: -75, 9: -60, 10: -40, 11: -20, 12: -5, 13: 0, 14: 0}
+def sweep(i):                                      # SWEEP: from the crouch he sinks onto one planted hand and swings the other leg back (frames 1-2, the wind-up), whips it right round under him (3-5) and out along the floor into the enemy's feet (the impact is frame 6) with a white swoosh behind the foot, a star at the impact and dust; he holds it, then pulls it in and is back in his crouch
+    by = round(kv({0: CR, 1: 9, 2: 11, 8: 11, 10: 10, 12: 8, 13: CR, 14: CR}, i)); hx = round(kv({0: 0, 1: -1, 2: -2, 4: 0, 14: 0}, i)); H = (34 + hx, 44 + by); fx, fy, fa = SW_X[i], SW_Y[i], SW_A[i]
+    kn = ((H[0] + fx)/2, (H[1] + fy)/2 - 1.5) if (fx <= 31 or fx >= 42) else None
+    P = dict(by=by, ln=round(kv({0: 2, 1: 3, 2: 6, 3: 3, 4: -2, 5: -6, 6: -8, 8: -8, 9: -6, 10: -3, 11: 0, 12: 1, 14: 2}, i)), hx=hx, hd=round(kv({0: 0, 2: 2, 4: 1, 9: 1, 11: 0, 14: 0}, i)), lf=(fx, fy, fa), kf=kn, lb=(round(kv({0: 30, 2: 29, 10: 29, 12: 30, 14: 30}, i)), GR, 0), kb=(37, 46 + by) if 1 <= i <= 11 else None,
+             na=kv({0: ((3, 4), (6, 0)), 1: ((2, 6), (4, 11)), 2: ((3, 8), (4, 16.5)), 3: ((1, 8), (1, 16.5)), 4: ((-3, 8), (-7, 16)), 10: ((-3, 8), (-7, 16)), 11: ((0, 5), (2, 8)), 12: ((3, 5), (6, 3)), 14: ((3, 4), (6, 0))}, i),
+             fa=kv({0: ((1.5, 4.5), (4, 1)), 1: ((2, 5), (5, 8)), 2: ((3, 5), (7, 10)), 3: ((0, 4), (-3, 8)), 4: ((-3.5, 1.5), (-9, -2)), 8: ((-3.5, 1.5), (-9, -3)), 10: ((-2, 3), (-6, 3)), 12: ((1.5, 4.5), (4, 1)), 14: ((1.5, 4.5), (4, 1))}, i), hp=i*.9, hup=1 if 4 <= i <= 6 else 0, hback=1 if 4 <= i <= 9 else 0, mo=4 <= i <= 9, blink=False)
+    f, nh, fh = figure(P)
+    if 3 <= i <= 10:                                                           # the swoosh: a white ring on the floor round him following the foot, long while it whips round, shorter and fading afterwards
+        swoosh(f, fx - 3, kv({3: 1.6, 4: 3.4, 5: 5.0, 6: 5.8, 7: 5.8, 8: 4.6, 9: 3.4, 10: 2.2}, i))
+    if 5 <= i <= 8:                                                            # wind lines in the air above the leg
+        for k, (dy, ln_) in enumerate(((-9, 11), (-12, 8))):
+            for x in range(ln_):
+                if f.at(fx - 6 - k*3 - x, 58 + dy) == '.': f.set(fx - 6 - k*3 - x, 58 + dy, 'W' if x < ln_ - 3 else 'E')
+    if i in (6, 7): burst(f, min(fx + 3, 56), 56, 4 if i == 6 else 3)           # the hit
+    for k, (dx, d0) in enumerate(((-4, 6), (-11, 7), (-18, 8), (-25, 9))):      # dust drifting up behind the foot
+        age = i - d0 + 3
+        if 0 <= age <= 5: puff(f, min(fx, 54) + dx, 61 - age//2, 1 if age < 3 else 2 if age < 5 else 3)
+    return f, nh, fh
+PU_N = {0: IDLE_N, 1: ((1, 6), (0, 10)), 2: ((-1, 3), (-3, -2)), 3: ((-3, -3), (-6, -9)), 4: ((-4, -6.5), (-8, -14)), 5: ((-4.5, -7.5), (-9, -16.5)), 6: ((-4.5, -7.5), (-9, -16.5)), 7: ((2, -4), (4, -10)), 8: ((6, 3), (10, 6)), 9: ((5.5, 8), (9, 17)), 10: ((5.5, 8), (9, 17)), 11: ((4, 5), (7.5, 8)), 12: GUARD_N, 13: ((1.5, 5.5), (3, 6)), 14: IDLE_N}
+PU_F = {0: IDLE_F, 1: ((-.5, 5.5), (-1, 9)), 2: ((3, 0), (6, -5)), 3: ((4, -4), (8, -10)), 4: ((5, -7), (9.5, -14.5)), 5: ((5.5, -8), (10.5, -17)), 6: ((5.5, -8), (10.5, -17)), 7: ((4, -3), (7, -9)), 8: ((5, 3), (8.5, 6)), 9: ((4.5, 8), (7.5, 17)), 10: ((4.5, 8), (7.5, 17)), 11: ((3, 5), (6, 8)), 12: GUARD_F, 13: ((.5, 5), (1, 7)), 14: IDLE_F}
+def pu_params(i):
+    return dict(by=[0, 2, 0, -1, -2, -2, -2, 0, 3, 5, 5, 3, 1, 0, 0][i], ln=[0, 1, 0, 0, -1, -1, -1, 1, 3, 4, 4, 2, 1, 0, 0][i], hd=[0, 0, 0, 0, 0, -1, -1, 0, 1, 2, 2, 1, 0, 0, 0][i],
+                hx=[0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 1, 0, 0, 0][i], lf=(34 + [0, 1, 0, 0, 0, 0, 0, 0, 1, 3, 3, 2, 1, 0, 0][i], GR, 0), lb=(31 - [0, 1, 0, 0, 0, 0, 0, 0, 1, 3, 3, 2, 1, 0, 0][i], GR, 0),
+                na=PU_N[i], fa=PU_F[i], hp=i*.9, hup=1 if 3 <= i <= 7 else 0, hback=1 if 4 <= i <= 6 else 0, mo=8 <= i <= 10, blink=False)
+def powerup(i):                                    # CURSED ENERGY ON: both hands go up behind his head with nothing on them (frames 1-4, a beat at the top, 5-6), then slam down in front of him (7-9) and the flames light up on the way down (the game lights them after 7.5 frames); he crouches under the blow, then straightens up with his fists burning
+    f, nh, fh = figure(pu_params(i))
+    if i in (7, 8, 9):                                                         # a swoosh behind each falling fist (from where it was a frame ago)
+        pn, pf = figure(pu_params(i - 1))[1:]
+        streak(f, [pf, fh], (1.0, 3.4), (0, 1), False); streak(f, [pn, nh], (1.0, 3.4), (0, 1), False)
+    return f, nh, fh
+ATTACKS = (('atk0', lambda i: hook(i, False)), ('atk1', lambda i: hook(i, True)), ('atk2', knee), ('atk3', kick3), ('atk4', divergent), ('atk5', rkick, 16, 48), ('atk6', elbow), ('atk7', downslam), ('atk8', pushkick), ('atk9', conc), ('atk10', sweep, 12, 52), ('atk11', powerup))
 # ---------------------------------------------------------------- crouch, crouch walk, crouch jump and the four dashes (15 frames each)
 CR = 7                                                                          # how far the hips drop in a crouch (the leg IK folds the knees by itself)
 def cdn(i):                                                                     # standing -> crouched (standing up plays it backwards)
@@ -332,17 +423,17 @@ if __name__ == '__main__':
     for k, fn, top, w in MOVES:
         fr, hn, hf = pack(fn, X0, w, top); out[k] = {'x0': X0, 'w': w, 'h': N + 2*top, 'top': top, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}
         if k == 'cjump': out[k]['lift'] = CJ_LIFT
-    for k, fn in ATTACKS:
-        fr, hn, hf = pack(fn, X0, 44, 0); out[k] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}
+    for k, fn, *xw in ATTACKS:                                              # (a move that reaches further than the usual 44 px strip has its own start column and width)
+        x0, w = xw or (X0, 44); fr, hn, hf = pack(fn, x0, w, 0); out[k] = {'x0': x0, 'w': w, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}
         if k == 'atk3': out[k]['lift'] = KICK_LIFT
     for k in range(10): out['rx%d' % k] = pack_rx(k)
     fr, hn, hf = pack(block, X0, 44, 0, 10); out['blk'] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}      # BLOCK (10 frames)
     fr, hn, hf = pack(bwalk, X0, 44, 0); out['bfwd'] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}      # walking with the guard up
     json.dump(out, open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'yuji.json'), 'w'), separators=(',', ':'))
-    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct', 'x0', out[k]['x0'], 'w', out[k]['w'])
+    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct', 'x0', out[k]['x0'], 'w', out[k]['w'])
     if len(sys.argv) > 1:                                                  # contact sheets: python3 -B yuji_art.py sheets <dir>
         d = sys.argv[2]; z = 2
-        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]):
+        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]):
             s = out[k]; sheet = Image.new('RGB', (15*s['w']*z, s['h']*z), (40, 40, 70)); px = {c: tuple(int(PAL[c][j:j+2], 16) for j in (1, 3, 5)) for c in PAL}
             for n, rows in enumerate(s['frames']):
                 for y, row in enumerate(rows):

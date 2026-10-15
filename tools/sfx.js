@@ -378,6 +378,21 @@ function makeSfx(ac) {
       tone(B.soft, t + 0.09, { type: 'sine', f: 1980, f2: 990, dur: 0.5, cur: 1, gain: 0.1, atk: 0.005 });
       burst(B.soft, t + 0.03, { type: 'highpass', f: 2000, f2: 6000, q: 0.7, dur: 0.4, gain: 0.7, atk: 0.02 });
     },
+    concgather(at) {                                     // CONCENTRATED FIST 1: he coils and the cursed energy packs into his fist: a low hum that tightens and climbs for half a second, a thin shimmer over it and a few dry crackles at the end
+      const t = T(at), B = C.ce;
+      tone(B.deep, t, { type: 'triangle', f: 70, f2: 260, dur: 0.5, cur: 1, gain: 0.3, atk: 0.2 });
+      tone(B.soft, t + 0.05, { type: 'sine', f: 180, f2: 720, dur: 0.4, cur: 1, gain: 0.14, atk: 0.1 });
+      burst(B.deep, t, { type: 'highpass', f: 1200, f2: 3800, q: 1.0, dur: 0.45, gain: 0.4, atk: 0.15 });
+      for (let k = 0; k < 5; k++) burst(B.deep, t + 0.2 + k * 0.05 + R(0, 0.02), { f: R(1800, 3600), q: 2.2, dur: R(0.012, 0.025), gain: R(0.2, 0.35), atk: 0.001 });
+    },
+    concboom(at) {                                       // CONCENTRATED FIST lands: a huge, deep boom with a hard crack on top, a rush of air and a ringing echo (heavier than the second impact of DIVERGENT FIST)
+      const t = T(at), B = C.atk;
+      tone(B.deep, t, { type: 'triangle', f: 96, f2: 28, dur: 0.9, gain: 0.7, atk: 0.003 });
+      tone(B.deep, t, { f: 220, f2: 70, dur: 0.12, gain: 0.4, atk: 0.002 });
+      burst(B.soft, t, { f: 420, f2: 70, q: 0.7, dur: 0.38, gain: 3.8, atk: 0.001 });
+      burst(B.soft, t + 0.02, { type: 'highpass', f: 1800, f2: 5200, q: 0.8, dur: 0.3, gain: 0.8, atk: 0.01 });
+      tone(B.soft, t + 0.06, { type: 'sine', f: 1100, f2: 520, dur: 0.6, cur: 1, gain: 0.14, atk: 0.005 });
+    },
     quake(at) {                                          // the roof is hit: a huge low boom, a long shaking rumble and stones and splinters falling
       const t = T(at), B = C.ce;
       tone(B.deep, t, { type: 'triangle', f: 80, f2: 22, dur: 1.6, gain: 0.6, atk: 0.004 });
