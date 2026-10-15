@@ -60,7 +60,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #blk{border-color:#9f8cff}
 #fat{display:none;grid-area:2/1;border-color:#ff4a3a;color:#ff6a5a;opacity:.38}#fat span{color:#ffb4a8}#fat svg{width:4.5vh;height:4.5vh}      /* FATALITY: only in a match, to the left of BLOCK; dark until the enemy is at 20% health or less and close, then it glows */
 .col.vs{grid-template-columns:auto auto auto}.col.vs #fat{display:flex}
-.col.yj .pb:not(#atk):not(#dash):not(#lap){opacity:.3}.col.ct #ce,.col.ct #blk{visibility:hidden}.col.ct #dom{border-color:#ff5a8a;color:#ff8fb0}.col.ct #dom span{color:#ffc0d4}.col.ct #dom::after{background:rgba(255,90,138,.38)}.col.ct #dom.on{border-color:#ffd0e0;color:#fff}.col.vy #dom{border-color:#ff5a5a;color:#ff8a8a}.col.vy #dom span{color:#ffb4b4}.col.vy #dom::after{background:rgba(255,80,80,.38)}.col.vy #dom.on{border-color:#ffd0d0;color:#fff}      /* playing Verity the DOMAIN button is his JUMPSCARE (red, with the same wait-fill); the FATAL button is the same as Gojo's */
+.col.yj .pb:not(#atk):not(#dash):not(#lap):not(#blk){opacity:.3}.col.ct #ce{visibility:hidden}.col.ct #dom{border-color:#ff5a8a;color:#ff8fb0}.col.ct #dom span{color:#ffc0d4}.col.ct #dom::after{background:rgba(255,90,138,.38)}.col.ct #dom.on{border-color:#ffd0e0;color:#fff}.col.vy #dom{border-color:#ff5a5a;color:#ff8a8a}.col.vy #dom span{color:#ffb4b4}.col.vy #dom::after{background:rgba(255,80,80,.38)}.col.vy #dom.on{border-color:#ffd0d0;color:#fff}      /* playing Verity the DOMAIN button is his JUMPSCARE (red, with the same wait-fill); the FATAL button is the same as Gojo's */
 .col.vs #dom{grid-area:1/2}.col.vs #ce{grid-area:1/3}.col.vs #blk{grid-area:2/2}.col.vs #lap{grid-area:2/3}.col.vs #dash{grid-area:3/2}.col.vs #atk{grid-area:3/3}
 #fat.rdy{opacity:1;background:#3a0d12;border-color:#ff8a7a;color:#fff;box-shadow:0 0 1.8vh #ff4a3a,0 0 .5vh #ff4a3a inset,4px 4px 0 #000;animation:fatglow .5s steps(2) infinite}
 @keyframes fatglow{50%{box-shadow:0 0 3.2vh #ff2a2a,0 0 .9vh #ff2a2a inset,4px 4px 0 #000}}
@@ -202,7 +202,7 @@ const YU_ATK = { base: 24, names: ['R.HOOK', 'L.HOOK', 'KNEE', '3 KICKS', 'DIVER
 // THE CARTOON CAT (chapter 2, tools/cat_rig.py). His M1 (15 frames each): 1. GRAB: the arm stretches out, grabs Gojo and pulls him in (hit 30), 2. PUNCH with the other hand while the first still holds on (31), 3. GRAB again (32, the same animation as the first), 4. KICK that sends Gojo away (33); 4 + 8 + 4 + 14 = 30 damage. Hit 34 = the punch up from the floor. Hit 35 = the HUGE Cat's kick (CARTOON ATTACK: 25 damage). CAT_RXLIFT: how high the hop of his hit reaction 7 lifts him. CT: the playable Cat's numbers (smashFps = how fast he smashes himself flat, flatMul = his walking speed while flat, flatMax = ms flat before he gets up dizzy, stunMs = how long he is dizzy, toonFps / toonHit = the speed and the impact frame of CARTOON ATTACK, back = how many px behind the summoner the giant stands, hold = ms his glove keeps its grip). CAT_CELL: every strip's cell: [width, height, anchor column, rows above the usual 64]
 const CAT_ATK = { base: 30, names: ['GRAB', 'PUNCH', 'GRAB', 'KICK', 'UPPER'], strip: ['m0', 'm1', 'm0', 'm3', 'flatpunch'], fps: [24, 30, 24, 28, 30], swing: [[3], [4], [3], [4], [3]], imp: [[6], [7], [6], [8], [6]], hit: [[30], [31], [32], [33], [34]], snd: [0, 1, 2, 3, 0] };      // (index 4 = the punch up from the floor: only the playable Cat uses it)
 const CAT_RXLIFT = { 7: [0, 3, 6, 9, 10, 10, 10, 9, 7, 5, 3, 2, 1, 0, 0] }, CT = { smashFps: 25, flatMul: 3, flatMax: 5000, stunMs: 1000, toonFps: 24, toonHit: 10, back: 64, hold: 1300 };
-const CAT_CELL = { idle: [64, 64, 32, 0], walk: [64, 64, 32, 0], stun: [64, 64, 32, 0], smash: [64, 80, 32, 16], unsmash: [64, 80, 32, 16], flat: [64, 64, 32, 0], flatwalk: [64, 64, 32, 0], flatpunch: [64, 64, 32, 0], m0: [128, 64, 36, 0], m1: [128, 64, 36, 0], m3: [128, 64, 36, 0], dashf: [128, 64, 36, 0], dashb: [128, 64, 36, 0], rx0: [96, 64, 64, 0], rx1: [96, 64, 64, 0], rx2: [96, 64, 64, 0], rx3: [96, 64, 64, 0], rx4: [96, 64, 64, 0], rx5: [96, 64, 64, 0], rx6: [96, 64, 64, 0], rx7: [96, 64, 64, 0], rx8: [96, 64, 64, 0], rx9: [96, 64, 64, 0], jump: [64, 72, 32, 8], toon: [64, 64, 32, 0], huge: [128, 64, 36, 0], ult1: [128, 64, 36, 0], ult2: [128, 64, 36, 0], run: [64, 64, 32, 0], maw: [128, 128, 64, 0], shock: [64, 96, 32, 32], kickb: [288, 100, 196, 36], snap: [288, 100, 196, 36] };
+const CAT_CELL = { idle: [64, 64, 32, 0], walk: [64, 64, 32, 0], block: [64, 64, 32, 0], bwalk: [64, 64, 32, 0], stun: [64, 64, 32, 0], smash: [64, 80, 32, 16], unsmash: [64, 80, 32, 16], flat: [64, 64, 32, 0], flatwalk: [64, 64, 32, 0], flatpunch: [64, 64, 32, 0], m0: [128, 64, 36, 0], m1: [128, 64, 36, 0], m3: [128, 64, 36, 0], dashf: [128, 64, 36, 0], dashb: [128, 64, 36, 0], rx0: [96, 64, 64, 0], rx1: [96, 64, 64, 0], rx2: [96, 64, 64, 0], rx3: [96, 64, 64, 0], rx4: [96, 64, 64, 0], rx5: [96, 64, 64, 0], rx6: [96, 64, 64, 0], rx7: [96, 64, 64, 0], rx8: [96, 64, 64, 0], rx9: [96, 64, 64, 0], jump: [64, 72, 32, 8], toon: [64, 64, 32, 0], huge: [128, 64, 36, 0], ult1: [128, 64, 36, 0], ult2: [128, 64, 36, 0], run: [64, 64, 32, 0], maw: [128, 128, 64, 0], shock: [64, 96, 32, 32], kickb: [288, 100, 196, 36], snap: [288, 100, 196, 36] };
 const ATK_NAMES = ['R.HOOK', 'L.HOOK', 'ELBOW', 'KICK'], WALK_NAMES = ['JAB', 'KICK', 'CROSS', 'KICK2'], RED_NAMES = ['NECK', 'GUT', 'PUNCH', 'SMASH'], CR_FPS = 36, LAPSE_FPS = 24;   // hooks and the elbow nudge the enemy (so the combo keeps connecting); the kick sends him sliding with a smoke trail
 const DUMMY_HP = 300, RX_FPS = [16, 16, 16, 18, 12, 16, 16, 16, 12, 14], RX_DUR = RX_FPS.map(f => 10000 / f);      // 10 reactions, 10 frames each
 const RXF15 = RX_FPS.map(f => f * 1.5);      // Yuji's and Verity's 10 hit reactions have 15 frames each: they play at 1.5x Gojo's frame rate, so a reaction lasts exactly as long as his
@@ -266,8 +266,8 @@ const FOE_INV = { rx: rxI, atk: atkI, walk: dumWalk, blk: blkI, idle: dumF, fear
 const foeSet = () => vs && !vs.inv ? FOE_NORM : FOE_INV;      // in a match the enemy Gojo is inverted only when you are Gojo too
 const YU = __YUJI__, yuInv = p => { const o = {}; for (const k in p) o[k] = inv(p[k]); return o; };      // YUJI (tools/yuji_art.py): an idle, a walk (played backwards for walking back) and a jump, 15 frames each; the inverted one has the colours flipped
 const YUF = { norm: {}, inv: {} }, YINFO = { idle: YU.idle, fwd: YU.fwd, back: { ...YU.fwd, hn: YU.fwd.hn.slice().reverse(), hf: YU.fwd.hf.slice().reverse() }, jump: YU.jump };
-for (const [k, pal] of [['norm', YU.pal], ['inv', yuInv(YU.pal)]]) { for (const n of ['idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'cjump', 'run']) YUF[k][n] = mk(YU[n], pal); YUF[k].back = YUF[k].fwd.slice().reverse(); YUF[k].cback = YUF[k].cfwd.slice().reverse(); YUF[k].atk = [0, 1, 2, 3, 4].map(j => mk(YU['atk' + j], pal)); YUF[k].dash = [0, 1, 2, 3].map(j => mk(YU['dash' + j], pal)); YUF[k].rx = Array.from({ length: 10 }, (_, j) => mk(YU['rx' + j], pal)); }
-YU.atk = [0, 1, 2, 3, 4].map(j => YU['atk' + j]); YU.dash = [0, 1, 2, 3].map(j => YU['dash' + j]); YU.rx = Array.from({ length: 10 }, (_, j) => YU['rx' + j]); YINFO.cback = { ...YU.cfwd, hn: YU.cfwd.hn.slice().reverse(), hf: YU.cfwd.hf.slice().reverse() };
+for (const [k, pal] of [['norm', YU.pal], ['inv', yuInv(YU.pal)]]) { for (const n of ['idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'cjump', 'run', 'blk', 'bfwd']) YUF[k][n] = mk(YU[n], pal); YUF[k].back = YUF[k].fwd.slice().reverse(); YUF[k].cback = YUF[k].cfwd.slice().reverse(); YUF[k].bback = YUF[k].bfwd.slice().reverse(); YUF[k].atk = [0, 1, 2, 3, 4].map(j => mk(YU['atk' + j], pal)); YUF[k].dash = [0, 1, 2, 3].map(j => mk(YU['dash' + j], pal)); YUF[k].rx = Array.from({ length: 10 }, (_, j) => mk(YU['rx' + j], pal)); }
+YU.atk = [0, 1, 2, 3, 4].map(j => YU['atk' + j]); YU.dash = [0, 1, 2, 3].map(j => YU['dash' + j]); YU.rx = Array.from({ length: 10 }, (_, j) => YU['rx' + j]); YINFO.cback = { ...YU.cfwd, hn: YU.cfwd.hn.slice().reverse(), hf: YU.cfwd.hf.slice().reverse() }; YINFO.bback = { ...YU.bfwd, hn: YU.bfwd.hn.slice().reverse(), hf: YU.bfwd.hf.slice().reverse() };
 const YHL = new Map();
 function headlessY(c) {      // Yuji's picture without the head (Verity's bite): everything above the red collar is gone, a red stump stands on the collar and blood runs down the collar and the chest
   let r = YHL.get(c); if (r) return r; r = document.createElement('canvas'); r.width = c.width; r.height = c.height; const g = r.getContext('2d'); g.drawImage(c, 0, 0); g.clearRect(0, 0, c.width, 24);
@@ -296,6 +296,10 @@ function yujiPick(a) {      // YUJI's picture for the player: the frame set, its
   if (a.hurting) { const r = a.hurtK, I = YU.rx[r], f = Math.min(14, Math.floor(Math.max(0, a.now - a.hurtAt) * RXF15[r] / 1000)); return { set: N.rx[r], info: I, fi: f, lift: I.lift ? I.lift[f] : 0 }; }      // one of his ten hit reactions (picked at random when he is hit)
   if (a.atkOn) { const I = YU.atk[a.atkK], f = Math.min(14, a.af); return { set: N.atk[a.atkK], info: I, fi: f, lift: I.lift ? I.lift[f] : 0 }; }
   if (a.dodging) { const n = a.dgK + (a.dgCr ? 2 : 0); return { set: N.dash[n], info: YU.dash[n], fi: Math.min(14, a.df), lift: a.jumping ? jl() : 0 }; }      // (a dash in mid-air stays up there)
+  if (a.blocking) {      // BLOCK: his fists and forearms up in front of his face (5 frames to raise them, 5 to hold, the same ones backwards to lower them); walking with the guard up is a slow shuffle (a third of the walking speed)
+    if (a.dir === 0) return { set: N.blk, info: YU.blk, fi: Math.max(0, Math.min(9, a.bf)), lift: 0 };
+    const k = Math.floor(Math.max(0, a.now - a.modeAt) * WALK_FPS * 0.3 / 1000) % 15; return a.dir > 0 ? { set: N.bfwd, info: YU.bfwd, fi: k, lift: 0 } : { set: N.bback, info: YINFO.bback, fi: k, lift: 0 };
+  }
   if (a.jumping) return { set: a.jumpC ? N.cjump : N.jump, info: a.jumpC ? YU.cjump : YU.jump, fi: a.jf, lift: jl() };
   if (a.mode === 'cdn') return { set: N.cdn, info: YU.cdn, fi: a.stance === 'down' ? a.sf : 14 - a.sf, lift: 0 };
   if (a.mode === 'cidle') return { set: N.cidle, info: YU.cidle, fi: FI, lift: 0 };
@@ -742,6 +746,7 @@ function drawDummy(now, dt) {
   if (vs && vs.foe === 'yuji') { const ys = vs.inv ? YUF.inv : YUF.norm, wk = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'walk', at = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'attack'; ox = oy = 0; lift = 0;      // the enemy is Yuji
     if (at) { fi = Math.min(14, Math.floor((now - dummy.aiAt) * YU_ATK.fps[dummy.k] * (dummy.spd || 1) / 1000)); src = ys.atk[dummy.k][fi]; info = YU.atk[dummy.k]; lift = info.lift ? info.lift[fi] : 0; }
     else if (reacting) { const r = dummy.rx; fi = Math.min(14, Math.floor((now - dummy.rxAt) * RXF15[r] / 1000)); src = ys.rx[r][fi]; info = YU.rx[r]; lift = info.lift ? info.lift[fi] : 0; }      // one of his ten hit reactions
+    else if (kt < 0 && dummy.mode === 'fighter' && (dummy.ai === 'block' || dummy.ai === 'dodge')) { const t = now - dummy.aiAt; fi = t < 250 ? Math.max(0, Math.floor(t / 50)) : 5 + Math.floor(now / 125) % 5; src = ys.blk[fi]; info = YU.blk; }      // BLOCK: the guard comes up in a quarter of a second and is held (also while he steps back)
     else { fi = Math.floor(wk ? now * WALK_FPS / 1000 : now / (1000 / IDLE_FPS)) % 15; src = (wk ? ys.fwd : ys.idle)[fi]; info = wk ? YU.fwd : YU.idle; }
     if ((reacting && hitT < 70) || (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0)) src = whiteOf(src); }
   if (vs && vs.foe === 'cat') { const L = catLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox; oy = L.oy; }      // the enemy is the Cartoon Cat
@@ -1230,8 +1235,8 @@ function vsTick(now, dt) {
   if (now - vs.hitAt > 350) vs.sh += (vs.hp - vs.sh) * Math.min(1, dt * 4);
   if (vs.ph !== 'fight') { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = false; }      // no control before FIGHT! and after the K.O.
   if (now < pStun || now < (vs.catHold || 0) || now < (vs.cStun || 0)) { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; stickDown = false; }      // ...and none while he is stunned by the JUMPSCARE, held in the Cat's glove or dizzy (the Cat after 5 s flat)
-  if (vs.me === 'cat') { ceReq = blockHeld = false; }      // the Cat has no MODE and no BLOCK
-  if (vs.me === 'yuji') { ceReq = domReq = blockHeld = false; if (stance !== 'stand') atkReq = lpReq = false; }      // Yuji has his M1 combo, DIVERGENT FIST (the BLUE button, standing only), walking, jumping, crouching and dashing (no MODE, DOMAIN or block, and no attacks while crouched)
+  if (vs.me === 'cat') { ceReq = false; if (stance !== 'stand') blockHeld = false; }      // the Cat has no MODE; he blocks standing only (flat nothing can hit him anyway)
+  if (vs.me === 'yuji') { ceReq = domReq = false; if (stance !== 'stand') atkReq = lpReq = blockHeld = false; }      // Yuji has his M1 combo, DIVERGENT FIST (the BLUE button, standing only), walking, jumping, crouching and dashing (no MODE, DOMAIN or block, and no attacks while crouched)
 }
 function vsHurt(dm, now) { vs.hp = Math.max(0, vs.hp - dm); vs.hitAt = now; if (vs.hp <= 0) { if (!vs.story || vs.foe === 'cat') endRound('enemy', 'ko', now); else if (!de && !se) deathStart(now); } }      // (in the story fight Gojo's death is a cutscene)
 function endRound(who, why, now) {
@@ -1259,7 +1264,7 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
   // 1. a swing is coming: after his reaction time he steps out of it or raises his guard; a move you keep repeating is read (Grade 2 and up) and answered more and more
   if (atkAt >= 0 && !vs.rolled && d.ai !== 'attack' && gap > 0 && now - vs.seenAt >= G.react * (0.8 + Math.random() * 0.4) && now < atkAt + ATK_IMPACT[vs.seenK] * 1000 / ATK_FPS[vs.seenK] && ag <= pMove(vs.seenK) + 4) {
     vs.rolled = true; const habit = vs.hist.slice(-5).filter(k => k === vs.seenK).length, r = Math.random(), blk = Math.min(0.95, G.blk + (G.smart >= 1 ? 0.12 * Math.max(0, habit - 1) : 0));
-    const catFoe = vs.foe === 'cat';      // (the Cat never blocks: he pushes himself away with his hands instead)
+    const catFoe = vs.foe === 'cat' && vs.story;      // (in the chapter 2 story fight the Cat never blocks: he pushes himself away with his hands instead; in Versus he blocks like the others)
     if (r < G.dodge + (catFoe ? blk : 0)) { vs.defended = true; dodge(300); return; }
     if (!catFoe && r < G.dodge + blk) { vs.defended = true; d.ai = 'block'; d.aiAt = now; d.until = now + 650; return; }
   }
@@ -2208,6 +2213,11 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   if (jumpAt >= 0) { jf = Math.floor(Math.max(0, now - jumpAt) * JUMP_FPS / 1000); if (jf >= 15) { jumpAt = -1; jf = -1; } }
   if (hurtAt >= 0) { hf = Math.floor(Math.max(0, now - hurtAt) * RX_FPS[hurtK] / 1000); if (hf >= 10) { hurtAt = -1; hf = -1; hurtEnd = now; } }
   if (dgAt >= 0) { df = Math.floor(Math.max(0, now - dgAt) * DASH_FPS / 1000); if (df >= 15) { dgAt = -1; df = -1; dgReady = now + 150; } }
+  let bf = -1;      // BLOCK 0-9: the glove swells up (0-4), then the held guard (5-9, loops); lowering it runs 4..0 again
+  if (blkAt >= 0) {
+    if (blkEnd < 0) { const k = Math.floor(Math.max(0, now - blkAt) * BLK_FPS / 1000); bf = k < 5 ? k : 5 + Math.floor((now - blkAt - 5000 / BLK_FPS) * 8 / 1000) % 5; blkFrom = Math.min(4, k); }
+    else { bf = blkFrom - Math.floor(Math.max(0, now - blkEnd) * BLK_FPS / 1000); if (bf < 0) { blkAt = -1; blkEnd = -1; bf = -1; } }
+  }
   if (stance === 'down' || stance === 'up') { sf = Math.floor(Math.max(0, now - stAt) * CT.smashFps / 1000); if (sf >= 15) { const was = stance; stance = was === 'down' ? 'crouch' : 'stand'; sf = -1; if (was === 'down') c.flatAt = now; else if (c.tired) { c.tired = false; vs.cStun = now + CT.stunMs; c.stunAt = now; } } }
   if (lpAt >= 0) { lf = Math.floor(Math.max(0, now - lpAt) * CT.toonFps / 1000); if (lf >= 15 || (vs.who === 'enemy' && (vs.ph === 'ko' || vs.ph === 'over'))) { lpAt = -1; lf = -1; lpReady = now + 700; } }      // (a cast ends with its 15 frames, or when the enemy has beaten him)
   if (atkAt >= 0) {
@@ -2215,7 +2225,7 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
     if (af >= 15) { if (atkQ) { atkQ = false; atkK = ctPick(); atkAt = now; af = 0; } else { atkAt = -1; af = -1; comboUntil = now + COMBO_MS; } }      // (a press during a swing chains the next one)
   }
   if (stance === 'crouch' && now - c.flatAt >= CT.flatMax) { stance = 'up'; stAt = now; sf = 0; c.tired = true; atkAt = -1; af = -1; atkQ = false; }      // flat for more than 5 s: he gets up (and is dizzy for 1 s once he stands)
-  const can = () => t >= 1 && !dizzy && !fear && jf < 0 && hf < 0 && df < 0 && sf < 0 && lf < 0 && !ulting, free = () => can() && af < 0;      // (nothing else is going on: asked again after every move that may have started in this frame)
+  const can = () => t >= 1 && !dizzy && !fear && jf < 0 && hf < 0 && df < 0 && sf < 0 && lf < 0 && bf < 0 && !ulting, free = () => can() && af < 0;      // (nothing else is going on: asked again after every move that may have started in this frame)
   if (lpReq) { lpReq = false; if (free() && stance === 'stand' && now > lpReady && ceSpend(CE_COST.cToon, now)) { lpAt = now; lf = 0; atkQ = false; snd('boing'); } }      // CARTOON ATTACK (the BLUE button): costs 30% of the energy
   if (domReq) {      // the ULTIMATE (the DOMAIN button): the enemy in front and within the glove's reach, 67% of the energy, 30 s between two
     domReq = false;
@@ -2227,6 +2237,8 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   if (crReq) { crReq = false; if (free()) { if (stance === 'stand') { stance = 'down'; stAt = now; sf = 0; } else if (stance === 'crouch') { stance = 'up'; stAt = now; sf = 0; } } }      // (tap to smash himself flat, tap to stand again; the stick's down position keeps him flat for as long as it is held)
   if (free()) { if (stickDown && stance === 'stand') { stance = 'down'; stAt = now; sf = 0; stickCr = true; } else if (!stickDown && stickCr && stance === 'crouch' && now - stickDownEnd > 140) { stance = 'up'; stAt = now; sf = 0; } }
   if (stance === 'stand') stickCr = false;
+  if (blockHeld && blkAt < 0 && free() && stance === 'stand') { blkAt = now; blkEnd = -1; bf = 0; atkQ = false; }      // BLOCK (hold): one glove swells into a giant shield; hits from the front bounce off
+  if (!blockHeld && blkAt >= 0 && blkEnd < 0) { if (stance !== 'stand' || keyL || keyR || padL || padR) { blkAt = -1; bf = -1; } else blkEnd = now; }      // (the glove shrinks back smoothly only when he stands still; otherwise it just drops)
   if (dashReq) {      // PUSH DASH: the way he is walking is the way he goes (standing still = back); both gloves on the ground, he shoves himself along; nothing can hit him from frame 0 to 10; it costs nothing
     dashReq = false;
     if (free() && stance === 'stand' && now > dgReady) { const d = (keyR || padR) ? 1 : -1; dgAt = now; df = 0; dgK = d > 0 ? 0 : 1; dgFrom = wx; dgTo = wx + d * (d > 0 ? DASH_FWD : DASH_BACK); atkQ = false; snd('dash', dgK); puff(wx - d * 5, 5); }
@@ -2234,9 +2246,9 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   if (jumpReq) { jumpReq = false; if (free() && stance === 'stand') { jumpAt = now; jf = 0; } }
   const flat = stance === 'crouch', steer = t >= 1 && !dizzy && !fear && !ulting && df < 0 && sf < 0 && lf < 0 && (stance === 'stand' || flat) && ((jf < 0 && af < 0 && hf < 0) || (jf >= 3 && jf <= 11));      // (no walking while he smashes himself flat, stands up, swings, casts or is hurt)
   const dir = steer ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0;
-  const nm = hf >= 0 ? 'hurt' : ulting ? 'ult' : (fear || dizzy) ? 'stun' : lf >= 0 ? 'toon' : df >= 0 ? 'dash' : jf >= 0 ? 'jump' : af >= 0 ? 'atk' : sf >= 0 ? 'cdn' : flat ? (dir !== 0 ? 'cwalk' : 'cidle') : dir > 0 ? 'fwd' : dir < 0 ? 'back' : 'idle';
+  const nm = hf >= 0 ? 'hurt' : ulting ? 'ult' : (fear || dizzy) ? 'stun' : lf >= 0 ? 'toon' : df >= 0 ? 'dash' : bf >= 0 && sf < 0 ? 'block' : jf >= 0 ? 'jump' : af >= 0 ? 'atk' : sf >= 0 ? 'cdn' : flat ? (dir !== 0 ? 'cwalk' : 'cidle') : dir > 0 ? 'fwd' : dir < 0 ? 'back' : 'idle';
   if (nm !== mode) { mode = nm; modeAt = now; stepN = -1; }
-  wx += dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * (flat ? CT.flatMul : 1) * dt;      // (flat he is 3 times as fast)
+  wx += dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * (flat ? CT.flatMul : 1) * (bf >= 0 ? 0.3 : 1) * dt;      // (flat he is 3 times as fast, and with the shield up he shuffles at a third of the speed)
   if (df >= 0) { const k = Math.min(1, Math.max(0, (now - dgAt - 2000 / DASH_FPS) / 300)); wx = dgFrom + (dgTo - dgFrom) * (1 - Math.pow(1 - k, 3)); }      // the push itself: fast at first, over frames 3-12
   wx += wxv * dt; wxv *= Math.exp(-7 * dt);      // knocked back by the enemy: the world slides past, then friction stops it
   const lift = jf >= 0 ? D.jump.lift[jf] : 0; gojoLift = lift; gojoGone = false;      // (the enemy's swings miss while he is in the air)
@@ -2248,9 +2260,9 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   drawBackdrop(now);
   ctx.fillStyle = 'rgba(220,210,255,0.35)';      // wind streaks
   for (const p of parts) { p.x -= (p.v + dir * 45) * dt; if (p.x < -p.l) p.x = VW; else if (p.x > VW) p.x = -p.l; ctx.fillRect(p.x | 0, p.y | 0, p.l, 1); }
-  if (mode === 'fwd' || mode === 'back') {      // a step every half cycle (flat he slides: no steps)
-    const st = Math.floor(Math.max(0, now - modeAt) / 500);
-    if (st !== stepN) { stepN = st; snd('step', st & 1, mode === 'back'); }
+  if (mode === 'fwd' || mode === 'back' || (mode === 'block' && dir !== 0)) {      // a step every half cycle (flat he slides: no steps; with the shield up they come three times as slowly)
+    const st = Math.floor(Math.max(0, now - modeAt) / (500 / (mode === 'block' ? 0.3 : 1)));
+    if (st !== stepN) { stepN = st; snd('step', st & 1, mode === 'back' || mode === 'block'); }
     if (sfx) sfx.windPush(mode === 'fwd' ? 1.3 : 1);
   } else { stepN = -1; if (sfx) sfx.windPush(1); }
   if (jf !== evJ) { if (evJ < 3 && jf >= 3) snd('jump'); if (evJ < 12 && jf >= 12) snd('land', 1); evJ = jf; }
@@ -2280,6 +2292,7 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   else if (ulting) { const A = ultAnim(now); name = A.name; fi = A.fi; loop = A.loop; }      // his ULTIMATE: the grab, the knees, the throw
   else if (lf >= 0) { name = 'toon'; fi = lf; loop = false; }
   else if (df >= 0) { name = dgK === 0 ? 'dashf' : 'dashb'; fi = df; loop = false; }
+  else if (bf >= 0 && sf < 0) { if (dir === 0) { name = 'block'; fi = bf; loop = false; } else { const k = Math.floor(Math.max(0, now - modeAt) * WALK_FPS * 0.3 / 1000) % 15; name = 'bwalk'; fi = dir > 0 ? k : 14 - k; loop = false; } }      // BLOCK: the giant glove (or the slow shuffle with it up; walking back plays the stride the other way round)
   else if (jf >= 0) { name = 'jump'; fi = jf; loop = false; }
   else if (af >= 0) { name = CAT_ATK.strip[atkK]; fi = af; loop = false; }
   else if (sf >= 0) { name = stance === 'down' ? 'smash' : 'unsmash'; fi = sf; loop = false; }
@@ -2494,7 +2507,7 @@ function drawScene(now, dt) {
     if (!crch) { if (dir > 0) { bset = wblkF; binfo = D.wfb; bfi = slow % 15; } else if (dir < 0) { bset = wblkB; binfo = D.wbb; bfi = slow % 15; } else { bset = atkF[11]; binfo = D.atk11; bfi = bf; } }
     else if (dir > 0) { bset = crF.fblk; binfo = D.cfb; bfi = slow % 15; } else if (dir < 0) { bset = crF.bblk; binfo = D.cbb; bfi = slow % 15; } else { bset = crF.blk; binfo = D.cb; bfi = Math.floor(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)) % 15; }
   }
-  const fearing = now < pStun && !hurting, riding = !!ride, yj = vs && vs.me === 'yuji' ? yujiPick({ now, atkOn, atkK, af, hurting, hurtK, hurtAt, hf, dodging, dgK, dgCr, df, jumping, jumpC, jf, mode, idle, sf, stance, spawnAt, modeAt }) : null, set = yj ? yj.set : riding ? ride.set : hurting ? (now - hurtAt < 70 ? rxW : rxN)[hurtK] : fearing ? crF.idle : dodging ? atkF[9 + dgK + (dgCr ? 3 : 0)] : blocking ? bset : tele ? teleF : jumping ? (jumpC ? crF.jump : jumpF) : mbing ? (mbK ? redF : mbF) : lapsing ? lapseF[lpK] : atkOn ? atkF[atkK] : mode === 'cdn' ? crF.dn : mode === 'cidle' ? crF.idle : mode === 'cfwd' ? crF.fwd : mode === 'cback' ? crF.back : idle ? idleF : mode === 'fwd' ? fwdF : backF;
+  const fearing = now < pStun && !hurting, riding = !!ride, yj = vs && vs.me === 'yuji' ? yujiPick({ now, atkOn, atkK, af, hurting, hurtK, hurtAt, hf, dodging, dgK, dgCr, df, jumping, jumpC, jf, mode, idle, sf, stance, spawnAt, modeAt, blocking, bf, dir }) : null, set = yj ? yj.set : riding ? ride.set : hurting ? (now - hurtAt < 70 ? rxW : rxN)[hurtK] : fearing ? crF.idle : dodging ? atkF[9 + dgK + (dgCr ? 3 : 0)] : blocking ? bset : tele ? teleF : jumping ? (jumpC ? crF.jump : jumpF) : mbing ? (mbK ? redF : mbF) : lapsing ? lapseF[lpK] : atkOn ? atkF[atkK] : mode === 'cdn' ? crF.dn : mode === 'cidle' ? crF.idle : mode === 'cfwd' ? crF.fwd : mode === 'cback' ? crF.back : idle ? idleF : mode === 'fwd' ? fwdF : backF;
   const info = yj ? yj.info : riding ? ride.info : hurting ? D['rx' + hurtK] : fearing ? D.cidle : dodging ? D['atk' + (9 + dgK + (dgCr ? 3 : 0))] : blocking ? binfo : tele ? D.tele : jumping ? (jumpC ? D.cjump : D.jump) : mbing ? (mbK ? D.atk22 : D.atk8) : lapsing ? D['atk' + (4 + lpK)] : atkOn ? D['atk' + atkK] : mode === 'cdn' ? D.cdn : mode === 'cidle' ? D.cidle : mode === 'cfwd' ? D.cfwd : mode === 'cback' ? D.cback : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
   const fi = yj ? yj.fi : riding ? ride.fi : hurting ? hf : fearing ? Math.floor(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)) % 15 : dodging ? df : blocking ? bfi : tele ? tf : jumping ? jf : mbing ? mf : lapsing ? lf : atkOn ? af : mode === 'cdn' ? (stance === 'down' ? sf : 14 - sf) : Math.floor(Math.max(0, now - (idle || mode === 'cidle' ? spawnAt : modeAt)) / (1000 / (idle || mode === 'cidle' ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail pnow() by a hair
   const lk = tele ? info.lift_k[tf] : 0;      // teleport: stays where he vanished (null), then the fixed height he reappears at, falling back to the ground
@@ -2958,6 +2971,7 @@ function catLook(now, reacting, hitT, kt) {      // what the Cat looks like: eve
   else if (a) { name = a.anim; fi = a.fi; loop = !!a.loop; }
   else if (d.ai === 'attack') { name = CAT_ATK.strip[d.k]; fi = (now - d.aiAt) * CAT_ATK.fps[d.k] * (d.spd || 1) / 1000; loop = false; }
   else if (d.ai === 'dodge') { name = 'dashb'; fi = (now - d.aiAt) / Math.max(1, d.until - d.aiAt) * 15; loop = false; }
+  else if (d.ai === 'block') { const t = now - d.aiAt; name = 'block'; fi = t < 250 ? t / 50 : 5 + (now / 125) % 5; loop = false; }      // BLOCK: the glove swells into a shield in a quarter of a second and is held
   else if (d.ai === 'walk') { name = 'walk'; fi = now * WALK_FPS / 1000; }
   const I = CAT_CELL[name]; let src = cfr(name, fi, loop, !!(vs && vs.inv));
   if ((kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) || (kt < 0 && reacting && hitT < 70)) src = whiteOf(src);

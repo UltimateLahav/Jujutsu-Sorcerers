@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """The Cartoon Cat (a curse; chapter 2), drawn from tools/cat_ref.png: a tall black rubber-hose cat with two white arcs for eyes, a wide grin of teeth, long thin arms with big white gloves, thin legs. A little rig of joints is rasterised at 4x and cut to whole pixels, then lit by rule (light from the upper left: the top and left edges are lit, the bottom and right edges are in the shade) and outlined, so every frame is clean 16-bit pixel art in the same look as the other fighters. He faces right (the game mirrors him); his feet are on row 62.
 strips() -> {name: PNG data URL, 15 frames wide}; cells are 64x64 (idle, walk, the flat strips, stun), 128x64 (the stretching moves m0, m1, m3 and the dashes: the figure stands on column 36) and 96x64 (the hit reactions rx*: column 64, like Verity's). INFO gives the game each strip's cell size and anchor column.
+The BLOCK strips (block, 10 of the 15 frames are used; bwalk = the slow walk with the shield up) swell one glove into a giant shield: the pose key gsL / gsR is how big a glove is (1 = a normal one).
 Run on its own to write contact sheets:  python3 -B cat_rig.py <dir>"""
 import base64, io, math, os, sys, copy
 import numpy as np
@@ -18,7 +19,7 @@ BELLY = [(148, 148, 158), (112, 112, 124), (76, 76, 88)]
 
 # ---------------------------------------------------------------- poses (x is relative to the anchor column, y is the picture row; his feet are on row 62)
 STAND = dict(lean=0.0, hx=0.0, hy=9.6, hrot=0.0, sy=19.0, hp=44.0, aL=[(-7.4, 33), (-8.2, 46)], aR=[(7.4, 33), (8.2, 46)], gL=0.0, gR=0.0,
-             lL=[(-2.2, 53), (-2.4, 60)], lR=[(2.2, 53), (2.4, 60)], eyes=0, mouth=0, sx=1.0, sz=1.0, rot=0.0, tx=0.0, ty=0.0, piv=(0.0, 62.0), belly=1, fl=0.0, nk=None, nw=4.8)
+             lL=[(-2.2, 53), (-2.4, 60)], lR=[(2.2, 53), (2.4, 60)], eyes=0, mouth=0, sx=1.0, sz=1.0, rot=0.0, tx=0.0, ty=0.0, piv=(0.0, 62.0), belly=1, fl=0.0, nk=None, nw=4.8, gsL=1.0, gsR=1.0)
 def pose(**kw): p = copy.deepcopy(STAND); p.update(kw); return p
 mix = lambda a, b, t: [mix(x, y, t) for x, y in zip(a, b)] if isinstance(a, (list, tuple)) else a + (b - a) * t
 ease = lambda t: t * t * (3 - 2 * t)
@@ -95,30 +96,30 @@ def render(p, W=64, ax=32, Hc=64, oy=0):
     layer(lambda c: (c.poly(TL([H0(*q) for q in HEAD])), [c.poly(TL([H0(sg * a, b) for a, b in EAR])) for sg in (-1, 1)]), BODY)
     # the arms (thin rubber hoses) and their gloves
     gl = []; gaps = []
-    for key, sgn, gk in (('aL', -1, 'gL'), ('aR', 1, 'gR')):
+    for key, sgn, gk, sk in (('aL', -1, 'gL', 'gsL'), ('aR', 1, 'gR', 'gsR')):
         E, H = p[key]; S0 = (sgn * 5.4 + up(sy + 1.6), sy + 1.8); d = (H[0] - E[0], H[1] - E[1]); L = math.hypot(*d) or 1; d = (d[0] / L, d[1] / L); n = (-d[1], d[0]); o = p[gk]
         if math.hypot(H[0] - S0[0], H[1] - S0[1]) > 30: E = ((S0[0] + H[0]) / 2, (S0[1] + H[1]) / 2)          # (a stretched arm is straight)
         layer(lambda c: c.line(TL([S0, E, H]), 1.9), BODY)
-        gl.append((H, d, n, o))
-    for H, d, n, o in gl:
-        def glove(c, H=H, d=d, n=n, o=o):
-            pc = (H[0] + d[0] * 1.8, H[1] + d[1] * 1.8)
-            pts = [(pc[0] + n[0] * 3.0 * math.cos(a) + d[0] * 3.3 * math.sin(a), pc[1] + n[1] * 3.0 * math.cos(a) + d[1] * 3.3 * math.sin(a)) for a in np.linspace(0, 2 * math.pi, 14, endpoint=False)]
+        gl.append((H, d, n, o, p[sk]))
+    for H, d, n, o, g in gl:
+        def glove(c, H=H, d=d, n=n, o=o, g=g):                                                           # (g: how big the glove is: 1 = a normal glove, about 3 = the GIANT one of his block)
+            pc = (H[0] + d[0] * 1.8 * g, H[1] + d[1] * 1.8 * g)
+            pts = [(pc[0] + n[0] * 3.0 * g * math.cos(a) + d[0] * 3.3 * g * math.sin(a), pc[1] + n[1] * 3.0 * g * math.cos(a) + d[1] * 3.3 * g * math.sin(a)) for a in np.linspace(0, 2 * math.pi, 14 if g < 1.5 else 28, endpoint=False)]
             c.poly(TL(pts))                                                                                   # the palm
             for k, ang in enumerate((-0.5, -0.1, 0.3)):                                                      # three fingers, spread when the hand is open
-                a = ang * (0.4 + 1.4 * o); fd = (d[0] * math.cos(a) - d[1] * math.sin(a), d[0] * math.sin(a) + d[1] * math.cos(a)); b = (pc[0] + n[0] * (k - 1) * 1.6 + d[0] * 2.4, pc[1] + n[1] * (k - 1) * 1.6 + d[1] * 2.4)
-                c.line(TL([b, (b[0] + fd[0] * (1.4 + 2.2 * o), b[1] + fd[1] * (1.4 + 2.2 * o))]), 1.5)
-            tb = (pc[0] - n[0] * 2.6, pc[1] - n[1] * 2.6); c.line(TL([tb, (tb[0] - n[0] * (0.6 + 1.4 * o) + d[0] * (0.8 + 1.0 * o), tb[1] - n[1] * (0.6 + 1.4 * o) + d[1] * (0.8 + 1.0 * o))]), 1.6)    # the thumb
-            c.poly(TL([(H[0] - d[0] * 1.4 + n[0] * 2.4, H[1] - d[1] * 1.4 + n[1] * 2.4), (H[0] + d[0] * 0.6 + n[0] * 2.4, H[1] + d[1] * 0.6 + n[1] * 2.4), (H[0] + d[0] * 0.6 - n[0] * 2.4, H[1] + d[1] * 0.6 - n[1] * 2.4), (H[0] - d[0] * 1.4 - n[0] * 2.4, H[1] - d[1] * 1.4 - n[1] * 2.4)]))   # the cuff
-        layer(glove, GLOVE); gaps.append((H, d, n, o))
+                a = ang * (0.4 + 1.4 * o); fd = (d[0] * math.cos(a) - d[1] * math.sin(a), d[0] * math.sin(a) + d[1] * math.cos(a)); b = (pc[0] + n[0] * (k - 1) * 1.6 * g + d[0] * 2.4 * g, pc[1] + n[1] * (k - 1) * 1.6 * g + d[1] * 2.4 * g)
+                c.line(TL([b, (b[0] + fd[0] * (1.4 + 2.2 * o) * g, b[1] + fd[1] * (1.4 + 2.2 * o) * g)]), 1.5 * g)
+            tb = (pc[0] - n[0] * 2.6 * g, pc[1] - n[1] * 2.6 * g); c.line(TL([tb, (tb[0] - n[0] * (0.6 + 1.4 * o) * g + d[0] * (0.8 + 1.0 * o) * g, tb[1] - n[1] * (0.6 + 1.4 * o) * g + d[1] * (0.8 + 1.0 * o) * g)]), 1.6 * g)    # the thumb
+            c.poly(TL([(H[0] - d[0] * 1.4 * g + n[0] * 2.4 * g, H[1] - d[1] * 1.4 * g + n[1] * 2.4 * g), (H[0] + d[0] * 0.6 * g + n[0] * 2.4 * g, H[1] + d[1] * 0.6 * g + n[1] * 2.4 * g), (H[0] + d[0] * 0.6 * g - n[0] * 2.4 * g, H[1] + d[1] * 0.6 * g - n[1] * 2.4 * g), (H[0] - d[0] * 1.4 * g - n[0] * 2.4 * g, H[1] - d[1] * 1.4 * g - n[1] * 2.4 * g)]))   # the cuff
+        layer(glove, GLOVE); gaps.append((H, d, n, o, g))
     # ---- compose
     out = np.zeros((Hc, W, 4), np.uint8)
     for m, tones in parts:
         sh = shade(m, tones); out[m] = sh[m]
-    for H, d, n, o in gaps:                                                 # (the gaps between the fingers: short dark lines from the fingertips inwards)
+    for H, d, n, o, g in gaps:                                              # (the gaps between the fingers: short dark lines from the fingertips inwards)
         for k in (-1, 1):
-            for r in (0.0, 1.0, 2.0):
-                q = (H[0] + d[0] * (5.4 - r) + n[0] * k * (1.1 + 0.9 * o * (1 + r * 0.3)), H[1] + d[1] * (5.4 - r) + n[1] * k * (1.1 + 0.9 * o * (1 + r * 0.3))); X, Y = T(*q)
+            for r in (0.0, 1.0, 2.0) if g < 1.5 else np.arange(0.0, 2.01, 1.0 / g):
+                q = (H[0] + (d[0] * (5.4 - r) + n[0] * k * (1.1 + 0.9 * o * (1 + r * 0.3))) * g, H[1] + (d[1] * (5.4 - r) + n[1] * k * (1.1 + 0.9 * o * (1 + r * 0.3))) * g); X, Y = T(*q)
                 gx, gy_ = int(math.floor(ax + 0.5 + X)), int(math.floor(Y)) + oy
                 if 0 <= gx < W and 0 <= gy_ < Hc and out[gy_, gx, 3]: out[gy_, gx] = GLOVE[4] + (255,)
     def dot(x, y, col):
@@ -372,7 +373,27 @@ def a_snap(i):                                                                # 
                 aL=[(-9.0 - 2.0 * wd, 31), (-11.0 - 4.0 * wd + 14.0 * k, 42 - 10.0 * k)], aR=[(8.0 + 6.0 * k, 30 - 2.0 * k), (9.0 + 14.0 * k, 36 - 8.0 * k)],
                 lL=[(-2.2 - 2.5 * st, 53), (-2.4 - 3.5 * st, 60)], lR=[(2.2 + 3.5 * st, 53), (2.4 + 4.5 * st, 60)])
 
+SHIELD_GS = 2.9                                                               # how big the glove of his block is (a normal glove is 1)
+def shield(f, walk=False):                                                    # the pose of the block at frame f: the near glove swells into a GIANT one and is held up in front of him like a shield, the other arm braces behind it, the head ducks and he narrows his eyes behind it (the grin stays)
+    up = ease(seg(f, 0, 4)); w = math.sin((f - 5) * 2 * math.pi / 5) if f >= 5 else 0.0
+    gs = 1.0 + (SHIELD_GS - 1.0) * sc(f, [(0, 0), (2, 0.45), (3, 1.12), (4, 1.0)]) + 0.1 * w * up      # (it swells with a cartoon overshoot, then wobbles like jelly)
+    E = (lerp(7.4, 15.0, up), lerp(33, 40, up) + 0.5 * w * up); H = (lerp(8.2, 16.4, up), lerp(46, 33, up) - 0.6 * w * up)
+    return dict(lean=-1.0 * up + 0.3 * w * up, hy=9.6 + 1.6 * up, hrot=-3.0 * up, eyes=2 if up > 0.5 else 0, mouth=0, gL=0.0, gR=1.0, gsR=gs,
+                aL=[(lerp(-7.4, -6.0, up), lerp(33, 36, up)), (lerp(-8.4, -3.0, up), lerp(46, 40, up))], aR=[E, H])
+def a_block(i):                                                               # BLOCK (10 frames: 0-4 the glove swells up into the shield, 5-9 held with a jelly wobble): braced, knees bent
+    f = float(i); up = ease(seg(f, 0, 4))
+    return pose(**shield(f), lL=[(lerp(-2.2, -3.8, up), 53), (lerp(-2.4, -4.6, up), 60)], lR=[(lerp(2.2, 3.4, up), 53), (lerp(2.4, 4.6, up), 60)])
+def a_bwalk(i):                                                               # walking with the shield up (15 frames, a slow shuffle; the game plays it backwards for walking back)
+    t = 2 * math.pi * i / N; legs = {}
+    for key, ph, sg in (('lL', t, -1), ('lR', t + math.pi, 1)):
+        x = 3.2 * math.sin(ph); lift = 2.2 * max(0.0, math.cos(ph)); ank = (sg * 3.4 + x, 60 - lift); hip = (sg * 2.2, 44); kn = ((hip[0] + ank[0]) / 2 + 1.4 + 0.5 * lift, (hip[1] + ank[1]) / 2 + 0.5)
+        legs[key] = [kn, ank]
+    d = shield(9.0); d['lean'] += 0.6; d['gsR'] += 0.08 * math.sin(t)
+    return pose(**d, **legs)
+
 def pose_of(name, i):
+    if name == 'block': return a_block(i)
+    if name == 'bwalk': return a_bwalk(i)
     if name == 'idle': return a_idle(i)
     if name == 'walk': return a_walk(i)
     if name == 'm0': return a_m0(i)
@@ -406,7 +427,7 @@ def pose_of(name, i):
     if name == 'kickb': return a_kickb(i)
     if name == 'snap': return a_snap(i)
     raise KeyError(name)
-CELL = {'idle': (64, 32, 64, 0), 'walk': (64, 32, 64, 0), 'stun': (64, 32, 64, 0), 'smash': (64, 32, 80, 16), 'unsmash': (64, 32, 80, 16), 'flat': (64, 32, 64, 0), 'flatwalk': (64, 32, 64, 0), 'flatpunch': (64, 32, 64, 0), 'm0': WIDE + (64, 0), 'm1': WIDE + (64, 0), 'm3': WIDE + (64, 0), 'dashf': WIDE + (64, 0), 'dashb': WIDE + (64, 0), 'rx0': REACT + (64, 0), 'rx1': REACT + (64, 0), 'rx2': REACT + (64, 0), 'rx4': REACT + (64, 0), 'jump': (64, 32, 72, 8), 'toon': (64, 32, 64, 0), 'huge': WIDE + (64, 0), 'rx3': REACT + (64, 0), 'rx5': REACT + (64, 0), 'rx6': REACT + (64, 0), 'rx7': REACT + (64, 0), 'rx8': REACT + (64, 0), 'rx9': REACT + (64, 0), 'ult1': WIDE + (64, 0), 'ult2': WIDE + (64, 0), 'run': (64, 32, 64, 0), 'shock': (64, 32, 96, 32), 'kickb': (288, 196, 100, 36), 'snap': (288, 196, 100, 36)}
+CELL = {'idle': (64, 32, 64, 0), 'walk': (64, 32, 64, 0), 'block': (64, 32, 64, 0), 'bwalk': (64, 32, 64, 0), 'stun': (64, 32, 64, 0), 'smash': (64, 32, 80, 16), 'unsmash': (64, 32, 80, 16), 'flat': (64, 32, 64, 0), 'flatwalk': (64, 32, 64, 0), 'flatpunch': (64, 32, 64, 0), 'm0': WIDE + (64, 0), 'm1': WIDE + (64, 0), 'm3': WIDE + (64, 0), 'dashf': WIDE + (64, 0), 'dashb': WIDE + (64, 0), 'rx0': REACT + (64, 0), 'rx1': REACT + (64, 0), 'rx2': REACT + (64, 0), 'rx4': REACT + (64, 0), 'jump': (64, 32, 72, 8), 'toon': (64, 32, 64, 0), 'huge': WIDE + (64, 0), 'rx3': REACT + (64, 0), 'rx5': REACT + (64, 0), 'rx6': REACT + (64, 0), 'rx7': REACT + (64, 0), 'rx8': REACT + (64, 0), 'rx9': REACT + (64, 0), 'ult1': WIDE + (64, 0), 'ult2': WIDE + (64, 0), 'run': (64, 32, 64, 0), 'shock': (64, 32, 96, 32), 'kickb': (288, 196, 100, 36), 'snap': (288, 196, 100, 36)}
 def frame(name, i):
     W, ax, H, oy = CELL[name]; p = pose_of(name, i)
     if p.get('squash'):                                                    # a cartoon squash: the picture itself is scaled (wider, much lower), standing on the floor

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Yuji Itadori in side view (facing right), 64x64 16-bit style like Gojo's sprites.
-Writes yuji.json (also atk0-atk3 = the M1 and atk4 = DIVERGENT FIST): idle (15 frames), fwd (15-frame walk; the game plays it backwards for walking back), jump (15 frames + the lift per frame).
+Writes yuji.json (also atk0-atk3 = the M1, atk4 = DIVERGENT FIST, blk = BLOCK (10 frames) and bfwd = walking with the guard up): idle (15 frames), fwd (15-frame walk; the game plays it backwards for walking back), jump (15 frames + the lift per frame).
 Every frame is drawn from joints: hips, a two-bone IK for each leg, shoulders, a boxer's guard for the arms, hair tufts that move."""
 import json, math, os, sys
 from PIL import Image, ImageDraw
@@ -107,7 +107,7 @@ def figure(P):
     T = pm([(32+sx, 29+sy), (37+sx, 29+sy), (37, 40+by), (36, 44+by), (32, 44+by)]); f.fill(T, 'C'); f.bands(T, 'C', 'D', 'B'); f.rim(T, 'O'); f.fill(T, 'C'); f.bands(T, 'C', 'D', 'B')
     f.line([(32, 44+by), (36, 44+by)], 'A'); f.line([(33+sx, 31+sy), (33, 41+by)], 'D'); f.set(36, 35+sy, 'g')
     leg(f, hipF, lf[:2], True, lf[2], 'B', 'C', 'A', P.get('kf'))
-    f.blit(head_block(P), sx + P.get('hs', 0), sy + 3)
+    f.blit(head_block(P), sx + P.get('hs', 0), sy + 3 + P.get('hd', 0))
     if P.get('na'):                                                       # an explicit near arm: elbow and wrist relative to its shoulder
         S0 = (34+sx, 31+sy); ne = (S0[0]+P['na'][0][0], S0[1]+P['na'][0][1]); nw = (S0[0]+P['na'][1][0], S0[1]+P['na'][1][1]); d = unit(nw[0]-ne[0], nw[1]-ne[1])
         limb(f, S0, ne, nw, (3.4, 3.0, 2.8), 'C', 'D', 'B'); f.fill(seg((nw[0]-d[0]*2.4, nw[1]-d[1]*2.4), (nw[0]-d[0]*.4, nw[1]-d[1]*.4), 3.0, 3.0), 's'); fc = (nw[0]+d[0]*1.6, nw[1]+d[1]*1.6)
@@ -177,6 +177,19 @@ DIV_F = {0: GUARD_F, 3: ((4, 3.5), (8, .5)), 5: ((3, 4), (6.5, 2)), 6: ((2.5, 4.
 def divergent(i):                                  # DIVERGENT FIST: the near fist is pulled back to the hip (cursed energy gathers in it), drives straight forward into the enemy (the first impact is frame 6), stays pressed in, then is pulled back (the second impact lands on frame 10 while it comes back)
     P = dict(by=round(kv({0: 0, 2: 1, 4: 1, 6: -1, 8: -1, 10: 0, 14: 0}, i)), ln=round(kv({0: 0, 3: -1, 5: 1, 6: 3, 8: 3, 10: 1, 12: 0, 14: 0}, i)), hx=round(kv({0: 0, 3: -1, 6: 2, 8: 2, 10: 1, 12: 0, 14: 0}, i)),
              lf=(round(kv({0: 34, 3: 34, 6: 38, 8: 38, 11: 36, 14: 34}, i)), GR, 0), lb=(round(kv({0: 31, 3: 30, 6: 28, 8: 28, 11: 30, 14: 31}, i)), GR, 0), na=kv(DIV_N, i), fa=kv(DIV_F, i), hp=i*.8, hback=0, blink=False)
+    return figure(P)
+BLK_N, BLK_F = ((5.5, 3.5), (7.5, -5.5)), ((4, 3.5), (7, -8))                # BLOCK: both forearms up tight in front of the face, the elbows tucked in front of the ribs (the far fist peeks out above the near one)
+def block(i):                                      # BLOCK, 10 frames: 0-4 the guard comes up (the game plays them in a quarter of a second), 5-9 held with a slow breathing sway (that part loops); the knees bend, the shoulders hunch, the head ducks behind the fists
+    r = kv({0: 0, 4: 1}, i); sw = math.sin((i - 5)*2*math.pi/5) if i >= 5 else 0.0
+    P = dict(by=round(2*r + .5*sw), ln=round(1.4*r), hx=-round(r), hs=round(r), hd=round(2*r), lf=(round(34 + 1.6*r), GR, 0), lb=(round(31 - 1.6*r), GR, 0),
+             na=kv({0: IDLE_N, 4: BLK_N}, i), fa=kv({0: IDLE_F, 4: BLK_F}, i), hp=i*.8, hback=0, blink=False)
+    if i >= 5: P['na'] = (BLK_N[0], (BLK_N[1][0], BLK_N[1][1] + .6*sw)); P['fa'] = (BLK_F[0], (BLK_F[1][0], BLK_F[1][1] - .6*sw))
+    return figure(P)
+def bwalk(i):                                      # walking with the guard up (15 frames, a slow shuffle; the game plays it backwards for walking back)
+    ph = i/15; S = 2.6; L = 2.0
+    def foot(p, base):
+        p %= 1.0; return (base + S*math.cos(2*math.pi*p), GR - L*max(0.0, -math.sin(2*math.pi*p)), 0)
+    P = dict(by=2 + round(.5 + .5*math.cos(4*math.pi*ph)) - 1, ln=1, hx=-1, hs=1, hd=2, lf=foot(ph, 35), lb=foot(ph + .5, 30), na=BLK_N, fa=BLK_F, hp=ph*4*math.pi, hback=0, blink=False)
     return figure(P)
 ATTACKS = (('atk0', lambda i: hook(i, False)), ('atk1', lambda i: hook(i, True)), ('atk2', knee), ('atk3', kick3), ('atk4', divergent))
 # ---------------------------------------------------------------- crouch, crouch walk, crouch jump and the four dashes (15 frames each)
@@ -305,9 +318,9 @@ def pack_rx(k):
     fr = [rxf(k, i) for i in range(15)]; xs = [x for g, _, _ in fr for r in g for x, c in enumerate(r) if c != '.']; x0 = max(0, min(xs) - 1); x1 = min(W96 - 1, max(xs) + 1); w = x1 - x0 + 1
     return {'x0': x0, 'w': w, 'h': N, 'top': 0, 'cx': 34 + OFF, 'frames': [[''.join(r[x0:x0 + w]) for r in g] for g, _, _ in fr], 'hn': [[round(n[0] - x0, 1), round(n[1], 1)] for _, n, _ in fr], 'hf': [[round(h[0] - x0, 1), round(h[1], 1)] for _, _, h in fr],
             **({'lift': RX_LIFT_Y[k]} if k in RX_LIFT_Y else {})}
-def pack(fn, x0, w, top):
+def pack(fn, x0, w, top, n=15):
     frames, hn, hf = [], [], []; sh = top
-    for i in range(15):
+    for i in range(n):
         f, nh, fh = fn(i); rows = ['.'*w for _ in range(sh)] + [''.join(f.g[y][x0:x0+w]) for y in range(N)] + ['.'*w for _ in range(top)]
         frames.append(rows); hn.append([round(nh[0]-x0, 1), round(nh[1]+top, 1)]); hf.append([round(fh[0]-x0, 1), round(fh[1]+top, 1)])
     return frames, hn, hf
@@ -323,11 +336,13 @@ if __name__ == '__main__':
         fr, hn, hf = pack(fn, X0, 44, 0); out[k] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}
         if k == 'atk3': out[k]['lift'] = KICK_LIFT
     for k in range(10): out['rx%d' % k] = pack_rx(k)
+    fr, hn, hf = pack(block, X0, 44, 0, 10); out['blk'] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}      # BLOCK (10 frames)
+    fr, hn, hf = pack(bwalk, X0, 44, 0); out['bfwd'] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}      # walking with the guard up
     json.dump(out, open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'yuji.json'), 'w'), separators=(',', ':'))
-    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct', 'x0', out[k]['x0'], 'w', out[k]['w'])
+    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct', 'x0', out[k]['x0'], 'w', out[k]['w'])
     if len(sys.argv) > 1:                                                  # contact sheets: python3 -B yuji_art.py sheets <dir>
         d = sys.argv[2]; z = 2
-        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]):
+        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]):
             s = out[k]; sheet = Image.new('RGB', (15*s['w']*z, s['h']*z), (40, 40, 70)); px = {c: tuple(int(PAL[c][j:j+2], 16) for j in (1, 3, 5)) for c in PAL}
             for n, rows in enumerate(s['frames']):
                 for y, row in enumerate(rows):
