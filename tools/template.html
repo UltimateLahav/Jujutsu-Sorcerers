@@ -1156,6 +1156,20 @@ function blindDown(src) {      // the same picture with the blindfold down (made
   if (w && h && w * h < 20000) { const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.drawImage(src, 0, 0); const im = g.getImageData(0, 0, w, h); if (blindData(im.data, w, h)) { g.putImageData(im, 0, 0); r = c; } }
   BDC.set(src, r); return r;
 }
+const BMC = new Map();
+function blindMid(src, p) {      // the picture with the blindfold pulled p (0-1) of the way down his face: the band slides from his eyes to his neck (6 px) and the face it leaves behind is the face WITHOUT the blindfold (blindDown); p = 1 is exactly blindDown, p = 0 the picture itself
+  if (p <= 0) return src; const dn = blindDown(src); if (p >= 1 || dn === src || !dn.getContext) return dn;
+  const k = Math.round(p * 6); if (k <= 0) return src; let m = BMC.get(src); if (!m) BMC.set(src, m = []); if (m[k]) return m[k];
+  const w = src.width, h = src.height, c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.drawImage(src, 0, 0);
+  const sd = g.getImageData(0, 0, w, h).data, gd = dn.getContext('2d').getImageData(0, 0, w, h).data, out = g.getImageData(0, 0, w, h), od = out.data;
+  const isB = i => sd[i + 3] === 255 && ((sd[i] === 14 && sd[i + 1] === 11 && sd[i + 2] === 18) || (sd[i] === 47 && sd[i + 1] === 39 && sd[i + 2] === 68));
+  let ay = -1; for (let y = 0; y < h && ay < 0; y++) { let n = 0; for (let x = 0; x < w; x++) { const i = (y * w + x) * 4; if (sd[i] === 14 && sd[i + 1] === 11 && sd[i + 2] === 18 && sd[i + 3] === 255) n++; } if (n >= 4) ay = y; }
+  if (ay < 0) { m[k] = dn; return dn; }
+  let x0 = w, x1 = -1; for (let y = ay; y < ay + 3 && y < h; y++) for (let x = 0; x < w; x++) if (isB((y * w + x) * 4)) { if (x < x0) x0 = x; if (x > x1) x1 = x; }
+  for (let y = ay; y < Math.min(h, ay + k); y++) for (let x = Math.max(0, x0 - 1); x <= Math.min(w - 1, x1 + 2); x++) { const i = (y * w + x) * 4; od[i] = gd[i]; od[i + 1] = gd[i + 1]; od[i + 2] = gd[i + 2]; od[i + 3] = gd[i + 3]; }      // (the rows the band has left show the face without it)
+  for (let y = ay; y < ay + 3 && y + k < h; y++) for (let x = x0; x <= x1; x++) { const i = (y * w + x) * 4, j = ((y + k) * w + x) * 4; if (isB(i)) { od[j] = sd[i]; od[j + 1] = sd[i + 1]; od[j + 2] = sd[i + 2]; od[j + 3] = 255; } }      // (the band itself, k rows lower)
+  g.putImageData(out, 0, 0); m[k] = c; return c;
+}
 const FACE_N = 29;      // frames of the blindfold close-up (tools/gojo_pull.png: 320 x 128 each, stacked downwards)
 function drawFaceClose(k, rev) {      // the blindfold close-up (the reference GIF, cut out and pixelated by tools/face_gif.py), full screen: k = how far the move is (0-1), rev = played backwards (the blindfold goes back on)
   const g = SIMG.gface && SIMG.gface.pull; ctx.fillStyle = '#000'; ctx.fillRect(-8, -8, VW + 16, VH + 16); if (!g || !g.complete || !g.naturalWidth) return;      // (the picture keeps the GIF's own background and fills the screen)
@@ -1174,7 +1188,7 @@ function bfTick(now) {
   }
   if (bfp && blindOff && !dom && !rdOrb && !purple && !pboom && now > bfAt + 900) { bfp = false; if (!vs || (dummy && dummy.ko < 0 && vs.ph === 'fight')) bfStart(now, 'on', BF.on, null); }      // the Purple is over: the blindfold goes back on if the enemy is still standing
 }
-function bfOverlay(now) { if (bfo) drawFaceClose(Math.min(1, (now - bfo.t0) / bfo.ms), bfo.kind === 'on'); }
+function bfOverlay(now) { }      // (no full-screen close-up any more: Gojo himself takes the blindfold off / puts it on, see blindMid)
 function startDomain(now) {
   dom = { ph: blindOff ? 'pose' : 'blind', p0: now, zoomed: false, burst: false, eyes: false, ping: now + 1500 + (blindOff ? 0 : DOM_MS.blind) }; domHold = true; snd('domainstart'); if (dom.ph === 'blind') snd('cloth');
   if (dummy && dummy.ko < 0) { const tot = (dom.ph === 'blind' ? DOM_MS.blind : 0) + DOM_MS.pose + DOM_MS.face + DOM_MS.wide + DOM_MS.burst + DOM_MS.void; dummy.stunUntil = now + tot; dummy.pull = null; dummy.vx = 0; dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = tot + 300; dummy.cact = null; dummy.vact = null; dummy.held = null; dummy.cheld = null; dummy.dodgeUntil = 0; dummy.hitDone = true; dummy.swung = true; if (vs) vs.catHold = 0; if (ult) ultCancel(now); }      // the enemy is frozen (a swing in progress is cancelled) until the void ends
@@ -1214,7 +1228,7 @@ function domVoidLayer(now) {                   // the void inside a hard-edged c
 }
 function domOverlay(now) {                     // darkness, the white burst, the cut-in, the title and the cinema bars
   if (!dom) return; const a = now - dom.p0, cx = Math.round(VW / 2), cy = gy - 38, full = (al) => { ctx.fillStyle = al; ctx.fillRect(-8, -8, VW + 16, VH + 16); };
-  if (dom.ph === 'blind' || dom.ph === 'reblind') { drawFaceClose(Math.min(1, a / DOM_MS[dom.ph]), dom.ph === 'reblind'); return; }      // (the blindfold comes down / goes back on: his face, full screen)
+  if (dom.ph === 'blind' || dom.ph === 'reblind') return;      // (the blindfold comes down / goes back on: Gojo himself does it in the fight, see blindMid; there is no full-screen close-up any more)
   if (dom.ph === 'wide') full('rgba(0,0,12,' + (0.38 * a / DOM_MS.wide).toFixed(2) + ')');
   if (dom.ph === 'burst') {
     if (a < 350) full('rgba(0,0,10,' + (0.38 + 0.5 * a / 350).toFixed(2) + ')');
@@ -2615,9 +2629,14 @@ function drawScene(now, dt) {
     if (!crch) { if (dir > 0) { bset = wblkF; binfo = D.wfb; bfi = slow % 15; } else if (dir < 0) { bset = wblkB; binfo = D.wbb; bfi = slow % 15; } else { bset = atkF[11]; binfo = D.atk11; bfi = bf; } }
     else if (dir > 0) { bset = crF.fblk; binfo = D.cfb; bfi = slow % 15; } else if (dir < 0) { bset = crF.bblk; binfo = D.cbb; bfi = slow % 15; } else { bset = crF.blk; binfo = D.cb; bfi = Math.floor(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)) % 15; }
   }
-  const fearing = now < pStun && !hurting, riding = !!ride, yj = vs && vs.me === 'yuji' ? yujiPick({ now, atkOn, atkK, af, hurting, hurtK, hurtAt, hf, dodging, dgK, dgCr, df, jumping, jumpC, jf, mode, idle, sf, stance, spawnAt, modeAt, blocking, bf, dir }) : null, set = yj ? yj.set : riding ? ride.set : hurting ? (now - hurtAt < 70 ? rxW : rxN)[hurtK] : fearing ? crF.idle : dodging ? atkF[9 + dgK + (dgCr ? 3 : 0)] : blocking ? bset : tele ? teleF : jumping ? (jumpC ? crF.jump : jumpF) : mbing ? (mbK ? redF : mbF) : lapsing ? lapseF[lpK] : atkOn ? atkF[atkK] : mode === 'cdn' ? crF.dn : mode === 'cidle' ? crF.idle : mode === 'cfwd' ? crF.fwd : mode === 'cback' ? crF.back : idle ? idleF : mode === 'fwd' ? fwdF : backF;
-  const info = yj ? yj.info : riding ? ride.info : hurting ? D['rx' + hurtK] : fearing ? D.cidle : dodging ? D['atk' + (9 + dgK + (dgCr ? 3 : 0))] : blocking ? binfo : tele ? D.tele : jumping ? (jumpC ? D.cjump : D.jump) : mbing ? (mbK ? D.atk22 : D.atk8) : lapsing ? D['atk' + (4 + lpK)] : atkOn ? D['atk' + atkK] : mode === 'cdn' ? D.cdn : mode === 'cidle' ? D.cidle : mode === 'cfwd' ? D.cfwd : mode === 'cback' ? D.cback : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
-  const fi = yj ? yj.fi : riding ? ride.fi : hurting ? hf : fearing ? Math.floor(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)) % 15 : dodging ? df : blocking ? bfi : tele ? tf : jumping ? jf : mbing ? mf : lapsing ? lf : atkOn ? af : mode === 'cdn' ? (stance === 'down' ? sf : 14 - sf) : Math.floor(Math.max(0, now - (idle || mode === 'cidle' ? spawnAt : modeAt)) / (1000 / (idle || mode === 'cidle' ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail pnow() by a hair
+  let rmvK = 0, rmvF = 0, rmvP = 0;      // THE BLINDFOLD (the domain's first and last second, and Hollow Purple's): Gojo himself takes it off / puts it back on, over exactly the time the close-up GIF used to take (2.2 s, 1 s, 1.4 s, 1 s): 0-35% the hand rises (the block pose's first five frames), 35-85% the band slides down his face, then it hangs at his neck; putting it on plays the same backwards. After Hollow Purple's the hand comes back down at the end
+  if (!(vs && vs.me === 'yuji') && (bfo || (dom && (dom.ph === 'blind' || dom.ph === 'reblind')))) {
+    const on = bfo ? bfo.kind === 'on' : dom.ph === 'reblind', t0 = bfo ? bfo.t0 : dom.p0, ms = bfo ? bfo.ms : DOM_MS[dom.ph], T = Math.max(0, Math.min(1, (now - t0) / ms)), u = on ? 1 - T : T;
+    rmvK = on ? -1 : 1; rmvP = Math.max(0, Math.min(1, (u - 0.35) / 0.5)); rmvF = Math.round(4 * (bfo && u > 0.8 ? 1 - (u - 0.8) / 0.2 : Math.min(1, u / 0.35)));
+  }
+  const fearing = now < pStun && !hurting, riding = !!ride, yj = vs && vs.me === 'yuji' ? yujiPick({ now, atkOn, atkK, af, hurting, hurtK, hurtAt, hf, dodging, dgK, dgCr, df, jumping, jumpC, jf, mode, idle, sf, stance, spawnAt, modeAt, blocking, bf, dir }) : null, set = rmvK ? atkF[11] : yj ? yj.set : riding ? ride.set : hurting ? (now - hurtAt < 70 ? rxW : rxN)[hurtK] : fearing ? crF.idle : dodging ? atkF[9 + dgK + (dgCr ? 3 : 0)] : blocking ? bset : tele ? teleF : jumping ? (jumpC ? crF.jump : jumpF) : mbing ? (mbK ? redF : mbF) : lapsing ? lapseF[lpK] : atkOn ? atkF[atkK] : mode === 'cdn' ? crF.dn : mode === 'cidle' ? crF.idle : mode === 'cfwd' ? crF.fwd : mode === 'cback' ? crF.back : idle ? idleF : mode === 'fwd' ? fwdF : backF;
+  const info = rmvK ? D.atk11 : yj ? yj.info : riding ? ride.info : hurting ? D['rx' + hurtK] : fearing ? D.cidle : dodging ? D['atk' + (9 + dgK + (dgCr ? 3 : 0))] : blocking ? binfo : tele ? D.tele : jumping ? (jumpC ? D.cjump : D.jump) : mbing ? (mbK ? D.atk22 : D.atk8) : lapsing ? D['atk' + (4 + lpK)] : atkOn ? D['atk' + atkK] : mode === 'cdn' ? D.cdn : mode === 'cidle' ? D.cidle : mode === 'cfwd' ? D.cfwd : mode === 'cback' ? D.cback : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
+  const fi = rmvK ? rmvF : yj ? yj.fi : riding ? ride.fi : hurting ? hf : fearing ? Math.floor(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)) % 15 : dodging ? df : blocking ? bfi : tele ? tf : jumping ? jf : mbing ? mf : lapsing ? lf : atkOn ? af : mode === 'cdn' ? (stance === 'down' ? sf : 14 - sf) : Math.floor(Math.max(0, now - (idle || mode === 'cidle' ? spawnAt : modeAt)) / (1000 / (idle || mode === 'cidle' ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail pnow() by a hair
   const lk = tele ? info.lift_k[tf] : 0;      // teleport: stays where he vanished (null), then the fixed height he reappears at, falling back to the ground
   const lift = gAir ? gAirH : yj ? yj.lift : riding ? ride.lift : tele ? (lk === null ? teleL0 : Math.round(Math.min(34, gy - 66) * lk)) : jumping ? (jumpC ? D.cjump : D.jump).lift[jf] : hurting && info.lift ? info.lift[hf] : 0;   // how far the sprite is raised off the ground
   gojoLift = lift; gojoGone = tele && tf < 6;   // the attacking dummy misses him while he is up in the air or vanished
@@ -2636,7 +2655,7 @@ function drawScene(now, dt) {
   else {
     ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip();
     ctx.globalAlpha = Math.min(1, t * 2);
-    { const gp = (ceOn && (cm === 2 ? HOMAPR : HOMAP).get(set) || set)[fi]; ctx.drawImage(blindOff && !yj ? blindDown(gp) : gp, x, y); } if (yj && hurting && now - hurtAt < 70) ctx.drawImage(whiteOf(set[fi]), x, y);        // cursed energy on: both hands out of the pockets
+    { const gp = (ceOn && (cm === 2 ? HOMAPR : HOMAP).get(set) || set)[fi]; ctx.drawImage(rmvK ? blindMid(gp, rmvP) : blindOff && !yj ? blindDown(gp) : gp, x, y); } if (yj && hurting && now - hurtAt < 70) ctx.drawImage(whiteOf(set[fi]), x, y);        // cursed energy on: both hands out of the pockets
     if (fearing) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(blindOff && !yj ? blindDown(set[fi]) : set[fi]), x, y); }      // (JUMPSCARE: a pale pulse; with the blindfold down it follows the redrawn head)
   }
   ctx.restore(); if (!again) drawGiantNow('foe');
