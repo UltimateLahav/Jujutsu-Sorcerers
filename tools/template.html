@@ -91,14 +91,14 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 .col.nt #ce,.col.nt #dom,.col.nt #fat{opacity:.25}      /* the Wi-Fi fight: MODE, DOMAIN and FATAL are off for now */
 #ver{position:fixed;right:2vh;bottom:1.6vh;font-size:clamp(7px,2vh,11px)}#modes .card{width:25vh;font-size:clamp(7px,2vh,12px)}#modes .cards{gap:3vh}.row button.sel{border-color:var(--acc);background:#2a1f4a}#vsInfo{white-space:pre-line;line-height:1.8}
 .pb.lk{opacity:.22;filter:grayscale(1);position:relative}.pb.lk::before{content:'LOCK';position:absolute;top:.3vh;left:0;right:0;text-align:center;font-size:1.5vh;color:#ff6a5a;text-shadow:1px 1px 0 #000}      /* a move you do not own */
-#modesMoney,#chalMoney,#skMoney{color:#ffd34d;font-size:clamp(8px,2.6vh,14px)}#chalCards{display:flex;gap:2vh}.cc{width:27vh;height:auto;min-height:60vh;gap:.8vh;justify-content:flex-start}.cv{height:26vh;display:flex;align-items:flex-end;justify-content:center}.cv canvas{width:auto;transform:scaleX(-1)}.cv canvas.dk{filter:brightness(0) opacity(.45)}.cc b{font-size:.9em;line-height:1.3}.ct{width:100%;padding:.9vh .6vh;font-size:.85em;line-height:1.5}.ct small{display:block;color:var(--dim);font-size:.8em}
+#modesMoney,#chalMoney,#skMoney{color:#ffd34d;font-size:clamp(8px,2.6vh,14px)}#chalCards{display:flex;gap:2vh;overflow-x:auto;max-width:96vw;padding:.6vh .6vh 1.6vh;scrollbar-color:var(--acc) #120d22}#chalCards::-webkit-scrollbar{height:1.6vh}#chalCards::-webkit-scrollbar-thumb{background:var(--acc);border:2px solid var(--bg)}#chalCards::-webkit-scrollbar-track{background:#120d22}.cc{flex:0 0 27vh;width:27vh;height:auto;min-height:60vh;gap:.8vh;justify-content:flex-start}.cc.rush{border-color:#ffd34d}.cc.rush .cv{gap:0}.rb{color:var(--dim);font-size:.7em;line-height:1.5}.cv{height:26vh;display:flex;align-items:flex-end;justify-content:center}.cv canvas{width:auto;transform:scaleX(-1)}.cv canvas.dk{filter:brightness(0) opacity(.45)}.cc b{font-size:.9em;line-height:1.3}.ct{width:100%;padding:.9vh .6vh;font-size:.85em;line-height:1.5}.ct small{display:block;color:var(--dim);font-size:.8em}
 #skList::-webkit-scrollbar{width:1.6vh}#skList::-webkit-scrollbar-thumb{background:var(--acc);border:2px solid var(--bg)}#skList::-webkit-scrollbar-track{background:#120d22}#skList{scrollbar-color:var(--acc) #120d22;display:grid;grid-template-columns:repeat(3,1fr);gap:1.4vh;width:min(94vw,120vh);max-height:56vh;overflow-y:auto}.sk{border:3px solid var(--line);background:var(--card);padding:1.2vh;display:flex;flex-direction:column;gap:.8vh;text-align:left;font-size:clamp(7px,1.9vh,11px)}.sk small{color:var(--dim);line-height:1.5;flex:1;font-size:.9em}.sk button{padding:.9vh;font-size:inherit}.sk.own{border-color:#4fd18a}.sk b{font-weight:normal;color:var(--ink)}      /* the CHALLENGES and SKILLS pages */
 @keyframes shk{0%{transform:translateX(0)}25%{transform:translateX(-.8vh)}50%{transform:translateX(.8vh)}75%{transform:translateX(-.5vh)}100%{transform:translateX(0)}}.shake{animation:shk .35s steps(6)}.shake i{color:#ff8a7a}      /* STORY MODE: not made yet, the card shakes */
 #grades{display:grid;grid-template-columns:repeat(3,auto);gap:1.2vh 1.6vh}
 .gr{padding:1vh 1.6vh;font-size:clamp(7px,2.1vh,12px);min-width:22vh}.gr small{display:block;margin-top:.7vh}
 .gr.sel{border-color:var(--acc);background:#2a1f4a}.gr.lk{opacity:.4;border-style:dashed}
 .star{display:inline-block;width:1.6em;height:1.6em;margin:0 .15em;background:#ffd34d;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}.star.off{background:#3a3050}
-#vsres.screen{z-index:6;background:rgba(13,10,23,.93)}#vsStars{font-size:6vh;height:7vh}#vsInfo{font-size:var(--fs-btn,clamp(9px,3vh,16px))}
+#vsres.screen{z-index:6;background:rgba(13,10,23,.93)}#vsAgain.hot{border-color:#ffd34d;color:#ffd34d;animation:hotp 1s steps(2) infinite}@keyframes hotp{50%{background:#2a1f4a}}#vsStars{font-size:6vh;height:7vh}#vsInfo{font-size:var(--fs-btn,clamp(9px,3vh,16px))}
 #settings.vsOn #dummyBtn,#settings.vsOn #fighterBtn,#settings.vsOn #blockerBtn{display:none}
 #joy{pointer-events:auto;touch-action:none;position:relative;width:40vh;height:40vh;flex:none}      /* the joystick: left / right walk, up jumps, down crouches */
 #joy .jb{position:absolute;inset:0;width:100%;height:100%;opacity:.85}
@@ -123,7 +123,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.00</small>
+    <small id="ver">V1.10</small>
   </div>
 </section>
 
@@ -260,27 +260,30 @@ __SFX__
 __HUMAN__
 const D = __SPR__;                 // palette + idle / walk-forward / walk-back / jump / double-jump (teleport) sprite frames (rows of palette letters)
 const HEROES = __HEROES__;         // title key art: 0 eye open ... 4 eye fully closed
-const IDLE_FPS = 12, WALK_FPS = 15, JUMP_FPS = 15, TELE_FPS = 20;   // animation speeds in frames per second (15 walk frames = 1 s per cycle = one step every half second; 15 jump frames = 1 s; 15 teleport frames = 0.75 s)
-const ATK_FPS = [30, 30, 30, 24, 24, 24, 30, 30, 0, 0, 0, 0, 0, 0, 36, 30, 32, 28, 28, 30, 34, 22, 18, 24], ATK_IMPACT = [7, 7, 7, 8, 8, 6, 6, 7, 0, 0, 0, 0, 0, 0, 4, 6, 4, 6, 6, 5, 4, 7, 8, 12], ATK_SWING = [4, 4, 4, 5, 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 1, 3, 2, 3, 2, 2, 1, 4, 5, 3], COMBO_MS = 1400, MB_FPS = 20, ORB_MS = 4400, DASH_FPS = 30, DASH_FWD = 50, DASH_BACK = 42, BLK_FPS = 24;   // 15 frames per attack; the next press within COMBO_MS continues the combo. Index 4 and 5 are Lapse Blue (not combo hits), 6 and 7 are the crouch punches; Max Blue: 40 summon frames at 20 FPS, the orb lives 3.4 s
+const PACE = 1.25;      // v1.10 FAST PACE: walking, jumping, punching, dashing and the hit reactions are about a quarter quicker than before (and the enemies move with the same numbers)
+const IDLE_FPS = 12, WALK_FPS = 19, JUMP_FPS = 19, TELE_FPS = 24;   // animation speeds in frames per second (frames per second = how many pictures are shown each second; 15 walk frames = 0.8 s per cycle = one step every 0.4 s; 15 jump frames = 0.8 s; 15 teleport frames = 0.63 s)
+const ATK_FPS0 = [30, 30, 30, 24, 24, 24, 30, 30, 0, 0, 0, 0, 0, 0, 36, 30, 32, 28, 28, 30, 34, 22, 18, 24], FAST_ATK = [0, 1, 2, 3, 6, 7, 14, 15, 16, 17, 18, 19, 20, 21], ATK_FPS = ATK_FPS0.map((f, i) => FAST_ATK.includes(i) ? Math.round(f * PACE) : f), ATK_IMPACT = [7, 7, 7, 8, 8, 6, 6, 7, 0, 0, 0, 0, 0, 0, 4, 6, 4, 6, 6, 5, 4, 7, 8, 12], ATK_SWING = [4, 4, 4, 5, 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 1, 3, 2, 3, 2, 2, 1, 4, 5, 3], COMBO_MS = 1400, MB_FPS = 20, ORB_MS = 4400, DASH_FPS = 40, DASH_MS = 225, DASH_FWD = 50, DASH_BACK = 42, BLK_FPS = 24;   // 15 frames per attack; the next press within COMBO_MS continues the combo. Index 4 and 5 are Lapse Blue (not combo hits), 6 and 7 are the crouch punches; Max Blue: 40 summon frames at 20 FPS, the orb lives 3.4 s
 // YUJI's RUSH FIST (move 12, hits 44 and 45): hold FORWARD and press BLUE in normal mode and the DIVERGENT FIST comes out twice as fast while he sprints forward (strip atk12, 48 FPS): the same two impacts (first 8 and a shove of 80, second 19 and a push of 520: 5% more damage and a longer push than the normal one, which is 8 + 18 and 40 / 380), the same 15% energy. YUJI's CURSED ENERGY MODE (his MODE button, key E): the M1 becomes R.KICK (a roundhouse), ELBOW, DOWNSLAM (the enemy hits the floor) and PUSH KICK (it pushes the enemy far away) = moves 5-8, and the BLUE button becomes CONC.FIST (move 9: ONE huge cursed energy punch that breaks the guard); crouched in normal mode BLUE is the SWEEP (move 10: he kicks the enemy's feet away and drops him). Move 11 is the POWER-UP, the animation of switching the mode on (both hands go up with no energy on them, come down hard and the flames light up): it has no hits and is never picked as an attack. Moves 13 and 14 (hits 46 and 47) are the CROUCHED CONCENTRATED FIST: crouched in cursed energy mode BLUE throws the UPPERCUT (move 13, 25%: it breaks a guard and LAUNCHES the enemy into the air for a second, see AIR below: while he is up there everything can hit him), and BLUE again while he is up there throws the FACE KICK (move 14, 5%: a flying kick that sends him far back with a shock wave)
 const YU_ATK = { base: 24, names: ['R.HOOK', 'L.HOOK', 'KNEE', '3 KICKS', 'DIVERGENT', 'R.KICK', 'ELBOW', 'DOWNSLAM', 'PUSH KICK', 'CONC.FIST', 'SWEEP', 'POWER', 'RUSH FIST', 'UPPERCUT', 'FACE KICK', 'SPIN ELBOW'], fps: [30, 30, 30, 24, 24, 30, 30, 30, 30, 24, 30, 24, 48, 30, 30, 30], swing: [[5], [5], [4], [4, 8, 11], [4], [5], [5], [5], [5], [6], [3], [], [3], [4], [4], [3]], imp: [[7], [7], [7], [5, 9, 12], [6, 10], [7], [7], [7], [7], [7], [6], [], [6, 10], [6], [7], [11]], hit: [[24], [25], [26], [27, 28, 29], [36, 37], [38], [39], [40], [41], [42], [43], [], [44, 45], [46], [47], [48]], snd: [0, 1, 2, 0, 1, 3, 0, 0, 0, 0, 0, 0, 2, 3, 3, 0, 3, 3, 3, 0, 2, 3, 3, 3, 3], reach: [17, 17, 17, 28, 20, 30, 18, 16, 28, 26, 30, 0, 24, 20, 30, 22] };      // YUJI's M1 (15 frames each) and his DIVERGENT FIST (move 4, the BLUE button: a straight punch with a glowing fist; hit 36 = the fist reaches the enemy, hit 37 = the delayed second impact in his stomach as the fist is pulled back, see hitDummy and gojoHit): right hook, left hook, knee, then a jump and ONE leg kicks three times (head, stomach, legs; the last kick sends the enemy flying): frames per second, whoosh frames, impact frames, which hit index lands on each impact (24-29 in REACH / KNOCK / DMG), sound variants
+YU_ATK.fps = YU_ATK.fps.map((f, i) => [0, 1, 2, 3, 5, 6, 7, 8].includes(i) ? Math.round(f * PACE) : f);      // (v1.10 pace: his M1 moves are quicker; the special moves keep their speed)
 // THE CARTOON CAT (chapter 2, tools/cat_rig.py). His M1 (15 frames each): 1. GRAB: the arm stretches out, grabs Gojo and pulls him in (hit 30), 2. PUNCH with the other hand while the first still holds on (31), 3. GRAB again (32, the same animation as the first), 4. KICK that sends Gojo away (33); 4 + 8 + 4 + 14 = 30 damage. Hit 34 = the punch up from the floor. Hit 35 = the HUGE Cat's kick (CARTOON ATTACK: 25 damage). CAT_RXLIFT: how high the hop of his hit reaction 7 lifts him. CT: the playable Cat's numbers (smashFps = how fast he smashes himself flat, flatMul = his walking speed while flat, flatMax = ms flat before he gets up dizzy, stunMs = how long he is dizzy, toonFps / toonHit = the speed and the impact frame of CARTOON ATTACK, back = how many px behind the summoner the giant stands, hold = ms his glove keeps its grip). CAT_CELL: every strip's cell: [width, height, anchor column, rows above the usual 64]
 const CAT_ATK = { base: 30, names: ['GRAB', 'PUNCH', 'GRAB', 'KICK', 'UPPER'], strip: ['m0', 'm1', 'm0', 'm3', 'flatpunch'], fps: [24, 30, 24, 28, 30], swing: [[3], [4], [3], [4], [3]], imp: [[6], [7], [6], [8], [6]], hit: [[30], [31], [32], [33], [34]], snd: [0, 1, 2, 3, 0] };      // (index 4 = the punch up from the floor: only the playable Cat uses it)
+CAT_ATK.fps = CAT_ATK.fps.map(f => Math.round(f * 1.2));      // (v1.10 pace: the Cat's M1 is a fifth quicker)
 const CAT_RXLIFT = { 7: [0, 3, 6, 9, 10, 10, 10, 9, 7, 5, 3, 2, 1, 0, 0] }, CT = { smashFps: 25, flatMul: 3, flatMax: 5000, stunMs: 1000, toonFps: 24, toonHit: 10, back: 64, hold: 1300 };
 const CAT_CELL = { idle: [64, 64, 32, 0], walk: [64, 64, 32, 0], block: [64, 64, 32, 0], bwalk: [64, 64, 32, 0], stun: [64, 64, 32, 0], smash: [64, 80, 32, 16], unsmash: [64, 80, 32, 16], flat: [64, 64, 32, 0], flatwalk: [64, 64, 32, 0], flatpunch: [64, 64, 32, 0], m0: [128, 64, 36, 0], m1: [128, 64, 36, 0], m3: [128, 64, 36, 0], dashf: [128, 64, 36, 0], dashb: [128, 64, 36, 0], rx0: [96, 64, 64, 0], rx1: [96, 64, 64, 0], rx2: [96, 64, 64, 0], rx3: [96, 64, 64, 0], rx4: [96, 64, 64, 0], rx5: [96, 64, 64, 0], rx6: [96, 64, 64, 0], rx7: [96, 64, 64, 0], rx8: [96, 64, 64, 0], rx9: [96, 64, 64, 0], jump: [64, 72, 32, 8], toon: [64, 64, 32, 0], huge: [128, 64, 36, 0], ult1: [128, 64, 36, 0], ult2: [128, 64, 36, 0], run: [64, 64, 32, 0], maw: [128, 128, 64, 0], shock: [64, 96, 32, 32], kickb: [288, 100, 196, 36], snap: [288, 100, 196, 36] };
-const ATK_NAMES = ['R.HOOK', 'L.HOOK', 'ELBOW', 'KICK'], WALK_NAMES = ['JAB', 'KICK', 'CROSS', 'KICK2'], RED_NAMES = ['NECK', 'GUT', 'PUNCH', 'SMASH'], CR_FPS = 36, LAPSE_FPS = 24;   // hooks and the elbow nudge the enemy (so the combo keeps connecting); the kick sends him sliding with a smoke trail
-const DUMMY_HP = 300, RX_FPS = [16, 16, 16, 18, 12, 16, 16, 16, 12, 14], RX_DUR = RX_FPS.map(f => 10000 / f);      // 10 reactions, 10 frames each
+const ATK_NAMES = ['R.HOOK', 'L.HOOK', 'ELBOW', 'KICK'], WALK_NAMES = ['JAB', 'KICK', 'CROSS', 'KICK2'], RED_NAMES = ['NECK', 'GUT', 'PUNCH', 'SMASH'], CR_FPS = 48, LAPSE_FPS = 24;   // hooks and the elbow nudge the enemy (so the combo keeps connecting); the kick sends him sliding with a smoke trail
+const DUMMY_HP = 300, RX_FPS = [22, 22, 22, 24, 16, 22, 22, 22, 16, 19], RX_DUR = RX_FPS.map(f => 10000 / f);      // 10 reactions, 10 frames each
 const RXF15 = RX_FPS.map(f => f * 1.5);      // Yuji's and Verity's 10 hit reactions have 15 frames each: they play at 1.5x Gojo's frame rate, so a reaction lasts exactly as long as his
 const REACH = [17, 17, 15, 26, 0, 0, 16, 16, 0, 0, 0, 0, 0, 0, 19, 25, 19, 27, 25, 24, 18, 20, 26, 40, 17, 17, 17, 26, 27, 28, 70, 24, 70, 40, 28, 100, 20, 34, 30, 18, 16, 28, 26, 30, 24, 34, 20, 30, 22], KNOCK = [9, 9, 11, 100, 0, 0, 8, 8, 0, 0, 0, 0, 0, 0, 8, 14, 9, 40, 12, 14, 9, 170, 9, 0, 9, 10, 14, 12, 14, 480, 0, 40, 0, 300, 60, 600, 40, 380, 14, 10, 0, 520, 700, 30, 80, 520, 40, 700, 70], KNOCK_G = [26, 26, 34, 80, 0, 0, 20, 20, 0, 0, 0, 0, 0, 0, 20, 30, 22, 45, 26, 28, 20, 60, 26, 0, 26, 30, 40, 30, 34, 420, 0, 60, 0, 330, 150, 500, 40, 380, 30, 26, 10, 420, 600, 40, 80, 520, 50, 600, 90], DMG = [12, 14, 18, 35, 0, 0, 10, 13, 0, 0, 0, 0, 0, 0, 10, 16, 13, 22, 14, 14, 12, 30, 12, 0, 11, 13, 15, 6, 6, 8, 4, 8, 4, 14, 10, 25, 8, 18, 11, 13, 18, 14, 30, 10, 8, 19, 20, 16, 28];      // 48 = the SPIN ELBOW (28: knocks the enemy down like a DOWNSLAM, it can be blocked); 46 = the UPPERCUT (20, breaks the guard, launches the enemy up) and 47 = the FACE KICK (16, sends him far away: 700 px/s); 44-45 = the RUSH FIST's two impacts (8 + 19 = 27, 5% more than 26; the shoves are 80 and 520 px/s); 38-43 = Yuji's cursed energy moves: R.KICK, ELBOW, DOWNSLAM (drops the enemy), PUSH KICK (sends him far away), CONCENTRATED FIST (30, breaks the guard, the longest push) and the SWEEP (drops him); 36-37 = Yuji's DIVERGENT FIST (8 + 18 = 26 damage; 37, the second impact, pushes 380 px/s); 30-35 = the Cartoon Cat (the M1 adds up to 30: 4 + 8 + 4 + 14; 34 = the punch up from the floor, 35 = the giant's kick); 14-17 = the walking combo: jab, kick, cross with the other hand, kick with the other leg   // per hit: how far it reaches from his hips (px), how hard it shoves the dummy (px/s), damage number
 const HIT = __HIT__;      // tools/hitbox_art.py measures the pictures: HIT[attacker][hit number][target] = the gap (px between the two characters' hips) up to which that move really touches that body: the limb as drawn at the moment of impact against the body as drawn, row by row
 const reachFor = (att, k, tgt) => { const r = HIT[att] && HIT[att][k] && HIT[att][k][tgt]; return r === undefined ? REACH[k] + 6 : r; };      // (a move that was not measured keeps its old reach)
 const moveReach = (att, tgt, k) => { const T = att === 'yuji' ? YU_ATK : att === 'cat' ? CAT_ATK : null; return T && T.hit[k] ? Math.min(...T.hit[k].map(h => reachFor(att, h, tgt))) : reachFor(att, k, tgt); };      // the reach of a whole move (Yuji's move k lands the hits YU_ATK.hit[k]: its shortest hit counts)
-const pHit = k => reachFor(vs ? vs.me : 'gojo', k, vs ? vs.foe : 'gojo') + (vs && vs.cv ? vs.cv.hw - 8 : 0), eHit = k => reachFor(vs ? vs.foe : 'gojo', k, vs ? vs.me : 'gojo'), pMove = k => moveReach(vs ? vs.me : 'gojo', vs ? vs.foe : 'gojo', k), eMove = k => moveReach(vs ? vs.foe : 'gojo', vs ? vs.me : 'gojo', k);      // your hit / move on the enemy, the enemy's hit / move on you
+const pHit = k => reachFor(vs ? vs.me : 'gojo', k, vs ? vs.foe : 'gojo') + (dummy && dummy.curse ? dummy.curse.hw - 8 : 0), eHit = k => reachFor(vs ? vs.foe : 'gojo', k, vs ? vs.me : 'gojo'), pMove = k => moveReach(vs ? vs.me : 'gojo', vs ? vs.foe : 'gojo', k), eMove = k => moveReach(vs ? vs.foe : 'gojo', vs ? vs.me : 'gojo', k);      // your hit / move on the enemy, the enemy's hit / move on you
 const KICKS = { gojo: [3, 15, 17, 18, 19], yuji: [26, 27, 28, 29, 38, 41, 43, 47], cat: [33, 35] }, isKick = (who, k) => !!KICKS[who] && KICKS[who].includes(k), ySwingK = k => [3, 5, 8, 9, 10, 12, 13, 14, 15].includes(k) ? 3 : k, isD1 = k => k === 36 || k === 44, isD2 = k => k === 37 || k === 45;      // the hit numbers are shared by every fighter, so what counts as a KICK depends on who swings (Verity has none). A crouched or knocked-down fighter can be hit by kicks only: punches, elbows and slams pass over him (hits 6 and 7, the low punches and claws of a crouched Gojo or Verity, also reach a crouched enemy). ySwingK: Yuji's heavy moves use the deep whoosh of a kick
 const POW_FPS = 24, POW_FLAME = 7.5 / 24 * 1000;      // Yuji's power-up (switching cursed energy on): 15 frames at 24 FPS = 0.62 s; the flames light up after POW_FLAME ms (frame 7.5), as his fists come down
 const pImpMs = k => (vs && vs.me === 'yuji' && k >= 5) ? (YU_ATK.imp[k].length ? YU_ATK.imp[k][0] * 1000 / YU_ATK.fps[k] : -1) : ATK_IMPACT[k] * 1000 / ATK_FPS[k];      // how long after it started the swing you made lands (the enemy only answers a swing that has not landed yet); Yuji's new moves have their own timing, the power-up lands nothing
 const CE_FPS = 20, CE_DMG = 1.3;               // cursed energy: its 15 frames play at 20 FPS (frames per second = how many pictures are shown each second); while it is on, every hit he lands does 1.3 times the damage
-const FWD_SPEED = 44, BACK_SPEED = 30;         // world pixels per second (matched to the slower stride so his feet do not skate)
+const FWD_SPEED = 56, BACK_SPEED = 38, FOE_WALK = 38;         // world pixels per second (matched to the stride so the feet do not skate; FOE_WALK = how fast an enemy walks, before his grade's speed)
 const BLINK_STEP = 70, BLINK_HOLD = 500;       // ms per blink frame, ms the eye stays shut
 const $ = id => document.getElementById(id);
 let vOff = 0, slowAt = -1e9, slowMs = 0, slowRate = 1, slowFin = false, tLast = 0;      // THE GAME'S CLOCK: in slow motion it runs at a fraction of the real one and vOff is how far behind it has fallen; every time stamp in the game comes from tick() or from pnow(), so everything slows down together (the sound too: slowin / slowout)
@@ -385,7 +388,7 @@ const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
 let story = null, alley = false, state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
 let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1, vp = null, js = null, pStun = 0, vf = null, ult = null, cf = null, ke = null;
-let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, shkX = 0, shkY = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', lastBlue = '', flashUntil = 0, flashMs = 1, flashA = 0, stickX = 0, stickY = 0, stickUp = false, stickDown = false, stickCr = false, stickDownEnd = -9999, jumpFromStick = false, joyId = null, dashReq = false, dgAt = -1, dgK = 0, dgFrom = 0, dgTo = 0, dgAir = false, dgUsed = false, dgCr = false, dgReady = 0, blockHeld = false, blkAt = -1, blkEnd = -1, blkFrom = 4, wcIdx = 0, ceOn = false, ceAt = -9999, ceAmt = 0, ceFlameAt = 0, gDownUntil = 0, ceNext = 0, ceReq = false, cm = 0, rdIdx = 0, mbK = 0, rdOrb = null, boom = null, holdUntil = 0, rdSlow = false, ride = null, gAir = null, gAirH = 0, kickBuf = 0;
+let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, shkX = 0, shkY = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999, last: -9999, bonus: 0 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', lastBlue = '', flashUntil = 0, flashMs = 1, flashA = 0, stickX = 0, stickY = 0, stickUp = false, stickDown = false, stickCr = false, stickDownEnd = -9999, jumpFromStick = false, joyId = null, dashReq = false, dgAt = -1, dgK = 0, dgFrom = 0, dgTo = 0, dgAir = false, dgUsed = false, dgCr = false, dgReady = 0, blockHeld = false, blkAt = -1, blkEnd = -1, blkFrom = 4, wcIdx = 0, ceOn = false, ceAt = -9999, ceAmt = 0, ceFlameAt = 0, gDownUntil = 0, ceNext = 0, ceReq = false, cm = 0, rdIdx = 0, mbK = 0, rdOrb = null, boom = null, holdUntil = 0, rdSlow = false, ride = null, gAir = null, gAirH = 0, kickBuf = 0;
 const ceDmg = n => (cm === 1 ? Math.round(n * CE_DMG) : n) * (voidOn() ? 2 : 1);      // x1.3 in cursed energy mode, and everything hits twice as hard inside the Infinite Void      // only cursed energy mode hits harder; red mode has no damage bonus
 const popCol = () => cm === 1 ? '#4ff5e8' : cm === 2 ? '#ff8a7a' : '#7fc4ff';
 const STRIP = 480;
@@ -449,7 +452,7 @@ function drawHero(i) {
 
 // ---------------------------------------------------------------- v1.00: PROGRESS (money, skills, characters), the SKILLS page, and the five CURSES of the CHALLENGES ladder
 // You start as Gojo with walking, jumping and punches only. Everything else is a SKILL you buy with the money from beating curses (and Versus / Story wins); the other characters are bought too.
-const PROG = (() => { try { const p = JSON.parse(localStorage.getItem('js_prog') || '{}'); return { m: Math.max(0, +p.m || 0), own: p.own || {}, beat: p.beat || {}, once: p.once || {} }; } catch (e) { return { m: 0, own: {}, beat: {}, once: {} }; } })();      // saved on the device: money, what you own (skills and characters), which challenges you beat
+const PROG = (() => { const OLD = ['grub', 'stalker', 'wisp', 'ogre', 'imp']; try { const p = JSON.parse(localStorage.getItem('js_prog') || '{}'), r = p.rush || {}, P = { m: Math.max(0, +p.m || 0), own: p.own || {}, beat: p.beat || {}, once: p.once || {}, rush: { best: +r.best || 0, clears: +r.clears || 0 } }; for (const k of Object.keys(P.beat)) { const m = /^c(\d)(h?)$/.exec(k); if (m && OLD[+m[1]]) { P.beat['c:' + OLD[+m[1]] + m[2]] = 1; delete P.beat[k]; } } return P; } catch (e) { return { m: 0, own: {}, beat: {}, once: {}, rush: { best: 0, clears: 0 } }; } })();      // (v1.00 saved the curses you beat as c0..c4; they are called by name now so the ladder can grow)      // saved on the device: money, what you own (skills and characters), which challenges you beat
 const saveProg = () => { try { localStorage.setItem('js_prog', JSON.stringify(PROG)); } catch (e) { /* storage blocked */ } };
 const owns = id => !!PROG.own[id], gojoMe = () => !vs || vs.me === 'gojo';
 const setMoneyUI = () => { const t = 'MONEY $' + PROG.m; for (const id of ['modesMoney', 'chalMoney', 'skMoney']) $(id).textContent = t; };
@@ -458,7 +461,7 @@ const earnOnce = (key, n) => { if (!PROG.once[key]) { PROG.once[key] = 1; earn(n
 const SK_GOJO = [      // [id, name, what it does, price, needs]
   ['crouch', 'CROUCH', 'DOWN ON THE STICK OR KEY S: DUCK UNDER HIGH HITS', 50, []],
   ['dash', 'DASH', 'A QUICK EVADE FORWARD OR BACK THAT DODGES HITS', 80, []],
-  ['block', 'BLOCK', 'HOLD TO GUARD AGAINST HITS FROM THE FRONT', 80, []],
+  ['block', 'BLOCK + PARRY', 'HOLD TO GUARD AGAINST HITS FROM THE FRONT. RAISE IT JUST BEFORE A HIT TO PARRY: NO DAMAGE, THE ENEMY IS STUNNED', 80, []],
   ['cpunch', 'CROUCH PUNCHES', 'LOW PUNCHES THAT HIT DUCKING ENEMIES', 120, ['crouch']],
   ['tele', 'TELEPORT UP', 'BLUE IN THE AIR: A SECOND JUMP', 150, []],
   ['blue', 'LAPSE BLUE', 'BLUE ON THE GROUND PULLS THE ENEMY IN', 250, []],
@@ -493,85 +496,131 @@ function skillUI() {                          // the buttons of a move you do no
 }
 function leavePlay() { if (vs && vs.net) lanLeave(); else if (vs && vs.cv) { show('chal'); buildChal(); } else show('select'); }
 
-// ---- the five curses: sprites (tools/curse_art.py) and what each of them can do
-const CU = __CURSES__;                        // idle, walk, a1 a2 a3 (the three attacks: 8 frames, the blow lands on frame 4) and hurt (2 frames) for every curse; they face right and the game mirrors them
-const CSP = {};
-for (const id in CU) { const c = CU[id], S = { w: c.w, h: c.h, g: c.g, cx: c.cx, hw: c.hw }; for (const a of ['idle', 'walk', 'a1', 'a2', 'a3', 'hurt']) S[a] = mk(c[a], c.pal); CSP[id] = S; }
-const CDEF = [        // hp: x300; spd: px/s; pref: the distance he likes; pay: [first win, repeat] (HARD: payH); moves: kind = melee / melee2 (two blows) / lunge / dash (he rushes at you) / tele (vanishes and strikes beside you) / proj (a ball) / beam / wave (along the ground) / gust; low = hits a ducking Gojo too; heavy = knocks you down
-  { id: 'grub', name: 'WRETCHED GRUB', grade: 'GRADE 4', hp: 0.5, spd: 36, pref: 20, rest: [500, 600], pay: [60, 15], payH: [130, 35], moves: [
-    { name: 'SCRATCH', anim: 'a1', fps: 12, imp: 4, kind: 'melee', reach: 20, dmg: 7, knock: 70, cd: 700, range: [0, 24], w: 3 },
-    { name: 'BITE LUNGE', anim: 'a2', fps: 11, imp: 4, kind: 'lunge', reach: 22, dmg: 11, knock: 110, cd: 2600, range: [24, 70], lunge: 36, w: 2, warn: 1 },
-    { name: 'SLUDGE SPIT', anim: 'a3', fps: 10, imp: 4, kind: 'proj', dmg: 9, knock: 80, cd: 3200, range: [50, 190], speed: 85, r: 3, h: 22, mx: 26, col: ['#9cff5a', '#e8ffc0'], w: 2, warn: 1 }] },
-  { id: 'stalker', name: 'LONG-ARM STALKER', grade: 'GRADE 3', hp: 0.7, spd: 40, pref: 38, rest: [900, 800], pay: [100, 25], payH: [210, 55], moves: [
-    { name: 'REACH SWEEP', anim: 'a1', fps: 10, imp: 4, kind: 'melee', reach: 42, dmg: 11, knock: 90, cd: 2100, range: [20, 52], w: 3, warn: 1 },
-    { name: 'DOUBLE CLAW', anim: 'a2', fps: 12, imp: 4, kind: 'melee2', reach: 44, dmg: 8, knock: 70, cd: 3000, range: [14, 54], w: 2 },
-    { name: 'SHADOW STEP', anim: 'a3', fps: 6, imp: 4, kind: 'tele', reach: 40, dmg: 15, knock: 130, cd: 6000, range: [40, 200], w: 2, warn: 1 }] },
-  { id: 'wisp', name: 'CYCLOPS WISP', grade: 'GRADE 3', hp: 0.8, spd: 34, pref: 78, keep: 1, rest: [900, 800], pay: [160, 40], payH: [340, 85], moves: [
-    { name: 'TENTACLE WHIP', anim: 'a1', fps: 11, imp: 4, kind: 'melee', reach: 48, dmg: 10, knock: 100, cd: 1700, range: [14, 58], w: 3 },
-    { name: 'EYE BEAM', anim: 'a2', fps: 7, imp: 4, kind: 'beam', reach: 190, dmg: 14, knock: 150, cd: 5000, range: [40, 190], h: 38, mx: 10, w: 3, warn: 1 },
-    { name: 'SPIN DASH', anim: 'a3', fps: 9, imp: 4, kind: 'dash', reach: 24, dmg: 13, knock: 150, cd: 4800, range: [30, 120], lunge: 90, w: 2, warn: 1 }] },
-  { id: 'ogre', name: 'HOLLOW OGRE', grade: 'GRADE 2', hp: 2.0, spd: 26, pref: 36, armor: 1, rest: [650, 550], pay: [240, 60], payH: [520, 130], moves: [
-    { name: 'CLUB SMASH', anim: 'a1', fps: 8, imp: 4, kind: 'melee', reach: 46, dmg: 30, knock: 240, cd: 1900, range: [10, 52], w: 3, warn: 1, heavy: 1 },
-    { name: 'GROUND SLAM', anim: 'a2', fps: 8, imp: 4, kind: 'wave', dmg: 22, knock: 200, cd: 3600, range: [40, 200], speed: 130, r: 6, mx: 30, w: 2, warn: 1, low: 1, heavy: 1 },
-    { name: 'CHARGE', anim: 'a3', fps: 8, imp: 4, kind: 'dash', reach: 30, dmg: 24, knock: 300, cd: 4400, range: [40, 160], lunge: 100, w: 2, warn: 1, heavy: 1 }] },
-  { id: 'imp', name: 'CARRION IMP', grade: 'GRADE 1', hp: 2.2, spd: 56, pref: 50, rest: [300, 350], pay: [380, 95], payH: [800, 200], moves: [
-    { name: 'DIVE CLAW', anim: 'a1', fps: 10, imp: 4, kind: 'lunge', reach: 28, dmg: 20, knock: 160, cd: 1800, range: [30, 110], lunge: 62, w: 3, warn: 1 },
-    { name: 'FIRE BOLT', anim: 'a2', fps: 10, imp: 4, kind: 'proj', dmg: 18, knock: 120, cd: 2000, range: [50, 200], speed: 170, r: 4, h: 40, mx: 28, col: ['#ff7a1a', '#ffe14a'], w: 3, warn: 1 },
-    { name: 'WING GUST', anim: 'a3', fps: 9, imp: 4, kind: 'gust', dmg: 8, knock: 380, cd: 3200, range: [20, 90], speed: 150, r: 10, h: 30, mx: 20, w: 2, warn: 1 }] }];
-for (const c of CDEF) c.hw = CSP[c.id].hw;
-const CMOVE = [];     // every curse move gets a hit number from 49 on, so gojoHit (damage, knock-back, guard, dash, jump, crouch rules) deals with them like with any other swing
-CDEF.forEach((c, ci) => c.moves.forEach(m => { m.k = 49 + CMOVE.length; m.c = ci; CMOVE.push(m); REACH.push(m.reach || 20); KNOCK.push(0); KNOCK_G.push(m.knock); DMG.push(m.dmg); }));
-KICKS.curse = CMOVE.filter(m => m.low).map(m => m.k);      // (a LOW move hits a ducking Gojo too; the others pass over him)
-let cProj = [];       // his balls, waves and gusts: { x (world), h (height above the ground), vx, k, r, kind, col, born, life }
-
-function initCurse() {                        // a round of a challenge starts: the curse of vs.cv steps in
-  const d = dummy, c = vs.cv, t = pnow(); d.curse = c; d.max = Math.round(DUMMY_HP * c.hp * (vs.hard ? 1.5 : 1)); d.hp = d.shown = d.max;
-  d.x = wx + Math.max(54, Math.min(90, (VW >> 1) - 70)); d.cs = 'idle'; d.ct0 = t; d.mcd = {}; d.cnext = t + 2400; d.seenHit = 0; d.cm = null; d.teleDone = d.hit2 = false; cProj = [];
+// ---- the ten curses: sprites (tools/curse_art.py) and what each of them can do
+const CU = __CURSES__;                        // idle, walk, a1 a2 a3 (the three attacks: the blow lands on frame imp) and hurt for every curse; they face right and the game mirrors them
+const CSP = {}, CPV = {};      // CSP[id]: every picture of a curse (built the first time a fight needs it); CPV[id]: just the idle pictures for the cards of the challenges page
+for (const id in CU) {
+  const c = CU[id]; let S = null, V = null, top = c.h; for (const fr of c.idle.frames) for (let y = 0; y < top; y++) if (/[^.]/.test(fr[y])) { top = y; break; }      // (top = the highest row of his body, for the health bar over his head)
+  Object.defineProperty(CSP, id, { enumerable: true, get() { if (!S) { S = { w: c.w, h: c.h, g: c.g, cx: c.cx, hw: c.hw, top }; for (const a of ['idle', 'walk', 'a1', 'a2', 'a3', 'hurt']) S[a] = mk(c[a], c.pal); } return S; } });
+  Object.defineProperty(CPV, id, { enumerable: true, get() { return V || (V = { w: c.w, h: c.h, idle: S ? S.idle : mk(c.idle, c.pal) }); } });
 }
-function curseAI(now, dt) {
-  const d = dummy, c = d.curse, hard = vs.hard ? 1 : 0;
+// the ladder, easiest first. hp: x300; spd: px/s; pref: the distance he likes; keep: he backs away to stay at that distance; armor: he does not flinch while he attacks; stun: ms he flinches when hit; rest: [least, extra] ms between two attacks; pay: [first win, repeat] (HARD: payH); aura: the colours of the smoke that rises off him. moves: kind = melee / melee2 (two blows) / lunge / dash (he rushes at you) / tele (vanishes and strikes beside you) / proj (balls; shots: several at different heights) / beam / wave (along the ground) / gust / pillar (a flame column erupts where you stood after a delay); low = hits a ducking Gojo too; heavy = knocks you down; nb = cannot be blocked (dash, jump or walk away); imp = the frame the blow lands on, fps = how fast the 10 frames play, mv = the frames he moves forward on, cd = ms before he may use it again, range = the distances he picks it at, w = how often, warn = shows a ! while he winds up
+const CDEF = [
+  { id: 'grub', name: 'WRETCHED GRUB', grade: 'GRADE 4', hp: 0.55, spd: 46, pref: 20, rest: [330, 420], stun: 300, aura: ['#5d7550', '#9cff5a'], pay: [60, 15], payH: [130, 35], moves: [
+    { name: 'SCRATCH', anim: 'a1', fps: 14, imp: 5, kind: 'melee', reach: 22, dmg: 7, knock: 70, cd: 600, range: [0, 24], w: 3 },
+    { name: 'BITE LUNGE', anim: 'a2', fps: 13, imp: 5, kind: 'lunge', reach: 22, dmg: 11, knock: 110, cd: 2200, range: [24, 70], lunge: 36, mv: [4, 6], w: 2, warn: 1 },
+    { name: 'SLUDGE SPIT', anim: 'a3', fps: 12, imp: 5, kind: 'proj', dmg: 9, knock: 80, cd: 2600, range: [50, 190], speed: 95, r: 3, h: 16, mx: 18, look: 'proj', col: ['#9cff5a', '#e8ffc0'], w: 2, warn: 1 }] },
+  { id: 'hound', kite: 1, name: 'BONE HOUND', grade: 'GRADE 4', hp: 0.7, spd: 70, pref: 22, rest: [280, 320], stun: 280, aura: ['#e8e0cc', '#a02a2a'], pay: [80, 20], payH: [170, 45], moves: [
+    { name: 'SNAP', anim: 'a1', fps: 15, imp: 5, kind: 'melee', reach: 24, dmg: 8, knock: 80, cd: 700, range: [0, 28], w: 3 },
+    { name: 'POUNCE', anim: 'a2', fps: 12, imp: 5, kind: 'lunge', reach: 26, dmg: 13, knock: 150, cd: 2400, range: [28, 110], lunge: 70, mv: [3, 7], w: 3, warn: 1 },
+    { name: 'BONE SHARDS', anim: 'a3', fps: 11, imp: 5, kind: 'proj', dmg: 8, knock: 70, cd: 3000, range: [50, 200], shots: [{ h: 30, speed: 150, mx: 28 }, { h: 12, speed: 170, mx: 28 }], r: 3, look: 'shard', w: 2, warn: 1 }] },
+  { id: 'stalker', name: 'LONG-ARM STALKER', grade: 'GRADE 3', hp: 0.75, spd: 52, pref: 38, rest: [600, 520], stun: 300, aura: ['#54407a', '#c8a0ff'], pay: [100, 25], payH: [210, 55], moves: [
+    { name: 'REACH SWEEP', anim: 'a1', fps: 12, imp: 5, kind: 'melee', reach: 45, dmg: 11, knock: 90, cd: 1800, range: [20, 52], w: 3, warn: 1 },
+    { name: 'DOUBLE CLAW', anim: 'a2', fps: 14, imp: 5, kind: 'melee2', reach: 45, dmg: 8, knock: 70, cd: 2600, range: [14, 54], w: 2 },
+    { name: 'SHADOW STEP', anim: 'a3', fps: 8, imp: 5, kind: 'tele', reach: 46, dmg: 15, knock: 130, cd: 5200, range: [40, 200], tp: 3, vis: [2, 3], w: 2, warn: 1 }] },
+  { id: 'wisp', kite: 1, name: 'CYCLOPS WISP', grade: 'GRADE 3', hp: 0.85, spd: 40, pref: 78, keep: 1, rest: [600, 520], stun: 300, aura: ['#6a3da8', '#6cf3ff'], pay: [160, 40], payH: [340, 85], moves: [
+    { name: 'TENTACLE WHIP', anim: 'a1', fps: 12, imp: 5, kind: 'melee', reach: 50, dmg: 10, knock: 100, cd: 1500, range: [14, 58], w: 3 },
+    { name: 'EYE BEAM', anim: 'a2', fps: 8, imp: 5, kind: 'beam', reach: 190, dmg: 14, knock: 150, cd: 4200, range: [40, 190], h: 38, mx: 10, w: 3, warn: 1 },
+    { name: 'SPIN DASH', anim: 'a3', fps: 10, imp: 5, kind: 'dash', reach: 26, dmg: 13, knock: 150, cd: 4000, range: [30, 120], lunge: 90, mv: [4, 6], w: 2, warn: 1 }] },
+  { id: 'wraith', kite: 1, name: 'LANTERN WRAITH', grade: 'GRADE 3', hp: 1.0, spd: 36, pref: 80, keep: 1, rest: [520, 500], stun: 300, aura: ['#2a6a8a', '#6cf3ff'], pay: [190, 45], payH: [400, 100], moves: [
+    { name: 'LANTERN SWING', anim: 'a1', fps: 11, imp: 5, kind: 'melee', reach: 40, dmg: 11, knock: 100, cd: 1500, range: [10, 46], w: 3 },
+    { name: 'SOUL FLAME', anim: 'a2', fps: 10, imp: 5, kind: 'proj', dmg: 13, knock: 100, cd: 2400, range: [40, 200], speed: 120, r: 4, h: 44, mx: 24, look: 'soul', col: ['#6cf3ff', '#ffffff'], w: 3, warn: 1 },
+    { name: 'FIRE PILLAR', anim: 'a3', fps: 9, imp: 5, kind: 'pillar', dmg: 19, knock: 200, cd: 4600, range: [10, 200], r: 9, delay: 560, low: 1, nb: 1, w: 2, warn: 1 }] },
+  { id: 'doll', kite: 1, name: 'STITCH DOLL', grade: 'GRADE 2', hp: 1.4, spd: 44, pref: 40, rest: [500, 420], stun: 300, aura: ['#e0a0a0', '#ffd0d0'], pay: [240, 60], payH: [500, 125], moves: [
+    { name: 'NEEDLE STAB', anim: 'a1', fps: 13, imp: 5, kind: 'lunge', reach: 44, dmg: 14, knock: 120, cd: 1500, range: [14, 60], lunge: 14, mv: [4, 5], w: 3, warn: 1 },
+    { name: 'SCISSOR TOSS', anim: 'a2', fps: 11, imp: 5, kind: 'proj', dmg: 15, knock: 110, cd: 2600, range: [50, 200], speed: 190, r: 5, h: 34, mx: 26, look: 'scissor', w: 3, warn: 1 },
+    { name: 'SPIN SLASH', anim: 'a3', fps: 12, imp: 5, kind: 'melee2', reach: 36, dmg: 9, knock: 90, cd: 2800, range: [10, 48], w: 2, warn: 1 }] },
+  { id: 'mantis', kite: 1, name: 'BLADE MANTIS', grade: 'GRADE 2', hp: 1.6, spd: 48, pref: 36, rest: [450, 420], stun: 300, aura: ['#8ac84a', '#6cf3ff'], pay: [290, 70], payH: [600, 150], moves: [
+    { name: 'SCYTHE SLASH', anim: 'a1', fps: 12, imp: 5, kind: 'melee', reach: 40, dmg: 15, knock: 130, cd: 1400, range: [14, 48], w: 3, warn: 1 },
+    { name: 'CROSS CUT', anim: 'a2', fps: 13, imp: 5, kind: 'melee2', reach: 38, dmg: 10, knock: 100, cd: 2400, range: [10, 46], w: 2, warn: 1 },
+    { name: 'CRESCENT WAVE', anim: 'a3', fps: 11, imp: 5, kind: 'proj', dmg: 14, knock: 140, cd: 3000, range: [50, 200], speed: 220, r: 5, h: 26, mx: 30, look: 'crescent', w: 3, warn: 1 }] },
+  { id: 'ogre', name: 'HOLLOW OGRE', grade: 'GRADE 2', hp: 2.1, spd: 30, pref: 36, armor: 1, rest: [450, 400], stun: 240, aura: ['#58535f', '#d83a2a'], pay: [340, 85], payH: [720, 180], moves: [
+    { name: 'CLUB SMASH', anim: 'a1', fps: 9, imp: 5, kind: 'melee', reach: 46, dmg: 30, knock: 240, cd: 1700, range: [10, 52], w: 3, warn: 1, heavy: 1 },
+    { name: 'GROUND SLAM', anim: 'a2', fps: 9, imp: 5, kind: 'wave', dmg: 22, knock: 200, cd: 3200, range: [40, 200], speed: 140, r: 6, mx: 38, w: 2, warn: 1, low: 1, heavy: 1 },
+    { name: 'CHARGE', anim: 'a3', fps: 9, imp: 5, kind: 'dash', reach: 33, dmg: 24, knock: 300, cd: 3800, range: [40, 160], lunge: 100, mv: [4, 7], w: 2, warn: 1, heavy: 1 }] },
+  { id: 'crab', name: 'SHELL CRAB', grade: 'GRADE 1', hp: 2.5, spd: 28, pref: 34, armor: 1, rest: [480, 420], stun: 240, aura: ['#e0804a', '#6ac8b0'], pay: [420, 105], payH: [880, 220], moves: [
+    { name: 'CLAW SNAP', anim: 'a1', fps: 10, imp: 5, kind: 'melee', reach: 40, dmg: 24, knock: 220, cd: 1700, range: [10, 46], w: 3, warn: 1, heavy: 1 },
+    { name: 'BUBBLE BARRAGE', anim: 'a2', fps: 10, imp: 5, kind: 'proj', dmg: 12, knock: 90, cd: 3000, range: [50, 200], shots: [{ h: 36, speed: 70, mx: 28 }, { h: 24, speed: 90, mx: 28 }, { h: 10, speed: 110, mx: 28 }], r: 6, look: 'bubble', w: 3, warn: 1 },
+    { name: 'SHELL RUSH', anim: 'a3', fps: 10, imp: 5, kind: 'dash', reach: 30, dmg: 22, knock: 280, cd: 3800, range: [40, 160], lunge: 90, mv: [4, 7], w: 2, warn: 1, heavy: 1 }] },
+  { id: 'imp', kite: 1, name: 'CARRION IMP', grade: 'GRADE 1', hp: 2.3, spd: 72, pref: 50, rest: [150, 190], stun: 200, aura: ['#b02a34', '#ff7a1a'], pay: [520, 130], payH: [1100, 270], moves: [
+    { name: 'DIVE CLAW', anim: 'a1', fps: 11, imp: 5, kind: 'lunge', reach: 36, dmg: 24, knock: 160, cd: 1300, range: [30, 110], lunge: 62, mv: [4, 6], w: 3, warn: 1 },
+    { name: 'FIRE BOLT', anim: 'a2', fps: 11, imp: 5, kind: 'proj', dmg: 22, knock: 120, cd: 1500, range: [44, 200], speed: 200, r: 4, h: 29, mx: 42, look: 'flame', col: ['#ff7a1a', '#ffe14a'], w: 3, warn: 1 },
+    { name: 'WING GUST', anim: 'a3', fps: 10, imp: 5, kind: 'gust', dmg: 10, knock: 380, cd: 2400, range: [20, 90], speed: 160, r: 10, h: 30, mx: 22, w: 2, warn: 1 }] }].filter(c => CU[c.id]);      // (a curse whose pictures are missing is left out)
+const CID = {}; CDEF.forEach((c, i) => { c.hw = CU[c.id].hw; CID[c.id] = i; });
+const CMOVE = [];     // every curse move gets a hit number from 49 on, so gojoHit (damage, knock-back, guard, dash, jump, crouch rules) deals with them like with any other swing
+CDEF.forEach((c, ci) => c.moves.forEach(m => { m.k = 49 + CMOVE.length; m.c = ci; m.tp = m.tp || 3; m.vis = m.vis || [2, 3]; if (m.kind === 'melee' || m.kind === 'melee2') m.range = [m.range[0], Math.min(m.range[1], m.reach)]; CMOVE.push(m); REACH.push(m.reach || 20); KNOCK.push(0); KNOCK_G.push(m.knock); DMG.push(m.dmg); }));
+KICKS.curse = CMOVE.filter(m => m.low).map(m => m.k);      // (a LOW move hits a ducking Gojo too; the others pass over him)
+const beaten = (id, hard) => !!PROG.beat['c:' + id + (hard ? 'h' : '')];
+// RUSH: the last challenge. Five waves, a wave is one or two curses (the one in front fights, the other stays behind and throws things); you are healed (health and energy) between the waves; every wave you clear pays the same every time, the last one pays a lot; it opens when you have beaten five curses.
+const RUSH_FULL = [['hound'], ['stalker', 'wisp'], ['mantis', 'wraith'], ['ogre', 'doll'], ['crab', 'imp']], RUSH_SUB = { hound: 'grub', wraith: 'wisp', doll: 'stalker', mantis: 'stalker', crab: 'ogre' };
+const RUSH = { waves: RUSH_FULL.map(w => w.map(id => CU[id] ? id : RUSH_SUB[id])), pay: [40, 60, 80, 100, 320], hp: [1, 0.85, 0.85, 0.8, 0.75], tl: 90000, open: 5 };
+const rushOpen = () => CDEF.filter(c => beaten(c.id)).length >= RUSH.open;
+const COMBO_PAY = 3;      // a challenge pays $3 for every hit of your best combo above 2, but never more than 30% of what the win itself pays
+let cProj = [];       // their balls, waves, gusts and flame pillars: { o (who threw it), x (world), h (height above the ground), vx, k, r, kind, look, col, born, life }
+const foesOf = () => vs && vs.foes && vs.foes.length > 1 ? vs.foes : dummy ? [dummy] : [];      // the enemy and, in a RUSH wave, the other one (vs.foes: everybody in the wave, `dummy` is the one that is meant by "the enemy")
+const leadFoe = () => { let f = null; for (const e of foesOf()) if (e.ko < 0 && !e.cap && (!f || e.x < f.x)) f = e; return f; };      // the one standing nearest to you
+function foeSwap(x, fn) { const k = dummy; dummy = x; try { return fn(); } finally { dummy = k; } }      // (everything that deals with "the enemy" works on `dummy`: for a moment it is the one that is meant)
+
+function initCurse(d, c, x, hpMul) {          // a round of a challenge starts: curse c steps in at world place x
+  const t = pnow(); d.curse = c; d.max = Math.round(DUMMY_HP * c.hp * (hpMul || 1)); d.hp = d.shown = d.max; d.born = t;
+  d.x = x; d.cs = 'idle'; d.ct0 = t; d.mcd = {}; d.cnext = t + 1700; d.seenHit = 0; d.cm = null; d.teleDone = d.hit2 = false; d.seed = Math.random(); d.stunUntil = 0;
+}
+function curseAI(d, now, dt) {
+  const c = d.curse, S = CSP[c.id], hard = vs.hard ? 1 : 0;
   if (d.pull) { const k = Math.min(1, (now - d.pull.at) / d.pull.ms); d.x = d.pull.from + (d.pull.to - d.pull.from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) d.pull = null; }      // (Lapse Blue drags him in)
   d.x += d.vx * dt; d.vx *= Math.exp(-7 * dt);                                       // knock-back slide with friction
   if (now - d.hitAt > 350) d.shown += (d.hp - d.shown) * Math.min(1, dt * 4);
-  if (d.cap) { capUpdate(now, dt); return; }                                         // (Max Blue has him: he is swung round the orb until it lets go)
-  if (d.ko >= 0) { cProj.length = 0; return; }
+  if (d.cap) { foeSwap(d, () => capUpdate(now, dt)); return; }                      // (Max Blue has him: he is swung round the orb until it lets go)
+  if (d.ko >= 0) { if (cProj.length) cProj = cProj.filter(p => p.o !== d); return; }
   if (vs.ph !== 'fight' || dom) return;
-  const gap = d.x - wx, dir = gap > 0 ? -1 : 1, step = (v) => { d.x += dir * v * dt; if (dir < 0 && d.x - wx < Math.max(12, c.hw)) d.x = wx + Math.max(12, c.hw); };      // (he never walks into Gojo)
-  if (d.hitAt > d.seenHit) { d.seenHit = d.hitAt; if (!(d.cs === 'atk' && c.armor)) { d.cs = 'hurt'; d.ct0 = now; d.cm = null; d.stunUntil = Math.max(d.stunUntil, now + 360); d.cnext = d.stunUntil + 250 + Math.random() * 300; } }      // (a hit makes him flinch; the ogre keeps swinging)
+  const gap = d.x - wx, dir = gap > 0 ? -1 : 1, step = v => { d.x += dir * v * dt; if (dir < 0 && d.x - wx < Math.max(12, c.hw)) d.x = wx + Math.max(12, c.hw); };      // (he never walks into Gojo)
+  if (d.hitAt > d.seenHit) { d.seenHit = d.hitAt; if (!(d.cs === 'atk' && c.armor)) { d.cs = 'hurt'; d.ct0 = now; d.cm = null; d.stunUntil = Math.max(d.stunUntil, now + c.stun); d.cnext = d.stunUntil + 140 + Math.random() * 180; } }      // (a hit makes him flinch; the ogre and the crab keep going)
   if (now < d.stunUntil) { if (d.cs !== 'hurt') { d.cs = 'hurt'; d.ct0 = now; d.cm = null; } return; }
   if (d.cs === 'hurt') d.cs = 'idle';
   if (d.cs === 'atk') {
-    const m = d.cm, fi = Math.floor((now - d.ct0) * m.fps / 1000);
-    if ((m.kind === 'lunge' || m.kind === 'dash') && fi >= 3 && fi <= 5 && Math.abs(gap) > 12) step(m.lunge * m.fps / 3);
-    if (m.kind === 'tele' && fi >= 3 && !d.teleDone) { d.teleDone = true; d.x = wx + 17 + (Math.random() < 0.3 ? 8 : 0); puff(d.x, 6); }
-    if (fi >= m.imp && !d.hitDone) { d.hitDone = true; curseImpact(m, now); }
-    if (m.kind === 'melee2' && fi >= m.imp + 2 && !d.hit2) { d.hit2 = true; curseImpact(m, now); }
-    if (fi >= 8) { d.cs = 'idle'; d.cm = null; d.cnext = now + (c.rest[0] + Math.random() * c.rest[1]) * (hard ? 0.7 : 1); }
+    const m = d.cm, nf = S[m.anim].length, fi = Math.floor((now - d.ct0) * m.fps / 1000), w0 = m.mv ? m.mv[0] : m.imp - 1, w1 = m.mv ? m.mv[1] : m.imp + 1;
+    if ((m.kind === 'lunge' || m.kind === 'dash') && fi >= w0 && fi <= w1 && Math.abs(gap) > 12) step(m.lunge * m.fps / (w1 - w0 + 1));
+    if (m.kind === 'tele' && fi >= m.tp && !d.teleDone) { d.teleDone = true; d.x = wx + 17 + (Math.random() < 0.3 ? 8 : 0); puff(d.x, 6); }
+    if (fi >= m.imp && !d.hitDone) { d.hitDone = true; curseImpact(d, m, now); }
+    if (m.kind === 'melee2' && fi >= m.imp + 2 && !d.hit2) { d.hit2 = true; curseImpact(d, m, now); }
+    if (fi >= nf) { d.cs = 'idle'; d.cm = null; d.cnext = now + (c.rest[0] + Math.random() * c.rest[1]) * (hard ? 0.7 : 1); }
     return;
   }
+  const ag = Math.abs(gap), sp = c.spd * (hard ? 1.25 : 1), pick = list => { let r = Math.random() * list.reduce((a, m) => a + m.w, 0), m = list[0]; for (const q of list) { r -= q.w; if (r <= 0) { m = q; break; } } return m; };
   if (now >= d.cnext) {
-    const ag = Math.abs(gap), ok = c.moves.filter(m => now >= (d.mcd[m.k] || 0) && ag >= m.range[0] && ag <= m.range[1]);
+    const ready = c.moves.filter(m => now >= (d.mcd[m.k] || 0)), ok = ready.filter(m => ag >= m.range[0] && ag <= m.range[1]);
     if (ok.length) {
-      let r = Math.random() * ok.reduce((a, m) => a + m.w, 0), m = ok[0]; for (const q of ok) { r -= q.w; if (r <= 0) { m = q; break; } }
+      const m = pick(ok); d.intent = null;
+      if (vs.rush && m.kind !== 'proj' && m.kind !== 'beam' && Math.random() < 0.7 && foesOf().some(o => o !== d && o.ko < 0 && o.cs === 'atk')) { d.cnext = now + 320; return; }      // (in a RUSH wave the two do not swing at the same moment, mostly: you can read one blow at a time)
       d.cs = 'atk'; d.cm = m; d.ct0 = now; d.hitDone = false; d.teleDone = d.hit2 = false; d.mcd[m.k] = now + m.cd * (hard ? 0.75 : 1); if (m.warn) snd('charge'); return;
     }
+    if (ready.length) {      // nothing is in range from here: he works his way into the range of a move that is ready (the ones that can kite back away to get room for a ranged move)
+      if (!d.intent || now > d.intentUntil || !ready.includes(d.intent)) { d.intent = pick(ready); d.intentUntil = now + 1400; }
+      const m = d.intent;
+      if (ag > m.range[1] - 6) { step(sp); d.cs = 'walk'; return; }
+      if (c.kite && ag < m.range[0] + 6 && ag < 190) { d.x -= dir * sp * dt; d.cs = 'walk'; return; }
+    }
   }
-  const ag = Math.abs(gap), sp = c.spd * (hard ? 1.25 : 1);
   if (ag > c.pref + 6) { step(sp); d.cs = 'walk'; } else if (c.keep && ag < c.pref - 14) { d.x -= dir * sp * dt; d.cs = 'walk'; } else d.cs = 'idle';
 }
-function curseImpact(m, now) {                // the blow lands (frame 4): a swing reaches Gojo, a ball / wave / gust leaves him, a beam fires
-  const d = dummy, g = d.x - wx, dir = g > 0 ? -1 : 1;
-  if (m.kind === 'proj' || m.kind === 'gust') { cProj.push({ x: d.x + dir * m.mx, h: m.h, vx: dir * m.speed, k: m.k, r: m.r, kind: m.kind, col: m.col, born: now, life: 2800 }); snd('boing'); }
-  else if (m.kind === 'wave') { cProj.push({ x: d.x + dir * m.mx, h: 0, vx: dir * m.speed, k: m.k, r: m.r, kind: 'wave', born: now, life: 1800 }); shakeUntil = now + 260; shakeAmp = 3; snd('land', 1.6); }
-  else if (m.kind === 'beam') { d.beamAt = now; d.beamM = m; snd('hurt', 1); if (g <= m.reach && g > -6) gojoHit(m.k, now); }
-  else { snd('f:swing', m.heavy ? 3 : 1); if (g <= m.reach + 2 && g >= -6) gojoHit(m.k, now); if (m.heavy) { shakeUntil = Math.max(shakeUntil, now + 150); shakeAmp = Math.max(shakeAmp, 3); } }
+function curseImpact(d, m, now) {                // the blow lands: a swing reaches Gojo, a ball / wave / gust / pillar leaves him, a beam fires
+  const g = d.x - wx, dir = g > 0 ? -1 : 1, hit = () => foeSwap(d, () => gojoHit(m.k, now));
+  if (m.kind === 'proj' || m.kind === 'gust') { for (const s of m.shots || [m]) cProj.push({ o: d, x: d.x + dir * (s.mx !== undefined ? s.mx : m.mx), h: s.h, vx: dir * s.speed, k: m.k, r: s.r || m.r, kind: m.kind, look: m.look || m.kind, col: m.col, born: now, life: 2800 }); snd('boing'); }
+  else if (m.kind === 'wave') { cProj.push({ o: d, x: d.x + dir * m.mx, h: 0, vx: dir * m.speed, k: m.k, r: m.r, kind: 'wave', look: 'wave', born: now, life: 1800 }); shakeUntil = now + 260; shakeAmp = 3; snd('land', 1.6); }
+  else if (m.kind === 'pillar') { cProj.push({ o: d, x: wx, h: 0, vx: 0, k: m.k, r: m.r, kind: 'pillar', look: 'pillar', born: now, delay: m.delay, life: m.delay + 460 }); snd('charge'); }
+  else if (m.kind === 'beam') { d.beamAt = now; d.beamM = m; snd('hurt', 1); if (g <= m.reach && g > -6) hit(); }
+  else { snd('f:swing', m.heavy ? 3 : 1); if (g <= m.reach + 2 && g >= -6) hit(); if (m.heavy) { shakeUntil = Math.max(shakeUntil, now + 150); shakeAmp = Math.max(shakeAmp, 3); } }
 }
-function curseProj(now, dt) {
+function curseProj(now, dt) {                    // once a frame: every ball, wave, gust and pillar of every curse
   for (const p of cProj) {
     if (p.gone) continue;
+    if (p.kind === 'pillar') {                   // the flame column: it shows where it will erupt, then erupts and hurts whoever is standing there (a jump or a dash gets out of it; it cannot be blocked)
+      if (!p.fired && now - p.born >= p.delay) { p.fired = true; shakeUntil = Math.max(shakeUntil, now + 200); shakeAmp = Math.max(shakeAmp, 3); snd('redboom'); if (vs && vs.ph === 'fight' && !dom && Math.abs(p.x - wx) < p.r + 6) foeSwap(p.o, () => gojoHit(p.k, now)); }
+      if (now - p.born > p.life) p.gone = true; continue;
+    }
     if (!dom) p.x += p.vx * dt;
     if (!p.dead && vs && vs.ph === 'fight' && now - p.born > 40 && now >= (p.try || 0) && Math.abs(p.x - wx) < p.r + 7) {
-      const guard = guardUp(now) && dummy.x > wx, h0 = hurtAt; gojoHit(p.k, now);
+      const guard = guardUp(now) && p.vx < 0, h0 = hurtAt; foeSwap(p.o, () => gojoHit(p.k, now));
       if (hurtAt !== h0 || guard) p.dead = now; else p.try = now + 150;              // (hit or blocked: it bursts; a dash, a jump or a duck lets it fly on)
     }
     if (now - p.born > p.life || Math.abs(p.x - wx) > 420) p.gone = true;
@@ -581,39 +630,52 @@ function curseProj(now, dt) {
 function dotc(x, y, r) { for (let yy = -r; yy <= r; yy++) { const w = Math.floor(Math.sqrt(r * r - yy * yy)); ctx.fillRect(x - w, y + yy, 2 * w + 1, 1); } }
 function drawProj(now) {
   for (const p of cProj) {
-    const sx = Math.round(VW / 2 + p.x - wx), y = Math.round(gy - p.h), a = p.dead ? Math.max(0, 1 - (now - p.dead) / 130) : 1, back = p.vx > 0 ? -1 : 1;
+    const sx = Math.round(VW / 2 + p.x - wx), y = Math.round(gy - p.h), a = p.dead ? Math.max(0, 1 - (now - p.dead) / 130) : 1, back = p.vx > 0 ? -1 : 1, age = now - p.born, L = p.look;
     ctx.globalAlpha = a;
-    if (p.kind === 'proj') { for (let i = 3; i >= 1; i--) { ctx.globalAlpha = a * (0.5 - i * 0.12); ctx.fillStyle = p.col[0]; dotc(sx + back * i * 4, y, Math.max(1, p.r - i)); } ctx.globalAlpha = a; ctx.fillStyle = p.col[0]; dotc(sx, y, p.r); ctx.fillStyle = p.col[1]; dotc(sx, y, Math.max(1, p.r - 2)); }
-    else if (p.kind === 'wave') { const sp = 7 + Math.round(Math.sin(now / 60) * 1); for (let i = 0; i < 9; i++) { ctx.fillStyle = i % 2 ? '#d8c8a8' : '#9a8a70'; const hh = Math.max(2, 10 - i); ctx.fillRect(sx + back * i * 3 - 2, gy + 2 - hh, 4, hh); } ctx.fillStyle = '#fff2d0'; ctx.fillRect(sx - 1, gy - sp + 2, 3, sp); }
-    else if (p.kind === 'gust') { ctx.fillStyle = '#e8f4ff'; for (let i = 0; i < 3; i++) for (let k = -p.r; k <= p.r; k += 2) { const x = sx + back * (Math.abs(k) * 0.9 + i * 6); ctx.fillRect(Math.round(x), y + k, 2, 1); } }
+    if (L === 'proj' || L === 'flame' || L === 'soul') { const col = p.col || ['#ff7a1a', '#ffe14a'], fl = L === 'proj' ? 0 : Math.round(Math.sin(now / 40 + p.x) * 1); for (let i = 3; i >= 1; i--) { ctx.globalAlpha = a * (0.5 - i * 0.12); ctx.fillStyle = col[0]; dotc(sx + back * i * 4, y + (L === 'proj' ? 0 : fl * i % 2), Math.max(1, p.r - i)); } ctx.globalAlpha = a; ctx.fillStyle = col[0]; dotc(sx, y, p.r); ctx.fillStyle = col[1]; dotc(sx, y, Math.max(1, p.r - 2)); if (L === 'soul') { ctx.fillStyle = col[0]; ctx.fillRect(sx + back * 6, y - 5 + ((now / 70) & 1), 1, 3); ctx.fillRect(sx + back * 9, y - 3, 1, 2); } }
+    else if (L === 'wave') { const sp = 7 + Math.round(Math.sin(now / 60) * 1); for (let i = 0; i < 9; i++) { ctx.fillStyle = i % 2 ? '#d8c8a8' : '#9a8a70'; const hh = Math.max(2, 10 - i); ctx.fillRect(sx + back * i * 3 - 2, gy + 2 - hh, 4, hh); } ctx.fillStyle = '#fff2d0'; ctx.fillRect(sx - 1, gy - sp + 2, 3, sp); }
+    else if (L === 'gust') { ctx.fillStyle = '#e8f4ff'; for (let i = 0; i < 3; i++) for (let k = -p.r; k <= p.r; k += 2) { const x = sx + back * (Math.abs(k) * 0.9 + i * 6); ctx.fillRect(Math.round(x), y + k, 2, 1); } }
+    else if (L === 'shard') { const tv = -back, f = (now / 90) & 1; ctx.fillStyle = '#8a6a50'; ctx.fillRect(sx - tv * 3 - (tv > 0 ? 1 : 0), y - f, 2, 1); ctx.fillStyle = '#e8e0cc'; ctx.fillRect(sx - 2, y - 1 - f, 5, 3); ctx.fillStyle = '#ffffff'; ctx.fillRect(sx - 1, y - f, 3, 1); ctx.fillStyle = '#e8e0cc'; ctx.fillRect(sx + tv * 3 - (tv > 0 ? 0 : 0), y - f, 1, 1); }
+    else if (L === 'crescent') { const tv = -back; for (let i = -5; i <= 5; i++) { const lead = Math.round(sx + tv * (4 - i * i * 0.18)), h = (1 + (6 - Math.abs(i)) / 3) | 0; ctx.fillStyle = '#6cf3ff'; ctx.fillRect(tv > 0 ? lead - h : lead, y + i, h + 1, 1); if (Math.abs(i) <= 3) { ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(sx + tv * (3 - i * i * 0.18)), y + i, 1, 1); } ctx.globalAlpha = a * 0.35; ctx.fillStyle = '#6cf3ff'; const tx = Math.round(sx - tv * (2 + i * i * 0.18)); ctx.fillRect(tv > 0 ? tx - 4 : tx, y + i, 5, 1); ctx.globalAlpha = a; } }
+    else if (L === 'scissor') { const th = now / 50 + p.x * 0.1; ctx.fillStyle = '#d8dce8'; for (let t = -5; t <= 5; t++) { ctx.fillRect(Math.round(sx + Math.cos(th) * t * 0.9), Math.round(y + Math.sin(th) * t * 0.9), 1, 1); ctx.fillRect(Math.round(sx + Math.cos(th + 1.2) * t * 0.8), Math.round(y + Math.sin(th + 1.2) * t * 0.8), 1, 1); } ctx.fillStyle = '#a04a5a'; ctx.fillRect(sx - 1, y - 1, 2, 2); }
+    else if (L === 'bubble') { ctx.fillStyle = '#bff0ff'; for (let a2 = 0, n = Math.max(12, Math.round(p.r * 7)); a2 < n; a2++) { const th = a2 / n * 6.2832; ctx.fillRect(Math.round(sx + Math.cos(th) * p.r), Math.round(y + Math.sin(th) * p.r), 1, 1); } ctx.globalAlpha = a * 0.28; ctx.fillStyle = '#6ac8b0'; dotc(sx, y, p.r - 1); ctx.globalAlpha = a; ctx.fillStyle = '#ffffff'; ctx.fillRect(sx - 2, y - 2, 2, 1); ctx.fillRect(sx - 2, y - 1, 1, 1); }
+    else if (L === 'pillar') {
+      if (age < p.delay) { const k = age / p.delay, fl = 0.55 + 0.45 * Math.sin(age / 45); ctx.globalAlpha = 0.14 * k; ctx.fillStyle = '#ff9a3a'; ctx.fillRect(sx - p.r, Math.round(gy - 44 * k), p.r * 2 + 1, Math.round(44 * k) + 2); ctx.globalAlpha = Math.min(1, 0.55 + k * 0.45) * (0.7 + 0.3 * fl); ctx.fillStyle = '#ff6a1a'; ctx.fillRect(sx - p.r, gy + 1, p.r * 2 + 1, 1); ctx.fillRect(sx - p.r + 1, gy + 2, p.r * 2 - 1, 1); ctx.fillRect(sx - p.r + 3, gy + 3, p.r * 2 - 5, 1); ctx.fillStyle = '#ffd34d'; ctx.fillRect(sx - 4, gy + 2, 9, 1); for (let i = 0; i < 6; i++) { const ph = ((age / 380) + i * 0.17) % 1; ctx.globalAlpha = (1 - ph) * (0.4 + k * 0.6); ctx.fillStyle = i % 2 ? '#ffd34d' : '#ff9a3a'; ctx.fillRect(sx - p.r + 1 + ((i * 7) % (p.r * 2 - 1)), Math.round(gy + 1 - ph * 18 * (0.5 + k)), 1, 2); } }
+      else { const e = age - p.delay, k = Math.min(1, e / 90), out = Math.max(0, 1 - Math.max(0, e - 280) / 180), H = Math.round(60 * k); ctx.globalAlpha = out; for (let yy = 0; yy < H; yy += 1) { const w = Math.round(p.r * (1 - yy / 90) + Math.sin(yy * 0.5 + now / 30) * 1.5), c = yy < H * 0.3 ? '#ffffff' : yy < H * 0.6 ? '#ffe14a' : yy < H * 0.85 ? '#ff9a2a' : '#d83a1a'; ctx.fillStyle = c; ctx.fillRect(sx - w, gy + 2 - yy, w * 2 + 1, 1); } ctx.fillStyle = '#ffffff'; ctx.fillRect(sx - 2, gy + 1 - Math.round(H * 0.5), 5, Math.round(H * 0.5)); }
+    }
   }
   ctx.globalAlpha = 1;
 }
-function drawCurse(now, dt) {                 // the curse: the right picture for what he is doing, facing Gojo
-  const d = dummy, c = d.curse, S = CSP[c.id]; pendingGiants.length = 0; pendingEnemy = null;
-  curseAI(now, dt); curseProj(now, dt);
+function miniBar(sx, by, d) {                    // a small health bar over a curse (in a RUSH wave there are two to tell apart)
+  const f = Math.max(0, d.hp) / d.max, g = Math.max(0, d.shown) / d.max; ctx.fillStyle = '#000'; ctx.fillRect(sx - 12, by - 1, 24, 4); ctx.fillStyle = '#3a1a2a'; ctx.fillRect(sx - 11, by, 22, 2); ctx.fillStyle = '#ffd27a'; ctx.fillRect(sx - 11, by, Math.round(22 * g), 2); ctx.fillStyle = f > 0.3 ? '#52e08a' : '#ff4a4a'; ctx.fillRect(sx - 11, by, Math.round(22 * f), 2);
+}
+function drawCurse(d, now, dt) {                 // a curse: the right picture for what he is doing, facing Gojo
+  const c = d.curse, S = CSP[c.id]; pendingGiants.length = 0; pendingEnemy = null;
+  curseAI(d, now, dt);
   const cx = Math.round(VW / 2), sx = Math.round(cx + d.x - wx), gap = d.x - wx, mirror = gap > -4, m = d.cm, kt = d.ko >= 0 ? Math.max(0, now - (d.koAt || d.ko)) : -1;
-  if (sx < -90 || sx > VW + 90) { drawProj(now); return; }
-  if (d.cap) { if (d.cap.mode === 'fly' || !d.cap.front) drawCaughtCurse(now); drawProj(now); return; }
-  let fr, vis = 1, fi = 0;
+  if (sx < -90 || sx > VW + 90) return;
+  if (d.cap) { if (d.cap.mode === 'fly' || !d.cap.front) drawCaughtCurse(now); return; }
+  let fr, vis = 1, fi = 0, stunned = false;
   if (kt >= 0) fr = S.hurt[0];
-  else if (d.cs === 'hurt') fr = S.hurt[Math.min(1, Math.floor((now - d.ct0) / 130))];
-  else if (d.cs === 'atk' && m) { fi = Math.max(0, Math.min(7, Math.floor((now - d.ct0) * m.fps / 1000))); fr = S[m.anim][fi]; if (m.kind === 'tele' && fi >= 1 && fi <= 2) vis = 0.1; }
-  else if (d.cs === 'walk') fr = S.walk[Math.floor(now * 10 / 1000) % S.walk.length];
+  else if (d.cs === 'hurt') { fr = S.hurt[Math.min(S.hurt.length - 1, Math.floor((now - d.ct0) / 100))]; stunned = now - d.ct0 > 360; }
+  else if (d.cs === 'atk' && m) { const A = S[m.anim]; fi = Math.max(0, Math.min(A.length - 1, Math.floor((now - d.ct0) * m.fps / 1000))); fr = A[fi]; if (m.kind === 'tele' && fi >= m.vis[0] && fi <= m.vis[1]) vis = 0.1; }
+  else if (d.cs === 'walk') fr = S.walk[Math.floor(now * Math.max(6, Math.min(15, c.spd / 4.5)) / 1000) % S.walk.length];      // (the faster he walks, the faster his legs go)
   else fr = S.idle[Math.floor(now * 8 / 1000) % S.idle.length];
   const t = Math.min(1, (now - d.born) / 650), y = gy + 2 - S.g, sw = Math.round(S.hw * 0.9 + 4);
   ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(sx - sw, gy + 3, sw * 2, 2); ctx.fillRect(sx - sw + 2, gy + 2, sw * 2 - 4, 1);
+  if (kt < 0 && c.aura) { for (let i = 0; i < 5; i++) { const ph = (now / 1200 + i / 5 + d.seed) % 1, ax = sx + Math.round(Math.sin((ph * 5 + i * 2 + d.seed * 9) * 1.3) * S.hw * 0.9), ay = Math.round(gy - S.h * 0.1 - ph * S.h * 0.7); ctx.globalAlpha = (1 - ph) * 0.85 * t; ctx.fillStyle = c.aura[i % c.aura.length]; ctx.fillRect(ax, ay, 1 + (i & 1), 1 + (i & 1)); } ctx.globalAlpha = 1; }      // (a little cursed smoke and sparks rising off him)
+  if (kt < 0 && t < 1) { const R = 4 + t * 30; ctx.fillStyle = c.aura ? c.aura[1] : '#c8a0ff'; ctx.globalAlpha = 1 - t; for (let a = 0; a < 36; a++) { const th = a / 36 * 6.2832; ctx.fillRect(Math.round(sx + Math.cos(th) * R), Math.round(gy + 2 + Math.sin(th) * R * 0.25), 1, 1); } ctx.globalAlpha = 1; }      // (he steps in through a ring of cursed energy)
   ctx.save(); ctx.translate(sx, 0); if (mirror) ctx.scale(-1, 1);
   if (kt >= 0) { const k = Math.min(1, kt / 1100); ctx.globalAlpha = Math.max(0, 1 - k * k); ctx.translate(0, gy + 2); ctx.rotate(-1.2 * Math.pow(Math.min(1, kt / 480), 2)); ctx.drawImage(((kt / 70) | 0) % 2 === 0 && kt < 420 ? whiteOf(fr) : fr, -S.cx, -S.g); }
-  else { ctx.globalAlpha = vis * t; ctx.drawImage(fr, -S.cx, y); if (now - d.hitAt < 70) ctx.drawImage(whiteOf(fr), -S.cx, y); }
+  else { ctx.globalAlpha = vis * t; ctx.drawImage(fr, -S.cx, y); if (now - d.hitAt < 70 || (stunned && ((now / 80) | 0) % 2 === 0)) ctx.drawImage(whiteOf(fr), -S.cx, y); }
   ctx.restore(); ctx.globalAlpha = 1;
   if (kt >= 0 && kt < 1100) { const k = kt / 1100; for (let i = 0; i < 14; i++) { const ph = (k * 1.2 + i / 14) % 1; ctx.globalAlpha = 1 - ph; ctx.fillStyle = i % 3 ? '#c8a0ff' : '#ffffff'; ctx.fillRect(sx + ((i * 53) % 29) - 14, Math.round(gy - 6 - ph * 50), 2, 2); } ctx.globalAlpha = 1; }
   if (kt < 0 && d.cs === 'atk' && m && m.warn && fi < m.imp) pxt('!', sx, y - 2, '#ffd34d', 8, 'center');      // (a heavy or tricky move shows a warning while he winds up)
+  if (kt < 0 && vs && vs.rush && t >= 1) miniBar(sx, Math.max(26, y + S.top - 7), d);
   if (d.beamM && now - d.beamAt < 240) {      // the eye beam: a bright line from his eye towards Gojo
     const b = d.beamM, by = Math.round(gy - b.h), a = 1 - (now - d.beamAt) / 240, x0 = sx - (mirror ? 1 : -1) * b.mx, x1 = x0 - (mirror ? 1 : -1) * b.reach;
     ctx.globalAlpha = a * 0.35; ctx.fillStyle = '#6cf3ff'; ctx.fillRect(Math.min(x0, x1), by - 4, Math.abs(x1 - x0), 9); ctx.globalAlpha = a * 0.8; ctx.fillRect(Math.min(x0, x1), by - 2, Math.abs(x1 - x0), 5); ctx.globalAlpha = a; ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.min(x0, x1), by - 1, Math.abs(x1 - x0), 3); ctx.globalAlpha = 1;
   }
-  drawProj(now);
 }
 function drawCaughtCurse(now) {               // Max Blue has the curse: stun flicker, tumbling about his middle
   const c = dummy.cap, S = CSP[dummy.curse.id], sx = Math.round(Math.round(VW / 2) + c.px - wx), fr = S.hurt[0];
@@ -621,31 +683,70 @@ function drawCaughtCurse(now) {               // Max Blue has the curse: stun fl
   ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(sx - 7, gy + 3, 14, 2);
   ctx.save(); ctx.translate(sx, Math.round(c.py)); ctx.rotate(c.rot); ctx.scale(-1, 1); ctx.drawImage(src, -S.cx, -Math.round(S.g / 2)); ctx.restore();
 }
+function drawFoes(now, dt) {                  // the enemy (or enemies: a RUSH wave has two) and what they throw, once a frame
+  if (vs && vs.foes && vs.foes.length > 1) { rushStep(now); for (const x of vs.foes.filter(f => f !== dummy).sort((a, b) => b.x - a.x)) foeSwap(x, () => drawDummy(now, dt)); }      // (the one behind first, so the one in front is painted over it)
+  drawDummy(now, dt);
+  if (vs && vs.cv) { curseProj(now, dt); drawProj(now); }
+}
+function rushStep(now) {                      // every frame of a RUSH wave: the two keep apart, and when the one that was "the enemy" is down, the other becomes "the enemy" (so BLUE, RED and the rest go for him)
+  const alive = vs.foes.filter(f => f.ko < 0).sort((a, b) => a.x - b.x);
+  for (let i = 1; i < alive.length; i++) { const lo = alive[i - 1], hi = alive[i], need = lo.curse.hw + hi.curse.hw + 4; if (hi.x - lo.x < need) hi.x = lo.x + need; }
+  if (dummy.ko >= 0 && alive.length && !dummy.cap) { dummy = alive[0]; vs.cv = dummy.curse; }
+}
 function startCurse(i, hard) {                // a challenge: best of 3 rounds against curse i (HARD: 1.5 times the health, 1.35 times the damage, quicker)
-  audio(); vs = { story: false, gi: 2, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: 60000, hp: PHP, sh: PHP, hist: [], res: null, retry: 0, me: 'gojo', foe: 'curse', cv: CDEF[i], ci: i, hard: !!hard, inv: false };
+  audio(); vs = { story: false, gi: 2, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: ROUND_MS, hp: PHP, sh: PHP, hist: [], res: null, retry: 0, me: 'gojo', foe: 'curse', cv: CDEF[i], ci: i, hard: !!hard, dmgMul: hard ? 1.35 : 1, inv: false, bestCmb: 0 };
   beginRound(pnow());
 }
-function curseOver(now) {                     // the best of 3 is decided: money for a win (the first win of a challenge pays most), the next curse opens
-  vs.ph = 'over'; const win = vs.pw >= 2, c = vs.cv, key = 'c' + vs.ci + (vs.hard ? 'h' : ''); let pay = 0, first = false;
-  if (win) { first = !PROG.beat[key]; pay = c[vs.hard ? 'payH' : 'pay'][first ? 0 : 1]; PROG.beat[key] = 1; earn(pay); }
-  vs.res = { win, pay };
-  $('vsTitle').textContent = win ? 'VICTORY' : 'DEFEAT'; $('vsInfo').textContent = c.name + (vs.hard ? ' (HARD)' : '') + '  -  ROUNDS ' + vs.pw + ' : ' + vs.ew + (win ? '\n+$' + pay + (first ? '  FIRST CLEAR' : '') : '');
-  $('vsStars').innerHTML = ''; $('vsNext').textContent = 'NEXT CURSE'; $('vsNext').style.display = win && !vs.hard && vs.ci < 4 ? '' : 'none'; $('vsres').classList.add('on'); snd(win ? 'finisher' : 'ko');
+function startRush() {                        // RUSH: wave after wave, one round each; one loss ends it
+  audio(); vs = { story: false, gi: 2, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: RUSH.tl, hp: PHP, sh: PHP, hist: [], res: null, retry: 0, me: 'gojo', foe: 'curse', cv: CDEF[CID[RUSH.waves[0][0]]], ci: -1, hard: false, dmgMul: 1, rush: true, inv: false, bestCmb: 0, foes: [], rpay: 0 };
+  beginRound(pnow());
+}
+function rushSpawn(t) {                       // a wave steps in (beginRound has made the first `dummy`)
+  const k = Math.min(vs.round, RUSH.waves.length) - 1, ids = RUSH.waves[k].filter(id => CID[id] !== undefined), x0 = wx + Math.max(60, Math.min(90, (VW >> 1) - 70));
+  vs.cv = CDEF[CID[ids[0]]]; initCurse(dummy, vs.cv, x0, RUSH.hp[k]); vs.foes = [dummy];
+  for (let j = 1; j < ids.length; j++) { const e = newFoe(t, 'fighter'), c = CDEF[CID[ids[j]]]; initCurse(e, c, x0 + 30 + dummy.curse.hw + c.hw + 4, RUSH.hp[k]); vs.foes.push(e); }
+  vs.tl = RUSH.tl;
+}
+function rushPay(now) {                       // a wave is cleared: the same money every time
+  const k = vs.round - 1, n = RUSH.pay[k]; vs.rpay += n; earn(n); PROG.rush.best = Math.max(PROG.rush.best, vs.round); saveProg(); say('+$' + n, wx + 24, '#7dff9a', 16, now + 250);
+}
+function comboPay(base) { return Math.min(Math.round(base * 0.3), COMBO_PAY * Math.max(0, (vs.bestCmb | 0) - 2)); }      // the money for the best combo of a challenge (base = what the win pays)
+function curseOver(now) {                     // the fight is decided: money for a win (the first win of a challenge pays most), the next curse opens
+  vs.ph = 'over'; $('vsAgain').textContent = vs.rush ? 'RUSH AGAIN' : 'REMATCH'; $('vsAgain').classList.toggle('hot', vs.rush ? vs.pw < RUSH.waves.length : vs.pw < 2);
+  if (vs.rush) { rushOver(now); return; }
+  const win = vs.pw >= 2, c = vs.cv, key = 'c:' + c.id + (vs.hard ? 'h' : ''); let pay = 0, first = false, cb = 0;
+  if (win) { first = !PROG.beat[key]; pay = c[vs.hard ? 'payH' : 'pay'][first ? 0 : 1]; cb = comboPay(pay); PROG.beat[key] = 1; earn(pay + cb); }
+  vs.res = { win, pay: pay + cb };
+  $('vsTitle').textContent = win ? 'VICTORY' : 'DEFEAT'; $('vsInfo').textContent = c.name + (vs.hard ? ' (HARD)' : '') + '  -  ROUNDS ' + vs.pw + ' : ' + vs.ew + (win ? '\n+$' + pay + (first ? '  FIRST CLEAR' : '') + (cb ? '\nBEST COMBO ' + vs.bestCmb + ' HITS  +$' + cb : '') : '');
+  $('vsStars').innerHTML = ''; $('vsNext').textContent = 'NEXT CURSE'; $('vsNext').style.display = win && !vs.hard && vs.ci < CDEF.length - 1 ? '' : 'none'; $('vsres').classList.add('on'); snd(win ? 'finisher' : 'ko');
+}
+function rushOver(now) {
+  const full = vs.pw >= RUSH.waves.length, cb = vs.pw ? comboPay(vs.rpay) : 0; if (cb) earn(cb); if (full) PROG.rush.clears++; saveProg();
+  vs.res = { win: full, pay: vs.rpay + cb };
+  $('vsTitle').textContent = full ? 'RUSH CLEARED' : 'RUSH OVER'; $('vsInfo').textContent = 'WAVES ' + vs.pw + ' OF ' + RUSH.waves.length + '\n+$' + vs.rpay + (cb ? '\nBEST COMBO ' + vs.bestCmb + ' HITS  +$' + cb : '');
+  $('vsStars').innerHTML = ''; $('vsNext').style.display = 'none'; $('vsres').classList.add('on'); snd(full ? 'finisher' : 'ko');
 }
 let chalPv = [];
-function buildChal() {                        // the five cards: the curse, NORMAL and HARD (HARD opens when you beat NORMAL; a curse opens when you beat the one before)
+function buildChal() {                        // the cards: every curse with NORMAL and HARD (HARD opens when you beat NORMAL; a curse opens when you beat the one before), then RUSH
   const box = $('chalCards'); box.innerHTML = ''; chalPv = []; setMoneyUI();
   CDEF.forEach((c, i) => {
-    const open = i === 0 || !!PROG.beat['c' + (i - 1)], S = CSP[c.id], card = document.createElement('div'), wrap = document.createElement('div'), cvs = document.createElement('canvas');
+    const open = i === 0 || beaten(CDEF[i - 1].id) || beaten(c.id), S = CPV[c.id], card = document.createElement('div'), wrap = document.createElement('div'), cvs = document.createElement('canvas');
     card.className = 'card cc'; wrap.className = 'cv'; cvs.width = S.w; cvs.height = S.h; cvs.style.height = (S.h * 0.26) + 'vh'; if (!open) cvs.className = 'dk'; wrap.appendChild(cvs); card.appendChild(wrap); chalPv.push({ cvs, S });
     card.insertAdjacentHTML('beforeend', '<b>' + (open ? c.name : '???') + '</b><i>' + c.grade + '</i>');
     for (const hard of [0, 1]) {
-      const ok = hard ? !!PROG.beat['c' + i] : open, done = !!PROG.beat['c' + i + (hard ? 'h' : '')], b = document.createElement('button'), pay = c[hard ? 'payH' : 'pay'];
+      const ok = hard ? beaten(c.id) : open, done = beaten(c.id, hard), b = document.createElement('button'), pay = c[hard ? 'payH' : 'pay'];
       b.className = 'ct'; b.disabled = !ok; b.innerHTML = ok ? (hard ? 'HARD' : 'NORMAL') + '<small>' + (done ? 'DONE $' + pay[1] : '$' + pay[0]) + '</small>' : 'LOCKED';
       b.addEventListener('click', () => startCurse(i, hard)); card.appendChild(b);
     }
     box.appendChild(card);
   });
+  const ro = rushOpen(), card = document.createElement('div'), wrap = document.createElement('div'), last = RUSH.waves[RUSH.waves.length - 1].filter(id => CU[id]);      // the RUSH card: the last wave's two curses side by side
+  card.className = 'card cc rush'; wrap.className = 'cv'; for (const id of last) { const S = CPV[id], cvs = document.createElement('canvas'); cvs.width = S.w; cvs.height = S.h; cvs.style.height = (S.h * 0.17) + 'vh'; if (!ro) cvs.className = 'dk'; wrap.appendChild(cvs); chalPv.push({ cvs, S }); } card.appendChild(wrap);
+  card.insertAdjacentHTML('beforeend', '<b>' + (ro ? 'RUSH' : '???') + '</b><i>' + RUSH.waves.length + ' WAVES</i>');
+  const b = document.createElement('button'), total = RUSH.pay.reduce((a, n) => a + n, 0);
+  b.className = 'ct'; b.disabled = !ro; b.innerHTML = ro ? 'START<small>$' + total + ' A CLEAR</small>' : 'LOCKED<small>BEAT ' + RUSH.open + ' CURSES</small>'; b.addEventListener('click', startRush); card.appendChild(b);
+  if (ro) card.insertAdjacentHTML('beforeend', '<small class="rb">BEST WAVE ' + PROG.rush.best + '/' + RUSH.waves.length + '  CLEARS ' + PROG.rush.clears + '</small>');
+  box.appendChild(card);
 }
 function chalDraw(now) { for (const q of chalPv) { const g = q.cvs.getContext('2d'); g.clearRect(0, 0, q.cvs.width, q.cvs.height); g.drawImage(q.S.idle[Math.floor(now / 125) % q.S.idle.length], 0, 0); } }
 let skTab = 'g';
@@ -716,7 +817,7 @@ function lanMsg(m) {
   if (c === 'W') { netSwing(+a, +p[2], now); return; }                    // (his swing reaches me: my phone decides what it does)
   if (c === 'R') { netResult(+a, p[2], +p[3], now); return; }             // (...and the answer to my swing)
   if (c === 'K') { netKo(now); return; }                                  // (I knocked him out)
-  if (c === 'T') { netTime(a, now); return; }                             // (the host says who had more health when the 60 s ran out)
+  if (c === 'T') { netTime(a, now); return; }                             // (the host says who had more health when the time ran out)
   if (c === 'C' && lanPhase === 'pick') { lanFoeReady = a === 'gojo'; lanCheck(); }
   else if (c === 'X' && !lanHost && lanPhase === 'pick') { lanMeReady = lanFoeReady = true; lanStartRoll(a === '0'); }
   else if (c === 'F' && lanPhase === 'done') { lanFightFoe = a === '1'; lanGoCheck(); }
@@ -765,7 +866,7 @@ function lanTick() {
   if (lanRole === 'browse') lanShow(rooms);
   if (lanRole === 'in' && p !== lanPing) { lanPing = p; lsRender(); }
 }
-// ---------------------------------------------------------------- THE WI-FI FIGHT: Gojo against Gojo like the offline Versus (best of 3 rounds, 60 s, health bars). Each phone runs its OWN fighter with the normal game code and sends its picture, place and health 25 times a second (P|); the other fighter on the screen is only that picture (drawRemote). A swing that reaches him is sent (W|); HIS phone decides what it does to him with the offline rules (gojoHit: guard, dash, jump, crouch, hit-stun) and answers (R|). Works: walking, jumping, teleporting up, crouching, dashing, blocking, the 4-hit combo and the crouch punches. Off for now: BLUE on the ground, MODE, DOMAIN, FATAL.
+// ---------------------------------------------------------------- THE WI-FI FIGHT: Gojo against Gojo like the offline Versus (best of 3 rounds, 45 s, health bars). Each phone runs its OWN fighter with the normal game code and sends its picture, place and health 25 times a second (P|); the other fighter on the screen is only that picture (drawRemote). A swing that reaches him is sent (W|); HIS phone decides what it does to him with the offline rules (gojoHit: guard, dash, jump, crouch, hit-stun) and answers (R|). Works: walking, jumping, teleporting up, crouching, dashing, blocking, the 4-hit combo and the crouch punches. Off for now: BLUE on the ground, MODE, DOMAIN, FATAL.
 const NET_G0 = 70, NET_LEASH = 150;           // the two fighters start 70 px apart and never get more than 150 px apart, so both stay on both screens
 let netK = -1, netBonus = 0, netSentAt = 0;
 const GPOSE = [], GPOSE_ID = new Map();       // every picture set a fighter can show, in a fixed order, so a picture is just a number (both phones run the same code)
@@ -786,7 +887,7 @@ function lanFight() { if (lanPhase !== 'done') return; lanFightMe = !lanFightMe;
 function lanGoCheck() { if (lanHost && lanPhase === 'done' && lanFightMe && lanFightFoe) { lanSend('S|'); lanStartFight(); } }      // both tapped FIGHT: the host says go
 function lanStartFight() {
   lanPhase = 'fight'; lanFightMe = lanFightFoe = false;
-  vs = { story: false, gi: 2, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: 60000, hp: PHP, sh: PHP, hist: [], res: null, retry: 0, me: 'gojo', foe: 'gojo', net: true, meInv: lanMeInv, inv: !lanMeInv };      // (inv: the OTHER Gojo is the inverted one; meInv: I am)
+  vs = { story: false, gi: 2, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: ROUND_MS, hp: PHP, sh: PHP, hist: [], res: null, retry: 0, me: 'gojo', foe: 'gojo', net: true, meInv: lanMeInv, inv: !lanMeInv };      // (inv: the OTHER Gojo is the inverted one; meInv: I am)
   beginRound(pnow());
 }
 function netPose(set, fi, lift) {             // every frame of my own scene: what I look like and where I am, sent every 40 ms
@@ -799,7 +900,7 @@ function netPoseIn(p) {                       // P|x10|picture|frame|lift|health
   dummy.tx = NET_G0 - (+p[1]) / 10; if (dummy.ko < 0) dummy.hp = Math.max(0, Math.min(PHP, +p[5] || 0));
 }
 function netAttack(k, now) {                  // my swing reaches him (the reach is checked here, on my screen): his phone decides if it hurts him
-  const seq = now > hits.until ? 0 : hits.seq; lanSend('W|' + k + '|' + (seq === 3 && gKo(k) === 3 ? 25 : 0));      // (the 4th hit of a perfect combo hits 25 harder)
+  const seq = now > hits.until ? 0 : hits.seq; lanSend('W|' + k + '|' + ((seq === 3 && gKo(k) === 3 ? 25 : 0) + comboBonus(k, now)));      // (the 4th hit of a perfect combo hits 25 harder)
 }
 const gKo = k => k <= 3 ? k : k >= 18 && k <= 21 ? k - 18 : k >= 14 && k <= 17 ? k - 14 : -1;      // which hit of the 4-hit combo a swing number is (standing 0-3, walking 14-17, crouch-walking 18-21)
 const nres = (r, dm, rx) => { if (netK >= 0) { lanSend('R|' + netK + '|' + r + '|' + (dm | 0) + '|' + (rx | 0)); netK = -1; } };      // (gojoHit says what became of the swing)
@@ -812,8 +913,9 @@ function netResult(k, r, dm, now) {           // R|: what my swing did on his ph
   if (r === 'h') {
     if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; }
     const ko = gKo(k); hits.seq = ko === hits.seq ? hits.seq + 1 : ko === 0 ? 1 : 0; if (hits.seq === 4) { hits.perfect = now; snd('finisher'); say('COMBO!', dummy.x, '#ffd34d', 8, now + 90); }
-    hits.n++; hits.dmg += dm; hits.until = now + 1600; dummy.hitAt = now; shakeUntil = now + 110; shakeAmp = k === 21 ? 4 : k === 3 || k === 15 || k === 17 || k === 18 || k === 19 ? 3 : 2; say('' + dm, dummy.x, popCol(), 8, now); snd('smack', k);
+    hits.n++; hits.dmg += dm; hits.until = now + COMBO_WIN; hits.last = now; if (vs) vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n); dummy.hitAt = now; shakeUntil = now + 110; shakeAmp = k === 21 ? 4 : k === 3 || k === 15 || k === 17 || k === 18 || k === 19 ? 3 : 2; say('' + dm, dummy.x, popCol(), 8, now); snd('smack', k);
     if (k === 3 || k === 17 || k === 21) { dummy.smokeUntil = now + 520; puff(dummy.x, 8); }
+    onLand(k, dm, now);
   } else if (r === 'b') { shakeUntil = now + 70; shakeAmp = 1; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); }
   else say('MISS', dummy.x, '#9fd8ff', 8, now);
 }
@@ -821,14 +923,14 @@ function netKo(now) {                         // K|: he ran out of health on his
   if (!vs || !vs.net || vs.ph !== 'fight' || !dummy) return;
   dummy.hp = 0; dummy.ko = now; endRound('player', 'ko', now); dummy.koAt = vs.koAt;
 }
-function netTimeUp(now) {                     // the 60 s are over: the HOST decides who had more health (a tie is a coin toss) and tells the guest
+function netTimeUp(now) {                     // the time is over: the HOST decides who had more health (a tie is a coin toss) and tells the guest
   if (!lanHost || vs.toSent) return; vs.toSent = true;
   const mine = vs.hp / PHP, his = dummy ? dummy.hp / dummy.max : 0, w = mine === his ? Math.random() < 0.5 : mine > his;
   lanSend('T|' + (w ? 'h' : 'g')); endRound(w ? 'player' : 'enemy', 'time', now);
 }
 function netTime(a, now) { if (vs && vs.net && vs.ph === 'fight') endRound(a === (lanHost ? 'h' : 'g') ? 'player' : 'enemy', 'time', now); }
 function netOver(now) {                       // best of 3 is decided: the result overlay of the offline Versus, with REMATCH (back to the character select) and MENU (leave the room)
-  vs.ph = 'over'; const win = vs.pw >= 2; vs.res = { win, stars: 0 };
+  vs.ph = 'over'; $('vsAgain').textContent = 'REMATCH'; $('vsAgain').classList.remove('hot'); const win = vs.pw >= 2; vs.res = { win, stars: 0 };
   $('vsTitle').textContent = win ? 'VICTORY' : 'DEFEAT'; $('vsInfo').textContent = 'WI-FI FIGHT  -  ROUNDS ' + vs.pw + ' : ' + vs.ew; $('vsStars').innerHTML = ''; $('vsNext').style.display = 'none'; $('vsres').classList.add('on'); snd(win ? 'finisher' : 'ko');
 }
 const netRematch = () => { lanAgain(true); show('lansel'); lsRender(); };
@@ -860,7 +962,7 @@ function show(s) {
   releaseAll(); $('settings').classList.remove('on');
   js = null; vf = null; if (cf) cfReset(); if (ke) keReset(); blindOff = false; bfo = null; bfp = false; ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; ceOn = false; ceAmt = 0; ceFlameAt = 0; gDownUntil = 0; gAir = null; gAirH = 0; kickBuf = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
-  if (s === 'play') { spawnAt = pnow(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
+  if (s === 'play') { spawnAt = pnow(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; sparks = []; stopMs = 0; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(pnow(), 1200);
 }
 
@@ -1065,9 +1167,8 @@ function layer(c, k) {                        // parallax: far layers move less 
   for (let x = off - STRIP; x < VW; x += STRIP) ctx.drawImage(c, x, 0);
 }
 
-function spawnDummy(now, mode) {
-  dummy = { mode: mode || 'dummy', x: wx + (mode === 'fighter' ? 78 : 32), born: now, vx: 0, hitAt: -9999, hp: DUMMY_HP, shown: DUMMY_HP, ko: -1, rx: 0, rxAt: -9999, stunUntil: 0, pull: null, smokeUntil: 0, ai: 'rest', aiAt: now, restFor: 1200, k: 0, hitDone: true, swung: true };
-}
+function newFoe(now, mode) { return { mode: mode || 'dummy', x: wx + (mode === 'fighter' ? 78 : 32), born: now, vx: 0, hitAt: -9999, hp: DUMMY_HP, shown: DUMMY_HP, ko: -1, rx: 0, rxAt: -9999, stunUntil: 0, pull: null, smokeUntil: 0, ai: 'rest', aiAt: now, restFor: 1200, k: 0, hitDone: true, swung: true }; }
+function spawnDummy(now, mode) { dummy = newFoe(now, mode); }
 function guardUp(now) { return blkAt >= 0 && blkEnd < 0 && now - blkAt >= 2000 / BLK_FPS; }       // hands are up (from the 3rd frame): attacks from the front bounce off
 function say(txt, x, col, size, now) { popups.push({ born: now, x, txt, col, size: size || 8 }); }
 // ---------------------------------------------------------------- DIVERGENT FIST. Yuji's own move (the BLUE button while you play Yuji, 15% of the energy; the enemy Yuji throws it too): a straight punch with a fist full of cursed energy. 1. The fist reaches the enemy (hit 36: a short shove; he can block it), 2. it stays pressed in, 3. as Yuji pulls it back, 0.17 s later, a SECOND impact lands in the enemy's stomach (hit 37: a long push, a shock ring, a flash, a shake and a moment of slow motion). The second one only needs the first to have reached him (divP: yours on the enemy, dummy.divOk: the enemy's on you): blocking the fist, or stepping away after it, does not stop it.
@@ -1111,7 +1212,7 @@ function kickFx(now, wxx, dir) {      // the FACE KICK lands: a shock wave rushe
 }
 function dummyDiv2(now) {      // the second impact on the enemy: it only needs the first impact to have reached him; a block, a step back or a dash after that does not stop it
   if (!divP || now - divP.at > 900) return; const k2 = divP.k === 44 ? 45 : 37; divP = null;      // (45 = the second impact of the RUSH FIST)
-  const d = dummy, dmg = ceDmg(DMG[k2]); d.hp = Math.max(0, d.hp - dmg); d.hitAt = now; d.vx += KNOCK[k2]; hits.n++; hits.dmg += dmg; hits.until = now + 1600; hits.seq = 0;
+  const d = dummy, dmg = ceDmg(DMG[k2]); d.hp = Math.max(0, d.hp - dmg); d.hitAt = now; d.vx += KNOCK[k2]; hits.n++; hits.dmg += dmg; hits.until = now + COMBO_WIN; hits.seq = 0;
   if (vs && vs.foe === 'cat') { vs.catHold = 0; d.held = null; }
   d.rx = 1; d.rxAt = now; catRelease(now); if (window.__sfxlog) window.__sfxlog.push(['rx', Math.round(now), d.rx]);      // (reaction 1 = doubled over, for every enemy)
   say('' + dmg, d.x, popCol(), 8, now); snd('smack', 3); puff(d.x, 8); divSecond(now, d.x, d.hp > 0);
@@ -1142,7 +1243,49 @@ function drawDivFx(now) {      // the shock rings of the second impact: a thick 
     ctx.restore();
   }
 }
-function hitDummy(k, now) {                   // called on the impact frame: a hit lands if the dummy is standing in front of him and within reach
+// ---------------------------------------------------------------- v1.10 FEEL: hit-stop, sparks, the COMBO and the PARRY
+// HIT-STOP: when a blow lands the whole game stands still for a moment (its clock stops, see tick) and then goes on from the same picture, so the hit feels heavy. A COMBO is the hits you land within COMBO_WIN ms of each other: from the third hit on every hit does 1 more damage per extra hit (at most +6; Yuji's and the Cat's own moves keep their exact totals), every landed hit fills the cursed energy bar, and a challenge pays a little extra for the best combo. The PARRY: a guard that went up no more than PARRY_MS before the blow turns it aside, stuns whoever struck and fills the bar.
+const COMBO_WIN = 1200, PARRY_MS = 260, E_HIT = 3, E_HURT = 2, E_PARRY = 12;      // energy in % of the bar for a landed hit (plus 1 per extra hit of the combo, at most +3), a hit taken and a parry
+let stopMs = 0, sparks = [];
+const hitStop = ms => { if (state === 'play') stopMs = Math.max(stopMs, Math.min(110, ms)); };
+const ceGain = n => { if (vs && vs.ph === 'fight' && !vs.end) ce = Math.min(100, ce + n); };
+const comboBonus = (k, now) => k < 22 ? Math.min(6, Math.max(0, (now > hits.until ? 0 : hits.n) - 1)) : 0;      // the extra damage of the hit that is about to land (hits.n = the hits already landed in this combo)
+function spark(x, y, n, cols, big, dir) {      // a burst of hit sparks at the world place x, screen height y; dir 1 = thrown to the right, -1 = to the left
+  const t = pnow();
+  for (let i = 0; i < n; i++) { const a = (dir < 0 ? Math.PI : 0) + (Math.random() - 0.5) * 2.4, v = (big ? 70 : 45) + Math.random() * (big ? 110 : 70); sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 16, born: t, life: 150 + Math.random() * 170, c: cols[i % cols.length], len: big && i % 3 === 0 ? 3 : 2 }); }
+  if (sparks.length > 140) sparks.splice(0, sparks.length - 140);
+}
+function drawSparks(now, dt) {
+  sparks = sparks.filter(p => now - p.born < p.life); const cx = Math.round(VW / 2);
+  for (const p of sparks) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 230 * dt; p.vx *= Math.exp(-3 * dt); const k = (now - p.born) / p.life, h = Math.abs(p.vx) > Math.abs(p.vy); ctx.globalAlpha = Math.max(0, Math.min(1, 1.7 * (1 - k))); ctx.fillStyle = p.c; ctx.fillRect(Math.round(cx + p.x - wx), Math.round(p.y), h ? p.len : 1, h ? 1 : p.len); }
+  ctx.globalAlpha = 1;
+}
+function onLand(k, dmg, now) {      // a blow of yours landed: the sparks, the hit-stop, a flash on the heavy ones, and the energy
+  const heavy = dmg >= 20 || k === 3 || k >= 40;
+  const S = dummy.curse ? CSP[dummy.curse.id] : null, bh = S ? S.g - S.top : 52;      // (the sparks fly where the blow lands: in the middle of his body, at his front)
+  hitStop(heavy ? 70 : 38); spark(dummy.x - (S ? Math.round(dummy.curse.hw * 0.7) : 7), gy - Math.round(bh * (0.3 + Math.random() * 0.35)), heavy ? 12 : 7, heavy ? ['#ffffff', '#ffe9a0', '#ffb060'] : ['#ffffff', '#ffe9a0', '#9fd8ff'], heavy, 1);
+  if (heavy) flash(now, 70, 0.14);
+  ceGain(E_HIT + Math.min(3, Math.max(0, hits.n - 1)));
+}
+function onHurt(k, dm, now) {      // a blow landed on you: sparks, a longer hit-stop, a little energy; your combo is over
+  const heavy = dm >= 20 || k === 3 || k >= 40;
+  hitStop(heavy ? 80 : 48); spark(wx + 7, gy - 24 - ((Math.random() * 16) | 0), heavy ? 12 : 7, ['#ffffff', '#ffb09a', '#ff6a5a'], heavy, -1);
+  if (heavy) flash(now, 80, 0.16);
+  ceGain(E_HURT); hits.until = 0;
+}
+function parryHit(now) {      // PARRY: the blow is turned aside (no damage, no push), whoever struck is stunned and open for a counter, and the energy bar fills
+  const d = dummy; say('PARRY!', wx + 16, '#ffd34d', 8, now); snd('stun'); snd('block'); flash(now, 90, 0.22); hitStop(80); shakeUntil = now + 90; shakeAmp = 2;
+  spark(wx + 14, gy - 34, 14, ['#ffffff', '#ffd34d', '#fff2a0'], true, 1); divFx.push({ wx: wx + 14, y: gy - 34, born: now }); if (divFx.length > 8) divFx.shift(); ceGain(E_PARRY);
+  if (!d || d.ko >= 0 || d.cap) return;
+  if (d.curse) { d.stunUntil = Math.max(d.stunUntil, now + (d.curse.armor ? 700 : 950)); d.cs = 'hurt'; d.ct0 = now; d.cm = null; d.cnext = Math.max(d.cnext, d.stunUntil + 200); say('STUN', d.x, '#59b8ff', 8, now + 60); }
+  else if (d.mode === 'fighter' && !d.cact && !d.vact && !d.net) { d.stunUntil = Math.max(d.stunUntil, now + 800); d.ai = 'rest'; d.aiAt = now; d.restFor = 800; d.chain = 0; d.hitDone = true; say('STUN', d.x, '#59b8ff', 8, now + 60); }
+}
+function hitDummy(k, now) {                   // your blow on the impact frame: in a RUSH wave the nearest enemy in front of you takes it
+  if (!(vs && vs.foes && vs.foes.length > 1)) { hitFoe(k, now); return; }
+  const t = vs.foes.filter(e => e.ko < 0 && !e.cap && e.x - wx >= -3 && now - e.born >= 600).sort((a, b) => a.x - b.x)[0];
+  if (t) foeSwap(t, () => hitFoe(k, now));
+}
+function hitFoe(k, now) {                     // called on the impact frame: a hit lands if the dummy is standing in front of him and within reach
   if (!dummy || dummy.ko >= 0 || dummy.cap || now - dummy.born < 600) return;     // (an enemy caught by Max Blue is out of reach)
   if (vs && vs.ph !== 'fight') return;
   if (dummy.vform && dummy.vform !== 'verity') { say('IMMUNE', dummy.x, '#ffe9a0', 8, now); return; }      // the smiley form cannot be hit
@@ -1164,7 +1307,7 @@ function hitDummy(k, now) {                   // called on the impact frame: a h
   if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; }                    // the counter restarts after 1.6 s without a landed hit
   const ko = k >= 36 ? -1 : k >= 24 ? [0, 1, 2, -1, -1, 3][k - 24] : k === 22 ? -1 : k <= 3 ? k : k >= 18 ? k - 18 : k >= 14 ? k - 14 : -1; if (k >= 36) hits.seq = 0; else if (k !== 27 && k !== 28) hits.seq = ko === hits.seq ? hits.seq + 1 : ko === 0 ? 1 : 0;                          // the meter fills while the hits land in order: right hook, left hook, elbow, kick
   if (hits.seq === 4) { if (k !== 29) dmg += 25; hits.perfect = now; snd('finisher'); say('COMBO!', dummy.x, '#ffd34d', 8, now + 90); }
-  dmg = ceDmg(dmg); hits.n++; hits.dmg += dmg; hits.until = now + 1600;
+  dmg = ceDmg(dmg); const cb = comboBonus(k, now); dmg += cb; hits.n++; hits.dmg += dmg; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = cb; if (vs) vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n);
   const grab = !!vs && vs.me === 'cat' && (k === 30 || k === 32), held = !!vs && vs.me === 'cat' && k >= 31 && k <= 33 && !!dummy.cheld;      // (the playable Cat's glove: a grab holds the enemy and pulls him in, the punch lands on the held enemy where he stands, the kick sends him away)
   dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += held && k !== 33 ? 0 : KNOCK[k]; if (k === 3 || k === 17 || k === 21 || k === 29 || k === 33 || k === 35 || k === 41 || k === 42) { dummy.smokeUntil = now + 520; puff(dummy.x, 8); } shakeUntil = now + 110; shakeAmp = k === 21 || k === 35 || k === 42 ? 4 : [3, 15, 17, 18, 19, 29, 33, 40, 41].includes(k) ? 3 : 2;
   if (k === 40 || k === 43 || k === 48) dummy.down = now + RX_DUR[4];      // (a DOWNSLAM or a SWEEP puts him on the floor for as long as the fall lasts)
@@ -1178,7 +1321,7 @@ function hitDummy(k, now) {                   // called on the impact frame: a h
     else if (!juggle) { dummy.rx = isD1(k) ? 0 : k === 29 || k >= 40 || (!!vs && vs.me === 'cat' && (k === 33 || k === 35)) || (!!vs && vs.foe === 'cat' && (k === 3 || k === 17 || k === 21)) ? 4 : (Math.random() * 10) | 0; dummy.rxAt = now; if (k === 47) dummy.air = airUp(dummy) ? airMake(now, dummy.airH, -80, 900, 'drop') : null; }      // (the FACE KICK knocks him out of the air: he drops fast, far away)
     if (held && k !== 33) { dummy.cheld.until = now + CT.hold; dummy.stunUntil = Math.max(dummy.stunUntil, dummy.cheld.until); } else catRelease(now); }      // (the big fall: Yuji's last kick, the Cat's kick and the giant's kick, and the big kicks on the Cat; otherwise one of ten reactions, picked at random)
   if (window.__sfxlog) window.__sfxlog.push(['rx', Math.round(now), dummy.rx]);
-  say('' + dmg, dummy.x, popCol(), 8, now); if (broke) say('GUARD BREAK', dummy.x, '#ffd34d', 8, now + 90);
+  say('' + dmg, dummy.x, popCol(), 8, now); if (broke) say('GUARD BREAK', dummy.x, '#ffd34d', 8, now + 90); onLand(k, dmg, now);
   snd('smack', k >= 36 ? YU_ATK.snd[k - 24] : k >= 30 ? (k === 33 || k === 35 ? 3 : 0) : k >= 24 ? YU_ATK.snd[k - 24] : k === 22 ? 3 : k);      // (the Cat's kick and the giant's kick are the heavy blows)
   if (k === 22) dummy.bleed = { until: now + 4000, next: now + 100 };      // the bite: he bleeds 1 damage every 0.1 s for 4 s (a second bite starts the four seconds again)
   if (dummy.hp <= 0) koDummy(now);            // (a normal punch or kick that finishes him ends the round in a match too)
@@ -1190,9 +1333,10 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   const held = vs && vs.foe === 'cat' && k >= 30 && k <= 33 && now < (vs.catHold || 0);      // (inside the Cat's glove the combo cannot miss because Gojo is 'still reeling')
   const foeWho = vs ? vs.foe : 'gojo', downed = now < gDownUntil;      // (whose swing this is; and after a DOWNSLAM or a SWEEP you are on the floor: only a kick reaches you there, even while you reel)
   const airMe = !!gAir && gAir.kind === 'up';      // you are launched: everything can hit you up there, the hit-stun and the height do not protect you
-  if (airMe ? gojoGone : downed ? (!isKick(foeWho, k) || gojoLift > 12 || gojoGone) : ((!held && (hurtAt >= 0 || now - hurtEnd < 350)) || gojoLift > 12 || gojoGone)) { nres('m'); return; }
+  if (airMe ? gojoGone : downed ? (!isKick(foeWho, k) || gojoLift > 12 || gojoGone) : ((!held && (hurtAt >= 0 || now - hurtEnd < 250)) || gojoLift > 12 || gojoGone)) { nres('m'); return; }
   const guardWas = guardUp(now) && !!dummy && dummy.x > wx;
-  if (guardWas && k !== 42 && k !== 46) {  // his guard is up and the attacker is in front of him: the swing is blocked (a hit from behind still lands; CONCENTRATED FIST breaks the guard)
+  if (guardWas && k !== 42 && k !== 46 && !(k >= 49 && CMOVE[k - 49].nb)) {  // his guard is up and the attacker is in front of him: the swing is blocked (a hit from behind still lands; CONCENTRATED FIST breaks the guard)
+    if (!isD1(k) && now - blkAt <= PARRY_MS) { parryHit(now); nres('b'); return; }      // (PARRY: the guard went up just before the blow, see parryHit)
     wxv -= KNOCK_G[k] * 0.3; shakeUntil = now + 80; shakeAmp = 1; say('BLOCKED', wx + 14, '#9fd8ff', 8, now); snd('block'); if (isD1(k)) { dummy.divOk = now; dummy.divK = k; }      // (the fist was blocked: the second impact still comes)
     nres('b'); return;
   }
@@ -1202,9 +1346,9 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   if (!(airMe && k !== 47)) { hurtK = isD1(k) ? 0 : k === 29 || k === 33 || k === 35 || (k >= 40 && (k < 49 || CMOVE[k - 49].heavy)) ? 4 : (Math.random() * 10) | 0; hurtAt = now; if (k === 46) { hurtK = AIR_RX; gAir = airMake(now, 0, AIR_V, AIR_G, 'up'); } else if (k === 47) gAir = airMe ? airMake(now, gAirH, -80, 900, 'drop') : null; }      // (a hit on you while you are in the air keeps your flight and your pose; the UPPERCUT launches you, the FACE KICK knocks you out of the air)
   if ((k === 33 || k === 35) && vs) vs.catHold = 0;                                    // one of ten reactions, picked at random
   atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; wxv -= KNOCK_G[k] * 0.9; shakeUntil = now + 120; shakeAmp = k === 35 || k === 42 ? 4 : k === 3 || k === 29 || k === 33 || k === 40 || k === 41 ? 3 : 2; if (k === 40 || k === 43 || k === 48 || (k >= 49 && CMOVE[k - 49].heavy)) gDownUntil = now + RX_DUR[4];
-  const dm = Math.round((DMG[k] + (k >= 27 ? 0 : (Math.random() * 5) | 0) + (netK >= 0 ? netBonus : 0)) * (vs ? (vs.net ? 1 : vs.cv ? (vs.hard ? 1.35 : 1) : GRADES[vs.gi].dmg) : 1)); say('' + dm, wx, '#ff9a5a', 8, now);
+  const dm = Math.round((DMG[k] + (k >= 27 ? 0 : (Math.random() * 5) | 0) + (netK >= 0 ? netBonus : 0)) * (vs ? (vs.net ? 1 : vs.cv ? (vs.dmgMul || 1) : GRADES[vs.gi].dmg) : 1)); say('' + dm, wx, '#ff9a5a', 8, now);
   if (vs && vs.ph === 'fight') vsHurt(dm, now);
-  snd('hurt', hurtK); nres('h', dm, hurtK);
+  snd('hurt', hurtK); nres('h', dm, hurtK); onHurt(k, dm, now);
   if (k === 42) { concFx(now, wx); if (guardWas) say('GUARD BREAK', wx, '#ffd34d', 8, now + 90); }      // (CONCENTRATED FIST: the shock, and your guard is broken)
   if (k === 46) { upFx(now, wx); if (guardWas) say('GUARD BREAK', wx, '#ffd34d', 8, now + 90); } if (k === 47) kickFx(now, wx, dummy && dummy.x >= wx ? -1 : 1);      // (the UPPERCUT and the FACE KICK on you)
 }
@@ -1218,15 +1362,15 @@ function updateFighter(now, dt) {             // the attacking dummy: walks up t
   if (d.ko >= 0) return;
   if (now < d.stunUntil) return;              // caught by Lapse Blue
   if (now - d.rxAt < RX_DUR[d.rx]) { d.ai = 'hurt'; return; }
-  if (d.ai === 'hurt') { d.ai = 'rest'; d.aiAt = now; d.restFor = 500 + Math.random() * 500; }
+  if (d.ai === 'hurt') { d.ai = 'rest'; d.aiAt = now; d.restFor = 340 + Math.random() * 360; }
   if (d.ai === 'rest') { if (now - d.aiAt > d.restFor && now - d.born > 900) { d.k = (Math.random() * 4) | 0; d.ai = 'walk'; } }
   else if (d.ai === 'walk') {
-    if (Math.abs(gap) > eHit(d.k) - 3) d.x += (gap > 0 ? -1 : 1) * 30 * dt; else { d.ai = 'attack'; d.aiAt = now; d.hitDone = false; d.swung = false; }
+    if (Math.abs(gap) > eHit(d.k) - 3) d.x += (gap > 0 ? -1 : 1) * FOE_WALK * dt; else { d.ai = 'attack'; d.aiAt = now; d.hitDone = false; d.swung = false; }
   } else if (d.ai === 'attack') {
     const f = Math.floor((now - d.aiAt) * ATK_FPS[d.k] / 1000);
     if (!d.swung && f >= ATK_SWING[d.k]) { d.swung = true; snd('f:swing', d.k); }
     if (!d.hitDone && f >= ATK_IMPACT[d.k]) { d.hitDone = true; snd('f:hit', d.k); if (Math.abs(gap) <= eHit(d.k)) gojoHit(d.k, now); if (purple && Math.abs(dummy.x - purple.x) - 8 <= REACH[d.k]) damagePurple((DMG[d.k] || 12) + ((Math.random() * 5) | 0), now); }
-    if (f >= 15) { d.ai = 'rest'; d.aiAt = now; d.restFor = 700 + Math.random() * 900; }
+    if (f >= 15) { d.ai = 'rest'; d.aiAt = now; d.restFor = 480 + Math.random() * 640; }
   }
 }
 function drawBar(bx, by) {                    // (in a match the big bars at the top are used instead)  health bar: green (red when low) with a pale trail showing the damage just taken
@@ -1235,7 +1379,7 @@ function drawBar(bx, by) {                    // (in a match the big bars at the
   ctx.fillStyle = '#ffd27a'; ctx.fillRect(bx, by, Math.round(26 * g), 3); ctx.fillStyle = f > 0.3 ? '#52e08a' : '#ff4a4a'; ctx.fillRect(bx, by, Math.round(26 * f), 3);
 }
 function drawDummy(now, dt) {
-  pendingGiants.length = 0; pendingEnemy = null; if (!dummy || dummy.gone) return; if (dummy.net) { drawRemote(now, dt); return; } if (dummy.curse) { drawCurse(now, dt); return; }
+  pendingGiants.length = 0; pendingEnemy = null; if (!dummy || dummy.gone) return; if (dummy.net) { drawRemote(now, dt); return; } if (dummy.curse) { drawCurse(dummy, now, dt); return; }
   if (dummy.ko >= 0 && now - dummy.ko > 2300 && !vs) spawnDummy(now, dummy.mode);            // knocked out: a fresh one steps in after a moment
   airStepDummy(now);      // (an enemy in the air: his height and the frame of his reaction)
   if (dummy.mode === 'fighter' && !dom && !(dummy.vform && dummy.vform !== 'verity')) { if (vs) updateFighterVs(now, dt); else updateFighter(now, dt); }      // (as the smiley ball he does nothing)
@@ -1326,12 +1470,15 @@ function drawPopups(now, dy) {                    // damage numbers float up fro
   }
   ctx.globalAlpha = 1;
 }
-function drawHits(now) {                      // top right: hit counter, damage total and the 4-pip combo meter (right hook, left hook, elbow blue; kick red); KO count below
-  const left = hits.until - now, rx = vs ? 6 : VW - 8; let y = vs ? 57 : 16;       // (in a match it sits at the left under Gojo's name, clear of the enemy's bar and name, and without the K.O. count)
+function drawHits(now) {                      // the combo: in a match at the left under your name (the hit counter grows from 3 hits on and changes colour, with the bonus damage), the damage total and the 4-pip combo meter (right hook, left hook, elbow blue; kick red); KO count below
+  const left = hits.until - now, rx = vs ? 6 : VW - 8; let y = vs ? 57 : 16;       // (in a match it sits clear of the enemy's bar and name, and without the K.O. count)
   if (left > 0) {
     ctx.globalAlpha = Math.min(1, left / 400);
-    const line = (s, col) => { pxt(s, rx, y, col, 8, vs ? 'left' : 'right'); y += 10; };
-    line(hits.n === 1 ? '1 HIT' : hits.n + ' HITS', '#ffffff'); line(hits.dmg + ' DMG', '#b9a8ee');
+    const big = hits.n >= 3, pop = now - hits.last < 120, sz = big ? 16 : 8, line = (str, col, size) => { pxt(str, rx, y, col, size || 8, vs ? 'left' : 'right'); y += (size || 8) + 2; };
+    if (vs && big) y = 49 + 16;
+    line(hits.n === 1 ? '1 HIT' : hits.n + ' HITS', pop && big ? '#ffffff' : hits.n >= 10 ? '#ff6a5a' : hits.n >= 6 ? '#ffb040' : hits.n >= 3 ? '#ffe14a' : '#ffffff', sz);      // (a new hit flashes the counter white)
+    if (hits.bonus > 0 && hits.n >= 3) line('BONUS +' + hits.bonus, '#7dff9a');
+    line(hits.dmg + ' DMG', '#b9a8ee');
     for (let i = 0; i < 4; i++) {
       const px = (vs ? rx + 1 : rx - 26) + i * 7; ctx.fillStyle = '#000'; ctx.fillRect(px - 1, y - 1, 7, 7);
       ctx.fillStyle = i < hits.seq ? (now - hits.perfect < 600 ? '#ffd34d' : '#59b8ff') : '#2a2040'; ctx.fillRect(px, y, 5, 5);
@@ -1342,6 +1489,7 @@ function drawHits(now) {                      // top right: hit counter, damage 
 }
 
 function pullEnemy(now) {                     // Lapse Blue: the enemy is dragged to just in front of Gojo, then stunned for 0.4 s
+  if (vs && vs.foes && vs.foes.length > 1) { const t = leadFoe(); if (t && t !== dummy) { foeSwap(t, () => pullEnemy(now)); return; } }      // (a RUSH wave: the nearest one)
   if (!dummy || dummy.ko >= 0 || dummy.cap) return;
   const gap = dummy.x - wx;
   if (gap < 3 || gap > 140) return;           // nothing in front of him within range
@@ -1351,7 +1499,7 @@ function pullEnemy(now) {                     // Lapse Blue: the enemy is dragge
   else { dummy.stunUntil = now + 260 + 400; say('STUN', dummy.x, '#59b8ff', 8, now); snd('stun'); }
 }
 function startBlink(now) {                    // Lapse Blue: blink forward to the enemy (or 50 px ahead if there is none)
-  const gap = dummy && dummy.ko < 0 ? dummy.x - wx : -1, dist = gap > 20 ? gap - 15 : gap >= 0 ? 0 : 50;
+  const lf = vs && vs.foes && vs.foes.length > 1 ? leadFoe() : dummy, gap = lf && lf.ko < 0 ? lf.x - wx : -1, dist = gap > 20 ? gap - 15 : gap >= 0 ? 0 : 50;
   if (dist > 0) dash = { from: wx, to: wx + dist, at: now, ms: 150 };
 }
 function puff(x, n) { for (let i = 0; i < n; i++) smoke.push({ x: x + Math.random() * 8 - 4, y: gy + 1 + Math.random() * 2, born: pnow(), vx: Math.random() * 10 - 5, vy: -(6 + Math.random() * 12), r: 1.6 + Math.random() * 2 }); if (smoke.length > 120) smoke.splice(0, smoke.length - 120); }
@@ -1370,7 +1518,8 @@ function koDummy(now) {                       // the enemy goes down (every way 
   dummy.air = null; dummy.airH = 0;
   if (vs && vs.story && vs.foe === 'verity' && !vs.endGo) { if (!vs.end) storyEndStart(pnow()); return; }      // the story fight does not end with a fall: it ends with the Reversal Red
   if (vs && vs.story && vs.foe === 'cat' && !vs.endGo) { if (!vs.end) catEndStart(pnow()); return; }      // ...and the one with the Cat ends with a cutscene (see keFrame)
-  if (vs) endRound('player', 'ko', now);
+  if (vs && !(vs.rush && foesOf().some(f => f !== dummy && f.ko < 0))) endRound('player', 'ko', now);      // (a RUSH wave goes on while the other one still stands)
+  if (vs && vs.rush && vs.ph === 'fight') hitStop(90);
   dummy.ko = now; dummy.koAt = Math.max(now, holdUntil);        // he starts to topple when the hit-stop is over, so the fall is seen
   dummy.vx += 70; shakeUntil = now + 260; shakeAmp = 4; kos++; if (!vs) say('K.O.', dummy.x, '#ffd34d', 16, now + 120); snd('ko');      // (a match has its own big K.O. banner)
 }
@@ -1541,11 +1690,11 @@ function explodePurple(now) {                 // the fuse is out: a huge blast. 
   const P = purple; purple = null; pboom = { x: P.x, born: now };
   snd('purpleboom'); flash(now, 320, 0.9); holdUntil = Math.max(holdUntil, now + 150); shakeUntil = now + 520; shakeAmp = 6;
   blastPeds(P.x, 70, now);
-  if (dummy && dummy.ko < 0 && Math.abs(dummy.x - P.x) < 70) {
+  for (const f of foesOf()) if (f.ko < 0 && Math.abs(f.x - P.x) < 70) foeSwap(f, () => {      // (everybody inside the blast: a RUSH wave can have two)
     if (dummy.cap) releaseCap(now);
     const dmg = Math.max(1, Math.round(dummy.hp * 0.5)); dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += 200 * (dummy.x >= P.x ? 1 : -1); dummy.stunUntil = now + 700; dummy.rx = (Math.random() * 10) | 0; dummy.rxAt = now; dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = 900;
     say('' + dmg, dummy.x, '#d79bff', 12, now + 90); if (dummy.hp <= 0) koDummy(now);
-  }
+  });
 }
 function drawPurple(now, dt) {
   if (!purple) return; const P = purple, age = now - P.born;
@@ -1749,7 +1898,7 @@ const GRADES = [
   { name: 'GRADE 1', hp: 1.7, dmg: 1.3, spd: 1.15, react: 160, aggr: 0.85, blk: 0.58, dodge: 0.36, combo: 3, smart: 2 },
   { name: 'SPECIAL GRADE', hp: 2.3, dmg: 1.6, spd: 1.25, react: 90, aggr: 1.0, blk: 0.78, dodge: 0.5, combo: 4, smart: 3 }];
 const PHP = 300;                              // Gojo's health in a match
-const KO_HOLD = 450, KO_MS = 2500;            // a K.O.: the picture freezes for 0.45 s, then the loser topples; 2.5 s after it the next round starts (or the result shows)
+const KO_HOLD = 450, KO_MS = 1800, ROUND_MS = 45000, INTRO_MS = 1500, INTRO_ROUND = 800;            // a K.O.: the picture freezes for 0.45 s, then the loser topples; 1.8 s after it the next round starts (or the result shows); a round lasts 45 s; the intro (ROUND n, then FIGHT!) takes 1.5 s
 let vs = null, vsSel = 0;
 const vsPick = { me: 'gojo', foe: 'gojo' }, FIGHTERS = [['SORCERERS', [['gojo', 'GOJO'], ['yuji', 'YUJI']]], ['CURSED SPIRITS', [['verity', 'VERITY'], ['cat', 'CARTOON<br>CAT']]]], NAMES = { gojo: 'GOJO', verity: 'VERITY', yuji: 'YUJI', cat: 'CARTOON CAT' }; let vsPv = [];      // who you and the enemy have picked, the two sections, and the little pictures on the cards
 function buildFighters() {      // YOUR FIGHTER / ENEMY FIGHTER, each with a SORCERERS section (Gojo) and a CURSED SPIRITS section (Verity); the enemy is drawn inverted only when he is the same fighter as you
@@ -1777,24 +1926,25 @@ function buildGrades() {                       // the six grade buttons: locked 
   const sv = vsLoad(), box = $('grades'); box.innerHTML = ''; if (vsSel > sv.un) vsSel = sv.un;
   GRADES.forEach((g, i) => { const b = document.createElement('button'); b.className = 'gr' + (i === vsSel ? ' sel' : '') + (i > sv.un ? ' lk' : ''); b.disabled = i > sv.un; b.dataset.g = i; b.innerHTML = g.name + '<small>' + (i > sv.un ? 'LOCKED' : [0, 1, 2].map(k => '<span class="star' + (k < sv.st[i] ? '' : ' off') + '"></span>').join('')) + '</small>'; b.addEventListener('click', () => { vsSel = i; buildGrades(); }); box.appendChild(b); });
 }
-function startMatch(gi, story, retry, foe) { vs = { story: !!story, gi, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: story ? 1e9 : 60000, hp: PHP, sh: PHP, hist: [], res: null, retry: retry | 0, me: story ? 'gojo' : vsPick.me, foe: story ? (foe || 'verity') : vsPick.foe }; vs.inv = !story && vs.me === vs.foe; beginRound(pnow()); }      // (retry: the story fight again after a failed red)
+function startMatch(gi, story, retry, foe) { vs = { story: !!story, gi, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: story ? 1e9 : ROUND_MS, hp: PHP, sh: PHP, hist: [], res: null, retry: retry | 0, me: story ? 'gojo' : vsPick.me, foe: story ? (foe || 'verity') : vsPick.foe }; vs.inv = !story && vs.me === vs.foe; beginRound(pnow()); }      // (retry: the story fight again after a failed red)
 function beginRound(now) {                     // a fresh round: the scene is reset, the enemy steps in, "ROUND n" and "FIGHT!"
   const keep = vs, gore = keep.story && keep.foe === 'cat' ? [gibs, drops, decals, pools] : null; show('play'); vs = keep; if (gore) [gibs, drops, decals, pools] = gore; ceReset(); const t = pnow(), G = GRADES[vs.gi];
-  Object.assign(vs, { ph: 'intro', t0: t, tl: vs.story ? 1e9 : 60000, hp: PHP, sh: PHP, hist: [], seenAtk: -1, seenAt: 0, seenK: 0, rolled: true, whiffAt: -1, prevAtk: -1, hitAt: -9999, why: '', who: '', koAt: 0, crater: null }); blindOff = false; bfo = null; bfp = false;
+  Object.assign(vs, { ph: 'intro', t0: t, tl: vs.story ? 1e9 : ROUND_MS, hp: PHP, sh: PHP, hist: [], seenAtk: -1, seenAt: 0, seenK: 0, rolled: true, whiffAt: -1, prevAtk: -1, hitAt: -9999, why: '', who: '', koAt: 0, crater: null }); blindOff = false; bfo = null; bfp = false;
   spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); if (vs.net) { dummy.net = true; dummy.max = dummy.hp = dummy.shown = PHP; dummy.x = dummy.tx = wx + NET_G0; dummy.pose = null; vs.toSent = false; }      // (the Wi-Fi fight: the other player, drawn from his phone's pictures)
-  if (vs.cv) initCurse();      // (a challenge: the curse steps in) $('vsres').classList.remove('on');      // (he starts in the clear, not behind the touch buttons)
+  cProj = []; if (vs.rush) rushSpawn(t); else if (vs.cv) initCurse(dummy, vs.cv, wx + Math.max(54, Math.min(90, (VW >> 1) - 70)), vs.hard ? 1.5 : 1);      // (a challenge: the curse steps in; a RUSH wave: one or two)
+  $('vsres').classList.remove('on');      // (REMATCH and NEXT start a new fight: the result screen goes away. Since v7.12 this line had slipped into a comment, so the result screen stayed on top of the new fight)
   vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; lastLabel = ''; vs.cStun = 0; setModeUI();      // (playing Verity: back in his own form, the button labels set)
   if (vs.retry) { vs.round = 1 + vs.retry; vs.hp = vs.sh = PHP / 2; dummy.hp = dummy.shown = dummy.lock = 1; vs.morphed = true; blackUntil = t + 700; } else blackUntil = 0;      // after a failed red: Gojo at half health, Verity as he was (1 health left, so no smoke change); the picture comes up from black
 }
 function vsTick(now, dt) {
   if (!vs) return; const a = now - vs.t0;
-  if (vs.ph === 'intro' && a >= 2200) { vs.ph = 'fight'; vs.t0 = now; }
+  if (vs.ph === 'intro' && a >= INTRO_MS) { vs.ph = 'fight'; vs.t0 = now; }
   else if (vs.ph === 'fight') {
     if (!domLock()) vs.tl -= dt * 1000;
     if (atkAt < 0 && vs.prevAtk >= 0 && dummy && dummy.hitAt < vs.prevAtk) vs.whiffAt = now;      // Gojo's swing ended without hitting: he is open for a moment
     vs.prevAtk = atkAt;
-    if (vs.tl <= 0) { if (vs.net) netTimeUp(now); else endRound(vs.hp / PHP > (dummy ? dummy.hp / dummy.max : 0) ? 'player' : 'enemy', 'time', now); }
-  } else if (vs.ph === 'ko' && a >= KO_MS) { if (vs.story || vs.pw >= 2 || vs.ew >= 2) finishMatch(now); else { vs.round++; beginRound(now); return; } }      // the round is over: whoever got the point, the next round starts fresh (full health, new positions)
+    if (vs.tl <= 0) { if (vs.net) netTimeUp(now); else endRound(!vs.rush && vs.hp / PHP > (dummy ? dummy.hp / dummy.max : 0) ? 'player' : 'enemy', 'time', now); }
+  } else if (vs.ph === 'ko' && a >= KO_MS) { if (vs.story || (vs.rush ? vs.ew >= 1 || vs.pw >= RUSH.waves.length : vs.pw >= 2 || vs.ew >= 2)) finishMatch(now); else { vs.round++; beginRound(now); return; } }      // the round is over: whoever got the point, the next round starts fresh (full health, new positions)
   if (now - vs.hitAt > 350) vs.sh += (vs.hp - vs.sh) * Math.min(1, dt * 4);
   if (vs.ph !== 'fight') { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = false; }      // no control before FIGHT! and after the K.O.
   if (now < pStun || now < (vs.catHold || 0) || now < (vs.cStun || 0)) { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; stickDown = false; }      // ...and none while he is stunned by the JUMPSCARE, held in the Cat's glove or dizzy (the Cat after 5 s flat)
@@ -1804,13 +1954,13 @@ function vsTick(now, dt) {
 }
 function vsHurt(dm, now) { if (dom) return; vs.hp = Math.max(0, vs.hp - dm); vs.hitAt = now; if (vs.hp <= 0) { if (!vs.story || vs.foe === 'cat') { endRound('enemy', 'ko', now); if (vs.net && vs.ph === 'ko' && vs.who === 'enemy') lanSend('K|'); } else if (!de && !se) deathStart(now); } }      // (in the story fight Gojo's death is a cutscene)
 function endRound(who, why, now) {
-  if (!vs || vs.ph !== 'fight') return; vs.ph = 'ko'; vs.t0 = now; vs.who = who; vs.why = why; if (who === 'player') vs.pw++; else vs.ew++;
+  if (!vs || vs.ph !== 'fight') return; vs.ph = 'ko'; vs.t0 = now; vs.who = who; vs.why = why; if (who === 'player') vs.pw++; else vs.ew++; if (vs.rush && who === 'player') rushPay(now);
   if (why === 'ko') holdUntil = Math.max(holdUntil, now + KO_HOLD); vs.koAt = Math.max(now, holdUntil); snd(who === 'player' ? 'finisher' : 'ko');      // (koAt: when the loser starts to topple)
 }
 function finishMatch(now) {
   if (vs.net) { netOver(now); return; }
   if (vs.cv) { curseOver(now); return; }
-  vs.ph = 'over'; if (vs.story && vs.foe === 'verity' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s1', 200); storyDone(); story.toOutro = true; return; }      // (beating Verity: the report to the higher-ups follows, started by the main loop)
+  vs.ph = 'over'; $('vsAgain').textContent = 'REMATCH'; $('vsAgain').classList.toggle('hot', !(vs.story ? vs.pw >= 1 : vs.pw >= 2)); if (vs.story && vs.foe === 'verity' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s1', 200); storyDone(); story.toOutro = true; return; }      // (beating Verity: the report to the higher-ups follows, started by the main loop)
   const win = vs.story ? vs.pw >= 1 : vs.pw >= 2, pf = vs.hp / PHP, stars = win ? (pf >= 0.7 ? 3 : pf >= 0.35 ? 2 : 1) : 0, sv = vsLoad(), gi = vs.gi;
   if (win && !vs.story) { sv.un = Math.max(sv.un, Math.min(5, gi + 1)); sv.st[gi] = Math.max(sv.st[gi], stars); vsStore(sv.un, sv.st); earn([15, 25, 40, 60, 90, 140][gi]); }
   vs.res = { win, stars }; $('vsTitle').textContent = win ? 'VICTORY' : 'DEFEAT'; $('vsInfo').textContent = GRADES[gi].name + '  -  ROUNDS ' + vs.pw + ' : ' + vs.ew + (win && !vs.story ? '\n+$' + [15, 25, 40, 60, 90, 140][gi] : '');
@@ -1853,10 +2003,10 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
       if (d.k === 4 || d.k === 12) d.divAt = now + 4500 - vs.gi * 300; else if (d.k === 9) d.concAt = now + 5500 - (vs.gi - 3) * 500; else if (d.k === 13 || d.k === 14) d.upAt = now + 6500 - (vs.gi - 3) * 500; else if (d.k === 15) d.spinAt = now + 7000 - (vs.gi - 3) * 600; else d.sweepAt = now + 4000;
       d.held = null;
       if (d.k === 10 && now < gDownUntil) { d.k = 3; d.aiAt = now; d.hitDone = false; d.swung = false; d.hitN = 0; d.chain = 0; d.vx -= 100; return; }      // (the sweep dropped you: he follows at once with the jump kicks, which still hit you on the floor)
-      d.ai = 'rest'; d.aiAt = now; d.restFor = (650 + Math.random() * 850) / (0.45 + G.aggr * 0.9); return;
+      d.ai = 'rest'; d.aiAt = now; d.restFor = (430 + Math.random() * 600) / (0.45 + G.aggr * 0.9); return;
     }
     if (f >= 15) { d.chain = (d.chain || 0) + 1; if (cat ? (d.held && d.chain < 4) : (d.chain < G.combo && Math.random() < 0.8 && !(G.smart >= 2 && atkAt >= 0 && gap > 0 && ag <= pMove(atkK) + 4))) {      // (from Grade 2 up he does not keep chaining into a swing of yours: he drops the combo and defends)
-       d.k = vs.foe === 'yuji' && d.k >= 5 && d.k <= 8 ? 5 + (d.k - 4) % 4 : (d.k + 1) % 4; d.aiAt = now; d.hitDone = false; d.swung = false; d.hitN = 0; if (vs.foe === 'yuji' && d.k === 3) d.vx -= 100; } else { d.held = null; if (cat) vs.catHold = 0; d.ai = 'rest'; d.aiAt = now; d.restFor = (650 + Math.random() * 850) / (0.45 + G.aggr * 0.9); } }
+       d.k = vs.foe === 'yuji' && d.k >= 5 && d.k <= 8 ? 5 + (d.k - 4) % 4 : (d.k + 1) % 4; d.aiAt = now; d.hitDone = false; d.swung = false; d.hitN = 0; if (vs.foe === 'yuji' && d.k === 3) d.vx -= 100; } else { d.held = null; if (cat) vs.catHold = 0; d.ai = 'rest'; d.aiAt = now; d.restFor = (430 + Math.random() * 600) / (0.45 + G.aggr * 0.9); } }
     return;
   }
   if (d.ai === 'power') { if (now - d.aiAt >= 15 * 1000 / POW_FPS) { d.ai = 'think'; d.aiAt = now; } else return; }      // (his power-up runs: he is open to attacks for 0.6 s)
@@ -1883,10 +2033,10 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
   if (vs.foe === 'yuji' && vs.gi >= 3 && !d.ce && (G.smart >= 3 || (d.ai === 'walk' && move === toward)) && !hold && now >= (d.divAt || 0) && now >= (d.rushNext || 0) && ag > eMove(4) && ag <= eMove(12) + 14) {      // from Semi-Grade 1 up, while he is walking in (the Special Grade one, who waits out of your reach, uses it to close the gap) and you are just too far for his DIVERGENT FIST, he may sprint at you with the RUSH FIST (half of the tries; it shares the 4.5 s wait of the normal one)
     d.rushNext = now + 250; if (Math.random() < 0.5) { d.k = 12; d.divOk = 0; d.held = null; d.ai = 'attack'; d.aiAt = now; d.hitDone = false; d.swung = false; d.hitN = 0; d.chain = 0; d.counter = 0; return; }
   }
-  if (move) { d.x += move * 30 * G.spd * dt; d.ai = 'walk'; } else d.ai = 'think';
+  if (move) { d.x += move * FOE_WALK * G.spd * dt; d.ai = 'walk'; } else d.ai = 'think';
 }
-// ---------------------------------------------------------------- CURSED ENERGY (Versus mode only): a cyan bar under Gojo's health bar. It starts every round at 100%, each energy move costs some of it, it refills 1% per second once a second has passed without such a move, and the cursed energy mode drains 1% per second (no refill) and switches itself off at 0%.
-const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30, purple: 50, domain: 67, fatal: 50, vBite: 20, vTele: 10, vBall: 20, vScare: 67, cToon: 30, cUlt: 67, yDiv: 15, yConc: 25, yKick: 5 }, CE_WAIT = 1000;      // what each move costs in % of the bar (slowRed = RED fired while walking back, coat = the BLUE leap onto that slow orb, tele = BLUE in the air, purple = the RED shot fired while Max Blue is out, it costs this instead of the plain RED price); the refill waits 1 s after the last paid move
+// ---------------------------------------------------------------- CURSED ENERGY (Versus mode only): a cyan bar under Gojo's health bar. It starts every round at 100%, each energy move costs some of it, it refills half a percent per second once a second and a half has passed without such a move (hitting, being hit and parrying fill it much faster, see onLand), and the cursed energy mode drains 1% per second (no refill) and switches itself off at 0%.
+const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30, purple: 50, domain: 67, fatal: 50, vBite: 20, vTele: 10, vBall: 20, vScare: 67, cToon: 30, cUlt: 67, yDiv: 15, yConc: 25, yKick: 5 }, CE_WAIT = 1500, CE_REFILL = 0.5;      // what each move costs in % of the bar (slowRed = RED fired while walking back, coat = the BLUE leap onto that slow orb, tele = BLUE in the air, purple = the RED shot fired while Max Blue is out, it costs this instead of the plain RED price); the refill waits 1 s after the last paid move
 let ce = 100, ceLast = -1e9, ceFlash = -1e9;      // the energy in %, when a move last cost some, when a move was last refused (the bar flashes red)
 function ceReset() { ce = 100; ceLast = ceFlash = -1e9; }
 function ceDeny(now) { if (now - ceFlash < 150) return; ceFlash = now; snd('noce'); }      // a refused move: the bar flashes red and says NO CE for a moment (one refusal per press, even if the press falls through to another move that is refused too)
@@ -1894,29 +2044,30 @@ function ceSpend(cost, now) { if (!vs || vs.end) return true; if (ce + 1e-6 < co
 function ceTick(now, dt) {                    // the refill and the cursed mode's drain (only while a round is being fought)
   if (!vs || vs.ph !== 'fight') return;
   if (cm === 1) { ce = Math.max(0, ce - dt); if (ce <= 0) { ceDeny(now); setMode(0, now); } }
-  else if (now - ceLast >= CE_WAIT) ce = Math.min(100, ce + dt);
+  else if (now - ceLast >= CE_WAIT) ce = Math.min(100, ce + dt * CE_REFILL);
 }
 window.__ce = () => ({ ce, last: ceLast, flash: ceFlash, now: pnow() }); window.__ceSet = o => { if (o.ce !== undefined) ce = o.ce; if (o.last !== undefined) ceLast = o.last; }; window.__ceCost = () => CE_COST;      // test hooks
 const CEC = { gojo: ['#0b2a3a', '#2fe3ff', '#b8f8ff', '#7df0ff'], verity: ['#2a2208', '#ffd34d', '#fff3b0', '#ffe37d'], cat: ['#2a0b1a', '#ff5a8a', '#ffc0d4', '#ff8fb0'] };      // the cursed energy bar's colours per fighter: [empty part, bar, shine, text] (cyan for Gojo and Yuji, yellow for Verity, pink for the Cat)
 function drawVs(now, ux = 0, uy = 0) {         // health bars, names, the grade, the timer, the round points and the big banners (ux, uy: undoes this frame's screen shake for everything except the banners)
-  if (!vs) return; const W = Math.max(60, Math.min(96, (VW - 52) >> 1)), a = now - vs.t0, ef = dummy ? Math.max(0, dummy.hp) / dummy.max : 0, es = dummy ? Math.max(0, dummy.shown) / dummy.max : 0, pf = Math.max(0, vs.hp) / PHP, ps = Math.max(0, vs.sh) / PHP;
+  if (!vs) return; const W = Math.max(60, Math.min(96, (VW - 52) >> 1)), a = now - vs.t0, FO = foesOf(), ef = FO.length ? FO.reduce((t, f) => t + Math.max(0, f.hp), 0) / FO.reduce((t, f) => t + f.max, 0) : 0, es = FO.length ? FO.reduce((t, f) => t + Math.max(0, f.shown), 0) / FO.reduce((t, f) => t + f.max, 0) : 0, pf = Math.max(0, vs.hp) / PHP, ps = Math.max(0, vs.sh) / PHP;
   const bar = (x, y, f, g, right) => { ctx.fillStyle = '#000'; ctx.fillRect(x - 1, y - 1, W + 2, 8); ctx.fillStyle = '#3a1a2a'; ctx.fillRect(x, y, W, 6); const w1 = Math.round(W * g), w2 = Math.round(W * f); ctx.fillStyle = '#ffd27a'; ctx.fillRect(right ? x + W - w1 : x, y, w1, 6); ctx.fillStyle = f > 0.3 ? '#52e08a' : '#ff4a4a'; ctx.fillRect(right ? x + W - w2 : x, y, w2, 6); };
   ctx.save(); ctx.translate(ux, uy);
   bar(6, 20, pf, ps, false); bar(VW - 6 - W, 20, ef, es, true);
-  const cw = Math.round(W * Math.max(0, Math.min(100, ce)) / 100), bad = now - ceFlash < 500, cc = CEC[vs.me] || CEC.gojo, nx = 6 + (NAMES[vs.me].length + (vs.meInv ? 7 : 0)) * 8 + 8, foeName = vs.cv ? vs.cv.name : NAMES[vs.foe] + (vs.inv ? ' (INV.)' : '');      // the cursed energy bar right under the health bar (cyan for Gojo, yellow for Verity; it flashes red when a move is refused)
+  const cw = Math.round(W * Math.max(0, Math.min(100, ce)) / 100), bad = now - ceFlash < 500, cc = CEC[vs.me] || CEC.gojo, nx = 6 + (NAMES[vs.me].length + (vs.meInv ? 7 : 0)) * 8 + 8, foeName = vs.cv ? vs.cv.name + (vs.rush && FO.filter(f => f.ko < 0).length > 1 ? ' +1' : '') : NAMES[vs.foe] + (vs.inv ? ' (INV.)' : '');      // the cursed energy bar right under the health bar (cyan for Gojo, yellow for Verity; it flashes red when a move is refused)
   ctx.fillStyle = '#000'; ctx.fillRect(5, 28, W + 2, 6); ctx.fillStyle = cc[0]; ctx.fillRect(6, 29, W, 4); ctx.fillStyle = bad ? '#ff4a4a' : cc[1]; ctx.fillRect(6, 29, cw, 4); ctx.fillStyle = bad ? '#ffb0b0' : cc[2]; ctx.fillRect(6, 29, cw, 1);
-  pxt(NAMES[vs.me] + (vs.meInv ? ' (INV.)' : ''), 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', nx, 45, bad ? '#ff6a5a' : cc[3], 8); let lx = nx + 62; if (vs.bleed) { pxt('BLEED', lx, 45, '#ff4a4a', 8); lx += 48; } if (vs.fear) pxt('FEAR', lx, 45, '#c77dff', 8); pxt(vs.story ? (vs.foe === 'cat' ? 'CARTOON CAT' : 'VERITY') : foeName, VW - 6, 45, '#ffffff', 8, 'right'); let rx2 = VW - 6; if (dummy && dummy.bleed) { pxt('BLEED', rx2, 37, '#ff4a4a', 8, 'right'); rx2 -= 48; } if (dummy && dummy.fear) pxt('FEAR', rx2, 37, '#c77dff', 8, 'right'); pxt(vs.story ? 'SPECIAL GRADE' : vs.net ? 'WI-FI' : vs.cv ? (vs.hard ? 'HARD ' : '') + vs.cv.grade : GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
+  pxt(NAMES[vs.me] + (vs.meInv ? ' (INV.)' : ''), 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', nx, 45, bad ? '#ff6a5a' : cc[3], 8); let lx = nx + 62; if (vs.bleed) { pxt('BLEED', lx, 45, '#ff4a4a', 8); lx += 48; } if (vs.fear) pxt('FEAR', lx, 45, '#c77dff', 8); pxt(vs.story ? (vs.foe === 'cat' ? 'CARTOON CAT' : 'VERITY') : foeName, VW - 6, 45, '#ffffff', 8, 'right'); let rx2 = VW - 6; if (dummy && dummy.bleed) { pxt('BLEED', rx2, 37, '#ff4a4a', 8, 'right'); rx2 -= 48; } if (dummy && dummy.fear) pxt('FEAR', rx2, 37, '#c77dff', 8, 'right'); pxt(vs.story ? 'SPECIAL GRADE' : vs.net ? 'WI-FI' : vs.cv ? (vs.rush ? 'WAVE ' + Math.min(vs.round, RUSH.waves.length) + '/' + RUSH.waves.length : (vs.hard ? 'HARD ' : '') + vs.cv.grade) : GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
   if (!vs.story) pxt(String(Math.max(0, Math.ceil(vs.tl / 1000))), VW / 2, 18, vs.tl < 10000 ? '#ff6a5a' : '#ffffff', 16, 'center');
   const kob = vs.ph === 'ko';
-  for (let i = 0; i < (vs.story ? 0 : 2); i++) {               // the round points (a pip lights up for every round won); the point that was just won blinks
+  for (let i = 0; i < (vs.story || vs.rush ? 0 : 2); i++) {               // the round points (a pip lights up for every round won); the point that was just won blinks
     const bl = c => kob && vs.who === c && i === (c === 'player' ? vs.pw : vs.ew) - 1 && ((now / 100) | 0) % 2 === 0;
     ctx.fillStyle = '#000'; ctx.fillRect(6 + W - 7 - i * 8, 11, 8, 8); ctx.fillRect(VW - 6 - W - 1 + i * 8, 11, 8, 8);      // (just above the inner ends of the two bars, where no banner covers them)
     ctx.fillStyle = bl('player') ? '#ffffff' : i < vs.pw ? '#ffd34d' : '#3a3050'; ctx.fillRect(6 + W - 6 - i * 8, 12, 6, 6);
     ctx.fillStyle = bl('enemy') ? '#ffffff' : i < vs.ew ? '#ffd34d' : '#3a3050'; ctx.fillRect(VW - 6 - W + i * 8, 12, 6, 6);
   }
-  if (kob && !vs.story) { const me = vs.who === 'player'; pxt(me ? 'YOU GET THE POINT' : 'ENEMY GETS THE POINT', VW / 2, gy + 20, me ? '#7dff9a' : '#ff8a7a', 8, 'center'); }      // who got the point (the round restarts in a moment); it stays between the touch controls
+  if (vs.rush) for (let i = 0; i < RUSH.waves.length; i++) { const x = Math.round(VW / 2 - RUSH.waves.length * 4 + i * 8), done = i < vs.pw; ctx.fillStyle = '#000'; ctx.fillRect(x - 1, 21, 8, 8); ctx.fillStyle = done ? '#ffd34d' : i === vs.round - 1 && vs.ph !== 'ko' ? '#7a6aa8' : '#3a3050'; ctx.fillRect(x, 22, 6, 6); }      // (RUSH: a pip for every wave, lit when it is cleared)
+  if (kob && !vs.story && !vs.rush) { const me = vs.who === 'player'; pxt(me ? 'YOU GET THE POINT' : 'ENEMY GETS THE POINT', VW / 2, gy + 20, me ? '#7dff9a' : '#ff8a7a', 8, 'center'); }      // who got the point (the round restarts in a moment); it stays between the touch controls
   ctx.restore();
-  const bt = vs.ph === 'intro' ? (vs.story ? ['FIGHT!', '#ff4a3a', a] : a < 1300 ? ['ROUND ' + vs.round, '#ffe9a0', a] : ['FIGHT!', '#ff4a3a', a - 1300]) : kob ? (vs.why === 'fatal' ? ['FATALITY', '#ff3a3a', a] : vs.why === 'time' ? ['TIME!', '#9fd8ff', a] : ['K.O.', '#ffe9a0', a]) : null;
+  const bt = vs.ph === 'intro' ? (vs.story ? ['FIGHT!', '#ff4a3a', a] : a < INTRO_ROUND ? [(vs.rush ? 'WAVE ' : 'ROUND ') + vs.round, '#ffe9a0', a] : ['FIGHT!', '#ff4a3a', a - INTRO_ROUND]) : kob ? (vs.why === 'fatal' ? ['FATALITY', '#ff3a3a', a] : vs.why === 'time' ? ['TIME!', '#9fd8ff', a] : vs.rush && vs.who === 'player' ? [vs.pw >= RUSH.waves.length ? 'RUSH CLEAR' : 'WAVE CLEAR', '#7dff9a', a] : ['K.O.', '#ffe9a0', a]) : null;
   if (bt) { const kk = bt[2] / 1000, j = kk < 0.4 ? Math.round((Math.random() - 0.5) * 2) : 0; pxt(bt[0], VW / 2 + j, gy - 26 + j, bt[1], kk < 0.06 ? 48 : kk < 0.12 ? 32 : 24, 'center'); }      // the big banners (ROUND n, FIGHT!, K.O., TIME!, FATALITY) slam in huge and drop to 24 px in two steps, then shake a little, like the FATALITY title
 }
 window.__tu = () => vp ? vp.tuNow : -1;
@@ -1929,7 +2080,7 @@ const FAT_RANGE = 44, FAT_LOW = 0.2, FAT_AI_GRADE = 3, FAT_SEQ = [14, 15, 16, 14
 const FEX = 17, FEX2 = 60, FLIFT = 72, FOY = 84;      // px right of Gojo: where the enemy stands for the barrage / after he has been thrown and kicked down; how high Gojo is in the air for the kick down; how high the orbs hang
 const fatH = tau => 165 * tau - 110 * tau * tau;       // his height (px above the floor) after the kick: thrown up, he hangs at the top for about 0.75 s
 const FSW = [];                                        // the barrage's swings: when each starts, how long it lasts (11 of its 15 frames, 15% faster), when its whoosh and its blow come
-{ let t = 0; for (const k of FAT_SEQ) { const sp = ATK_FPS[k] * 1.15; FSW.push({ k, t0: t, d: 11 / sp, hit: t + ATK_IMPACT[k] / sp, sw: t + ATK_SWING[k] / sp }); t += 11 / sp; } FSW.end = t; }
+{ let t = 0; for (const k of FAT_SEQ) { const sp = ATK_FPS0[k] * 1.15; FSW.push({ k, t0: t, d: 11 / sp, hit: t + ATK_IMPACT[k] / sp, sw: t + ATK_SWING[k] / sp }); t += 11 / sp; } FSW.end = t; }
 const FP = (() => {                                    // the timeline, in seconds of cutscene time
   const TW = 0.35, TP = TW + 0.5, THIT = TP + 1 / 30, TB = TP + 0.3, TK = TB + FSW.end, TL = TK + 8 / 24, TV = TL + 0.55, TA = TL + 0.75, TD = TA + 3 / 24, TS = TD + 0.17, TLD = TD + 0.43, TR = TLD + 0.2, TF = TR + 1.0, TU = TF + 0.4, TBL = TU + 1.3, TT = TBL + 0.4, TE = TBL + 2.0, TX = TBL + 2.8;
   return { TW, TP, THIT, TB, TK, TL, TV, TA, TD, TS, TLD, TR, TF, TU, TBL, TT, TE, TX };      // wind-up | punch | it lands | barrage | big kick | he is thrown | Gojo blinks | appears | kicks down | slam | lands | RED charge | RED fires | the fuse | the blast | the title | round ends | over
@@ -2036,7 +2187,7 @@ function fatGojo(t, now) {                             // Gojo's pose and place 
   const P = FP, S = fat.S, mx = Math.round(VW / 2), G = { set: S.idle, info: D.idle, fi: Math.floor(now / (1000 / IDLE_FPS)) % S.idle.length, x: mx, lift: 0, vis: true }, pick = (set, info, fi, x, lift) => { G.set = set; G.info = info; G.fi = fi; if (x !== undefined) G.x = x; if (lift) G.lift = lift; return G; };
   if (t >= P.TW && t < P.TP) { const k = (t - P.TW) / (P.TP - P.TW); pick(S.atk[0], D.atk0, 1 + Math.min(4, Math.floor(k / 0.6 * 5))); if (k > 0.6) G.x += Math.round((Math.random() - 0.5) * 2); return G; }      // the wind-up punch: the fist is pulled back (frames 1-5) and held, shaking, while the energy gathers
   if (t >= P.TP && t < P.TB) return pick(S.atk[0], D.atk0, Math.min(14, 6 + Math.floor((t - P.TP) * 30)));      // ...and thrown (it lands on frame 7)
-  if (t >= P.TB && t < P.TK) { let i = 0; for (let j = 0; j < FSW.length; j++) if (t >= P.TB + FSW[j].t0) i = j; const k = FSW[i].k; return pick(S.atk[k], D['atk' + k], Math.min(14, Math.floor((t - P.TB - FSW[i].t0) * ATK_FPS[k] * 1.15))); }      // the barrage
+  if (t >= P.TB && t < P.TK) { let i = 0; for (let j = 0; j < FSW.length; j++) if (t >= P.TB + FSW[j].t0) i = j; const k = FSW[i].k; return pick(S.atk[k], D['atk' + k], Math.min(14, Math.floor((t - P.TB - FSW[i].t0) * ATK_FPS0[k] * 1.15))); }      // the barrage
   if (t >= P.TK && t < P.TK + 15 / 24) return pick(S.atk[3], D.atk3, Math.min(14, Math.floor((t - P.TK) * 24)));      // the big kick
   if (t >= P.TV && t < P.TA) { if (t < P.TV + 0.15) return pick(S.tele, D.tele, Math.min(2, Math.floor((t - P.TV) * 20))); G.vis = false; return G; }      // he folds into light and is gone
   if (t >= P.TA && t < P.TD + 0.13) return pick(S.atk[3], D.atk3, Math.min(14, 5 + Math.floor((t - P.TA) * 24)), mx + 20, FLIFT);      // the kick in the air
@@ -2167,8 +2318,9 @@ function drawRedFx(now, dt, x, y, info, fi, charging, mf) {      // the red orb 
   const k = Math.floor(now * 20 / 1000) % 15, ob = (n, sx, sy, s, set = orbR) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));
   if (charging && mf < 20) { const a = info.hn[fi]; if (a) ob(k, x + a[0] + 2, y + a[1] - 8, 0.1 + 0.3 * Math.min(1, mf / 19)); }
   if (rdOrb) {
-    const o = rdOrb, gap = dummy ? dummy.x - o.x : 999; o.x += o.v * dt; o.trail.push([o.x, o.y]); if (o.trail.length > 9) o.trail.shift();
-    if (dummy && dummy.ko < 0 && !dummy.cap && gap < 9 && gap > -16 && now >= (dummy.dodgeUntil || 0)) explodeRed(now, true); else if (orb && !purple && Math.abs(o.x - orbPose(now).xo) < 13 && orbPose(now).age > 200 && orbPose(now).age < ORB_MS - 350) fusePurple(now);
+    const o = rdOrb; o.x += o.v * dt; o.trail.push([o.x, o.y]); if (o.trail.length > 9) o.trail.shift();
+    const rt = foesOf().find(f => f.ko < 0 && !f.cap && f.x - o.x < 9 && f.x - o.x > -16 && now >= (f.dodgeUntil || 0));      // (the first enemy it touches)
+    if (rt) { if (rt === dummy) explodeRed(now, true); else foeSwap(rt, () => explodeRed(now, true)); } else if (orb && !purple && Math.abs(o.x - orbPose(now).xo) < 13 && orbPose(now).age > 200 && orbPose(now).age < ORB_MS - 350) fusePurple(now);
     else if (o.x - o.x0 > 210 || peds.some(p => Math.abs(p.x - o.x) < 12)) explodeRed(now, false);
     else {
       const cx = Math.round(VW / 2), tr = o.coat ? orbF : orbR;      // a coated orb leaves a blue trail
@@ -2460,7 +2612,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   ctx.fillStyle = 'rgba(220,210,255,0.35)';      // wind streaks
   for (const p of parts) { p.x -= (p.v + dir * 45) * dt; if (p.x < -p.l) p.x = VW; else if (p.x > VW) p.x = -p.l; ctx.fillRect(p.x | 0, p.y | 0, p.l, 1); }
   if (mode === 'fwd' || mode === 'back' || (mode === 'block' && dir !== 0)) {      // a step every half cycle (the guard walks at a third of the speed)
-    const st = Math.floor(Math.max(0, now - modeAt) / (500 / (mode === 'block' ? 0.3 : 1)));
+    const st = Math.floor(Math.max(0, now - modeAt) / (7500 / WALK_FPS / (mode === 'block' ? 0.3 : 1)));
     if (st !== stepN) { stepN = st; snd('step', st & 1, mode === 'back' || mode === 'block'); }
     if (sfx) sfx.windPush(mode === 'fwd' ? 1.3 : 1);
   } else { stepN = -1; if (sfx) sfx.windPush(1); }
@@ -2476,7 +2628,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
     evA = af;
   }
   drawSmoke(now, dt);
-  drawDummy(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
+  drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
   const fa = now - v.fAt, ballOn = v.form === 'ball' || (v.form === 'smoke1' && fa >= 200) || (v.form === 'smoke2' && fa < 400);      // (the ball shows from 0.2 s into the first puff to 0.4 s into the huge smoke, which is where Verity is swapped back in)
   let src, info = VINFO, py = gAir ? gAirH : lift, ox = 0, oy = 0;
   if (ballOn) { src = SIMG.ball; info = BALL.info; py = ballH(Math.max(0, (now - v.bAt) / 1000)); }
@@ -2508,7 +2660,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
     for (let a = 0; a < 64; a++) { const th = a / 64 * 6.2832; ctx.fillRect(Math.round(cx + Math.cos(th) * R), Math.round(y + 34 + Math.sin(th) * R * 0.45), 1, 1); }
     ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')'; ctx.fillRect(0, 0, VW, VH);
   }
-  drawDivFx(now); drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); drawVs(now, -shkX, -shkY);
+  drawDivFx(now); drawSparks(now, dt); drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); drawVs(now, -shkX, -shkY);
   ctx.restore();
   if (now < flashUntil) { ctx.fillStyle = 'rgba(190,225,255,' + (flashA * (flashUntil - now) / flashMs) + ')'; ctx.fillRect(0, 0, VW, VH); }
   if (now < blackUntil) { ctx.fillStyle = 'rgba(0,0,0,' + ((blackUntil - now) / 600).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }
@@ -2555,7 +2707,7 @@ const ultHeldOff = now => ult && ult.who === 'enemy' && ult.held && !ult.rel ? (
 function ultHit(dm, now, big) {      // one knee (3) or the throw (5)
   const u = ult, d = dummy;
   if (u.who === 'player') {
-    d.hp = Math.max(0, d.hp - dm); d.hitAt = now; hits.n++; hits.dmg += dm; hits.until = now + 1600; u.dmg += dm;
+    d.hp = Math.max(0, d.hp - dm); d.hitAt = now; hits.n++; hits.dmg += dm; hits.until = now + COMBO_WIN; u.dmg += dm;
     snd('smack', big ? 3 : 0); shakeUntil = now + (big ? 200 : 70); shakeAmp = big ? 3 : 1;
     if (big) { d.rx = 4; d.rxAt = now; d.vx += 640; d.smokeUntil = now + 520; puff(d.x, 8); d.stunUntil = now; d.ai = 'hurt'; say('' + u.dmg, d.x, popCol(), 8, now); snd('hit', 3); }
     if (d.hp <= 0) { ultCancel(now); koDummy(now); }
@@ -2845,7 +2997,7 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   const nm = hf >= 0 ? 'hurt' : ulting ? 'ult' : (fear || dizzy) ? 'stun' : lf >= 0 ? 'toon' : df >= 0 ? 'dash' : bf >= 0 && sf < 0 ? 'block' : jf >= 0 ? 'jump' : af >= 0 ? 'atk' : sf >= 0 ? 'cdn' : flat ? (dir !== 0 ? 'cwalk' : 'cidle') : dir > 0 ? 'fwd' : dir < 0 ? 'back' : 'idle';
   if (nm !== mode) { mode = nm; modeAt = now; stepN = -1; }
   wx += dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * (flat ? CT.flatMul : 1) * (bf >= 0 ? 0.3 : 1) * dt;      // (flat he is 3 times as fast, and with the shield up he shuffles at a third of the speed)
-  if (df >= 0) { const k = Math.min(1, Math.max(0, (now - dgAt - 2000 / DASH_FPS) / 300)); wx = dgFrom + (dgTo - dgFrom) * (1 - Math.pow(1 - k, 3)); }      // the push itself: fast at first, over frames 3-12
+  if (df >= 0) { const k = Math.min(1, Math.max(0, (now - dgAt - 2000 / DASH_FPS) / DASH_MS)); wx = dgFrom + (dgTo - dgFrom) * (1 - Math.pow(1 - k, 3)); }      // the push itself: fast at first, over frames 3-12
   wx += wxv * dt; wxv *= Math.exp(-7 * dt);      // knocked back by the enemy: the world slides past, then friction stops it
   const lift = jf >= 0 ? D.jump.lift[jf] : 0; gojoLift = lift; gojoGone = false;      // (the enemy's swings miss while he is in the air)
   const dm = dummy; if (dm && dm.cheld && (now >= dm.cheld.until || dm.ko >= 0 || hf >= 0 || jf >= 0 || df >= 0 || stance !== 'stand')) catRelease(now);      // (the glove lets go when its time is up or when he does something else)
@@ -2857,7 +3009,7 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   ctx.fillStyle = 'rgba(220,210,255,0.35)';      // wind streaks
   for (const p of parts) { p.x -= (p.v + dir * 45) * dt; if (p.x < -p.l) p.x = VW; else if (p.x > VW) p.x = -p.l; ctx.fillRect(p.x | 0, p.y | 0, p.l, 1); }
   if (mode === 'fwd' || mode === 'back' || (mode === 'block' && dir !== 0)) {      // a step every half cycle (flat he slides: no steps; with the shield up they come three times as slowly)
-    const st = Math.floor(Math.max(0, now - modeAt) / (500 / (mode === 'block' ? 0.3 : 1)));
+    const st = Math.floor(Math.max(0, now - modeAt) / (7500 / WALK_FPS / (mode === 'block' ? 0.3 : 1)));
     if (st !== stepN) { stepN = st; snd('step', st & 1, mode === 'back' || mode === 'block'); }
     if (sfx) sfx.windPush(mode === 'fwd' ? 1.3 : 1);
   } else { stepN = -1; if (sfx) sfx.windPush(1); }
@@ -2880,7 +3032,7 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
     evL = lf;
   }
   drawSmoke(now, dt);
-  drawDummy(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
+  drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
   let name = 'idle', fi = Math.max(0, now - spawnAt) / (1000 / IDLE_FPS), loop = true, py = gAir ? gAirH : lift, ox = 0, oy = 0, white = false;
   if (hf >= 0) { const q = (now - hurtAt) / RX_DUR[hurtK] * 15; name = 'rx' + hurtK; fi = q; loop = false; if (CAT_RXLIFT[hurtK] && !gAir) py += CAT_RXLIFT[hurtK][Math.min(14, Math.floor(q))]; white = now - hurtAt < 70; }      // one of his ten hit reactions
   else if (fear) { name = 'stun'; fi = now / 66; const o = fearOff(now); ox = o[0]; oy = o[1]; }      // the enemy's JUMPSCARE has him: dizzy and shaking
@@ -2912,7 +3064,7 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
     for (let a = 0; a < 64; a++) { const th = a / 64 * 6.2832; ctx.fillRect(Math.round(cx + Math.cos(th) * R), Math.round(y + 34 + Math.sin(th) * R * 0.45), 1, 1); }
     ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')'; ctx.fillRect(0, 0, VW, VH);
   }
-  drawDivFx(now); drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); drawVs(now, -shkX, -shkY);
+  drawDivFx(now); drawSparks(now, dt); drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); drawVs(now, -shkX, -shkY);
   ctx.restore();
   if (now < flashUntil) { ctx.fillStyle = 'rgba(190,225,255,' + (flashA * (flashUntil - now) / flashMs) + ')'; ctx.fillRect(0, 0, VW, VH); }
   if (now < blackUntil) { ctx.fillStyle = 'rgba(0,0,0,' + ((blackUntil - now) / 600).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }
@@ -3059,8 +3211,8 @@ function drawScene(now, dt) {
   if (af >= 0 && vs && vs.me === 'yuji' && atkK === 12 && af <= 8 && !(dummy && dummy.ko < 0 && dummy.x - wx < 14 && dummy.x - wx > -4)) wx += 140 * dt;      // (the RUSH FIST slides him about 24 px forward while he sprints, but not through the enemy)          // the walking combo lunges forward a little with each strike (but not through the enemy)
   wx += dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * (crch ? 0.6 : 1) * (bf >= 0 ? 0.3 : 1) * dt;      // crouch-walking is slower, and walking while blocking is much slower still
   if (dash) { const k = Math.min(1, (now - dash.at) / dash.ms); wx = dash.from + (dash.to - dash.from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) dash = null; }   // Lapse Blue blink: a very fast dash
-  if (df >= 0) { const k = Math.min(1, Math.max(0, (now - dgAt - 2000 / DASH_FPS) / 300)); wx = dgFrom + (dgTo - dgFrom) * (1 - Math.pow(1 - k, 3)); }      // the dash itself: fast at first, over frames 3-12
-  wx += wxv * dt; wxv *= Math.exp(-7 * dt); if (ride) updateRide(now); if (vs && vs.net && dummy) wx = Math.max(dummy.x - NET_LEASH, Math.min(dummy.x - 14, wx)); else if (vs && vs.cv && dummy && dummy.ko < 0) wx = Math.min(wx, dummy.x - Math.max(12, vs.cv.hw));                    // knocked back by the attacking dummy: the world slides past, then friction stops it
+  if (df >= 0) { const k = Math.min(1, Math.max(0, (now - dgAt - 2000 / DASH_FPS) / DASH_MS)); wx = dgFrom + (dgTo - dgFrom) * (1 - Math.pow(1 - k, 3)); }      // the dash itself: fast at first, over frames 3-12
+  wx += wxv * dt; wxv *= Math.exp(-7 * dt); if (ride) updateRide(now); if (vs && vs.net && dummy) wx = Math.max(dummy.x - NET_LEASH, Math.min(dummy.x - 14, wx)); else if (vs && vs.cv) { const lf = leadFoe(); if (lf) wx = Math.min(wx, lf.x - Math.max(12, lf.curse.hw)); }                    // knocked back by the attacking dummy: the world slides past, then friction stops it
 
   ctx.save();
   shkX = shkY = 0; if (now < shakeUntil) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }   // tiny shake on impact (the bars, names and timer are drawn back where they belong, so they stay still)
@@ -3119,7 +3271,7 @@ function drawScene(now, dt) {
     evM = mf;
   }
   drawSmoke(now, dt);
-  drawDummy(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);                         // behind Gojo, so his fists and kicks overlap it
+  drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);                         // behind Gojo, so his fists and kicks overlap it
   drawOrb(now, dt); drawPurple(now, dt);
   const tele = tf >= 0, jumping = jf >= 0, atkOn = af >= 0, hurting = hf >= 0, dodging = df >= 0, blocking = bf >= 0 && sf < 0, lapsing = lf >= 0, mbing = mf >= 0, idle = mode === 'idle';
   let bset = null, binfo = null, bfi = 0;       // the blocking sprite: hand-raise (standing still), or the walking / crouching versions with the hand already up
@@ -3174,7 +3326,7 @@ function drawScene(now, dt) {
     ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')';
     ctx.fillRect(0, 0, VW, VH);
   }
-  drawDivFx(now); drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); drawVs(now, -shkX, -shkY); domOverlay(now); bfOverlay(now); if (dom || bfo) paintMe(true);      // (everything the DOMAIN shows, even its pop-up and the blindfold close-up, is a layer UNDER Gojo: he is painted again on top of it)
+  drawDivFx(now); drawSparks(now, dt); drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); drawVs(now, -shkX, -shkY); domOverlay(now); bfOverlay(now); if (dom || bfo) paintMe(true);      // (everything the DOMAIN shows, even its pop-up and the blindfold close-up, is a layer UNDER Gojo: he is painted again on top of it)
   ctx.restore();
   if (now < flashUntil) { ctx.fillStyle = 'rgba(190,225,255,' + (flashA * (flashUntil - now) / flashMs) + ')'; ctx.fillRect(0, 0, VW, VH); }
   if (now < blackUntil) { ctx.fillStyle = 'rgba(0,0,0,' + ((blackUntil - now) / 600).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (coming out of the red ending: from black)
@@ -3422,7 +3574,7 @@ function outroHall(now, dt, T) {      // scene 2: the corridor with the BIG door
   else if (T >= ta) {
     shadow(sx, 9); const a = T - ta;
     if (a < 0.15) sprAt(teleF[Math.min(14, 12 + Math.floor(a * 20))], D.tele, sx, 0, false, 0);
-    else if (walk) sprAt(fwdF[Math.floor(now * WALK_FPS / 1000) % 15], D.fwd, sx, 0, false, 0);
+    else if (walk) sprAt(fwdF[Math.floor(now * 15 / 1000) % 15], D.fwd, sx, 0, false, 0);
     else sprAt(idleF[Math.floor(T * IDLE_FPS) % idleF.length], D.idle, sx, 0, false, 0);      // (he looks at the big door and says nothing)
   }
   ctx.restore();
@@ -3863,11 +4015,13 @@ function tick(t) {
   const rdt = Math.max(0, Math.min(100, t - tLast)); tLast = t;
   if (t < slowAt + slowMs) { const k = (t - slowAt) / slowMs; vOff += rdt * (1 - (k < 0.35 ? slowRate : slowRate + (1 - slowRate) * Math.pow((k - 0.35) / 0.65, 2))); }      // slow motion: the game's clock falls behind the real one
   else if (slowFin) { slowFin = false; snd('slowout'); }
-  const now = t - vOff;
+  let now = t - vOff;
+  const still = state === 'play' && stopMs > 0;      // HIT-STOP: the game's clock stands still for a moment (everything in the game runs on it, so the fight freezes and goes on from the same picture)
+  if (still) { stopMs = Math.max(0, stopMs - rdt); vOff += now - last; now = last; } else if (state !== 'play') stopMs = 0;
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
   if (lanRole === 'in' && state === 'play') lanTick();      // (the Wi-Fi fight: his pictures are picked up every frame, not every 0.15 s)
   if (story && story.toOutro) { story.toOutro = false; startOutro(now); }      // (the fight against Verity is won: the ending of the chapter starts)
-  if (state === 'play') { if (now < holdUntil) last = now; else drawScene(now, dt); }      // hit-stop: the picture freezes for a split second when the red orb explodes
+  if (state === 'play') { if (still || now < holdUntil) last = now; else drawScene(now, dt); }      // hit-stop: the picture freezes for a split second when the red orb explodes
   else if (state === 'versus') { const fr = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length; for (const q of vsPv) { q.g.clearRect(0, 0, 64, 64); q.g.drawImage(q.who === 'gojo' ? (q.inv ? dumF : idleF)[fr] : q.who === 'yuji' ? (q.inv ? YUF.inv : YUF.norm).idle[fr % 15] : q.who === 'cat' ? cfr('idle', now / 100, true, q.inv) : vfr('idle', now / 100, true, q.inv), 0, 0); } }
   else if (state === 'lansel') lanSelDraw(now);
   else if (state === 'chal') chalDraw(now);
@@ -3987,7 +4141,7 @@ $('lsBack').addEventListener('click', lanLeave);
 addEventListener('pointerdown', () => { if (state === 'story') storySkip(); });      // a tap skips to the next part of the cutscene
 $('vsGo').addEventListener('click', () => startMatch(vsSel));
 $('vsNext').addEventListener('click', () => { if (vs && vs.cv) { startCurse(vs.ci + 1, 0); return; } const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
-$('vsAgain').addEventListener('click', () => vs && vs.cv ? startCurse(vs.ci, vs.hard) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe));
+$('vsAgain').addEventListener('click', () => vs && vs.rush ? startRush() : vs && vs.cv ? startCurse(vs.ci, vs.hard) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe));
 $('vsMenu').addEventListener('click', () => { if (vs && vs.net) { lanLeave(); return; } if (vs && vs.cv) { show('chal'); buildChal(); return; } if (vs && vs.story) { show('saves'); renderSaves(); } else { buildGrades(); buildFighters(); show('versus'); } });
 $('back').addEventListener('click', () => { leavePlay(); });
 VOLS.forEach(([k, name]) => {
