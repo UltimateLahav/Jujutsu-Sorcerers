@@ -136,7 +136,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.17</small>
+    <small id="ver">V1.18</small>
   </div>
 </section>
 
@@ -1131,35 +1131,35 @@ const setMoneyUI = () => { const t = 'MONEY $' + PROG.m; for (const id of ['mode
 const earn = n => { PROG.m += n; saveProg(); setMoneyUI(); };
 const earnOnce = (key, n) => { if (!PROG.once[key]) { PROG.once[key] = 1; earn(n); } };
 const SK_GOJO = [      // [id, name, what it does, price, needs]
-  ['crouch', 'CROUCH', 'DOWN ON THE STICK OR KEY S: DUCK UNDER HIGH HITS', 50, []],
+  ['crouch', 'CROUCH', 'DOWN ON THE STICK OR KEY S: DUCK UNDER HIGH HITS (3% ENERGY)', 50, []],
   ['dash', 'DASH', 'A QUICK EVADE FORWARD OR BACK THAT DODGES HITS', 80, []],
   ['block', 'BLOCK + PARRY', 'HOLD TO GUARD AGAINST HITS FROM THE FRONT. RAISE IT JUST BEFORE A HIT TO PARRY: NO DAMAGE, THE ENEMY IS STUNNED', 80, []],
   ['cpunch', 'CROUCH PUNCHES', 'LOW PUNCHES THAT HIT DUCKING ENEMIES', 120, ['crouch']],
   ['tele', 'TELEPORT UP', 'BLUE IN THE AIR: A SECOND JUMP', 150, []],
   ['blue', 'LAPSE BLUE', 'BLUE ON THE GROUND PULLS THE ENEMY IN', 250, []],
-  ['ce', 'CURSED ENERGY', 'THE MODE BUTTON: EVERY HIT DOES 1.3 TIMES THE DAMAGE', 300, []],
+  ['ce', 'CURSED ENERGY', 'THE MODE BUTTON: EVERY HIT DOES 1.3 TIMES THE DAMAGE (10% TO SWITCH ON, THEN 1% A SECOND)', 300, []],
   ['mblue', 'MAX BLUE', 'CROUCH + BLUE: AN ORB THAT GRINDS THE ENEMY', 400, ['crouch', 'blue']],
-  ['red', 'REVERSAL RED', 'MODE: RED, THEN RED FIRES A BLAST ORB', 500, ['ce']],
+  ['red', 'REVERSAL RED', 'MODE: RED (10% TO SWITCH ON), THEN RED FIRES A BLAST ORB', 500, ['ce']],
   ['fatal', 'FATALITY', 'FINISH A WEAK ENEMY IN A CUTSCENE', 600, []],
   ['purple', 'HOLLOW PURPLE', 'FIRE RED INTO MAX BLUE', 900, ['mblue', 'red']],
   ['domain', 'DOMAIN EXPANSION', 'INFINITE VOID: EVERYONE FREEZES', 1200, ['ce']]];
 const SK_CHAR = [['yuji', 'YUJI ITADORI', 'FIGHT AS OR AGAINST YUJI IN VERSUS, ALL HIS MOVES', 1500, []], ['verity', 'VERITY', 'FIGHT AS OR AGAINST VERITY IN VERSUS, ALL HIS MOVES', 1800, []], ['cat', 'CARTOON CAT', 'FIGHT AS OR AGAINST THE CAT IN VERSUS, ALL HIS MOVES', 2200, []]];
 const SK_YUJI = [      // (v1.11) the moves of Yuji, bought like Gojo's; only walking, jumping and the M1 combo are free
-  ['y_crouch', 'CROUCH', 'DOWN ON THE STICK OR KEY S: DUCK UNDER HIGH HITS', 50, []],
+  ['y_crouch', 'CROUCH', 'DOWN ON THE STICK OR KEY S: DUCK UNDER HIGH HITS (3% ENERGY)', 50, []],
   ['y_dash', 'DASH', 'A QUICK EVADE FORWARD OR BACK THAT DODGES HITS', 80, []],
   ['y_block', 'BLOCK + PARRY', 'HOLD TO GUARD AGAINST HITS FROM THE FRONT. RAISE IT JUST BEFORE A HIT TO PARRY: NO DAMAGE, THE ENEMY IS STUNNED', 80, []],
   ['y_cpunch', 'CROUCH PUNCHES', 'LOW PUNCHES THAT HIT DUCKING ENEMIES', 120, ['y_crouch']],
   ['y_sweep', 'SWEEP KICK', 'CROUCH + BLUE: A LOW KICK FULL OF CURSED ENERGY', 150, ['y_crouch']],
   ['y_div', 'DIVERGENT FIST', 'BLUE: A PUNCH FULL OF CURSED ENERGY, THEN A SECOND IMPACT IN THE STOMACH', 200, []],
   ['y_rush', 'RUSH FIST', 'WALK FORWARD + BLUE: THE FIST SLIDES AT THE ENEMY', 250, ['y_div']],
-  ['y_ce', 'CURSED ENERGY', 'THE MODE BUTTON: THE POWER-UP AND A STRONGER COMBO', 300, []],
+  ['y_ce', 'CURSED ENERGY', 'THE MODE BUTTON: THE POWER-UP AND A STRONGER COMBO (10% TO SWITCH ON, THEN 1% A SECOND)', 300, []],
   ['y_conc', 'CONCENTRATED FIST', 'CURSED MODE + BLUE: ONE HUGE PUNCH THAT BREAKS THE GUARD', 350, ['y_ce']],
   ['y_elbow', 'SPIN ELBOW', 'CURSED MODE + BLUE IN THE AIR: A SPINNING ELBOW', 350, ['y_ce']],
   ['y_upper', 'UPPERCUT + FACE KICK', 'CURSED MODE + CROUCH + BLUE: LAUNCH THE ENEMY, THEN BLUE AGAIN KICKS HIM IN THE FACE', 450, ['y_ce', 'y_crouch']],
   ['y_zone', 'THE ZONE', 'THE MODE BUTTON IN CURSED MODE: A RED AND BLACK AURA. THE M1 BECOMES HIGH KICK, SPIN KICK, PUNCH, SPIN PUNCH. IT BURNS ENERGY WHILE IT LASTS', 600, ['y_ce']],
   ['y_flash', 'BLACK FLASH', 'IN THE ZONE, BLUE: A PUNCH CRACKLING WITH BLACK SPARKS THAT HITS TWICE AS HARD AND SENDS THE ENEMY FLYING BACK', 800, ['y_zone']]];
 const SK_VERITY = [
-  ['v_crouch', 'CROUCH', 'DOWN ON THE STICK OR KEY S: DUCK UNDER HIGH HITS', 50, []],
+  ['v_crouch', 'CROUCH', 'DOWN ON THE STICK OR KEY S: DUCK UNDER HIGH HITS (3% ENERGY)', 50, []],
   ['v_block', 'BLOCK + PARRY', 'HOLD TO GUARD AGAINST HITS FROM THE FRONT. RAISE IT JUST BEFORE A HIT TO PARRY: NO DAMAGE, THE ENEMY IS STUNNED', 80, []],
   ['v_tele', 'TELEPORT', 'THE DASH BUTTON: BLINK AWAY FROM A HIT', 100, []],
   ['v_bite', 'BITE', 'BLUE: A BITE, THE ENEMY BLEEDS FOR 4 SECONDS', 200, []],
@@ -1167,7 +1167,7 @@ const SK_VERITY = [
   ['v_fatal', 'FATALITY', 'FINISH A WEAK ENEMY IN A CUTSCENE', 500, []],
   ['v_scare', 'JUMPSCARE', 'THE DOMAIN BUTTON: GRAB THE ENEMY, HE IS STUNNED FOR 5 SECONDS AND TAKES FEAR DAMAGE', 800, []]];
 const SK_CAT = [
-  ['k_crouch', 'FLATTEN', 'DOWN ON THE STICK OR KEY S: SMASH YOURSELF FLAT, TAP AGAIN TO STAND UP', 50, []],
+  ['k_crouch', 'FLATTEN', 'DOWN ON THE STICK OR KEY S: SMASH YOURSELF FLAT, TAP AGAIN TO STAND UP (3% ENERGY)', 50, []],
   ['k_block', 'GLOVE SHIELD', 'HOLD TO GUARD WITH A GIANT GLOVE. RAISE IT JUST BEFORE A HIT TO PARRY: NO DAMAGE, THE ENEMY IS STUNNED', 80, []],
   ['k_dash', 'PUSH DASH', 'SHOVE YOURSELF ALONG THE GROUND, NOTHING CAN HIT YOU AT THE START', 80, []],
   ['k_toon', 'CARTOON ATTACK', 'BLUE: THE HUGE CARTOON CAT GRABS YOU AND THROWS YOU ONTO THE ENEMY', 300, []],
@@ -1186,6 +1186,7 @@ function lockPop(now) { if (now - lockSayAt > 1200) { lockSayAt = now; say('LOCK
 function gateSkills(now) {                    // every frame, before the controls are read: a move you do not own is simply not there (any fighter)
   if (crReq && lacks('cr')) { crReq = false; lockPop(now); }
   if (stickDown && lacks('cr')) stickDown = false;
+  if ((crReq || stickDown) && stance === 'stand' && vs && ce < CE_COST.crouch) { if (crReq) ceDeny(now); crReq = false; stickDown = false; }      // (a crouch costs 3% of the energy)
   if (dashReq && lacks('dash')) { dashReq = false; lockPop(now); }
   if (blockHeld && lacks('blk')) { blockHeld = false; lockPop(now); }
   if (atkReq && stance !== 'stand' && lacks('cp')) { atkReq = false; lockPop(now); }
@@ -2378,8 +2379,9 @@ function setModeUI() {                        // the MODE button (OFF / CURSED /
   skillUI();
 }
 function cycleMode(now) {                     // MODE button / E: normal -> cursed energy -> red -> normal (in Versus the cursed mode needs some energy: with none left the tap skips it)
-  let m = (cm + 1) % 3; if (m === 1 && vs && ce < 1) { ceDeny(now); m = 2; }
+  let m = (cm + 1) % 3; if (m === 1 && vs && !ceSpend(CE_COST.ceMode, now)) m = 2;      // (no energy for the cursed mode: the tap skips it)
   if (m === 2 && gojoMe() && !owns('red')) m = 0;
+  if (m === 2 && cm !== 2 && vs && !ceSpend(CE_COST.redMode, now)) m = 0;
   setMode(m, now);
 }
 function setMode(m, now) {
@@ -2768,7 +2770,7 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
   if (move) { d.x += move * FOE_WALK * G.spd * dt; d.ai = 'walk'; } else d.ai = 'think';
 }
 // ---------------------------------------------------------------- CURSED ENERGY (Versus mode only): a cyan bar under Gojo's health bar. It starts every round at 100%, each energy move costs some of it, it refills half a percent per second once a second and a half has passed without such a move (hitting, being hit and parrying fill it much faster, see onLand), and the cursed energy mode drains 1% per second (no refill) and switches itself off at 0%.
-const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30, purple: 50, domain: 67, fatal: 50, vBite: 20, vTele: 10, vBall: 20, vScare: 67, cToon: 30, cUlt: 67, yDiv: 15, yConc: 25, yKick: 5, yZone: 20, yFlash: 40, vTalk: 15 }, CE_WAIT = 1500, CE_REFILL = 0.5;      // what each move costs in % of the bar (slowRed = RED fired while walking back, coat = the BLUE leap onto that slow orb, tele = BLUE in the air, purple = the RED shot fired while Max Blue is out, it costs this instead of the plain RED price); the refill waits 1 s after the last paid move
+const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30, purple: 50, domain: 67, fatal: 50, vBite: 20, vTele: 10, vBall: 20, vScare: 67, cToon: 30, cUlt: 67, yDiv: 15, yConc: 25, yKick: 5, yZone: 20, yFlash: 40, vTalk: 15, crouch: 3, ceMode: 10, redMode: 10 }, CE_WAIT = 1500, CE_REFILL = 0.5;      // what each move costs in % of the bar (slowRed = RED fired while walking back, coat = the BLUE leap onto that slow orb, tele = BLUE in the air, purple = the RED shot fired while Max Blue is out, it costs this instead of the plain RED price); the refill waits 1 s after the last paid move
 let ce = 100, ceLast = -1e9, ceFlash = -1e9;      // the energy in %, when a move last cost some, when a move was last refused (the bar flashes red)
 function ceReset() { ce = 100; ceLast = ceFlash = -1e9; }
 function ceDeny(now) { if (now - ceFlash < 150) return; ceFlash = now; snd('noce'); }      // a refused move: the bar flashes red and says NO CE for a moment (one refusal per press, even if the press falls through to another move that is refused too)
@@ -3077,6 +3079,7 @@ function drawFoeCE(now, sx, y, mirror, hx, info, fi, amt, igAt) {      // the en
   }
 }
 const ZONE_DRAIN = 4, BF_DMG = [60, 52, 56], ZN = [[-2, 0], [2, 0], [0, -2], [0, 2], [-2, -2], [2, 2], [-2, 2], [2, -2]], Z1 = [[-1, 0], [1, 0], [0, -1], [0, 1]], tintCache = new Map(); let zoneSpkAt = 0;      // THE ZONE burns 4% of the energy a second
+let stPrev = 'stand';      // v1.18 every ability except BLOCK, DASH and the punches costs cursed energy: a crouch 3% (checked in gateSkills, paid when he goes down, see tick), switching on cursed energy mode 10% and then 1.5% a second, RED mode 10%
 const VT = { ms: 3870, stun: 2500, cd: 3900, range: 150 }; let vTalkAt = -1e9, vTalkReal = -1e9;      // THE TALK: how long the voice lasts, how long the enemy's ears ring (he cannot act), the wait for the next one, how far the voice carries (px)
 function vTalk(v, now) {      // VERITY'S BALL, his only M1: "Hey, it's me, it's Verity": the voice stuns the enemy's ears for 2.5 s (15% of the energy; the ball lasts 5 s, so there is one talk for every ball)
   const d = dummy; if (v.form !== 'ball' || !d || d.ko >= 0 || d.cap || now - vTalkAt < VT.cd) return;
@@ -3947,9 +3950,9 @@ function drawScene(now, dt) {
     ceReq = false;
     if (cm === 2) setMode(0, now);      // THE ZONE -> off
     else if (cm === 1) { if (owns('y_zone') && ce >= CE_COST.yZone) { ceSpend(CE_COST.yZone, now); setMode(2, now); say('THE ZONE', wx, '#ff3a4a', 16, now); flash(now, 140, 0.3); shakeUntil = now + 160; shakeAmp = 2; buzz(60); } else setMode(0, now); }      // CURSED -> THE ZONE (bought, and 20% of the energy), otherwise off
-    else if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0 && stance === 'stand') { if (ce < 1) ceDeny(now); else { setMode(1, now); ceFlameAt = ceAt = now + POW_FLAME; atkK = 11; atkAt = now; af = 0; atkQ = false; divP = null; } }
+    else if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0 && stance === 'stand') { if (!ceSpend(CE_COST.ceMode, now)) { /* NO CE */ } else { setMode(1, now); ceFlameAt = ceAt = now + POW_FLAME; atkK = 11; atkAt = now; af = 0; atkQ = false; divP = null; } }
   }
-  if (cm === 2 && vs && vs.me === 'yuji' && vs.ph === 'fight') { ce = Math.max(0, ce - ZONE_DRAIN * dt); if (ce <= 0) { setMode(0, now); say('ZONE OVER', wx, '#ff8a7a', 8, now); } }      // THE ZONE burns energy while it lasts
+  if (cm === 2 && vs && vs.me === 'yuji' && vs.ph === 'fight') { ce = Math.max(0, ce - ZONE_DRAIN * dt); if (ce <= 0) { setMode(0, now); say('ZONE OVER', wx, '#ff8a7a', 8, now); } }      // THE ZONE burns 4% a second (the plain cursed energy mode already burns 1% a second: see the energy step)
   gateBlue(now, jf, tf);
   if (lpReq && vs && vs.me === 'yuji') {      // BLUE: DIVERGENT FIST (normal mode, standing: 15% of the energy), CONCENTRATED FIST (cursed energy mode, standing: 25%) or the SWEEP (normal mode, crouched: 15%), with nothing else going on
     lpReq = false;
@@ -4844,6 +4847,7 @@ function tick(t) {
   if (still) { stopMs = Math.max(0, stopMs - rdt); vOff += now - last; now = last; } else if (state !== 'play') stopMs = 0;
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
   if (vs && vs.practice && state === 'play') practiceStep(now);
+  if (stance === 'down' && stPrev === 'stand' && vs && state === 'play') ceSpend(CE_COST.crouch, now); stPrev = stance;      // (the crouch of every fighter, the Cat smashing himself flat: 3% of the energy)
   if (lanRole === 'in' && state === 'play') lanTick();      // (the Wi-Fi fight: his pictures are picked up every frame, not every 0.15 s)
   if (story && story.toOutro) { story.toOutro = false; startOutro(now); }      // (the fight against Verity is won: the ending of the chapter starts)
   if (state === 'play') { if (still || now < holdUntil) last = now; else drawScene(now, dt); }      // hit-stop: the picture freezes for a split second when the red orb explodes
