@@ -112,7 +112,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 .setp{display:none;flex-direction:column;align-items:center;gap:1.2vh;width:min(92vw,820px)}.setp.on{display:flex}.setp small{font-size:clamp(6px,1.9vh,10px);line-height:1.5}
 .opt{display:grid;grid-template-columns:1fr 1fr;gap:1.2vh 4vh;width:100%;text-align:left}.opt label{display:grid;grid-template-columns:1fr auto;gap:.6vh 1vh;font-size:clamp(7px,2.2vh,12px)}.opt input{grid-column:1/3;width:100%;height:3.4vh;accent-color:var(--acc)}.opt b{font-weight:normal;color:var(--acc)}.opt button{padding:1vh 1.4vh;font-size:clamp(7px,2.2vh,12px)}
 #bkCode{width:100%;height:11vh;background:#120d22;color:var(--ink);border:2px solid var(--line);font:inherit;font-size:clamp(6px,1.9vh,10px);resize:none;word-break:break-all}
-.cc.daily{border-color:#ffd34d}.cc.roul{border-color:#ff5a4a}
+.cc.daily{border-color:#ffd34d}.cc.roul{border-color:#ff5a4a}#dash.cd{position:relative;opacity:.4}#dash.cd::after{content:attr(data-cd);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#ffd34d;font-size:clamp(10px,6vh,28px);text-shadow:2px 2px 0 #000}
 #joy{pointer-events:auto;touch-action:none;position:relative;width:40vh;height:40vh;flex:none}      /* the joystick: left / right walk, up jumps, down crouches */
 #joy .jb{position:absolute;inset:0;width:100%;height:100%;opacity:.85}
 #joy .jbase{fill:#1a1330;stroke:#6d56a0;stroke-width:3}
@@ -136,7 +136,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.28</small>
+    <small id="ver">V1.29</small>
   </div>
 </section>
 
@@ -2739,8 +2739,51 @@ function beginRound(now) {                     // a fresh round: the scene is re
   spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); if (vs.net) { dummy.net = true; dummy.max = dummy.hp = dummy.shown = PHP; dummy.x = dummy.tx = wx + NET_G0; dummy.pose = null; vs.toSent = false; }      // (the Wi-Fi fight: the other player, drawn from his phone's pictures)
   vdg = cst = null; smear.length = drip.length = 0; cProj = []; if (vs.rush) rushSpawn(t); else if (vs.cv) initCurse(dummy, vs.cv, wx + Math.max(54, Math.min(90, (VW >> 1) - 70)), vs.hard ? 1.5 : 1);      // (a challenge: the curse steps in; a RUSH wave: one or two)
   $('vsres').classList.remove('on');      // (REMATCH and NEXT start a new fight: the result screen goes away. Since v7.12 this line had slipped into a comment, so the result screen stayed on top of the new fight)
-  vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
+  vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
   if (vs.retry) { vs.round = 1 + vs.retry; vs.hp = vs.sh = PHP / 2; dummy.hp = dummy.shown = dummy.lock = 1; vs.morphed = true; blackUntil = t + 700; } else blackUntil = 0;      // after a failed red: Gojo at half health, Verity as he was (1 health left, so no smoke change); the picture comes up from black
+}
+// ---------------------------------------------------------------- v1.29 THE STATE TRACKER and the COMBO ESCAPE. A small box by your health bar says what state you are in: green FREE (you can move) or red (HIT: reeling from a blow, DOWN: on the floor, STUN: the JUMPSCARE, the Cat's glove or dizzy, HELD: the enemy Cat's ULTIMATE has you). While you are red, DASH gets you out of it: the stun is gone, you dash (with the dash's own invulnerable start), and when the dash ends you strike back with the LAST M1 of your combo; the dash is then on a cooldown of 4 seconds (the DASH button counts it down). Not possible when you are in the air from a launch, held by the ULTIMATE, in a cutscene or while the DOMAIN lasts.
+let dgLock = 0, esc = null, escSay = -1e9;      // dgLock: no dash before this time; esc = { at } from the escape dash until the counter blow
+const redWhy = now => {      // why you are red, or '' when you are free: hit (reeling), down (on the floor), stun (JUMPSCARE fear, the Cat's glove, dizzy), held (the enemy Cat's ULTIMATE)
+  if (state !== 'play' || (vs && vs.ph !== 'fight') || dom) return '';
+  if (ult && ult.who === 'enemy' && ult.held && !ult.rel) return 'held';
+  if (hurtAt >= 0) return 'hit'; if (now < gDownUntil) return 'down';
+  if (now < pStun || (vs && (now < (vs.catHold || 0) || now < (vs.cStun || 0)))) return 'stun';
+  return '';
+};
+const escOK = now => state === 'play' && !gAir && !js && !vf && !cf && !ke && !domLock() && !(ult && ult.who === 'enemy') && (hurtAt >= 0 || now < gDownUntil || now < pStun || (!!vs && now < (vs.catHold || 0)));      // (what a dash can get you out of)
+const lastM1 = () => { const y = !!vs && vs.me === 'yuji'; if (vs && vs.me === 'cat') return 3; if (cm === 3 && y) return 23; if (cm === 1) return y ? 8 : 17; if (cm === 2) return y ? 19 : 21; return 3; };      // (the last blow of the 4-hit M1 combo you are on: the normal combo, cursed energy, red or THE ZONE, the Inheritence)
+function comboEscape(now) {      // every frame, before the controls are gated
+  if (dashReq) {
+    if (now < dgLock) { dashReq = false; if (now - escSay > 800) { escSay = now; say('DASH ' + Math.ceil((dgLock - now) / 1000), wx, '#9fd8ff', 8, now); } }      // (the dash is on its cooldown)
+    else if (escOK(now) && !lacks('dash')) {
+      dashReq = false; const me = meK(), d = (keyR || padR) ? 1 : -1; let to = wx + d * (d > 0 ? DASH_FWD : DASH_BACK);
+      hurtAt = -1; hurtEnd = now - 300; gDownUntil = 0; pStun = 0; if (vs) { vs.catHold = 0; vs.fear = null; }
+      atkAt = -1; atkQ = false; stance = 'stand'; jumpAt = teleAt = -1; lpAt = -1; blkAt = blkEnd = -1; mbAt = -1; mbPending = false; dash = null; ride = null; tz = null;
+      if (me === 'v' && d > 0 && dummy && dummy.ko < 0 && dummy.x > wx) to = Math.min(to, Math.max(wx, dummy.x - 12));
+      dgAt = now; dgCr = false; dgAir = false; dgK = d > 0 ? 0 : 1; dgFrom = wx; dgTo = to; if (vp) vp.tpDone = false;
+      dgLock = now + 4000; dgReady = now + 4000; esc = { at: now }; snd(me === 'v' ? 'vanish' : 'dash', dgK); if (me !== 'v') puff(wx - d * 5, 5);
+      say('COMBO BREAK!', wx, '#7dff9a', 8, now); flash(now, 80, 0.18);
+    }
+  }
+  if (esc) {      // the dash is over: strike back with the last M1, closing the gap to the enemy
+    if (hurtAt >= 0 || now - esc.at > 1500 || (vs && vs.ph !== 'fight')) esc = null;
+    else if (dgAt < 0) {
+      esc = null;
+      if (!dummy || dummy.ko >= 0) return;
+      atkK = lastM1(); atkAt = now; atkQ = false; const g = dummy.x - wx; if (g > 20) wxv += Math.min(760, (g - 20) * 8); say('COUNTER!', wx, '#ffd34d', 8, now);
+    }
+  }
+}
+function stateDraw(now) {      // the tracker, over the picture: green FREE or red (it blinks), a yellow DASH! when a dash can get you out, the seconds of the cooldown while the dash is locked; and the same seconds on the DASH button
+  const b = $('dash'), cd = now < dgLock ? Math.ceil((dgLock - now) / 1000) : 0;
+  if (b && (+b.dataset.cd || 0) !== cd) { b.dataset.cd = cd || ''; b.classList.toggle('cd', cd > 0); }
+  if (state !== 'play' || (vs && vs.ph !== 'fight')) return;
+  const why = redWhy(now), red = !!why, x = vs ? Math.max(60, Math.min(96, (VW - 52) >> 1)) + 10 : 6, h = vs && vs.rush ? 9 : 10, y = vs ? (vs.rush ? 30 : 21) : 20, pulse = red && ((now / 140) | 0) % 2 === 0;
+  ctx.save(); ctx.globalAlpha = 1; ctx.fillStyle = '#000'; ctx.fillRect(x - 1, y - 1, 42, h + 2); ctx.fillStyle = red ? (pulse ? '#ff3a3a' : '#b01c1c') : '#2fb868'; ctx.fillRect(x, y, 40, h);
+  pxt(red ? (why === 'hit' ? 'HIT' : why === 'down' ? 'DOWN' : why === 'held' ? 'HELD' : 'STUN') : 'FREE', x + 20, y + h - 1, '#ffffff', 8, 'center');
+  if (red && cd === 0 && escOK(now) && !lacks('dash')) pxt('DASH!', x + 66, y + h - 1, pulse ? '#ffd34d' : '#fff3b0', 8, 'center'); else if (cd > 0) pxt('DASH ' + cd, x + 64, y + h - 1, '#9fd8ff', 8, 'center');
+  ctx.restore();
 }
 function vsTick(now, dt) {
   if (!vs) return; const a = now - vs.t0;
@@ -4273,7 +4316,7 @@ function drawScene(now, dt) {
   if (vf) { vfFrame(now, dt); return; }         // ...and Verity's FATALITY
   if (cf) { cfFrame(now, dt); return; }         // ...and the Cat's FATALITY
   if (ke) { keFrame(now, dt); return; }         // ...and the end of the Cat in the story
-  domTick(now); bfTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); if (!dom) { if (vs && vs.foe === 'verity') storyBattleTick(now, dt); else if (vs && vs.foe === 'cat') catTick(now, dt); ultTick(now, dt); }      // (the DOMAIN freezes everyone: none of the enemy's own clocks run while it lasts)
+  comboEscape(now); domTick(now); bfTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); if (!dom) { if (vs && vs.foe === 'verity') storyBattleTick(now, dt); else if (vs && vs.foe === 'cat') catTick(now, dt); ultTick(now, dt); }      // (the DOMAIN freezes everyone: none of the enemy's own clocks run while it lasts)
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
     const fs = fatState(now);
     if (fs === 0) { fatReq = 0; if (ceSpend(CE_COST.fatal, now)) { fatGo(now, dt, false); return; } }      // (his own FATALITY costs 50% cursed energy; the enemy's is free)
@@ -5258,7 +5301,7 @@ function tick(t) {
   if (stance === 'down' && stPrev === 'stand' && vs && state === 'play') ceSpend(CE_COST.crouch, now); stPrev = stance;      // (the crouch of every fighter, the Cat smashing himself flat: 3% of the energy)
   if (lanRole === 'in' && state === 'play') lanTick();      // (the Wi-Fi fight: his pictures are picked up every frame, not every 0.15 s)
   if (story && story.toOutro) { story.toOutro = false; startOutro(now); }      // (the fight against Verity is won: the ending of the chapter starts)
-  if (state === 'play') { if (still || now < holdUntil) { last = now; if (impf) impfFrame(); } else drawScene(now, dt); }      // hit-stop: the picture freezes for a split second when the red orb explodes
+  if (state === 'play') { if (still || now < holdUntil) { last = now; if (impf) impfFrame(); } else drawScene(now, dt); stateDraw(now); }      // hit-stop: the picture freezes for a split second when the red orb explodes
   else if (state === 'versus') { const fr = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length; for (const q of vsPv) { q.g.clearRect(0, 0, 64, 64); q.g.drawImage(q.who === 'gojo' ? (q.inv ? dumF : idleF)[fr] : q.who === 'yuji' ? (q.inv ? YUF.inv : YUF.norm).idle[fr % 15] : q.who === 'cat' ? cfr('idle', now / 100, true, q.inv) : vfr('idle', now / 100, true, q.inv), 0, 0); } }
   else if (state === 'lansel') lanSelDraw(now);
   else if (state === 'chal') chalDraw(now);
