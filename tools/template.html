@@ -112,7 +112,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 .setp{display:none;flex-direction:column;align-items:center;gap:1.2vh;width:min(92vw,820px)}.setp.on{display:flex}.setp small{font-size:clamp(6px,1.9vh,10px);line-height:1.5}
 .opt{display:grid;grid-template-columns:1fr 1fr;gap:1.2vh 4vh;width:100%;text-align:left}.opt label{display:grid;grid-template-columns:1fr auto;gap:.6vh 1vh;font-size:clamp(7px,2.2vh,12px)}.opt input{grid-column:1/3;width:100%;height:3.4vh;accent-color:var(--acc)}.opt b{font-weight:normal;color:var(--acc)}.opt button{padding:1vh 1.4vh;font-size:clamp(7px,2.2vh,12px)}
 #bkCode{width:100%;height:11vh;background:#120d22;color:var(--ink);border:2px solid var(--line);font:inherit;font-size:clamp(6px,1.9vh,10px);resize:none;word-break:break-all}
-.cc.daily{border-color:#ffd34d}
+.cc.daily{border-color:#ffd34d}.cc.roul{border-color:#ff5a4a}
 #joy{pointer-events:auto;touch-action:none;position:relative;width:40vh;height:40vh;flex:none}      /* the joystick: left / right walk, up jumps, down crouches */
 #joy .jb{position:absolute;inset:0;width:100%;height:100%;opacity:.85}
 #joy .jbase{fill:#1a1330;stroke:#6d56a0;stroke-width:3}
@@ -136,7 +136,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.25</small>
+    <small id="ver">V1.26</small>
   </div>
 </section>
 
@@ -504,7 +504,7 @@ function drawHero(i) {
 
 // ---------------------------------------------------------------- v1.00: PROGRESS (money, skills, characters), the SKILLS page, and the five CURSES of the CHALLENGES ladder
 // You start as Gojo with walking, jumping and punches only. Everything else is a SKILL you buy with the money from beating curses (and Versus / Story wins); the other characters are bought too.
-const PROG = (() => { const OLD = ['grub', 'stalker', 'wisp', 'ogre', 'imp']; try { const p = JSON.parse(localStorage.getItem('js_prog') || '{}'), r = p.rush || {}, P = { m: Math.max(0, +p.m || 0), own: p.own || {}, beat: p.beat || {}, once: p.once || {}, rush: { best: +r.best || 0, clears: +r.clears || 0 } }; for (const k of Object.keys(P.beat)) { const m = /^c(\d)(h?)$/.exec(k); if (m && OLD[+m[1]]) { P.beat['c:' + OLD[+m[1]] + m[2]] = 1; delete P.beat[k]; } } return P; } catch (e) { return { m: 0, own: {}, beat: {}, once: {}, rush: { best: 0, clears: 0 } }; } })();      // (v1.00 saved the curses you beat as c0..c4; they are called by name now so the ladder can grow)      // saved on the device: money, what you own (skills and characters), which challenges you beat
+const PROG = (() => { const OLD = ['grub', 'stalker', 'wisp', 'ogre', 'imp']; try { const p = JSON.parse(localStorage.getItem('js_prog') || '{}'), r = p.rush || {}, P = { m: Math.max(0, +p.m || 0), own: p.own || {}, beat: p.beat || {}, once: p.once || {}, rush: { best: +r.best || 0, clears: +r.clears || 0, rb: +r.rb || 0, rc: +r.rc || 0 } }; for (const k of Object.keys(P.beat)) { const m = /^c(\d)(h?)$/.exec(k); if (m && OLD[+m[1]]) { P.beat['c:' + OLD[+m[1]] + m[2]] = 1; delete P.beat[k]; } } return P; } catch (e) { return { m: 0, own: {}, beat: {}, once: {}, rush: { best: 0, clears: 0, rb: 0, rc: 0 } }; } })();      // (v1.00 saved the curses you beat as c0..c4; they are called by name now so the ladder can grow)      // saved on the device: money, what you own (skills and characters), which challenges you beat
 const saveProg = () => { try { localStorage.setItem('js_prog', JSON.stringify(PROG)); } catch (e) { /* storage blocked */ } };
 // ---- v1.11 MOBILE: the options (kept in js_set), vibration, the assist levels, the pause flag and the margin a camera notch needs
 const SET = (() => { const D = { hap: 1, sz: 100, op: 78, up: 0, lh: 0, fps: 0, lite: 0, ap: 1, assist: 0 }, R = { hap: [0, 2], sz: [70, 120], op: [30, 100], up: [0, 20], lh: [0, 1], fps: [0, 60], lite: [0, 1], ap: [0, 1], assist: [0, 3] }; try { const p = JSON.parse(localStorage.getItem('js_set') || '{}'); for (const k in D) if (typeof p[k] === 'number' && isFinite(p[k])) D[k] = Math.max(R[k][0], Math.min(R[k][1], Math.round(p[k]))); } catch (e) { /* storage blocked: the defaults */ } if (![0, 30, 60].includes(D.fps)) D.fps = 0; return D; })();
@@ -657,8 +657,11 @@ KICKS.curse = CMOVE.filter(m => m.low).map(m => m.k);      // (a LOW move hits a
 const beaten = (id, hard) => !!PROG.beat['c:' + id + (hard ? 'h' : '')];
 // RUSH: the last challenge. Five waves, a wave is one or two curses (the one in front fights, the other stays behind and throws things); you are healed (health and energy) between the waves; every wave you clear pays the same every time, the last one pays a lot; it opens when you have beaten five curses.
 const RUSH_FULL = [['hound'], ['stalker', 'wisp'], ['mantis', 'wraith'], ['ogre', 'doll'], ['crab', 'imp']], RUSH_SUB = { hound: 'grub', wraith: 'wisp', doll: 'stalker', mantis: 'stalker', crab: 'ogre' };
-const RUSH = { waves: RUSH_FULL.map(w => w.map(id => CU[id] ? id : RUSH_SUB[id])), pay: [40, 60, 80, 100, 320], hp: [1, 0.85, 0.85, 0.8, 0.75], tl: 90000, open: 5 };
+const RUSH = { waves: RUSH_FULL.map(w => w.map(id => CU[id] ? id : RUSH_SUB[id])), pay: [40, 60, 80, 100, 320], hp: [1, 0.85, 0.85, 0.8, 0.75], tl: 90000, open: 5, name: 'RUSH' };
 const rushOpen = () => CDEF.filter(c => beaten(c.id)).length >= RUSH.open;
+// v1.26 the ROULETTE: two waves, every wave is two curses picked by chance from all of them (four different ones in all), at the highest level: quicker than HARD (hard), dmg times the damage, hp times the health but never less than floor times 300 health (a weak curse that is rolled gets more health, so every roll is a tough one), and a long time for every wave (tl). Only the last wave pays: a random $500 to $1000 (steps of 10); nothing for a loss
+const ROUL = { name: 'ROULETTE', waves: [], hp: [1.5, 1.8], floor: [1.8, 2.4], tl: 150000, dmg: 1.7, open: RUSH.open, pay: [0, () => 500 + 10 * Math.floor(Math.random() * 51)] };
+function rollWaves() { const ids = CDEF.map(c => c.id); for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; } return [ids.slice(0, 2), ids.slice(2, 4)]; }
 const COMBO_PAY = 3;      // a challenge pays $3 for every hit of your best combo above 2, but never more than 30% of what the win itself pays
 let cProj = [];       // their balls, waves, gusts and flame pillars: { o (who threw it), x (world), h (height above the ground), vx, k, r, kind, look, col, born, life }
 const foesOf = () => vs && vs.foes && vs.foes.length > 1 ? vs.foes : dummy ? [dummy] : [];      // the enemy and, in a RUSH wave, the other one (vs.foes: everybody in the wave, `dummy` is the one that is meant by "the enemy")
@@ -801,22 +804,26 @@ function startCurse(i, hard, daily) {                // a challenge: best of 3 r
   audio(); vs = { story: false, gi: 2, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: ROUND_MS, hp: PHP, sh: PHP, hist: [], res: null, retry: 0, me: 'gojo', foe: 'curse', cv: CDEF[i], ci: i, hard: !!hard, dmgMul: hard ? 1.35 : 1, inv: false, bestCmb: 0, daily: daily || null };
   beginRound(pnow());
 }
-function startRush() {                        // RUSH: wave after wave, one round each; one loss ends it
-  audio(); vs = { story: false, gi: 2, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: RUSH.tl, hp: PHP, sh: PHP, hist: [], res: null, retry: 0, me: 'gojo', foe: 'curse', cv: CDEF[CID[RUSH.waves[0][0]]], ci: -1, hard: false, dmgMul: 1, rush: true, inv: false, bestCmb: 0, foes: [], rpay: 0 };
+function startRun(R) {                       // a run of waves (the RUSH or the ROULETTE): wave after wave, one round each; one loss ends it (R.dmg: the curses hit that many times as hard and are quicker, like HARD)
+  audio(); vs = { story: false, gi: 2, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: R.tl, hp: PHP, sh: PHP, hist: [], res: null, retry: 0, me: 'gojo', foe: 'curse', cv: CDEF[CID[R.waves[0][0]]], ci: -1, hard: !!R.dmg, dmgMul: R.dmg || 1, rush: true, run: R, inv: false, bestCmb: 0, foes: [], rpay: 0 };
   beginRound(pnow());
 }
+const startRush = () => startRun(RUSH);
+function startRoulette() { ROUL.waves = rollWaves(); startRun(ROUL); }
 function rushSpawn(t) {                       // a wave steps in (beginRound has made the first `dummy`)
-  const k = Math.min(vs.round, RUSH.waves.length) - 1, ids = RUSH.waves[k].filter(id => CID[id] !== undefined), x0 = wx + Math.max(60, Math.min(90, (VW >> 1) - 70));
-  vs.cv = CDEF[CID[ids[0]]]; initCurse(dummy, vs.cv, x0, RUSH.hp[k]); vs.foes = [dummy];
-  for (let j = 1; j < ids.length; j++) { const e = newFoe(t, 'fighter'), c = CDEF[CID[ids[j]]]; initCurse(e, c, x0 + 30 + dummy.curse.hw + c.hw + 4, RUSH.hp[k]); vs.foes.push(e); }
-  vs.tl = RUSH.tl;
+  const R = vs.run, k = Math.min(vs.round, R.waves.length) - 1, ids = R.waves[k].filter(id => CID[id] !== undefined), x0 = wx + Math.max(60, Math.min(90, (VW >> 1) - 70)), hm = c => Math.max(R.hp[k], R.floor ? R.floor[k] / c.hp : 0);
+  vs.cv = CDEF[CID[ids[0]]]; initCurse(dummy, vs.cv, x0, hm(vs.cv)); vs.foes = [dummy];
+  for (let j = 1; j < ids.length; j++) { const e = newFoe(t, 'fighter'), c = CDEF[CID[ids[j]]]; initCurse(e, c, x0 + 30 + dummy.curse.hw + c.hw + 4, hm(c)); vs.foes.push(e); }
+  vs.tl = R.tl;
 }
-function rushPay(now) {                       // a wave is cleared: the same money every time
-  const k = vs.round - 1, n = RUSH.pay[k]; vs.rpay += n; earn(n); PROG.rush.best = Math.max(PROG.rush.best, vs.round); saveProg(); say('+$' + n, wx + 24, '#7dff9a', 16, now + 250);
+function rushPay(now) {                       // a wave is cleared: the RUSH pays the same every time; the ROULETTE pays nothing for the first wave and a random $500 to $1000 for the second
+  const R = vs.run, k = vs.round - 1, p = R.pay[k], n = typeof p === 'function' ? p() : p; vs.rpay += n; if (n) earn(n);
+  if (R === RUSH) PROG.rush.best = Math.max(PROG.rush.best, vs.round); else PROG.rush.rb = Math.max(PROG.rush.rb, vs.round);
+  saveProg(); if (n) say('+$' + n, wx + 24, '#7dff9a', 16, now + 250);
 }
 function comboPay(base) { return Math.min(Math.round(base * 0.3), COMBO_PAY * Math.max(0, (vs.bestCmb | 0) - 2)); }      // the money for the best combo of a challenge (base = what the win pays)
 function curseOver(now) {                     // the fight is decided: money for a win (the first win of a challenge pays most), the next curse opens
-  vs.ph = 'over'; $('vsAgain').textContent = vs.rush ? 'RUSH AGAIN' : 'REMATCH'; $('vsAgain').classList.toggle('hot', vs.rush ? vs.pw < RUSH.waves.length : vs.pw < 2);
+  vs.ph = 'over'; $('vsAgain').textContent = vs.rush ? vs.run.name + ' AGAIN' : 'REMATCH'; $('vsAgain').classList.toggle('hot', vs.rush ? vs.pw < vs.run.waves.length : vs.pw < 2);
   if (vs.rush) { rushOver(now); return; }
   const win = vs.pw >= 2, c = vs.cv, key = 'c:' + c.id + (vs.hard ? 'h' : ''); let pay = 0, first = false, cb = 0;
   if (win) { first = !PROG.beat[key]; pay = c[vs.hard ? 'payH' : 'pay'][first ? 0 : 1]; cb = comboPay(pay); PROG.beat[key] = 1; earn(pay + cb); }
@@ -826,9 +833,9 @@ function curseOver(now) {                     // the fight is decided: money for
   $('vsStars').innerHTML = ''; $('vsNext').textContent = 'NEXT CURSE'; $('vsNext').style.display = win && !vs.hard && !vs.daily && vs.ci < CDEF.length - 1 ? '' : 'none'; $('vsres').classList.add('on'); snd(win ? 'finisher' : 'ko');
 }
 function rushOver(now) {
-  const full = vs.pw >= RUSH.waves.length, cb = vs.pw ? comboPay(vs.rpay) : 0; if (cb) earn(cb); if (full) PROG.rush.clears++; saveProg();
+  const R = vs.run, full = vs.pw >= R.waves.length, cb = vs.pw ? comboPay(vs.rpay) : 0; if (cb) earn(cb); if (full) { if (R === RUSH) PROG.rush.clears++; else PROG.rush.rc++; } saveProg();
   vs.res = { win: full, pay: vs.rpay + cb };
-  $('vsTitle').textContent = full ? 'RUSH CLEARED' : 'RUSH OVER'; $('vsInfo').textContent = 'WAVES ' + vs.pw + ' OF ' + RUSH.waves.length + '\n+$' + vs.rpay + (cb ? '\nBEST COMBO ' + vs.bestCmb + ' HITS  +$' + cb : '');
+  $('vsTitle').textContent = R.name + (full ? ' CLEARED' : ' OVER'); $('vsInfo').textContent = 'WAVES ' + vs.pw + ' OF ' + R.waves.length + '\n+$' + vs.rpay + (cb ? '\nBEST COMBO ' + vs.bestCmb + ' HITS  +$' + cb : '') + (R === ROUL ? '\n' + R.waves.map(w => w.map(id => CDEF[CID[id]].name).join(' + ')).join('\n') : '');
   $('vsStars').innerHTML = ''; $('vsNext').style.display = 'none'; $('vsres').classList.add('on'); snd(full ? 'finisher' : 'ko');
 }
 // ---- v1.11 DAILY CHALLENGE: one curse and one rule a day (the same all day); winning under the rule pays a bonus once a day
@@ -870,6 +877,12 @@ function buildChal() {                        // the cards: every curse with NOR
   b.className = 'ct'; b.disabled = !ro; b.innerHTML = ro ? 'START<small>$' + total + ' A CLEAR</small>' : 'LOCKED<small>BEAT ' + RUSH.open + ' CURSES</small>'; b.addEventListener('click', startRush); card.appendChild(b);
   if (ro) card.insertAdjacentHTML('beforeend', '<small class="rb">BEST WAVE ' + PROG.rush.best + '/' + RUSH.waves.length + '  CLEARS ' + PROG.rush.clears + '</small>');
   box.appendChild(card);
+  { const ro2 = rushOpen(), c2 = document.createElement('div'), w2 = document.createElement('div'), pick = CDEF.map(c => c.id).sort(() => Math.random() - 0.5).slice(0, 2);      // the ROULETTE card: two curses in the dark, you never know who comes
+    c2.className = 'card cc rush roul'; w2.className = 'cv'; for (const id of pick) { const S = CPV[id], cvs = document.createElement('canvas'); cvs.width = S.w; cvs.height = S.h; cvs.style.height = (S.h * 0.17) + 'vh'; cvs.className = 'dk'; w2.appendChild(cvs); chalPv.push({ cvs, S }); } c2.appendChild(w2);
+    c2.insertAdjacentHTML('beforeend', '<b>' + (ro2 ? 'ROULETTE' : '???') + '</b><i>2 WAVES, MAX LEVEL</i>');
+    const b2 = document.createElement('button'); b2.className = 'ct'; b2.disabled = !ro2; b2.innerHTML = ro2 ? 'START<small>$500-$1000 A CLEAR</small>' : 'LOCKED<small>BEAT ' + ROUL.open + ' CURSES</small>'; b2.addEventListener('click', startRoulette); c2.appendChild(b2);
+    if (ro2) c2.insertAdjacentHTML('beforeend', '<small class="rb">BEST WAVE ' + PROG.rush.rb + '/2  CLEARS ' + PROG.rush.rc + '</small>');
+    box.appendChild(c2); }
 }
 function chalDraw(now) { for (const q of chalPv) { const g = q.cvs.getContext('2d'); g.clearRect(0, 0, q.cvs.width, q.cvs.height); g.drawImage(q.S.idle[Math.floor(now / 125) % q.S.idle.length], 0, 0); } }
 let skTab = 'g';
@@ -2111,7 +2124,7 @@ function vsTick(now, dt) {
     if (atkAt < 0 && vs.prevAtk >= 0 && dummy && dummy.hitAt < vs.prevAtk) vs.whiffAt = now;      // Gojo's swing ended without hitting: he is open for a moment
     vs.prevAtk = atkAt;
     if (vs.tl <= 0) { if (vs.net) netTimeUp(now); else endRound(!vs.rush && vs.hp / PHP > (dummy ? dummy.hp / dummy.max : 0) ? 'player' : 'enemy', 'time', now); }
-  } else if (vs.ph === 'ko' && a >= KO_MS) { if (vs.story || (vs.rush ? vs.ew >= 1 || vs.pw >= RUSH.waves.length : vs.pw >= 2 || vs.ew >= 2)) finishMatch(now); else { vs.round++; beginRound(now); return; } }      // the round is over: whoever got the point, the next round starts fresh (full health, new positions)
+  } else if (vs.ph === 'ko' && a >= KO_MS) { if (vs.story || (vs.rush ? vs.ew >= 1 || vs.pw >= vs.run.waves.length : vs.pw >= 2 || vs.ew >= 2)) finishMatch(now); else { vs.round++; beginRound(now); return; } }      // the round is over: whoever got the point, the next round starts fresh (full health, new positions)
   if (now - vs.hitAt > 350) vs.sh += (vs.hp - vs.sh) * Math.min(1, dt * 4);
   if (vs.ph !== 'fight') { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = false; }      // no control before FIGHT! and after the K.O.
   if (now < pStun || now < (vs.catHold || 0) || now < (vs.cStun || 0)) { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; stickDown = false; }      // ...and none while he is stunned by the JUMPSCARE, held in the Cat's glove or dizzy (the Cat after 5 s flat)
@@ -2226,7 +2239,7 @@ function drawVs0(now, ux, uy, VW) {         // health bars, names, the grade, th
   bar(6, 20, pf, ps, false); bar(VW - 6 - W, 20, ef, es, true);
   const cw = Math.round(W * Math.max(0, Math.min(100, ce)) / 100), bad = now - ceFlash < 500, cc = CEC[vs.me] || CEC.gojo, nx = 6 + (NAMES[vs.me].length + (vs.meInv ? 7 : 0)) * 8 + 8, foeName = vs.cv ? vs.cv.name + (vs.rush && FO.filter(f => f.ko < 0).length > 1 ? ' +1' : '') : NAMES[vs.foe] + (vs.inv ? ' (INV.)' : '');      // the cursed energy bar right under the health bar (cyan for Gojo, yellow for Verity; it flashes red when a move is refused)
   ctx.fillStyle = '#000'; ctx.fillRect(5, 28, W + 2, 6); ctx.fillStyle = cc[0]; ctx.fillRect(6, 29, W, 4); ctx.fillStyle = bad ? '#ff4a4a' : cc[1]; ctx.fillRect(6, 29, cw, 4); ctx.fillStyle = bad ? '#ffb0b0' : cc[2]; ctx.fillRect(6, 29, cw, 1);
-  pxt(NAMES[vs.me] + (vs.meInv ? ' (INV.)' : ''), 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', nx, 45, bad ? '#ff6a5a' : cc[3], 8); let lx = nx + 62; if (vs.bleed) { pxt('BLEED', lx, 45, '#ff4a4a', 8); lx += 48; } if (vs.fear) pxt('FEAR', lx, 45, '#c77dff', 8); pxt(vs.story ? (vs.foe === 'cat' ? 'CARTOON CAT' : 'VERITY') : foeName, VW - 6, 45, '#ffffff', 8, 'right'); let rx2 = VW - 6; if (dummy && dummy.bleed) { pxt('BLEED', rx2, 37, '#ff4a4a', 8, 'right'); rx2 -= 48; } if (dummy && dummy.fear) pxt('FEAR', rx2, 37, '#c77dff', 8, 'right'); pxt(vs.story ? 'SPECIAL GRADE' : vs.net ? 'WI-FI' : vs.cv ? (vs.rush ? 'WAVE ' + Math.min(vs.round, RUSH.waves.length) + '/' + RUSH.waves.length : (vs.hard ? 'HARD ' : '') + vs.cv.grade) : GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
+  pxt(NAMES[vs.me] + (vs.meInv ? ' (INV.)' : ''), 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', nx, 45, bad ? '#ff6a5a' : cc[3], 8); let lx = nx + 62; if (vs.bleed) { pxt('BLEED', lx, 45, '#ff4a4a', 8); lx += 48; } if (vs.fear) pxt('FEAR', lx, 45, '#c77dff', 8); pxt(vs.story ? (vs.foe === 'cat' ? 'CARTOON CAT' : 'VERITY') : foeName, VW - 6, 45, '#ffffff', 8, 'right'); let rx2 = VW - 6; if (dummy && dummy.bleed) { pxt('BLEED', rx2, 37, '#ff4a4a', 8, 'right'); rx2 -= 48; } if (dummy && dummy.fear) pxt('FEAR', rx2, 37, '#c77dff', 8, 'right'); pxt(vs.story ? 'SPECIAL GRADE' : vs.net ? 'WI-FI' : vs.cv ? (vs.rush ? 'WAVE ' + Math.min(vs.round, vs.run.waves.length) + '/' + vs.run.waves.length : (vs.hard ? 'HARD ' : '') + vs.cv.grade) : GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
   if (!vs.story && !vs.practice) pxt(String(Math.max(0, Math.ceil(vs.tl / 1000))), VW / 2, 18, vs.tl < 10000 ? '#ff6a5a' : '#ffffff', 16, 'center');
   const kob = vs.ph === 'ko';
   for (let i = 0; i < (vs.story || vs.rush || vs.practice ? 0 : 2); i++) {               // the round points (a pip lights up for every round won); the point that was just won blinks
@@ -2235,10 +2248,10 @@ function drawVs0(now, ux, uy, VW) {         // health bars, names, the grade, th
     ctx.fillStyle = bl('player') ? '#ffffff' : i < vs.pw ? '#ffd34d' : '#3a3050'; ctx.fillRect(6 + W - 6 - i * 8, 12, 6, 6);
     ctx.fillStyle = bl('enemy') ? '#ffffff' : i < vs.ew ? '#ffd34d' : '#3a3050'; ctx.fillRect(VW - 6 - W + i * 8, 12, 6, 6);
   }
-  if (vs.rush) for (let i = 0; i < RUSH.waves.length; i++) { const x = Math.round(VW / 2 - RUSH.waves.length * 4 + i * 8), done = i < vs.pw; ctx.fillStyle = '#000'; ctx.fillRect(x - 1, 21, 8, 8); ctx.fillStyle = done ? '#ffd34d' : i === vs.round - 1 && vs.ph !== 'ko' ? '#7a6aa8' : '#3a3050'; ctx.fillRect(x, 22, 6, 6); }      // (RUSH: a pip for every wave, lit when it is cleared)
+  if (vs.rush) for (let i = 0; i < vs.run.waves.length; i++) { const x = Math.round(VW / 2 - vs.run.waves.length * 4 + i * 8), done = i < vs.pw; ctx.fillStyle = '#000'; ctx.fillRect(x - 1, 21, 8, 8); ctx.fillStyle = done ? '#ffd34d' : i === vs.round - 1 && vs.ph !== 'ko' ? '#7a6aa8' : '#3a3050'; ctx.fillRect(x, 22, 6, 6); }      // (RUSH: a pip for every wave, lit when it is cleared)
   if (kob && !vs.story && !vs.rush) { const me = vs.who === 'player'; pxt(me ? 'YOU GET THE POINT' : 'ENEMY GETS THE POINT', VW / 2, gy + 20, me ? '#7dff9a' : '#ff8a7a', 8, 'center'); }      // who got the point (the round restarts in a moment); it stays between the touch controls
   ctx.restore();
-  const bt = vs.ph === 'intro' ? (vs.story ? ['FIGHT!', '#ff4a3a', a] : a < INTRO_ROUND ? [(vs.rush ? 'WAVE ' : 'ROUND ') + vs.round, '#ffe9a0', a] : ['FIGHT!', '#ff4a3a', a - INTRO_ROUND]) : kob ? (vs.why === 'fatal' ? ['FATALITY', '#ff3a3a', a] : vs.why === 'time' ? ['TIME!', '#9fd8ff', a] : vs.rush && vs.who === 'player' ? [vs.pw >= RUSH.waves.length ? 'RUSH CLEAR' : 'WAVE CLEAR', '#7dff9a', a] : ['K.O.', '#ffe9a0', a]) : null;
+  const bt = vs.ph === 'intro' ? (vs.story ? ['FIGHT!', '#ff4a3a', a] : a < INTRO_ROUND ? [(vs.rush ? 'WAVE ' : 'ROUND ') + vs.round, '#ffe9a0', a] : ['FIGHT!', '#ff4a3a', a - INTRO_ROUND]) : kob ? (vs.why === 'fatal' ? ['FATALITY', '#ff3a3a', a] : vs.why === 'time' ? ['TIME!', '#9fd8ff', a] : vs.rush && vs.who === 'player' ? [vs.pw >= vs.run.waves.length ? vs.run.name + ' CLEAR' : 'WAVE CLEAR', '#7dff9a', a] : ['K.O.', '#ffe9a0', a]) : null;
   if (bt) { const kk = bt[2] / 1000, j = kk < 0.4 ? Math.round((Math.random() - 0.5) * 2) : 0; pxt(bt[0], VW / 2 + j, gy - 26 + j, bt[1], kk < 0.06 ? 48 : kk < 0.12 ? 32 : 24, 'center'); }      // the big banners (ROUND n, FIGHT!, K.O., TIME!, FATALITY) slam in huge and drop to 24 px in two steps, then shake a little, like the FATALITY title
 }
 window.__tu = () => vp ? vp.tuNow : -1;
@@ -4752,7 +4765,7 @@ $('lsBack').addEventListener('click', lanLeave);
 addEventListener('pointerdown', () => { if (state === 'story') storySkip(); });      // a tap skips to the next part of the cutscene
 $('vsGo').addEventListener('click', () => startMatch(vsSel));
 $('vsNext').addEventListener('click', () => { if (vs && vs.cv) { startCurse(vs.ci + 1, 0); return; } const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
-$('vsAgain').addEventListener('click', () => vs && vs.rush ? startRush() : vs && vs.cv ? startCurse(vs.ci, vs.hard, vs.daily) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe));
+$('vsAgain').addEventListener('click', () => vs && vs.rush ? (vs.run === ROUL ? startRoulette() : startRush()) : vs && vs.cv ? startCurse(vs.ci, vs.hard, vs.daily) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe));
 $('vsMenu').addEventListener('click', () => { if (vs && vs.net) { lanLeave(); return; } if (vs && vs.cv) { show('chal'); buildChal(); return; } if (vs && vs.story) { show('saves'); renderSaves(); } else { buildGrades(); buildFighters(); show('versus'); } });
 $('back').addEventListener('click', () => { leavePlay(); });
 VOLS.forEach(([k, name]) => {
