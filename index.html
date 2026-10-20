@@ -136,7 +136,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.12</small>
+    <small id="ver">V1.13</small>
   </div>
 </section>
 
@@ -150,7 +150,8 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <button id="lanMode" class="card mode"><span>WIFI</span><b>WI-FI ROOMS</b><i>SAME WI-FI ONLY</i></button>
   </div>
   <small>YOU START WITH PUNCHES ONLY: BEAT CURSES IN CHALLENGES, EARN MONEY, BUY SKILLS</small>
-  <div class="row"><button id="skillsMode">SKILLS</button><button id="modesBack">BACK</button></div>
+  <small id="testNote" style="display:none;color:#ffd34d">TEST PLAY: EVERY FIGHTER AND EVERY MOVE IS UNLOCKED, THE ENERGY NEVER RUNS OUT AND NOTHING IS SAVED. TAP THE BUTTON AGAIN TO GO BACK TO YOUR REAL SAVE.</small>
+  <div class="row"><button id="skillsMode">SKILLS</button><button id="testBtn">TEST PLAY: OFF</button><button id="modesBack">BACK</button></div>
 </section>
 
 <section id="lan" class="screen">
@@ -1109,7 +1110,7 @@ function drawHero(i) {
 // ---------------------------------------------------------------- v1.00: PROGRESS (money, skills, characters), the SKILLS page, and the five CURSES of the CHALLENGES ladder
 // You start as Gojo with walking, jumping and punches only. Everything else is a SKILL you buy with the money from beating curses (and Versus / Story wins); the other characters are bought too.
 const PROG = (() => { const OLD = ['grub', 'stalker', 'wisp', 'ogre', 'imp']; try { const p = JSON.parse(localStorage.getItem('js_prog') || '{}'), r = p.rush || {}, P = { m: Math.max(0, +p.m || 0), own: p.own || {}, beat: p.beat || {}, once: p.once || {}, rush: { best: +r.best || 0, clears: +r.clears || 0 } }; for (const k of Object.keys(P.beat)) { const m = /^c(\d)(h?)$/.exec(k); if (m && OLD[+m[1]]) { P.beat['c:' + OLD[+m[1]] + m[2]] = 1; delete P.beat[k]; } } return P; } catch (e) { return { m: 0, own: {}, beat: {}, once: {}, rush: { best: 0, clears: 0 } }; } })();      // (v1.00 saved the curses you beat as c0..c4; they are called by name now so the ladder can grow)      // saved on the device: money, what you own (skills and characters), which challenges you beat
-const saveProg = () => { try { localStorage.setItem('js_prog', JSON.stringify(PROG)); } catch (e) { /* storage blocked */ } };
+const saveProg = () => { if (TEST) return; try { localStorage.setItem('js_prog', JSON.stringify(PROG)); } catch (e) { /* storage blocked */ } };
 // ---- v1.11 MOBILE: the options (kept in js_set), vibration, the assist levels, the pause flag and the margin a camera notch needs
 const SET = (() => { const D = { hap: 1, sz: 100, op: 78, up: 0, lh: 0, fps: 0, lite: 0, ap: 1, assist: 0 }, R = { hap: [0, 2], sz: [70, 120], op: [30, 100], up: [0, 20], lh: [0, 1], fps: [0, 60], lite: [0, 1], ap: [0, 1], assist: [0, 3] }; try { const p = JSON.parse(localStorage.getItem('js_set') || '{}'); for (const k in D) if (typeof p[k] === 'number' && isFinite(p[k])) D[k] = Math.max(R[k][0], Math.min(R[k][1], Math.round(p[k]))); } catch (e) { /* storage blocked: the defaults */ } if (![0, 30, 60].includes(D.fps)) D.fps = 0; return D; })();
 const saveSet = () => { try { localStorage.setItem('js_set', JSON.stringify(SET)); } catch (e) { /* storage blocked */ } };
@@ -1121,7 +1122,8 @@ const fpsCap = () => SET.lite || SET.fps === 30 || (!SET.fps && powerSave) ? 30 
 const assistLvl = () => vs && vs.net ? 0 : SET.assist;      // (assist is for the offline fights only)
 const soft = dm => assistLvl() >= 2 ? Math.max(1, Math.round(dm * 0.7)) : dm;      // EASY: 30% less damage to you
 const autoGuard = () => assistLvl() >= 3 && !lacks('blk') && stance === 'stand' && atkAt < 0 && lpAt < 0 && jumpAt < 0 && teleAt < 0 && dgAt < 0 && mbAt < 0 && !dash && !keyL && !keyR && !padL && !padR;      // AUTO-GUARD: standing still with nothing going on, the front is guarded as if BLOCK were held
-const owns = id => !!PROG.own[id], gojoMe = () => !vs || vs.me === 'gojo';
+let TEST = false;      // v1.13 TEST PLAY (the MODES screen): every fighter and every move counts as bought, the energy never runs out and nothing is saved; it is off again whenever the app starts
+const owns = id => TEST || !!PROG.own[id], gojoMe = () => !vs || vs.me === 'gojo';
 const meK = () => !vs ? 'g' : vs.me === 'yuji' ? 'y' : vs.me === 'verity' ? 'v' : vs.me === 'cat' ? 'k' : 'g';      // the fighter you play: g = Gojo (and everything outside a match), y = Yuji, v = Verity, k = the Cat
 const setMoneyUI = () => { const t = 'MONEY $' + PROG.m; for (const id of ['modesMoney', 'chalMoney', 'skMoney']) $(id).textContent = t; };
 const earn = n => { PROG.m += n; saveProg(); setMoneyUI(); };
@@ -2646,7 +2648,7 @@ function buildFighters() {      // YOUR FIGHTER / ENEMY FIGHTER, each with a SOR
   }
 }
 const vsLoad = () => { try { const st = JSON.parse(localStorage.getItem('jsv_stars') || '[]'); return { un: Math.max(0, Math.min(5, +localStorage.getItem('jsv_unlock') || 0)), st: [0, 1, 2, 3, 4, 5].map(i => +st[i] || 0) }; } catch (e) { return { un: 0, st: [0, 0, 0, 0, 0, 0] }; } };
-const vsStore = (un, st) => { try { localStorage.setItem('jsv_unlock', String(un)); localStorage.setItem('jsv_stars', JSON.stringify(st)); } catch (e) { } };
+const vsStore = (un, st) => { if (TEST) return; try { localStorage.setItem('jsv_unlock', String(un)); localStorage.setItem('jsv_stars', JSON.stringify(st)); } catch (e) { } };
 const dBlocks = () => !!dummy && (dummy.mode === 'blocker' || dummy.ai === 'block');
 function buildGrades() {                       // the six grade buttons: locked until the grade before has been beaten, with the stars earned
   const sv = vsLoad(), box = $('grades'); box.innerHTML = ''; if (vsSel > sv.un) vsSel = sv.un;
@@ -2766,7 +2768,7 @@ const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30,
 let ce = 100, ceLast = -1e9, ceFlash = -1e9;      // the energy in %, when a move last cost some, when a move was last refused (the bar flashes red)
 function ceReset() { ce = 100; ceLast = ceFlash = -1e9; }
 function ceDeny(now) { if (now - ceFlash < 150) return; ceFlash = now; snd('noce'); }      // a refused move: the bar flashes red and says NO CE for a moment (one refusal per press, even if the press falls through to another move that is refused too)
-function ceSpend(cost, now) { if (!vs || vs.end) return true; if (ce + 1e-6 < cost) { ceDeny(now); return false; } ce = Math.max(0, ce - cost); ceLast = now; return true; }      // pays for a move (free outside Versus mode); false = not enough energy, the move does not start
+function ceSpend(cost, now) { if (TEST || !vs || vs.end) return true; if (ce + 1e-6 < cost) { ceDeny(now); return false; } ce = Math.max(0, ce - cost); ceLast = now; return true; }      // pays for a move (free outside Versus mode); false = not enough energy, the move does not start
 function ceTick(now, dt) {                    // the refill and the cursed mode's drain (only while a round is being fought)
   if (!vs || vs.ph !== 'fight') return;
   if (cm === 1) { ce = Math.max(0, ce - dt); if (ce <= 0) { ceDeny(now); setMode(0, now); } }
@@ -4091,7 +4093,7 @@ const STORYART = {"verity":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAA
 const SIMG = {}; for (const k in STORYART) { const mkI = u => { const i = new Image(); i.src = u; return i; }, a = STORYART[k]; SIMG[k] = Array.isArray(a) ? a.map(mkI) : typeof a === 'object' ? Object.fromEntries(Object.entries(a).map(([n, u]) => [n, mkI(u)])) : mkI(a); }
 const SAVE_KEY = 'jsv_saves'; let svSel = -1;
 function loadSaves() { try { const a = JSON.parse(localStorage.getItem(SAVE_KEY)); if (Array.isArray(a) && a.length === 3) return a; } catch (e) { } return [null, null, null]; }
-function storeSaves(a) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(a)); } catch (e) { } }
+function storeSaves(a) { if (TEST) return; try { localStorage.setItem(SAVE_KEY, JSON.stringify(a)); } catch (e) { } }
 function renderSaves() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].ch2 ? 'CAT BEATEN' : a[i].ch1 ? 'CHAPTER 2' : a[i].beat ? 'VERITY BEATEN' : 'CHAPTER 1') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
 function startStory(slot) { const a = loadSaves(); if (a[slot] && a[slot].ch1) { startChapter2(slot); return; } if (!a[slot]) a[slot] = { ch: 1 }; storeSaves(a); audio(); show('story'); story = { slot, t0: pnow(), battle: false, T: 0, ev: {} }; alley = true; court = false; wx = 0; }      // (a save that finished chapter 1 goes on with chapter 2)
 function storyDone() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].beat = true; storeSaves(a); }
@@ -4766,6 +4768,7 @@ window.__story = () => story ? ({ T: +(story.T || 0).toFixed(2), battle: !!story
 function tick(t) {
   requestAnimationFrame(tick);                // schedule first so one bad frame can't stop the loop
   if (paused) { if (state !== 'play') setPause(false); return; }      // PAUSE: nothing moves and the game's clock stands still
+  if (TEST) ce = 100;      // TEST PLAY: the energy never runs out
   const cap = fpsCap(); if (cap && t - tDraw < 1000 / cap - 3) return; tDraw = t;      // the 30 / 60 FPS option and the battery saver: the frames in between are skipped
   const rdt = Math.max(0, Math.min(100, t - tLast)); tLast = t;
   if (t < slowAt + slowMs) { const k = (t - slowAt) / slowMs; vOff += rdt * (1 - (k < 0.35 ? slowRate : slowRate + (1 - slowRate) * Math.pow((k - 0.35) / 0.65, 2))); }      // slow motion: the game's clock falls behind the real one
@@ -4991,6 +4994,11 @@ $('bkLoad').addEventListener('click', () => {
   try { const del = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (bkOwn(k)) del.push(k); } del.forEach(k => localStorage.removeItem(k)); for (const k in o) localStorage.setItem(k, o[k]); bkSay('LOADED'); location.reload(); } catch (e) { bkSay('COULD NOT SAVE ON THIS DEVICE'); }
 });
 applyCtl(); buildOpts(); setTab(0); refreshPower();
+// TEST PLAY: for testing every fighter with every move without buying anything (BATTLES > pick your fighter); the real save is not touched, turning it off restarts the game with the real save
+const VER = $('ver').textContent;
+function setTestUI() { $('testBtn').textContent = 'TEST PLAY: ' + (TEST ? 'ON' : 'OFF'); $('testBtn').classList.toggle('sel', TEST); $('testNote').style.display = TEST ? '' : 'none'; $('ver').textContent = VER + (TEST ? ' TEST PLAY' : ''); }
+$('testBtn').addEventListener('click', () => { if (TEST) { location.reload(); return; } TEST = true; setTestUI(); });
+setTestUI();
 const toggleDummy = mode => { if (dummy && dummy.mode === mode) dummy = null; else spawnDummy(pnow(), mode); closeSettings(); };
 $('dummyBtn').addEventListener('click', () => toggleDummy('dummy'));      // a punching bag that reacts to every hit
 $('fighterBtn').addEventListener('click', () => toggleDummy('fighter'));
