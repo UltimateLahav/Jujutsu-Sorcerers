@@ -99,7 +99,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 .gr.sel{border-color:var(--acc);background:#2a1f4a}.gr.lk{opacity:.4;border-style:dashed}
 .star{display:inline-block;width:1.6em;height:1.6em;margin:0 .15em;background:#ffd34d;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}.star.off{background:#3a3050}
 #vsres.screen{z-index:6;background:rgba(13,10,23,.93)}#vsAgain.hot{border-color:#ffd34d;color:#ffd34d;animation:hotp 1s steps(2) infinite}@keyframes hotp{50%{background:#2a1f4a}}#vsStars{font-size:6vh;height:7vh}#vsInfo{font-size:var(--fs-btn,clamp(9px,3vh,16px))}
-#settings.vsOn #dummyBtn,#settings.vsOn #fighterBtn,#settings.vsOn #blockerBtn{display:none}#pracAi{display:none}#settings.prac #pracAi{display:inline-block}
+#settings.vsOn #dummyBtn,#settings.vsOn #fighterBtn,#settings.vsOn #blockerBtn{display:none}#trHud{position:fixed;left:50%;top:10.5vh;transform:translateX(-50%);z-index:2;pointer-events:none;text-align:center;font-size:clamp(7px,2.2vh,11px);line-height:1.55;text-shadow:1px 1px 0 #000,-1px -1px 0 #000;display:none}#trHud.on{display:block}#trI,#trM{display:block;white-space:pre}#trI{color:#9fd8ff}#trM{color:#ffd34d}#stT{display:none}#settings.fp #stT{display:inline-block}#setT{max-height:58vh;overflow-y:auto}#optT button:disabled{opacity:.35}
 /* v1.11 mobile: the buttons (size, see-through, height, side), the pause screen, the settings pages, the daily card */
 .pb{width:calc(15vh*var(--pbs,1));height:calc(15vh*var(--pbs,1));opacity:var(--pbo,.78)}
 #pad #joy{width:calc(40vh*var(--pbs,1));height:calc(40vh*var(--pbs,1))}
@@ -136,7 +136,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.23</small>
+    <small id="ver">V1.24</small>
   </div>
 </section>
 
@@ -245,7 +245,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 
 <section id="settings" class="screen">
   <h2>SETTINGS</h2>
-  <div class="row"><button id="stS" class="sel">SOUND</button><button id="stC">CONTROLS</button><button id="stG">GAME</button><button id="stB">BACKUP</button></div>
+  <div class="row"><button id="stS" class="sel">SOUND</button><button id="stC">CONTROLS</button><button id="stG">GAME</button><button id="stB">BACKUP</button><button id="stT">TRAIN</button></div>
   <div id="setS" class="setp on">
     <small>VOLUME OF EACH SOUND (100% = DEFAULT, UP TO 200%)</small>
     <div id="vols"></div>
@@ -258,7 +258,11 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <small>FPS = FRAMES PER SECOND: HOW MANY PICTURES THE GAME DRAWS EVERY SECOND (30 SAVES BATTERY). BATTERY SAVER: 30 FPS, NO SCREEN SHAKE, FEWER SPARKS. AUTO-PAUSE: A CALL OR LEAVING THE APP PAUSES THE FIGHT.</small>
     <small>ASSIST (NOT IN WI-FI FIGHTS): PARRY+ = A WIDER PARRY WINDOW. EASY = ALSO 30% LESS DAMAGE TO YOU. AUTO-GUARD = ALSO BLOCKS FOR YOU WHILE YOU STAND STILL (NEEDS THE BLOCK SKILL).</small>
     <div class="opt" id="optG"></div>
-    <div class="row"><button id="dummyBtn">SPAWN DUMMY</button><button id="fighterBtn">SPAWN ATTACKER</button><button id="blockerBtn">SPAWN BLOCKER</button><button id="pracAi">ENEMY: DUMMY</button></div>
+    <div class="row"><button id="dummyBtn">SPAWN DUMMY</button><button id="fighterBtn">SPAWN ATTACKER</button><button id="blockerBtn">SPAWN BLOCKER</button></div>
+  </div>
+  <div id="setT" class="setp">
+    <small>TRAINING (FREE PLAY ONLY): TAP AN OPTION TO CHANGE IT. THE GREY ONES (ENEMY LEVEL, ENEMY IS, YOUR HEALTH, YOUR ENERGY) NEED THE FREE PLAY ROOM OF YUJI, VERITY OR THE CAT. GAME SPEED 50% AND 25% IS SLOW MOTION.</small>
+    <div class="opt" id="optT"></div>
   </div>
   <div id="setB" class="setp">
     <small>THE SAVE CODE HOLDS YOUR MONEY, SKILLS, PROGRESS AND SETTINGS. MAKE ONE, COPY IT, AND LOAD IT ON ANY DEVICE.</small>
@@ -270,6 +274,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 </section>
 
 <div id="safe" aria-hidden="true"></div>
+<div id="trHud" aria-hidden="true"><span id="trI"></span><span id="trM"></span></div>
 <div id="hud"><button id="back">&lt; MENU</button><span>GOJO SATORU</span><button id="snd">SND ON</button><button id="pauseBtn" aria-label="Pause">II</button><button id="setBtn">SET</button></div>
 <div id="pad">
   <div id="joy" role="application" aria-label="Joystick: push left or right to walk, up to jump, down to crouch">
@@ -2779,7 +2784,7 @@ const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30,
 let ce = 100, ceLast = -1e9, ceFlash = -1e9;      // the energy in %, when a move last cost some, when a move was last refused (the bar flashes red)
 function ceReset() { ce = 100; ceLast = ceFlash = -1e9; }
 function ceDeny(now) { if (now - ceFlash < 150) return; ceFlash = now; snd('noce'); }      // a refused move: the bar flashes red and says NO CE for a moment (one refusal per press, even if the press falls through to another move that is refused too)
-function ceSpend(cost, now) { if (!vs || vs.end || vs.practice) return true; if (ce + 1e-6 < cost) { ceDeny(now); return false; } ce = Math.max(0, ce - cost); ceLast = now; return true; }      // pays for a move (free outside Versus mode); false = not enough energy, the move does not start
+function ceSpend(cost, now) { if (!vs || vs.end || (vs.practice && TR.pce === 0)) return true; if (ce + 1e-6 < cost) { ceDeny(now); return false; } ce = Math.max(0, ce - cost); ceLast = now; return true; }      // pays for a move (free outside Versus mode); false = not enough energy, the move does not start
 function ceTick(now, dt) {                    // the refill and the cursed mode's drain (only while a round is being fought)
   if (!vs || vs.ph !== 'fight') return;
   if (cm === 1) { ce = Math.max(0, ce - dt); if (ce <= 0) { ceDeny(now); setMode(0, now); } }
@@ -5123,11 +5128,13 @@ function tick(t) {
   const rdt = Math.max(0, Math.min(100, t - tLast)); tLast = t;
   if (t < slowAt + slowMs) { const k = (t - slowAt) / slowMs; vOff += rdt * (1 - (k < 0.35 ? slowRate : slowRate + (1 - slowRate) * Math.pow((k - 0.35) / 0.65, 2))); }      // slow motion: the game's clock falls behind the real one
   else if (slowFin) { slowFin = false; snd('slowout'); }
+  if (TR.spd && freePlay()) vOff += rdt * (1 - TRS[TR.spd]);      // GAME SPEED (SETTINGS > TRAIN): the game's clock runs at half or a quarter of the real one in free play
   let now = t - vOff;
   const still = state === 'play' && stopMs > 0;      // HIT-STOP: the game's clock stands still for a moment (everything in the game runs on it, so the fight freezes and goes on from the same picture)
   if (still) { stopMs = Math.max(0, stopMs - rdt); vOff += now - last; now = last; } else if (state !== 'play') stopMs = 0;
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
-  if (vs && vs.practice && state === 'play') practiceStep(now);
+  if (freePlay()) trainStep(now, dt);
+  trainDraw(now);
   if (stance === 'down' && stPrev === 'stand' && vs && state === 'play') ceSpend(CE_COST.crouch, now); stPrev = stance;      // (the crouch of every fighter, the Cat smashing himself flat: 3% of the energy)
   if (lanRole === 'in' && state === 'play') lanTick();      // (the Wi-Fi fight: his pictures are picked up every frame, not every 0.15 s)
   if (story && story.toOutro) { story.toOutro = false; startOutro(now); }      // (the fight against Verity is won: the ending of the chapter starts)
@@ -5228,13 +5235,72 @@ const inApp = /; wv\)/.test(navigator.userAgent);   // inside the Android app th
 $('start').addEventListener('click', () => { audio(); if (!inApp && matchMedia('(pointer:coarse)').matches) goFullscreen(); show('modes'); });
 $('gojo').addEventListener('click', () => { show('play'); skillUI(); });      // (free play as Gojo: all his moves are free there, see freePlay)
 const selPv = [];
-function startPractice(who) {      // FREE PLAY as Yuji, Verity or the Cat: a Versus match against a punching bag that never ends: every move is free (freePlay), you cannot lose, the energy is always full, there is no timer, an enemy who is K.O.'d comes back with the next round (see practiceStep); SET > GAME makes the enemy fight back
-  const sv = { ...vsPick }; audio(); vsPick.me = who; vsPick.foe = 'gojo'; startMatch(0); Object.assign(vsPick, sv);
-  vs.practice = true; vs.pAi = false; vs.tl = 1e9; setModeUI();
+function startPractice(who, foe) {      // FREE PLAY as Yuji, Verity or the Cat: a Versus match against a punching bag that never ends: every move is free (freePlay), you cannot lose, the energy is always full, there is no timer, an enemy who is K.O.'d comes back with the next round (see trainStep). v1.24: SETTINGS > TRAIN controls the enemy (who he is, what he does, his health and level), your health and energy, the speed of the game and two overlays
+  const sv = { ...vsPick }; audio(); vsPick.me = who; vsPick.foe = foe || TRF[TR.foe] || 'gojo'; startMatch(TR.grade); Object.assign(vsPick, sv);
+  vs.practice = true; vs.tl = 1e9; setModeUI();
 }
-function practiceStep(now) {      // every frame of a free play match
-  ce = 100; vs.hp = vs.sh = PHP; vs.tl = 1e9; vs.pw = vs.ew = 0;      // (no round is ever won: the next round starts after a K.O.)
-  const d = dummy; if (d && !vs.pAi && vs.ph === 'fight' && d.ko < 0 && !d.cap) { d.stunUntil = now + 500; d.ai = 'rest'; d.aiAt = now; d.restFor = 500; }      // (the enemy stands still, a punching bag)
+// ---------------------------------------------------------------- v1.24 THE TRAIN PAGE of SETTINGS (free play only: the rooms of Yuji, Verity and the Cat, and Gojo's free play): options to control the match and the enemy. The "ENEMY: DUMMY / FIGHTS BACK" button of v1.14 is the first option now. ENEMY (what he does: DUMMY, FIGHTS BACK, BLOCKS, DODGES, WALKS TO YOU, BACKS AWAY), ENEMY HEALTH (NORMAL, INFINITE, LOW 10%), YOUR HEALTH and YOUR ENERGY (INFINITE or NORMAL), ENEMY LEVEL (the six grades: how well he fights back), ENEMY IS (Gojo, Yuji, Verity or the Cat: the room starts again), ENEMY ARMOR (no flinch / no push), GAME SPEED (100%, 50%, 25%), DAMAGE METER and MOVE INFO (two overlays), and three buttons: PUT ENEMY (close, mid, far), RESET ENEMY and RESET METER. Everything is off or as before by default.
+const TRF = ['gojo', 'yuji', 'verity', 'cat'], TRS = [1, 0.5, 0.25];
+const TRV = { beh: ['DUMMY', 'FIGHTS BACK', 'BLOCKS', 'DODGES', 'WALKS TO YOU', 'BACKS AWAY'], ehp: ['NORMAL', 'INFINITE', 'LOW (10%)'], php: ['INFINITE', 'NORMAL'], pce: ['INFINITE', 'NORMAL'], grade: GRADES.map(g => g.name), foe: ['GOJO', 'YUJI', 'VERITY', 'CAT'], arm: ['OFF', 'NO FLINCH', 'NO FLINCH, NO PUSH'], spd: ['100%', '50%', '25%'], meter: ['OFF', 'ON'], info: ['OFF', 'ON'], put: ['CLOSE', 'MID', 'FAR'] };
+const TR = { beh: 0, ehp: 0, php: 0, pce: 0, grade: 0, foe: 0, arm: 0, spd: 0, meter: 0, info: 0, put: 0, born: -1, hpPrev: 0, xHold: 0, hitSeen: -1e9, log: [], total: 0, last: 0, best: 0 };
+function trLog(n, now) { TR.log.push([now, n]); if (TR.log.length > 80) TR.log.shift(); TR.last = n; TR.total += n; }
+function trainStep(now, dt) {      // every frame of free play, before the picture is drawn
+  const room = !!vs && vs.practice, d = dummy, fight = !vs || vs.ph === 'fight';
+  if (room) { if (TR.pce === 0) ce = 100; if (TR.php === 0) vs.hp = vs.sh = PHP; vs.tl = 1e9; vs.pw = vs.ew = 0; }      // (no round is ever won: the next round starts after a K.O.)
+  if (!d) { TR.born = -1; return; }
+  const mx = d.max || DUMMY_HP;
+  if (d.born !== TR.born) { TR.born = d.born; if (TR.ehp === 2 && !d.curse) d.hp = d.shown = Math.max(1, Math.round(mx * 0.1)); TR.hpPrev = d.hp; TR.xHold = d.x; }      // (a new enemy: LOW health starts at 10%)
+  const lost = TR.hpPrev - d.hp; if (lost > 0) trLog(lost, now); TR.best = Math.max(TR.best, hits.n);      // (the damage meter counts every point he lost since the last frame, bleeding too)
+  if (d.ko >= 0 || d.cap || !fight) { TR.hpPrev = d.hp; TR.xHold = d.x; TR.hitSeen = d.hitAt; return; }
+  if (TR.arm === 2) { if (d.hitAt !== TR.hitSeen) d.x = TR.xHold; d.vx = 0; }      // (NO PUSH: the frame after a hit he is put back where he stood, and his speed is zero; his own walking is not touched)
+  const gap = d.x - wx, b = TR.beh;
+  if (b === 0 || b === 3) { d.stunUntil = now + 500; d.ai = 'rest'; d.aiAt = now; d.restFor = 500; if (b === 3) d.dodgeUntil = now + 150; }      // DUMMY: he stands still, a punching bag (v1.14). DODGES: the same, and everything you throw misses him
+  else if (b === 2) { d.ai = 'block'; d.aiAt = now; d.until = now + 700; }      // BLOCKS: his guard is always up
+  else if (b >= 4) {      // WALKS TO YOU (he stops 24 px in front of you) / BACKS AWAY (he keeps 150 px between you)
+    d.stunUntil = now + 300; const go = b === 4 ? gap > 24 : gap < 150;
+    if (go) { d.x += (b === 4 ? -1 : 1) * FOE_WALK * 1.5 * dt; d.ai = 'walk'; } else { d.ai = 'rest'; d.aiAt = now; d.restFor = 300; }
+  }
+  if (TR.arm >= 1) { d.rxAt = -9999; d.down = 0; }      // (NO FLINCH: he takes the hit and goes on)
+  if (TR.ehp === 1) d.hp = d.shown = mx;      // (INFINITE health)
+  TR.hpPrev = d.hp; TR.xHold = d.x; TR.hitSeen = d.hitAt;
+}
+function trainPut() {      // PUT ENEMY: in front of you, close (28 px), mid (70 px) or far (130 px); every press is the next distance
+  const d = dummy; TR.put = (TR.put + 1) % 3; if (!d) return; d.x = wx + [28, 70, 130][TR.put]; d.vx = 0; d.air = null; d.down = 0; d.pull = null; TR.xHold = d.x;
+}
+function trainReset() {      // RESET ENEMY: full health, standing, 70 px in front of you; a K.O.'d enemy comes back with a new round
+  const d = dummy; if (!d) return; if (d.ko >= 0 || d.hp <= 0) { if (vs) beginRound(pnow()); else spawnDummy(pnow(), 'fighter'); return; }
+  d.hp = d.shown = d.max || DUMMY_HP; d.bleed = null; d.air = null; d.down = 0; d.vx = 0; d.stunUntil = 0; d.rxAt = -9999; d.pull = null; d.x = wx + 70; TR.xHold = d.x; TR.hpPrev = d.hp;
+}
+function trainMeterReset() { TR.log = []; TR.total = TR.last = TR.best = 0; hits.n = 0; }
+const TRO = [      // [key, label, needs a room of Yuji / Verity / the Cat, what happens when it changes]
+  ['beh', 'ENEMY', false, () => { if (!vs && (!dummy || dummy.mode !== 'fighter')) spawnDummy(pnow(), 'fighter'); }],
+  ['ehp', 'ENEMY HEALTH', false, i => { const d = dummy; if (!d) return; const mx = d.max || DUMMY_HP; d.hp = d.shown = i === 2 ? Math.max(1, Math.round(mx * 0.1)) : mx; TR.hpPrev = d.hp; }],
+  ['php', 'YOUR HEALTH', true, null], ['pce', 'YOUR ENERGY', true, null],
+  ['grade', 'ENEMY LEVEL', true, i => { vs.gi = i; const d = dummy, G = GRADES[i]; if (d && !d.curse && d.mode === 'fighter') { d.max = Math.round(DUMMY_HP * G.hp); d.hp = d.shown = d.max; d.spd = G.spd; TR.hpPrev = d.hp; } }],
+  ['foe', 'ENEMY IS', true, i => { startPractice(vs.me, TRF[i]); setPause(false); closeSettings(); }],
+  ['arm', 'ENEMY ARMOR', false, null], ['spd', 'GAME SPEED', false, null], ['meter', 'DAMAGE METER', false, null], ['info', 'MOVE INFO', false, null]];
+function trainUI() {      // the labels of the TRAIN page (the options that need a room are grey in Gojo's free play)
+  for (const [key, label, room] of TRO) { const b = $('tr_' + key); if (!b) continue; b.textContent = label + ': ' + TRV[key][TR[key]]; b.disabled = room && !(vs && vs.practice); }
+  $('tr_put').textContent = 'PUT ENEMY: ' + TRV.put[TR.put];
+}
+{
+  const box = $('optT');
+  for (const [key, , , fn] of TRO) { const b = document.createElement('button'); b.id = 'tr_' + key; b.addEventListener('click', () => { TR[key] = (TR[key] + 1) % TRV[key].length; if (fn) fn(TR[key]); trainUI(); }); box.appendChild(b); }
+  for (const [id, text, fn] of [['tr_put', 'PUT ENEMY', trainPut], ['tr_reset', 'RESET ENEMY', trainReset], ['tr_mreset', 'RESET METER', trainMeterReset]]) { const b = document.createElement('button'); b.id = id; b.textContent = text; b.addEventListener('click', () => { fn(); trainUI(); }); box.appendChild(b); }
+  trainUI();
+}
+let trShown = false;
+function trainDraw(now) {      // the two overlays of the TRAIN page, as a small text panel in the middle under the top bars (clear of the bars, the combo counter and the buttons): MOVE INFO (your move and its frame, the gap to the enemy, your energy) and the DAMAGE METER (the last hit, the total, the damage per second over the last 3 s, the combo and the best combo)
+  const on = freePlay() && !!(TR.meter || TR.info) && !$('hud').classList.contains('cine');
+  if (!on) { if (trShown) { $('trHud').classList.remove('on'); trShown = false; } return; }
+  let a = '', m = '';
+  if (TR.info) {
+    const yj = !!vs && vs.me === 'yuji', gj = !vs || vs.me === 'gojo', fps = yj ? YU_ATK.fps[atkK] : gj ? ATK_FPS[atkK] : 0, name = atkAt >= 0 ? (yj ? YU_ATK.names[atkK] : gj ? ATK_NAMES[atkK] : 'MOVE ' + atkK) : '-', fr = atkAt >= 0 && fps ? Math.min(14, Math.floor(Math.max(0, now - atkAt) * fps / 1000)) + 1 : 0;
+    a = 'MOVE ' + name + (fr ? '   FRAME ' + fr + '/15' : '') + '\nGAP ' + (dummy ? Math.round(dummy.x - wx) : 0) + ' PX   ENERGY ' + Math.round(ce) + '%';
+  }
+  if (TR.meter) { TR.log = TR.log.filter(e => e[0] > now - 3000); m = 'LAST ' + TR.last + '   TOTAL ' + TR.total + '   DPS ' + Math.round(TR.log.reduce((x, e) => x + e[1], 0) / 3) + '\nCOMBO ' + hits.n + '   BEST ' + Math.max(TR.best, hits.n); }
+  if ($('trI').textContent !== a) $('trI').textContent = a; if ($('trM').textContent !== m) $('trM').textContent = m;
+  if (!trShown) { $('trHud').classList.add('on'); trShown = true; }
 }
 for (const b of document.querySelectorAll('#select .pp')) { const who = b.dataset.who, c = b.querySelector('canvas'); c.width = who === 'yuji' ? YU.idle.w : 64; c.height = 64; selPv.push({ g: c.getContext('2d'), who }); b.addEventListener('click', () => startPractice(who)); }
 $('vsBtn').addEventListener('click', () => { buildGrades(); buildFighters(); show('versus'); });
@@ -5280,9 +5346,8 @@ VOLS.forEach(([k, name]) => {
 const settingsOn = () => $('settings').classList.contains('on');
 const closeSettings = () => { $('settings').classList.remove('on'); $('pause').classList.remove('hid'); };
 const dummyLabels = () => { $('dummyBtn').textContent = dummy && dummy.mode === 'dummy' ? 'REMOVE DUMMY' : 'SPAWN DUMMY'; $('fighterBtn').textContent = dummy && dummy.mode === 'fighter' ? 'REMOVE ATTACKER' : 'SPAWN ATTACKER'; $('blockerBtn').textContent = dummy && dummy.mode === 'blocker' ? 'REMOVE BLOCKER' : 'SPAWN BLOCKER'; };
-$('setBtn').addEventListener('click', () => { setPause(true); releaseAll(); audio(); dummyLabels(); $('settings').classList.toggle('prac', !!(vs && vs.practice)); $('pracAi').textContent = 'ENEMY: ' + (vs && vs.pAi ? 'FIGHTS BACK' : 'DUMMY'); $('settings').classList.toggle('vsOn', !!vs); $('settings').classList.add('on'); $('pause').classList.add('hid'); });
+$('setBtn').addEventListener('click', () => { setPause(true); releaseAll(); audio(); dummyLabels(); $('settings').classList.toggle('fp', freePlay()); trainUI(); $('settings').classList.toggle('vsOn', !!vs); $('settings').classList.add('on'); $('pause').classList.add('hid'); });
 $('setClose').addEventListener('click', closeSettings);
-$('pracAi').addEventListener('click', () => { if (vs && vs.practice) { vs.pAi = !vs.pAi; $('pracAi').textContent = 'ENEMY: ' + (vs.pAi ? 'FIGHTS BACK' : 'DUMMY'); } });
 // ---------------------------------------------------------------- v1.11 MOBILE: pause, controls, game options, the save code
 // PAUSE: tick returns at once (nothing moves); when it ends, its length is added to the game's clock, so every timer goes on from where it was. A call, the home button, a locked screen or a pulled-down notification bar pause an offline fight by themselves.
 function setPause(on) {
@@ -5321,7 +5386,7 @@ function buildOpts() {
     }
   }
 }
-const SET_TABS = [['stS', 'setS'], ['stC', 'setC'], ['stG', 'setG'], ['stB', 'setB']];
+const SET_TABS = [['stS', 'setS'], ['stC', 'setC'], ['stG', 'setG'], ['stB', 'setB'], ['stT', 'setT']];
 function setTab(i) { SET_TABS.forEach(([bt, pg], j) => { $(bt).classList.toggle('sel', i === j); $(pg).classList.toggle('on', i === j); }); $('settings').classList.toggle('ctl', i === 1); }      // (on the CONTROLS page the screen is see-through, so you see the buttons change)
 SET_TABS.forEach(([bt], i) => $(bt).addEventListener('click', () => setTab(i)));
 // SAVE CODE: everything the game keeps (js_* and jsv_* in the storage) as one line of text: JS1.<data>.<check>
