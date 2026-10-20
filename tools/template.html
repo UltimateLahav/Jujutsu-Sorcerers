@@ -92,7 +92,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #ver{position:fixed;right:2vh;bottom:1.6vh;font-size:clamp(7px,2vh,11px)}#modes .card{width:25vh;font-size:clamp(7px,2vh,12px)}#modes .cards{gap:3vh}.row button.sel{border-color:var(--acc);background:#2a1f4a}#vsInfo{white-space:pre-line;line-height:1.8}
 .pb.lk{opacity:.22;filter:grayscale(1);position:relative}.pb.lk::before{content:'LOCK';position:absolute;top:.3vh;left:0;right:0;text-align:center;font-size:1.5vh;color:#ff6a5a;text-shadow:1px 1px 0 #000}      /* a move you do not own */
 #modesMoney,#chalMoney,#skMoney{color:#ffd34d;font-size:clamp(8px,2.6vh,14px)}#chalCards{display:flex;gap:2vh;overflow-x:auto;max-width:96vw;padding:.6vh .6vh 1.6vh;scrollbar-color:var(--acc) #120d22}#chalCards::-webkit-scrollbar{height:1.6vh}#chalCards::-webkit-scrollbar-thumb{background:var(--acc);border:2px solid var(--bg)}#chalCards::-webkit-scrollbar-track{background:#120d22}.cc{flex:0 0 27vh;width:27vh;height:auto;min-height:60vh;gap:.8vh;justify-content:flex-start}.cc.rush{border-color:#ffd34d}.cc.rush .cv{gap:0}.rb{color:var(--dim);font-size:.7em;line-height:1.5}.cv{height:26vh;display:flex;align-items:flex-end;justify-content:center}.cv canvas{width:auto;transform:scaleX(-1)}.cv canvas.dk{filter:brightness(0) opacity(.45)}.cc b{font-size:.9em;line-height:1.3}.ct{width:100%;padding:.9vh .6vh;font-size:.85em;line-height:1.5}.ct small{display:block;color:var(--dim);font-size:.8em}
-#skList::-webkit-scrollbar{width:1.6vh}#skList::-webkit-scrollbar-thumb{background:var(--acc);border:2px solid var(--bg)}#skList::-webkit-scrollbar-track{background:#120d22}#skList{scrollbar-color:var(--acc) #120d22;display:grid;grid-template-columns:repeat(3,1fr);gap:1.4vh;width:min(94vw,120vh);max-height:56vh;overflow-y:auto}.sk{border:3px solid var(--line);background:var(--card);padding:1.2vh;display:flex;flex-direction:column;gap:.8vh;text-align:left;font-size:clamp(7px,1.9vh,11px)}.sk small{color:var(--dim);line-height:1.5;flex:1;font-size:.9em}.sk button{padding:.9vh;font-size:inherit}.sk.own{border-color:#4fd18a}.sk b{font-weight:normal;color:var(--ink)}      /* the CHALLENGES and SKILLS pages */
+#skills{gap:1.2vh;justify-content:flex-start;padding-top:calc(env(safe-area-inset-top) + 1.4vh);padding-bottom:calc(env(safe-area-inset-bottom) + 1.4vh)}#skTop{display:flex;align-items:center;gap:1.6vh;width:min(100%,220vh)}#skTop button{padding:.8vh 1.6vh;font-size:clamp(7px,2.3vh,12px);box-shadow:3px 3px 0 #000}#skTop .row{flex:1;gap:1vh;flex-wrap:nowrap}#skSum{display:flex;flex-direction:column;align-items:flex-end;gap:.5vh}#skCnt{color:var(--dim);font-size:clamp(6px,1.8vh,10px)}#skMain{display:flex;gap:1.6vh;width:min(100%,220vh);flex:1;min-height:0}#skTree{flex:1;min-width:0;display:flex;overflow:auto;border:3px solid var(--line);background:#0f0a1d;scrollbar-color:var(--acc) #120d22}#skTree::-webkit-scrollbar{width:1.6vh;height:1.6vh}#skTree::-webkit-scrollbar-thumb{background:var(--acc);border:2px solid var(--bg)}#skTree::-webkit-scrollbar-track{background:#120d22}#skCv{position:relative;flex:none;margin:auto}.skl{position:absolute;left:0;top:0;fill:none;stroke-width:.9;shape-rendering:crispEdges}.skl .off path{stroke:#54457f}.skl .open path{stroke:#c9a227;stroke-dasharray:1.6 1.2}.skl .lit path{stroke:#4fd18a}.skl .fresh{stroke-dasharray:1;animation:skdraw .5s steps(8) both}@keyframes skdraw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}.nd{position:absolute;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3vh;padding:.3vh .5vh;border:3px solid #54457f;background:#1b1432;color:#bdb5de;font-size:clamp(7px,1.9vh,11px);line-height:1.15;box-shadow:3px 3px 0 #000;overflow:hidden}.nd b{font-weight:normal;overflow-wrap:anywhere}.nd i{font-style:normal;font-size:.92em;color:#a79fca}.nd.open{border-color:#c9a227;background:#241c0c;color:var(--ink)}.nd.open i{color:#e8c24a}.nd.can{animation:skcan 1s steps(2) infinite}@keyframes skcan{50%{border-color:#fff1a8}}.nd.own{border-color:#4fd18a;background:#0f2a1c;color:#d8ffe8}.nd.own i{color:#4fd18a}.nd.rt{border-width:4px}.nd.sel{outline:.6vh solid #9fd8ff;outline-offset:.2vh;z-index:2}.nd.pop{animation:skpop .5s steps(6)}@keyframes skpop{0%{transform:scale(1.3);box-shadow:0 0 0 1vh #4fd18a}100%{transform:none}}.nd.new{animation:sknew .5s steps(2) 4}@keyframes sknew{50%{background:#4a3a10;border-color:#fff1a8}}#skInfo{flex:0 0 48vh;display:flex;flex-direction:column;gap:1.2vh;padding:1.4vh;border:3px solid var(--line);background:var(--card);text-align:left;overflow-y:auto;font-size:clamp(7px,1.9vh,11px)}#skInfo h3{margin:0;font-size:clamp(8px,2.5vh,14px);font-weight:normal}#skInfo .st{font-style:normal}.st.own{color:#4fd18a}.st.open{color:#ffd34d}.st.lock{color:#ff8a7a}#skInfo small{color:var(--dim);line-height:1.55;font-size:.95em;flex:1}#skInfo .rq{color:var(--dim);line-height:1.5}.rq .hv{color:#4fd18a}.rq .ms{color:#ff8a7a}#skInfo button{padding:1vh;font-size:inherit}      /* the CHALLENGES and SKILLS pages */
 @keyframes shk{0%{transform:translateX(0)}25%{transform:translateX(-.8vh)}50%{transform:translateX(.8vh)}75%{transform:translateX(-.5vh)}100%{transform:translateX(0)}}.shake{animation:shk .35s steps(6)}.shake i{color:#ff8a7a}      /* STORY MODE: not made yet, the card shakes */
 #grades{display:grid;grid-template-columns:repeat(3,auto);gap:1.2vh 1.6vh}
 .gr{padding:1vh 1.6vh;font-size:clamp(7px,2.1vh,12px);min-width:22vh}.gr small{display:block;margin-top:.7vh}
@@ -136,7 +136,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.24</small>
+    <small id="ver">V1.25</small>
   </div>
 </section>
 
@@ -195,11 +195,12 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 </section>
 
 <section id="skills" class="screen">
-  <h2>SKILLS</h2>
-  <small id="skMoney"></small>
-  <div class="row"><button id="skTabG" class="sel">GOJO</button><button id="skTabY">YUJI</button><button id="skTabV">VERITY</button><button id="skTabK">CAT</button><button id="skTabC">CHARACTERS</button></div>
-  <div id="skList"></div>
-  <button id="skBack">BACK</button>
+  <div id="skTop">
+    <button id="skBack">BACK</button>
+    <div class="row"><button id="skTabG" class="sel">GOJO</button><button id="skTabY">YUJI</button><button id="skTabV">VERITY</button><button id="skTabK">CAT</button><button id="skTabC">CHARACTERS</button></div>
+    <div id="skSum"><small id="skMoney"></small><small id="skCnt"></small></div>
+  </div>
+  <div id="skMain"><div id="skTree"><div id="skCv"></div></div><div id="skInfo"></div></div>
 </section>
 
 <section id="saves" class="screen">
@@ -527,7 +528,7 @@ const SK_GOJO = [      // [id, name, what it does, price, needs]
   ['dash', 'DASH', 'A QUICK EVADE FORWARD OR BACK THAT DODGES HITS', 80, []],
   ['block', 'BLOCK + PARRY', 'HOLD TO GUARD AGAINST HITS FROM THE FRONT. RAISE IT JUST BEFORE A HIT TO PARRY: NO DAMAGE, THE ENEMY IS STUNNED', 80, []],
   ['cpunch', 'CROUCH PUNCHES', 'LOW PUNCHES THAT HIT DUCKING ENEMIES', 120, ['crouch']],
-  ['tele', 'TELEPORT UP', 'BLUE IN THE AIR: A SECOND JUMP', 150, []],
+  ['tele', 'TELEPORT UP', 'BLUE IN THE AIR: A SECOND JUMP', 150, ['dash']],
   ['blue', 'LAPSE BLUE', 'BLUE ON THE GROUND PULLS THE ENEMY IN', 250, []],
   ['ce', 'CURSED ENERGY', 'THE MODE BUTTON: EVERY HIT DOES 1.3 TIMES THE DAMAGE (10% TO SWITCH ON, THEN 1% A SECOND)', 300, []],
   ['mblue', 'MAX BLUE', 'CROUCH + BLUE: AN ORB THAT GRINDS THE ENEMY', 400, ['crouch', 'blue']],
@@ -556,16 +557,16 @@ const SK_VERITY = [
   ['v_block', 'BLOCK + PARRY', 'HOLD TO GUARD AGAINST HITS FROM THE FRONT. RAISE IT JUST BEFORE A HIT TO PARRY: NO DAMAGE, THE ENEMY IS STUNNED', 80, []],
   ['v_tele', 'TELEPORT', 'THE DASH BUTTON: BLINK AWAY FROM A HIT', 100, []],
   ['v_bite', 'BITE', 'BLUE: A BITE, THE ENEMY BLEEDS FOR 4 SECONDS', 200, []],
-  ['v_ball', 'SMOKE BALL', 'THE MODE BUTTON: TURN INTO A BALL THAT NOTHING CAN HIT, TAP AGAIN TO CHANGE BACK', 250, []],
-  ['v_fatal', 'FATALITY', 'FINISH A WEAK ENEMY IN A CUTSCENE', 500, []],
-  ['v_scare', 'JUMPSCARE', 'THE DOMAIN BUTTON: GRAB THE ENEMY, HE IS STUNNED FOR 5 SECONDS AND TAKES FEAR DAMAGE', 800, []]];
+  ['v_ball', 'SMOKE BALL', 'THE MODE BUTTON: TURN INTO A BALL THAT NOTHING CAN HIT, TAP AGAIN TO CHANGE BACK', 250, ['v_block']],
+  ['v_fatal', 'FATALITY', 'FINISH A WEAK ENEMY IN A CUTSCENE', 500, ['v_bite']],
+  ['v_scare', 'JUMPSCARE', 'THE DOMAIN BUTTON: GRAB THE ENEMY, HE IS STUNNED FOR 5 SECONDS AND TAKES FEAR DAMAGE', 800, ['v_ball', 'v_bite']]];
 const SK_CAT = [
   ['k_crouch', 'FLATTEN', 'DOWN ON THE STICK OR KEY S: SMASH YOURSELF FLAT, TAP AGAIN TO STAND UP (3% ENERGY)', 50, []],
   ['k_block', 'GLOVE SHIELD', 'HOLD TO GUARD WITH A GIANT GLOVE. RAISE IT JUST BEFORE A HIT TO PARRY: NO DAMAGE, THE ENEMY IS STUNNED', 80, []],
   ['k_dash', 'PUSH DASH', 'SHOVE YOURSELF ALONG THE GROUND, NOTHING CAN HIT YOU AT THE START', 80, []],
-  ['k_toon', 'CARTOON ATTACK', 'BLUE: THE HUGE CARTOON CAT GRABS YOU AND THROWS YOU ONTO THE ENEMY', 300, []],
-  ['k_fatal', 'FATALITY', 'FINISH A WEAK ENEMY IN A CUTSCENE', 500, []],
-  ['k_ult', 'ULTIMATE', 'THE DOMAIN BUTTON: CHOKE THE ENEMY, KNEE HIM 15 TIMES AND THROW HIM AWAY', 900, []]];
+  ['k_toon', 'CARTOON ATTACK', 'BLUE: THE HUGE CARTOON CAT GRABS YOU AND THROWS YOU ONTO THE ENEMY', 300, ['k_dash']],
+  ['k_fatal', 'FATALITY', 'FINISH A WEAK ENEMY IN A CUTSCENE', 500, ['k_toon']],
+  ['k_ult', 'ULTIMATE', 'THE DOMAIN BUTTON: CHOKE THE ENEMY, KNEE HIM 15 TIMES AND THROW HIM AWAY', 900, ['k_toon', 'k_block']]];
 const SKN = {}; for (const s of [].concat(SK_GOJO, SK_YUJI, SK_VERITY, SK_CAT, SK_CHAR)) SKN[s[0]] = s[1];
 const GATE = {      // for each fighter the skill each button needs (a button that is not listed is free): cr crouch, dash, blk block, cp crouched punches, ce MODE, dom DOMAIN, fat FATALITY, bl BLUE (Verity and the Cat; Gojo's and Yuji's BLUE depends on the mode, the air and the stance: gateBlue)
   g: { cr: 'crouch', dash: 'dash', blk: 'block', cp: 'cpunch', ce: 'ce', dom: 'domain', fat: 'fatal' },
@@ -873,16 +874,54 @@ function buildChal() {                        // the cards: every curse with NOR
 function chalDraw(now) { for (const q of chalPv) { const g = q.cvs.getContext('2d'); g.clearRect(0, 0, q.cvs.width, q.cvs.height); g.drawImage(q.S.idle[Math.floor(now / 125) % q.S.idle.length], 0, 0); } }
 let skTab = 'g';
 const SK_TABS = [['g', 'skTabG', SK_GOJO], ['y', 'skTabY', SK_YUJI], ['v', 'skTabV', SK_VERITY], ['k', 'skTabK', SK_CAT], ['c', 'skTabC', SK_CHAR]], SK_OF = { y: 'yuji', v: 'verity', k: 'cat' };      // (the moves of a fighter need the fighter first)
-function buildSkills() {                      // the SKILLS page: the moves of Gojo, Yuji, Verity and the Cat, and the characters, paid with money
+// ---------------------------------------------------------------- v1.25 THE SKILL TREE: the SKILLS page draws every fighter as a tree. The root is the fighter (Gojo is free, the others are bought like before), every skill is a node, and a line joins a node to the skills it needs: buy a node and the nodes after it open. A tap on a node shows it on the right, UNLOCK buys it. A skill with nothing in front of it hangs on the root.
+const SK_LAY = {      // where every node sits, [column, row] (the root is column 0): a line runs from the right edge of a skill a node needs to the left edge of the node, so the cells in between have to be empty
+  g: { _root: [0, 2.5], crouch: [1, 0], cpunch: [2, 0], blue: [1, 1], mblue: [2, 1], dash: [1, 2], tele: [2, 2], purple: [3, 2.5], block: [1, 3], ce: [1, 4], red: [2, 4], fatal: [1, 5], domain: [2, 5] },
+  y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 5], y_div: [1, 6], y_rush: [2, 6] },
+  v: { _root: [0, 2.5], v_crouch: [1, 0], v_tele: [1, 1], v_block: [1, 2], v_ball: [2, 2], v_scare: [3, 3], v_bite: [1, 4], v_fatal: [2, 5] },
+  k: { _root: [0, 1], k_crouch: [1, 0], k_fatal: [3, 0], k_dash: [1, 1], k_toon: [2, 1], k_block: [1, 2], k_ult: [3, 2] },
+  c: { _root: [0, 1], yuji: [1, 0], verity: [1, 1], cat: [1, 2] } };
+const SKI = {}; for (const [t, , rows] of SK_TABS) for (const r of rows) SKI[r[0]] = { r, t };
+const SK_GROOT = ['_gojo', 'GOJO', 'THE FIGHTER YOU START WITH. WALKING, JUMPING AND THE M1 COMBO ARE FREE. EVERY OTHER MOVE IS A NODE OF THE TREE: TAP A NODE TO READ IT AND UNLOCK IT, AND THE NODES AFTER IT OPEN', 0, []];
+let skSel = null, skPop = null, skNew = null;      // the node you tapped, the node you just bought, the nodes that just opened
+const skRow = id => id === '_gojo' ? SK_GROOT : SKI[id].r, skHas = id => id === '_gojo' || owns(id);
+const skNeeds = id => { const f = id === '_gojo' ? null : SK_OF[SKI[id].t]; return (f ? [f] : []).concat(skRow(id)[4]); }, skMiss = id => skNeeds(id).filter(r => !skHas(r));      // (the fighter and every skill in front of a node; skMiss = the ones you do not have yet)
+function buildSkills(keep) {      // draw the tree of the tab you are on (keep = a tap on a node: the tree stays where it was scrolled)
   setMoneyUI(); for (const [k, id] of SK_TABS) $(id).classList.toggle('sel', skTab === k);
-  const box = $('skList'); box.innerHTML = '';
-  for (const [id, nm, ds, pr, req] of SK_TABS.find(t => t[0] === skTab)[2]) {
-    const d = document.createElement('div'), b = document.createElement('button'), miss = (SK_OF[skTab] ? [SK_OF[skTab]] : []).concat(req).filter(r => !owns(r)); d.className = 'sk' + (owns(id) ? ' own' : ''); d.innerHTML = '<b>' + nm + '</b><small>' + ds + '</small>';
-    if (owns(id)) { b.textContent = 'OWNED'; b.disabled = true; } else if (miss.length) { b.textContent = 'NEEDS ' + miss.map(r => SKN[r]).join(' + '); b.disabled = true; } else { b.textContent = 'BUY $' + pr; b.disabled = PROG.m < pr; b.addEventListener('click', () => buySkill(id, pr)); }
-    d.appendChild(b); box.appendChild(d);
+  const rows = SK_TABS.find(t => t[0] === skTab)[2], lay = SK_LAY[skTab], root = SK_OF[skTab] || '_gojo', ids = [root].concat(rows.map(r => r[0])), tree = $('skTree'), cv = $('skCv'), sx = tree.scrollLeft, sy = tree.scrollTop;
+  const NW = 27, NH = 9.8, CX = 33.5, RY = 11, PD = 1.5, col = id => lay[id === root ? '_root' : id][0], row = id => lay[id === root ? '_root' : id][1], px = id => PD + col(id) * CX, py = id => PD + row(id) * RY, par = id => id === root ? [] : (skRow(id)[4].length ? skRow(id)[4] : [root]);      // (sizes in vh: a node is 27 wide and 9.8 high, a column is 33.5 wide, a row 11 high)
+  if (!skSel || !ids.includes(skSel)) skSel = root;
+  const lanes = {}; for (const id of ids) for (const p of par(id)) { const L = lanes[col(id)] || (lanes[col(id)] = []); if (!L.includes(p)) L.push(p); }      // (the vertical part of a line runs in the gap before the column of its node, every parent has its own lane there)
+  for (const c in lanes) lanes[c].sort((a, b) => row(a) - row(b));
+  const W = 2 * PD + Math.max(...ids.map(col)) * CX + NW, H = 2 * PD + Math.max(...ids.map(row)) * RY + NH, lines = { off: '', open: '', lit: '' };
+  for (const id of ids) for (const p of par(id)) {
+    const L = lanes[col(id)], x1 = px(p) + NW, y1 = py(p) + NH / 2, x2 = px(id), y2 = py(id) + NH / 2, xv = x2 - (CX - NW) / 2 + (L.indexOf(p) - (L.length - 1) / 2) * 1.5, k = skHas(p) ? (skHas(id) ? 'lit' : 'open') : 'off';      // (lit = both are yours, open = the way to a node you do not have yet, off = not reached)
+    lines[k] += '<path' + (k === 'lit' && id === skPop ? ' class="fresh"' : '') + ' pathLength="1" d="M' + x1 + ' ' + y1 + (y1 === y2 ? '' : 'H' + xv + 'V' + y2) + 'H' + x2 + '"/>';
   }
+  cv.style.width = W + 'vh'; cv.style.height = H + 'vh';
+  cv.innerHTML = '<svg class="skl" style="width:' + W + 'vh;height:' + H + 'vh" viewBox="0 0 ' + W + ' ' + H + '"><g class="off">' + lines.off + '</g><g class="open">' + lines.open + '</g><g class="lit">' + lines.lit + '</g></svg>';
+  for (const id of ids) {
+    const [, nm, , pr] = skRow(id), own = skHas(id), open = !own && !skMiss(id).length, b = document.createElement('button');
+    b.className = 'nd ' + (own ? 'own' : open ? 'open' + (PROG.m >= pr ? ' can' : '') : 'lock') + (id === root ? ' rt' : '') + (id === skSel ? ' sel' : '') + (id === skPop ? ' pop' : '') + (skNew && skNew.has(id) ? ' new' : '');
+    b.style.cssText = 'left:' + px(id) + 'vh;top:' + py(id) + 'vh;width:' + NW + 'vh;height:' + NH + 'vh'; b.dataset.id = id;
+    b.innerHTML = '<b>' + nm + '</b><i>' + (own ? (id === '_gojo' ? 'FREE' : 'OWNED') : '$' + pr) + '</i>';
+    b.addEventListener('click', () => { skSel = id; buildSkills(true); }); cv.appendChild(b);
+  }
+  tree.scrollLeft = keep ? sx : 0; tree.scrollTop = keep ? sy : 0;
+  $('skCnt').textContent = 'UNLOCKED ' + rows.filter(r => owns(r[0])).length + '/' + rows.length;
+  skInfoFill(skSel); skPop = skNew = null;
 }
-function buySkill(id, pr) { if (owns(id) || PROG.m < pr) return; PROG.m -= pr; PROG.own[id] = true; saveProg(); snd('finisher'); buildSkills(); }
+function skInfoFill(id) {      // the right side of the page: the node you tapped, what it needs and the button that buys it
+  const [, nm, ds, pr] = skRow(id), own = skHas(id), need = skNeeds(id), miss = skMiss(id), el = $('skInfo');
+  el.innerHTML = '<h3></h3><i class="st ' + (own ? 'own' : miss.length ? 'lock' : 'open') + '">' + (own ? 'UNLOCKED' : miss.length ? 'LOCKED' : 'READY TO UNLOCK') + '</i><small></small>' + (need.length ? '<div class="rq">NEEDS ' + need.map(r => '<span class="' + (skHas(r) ? 'hv' : 'ms') + '">' + SKN[r] + '</span>').join(' + ') + '</div>' : '');
+  el.firstChild.textContent = nm; el.querySelector('small').textContent = ds;
+  if (id !== '_gojo') { const b = document.createElement('button'); b.textContent = own ? 'UNLOCKED' : miss.length ? 'LOCKED' : PROG.m < pr ? 'NEED $' + (pr - PROG.m) + ' MORE' : 'UNLOCK $' + pr; b.disabled = own || !!miss.length || PROG.m < pr; b.addEventListener('click', () => buySkill(id, pr)); el.appendChild(b); }
+}
+function buySkill(id, pr) {      // a node needs the fighter and every skill in front of it; the nodes that open because of it flash
+  if (owns(id) || PROG.m < pr || skMiss(id).length) return;
+  const opn = () => Object.keys(SKI).filter(k => !owns(k) && !skMiss(k).length), was = opn();
+  PROG.m -= pr; PROG.own[id] = true; saveProg(); snd('finisher'); skPop = id; skNew = new Set(opn().filter(k => !was.includes(k))); buildSkills(true);
+}
 setMoneyUI();
 
 // ---------------------------------------------------------------- WI-FI ROOMS: rooms between phones on the same Wi-Fi. The Android app gives the page window.AndroidLan (android/src/com/jujutsusorcerers/game/LanNet.java: a UDP broadcast finds the rooms, a TCP link carries the messages and measures the ping)
@@ -4705,7 +4744,7 @@ $('skillsMode').addEventListener('click', () => { audio(); buildSkills(); show('
 $('chalSkills').addEventListener('click', () => { buildSkills(); show('skills'); });
 $('chalBack').addEventListener('click', () => show('modes'));
 $('skBack').addEventListener('click', () => show('modes'));
-for (const [k, id] of SK_TABS) $(id).addEventListener('click', () => { skTab = k; buildSkills(); });
+for (const [k, id] of SK_TABS) $(id).addEventListener('click', () => { skTab = k; skSel = null; buildSkills(); });
 $('lsGojo').addEventListener('click', lanChoose);
 $('lsFight').addEventListener('click', lanFight);
 $('lsAgain').addEventListener('click', () => lanAgain(true));
