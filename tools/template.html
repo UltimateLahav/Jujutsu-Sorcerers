@@ -136,7 +136,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.29</small>
+    <small id="ver">V1.30</small>
   </div>
 </section>
 
@@ -258,6 +258,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
   <div id="setG" class="setp">
     <small>FPS = FRAMES PER SECOND: HOW MANY PICTURES THE GAME DRAWS EVERY SECOND (30 SAVES BATTERY). BATTERY SAVER: 30 FPS, NO SCREEN SHAKE, FEWER SPARKS. AUTO-PAUSE: A CALL OR LEAVING THE APP PAUSES THE FIGHT.</small>
     <small>ASSIST (NOT IN WI-FI FIGHTS): PARRY+ = A WIDER PARRY WINDOW. EASY = ALSO 30% LESS DAMAGE TO YOU. AUTO-GUARD = ALSO BLOCKS FOR YOU WHILE YOU STAND STILL (NEEDS THE BLOCK SKILL).</small>
+    <small>GAME PACE: HOW FAST A FIGHT RUNS. FAST = 1.25 TIMES, TURBO = 1.5 TIMES (NOT IN WI-FI FIGHTS AND THE STORY). THE ROUND TIMER, THE 10 SECONDS OF THE INHERITENCE AND THE 4 SECONDS OF THE DASH LOCK STILL COUNT REAL SECONDS.</small>
     <div class="opt" id="optG"></div>
     <div class="row"><button id="dummyBtn">SPAWN DUMMY</button><button id="fighterBtn">SPAWN ATTACKER</button><button id="blockerBtn">SPAWN BLOCKER</button></div>
   </div>
@@ -507,7 +508,7 @@ function drawHero(i) {
 const PROG = (() => { const OLD = ['grub', 'stalker', 'wisp', 'ogre', 'imp']; try { const p = JSON.parse(localStorage.getItem('js_prog') || '{}'), r = p.rush || {}, P = { m: Math.max(0, +p.m || 0), own: p.own || {}, beat: p.beat || {}, once: p.once || {}, rush: { best: +r.best || 0, clears: +r.clears || 0, rb: +r.rb || 0, rc: +r.rc || 0 } }; for (const k of Object.keys(P.beat)) { const m = /^c(\d)(h?)$/.exec(k); if (m && OLD[+m[1]]) { P.beat['c:' + OLD[+m[1]] + m[2]] = 1; delete P.beat[k]; } } return P; } catch (e) { return { m: 0, own: {}, beat: {}, once: {}, rush: { best: 0, clears: 0, rb: 0, rc: 0 } }; } })();      // (v1.00 saved the curses you beat as c0..c4; they are called by name now so the ladder can grow)      // saved on the device: money, what you own (skills and characters), which challenges you beat
 const saveProg = () => { try { localStorage.setItem('js_prog', JSON.stringify(PROG)); } catch (e) { /* storage blocked */ } };
 // ---- v1.11 MOBILE: the options (kept in js_set), vibration, the assist levels, the pause flag and the margin a camera notch needs
-const SET = (() => { const D = { hap: 1, sz: 100, op: 78, up: 0, lh: 0, fps: 0, lite: 0, ap: 1, assist: 0 }, R = { hap: [0, 2], sz: [70, 120], op: [30, 100], up: [0, 20], lh: [0, 1], fps: [0, 60], lite: [0, 1], ap: [0, 1], assist: [0, 3] }; try { const p = JSON.parse(localStorage.getItem('js_set') || '{}'); for (const k in D) if (typeof p[k] === 'number' && isFinite(p[k])) D[k] = Math.max(R[k][0], Math.min(R[k][1], Math.round(p[k]))); } catch (e) { /* storage blocked: the defaults */ } if (![0, 30, 60].includes(D.fps)) D.fps = 0; return D; })();
+const SET = (() => { const D = { hap: 1, sz: 100, op: 78, up: 0, lh: 0, fps: 0, lite: 0, ap: 1, assist: 0, pace: 1 }, R = { hap: [0, 2], sz: [70, 120], op: [30, 100], up: [0, 20], lh: [0, 1], fps: [0, 60], lite: [0, 1], ap: [0, 1], assist: [0, 3], pace: [0, 2] }; try { const p = JSON.parse(localStorage.getItem('js_set') || '{}'); for (const k in D) if (typeof p[k] === 'number' && isFinite(p[k])) D[k] = Math.max(R[k][0], Math.min(R[k][1], Math.round(p[k]))); } catch (e) { /* storage blocked: the defaults */ } if (![0, 30, 60].includes(D.fps)) D.fps = 0; return D; })();
 const saveSet = () => { try { localStorage.setItem('js_set', JSON.stringify(SET)); } catch (e) { /* storage blocked */ } };
 const hash32 = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };      // (FNV-1a: the day's pick and the check of a save code)
 const buzz = ms => { if (!SET.hap) return; ms = Math.round(ms * (SET.hap === 2 ? 1.6 : 1)); try { if (window.AndroidApp) window.AndroidApp.vibrate(ms); else if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* no motor: no buzz */ } };
@@ -664,10 +665,10 @@ KICKS.curse = CMOVE.filter(m => m.low).map(m => m.k);      // (a LOW move hits a
 const beaten = (id, hard) => !!PROG.beat['c:' + id + (hard ? 'h' : '')];
 // RUSH: the last challenge. Five waves, a wave is one or two curses (the one in front fights, the other stays behind and throws things); you are healed (health and energy) between the waves; every wave you clear pays the same every time, the last one pays a lot; it opens when you have beaten five curses.
 const RUSH_FULL = [['hound'], ['stalker', 'wisp'], ['mantis', 'wraith'], ['ogre', 'doll'], ['crab', 'imp']], RUSH_SUB = { hound: 'grub', wraith: 'wisp', doll: 'stalker', mantis: 'stalker', crab: 'ogre' };
-const RUSH = { waves: RUSH_FULL.map(w => w.map(id => CU[id] ? id : RUSH_SUB[id])), pay: [40, 60, 80, 100, 320], hp: [1, 0.85, 0.85, 0.8, 0.75], tl: 90000, open: 5, name: 'RUSH' };
+const RUSH = { waves: RUSH_FULL.map(w => w.map(id => CU[id] ? id : RUSH_SUB[id])), pay: [40, 60, 80, 100, 320], hp: [1, 0.85, 0.85, 0.8, 0.75], tl: 90000, open: 5, name: 'RUSH', par: [25, 35, 45, 55, 65] };
 const rushOpen = () => CDEF.filter(c => beaten(c.id)).length >= RUSH.open;
 // v1.26 the ROULETTE: two waves, every wave is two curses picked by chance from all of them (four different ones in all), at the highest level: quicker than HARD (hard), dmg times the damage, hp times the health but never less than floor times 300 health (a weak curse that is rolled gets more health, so every roll is a tough one), and a long time for every wave (tl). Only the last wave pays: a random $500 to $1000 (steps of 10); nothing for a loss
-const ROUL = { name: 'ROULETTE', waves: [], hp: [1.5, 1.8], floor: [1.8, 2.4], tl: 150000, dmg: 1.7, open: RUSH.open, pay: [0, () => 500 + 10 * Math.floor(Math.random() * 51)] };
+const ROUL = { name: 'ROULETTE', waves: [], hp: [1.5, 1.8], floor: [1.8, 2.4], tl: 150000, dmg: 1.7, open: RUSH.open, par: [50, 80], sb: [100, 200], pay: [0, () => 500 + 10 * Math.floor(Math.random() * 51)] };
 function rollWaves() { const ids = CDEF.map(c => c.id); for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; } return [ids.slice(0, 2), ids.slice(2, 4)]; }
 const COMBO_PAY = 3;      // a challenge pays $3 for every hit of your best combo above 2, but never more than 30% of what the win itself pays
 let cProj = [];       // their balls, waves, gusts and flame pillars: { o (who threw it), x (world), h (height above the ground), vx, k, r, kind, look, col, born, life }
@@ -697,7 +698,7 @@ function curseAI(d, now, dt) {
     if (m.kind === 'tele' && fi >= m.tp && !d.teleDone) { d.teleDone = true; d.x = wx + 17 + (Math.random() < 0.3 ? 8 : 0); puff(d.x, 6); }
     if (fi >= m.imp && !d.hitDone) { d.hitDone = true; curseImpact(d, m, now); }
     if (m.kind === 'melee2' && fi >= m.imp + 2 && !d.hit2) { d.hit2 = true; curseImpact(d, m, now); }
-    if (fi >= nf) { d.cs = 'idle'; d.cm = null; d.cnext = now + (c.rest[0] + Math.random() * c.rest[1]) * (hard ? 0.7 : 1); }
+    if (fi >= nf) { d.cs = 'idle'; d.cm = null; d.cnext = now + (c.rest[0] + Math.random() * c.rest[1]) * (hard ? 0.7 : 1) * aggr(now); }
     return;
   }
   const ag = Math.abs(gap), sp = c.spd * (hard ? 1.25 : 1), pick = list => { let r = Math.random() * list.reduce((a, m) => a + m.w, 0), m = list[0]; for (const q of list) { r -= q.w; if (r <= 0) { m = q; break; } } return m; };
@@ -824,7 +825,7 @@ function rushSpawn(t) {                       // a wave steps in (beginRound has
   vs.tl = R.tl;
 }
 function rushPay(now) {                       // a wave is cleared: the RUSH pays the same every time; the ROULETTE pays nothing for the first wave and a random $500 to $1000 for the second
-  const R = vs.run, k = vs.round - 1, p = R.pay[k], n = typeof p === 'function' ? p() : p; vs.rpay += n; if (n) earn(n);
+  const R = vs.run, k = vs.round - 1, p = R.pay[k], n = typeof p === 'function' ? p() : p, sb = speedBonus(); vs.rpay += n + sb; vs.rspd = (vs.rspd | 0) + sb; if (n + sb) earn(n + sb); if (sb) say('SPEED +$' + sb, wx + 24, '#7ae8ff', 8, now + 700);
   if (R === RUSH) PROG.rush.best = Math.max(PROG.rush.best, vs.round); else PROG.rush.rb = Math.max(PROG.rush.rb, vs.round);
   saveProg(); if (n) say('+$' + n, wx + 24, '#7dff9a', 16, now + 250);
 }
@@ -842,7 +843,7 @@ function curseOver(now) {                     // the fight is decided: money for
 function rushOver(now) {
   const R = vs.run, full = vs.pw >= R.waves.length, cb = vs.pw ? comboPay(vs.rpay) : 0; if (cb) earn(cb); if (full) { if (R === RUSH) PROG.rush.clears++; else PROG.rush.rc++; } saveProg();
   vs.res = { win: full, pay: vs.rpay + cb };
-  $('vsTitle').textContent = R.name + (full ? ' CLEARED' : ' OVER'); $('vsInfo').textContent = 'WAVES ' + vs.pw + ' OF ' + R.waves.length + '\n+$' + vs.rpay + (cb ? '\nBEST COMBO ' + vs.bestCmb + ' HITS  +$' + cb : '') + (R === ROUL ? '\n' + R.waves.map(w => w.map(id => CDEF[CID[id]].name).join(' + ')).join('\n') : '');
+  $('vsTitle').textContent = R.name + (full ? ' CLEARED' : ' OVER'); $('vsInfo').textContent = 'WAVES ' + vs.pw + ' OF ' + R.waves.length + '\n+$' + vs.rpay + (vs.rspd ? '  (SPEED BONUS +$' + vs.rspd + ')' : '') + (cb ? '\nBEST COMBO ' + vs.bestCmb + ' HITS  +$' + cb : '') + (R === ROUL ? '\n' + R.waves.map(w => w.map(id => CDEF[CID[id]].name).join(' + ')).join('\n') : '');
   $('vsStars').innerHTML = ''; $('vsNext').style.display = 'none'; $('vsres').classList.add('on'); snd(full ? 'finisher' : 'ko');
 }
 // ---- v1.11 DAILY CHALLENGE: one curse and one rule a day (the same all day); winning under the rule pays a bonus once a day
@@ -1460,6 +1461,7 @@ function onHurt(k, dm, now) {      // a blow landed on you: sparks, a longer hit
 function parryHit(now) {      // PARRY: the blow is turned aside (no damage, no push), whoever struck is stunned and open for a counter, and the energy bar fills
   const d = dummy; say('PARRY!', wx + 16, '#ffd34d', 8, now); snd('stun'); snd('block'); flash(now, 90, 0.22); hitStop(80); buzz(35); if (vs) vs.par = (vs.par | 0) + 1; shakeUntil = now + 90; shakeAmp = 2;
   spark(wx + 14, gy - 34, 14, ['#ffffff', '#ffd34d', '#fff2a0'], true, 1); divFx.push({ wx: wx + 14, y: gy - 34, born: now }); if (divFx.length > 8) divFx.shift(); ceGain(E_PARRY);
+  if (!(vs && vs.net) && (!vs || vs.ph === 'fight')) { slowMo(520, 0.3); ctr = { at: now, until: now + 70 }; }      // (v1.30: a short slow motion, then the free counter)
   if (!d || d.ko >= 0 || d.cap) return;
   if (d.curse) { d.stunUntil = Math.max(d.stunUntil, now + (d.curse.armor ? 700 : 950)); d.cs = 'hurt'; d.ct0 = now; d.cm = null; d.cnext = Math.max(d.cnext, d.stunUntil + 200); say('STUN', d.x, '#59b8ff', 8, now + 60); }
   else if (d.mode === 'fighter' && !d.cact && !d.vact && !d.net) { d.stunUntil = Math.max(d.stunUntil, now + 800); d.ai = 'rest'; d.aiAt = now; d.restFor = 800; d.chain = 0; d.hitDone = true; say('STUN', d.x, '#59b8ff', 8, now + 60); }
@@ -1491,7 +1493,8 @@ function hitFoe(k, now) {                     // called on the impact frame: a h
   if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; }                    // the counter restarts after 1.6 s without a landed hit
   const ko = k >= 36 ? -1 : k >= 24 ? [0, 1, 2, -1, -1, 3][k - 24] : k === 22 ? -1 : k <= 3 ? k : k >= 18 ? k - 18 : k >= 14 ? k - 14 : -1; if (k >= 36) hits.seq = 0; else if (k !== 27 && k !== 28) hits.seq = ko === hits.seq ? hits.seq + 1 : ko === 0 ? 1 : 0;                          // the meter fills while the hits land in order: right hook, left hook, elbow, kick
   if (hits.seq === 4) { if (k !== 29) dmg += 25; hits.perfect = now; snd('finisher'); say('COMBO!', dummy.x, '#ffd34d', 8, now + 90); }
-  dmg = ceDmg(dmg); const cb = comboBonus(k, now); dmg += cb; hits.n++; hits.dmg += dmg; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = cb; if (vs) vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n);
+  dmg = ceDmg(dmg); if (ctrBoost && atkAt === ctrBoost) dmg = Math.round(dmg * 1.5);      // (every hit of the free counter's swing, after a parry, does 1.5 times the damage)
+  const cb = comboBonus(k, now); dmg += cb; hits.n++; hits.dmg += dmg; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = cb; if (vs) vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n);
   const grab = !!vs && vs.me === 'cat' && (k === 30 || k === 32), held = !!vs && vs.me === 'cat' && k >= 31 && k <= 33 && !!dummy.cheld;      // (the playable Cat's glove: a grab holds the enemy and pulls him in, the punch lands on the held enemy where he stands, the kick sends him away)
   dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += held && k !== 33 ? 0 : KNOCK[k]; if (k === 3 || k === 17 || k === 21 || k === 29 || k === 33 || k === 35 || k === 41 || k === 42) { dummy.smokeUntil = now + 520; puff(dummy.x, 8); } shakeUntil = now + 110; shakeAmp = k === 21 || k === 35 || k === 42 ? 4 : [3, 15, 17, 18, 19, 29, 33, 40, 41].includes(k) ? 3 : 2;
   if (k === 40 || k === 43 || k === 48) dummy.down = now + RX_DUR[4];      // (a DOWNSLAM or a SWEEP puts him on the floor for as long as the fall lasts)
@@ -1515,14 +1518,14 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   if (tz && lpAt >= 0 && now - lpAt > 250 && now - lpAt < 720) { nres('m'); return; }      // (the Cat in the giant's glove, or flying: nothing touches him)
   if (dom) { nres('m'); return; }      // (the DOMAIN freezes everyone, whatever they were doing: nothing of the enemy's touches you until it is over)
   if (isD2(k)) { gojoDiv2(now); return; }      // (DIVERGENT FIST's second impact, normal or RUSH: see gojoDiv2)
-  if (dgAt >= 0 && now - dgAt < 11 * 1000 / DASH_FPS) { nres('m'); return; }       // he is dashing: the swing misses
+  if (dgAt >= 0 && now - dgAt < 11 * 1000 / DASH_FPS) { if (now - dgAt < 7 * 1000 / DASH_FPS && now - dodgeAt > 400 && (!vs || vs.ph === 'fight')) { dodgeAt = now; ceGain(E_DODGE); say('DODGE!', wx, '#9fd8ff', 8, now); } nres('m'); return; }       // he is dashing: the swing misses (v1.30: a dash started just before the blow gives energy)
   const held = vs && vs.foe === 'cat' && k >= 30 && k <= 33 && now < (vs.catHold || 0);      // (inside the Cat's glove the combo cannot miss because Gojo is 'still reeling')
   const foeWho = vs ? vs.foe : 'gojo', downed = now < gDownUntil;      // (whose swing this is; and after a DOWNSLAM or a SWEEP you are on the floor: only a kick reaches you there, even while you reel)
   const airMe = !!gAir && gAir.kind === 'up';      // you are launched: everything can hit you up there, the hit-stun and the height do not protect you
   if (airMe ? gojoGone : downed ? (!isKick(foeWho, k) || gojoLift > 12 || gojoGone) : ((!held && (hurtAt >= 0 || now - hurtEnd < 250)) || gojoLift > 12 || gojoGone)) { nres('m'); return; }
   const guardWas = (guardUp(now) || autoGuard()) && !!dummy && dummy.x > wx;
   if (guardWas && k !== 42 && k !== 46 && !(k >= 49 && CMOVE[k - 49].nb)) {  // his guard is up and the attacker is in front of him: the swing is blocked (a hit from behind still lands; CONCENTRATED FIST breaks the guard)
-    if (!isD1(k) && blkAt >= 0 && now - blkAt <= PARRY_MS * (assistLvl() >= 1 ? 2 : 1)) { parryHit(now); nres('b'); return; }      // (PARRY: the guard went up just before the blow, see parryHit)
+    if (!isD1(k) && blkAt >= 0 && now - blkAt <= PARRY_MS * paceBase() * (assistLvl() >= 1 ? 2 : 1)) { parryHit(now); nres('b'); return; }      // (PARRY: the guard went up just before the blow, see parryHit)
     wxv -= KNOCK_G[k] * 0.3; shakeUntil = now + 80; shakeAmp = 1; buzz(8); say('BLOCKED', wx + 14, '#9fd8ff', 8, now); snd('block'); if (isD1(k)) { dummy.divOk = now; dummy.divK = k; }      // (the fist was blocked: the second impact still comes)
     nres('b'); return;
   }
@@ -1556,7 +1559,7 @@ function updateFighter(now, dt) {             // the attacking dummy: walks up t
     const f = Math.floor((now - d.aiAt) * ATK_FPS[d.k] / 1000);
     if (!d.swung && f >= ATK_SWING[d.k]) { d.swung = true; snd('f:swing', d.k); }
     if (!d.hitDone && f >= ATK_IMPACT[d.k]) { d.hitDone = true; snd('f:hit', d.k); if (Math.abs(gap) <= eHit(d.k)) gojoHit(d.k, now); if (purple && Math.abs(dummy.x - purple.x) - 8 <= REACH[d.k]) damagePurple((DMG[d.k] || 12) + ((Math.random() * 5) | 0), now); }
-    if (f >= 15) { d.ai = 'rest'; d.aiAt = now; d.restFor = 480 + Math.random() * 640; }
+    if (f >= 15) { d.ai = 'rest'; d.aiAt = now; d.restFor = (480 + Math.random() * 640) * aggr(now); }
   }
 }
 function drawBar(bx, by) {                    // (in a match the big bars at the top are used instead)  health bar: green (red when low) with a pale trail showing the damage just taken
@@ -2123,7 +2126,7 @@ function beginRound(now) {                     // a fresh round: the scene is re
   spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); if (vs.net) { dummy.net = true; dummy.max = dummy.hp = dummy.shown = PHP; dummy.x = dummy.tx = wx + NET_G0; dummy.pose = null; vs.toSent = false; }      // (the Wi-Fi fight: the other player, drawn from his phone's pictures)
   vdg = cst = null; smear.length = drip.length = 0; cProj = []; if (vs.rush) rushSpawn(t); else if (vs.cv) initCurse(dummy, vs.cv, wx + Math.max(54, Math.min(90, (VW >> 1) - 70)), vs.hard ? 1.5 : 1);      // (a challenge: the curse steps in; a RUSH wave: one or two)
   $('vsres').classList.remove('on');      // (REMATCH and NEXT start a new fight: the result screen goes away. Since v7.12 this line had slipped into a comment, so the result screen stayed on top of the new fight)
-  vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
+  vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
   if (vs.retry) { vs.round = 1 + vs.retry; vs.hp = vs.sh = PHP / 2; dummy.hp = dummy.shown = dummy.lock = 1; vs.morphed = true; blackUntil = t + 700; } else blackUntil = 0;      // after a failed red: Gojo at half health, Verity as he was (1 health left, so no smoke change); the picture comes up from black
 }
 // ---------------------------------------------------------------- v1.29 THE STATE TRACKER and the COMBO ESCAPE. A small box by your health bar says what state you are in: green FREE (you can move) or red (HIT: reeling from a blow, DOWN: on the floor, STUN: the JUMPSCARE, the Cat's glove or dizzy, HELD: the enemy Cat's ULTIMATE has you). While you are red, DASH gets you out of it: the stun is gone, you dash (with the dash's own invulnerable start), and when the dash ends you strike back with the LAST M1 of your combo; the dash is then on a cooldown of 4 seconds (the DASH button counts it down). Not possible when you are in the air from a launch, held by the ULTIMATE, in a cutscene or while the DOMAIN lasts.
@@ -2139,14 +2142,14 @@ const escOK = now => state === 'play' && !gAir && !js && !vf && !cf && !ke && !d
 const lastM1 = () => { const y = !!vs && vs.me === 'yuji'; if (vs && vs.me === 'cat') return 3; if (cm === 3 && y) return 23; if (cm === 1) return y ? 8 : 17; if (cm === 2) return y ? 19 : 21; return 3; };      // (the last blow of the 4-hit M1 combo you are on: the normal combo, cursed energy, red or THE ZONE, the Inheritence)
 function comboEscape(now) {      // every frame, before the controls are gated
   if (dashReq) {
-    if (now < dgLock) { dashReq = false; if (now - escSay > 800) { escSay = now; say('DASH ' + Math.ceil((dgLock - now) / 1000), wx, '#9fd8ff', 8, now); } }      // (the dash is on its cooldown)
+    if (now < dgLock) { dashReq = false; if (now - escSay > 800) { escSay = now; say('DASH ' + Math.ceil((dgLock - now) / (1000 * paceBase())), wx, '#9fd8ff', 8, now); } }      // (the dash is on its cooldown)
     else if (escOK(now) && !lacks('dash')) {
       dashReq = false; const me = meK(), d = (keyR || padR) ? 1 : -1; let to = wx + d * (d > 0 ? DASH_FWD : DASH_BACK);
       hurtAt = -1; hurtEnd = now - 300; gDownUntil = 0; pStun = 0; if (vs) { vs.catHold = 0; vs.fear = null; }
       atkAt = -1; atkQ = false; stance = 'stand'; jumpAt = teleAt = -1; lpAt = -1; blkAt = blkEnd = -1; mbAt = -1; mbPending = false; dash = null; ride = null; tz = null;
       if (me === 'v' && d > 0 && dummy && dummy.ko < 0 && dummy.x > wx) to = Math.min(to, Math.max(wx, dummy.x - 12));
       dgAt = now; dgCr = false; dgAir = false; dgK = d > 0 ? 0 : 1; dgFrom = wx; dgTo = to; if (vp) vp.tpDone = false;
-      dgLock = now + 4000; dgReady = now + 4000; esc = { at: now }; snd(me === 'v' ? 'vanish' : 'dash', dgK); if (me !== 'v') puff(wx - d * 5, 5);
+      dgLock = now + 4000 * paceBase(); dgReady = dgLock; esc = { at: now }; snd(me === 'v' ? 'vanish' : 'dash', dgK); if (me !== 'v') puff(wx - d * 5, 5);
       say('COMBO BREAK!', wx, '#7dff9a', 8, now); flash(now, 80, 0.18);
     }
   }
@@ -2154,26 +2157,26 @@ function comboEscape(now) {      // every frame, before the controls are gated
     if (hurtAt >= 0 || now - esc.at > 1500 || (vs && vs.ph !== 'fight')) esc = null;
     else if (dgAt < 0) {
       esc = null;
-      if (!dummy || dummy.ko >= 0) return;
-      atkK = lastM1(); atkAt = now; atkQ = false; const g = dummy.x - wx; if (g > 20) wxv += Math.min(760, (g - 20) * 8); say('COUNTER!', wx, '#ffd34d', 8, now);
+      if (strikeBack(now)) say('COUNTER!', wx, '#ffd34d', 8, now);
     }
   }
 }
 function stateDraw(now) {      // the tracker, over the picture: green FREE or red (it blinks), a yellow DASH! when a dash can get you out, the seconds of the cooldown while the dash is locked; and the same seconds on the DASH button
-  const b = $('dash'), cd = now < dgLock ? Math.ceil((dgLock - now) / 1000) : 0;
+  const b = $('dash'), cd = now < dgLock ? Math.ceil((dgLock - now) / (1000 * paceBase())) : 0;
   if (b && (+b.dataset.cd || 0) !== cd) { b.dataset.cd = cd || ''; b.classList.toggle('cd', cd > 0); }
   if (state !== 'play' || (vs && vs.ph !== 'fight')) return;
   const why = redWhy(now), red = !!why, x = vs ? Math.max(60, Math.min(96, (VW - 52) >> 1)) + 10 : 6, h = vs && vs.rush ? 9 : 10, y = vs ? (vs.rush ? 30 : 21) : 20, pulse = red && ((now / 140) | 0) % 2 === 0;
   ctx.save(); ctx.globalAlpha = 1; ctx.fillStyle = '#000'; ctx.fillRect(x - 1, y - 1, 42, h + 2); ctx.fillStyle = red ? (pulse ? '#ff3a3a' : '#b01c1c') : '#2fb868'; ctx.fillRect(x, y, 40, h);
   pxt(red ? (why === 'hit' ? 'HIT' : why === 'down' ? 'DOWN' : why === 'held' ? 'HELD' : 'STUN') : 'FREE', x + 20, y + h - 1, '#ffffff', 8, 'center');
   if (red && cd === 0 && escOK(now) && !lacks('dash')) pxt('DASH!', x + 66, y + h - 1, pulse ? '#ffd34d' : '#fff3b0', 8, 'center'); else if (cd > 0) pxt('DASH ' + cd, x + 64, y + h - 1, '#9fd8ff', 8, 'center');
+  if (vs) { if (aggr(now) < 0.92) pxt('PRESSURE', VW - 6, 55, ((now / 200) | 0) % 2 ? '#ffb05a' : '#ff6a3a', 8, 'right'); if (vs.rush) pxt('SPEED $' + speedBonus(), VW - 6, 64, '#7ae8ff', 8, 'right'); }      // (right under the enemy's name: the enemy is getting angry; the extra money a quick clear of this wave pays now)
   ctx.restore();
 }
 function vsTick(now, dt) {
   if (!vs) return; const a = now - vs.t0;
   if (vs.ph === 'intro' && a >= INTRO_MS) { vs.ph = 'fight'; vs.t0 = now; }
   else if (vs.ph === 'fight') {
-    if (!domLock()) vs.tl -= dt * 1000;
+    if (!domLock()) vs.tl -= dt * 1000 / paceNow();      // (the round timer counts real seconds, whatever the pace)
     if (atkAt < 0 && vs.prevAtk >= 0 && dummy && dummy.hitAt < vs.prevAtk) vs.whiffAt = now;      // Gojo's swing ended without hitting: he is open for a moment
     vs.prevAtk = atkAt;
     if (vs.tl <= 0) { if (vs.net) netTimeUp(now); else endRound(!vs.rush && vs.hp / PHP > (dummy ? dummy.hp / dummy.max : 0) ? 'player' : 'enemy', 'time', now); }
@@ -2687,11 +2690,11 @@ function inheritEnd(now) {      // the 10 seconds are over and the fight is not:
 function inheritStep(now) {      // every frame: the 10 seconds run on the game's clock (a freeze or a pause does not count); a round that is over (he won in time, or lost) ends it without a price. A single tap in THE ZONE leaves it after 0.45 s unless the second tap came
   if (cm !== 2) inhArm = -1; else if (inhArm >= 0 && now - inhArm >= 450) { inhArm = -1; setMode(0, now); }      // (an armed first tap never outlives the Zone)
   if (cm !== 3 || !vs || vs.me !== 'yuji' || vs.ph !== 'fight') return;
-  if (now - inhAt >= INH_MS) inheritEnd(now);
+  if (now - inhAt >= INH_MS * paceBase()) inheritEnd(now);
 }
 function inheritHud(now) {      // the clock over his head: a red bar and the seconds left (it flashes in the last 3)
-  const left = Math.max(0, INH_MS - (now - inhAt)), cx = Math.round(VW / 2), y = gy - 76, w = 30, hot = left < 3000 && Math.floor(now / 120) % 2 === 0;
-  ctx.save(); ctx.globalAlpha = 1; ctx.fillStyle = '#12030a'; ctx.fillRect(cx - w / 2 - 1, y - 1, w + 2, 4); ctx.fillStyle = hot ? '#ffffff' : '#ff2a3a'; ctx.fillRect(cx - w / 2, y, Math.round(w * left / INH_MS), 2);
+  const left = Math.max(0, INH_MS * paceBase() - (now - inhAt)), cx = Math.round(VW / 2), y = gy - 76, w = 30, hot = left < 3000 && Math.floor(now / 120) % 2 === 0;
+  ctx.save(); ctx.globalAlpha = 1; ctx.fillStyle = '#12030a'; ctx.fillRect(cx - w / 2 - 1, y - 1, w + 2, 4); ctx.fillStyle = hot ? '#ffffff' : '#ff2a3a'; ctx.fillRect(cx - w / 2, y, Math.round(w * left / (INH_MS * paceBase())), 2);
   ctx.textAlign = 'center'; ctx.font = '6px "Press Start 2P"'; ctx.fillStyle = hot ? '#ffffff' : '#ff8a7a'; ctx.fillText((left / 1000).toFixed(1), cx, y - 3); ctx.restore();
 }
 function chargeFx(now, x, y, info, fi, af) {      // the CHARGED BLACK FLASH while he gathers it (frames 0-8): black and red specks stream into the fist from all round, the edges of the screen darken more and more, the ground trembles and the energy crackles (the picture itself carries the aura, the ball, the cracks and the rocks)
@@ -3700,7 +3703,7 @@ function drawScene(now, dt) {
   if (vf) { vfFrame(now, dt); return; }         // ...and Verity's FATALITY
   if (cf) { cfFrame(now, dt); return; }         // ...and the Cat's FATALITY
   if (ke) { keFrame(now, dt); return; }         // ...and the end of the Cat in the story
-  comboEscape(now); domTick(now); bfTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); if (!dom) { if (vs && vs.foe === 'verity') storyBattleTick(now, dt); else if (vs && vs.foe === 'cat') catTick(now, dt); ultTick(now, dt); }      // (the DOMAIN freezes everyone: none of the enemy's own clocks run while it lasts)
+  comboEscape(now); counterTick(now); domTick(now); bfTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); if (!dom) { if (vs && vs.foe === 'verity') storyBattleTick(now, dt); else if (vs && vs.foe === 'cat') catTick(now, dt); ultTick(now, dt); }      // (the DOMAIN freezes everyone: none of the enemy's own clocks run while it lasts)
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
     const fs = fatState(now);
     if (fs === 0) { fatReq = 0; if (ceSpend(CE_COST.fatal, now)) { fatGo(now, dt, false); return; } }      // (his own FATALITY costs 50% cursed energy; the enemy's is free)
@@ -4668,14 +4671,38 @@ window.__end = () => vs && vs.end ? ({ stage: vs.end.stage, del: dummy && dummy.
 window.__se = () => se ? ({ ph: se.ph, lvl: +se.lvl.toFixed(3), shown: +se.shown.toFixed(3), z: +se.z.toFixed(2), taps: se.taps, held: se.held, down: se.down, res: se.res, off: se.off, now: pnow(), at: se.at, ringAt: se.ringAt, touch: se.ringAt + SE.ring, del: se.delAt ? 1 : 0, btn: $('qBtn').classList.contains('show'), ring: $('qRing').classList.contains('show'), now2: $('qRing').classList.contains('now'), bx: $('qBtn').getBoundingClientRect().toJSON(), padHidden: getComputedStyle($('pad')).visibility === 'hidden', hudHidden: getComputedStyle($('hud')).visibility === 'hidden' }) : null; window.__sePress = d => sePress(d); window.__seSet = o => { if (se) Object.assign(se, o); };
 window.__story = () => story ? ({ T: +(story.T || 0).toFixed(2), battle: !!story.battle, slot: story.slot, state, cam: story.cam || null, g: story.g || null }) : null; window.__storyJump = t => { if (story && !story.battle) story.t0 = pnow() - t * 1000; }; window.__saves = loadSaves; window.__simg = () => SIMG; window.__mouths = () => { const chk = c => { const m = mouthOf(c); if (!m) return null; const d = c.getContext('2d').getImageData(m.x, m.y, 3, 2).data; let skin = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] && d[i] > 140 && d[i + 1] > 90 && d[i + 2] > 80) skin++; return { x: m.x, y: m.y, skin }; }; return { idle: idleF.map(chk), jump: jumpF.map(chk), red: redF.map(chk) }; }; window.__hd = k => hitDummy(k, pnow()); window.__vact = t => { if (dummy && vs) vStart(dummy, t, pnow()); }; window.__vanim = () => dummy ? ({ anim: dummy.anim || '', act: dummy.vact ? dummy.vact.type : '', fi: dummy.vact ? +dummy.vact.fi.toFixed(1) : -1, x: dummy.x - wx, hp: vs ? vs.hp : -1 }) : null; window.__bleed = () => vs && vs.bleed ? ({ until: vs.bleed.until }) : null;      // test hooks
 
+// ---------------------------------------------------------------- v1.30 A FASTER GAME. GAME PACE (SETTINGS > GAME: NORMAL / FAST 1.25x / TURBO 1.5x, FAST is the default): in a fight everything runs faster than the real clock (walking, swings, the enemy, the cooldowns, the combo window), but the round timer and the 10 seconds of the Inheritence still count real seconds; not in the Wi-Fi fight, the story, cutscenes (FATALITY, JUMPSCARE, DOMAIN, the ULTIMATE) or the menus. PARRY: slow motion and a free counter. DODGE: a dash just before a blow gives energy. PRESSURE: the longer you do not hurt the enemy, the shorter his rests. SPEED BONUS: a RUSH or ROULETTE wave cleared under its par time pays extra.
+const PACE_X = [1, 1.25, 1.5], E_DODGE = 8;
+const paceBase = () => state === 'play' && SET.pace && !(vs && (vs.net || vs.story)) ? PACE_X[SET.pace] : 1;      // (the pace of this kind of fight: not the Wi-Fi fight, not the story)
+const paceNow = () => (!vs || vs.ph === 'fight') && !fat && !se && !de && !js && !vf && !cf && !ke && !dom && !ult ? paceBase() : 1;      // (how many times faster than the real clock the game runs right now: 1 in a cutscene and between the rounds)
+let ctr = null, ctrBoost = 0, dodgeAt = -1e9;      // ctr = { at, until }: the free counter that follows a PARRY; ctrBoost: the time stamp (atkAt) of that counter's swing, the hits of that swing do 1.5 times the damage; dodgeAt: the last DODGE reward
+function strikeBack(now) {      // the LAST M1 of your combo, lunging at the enemy so that it reaches (the combo escape and the free counter of a parry)
+  if (!dummy || dummy.ko >= 0) return false;
+  atkK = lastM1(); atkAt = now; atkQ = false; const g = dummy.x - wx; if (g > 20) wxv += Math.min(760, (g - 20) * 8); return true;
+}
+function counterTick(now) {      // after a PARRY: the slow motion runs, then (or at once when you press ATTACK) the free counter blow comes
+  if (!ctr) return;
+  if (state !== 'play' || redWhy(now) || (vs && vs.ph !== 'fight') || now - ctr.at > 1500) { ctr = null; return; }
+  if (!atkReq && (jumpReq || dashReq || lpReq || crReq || jumpAt >= 0 || teleAt >= 0 || lpAt >= 0 || mbAt >= 0 || dgAt >= 0 || atkAt >= 0 || dash || ride)) { ctr = null; return; }      // (you chose another move yourself: no free counter)
+  if (atkReq || now >= ctr.until) { atkReq = false; ctr = null; blkAt = blkEnd = -1; stance = 'stand'; if (strikeBack(now)) { ctrBoost = now; say('FREE COUNTER!', wx, '#ffd34d', 8, now); } }      // (a guard that is still held goes up again after the blow)
+}
+const aggr = now => {      // PRESSURE: 1 while you hurt the enemy, then (after 4 real seconds without a hit on him) down to 0.5 at 12 seconds: his rests between two attacks are that much shorter
+  if (!vs || vs.ph !== 'fight' || vs.net || vs.story || vs.practice) return 1; let last = vs.t0; for (const e of foesOf()) if (e.hitAt > last) last = e.hitAt;
+  return 1 - 0.5 * Math.min(1, Math.max(0, ((now - last) / paceNow() - 4000) / 8000));
+};
+function speedBonus() {      // RUSH and ROULETTE: a wave cleared faster than its par time (real seconds) pays up to half of the wave's pay (the ROULETTE: a fixed sum) extra, less and less until the par time is over
+  const R = vs.run, k = Math.min(vs.round, R.waves.length) - 1, par = R.par[k], el = (R.tl - vs.tl) / 1000, p = R.pay[k], base = R.sb ? R.sb[k] : typeof p === 'number' ? p * 0.5 : 0;
+  return Math.round(base * Math.max(0, Math.min(1, (par - el) / (par * 0.5))));
+}
 function tick(t) {
   requestAnimationFrame(tick);                // schedule first so one bad frame can't stop the loop
   if (paused) { if (state !== 'play') setPause(false); return; }      // PAUSE: nothing moves and the game's clock stands still
   const cap = fpsCap(); if (cap && t - tDraw < 1000 / cap - 3) return; tDraw = t;      // the 30 / 60 FPS option and the battery saver: the frames in between are skipped
   const rdt = Math.max(0, Math.min(100, t - tLast)); tLast = t;
-  if (t < slowAt + slowMs) { const k = (t - slowAt) / slowMs; vOff += rdt * (1 - (k < 0.35 ? slowRate : slowRate + (1 - slowRate) * Math.pow((k - 0.35) / 0.65, 2))); }      // slow motion: the game's clock falls behind the real one
+  let rate = (TR.spd && freePlay() ? TRS[TR.spd] : 1) * paceNow();      // GAME SPEED (SETTINGS > TRAIN: half or a quarter in free play) times GAME PACE (SETTINGS > GAME: 1.25 or 1.5 times in a fight): the game's clock runs at that rate of the real one, and the slow motion below is a fraction of that
+  if (t < slowAt + slowMs) { const k = (t - slowAt) / slowMs; rate *= k < 0.35 ? slowRate : slowRate + (1 - slowRate) * Math.pow((k - 0.35) / 0.65, 2); }      // slow motion: the game's clock falls behind the real one
   else if (slowFin) { slowFin = false; snd('slowout'); }
-  if (TR.spd && freePlay()) vOff += rdt * (1 - TRS[TR.spd]);      // GAME SPEED (SETTINGS > TRAIN): the game's clock runs at half or a quarter of the real one in free play
+  if (rate !== 1) vOff += rdt * (1 - rate);
   let now = t - vOff;
   const still = state === 'play' && stopMs > 0;      // HIT-STOP: the game's clock stands still for a moment (everything in the game runs on it, so the fight freezes and goes on from the same picture)
   if (still) { stopMs = Math.max(0, stopMs - rdt); vOff += now - last; now = last; } else if (state !== 'play') stopMs = 0;
@@ -4916,7 +4943,7 @@ function applyCtl() {      // the size, see-through-ness, height and side of the
 }
 const OPT_DEF = {      // [key, name, 'r' (a slider: min, max, step, unit) or 't' (a button that cycles: names, values)]
   optC: [['sz', 'BUTTON SIZE', 'r', 70, 120, 5, '%'], ['op', 'BUTTON OPACITY', 'r', 30, 100, 5, '%'], ['up', 'RAISE BUTTONS', 'r', 0, 20, 1, ''], ['lh', 'SIDE', 't', ['RIGHT-HANDED', 'LEFT-HANDED']], ['hap', 'VIBRATION', 't', ['OFF', 'LIGHT', 'STRONG']]],
-  optG: [['fps', 'FRAME RATE', 't', ['AUTO', '30 FPS', '60 FPS'], [0, 30, 60]], ['lite', 'BATTERY SAVER', 't', ['OFF', 'ON']], ['ap', 'AUTO-PAUSE', 't', ['OFF', 'ON']], ['assist', 'ASSIST', 't', ['OFF', 'PARRY+', 'EASY', 'AUTO-GUARD']]] };
+  optG: [['fps', 'FRAME RATE', 't', ['AUTO', '30 FPS', '60 FPS'], [0, 30, 60]], ['lite', 'BATTERY SAVER', 't', ['OFF', 'ON']], ['ap', 'AUTO-PAUSE', 't', ['OFF', 'ON']], ['assist', 'ASSIST', 't', ['OFF', 'PARRY+', 'EASY', 'AUTO-GUARD']], ['pace', 'GAME PACE', 't', ['NORMAL', 'FAST', 'TURBO']]] };
 function buildOpts() {
   for (const id in OPT_DEF) {
     const box = $(id); box.innerHTML = '';
