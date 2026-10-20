@@ -2,12 +2,13 @@
 """Yuji Itadori in side view (facing right), 64x64 16-bit style like Gojo's sprites.
 Writes yuji.json (also atk0-atk3 = the M1, atk4 = DIVERGENT FIST, atk5-atk8 = the cursed energy M1 (roundhouse, elbow, downslam, push kick), atk9 = CONCENTRATED FIST, atk10 = the SWEEP, atk11 = the POWER-UP (switching cursed energy on), atk12 = RUSH FIST (the super fast DIVERGENT FIST on the run), atk13 = the UPPERCUT (crouched CONCENTRATED FIST: launches the enemy), atk14 = the FACE KICK (the flying kick into the launched enemy), atk15 = the SPIN ELBOW (BLUE in the air in cursed energy mode: a spin, then an elbow down onto the enemy), blk = BLOCK (10 frames) and bfwd = walking with the guard up): idle (15 frames), fwd (15-frame walk; the game plays it backwards for walking back), jump (15 frames + the lift per frame).
 Every frame is drawn from joints: hips, a two-bone IK for each leg, shoulders, a boxer's guard for the arms, hair tufts that move."""
-import json, math, os, sys
+import json, math, os, random, sys
 from PIL import Image, ImageDraw
 N = 64
 PAL = {'O': '#0e0a1a', 'A': '#0e0c1e', 'B': '#1a1e3c', 'C': '#28305c', 'D': '#3e4a80', 'E': '#6070b8', 'r': '#b02834', 's': '#7c1c2c', 't': '#541424', 'u': '#e25454', 'g': '#deb040',
        'S': '#eec7b4', 'T': '#fbe3d4', 'U': '#d1a08f', 'V': '#a06d68', 'H': '#f8c8cc', 'I': '#e49aa0', 'K': '#c47482', 'L': '#8c4e60', 'k': '#362432',
-       'P': '#541424', 'Q': '#aa3636', 'R': '#d66060', 'W': '#ececf0', 'e': '#0e0a1a'}
+       'P': '#541424', 'Q': '#aa3636', 'R': '#d66060', 'W': '#ececf0', 'e': '#0e0a1a',
+       'X': '#ff2a3a', 'Y': '#ffb0a0', 'Z': '#12030a', 'z': '#7a0f1e'}      # v1.15 BLACK FLASH: X bright red, Y a pale red-white spark, Z black, z dark red
 def pm(pts):
     im = Image.new('L', (N, N), 0); ImageDraw.Draw(im).polygon([(round(x), round(y)) for x, y in pts], fill=255); a = im.load()
     return {(x, y) for y in range(N) for x in range(N) if a[x, y]}
@@ -342,7 +343,122 @@ def fkick(i):                                      # FACE KICK: from the crouch 
                 if 0 <= yy < N and f.at(x, yy) == '.': f.set(x, yy, 'W' if y < n - 3 else 'E')
     if i in (1, 2): puff(f, 28, 61, 2); puff(f, 40, 61, 2)
     return f, nh, fh
-ATTACKS = (('atk0', lambda i: hook(i, False)), ('atk1', lambda i: hook(i, True)), ('atk2', knee), ('atk3', kick3), ('atk4', divergent), ('atk5', rkick, 16, 48), ('atk6', elbow), ('atk7', downslam), ('atk8', pushkick), ('atk9', conc), ('atk10', sweep, 12, 52), ('atk11', powerup), ('atk12', rush, 16, 48), ('atk13', uppercut, 16, 48), ('atk14', fkick, 16, 48))
+# ---------------------------------------------------------------- v1.15 BLACK FLASH (THE ZONE): atk16 = the punch (standing), atk17 = the head kick in the air, atk18 = the body blow from the crouch (15 frames each, the impact is frame 7)
+def bolt(f, x, y, ang, length, seed):                 # a jagged lightning bolt: sharp zigzags along the line (2-3 px legs turning 25-55 degrees to one side and the other), a black core with a bright red glow either side (the black-and-red of a BLACK FLASH)
+    rnd = random.Random(seed); px, py = float(x), float(y); pts = []; k = 0
+    while len(pts) < length:
+        a = math.radians(ang + (-1)**k*rnd.uniform(25, 55)); leg_ = rnd.choice((2, 2, 3))
+        for _ in range(leg_): px += math.cos(a); py += math.sin(a); pts.append((round(px), round(py)))
+        k += 1
+    ps = set(pts)
+    for qx, qy in pts:
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            if (qx+dx, qy+dy) not in ps and f.at(qx+dx, qy+dy) == '.': f.set(qx+dx, qy+dy, 'X')
+    for qx, qy in pts:
+        if f.at(qx, qy) in '.X': f.set(qx, qy, 'Z')
+def bf_ring(f, x, y, r, seed):                       # the shock ring of a BLACK FLASH: a broken ring of black with a red edge on the outside
+    rnd = random.Random(seed); gap = rnd.uniform(0, 6.28)
+    for k in range(int(r*7)):
+        t = 6.2832*k/int(r*7)
+        if (t - gap) % 6.2832 < 1.1 or k % 5 == 4: continue
+        px, py = round(x + math.cos(t)*r), round(y + math.sin(t)*r*.9)
+        if f.at(px, py) == '.': f.set(px, py, 'Z')
+        qx, qy = round(x + math.cos(t)*(r + 1.4)), round(y + math.sin(t)*(r + 1.4)*.9)
+        if f.at(qx, qy) == '.': f.set(qx, qy, 'X')
+def bf_burst(f, x, y, r, n, seed, spread=360, aim=0):            # the flash at the point of impact: a white-hot core, a red ring and n bolts around it
+    for dx in range(-r, r + 1):
+        for dy in range(-r, r + 1):
+            d = math.hypot(dx, dy)
+            if d <= r*.5: f.set(x + dx, y + dy, 'W' if d <= r*.28 else 'Y')
+            elif d <= r*.85 and (dx + dy) % 2 == 0: f.set(x + dx, y + dy, 'X')
+    for k in range(n):
+        ang = aim - spread/2 + spread*(k + .5)/n + random.Random(seed*31 + k).uniform(-14, 14)
+        bolt(f, x + math.cos(math.radians(ang))*r*.7, y + math.sin(math.radians(ang))*r*.7, ang, 5 + (k*7 + seed) % 9 + r, seed*17 + k)
+def charge(f, x, y, t, seed):                      # cursed energy gathering: red and black specks spiralling in on the fist (t 0..1: far..near)
+    for k in range(9):
+        a = math.radians(k*40 + seed*23 + t*160); rad = 2 + (1 - t)*11 + (k % 3)
+        px, py = round(x + math.cos(a)*rad), round(y + math.sin(a)*rad*.8)
+        if f.at(px, py) == '.': f.set(px, py, 'X' if k % 2 else 'Z')
+        if k % 3 == 0 and f.at(px + 1, py) == '.': f.set(px + 1, py, 'z')
+def rstreak(f, pts, ws):                           # a red ribbon along the points (tail first): the path the fist or foot has just taken (only on empty pixels)
+    xs = [p[0] for p in pts]; ys = [p[1] for p in pts]; pad = max(ws)/2 + 1
+    for y in range(max(0, int(min(ys) - pad)), min(N, int(max(ys) + pad) + 2)):
+        for x in range(max(0, int(min(xs) - pad)), min(N, int(max(xs) + pad) + 2)):
+            best = None
+            for j in range(len(pts) - 1):
+                (x0, y0), (x1, y1) = pts[j], pts[j+1]; dx, dy = x1 - x0, y1 - y0; l2 = dx*dx + dy*dy or 1; u = max(0.0, min(1.0, ((x - x0)*dx + (y - y0)*dy)/l2)); d = math.hypot(x - (x0 + u*dx), y - (y0 + u*dy))
+                if best is None or d < best[0]: best = (d, ws[j] + (ws[j+1] - ws[j])*u, j + u)
+            d, w, t = best
+            if d <= w/2 and f.at(x, y) == '.': f.set(x, y, 'Y' if d <= w*.2 else ('X' if t > .8 else 'z'))
+def lines_r(f, x, y, n, length, i):                # red speed lines streaming back from the hit
+    for k in range(n):
+        yy = y - n*2 + k*4 + (i % 2); xx = x - 3 - (k % 2)*2
+        for q in range(length - (k % 3)*2):
+            if f.at(xx - q, yy) == '.': f.set(xx - q, yy, 'X' if q < length - 3 else 'z')
+def bfp_params(i):                                 # the standing punch: he sinks and coils with the fist drawn right back (1-5), steps in and drives it out arm fully stretched (7), holds it, comes back
+    return dict(by=round(kv({0: 0, 2: 2, 5: 3, 7: -1, 10: -1, 14: 0}, i)), ln=round(kv({0: 0, 3: -2, 5: -3, 6: 2, 7: 5, 10: 4, 12: 2, 14: 0}, i)), hx=round(kv({0: 0, 4: -1, 5: -2, 7: 4, 10: 3, 14: 0}, i)), hs=round(kv({0: 0, 7: 1, 14: 0}, i)),
+                lf=(round(kv({0: 34, 4: 33, 6: 38, 7: 42, 11: 40, 14: 34}, i)), GR, 0), lb=(round(kv({0: 31, 4: 28, 7: 25, 11: 28, 14: 31}, i)), GR, 0),
+                na=kv({0: GUARD_N, 1: ((-1.5, 5.5), (-2.5, 8)), 4: ((-5, 6), (-8, 8.5)), 5: ((-5, 5.5), (-8, 8)), 6: ((3, 1.5), (10, 0)), 7: ((8, .5), (17, -1.5)), 9: ((8, .5), (17, -1.5)), 10: ((7, 1), (14, -.5)), 12: GUARD_N, 14: IDLE_N}, i),
+                fa=kv({0: GUARD_F, 4: ((3.5, 4), (7, 1)), 6: ((2.5, 4.5), (5.5, 3)), 9: ((3, 4), (6, 1.5)), 12: GUARD_F, 14: IDLE_F}, i), hp=i*.8, hback=0, mo=5 <= i <= 9, blink=False)
+def bf_punch(i):
+    f, nh, fh = figure(bfp_params(i)); hx, hy = round(nh[0]), round(nh[1])
+    if 2 <= i <= 6: charge(f, hx, hy, (i - 2)/4, i)
+    if 3 <= i <= 6:
+        for k in range(3): bolt(f, hx, hy, (k*120 + i*40) % 360, 4 + i % 3, i*9 + k)
+    if 5 <= i <= 10:
+        pts = [figure(bfp_params(j))[1] for j in (max(0, i - 3), max(0, i - 2), max(0, i - 1), i)]
+        if pts[0] != pts[-1]: rstreak(f, pts, (.8, 1.8, 3.2, 4.6))
+    if i == 7: bf_burst(f, hx - 1, hy, 5, 9, 7, 300, 180)
+    if i == 8: bf_burst(f, hx - 1, hy, 4, 7, 8, 280, 180)
+    if i in (9, 10): bf_burst(f, hx - 1, hy, 2, 5, i, 240, 180)
+    if 7 <= i <= 10: lines_r(f, hx - 4, hy, 3, 9 - (i - 7)*2, i)
+    if 5 <= i <= 7: puff(f, 34 - 9, 61, 2); puff(f, 34 + 9, 61, 1)
+    return f, nh, fh
+BFK_LIFT = [0, 6, 16, 22, 26, 28, 28, 28, 26, 22, 17, 12, 7, 2, 0]                   # the hop of the head kick (the game starts it on frame 2, where his jump has taken him)
+BK_KN = {3: (40, 44), 4: (44, 40), 5: (47, 41), 6: (48, 42), 7: (48, 42), 9: (48, 42), 10: (45, 43), 11: (42, 46)}
+BK_LF = {0: (36, 50, 20), 2: (38, 50, 20), 4: (41, 46, 25), 5: (49, 42, 0), 6: (54, 41, -30), 7: (57, 40, -60), 9: (56, 40, -55), 10: (48, 44, -10), 11: (42, 49, 10), 12: (39, 54, 15), 13: (37, GR, 0), 14: (34, GR, 0)}
+BK_LB = {0: (31, 52, 40), 3: (30, 53, 40), 6: (31, 52, 45), 9: (31, 52, 45), 11: (30, 54, 30), 12: (31, 56, 20), 13: (31, GR, 0), 14: (31, GR, 0)}
+BK_KB = {4: (34, 49), 6: (35, 47), 9: (35, 47), 11: (34, 50)}
+def bfk_params(i):
+    kf = kv(BK_KN, i) if 3 <= i <= 11 else None; kb = kv(BK_KB, i) if 4 <= i <= 11 else None
+    return dict(by=round(kv({0: 0, 2: -1, 4: -2, 7: 0, 10: 1, 12: 2, 14: 0}, i)), ln=round(kv({0: 0, 2: 0, 4: -1, 6: -3, 8: -4, 10: -2, 12: 0, 14: 0}, i)), hx=round(kv({0: 0, 2: -1, 6: 2, 9: 2, 11: 1, 13: 0, 14: 0}, i)),
+                hs=round(kv({0: 0, 6: -1, 9: -1, 12: 0, 14: 0}, i)), lf=tuple(round(v) for v in kv(BK_LF, i)), lb=tuple(round(v) for v in kv(BK_LB, i)), kf=tuple(kf) if kf else None, kb=tuple(kb) if kb else None,
+                na=kv({0: ((3, 4), (6, 0)), 2: ((2, 1), (5, -3)), 4: ((3, -1), (6, -6)), 7: ((-3, 3), (-7, 6)), 10: ((-1, 4), (-3, 7)), 12: ((2, 2), (5, -1)), 13: ((3, 4), (6, 0)), 14: IDLE_N}, i),
+                fa=kv({0: ((1.5, 4.5), (4, 1)), 2: ((1, 2), (4, -2)), 4: ((2, -1), (5, -5)), 7: ((-2, 4), (-6, 7)), 10: ((0, 4), (-2, 7)), 12: ((1.5, 3), (4, 0)), 13: ((1.5, 4.5), (4, 1)), 14: IDLE_F}, i),
+                hp=i*.9, hup=1 if 3 <= i <= 10 else 0, hback=1 if 4 <= i <= 10 else 0, mo=4 <= i <= 9, blink=False)
+def bf_kick(i):
+    f, nh, fh = figure(bfk_params(i)); foot = bfk_params(i)['lf']; fx, fy = foot[0] + 1, foot[1] - 1; nh = (fx, fy)       # (the "near hand" of this move is the foot: the game puts its crackling sparks there)
+    if 2 <= i <= 6: charge(f, fx, fy, (i - 2)/4, i)
+    if 5 <= i <= 6:
+        for k in range(3): bolt(f, fx, fy, (k*120 + i*40) % 360, 4 + i % 3, i*9 + k)
+    if 4 <= i <= 9:
+        pts = [(x + 1.5, y - 1.5) for x, y in [bfk_params(j)['lf'][:2] for j in (max(0, i - 3), max(0, i - 2), max(0, i - 1), i)]]
+        if pts[0] != pts[-1]: rstreak(f, pts, (.8, 1.8, 3.2, 4.6))
+    if i == 7: bf_burst(f, min(58, fx - 1), fy, 5, 9, 7, 300, 180)
+    if i == 8: bf_burst(f, min(58, fx - 1), fy, 4, 7, 8, 280, 180)
+    if i in (9, 10): bf_burst(f, min(58, fx - 1), fy, 2, 5, i, 240, 180)
+    if 7 <= i <= 10: lines_r(f, fx - 6, fy, 3, 8 - (i - 7)*2, i)
+    return f, nh, fh
+def bfg_params(i):                                 # the body blow: from the crouch he coils with the fist low behind his hip (1-5), drives forward out of the crouch and the fist into the stomach (7), holds, settles back into the crouch
+    return dict(by=round(kv({0: CR, 2: CR + 2, 4: CR + 3, 6: CR + 1, 7: CR, 12: CR, 14: CR}, i)), ln=round(kv({0: 2, 3: 0, 5: -2, 6: 3, 7: 6, 10: 5, 13: 3, 14: 2}, i)), hx=round(kv({0: 0, 4: -1, 7: 3, 10: 2, 14: 0}, i)), hd=round(kv({0: 0, 4: 1, 7: 0, 14: 0}, i)),
+                lf=(round(kv({0: 37, 4: 36, 6: 40, 7: 44, 11: 42, 14: 37}, i)), GR, 0), lb=(round(kv({0: 30, 4: 27, 7: 24, 11: 27, 14: 30}, i)), GR, 0),
+                na=kv({0: GUARD_N, 2: ((-1, 5), (-2.5, 8.5)), 4: ((-4, 5.5), (-6.5, 8)), 5: ((-4, 5), (-6.5, 7.5)), 6: ((3, 2), (9, 2.5)), 7: ((7.5, 1), (15.5, -.5)), 9: ((7.5, 1), (15.5, -.5)), 10: ((6.5, 1.5), (13, .5)), 12: GUARD_N, 14: GUARD_N}, i),
+                fa=kv({0: GUARD_F, 4: ((3, 4.5), (6, 1.5)), 7: ((2.5, 5), (5.5, 3.5)), 14: GUARD_F}, i), hp=i*1.1, hback=0, mo=5 <= i <= 9, blink=False)
+def bf_gut(i):
+    f, nh, fh = figure(bfg_params(i)); hx, hy = round(nh[0]), round(nh[1])
+    if 2 <= i <= 6: charge(f, hx, hy, (i - 2)/4, i)
+    if 3 <= i <= 6:
+        for k in range(3): bolt(f, hx, hy, (k*120 + i*40) % 360, 4 + i % 3, i*9 + k)
+    if 5 <= i <= 10:
+        pts = [figure(bfg_params(j))[1] for j in (max(0, i - 3), max(0, i - 2), max(0, i - 1), i)]
+        if pts[0] != pts[-1]: rstreak(f, pts, (.8, 1.8, 3.2, 4.6))
+    if i == 7: bf_burst(f, hx - 1, hy, 5, 9, 7, 300, 180)
+    if i == 8: bf_burst(f, hx - 1, hy, 4, 7, 8, 280, 180)
+    if i in (9, 10): bf_burst(f, hx - 1, hy, 2, 5, i, 240, 180)
+    if 7 <= i <= 10: lines_r(f, hx - 4, hy, 3, 9 - (i - 7)*2, i)
+    if 5 <= i <= 7: puff(f, 34 - 9, 61, 2); puff(f, 34 + 9, 61, 1)
+    return f, nh, fh
+ATTACKS = (('atk0', lambda i: hook(i, False)), ('atk1', lambda i: hook(i, True)), ('atk2', knee), ('atk3', kick3), ('atk4', divergent), ('atk5', rkick, 16, 48), ('atk6', elbow), ('atk7', downslam), ('atk8', pushkick), ('atk9', conc), ('atk10', sweep, 12, 52), ('atk11', powerup), ('atk12', rush, 16, 48), ('atk13', uppercut, 16, 48), ('atk14', fkick, 16, 48), ('atk16', bf_punch, 16, 48), ('atk17', bf_kick, 16, 48), ('atk18', bf_gut, 16, 48))
 # ---------------------------------------------------------------- crouch, crouch walk, crouch jump and the four dashes (15 frames each)
 CR = 7                                                                          # how far the hips drop in a crouch (the leg IK folds the knees by itself)
 def cdn(i):                                                                     # standing -> crouched (standing up plays it backwards)
@@ -508,15 +624,16 @@ if __name__ == '__main__':
         if k == 'atk3': out[k]['lift'] = KICK_LIFT
         if k == 'atk13': out[k]['lift'] = UP_LIFT
         if k == 'atk14': out[k]['lift'] = FK_LIFT
+        if k == 'atk17': out[k]['lift'] = BFK_LIFT
     for k in range(10): out['rx%d' % k] = pack_rx(k)
     out['atk15'] = pack_sp()                                                  # the SPIN ELBOW
     fr, hn, hf = pack(block, X0, 44, 0, 10); out['blk'] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}      # BLOCK (10 frames)
     fr, hn, hf = pack(bwalk, X0, 44, 0); out['bfwd'] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}      # walking with the guard up
     json.dump(out, open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'yuji.json'), 'w'), separators=(',', ':'))
-    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'atk15', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct', 'x0', out[k]['x0'], 'w', out[k]['w'])
+    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'atk15', 'atk16', 'atk17', 'atk18', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct', 'x0', out[k]['x0'], 'w', out[k]['w'])
     if len(sys.argv) > 1:                                                  # contact sheets: python3 -B yuji_art.py sheets <dir>
         d = sys.argv[2]; z = 2
-        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'atk15', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]):
+        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'atk15', 'atk16', 'atk17', 'atk18', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]):
             s = out[k]; sheet = Image.new('RGB', (15*s['w']*z, s['h']*z), (40, 40, 70)); px = {c: tuple(int(PAL[c][j:j+2], 16) for j in (1, 3, 5)) for c in PAL}
             for n, rows in enumerate(s['frames']):
                 for y, row in enumerate(rows):
