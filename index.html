@@ -136,7 +136,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.22</small>
+    <small id="ver">V1.23</small>
   </div>
 </section>
 
@@ -1050,7 +1050,7 @@ const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
 let story = null, alley = false, state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
 let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1, vp = null, js = null, pStun = 0, vf = null, ult = null, cf = null, ke = null;
-let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, shkX = 0, shkY = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999, last: -9999, bonus: 0 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', lastBlue = '', flashUntil = 0, flashMs = 1, flashA = 0, stickX = 0, stickY = 0, stickUp = false, stickDown = false, stickCr = false, stickDownEnd = -9999, jumpFromStick = false, joyId = null, dashReq = false, dgAt = -1, dgK = 0, dgFrom = 0, dgTo = 0, dgAir = false, dgUsed = false, dgCr = false, dgReady = 0, blockHeld = false, blkAt = -1, blkEnd = -1, blkFrom = 4, wcIdx = 0, ceOn = false, ceAt = -9999, ceAmt = 0, ceFlameAt = 0, gDownUntil = 0, ceNext = 0, ceReq = false, cm = 0, inhAt = -1, inhLock = false, inhArm = -1, smd = null, impf = null, tqBlock = null, tqGrab = null, tqBeam = [], tqFx = [], rdIdx = 0, mbK = 0, rdOrb = null, boom = null, holdUntil = 0, rdSlow = false, ride = null, gAir = null, gAirH = 0;
+let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, shkX = 0, shkY = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999, last: -9999, bonus: 0 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', lastBlue = '', flashUntil = 0, flashMs = 1, flashA = 0, stickX = 0, stickY = 0, stickUp = false, stickDown = false, stickCr = false, stickDownEnd = -9999, jumpFromStick = false, joyId = null, dashReq = false, dgAt = -1, dgK = 0, dgFrom = 0, dgTo = 0, dgAir = false, dgUsed = false, dgCr = false, dgReady = 0, blockHeld = false, blkAt = -1, blkEnd = -1, blkFrom = 4, wcIdx = 0, ceOn = false, ceAt = -9999, ceAmt = 0, ceFlameAt = 0, gDownUntil = 0, ceNext = 0, ceReq = false, cm = 0, inhAt = -1, inhLock = false, inhArm = -1, smd = null, impf = null, tqBlock = null, tqGrab = null, tqBeam = [], tqFx = [], rdIdx = 0, mbK = 0, rdOrb = null, boom = null, holdUntil = 0, rdSlow = false, ride = null, gAir = null, gAirH = 0, kickBuf = 0;
 const ceDmg = n => (cm === 1 ? Math.round(n * CE_DMG) : n) * (voidOn() ? 2 : 1);      // x1.3 in cursed energy mode, and everything hits twice as hard inside the Infinite Void      // only cursed energy mode hits harder; red mode has no damage bonus
 const popCol = () => cm === 1 ? '#4ff5e8' : cm === 3 ? '#ff3a4a' : cm === 2 ? '#ff8a7a' : '#7fc4ff';
 const STRIP = 480;
@@ -1152,11 +1152,16 @@ const SK_YUJI = [      // (v1.11) the moves of Yuji, bought like Gojo's; only wa
   ['y_dash', 'DASH', 'A QUICK EVADE FORWARD OR BACK THAT DODGES HITS', 80, []],
   ['y_block', 'BLOCK + PARRY', 'HOLD TO GUARD AGAINST HITS FROM THE FRONT. RAISE IT JUST BEFORE A HIT TO PARRY: NO DAMAGE, THE ENEMY IS STUNNED', 80, []],
   ['y_cpunch', 'CROUCH PUNCHES', 'LOW PUNCHES THAT HIT DUCKING ENEMIES', 120, ['y_crouch']],
+  ['y_sweep', 'SWEEP KICK', 'CROUCH + BLUE: A LOW KICK FULL OF CURSED ENERGY', 150, ['y_crouch']],
+  ['y_div', 'DIVERGENT FIST', 'BLUE: A PUNCH FULL OF CURSED ENERGY, THEN A SECOND IMPACT IN THE STOMACH', 200, []],
+  ['y_rush', 'RUSH FIST', 'WALK FORWARD + BLUE: THE FIST SLIDES AT THE ENEMY', 250, ['y_div']],
   ['y_ce', 'CURSED ENERGY', 'THE MODE BUTTON: THE POWER-UP AND A STRONGER COMBO (10% TO SWITCH ON, THEN 1% A SECOND)', 300, []],
+  ['y_conc', 'CONCENTRATED FIST', 'CURSED MODE + BLUE: ONE HUGE PUNCH THAT BREAKS THE GUARD', 350, ['y_ce']],
+  ['y_elbow', 'SPIN ELBOW', 'CURSED MODE + BLUE IN THE AIR: A SPINNING ELBOW', 350, ['y_ce']],
+  ['y_upper', 'UPPERCUT + FACE KICK', 'CURSED MODE + CROUCH + BLUE: LAUNCH THE ENEMY, THEN BLUE AGAIN KICKS HIM IN THE FACE', 450, ['y_ce', 'y_crouch']],
   ['y_zone', 'THE ZONE', 'THE MODE BUTTON IN CURSED MODE: A RED AND BLACK AURA. THE M1 BECOMES HIGH KICK, SPIN KICK, PUNCH, SPIN PUNCH. IT BURNS ENERGY WHILE IT LASTS', 600, ['y_ce']],
   ['y_flash', 'BLACK FLASH', 'IN THE ZONE, BLUE: A PUNCH CRACKLING WITH BLACK SPARKS THAT HITS TWICE AS HARD AND SENDS THE ENEMY FLYING BACK', 800, ['y_zone']],
-  ['y_inherit', 'INHERITENCE', 'IN THE ZONE TAP MODE TWICE (20%): SPIKY HAIR, NO WAY BACK. M1 = 4 BLACK FLASHES, THE LAST ONE CHARGED. NOT WON IN 10 SECONDS: -50% HEALTH (OR 1%), MODES LOCKED', 2000, ['y_flash']],
-  ['y_tech', 'CURSED TECHNIQUE', 'THE BLUE BUTTON IN THE NORMAL AND THE CURSED MODE (IT REPLACES THE OLD BLUE MOVES): STANDING = PIERCING BLOOD, CROUCHED = SHRINE, WALKING FORWARD = GRAB AND CLEAVE, IN THE AIR = SIMPLE DOMAIN', 1200, []]];
+  ['y_inherit', 'INHERITENCE', 'IN THE ZONE TAP MODE TWICE (20%): SPIKY HAIR, NO WAY BACK. M1 = 4 BLACK FLASHES, BLUE = CURSED TECHNIQUE (ONLY HERE). NOT WON IN 10 SECONDS: -50% HEALTH (OR 1%), MODES LOCKED', 2000, ['y_flash']]];
 const SK_VERITY = [
   ['v_crouch', 'CROUCH', 'DOWN ON THE STICK OR KEY S: DUCK UNDER HIGH HITS (3% ENERGY)', 50, []],
   ['v_block', 'BLOCK + PARRY', 'HOLD TO GUARD AGAINST HITS FROM THE FRONT. RAISE IT JUST BEFORE A HIT TO PARRY: NO DAMAGE, THE ENEMY IS STUNNED', 80, []],
@@ -1178,7 +1183,7 @@ const GATE = {      // for each fighter the skill each button needs (a button th
   y: { cr: 'y_crouch', dash: 'y_dash', blk: 'y_block', cp: 'y_cpunch', ce: 'y_ce' },
   v: { cr: 'v_crouch', dash: 'v_tele', blk: 'v_block', ce: 'v_ball', dom: 'v_scare', fat: 'v_fatal', bl: 'v_bite' },
   k: { cr: 'k_crouch', dash: 'k_dash', blk: 'k_block', dom: 'k_ult', fat: 'k_fatal', bl: 'k_toon' } };
-const BLUES = { g: ['blue', 'tele', 'mblue'], y: ['y_tech', 'y_flash'], v: ['v_bite'], k: ['k_toon'] };
+const BLUES = { g: ['blue', 'tele', 'mblue'], y: ['y_div', 'y_sweep', 'y_rush', 'y_conc', 'y_elbow', 'y_upper', 'y_flash'], v: ['v_bite'], k: ['k_toon'] };
 const lacks = key => { const need = GATE[meK()][key]; return !!need && !owns(need); };      // true when the fighter you play has not bought what this button needs
 let lockSayAt = -1e9;
 function lockPop(now) { if (now - lockSayAt > 1200) { lockSayAt = now; say('LOCKED: BUY IT IN SKILLS', wx, '#ff8a7a', 8, now); } }
@@ -1195,9 +1200,9 @@ function gateSkills(now) {                    // every frame, before the control
 }
 function gateBlue(now, jf, tf) {              // BLUE of Gojo: teleport up in the air, Max Blue crouched, Lapse Blue on the ground; in red mode RED (and RED into the Max Blue orb is the PURPLE). BLUE of Yuji: by mode, air, stance and walking forward
   const k = meK(); if (!lpReq || (k !== 'g' && k !== 'y')) return;
-  const need = k === 'y' ? (cm >= 2 ? 'y_flash' : 'y_tech')
+  const need = k === 'y' ? (cm === 3 ? null : cm === 2 ? 'y_flash' : cm === 1 ? (jf >= 4 && jf <= 10 ? 'y_elbow' : stance === 'crouch' ? 'y_upper' : 'y_conc') : stance === 'crouch' ? 'y_sweep' : (keyR || padR) ? 'y_rush' : 'y_div')
     : cm === 2 ? (orb && !purple ? 'purple' : 'red') : jf >= 0 || tf >= 0 ? 'tele' : stance !== 'stand' ? 'mblue' : 'blue';
-  if (!owns(need)) { lpReq = false; lockPop(now); }
+  if (need && !owns(need)) { lpReq = false; lockPop(now); }      // (INHERITENCE has no gate of its own for BLUE: owning the mode is the price)
 }
 function skillUI() {                          // the buttons of a move you do not own are dimmed and marked
   const L = (id, key) => $(id).classList.toggle('lk', lacks(key));
@@ -1689,7 +1694,7 @@ function show(s) {
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll(); $('settings').classList.remove('on');
-  js = null; vf = null; if (cf) cfReset(); if (ke) keReset(); blindOff = false; bfo = null; bfp = false; ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; inhAt = -1; inhLock = false; inhArm = -1; smd = null; impf = null; tqBlock = null; tqGrab = null; tqBeam = []; tqFx = []; ceOn = false; ceAmt = 0; ceFlameAt = 0; gDownUntil = 0; gAir = null; gAirH = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
+  js = null; vf = null; if (cf) cfReset(); if (ke) keReset(); blindOff = false; bfo = null; bfp = false; ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; inhAt = -1; inhLock = false; inhArm = -1; smd = null; impf = null; tqBlock = null; tqGrab = null; tqBeam = []; tqFx = []; ceOn = false; ceAmt = 0; ceFlameAt = 0; gDownUntil = 0; gAir = null; gAirH = 0; kickBuf = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
   if (s === 'play') { spawnAt = pnow(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; sparks = []; stopMs = 0; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(pnow(), 1200);
@@ -2375,7 +2380,7 @@ function setModeUI() {                        // the MODE button (OFF / CURSED /
   $('dashl').textContent = vy ? 'TELE' : 'DASH'; $('dash').setAttribute('aria-label', vy ? 'Teleport dodge' : 'Dash'); $('ce').setAttribute('aria-label', vy ? 'Mode: tap to turn into the ball and back' : 'Mode: tap to switch between normal, cursed energy and red');
   if (vy) { $('ce').classList.toggle('lit', ball); $('ce').setAttribute('aria-pressed', ball ? 'true' : 'false'); $('cel').innerHTML = 'MODE<br>' + (ball ? 'BALL' : 'OFF'); $('lapl').textContent = 'BITE'; $('lap').setAttribute('aria-label', 'Bite: the enemy bleeds for 4 seconds'); }
   if (!!vs && vs.me === 'cat') { $('lapl').innerHTML = 'CARTOON<br>TOSS'; $('lap').setAttribute('aria-label', 'Cartoon Toss: the huge Cartoon Cat grabs you and throws you onto the enemy'); $('doml').innerHTML = 'ULTI<br>MATE'; $('dom').querySelector('path').setAttribute('d', CHOKE_D); $('dom').setAttribute('aria-label', 'Ultimate: the Cat chokes the enemy, knees him 15 times and throws him away'); }      // playing the Cat: BLUE = CARTOON ATTACK; the DOMAIN button is his ULTIMATE; MODE and BLOCK are hidden by the style sheet
-  if (!!vs && vs.me === 'yuji') { lastBlue = cm >= 2 ? 'BLACK<br>FLASH' : 'PIERCE<br>BLOOD'; $('lapl').innerHTML = lastBlue; $('lap').classList.remove('red'); $('lap').setAttribute('aria-label', cm >= 2 ? 'Black Flash: a punch crackling with black sparks that hits twice as hard and sends the enemy flying back' : 'Cursed Technique: standing = Piercing Blood, crouched = Shrine, walking forward = Grab and Cleave, in the air = Simple Domain'); $('ce').setAttribute('aria-label', 'Mode: tap to switch cursed energy on (hands up, then the flames light up) and off'); }      // playing Yuji: BLUE = DIVERGENT FIST (CONCENTRATED FIST in cursed energy mode, a SWEEP while crouched; the per-frame code in drawScene keeps the label right); MODE = cursed energy on / off (no red mode); DOMAIN is dimmed by the style sheet
+  if (!!vs && vs.me === 'yuji') { lastBlue = cm === 3 ? 'PIERCE<br>BLOOD' : cm === 2 ? 'BLACK<br>FLASH' : cm === 1 ? 'CONC.<br>FIST' : 'DIVERG.<br>FIST'; $('lapl').innerHTML = lastBlue; $('lap').classList.remove('red'); $('lap').setAttribute('aria-label', cm === 3 ? 'Cursed Technique: standing = Piercing Blood, crouched = Shrine, walking forward = Grab and Cleave, in the air = Simple Domain' : cm === 2 ? 'Black Flash: a punch crackling with black sparks that hits twice as hard and sends the enemy flying back' : cm === 1 ? 'Concentrated Fist: one huge cursed energy punch that breaks the guard' : 'Divergent Fist: a punch full of cursed energy, then a second impact in the stomach as the fist is pulled back (crouched: a sweep kick that drops the enemy)'); $('ce').setAttribute('aria-label', 'Mode: tap to switch cursed energy on (hands up, then the flames light up) and off'); }      // playing Yuji: BLUE = DIVERGENT FIST (CONCENTRATED FIST in cursed energy mode, a SWEEP while crouched; the per-frame code in drawScene keeps the label right); MODE = cursed energy on / off (no red mode); DOMAIN is dimmed by the style sheet
   skillUI();
 }
 function cycleMode(now) {                     // MODE button / E: normal -> cursed energy -> red -> normal (in Versus the cursed mode needs some energy: with none left the tap skips it)
@@ -3234,7 +3239,7 @@ function drawBig(now) {      // the darkness, white flash, speed lines, three sh
   }
   ctx.globalAlpha = 1;
 }
-// ---------------------------------------------------------------- v1.21 CURSED TECHNIQUE (Yuji's BLUE button in the normal and the cursed energy mode, $1200 in the shop; v1.22: it REPLACES the old BLUE moves (DIVERGENT FIST, RUSH FIST, the SWEEP, CONCENTRATED FIST, the SPIN ELBOW, the UPPERCUT and the FACE KICK); v1.21 had it on the DOMAIN button). Four techniques, picked by what he is doing: STANDING = PIERCING BLOOD (strip 24: he claps, holds his arms out all the way, the game stands still for four manga IMPACT FRAMES and a jet of blood pierces the enemy: 40 damage, nothing blocks it, 4 s of bleeding; the jet flies over a crouching enemy), CROUCHED = SHRINE (strip 25: he cleaves the floor, lifts the block and throws it: 55 damage, a guard stops it), WALKING FORWARD = GRAB + CLEAVE (strip 26: he runs in, grabs the enemy and cleaves him: 50 damage and 4 s of bleeding, nothing blocks the grab), IN THE AIR = SIMPLE DOMAIN (strip 27: a cyan circle on the floor round him; while he stays inside it the enemy's domain-style attacks (Verity's JUMPSCARE, the Cat's ULTIMATE) are negated and held back; he can fight inside it, but when he steps out (or his energy runs out) the held-back attack hits him and the circle is gone). 25 / 30 / 25 / 30% of the energy, the simple domain burns 2% a second.
+// ---------------------------------------------------------------- v1.21 CURSED TECHNIQUE (Yuji's BLUE button, ONLY in INHERITENCE; it comes with that mode, there is no skill of its own. v1.21 had it on the DOMAIN button, v1.22 in the normal and the cursed energy mode). Four techniques, picked by what he is doing: STANDING = PIERCING BLOOD (strip 24: he claps, holds his arms out all the way, the game stands still for four manga IMPACT FRAMES and a jet of blood pierces the enemy: 40 damage, nothing blocks it, 4 s of bleeding; the jet flies over a crouching enemy), CROUCHED = SHRINE (strip 25: he cleaves the floor, lifts the block and throws it: 55 damage, a guard stops it), WALKING FORWARD = GRAB + CLEAVE (strip 26: he runs in, grabs the enemy and cleaves him: 50 damage and 4 s of bleeding, nothing blocks the grab), IN THE AIR = SIMPLE DOMAIN (strip 27: a cyan circle on the floor round him; while he stays inside it the enemy's domain-style attacks (Verity's JUMPSCARE, the Cat's ULTIMATE) are negated and held back; he can fight inside it, but when he steps out (or his energy runs out) the held-back attack hits him and the circle is gone). 25 / 30 / 25 / 30% of the energy, the simple domain burns 2% a second.
 const TQ = { range: 190, pierce: 40, shrine: 55, grab: 50, bleed: 4000, gap: 28, reach: 46, sdR: 54, sdDrain: 2, sdHold: 8000, imp: 420 };
 let tqStone = null;
 const tqBlood = (x, y, n, dir) => spark(x, y, n, ['#ff2a3a', '#c4121c', '#7a0f1e', '#ffb0a0'], true, dir);
@@ -4203,7 +4208,7 @@ function drawScene(now, dt) {
   }
   if (af < 0 && (combo !== 0 || cpIdx !== 0 || wcIdx !== 0 || rdIdx !== 0) && now > comboUntil) { combo = 0; cpIdx = 0; wcIdx = 0; rdIdx = 0; }   // waited too long: back to the first hit (standing and crouched)
   const lab = stance === 'crouch' ? ['R.JAB', 'L.UPPR'][cpIdx] : (stance === 'stand' && cm === 1) ? (vs && vs.me === 'yuji' ? YU_ATK.names[5 + wcIdx] : WALK_NAMES[wcIdx]) : (stance === 'stand' && cm >= 2) ? (vs && vs.me === 'yuji' ? YU_ATK.names[(cm === 3 ? 20 : 16) + rdIdx] : RED_NAMES[rdIdx]) : (vs && vs.me === 'yuji' ? YU_ATK.names : ATK_NAMES)[combo]; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; }
-  if (vs && vs.me === 'yuji') { const bl = cm >= 2 ? (jf >= 4 && jf <= 10 ? 'BF<br>KICK' : stance === 'crouch' ? 'BF<br>GUT' : 'BLACK<br>FLASH') : jf >= 3 && jf <= 11 ? 'SIMPLE<br>DOMAIN' : stance === 'crouch' ? 'SHRINE' : (keyR || padR) ? 'GRAB<br>CLEAVE' : 'PIERCE<br>BLOOD'; if (bl !== lastBlue) { lastBlue = bl; $('lapl').innerHTML = bl; } }      // (the BLUE button's name follows the mode and the stance)
+  if (vs && vs.me === 'yuji') { const bl = cm === 3 ? (jf >= 3 && jf <= 11 ? 'SIMPLE<br>DOMAIN' : stance === 'crouch' ? 'SHRINE' : (keyR || padR) ? 'GRAB<br>CLEAVE' : 'PIERCE<br>BLOOD') : cm === 2 ? (jf >= 4 && jf <= 10 ? 'BF<br>KICK' : stance === 'crouch' ? 'BF<br>GUT' : 'BLACK<br>FLASH') : cm === 1 ? (jf >= 4 && jf <= 10 ? 'SPIN<br>ELBOW' : stance === 'crouch' ? (airUp(dummy) ? 'FACE<br>KICK' : 'UPPER<br>CUT') : 'CONC.<br>FIST') : stance === 'crouch' ? 'SWEEP' : (keyR || padR) ? 'RUSH<br>FIST' : 'DIVERG.<br>FIST'; if (bl !== lastBlue) { lastBlue = bl; $('lapl').innerHTML = bl; } }      // (the BLUE button's name follows the mode and the stance)
   if (crReq) {                                // keyboard S / Down / C: tap to go down (10 frames), tap again to stand up (the joystick crouches while it is held down)
     crReq = false;
     if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0) { if (stance === 'stand') { stance = 'down'; stAt = now; sf = 0; } else if (stance === 'crouch') { stance = 'up'; stAt = now; sf = 0; } }
@@ -4221,18 +4226,35 @@ function drawScene(now, dt) {
   inheritStep(now);
   if (vs && vs.me === 'yuji') tqStep(now, dt, af);
   gateBlue(now, jf, tf);
-  if (lpReq && vs && vs.me === 'yuji') {      // BLUE (v1.22: CURSED TECHNIQUE REPLACES the old BLUE moves of the normal mode and the cursed energy mode: DIVERGENT FIST, RUSH FIST, the SWEEP, CONCENTRATED FIST, the SPIN ELBOW, the UPPERCUT and the FACE KICK): in the air = SIMPLE DOMAIN (30% of the energy), crouched = SHRINE (30%), walking forward = GRAB + CLEAVE (25%), otherwise PIERCING BLOOD (25%); in THE ZONE and INHERITENCE BLUE is still BLACK FLASH (40%)
+  if (lpReq && vs && vs.me === 'yuji') {      // BLUE: DIVERGENT FIST (normal mode, standing: 15% of the energy), CONCENTRATED FIST (cursed energy mode, standing: 25%) or the SWEEP (normal mode, crouched: 15%), with nothing else going on      // (v1.23: in INHERITENCE BLUE is CURSED TECHNIQUE instead, and ONLY there: in the air = SIMPLE DOMAIN 30%, crouched = SHRINE 30%, walking forward = GRAB + CLEAVE 25%, otherwise PIERCING BLOOD 25%)
     lpReq = false;
-    const base = t >= 1 && jf < 0 && tf < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0, free = base && af < 0 && now > lpReady, air = t >= 1 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0 && hurtAt < 0 && jf >= 3 && jf <= 11, go = (k, cost, s1) => { if (ceSpend(cost, now)) { atkK = k; atkAt = now; af = 0; atkQ = false; divP = null; snd(s1); } };
-    if (cm >= 2) {      // BLACK FLASH (THE ZONE and INHERITENCE, 40% of the energy): standing = the punch, in the air = a kick to the head, crouched = a blow to the stomach; each has its own 15-frame animation, see hitFoe
+    const base = t >= 1 && jf < 0 && tf < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0, free = base && af < 0 && now > lpReady, airFoe = airUp(dummy) && dummy.ko < 0, airOK = cm === 1 && jf >= 4 && jf <= 10 && t >= 1 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0;
+    const air = t >= 1 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0 && hurtAt < 0 && jf >= 3 && jf <= 11, go = (k, cost, s1) => { if (ceSpend(cost, now)) { atkK = k; atkAt = now; af = 0; atkQ = false; divP = null; snd(s1); } };
+    if (cm === 3) {      // INHERITENCE: CURSED TECHNIQUE
+      if (air) { if (ceSpend(CE_COST.ySimple, now)) { atkK = 27; atkAt = now - 3000 / YU_ATK.fps[27]; af = 3; atkQ = false; divP = null; jumpAt = -1; jf = -1; snd('ceon'); } }      // (SIMPLE DOMAIN: the seal starts on its frame 3, where his jump has taken him)
+      else if (free && stance === 'crouch') go(25, CE_COST.yShrine, 'concgather');
+      else if (free && stance === 'stand' && (keyR || padR)) go(26, CE_COST.yGrab, 'concgather');
+      else if (free && stance === 'stand') go(24, CE_COST.yBlood, 'concgather');
+    }
+    else if (airOK && ceSpend(CE_COST.yConc, now)) { atkK = 15; atkAt = now - 3000 / YU_ATK.fps[15]; af = 3; atkQ = false; divP = null; jumpAt = -1; jf = -1; { const gp = dummy ? dummy.x - wx : 60; wxv += Math.max(0, Math.min(160, (Math.abs(gp) - 18) * 7)) * (gp < 0 ? -1 : 1); } snd('concgather'); }      // (the SPIN ELBOW: BLUE in the air in cursed energy mode, 25%: the strip starts on its frame 3, the spin, from where his jump has taken him; he drifts towards the enemy, but stops 18 px short of him)
+    else if (cm === 2) {      // BLACK FLASH (THE ZONE, 40% of the energy): standing = the punch, in the air = a kick to the head, crouched = a blow to the stomach; each has its own 15-frame animation, see hitFoe
       if (jf >= 4 && jf <= 10 && t >= 1 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0 && ceSpend(CE_COST.yFlash, now)) { atkK = 21; atkAt = now - 2000 / YU_ATK.fps[21]; af = 2; atkQ = false; divP = null; jumpAt = -1; jf = -1; { const gp = dummy ? dummy.x - wx : 60; wxv += Math.max(0, Math.min(160, (Math.abs(gp) - 18) * 7)) * (gp < 0 ? -1 : 1); } snd('concgather'); }      // (the kick starts on its frame 2, where his jump has taken him, and he drifts towards the enemy)
       else if (free && stance === 'stand' && ceSpend(CE_COST.yFlash, now)) { atkK = 20; atkAt = now; af = 0; atkQ = false; divP = null; snd('concgather'); }
       else if (free && stance === 'crouch' && ceSpend(CE_COST.yFlash, now)) { atkK = 22; atkAt = now; af = 0; atkQ = false; divP = null; snd('concgather'); }
     }
-    else if (air) { if (ceSpend(CE_COST.ySimple, now)) { atkK = 27; atkAt = now - 3000 / YU_ATK.fps[27]; af = 3; atkQ = false; divP = null; jumpAt = -1; jf = -1; snd('ceon'); } }      // (SIMPLE DOMAIN: the seal starts on its frame 3, where his jump has taken him)
-    else if (free && stance === 'crouch') go(25, CE_COST.yShrine, 'concgather');
-    else if (free && stance === 'stand' && (keyR || padR)) go(26, CE_COST.yGrab, 'concgather');
-    else if (free && stance === 'stand') go(24, CE_COST.yBlood, 'concgather');
+    else if (free && stance === 'stand' && cm === 0 && (keyR || padR) && ceSpend(CE_COST.yDiv, now)) { atkK = 12; atkAt = now; af = 0; atkQ = false; divP = null; snd('divgather'); }      // (walking forward: the RUSH FIST, the same 15%)
+    else if (free && stance === 'stand' && cm === 0 && ceSpend(CE_COST.yDiv, now)) { atkK = 4; atkAt = now; af = 0; atkQ = false; divP = null; snd('divgather'); }
+    else if (free && stance === 'stand' && cm === 1 && ceSpend(CE_COST.yConc, now)) { atkK = 9; atkAt = now; af = 0; atkQ = false; divP = null; snd('concgather'); }
+    else if (free && stance === 'crouch' && cm === 0 && ceSpend(CE_COST.yDiv, now)) { atkK = 10; atkAt = now; af = 0; atkQ = false; divP = null; }
+    else if (stance === 'crouch' && cm === 1) {      // the CROUCHED CONCENTRATED FIST: the UPPERCUT (25%) launches the enemy; BLUE again while he is up there is the FACE KICK (5%), as soon as the uppercut has landed (frame 8 on)
+      if (base && airFoe && (af < 0 ? now > lpReady : atkK === 13 && af >= 8)) { if (ceSpend(CE_COST.yKick, now)) { atkK = 14; atkAt = now; af = 0; atkQ = false; divP = null; kickBuf = 0; snd('concgather'); } }
+      else if (free && !airFoe && ceSpend(CE_COST.yConc, now)) { atkK = 13; atkAt = now; af = 0; atkQ = false; divP = null; snd('concgather'); }
+      else if (atkK === 13 && af >= 0 && af < 8) kickBuf = now;      // (pressed a moment too early: remembered for 0.3 s)
+    }
+  }
+  if (kickBuf && vs && vs.me === 'yuji') {      // the remembered second press: the kick starts as soon as the uppercut has landed, if the enemy is up in the air
+    if (now - kickBuf > 300 || cm !== 1 || stance !== 'crouch') kickBuf = 0;
+    else if (atkK === 13 && af >= 8) { kickBuf = 0; if (airUp(dummy) && dummy.ko < 0 && t >= 1 && hf < 0 && ceSpend(CE_COST.yKick, now)) { atkK = 14; atkAt = now; af = 0; atkQ = false; divP = null; snd('concgather'); } }
   }
   if (vs && vs.net && !(jf >= 0)) lpReq = false;      // (the Wi-Fi fight: BLUE only in the air for now = teleport up)
   if (lpReq) {                                // BLUE: in mid-air = teleport up, then fall. On the ground: walking forward = stand and pull the enemy in (stuns 0.4 s); otherwise blink forward to the enemy; crouched = Max Blue
