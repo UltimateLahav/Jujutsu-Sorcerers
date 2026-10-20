@@ -136,7 +136,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.19</small>
+    <small id="ver">V1.20</small>
   </div>
 </section>
 
@@ -3138,9 +3138,9 @@ function drawBolts(now) {      // the lightning, the shock ring and the darkness
   ctx.globalAlpha = 1;
 }
 // ---------------------------------------------------------------- v1.19 INHERITENCE (Yuji, $2000, needs BLACK FLASH). In THE ZONE tap MODE twice (once: just leaves the Zone): 20% of the energy, spiky hair, a red-black aura, and for 10 seconds of the fight no mode can be changed. Its M1 is four BLACK FLASHES: the punch, the kick to the head (he hops into it), the blow to the stomach and, fourth, the CHARGED BLACK FLASH (strip 23, 150 damage, 15 frames on a 96-wide grid: he gathers it for 0.45 s, then the longest freeze of the game, a white flash, speed lines, three shock rings and 16 bolts). The first three do not send the enemy flying, so the chain connects. If the fight is not over after the 10 s he is back in the base mode with every mode locked until the next round and loses half of his health (at half or less he is left with 1%); in free play there is no loss and no lock.
-const SPK_E = 8, SPK_HAIR = 'HIKLk';      // rows added above every picture for the taller hair
-const SPK_SP = [[0, 6, -0.6], [3, 8, -0.32], [6, 9, -0.05], [9, 7, 0.25], [12, 5, 0.5]];      // the spikes: [column from the back of the hair (of 12), height, lean per row (negative = swept back)]
-function spikify(S) {      // the same strip with SPIKIER HAIR: in every frame the top of the hair is found and five tall, sharp spikes (they flicker a little from frame to frame, like flames) grow out of it with a dark rim like the rest of him; the picture gets SPK_E more rows on top and is drawn that much higher, so nothing moves
+const SPK_E = 6, SPK_HAIR = 'HIKLk';      // rows added above every picture for the taller hair (v1.20: 6, the spikes are only a little taller than his own)
+const SPK_SP = [[0, 3, -0.7], [3, 4, -0.62], [6, 5, -0.52], [9, 4, -0.42], [12, 3, -0.32]];      // the spikes: [column from the back of the hair (of 12), height, lean per row (negative = swept back)]; v1.20: 3-5 px on top of his own tufts, all swept back a little (v1.19 had 5-9 px and a crown)
+function spikify(S) {      // the same strip with SPIKIER HAIR: in every frame the top of the hair is found and five sharp spikes, only a little taller than his own tufts and swept back, (they flicker a little from frame to frame) grow out of it with a dark rim like the rest of him; the picture gets SPK_E more rows on top and is drawn that much higher, so nothing moves
   const E = SPK_E, W = S.w;
   const frames = S.frames.map((rows, fi) => {
     const g = []; for (let y = 0; y < E; y++) g.push(new Array(W).fill('.')); for (const r of rows) g.push(r.split(''));
@@ -3151,9 +3151,9 @@ function spikify(S) {      // the same strip with SPIKIER HAIR: in every frame t
       const ph = fi / 15 * 6.2832, put = (x, y, c) => { if (y >= 0 && y < g.length && x >= 0 && x < W && g[y][x] === '.') g[y][x] = c; }, spk = [];
       for (const [dx, h0, lean] of SPK_SP) {
         const c = xa + Math.round(dx * (xb - xa) / 12); let yb = 1e9; for (let x = c - 1; x <= c + 1; x++) if (top[x] !== undefined) yb = Math.min(yb, top[x]); if (yb === 1e9) continue;
-        const h = Math.max(3, h0 + Math.round(1.2 * Math.sin(ph * 2 + dx)));
+        const h = Math.max(3, h0 + Math.round(0.7 * Math.sin(ph * 2 + dx)));
         for (let j = 1; j <= h; j++) {
-          const wd = j >= h ? 1 : Math.max(1, Math.round(5.2 * (h - j + 1) / h)), xc = c + lean * j, x1 = Math.round(xc - (wd - 1) / 2), y = yb - j;
+          const wd = j >= h ? 1 : Math.max(1, Math.round(4.2 * (h - j + 1) / h)), xc = c + lean * j, x1 = Math.round(xc - (wd - 1) / 2), y = yb - j;
           for (let q = 0; q < wd; q++) { const x = x1 + q; spk.push([x, y, q === 0 && wd >= 3 ? 'K' : q === wd - 1 && wd >= 2 ? 'H' : j >= h - 1 ? 'H' : (j + q) % 4 === 0 ? 'L' : 'I']); }
         }
       }
