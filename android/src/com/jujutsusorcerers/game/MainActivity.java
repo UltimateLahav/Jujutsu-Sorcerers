@@ -2,6 +2,7 @@ package com.jujutsusorcerers.game;
 
 import android.app.Activity;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
@@ -23,6 +24,11 @@ public class MainActivity extends Activity implements View.OnLongClickListener {
         super.onCreate(savedInstanceState);
         android.util.Log.i("JujutsuSorcerers", OWNER);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if (Build.VERSION.SDK_INT >= 28) {   // the game fills the whole screen, also behind a camera notch; the page keeps its bars and buttons clear of it (env(safe-area-inset-*))
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            getWindow().setAttributes(lp);
+        }
 
         web = new WebView(this);
         web.setBackgroundColor(Color.parseColor("#0D0A17"));
@@ -45,6 +51,7 @@ public class MainActivity extends Activity implements View.OnLongClickListener {
         web.setWebChromeClient(new WebChromeClient());
         lan = new LanBridge(this);
         web.addJavascriptInterface(lan, "AndroidLan");   // WI-FI ROOMS (rooms on the same Wi-Fi)
+        web.addJavascriptInterface(new AppBridge(this), "AndroidApp");   // vibration, the clipboard (save codes), the phone's battery saver
         setContentView(web);
         web.loadUrl("file:///android_asset/index.html");
     }
@@ -58,6 +65,7 @@ public class MainActivity extends Activity implements View.OnLongClickListener {
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus) hideSystemUi();
+        else web.evaluateJavascript("window.__pause && window.__pause()", null);   // the notification bar, a call or a system dialog: the fight waits
     }
 
     /** Back button: let the game step back through its menus first; close the app from the title screen. */
@@ -69,7 +77,7 @@ public class MainActivity extends Activity implements View.OnLongClickListener {
     @Override public boolean onLongClick(View v) { return true; }   // swallow long-press (no text-selection popups)
 
     // the game's sound is silenced while the app is in the background
-    @Override protected void onPause()  { super.onPause();  web.evaluateJavascript("window.__audio && window.__audio(false)", null); web.onPause(); }
+    @Override protected void onPause()  { super.onPause();  web.evaluateJavascript("window.__pause && window.__pause(); window.__audio && window.__audio(false)", null); web.onPause(); }
     @Override protected void onResume() { super.onResume(); web.onResume(); web.evaluateJavascript("window.__audio && window.__audio(true)", null); hideSystemUi(); }
     @Override protected void onDestroy() { lan.stop(); web.destroy(); super.onDestroy(); }
 }
