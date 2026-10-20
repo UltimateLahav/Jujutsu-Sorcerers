@@ -136,7 +136,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.27</small>
+    <small id="ver">V1.28</small>
   </div>
 </section>
 
@@ -1167,7 +1167,11 @@ const SK_YUJI = [      // (v1.11) the moves of Yuji, bought like Gojo's; only wa
   ['y_upper', 'UPPERCUT + FACE KICK', 'CURSED MODE + CROUCH + BLUE: LAUNCH THE ENEMY, THEN BLUE AGAIN KICKS HIM IN THE FACE', 450, ['y_ce', 'y_crouch']],
   ['y_zone', 'THE ZONE', 'THE MODE BUTTON IN CURSED MODE: A RED AND BLACK AURA. THE M1 BECOMES HIGH KICK, SPIN KICK, PUNCH, SPIN PUNCH. IT BURNS ENERGY WHILE IT LASTS', 600, ['y_ce']],
   ['y_flash', 'BLACK FLASH', 'IN THE ZONE, BLUE: A PUNCH CRACKLING WITH BLACK SPARKS THAT HITS TWICE AS HARD AND SENDS THE ENEMY FLYING BACK', 800, ['y_zone']],
-  ['y_inherit', 'INHERITENCE', 'IN THE ZONE TAP MODE TWICE (20%): SPIKY HAIR, NO WAY BACK. M1 = 4 BLACK FLASHES, BLUE = CURSED TECHNIQUE (ONLY HERE). NOT WON IN 10 SECONDS: -50% HEALTH (OR 1%), MODES LOCKED', 2000, ['y_flash']]];
+  ['y_inherit', 'INHERITENCE', 'IN THE ZONE TAP MODE TWICE (20%): SPIKY HAIR, NO WAY BACK. M1 = 4 BLACK FLASHES, BLUE = CURSED TECHNIQUE (ONLY HERE; ITS FOUR MOVES ARE BOUGHT SEPARATELY). NOT WON IN 10 SECONDS: -50% HEALTH (OR 1%), MODES LOCKED', 2000, ['y_flash']],
+  ['y_pierce', 'PIERCING BLOOD', 'INHERITENCE + BLUE: CLAP HIS HANDS AND FIRE PIERCING BLOOD THROUGH THE ENEMY, HE BLEEDS (25% ENERGY)', 400, ['y_inherit']],
+  ['y_shrine', 'SHRINE', 'INHERITENCE, CROUCHED + BLUE: CLEAVE A BLOCK OUT OF THE FLOOR AND THROW IT (30% ENERGY). HE NEEDS THE CROUCH TO DO IT', 500, ['y_inherit']],
+  ['y_cleave', 'GRAB CLEAVE', 'INHERITENCE, WALKING FORWARD + BLUE: GRAB THE ENEMY AND CLEAVE HIM, HE BLEEDS (25% ENERGY)', 500, ['y_inherit']],
+  ['y_simple', 'SIMPLE DOMAIN', 'INHERITENCE, IN THE AIR + BLUE: A CYAN CIRCLE ROUND HIM: DOMAIN EXPANSIONS DO NOTHING UNTIL HE IS HIT (30% ENERGY)', 600, ['y_inherit']]];
 const SK_VERITY = [
   ['v_crouch', 'CROUCH', 'DOWN ON THE STICK OR KEY S: DUCK UNDER HIGH HITS (3% ENERGY)', 50, []],
   ['v_block', 'BLOCK + PARRY', 'HOLD TO GUARD AGAINST HITS FROM THE FRONT. RAISE IT JUST BEFORE A HIT TO PARRY: NO DAMAGE, THE ENEMY IS STUNNED', 80, []],
@@ -1175,14 +1179,16 @@ const SK_VERITY = [
   ['v_bite', 'BITE', 'BLUE: A BITE, THE ENEMY BLEEDS FOR 4 SECONDS', 200, []],
   ['v_ball', 'SMOKE BALL', 'THE MODE BUTTON: TURN INTO A BALL THAT NOTHING CAN HIT, TAP AGAIN TO CHANGE BACK', 250, ['v_block']],
   ['v_fatal', 'FATALITY', 'FINISH A WEAK ENEMY IN A CUTSCENE', 500, ['v_bite']],
-  ['v_scare', 'JUMPSCARE', 'THE DOMAIN BUTTON: GRAB THE ENEMY, HE IS STUNNED FOR 5 SECONDS AND TAKES FEAR DAMAGE', 800, ['v_ball', 'v_bite']]];
+  ['v_scare', 'JUMPSCARE', 'THE DOMAIN BUTTON: GRAB THE ENEMY, HE IS STUNNED FOR 5 SECONDS AND TAKES FEAR DAMAGE', 800, ['v_ball', 'v_bite']],
+  ['v_drag', 'BLOOD DRAG', "CROUCH + BLUE: A LOW LUNGE, BITE THE ENEMY'S FEET AND DRAG HIM ALONG THE FLOOR BY THEM, HIS BLOOD IS DRAGGED ALONG THE GROUND (25% ENERGY)", 350, ['v_bite', 'v_crouch']]];
 const SK_CAT = [
   ['k_crouch', 'FLATTEN', 'DOWN ON THE STICK OR KEY S: SMASH YOURSELF FLAT, TAP AGAIN TO STAND UP (3% ENERGY)', 50, []],
   ['k_block', 'GLOVE SHIELD', 'HOLD TO GUARD WITH A GIANT GLOVE. RAISE IT JUST BEFORE A HIT TO PARRY: NO DAMAGE, THE ENEMY IS STUNNED', 80, []],
   ['k_dash', 'PUSH DASH', 'SHOVE YOURSELF ALONG THE GROUND, NOTHING CAN HIT YOU AT THE START', 80, []],
   ['k_toon', 'CARTOON ATTACK', 'BLUE: THE HUGE CARTOON CAT GRABS YOU AND THROWS YOU ONTO THE ENEMY', 300, ['k_dash']],
   ['k_fatal', 'FATALITY', 'FINISH A WEAK ENEMY IN A CUTSCENE', 500, ['k_toon']],
-  ['k_ult', 'ULTIMATE', 'THE DOMAIN BUTTON: CHOKE THE ENEMY, KNEE HIM 15 TIMES AND THROW HIM AWAY', 900, ['k_toon', 'k_block']]];
+  ['k_ult', 'ULTIMATE', 'THE DOMAIN BUTTON: CHOKE THE ENEMY, KNEE HIM 15 TIMES AND THROW HIM AWAY', 900, ['k_toon', 'k_block']],
+  ['k_stomp', 'GIANT SMASH', "FLAT ON THE FLOOR + BLUE: THE GIANT CAT'S HUGE LEG SMASHES DOWN ON THE ENEMY (40% ENERGY)", 450, ['k_toon', 'k_crouch']]];
 const SKN = {}; for (const s of [].concat(SK_GOJO, SK_YUJI, SK_VERITY, SK_CAT, SK_CHAR)) SKN[s[0]] = s[1];
 const GATE = {      // for each fighter the skill each button needs (a button that is not listed is free): cr crouch, dash, blk block, cp crouched punches, ce MODE, dom DOMAIN, fat FATALITY, bl BLUE (Verity and the Cat; Gojo's and Yuji's BLUE depends on the mode, the air and the stance: gateBlue)
   g: { cr: 'crouch', dash: 'dash', blk: 'block', cp: 'cpunch', ce: 'ce', dom: 'domain', fat: 'fatal' },
@@ -1203,12 +1209,13 @@ function gateSkills(now) {                    // every frame, before the control
   if (ceReq && lacks('ce')) { ceReq = false; lockPop(now); }
   if (domReq && lacks('dom')) { domReq = false; lockPop(now); }
   if (lpReq && lacks('bl')) { lpReq = false; lockPop(now); }
+  if (lpReq && stance === 'crouch' && ((meK() === 'v' && !owns('v_drag')) || (meK() === 'k' && !owns('k_stomp')))) { lpReq = false; lockPop(now); }      // (v1.28: BLUE while crouched is a variant of its own: Verity's BLOOD DRAG, the Cat's GIANT SMASH)
 }
 function gateBlue(now, jf, tf) {              // BLUE of Gojo: teleport up in the air, Max Blue crouched, Lapse Blue on the ground; in red mode RED (and RED into the Max Blue orb is the PURPLE). BLUE of Yuji: by mode, air, stance and walking forward
   const k = meK(); if (!lpReq || (k !== 'g' && k !== 'y')) return;
-  const need = k === 'y' ? (cm === 3 ? null : cm === 2 ? 'y_flash' : cm === 1 ? (jf >= 4 && jf <= 10 ? 'y_elbow' : stance === 'crouch' ? 'y_upper' : 'y_conc') : stance === 'crouch' ? 'y_sweep' : (keyR || padR) ? 'y_rush' : 'y_div')
+  const need = k === 'y' ? (cm === 3 ? (jf >= 3 && jf <= 11 ? 'y_simple' : stance === 'crouch' ? 'y_shrine' : (keyR || padR) ? 'y_cleave' : 'y_pierce') : cm === 2 ? 'y_flash' : cm === 1 ? (jf >= 4 && jf <= 10 ? 'y_elbow' : stance === 'crouch' ? 'y_upper' : 'y_conc') : stance === 'crouch' ? 'y_sweep' : (keyR || padR) ? 'y_rush' : 'y_div')
     : cm === 2 ? (orb && !purple ? 'purple' : 'red') : jf >= 0 || tf >= 0 ? 'tele' : stance !== 'stand' ? 'mblue' : 'blue';
-  if (need && !owns(need)) { lpReq = false; lockPop(now); }      // (INHERITENCE has no gate of its own for BLUE: owning the mode is the price)
+  if (need && !owns(need)) { lpReq = false; lockPop(now); }      // (v1.28: in INHERITENCE every one of the four techniques has to be bought: pierce = nothing special, shrine = crouched, cleave = walking forward, simple domain = in the air)
 }
 function skillUI() {                          // the buttons of a move you do not own are dimmed and marked
   const L = (id, key) => $(id).classList.toggle('lk', lacks(key));
@@ -1506,9 +1513,9 @@ const SK_TABS = [['g', 'skTabG', SK_GOJO], ['y', 'skTabY', SK_YUJI], ['v', 'skTa
 // ---------------------------------------------------------------- v1.25 THE SKILL TREE: the SKILLS page draws every fighter as a tree. The root is the fighter (Gojo is free, the others are bought like before), every skill is a node, and a line joins a node to the skills it needs: buy a node and the nodes after it open. A tap on a node shows it on the right, UNLOCK buys it. A skill with nothing in front of it hangs on the root.
 const SK_LAY = {      // where every node sits, [column, row] (the root is column 0): a line runs from the right edge of a skill a node needs to the left edge of the node, so the cells in between have to be empty
   g: { _root: [0, 2.5], crouch: [1, 0], cpunch: [2, 0], blue: [1, 1], mblue: [2, 1], dash: [1, 2], tele: [2, 2], purple: [3, 2.5], block: [1, 3], ce: [1, 4], red: [2, 4], fatal: [1, 5], domain: [2, 5] },
-  y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 5], y_div: [1, 6], y_rush: [2, 6] },
-  v: { _root: [0, 2.5], v_crouch: [1, 0], v_tele: [1, 1], v_block: [1, 2], v_ball: [2, 2], v_scare: [3, 3], v_bite: [1, 4], v_fatal: [2, 5] },
-  k: { _root: [0, 1], k_crouch: [1, 0], k_fatal: [3, 0], k_dash: [1, 1], k_toon: [2, 1], k_block: [1, 2], k_ult: [3, 2] },
+  y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 4.5], y_pierce: [5, 3], y_shrine: [5, 4], y_cleave: [5, 5], y_simple: [5, 6], y_div: [1, 6], y_rush: [2, 6] },
+  v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5] },
+  k: { _root: [0, 1], k_crouch: [1, 0], k_fatal: [3, 0], k_dash: [1, 1], k_toon: [2, 1], k_stomp: [3, 1], k_block: [1, 2], k_ult: [3, 2] },
   c: { _root: [0, 1], yuji: [1, 0], verity: [1, 1], cat: [1, 2] } };
 const SKI = {}; for (const [t, , rows] of SK_TABS) for (const r of rows) SKI[r[0]] = { r, t };
 const SK_GROOT = ['_gojo', 'GOJO', 'THE FIGHTER YOU START WITH. WALKING, JUMPING AND THE M1 COMBO ARE FREE. EVERY OTHER MOVE IS A NODE OF THE TREE: TAP A NODE TO READ IT AND UNLOCK IT, AND THE NODES AFTER IT OPEN', 0, []];
@@ -2216,12 +2223,15 @@ function drawDummy(now, dt) {
   const w = info.w, h = info.h, hx = info.cx - info.x0, y = gy - 60 - (info.top || 0) - lift, fade = kt > 1200 ? Math.max(0, 1 - (kt - 1200) / 700) : 1;
   ctx.fillStyle = 'rgba(0,0,0,' + 0.4 * fade + ')'; ctx.fillRect(sx - 9, gy + 3, 18, 2); ctx.fillRect(sx - 6, gy + 2, 12, 1); ctx.fillRect(sx - 6, gy + 5, 12, 1);
   ctx.save();
-  if (kt >= 0) {                              // knocked out: he topples backwards about his feet, flickers, then fades away
+  if (dummy.drag && kt < 0) {                 // v1.28 BLOOD DRAG: he lies flat on the floor, feet towards Verity, and is dragged by the feet
+    ctx.translate(sx + 4, gy + 1 - Math.round(hx * 0.62) + ((now / 60) & 1)); ctx.rotate(1.5 + Math.sin(now / 70) * 0.02); ctx.scale(-1, 1); ctx.globalAlpha = 1; ctx.drawImage(src, -hx, -62);
+  } else if (kt >= 0) {                       // knocked out: he topples backwards about his feet, flickers, then fades away
     ctx.translate(sx, gy + 2); ctx.rotate(1.4 * Math.pow(Math.min(1, kt / 520), 2)); ctx.scale(-1, 1);
     ctx.globalAlpha = fade; ctx.drawImage(src, -hx, -62);
   } else {
     const paint = () => {
       ctx.save(); ctx.translate(sx, 0); ctx.scale(mirror ? -1 : 1, 1);
+      if (dummy.squash && now - dummy.squash < 420) { const q = Math.sin(Math.min(1, (now - dummy.squash) / 420) * Math.PI); ctx.translate(0, gy + 2); ctx.scale(1 + 0.35 * q, 1 - 0.45 * q); ctx.translate(0, -(gy + 2)); }      // (v1.28 GIANT SMASH: squashed flat for a moment)
       ctx.beginPath(); ctx.rect(-hx - 2, y + Math.round(h * (1 - e)), w + 4, h); ctx.clip();   // materialises from the feet up
       ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, -hx + ox, y + oy);
       if (dummy.fear && !reacting) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(src), -hx + ox, y + oy); }      // (a pale pulse: the fear)
@@ -2727,7 +2737,7 @@ function beginRound(now) {                     // a fresh round: the scene is re
   const keep = vs, gore = keep.story && keep.foe === 'cat' ? [gibs, drops, decals, pools] : null; show('play'); vs = keep; if (gore) [gibs, drops, decals, pools] = gore; ceReset(); const t = pnow(), G = GRADES[vs.gi];
   Object.assign(vs, { ph: 'intro', t0: t, tl: vs.story ? 1e9 : ROUND_MS, hp: PHP, sh: PHP, hist: [], seenAtk: -1, seenAt: 0, seenK: 0, rolled: true, whiffAt: -1, prevAtk: -1, hitAt: -9999, why: '', who: '', koAt: 0, crater: null }); blindOff = false; bfo = null; bfp = false;
   spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); if (vs.net) { dummy.net = true; dummy.max = dummy.hp = dummy.shown = PHP; dummy.x = dummy.tx = wx + NET_G0; dummy.pose = null; vs.toSent = false; }      // (the Wi-Fi fight: the other player, drawn from his phone's pictures)
-  cProj = []; if (vs.rush) rushSpawn(t); else if (vs.cv) initCurse(dummy, vs.cv, wx + Math.max(54, Math.min(90, (VW >> 1) - 70)), vs.hard ? 1.5 : 1);      // (a challenge: the curse steps in; a RUSH wave: one or two)
+  vdg = cst = null; smear.length = drip.length = 0; cProj = []; if (vs.rush) rushSpawn(t); else if (vs.cv) initCurse(dummy, vs.cv, wx + Math.max(54, Math.min(90, (VW >> 1) - 70)), vs.hard ? 1.5 : 1);      // (a challenge: the curse steps in; a RUSH wave: one or two)
   $('vsres').classList.remove('on');      // (REMATCH and NEXT start a new fight: the result screen goes away. Since v7.12 this line had slipped into a comment, so the result screen stayed on top of the new fight)
   vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
   if (vs.retry) { vs.round = 1 + vs.retry; vs.hp = vs.sh = PHP / 2; dummy.hp = dummy.shown = dummy.lock = 1; vs.morphed = true; blackUntil = t + 700; } else blackUntil = 0;      // after a failed red: Gojo at half health, Verity as he was (1 health left, so no smoke change); the picture comes up from black
@@ -2832,7 +2842,7 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
   if (move) { d.x += move * FOE_WALK * G.spd * dt; d.ai = 'walk'; } else d.ai = 'think';
 }
 // ---------------------------------------------------------------- CURSED ENERGY (Versus mode only): a cyan bar under Gojo's health bar. It starts every round at 100%, each energy move costs some of it, it refills half a percent per second once a second and a half has passed without such a move (hitting, being hit and parrying fill it much faster, see onLand), and the cursed energy mode drains 1% per second (no refill) and switches itself off at 0%.
-const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30, purple: 50, domain: 67, fatal: 50, vBite: 20, vTele: 10, vBall: 20, vScare: 67, cToon: 30, cUlt: 67, yDiv: 15, yConc: 25, yKick: 5, yZone: 20, yFlash: 40, vTalk: 15, crouch: 3, ceMode: 10, redMode: 10, yInherit: 20, yBlood: 25, yShrine: 30, yGrab: 25, ySimple: 30 }, CE_WAIT = 1500, CE_REFILL = 0.5;      // what each move costs in % of the bar (slowRed = RED fired while walking back, coat = the BLUE leap onto that slow orb, tele = BLUE in the air, purple = the RED shot fired while Max Blue is out, it costs this instead of the plain RED price); the refill waits 1 s after the last paid move
+const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30, purple: 50, domain: 67, fatal: 50, vBite: 20, vDrag: 25, cStomp: 40, vTele: 10, vBall: 20, vScare: 67, cToon: 30, cUlt: 67, yDiv: 15, yConc: 25, yKick: 5, yZone: 20, yFlash: 40, vTalk: 15, crouch: 3, ceMode: 10, redMode: 10, yInherit: 20, yBlood: 25, yShrine: 30, yGrab: 25, ySimple: 30 }, CE_WAIT = 1500, CE_REFILL = 0.5;      // what each move costs in % of the bar (slowRed = RED fired while walking back, coat = the BLUE leap onto that slow orb, tele = BLUE in the air, purple = the RED shot fired while Max Blue is out, it costs this instead of the plain RED price); the refill waits 1 s after the last paid move
 let ce = 100, ceLast = -1e9, ceFlash = -1e9;      // the energy in %, when a move last cost some, when a move was last refused (the bar flashes red)
 function ceReset() { ce = 100; ceLast = ceFlash = -1e9; }
 function ceDeny(now) { if (now - ceFlash < 150) return; ceFlash = now; snd('noce'); }      // a refused move: the bar flashes red and says NO CE for a moment (one refusal per press, even if the press falls through to another move that is refused too)
@@ -3658,6 +3668,64 @@ function vpBleed(now) {      // the bite's bleeding on the enemy: 1 damage every
   while (d.bleed && b.next <= now && b.next <= b.until) { b.next += 100; if (d.vform && d.vform !== 'verity') continue; d.hp = Math.max(0, d.hp - 1); d.hitAt = now; if (d.hp <= 0) { d.bleed = null; koDummy(now); } }
   if (d.bleed && now >= b.until) d.bleed = null;
 }
+// ---------------------------------------------------------------- v1.28 TWO NEW VARIANTS (bought in SKILLS like every other variant). BLOOD DRAG (Verity, crouched + BLUE; the bite needs him standing): a low lunge at the enemy's feet, the bite, then he backs away with the enemy by the feet, flat on the floor, and the blood is dragged along the ground. GIANT SMASH (the Cat, flat on the floor + BLUE): the giant's huge leg smashes down on the enemy.
+let vdg = null, cst = null; const smear = [], drip = [];      // vdg = { at, ph (0 lunge, 1 drag, 2 lying), tick }; cst = { at, tx (where the leg comes down, world x), lock, hit }; smear = the blood on the floor ({ x, born, r }); drip = the drops thrown up ({ x, h, vx, vy })
+function vdgBegin(now) { vdg = { at: now, ph: 0, tick: now }; snd('swing', 3); }
+function vdgStep(now, dt) {      // every frame of Verity: the lunge (0.2 s), the bite (he must stand within 36 px, on the ground, not behind a guard), then 1.15 s of backing away with him by the feet (1 damage every 55 ms on top of the bite and its bleeding)
+  const v = vdg, d = dummy; if (!v) return; const t = (now - v.at) / 1000;
+  if (!d || d.ko >= 0 || !vs || vs.ph !== 'fight' || hurtAt >= 0 || d.cap) { if (d && d.drag) { d.drag = null; d.down = 0; } vdg = null; return; }
+  if (v.ph === 0) {
+    const gap = d.x - wx; if (gap > 26) wx += Math.min(gap - 24, 480 * dt);
+    if (t >= 0.2) {
+      const hp0 = d.hp, k0 = atkK, near = d.x - wx < 36 && !airUp(d); atkK = 22; if (near) hitDummy(22, now); atkK = k0;
+      if (near && d.hp < hp0) { v.ph = 1; v.at = now; v.tick = now; d.drag = { until: 1e12 }; d.down = now + 4000; shakeUntil = now + 220; shakeAmp = 3; flash(now, 70, 0.25); say('DRAG!', d.x, '#ff5a5a', 8, now); snd('smack', 3); }
+      else { say('MISS', wx + 24, '#9fd8ff', 8, now); vdg = null; }
+    }
+  } else if (v.ph === 1) {
+    const x0 = wx; wx -= 95 * dt; wxv = 0; d.x = wx + 26; d.vx = 0; d.ai = 'rest'; d.aiAt = now; d.restFor = 300; d.pull = null;
+    if (Math.floor(x0 / 6) !== Math.floor(wx / 6)) { smear.push({ x: d.x + 14 + rnd() * 10, born: now, r: rnd() }); if (smear.length > 160) smear.splice(0, 20); }
+    if (now >= v.tick) { v.tick += 55; d.hp = Math.max(0, d.hp - 1); d.hitAt = now; for (let k = 0; k < 2; k++) drip.push({ x: d.x + 20 + rnd() * 14, h: 3, vx: 25 + rnd() * 70, vy: 50 + rnd() * 60 }); if (d.hp <= 0) { d.drag = null; vdg = null; koDummy(now); return; } }
+    if (t >= 1.15) { v.ph = 2; v.at = now; d.vx = -150; d.drag = { until: now + 420 }; }      // (he lets go: the enemy slides a little and lies there for a moment)
+  } else if (now - v.at > 420) { d.drag = null; d.down = 0; vdg = null; }
+}
+function drawBloodFloor(now, dt) {      // the smears and the drops of the BLOOD DRAG, on the floor under everybody
+  if (!smear.length && !drip.length) return; const cx = Math.round(VW / 2);
+  for (let i = smear.length - 1; i >= 0; i--) {
+    const s = smear[i], age = (now - s.born) / 1000; if (age > 7) { smear.splice(i, 1); continue; }
+    const sx = Math.round(cx + s.x - wx); ctx.globalAlpha = age < 5 ? 1 : 1 - (age - 5) / 2; ctx.fillStyle = '#6e0a12'; ctx.fillRect(sx - 4, gy + 2, 9, 2); ctx.fillStyle = '#b01220'; ctx.fillRect(sx - 3 + ((s.r * 3) | 0), gy + 2, 4, 1); if (s.r > 0.6) { ctx.fillStyle = '#6e0a12'; ctx.fillRect(sx + 1, gy + 4, 3, 1); }
+  }
+  ctx.globalAlpha = 1;
+  for (let i = drip.length - 1; i >= 0; i--) { const p = drip[i]; p.x += p.vx * dt; p.h += p.vy * dt; p.vy -= 260 * dt; if (p.h <= 0) { smear.push({ x: p.x, born: now, r: rnd() }); drip.splice(i, 1); continue; } ctx.fillStyle = '#c4121c'; ctx.fillRect(Math.round(cx + p.x - wx), Math.round(gy - p.h), 1, 1 + (p.vy > 0 ? 1 : 0)); }
+}
+function cstBegin(now) { cst = { at: now, tx: dummy && dummy.ko < 0 ? dummy.x : wx + 80, lock: false, hit: false }; snd('boing'); }
+function cstStep(now, dt) {      // the GIANT SMASH, every frame of the Cat: the giant's leg hangs over the enemy (0.62 s, it follows him), then it is locked on the place (the warning), smashes down (0.15 s) on frame 0.77 s and flattens whoever stands within 26 px of it on the ground; then it lifts away
+  const s = cst, d = dummy; if (!s) return; const t = (now - s.at) / 1000;
+  if (!vs || vs.ph !== 'fight') { cst = null; return; }
+  if (!s.lock) { if (d && d.ko < 0) s.tx += (d.x - s.tx) * Math.min(1, dt * 9); if (t >= 0.62) s.lock = true; }
+  if (t >= 0.77 && !s.hit) {
+    s.hit = true; const on = d && d.ko < 0 && Math.abs(d.x - s.tx) < 26 && !airUp(d) && !d.cap;
+    shakeUntil = now + 420; shakeAmp = 7; flash(now, 130, 0.45); snd('land', 1.8); hitStop(110); for (let k = 0; k < 14; k++) spark(s.tx + rnd() * 40 - 20, gy - 2 - rnd() * 6, 1, ['#d8d0c0', '#8a8498', '#ffffff']);
+    if (on) { const w0 = wx; wx = d.x - 20; hitDummy(35, now); wx = w0; d.squash = now; say('SMASH!', d.x, '#ffd34d', 8, now); } else say('MISS', s.tx, '#9fd8ff', 8, now);
+  }
+  if (t >= 1.3) cst = null;
+}
+function pxEll(x, y, rx, ry, col) { ctx.fillStyle = col; for (let j = -ry; j <= ry; j++) { const hw = Math.round(rx * Math.sqrt(Math.max(0, 1 - (j * j) / (ry * ry + 0.0001)))); ctx.fillRect(x - hw, y + j, hw * 2 + 1, 1); } }
+function drawCst(now) {      // the giant's leg: a big black cartoon leg with a white sock and a round paw with pink toe beans, hanging in from the top of the screen
+  const s = cst; if (!s) return; const t = (now - s.at) / 1000, cx = Math.round(VW / 2), sx = Math.round(cx + s.tx - wx), up = gy - 128, dn = gy + 1;
+  const fy = t < 0.62 ? up + Math.round(Math.sin(t * 8) * 2 + t * 18) : t < 0.77 ? up + 11 + Math.round((dn - up - 11) * Math.pow((t - 0.62) / 0.15, 2)) : t < 1.0 ? dn : dn - Math.round((dn - up) * Math.pow((t - 1.0) / 0.3, 1.5));
+  const a = t < 0.15 ? t / 0.15 : t > 1.15 ? Math.max(0, 1 - (t - 1.15) / 0.15) : 1, sh = Math.min(1, t / 0.62);
+  ctx.save(); ctx.globalAlpha = a * (0.2 + 0.4 * sh); pxEll(sx, gy + 3, 8 + Math.round(24 * sh), 2, '#000000'); ctx.globalAlpha = a;      // (his shadow on the floor grows while the leg hangs there)
+  ctx.fillStyle = '#17141f'; ctx.fillRect(sx - 20, 0, 40, Math.max(0, fy - 24)); ctx.fillStyle = '#322e46'; ctx.fillRect(sx - 20, 0, 6, Math.max(0, fy - 24));
+  for (let y = 6; y < fy - 26; y += 13) { ctx.fillStyle = '#17141f'; ctx.fillRect(sx - 23, y, 3, 4); ctx.fillRect(sx + 20, y + 6, 3, 4); }      // (tufts of fur on the sides)
+  ctx.fillStyle = '#f2f0f6'; ctx.fillRect(sx - 22, fy - 40, 44, 15); ctx.fillStyle = '#d8323c'; ctx.fillRect(sx - 22, fy - 36, 44, 2); ctx.fillStyle = '#b8b4c8'; ctx.fillRect(sx - 22, fy - 28, 44, 3);      // (the white sock with a red stripe)
+  pxEll(sx + 3, fy - 10, 30, 13, '#17141f'); pxEll(sx - 4, fy - 17, 19, 4, '#322e46'); pxEll(sx + 6, fy - 7, 9, 5, '#ff7fa5'); pxEll(sx + 17, fy - 5, 4, 3, '#ff9ab8'); pxEll(sx + 3, fy - 2, 4, 2, '#ff9ab8'); pxEll(sx - 9, fy - 3, 4, 2, '#ff9ab8');      // (the paw: the big pad and the toe beans)
+  if (s.lock && !s.hit) pxt('!', sx, gy - 104, '#ffd34d', 16, 'center');
+  if (t >= 0.77 && t < 1.7) {      // the dust ring and the cracks in the floor
+    const k = (t - 0.77) / 0.35, R = Math.round(6 + Math.min(1, k) * 54); ctx.globalAlpha = Math.max(0, 1 - k) * a; ctx.fillStyle = '#d8d0c0'; for (let q = 0; q < 28; q++) { const th = q / 28 * 6.2832; ctx.fillRect(Math.round(sx + Math.cos(th) * R), Math.round(gy + 2 + Math.sin(th) * R * 0.22), 2, 1); }
+    ctx.globalAlpha = Math.max(0, 1 - (t - 0.77) / 0.9); ctx.fillStyle = '#1a1424'; for (let q = -3; q <= 3; q++) { if (!q) continue; ctx.fillRect(sx + q * 9, gy + 2 + (Math.abs(q) % 2), 6 - Math.abs(q), 1); ctx.fillRect(sx + q * 6, gy + 3, 3, 1); }
+  }
+  ctx.restore();
+}
 function verityScene(now, dt) {      // one frame of a Versus match with Verity as the player: the controls, then the picture (the enemy, the HUD and the effects are the shared ones)
   const v = vp || (vp = vpNew()), el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3), cx = Math.round(VW / 2);
   vpPhase(now); vpBleed(now);
@@ -3677,14 +3745,14 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
     af = Math.floor(Math.max(0, now - atkAt) * ATK_FPS[atkK] / 1000);
     if (af >= 15) { if (atkQ) { atkQ = false; atkK = pickAtk(); atkAt = now; af = 0; } else { atkAt = -1; af = -1; comboUntil = now + COMBO_MS; } }      // (a press during a swing chains the next one)
   }
-  const idleOK = t >= 1 && hum && !stun && jf < 0 && tu < 0 && hf < 0 && df < 0 && bf < 0 && sf < 0, free = idleOK && af < 0;
+  const idleOK = t >= 1 && hum && !stun && jf < 0 && tu < 0 && hf < 0 && df < 0 && bf < 0 && sf < 0, free = idleOK && af < 0 && !vdg; vdgStep(now, dt);
   if (ceReq) {      // MODE: into the ball (20% of the energy); with the ball out: back into Verity
     ceReq = false;
     if (free && stance === 'stand' && ceSpend(CE_COST.vBall, now)) { voiceLoad(); v.form = 'smoke1'; v.fAt = now; v.bAt = now + 200; v.bSnd = false; v.back = false; atkQ = false; lpReq = atkReq = dashReq = jumpReq = crReq = false; setModeUI(); snd('vanish'); }
     else if (v.form === 'ball') v.back = true;
   }
   if (!hum) { lpReq = dashReq = jumpReq = crReq = false; if (atkReq) { atkReq = false; vTalk(v, now); } }      // as a ball he can do nothing but TALK (the ATTACK button: his only M1)
-  if (lpReq) { lpReq = false; if (free && stance === 'stand' && ceSpend(CE_COST.vBite, now)) { atkK = 22; atkAt = now; af = 0; atkQ = false; } }      // BITE: its own swing (number 22)
+  if (lpReq) { lpReq = false; if (free && stance === 'stand' && ceSpend(CE_COST.vBite, now)) { atkK = 22; atkAt = now; af = 0; atkQ = false; } else if (free && stance === 'crouch' && owns('v_drag') && ceSpend(CE_COST.vDrag, now)) vdgBegin(now); }      // BITE: its own swing (number 22); crouched: the BLOOD DRAG (v1.28)
   // (a refused grab says TOO FAR when he is out of reach and CANT GRAB when he is in reach but folded up, a ball, stunned or beaten)
   if (domReq) {      // JUMPSCARE (the DOMAIN button): the grab, swing number 23. It needs the enemy in front and within 40 px, 67% of the energy and 30 s since the last one; the enemy is frozen from the first moment
     domReq = false;
@@ -3745,7 +3813,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
     evA = af;
   }
   drawSmoke(now, dt);
-  drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
+  drawBloodFloor(now, dt); drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
   const fa = now - v.fAt, ballOn = v.form === 'ball' || (v.form === 'smoke1' && fa >= 200) || (v.form === 'smoke2' && fa < 400);      // (the ball shows from 0.2 s into the first puff to 0.4 s into the huge smoke, which is where Verity is swapped back in)
   let src, info = VINFO, py = gAir ? gAirH : lift, ox = 0, oy = 0;
   if (ballOn) { src = performance.now() - vTalkReal < VT.ms ? ballTalkF(lipFrame(performance.now() - vTalkReal)) : SIMG.ball; info = BALL.info; py = ballH(Math.max(0, (now - v.bAt) / 1000)); }
@@ -4093,8 +4161,8 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
     if (af >= 15) { if (atkQ) { atkQ = false; atkK = ctPick(); atkAt = now; af = 0; } else { atkAt = -1; af = -1; comboUntil = now + COMBO_MS; } }      // (a press during a swing chains the next one)
   }
   if (stance === 'crouch' && now - c.flatAt >= CT.flatMax) { stance = 'up'; stAt = now; sf = 0; c.tired = true; atkAt = -1; af = -1; atkQ = false; }      // flat for more than 5 s: he gets up (and is dizzy for 1 s once he stands)
-  const can = () => t >= 1 && !dizzy && !fear && jf < 0 && hf < 0 && df < 0 && sf < 0 && lf < 0 && bf < 0 && !ulting, free = () => can() && af < 0;      // (nothing else is going on: asked again after every move that may have started in this frame)
-  if (lpReq) { lpReq = false; if (free() && stance === 'stand' && now > lpReady && ceSpend(CE_COST.cToon, now)) { lpAt = now; lf = 0; atkQ = false; snd('boing'); tz = { w0: wx, tx: Math.max(wx, dummy && dummy.ko < 0 ? dummy.x - 26 : wx + 90), u: 0 }; } }      // CARTOON ATTACK (the BLUE button): costs 30% of the energy
+  const can = () => t >= 1 && !dizzy && !fear && jf < 0 && hf < 0 && df < 0 && sf < 0 && lf < 0 && bf < 0 && !ulting && !cst, free = () => can() && af < 0; cstStep(now, dt);      // (nothing else is going on: asked again after every move that may have started in this frame)
+  if (lpReq) { lpReq = false; if (free() && stance === 'stand' && now > lpReady && ceSpend(CE_COST.cToon, now)) { lpAt = now; lf = 0; atkQ = false; snd('boing'); tz = { w0: wx, tx: Math.max(wx, dummy && dummy.ko < 0 ? dummy.x - 26 : wx + 90), u: 0 }; } else if (free() && stance === 'crouch' && now > lpReady && owns('k_stomp') && ceSpend(CE_COST.cStomp, now)) { cstBegin(now); lpReady = now + 900; } }      // CARTOON ATTACK (the BLUE button): costs 30% of the energy; flat on the floor: the GIANT SMASH (v1.28, 40%)
   if (domReq) {      // the ULTIMATE (the DOMAIN button): the enemy in front and within the glove's reach, 67% of the energy, 30 s between two
     domReq = false;
     if (free() && stance === 'stand' && now >= domReadyAt && !ult) { if (!ultTarget(now)) { const gp = dummy ? dummy.x - wx : 999; say(gp <= pHit(30) && gp >= -4 ? 'CANT GRAB' : 'TOO FAR', wx, '#ff8a7a', 8, now); } else if (ceSpend(CE_COST.cUlt, now)) { ultStart(now, 'player'); ulting = true; } }
@@ -4184,7 +4252,7 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   if (vap) { /* gone */ } else if (gko >= 0) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); ctx.drawImage(cfr('idle', 0, false), -32, -63); }
   else { ctx.beginPath(); ctx.rect(x, y + ry, I[0], I[1] - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, x, y); if (fear && hf < 0) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(src), x, y); } }
   ctx.restore();
-  drawGiantNow('foe');      // (the enemy Cat's giant, if he summoned one: in front of the player, behind the enemy)
+  drawGiantNow('foe'); drawCst(now);      // (the enemy Cat's giant, if he summoned one: in front of the player, behind the enemy)
   if (t < 1) {      // spawn ring + flash
     const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,130,175,' + (1 - t) + ')';
     for (let a = 0; a < 64; a++) { const th = a / 64 * 6.2832; ctx.fillRect(Math.round(cx + Math.cos(th) * R), Math.round(y + 34 + Math.sin(th) * R * 0.45), 1, 1); }
