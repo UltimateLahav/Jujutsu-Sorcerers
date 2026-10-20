@@ -592,7 +592,9 @@ class WF(F):                                                                  # 
     def set(s, x, y, c):
         x, y = round(x), round(y)
         if 0 <= x < s.w and 0 <= y < N: s.g[y][x] = c
-    def at(s, x, y): return s.g[y][x] if 0 <= x < s.w and 0 <= y < N else '.'
+    def at(s, x, y):
+        x, y = round(x), round(y)
+        return s.g[y][x] if 0 <= x < s.w and 0 <= y < N else '.'
 def bfc_params(i):
     sh = (1 if i % 2 else -1) if 4 <= i <= 7 else 0                           # (the body shakes while the energy builds)
     return dict(by=round(kv({0: 0, 2: 3, 4: 4, 7: 4, 8: 1, 9: -2, 11: -1, 13: 1, 14: 0}, i)), ln=round(kv({0: 0, 2: -1, 4: -3, 7: -4, 8: 2, 9: 7, 11: 6, 13: 2, 14: 0}, i)),
@@ -604,16 +606,16 @@ def bfc_params(i):
 def bfc_body(i):                                                              # the body of frame i on the wide grid, and where its near fist is
     f0, nh, fh = figure(bfc_params(i)); f = WF(); f.g = [['.']*CH_X + r + ['.']*(W96 - CH_X - N) for r in f0.g]; return f, (nh[0] + CH_X, nh[1]), (fh[0] + CH_X, fh[1])
 def sil(f): return {(x, y) for y, r in enumerate(f.g) for x, c in enumerate(r) if c != '.'}
-def aura(f, s, i, amt):                                                       # cursed energy licks all round him: three layers of dithered flame round the body (dark red close, bright red at the edge, a last few sparks), a new pattern every frame
+def aura(f, s, i, amt, cols=('z', 'X', 'Y')):                                                       # cursed energy licks all round him: three layers of dithered flame round the body (dark red close, bright red at the edge, a last few sparks), a new pattern every frame
     r1 = {(x + dx, y + dy) for x, y in s for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))} - s
     r2 = {(x + dx, y + dy) for x, y in r1 for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))} - s - r1
     r3 = {(x + dx, y + dy) for x, y in r2 for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))} - s - r1 - r2
     for x, y in r1:
-        if f.at(x, y) == '.' and (x*5 + y*3 + i*7) % 3 != 0: f.set(x, y, 'z' if (x + y + i) % 3 else 'X')
+        if f.at(x, y) == '.' and (x*5 + y*3 + i*7) % 3 != 0: f.set(x, y, cols[0] if (x + y + i) % 3 else cols[1])
     for x, y in r2:
-        if amt >= 2 and f.at(x, y) == '.' and (x*7 + y*5 + i*11) % 4 < 2 + (amt >= 3): f.set(x, y, 'X' if (x*3 + y + i) % 2 else 'z')
+        if amt >= 2 and f.at(x, y) == '.' and (x*7 + y*5 + i*11) % 4 < 2 + (amt >= 3): f.set(x, y, cols[1] if (x*3 + y + i) % 2 else cols[0])
     for x, y in r3:
-        if amt >= 3 and f.at(x, y) == '.' and (x*11 + y*7 + i*13) % 7 == 0: f.set(x, y, 'Y' if (x + y) % 3 == 0 else 'X')
+        if amt >= 3 and f.at(x, y) == '.' and (x*11 + y*7 + i*13) % 7 == 0: f.set(x, y, cols[2] if (x + y) % 3 == 0 else cols[1])
 def tongues(f, i, amt):                                                       # flames rising off his back and shoulders: tapering red strands that flicker from frame to frame
     rnd = random.Random(i*41 + 7)
     for k in range(7):
@@ -686,6 +688,170 @@ def bf_charged(i):
     if i >= 9: embers(f, hx - 10, hy + 6, i, 16 if i <= 11 else 10, 16)
     if i >= 12: embers(f, cx, 40, i, 8, 14)
     return f, (hx, hy), (fh[0], fh[1])
+# ---------------------------------------------------------------- v1.21 CURSED TECHNIQUE (Yuji's DOMAIN button), four 15-frame strips on the 96-wide grid of atk19: atk24 = PIERCING BLOOD (standing: he claps, holds his arms out all the way, fires; the impact frames are drawn by the game), atk25 = SHRINE (crouched: he cleaves the floor, lifts the block, throws it), atk26 = GRAB + CLEAVE (walking forward), atk27 = SIMPLE DOMAIN (in the air: the hand seal and a cyan glow; the circle on the floor is drawn by the game)
+PAL.update({'M': '#8c8898', 'N': '#5e5a6c', 'a': '#383444', 'q': '#c4121c', 'c': '#7df4ff', 'd': '#2fc3e6', 'b': '#1a6f94', 'f': '#d6fcff'})      # stone (light, mid, dark), deep blood red, cyan (bright, mid, dark, pale)
+def wbody(P):                                                                 # the body of a pose on the wide grid, and its two hands
+    f0, nh, fh = figure(P); f = WF(); f.g = [['.']*CH_X + r + ['.']*(W96 - CH_X - N) for r in f0.g]; return f, (nh[0] + CH_X, nh[1]), (fh[0] + CH_X, fh[1])
+def bloodorb(f, x, y, r, i):                                                  # the blood gathering in his hands: a deep red ball with a bright rim, a pale core, dark swirls and drops circling it
+    for dy in range(-r - 1, r + 2):
+        for dx in range(-r - 1, r + 2):
+            d = math.hypot(dx, dy)
+            if d > r + .4: continue
+            c = 'q'
+            if d > r - 1.0: c = 'X'
+            elif d <= r*.35: c = 'Y'
+            elif math.sin(math.atan2(dy, dx)*2 + i*1.7 + d) > .5: c = 'z'
+            f.set(x + dx, y + dy, c)
+    for k in range(5):
+        a = i*1.1 + k*1.2566; f.set(x + math.cos(a)*(r + 2.5), y + math.sin(a)*(r + 2.5)*.8, 'X' if k % 2 else 'q')
+def pbeam(f, x, y, i, w):                                                     # PIERCING BLOOD: a hard, thin jet of blood from his hands out to the edge of the picture: a white-hot core, a red body, a dark red skin and a black rim that wobbles
+    for xx in range(int(x), f.w):
+        wob = math.sin(xx*.55 + i*2.3)*.5
+        for dy in range(-int(w) - 3, int(w) + 4):
+            d = abs(dy - wob)
+            if d <= w*.5: f.set(xx, y + dy, 'W' if d <= w*.22 and (xx + i) % 9 else 'Y')
+            elif d <= w*.9: f.set(xx, y + dy, 'X')
+            elif d <= w + 1.2: f.set(xx, y + dy, 'q' if (xx + dy) % 2 else 'z')
+            elif d <= w + 2.2 and f.at(xx, y + dy) == '.': f.set(xx, y + dy, 'Z')
+    rnd = random.Random(i*77 + 5)
+    for k in range(14):
+        px = x + 4 + rnd.random()*(f.w - x - 6); py = y + rnd.choice((-1, 1))*(w + 2 + rnd.random()*5); f.set(px, py, 'X' if k % 3 else 'q')
+def slab(f, x, y, w, h, behind=False):                                        # a block of the floor: a lit top edge, a mid face, a dark underside, cracks and a dark rim (behind=True: only where the picture is still empty)
+    put = (lambda a, b, c: f.at(a, b) == '.' and f.set(a, b, c)) if behind else f.set
+    for yy in range(-1, h + 1):
+        for xx in range(-1, w + 1):
+            if yy in (-1, h) or xx in (-1, w): put(x + xx, y + yy, 'O'); continue
+            c = 'N'
+            if yy == 0: c = 'M'
+            elif yy >= h - 2: c = 'a'
+            elif xx == 0: c = 'M'
+            elif xx >= w - 2: c = 'a'
+            put(x + xx, y + yy, c)
+    if h >= 6:
+        for a, b in (((x + 3, y + 1), (x + 5, y + 4)), ((x + 5, y + 4), (x + 4, y + h - 2)), ((x + w - 5, y + 2), (x + w - 3, y + h - 3))):
+            f.line([a, b], 'a') if not behind else None
+def cleave(f, pts, w, i):                                                     # a CLEAVE slash: a bright white-red streak along the points with a black rim (tail thin, head wide)
+    for j in range(len(pts) - 1):
+        (x0, y0), (x1, y1) = pts[j], pts[j + 1]; n = max(1, int(max(abs(x1 - x0), abs(y1 - y0))*2))
+        for q in range(n + 1):
+            u = q/n; xx, yy = x0 + (x1 - x0)*u, y0 + (y1 - y0)*u; ww = w*((j + u)/(len(pts) - 1))
+            for dy in range(-int(ww) - 2, int(ww) + 3):
+                d = abs(dy)
+                if d <= ww*.3: f.set(xx, yy + dy, 'W')
+                elif d <= ww*.65: f.set(xx, yy + dy, 'Y')
+                elif d <= ww + .6: f.set(xx, yy + dy, 'X')
+                elif d <= ww + 1.6 and f.at(xx, yy + dy) == '.': f.set(xx, yy + dy, 'Z')
+def sparkle(f, x, y, i, n, R, cols=('c', 'f', 'd')):                          # little stars orbiting (the simple domain's cyan light)
+    for k in range(n):
+        a = i*.8 + k*6.2832/n; px, py = x + math.cos(a)*R*(1 + .25*math.sin(k + i)), y + math.sin(a)*R*.8
+        f.set(px, py, cols[k % 3])
+        if k % 2 == 0: f.set(px + 1, py, cols[2]); f.set(px - 1, py, cols[2]); f.set(px, py + 1, cols[2]); f.set(px, py - 1, cols[2])
+# ---- 1. PIERCING BLOOD: guard, the arms open wide (1-2), the CLAP (3), the arms swing up and out until they are extended all the way with the hands together (4-5), HELD (5-9: the blood gathers, he trembles), FIRE (10), the jet thins (11-12), the arms come down (13), guard (14)
+CTB_N = {0: GUARD_N, 1: ((-2.5, 3), (-6.5, 1)), 2: ((-4.5, 1), (-9, -2)), 3: ((6, 3), (9.5, 2.5)), 4: ((6.5, 1), (11, -1)), 5: ((7, -.5), (13.5, -1.5)), 9: ((7, -.5), (13.5, -1.5)), 10: ((6.5, 0), (12.5, -1)), 12: ((6, 1), (11, 0)), 13: GUARD_N, 14: IDLE_N}
+CTB_F = {0: GUARD_F, 1: ((3, 3), (7.5, 1)), 2: ((4.5, 1), (9.5, -2)), 3: ((5.5, 3), (8.5, 2.5)), 4: ((6, 1), (10.5, -1)), 5: ((6.5, -.5), (13, -1.5)), 9: ((6.5, -.5), (13, -1.5)), 10: ((6, 0), (12, -1)), 12: ((5.5, 1), (10.5, 0)), 13: GUARD_F, 14: IDLE_F}
+def ctb_params(i):
+    tr = (1 if i % 2 else -1)*.5 if 6 <= i <= 9 else 0                          # (the arms tremble while the blood gathers)
+    na, fa = kv(CTB_N, i), kv(CTB_F, i)
+    na = ((na[0][0], na[0][1]), (na[1][0], na[1][1] + tr)); fa = ((fa[0][0], fa[0][1]), (fa[1][0], fa[1][1] + tr))
+    return dict(by=round(kv({0: 0, 2: 1, 3: 0, 5: 2, 9: 2, 10: 1, 12: 1, 14: 0}, i)), ln=round(kv({0: 0, 2: -2, 3: 1, 5: 3, 9: 3, 10: 0, 12: 2, 14: 0}, i)), hx=round(kv({0: 0, 5: 2, 9: 2, 10: -1, 12: 0, 14: 0}, i)), hs=round(kv({0: 0, 5: 1, 10: 0, 14: 0}, i)),
+                lf=(round(kv({0: 34, 5: 39, 9: 40, 10: 37, 13: 34, 14: 34}, i)), GR, 0), lb=(round(kv({0: 31, 5: 27, 9: 26, 10: 28, 13: 31, 14: 31}, i)), GR, 0), na=na, fa=fa,
+                hp=i*.9, hup=1 if 4 <= i <= 12 else 0, hback=1 if 5 <= i <= 11 else 0, mo=8 <= i <= 11, blink=i in (2, 3))
+def ct_blood(i):
+    f, nh, fh = wbody(ctb_params(i)); s = sil(f); hx, hy = round(nh[0]) + 1, round(nh[1])
+    if 5 <= i <= 12: aura(f, s, i, 1 if i < 8 else 2)
+    if i == 3:                                                                # the clap: a white flash between the palms and lines of sound
+        burst(f, hx - 1, hy, 3)
+        for a in (-60, -25, 25, 60):
+            for q in range(3, 7): f.set(hx - 1 + math.cos(math.radians(a))*q, hy + math.sin(math.radians(a))*q, 'Y' if q < 6 else 'X')
+    if 4 <= i <= 9: charge(f, hx, hy, (i - 4)/5, i); bloodorb(f, hx + 2, hy, {4: 1, 5: 2, 6: 2, 7: 3, 8: 4, 9: 5}[i], i)
+    if 6 <= i <= 9:
+        for k in range(3): bolt(f, hx + 2, hy, (k*120 + i*50) % 360, 3 + i % 3, i*9 + k)
+    if 10 <= i <= 12: pbeam(f, hx + 2, hy, i, {10: 3, 11: 2.4, 12: 1.4}[i])
+    if i == 10: bf_burst(f, hx + 3, hy, 5, 8, 10, 220, 0); lines_r(f, hx - 8, hy, 3, 9, i)
+    if i == 11: bf_burst(f, hx + 3, hy, 3, 6, 11, 200, 0)
+    if i >= 12: embers(f, hx, hy + 4, i, 8, 8)
+    return f, (hx, hy), fh
+# ---- 2. SHRINE: crouch guard, the hand goes up (1-2), the CLEAVE slashes down to the floor (3) and cuts the block out of it (4), both hands under it (5), he lifts it (6-7), draws it back (8), throws it (9: the game's block takes over from his hands), follow-through and dust (10-11), back in the crouch (12-14)
+CTS_N = {0: GUARD_N, 1: ((-1.5, -3), (-3, -9)), 2: ((3, -5), (6, -11)), 3: ((7, 5), (11, 12)), 4: ((7.5, 6), (10, 14)), 5: ((6, 7), (9.5, 13)), 6: ((6, 4), (10, 9)), 7: ((6, -2), (9, -8)), 8: ((-1, -3), (-2, -9)), 9: ((8, -1), (15, -3)), 11: ((7, 1), (12, 1)), 13: GUARD_N, 14: GUARD_N}
+CTS_F = {0: GUARD_F, 1: GUARD_F, 3: ((4, 4), (7, 10)), 4: ((5, 5.5), (8.5, 13)), 5: ((5, 6.5), (8, 13)), 6: ((4, 3.5), (8, 8)), 7: ((4, -2), (7.5, -8)), 8: ((0, -3), (-1, -9)), 9: ((7, -1), (14, -3)), 11: ((6, 1), (11, 1)), 13: GUARD_F, 14: GUARD_F}
+def cts_params(i):
+    return dict(by=round(kv({0: CR, 2: CR, 3: 11, 5: 12, 6: 9, 7: 5, 8: 4, 9: 5, 11: 7, 13: CR, 14: CR}, i)), ln=round(kv({0: 2, 2: 0, 3: 5, 5: 4, 7: 1, 8: -2, 9: 4, 11: 3, 13: 2, 14: 2}, i)), hx=round(kv({0: 0, 3: 2, 5: 2, 8: -1, 9: 2, 13: 0, 14: 0}, i)), hd=round(kv({0: 0, 3: 1, 5: 1, 8: 0, 14: 0}, i)),
+                lf=(round(kv({0: 37, 3: 39, 8: 38, 9: 40, 13: 37, 14: 37}, i)), GR, 0), lb=(round(kv({0: 30, 3: 27, 9: 26, 13: 30, 14: 30}, i)), GR, 0), na=kv(CTS_N, i), fa=kv(CTS_F, i),
+                hp=i*.8, hup=1 if 2 <= i <= 9 else 0, hback=0, mo=i in (3, 4, 9), blink=False)
+SL_BOX = {4: (53, 58, 16, 3), 5: (52, 51, 15, 9), 6: (52, 41, 15, 12), 7: (51, 22, 15, 12), 8: (CH_X + 20, 10, 15, 12)}                 # the block per frame: x, y, width, height (the game's own block starts from his hands on 9)
+def ct_shrine(i):
+    f, nh, fh = wbody(cts_params(i)); s = sil(f); hx, hy = round(nh[0]), round(nh[1]); cx = 34 + CH_X
+    if i in SL_BOX:
+        x, y, w, h = SL_BOX[i]; slab(f, x + (CH_X if i != 8 else 0), y, w, h, behind=(i == 8))
+    if 1 <= i <= 2: sparkle(f, hx, hy - 4, i, 3, 5, ('Y', 'X', 'q'))
+    if 3 <= i <= 4: cleave(f, [(cx + 8, 22), (cx + 13, 34), (cx + 17, 48), (cx + 19, 60)], 2.6, i); cleave(f, [(cx + 15, 26), (cx + 19, 38), (cx + 23, 50), (cx + 25, 60)], 1.4, i + 3)       # the slash from above down into the floor in front of him (and a thinner one beside it)
+    if 3 <= i <= 6:                                                           # the floor splits: a bright cut with cracks running out of it
+        for q in range(12 + (i - 3)*5): f.set(cx + 8 + q*2, 61 + (q % 5 == 3), 'Y' if q % 4 == 0 else 'X'); f.set(cx + 8 + q*2, 62, 'Z')
+        for q in range(4): f.line([(cx + 14 + q*8, 61), (cx + 17 + q*8, 63)], 'Z')
+    if 4 <= i <= 8:
+        for k in range(6): f.set(cx + 10 + k*5 + (i % 2), 58 - (i - 4)*3 - (k % 3)*2, 'M' if k % 2 else 'N')      # chips flying up off the block
+    if 4 <= i <= 8: puff(f, cx + 16, 61, 2); puff(f, cx + 28, 61, 1)
+    if 3 <= i <= 9: aura(f, s, i, 1)
+    if i == 9:                                                                # the block leaves his hands: chips and dust fly off it
+        for k in range(9): f.set(hx + 3 + k, hy - 3 + (k % 3)*2, 'M' if k % 2 else 'N')
+        puff(f, hx + 2, hy + 3, 2)
+    if 10 <= i <= 12: puff(f, cx + 18, 61, 3)
+    return f, (hx, hy), fh
+# ---- 3. GRAB + CLEAVE: a lunge (0-2), the hand closes on the enemy's neck (3: the contact), the pull (4), the other hand goes up (5), the CLEAVE (6-7: a slash across the enemy and a spray of blood), hold (8), a shove (9-10), recovery (11-14)
+CTG_N = {0: ((3, 1), (7, -1)), 1: ((6, -1), (11, -3)), 2: ((7.5, -2), (13.5, -5)), 3: ((7.5, -2), (14, -6)), 4: ((5, -2), (10.5, -5)), 8: ((5, -2), (10.5, -5)), 9: ((8, 0), (14.5, -1)), 11: ((6, 1), (11, 0)), 13: GUARD_N, 14: IDLE_N}
+CTG_F = {0: GUARD_F, 3: ((3, 3), (6, 1)), 4: ((2.5, 1), (4.5, -3)), 5: ((2, -5), (3, -12)), 6: ((6, 1), (10, 5)), 7: ((8, 6), (13, 12)), 9: ((6, 4), (10, 8)), 11: ((5, 2), (9, 3)), 13: GUARD_F, 14: IDLE_F}
+def ctg_params(i):
+    return dict(by=round(kv({0: 2, 2: 3, 4: 3, 7: 2, 9: 1, 12: 0, 14: 0}, i)), ln=round(kv({0: 2, 1: 4, 3: 6, 5: 5, 7: 5, 9: 3, 12: 1, 14: 0}, i)), hx=round(kv({0: 1, 3: 3, 8: 3, 12: 0, 14: 0}, i)), hs=round(kv({0: 0, 3: 1, 8: 1, 14: 0}, i)),
+                lf=(round(kv({0: 38, 2: 42, 3: 43, 8: 43, 11: 38, 14: 34}, i)), GR, 0), lb=(round(kv({0: 28, 2: 23, 3: 22, 8: 22, 11: 27, 14: 31}, i)), GR, 0), na=kv(CTG_N, i), fa=kv(CTG_F, i),
+                hp=i*1.1, hup=1 if 1 <= i <= 10 else 0, hback=1 if 1 <= i <= 4 else 0, mo=3 <= i <= 8, blink=False)
+def ct_grab(i):
+    f, nh, fh = wbody(ctg_params(i)); s = sil(f); hx, hy = round(nh[0]), round(nh[1])
+    if 2 <= i <= 8:                                                           # the open hand: fingers stretch out of the fist
+        for k in range(3): f.set(hx + 2 + k, hy - 1 + k - (k == 2), 'S'); f.set(hx + 3, hy - 2 + k, 'S')
+    if 1 <= i <= 3:                                                           # speed lines behind the lunge
+        for q in range(0, 10, 2): f.set(hx - 10 - q, hy + 2 + (q % 3) - 1, 'Y' if q < 6 else 'z')
+    if i == 3: burst(f, hx + 4, hy + 1, 3)
+    if 4 <= i <= 8: aura(f, s, i, 2); embers(f, hx + 6, hy + 8, i, 8, 8)
+    if i == 6: cleave(f, [(hx - 1, hy - 8), (hx + 4, hy + 2), (hx + 9, hy + 12)], 2.4, i)
+    if i == 7:
+        cleave(f, [(hx - 2, hy - 10), (hx + 7, hy + 6), (hx + 17, hy + 26)], 3.8, i); bf_burst(f, hx + 9, hy + 10, 4, 8, 7, 180, 0)
+        rnd = random.Random(7)
+        for k in range(22): a = math.radians(rnd.uniform(-70, 60)); r = rnd.uniform(5, 20); f.set(hx + 9 + math.cos(a)*r, hy + 10 + math.sin(a)*r, 'X' if k % 3 else ('q' if k % 2 else 'Y'))
+    if i == 8:
+        rnd = random.Random(8)
+        for k in range(24): a = math.radians(rnd.uniform(-80, 50)); r = rnd.uniform(6, 26); f.set(hx + 9 + math.cos(a)*r, hy + 10 + math.sin(a)*r + r*r/90, 'q' if k % 2 else 'X')
+    if 9 <= i <= 10: lines_r(f, hx - 6, hy, 3, 8, i)
+    if i >= 9: embers(f, hx, hy + 6, i, 8, 10)
+    return f, (hx, hy), fh
+# ---- 4. SIMPLE DOMAIN (the game starts it on frame 3, in the air; the lift is SD_LIFT): the hand seal in front of the chest (3-5), HELD with a cyan glow gathering (5-9), the flash of the circle (10), down (11-13), landed (14)
+SD_LIFT = [0, 8, 16, 22, 26, 28, 28, 28, 28, 28, 24, 16, 8, 2, 0]
+CTD_N = {0: GUARD_N, 1: ((3, 3), (5, 6)), 2: ((3.5, 1), (6, 0)), 3: ((4, 0), (7, -3)), 4: ((4, 0), (7.5, -3.5)), 10: ((4.5, 0), (8, -4)), 12: ((4, 1), (6.5, -1)), 14: IDLE_N}
+CTD_F = {0: GUARD_F, 1: ((2.5, 3), (4, 5.5)), 2: ((3, 1), (5, -.5)), 3: ((3.5, 0), (6.5, -3.5)), 4: ((3.5, 0), (7, -4)), 10: ((4, 0), (7.5, -4.5)), 12: ((3.5, 1), (6, -1.5)), 14: IDLE_F}
+def ctd_params(i):
+    tuck = kv({0: 0, 1: .4, 2: .8, 3: 1, 10: 1, 12: .5, 13: .1, 14: 0}, i)
+    return dict(by=round(kv({0: 3, 1: 0, 3: -1, 10: -1, 13: 1, 14: 2}, i)), ln=round(kv({0: 1, 3: 0, 10: 0, 14: 0}, i)), hs=0,
+                lf=(round(34 + 3*tuck), round(GR - 10*tuck), round(22*tuck)), lb=(round(31 + tuck), round(GR - 9*tuck), round(26*tuck)), na=kv(CTD_N, i), fa=kv(CTD_F, i),
+                hp=i*.9, hup=1 if 2 <= i <= 12 else 0, hback=0, mo=False, blink=3 <= i <= 12)
+def ct_simple(i):
+    f, nh, fh = wbody(ctd_params(i)); s = sil(f); hx, hy = round(nh[0]) + 1, round(nh[1]); cx = 34 + CH_X
+    if 3 <= i <= 13: aura(f, s, i, 1 if i < 5 or i > 11 else 3, ('b', 'd', 'f'))
+    if 4 <= i <= 12:
+        r = {4: 1, 5: 2, 6: 3, 7: 3, 8: 4, 9: 4, 10: 5, 11: 3, 12: 2}[i]
+        for dy in range(-r, r + 1):
+            for dx in range(-r, r + 1):
+                d = math.hypot(dx, dy)
+                if d <= r + .3: f.set(hx + 1 + dx, hy + dy, 'f' if d <= r*.45 else ('c' if d <= r*.8 else 'd'))
+    if 3 <= i <= 12: sparkle(f, cx, 34, i, 7, 16 + (i - 3)*.6)
+    if i == 10:                                                               # the flash of the domain: a cyan ring races out round him with rays
+        for k in range(48):
+            a = 6.2832*k/48
+            if k % 5 != 4: f.set(cx + math.cos(a)*22, 34 + math.sin(a)*19, 'c'); f.set(cx + math.cos(a)*24, 34 + math.sin(a)*21, 'd')
+        for k in range(10): a = 6.2832*k/10 + .3; [f.set(cx + math.cos(a)*q, 34 + math.sin(a)*q*.9, 'f' if q < 20 else 'c') for q in range(10, 30, 2)]
+    if i == 11:
+        for k in range(48):
+            a = 6.2832*k/48
+            if k % 6 != 5: f.set(cx + math.cos(a)*31, 34 + math.sin(a)*27, 'd')
+    return f, (hx, hy), fh
 # ---------------------------------------------------------------- the SPIN ELBOW (atk15, hit 48; cursed energy mode, BLUE while jumping): he leaps (frames 0-2, the enemy Yuji starts here; the player starts on frame 3 from his own jump), spins once in the air (3-8: the picture is squashed about his vertical axis like the spin reaction), unfolds leaning forward with the elbow cocked (9-10), drives the elbow down onto the enemy (the impact is frame 11) and lands in a crouch (12-14). 96-wide grid like the reactions (pack_sp)
 SP_LIFT = [0, 6, 14, 20, 24, 26, 26, 24, 22, 20, 17, 14, 8, 2, 0]
 SP_SQ = {4: .31, 5: -.81, 6: -.81, 7: .31}
@@ -729,13 +895,16 @@ if __name__ == '__main__':
     for k in range(10): out['rx%d' % k] = pack_rx(k)
     out['atk15'] = pack_sp()                                                  # the SPIN ELBOW
     fr, hn, hf = pack(bf_charged, 20, 76, 0); out['atk19'] = {'x0': 20, 'w': 76, 'h': N, 'top': 0, 'cx': 34 + CH_X, 'frames': fr, 'hn': hn, 'hf': hf}      # v1.19 the CHARGED BLACK FLASH (96-wide grid, the body 8 px in)
+    for k, fn in (('atk24', ct_blood), ('atk25', ct_shrine), ('atk26', ct_grab), ('atk27', ct_simple)):      # v1.21 the four CURSED TECHNIQUES (the same grid)
+        fr, hn, hf = pack(fn, 20, 76, 0); out[k] = {'x0': 20, 'w': 76, 'h': N, 'top': 0, 'cx': 34 + CH_X, 'frames': fr, 'hn': hn, 'hf': hf}
+        if k == 'atk27': out[k]['lift'] = SD_LIFT
     fr, hn, hf = pack(block, X0, 44, 0, 10); out['blk'] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}      # BLOCK (10 frames)
     fr, hn, hf = pack(bwalk, X0, 44, 0); out['bfwd'] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}      # walking with the guard up
     json.dump(out, open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'yuji.json'), 'w'), separators=(',', ':'))
-    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'atk15', 'atk16', 'atk17', 'atk18', 'atk19', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct', 'x0', out[k]['x0'], 'w', out[k]['w'])
+    for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'atk15', 'atk16', 'atk17', 'atk18', 'atk19', 'atk24', 'atk25', 'atk26', 'atk27', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct', 'x0', out[k]['x0'], 'w', out[k]['w'])
     if len(sys.argv) > 1:                                                  # contact sheets: python3 -B yuji_art.py sheets <dir>
         d = sys.argv[2]; z = 2
-        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'atk15', 'atk16', 'atk17', 'atk18', 'atk19', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]):
+        for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'atk15', 'atk16', 'atk17', 'atk18', 'atk19', 'atk24', 'atk25', 'atk26', 'atk27', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]):
             s = out[k]; sheet = Image.new('RGB', (15*s['w']*z, s['h']*z), (40, 40, 70)); px = {c: tuple(int(PAL[c][j:j+2], 16) for j in (1, 3, 5)) for c in PAL}
             for n, rows in enumerate(s['frames']):
                 for y, row in enumerate(rows):
