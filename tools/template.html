@@ -60,7 +60,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #blk{border-color:#9f8cff}
 #fat{display:none;grid-area:2/1;border-color:#ff4a3a;color:#ff6a5a;opacity:.38}#fat span{color:#ffb4a8}#fat svg{width:4.5vh;height:4.5vh}      /* FATALITY: only in a match, to the left of BLOCK; dark until the enemy is at 20% health or less and close, then it glows */
 .col.vs{grid-template-columns:auto auto auto}.col.vs #fat{display:flex}
-.col.yj .pb:not(#atk):not(#dash):not(#lap):not(#blk):not(#ce){opacity:.3}.col.ct #ce{visibility:hidden}.col.ct #dom{border-color:#ff5a8a;color:#ff8fb0}.col.ct #dom span{color:#ffc0d4}.col.ct #dom::after{background:rgba(255,90,138,.38)}.col.ct #dom.on{border-color:#ffd0e0;color:#fff}.col.vy #dom{border-color:#ff5a5a;color:#ff8a8a}.col.vy #dom span{color:#ffb4b4}.col.vy #dom::after{background:rgba(255,80,80,.38)}.col.vy #dom.on{border-color:#ffd0d0;color:#fff}      /* playing Verity the DOMAIN button is his JUMPSCARE (red, with the same wait-fill); the FATAL button is the same as Gojo's */
+.col.yj .pb:not(#atk):not(#dash):not(#lap):not(#blk):not(#ce){opacity:.3}.col.kt #ce{opacity:.3}.col.kt #dom{border-color:#ff5a8a;color:#ff8fb0}.col.kt #dom span{color:#ffc0d4}.col.kt #dom::after{background:rgba(255,90,138,.38)}.col.kt #dom.on{border-color:#ffd0e0;color:#fff}.col.vy #dom{border-color:#ff5a5a;color:#ff8a8a}.col.vy #dom span{color:#ffb4b4}.col.vy #dom::after{background:rgba(255,80,80,.38)}.col.vy #dom.on{border-color:#ffd0d0;color:#fff}      /* playing Verity the DOMAIN button is his JUMPSCARE (red, with the same wait-fill); the FATAL button is the same as Gojo's */
 .col.vs #dom{grid-area:1/2}.col.vs #ce{grid-area:1/3}.col.vs #blk{grid-area:2/2}.col.vs #lap{grid-area:2/3}.col.vs #dash{grid-area:3/2}.col.vs #atk{grid-area:3/3}
 #fat.rdy{opacity:1;background:#3a0d12;border-color:#ff8a7a;color:#fff;box-shadow:0 0 1.8vh #ff4a3a,0 0 .5vh #ff4a3a inset,4px 4px 0 #000;animation:fatglow .5s steps(2) infinite}
 @keyframes fatglow{50%{box-shadow:0 0 3.2vh #ff2a2a,0 0 .9vh #ff2a2a inset,4px 4px 0 #000}}
@@ -136,7 +136,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.16</small>
+    <small id="ver">V1.17</small>
   </div>
 </section>
 
@@ -1757,7 +1757,7 @@ function setModeUI() {                        // the MODE button (OFF / CURSED /
   $('doml').innerHTML = vy ? 'JUMP<br>SCARE' : 'DOMAIN'; $('dom').querySelector('path').setAttribute('d', vy ? SCARE_D : DOM_D); $('dom').setAttribute('aria-label', vy ? 'Jumpscare: Verity grabs the enemy, who is stunned for 5 seconds and takes fear damage' : 'Domain expansion: Infinite Void');
   $('dashl').textContent = vy ? 'TELE' : 'DASH'; $('dash').setAttribute('aria-label', vy ? 'Teleport dodge' : 'Dash'); $('ce').setAttribute('aria-label', vy ? 'Mode: tap to turn into the ball and back' : 'Mode: tap to switch between normal, cursed energy and red');
   if (vy) { $('ce').classList.toggle('lit', ball); $('ce').setAttribute('aria-pressed', ball ? 'true' : 'false'); $('cel').innerHTML = 'MODE<br>' + (ball ? 'BALL' : 'OFF'); $('lapl').textContent = 'BITE'; $('lap').setAttribute('aria-label', 'Bite: the enemy bleeds for 4 seconds'); }
-  if (!!vs && vs.me === 'cat') { $('lapl').innerHTML = 'CARTOON<br>TOSS'; $('lap').setAttribute('aria-label', 'Cartoon Toss: the huge Cartoon Cat grabs you and throws you onto the enemy'); $('doml').textContent = 'ULTIMATE'; $('dom').querySelector('path').setAttribute('d', CHOKE_D); $('dom').setAttribute('aria-label', 'Ultimate: the Cat chokes the enemy, knees him 15 times and throws him away'); }      // playing the Cat: BLUE = CARTOON ATTACK; the DOMAIN button is his ULTIMATE; MODE and BLOCK are hidden by the style sheet
+  if (!!vs && vs.me === 'cat') { $('lapl').innerHTML = 'CARTOON<br>TOSS'; $('lap').setAttribute('aria-label', 'Cartoon Toss: the huge Cartoon Cat grabs you and throws you onto the enemy'); $('doml').innerHTML = 'ULTI<br>MATE'; $('dom').querySelector('path').setAttribute('d', CHOKE_D); $('dom').setAttribute('aria-label', 'Ultimate: the Cat chokes the enemy, knees him 15 times and throws him away'); }      // playing the Cat: BLUE = CARTOON ATTACK; the DOMAIN button is his ULTIMATE; MODE and BLOCK are hidden by the style sheet
   if (!!vs && vs.me === 'yuji') { lastBlue = cm === 2 ? 'BLACK<br>FLASH' : cm === 1 ? 'CONC.<br>FIST' : 'DIVERG.<br>FIST'; $('lapl').innerHTML = lastBlue; $('lap').classList.remove('red'); $('lap').setAttribute('aria-label', cm === 2 ? 'Black Flash: a punch crackling with black sparks that hits twice as hard and sends the enemy flying back' : cm === 1 ? 'Concentrated Fist: one huge cursed energy punch that breaks the guard' : 'Divergent Fist: a punch full of cursed energy, then a second impact in the stomach as the fist is pulled back (crouched: a sweep kick that drops the enemy)'); $('ce').setAttribute('aria-label', 'Mode: tap to switch cursed energy on (hands up, then the flames light up) and off'); }      // playing Yuji: BLUE = DIVERGENT FIST (CONCENTRATED FIST in cursed energy mode, a SWEEP while crouched; the per-frame code in drawScene keeps the label right); MODE = cursed energy on / off (no red mode); DOMAIN is dimmed by the style sheet
   skillUI();
 }
@@ -2229,7 +2229,7 @@ function fatAiState(now) {                             // the enemy's own FATALI
 }
 function fatGo(now, dt, rev) { if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else if (rev ? vs.foe === 'cat' : vs.me === 'cat') { cfStart(now, rev); cfFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's and the Cat's FATALITY are their own cutscenes)
 function fatUI(now) {                                  // the button: only in a match, dark until it can be used, then it glows
-  const col = $('fat').parentNode; col.classList.toggle('vs', !!vs); col.classList.toggle('vy', !!vs && vs.me === 'verity'); col.classList.toggle('yj', !!vs && vs.me === 'yuji'); col.classList.toggle('ct', !!vs && vs.me === 'cat'); col.classList.toggle('nt', !!vs && !!vs.net); $('hud').classList.toggle('vs', !!vs); $('pauseBtn').style.display = vs && vs.net ? 'none' : ''; if (vs) $('fat').classList.toggle('rdy', fatState(now) === 0);
+  const col = $('fat').parentNode; col.classList.toggle('vs', !!vs); col.classList.toggle('vy', !!vs && vs.me === 'verity'); col.classList.toggle('yj', !!vs && vs.me === 'yuji'); col.classList.toggle('kt', !!vs && vs.me === 'cat'); col.classList.toggle('nt', !!vs && !!vs.net); $('hud').classList.toggle('vs', !!vs); $('pauseBtn').style.display = vs && vs.net ? 'none' : ''; if (vs) $('fat').classList.toggle('rdy', fatState(now) === 0);
 }
 function pressFat() { if (lacks('fat')) { lockPop(pnow()); return; } fatReq = pnow() + 500; }      // (a press is remembered for half a second, e.g. while he is still reeling)
 function fatStart(now, rev) {                          // rev = the enemy does it to Gojo
@@ -2461,12 +2461,12 @@ function drawFoeCE(now, sx, y, mirror, hx, info, fi, amt, igAt) {      // the en
   }
 }
 const ZONE_DRAIN = 4, BF_DMG = [60, 52, 56], ZN = [[-2, 0], [2, 0], [0, -2], [0, 2], [-2, -2], [2, 2], [-2, 2], [2, -2]], Z1 = [[-1, 0], [1, 0], [0, -1], [0, 1]], tintCache = new Map(); let zoneSpkAt = 0;      // THE ZONE burns 4% of the energy a second
-const VT = { ms: 3870, stun: 2500, cd: 3900, range: 150 }; let vTalkAt = -1e9;      // THE TALK: how long the voice lasts, how long the enemy's ears ring (he cannot act), the wait for the next one, how far the voice carries (px)
+const VT = { ms: 3870, stun: 2500, cd: 3900, range: 150 }; let vTalkAt = -1e9, vTalkReal = -1e9;      // THE TALK: how long the voice lasts, how long the enemy's ears ring (he cannot act), the wait for the next one, how far the voice carries (px)
 function vTalk(v, now) {      // VERITY'S BALL, his only M1: "Hey, it's me, it's Verity": the voice stuns the enemy's ears for 2.5 s (15% of the energy; the ball lasts 5 s, so there is one talk for every ball)
   const d = dummy; if (v.form !== 'ball' || !d || d.ko >= 0 || d.cap || now - vTalkAt < VT.cd) return;
   if (Math.abs(d.x - wx) > VT.range) { say('TOO FAR', wx, '#ff8a7a', 8, now); return; }
   if (!ceSpend(CE_COST.vTalk, now)) return;
-  vTalkAt = now; playVoice(); buzz(40); const busy = !!(d.cact || d.vact);
+  vTalkAt = now; vTalkReal = performance.now(); playVoice(); buzz(40); const busy = !!(d.cact || d.vact);
   d.stunUntil = Math.max(d.stunUntil || 0, now + VT.stun); d.earsUntil = now + VT.stun; if (d.curse) { d.cs = 'hurt'; d.ct0 = now; d.cm = null; d.cnext = Math.max(d.cnext, d.stunUntil + 200); } else if (!busy) { d.ai = 'rest'; d.aiAt = now; d.restFor = VT.stun; d.chain = 0; d.hitDone = true; }
   say('HEY ITS ME VERITY', wx, '#ffe060', 8, now); say('DEAF!', d.x, '#ffd34d', 8, now + 120);
 }
@@ -2806,7 +2806,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
   const fa = now - v.fAt, ballOn = v.form === 'ball' || (v.form === 'smoke1' && fa >= 200) || (v.form === 'smoke2' && fa < 400);      // (the ball shows from 0.2 s into the first puff to 0.4 s into the huge smoke, which is where Verity is swapped back in)
   let src, info = VINFO, py = gAir ? gAirH : lift, ox = 0, oy = 0;
-  if (ballOn) { src = now - vTalkAt < VT.ms ? ballTalkF(Math.floor((now - vTalkAt) * 10 / 1000) % 15) : SIMG.ball; info = BALL.info; py = ballH(Math.max(0, (now - v.bAt) / 1000)); }
+  if (ballOn) { src = performance.now() - vTalkReal < VT.ms ? ballTalkF(lipFrame(performance.now() - vTalkReal)) : SIMG.ball; info = BALL.info; py = ballH(Math.max(0, (now - v.bAt) / 1000)); }
   else if (!hum) src = vfr('idle', 0, false);
   else if (hf >= 0) { const q = (now - hurtAt) / RX_DUR[hurtK] * 15; src = vrx(hurtK, q, false); info = VRXIN[hurtK]; if (info.lift && !gAir) py += info.lift[Math.min(14, Math.floor(q))]; if (now - hurtAt < 70) src = whiteOf(src); }      // one of his ten hit reactions
   else if (stun) { src = vfr('crouch', 14, false); const o = fearOff(now); ox = o[0]; oy = o[1]; }      // the enemy's JUMPSCARE has him: folded up and shaking
@@ -3529,7 +3529,8 @@ const SIMG = {}; for (const k in STORYART) { const mkI = u => { const i = new Im
 const TALK = __TALK__;      // v1.16 (tools/talk_art.py): ballTalk = Verity's ball talking (15 frames of 13x13), cat.hugegrab / held / toss = the giant's grab and throw, the Cat in his glove and the thrown Cat (15 frames each), hand = where the giant's hand is on each frame, voice = "Hey, it's me, it's Verity" (an mp3 as a data URL)
 { const mkI = u => { const i = new Image(); i.src = u; return i; }; SIMG.ballTalk = mkI(TALK.ballTalk); for (const k in TALK.cat) SIMG.cat[k] = mkI(TALK.cat[k]); }
 CAT_CELL.hugegrab = [128, 64, 36, 0]; CAT_CELL.held = [64, 64, 32, 0]; CAT_CELL.toss = [64, 64, 32, 0];
-const BTF = [];
+const BTF = [], LIPF = [[0, 5, 9, 14], [4, 6, 8, 13], [1, 3, 7, 10, 12], [2, 11]];      // the 15 pictures of the talking ball sorted by how open the mouth is (0 smile .. 3 wide)
+const lipFrame = ms => { const li = Math.max(0, Math.floor(ms / 25)), m = li < TALK.lip.length ? TALK.lip[li] : 0, L = LIPF[m]; return L[li % L.length]; };      // the mouth for the voice at ms after it started: the opening was measured from the recording (tools/talk_art.py), so the lips follow the sound
 function ballTalkF(i) { if (BTF[i]) return BTF[i]; const s = SIMG.ballTalk; if (!s || !s.complete || !s.naturalWidth) return SIMG.ball; const c = document.createElement('canvas'); c.width = 13; c.height = 13; c.getContext('2d').drawImage(s, i * 13, 0, 13, 13, 0, 0, 13, 13); return BTF[i] = c; }
 let voiceBuf = null, voiceBusy = false;
 function voiceLoad() {      // decodes Verity's voice (the mp3 in TALK.voice) once the sound system exists

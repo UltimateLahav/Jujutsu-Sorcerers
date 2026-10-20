@@ -44,10 +44,26 @@ def ball_talk():                                  # Verity's smiley ball (13x13,
             for xy in [(4, 4), (8, 4)]: o[xy] = (206, 150, 8, 255)
         out.paste(im, (i*S_, 0))
     return out
+def lip_levels():                                 # how open the mouth is (0 smile .. 3 wide) every 25 ms of the recording: the loudness decides, an open vowel (low-pitched energy) opens it wider, a hissing "s" keeps it narrow, and it closes a little slower than it opens
+    import subprocess; import numpy as np
+    raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', os.path.join(HERE, 'voice_hey_its_me_verity.mp3'), '-ac', '1', '-ar', '16000', '-f', 's16le', '-'], capture_output=True).stdout
+    x = np.frombuffer(raw, dtype=np.int16).astype(np.float32)/32768.0; sr = 16000; hop = int(sr*0.025); win = int(sr*0.040); fr = np.fft.rfftfreq(win, 1/sr); rms, low, cen = [], [], []
+    for i in range(len(x)//hop):
+        sg = x[i*hop:i*hop + win]; sg = np.pad(sg, (0, win - len(sg))) if len(sg) < win else sg; rms.append(float(np.sqrt((sg*sg).mean())))
+        sp = np.abs(np.fft.rfft(sg*np.hanning(win)))**2; tot = sp.sum() + 1e-12; low.append(float(sp[(fr >= 250) & (fr < 1000)].sum()/tot)); cen.append(float((sp*fr).sum()/tot))
+    db = 20*np.log10(np.array(rms)/max(rms) + 1e-6); lv = []
+    for d, lo, ce in zip(db, low, cen):
+        m = 3 if d > -8 else 2 if d > -16 else 1 if d > -26 else 0
+        if m and ce > 2500: m = min(m, 1)
+        elif m and lo > 0.45: m = min(3, m + 1)
+        lv.append(m)
+    out = []
+    for i, m in enumerate(lv): out.append(max(m, (out[-1] - 1) if out else 0))
+    return out
 def url(im): b = io.BytesIO(); im.save(b, 'PNG', optimize=True); return 'data:image/png;base64,' + base64.b64encode(b.getvalue()).decode()
 if __name__ == '__main__':
     out = {'ballTalk': url(ball_talk()), 'cat': {k: url(strip(k)) for k in POSES}, 'hand': [[round(v, 2) for v in C.hand(float(i), HAND)] for i in range(N)],
-           'voice': 'data:audio/mpeg;base64,' + base64.b64encode(open(os.path.join(HERE, 'voice_hey_its_me_verity.mp3'), 'rb').read()).decode()}
+           'lip': lip_levels(), 'voice': 'data:audio/mpeg;base64,' + base64.b64encode(open(os.path.join(HERE, 'voice_hey_its_me_verity.mp3'), 'rb').read()).decode()}
     json.dump(out, open(os.path.join(HERE, 'talk.json'), 'w'), separators=(',', ':')); print('talk.json', os.path.getsize(os.path.join(HERE, 'talk.json')), 'bytes')
     if len(sys.argv) > 1:                                                        # a contact sheet: python3 -B talk_art.py sheet <png>
         rows = [strip('hugegrab'), strip('held'), strip('toss'), ball_talk().resize((13*N*4, 13*4), Image.NEAREST)]; W = max(r.width for r in rows); sh = Image.new('RGB', (W, sum(r.height for r in rows) + 12), (60, 70, 110)); y = 0
