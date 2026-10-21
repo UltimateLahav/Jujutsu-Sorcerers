@@ -136,7 +136,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.30</small>
+    <small id="ver">V1.31</small>
   </div>
 </section>
 
@@ -259,6 +259,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <small>FPS = FRAMES PER SECOND: HOW MANY PICTURES THE GAME DRAWS EVERY SECOND (30 SAVES BATTERY). BATTERY SAVER: 30 FPS, NO SCREEN SHAKE, FEWER SPARKS. AUTO-PAUSE: A CALL OR LEAVING THE APP PAUSES THE FIGHT.</small>
     <small>ASSIST (NOT IN WI-FI FIGHTS): PARRY+ = A WIDER PARRY WINDOW. EASY = ALSO 30% LESS DAMAGE TO YOU. AUTO-GUARD = ALSO BLOCKS FOR YOU WHILE YOU STAND STILL (NEEDS THE BLOCK SKILL).</small>
     <small>GAME PACE: HOW FAST A FIGHT RUNS. FAST = 1.25 TIMES, TURBO = 1.5 TIMES (NOT IN WI-FI FIGHTS AND THE STORY). THE ROUND TIMER, THE 10 SECONDS OF THE INHERITENCE AND THE 4 SECONDS OF THE DASH LOCK STILL COUNT REAL SECONDS.</small>
+    <small>COMBAT (GOJO AND YUJI): TAP ATTACK = LIGHT. KEEP IT HELD AFTER A HIT = HEAVY (1.6 TIMES THE DAMAGE, BREAKS A GUARD). DASH DURING A SWING THAT HIT = CANCEL (+4% ENERGY). THE SAME SWING AGAIN IN ONE COMBO HITS 20% WEAKER, AND A SWING THAT MISSES LEAVES YOU OPEN FOR A MOMENT.</small>
     <div class="opt" id="optG"></div>
     <div class="row"><button id="dummyBtn">SPAWN DUMMY</button><button id="fighterBtn">SPAWN ATTACKER</button><button id="blockerBtn">SPAWN BLOCKER</button></div>
   </div>
@@ -2092,25 +2093,27 @@ function hitFoe(k, now) {                     // called on the impact frame: a h
   if (vs && vs.ph !== 'fight') return;
   if (dummy.vform && dummy.vform !== 'verity') { say('IMMUNE', dummy.x, '#ffe9a0', 8, now); return; }      // the smiley form cannot be hit
   if (isD2(k)) { dummyDiv2(now); return; }      // (DIVERGENT FIST's second impact, normal or RUSH, has its own rules: see above)
-  const who = vs ? vs.me : 'gojo';      // (whose swing this is: the hit numbers are shared, see KICKS)
+  const who = vs ? vs.me : 'gojo', hv = !!heavyAt && atkAt === heavyAt;      // (whose swing this is: the hit numbers are shared, see KICKS; hv: it is the HEAVY swing)
   if (dummy.vact && dummy.vact.type === 'crouch' && !isKick(who, k) && k !== 6 && k !== 7 && k !== 46) { say('MISS', dummy.x, '#9fd8ff', 8, now); return; }      // folded up he is below every swing except kicks and the crouching punches
   if (now < (dummy.down || 0) && !isKick(who, k)) { say('MISS', dummy.x, '#9fd8ff', 8, now); return; }      // knocked to the floor (by a DOWNSLAM or a SWEEP): only a kick reaches him there
   if (dummy.cact && dummy.cact.flat) { say('MISS', dummy.x, '#9fd8ff', 8, now); return; }      // the Cat smashed flat is two pixels thin: every swing passes over him
   if (now < (dummy.dodgeUntil || 0)) { say('MISS', dummy.x, '#9fd8ff', 8, now); return; }      // the smart enemy stepped back out of the swing
   const gap = dummy.x - wx;                   // the dummy's centre relative to Gojo's hips
-  if (gap > pHit(k) || gap < -3) return; if (dummy.net) { netAttack(k, now); return; }      // (pHit: how far the drawn limb of this move really reaches into the drawn body of this enemy; behind you nothing lands)
+  if (gap > pHit(k) || gap < -3) return; if (dummy.net) { netAttack(k, now); return; } connectAt = atkAt;      // (pHit: how far the drawn limb of this move really reaches into the drawn body of this enemy; behind you nothing lands)
   if (isD1(k)) divP = { at: now, k };      // (DIVERGENT FIST: the fist has reached him, landed or blocked: the second impact follows 0.17 s later)
-  const broke = (k === 42 || k === 46) && gap > 0 && dBlocks();      // (CONCENTRATED FIST and its crouched version, the UPPERCUT: nothing stops them, they break the guard of a blocking enemy)
-  if (dBlocks() && gap > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx] && k !== 42 && k !== 46) {      // (a smart enemy that blocked: he answers with a counter)
+  const broke = (k === 42 || k === 46 || hv) && gap > 0 && dBlocks();      // (CONCENTRATED FIST and its crouched version, the UPPERCUT: nothing stops them, they break the guard of a blocking enemy)
+  if (dBlocks() && gap > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx] && k !== 42 && k !== 46 && !hv) {      // (a smart enemy that blocked: he answers with a counter)
     if (vs) dummy.counter = now;      // the blocker's guard faces Gojo: normal punches are blocked (from behind they land)
     dummy.vx += KNOCK[k] * 0.3; shakeUntil = now + 70; shakeAmp = 1; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); return;
   }
   let dmg = DMG[k] + (k >= 27 ? 0 : (Math.random() * 5) | 0); const bfl = (k === 42 || k === 47) && !!vs && vs.me === 'yuji' && atkK >= 20 && atkK <= 23; if (bfl) dmg = BF_DMG[atkK - 20];      // (BLACK FLASH: 60 with the punch, 52 with the kick to the head, 56 with the blow to the stomach)      // (Yuji's three kicks: 6 + 6 + 8 = exactly 20 and the Cat's M1: 4 + 8 + 4 + 14 = exactly 30, no random bonus)
-  if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; }                    // the counter restarts after 1.6 s without a landed hit
+  if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; repSw = {}; repN = {}; }                    // the counter restarts after 1.6 s without a landed hit (and so does the count of repeated swings)
   const ko = k >= 36 ? -1 : k >= 24 ? [0, 1, 2, -1, -1, 3][k - 24] : k === 22 ? -1 : k <= 3 ? k : k >= 18 ? k - 18 : k >= 14 ? k - 14 : -1; if (k >= 36) hits.seq = 0; else if (k !== 27 && k !== 28) hits.seq = ko === hits.seq ? hits.seq + 1 : ko === 0 ? 1 : 0;                          // the meter fills while the hits land in order: right hook, left hook, elbow, kick
   if (hits.seq === 4) { if (k !== 29) dmg += 25; hits.perfect = now; snd('finisher'); say('COMBO!', dummy.x, '#ffd34d', 8, now + 90); }
   dmg = ceDmg(dmg); if (ctrBoost && atkAt === ctrBoost) dmg = Math.round(dmg * 1.5);      // (every hit of the free counter's swing, after a parry, does 1.5 times the damage)
-  const cb = comboBonus(k, now); dmg += cb; hits.n++; hits.dmg += dmg; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = cb; if (vs) vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n);
+  if (hv) dmg = Math.round(dmg * HEAVY_X);      // (v1.31: the HEAVY swing)
+  { if (repSw[atkK] !== atkAt) { repSw[atkK] = atkAt; repN[atkK] = (repN[atkK] | 0) + 1; } const rp = repN[atkK] - 1; if (rp > 0 && !(vs && vs.net)) { dmg = Math.max(1, Math.round(dmg * Math.max(0.4, 1 - 0.2 * rp))); if (repSay !== atkAt) { repSay = atkAt; say('REPEAT', dummy.x, '#9a9aa8', 8, now + 60); } } }      // (v1.31: the same swing again in one combo hits 20% weaker each time, down to 40%)
+  const cb = comboBonus(k, now); dmg += cb; hits.n++; hits.dmg += dmg; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = cb; cancelFor = atkAt; cancelUntil = now + CANCEL_MS; if (vs) vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n);
   const grab = !!vs && vs.me === 'cat' && (k === 30 || k === 32), held = !!vs && vs.me === 'cat' && k >= 31 && k <= 33 && !!dummy.cheld;      // (the playable Cat's glove: a grab holds the enemy and pulls him in, the punch lands on the held enemy where he stands, the kick sends him away)
   dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += held && k !== 33 ? 0 : KNOCK[k]; if (k === 3 || k === 17 || k === 21 || k === 29 || k === 33 || k === 35 || k === 41 || k === 42) { dummy.smokeUntil = now + 520; puff(dummy.x, 8); } shakeUntil = now + 110; shakeAmp = k === 21 || k === 35 || k === 42 ? 4 : [3, 15, 17, 18, 19, 29, 33, 40, 41].includes(k) ? 3 : 2;
   if (k === 40 || k === 43 || k === 48) dummy.down = now + RX_DUR[4];      // (a DOWNSLAM or a SWEEP puts him on the floor for as long as the fall lasts)
@@ -2125,7 +2128,7 @@ function hitFoe(k, now) {                     // called on the impact frame: a h
     else if (!juggle) { dummy.rx = isD1(k) ? 0 : k === 29 || k >= 40 || (k === 21 && !!vs && vs.me === 'yuji') || (!!vs && vs.me === 'cat' && (k === 33 || k === 35)) || (!!vs && vs.foe === 'cat' && (k === 3 || k === 17 || k === 21)) ? 4 : (Math.random() * 10) | 0; dummy.rxAt = now; if (k === 47) dummy.air = airUp(dummy) ? airMake(now, dummy.airH, -80, 900, 'drop') : null; }      // (the FACE KICK knocks him out of the air: he drops fast, far away)
     if (held && k !== 33) { dummy.cheld.until = now + CT.hold; dummy.stunUntil = Math.max(dummy.stunUntil, dummy.cheld.until); } else catRelease(now); }      // (the big fall: Yuji's last kick, the Cat's kick and the giant's kick, and the big kicks on the Cat; otherwise one of ten reactions, picked at random)
   if (window.__sfxlog) window.__sfxlog.push(['rx', Math.round(now), dummy.rx]);
-  say('' + dmg, dummy.x, popCol(), 8, now); if (broke) say('GUARD BREAK', dummy.x, '#ffd34d', 8, now + 90); onLand(k, dmg, now);
+  say('' + dmg, dummy.x, popCol(), 8, now); if (broke) say('GUARD BREAK', dummy.x, '#ffd34d', 8, now + 90); onLand(k, dmg, now); if (hv) { dummy.vx += (dummy.x >= wx ? 1 : -1) * 150; shakeUntil = now + 170; shakeAmp = 4; }
   snd('smack', k >= 36 ? YU_ATK.snd[k - 24] : k >= 30 ? (k === 33 || k === 35 ? 3 : 0) : k >= 24 ? YU_ATK.snd[k - 24] : k === 22 ? 3 : k);      // (the Cat's kick and the giant's kick are the heavy blows)
   if (k === 22) dummy.bleed = { until: now + 4000, next: now + 100 };      // the bite: he bleeds 1 damage every 0.1 s for 4 s (a second bite starts the four seconds again)
   if (dummy.hp <= 0) koDummy(now);            // (a normal punch or kick that finishes him ends the round in a match too)
@@ -2742,7 +2745,7 @@ function beginRound(now) {                     // a fresh round: the scene is re
   spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); if (vs.net) { dummy.net = true; dummy.max = dummy.hp = dummy.shown = PHP; dummy.x = dummy.tx = wx + NET_G0; dummy.pose = null; vs.toSent = false; }      // (the Wi-Fi fight: the other player, drawn from his phone's pictures)
   vdg = cst = null; smear.length = drip.length = 0; cProj = []; if (vs.rush) rushSpawn(t); else if (vs.cv) initCurse(dummy, vs.cv, wx + Math.max(54, Math.min(90, (VW >> 1) - 70)), vs.hard ? 1.5 : 1);      // (a challenge: the curse steps in; a RUSH wave: one or two)
   $('vsres').classList.remove('on');      // (REMATCH and NEXT start a new fight: the result screen goes away. Since v7.12 this line had slipped into a comment, so the result screen stayed on top of the new fight)
-  vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
+  vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
   if (vs.retry) { vs.round = 1 + vs.retry; vs.hp = vs.sh = PHP / 2; dummy.hp = dummy.shown = dummy.lock = 1; vs.morphed = true; blackUntil = t + 700; } else blackUntil = 0;      // after a failed red: Gojo at half health, Verity as he was (1 health left, so no smoke change); the picture comes up from black
 }
 // ---------------------------------------------------------------- v1.29 THE STATE TRACKER and the COMBO ESCAPE. A small box by your health bar says what state you are in: green FREE (you can move) or red (HIT: reeling from a blow, DOWN: on the floor, STUN: the JUMPSCARE, the Cat's glove or dizzy, HELD: the enemy Cat's ULTIMATE has you). While you are red, DASH gets you out of it: the stun is gone, you dash (with the dash's own invulnerable start), and when the dash ends you strike back with the LAST M1 of your combo; the dash is then on a cooldown of 4 seconds (the DASH button counts it down). Not possible when you are in the air from a launch, held by the ULTIMATE, in a cutscene or while the DOMAIN lasts.
@@ -4319,7 +4322,7 @@ function drawScene(now, dt) {
   if (vf) { vfFrame(now, dt); return; }         // ...and Verity's FATALITY
   if (cf) { cfFrame(now, dt); return; }         // ...and the Cat's FATALITY
   if (ke) { keFrame(now, dt); return; }         // ...and the end of the Cat in the story
-  comboEscape(now); counterTick(now); domTick(now); bfTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); if (!dom) { if (vs && vs.foe === 'verity') storyBattleTick(now, dt); else if (vs && vs.foe === 'cat') catTick(now, dt); ultTick(now, dt); }      // (the DOMAIN freezes everyone: none of the enemy's own clocks run while it lasts)
+  comboEscape(now); flowTick(now); counterTick(now); domTick(now); bfTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); if (!dom) { if (vs && vs.foe === 'verity') storyBattleTick(now, dt); else if (vs && vs.foe === 'cat') catTick(now, dt); ultTick(now, dt); }      // (the DOMAIN freezes everyone: none of the enemy's own clocks run while it lasts)
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
     const fs = fatState(now);
     if (fs === 0) { fatReq = 0; if (ceSpend(CE_COST.fatal, now)) { fatGo(now, dt, false); return; } }      // (his own FATALITY costs 50% cursed energy; the enemy's is free)
@@ -5310,6 +5313,26 @@ function speedBonus() {      // RUSH and ROULETTE: a wave cleared faster than it
   const R = vs.run, k = Math.min(vs.round, R.waves.length) - 1, par = R.par[k], el = (R.tl - vs.tl) / 1000, p = R.pay[k], base = R.sb ? R.sb[k] : typeof p === 'number' ? p * 0.5 : 0;
   return Math.round(base * Math.max(0, Math.min(1, (par - el) / (par * 0.5))));
 }
+// ---------------------------------------------------------------- v1.31 FLOW COMBAT I (Gojo and Yuji). LIGHT = tap ATTACK (the chain as before). HEAVY = keep ATTACK held after a hit: the last M1 of your combo, 1.6 times the damage, breaks a guard, pushes harder, long recovery if it misses. CANCEL = press DASH during a swing that has hit: the swing stops, you dash, +4% energy, the repeat count starts again. AGAINST BUTTON MASHING: the same swing again in one combo does 20% less each time (down to 40%), and a swing that hits nothing leaves you open for 0.24 s (0.42 s for a heavy) in which ATTACK does nothing. None of it in the Wi-Fi fight.
+const HEAVY_HOLD = 300, HEAVY_X = 1.6, WHIFF_MS = 240, WHIFF_HEAVY_MS = 420, CANCEL_MS = 380, E_CANCEL = 4;
+let atkHold = -1, heavyAt = 0, whiffUntil = 0, cancelFor = -1, cancelUntil = 0, connectAt = -1, swPrev = -1, swLast = 0, repSw = {}, repN = {}, repSay = -1, chgTick = -1;      // atkHold: when ATTACK went down (-1 = up); heavyAt: the atkAt of the heavy swing; connectAt: the swing that last touched the enemy; swPrev: last frame's swing; repSw / repN: per swing type, the last swing and how many times it was used in this combo
+const flowOK = now => state === 'play' && !!dummy && dummy.ko < 0 && (meK() === 'g' || meK() === 'y') && !(vs && (vs.net || vs.ph !== 'fight')) && !redWhy(now) && !dom;      // (the new moves: Gojo and Yuji, in a fight that is on, not in the Wi-Fi fight)
+function flowTick(now) {      // every frame, before the controls are gated
+  if (now - swLast > 150) swPrev = atkAt; swLast = now;      // (a cutscene or a freeze came between: nothing to judge)
+  if (dashReq && atkAt >= 0 && cancelFor === atkAt && now < cancelUntil && flowOK(now) && !lacks('dash')) {      // CANCEL: the swing has hit, the dash takes over
+    cancelFor = -1; swPrev = atkAt = -1; atkQ = false; repSw = {}; repN = {}; hits.until = Math.max(hits.until, now + COMBO_WIN); ceGain(E_CANCEL); say('CANCEL!', wx, '#9fd8ff', 8, now);
+  }
+  if (atkAt !== swPrev) {      // the swing that was running is over (or the next one of a chain began)
+    if (swPrev >= 0 && connectAt !== swPrev && flowOK(now)) { whiffUntil = now + (swPrev === heavyAt ? WHIFF_HEAVY_MS : WHIFF_MS); say('WHIFF', wx, '#9a9aa8', 8, now); }
+    swPrev = atkAt;
+  }
+  if (now < whiffUntil) atkReq = false;      // (open: ATTACK does nothing for a moment)
+  if (atkHold >= 0 && flowOK(now) && stance === 'stand' && hits.n > 0 && now < hits.until) {      // HEAVY: ATTACK still held after a hit
+    const held = now - atkHold;
+    if (held >= 140 && ((now / 90) | 0) !== chgTick) { chgTick = (now / 90) | 0; spark(wx + 12, gy - 26, 2, ['#ffb05a', '#fff3b0'], false, 1); }      // (the charge: sparks at the fist)
+    if (held >= HEAVY_HOLD && atkAt < 0 && now >= whiffUntil) { atkHold = -1; atkReq = false; if (strikeBack(now)) { heavyAt = atkAt; say('HEAVY!', wx, '#ffb05a', 8, now); } }
+  }
+}
 function tick(t) {
   requestAnimationFrame(tick);                // schedule first so one bad frame can't stop the loop
   if (paused) { if (state !== 'play') setPause(false); return; }      // PAUSE: nothing moves and the game's clock stands still
@@ -5342,7 +5365,7 @@ function tick(t) {
 
 // ---------------------------------------------------------------- input
 function releaseAll() {
-  keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = blockHeld = false;
+  keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = blockHeld = false; atkHold = -1;
   $('ce').classList.remove('on'); $('atk').classList.remove('on'); $('lap').classList.remove('on'); $('dash').classList.remove('on'); $('blk').classList.remove('on'); $('fat').classList.remove('on'); joyRelease();
 }
 function bindPad(id, set) {                   // hold-to-walk touch buttons (multi-touch safe)
@@ -5355,7 +5378,7 @@ function bindPad(id, set) {                   // hold-to-walk touch buttons (mul
   ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => b.addEventListener(t, () => { set(false); b.classList.remove('on'); }));
   b.addEventListener('contextmenu', e => e.preventDefault());
 }
-bindPad('atk', v => { if (v) atkReq = true; });
+bindPad('atk', v => { if (v) { atkReq = true; atkHold = pnow(); } else atkHold = -1; });
 bindPad('dash', v => { if (v) dashReq = true; });
 bindPad('blk', v => { blockHeld = v; });                    // hold to block           // tap to dash the way you are walking (back when standing still)
 bindPad('ce', v => { if (v) ceReq = true; });
@@ -5397,7 +5420,7 @@ addEventListener('keydown', e => {
   if (se && SE_KEYS.has(e.code)) { e.preventDefault(); if (!e.repeat) sePress(true); return; }      // (in the red ending the keys mash and hold)
   const k = KEYS[e.code];
   if (k) {
-    if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (k === 'G') blockHeld = true; else if (state === 'play' && !e.repeat) { if (k === 'A') atkReq = true; else if (k === 'C') crReq = true; else if (k === 'B') lpReq = true; else if (k === 'D') dashReq = true; else if (k === 'E') ceReq = true; else if (k === 'V') domReq = true; else if (k === 'H') pressFat(); else { jumpReq = true; jumpFromStick = false; } }
+    if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (k === 'G') blockHeld = true; else if (state === 'play' && !e.repeat) { if (k === 'A') { atkReq = true; atkHold = pnow(); } else if (k === 'C') crReq = true; else if (k === 'B') lpReq = true; else if (k === 'D') dashReq = true; else if (k === 'E') ceReq = true; else if (k === 'V') domReq = true; else if (k === 'H') pressFat(); else { jumpReq = true; jumpFromStick = false; } }
     if (state === 'play') e.preventDefault();
     return;
   }
@@ -5408,7 +5431,7 @@ addEventListener('keyup', e => {
   if (e.target.id === 'lanName') return;
   if (se && SE_KEYS.has(e.code)) sePress(false);
   const k = KEYS[e.code];
-  if (k === 'L') keyL = false; else if (k === 'R') keyR = false; else if (k === 'G') blockHeld = false;
+  if (k === 'L') keyL = false; else if (k === 'R') keyR = false; else if (k === 'G') blockHeld = false; else if (k === 'A') atkHold = -1;
 });
 addEventListener('blur', () => { releaseAll(); autoPause(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) { releaseAll(); autoPause(); if (sfx) sfx.ac.suspend(); } else if (sfx && !paused) audio(); });
