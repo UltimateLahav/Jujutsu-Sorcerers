@@ -137,7 +137,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.35</small>
+    <small id="ver">V1.36</small>
   </div>
 </section>
 
@@ -699,7 +699,7 @@ function initCurse(d, c, x, hpMul) {          // a round of a challenge starts: 
 function curseAI(d, now, dt) {
   const c = d.curse, S = CSP[c.id], hard = vs.hard ? 1 : 0;
   if (d.pull) { const k = Math.min(1, (now - d.pull.at) / d.pull.ms); d.x = d.pull.from + (d.pull.to - d.pull.from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) d.pull = null; }      // (Lapse Blue drags him in)
-  d.x += d.vx * dt; d.vx *= Math.exp(-7 * dt);                                       // knock-back slide with friction
+  foeSlide(d, dt);                                       // knock-back slide with friction
   if (now - d.hitAt > 350) d.shown += (d.hp - d.shown) * Math.min(1, dt * 4);
   if (d.cap) { foeSwap(d, () => capUpdate(now, dt)); return; }                      // (Max Blue has him: he is swung round the orb until it lets go)
   if (d.ko >= 0) { if (cProj.length) cProj = cProj.filter(p => p.o !== d); return; }
@@ -1162,7 +1162,7 @@ function show(s) {
   releaseAll(); $('settings').classList.remove('on');
   js = null; vf = null; if (cf) cfReset(); if (ke) keReset(); blindOff = false; bfo = null; bfp = false; ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; inhAt = -1; inhLock = false; inhArm = -1; smd = null; impf = null; tqBlock = null; tqGrab = null; tqBeam = []; tqFx = []; ceOn = false; ceAmt = 0; ceFlameAt = 0; gDownUntil = 0; gAir = null; gAirH = 0; kickBuf = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
-  if (s === 'play') { spawnAt = pnow(); wx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; sparks = []; stopMs = 0; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
+  if (s === 'play') { spawnAt = pnow(); wx = 0; wvx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; sparks = []; stopMs = 0; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(pnow(), 1200);
 }
 
@@ -1393,14 +1393,14 @@ function airStepDummy(now) {      // every frame: how high the flying enemy is a
   const d = dummy, a = d.air; if (!a) { d.airH = 0; return; }
   if (d.ko >= 0) { d.air = null; d.airH = 0; return; }
   const t = (now - a.at) / 1000;
-  if (t >= a.T) { d.air = null; d.airH = 0; puff(d.x, a.kind === 'up' ? 6 : 10); snd('land', a.kind === 'up' ? 1.2 : 1.8); shakeUntil = now + 100; shakeAmp = a.kind === 'up' ? 1 : 3; if (a.kind === 'up') { d.rx = AIR_RX; d.rxAt = now - AIR_W1 * RX_DUR[AIR_RX]; } return; }
+  if (t >= a.T) { const vi = Math.abs(a.v0 - a.g * a.T); d.air = null; d.airH = 0; if (a.kind !== 'bounce' && !a.hover && fallHit(d, vi, now)) { puff(d.x, 10); snd('land', 1.8); shakeUntil = now + 140; shakeAmp = 3; return; } puff(d.x, a.kind === 'up' ? 6 : a.kind === 'bounce' ? 3 : 10); snd('land', a.kind === 'up' ? 1.2 : 1.8); shakeUntil = now + 100; shakeAmp = a.kind === 'up' ? 1 : 3; if (a.kind === 'up') { d.rx = AIR_RX; d.rxAt = now - AIR_W1 * RX_DUR[AIR_RX]; } return; }
   d.airH = airHt(a, now); if (a.kind === 'up') { d.rx = AIR_RX; d.rxAt = now - airW(a.hover ? 0.45 : t / a.T) * RX_DUR[AIR_RX]; }
 }
 function airStepMe(now) {      // the same for you (the enemy's UPPERCUT threw you up): the reaction frame follows the flight through hurtAt, gAirH is how high you are
   const a = gAir; if (!a) { gAirH = 0; return; }
   if (a.kind === 'up' && hurtAt < 0) { gAir = null; gAirH = 0; return; }      // (something else ended the reaction: the flight is over)
   const t = (now - a.at) / 1000;
-  if (t >= a.T) { gAir = null; gAirH = 0; puff(wx, a.kind === 'up' ? 6 : 10); snd('land', a.kind === 'up' ? 1.2 : 1.8); shakeUntil = now + 100; shakeAmp = a.kind === 'up' ? 1 : 3; if (a.kind === 'up') { hurtK = AIR_RX; hurtAt = Math.max(0, now - AIR_W1 * RX_DUR[AIR_RX]); } return; }
+  if (t >= a.T) { const vi = Math.abs(a.v0 - a.g * a.T); gAir = null; gAirH = 0; if (a.kind !== 'bounce' && fallMe(vi, now)) { puff(wx, 10); snd('land', 1.8); shakeUntil = now + 140; shakeAmp = 3; return; } puff(wx, a.kind === 'up' ? 6 : a.kind === 'bounce' ? 3 : 10); snd('land', a.kind === 'up' ? 1.2 : 1.8); shakeUntil = now + 100; shakeAmp = a.kind === 'up' ? 1 : 3; if (a.kind === 'up') { hurtK = AIR_RX; hurtAt = Math.max(0, now - AIR_W1 * RX_DUR[AIR_RX]); } return; }
   gAirH = airHt(a, now); if (a.kind === 'up') { hurtK = AIR_RX; hurtAt = Math.max(0, now - airW(t / a.T) * RX_DUR[AIR_RX]); }
 }
 function upFx(now, wxx) {      // the UPPERCUT lands (on whoever was hit): a ring at the chin, a flash, a shake, a moment of hit-stop and a deep boom
@@ -1421,7 +1421,7 @@ function dummyDiv2(now) {      // the second impact on the enemy: it only needs 
 }
 function gojoDiv2(now) {      // the second impact on you (the enemy's DIVERGENT FIST): nothing you do after the first impact stops it, not even a block
   const d = dummy; if (dom || !d || !(d.divOk && now - d.divOk < 900) || gojoGone) return; d.divOk = 0; const k2 = d.divK === 44 ? 45 : 37;
-  hurtK = 1; hurtAt = now; atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; wxv -= KNOCK_G[k2] * 0.9;
+  hurtK = 1; hurtAt = now; atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; wxv -= KNOCK_G[k2] * 0.9 * pScale();
   const dm = soft(Math.round(DMG[k2] * (vs ? GRADES[vs.gi].dmg : 1))); say('' + dm, wx, '#ff9a5a', 8, now);
   if (vs && vs.ph === 'fight') vsHurt(dm, now); snd('hurt', 1); divSecond(now, wx, !vs || vs.hp > 0);
 }
@@ -1528,7 +1528,7 @@ function hitFoe(k, now) {                     // called on the impact frame: a h
   if (vs && vs.foe === 'cat') { vs.catHold = 0; dummy.held = null; }      // (a Cat who is hit lets go of whoever he holds)
   if (grab) { dummy.cheld = { until: now + CT.hold }; dummy.stunUntil = Math.max(dummy.stunUntil, dummy.cheld.until); dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = CT.hold + 100; dummy.vx = 0; dummy.cact = null; dummy.vact = null; }      // GRAB: no reaction, he is held and cannot act (the glove pulls him in on frame 8: see catScene)
   else { const juggle = airUp(dummy) && k !== 47;      // (a hit on an enemy who is in the air: he keeps his flight and his pose, only the FACE KICK ends it)
-    if (k === 46 && !dummy.air) { dummy.air = airMake(now, 0, AIR_V, AIR_G, 'up'); dummy.rx = AIR_RX; dummy.rxAt = now; }      // (the UPPERCUT launches him: see airStepDummy)
+    if (k === 46 && (!dummy.air || dummy.air.kind === 'bounce')) { dummy.air = airMake(now, 0, AIR_V, AIR_G, 'up'); dummy.rx = AIR_RX; dummy.rxAt = now; }      // (the UPPERCUT launches him: see airStepDummy)
     else if (!juggle) { dummy.rx = isD1(k) ? 0 : k === 29 || k >= 40 || (k === 21 && !!vs && vs.me === 'yuji') || (!!vs && vs.me === 'cat' && (k === 33 || k === 35)) || (!!vs && vs.foe === 'cat' && (k === 3 || k === 17 || k === 21)) ? 4 : (Math.random() * 10) | 0; dummy.rxAt = now; if (k === 47) dummy.air = airUp(dummy) ? airMake(now, dummy.airH, -80, 900, 'drop') : null; }      // (the FACE KICK knocks him out of the air: he drops fast, far away)
     if (held && k !== 33) { dummy.cheld.until = now + CT.hold; dummy.stunUntil = Math.max(dummy.stunUntil, dummy.cheld.until); } else catRelease(now); }      // (the big fall: Yuji's last kick, the Cat's kick and the giant's kick, and the big kicks on the Cat; otherwise one of ten reactions, picked at random)
   if (window.__sfxlog) window.__sfxlog.push(['rx', Math.round(now), dummy.rx]);
@@ -1549,7 +1549,7 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   const guardWas = (guardUp(now) || autoGuard()) && !!dummy && dummy.x > wx;
   if (guardWas && k !== 42 && k !== 46 && !(k >= 49 && CMOVE[k - 49].nb)) {  // his guard is up and the attacker is in front of him: the swing is blocked (a hit from behind still lands; CONCENTRATED FIST breaks the guard)
     if (!isD1(k) && blkAt >= 0 && now - blkAt <= PARRY_MS * paceBase() * (assistLvl() >= 1 ? 2 : 1)) { parryHit(now); nres('b'); return; }      // (PARRY: the guard went up just before the blow, see parryHit)
-    wxv -= KNOCK_G[k] * 0.3; shakeUntil = now + 80; shakeAmp = 1; buzz(8); say('BLOCKED', wx + 14, '#9fd8ff', 8, now); snd('block'); if (isD1(k)) { dummy.divOk = now; dummy.divK = k; }      // (the fist was blocked: the second impact still comes)
+    wxv -= KNOCK_G[k] * 0.3 * pScale(); shakeUntil = now + 80; shakeAmp = 1; buzz(8); say('BLOCKED', wx + 14, '#9fd8ff', 8, now); snd('block'); if (isD1(k)) { dummy.divOk = now; dummy.divK = k; }      // (the fist was blocked: the second impact still comes)
     nres('b'); return;
   }
   if (stance !== 'stand' && !(netK >= 0 && (k === 6 || k === 7)) && (!!vs && vs.me === 'cat' || (!isKick(foeWho, k) && k !== 46))) { nres('m'); return; }      // crouched (or going down / getting up): only a kick can hit him (punches pass over); the Cat smashed flat is two pixels thin, nothing hits him (already reeling, just recovered, or jumped / teleported out of the way: see above)
@@ -1557,7 +1557,7 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   if (isD1(k)) { dummy.divOk = now; dummy.divK = k; }      // (DIVERGENT FIST: the fist reached you, the second impact follows)
   if (!(airMe && k !== 47)) { hurtK = isD1(k) ? 0 : k === 29 || k === 33 || k === 35 || (k >= 40 && (k < 49 || CMOVE[k - 49].heavy)) ? 4 : (Math.random() * 10) | 0; hurtAt = now; if (k === 46) { hurtK = AIR_RX; gAir = airMake(now, 0, AIR_V, AIR_G, 'up'); } else if (k === 47) gAir = airMe ? airMake(now, gAirH, -80, 900, 'drop') : null; }      // (a hit on you while you are in the air keeps your flight and your pose; the UPPERCUT launches you, the FACE KICK knocks you out of the air)
   if ((k === 33 || k === 35) && vs) vs.catHold = 0;                                    // one of ten reactions, picked at random
-  atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; wxv -= KNOCK_G[k] * 0.9; shakeUntil = now + 120; shakeAmp = k === 35 || k === 42 ? 4 : k === 3 || k === 29 || k === 33 || k === 40 || k === 41 ? 3 : 2; if (k === 40 || k === 43 || k === 48 || (k >= 49 && CMOVE[k - 49].heavy)) gDownUntil = now + RX_DUR[4];
+  atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; wxv -= KNOCK_G[k] * 0.9 * pScale(); shakeUntil = now + 120; shakeAmp = k === 35 || k === 42 ? 4 : k === 3 || k === 29 || k === 33 || k === 40 || k === 41 ? 3 : 2; if (k === 40 || k === 43 || k === 48 || (k >= 49 && CMOVE[k - 49].heavy)) gDownUntil = now + RX_DUR[4];
   const dm = Math.round((DMG[k] + (k >= 27 ? 0 : (Math.random() * 5) | 0) + (netK >= 0 ? netBonus : 0)) * (vs ? (vs.net ? 1 : vs.cv ? (vs.dmgMul || 1) : GRADES[vs.gi].dmg) : 1) * (assistLvl() >= 2 ? 0.7 : 1)); say('' + dm, wx, '#ff9a5a', 8, now);
   if (vs && vs.ph === 'fight') vsHurt(dm, now);
   snd('hurt', hurtK); nres('h', dm, hurtK); onHurt(k, dm, now);
@@ -1596,7 +1596,7 @@ function drawDummy(now, dt) {
   airStepDummy(now);      // (an enemy in the air: his height and the frame of his reaction)
   if (dummy.mode === 'fighter' && !dom && !(dummy.vform && dummy.vform !== 'verity')) { if (vs) updateFighterVs(now, dt); else updateFighter(now, dt); }      // (as the smiley ball he does nothing)
   if (dummy.pull) { const k = Math.min(1, (now - dummy.pull.at) / dummy.pull.ms); dummy.x = dummy.pull.from + (dummy.pull.to - dummy.pull.from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) dummy.pull = null; }
-  dummy.x += dummy.vx * dt; dummy.vx *= Math.exp(-7 * dt);                              // knock-back slide with friction
+  foeSlide(dummy, dt);                              // knock-back slide with friction
   if (vs && vs.foe === 'yuji') { const on = !!dummy.ce && now >= (dummy.ceFlame || 0); dummy.ceA = (dummy.ceA || 0) + ((on ? 1 : 0) - (dummy.ceA || 0)) * Math.min(1, dt * (on ? 16 : 10)); if (!on && dummy.ceA < 0.03) dummy.ceA = 0; }      // (the enemy Yuji's flames swell in quickly and die away a little slower, as yours do)
   if (now - dummy.hitAt > 350) dummy.shown += (dummy.hp - dummy.shown) * Math.min(1, dt * 4);     // the pale "recent damage" part of the health bar catches up
   if (dummy.cap) capUpdate(now, dt);          // Max Blue has him: swung round the orb (or thrown off by the blast)
@@ -2149,7 +2149,7 @@ function beginRound(now) {                     // a fresh round: the scene is re
   spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); if (vs.net) { dummy.net = true; dummy.max = dummy.hp = dummy.shown = PHP; dummy.x = dummy.tx = wx + NET_G0; dummy.pose = null; vs.toSent = false; }      // (the Wi-Fi fight: the other player, drawn from his phone's pictures)
   vdg = cst = null; smear.length = drip.length = 0; cProj = []; if (vs.rush) rushSpawn(t); else if (vs.cv) initCurse(dummy, vs.cv, wx + Math.max(54, Math.min(90, (VW >> 1) - 70)), vs.hard ? 1.5 : 1);      // (a challenge: the curse steps in; a RUSH wave: one or two)
   $('vsres').classList.remove('on');      // (REMATCH and NEXT start a new fight: the result screen goes away. Since v7.12 this line had slipped into a comment, so the result screen stayed on top of the new fight)
-  vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; vh = null; ac = null; acWin = 0; acGo = false; acPend = -1; redAt = -1; redLast = -1e9; escQ = -1; flow = 0; flowOn = false; flowLast = -1; flowSw = -1; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
+  vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; wvx = 0; vh = null; ac = null; acWin = 0; acGo = false; acPend = -1; redAt = -1; redLast = -1e9; escQ = -1; flow = 0; flowOn = false; flowLast = -1; flowSw = -1; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
   if (vs.retry) { vs.round = 1 + vs.retry; vs.hp = vs.sh = PHP / 2; dummy.hp = dummy.shown = dummy.lock = 1; vs.morphed = true; blackUntil = t + 700; } else blackUntil = 0;      // after a failed red: Gojo at half health, Verity as he was (1 health left, so no smoke change); the picture comes up from black
 }
 // ---------------------------------------------------------------- v1.29 THE STATE TRACKER and the COMBO ESCAPE. A small box by your health bar says what state you are in: green FREE (you can move) or red (HIT: reeling from a blow, DOWN: on the floor, STUN: the JUMPSCARE, the Cat's glove or dizzy, HELD: the enemy Cat's ULTIMATE has you). While you are red, DASH gets you out of it: the stun is gone, you dash (with the dash's own invulnerable start), and when the dash ends you strike back with the LAST M1 of your combo; the dash is then on a cooldown of 4 seconds (the DASH button counts it down). Not possible when you are in the air from a launch, held by the ULTIMATE, in a cutscene or while the DOMAIN lasts.
@@ -2161,7 +2161,7 @@ const redWhy = now => {      // why you are red, or '' when you are free: hit (r
   if (now < pStun || (vs && (now < (vs.catHold || 0) || now < (vs.cStun || 0)))) return 'stun';
   return '';
 };
-const escBase = now => state === 'play' && !gAir && !js && !vf && !cf && !ke && !domLock() && !(ult && ult.who === 'enemy') && (hurtAt >= 0 || now < gDownUntil || now < pStun || (!!vs && now < (vs.catHold || 0)));      // (what a dash can get you out of)
+const escBase = now => state === 'play' && !(gAir && gAir.kind !== 'bounce') && !js && !vf && !cf && !ke && !domLock() && !(ult && ult.who === 'enemy') && (hurtAt >= 0 || now < gDownUntil || now < pStun || (!!vs && now < (vs.catHold || 0)));      // (what a dash can get you out of)
 const ESC_T = { g: 0.7, v: 0.9, k: 0.3, y: 0.5 };      // (v1.34: how long a combo has to run, in red, before DASH gets you out of it, in real seconds: Gojo 0.7, Verity 0.9, the Cat 0.3, Yuji 0.5)
 let redAt = -1, redLast = -1e9, escQ = -1;      // redAt: when the red state you are in began (a gap of under 0.4 s between two blows is still the same combo); redLast: the last moment you were red; escQ: a DASH pressed a little too early, remembered for 0.45 s
 const escWait = now => redAt < 0 ? 1e9 : Math.max(0, redAt + ESC_T[meK()] * 1000 * paceBase() - now);
@@ -3198,7 +3198,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   vpPhase(now); vpBleed(now);
   const hum = v.form === 'verity', stun = now < pStun; setDomUI(now);      // (stun: the enemy's JUMPSCARE has him; the DOMAIN button's fill counts the wait of his own)
   let jf = -1, hf = -1, df = -1, bf = -1, sf = -1, af = -1, tu = -1;      // jump 0-14 (15 FPS), hurt 0-9, teleport 0-14 (30 FPS: gone from frame 3 to 11), block, crouch 0-14, swing 0-14, teleport UP (the double jump) 0-14 (20 FPS: gone from frame 3 to 11)
-  if (jumpAt >= 0) { jf = Math.floor(Math.max(0, now - jumpAt) * JUMP_FPS / 1000); if (jf >= 15) { jumpAt = -1; jf = -1; } }
+  if (jumpAt >= 0) { jf = jumpFrame(Math.max(0, now - jumpAt)); if (jf >= 15) { jumpAt = -1; jf = -1; } }
   if (teleAt >= 0) { tu = Math.floor(Math.max(0, now - teleAt) * TELE_FPS / 1000); if (tu >= 15) { teleAt = -1; tu = -1; } }
   if (jf < 0 && tu < 0) v.tuUsed = false;      // (one double jump per jump)
   if (hurtAt >= 0) { hf = Math.floor(Math.max(0, now - hurtAt) * RX_FPS[hurtK] / 1000); if (hf >= 10) { hurtAt = -1; hf = -1; hurtEnd = now; } }
@@ -3252,9 +3252,9 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   if (nm !== mode) { mode = nm; modeAt = now; stepN = -1; }
   if (af >= 4 && af < 8 && atkK === 23 && dummy && dummy.ko < 0 && dummy.x - wx > 28) wx += 130 * dt;      // the JUMPSCARE lunges to arm's length
   if (af >= 5 && af < 9 && atkK === 22 && dummy && dummy.ko < 0 && dummy.x - wx > 14) wx += 80 * dt;      // the bite lunges at the enemy (but not through him)
-  wx += dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * (bf >= 0 ? 0.3 : 1) * dt;
+  wx += walkVel(dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * (bf >= 0 ? 0.3 : 1), dt, (jf >= 0 && jf <= 11) || tu >= 0) * dt;
   if (df >= 7 && !v.tpDone) { v.tpDone = true; wx = dgTo; snd('arrive'); }      // gone at frame 7: he is already standing where he arrives
-  wx += wxv * dt; wxv *= Math.exp(-7 * dt);      // knocked back by the enemy: the world slides past, then friction stops it
+  playerSlide(dt); physCollide(now, dt);      // knocked back by the enemy: the world slides past, then friction stops it
   const tuH = Math.min(40, gy - 61), lift = vh ? vhLift(now) : tu >= 0 ? (tu < 7 ? teleL0 : Math.max(0, Math.round(tuH * (1 - Math.pow((tu - 7) / 7, 1.7))))) : jf >= 0 ? D.jump.lift[jf] : 0; gojoLift = hum ? lift : 0; gojoGone = !hum || (df >= 3 && df <= 11) || (tu >= 3 && tu <= 11); v.tuNow = tu;      // (the double jump: he vanishes where he is, comes back at the fixed height of 40 px and falls to the ground)      // (the enemy's swings miss while he is in the air, gone, or a ball)
 
   ctx.save();
@@ -3367,7 +3367,7 @@ function ultHit(dm, now, big) {      // one knee (3) or the throw (5)
   } else {
     const m = Math.max(1, Math.round(dm * GRADES[vs.gi].dmg)); u.dmg += m;
     snd('hurt', big ? 4 : 1); shakeUntil = now + (big ? 200 : 70); shakeAmp = big ? 3 : 1;
-    if (big) { hurtK = 4; hurtAt = now; wxv -= 560; vs.catHold = 0; say('' + u.dmg, wx, '#ff9a5a', 8, now); snd('hit', 3); }
+    if (big) { hurtK = 4; hurtAt = now; wxv -= 560 * pScale(); vs.catHold = 0; say('' + u.dmg, wx, '#ff9a5a', 8, now); snd('hit', 3); }
     vsHurt(m, now); if (vs.ph !== 'fight') ultCancel(now);
   }
 }
@@ -3612,7 +3612,7 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   const c = cp || (cp = cpNew()), el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3), cx = Math.round(VW / 2), dizzy = now < (vs.cStun || 0), fear = now < pStun;      // (fear: the enemy's JUMPSCARE has him; dizzy: he got up after 5 s on the floor)
   let jf = -1, hf = -1, df = -1, sf = -1, af = -1, lf = -1;      // jump 0-14 (15 FPS), hurt 0-9, push dash 0-14 (30 FPS), smash flat / stand up 0-14 (25 FPS), swing 0-14, CARTOON ATTACK 0-14 (24 FPS)
   let ulting = !!(ult && ult.who === 'player'); setDomUI(now);      // (his ULTIMATE is going on; the DOMAIN button's fill counts the wait for the next one)
-  if (jumpAt >= 0) { jf = Math.floor(Math.max(0, now - jumpAt) * JUMP_FPS / 1000); if (jf >= 15) { jumpAt = -1; jf = -1; } }
+  if (jumpAt >= 0) { jf = jumpFrame(Math.max(0, now - jumpAt)); if (jf >= 15) { jumpAt = -1; jf = -1; } }
   if (hurtAt >= 0) { hf = Math.floor(Math.max(0, now - hurtAt) * RX_FPS[hurtK] / 1000); if (hf >= 10) { hurtAt = -1; hf = -1; hurtEnd = now; } }
   if (dgAt >= 0) { df = Math.floor(Math.max(0, now - dgAt) * DASH_FPS / 1000); if (df >= 15) { dgAt = -1; df = -1; dgReady = now + 150; } }
   let bf = -1;      // BLOCK 0-9: the glove swells up (0-4), then the held guard (5-9, loops); lowering it runs 4..0 again
@@ -3651,9 +3651,9 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   const dir = steer ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0;
   const nm = hf >= 0 ? 'hurt' : ulting ? 'ult' : (fear || dizzy) ? 'stun' : lf >= 0 ? 'toon' : df >= 0 ? 'dash' : bf >= 0 && sf < 0 ? 'block' : jf >= 0 ? 'jump' : af >= 0 ? 'atk' : sf >= 0 ? 'cdn' : flat ? (dir !== 0 ? 'cwalk' : 'cidle') : dir > 0 ? 'fwd' : dir < 0 ? 'back' : 'idle';
   if (nm !== mode) { mode = nm; modeAt = now; stepN = -1; }
-  wx += dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * (flat ? CT.flatMul : 1) * (bf >= 0 ? 0.3 : 1) * dt;      // (flat he is 3 times as fast, and with the shield up he shuffles at a third of the speed)
+  wx += walkVel(dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * (flat ? CT.flatMul : 1) * (bf >= 0 ? 0.3 : 1), dt, jf >= 0 && jf <= 11) * dt;      // (flat he is 3 times as fast, and with the shield up he shuffles at a third of the speed)
   if (df >= 0) { const k = Math.min(1, Math.max(0, (now - dgAt - 2000 / DASH_FPS) / DASH_MS)); wx = dgFrom + (dgTo - dgFrom) * (1 - Math.pow(1 - k, 3)); }      // the push itself: fast at first, over frames 3-12
-  wx += wxv * dt; wxv *= Math.exp(-7 * dt);      // knocked back by the enemy: the world slides past, then friction stops it
+  playerSlide(dt); physCollide(now, dt);      // knocked back by the enemy: the world slides past, then friction stops it
   const lift = jf >= 0 ? D.jump.lift[jf] : 0; gojoLift = lift; gojoGone = false;      // (the enemy's swings miss while he is in the air)
   const dm = dummy; if (dm && dm.cheld && (now >= dm.cheld.until || dm.ko >= 0 || hf >= 0 || jf >= 0 || df >= 0 || stance !== 'stand')) catRelease(now);      // (the glove lets go when its time is up or when he does something else)
 
@@ -3758,7 +3758,7 @@ function drawScene(now, dt) {
   if (cm === 1 && now >= ceNext) { snd('cecrackle'); ceNext = now + 260 + Math.random() * 700; }      // a quiet crackle at random moments while it is on
   let jf = -1, tf = -1;                       // jump frame 0-14 (0-2 crouch, 3 push-off, 4-11 airborne, 12-14 land) / teleport frame 0-14 (0-6 vanish + arrive, 7-11 fall, 12-14 land)
   if (jumpAt >= 0) {
-    jf = Math.floor(Math.max(0, now - jumpAt) * JUMP_FPS / 1000);                // clamp: rAF time can trail pnow() by a hair
+    jf = jumpFrame(Math.max(0, now - jumpAt));                // clamp: rAF time can trail pnow() by a hair
     if (jf >= jumpF.length) { jumpAt = -1; jf = -1; }                            // landed
   }
   if (teleAt >= 0) {
@@ -3889,10 +3889,10 @@ function drawScene(now, dt) {
   if (nm !== mode) { mode = nm; modeAt = now; stepN = -1; }
   if (af >= 0 && atkK >= 14 && af <= 9 && !(dummy && dummy.ko < 0 && dummy.x - wx < 14 && dummy.x - wx > -4)) wx += 24 * dt;
   if (af >= 0 && vs && vs.me === 'yuji' && atkK === 12 && af <= 8 && !(dummy && dummy.ko < 0 && dummy.x - wx < 14 && dummy.x - wx > -4)) wx += 140 * dt;      // (the RUSH FIST slides him about 24 px forward while he sprints, but not through the enemy)          // the walking combo lunges forward a little with each strike (but not through the enemy)
-  wx += dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * (crch ? 0.6 : 1) * (bf >= 0 ? 0.3 : 1) * dt;      // crouch-walking is slower, and walking while blocking is much slower still
+  wx += walkVel(dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * (crch ? 0.6 : 1) * (bf >= 0 ? 0.3 : 1), dt, (jf >= 0 && jf <= 11) || tf >= 0) * dt;      // crouch-walking is slower, and walking while blocking is much slower still
   if (dash) { const k = Math.min(1, (now - dash.at) / dash.ms); wx = dash.from + (dash.to - dash.from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) dash = null; }   // Lapse Blue blink: a very fast dash
   if (df >= 0) { const k = Math.min(1, Math.max(0, (now - dgAt - 2000 / DASH_FPS) / DASH_MS)); wx = dgFrom + (dgTo - dgFrom) * (1 - Math.pow(1 - k, 3)); }      // the dash itself: fast at first, over frames 3-12
-  wx += wxv * dt; wxv *= Math.exp(-7 * dt); if (ride) updateRide(now); if (vs && vs.net && dummy) wx = Math.max(dummy.x - NET_LEASH, Math.min(dummy.x - 14, wx)); else if (vs && vs.cv) { const lf = leadFoe(); if (lf) wx = Math.min(wx, lf.x - Math.max(12, lf.curse.hw)); }                    // knocked back by the attacking dummy: the world slides past, then friction stops it
+  playerSlide(dt); if (ride) updateRide(now); physCollide(now, dt); if (vs && vs.net && dummy) wx = Math.max(dummy.x - NET_LEASH, Math.min(dummy.x - 14, wx)); else if (vs && vs.cv) { const lf = leadFoe(); if (lf) wx = Math.min(wx, lf.x - Math.max(12, lf.curse.hw)); }                    // knocked back by the attacking dummy: the world slides past, then friction stops it
 
   ctx.save();
   shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }   // tiny shake on impact (the bars, names and timer are drawn back where they belong, so they stay still)
@@ -4903,7 +4903,8 @@ function huntFoeKO(now) {      // one of the curses is down: the hidden one (the
 }
 function huntTick(now, dt) {      // every frame of a hunt, from vsTick
   const H = vs.hunt, h = H.h; if (H.over) return;
-  if (wx < 0) { wx = 0; if (wxv < 0) wxv = 0; } else if (wx > h.len) { wx = h.len; if (wxv > 0) wxv = 0; }
+  if (wx < 0) { wx = 0; wallMe(-1, now); wvx = Math.max(0, wvx); } else if (wx > h.len) { wx = h.len; wallMe(1, now); wvx = Math.min(0, wvx); }
+  for (const f of vs.foes) { if (f.ko >= 0) continue; if (f.x < -30) { f.x = -30; wallFoe(f, now); } else if (f.x > h.len + 90) { f.x = h.len + 90; wallFoe(f, now); } }
   H.vis[Math.max(0, Math.min(H.vis.length - 1, Math.floor(wx / 20)))] = 1;
   if (senseReq) { senseReq = false; if (!lacks('sn') && now >= H.sCd && !redWhy(now)) { H.sOn = now + 3000 * paceBase(); H.sCd = now + 8000 * paceBase(); say('SENSE!', wx, '#7af0ff', 8, now); snd('slowin'); flash(now, 140, 0.12); } }
   for (const o of H.objs) { if (o.found || (o.w !== 'b' && o.w !== 't')) continue; if (Math.abs(o.x - wx) < 20) { o.near += dt; if (o.near > 1.4) huntFound(o, now); } else o.near = 0; }      // (a hidden curse or a trap that you stand next to for a while comes out by itself)
@@ -4969,6 +4970,75 @@ function buildHunts() {      // CHALLENGES > HUNTS: the fighter and the ten hunt
     if (open) card.insertAdjacentHTML('beforeend', '<small class="rb">' + (best ? 'BEST RANK ' + best : 'NOT CLEARED') + '</small>');
     box.appendChild(card);
   });
+}
+// ---------------------------------------------------------------- v1.36 PHYSICS I: weight, momentum, falling and bodies. Everyone has a MASS (the fighters 48 to 75 kg, the curses 8 kg for the wisp up to 260 for the ogre). KNOCK-BACK is a push that gives a velocity of (the table's value x 70 / the mass): the light fly, the heavy barely move; then the body slides with real friction (a constant braking, 260 px/s^2, plus a little drag) so a fast slide goes quadratically further. WALKING has inertia (the legs need 0.1 s to get up to speed and 0.07 s to stop; in the air there is hardly any steering: what you had at take-off you keep). The JUMP follows gravity (9.8 m/s^2 at 35 px per metre: 0.71 s in the air for the 22 px jump, it was 0.42 s). BODIES are solid: nobody walks through anybody, a walker pushes the lighter one along and is slowed by the heavier one, a body that slides into another gives it momentum, you can jump over them. A slammed enemy BOUNCES (and a hard fall hurts); the street's ends in a hunt are walls (a hard hit against one hurts). Not in the Wi-Fi fight (both phones must agree) and not in the story (it is scripted).
+const PH_REF = 70, SLIDE_C = 260, SLIDE_K = 5, MASS = { gojo: 75, yuji: 72, verity: 58, cat: 48, grub: 14, hound: 45, stalker: 62, wisp: 8, wraith: 34, doll: 20, mantis: 55, ogre: 260, crab: 150, imp: 26 };
+let wvx = 0;      // your walking velocity (px/s)
+const physOn = () => !window.__noPhys && !(vs && (vs.net || vs.story));
+const mScale = m => Math.max(0.3, Math.min(2.5, PH_REF / m));      // how much faster than the table says a body of mass m is pushed
+const massOf = d => d ? (d.curse ? MASS[d.curse.id] || 60 : MASS[vs ? vs.foe : 'gojo'] || 70) : MASS[vs ? vs.me : 'gojo'] || 70;
+const pScale = () => physOn() ? mScale(massOf(null)) : 1;      // the same for a blow that lands on you
+const slideV = (v, dt) => { v *= Math.exp(-SLIDE_K * dt); const a = SLIDE_C * dt; return Math.abs(v) <= a ? 0 : v - Math.sign(v) * a; };
+function foeSlide(d, dt) {      // the enemy's slide after a blow: x moves by the real velocity (his stored one times 70 / mass), the friction acts on the real one
+  if (!physOn()) { d.x += d.vx * dt; d.vx *= Math.exp(-7 * dt); return; }
+  const s = mScale(massOf(d)), v0 = d.vx * s, v1 = slideV(v0, dt); d.x += 0.5 * (v0 + v1) * dt; d.vx = v1 / s;
+}
+function playerSlide(dt) {      // yours
+  if (!physOn()) { wx += wxv * dt; wxv *= Math.exp(-7 * dt); return; }
+  const v1 = slideV(wxv, dt); wx += 0.5 * (wxv + v1) * dt; wxv = v1;
+}
+function walkVel(target, dt, air) {      // the legs: a limited push towards the speed you want (the old game: straight to it)
+  if (!physOn()) return wvx = target;
+  const a = (air ? 140 : target === 0 ? 800 : (wvx * target < 0 ? 900 : 520)) * Math.max(1, Math.max(Math.abs(target), Math.abs(wvx)) / FWD_SPEED), d = target - wvx;
+  wvx += Math.max(-a * dt, Math.min(a * dt, d)); return wvx;
+}
+const JF_MAP = (() => {      // the jump's picture (0-14) for every 1/64 of the time in the air: the pictures follow the real arc of a body in gravity (they hang at the top), not the clock
+  const L = [10, 16, 20, 22, 22, 20, 16, 10], m = [];
+  for (let i = 0; i < 64; i++) { const p = (i + 0.5) / 64, h = 22 * 4 * p * (1 - p); let j; if (h >= 21.4) j = 4; else { const from = p < 0.5 ? 0 : 5, to = p < 0.5 ? 3 : 7; j = from; for (let q = from; q <= to; q++) if (Math.abs(L[q] - h) < Math.abs(L[j] - h)) j = q; } m.push(4 + j); }
+  return m;
+})();
+const JUMP_T = { crouch: 160, air: 713, land: 160 };      // ms: the push-off, the flight (2 x 124 px/s / 348 px/s^2) and the landing
+function jumpFrame(e) {      // the frame of a jump that began e ms ago
+  if (!physOn()) return Math.floor(e * JUMP_FPS / 1000);
+  if (e < JUMP_T.crouch) return Math.floor(e / JUMP_T.crouch * 4);
+  const t = e - JUMP_T.crouch; if (t < JUMP_T.air) return JF_MAP[Math.min(63, Math.floor(t / JUMP_T.air * 64))];
+  const l = t - JUMP_T.air; return l < JUMP_T.land ? 12 + Math.floor(l / JUMP_T.land * 3) : 15;
+}
+function physCollide(now, dt) {      // every frame, after the movements: the bodies are solid
+  if (!physOn() || state !== 'play' || (vs && vs.ph !== 'fight') || dom || ult || tz || vdg || cst || ride || dash || dgAt >= 0 || teleAt >= 0 || gojoGone || gojoLift > 9 || (meK() === 'v' && !(vp && vp.form === 'verity')) || (typeof tqGrab !== 'undefined' && tqGrab)) return;      // (in the air, from the first rise on, you pass over a body)
+  const mP = massOf(null);
+  for (const f of foesOf()) {
+    if (f.ko >= 0 || f.cap || f.pull || f.cheld || f.held || (f.airH || 0) > 18) continue;
+    const hwE = f.curse ? Math.max(5, Math.min(14, f.curse.hw * 0.45)) : 6, mE = massOf(f), gap = f.x - wx, sgn = gap >= 0 ? 1 : -1, pen = 5 + hwE - Math.abs(gap);
+    if (pen <= 0) continue;
+    const sh = pen * Math.min(1, dt * 18), fp = mE / (mP + mE), fe = mP / (mP + mE); wx -= sgn * sh * fp; f.x += sgn * sh * fe;      // (they slide apart: the lighter one gives way more)
+    const sE = mScale(mE), vP = wvx + wxv, vE = f.vx * sE, rel = (vP - vE) * sgn;
+    if (rel > 0) {      // they were closing in: a push (a little bounce, 12%)
+      const j = 1.12 * rel * mP * mE / (mP + mE), dvP = -sgn * j / mP, dvE = sgn * j / mE;
+      if (wvx * sgn > 0) wvx = Math.max(0, wvx * sgn + dvP * sgn) * sgn; else wxv += dvP;
+      f.vx += dvE / sE;
+    }
+  }
+}
+function wallFoe(f, now) {      // an enemy slides against the end of the street
+  const v = Math.abs(f.vx * mScale(massOf(f)));
+  if (physOn() && v > 160) { const dm = Math.round((v - 160) * 0.12); if (dm > 0) { f.hp = Math.max(0, f.hp - dm); f.hitAt = now; say('WALL! ' + dm, f.x, '#ffd34d', 8, now); shakeUntil = now + 120; shakeAmp = 2; snd('smack', 1); if (f.hp <= 0) foeSwap(f, () => koDummy(now)); } }
+  f.vx = physOn() ? -f.vx * 0.3 : 0;
+}
+function wallMe(side, now) {      // you slide against the end of the street
+  const v = Math.abs(wxv);
+  if (physOn() && v > 150) { const dm = Math.round((v - 150) * 0.1); if (dm > 0) { vsHurt(dm, now); say('WALL! -' + dm, wx, '#ff9a5a', 8, now); shakeUntil = now + 120; shakeAmp = 2; snd('hit', 1); } wxv = -wxv * 0.3; }
+  else if (wxv * side > 0) wxv = 0;
+}
+function fallHit(d, vi, now) {      // an enemy comes down hard: a fall of more than 230 px/s hurts, one of more than 200 bounces
+  if (!physOn() || vi < 200) return false;
+  if (vi > 230 && d.hp > 0) { const dm = Math.round((vi - 230) * 0.25); if (dm > 0) { d.hp = Math.max(0, d.hp - dm); d.hitAt = now; say('FALL ' + dm, d.x, '#ffd34d', 8, now + 60); if (d.hp <= 0) foeSwap(d, () => koDummy(now)); } }
+  d.air = airMake(now, 0, vi * 0.32, 650, 'bounce'); return true;
+}
+function fallMe(vi, now) {      // you come down hard (the enemy's FACE KICK): the same as for him
+  if (!physOn() || !vs || vi < 200) return false;
+  if (vi > 230) { const dm = Math.round((vi - 230) * 0.25); if (dm > 0) { vsHurt(dm, now); say('FALL -' + dm, wx, '#ff9a5a', 8, now + 60); } }
+  gAir = airMake(now, 0, vi * 0.32, 650, 'bounce'); return true;
 }
 function tick(t) {
   requestAnimationFrame(tick);                // schedule first so one bad frame can't stop the loop
