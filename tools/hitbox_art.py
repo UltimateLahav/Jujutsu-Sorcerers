@@ -57,6 +57,7 @@ MOVES = {'gojo': {k: (lambda f, S=GOJO['atk%d' % k]: grid_rows(S, f, FX), IMPACT
          'verity': {k: (lambda f, im=strip(n): img_rows(im, f), IMPACT[k], 15) for k, n in ((0, 'm0'), (1, 'm1'), (2, 'm2'), (3, 'm3'), (6, 'c0'), (7, 'c1'), (22, 'bite'))},
          'cat': {k: (lambda f, im=cat_strip(n), W=W, a=a: cat_rows(im, f, W, a), imp, 15) for k, n, W, a, imp in ((30, 'm0', 128, 36, 6), (31, 'm1', 128, 36, 7), (32, 'm0', 128, 36, 6), (33, 'm3', 128, 36, 8), (34, 'flatpunch', 64, 32, 6))}}      # (hits 30-34: the stretching grab, the punch, the grab again, the kick, the punch up from the floor)
 MOVES['freddy'] = {k: (lambda f, r=8 + k: fred_rows(r, f), IMPACT[k], 15) for k in (0, 1)}
+MOVES['yuji'][6] = (lambda f, S=YUJI['atk30']: grid_rows(S, f), 6, 15); MOVES['yuji'][7] = (lambda f, S=YUJI['atk31']: grid_rows(S, f), 7, 15)      # (v1.48 his crouch punches: the R.JAB, impact on picture 6, and the L.UPPR, picture 7)
 out = {}
 for att, moves in MOVES.items():
     out[att] = {}

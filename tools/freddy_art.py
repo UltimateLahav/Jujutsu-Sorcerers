@@ -213,6 +213,18 @@ def walk_frames():
         Pz = dict(REST); Pz['hipY'] = GROUND - h; Pz['legs'] = ((xn, GROUND - ln, 0), (xf, GROUND - lf, 0)); Pz['torso'] = (3.0 + 1.6 * np.sin(2 * np.pi * ph), 1.0); Pz['head'] = (-2.0, 0.0, 0.0)      # he leans into the stride and sways, his head level
         Pz['gf'] = (4.0, -2.0 + 0.8 * np.sin(4 * np.pi * ph)); Pz['sway'] = 0.8 * np.sin(4 * np.pi * ph + 1.0); FR.append(render(Pz))
     return FR
+# ---------------------------------------------------------------- THE RUN (v1.46, his DASH): 15 pictures, one cycle of two strides: long strides (a stride is 17 px), a foot is on the ground for 36% of the cycle so there is a moment in the air between the steps (the hips rise), high knees (the swinging foot rises 8.5 px), the body leans 14 degrees into it, the head looks ahead and the arms pump against the legs (the claw arm swings forward and up when the near leg is back)
+RSTRIDE = 17.0; RDUTY = 0.36; RLIFT = 8.5
+def run_foot(u):
+    if u < RDUTY: return RSTRIDE / 2 - RSTRIDE * (u / RDUTY), 0.0
+    s = (u - RDUTY) / (1 - RDUTY); e = s - np.sin(2 * np.pi * s) / (2 * np.pi); return -RSTRIDE / 2 + RSTRIDE * e, RLIFT * np.sin(np.pi * s)
+def run_frames():
+    FR = []
+    for k in range(15):
+        ph = k / 15.0; xf, lf = run_foot((ph + 0.5) % 1.0); xn, ln = run_foot(ph % 1.0); c = np.cos(2 * np.pi * ph); bounce = 0.5 + 0.5 * np.cos(4 * np.pi * (ph - 0.43))
+        Pz = dict(REST); Pz['hipY'] = GROUND - (19.0 + 2.4 * bounce); Pz['legs'] = ((xn, GROUND - ln, 0), (xf, GROUND - lf, 0)); Pz['torso'] = (14.0 + 2.0 * np.sin(4 * np.pi * ph), 1.0); Pz['head'] = (-9.0, 0.0, 0.0)
+        Pz['gf'] = (4.0 - 4.5 * c, -1.0 - 3.0 * (0.5 - 0.5 * c)); Pz['hb'] = (6.5 * c, 10.5 - 3.0 * c); Pz['wr'] = 18.0 - 6.0 * c; Pz['sway'] = 0.8 * np.sin(4 * np.pi * ph + 1.0); FR.append(render(Pz))
+    return FR
 # THE JUMP: key poses (frame, hip row, row of the lowest point of the feet, near foot, far foot (forward of the hips), toe angle, torso turn (deg), torso stretch, head turn (deg), back hand (x, y from the shoulder), glove (x, y from the shoulder), wrist (deg)), blended smoothly: 20 pictures jump, 20 land
 KEYS = [(0, 36.0, 59.0, -1.5, 3.0, 0, 1.0, 1.0, 0.0, 0.0, 13.0, 4.0, -2.0, 14), (3, 43.5, 59.0, -1.0, 4.0, 0, 30.0, 0.97, -14.0, -8.0, 10.0, 8.0, 6.0, 14), (5, 38.5, 59.0, -0.5, 3.0, 20, 9.0, 1.0, -8.0, 3.0, 0.0, 10.5, -4.5, 14), (6, 36.5, 59.0, -0.5, 2.5, 45, -3.0, 1.03, -2.0, 6.0, -6.0, 11.0, -8.0, 22),
         (12, 37.5, 57.0, 1.0, 3.5, 55, 2.0, 1.02, -2.0, 2.0, -13.0, 12.0, -9.0, 30), (19, 39.0, 51.0, 4.5, 7.5, 70, 5.0, 1.0, -4.0, -8.0, -14.0, 11.0, -10.0, 30), (26, 38.0, 54.0, 2.5, 5.0, 60, 6.0, 1.0, 1.0, -9.0, -4.0, 11.0, -5.0, 22), (33, 36.5, 59.5, 0.5, 3.0, 45, 3.0, 1.02, -2.0, -6.0, 6.0, 9.0, 2.0, 14),
@@ -273,7 +285,7 @@ def slash_frames(keys, claw):
         Pz['trail'] = trail; out.append(render(Pz))
     return out
 def sheet(FR, FW, FJ, FC):
-    A = np.zeros((640, 64 * 15, 4), np.uint8)      # row 0: the idle, row 1: the walk, rows 2-4: the jump (frames 0-14, 15-29, 30-39), row 5: going down into the crouch, row 6: from the crouch into the jump, row 7: from the jump into the crouch, row 8: the claw slash, row 9: the slash with the bare hand
+    A = np.zeros((704, 64 * 15, 4), np.uint8)      # row 10: the run (the dash), row 0: the idle, row 1: the walk, rows 2-4: the jump (frames 0-14, 15-29, 30-39), row 5: going down into the crouch, row 6: from the crouch into the jump, row 7: from the jump into the crouch, row 8: the claw slash, row 9: the slash with the bare hand
     def put(f, r, c):
         for v in range(16): A[r * 64:(r + 1) * 64, c * 64:(c + 1) * 64][f == v] = list(P[v].astype(int)) + [255]
     for i, f in enumerate(FR): put(f, 0, i)
@@ -283,7 +295,7 @@ def sheet(FR, FW, FJ, FC):
         for i, f in enumerate(fs): put(f, 5 + r, i)
     Image.fromarray(A).save('freddy_sheet.png'); return A
 if __name__ == '__main__':
-    U, RH, hx, gx, gy = upper(); print('hem', RH, 'hips', round(hx, 1)); FR = idle_frames(); FW = walk_frames(); FJ = jump_frames(); FC = [crouch_frames(CD_KEYS), crouch_frames(CJ_KEYS, 0.0, jump_sway(6)), crouch_frames(JC_KEYS, jump_sway(34), 0.0), slash_frames(SL1_KEYS, True), slash_frames(SL2_KEYS, False)]; A = sheet(FR, FW, FJ, FC)
+    U, RH, hx, gx, gy = upper(); print('hem', RH, 'hips', round(hx, 1)); FR = idle_frames(); FW = walk_frames(); FJ = jump_frames(); FC = [crouch_frames(CD_KEYS), crouch_frames(CJ_KEYS, 0.0, jump_sway(6)), crouch_frames(JC_KEYS, jump_sway(34), 0.0), slash_frames(SL1_KEYS, True), slash_frames(SL2_KEYS, False), run_frames()]; A = sheet(FR, FW, FJ, FC)
     # contact sheets to look at, x2: the jump (8 x 5) and the three crouch animations (15 x 3)
     def contact(cells, cols, name):
         rows = (len(cells) + cols - 1) // cols; cs = np.zeros((64 * rows, 64 * cols, 4), np.uint8); cs[:] = [120, 116, 132, 255]
@@ -291,5 +303,5 @@ if __name__ == '__main__':
             r, c = divmod(i, cols); m = blk[:, :, 3] > 0; cs[r * 64:(r + 1) * 64, c * 64:(c + 1) * 64][m] = blk[m]
         Image.fromarray(cs).resize((cs.shape[1] * 2, cs.shape[0] * 2), Image.NEAREST).save(name)
     contact([A[(2 + i // 15) * 64:(3 + i // 15) * 64, (i % 15) * 64:(i % 15 + 1) * 64] for i in range(40)], 8, 'freddy_contact.png')
-    contact([A[(5 + r) * 64:(6 + r) * 64, i * 64:(i + 1) * 64] for r in range(3) for i in range(15)], 15, 'freddy_contact2.png'); contact([A[(8 + r) * 64:(9 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact3.png')
+    contact([A[(5 + r) * 64:(6 + r) * 64, i * 64:(i + 1) * 64] for r in range(3) for i in range(15)], 15, 'freddy_contact2.png'); contact([A[(8 + r) * 64:(9 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact3.png'); contact([A[10 * 64:11 * 64, i * 64:(i + 1) * 64] for i in range(15)], 15, 'freddy_contact4.png')
     print('sheet', A.shape, 'blade pixels cut off:', CLIP[0], 'farthest ankle', round(REACH[0], 2), 'of', L1 + L2); assert CLIP[0] == 0 and REACH[0] <= L1 + L2 - 0.05
