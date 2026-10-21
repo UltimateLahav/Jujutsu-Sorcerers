@@ -136,7 +136,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.31</small>
+    <small id="ver">V1.32</small>
   </div>
 </section>
 
@@ -258,8 +258,8 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
   <div id="setG" class="setp">
     <small>FPS = FRAMES PER SECOND: HOW MANY PICTURES THE GAME DRAWS EVERY SECOND (30 SAVES BATTERY). BATTERY SAVER: 30 FPS, NO SCREEN SHAKE, FEWER SPARKS. AUTO-PAUSE: A CALL OR LEAVING THE APP PAUSES THE FIGHT.</small>
     <small>ASSIST (NOT IN WI-FI FIGHTS): PARRY+ = A WIDER PARRY WINDOW. EASY = ALSO 30% LESS DAMAGE TO YOU. AUTO-GUARD = ALSO BLOCKS FOR YOU WHILE YOU STAND STILL (NEEDS THE BLOCK SKILL).</small>
-    <small>GAME PACE: HOW FAST A FIGHT RUNS. FAST = 1.25 TIMES, TURBO = 1.5 TIMES (NOT IN WI-FI FIGHTS AND THE STORY). THE ROUND TIMER, THE 10 SECONDS OF THE INHERITENCE AND THE 4 SECONDS OF THE DASH LOCK STILL COUNT REAL SECONDS.</small>
-    <small>COMBAT (GOJO AND YUJI): TAP ATTACK = LIGHT. KEEP IT HELD AFTER A HIT = HEAVY (1.6 TIMES THE DAMAGE, BREAKS A GUARD). DASH DURING A SWING THAT HIT = CANCEL (+4% ENERGY). THE SAME SWING AGAIN IN ONE COMBO HITS 20% WEAKER, AND A SWING THAT MISSES LEAVES YOU OPEN FOR A MOMENT.</small>
+    <small>GAME PACE: FAST = 1.25 TIMES, TURBO = 1.5 TIMES (NOT IN WI-FI FIGHTS OR THE STORY). THE TIMERS STILL COUNT REAL SECONDS.</small>
+    <small>COMBAT (GOJO, YUJI): TAP = LIGHT, HOLD AFTER A HIT = HEAVY, DASH DURING A HIT = CANCEL. THE SAME SWING AGAIN HITS WEAKER, A MISS LEAVES YOU OPEN. PURPLE BAR = FLOW (MIX MOVES, PARRY, DODGE; FULL = 1.25 TIMES THE DAMAGE). ORANGE BAR = THE ENEMY'S STAGGER (HEAVIES AND PARRIES FILL IT; FULL = BREAK: STUNNED, 1.4 TIMES THE DAMAGE).</small>
     <div class="opt" id="optG"></div>
     <div class="row"><button id="dummyBtn">SPAWN DUMMY</button><button id="fighterBtn">SPAWN ATTACKER</button><button id="blockerBtn">SPAWN BLOCKER</button></div>
   </div>
@@ -2073,12 +2073,13 @@ function onHurt(k, dm, now) {      // a blow landed on you: sparks, a longer hit
   const heavy = dm >= 20 || k === 3 || k >= 40;
   hitStop(heavy ? 80 : 48); buzz(heavy ? 55 : 28); spark(wx + 7, gy - 24 - ((Math.random() * 16) | 0), heavy ? 12 : 7, ['#ffffff', '#ffb09a', '#ff6a5a'], heavy, -1);
   if (heavy) flash(now, 80, 0.16);
-  ceGain(E_HURT); hits.until = 0;
+  ceGain(E_HURT); hits.until = 0; flowHurt(now);
 }
 function parryHit(now) {      // PARRY: the blow is turned aside (no damage, no push), whoever struck is stunned and open for a counter, and the energy bar fills
   const d = dummy; say('PARRY!', wx + 16, '#ffd34d', 8, now); snd('stun'); snd('block'); flash(now, 90, 0.22); hitStop(80); buzz(35); if (vs) vs.par = (vs.par | 0) + 1; shakeUntil = now + 90; shakeAmp = 2;
   spark(wx + 14, gy - 34, 14, ['#ffffff', '#ffd34d', '#fff2a0'], true, 1); divFx.push({ wx: wx + 14, y: gy - 34, born: now }); if (divFx.length > 8) divFx.shift(); ceGain(E_PARRY);
   if (!(vs && vs.net) && (!vs || vs.ph === 'fight')) { slowMo(520, 0.3); ctr = { at: now, until: now + 70 }; }      // (v1.30: a short slow motion, then the free counter)
+  flowAdd(15, now); if (d) stgAdd(d, 45, now);      // (v1.32: Flow for you, stagger for him)
   if (!d || d.ko >= 0 || d.cap) return;
   if (d.curse) { d.stunUntil = Math.max(d.stunUntil, now + (d.curse.armor ? 700 : 950)); d.cs = 'hurt'; d.ct0 = now; d.cm = null; d.cnext = Math.max(d.cnext, d.stunUntil + 200); say('STUN', d.x, '#59b8ff', 8, now + 60); }
   else if (d.mode === 'fighter' && !d.cact && !d.vact && !d.net) { d.stunUntil = Math.max(d.stunUntil, now + 800); d.ai = 'rest'; d.aiAt = now; d.restFor = 800; d.chain = 0; d.hitDone = true; say('STUN', d.x, '#59b8ff', 8, now + 60); }
@@ -2112,8 +2113,9 @@ function hitFoe(k, now) {                     // called on the impact frame: a h
   if (hits.seq === 4) { if (k !== 29) dmg += 25; hits.perfect = now; snd('finisher'); say('COMBO!', dummy.x, '#ffd34d', 8, now + 90); }
   dmg = ceDmg(dmg); if (ctrBoost && atkAt === ctrBoost) dmg = Math.round(dmg * 1.5);      // (every hit of the free counter's swing, after a parry, does 1.5 times the damage)
   if (hv) dmg = Math.round(dmg * HEAVY_X);      // (v1.31: the HEAVY swing)
-  { if (repSw[atkK] !== atkAt) { repSw[atkK] = atkAt; repN[atkK] = (repN[atkK] | 0) + 1; } const rp = repN[atkK] - 1; if (rp > 0 && !(vs && vs.net)) { dmg = Math.max(1, Math.round(dmg * Math.max(0.4, 1 - 0.2 * rp))); if (repSay !== atkAt) { repSay = atkAt; say('REPEAT', dummy.x, '#9a9aa8', 8, now + 60); } } }      // (v1.31: the same swing again in one combo hits 20% weaker each time, down to 40%)
-  const cb = comboBonus(k, now); dmg += cb; hits.n++; hits.dmg += dmg; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = cb; cancelFor = atkAt; cancelUntil = now + CANCEL_MS; if (vs) vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n);
+  let rp = 0; { if (repSw[atkK] !== atkAt) { repSw[atkK] = atkAt; repN[atkK] = (repN[atkK] | 0) + 1; } rp = repN[atkK] - 1; if (rp > 0 && !(vs && vs.net)) { dmg = Math.max(1, Math.round(dmg * Math.max(0.4, 1 - 0.2 * rp))); if (repSay !== atkAt) { repSay = atkAt; say('REPEAT', dummy.x, '#9a9aa8', 8, now + 60); } } }      // (v1.31: the same swing again in one combo hits 20% weaker each time, down to 40%)
+  if (!(vs && vs.net)) { if (now < (dummy.openUntil || 0)) dmg = Math.round(dmg * OPEN_X); if (flowOn) dmg = Math.round(dmg * FLOW_X); }      // (v1.32: an enemy who is OPEN takes 1.4 times, you in FLOW deal 1.25 times)
+  const cb = comboBonus(k, now); dmg += cb; hits.n++; hits.dmg += dmg; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = cb; cancelFor = atkAt; cancelUntil = now + CANCEL_MS * (flowOn ? 2 : 1); if (vs) vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n);
   const grab = !!vs && vs.me === 'cat' && (k === 30 || k === 32), held = !!vs && vs.me === 'cat' && k >= 31 && k <= 33 && !!dummy.cheld;      // (the playable Cat's glove: a grab holds the enemy and pulls him in, the punch lands on the held enemy where he stands, the kick sends him away)
   dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += held && k !== 33 ? 0 : KNOCK[k]; if (k === 3 || k === 17 || k === 21 || k === 29 || k === 33 || k === 35 || k === 41 || k === 42) { dummy.smokeUntil = now + 520; puff(dummy.x, 8); } shakeUntil = now + 110; shakeAmp = k === 21 || k === 35 || k === 42 ? 4 : [3, 15, 17, 18, 19, 29, 33, 40, 41].includes(k) ? 3 : 2;
   if (k === 40 || k === 43 || k === 48) dummy.down = now + RX_DUR[4];      // (a DOWNSLAM or a SWEEP puts him on the floor for as long as the fall lasts)
@@ -2128,7 +2130,7 @@ function hitFoe(k, now) {                     // called on the impact frame: a h
     else if (!juggle) { dummy.rx = isD1(k) ? 0 : k === 29 || k >= 40 || (k === 21 && !!vs && vs.me === 'yuji') || (!!vs && vs.me === 'cat' && (k === 33 || k === 35)) || (!!vs && vs.foe === 'cat' && (k === 3 || k === 17 || k === 21)) ? 4 : (Math.random() * 10) | 0; dummy.rxAt = now; if (k === 47) dummy.air = airUp(dummy) ? airMake(now, dummy.airH, -80, 900, 'drop') : null; }      // (the FACE KICK knocks him out of the air: he drops fast, far away)
     if (held && k !== 33) { dummy.cheld.until = now + CT.hold; dummy.stunUntil = Math.max(dummy.stunUntil, dummy.cheld.until); } else catRelease(now); }      // (the big fall: Yuji's last kick, the Cat's kick and the giant's kick, and the big kicks on the Cat; otherwise one of ten reactions, picked at random)
   if (window.__sfxlog) window.__sfxlog.push(['rx', Math.round(now), dummy.rx]);
-  say('' + dmg, dummy.x, popCol(), 8, now); if (broke) say('GUARD BREAK', dummy.x, '#ffd34d', 8, now + 90); onLand(k, dmg, now); if (hv) { dummy.vx += (dummy.x >= wx ? 1 : -1) * 150; shakeUntil = now + 170; shakeAmp = 4; }
+  say('' + dmg, dummy.x, popCol(), 8, now); if (broke) say('GUARD BREAK', dummy.x, '#ffd34d', 8, now + 90); onLand(k, dmg, now); foeGain(k, hv, rp, now); if (hv) { dummy.vx += (dummy.x >= wx ? 1 : -1) * 150; shakeUntil = now + 170; shakeAmp = 4; }
   snd('smack', k >= 36 ? YU_ATK.snd[k - 24] : k >= 30 ? (k === 33 || k === 35 ? 3 : 0) : k >= 24 ? YU_ATK.snd[k - 24] : k === 22 ? 3 : k);      // (the Cat's kick and the giant's kick are the heavy blows)
   if (k === 22) dummy.bleed = { until: now + 4000, next: now + 100 };      // the bite: he bleeds 1 damage every 0.1 s for 4 s (a second bite starts the four seconds again)
   if (dummy.hp <= 0) koDummy(now);            // (a normal punch or kick that finishes him ends the round in a match too)
@@ -2137,7 +2139,7 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   if (tz && lpAt >= 0 && now - lpAt > 250 && now - lpAt < 720) { nres('m'); return; }      // (the Cat in the giant's glove, or flying: nothing touches him)
   if (dom) { nres('m'); return; }      // (the DOMAIN freezes everyone, whatever they were doing: nothing of the enemy's touches you until it is over)
   if (isD2(k)) { gojoDiv2(now); return; }      // (DIVERGENT FIST's second impact, normal or RUSH: see gojoDiv2)
-  if (dgAt >= 0 && now - dgAt < 11 * 1000 / DASH_FPS) { if (now - dgAt < 7 * 1000 / DASH_FPS && now - dodgeAt > 400 && (!vs || vs.ph === 'fight')) { dodgeAt = now; ceGain(E_DODGE); say('DODGE!', wx, '#9fd8ff', 8, now); } nres('m'); return; }       // he is dashing: the swing misses (v1.30: a dash started just before the blow gives energy)
+  if (dgAt >= 0 && now - dgAt < 11 * 1000 / DASH_FPS) { if (now - dgAt < 7 * 1000 / DASH_FPS && now - dodgeAt > 400 && (!vs || vs.ph === 'fight')) { dodgeAt = now; ceGain(E_DODGE); flowAdd(10, now); say('DODGE!', wx, '#9fd8ff', 8, now); } nres('m'); return; }       // he is dashing: the swing misses (v1.30: a dash started just before the blow gives energy)
   const held = vs && vs.foe === 'cat' && k >= 30 && k <= 33 && now < (vs.catHold || 0);      // (inside the Cat's glove the combo cannot miss because Gojo is 'still reeling')
   const foeWho = vs ? vs.foe : 'gojo', downed = now < gDownUntil;      // (whose swing this is; and after a DOWNSLAM or a SWEEP you are on the floor: only a kick reaches you there, even while you reel)
   const airMe = !!gAir && gAir.kind === 'up';      // you are launched: everything can hit you up there, the hit-stun and the height do not protect you
@@ -2745,7 +2747,7 @@ function beginRound(now) {                     // a fresh round: the scene is re
   spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); if (vs.net) { dummy.net = true; dummy.max = dummy.hp = dummy.shown = PHP; dummy.x = dummy.tx = wx + NET_G0; dummy.pose = null; vs.toSent = false; }      // (the Wi-Fi fight: the other player, drawn from his phone's pictures)
   vdg = cst = null; smear.length = drip.length = 0; cProj = []; if (vs.rush) rushSpawn(t); else if (vs.cv) initCurse(dummy, vs.cv, wx + Math.max(54, Math.min(90, (VW >> 1) - 70)), vs.hard ? 1.5 : 1);      // (a challenge: the curse steps in; a RUSH wave: one or two)
   $('vsres').classList.remove('on');      // (REMATCH and NEXT start a new fight: the result screen goes away. Since v7.12 this line had slipped into a comment, so the result screen stayed on top of the new fight)
-  vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
+  vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; flow = 0; flowOn = false; flowLast = -1; flowSw = -1; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
   if (vs.retry) { vs.round = 1 + vs.retry; vs.hp = vs.sh = PHP / 2; dummy.hp = dummy.shown = dummy.lock = 1; vs.morphed = true; blackUntil = t + 700; } else blackUntil = 0;      // after a failed red: Gojo at half health, Verity as he was (1 health left, so no smoke change); the picture comes up from black
 }
 // ---------------------------------------------------------------- v1.29 THE STATE TRACKER and the COMBO ESCAPE. A small box by your health bar says what state you are in: green FREE (you can move) or red (HIT: reeling from a blow, DOWN: on the floor, STUN: the JUMPSCARE, the Cat's glove or dizzy, HELD: the enemy Cat's ULTIMATE has you). While you are red, DASH gets you out of it: the stun is gone, you dash (with the dash's own invulnerable start), and when the dash ends you strike back with the LAST M1 of your combo; the dash is then on a cooldown of 4 seconds (the DASH button counts it down). Not possible when you are in the air from a launch, held by the ULTIMATE, in a cutscene or while the DOMAIN lasts.
@@ -2914,6 +2916,10 @@ function drawVs0(now, ux, uy, VW) {         // health bars, names, the grade, th
   bar(6, 20, pf, ps, false); bar(VW - 6 - W, 20, ef, es, true);
   const cw = Math.round(W * Math.max(0, Math.min(100, ce)) / 100), bad = now - ceFlash < 500, cc = CEC[vs.me] || CEC.gojo, nx = 6 + (NAMES[vs.me].length + (vs.meInv ? 7 : 0)) * 8 + 8, foeName = vs.cv ? vs.cv.name + (vs.rush && FO.filter(f => f.ko < 0).length > 1 ? ' +1' : '') : NAMES[vs.foe] + (vs.inv ? ' (INV.)' : '');      // the cursed energy bar right under the health bar (cyan for Gojo, yellow for Verity; it flashes red when a move is refused)
   ctx.fillStyle = '#000'; ctx.fillRect(5, 28, W + 2, 6); ctx.fillStyle = cc[0]; ctx.fillRect(6, 29, W, 4); ctx.fillStyle = bad ? '#ff4a4a' : cc[1]; ctx.fillRect(6, 29, cw, 4); ctx.fillStyle = bad ? '#ffb0b0' : cc[2]; ctx.fillRect(6, 29, cw, 1);
+  if (!vs.story && !vs.net) {      // (v1.32) FLOW: a thin purple bar under your energy (gold and flashing while FLOW is on); STAGGER: an orange bar under his health (white and gold while he is OPEN)
+    const fw = Math.round(W * Math.max(0, Math.min(100, flow)) / 100); ctx.fillStyle = '#000'; ctx.fillRect(5, 34, W + 2, 4); ctx.fillStyle = '#241033'; ctx.fillRect(6, 35, W, 2); ctx.fillStyle = flowOn ? (((now / 90) | 0) % 2 ? '#fff3b0' : '#ffd34d') : '#c77dff'; ctx.fillRect(6, 35, fw, 2);
+    const d0 = dummy; if (d0 && d0.ko < 0) { const open = now < (d0.openUntil || 0), sw = Math.round(W * (open ? 1 : Math.max(0, Math.min(1, (d0.stg || 0) / STG_MAX)))); ctx.fillStyle = '#000'; ctx.fillRect(VW - 7 - W, 28, W + 2, 6); ctx.fillStyle = '#2a2208'; ctx.fillRect(VW - 6 - W, 29, W, 4); ctx.fillStyle = open ? (((now / 90) | 0) % 2 ? '#ffffff' : '#ffd34d') : '#ffb84a'; ctx.fillRect(VW - 6 - sw, 29, sw, 4); }
+  }
   pxt(NAMES[vs.me] + (vs.meInv ? ' (INV.)' : ''), 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', nx, 45, bad ? '#ff6a5a' : cc[3], 8); let lx = nx + 62; if (vs.bleed) { pxt('BLEED', lx, 45, '#ff4a4a', 8); lx += 48; } if (vs.fear) pxt('FEAR', lx, 45, '#c77dff', 8); pxt(vs.story ? (vs.foe === 'cat' ? 'CARTOON CAT' : 'VERITY') : foeName, VW - 6, 45, '#ffffff', 8, 'right'); let rx2 = VW - 6; if (dummy && dummy.bleed) { pxt('BLEED', rx2, 37, '#ff4a4a', 8, 'right'); rx2 -= 48; } if (dummy && dummy.fear) pxt('FEAR', rx2, 37, '#c77dff', 8, 'right'); pxt(vs.story ? 'SPECIAL GRADE' : vs.net ? 'WI-FI' : vs.cv ? (vs.rush ? 'WAVE ' + Math.min(vs.round, vs.run.waves.length) + '/' + vs.run.waves.length : (vs.hard ? 'HARD ' : '') + vs.cv.grade) : GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
   if (!vs.story && !vs.practice) pxt(String(Math.max(0, Math.ceil(vs.tl / 1000))), VW / 2, 18, vs.tl < 10000 ? '#ff6a5a' : '#ffffff', 16, 'center');
   const kob = vs.ph === 'ko';
@@ -5318,12 +5324,18 @@ const HEAVY_HOLD = 300, HEAVY_X = 1.6, WHIFF_MS = 240, WHIFF_HEAVY_MS = 420, CAN
 let atkHold = -1, heavyAt = 0, whiffUntil = 0, cancelFor = -1, cancelUntil = 0, connectAt = -1, swPrev = -1, swLast = 0, repSw = {}, repN = {}, repSay = -1, chgTick = -1;      // atkHold: when ATTACK went down (-1 = up); heavyAt: the atkAt of the heavy swing; connectAt: the swing that last touched the enemy; swPrev: last frame's swing; repSw / repN: per swing type, the last swing and how many times it was used in this combo
 const flowOK = now => state === 'play' && !!dummy && dummy.ko < 0 && (meK() === 'g' || meK() === 'y') && !(vs && (vs.net || vs.ph !== 'fight')) && !redWhy(now) && !dom;      // (the new moves: Gojo and Yuji, in a fight that is on, not in the Wi-Fi fight)
 function flowTick(now) {      // every frame, before the controls are gated
-  if (now - swLast > 150) swPrev = atkAt; swLast = now;      // (a cutscene or a freeze came between: nothing to judge)
+  const dts = now - swLast > 150 ? 0 : Math.min(0.1, (now - swLast) / 1000); if (now - swLast > 150) swPrev = atkAt; swLast = now;      // (a cutscene or a freeze came between: nothing to judge)
+  if (!fxOK()) { flow = 0; flowOn = false; }
+  else {
+    if (flowOn) { flow -= 100 * dts * 1000 / (FLOW_MS * paceBase()); if (flow <= 0) { flow = 0; flowOn = false; say('FLOW OVER', wx, '#9a9aa8', 8, now); } }
+    else if (now - flowAt > 2500) flow = Math.max(0, flow - 14 * dts);
+    for (const e of foesOf()) if (e.stg > 0 && now >= (e.openUntil || 0) && now - (e.stgAt || 0) > 2000) e.stg = Math.max(0, e.stg - 12 * dts);
+  }
   if (dashReq && atkAt >= 0 && cancelFor === atkAt && now < cancelUntil && flowOK(now) && !lacks('dash')) {      // CANCEL: the swing has hit, the dash takes over
-    cancelFor = -1; swPrev = atkAt = -1; atkQ = false; repSw = {}; repN = {}; hits.until = Math.max(hits.until, now + COMBO_WIN); ceGain(E_CANCEL); say('CANCEL!', wx, '#9fd8ff', 8, now);
+    cancelFor = -1; swPrev = atkAt = -1; atkQ = false; repSw = {}; repN = {}; hits.until = Math.max(hits.until, now + COMBO_WIN); ceGain(E_CANCEL); flowAdd(20, now); say('CANCEL!', wx, '#9fd8ff', 8, now);
   }
   if (atkAt !== swPrev) {      // the swing that was running is over (or the next one of a chain began)
-    if (swPrev >= 0 && connectAt !== swPrev && flowOK(now)) { whiffUntil = now + (swPrev === heavyAt ? WHIFF_HEAVY_MS : WHIFF_MS); say('WHIFF', wx, '#9a9aa8', 8, now); }
+    if (swPrev >= 0 && connectAt !== swPrev && flowOK(now)) { if (!flowOn) { whiffUntil = now + (swPrev === heavyAt ? WHIFF_HEAVY_MS : WHIFF_MS); say('WHIFF', wx, '#9a9aa8', 8, now); } }
     swPrev = atkAt;
   }
   if (now < whiffUntil) atkReq = false;      // (open: ATTACK does nothing for a moment)
@@ -5332,6 +5344,38 @@ function flowTick(now) {      // every frame, before the controls are gated
     if (held >= 140 && ((now / 90) | 0) !== chgTick) { chgTick = (now / 90) | 0; spark(wx + 12, gy - 26, 2, ['#ffb05a', '#fff3b0'], false, 1); }      // (the charge: sparks at the fist)
     if (held >= HEAVY_HOLD && atkAt < 0 && now >= whiffUntil) { atkHold = -1; atkReq = false; if (strikeBack(now)) { heavyAt = atkAt; say('HEAVY!', wx, '#ffb05a', 8, now); } }
   }
+}
+// ---------------------------------------------------------------- v1.32 FLOW COMBAT II: the FLOW meter and the STAGGER bar (every fighter, in a fight or a training room; not the Wi-Fi fight, not the story). FLOW (purple bar under your energy): +8 for a hit with a different swing than the last one (+2 for a repeat), +12 for a heavy, +20 for a cancel, +15 for a parry, +10 for a dodge; it drains after 2.5 s without a hit, a blow on you takes 30. Full = FLOW for 6 real seconds: 1.25 times the damage, no whiff opening, a longer cancel window; a blow on you ends it. STAGGER (orange bar under the enemy's health): +8 for a light swing (+3 for a repeat), +34 for a heavy, +20 for a guard breaker, +45 for a parry; it drains after 2 s without a hit. Full = BREAK: he is stunned (when he can be) and OPEN for 1.6 s: 1.4 times the damage; then 4 s in which it cannot fill again.
+const FLOW_MS = 6000, FLOW_X = 1.25, STG_MAX = 100, OPEN_MS = 1600, OPEN_X = 1.4, STG_LOCK_MS = 4000;
+let flow = 0, flowOn = false, flowAt = 0, flowLast = -1, flowSw = -1;      // flowAt: the last gain; flowLast: the swing type of the last landed hit; flowSw: the swing that last gave Flow (a multi-hit swing counts once)
+const fxOK = () => !!vs && !vs.net && !vs.story && vs.ph === 'fight' && state === 'play';
+function flowAdd(n, now) {
+  if (!fxOK()) return;
+  if (flowOn) { flow = Math.min(100, flow + n * 0.5); flowAt = now; return; }      // (in FLOW every gain is half and lengthens it)
+  flow = Math.min(100, flow + n); flowAt = now;
+  if (flow >= 100) { flowOn = true; say('FLOW!', wx, '#ffd34d', 12, now + 60); snd('finisher'); }
+}
+function flowHurt(now) { if (!fxOK()) return; flow = Math.max(0, flow - 30); if (flowOn) { flowOn = false; flow = 0; say('FLOW LOST', wx, '#9a9aa8', 8, now); } }
+function stunFoe(d, now, ms) {      // what a parry does to the enemy, for any length: a curse flinches out of his move, the attacking fighter stops and rests
+  if (!d || d.ko >= 0 || d.cap) return;
+  if (d.curse) { d.stunUntil = Math.max(d.stunUntil, now + (d.curse.armor ? ms * 0.75 : ms)); d.cs = 'hurt'; d.ct0 = now; d.cm = null; d.cnext = Math.max(d.cnext, d.stunUntil + 200); }
+  else if (d.mode === 'fighter' && !d.cact && !d.vact && !d.net) { d.stunUntil = Math.max(d.stunUntil, now + ms); d.ai = 'rest'; d.aiAt = now; d.restFor = ms; d.chain = 0; d.hitDone = true; }
+}
+function stgAdd(d, n, now) {
+  if (!fxOK() || !d || d.ko >= 0 || d.cap || now < (d.stgLock || 0)) return;
+  if (d.curse && d.curse.armor) n *= 0.6;      // (an armoured curse is hard to stagger)
+  d.stg = Math.min(STG_MAX, (d.stg || 0) + n); d.stgAt = now;
+  if (d.stg >= STG_MAX) stgBreak(d, now);
+}
+function stgBreak(d, now) {      // BREAK: stunned and open
+  d.stg = 0; d.openUntil = now + OPEN_MS; d.stgLock = d.openUntil + STG_LOCK_MS; stunFoe(d, now, OPEN_MS);
+  say('BREAK!', d.x, '#ffd34d', 12, now + 80); snd('stun'); flash(now, 90, 0.2); hitStop(110); shakeUntil = now + 160; shakeAmp = 3; flowAdd(10, now);
+}
+function foeGain(k, hv, rp, now) {      // a hit of yours has landed: Flow for variety, stagger for the enemy
+  if (!fxOK() || !dummy || dummy.hp <= 0) return;
+  const fresh = flowSw !== atkAt; flowSw = atkAt;
+  if (fresh) { flowAdd(rp > 0 || atkK === flowLast ? 2 : 8, now); flowLast = atkK; if (hv) flowAdd(12, now); } else flowAdd(1, now);
+  stgAdd(dummy, fresh ? (hv ? 34 : (k === 42 || k === 46) ? 20 : rp > 0 ? 3 : 8) : 2, now);
 }
 function tick(t) {
   requestAnimationFrame(tick);                // schedule first so one bad frame can't stop the loop
