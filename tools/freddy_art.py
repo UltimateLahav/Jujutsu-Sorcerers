@@ -1,5 +1,5 @@
 """FREDDY KRUEGER, the 16-bit fighter (v1.39): turns freddy_ref.jpg (the picture the game's author gave: a full-length photo on a checkerboard) into freddy_sheet.png, 15 idle frames of 64 x 64 pixels side by side (960 x 64), 16 colours, facing right like every fighter.
-Run from tools/:  python3 freddy_art.py   (needs numpy, scipy, pillow). v1.40: the sheet has a second row, the 15-frame WALK (and, v1.41, rows 3 to 5: the 40-frame JUMP, 20 jumping + 20 landing): the legs are drawn from scratch with two-bone inverse kinematics (a foot on the ground moves back at the body's speed, so it never slides; the swinging foot only rises 2.6 px: an elegant glide), the upper body leans and sways, and the standing figure uses the same legs. Steps: cut him out of the checkerboard (15 px squares, rows offset by 2) -> stocky 16-bit proportions (big head, short legs: three bands resized separately) -> the 16-colour palette below -> hand-drawn details (hat band, shadowed eyes, burn scars, the glove and its four blades) -> a 1 px outline -> flip -> 15 frames of idle (breathing, sway, hat, claw, a glint that runs up the blades)."""
+Run from tools/:  python3 freddy_art.py   (needs numpy, scipy, pillow). v1.42: the body is a PUPPET: the head (with the hat) and the torso are cut out of the picture and turned about the neck and the hips (a real rotation, redrawn clean at 4 times the size), the two arms are drawn from scratch as chains of two bones with striped, shaded sleeves, and the same figure is used for the idle, the walk and the jump, so in the jump he leans into the squat, throws his arms up, tucks, stretches and lands, instead of sliding one rigid block about. v1.40: the sheet has a second row, the 15-frame WALK (and, v1.41, rows 3 to 5: the 40-frame JUMP, 20 jumping + 20 landing): the legs are drawn from scratch with two-bone inverse kinematics (a foot on the ground moves back at the body's speed, so it never slides; the swinging foot only rises 2.6 px: an elegant glide), the upper body leans and sways, and the standing figure uses the same legs. Steps: cut him out of the checkerboard (15 px squares, rows offset by 2) -> stocky 16-bit proportions (big head, short legs: three bands resized separately) -> the 16-colour palette below -> hand-drawn details (hat band, shadowed eyes, burn scars, the glove and its four blades) -> a 1 px outline -> flip -> 15 frames of idle (breathing, sway, hat, claw, a glint that runs up the blades)."""
 import numpy as np
 from PIL import Image, ImageEnhance
 from scipy import ndimage as ndi
@@ -64,13 +64,6 @@ def outline(G):
     out = G.copy(); op = G >= 0; edge = ndi.binary_dilation(op, structure=np.ones((3, 3))) & ~op
     out[edge] = OL; return out
 CACHE = {}
-BLADES = [(0, 7), (2, 9), (4, 8)]      # the three blades that show of the glove: (how far right of the knuckles, how long); they fan out to the right
-def glove(G, gx, gy):
-    """the leather glove: a block of 5 x 3 pixels at the knuckles gx, gy (it covers the sleeve's end)"""
-    for dy in range(0, 3):
-        for dx in range(-2, 3):
-            y, x = gy + dy, gx + dx
-            if 0 <= y < 64 and 0 <= x < 64 and (G[y, x] < 0 or G[y, x] in (SK1, SK2, SK0, R0, R1, R2)): G[y, x] = GLV
 def upper():
     """the upper body without legs, facing right: (picture, the first row of the legs, the column of the hips, the knuckles gx, gy)"""
     idx, MAP = base()
@@ -79,8 +72,7 @@ def upper():
     G = details(idx); sw = np.isin(G, (R0, R1, R2, G0, G1)); RH = int(np.where(sw.any(axis=1))[0].max()) + 1      # the sweater's hem: the legs start below it
     pr = np.where(np.isin(G[RH:RH + 5], (PNT, PN2)))[1]; hx = 63 - (float(pr.mean()) if len(pr) else 32.0)
     U = G.copy(); U[RH:] = -1; U = U[:, ::-1].copy()      # he faces right
-    CACHE['U0'] = U.copy()      # (without the glove: the jump moves the claw arm on its own)
-    glove(U, gx, gy)
+    CACHE['U0'] = U.copy()      # (the puppet cuts the head and the torso out of this picture; the arms and the glove are drawn on their own)
     return U, RH, hx, gx, gy
 L1, L2 = 12.2, 12.3      # thigh and shin (px)
 def ik(hx, hy, ax, ay):
@@ -95,61 +87,15 @@ def stroke(F, p, q, w0, w1, col):
         for yy in range(y0, y0 + wi):
             for xx in range(x0, x0 + wi):
                 if 0 <= yy < 64 and 0 <= xx < 64: F[yy, xx] = col
-def leg(F, hx, hy, fx, fy, col):
-    """one leg drawn as thick strokes: from the hip hx, hy to the sole at fx, fy (the ankle is 2 px above it), with the shoe (6 x 3 px, the toe to the right)"""
-    ax, ay = fx - 1.0, fy - 2.0; k = ik(hx, hy, ax, ay)
-    stroke(F, (hx, hy), k, 5, 4, col); stroke(F, k, (ax, ay), 4, 3, col)
-    y1 = int(round(fy)); x0 = int(round(fx - 2)); x1 = int(round(fx + 3))
-    for yy in range(y1 - 2, y1 + 1):
-        for xx in range(x0, x1 + 1):
-            if 0 <= yy < 64 and 0 <= xx < 64: F[yy, xx] = col
 GROUND = 59
-def put_upper(F, U, RH, dy, lean):
-    """the upper body over the legs, moved down by dy and leaning: lean(row) = how far right a row is moved"""
-    for r in range(64):
-        sr = r - dy
-        if 0 <= sr < 64:
-            dx = int(round(lean(sr)))
-            for x in range(64):
-                v = U[sr, x]
-                if v >= 0 and 0 <= x + dx < 64: F[r, x + dx] = v
 def finish(F):
     G = outline(F); pn = (G == PNT); left = np.zeros_like(pn); left[:, 1:] = (G[:, :-1] < 0) | (G[:, :-1] == OL); G[pn & left] = PN2      # a rim light on the trousers
     return G
-def rest_figure(U, RH, hx):
-    """the standing figure: the legs at rest (both feet planted, a relaxed stance) under the upper body"""
-    F = -np.ones((64, 64), int); hy = GROUND - 23.0
-    leg(F, hx + 1, hy, hx + 3.0, GROUND, OL); leg(F, hx - 1, hy, hx - 1.5, GROUND, PNT)
-    put_upper(F, U, RH, 0, lambda r: 0); return finish(F)
 STEP = 15.0; DUTY = 0.62; LIFT = 2.6      # the walk: a step is 15 px long, a foot is on the ground for 62% of the cycle (two feet for 24%), the swinging foot rises only 2.6 px: a glide, not a march
 def foot_at(u):
     """where a foot is (forward of the hip, height above the ground) at the cycle position u (0 = it has just touched down): on the ground it moves back at the body's speed (it never slides), then it swings forward and eases in and out"""
     if u < DUTY: return STEP / 2 - STEP * (u / DUTY), 0.0
     s = (u - DUTY) / (1 - DUTY); e = s - np.sin(2 * np.pi * s) / (2 * np.pi); return -STEP / 2 + STEP * e, LIFT * np.sin(np.pi * s)
-def walk_frames(U, RH, hx, gx, gy):
-    FR = []
-    for k in range(15):
-        ph = k / 15.0; h = 22.3 + 0.5 * np.cos(2 * np.pi * (k - 4.65) / 7.5); hy = GROUND - h      # the pelvis is highest in mid-stance, lowest when a foot touches down
-        F = -np.ones((64, 64), int)
-        xf, lf = foot_at((ph + 0.5) % 1.0); leg(F, hx + 1, hy, hx + xf, GROUND - lf, OL)      # the far leg (darker)
-        xn, ln = foot_at(ph % 1.0); leg(F, hx - 1, hy, hx + xn, GROUND - ln, PNT)      # the near leg
-        sway = 0.8 * np.sin(2 * np.pi * ph); dy = int(round(23.0 - h))
-        put_upper(F, U, RH, dy, lambda r: (1.0 + sway) * max(0.0, (RH - r) / float(RH)))      # he leans into the stride a little and sways
-        G = finish(F)
-        sh = int(round(0.8 * np.sin(4 * np.pi * ph + 1.0)))      # the blades lag a little behind
-        for i, (dx, ln_) in enumerate(BLADES):
-            for j in range(ln_):
-                x = gx + dx + (j + 1) // 2 + (sh if j > 2 else 0) + int(round((1.0 + sway) * max(0.0, (RH - gy) / float(RH)))); y = gy - 1 - j + dy
-                if 0 <= y < 64 and 0 <= x < 64: G[y, x] = BLD
-        FR.append(G)
-    return FR
-# THE JUMP (v1.41): 40 frames over the whole jump (crouch 160 ms + flight 713 ms + landing 160 ms = 1033 ms, 38.7 frames a second): frames 0-19 jump (the squat, the push-off, the take-off at frame 6, the rise and the tuck at the top), frames 20-39 land (the fall, legs reaching for the ground, the touch-down at frame 34, the knees absorbing, standing up). Key poses, smoothly blended: (frame, hip row, row of the lowest point of the feet, forward reach of the near foot and of the far foot, toe angle (0 flat, 70 pointed down), forward lean of the head, claw arm swing x and y)
-KEYS = [(0, 36.0, 59.0, -1.5, 3.0, 0, 0.5, 0, 0), (3, 43.5, 59.0, -1.0, 4.0, 0, 4.0, -2, 4), (5, 38.0, 59.0, -0.5, 3.0, 20, 2.0, 0, 0), (6, 33.5, 59.0, -0.5, 2.5, 45, 1.0, 1, -4), (12, 34.5, 57.0, 1.0, 3.5, 55, 1.0, 1, -3), (19, 36.0, 51.0, 4.5, 7.5, 70, 0.0, 2, -5),
-        (26, 35.0, 54.0, 2.5, 5.0, 60, 1.0, 1, -3), (33, 33.5, 59.5, 0.5, 3.0, 45, 1.5, 0, -2), (35, 37.5, 59.0, -0.5, 3.5, 20, 2.5, 0, 2), (37, 43.5, 59.0, -1.0, 4.0, 0, 4.0, -1, 4), (39, 36.6, 59.0, -1.5, 3.0, 0, 0.9, 0, 1)]      # (the last picture is not quite upright yet: he settles into his idle)
-def pose(k):
-    for a, b in zip(KEYS, KEYS[1:]):
-        if a[0] <= k <= b[0]:
-            t = (k - a[0]) / float(b[0] - a[0]); t = t * t * (3 - 2 * t); return [a[i] + (b[i] - a[i]) * t for i in range(1, 9)]
 def leg2(F, hx, hy, fx, fy, col, ang):
     """a leg for the jump: fy is the lowest row of the foot, ang the angle of the foot (0 = flat on the ground, 70 = the toes pointed down)"""
     if ang < 12: ax, ay = fx - 1.0, fy - 2.0
@@ -162,53 +108,100 @@ def leg2(F, hx, hy, fx, fy, col, ang):
                 if 0 <= yy < 64 and 0 <= xx < 64: F[yy, xx] = col
     else:
         a = np.radians(ang); stroke(F, (ax - 1, ay + 0.5), (ax - 1 + 5 * np.cos(a), ay + 0.5 + 5 * np.sin(a)), 3, 3, col)
-def jump_frames(RH, hx, gx, gy):
-    U0 = CACHE['U0']; FR = []
-    for k in range(40):
-        hipY, footY, xn, xf, ang, lean, cdx, cdy = pose(k); F = -np.ones((64, 64), int)
-        leg2(F, hx + 1, hipY, hx + xf, footY, OL, ang); leg2(F, hx - 1, hipY, hx + xn, footY, PNT, ang)      # the far leg (darker), the near leg
-        dy = int(round(hipY - 36.0)); ln = lambda r: lean * max(0.0, (RH - r) / float(RH)) ** 1.2
-        put_upper(F, U0, RH, dy, ln)
-        cx0 = int(round(gx + cdx + ln(gy))); cy0 = int(round(gy + cdy + dy))      # the claw arm: a forearm from the sleeve to the glove, which swings on its own
-        stroke(F, (gx - 2 + int(round(ln(gy + 6))), gy + 6 + dy), (cx0, cy0 + 1), 3, 3, R0)
-        for yy in range(cy0, cy0 + 3):
-            for xx in range(cx0 - 2, cx0 + 3):
-                if 0 <= yy < 64 and 0 <= xx < 64: F[yy, xx] = GLV
-        G = finish(F)
-        sh = int(round(0.8 * np.sin(2 * np.pi * k / 13.0)))
-        for i, (dx, ln_) in enumerate(BLADES):
-            for j in range(ln_):
-                x = cx0 + dx + (j + 1) // 2 + (sh if j > 2 else 0); y = cy0 - 1 - j
-                if 0 <= y < 64 and 0 <= x < 64: G[y, x] = BLD
-        FR.append(G)
+# ---------------------------------------------------------------- THE PUPPET (v1.42): the body is made of parts that move on their own, like a real body: the TORSO turns about the hips (he leans forward in the squat, arches back at the take-off, crunches at the top) and stretches a little when he breathes, the HEAD (with the hat) turns on the neck, the BACK ARM and the CLAW ARM are chains of two bones (upper arm, forearm) drawn from the shoulder, with striped sleeves, that swing up for the take-off, reach high at the top and come down to land, the legs are as before. The head and the torso are cut out of the picture made from the photograph; the arms and the legs are drawn from scratch.
+S4 = 4
+def mode_down(big, S=S4):
+    H = big.shape[0] // S; b = big.reshape(H, S, H, S).transpose(0, 2, 1, 3).reshape(H, H, S * S)
+    cnt = np.stack([(b == c).sum(axis=2) for c in range(16)]); out = cnt.argmax(axis=0); out[cnt.sum(axis=0) < 7] = -1; return out
+def xform(piece, pivot, ang, trans=(0.0, 0.0), sy=1.0):
+    """a picture (64 x 64 colour numbers, -1 = nothing) turned by ang degrees about pivot (clockwise: leaning forward is to the right), stretched sy times up and down about it, moved by trans: turned at 4 times the size and brought back by the commonest colour of every 4 x 4 block, so the edges stay clean"""
+    H = 64 * S4; big = np.kron(piece, np.ones((S4, S4), int)); Y, X = np.mgrid[0:H, 0:H]
+    xd = (X + 0.5) / S4 - trans[0] - pivot[0]; yd = (Y + 0.5) / S4 - trans[1] - pivot[1]; a = np.radians(-ang); c, s = np.cos(a), np.sin(a)
+    xs = c * xd - s * yd + pivot[0]; ys = (s * xd + c * yd) / sy + pivot[1]; xi = np.floor(xs * S4).astype(int); yi = np.floor(ys * S4).astype(int)
+    ok = (xi >= 0) & (xi < H) & (yi >= 0) & (yi < H); out = -np.ones((H, H), int); out[ok] = big[yi[ok], xi[ok]]; return mode_down(out)
+def fpt(pt, pivot, ang, trans=(0.0, 0.0), sy=1.0):
+    a = np.radians(ang); c, s = np.cos(a), np.sin(a); x, y = pt[0] - pivot[0], (pt[1] - pivot[1]) * sy
+    return (c * x - s * y + pivot[0] + trans[0], s * x + c * y + pivot[1] + trans[1])
+HX = 31.0; HEAD_PIV = (33.0, 17.0); TORSO_PIV = (31.0, 35.5); SB = (25.0, 21.0); SF = (37.0, 21.0); LB1, LB2, LF1, LF2 = 8.5, 9.5, 8.5, 10.0      # the neck, the hips, the back and the front shoulder, the lengths of the bones of the arms
+def pieces():
+    if 'U0' not in CACHE: upper()
+    U0 = CACHE['U0']; head = -np.ones((64, 64), int); head[0:17, 22:42] = U0[0:17, 22:42]; torso = -np.ones((64, 64), int); torso[17:36, 26:38] = U0[17:36, 26:38]
+    return head, torso
+def two_bone(S, T, L1, L2, pick):
+    """the elbow of an arm from the shoulder S to the hand T (the one of the two elbows that pick likes best) and where the hand really is (it cannot go farther than the arm is long)"""
+    dx, dy = T[0] - S[0], T[1] - S[1]; r = max(np.hypot(dx, dy), 1e-6); d = max(0.5, min(r, L1 + L2 - 0.05)); b = np.arctan2(dy, dx)
+    a = np.arccos(np.clip((L1 * L1 + d * d - L2 * L2) / (2 * L1 * d), -1, 1))
+    E = max([(S[0] + L1 * np.cos(b + s * a), S[1] + L1 * np.sin(b + s * a)) for s in (1, -1)], key=pick)
+    return E, (S[0] + dx / r * d, S[1] + dy / r * d)
+Y64, X64 = np.mgrid[0:64, 0:64]
+def limbs(F, jobs):
+    """sleeves, gloves and hands, each from p to q (w0 wide at p, w1 wide at q; L = how long, for the stripes; kind): first all the dark rims, so an arm stands out from the body, then the colours, lit from the top left: dark side, middle, light side. The sweater has stripes round the arm: two red, one dark green."""
+    M = []
+    for p, q, w0, w1, L, kind in jobs:
+        dx, dy = q[0] - p[0], q[1] - p[1]; ll = max(dx * dx + dy * dy, 1e-6); px, py = X64 + 0.5, Y64 + 0.5
+        t = np.clip(((px - p[0]) * dx + (py - p[1]) * dy) / ll, 0, 1); ex, ey = px - (p[0] + t * dx), py - (p[1] + t * dy); d = np.maximum(np.hypot(ex, ey), 1e-6); w = w0 + (w1 - w0) * t
+        M.append((d <= w / 2 + 0.001, d <= w / 2 + 1.0, t, -(ex + ey) / d * 0.7071, L, kind))
+    for m in M: F[m[1]] = OL
+    for fill, rim, t, lit, L, kind in M:
+        sh = np.where(lit > 0.62, 2, np.where(lit < -0.3, 0, 1)); stripe = (np.floor(t * L / 3.0).astype(int) % 3 == 2)
+        if kind == 'sleeve': c = np.where(stripe, np.array([G0, G0, G1])[sh], np.array([R0, R1, R2])[sh])
+        elif kind == 'glove': c = np.array([BAND, GLV, GLV])[sh]
+        else: c = np.array([SK0, SK1, SK2])[sh]
+        F[fill] = c[fill]
+def unit(v):
+    r = max(np.hypot(v[0], v[1]), 1e-6); return (v[0] / r, v[1] / r)
+CLIP = [0]
+def blades(G, W, u, sh, glint):
+    """the three blades of the glove, fanning out along the forearm (u points from the elbow to the glove), swaying sh px at the tips; a glint (white) at position glint of the middle blade"""
+    v = (-u[1], u[0]); lens = (7, 9, 8)
+    for i in range(3):
+        o = (i - 1) * 1.8; p = (W[0] + u[0] * 2.0 + v[0] * o, W[1] + u[1] * 2.0 + v[1] * o); q = (p[0] + u[0] * lens[i] + v[0] * (i - 1) * 0.9 + sh * 0.5 * v[0], p[1] + u[1] * lens[i] + v[1] * (i - 1) * 0.9 + sh * 0.5 * v[1])
+        n = int(max(abs(q[0] - p[0]), abs(q[1] - p[1])) * 2) + 1
+        for j in range(n + 1):
+            t = j / n; x = int(round(p[0] + (q[0] - p[0]) * t)); y = int(round(p[1] + (q[1] - p[1]) * t))
+            CLIP[0] += not (0 <= y < 64 and 0 <= x < 64)
+            if 0 <= y < 64 and 0 <= x < 64: G[y, x] = GLT if (i == 1 and glint is not None and abs(t - glint) < 0.12) else BLD
+def render(Pz):
+    """one picture from a pose: hipY, legs ((x, y, toe angle) of the near and the far foot's lowest point, x from the hips), torso (turn in degrees, stretch), head (turn relative to the torso, dx, dy), hb (the back hand, from the back shoulder), gf (the glove, from the front shoulder), sway of the blades, glint"""
+    HEAD, TORSO = pieces(); hy = Pz['hipY']; (fxn, fyn, an), (fxf, fyf, af) = Pz['legs']; F = -np.ones((64, 64), int)
+    leg2(F, HX + 1, hy, HX + fxf, fyf, OL, af); leg2(F, HX - 1, hy, HX + fxn, fyn, PNT, an)
+    al, sy = Pz['torso']; tr = (0.0, hy - 36.0); T = xform(TORSO, TORSO_PIV, al, tr, sy); Np = fpt(HEAD_PIV, TORSO_PIV, al, tr, sy); bt, hdx, hdy = Pz['head']
+    Hh = xform(HEAD, HEAD_PIV, al + bt, (Np[0] - HEAD_PIV[0] + hdx, Np[1] - HEAD_PIV[1] + hdy))
+    F[T >= 0] = T[T >= 0]; HEADL = Hh
+    Sb = fpt(SB, TORSO_PIV, al, tr, sy); Sf = fpt(SF, TORSO_PIV, al, tr, sy); hb = Pz['hb']; gf = Pz['gf']
+    Eb, Wb = two_bone(Sb, (Sb[0] + hb[0], Sb[1] + hb[1]), LB1, LB2, lambda e: -e[0]); Ef, Wf = two_bone(Sf, (Sf[0] + gf[0], Sf[1] + gf[1]), LF1, LF2, lambda e: e[1])
+    u0 = unit((Wf[0] - Ef[0], Wf[1] - Ef[1])); th = np.radians(Pz.get('wr', 14.0)); u = (u0[0] * np.cos(th) - u0[1] * np.sin(th), u0[0] * np.sin(th) + u0[1] * np.cos(th))      # (the blades lean wr degrees to the right of the forearm, 14 as a rule, more when the arm is up: the hand tips forward)
+    BODY = F.copy(); F = -np.ones((64, 64), int)      # the back arm is in front of the torso but behind the head, the claw arm in front of everything
+    limbs(F, [(Sb, Eb, 5, 4.5, LB1, 'sleeve'), (Eb, Wb, 4.5, 3.5, LB2, 'sleeve'), (Wb, Wb, 3, 3, 1, 'hand')]); BA = F.copy(); F = -np.ones((64, 64), int)
+    limbs(F, [(Sf, Ef, 5, 4.5, LF1, 'sleeve'), (Ef, Wf, 4.5, 3.5, LF2, 'sleeve'), ((Wf[0] - u0[0] * 1.2, Wf[1] - u0[1] * 1.2), (Wf[0] + u0[0] * 0.8, Wf[1] + u0[1] * 0.8), 3, 3, 1, 'glove')]); FA = F.copy()
+    F = BODY; F[BA >= 0] = BA[BA >= 0]; F[HEADL >= 0] = HEADL[HEADL >= 0]; F[FA >= 0] = FA[FA >= 0]
+    G = finish(F); blades(G, Wf, u, Pz.get('sway', 0.0), Pz.get('glint')); return G
+REST = dict(hipY=36.0, legs=((-1.5, 59.0, 0), (3.0, 59.0, 0)), torso=(0.0, 1.0), head=(0.0, 0.0, 0.0), hb=(0.0, 13.0), gf=(4.0, -2.0))
+def idle_frames():
+    FR = []
+    for k in range(15):
+        ph = 2 * np.pi * k / 15; Pz = dict(REST); Pz['torso'] = (1.4 * np.sin(ph + 0.9), 1.0 + 0.03 * np.sin(ph)); Pz['head'] = (1.5 * np.sin(ph + 2.2), 0.0, 0.0)      # he breathes, sways and the hat tips
+        Pz['gf'] = (4.0 + 0.7 * np.sin(2 * ph + 1.3), -2.0 + 0.6 * np.sin(2 * ph)); Pz['sway'] = 0.8 * np.sin(2 * ph + 1.3); Pz['glint'] = ((k * 3) % 15) / 15.0 if k < 11 else None; FR.append(render(Pz))      # the claw twitches, a glint runs up a blade
     return FR
-def make():
-    U, RH, hx, gx, gy = upper(); G = rest_figure(U, RH, hx)
-    ys, xs = np.where(G >= 0); print('figure', xs.min(), xs.max(), ys.min(), ys.max(), 'knuckles', gx, gy, 'hem', RH, 'hips', round(hx, 1))
-    return G, gx, gy, (U, RH, hx)
-def frames(G, gx, gy):
-    FR = []; ys, xs = np.where(G >= 0); top = ys.min(); bot = ys.max()
-    for t in range(15):
-        ph = 2 * np.pi * t / 15; Gt = G.copy()
-        sh = int(round(0.9 * np.sin(2 * ph + 1.3)))
-        pix = []
-        for i, (dx, ln) in enumerate(BLADES):
-            for k in range(ln):
-                x = gx + dx + (k + 1) // 2 + (sh if k > 2 else 0); y = gy - 1 - k
-                if 0 <= y < 64 and 0 <= x < 64: Gt[y, x] = BLD; pix.append((y, x, i, k))
-        if t < 11:      # a glint runs up the second blade, then he rests
-            run = sorted([p for p in pix if p[2] == 1], key=lambda p: p[3]); k = (t * 3) % max(1, len(run))
-            for j in (k, k + 1):
-                if j < len(run): Gt[run[j][0], run[j][1]] = GLT
-        out = -np.ones((64, 64), int)
-        for r in range(64):
-            w = max(0, min(1, (top + 38 - r) / 37.0)); src = int(round(r + 1.2 * np.sin(ph) * w))      # breathing: the upper body stretches a little
-            sw = max(0, min(1, (bot - r) / float(bot - top))) ** 1.6; dx = int(round(1.1 * np.sin(ph + 0.9) * sw)) + (int(round(0.7 * np.sin(ph + 2.2))) if r < top + 9 else 0)      # sway, and the hat tips
-            if 0 <= src < 64:
-                for x in range(64):
-                    v = Gt[src, x]
-                    if v >= 0 and 0 <= x + dx < 64: out[r, x + dx] = v
-        FR.append(out)
+def walk_frames():
+    FR = []
+    for k in range(15):
+        ph = k / 15.0; h = 22.3 + 0.5 * np.cos(2 * np.pi * (k - 4.65) / 7.5); xf, lf = foot_at((ph + 0.5) % 1.0); xn, ln = foot_at(ph % 1.0)
+        Pz = dict(REST); Pz['hipY'] = GROUND - h; Pz['legs'] = ((xn, GROUND - ln, 0), (xf, GROUND - lf, 0)); Pz['torso'] = (3.0 + 1.6 * np.sin(2 * np.pi * ph), 1.0); Pz['head'] = (-2.0, 0.0, 0.0)      # he leans into the stride and sways, his head level
+        Pz['gf'] = (4.0, -2.0 + 0.8 * np.sin(4 * np.pi * ph)); Pz['sway'] = 0.8 * np.sin(4 * np.pi * ph + 1.0); FR.append(render(Pz))
+    return FR
+# THE JUMP: key poses (frame, hip row, row of the lowest point of the feet, near foot, far foot (forward of the hips), toe angle, torso turn (deg), torso stretch, head turn (deg), back hand (x, y from the shoulder), glove (x, y from the shoulder), wrist (deg)), blended smoothly: 20 pictures jump, 20 land
+KEYS = [(0, 36.0, 59.0, -1.5, 3.0, 0, 1.0, 1.0, 0.0, 0.0, 13.0, 4.0, -2.0, 14), (3, 43.5, 59.0, -1.0, 4.0, 0, 30.0, 0.97, -14.0, -8.0, 10.0, 8.0, 6.0, 14), (5, 38.5, 59.0, -0.5, 3.0, 20, 9.0, 1.0, -8.0, 3.0, 0.0, 10.5, -4.5, 14), (6, 36.5, 59.0, -0.5, 2.5, 45, -3.0, 1.03, -2.0, 6.0, -6.0, 11.0, -8.0, 22),
+        (12, 37.5, 57.0, 1.0, 3.5, 55, 2.0, 1.02, -2.0, 2.0, -13.0, 12.0, -9.0, 30), (19, 39.0, 51.0, 4.5, 7.5, 70, 5.0, 1.0, -4.0, -8.0, -14.0, 11.0, -10.0, 30), (26, 38.0, 54.0, 2.5, 5.0, 60, 6.0, 1.0, 1.0, -9.0, -4.0, 11.0, -5.0, 22), (33, 36.5, 59.5, 0.5, 3.0, 45, 3.0, 1.02, -2.0, -6.0, 6.0, 9.0, 2.0, 14),
+        (35, 38.0, 59.0, -0.5, 3.5, 20, 16.0, 0.99, -6.0, 3.0, 8.0, 9.0, 5.0, 14), (37, 43.5, 59.0, -1.0, 4.0, 0, 30.0, 0.97, -14.0, 4.0, 9.0, 9.0, 7.0, 14), (39, 36.6, 59.0, -1.5, 3.0, 0, 3.0, 1.0, -1.0, 0.0, 12.5, 4.2, -1.0, 14)]
+def pose(k):
+    for a, b in zip(KEYS, KEYS[1:]):
+        if a[0] <= k <= b[0]:
+            t = (k - a[0]) / float(b[0] - a[0]); t = t * t * (3 - 2 * t); return [a[i] + (b[i] - a[i]) * t for i in range(1, 14)]
+def jump_frames():
+    FR = []
+    for k in range(40):
+        hipY, footY, xn, xf, ang, al, sy, bt, hbx, hby, gfx, gfy, wr = pose(k); Pz = dict(wr=wr, hipY=hipY, legs=((xn, footY, ang), (xf, footY, ang)), torso=(al, sy), head=(bt, 0.0, 0.0), hb=(hbx, hby), gf=(gfx, gfy), sway=0.8 * np.sin(2 * np.pi * k / 13.0)); FR.append(render(Pz))
     return FR
 def sheet(FR, FW, FJ):
     A = np.zeros((320, 64 * 15, 4), np.uint8)      # row 0: the idle, row 1: the walk, rows 2-4: the jump (frames 0-14, 15-29, 30-39)
@@ -219,9 +212,9 @@ def sheet(FR, FW, FJ):
     for i, f in enumerate(FJ): put(f, 2 + i // 15, i % 15)
     Image.fromarray(A).save('freddy_sheet.png'); return A
 if __name__ == '__main__':
-    G, gx, gy, parts = make(); FR = frames(G, gx, gy); FW = walk_frames(*parts, gx, gy); FJ = jump_frames(parts[1], parts[2], gx, gy); A = sheet(FR, FW, FJ)
-    # a contact sheet to look at: the jump, 8 x 5 frames, x2
+    U, RH, hx, gx, gy = upper(); print('hem', RH, 'hips', round(hx, 1)); FR = idle_frames(); FW = walk_frames(); FJ = jump_frames(); A = sheet(FR, FW, FJ)
+    # contact sheets to look at: the jump (8 x 5), x2
     cs = np.zeros((64 * 5, 64 * 8, 4), np.uint8); cs[:] = [120, 116, 132, 255]
     for i in range(40):
         blk = A[(2 + i // 15) * 64:(3 + i // 15) * 64, (i % 15) * 64:(i % 15 + 1) * 64]; r, c = divmod(i, 8); m = blk[:, :, 3] > 0; cs[r * 64:(r + 1) * 64, c * 64:(c + 1) * 64][m] = blk[m]
-    Image.fromarray(cs).resize((cs.shape[1] * 2, cs.shape[0] * 2), Image.NEAREST).save('freddy_contact.png'); print('sheet', A.shape)
+    Image.fromarray(cs).resize((cs.shape[1] * 2, cs.shape[0] * 2), Image.NEAREST).save('freddy_contact.png'); print('sheet', A.shape, 'blade pixels cut off:', CLIP[0]); assert CLIP[0] == 0

@@ -137,7 +137,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.41</small>
+    <small id="ver">V1.42</small>
   </div>
 </section>
 
@@ -5277,7 +5277,7 @@ function fredJ(k) {      // frame k (0-39) of his JUMP as a canvas of 64 x 64: t
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
   c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, (k % 15) * 64, (2 + ((k / 15) | 0)) * 64, 64, 64, 0, 0, 64, 64); FRC.set(key, c); return c;
 }
-// THE JUMP (v1.41): 40 pictures over the whole jump (the same time line as every fighter's jump: 160 ms of squatting and pushing off, 713 ms in the air under gravity, 160 ms of landing: 1033 ms, 38.7 pictures a second): pictures 0-19 JUMP (the squat, the push-off, the take-off at picture 6, the rise and the tuck at the top), 20-39 LAND (the fall with the legs reaching down, the touch-down at picture 34, the knees absorbing, standing up). The picture is raised by the real height of the jump (22 px at the top), he keeps the speed he took off with and steers only a little in the air, and a blow knocks him out of it.
+// THE JUMP (v1.41, the whole body moves since v1.42: the torso leans into the squat and arches at the take-off, the head tips on the neck, both arms swing up and come down, see tools/freddy_art.py): 40 pictures over the whole jump (the same time line as every fighter's jump: 160 ms of squatting and pushing off, 713 ms in the air under gravity, 160 ms of landing: 1033 ms, 38.7 pictures a second): pictures 0-19 JUMP (the squat, the push-off, the take-off at picture 6, the rise and the tuck at the top), 20-39 LAND (the fall with the legs reaching down, the touch-down at picture 34, the knees absorbing, standing up). The picture is raised by the real height of the jump (22 px at the top), he keeps the speed he took off with and steers only a little in the air, and a blow knocks him out of it.
 const FRED_JUMP = JUMP_T.crouch + JUMP_T.air + JUMP_T.land; let fredJf = -1;
 // THE WALK (v1.40): an elegant glide. The cycle (15 frames = two steps) is driven by the GROUND he covers, one step per 15 px, so a foot on the ground never slides (the picture's foot moves back exactly as fast as he moves forward); he walks forward at 44 px/s and back at 32 (the cycle plays the other way round); when he stops, the step in progress is finished slowly up to the passing pose (the feet together) and he stands again; a blow, the Cat's hold or the enemy's body stops him.
 const FRED_FWD = 44, FRED_BACK = 32, FRED_STEP = 15, FRED_PASS = 4.65;      // px/s forward, px/s back, px of one step, the frame of the passing pose (the other one is 7.5 frames on)
