@@ -137,7 +137,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.36</small>
+    <small id="ver">V1.37</small>
   </div>
 </section>
 
@@ -797,7 +797,7 @@ function drawCurse(d, now, dt) {                 // a curse: the right picture f
   if (kt < 0 && c.aura) { for (let i = 0; i < 5; i++) { const ph = (now / 1200 + i / 5 + d.seed) % 1, ax = sx + Math.round(Math.sin((ph * 5 + i * 2 + d.seed * 9) * 1.3) * S.hw * 0.9), ay = Math.round(gy - S.h * 0.1 - ph * S.h * 0.7); ctx.globalAlpha = (1 - ph) * 0.85 * t; ctx.fillStyle = c.aura[i % c.aura.length]; ctx.fillRect(ax, ay, 1 + (i & 1), 1 + (i & 1)); } ctx.globalAlpha = 1; }      // (a little cursed smoke and sparks rising off him)
   if (kt < 0 && t < 1) { const R = 4 + t * 30; ctx.fillStyle = c.aura ? c.aura[1] : '#c8a0ff'; ctx.globalAlpha = 1 - t; for (let a = 0; a < 36; a++) { const th = a / 36 * 6.2832; ctx.fillRect(Math.round(sx + Math.cos(th) * R), Math.round(gy + 2 + Math.sin(th) * R * 0.25), 1, 1); } ctx.globalAlpha = 1; }      // (he steps in through a ring of cursed energy)
   ctx.save(); ctx.translate(sx, 0); if (mirror) ctx.scale(-1, 1);
-  if (kt >= 0) { const k = Math.min(1, kt / 1100); ctx.globalAlpha = Math.max(0, 1 - k * k); ctx.translate(0, gy + 2); ctx.rotate(-1.2 * Math.pow(Math.min(1, kt / 480), 2)); ctx.drawImage(((kt / 70) | 0) % 2 === 0 && kt < 420 ? whiteOf(fr) : fr, -S.cx, -S.g); }
+  if (kt >= 0) { const k = Math.min(1, kt / 1100), rgh = ragXf(d.rag, kt, 0, gy + 2, -1); ctx.globalAlpha = Math.max(0, 1 - k * k); if (!rgh) { ctx.translate(0, gy + 2); ctx.rotate(-1.2 * Math.pow(Math.min(1, kt / 480), 2)); } ctx.drawImage(((kt / 70) | 0) % 2 === 0 && kt < 420 ? whiteOf(fr) : fr, -S.cx, -S.g + rgh); }
   else { ctx.globalAlpha = vis * t; ctx.drawImage(fr, -S.cx, y); if (now - d.hitAt < 70 || (stunned && ((now / 80) | 0) % 2 === 0)) ctx.drawImage(whiteOf(fr), -S.cx, y); }
   ctx.restore(); ctx.globalAlpha = 1;
   if (kt >= 0 && kt < 1100) { const k = kt / 1100; for (let i = 0; i < 14; i++) { const ph = (k * 1.2 + i / 14) % 1; ctx.globalAlpha = 1 - ph; ctx.fillStyle = i % 3 ? '#c8a0ff' : '#ffffff'; ctx.fillRect(sx + ((i * 53) % 29) - 14, Math.round(gy - 6 - ph * 50), 2, 2); } ctx.globalAlpha = 1; }
@@ -1142,7 +1142,7 @@ function drawRemote(now, dt) {                // the other player: the picture h
   const kt = d.ko >= 0 ? Math.max(0, now - (d.koAt || d.ko)) : -1, P = d.pose || { set: idleF, info: D.idle, fi: 0, lift: 0, white: false }, hx = P.info.cx - P.info.x0, pic = P.set[Math.max(0, Math.min(P.fi, P.set.length - 1))];
   const sw = Math.max(5, Math.round(9 * (1 - P.lift / 48))), sv = Math.round(sw * 2 / 3); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(sx - sw, gy + 3, sw * 2, 2); ctx.fillRect(sx - sv, gy + 2, sv * 2, 1); ctx.fillRect(sx - sv, gy + 5, sv * 2, 1);
   ctx.save(); ctx.translate(sx, 0); ctx.scale(-1, 1);
-  if (kt >= 0) { ctx.translate(0, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, kt / 520), 2)); ctx.drawImage(vs.inv ? invOf(idleF[0]) : idleF[0], -(D.idle.cx - D.idle.x0), -62); }
+  if (kt >= 0) { const rgh = ragXf(d.rag, kt, 0, gy + 2, -1); if (!rgh) { ctx.translate(0, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, kt / 520), 2)); } ctx.drawImage(vs.inv ? invOf(idleF[0]) : idleF[0], -(D.idle.cx - D.idle.x0), -62 + rgh); }
   else { const y = gy - 60 - P.info.top - P.lift; ctx.drawImage(vs.inv && !P.white ? invOf(pic) : pic, -hx, y); if (now - d.hitAt < 70) ctx.drawImage(whiteOf(pic), -hx, y); }
   ctx.restore();
 }
@@ -1162,7 +1162,7 @@ function show(s) {
   releaseAll(); $('settings').classList.remove('on');
   js = null; vf = null; if (cf) cfReset(); if (ke) keReset(); blindOff = false; bfo = null; bfp = false; ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; inhAt = -1; inhLock = false; inhArm = -1; smd = null; impf = null; tqBlock = null; tqGrab = null; tqBeam = []; tqFx = []; ceOn = false; ceAmt = 0; ceFlameAt = 0; gDownUntil = 0; gAir = null; gAirH = 0; kickBuf = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
-  if (s === 'play') { spawnAt = pnow(); wx = 0; wvx = 0; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; sparks = []; stopMs = 0; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
+  if (s === 'play') { spawnAt = pnow(); wx = 0; wvx = 0; deb = []; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; sparks = []; stopMs = 0; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(pnow(), 1200);
 }
 
@@ -1460,7 +1460,7 @@ function drawSparks(now, dt) {
   drawBolts(now); drawBig(now); drawSMD(now, true); drawTq(now); drawTalkFx(now);
   sparks = sparks.filter(p => now - p.born < p.life); const cx = Math.round(VW / 2);
   for (const p of sparks) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 230 * dt; p.vx *= Math.exp(-3 * dt); const k = (now - p.born) / p.life, h = Math.abs(p.vx) > Math.abs(p.vy); ctx.globalAlpha = Math.max(0, Math.min(1, 1.7 * (1 - k))); ctx.fillStyle = p.c; ctx.fillRect(Math.round(cx + p.x - wx), Math.round(p.y), h ? p.len : 1, h ? 1 : p.len); }
-  ctx.globalAlpha = 1;
+  ctx.globalAlpha = 1; drawDebris(now, dt);
 }
 function onLand(k, dmg, now) {      // a blow of yours landed: the sparks, the hit-stop, a flash on the heavy ones, and the energy
   const heavy = dmg >= 20 || k === 3 || k >= 40;
@@ -1631,13 +1631,13 @@ function drawDummy(now, dt) {
   if (dummy.del && now - dummy.del > 1700) return;      // deleted: nothing of him is left
   if (dummy.airH > 0 && kt < 0) lift = dummy.airH;      // (launched by the UPPERCUT: he is raised by his flight, whatever he is drawn as)
   const w = info.w, h = info.h, hx = info.cx - info.x0, y = gy - 60 - (info.top || 0) - lift, fade = kt > 1200 ? Math.max(0, 1 - (kt - 1200) / 700) : 1;
-  ctx.fillStyle = 'rgba(0,0,0,' + 0.4 * fade + ')'; ctx.fillRect(sx - 9, gy + 3, 18, 2); ctx.fillRect(sx - 6, gy + 2, 12, 1); ctx.fillRect(sx - 6, gy + 5, 12, 1);
+  if (!(kt >= 0 && dummy.rag && dummy.rag.ko === dummy.ko)) { ctx.fillStyle = 'rgba(0,0,0,' + 0.4 * fade + ')'; ctx.fillRect(sx - 9, gy + 3, 18, 2); ctx.fillRect(sx - 6, gy + 2, 12, 1); ctx.fillRect(sx - 6, gy + 5, 12, 1); }
   ctx.save();
   if (dummy.drag && kt < 0) {                 // v1.28 BLOOD DRAG: he lies flat on the floor, feet towards Verity, and is dragged by the feet
     ctx.translate(sx + 4, gy + 1 - Math.round(hx * 0.62) + ((now / 60) & 1)); ctx.rotate(1.5 + Math.sin(now / 70) * 0.02); ctx.scale(-1, 1); ctx.globalAlpha = 1; ctx.drawImage(src, -hx, -62);
   } else if (kt >= 0) {                       // knocked out: he topples backwards about his feet, flickers, then fades away
-    ctx.translate(sx, gy + 2); ctx.rotate(1.4 * Math.pow(Math.min(1, kt / 520), 2)); ctx.scale(-1, 1);
-    ctx.globalAlpha = fade; ctx.drawImage(src, -hx, -62);
+    const rgh = ragXf(dummy.rag, kt, sx, gy + 2, 1); if (!rgh) { ctx.translate(sx, gy + 2); ctx.rotate(1.4 * Math.pow(Math.min(1, kt / 520), 2)); } ctx.scale(-1, 1);
+    ctx.globalAlpha = fade; ctx.drawImage(src, -hx, -62 + rgh);
   } else {
     const paint = () => {
       ctx.save(); ctx.translate(sx, 0); ctx.scale(mirror ? -1 : 1, 1);
@@ -1730,7 +1730,7 @@ function drawSmoke(now, dt) {                 // dust along the ground behind an
 
 function koDummy(now) {                       // the enemy goes down (every way of finishing him ends here): in a match the round ends and Gojo gets the point
   if (dummy.ko >= 0) return;                  // (only once, even if two hits finish him in the same moment)
-  dummy.air = null; dummy.airH = 0;
+  dummy.air = null; dummy.airH = 0; dummy.rag = null;
   if (vs && vs.story && vs.foe === 'verity' && !vs.endGo) { if (!vs.end) storyEndStart(pnow()); return; }      // the story fight does not end with a fall: it ends with the Reversal Red
   if (vs && vs.story && vs.foe === 'cat' && !vs.endGo) { if (!vs.end) catEndStart(pnow()); return; }      // ...and the one with the Cat ends with a cutscene (see keFrame)
   if (vs && vs.hunt) huntFoeKO(now); else if (vs && !(vs.rush && foesOf().some(f => f !== dummy && f.ko < 0))) endRound('player', 'ko', now);      // (a RUSH wave goes on while the other one still stands)
@@ -2149,7 +2149,7 @@ function beginRound(now) {                     // a fresh round: the scene is re
   spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); if (vs.net) { dummy.net = true; dummy.max = dummy.hp = dummy.shown = PHP; dummy.x = dummy.tx = wx + NET_G0; dummy.pose = null; vs.toSent = false; }      // (the Wi-Fi fight: the other player, drawn from his phone's pictures)
   vdg = cst = null; smear.length = drip.length = 0; cProj = []; if (vs.rush) rushSpawn(t); else if (vs.cv) initCurse(dummy, vs.cv, wx + Math.max(54, Math.min(90, (VW >> 1) - 70)), vs.hard ? 1.5 : 1);      // (a challenge: the curse steps in; a RUSH wave: one or two)
   $('vsres').classList.remove('on');      // (REMATCH and NEXT start a new fight: the result screen goes away. Since v7.12 this line had slipped into a comment, so the result screen stayed on top of the new fight)
-  vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; wvx = 0; vh = null; ac = null; acWin = 0; acGo = false; acPend = -1; redAt = -1; redLast = -1e9; escQ = -1; flow = 0; flowOn = false; flowLast = -1; flowSw = -1; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
+  vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; wvx = 0; deb = []; vs.rag = null; vh = null; ac = null; acWin = 0; acGo = false; acPend = -1; redAt = -1; redLast = -1e9; escQ = -1; flow = 0; flowOn = false; flowLast = -1; flowSw = -1; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
   if (vs.retry) { vs.round = 1 + vs.retry; vs.hp = vs.sh = PHP / 2; dummy.hp = dummy.shown = dummy.lock = 1; vs.morphed = true; blackUntil = t + 700; } else blackUntil = 0;      // after a failed red: Gojo at half health, Verity as he was (1 health left, so no smoke change); the picture comes up from black
 }
 // ---------------------------------------------------------------- v1.29 THE STATE TRACKER and the COMBO ESCAPE. A small box by your health bar says what state you are in: green FREE (you can move) or red (HIT: reeling from a blow, DOWN: on the floor, STUN: the JUMPSCARE, the Cat's glove or dizzy, HELD: the enemy Cat's ULTIMATE has you). While you are red, DASH gets you out of it: the stun is gone, you dash (with the dash's own invulnerable start), and when the dash ends you strike back with the LAST M1 of your combo; the dash is then on a cooldown of 4 seconds (the DASH button counts it down). Not possible when you are in the air from a launch, held by the ULTIMATE, in a cutscene or while the DOMAIN lasts.
@@ -3300,10 +3300,10 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   const x = cx - (info.cx - info.x0) + ox, y = gy - 60 - (info.top || 0) - py + oy;
   const sw = Math.max(ballOn ? 3 : 5, Math.round((ballOn ? 6 : 9) * (1 - py / (ballOn ? 60 : 48)))), sv = Math.round(sw * 2 / 3);      // the ground shadow stays put and shrinks while he is in the air
   const vap = vs.who === 'enemy' && vs.why === 'fatal' && (vs.ph === 'ko' || vs.ph === 'over');      // (the enemy's FATALITY: he is gone until the next round)
-  ctx.fillStyle = 'rgba(0,0,0,0.4)'; if (!vap) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
+  ctx.fillStyle = 'rgba(0,0,0,0.4)'; if (!vap && !rgOn()) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
   const ry = Math.round(info.h * (1 - e)), gko = vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // (spawn: he materialises from the feet up; beaten: he topples backwards and stays down until the next round)
   ctx.save();
-  if (vap) { /* gone */ } else if (gko >= 0) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); ctx.drawImage(vfr('idle', 0, false), -32, -62); }
+  if (vap) { /* gone */ } else if (gko >= 0) { const rgh = ragXf(vs.rag, gko, cx, gy + 2, -1); if (!rgh) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); } ctx.drawImage(vfr('idle', 0, false), -32, -62 + rgh); }
   else { ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, x, y); if (stun && hf < 0) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(src), x, y); } }
   ctx.restore(); drawGiantNow('foe');
   if (v.form === 'smoke1') smokePuffs(cx, gy - 28, fa / 450); else if (v.form === 'smoke2') smokeBig(cx, fa / 1000);
@@ -3712,11 +3712,11 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   if (lf >= 0) pendingGiants.push({ who: 'me', sx: tz ? cx - (wx - tz.w0) : cx, ff: Math.max(0, now - lpAt) * CT.tossFps / 1000, dir: 1, inv: false, strip: tz ? 'hugegrab' : 'huge' });      // (the giant appears behind him)
   const sw = Math.max(5, Math.round(9 * (1 - py / 48))), sv = Math.round(sw * 2 / 3);      // the ground shadow stays put and shrinks while he is in the air
   const vap = vs.who === 'enemy' && vs.why === 'fatal' && (vs.ph === 'ko' || vs.ph === 'over');      // (a FATALITY of the enemy: he is gone until the next round)
-  ctx.fillStyle = 'rgba(0,0,0,0.4)'; if (!vap) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
+  ctx.fillStyle = 'rgba(0,0,0,0.4)'; if (!vap && !rgOn()) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
   const ry = Math.round(I[1] * (1 - e)), gko = vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // (spawn: he materialises from the feet up; beaten: he topples backwards and stays down until the next round)
   drawGiantNow('me');      // (his giant stands behind him: it is in front of the enemy and behind his own picture)
   ctx.save();
-  if (vap) { /* gone */ } else if (gko >= 0) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); ctx.drawImage(cfr('idle', 0, false), -32, -63); }
+  if (vap) { /* gone */ } else if (gko >= 0) { const rgh = ragXf(vs.rag, gko, cx, gy + 2, -1); if (!rgh) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); } ctx.drawImage(cfr('idle', 0, false), -32, -63 + rgh); }
   else { ctx.beginPath(); ctx.rect(x, y + ry, I[0], I[1] - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, x, y); if (fear && hf < 0) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(src), x, y); } }
   ctx.restore();
   drawGiantNow('foe'); drawCst(now);      // (the enemy Cat's giant, if he summoned one: in front of the player, behind the enemy)
@@ -3978,13 +3978,13 @@ function drawScene(now, dt) {
   const vap = vs && vs.who === 'enemy' && vs.why === 'fatal' && (vs.ph === 'ko' || vs.ph === 'over');      // the enemy's FATALITY: Gojo is gone until the next round
   const sw = Math.max(5, Math.round(9 * (1 - lift / 48))), sv = Math.round(sw * 2 / 3);   // ground shadow stays put and shrinks while he is in the air
   ctx.fillStyle = 'rgba(0,0,0,0.4)';
-  if (!vap) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
+  if (!vap && !rgOn()) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
 
   const ry = Math.round(info.h * (1 - e));    // spawn: materialise from the feet up
   const gko = vs && vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // the enemy finished him in a match: after the hit-stop he topples backwards (like the enemy does) and stays down until the next round
   const paintMe = again => {      // (Gojo's picture: painted here, and once more on top of everything the DOMAIN shows)
   ctx.save();
-  if (vap) { /* gone */ } else if (gko >= 0) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); { const ki = (yj ? YUF.norm.idle : idleF)[0]; ctx.drawImage(vs && vs.meInv ? invOf(ki) : ki, -((yj ? YU.idle : D.idle).cx - (yj ? YU.idle : D.idle).x0), -62); } }
+  if (vap) { /* gone */ } else if (gko >= 0) { const rgh = ragXf(vs.rag, gko, cx, gy + 2, -1); if (!rgh) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); } { const ki = (yj ? YUF.norm.idle : idleF)[0]; ctx.drawImage(vs && vs.meInv ? invOf(ki) : ki, -((yj ? YU.idle : D.idle).cx - (yj ? YU.idle : D.idle).x0), -62 + rgh); } }
   else {
     ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip();
     ctx.globalAlpha = Math.min(1, t * 2);
@@ -4882,7 +4882,7 @@ function huntCheck(now) {
   if (h.goal !== 'b' && ready && H.boss === 'no') huntBoss(now);
 }
 function huntFound(o, now) {
-  const H = vs.hunt, h = H.h; o.found = true; spark(o.x, gy - 8, 10, ['#ffffff', '#ffd34d', '#fff2a0'], false, 1);
+  const H = vs.hunt, h = H.h; o.found = true; if (physOn()) propBreak(o, now); spark(o.x, gy - 8, 10, ['#ffffff', '#ffd34d', '#fff2a0'], false, 1);
   if (o.w === 'i') { H.items++; say('TALISMAN ' + H.items + '/' + H.need.i, o.x, '#ffd34d', 8, now); snd('finisher'); }
   else if (o.w === 'k') { H.clues++; H.msg = CLUE_TXT[o.ci % CLUE_TXT.length]; H.msgAt = now; say('CLUE ' + H.clues + '/' + H.need.k, o.x, '#59b8ff', 8, now); snd('block'); }
   else if (o.w === 'b') { H.boss = 'out'; huntSpawn(h.boss, h.hm, o.x, true, now); say('IT WAS THE CURSE!', o.x, '#ff6a5a', 12, now); shakeUntil = now + 240; shakeAmp = 3; snd('stun'); }
@@ -4894,7 +4894,7 @@ function huntStrike(now) {      // your swing reaches the street: the crates bre
   const H = vs.hunt; if (!H || H.over || vs.ph !== 'fight') return;
   for (const o of H.objs) {
     if (o.found || o.sw === atkAt) continue; const g = o.x - wx; if (g < -10 || g > 36) continue; o.sw = atkAt;
-    if (o.k === 'c' && --o.hp > 0) { say('CRACK', o.x, '#c9a36a', 8, now); spark(o.x, gy - 8, 4, ['#b07a3a', '#8a5a2b'], false, 1); snd('smack', 1); continue; }
+    if (o.k === 'c' && --o.hp > 0) { say('CRACK', o.x, '#c9a36a', 8, now); spark(o.x, gy - 8, 4, ['#b07a3a', '#8a5a2b'], false, 1); snd('smack', 1); o.wob = now; if (physOn()) debBurst(o.x, 8, 4, DEB.wood, 60); continue; }
     huntFound(o, now);
   }
 }
@@ -4905,6 +4905,8 @@ function huntTick(now, dt) {      // every frame of a hunt, from vsTick
   const H = vs.hunt, h = H.h; if (H.over) return;
   if (wx < 0) { wx = 0; wallMe(-1, now); wvx = Math.max(0, wvx); } else if (wx > h.len) { wx = h.len; wallMe(1, now); wvx = Math.min(0, wvx); }
   for (const f of vs.foes) { if (f.ko >= 0) continue; if (f.x < -30) { f.x = -30; wallFoe(f, now); } else if (f.x > h.len + 90) { f.x = h.len + 90; wallFoe(f, now); } }
+  for (const o of H.objs) if (o.tp) propFx(o, now);
+  if (physOn()) propBump(now);
   H.vis[Math.max(0, Math.min(H.vis.length - 1, Math.floor(wx / 20)))] = 1;
   if (senseReq) { senseReq = false; if (!lacks('sn') && now >= H.sCd && !redWhy(now)) { H.sOn = now + 3000 * paceBase(); H.sCd = now + 8000 * paceBase(); say('SENSE!', wx, '#7af0ff', 8, now); snd('slowin'); flash(now, 140, 0.12); } }
   for (const o of H.objs) { if (o.found || (o.w !== 'b' && o.w !== 't')) continue; if (Math.abs(o.x - wx) < 20) { o.near += dt; if (o.near > 1.4) huntFound(o, now); } else o.near = 0; }      // (a hidden curse or a trap that you stand next to for a while comes out by itself)
@@ -4928,9 +4930,9 @@ function huntDraw(now) {      // the street's things, behind the fighters; what 
   for (const o of H.objs) {
     const sx = Math.round(cx + o.x - wx); if (sx < -30 || sx > VW + 30) continue;
     const dx = Math.abs(o.x - wx), mark = sensed && dx < 170, col = o.w === 'i' ? '#ffd34d' : o.w === 'k' ? '#59b8ff' : o.w === 'b' ? '#ff4a4a' : o.w === 't' ? '#ff9a3a' : '#7c8096', sym = o.w === 'i' ? '*' : o.w === 'k' ? 'i' : o.w === 'e' ? 'x' : '!';
-    if (o.found) { if (o.k === 'c') { ctx.fillStyle = '#5a3a1a'; ctx.fillRect(sx - 6, gy - 2, 5, 2); ctx.fillStyle = '#8a5a2b'; ctx.fillRect(sx + 1, gy - 3, 5, 3); } continue; }
+    if (o.found) { if (o.k === 'c') { ctx.fillStyle = '#5a3a1a'; ctx.fillRect(sx - 6, gy - 2, 5, 2); ctx.fillStyle = '#8a5a2b'; ctx.fillRect(sx + 1, gy - 3, 5, 3); } else if (o.tp) { const c = tipAt(o.tp, now - o.tp.at), px = sx + o.tp.dir * 8; ctx.save(); ctx.translate(px, gy); ctx.rotate(o.tp.dir * c.th); ctx.translate(-px, -gy); huntProp(o.p, sx, gy); ctx.restore(); } continue; }
     if (o.k === 'g') { if (mark) { ctx.globalAlpha = 0.55; ctx.fillStyle = col; ctx.fillRect(sx - 5, gy - 22, 10, 22); ctx.globalAlpha = 1; } else if (dx < 30 && ((now / 350) | 0) % 2 === 0) { ctx.fillStyle = '#fff3b0'; ctx.fillRect(sx + 3, gy - 14, 1, 1); ctx.fillRect(sx - 4, gy - 8, 1, 1); } }
-    else { huntProp(o.p, sx, gy); if (mark) { ctx.globalAlpha = 0.8; ctx.fillStyle = col; ctx.fillRect(sx - 11, gy - 1, 22, 1); ctx.fillRect(sx - 11, gy - 32, 22, 1); ctx.fillRect(sx - 11, gy - 32, 1, 32); ctx.fillRect(sx + 10, gy - 32, 1, 32); ctx.globalAlpha = 1; } }
+    else { const wb = o.wob && now - o.wob < 260 ? Math.round(Math.sin((now - o.wob) / 22) * (1 - (now - o.wob) / 260) * 2) : 0; huntProp(o.p, sx + wb, gy); if (mark) { ctx.globalAlpha = 0.8; ctx.fillStyle = col; ctx.fillRect(sx - 11, gy - 1, 22, 1); ctx.fillRect(sx - 11, gy - 32, 22, 1); ctx.fillRect(sx - 11, gy - 32, 1, 32); ctx.fillRect(sx + 10, gy - 32, 1, 32); ctx.globalAlpha = 1; } }
     if (mark) pxt(sym, sx, gy - 36 - ((now / 160) % 2 | 0), col, 8, 'center');
   }
   if (sensed) { const k = 1 - (H.sOn - now) / (3000 * paceBase()), r = 16 + k * 150; ctx.globalAlpha = 0.5 * (1 - k); ctx.strokeStyle = '#7af0ff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, gy - 18, r, 0, 6.3); ctx.stroke(); ctx.globalAlpha = 1; }
@@ -5022,23 +5024,122 @@ function physCollide(now, dt) {      // every frame, after the movements: the bo
 }
 function wallFoe(f, now) {      // an enemy slides against the end of the street
   const v = Math.abs(f.vx * mScale(massOf(f)));
-  if (physOn() && v > 160) { const dm = Math.round((v - 160) * 0.12); if (dm > 0) { f.hp = Math.max(0, f.hp - dm); f.hitAt = now; say('WALL! ' + dm, f.x, '#ffd34d', 8, now); shakeUntil = now + 120; shakeAmp = 2; snd('smack', 1); if (f.hp <= 0) foeSwap(f, () => koDummy(now)); } }
+  if (physOn() && v > 160) { const dm = Math.round((v - 160) * 0.12); if (dm > 0) { f.hp = Math.max(0, f.hp - dm); f.hitAt = now; say('WALL! ' + dm, f.x, '#ffd34d', 8, now); debBurst(f.x, 12, 6, DEB.stone, 90); shakeUntil = now + 120; shakeAmp = 2; snd('smack', 1); if (f.hp <= 0) foeSwap(f, () => koDummy(now)); } }
   f.vx = physOn() ? -f.vx * 0.3 : 0;
 }
 function wallMe(side, now) {      // you slide against the end of the street
   const v = Math.abs(wxv);
-  if (physOn() && v > 150) { const dm = Math.round((v - 150) * 0.1); if (dm > 0) { vsHurt(dm, now); say('WALL! -' + dm, wx, '#ff9a5a', 8, now); shakeUntil = now + 120; shakeAmp = 2; snd('hit', 1); } wxv = -wxv * 0.3; }
+  if (physOn() && v > 150) { const dm = Math.round((v - 150) * 0.1); if (dm > 0) { vsHurt(dm, now); say('WALL! -' + dm, wx, '#ff9a5a', 8, now); debBurst(wx, 12, 6, DEB.stone, 90); shakeUntil = now + 120; shakeAmp = 2; snd('hit', 1); } wxv = -wxv * 0.3; }
   else if (wxv * side > 0) wxv = 0;
 }
 function fallHit(d, vi, now) {      // an enemy comes down hard: a fall of more than 230 px/s hurts, one of more than 200 bounces
   if (!physOn() || vi < 200) return false;
+  debBurst(d.x, 0, vi > 230 ? 8 : 4, DEB.dust, vi * 0.3);
   if (vi > 230 && d.hp > 0) { const dm = Math.round((vi - 230) * 0.25); if (dm > 0) { d.hp = Math.max(0, d.hp - dm); d.hitAt = now; say('FALL ' + dm, d.x, '#ffd34d', 8, now + 60); if (d.hp <= 0) foeSwap(d, () => koDummy(now)); } }
   d.air = airMake(now, 0, vi * 0.32, 650, 'bounce'); return true;
 }
 function fallMe(vi, now) {      // you come down hard (the enemy's FACE KICK): the same as for him
   if (!physOn() || !vs || vi < 200) return false;
+  debBurst(wx, 0, vi > 230 ? 8 : 4, DEB.dust, vi * 0.3);
   if (vi > 230) { const dm = Math.round((vi - 230) * 0.25); if (dm > 0) { vsHurt(dm, now); say('FALL -' + dm, wx, '#ff9a5a', 8, now + 60); } }
   gAir = airMake(now, 0, vi * 0.32, 650, 'bounce'); return true;
+}
+// ---------------------------------------------------------------- v1.37 PHYSICS II: a knocked-out body TUMBLES (a rigid body: it is thrown with the speed of the last blow, spins, falls under gravity 700 px/s^2, bounces on the floor at 35%, slides with friction and flops flat) and the street BREAKS (debris pieces that fall, bounce and settle; crates burst, props are knocked over and stay as wrecks). Not in a Wi-Fi fight or the story (they keep the old topple).
+const RAG_G = 700, RAG_E = 0.35;
+function ragNew(vx, vy, w, hh, hw, dirW, ko) { return { vx0: vx, vy0: vy, w0: w, hh, hw, dirW, ko, c: null, seen: 0 }; }      // vx along the way he falls (px/s), vy up, w the spin (rad/s), hh and hw the half height and half width of the body
+function ragAt(r, t) {      // where the tumbling body is t ms after the blow: x px along the fall, h px (its middle) above the floor, a its angle: simulated in steps of 8 ms and remembered, so asking again costs nothing
+  let c = r.c; if (!c || t < c.t) c = r.c = { t: 0, x: 0, h: r.hh, vx: r.vx0, vy: r.vy0, a: 0, w: r.w0, rest: false, ev: [] };
+  while (!c.rest && c.t + 8 <= t) {
+    const dt = 0.008; c.t += 8; c.vy -= RAG_G * dt; c.h += c.vy * dt; c.x += c.vx * dt; c.a += c.w * dt;
+    const low = r.hh * Math.abs(Math.cos(c.a)) + r.hw * Math.abs(Math.sin(c.a));      // (how far its lowest corner is below its middle)
+    if (c.h > low) continue;
+    c.h = low;
+    if (c.vy < -40) { if (c.vy < -70) c.ev.push([c.t, c.x, -c.vy]); c.vy = -c.vy * RAG_E; c.vx *= 0.8; c.w *= 0.6; continue; }      // it hits the floor: a bounce, a thud, and some of the speed and the spin is lost
+    c.vy = 0; c.vx = slideV(c.vx, dt);      // lying or sliding on the floor: friction, and it flops down flat
+    const tgt = Math.PI / 2 + Math.round((c.a - Math.PI / 2) / Math.PI) * Math.PI;
+    c.w += (tgt - c.a) * 70 * dt; c.w -= c.w * 10 * dt;
+    if (Math.abs(c.vx) < 0.5 && Math.abs(c.w) < 0.03 && Math.abs(tgt - c.a) < 0.02) { c.a = tgt; c.w = 0; c.vx = 0; c.h = r.hw; c.rest = true; }
+  }
+  return c;
+}
+function ragXf(r, t, bx, by, sgn) {      // puts the canvas in the middle of a tumbling body whose feet stood at bx, by (it falls to the side sgn: -1 left, 1 right) and draws its shadow; returns the half height of the body, 0 if it does not tumble (the old topple is drawn then)
+  if (!r) return 0;
+  const c = ragAt(r, t), w = Math.max(5, Math.round(9 * (1 - Math.min(1, (c.h - r.hw) / 48)))), sx = Math.round(bx + sgn * c.x);
+  ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(sx - w, by + 1, w * 2, 2); ctx.fillRect(sx - Math.round(w * 0.66), by, Math.round(w * 1.32), 1); ctx.fillRect(sx - Math.round(w * 0.66), by + 3, Math.round(w * 1.32), 1);
+  ctx.translate(sx, Math.round(by - c.h)); ctx.rotate(sgn * c.a); return r.hh;
+}
+const rgOn = () => !!(vs && vs.rag && vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && pnow() >= vs.koAt);      // (you are the one tumbling: the old shadow stays away, the tumble draws its own)
+function ragLaunch(vxW, dirW, hh, hw, ms, ko) {      // the body starts to tumble: vxW = how fast the last blow threw it (px/s along the world), dirW = which way it falls (-1 left, 1 right), ms = how light it is (the light hop higher)
+  const v = Math.max(-260, Math.min(260, vxW * dirW)) * 0.6, s = Math.abs(v);      // (the body leaves with 60% of the push that slid it before, at most 156 px/s)
+  return ragNew(v, Math.min(130, (40 + s * 0.45) * Math.max(0.5, Math.min(1.5, ms))), (v >= 0 ? 1 : -1) * Math.min(9, 3 + s / 40), hh, hw, dirW, ko);
+}
+function ragFx(r, wxBody, now) {      // each time the body hits the floor: dust, a thud and some debris
+  const c = ragAt(r, now - r.t0);
+  while (r.seen < c.ev.length) {
+    const e = c.ev[r.seen++], xw = wxBody + r.dirW * e[1], vi = e[2];
+    puff(xw, vi > 150 ? 4 : 2); snd('land', Math.min(2, vi / 130)); if (vi > 90) debBurst(xw, 0, Math.min(8, 2 + ((vi / 60) | 0)), DEB.dust, vi * 0.35);
+    if (vi > 170) { shakeUntil = now + 90; shakeAmp = 2; }
+  }
+}
+function ragTick(now) {      // every frame: a body that has just been knocked out starts to tumble (from the speed it was thrown with), and thuds when it lands
+  if (!physOn() || state !== 'play') return;
+  for (const d of (vs && vs.foes && vs.foes.length ? vs.foes : dummy ? [dummy] : [])) {
+    if (d.ko < 0) continue;
+    const t0 = d.koAt || d.ko;
+    if ((!d.rag || d.rag.ko !== d.ko) && now >= t0 && now - t0 < 1000) {      // (a fresh knock-out only: the fatalities keep their own)
+      const S = d.curse ? CSP[d.curse.id] : null, ms = mScale(massOf(d)), dirW = d.curse ? (d.x >= wx ? 1 : -1) : 1;
+      d.rag = ragLaunch((d.vx || 0) * ms, dirW, S ? Math.max(10, Math.min(45, (S.g - (S.top || 0)) / 2)) : 31, S ? Math.max(5, Math.min(20, S.hw * 0.5)) : 8, ms, d.ko); d.rag.t0 = t0; d.vx = 0;
+    }
+    if (d.rag && d.rag.ko === d.ko) ragFx(d.rag, d.x, now);
+  }
+  if (vs && (vs.ph === 'ko' || vs.ph === 'over') && vs.who === 'enemy' && vs.why === 'ko') {      // (you are knocked out)
+    if ((!vs.rag || vs.rag.ko !== vs.koAt) && now >= vs.koAt && now - vs.koAt < 1000) { const ms = pScale(); vs.rag = ragLaunch(wxv || 0, -1, 31, 8, ms, vs.koAt); vs.rag.t0 = vs.koAt; wxv = 0; wvx = 0; }
+    if (vs.rag && vs.rag.ko === vs.koAt) ragFx(vs.rag, wx, now);
+  }
+}
+// DEBRIS: little pieces that fly, fall, bounce and lie about until they fade
+let deb = [];
+const DEB = { wood: ['#b07a3a', '#8a5a2b', '#5a3a1a'], stone: ['#9a8fb0', '#6d5f86', '#5b516b'], metal: ['#9aa2b8', '#6d7488', '#4a5064'], glass: ['#e8f6ff', '#9fd8ff', '#2c63c9'], dust: ['#b8b0a0', '#8a8478', '#6a6458'], doll: ['#e8d6c0', '#a02a3a', '#2a1a22'], lamp: ['#ffd27a', '#3a3f55'], sign: ['#c9b27a', '#6a2a2a'] };
+const PDEB = { crate: 'wood', bin: 'metal', vend: 'glass', statue: 'stone', doll: 'doll', lamp: 'lamp', sign: 'sign' };
+function debBurst(x, h, n, cols, spd, size) {      // n pieces fly out of the world place x, h px above the floor
+  const t = pnow();
+  for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI, v = spd * (0.4 + Math.random() * 0.8); deb.push({ x: x + Math.random() * 6 - 3, h: h + Math.random() * 4, vx: Math.cos(a) * v, vy: Math.sin(a) * v * 0.9 + 20, dz: Math.random() * 4, s: size || (Math.random() < 0.3 ? 2 : 1), c: cols[i % cols.length], born: t, life: 2400 + Math.random() * 1400, rest: false }); }
+  if (deb.length > 100) deb.splice(0, deb.length - 100);
+}
+function drawDebris(now, dt) {
+  if (!deb.length) return;
+  deb = deb.filter(p => now - p.born < p.life); const cx = Math.round(VW / 2);
+  for (const p of deb) {
+    if (!p.rest) { p.vy -= 650 * dt; p.h += p.vy * dt; p.x += p.vx * dt; if (p.h <= 0) { p.h = 0; if (p.vy < -35) { p.vy = -p.vy * 0.42; p.vx *= 0.7; } else { p.vy = 0; p.vx *= Math.exp(-9 * dt); if (Math.abs(p.vx) < 2) p.rest = true; } } }
+    const k = (now - p.born) / p.life; ctx.globalAlpha = k > 0.75 ? Math.max(0, (1 - k) / 0.25) : 1; ctx.fillStyle = p.c;
+    ctx.fillRect(Math.round(cx + p.x - wx), Math.round(gy + p.dz - p.h - p.s), p.s + (p.s > 1 ? 1 : 0), p.s);
+  }
+  ctx.globalAlpha = 1;
+}
+// PROPS: a prop that is knocked over falls about its foot (gravity torque), hits the ground, bounces a little and stays there as a wreck
+function tipAt(tp, t) {      // tp.dir the side it falls to; th the angle (0 upright to pi/2 flat), om its speed (rad/s); ev = when it first hit the ground (ms), 0 before
+  let c = tp.c; if (!c || t < c.t) c = tp.c = { t: 0, th: 0.05, om: 0.4, rest: false, ev: 0 };
+  while (!c.rest && c.t + 8 <= t) {
+    c.t += 8; c.om += 16 * (Math.sin(c.th) + 0.1) * 0.008; c.th += c.om * 0.008;
+    if (c.th >= Math.PI / 2) { c.th = Math.PI / 2; if (c.om > 0.8) { if (!c.ev) c.ev = c.t; c.om = -c.om * 0.3; } else { c.om = 0; c.rest = true; } }
+  }
+  return c;
+}
+function propBreak(o, now) {      // a crate bursts / a prop is hit: planks fly; a prop falls over (unless it was a curse or a trap in disguise: that bursts)
+  const cols = DEB[PDEB[o.p || 'crate']] || DEB.dust;
+  if (o.k === 'c') { debBurst(o.x, 6, 12, DEB.wood, 95); debBurst(o.x, 8, 3, DEB.wood, 60, 3); return; }
+  if (o.k !== 'p') return;
+  if (o.w === 'b' || o.w === 't') { debBurst(o.x, 10, 14, cols, 110); return; }
+  o.tp = { at: now, dir: o.x >= wx ? 1 : -1, c: null, thud: false }; debBurst(o.x, 14, 4, cols, 50);
+}
+function propBump(now) {      // a body that slides or tumbles fast through the street shakes whatever stands in its way: the prop wobbles and chips fly (it is not opened by it)
+  const H = vs.hunt, L = [];
+  for (const f of vs.foes) { if (f.ko < 0) { const v = Math.abs(f.vx * mScale(massOf(f))); if (v > 100) L.push([f.x, v]); } else if (f.rag && f.rag.ko === f.ko) { const c = ragAt(f.rag, now - f.rag.t0); if (!c.rest && Math.abs(c.vx) > 100 && c.h < 40) L.push([f.x + f.rag.dirW * c.x, Math.abs(c.vx)]); } }
+  for (const [bx, v] of L) for (const o of H.objs) { if (o.found || (o.k !== 'c' && o.k !== 'p') || Math.abs(o.x - bx) > 12 || now - (o.bumpAt || -1e9) < 500) continue; o.bumpAt = o.wob = now; debBurst(o.x, 10, 3, DEB[PDEB[o.p || 'crate']] || DEB.dust, 40 + v * 0.2); snd('smack', 0.6); }
+}
+function propFx(o, now) {      // a toppled prop hits the ground
+  if (!o.tp || o.tp.thud) return; const c = tipAt(o.tp, now - o.tp.at); if (!c.ev) return;
+  o.tp.thud = true; const px = o.x + o.tp.dir * 15; debBurst(px, 2, 8, DEB[PDEB[o.p]] || DEB.dust, 85); puff(px, 3); snd('smack', 1); shakeUntil = now + 100; shakeAmp = 1;
 }
 function tick(t) {
   requestAnimationFrame(tick);                // schedule first so one bad frame can't stop the loop
@@ -5054,6 +5155,7 @@ function tick(t) {
   if (still) { stopMs = Math.max(0, stopMs - rdt); vOff += now - last; now = last; } else if (state !== 'play') stopMs = 0;
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
   if (freePlay()) trainStep(now, dt);
+  ragTick(now);
   trainDraw(now);
   if (stance === 'down' && stPrev === 'stand' && vs && state === 'play') ceSpend(CE_COST.crouch, now); stPrev = stance;      // (the crouch of every fighter, the Cat smashing himself flat: 3% of the energy)
   if (lanRole === 'in' && state === 'play') lanTick();      // (the Wi-Fi fight: his pictures are picked up every frame, not every 0.15 s)
