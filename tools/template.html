@@ -137,7 +137,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.39</small>
+    <small id="ver">V1.40</small>
   </div>
 </section>
 
@@ -5266,28 +5266,43 @@ function cloth(E, src, ox, oy, flip, kind, dt) {      // the hair and the coat f
 }
 // ---------------------------------------------------------------- v1.39 FREDDY KRUEGER: a CURSED SPIRIT fighter like Verity and the Cartoon Cat (16 bit, 64 x 64 pictures, tools/freddy_art.py makes them from the picture the game's author gave). For now he only STANDS: 15 idle frames, he cannot move or attack yet (the buttons do nothing), but he can be pushed and hurt, flashes when he is hit and tumbles when he is knocked out. You can play him in FREE PLAY and in VERSUS (as your fighter; he is not offered as the enemy).
 const FRED_IMG = new Image(); FRED_IMG.src = '__FREDDY__';
-const FRED_INFO = { w: 64, h: 64, cx: 30, x0: 0, top: 1 }, FRC = new Map();      // (cx: the column of the picture that stands at the middle of the screen: between his feet)
-function fredF(i) {      // frame i of his idle (15 frames, looping) as a canvas of 64 x 64 (EMPTY until the sheet has loaded)
-  i = ((Math.floor(i) % 15) + 15) % 15; let c = FRC.get(i); if (c) return c;
+const FRED_INFO = { w: 64, h: 64, cx: 31, x0: 0, top: 1 }, FRC = new Map();      // (cx: the column of the picture that stands at the middle of the screen: between his feet)
+function fredF(i, walk) {      // frame i of his idle (15 frames, looping), or of his WALK when walk is true (15 frames too), as a canvas of 64 x 64 (EMPTY until the sheet has loaded)
+  i = ((Math.floor(i) % 15) + 15) % 15; const key = i + (walk ? 15 : 0); let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
-  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, 0, 64, 64, 0, 0, 64, 64); FRC.set(i, c); return c;
+  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, walk ? 64 : 0, 64, 64, 0, 0, 64, 64); FRC.set(key, c); return c;
 }
+// THE WALK (v1.40): an elegant glide. The cycle (15 frames = two steps) is driven by the GROUND he covers, one step per 15 px, so a foot on the ground never slides (the picture's foot moves back exactly as fast as he moves forward); he walks forward at 44 px/s and back at 32 (the cycle plays the other way round); when he stops, the step in progress is finished slowly up to the passing pose (the feet together) and he stands again; a blow, the Cat's hold or the enemy's body stops him.
+const FRED_FWD = 44, FRED_BACK = 32, FRED_STEP = 15, FRED_PASS = 4.65;      // px/s forward, px/s back, px of one step, the frame of the passing pose (the other one is 7.5 frames on)
+let fredPh = 0, fredWalk = false, fredDir = 1, fredStep = -1, fredTg = 0;      // where he is in the cycle (0-15), whether the walk is showing, the way he went last, which footfall was the last
 function freddyScene(now, dt) {      // one frame of a match with FREDDY as the player: no controls (he cannot move or attack yet), then the picture (the enemy, the HUD and the effects are the shared ones)
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3), cx = Math.round(VW / 2); setDomUI(now);
-  jumpReq = atkReq = lpReq = dashReq = crReq = domReq = ceReq = senseReq = blockHeld = false; jumpAt = teleAt = atkAt = dgAt = blkAt = blkEnd = -1; atkQ = false; stance = 'stand'; wvx = 0; gojoLift = 0; gojoGone = false;
+  jumpReq = atkReq = lpReq = dashReq = crReq = domReq = ceReq = senseReq = blockHeld = false; jumpAt = teleAt = atkAt = dgAt = blkAt = blkEnd = -1; atkQ = false; stance = 'stand'; gojoLift = 0; gojoGone = false;      // (he cannot jump, attack, dash, block or crouch yet: only walk)
   let hf = -1; if (hurtAt >= 0) { hf = Math.floor(Math.max(0, now - hurtAt) * RX_FPS[hurtK] / 1000); if (hf >= 10) { hurtAt = -1; hf = -1; hurtEnd = now; } }
-  const nm = hf >= 0 ? 'hurt' : 'idle'; if (nm !== mode) { mode = nm; modeAt = now; stepN = -1; }
-  playerSlide(dt); physCollide(now, dt);      // (knocked back by the enemy: the world slides past, then friction stops it)
+  const dir = t >= 1 && hf < 0 && now >= pStun && (!vs || vs.ph === 'fight') ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0, w0 = wx;      // (no walking while he appears, flinches, is held or between the rounds)
+  { const want = dir * (dir > 0 ? FRED_FWD : FRED_BACK), a = want === 0 ? 300 : fredTg * want < 0 ? 400 : 200; fredTg += Math.max(-a * dt, Math.min(a * dt, want - fredTg)); }      // (the speed he WANTS grows softly, in a fifth of a second, and fades in half as long: he glides; his legs' strength against the enemy's body stays that of every walker)
+  wx += walkVel(fredTg, dt, false) * dt; const w1 = wx;
+  playerSlide(dt); const w2 = wx; physCollide(now, dt);      // (knocked back by the enemy: the world slides past, then friction stops it)
+  let eff = (w1 - w0) + (wx - w2); if (eff * (w1 - w0) < 0) eff = 0;      // the ground he really covered on foot (a blow's slide does not count, the enemy's body takes it back)
+  const moving = Math.abs(eff) > Math.max(0.001, 0.2 * Math.abs(w1 - w0));      // (pushing against the enemy's body is standing, not walking: less than a fifth of the step got through)
+  if (moving) { if (!fredWalk) { fredWalk = true; fredPh = FRED_PASS + 7.5; fredStep = -1; } fredPh = (((fredPh + eff * 15 / (2 * FRED_STEP)) % 15) + 15) % 15; fredDir = eff > 0 ? 1 : -1; }
+  else if (fredWalk) {      // he has stopped: the step goes on slowly to the passing pose, then he stands
+    const q = (((fredPh - FRED_PASS) % 7.5) + 7.5) % 7.5, left = fredDir > 0 ? (7.5 - q) % 7.5 : q, adv = Math.min(left, 14 * dt);
+    fredPh = (((fredPh + fredDir * adv) % 15) + 15) % 15; if (left - adv < 0.05) fredWalk = false;
+  }
+  if (hf >= 0) fredWalk = false;
+  const nm = hf >= 0 ? 'hurt' : fredWalk ? (fredDir > 0 ? 'fwd' : 'back') : 'idle'; if (nm !== mode) { mode = nm; modeAt = now; stepN = -1; }
+  if (fredWalk && moving) { const si = Math.floor(fredPh / 7.5); if (si !== fredStep) { if (fredStep >= 0) snd('step', si & 1, true); fredStep = si; } }      // (a soft footfall each time a foot touches down)
   ctx.save();
   shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }
   ctx.imageSmoothingEnabled = false;
   drawBackdrop(now);
   ctx.fillStyle = 'rgba(220,210,255,0.35)';      // wind streaks
-  for (const p of parts) { p.x -= p.v * dt; if (p.x < -p.l) p.x = VW; ctx.fillRect(p.x | 0, p.y | 0, p.l, 1); }
-  if (sfx) sfx.windPush(1);
+  for (const p of parts) { p.x -= (p.v + dir * 45) * dt; if (p.x < -p.l) p.x = VW; else if (p.x > VW) p.x = -p.l; ctx.fillRect(p.x | 0, p.y | 0, p.l, 1); }
+  if (sfx) sfx.windPush(mode === 'fwd' ? 1.3 : 1);
   drawSmoke(now, dt);
   drawBloodFloor(now, dt); drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
-  const info = FRED_INFO, py = gAir ? gAirH : 0, src = fredF(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)); let ox = hf >= 0 ? (((now / 45) | 0) & 1 ? 1 : -1) : 0, oy = 0;      // (hurt: a shiver)
+  const info = FRED_INFO, py = gAir ? gAirH : 0, src = fredWalk && hf < 0 ? fredF(Math.floor(fredPh), true) : fredF(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)); let ox = hf >= 0 ? (((now / 45) | 0) & 1 ? 1 : -1) : 0, oy = 0;      // (hurt: a shiver)
   { const uo = ultHeldOff(now); ox += uo[0]; oy += uo[1]; }      // (the enemy Cat's ULTIMATE holds him up by the neck: lifted and shaking)
   const x = cx - (info.cx - info.x0) + ox, y = gy - 60 - info.top - py + oy;
   const sw = Math.max(5, Math.round(9 * (1 - py / 48))), sv = Math.round(sw * 2 / 3);      // the ground shadow stays put and shrinks while he is in the air
