@@ -137,7 +137,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.46</small>
+    <small id="ver">V1.47</small>
   </div>
 </section>
 
@@ -391,7 +391,7 @@ const FOE_INV = { rx: rxI, atk: atkI, walk: dumWalk, blk: blkI, idle: dumF, fear
 const foeSet = () => vs && !vs.inv ? FOE_NORM : FOE_INV;      // in a match the enemy Gojo is inverted only when you are Gojo too
 const YU = __YUJI__, yuInv = p => { const o = {}; for (const k in p) o[k] = inv(p[k]); return o; };      // YUJI (tools/yuji_art.py): an idle, a walk (played backwards for walking back) and a jump, 15 frames each; the inverted one has the colours flipped
 const YUF = { norm: {}, inv: {} }, YINFO = { idle: YU.idle, fwd: YU.fwd, back: { ...YU.fwd, hn: YU.fwd.hn.slice().reverse(), hf: YU.fwd.hf.slice().reverse() }, jump: YU.jump };
-for (const [k, pal] of [['norm', YU.pal], ['inv', yuInv(YU.pal)]]) { for (const n of ['idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'cjump', 'run', 'blk', 'bfwd']) YUF[k][n] = mk(YU[n], pal); YUF[k].back = YUF[k].fwd.slice().reverse(); YUF[k].cback = YUF[k].cfwd.slice().reverse(); YUF[k].bback = YUF[k].bfwd.slice().reverse(); YUF[k].atk = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map(j => mk(YU['atk' + j], pal)); YUF[k].dash = [0, 1, 2, 3].map(j => mk(YU['dash' + j], pal)); YUF[k].rx = Array.from({ length: 10 }, (_, j) => mk(YU['rx' + j], pal)); }
+for (const [k, pal] of [['norm', YU.pal], ['inv', yuInv(YU.pal)]]) { for (const n of ['idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'cjump', 'cju', 'jcr', 'run', 'blk', 'bfwd']) YUF[k][n] = mk(YU[n], pal); YUF[k].back = YUF[k].fwd.slice().reverse(); YUF[k].cback = YUF[k].cfwd.slice().reverse(); YUF[k].bback = YUF[k].bfwd.slice().reverse(); YUF[k].atk = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map(j => mk(YU['atk' + j], pal)); YUF[k].dash = [0, 1, 2, 3].map(j => mk(YU['dash' + j], pal)); YUF[k].rx = Array.from({ length: 10 }, (_, j) => mk(YU['rx' + j], pal)); }
 YU.atk = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map(j => YU['atk' + j]); YU.dash = [0, 1, 2, 3].map(j => YU['dash' + j]); YU.rx = Array.from({ length: 10 }, (_, j) => YU['rx' + j]); YINFO.cback = { ...YU.cfwd, hn: YU.cfwd.hn.slice().reverse(), hf: YU.cfwd.hf.slice().reverse() }; YINFO.bback = { ...YU.bfwd, hn: YU.bfwd.hn.slice().reverse(), hf: YU.bfwd.hf.slice().reverse() };
 [14, 8, 0, 9].forEach((src, i) => { YU.atk[16 + i] = YU.atk[src]; YUF.norm.atk[16 + i] = YUF.norm.atk[src]; YUF.inv.atk[16 + i] = YUF.inv.atk[src]; });      // v1.11 THE ZONE: strips 16-19 (its M1) reuse the pictures of FACE KICK (14), PUSH KICK (8), R.HOOK (0) and CONC.FIST (9); the spins are drawn by turning him round (zoneFxPre)
 [0, 1, 2].forEach(i => { YU.atk[20 + i] = YU['atk' + (16 + i)]; YUF.norm.atk[20 + i] = mk(YU['atk' + (16 + i)], YU.pal); YUF.inv.atk[20 + i] = mk(YU['atk' + (16 + i)], yuInv(YU.pal)); });      // v1.15 BLACK FLASH has its own 15-frame animations (tools/yuji_art.py): 20 = the punch, 21 = the kick to the head (in the air), 22 = the blow to the stomach (from the crouch)
@@ -429,7 +429,13 @@ function yujiPick(a) {      // YUJI's picture for the player: the frame set, its
     if (a.dir === 0) return { set: N.blk, info: YY.blk, fi: Math.max(0, Math.min(9, a.bf)), lift: 0 };
     const k = Math.floor(Math.max(0, a.now - a.modeAt) * WALK_FPS * 0.3 / 1000) % 15; return a.dir > 0 ? { set: N.bfwd, info: YY.bfwd, fi: k, lift: 0 } : { set: N.bback, info: YB.bback, fi: k, lift: 0 };
   }
-  if (a.jumping) return { set: a.jumpC ? N.cjump : N.jump, info: a.jumpC ? YY.cjump : YY.jump, fi: a.jf, lift: jl() };
+  if (a.land && !a.jumping) return { set: N.jcr, info: YY.jcr, fi: Math.min(14, Math.floor(Math.max(0, a.now - a.land.at) * 15 / YJ_T.landC)), lift: 0 };      // (v1.47 the last part of a CROUCH LANDING: the jump itself is over and he is crouched)
+  if (a.jumping) {      // v1.47 his JUMPS: the standing JUMP (15 pictures, by the frame of the jump), CROUCH -> JUMP (the spring: 15 pictures in 250 ms, the last one is the first of the flight) and JUMP -> CROUCH (the landing: 15 pictures in 250 ms from the touch-down); the height is still the jump's own (a.jf)
+    const e = Math.max(0, a.now - a.jumpAt);
+    if (a.tdC && e >= JUMP_T.crouch + JUMP_T.air) return { set: N.jcr, info: YY.jcr, fi: Math.min(14, Math.floor((e - JUMP_T.crouch - JUMP_T.air) * 15 / YJ_T.landC)), lift: jl() };
+    if (a.jumpC && e < YJ_T.spring) return { set: N.cju, info: YY.cju, fi: Math.min(14, Math.floor(e * 15 / YJ_T.spring)), lift: jl() };
+    return { set: N.jump, info: YY.jump, fi: a.jf, lift: jl() };
+  }
   if (a.mode === 'cdn') return { set: N.cdn, info: YY.cdn, fi: a.stance === 'down' ? a.sf : 14 - a.sf, lift: 0 };
   if (a.mode === 'cidle') return { set: N.cidle, info: YY.cidle, fi: FI, lift: 0 };
   if (a.mode === 'cfwd') return { set: N.cfwd, info: YY.cfwd, fi: FW, lift: 0 };
@@ -2713,7 +2719,7 @@ function spikify(S) {      // the same strip with SPIKIER HAIR: in every frame t
 }
 let YSP = null;
 function spikyY() {      // the pictures he has in INHERITENCE: spiky hair on every strip he can show in it (built once, about 0.1 s: at the start of a round in which he owns it)
-  if (YSP) return YSP; const I = {}, F = {}, one = ['idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'cjump', 'run', 'blk', 'bfwd'], rv = s => ({ ...s, hn: s.hn.slice().reverse(), hf: s.hf.slice().reverse() }), pal = YU.pal;
+  if (YSP) return YSP; const I = {}, F = {}, one = ['idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'cjump', 'cju', 'jcr', 'run', 'blk', 'bfwd'], rv = s => ({ ...s, hn: s.hn.slice().reverse(), hf: s.hf.slice().reverse() }), pal = YU.pal;
   for (const n of one) I[n] = spikify(YU[n]);
   I.dash = [0, 1, 2, 3].map(j => spikify(YU['dash' + j])); I.rx = Array.from({ length: 10 }, (_, j) => spikify(YU['rx' + j])); I.atk = YU.atk.map((s, k) => [6, 7, 20, 21, 22, 23, 24, 25, 26, 27].includes(k) ? spikify(s) : s);
   I.back = rv(I.fwd); I.cback = rv(I.cfwd); I.bback = rv(I.bfwd);
@@ -3755,6 +3761,23 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   if (now < blackUntil) { ctx.fillStyle = 'rgba(0,0,0,' + ((blackUntil - now) / 600).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }
   drawHits(now);
 }
+// ---------------------------------------------------------------- v1.47 YUJI'S JUMPS: 45 new pictures (tools/yuji_art.py): the standing JUMP (15, they follow the frame of the jump as before), CROUCH -> JUMP (15 in 250 ms: the 160 ms of the push-off and the first 90 ms of the rise, then the flight goes on with the jump's own pictures) and JUMP -> CROUCH (15 in 250 ms from the touch-down: pressing CROUCH in the air, or holding the stick down when he touches down, makes the landing a CROUCH LANDING that leaves him crouched; it costs 3% of the energy like every crouch). The PHYSICS is exactly the old one (the jump's frame still gives the height: 160 ms push-off, 713 ms flight, 160 ms landing; 22 px, a crouch jump 30 px): only the pictures changed.
+const YJ_T = { spring: 250, landC: 250 };
+let yjLC = false, yjTD = false, yjLandC = false, yjLand = null, yjWas = false, yjJumpAt = -1;      // CROUCH was pressed in the air; the touch-down has been handled; the landing is a crouch landing (decided at the touch-down); the last pictures of the crouch landing after the jump is over { at }; there was a jump last frame; when it began
+function yuJumpStep(now, jf, hf) {      // Yuji, every frame, once the jump's frame and the hurt frame are known
+  if (jf >= 0) {
+    yjJumpAt = jumpAt; yjWas = true; yjLand = null;      // (a new jump while the last pictures of a crouch landing are still playing: the new jump wins)
+    if (jf < 12) yjTD = false;
+    else if (!yjTD) { yjTD = true; yjLandC = (yjLC || stickDown) && hf < 0 && stance === 'stand' && ceSpend(CE_COST.crouch, now); }      // (the touch-down: CROUCH pressed in the air, or the stick held down)
+    return;
+  }
+  if (yjWas) {      // the jump is over this frame
+    yjWas = false;
+    if (yjLandC && hf < 0 && stance === 'stand') { stance = 'crouch'; stAt = now; stickCr = !!stickDown; yjLand = { at: yjJumpAt + JUMP_T.crouch + JUMP_T.air }; }
+    yjLC = false; yjLandC = false; yjTD = false;
+  }
+  if (yjLand && now - yjLand.at >= YJ_T.landC) yjLand = null;
+}
 // ---------------------------------------------------------------- v1.46 YUJI'S ULTIMATE (skill y_ult, 1500 coins, needs BLACK FLASH; the DOMAIN button, which did nothing for Yuji before: 67% of the energy, 30 s between two, the enemy in front within 44 px, standing in the open, not in a RUSH). FOUR BLACK FLASHES while the enemy is held (frozen, so none can miss): 1 (20 damage) a LEAP with a blow to the stomach: the enemy is thrown up with him (strip 28); 2 (25) in the air he charges his leg and KICKS (the BLACK FLASH KICK, strip 21); 3 (30) he leaps again with one hand up and CHOPS down with it (strip 29): the enemy is slammed back to the floor; 4 (75) he lands and charges a punch, the CHARGED BLACK FLASH (strip 23), that hits very hard: 150 in all. Most of the effects are on the last one (yuBig, drawYuBig). The controller (yuTick) drives the swing the game already knows (atkK / atkAt), so the pictures, whooshes and sparks are the normal ones; it applies the blows itself (the normal impact handler is skipped while it runs), lifts Yuji and the enemy, and gives no control back until it is over.
 for (const j of [28, 29]) { YU.atk[j] = YU['atk' + j]; YUF.norm.atk[j] = mk(YU['atk' + j], YU.pal); YUF.inv.atk[j] = mk(YU['atk' + j], yuInv(YU.pal)); }      // (strips 28 = the LEAP, 29 = the HAND SLASH, tools/yuji_art.py)
 YU_ATK.names.push('U.LEAP', 'U.SLASH'); YU_ATK.fps.push(34, 32); YU_ATK.swing.push([4], [5]); YU_ATK.imp.push([], []); YU_ATK.hit.push([], []); YU_ATK.reach.push(0, 0);      // (no impact frames and hits of their own: the ultimate lands its blows by itself)
@@ -3879,6 +3902,7 @@ function drawScene(now, dt) {
   }
   let hf = -1;                                // hurt frame 0-9: Gojo's reaction when the attacking dummy lands a hit
   if (hurtAt >= 0) { hf = Math.floor(Math.max(0, now - hurtAt) * RX_FPS[hurtK] / 1000); if (hf >= 10) { hurtAt = -1; hf = -1; hurtEnd = now; } }
+  if (vs && vs.me === 'yuji') yuJumpStep(now, jf, hf);      // (v1.47: his crouch landing)
   let mf = -1;                                // Max Blue summon frame 0-39 (20 FPS)
   if (mbAt >= 0) { mf = Math.floor(Math.max(0, now - mbAt) * MB_FPS / 1000); if (mf >= (mbK === 2 ? 1e9 : mbK ? 30 : 40)) { mbAt = -1; mf = -1; lpReady = now + 900; } }
   let df = -1;                                // dash frame 0-14 (30 FPS)
@@ -3913,6 +3937,7 @@ function drawScene(now, dt) {
   if (af < 0 && (combo !== 0 || cpIdx !== 0 || wcIdx !== 0 || rdIdx !== 0) && now > comboUntil) { combo = 0; cpIdx = 0; wcIdx = 0; rdIdx = 0; }   // waited too long: back to the first hit (standing and crouched)
   const lab = stance === 'crouch' ? ['R.JAB', 'L.UPPR'][cpIdx] : (stance === 'stand' && cm === 1) ? (vs && vs.me === 'yuji' ? YU_ATK.names[5 + wcIdx] : WALK_NAMES[wcIdx]) : (stance === 'stand' && cm >= 2) ? (vs && vs.me === 'yuji' ? YU_ATK.names[(cm === 3 ? 20 : 16) + rdIdx] : RED_NAMES[rdIdx]) : (vs && vs.me === 'yuji' ? YU_ATK.names : ATK_NAMES)[combo]; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; }
   if (vs && vs.me === 'yuji') { const bl = cm === 3 ? (jf >= 3 && jf <= 11 ? 'SIMPLE<br>DOMAIN' : stance === 'crouch' ? 'SHRINE' : (keyR || padR) ? 'GRAB<br>CLEAVE' : 'PIERCE<br>BLOOD') : cm === 2 ? (jf >= 4 && jf <= 10 ? 'BF<br>KICK' : stance === 'crouch' ? 'BF<br>GUT' : 'BLACK<br>FLASH') : cm === 1 ? (jf >= 4 && jf <= 10 ? 'SPIN<br>ELBOW' : stance === 'crouch' ? (airUp(dummy) ? 'FACE<br>KICK' : 'UPPER<br>CUT') : 'CONC.<br>FIST') : stance === 'crouch' ? 'SWEEP' : (keyR || padR) ? 'RUSH<br>FIST' : 'DIVERG.<br>FIST'; if (bl !== lastBlue) { lastBlue = bl; $('lapl').innerHTML = bl; } }      // (the BLUE button's name follows the mode and the stance)
+  if (crReq && vs && vs.me === 'yuji' && jf >= 0) { crReq = false; yjLC = !yjLC; }      // (v1.47 Yuji: CROUCH in the air makes the landing a crouch landing, and again undoes it)
   if (crReq) {                                // keyboard S / Down / C: tap to go down (10 frames), tap again to stand up (the joystick crouches while it is held down)
     crReq = false;
     if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0) { if (stance === 'stand') { stance = 'down'; stAt = now; sf = 0; } else if (stance === 'crouch') { stance = 'up'; stAt = now; sf = 0; } }
@@ -4079,7 +4104,7 @@ function drawScene(now, dt) {
     const on = bfo ? bfo.kind === 'on' : dom.ph === 'reblind', t0 = bfo ? bfo.t0 : dom.p0, ms = bfo ? bfo.ms : DOM_MS[dom.ph], T = Math.max(0, Math.min(1, (now - t0) / ms)), u = on ? 1 - T : T;
     rmvK = on ? -1 : 1; rmvI = Math.max(0, Math.min(19, Math.floor(u * 20))); rmvF = !bfo && rmvI >= 16 ? rmvI - 15 : 0;
   }
-  const fearing = now < pStun && !hurting, riding = !!ride, yj = vs && vs.me === 'yuji' ? yujiPick({ spiky: cm === 3, now, atkOn, atkK, af, hurting, hurtK, hurtAt, hf, dodging, dgK, dgCr, df, jumping, jumpC, jf, mode, idle, sf, stance, spawnAt, modeAt, blocking, bf, dir }) : null, set = rmvK ? atkF[11] : yj ? yj.set : riding ? ride.set : hurting ? (now - hurtAt < 70 ? rxW : rxN)[hurtK] : fearing ? crF.idle : dodging ? atkF[9 + dgK + (dgCr ? 3 : 0)] : blocking ? bset : tele ? teleF : jumping ? (jumpC ? crF.jump : jumpF) : mbing ? (mbK ? redF : mbF) : lapsing ? lapseF[lpK] : atkOn ? atkF[atkK] : mode === 'cdn' ? crF.dn : mode === 'cidle' ? crF.idle : mode === 'cfwd' ? crF.fwd : mode === 'cback' ? crF.back : idle ? idleF : mode === 'fwd' ? fwdF : backF;
+  const fearing = now < pStun && !hurting, riding = !!ride, yj = vs && vs.me === 'yuji' ? yujiPick({ spiky: cm === 3, now, atkOn, atkK, af, hurting, hurtK, hurtAt, hf, dodging, dgK, dgCr, df, jumping, jumpC, jf, jumpAt, tdC: yjLandC, land: yjLand, mode, idle, sf, stance, spawnAt, modeAt, blocking, bf, dir }) : null, set = rmvK ? atkF[11] : yj ? yj.set : riding ? ride.set : hurting ? (now - hurtAt < 70 ? rxW : rxN)[hurtK] : fearing ? crF.idle : dodging ? atkF[9 + dgK + (dgCr ? 3 : 0)] : blocking ? bset : tele ? teleF : jumping ? (jumpC ? crF.jump : jumpF) : mbing ? (mbK ? redF : mbF) : lapsing ? lapseF[lpK] : atkOn ? atkF[atkK] : mode === 'cdn' ? crF.dn : mode === 'cidle' ? crF.idle : mode === 'cfwd' ? crF.fwd : mode === 'cback' ? crF.back : idle ? idleF : mode === 'fwd' ? fwdF : backF;
   const info = rmvK ? D.atk11 : yj ? yj.info : riding ? ride.info : hurting ? D['rx' + hurtK] : fearing ? D.cidle : dodging ? D['atk' + (9 + dgK + (dgCr ? 3 : 0))] : blocking ? binfo : tele ? D.tele : jumping ? (jumpC ? D.cjump : D.jump) : mbing ? (mbK ? D.atk22 : D.atk8) : lapsing ? D['atk' + (4 + lpK)] : atkOn ? D['atk' + atkK] : mode === 'cdn' ? D.cdn : mode === 'cidle' ? D.cidle : mode === 'cfwd' ? D.cfwd : mode === 'cback' ? D.cback : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
   const fi = rmvK ? rmvF : yj ? yj.fi : riding ? ride.fi : hurting ? hf : fearing ? Math.floor(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)) % 15 : dodging ? df : blocking ? bfi : tele ? tf : jumping ? jf : mbing ? mf : lapsing ? lf : atkOn ? af : mode === 'cdn' ? (stance === 'down' ? sf : 14 - sf) : Math.floor(Math.max(0, now - (idle || mode === 'cidle' ? spawnAt : modeAt)) / (1000 / (idle || mode === 'cidle' ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail pnow() by a hair
   const lk = tele ? info.lift_k[tf] : 0;      // teleport: stays where he vanished (null), then the fixed height he reappears at, falling back to the ground

@@ -135,14 +135,8 @@ def walk(i):
     P = dict(by=round(.5 + .5*math.cos(4*math.pi*ph)), ln=1, nf=(round(2*math.sin(2*math.pi*ph)), 0), ff=(-round(2*math.sin(2*math.pi*ph)), 0), hp=ph*4*math.pi, hback=1, lf=foot(ph, 34), lb=foot(ph + .5, 31), blink=False)
     return figure(P)
 JL = [0, 0, 0, 0, 10, 16, 20, 22, 22, 20, 16, 10, 0, 0, 0]                 # same lift curve as Gojo's jump
-def jump(i):
-    G = GR
-    T = {0: (1, 0, (34, G), (31, G), 0, 1, 0), 1: (3, 1, (34, G), (31, G), 0, 2, 0), 2: (5, 2, (36, G), (30, G), 0, 3, 0), 3: (3, 1, (34, G), (31, G), 0, 1, 0),
-         4: (-2, 0, (34, G), (32, G), 38, -1, 1), 5: (-1, 0, (37, G-4), (32, G-3), 20, -2, 1), 6: (-1, 0, (38, G-7), (33, G-6), 10, -3, 1), 7: (-1, 0, (39, G-9), (34, G-8), 0, -3, 1),
-         8: (-1, 0, (39, G-9), (33, G-7), 0, -2, 1), 9: (-1, 0, (38, G-6), (32, G-5), 0, -1, 1), 10: (-1, 0, (37, G-3), (31, G-3), 10, 0, 0), 11: (-1, 0, (36, G), (31, G), 25, 0, 0),
-         12: (3, 1, (34, G), (30, G), 0, 2, 0), 13: (4, 2, (36, G), (29, G), 0, 3, 0), 14: (1, 0, (34, G), (31, G), 0, 1, 0)}
-    by, ln, lf, lb, ph, fy, up = T[i]
-    return figure(dict(by=by, ln=ln, lf=lf + (ph,), lb=lb + (ph*.6,), nf=(0, fy), ff=(0, fy), hp=i*.9, hup=up, hback=1 if 4 <= i <= 9 else 0))
+def jump(i):                                       # v1.47 the standing JUMP, 15 new pictures (the game plays 0-3 in the 160 ms of the push-off, 4-11 in the flight, following the real arc: 4 the rise, 5-6 higher, 7-8 the top, 9-11 the fall, and 12-14 in the 160 ms of the landing): 0 ready, 1-2 he dips and swings his arms back, 3 the push-off (the heels lift, the arms swing up), 4 the toes leave the floor, 5-6 the rise with the arms high and the legs trailing, 7-8 the top: the knees tuck and the arms open for balance, 9-11 the legs reach down and the arms come down and out, 12 touch-down, 13 the knees absorb it, 14 up again
+    return figure(jpar(JUMPK, i, 1 if 4 <= i <= 8 else 0, 1 if 4 <= i <= 9 else 0))
 def mix(a, b, t):
     return tuple(mix(x, y, t) for x, y in zip(a, b)) if isinstance(a, tuple) else a + (b - a)*t
 def kv(keys, i):                                  # keyframes {frame: value} -> the value at frame i, eased between the keys (tuples are mixed part by part)
@@ -152,6 +146,14 @@ def kv(keys, i):                                  # keyframes {frame: value} -> 
         if a <= i <= b: t = (i-a)/(b-a); return mix(va, vb, t*t*(3-2*t))
     return ks[-1][1]
 IDLE_N, IDLE_F = ((0.0, 6.5), (0.6, 10.0)), ((-.5, 5), (-.5, 7)); GUARD_N, GUARD_F = ((3, 4), (6, 0)), ((1.5, 4.5), (4, 1))
+JUMPK = {0: (0, 0, (34, GR, 0), (31, GR, 0), GUARD_N, GUARD_F), 1: (3, 1, (35, GR, 0), (30, GR, 0), ((-1, 5), (-3, 8)), ((-2, 5), (-4, 8))), 2: (6, 3, (37, GR, 0), (29, GR, 0), ((-3, 4), (-6, 7)), ((-3, 5), (-5, 8))),
+         3: (2, 1, (36, GR-2, 25), (31, GR-1, 15), ((4, 0), (7, -5)), ((3, 1), (6, -3))), 4: (-2, 0, (36, GR-5, 40), (32, GR-4, 25), ((5, -3), (7, -9)), ((4, -2), (7, -7))), 5: (-2, 0, (37, GR-8, 30), (33, GR-7, 20), ((4, -4), (5, -11)), ((3, -3), (5, -9))),
+         6: (-2, 0, (38, GR-10, 15), (34, GR-9, 10), ((5, -2), (9, -6)), ((4, -1), (8, -4))), 7: (-2, 0, (39, GR-11, 0), (35, GR-10, 0), ((5, 0), (10, -2)), ((4, 1), (9, 0))), 8: (-2, 0, (39, GR-11, 0), (34, GR-10, 0), ((5, 1), (11, 0)), ((3, 2), (8, 2))),
+         9: (-2, 0, (38, GR-8, -5), (33, GR-7, 0), ((4, 2), (9, 3)), ((3, 3), (7, 4))), 10: (-1, 0, (37, GR-5, -10), (32, GR-4, -5), ((3, 3), (7, 6)), ((2, 4), (5, 7))), 11: (-1, 0, (36, GR-2, -15), (31, GR-1, -10), ((2, 4), (5, 8)), ((1, 5), (3, 8))),
+         12: (3, 2, (36, GR, 0), (30, GR, 0), ((4, 3), (8, 2)), ((3, 3), (6, 3))), 13: (6, 3, (37, GR, 0), (29, GR, 0), ((3, 4), (6, 0)), GUARD_F), 14: (1, 0, (34, GR, 0), (31, GR, 0), GUARD_N, GUARD_F)}      # the standing jump, a picture each: body height, lean, front foot (x, y, tilt), back foot, near arm (elbow, hand), far arm
+def jpar(K, i, up, back):                          # the figure's numbers for picture i of a table of key pictures (every number is eased between the keys)
+    by, ln, lf, lb, na, fa = kv(K, i)
+    return dict(by=round(by), ln=round(ln), lf=(round(lf[0]), round(lf[1]), lf[2]), lb=(round(lb[0]), round(lb[1]), lb[2]), na=na, fa=fa, hp=i*.9, hup=up, hback=back)
 HOOK = {0: IDLE_N, 2: GUARD_N, 4: ((-4, 3), (-3, -4)), 5: ((0, -1), (3, -7)), 6: ((5, -2), (9, -5)), 7: ((7, -1), (12, -4)), 8: ((7.5, -.5), (12.5, -3.5)), 9: ((6, 1), (10, -1)), 10: ((4, 3), (8, 2)), 12: ((2, 5), (3, 3)), 14: IDLE_N}      # a hook: the elbow comes up and round, the bent arm swings at head height
 def hook(i, far):                                  # right hook (the near arm) or left hook (the far arm): wind back, swing round, snap back; the impact is frame 7
     g = {0: IDLE_F if far else IDLE_N, 2: GUARD_N if far else GUARD_F, 12: GUARD_N if far else GUARD_F, 14: IDLE_N if far else IDLE_F}
@@ -458,6 +460,15 @@ def bf_gut(i):
     if 7 <= i <= 10: lines_r(f, hx - 4, hy, 3, 9 - (i - 7)*2, i)
     if 5 <= i <= 7: puff(f, 34 - 9, 61, 2); puff(f, 34 + 9, 61, 1)
     return f, nh, fh
+# ---------------------------------------------------------------- v1.47 YUJI'S CROUCH -> JUMP and JUMP -> CROUCH (15 pictures each, with the standing JUMP above: 45 new pictures)
+CJUK = {0: (7, 2, (37, GR, 0), (30, GR, 0), GUARD_N, GUARD_F), 2: (10, 4, (38, GR, 0), (29, GR, 0), ((-3, 5), (-6, 8)), ((-3, 5), (-5, 8))), 3: (8, 3, (37, GR, 0), (30, GR, 0), ((-1, 4), (-2, 8)), ((-2, 5), (-3, 8))),
+        5: (2, 1, (36, GR, 10), (31, GR, 5), ((4, -1), (6, -6)), ((3, 0), (5, -4))), 6: (0, 0, (36, GR-1, 30), (31, GR, 20), ((4, -3), (6, -10)), ((3, -2), (5, -8))), 8: (-2, 0, (36, GR-3, 45), (32, GR-2, 35), ((4, -4), (5, -12)), ((3, -3), (5, -10))),
+        14: JUMPK[4]}
+def cju(i):                                        # CROUCH -> JUMP, the spring (the game plays it in 250 ms: the 160 ms of the push-off and the first 90 ms of the rise): from the crouch (0) he dips lower and swings his arms back (1-2), drives up (3-6: the legs straighten, the arms swing up), rises onto his toes (7-8) and the feet leave the floor (9-13: the legs trail, the arms stay high); picture 14 is picture 4 of the jump (the first one in the air), so the flight goes on from it
+    return figure(jpar(CJUK, i, 1 if i >= 7 else 0, 1 if i >= 9 else 0))
+JCRK = {0: JUMPK[12], 2: (6, 3, (37, GR, 0), (29, GR, 0), ((3, 4), (6, 0)), GUARD_F), 4: (10, 4, (38, GR, 0), (29, GR, 0), ((2, 5), (4, 1)), ((1, 5), (3, 2))), 7: (8, 3, (37, GR, 0), (30, GR, 0), GUARD_N, GUARD_F), 14: (7, 2, (37, GR, 0), (30, GR, 0), GUARD_N, GUARD_F)}
+def jcr(i):                                        # JUMP -> CROUCH, the crouch landing (CROUCH pressed in the air; the game plays it in 250 ms from the touch-down): picture 0 is picture 12 of the jump (touch-down), the knees buckle deeper than the crouch (1-4), come back up (5-8) and he settles into the crouch (9-14: the picture the crouch has when it is held)
+    return figure(jpar(JCRK, i, 0, 0))
 # ---------------------------------------------------------------- v1.46 THE ULTIMATE (the DOMAIN button, tools/template.html YUT): four BLACK FLASHES in a row. 1 = this LEAP (atk28), 2 = the BLACK FLASH KICK (atk17, he is already up in the air), 3 = this HAND SLASH (atk29), 4 = the CHARGED BLACK FLASH (atk19). The game lifts the picture and the enemy (the heights are in YUT.lift), the legs are drawn tucked here.
 def bfgj_params(i):                                # the body blow as a LEAP: the same coil (1-5) and the same blow into the stomach (7), but he drives UP out of the crouch: the body straightens and both legs tuck under him (8-11) while the game lifts the picture, the fist stays high, then the legs reach down (14)
     P = bfg_params(i); u = kv({6: 0, 9: 1, 12: 1, 14: .3}, i)
@@ -549,7 +560,7 @@ def yrun(i):                                                                    
     FWD_A, BACK_A = ((5, 2), (9, -2)), ((-4, 4), (-7, 8)); mixa = lambda t: mix(BACK_A, FWD_A, t)
     P = dict(by=1 + round(.5 + .5*math.cos(4*math.pi*ph)), ln=4, hx=2, lf=foot(ph, 36), lb=foot(ph + .5, 31), na=mixa((sw + 1)/2), fa=mixa((1 - sw)/2), hp=i*1.3, hback=1, blink=False)
     return figure(P)
-MOVES = (('cdn', cdn, 0, 44), ('cidle', cidle, 0, 44), ('cfwd', cwalk, 0, 44), ('cjump', cjump, 4, 44), ('dash0', lambda i: dash(i, 0), 0, 44), ('dash1', lambda i: dash(i, 1), 0, 44), ('dash2', lambda i: dash(i, 2), 0, 44), ('dash3', lambda i: dash(i, 3), 0, 44), ('run', yrun, 0, 44))
+MOVES = (('cdn', cdn, 0, 44), ('cidle', cidle, 0, 44), ('cfwd', cwalk, 0, 44), ('cjump', cjump, 4, 44), ('cju', cju, 4, 44), ('jcr', jcr, 4, 44), ('dash0', lambda i: dash(i, 0), 0, 44), ('dash1', lambda i: dash(i, 1), 0, 44), ('dash2', lambda i: dash(i, 2), 0, 44), ('dash3', lambda i: dash(i, 3), 0, 44), ('run', yrun, 0, 44))
 # ---------------------------------------------------------------- the ten hit reactions: the same ten as Gojo's (tools/side.py, RX), 15 frames each; the game picks one at random whenever he is hit (and plays 15 frames in the time Gojo's 10 take)
 OFF, W96 = 32, 96                                                               # they are drawn on a 96-wide grid: the usual 64-grid pasted OFF px to the right, so there is room to fall backwards
 AX = 34.5 + OFF                                                                 # the body axis (the spin turns about it) and the feet (the fall turns about them)
