@@ -458,7 +458,48 @@ def bf_gut(i):
     if 7 <= i <= 10: lines_r(f, hx - 4, hy, 3, 9 - (i - 7)*2, i)
     if 5 <= i <= 7: puff(f, 34 - 9, 61, 2); puff(f, 34 + 9, 61, 1)
     return f, nh, fh
-ATTACKS = (('atk0', lambda i: hook(i, False)), ('atk1', lambda i: hook(i, True)), ('atk2', knee), ('atk3', kick3), ('atk4', divergent), ('atk5', rkick, 16, 48), ('atk6', elbow), ('atk7', downslam), ('atk8', pushkick), ('atk9', conc), ('atk10', sweep, 12, 52), ('atk11', powerup), ('atk12', rush, 16, 48), ('atk13', uppercut, 16, 48), ('atk14', fkick, 16, 48), ('atk16', bf_punch, 16, 48), ('atk17', bf_kick, 16, 48), ('atk18', bf_gut, 16, 48))
+# ---------------------------------------------------------------- v1.46 THE ULTIMATE (the DOMAIN button, tools/template.html YUT): four BLACK FLASHES in a row. 1 = this LEAP (atk28), 2 = the BLACK FLASH KICK (atk17, he is already up in the air), 3 = this HAND SLASH (atk29), 4 = the CHARGED BLACK FLASH (atk19). The game lifts the picture and the enemy (the heights are in YUT.lift), the legs are drawn tucked here.
+def bfgj_params(i):                                # the body blow as a LEAP: the same coil (1-5) and the same blow into the stomach (7), but he drives UP out of the crouch: the body straightens and both legs tuck under him (8-11) while the game lifts the picture, the fist stays high, then the legs reach down (14)
+    P = bfg_params(i); u = kv({6: 0, 9: 1, 12: 1, 14: .3}, i)
+    P['by'] = round(kv({0: CR, 2: CR + 2, 4: CR + 3, 6: CR + 1, 7: CR - 1, 9: -1, 12: -1, 14: 0}, i))
+    P['lf'] = (P['lf'][0] - round(4*u), GR - round(11*u), 0); P['lb'] = (P['lb'][0] + round(1*u), GR - round(9*u), 0)
+    return P
+def bf_gutj(i):
+    f, nh, fh = figure(bfgj_params(i)); hx, hy = round(nh[0]), round(nh[1])
+    if 2 <= i <= 6: charge(f, hx, hy, (i - 2)/4, i)
+    if 3 <= i <= 6:
+        for k in range(3): bolt(f, hx, hy, (k*120 + i*40) % 360, 4 + i % 3, i*9 + k)
+    if 5 <= i <= 10:
+        pts = [figure(bfgj_params(j))[1] for j in (max(0, i - 3), max(0, i - 2), max(0, i - 1), i)]
+        if pts[0] != pts[-1]: rstreak(f, pts, (.8, 1.8, 3.2, 4.6))
+    if i == 7: bf_burst(f, hx - 1, hy, 5, 9, 7, 300, 180)
+    if i == 8: bf_burst(f, hx - 1, hy, 4, 7, 8, 280, 180)
+    if i in (9, 10): bf_burst(f, hx - 1, hy, 2, 5, i, 240, 180)
+    if 7 <= i <= 10: lines_r(f, hx - 4, hy, 3, 9 - (i - 7)*2, i)
+    if 5 <= i <= 7: puff(f, 34 - 9, 61, 2); puff(f, 34 + 9, 61, 1)
+    return f, nh, fh
+def bfs_params(i):                                 # the HAND SLASH: a crouch and a leap (1-4) with the near hand lifted straight up over his head (2-5), held at the top (5) with the energy gathering in it, then the hand comes down in one diagonal chop in front of him, edge first, arm stretched (the impact is frame 7); he hangs there (8-10), the legs reach down (11) and he lands in a crouch and comes back up (14)
+    return dict(by=round(kv({0: 0, 1: 3, 2: 4, 3: 1, 5: -1, 7: 0, 9: 2, 11: 4, 12: 5, 13: 2, 14: 0}, i)), ln=round(kv({0: 0, 2: -2, 4: -3, 6: 1, 7: 5, 10: 5, 12: 2, 14: 0}, i)), hx=round(kv({0: 0, 4: -1, 7: 2, 12: 1, 14: 0}, i)), hd=round(kv({0: 0, 6: 0, 7: 1, 10: 1, 14: 0}, i)),
+                lf=(round(kv({0: 34, 2: 33, 3: 36, 7: 38, 10: 38, 11: 39, 12: 37, 14: 34}, i)), GR - round(kv({0: 0, 2: 0, 3: 4, 4: 9, 5: 11, 8: 11, 9: 8, 10: 4, 11: 0, 14: 0}, i)), 0),
+                lb=(round(kv({0: 31, 4: 28, 7: 27, 10: 30, 12: 31, 14: 31}, i)), GR - round(kv({0: 0, 2: 0, 3: 5, 4: 10, 5: 12, 8: 12, 9: 9, 10: 4, 11: 0, 14: 0}, i)), 0),
+                na=kv({0: GUARD_N, 2: ((2, 0), (3, -3)), 4: ((1, -5.5), (2, -12.5)), 5: ((.5, -6.5), (0, -14)), 6: ((6, -5), (11, -9)), 7: ((9, -.5), (17, 6)), 8: ((9, 1), (16.5, 8)), 10: ((7, 2.5), (13, 9)), 12: ((4, 4), (7, 3)), 14: IDLE_N}, i),
+                fa=kv({0: GUARD_F, 3: ((-2, 2), (-5, -1)), 5: ((-3, 3), (-7, 1)), 7: ((-4, 3), (-8, 5)), 10: ((-2, 3.5), (-5, 5)), 12: GUARD_F, 14: IDLE_F}, i),
+                hp=i*1.1, hup=1 if 3 <= i <= 6 else 0, hback=1 if 4 <= i <= 9 else 0, mo=6 <= i <= 9, blink=False)
+def bf_slash(i):
+    f, nh, fh = figure(bfs_params(i)); hx, hy = round(nh[0]), round(nh[1])
+    if 1 <= i <= 5: charge(f, hx, hy, (i - 1)/4, i)
+    if 3 <= i <= 6:
+        for k in range(3): bolt(f, hx, hy, (k*120 + i*40) % 360, 4 + i % 3, i*9 + k)
+    if 5 <= i <= 11:
+        pts = [figure(bfs_params(j))[1] for j in range(max(4, i - 5), i + 1)]
+        if len(pts) >= 2 and pts[0] != pts[-1]: rstreak(f, pts, [.8, 1.4, 2.2, 3.0, 4.0, 5.0][-len(pts):])
+    if i == 7: bf_burst(f, hx - 1, hy, 5, 9, 7, 300, 200)
+    if i == 8: bf_burst(f, hx - 1, hy, 4, 7, 8, 280, 200)
+    if i in (9, 10): bf_burst(f, hx - 1, hy, 2, 5, i, 240, 200)
+    if 7 <= i <= 10: lines_r(f, hx - 4, hy, 3, 9 - (i - 7)*2, i)
+    if 2 <= i <= 3 or 11 <= i <= 13: puff(f, 34 - 9, 61, 2); puff(f, 34 + 9, 61, 1)
+    return f, nh, fh
+ATTACKS = (('atk0', lambda i: hook(i, False)), ('atk1', lambda i: hook(i, True)), ('atk2', knee), ('atk3', kick3), ('atk4', divergent), ('atk5', rkick, 16, 48), ('atk6', elbow), ('atk7', downslam), ('atk8', pushkick), ('atk9', conc), ('atk10', sweep, 12, 52), ('atk11', powerup), ('atk12', rush, 16, 48), ('atk13', uppercut, 16, 48), ('atk14', fkick, 16, 48), ('atk16', bf_punch, 16, 48), ('atk17', bf_kick, 16, 48), ('atk18', bf_gut, 16, 48), ('atk28', bf_gutj, 16, 48), ('atk29', bf_slash, 16, 48))
 # ---------------------------------------------------------------- crouch, crouch walk, crouch jump and the four dashes (15 frames each)
 CR = 7                                                                          # how far the hips drop in a crouch (the leg IK folds the knees by itself)
 def cdn(i):                                                                     # standing -> crouched (standing up plays it backwards)

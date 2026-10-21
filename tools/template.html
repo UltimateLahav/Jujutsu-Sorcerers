@@ -61,7 +61,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #sns{display:none;grid-area:3/1;border-color:#4fe3ff;color:#7af0ff}#sns span{color:#b8f4ff}#sns.cd{opacity:.4}
 #fat{display:none;grid-area:2/1;border-color:#ff4a3a;color:#ff6a5a;opacity:.38}#fat span{color:#ffb4a8}#fat svg{width:4.5vh;height:4.5vh}      /* FATALITY: only in a match, to the left of BLOCK; dark until the enemy is at 20% health or less and close, then it glows */
 .col.vs{grid-template-columns:auto auto auto}.col.vs #fat{display:flex}
-.col.yj .pb:not(#atk):not(#dash):not(#lap):not(#blk):not(#ce):not(#sns){opacity:.3}.col.kt #ce{opacity:.3}.col.kt #dom{border-color:#ff5a8a;color:#ff8fb0}.col.kt #dom span{color:#ffc0d4}.col.kt #dom::after{background:rgba(255,90,138,.38)}.col.kt #dom.on{border-color:#ffd0e0;color:#fff}.col.vy #dom{border-color:#ff5a5a;color:#ff8a8a}.col.vy #dom span{color:#ffb4b4}.col.vy #dom::after{background:rgba(255,80,80,.38)}.col.vy #dom.on{border-color:#ffd0d0;color:#fff}      /* playing Verity the DOMAIN button is his JUMPSCARE (red, with the same wait-fill); the FATAL button is the same as Gojo's */
+.col.yj .pb:not(#atk):not(#dash):not(#lap):not(#blk):not(#ce):not(#sns):not(#dom){opacity:.3}.col.yj #dom{border-color:#ff3a4a;color:#ff7a8a}.col.yj #dom span{color:#ffb0b8}.col.yj #dom::after{background:rgba(255,58,74,.38)}.col.kt #ce{opacity:.3}.col.kt #dom{border-color:#ff5a8a;color:#ff8fb0}.col.kt #dom span{color:#ffc0d4}.col.kt #dom::after{background:rgba(255,90,138,.38)}.col.kt #dom.on{border-color:#ffd0e0;color:#fff}.col.vy #dom{border-color:#ff5a5a;color:#ff8a8a}.col.vy #dom span{color:#ffb4b4}.col.vy #dom::after{background:rgba(255,80,80,.38)}.col.vy #dom.on{border-color:#ffd0d0;color:#fff}      /* playing Verity the DOMAIN button is his JUMPSCARE (red, with the same wait-fill); the FATAL button is the same as Gojo's */
 .col.vs #dom{grid-area:1/2}.col.vs #ce{grid-area:1/3}.col.vs #blk{grid-area:2/2}.col.vs #lap{grid-area:2/3}.col.vs #dash{grid-area:3/2}.col.vs #atk{grid-area:3/3}
 #fat.rdy{opacity:1;background:#3a0d12;border-color:#ff8a7a;color:#fff;box-shadow:0 0 1.8vh #ff4a3a,0 0 .5vh #ff4a3a inset,4px 4px 0 #000;animation:fatglow .5s steps(2) infinite}
 @keyframes fatglow{50%{box-shadow:0 0 3.2vh #ff2a2a,0 0 .9vh #ff2a2a inset,4px 4px 0 #000}}
@@ -137,7 +137,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.45</small>
+    <small id="ver">V1.46</small>
   </div>
 </section>
 
@@ -333,7 +333,7 @@ const HIT = __HIT__;      // tools/hitbox_art.py measures the pictures: HIT[atta
 const reachFor = (att, k, tgt) => { const r = HIT[att] && HIT[att][k] && HIT[att][k][tgt]; return r === undefined ? REACH[k] + 6 : r; };      // (a move that was not measured keeps its old reach)
 const moveReach = (att, tgt, k) => { const T = att === 'yuji' ? YU_ATK : att === 'cat' ? CAT_ATK : null; return T && T.hit[k] ? Math.min(...T.hit[k].map(h => reachFor(att, h, tgt))) : reachFor(att, k, tgt); };      // the reach of a whole move (Yuji's move k lands the hits YU_ATK.hit[k]: its shortest hit counts)
 const pHit = k => reachFor(vs ? vs.me : 'gojo', k, vs ? vs.foe : 'gojo') + (dummy && dummy.curse ? dummy.curse.hw - 8 : 0), eHit = k => reachFor(vs ? vs.foe : 'gojo', k, vs ? vs.me : 'gojo'), pMove = k => moveReach(vs ? vs.me : 'gojo', vs ? vs.foe : 'gojo', k), eMove = k => moveReach(vs ? vs.foe : 'gojo', vs ? vs.me : 'gojo', k);      // your hit / move on the enemy, the enemy's hit / move on you
-const KICKS = { gojo: [3, 15, 17, 18, 19], yuji: [18, 19, 26, 27, 28, 29, 38, 41, 43, 47], cat: [33, 35] }, isKick = (who, k) => !!KICKS[who] && KICKS[who].includes(k), ySwingK = k => [3, 5, 8, 9, 10, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23].includes(k) ? 3 : k, isD1 = k => k === 36 || k === 44, isD2 = k => k === 37 || k === 45;      // the hit numbers are shared by every fighter, so what counts as a KICK depends on who swings (Verity has none). A crouched or knocked-down fighter can be hit by kicks only: punches, elbows and slams pass over him (hits 6 and 7, the low punches and claws of a crouched Gojo or Verity, also reach a crouched enemy). ySwingK: Yuji's heavy moves use the deep whoosh of a kick
+const KICKS = { gojo: [3, 15, 17, 18, 19], yuji: [18, 19, 26, 27, 28, 29, 38, 41, 43, 47], cat: [33, 35] }, isKick = (who, k) => !!KICKS[who] && KICKS[who].includes(k), ySwingK = k => [3, 5, 8, 9, 10, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23, 28, 29].includes(k) ? 3 : k, isD1 = k => k === 36 || k === 44, isD2 = k => k === 37 || k === 45;      // the hit numbers are shared by every fighter, so what counts as a KICK depends on who swings (Verity has none). A crouched or knocked-down fighter can be hit by kicks only: punches, elbows and slams pass over him (hits 6 and 7, the low punches and claws of a crouched Gojo or Verity, also reach a crouched enemy). ySwingK: Yuji's heavy moves use the deep whoosh of a kick
 const POW_FPS = 24, POW_FLAME = 7.5 / 24 * 1000;      // Yuji's power-up (switching cursed energy on): 15 frames at 24 FPS = 0.62 s; the flames light up after POW_FLAME ms (frame 7.5), as his fists come down
 const pImpMs = k => (vs && vs.me === 'yuji' && k >= 5) ? (YU_ATK.imp[k].length ? YU_ATK.imp[k][0] * 1000 / YU_ATK.fps[k] : -1) : ATK_IMPACT[k] * 1000 / ATK_FPS[k];      // how long after it started the swing you made lands (the enemy only answers a swing that has not landed yet); Yuji's new moves have their own timing, the power-up lands nothing
 const CE_FPS = 20, CE_DMG = 1.3;               // cursed energy: its 15 frames play at 20 FPS (frames per second = how many pictures are shown each second); while it is on, every hit he lands does 1.3 times the damage
@@ -565,6 +565,7 @@ const SK_YUJI = [      // (v1.11) the moves of Yuji, bought like Gojo's; only wa
   ['y_shrine', 'SHRINE', 'INHERITENCE, CROUCHED + BLUE: CLEAVE A BLOCK OUT OF THE FLOOR AND THROW IT (30% ENERGY). HE NEEDS THE CROUCH TO DO IT', 500, ['y_inherit']],
   ['y_cleave', 'GRAB CLEAVE', 'INHERITENCE, WALKING FORWARD + BLUE: GRAB THE ENEMY AND CLEAVE HIM, HE BLEEDS (25% ENERGY)', 500, ['y_inherit']],
   ['y_simple', 'SIMPLE DOMAIN', 'INHERITENCE, IN THE AIR + BLUE: A CYAN CIRCLE ROUND HIM: DOMAIN EXPANSIONS DO NOTHING UNTIL HE IS HIT (30% ENERGY)', 600, ['y_inherit']],
+  ['y_ult', 'BLACK FLASH ULTIMATE', 'THE DOMAIN BUTTON: JUMP AT THE ENEMY WITH FOUR BLACK FLASHES IN A ROW: A LEAP WITH A BLOW TO THE STOMACH, A CHARGED KICK IN THE AIR, A HAND SLASH AND A HUGE CHARGED PUNCH. ABOUT 150 DAMAGE (67% ENERGY, 30 SECOND COOLDOWN)', 1500, ['y_flash']],
   ['y_heavy', 'HEAVY STRIKE', 'KEEP ATTACK HELD AFTER A HIT: THE LAST M1 WITH 1.6 TIMES THE DAMAGE THAT BREAKS A GUARD AND FILLS THE STAGGER BAR', 120, []],
   ['y_cancel', 'DASH CANCEL', 'DASH DURING A SWING THAT HIT: IT STOPS, +4% ENERGY AND +20 FLOW', 100, ['y_dash']],
   ['y_sense', 'CURSE SENSE', 'IN HUNTS: THE SENSE BUTTON SHOWS EVERY HIDDEN ITEM, CLUE AND CURSE NEAR YOU FOR 3 SECONDS (8 SECOND COOLDOWN)', 300, []]];
@@ -596,7 +597,7 @@ const SK_CAT = [
 const SKN = {}; for (const s of [].concat(SK_GOJO, SK_YUJI, SK_VERITY, SK_CAT, SK_CHAR)) SKN[s[0]] = s[1];
 const GATE = {      // for each fighter the skill each button needs (a button that is not listed is free): cr crouch, dash, blk block, cp crouched punches, ce MODE, dom DOMAIN, fat FATALITY, bl BLUE (Verity and the Cat; Gojo's and Yuji's BLUE depends on the mode, the air and the stance: gateBlue)
   g: { cr: 'crouch', dash: 'dash', blk: 'block', cp: 'cpunch', ce: 'ce', dom: 'domain', fat: 'fatal', hv: 'heavy', cn: 'cancel', sn: 'sense' },
-  y: { cr: 'y_crouch', dash: 'y_dash', blk: 'y_block', cp: 'y_cpunch', ce: 'y_ce', hv: 'y_heavy', cn: 'y_cancel', sn: 'y_sense' },
+  y: { cr: 'y_crouch', dash: 'y_dash', blk: 'y_block', cp: 'y_cpunch', ce: 'y_ce', hv: 'y_heavy', cn: 'y_cancel', sn: 'y_sense', dom: 'y_ult' },
   v: { cr: 'v_crouch', dash: 'v_tele', blk: 'v_block', ce: 'v_ball', dom: 'v_scare', fat: 'v_fatal', bl: 'v_bite', hv: 'v_heavy', cn: 'v_cancel', ac: 'v_air', sn: 'v_sense' },
   k: { cr: 'k_crouch', dash: 'k_dash', blk: 'k_block', dom: 'k_ult', fat: 'k_fatal', bl: 'k_toon', hv: 'k_heavy', cn: 'k_cancel', sn: 'k_sense' } };
 const BLUES = { g: ['blue', 'tele', 'mblue'], y: ['y_div', 'y_sweep', 'y_rush', 'y_conc', 'y_elbow', 'y_upper', 'y_flash'], v: ['v_bite'], k: ['k_toon'] };
@@ -919,7 +920,7 @@ const SK_TABS = [['g', 'skTabG', SK_GOJO], ['y', 'skTabY', SK_YUJI], ['v', 'skTa
 // ---------------------------------------------------------------- v1.25 THE SKILL TREE: the SKILLS page draws every fighter as a tree. The root is the fighter (Gojo is free, the others are bought like before), every skill is a node, and a line joins a node to the skills it needs: buy a node and the nodes after it open. A tap on a node shows it on the right, UNLOCK buys it. A skill with nothing in front of it hangs on the root.
 const SK_LAY = {      // where every node sits, [column, row] (the root is column 0): a line runs from the right edge of a skill a node needs to the left edge of the node, so the cells in between have to be empty
   g: { _root: [0, 2.5], crouch: [1, 0], cpunch: [2, 0], blue: [1, 1], mblue: [2, 1], dash: [1, 2], tele: [2, 2], purple: [3, 2.5], block: [1, 3], ce: [1, 4], red: [2, 4], fatal: [1, 5], domain: [2, 5], heavy: [1, 6], cancel: [2, 3], sense: [1, 7] },
-  y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 4.5], y_pierce: [5, 3], y_shrine: [5, 4], y_cleave: [5, 5], y_simple: [5, 6], y_div: [1, 6], y_rush: [2, 6], y_heavy: [1, 4.7], y_cancel: [3, 1.5], y_sense: [1, 7] },
+  y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 4.5], y_pierce: [5, 3], y_shrine: [5, 4], y_cleave: [5, 5], y_simple: [5, 6], y_ult: [4, 5.7], y_div: [1, 6], y_rush: [2, 6], y_heavy: [1, 4.7], y_cancel: [3, 1.5], y_sense: [1, 7] },
   v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5], v_heavy: [1, 4.5], v_cancel: [3, 0.8], v_air: [2, 4.5], v_pounce: [3, 3.5], v_sense: [1, 5.6] },
   k: { _root: [0, 1], k_crouch: [1, 0], k_fatal: [3, 0], k_dash: [1, 1], k_toon: [2, 1], k_stomp: [3, 1], k_block: [1, 2], k_ult: [3, 2], k_heavy: [1, 3], k_cancel: [2, 0], k_sense: [1, 4] },
   c: { _root: [0, 1], yuji: [1, 0], verity: [1, 1], cat: [1, 2] } };
@@ -1461,7 +1462,7 @@ function spark(x, y, n, cols, big, dir) {      // a burst of hit sparks at the w
   if (sparks.length > 140) sparks.splice(0, sparks.length - 140);
 }
 function drawSparks(now, dt) {
-  drawBolts(now); drawBig(now); drawSMD(now, true); drawTq(now); drawTalkFx(now);
+  drawBolts(now); drawBig(now); drawYuBig(now); drawSMD(now, true); drawTq(now); drawTalkFx(now);
   sparks = sparks.filter(p => now - p.born < p.life); const cx = Math.round(VW / 2);
   for (const p of sparks) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 230 * dt; p.vx *= Math.exp(-3 * dt); if (p.y > gy + 1 && p.vy > 0 && physOn()) { p.y = gy + 1; p.vy *= -0.4; p.vx *= 0.75; } const k = (now - p.born) / p.life, h = Math.abs(p.vx) > Math.abs(p.vy); ctx.globalAlpha = Math.max(0, Math.min(1, 1.7 * (1 - k))); ctx.fillStyle = p.c; ctx.fillRect(Math.round(cx + p.x - wx), Math.round(p.y), h ? p.len : 1, h ? 1 : p.len); }
   ctx.globalAlpha = 1; drawDeb(now, dt);
@@ -1853,6 +1854,7 @@ function drawOrb(now, dt) {
 }
 
 const DOM_D = $('dom').querySelector('path').getAttribute('d'), SCARE_D = 'M2 0h4v1H2zM1 1h6v1H1zM0 2h2v1H0zM3 2h2v1H3zM6 2h2v1H6zM0 3h8v1H0zM0 4h1v1H0zM7 4h1v1H7zM0 5h1v1H0zM7 5h1v1H7zM1 6h1v1H1zM6 6h1v1H6zM2 7h4v1H2z';      // (the JUMPSCARE icon: a screaming face)
+const YULT_D = 'M5 0h2v1H5zM4 1h2v1H4zM3 2h2v1H3zM2 3h5v1H2zM4 4h2v1H4zM3 5h2v1H3zM2 6h2v1H2zM1 7h2v1H1z';      // (YUJI'S ULTIMATE icon: a bolt of black lightning)
 const CHOKE_D = 'M0 0h2v1H0zM6 0h2v1H6zM0 1h8v1H0zM0 2h8v1H0zM0 3h1v1H0zM2 3h4v1H2zM7 3h1v1H7zM0 4h8v1H0zM0 5h3v1H0zM5 5h3v1H5zM1 6h6v1H1zM2 7h4v1H2z';      // (the ULTIMATE icon: a cat's face)
 function setModeUI() {                        // the MODE button (OFF / CURSED / RED) and the BLUE button, which becomes RED in red mode
   $('ce').classList.toggle('lit', cm === 1); $('ce').classList.toggle('red', cm >= 2); $('ce').setAttribute('aria-pressed', cm ? 'true' : 'false');
@@ -1862,6 +1864,7 @@ function setModeUI() {                        // the MODE button (OFF / CURSED /
   $('dashl').textContent = vy ? 'TELE' : 'DASH'; $('dash').setAttribute('aria-label', vy ? 'Teleport dodge' : 'Dash'); $('ce').setAttribute('aria-label', vy ? 'Mode: tap to turn into the ball and back' : 'Mode: tap to switch between normal, cursed energy and red');
   if (vy) { $('ce').classList.toggle('lit', ball); $('ce').setAttribute('aria-pressed', ball ? 'true' : 'false'); $('cel').innerHTML = 'MODE<br>' + (ball ? 'BALL' : 'OFF'); $('lapl').textContent = 'BITE'; $('lap').setAttribute('aria-label', 'Bite: the enemy bleeds for 4 seconds'); }
   if (!!vs && vs.me === 'cat') { $('lapl').innerHTML = 'CARTOON<br>TOSS'; $('lap').setAttribute('aria-label', 'Cartoon Toss: the huge Cartoon Cat grabs you and throws you onto the enemy'); $('doml').innerHTML = 'ULTI<br>MATE'; $('dom').querySelector('path').setAttribute('d', CHOKE_D); $('dom').setAttribute('aria-label', 'Ultimate: the Cat chokes the enemy, knees him 15 times and throws him away'); }      // playing the Cat: BLUE = CARTOON ATTACK; the DOMAIN button is his ULTIMATE; MODE and BLOCK are hidden by the style sheet
+  if (!!vs && vs.me === 'yuji') { $('doml').innerHTML = 'ULTI<br>MATE'; $('dom').querySelector('path').setAttribute('d', YULT_D); $('dom').setAttribute('aria-label', 'Ultimate: Yuji jumps at the enemy with four Black Flashes in a row, the last one a huge charged punch'); }      // (playing Yuji: the DOMAIN button is his ULTIMATE, v1.46)
   if (!!vs && vs.me === 'yuji') { lastBlue = cm === 3 ? 'PIERCE<br>BLOOD' : cm === 2 ? 'BLACK<br>FLASH' : cm === 1 ? 'CONC.<br>FIST' : 'DIVERG.<br>FIST'; $('lapl').innerHTML = lastBlue; $('lap').classList.remove('red'); $('lap').setAttribute('aria-label', cm === 3 ? 'Cursed Technique: standing = Piercing Blood, crouched = Shrine, walking forward = Grab and Cleave, in the air = Simple Domain' : cm === 2 ? 'Black Flash: a punch crackling with black sparks that hits twice as hard and sends the enemy flying back' : cm === 1 ? 'Concentrated Fist: one huge cursed energy punch that breaks the guard' : 'Divergent Fist: a punch full of cursed energy, then a second impact in the stomach as the fist is pulled back (crouched: a sweep kick that drops the enemy)'); $('ce').setAttribute('aria-label', 'Mode: tap to switch cursed energy on (hands up, then the flames light up) and off'); }      // playing Yuji: BLUE = DIVERGENT FIST (CONCENTRATED FIST in cursed energy mode, a SWEEP while crouched; the per-frame code in drawScene keeps the label right); MODE = cursed energy on / off (no red mode); DOMAIN is dimmed by the style sheet
   skillUI();
 }
@@ -2223,7 +2226,7 @@ function vsTick(now, dt) {
   if (now < pStun || now < (vs.catHold || 0) || now < (vs.cStun || 0)) { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; stickDown = false; }      // ...and none while he is stunned by the JUMPSCARE, held in the Cat's glove or dizzy (the Cat after 5 s flat)
   if (vs.net) { ceReq = domReq = false; fatReq = 0; }      // (the Wi-Fi fight: no MODE, DOMAIN or FATAL for now)
   if (vs.me === 'cat') { ceReq = false; if (stance !== 'stand') blockHeld = false; }      // the Cat has no MODE; he blocks standing only (flat nothing can hit him anyway)
-  if (vs.me === 'yuji') { domReq = false; if (stance !== 'stand') { atkReq = blockHeld = false; if (stance !== 'crouch') lpReq = false; } }      // Yuji has his M1 combo, BLUE (DIVERGENT FIST standing, CONCENTRATED FIST in cursed energy mode, crouched: the SWEEP in normal mode and the UPPERCUT, then the FACE KICK, in cursed energy mode), the cursed energy MODE (off <-> on, no red mode), block, walking, jumping, crouching and dashing (no DOMAIN, and no punches while crouched)
+  if (vs.me === 'yuji') { if (stance !== 'stand') { atkReq = blockHeld = false; if (stance !== 'crouch') lpReq = false; } }      // Yuji has his M1 combo, BLUE (DIVERGENT FIST standing, CONCENTRATED FIST in cursed energy mode, crouched: the SWEEP in normal mode and the UPPERCUT, then the FACE KICK, in cursed energy mode), the cursed energy MODE (off <-> on, no red mode), block, walking, jumping, crouching and dashing (no DOMAIN, and no punches while crouched)
 }
 function vsHurt(dm, now) { if (dom) return; vs.hp = Math.max(0, vs.hp - dm); vs.hitAt = now; if (vs.hp <= 0) { if (!vs.story || vs.foe === 'cat') { endRound('enemy', 'ko', now); if (vs.net && vs.ph === 'ko' && vs.who === 'enemy') lanSend('K|'); } else if (!de && !se) deathStart(now); } }      // (in the story fight Gojo's death is a cutscene)
 function endRound(who, why, now) {
@@ -2311,7 +2314,7 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
 }
 // ---------------------------------------------------------------- CURSED ENERGY (Versus mode only): a cyan bar under Gojo's health bar. It starts every round at 100%, each energy move costs some of it, it refills half a percent per second once a second and a half has passed without such a move (hitting, being hit and parrying fill it much faster, see onLand), and the cursed energy mode drains 1% per second (no refill) and switches itself off at 0%.
 const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30, purple: 50, domain: 67, fatal: 50, vBite: 20, vDrag: 25, cStomp: 40, vTele: 10, vBall: 20, vScare: 67, cToon: 30, cUlt: 67, yDiv: 15, yConc: 25, yKick: 5, yZone: 20, yFlash: 40, vTalk: 15, crouch: 3, ceMode: 10, redMode: 10, yInherit: 20, yBlood: 25, yShrine: 30, yGrab: 25, ySimple: 30 }, CE_WAIT = 1500, CE_REFILL = 0.5;      // what each move costs in % of the bar (slowRed = RED fired while walking back, coat = the BLUE leap onto that slow orb, tele = BLUE in the air, purple = the RED shot fired while Max Blue is out, it costs this instead of the plain RED price); the refill waits 1 s after the last paid move
-CE_COST.vPounce = 25;      // (v1.45: Verity's AIR BITE)
+CE_COST.vPounce = 25; CE_COST.yUlt = 67;      // (v1.45: Verity's AIR BITE)
 let ce = 100, ceLast = -1e9, ceFlash = -1e9;      // the energy in %, when a move last cost some, when a move was last refused (the bar flashes red)
 function ceReset() { ce = 100; ceLast = ceFlash = -1e9; }
 function ceDeny(now) { if (now - ceFlash < 150) return; ceFlash = now; snd('noce'); }      // a refused move: the bar flashes red and says NO CE for a moment (one refusal per press, even if the press falls through to another move that is refused too)
@@ -3752,6 +3755,93 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   if (now < blackUntil) { ctx.fillStyle = 'rgba(0,0,0,' + ((blackUntil - now) / 600).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }
   drawHits(now);
 }
+// ---------------------------------------------------------------- v1.46 YUJI'S ULTIMATE (skill y_ult, 1500 coins, needs BLACK FLASH; the DOMAIN button, which did nothing for Yuji before: 67% of the energy, 30 s between two, the enemy in front within 44 px, standing in the open, not in a RUSH). FOUR BLACK FLASHES while the enemy is held (frozen, so none can miss): 1 (20 damage) a LEAP with a blow to the stomach: the enemy is thrown up with him (strip 28); 2 (25) in the air he charges his leg and KICKS (the BLACK FLASH KICK, strip 21); 3 (30) he leaps again with one hand up and CHOPS down with it (strip 29): the enemy is slammed back to the floor; 4 (75) he lands and charges a punch, the CHARGED BLACK FLASH (strip 23), that hits very hard: 150 in all. Most of the effects are on the last one (yuBig, drawYuBig). The controller (yuTick) drives the swing the game already knows (atkK / atkAt), so the pictures, whooshes and sparks are the normal ones; it applies the blows itself (the normal impact handler is skipped while it runs), lifts Yuji and the enemy, and gives no control back until it is over.
+for (const j of [28, 29]) { YU.atk[j] = YU['atk' + j]; YUF.norm.atk[j] = mk(YU['atk' + j], YU.pal); YUF.inv.atk[j] = mk(YU['atk' + j], yuInv(YU.pal)); }      // (strips 28 = the LEAP, 29 = the HAND SLASH, tools/yuji_art.py)
+YU_ATK.names.push('U.LEAP', 'U.SLASH'); YU_ATK.fps.push(34, 32); YU_ATK.swing.push([4], [5]); YU_ATK.imp.push([], []); YU_ATK.hit.push([], []); YU_ATK.reach.push(0, 0);      // (no impact frames and hits of their own: the ultimate lands its blows by itself)
+const YUT = { cd: 30000, reach: 44, near: 21, dmg: [20, 25, 30, 75], k: [28, 21, 29, 23], next: [13, 12, 14.7], imp: [7, 7, 7, 9], hov: 24, pop: 3, rise: 0.25, fall: 0.24 };      // damage of the four blows (150), the strip of each, the frame of the strip at which the next beat starts, the impact frame, how high the enemy hangs (px), the pop of the kick, the seconds he takes to rise and to fall
+const YU_LIFT = { 28: [0, 0, 0, 0, 0, 0, 3, 10, 17, 22, 24, 24, 24, 24, 24], 29: [26, 27, 28, 30, 33, 36, 37, 37, 36, 32, 26, 18, 9, 3, 0] };      // how high Yuji is raised (px) in each frame of the two new strips; the kick hovers on top of 24 px (its own hop, scaled), the punch is on the ground
+let yu = null, yuFx = [];      // the ultimate in progress { at, beat 0-3, hit: [landed x4], ti: [when each landed (s)], eh: the enemy's height, h2: his height when the chop landed, lift: Yuji's height, dmg, rel: he has been blasted away, landed }; the shows of the last punch (real clock)
+const yuEase = u => u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u);
+function yuLiftAt(k, fa) {      // Yuji's height in frame fa (a fraction: between two pictures) of strip k
+  const f = Math.max(0, Math.min(14, fa)), a = Math.floor(f), b = Math.min(14, a + 1), g = i => k === 21 ? YUT.hov + 0.36 * YU.atk[21].lift[i] : k === 23 ? 0 : YU_LIFT[k][i];
+  return g(a) + (g(b) - g(a)) * (f - a);
+}
+function yuTarget(now) {      // the enemy can be held: in front within the reach, alone, standing in the open (the Cat's ULTIMATE has the same rules)
+  const d = dummy; return !!d && !!vs && !vs.net && vs.ph === 'fight' && !yu && !ult && !dom && !d.curse && !(vs.foes && vs.foes.length > 1) && d.ko < 0 && !d.cap && !d.air && !(d.vform && d.vform !== 'verity') && !(d.vact && d.vact.type === 'crouch') && !(d.cact && d.cact.flat) && now >= d.stunUntil && now - d.rxAt >= RX_DUR[d.rx] && now - d.born >= 900 && d.x - wx <= YUT.reach && d.x - wx >= -4;
+}
+function yuTry(now, t, hf) {      // the DOMAIN button as Yuji (the lock was checked by gateSkills)
+  if (yu || !vs || vs.me !== 'yuji' || !(freeNow() && stance === 'stand' && t >= 1 && hf < 0 && hurtAt < 0 && now >= pStun && now >= domReadyAt)) return;
+  if (!yuTarget(now)) { const gp = dummy ? dummy.x - wx : 999; say(gp <= YUT.reach && gp >= -4 ? 'CANT' : 'TOO FAR', wx, '#ff8a7a', 8, now); return; }
+  if (ceSpend(CE_COST.yUlt, now)) yuStart(now);
+}
+function yuStart(now) {
+  const d = dummy, T = 3.2; yu = {      // (T: the seconds the enemy is held, much more than it lasts)
+    at: now, beat: -1, hit: [false, false, false, false], ti: [-1, -1, -1, -1], eh: 0, h2: 0, lift: 0, dmg: 0, rel: false, landed: false };
+  domReadyAt = now + YUT.cd; atkQ = false; combo = 0; d.stunUntil = now + (T + 0.5) * 1000; d.ai = 'rest'; d.aiAt = now; d.restFor = (T + 0.6) * 1000; d.vx = 0; d.pull = null; d.vact = null; d.cact = null; d.held = null; d.cheld = null;
+  snd('swing', 3); say('ULTIMATE!', wx, '#ff3a4a', 12, now);
+}
+function yuBeat(i, now) { yu.beat = i; atkK = YUT.k[i]; atkAt = now; atkQ = false; evA = -1; if (i === 1 || i === 3) snd('charge'); if (i === 3) { shakeUntil = now + 450; shakeAmp = 2; } }
+function yuEnd(now) {      // over (or cut short: the enemy was beaten, the round ended)
+  const u = yu; if (!u) return; yu = null; const d = dummy; atkAt = -1; atkQ = false; combo = 0; comboUntil = 0;
+  if (d) { if (!u.rel) { d.air = null; d.airH = 0; } d.stunUntil = Math.max(d.stunUntil, now + 450); if (d.ai === 'rest') { d.ai = 'think'; d.aiAt = now + 450; } }
+}
+function yuEnemyH(u, t) {      // how high the held enemy is: thrown up by the first blow, popped by the kick, slammed down by the chop
+  if (u.ti[0] < 0 || t < u.ti[0]) return 0;
+  if (u.ti[2] >= 0 && t >= u.ti[2]) { const e = Math.min(1, (t - u.ti[2]) / YUT.fall); return u.h2 * (1 - e * e); }
+  return YUT.hov * yuEase((t - u.ti[0]) / YUT.rise) + (u.ti[1] >= 0 ? YUT.pop * yuEase((t - u.ti[1]) / 0.12) : 0);
+}
+function yuHit(i, now) {      // blow i lands (a Black Flash, 20 / 25 / 30 / 75)
+  const u = yu, d = dummy, dm = YUT.dmg[i]; d.hp = Math.max(0, d.hp - dm); d.hitAt = now; u.dmg += dm; hits.n++; hits.dmg += dm; hits.until = now + COMBO_WIN; hits.last = now; connectAt = atkAt; flowAdd(8, now);
+  say('' + dm, d.x, popCol(), 8, now + 30);
+  if (i === 3) { d.rx = 4; d.rxAt = now; d.vx = 1100; d.stunUntil = now + 1500; d.ai = 'hurt'; d.smokeUntil = now + 900; d.down = now + RX_DUR[4]; u.rel = true; d.air = null; d.airH = 0; yuBig(now, d.x); }
+  else {
+    snd('hit', 3); snd('smack', 3); shakeUntil = now + 120; shakeAmp = 2; buzz(60); bfFx(now, d.x, [22, 21, 20][i]); const b = bfList[bfList.length - 1]; if (b) b.y = gy - [24, 46, 44][i] - Math.round(d.airH || 0);
+    if (i === 0) { d.rx = AIR_RX; d.rxAt = now; }
+  }
+  if (d.hp <= 0) { yuEnd(now); koDummy(now); }
+}
+function yuTick(now, dt) {      // every frame, before the controls: the beats, the blows, the heights, no control for the player
+  const u = yu; if (!u) return; const d = dummy;
+  keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; stickDown = false;
+  if (!vs || vs.ph !== 'fight' || !d || d.ko >= 0 || state !== 'play') { yuEnd(now); return; }
+  const t = (now - u.at) / 1000; if (u.beat < 0) yuBeat(0, now);
+  let fa = atkAt >= 0 ? (now - atkAt) * YU_ATK.fps[atkK] / 1000 : 99;
+  if (u.beat < 3 && fa >= YUT.next[u.beat]) { yuBeat(u.beat + 1, now); fa = 0; }
+  const i = u.beat; if (!u.hit[i] && fa >= YUT.imp[i]) { u.hit[i] = true; u.ti[i] = t; if (i === 2) u.h2 = u.eh; yuHit(i, now); if (yu !== u) return; }
+  u.lift = yuLiftAt(atkK, fa);
+  if (i === 0 && !u.hit[0] && d.x - wx > YUT.near) wx = Math.min(d.x - YUT.near, wx + 360 * dt);      // (he closes up on the enemy while he coils)
+  if (!u.rel) {
+    u.eh = yuEnemyH(u, t); d.vx = 0; d.stunUntil = Math.max(d.stunUntil, now + 300);
+    if (u.ti[2] >= 0 && u.eh <= 0.2) { if (!u.landed) { u.landed = true; d.air = null; d.airH = 0; d.rx = 0; d.rxAt = now; puff(d.x, 8); snd('land', 1.4); shakeUntil = now + 120; shakeAmp = 2; gritAt(d.x, 8, 50, 0); } }
+    else if (u.ti[0] >= 0) { d.air = { at: now, h0: u.eh, v0: 0, g: 0, kind: 'up', T: 1e9, hover: true }; d.airH = u.eh; }
+  }
+  if (i === 3 && fa >= 15) yuEnd(now);
+}
+function yuBig(now, x) {      // the last punch: the longest freeze of the game (0.52 s) with the anime's four impact frames on it, the biggest shake, slow motion afterwards and the show of drawYuBig (the first three blows have the normal BLACK FLASH)
+  const I = YU.atk[23], h = I.hn[9], hxp = wx + h[0] - (I.cx - I.x0), hyp = gy - 60 - (I.top || 0) + h[1];
+  stopMs = Math.max(stopMs, 520); impfStart(hxp - wx, hyp); buzz(400); shakeUntil = now + 1000; shakeAmp = 8; flash(now, 260, 0.9);
+  say('BLACK FLASH!!', x, '#ff3a4a', 16, now + 30);
+  yuFx.push({ x: x - 4, y: gy - 34, real: performance.now() + 520 });
+  spark(x - 6, gy - 34, 90, ['#ff2a3a', '#12030a', '#ffffff', '#ff7a5a'], true, 1); spark(x - 6, gy - 34, 50, ['#ff2a3a', '#12030a'], true, -1);
+  gritAt(x, 24, 160, 0); shockAt(x, 260, 120, 0.9); puff(x, 12); snd('concboom'); snd('finisher'); snd('smack', 3); snd('land', 2);
+  setTimeout(() => { if (state === 'play') slowMo(1500, 0.3); }, 500);      // (slow motion starts when the freeze is over)
+}
+function drawYuBig(now) {      // the charge of the last punch (game clock: the world dims and a rumble builds) and its show (real clock, so it plays while the game stands still): a white and then red flash, darkness, a beam through the hit, four shock rings, sixteen bolts of lightning, the floor splitting both ways and flying debris
+  const u = yu; if (u && u.beat === 3 && !u.hit[3] && atkAt >= 0) { const k = Math.max(0, Math.min(1, (now - atkAt) * YU_ATK.fps[23] / 1000 / 9)); ctx.globalAlpha = 0.5 * k; ctx.fillStyle = '#12030a'; ctx.fillRect(-8, -8, VW + 16, VH + 16); ctx.globalAlpha = 1; shakeUntil = Math.max(shakeUntil, now + 60); shakeAmp = Math.max(shakeAmp, 1 + 2 * k); }
+  const rn = performance.now(); yuFx = yuFx.filter(b => rn - b.real < 1700); if (!yuFx.length) return; const cx = Math.round(VW / 2);
+  for (const b of yuFx) {
+    const t = rn - b.real; if (t < 0) continue; const X = Math.round(cx + b.x - wx), Y = b.y;
+    if (t < 140) { ctx.globalAlpha = 0.95 * (1 - t / 140); ctx.fillStyle = '#ffffff'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }
+    ctx.globalAlpha = Math.max(0, 0.38 * (1 - t / 800)); ctx.fillStyle = '#ff2a3a'; ctx.fillRect(-8, -8, VW + 16, VH + 16);
+    ctx.globalAlpha = Math.max(0, 0.7 * (1 - t / 1100)); ctx.fillStyle = '#12030a'; ctx.fillRect(-8, -8, VW + 16, VH + 16);
+    if (t < 260) { const h = Math.round(7 * (1 - t / 260)); ctx.globalAlpha = 1; ctx.fillStyle = '#ffffff'; ctx.fillRect(0, Y - h, VW, 2 * h + 1); ctx.fillStyle = '#ff2a3a'; ctx.fillRect(0, Y - h - 2, VW, 2); ctx.fillRect(0, Y + h + 1, VW, 2); }
+    for (let q = 0; q < 4; q++) { const a = t - q * 110; if (a < 0 || a > 900) continue; const R = 4 + a * 0.3; ctx.globalAlpha = Math.max(0, 1 - a / 900); for (const [col, rr] of [['#12030a', R], ['#ff2a3a', R + 2]]) { ctx.fillStyle = col; for (let sg = 0; sg < 96; sg++) { if (sg % 8 === 7) continue; const th = sg / 96 * 6.2832; ctx.fillRect(Math.round(X + Math.cos(th) * rr), Math.round(Y + Math.sin(th) * rr * 0.75), 2, 2); } } }
+    if (t < 700) { ctx.globalAlpha = Math.max(0, 1 - t / 700); for (let q = 0; q < 16; q++) bfBolt(X, Y, q / 16 * 6.2832 + Math.random() * 0.4, Math.round(16 + 54 * Math.min(1, t / 160))); for (let q = 0; q < 6 && t < 300; q++) bfBolt(X + ((Math.random() * 40) | 0) - 20, Y, (q % 2 ? 0 : Math.PI) + (Math.random() - 0.5) * 0.5, 80 + ((Math.random() * 40) | 0)); }
+    if (t < 1200) { const L = Math.min(VW, t * 0.55); ctx.globalAlpha = Math.max(0, 1 - t / 1200); for (const dr of [-1, 1]) { let py = gy + 1; for (let sg = 0; sg < L; sg++) { if (sg * 7 % 5 === 0) py += (sg % 3) - 1; py = Math.max(gy - 1, Math.min(gy + 4, py)); ctx.fillStyle = '#ff2a3a'; ctx.fillRect(X + dr * sg, py - 1, 1, 1); ctx.fillStyle = '#12030a'; ctx.fillRect(X + dr * sg, py, 1, 2); } } }
+    if (t < 1100) { ctx.globalAlpha = Math.max(0, 1 - t / 1100); for (let q = 0; q < 28; q++) { const an = q * 2.399, sp = 40 + (q * 37 % 90), px = X + Math.cos(an) * sp * t / 1000 * 1.4, py = Math.min(gy + 2, Y + Math.sin(an) * sp * t / 1000 - 70 * t / 1000 + 120 * t * t / 1e6); ctx.fillStyle = q % 3 === 0 ? '#ff2a3a' : q % 3 === 1 ? '#383444' : '#8c8898'; const z = q % 4 === 0 ? 2 : 1; ctx.fillRect(Math.round(px), Math.round(py), z + 1, z); } }
+  }
+  ctx.globalAlpha = 1;
+}
 function drawScene(now, dt) {
   fatUI(now);
   if (fat) { fatFrame(now, dt); return; }       // the FATALITY cutscene replaces the whole scene while it plays
@@ -3761,7 +3851,7 @@ function drawScene(now, dt) {
   if (vf) { vfFrame(now, dt); return; }         // ...and Verity's FATALITY
   if (cf) { cfFrame(now, dt); return; }         // ...and the Cat's FATALITY
   if (ke) { keFrame(now, dt); return; }         // ...and the end of the Cat in the story
-  comboEscape(now); flowTick(now); counterTick(now); domTick(now); bfTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); if (!dom) { if (vs && vs.foe === 'verity') storyBattleTick(now, dt); else if (vs && vs.foe === 'cat') catTick(now, dt); ultTick(now, dt); }      // (the DOMAIN freezes everyone: none of the enemy's own clocks run while it lasts)
+  comboEscape(now); flowTick(now); yuTick(now, dt); counterTick(now); domTick(now); bfTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); if (!dom) { if (vs && vs.foe === 'verity') storyBattleTick(now, dt); else if (vs && vs.foe === 'cat') catTick(now, dt); ultTick(now, dt); }      // (the DOMAIN freezes everyone: none of the enemy's own clocks run while it lasts)
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
     const fs = fatState(now);
     if (fs === 0) { fatReq = 0; if (ceSpend(CE_COST.fatal, now)) { fatGo(now, dt, false); return; } }      // (his own FATALITY costs 50% cursed energy; the enemy's is free)
@@ -3827,6 +3917,7 @@ function drawScene(now, dt) {
     crReq = false;
     if (t >= 1 && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0) { if (stance === 'stand') { stance = 'down'; stAt = now; sf = 0; } else if (stance === 'crouch') { stance = 'up'; stAt = now; sf = 0; } }
   }
+  if (domReq && vs && vs.me === 'yuji') { domReq = false; yuTry(now, t, hf); }      // (YUJI'S ULTIMATE, v1.46)
   if (domReq) { domReq = false; if (!dom && now >= domReadyAt && t >= 1 && stance === 'stand' && jf < 0 && tf < 0 && af < 0 && hf < 0 && lf < 0 && sf < 0 && mf < 0 && df < 0 && bf < 0 && hurtAt < 0 && ceSpend(CE_COST.domain, now)) startDomain(now); }      // DOMAIN: only while he stands and nothing else is going on
   if (ceReq && vs && vs.me === 'yuji') {      // YUJI's MODE button: cursed energy off <-> on (no red mode). Switching it ON takes the POWER-UP (move 11: both hands go up with nothing on them, then come down hard and the flames light up on the way down, see ceFlameAt); he has to stand with nothing else going on, and some energy is needed
     ceReq = false;
@@ -3951,7 +4042,7 @@ function drawScene(now, dt) {
     if (af >= 0) {
       if (vs && vs.me === 'yuji') {      // YUJI: the whoosh and every impact of this attack (the jump kick has three)
         for (const w of YU_ATK.swing[atkK]) if (evA < w && af >= w) snd('swing', ySwingK(atkK));
-        YU_ATK.imp[atkK].forEach((im, j) => { if (evA < im && af >= im) { const hk = YU_ATK.hit[atkK][j]; if (!isD2(hk)) { snd('hit', YU_ATK.snd[hk - 24] | 0); shakeUntil = now + 90; shakeAmp = hk === 29 || hk === 41 ? 3 : 1; } hitDummy(hk, now); hitPeds(hk, now); hitPurple(hk, now); } });
+        if (!yu) YU_ATK.imp[atkK].forEach((im, j) => { if (evA < im && af >= im) { const hk = YU_ATK.hit[atkK][j]; if (!isD2(hk)) { snd('hit', YU_ATK.snd[hk - 24] | 0); shakeUntil = now + 90; shakeAmp = hk === 29 || hk === 41 ? 3 : 1; } hitDummy(hk, now); hitPeds(hk, now); hitPurple(hk, now); } });
         if (atkK >= 24) techFrame(now, evA, af);      // (v1.21 CURSED TECHNIQUE: its moments sit on their own frames)
       } else {
       if (evA < ATK_SWING[atkK] && af >= ATK_SWING[atkK]) snd('swing', atkK);
@@ -3992,7 +4083,7 @@ function drawScene(now, dt) {
   const info = rmvK ? D.atk11 : yj ? yj.info : riding ? ride.info : hurting ? D['rx' + hurtK] : fearing ? D.cidle : dodging ? D['atk' + (9 + dgK + (dgCr ? 3 : 0))] : blocking ? binfo : tele ? D.tele : jumping ? (jumpC ? D.cjump : D.jump) : mbing ? (mbK ? D.atk22 : D.atk8) : lapsing ? D['atk' + (4 + lpK)] : atkOn ? D['atk' + atkK] : mode === 'cdn' ? D.cdn : mode === 'cidle' ? D.cidle : mode === 'cfwd' ? D.cfwd : mode === 'cback' ? D.cback : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
   const fi = rmvK ? rmvF : yj ? yj.fi : riding ? ride.fi : hurting ? hf : fearing ? Math.floor(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)) % 15 : dodging ? df : blocking ? bfi : tele ? tf : jumping ? jf : mbing ? mf : lapsing ? lf : atkOn ? af : mode === 'cdn' ? (stance === 'down' ? sf : 14 - sf) : Math.floor(Math.max(0, now - (idle || mode === 'cidle' ? spawnAt : modeAt)) / (1000 / (idle || mode === 'cidle' ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail pnow() by a hair
   const lk = tele ? info.lift_k[tf] : 0;      // teleport: stays where he vanished (null), then the fixed height he reappears at, falling back to the ground
-  const lift = gAir ? gAirH : yj ? yj.lift : riding ? ride.lift : tele ? (lk === null ? teleL0 : Math.round(Math.min(34, gy - 66) * lk)) : jumping ? (jumpC ? D.cjump : D.jump).lift[jf] : hurting && info.lift ? info.lift[hf] : 0;   // how far the sprite is raised off the ground
+  const lift = gAir ? gAirH : yj ? (yu ? yu.lift : yj.lift) : riding ? ride.lift : tele ? (lk === null ? teleL0 : Math.round(Math.min(34, gy - 66) * lk)) : jumping ? (jumpC ? D.cjump : D.jump).lift[jf] : hurting && info.lift ? info.lift[hf] : 0;   // how far the sprite is raised off the ground
   if (vs && vs.net) netPose(set, fi, lift);
   gojoLift = lift; gojoGone = tele && tf < 6;   // the attacking dummy misses him while he is up in the air or vanished
   const cx = Math.round(VW / 2), fo = fearing ? fearOff(now) : ultHeldOff(now), x = cx - (info.cx - info.x0) + fo[0], y = gy - 60 - info.top - lift + fo[1];
@@ -4010,13 +4101,13 @@ function drawScene(now, dt) {
   else {
     ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip();
     ctx.globalAlpha = Math.min(1, t * 2);
-    { const gp = (ceOn && (cm === 2 ? HOMAPR : HOMAP).get(set) || set)[fi]; const pp = rmvK ? rmvPic(gp, rmvI) : blindOff && !yj ? blindDown(gp) : gp; const zn = yj && cm >= 2 ? zoneFxPre(now, info, set[fi], x, y, af, atkOn) : false; ctx.drawImage(vs && vs.meInv && !(hurting && now - hurtAt < 70) ? invOf(pp) : pp, x, y); if (zn) ctx.restore(); } if (yj && hurting && now - hurtAt < 70) ctx.drawImage(whiteOf(set[fi]), x, y);        // cursed energy on: both hands out of the pockets
+    { const gp = (ceOn && (cm === 2 ? HOMAPR : HOMAP).get(set) || set)[fi]; const pp = rmvK ? rmvPic(gp, rmvI) : blindOff && !yj ? blindDown(gp) : gp; const zn = yj && (cm >= 2 || yu) ? zoneFxPre(now, info, set[fi], x, y, af, atkOn) : false; ctx.drawImage(vs && vs.meInv && !(hurting && now - hurtAt < 70) ? invOf(pp) : pp, x, y); if (zn) ctx.restore(); } if (yj && hurting && now - hurtAt < 70) ctx.drawImage(whiteOf(set[fi]), x, y);        // cursed energy on: both hands out of the pockets
     if (fearing) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(blindOff && !yj ? blindDown(set[fi]) : set[fi]), x, y); }      // (JUMPSCARE: a pale pulse; with the blindfold down it follows the redrawn head)
   }
   ctx.restore(); if (!again) drawGiantNow('foe');
   if (!again && t >= 1 && gko < 0 && !vap) cloth(clMe, set[fi], x, y, false, yj ? 'yuji' : 'gojo', dt);
   if (yj && atkOn && (atkK === 4 || atkK === 9 || atkK === 12 || atkK === 13) && info.hn && !vap) divGlow(x + info.hn[fi][0], y + info.hn[fi][1], fi, now, atkK === 9 || atkK === 13);      // (DIVERGENT FIST and CONCENTRATED FIST: the cursed energy round your fist)
-  if (t >= 1 && gko < 0 && !vap) { drawCE(now, x, y, info, fi); if (yj && cm >= 2 && atkOn && atkK >= 20 && atkK <= 22 && af >= 2) bfSparks(now, x, y, info, fi); if (yj && cm === 3 && atkOn && atkK === 23) chargeFx(now, x, y, info, fi, af); if (yj && cm === 3 && vs && vs.ph === 'fight') inheritHud(now); if (!again) drawRedFx(now, dt, x, y, info, fi, mbing && mbK === 1, mf); }
+  if (t >= 1 && gko < 0 && !vap) { drawCE(now, x, y, info, fi); if (yj && atkOn && af >= 2 && ((cm >= 2 && atkK >= 20 && atkK <= 22) || (yu && (atkK === 21 || atkK === 28 || atkK === 29)))) bfSparks(now, x, y, info, fi); if (yj && (cm === 3 || yu) && atkOn && atkK === 23) chargeFx(now, x, y, info, fi, af); if (yj && cm === 3 && vs && vs.ph === 'fight') inheritHud(now); if (!again) drawRedFx(now, dt, x, y, info, fi, mbing && mbK === 1, mf); }
   }; paintMe(false);
 
   if (tele && (tf === 2 || tf === 3)) { ctx.fillStyle = 'rgba(160,220,255,0.12)'; ctx.fillRect(0, 0, VW, VH); }   // soft blue flash on the teleport
