@@ -137,7 +137,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.38</small>
+    <small id="ver">V1.39</small>
   </div>
 </section>
 
@@ -221,6 +221,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <button class="card pp" data-who="yuji"><canvas></canvas><b>YUJI</b><i>FREE PLAY</i></button>
     <button class="card pp" data-who="verity"><canvas></canvas><b>VERITY</b><i>FREE PLAY</i></button>
     <button class="card pp" data-who="cat"><canvas></canvas><b>CARTOON CAT</b><i>FREE PLAY</i></button>
+    <button class="card pp" data-who="freddy"><canvas></canvas><b>FREDDY<br>KRUEGER</b><i>FREE PLAY</i></button>
   </div>
   <small>FREE PLAY: EVERY MOVE OF EVERY FIGHTER IS FREE HERE, THE ENERGY NEVER RUNS OUT AND YOU CANNOT LOSE (SET > GAME: THE ENEMY CAN FIGHT BACK)</small>
   <div class="row"><button id="vsBtn">VERSUS MODE</button><button id="selBack">BACK</button></div>
@@ -1138,7 +1139,7 @@ const assistLvl = () => vs && vs.net ? 0 : SET.assist;      // (assist is for th
 const soft = dm => assistLvl() >= 2 ? Math.max(1, Math.round(dm * 0.7)) : dm;      // EASY: 30% less damage to you
 const autoGuard = () => assistLvl() >= 3 && !lacks('blk') && stance === 'stand' && atkAt < 0 && lpAt < 0 && jumpAt < 0 && teleAt < 0 && dgAt < 0 && mbAt < 0 && !dash && !keyL && !keyR && !padL && !padR;      // AUTO-GUARD: standing still with nothing going on, the front is guarded as if BLOCK were held
 const freePlay = () => state === 'play' && (!vs || !!vs.practice);      // v1.14 FREE PLAY (the fighter select screen): in it every move of every fighter is free
-const owns = id => freePlay() || !!PROG.own[id], gojoMe = () => !vs || vs.me === 'gojo';
+const owns = id => id === 'freddy' || freePlay() || !!PROG.own[id], gojoMe = () => !vs || vs.me === 'gojo';
 const meK = () => !vs ? 'g' : vs.me === 'yuji' ? 'y' : vs.me === 'verity' ? 'v' : vs.me === 'cat' ? 'k' : 'g';      // the fighter you play: g = Gojo (and everything outside a match), y = Yuji, v = Verity, k = the Cat
 const setMoneyUI = () => { const t = 'MONEY $' + PROG.m; for (const id of ['modesMoney', 'chalMoney', 'skMoney']) $(id).textContent = t; };
 const earn = n => { PROG.m += n; saveProg(); setMoneyUI(); };
@@ -2734,7 +2735,7 @@ const GRADES = [
 const PHP = 300;                              // Gojo's health in a match
 const KO_HOLD = 450, KO_MS = 1800, ROUND_MS = 45000, INTRO_MS = 1500, INTRO_ROUND = 800;            // a K.O.: the picture freezes for 0.45 s, then the loser topples; 1.8 s after it the next round starts (or the result shows); a round lasts 45 s; the intro (ROUND n, then FIGHT!) takes 1.5 s
 let vs = null, vsSel = 0;
-const vsPick = { me: 'gojo', foe: 'gojo' }, FIGHTERS = [['SORCERERS', [['gojo', 'GOJO'], ['yuji', 'YUJI']]], ['CURSED SPIRITS', [['verity', 'VERITY'], ['cat', 'CARTOON<br>CAT']]]], NAMES = { gojo: 'GOJO', verity: 'VERITY', yuji: 'YUJI', cat: 'CARTOON CAT' }; let vsPv = [];      // who you and the enemy have picked, the two sections, and the little pictures on the cards
+const vsPick = { me: 'gojo', foe: 'gojo' }, FIGHTERS = [['SORCERERS', [['gojo', 'GOJO'], ['yuji', 'YUJI']]], ['CURSED SPIRITS', [['verity', 'VERITY'], ['cat', 'CARTOON<br>CAT'], ['freddy', 'FREDDY<br>KRUEGER']]]], NAMES = { gojo: 'GOJO', verity: 'VERITY', yuji: 'YUJI', cat: 'CARTOON CAT', freddy: 'FREDDY KRUEGER' }; let vsPv = [];      // who you and the enemy have picked, the two sections, and the little pictures on the cards
 function buildFighters() {      // YOUR FIGHTER / ENEMY FIGHTER, each with a SORCERERS section (Gojo) and a CURSED SPIRITS section (Verity); the enemy is drawn inverted only when he is the same fighter as you
   vsPv = [];
   for (const [row, id] of [['me', 'vsMeRow'], ['foe', 'vsFoeRow']]) {
@@ -2742,6 +2743,7 @@ function buildFighters() {      // YOUR FIGHTER / ENEMY FIGHTER, each with a SOR
     for (const [sec, list] of FIGHTERS) {
       const g = document.createElement('div'), cards = document.createElement('div'); g.className = 'fg'; g.innerHTML = '<span class="gl">' + sec + '</span>'; cards.className = 'cards mini';
       for (const [who, nm] of list) {
+        if (row === 'foe' && who === 'freddy') continue;      // (he is not offered as the enemy: he cannot fight yet)
         if (who !== 'gojo' && !owns(who)) { const lk = document.createElement('div'); lk.className = 'card lock'; lk.innerHTML = '<span>?</span><b>LOCKED</b>'; cards.appendChild(lk); continue; }      // (bought on the SKILLS page)
         const inv = row === 'foe' && vsPick.me === who, b = document.createElement('button');
         b.className = 'card' + (vsPick[row] === who ? ' sel' : ''); b.dataset.row = row; b.dataset.who = who; b.innerHTML = '<canvas></canvas><b>' + nm + (inv ? '<br>(INV.)' : '') + '</b>';
@@ -4368,6 +4370,7 @@ function drawScene(now, dt) {
   airStepMe(now);      // (you are launched by the enemy's UPPERCUT: your height and the frame of your reaction)
   gateSkills(now);      // (v1.00: a move you do not own is not there; v1.11: for Yuji, Verity and the Cat as well)
   if (vs && vs.me === 'verity') { verityScene(now, dt); return; }      // YOUR FIGHTER is Verity: his own controls and pictures (below)
+  if (vs && vs.me === 'freddy') { freddyScene(now, dt); return; }      // YOUR FIGHTER is Freddy Krueger: he only stands (v1.39)
   if (vs && vs.me === 'cat') { catScene(now, dt); return; }      // YOUR FIGHTER is the Cartoon Cat: his own controls and pictures (below)
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3);
   if (mbAt < 0) mbK = 0;
@@ -5593,7 +5596,7 @@ function buildHunts() {      // CHALLENGES > HUNTS: the fighter and the ten hunt
   });
 }
 // ---------------------------------------------------------------- v1.36 PHYSICS I: weight, momentum, falling and bodies. Everyone has a MASS (the fighters 48 to 75 kg, the curses 8 kg for the wisp up to 260 for the ogre). KNOCK-BACK is a push that gives a velocity of (the table's value x 70 / the mass): the light fly, the heavy barely move; then the body slides with real friction (a constant braking, 260 px/s^2, plus a little drag) so a fast slide goes quadratically further. WALKING has inertia (the legs need 0.1 s to get up to speed and 0.07 s to stop; in the air there is hardly any steering: what you had at take-off you keep). The JUMP follows gravity (9.8 m/s^2 at 35 px per metre: 0.71 s in the air for the 22 px jump, it was 0.42 s). BODIES are solid: nobody walks through anybody, a walker pushes the lighter one along and is slowed by the heavier one, a body that slides into another gives it momentum, you can jump over them. A slammed enemy BOUNCES (and a hard fall hurts); the street's ends in a hunt are walls (a hard hit against one hurts). Not in the Wi-Fi fight (both phones must agree) and not in the story (it is scripted).
-const PH_REF = 70, SLIDE_C = 260, SLIDE_K = 5, MASS = { gojo: 75, yuji: 72, verity: 58, cat: 48, grub: 14, hound: 45, stalker: 62, wisp: 8, wraith: 34, doll: 20, mantis: 55, ogre: 260, crab: 150, imp: 26 };
+const PH_REF = 70, SLIDE_C = 260, SLIDE_K = 5, MASS = { gojo: 75, yuji: 72, verity: 58, cat: 48, freddy: 70, grub: 14, hound: 45, stalker: 62, wisp: 8, wraith: 34, doll: 20, mantis: 55, ogre: 260, crab: 150, imp: 26 };
 let wvx = 0;      // your walking velocity (px/s)
 const physOn = () => !window.__noPhys && !(vs && (vs.net || vs.story));
 const mScale = m => Math.max(0.3, Math.min(2.5, PH_REF / m));      // how much faster than the table says a body of mass m is pushed
@@ -5877,6 +5880,51 @@ function cloth(E, src, ox, oy, flip, kind, dt) {      // the hair and the coat f
   if (kind !== 'cat') { clStep(E.hair, X(A.hu) + bk * 2, oy + A.ht + 2, bk, 3, CL_HAIR, d); clDraw(E.hair, A.hc, 2); }
   clStep(E.coat, X(A.bu), oy + A.bv + 1, bk, kind === 'cat' ? 4 : 3.5, kind === 'cat' ? CL_TAIL : CL_COAT, d); clDraw(E.coat, A.bc, 2);
 }
+// ---------------------------------------------------------------- v1.39 FREDDY KRUEGER: a CURSED SPIRIT fighter like Verity and the Cartoon Cat (16 bit, 64 x 64 pictures, tools/freddy_art.py makes them from the picture the game's author gave). For now he only STANDS: 15 idle frames, he cannot move or attack yet (the buttons do nothing), but he can be pushed and hurt, flashes when he is hit and tumbles when he is knocked out. You can play him in FREE PLAY and in VERSUS (as your fighter; he is not offered as the enemy).
+const FRED_IMG = new Image(); FRED_IMG.src = 'data:image/png;base64,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';
+const FRED_INFO = { w: 64, h: 64, cx: 30, x0: 0, top: 1 }, FRC = new Map();      // (cx: the column of the picture that stands at the middle of the screen: between his feet)
+function fredF(i) {      // frame i of his idle (15 frames, looping) as a canvas of 64 x 64 (EMPTY until the sheet has loaded)
+  i = ((Math.floor(i) % 15) + 15) % 15; let c = FRC.get(i); if (c) return c;
+  if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
+  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, 0, 64, 64, 0, 0, 64, 64); FRC.set(i, c); return c;
+}
+function freddyScene(now, dt) {      // one frame of a match with FREDDY as the player: no controls (he cannot move or attack yet), then the picture (the enemy, the HUD and the effects are the shared ones)
+  const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3), cx = Math.round(VW / 2); setDomUI(now);
+  jumpReq = atkReq = lpReq = dashReq = crReq = domReq = ceReq = senseReq = blockHeld = false; jumpAt = teleAt = atkAt = dgAt = blkAt = blkEnd = -1; atkQ = false; stance = 'stand'; wvx = 0; gojoLift = 0; gojoGone = false;
+  let hf = -1; if (hurtAt >= 0) { hf = Math.floor(Math.max(0, now - hurtAt) * RX_FPS[hurtK] / 1000); if (hf >= 10) { hurtAt = -1; hf = -1; hurtEnd = now; } }
+  const nm = hf >= 0 ? 'hurt' : 'idle'; if (nm !== mode) { mode = nm; modeAt = now; stepN = -1; }
+  playerSlide(dt); physCollide(now, dt);      // (knocked back by the enemy: the world slides past, then friction stops it)
+  ctx.save();
+  shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }
+  ctx.imageSmoothingEnabled = false;
+  drawBackdrop(now);
+  ctx.fillStyle = 'rgba(220,210,255,0.35)';      // wind streaks
+  for (const p of parts) { p.x -= p.v * dt; if (p.x < -p.l) p.x = VW; ctx.fillRect(p.x | 0, p.y | 0, p.l, 1); }
+  if (sfx) sfx.windPush(1);
+  drawSmoke(now, dt);
+  drawBloodFloor(now, dt); drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
+  const info = FRED_INFO, py = gAir ? gAirH : 0, src = fredF(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)); let ox = hf >= 0 ? (((now / 45) | 0) & 1 ? 1 : -1) : 0, oy = 0;      // (hurt: a shiver)
+  { const uo = ultHeldOff(now); ox += uo[0]; oy += uo[1]; }      // (the enemy Cat's ULTIMATE holds him up by the neck: lifted and shaking)
+  const x = cx - (info.cx - info.x0) + ox, y = gy - 60 - info.top - py + oy;
+  const sw = Math.max(5, Math.round(9 * (1 - py / 48))), sv = Math.round(sw * 2 / 3);      // the ground shadow stays put and shrinks while he is in the air
+  const vap = vs.who === 'enemy' && vs.why === 'fatal' && (vs.ph === 'ko' || vs.ph === 'over');      // (the enemy's FATALITY: he is gone until the next round)
+  ctx.fillStyle = 'rgba(0,0,0,0.4)'; if (!vap && !rgOn()) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
+  const ry = Math.round(info.h * (1 - e)), gko = vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // (spawn: he materialises from the feet up; beaten: he tumbles and stays down until the next round)
+  ctx.save();
+  if (vap) { /* gone */ } else if (gko >= 0) { const rgh = ragXf(vs.rag, gko, cx, gy + 2, -1); if (!rgh) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); } ctx.drawImage(fredF(0), -info.cx, -62 + rgh); }
+  else { ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, x, y); if (hf >= 0 && now - hurtAt < 70) ctx.drawImage(whiteOf(src), x, y); }
+  ctx.restore(); drawGiantNow('foe');
+  if (t < 1) {      // spawn ring + flash
+    const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,225,110,' + (1 - t) + ')';
+    for (let a = 0; a < 64; a++) { const th = a / 64 * 6.2832; ctx.fillRect(Math.round(cx + Math.cos(th) * R), Math.round(y + 34 + Math.sin(th) * R * 0.45), 1, 1); }
+    ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')'; ctx.fillRect(0, 0, VW, VH);
+  }
+  drawDivFx(now); drawSparks(now, dt); drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); drawVs(now, -shkX, -shkY);
+  ctx.restore();
+  if (now < flashUntil) { ctx.fillStyle = 'rgba(190,225,255,' + (flashA * (flashUntil - now) / flashMs) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  if (now < blackUntil) { ctx.fillStyle = 'rgba(0,0,0,' + ((blackUntil - now) / 600).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  drawHits(now);
+}
 function tick(t) {
   requestAnimationFrame(tick);                // schedule first so one bad frame can't stop the loop
   if (paused) { if (state !== 'play') setPause(false); return; }      // PAUSE: nothing moves and the game's clock stands still
@@ -5897,14 +5945,14 @@ function tick(t) {
   if (lanRole === 'in' && state === 'play') lanTick();      // (the Wi-Fi fight: his pictures are picked up every frame, not every 0.15 s)
   if (story && story.toOutro) { story.toOutro = false; startOutro(now); }      // (the fight against Verity is won: the ending of the chapter starts)
   if (state === 'play') { if (still || now < holdUntil) { last = now; if (impf) impfFrame(); } else drawScene(now, dt); stateDraw(now); }      // hit-stop: the picture freezes for a split second when the red orb explodes
-  else if (state === 'versus') { const fr = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length; for (const q of vsPv) { q.g.clearRect(0, 0, 64, 64); q.g.drawImage(q.who === 'gojo' ? (q.inv ? dumF : idleF)[fr] : q.who === 'yuji' ? (q.inv ? YUF.inv : YUF.norm).idle[fr % 15] : q.who === 'cat' ? cfr('idle', now / 100, true, q.inv) : vfr('idle', now / 100, true, q.inv), 0, 0); } }
+  else if (state === 'versus') { const fr = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length; for (const q of vsPv) { q.g.clearRect(0, 0, 64, 64); q.g.drawImage(q.who === 'gojo' ? (q.inv ? dumF : idleF)[fr] : q.who === 'yuji' ? (q.inv ? YUF.inv : YUF.norm).idle[fr % 15] : q.who === 'cat' ? cfr('idle', now / 100, true, q.inv) : q.who === 'freddy' ? fredF(now / (1000 / IDLE_FPS)) : vfr('idle', now / 100, true, q.inv), 0, 0); } }
   else if (state === 'lansel') lanSelDraw(now);
   else if (state === 'chal') chalDraw(now);
   else if (state === 'story') storyFrame(now, dt);
   else if (state === 'select') {
     pctx.clearRect(0, 0, pv.width, pv.height);
     pctx.drawImage(idleF[Math.floor(now / (1000 / IDLE_FPS)) % idleF.length], 0, 0);
-    for (const q of selPv) { q.g.clearRect(0, 0, q.g.canvas.width, 64); q.g.drawImage(q.who === 'yuji' ? YUF.norm.idle[Math.floor(now / (1000 / IDLE_FPS)) % 15] : q.who === 'cat' ? cfr('idle', now / 100, true, false) : vfr('idle', now / 100, true, false), 0, 0); }
+    for (const q of selPv) { q.g.clearRect(0, 0, q.g.canvas.width, 64); q.g.drawImage(q.who === 'yuji' ? YUF.norm.idle[Math.floor(now / (1000 / IDLE_FPS)) % 15] : q.who === 'cat' ? cfr('idle', now / 100, true, false) : q.who === 'freddy' ? fredF(now / (1000 / IDLE_FPS)) : vfr('idle', now / 100, true, false), 0, 0); }
   } else if (state === 'title') drawHero(updateBlink(now));
 }
 
