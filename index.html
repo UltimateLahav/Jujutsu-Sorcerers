@@ -136,7 +136,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.32</small>
+    <small id="ver">V1.33</small>
   </div>
 </section>
 
@@ -259,7 +259,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <small>FPS = FRAMES PER SECOND: HOW MANY PICTURES THE GAME DRAWS EVERY SECOND (30 SAVES BATTERY). BATTERY SAVER: 30 FPS, NO SCREEN SHAKE, FEWER SPARKS. AUTO-PAUSE: A CALL OR LEAVING THE APP PAUSES THE FIGHT.</small>
     <small>ASSIST (NOT IN WI-FI FIGHTS): PARRY+ = A WIDER PARRY WINDOW. EASY = ALSO 30% LESS DAMAGE TO YOU. AUTO-GUARD = ALSO BLOCKS FOR YOU WHILE YOU STAND STILL (NEEDS THE BLOCK SKILL).</small>
     <small>GAME PACE: FAST = 1.25 TIMES, TURBO = 1.5 TIMES (NOT IN WI-FI FIGHTS OR THE STORY). THE TIMERS STILL COUNT REAL SECONDS.</small>
-    <small>COMBAT (GOJO, YUJI): TAP = LIGHT, HOLD AFTER A HIT = HEAVY, DASH DURING A HIT = CANCEL. THE SAME SWING AGAIN HITS WEAKER, A MISS LEAVES YOU OPEN. PURPLE BAR = FLOW (MIX MOVES, PARRY, DODGE; FULL = 1.25 TIMES THE DAMAGE). ORANGE BAR = THE ENEMY'S STAGGER (HEAVIES AND PARRIES FILL IT; FULL = BREAK: STUNNED, 1.4 TIMES THE DAMAGE).</small>
+    <small>COMBAT: TAP = LIGHT, HOLD AFTER A HIT = HEAVY, DASH DURING A HIT = CANCEL (BOTH ARE SKILLS). THE SAME SWING AGAIN HITS WEAKER, A MISS LEAVES YOU OPEN. PURPLE BAR = FLOW (MIX MOVES, PARRY, DODGE; FULL = 1.25 TIMES THE DAMAGE). ORANGE BAR = THE ENEMY'S STAGGER (HEAVIES AND PARRIES FILL IT; FULL = BREAK: STUNNED, 1.4 TIMES THE DAMAGE).</small>
     <div class="opt" id="optG"></div>
     <div class="row"><button id="dummyBtn">SPAWN DUMMY</button><button id="fighterBtn">SPAWN ATTACKER</button><button id="blockerBtn">SPAWN BLOCKER</button></div>
   </div>
@@ -1153,7 +1153,9 @@ const SK_GOJO = [      // [id, name, what it does, price, needs]
   ['red', 'REVERSAL RED', 'MODE: RED (10% TO SWITCH ON), THEN RED FIRES A BLAST ORB', 500, ['ce']],
   ['fatal', 'FATALITY', 'FINISH A WEAK ENEMY IN A CUTSCENE', 600, []],
   ['purple', 'HOLLOW PURPLE', 'FIRE RED INTO MAX BLUE', 900, ['mblue', 'red']],
-  ['domain', 'DOMAIN EXPANSION', 'INFINITE VOID: EVERYONE FREEZES', 1200, ['ce']]];
+  ['domain', 'DOMAIN EXPANSION', 'INFINITE VOID: EVERYONE FREEZES', 1200, ['ce']],
+  ['heavy', 'HEAVY STRIKE', 'KEEP ATTACK HELD AFTER A HIT: THE LAST M1 WITH 1.6 TIMES THE DAMAGE THAT BREAKS A GUARD AND FILLS THE STAGGER BAR', 120, []],
+  ['cancel', 'DASH CANCEL', 'DASH DURING A SWING THAT HIT: IT STOPS, +4% ENERGY AND +20 FLOW', 100, ['dash']]];
 const SK_CHAR = [['yuji', 'YUJI ITADORI', 'FIGHT AS OR AGAINST YUJI IN VERSUS, ALL HIS MOVES', 1500, []], ['verity', 'VERITY', 'FIGHT AS OR AGAINST VERITY IN VERSUS, ALL HIS MOVES', 1800, []], ['cat', 'CARTOON CAT', 'FIGHT AS OR AGAINST THE CAT IN VERSUS, ALL HIS MOVES', 2200, []]];
 const SK_YUJI = [      // (v1.11) the moves of Yuji, bought like Gojo's; only walking, jumping and the M1 combo are free
   ['y_crouch', 'CROUCH', 'DOWN ON THE STICK OR KEY S: DUCK UNDER HIGH HITS (3% ENERGY)', 50, []],
@@ -1173,7 +1175,9 @@ const SK_YUJI = [      // (v1.11) the moves of Yuji, bought like Gojo's; only wa
   ['y_pierce', 'PIERCING BLOOD', 'INHERITENCE + BLUE: CLAP HIS HANDS AND FIRE PIERCING BLOOD THROUGH THE ENEMY, HE BLEEDS (25% ENERGY)', 400, ['y_inherit']],
   ['y_shrine', 'SHRINE', 'INHERITENCE, CROUCHED + BLUE: CLEAVE A BLOCK OUT OF THE FLOOR AND THROW IT (30% ENERGY). HE NEEDS THE CROUCH TO DO IT', 500, ['y_inherit']],
   ['y_cleave', 'GRAB CLEAVE', 'INHERITENCE, WALKING FORWARD + BLUE: GRAB THE ENEMY AND CLEAVE HIM, HE BLEEDS (25% ENERGY)', 500, ['y_inherit']],
-  ['y_simple', 'SIMPLE DOMAIN', 'INHERITENCE, IN THE AIR + BLUE: A CYAN CIRCLE ROUND HIM: DOMAIN EXPANSIONS DO NOTHING UNTIL HE IS HIT (30% ENERGY)', 600, ['y_inherit']]];
+  ['y_simple', 'SIMPLE DOMAIN', 'INHERITENCE, IN THE AIR + BLUE: A CYAN CIRCLE ROUND HIM: DOMAIN EXPANSIONS DO NOTHING UNTIL HE IS HIT (30% ENERGY)', 600, ['y_inherit']],
+  ['y_heavy', 'HEAVY STRIKE', 'KEEP ATTACK HELD AFTER A HIT: THE LAST M1 WITH 1.6 TIMES THE DAMAGE THAT BREAKS A GUARD AND FILLS THE STAGGER BAR', 120, []],
+  ['y_cancel', 'DASH CANCEL', 'DASH DURING A SWING THAT HIT: IT STOPS, +4% ENERGY AND +20 FLOW', 100, ['y_dash']]];
 const SK_VERITY = [
   ['v_crouch', 'CROUCH', 'DOWN ON THE STICK OR KEY S: DUCK UNDER HIGH HITS (3% ENERGY)', 50, []],
   ['v_block', 'BLOCK + PARRY', 'HOLD TO GUARD AGAINST HITS FROM THE FRONT. RAISE IT JUST BEFORE A HIT TO PARRY: NO DAMAGE, THE ENEMY IS STUNNED', 80, []],
@@ -1182,7 +1186,9 @@ const SK_VERITY = [
   ['v_ball', 'SMOKE BALL', 'THE MODE BUTTON: TURN INTO A BALL THAT NOTHING CAN HIT, TAP AGAIN TO CHANGE BACK', 250, ['v_block']],
   ['v_fatal', 'FATALITY', 'FINISH A WEAK ENEMY IN A CUTSCENE', 500, ['v_bite']],
   ['v_scare', 'JUMPSCARE', 'THE DOMAIN BUTTON: GRAB THE ENEMY, HE IS STUNNED FOR 5 SECONDS AND TAKES FEAR DAMAGE', 800, ['v_ball', 'v_bite']],
-  ['v_drag', 'BLOOD DRAG', "CROUCH + BLUE: A LOW LUNGE, BITE THE ENEMY'S FEET AND DRAG HIM ALONG THE FLOOR BY THEM, HIS BLOOD IS DRAGGED ALONG THE GROUND (25% ENERGY)", 350, ['v_bite', 'v_crouch']]];
+  ['v_drag', 'BLOOD DRAG', "CROUCH + BLUE: A LOW LUNGE, BITE THE ENEMY'S FEET AND DRAG HIM ALONG THE FLOOR BY THEM, HIS BLOOD IS DRAGGED ALONG THE GROUND (25% ENERGY)", 350, ['v_bite', 'v_crouch']],
+  ['v_heavy', 'HEAVY STRIKE', 'KEEP ATTACK HELD AFTER A HIT: THE LAST M1 WITH 1.6 TIMES THE DAMAGE THAT BREAKS A GUARD AND FILLS THE STAGGER BAR', 150, []],
+  ['v_cancel', 'TELEPORT CANCEL', 'TELEPORT DURING A SWING THAT HIT: IT STOPS, +4% ENERGY AND +20 FLOW', 120, ['v_tele']]];
 const SK_CAT = [
   ['k_crouch', 'FLATTEN', 'DOWN ON THE STICK OR KEY S: SMASH YOURSELF FLAT, TAP AGAIN TO STAND UP (3% ENERGY)', 50, []],
   ['k_block', 'GLOVE SHIELD', 'HOLD TO GUARD WITH A GIANT GLOVE. RAISE IT JUST BEFORE A HIT TO PARRY: NO DAMAGE, THE ENEMY IS STUNNED', 80, []],
@@ -1190,13 +1196,15 @@ const SK_CAT = [
   ['k_toon', 'CARTOON ATTACK', 'BLUE: THE HUGE CARTOON CAT GRABS YOU AND THROWS YOU ONTO THE ENEMY', 300, ['k_dash']],
   ['k_fatal', 'FATALITY', 'FINISH A WEAK ENEMY IN A CUTSCENE', 500, ['k_toon']],
   ['k_ult', 'ULTIMATE', 'THE DOMAIN BUTTON: CHOKE THE ENEMY, KNEE HIM 15 TIMES AND THROW HIM AWAY', 900, ['k_toon', 'k_block']],
-  ['k_stomp', 'GIANT SMASH', "FLAT ON THE FLOOR + BLUE: THE GIANT CAT'S HUGE LEG SMASHES DOWN ON THE ENEMY (40% ENERGY)", 450, ['k_toon', 'k_crouch']]];
+  ['k_stomp', 'GIANT SMASH', "FLAT ON THE FLOOR + BLUE: THE GIANT CAT'S HUGE LEG SMASHES DOWN ON THE ENEMY (40% ENERGY)", 450, ['k_toon', 'k_crouch']],
+  ['k_heavy', 'HEAVY STRIKE', 'KEEP ATTACK HELD AFTER A HIT: THE LAST M1 WITH 1.6 TIMES THE DAMAGE THAT BREAKS A GUARD AND FILLS THE STAGGER BAR', 150, []],
+  ['k_cancel', 'DASH CANCEL', 'DASH DURING A SWING THAT HIT: IT STOPS, +4% ENERGY AND +20 FLOW', 120, ['k_dash']]];
 const SKN = {}; for (const s of [].concat(SK_GOJO, SK_YUJI, SK_VERITY, SK_CAT, SK_CHAR)) SKN[s[0]] = s[1];
 const GATE = {      // for each fighter the skill each button needs (a button that is not listed is free): cr crouch, dash, blk block, cp crouched punches, ce MODE, dom DOMAIN, fat FATALITY, bl BLUE (Verity and the Cat; Gojo's and Yuji's BLUE depends on the mode, the air and the stance: gateBlue)
-  g: { cr: 'crouch', dash: 'dash', blk: 'block', cp: 'cpunch', ce: 'ce', dom: 'domain', fat: 'fatal' },
-  y: { cr: 'y_crouch', dash: 'y_dash', blk: 'y_block', cp: 'y_cpunch', ce: 'y_ce' },
-  v: { cr: 'v_crouch', dash: 'v_tele', blk: 'v_block', ce: 'v_ball', dom: 'v_scare', fat: 'v_fatal', bl: 'v_bite' },
-  k: { cr: 'k_crouch', dash: 'k_dash', blk: 'k_block', dom: 'k_ult', fat: 'k_fatal', bl: 'k_toon' } };
+  g: { cr: 'crouch', dash: 'dash', blk: 'block', cp: 'cpunch', ce: 'ce', dom: 'domain', fat: 'fatal', hv: 'heavy', cn: 'cancel' },
+  y: { cr: 'y_crouch', dash: 'y_dash', blk: 'y_block', cp: 'y_cpunch', ce: 'y_ce', hv: 'y_heavy', cn: 'y_cancel' },
+  v: { cr: 'v_crouch', dash: 'v_tele', blk: 'v_block', ce: 'v_ball', dom: 'v_scare', fat: 'v_fatal', bl: 'v_bite', hv: 'v_heavy', cn: 'v_cancel' },
+  k: { cr: 'k_crouch', dash: 'k_dash', blk: 'k_block', dom: 'k_ult', fat: 'k_fatal', bl: 'k_toon', hv: 'k_heavy', cn: 'k_cancel' } };
 const BLUES = { g: ['blue', 'tele', 'mblue'], y: ['y_div', 'y_sweep', 'y_rush', 'y_conc', 'y_elbow', 'y_upper', 'y_flash'], v: ['v_bite'], k: ['k_toon'] };
 const lacks = key => { const need = GATE[meK()][key]; return !!need && !owns(need); };      // true when the fighter you play has not bought what this button needs
 let lockSayAt = -1e9;
@@ -1514,10 +1522,10 @@ let skTab = 'g';
 const SK_TABS = [['g', 'skTabG', SK_GOJO], ['y', 'skTabY', SK_YUJI], ['v', 'skTabV', SK_VERITY], ['k', 'skTabK', SK_CAT], ['c', 'skTabC', SK_CHAR]], SK_OF = { y: 'yuji', v: 'verity', k: 'cat' };      // (the moves of a fighter need the fighter first)
 // ---------------------------------------------------------------- v1.25 THE SKILL TREE: the SKILLS page draws every fighter as a tree. The root is the fighter (Gojo is free, the others are bought like before), every skill is a node, and a line joins a node to the skills it needs: buy a node and the nodes after it open. A tap on a node shows it on the right, UNLOCK buys it. A skill with nothing in front of it hangs on the root.
 const SK_LAY = {      // where every node sits, [column, row] (the root is column 0): a line runs from the right edge of a skill a node needs to the left edge of the node, so the cells in between have to be empty
-  g: { _root: [0, 2.5], crouch: [1, 0], cpunch: [2, 0], blue: [1, 1], mblue: [2, 1], dash: [1, 2], tele: [2, 2], purple: [3, 2.5], block: [1, 3], ce: [1, 4], red: [2, 4], fatal: [1, 5], domain: [2, 5] },
-  y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 4.5], y_pierce: [5, 3], y_shrine: [5, 4], y_cleave: [5, 5], y_simple: [5, 6], y_div: [1, 6], y_rush: [2, 6] },
-  v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5] },
-  k: { _root: [0, 1], k_crouch: [1, 0], k_fatal: [3, 0], k_dash: [1, 1], k_toon: [2, 1], k_stomp: [3, 1], k_block: [1, 2], k_ult: [3, 2] },
+  g: { _root: [0, 2.5], crouch: [1, 0], cpunch: [2, 0], blue: [1, 1], mblue: [2, 1], dash: [1, 2], tele: [2, 2], purple: [3, 2.5], block: [1, 3], ce: [1, 4], red: [2, 4], fatal: [1, 5], domain: [2, 5], heavy: [1, 6], cancel: [2, 3] },
+  y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 4.5], y_pierce: [5, 3], y_shrine: [5, 4], y_cleave: [5, 5], y_simple: [5, 6], y_div: [1, 6], y_rush: [2, 6], y_heavy: [1, 4.7], y_cancel: [3, 1.5] },
+  v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5], v_heavy: [1, 4.5], v_cancel: [3, 0.8] },
+  k: { _root: [0, 1], k_crouch: [1, 0], k_fatal: [3, 0], k_dash: [1, 1], k_toon: [2, 1], k_stomp: [3, 1], k_block: [1, 2], k_ult: [3, 2], k_heavy: [1, 3], k_cancel: [2, 0] },
   c: { _root: [0, 1], yuji: [1, 0], verity: [1, 1], cat: [1, 2] } };
 const SKI = {}; for (const [t, , rows] of SK_TABS) for (const r of rows) SKI[r[0]] = { r, t };
 const SK_GROOT = ['_gojo', 'GOJO', 'THE FIGHTER YOU START WITH. WALKING, JUMPING AND THE M1 COMBO ARE FREE. EVERY OTHER MOVE IS A NODE OF THE TREE: TAP A NODE TO READ IT AND UNLOCK IT, AND THE NODES AFTER IT OPEN', 0, []];
@@ -2111,10 +2119,11 @@ function hitFoe(k, now) {                     // called on the impact frame: a h
   if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; repSw = {}; repN = {}; }                    // the counter restarts after 1.6 s without a landed hit (and so does the count of repeated swings)
   const ko = k >= 36 ? -1 : k >= 24 ? [0, 1, 2, -1, -1, 3][k - 24] : k === 22 ? -1 : k <= 3 ? k : k >= 18 ? k - 18 : k >= 14 ? k - 14 : -1; if (k >= 36) hits.seq = 0; else if (k !== 27 && k !== 28) hits.seq = ko === hits.seq ? hits.seq + 1 : ko === 0 ? 1 : 0;                          // the meter fills while the hits land in order: right hook, left hook, elbow, kick
   if (hits.seq === 4) { if (k !== 29) dmg += 25; hits.perfect = now; snd('finisher'); say('COMBO!', dummy.x, '#ffd34d', 8, now + 90); }
-  dmg = ceDmg(dmg); if (ctrBoost && atkAt === ctrBoost) dmg = Math.round(dmg * 1.5);      // (every hit of the free counter's swing, after a parry, does 1.5 times the damage)
+  dmg = ceDmg(dmg); const dBase = dmg; if (ctrBoost && atkAt === ctrBoost) dmg = Math.round(dmg * 1.5);      // (every hit of the free counter's swing, after a parry, does 1.5 times the damage)
   if (hv) dmg = Math.round(dmg * HEAVY_X);      // (v1.31: the HEAVY swing)
   let rp = 0; { if (repSw[atkK] !== atkAt) { repSw[atkK] = atkAt; repN[atkK] = (repN[atkK] | 0) + 1; } rp = repN[atkK] - 1; if (rp > 0 && !(vs && vs.net)) { dmg = Math.max(1, Math.round(dmg * Math.max(0.4, 1 - 0.2 * rp))); if (repSay !== atkAt) { repSay = atkAt; say('REPEAT', dummy.x, '#9a9aa8', 8, now + 60); } } }      // (v1.31: the same swing again in one combo hits 20% weaker each time, down to 40%)
   if (!(vs && vs.net)) { if (now < (dummy.openUntil || 0)) dmg = Math.round(dmg * OPEN_X); if (flowOn) dmg = Math.round(dmg * FLOW_X); }      // (v1.32: an enemy who is OPEN takes 1.4 times, you in FLOW deal 1.25 times)
+  if (dmg > dBase * DMG_CAP) dmg = Math.round(dBase * DMG_CAP);      // (v1.33: the free counter, the heavy, OPEN and FLOW together never do more than 2.8 times the blow)
   const cb = comboBonus(k, now); dmg += cb; hits.n++; hits.dmg += dmg; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = cb; cancelFor = atkAt; cancelUntil = now + CANCEL_MS * (flowOn ? 2 : 1); if (vs) vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n);
   const grab = !!vs && vs.me === 'cat' && (k === 30 || k === 32), held = !!vs && vs.me === 'cat' && k >= 31 && k <= 33 && !!dummy.cheld;      // (the playable Cat's glove: a grab holds the enemy and pulls him in, the punch lands on the held enemy where he stands, the kick sends him away)
   dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += held && k !== 33 ? 0 : KNOCK[k]; if (k === 3 || k === 17 || k === 21 || k === 29 || k === 33 || k === 35 || k === 41 || k === 42) { dummy.smokeUntil = now + 520; puff(dummy.x, 8); } shakeUntil = now + 110; shakeAmp = k === 21 || k === 35 || k === 42 ? 4 : [3, 15, 17, 18, 19, 29, 33, 40, 41].includes(k) ? 3 : 2;
@@ -5322,7 +5331,8 @@ function speedBonus() {      // RUSH and ROULETTE: a wave cleared faster than it
 // ---------------------------------------------------------------- v1.31 FLOW COMBAT I (Gojo and Yuji). LIGHT = tap ATTACK (the chain as before). HEAVY = keep ATTACK held after a hit: the last M1 of your combo, 1.6 times the damage, breaks a guard, pushes harder, long recovery if it misses. CANCEL = press DASH during a swing that has hit: the swing stops, you dash, +4% energy, the repeat count starts again. AGAINST BUTTON MASHING: the same swing again in one combo does 20% less each time (down to 40%), and a swing that hits nothing leaves you open for 0.24 s (0.42 s for a heavy) in which ATTACK does nothing. None of it in the Wi-Fi fight.
 const HEAVY_HOLD = 300, HEAVY_X = 1.6, WHIFF_MS = 240, WHIFF_HEAVY_MS = 420, CANCEL_MS = 380, E_CANCEL = 4;
 let atkHold = -1, heavyAt = 0, whiffUntil = 0, cancelFor = -1, cancelUntil = 0, connectAt = -1, swPrev = -1, swLast = 0, repSw = {}, repN = {}, repSay = -1, chgTick = -1;      // atkHold: when ATTACK went down (-1 = up); heavyAt: the atkAt of the heavy swing; connectAt: the swing that last touched the enemy; swPrev: last frame's swing; repSw / repN: per swing type, the last swing and how many times it was used in this combo
-const flowOK = now => state === 'play' && !!dummy && dummy.ko < 0 && (meK() === 'g' || meK() === 'y') && !(vs && (vs.net || vs.ph !== 'fight')) && !redWhy(now) && !dom;      // (the new moves: Gojo and Yuji, in a fight that is on, not in the Wi-Fi fight)
+const flowOK = now => state === 'play' && !!dummy && dummy.ko < 0 && (meK() !== 'v' || (!!vp && vp.form === 'verity')) && !(vs && (vs.net || vs.ph !== 'fight')) && !redWhy(now) && !dom;      // (the new moves: every fighter (Verity in his own form), in a fight that is on, not in the Wi-Fi fight)
+const freeNow = () => jumpAt < 0 && teleAt < 0 && lpAt < 0 && mbAt < 0 && dgAt < 0 && atkAt < 0 && !dash && !ride && !tz;      // (nothing else is going on)
 function flowTick(now) {      // every frame, before the controls are gated
   const dts = now - swLast > 150 ? 0 : Math.min(0.1, (now - swLast) / 1000); if (now - swLast > 150) swPrev = atkAt; swLast = now;      // (a cutscene or a freeze came between: nothing to judge)
   if (!fxOK()) { flow = 0; flowOn = false; }
@@ -5331,7 +5341,7 @@ function flowTick(now) {      // every frame, before the controls are gated
     else if (now - flowAt > 2500) flow = Math.max(0, flow - 14 * dts);
     for (const e of foesOf()) if (e.stg > 0 && now >= (e.openUntil || 0) && now - (e.stgAt || 0) > 2000) e.stg = Math.max(0, e.stg - 12 * dts);
   }
-  if (dashReq && atkAt >= 0 && cancelFor === atkAt && now < cancelUntil && flowOK(now) && !lacks('dash')) {      // CANCEL: the swing has hit, the dash takes over
+  if (dashReq && atkAt >= 0 && cancelFor === atkAt && now < cancelUntil && flowOK(now) && !lacks('dash') && !lacks('cn')) {      // CANCEL: the swing has hit, the dash takes over
     cancelFor = -1; swPrev = atkAt = -1; atkQ = false; repSw = {}; repN = {}; hits.until = Math.max(hits.until, now + COMBO_WIN); ceGain(E_CANCEL); flowAdd(20, now); say('CANCEL!', wx, '#9fd8ff', 8, now);
   }
   if (atkAt !== swPrev) {      // the swing that was running is over (or the next one of a chain began)
@@ -5341,12 +5351,12 @@ function flowTick(now) {      // every frame, before the controls are gated
   if (now < whiffUntil) atkReq = false;      // (open: ATTACK does nothing for a moment)
   if (atkHold >= 0 && flowOK(now) && stance === 'stand' && hits.n > 0 && now < hits.until) {      // HEAVY: ATTACK still held after a hit
     const held = now - atkHold;
-    if (held >= 140 && ((now / 90) | 0) !== chgTick) { chgTick = (now / 90) | 0; spark(wx + 12, gy - 26, 2, ['#ffb05a', '#fff3b0'], false, 1); }      // (the charge: sparks at the fist)
-    if (held >= HEAVY_HOLD && atkAt < 0 && now >= whiffUntil) { atkHold = -1; atkReq = false; if (strikeBack(now)) { heavyAt = atkAt; say('HEAVY!', wx, '#ffb05a', 8, now); } }
+    if (held >= 140 && !lacks('hv') && ((now / 90) | 0) !== chgTick) { chgTick = (now / 90) | 0; spark(wx + 12, gy - 26, 2, ['#ffb05a', '#fff3b0'], false, 1); }      // (the charge: sparks at the fist)
+    if (held >= HEAVY_HOLD && freeNow() && now >= whiffUntil) { atkHold = -1; atkReq = false; if (lacks('hv')) lockPop(now); else if (strikeBack(now)) { heavyAt = atkAt; say('HEAVY!', wx, '#ffb05a', 8, now); } }
   }
 }
 // ---------------------------------------------------------------- v1.32 FLOW COMBAT II: the FLOW meter and the STAGGER bar (every fighter, in a fight or a training room; not the Wi-Fi fight, not the story). FLOW (purple bar under your energy): +8 for a hit with a different swing than the last one (+2 for a repeat), +12 for a heavy, +20 for a cancel, +15 for a parry, +10 for a dodge; it drains after 2.5 s without a hit, a blow on you takes 30. Full = FLOW for 6 real seconds: 1.25 times the damage, no whiff opening, a longer cancel window; a blow on you ends it. STAGGER (orange bar under the enemy's health): +8 for a light swing (+3 for a repeat), +34 for a heavy, +20 for a guard breaker, +45 for a parry; it drains after 2 s without a hit. Full = BREAK: he is stunned (when he can be) and OPEN for 1.6 s: 1.4 times the damage; then 4 s in which it cannot fill again.
-const FLOW_MS = 6000, FLOW_X = 1.25, STG_MAX = 100, OPEN_MS = 1600, OPEN_X = 1.4, STG_LOCK_MS = 4000;
+const DMG_CAP = 2.8, FLOW_MS = 6000, FLOW_X = 1.25, STG_MAX = 100, OPEN_MS = 1600, OPEN_X = 1.4, STG_LOCK_MS = 4000;
 let flow = 0, flowOn = false, flowAt = 0, flowLast = -1, flowSw = -1;      // flowAt: the last gain; flowLast: the swing type of the last landed hit; flowSw: the swing that last gave Flow (a multi-hit swing counts once)
 const fxOK = () => !!vs && !vs.net && !vs.story && vs.ph === 'fight' && state === 'play';
 function flowAdd(n, now) {
