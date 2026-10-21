@@ -137,7 +137,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.37</small>
+    <small id="ver">V1.38</small>
   </div>
 </section>
 
@@ -1362,13 +1362,14 @@ function curseProj(now, dt) {                    // once a frame: every ball, wa
   for (const p of cProj) {
     if (p.gone) continue;
     if (p.kind === 'pillar') {                   // the flame column: it shows where it will erupt, then erupts and hurts whoever is standing there (a jump or a dash gets out of it; it cannot be blocked)
-      if (!p.fired && now - p.born >= p.delay) { p.fired = true; shakeUntil = Math.max(shakeUntil, now + 200); shakeAmp = Math.max(shakeAmp, 3); snd('redboom'); if (vs && vs.ph === 'fight' && !dom && Math.abs(p.x - wx) < p.r + 6) foeSwap(p.o, () => gojoHit(p.k, now)); }
+      if (!p.fired && now - p.born >= p.delay) { p.fired = true; if (physOn()) { shockAt(p.x, 240, 70, 1.1); debBurst(p.x, 0, 10, DEB.stone, 130); } shakeUntil = Math.max(shakeUntil, now + 200); shakeAmp = Math.max(shakeAmp, 3); snd('redboom'); if (vs && vs.ph === 'fight' && !dom && Math.abs(p.x - wx) < p.r + 6) foeSwap(p.o, () => gojoHit(p.k, now)); }
       if (now - p.born > p.life) p.gone = true; continue;
     }
     if (!dom) p.x += p.vx * dt;
+    projFx(p, now, dt);
     if (!p.dead && vs && vs.ph === 'fight' && now - p.born > 40 && now >= (p.try || 0) && Math.abs(p.x - wx) < p.r + 7) {
       const guard = guardUp(now) && p.vx < 0, h0 = hurtAt; foeSwap(p.o, () => gojoHit(p.k, now));
-      if (hurtAt !== h0 || guard) p.dead = now; else p.try = now + 150;              // (hit or blocked: it bursts; a dash, a jump or a duck lets it fly on)
+      if (hurtAt !== h0 || guard) { p.dead = now; projBurst(p); } else p.try = now + 150;              // (hit or blocked: it bursts; a dash, a jump or a duck lets it fly on)
     }
     if (now - p.born > p.life || Math.abs(p.x - wx) > 420) p.gone = true;
   }
@@ -1778,7 +1779,7 @@ function show(s) {
   releaseAll(); $('settings').classList.remove('on');
   js = null; vf = null; if (cf) cfReset(); if (ke) keReset(); blindOff = false; bfo = null; bfp = false; ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; inhAt = -1; inhLock = false; inhArm = -1; smd = null; impf = null; tqBlock = null; tqGrab = null; tqBeam = []; tqFx = []; ceOn = false; ceAmt = 0; ceFlameAt = 0; gDownUntil = 0; gAir = null; gAirH = 0; kickBuf = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
-  if (s === 'play') { spawnAt = pnow(); wx = 0; wvx = 0; deb = []; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; sparks = []; stopMs = 0; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
+  if (s === 'play') { spawnAt = pnow(); wx = 0; wvx = 0; deb = []; lit = []; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; sparks = []; stopMs = 0; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(pnow(), 1200);
 }
 
@@ -2075,13 +2076,13 @@ function spark(x, y, n, cols, big, dir) {      // a burst of hit sparks at the w
 function drawSparks(now, dt) {
   drawBolts(now); drawBig(now); drawSMD(now, true); drawTq(now); drawTalkFx(now);
   sparks = sparks.filter(p => now - p.born < p.life); const cx = Math.round(VW / 2);
-  for (const p of sparks) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 230 * dt; p.vx *= Math.exp(-3 * dt); const k = (now - p.born) / p.life, h = Math.abs(p.vx) > Math.abs(p.vy); ctx.globalAlpha = Math.max(0, Math.min(1, 1.7 * (1 - k))); ctx.fillStyle = p.c; ctx.fillRect(Math.round(cx + p.x - wx), Math.round(p.y), h ? p.len : 1, h ? 1 : p.len); }
-  ctx.globalAlpha = 1; drawDebris(now, dt);
+  for (const p of sparks) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 230 * dt; p.vx *= Math.exp(-3 * dt); if (p.y > gy + 1 && p.vy > 0 && physOn()) { p.y = gy + 1; p.vy *= -0.4; p.vx *= 0.75; } const k = (now - p.born) / p.life, h = Math.abs(p.vx) > Math.abs(p.vy); ctx.globalAlpha = Math.max(0, Math.min(1, 1.7 * (1 - k))); ctx.fillStyle = p.c; ctx.fillRect(Math.round(cx + p.x - wx), Math.round(p.y), h ? p.len : 1, h ? 1 : p.len); }
+  ctx.globalAlpha = 1; drawDeb(now, dt);
 }
 function onLand(k, dmg, now) {      // a blow of yours landed: the sparks, the hit-stop, a flash on the heavy ones, and the energy
   const heavy = dmg >= 20 || k === 3 || k >= 40;
   const S = dummy.curse ? CSP[dummy.curse.id] : null, bh = S ? S.g - S.top : 52;      // (the sparks fly where the blow lands: in the middle of his body, at his front)
-  hitStop(heavy ? 70 : 38); buzz(heavy ? 22 : 10); spark(dummy.x - (S ? Math.round(dummy.curse.hw * 0.7) : 7), gy - Math.round(bh * (0.3 + Math.random() * 0.35)), heavy ? 12 : 7, heavy ? ['#ffffff', '#ffe9a0', '#ffb060'] : ['#ffffff', '#ffe9a0', '#9fd8ff'], heavy, 1);
+  hitStop(heavy ? 70 : 38); buzz(heavy ? 22 : 10); if (heavy) shockAt(dummy.x, 110, 50, 0.6); spark(dummy.x - (S ? Math.round(dummy.curse.hw * 0.7) : 7), gy - Math.round(bh * (0.3 + Math.random() * 0.35)), heavy ? 12 : 7, heavy ? ['#ffffff', '#ffe9a0', '#ffb060'] : ['#ffffff', '#ffe9a0', '#9fd8ff'], heavy, 1);
   if (heavy) flash(now, 70, 0.14);
   ceGain(E_HIT + Math.min(3, Math.max(0, hits.n - 1)));
 }
@@ -2173,7 +2174,7 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   if (isD1(k)) { dummy.divOk = now; dummy.divK = k; }      // (DIVERGENT FIST: the fist reached you, the second impact follows)
   if (!(airMe && k !== 47)) { hurtK = isD1(k) ? 0 : k === 29 || k === 33 || k === 35 || (k >= 40 && (k < 49 || CMOVE[k - 49].heavy)) ? 4 : (Math.random() * 10) | 0; hurtAt = now; if (k === 46) { hurtK = AIR_RX; gAir = airMake(now, 0, AIR_V, AIR_G, 'up'); } else if (k === 47) gAir = airMe ? airMake(now, gAirH, -80, 900, 'drop') : null; }      // (a hit on you while you are in the air keeps your flight and your pose; the UPPERCUT launches you, the FACE KICK knocks you out of the air)
   if ((k === 33 || k === 35) && vs) vs.catHold = 0;                                    // one of ten reactions, picked at random
-  atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; wxv -= KNOCK_G[k] * 0.9 * pScale(); shakeUntil = now + 120; shakeAmp = k === 35 || k === 42 ? 4 : k === 3 || k === 29 || k === 33 || k === 40 || k === 41 ? 3 : 2; if (k === 40 || k === 43 || k === 48 || (k >= 49 && CMOVE[k - 49].heavy)) gDownUntil = now + RX_DUR[4];
+  atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; wxv -= KNOCK_G[k] * 0.9 * pScale(); shockAt(wx, 90, 45, 0.5); shakeUntil = now + 120; shakeAmp = k === 35 || k === 42 ? 4 : k === 3 || k === 29 || k === 33 || k === 40 || k === 41 ? 3 : 2; if (k === 40 || k === 43 || k === 48 || (k >= 49 && CMOVE[k - 49].heavy)) gDownUntil = now + RX_DUR[4];
   const dm = Math.round((DMG[k] + (k >= 27 ? 0 : (Math.random() * 5) | 0) + (netK >= 0 ? netBonus : 0)) * (vs ? (vs.net ? 1 : vs.cv ? (vs.dmgMul || 1) : GRADES[vs.gi].dmg) : 1) * (assistLvl() >= 2 ? 0.7 : 1)); say('' + dm, wx, '#ff9a5a', 8, now);
   if (vs && vs.ph === 'fight') vsHurt(dm, now);
   snd('hurt', hurtK); nres('h', dm, hurtK); onHurt(k, dm, now);
@@ -2261,7 +2262,7 @@ function drawDummy(now, dt) {
       ctx.beginPath(); ctx.rect(-hx - 2, y + Math.round(h * (1 - e)), w + 4, h); ctx.clip();   // materialises from the feet up
       ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, -hx + ox, y + oy);
       if (dummy.fear && !reacting) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(src), -hx + ox, y + oy); }      // (a pale pulse: the fear)
-      ctx.restore();
+      ctx.restore(); if (kt < 0 && t >= 1 && !dummy.drag) cloth(dummy.cl || (dummy.cl = {}), src, sx + (mirror ? hx - ox : -hx + ox), y + oy, mirror, vs ? vs.foe : 'gojo', dt);
       if (vs && vs.foe === 'yuji' && kt < 0 && !reacting && dummy.ai === 'attack' && (dummy.k === 4 || dummy.k === 9 || dummy.k === 12 || dummy.k === 13) && info.hn) divGlow(sx + (mirror ? -1 : 1) * (info.hn[fi][0] - hx + ox), y + oy + info.hn[fi][1], fi, now, dummy.k === 9 || dummy.k === 13);      // (his DIVERGENT FIST and CONCENTRATED FIST: the cursed energy round his fist)
       if (vs && vs.foe === 'yuji' && kt < 0 && dummy.ceA > 0.02 && info.hn && info.hf) drawFoeCE(now, sx, y + oy, mirror, hx - ox, info, fi, dummy.ceA, dummy.ceAt || 0);      // (his cursed energy flames, on both fists)
     };
@@ -2426,6 +2427,7 @@ function drawDebris(front) {                  // pieces on the far half of the s
 }
 function drawOrb(now, dt) {
   if (!orb) return;
+  suckAt((orb.x0 + orb.x1) / 2, 520, 170, dt);      // (the loose things on the street are pulled in with the rest)
   const { age, xo, ox, oy, s } = orbPose(now), late = age > ORB_MS - 400;
   if (age % 160 < 20 && age < ORB_MS - 400) { if (now >= shakeUntil) shakeAmp = 1; shakeUntil = Math.max(shakeUntil, now + 30); }   // a faint rumble while it hums
   if (age > 300 && age < ORB_MS - 300) {      // suction rings on the floor shrink in towards the orb
@@ -2491,7 +2493,7 @@ function fireRed(now) {                       // RED, frame 20: the orb leaves h
   const a = D.atk22.hn[20], i = D.atk22; const x0 = wx + a[0] - (i.cx - i.x0) + 7; rdOrb = { x: x0, x0, y: gy - 60 - i.top + a[1], trail: [], slow: rdSlow, v: rdSlow ? 70 : 280, coat: false }; snd('redfire');      // pressed while walking back: it flies slowly (70 px/s instead of 280)
 }
 function explodeRed(now, hit) {               // RED hits (or reaches the end of its range): a blast, hit-stop, and on a hit damage + a hard shove. A blue-coated orb is a smaller blast that stuns the enemy for 0.6 s instead of shoving him
-  const o = rdOrb, c = o.coat; rdOrb = null; boom = { x: o.x, y: o.y, born: now, big: hit && !c }; snd('redboom'); blastPeds(o.x, c ? 24 : 40, now); shakeUntil = now + 220; shakeAmp = hit && !c ? 4 : 2; holdUntil = now + 90;
+  const o = rdOrb, c = o.coat; rdOrb = null; boom = { x: o.x, y: o.y, born: now, big: hit && !c }; snd('redboom'); blastPeds(o.x, c ? 24 : 40, now); shockAt(o.x, c ? 150 : 260, c ? 70 : 130, 1.0); shakeUntil = now + 220; shakeAmp = hit && !c ? 4 : 2; holdUntil = now + 90;
   if (ride) { ride.phase = 'drop'; ride.dropAt = now; }          // (Gojo falls off the burst orb and lands right next to the enemy)
   if (!hit || !dummy) return;
   if (dBlocks() && dummy.x - wx > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx]) { boom.big = false; dummy.vx += 40; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); return; }      // blockable, like Lapse Blue
@@ -2765,7 +2767,7 @@ function beginRound(now) {                     // a fresh round: the scene is re
   spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); if (vs.net) { dummy.net = true; dummy.max = dummy.hp = dummy.shown = PHP; dummy.x = dummy.tx = wx + NET_G0; dummy.pose = null; vs.toSent = false; }      // (the Wi-Fi fight: the other player, drawn from his phone's pictures)
   vdg = cst = null; smear.length = drip.length = 0; cProj = []; if (vs.rush) rushSpawn(t); else if (vs.cv) initCurse(dummy, vs.cv, wx + Math.max(54, Math.min(90, (VW >> 1) - 70)), vs.hard ? 1.5 : 1);      // (a challenge: the curse steps in; a RUSH wave: one or two)
   $('vsres').classList.remove('on');      // (REMATCH and NEXT start a new fight: the result screen goes away. Since v7.12 this line had slipped into a comment, so the result screen stayed on top of the new fight)
-  vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; wvx = 0; deb = []; vs.rag = null; vh = null; ac = null; acWin = 0; acGo = false; acPend = -1; redAt = -1; redLast = -1e9; escQ = -1; flow = 0; flowOn = false; flowLast = -1; flowSw = -1; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
+  vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; wvx = 0; deb = []; lit = []; vs.rag = null; vh = null; ac = null; acWin = 0; acGo = false; acPend = -1; redAt = -1; redLast = -1e9; escQ = -1; flow = 0; flowOn = false; flowLast = -1; flowSw = -1; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
   if (vs.retry) { vs.round = 1 + vs.retry; vs.hp = vs.sh = PHP / 2; dummy.hp = dummy.shown = dummy.lock = 1; vs.morphed = true; blackUntil = t + 700; } else blackUntil = 0;      // after a failed red: Gojo at half health, Verity as he was (1 health left, so no smoke change); the picture comes up from black
 }
 // ---------------------------------------------------------------- v1.29 THE STATE TRACKER and the COMBO ESCAPE. A small box by your health bar says what state you are in: green FREE (you can move) or red (HIT: reeling from a blow, DOWN: on the floor, STUN: the JUMPSCARE, the Cat's glove or dizzy, HELD: the enemy Cat's ULTIMATE has you). While you are red, DASH gets you out of it: the stun is gone, you dash (with the dash's own invulnerable start), and when the dash ends you strike back with the LAST M1 of your combo; the dash is then on a cooldown of 4 seconds (the DASH button counts it down). Not possible when you are in the air from a launch, held by the ULTIMATE, in a cutscene or while the DOMAIN lasts.
@@ -3211,7 +3213,7 @@ function drawRedFx(now, dt, x, y, info, fi, charging, mf) {      // the red orb 
   const k = Math.floor(now * 20 / 1000) % 15, ob = (n, sx, sy, s, set = orbR) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));
   if (charging && mf < 20) { const a = info.hn[fi]; if (a) ob(k, x + a[0] + 2, y + a[1] - 8, 0.1 + 0.3 * Math.min(1, mf / 19)); }
   if (rdOrb) {
-    const o = rdOrb; o.x += o.v * dt; o.trail.push([o.x, o.y]); if (o.trail.length > 9) o.trail.shift();
+    const o = rdOrb; o.x += o.v * dt; o.trail.push([o.x, o.y]); if (o.trail.length > 9) o.trail.shift(); if (dt > 0 && physOn()) { windAt(o.x, 30, o.v * 0.7, dt); if (Math.random() < 0.5) debAdd({ x: o.x - 4, h: gy - o.y + Math.random() * 4 - 2, vx: -o.v * 0.08 + Math.random() * 16 - 8, vy: Math.random() * 30, dz: 0, c: Math.random() < 0.5 ? '#ff4a3a' : '#ffb0a0', life: 500, g: 260 }); }      // (v1.38: the flying orb blows the loose things along and sheds embers that fall)
     const rt = foesOf().find(f => f.ko < 0 && !f.cap && f.x - o.x < 9 && f.x - o.x > -16 && now >= (f.dodgeUntil || 0));      // (the first enemy it touches)
     if (rt) { if (rt === dummy) explodeRed(now, true); else foeSwap(rt, () => explodeRed(now, true)); } else if (orb && !purple && Math.abs(o.x - orbPose(now).xo) < 13 && orbPose(now).age > 200 && orbPose(now).age < ORB_MS - 350) fusePurple(now);
     else if (o.x - o.x0 > 210 || peds.some(p => Math.abs(p.x - o.x) < 12)) explodeRed(now, false);
@@ -3814,7 +3816,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   vpPhase(now); vpBleed(now);
   const hum = v.form === 'verity', stun = now < pStun; setDomUI(now);      // (stun: the enemy's JUMPSCARE has him; the DOMAIN button's fill counts the wait of his own)
   let jf = -1, hf = -1, df = -1, bf = -1, sf = -1, af = -1, tu = -1;      // jump 0-14 (15 FPS), hurt 0-9, teleport 0-14 (30 FPS: gone from frame 3 to 11), block, crouch 0-14, swing 0-14, teleport UP (the double jump) 0-14 (20 FPS: gone from frame 3 to 11)
-  if (jumpAt >= 0) { jf = jumpFrame(Math.max(0, now - jumpAt)); if (jf >= 15) { jumpAt = -1; jf = -1; } }
+  if (jumpAt >= 0) { jf = jumpFrame(Math.max(0, now - jumpAt)); if (jf >= 15) { jumpAt = -1; jf = -1; } jumpDust(jf); }
   if (teleAt >= 0) { tu = Math.floor(Math.max(0, now - teleAt) * TELE_FPS / 1000); if (tu >= 15) { teleAt = -1; tu = -1; } }
   if (jf < 0 && tu < 0) v.tuUsed = false;      // (one double jump per jump)
   if (hurtAt >= 0) { hf = Math.floor(Math.max(0, now - hurtAt) * RX_FPS[hurtK] / 1000); if (hf >= 10) { hurtAt = -1; hf = -1; hurtEnd = now; } }
@@ -3921,7 +3923,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   ctx.save();
   if (vap) { /* gone */ } else if (gko >= 0) { const rgh = ragXf(vs.rag, gko, cx, gy + 2, -1); if (!rgh) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); } ctx.drawImage(vfr('idle', 0, false), -32, -62 + rgh); }
   else { ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, x, y); if (stun && hf < 0) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(src), x, y); } }
-  ctx.restore(); drawGiantNow('foe');
+  ctx.restore(); if (hum && t >= 1 && gko < 0 && !vap) cloth(clMe, src, x, y, false, 'verity', dt); drawGiantNow('foe');
   if (v.form === 'smoke1') smokePuffs(cx, gy - 28, fa / 450); else if (v.form === 'smoke2') smokeBig(cx, fa / 1000);
   if (t < 1) {      // spawn ring + flash
     const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,225,110,' + (1 - t) + ')';
@@ -4228,7 +4230,7 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   const c = cp || (cp = cpNew()), el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3), cx = Math.round(VW / 2), dizzy = now < (vs.cStun || 0), fear = now < pStun;      // (fear: the enemy's JUMPSCARE has him; dizzy: he got up after 5 s on the floor)
   let jf = -1, hf = -1, df = -1, sf = -1, af = -1, lf = -1;      // jump 0-14 (15 FPS), hurt 0-9, push dash 0-14 (30 FPS), smash flat / stand up 0-14 (25 FPS), swing 0-14, CARTOON ATTACK 0-14 (24 FPS)
   let ulting = !!(ult && ult.who === 'player'); setDomUI(now);      // (his ULTIMATE is going on; the DOMAIN button's fill counts the wait for the next one)
-  if (jumpAt >= 0) { jf = jumpFrame(Math.max(0, now - jumpAt)); if (jf >= 15) { jumpAt = -1; jf = -1; } }
+  if (jumpAt >= 0) { jf = jumpFrame(Math.max(0, now - jumpAt)); if (jf >= 15) { jumpAt = -1; jf = -1; } jumpDust(jf); }
   if (hurtAt >= 0) { hf = Math.floor(Math.max(0, now - hurtAt) * RX_FPS[hurtK] / 1000); if (hf >= 10) { hurtAt = -1; hf = -1; hurtEnd = now; } }
   if (dgAt >= 0) { df = Math.floor(Math.max(0, now - dgAt) * DASH_FPS / 1000); if (df >= 15) { dgAt = -1; df = -1; dgReady = now + 150; } }
   let bf = -1;      // BLOCK 0-9: the glove swells up (0-4), then the held guard (5-9, loops); lowering it runs 4..0 again
@@ -4334,7 +4336,7 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   ctx.save();
   if (vap) { /* gone */ } else if (gko >= 0) { const rgh = ragXf(vs.rag, gko, cx, gy + 2, -1); if (!rgh) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); } ctx.drawImage(cfr('idle', 0, false), -32, -63 + rgh); }
   else { ctx.beginPath(); ctx.rect(x, y + ry, I[0], I[1] - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, x, y); if (fear && hf < 0) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(src), x, y); } }
-  ctx.restore();
+  ctx.restore(); if (!flat && t >= 1 && gko < 0 && !vap) cloth(clMe, src, x, y, false, 'cat', dt);
   drawGiantNow('foe'); drawCst(now);      // (the enemy Cat's giant, if he summoned one: in front of the player, behind the enemy)
   if (t < 1) {      // spawn ring + flash
     const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,130,175,' + (1 - t) + ')';
@@ -4375,7 +4377,7 @@ function drawScene(now, dt) {
   let jf = -1, tf = -1;                       // jump frame 0-14 (0-2 crouch, 3 push-off, 4-11 airborne, 12-14 land) / teleport frame 0-14 (0-6 vanish + arrive, 7-11 fall, 12-14 land)
   if (jumpAt >= 0) {
     jf = jumpFrame(Math.max(0, now - jumpAt));                // clamp: rAF time can trail pnow() by a hair
-    if (jf >= jumpF.length) { jumpAt = -1; jf = -1; }                            // landed
+    if (jf >= jumpF.length) { jumpAt = -1; jf = -1; } jumpDust(jf);                            // landed
   }
   if (teleAt >= 0) {
     tf = Math.floor(Math.max(0, now - teleAt) * TELE_FPS / 1000);
@@ -4608,6 +4610,7 @@ function drawScene(now, dt) {
     if (fearing) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(blindOff && !yj ? blindDown(set[fi]) : set[fi]), x, y); }      // (JUMPSCARE: a pale pulse; with the blindfold down it follows the redrawn head)
   }
   ctx.restore(); if (!again) drawGiantNow('foe');
+  if (!again && t >= 1 && gko < 0 && !vap) cloth(clMe, set[fi], x, y, false, yj ? 'yuji' : 'gojo', dt);
   if (yj && atkOn && (atkK === 4 || atkK === 9 || atkK === 12 || atkK === 13) && info.hn && !vap) divGlow(x + info.hn[fi][0], y + info.hn[fi][1], fi, now, atkK === 9 || atkK === 13);      // (DIVERGENT FIST and CONCENTRATED FIST: the cursed energy round your fist)
   if (t >= 1 && gko < 0 && !vap) { drawCE(now, x, y, info, fi); if (yj && cm >= 2 && atkOn && atkK >= 20 && atkK <= 22 && af >= 2) bfSparks(now, x, y, info, fi); if (yj && cm === 3 && atkOn && atkK === 23) chargeFx(now, x, y, info, fi, af); if (yj && cm === 3 && vs && vs.ph === 'fight') inheritHud(now); if (!again) drawRedFx(now, dt, x, y, info, fi, mbing && mbK === 1, mf); }
   }; paintMe(false);
@@ -5599,16 +5602,16 @@ const pScale = () => physOn() ? mScale(massOf(null)) : 1;      // the same for a
 const slideV = (v, dt) => { v *= Math.exp(-SLIDE_K * dt); const a = SLIDE_C * dt; return Math.abs(v) <= a ? 0 : v - Math.sign(v) * a; };
 function foeSlide(d, dt) {      // the enemy's slide after a blow: x moves by the real velocity (his stored one times 70 / mass), the friction acts on the real one
   if (!physOn()) { d.x += d.vx * dt; d.vx *= Math.exp(-7 * dt); return; }
-  const s = mScale(massOf(d)), v0 = d.vx * s, v1 = slideV(v0, dt); d.x += 0.5 * (v0 + v1) * dt; d.vx = v1 / s;
+  const s = mScale(massOf(d)), v0 = d.vx * s, v1 = slideV(v0, dt); d.x += 0.5 * (v0 + v1) * dt; d.vx = v1 / s; if (Math.abs(v1) > 110) slideGrit(d.x, v1, d);
 }
 function playerSlide(dt) {      // yours
   if (!physOn()) { wx += wxv * dt; wxv *= Math.exp(-7 * dt); return; }
-  const v1 = slideV(wxv, dt); wx += 0.5 * (wxv + v1) * dt; wxv = v1;
+  const v1 = slideV(wxv, dt); wx += 0.5 * (wxv + v1) * dt; wxv = v1; if (Math.abs(v1) > 110) slideGrit(wx, v1, slGr);
 }
 function walkVel(target, dt, air) {      // the legs: a limited push towards the speed you want (the old game: straight to it)
   if (!physOn()) return wvx = target;
   const a = (air ? 140 : target === 0 ? 800 : (wvx * target < 0 ? 900 : 520)) * Math.max(1, Math.max(Math.abs(target), Math.abs(wvx)) / FWD_SPEED), d = target - wvx;
-  wvx += Math.max(-a * dt, Math.min(a * dt, d)); return wvx;
+  wvx += Math.max(-a * dt, Math.min(a * dt, d)); if (!air && Math.abs(wvx) > 44) runGrit(); return wvx;
 }
 const JF_MAP = (() => {      // the jump's picture (0-14) for every 1/64 of the time in the air: the pictures follow the real arc of a body in gravity (they hang at the top), not the clock
   const L = [10, 16, 20, 22, 22, 20, 16, 10], m = [];
@@ -5640,23 +5643,23 @@ function physCollide(now, dt) {      // every frame, after the movements: the bo
 }
 function wallFoe(f, now) {      // an enemy slides against the end of the street
   const v = Math.abs(f.vx * mScale(massOf(f)));
-  if (physOn() && v > 160) { const dm = Math.round((v - 160) * 0.12); if (dm > 0) { f.hp = Math.max(0, f.hp - dm); f.hitAt = now; say('WALL! ' + dm, f.x, '#ffd34d', 8, now); debBurst(f.x, 12, 6, DEB.stone, 90); shakeUntil = now + 120; shakeAmp = 2; snd('smack', 1); if (f.hp <= 0) foeSwap(f, () => koDummy(now)); } }
+  if (physOn() && v > 160) { const dm = Math.round((v - 160) * 0.12); if (dm > 0) { f.hp = Math.max(0, f.hp - dm); f.hitAt = now; say('WALL! ' + dm, f.x, '#ffd34d', 8, now); debBurst(f.x, 12, 6, DEB.stone, 90); shockAt(f.x, 100, 45, 0.6); shakeUntil = now + 120; shakeAmp = 2; snd('smack', 1); if (f.hp <= 0) foeSwap(f, () => koDummy(now)); } }
   f.vx = physOn() ? -f.vx * 0.3 : 0;
 }
 function wallMe(side, now) {      // you slide against the end of the street
   const v = Math.abs(wxv);
-  if (physOn() && v > 150) { const dm = Math.round((v - 150) * 0.1); if (dm > 0) { vsHurt(dm, now); say('WALL! -' + dm, wx, '#ff9a5a', 8, now); debBurst(wx, 12, 6, DEB.stone, 90); shakeUntil = now + 120; shakeAmp = 2; snd('hit', 1); } wxv = -wxv * 0.3; }
+  if (physOn() && v > 150) { const dm = Math.round((v - 150) * 0.1); if (dm > 0) { vsHurt(dm, now); say('WALL! -' + dm, wx, '#ff9a5a', 8, now); debBurst(wx, 12, 6, DEB.stone, 90); shockAt(wx, 100, 45, 0.6); shakeUntil = now + 120; shakeAmp = 2; snd('hit', 1); } wxv = -wxv * 0.3; }
   else if (wxv * side > 0) wxv = 0;
 }
 function fallHit(d, vi, now) {      // an enemy comes down hard: a fall of more than 230 px/s hurts, one of more than 200 bounces
   if (!physOn() || vi < 200) return false;
-  debBurst(d.x, 0, vi > 230 ? 8 : 4, DEB.dust, vi * 0.3);
+  debBurst(d.x, 0, vi > 230 ? 8 : 4, DEB.dust, vi * 0.3); shockAt(d.x, vi * 0.5, 55, 0.8);
   if (vi > 230 && d.hp > 0) { const dm = Math.round((vi - 230) * 0.25); if (dm > 0) { d.hp = Math.max(0, d.hp - dm); d.hitAt = now; say('FALL ' + dm, d.x, '#ffd34d', 8, now + 60); if (d.hp <= 0) foeSwap(d, () => koDummy(now)); } }
   d.air = airMake(now, 0, vi * 0.32, 650, 'bounce'); return true;
 }
 function fallMe(vi, now) {      // you come down hard (the enemy's FACE KICK): the same as for him
   if (!physOn() || !vs || vi < 200) return false;
-  debBurst(wx, 0, vi > 230 ? 8 : 4, DEB.dust, vi * 0.3);
+  debBurst(wx, 0, vi > 230 ? 8 : 4, DEB.dust, vi * 0.3); shockAt(wx, vi * 0.5, 55, 0.8);
   if (vi > 230) { const dm = Math.round((vi - 230) * 0.25); if (dm > 0) { vsHurt(dm, now); say('FALL -' + dm, wx, '#ff9a5a', 8, now + 60); } }
   gAir = airMake(now, 0, vi * 0.32, 650, 'bounce'); return true;
 }
@@ -5694,7 +5697,7 @@ function ragFx(r, wxBody, now) {      // each time the body hits the floor: dust
   while (r.seen < c.ev.length) {
     const e = c.ev[r.seen++], xw = wxBody + r.dirW * e[1], vi = e[2];
     puff(xw, vi > 150 ? 4 : 2); snd('land', Math.min(2, vi / 130)); if (vi > 90) debBurst(xw, 0, Math.min(8, 2 + ((vi / 60) | 0)), DEB.dust, vi * 0.35);
-    if (vi > 170) { shakeUntil = now + 90; shakeAmp = 2; }
+    if (vi > 170) { shakeUntil = now + 90; shakeAmp = 2; shockAt(xw, vi * 0.6, 50, 0.7); }
   }
 }
 function ragTick(now) {      // every frame: a body that has just been knocked out starts to tumble (from the speed it was thrown with), and thuds when it lands
@@ -5722,11 +5725,12 @@ function debBurst(x, h, n, cols, spd, size) {      // n pieces fly out of the wo
   for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI, v = spd * (0.4 + Math.random() * 0.8); deb.push({ x: x + Math.random() * 6 - 3, h: h + Math.random() * 4, vx: Math.cos(a) * v, vy: Math.sin(a) * v * 0.9 + 20, dz: Math.random() * 4, s: size || (Math.random() < 0.3 ? 2 : 1), c: cols[i % cols.length], born: t, life: 2400 + Math.random() * 1400, rest: false }); }
   if (deb.length > 100) deb.splice(0, deb.length - 100);
 }
-function drawDebris(now, dt) {
+function drawDeb(now, dt) {
+  if (physOn() && state === 'play') litStep(dt);
   if (!deb.length) return;
   deb = deb.filter(p => now - p.born < p.life); const cx = Math.round(VW / 2);
   for (const p of deb) {
-    if (!p.rest) { p.vy -= 650 * dt; p.h += p.vy * dt; p.x += p.vx * dt; if (p.h <= 0) { p.h = 0; if (p.vy < -35) { p.vy = -p.vy * 0.42; p.vx *= 0.7; } else { p.vy = 0; p.vx *= Math.exp(-9 * dt); if (Math.abs(p.vx) < 2) p.rest = true; } } }
+    if (!p.rest) { p.vy -= (p.g || 650) * dt; if (p.ad) { p.vx *= Math.exp(-p.ad * dt); p.vy *= Math.exp(-p.ad * 1.5 * dt); } p.h += p.vy * dt; p.x += p.vx * dt; if (p.h <= 0) { p.h = 0; if (p.vy < -35) { p.vy = -p.vy * 0.42; p.vx *= 0.7; } else { p.vy = 0; p.vx *= Math.exp(-9 * dt); if (Math.abs(p.vx) < 2) p.rest = true; } } }
     const k = (now - p.born) / p.life; ctx.globalAlpha = k > 0.75 ? Math.max(0, (1 - k) / 0.25) : 1; ctx.fillStyle = p.c;
     ctx.fillRect(Math.round(cx + p.x - wx), Math.round(gy + p.dz - p.h - p.s), p.s + (p.s > 1 ? 1 : 0), p.s);
   }
@@ -5751,11 +5755,127 @@ function propBreak(o, now) {      // a crate bursts / a prop is hit: planks fly;
 function propBump(now) {      // a body that slides or tumbles fast through the street shakes whatever stands in its way: the prop wobbles and chips fly (it is not opened by it)
   const H = vs.hunt, L = [];
   for (const f of vs.foes) { if (f.ko < 0) { const v = Math.abs(f.vx * mScale(massOf(f))); if (v > 100) L.push([f.x, v]); } else if (f.rag && f.rag.ko === f.ko) { const c = ragAt(f.rag, now - f.rag.t0); if (!c.rest && Math.abs(c.vx) > 100 && c.h < 40) L.push([f.x + f.rag.dirW * c.x, Math.abs(c.vx)]); } }
-  for (const [bx, v] of L) for (const o of H.objs) { if (o.found || (o.k !== 'c' && o.k !== 'p') || Math.abs(o.x - bx) > 12 || now - (o.bumpAt || -1e9) < 500) continue; o.bumpAt = o.wob = now; debBurst(o.x, 10, 3, DEB[PDEB[o.p || 'crate']] || DEB.dust, 40 + v * 0.2); snd('smack', 0.6); }
+  for (const [bx, v] of L) for (const o of H.objs) { if (o.found || (o.k !== 'c' && o.k !== 'p') || Math.abs(o.x - bx) > 12 || now - (o.bumpAt || -1e9) < 500) continue; propShake(o, now, v); }
 }
 function propFx(o, now) {      // a toppled prop hits the ground
   if (!o.tp || o.tp.thud) return; const c = tipAt(o.tp, now - o.tp.at); if (!c.ev) return;
   o.tp.thud = true; const px = o.x + o.tp.dir * 15; debBurst(px, 2, 8, DEB[PDEB[o.p]] || DEB.dust, 85); puff(px, 3); snd('smack', 1); shakeUntil = now + 100; shakeAmp = 1;
+}
+// ---------------------------------------------------------------- v1.38 PHYSICS III: loose things, hair and cloth, flying things. LITTER (pebbles, paper, leaves) lies about the street and is blown away by the shock of a hard blow, a landing, a slam, a wave, a gust or an explosion, is sucked in by MAX BLUE and kicked by running feet; grit is thrown up by running, sliding, jumping and landing; sparks bounce; a ball sheds embers and bursts into pieces; hair and a coat flap (a tail for the Cat) are chains that swing with every move. Not in a Wi-Fi fight or the story.
+const LIT_TYPES = [['#8a8478', 1, 650, 0], ['#a8a090', 2, 650, 0], ['#5a5448', 1, 650, 0], ['#cfc7b0', 2, 240, 1.3], ['#6a7a3a', 2, 220, 1.5]];      // colour, width, gravity (px/s^2), air drag: pebbles fall fast, paper and leaves float down
+let lit = [];
+function litNew(x) { const t = LIT_TYPES[(Math.random() * LIT_TYPES.length) | 0]; return { x, h: 0, vx: 0, vy: 0, dz: 1 + Math.random() * 4, c: t[0], s: t[1], g: t[2], ad: t[3], rest: true }; }
+function litStep(dt) {      // every frame: the litter that lies about moves if it was pushed, and the street is always strewn all round you (what you leave behind turns up again ahead)
+  if (!lit.length) { for (let i = 0; i < 30; i++) lit.push(litNew(wx + (Math.random() * 2 - 1) * VW * 0.75)); }
+  const w = VW * 0.8, cx = Math.round(VW / 2), side = Math.sign(wvx);
+  for (const p of lit) {
+    if (Math.abs(p.x - wx) > w) { p.x = wx + (side && Math.random() < 0.75 ? side : Math.random() < 0.5 ? -1 : 1) * (VW * 0.55 + Math.random() * VW * 0.2); p.h = p.vx = p.vy = 0; p.rest = true; p.dz = 1 + Math.random() * 4; }
+    if (!p.rest) {
+      p.vy -= p.g * dt; if (p.ad) { p.vx *= Math.exp(-p.ad * dt); p.vy *= Math.exp(-p.ad * 1.5 * dt); } p.h += p.vy * dt; p.x += p.vx * dt;
+      if (p.h <= 0) { p.h = 0; if (p.vy < -30) { p.vy = -p.vy * 0.35; p.vx *= 0.7; } else { p.vy = 0; p.vx *= Math.exp(-10 * dt); if (Math.abs(p.vx) < 3) { p.vx = 0; p.rest = true; } } }
+    }
+    ctx.fillStyle = p.c; ctx.fillRect(Math.round(cx + p.x - wx), Math.round(gy + p.dz - p.h - p.s), p.s + (p.s > 1 ? 1 : 0), p.s);
+  }
+}
+function debAdd(o) { deb.push(Object.assign({ x: 0, h: 0, vx: 0, vy: 0, dz: Math.random() * 4, s: 1, c: '#b8b0a0', born: pnow(), life: 2400, rest: false, g: 650, ad: 0 }, o)); if (deb.length > 100) deb.splice(0, deb.length - 100); }
+function gritAt(x, n, spd, dir) {      // n tiny pieces of grit are kicked up at the world place x, mostly the way dir says (-1 left, 1 right, 0 every way)
+  if (!physOn()) return;
+  for (let i = 0; i < n; i++) debAdd({ x: x + Math.random() * 4 - 2, h: Math.random() * 2, vx: (dir ? dir * (0.5 + Math.random()) : Math.random() * 2 - 1) * spd, vy: spd * (0.5 + Math.random() * 0.9), c: DEB.dust[(Math.random() * 3) | 0], life: 420 + Math.random() * 360 });
+}
+const loose = () => lit.concat(deb);      // (everything that lies about and can be pushed)
+function shockAt(x, str, rad, up) {      // a blast at the world place x (str px/s at the middle, reaching rad px): the loose things are thrown away from it, the light ones (paper, leaves) higher and farther
+  if (!physOn() || !Number.isFinite(x + str)) return;
+  for (const p of loose()) { const dx = p.x - x, d = Math.abs(dx); if (d > rad) continue; const k = 1 - d / rad, lite = (p.g || 650) < 400 ? 1.5 : 1; p.vx += (dx >= 0 ? 1 : -1) * str * k * lite * (0.6 + Math.random() * 0.8); p.vy += str * up * k * lite * (0.5 + Math.random()); p.rest = false; }
+  for (const p of smoke) { const dx = p.x - x; if (Math.abs(dx) < rad) p.vx += (dx >= 0 ? 1 : -1) * str * 0.08 * (1 - Math.abs(dx) / rad); }
+}
+function windAt(x, rad, vx, dt) {      // a gust blows along the street at vx: everything loose within rad px of x is carried with it, the light things are lifted
+  if (!physOn() || !Number.isFinite(x + vx + dt)) return;
+  for (const p of loose()) { const d = Math.abs(p.x - x); if (d > rad) continue; const k = 1 - d / rad; p.vx += vx * 3 * k * dt; p.vy += 160 * k * dt * ((p.g || 650) < 400 ? 1 : 0.4); p.rest = false; }
+}
+function suckAt(x, str, rad, dt) {      // MAX BLUE: everything loose within rad px is pulled to x and swallowed there
+  if (!physOn() || !Number.isFinite(x + dt)) return;
+  for (const p of loose()) { const dx = p.x - x, d = Math.abs(dx); if (d > rad) continue; if (d < 5) { if (p.s !== undefined && p.born === undefined) p.x = 1e9; else p.life = 0; continue; } const k = 1 - d / rad; p.vx -= Math.sign(dx) * str * k * dt; p.vy += 70 * k * dt; p.rest = false; }
+}
+let runAt = 0, jdLast = -1;
+const slGr = { gAt: 0 };
+function runGrit() {      // running at full speed: a pinch of grit behind the heel, and the pebble in front of the toe is kicked
+  const t = pnow(); if (t < runAt) return; runAt = t + 150; const d = Math.sign(wvx);
+  gritAt(wx - d * 4, 1, 26, -d);
+  for (const p of lit) if (p.rest && Math.abs(p.x - (wx + d * 5)) < 4) { p.vx = d * (60 + Math.random() * 50); p.vy = 50 + Math.random() * 60; p.rest = false; }
+}
+function slideGrit(x, v, key) {      // a body that slides fast (a knock-back) scrapes up grit behind it
+  const t = pnow(); if (t < (key.gAt || 0)) return; key.gAt = t + 90; gritAt(x, 2, 30, -Math.sign(v));
+}
+function jumpDust(jf) {      // the push-off and the landing of your jump
+  if (physOn()) {
+    if (jf >= 4 && jdLast >= 0 && jdLast < 4) { gritAt(wx, 5, 45, 0); shockAt(wx, 50, 30, 0.5); }
+    if (jf >= 12 && jdLast >= 4 && jdLast < 12) { gritAt(wx, 7, 60, 0); shockAt(wx, 90, 45, 0.7); }
+  }
+  jdLast = jf;
+}
+function propShake(o, now, v) {      // a prop or a crate is knocked: it wobbles and chips fly (it is not opened)
+  o.bumpAt = o.wob = now; debBurst(o.x, 10, 3, DEB[PDEB[o.p || 'crate']] || DEB.dust, 40 + v * 0.2); snd('smack', 0.6);
+}
+function projBurst(p) {      // a ball is blocked or lands: it bursts into pieces that fly, fall and bounce, and the shock blows the litter
+  if (!physOn()) return; const c = typeof p.col === 'string' ? p.col : '#ffb060';
+  for (let i = 0; i < 9; i++) { const a = Math.random() * 6.283, v = 50 + Math.random() * 70; debAdd({ x: p.x, h: p.h || 0, vx: Math.cos(a) * v, vy: Math.sin(a) * v * 0.8 + 25, dz: 0, s: 1 + ((Math.random() < 0.3) | 0), c: i % 3 ? c : '#ffffff', life: 700 + Math.random() * 500, g: 420 }); }
+  shockAt(p.x, 120, 45, 0.6);
+}
+function projFx(p, now, dt) {      // what a flying thing does to the street: a ball sheds embers that fall, a wave throws grit and litter up, a gust blows everything loose along, and a prop in the way shakes
+  if (!physOn() || p.dead) return;
+  const d = Math.sign(p.vx) || 1;
+  if (p.kind === 'gust') windAt(p.x, p.r * 3, p.vx, dt);
+  if (now >= (p.emAt || 0)) {
+    p.emAt = now + (p.kind === 'wave' ? 60 : 45);
+    if (p.kind === 'wave') { gritAt(p.x, 3, 70, d); shockAt(p.x + d * p.r, 160, p.r * 2, 0.9); }
+    else if (p.kind === 'proj') debAdd({ x: p.x - d * p.r * 0.6, h: (p.h || 0) + Math.random() * 4 - 2, vx: -p.vx * 0.1 + Math.random() * 20 - 10, vy: Math.random() * 25, dz: 0, c: typeof p.col === 'string' ? p.col : '#ffb060', life: 450, g: 260 });
+  }
+  if (vs && vs.hunt) for (const o of vs.hunt.objs) if (!o.found && (o.k === 'c' || o.k === 'p') && Math.abs(o.x - p.x) < p.r + 8 && now - (o.bumpAt || -1e9) > 500) propShake(o, now, Math.abs(p.vx));
+}
+// HAIR and CLOTH: a chain of points hangs from an anchor on the picture (the top of the head, the back at the waist), swings with every move (the anchor moves through the world, the chain lags behind), falls under gravity and is held up by a stiff spring so it keeps its shape; its colour is taken from the picture's own pixels
+const clA = new WeakMap();
+function clAnchors(src) {      // where the hair and the back are on a picture and what colour they are (found once per picture from its pixels): hu the column of the head, ht the row of its top, hc its colour, bu the column of the back at the waist, bv its row, bc its colour
+  let a = clA.get(src); if (a !== undefined) return a; a = null;
+  try {
+    const w = src.width, h = src.height, d = src.getContext('2d').getImageData(0, 0, w, h).data, on = (x, y) => d[(y * w + x) * 4 + 3] > 40; let top = -1, bot = -1;
+    for (let y = 0; y < h && top < 0; y++) for (let x = 0; x < w; x++) if (on(x, y)) { top = y; break; }
+    for (let y = h - 1; y >= 0 && bot < 0; y--) for (let x = 0; x < w; x++) if (on(x, y)) { bot = y; break; }
+    if (top >= 0 && bot > top + 12) {
+      let sx = 0, n = 0; for (let y = top; y < top + 3; y++) for (let x = 0; x < w; x++) if (on(x, y)) { sx += x; n++; }
+      const hu = Math.round(sx / n), px = (x, y) => { const i = (y * w + x) * 4; return d[i + 3] > 40 ? 'rgb(' + d[i] + ',' + d[i + 1] + ',' + d[i + 2] + ')' : null; }, my = top + Math.round((bot - top) * 0.52); let mn = w;
+      for (let y = my - 1; y <= my + 1; y++) for (let x = 0; x < w; x++) if (on(x, y)) { mn = Math.min(mn, x); break; }
+      if (mn < w) a = { hu, ht: top, hc: px(hu, top + 1) || '#ffffff', bu: mn, bv: my, bc: px(mn + 1, my) || '#333344' };
+    }
+  } catch (e) { a = null; }
+  clA.set(src, a); return a;
+}
+const clNew = n => ({ p: Array.from({ length: n }, () => ({ x: 0, y: 0, px: 0, py: 0 })), init: false });
+const CL_HAIR = [[0, 0], [0.8, -0.3], [1.2, 0.4], [1.4, 1.2]], CL_COAT = [[0, 0], [0.45, 0.8], [0.8, 1.6], [1.1, 2.4], [1.35, 3.2]], CL_TAIL = [[0, 0], [0.6, 0.5], [1.3, 0.7], [2.0, 0.5], [2.7, 0]];      // where each link of a chain would hang if nothing moved it (in links, behind and below the anchor): the hair sticks out a little and droops, the coat hangs down his back, the Cat's tail curves up
+function clStep(S, ax, ay, bk, L, shape, dt) {      // one frame of a chain hanging from (ax world, ay screen): bk the way it streams (-1 left, 1 right), L the length of a link, shape its rest shape
+  const P = S.p, n = P.length;
+  if (!S.init || Math.abs(P[0].x - ax) > 40 || Math.abs(P[0].y - ay) > 40) { P.forEach((q, i) => { q.x = q.px = ax + bk * shape[i][0] * L; q.y = q.py = ay + shape[i][1] * L; }); S.init = true; }
+  P[0].x = P[0].px = ax; P[0].y = P[0].py = ay;
+  const d2 = dt * dt, damp = Math.pow(0.9, dt * 60);
+  for (let i = 1; i < n; i++) {
+    const q = P[i], vx = (q.x - q.px) * damp, vy = (q.y - q.py) * damp; q.px = q.x; q.py = q.y;
+    const rx = ax + bk * shape[i][0] * L, ry = ay + shape[i][1] * L;
+    q.x += vx + (rx - q.x) * 30 * d2; q.y += vy + 260 * d2 + (ry - q.y) * 30 * d2;
+  }
+  for (let k = 0; k < 2; k++) for (let i = 1; i < n; i++) { const a = P[i - 1], b = P[i], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1e-6, e = (d - L) / d; if (i > 1) { a.x += dx * e * 0.5; a.y += dy * e * 0.5; b.x -= dx * e * 0.5; b.y -= dy * e * 0.5; } else { b.x -= dx * e; b.y -= dy * e; } }
+}
+function clDraw(S, col, th) {      // the chain as little dots, thick at the root and thin at the tip
+  const P = S.p, cx = Math.round(VW / 2); ctx.fillStyle = col;
+  for (let i = 0; i < P.length - 1; i++) for (let k = 0; k < 3; k++) { const f = k / 3, x = P[i].x + (P[i + 1].x - P[i].x) * f, y = P[i].y + (P[i + 1].y - P[i].y) * f, t = i < 2 ? th : 1; ctx.fillRect(Math.round(cx + x - wx), Math.round(y), t, t); }
+  ctx.fillRect(Math.round(cx + P[P.length - 1].x - wx), Math.round(P[P.length - 1].y), 1, 1);
+}
+const clMe = {};
+function cloth(E, src, ox, oy, flip, kind, dt) {      // the hair and the coat flap (the tail of the Cat) of a fighter whose picture src has its top left corner at ox, oy on the screen (flip: drawn mirrored, facing left)
+  if (!physOn() || !src) return;
+  const A = clAnchors(src); if (!A) return;
+  const cx = Math.round(VW / 2), s = flip ? -1 : 1, bk = -s, d = Math.min(dt, 1 / 30), X = u => wx + (ox + s * u - cx);      // (bk: the way things stream: behind him)
+  if (!E.hair) { E.hair = clNew(4); E.coat = clNew(5); }
+  if (kind !== 'cat') { clStep(E.hair, X(A.hu) + bk * 2, oy + A.ht + 2, bk, 3, CL_HAIR, d); clDraw(E.hair, A.hc, 2); }
+  clStep(E.coat, X(A.bu), oy + A.bv + 1, bk, kind === 'cat' ? 4 : 3.5, kind === 'cat' ? CL_TAIL : CL_COAT, d); clDraw(E.coat, A.bc, 2);
 }
 function tick(t) {
   requestAnimationFrame(tick);                // schedule first so one bad frame can't stop the loop
