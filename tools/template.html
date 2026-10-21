@@ -58,9 +58,10 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #lap{border-color:#59b8ff}
 #dash{border-color:#7bd9a3}
 #blk{border-color:#9f8cff}
+#sns{display:none;grid-area:3/1;border-color:#4fe3ff;color:#7af0ff}#sns span{color:#b8f4ff}#sns.cd{opacity:.4}
 #fat{display:none;grid-area:2/1;border-color:#ff4a3a;color:#ff6a5a;opacity:.38}#fat span{color:#ffb4a8}#fat svg{width:4.5vh;height:4.5vh}      /* FATALITY: only in a match, to the left of BLOCK; dark until the enemy is at 20% health or less and close, then it glows */
 .col.vs{grid-template-columns:auto auto auto}.col.vs #fat{display:flex}
-.col.yj .pb:not(#atk):not(#dash):not(#lap):not(#blk):not(#ce){opacity:.3}.col.kt #ce{opacity:.3}.col.kt #dom{border-color:#ff5a8a;color:#ff8fb0}.col.kt #dom span{color:#ffc0d4}.col.kt #dom::after{background:rgba(255,90,138,.38)}.col.kt #dom.on{border-color:#ffd0e0;color:#fff}.col.vy #dom{border-color:#ff5a5a;color:#ff8a8a}.col.vy #dom span{color:#ffb4b4}.col.vy #dom::after{background:rgba(255,80,80,.38)}.col.vy #dom.on{border-color:#ffd0d0;color:#fff}      /* playing Verity the DOMAIN button is his JUMPSCARE (red, with the same wait-fill); the FATAL button is the same as Gojo's */
+.col.yj .pb:not(#atk):not(#dash):not(#lap):not(#blk):not(#ce):not(#sns){opacity:.3}.col.kt #ce{opacity:.3}.col.kt #dom{border-color:#ff5a8a;color:#ff8fb0}.col.kt #dom span{color:#ffc0d4}.col.kt #dom::after{background:rgba(255,90,138,.38)}.col.kt #dom.on{border-color:#ffd0e0;color:#fff}.col.vy #dom{border-color:#ff5a5a;color:#ff8a8a}.col.vy #dom span{color:#ffb4b4}.col.vy #dom::after{background:rgba(255,80,80,.38)}.col.vy #dom.on{border-color:#ffd0d0;color:#fff}      /* playing Verity the DOMAIN button is his JUMPSCARE (red, with the same wait-fill); the FATAL button is the same as Gojo's */
 .col.vs #dom{grid-area:1/2}.col.vs #ce{grid-area:1/3}.col.vs #blk{grid-area:2/2}.col.vs #lap{grid-area:2/3}.col.vs #dash{grid-area:3/2}.col.vs #atk{grid-area:3/3}
 #fat.rdy{opacity:1;background:#3a0d12;border-color:#ff8a7a;color:#fff;box-shadow:0 0 1.8vh #ff4a3a,0 0 .5vh #ff4a3a inset,4px 4px 0 #000;animation:fatglow .5s steps(2) infinite}
 @keyframes fatglow{50%{box-shadow:0 0 3.2vh #ff2a2a,0 0 .9vh #ff2a2a inset,4px 4px 0 #000}}
@@ -136,7 +137,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.34</small>
+    <small id="ver">V1.35</small>
   </div>
 </section>
 
@@ -188,10 +189,10 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 </section>
 
 <section id="chal" class="screen">
-  <h2>CHALLENGES</h2>
+  <h2 id="chalTitle">CHALLENGES</h2>
   <small id="chalMoney"></small>
   <div id="chalCards"></div>
-  <div class="row"><button id="chalSkills">SKILLS</button><button id="chalBack">BACK</button></div>
+  <div class="row"><button id="chalHunts">HUNTS</button><button id="chalSkills">SKILLS</button><button id="chalBack">BACK</button></div>
 </section>
 
 <section id="skills" class="screen">
@@ -293,6 +294,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <button id="blk" class="pb" aria-label="Block (hold)"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M0 0h8v4H7v1H6v1H5v1H4v1H3V7H2V6H1V5H0z"/></svg><span>BLOCK</span></button>
     <button id="fat" class="pb" aria-label="Fatality finisher (needs the enemy close and at 20 percent health or less)"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M2 0h4v1H2zM1 1h6v1H1zM0 2h8v1H0zM0 3h1v2H0zM3 3h2v2H3zM7 3h1v2H7zM0 5h8v1H0zM1 6h6v1H1zM1 7h1v1H1zM3 7h2v1H3zM6 7h1v1H6z"/></svg><span>FATAL</span></button>
     <button id="lap" class="pb" aria-label="Lapse Blue"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M2 1h4v1h1v4h-1v1h-4v-1h-1v-4h1z"/></svg><span id="lapl">BLUE</span></button>
+    <button id="sns" class="pb" aria-label="Sense: show what is hidden near you (hunts)"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M1 3h1v2H1zM2 2h4v1H2zM2 5h4v1H2zM6 3h1v2H6zM3 3h2v2H3z"/></svg><span id="snsl">SENSE</span></button>
     <button id="dash" class="pb" aria-label="Dash"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M0 1h2l3 3-3 3H0l3-3zM4 1h2l2 3-2 3H4l3-3z"/></svg><span id="dashl">DASH</span></button>
     <button id="atk" class="pb" aria-label="Attack"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M3 0h2v8H3zM0 3h8v2H0zM1 1h1v1H1zM6 1h1v1H6zM1 6h1v1H1zM6 6h1v1H6z"/></svg><span id="atkl">R.HOOK</span></button>
   </div>
@@ -506,7 +508,7 @@ function drawHero(i) {
 
 // ---------------------------------------------------------------- v1.00: PROGRESS (money, skills, characters), the SKILLS page, and the five CURSES of the CHALLENGES ladder
 // You start as Gojo with walking, jumping and punches only. Everything else is a SKILL you buy with the money from beating curses (and Versus / Story wins); the other characters are bought too.
-const PROG = (() => { const OLD = ['grub', 'stalker', 'wisp', 'ogre', 'imp']; try { const p = JSON.parse(localStorage.getItem('js_prog') || '{}'), r = p.rush || {}, P = { m: Math.max(0, +p.m || 0), own: p.own || {}, beat: p.beat || {}, once: p.once || {}, rush: { best: +r.best || 0, clears: +r.clears || 0, rb: +r.rb || 0, rc: +r.rc || 0 } }; for (const k of Object.keys(P.beat)) { const m = /^c(\d)(h?)$/.exec(k); if (m && OLD[+m[1]]) { P.beat['c:' + OLD[+m[1]] + m[2]] = 1; delete P.beat[k]; } } return P; } catch (e) { return { m: 0, own: {}, beat: {}, once: {}, rush: { best: 0, clears: 0, rb: 0, rc: 0 } }; } })();      // (v1.00 saved the curses you beat as c0..c4; they are called by name now so the ladder can grow)      // saved on the device: money, what you own (skills and characters), which challenges you beat
+const PROG = (() => { const OLD = ['grub', 'stalker', 'wisp', 'ogre', 'imp']; try { const p = JSON.parse(localStorage.getItem('js_prog') || '{}'), r = p.rush || {}, P = { m: Math.max(0, +p.m || 0), own: p.own || {}, beat: p.beat || {}, once: p.once || {}, rush: { best: +r.best || 0, clears: +r.clears || 0, rb: +r.rb || 0, rc: +r.rc || 0 }, hunt: Object.fromEntries(Object.entries(p.hunt && typeof p.hunt === 'object' ? p.hunt : {}).filter(([k, v]) => typeof v === 'string' && v.length === 1 && 'CBAS'.includes(v))) }; for (const k of Object.keys(P.beat)) { const m = /^c(\d)(h?)$/.exec(k); if (m && OLD[+m[1]]) { P.beat['c:' + OLD[+m[1]] + m[2]] = 1; delete P.beat[k]; } } return P; } catch (e) { return { m: 0, own: {}, beat: {}, once: {}, rush: { best: 0, clears: 0, rb: 0, rc: 0 }, hunt: {} }; } })();      // (v1.00 saved the curses you beat as c0..c4; they are called by name now so the ladder can grow)      // saved on the device: money, what you own (skills and characters), which challenges you beat
 const saveProg = () => { try { localStorage.setItem('js_prog', JSON.stringify(PROG)); } catch (e) { /* storage blocked */ } };
 // ---- v1.11 MOBILE: the options (kept in js_set), vibration, the assist levels, the pause flag and the margin a camera notch needs
 const SET = (() => { const D = { hap: 1, sz: 100, op: 78, up: 0, lh: 0, fps: 0, lite: 0, ap: 1, assist: 0, pace: 1 }, R = { hap: [0, 2], sz: [70, 120], op: [30, 100], up: [0, 20], lh: [0, 1], fps: [0, 60], lite: [0, 1], ap: [0, 1], assist: [0, 3], pace: [0, 2] }; try { const p = JSON.parse(localStorage.getItem('js_set') || '{}'); for (const k in D) if (typeof p[k] === 'number' && isFinite(p[k])) D[k] = Math.max(R[k][0], Math.min(R[k][1], Math.round(p[k]))); } catch (e) { /* storage blocked: the defaults */ } if (![0, 30, 60].includes(D.fps)) D.fps = 0; return D; })();
@@ -539,7 +541,8 @@ const SK_GOJO = [      // [id, name, what it does, price, needs]
   ['purple', 'HOLLOW PURPLE', 'FIRE RED INTO MAX BLUE', 900, ['mblue', 'red']],
   ['domain', 'DOMAIN EXPANSION', 'INFINITE VOID: EVERYONE FREEZES', 1200, ['ce']],
   ['heavy', 'HEAVY STRIKE', 'KEEP ATTACK HELD AFTER A HIT: THE LAST M1 WITH 1.6 TIMES THE DAMAGE THAT BREAKS A GUARD AND FILLS THE STAGGER BAR', 120, []],
-  ['cancel', 'DASH CANCEL', 'DASH DURING A SWING THAT HIT: IT STOPS, +4% ENERGY AND +20 FLOW', 100, ['dash']]];
+  ['cancel', 'DASH CANCEL', 'DASH DURING A SWING THAT HIT: IT STOPS, +4% ENERGY AND +20 FLOW', 100, ['dash']],
+  ['sense', 'SIX EYES SENSE', 'IN HUNTS: THE SENSE BUTTON SHOWS EVERY HIDDEN ITEM, CLUE AND CURSE NEAR YOU FOR 3 SECONDS (8 SECOND COOLDOWN)', 300, []]];
 const SK_CHAR = [['yuji', 'YUJI ITADORI', 'FIGHT AS OR AGAINST YUJI IN VERSUS, ALL HIS MOVES', 1500, []], ['verity', 'VERITY', 'FIGHT AS OR AGAINST VERITY IN VERSUS, ALL HIS MOVES', 1800, []], ['cat', 'CARTOON CAT', 'FIGHT AS OR AGAINST THE CAT IN VERSUS, ALL HIS MOVES', 2200, []]];
 const SK_YUJI = [      // (v1.11) the moves of Yuji, bought like Gojo's; only walking, jumping and the M1 combo are free
   ['y_crouch', 'CROUCH', 'DOWN ON THE STICK OR KEY S: DUCK UNDER HIGH HITS (3% ENERGY)', 50, []],
@@ -561,7 +564,8 @@ const SK_YUJI = [      // (v1.11) the moves of Yuji, bought like Gojo's; only wa
   ['y_cleave', 'GRAB CLEAVE', 'INHERITENCE, WALKING FORWARD + BLUE: GRAB THE ENEMY AND CLEAVE HIM, HE BLEEDS (25% ENERGY)', 500, ['y_inherit']],
   ['y_simple', 'SIMPLE DOMAIN', 'INHERITENCE, IN THE AIR + BLUE: A CYAN CIRCLE ROUND HIM: DOMAIN EXPANSIONS DO NOTHING UNTIL HE IS HIT (30% ENERGY)', 600, ['y_inherit']],
   ['y_heavy', 'HEAVY STRIKE', 'KEEP ATTACK HELD AFTER A HIT: THE LAST M1 WITH 1.6 TIMES THE DAMAGE THAT BREAKS A GUARD AND FILLS THE STAGGER BAR', 120, []],
-  ['y_cancel', 'DASH CANCEL', 'DASH DURING A SWING THAT HIT: IT STOPS, +4% ENERGY AND +20 FLOW', 100, ['y_dash']]];
+  ['y_cancel', 'DASH CANCEL', 'DASH DURING A SWING THAT HIT: IT STOPS, +4% ENERGY AND +20 FLOW', 100, ['y_dash']],
+  ['y_sense', 'CURSE SENSE', 'IN HUNTS: THE SENSE BUTTON SHOWS EVERY HIDDEN ITEM, CLUE AND CURSE NEAR YOU FOR 3 SECONDS (8 SECOND COOLDOWN)', 300, []]];
 const SK_VERITY = [
   ['v_crouch', 'CROUCH', 'DOWN ON THE STICK OR KEY S: DUCK UNDER HIGH HITS (3% ENERGY)', 50, []],
   ['v_block', 'BLOCK + PARRY', 'HOLD TO GUARD AGAINST HITS FROM THE FRONT. RAISE IT JUST BEFORE A HIT TO PARRY: NO DAMAGE, THE ENEMY IS STUNNED', 80, []],
@@ -573,7 +577,8 @@ const SK_VERITY = [
   ['v_drag', 'BLOOD DRAG', "CROUCH + BLUE: A LOW LUNGE, BITE THE ENEMY'S FEET AND DRAG HIM ALONG THE FLOOR BY THEM, HIS BLOOD IS DRAGGED ALONG THE GROUND (25% ENERGY)", 350, ['v_bite', 'v_crouch']],
   ['v_heavy', 'HEAVY PUNCH', 'HOLD ATTACK FOR 0.6 SECONDS: A SLOW PUNCH THAT DEALS TWICE THE DAMAGE, BREAKS A GUARD AND FILLS THE STAGGER BAR. TAPS NOW FIRE WHEN YOUR FINGER LIFTS', 150, []],
   ['v_cancel', 'TELEPORT CANCEL', 'TELEPORT DURING A SWING THAT HIT: IT STOPS, +4% ENERGY AND +20 FLOW', 120, ['v_tele']],
-  ['v_air', 'AIR COMBO', 'JUMP ON THE LAST M1 (THE PUNCH): THE ENEMY IS KICKED UP. JUMP AGAIN: HE LEVITATES WITH THE ENEMY AND THE 4-HIT M1 STARTS AGAIN IN THE AIR. IF HE DOES NOT ATTACK, OR AFTER THE LAST HIT, HE KICKS THE ENEMY DOWN TO THE FLOOR', 450, ['v_heavy']]];
+  ['v_air', 'AIR COMBO', 'JUMP ON THE LAST M1 (THE PUNCH): THE ENEMY IS KICKED UP. JUMP AGAIN: HE LEVITATES WITH THE ENEMY AND THE 4-HIT M1 STARTS AGAIN IN THE AIR. IF HE DOES NOT ATTACK, OR AFTER THE LAST HIT, HE KICKS THE ENEMY DOWN TO THE FLOOR', 450, ['v_heavy']],
+  ['v_sense', 'SMELL OF FEAR', 'IN HUNTS: THE SENSE BUTTON SHOWS EVERY HIDDEN ITEM, CLUE AND CURSE NEAR YOU FOR 3 SECONDS (8 SECOND COOLDOWN)', 300, []]];
 const SK_CAT = [
   ['k_crouch', 'FLATTEN', 'DOWN ON THE STICK OR KEY S: SMASH YOURSELF FLAT, TAP AGAIN TO STAND UP (3% ENERGY)', 50, []],
   ['k_block', 'GLOVE SHIELD', 'HOLD TO GUARD WITH A GIANT GLOVE. RAISE IT JUST BEFORE A HIT TO PARRY: NO DAMAGE, THE ENEMY IS STUNNED', 80, []],
@@ -583,13 +588,14 @@ const SK_CAT = [
   ['k_ult', 'ULTIMATE', 'THE DOMAIN BUTTON: CHOKE THE ENEMY, KNEE HIM 15 TIMES AND THROW HIM AWAY', 900, ['k_toon', 'k_block']],
   ['k_stomp', 'GIANT SMASH', "FLAT ON THE FLOOR + BLUE: THE GIANT CAT'S HUGE LEG SMASHES DOWN ON THE ENEMY (40% ENERGY)", 450, ['k_toon', 'k_crouch']],
   ['k_heavy', 'HEAVY STRIKE', 'KEEP ATTACK HELD AFTER A HIT: THE LAST M1 WITH 1.6 TIMES THE DAMAGE THAT BREAKS A GUARD AND FILLS THE STAGGER BAR', 150, []],
-  ['k_cancel', 'DASH CANCEL', 'DASH DURING A SWING THAT HIT: IT STOPS, +4% ENERGY AND +20 FLOW', 120, ['k_dash']]];
+  ['k_cancel', 'DASH CANCEL', 'DASH DURING A SWING THAT HIT: IT STOPS, +4% ENERGY AND +20 FLOW', 120, ['k_dash']],
+  ['k_sense', 'CARTOON NOSE', 'IN HUNTS: THE SENSE BUTTON SHOWS EVERY HIDDEN ITEM, CLUE AND CURSE NEAR YOU FOR 3 SECONDS (8 SECOND COOLDOWN)', 300, []]];
 const SKN = {}; for (const s of [].concat(SK_GOJO, SK_YUJI, SK_VERITY, SK_CAT, SK_CHAR)) SKN[s[0]] = s[1];
 const GATE = {      // for each fighter the skill each button needs (a button that is not listed is free): cr crouch, dash, blk block, cp crouched punches, ce MODE, dom DOMAIN, fat FATALITY, bl BLUE (Verity and the Cat; Gojo's and Yuji's BLUE depends on the mode, the air and the stance: gateBlue)
-  g: { cr: 'crouch', dash: 'dash', blk: 'block', cp: 'cpunch', ce: 'ce', dom: 'domain', fat: 'fatal', hv: 'heavy', cn: 'cancel' },
-  y: { cr: 'y_crouch', dash: 'y_dash', blk: 'y_block', cp: 'y_cpunch', ce: 'y_ce', hv: 'y_heavy', cn: 'y_cancel' },
-  v: { cr: 'v_crouch', dash: 'v_tele', blk: 'v_block', ce: 'v_ball', dom: 'v_scare', fat: 'v_fatal', bl: 'v_bite', hv: 'v_heavy', cn: 'v_cancel', ac: 'v_air' },
-  k: { cr: 'k_crouch', dash: 'k_dash', blk: 'k_block', dom: 'k_ult', fat: 'k_fatal', bl: 'k_toon', hv: 'k_heavy', cn: 'k_cancel' } };
+  g: { cr: 'crouch', dash: 'dash', blk: 'block', cp: 'cpunch', ce: 'ce', dom: 'domain', fat: 'fatal', hv: 'heavy', cn: 'cancel', sn: 'sense' },
+  y: { cr: 'y_crouch', dash: 'y_dash', blk: 'y_block', cp: 'y_cpunch', ce: 'y_ce', hv: 'y_heavy', cn: 'y_cancel', sn: 'y_sense' },
+  v: { cr: 'v_crouch', dash: 'v_tele', blk: 'v_block', ce: 'v_ball', dom: 'v_scare', fat: 'v_fatal', bl: 'v_bite', hv: 'v_heavy', cn: 'v_cancel', ac: 'v_air', sn: 'v_sense' },
+  k: { cr: 'k_crouch', dash: 'k_dash', blk: 'k_block', dom: 'k_ult', fat: 'k_fatal', bl: 'k_toon', hv: 'k_heavy', cn: 'k_cancel', sn: 'k_sense' } };
 const BLUES = { g: ['blue', 'tele', 'mblue'], y: ['y_div', 'y_sweep', 'y_rush', 'y_conc', 'y_elbow', 'y_upper', 'y_flash'], v: ['v_bite'], k: ['k_toon'] };
 const lacks = key => { const need = GATE[meK()][key]; return !!need && !owns(need); };      // true when the fighter you play has not bought what this button needs
 let lockSayAt = -1e9;
@@ -616,7 +622,7 @@ function skillUI() {                          // the buttons of a move you do no
   const L = (id, key) => $(id).classList.toggle('lk', lacks(key));
   L('blk', 'blk'); L('dash', 'dash'); L('ce', 'ce'); L('dom', 'dom'); L('fat', 'fat'); $('lap').classList.toggle('lk', !BLUES[meK()].some(owns));
 }
-function leavePlay() { if (vs && vs.net) lanLeave(); else if (vs && vs.cv) { show('chal'); buildChal(); } else show('select'); }
+function leavePlay() { if (vs && vs.net) lanLeave(); else if (vs && vs.hunt) { show('chal'); buildHunts(); } else if (vs && vs.cv) { show('chal'); buildChal(); } else show('select'); }
 
 // ---- the ten curses: sprites (tools/curse_art.py) and what each of them can do
 const CU = __CURSES__;                        // idle, walk, a1 a2 a3 (the three attacks: the blow lands on frame imp) and hurt for every curse; they face right and the game mirrors them
@@ -809,6 +815,7 @@ function drawCaughtCurse(now) {               // Max Blue has the curse: stun fl
   ctx.save(); ctx.translate(sx, Math.round(c.py)); ctx.rotate(c.rot); ctx.scale(-1, 1); ctx.drawImage(src, -S.cx, -Math.round(S.g / 2)); ctx.restore();
 }
 function drawFoes(now, dt) {                  // the enemy (or enemies: a RUSH wave has two) and what they throw, once a frame
+  if (vs && vs.hunt) huntDraw(now);
   if (vs && vs.foes && vs.foes.length > 1) { rushStep(now); for (const x of vs.foes.filter(f => f !== dummy).sort((a, b) => b.x - a.x)) foeSwap(x, () => drawDummy(now, dt)); }      // (the one behind first, so the one in front is painted over it)
   drawDummy(now, dt);
   if (vs && vs.cv) { curseProj(now, dt); drawProj(now); }
@@ -872,7 +879,7 @@ function dailyInfo() {      // today's challenge: day, ci (the curse), ru (the r
 }
 let chalPv = [];
 function buildChal() {                        // the cards: every curse with NORMAL and HARD (HARD opens when you beat NORMAL; a curse opens when you beat the one before), then RUSH
-  const box = $('chalCards'); box.innerHTML = ''; chalPv = []; setMoneyUI();
+  const box = $('chalCards'); box.innerHTML = ''; chalPv = []; setMoneyUI(); huntView = false; $('chalTitle').textContent = 'CHALLENGES'; $('chalHunts').textContent = 'HUNTS';
   { const dl = dailyInfo(), dc = CDEF[dl.ci], dS = CPV[dc.id], dcard = document.createElement('div'), dwrap = document.createElement('div'), dcvs = document.createElement('canvas'), db = document.createElement('button'), dh = beaten(dc.id) ? 1 : 0;      // the DAILY card comes first
     dcard.className = 'card cc daily'; dwrap.className = 'cv'; dcvs.width = dS.w; dcvs.height = dS.h; dcvs.style.height = (dS.h * 0.26) + 'vh'; dwrap.appendChild(dcvs); dcard.appendChild(dwrap); chalPv.push({ cvs: dcvs, S: dS });
     dcard.insertAdjacentHTML('beforeend', '<b>DAILY</b><i>' + dc.name + '</i><small class="rb">' + DAILY[dl.ru][0] + '</small>');
@@ -907,10 +914,10 @@ let skTab = 'g';
 const SK_TABS = [['g', 'skTabG', SK_GOJO], ['y', 'skTabY', SK_YUJI], ['v', 'skTabV', SK_VERITY], ['k', 'skTabK', SK_CAT], ['c', 'skTabC', SK_CHAR]], SK_OF = { y: 'yuji', v: 'verity', k: 'cat' };      // (the moves of a fighter need the fighter first)
 // ---------------------------------------------------------------- v1.25 THE SKILL TREE: the SKILLS page draws every fighter as a tree. The root is the fighter (Gojo is free, the others are bought like before), every skill is a node, and a line joins a node to the skills it needs: buy a node and the nodes after it open. A tap on a node shows it on the right, UNLOCK buys it. A skill with nothing in front of it hangs on the root.
 const SK_LAY = {      // where every node sits, [column, row] (the root is column 0): a line runs from the right edge of a skill a node needs to the left edge of the node, so the cells in between have to be empty
-  g: { _root: [0, 2.5], crouch: [1, 0], cpunch: [2, 0], blue: [1, 1], mblue: [2, 1], dash: [1, 2], tele: [2, 2], purple: [3, 2.5], block: [1, 3], ce: [1, 4], red: [2, 4], fatal: [1, 5], domain: [2, 5], heavy: [1, 6], cancel: [2, 3] },
-  y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 4.5], y_pierce: [5, 3], y_shrine: [5, 4], y_cleave: [5, 5], y_simple: [5, 6], y_div: [1, 6], y_rush: [2, 6], y_heavy: [1, 4.7], y_cancel: [3, 1.5] },
-  v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5], v_heavy: [1, 4.5], v_cancel: [3, 0.8], v_air: [2, 4.5] },
-  k: { _root: [0, 1], k_crouch: [1, 0], k_fatal: [3, 0], k_dash: [1, 1], k_toon: [2, 1], k_stomp: [3, 1], k_block: [1, 2], k_ult: [3, 2], k_heavy: [1, 3], k_cancel: [2, 0] },
+  g: { _root: [0, 2.5], crouch: [1, 0], cpunch: [2, 0], blue: [1, 1], mblue: [2, 1], dash: [1, 2], tele: [2, 2], purple: [3, 2.5], block: [1, 3], ce: [1, 4], red: [2, 4], fatal: [1, 5], domain: [2, 5], heavy: [1, 6], cancel: [2, 3], sense: [1, 7] },
+  y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 4.5], y_pierce: [5, 3], y_shrine: [5, 4], y_cleave: [5, 5], y_simple: [5, 6], y_div: [1, 6], y_rush: [2, 6], y_heavy: [1, 4.7], y_cancel: [3, 1.5], y_sense: [1, 7] },
+  v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5], v_heavy: [1, 4.5], v_cancel: [3, 0.8], v_air: [2, 4.5], v_sense: [1, 5.6] },
+  k: { _root: [0, 1], k_crouch: [1, 0], k_fatal: [3, 0], k_dash: [1, 1], k_toon: [2, 1], k_stomp: [3, 1], k_block: [1, 2], k_ult: [3, 2], k_heavy: [1, 3], k_cancel: [2, 0], k_sense: [1, 4] },
   c: { _root: [0, 1], yuji: [1, 0], verity: [1, 1], cat: [1, 2] } };
 const SKI = {}; for (const [t, , rows] of SK_TABS) for (const r of rows) SKI[r[0]] = { r, t };
 const SK_GROOT = ['_gojo', 'GOJO', 'THE FIGHTER YOU START WITH. WALKING, JUMPING AND THE M1 COMBO ARE FREE. EVERY OTHER MOVE IS A NODE OF THE TREE: TAP A NODE TO READ IT AND UNLOCK IT, AND THE NODES AFTER IT OPEN', 0, []];
@@ -1144,7 +1151,7 @@ const lanBack = () => { if (lanRole) lanStop(); else show('modes'); };
 // ---------------------------------------------------------------- screens
 function show(s) {
   state = s; if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
-  $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); $('chal').classList.toggle('on', s === 'chal'); $('skills').classList.toggle('on', s === 'skills'); if (s !== 'lan' && s !== 'lansel' && !(s === 'play' && vs && vs.net) && lanTimer) lanStop();
+  $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); $('chal').classList.toggle('on', s === 'chal'); $('skills').classList.toggle('on', s === 'skills'); $('sns').style.display = 'none'; if (s !== 'lan' && s !== 'lansel' && !(s === 'play' && vs && vs.net) && lanTimer) lanStop();
   $('versus').classList.toggle('on', s === 'versus');
   $('title').classList.toggle('on', s === 'title');
   $('select').classList.toggle('on', s === 'select');
@@ -1478,6 +1485,7 @@ function parryHit(now) {      // PARRY: the blow is turned aside (no damage, no 
   else if (d.mode === 'fighter' && !d.cact && !d.vact && !d.net) { d.stunUntil = Math.max(d.stunUntil, now + 800); d.ai = 'rest'; d.aiAt = now; d.restFor = 800; d.chain = 0; d.hitDone = true; say('STUN', d.x, '#59b8ff', 8, now + 60); }
 }
 function hitDummy(k, now) {                   // your blow on the impact frame: in a RUSH wave the nearest enemy in front of you takes it
+  if (vs && vs.hunt) huntStrike(now);
   if (!(vs && vs.foes && vs.foes.length > 1)) { hitFoe(k, now); return; }
   const t = vs.foes.filter(e => e.ko < 0 && !e.cap && e.x - wx >= -3 && now - e.born >= 600).sort((a, b) => a.x - b.x)[0];
   if (t) foeSwap(t, () => hitFoe(k, now));
@@ -1725,7 +1733,7 @@ function koDummy(now) {                       // the enemy goes down (every way 
   dummy.air = null; dummy.airH = 0;
   if (vs && vs.story && vs.foe === 'verity' && !vs.endGo) { if (!vs.end) storyEndStart(pnow()); return; }      // the story fight does not end with a fall: it ends with the Reversal Red
   if (vs && vs.story && vs.foe === 'cat' && !vs.endGo) { if (!vs.end) catEndStart(pnow()); return; }      // ...and the one with the Cat ends with a cutscene (see keFrame)
-  if (vs && !(vs.rush && foesOf().some(f => f !== dummy && f.ko < 0))) endRound('player', 'ko', now);      // (a RUSH wave goes on while the other one still stands)
+  if (vs && vs.hunt) huntFoeKO(now); else if (vs && !(vs.rush && foesOf().some(f => f !== dummy && f.ko < 0))) endRound('player', 'ko', now);      // (a RUSH wave goes on while the other one still stands)
   if (vs && vs.rush && vs.ph === 'fight') hitStop(90);
   dummy.ko = now; dummy.koAt = Math.max(now, holdUntil);        // he starts to topple when the hit-stop is over, so the fall is seen
   dummy.vx += 70; shakeUntil = now + 260; shakeAmp = 4; kos++; if (!vs) say('K.O.', dummy.x, '#ffd34d', 16, now + 120); snd('ko');      // (a match has its own big K.O. banner)
@@ -2199,10 +2207,11 @@ function vsTick(now, dt) {
   if (vs.ph === 'intro' && a >= INTRO_MS) { vs.ph = 'fight'; vs.t0 = now; }
   else if (vs.ph === 'fight') {
     if (!domLock()) vs.tl -= dt * 1000 / paceNow();      // (the round timer counts real seconds, whatever the pace)
+    if (vs.hunt) huntTick(now, dt);
     if (atkAt < 0 && vs.prevAtk >= 0 && dummy && dummy.hitAt < vs.prevAtk) vs.whiffAt = now;      // Gojo's swing ended without hitting: he is open for a moment
     vs.prevAtk = atkAt;
-    if (vs.tl <= 0) { if (vs.net) netTimeUp(now); else endRound(!vs.rush && vs.hp / PHP > (dummy ? dummy.hp / dummy.max : 0) ? 'player' : 'enemy', 'time', now); }
-  } else if (vs.ph === 'ko' && a >= KO_MS) { if (vs.story || (vs.rush ? vs.ew >= 1 || vs.pw >= vs.run.waves.length : vs.pw >= 2 || vs.ew >= 2)) finishMatch(now); else { vs.round++; beginRound(now); return; } }      // the round is over: whoever got the point, the next round starts fresh (full health, new positions)
+    if (vs.tl <= 0) { if (vs.net) netTimeUp(now); else endRound(!vs.rush && !vs.hunt && vs.hp / PHP > (dummy ? dummy.hp / dummy.max : 0) ? 'player' : 'enemy', 'time', now); }
+  } else if (vs.ph === 'ko' && a >= KO_MS) { if (vs.story || vs.hunt || (vs.rush ? vs.ew >= 1 || vs.pw >= vs.run.waves.length : vs.pw >= 2 || vs.ew >= 2)) finishMatch(now); else { vs.round++; beginRound(now); return; } }      // the round is over: whoever got the point, the next round starts fresh (full health, new positions)
   if (now - vs.hitAt > 350) vs.sh += (vs.hp - vs.sh) * Math.min(1, dt * 4);
   if (vs.ph !== 'fight') { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = false; }      // no control before FIGHT! and after the K.O.
   if (now < pStun || now < (vs.catHold || 0) || now < (vs.cStun || 0)) { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; stickDown = false; }      // ...and none while he is stunned by the JUMPSCARE, held in the Cat's glove or dizzy (the Cat after 5 s flat)
@@ -2217,6 +2226,7 @@ function endRound(who, why, now) {
 }
 function finishMatch(now) {
   if (vs.net) { netOver(now); return; }
+  if (vs.hunt) { huntOver(now); return; }
   if (vs.cv) { curseOver(now); return; }
   vs.ph = 'over'; $('vsAgain').textContent = 'REMATCH'; $('vsAgain').classList.toggle('hot', !(vs.story ? vs.pw >= 1 : vs.pw >= 2)); if (vs.story && vs.foe === 'verity' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s1', 200); storyDone(); story.toOutro = true; return; }      // (beating Verity: the report to the higher-ups follows, started by the main loop)
   const win = vs.story ? vs.pw >= 1 : vs.pw >= 2, pf = vs.hp / PHP, stars = win ? (pf >= 0.7 ? 3 : pf >= 0.35 ? 2 : 1) : 0, sv = vsLoad(), gi = vs.gi;
@@ -2315,14 +2325,15 @@ function drawVs0(now, ux, uy, VW) {         // health bars, names, the grade, th
   const bar = (x, y, f, g, right) => { ctx.fillStyle = '#000'; ctx.fillRect(x - 1, y - 1, W + 2, 8); ctx.fillStyle = '#3a1a2a'; ctx.fillRect(x, y, W, 6); const w1 = Math.round(W * g), w2 = Math.round(W * f); ctx.fillStyle = '#ffd27a'; ctx.fillRect(right ? x + W - w1 : x, y, w1, 6); ctx.fillStyle = f > 0.3 ? '#52e08a' : '#ff4a4a'; ctx.fillRect(right ? x + W - w2 : x, y, w2, 6); };
   ctx.save(); ctx.translate(ux, uy);
   bar(6, 20, pf, ps, false); bar(VW - 6 - W, 20, ef, es, true);
-  const cw = Math.round(W * Math.max(0, Math.min(100, ce)) / 100), bad = now - ceFlash < 500, cc = CEC[vs.me] || CEC.gojo, nx = 6 + (NAMES[vs.me].length + (vs.meInv ? 7 : 0)) * 8 + 8, foeName = vs.cv ? vs.cv.name + (vs.rush && FO.filter(f => f.ko < 0).length > 1 ? ' +1' : '') : NAMES[vs.foe] + (vs.inv ? ' (INV.)' : '');      // the cursed energy bar right under the health bar (cyan for Gojo, yellow for Verity; it flashes red when a move is refused)
+  const cw = Math.round(W * Math.max(0, Math.min(100, ce)) / 100), bad = now - ceFlash < 500, cc = CEC[vs.me] || CEC.gojo, nx = 6 + (NAMES[vs.me].length + (vs.meInv ? 7 : 0)) * 8 + 8, foeName = vs.hunt ? (vs.cv ? vs.cv.name + (FO.filter(f => f.ko < 0).length > 1 ? ' +1' : '') : 'HUNT') : vs.cv ? vs.cv.name + (vs.rush && FO.filter(f => f.ko < 0).length > 1 ? ' +1' : '') : NAMES[vs.foe] + (vs.inv ? ' (INV.)' : '');      // the cursed energy bar right under the health bar (cyan for Gojo, yellow for Verity; it flashes red when a move is refused)
   ctx.fillStyle = '#000'; ctx.fillRect(5, 28, W + 2, 6); ctx.fillStyle = cc[0]; ctx.fillRect(6, 29, W, 4); ctx.fillStyle = bad ? '#ff4a4a' : cc[1]; ctx.fillRect(6, 29, cw, 4); ctx.fillStyle = bad ? '#ffb0b0' : cc[2]; ctx.fillRect(6, 29, cw, 1);
   if (!vs.story && !vs.net) {      // (v1.32) FLOW: a thin purple bar under your energy (gold and flashing while FLOW is on); STAGGER: an orange bar under his health (white and gold while he is OPEN)
     const fw = Math.round(W * Math.max(0, Math.min(100, flow)) / 100); ctx.fillStyle = '#000'; ctx.fillRect(5, 34, W + 2, 4); ctx.fillStyle = '#241033'; ctx.fillRect(6, 35, W, 2); ctx.fillStyle = flowOn ? (((now / 90) | 0) % 2 ? '#fff3b0' : '#ffd34d') : '#c77dff'; ctx.fillRect(6, 35, fw, 2);
     const d0 = dummy; if (d0 && d0.ko < 0) { const open = now < (d0.openUntil || 0), sw = Math.round(W * (open ? 1 : Math.max(0, Math.min(1, (d0.stg || 0) / STG_MAX)))); ctx.fillStyle = '#000'; ctx.fillRect(VW - 7 - W, 28, W + 2, 6); ctx.fillStyle = '#2a2208'; ctx.fillRect(VW - 6 - W, 29, W, 4); ctx.fillStyle = open ? (((now / 90) | 0) % 2 ? '#ffffff' : '#ffd34d') : '#ffb84a'; ctx.fillRect(VW - 6 - sw, 29, sw, 4); }
   }
-  pxt(NAMES[vs.me] + (vs.meInv ? ' (INV.)' : ''), 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', nx, 45, bad ? '#ff6a5a' : cc[3], 8); let lx = nx + 62; if (vs.bleed) { pxt('BLEED', lx, 45, '#ff4a4a', 8); lx += 48; } if (vs.fear) pxt('FEAR', lx, 45, '#c77dff', 8); pxt(vs.story ? (vs.foe === 'cat' ? 'CARTOON CAT' : 'VERITY') : foeName, VW - 6, 45, '#ffffff', 8, 'right'); let rx2 = VW - 6; if (dummy && dummy.bleed) { pxt('BLEED', rx2, 37, '#ff4a4a', 8, 'right'); rx2 -= 48; } if (dummy && dummy.fear) pxt('FEAR', rx2, 37, '#c77dff', 8, 'right'); pxt(vs.story ? 'SPECIAL GRADE' : vs.net ? 'WI-FI' : vs.cv ? (vs.rush ? 'WAVE ' + Math.min(vs.round, vs.run.waves.length) + '/' + vs.run.waves.length : (vs.hard ? 'HARD ' : '') + vs.cv.grade) : GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
+  pxt(NAMES[vs.me] + (vs.meInv ? ' (INV.)' : ''), 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', nx, 45, bad ? '#ff6a5a' : cc[3], 8); let lx = nx + 62; if (vs.bleed) { pxt('BLEED', lx, 45, '#ff4a4a', 8); lx += 48; } if (vs.fear) pxt('FEAR', lx, 45, '#c77dff', 8); pxt(vs.story ? (vs.foe === 'cat' ? 'CARTOON CAT' : 'VERITY') : foeName, VW - 6, 45, '#ffffff', 8, 'right'); let rx2 = VW - 6; if (dummy && dummy.bleed) { pxt('BLEED', rx2, 37, '#ff4a4a', 8, 'right'); rx2 -= 48; } if (dummy && dummy.fear) pxt('FEAR', rx2, 37, '#c77dff', 8, 'right'); pxt(vs.story ? 'SPECIAL GRADE' : vs.net ? 'WI-FI' : vs.hunt ? HUNT_SIZE[vs.hunt.h.s] + ' HUNT' : vs.cv ? (vs.rush ? 'WAVE ' + Math.min(vs.round, vs.run.waves.length) + '/' + vs.run.waves.length : (vs.hard ? 'HARD ' : '') + vs.cv.grade) : GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
   if (!vs.story && !vs.practice) pxt(String(Math.max(0, Math.ceil(vs.tl / 1000))), VW / 2, 18, vs.tl < 10000 ? '#ff6a5a' : '#ffffff', 16, 'center');
+  if (vs.hunt && !vs.hunt.over) huntHud(now, VW);
   const kob = vs.ph === 'ko';
   for (let i = 0; i < (vs.story || vs.rush || vs.practice ? 0 : 2); i++) {               // the round points (a pip lights up for every round won); the point that was just won blinks
     const bl = c => kob && vs.who === c && i === (c === 'player' ? vs.pw : vs.ew) - 1 && ((now / 100) | 0) % 2 === 0;
@@ -2333,7 +2344,7 @@ function drawVs0(now, ux, uy, VW) {         // health bars, names, the grade, th
   if (vs.rush) for (let i = 0; i < vs.run.waves.length; i++) { const x = Math.round(VW / 2 - vs.run.waves.length * 4 + i * 8), done = i < vs.pw; ctx.fillStyle = '#000'; ctx.fillRect(x - 1, 21, 8, 8); ctx.fillStyle = done ? '#ffd34d' : i === vs.round - 1 && vs.ph !== 'ko' ? '#7a6aa8' : '#3a3050'; ctx.fillRect(x, 22, 6, 6); }      // (RUSH: a pip for every wave, lit when it is cleared)
   if (kob && !vs.story && !vs.rush) { const me = vs.who === 'player'; pxt(me ? 'YOU GET THE POINT' : 'ENEMY GETS THE POINT', VW / 2, gy + 20, me ? '#7dff9a' : '#ff8a7a', 8, 'center'); }      // who got the point (the round restarts in a moment); it stays between the touch controls
   ctx.restore();
-  const bt = vs.ph === 'intro' ? (vs.story ? ['FIGHT!', '#ff4a3a', a] : a < INTRO_ROUND ? [(vs.rush ? 'WAVE ' : 'ROUND ') + vs.round, '#ffe9a0', a] : ['FIGHT!', '#ff4a3a', a - INTRO_ROUND]) : kob ? (vs.why === 'fatal' ? ['FATALITY', '#ff3a3a', a] : vs.why === 'time' ? ['TIME!', '#9fd8ff', a] : vs.rush && vs.who === 'player' ? [vs.pw >= vs.run.waves.length ? vs.run.name + ' CLEAR' : 'WAVE CLEAR', '#7dff9a', a] : ['K.O.', '#ffe9a0', a]) : null;
+  const bt = vs.ph === 'intro' ? (vs.story ? ['FIGHT!', '#ff4a3a', a] : a < INTRO_ROUND ? [vs.hunt ? 'HUNT ' + (vs.hunt.i + 1) : (vs.rush ? 'WAVE ' : 'ROUND ') + vs.round, '#ffe9a0', a] : [vs.hunt ? 'SEARCH!' : 'FIGHT!', '#ff4a3a', a - INTRO_ROUND]) : kob ? (vs.why === 'fatal' ? ['FATALITY', '#ff3a3a', a] : vs.why === 'time' ? ['TIME!', '#9fd8ff', a] : vs.hunt && vs.why === 'hunt' ? ['HUNT CLEAR', '#7dff9a', a] : vs.rush && vs.who === 'player' ? [vs.pw >= vs.run.waves.length ? vs.run.name + ' CLEAR' : 'WAVE CLEAR', '#7dff9a', a] : ['K.O.', '#ffe9a0', a]) : null;
   if (bt) { const kk = bt[2] / 1000, j = kk < 0.4 ? Math.round((Math.random() - 0.5) * 2) : 0; pxt(bt[0], VW / 2 + j, gy - 26 + j, bt[1], kk < 0.06 ? 48 : kk < 0.12 ? 32 : 24, 'center'); }      // the big banners (ROUND n, FIGHT!, K.O., TIME!, FATALITY) slam in huge and drop to 24 px in two steps, then shake a little, like the FATALITY title
 }
 window.__tu = () => vp ? vp.tuNow : -1;
@@ -4713,7 +4724,7 @@ function counterTick(now) {      // after a PARRY: the slow motion runs, then (o
   if (atkReq || now >= ctr.until) { atkReq = false; ctr = null; blkAt = blkEnd = -1; stance = 'stand'; if (strikeBack(now)) { ctrBoost = now; say('FREE COUNTER!', wx, '#ffd34d', 8, now); } }      // (a guard that is still held goes up again after the blow)
 }
 const aggr = now => {      // PRESSURE: 1 while you hurt the enemy, then (after 4 real seconds without a hit on him) down to 0.5 at 12 seconds: his rests between two attacks are that much shorter
-  if (!vs || vs.ph !== 'fight' || vs.net || vs.story || vs.practice) return 1; let last = vs.t0; for (const e of foesOf()) if (e.hitAt > last) last = e.hitAt;
+  if (!vs || vs.ph !== 'fight' || vs.net || vs.story || vs.practice) return 1; let last = vs.t0; for (const e of foesOf()) { if (e.hitAt > last) last = e.hitAt; if (vs.hunt && e.born > last) last = e.born; }
   return 1 - 0.5 * Math.min(1, Math.max(0, ((now - last) / paceNow() - 4000) / 8000));
 };
 function speedBonus() {      // RUSH and ROULETTE: a wave cleared faster than its par time (real seconds) pays up to half of the wave's pay (the ROULETTE: a fixed sum) extra, less and less until the par time is over
@@ -4831,6 +4842,134 @@ function acTick(now) {      // every frame, before the controls are gated (calle
   }
   if (ac && !airUp(d)) ac = null;      // (he has landed: the chance is over)
 }
+// ---------------------------------------------------------------- v1.35 HUNTS: ten searches on a long scrolling street (CHALLENGES > HUNTS). Walk along it and look for things: crates (break them: hit them), props (inspect them: hit them), and spots with nothing to see (hit the empty air where something glimmers, or use SENSE, a skill every fighter can buy: it shows what is hidden near you for 3 seconds). What you find: TALISMANS (items), CLUES (they lead to the curse) or the CURSE itself (disguised as a prop, invisible, one of several fakes) and TRAPS (a curse jumps out); and AMBUSHES, curses that step in while you search. Goals: i = every talisman, b = find the hidden curse and beat it, k = every clue, then the curse comes out and you beat it, m = every talisman and every clue, then the curse. A time limit; a rank S / A / B / C from the time that is left, money for the rank; the next hunt opens when you clear one. Time out or a K.O. fails the hunt, but you keep a share of the money for what you had found.
+const HUNT_SIZE = { S: 'SMALL', M: 'MEDIUM', B: 'BIG' }, HUNT_RANK = 'CBAS', HUNT_GOAL = { i: 'TALISMANS', b: 'HIDDEN CURSE', k: 'CLUES', m: 'TALISMANS + CLUES' };
+const CLUE_TXT = ['IT FEARS THE LIGHT', 'CLAW MARKS ON THE WALL', 'A DOLL WITH ONE EYE', 'THE LAMPS ARE BENT', 'IT NEVER LEAVES THE STREET', 'WHISPERS COME FROM BELOW', 'A TRAIL OF SALT', 'FRESH CURSED ENERGY HERE'];
+let huntMe = 'gojo', huntView = false, senseReq = false;
+const OB = (k, p, w, fx) => ({ k, p, w, fx });      // k: c crate, p prop, g ghost (nothing to see); p: its look; w: what is in it (i talisman, k clue, b the curse, t trap, e nothing); fx: where, 0 to 1 along the street
+const HUNTS = [
+  { id: 'h1', s: 'S', name: 'LOST TALISMANS', len: 700, tl: 100, goal: 'i', d: 'THREE TALISMANS ARE HIDDEN IN THE STREET. BREAK THE CRATES, INSPECT THE BIN', o: [OB('c', 'crate', 'i', .22), OB('c', 'crate', 'e', .4), OB('p', 'bin', 'i', .56), OB('c', 'crate', 'i', .8)], a: [], pay: [100, 150, 200, 300] },
+  { id: 'h2', s: 'S', name: 'THE STATUE', len: 760, tl: 100, goal: 'b', boss: ['doll'], hm: 1.2, d: 'A CURSE IS DISGUISED AS ONE OF THE PROPS. FIND IT AND BEAT IT', o: [OB('p', 'lamp', 'e', .22), OB('p', 'vend', 'e', .48), OB('p', 'statue', 'b', .78)], a: [], pay: [120, 170, 230, 300] },
+  { id: 'h3', s: 'S', name: 'SMASH AND GRAB', len: 800, tl: 110, goal: 'i', d: 'FOUR TALISMANS IN SIX CRATES. ONE CRATE IS A TRAP', o: [OB('c', 'crate', 'i', .14), OB('c', 'crate', 't', .3), OB('c', 'crate', 'i', .42), OB('c', 'crate', 'e', .56), OB('c', 'crate', 'i', .68), OB('c', 'crate', 'i', .86)], a: [], pay: [150, 200, 250, 300] },
+  { id: 'h4', s: 'S', name: 'WHO IS HIDING?', len: 820, tl: 110, goal: 'b', boss: ['stalker'], hm: 1.2, d: 'THREE SUSPICIOUS PROPS, ONE HIDES THE CURSE. USE YOUR SENSE', o: [OB('p', 'vend', 'e', .3), OB('p', 'bin', 'b', .55), OB('p', 'statue', 'e', .8)], a: [], pay: [150, 200, 250, 300] },
+  { id: 'h5', s: 'S', name: 'FIRST CLUES', len: 900, tl: 120, goal: 'k', boss: ['hound'], hm: 1.2, d: 'TWO CLUES LEAD TO A CURSE. LOOK WHERE NOTHING SEEMS TO BE', o: [OB('g', '', 'k', .3), OB('g', '', 'k', .62), OB('c', 'crate', 'e', .8)], a: [], pay: [150, 210, 260, 300] },
+  { id: 'h6', s: 'M', name: 'NIGHT SWEEP', len: 1600, tl: 220, goal: 'i', d: 'SIX TALISMANS ALONG A LONG STREET. CURSES WILL STEP IN', o: [OB('c', 'crate', 'i', .1), OB('p', 'lamp', 'i', .22), OB('g', '', 'i', .34), OB('c', 'crate', 'e', .46), OB('p', 'vend', 'i', .58), OB('c', 'crate', 'i', .7), OB('g', '', 'i', .82), OB('c', 'crate', 't', .92)], a: [[.38, ['grub', 'hound']], [.74, ['wisp', 'stalker']]], pay: [400, 500, 600, 700] },
+  { id: 'h7', s: 'M', name: 'THE INVISIBLE ONE', len: 1700, tl: 230, goal: 'b', boss: ['wraith'], hm: 1.5, d: 'A CURSE YOU CANNOT SEE. ONLY THE SENSE SHOWS WHERE IT STANDS', o: [OB('g', '', 'e', .25), OB('g', '', 'e', .45), OB('c', 'crate', 't', .6), OB('g', '', 'b', .8)], a: [[.35, ['stalker']], [.62, ['imp', 'grub']]], pay: [450, 550, 650, 700] },
+  { id: 'h8', s: 'M', name: 'TRAIL OF CLUES', len: 1800, tl: 240, goal: 'k', boss: ['mantis'], hm: 1.5, d: 'FOUR CLUES, THEN THE CURSE COMES OUT. KEEP MOVING', o: [OB('p', 'sign', 'k', .15), OB('g', '', 'k', .35), OB('c', 'crate', 'k', .55), OB('p', 'statue', 'k', .75), OB('c', 'crate', 'e', .9)], a: [[.3, ['hound']], [.52, ['wisp', 'grub']], [.8, ['stalker']]], pay: [500, 580, 650, 700] },
+  { id: 'h9', s: 'B', name: 'CURSED DISTRICT', len: 3200, tl: 420, goal: 'm', boss: ['ogre'], hm: 1.9, d: 'SIX TALISMANS AND THREE CLUES ACROSS A WHOLE DISTRICT, THEN THE CURSE', o: [OB('c', 'crate', 'i', .06), OB('p', 'vend', 'i', .15), OB('g', '', 'k', .22), OB('c', 'crate', 't', .3), OB('p', 'lamp', 'i', .38), OB('g', '', 'i', .46), OB('p', 'sign', 'k', .54), OB('c', 'crate', 'i', .62), OB('g', '', 'e', .7), OB('c', 'crate', 'i', .76), OB('p', 'statue', 'k', .86), OB('c', 'crate', 'e', .94)], a: [[.2, ['grub', 'hound']], [.42, ['wisp', 'stalker']], [.66, ['mantis']], [.88, ['imp', 'hound']]], pay: [800, 1000, 1200, 1400] },
+  { id: 'h10', s: 'B', name: 'THE LAST SEARCH', len: 3800, tl: 480, goal: 'm', boss: ['crab', 'imp'], hm: 2, d: 'FIVE TALISMANS, FOUR CLUES, TRAPS AND AMBUSHES. THEN THE LAST CURSES', o: [OB('g', '', 'i', .05), OB('c', 'crate', 'k', .12), OB('p', 'statue', 't', .2), OB('c', 'crate', 'i', .28), OB('g', '', 'k', .35), OB('p', 'vend', 'i', .43), OB('g', '', 't', .5), OB('p', 'sign', 'k', .58), OB('c', 'crate', 'i', .66), OB('p', 'lamp', 'e', .72), OB('g', '', 'k', .8), OB('c', 'crate', 'i', .9)], a: [[.16, ['hound', 'wisp']], [.38, ['mantis']], [.55, ['stalker', 'imp']], [.74, ['ogre']], [.92, ['wraith', 'hound']]], pay: [900, 1100, 1350, 1500] }];
+const huntOpen = i => i === 0 || !!PROG.hunt[HUNTS[i - 1].id];
+const huntNeed = h => { const n = { i: 0, k: 0, b: h.goal !== 'i' }; for (const o of h.o) if (o.w === 'i') n.i++; else if (o.w === 'k') n.k++; return n; };
+function huntMake(h, i) {
+  return { h, i, objs: h.o.map((o, j) => ({ k: o.k, p: o.p, w: o.w, x: Math.round(o.fx * h.len), hp: o.k === 'c' ? 2 : 1, found: false, near: 0, sw: -1, ci: j })), amb: h.a.map(a => ({ x: Math.round(a[0] * h.len), ids: a[1], hm: 0.9 + 0.25 * h.s.length, done: false })), need: huntNeed(h), items: 0, clues: 0, boss: 'no', sOn: 0, sCd: 0, vis: new Array(Math.ceil(h.len / 20) + 1).fill(0), msg: '', msgAt: 0, over: false, won: false };
+}
+function startHunt(i) {
+  const h = HUNTS[i]; audio();
+  vs = { story: false, gi: 2, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: ROUND_MS, hp: PHP, sh: PHP, hist: [], res: null, retry: 0, me: huntMe, foe: 'curse', cv: null, ci: -1, hard: false, dmgMul: 1, inv: false, bestCmb: 0, foes: [], hunt: null };
+  beginRound(pnow()); vs.hunt = huntMake(h, i); vs.tl = h.tl * 1000; dummy = null; vs.foes = []; vs.cv = null; cProj = []; wx = 0;
+}
+function huntSpawn(ids, hm, x0, boss, now) {      // curses step in (an ambush, a trap, the hidden curse, the last curses); the ones still standing stay
+  const alive = vs.foes.filter(f => f.ko < 0), list = [];
+  ids.forEach((id, j) => { if (CID[id] === undefined) return; const c = CDEF[CID[id]], e = newFoe(now, 'fighter'); initCurse(e, c, x0 + j * (c.hw + 34), hm); e.boss = !!boss && j === 0; list.push(e); });
+  if (!list.length) return; vs.foes = alive.concat(list); dummy = vs.foes.slice().sort((a, b) => a.x - b.x)[0]; vs.cv = dummy.curse;
+}
+function huntWin(now) { const H = vs.hunt; if (H.over) return; H.over = H.won = true; endRound('player', 'hunt', now); }
+function huntBoss(now) { const H = vs.hunt, h = H.h; H.boss = 'out'; huntSpawn(h.boss, h.hm, Math.min(h.len + 30, wx + 120), true, now); say('THE CURSE COMES OUT!', wx, '#ff6a5a', 12, now); shakeUntil = now + 240; shakeAmp = 3; }
+function huntCheck(now) {
+  const H = vs.hunt, h = H.h; if (H.over) return;
+  const ready = H.items >= H.need.i && H.clues >= H.need.k;
+  if (h.goal === 'i') { if (ready) huntWin(now); return; }
+  if (h.goal !== 'b' && ready && H.boss === 'no') huntBoss(now);
+}
+function huntFound(o, now) {
+  const H = vs.hunt, h = H.h; o.found = true; spark(o.x, gy - 8, 10, ['#ffffff', '#ffd34d', '#fff2a0'], false, 1);
+  if (o.w === 'i') { H.items++; say('TALISMAN ' + H.items + '/' + H.need.i, o.x, '#ffd34d', 8, now); snd('finisher'); }
+  else if (o.w === 'k') { H.clues++; H.msg = CLUE_TXT[o.ci % CLUE_TXT.length]; H.msgAt = now; say('CLUE ' + H.clues + '/' + H.need.k, o.x, '#59b8ff', 8, now); snd('block'); }
+  else if (o.w === 'b') { H.boss = 'out'; huntSpawn(h.boss, h.hm, o.x, true, now); say('IT WAS THE CURSE!', o.x, '#ff6a5a', 12, now); shakeUntil = now + 240; shakeAmp = 3; snd('stun'); }
+  else if (o.w === 't') { huntSpawn([h.s === 'S' ? 'grub' : 'hound'], 0.9, o.x, false, now); say('IT IS A TRAP!', o.x, '#ff9a3a', 12, now); shakeUntil = now + 160; shakeAmp = 2; }
+  else say('NOTHING HERE', o.x, '#9a9aa8', 8, now);
+  huntCheck(now);
+}
+function huntStrike(now) {      // your swing reaches the street: the crates break, the props and the spots are inspected
+  const H = vs.hunt; if (!H || H.over || vs.ph !== 'fight') return;
+  for (const o of H.objs) {
+    if (o.found || o.sw === atkAt) continue; const g = o.x - wx; if (g < -10 || g > 36) continue; o.sw = atkAt;
+    if (o.k === 'c' && --o.hp > 0) { say('CRACK', o.x, '#c9a36a', 8, now); spark(o.x, gy - 8, 4, ['#b07a3a', '#8a5a2b'], false, 1); snd('smack', 1); continue; }
+    huntFound(o, now);
+  }
+}
+function huntFoeKO(now) {      // one of the curses is down: the hidden one (the boss) ends the hunt
+  const H = vs.hunt; if (dummy.boss) { H.boss = 'dead'; huntWin(now); }
+}
+function huntTick(now, dt) {      // every frame of a hunt, from vsTick
+  const H = vs.hunt, h = H.h; if (H.over) return;
+  if (wx < 0) { wx = 0; if (wxv < 0) wxv = 0; } else if (wx > h.len) { wx = h.len; if (wxv > 0) wxv = 0; }
+  H.vis[Math.max(0, Math.min(H.vis.length - 1, Math.floor(wx / 20)))] = 1;
+  if (senseReq) { senseReq = false; if (!lacks('sn') && now >= H.sCd && !redWhy(now)) { H.sOn = now + 3000 * paceBase(); H.sCd = now + 8000 * paceBase(); say('SENSE!', wx, '#7af0ff', 8, now); snd('slowin'); flash(now, 140, 0.12); } }
+  for (const o of H.objs) { if (o.found || (o.w !== 'b' && o.w !== 't')) continue; if (Math.abs(o.x - wx) < 20) { o.near += dt; if (o.near > 1.4) huntFound(o, now); } else o.near = 0; }      // (a hidden curse or a trap that you stand next to for a while comes out by itself)
+  for (const a of H.amb) if (!a.done && wx >= a.x - 30) { a.done = true; huntSpawn(a.ids, a.hm, Math.min(h.len + 30, wx + 110), false, now); say('AMBUSH!', wx, '#ff6a5a', 12, now); shakeUntil = now + 200; shakeAmp = 2; }
+  if (vs.foes.length && vs.foes.every(f => f.ko >= 0 && now - (f.koAt || f.ko) > 1500)) { vs.foes = []; dummy = null; vs.cv = null; cProj = []; }      // (the bodies go)
+  const b = $('sns'), has = !lacks('sn'); b.style.display = has ? 'flex' : 'none';
+  if (has) { const cd = Math.max(0, Math.ceil((H.sCd - now) / (1000 * paceBase()))), lbl = cd > 0 ? '' + cd : 'SENSE'; if (b.dataset.l !== lbl) { b.dataset.l = lbl; $('snsl').textContent = lbl; b.classList.toggle('cd', cd > 0); } }
+}
+function huntProp(p, x, y) {      // a prop standing on the floor line y at screen x (all drawn in rectangles)
+  const R = (c, ax, ay, w, h) => { ctx.fillStyle = c; ctx.fillRect(x + ax, y + ay, w, h); };
+  if (p === 'crate') { R('#000', -8, -13, 16, 13); R('#8a5a2b', -7, -12, 14, 11); R('#b07a3a', -7, -12, 14, 2); R('#b07a3a', -7, -4, 14, 2); R('#5a3a1a', -1, -12, 2, 11); }
+  else if (p === 'bin') { R('#000', -6, -15, 12, 15); R('#6d7488', -5, -14, 10, 13); R('#9aa2b8', -6, -16, 12, 3); R('#4a5064', -3, -11, 1, 8); R('#4a5064', 0, -11, 1, 8); R('#4a5064', 3, -11, 1, 8); }
+  else if (p === 'vend') { R('#000', -9, -27, 18, 27); R('#2c63c9', -8, -26, 16, 25); R('#9fd8ff', -6, -23, 9, 13); R('#e8f6ff', -6, -23, 9, 2); R('#ff5a5a', 5, -22, 2, 2); R('#59e08a', 5, -18, 2, 2); R('#ffd34d', 5, -14, 2, 2); R('#0e2a66', -6, -7, 12, 4); }
+  else if (p === 'statue') { R('#000', -8, -27, 16, 27); R('#6a6478', -7, -6, 14, 5); R('#9a93ac', -4, -24, 8, 8); R('#9a93ac', -5, -16, 10, 11); R('#6a6478', -3, -22, 2, 2); R('#6a6478', 1, -22, 2, 2); }
+  else if (p === 'doll') { R('#000', -6, -17, 12, 17); R('#e8d6c0', -4, -16, 8, 7); R('#2a1a22', -3, -14, 2, 2); R('#2a1a22', 1, -14, 2, 2); R('#a02a3a', -5, -9, 10, 8); }
+  else if (p === 'lamp') { R('#000', -2, -29, 4, 29); R('#3a3f55', -1, -28, 2, 28); R('#000', -5, -33, 10, 6); R('#ffd27a', -4, -32, 8, 4); }
+  else if (p === 'sign') { R('#000', -9, -22, 18, 12); R('#c9b27a', -8, -21, 16, 10); R('#6a2a2a', -5, -19, 10, 1); R('#6a2a2a', -5, -16, 7, 1); R('#000', -1, -10, 3, 10); R('#5a4a2a', 0, -10, 1, 10); }
+}
+function huntDraw(now) {      // the street's things, behind the fighters; what SENSE shows gets a coloured outline and a mark
+  const H = vs.hunt, cx = Math.round(VW / 2), sensed = now < H.sOn; ctx.save(); ctx.imageSmoothingEnabled = false;
+  for (const o of H.objs) {
+    const sx = Math.round(cx + o.x - wx); if (sx < -30 || sx > VW + 30) continue;
+    const dx = Math.abs(o.x - wx), mark = sensed && dx < 170, col = o.w === 'i' ? '#ffd34d' : o.w === 'k' ? '#59b8ff' : o.w === 'b' ? '#ff4a4a' : o.w === 't' ? '#ff9a3a' : '#7c8096', sym = o.w === 'i' ? '*' : o.w === 'k' ? 'i' : o.w === 'e' ? 'x' : '!';
+    if (o.found) { if (o.k === 'c') { ctx.fillStyle = '#5a3a1a'; ctx.fillRect(sx - 6, gy - 2, 5, 2); ctx.fillStyle = '#8a5a2b'; ctx.fillRect(sx + 1, gy - 3, 5, 3); } continue; }
+    if (o.k === 'g') { if (mark) { ctx.globalAlpha = 0.55; ctx.fillStyle = col; ctx.fillRect(sx - 5, gy - 22, 10, 22); ctx.globalAlpha = 1; } else if (dx < 30 && ((now / 350) | 0) % 2 === 0) { ctx.fillStyle = '#fff3b0'; ctx.fillRect(sx + 3, gy - 14, 1, 1); ctx.fillRect(sx - 4, gy - 8, 1, 1); } }
+    else { huntProp(o.p, sx, gy); if (mark) { ctx.globalAlpha = 0.8; ctx.fillStyle = col; ctx.fillRect(sx - 11, gy - 1, 22, 1); ctx.fillRect(sx - 11, gy - 32, 22, 1); ctx.fillRect(sx - 11, gy - 32, 1, 32); ctx.fillRect(sx + 10, gy - 32, 1, 32); ctx.globalAlpha = 1; } }
+    if (mark) pxt(sym, sx, gy - 36 - ((now / 160) % 2 | 0), col, 8, 'center');
+  }
+  if (sensed) { const k = 1 - (H.sOn - now) / (3000 * paceBase()), r = 16 + k * 150; ctx.globalAlpha = 0.5 * (1 - k); ctx.strokeStyle = '#7af0ff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, gy - 18, r, 0, 6.3); ctx.stroke(); ctx.globalAlpha = 1; }
+  ctx.restore();
+}
+function huntHud(now, VW) {      // the street map (where you have been, what you found, you) and what is left to do
+  const H = vs.hunt, h = H.h, mw = Math.min(VW - 120, 200), mx = Math.round((VW - mw) / 2), my = 48, f = x => mx + Math.round(Math.max(0, Math.min(1, x / h.len)) * (mw - 1)), sensed = now < H.sOn;
+  ctx.fillStyle = '#000'; ctx.fillRect(mx - 1, my - 1, mw + 2, 7); ctx.fillStyle = '#1a1f33'; ctx.fillRect(mx, my, mw, 5);
+  ctx.fillStyle = '#39456e'; for (let i = 0; i < H.vis.length; i++) if (H.vis[i]) { const a = f(i * 20), b = f((i + 1) * 20); ctx.fillRect(a, my, Math.max(1, b - a), 5); }
+  for (const o of H.objs) { if (o.found) ctx.fillStyle = o.w === 'i' ? '#ffd34d' : o.w === 'k' ? '#59b8ff' : o.w === 'e' ? '#5a6078' : '#ff6a5a'; else if (sensed) ctx.fillStyle = '#7af0ff'; else continue; ctx.fillRect(f(o.x) - 1, my + 1, 3, 3); }
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(f(wx) - 1, my - 1, 3, 7);
+  const n = H.need, parts = []; if (n.i) parts.push('TALISMANS ' + H.items + '/' + n.i); if (n.k) parts.push('CLUES ' + H.clues + '/' + n.k);
+  const txt = H.boss === 'out' ? 'DEFEAT THE CURSE!' : H.boss === 'dead' ? 'THE CURSE IS DOWN' : h.goal === 'b' ? 'FIND THE HIDDEN CURSE' : parts.join('  ');
+  pxt(txt, VW / 2, my + 16, '#ffe9a0', 8, 'center'); if (H.msg && now - H.msgAt < 3200) pxt(H.msg, VW / 2, my + 27, '#59b8ff', 8, 'center');
+}
+function huntOver(now) {      // the hunt is over: the rank and the money (a failed hunt keeps a share for what was found), the next hunt opens
+  const H = vs.hunt, h = H.h, win = H.won, left = Math.max(0, vs.tl) / (h.tl * 1000), found = H.items + H.clues, all = Math.max(1, H.need.i + H.need.k); let rank = '', pay = 0, first = false;
+  if (win) { rank = left >= 0.45 ? 'S' : left >= 0.3 ? 'A' : left >= 0.15 ? 'B' : 'C'; pay = h.pay[HUNT_RANK.indexOf(rank)]; first = !PROG.hunt[h.id]; if (first || HUNT_RANK.indexOf(rank) > HUNT_RANK.indexOf(PROG.hunt[h.id])) PROG.hunt[h.id] = rank; }
+  else pay = Math.round(h.pay[0] * 0.5 * Math.min(1, found / all));
+  if (pay) earn(pay); saveProg(); vs.ph = 'over'; vs.res = { win, pay, rank };
+  $('vsTitle').textContent = win ? 'HUNT CLEAR' : vs.why === 'time' ? 'TIME UP' : 'HUNT FAILED';
+  $('vsInfo').textContent = h.name + '\n' + (H.need.i ? 'TALISMANS ' + H.items + '/' + H.need.i + '  ' : '') + (H.need.k ? 'CLUES ' + H.clues + '/' + H.need.k : '') + (win ? '\nTIME LEFT ' + Math.ceil(vs.tl / 1000) + ' S' : '') + '\n+$' + pay + (win ? '' : '  (A SHARE FOR WHAT YOU FOUND)') + (win && first && H.i < HUNTS.length - 1 ? '\nTHE NEXT HUNT IS OPEN' : '');
+  $('vsStars').innerHTML = win ? '<span style="font-size:7vh;color:' + (rank === 'S' ? '#ffd34d' : rank === 'A' ? '#7dff9a' : rank === 'B' ? '#59b8ff' : '#c9c9d9') + '">RANK ' + rank + '</span>' : '';
+  $('vsAgain').textContent = 'HUNT AGAIN'; $('vsAgain').classList.toggle('hot', !win); $('vsNext').style.display = 'none'; $('vsres').classList.add('on'); snd(win ? 'finisher' : 'ko');
+}
+function buildHunts() {      // CHALLENGES > HUNTS: the fighter and the ten hunts
+  huntView = true; const box = $('chalCards'); box.innerHTML = ''; chalPv = []; setMoneyUI(); $('chalTitle').textContent = 'HUNTS'; $('chalHunts').textContent = 'CURSES';
+  const me = document.createElement('div'); me.className = 'card cc'; me.insertAdjacentHTML('beforeend', '<b>YOUR FIGHTER</b><i>EACH BUYS ITS OWN SENSE</i>');
+  for (const [id, nm, sk] of [['gojo', 'GOJO', 'sense'], ['yuji', 'YUJI', 'y_sense'], ['verity', 'VERITY', 'v_sense'], ['cat', 'CAT', 'k_sense']]) {
+    const has = id === 'gojo' || !!PROG.own[id], b = document.createElement('button'); b.className = 'ct' + (huntMe === id ? ' hot' : ''); b.disabled = !has; b.innerHTML = nm + '<small>' + (!has ? 'NOT OWNED' : PROG.own[sk] ? 'SENSE OK' : 'NO SENSE') + '</small>'; b.addEventListener('click', () => { huntMe = id; buildHunts(); }); me.appendChild(b);
+  }
+  box.appendChild(me);
+  HUNTS.forEach((h, i) => {
+    const open = huntOpen(i), card = document.createElement('div'), b = document.createElement('button'), best = PROG.hunt[h.id];
+    card.className = 'card cc hunt'; card.insertAdjacentHTML('beforeend', '<b>' + (i + 1) + '. ' + (open ? h.name : '???') + '</b><i>' + HUNT_SIZE[h.s] + ' - ' + (open ? HUNT_GOAL[h.goal] : 'LOCKED') + '</i>' + (open ? '<small class="rb">' + h.d + '</small>' : ''));
+    b.className = 'ct'; b.disabled = !open; b.innerHTML = open ? 'START<small>$' + h.pay[0] + '-$' + h.pay[3] + ' - ' + h.tl + ' S</small>' : 'LOCKED<small>CLEAR HUNT ' + i + '</small>'; b.addEventListener('click', () => startHunt(i)); card.appendChild(b);
+    if (open) card.insertAdjacentHTML('beforeend', '<small class="rb">' + (best ? 'BEST RANK ' + best : 'NOT CLEARED') + '</small>');
+    box.appendChild(card);
+  });
+}
 function tick(t) {
   requestAnimationFrame(tick);                // schedule first so one bad frame can't stop the loop
   if (paused) { if (state !== 'play') setPause(false); return; }      // PAUSE: nothing moves and the game's clock stands still
@@ -4909,7 +5048,7 @@ joy.addEventListener('pointermove', e => { if (e.pointerId === joyId) joyMove(e)
 ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => joy.addEventListener(n, e => { if (e.pointerId === joyId) joyRelease(); }));
 joy.addEventListener('contextmenu', e => e.preventDefault());
 
-const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U', KeyJ: 'A', KeyF: 'A', ArrowDown: 'C', KeyS: 'C', KeyC: 'C', KeyL: 'B', KeyK: 'D', ShiftLeft: 'D', ShiftRight: 'D', KeyB: 'G', KeyE: 'E', KeyV: 'V', KeyH: 'H' };
+const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U', KeyJ: 'A', KeyF: 'A', ArrowDown: 'C', KeyS: 'C', KeyC: 'C', KeyL: 'B', KeyK: 'D', ShiftLeft: 'D', ShiftRight: 'D', KeyB: 'G', KeyE: 'E', KeyV: 'V', KeyH: 'H', KeyQ: 'Q' };
 addEventListener('keydown', e => {
   if (e.target.id === 'lanName') { if (e.key === 'Enter') e.target.blur(); return; }      // typing a room name: the game keys stay out of it
   if (paused && !settingsOn()) { if ((e.key === 'Escape' || e.code === 'KeyP') && !e.repeat) setPause(false); return; }      // (paused: only Esc or P do anything)
@@ -4918,7 +5057,7 @@ addEventListener('keydown', e => {
   if (se && SE_KEYS.has(e.code)) { e.preventDefault(); if (!e.repeat) sePress(true); return; }      // (in the red ending the keys mash and hold)
   const k = KEYS[e.code];
   if (k) {
-    if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (k === 'G') blockHeld = true; else if (state === 'play' && !e.repeat) { if (k === 'A') { atkHold = pnow(); if (!atkDefer()) atkReq = true; } else if (k === 'C') crReq = true; else if (k === 'B') lpReq = true; else if (k === 'D') dashReq = true; else if (k === 'E') ceReq = true; else if (k === 'V') domReq = true; else if (k === 'H') pressFat(); else { jumpReq = true; jumpFromStick = false; } }
+    if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (k === 'G') blockHeld = true; else if (state === 'play' && !e.repeat) { if (k === 'A') { atkHold = pnow(); if (!atkDefer()) atkReq = true; } else if (k === 'C') crReq = true; else if (k === 'B') lpReq = true; else if (k === 'D') dashReq = true; else if (k === 'E') ceReq = true; else if (k === 'Q') senseReq = true; else if (k === 'V') domReq = true; else if (k === 'H') pressFat(); else { jumpReq = true; jumpFromStick = false; } }
     if (state === 'play') e.preventDefault();
     return;
   }
@@ -5030,6 +5169,8 @@ $('lanBack').addEventListener('click', lanBack);
 $('chalMode').addEventListener('click', () => { audio(); buildChal(); show('chal'); });
 $('skillsMode').addEventListener('click', () => { audio(); buildSkills(); show('skills'); });
 $('chalSkills').addEventListener('click', () => { buildSkills(); show('skills'); });
+$('chalHunts').addEventListener('click', () => { audio(); if (huntView) buildChal(); else buildHunts(); });
+bindPad('sns', v => { if (v) senseReq = true; });
 $('chalBack').addEventListener('click', () => show('modes'));
 $('skBack').addEventListener('click', () => show('modes'));
 for (const [k, id] of SK_TABS) $(id).addEventListener('click', () => { skTab = k; skSel = null; buildSkills(); });
@@ -5040,8 +5181,8 @@ $('lsBack').addEventListener('click', lanLeave);
 addEventListener('pointerdown', () => { if (state === 'story') storySkip(); });      // a tap skips to the next part of the cutscene
 $('vsGo').addEventListener('click', () => startMatch(vsSel));
 $('vsNext').addEventListener('click', () => { if (vs && vs.cv) { startCurse(vs.ci + 1, 0); return; } const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
-$('vsAgain').addEventListener('click', () => vs && vs.rush ? (vs.run === ROUL ? startRoulette() : startRush()) : vs && vs.cv ? startCurse(vs.ci, vs.hard, vs.daily) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe));
-$('vsMenu').addEventListener('click', () => { if (vs && vs.net) { lanLeave(); return; } if (vs && vs.cv) { show('chal'); buildChal(); return; } if (vs && vs.story) { show('saves'); renderSaves(); } else { buildGrades(); buildFighters(); show('versus'); } });
+$('vsAgain').addEventListener('click', () => vs && vs.hunt ? startHunt(vs.hunt.i) : vs && vs.rush ? (vs.run === ROUL ? startRoulette() : startRush()) : vs && vs.cv ? startCurse(vs.ci, vs.hard, vs.daily) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe));
+$('vsMenu').addEventListener('click', () => { if (vs && vs.net) { lanLeave(); return; } if (vs && vs.hunt) { show('chal'); buildHunts(); return; } if (vs && vs.cv) { show('chal'); buildChal(); return; } if (vs && vs.story) { show('saves'); renderSaves(); } else { buildGrades(); buildFighters(); show('versus'); } });
 $('back').addEventListener('click', () => { leavePlay(); });
 VOLS.forEach(([k, name]) => {
   const row = document.createElement('label');
