@@ -172,14 +172,19 @@ def render(Pz):
     leg3(F, HX + 1, hy, HX + fxf, fyf, af, True); leg3(F, HX - 1, hy, HX + fxn, fyn, an, False)
     al, sy = Pz['torso']; tr = (0.0, hy - 36.0); T = xform(TORSO, TORSO_PIV, al, tr, sy); Np = fpt(HEAD_PIV, TORSO_PIV, al, tr, sy); bt, hdx, hdy = Pz['head']
     Hh = xform(HEAD, HEAD_PIV, al + bt, (Np[0] - HEAD_PIV[0] + hdx, Np[1] - HEAD_PIV[1] + hdy))
-    F[T >= 0] = T[T >= 0]; HEADL = Hh
+    HEADL = Hh
     Sb = fpt(SB, TORSO_PIV, al, tr, sy); Sf = fpt(SF, TORSO_PIV, al, tr, sy); hb = Pz['hb']; gf = Pz['gf']
     Eb, Wb = two_bone(Sb, (Sb[0] + hb[0], Sb[1] + hb[1]), LB1, LB2, lambda e: -e[0]); Ef, Wf = two_bone(Sf, (Sf[0] + gf[0], Sf[1] + gf[1]), LF1, LF2, lambda e: e[1])
     u0 = unit((Wf[0] - Ef[0], Wf[1] - Ef[1])); th = np.radians(Pz.get('wr', 14.0)); u = (u0[0] * np.cos(th) - u0[1] * np.sin(th), u0[0] * np.sin(th) + u0[1] * np.cos(th))      # (the blades lean wr degrees to the right of the forearm, 14 as a rule, more when the arm is up: the hand tips forward)
-    BODY = F.copy(); F = -np.ones((64, 64), int)      # the back arm is in front of the torso but behind the head, the claw arm in front of everything
-    limbs(F, [(Sb, Eb, 5, 4.5, LB1, 'sleeve'), (Eb, Wb, 4.5, 3.5, LB2, 'sleeve'), (Wb, Wb, 3, 3, 1, 'hand')]); BA = F.copy(); F = -np.ones((64, 64), int)
+    LEGL = F; F = -np.ones((64, 64), int)      # the back arm is in front of the torso (behind it when bz is set: in a crouch it hangs down behind him) but behind the head, the claw arm in front of everything
+    bz = Pz.get('bz'); limbs(F, [(Sb, Eb, 5, 4.5, LB1, 'sleeve'), (Eb, Wb, 4.5, 3.5, LB2, 'sleeve')] + ([] if bz else [(Wb, Wb, 3, 3, 1, 'hand')])); BA = F.copy(); F = -np.ones((64, 64), int)
+    if bz: limbs(F, [(Wb, Wb, 3, 3, 1, 'hand')])      # (the hand stays in front of the body: it rests on his thigh)
+    BH = F.copy(); F = -np.ones((64, 64), int)
     limbs(F, [(Sf, Ef, 5, 4.5, LF1, 'sleeve'), (Ef, Wf, 4.5, 3.5, LF2, 'sleeve'), ((Wf[0] - u0[0] * 1.2, Wf[1] - u0[1] * 1.2), (Wf[0] + u0[0] * 0.8, Wf[1] + u0[1] * 0.8), 3, 3, 1, 'glove')]); FA = F.copy()
-    F = BODY; F[BA >= 0] = BA[BA >= 0]; F[HEADL >= 0] = HEADL[HEADL >= 0]; F[FA >= 0] = FA[FA >= 0]
+    F = LEGL
+    if bz: F[BA >= 0] = BA[BA >= 0]; F[T >= 0] = T[T >= 0]; F[BH >= 0] = BH[BH >= 0]
+    else: F[T >= 0] = T[T >= 0]; F[BA >= 0] = BA[BA >= 0]
+    F[HEADL >= 0] = HEADL[HEADL >= 0]; F[FA >= 0] = FA[FA >= 0]
     G = finish(F); blades(G, Wf, u, Pz.get('sway', 0.0), Pz.get('glint')); return G
 REST = dict(hipY=36.0, legs=((-1.5, 59.0, 0), (3.0, 59.0, 0)), torso=(0.0, 1.0), head=(0.0, 0.0, 0.0), hb=(0.0, 13.0), gf=(4.0, -2.0))
 def idle_frames():
@@ -199,27 +204,49 @@ def walk_frames():
 KEYS = [(0, 36.0, 59.0, -1.5, 3.0, 0, 1.0, 1.0, 0.0, 0.0, 13.0, 4.0, -2.0, 14), (3, 43.5, 59.0, -1.0, 4.0, 0, 30.0, 0.97, -14.0, -8.0, 10.0, 8.0, 6.0, 14), (5, 38.5, 59.0, -0.5, 3.0, 20, 9.0, 1.0, -8.0, 3.0, 0.0, 10.5, -4.5, 14), (6, 36.5, 59.0, -0.5, 2.5, 45, -3.0, 1.03, -2.0, 6.0, -6.0, 11.0, -8.0, 22),
         (12, 37.5, 57.0, 1.0, 3.5, 55, 2.0, 1.02, -2.0, 2.0, -13.0, 12.0, -9.0, 30), (19, 39.0, 51.0, 4.5, 7.5, 70, 5.0, 1.0, -4.0, -8.0, -14.0, 11.0, -10.0, 30), (26, 38.0, 54.0, 2.5, 5.0, 60, 6.0, 1.0, 1.0, -9.0, -4.0, 11.0, -5.0, 22), (33, 36.5, 59.5, 0.5, 3.0, 45, 3.0, 1.02, -2.0, -6.0, 6.0, 9.0, 2.0, 14),
         (35, 38.0, 59.0, -0.5, 3.5, 20, 16.0, 0.99, -6.0, 3.0, 8.0, 9.0, 5.0, 14), (37, 43.5, 59.0, -1.0, 4.0, 0, 30.0, 0.97, -14.0, 4.0, 9.0, 9.0, 7.0, 14), (39, 36.6, 59.0, -1.5, 3.0, 0, 3.0, 1.0, -1.0, 0.0, 12.5, 4.2, -1.0, 14)]
-def pose(k):
-    for a, b in zip(KEYS, KEYS[1:]):
+def blend(keys, k):
+    """the pose at picture k between the key poses (each stretch eases in and out): the numbers that follow the picture number"""
+    for a, b in zip(keys, keys[1:]):
         if a[0] <= k <= b[0]:
-            t = (k - a[0]) / float(b[0] - a[0]); t = t * t * (3 - 2 * t); return [a[i] + (b[i] - a[i]) * t for i in range(1, 14)]
-def jump_frames():
+            t = (k - a[0]) / float(b[0] - a[0]); t = t * t * (3 - 2 * t); return [a[i] + (b[i] - a[i]) * t for i in range(1, len(a))]
+def pose(k): return blend(KEYS, k)
+def from_pose(v, k):
+    """the pose for render() from the numbers of a key pose (13 as in the jump keys; a 14th says the back arm is behind the torso)"""
+    hipY, footY, xn, xf, ang, al, sy, bt, hbx, hby, gfx, gfy, wr = v[:13]
+    return dict(wr=wr, hipY=hipY, legs=((xn, footY, ang), (xf, footY, ang)), torso=(al, sy), head=(bt, 0.0, 0.0), hb=(hbx, hby), gf=(gfx, gfy), sway=0.8 * np.sin(2 * np.pi * k / 13.0), bz=len(v) > 13 and v[13] >= 0.5)
+def jump_frames(): return [render(from_pose(pose(k), k)) for k in range(40)]
+# THE CROUCH (v1.44), the stalker's crouch: low and hunched forward, the head down between the shoulders, the claw out in front near the knee, the other hand on his thigh, the feet apart (the near one back). Three animations of 15 pictures each: GOING DOWN (standing up plays them backwards and he holds the last one), FROM THE CROUCH INTO THE JUMP (it ends with the take-off picture of the jump) and FROM THE JUMP INTO THE CROUCH (it starts with the touch-down picture of the jump). Key poses as in the jump, with a 14th number: the back arm behind the torso (1) or in front of it (0).
+CROUCH = (45.5, 59.0, -4.0, 8.0, 0, 36.0, 0.97, -16.0, -1.4, 15.9, 6.9, 9.9, -20, 1)
+CD_KEYS = [(0, 36.0, 59.0, -1.5, 3.0, 0, 0.0, 1.0, 0.0, 0.0, 13.0, 4.0, -2.0, 14, 0), (4, 39.5, 59.0, -2.5, 5.0, 0, 12.0, 0.99, -5.0, 0.0, 14.0, 5.0, 0.0, 12, 0), (7, 43.0, 59.0, -3.5, 7.0, 0, 26.0, 0.98, -11.0, -1.0, 15.5, 6.0, 5.0, 0, 0),
+           (9, 45.0, 59.0, -3.9, 7.8, 0, 33.0, 0.97, -14.5, -1.2, 16.0, 6.5, 8.0, -12, 1), (12, 46.5, 59.0, -4.2, 8.5, 0, 39.0, 0.96, -17.5, -1.6, 16.2, 7.0, 10.5, -22, 1), (14,) + CROUCH]
+CJ_KEYS = [(0,) + CROUCH, (3, 47.0, 59.0, -4.5, 8.0, 0, 41.0, 0.96, -19.0, -4.0, 14.5, 3.0, 11.0, -10, 1), (6, 42.0, 59.0, -2.5, 5.5, 0, 24.0, 0.99, -9.0, 3.0, 6.0, 9.0, 2.0, 10, 0), (9, 40.0, 59.0, -1.0, 4.0, 10, 14.0, 1.0, -6.0, 3.0, 2.0, 10.0, -2.0, 14, 0),
+           (12, 38.5, 59.0, -0.5, 3.0, 20, 9.0, 1.0, -8.0, 3.0, 0.0, 10.5, -4.5, 14, 0), (14, 36.5, 59.0, -0.5, 2.5, 45, -3.0, 1.03, -2.0, 6.0, -6.0, 11.0, -8.0, 22, 0)]
+JC_KEYS = [(0,) + tuple(pose(34)) + (0,), (2, 40.5, 59.0, -1.5, 4.0, 0, 22.0, 0.985, -10.0, 1.0, 8.0, 9.0, 6.0, 14, 0), (4, 45.0, 59.0, -3.0, 6.0, 0, 33.0, 0.97, -15.0, 3.0, 9.0, 8.0, 8.5, 6, 0), (6, 47.2, 59.0, -4.5, 8.5, 0, 41.0, 0.955, -20.0, -2.0, 14.0, 7.5, 11.0, -8, 1),
+           (8, 46.6, 59.0, -4.3, 8.3, 0, 39.0, 0.96, -18.5, -1.8, 15.0, 7.2, 10.6, -14, 1), (10, 46.0, 59.0, -4.2, 8.2, 0, 38.0, 0.965, -17.5, -1.6, 15.6, 6.5, 8.8, -24, 1), (12, 45.7, 59.0, -4.1, 8.1, 0, 36.8, 0.968, -16.5, -1.5, 15.8, 6.8, 9.6, -21, 1), (14,) + CROUCH]
+def jump_sway(k): return 0.8 * np.sin(2 * np.pi * k / 13.0)      # (the wobble of the blades in the jump pictures: the ends of the crouch animations take it over so that they join the jump's pictures exactly)
+def crouch_frames(keys, s0=0.0, s1=0.0):
     FR = []
-    for k in range(40):
-        hipY, footY, xn, xf, ang, al, sy, bt, hbx, hby, gfx, gfy, wr = pose(k); Pz = dict(wr=wr, hipY=hipY, legs=((xn, footY, ang), (xf, footY, ang)), torso=(al, sy), head=(bt, 0.0, 0.0), hb=(hbx, hby), gf=(gfx, gfy), sway=0.8 * np.sin(2 * np.pi * k / 13.0)); FR.append(render(Pz))
+    for k in range(15):
+        u = k / 14.0; Pz = from_pose(blend(keys, k), k); Pz['sway'] = s0 * (1 - u) + s1 * u + 0.6 * np.sin(2 * np.pi * k / 13.0) * np.sin(np.pi * u); FR.append(render(Pz))
     return FR
-def sheet(FR, FW, FJ):
-    A = np.zeros((320, 64 * 15, 4), np.uint8)      # row 0: the idle, row 1: the walk, rows 2-4: the jump (frames 0-14, 15-29, 30-39)
+def sheet(FR, FW, FJ, FC):
+    A = np.zeros((512, 64 * 15, 4), np.uint8)      # row 0: the idle, row 1: the walk, rows 2-4: the jump (frames 0-14, 15-29, 30-39), row 5: going down into the crouch, row 6: from the crouch into the jump, row 7: from the jump into the crouch
     def put(f, r, c):
         for v in range(16): A[r * 64:(r + 1) * 64, c * 64:(c + 1) * 64][f == v] = list(P[v].astype(int)) + [255]
     for i, f in enumerate(FR): put(f, 0, i)
     for i, f in enumerate(FW): put(f, 1, i)
     for i, f in enumerate(FJ): put(f, 2 + i // 15, i % 15)
+    for r, fs in enumerate(FC):
+        for i, f in enumerate(fs): put(f, 5 + r, i)
     Image.fromarray(A).save('freddy_sheet.png'); return A
 if __name__ == '__main__':
-    U, RH, hx, gx, gy = upper(); print('hem', RH, 'hips', round(hx, 1)); FR = idle_frames(); FW = walk_frames(); FJ = jump_frames(); A = sheet(FR, FW, FJ)
-    # contact sheets to look at: the jump (8 x 5), x2
-    cs = np.zeros((64 * 5, 64 * 8, 4), np.uint8); cs[:] = [120, 116, 132, 255]
-    for i in range(40):
-        blk = A[(2 + i // 15) * 64:(3 + i // 15) * 64, (i % 15) * 64:(i % 15 + 1) * 64]; r, c = divmod(i, 8); m = blk[:, :, 3] > 0; cs[r * 64:(r + 1) * 64, c * 64:(c + 1) * 64][m] = blk[m]
-    Image.fromarray(cs).resize((cs.shape[1] * 2, cs.shape[0] * 2), Image.NEAREST).save('freddy_contact.png'); print('sheet', A.shape, 'blade pixels cut off:', CLIP[0], 'farthest ankle', round(REACH[0], 2), 'of', L1 + L2); assert CLIP[0] == 0 and REACH[0] <= L1 + L2 - 0.05
+    U, RH, hx, gx, gy = upper(); print('hem', RH, 'hips', round(hx, 1)); FR = idle_frames(); FW = walk_frames(); FJ = jump_frames(); FC = [crouch_frames(CD_KEYS), crouch_frames(CJ_KEYS, 0.0, jump_sway(6)), crouch_frames(JC_KEYS, jump_sway(34), 0.0)]; A = sheet(FR, FW, FJ, FC)
+    # contact sheets to look at, x2: the jump (8 x 5) and the three crouch animations (15 x 3)
+    def contact(cells, cols, name):
+        rows = (len(cells) + cols - 1) // cols; cs = np.zeros((64 * rows, 64 * cols, 4), np.uint8); cs[:] = [120, 116, 132, 255]
+        for i, blk in enumerate(cells):
+            r, c = divmod(i, cols); m = blk[:, :, 3] > 0; cs[r * 64:(r + 1) * 64, c * 64:(c + 1) * 64][m] = blk[m]
+        Image.fromarray(cs).resize((cs.shape[1] * 2, cs.shape[0] * 2), Image.NEAREST).save(name)
+    contact([A[(2 + i // 15) * 64:(3 + i // 15) * 64, (i % 15) * 64:(i % 15 + 1) * 64] for i in range(40)], 8, 'freddy_contact.png')
+    contact([A[(5 + r) * 64:(6 + r) * 64, i * 64:(i + 1) * 64] for r in range(3) for i in range(15)], 15, 'freddy_contact2.png')
+    print('sheet', A.shape, 'blade pixels cut off:', CLIP[0], 'farthest ankle', round(REACH[0], 2), 'of', L1 + L2); assert CLIP[0] == 0 and REACH[0] <= L1 + L2 - 0.05
