@@ -3,9 +3,11 @@ Run from tools/:  python3 freddy_art.py   (needs numpy, scipy, pillow). v1.42: t
 import numpy as np
 from PIL import Image, ImageEnhance
 from scipy import ndimage as ndi
-PAL = ['#120e18', '#35221a', '#5a3a28', '#7a4234', '#b87c58', '#dca878', '#6a1220', '#b01c2c', '#de4452', '#1c2a22', '#34503a', '#8a6a3c', '#c4c8d8', '#ffffff', '#1a1620', '#34303e']
+PAL = ['#120e18', '#35221a', '#5a3a28', '#7a4234', '#b87c58', '#dca878', '#6a1220', '#b01c2c', '#de4452', '#1c2a22', '#34503a', '#8a6a3c', '#c4c8d8', '#ffffff', '#2a2634', '#4a4660']
 OL, HAT, BAND, SK0, SK1, SK2, R0, R1, R2, G0, G1, GLV, BLD, GLT, PNT, PN2 = range(16)
 P = np.array([[int(h[i:i + 2], 16) for i in (1, 3, 5)] for h in PAL], float)
+PHOTO = PAL[:14] + ['#1a1620', '#34303e']      # the picture made from the photograph is matched to the palette it was drawn for (the trousers were darker before v1.43); its few dark details are then moved to the nearest colours of the new palette
+PP = np.array([[int(h[i:i + 2], 16) for i in (1, 3, 5)] for h in PHOTO], float)
 def cutout():
     im = np.asarray(Image.open('freddy_ref.jpg').convert('RGB')).astype(int); H, W = im.shape[:2]; yy, xx = np.mgrid[0:H, 0:W]
     model = np.where(((xx // 15) + ((yy + 2) // 15)) % 2 == 0, 255, 204)
@@ -33,7 +35,7 @@ def base():
                 X = ox + xx
                 if 0 <= X < CW and rm[yy, xx] > 0.5: canvas[ty + yy, X] = ri[yy, xx] / max(rm[yy, xx], 0.01); cop[ty + yy, X] = True
         MAP.append((a, b, ty, th, sx, cx, L, ox)); ty += th
-    d = (((canvas[:, :, None, :] - P[None, None, :, :]) ** 2) * np.array([0.3, 0.59, 0.11])).sum(axis=3); idx = d.argmin(axis=2); idx[~cop] = -1
+    d = (((canvas[:, :, None, :] - PP[None, None, :, :]) ** 2) * np.array([0.3, 0.59, 0.11])).sum(axis=3); idx = d.argmin(axis=2); idx[~cop] = -1
     idx[(idx == BLD) | (idx == GLT)] = SK2      # (no stray silver from the photo: the blades are drawn below)
     return idx, MAP
 def details(idx):
@@ -72,42 +74,40 @@ def upper():
     G = details(idx); sw = np.isin(G, (R0, R1, R2, G0, G1)); RH = int(np.where(sw.any(axis=1))[0].max()) + 1      # the sweater's hem: the legs start below it
     pr = np.where(np.isin(G[RH:RH + 5], (PNT, PN2)))[1]; hx = 63 - (float(pr.mean()) if len(pr) else 32.0)
     U = G.copy(); U[RH:] = -1; U = U[:, ::-1].copy()      # he faces right
+    U[U == PNT] = OL; U[U == PN2] = PNT      # (the dark details of the photo: the old trouser colours were within 10 levels of these two)
     CACHE['U0'] = U.copy()      # (the puppet cuts the head and the torso out of this picture; the arms and the glove are drawn on their own)
     return U, RH, hx, gx, gy
-L1, L2 = 12.2, 12.3      # thigh and shin (px)
+L1, L2 = 11.4, 11.6      # thigh and shin (px): 23 in all, so that a standing leg is only a little bent (v1.43; it was 24.5, a leg with a deep zigzag)
+REACH = [0.0]      # the farthest an ankle was from its hip: a leg must never be asked to reach farther than it is long
 def ik(hx, hy, ax, ay):
     """the knee of a leg whose hip is at hx, hy and whose ankle is at ax, ay (two bones; the knee points forward, to the right)"""
-    dx, dy = ax - hx, ay - hy; d = min(np.hypot(dx, dy), L1 + L2 - 0.05); b = np.arctan2(dy, dx)
+    dx, dy = ax - hx, ay - hy; REACH[0] = max(REACH[0], np.hypot(dx, dy)); d = min(np.hypot(dx, dy), L1 + L2 - 0.05); b = np.arctan2(dy, dx)
     a = np.arccos(np.clip((L1 * L1 + d * d - L2 * L2) / (2 * L1 * d), -1, 1))
     return max([(hx + L1 * np.cos(b + s * a), hy + L1 * np.sin(b + s * a)) for s in (1, -1)], key=lambda p: p[0])
-def stroke(F, p, q, w0, w1, col):
-    n = int(max(abs(q[0] - p[0]), abs(q[1] - p[1])) * 2) + 1
-    for i in range(n + 1):
-        t = i / n; x = p[0] + (q[0] - p[0]) * t; y = p[1] + (q[1] - p[1]) * t; w = w0 + (w1 - w0) * t; wi = max(1, int(round(w))); x0 = int(round(x - w / 2)); y0 = int(round(y - w / 2))
-        for yy in range(y0, y0 + wi):
-            for xx in range(x0, x0 + wi):
-                if 0 <= yy < 64 and 0 <= xx < 64: F[yy, xx] = col
 GROUND = 59
 def finish(F):
-    G = outline(F); pn = (G == PNT); left = np.zeros_like(pn); left[:, 1:] = (G[:, :-1] < 0) | (G[:, :-1] == OL); G[pn & left] = PN2      # a rim light on the trousers
-    return G
+    return outline(F)
 STEP = 15.0; DUTY = 0.62; LIFT = 2.6      # the walk: a step is 15 px long, a foot is on the ground for 62% of the cycle (two feet for 24%), the swinging foot rises only 2.6 px: a glide, not a march
 def foot_at(u):
     """where a foot is (forward of the hip, height above the ground) at the cycle position u (0 = it has just touched down): on the ground it moves back at the body's speed (it never slides), then it swings forward and eases in and out"""
     if u < DUTY: return STEP / 2 - STEP * (u / DUTY), 0.0
     s = (u - DUTY) / (1 - DUTY); e = s - np.sin(2 * np.pi * s) / (2 * np.pi); return -STEP / 2 + STEP * e, LIFT * np.sin(np.pi * s)
-def leg2(F, hx, hy, fx, fy, col, ang):
-    """a leg for the jump: fy is the lowest row of the foot, ang the angle of the foot (0 = flat on the ground, 70 = the toes pointed down)"""
-    if ang < 12: ax, ay = fx - 1.0, fy - 2.0
-    else: ax, ay = fx - 1.0, fy - 1.0 - 5 * np.sin(np.radians(ang))
-    kx, ky = ik(hx, hy, ax, ay); stroke(F, (hx, hy), (kx, ky), 5, 4, col); stroke(F, (kx, ky), (ax, ay), 4, 3, col)
+LT0, LT1, LS0, LS1, LC = 3.4, 2.9, 2.6, 2.1, 2.9      # how wide a leg is: the thigh at the hip and at the knee, the shin at the knee and at the ankle, the cuff of the trouser leg (a thin leg: v1.43)
+def shoe(F, fx, fy, ang, far, ax, ay):
+    """the shoe: brown leather with a dark sole and (on the near foot) a lighter toe cap; flat on the ground when ang < 12, otherwise (the toes pointed down in the air) a short stroke from the ankle"""
     if ang < 12:
         y1 = int(round(fy)); x0 = int(round(fx - 2)); x1 = int(round(fx + 3))
-        for yy in range(y1 - 2, y1 + 1):
-            for xx in range(x0, x1 + 1):
-                if 0 <= yy < 64 and 0 <= xx < 64: F[yy, xx] = col
+        for xx in range(x0, x1 + 1):
+            for yy, c in ((y1 - 2, BAND if xx > x0 + 2 else -2), (y1 - 1, SK0 if (xx >= x1 - 1 and not far) else BAND), (y1, OL)):
+                if c != -2 and 0 <= yy < 64 and 0 <= xx < 64: F[yy, xx] = c
     else:
-        a = np.radians(ang); stroke(F, (ax - 1, ay + 0.5), (ax - 1 + 5 * np.cos(a), ay + 0.5 + 5 * np.sin(a)), 3, 3, col)
+        a = np.radians(ang); limbs(F, [((ax - 1, ay + 0.5), (ax - 1 + 5 * np.cos(a), ay + 0.5 + 5 * np.sin(a)), 3, 3, 1, 'shoe')], inner=True)
+def leg3(F, hx, hy, fx, fy, ang, far):
+    """a leg for every picture: fy is the lowest row of the foot, ang the angle of the foot (0 = flat on the ground, 70 = the toes pointed down): the trouser leg (the thigh, the shin and a cuff at the ankle) as shaded tubes with a dark line where it crosses the other leg, then the shoe"""
+    if ang < 12: ax, ay = fx - 1.0, fy - 2.0
+    else: ax, ay = fx - 1.0, fy - 1.0 - 5 * np.sin(np.radians(ang))
+    kx, ky = ik(hx, hy, ax, ay); kind = 'far' if far else 'pants'
+    limbs(F, [((hx, hy), (kx, ky), LT0, LT1, 1, kind), ((kx, ky), (ax, ay), LS0, LS1, 1, kind), ((ax, ay - 1.2), (ax, ay + 0.8), LC, LC, 1, kind)], inner=True); shoe(F, fx, fy, ang, far, ax, ay)
 # ---------------------------------------------------------------- THE PUPPET (v1.42): the body is made of parts that move on their own, like a real body: the TORSO turns about the hips (he leans forward in the squat, arches back at the take-off, crunches at the top) and stretches a little when he breathes, the HEAD (with the hat) turns on the neck, the BACK ARM and the CLAW ARM are chains of two bones (upper arm, forearm) drawn from the shoulder, with striped sleeves, that swing up for the take-off, reach high at the top and come down to land, the legs are as before. The head and the torso are cut out of the picture made from the photograph; the arms and the legs are drawn from scratch.
 S4 = 4
 def mode_down(big, S=S4):
@@ -134,18 +134,23 @@ def two_bone(S, T, L1, L2, pick):
     E = max([(S[0] + L1 * np.cos(b + s * a), S[1] + L1 * np.sin(b + s * a)) for s in (1, -1)], key=pick)
     return E, (S[0] + dx / r * d, S[1] + dy / r * d)
 Y64, X64 = np.mgrid[0:64, 0:64]
-def limbs(F, jobs):
-    """sleeves, gloves and hands, each from p to q (w0 wide at p, w1 wide at q; L = how long, for the stripes; kind): first all the dark rims, so an arm stands out from the body, then the colours, lit from the top left: dark side, middle, light side. The sweater has stripes round the arm: two red, one dark green."""
+LEGS = ('pants', 'far', 'shoe')
+def limbs(F, jobs, inner=False):
+    """sleeves, gloves, hands, trouser legs and shoes, each from p to q (w0 wide at p, w1 wide at q; L = how long, for the stripes; kind): first all the dark rims, so a limb stands out from what is behind it, then the colours, lit from the top left: dark side, middle, light side. The sweater has stripes round the arm: two red, one dark green. The legs are lit across their width (a thin leg has a light edge, a body and a dark edge); the far leg is darker than the near one."""
     M = []
     for p, q, w0, w1, L, kind in jobs:
         dx, dy = q[0] - p[0], q[1] - p[1]; ll = max(dx * dx + dy * dy, 1e-6); px, py = X64 + 0.5, Y64 + 0.5
         t = np.clip(((px - p[0]) * dx + (py - p[1]) * dy) / ll, 0, 1); ex, ey = px - (p[0] + t * dx), py - (p[1] + t * dy); d = np.maximum(np.hypot(ex, ey), 1e-6); w = w0 + (w1 - w0) * t
-        M.append((d <= w / 2 + 0.001, d <= w / 2 + 1.0, t, -(ex + ey) / d * 0.7071, L, kind))
-    for m in M: F[m[1]] = OL
+        lit = -(ex + ey) * 0.7071 / (w / 2) if kind in LEGS else -(ex + ey) / d * 0.7071
+        M.append((d <= w / 2 + 0.001, d <= w / 2 + 1.0, t, lit, L, kind))
+    for m in M: F[m[1] & (F >= 0) if inner else m[1]] = OL      # (inner: only where something is behind the limb; the outer edge is drawn by the outline of the whole figure)
     for fill, rim, t, lit, L, kind in M:
-        sh = np.where(lit > 0.62, 2, np.where(lit < -0.3, 0, 1)); stripe = (np.floor(t * L / 3.0).astype(int) % 3 == 2)
+        sh = np.where(lit > 0.45, 2, np.where(lit < -0.45, 0, 1)) if kind in LEGS else np.where(lit > 0.62, 2, np.where(lit < -0.3, 0, 1)); stripe = (np.floor(t * L / 3.0).astype(int) % 3 == 2)
         if kind == 'sleeve': c = np.where(stripe, np.array([G0, G0, G1])[sh], np.array([R0, R1, R2])[sh])
         elif kind == 'glove': c = np.array([BAND, GLV, GLV])[sh]
+        elif kind == 'pants': c = np.array([OL, PNT, PN2])[sh]
+        elif kind == 'far': c = np.array([OL, OL, PNT])[sh]
+        elif kind == 'shoe': c = np.array([OL, BAND, SK0])[sh]
         else: c = np.array([SK0, SK1, SK2])[sh]
         F[fill] = c[fill]
 def unit(v):
@@ -164,7 +169,7 @@ def blades(G, W, u, sh, glint):
 def render(Pz):
     """one picture from a pose: hipY, legs ((x, y, toe angle) of the near and the far foot's lowest point, x from the hips), torso (turn in degrees, stretch), head (turn relative to the torso, dx, dy), hb (the back hand, from the back shoulder), gf (the glove, from the front shoulder), sway of the blades, glint"""
     HEAD, TORSO = pieces(); hy = Pz['hipY']; (fxn, fyn, an), (fxf, fyf, af) = Pz['legs']; F = -np.ones((64, 64), int)
-    leg2(F, HX + 1, hy, HX + fxf, fyf, OL, af); leg2(F, HX - 1, hy, HX + fxn, fyn, PNT, an)
+    leg3(F, HX + 1, hy, HX + fxf, fyf, af, True); leg3(F, HX - 1, hy, HX + fxn, fyn, an, False)
     al, sy = Pz['torso']; tr = (0.0, hy - 36.0); T = xform(TORSO, TORSO_PIV, al, tr, sy); Np = fpt(HEAD_PIV, TORSO_PIV, al, tr, sy); bt, hdx, hdy = Pz['head']
     Hh = xform(HEAD, HEAD_PIV, al + bt, (Np[0] - HEAD_PIV[0] + hdx, Np[1] - HEAD_PIV[1] + hdy))
     F[T >= 0] = T[T >= 0]; HEADL = Hh
@@ -217,4 +222,4 @@ if __name__ == '__main__':
     cs = np.zeros((64 * 5, 64 * 8, 4), np.uint8); cs[:] = [120, 116, 132, 255]
     for i in range(40):
         blk = A[(2 + i // 15) * 64:(3 + i // 15) * 64, (i % 15) * 64:(i % 15 + 1) * 64]; r, c = divmod(i, 8); m = blk[:, :, 3] > 0; cs[r * 64:(r + 1) * 64, c * 64:(c + 1) * 64][m] = blk[m]
-    Image.fromarray(cs).resize((cs.shape[1] * 2, cs.shape[0] * 2), Image.NEAREST).save('freddy_contact.png'); print('sheet', A.shape, 'blade pixels cut off:', CLIP[0]); assert CLIP[0] == 0
+    Image.fromarray(cs).resize((cs.shape[1] * 2, cs.shape[0] * 2), Image.NEAREST).save('freddy_contact.png'); print('sheet', A.shape, 'blade pixels cut off:', CLIP[0], 'farthest ankle', round(REACH[0], 2), 'of', L1 + L2); assert CLIP[0] == 0 and REACH[0] <= L1 + L2 - 0.05
