@@ -1,5 +1,5 @@
 """FREDDY KRUEGER, the 16-bit fighter (v1.39): turns freddy_ref.jpg (the picture the game's author gave: a full-length photo on a checkerboard) into freddy_sheet.png, 15 idle frames of 64 x 64 pixels side by side (960 x 64), 16 colours, facing right like every fighter.
-Run from tools/:  python3 freddy_art.py   (needs numpy, scipy, pillow). v1.40: the sheet has a second row, the 15-frame WALK: the legs are drawn from scratch with two-bone inverse kinematics (a foot on the ground moves back at the body's speed, so it never slides; the swinging foot only rises 2.6 px: an elegant glide), the upper body leans and sways, and the standing figure uses the same legs. Steps: cut him out of the checkerboard (15 px squares, rows offset by 2) -> stocky 16-bit proportions (big head, short legs: three bands resized separately) -> the 16-colour palette below -> hand-drawn details (hat band, shadowed eyes, burn scars, the glove and its four blades) -> a 1 px outline -> flip -> 15 frames of idle (breathing, sway, hat, claw, a glint that runs up the blades)."""
+Run from tools/:  python3 freddy_art.py   (needs numpy, scipy, pillow). v1.40: the sheet has a second row, the 15-frame WALK (and, v1.41, rows 3 to 5: the 40-frame JUMP, 20 jumping + 20 landing): the legs are drawn from scratch with two-bone inverse kinematics (a foot on the ground moves back at the body's speed, so it never slides; the swinging foot only rises 2.6 px: an elegant glide), the upper body leans and sways, and the standing figure uses the same legs. Steps: cut him out of the checkerboard (15 px squares, rows offset by 2) -> stocky 16-bit proportions (big head, short legs: three bands resized separately) -> the 16-colour palette below -> hand-drawn details (hat band, shadowed eyes, burn scars, the glove and its four blades) -> a 1 px outline -> flip -> 15 frames of idle (breathing, sway, hat, claw, a glint that runs up the blades)."""
 import numpy as np
 from PIL import Image, ImageEnhance
 from scipy import ndimage as ndi
@@ -63,6 +63,7 @@ def details(idx):
 def outline(G):
     out = G.copy(); op = G >= 0; edge = ndi.binary_dilation(op, structure=np.ones((3, 3))) & ~op
     out[edge] = OL; return out
+CACHE = {}
 BLADES = [(0, 7), (2, 9), (4, 8)]      # the three blades that show of the glove: (how far right of the knuckles, how long); they fan out to the right
 def glove(G, gx, gy):
     """the leather glove: a block of 5 x 3 pixels at the knuckles gx, gy (it covers the sleeve's end)"""
@@ -78,6 +79,7 @@ def upper():
     G = details(idx); sw = np.isin(G, (R0, R1, R2, G0, G1)); RH = int(np.where(sw.any(axis=1))[0].max()) + 1      # the sweater's hem: the legs start below it
     pr = np.where(np.isin(G[RH:RH + 5], (PNT, PN2)))[1]; hx = 63 - (float(pr.mean()) if len(pr) else 32.0)
     U = G.copy(); U[RH:] = -1; U = U[:, ::-1].copy()      # he faces right
+    CACHE['U0'] = U.copy()      # (without the glove: the jump moves the claw arm on its own)
     glove(U, gx, gy)
     return U, RH, hx, gx, gy
 L1, L2 = 12.2, 12.3      # thigh and shin (px)
@@ -141,6 +143,45 @@ def walk_frames(U, RH, hx, gx, gy):
                 if 0 <= y < 64 and 0 <= x < 64: G[y, x] = BLD
         FR.append(G)
     return FR
+# THE JUMP (v1.41): 40 frames over the whole jump (crouch 160 ms + flight 713 ms + landing 160 ms = 1033 ms, 38.7 frames a second): frames 0-19 jump (the squat, the push-off, the take-off at frame 6, the rise and the tuck at the top), frames 20-39 land (the fall, legs reaching for the ground, the touch-down at frame 34, the knees absorbing, standing up). Key poses, smoothly blended: (frame, hip row, row of the lowest point of the feet, forward reach of the near foot and of the far foot, toe angle (0 flat, 70 pointed down), forward lean of the head, claw arm swing x and y)
+KEYS = [(0, 36.0, 59.0, -1.5, 3.0, 0, 0.5, 0, 0), (3, 43.5, 59.0, -1.0, 4.0, 0, 4.0, -2, 4), (5, 38.0, 59.0, -0.5, 3.0, 20, 2.0, 0, 0), (6, 33.5, 59.0, -0.5, 2.5, 45, 1.0, 1, -4), (12, 34.5, 57.0, 1.0, 3.5, 55, 1.0, 1, -3), (19, 36.0, 51.0, 4.5, 7.5, 70, 0.0, 2, -5),
+        (26, 35.0, 54.0, 2.5, 5.0, 60, 1.0, 1, -3), (33, 33.5, 59.5, 0.5, 3.0, 45, 1.5, 0, -2), (35, 37.5, 59.0, -0.5, 3.5, 20, 2.5, 0, 2), (37, 43.5, 59.0, -1.0, 4.0, 0, 4.0, -1, 4), (39, 36.6, 59.0, -1.5, 3.0, 0, 0.9, 0, 1)]      # (the last picture is not quite upright yet: he settles into his idle)
+def pose(k):
+    for a, b in zip(KEYS, KEYS[1:]):
+        if a[0] <= k <= b[0]:
+            t = (k - a[0]) / float(b[0] - a[0]); t = t * t * (3 - 2 * t); return [a[i] + (b[i] - a[i]) * t for i in range(1, 9)]
+def leg2(F, hx, hy, fx, fy, col, ang):
+    """a leg for the jump: fy is the lowest row of the foot, ang the angle of the foot (0 = flat on the ground, 70 = the toes pointed down)"""
+    if ang < 12: ax, ay = fx - 1.0, fy - 2.0
+    else: ax, ay = fx - 1.0, fy - 1.0 - 5 * np.sin(np.radians(ang))
+    kx, ky = ik(hx, hy, ax, ay); stroke(F, (hx, hy), (kx, ky), 5, 4, col); stroke(F, (kx, ky), (ax, ay), 4, 3, col)
+    if ang < 12:
+        y1 = int(round(fy)); x0 = int(round(fx - 2)); x1 = int(round(fx + 3))
+        for yy in range(y1 - 2, y1 + 1):
+            for xx in range(x0, x1 + 1):
+                if 0 <= yy < 64 and 0 <= xx < 64: F[yy, xx] = col
+    else:
+        a = np.radians(ang); stroke(F, (ax - 1, ay + 0.5), (ax - 1 + 5 * np.cos(a), ay + 0.5 + 5 * np.sin(a)), 3, 3, col)
+def jump_frames(RH, hx, gx, gy):
+    U0 = CACHE['U0']; FR = []
+    for k in range(40):
+        hipY, footY, xn, xf, ang, lean, cdx, cdy = pose(k); F = -np.ones((64, 64), int)
+        leg2(F, hx + 1, hipY, hx + xf, footY, OL, ang); leg2(F, hx - 1, hipY, hx + xn, footY, PNT, ang)      # the far leg (darker), the near leg
+        dy = int(round(hipY - 36.0)); ln = lambda r: lean * max(0.0, (RH - r) / float(RH)) ** 1.2
+        put_upper(F, U0, RH, dy, ln)
+        cx0 = int(round(gx + cdx + ln(gy))); cy0 = int(round(gy + cdy + dy))      # the claw arm: a forearm from the sleeve to the glove, which swings on its own
+        stroke(F, (gx - 2 + int(round(ln(gy + 6))), gy + 6 + dy), (cx0, cy0 + 1), 3, 3, R0)
+        for yy in range(cy0, cy0 + 3):
+            for xx in range(cx0 - 2, cx0 + 3):
+                if 0 <= yy < 64 and 0 <= xx < 64: F[yy, xx] = GLV
+        G = finish(F)
+        sh = int(round(0.8 * np.sin(2 * np.pi * k / 13.0)))
+        for i, (dx, ln_) in enumerate(BLADES):
+            for j in range(ln_):
+                x = cx0 + dx + (j + 1) // 2 + (sh if j > 2 else 0); y = cy0 - 1 - j
+                if 0 <= y < 64 and 0 <= x < 64: G[y, x] = BLD
+        FR.append(G)
+    return FR
 def make():
     U, RH, hx, gx, gy = upper(); G = rest_figure(U, RH, hx)
     ys, xs = np.where(G >= 0); print('figure', xs.min(), xs.max(), ys.min(), ys.max(), 'knuckles', gx, gy, 'hem', RH, 'hips', round(hx, 1))
@@ -169,16 +210,18 @@ def frames(G, gx, gy):
                     if v >= 0 and 0 <= x + dx < 64: out[r, x + dx] = v
         FR.append(out)
     return FR
-def sheet(FR, FW):
-    A = np.zeros((128, 64 * len(FR), 4), np.uint8)      # row 0: the idle, row 1: the walk
-    for r, frs in enumerate((FR, FW)):
-        for i, f in enumerate(frs):
-            for c in range(16): A[r * 64:(r + 1) * 64, i * 64:(i + 1) * 64][f == c] = list(P[c].astype(int)) + [255]
+def sheet(FR, FW, FJ):
+    A = np.zeros((320, 64 * 15, 4), np.uint8)      # row 0: the idle, row 1: the walk, rows 2-4: the jump (frames 0-14, 15-29, 30-39)
+    def put(f, r, c):
+        for v in range(16): A[r * 64:(r + 1) * 64, c * 64:(c + 1) * 64][f == v] = list(P[v].astype(int)) + [255]
+    for i, f in enumerate(FR): put(f, 0, i)
+    for i, f in enumerate(FW): put(f, 1, i)
+    for i, f in enumerate(FJ): put(f, 2 + i // 15, i % 15)
     Image.fromarray(A).save('freddy_sheet.png'); return A
 if __name__ == '__main__':
-    G, gx, gy, parts = make(); FR = frames(G, gx, gy); FW = walk_frames(*parts, gx, gy); A = sheet(FR, FW)
-    # a contact sheet to look at: the idle and the walk, 5 x 3 frames each, x3
-    cs = np.zeros((64 * 6, 64 * 5, 4), np.uint8); cs[:] = [40, 36, 52, 255]
-    for i in range(30):
-        blk = A[(i // 15) * 64:(i // 15 + 1) * 64, (i % 15) * 64:(i % 15 + 1) * 64]; r, c = divmod(i, 5); m = blk[:, :, 3] > 0; cs[r * 64:(r + 1) * 64, c * 64:(c + 1) * 64][m] = blk[m]
+    G, gx, gy, parts = make(); FR = frames(G, gx, gy); FW = walk_frames(*parts, gx, gy); FJ = jump_frames(parts[1], parts[2], gx, gy); A = sheet(FR, FW, FJ)
+    # a contact sheet to look at: the jump, 8 x 5 frames, x2
+    cs = np.zeros((64 * 5, 64 * 8, 4), np.uint8); cs[:] = [120, 116, 132, 255]
+    for i in range(40):
+        blk = A[(2 + i // 15) * 64:(3 + i // 15) * 64, (i % 15) * 64:(i % 15 + 1) * 64]; r, c = divmod(i, 8); m = blk[:, :, 3] > 0; cs[r * 64:(r + 1) * 64, c * 64:(c + 1) * 64][m] = blk[m]
     Image.fromarray(cs).resize((cs.shape[1] * 2, cs.shape[0] * 2), Image.NEAREST).save('freddy_contact.png'); print('sheet', A.shape)
