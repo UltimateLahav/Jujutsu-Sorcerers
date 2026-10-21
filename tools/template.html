@@ -136,7 +136,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.33</small>
+    <small id="ver">V1.34</small>
   </div>
 </section>
 
@@ -259,7 +259,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <small>FPS = FRAMES PER SECOND: HOW MANY PICTURES THE GAME DRAWS EVERY SECOND (30 SAVES BATTERY). BATTERY SAVER: 30 FPS, NO SCREEN SHAKE, FEWER SPARKS. AUTO-PAUSE: A CALL OR LEAVING THE APP PAUSES THE FIGHT.</small>
     <small>ASSIST (NOT IN WI-FI FIGHTS): PARRY+ = A WIDER PARRY WINDOW. EASY = ALSO 30% LESS DAMAGE TO YOU. AUTO-GUARD = ALSO BLOCKS FOR YOU WHILE YOU STAND STILL (NEEDS THE BLOCK SKILL).</small>
     <small>GAME PACE: FAST = 1.25 TIMES, TURBO = 1.5 TIMES (NOT IN WI-FI FIGHTS OR THE STORY). THE TIMERS STILL COUNT REAL SECONDS.</small>
-    <small>COMBAT: TAP = LIGHT, HOLD AFTER A HIT = HEAVY, DASH DURING A HIT = CANCEL (BOTH ARE SKILLS). THE SAME SWING AGAIN HITS WEAKER, A MISS LEAVES YOU OPEN. PURPLE BAR = FLOW (MIX MOVES, PARRY, DODGE; FULL = 1.25 TIMES THE DAMAGE). ORANGE BAR = THE ENEMY'S STAGGER (HEAVIES AND PARRIES FILL IT; FULL = BREAK: STUNNED, 1.4 TIMES THE DAMAGE).</small>
+    <small>COMBAT: TAP = LIGHT, HOLD AFTER A HIT = HEAVY (VERITY: HOLD = SLOW HEAVY PUNCH, 2X), DASH DURING A HIT = CANCEL (SKILLS). THE SAME SWING AGAIN HITS WEAKER, A MISS LEAVES YOU OPEN. PURPLE BAR = FLOW (MIX MOVES, PARRY, DODGE; FULL = 1.25 TIMES THE DAMAGE). ORANGE BAR = THE ENEMY'S STAGGER (HEAVIES AND PARRIES FILL IT; FULL = BREAK: STUNNED, 1.4 TIMES THE DAMAGE).</small>
     <div class="opt" id="optG"></div>
     <div class="row"><button id="dummyBtn">SPAWN DUMMY</button><button id="fighterBtn">SPAWN ATTACKER</button><button id="blockerBtn">SPAWN BLOCKER</button></div>
   </div>
@@ -571,8 +571,9 @@ const SK_VERITY = [
   ['v_fatal', 'FATALITY', 'FINISH A WEAK ENEMY IN A CUTSCENE', 500, ['v_bite']],
   ['v_scare', 'JUMPSCARE', 'THE DOMAIN BUTTON: GRAB THE ENEMY, HE IS STUNNED FOR 5 SECONDS AND TAKES FEAR DAMAGE', 800, ['v_ball', 'v_bite']],
   ['v_drag', 'BLOOD DRAG', "CROUCH + BLUE: A LOW LUNGE, BITE THE ENEMY'S FEET AND DRAG HIM ALONG THE FLOOR BY THEM, HIS BLOOD IS DRAGGED ALONG THE GROUND (25% ENERGY)", 350, ['v_bite', 'v_crouch']],
-  ['v_heavy', 'HEAVY STRIKE', 'KEEP ATTACK HELD AFTER A HIT: THE LAST M1 WITH 1.6 TIMES THE DAMAGE THAT BREAKS A GUARD AND FILLS THE STAGGER BAR', 150, []],
-  ['v_cancel', 'TELEPORT CANCEL', 'TELEPORT DURING A SWING THAT HIT: IT STOPS, +4% ENERGY AND +20 FLOW', 120, ['v_tele']]];
+  ['v_heavy', 'HEAVY PUNCH', 'HOLD ATTACK FOR 0.6 SECONDS: A SLOW PUNCH THAT DEALS TWICE THE DAMAGE, BREAKS A GUARD AND FILLS THE STAGGER BAR. TAPS NOW FIRE WHEN YOUR FINGER LIFTS', 150, []],
+  ['v_cancel', 'TELEPORT CANCEL', 'TELEPORT DURING A SWING THAT HIT: IT STOPS, +4% ENERGY AND +20 FLOW', 120, ['v_tele']],
+  ['v_air', 'AIR COMBO', 'JUMP ON THE LAST M1 (THE PUNCH): THE ENEMY IS KICKED UP. JUMP AGAIN: HE LEVITATES WITH THE ENEMY AND THE 4-HIT M1 STARTS AGAIN IN THE AIR. IF HE DOES NOT ATTACK, OR AFTER THE LAST HIT, HE KICKS THE ENEMY DOWN TO THE FLOOR', 450, ['v_heavy']]];
 const SK_CAT = [
   ['k_crouch', 'FLATTEN', 'DOWN ON THE STICK OR KEY S: SMASH YOURSELF FLAT, TAP AGAIN TO STAND UP (3% ENERGY)', 50, []],
   ['k_block', 'GLOVE SHIELD', 'HOLD TO GUARD WITH A GIANT GLOVE. RAISE IT JUST BEFORE A HIT TO PARRY: NO DAMAGE, THE ENEMY IS STUNNED', 80, []],
@@ -587,7 +588,7 @@ const SKN = {}; for (const s of [].concat(SK_GOJO, SK_YUJI, SK_VERITY, SK_CAT, S
 const GATE = {      // for each fighter the skill each button needs (a button that is not listed is free): cr crouch, dash, blk block, cp crouched punches, ce MODE, dom DOMAIN, fat FATALITY, bl BLUE (Verity and the Cat; Gojo's and Yuji's BLUE depends on the mode, the air and the stance: gateBlue)
   g: { cr: 'crouch', dash: 'dash', blk: 'block', cp: 'cpunch', ce: 'ce', dom: 'domain', fat: 'fatal', hv: 'heavy', cn: 'cancel' },
   y: { cr: 'y_crouch', dash: 'y_dash', blk: 'y_block', cp: 'y_cpunch', ce: 'y_ce', hv: 'y_heavy', cn: 'y_cancel' },
-  v: { cr: 'v_crouch', dash: 'v_tele', blk: 'v_block', ce: 'v_ball', dom: 'v_scare', fat: 'v_fatal', bl: 'v_bite', hv: 'v_heavy', cn: 'v_cancel' },
+  v: { cr: 'v_crouch', dash: 'v_tele', blk: 'v_block', ce: 'v_ball', dom: 'v_scare', fat: 'v_fatal', bl: 'v_bite', hv: 'v_heavy', cn: 'v_cancel', ac: 'v_air' },
   k: { cr: 'k_crouch', dash: 'k_dash', blk: 'k_block', dom: 'k_ult', fat: 'k_fatal', bl: 'k_toon', hv: 'k_heavy', cn: 'k_cancel' } };
 const BLUES = { g: ['blue', 'tele', 'mblue'], y: ['y_div', 'y_sweep', 'y_rush', 'y_conc', 'y_elbow', 'y_upper', 'y_flash'], v: ['v_bite'], k: ['k_toon'] };
 const lacks = key => { const need = GATE[meK()][key]; return !!need && !owns(need); };      // true when the fighter you play has not bought what this button needs
@@ -908,7 +909,7 @@ const SK_TABS = [['g', 'skTabG', SK_GOJO], ['y', 'skTabY', SK_YUJI], ['v', 'skTa
 const SK_LAY = {      // where every node sits, [column, row] (the root is column 0): a line runs from the right edge of a skill a node needs to the left edge of the node, so the cells in between have to be empty
   g: { _root: [0, 2.5], crouch: [1, 0], cpunch: [2, 0], blue: [1, 1], mblue: [2, 1], dash: [1, 2], tele: [2, 2], purple: [3, 2.5], block: [1, 3], ce: [1, 4], red: [2, 4], fatal: [1, 5], domain: [2, 5], heavy: [1, 6], cancel: [2, 3] },
   y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 4.5], y_pierce: [5, 3], y_shrine: [5, 4], y_cleave: [5, 5], y_simple: [5, 6], y_div: [1, 6], y_rush: [2, 6], y_heavy: [1, 4.7], y_cancel: [3, 1.5] },
-  v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5], v_heavy: [1, 4.5], v_cancel: [3, 0.8] },
+  v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5], v_heavy: [1, 4.5], v_cancel: [3, 0.8], v_air: [2, 4.5] },
   k: { _root: [0, 1], k_crouch: [1, 0], k_fatal: [3, 0], k_dash: [1, 1], k_toon: [2, 1], k_stomp: [3, 1], k_block: [1, 2], k_ult: [3, 2], k_heavy: [1, 3], k_cancel: [2, 0] },
   c: { _root: [0, 1], yuji: [1, 0], verity: [1, 1], cat: [1, 2] } };
 const SKI = {}; for (const [t, , rows] of SK_TABS) for (const r of rows) SKI[r[0]] = { r, t };
@@ -1386,7 +1387,7 @@ function airStepDummy(now) {      // every frame: how high the flying enemy is a
   if (d.ko >= 0) { d.air = null; d.airH = 0; return; }
   const t = (now - a.at) / 1000;
   if (t >= a.T) { d.air = null; d.airH = 0; puff(d.x, a.kind === 'up' ? 6 : 10); snd('land', a.kind === 'up' ? 1.2 : 1.8); shakeUntil = now + 100; shakeAmp = a.kind === 'up' ? 1 : 3; if (a.kind === 'up') { d.rx = AIR_RX; d.rxAt = now - AIR_W1 * RX_DUR[AIR_RX]; } return; }
-  d.airH = airHt(a, now); if (a.kind === 'up') { d.rx = AIR_RX; d.rxAt = now - airW(t / a.T) * RX_DUR[AIR_RX]; }
+  d.airH = airHt(a, now); if (a.kind === 'up') { d.rx = AIR_RX; d.rxAt = now - airW(a.hover ? 0.45 : t / a.T) * RX_DUR[AIR_RX]; }
 }
 function airStepMe(now) {      // the same for you (the enemy's UPPERCUT threw you up): the reaction frame follows the flight through hurtAt, gAirH is how high you are
   const a = gAir; if (!a) { gAirH = 0; return; }
@@ -1504,11 +1505,11 @@ function hitFoe(k, now) {                     // called on the impact frame: a h
   const ko = k >= 36 ? -1 : k >= 24 ? [0, 1, 2, -1, -1, 3][k - 24] : k === 22 ? -1 : k <= 3 ? k : k >= 18 ? k - 18 : k >= 14 ? k - 14 : -1; if (k >= 36) hits.seq = 0; else if (k !== 27 && k !== 28) hits.seq = ko === hits.seq ? hits.seq + 1 : ko === 0 ? 1 : 0;                          // the meter fills while the hits land in order: right hook, left hook, elbow, kick
   if (hits.seq === 4) { if (k !== 29) dmg += 25; hits.perfect = now; snd('finisher'); say('COMBO!', dummy.x, '#ffd34d', 8, now + 90); }
   dmg = ceDmg(dmg); const dBase = dmg; if (ctrBoost && atkAt === ctrBoost) dmg = Math.round(dmg * 1.5);      // (every hit of the free counter's swing, after a parry, does 1.5 times the damage)
-  if (hv) dmg = Math.round(dmg * HEAVY_X);      // (v1.31: the HEAVY swing)
+  if (hv) dmg = Math.round(dmg * (meK() === 'v' ? V_HEAVY_X : HEAVY_X));      // (v1.31: the HEAVY swing; Verity's heavy punch does twice)
   let rp = 0; { if (repSw[atkK] !== atkAt) { repSw[atkK] = atkAt; repN[atkK] = (repN[atkK] | 0) + 1; } rp = repN[atkK] - 1; if (rp > 0 && !(vs && vs.net)) { dmg = Math.max(1, Math.round(dmg * Math.max(0.4, 1 - 0.2 * rp))); if (repSay !== atkAt) { repSay = atkAt; say('REPEAT', dummy.x, '#9a9aa8', 8, now + 60); } } }      // (v1.31: the same swing again in one combo hits 20% weaker each time, down to 40%)
   if (!(vs && vs.net)) { if (now < (dummy.openUntil || 0)) dmg = Math.round(dmg * OPEN_X); if (flowOn) dmg = Math.round(dmg * FLOW_X); }      // (v1.32: an enemy who is OPEN takes 1.4 times, you in FLOW deal 1.25 times)
   if (dmg > dBase * DMG_CAP) dmg = Math.round(dBase * DMG_CAP);      // (v1.33: the free counter, the heavy, OPEN and FLOW together never do more than 2.8 times the blow)
-  const cb = comboBonus(k, now); dmg += cb; hits.n++; hits.dmg += dmg; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = cb; cancelFor = atkAt; cancelUntil = now + CANCEL_MS * (flowOn ? 2 : 1); if (vs) vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n);
+  const cb = comboBonus(k, now); dmg += cb; hits.n++; hits.dmg += dmg; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = cb; cancelFor = atkAt; cancelUntil = now + CANCEL_MS * (flowOn ? 2 : 1); if (atkK === 3 && meK() === 'v' && !vh && !ac) { acWin = now + AC_WIN; if (acPend === atkAt) acGo = true; } if (vs) vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n);
   const grab = !!vs && vs.me === 'cat' && (k === 30 || k === 32), held = !!vs && vs.me === 'cat' && k >= 31 && k <= 33 && !!dummy.cheld;      // (the playable Cat's glove: a grab holds the enemy and pulls him in, the punch lands on the held enemy where he stands, the kick sends him away)
   dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += held && k !== 33 ? 0 : KNOCK[k]; if (k === 3 || k === 17 || k === 21 || k === 29 || k === 33 || k === 35 || k === 41 || k === 42) { dummy.smokeUntil = now + 520; puff(dummy.x, 8); } shakeUntil = now + 110; shakeAmp = k === 21 || k === 35 || k === 42 ? 4 : [3, 15, 17, 18, 19, 29, 33, 40, 41].includes(k) ? 3 : 2;
   if (k === 40 || k === 43 || k === 48) dummy.down = now + RX_DUR[4];      // (a DOWNSLAM or a SWEEP puts him on the floor for as long as the fall lasts)
@@ -2140,7 +2141,7 @@ function beginRound(now) {                     // a fresh round: the scene is re
   spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); if (vs.net) { dummy.net = true; dummy.max = dummy.hp = dummy.shown = PHP; dummy.x = dummy.tx = wx + NET_G0; dummy.pose = null; vs.toSent = false; }      // (the Wi-Fi fight: the other player, drawn from his phone's pictures)
   vdg = cst = null; smear.length = drip.length = 0; cProj = []; if (vs.rush) rushSpawn(t); else if (vs.cv) initCurse(dummy, vs.cv, wx + Math.max(54, Math.min(90, (VW >> 1) - 70)), vs.hard ? 1.5 : 1);      // (a challenge: the curse steps in; a RUSH wave: one or two)
   $('vsres').classList.remove('on');      // (REMATCH and NEXT start a new fight: the result screen goes away. Since v7.12 this line had slipped into a comment, so the result screen stayed on top of the new fight)
-  vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; flow = 0; flowOn = false; flowLast = -1; flowSw = -1; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
+  vp = vpNew(); cp = cpNew(); js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; vh = null; ac = null; acWin = 0; acGo = false; acPend = -1; redAt = -1; redLast = -1e9; escQ = -1; flow = 0; flowOn = false; flowLast = -1; flowSw = -1; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
   if (vs.retry) { vs.round = 1 + vs.retry; vs.hp = vs.sh = PHP / 2; dummy.hp = dummy.shown = dummy.lock = 1; vs.morphed = true; blackUntil = t + 700; } else blackUntil = 0;      // after a failed red: Gojo at half health, Verity as he was (1 health left, so no smoke change); the picture comes up from black
 }
 // ---------------------------------------------------------------- v1.29 THE STATE TRACKER and the COMBO ESCAPE. A small box by your health bar says what state you are in: green FREE (you can move) or red (HIT: reeling from a blow, DOWN: on the floor, STUN: the JUMPSCARE, the Cat's glove or dizzy, HELD: the enemy Cat's ULTIMATE has you). While you are red, DASH gets you out of it: the stun is gone, you dash (with the dash's own invulnerable start), and when the dash ends you strike back with the LAST M1 of your combo; the dash is then on a cooldown of 4 seconds (the DASH button counts it down). Not possible when you are in the air from a launch, held by the ULTIMATE, in a cutscene or while the DOMAIN lasts.
@@ -2152,9 +2153,15 @@ const redWhy = now => {      // why you are red, or '' when you are free: hit (r
   if (now < pStun || (vs && (now < (vs.catHold || 0) || now < (vs.cStun || 0)))) return 'stun';
   return '';
 };
-const escOK = now => state === 'play' && !gAir && !js && !vf && !cf && !ke && !domLock() && !(ult && ult.who === 'enemy') && (hurtAt >= 0 || now < gDownUntil || now < pStun || (!!vs && now < (vs.catHold || 0)));      // (what a dash can get you out of)
+const escBase = now => state === 'play' && !gAir && !js && !vf && !cf && !ke && !domLock() && !(ult && ult.who === 'enemy') && (hurtAt >= 0 || now < gDownUntil || now < pStun || (!!vs && now < (vs.catHold || 0)));      // (what a dash can get you out of)
+const ESC_T = { g: 0.7, v: 0.9, k: 0.3, y: 0.5 };      // (v1.34: how long a combo has to run, in red, before DASH gets you out of it, in real seconds: Gojo 0.7, Verity 0.9, the Cat 0.3, Yuji 0.5)
+let redAt = -1, redLast = -1e9, escQ = -1;      // redAt: when the red state you are in began (a gap of under 0.4 s between two blows is still the same combo); redLast: the last moment you were red; escQ: a DASH pressed a little too early, remembered for 0.45 s
+const escWait = now => redAt < 0 ? 1e9 : Math.max(0, redAt + ESC_T[meK()] * 1000 * paceBase() - now);
+const escOK = now => escBase(now) && escWait(now) <= 0;
 const lastM1 = () => { const y = !!vs && vs.me === 'yuji'; if (vs && vs.me === 'cat') return 3; if (cm === 3 && y) return 23; if (cm === 1) return y ? 8 : 17; if (cm === 2) return y ? 19 : 21; return 3; };      // (the last blow of the 4-hit M1 combo you are on: the normal combo, cursed energy, red or THE ZONE, the Inheritence)
 function comboEscape(now) {      // every frame, before the controls are gated
+  if (redWhy(now)) { if (now - redLast > 400) redAt = now; redLast = now; } else if (now - redLast > 400) redAt = -1;
+  if (escQ >= 0) { if (now - escQ > 450 || !escBase(now)) escQ = -1; else if (escWait(now) <= 0 && now >= dgLock) { escQ = -1; dashReq = true; } }
   if (dashReq) {
     if (now < dgLock) { dashReq = false; if (now - escSay > 800) { escSay = now; say('DASH ' + Math.ceil((dgLock - now) / (1000 * paceBase())), wx, '#9fd8ff', 8, now); } }      // (the dash is on its cooldown)
     else if (escOK(now) && !lacks('dash')) {
@@ -2166,6 +2173,7 @@ function comboEscape(now) {      // every frame, before the controls are gated
       dgLock = now + 4000 * paceBase(); dgReady = dgLock; esc = { at: now }; snd(me === 'v' ? 'vanish' : 'dash', dgK); if (me !== 'v') puff(wx - d * 5, 5);
       say('COMBO BREAK!', wx, '#7dff9a', 8, now); flash(now, 80, 0.18);
     }
+    else if (escBase(now) && !lacks('dash')) { dashReq = false; escQ = now; if (now - escSay > 800) { escSay = now; say('NOT YET', wx, '#8a8aa0', 8, now); } }      // (too early: it is remembered for a moment)
   }
   if (esc) {      // the dash is over: strike back with the last M1, closing the gap to the enemy
     if (hurtAt >= 0 || now - esc.at > 1500 || (vs && vs.ph !== 'fight')) esc = null;
@@ -2182,7 +2190,7 @@ function stateDraw(now) {      // the tracker, over the picture: green FREE or r
   const why = redWhy(now), red = !!why, x = vs ? Math.max(60, Math.min(96, (VW - 52) >> 1)) + 10 : 6, h = vs && vs.rush ? 9 : 10, y = vs ? (vs.rush ? 30 : 21) : 20, pulse = red && ((now / 140) | 0) % 2 === 0;
   ctx.save(); ctx.globalAlpha = 1; ctx.fillStyle = '#000'; ctx.fillRect(x - 1, y - 1, 42, h + 2); ctx.fillStyle = red ? (pulse ? '#ff3a3a' : '#b01c1c') : '#2fb868'; ctx.fillRect(x, y, 40, h);
   pxt(red ? (why === 'hit' ? 'HIT' : why === 'down' ? 'DOWN' : why === 'held' ? 'HELD' : 'STUN') : 'FREE', x + 20, y + h - 1, '#ffffff', 8, 'center');
-  if (red && cd === 0 && escOK(now) && !lacks('dash')) pxt('DASH!', x + 66, y + h - 1, pulse ? '#ffd34d' : '#fff3b0', 8, 'center'); else if (cd > 0) pxt('DASH ' + cd, x + 64, y + h - 1, '#9fd8ff', 8, 'center');
+  if (red && cd === 0 && escOK(now) && !lacks('dash')) pxt('DASH!', x + 66, y + h - 1, pulse ? '#ffd34d' : '#fff3b0', 8, 'center'); else if (cd > 0) pxt('DASH ' + cd, x + 64, y + h - 1, '#9fd8ff', 8, 'center'); else if (red && escBase(now) && !lacks('dash')) pxt('ESC ' + (escWait(now) / (1000 * paceBase())).toFixed(1), x + 66, y + h - 1, '#8a8aa0', 8, 'center');
   if (vs) { if (aggr(now) < 0.92) pxt('PRESSURE', VW - 6, 55, ((now / 200) | 0) % 2 ? '#ffb05a' : '#ff6a3a', 8, 'right'); if (vs.rush) pxt('SPEED $' + speedBonus(), VW - 6, 64, '#7ae8ff', 8, 'right'); }      // (right under the enemy's name: the enemy is getting angry; the extra money a quick clear of this wave pays now)
   ctx.restore();
 }
@@ -3190,10 +3198,10 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   }
   if (stance === 'down' || stance === 'up') { sf = Math.floor(Math.max(0, now - stAt) * CR_FPS / 1000); if (sf >= 15) { stance = stance === 'down' ? 'crouch' : 'stand'; sf = -1; } }
   if (atkAt >= 0) {
-    af = Math.floor(Math.max(0, now - atkAt) * ATK_FPS[atkK] / 1000);
+    af = Math.floor(Math.max(0, now - atkAt) * ATK_FPS[atkK] * (heavyAt && atkAt === heavyAt ? V_HEAVY_SLOW : 1) / 1000);      // (the heavy punch is slow)
     if (af >= 15) { if (atkQ) { atkQ = false; atkK = pickAtk(); atkAt = now; af = 0; } else { atkAt = -1; af = -1; comboUntil = now + COMBO_MS; } }      // (a press during a swing chains the next one)
   }
-  const idleOK = t >= 1 && hum && !stun && jf < 0 && tu < 0 && hf < 0 && df < 0 && bf < 0 && sf < 0, free = idleOK && af < 0 && !vdg; vdgStep(now, dt);
+  const idleOK = t >= 1 && hum && !stun && jf < 0 && tu < 0 && hf < 0 && df < 0 && bf < 0 && sf < 0 && !(vh && vh.phase !== 'hover'), free = idleOK && af < 0 && !vdg; vdgStep(now, dt);
   if (ceReq) {      // MODE: into the ball (20% of the energy); with the ball out: back into Verity
     ceReq = false;
     if (free && stance === 'stand' && ceSpend(CE_COST.vBall, now)) { voiceLoad(); v.form = 'smoke1'; v.fAt = now; v.bAt = now + 200; v.bSnd = false; v.back = false; atkQ = false; lpReq = atkReq = dashReq = jumpReq = crReq = false; setModeUI(); snd('vanish'); }
@@ -3227,7 +3235,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
     }
   }
   if (jumpReq) { jumpReq = false; if (free && stance === 'stand') { jumpAt = now; jf = 0; } }
-  const steer = t >= 1 && hum && !stun && df < 0 && sf < 0 && stance === 'stand' && ((jf < 0 && af < 0 && hf < 0) || (jf >= 3 && jf <= 11));      // (no walking while folded up, swinging, hurt or teleporting)
+  const steer = t >= 1 && hum && !stun && !vh && df < 0 && sf < 0 && stance === 'stand' && ((jf < 0 && af < 0 && hf < 0) || (jf >= 3 && jf <= 11));      // (no walking while folded up, swinging, hurt or teleporting)
   const dir = steer ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0;
   const nm = !hum ? 'ball' : hf >= 0 ? 'hurt' : stun ? 'fear' : df >= 0 ? 'tele' : bf >= 0 && sf < 0 ? 'block' : tu >= 0 || jf >= 0 ? 'jump' : af >= 0 ? 'atk' : sf >= 0 ? 'cdn' : stance === 'crouch' ? 'cidle' : dir > 0 ? 'fwd' : dir < 0 ? 'back' : 'idle';
   if (nm !== mode) { mode = nm; modeAt = now; stepN = -1; }
@@ -3236,7 +3244,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   wx += dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * (bf >= 0 ? 0.3 : 1) * dt;
   if (df >= 7 && !v.tpDone) { v.tpDone = true; wx = dgTo; snd('arrive'); }      // gone at frame 7: he is already standing where he arrives
   wx += wxv * dt; wxv *= Math.exp(-7 * dt);      // knocked back by the enemy: the world slides past, then friction stops it
-  const tuH = Math.min(40, gy - 61), lift = tu >= 0 ? (tu < 7 ? teleL0 : Math.max(0, Math.round(tuH * (1 - Math.pow((tu - 7) / 7, 1.7))))) : jf >= 0 ? D.jump.lift[jf] : 0; gojoLift = hum ? lift : 0; gojoGone = !hum || (df >= 3 && df <= 11) || (tu >= 3 && tu <= 11); v.tuNow = tu;      // (the double jump: he vanishes where he is, comes back at the fixed height of 40 px and falls to the ground)      // (the enemy's swings miss while he is in the air, gone, or a ball)
+  const tuH = Math.min(40, gy - 61), lift = vh ? vhLift(now) : tu >= 0 ? (tu < 7 ? teleL0 : Math.max(0, Math.round(tuH * (1 - Math.pow((tu - 7) / 7, 1.7))))) : jf >= 0 ? D.jump.lift[jf] : 0; gojoLift = hum ? lift : 0; gojoGone = !hum || (df >= 3 && df <= 11) || (tu >= 3 && tu <= 11); v.tuNow = tu;      // (the double jump: he vanishes where he is, comes back at the fixed height of 40 px and falls to the ground)      // (the enemy's swings miss while he is in the air, gone, or a ball)
 
   ctx.save();
   shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }
@@ -4733,10 +4741,12 @@ function flowTick(now) {      // every frame, before the controls are gated
     swPrev = atkAt;
   }
   if (now < whiffUntil) atkReq = false;      // (open: ATTACK does nothing for a moment)
-  if (atkHold >= 0 && flowOK(now) && stance === 'stand' && hits.n > 0 && now < hits.until) {      // HEAVY: ATTACK still held after a hit
+  acTick(now);
+  const vH = meK() === 'v';
+  if (atkHold >= 0 && flowOK(now) && stance === 'stand' && (vH || (hits.n > 0 && now < hits.until))) {      // HEAVY: ATTACK still held after a hit (Verity: just held, no hit needed)
     const held = now - atkHold;
-    if (held >= 140 && !lacks('hv') && ((now / 90) | 0) !== chgTick) { chgTick = (now / 90) | 0; spark(wx + 12, gy - 26, 2, ['#ffb05a', '#fff3b0'], false, 1); }      // (the charge: sparks at the fist)
-    if (held >= HEAVY_HOLD && freeNow() && now >= whiffUntil) { atkHold = -1; atkReq = false; if (lacks('hv')) lockPop(now); else if (strikeBack(now)) { heavyAt = atkAt; say('HEAVY!', wx, '#ffb05a', 8, now); } }
+    if (held >= (vH ? 250 : 140) && !lacks('hv') && ((now / 90) | 0) !== chgTick) { chgTick = (now / 90) | 0; spark(wx + 12, gy - 26, 2, ['#ffb05a', '#fff3b0'], false, 1); }      // (the charge: sparks at the fist)
+    if (held >= (vH ? V_HEAVY_HOLD : HEAVY_HOLD) && freeNow() && now >= whiffUntil) { atkHold = -1; atkReq = false; if (lacks('hv')) lockPop(now); else if (strikeBack(now)) { heavyAt = atkAt; say('HEAVY!', wx, '#ffb05a', 8, now); } }
   }
 }
 // ---------------------------------------------------------------- v1.32 FLOW COMBAT II: the FLOW meter and the STAGGER bar (every fighter, in a fight or a training room; not the Wi-Fi fight, not the story). FLOW (purple bar under your energy): +8 for a hit with a different swing than the last one (+2 for a repeat), +12 for a heavy, +20 for a cancel, +15 for a parry, +10 for a dodge; it drains after 2.5 s without a hit, a blow on you takes 30. Full = FLOW for 6 real seconds: 1.25 times the damage, no whiff opening, a longer cancel window; a blow on you ends it. STAGGER (orange bar under the enemy's health): +8 for a light swing (+3 for a repeat), +34 for a heavy, +20 for a guard breaker, +45 for a parry; it drains after 2 s without a hit. Full = BREAK: he is stunned (when he can be) and OPEN for 1.6 s: 1.4 times the damage; then 4 s in which it cannot fill again.
@@ -4770,6 +4780,56 @@ function foeGain(k, hv, rp, now) {      // a hit of yours has landed: Flow for v
   const fresh = flowSw !== atkAt; flowSw = atkAt;
   if (fresh) { flowAdd(rp > 0 || atkK === flowLast ? 2 : 8, now); flowLast = atkK; if (hv) flowAdd(12, now); } else flowAdd(1, now);
   stgAdd(dummy, fresh ? (hv ? 34 : (k === 42 || k === 46) ? 20 : rp > 0 ? 3 : 8) : 2, now);
+}
+// ---------------------------------------------------------------- v1.34 VERITY: the HEAVY PUNCH (skill v_heavy: HOLD ATTACK for 0.6 s: a slow punch, twice the damage, breaks a guard; his taps fire when the finger lifts, so a tap and a hold can be told apart) and the AIR COMBO (skill v_air): on the last M1 (the PUNCH) press JUMP: the enemy is kicked up; press JUMP again while he is up there: Verity levitates with him, his M1 starts again from the first hit, and he can do the 4-hit combo in the air; after the last hit, or when he does not attack for 1.2 s, he kicks the enemy down to the floor (a SLAM). Not against curses (they are not drawn raised), not in the Wi-Fi fight, not in the story.
+const V_HEAVY_HOLD = 600, V_HEAVY_X = 2, V_HEAVY_SLOW = 0.55, AC_IDLE = 1200, AC_MAX = 4500, AC_WIN = 450;
+let ac = null, vh = null, acWin = 0, acGo = false, acPend = -1;      // ac: the enemy was kicked up (waiting for the second JUMP); vh: Verity's own levitation { at, h, phase 'rise' / 'hover' / 'down', lastAct, k3, downAt }; acWin: until when a JUMP launches (after the last M1 landed); acPend: a JUMP pressed before the punch landed
+const atkDefer = () => state === 'play' && !!vs && vs.me === 'verity' && !vs.net && !!vp && vp.form === 'verity' && !lacks('hv');      // (Verity with the heavy punch: ATTACK fires when the finger lifts, or at 0.6 s as the heavy)
+const vhLift = now => !vh ? 0 : vh.phase === 'rise' ? Math.round(vh.h * Math.min(1, (now - vh.at) / 220)) : vh.phase === 'down' ? Math.round(vh.h * Math.max(0, 1 - (now - vh.downAt) / 220)) : vh.h;
+function acEnd(now) {      // the move is broken off (he is hurt, the enemy is down, the fight is over): the enemy falls normally, he comes down
+  if (dummy && dummy.air && dummy.air.hover) dummy.air = airMake(now, dummy.airH || 0, 0, AIR_G, 'up');
+  if (vh) { vh.phase = 'down'; vh.downAt = now; } else ac = null;
+}
+function acLaunch(now) {      // the last M1 landed and JUMP was pressed: the enemy is kicked up
+  const d = dummy; jumpReq = false; acWin = 0; acPend = -1; ac = { at: now };
+  d.air = airMake(now, 0, AIR_V, AIR_G, 'up'); d.rx = AIR_RX; d.rxAt = now; d.vx = 0; d.stunUntil = Math.max(d.stunUntil, now + 1300);
+  say('LAUNCH!', d.x, '#ffd34d', 8, now); snd('smack', 3); shakeUntil = now + 120; shakeAmp = 2; puff(d.x, 6);
+}
+function acHover(now) {      // the second JUMP: Verity goes up to the enemy and both levitate
+  const d = dummy, h = Math.max(26, Math.min(38, gy - 62, d.airH || 0));
+  jumpReq = false; atkAt = -1; atkQ = false; combo = 0; comboUntil = 0; cpIdx = 0;      // (his M1 starts again)
+  vh = { at: now, h, phase: 'rise', lastAct: now, k3: -1, downAt: 0 };
+  d.air = { at: now, h0: h, v0: 0, g: 0, kind: 'up', T: 1e9, hover: true }; d.airH = h; d.stunUntil = now + 600;
+  say('AIR COMBO!', wx, '#9fd8ff', 8, now); snd('vanish');
+}
+function acSlam(now) {      // he kicks the enemy down to the floor
+  const d = dummy, dm = ceDmg(28);
+  d.hp = Math.max(0, d.hp - dm); d.hitAt = now; say('' + dm, d.x, popCol(), 8, now); say('SLAM!', d.x, '#ffd34d', 12, now + 80);
+  d.air = airMake(now, d.airH || 0, -80, 900, 'drop'); d.rx = 4; d.rxAt = now; d.down = now + RX_DUR[4]; d.vx = 0;
+  hitStop(100); shakeUntil = now + 160; shakeAmp = 3; snd('smack', 3); flowAdd(15, now); stgAdd(d, 25, now);
+  vh.phase = 'down'; vh.downAt = now;
+  if (d.hp <= 0) koDummy(now);
+}
+function acTick(now) {      // every frame, before the controls are gated (called by flowTick)
+  if (vh && vh.phase === 'down' && now - vh.downAt >= 220) { vh = null; ac = null; }
+  const d = dummy, on = meK() === 'v' && flowOK(now) && !lacks('ac') && !!d && !d.curse && !d.net && !d.cap;
+  if (!on) { if (vh && vh.phase !== 'down') acEnd(now); else if (!vh) ac = null; acGo = false; return; }
+  if (vh) {      // levitating with the enemy
+    jumpReq = dashReq = lpReq = domReq = ceReq = crReq = false; d.vx = 0; d.stunUntil = Math.max(d.stunUntil, now + 500);
+    if (vh.phase === 'down') return;
+    if (vh.phase === 'rise' && now - vh.at >= 220) vh.phase = 'hover';
+    if (atkAt >= 0) { vh.lastAct = now; if (atkK === 3) vh.k3 = atkAt; }
+    if (d.ko >= 0) { acEnd(now); return; }
+    if (vh.phase === 'hover' && atkAt < 0 && !atkQ && (vh.k3 >= 0 || now - vh.lastAct > AC_IDLE || now - vh.at > AC_MAX)) acSlam(now);
+    return;
+  }
+  if (acGo) { acGo = false; if (!ac) acLaunch(now); }
+  if (jumpReq) {
+    if (ac) { if (airUp(d)) acHover(now); }
+    else if (now < acWin) acLaunch(now);
+    else if (atkK === 3 && atkAt >= 0 && connectAt !== atkAt) acPend = atkAt;      // (pressed a moment before the punch lands: it is remembered)
+  }
+  if (ac && !airUp(d)) ac = null;      // (he has landed: the chance is over)
 }
 function tick(t) {
   requestAnimationFrame(tick);                // schedule first so one bad frame can't stop the loop
@@ -4816,7 +4876,7 @@ function bindPad(id, set) {                   // hold-to-walk touch buttons (mul
   ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => b.addEventListener(t, () => { set(false); b.classList.remove('on'); }));
   b.addEventListener('contextmenu', e => e.preventDefault());
 }
-bindPad('atk', v => { if (v) { atkReq = true; atkHold = pnow(); } else atkHold = -1; });
+bindPad('atk', v => { if (v) { atkHold = pnow(); if (!atkDefer()) atkReq = true; } else { if (atkHold >= 0 && atkDefer() && pnow() - atkHold < V_HEAVY_HOLD) atkReq = true; atkHold = -1; } });
 bindPad('dash', v => { if (v) dashReq = true; });
 bindPad('blk', v => { blockHeld = v; });                    // hold to block           // tap to dash the way you are walking (back when standing still)
 bindPad('ce', v => { if (v) ceReq = true; });
@@ -4858,7 +4918,7 @@ addEventListener('keydown', e => {
   if (se && SE_KEYS.has(e.code)) { e.preventDefault(); if (!e.repeat) sePress(true); return; }      // (in the red ending the keys mash and hold)
   const k = KEYS[e.code];
   if (k) {
-    if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (k === 'G') blockHeld = true; else if (state === 'play' && !e.repeat) { if (k === 'A') { atkReq = true; atkHold = pnow(); } else if (k === 'C') crReq = true; else if (k === 'B') lpReq = true; else if (k === 'D') dashReq = true; else if (k === 'E') ceReq = true; else if (k === 'V') domReq = true; else if (k === 'H') pressFat(); else { jumpReq = true; jumpFromStick = false; } }
+    if (k === 'L') keyL = true; else if (k === 'R') keyR = true; else if (k === 'G') blockHeld = true; else if (state === 'play' && !e.repeat) { if (k === 'A') { atkHold = pnow(); if (!atkDefer()) atkReq = true; } else if (k === 'C') crReq = true; else if (k === 'B') lpReq = true; else if (k === 'D') dashReq = true; else if (k === 'E') ceReq = true; else if (k === 'V') domReq = true; else if (k === 'H') pressFat(); else { jumpReq = true; jumpFromStick = false; } }
     if (state === 'play') e.preventDefault();
     return;
   }
@@ -4869,7 +4929,7 @@ addEventListener('keyup', e => {
   if (e.target.id === 'lanName') return;
   if (se && SE_KEYS.has(e.code)) sePress(false);
   const k = KEYS[e.code];
-  if (k === 'L') keyL = false; else if (k === 'R') keyR = false; else if (k === 'G') blockHeld = false; else if (k === 'A') atkHold = -1;
+  if (k === 'L') keyL = false; else if (k === 'R') keyR = false; else if (k === 'G') blockHeld = false; else if (k === 'A') { if (atkHold >= 0 && atkDefer() && pnow() - atkHold < V_HEAVY_HOLD) atkReq = true; atkHold = -1; }
 });
 addEventListener('blur', () => { releaseAll(); autoPause(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) { releaseAll(); autoPause(); if (sfx) sfx.ac.suspend(); } else if (sfx && !paused) audio(); });
