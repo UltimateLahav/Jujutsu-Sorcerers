@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Hitboxes, measured from the pictures themselves.
-For every move of Gojo, Yuji and Verity (the hit numbers of the game: 0-3 the M1 combo, 6-7 the crouch punches / Verity's claws, 14-21 Gojo's walking and red combos, 22 Verity's bite, 24-29 Yuji's M1, 36-37 his DIVERGENT FIST, 44-45 his RUSH FIST (the super fast DIVERGENT FIST on the run), 46-47 his crouched CONCENTRATED FIST: the UPPERCUT and the FACE KICK (measured against a body 30 px up), 38-43 his cursed energy mode moves: R.KICK, ELBOW, DOWNSLAM, PUSH KICK, CONCENTRATED FIST and the SWEEP) and for every body it can land on, this finds how far apart the two characters' anchors (the middle of the hips) can be while the limb the attacker has stretched out at the moment of impact (the two frames from the impact frame on) still overlaps the drawn body of the target. Both are compared ROW BY ROW, because a fist at chest height, a hanging arm and a foot all stop at different distances. Glow effects (Gojo's blue sparks) are not part of a limb. The target is its standing picture (the widest its idle animation gets in each row).
+For every move of Gojo, Yuji, Verity, the Cat and Freddy (the hit numbers of the game: 0-1 are also Freddy's two M1 slashes (v1.45: the claw's blades, and the bare hand with the glove held low in front), 0-3 the M1 combo, 6-7 the crouch punches / Verity's claws, 14-21 Gojo's walking and red combos, 22 Verity's bite, 24-29 Yuji's M1, 36-37 his DIVERGENT FIST, 44-45 his RUSH FIST (the super fast DIVERGENT FIST on the run), 46-47 his crouched CONCENTRATED FIST: the UPPERCUT and the FACE KICK (measured against a body 30 px up), 38-43 his cursed energy mode moves: R.KICK, ELBOW, DOWNSLAM, PUSH KICK, CONCENTRATED FIST and the SWEEP) and for every body it can land on, this finds how far apart the two characters' anchors (the middle of the hips) can be while the limb the attacker has stretched out at the moment of impact (the two frames from the impact frame on) still overlaps the drawn body of the target. Both are compared ROW BY ROW, because a fist at chest height, a hanging arm and a foot all stop at different distances. Glow effects (Gojo's blue sparks) are not part of a limb. The target is its standing picture (the widest its idle animation gets in each row).
 Writes hitboxes.json: {attacker: {hit number: {target: the gap in px}}}; the game (HIT in tools/template.html) lands a hit when the gap is at most that.
 Run from the tools folder, after the art and tools/template.html are final:  python3 -B hitbox_art.py"""
 import base64, io, json, os, re
@@ -11,6 +11,7 @@ IMPACT = json.loads(re.search(r'ATK_IMPACT = (\[[^\]]*\])', tpl).group(1))      
 YU_IMP = json.loads(re.search(r'const YU_ATK = \{.*?imp: (\[\[.*?\]\]),', tpl).group(1))          # Yuji's impact frames per move ...
 YU_HIT = json.loads(re.search(r'const YU_ATK = \{.*?hit: (\[\[.*?\]\]),', tpl).group(1))          # ... and the hit numbers they land
 GOJO, YUJI, ART = json.load(open(P('side.json'))), json.load(open(P('yuji.json'))), json.load(open(P('story_art.json')))['vanim']
+FRED = Image.open(P('freddy_sheet.png')).convert('RGBA')                                              # Freddy's pictures (tools/freddy_art.py, 15 across): his M1 slashes are rows 8 (the claw) and 9 (the bare hand)
 CATART = json.load(open(P('story_art.json')))['cat']                                                 # the Cartoon Cat's strips (tools/cat_rig.py)
 AIRSHIFT = {47: 30}                                                                              # the FACE KICK (hit 47) lands on an enemy who is launched about 30 px up: the foot is measured against a body raised by that much
 FX = set('ghjk')                                                                                  # Gojo's glow letters: sparks, not limbs
@@ -35,6 +36,12 @@ def img_rows(im, fi):                                                           
         xs = [x for x in range(64) if c[x, y][3]]
         if xs: out[y] = max(xs) - 32
     return out
+def fred_rows(row, fi):                                                                           # a picture of Freddy's sheet: how far in front of his hips (column 31) the farthest pixel of every row is; his picture sits one row higher on the screen than Verity's, and the white arc of the slash above the hand is a trail, not a limb (from row 20 down)
+    c = FRED.crop((fi * 64, row * 64, fi * 64 + 64, row * 64 + 64)).load(); out = {}
+    for y in range(20, 64):
+        xs = [x for x in range(64) if c[x, y][3]]
+        if xs: out[y - 1] = max(xs) - 31
+    return out
 def widest(rows):                                                                                 # several frames -> the farthest each row ever gets
     out = {}
     for d in rows:
@@ -49,6 +56,7 @@ MOVES = {'gojo': {k: (lambda f, S=GOJO['atk%d' % k]: grid_rows(S, f, FX), IMPACT
          'yuji': {hk: (lambda f, S=YUJI['atk%d' % j], sh=AIRSHIFT.get(hk, 0): {r + sh: v for r, v in grid_rows(S, f).items()}, YU_IMP[j][i], 15) for j, hits in enumerate(YU_HIT) for i, hk in enumerate(hits)},
          'verity': {k: (lambda f, im=strip(n): img_rows(im, f), IMPACT[k], 15) for k, n in ((0, 'm0'), (1, 'm1'), (2, 'm2'), (3, 'm3'), (6, 'c0'), (7, 'c1'), (22, 'bite'))},
          'cat': {k: (lambda f, im=cat_strip(n), W=W, a=a: cat_rows(im, f, W, a), imp, 15) for k, n, W, a, imp in ((30, 'm0', 128, 36, 6), (31, 'm1', 128, 36, 7), (32, 'm0', 128, 36, 6), (33, 'm3', 128, 36, 8), (34, 'flatpunch', 64, 32, 6))}}      # (hits 30-34: the stretching grab, the punch, the grab again, the kick, the punch up from the floor)
+MOVES['freddy'] = {k: (lambda f, r=8 + k: fred_rows(r, f), IMPACT[k], 15) for k in (0, 1)}
 out = {}
 for att, moves in MOVES.items():
     out[att] = {}

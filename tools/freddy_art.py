@@ -156,16 +156,25 @@ def limbs(F, jobs, inner=False):
 def unit(v):
     r = max(np.hypot(v[0], v[1]), 1e-6); return (v[0] / r, v[1] / r)
 CLIP = [0]
+LAST = {}      # what the last render() drew: the tips of the three blades and the back hand (the slash trails follow them)
 def blades(G, W, u, sh, glint):
     """the three blades of the glove, fanning out along the forearm (u points from the elbow to the glove), swaying sh px at the tips; a glint (white) at position glint of the middle blade"""
-    v = (-u[1], u[0]); lens = (7, 9, 8)
+    v = (-u[1], u[0]); lens = (7, 9, 8); tips = []
     for i in range(3):
         o = (i - 1) * 1.8; p = (W[0] + u[0] * 2.0 + v[0] * o, W[1] + u[1] * 2.0 + v[1] * o); q = (p[0] + u[0] * lens[i] + v[0] * (i - 1) * 0.9 + sh * 0.5 * v[0], p[1] + u[1] * lens[i] + v[1] * (i - 1) * 0.9 + sh * 0.5 * v[1])
-        n = int(max(abs(q[0] - p[0]), abs(q[1] - p[1])) * 2) + 1
+        tips.append(q); n = int(max(abs(q[0] - p[0]), abs(q[1] - p[1])) * 2) + 1
         for j in range(n + 1):
             t = j / n; x = int(round(p[0] + (q[0] - p[0]) * t)); y = int(round(p[1] + (q[1] - p[1]) * t))
             CLIP[0] += not (0 <= y < 64 and 0 <= x < 64)
             if 0 <= y < 64 and 0 <= x < 64: G[y, x] = GLT if (i == 1 and glint is not None and abs(t - glint) < 0.12) else BLD
+    return tips
+def streak(G, p, q, c):
+    """a line of the slash trail from p to q in colour c (it only paints over empty pixels and the blades' own colour: the body stays in front)"""
+    n = int(max(abs(q[0] - p[0]), abs(q[1] - p[1])) * 2) + 1
+    for j in range(n + 1):
+        t = j / n; x = int(round(p[0] + (q[0] - p[0]) * t)); y = int(round(p[1] + (q[1] - p[1]) * t))
+        CLIP[0] += not (0 <= y < 64 and 0 <= x < 64)
+        if 0 <= y < 64 and 0 <= x < 64 and (G[y, x] < 0 or G[y, x] in (BLD, GLT)): G[y, x] = c
 def render(Pz):
     """one picture from a pose: hipY, legs ((x, y, toe angle) of the near and the far foot's lowest point, x from the hips), torso (turn in degrees, stretch), head (turn relative to the torso, dx, dy), hb (the back hand, from the back shoulder), gf (the glove, from the front shoulder), sway of the blades, glint"""
     HEAD, TORSO = pieces(); hy = Pz['hipY']; (fxn, fyn, an), (fxf, fyf, af) = Pz['legs']; F = -np.ones((64, 64), int)
@@ -177,15 +186,19 @@ def render(Pz):
     Eb, Wb = two_bone(Sb, (Sb[0] + hb[0], Sb[1] + hb[1]), LB1, LB2, lambda e: -e[0]); Ef, Wf = two_bone(Sf, (Sf[0] + gf[0], Sf[1] + gf[1]), LF1, LF2, lambda e: e[1])
     u0 = unit((Wf[0] - Ef[0], Wf[1] - Ef[1])); th = np.radians(Pz.get('wr', 14.0)); u = (u0[0] * np.cos(th) - u0[1] * np.sin(th), u0[0] * np.sin(th) + u0[1] * np.cos(th))      # (the blades lean wr degrees to the right of the forearm, 14 as a rule, more when the arm is up: the hand tips forward)
     LEGL = F; F = -np.ones((64, 64), int)      # the back arm is in front of the torso (behind it when bz is set: in a crouch it hangs down behind him) but behind the head, the claw arm in front of everything
-    bz = Pz.get('bz'); limbs(F, [(Sb, Eb, 5, 4.5, LB1, 'sleeve'), (Eb, Wb, 4.5, 3.5, LB2, 'sleeve')] + ([] if bz else [(Wb, Wb, 3, 3, 1, 'hand')])); BA = F.copy(); F = -np.ones((64, 64), int)
-    if bz: limbs(F, [(Wb, Wb, 3, 3, 1, 'hand')])      # (the hand stays in front of the body: it rests on his thigh)
+    bz = int(Pz.get('bz') or 0); limbs(F, [(Sb, Eb, 5, 4.5, LB1, 'sleeve'), (Eb, Wb, 4.5, 3.5, LB2, 'sleeve')] + ([] if bz == 1 else [(Wb, Wb, 3, 3, 1, 'hand')])); BA = F.copy(); F = -np.ones((64, 64), int)
+    if bz == 1: limbs(F, [(Wb, Wb, 3, 3, 1, 'hand')])      # (the hand stays in front of the body: it rests on his thigh)
     BH = F.copy(); F = -np.ones((64, 64), int)
     limbs(F, [(Sf, Ef, 5, 4.5, LF1, 'sleeve'), (Ef, Wf, 4.5, 3.5, LF2, 'sleeve'), ((Wf[0] - u0[0] * 1.2, Wf[1] - u0[1] * 1.2), (Wf[0] + u0[0] * 0.8, Wf[1] + u0[1] * 0.8), 3, 3, 1, 'glove')]); FA = F.copy()
     F = LEGL
-    if bz: F[BA >= 0] = BA[BA >= 0]; F[T >= 0] = T[T >= 0]; F[BH >= 0] = BH[BH >= 0]
-    else: F[T >= 0] = T[T >= 0]; F[BA >= 0] = BA[BA >= 0]
-    F[HEADL >= 0] = HEADL[HEADL >= 0]; F[FA >= 0] = FA[FA >= 0]
-    G = finish(F); blades(G, Wf, u, Pz.get('sway', 0.0), Pz.get('glint')); return G
+    if bz == 1: F[BA >= 0] = BA[BA >= 0]; F[T >= 0] = T[T >= 0]; F[BH >= 0] = BH[BH >= 0]
+    else: F[T >= 0] = T[T >= 0]; F[BA >= 0] = BA[BA >= 0] if bz != 2 else F[BA >= 0]
+    F[HEADL >= 0] = HEADL[HEADL >= 0]
+    if bz == 2: F[BA >= 0] = BA[BA >= 0]      # (2: the back arm is in front of the head too: the swipe)
+    F[FA >= 0] = FA[FA >= 0]
+    G = finish(F); LAST['tips'] = blades(G, Wf, u, Pz.get('sway', 0.0), Pz.get('glint')); LAST['hand'] = Wb; LAST['glove'] = Wf
+    for p, q, c in Pz.get('trail', ()): streak(G, p, q, c)
+    return G
 REST = dict(hipY=36.0, legs=((-1.5, 59.0, 0), (3.0, 59.0, 0)), torso=(0.0, 1.0), head=(0.0, 0.0, 0.0), hb=(0.0, 13.0), gf=(4.0, -2.0))
 def idle_frames():
     FR = []
@@ -213,7 +226,7 @@ def pose(k): return blend(KEYS, k)
 def from_pose(v, k):
     """the pose for render() from the numbers of a key pose (13 as in the jump keys; a 14th says the back arm is behind the torso)"""
     hipY, footY, xn, xf, ang, al, sy, bt, hbx, hby, gfx, gfy, wr = v[:13]
-    return dict(wr=wr, hipY=hipY, legs=((xn, footY, ang), (xf, footY, ang)), torso=(al, sy), head=(bt, 0.0, 0.0), hb=(hbx, hby), gf=(gfx, gfy), sway=0.8 * np.sin(2 * np.pi * k / 13.0), bz=len(v) > 13 and v[13] >= 0.5)
+    return dict(wr=wr, hipY=hipY, legs=((xn, footY, ang), (xf, footY, ang)), torso=(al, sy), head=(bt, 0.0, 0.0), hb=(hbx, hby), gf=(gfx, gfy), sway=0.8 * np.sin(2 * np.pi * k / 13.0), bz=(1 if len(v) > 13 and v[13] >= 0.5 else 0))
 def jump_frames(): return [render(from_pose(pose(k), k)) for k in range(40)]
 # THE CROUCH (v1.44), the stalker's crouch: low and hunched forward, the head down between the shoulders, the claw out in front near the knee, the other hand on his thigh, the feet apart (the near one back). Three animations of 15 pictures each: GOING DOWN (standing up plays them backwards and he holds the last one), FROM THE CROUCH INTO THE JUMP (it ends with the take-off picture of the jump) and FROM THE JUMP INTO THE CROUCH (it starts with the touch-down picture of the jump). Key poses as in the jump, with a 14th number: the back arm behind the torso (1) or in front of it (0).
 CROUCH = (45.5, 59.0, -4.0, 8.0, 0, 36.0, 0.97, -16.0, -1.4, 15.9, 6.9, 9.9, -20, 1)
@@ -229,8 +242,38 @@ def crouch_frames(keys, s0=0.0, s1=0.0):
     for k in range(15):
         u = k / 14.0; Pz = from_pose(blend(keys, k), k); Pz['sway'] = s0 * (1 - u) + s1 * u + 0.6 * np.sin(2 * np.pi * k / 13.0) * np.sin(np.pi * u); FR.append(render(Pz))
     return FR
+# THE M1 (v1.45): two slashes of 15 pictures each, with the whole game's M1 timing (the whoosh on picture 4, the blow on picture 7). SLASH 1 is the claw: it is drawn back high behind the head (the body leans back), then swept down and forward through the blow at chest height (the body throws itself forward), follows through and comes back. SLASH 2 is the other, BARE hand (only the glove has blades): it is drawn back low, then swiped forward and up at the height of the face. Slash lines (the blades' own paths, or three lines for the bare hand) trail behind the swing in light colours.
+REST_K = (36.0, 59.0, -1.5, 3.0, 0, 0.0, 1.0, 0.0, 0.0, 13.0, 4.0, -2.0, 14, 0)      # (the standing pose as key numbers)
+SL1_KEYS = [(0,) + REST_K, (2, 36.5, 59.0, -2.0, 3.5, 0, -5.0, 1.0, 2.0, -1.0, 12.5, 1.0, -8.0, 14, 0), (4, 37.0, 59.0, -2.5, 4.5, 0, -11.0, 1.0, 5.0, -2.0, 12.0, -3.0, -10.5, 10, 0), (5, 37.2, 59.0, -3.0, 5.5, 0, -3.0, 1.0, 2.0, -1.0, 12.0, 5.0, -10.0, 20, 0),
+            (6, 37.5, 59.0, -3.2, 6.0, 0, 8.0, 1.0, -3.0, 0.0, 12.5, 9.5, -5.0, 30, 0), (7, 37.8, 59.0, -3.5, 6.5, 0, 14.0, 0.99, -6.0, 0.0, 13.0, 11.5, 1.0, 38, 0), (8, 37.8, 59.0, -3.5, 6.5, 0, 16.0, 0.99, -7.0, 1.0, 13.0, 11.5, 6.0, 42, 0),
+            (10, 37.2, 59.0, -3.0, 5.5, 0, 12.0, 1.0, -5.0, 0.0, 13.0, 9.0, 10.5, 36, 0), (12, 36.6, 59.0, -2.2, 4.2, 0, 6.0, 1.0, -2.0, 0.0, 13.0, 6.5, 5.0, 24, 0), (14,) + REST_K]
+SL2_KEYS = [(0,) + REST_K, (2, 36.4, 59.0, -2.0, 3.5, 0, -3.0, 1.0, 1.0, -4.0, 12.0, 5.0, 3.0, 24, 0), (4, 37.0, 59.0, -2.5, 4.5, 0, -8.0, 1.0, 3.0, -10.0, 11.0, 6.0, 8.0, 36, 0), (5, 37.2, 59.0, -3.0, 5.5, 0, -1.0, 1.0, 1.0, -4.0, 6.0, 6.5, 8.5, 36, 0),
+            (6, 37.5, 59.0, -3.2, 6.0, 0, 8.0, 1.0, -3.0, 7.0, 3.0, 7.0, 9.0, 36, 0), (7, 37.8, 59.0, -3.5, 6.5, 0, 13.0, 0.99, -6.0, 16.5, 2.0, 7.0, 9.0, 36, 0), (8, 37.8, 59.0, -3.5, 6.5, 0, 15.0, 0.99, -7.0, 17.0, 3.5, 7.0, 9.0, 36, 0),
+            (10, 37.2, 59.0, -3.0, 5.5, 0, 11.0, 1.0, -5.0, 12.0, 6.0, 7.0, 7.0, 34, 0), (12, 36.6, 59.0, -2.2, 4.2, 0, 5.0, 1.0, -2.0, 6.0, 9.0, 5.5, 2.0, 24, 0), (14,) + REST_K]
+def slash_frames(keys, claw):
+    """15 pictures from key poses; claw = the glove hand slashes (its three blade tips leave the lines), otherwise the bare back hand does (three lines leave it). Two passes: the first finds where the tips go, the second draws the lines of the last three pictures behind them."""
+    pts = []; c0 = CLIP[0]
+    for k in range(15):
+        Pz = from_pose(blend(keys, k), k); render(Pz); pts.append([tuple(t) for t in LAST['tips']] if claw else [tuple(LAST['hand'])])
+    CLIP[0] = c0      # (only what the kept pictures lose counts)
+    out = []
+    for k in range(15):
+        Pz = from_pose(blend(keys, k), k); trail = []
+        if not claw and 4 <= k <= 10: Pz['bz'] = 2      # (the swipe passes in front of the body and the head)
+        for back in (1, 2, 3):
+            if k - back < 4 or k > 11: continue      # (the lines show from the start of the swing, picture 4, until picture 11)
+            col = GLT if back == 1 else BLD
+            for i in range(len(pts[k])):
+                p, q = pts[k - back][i], pts[k - back + 1][i]
+                if np.hypot(q[0] - p[0], q[1] - p[1]) < 1.2: continue
+                if claw: trail.append((p, q, col))
+                else:      # (the bare hand: three lines side by side)
+                    dx, dy = q[0] - p[0], q[1] - p[1]; r = max(np.hypot(dx, dy), 1e-6); nx, ny = -dy / r, dx / r
+                    for o in (-2.0, 0.0, 2.0): trail.append(((p[0] + nx * o, p[1] + ny * o), (q[0] + nx * o, q[1] + ny * o), col))
+        Pz['trail'] = trail; out.append(render(Pz))
+    return out
 def sheet(FR, FW, FJ, FC):
-    A = np.zeros((512, 64 * 15, 4), np.uint8)      # row 0: the idle, row 1: the walk, rows 2-4: the jump (frames 0-14, 15-29, 30-39), row 5: going down into the crouch, row 6: from the crouch into the jump, row 7: from the jump into the crouch
+    A = np.zeros((640, 64 * 15, 4), np.uint8)      # row 0: the idle, row 1: the walk, rows 2-4: the jump (frames 0-14, 15-29, 30-39), row 5: going down into the crouch, row 6: from the crouch into the jump, row 7: from the jump into the crouch, row 8: the claw slash, row 9: the slash with the bare hand
     def put(f, r, c):
         for v in range(16): A[r * 64:(r + 1) * 64, c * 64:(c + 1) * 64][f == v] = list(P[v].astype(int)) + [255]
     for i, f in enumerate(FR): put(f, 0, i)
@@ -240,7 +283,7 @@ def sheet(FR, FW, FJ, FC):
         for i, f in enumerate(fs): put(f, 5 + r, i)
     Image.fromarray(A).save('freddy_sheet.png'); return A
 if __name__ == '__main__':
-    U, RH, hx, gx, gy = upper(); print('hem', RH, 'hips', round(hx, 1)); FR = idle_frames(); FW = walk_frames(); FJ = jump_frames(); FC = [crouch_frames(CD_KEYS), crouch_frames(CJ_KEYS, 0.0, jump_sway(6)), crouch_frames(JC_KEYS, jump_sway(34), 0.0)]; A = sheet(FR, FW, FJ, FC)
+    U, RH, hx, gx, gy = upper(); print('hem', RH, 'hips', round(hx, 1)); FR = idle_frames(); FW = walk_frames(); FJ = jump_frames(); FC = [crouch_frames(CD_KEYS), crouch_frames(CJ_KEYS, 0.0, jump_sway(6)), crouch_frames(JC_KEYS, jump_sway(34), 0.0), slash_frames(SL1_KEYS, True), slash_frames(SL2_KEYS, False)]; A = sheet(FR, FW, FJ, FC)
     # contact sheets to look at, x2: the jump (8 x 5) and the three crouch animations (15 x 3)
     def contact(cells, cols, name):
         rows = (len(cells) + cols - 1) // cols; cs = np.zeros((64 * rows, 64 * cols, 4), np.uint8); cs[:] = [120, 116, 132, 255]
@@ -248,5 +291,5 @@ if __name__ == '__main__':
             r, c = divmod(i, cols); m = blk[:, :, 3] > 0; cs[r * 64:(r + 1) * 64, c * 64:(c + 1) * 64][m] = blk[m]
         Image.fromarray(cs).resize((cs.shape[1] * 2, cs.shape[0] * 2), Image.NEAREST).save(name)
     contact([A[(2 + i // 15) * 64:(3 + i // 15) * 64, (i % 15) * 64:(i % 15 + 1) * 64] for i in range(40)], 8, 'freddy_contact.png')
-    contact([A[(5 + r) * 64:(6 + r) * 64, i * 64:(i + 1) * 64] for r in range(3) for i in range(15)], 15, 'freddy_contact2.png')
+    contact([A[(5 + r) * 64:(6 + r) * 64, i * 64:(i + 1) * 64] for r in range(3) for i in range(15)], 15, 'freddy_contact2.png'); contact([A[(8 + r) * 64:(9 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact3.png')
     print('sheet', A.shape, 'blade pixels cut off:', CLIP[0], 'farthest ankle', round(REACH[0], 2), 'of', L1 + L2); assert CLIP[0] == 0 and REACH[0] <= L1 + L2 - 0.05

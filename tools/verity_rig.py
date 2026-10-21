@@ -110,6 +110,15 @@ def runp(f):
 def headp(f):      # the headless body: it sways and the arms twitch (the heart still pumps)
     w = 2 * math.pi * f / 15; s = math.sin(w); t = math.sin(w * 3 + 1)
     return {**idlep(f), 'nohead': 1, 'aL': ((21 + 1.5 * t, 34), (20 + 3 * t, 52 - 2 * abs(s))), 'aR': ((43 - 1.5 * t, 34), (44 - 3 * t, 52 - 2 * abs(t)))}
+# THE AIR BITE (v1.45, the POUNCE): 15 frames. In the air (the arms up and the legs tucked, as at the top of the jump) he turns his head down and opens his mouth wide, throws himself forward head first (the body leans further and further, the arms reach out, the legs trail behind), touches down on all fours with the jaws wide open (frame 8), the jaws SNAP shut on the enemy (frame 9: the impact), blood on the teeth, he holds the bite for a moment, then lets go and rises. The game lifts the picture by the height of the fall and slides it towards the enemy; the pictures show only the body.
+POUNCE = [(0, pose(**JUMPA)), (2, pose(hx=37, hy=8, sy=19, hp=38, lean=7, m=1, aL=((20, 24), (28, 14)), aR=((46, 24), (53, 16)), lL=((31, 44), (27, 51)), lR=((35, 44), (37, 51)))),
+          (4, pose(hx=44, hy=14, sy=22, hp=40, lean=12, m=1, aL=((42, 26), (49, 32)), aR=((46, 28), (53, 34)), lL=((30, 47), (20, 55)), lR=((36, 48), (27, 57)))),
+          (6, pose(hx=47, hy=21, sy=29, hp=44, lean=14, m=1, aL=((45, 37), (51, 45)), aR=((48, 39), (54, 47)), lL=((28, 49), (16, 55)), lR=((35, 51), (24, 58)))),
+          (8, pose(hx=49, hy=29, sy=36, hp=49, lean=13, m=1, aL=((46, 45), (51, 54)), aR=((50, 46), (54, 55)), lL=((27, 53), (14, 58)), lR=((36, 53), (25, 59)))),
+          (9, pose(hx=49, hy=30, sy=37, hp=50, lean=14, m=0.2, bl=1, aL=((47, 46), (52, 55)), aR=((51, 47), (55, 56)), lL=((27, 54), (14, 59)), lR=((37, 54), (26, 59)))),
+          (10, pose(hx=49, hy=30, sy=37, hp=50, lean=13, m=0, bl=1, aL=((47, 46), (52, 55)), aR=((51, 47), (55, 56)), lL=((27, 54), (14, 59)), lR=((37, 54), (26, 59)))),
+          (11, pose(hx=48, hy=30, sy=37, hp=50, lean=12, m=0, bl=1, aL=((46, 46), (51, 55)), aR=((50, 47), (54, 56)), lL=((27, 54), (14, 59)), lR=((37, 54), (26, 59)))),
+          (13, pose(hx=36, hy=14, sy=24, hp=43, lean=5, m=0.1, bl=0.5, aL=((26, 36), (24, 50)), aR=((44, 36), (46, 50)), lL=((29, 51), (28, 59)), lR=((35, 51), (36, 59)))), (14, pose())]
 A = {
  'idle': idlep, 'walk': walkp,
  'm0': lambda f: keys([(0, pose()), (3, pose(lean=-3, aR=((46, 28), (52, 12)))), (6, pose(lean=2, aR=((50, 26), (56, 16)))), (7, pose(lean=5, aR=((54, 32), (60, 40)))), (9, pose(lean=5, aR=((54, 34), (59, 44)))), (14, pose())], f),
@@ -119,6 +128,7 @@ A = {
  'crouch': lambda f: keys(CROUCH, f), 'c0': lambda f: keys(CLAW1, f), 'c1': lambda f: keys(CLAW2, f),
  'block': lambda f: keys([(0, pose()), (5, pose(aL=((22, 26), (31, 12)), aR=((42, 26), (33, 12)))), (14, pose(aL=((22, 26), (31, 12)), aR=((42, 26), (33, 12))))], f),
  'bite': lambda f: keys([(0, pose()), (5, pose(lean=-3, hx=30, hy=5, m=1, aL=((18, 34), (14, 50)), aR=((46, 34), (50, 50)))), (8, pose(lean=9, hx=44, hy=11, m=1, aL=((18, 34), (14, 50)), aR=((46, 34), (52, 48)))), (10, pose(lean=9, hx=45, hy=12, m=0.2)), (14, pose())], f),
+ 'pounce': lambda f: keys(POUNCE, f),
  'hurt': lambda f: keys([(0, pose()), (3, pose(lean=-6, hx=29, hy=8, m=0.6, aL=((16, 28), (10, 22)), aR=((48, 28), (54, 22)))), (8, pose(lean=-5, hx=30, hy=8, m=0.4, aL=((17, 30), (12, 28)), aR=((47, 30), (52, 28)))), (14, pose())], f),
  'seize': lambda f: keys([(0, pose()), (3, pose(lean=3, hy=7.5, aR=((50, 26), (60, 30)))), (5, pose(lean=3, hy=7.5, aR=SEIZE)), (7, pose(lean=-3, hx=29, hy=5, m=1, aR=SEIZE)), (9, pose(lean=10, hx=50, hy=14, m=1, aR=SEIZE)), (10, pose(lean=11, hx=55, hy=16, m=0, bl=1, aR=SEIZE)), (12, pose(lean=8, hx=50, hy=13, m=0.15, bl=1, aR=SEIZE)), (14, pose(lean=2, hx=40, hy=9, m=0.3, bl=1, aR=((46, 28), (50, 38))))], f),      # the DEATH: the arm reaches out and grips Gojo's throat (5), the head draws back, jaws wide (7), lunges (9) and the jaws shut on his head (10), pulls back, bloody (12), lets go (14)
  'jump': lambda f: keys([(0, pose()), (3, pose(**JUMPC)), (5, pose(**JUMPA)), (10, pose(**{**JUMPA, 'lean': 1})), (12, pose(**JUMPC)), (14, pose())], f),      # (playable Verity: crouch, push off, in the air with the arms up and the legs tucked, land)
