@@ -486,6 +486,50 @@ function makeSfx(ac) {
       [[55, 0.5], [110, 0.3], [164, 0.22], [233, 0.16], [331, 0.1]].forEach(([f, g], i) => tone(B.deep, t, { f, f2: f * 0.985, dur: 2.2 - i * 0.25, gain: g, atk: 0.004 }));
       burst(B.soft, t, { f: 1800, f2: 400, q: 1.2, dur: 0.3, gain: 0.4, atk: 0.001 });
     },
+    yfbf(n, at) {                                        // YUJI'S FATALITY: blow n (1 to 8) of the BLACK FLASHES: a hard crack, a deep thump that gets deeper, a zap of lightning and a bell that climbs a step with every blow (the eighth has its own, yfbig)
+      const t = T(at), B = C.atk; n = Math.max(1, Math.min(8, n || 1)); const pit = Math.pow(1.0595, n * 2);
+      burst(B.soft, t, { type: 'highpass', f: 1800, f2: 5600, q: 0.8, dur: 0.14, gain: 0.9 + 0.05 * n, atk: 0.001 });
+      tone(B.deep, t, { type: 'triangle', f: 132 - 4 * n, f2: 30, dur: 0.5 + 0.04 * n, gain: 0.5 + 0.045 * n, atk: 0.003 });
+      tone(B.deep, t, { f: 240, f2: 70, dur: 0.1, gain: 0.34, atk: 0.002 });
+      tone(B.soft, t, { type: 'sawtooth', f: 2600 + 140 * n, f2: 260, dur: 0.17, cur: 1, gain: 0.12, atk: 0.002 });
+      burst(B.soft, t + 0.01, { f: 900, f2: 90, q: 0.7, dur: 0.26, gain: 2.2 + 0.2 * n, atk: 0.001 });
+      tone(B.soft, t + 0.03, { f: 520 * pit, f2: 500 * pit, dur: 0.8, cur: 1, gain: 0.07, atk: 0.004 });
+      tone(B.soft, t + 0.03, { f: 1040 * pit, f2: 1000 * pit, dur: 0.6, cur: 1, gain: 0.03, atk: 0.004 });
+      if (n >= 4) burst(B.deep, t, { type: 'lowpass', f: 700, f2: 60, q: 0.7, dur: 0.4 + 0.1 * n, gain: 0.6, atk: 0.004 });
+    },
+    yfbig(at) {                                          // YUJI'S FATALITY, the ELITE FINISHER: a colossal boom that falls through the floor, a crack that tears the air, a long rumble, a ringing and debris coming down
+      const t = T(at), B = C.ce;
+      tone(B.deep, t, { type: 'triangle', f: 90, f2: 14, dur: 3.2, gain: 0.85, atk: 0.003 });
+      tone(B.deep, t, { f: 240, f2: 34, dur: 0.7, gain: 0.5, atk: 0.002 });
+      tone(B.deep, t + 0.02, { type: 'sine', f: 52, f2: 20, dur: 2.6, gain: 0.6, atk: 0.01 });
+      burst(B.deep, t, { f: 4200, f2: 90, q: 0.6, dur: 1.5, gain: 1.4, atk: 0.001 });
+      burst(B.deep, t, { type: 'lowpass', f: 500, f2: 36, q: 0.7, dur: 2.8, gain: 1.1, atk: 0.004 });
+      burst(B.soft, t, { type: 'highpass', f: 2400, f2: 7000, q: 0.8, dur: 0.5, gain: 1.0, atk: 0.001 });
+      for (let k = 0; k < 18; k++) burst(B.deep, t + 0.03 + k * 0.05, { f: R(1200, 6200), q: 2.2, dur: R(0.02, 0.07), gain: R(0.25, 0.5), atk: 0.001 });
+      for (let k = 0; k < 16; k++) burst(B.deep, t + 0.5 + k * R(0.07, 0.16), { f: R(300, 2400), q: 1.8, dur: R(0.03, 0.09), gain: R(0.1, 0.3), atk: 0.001 });
+      tone(B.soft, t + 0.1, { f: 3150, f2: 3080, dur: 3.4, gain: 0.05, atk: 0.2 });
+      tone(B.soft, t + 0.1, { f: 1580, f2: 1560, dur: 3.0, gain: 0.04, atk: 0.2 });
+    },
+    yfrise(dur, at) {                                    // the charge of the last blow: a long rush of air and a saw that climbs for dur seconds, with a quickening pulse underneath
+      const t = T(at), B = C.ce; dur = dur || 3;
+      burst(B.soft, t, { type: 'bandpass', f: 300, f2: 5200, q: 1.1, dur, gain: 0.7, atk: dur * 0.5 });
+      tone(B.soft, t, { type: 'sawtooth', f: 90, f2: 880, dur, cur: 1, gain: 0.07, atk: dur * 0.4 });
+      tone(B.deep, t, { type: 'sine', f: 45, f2: 90, dur, cur: 1, gain: 0.3, atk: dur * 0.3 });
+      for (let k = 0, x = 0, gap = 0.5; x < dur - 0.3; k++) { tone(B.deep, t + x, { type: 'triangle', f: 80, f2: 38, dur: 0.22, gain: 0.2 + 0.25 * x / dur, atk: 0.004 }); gap = Math.max(0.12, gap * 0.84); x += gap; }
+    },
+    yfscore(stop, at) {                                        // YUJI'S FATALITY: the music under the 30 seconds, made on the spot: a deep drone that climbs, a pad that opens up, and a heartbeat that gets faster and faster until it stops just before the last blow
+      stop = stop || 22.6; const t = T(at), B = C.ce, bed = ac.createGain(); bed.gain.setValueAtTime(0.0001, t); bed.gain.linearRampToValueAtTime(1, t + 1.2); bed.connect(B.deep);
+      if (st.bed) { try { st.bed.gain.setTargetAtTime(0, t, 0.05); } catch (e) { /* gone already */ } } st.bed = bed;
+      const osc = (type, f0, f1, g, dur) => { const o = ac.createOscillator(), a = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur); a.gain.value = g; o.connect(a); a.connect(bed); o.start(t); o.stop(t + dur + 0.1); return a; };
+      const d1 = osc('sine', 41, 62, 0.26, 28), lfo = ac.createOscillator(), lg = ac.createGain(); lfo.frequency.value = 0.19; lg.gain.value = 0.1; lfo.connect(lg); lg.connect(d1.gain); lfo.start(t); lfo.stop(t + 28.1);
+      osc('triangle', 82, 124, 0.07, 28);
+      const pad = ac.createBiquadFilter(); pad.type = 'lowpass'; pad.Q.value = 0.8; pad.frequency.setValueAtTime(260, t); pad.frequency.exponentialRampToValueAtTime(2400, t + stop); pad.connect(bed);
+      for (const d of [1, 1.0075, 0.9925]) { const o = ac.createOscillator(), a = ac.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(110 * d, t); o.frequency.exponentialRampToValueAtTime(164 * d, t + stop); a.gain.setValueAtTime(0.0001, t); a.gain.linearRampToValueAtTime(0.035, t + stop * 0.6); a.gain.linearRampToValueAtTime(0.06, t + stop); a.gain.linearRampToValueAtTime(0.0001, t + stop + 0.6); o.connect(a); a.connect(pad); o.start(t); o.stop(t + stop + 0.8); }
+      for (let k = 0, x = 0.5, gap = 1.1; x < stop; k++) { tone(bed, t + x, { type: 'triangle', f: 74, f2: 38, dur: 0.3, gain: 0.3, atk: 0.004 }); tone(bed, t + x + 0.2, { type: 'triangle', f: 66, f2: 36, dur: 0.26, gain: 0.18, atk: 0.004 }); gap = Math.max(0.5, gap * 0.955); x += gap; }
+    },
+    yfstop(at) {                                         // the score stops (the cutscene was skipped or is over)
+      const t = T(at); if (st.bed) { st.bed.gain.cancelScheduledValues(t); st.bed.gain.setTargetAtTime(0, t, 0.08); st.bed = null; }
+    },
     setVol(name, v) {                                    // per-sound volume, 0 = silent, 1 = designed level, 2 = twice as loud
       vol[name] = v;
       if (name === 'master') applyMaster();

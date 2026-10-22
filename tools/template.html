@@ -61,7 +61,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #sns{display:none;grid-area:3/1;border-color:#4fe3ff;color:#7af0ff}#sns span{color:#b8f4ff}#sns.cd{opacity:.4}
 #fat{display:none;grid-area:2/1;border-color:#ff4a3a;color:#ff6a5a;opacity:.38}#fat span{color:#ffb4a8}#fat svg{width:4.5vh;height:4.5vh}      /* FATALITY: only in a match, to the left of BLOCK; dark until the enemy is at 20% health or less and close, then it glows */
 .col.vs{grid-template-columns:auto auto auto}.col.vs #fat{display:flex}
-.col.yj .pb:not(#atk):not(#dash):not(#lap):not(#blk):not(#ce):not(#sns):not(#dom){opacity:.3}.col.yj #dom{border-color:#ff3a4a;color:#ff7a8a}.col.yj #dom span{color:#ffb0b8}.col.yj #dom::after{background:rgba(255,58,74,.38)}.col.kt #ce{opacity:.3}.col.kt #dom{border-color:#ff5a8a;color:#ff8fb0}.col.kt #dom span{color:#ffc0d4}.col.kt #dom::after{background:rgba(255,90,138,.38)}.col.kt #dom.on{border-color:#ffd0e0;color:#fff}.col.vy #dom{border-color:#ff5a5a;color:#ff8a8a}.col.vy #dom span{color:#ffb4b4}.col.vy #dom::after{background:rgba(255,80,80,.38)}.col.vy #dom.on{border-color:#ffd0d0;color:#fff}      /* playing Verity the DOMAIN button is his JUMPSCARE (red, with the same wait-fill); the FATAL button is the same as Gojo's */
+.col.yj .pb:not(#atk):not(#dash):not(#lap):not(#blk):not(#ce):not(#sns):not(#dom):not(#fat){opacity:.3}.col.yj #dom{border-color:#ff3a4a;color:#ff7a8a}.col.yj #dom span{color:#ffb0b8}.col.yj #dom::after{background:rgba(255,58,74,.38)}.col.kt #ce{opacity:.3}.col.kt #dom{border-color:#ff5a8a;color:#ff8fb0}.col.kt #dom span{color:#ffc0d4}.col.kt #dom::after{background:rgba(255,90,138,.38)}.col.kt #dom.on{border-color:#ffd0e0;color:#fff}.col.vy #dom{border-color:#ff5a5a;color:#ff8a8a}.col.vy #dom span{color:#ffb4b4}.col.vy #dom::after{background:rgba(255,80,80,.38)}.col.vy #dom.on{border-color:#ffd0d0;color:#fff}      /* playing Verity the DOMAIN button is his JUMPSCARE (red, with the same wait-fill); the FATAL button is the same as Gojo's */
 .col.vs #dom{grid-area:1/2}.col.vs #ce{grid-area:1/3}.col.vs #blk{grid-area:2/2}.col.vs #lap{grid-area:2/3}.col.vs #dash{grid-area:3/2}.col.vs #atk{grid-area:3/3}
 #fat.rdy{opacity:1;background:#3a0d12;border-color:#ff8a7a;color:#fff;box-shadow:0 0 1.8vh #ff4a3a,0 0 .5vh #ff4a3a inset,4px 4px 0 #000;animation:fatglow .5s steps(2) infinite}
 @keyframes fatglow{50%{box-shadow:0 0 3.2vh #ff2a2a,0 0 .9vh #ff2a2a inset,4px 4px 0 #000}}
@@ -137,7 +137,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.48</small>
+    <small id="ver">V1.49</small>
   </div>
 </section>
 
@@ -572,6 +572,7 @@ const SK_YUJI = [      // (v1.11) the moves of Yuji, bought like Gojo's; only wa
   ['y_cleave', 'GRAB CLEAVE', 'INHERITENCE, WALKING FORWARD + BLUE: GRAB THE ENEMY AND CLEAVE HIM, HE BLEEDS (25% ENERGY)', 500, ['y_inherit']],
   ['y_simple', 'SIMPLE DOMAIN', 'INHERITENCE, IN THE AIR + BLUE: A CYAN CIRCLE ROUND HIM: DOMAIN EXPANSIONS DO NOTHING UNTIL HE IS HIT (30% ENERGY)', 600, ['y_inherit']],
   ['y_ult', 'BLACK FLASH ULTIMATE', 'THE DOMAIN BUTTON: JUMP AT THE ENEMY WITH FOUR BLACK FLASHES IN A ROW: A LEAP WITH A BLOW TO THE STOMACH, A CHARGED KICK IN THE AIR, A HAND SLASH AND A HUGE CHARGED PUNCH. ABOUT 150 DAMAGE (67% ENERGY, 30 SECOND COOLDOWN)', 1500, ['y_flash']],
+  ['y_fatal', 'FATALITY', 'THE FATAL BUTTON: FINISH A WEAK ENEMY (20% HEALTH OR LESS, CLOSE) IN A 30 SECOND CUTSCENE OF EIGHT BLACK FLASHES, THE LAST ONE HUGE. EVERY ENEMY GETS ITS OWN (50% ENERGY)', 1000, ['y_flash']],
   ['y_heavy', 'HEAVY STRIKE', 'KEEP ATTACK HELD AFTER A HIT: THE LAST M1 WITH 1.6 TIMES THE DAMAGE THAT BREAKS A GUARD AND FILLS THE STAGGER BAR', 120, []],
   ['y_cancel', 'DASH CANCEL', 'DASH DURING A SWING THAT HIT: IT STOPS, +4% ENERGY AND +20 FLOW', 100, ['y_dash']],
   ['y_sense', 'CURSE SENSE', 'IN HUNTS: THE SENSE BUTTON SHOWS EVERY HIDDEN ITEM, CLUE AND CURSE NEAR YOU FOR 3 SECONDS (8 SECOND COOLDOWN)', 300, []]];
@@ -603,7 +604,7 @@ const SK_CAT = [
 const SKN = {}; for (const s of [].concat(SK_GOJO, SK_YUJI, SK_VERITY, SK_CAT, SK_CHAR)) SKN[s[0]] = s[1];
 const GATE = {      // for each fighter the skill each button needs (a button that is not listed is free): cr crouch, dash, blk block, cp crouched punches, ce MODE, dom DOMAIN, fat FATALITY, bl BLUE (Verity and the Cat; Gojo's and Yuji's BLUE depends on the mode, the air and the stance: gateBlue)
   g: { cr: 'crouch', dash: 'dash', blk: 'block', cp: 'cpunch', ce: 'ce', dom: 'domain', fat: 'fatal', hv: 'heavy', cn: 'cancel', sn: 'sense' },
-  y: { cr: 'y_crouch', dash: 'y_dash', blk: 'y_block', cp: 'y_cpunch', ce: 'y_ce', hv: 'y_heavy', cn: 'y_cancel', sn: 'y_sense', dom: 'y_ult' },
+  y: { cr: 'y_crouch', dash: 'y_dash', blk: 'y_block', cp: 'y_cpunch', ce: 'y_ce', hv: 'y_heavy', cn: 'y_cancel', sn: 'y_sense', dom: 'y_ult', fat: 'y_fatal' },
   v: { cr: 'v_crouch', dash: 'v_tele', blk: 'v_block', ce: 'v_ball', dom: 'v_scare', fat: 'v_fatal', bl: 'v_bite', hv: 'v_heavy', cn: 'v_cancel', ac: 'v_air', sn: 'v_sense' },
   k: { cr: 'k_crouch', dash: 'k_dash', blk: 'k_block', dom: 'k_ult', fat: 'k_fatal', bl: 'k_toon', hv: 'k_heavy', cn: 'k_cancel', sn: 'k_sense' } };
 const BLUES = { g: ['blue', 'tele', 'mblue'], y: ['y_div', 'y_sweep', 'y_rush', 'y_conc', 'y_elbow', 'y_upper', 'y_flash'], v: ['v_bite'], k: ['k_toon'] };
@@ -926,7 +927,7 @@ const SK_TABS = [['g', 'skTabG', SK_GOJO], ['y', 'skTabY', SK_YUJI], ['v', 'skTa
 // ---------------------------------------------------------------- v1.25 THE SKILL TREE: the SKILLS page draws every fighter as a tree. The root is the fighter (Gojo is free, the others are bought like before), every skill is a node, and a line joins a node to the skills it needs: buy a node and the nodes after it open. A tap on a node shows it on the right, UNLOCK buys it. A skill with nothing in front of it hangs on the root.
 const SK_LAY = {      // where every node sits, [column, row] (the root is column 0): a line runs from the right edge of a skill a node needs to the left edge of the node, so the cells in between have to be empty
   g: { _root: [0, 2.5], crouch: [1, 0], cpunch: [2, 0], blue: [1, 1], mblue: [2, 1], dash: [1, 2], tele: [2, 2], purple: [3, 2.5], block: [1, 3], ce: [1, 4], red: [2, 4], fatal: [1, 5], domain: [2, 5], heavy: [1, 6], cancel: [2, 3], sense: [1, 7] },
-  y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 4.5], y_pierce: [5, 3], y_shrine: [5, 4], y_cleave: [5, 5], y_simple: [5, 6], y_ult: [4, 5.7], y_div: [1, 6], y_rush: [2, 6], y_heavy: [1, 4.7], y_cancel: [3, 1.5], y_sense: [1, 7] },
+  y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 4.5], y_pierce: [5, 3], y_shrine: [5, 4], y_cleave: [5, 5], y_simple: [5, 6], y_ult: [4, 5.7], y_fatal: [4, 6.7], y_div: [1, 6], y_rush: [2, 6], y_heavy: [1, 4.7], y_cancel: [3, 1.5], y_sense: [1, 7] },
   v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5], v_heavy: [1, 4.5], v_cancel: [3, 0.8], v_air: [2, 4.5], v_pounce: [3, 3.5], v_sense: [1, 5.6] },
   k: { _root: [0, 1], k_crouch: [1, 0], k_fatal: [3, 0], k_dash: [1, 1], k_toon: [2, 1], k_stomp: [3, 1], k_block: [1, 2], k_ult: [3, 2], k_heavy: [1, 3], k_cancel: [2, 0], k_sense: [1, 4] },
   c: { _root: [0, 1], yuji: [1, 0], verity: [1, 1], cat: [1, 2] } };
@@ -1171,7 +1172,7 @@ function show(s) {
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll(); $('settings').classList.remove('on');
-  js = null; vf = null; if (cf) cfReset(); if (ke) keReset(); blindOff = false; bfo = null; bfp = false; ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; inhAt = -1; inhLock = false; inhArm = -1; smd = null; impf = null; tqBlock = null; tqGrab = null; tqBeam = []; tqFx = []; ceOn = false; ceAmt = 0; ceFlameAt = 0; gDownUntil = 0; gAir = null; gAirH = 0; kickBuf = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
+  js = null; vf = null; if (yf) yfReset(); if (cf) cfReset(); if (ke) keReset(); blindOff = false; bfo = null; bfp = false; ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; inhAt = -1; inhLock = false; inhArm = -1; smd = null; impf = null; tqBlock = null; tqGrab = null; tqBeam = []; tqFx = []; ceOn = false; ceAmt = 0; ceFlameAt = 0; gDownUntil = 0; gAir = null; gAirH = 0; kickBuf = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
   if (s === 'play') { spawnAt = pnow(); wx = 0; wvx = 0; deb = []; lit = []; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; sparks = []; stopMs = 0; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(pnow(), 1200);
@@ -2209,7 +2210,7 @@ function comboEscape(now) {      // every frame, before the controls are gated
 function stateDraw(now) {      // the tracker, over the picture: green FREE or red (it blinks), a yellow DASH! when a dash can get you out, the seconds of the cooldown while the dash is locked; and the same seconds on the DASH button
   const b = $('dash'), cd = now < dgLock ? Math.ceil((dgLock - now) / (1000 * paceBase())) : 0;
   if (b && (+b.dataset.cd || 0) !== cd) { b.dataset.cd = cd || ''; b.classList.toggle('cd', cd > 0); }
-  if (state !== 'play' || (vs && vs.ph !== 'fight')) return;
+  if (state !== 'play' || yf || (vs && vs.ph !== 'fight')) return;
   const why = redWhy(now), red = !!why, x = vs ? Math.max(60, Math.min(96, (VW - 52) >> 1)) + 10 : 6, h = vs && vs.rush ? 9 : 10, y = vs ? (vs.rush ? 30 : 21) : 20, pulse = red && ((now / 140) | 0) % 2 === 0;
   ctx.save(); ctx.globalAlpha = 1; ctx.fillStyle = '#000'; ctx.fillRect(x - 1, y - 1, 42, h + 2); ctx.fillStyle = red ? (pulse ? '#ff3a3a' : '#b01c1c') : '#2fb868'; ctx.fillRect(x, y, 40, h);
   pxt(red ? (why === 'hit' ? 'HIT' : why === 'down' ? 'DOWN' : why === 'held' ? 'HELD' : 'STUN') : 'FREE', x + 20, y + h - 1, '#ffffff', 8, 'center');
@@ -2391,16 +2392,16 @@ function fatSets(rev) {                                // the pictures of the at
 let fat = null, fatReq = 0;                            // fat = the running cutscene (null when there is none); fatReq = until when a press of the FATALITY button is remembered
 const orbAt = (set, n, sx, sy, s) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));      // an orb frame centred on (sx, sy)
 function fatState(now) {                               // Gojo's FATALITY (and Verity's). 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far away; 3 = not possible right now
-  if (!vs || vs.story || vs.cv || vs.me === 'yuji' || lacks('fat') || vs.ph !== 'fight' || js || vf || fat || dom || ult || cf || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (Verity and the Cat have their own FATALITY: the same rules; Yuji has none)      // (no FATALITY in the story fight: his ending is a Reversal Red)
+  if (!vs || vs.story || vs.cv || lacks('fat') || vs.ph !== 'fight' || js || vf || fat || yf || yu || dom || ult || cf || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (Verity and the Cat have their own FATALITY: the same rules; so has Yuji since v1.49, the 30-second one)      // (no FATALITY in the story fight: his ending is a Reversal Red)
   if (!(dummy.hp <= dummy.max * FAT_LOW)) return 1;      // Gojo's FATALITY: only when the enemy is at 20% health or less
   if (Math.abs(dummy.x - wx) > FAT_RANGE) return 2;
   return hurtAt >= 0 || gojoGone ? 3 : 0;
 }
 function fatAiState(now) {                             // the enemy's own FATALITY on Gojo: from SEMI-GRADE 1 up, the moment Gojo is at 20% health or less and the enemy is close (no warning; being in the air, dashing or out of reach saves him)
-  if (!vs || vs.story || vs.foe === 'yuji' || vs.ph !== 'fight' || js || vf || fat || dom || ult || cf || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.cact || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
+  if (!vs || vs.story || vs.foe === 'yuji' || vs.ph !== 'fight' || js || vf || fat || yf || dom || ult || cf || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.cact || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
   return vs.hp <= PHP * FAT_LOW && Math.abs(dummy.x - wx) <= FAT_RANGE && !gojoGone && gojoLift <= 12 && dgAt < 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
 }
-function fatGo(now, dt, rev) { if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else if (rev ? vs.foe === 'cat' : vs.me === 'cat') { cfStart(now, rev); cfFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's and the Cat's FATALITY are their own cutscenes)
+function fatGo(now, dt, rev) { if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else if (rev ? vs.foe === 'cat' : vs.me === 'cat') { cfStart(now, rev); cfFrame(now, dt); } else if (!rev && vs.me === 'yuji') { yfStart(now); yfFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's and the Cat's FATALITY are their own cutscenes)
 function fatUI(now) {                                  // the button: only in a match, dark until it can be used, then it glows
   const col = $('fat').parentNode; col.classList.toggle('vs', !!vs); col.classList.toggle('vy', !!vs && vs.me === 'verity'); col.classList.toggle('yj', !!vs && vs.me === 'yuji'); col.classList.toggle('kt', !!vs && vs.me === 'cat'); col.classList.toggle('nt', !!vs && !!vs.net); $('hud').classList.toggle('vs', !!vs); $('pauseBtn').style.display = vs && vs.net ? 'none' : ''; if (vs) $('fat').classList.toggle('rdy', fatState(now) === 0);
 }
@@ -3780,6 +3781,7 @@ function yuJumpStep(now, jf, hf) {      // Yuji, every frame, once the jump's fr
 }
 // ---------------------------------------------------------------- v1.46 YUJI'S ULTIMATE (skill y_ult, 1500 coins, needs BLACK FLASH; the DOMAIN button, which did nothing for Yuji before: 67% of the energy, 30 s between two, the enemy in front within 44 px, standing in the open, not in a RUSH). FOUR BLACK FLASHES while the enemy is held (frozen, so none can miss): 1 (20 damage) a LEAP with a blow to the stomach: the enemy is thrown up with him (strip 28); 2 (25) in the air he charges his leg and KICKS (the BLACK FLASH KICK, strip 21); 3 (30) he leaps again with one hand up and CHOPS down with it (strip 29): the enemy is slammed back to the floor; 4 (75) he lands and charges a punch, the CHARGED BLACK FLASH (strip 23), that hits very hard: 150 in all. Most of the effects are on the last one (yuBig, drawYuBig). The controller (yuTick) drives the swing the game already knows (atkK / atkAt), so the pictures, whooshes and sparks are the normal ones; it applies the blows itself (the normal impact handler is skipped while it runs), lifts Yuji and the enemy, and gives no control back until it is over.
 for (const j of [28, 29, 30, 31]) { YU.atk[j] = YU['atk' + j]; YUF.norm.atk[j] = mk(YU['atk' + j], YU.pal); YUF.inv.atk[j] = mk(YU['atk' + j], yuInv(YU.pal)); }      // (strips 28 = the LEAP, 29 = the HAND SLASH, tools/yuji_art.py)
+YU.fx = {}; YUF.norm.fx = {}; for (const n of ['fx_charge', 'fx_pose', 'fx_dive']) { YU.fx[n] = YU[n]; YUF.norm.fx[n] = mk(YU[n], YU.pal); }      // v1.49 the three pictures only Yuji's FATALITY shows (tools/yuji_art.py: the charge, the pose after the last blow, the dive kick)
 YU_ATK.names.push('U.LEAP', 'U.SLASH'); YU_ATK.fps.push(34, 32); YU_ATK.swing.push([4], [5]); YU_ATK.imp.push([], []); YU_ATK.hit.push([], []); YU_ATK.reach.push(0, 0);      // (no impact frames and hits of their own: the ultimate lands its blows by itself)
 YU_ATK.names.push('C.JAB', 'C.UPPR'); YU_ATK.fps.push(38, 38); YU_ATK.swing.push([3], [3]); YU_ATK.imp.push([6], [7]); YU_ATK.hit.push([6], [7]); YU_ATK.reach.push(16, 16);      // v1.48 YUJI'S CROUCH PUNCHES: swings 30 (R.JAB, strip 30) and 31 (L.UPPR, strip 31), the same hits as Gojo's crouch punches (6 and 7: 10 and 13 damage, they reach a crouching enemy); 38 pictures a second like the other M1 moves
 const YUT = { cd: 30000, reach: 44, near: 21, dmg: [20, 25, 30, 75], k: [28, 21, 29, 23], next: [13, 12, 14.7], imp: [7, 7, 7, 9], hov: 24, pop: 3, rise: 0.25, fall: 0.24 };      // damage of the four blows (150), the strip of each, the frame of the strip at which the next beat starts, the impact frame, how high the enemy hangs (px), the pop of the kick, the seconds he takes to rise and to fall
@@ -3866,9 +3868,11 @@ function drawYuBig(now) {      // the charge of the last punch (game clock: the 
   }
   ctx.globalAlpha = 1;
 }
+__YFAT__
 function drawScene(now, dt) {
   fatUI(now);
   if (fat) { fatFrame(now, dt); return; }       // the FATALITY cutscene replaces the whole scene while it plays
+  if (yf) { yfFrame(now, dt); return; }         // ...and so does Yuji's (30 seconds, eight BLACK FLASHES)
   if (se) { seFrame(now, dt); return; }         // ...and so does the red ending of the story
   if (de) { deFrame(now, dt); return; }         // ...and Gojo's death
   if (js) { jsFrame(now, dt); return; }         // ...and the JUMPSCARE
@@ -4851,7 +4855,7 @@ window.__story = () => story ? ({ T: +(story.T || 0).toFixed(2), battle: !!story
 // ---------------------------------------------------------------- v1.30 A FASTER GAME. GAME PACE (SETTINGS > GAME: NORMAL / FAST 1.25x / TURBO 1.5x, FAST is the default): in a fight everything runs faster than the real clock (walking, swings, the enemy, the cooldowns, the combo window), but the round timer and the 10 seconds of the Inheritence still count real seconds; not in the Wi-Fi fight, the story, cutscenes (FATALITY, JUMPSCARE, DOMAIN, the ULTIMATE) or the menus. PARRY: slow motion and a free counter. DODGE: a dash just before a blow gives energy. PRESSURE: the longer you do not hurt the enemy, the shorter his rests. SPEED BONUS: a RUSH or ROULETTE wave cleared under its par time pays extra.
 const PACE_X = [1, 1.25, 1.5], E_DODGE = 8;
 const paceBase = () => state === 'play' && SET.pace && !(vs && (vs.net || vs.story)) ? PACE_X[SET.pace] : 1;      // (the pace of this kind of fight: not the Wi-Fi fight, not the story)
-const paceNow = () => (!vs || vs.ph === 'fight') && !fat && !se && !de && !js && !vf && !cf && !ke && !dom && !ult ? paceBase() : 1;      // (how many times faster than the real clock the game runs right now: 1 in a cutscene and between the rounds)
+const paceNow = () => (!vs || vs.ph === 'fight') && !fat && !yf && !se && !de && !js && !vf && !cf && !ke && !dom && !ult ? paceBase() : 1;      // (how many times faster than the real clock the game runs right now: 1 in a cutscene and between the rounds)
 let ctr = null, ctrBoost = 0, dodgeAt = -1e9;      // ctr = { at, until }: the free counter that follows a PARRY; ctrBoost: the time stamp (atkAt) of that counter's swing, the hits of that swing do 1.5 times the damage; dodgeAt: the last DODGE reward
 function strikeBack(now) {      // the LAST M1 of your combo, lunging at the enemy so that it reaches (the combo escape and the free counter of a parry)
   if (!dummy || dummy.ko >= 0) return false;
@@ -5747,6 +5751,7 @@ $('lsFight').addEventListener('click', lanFight);
 $('lsAgain').addEventListener('click', () => lanAgain(true));
 $('lsBack').addEventListener('click', lanLeave);
 addEventListener('pointerdown', () => { if (state === 'story') storySkip(); });      // a tap skips to the next part of the cutscene
+addEventListener('pointerdown', () => { if (yf && !paused) yfTap(pnow()); });      // (v1.49 Yuji's FATALITY: two taps skip it)
 $('vsGo').addEventListener('click', () => startMatch(vsSel));
 $('vsNext').addEventListener('click', () => { if (vs && vs.cv) { startCurse(vs.ci + 1, 0); return; } const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
 $('vsAgain').addEventListener('click', () => vs && vs.hunt ? startHunt(vs.hunt.i) : vs && vs.rush ? (vs.run === ROUL ? startRoulette() : startRush()) : vs && vs.cv ? startCurse(vs.ci, vs.hard, vs.daily) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe));

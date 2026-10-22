@@ -519,6 +519,71 @@ def bf_slash(i):
     if 7 <= i <= 10: lines_r(f, hx - 4, hy, 3, 9 - (i - 7)*2, i)
     if 2 <= i <= 3 or 11 <= i <= 13: puff(f, 34 - 9, 61, 2); puff(f, 34 + 9, 61, 1)
     return f, nh, fh
+# ---------------------------------------------------------------- v1.49 YUJI'S FATALITY: the three pictures only the 30-second cutscene uses (keys fx_charge, fx_pose, fx_dive): the CHARGE (a loop: a low wide stance, the near fist drawn back with cursed energy streaming into it, the other hand pointing at the enemy), the POSE after the last blow (the arm comes down, steam off the fist, he stands up and looks ahead) and the DIVE KICK (a spring, both feet driven out in the air, the blow with a Black Flash at the feet, a crouch landing)
+def charge2(f, x, y, i):                            # cursed energy streaming into the fist without a break: three rings of specks, each a third of a turn behind the last, drawn in towards the fist
+    for L in range(3):
+        t = ((i + 5*L) % 15)/15
+        for q in range(5):
+            a = math.radians(q*72 + L*40 + t*120); rad = 1.5 + (1 - t)*(10 + 3*L)
+            px, py = round(x + math.cos(a)*rad), round(y + math.sin(a)*rad*.8)
+            if f.at(px, py) == '.': f.set(px, py, 'X' if (q + L) % 2 else 'Z')
+            if q % 2 == 0 and f.at(px + 1, py) == '.': f.set(px + 1, py, 'z')
+def fc_params(i):
+    br = 1 if i in (3, 4, 5, 10, 11, 12) else 0
+    return dict(by=4 + br, ln=3, hx=-2, hs=2, hd=2, lf=(40, GR, 0), lb=(23, GR, 0), na=((-6, 7 + br*.5), (-10, 10 + br*.5)), fa=((4, 3 + br*.4), (9, 0.5 + br*.6)), hp=i*.9, hback=0, blink=False)
+def f_charge(i):
+    f, nh, fh = figure(fc_params(i)); hx, hy = round(nh[0]), round(nh[1]); charge2(f, hx, hy, i)
+    r = 2.3 + 0.5*math.sin(i/15*6.2832)                                          # the ball of cursed energy in the fist: black with a red rim, a little bigger and smaller as it pulses
+    for dx in range(-5, 6):
+        for dy in range(-5, 6):
+            d = math.hypot(dx, dy)
+            if d <= r and f.at(hx + dx, hy + dy) in ('.', 'S', 'U', 'T', 'V'): f.set(hx + dx, hy + dy, 'Z')
+            elif d <= r + 1.2 and f.at(hx + dx, hy + dy) == '.': f.set(hx + dx, hy + dy, 'X' if (dx + dy + i) % 3 else 'z')
+    for k in range(2): bolt(f, hx, hy, (k*160 + i*47) % 360, 3 + (i + k) % 4, i*5 + k)
+    for k in range(3):                                                         # embers climbing off his back
+        px, py = 27 + k*3 + (i*2 + k*5) % 3, 40 - ((i*2 + k*4) % 14)
+        if f.at(px, py) == '.': f.set(px, py, 'X' if k % 2 else 'z')
+    return f, nh, fh
+def fp_params(i):
+    return dict(by=round(kv({0: 1, 3: 2, 8: 1, 14: 0}, i)), ln=round(kv({0: 3, 5: 2, 9: 0, 14: 0}, i)), hx=round(kv({0: 1, 8: 0, 14: 0}, i)), hs=0, hd=round(kv({0: 1, 5: 1, 10: 0, 14: 0}, i)),
+                lf=(round(kv({0: 40, 8: 37, 14: 35}, i)), GR, 0), lb=(round(kv({0: 27, 8: 29, 14: 31}, i)), GR, 0),
+                na=kv({0: ((7, 1), (13, 2)), 3: ((5, 3), (9, 6)), 6: ((3, 5), (5, 9)), 8: ((2, 6), (3, 10)), 10: ((1, 6.5), (3, 10.5)), 12: IDLE_N, 14: IDLE_N}, i),
+                fa=kv({0: ((3, 4), (6, 1.5)), 6: ((1, 5), (2, 9)), 12: IDLE_F, 14: IDLE_F}, i), hp=i*.9, hup=1 if i >= 8 else 0, hback=0, mo=3 <= i <= 6, blink=(i == 11))
+def f_pose(i):
+    f, nh, fh = figure(fp_params(i)); nx, ny = round(nh[0]), round(nh[1])
+    if i <= 11:
+        for k in range(1, 6):                                                  # steam off the fist
+            px, py = round(nx + math.sin(i*.8 + k*1.3)*1.4), ny - 2*k - (i % 3)
+            if f.at(px, py) == '.': f.set(px, py, 'W' if k < 3 else 'E')
+    if i <= 3:
+        for k in range(3): bolt(f, nx, ny, (k*130 + i*50) % 360, 3 + k, i*7 + k)
+    return f, nh, fh
+DV_LF = {0: (34, GR, 0), 2: (36, GR, 0), 3: (37, 53, 15), 4: (41, 47, 10), 5: (49, 44, -25), 6: (56, 41, -65), 7: (58, 40, -75), 9: (57, 41, -70), 10: (50, 44, -35), 11: (42, 49, -5), 12: (38, 54, 10), 13: (36, GR, 0), 14: (34, GR, 0)}
+DV_LB = {0: (31, GR, 0), 2: (29, GR, 0), 3: (32, 54, 25), 4: (35, 49, 25), 5: (42, 46, -10), 6: (51, 43, -55), 7: (54, 42, -65), 9: (53, 43, -60), 10: (45, 46, -25), 11: (38, 51, 5), 12: (33, 55, 15), 13: (31, GR, 0), 14: (31, GR, 0)}
+DV_KF = {4: (45, 43), 5: (51, 41), 6: (53, 40), 7: (54, 40), 9: (54, 40), 10: (48, 43)}
+DV_KB = {4: (38, 45), 5: (45, 43), 6: (48, 42), 7: (50, 42), 9: (50, 42), 10: (43, 45)}
+DV_LIFT = [0, 0, 0, 6, 16, 24, 28, 28, 28, 26, 20, 12, 5, 0, 0]
+def dv_params(i):
+    kf = kv(DV_KF, i) if 4 <= i <= 10 else None; kb = kv(DV_KB, i) if 4 <= i <= 10 else None
+    return dict(by=round(kv({0: 0, 2: 3, 3: -2, 5: -2, 7: 0, 10: 1, 12: 2, 13: 4, 14: 0}, i)), ln=round(kv({0: 0, 2: 1, 4: 1, 6: -4, 8: -5, 10: -2, 12: 0, 13: 2, 14: 0}, i)), hx=round(kv({0: 0, 4: -1, 6: 3, 9: 3, 12: 1, 14: 0}, i)), hs=round(kv({0: 0, 6: -1, 9: -1, 12: 0, 14: 0}, i)),
+                lf=tuple(round(v) for v in kv(DV_LF, i)), lb=tuple(round(v) for v in kv(DV_LB, i)), kf=tuple(kf) if kf else None, kb=tuple(kb) if kb else None,
+                na=kv({0: GUARD_N, 2: ((-2, 3), (-4, 6)), 4: ((3, -2), (6, -5)), 6: ((-4, 2), (-9, 4)), 8: ((-4, 3), (-8, 6)), 11: ((1, 3), (3, 5)), 13: GUARD_N, 14: IDLE_N}, i),
+                fa=kv({0: GUARD_F, 2: ((-1, 3), (-3, 6)), 4: ((2, -2), (5, -5)), 6: ((-3, 2), (-8, 5)), 8: ((-3, 3), (-7, 6)), 11: ((1, 3), (3, 5)), 13: GUARD_F, 14: IDLE_F}, i),
+                hp=i*.9, hup=1 if 3 <= i <= 10 else 0, hback=1 if 5 <= i <= 10 else 0, mo=5 <= i <= 9, blink=False)
+def f_dive(i):
+    P = dv_params(i); f, nh, fh = figure(P); fx, fy = P['lf'][0] + 1, P['lf'][1] - 1; nh = (fx, fy)
+    if 2 <= i <= 6: charge(f, fx, fy, (i - 2)/4, i)
+    if 5 <= i <= 6:
+        for k in range(3): bolt(f, fx, fy, (k*120 + i*40) % 360, 4 + i % 3, i*9 + k)
+    if 4 <= i <= 9:
+        pts = [(x + 1.5, y - 1.5) for x, y in [dv_params(j)['lf'][:2] for j in (max(0, i - 3), max(0, i - 2), max(0, i - 1), i)]]
+        if pts[0] != pts[-1]: rstreak(f, pts, (.8, 1.8, 3.2, 4.6))
+    if i == 7: bf_burst(f, min(59, fx - 1), fy, 5, 9, 7, 300, 180)
+    if i == 8: bf_burst(f, min(59, fx - 1), fy, 4, 7, 8, 280, 180)
+    if i in (9, 10): bf_burst(f, min(59, fx - 1), fy, 2, 5, i, 240, 180)
+    if 7 <= i <= 10: lines_r(f, fx - 6, fy, 3, 8 - (i - 7)*2, i)
+    return f, nh, fh
+FATAL = (('fx_charge', f_charge, 16, 48), ('fx_pose', f_pose, 16, 48), ('fx_dive', f_dive, 16, 48))
 ATTACKS = (('atk0', lambda i: hook(i, False)), ('atk1', lambda i: hook(i, True)), ('atk2', knee), ('atk3', kick3), ('atk4', divergent), ('atk5', rkick, 16, 48), ('atk6', elbow), ('atk7', downslam), ('atk8', pushkick), ('atk9', conc), ('atk10', sweep, 12, 52), ('atk11', powerup), ('atk12', rush, 16, 48), ('atk13', uppercut, 16, 48), ('atk14', fkick, 16, 48), ('atk16', bf_punch, 16, 48), ('atk17', bf_kick, 16, 48), ('atk18', bf_gut, 16, 48), ('atk28', bf_gutj, 16, 48), ('atk29', bf_slash, 16, 48), ('atk30', cjab, 16, 48), ('atk31', cupr, 16, 48))
 # ---------------------------------------------------------------- crouch, crouch walk, crouch jump and the four dashes (15 frames each)
 CR = 7                                                                          # how far the hips drop in a crouch (the leg IK folds the knees by itself)
@@ -953,6 +1018,9 @@ if __name__ == '__main__':
         if k == 'atk13': out[k]['lift'] = UP_LIFT
         if k == 'atk14': out[k]['lift'] = FK_LIFT
         if k == 'atk17': out[k]['lift'] = BFK_LIFT
+    for k, fn, x0, w in FATAL:                                              # v1.49 the pictures of the fatality (cutscene only)
+        fr, hn, hf = pack(fn, x0, w, 0); out[k] = {'x0': x0, 'w': w, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}
+        if k == 'fx_dive': out[k]['lift'] = DV_LIFT
     for k in range(10): out['rx%d' % k] = pack_rx(k)
     out['atk15'] = pack_sp()                                                  # the SPIN ELBOW
     fr, hn, hf = pack(bf_charged, 20, 76, 0); out['atk19'] = {'x0': 20, 'w': 76, 'h': N, 'top': 0, 'cx': 34 + CH_X, 'frames': fr, 'hn': hn, 'hf': hf}      # v1.19 the CHARGED BLACK FLASH (96-wide grid, the body 8 px in)
