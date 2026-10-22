@@ -137,7 +137,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.61</small>
+    <small id="ver">V1.62</small>
   </div>
 </section>
 
@@ -478,7 +478,7 @@ function audio() {                            // browsers only allow sound after
   if (sfx.ac.state === 'suspended' && !document.hidden) sfx.ac.resume();
   return sfx;
 }
-const STOP_CUES = ['ceoff', 'voidoff', 'homeoff', 'mhumoff', 'tmusicoff', 'rsmuroff'];      // (the cues that fade a drone out always go through, even with the sound switched off or the game paused: a stop that was dropped left the drone playing for good; with a suspended clock the fade simply runs when the sound comes back)
+const STOP_CUES = ['ceoff', 'voidoff', 'homeoff', 'mhumoff', 'tmusicoff', 'rsmuroff', 'bluepulloff'];      // (the cues that fade a drone out always go through, even with the sound switched off or the game paused: a stop that was dropped left the drone playing for good; with a suspended clock the fade simply runs when the sound comes back)
 function snd(name, a, b) {                    // play one cue (and log it when a test harness asks for that)
   if (window.__sfxlog) window.__sfxlog.push([name, Math.round(pnow()), a, b]);
   if (sfx && ((soundOn && sfx.ac.state === 'running') || STOP_CUES.includes(name))) {
@@ -1175,7 +1175,7 @@ const lanBack = () => { if (lanRole) lanStop(); else show('modes'); };
 
 // ---------------------------------------------------------------- screens
 function show(s) {
-  state = s; if (s !== 'story') { snd('mhumoff'); snd('tmusicoff'); snd('rsmuroff'); } if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; track = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
+  state = s; if (s !== 'story') { snd('mhumoff'); snd('tmusicoff'); snd('rsmuroff'); snd('bluepulloff'); } if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; track = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
   $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); $('chal').classList.toggle('on', s === 'chal'); $('skills').classList.toggle('on', s === 'skills'); $('sns').style.display = 'none'; if (s !== 'lan' && s !== 'lansel' && !(s === 'play' && vs && vs.net) && lanTimer) lanStop();
   $('versus').classList.toggle('on', s === 'versus');
   $('title').classList.toggle('on', s === 'title');
@@ -3920,6 +3920,7 @@ __HDOM__
 __MSCENE__
 __TRAIN__
 __REST__
+__CONT__
 function drawScene(now, dt) {
   fatUI(now);
   if (fat) { fatFrame(now, dt); return; }       // the FATALITY cutscene replaces the whole scene while it plays

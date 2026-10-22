@@ -10,7 +10,18 @@ const RS_SEQ = [
   { k: 'say', w: 'GOJO', a: 'YUJI. GET BEHIND ME.', b: '', warn: true },
   { k: 'charge', d: 1.6 }, { k: 'punch', d: 0.7 },
   { k: 'closeA', d: 3.4 }, { k: 'closeB', d: 3.2 }, { k: 'closeC', d: 3.2 },
-  { k: 'launch', d: 5.4 }, { k: 'black', d: 1.6 }];
+  { k: 'launch', d: 5.4 },
+  { k: 'hush', d: 4.2, c: 1 }, { k: 'scream', d: 3.4, c: 1 }, { k: 'ycharge', d: 1.9, c: 1 }, { k: 'gblue', d: 3.4, c: 1 }, { k: 'bstop', d: 4.4, c: 1 }, { k: 'ystop', d: 2.8, c: 1 }, { k: 'tele', d: 3.4, c: 1 }, { k: 'yfly', d: 4.0, c: 1 },
+  { k: 'say', c: 1, id: 'd1', w: 'GOJO', a: 'WHAT IS THIS? WHAT ARE YOU', b: 'DOING TO THIS WORLD?' },
+  { k: 'say', c: 1, id: 'd2', w: 'MASTER', a: 'I OPENED THE DOOR.', b: 'THE CURSES CAME THROUGH IT.' },
+  { k: 'say', c: 1, id: 'd3', w: 'GOJO', a: 'VERITY. THE CAT. SO MANY', b: 'SPECIAL GRADES. WHY?' },
+  { k: 'say', c: 1, id: 'd4', w: 'MASTER', a: 'THIS EARTH IS DYING.', b: 'HUMANS ARE KILLING IT.' },
+  { k: 'say', c: 1, id: 'd5', w: 'MASTER', a: 'THEIR GASES POISON THE SKY.', b: 'THEIR HEAT BURNS THE SEAS.' },
+  { k: 'say', c: 1, id: 'd6', w: 'GOJO', a: 'SO YOU WILL KILL THEM ALL?', b: '' },
+  { k: 'say', c: 1, id: 'd7', w: 'MASTER', a: 'HUMAN EXTINCTION IS THE', b: 'ONLY WAY EARTH CAN LIVE.' },
+  { k: 'say', c: 1, id: 'd8', w: 'GOJO', a: 'WHAT A TERRIBLE PLAN.', b: 'I WILL STOP YOU HERE.' },
+  { k: 'say', c: 1, id: 'd9', w: 'MASTER', a: 'YOU CANNOT EVEN STAND.', b: '' },
+  { k: 'cpunch', d: 3.2, c: 1 }, { k: 'pierce', d: 3.8, c: 1 }, { k: 'carry', d: 5.2, c: 1 }, { k: 'black', d: 1.8, c: 1 }];
 { let t = 0; for (const s of RS_SEQ) { s.t0 = t; if (!s.d) s.d = Math.max(1.9, ((s.a || '').length + (s.b || '').length) / TN_RATE + 0.9); t += s.d; } RS_SEQ.end = t; }
 const RS_CUTS = RS_SEQ.slice(1).map(s => s.t0), RS_CARD = RS_SEQ.end, rsT = k => RS_SEQ.find(s => s.k === k).t0, RS_LAUNCH = { grab: 0.9, punch: 1.8, v: 270 };      // the card follows the last step; the flight of Gojo: the Master grabs at 0.9 s, hits at 1.8 s, Gojo flies at 270 px a second
 const RS_KILLS = ['halve', 'head', 'crush'];      // how the three diners in Gojo's way die (the Cat's own kills)
@@ -97,7 +108,7 @@ function rsGojoBlock(f, k) {      // a NEW picture of Gojo with his far arm stre
   { const ex = Math.round(sx - 0.55 * (sx - wx)), [y0, y1] = col[ex] || col[wx]; g.fillStyle = rsRgb(slv, 0.4); g.fillRect(ex, y1, 1, 1); g.fillRect(ex - 1, y1 - 1, 1, 1); g.fillStyle = rsRgb(slv, 1.9); g.fillRect(ex + 1, y0 + 1, 1, 1); }      // the elbow: a crease underneath and a light fold
   if (kq > 0.2) {
     const [cy0, cy1] = col[wx + 2] || col[wx]; g.fillStyle = OL; g.fillRect(wx + 1, cy0 - 1, 4, cy1 - cy0 + 3); g.fillStyle = rsRgb(acc, 1.25); g.fillRect(wx + 2, cy0, 2, cy1 - cy0 + 1); g.fillStyle = rsRgb(acc, 0.7); g.fillRect(wx + 2, cy1, 2, 1);      // the cuff
-    const hx = wx - 3, hy = Math.round((cy0 + cy1) / 2); g.fillStyle = OL; g.fillRect(hx - 2, hy - 2, 6, 6); g.fillRect(hx - 1, hy - 8, 5, 8); g.fillRect(hx - 3, hy - 3, 3, 4); g.fillRect(hx, hy, 2, 4);
+    const hx = wx - 3, hy = Math.round((cy0 + cy1) / 2); c.hand = [hx + 1, hy - 1]; g.fillStyle = OL; g.fillRect(hx - 2, hy - 2, 6, 6); g.fillRect(hx - 1, hy - 8, 5, 8); g.fillRect(hx - 3, hy - 3, 3, 4); g.fillRect(hx, hy, 2, 4);
     g.fillStyle = rsRgb(skin, 1); g.fillRect(hx - 1, hy - 1, 4, 4); g.fillRect(hx, hy - 7, 3, 6); g.fillRect(hx - 2, hy - 2, 1, 2); g.fillStyle = rsRgb(skin, 1.12); g.fillRect(hx - 1, hy - 1, 1, 4); g.fillRect(hx, hy - 7, 1, 5); g.fillStyle = rsRgb(skin, 0.7); g.fillRect(hx + 1, hy - 7, 1, 4); g.fillRect(hx + 2, hy - 1, 1, 4); g.fillRect(hx - 1, hy + 2, 4, 1);      // the open hand: the palm faces Yuji, three fingers point up (with the gaps between them), the thumb sticks out
   }
   g.drawImage(f, PAD, 0); return M[kq] = c;
@@ -181,12 +192,12 @@ function rsFred(src) {      // a black copy of one of Freddy's pictures (he face
 function rsFrFront(B, row) {      // the front-most column of his HEAD at a row of the picture (the claw hand, from column 44 on, does not count)
   const d = B.getContext('2d').getImageData(0, row, B.width, 1).data; for (let x = 43; x >= 0; x--) if (d[x * 4 + 3] > 100) return x; return 40;
 }
-const rsEyeAt = (mx, F, lift) => [mx - (F.eye[0] + 0.5 - RS_FC), gy - RS_FY - (lift || 0) + F.eye[1] + 0.5];      // where his eye is on the screen when he stands at mx facing left
-function rsFredDraw(mx, T, o) {      // the Master in the wide shot: black, a violet rim of light (the portal behind him, Gojo's fist in front), one red eye; o.mode = 'idle' | 'walk' (o.d = the ground he has covered) | 'grab' | 'punch' (the claw slash pictures); o.eye = how bright the eye is
-  const src = o.mode === 'walk' ? fredF(o.d * 0.5, true) : o.mode === 'grab' ? fredA(0, 13) : o.mode === 'punch' ? fredA(0, 11) : fredF(Math.floor(T * IDLE_FPS)), F = rsFred(src), U = rsLay().U;
-  sprAt(F.B, FRED_INFO, mx, 0, true, 0);
-  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.85; sprAt(rsRim(F.B, -1, [170, 90, 255]), FRED_INFO, mx, 0, true, 0); ctx.globalAlpha = 0.45; sprAt(rsRim(F.B, 1, [200, 130, 255]), FRED_INFO, mx, 0, true, 0); ctx.globalAlpha = 0.4; sprAt(rsEdge(F.B, [150, 80, 230]), FRED_INFO, mx, 0, true, 0); ctx.restore();
-  const e = rsEyeAt(mx, F, 0); msEye(e[0], e[1], Math.max(1, U * 0.75), o.eye, 0, o.flare || 0);
+const rsEyeAt = (mx, F, lift, right) => [mx + (right ? 1 : -1) * (F.eye[0] + 0.5 - RS_FC), gy - RS_FY - (lift || 0) + F.eye[1] + 0.5];      // where his eye is on the screen when he stands at mx facing left
+function rsFredDraw(mx, T, o) {      // the Master in the wide shot: black, a violet rim of light (the portal behind him, Gojo's fist in front), one red eye; o.mode = 'idle' | 'walk' (o.d = the ground he has covered) | 'grab' | 'punch' (the claw slash pictures), or o.src = any picture of his; o.right = he faces right; o.eye = how bright the eye is
+  const src = o.src || (o.mode === 'walk' ? fredF(o.d * 0.5, true) : o.mode === 'grab' ? fredA(0, 13) : o.mode === 'punch' ? fredA(0, 11) : fredF(Math.floor(T * IDLE_FPS))), F = rsFred(src), U = rsLay().U, fl = !o.right;
+  sprAt(F.B, FRED_INFO, mx, 0, fl, 0);
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.85; sprAt(rsRim(F.B, fl ? -1 : 1, [170, 90, 255]), FRED_INFO, mx, 0, fl, 0); ctx.globalAlpha = 0.45; sprAt(rsRim(F.B, fl ? 1 : -1, [200, 130, 255]), FRED_INFO, mx, 0, fl, 0); ctx.globalAlpha = 0.4; sprAt(rsEdge(F.B, [150, 80, 230]), FRED_INFO, mx, 0, fl, 0); ctx.restore();
+  const e = rsEyeAt(mx, F, 0, !fl); msEye(e[0], e[1], Math.max(1, U * 0.75), o.eye, 0, o.flare || 0);
 }
 const rsFhC = new Map();
 function rsFredParts(Z) {      // Freddy's idle picture for the close-ups, black, enlarged Z times with hard pixels and cut in two: .body = chest and shoulders (no head, no claw hand), .head = hat and face, which turns about .pv (his neck); .rim = the violet edge of the body; .bx / .hx = the picture column of each piece's left edge
@@ -321,7 +332,7 @@ function rsWide(now, dt, T, st, t1) {
   const fi = 1 - clamp01(T / 1.2); if (fi > 0) { ctx.fillStyle = 'rgba(255,246,214,' + fi.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
 }
 function rsSay(st, t1) {      // the typed speech with a voice blip for each letter (the same as the training's)
-  const n = Math.floor(t1 * TN_RATE), sp = st.a + st.b, i = RS_SEQ.indexOf(st); if (story.tn.vi !== i) { story.tn.vi = i; story.tn.vc = 0; } while (story.tn.vc < Math.min(n, sp.length)) { story.tn.vc++; if (sp[story.tn.vc - 1] !== ' ') snd('tvoice', st.w === 'GOJO' ? 0 : 1); } tnDlg(st.w, st.a, st.b, n);
+  const n = Math.floor(t1 * TN_RATE), sp = st.a + st.b, i = RS_SEQ.indexOf(st); if (story.tn.vi !== i) { story.tn.vi = i; story.tn.vc = 0; } while (story.tn.vc < Math.min(n, sp.length)) { story.tn.vc++; if (sp[story.tn.vc - 1] !== ' ') snd('tvoice', st.w === 'GOJO' ? 0 : st.w === 'MASTER' ? 2 : 1); } if (st.c) dlg2(st.w, st.a, st.b, n, TN_COL[st.w]); else tnDlg(st.w, st.a, st.b, n);
 }
 function rsWallFx(T, a) {      // where Gojo hits the wall: cracks in the plaster, a cloud of dust, flying rubble
   const L = rsLay(), U = L.U, cx = L.wall + 4, cy = gy - 28 * U; ctx.save(); ctx.strokeStyle = '#2a1a10'; ctx.lineWidth = 1; for (let i = 0; i < 9; i++) { const an = i * 0.7 + 0.3, len = (14 + (i * 13) % 22) * U * clamp01(a * 8); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(an) * len * 0.5 + (i % 2 ? 2 : -2), cy + Math.sin(an) * len * 0.5); ctx.lineTo(cx + Math.cos(an) * len, cy + Math.sin(an) * len); ctx.stroke(); }
@@ -389,12 +400,12 @@ function restFrame(now, dt) {
   const T = Math.max(0, now - story.t0) / 1000; story.T = T; if (T >= RS_CARD + 0.3) { rsCard(now, T); return; }
   const st = RS_SEQ.find(s => T >= s.t0 && T < s.t0 + s.d) || RS_SEQ[RS_SEQ.length - 1], t1 = T - st.t0;
   ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); updateGore(now, dt); rsSounds(T, st);
-  if (st.k === 'closeA' || st.k === 'closeB' || st.k === 'closeC') rsClose(now, T, st, t1); else rsWide(now, dt, T, st, t1);
+  if (st.c) rsCont(now, dt, T, st, t1); else if (st.k === 'closeA' || st.k === 'closeB' || st.k === 'closeC') rsClose(now, T, st, t1); else rsWide(now, dt, T, st, t1);
   ctx.restore();
 }
-function rsCard(now, T) {      // END OF CHAPTER 2
+function rsCard(now, T) {      // END OF CHAPTER 1 (THE MYSTERY)
   const t = T - (RS_CARD + 0.3); ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); once2('card', () => { snd('msting'); storyDone4(); }); ctx.globalAlpha = clamp01((t + 0.1) / 1.0);
-  pxt('END OF CHAPTER 2', VW / 2, Math.round(VH / 2) - 2, '#ffffff', 16, 'center'); pxt('TO BE CONTINUED', VW / 2, Math.round(VH / 2) + 20, '#ffd34d', 8, 'center'); if (t > 2.2 && Math.floor(now / 600) % 2 === 0) pxt('TAP TO CONTINUE', VW / 2, VH - 8, '#9d8cff', 8, 'center'); ctx.globalAlpha = 1; ctx.restore();
+  pxt('END OF CHAPTER 1', VW / 2, Math.round(VH / 2) - 10, '#ffffff', 16, 'center'); pxt('THE MYSTERY', VW / 2, Math.round(VH / 2) + 8, '#c9a8ff', 8, 'center'); pxt('TO BE CONTINUED', VW / 2, Math.round(VH / 2) + 26, '#ffd34d', 8, 'center'); if (t > 2.2 && Math.floor(now / 600) % 2 === 0) pxt('TAP TO CONTINUE', VW / 2, VH - 8, '#9d8cff', 8, 'center'); ctx.globalAlpha = 1; ctx.restore();
 }
 function restSkip() {      // a tap: on to the next step; on the card (after its first 1.2 s) back to the saves
   const T = story.T; if (T >= RS_CARD + 0.3 + 1.2) { show('saves'); renderSaves(); return; }

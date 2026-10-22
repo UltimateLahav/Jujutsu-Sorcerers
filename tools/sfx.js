@@ -87,6 +87,18 @@ function makeSfx(ac) {
     lo.start(0); hi.start(0, 4.7); windBuilt = true;
   }
 
+  function shout(t, o) {                                // v1.62 a shouted voice: two detuned saws glide from o.f0 up to o.pk and down to o.fe, a rasp and two vowel formants; o.cut ends it dead (no fade), o.crack makes the voice break upwards half way
+    const B = C.atk.deep, end = t + o.dur, rise = Math.min(0.3, o.dur * 0.2); if (!st.curve) { st.curve = new Float32Array(1025); for (let i = 0; i < 1025; i++) st.curve[i] = Math.tanh((i / 512 - 1) * 1.8); }
+    const out = ac.createGain(), ws = ac.createWaveShaper(), am = ac.createGain(), mix = ac.createGain(), lfo = ac.createOscillator(), lg = ac.createGain(), rough = ac.createOscillator(), rg = ac.createGain(), lp = ac.createBiquadFilter();
+    out.gain.setValueAtTime(0.0001, t); out.gain.linearRampToValueAtTime(o.gain, t + 0.03);
+    if (o.cut) { out.gain.setValueAtTime(o.gain, end - 0.012); out.gain.linearRampToValueAtTime(0.0001, end); } else { out.gain.setValueAtTime(o.gain * 0.92, t + o.dur * 0.7); out.gain.exponentialRampToValueAtTime(0.0001, end); }
+    ws.curve = st.curve; am.gain.value = 0.72; rough.type = 'sawtooth'; rough.frequency.value = o.rough; rg.gain.value = 0.28; rough.connect(rg); rg.connect(am.gain); lfo.frequency.value = o.vib; lg.gain.value = o.pk * 0.03; lfo.connect(lg);
+    for (const d of [1, 1.013]) { const s = ac.createOscillator(); s.type = 'sawtooth'; s.frequency.setValueAtTime(o.f0, t); s.frequency.exponentialRampToValueAtTime(o.pk * d, t + rise); if (o.crack) { s.frequency.setValueAtTime(o.pk * d, t + o.dur * 0.5); s.frequency.exponentialRampToValueAtTime(o.pk * 1.24 * d, t + o.dur * 0.56); } s.frequency.exponentialRampToValueAtTime(o.fe * d, end); lg.connect(s.frequency); s.connect(ws); s.start(t); s.stop(end + 0.05); }
+    ws.connect(am); o.form.forEach(([f0, f1, q, g]) => { const bp = ac.createBiquadFilter(), gg = ac.createGain(); bp.type = 'bandpass'; bp.Q.value = q; bp.frequency.setValueAtTime(f0, t); bp.frequency.exponentialRampToValueAtTime(f1, t + Math.min(0.7, o.dur * 0.4)); gg.gain.value = g; am.connect(bp); bp.connect(gg); gg.connect(mix); });
+    lp.type = 'lowpass'; lp.frequency.value = 2800; lp.Q.value = 0.5; mix.connect(lp); lp.connect(out); out.connect(B); lfo.start(t); lfo.stop(end + 0.05); rough.start(t); rough.stop(end + 0.05);
+    burst(B, t, { type: 'highpass', f: 2600, q: 0.7, dur: Math.min(o.dur, 0.5), gain: 0.18, atk: 0.01 });
+  }
+
   return {
     ac, master,
     step(alt, back, at) {                                // calm, heavy footstep: heel lands with a dull "tok" and a deep thump, the forefoot rolls down a beat later ("da-dum")
@@ -324,8 +336,8 @@ function makeSfx(ac) {
     msting(at) {                                         // the last chord of the chapter: low notes that swell over three seconds, a thin shimmer on top
       const t = T(at), B = C.ce; [55, 82.4, 110].forEach((f, i) => tone(B.deep, t + i * 0.05, { type: 'triangle', f, f2: f * 1.006, dur: 3.2, gain: 0.09, atk: 1.3 })); burst(B.soft, t + 0.3, { type: 'highpass', f: 4000, f2: 7000, q: 0.7, dur: 2.2, gain: 0.05, atk: 1.2 });
     },
-    tvoice(k) {                                          // v1.55 one letter of a speaker in the training (0 = Gojo: a smooth, lower blip; 1 = Yuji: a brighter, quicker one)
-      const t = T(), B = C.atk; tone(B.soft, t, { type: 'triangle', f: k ? R(300, 360) : R(205, 250), f2: k ? R(280, 330) : R(190, 225), dur: 0.08, gain: 0.06, atk: 0.004 }); burst(B.soft, t, { type: 'bandpass', f: k ? R(1500, 2100) : R(900, 1300), q: 3, dur: 0.05, gain: 0.03, atk: 0.003 });
+    tvoice(k) {                                          // v1.55 one letter of a speaker in the training (0 = Gojo: a smooth, lower blip; 1 = Yuji: a brighter, quicker one; 2 = the Master: a deep, gravelly growl)
+      const t = T(), B = C.atk; if (k === 2) { tone(B.deep, t, { type: 'sawtooth', f: R(62, 78), f2: R(50, 62), dur: 0.12, gain: 0.11, atk: 0.006 }); burst(B.soft, t, { type: 'bandpass', f: R(260, 420), q: 2.5, dur: 0.1, gain: 0.2, atk: 0.004 }); return; } tone(B.soft, t, { type: 'triangle', f: k ? R(300, 360) : R(205, 250), f2: k ? R(280, 330) : R(190, 225), dur: 0.08, gain: 0.06, atk: 0.004 }); burst(B.soft, t, { type: 'bandpass', f: k ? R(1500, 2100) : R(900, 1300), q: 3, dur: 0.05, gain: 0.03, atk: 0.003 });
     },
     tink(k) {                                            // v1.55 INFINITY stops a blow: a glassy ring, a hiss and a soft low thump (k = 1: the big blow, a longer ring and a deeper thump)
       const t = T(), B = C.ce, big = k === 1; tone(B.soft, t, { f: 1760, f2: 1660, dur: big ? 0.95 : 0.55, gain: big ? 0.09 : 0.07, atk: 0.002 }); tone(B.soft, t, { f: 2637, f2: 2500, dur: 0.4, gain: 0.04, atk: 0.002 }); burst(B.soft, t, { type: 'highpass', f: 3000, f2: 7000, q: 0.7, dur: 0.18, gain: 0.12, atk: 0.001 }); tone(B.deep, t, { f: 120, f2: 70, dur: 0.25, gain: big ? 0.25 : 0.14, atk: 0.002 });
@@ -374,6 +386,43 @@ function makeSfx(ac) {
     rssmash() { const t = T(), B = C.atk; burst(B.soft, t, { type: 'bandpass', f: 900, f2: 2600, q: 1.2, dur: 0.35, gain: 0.35, atk: 0.001 }); tone(C.ce.deep, t, { f: 110, f2: 45, dur: 0.35, gain: 0.5, atk: 0.002 }); burst(B.soft, t + 0.08, { type: 'highpass', f: 3500, f2: 8000, q: 0.7, dur: 0.25, gain: 0.2, atk: 0.001 }); },      // a table, bowls and wood smashed
     rswall() {                                           // Gojo hits the wall: a huge boom, rubble, a long rumble
       const t = T(), B = C.atk; tone(C.ce.deep, t, { f: 60, f2: 18, dur: 2.6, gain: 1.0, atk: 0.003 }); burst(B.deep, t, { type: 'lowpass', f: 400, f2: 60, q: 0.7, dur: 2.0, gain: 0.7, atk: 0.002 }); burst(B.soft, t, { type: 'bandpass', f: 1200, f2: 300, q: 0.9, dur: 1.2, gain: 0.35, atk: 0.003 }); for (let i = 0; i < 8; i++) burst(B.soft, t + 0.3 + i * 0.16, { type: 'bandpass', f: R(600, 2400), q: 2, dur: 0.1, gain: 0.12, atk: 0.001 });
+    },
+    yscream(k) {                                         // v1.62 YUJI: 0 = the long scream SENSEI NO! (his voice climbs, breaks and holds), 1 = SENSEI STO- (the same voice cut off dead), 2 = the roar of a man pushing against a pull with all he has
+      const t = T(); if (k === 2) shout(t, { f0: 110, pk: 250, fe: 205, dur: 1.5, gain: 0.3, rough: 52, form: [[480, 650, 4, 1], [1050, 1250, 5, 0.6]], vib: 5 }); else shout(t, { f0: 210, pk: 580, fe: k ? 560 : 430, dur: k ? 0.62 : 1.95, gain: 0.46, cut: !!k, crack: !k, rough: 66, form: [[780, 1050, 5, 1], [1650, 2000, 6, 0.7]], vib: 6.8 });
+    },
+    gasp(k) {                                            // v1.62 a breath: 0 = a quick breath in, 1 = a pained grunt (a low voiced bark), 2 = a choked gasp (airless and cracking)
+      const t = T(), B = C.atk; if (k === 1) { tone(B.deep, t, { type: 'sawtooth', f: 150, f2: 95, dur: 0.22, gain: 0.12, atk: 0.01 }); burst(B.soft, t, { type: 'bandpass', f: 700, q: 1.5, dur: 0.2, gain: 0.25, atk: 0.01 }); } else if (k === 2) { burst(B.soft, t, { type: 'bandpass', f: 500, f2: 1300, q: 2, dur: 0.5, gain: 0.5, atk: 0.04 }); tone(B.deep, t, { type: 'sawtooth', f: 90, f2: 160, dur: 0.4, gain: 0.07, atk: 0.05 }); } else burst(B.soft, t, { type: 'bandpass', f: 800, f2: 2100, q: 1.1, dur: 0.3, gain: 0.55, atk: 0.1 });
+    },
+    yrun(k) {                                            // v1.62 one stride of Yuji sprinting (0 = a firm footfall) or skidding against the pull of BLUE (1 = a scuff of the sole)
+      const t = T(), B = C.steps, f = R(0.94, 1.08); if (k === 1) { burst(B.step, t, { type: 'bandpass', f: 1300 * f, f2: 600, q: 1.2, dur: 0.13, gain: 0.7, atk: 0.004 }); tone(B.step, t, { type: 'triangle', f: 98 * f, f2: 60, dur: 0.1, gain: 0.14, atk: 0.003 }); return; }
+      tone(B.step, t, { type: 'triangle', f: 130 * f, f2: 58 * f, dur: 0.12, gain: 0.2, atk: 0.003 }); burst(B.step, t, { dur: 0.06, f: 480 * f, q: 0.9, gain: 1.1, atk: 0.002 });
+    },
+    bluepull() {                                         // v1.62 BLUE holds Yuji: a deep hum that pulses, a whine that climbs as the pull grows and a long rush of air; bluepulloff() lets it go (a loop: a tap that skips the scene can stop it)
+      if (st.blueN) return; const t = ac.currentTime, B = C.tele, gd = ac.createGain(), gs = ac.createGain(), nodes = []; for (const g of [gd, gs]) { g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(1, t + 0.5); } gd.connect(B.deep); gs.connect(B.soft);
+      for (const [f, a] of [[55, 0.2], [82, 0.12], [110, 0.06]]) { const o = ac.createOscillator(), og = ac.createGain(), lf = ac.createOscillator(), lg = ac.createGain(); o.type = 'triangle'; o.frequency.value = f; og.gain.value = a; lf.frequency.value = 5.5; lg.gain.value = a * 0.5; lf.connect(lg); lg.connect(og.gain); o.connect(og); og.connect(gd); o.start(t); lf.start(t); nodes.push(o, lf); }
+      const lp = ac.createBiquadFilter(), lfo = ac.createOscillator(), ld = ac.createGain(); lp.type = 'lowpass'; lp.frequency.value = 700; lp.Q.value = 1.1; lfo.frequency.value = 0.7; ld.gain.value = 240; lfo.connect(ld); ld.connect(lp.frequency); lfo.start(t); nodes.push(lfo); lp.connect(gs);
+      for (const f of [110, 111.8, 165, 220]) { const o = ac.createOscillator(), og = ac.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(f * 0.9, t); o.frequency.linearRampToValueAtTime(f * 1.25, t + 4); og.gain.value = 0.035; o.connect(og); og.connect(lp); o.start(t); nodes.push(o); }
+      const ns = ac.createBufferSource(), nf = ac.createBiquadFilter(), ng = ac.createGain(); ns.buffer = nbuf; ns.loop = true; nf.type = 'bandpass'; nf.frequency.setValueAtTime(450, t); nf.frequency.linearRampToValueAtTime(1800, t + 4); nf.Q.value = 0.7; ng.gain.value = 0.38; ns.connect(nf); nf.connect(ng); ng.connect(gs); ns.start(t); nodes.push(ns); st.blueN = { gd, gs, nodes };
+    },
+    bluepulloff() { const v = st.blueN; if (!v) return; st.blueN = null; const t = ac.currentTime; for (const g of [v.gd, v.gs]) { g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), t); g.gain.linearRampToValueAtTime(0.0001, t + 0.35); } v.nodes.forEach(n => { try { n.stop(t + 0.4); } catch (e) { } }); },
+    blink() {                                            // v1.62 Gojo's BLUE carries him across the room: a pitch dive, a snap of air, and where he lands a deep thump with a glassy ring
+      const t = T(), B = C.tele; tone(B.deep, t, { f: 260, f2: 48, dur: 0.16, gain: 0.5, atk: 0.002, cur: 0.85 }); burst(B.soft, t, { f: 1800, f2: 260, q: 1.2, dur: 0.14, gain: 0.5, atk: 0.003 });
+      tone(B.deep, t + 0.14, { type: 'triangle', f: 150, f2: 40, dur: 0.5, gain: 0.45, atk: 0.003 }); burst(B.soft, t + 0.14, { type: 'lowpass', f: 1200, f2: 250, q: 0.7, dur: 0.14, gain: 0.55, atk: 0.002 }); tone(B.soft, t + 0.16, { f: 1568, f2: 1500, dur: 0.5, gain: 0.05, atk: 0.003 });
+    },
+    bluevac() {                                          // v1.62 BLUE swallows Yuji: air is sucked into a point (a rush that climbs), a sharp pop, then nothing
+      const t = T(), B = C.tele; burst(B.soft, t, { type: 'bandpass', f: 250, f2: 4200, q: 1.3, dur: 0.34, gain: 1.4, atk: 0.2 }); tone(B.deep, t, { type: 'triangle', f: 70, f2: 220, dur: 0.34, gain: 0.35, atk: 0.2, cur: 1 });
+      tone(B.deep, t + 0.34, { f: 200, f2: 38, dur: 0.3, gain: 0.5, atk: 0.002 }); burst(C.ce.deep, t + 0.34, { type: 'highpass', f: 2500, f2: 6000, q: 0.7, dur: 0.12, gain: 0.25, atk: 0.001 });
+    },
+    infcrack(k) {                                        // v1.62 INFINITY gives way: 0 = the barrier groans and cracks (a rising grind, glassy ticks that come faster), 1 = it SHATTERS (a flash of glass and a deep boom)
+      const t = T(), B = C.ce; if (k === 1) { tone(B.deep, t, { f: 120, f2: 26, dur: 1.2, gain: 0.8, atk: 0.003 }); burst(B.deep, t, { type: 'highpass', f: 3500, f2: 7000, q: 0.7, dur: 0.9, gain: 0.3, atk: 0.002 }); for (let i = 0; i < 40; i++) burst(B.deep, t + 0.02 + i * 0.025 + R(0, 0.02), { f: R(3000, 8000), q: 4, dur: R(0.01, 0.03), gain: R(0.06, 0.2) * (1 - i / 50), atk: 0.001 }); [2093, 2637, 3136].forEach((f, i) => tone(B.deep, t + i * 0.03, { f, f2: f * 0.9, dur: 0.7, gain: 0.03, atk: 0.002 })); return; }
+      tone(B.soft, t, { type: 'sawtooth', f: 90, f2: 240, dur: 1.5, gain: 0.04, atk: 1.2, cur: 1 }); tone(B.deep, t, { f: 44, f2: 70, dur: 1.5, gain: 0.35, atk: 1.2, cur: 1 }); for (let i = 0; i < 9; i++) burst(B.deep, t + 0.1 + i * (0.2 - i * 0.012) + R(0, 0.04), { f: R(2400, 6200), q: 5, dur: R(0.02, 0.05), gain: 0.07 + i * 0.012, atk: 0.001 });
+    },
+    portalclose() {                                      // v1.62 the portal collapses: a rush sucked into a point, a deep thump, then a trickle of sparks and silence
+      const t = T(), B = C.ce; burst(B.soft, t, { type: 'bandpass', f: 200, f2: 2400, q: 1.6, dur: 1.1, gain: 1.0, atk: 0.9 }); tone(B.deep, t, { f: 70, f2: 30, dur: 1.2, gain: 0.5, atk: 0.8 });
+      tone(B.deep, t + 1.1, { f: 120, f2: 24, dur: 1.4, gain: 0.9, atk: 0.003 }); burst(B.deep, t + 1.1, { type: 'lowpass', f: 700, f2: 80, q: 0.7, dur: 1.0, gain: 0.5, atk: 0.003 }); for (let i = 0; i < 12; i++) burst(B.deep, t + 1.2 + i * 0.09 + R(0, 0.05), { f: R(2500, 6000), q: 4, dur: 0.02, gain: 0.08 * (1 - i / 14), atk: 0.001 });
+    },
+    rumble(d) {                                          // v1.62 the whole room shakes: a low rumble that swells for d seconds and dies away
+      const t = T(), B = C.ce; d = d || 2; burst(B.deep, t, { type: 'lowpass', f: 320, f2: 70, q: 0.7, dur: d, gain: 0.8, atk: d * 0.6 }); tone(B.deep, t, { f: 42, f2: 30, dur: d, gain: 0.35, atk: d * 0.6 });
     },
     homeon() {                                           // v1.50 Yuji's Hometown: a warm drifting pad (A major, a slow shimmer) with a breath of wind in the grass (homeoff() fades it out)
       if (st.homeN) return; const t = ac.currentTime, g = ac.createGain(), nodes = []; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.13, t + 1.2); g.connect(C.ce.deep);

@@ -25,7 +25,7 @@ const TNE_SEQ = [
   { k: 'fade', d: 1.8 }];
 for (const S of [TN_SEQ, TNE_SEQ]) { let t = 0; for (const s of S) { s.t0 = t; if (s.k === 'try') s.d = TN_TRY[s.n].d; if (!s.d) s.d = Math.max(1.9, ((s.a || '').length + (s.b || '').length) / TN_RATE + 0.9); t += s.d; } S.end = t; }
 const TN_CUTS = TN_SEQ.slice(1).map(s => s.t0), TNE_CUTS = TNE_SEQ.slice(1).map(s => s.t0), TN_CARD = TNE_SEQ.end;      // taps jump to the next step; the ending's card comes right after its last step
-const TN_COL = { GOJO: '#7fd4ff', YUJI: '#ff9a5a' };
+const TN_COL = { GOJO: '#7fd4ff', YUJI: '#ff9a5a', MASTER: '#b58cff' };
 let tnSunK = 1, tnBirdsOn = true;      // how high the sun is (0 = behind the wall, 1 = up), and whether birds cross the sky
 
 // ---- the map: the training field (a red running track, a grass field, a stone wall, pine trees, a morning sky)
