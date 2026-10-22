@@ -1,4 +1,4 @@
-// ---------------------------------------------------------------- v1.55 CHAPTER 2: THE TRAINING (this file is spliced into template.html by build_html.py, in place of the marker line before drawScene)
+// ---------------------------------------------------------------- v1.55 PART 2: THE TRAINING (this file is spliced into template.html by build_html.py, in place of the marker line before drawScene)
 // A happy morning on the track field: Yuji comes to train with Gojo and tries to land a punch, but every blow stops in front of Gojo (INFINITY). Yuji backs away, Gojo switches Infinity off and a real fight begins: you are Yuji (his normal form only: no cursed-energy mode, no ULTIMATE, no FATALITY), Gojo has only his M1, his guard and his dash. When Yuji wins: a happy ending and a card.
 const TN_KIT = new Set(['y_crouch', 'y_dash', 'y_block', 'y_cpunch', 'y_sweep', 'y_div', 'y_rush', 'y_heavy', 'y_cancel']);      // the skills Yuji has in the training fight, bought or not (owns() answers from this list while vs.tn)
 const TN_TRY = [{ k: 0, d: 1.9 }, { k: 1, d: 1.9 }, { k: 12, d: 2.5 }];      // his three tries: R.HOOK, L.HOOK and RUSH FIST (his own numbers in YU_ATK); d = seconds the step lasts
@@ -165,7 +165,7 @@ function tnScene(now, dt, end) {
   if (!end) { const sws = TN_SEQ.filter(s => s.k === 'try'); sws.forEach(s => { const G = tnGeo(s.n); ev('sw' + s.n, s.t0 + TN_UA + G.sw / G.fps, () => snd('f:swing', ySwingK(G.k)), 0.3); }); const od = TN_SEQ.find(s => s.off).t0 + 1.0; ev('dispel', od, () => snd('tinkoff'), 0.4); if (T >= od && T < od + 0.7) { const a = (T - od) / 0.7; ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = 'rgba(180,235,255,' + (1 - a).toFixed(3) + ')'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(scr(GX + 2), gy - 33, 27 + a * 40, 40 + a * 30, 0, 0, 6.2832); ctx.stroke(); ctx.restore(); } }
   if (end) { ctx.fillStyle = 'rgba(255,170,190,0.9)'; for (let q = 0; q < 14; q++) { const x = (q * 53 + T * (8 + q % 3 * 3)) % (VW + 20) - 10, y = ((q * 37 + T * (14 + q % 4 * 4)) % (VH + 10)) - 5; ctx.fillRect(Math.round(x), Math.round(y), 2, 1); ctx.fillRect(Math.round(x) + 1, Math.round(y) + 1, 1, 1); } }      // petals fall in the ending
   // the title, the speech, the tiredness
-  if (!end && T > 0.7 && T < 3.7) { const a = clamp01(Math.min((T - 0.7) / 0.6, (3.7 - T) / 0.6)); ctx.globalAlpha = a; pxt('CHAPTER 2', VW / 2, Math.round(VH * 0.3), '#ffffff', 16, 'center'); pxt('A HAPPY MORNING', VW / 2, Math.round(VH * 0.3) + 16, '#ffe9a0', 8, 'center'); ctx.globalAlpha = 1; }
+  if (!end && T > 0.7 && T < 3.7) { const a = clamp01(Math.min((T - 0.7) / 0.6, (3.7 - T) / 0.6)); ctx.globalAlpha = a; pxt('A HAPPY MORNING', VW / 2, Math.round(VH * 0.3) + 8, '#ffe9a0', 16, 'center'); ctx.globalAlpha = 1; }
   if (!end && step.k === 'tired') { const al = clamp01(Math.min(t1 / 0.3, (step.d - t1) / 0.3)); ctx.globalAlpha = al; pxt('HAH... HAH...', scr(tnYuX(T).x), gy - 70, '#ffffff', 8, 'center'); ctx.globalAlpha = 1; }
   if (step.k === 'say') { const n = Math.floor(t1 * TN_RATE), sp = step.a + step.b; if (story.tn.vi !== i) { story.tn.vi = i; story.tn.vc = 0; } while (story.tn.vc < Math.min(n, sp.length)) { story.tn.vc++; if (sp[story.tn.vc - 1] !== ' ') snd('tvoice', step.w === 'GOJO' ? 0 : 1); } tnDlg(step.w, step.a, step.b, n); }
   // the light of the morning, the fade in from the sun (and the fade out at the end)
@@ -180,7 +180,7 @@ function startTraining(slot) {
   audio(); show('story'); story = { slot, t0: pnow(), battle: false, T: 0, ev: {}, tn: { end: false, bk: -1, fs: -1, vc: 0, vi: -1 } }; alley = true; court = false; track = true; wx = 0; tnSunK = 0; snd('tmusic', 0);
 }
 function trainFrame(now, dt) {
-  if (story.tn.rest) { restFrame(now, dt); return; }      // (the restaurant: the last scene of chapter 2)
+  if (story.tn.rest) { restFrame(now, dt); return; }      // (the restaurant: the last scene of part 2)
   if (story.tn.end) { trainEnd(now, dt); return; }
   tnScene(now, dt, false); const T = story.T; if (T >= 14.3) once2('mus2', () => snd('tmusic', 0)); if (T >= 28.6) once2('mus3', () => snd('tmusic', 0));
   if (T >= TN_SEQ.end && !story.battle) startTrainBattle();
@@ -198,4 +198,4 @@ function trainSkip() {      // a tap: on to the next step (in the opening the la
   const end = story.tn.end, T = story.T, n = (end ? TNE_CUTS : TN_CUTS).concat(end ? [TNE_SEQ.end] : [TN_SEQ.end]).find(c => c > T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000;
 }
 function storyDone3() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].tn = true; storeSaves(a); }
-function storyDone4() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].c2 = true; storeSaves(a); }      // (chapter 2 is finished: its last scene has reached the card)
+function storyDone4() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].c2 = true; storeSaves(a); }      // (part 2 is finished: its last scene has reached the card)

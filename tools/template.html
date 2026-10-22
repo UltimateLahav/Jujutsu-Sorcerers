@@ -137,7 +137,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.62</small>
+    <small id="ver">V1.63</small>
   </div>
 </section>
 
@@ -320,7 +320,7 @@ const YU_ATK = { base: 24, names: ['R.HOOK', 'L.HOOK', 'KNEE', '3 KICKS', 'DIVER
 YU_ATK.fps = YU_ATK.fps.map((f, i) => [0, 1, 2, 3, 5, 6, 7, 8].includes(i) ? Math.round(f * PACE) : f);      // (v1.10 pace: his M1 moves are quicker; the special moves keep their speed)
 YU_ATK.names.push('H.KICK', 'S.KICK', 'PUNCH', 'S.PUNCH', 'B.FLASH', 'BF KICK', 'BF GUT'); YU_ATK.fps.push(36, 36, 38, 26, 26, 30, 28); YU_ATK.swing.push([4], [5], [5], [6], [6], [5], [6]); YU_ATK.imp.push([7], [7], [7], [6], [7], [7], [7]); YU_ATK.hit.push([18], [19], [20], [21], [42], [47], [42]); YU_ATK.reach.push(25, 24, 18, 20, 26, 30, 26);      // THE ZONE's M1: high kick (hit 18), spin kick in the gut (19), punch to the face (20), spin punch (21: the enemy is sent flying back); strips 20-22 = BLACK FLASH: the punch (hit 42), the kick to the head (47), the blow to the stomach (42)
 YU_ATK.names.push('CH.FLASH'); YU_ATK.fps.push(20); YU_ATK.swing.push([7]); YU_ATK.imp.push([9]); YU_ATK.hit.push([42]); YU_ATK.reach.push(34); YU_ATK.names.push('P.BLOOD', 'SHRINE', 'CLEAVE', 'S.DOMAIN'); YU_ATK.fps.push(16, 16, 18, 14); YU_ATK.swing.push([], [], [], []); YU_ATK.imp.push([], [], [], []); YU_ATK.hit.push([], [], [], []); YU_ATK.reach.push(150, 40, 36, 0);      // v1.19 INHERITENCE: strip 23 = the CHARGED BLACK FLASH (hit 42; the impact is frame 9 at 20 FPS = 0.45 s after it starts; 150 damage, see BF_DMG)
-// THE CARTOON CAT (chapter 2, tools/cat_rig.py). His M1 (15 frames each): 1. GRAB: the arm stretches out, grabs Gojo and pulls him in (hit 30), 2. PUNCH with the other hand while the first still holds on (31), 3. GRAB again (32, the same animation as the first), 4. KICK that sends Gojo away (33); 4 + 8 + 4 + 14 = 30 damage. Hit 34 = the punch up from the floor. Hit 35 = the HUGE Cat's kick (CARTOON ATTACK: 25 damage). CAT_RXLIFT: how high the hop of his hit reaction 7 lifts him. CT: the playable Cat's numbers (smashFps = how fast he smashes himself flat, flatMul = his walking speed while flat, flatMax = ms flat before he gets up dizzy, stunMs = how long he is dizzy, toonFps / toonHit = the speed and the impact frame of CARTOON ATTACK, back = how many px behind the summoner the giant stands, hold = ms his glove keeps its grip). CAT_CELL: every strip's cell: [width, height, anchor column, rows above the usual 64]
+// THE CARTOON CAT (part 2, tools/cat_rig.py). His M1 (15 frames each): 1. GRAB: the arm stretches out, grabs Gojo and pulls him in (hit 30), 2. PUNCH with the other hand while the first still holds on (31), 3. GRAB again (32, the same animation as the first), 4. KICK that sends Gojo away (33); 4 + 8 + 4 + 14 = 30 damage. Hit 34 = the punch up from the floor. Hit 35 = the HUGE Cat's kick (CARTOON ATTACK: 25 damage). CAT_RXLIFT: how high the hop of his hit reaction 7 lifts him. CT: the playable Cat's numbers (smashFps = how fast he smashes himself flat, flatMul = his walking speed while flat, flatMax = ms flat before he gets up dizzy, stunMs = how long he is dizzy, toonFps / toonHit = the speed and the impact frame of CARTOON ATTACK, back = how many px behind the summoner the giant stands, hold = ms his glove keeps its grip). CAT_CELL: every strip's cell: [width, height, anchor column, rows above the usual 64]
 const CAT_ATK = { base: 30, names: ['GRAB', 'PUNCH', 'GRAB', 'KICK', 'UPPER'], strip: ['m0', 'm1', 'm0', 'm3', 'flatpunch'], fps: [24, 30, 24, 28, 30], swing: [[3], [4], [3], [4], [3]], imp: [[6], [7], [6], [8], [6]], hit: [[30], [31], [32], [33], [34]], snd: [0, 1, 2, 3, 0] };      // (index 4 = the punch up from the floor: only the playable Cat uses it)
 CAT_ATK.fps = CAT_ATK.fps.map(f => Math.round(f * 1.2));      // (v1.10 pace: the Cat's M1 is a fifth quicker)
 const CAT_RXLIFT = { 7: [0, 3, 6, 9, 10, 10, 10, 9, 7, 5, 3, 2, 1, 0, 0] }, CT = { tossFps: 18, smashFps: 25, flatMul: 3, flatMax: 5000, stunMs: 1000, toonFps: 24, toonHit: 10, back: 64, hold: 1300 };
@@ -2180,7 +2180,7 @@ function buildGrades() {                       // the six grade buttons: locked 
   const sv = vsLoad(), box = $('grades'); box.innerHTML = ''; if (vsSel > sv.un) vsSel = sv.un;
   GRADES.forEach((g, i) => { const b = document.createElement('button'); b.className = 'gr' + (i === vsSel ? ' sel' : '') + (i > sv.un ? ' lk' : ''); b.disabled = i > sv.un; b.dataset.g = i; b.innerHTML = g.name + '<small>' + (i > sv.un ? 'LOCKED' : [0, 1, 2].map(k => '<span class="star' + (k < sv.st[i] ? '' : ' off') + '"></span>').join('')) + '</small>'; b.addEventListener('click', () => { vsSel = i; buildGrades(); }); box.appendChild(b); });
 }
-function startMatch(gi, story, retry, foe) { vs = { story: !!story, gi, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: story ? 1e9 : ROUND_MS, hp: PHP, sh: PHP, hist: [], res: null, retry: retry | 0, me: story ? (foe === 'gojo' ? 'yuji' : 'gojo') : vsPick.me, foe: story ? (foe || 'verity') : vsPick.foe, tn: !!story && foe === 'gojo' };      // (a story fight against Gojo is the training of chapter 2: you are Yuji, tn = the training's limits)
+function startMatch(gi, story, retry, foe) { vs = { story: !!story, gi, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: story ? 1e9 : ROUND_MS, hp: PHP, sh: PHP, hist: [], res: null, retry: retry | 0, me: story ? (foe === 'gojo' ? 'yuji' : 'gojo') : vsPick.me, foe: story ? (foe || 'verity') : vsPick.foe, tn: !!story && foe === 'gojo' };      // (a story fight against Gojo is the training of part 2: you are Yuji, tn = the training's limits)
   vs.inv = !story && vs.me === vs.foe; beginRound(pnow()); }      // (retry: the story fight again after a failed red)
 function beginRound(now) {                     // a fresh round: the scene is reset, the enemy steps in, "ROUND n" and "FIGHT!"
   const keep = vs, gore = keep.story && keep.foe === 'cat' ? [gibs, drops, decals, pools] : null; show('play'); vs = keep; if (gore) [gibs, drops, decals, pools] = gore; ceReset(); const t = pnow(), G = GRADES[vs.gi];
@@ -2287,7 +2287,7 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
   // 1. a swing is coming: after his reaction time he steps out of it or raises his guard; a move you keep repeating is read (Grade 2 and up) and answered more and more
   if (atkAt >= 0 && !vs.rolled && d.ai !== 'attack' && gap > 0 && now - vs.seenAt >= G.react * (0.8 + Math.random() * 0.4) && now < atkAt + pImpMs(vs.seenK) && ag <= pMove(vs.seenK) + 4) {
     vs.rolled = true; const habit = vs.hist.slice(-5).filter(k => k === vs.seenK).length, r = Math.random(), blk = Math.min(0.95, G.blk + (G.smart >= 1 ? 0.12 * Math.max(0, habit - 1) : 0));
-    const catFoe = vs.foe === 'cat' && vs.story;      // (in the chapter 2 story fight the Cat never blocks: he pushes himself away with his hands instead; in Versus he blocks like the others)
+    const catFoe = vs.foe === 'cat' && vs.story;      // (in the part 2 story fight the Cat never blocks: he pushes himself away with his hands instead; in Versus he blocks like the others)
     if (r < G.dodge + (catFoe ? blk : 0)) { vs.defended = true; dodge(300); return; }
     if (!catFoe && r < G.dodge + blk) { vs.defended = true; d.ai = 'block'; d.aiAt = now; d.until = now + 650; return; }
   }
@@ -3552,7 +3552,7 @@ function cfFrame(now, dt) {
   const fa = clamp01((t - (T.end - 0.5)) / 0.5); if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
   if (t >= T.end) cfEnd(now);
 }
-// ---------------------------------------------------------------- THE CAT'S END (chapter 2, the story fight: when the Cat's health runs out he stays on his feet, dazed, and this cutscene takes over; about 30 s with its slow motions). Gojo walks up slowly. The Cat snatches a survivor with his rubber arm and holds him up as a shield. Gojo cuts the human in two from far away with a blade of Blue and the Cat is shocked. Gojo runs up and kicks his face: the head shoots away on a rubber neck as long as the screen, then snaps back and smashes into Gojo, who meets it with a full BLUE that cuts the Cat into thousands of single pixels. He is dead; Gojo says one last line and the TO BE CONTINUED card follows.
+// ---------------------------------------------------------------- THE CAT'S END (part 2, the story fight: when the Cat's health runs out he stays on his feet, dazed, and this cutscene takes over; about 30 s with its slow motions). Gojo walks up slowly. The Cat snatches a survivor with his rubber arm and holds him up as a shield. Gojo cuts the human in two from far away with a blade of Blue and the Cat is shocked. Gojo runs up and kicks his face: the head shoots away on a rubber neck as long as the screen, then snaps back and smashes into Gojo, who meets it with a full BLUE that cuts the Cat into thousands of single pixels. He is dead; Gojo says one last line and the TO BE CONTINUED card follows.
 const KE = { gx0: -56, walk: 6.0, wake: 3.0, grab: 3.8, say1: 4.9, cast: 7.4, slice: 8.35, shock: 8.6, say2: 8.95, rush: 10.9, kick: 11.35, raise: 13.4, face: 14.5, snap: 15.55, fcut: 15.8, slide: 36, who: 4, hx: 44 };      // (times on the cutscene's own clock, in seconds; slide = how far the kick pushes the Cat; who = which of the five people is the survivor; hx = where the snapped head ends up in front of the Cat's body, see SNAP_HX in tools/cat_rig.py)
 KE.imp = KE.kick + 8 / 24; KE.hit = KE.snap + 10 / 24; KE.burst = KE.hit + 0.7; KE.calm = KE.burst + 0.9; KE.end = KE.burst + 5.2;
 const KB = ['#0b3fd8', '#2f7bff', '#7fd0ff', '#ffffff'], KBU = [0xffd83f0b, 0xffff7b2f, 0xffffd07f, 0xffffffff];      // the colours of Blue (as text, and as ABGR numbers for the pieces)
@@ -4214,7 +4214,7 @@ function drawScene(now, dt) {
   drawHits(now);
 }
 
-// ---------------------------------------------------------------- STORY MODE, chapter 1 (the alley). STORY MODE > CHOOSE A SAVE (3 slots kept on this device) > START: a cutscene (the mission, Gojo looks around, Verity jumps him, the close-ups, the red VERITY), then the fight in the alley; after the fight and the report to the higher-ups the Cartoon Cat part follows at once (v1.51: it used to be chapter 2).
+// ---------------------------------------------------------------- STORY MODE, chapter 1 (the alley). STORY MODE > CHOOSE A SAVE (3 slots kept on this device) > START: a cutscene (the mission, Gojo looks around, Verity jumps him, the close-ups, the red VERITY), then the fight in the alley; after the fight and the report to the higher-ups the Cartoon Cat part follows at once (v1.51: it used to be part 2).
 const STORYART = __STORYART__;
 const SIMG = {}; for (const k in STORYART) { const mkI = u => { const i = new Image(); i.src = u; return i; }, a = STORYART[k]; SIMG[k] = Array.isArray(a) ? a.map(mkI) : typeof a === 'object' ? Object.fromEntries(Object.entries(a).map(([n, u]) => [n, mkI(u)])) : mkI(a); }
 const TALK = __TALK__;      // v1.16 (tools/talk_art.py): ballTalk = Verity's ball talking (15 frames of 13x13), cat.hugegrab / held / toss = the giant's grab and throw, the Cat in his glove and the thrown Cat (15 frames each), hand = where the giant's hand is on each frame, voice = "Hey, it's me, it's Verity" (an mp3 as a data URL)
@@ -4236,15 +4236,15 @@ function playVoice() {      // "HEY, IT'S ME, IT'S VERITY" (3.9 s), played throu
 const SAVE_KEY = 'jsv_saves'; let svSel = -1;
 function loadSaves() { try { const a = JSON.parse(localStorage.getItem(SAVE_KEY)); if (Array.isArray(a) && a.length === 3) return a; } catch (e) { } return [null, null, null]; }
 function storeSaves(a) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(a)); } catch (e) { } }
-function renderSaves() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].c2 ? 'CHAPTER 2 COMPLETE' : a[i].tn ? 'CHAPTER 2 TRAINING DONE' : a[i].ch2 ? 'THE MYSTERY COMPLETE' : a[i].ch1 ? 'THE MYSTERY: THE CAT' : a[i].beat ? 'THE MYSTERY: VERITY BEATEN' : 'CHAPTER 1: THE MYSTERY') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
-function startStory(slot) { const a = loadSaves(); if (a[slot] && a[slot].ch2) { startTraining(slot); return; } if (a[slot] && a[slot].ch1) { startChapter2(slot); return; }      // (a save that has finished chapter 1 goes on with chapter 2, the training)
+function renderSaves() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].c2 ? 'CHAPTER 1 COMPLETE' : a[i].tn ? 'THE MYSTERY: TRAINING DONE' : a[i].ch2 ? 'THE MYSTERY COMPLETE' : a[i].ch1 ? 'THE MYSTERY: THE CAT' : a[i].beat ? 'THE MYSTERY: VERITY BEATEN' : 'CHAPTER 1: THE MYSTERY') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
+function startStory(slot) { const a = loadSaves(); if (a[slot] && a[slot].ch2) { startTraining(slot); return; } if (a[slot] && a[slot].ch1) { startChapter2(slot); return; }      // (a save that has finished chapter 1 goes on with part 2, the training)
   if (!a[slot]) a[slot] = { ch: 1 }; storeSaves(a); audio(); show('story'); story = { slot, t0: pnow(), battle: false, T: 0, ev: {} }; alley = true; court = false; wx = 0; }      // (a save that has beaten Verity and heard the report goes on with the Cartoon Cat part, the second half of chapter 1)
 function storyDone() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].beat = true; storeSaves(a); }
 function storySkip() {
   if (!story || story.battle) return;
   if (story.tn) { trainSkip(); return; }
   if (story.master) { const n = MS_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; else if (story.T >= MS.card + 1.2) { show('saves'); renderSaves(); } return; }      // (the Master's scene - it is checked before the Cartoon Cat part, whose flag it keeps: on to the next cut; at the very end back to the saves)
-  if (story.ch2) { const n = C2_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; return; }      // (chapter 2: on to the next cut)
+  if (story.ch2) { const n = C2_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; return; }      // (part 2: on to the next cut)
   if (story.outro) { const n = OUT_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; return; }      // (the report: on to the next cut; the last cut is the seam into the Cartoon Cat part)
   const n = [6.9, 10.0, CUT.slowEnd, CUT.fade].find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; }      // a tap: on to the next part of the cutscene (the dialogue, Verity's attack, the close-up of Verity, the fade)
 function startStoryBattle() { msBuf.length = 0; msBurstAt = -1; story.battle = true; startMatch(3, true, 0, story.ch2 ? 'cat' : 'verity'); }
@@ -4291,7 +4291,7 @@ function buildCourt() {      // the grounds of Jujutsu High at night: a big moon
   g.fillStyle = '#17131d'; g.fillRect(0, 9, 12, 1); g.fillRect(14, 16, 14, 1);
 }
 function drawAlley(now) {
-  buildAlley(); if (track) { drawTrack(now); return; }      // (the training field of chapter 2 draws all of itself)
+  buildAlley(); if (track) { drawTrack(now); return; }      // (the training field of part 2 draws all of itself)
   ctx.drawImage(alleyBg, 0, 0); layer(alleyProps, 0.55);
   const o = Math.round(((-wx % 28) + 28) % 28); for (let x = o - 28; x < VW; x += 28) ctx.drawImage(alleyTile, x, gy - 12);
   drawBlood(now); if ((now / 1000) % 3.3 < 0.08) { ctx.fillStyle = 'rgba(0,0,12,0.35)'; ctx.fillRect(0, 0, VW, VH); }      // the lamp flickers now and then
@@ -4341,10 +4341,10 @@ const CUT = { see: 10.05, zoom: 10.3, slow: 10.85, slowEnd: 13.8, ask: 11.6, ask
 const wclock = T => T < CUT.slow ? T : T < CUT.slowEnd ? CUT.slow + (T - CUT.slow) * CUT.rate : CUT.slow + (CUT.slowEnd - CUT.slow) * CUT.rate + (T - CUT.slowEnd);      // the world's clock: it crawls (a quarter of the speed) while the slow motion lasts
 const ease3 = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
 function storyFrame(now, dt) {
-  if (story.tn) { trainFrame(now, dt); return; }      // (chapter 2: the training morning and its ending)
+  if (story.tn) { trainFrame(now, dt); return; }      // (part 2: the training morning and its ending)
   if (story.master) { masterFrame(now, dt); return; }      // (the Master's scene, after the Cat)
   if (story.outro) { outroFrame(now, dt); return; }      // (the ending of the chapter, after the fight)
-  if (story.ch2) { ch2Frame(now, dt); return; }      // (chapter 2, the opening)
+  if (story.ch2) { ch2Frame(now, dt); return; }      // (part 2, the opening)
   const T = Math.max(0, now - story.t0) / 1000; story.T = T;      // (clamp: rAF time can trail pnow() by a hair, and a negative time picked picture -1 of an animation)
   ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
   alleyScene(now, dt, T, Math.round(VW * 0.42));
@@ -4525,11 +4525,11 @@ function chapterSeam() {      // the end of the report (v1.51: the old chapters 
   startChapter2(story.slot);
 }
 // the fight: the stand-in enemy looks like Verity; at half health he turns into the smiley ball (smoke, 5 s, cannot be hit and cannot act), then smoke again and he is back
-// ---------------------------------------------------------------- THE CARTOON CAT PART (the second half of chapter 1, called chapter 2 before v1.51, so the code still says ch2 / C2), the opening. No title card (the clock starts at C2.hall); Gojo runs out of the higher-ups' room, along the corridor; outside, in the grounds, the Cartoon Cat is killing people for fun: he stretches an arm, grabs a man and pulls him in, punches his head off (the head, brain, eyes, teeth, skull and bones fly), kicks another in two (the guts spill), smashes himself flat on a third; Gojo arrives, sees the one the Cat has by the neck, runs up and kicks the Cat in the face, which sends him sliding away from the people; they talk, then the fight is the story battle against the Cat. T = seconds on the cutscene's own clock (the courtyard scene has its own clock t, which starts at C2.B).
+// ---------------------------------------------------------------- THE CARTOON CAT PART (the second half of chapter 1, called part 2 before v1.51, so the code still says ch2 / C2), the opening. No title card (the clock starts at C2.hall); Gojo runs out of the higher-ups' room, along the corridor; outside, in the grounds, the Cartoon Cat is killing people for fun: he stretches an arm, grabs a man and pulls him in, punches his head off (the head, brain, eyes, teeth, skull and bones fly), kicks another in two (the guts spill), smashes himself flat on a third; Gojo arrives, sees the one the Cat has by the neck, runs up and kicks the Cat in the face, which sends him sliding away from the people; they talk, then the fight is the story battle against the Cat. T = seconds on the cutscene's own clock (the courtyard scene has its own clock t, which starts at C2.B).
 const C2 = { hall: 2.8, run0: 3.0, black: 5.2, B: 6.4, fight: 6.4 + 13.8 }, C2_B = { kick: 7.83, talk: 9.8, fade: 13.0 };
 const C2_CAT = [[1.0, 'm0', 24], [1.625, 'm1', 30], [3.4, 'm3', 28], [5.0, 'smash', 25], [5.9, 'unsmash', 30], [6.4, 'm0', 24], [7.83, 'rx0', 18]];      // what the Cat does when: [scene time, strip, frames per second]
 const C2_CUTS = [C2.hall, C2.B, C2.B + 7.4, C2.B + C2_B.talk, C2.B + C2_B.fade];
-function startChapter2(slot) { audio(); show('story'); if (!HUM) HUM = makeHumans(document); story = { slot, t0: pnow() - C2.hall * 1000, battle: false, T: 0, ev: {}, ch2: true, shk: null, lastYell: 0 }; alley = true; court = true; wx = 0; }      // (v1.51: the second half of chapter 1, from the seam or from a save; its clock starts where the old CHAPTER 2 title card ended, so there is no title)
+function startChapter2(slot) { audio(); show('story'); if (!HUM) HUM = makeHumans(document); story = { slot, t0: pnow() - C2.hall * 1000, battle: false, T: 0, ev: {}, ch2: true, shk: null, lastYell: 0 }; alley = true; court = true; wx = 0; }      // (v1.51: the second half of chapter 1, from the seam or from a save; its clock starts where the old PART 2 title card ended, so there is no title)
 function ch2Frame(now, dt) {
   const T = Math.max(0, now - story.t0) / 1000; story.T = T; ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
   if (T < C2.B) c2Hall(now, T); else c2Court(now, dt, T - C2.B);
