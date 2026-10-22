@@ -85,9 +85,9 @@ function rsDrip(x, y, T, n, ph) {      // blood dripping from (x, y): n drops th
   ctx.save(); ctx.fillStyle = '#a3141c'; for (let i = 0; i < n; i++) { const q = (T * 0.8 + i * 0.37 + (ph || 0)) % 1; ctx.globalAlpha = 1 - q * 0.5; ctx.fillRect(Math.round(x + (i % 3 - 1) * 2), Math.round(y + q * q * 28), 1, 2); } ctx.restore();
 }
 function rsGojoStand(x, T, o) {      // Gojo, hurt, on his feet at x: his bloody picture leaning forward about his feet (o.lean), breathing, bleeding; o.alpha
-  o = o || {}; const f = bloody(idleF[Math.floor(T * IDLE_FPS) % idleF.length]), lean = o.lean == null ? 0.1 + 0.012 * Math.sin(T * 2.1) : o.lean;
+  o = o || {}; const f = bloody(idleF[Math.floor(T * IDLE_FPS) % idleF.length]), lp = Math.max(0, Math.sin(T * 2.4)), lean = o.lean == null ? 0.09 + 0.045 * lp : o.lean;      // (he limps: now and then he sags to one side)
   ctx.fillStyle = 'rgba(110,8,14,' + (o.alpha == null ? 0.85 : 0.85 * o.alpha).toFixed(2) + ')'; ctx.beginPath(); ctx.ellipse(x + 2, gy + 5, 9, 2, 0, 0, 6.2832); ctx.fill();      // the pool at his feet
-  shadow(x, 9); rsGojoRot(f, D.idle, x, gy + Math.round(Math.sin(T * 3.1) * 0.5 + 0.5), lean, 60, false, o.alpha); rsDrip(x + 7, gy - 24, T, 3, x * 0.01);
+  shadow(x, 9); rsGojoRot(f, D.idle, x, gy + Math.round(lp * 1.4), lean, 60, false, o.alpha); rsDrip(x + 7, gy - 24, T, 3, x * 0.01);
 }
 function rsWindLines(T, k) {      // long thin lines torn across a close-up to the left by the wind
   ctx.save(); for (let i = 0; i < 16; i++) { const h = Math.imul(i + 3, 2654435761) >>> 0, sp = 380 + (h % 360), len = 24 + (h >> 8) % 60, y = 8 + (h >> 4) % (VH - 16), x = VW + 80 - ((T * sp + (h >> 12) % (VW + 160)) % (VW + 160)); ctx.globalAlpha = (0.12 + 0.22 * ((h >> 18) % 4) / 4) * k; ctx.fillStyle = '#e8e0ff'; ctx.fillRect(Math.round(x), y, len, 1); } ctx.restore();
@@ -221,7 +221,7 @@ function rsTele(now, dt, T, st, t1) {
   if (t1 < 0.55) rsGojoStand(C.gs, T);
   else if (a < 0.25) { const f = Math.min(9, Math.floor(Math.max(0, t1 - 0.55) * 24)); shadow(C.gs, 9); rsGojoRot(bloody(lapseF[0][f]), D.atk4, C.gs, gy, 0.07, 60, false, a < 0 ? 1 : 1 - a / 0.25); if (a < 0) rsBlue(C.gs + 19, gy - 37, 2 + 6 * (t1 - 0.55) / 0.25, T, 0.6); }
   if (a >= 0 && a < 0.45) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; const hd = x0 + (x1 - x0) * Math.min(1, a / 0.14), fa = 1 - clamp01((a - 0.14) / 0.3), gr = ctx.createLinearGradient(x0, 0, hd, 0); gr.addColorStop(0, 'rgba(120,200,255,0)'); gr.addColorStop(1, 'rgba(235,250,255,' + fa.toFixed(2) + ')'); ctx.strokeStyle = gr; ctx.lineWidth = 3 * fa + 0.5; ctx.beginPath(); ctx.moveTo(x0, hy); ctx.lineTo(hd, hy); ctx.stroke(); ctx.restore(); }      // the streak
-  if (a >= 0.12) { const b = a - 0.12; rsGojoStand(C.xg, T, { alpha: arr }); rsInfinity(C.xg + 3, gy - 30, C.bx - C.xg - 3, 33, T, 0.25, null); if (b < 0.5) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < 3; i++) { ctx.strokeStyle = 'rgba(170,230,255,' + (0.8 * (1 - b / 0.5) * (1 - i * 0.25)).toFixed(3) + ')'; ctx.lineWidth = 2 - i * 0.5; ctx.beginPath(); ctx.ellipse(C.xg + 3, gy - 30, 4 + b * 60 + i * 8, 10 + b * 70 + i * 8, 0, 0, 6.2832); ctx.stroke(); } ctx.restore(); } }
+  if (a >= 0.12) { const b = a - 0.12; rsGojoStand(C.xg, T, { alpha: arr, lean: 0.1 + 0.28 * Math.max(0, 1 - b / 0.45) }); rsInfinity(C.xg + 3, gy - 30, C.bx - C.xg - 3, 33, T, 0.25, null); if (b < 0.5) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < 3; i++) { ctx.strokeStyle = 'rgba(170,230,255,' + (0.8 * (1 - b / 0.5) * (1 - i * 0.25)).toFixed(3) + ')'; ctx.lineWidth = 2 - i * 0.5; ctx.beginPath(); ctx.ellipse(C.xg + 3, gy - 30, 4 + b * 60 + i * 8, 10 + b * 70 + i * 8, 0, 0, 6.2832); ctx.stroke(); } ctx.restore(); } }
   rsWindBits(T, 0.4, 0, VW); rsCamOff(); rsCold(); if (a >= 0.12 && a < 0.2) { ctx.fillStyle = 'rgba(210,240,255,' + (0.4 * (1 - (a - 0.12) / 0.08)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }
 }
 // ---- 8. Gojo holds his hand back to Yuji, BLUE in the palm; Yuji screams SENSEI STO- and is sucked into it: gone, and the scream is cut off dead
