@@ -122,6 +122,19 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #knob path{fill:#2a1f4a;stroke:#8f7ac4;stroke-width:2}
 #joy.on .jbase{stroke:#8f7ac4}
 #joy.on #knob path{fill:#3d2f6e;stroke:#b9a8ee}
+/* ---- CUSTOM (v1.64): the slots, the name and the drawing board */
+#customMode span{font-size:6vh;margin-top:6.5vh;color:#7be0a0}
+#cust .cards{gap:3vh}#cust .card{width:26vh;height:38vh;font-size:var(--fs-btn,clamp(8px,2.4vh,13px))}#cust .card canvas{width:17vh;height:17vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line);margin-top:1vh}#cust .card b{font-size:.8em;word-break:break-all;line-height:1.3}
+#custName{gap:2.4vh}#custName input{font:inherit;font-size:var(--fs-btn,clamp(9px,3vh,16px));color:var(--ink);background:#120d22;border:3px solid var(--line);padding:1.6vh 2vh;width:44vh;text-transform:uppercase;text-align:center;user-select:text;-webkit-user-select:text;outline:none}#custName input:focus{border-color:var(--acc)}
+#cdMain{display:flex;align-items:center;justify-content:center;gap:2vh}
+#cdTools{display:grid;grid-template-columns:1fr 1fr;gap:1vh;width:27vh}
+#cdTools button,#cdSide button{padding:1vh .5vh;font-size:clamp(6px,1.9vh,10px);box-shadow:2px 2px 0 #000;border-width:2px}
+#cdTools button.sel{border-color:var(--acc);background:#2a1f4a;color:#ffd34d}
+#cdBoard{line-height:0}#cdCv{display:block;image-rendering:pixelated;border:3px solid var(--line);background:#120d22;touch-action:none;cursor:crosshair}
+#cdSide{display:flex;flex-direction:column;align-items:center;gap:1vh;width:38vh}#cdName{font-size:clamp(7px,2.2vh,12px);color:#ffd34d;font-weight:normal;word-break:break-all}
+#cdPal{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;width:100%}#cdPal button{padding:0;height:3.6vh;min-width:0;border:2px solid #000;box-shadow:none}#cdPal button.sel{outline:2px solid #fff;outline-offset:-1px;z-index:1}
+#cdPv{display:flex;align-items:center;gap:1.4vh}#cdPrev{width:64px;height:64px;image-rendering:pixelated;background:#120d22;border:2px solid var(--line)}
+#cdDone{border-color:#ffd34d;color:#ffd34d}
 #rotate{position:fixed;inset:0;z-index:9;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--bg);text-align:center;line-height:1.6;font-size:12px}
 #rotate div{font-size:56px;animation:r 2s ease-in-out infinite}
 @keyframes r{0%,30%{transform:rotate(0)}70%,100%{transform:rotate(-90deg)}}
@@ -137,7 +150,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.63</small>
+    <small id="ver">V1.64</small>
   </div>
 </section>
 
@@ -149,6 +162,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <button id="battles" class="card mode"><span>VS</span><b>BATTLES</b><i>FIGHT THE ENEMY</i></button>
     <button id="story" class="card mode"><span>?</span><b>STORY MODE</b><i>CHAPTER 1: THE MYSTERY</i></button>
     <button id="lanMode" class="card mode"><span>WIFI</span><b>WI-FI ROOMS</b><i>SAME WI-FI ONLY</i></button>
+    <button id="customMode" class="card mode"><span>ART</span><b>CUSTOM</b><i>DRAW YOUR OWN</i></button>
   </div>
   <small>YOU START WITH PUNCHES ONLY: BEAT CURSES IN CHALLENGES, EARN MONEY, BUY SKILLS</small>
   <div class="row"><button id="skillsMode">SKILLS</button><button id="modesBack">BACK</button></div>
@@ -212,6 +226,38 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <button id="sv2" class="card mode"><span>3</span><b>SAVE 3</b><i>EMPTY</i></button>
   </div>
   <div class="row"><button id="svStart" disabled>START</button><button id="svBack">BACK</button></div>
+</section>
+
+<section id="cust" class="screen">
+  <h2>CUSTOM</h2>
+  <small>CHOOSE A SLOT TO DRAW YOUR OWN CHARACTER</small>
+  <div class="cards">
+    <button id="cu0" class="card mode"><canvas width="64" height="64"></canvas><b>EMPTY</b><i>DRAW</i></button>
+    <button id="cu1" class="card mode"><canvas width="64" height="64"></canvas><b>EMPTY</b><i>DRAW</i></button>
+    <button id="cu2" class="card mode"><canvas width="64" height="64"></canvas><b>EMPTY</b><i>DRAW</i></button>
+  </div>
+  <div class="row"><button id="cuBack">BACK</button></div>
+</section>
+
+<section id="custName" class="screen">
+  <h2>NAME YOUR CHARACTER</h2>
+  <small id="cuNameSlot">SLOT 1</small>
+  <input id="cuName" type="text" maxlength="12" placeholder="NAME" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done" aria-label="Character name">
+  <small>UP TO 12 LETTERS OR NUMBERS</small>
+  <div class="row"><button id="cuNext" disabled>NEXT: DRAW</button><button id="cuDel">DELETE</button><button id="cuNameBack">BACK</button></div>
+</section>
+
+<section id="custDraw" class="screen">
+  <div id="cdMain">
+    <div id="cdTools"></div>
+    <div id="cdBoard"><canvas id="cdCv" width="256" height="256" aria-label="Drawing board, 64 by 64 pixels"></canvas></div>
+    <div id="cdSide">
+      <b id="cdName"></b>
+      <div id="cdPal"></div>
+      <div id="cdPv"><canvas id="cdPrev" width="64" height="64"></canvas><small>REAL SIZE</small></div>
+      <div class="row"><button id="cdDone">DONE</button><button id="cdBack">BACK</button></div>
+    </div>
+  </div>
 </section>
 
 <section id="select" class="screen">
@@ -1996,7 +2042,7 @@ function show(s) {
   $('versus').classList.toggle('on', s === 'versus');
   $('title').classList.toggle('on', s === 'title');
   $('select').classList.toggle('on', s === 'select');
-  $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves');
+  $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves'); $('cust').classList.toggle('on', s === 'cust'); $('custName').classList.toggle('on', s === 'custname'); $('custDraw').classList.toggle('on', s === 'custdraw');
   cv.style.display = s === 'play' || s === 'story' ? 'block' : 'none';
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
@@ -6522,6 +6568,135 @@ function rsCont(now, dt, T, st, t1) {
   }
 }
 
+// ---------------------------------------------------------------- v1.64 CUSTOM: draw your own character (this file is spliced into template.html by build_html.py, in place of the marker line after the continuation's)
+// CUSTOM is a card on the mode screen. It shows 3 slots; a slot asks for a NAME and then for a DRAWING: a 64 x 64 pixel picture like the people of the game, made with a pencil, an eraser, a bucket, a picker and a line, with mirror drawing, a grid, undo / redo and a 16-bit style palette of 66 colours. The drawings are kept on the device (localStorage 'js_custom'): for each slot the name, the colours that are used and one character for each of the 4096 pixels (0 = see-through). For now they are only drawn and saved.
+const CU_KEY = 'js_custom';
+const CU_PAL = (() => {      // 66 colours: 8 darks to whites, 13 hues in 4 shades (dark to light), 6 skin tones and browns
+  const hx = (h, s, l) => { s /= 100; l /= 100; const a = s * Math.min(l, 1 - l), f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); }; return '#' + [f(0), f(8), f(4)].map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join(''); };
+  const o = ['#000000', '#1a1426', '#3a3350', '#6a6488', '#9a96b4', '#cfcde0', '#f4f2f8', '#ffffff'];
+  for (const h of [0, 18, 38, 52, 78, 125, 160, 185, 210, 238, 268, 300, 330]) for (const [s, l] of [[70, 26], [72, 40], [74, 56], [80, 74]]) o.push(hx(h, s, l));
+  return o.concat(['#fbe3d0', '#f1cfb8', '#e2a98a', '#c27c5a', '#8a4d34', '#5a3220']);
+})();
+const CU_RGB = CU_PAL.map(c => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)]);
+
+// ---- what is kept on the device
+function cuLoad() { try { const a = JSON.parse(localStorage.getItem(CU_KEY)); if (Array.isArray(a) && a.length === 3) return a; } catch (e) { } return [null, null, null]; }
+function cuStore(a) { try { localStorage.setItem(CU_KEY, JSON.stringify(a)); } catch (e) { } }
+function cuEncode(art, name) {      // the name, the colours that are used and one character per pixel (48 + the number of its colour in that list; '0' = see-through)
+  const used = [], idx = new Map(); let s = '';
+  for (let i = 0; i < 4096; i++) { const v = art[i]; if (!v) { s += '0'; continue; } let k = idx.get(v); if (!k) { used.push(CU_PAL[v - 1]); k = used.length; idx.set(v, k); } s += String.fromCharCode(48 + k); }
+  return { n: name, p: used, a: s };
+}
+function cuDecode(d) {      // the 4096 colour numbers (0 = see-through, otherwise 1 + the place in CU_PAL) of a kept drawing; anything damaged is simply left empty
+  const art = new Uint8Array(4096); if (!d || typeof d.a !== 'string' || !Array.isArray(d.p)) return art;
+  for (let i = 0; i < 4096 && i < d.a.length; i++) { const k = d.a.charCodeAt(i) - 48; if (k > 0 && d.p[k - 1]) { const v = CU_PAL.indexOf(d.p[k - 1]); art[i] = v >= 0 ? v + 1 : 0; } }
+  return art;
+}
+function cuThumb(cv, d) {      // a kept drawing on a 64 x 64 canvas (a slot card)
+  const g = cv.getContext('2d'); g.clearRect(0, 0, 64, 64); if (!d) return; const art = cuDecode(d), im = g.createImageData(64, 64);
+  for (let i = 0; i < 4096; i++) if (art[i]) { const c = CU_RGB[art[i] - 1]; im.data[i * 4] = c[0]; im.data[i * 4 + 1] = c[1]; im.data[i * 4 + 2] = c[2]; im.data[i * 4 + 3] = 255; }
+  g.putImageData(im, 0, 0);
+}
+
+// ---- the editor
+let cuSlot = -1, cuNameV = '', cuArt = new Uint8Array(4096), cuTool = 'pen', cuColor = 1, cuMirror = false, cuGrid = true, cuUndo = [], cuRedo = [], cuDirty = false, cuCell = 4, cuSt = null, cuChk = null, cuGr = null, cuArmed = '', cuArmT = 0;
+const cuOff = document.createElement('canvas'); cuOff.width = cuOff.height = 64;
+const CU_TOOLS = [['pen', 'PEN'], ['era', 'ERASE'], ['fill', 'FILL'], ['pick', 'PICK'], ['line', 'LINE']];
+function cuSure(key, btn, label) {      // a button that needs a second tap within 2.5 s ("SURE?") before it does something that throws work away; true on the second tap
+  if (cuArmed === key && performance.now() - cuArmT < 2500) { cuArmed = ''; return true; }
+  cuArmed = key; cuArmT = performance.now(); if (btn) { const t0 = btn.dataset.t || btn.textContent; btn.dataset.t = t0; btn.textContent = label; setTimeout(() => { if (btn.dataset.t) { btn.textContent = btn.dataset.t; delete btn.dataset.t; } }, 2500); } return false;
+}
+function cuFlash(btn, text) { const t0 = btn.dataset.t || btn.textContent; btn.dataset.t = t0; btn.textContent = text; setTimeout(() => { if (btn.dataset.t) { btn.textContent = btn.dataset.t; delete btn.dataset.t; } }, 1400); }
+function cuLayout() {      // the board is a whole number of screen pixels for each art pixel, as big as the screen allows
+  const c = $('cdCv'), k = Math.max(3, Math.min(Math.floor(innerHeight * 0.82 / 64), Math.floor(innerWidth * 0.46 / 64))); cuCell = k; c.width = c.height = 64 * k; c.style.width = c.style.height = 64 * k + 'px';
+  cuChk = document.createElement('canvas'); cuChk.width = cuChk.height = 64 * k; let g = cuChk.getContext('2d'); for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) { g.fillStyle = (x + y) & 1 ? '#1f1834' : '#171127'; g.fillRect(x * k, y * k, k, k); }
+  cuGr = document.createElement('canvas'); cuGr.width = cuGr.height = 64 * k; g = cuGr.getContext('2d'); for (let i = 0; i <= 64; i++) { g.fillStyle = i % 8 === 0 ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.10)'; g.fillRect(Math.min(i * k, 64 * k - 1), 0, 1, 64 * k); g.fillRect(0, Math.min(i * k, 64 * k - 1), 64 * k, 1); }
+}
+function cuPaint(art) {      // the board: the checkerboard of the see-through pixels, the picture, the grid (every 8th line is stronger) and the mirror line; and the real-size preview
+  art = art || cuArt; const c = $('cdCv'), g = c.getContext('2d'), k = cuCell, o = cuOff.getContext('2d'), im = o.createImageData(64, 64);
+  for (let i = 0; i < 4096; i++) { const v = art[i]; if (v) { const r = CU_RGB[v - 1]; im.data[i * 4] = r[0]; im.data[i * 4 + 1] = r[1]; im.data[i * 4 + 2] = r[2]; im.data[i * 4 + 3] = 255; } }
+  o.putImageData(im, 0, 0); g.imageSmoothingEnabled = false; g.drawImage(cuChk, 0, 0); g.drawImage(cuOff, 0, 0, 64 * k, 64 * k);
+  if (cuGrid) g.drawImage(cuGr, 0, 0); if (cuMirror) { g.fillStyle = 'rgba(255,211,77,0.75)'; g.fillRect(32 * k - 1, 0, 2, 64 * k); }
+  const p = $('cdPrev').getContext('2d'); p.clearRect(0, 0, 64, 64); p.drawImage(cuOff, 0, 0);
+}
+function cuSync() {      // which tool, toggle and colour is selected
+  for (const b of $('cdTools').children) { const t = b.dataset.tool, a = b.dataset.act; b.classList.toggle('sel', t ? t === cuTool : a === 'mirror' ? cuMirror : a === 'grid' ? cuGrid : false); if (a === 'undo') b.disabled = !cuUndo.length; if (a === 'redo') b.disabled = !cuRedo.length; }
+  for (const b of $('cdPal').children) b.classList.toggle('sel', +b.dataset.i === cuColor);
+}
+function cuSetColor(i) { cuColor = i; if (cuTool === 'era' || cuTool === 'pick') cuTool = 'pen'; cuSync(); }
+function cuAct(id, b) {
+  if (id === 'mirror') { cuMirror = !cuMirror; } else if (id === 'grid') { cuGrid = !cuGrid; }
+  else if (id === 'undo') { if (cuUndo.length) { cuRedo.push(cuArt.slice()); cuArt = cuUndo.pop(); } }
+  else if (id === 'redo') { if (cuRedo.length) { cuUndo.push(cuArt.slice()); cuArt = cuRedo.pop(); } }
+  else if (id === 'clear') { if (!cuSure('clear', b, 'SURE?')) return; cuPush(); cuArt.fill(0); }
+  cuSync(); cuPaint();
+}
+const cuPut = (art, x, y, v) => { if (x < 0 || y < 0 || x > 63 || y > 63) return; art[y * 64 + x] = v; if (cuMirror) art[y * 64 + 63 - x] = v; };
+function cuLine(art, x0, y0, x1, y1, v) {      // a line of pixels (Bresenham), mirrored when the mirror is on
+  const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1; let e = dx + dy, n = 0;
+  for (; ;) { cuPut(art, x0, y0, v); if ((x0 === x1 && y0 === y1) || ++n > 400) break; const e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } }
+}
+function cuFill(art, x, y, v) {      // the bucket: every pixel joined to (x, y) (up, down, left, right) that has the same colour
+  const t = art[y * 64 + x]; if (t === v) return; const st = [[x, y]];
+  while (st.length) { const [px, py] = st.pop(); if (px < 0 || py < 0 || px > 63 || py > 63 || art[py * 64 + px] !== t) continue; art[py * 64 + px] = v; st.push([px + 1, py], [px - 1, py], [px, py + 1], [px, py - 1]); }
+}
+const cuXY = e => { const c = $('cdCv'), r = c.getBoundingClientRect(); return [Math.floor((e.clientX - r.left - c.clientLeft) / cuCell), Math.floor((e.clientY - r.top - c.clientTop) / cuCell)]; };
+function cuPush() { cuUndo.push(cuArt.slice()); if (cuUndo.length > 60) cuUndo.shift(); cuRedo.length = 0; cuDirty = true; }
+function cuDown(e) {
+  e.preventDefault(); const [x, y] = cuXY(e); if (x < 0 || y < 0 || x > 63 || y > 63) return;
+  if (cuTool === 'pick') { const v = cuArt[y * 64 + x]; if (v) cuSetColor(v - 1); return; }
+  try { $('cdCv').setPointerCapture(e.pointerId); } catch (er) { }
+  cuPush(); cuSync();
+  if (cuTool === 'fill') { cuFill(cuArt, x, y, cuColor + 1); cuPaint(); return; }
+  cuSt = { x0: x, y0: y, lx: x, ly: y, base: cuArt.slice() };
+  if (cuTool === 'pen' || cuTool === 'era') { cuPut(cuArt, x, y, cuTool === 'era' ? 0 : cuColor + 1); cuPaint(); }
+}
+function cuMove(e) {
+  if (!cuSt) return; const [x, y] = cuXY(e); if (x === cuSt.lx && y === cuSt.ly) return;
+  if (cuTool === 'line') { const t = cuSt.base.slice(); cuLine(t, cuSt.x0, cuSt.y0, x, y, cuColor + 1); cuPaint(t); }      // (the line follows the finger and is only drawn for good when it lets go)
+  else { cuLine(cuArt, cuSt.lx, cuSt.ly, x, y, cuTool === 'era' ? 0 : cuColor + 1); cuPaint(); }
+  cuSt.lx = x; cuSt.ly = y;
+}
+function cuUp(e) { if (!cuSt) return; if (cuTool === 'line') { const [x, y] = cuXY(e); cuLine(cuArt, cuSt.x0, cuSt.y0, x, y, cuColor + 1); } cuSt = null; cuPaint(); }
+
+// ---- the screens: CUSTOM (3 slots) > a slot > the NAME > the DRAWING
+function renderCust() {
+  const a = cuLoad(); for (let i = 0; i < 3; i++) { const b = $('cu' + i), d = a[i]; cuThumb(b.querySelector('canvas'), d); b.querySelector('b').textContent = d && d.n ? d.n : 'EMPTY'; b.querySelector('i').textContent = d ? 'EDIT' : 'DRAW'; }
+}
+function customBack() {      // the Android back button inside CUSTOM: the drawing asks "SURE?" before it is thrown away; true when it was used
+  if (state === 'custdraw') { if (cuDirty && !cuSure('back', $('cdBack'), 'SURE?')) return true; show('cust'); renderCust(); return true; }
+  if (state === 'custname') { show('cust'); return true; }
+  if (state === 'cust') { show('modes'); return true; }
+  return false;
+}
+(function cuInit() {
+  const t = $('cdTools'), pal = $('cdPal');
+  for (const [id, lab] of CU_TOOLS) { const b = document.createElement('button'); b.textContent = lab; b.dataset.tool = id; b.addEventListener('click', () => { cuTool = id; cuSync(); }); t.appendChild(b); }
+  for (const [id, lab] of [['mirror', 'MIRROR'], ['grid', 'GRID'], ['undo', 'UNDO'], ['redo', 'REDO'], ['clear', 'CLEAR']]) { const b = document.createElement('button'); b.textContent = lab; b.dataset.act = id; b.addEventListener('click', () => cuAct(id, b)); t.appendChild(b); }
+  CU_PAL.forEach((c, i) => { const b = document.createElement('button'); b.style.background = c; b.dataset.i = i; b.setAttribute('aria-label', 'colour ' + (i + 1)); b.addEventListener('click', () => cuSetColor(i)); pal.appendChild(b); });
+  const cv = $('cdCv'); cv.addEventListener('pointerdown', cuDown); cv.addEventListener('pointermove', cuMove); cv.addEventListener('pointerup', cuUp); cv.addEventListener('pointercancel', cuUp);
+  $('customMode').addEventListener('click', () => { audio(); renderCust(); show('cust'); });
+  $('cuBack').addEventListener('click', () => show('modes'));
+  ['cu0', 'cu1', 'cu2'].forEach((id, i) => $(id).addEventListener('click', () => {      // a slot: asks for the name (the old one is already written there)
+    audio(); cuSlot = i; const d = cuLoad()[i]; $('cuName').value = d && d.n ? d.n : ''; $('cuDel').style.display = d ? '' : 'none'; $('cuNext').disabled = !$('cuName').value.trim(); $('cuNameSlot').textContent = 'SLOT ' + (i + 1); show('custname');
+  }));
+  $('cuName').addEventListener('input', e => { const v = e.target.value.toUpperCase().replace(/[^A-Z0-9 ]/g, '').slice(0, 12); if (v !== e.target.value) e.target.value = v; $('cuNext').disabled = !v.trim(); });
+  $('cuName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); if (!$('cuNext').disabled) $('cuNext').click(); } });
+  $('cuNameBack').addEventListener('click', () => show('cust'));
+  $('cuDel').addEventListener('click', () => { if (!cuSure('del', $('cuDel'), 'SURE?')) return; const a = cuLoad(); a[cuSlot] = null; cuStore(a); show('cust'); renderCust(); });
+  $('cuNext').addEventListener('click', () => {      // on to the drawing: a new slot starts empty, an old one opens its picture
+    audio(); cuNameV = $('cuName').value.trim().replace(/\s+/g, ' '); if (!cuNameV) return; $('cuName').blur(); const d = cuLoad()[cuSlot]; cuArt = cuDecode(d); cuUndo = []; cuRedo = []; cuDirty = false; cuSt = null;
+    $('cdName').textContent = cuNameV; show('custdraw'); cuLayout(); cuSync(); cuPaint();
+  });
+  $('cdDone').addEventListener('click', () => {
+    if (!cuArt.some(v => v)) { cuFlash($('cdDone'), 'DRAW FIRST'); return; }
+    const a = cuLoad(); a[cuSlot] = cuEncode(cuArt, cuNameV); cuStore(a); cuDirty = false; audio(); show('cust'); renderCust();
+  });
+  $('cdBack').addEventListener('click', () => { if (cuDirty && !cuSure('back', $('cdBack'), 'SURE?')) return; show('cust'); renderCust(); });
+  addEventListener('resize', () => { if (state === 'custdraw') { cuLayout(); cuPaint(); } });
+})();
+window.__custom = () => ({ pal: CU_PAL.length, slots: cuLoad(), art: cuArt, tool: cuTool, color: cuColor, cell: cuCell, dirty: cuDirty });
+
 function drawScene(now, dt) {
   fatUI(now);
   if (fat) { fatFrame(now, dt); return; }       // the FATALITY cutscene replaces the whole scene while it plays
@@ -8284,7 +8459,7 @@ joy.addEventListener('contextmenu', e => e.preventDefault());
 
 const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U', KeyJ: 'A', KeyF: 'A', ArrowDown: 'C', KeyS: 'C', KeyC: 'C', KeyL: 'B', KeyK: 'D', ShiftLeft: 'D', ShiftRight: 'D', KeyB: 'G', KeyE: 'E', KeyV: 'V', KeyH: 'H', KeyQ: 'Q' };
 addEventListener('keydown', e => {
-  if (e.target.id === 'lanName') { if (e.key === 'Enter') e.target.blur(); return; }      // typing a room name: the game keys stay out of it
+  if (e.target.id === 'lanName' || e.target.id === 'cuName') { if (e.key === 'Enter') e.target.blur(); return; }      // typing a room name: the game keys stay out of it
   if (paused && !settingsOn()) { if ((e.key === 'Escape' || e.code === 'KeyP') && !e.repeat) setPause(false); return; }      // (paused: only Esc or P do anything)
   if (settingsOn()) { if (e.key === 'Escape') closeSettings(); return; }      // the settings screen takes the keyboard while it is open
   if (e.code === 'KeyP' && state === 'play') { if (!e.repeat) setPause(true); return; }      // P pauses a fight
@@ -8299,7 +8474,7 @@ addEventListener('keydown', e => {
   if (state === 'play') { if (!setPause(true)) leavePlay(); } else if (state === 'select') show('title');
 });
 addEventListener('keyup', e => {
-  if (e.target.id === 'lanName') return;
+  if (e.target.id === 'lanName' || e.target.id === 'cuName') return;
   if (se && SE_KEYS.has(e.code)) sePress(false);
   const k = KEYS[e.code];
   if (k === 'L') keyL = false; else if (k === 'R') keyR = false; else if (k === 'G') blockHeld = false; else if (k === 'A') { if (atkHold >= 0 && atkDefer() && pnow() - atkHold < V_HEAVY_HOLD) atkReq = true; atkHold = -1; }
@@ -8543,6 +8718,7 @@ window.__hit = k => gojoHit(k, pnow());           // test hook: the attacker's s
 window.__state = () => ({ cmode: cm, redOrb: !!rdOrb, orbV: rdOrb ? rdOrb.v : 0, coat: rdOrb ? !!rdOrb.coat : false, ride: ride ? ride.phase : '', lift: gojoLift, boom: !!boom, ce: ceOn, ceAmt: +ceAmt.toFixed(2), ho: HOMAP.size, stance, jumpC, mode, wx, stick: { x: stickX, y: stickY, up: stickUp, down: stickDown, held: stickCr }, lapse: lpAt >= 0 ? lpK : -1, dash: dgAt >= 0 ? dgK : -1, dashAir: dgAir, block: blkAt >= 0 ? (blkEnd < 0 ? 1 : 2) : 0, guard: guardUp(pnow()), mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests
 window.__back = () => {                       // Android back button: step back through the menus, otherwise let the app close
   if (settingsOn()) { closeSettings(); return true; }
+  if (customBack()) return true;      // (CUSTOM: the slots, the name, the drawing)
   if (state === 'play') { if (paused) setPause(false); else if (!setPause(true)) leavePlay(); return true; }      // (back pauses a fight, back again goes on; the MENU button of the pause screen leaves)
   if (state === 'story') { show('saves'); renderSaves(); return true; }
   if (state === 'saves') { show('modes'); return true; }
