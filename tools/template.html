@@ -137,7 +137,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.55</small>
+    <small id="ver">V1.56</small>
   </div>
 </section>
 
@@ -478,7 +478,7 @@ function audio() {                            // browsers only allow sound after
   if (sfx.ac.state === 'suspended' && !document.hidden) sfx.ac.resume();
   return sfx;
 }
-const STOP_CUES = ['ceoff', 'voidoff', 'homeoff', 'mhumoff', 'tmusicoff'];      // (the cues that fade a drone out always go through, even with the sound switched off or the game paused: a stop that was dropped left the drone playing for good; with a suspended clock the fade simply runs when the sound comes back)
+const STOP_CUES = ['ceoff', 'voidoff', 'homeoff', 'mhumoff', 'tmusicoff', 'rsmuroff'];      // (the cues that fade a drone out always go through, even with the sound switched off or the game paused: a stop that was dropped left the drone playing for good; with a suspended clock the fade simply runs when the sound comes back)
 function snd(name, a, b) {                    // play one cue (and log it when a test harness asks for that)
   if (window.__sfxlog) window.__sfxlog.push([name, Math.round(pnow()), a, b]);
   if (sfx && ((soundOn && sfx.ac.state === 'running') || STOP_CUES.includes(name))) {
@@ -1175,7 +1175,7 @@ const lanBack = () => { if (lanRole) lanStop(); else show('modes'); };
 
 // ---------------------------------------------------------------- screens
 function show(s) {
-  state = s; if (s !== 'story') { snd('mhumoff'); snd('tmusicoff'); } if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; track = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
+  state = s; if (s !== 'story') { snd('mhumoff'); snd('tmusicoff'); snd('rsmuroff'); } if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; track = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
   $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); $('chal').classList.toggle('on', s === 'chal'); $('skills').classList.toggle('on', s === 'skills'); $('sns').style.display = 'none'; if (s !== 'lan' && s !== 'lansel' && !(s === 'play' && vs && vs.net) && lanTimer) lanStop();
   $('versus').classList.toggle('on', s === 'versus');
   $('title').classList.toggle('on', s === 'title');
@@ -1204,7 +1204,7 @@ const spr = (rows, pal) => mkc(rows[0].length, rows.length, g => rows.forEach((r
 Object.assign(ORG, { brain: spr(['.ppppp.', 'pPpPpPp', 'ppPpPpp', 'pPpPpPp', '.pPppP.', '..ppp..'], { p: '#e8a0b4', P: '#b25c78' }), eye: spr(['.w.', 'wrw', '.w.'], { w: '#f4f0f0', r: '#a01820' }), skull: spr(['.bb.', 'bbbb', 'bB..'], { b: '#efe6d8', B: '#c8bca8' }), spine: spr(['bB', '.b', 'bB', '.b', 'bB', '.b'], { b: '#efe6d8', B: '#c8bca8' }), tooth: spr(['w', 'w'], { w: '#fffaf0' }) });
 const laid = (cv, f) => (cv.L || (cv.L = [0, 1].map(m => mkc(cv.height, cv.width, g => { g.translate(m ? cv.height : 0, m ? 0 : cv.width); g.rotate(m ? Math.PI / 2 : -Math.PI / 2); g.drawImage(cv, 0, 0); }))))[f ? 1 : 0];      // the same piece lying on its side
 let peds = [], gibs = [], drops = [], decals = [], pools = [], fount = [], flashes = [], kills = 0, pedNext = 0, pedT = 0;
-const catGore = () => !!(vs && vs.story && vs.foe === 'cat');      // (in the Cat's story fight the blood and the pieces of the massacre stay: no bystanders, but the gore is drawn)
+const catGore = () => !!(vs && vs.story && vs.foe === 'cat') || !!(story && story.tn && story.tn.rest);      // (in the Cat's story fight the blood and the pieces of the massacre stay: no bystanders, but the gore is drawn)
 const pedsOn = () => !vs && (!navigator.webdriver || window.__pedsOn);      // (the automatic tests run with no bystanders unless a test asks for them)
 function newPed(x, dir) {
   const used = peds.map(p => p.t), pool = [0, 1, 2, 3, 4].filter(i => !used.includes(i)), t = (pool.length ? pool : [0, 1, 2, 3, 4])[(rnd() * (pool.length || 5)) | 0], T = HUM[t], ly = peds.filter(q => q.layer === 0).length <= peds.filter(q => q.layer === 1).length ? 0 : 1;
@@ -3919,6 +3919,7 @@ __YFAT__
 __HDOM__
 __MSCENE__
 __TRAIN__
+__REST__
 function drawScene(now, dt) {
   fatUI(now);
   if (fat) { fatFrame(now, dt); return; }       // the FATALITY cutscene replaces the whole scene while it plays
@@ -4234,7 +4235,7 @@ function playVoice() {      // "HEY, IT'S ME, IT'S VERITY" (3.9 s), played throu
 const SAVE_KEY = 'jsv_saves'; let svSel = -1;
 function loadSaves() { try { const a = JSON.parse(localStorage.getItem(SAVE_KEY)); if (Array.isArray(a) && a.length === 3) return a; } catch (e) { } return [null, null, null]; }
 function storeSaves(a) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(a)); } catch (e) { } }
-function renderSaves() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].tn ? 'CHAPTER 2 TRAINING DONE' : a[i].ch2 ? 'CHAPTER 1 COMPLETE' : a[i].ch1 ? 'CHAPTER 1 THE CAT' : a[i].beat ? 'VERITY BEATEN' : 'CHAPTER 1') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
+function renderSaves() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].c2 ? 'CHAPTER 2 COMPLETE' : a[i].tn ? 'CHAPTER 2 TRAINING DONE' : a[i].ch2 ? 'CHAPTER 1 COMPLETE' : a[i].ch1 ? 'CHAPTER 1 THE CAT' : a[i].beat ? 'VERITY BEATEN' : 'CHAPTER 1') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
 function startStory(slot) { const a = loadSaves(); if (a[slot] && a[slot].ch2) { startTraining(slot); return; } if (a[slot] && a[slot].ch1) { startChapter2(slot); return; }      // (a save that has finished chapter 1 goes on with chapter 2, the training)
   if (!a[slot]) a[slot] = { ch: 1 }; storeSaves(a); audio(); show('story'); story = { slot, t0: pnow(), battle: false, T: 0, ev: {} }; alley = true; court = false; wx = 0; }      // (a save that has beaten Verity and heard the report goes on with the Cartoon Cat part, the second half of chapter 1)
 function storyDone() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].beat = true; storeSaves(a); }

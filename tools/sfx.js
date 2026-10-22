@@ -351,6 +351,30 @@ function makeSfx(ac) {
     tmusicoff() {                                        // v1.55 fade the morning tune out (the notes already scheduled stay silent)
       const g = st.tmus; st.tmusNext = 0; if (!g) return; st.tmus = null; const t = ac.currentTime; g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), t); g.gain.linearRampToValueAtTime(0.0001, t + 0.7);
     },
+    rsmur() {                                            // v1.56 the restaurant: a soft murmur of voices (filtered noise that swells slowly); rsmuroff() fades it out
+      if (st.rsmurN) return; const t = ac.currentTime, g = ac.createGain(), ns = ac.createBufferSource(), nf = ac.createBiquadFilter(), lf = ac.createOscillator(), lg = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.05, t + 1.0); g.connect(C.ce.soft);
+      ns.buffer = nbuf; ns.loop = true; nf.type = 'bandpass'; nf.frequency.value = 520; nf.Q.value = 0.8; lf.frequency.value = 0.35; lg.gain.value = 0.015; lf.connect(lg); lg.connect(g.gain); ns.connect(nf); nf.connect(g); ns.start(t); lf.start(t); st.rsmurN = { g, nodes: [ns, lf] };
+    },
+    rsmuroff() { const v = st.rsmurN; if (!v) return; st.rsmurN = null; const t = ac.currentTime; v.g.gain.cancelScheduledValues(t); v.g.gain.setValueAtTime(Math.max(0.0001, v.g.gain.value), t); v.g.gain.linearRampToValueAtTime(0.0001, t + 1.2); v.nodes.forEach(n => { try { n.stop(t + 1.3); } catch (e) { } }); },
+    rsclink() {                                          // a bowl or a cup touched with chopsticks
+      const t = T(), f = R(2600, 4200); tone(C.ce.soft, t, { f, f2: f * 0.98, dur: 0.22, gain: 0.03, atk: 0.001 }); tone(C.ce.soft, t + 0.05, { f: f * 1.5, f2: f * 1.48, dur: 0.15, gain: 0.015, atk: 0.001 });
+    },
+    rsportal() {                                         // the dark portal opens: a deep swell, two detuned eerie notes rising, a whoosh of noise (about 5 s, every tone has an end)
+      const t = T(), B = C.ce; tone(B.deep, t, { type: 'sine', f: 40, f2: 62, dur: 5, gain: 0.5, atk: 2.2 }); tone(B.soft, t, { type: 'sawtooth', f: 196, f2: 233, dur: 5, gain: 0.03, atk: 2.5 }); tone(B.soft, t + 0.1, { type: 'sawtooth', f: 203, f2: 247, dur: 5, gain: 0.03, atk: 2.5 }); burst(B.soft, t, { type: 'bandpass', f: 300, f2: 2600, q: 2, dur: 3.6, gain: 0.1, atk: 1.8 });
+    },
+    rsbeat() { const t = T(), B = C.ce; tone(B.deep, t, { f: 58, f2: 38, dur: 0.22, gain: 0.5, atk: 0.003 }); tone(B.deep, t + 0.17, { f: 52, f2: 34, dur: 0.22, gain: 0.35, atk: 0.003 }); },      // a heartbeat
+    rsstep() { const t = T(); tone(C.ce.deep, t, { f: 70, f2: 34, dur: 0.3, gain: 0.35, atk: 0.003 }); burst(C.steps.step, t, { type: 'lowpass', f: 320, f2: 120, q: 0.8, dur: 0.18, gain: 0.12, atk: 0.003 }); },      // one heavy step of the Master
+    rscharge() {                                         // the purple punch charges: a rising whine, crackling, a sub that grows
+      const t = T(), B = C.atk; tone(B.soft, t, { type: 'sawtooth', f: 180, f2: 1900, dur: 1.5, gain: 0.04, atk: 1.2 }); tone(C.ce.deep, t, { f: 45, f2: 110, dur: 1.6, gain: 0.4, atk: 1.3 }); for (let i = 0; i < 9; i++) burst(B.soft, t + 0.3 + i * 0.13, { type: 'highpass', f: 3000, f2: 7000, q: 0.7, dur: 0.05, gain: 0.08, atk: 0.001 });
+    },
+    rspunch(k) {                                         // a HUGE blow: a deep boom, a crack, a shockwave of noise (k = 1: the Master's blow, even deeper and longer)
+      const t = T(), B = C.atk, big = k === 1; tone(C.ce.deep, t, { f: big ? 80 : 100, f2: 22, dur: big ? 2.0 : 1.4, gain: big ? 0.9 : 0.8, atk: 0.003 }); burst(B.deep, t, { type: 'lowpass', f: 600, f2: 70, q: 0.7, dur: big ? 1.4 : 0.9, gain: 0.6, atk: 0.002 }); burst(B.soft, t, { type: 'highpass', f: 2000, f2: 6000, q: 0.7, dur: 0.3, gain: 0.35, atk: 0.001 }); burst(B.soft, t + 0.04, { type: 'bandpass', f: 400, f2: 3000, q: 1.5, dur: 0.8, gain: 0.25, atk: 0.02 });
+    },
+    rsgrab() { const t = T(); burst(C.atk.soft, t, { type: 'bandpass', f: 700, q: 3, dur: 0.12, gain: 0.35, atk: 0.001 }); tone(C.ce.deep, t, { f: 90, f2: 50, dur: 0.3, gain: 0.5, atk: 0.002 }); tone(C.atk.soft, t + 0.1, { type: 'sawtooth', f: 120, f2: 70, dur: 0.6, gain: 0.04, atk: 0.1 }); },      // the Master's hand closes round Gojo's fist
+    rssmash() { const t = T(), B = C.atk; burst(B.soft, t, { type: 'bandpass', f: 900, f2: 2600, q: 1.2, dur: 0.35, gain: 0.35, atk: 0.001 }); tone(C.ce.deep, t, { f: 110, f2: 45, dur: 0.35, gain: 0.5, atk: 0.002 }); burst(B.soft, t + 0.08, { type: 'highpass', f: 3500, f2: 8000, q: 0.7, dur: 0.25, gain: 0.2, atk: 0.001 }); },      // a table, bowls and wood smashed
+    rswall() {                                           // Gojo hits the wall: a huge boom, rubble, a long rumble
+      const t = T(), B = C.atk; tone(C.ce.deep, t, { f: 60, f2: 18, dur: 2.6, gain: 1.0, atk: 0.003 }); burst(B.deep, t, { type: 'lowpass', f: 400, f2: 60, q: 0.7, dur: 2.0, gain: 0.7, atk: 0.002 }); burst(B.soft, t, { type: 'bandpass', f: 1200, f2: 300, q: 0.9, dur: 1.2, gain: 0.35, atk: 0.003 }); for (let i = 0; i < 8; i++) burst(B.soft, t + 0.3 + i * 0.16, { type: 'bandpass', f: R(600, 2400), q: 2, dur: 0.1, gain: 0.12, atk: 0.001 });
+    },
     homeon() {                                           // v1.50 Yuji's Hometown: a warm drifting pad (A major, a slow shimmer) with a breath of wind in the grass (homeoff() fades it out)
       if (st.homeN) return; const t = ac.currentTime, g = ac.createGain(), nodes = []; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.13, t + 1.2); g.connect(C.ce.deep);
       [[110, 'sine', 0], [164.8, 'triangle', 4], [220, 'sine', -3], [277.2, 'triangle', 5], [329.6, 'sine', -2]].forEach(([f, ty, d], i) => { const o = ac.createOscillator(), og = ac.createGain(), lfo = ac.createOscillator(), lg = ac.createGain(); o.type = ty; o.frequency.value = f; o.detune.value = d; og.gain.value = 0.45 / (1 + i * 0.5); lfo.frequency.value = 0.09 + i * 0.04; lg.gain.value = 0.2; lfo.connect(lg); lg.connect(og.gain); o.connect(og); og.connect(g); o.start(t); lfo.start(t); nodes.push(o, lfo); });

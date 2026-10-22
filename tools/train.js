@@ -14,14 +14,14 @@ const TN_SEQ = [
   { k: 'back', d: 2.0 },
   { k: 'say', w: 'YUJI', a: 'THEN FIGHT ME WITHOUT IT!', b: '' },
   { k: 'say', w: 'GOJO', a: 'FAIR ENOUGH! NO INFINITY.', b: 'ONLY PUNCHES, GUARD, DASH.', off: true },
-  { k: 'say', w: 'GOJO', a: 'AND YOU? NORMAL FORM ONLY.', b: '' },
   { k: 'say', w: 'YUJI', a: 'DEAL! HERE I COME!', b: '' }];
 const TNE_SEQ = [
   { k: 'flash', d: 1.4 },
   { k: 'say', w: 'GOJO', a: 'HA HA HA! NICE ONE, YUJI!', b: '' },
   { k: 'say', w: 'YUJI', a: 'I DID IT! I HIT YOU!', b: '' },
   { k: 'say', w: 'GOJO', a: 'YOU SURE DID. YOU ARE', b: 'GETTING STRONGER EACH DAY.' },
-  { k: 'say', w: 'GOJO', a: 'NOW LET US GO EAT.', b: 'I AM STARVING!' },
+  { k: 'say', w: 'GOJO', a: 'NOW LET US GO EAT!', b: '' },
+  { k: 'say', w: 'YUJI', a: 'YES! I AM STARVING!', b: '' },
   { k: 'fade', d: 1.8 }];
 for (const S of [TN_SEQ, TNE_SEQ]) { let t = 0; for (const s of S) { s.t0 = t; if (s.k === 'try') s.d = TN_TRY[s.n].d; if (!s.d) s.d = Math.max(1.9, ((s.a || '').length + (s.b || '').length) / TN_RATE + 0.9); t += s.d; } S.end = t; }
 const TN_CUTS = TN_SEQ.slice(1).map(s => s.t0), TNE_CUTS = TNE_SEQ.slice(1).map(s => s.t0), TN_CARD = TNE_SEQ.end;      // taps jump to the next step; the ending's card comes right after its last step
@@ -180,6 +180,7 @@ function startTraining(slot) {
   audio(); show('story'); story = { slot, t0: pnow(), battle: false, T: 0, ev: {}, tn: { end: false, bk: -1, fs: -1, vc: 0, vi: -1 } }; alley = true; court = false; track = true; wx = 0; tnSunK = 0; snd('tmusic', 0);
 }
 function trainFrame(now, dt) {
+  if (story.tn.rest) { restFrame(now, dt); return; }      // (the restaurant: the last scene of chapter 2)
   if (story.tn.end) { trainEnd(now, dt); return; }
   tnScene(now, dt, false); const T = story.T; if (T >= 14.3) once2('mus2', () => snd('tmusic', 0)); if (T >= 28.6) once2('mus3', () => snd('tmusic', 0));
   if (T >= TN_SEQ.end && !story.battle) startTrainBattle();
@@ -188,17 +189,13 @@ function startTrainBattle() { story.battle = true; track = true; alley = true; c
 function startTrainEnd(now) {      // Yuji has won: the happy ending
   show('story'); story.tn = { end: true, bk: -1, fs: -1, vc: 0, vi: -1 }; story.battle = false; story.t0 = now; story.T = 0; story.ev = {}; alley = true; court = false; track = true; wx = 0; snd('tmusic', 1);
 }
-function trainEnd(now, dt) {
-  const T = Math.max(0, now - story.t0) / 1000;
-  if (T < TNE_SEQ.end + 0.3) { tnScene(now, dt, true); return; }
-  story.T = T; const t = T - (TNE_SEQ.end + 0.3); ctx.save(); ctx.imageSmoothingEnabled = false; const gr = ctx.createLinearGradient(0, 0, 0, VH); gr.addColorStop(0, '#fff3d2'); gr.addColorStop(1, '#ffd9a0'); ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH);
-  once2('card', () => snd('tmusicoff')); ctx.globalAlpha = clamp01((t + 0.1) / 1.0);
-  pxt('CHAPTER 2', VW / 2, Math.round(VH / 2) - 2, '#6b3f1d', 16, 'center'); pxt('TO BE CONTINUED', VW / 2, Math.round(VH / 2) + 20, '#d0702a', 8, 'center');
-  if (t > 2.2 && Math.floor(now / 600) % 2 === 0) pxt('TAP TO CONTINUE', VW / 2, VH - 8, '#8a6a4a', 8, 'center'); ctx.globalAlpha = 1; ctx.restore();
+function trainEnd(now, dt) {      // the happy ending of the training; when it has faded to cream the restaurant (rest.js) follows
+  if (Math.max(0, now - story.t0) / 1000 < TNE_SEQ.end) { tnScene(now, dt, true); return; }
+  startRest(now);
 }
-function trainSkip() {      // a tap: on to the next step (in the opening the last cut is the fight itself); on the card (after its first 1.2 s) back to the saves
-  const end = story.tn.end, T = story.T;
-  if (end && T >= TNE_SEQ.end + 0.3 + 1.2) { show('saves'); renderSaves(); return; }
-  const n = (end ? TNE_CUTS : TN_CUTS).concat(end ? [TNE_SEQ.end + 0.3] : [TN_SEQ.end]).find(c => c > T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000;
+function trainSkip() {      // a tap: on to the next step (in the opening the last cut is the fight itself, in the ending it is the restaurant)
+  if (story.tn.rest) { restSkip(); return; }
+  const end = story.tn.end, T = story.T, n = (end ? TNE_CUTS : TN_CUTS).concat(end ? [TNE_SEQ.end] : [TN_SEQ.end]).find(c => c > T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000;
 }
 function storyDone3() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].tn = true; storeSaves(a); }
+function storyDone4() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].c2 = true; storeSaves(a); }      // (chapter 2 is finished: its last scene has reached the card)
