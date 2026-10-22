@@ -137,7 +137,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.50</small>
+    <small id="ver">V1.51</small>
   </div>
 </section>
 
@@ -2264,7 +2264,7 @@ function finishMatch(now) {
   if (win && !vs.story) { sv.un = Math.max(sv.un, Math.min(5, gi + 1)); sv.st[gi] = Math.max(sv.st[gi], stars); vsStore(sv.un, sv.st); earn([15, 25, 40, 60, 90, 140][gi]); }
   vs.res = { win, stars }; $('vsTitle').textContent = win ? 'VICTORY' : 'DEFEAT'; $('vsInfo').textContent = GRADES[gi].name + '  -  ROUNDS ' + vs.pw + ' : ' + vs.ew + (win && !vs.story ? '\n+$' + [15, 25, 40, 60, 90, 140][gi] : '');
   $('vsStars').innerHTML = win ? [0, 1, 2].map(i => '<span class="star' + (i < stars ? '' : ' off') + '"></span>').join('') : ''; $('vsNext').textContent = 'NEXT GRADE'; $('vsNext').style.display = win && gi < 5 ? '' : 'none'; $('vsres').classList.add('on'); snd(win ? 'finisher' : 'ko');
-  if (vs.story) { $('vsTitle').textContent = win ? 'TO BE CONTINUED' : 'DEFEAT'; $('vsInfo').textContent = vs.foe === 'cat' ? (win ? 'CHAPTER 2: THE CARTOON CAT' : 'THE CAT WAS TOO STRONG') : win ? 'CHAPTER 1: VERITY' : 'VERITY WAS TOO STRONG'; $('vsStars').innerHTML = ''; $('vsNext').style.display = 'none'; if (win) { earnOnce(vs.foe === 'cat' ? 's2' : 's1', vs.foe === 'cat' ? 300 : 200); if (vs.foe === 'cat') storyDone2(); else storyDone(); } }
+  if (vs.story) { $('vsTitle').textContent = win ? (vs.foe === 'cat' ? 'END OF CHAPTER 1' : 'TO BE CONTINUED') : 'DEFEAT'; $('vsInfo').textContent = vs.foe === 'cat' ? (win ? 'TO BE CONTINUED' : 'THE CAT WAS TOO STRONG') : win ? 'CHAPTER 1: VERITY' : 'VERITY WAS TOO STRONG'; $('vsStars').innerHTML = ''; $('vsNext').style.display = 'none'; if (win) { earnOnce(vs.foe === 'cat' ? 's2' : 's1', vs.foe === 'cat' ? 300 : 200); if (vs.foe === 'cat') storyDone2(); else storyDone(); } }
 }
 function updateFighterVs(now, dt) {            // the grade AI (see GRADES): reaction time, block, dodge, combos, and from Grade 2 up it reads and punishes
   const d = dummy, G = GRADES[vs.gi], gap = d.x - wx, ag = Math.abs(gap), toward = gap > 0 ? -1 : 1;
@@ -4184,7 +4184,7 @@ function drawScene(now, dt) {
   drawHits(now);
 }
 
-// ---------------------------------------------------------------- STORY MODE, chapter 1 (the alley). STORY MODE > CHOOSE A SAVE (3 slots kept on this device) > START: a cutscene (the mission, Gojo looks around, Verity jumps him, the close-ups, the red VERITY), then the fight in the alley.
+// ---------------------------------------------------------------- STORY MODE, chapter 1 (the alley). STORY MODE > CHOOSE A SAVE (3 slots kept on this device) > START: a cutscene (the mission, Gojo looks around, Verity jumps him, the close-ups, the red VERITY), then the fight in the alley; after the fight and the report to the higher-ups the Cartoon Cat part follows at once (v1.51: it used to be chapter 2).
 const STORYART = __STORYART__;
 const SIMG = {}; for (const k in STORYART) { const mkI = u => { const i = new Image(); i.src = u; return i; }, a = STORYART[k]; SIMG[k] = Array.isArray(a) ? a.map(mkI) : typeof a === 'object' ? Object.fromEntries(Object.entries(a).map(([n, u]) => [n, mkI(u)])) : mkI(a); }
 const TALK = __TALK__;      // v1.16 (tools/talk_art.py): ballTalk = Verity's ball talking (15 frames of 13x13), cat.hugegrab / held / toss = the giant's grab and throw, the Cat in his glove and the thrown Cat (15 frames each), hand = where the giant's hand is on each frame, voice = "Hey, it's me, it's Verity" (an mp3 as a data URL)
@@ -4206,17 +4206,17 @@ function playVoice() {      // "HEY, IT'S ME, IT'S VERITY" (3.9 s), played throu
 const SAVE_KEY = 'jsv_saves'; let svSel = -1;
 function loadSaves() { try { const a = JSON.parse(localStorage.getItem(SAVE_KEY)); if (Array.isArray(a) && a.length === 3) return a; } catch (e) { } return [null, null, null]; }
 function storeSaves(a) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(a)); } catch (e) { } }
-function renderSaves() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].ch2 ? 'CAT BEATEN' : a[i].ch1 ? 'CHAPTER 2' : a[i].beat ? 'VERITY BEATEN' : 'CHAPTER 1') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
-function startStory(slot) { const a = loadSaves(); if (a[slot] && a[slot].ch1) { startChapter2(slot); return; } if (!a[slot]) a[slot] = { ch: 1 }; storeSaves(a); audio(); show('story'); story = { slot, t0: pnow(), battle: false, T: 0, ev: {} }; alley = true; court = false; wx = 0; }      // (a save that finished chapter 1 goes on with chapter 2)
+function renderSaves() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].ch2 ? 'CHAPTER 1 COMPLETE' : a[i].ch1 ? 'CHAPTER 1 THE CAT' : a[i].beat ? 'VERITY BEATEN' : 'CHAPTER 1') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
+function startStory(slot) { const a = loadSaves(); if (a[slot] && a[slot].ch1) { startChapter2(slot); return; } if (!a[slot]) a[slot] = { ch: 1 }; storeSaves(a); audio(); show('story'); story = { slot, t0: pnow(), battle: false, T: 0, ev: {} }; alley = true; court = false; wx = 0; }      // (a save that has beaten Verity and heard the report goes on with the Cartoon Cat part, the second half of chapter 1)
 function storyDone() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].beat = true; storeSaves(a); }
 function storySkip() {
   if (!story || story.battle) return;
   if (story.ch2) { const n = C2_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; return; }      // (chapter 2: on to the next cut)
-  if (story.outro) { const n = OUT_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; else if (story.T >= OUT.card + 1.2) { show('saves'); renderSaves(); } return; }      // (the ending: on to the next cut; at the very end back to the saves)
+  if (story.outro) { const n = OUT_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; return; }      // (the report: on to the next cut; the last cut is the seam into the Cartoon Cat part)
   const n = [6.9, 10.0, CUT.slowEnd, CUT.fade].find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; }      // a tap: on to the next part of the cutscene (the dialogue, Verity's attack, the close-up of Verity, the fade)
 function startStoryBattle() { story.battle = true; startMatch(3, true, 0, story.ch2 ? 'cat' : 'verity'); }
 // the alley: dark brick under a thin strip of night sky, a dumpster, crates, a barrel, a door and a street lamp along the wall, cracked wet asphalt
-let alleyBg = null, alleyProps = null, alleyTile = null, alleyKey = '', court = false;      // court: the grounds of Jujutsu High (chapter 2) instead of the alley
+let alleyBg = null, alleyProps = null, alleyTile = null, alleyKey = '', court = false;      // court: the grounds of Jujutsu High (the Cartoon Cat part) instead of the alley
 function buildAlley() {
   const key = VW + 'x' + VH + 'x' + gy + (court ? 'c' : ''); if (alleyBg && alleyKey === key) return; alleyKey = key; if (court) { buildCourt(); return; }
   const mkc = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')]; };
@@ -4366,7 +4366,7 @@ function alleyScene(now, dt, T, gx) {
   }
 }
 const once2 = (k, f) => { if (story && !story.ev[k]) { story.ev[k] = 1; f(); } };
-// ---------------------------------------------------------------- CHAPTER 1, the ending (after the Red). The alley in the wind: Gojo stands with his head bowed, his hair streaming, red embers drifting off the spot where Verity stood; he remembers the report and teleports to Jujutsu High. The corridor: the BIG door (the camera tilts up its whole height), he slides it open. The higher-ups' room (your picture, in pixel style): they talk about the special grades, the roof is hit, they send him to look. END OF CHAPTER 1. T = seconds on the cutscene's own clock; a tap skips to the next cut.
+// ---------------------------------------------------------------- CHAPTER 1, the ending (after the Red). The alley in the wind: Gojo stands with his head bowed, his hair streaming, red embers drifting off the spot where Verity stood; he remembers the report and teleports to Jujutsu High. The corridor: the BIG door (the camera tilts up its whole height), he slides it open. The higher-ups' room (your picture, in pixel style): they talk about the special grades, the roof is hit, they send him to look. The room fades to black and the Cartoon Cat part follows at once (v1.51: no END card). T = seconds on the cutscene's own clock; a tap skips to the next cut.
 const OUT = { think: 7.0, tele: 12.0, hall: 14.0, up0: 17.0, up1: 20.2, dn0: 22.0, dn1: 25.0, walk: 27.0, open: 30.2, openEnd: 33.2, enter: 33.4, white: 34.6, room: 36.6, quake: 63.0, quakeEnd: 66.8, fadeOut: 74.8, card: 76.0, tilt: 142 };
 const OUT_TALK = [      // [from, to, who speaks, line 1, line 2, which higher-up (0 = left, 1 = right, -1 = Gojo)]
   [41.0, 44.6, 'HIGHER-UP', 'YOU ARE LATE, GOJO.', 'WE CALLED YOU HOURS AGO.', 0],
@@ -4383,7 +4383,7 @@ function startOutro(now) {      // Verity is gone: the report to the higher-ups
 }
 function outroFrame(now, dt) {
   const T = Math.max(0, now - story.t0) / 1000; story.T = T; ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
-  if (T < OUT.hall) outroAlley(now, dt, T); else if (T < OUT.room) outroHall(now, dt, T); else if (T < OUT.card) outroRoom(now, dt, T); else outroCard(now, dt, T);
+  if (T < OUT.hall) outroAlley(now, dt, T); else if (T < OUT.room) outroHall(now, dt, T); else if (T < OUT.card) outroRoom(now, dt, T); else chapterSeam();
   ctx.restore();
 }
 function gojoWind(src, info, sx, t, bow) {      // Gojo standing in the wind: his hair streams backwards and ripples (the top rows move most); with bow his head is bowed a little (the head rows lean forward and drop one pixel)
@@ -4483,25 +4483,21 @@ function outroRoom(now, dt, T) {      // scene 3: the higher-ups' room
   const wa = 1 - (T - OUT.room) / 0.9; if (wa > 0) { ctx.fillStyle = 'rgba(255,244,214,' + wa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
   const fa = clamp01((T - OUT.fadeOut) / 1.0); if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
 }
-function outroCard(now, dt, T) {      // scene 4: END OF CHAPTER 1 (the save slot is marked, a tap goes back)
-  const t = T - OUT.card; once2('chdone', () => { const a = loadSaves(); if (a[story.slot]) { a[story.slot].ch1 = true; storeSaves(a); } snd('finisher'); });
-  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); ctx.globalAlpha = clamp01(t / 1.2);
-  pxt('END OF CHAPTER 1', VW / 2, Math.round(VH / 2) - 2, '#ffffff', 16, 'center'); pxt('TO BE CONTINUED', VW / 2, Math.round(VH / 2) + 20, '#ffd34d', 8, 'center');
-  if (t > 2.2 && Math.floor(now / 600) % 2 === 0) pxt('TAP TO CONTINUE', VW / 2, VH - 8, '#9d8cff', 8, 'center');
-  ctx.globalAlpha = 1;
+function chapterSeam() {      // the end of the report (v1.51: the old chapters 1 and 2 are ONE chapter): the save slot remembers that Verity and the report are done, and the Cartoon Cat part follows at once - no card, the room has faded to black and the corridor fades in
+  const a = loadSaves(); if (a[story.slot]) { a[story.slot].ch1 = true; storeSaves(a); }
+  startChapter2(story.slot);
 }
 // the fight: the stand-in enemy looks like Verity; at half health he turns into the smiley ball (smoke, 5 s, cannot be hit and cannot act), then smoke again and he is back
-// ---------------------------------------------------------------- CHAPTER 2, the opening. A title card; Gojo runs out of the higher-ups' room, along the corridor; outside, in the grounds, the Cartoon Cat is killing people for fun: he stretches an arm, grabs a man and pulls him in, punches his head off (the head, brain, eyes, teeth, skull and bones fly), kicks another in two (the guts spill), smashes himself flat on a third; Gojo arrives, sees the one the Cat has by the neck, runs up and kicks the Cat in the face, which sends him sliding away from the people; they talk, then the fight is the story battle against the Cat. T = seconds on the cutscene's own clock (the courtyard scene has its own clock t, which starts at C2.B).
+// ---------------------------------------------------------------- THE CARTOON CAT PART (the second half of chapter 1, called chapter 2 before v1.51, so the code still says ch2 / C2), the opening. No title card (the clock starts at C2.hall); Gojo runs out of the higher-ups' room, along the corridor; outside, in the grounds, the Cartoon Cat is killing people for fun: he stretches an arm, grabs a man and pulls him in, punches his head off (the head, brain, eyes, teeth, skull and bones fly), kicks another in two (the guts spill), smashes himself flat on a third; Gojo arrives, sees the one the Cat has by the neck, runs up and kicks the Cat in the face, which sends him sliding away from the people; they talk, then the fight is the story battle against the Cat. T = seconds on the cutscene's own clock (the courtyard scene has its own clock t, which starts at C2.B).
 const C2 = { hall: 2.8, run0: 3.0, black: 5.2, B: 6.4, fight: 6.4 + 13.8 }, C2_B = { kick: 7.83, talk: 9.8, fade: 13.0 };
 const C2_CAT = [[1.0, 'm0', 24], [1.625, 'm1', 30], [3.4, 'm3', 28], [5.0, 'smash', 25], [5.9, 'unsmash', 30], [6.4, 'm0', 24], [7.83, 'rx0', 18]];      // what the Cat does when: [scene time, strip, frames per second]
 const C2_CUTS = [C2.hall, C2.B, C2.B + 7.4, C2.B + C2_B.talk, C2.B + C2_B.fade];
-function startChapter2(slot) { audio(); show('story'); if (!HUM) HUM = makeHumans(document); story = { slot, t0: pnow(), battle: false, T: 0, ev: {}, ch2: true, shk: null, lastYell: 0 }; alley = true; court = true; wx = 0; }
+function startChapter2(slot) { audio(); show('story'); if (!HUM) HUM = makeHumans(document); story = { slot, t0: pnow() - C2.hall * 1000, battle: false, T: 0, ev: {}, ch2: true, shk: null, lastYell: 0 }; alley = true; court = true; wx = 0; }      // (v1.51: the second half of chapter 1, from the seam or from a save; its clock starts where the old CHAPTER 2 title card ended, so there is no title)
 function ch2Frame(now, dt) {
   const T = Math.max(0, now - story.t0) / 1000; story.T = T; ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
-  if (T < C2.hall) c2Title(T); else if (T < C2.B) c2Hall(now, T); else c2Court(now, dt, T - C2.B);
+  if (T < C2.B) c2Hall(now, T); else c2Court(now, dt, T - C2.B);
   ctx.restore(); if (T >= C2.fight && !story.battle) startStoryBattle();
 }
-function c2Title(T) { const a = Math.max(0, Math.min(1, T / 0.6, (C2.hall - T) / 0.6)); ctx.globalAlpha = a; pxt('CHAPTER 2', VW / 2, Math.round(VH / 2), '#ffffff', 16, 'center'); ctx.globalAlpha = Math.max(0, Math.min(1, (T - 0.8) / 0.5, (C2.hall - T) / 0.6)); pxt('THE CARTOON CAT', VW / 2, Math.round(VH / 2) + 20, '#ff3a3a', 8, 'center'); ctx.globalAlpha = 1; }
 function c2Hall(now, T) {      // the corridor again with the BIG door wide open and the light of the room behind it: Gojo runs out of it, to the left
   const O = SIMG.outro; if (!(O && ['hall', 'doorL', 'doorR'].every(k => O[k] && O[k].complete && O[k].naturalWidth))) return;
   once2('c2wind', () => { if (sfx) sfx.windOff(); });
