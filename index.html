@@ -137,7 +137,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.52</small>
+    <small id="ver">V1.53</small>
   </div>
 </section>
 
@@ -1144,7 +1144,8 @@ const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 let story = null, alley = false, state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
 let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1, vp = null, js = null, pStun = 0, vf = null, ult = null, cf = null, ke = null;
 let keyL = false, keyR = false, padL = false, padR = false, jumpReq = false, jumpAt = -1, teleAt = -1, teleL0 = 0, atkReq = false, atkAt = -1, atkK = 0, combo = 0, comboUntil = 0, atkQ = false, evA = -1, shakeUntil = 0, shakeAmp = 0, shkX = 0, shkY = 0, dummy = null, popups = [], hits = { n: 0, dmg: 0, until: 0, seq: 0, perfect: -9999, last: -9999, bonus: 0 }, kos = 0, hurtAt = -1, hurtK = 0, hurtEnd = -9999, wxv = 0, gojoLift = 0, gojoGone = false, stance = 'stand', stAt = 0, crReq = false, jumpC = false, lpReq = false, lpAt = -1, lpK = 0, lpReady = 0, dash = null, smoke = [], evL = -1, evM = -1, mbAt = -1, mbPending = false, orb = null, debris = [], cpIdx = 0, lastLabel = '', lastBlue = '', flashUntil = 0, flashMs = 1, flashA = 0, stickX = 0, stickY = 0, stickUp = false, stickDown = false, stickCr = false, stickDownEnd = -9999, jumpFromStick = false, joyId = null, dashReq = false, dgAt = -1, dgK = 0, dgFrom = 0, dgTo = 0, dgAir = false, dgUsed = false, dgCr = false, dgReady = 0, blockHeld = false, blkAt = -1, blkEnd = -1, blkFrom = 4, wcIdx = 0, ceOn = false, ceAt = -9999, ceAmt = 0, ceFlameAt = 0, gDownUntil = 0, ceNext = 0, ceReq = false, cm = 0, inhAt = -1, inhLock = false, inhArm = -1, smd = null, impf = null, tqBlock = null, tqGrab = null, tqBeam = [], tqFx = [], rdIdx = 0, mbK = 0, rdOrb = null, boom = null, holdUntil = 0, rdSlow = false, ride = null, gAir = null, gAirH = 0, kickBuf = 0;
-const ceDmg = n => (cm === 1 ? Math.round(n * CE_DMG) : n) * (voidOn() ? 2 : 1);      // x1.3 in cursed energy mode, and everything hits twice as hard inside the Infinite Void      // only cursed energy mode hits harder; red mode has no damage bonus
+const INH_DMG = 0.5, inhOn = () => cm === 3 && !!vs && vs.me === 'yuji' && !(dom && dom.kind === 'home' && dom.ph === 'town');      // v1.53: in INHERITENCE everything Yuji deals is halved (the Black Flash combo hit for half of an enemy's health); his HOMETOWN, and whatever he hits during its 10 s town, stays as it was
+const ceDmg = n => { const v = (cm === 1 ? Math.round(n * CE_DMG) : n) * (voidOn() ? 2 : 1); return inhOn() ? Math.max(1, Math.round(v * INH_DMG)) : v; };      // x1.3 in cursed energy mode, and everything hits twice as hard inside the Infinite Void      // only cursed energy mode hits harder; red mode has no damage bonus
 let gsd = -1, gsdOn = false, gSdLab = 0, inhPrev = 0;      // v1.50 Gojo's SIMPLE DOMAIN (when its pose began, whether its circle is up, which label the RED button has) and the last time inheritStep ran (the INHERITENCE clock waits during the HOMETOWN)
 const popCol = () => cm === 1 ? '#4ff5e8' : cm === 3 ? '#ff3a4a' : cm === 2 ? '#ff8a7a' : '#7fc4ff';
 const STRIP = 480;
@@ -1260,12 +1261,12 @@ const SK_YUJI = [      // (v1.11) the moves of Yuji, bought like Gojo's; only wa
   ['y_upper', 'UPPERCUT + FACE KICK', 'CURSED MODE + CROUCH + BLUE: LAUNCH THE ENEMY, THEN BLUE AGAIN KICKS HIM IN THE FACE', 450, ['y_ce', 'y_crouch']],
   ['y_zone', 'THE ZONE', 'THE MODE BUTTON IN CURSED MODE: A RED AND BLACK AURA. THE M1 BECOMES HIGH KICK, SPIN KICK, PUNCH, SPIN PUNCH. IT BURNS ENERGY WHILE IT LASTS', 600, ['y_ce']],
   ['y_flash', 'BLACK FLASH', 'IN THE ZONE, BLUE: A PUNCH CRACKLING WITH BLACK SPARKS THAT HITS TWICE AS HARD AND SENDS THE ENEMY FLYING BACK', 800, ['y_zone']],
-  ['y_inherit', 'INHERITENCE', 'IN THE ZONE TAP MODE TWICE (20%): SPIKY HAIR, NO WAY BACK. M1 = 4 BLACK FLASHES, BLUE = CURSED TECHNIQUE (ONLY HERE; ITS FOUR MOVES ARE BOUGHT SEPARATELY). NOT WON IN 10 SECONDS: -50% HEALTH (OR 1%), MODES LOCKED', 2000, ['y_flash']],
+  ['y_inherit', 'INHERITENCE', 'IN THE ZONE TAP MODE TWICE (20%): SPIKY HAIR, NO WAY BACK. M1 = 4 BLACK FLASHES, BLUE = CURSED TECHNIQUE (ONLY HERE; ITS FOUR MOVES ARE BOUGHT SEPARATELY). ALL HIS DAMAGE IS HALVED HERE. NOT WON IN 10 SECONDS: -50% HEALTH (OR 1%), MODES LOCKED', 2000, ['y_flash']],
   ['y_pierce', 'PIERCING BLOOD', 'INHERITENCE + BLUE: CLAP HIS HANDS AND FIRE PIERCING BLOOD THROUGH THE ENEMY, HE BLEEDS (25% ENERGY)', 400, ['y_inherit']],
   ['y_shrine', 'SHRINE', 'INHERITENCE, CROUCHED + BLUE: CLEAVE A BLOCK OUT OF THE FLOOR AND THROW IT (30% ENERGY). HE NEEDS THE CROUCH TO DO IT', 500, ['y_inherit']],
   ['y_cleave', 'GRAB CLEAVE', 'INHERITENCE, WALKING FORWARD + BLUE: GRAB THE ENEMY AND CLEAVE HIM, HE BLEEDS (25% ENERGY)', 500, ['y_inherit']],
   ['y_simple', 'SIMPLE DOMAIN', 'INHERITENCE, IN THE AIR + BLUE: A CYAN CIRCLE ROUND HIM: DOMAIN EXPANSIONS DO NOTHING UNTIL HE IS HIT (30% ENERGY)', 600, ['y_inherit']],
-  ['y_ult', 'BLACK FLASH ULTIMATE', 'THE DOMAIN BUTTON: JUMP AT THE ENEMY WITH FOUR BLACK FLASHES IN A ROW: A LEAP WITH A BLOW TO THE STOMACH, A CHARGED KICK IN THE AIR, A HAND SLASH AND A HUGE CHARGED PUNCH. ABOUT 150 DAMAGE (67% ENERGY, 30 SECOND COOLDOWN). IN INHERITENCE, WITH THE HOMETOWN DOMAIN BOUGHT, THE BUTTON CASTS THAT INSTEAD', 1500, ['y_flash']],
+  ['y_ult', 'BLACK FLASH ULTIMATE', 'THE DOMAIN BUTTON: JUMP AT THE ENEMY WITH FOUR BLACK FLASHES IN A ROW: A LEAP WITH A BLOW TO THE STOMACH, A CHARGED KICK IN THE AIR, A HAND SLASH AND A HUGE CHARGED PUNCH. ABOUT 150 DAMAGE, HALF OF THAT IN INHERITENCE (67% ENERGY, 30 SECOND COOLDOWN). IN INHERITENCE, WITH THE HOMETOWN DOMAIN BOUGHT, THE BUTTON CASTS THAT INSTEAD', 1500, ['y_flash']],
   ['y_fatal', 'FATALITY', 'THE FATAL BUTTON: FINISH A WEAK ENEMY (20% HEALTH OR LESS, CLOSE) IN A 30 SECOND CUTSCENE OF EIGHT BLACK FLASHES, THE LAST ONE HUGE. EVERY ENEMY GETS ITS OWN (50% ENERGY)', 1000, ['y_flash']],
   ['y_heavy', 'HEAVY STRIKE', 'KEEP ATTACK HELD AFTER A HIT: THE LAST M1 WITH 1.6 TIMES THE DAMAGE THAT BREAKS A GUARD AND FILLS THE STAGGER BAR', 120, []],
   ['y_cancel', 'DASH CANCEL', 'DASH DURING A SWING THAT HIT: IT STOPS, +4% ENERGY AND +20 FLOW', 100, ['y_dash']],
@@ -3524,7 +3525,7 @@ function techPierce(now) {      // PIERCING BLOOD fires: the jet passes through 
   if (d.vform && d.vform !== 'verity') { say('IMMUNE', d.x, '#ffe9a0', 8, now); return; }
   if (tqDuck(d, now)) { say('MISS', d.x, '#9fd8ff', 8, now); return; }
   if (dBlocks() && gap > 0) say('GUARD PIERCED', d.x, '#ffd34d', 8, now + 90);      // (nothing stops it)
-  techDmg(d, TQ.pierce, now, 150, false); d.bleed = { until: now + TQ.bleed, next: now + 100 }; tqBlood(d.x - 4, gy - 34, 34, 1); tqBlood(d.x - 4, gy - 34, 14, -1); say('PIERCED', d.x, '#ff3a4a', 8, now + 60);
+  techDmg(d, TQ.pierce, now, 150, false); d.bleed = { until: now + TQ.bleed, next: now + 100, gap: inhOn() ? 100 / INH_DMG : 100 }; tqBlood(d.x - 4, gy - 34, 34, 1); tqBlood(d.x - 4, gy - 34, 14, -1); say('PIERCED', d.x, '#ff3a4a', 8, now + 60);
 }
 function techThrow(now, hx) {      // SHRINE, frame 9: the block leaves his hands in an arc (it rises a little and falls): it hits the first enemy it meets or breaks on the floor
   tqBlock = { x: hx, h: 34, vx: 330, vy: 70, born: now };
@@ -3547,7 +3548,7 @@ function techGrab(now) {      // GRAB + CLEAVE, frame 3: the hand closes on the 
 }
 function techCleave(now) {      // frame 7: the cleave across the held enemy
   const d = dummy; if (!tqGrab || !tqOk(d)) return;
-  techHold(d, now, 700); techDmg(d, TQ.grab, now, 0, false); d.bleed = { until: now + TQ.bleed, next: now + 100 }; tqFx.push({ k: 'slash', x: d.x, real: performance.now() });
+  techHold(d, now, 700); techDmg(d, TQ.grab, now, 0, false); d.bleed = { until: now + TQ.bleed, next: now + 100, gap: inhOn() ? 100 / INH_DMG : 100 }; tqFx.push({ k: 'slash', x: d.x, real: performance.now() });
   tqBlood(d.x - 2, gy - 30, 40, 1); tqBlood(d.x - 2, gy - 30, 16, -1); say('CLEAVE!', d.x, '#ff3a4a', 12, now + 40); shakeUntil = now + 140; shakeAmp = 3; buzz(60);
 }
 function techRelease(now, shove) {      // the hand lets go (frame 9: a shove)
@@ -3881,10 +3882,10 @@ function pounceStep(v, now, dt, af) {      // Verity's AIR BITE, every frame of 
   if (fa >= 8.5 && !p.landed) { p.landed = true; snd('land', 1); gritAt(wx, 6, 50, 0); shockAt(wx, 80, 40, 0.6); }
   return fa >= 8.5 ? 0 : p.l0 * (1 - u * u);
 }
-function vpBleed(now) {      // the bite's bleeding on the enemy: 1 damage every 0.1 s for 4 s (a ball takes none: nothing hurts it)
+function vpBleed(now) {      // the bite's bleeding on the enemy: 1 damage every 0.1 s for 4 s (a ball takes none: nothing hurts it); Yuji's PIERCING BLOOD and CLEAVE in INHERITENCE bleed every 0.2 s (half, v1.53)
   const d = dummy; if (!d || !d.bleed) return; const b = d.bleed;
   if (vs.ph !== 'fight' || d.ko >= 0) { d.bleed = null; return; }
-  while (d.bleed && b.next <= now && b.next <= b.until) { b.next += 100; if (d.vform && d.vform !== 'verity') continue; d.hp = Math.max(0, d.hp - 1); d.hitAt = now; if (d.hp <= 0) { d.bleed = null; koDummy(now); } }
+  while (d.bleed && b.next <= now && b.next <= b.until) { b.next += b.gap || 100; if (d.vform && d.vform !== 'verity') continue; d.hp = Math.max(0, d.hp - 1); d.hitAt = now; if (d.hp <= 0) { d.bleed = null; koDummy(now); } }
   if (d.bleed && now >= b.until) d.bleed = null;
 }
 // ---------------------------------------------------------------- v1.28 TWO NEW VARIANTS (bought in SKILLS like every other variant). BLOOD DRAG (Verity, crouched + BLUE; the bite needs him standing): a low lunge at the enemy's feet, the bite, then he backs away with the enemy by the feet, flat on the floor, and the blood is dragged along the ground. GIANT SMASH (the Cat, flat on the floor + BLUE): the giant's huge leg smashes down on the enemy.
@@ -4533,7 +4534,7 @@ function yuTry(now, t, hf) {      // the DOMAIN button as Yuji (the lock was che
 }
 function yuStart(now) {
   const d = dummy, T = 3.2; yu = {      // (T: the seconds the enemy is held, much more than it lasts)
-    at: now, beat: -1, hit: [false, false, false, false], ti: [-1, -1, -1, -1], eh: 0, h2: 0, lift: 0, dmg: 0, rel: false, landed: false };
+    at: now, beat: -1, hit: [false, false, false, false], ti: [-1, -1, -1, -1], eh: 0, h2: 0, lift: 0, dmg: 0, rel: false, landed: false, f: inhOn() ? INH_DMG : 1, raw: 0 };      // (f: half the damage when it is cast in INHERITENCE, v1.53; raw: the damage so far at full strength)
   domReadyAt = now + YUT.cd; atkQ = false; combo = 0; d.stunUntil = now + (T + 0.5) * 1000; d.ai = 'rest'; d.aiAt = now; d.restFor = (T + 0.6) * 1000; d.vx = 0; d.pull = null; d.vact = null; d.cact = null; d.held = null; d.cheld = null;
   snd('swing', 3); say('ULTIMATE!', wx, '#ff3a4a', 12, now);
 }
@@ -4548,7 +4549,7 @@ function yuEnemyH(u, t) {      // how high the held enemy is: thrown up by the f
   return YUT.hov * yuEase((t - u.ti[0]) / YUT.rise) + (u.ti[1] >= 0 ? YUT.pop * yuEase((t - u.ti[1]) / 0.12) : 0);
 }
 function yuHit(i, now) {      // blow i lands (a Black Flash, 20 / 25 / 30 / 75)
-  const u = yu, d = dummy, dm = YUT.dmg[i]; d.hp = Math.max(0, d.hp - dm); d.hitAt = now; u.dmg += dm; hits.n++; hits.dmg += dm; hits.until = now + COMBO_WIN; hits.last = now; connectAt = atkAt; flowAdd(8, now);
+  const u = yu, d = dummy, dm = u.f < 1 ? Math.round((u.raw + YUT.dmg[i]) * u.f) - Math.round(u.raw * u.f) : YUT.dmg[i]; u.raw += YUT.dmg[i]; d.hp = Math.max(0, d.hp - dm); d.hitAt = now; u.dmg += dm; hits.n++; hits.dmg += dm; hits.until = now + COMBO_WIN; hits.last = now; connectAt = atkAt; flowAdd(8, now);
   say('' + dm, d.x, popCol(), 8, now + 30);
   if (i === 3) { d.rx = 4; d.rxAt = now; d.vx = 1100; d.stunUntil = now + 1500; d.ai = 'hurt'; d.smokeUntil = now + 900; d.down = now + RX_DUR[4]; u.rel = true; d.air = null; d.airH = 0; yuBig(now, d.x); }
   else {
