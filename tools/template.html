@@ -124,7 +124,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #joy.on #knob path{fill:#3d2f6e;stroke:#b9a8ee}
 /* ---- CUSTOM (v1.64): the slots, the name and the drawing board */
 #customMode span{font-size:6vh;margin-top:6.5vh;color:#7be0a0}
-#cust .cards{gap:3vh}#cust .card{width:26vh;height:38vh;font-size:var(--fs-btn,clamp(8px,2.4vh,13px))}#cust .card canvas{width:17vh;height:17vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line);margin-top:1vh}#cust .card b{font-size:.8em;word-break:break-all;line-height:1.3}
+#custAnim .cards{gap:3vh}#custAnim .card canvas{width:17vh;height:17vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line);margin-top:1vh}#custAnim .card{width:30vh;height:38vh}#cust .cards{gap:3vh}#cust .card{width:26vh;height:38vh;font-size:var(--fs-btn,clamp(8px,2.4vh,13px))}#cust .card canvas{width:17vh;height:17vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line);margin-top:1vh}#cust .card b{font-size:.8em;word-break:break-all;line-height:1.3}
 #custName{gap:2.4vh}#custName input{font:inherit;font-size:var(--fs-btn,clamp(9px,3vh,16px));color:var(--ink);background:#120d22;border:3px solid var(--line);padding:1.6vh 2vh;width:44vh;text-transform:uppercase;text-align:center;user-select:text;-webkit-user-select:text;outline:none}#custName input:focus{border-color:var(--acc)}
 #cdMain{display:flex;align-items:center;justify-content:center;gap:2vh}
 #cdLeft{display:flex;flex-direction:column;align-items:center;gap:1.2vh;width:33vh}#cdTools{display:grid;grid-template-columns:1fr 1fr;gap:.8vh;width:100%;max-height:62vh;overflow-y:auto;touch-action:pan-y}
@@ -150,7 +150,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.66</small>
+    <small id="ver">V1.67</small>
   </div>
 </section>
 
@@ -247,6 +247,17 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
   <div class="row"><button id="cuNext" disabled>NEXT: DRAW</button><button id="cuDel">DELETE</button><button id="cuNameBack">BACK</button></div>
 </section>
 
+<section id="custAnim" class="screen">
+  <h2>ANIMATIONS</h2>
+  <small id="caName"></small>
+  <div class="cards">
+    <button id="ca0" class="card mode"><canvas width="64" height="64"></canvas><b>IDLE</b><i>EMPTY</i></button>
+    <button id="ca1" class="card mode"><canvas width="64" height="64"></canvas><b>WALKING</b><i>EMPTY</i></button>
+  </div>
+  <small>TAP ONE TO DRAW ITS FRAMES (UP TO 15 EACH)</small>
+  <div class="row"><button id="caBack">DONE</button></div>
+</section>
+
 <section id="custDraw" class="screen">
   <div id="cdMain">
     <div id="cdLeft"><div id="cdTools"></div><div id="cdPv"><canvas id="cdPrev" width="64" height="64"></canvas><small>IDLE PREVIEW</small></div></div>
@@ -270,7 +281,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <button class="card pp" data-who="cat"><canvas></canvas><b>CARTOON CAT</b><i>FREE PLAY</i></button>
     <button class="card pp" data-who="freddy"><canvas></canvas><b>FREDDY<br>KRUEGER</b><i>FREE PLAY</i></button>
   </div>
-  <small id="selCuLab" style="display:none">YOUR CUSTOM CHARACTERS (THEY CANNOT MOVE YET)</small>
+  <small id="selCuLab" style="display:none">YOUR CUSTOM CHARACTERS (THEY WALK IF YOU DREW WALKING FRAMES)</small>
   <div class="cards mini" id="selCu" style="display:none"></div>
   <small>FREE PLAY: EVERY MOVE OF EVERY FIGHTER IS FREE HERE, THE ENERGY NEVER RUNS OUT AND YOU CANNOT LOSE (SET > GAME: THE ENEMY CAN FIGHT BACK)</small>
   <div class="row"><button id="vsBtn">VERSUS MODE</button><button id="selBack">BACK</button></div>
@@ -1229,7 +1240,7 @@ function show(s) {
   $('versus').classList.toggle('on', s === 'versus');
   $('title').classList.toggle('on', s === 'title');
   $('select').classList.toggle('on', s === 'select');
-  $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves'); if (s === 'select') cuSelRefresh(); $('cust').classList.toggle('on', s === 'cust'); $('custName').classList.toggle('on', s === 'custname'); $('custDraw').classList.toggle('on', s === 'custdraw');
+  $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves'); if (s === 'select') cuSelRefresh(); $('cust').classList.toggle('on', s === 'cust'); $('custName').classList.toggle('on', s === 'custname'); $('custDraw').classList.toggle('on', s === 'custdraw'); $('custAnim').classList.toggle('on', s === 'custanim');
   cv.style.display = s === 'play' || s === 'story' ? 'block' : 'none';
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
