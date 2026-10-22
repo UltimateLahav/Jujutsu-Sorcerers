@@ -151,6 +151,6 @@ function masterFrame(now, dt) {
 }
 function msCard(now, T) {      // END OF CHAPTER 1
   const t = T - MS.card; once2('ms_off', () => snd('mhumoff')); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); ctx.globalAlpha = clamp01((t + 0.2) / 1.2);
-  pxt('END OF CHAPTER 1', VW / 2, Math.round(VH / 2) - 2, '#ffffff', 16, 'center'); pxt('TO BE CONTINUED', VW / 2, Math.round(VH / 2) + 20, '#ffd34d', 8, 'center');
+  pxt('END OF CHAPTER 1', VW / 2, Math.round(VH / 2) - 10, '#ffffff', 16, 'center'); pxt('THE MYSTERY', VW / 2, Math.round(VH / 2) + 8, '#c9a8ff', 8, 'center'); pxt('TO BE CONTINUED', VW / 2, Math.round(VH / 2) + 26, '#ffd34d', 8, 'center');
   if (t > 2.2 && Math.floor(now / 600) % 2 === 0) pxt('TAP TO CONTINUE', VW / 2, VH - 8, '#9d8cff', 8, 'center'); ctx.globalAlpha = 1;
 }

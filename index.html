@@ -137,7 +137,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.60</small>
+    <small id="ver">V1.61</small>
   </div>
 </section>
 
@@ -147,7 +147,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
   <div class="cards">
     <button id="chalMode" class="card mode"><span>$</span><b>CHALLENGES</b><i>EARN MONEY</i></button>
     <button id="battles" class="card mode"><span>VS</span><b>BATTLES</b><i>FIGHT THE ENEMY</i></button>
-    <button id="story" class="card mode"><span>?</span><b>STORY MODE</b><i>CHAPTER 1</i></button>
+    <button id="story" class="card mode"><span>?</span><b>STORY MODE</b><i>CHAPTER 1: THE MYSTERY</i></button>
     <button id="lanMode" class="card mode"><span>WIFI</span><b>WI-FI ROOMS</b><i>SAME WI-FI ONLY</i></button>
   </div>
   <small>YOU START WITH PUNCHES ONLY: BEAT CURSES IN CHALLENGES, EARN MONEY, BUY SKILLS</small>
@@ -3039,7 +3039,7 @@ function finishMatch(now) {
   if (win && !vs.story) { sv.un = Math.max(sv.un, Math.min(5, gi + 1)); sv.st[gi] = Math.max(sv.st[gi], stars); vsStore(sv.un, sv.st); earn([15, 25, 40, 60, 90, 140][gi]); }
   vs.res = { win, stars }; $('vsTitle').textContent = win ? 'VICTORY' : 'DEFEAT'; $('vsInfo').textContent = GRADES[gi].name + '  -  ROUNDS ' + vs.pw + ' : ' + vs.ew + (win && !vs.story ? '\n+$' + [15, 25, 40, 60, 90, 140][gi] : '');
   $('vsStars').innerHTML = win ? [0, 1, 2].map(i => '<span class="star' + (i < stars ? '' : ' off') + '"></span>').join('') : ''; $('vsNext').textContent = 'NEXT GRADE'; $('vsNext').style.display = win && gi < 5 ? '' : 'none'; $('vsres').classList.add('on'); snd(win ? 'finisher' : 'ko');
-  if (vs.story) { $('vsTitle').textContent = win ? (vs.foe === 'cat' ? 'END OF CHAPTER 1' : 'TO BE CONTINUED') : 'DEFEAT'; $('vsInfo').textContent = vs.foe === 'cat' ? (win ? 'TO BE CONTINUED' : 'THE CAT WAS TOO STRONG') : vs.tn ? 'KEEP TRAINING, YUJI!' : win ? 'CHAPTER 1: VERITY' : 'VERITY WAS TOO STRONG'; $('vsStars').innerHTML = ''; $('vsNext').style.display = 'none'; if (win) { earnOnce(vs.foe === 'cat' ? 's2' : 's1', vs.foe === 'cat' ? 300 : 200); if (vs.foe === 'cat') storyDone2(); else storyDone(); } }
+  if (vs.story) { $('vsTitle').textContent = win ? (vs.foe === 'cat' ? 'END OF CHAPTER 1' : 'TO BE CONTINUED') : 'DEFEAT'; $('vsInfo').textContent = vs.foe === 'cat' ? (win ? 'TO BE CONTINUED' : 'THE CAT WAS TOO STRONG') : vs.tn ? 'KEEP TRAINING, YUJI!' : win ? 'THE MYSTERY: VERITY' : 'VERITY WAS TOO STRONG'; $('vsStars').innerHTML = ''; $('vsNext').style.display = 'none'; if (win) { earnOnce(vs.foe === 'cat' ? 's2' : 's1', vs.foe === 'cat' ? 300 : 200); if (vs.foe === 'cat') storyDone2(); else storyDone(); } }
 }
 function updateFighterVs(now, dt) {            // the grade AI (see GRADES): reaction time, block, dodge, combos, and from Grade 2 up it reads and punishes
   const d = dummy, G = GRADES[vs.gi], gap = d.x - wx, ag = Math.abs(gap), toward = gap > 0 ? -1 : 1;
@@ -5502,7 +5502,7 @@ function masterFrame(now, dt) {
 }
 function msCard(now, T) {      // END OF CHAPTER 1
   const t = T - MS.card; once2('ms_off', () => snd('mhumoff')); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); ctx.globalAlpha = clamp01((t + 0.2) / 1.2);
-  pxt('END OF CHAPTER 1', VW / 2, Math.round(VH / 2) - 2, '#ffffff', 16, 'center'); pxt('TO BE CONTINUED', VW / 2, Math.round(VH / 2) + 20, '#ffd34d', 8, 'center');
+  pxt('END OF CHAPTER 1', VW / 2, Math.round(VH / 2) - 10, '#ffffff', 16, 'center'); pxt('THE MYSTERY', VW / 2, Math.round(VH / 2) + 8, '#c9a8ff', 8, 'center'); pxt('TO BE CONTINUED', VW / 2, Math.round(VH / 2) + 26, '#ffd34d', 8, 'center');
   if (t > 2.2 && Math.floor(now / 600) % 2 === 0) pxt('TAP TO CONTINUE', VW / 2, VH - 8, '#9d8cff', 8, 'center'); ctx.globalAlpha = 1;
 }
 
@@ -6426,7 +6426,7 @@ function playVoice() {      // "HEY, IT'S ME, IT'S VERITY" (3.9 s), played throu
 const SAVE_KEY = 'jsv_saves'; let svSel = -1;
 function loadSaves() { try { const a = JSON.parse(localStorage.getItem(SAVE_KEY)); if (Array.isArray(a) && a.length === 3) return a; } catch (e) { } return [null, null, null]; }
 function storeSaves(a) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(a)); } catch (e) { } }
-function renderSaves() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].c2 ? 'CHAPTER 2 COMPLETE' : a[i].tn ? 'CHAPTER 2 TRAINING DONE' : a[i].ch2 ? 'CHAPTER 1 COMPLETE' : a[i].ch1 ? 'CHAPTER 1 THE CAT' : a[i].beat ? 'VERITY BEATEN' : 'CHAPTER 1') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
+function renderSaves() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].c2 ? 'CHAPTER 2 COMPLETE' : a[i].tn ? 'CHAPTER 2 TRAINING DONE' : a[i].ch2 ? 'THE MYSTERY COMPLETE' : a[i].ch1 ? 'THE MYSTERY: THE CAT' : a[i].beat ? 'THE MYSTERY: VERITY BEATEN' : 'CHAPTER 1: THE MYSTERY') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
 function startStory(slot) { const a = loadSaves(); if (a[slot] && a[slot].ch2) { startTraining(slot); return; } if (a[slot] && a[slot].ch1) { startChapter2(slot); return; }      // (a save that has finished chapter 1 goes on with chapter 2, the training)
   if (!a[slot]) a[slot] = { ch: 1 }; storeSaves(a); audio(); show('story'); story = { slot, t0: pnow(), battle: false, T: 0, ev: {} }; alley = true; court = false; wx = 0; }      // (a save that has beaten Verity and heard the report goes on with the Cartoon Cat part, the second half of chapter 1)
 function storyDone() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].beat = true; storeSaves(a); }
@@ -6539,6 +6539,7 @@ function storyFrame(now, dt) {
   ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
   alleyScene(now, dt, T, Math.round(VW * 0.42));
   const fa = T < 0.7 ? 1 - T / 0.7 : T > CUT.fade ? Math.min(1, (T - CUT.fade) / 0.7) : 0; if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  if (T > 0.7 && T < 3.9) { const a = clamp01(Math.min((T - 0.7) / 0.6, (3.9 - T) / 0.6)); ctx.globalAlpha = a; pxt('CHAPTER 1', VW / 2, Math.round(VH * 0.38), '#ffffff', 16, 'center'); pxt('THE MYSTERY', VW / 2, Math.round(VH * 0.38) + 16, '#c9a8ff', 8, 'center'); ctx.globalAlpha = 1; }      // (the title card of the chapter: where Verity, the Cat, the special grade curses and the new villain come from)
   ctx.restore(); if (T >= CUT.fight && !story.battle) startStoryBattle();
 }
 function gojoAt(W, T, gx) {      // Gojo at world time W (T = real time): his picture, place and face. He looks around, turns his back on the alley, looks back when he senses Verity; then (slow motion) he jumps away, rises and hangs in the air for good
