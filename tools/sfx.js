@@ -294,6 +294,36 @@ function makeSfx(ac) {
     },
     voidoff() { const v = st.voidN; if (!v) return; st.voidN = null; const t = ac.currentTime; v.g.gain.cancelScheduledValues(t); v.g.gain.setValueAtTime(Math.max(0.0001, v.g.gain.value), t); v.g.gain.linearRampToValueAtTime(0.0001, t + 0.7); v.nodes.forEach(n => { try { n.stop(t + 0.8); } catch (e) { } }); },
     voidping(at) { const t = T(at), B = C.ce, f = R(1500, 4200); tone(B.soft, t, { f, f2: f * 0.98, dur: R(0.3, 0.6), gain: 0.05, atk: 0.003 }); },
+    mhum() {                                             // v1.54 THE MASTER's room: a low cold drone (a few low notes that beat slowly, a thin hiss) that fades in over 2.5 s (mhumoff() fades it out)
+      if (st.mhumN) return; const t = ac.currentTime, g = ac.createGain(), nodes = []; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.11, t + 2.5); g.connect(C.ce.deep);
+      [[41.2, 'sine', 0], [61.8, 'sine', 6], [82.4, 'triangle', -5], [123.5, 'sine', 4]].forEach(([f, ty, d], i) => { const o = ac.createOscillator(), og = ac.createGain(), lfo = ac.createOscillator(), lg = ac.createGain(); o.type = ty; o.frequency.value = f; o.detune.value = d; og.gain.value = 0.5 / (1 + i * 0.6); lfo.frequency.value = 0.07 + i * 0.05; lg.gain.value = 0.25; lfo.connect(lg); lg.connect(og.gain); o.connect(og); og.connect(g); o.start(t); lfo.start(t); nodes.push(o, lfo); });
+      const ns = ac.createBufferSource(), nf = ac.createBiquadFilter(), ng = ac.createGain(); ns.buffer = nbuf; ns.loop = true; nf.type = 'bandpass'; nf.frequency.value = 5200; nf.Q.value = 3; ng.gain.value = 0.02; ns.connect(nf); nf.connect(ng); ng.connect(g); ns.start(t); nodes.push(ns);
+      st.mhumN = { g, nodes };
+    },
+    mhumoff() { const v = st.mhumN; if (!v) return; st.mhumN = null; const t = ac.currentTime; v.g.gain.cancelScheduledValues(t); v.g.gain.setValueAtTime(Math.max(0.0001, v.g.gain.value), t); v.g.gain.linearRampToValueAtTime(0.0001, t + 1.6); v.nodes.forEach(n => { try { n.stop(t + 1.7); } catch (e) { } }); },
+    mflash(at) {                                         // the Cat dies on the Master's screen: a bright shimmer that swells, a deep thump
+      const t = T(at), B = C.ce; burst(B.soft, t, { type: 'highpass', f: 1500, f2: 6000, q: 0.7, dur: 0.7, gain: 0.3, atk: 0.12 }); tone(B.soft, t, { f: 880, f2: 2600, dur: 0.6, gain: 0.05, atk: 0.1 }); tone(B.deep, t + 0.05, { f: 70, f2: 30, dur: 0.9, gain: 0.4, atk: 0.004 });
+    },
+    mstatic(at) {                                        // the screen dies: a burst of static, a falling electronic whine, a last low thud
+      const t = T(at), B = C.atk; burst(B.soft, t, { type: 'highpass', f: 1800, f2: 5000, q: 0.7, dur: 0.9, gain: 0.4, atk: 0.004 }); tone(B.soft, t, { type: 'sawtooth', f: 2600, f2: 90, dur: 0.8, gain: 0.06, atk: 0.002 }); tone(B.deep, t + 0.6, { f: 60, f2: 40, dur: 0.5, gain: 0.25, atk: 0.003 });
+    },
+    mdoor(k, at) {                                       // a heavy door: a rusty hinge (a rising wobbling whine under a band of noise) and a stone rumble; k = how big (1 = the whole opening, 0.45 = a far creak)
+      k = k || 1; const t = T(at), B = C.atk, d = 1.2 + 1.6 * k;
+      tone(B.soft, t, { type: 'sawtooth', f: 180, f2: 420, dur: d, gain: 0.05 * k, atk: 0.3, cur: 1 }); tone(B.soft, t + 0.1, { type: 'square', f: 260, f2: 610, dur: d * 0.8, gain: 0.02 * k, atk: 0.4, cur: 1 });
+      burst(B.soft, t, { type: 'bandpass', f: 700, f2: 1500, q: 4, dur: d, gain: 0.12 * k, atk: 0.3 }); burst(B.deep, t, { type: 'lowpass', f: 160, f2: 80, q: 0.7, dur: d, gain: 0.3 * k, atk: 0.2 });
+    },
+    mfoot(at) {                                          // one soft, slow footstep on stone
+      const t = T(at); burst(C.steps.step, t, { type: 'lowpass', f: 240, f2: 90, q: 0.8, dur: 0.14, gain: 0.16, atk: 0.003 }); tone(C.steps.step, t, { f: 95, f2: 45, dur: 0.12, gain: 0.12, atk: 0.002 });
+    },
+    mthud(at) {                                          // the door shuts: a deep boom, a rush of low noise, the latch
+      const t = T(at), B = C.atk; tone(B.deep, t, { f: 78, f2: 26, dur: 1.1, gain: 0.7, atk: 0.003 }); burst(B.deep, t, { type: 'lowpass', f: 420, f2: 90, q: 0.7, dur: 0.6, gain: 0.5, atk: 0.002 }); burst(B.soft, t + 0.05, { type: 'bandpass', f: 2200, q: 3, dur: 0.1, gain: 0.25, atk: 0.001 }); burst(B.soft, t + 0.22, { type: 'bandpass', f: 1500, q: 4, dur: 0.07, gain: 0.15, atk: 0.001 });
+    },
+    mvoice(at) {                                         // one letter of Verity's low voice (a short growl with a hollow band over it)
+      const t = T(at), B = C.atk; tone(B.soft, t, { type: 'sawtooth', f: R(95, 120), f2: R(78, 98), dur: 0.09, gain: 0.07, atk: 0.005 }); burst(B.soft, t, { type: 'bandpass', f: R(480, 720), q: 3, dur: 0.08, gain: 0.07, atk: 0.004 });
+    },
+    msting(at) {                                         // the last chord of the chapter: low notes that swell over three seconds, a thin shimmer on top
+      const t = T(at), B = C.ce; [55, 82.4, 110].forEach((f, i) => tone(B.deep, t + i * 0.05, { type: 'triangle', f, f2: f * 1.006, dur: 3.2, gain: 0.09, atk: 1.3 })); burst(B.soft, t + 0.3, { type: 'highpass', f: 4000, f2: 7000, q: 0.7, dur: 2.2, gain: 0.05, atk: 1.2 });
+    },
     homeon() {                                           // v1.50 Yuji's Hometown: a warm drifting pad (A major, a slow shimmer) with a breath of wind in the grass (homeoff() fades it out)
       if (st.homeN) return; const t = ac.currentTime, g = ac.createGain(), nodes = []; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.13, t + 1.2); g.connect(C.ce.deep);
       [[110, 'sine', 0], [164.8, 'triangle', 4], [220, 'sine', -3], [277.2, 'triangle', 5], [329.6, 'sine', -2]].forEach(([f, ty, d], i) => { const o = ac.createOscillator(), og = ac.createGain(), lfo = ac.createOscillator(), lg = ac.createGain(); o.type = ty; o.frequency.value = f; o.detune.value = d; og.gain.value = 0.45 / (1 + i * 0.5); lfo.frequency.value = 0.09 + i * 0.04; lg.gain.value = 0.2; lfo.connect(lg); lg.connect(og.gain); o.connect(og); og.connect(g); o.start(t); lfo.start(t); nodes.push(o, lfo); });

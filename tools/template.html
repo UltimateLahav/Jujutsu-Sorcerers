@@ -137,7 +137,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.53</small>
+    <small id="ver">V1.54</small>
   </div>
 </section>
 
@@ -478,7 +478,7 @@ function audio() {                            // browsers only allow sound after
   if (sfx.ac.state === 'suspended' && !document.hidden) sfx.ac.resume();
   return sfx;
 }
-const STOP_CUES = ['ceoff', 'voidoff', 'homeoff'];      // (the cues that fade a drone out always go through, even with the sound switched off or the game paused: a stop that was dropped left the drone playing for good; with a suspended clock the fade simply runs when the sound comes back)
+const STOP_CUES = ['ceoff', 'voidoff', 'homeoff', 'mhumoff'];      // (the cues that fade a drone out always go through, even with the sound switched off or the game paused: a stop that was dropped left the drone playing for good; with a suspended clock the fade simply runs when the sound comes back)
 function snd(name, a, b) {                    // play one cue (and log it when a test harness asks for that)
   if (window.__sfxlog) window.__sfxlog.push([name, Math.round(pnow()), a, b]);
   if (sfx && ((soundOn && sfx.ac.state === 'running') || STOP_CUES.includes(name))) {
@@ -1175,7 +1175,7 @@ const lanBack = () => { if (lanRole) lanStop(); else show('modes'); };
 
 // ---------------------------------------------------------------- screens
 function show(s) {
-  state = s; if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
+  state = s; if (s !== 'story') snd('mhumoff'); if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
   $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); $('chal').classList.toggle('on', s === 'chal'); $('skills').classList.toggle('on', s === 'skills'); $('sns').style.display = 'none'; if (s !== 'lan' && s !== 'lansel' && !(s === 'play' && vs && vs.net) && lanTimer) lanStop();
   $('versus').classList.toggle('on', s === 'versus');
   $('title').classList.toggle('on', s === 'title');
@@ -2266,7 +2266,7 @@ function finishMatch(now) {
   if (vs.net) { netOver(now); return; }
   if (vs.hunt) { huntOver(now); return; }
   if (vs.cv) { curseOver(now); return; }
-  vs.ph = 'over'; $('vsAgain').textContent = 'REMATCH'; $('vsAgain').classList.toggle('hot', !(vs.story ? vs.pw >= 1 : vs.pw >= 2)); if (vs.story && vs.foe === 'verity' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s1', 200); storyDone(); story.toOutro = true; return; }      // (beating Verity: the report to the higher-ups follows, started by the main loop)
+  vs.ph = 'over'; $('vsAgain').textContent = 'REMATCH'; $('vsAgain').classList.toggle('hot', !(vs.story ? vs.pw >= 1 : vs.pw >= 2)); if (vs.story && vs.foe === 'verity' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s1', 200); storyDone(); story.toOutro = true; return; }      if (vs.story && vs.foe === 'cat' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s2', 300); storyDone2(); story.toMaster = true; return; }      // (beating the Cat: the Master's scene follows, then END OF CHAPTER 1, v1.54)      // (beating Verity: the report to the higher-ups follows, started by the main loop)
   const win = vs.story ? vs.pw >= 1 : vs.pw >= 2, pf = vs.hp / PHP, stars = win ? (pf >= 0.7 ? 3 : pf >= 0.35 ? 2 : 1) : 0, sv = vsLoad(), gi = vs.gi;
   if (win && !vs.story) { sv.un = Math.max(sv.un, Math.min(5, gi + 1)); sv.st[gi] = Math.max(sv.st[gi], stars); vsStore(sv.un, sv.st); earn([15, 25, 40, 60, 90, 140][gi]); }
   vs.res = { win, stars }; $('vsTitle').textContent = win ? 'VICTORY' : 'DEFEAT'; $('vsInfo').textContent = GRADES[gi].name + '  -  ROUNDS ' + vs.pw + ' : ' + vs.ew + (win && !vs.story ? '\n+$' + [15, 25, 40, 60, 90, 140][gi] : '');
@@ -3573,8 +3573,8 @@ function keReset() { ke = null; $('pad').classList.remove('cine'); $('hud').clas
 function keEnd(now) {      // it is over: nothing of the Cat is left, Gojo wins the round and the TO BE CONTINUED card follows
   const w0 = ke.wx0; keReset(); wx = w0; blackUntil = now + 700; vs.end.stage = 'done'; vs.endGo = true; dummy.gone = true; dummy.hp = dummy.shown = 0; koDummy(now);
 }
-function keBurst(s, cx, bx, by) {      // the Cat's picture becomes single pixels: every pixel of it is a piece (about 2500) and there are sparks and dust besides; the pieces nearest the head let go first, so the break runs down the neck to the body
-  const img = cfr('snap', 14, false), I = CAT_CELL.snap, P = { x: [], y: [], vx: [], vy: [], c: [], d: [], life: [], age: 0 }; if (!img.getContext) return;
+function keBurst(s, cx, bx, by) {      // (msBurstAt: when the Cat bursts, for the Master's screen) the Cat's picture becomes single pixels: every pixel of it is a piece (about 2500) and there are sparks and dust besides; the pieces nearest the head let go first, so the break runs down the neck to the body
+  msBurstAt = pnow(); const img = cfr('snap', 14, false), I = CAT_CELL.snap, P = { x: [], y: [], vx: [], vy: [], c: [], d: [], life: [], age: 0 }; if (!img.getContext) return;
   const px = img.getContext('2d').getImageData(0, 0, I[0], I[1]).data, hx = cx - KE.hx, hy = gy - 44, add = (x, y, vx, vy, c, d, life) => { P.x.push(x); P.y.push(y); P.vx.push(vx); P.vy.push(vy); P.c.push(c); P.d.push(d); P.life.push(life); };
   for (let j = 0; j < I[1]; j++) for (let i = 0; i < I[0]; i++) {
     const o = (j * I[0] + i) * 4; if (px[o + 3] < 128) continue; const x = cx + I[2] - 1 - i, y = gy - 60 - I[3] + j, a = Math.atan2(y - by, x - bx) + (Math.random() - 0.5) * 1.5, v = 25 + Math.random() * 120;
@@ -3916,6 +3916,7 @@ function drawYuBig(now) {      // the charge of the last punch (game clock: the 
 }
 __YFAT__
 __HDOM__
+__MSCENE__
 function drawScene(now, dt) {
   fatUI(now);
   if (fat) { fatFrame(now, dt); return; }       // the FATALITY cutscene replaces the whole scene while it plays
@@ -4236,10 +4237,11 @@ function startStory(slot) { const a = loadSaves(); if (a[slot] && a[slot].ch1) {
 function storyDone() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].beat = true; storeSaves(a); }
 function storySkip() {
   if (!story || story.battle) return;
+  if (story.master) { const n = MS_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; else if (story.T >= MS.card + 1.2) { show('saves'); renderSaves(); } return; }      // (the Master's scene - it is checked before the Cartoon Cat part, whose flag it keeps: on to the next cut; at the very end back to the saves)
   if (story.ch2) { const n = C2_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; return; }      // (chapter 2: on to the next cut)
   if (story.outro) { const n = OUT_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; return; }      // (the report: on to the next cut; the last cut is the seam into the Cartoon Cat part)
   const n = [6.9, 10.0, CUT.slowEnd, CUT.fade].find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; }      // a tap: on to the next part of the cutscene (the dialogue, Verity's attack, the close-up of Verity, the fade)
-function startStoryBattle() { story.battle = true; startMatch(3, true, 0, story.ch2 ? 'cat' : 'verity'); }
+function startStoryBattle() { msBuf.length = 0; msBurstAt = -1; story.battle = true; startMatch(3, true, 0, story.ch2 ? 'cat' : 'verity'); }
 // the alley: dark brick under a thin strip of night sky, a dumpster, crates, a barrel, a door and a street lamp along the wall, cracked wet asphalt
 let alleyBg = null, alleyProps = null, alleyTile = null, alleyKey = '', court = false;      // court: the grounds of Jujutsu High (the Cartoon Cat part) instead of the alley
 function buildAlley() {
@@ -4332,6 +4334,7 @@ const CUT = { see: 10.05, zoom: 10.3, slow: 10.85, slowEnd: 13.8, ask: 11.6, ask
 const wclock = T => T < CUT.slow ? T : T < CUT.slowEnd ? CUT.slow + (T - CUT.slow) * CUT.rate : CUT.slow + (CUT.slowEnd - CUT.slow) * CUT.rate + (T - CUT.slowEnd);      // the world's clock: it crawls (a quarter of the speed) while the slow motion lasts
 const ease3 = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
 function storyFrame(now, dt) {
+  if (story.master) { masterFrame(now, dt); return; }      // (the Master's scene, after the Cat)
   if (story.outro) { outroFrame(now, dt); return; }      // (the ending of the chapter, after the fight)
   if (story.ch2) { ch2Frame(now, dt); return; }      // (chapter 2, the opening)
   const T = Math.max(0, now - story.t0) / 1000; story.T = T;      // (clamp: rAF time can trail pnow() by a hair, and a negative time picked picture -1 of an animation)
@@ -5606,8 +5609,9 @@ function tick(t) {
   trainDraw(now);
   if (stance === 'down' && stPrev === 'stand' && vs && state === 'play' && !fredMe()) ceSpend(CE_COST.crouch, now); stPrev = stance;      // (the crouch of every fighter, the Cat smashing himself flat: 3% of the energy)
   if (lanRole === 'in' && state === 'play') lanTick();      // (the Wi-Fi fight: his pictures are picked up every frame, not every 0.15 s)
-  if (story && story.toOutro) { story.toOutro = false; startOutro(now); }      // (the fight against Verity is won: the ending of the chapter starts)
-  if (state === 'play') { if (still || now < holdUntil) { last = now; if (impf) impfFrame(); } else drawScene(now, dt); stateDraw(now); }      // hit-stop: the picture freezes for a split second when the red orb explodes
+  if (story && story.toOutro) { story.toOutro = false; startOutro(now); }
+  if (story && story.toMaster) { story.toMaster = false; startMaster(now); }      // (the fight against the Cat is won: the Master's scene starts)      // (the fight against Verity is won: the ending of the chapter starts)
+  if (state === 'play') { if (still || now < holdUntil) { last = now; if (impf) impfFrame(); } else drawScene(now, dt); stateDraw(now); msRecord(now); }      // hit-stop: the picture freezes for a split second when the red orb explodes
   else if (state === 'versus') { const fr = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length; for (const q of vsPv) { q.g.clearRect(0, 0, 64, 64); q.g.drawImage(q.who === 'gojo' ? (q.inv ? dumF : idleF)[fr] : q.who === 'yuji' ? (q.inv ? YUF.inv : YUF.norm).idle[fr % 15] : q.who === 'cat' ? cfr('idle', now / 100, true, q.inv) : q.who === 'freddy' ? fredF(now / (1000 / IDLE_FPS)) : vfr('idle', now / 100, true, q.inv), 0, 0); } }
   else if (state === 'lansel') lanSelDraw(now);
   else if (state === 'chal') chalDraw(now);
