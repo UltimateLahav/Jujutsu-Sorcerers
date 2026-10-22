@@ -294,6 +294,32 @@ function makeSfx(ac) {
     },
     voidoff() { const v = st.voidN; if (!v) return; st.voidN = null; const t = ac.currentTime; v.g.gain.cancelScheduledValues(t); v.g.gain.setValueAtTime(Math.max(0.0001, v.g.gain.value), t); v.g.gain.linearRampToValueAtTime(0.0001, t + 0.7); v.nodes.forEach(n => { try { n.stop(t + 0.8); } catch (e) { } }); },
     voidping(at) { const t = T(at), B = C.ce, f = R(1500, 4200); tone(B.soft, t, { f, f2: f * 0.98, dur: R(0.3, 0.6), gain: 0.05, atk: 0.003 }); },
+    homeon() {                                           // v1.50 Yuji's Hometown: a warm drifting pad (A major, a slow shimmer) with a breath of wind in the grass (homeoff() fades it out)
+      if (st.homeN) return; const t = ac.currentTime, g = ac.createGain(), nodes = []; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.13, t + 1.2); g.connect(C.ce.deep);
+      [[110, 'sine', 0], [164.8, 'triangle', 4], [220, 'sine', -3], [277.2, 'triangle', 5], [329.6, 'sine', -2]].forEach(([f, ty, d], i) => { const o = ac.createOscillator(), og = ac.createGain(), lfo = ac.createOscillator(), lg = ac.createGain(); o.type = ty; o.frequency.value = f; o.detune.value = d; og.gain.value = 0.45 / (1 + i * 0.5); lfo.frequency.value = 0.09 + i * 0.04; lg.gain.value = 0.2; lfo.connect(lg); lg.connect(og.gain); o.connect(og); og.connect(g); o.start(t); lfo.start(t); nodes.push(o, lfo); });
+      const ns = ac.createBufferSource(), nf = ac.createBiquadFilter(), ng = ac.createGain(); ns.buffer = nbuf; ns.loop = true; nf.type = 'bandpass'; nf.frequency.value = 1400; nf.Q.value = 0.5; ng.gain.value = 0.07; ns.connect(nf); nf.connect(ng); ng.connect(g); ns.start(t); nodes.push(ns);
+      st.homeN = { g, nodes };
+    },
+    homeoff() { const v = st.homeN; if (!v) return; st.homeN = null; const t = ac.currentTime; v.g.gain.cancelScheduledValues(t); v.g.gain.setValueAtTime(Math.max(0.0001, v.g.gain.value), t); v.g.gain.linearRampToValueAtTime(0.0001, t + 0.7); v.nodes.forEach(n => { try { n.stop(t + 0.8); } catch (e) { } }); },
+    hdslice(k, at) {                                     // a white scissor mark slices the enemy: a bright metallic "shing" (a filtered noise sweep, a thin ringing tone, a dry crack); k = 1 for the huge X: a deep thump and a longer ring on top
+      const t = T(at), B = C.atk; k = k || 0;
+      burst(B.soft, t, { type: 'highpass', f: 2200, f2: 7500, q: 0.8, dur: 0.12 + 0.1 * k, gain: 0.55, atk: 0.002 });
+      burst(B.soft, t + 0.03, { type: 'bandpass', f: 5200, f2: 3000, q: 4, dur: 0.18 + 0.2 * k, gain: 0.25, atk: 0.002 });
+      tone(B.soft, t, { f: R(3300, 3800), f2: 2600, dur: 0.22 + 0.4 * k, gain: 0.07, atk: 0.002 }); tone(B.soft, t + 0.01, { f: 5100, f2: 4300, dur: 0.15 + 0.3 * k, gain: 0.04, atk: 0.002 });
+      burst(B.deep, t, { f: 900, f2: 200, q: 0.7, dur: 0.07, gain: 0.5, atk: 0.001 });
+      if (k) { tone(B.deep, t, { type: 'triangle', f: 90, f2: 30, dur: 0.6, gain: 0.5, atk: 0.003 }); burst(B.soft, t + 0.17, { type: 'highpass', f: 2200, f2: 7500, q: 0.8, dur: 0.22, gain: 0.6, atk: 0.002 }); }
+    },
+    hdhorse(at) {                                        // a horse whinnies in the field: a wobbling saw tone that rises and falls, a few quick overtones and some breath
+      const t = T(at), B = C.ce, f = R(520, 640);
+      tone(B.soft, t, { type: 'sawtooth', f, f2: f * 2.1, dur: 0.38, gain: 0.1, atk: 0.04, cur: 1 });
+      tone(B.soft, t + 0.36, { type: 'sawtooth', f: f * 2.1, f2: f * 0.8, dur: 0.55, gain: 0.1, atk: 0.01, cur: 1 });
+      for (let k = 0; k < 5; k++) tone(B.soft, t + 0.3 + k * 0.1, { type: 'sawtooth', f: f * 1.7 + (k % 2 ? 90 : -90), f2: f * 1.5, dur: 0.1, gain: 0.04, atk: 0.005 });
+      burst(B.soft, t, { type: 'bandpass', f: 1800, f2: 1200, q: 1.5, dur: 0.9, gain: 0.16, atk: 0.1 });
+    },
+    hdgoose(at) {                                        // a goose honks: two short nasal notes, the second higher
+      const t = T(at), B = C.ce, f = R(380, 470);
+      for (const [k, m] of [[0, 1], [0.22, 1.25]]) { tone(B.soft, t + k, { type: 'sawtooth', f: f * m, f2: f * m * 0.9, dur: 0.16, gain: 0.1, atk: 0.01 }); tone(B.soft, t + k, { type: 'square', f: f * m * 1.5, f2: f * m * 1.35, dur: 0.14, gain: 0.03, atk: 0.01 }); burst(B.soft, t + k, { type: 'bandpass', f: 900, q: 2, dur: 0.15, gain: 0.08, atk: 0.01 }); }
+    },
     domainend(at) {                                      // the domain collapses: a reverse rush, a thump and a shatter
       const t = T(at), B = C.ce;
       burst(B.soft, t, { type: 'highpass', f: 7000, f2: 300, q: 0.7, dur: 0.8, gain: 0.7, atk: 0.5 });

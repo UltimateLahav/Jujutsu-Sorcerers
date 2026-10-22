@@ -117,6 +117,7 @@ def figure(P):
         wx, wy = 34.6 + sx + nf[0], 41.0 + sy + nf[1]                     # near arm: down the side of the body, forearm forward to a fist at the belt
         limb(f, (34+sx, 31+sy), (34+sx+nf[0]*.5, 37.5+sy+nf[1]*.5), (wx, wy), (3.4, 3.0, 2.8), 'C', 'D', 'B'); f.fill(seg((wx-.8, wy-2.0), (wx+.1, wy-.4), 3.0, 3.0), 's')
         fist = disc(wx+.9, wy+.9, 1.8); f.fill(fist, 'S'); f.rim(fist, 'O'); f.fill(fist, 'S'); f.line([(wx+.2, wy+2.3), (wx+2.0, wy+2.3)], 'U'); f.set(wx+.2, wy-.7, 'T'); near_h = (wx+.9, wy+.9-1)
+    if P.get('top'): P['top'](f, sx, sy)                                  # (v1.50: a caller's own drawing over the near arm, e.g. fingers)
     out = [(x, y) for y in range(N) for x in range(N) if f.g[y][x] == '.' and any(f.at(x+dx, y+dy) != '.' for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))]
     for x, y in out: f.set(x, y, 'O')
     f.g = f.g[1:] + [['.']*N]                                             # feet on row 62, as in Gojo's sprites
@@ -978,6 +979,53 @@ def ct_simple(i):
             a = 6.2832*k/48
             if k % 6 != 5: f.set(cx + math.cos(a)*31, 34 + math.sin(a)*27, 'd')
     return f, (hx, hy), fh
+# ---------------------------------------------------------------- v1.50 YUJI'S HOMETOWN DOMAIN (strip atk32, INHERITENCE only: the game gives it spiky hair): the DOMAIN EXPANSION hand sign of the reference picture. The near hand rises to his chin with the index and middle fingers stretched straight up (the other two folded under the thumb), the other forearm (a white wrap) crosses in front of his chest and meets it from below. 0 he stands as he was, 1-4 the hands come up and the fingers stretch, 5-10 HELD (he breathes, red cursed energy gathers round him and sparks climb off the fingertips; the game plays 0-10 and then keeps 5-10 going for as long as the cast lasts), 11-14 the hands come down again and the picture ends in the standing pose (the game plays them when the town opens)
+PAL.update({'w': '#c9c3b4', 'v': '#a39d90'})                                 # the white wrap's shade and its folds
+HS_N = {0: IDLE_N, 2: GUARD_N, 4: ((3.8, 5.2), (7.2, -1.2)), 6: ((4, 5.5), (7.6, -2.2)), 10: ((4, 5.5), (7.6, -2.2)), 12: GUARD_N, 14: IDLE_N}; HS_FA = {0: IDLE_F, 3: GUARD_F, 5: ((-1, 6), (-1.5, 9)), 10: ((-1, 6), (-1.5, 9)), 12: GUARD_F, 14: IDLE_F}      # (the near hand and the far arm start from the idle pose, so the first picture is the one he was standing in)
+HS_FE = {0: (1.5, 4.5), 4: (-2.5, 8), 14: (-2.5, 8)}; HS_FW = {0: (4, 1), 4: (6.4, 1.2), 14: (6.4, 1.2)}
+def hs_top(i):
+    def top(f, sx, sy):                                                        # over the near arm: the far forearm (a white wrap with folds) rising from his belly to the near wrist, then the near hand again on top of it with the two raised fingers (index and middle, close together) and a thumb across the folded ones
+        S1 = (36+sx, 31+sy); fe, fw = kv(HS_FE, i), kv(HS_FW, i); wk = kv({0: 0, 2: 0, 3: .5, 5: 1, 10: 1, 12: .4, 13: 0}, i); E = (S1[0]+fe[0], S1[1]+fe[1]); Wr = (E[0] + (S1[0]+fw[0]-E[0])*wk, E[1] + (S1[1]+fw[1]-E[1])*wk); d = unit(Wr[0]-E[0], Wr[1]-E[1])
+        if wk > 0:                                                             # (the wrap grows out from his belly while the far arm comes up: nothing of it in the first pictures)
+            m = seg(E, Wr, 3.8, 3.4) | disc(E[0], E[1], 1.9); f.fill(m, 'W')
+            for x, y in m:
+                if (x, y+1) not in m: f.set(x, y, 'w')
+                elif (x, y-1) not in m: f.set(x, y, 'T')
+                elif (x + y) % 3 == 0 and f.at(x, y) == 'W': f.set(x, y, 'v')
+            f.rim(m, 'O'); hand = disc(Wr[0]+d[0]*1.8, Wr[1]+d[1]*1.8, 1.7); f.fill(hand, 'U'); f.rim(hand, 'O'); f.fill(hand, 'U')
+        S0 = (34+sx, 31+sy); na = kv(HS_N, i); ne = (S0[0]+na[0][0], S0[1]+na[0][1]); nw = (S0[0]+na[1][0], S0[1]+na[1][1]); d = unit(nw[0]-ne[0], nw[1]-ne[1]); fc = (nw[0]+d[0]*1.6, nw[1]+d[1]*1.6)
+        fist = disc(fc[0], fc[1], 1.9); f.fill(fist, 'S'); f.rim(fist, 'O'); f.fill(fist, 'S'); f.set(fc[0]-.4, fc[1]-1.3, 'T'); f.set(fc[0]+.3, fc[1]+1.4, 'U')
+        L = 6.4*kv({0: 0, 2: .3, 4: 1, 11: 1, 13: .3, 14: 0}, i)
+        if L >= 1:
+            fd = unit(d[0]*.5 + .12, d[1]); pp = (-fd[1], fd[0]); b0 = (fc[0] + d[0]*.4, fc[1] - 1.0)
+            for k, off in enumerate((-.95, .95)):
+                p0 = (b0[0] + pp[0]*off, b0[1] + pp[1]*off); p1 = (p0[0] + fd[0]*L*(1 if k else .93), p0[1] + fd[1]*L*(1 if k else .93)); fm = seg(p0, p1, 1.5, 1.1) | disc(p0[0], p0[1], .9)
+                f.fill(fm, 'S'); f.rim(fm, 'O'); f.fill(fm, 'S')
+                for x, y in fm:
+                    if (x-1, y) not in fm: f.set(x, y, 'T')
+                    if (x+1, y) not in fm: f.set(x, y, 'U')
+                f.set(p1[0], p1[1], 'T')
+            f.set(fc[0] + 1.0, fc[1] + .2, 'U'); f.set(fc[0] + 1.0, fc[1] + 1.2, 'V')                          # (the thumb over the folded fingers)
+    return top
+def hs_params(i):
+    br = round(.6 + .6*math.sin(2*math.pi*(i - 5)/6)) if 5 <= i <= 10 else 0         # (he breathes while the sign is held)
+    return dict(by=round(kv({0: 0, 3: 2, 5: 2, 10: 2, 14: 0}, i)) + br, ln=round(kv({0: 0, 4: 2, 10: 2, 14: 1}, i)), hx=round(kv({0: 0, 4: -1, 10: -1, 14: 0}, i)), hd=round(kv({0: 0, 4: 1, 10: 1, 14: 0}, i)),
+                lf=(round(kv({0: 34, 4: 38, 10: 38, 14: 34}, i)), GR, 0), lb=(round(kv({0: 31, 4: 28, 10: 28, 14: 31}, i)), GR, 0), na=kv(HS_N, i), fa=kv(HS_FA, i),
+                hp=i*.9, hup=1 if 3 <= i <= 12 else 0, hback=0, blink=False, top=hs_top(i))
+def hs_pose(i):
+    P = hs_params(i); f, nh, fh = wbody(P); s = sil(f); cx = 34 + CH_X
+    if 2 <= i <= 13: aura(f, s, i, 1 if i < 4 or i >= 13 else 2 if i < 6 or i >= 11 else 3)
+    if 4 <= i <= 10:                                                           # red and black cursed energy gathering round him: it streams in from all round
+        charge(f, round(nh[0]), round(nh[1]) - 5, ((i - 4) % 5)/5, i)
+        for k in range(3):                                                    # sparks climbing off the fingertips
+            px, py = round(nh[0]) + 1 + math.sin(i*.9 + k*2.1), round(nh[1]) - 7 - ((i*2 + k*3) % 9)
+            if f.at(px, py) == '.': f.set(px, py, 'Y' if k == 0 else 'X')
+    if 6 <= i <= 11:                                                           # embers drifting up off his back (only on empty pixels)
+        rnd = random.Random(i*53 + 3)
+        for k in range(7):
+            px, py = cx - 2 + rnd.uniform(-10, 10), 40 - rnd.uniform(0, 13)
+            if f.at(px, py) == '.': f.set(px, py, 'Y' if k % 4 == 0 else ('X' if k % 2 else 'z'))
+    return f, nh, fh
 # ---------------------------------------------------------------- the SPIN ELBOW (atk15, hit 48; cursed energy mode, BLUE while jumping): he leaps (frames 0-2, the enemy Yuji starts here; the player starts on frame 3 from his own jump), spins once in the air (3-8: the picture is squashed about his vertical axis like the spin reaction), unfolds leaning forward with the elbow cocked (9-10), drives the elbow down onto the enemy (the impact is frame 11) and lands in a crouch (12-14). 96-wide grid like the reactions (pack_sp)
 SP_LIFT = [0, 6, 14, 20, 24, 26, 26, 24, 22, 20, 17, 14, 8, 2, 0]
 SP_SQ = {4: .31, 5: -.81, 6: -.81, 7: .31}
@@ -1024,7 +1072,7 @@ if __name__ == '__main__':
     for k in range(10): out['rx%d' % k] = pack_rx(k)
     out['atk15'] = pack_sp()                                                  # the SPIN ELBOW
     fr, hn, hf = pack(bf_charged, 20, 76, 0); out['atk19'] = {'x0': 20, 'w': 76, 'h': N, 'top': 0, 'cx': 34 + CH_X, 'frames': fr, 'hn': hn, 'hf': hf}      # v1.19 the CHARGED BLACK FLASH (96-wide grid, the body 8 px in)
-    for k, fn in (('atk24', ct_blood), ('atk25', ct_shrine), ('atk26', ct_grab), ('atk27', ct_simple)):      # v1.21 the four CURSED TECHNIQUES (the same grid)
+    for k, fn in (('atk24', ct_blood), ('atk25', ct_shrine), ('atk26', ct_grab), ('atk27', ct_simple), ('atk32', hs_pose)):      # v1.21 the four CURSED TECHNIQUES (the same grid)
         fr, hn, hf = pack(fn, 20, 76, 0); out[k] = {'x0': 20, 'w': 76, 'h': N, 'top': 0, 'cx': 34 + CH_X, 'frames': fr, 'hn': hn, 'hf': hf}
         if k == 'atk27': out[k]['lift'] = SD_LIFT
     fr, hn, hf = pack(block, X0, 44, 0, 10); out['blk'] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}      # BLOCK (10 frames)
