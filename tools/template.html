@@ -472,9 +472,10 @@ function audio() {                            // browsers only allow sound after
   if (sfx.ac.state === 'suspended' && !document.hidden) sfx.ac.resume();
   return sfx;
 }
+const STOP_CUES = ['ceoff', 'voidoff', 'homeoff'];      // (the cues that fade a drone out always go through, even with the sound switched off or the game paused: a stop that was dropped left the drone playing for good; with a suspended clock the fade simply runs when the sound comes back)
 function snd(name, a, b) {                    // play one cue (and log it when a test harness asks for that)
   if (window.__sfxlog) window.__sfxlog.push([name, Math.round(pnow()), a, b]);
-  if (sfx && soundOn && sfx.ac.state === 'running') {
+  if (sfx && ((soundOn && sfx.ac.state === 'running') || STOP_CUES.includes(name))) {
     try { sfx[name.split(':').pop()](a, b); }     // 'f:hit' = the attacking dummy's hit (same sound, own log name)
     catch (e) { if (window.__sfxlog) console.error('sound ' + name + ': ' + e); }     // a sound problem must never stop the game; the tests still report it
   }
@@ -2865,7 +2866,7 @@ function smdOn(now) {      // SIMPLE DOMAIN, frame 10: the circle forms on the f
   spark(wx, gy - 6, 26, ['#7df4ff', '#d6fcff', '#2fc3e6'], true, 1); spark(wx, gy - 6, 26, ['#7df4ff', '#d6fcff', '#2fc3e6'], true, -1);
 }
 function smdEnd(now, why) {      // the circle is gone (he stepped out, or his energy ran out): an attack it was holding back hits him now
-  const p = smd && smd.pend; smd = null; snd('voidoff'); say(why === 'energy' ? 'DOMAIN BROKEN' : 'LEFT THE DOMAIN', wx, '#ff8a7a', 8, now);
+  const p = smd && smd.pend; smd = null; say(why === 'energy' ? 'DOMAIN BROKEN' : 'LEFT THE DOMAIN', wx, '#ff8a7a', 8, now);
   spark(wx, gy - 6, 30, ['#7df4ff', '#d6fcff', '#2fc3e6'], true, 1); spark(wx, gy - 6, 30, ['#7df4ff', '#d6fcff', '#2fc3e6'], true, -1);
   if (p && now <= p.until && tqOk(dummy)) { say('DOMAIN HITS!', wx, '#ff3a4a', 10, now + 120); if (p.kind === 'ult') { if (ultVictimOk(now)) ultStart(now, 'enemy'); } else if (jsVictimOk(now)) jsBegin(now, 'enemy'); }
 }

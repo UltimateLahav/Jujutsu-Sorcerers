@@ -13,11 +13,13 @@ const homeOn = () => !!dom && dom.kind === 'home';
 function hdTry(now, t, hf) {      // the DOMAIN button as Yuji in INHERITENCE (the caller checked the skill): he stands still in the open and there is an enemy to slice
   if (dom || yu || ult || !vs || vs.me !== 'yuji' || vs.net || vs.ph !== 'fight' || now < domReadyAt || !(freeNow() && stance === 'stand' && t >= 1 && hf < 0 && hurtAt < 0 && now >= pStun && blkAt < 0)) return;
   const d = dummy; if (!d || d.ko >= 0) return; if (d.cap) { say('CANT', wx, '#ff8a7a', 8, now); return; }      // (Yuji only fights one enemy at a time: challenges and RUSH are Gojo's)
+  if (d.vform && d.vform !== 'verity') { say('IMMUNE', d.x, '#ffe9a0', 8, now); return; }      // (Verity as the smiley ball cannot be hurt, so the slices must not reach him)
   if (ceSpend(CE_COST.yHome, now)) hdStart(now);
 }
+function hdNoInput() { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; stickDown = false; }      // (no control while he casts)
 function hdStart(now) {
   dom = { kind: 'home', ph: 'pose', p0: now, zoomed: false, burst: false, town: false, si: 0, cum: 0, fin2: false, marks: [], ping: now + 1500 + HD.pose + HD.face + HD.burst };
-  atkK = 32; atkAt = now; atkQ = false; combo = cpIdx = wcIdx = rdIdx = 0; comboUntil = 0; divP = null; evA = -1; wxv = 0; domHold = false; inhPrev = now;      // (a chain he was in the middle of starts again from its first blow after the cast)
+  atkK = 32; atkAt = now; atkQ = false; combo = cpIdx = wcIdx = rdIdx = 0; comboUntil = 0; divP = null; evA = -1; wxv = 0; domHold = false; inhPrev = now; hdNoInput();      // (a chain he was in the middle of starts again from its first blow after the cast; a button pressed in the same frame as the DOMAIN is thrown away, or a later handler of this frame would start its own move over the hand sign)
   snd('domainstart'); say('DOMAIN EXPANSION', wx, '#ff3a4a', 12, now);
   domFreeze(now, HD.pose + HD.face + HD.burst + HD.town + 400);      // (the enemy is frozen, a swing in progress is cancelled)
 }
@@ -39,14 +41,14 @@ function hdCut(now, w, big, n) {      // a slice lands on the enemy: w x (70% / 
   const sg = n % 2 ? -1 : 1, ang = big ? sg * 0.78 : sg * (0.5 + Math.random() * 0.75), ox = big ? 0 : (Math.random() - 0.5) * 10, oy = big ? 0 : (Math.random() - 0.5) * 22, len = big ? 54 : 24 + Math.random() * 10;
   dom.marks.push({ born: now, f: d, ang, len, big, ox, oy });
   if (!big && n % 4 === 3) dom.marks.push({ born: now, f: d, ang: ang + (sg > 0 ? -1.2 : 1.2), len: len * 0.9, big: false, ox, oy });      // (every fourth slice is a pair, the scissors: two blades crossing)
-  spark(d.x, gy - 30 + oy, big ? 34 : 12, ['#ffffff', '#fff2c8', '#ffd0a0'], true, 1); spark(d.x, gy - 30 + oy, big ? 22 : 8, ['#ffffff', '#fff2c8'], true, -1);
+  const sy = gy - 30 - (d.airH || 0) + oy; spark(d.x, sy, big ? 34 : 12, ['#ffffff', '#fff2c8', '#ffd0a0'], true, 1); spark(d.x, sy, big ? 22 : 8, ['#ffffff', '#fff2c8'], true, -1);
   snd('hdslice', big ? 1 : 0); shakeUntil = Math.max(shakeUntil, now + (big ? 320 : 90)); shakeAmp = Math.max(shakeAmp, big ? 4 : 1); buzz(big ? 120 : 30);
   if (big) hitStop(110);
   if (d.hp <= 0) koDummy(now);
 }
 function hdTick(now) {      // every frame while the Hometown lasts (called by domTick)
   setDomUI(now);
-  if (domLock()) { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; stickDown = false; }      // no control while he casts
+  if (domLock()) hdNoInput();
   const a = now - dom.p0;
   if (dom.ph !== 'collapse' && (!vs || vs.ph !== 'fight' || state !== 'play' || !dummy || dummy.ko >= 0)) { if (dom.ph === 'town') hdTo('collapse', now); else hdEnd(now); return; }      // (the round is over or every enemy is down: the town goes away)
   if (dom.ph === 'town') {      // (before the phase check below: a slow frame that jumps over the end of the town still lands every slice that is due)
