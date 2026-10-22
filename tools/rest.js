@@ -79,6 +79,18 @@ function rsStool(x, lane) {      // a round wooden stool with a red cushion: the
   ctx.fillStyle = '#2a160a'; ctx.fillRect(x - 8, y - 14, 17, 4); ctx.fillStyle = '#8a5a34'; ctx.fillRect(x - 7, y - 13, 15, 2); ctx.fillStyle = '#5a361c'; ctx.fillRect(x - 7, y - 12, 15, 1);
   ctx.fillStyle = '#3a1410'; ctx.fillRect(x - 10, y - 18, 21, 5); ctx.fillStyle = '#b03a3a'; ctx.fillRect(x - 9, y - 17, 19, 3); ctx.fillStyle = '#d65a52'; ctx.fillRect(x - 8, y - 17, 17, 1); ctx.fillStyle = '#7a2020'; ctx.fillRect(x - 9, y - 15, 19, 1);
 }
+const rsBlC = new Map();
+function rsGojoBlock(f, k) {      // a NEW picture of Gojo with his far arm stretched out behind him, palm open, to stop Yuji: the arm is drawn behind his body at shoulder height, with an outline, light and shade in the colours of his own uniform and skin, and a flat open hand (4 fingers up); k = how far it has come out (0 to 1)
+  const kq = Math.round(k * 4) / 4; let M = rsBlC.get(f); if (!M) rsBlC.set(f, M = {}); if (M[kq]) return M[kq];
+  const w = f.width, h = f.height, q = document.createElement('canvas'); q.width = w; q.height = h; const qg = q.getContext('2d'); qg.drawImage(f, 0, 0); const d = qg.getImageData(0, 0, w, h).data, at = (x, y) => (y * w + x) * 4, op = (x, y) => x >= 0 && y >= 0 && x < w && y < h && d[at(x, y) + 3] > 40, PAD = 16;
+  let top = -1, bot = -1; for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (op(x, y)) { if (top < 0) top = y; bot = y; break; }
+  const hip = top + Math.round(0.53 * (bot - top)), sy = bot - 30; let back = w; for (let y = sy - 1; y <= sy + 3; y++) for (let x = 0; x < w; x++) if (op(x, y)) { back = Math.min(back, x); break; }
+  const avg = (y0, y1, ok) => { let R = 0, G = 0, B = 0, m = 0; for (let y = y0; y <= y1; y++) for (let x = 0; x < w; x++) if (op(x, y)) { const i = at(x, y); if (!ok || ok(d[i], d[i + 1], d[i + 2])) { R += d[i]; G += d[i + 1]; B += d[i + 2]; m++; } } return m ? [R / m, G / m, B / m] : null; };
+  const slv = avg(hip - 8, hip - 2) || [30, 30, 46], skin = avg(top, top + 26, (R, G, B) => R > 150 && G > 100 && B > 70 && R > B + 25 && R >= G) || [241, 207, 184], OL = rsRgb([20, 16, 30], 1), len = Math.round(2 + 16 * kq), xs = back + PAD + 4, xe = back + PAD - len, ay = sy, c = document.createElement('canvas'); c.width = w + PAD; c.height = h; c.pad = PAD; const g = c.getContext('2d');
+  g.fillStyle = OL; g.fillRect(xe - 1, ay - 2, xs - xe + 2, 6); g.fillStyle = rsRgb(slv, 1.1); g.fillRect(xe, ay - 1, xs - xe, 4); g.fillStyle = rsRgb(slv, 1.9); g.fillRect(xe, ay - 1, xs - xe, 1); g.fillStyle = rsRgb(slv, 0.55); g.fillRect(xe, ay + 2, xs - xe, 1);      // the sleeve
+  if (kq > 0.2) { const hx = xe - 3, sk = (m, y0, y1, c) => { g.fillStyle = rsRgb(skin, m); g.fillRect(...c); }; g.fillStyle = OL; g.fillRect(hx - 2, ay - 2, 6, 6); g.fillRect(hx - 1, ay - 8, 5, 8); g.fillRect(hx - 3, ay - 3, 3, 4); g.fillStyle = rsRgb(skin, 1); g.fillRect(hx - 1, ay - 1, 4, 4); g.fillRect(hx, ay - 7, 3, 6); g.fillRect(hx - 2, ay - 2, 1, 2); g.fillStyle = rsRgb(skin, 1.12); g.fillRect(hx - 1, ay - 1, 1, 4); g.fillRect(hx, ay - 7, 1, 5); g.fillStyle = rsRgb(skin, 0.7); g.fillRect(hx + 1, ay - 7, 1, 4); g.fillRect(hx + 2, ay - 1, 1, 4); g.fillRect(hx - 1, ay + 2, 4, 1); }      // the open hand: the palm faces Yuji, three fingers point up (with the gaps between them), the thumb sticks out
+  g.drawImage(f, PAD, 0); return M[kq] = c;
+}
 const rsSitC = new Map();
 function rsSit(src) {      // NEW sitting pictures of the same person, 3 poses of eating (0 the chopsticks at the bowl, 1 lifting, 2 at the mouth): the upper body of the standing picture is kept pixel for pixel and lowered to the seat; the legs, the far arm, the hand and the chopsticks are drawn new with an outline and light and shade in the colours of the person himself; .seat = the row of the hip, .fx = the front of his chest
   let r = rsSitC.get(src); if (r) return r;
@@ -104,13 +116,13 @@ function rsSit(src) {      // NEW sitting pictures of the same person, 3 poses o
   const poses = [];
   for (let pose = 0; pose < 3; pose++) {
     const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); leg(g, 3, 0.6); leg(g, 0, 1);
-    const H = pose === 0 ? [fx + 6, rt - 3] : pose === 1 ? [fx + 6, rt - 10] : [ffx - 1, mouthY], E = [fx - 4, rt + 4], sl = rgb2(top0, 1);      // the hand, the (hidden) elbow
-    rsLine(g, E[0], E[1], H[0], H[1], 6, OL); rsLine(g, E[0], E[1], H[0], H[1], 4, sl); rsLine(g, E[0], E[1] - 1, H[0], H[1] - 1, 1, rgb2(top0, 1.4));      // the far arm (behind his body): his forearm
+    const H = pose === 0 ? [fx + 4, rt - 2] : pose === 1 ? [fx + 4, rt - 8] : [ffx - 1, mouthY], E = pose === 2 ? [fx - 4, rt + 4] : pose === 1 ? [fx - 1, rt - 1] : [fx - 1, rt + 3], sl = rgb2(top0, 1);      // the hand, the (hidden) elbow
+    rsLine(g, E[0], E[1], H[0], H[1], 5, OL); rsLine(g, E[0], E[1], H[0], H[1], 3, sl); rsLine(g, E[0], E[1] - 1, H[0], H[1] - 1, 1, rgb2(top0, 1.5)); rsLine(g, H[0] - 2, H[1] + 1, H[0] - 2, H[1] + 1, 1, rgb2(skin, 0.8));      // the far arm (behind his body): his forearm
     g.drawImage(src, 0, top, w, hip - top, 0, top + dy, w, hip - top);
     g.fillStyle = OL; g.fillRect(H[0] - 2, H[1] - 2, 5, 5); g.fillStyle = rgb2(skin, 1); g.fillRect(H[0] - 1, H[1] - 1, 3, 3); g.fillStyle = rgb2(skin, 1.12); g.fillRect(H[0] - 1, H[1] - 1, 3, 1); g.fillStyle = rgb2(skin, 0.78); g.fillRect(H[0] - 1, H[1] + 1, 3, 1);      // his hand
-    const cs = pose === 0 ? [[H[0] + 1, H[1], H[0] + 8, H[1] + 4], [H[0] + 1, H[1] + 1, H[0] + 8, H[1] + 5]] : pose === 1 ? [[H[0] + 1, H[1], H[0] + 5, H[1] - 5], [H[0] + 2, H[1], H[0] + 6, H[1] - 4]] : [[H[0] + 1, H[1], H[0] + 7, H[1] + 1], [H[0] + 1, H[1] + 1, H[0] + 7, H[1] + 2]];
+    const cs = pose === 0 ? [[H[0] + 1, H[1], H[0] + 7, H[1] + 3], [H[0] + 1, H[1] + 1, H[0] + 7, H[1] + 4]] : pose === 1 ? [[H[0] + 1, H[1], H[0] + 4, H[1] - 4], [H[0] + 2, H[1], H[0] + 5, H[1] - 3]] : [[H[0] + 1, H[1], H[0] + 7, H[1] + 1], [H[0] + 1, H[1] + 1, H[0] + 7, H[1] + 2]];
     for (const [a, b, e, f] of cs) { rsLine(g, a, b, e, f, 1, '#e8cc8c'); g.fillStyle = '#8a5a2a'; g.fillRect(e, f, 1, 1); }      // the chopsticks
-    if (pose === 1) { g.fillStyle = '#f4d878'; g.fillRect(H[0] + 5, H[1] - 4, 2, 2); g.fillRect(H[0] + 6, H[1] - 3, 1, 3); }      // noodles on them
+    if (pose === 1) { g.fillStyle = '#f4d878'; g.fillRect(H[0] + 4, H[1] - 4, 2, 2); g.fillRect(H[0] + 5, H[1] - 3, 1, 3); }      // noodles on them
     poses.push(c);
   }
   r = { f: poses, seat, fx, ffx, top, bot, cx }; rsSitC.set(src, r); return r;
@@ -188,11 +200,10 @@ function rsFredHead(Cx, Cy, Z, rot, shift, eyeG, flare) {      // Freddy's head 
   msEye(Cx - 1 - (pvx - shift + c * lx - s * ly), Cy + pvy + s * lx + c * ly, Z * 0.5, eyeG, 0, flare);
 }
 const rsFaC = new Map();
-function rsFredArm(tx, ty, Z) {      // Freddy's claw arm (his real picture of the slash, black), enlarged and mirrored so that the blades point left; (tx, ty) = the tips of the blades; the sleeve runs on off the right edge of the screen
-  let c = rsFaC.get(Z); if (!c) { c = document.createElement('canvas'); c.width = 14 * Z; c.height = 12 * Z; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(rsFred(fredA(0, 12)).B, 44, 22, 14, 12, 0, 0, 14 * Z, 12 * Z); rsFaC.set(Z, c); }
+function rsFredArm(tx, ty, Z) {      // Freddy's claw arm (his real picture of the slash, black), enlarged and mirrored so that the blades point left; (tx, ty) = the tips of the blades; the sleeve behind the picture's 5 columns of it is those same real sleeve pixels, repeated all the way off the right edge of the screen, with the same violet outline
+  let c = rsFaC.get(Z); if (!c) { const B = rsFred(fredA(0, 12)).B; c = document.createElement('canvas'); c.width = 94 * Z; c.height = 12 * Z; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; for (let i = 0; i < 20; i++) g.drawImage(B, 44, 22, 4, 12, i * 4 * Z, 0, 4 * Z, 12 * Z); g.drawImage(B, 44, 22, 14, 12, 80 * Z, 0, 14 * Z, 12 * Z); rsFaC.set(Z, c); }
   const R = Math.round, y0 = R(-6.5 * Z); tx = R(tx); ty = R(ty);
-  ctx.fillStyle = '#05040b'; ctx.fillRect(tx + 13 * Z - 1, ty + R(-4.5 * Z), VW, 8 * Z);
-  ctx.save(); ctx.translate(tx, ty); ctx.scale(-1, 1); ctx.drawImage(c, -13 * Z, y0); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.9; ctx.drawImage(rsRim(c, 1, [200, 130, 255]), -13 * Z, y0); ctx.globalAlpha = 0.7; ctx.drawImage(rsRim(c, -1, [150, 80, 230]), -13 * Z, y0); ctx.restore();
+  ctx.save(); ctx.translate(tx, ty); ctx.scale(-1, 1); ctx.drawImage(c, -93 * Z, y0); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.9; ctx.drawImage(rsRim(c, 1, [200, 130, 255]), -93 * Z, y0); ctx.globalAlpha = 0.7; ctx.drawImage(rsRim(c, -1, [150, 80, 230]), -93 * Z, y0); ctx.globalAlpha = 0.6; ctx.drawImage(rsEdge(c, [170, 100, 240]), -93 * Z, y0); ctx.restore();
 }
 function rsShock(cx, cy, age, R) {      // the HUGE shockwave: rings of white and violet running out, speed lines, a flash
   if (age < 0 || age > 1.5) return; const f = 1 - age / 1.5; ctx.save(); ctx.globalCompositeOperation = 'lighter';
@@ -262,8 +273,8 @@ function rsWide(now, dt, T, st, t1) {
     if (T < tC) {
       const eat = T < tP + 0.5 && st.k !== 'say' ? rsEat(T, 0.0) : 0, f = idleF[Math.floor(T * IDLE_FPS) % idleF.length];
       if (a < 1) rsPerson(f, D.idle, L.GX, 0, flip, eat, mouth, 1 - a);
-      if (a > 0) { ctx.save(); ctx.globalAlpha = a; shadow(L.GX, 9); sprAt(f, D.idle, L.GX, 0, flip, mouth); ctx.restore(); }
-      if (T >= tW + 0.45) { const a = ease3(clamp01((T - tW - 0.45) / 0.25)), sx = L.GX - 3 * U, sy = gy - 47 * U, ex = sx - 24 * U * a; ctx.strokeStyle = '#14141e'; ctx.lineWidth = Math.round(5 * U); ctx.lineCap = 'butt'; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, sy); ctx.stroke(); ctx.fillStyle = '#f1cfb8'; ctx.fillRect(Math.round(ex - 4 * U), Math.round(sy - 4 * U), Math.round(5 * U), Math.round(8 * U)); ctx.fillStyle = '#d8a88c'; for (let i = 0; i < 3; i++) ctx.fillRect(Math.round(ex - 6 * U), Math.round(sy - 3.5 * U + i * 2.6 * U), 2, 1); }      // the arm held out behind him, the palm open
+      const kb = T >= tW + 0.45 ? ease3(clamp01((T - tW - 0.45) / 0.25)) : 0;      // the arm held out behind him to stop Yuji (a new picture of Gojo)
+      if (a > 0) { ctx.save(); ctx.globalAlpha = a; shadow(L.GX, 9); { const bl = kb > 0 ? rsGojoBlock(f, kb) : null; sprAt(bl || f, bl ? { ...D.idle, cx: D.idle.cx + bl.pad } : D.idle, L.GX, 0, flip, mouth); } ctx.restore(); }
     } else if (k === 'charge' || (k === 'punch') || (k === 'launch' && !flying)) {
       const rt = clamp01((T - tC) / (RS_SEQ.find(s => s.k === 'charge').d)), gx = Math.round(lerp(L.GX, G.gxC, ease3(rt))), run = k === 'charge' && rt < 1, fr = run ? RUNF[Math.floor((T - tC) * 30) % 15] : G.f, info = run ? D.run : D.atk0, lift = k === 'charge' ? G.lift * ease3(clamp01((T - (tPu - 0.35)) / 0.35)) : G.lift;
       for (let i = 3; i >= 1 && run; i--) { ctx.globalAlpha = 0.14 * (4 - i); ctx.drawImage(RUNF[Math.floor((T - tC) * 30) % 15], gx - i * 7 - (D.run.cx - D.run.x0), gy - 60 - (D.run.top || 0) - lift); } ctx.globalAlpha = 1;
