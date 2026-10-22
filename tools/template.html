@@ -137,7 +137,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.54</small>
+    <small id="ver">V1.55</small>
   </div>
 </section>
 
@@ -478,7 +478,7 @@ function audio() {                            // browsers only allow sound after
   if (sfx.ac.state === 'suspended' && !document.hidden) sfx.ac.resume();
   return sfx;
 }
-const STOP_CUES = ['ceoff', 'voidoff', 'homeoff', 'mhumoff'];      // (the cues that fade a drone out always go through, even with the sound switched off or the game paused: a stop that was dropped left the drone playing for good; with a suspended clock the fade simply runs when the sound comes back)
+const STOP_CUES = ['ceoff', 'voidoff', 'homeoff', 'mhumoff', 'tmusicoff'];      // (the cues that fade a drone out always go through, even with the sound switched off or the game paused: a stop that was dropped left the drone playing for good; with a suspended clock the fade simply runs when the sound comes back)
 function snd(name, a, b) {                    // play one cue (and log it when a test harness asks for that)
   if (window.__sfxlog) window.__sfxlog.push([name, Math.round(pnow()), a, b]);
   if (sfx && ((soundOn && sfx.ac.state === 'running') || STOP_CUES.includes(name))) {
@@ -538,7 +538,7 @@ const assistLvl = () => vs && vs.net ? 0 : SET.assist;      // (assist is for th
 const soft = dm => assistLvl() >= 2 ? Math.max(1, Math.round(dm * 0.7)) : dm;      // EASY: 30% less damage to you
 const autoGuard = () => assistLvl() >= 3 && !lacks('blk') && stance === 'stand' && atkAt < 0 && lpAt < 0 && jumpAt < 0 && teleAt < 0 && dgAt < 0 && mbAt < 0 && !dash && !keyL && !keyR && !padL && !padR;      // AUTO-GUARD: standing still with nothing going on, the front is guarded as if BLOCK were held
 const freePlay = () => state === 'play' && (!vs || !!vs.practice);      // v1.14 FREE PLAY (the fighter select screen): in it every move of every fighter is free
-const owns = id => id === 'freddy' || freePlay() || !!PROG.own[id], gojoMe = () => !vs || vs.me === 'gojo', fredMe = () => !!vs && vs.me === 'freddy';
+const owns = id => id === 'freddy' || freePlay() || (vs && vs.tn ? TN_KIT.has(id) : !!PROG.own[id]), gojoMe = () => !vs || vs.me === 'gojo', fredMe = () => !!vs && vs.me === 'freddy';
 const meK = () => !vs ? 'g' : vs.me === 'yuji' ? 'y' : vs.me === 'verity' ? 'v' : vs.me === 'cat' ? 'k' : 'g';      // the fighter you play: g = Gojo (and everything outside a match), y = Yuji, v = Verity, k = the Cat
 const setMoneyUI = () => { const t = 'MONEY $' + PROG.m; for (const id of ['modesMoney', 'chalMoney', 'skMoney']) $(id).textContent = t; };
 const earn = n => { PROG.m += n; saveProg(); setMoneyUI(); };
@@ -1175,7 +1175,7 @@ const lanBack = () => { if (lanRole) lanStop(); else show('modes'); };
 
 // ---------------------------------------------------------------- screens
 function show(s) {
-  state = s; if (s !== 'story') snd('mhumoff'); if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
+  state = s; if (s !== 'story') { snd('mhumoff'); snd('tmusicoff'); } if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; track = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
   $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); $('chal').classList.toggle('on', s === 'chal'); $('skills').classList.toggle('on', s === 'skills'); $('sns').style.display = 'none'; if (s !== 'lan' && s !== 'lansel' && !(s === 'play' && vs && vs.net) && lanTimer) lanStop();
   $('versus').classList.toggle('on', s === 'versus');
   $('title').classList.toggle('on', s === 'title');
@@ -2180,7 +2180,8 @@ function buildGrades() {                       // the six grade buttons: locked 
   const sv = vsLoad(), box = $('grades'); box.innerHTML = ''; if (vsSel > sv.un) vsSel = sv.un;
   GRADES.forEach((g, i) => { const b = document.createElement('button'); b.className = 'gr' + (i === vsSel ? ' sel' : '') + (i > sv.un ? ' lk' : ''); b.disabled = i > sv.un; b.dataset.g = i; b.innerHTML = g.name + '<small>' + (i > sv.un ? 'LOCKED' : [0, 1, 2].map(k => '<span class="star' + (k < sv.st[i] ? '' : ' off') + '"></span>').join('')) + '</small>'; b.addEventListener('click', () => { vsSel = i; buildGrades(); }); box.appendChild(b); });
 }
-function startMatch(gi, story, retry, foe) { vs = { story: !!story, gi, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: story ? 1e9 : ROUND_MS, hp: PHP, sh: PHP, hist: [], res: null, retry: retry | 0, me: story ? 'gojo' : vsPick.me, foe: story ? (foe || 'verity') : vsPick.foe }; vs.inv = !story && vs.me === vs.foe; beginRound(pnow()); }      // (retry: the story fight again after a failed red)
+function startMatch(gi, story, retry, foe) { vs = { story: !!story, gi, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: story ? 1e9 : ROUND_MS, hp: PHP, sh: PHP, hist: [], res: null, retry: retry | 0, me: story ? (foe === 'gojo' ? 'yuji' : 'gojo') : vsPick.me, foe: story ? (foe || 'verity') : vsPick.foe, tn: !!story && foe === 'gojo' };      // (a story fight against Gojo is the training of chapter 2: you are Yuji, tn = the training's limits)
+  vs.inv = !story && vs.me === vs.foe; beginRound(pnow()); }      // (retry: the story fight again after a failed red)
 function beginRound(now) {                     // a fresh round: the scene is reset, the enemy steps in, "ROUND n" and "FIGHT!"
   const keep = vs, gore = keep.story && keep.foe === 'cat' ? [gibs, drops, decals, pools] : null; show('play'); vs = keep; if (gore) [gibs, drops, decals, pools] = gore; ceReset(); const t = pnow(), G = GRADES[vs.gi];
   Object.assign(vs, { ph: 'intro', t0: t, tl: vs.story ? 1e9 : ROUND_MS, hp: PHP, sh: PHP, hist: [], seenAtk: -1, seenAt: 0, seenK: 0, rolled: true, whiffAt: -1, prevAtk: -1, hitAt: -9999, why: '', who: '', koAt: 0, crater: null }); blindOff = false; bfo = null; bfp = false;
@@ -2257,7 +2258,7 @@ function vsTick(now, dt) {
   if (vs.me === 'cat') { ceReq = false; if (stance !== 'stand') blockHeld = false; }      // the Cat has no MODE; he blocks standing only (flat nothing can hit him anyway)
   if (vs.me === 'yuji') { if (stance !== 'stand') { if (stance !== 'crouch') atkReq = false; blockHeld = false; if (stance !== 'crouch') lpReq = false; } }      // Yuji has his M1 combo, BLUE (DIVERGENT FIST standing, CONCENTRATED FIST in cursed energy mode, crouched: the SWEEP in normal mode and the UPPERCUT, then the FACE KICK, in cursed energy mode), the cursed energy MODE (off <-> on, no red mode), block, walking, jumping, crouching and dashing (v1.46: the DOMAIN button is his ULTIMATE; v1.48: crouched, ATTACK is his two crouch punches, R.JAB and L.UPPR, with the skill CROUCH PUNCHES)
 }
-function vsHurt(dm, now) { if (dom) return; vs.hp = Math.max(0, vs.hp - dm); vs.hitAt = now; if (vs.hp <= 0) { if (!vs.story || vs.foe === 'cat') { endRound('enemy', 'ko', now); if (vs.net && vs.ph === 'ko' && vs.who === 'enemy') lanSend('K|'); } else if (!de && !se) deathStart(now); } }      // (in the story fight Gojo's death is a cutscene)
+function vsHurt(dm, now) { if (dom) return; vs.hp = Math.max(0, vs.hp - dm); vs.hitAt = now; if (vs.hp <= 0) { if (!vs.story || vs.foe === 'cat' || vs.tn) { endRound('enemy', 'ko', now); if (vs.net && vs.ph === 'ko' && vs.who === 'enemy') lanSend('K|'); } else if (!de && !se) deathStart(now); } }      // (in the story fight Gojo's death is a cutscene)
 function endRound(who, why, now) {
   if (!vs || vs.ph !== 'fight') return; vs.ph = 'ko'; vs.t0 = now; vs.who = who; vs.why = why; if (who === 'player') vs.pw++; else vs.ew++; if (vs.rush && who === 'player') rushPay(now);
   if (why === 'ko') holdUntil = Math.max(holdUntil, now + KO_HOLD); vs.koAt = Math.max(now, holdUntil); snd(who === 'player' ? 'finisher' : 'ko'); buzz(who === 'player' ? 60 : 110);      // (koAt: when the loser starts to topple)
@@ -2266,12 +2267,12 @@ function finishMatch(now) {
   if (vs.net) { netOver(now); return; }
   if (vs.hunt) { huntOver(now); return; }
   if (vs.cv) { curseOver(now); return; }
-  vs.ph = 'over'; $('vsAgain').textContent = 'REMATCH'; $('vsAgain').classList.toggle('hot', !(vs.story ? vs.pw >= 1 : vs.pw >= 2)); if (vs.story && vs.foe === 'verity' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s1', 200); storyDone(); story.toOutro = true; return; }      if (vs.story && vs.foe === 'cat' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s2', 300); storyDone2(); story.toMaster = true; return; }      // (beating the Cat: the Master's scene follows, then END OF CHAPTER 1, v1.54)      // (beating Verity: the report to the higher-ups follows, started by the main loop)
+  vs.ph = 'over'; $('vsAgain').textContent = 'REMATCH'; $('vsAgain').classList.toggle('hot', !(vs.story ? vs.pw >= 1 : vs.pw >= 2)); if (vs.story && vs.foe === 'verity' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s1', 200); storyDone(); story.toOutro = true; return; }      if (vs.story && vs.foe === 'cat' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s2', 300); storyDone2(); story.toMaster = true; return; }      if (vs.story && vs.tn && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s3', 300); storyDone3(); story.toEnd = true; return; }      // (beating Gojo in the training: the happy ending, v1.55)      // (beating the Cat: the Master's scene follows, then END OF CHAPTER 1, v1.54)      // (beating Verity: the report to the higher-ups follows, started by the main loop)
   const win = vs.story ? vs.pw >= 1 : vs.pw >= 2, pf = vs.hp / PHP, stars = win ? (pf >= 0.7 ? 3 : pf >= 0.35 ? 2 : 1) : 0, sv = vsLoad(), gi = vs.gi;
   if (win && !vs.story) { sv.un = Math.max(sv.un, Math.min(5, gi + 1)); sv.st[gi] = Math.max(sv.st[gi], stars); vsStore(sv.un, sv.st); earn([15, 25, 40, 60, 90, 140][gi]); }
   vs.res = { win, stars }; $('vsTitle').textContent = win ? 'VICTORY' : 'DEFEAT'; $('vsInfo').textContent = GRADES[gi].name + '  -  ROUNDS ' + vs.pw + ' : ' + vs.ew + (win && !vs.story ? '\n+$' + [15, 25, 40, 60, 90, 140][gi] : '');
   $('vsStars').innerHTML = win ? [0, 1, 2].map(i => '<span class="star' + (i < stars ? '' : ' off') + '"></span>').join('') : ''; $('vsNext').textContent = 'NEXT GRADE'; $('vsNext').style.display = win && gi < 5 ? '' : 'none'; $('vsres').classList.add('on'); snd(win ? 'finisher' : 'ko');
-  if (vs.story) { $('vsTitle').textContent = win ? (vs.foe === 'cat' ? 'END OF CHAPTER 1' : 'TO BE CONTINUED') : 'DEFEAT'; $('vsInfo').textContent = vs.foe === 'cat' ? (win ? 'TO BE CONTINUED' : 'THE CAT WAS TOO STRONG') : win ? 'CHAPTER 1: VERITY' : 'VERITY WAS TOO STRONG'; $('vsStars').innerHTML = ''; $('vsNext').style.display = 'none'; if (win) { earnOnce(vs.foe === 'cat' ? 's2' : 's1', vs.foe === 'cat' ? 300 : 200); if (vs.foe === 'cat') storyDone2(); else storyDone(); } }
+  if (vs.story) { $('vsTitle').textContent = win ? (vs.foe === 'cat' ? 'END OF CHAPTER 1' : 'TO BE CONTINUED') : 'DEFEAT'; $('vsInfo').textContent = vs.foe === 'cat' ? (win ? 'TO BE CONTINUED' : 'THE CAT WAS TOO STRONG') : vs.tn ? 'KEEP TRAINING, YUJI!' : win ? 'CHAPTER 1: VERITY' : 'VERITY WAS TOO STRONG'; $('vsStars').innerHTML = ''; $('vsNext').style.display = 'none'; if (win) { earnOnce(vs.foe === 'cat' ? 's2' : 's1', vs.foe === 'cat' ? 300 : 200); if (vs.foe === 'cat') storyDone2(); else storyDone(); } }
 }
 function updateFighterVs(now, dt) {            // the grade AI (see GRADES): reaction time, block, dodge, combos, and from Grade 2 up it reads and punishes
   const d = dummy, G = GRADES[vs.gi], gap = d.x - wx, ag = Math.abs(gap), toward = gap > 0 ? -1 : 1;
@@ -2370,7 +2371,7 @@ function drawVs0(now, ux, uy, VW) {         // health bars, names, the grade, th
     const fw = Math.round(W * Math.max(0, Math.min(100, flow)) / 100); ctx.fillStyle = '#000'; ctx.fillRect(5, 34, W + 2, 4); ctx.fillStyle = '#241033'; ctx.fillRect(6, 35, W, 2); ctx.fillStyle = flowOn ? (((now / 90) | 0) % 2 ? '#fff3b0' : '#ffd34d') : '#c77dff'; ctx.fillRect(6, 35, fw, 2);
     const d0 = dummy; if (d0 && d0.ko < 0) { const open = now < (d0.openUntil || 0), sw = Math.round(W * (open ? 1 : Math.max(0, Math.min(1, (d0.stg || 0) / STG_MAX)))); ctx.fillStyle = '#000'; ctx.fillRect(VW - 7 - W, 28, W + 2, 6); ctx.fillStyle = '#2a2208'; ctx.fillRect(VW - 6 - W, 29, W, 4); ctx.fillStyle = open ? (((now / 90) | 0) % 2 ? '#ffffff' : '#ffd34d') : '#ffb84a'; ctx.fillRect(VW - 6 - sw, 29, sw, 4); }
   }
-  pxt(NAMES[vs.me] + (vs.meInv ? ' (INV.)' : ''), 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', nx, 45, bad ? '#ff6a5a' : cc[3], 8); let lx = nx + 62; if (vs.bleed) { pxt('BLEED', lx, 45, '#ff4a4a', 8); lx += 48; } if (vs.fear) pxt('FEAR', lx, 45, '#c77dff', 8); pxt(vs.story ? (vs.foe === 'cat' ? 'CARTOON CAT' : 'VERITY') : foeName, VW - 6, 45, '#ffffff', 8, 'right'); let rx2 = VW - 6; if (dummy && dummy.bleed) { pxt('BLEED', rx2, 37, '#ff4a4a', 8, 'right'); rx2 -= 48; } if (dummy && dummy.fear) pxt('FEAR', rx2, 37, '#c77dff', 8, 'right'); pxt(vs.story ? 'SPECIAL GRADE' : vs.net ? 'WI-FI' : vs.hunt ? HUNT_SIZE[vs.hunt.h.s] + ' HUNT' : vs.cv ? (vs.rush ? 'WAVE ' + Math.min(vs.round, vs.run.waves.length) + '/' + vs.run.waves.length : (vs.hard ? 'HARD ' : '') + vs.cv.grade) : GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
+  pxt(NAMES[vs.me] + (vs.meInv ? ' (INV.)' : ''), 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', nx, 45, bad ? '#ff6a5a' : cc[3], 8); let lx = nx + 62; if (vs.bleed) { pxt('BLEED', lx, 45, '#ff4a4a', 8); lx += 48; } if (vs.fear) pxt('FEAR', lx, 45, '#c77dff', 8); pxt(vs.story ? (vs.foe === 'cat' ? 'CARTOON CAT' : vs.tn ? 'GOJO' : 'VERITY') : foeName, VW - 6, 45, '#ffffff', 8, 'right'); let rx2 = VW - 6; if (dummy && dummy.bleed) { pxt('BLEED', rx2, 37, '#ff4a4a', 8, 'right'); rx2 -= 48; } if (dummy && dummy.fear) pxt('FEAR', rx2, 37, '#c77dff', 8, 'right'); pxt(vs.story ? (vs.tn ? 'TRAINING' : 'SPECIAL GRADE') : vs.net ? 'WI-FI' : vs.hunt ? HUNT_SIZE[vs.hunt.h.s] + ' HUNT' : vs.cv ? (vs.rush ? 'WAVE ' + Math.min(vs.round, vs.run.waves.length) + '/' + vs.run.waves.length : (vs.hard ? 'HARD ' : '') + vs.cv.grade) : GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
   if (!vs.story && !vs.practice) pxt(String(Math.max(0, Math.ceil(vs.tl / 1000))), VW / 2, 18, vs.tl < 10000 ? '#ff6a5a' : '#ffffff', 16, 'center');
   if (vs.hunt && !vs.hunt.over) huntHud(now, VW);
   const kob = vs.ph === 'ko';
@@ -3917,6 +3918,7 @@ function drawYuBig(now) {      // the charge of the last punch (game clock: the 
 __YFAT__
 __HDOM__
 __MSCENE__
+__TRAIN__
 function drawScene(now, dt) {
   fatUI(now);
   if (fat) { fatFrame(now, dt); return; }       // the FATALITY cutscene replaces the whole scene while it plays
@@ -4232,20 +4234,22 @@ function playVoice() {      // "HEY, IT'S ME, IT'S VERITY" (3.9 s), played throu
 const SAVE_KEY = 'jsv_saves'; let svSel = -1;
 function loadSaves() { try { const a = JSON.parse(localStorage.getItem(SAVE_KEY)); if (Array.isArray(a) && a.length === 3) return a; } catch (e) { } return [null, null, null]; }
 function storeSaves(a) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(a)); } catch (e) { } }
-function renderSaves() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].ch2 ? 'CHAPTER 1 COMPLETE' : a[i].ch1 ? 'CHAPTER 1 THE CAT' : a[i].beat ? 'VERITY BEATEN' : 'CHAPTER 1') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
-function startStory(slot) { const a = loadSaves(); if (a[slot] && a[slot].ch1) { startChapter2(slot); return; } if (!a[slot]) a[slot] = { ch: 1 }; storeSaves(a); audio(); show('story'); story = { slot, t0: pnow(), battle: false, T: 0, ev: {} }; alley = true; court = false; wx = 0; }      // (a save that has beaten Verity and heard the report goes on with the Cartoon Cat part, the second half of chapter 1)
+function renderSaves() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].tn ? 'CHAPTER 2 TRAINING DONE' : a[i].ch2 ? 'CHAPTER 1 COMPLETE' : a[i].ch1 ? 'CHAPTER 1 THE CAT' : a[i].beat ? 'VERITY BEATEN' : 'CHAPTER 1') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
+function startStory(slot) { const a = loadSaves(); if (a[slot] && a[slot].ch2) { startTraining(slot); return; } if (a[slot] && a[slot].ch1) { startChapter2(slot); return; }      // (a save that has finished chapter 1 goes on with chapter 2, the training)
+  if (!a[slot]) a[slot] = { ch: 1 }; storeSaves(a); audio(); show('story'); story = { slot, t0: pnow(), battle: false, T: 0, ev: {} }; alley = true; court = false; wx = 0; }      // (a save that has beaten Verity and heard the report goes on with the Cartoon Cat part, the second half of chapter 1)
 function storyDone() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].beat = true; storeSaves(a); }
 function storySkip() {
   if (!story || story.battle) return;
+  if (story.tn) { trainSkip(); return; }
   if (story.master) { const n = MS_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; else if (story.T >= MS.card + 1.2) { show('saves'); renderSaves(); } return; }      // (the Master's scene - it is checked before the Cartoon Cat part, whose flag it keeps: on to the next cut; at the very end back to the saves)
   if (story.ch2) { const n = C2_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; return; }      // (chapter 2: on to the next cut)
   if (story.outro) { const n = OUT_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; return; }      // (the report: on to the next cut; the last cut is the seam into the Cartoon Cat part)
   const n = [6.9, 10.0, CUT.slowEnd, CUT.fade].find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; }      // a tap: on to the next part of the cutscene (the dialogue, Verity's attack, the close-up of Verity, the fade)
 function startStoryBattle() { msBuf.length = 0; msBurstAt = -1; story.battle = true; startMatch(3, true, 0, story.ch2 ? 'cat' : 'verity'); }
 // the alley: dark brick under a thin strip of night sky, a dumpster, crates, a barrel, a door and a street lamp along the wall, cracked wet asphalt
-let alleyBg = null, alleyProps = null, alleyTile = null, alleyKey = '', court = false;      // court: the grounds of Jujutsu High (the Cartoon Cat part) instead of the alley
+let alleyBg = null, alleyProps = null, alleyTile = null, alleyKey = '', court = false, track = false;      // court: the grounds of Jujutsu High (the Cartoon Cat part) instead of the alley
 function buildAlley() {
-  const key = VW + 'x' + VH + 'x' + gy + (court ? 'c' : ''); if (alleyBg && alleyKey === key) return; alleyKey = key; if (court) { buildCourt(); return; }
+  const key = VW + 'x' + VH + 'x' + gy + (court ? 'c' : '') + (track ? 't' : ''); if (alleyBg && alleyKey === key) return; alleyKey = key; if (track) { buildTrack(); return; } if (court) { buildCourt(); return; }
   const mkc = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')]; };
   let hs = 11; const rn = () => { hs = (hs * 1103515245 + 12345) & 0x7fffffff; return hs / 0x7fffffff; };
   let g; [alleyBg, g] = mkc(VW, VH);
@@ -4285,7 +4289,8 @@ function buildCourt() {      // the grounds of Jujutsu High at night: a big moon
   g.fillStyle = '#17131d'; g.fillRect(0, 9, 12, 1); g.fillRect(14, 16, 14, 1);
 }
 function drawAlley(now) {
-  buildAlley(); ctx.drawImage(alleyBg, 0, 0); layer(alleyProps, 0.55);
+  buildAlley(); if (track) { drawTrack(now); return; }      // (the training field of chapter 2 draws all of itself)
+  ctx.drawImage(alleyBg, 0, 0); layer(alleyProps, 0.55);
   const o = Math.round(((-wx % 28) + 28) % 28); for (let x = o - 28; x < VW; x += 28) ctx.drawImage(alleyTile, x, gy - 12);
   drawBlood(now); if ((now / 1000) % 3.3 < 0.08) { ctx.fillStyle = 'rgba(0,0,12,0.35)'; ctx.fillRect(0, 0, VW, VH); }      // the lamp flickers now and then
 }
@@ -4334,6 +4339,7 @@ const CUT = { see: 10.05, zoom: 10.3, slow: 10.85, slowEnd: 13.8, ask: 11.6, ask
 const wclock = T => T < CUT.slow ? T : T < CUT.slowEnd ? CUT.slow + (T - CUT.slow) * CUT.rate : CUT.slow + (CUT.slowEnd - CUT.slow) * CUT.rate + (T - CUT.slowEnd);      // the world's clock: it crawls (a quarter of the speed) while the slow motion lasts
 const ease3 = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
 function storyFrame(now, dt) {
+  if (story.tn) { trainFrame(now, dt); return; }      // (chapter 2: the training morning and its ending)
   if (story.master) { masterFrame(now, dt); return; }      // (the Master's scene, after the Cat)
   if (story.outro) { outroFrame(now, dt); return; }      // (the ending of the chapter, after the fight)
   if (story.ch2) { ch2Frame(now, dt); return; }      // (chapter 2, the opening)
@@ -5610,6 +5616,7 @@ function tick(t) {
   if (stance === 'down' && stPrev === 'stand' && vs && state === 'play' && !fredMe()) ceSpend(CE_COST.crouch, now); stPrev = stance;      // (the crouch of every fighter, the Cat smashing himself flat: 3% of the energy)
   if (lanRole === 'in' && state === 'play') lanTick();      // (the Wi-Fi fight: his pictures are picked up every frame, not every 0.15 s)
   if (story && story.toOutro) { story.toOutro = false; startOutro(now); }
+  if (story && story.toEnd) { story.toEnd = false; startTrainEnd(now); }      // (the training fight is won: the happy ending starts)
   if (story && story.toMaster) { story.toMaster = false; startMaster(now); }      // (the fight against the Cat is won: the Master's scene starts)      // (the fight against Verity is won: the ending of the chapter starts)
   if (state === 'play') { if (still || now < holdUntil) { last = now; if (impf) impfFrame(); } else drawScene(now, dt); stateDraw(now); msRecord(now); }      // hit-stop: the picture freezes for a split second when the red orb explodes
   else if (state === 'versus') { const fr = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length; for (const q of vsPv) { q.g.clearRect(0, 0, 64, 64); q.g.drawImage(q.who === 'gojo' ? (q.inv ? dumF : idleF)[fr] : q.who === 'yuji' ? (q.inv ? YUF.inv : YUF.norm).idle[fr % 15] : q.who === 'cat' ? cfr('idle', now / 100, true, q.inv) : q.who === 'freddy' ? fredF(now / (1000 / IDLE_FPS)) : vfr('idle', now / 100, true, q.inv), 0, 0); } }

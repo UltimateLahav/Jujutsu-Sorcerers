@@ -324,6 +324,33 @@ function makeSfx(ac) {
     msting(at) {                                         // the last chord of the chapter: low notes that swell over three seconds, a thin shimmer on top
       const t = T(at), B = C.ce; [55, 82.4, 110].forEach((f, i) => tone(B.deep, t + i * 0.05, { type: 'triangle', f, f2: f * 1.006, dur: 3.2, gain: 0.09, atk: 1.3 })); burst(B.soft, t + 0.3, { type: 'highpass', f: 4000, f2: 7000, q: 0.7, dur: 2.2, gain: 0.05, atk: 1.2 });
     },
+    tvoice(k) {                                          // v1.55 one letter of a speaker in the training (0 = Gojo: a smooth, lower blip; 1 = Yuji: a brighter, quicker one)
+      const t = T(), B = C.atk; tone(B.soft, t, { type: 'triangle', f: k ? R(300, 360) : R(205, 250), f2: k ? R(280, 330) : R(190, 225), dur: 0.08, gain: 0.06, atk: 0.004 }); burst(B.soft, t, { type: 'bandpass', f: k ? R(1500, 2100) : R(900, 1300), q: 3, dur: 0.05, gain: 0.03, atk: 0.003 });
+    },
+    tink(k) {                                            // v1.55 INFINITY stops a blow: a glassy ring, a hiss and a soft low thump (k = 1: the big blow, a longer ring and a deeper thump)
+      const t = T(), B = C.ce, big = k === 1; tone(B.soft, t, { f: 1760, f2: 1660, dur: big ? 0.95 : 0.55, gain: big ? 0.09 : 0.07, atk: 0.002 }); tone(B.soft, t, { f: 2637, f2: 2500, dur: 0.4, gain: 0.04, atk: 0.002 }); burst(B.soft, t, { type: 'highpass', f: 3000, f2: 7000, q: 0.7, dur: 0.18, gain: 0.12, atk: 0.001 }); tone(B.deep, t, { f: 120, f2: 70, dur: 0.25, gain: big ? 0.25 : 0.14, atk: 0.002 });
+    },
+    tinkoff() {                                          // v1.55 Gojo switches Infinity off: three falling glass notes and a shimmer
+      const t = T(), B = C.ce; [2093, 1568, 1175].forEach((f, i) => tone(B.soft, t + i * 0.08, { f, f2: f * 0.97, dur: 0.6, gain: 0.06, atk: 0.003 })); burst(B.soft, t, { type: 'highpass', f: 4000, f2: 8000, q: 0.7, dur: 0.5, gain: 0.07, atk: 0.01 });
+    },
+    tbirds() {                                           // v1.55 the morning birds: two to four quick rising chirps
+      const t0 = T(), n = 2 + ((Math.random() * 3) | 0), f0 = R(2300, 3600); for (let i = 0; i < n; i++) tone(C.ce.soft, t0 + i * R(0.08, 0.16), { f: f0 * R(0.9, 1.1), f2: f0 * R(1.25, 1.5), dur: 0.07, gain: 0.025, atk: 0.005 });
+    },
+    tmusic(k) {                                          // v1.55 the happy morning: a bright tune (C pentatonic) with a soft pad and a bass over C - Am - F - G; 8 bars per call (the scene calls it again when they are over, the next block starts where the last ended); k = 1: the slower ending
+      const BEAT = k ? 0.56 : 0.46, t0 = Math.max(ac.currentTime + 0.05, st.tmusNext || 0), CH = [[261.6, 329.6, 392], [220, 261.6, 329.6], [174.6, 220, 261.6], [196, 246.9, 293.7]], ROOT = [130.8, 110, 87.3, 98.0];
+      const MEL = k ? [[523, 0, 659, 0], [587, 0, 523, 0], [440, 523, 0, 0], [494, 587, 523, 0]] : [[659, 587, 523, 587], [659, 784, 659, 587], [523, 440, 523, 587], [659, 587, 784, 0], [784, 880, 784, 659], [587, 659, 784, 659], [523, 587, 659, 523], [587, 494, 523, 0]];
+      if (!st.tmus) { st.tmus = ac.createGain(); st.tmus.gain.value = 0.9; st.tmus.connect(C.ce.soft); }
+      const out = st.tmus, note = (f, t, d, ty, gain, dest) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = ty; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(gain, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(g); g.connect(dest); o.start(t); o.stop(t + d + 0.05); };
+      for (let b = 0; b < 8; b++) {
+        const t = t0 + b * 4 * BEAT, ch = CH[b % 4]; ch.forEach(f => note(f, t, 4 * BEAT, 'sine', 0.02, out)); note(ROOT[b % 4], t, 1.7 * BEAT, 'sine', 0.1, C.ce.deep); note(ROOT[b % 4], t + 2 * BEAT, 1.7 * BEAT, 'sine', 0.08, C.ce.deep);
+        if (!k) for (let i = 0; i < 8; i++) note(ch[[0, 1, 2, 1, 0, 1, 2, 1][i]] * 2, t + i * BEAT / 2, 0.3, 'triangle', 0.03, out);
+        MEL[b % MEL.length].forEach((f, i) => { if (f) note(f, t + i * BEAT, k ? 0.9 : 0.5, 'triangle', k ? 0.04 : 0.05, out); });
+      }
+      st.tmusNext = t0 + 8 * 4 * BEAT;
+    },
+    tmusicoff() {                                        // v1.55 fade the morning tune out (the notes already scheduled stay silent)
+      const g = st.tmus; st.tmusNext = 0; if (!g) return; st.tmus = null; const t = ac.currentTime; g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), t); g.gain.linearRampToValueAtTime(0.0001, t + 0.7);
+    },
     homeon() {                                           // v1.50 Yuji's Hometown: a warm drifting pad (A major, a slow shimmer) with a breath of wind in the grass (homeoff() fades it out)
       if (st.homeN) return; const t = ac.currentTime, g = ac.createGain(), nodes = []; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.13, t + 1.2); g.connect(C.ce.deep);
       [[110, 'sine', 0], [164.8, 'triangle', 4], [220, 'sine', -3], [277.2, 'triangle', 5], [329.6, 'sine', -2]].forEach(([f, ty, d], i) => { const o = ac.createOscillator(), og = ac.createGain(), lfo = ac.createOscillator(), lg = ac.createGain(); o.type = ty; o.frequency.value = f; o.detune.value = d; og.gain.value = 0.45 / (1 + i * 0.5); lfo.frequency.value = 0.09 + i * 0.04; lg.gain.value = 0.2; lfo.connect(lg); lg.connect(og.gain); o.connect(og); og.connect(g); o.start(t); lfo.start(t); nodes.push(o, lfo); });
