@@ -127,13 +127,13 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #cust .cards{gap:3vh}#cust .card{width:26vh;height:38vh;font-size:var(--fs-btn,clamp(8px,2.4vh,13px))}#cust .card canvas{width:17vh;height:17vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line);margin-top:1vh}#cust .card b{font-size:.8em;word-break:break-all;line-height:1.3}
 #custName{gap:2.4vh}#custName input{font:inherit;font-size:var(--fs-btn,clamp(9px,3vh,16px));color:var(--ink);background:#120d22;border:3px solid var(--line);padding:1.6vh 2vh;width:44vh;text-transform:uppercase;text-align:center;user-select:text;-webkit-user-select:text;outline:none}#custName input:focus{border-color:var(--acc)}
 #cdMain{display:flex;align-items:center;justify-content:center;gap:2vh}
-#cdTools{display:grid;grid-template-columns:1fr 1fr;gap:1vh;width:27vh}
+#cdLeft{display:flex;flex-direction:column;align-items:center;gap:1.2vh;width:27vh}#cdTools{display:grid;grid-template-columns:1fr 1fr;gap:.8vh;width:100%}
 #cdTools button,#cdSide button{padding:1vh .5vh;font-size:clamp(6px,1.9vh,10px);box-shadow:2px 2px 0 #000;border-width:2px}
 #cdTools button.sel{border-color:var(--acc);background:#2a1f4a;color:#ffd34d}
 #cdBoard{line-height:0}#cdCv{display:block;image-rendering:pixelated;border:3px solid var(--line);background:#120d22;touch-action:none;cursor:crosshair}
 #cdSide{display:flex;flex-direction:column;align-items:center;gap:1vh;width:38vh}#cdName{font-size:clamp(7px,2.2vh,12px);color:#ffd34d;font-weight:normal;word-break:break-all}
 #cdPal{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;width:100%}#cdPal button{padding:0;height:3.6vh;min-width:0;border:2px solid #000;box-shadow:none}#cdPal button.sel{outline:2px solid #fff;outline-offset:-1px;z-index:1}
-#cdPv{display:flex;align-items:center;gap:1.4vh}#cdPrev{width:64px;height:64px;image-rendering:pixelated;background:#120d22;border:2px solid var(--line)}
+#cdPv{display:flex;flex-direction:column;align-items:center;gap:.6vh;text-align:center}#cdFr{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;width:100%}#cdFr button{padding:0;height:5.4vh;min-width:0;border:2px solid var(--line);box-shadow:none;background:#120d22;font-size:clamp(8px,2.8vh,16px);color:#ffd34d;line-height:1;display:flex;align-items:center;justify-content:center}#cdFr canvas{width:100%;height:100%;image-rendering:pixelated}#cdFr button.sel{border-color:#ffd34d;background:#2a1f4a}#cdFr button.add{border-style:dashed}#cdFrInfo{font-size:clamp(6px,1.8vh,9px)}#cdPrev{width:64px;height:64px;image-rendering:pixelated;background:#120d22;border:2px solid var(--line)}
 #cdDone{border-color:#ffd34d;color:#ffd34d}
 #rotate{position:fixed;inset:0;z-index:9;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--bg);text-align:center;line-height:1.6;font-size:12px}
 #rotate div{font-size:56px;animation:r 2s ease-in-out infinite}
@@ -150,7 +150,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <h1>JUJUTSU<br>SORCERERS</h1>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.64</small>
+    <small id="ver">V1.65</small>
   </div>
 </section>
 
@@ -249,12 +249,13 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 
 <section id="custDraw" class="screen">
   <div id="cdMain">
-    <div id="cdTools"></div>
+    <div id="cdLeft"><div id="cdTools"></div><div id="cdPv"><canvas id="cdPrev" width="64" height="64"></canvas><small>IDLE PREVIEW</small></div></div>
     <div id="cdBoard"><canvas id="cdCv" width="256" height="256" aria-label="Drawing board, 64 by 64 pixels"></canvas></div>
     <div id="cdSide">
       <b id="cdName"></b>
       <div id="cdPal"></div>
-      <div id="cdPv"><canvas id="cdPrev" width="64" height="64"></canvas><small>REAL SIZE</small></div>
+      <small id="cdFrInfo">FRAME 1 OF 1</small>
+      <div id="cdFr"></div>
       <div class="row"><button id="cdDone">DONE</button><button id="cdBack">BACK</button></div>
     </div>
   </div>
@@ -269,6 +270,8 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
     <button class="card pp" data-who="cat"><canvas></canvas><b>CARTOON CAT</b><i>FREE PLAY</i></button>
     <button class="card pp" data-who="freddy"><canvas></canvas><b>FREDDY<br>KRUEGER</b><i>FREE PLAY</i></button>
   </div>
+  <small id="selCuLab" style="display:none">YOUR CUSTOM CHARACTERS (THEY CANNOT MOVE YET)</small>
+  <div class="cards mini" id="selCu" style="display:none"></div>
   <small>FREE PLAY: EVERY MOVE OF EVERY FIGHTER IS FREE HERE, THE ENERGY NEVER RUNS OUT AND YOU CANNOT LOSE (SET > GAME: THE ENEMY CAN FIGHT BACK)</small>
   <div class="row"><button id="vsBtn">VERSUS MODE</button><button id="selBack">BACK</button></div>
 </section>
@@ -1226,7 +1229,7 @@ function show(s) {
   $('versus').classList.toggle('on', s === 'versus');
   $('title').classList.toggle('on', s === 'title');
   $('select').classList.toggle('on', s === 'select');
-  $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves'); $('cust').classList.toggle('on', s === 'cust'); $('custName').classList.toggle('on', s === 'custname'); $('custDraw').classList.toggle('on', s === 'custdraw');
+  $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves'); if (s === 'select') cuSelRefresh(); $('cust').classList.toggle('on', s === 'cust'); $('custName').classList.toggle('on', s === 'custname'); $('custDraw').classList.toggle('on', s === 'custdraw');
   cv.style.display = s === 'play' || s === 'story' ? 'block' : 'none';
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
@@ -3990,6 +3993,7 @@ function drawScene(now, dt) {
   if (vs && vs.me === 'verity') { verityScene(now, dt); return; }      // YOUR FIGHTER is Verity: his own controls and pictures (below)
   if (vs && vs.me === 'freddy') { freddyScene(now, dt); return; }      // YOUR FIGHTER is Freddy Krueger: he walks, crouches, jumps, slashes and dashes (v1.39 to v1.48)
   if (vs && vs.me === 'cat') { catScene(now, dt); return; }      // YOUR FIGHTER is the Cartoon Cat: his own controls and pictures (below)
+  if (cuMe()) { customScene(now, dt); return; }      // YOUR FIGHTER is a CUSTOM character: it stands on its idle frames and cannot move yet (custom.js)
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3);
   if (mbAt < 0) mbK = 0;
   if (ceReq && !(vs && vs.me === 'yuji')) { ceReq = false; if (t >= 1) cycleMode(now); }        // CURSED ENERGY button / key: on <-> off (Yuji's MODE is handled below, once it is known whether he is free for the power-up)
@@ -5676,7 +5680,7 @@ function tick(t) {
   else if (state === 'select') {
     pctx.clearRect(0, 0, pv.width, pv.height);
     pctx.drawImage(idleF[Math.floor(now / (1000 / IDLE_FPS)) % idleF.length], 0, 0);
-    for (const q of selPv) { q.g.clearRect(0, 0, q.g.canvas.width, 64); q.g.drawImage(q.who === 'yuji' ? YUF.norm.idle[Math.floor(now / (1000 / IDLE_FPS)) % 15] : q.who === 'cat' ? cfr('idle', now / 100, true, false) : q.who === 'freddy' ? fredF(now / (1000 / IDLE_FPS)) : vfr('idle', now / 100, true, false), 0, 0); }
+    for (const q of selPv) { const cu = q.who.slice(0, 2) === 'cu' ? cuIdleCv(q.who, now) : null; if (q.who.slice(0, 2) === 'cu' && !cu) continue; q.g.clearRect(0, 0, q.g.canvas.width, 64); q.g.drawImage(cu || (q.who === 'yuji' ? YUF.norm.idle[Math.floor(now / (1000 / IDLE_FPS)) % 15] : q.who === 'cat' ? cfr('idle', now / 100, true, false) : q.who === 'freddy' ? fredF(now / (1000 / IDLE_FPS)) : vfr('idle', now / 100, true, false)), 0, 0); }
   } else if (state === 'title') drawHero(updateBlink(now));
 }
 
