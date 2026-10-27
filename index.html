@@ -125,13 +125,13 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 /* ---- CUSTOM (v1.64): the slots, the name and the drawing board */
 #customMode span{font-size:6vh;margin-top:6.5vh;color:#7be0a0}
 #custAnim .cards,#custAtk .cards{gap:3vh}#custAnim .card canvas,#custAtk .card canvas{width:17vh;height:17vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line);margin-top:1vh}#custAnim .card,#custAtk .card{width:27vh;height:38vh}#custAtk .card{height:31vh}#custAtk .card canvas{width:15vh;height:15vh}#custAtk .cmc{display:flex;flex-direction:column;align-items:center;gap:1.4vh}#custAtk .cmIn{font:inherit;font-size:var(--fs-btn,clamp(8px,2.4vh,13px));color:var(--ink);background:#120d22;border:3px solid var(--line);padding:1vh;width:27vh;text-transform:uppercase;text-align:center;user-select:text;-webkit-user-select:text;outline:none}#custAtk .cmIn:focus{border-color:var(--acc)}
-#custCode{gap:1.2vh}#custCode>small{line-height:1.5}#ccMain{display:flex;gap:2vh;width:min(94vw,170vh);height:60vh}#ccPal,#ccWork{display:flex;flex-direction:column;gap:1vh;padding:1.2vh;background:var(--card);border:3px solid var(--line);text-align:left;min-height:0}#ccPal{width:24vh;flex:none}#ccPal b{font-size:1.6vh;letter-spacing:.12em;color:var(--dim)}#ccPal button{margin-top:auto}#ccPal.del{border-color:var(--acc);background:#2a0d12}#ccWork{flex:1;min-width:0}
+#custCode{gap:1.2vh}#custCode>small{line-height:1.5}#ccMain{display:flex;gap:2vh;width:min(94vw,170vh);height:68vh}#ccPal,#ccWork{display:flex;flex-direction:column;gap:1vh;padding:1.2vh;background:var(--card);border:3px solid var(--line);text-align:left;min-height:0}#ccPal{width:27vh;flex:none}#ccPal b{font-size:1.6vh;letter-spacing:.12em;color:var(--dim)}#ccPal button{margin-top:auto}#ccPalL{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:.7vh;touch-action:pan-y}#ccPalL h6{margin:.6vh 0 0;font-size:1.4vh;font-weight:400;letter-spacing:.14em;color:var(--dim)}#ccPalL .blk{touch-action:pan-y;padding:.8vh 1vh;font-size:clamp(5px,1.7vh,10px);letter-spacing:.02em}#ccPalL .blk span{white-space:nowrap}#ccPal.del{border-color:var(--acc);background:#2a0d12}#ccWork{flex:1;min-width:0}
 #ccTabs{display:flex;gap:.8vh}#ccTabs button{flex:1;min-width:0;padding:.9vh .3vh;font-size:clamp(5px,1.6vh,9px);border-width:2px;overflow:hidden}#ccTabs button.on{border-color:var(--blue);color:var(--blue)}
-#ccFr{display:flex;gap:.6vh;min-height:11vh;font-size:1.5vh;color:var(--dim);overflow-x:auto;touch-action:pan-x;flex:none}#ccFr .cf{flex:none;width:8vh;text-align:center}#ccFr canvas{display:block;width:8vh;height:8vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line)}#ccFr em{font-style:normal;font-size:1.4vh}#ccFr .cf.hit canvas{border-color:var(--acc)}#ccFr .cf.hit em{color:var(--acc)}
+#ccFr{display:flex;gap:.6vh;min-height:9vh;font-size:1.5vh;color:var(--dim);overflow-x:auto;touch-action:pan-x;flex:none}#ccFr .cf{flex:none;width:7vh;text-align:center}#ccFr canvas{display:block;width:7vh;height:7vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line)}#ccFr em{font-style:normal;font-size:1.4vh}#ccFr .cf.hit canvas{border-color:var(--acc)}#ccFr .cf.hit em{color:var(--acc)}
 #ccList{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:.8vh;padding-bottom:.6vh}
 .blk{display:flex;align-items:center;gap:1vh;padding:1vh 1.4vh;font-size:clamp(7px,2vh,12px);font-weight:700;letter-spacing:.08em;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;border:2px solid #000;box-shadow:2px 2px 0 #000;color:#000;flex:none}
-.blk.bx{background:#ffd34d}.blk button{padding:.5vh 1.2vh;font-size:.9em;border-width:2px;color:#000;background:#fff;box-shadow:1px 1px 0 #000}#ccPre{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);z-index:3}#ccPre.on{display:flex}#ccPreBox{display:flex;flex-direction:column;gap:1vh;padding:2vh;background:var(--card);border:3px solid var(--line);min-width:62vh}#ccPreBox>b{font-size:1.8vh;letter-spacing:.12em;color:var(--dim)}#ccPreL{display:flex;flex-direction:column;gap:.8vh}#ccPreL button{display:flex;justify-content:space-between;gap:2vh;padding:1.1vh 1.6vh;font-size:clamp(7px,2vh,12px)}#ccPreL button.on{border-color:var(--blue);color:var(--blue)}#ccPreL small{opacity:.7}
-.blk.bf{background:var(--blue)}.blk.bi{background:var(--acc);color:var(--ink)}.blk.hat{background:var(--ink);cursor:default}.blk input{width:8.5vh;-moz-appearance:textfield;appearance:textfield;font:inherit;text-align:center;color:#000;background:#fff;border:2px solid #000;padding:.3vh}.blk input::-webkit-inner-spin-button,.blk input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.blk i{font-style:normal;font-size:.8em;opacity:.85;letter-spacing:.04em}.blk u{margin-left:auto;text-decoration:none;cursor:pointer;padding:0 .8vh}
+.blk[data-t=x]{background:#ffd34d}.blk[data-t=s]{background:#7be0a8}.blk[data-t=w]{background:#c9a0ff}.blk[data-t=h]{background:#ff9f43}.blk.g_h{background:#9a2a35;color:var(--ink)}.blk.g_y{background:#d9d3c4}.blk em{font-style:normal;font-size:.75em;opacity:.8}.blk button{padding:.5vh 1.2vh;font-size:.9em;border-width:2px;color:#000;background:#fff;box-shadow:1px 1px 0 #000}#ccPre{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);z-index:3}#ccPre.on{display:flex}#ccPreBox{display:flex;flex-direction:column;gap:1vh;padding:2vh;background:var(--card);border:3px solid var(--line);min-width:62vh}#ccPreBox>b{font-size:1.8vh;letter-spacing:.12em;color:var(--dim)}#ccPreL{display:flex;flex-direction:column;gap:.8vh}#ccPreL button{display:flex;justify-content:space-between;gap:2vh;padding:1.1vh 1.6vh;font-size:clamp(7px,2vh,12px)}#ccPreL button.on{border-color:var(--blue);color:var(--blue)}#ccPreL small{opacity:.7}
+.blk[data-t=f]{background:var(--blue)}.blk[data-t=i]{background:var(--acc);color:var(--ink)}.blk.hat{background:var(--ink);cursor:default}.blk input{width:8.5vh;-moz-appearance:textfield;appearance:textfield;font:inherit;text-align:center;color:#000;background:#fff;border:2px solid #000;padding:.3vh}.blk input::-webkit-inner-spin-button,.blk input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.blk i{font-style:normal;font-size:.8em;opacity:.85;letter-spacing:.04em}.blk u{margin-left:auto;text-decoration:none;cursor:pointer;padding:0 .8vh}
 .blk.off{opacity:.5;background-image:repeating-linear-gradient(135deg,transparent 0 6px,rgba(0,0,0,.35) 6px 8px)}.blk.ph{background:transparent;border:2px dashed var(--dim);box-shadow:none;padding:0}.blk.gh{position:fixed;z-index:9;pointer-events:none;opacity:.92;margin:0}#cust .cards{gap:3vh}#cust .card{width:26vh;height:38vh;font-size:var(--fs-btn,clamp(8px,2.4vh,13px))}#cust .card canvas{width:17vh;height:17vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line);margin-top:1vh}#cust .card b{font-size:.8em;word-break:break-all;line-height:1.3}
 #custName{gap:2.4vh}#custName input{font:inherit;font-size:var(--fs-btn,clamp(9px,3vh,16px));color:var(--ink);background:#120d22;border:3px solid var(--line);padding:1.6vh 2vh;width:44vh;text-transform:uppercase;text-align:center;user-select:text;-webkit-user-select:text;outline:none}#custName input:focus{border-color:var(--acc)}
 #cdMain{display:flex;align-items:center;justify-content:center;gap:2vh}
@@ -179,7 +179,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.76</small>
+    <small id="ver">V1.77</small>
   </div>
 </section>
 
@@ -294,12 +294,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
   <h2>CODE</h2>
   <small id="ccName"></small>
   <div id="ccMain">
-    <div id="ccPal"><b>BLOCKS</b>
-      <div class="blk bf" data-t="f"><span>FRAME</span></div>
-      <div class="blk bi" data-t="i"><span>IMPACT</span></div>
-      <div class="blk bx" data-t="x"><span>VFX</span></div>
-      <button id="ccBack">DONE</button>
-    </div>
+    <div id="ccPal"><b>BLOCKS</b><div id="ccPalL"></div><button id="ccBack">DONE</button></div>
     <div id="ccWork">
       <div id="ccTabs"></div>
       <div id="ccFr"></div>
@@ -307,7 +302,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
       <div id="ccList"></div>
     </div>
   </div>
-  <small>AN IMPACT HITS ON THE FRAME ABOVE IT; A VFX UNDER AN IMPACT PLAYS WITH IT. DRAG A BLOCK LEFT TO DELETE</small>
+  <small>BLOCKS HANG UNDER A FRAME OR AN IMPACT; AN IMPACT HITS ON THE FRAME ABOVE IT. X OR DRAG LEFT = DELETE</small>
   <div id="ccPre"><div id="ccPreBox"><b>VFX PRESET</b><div id="ccPreL"></div><button id="ccPreX">CANCEL</button></div></div>
 </section>
 
@@ -6980,17 +6975,31 @@ function renderAtk() {      // the 4 punches (M1) of the combo: the first frame 
   $('cmName').textContent = cuNameV;
 }
 function cuSaveChar() { if (!cuChar.idle.some(f => f.some(v => v))) return false; const a = cuLoad(); a[cuSlot] = cuEncode(cuChar.idle, cuNameV, cuChar.walk, cuChar.jump, [cuChar.m0, cuChar.m1, cuChar.m2, cuChar.m3], cuChar.mn, cuChar.pg, [cuChar.x0, cuChar.x1, cuChar.x2, cuChar.x3]); cuStore(a); return true; }      // (false: the IDLE is still empty, nothing is kept)
-// ---- v1.75 CODE (blocks for the punches): drag the FRAME and IMPACT blocks under the top one; an IMPACT hurts for its damage on the picture of the FRAME block above it (with no good FRAME above it, it does nothing)
+// ---- v1.75 CODE (blocks for the punches), v1.77 with many more blocks. Every block hangs under the nearest FRAME or IMPACT above it. An IMPACT hurts for its damage on the picture of the FRAME above it (with no good FRAME above it, it does nothing); under an IMPACT, KNOCKBACK, STUN, LAUNCH, GUARD BREAK and BLEED change the hit and VFX, SOUND, SHAKE and HIT STOP play with it; under a FRAME alone the effects play at that picture. SPEED, LUNGE, COST and COOLDOWN are settings of the punch and work anywhere in its script.
 let cuTab = 0, cuDrag = null;
-const cuProgs = d => [0, 1, 2, 3].map(q => (d && Array.isArray(d.pg) && Array.isArray(d.pg[q]) ? d.pg[q] : []).slice(0, 12).filter(b => Array.isArray(b) && (b[0] === 'f' || b[0] === 'i' || b[0] === 'x')).map(b => [b[0], Math.max(1, Math.min(b[0] === 'f' ? 15 : b[0] === 'x' ? 5 : 99, Math.round(+b[1]) || 1))]));      // the 4 scripts kept with a character: lists of ['f', picture number], ['i', damage] and ['x', VFX preset 1-5]
-function cuScan(prog, n) {      // reads a script: for each block the picture it works on (FRAME, IMPACT) or the number of the IMPACT it plays with (VFX); 0 = it does nothing (a FRAME past the last picture, an IMPACT with no good FRAME above it, a VFX not right under an IMPACT); and imp = [picture, damage, [VFX presets]] of every IMPACT that works
-  let f = 0, at = -1; const live = [], imp = [];
-  prog.forEach(([t, v]) => {
-    if (t === 'f') { f = v <= n ? v : 0; at = -1; live.push(f); }
-    else if (t === 'i') { if (f) { imp.push([f, v, []]); at = imp.length - 1; } else at = -1; live.push(f); }
-    else { live.push(at + 1); if (at >= 0) imp[at][2].push(v); }
+const CU_MAXB = 20;      // blocks in one script
+const CU_FX = [['SPARK', 'ON THE ENEMY'], ['BURST', 'ON THE ENEMY, TWICE AS BIG'], ['FIST', 'ON YOUR FIST'], ['GROUND', 'ON THE FLOOR UNDER HIM'], ['SHOT', 'FLIES FROM YOUR FIST TO HIM']];      // the 5 VFX presets: where the drawing shows when its IMPACT comes
+const CU_SND = [['PUNCH', 'LIGHT BODY BLOW', 'smack', 0], ['HEAVY', 'HEAVY BODY BLOW', 'smack', 3], ['HIT', 'CRACKLING HIT', 'hit', 0], ['BIG HIT', 'BIG CRACKLING HIT', 'hit', 3], ['SWING', 'WHOOSH', 'swing', 0], ['KICK SWING', 'DEEP WHOOSH', 'swing', 3], ['BLOCK', 'FORCEFIELD BOUNCE', 'block'], ['ZAP', 'BLUE CRACKLE', 'stun'], ['BOOM', 'HUGE BOOM', 'rspunch', 0]];      // the SOUND presets: [name, what it is, the game's cue and its number]
+const CU_BLK = {      // the blocks, in the order of the list: n = name, g = group (t time, h on the hit, e effects, y you), v = its number boxes [label, least, most, first value], pre = its presets instead
+  f: { n: 'FRAME', g: 't', v: [['', 1, 15, 3]] }, i: { n: 'IMPACT', g: 't', v: [['DMG', 1, 99, 5]] },
+  k: { n: 'KNOCKBACK', g: 'h', v: [['', 1, 99, 15]] }, t: { n: 'STUN', g: 'h', v: [['SEC', 1, 9, 1]] }, l: { n: 'LAUNCH', g: 'h', v: [['PX', 10, 99, 40]] }, q: { n: 'GUARD BREAK', g: 'h', v: [] }, b: { n: 'BLEED', g: 'h', v: [['DMG', 1, 20, 2], ['SEC', 1, 9, 3]] },
+  x: { n: 'VFX', g: 'e', pre: CU_FX }, s: { n: 'SOUND', g: 'e', pre: CU_SND }, w: { n: 'SHAKE', g: 'e', v: [['', 1, 20, 3]] }, h: { n: 'HIT STOP', g: 'e', v: [['MS', 1, 110, 60]] },
+  v: { n: 'SPEED', g: 'y', v: [['PICS/S', 1, 60, 20]] }, m: { n: 'LUNGE', g: 'y', v: [['PX', 1, 60, 12]] }, c: { n: 'COST', g: 'y', v: [['%', 1, 100, 20]] }, d: { n: 'COOLDOWN', g: 'y', v: [['SEC', 1, 30, 2]] } };
+const CU_GRP = [['t', 'TIME'], ['h', 'ON THE HIT'], ['e', 'EFFECTS'], ['y', 'YOU']];
+const cuSpec = t => CU_BLK[t].pre ? [['', 1, CU_BLK[t].pre.length, 1]] : CU_BLK[t].v;
+function cuNew(t) { const b = [t, ...cuSpec(t).map(sp => sp[3])]; if (t === 'f') b[1] = Math.max(1, Math.ceil(cuChar['m' + cuTab].length / 2)); return b; }      // a new block with its first values (a FRAME starts on the middle picture)
+const cuProgs = d => [0, 1, 2, 3].map(q => (d && Array.isArray(d.pg) && Array.isArray(d.pg[q]) ? d.pg[q] : []).slice(0, CU_MAXB).filter(b => Array.isArray(b) && CU_BLK[b[0]]).map(b => [b[0], ...cuSpec(b[0]).map((sp, k) => Math.max(sp[1], Math.min(sp[2], Math.round(+b[k + 1]) || sp[3])))]));      // the 4 scripts kept with a character: lists of [block letter, its values]
+function cuScan(prog, n) {      // reads a script of a punch with n pictures: live = for each block 0 if it does nothing (a FRAME past the last picture, an IMPACT with no good FRAME above it, an effect with nothing to hang under, a change of the hit with no IMPACT above it) else the picture (FRAME, IMPACT) or 1; imp = [picture, damage, the blocks under it] of every IMPACT that works; tm = [picture, blocks] of the pictures that have effects under them; set = the settings of the punch (the last block of each kind wins)
+  let f = 0, an = null; const live = [], imp = [], tm = [], set = { v: 20, m: 0, c: 0, d: 0 };
+  prog.forEach(([t, a, b]) => {
+    const g = CU_BLK[t].g;
+    if (t === 'f') { f = a <= n ? a : 0; an = f ? { f, fx: [] } : null; if (an) tm.push(an); live.push(f); }
+    else if (t === 'i') { if (f) { an = { f, d: a, fx: [] }; imp.push(an); } else an = null; live.push(f); }
+    else if (g === 'h') { const ok = !!an && an.d !== undefined; if (ok) an.fx.push([t, a, b]); live.push(ok ? 1 : 0); }
+    else if (g === 'e') { if (an) an.fx.push([t, a, b]); live.push(an ? 1 : 0); }
+    else { set[t] = a; live.push(1); }
   });
-  return { live, imp };
+  return { live, imp: imp.map(x => [x.f, x.d, x.fx]), tm: tm.filter(x => x.fx.length).map(x => [x.f, x.fx]), set };
 }
 const cuImpacts = (prog, n) => cuScan(prog, n).imp;
 function cuStrip() {      // the pictures of the open punch, numbered; the ones an IMPACT lands on say how much it hurts
@@ -7000,22 +7009,33 @@ function cuStrip() {      // the pictures of the open punch, numbered; the ones 
 }
 function cuFlags() {      // after a change: the blocks that work, the others are dimmed and say why, and the marks on the pictures
   const q = cuTab, n = cuChar['m' + q].length, prog = cuChar.pg[q], live = cuScan(prog, n).live, nv = cuChar['x' + q].length;
-  [...$('ccList').children].forEach((d, i) => { const t = prog[i][0], ok = live[i] > 0 && (t !== 'x' || nv > 0); d.classList.toggle('off', !ok); d.querySelector('i').textContent = t === 'f' ? (live[i] ? '' : 'ONLY ' + n + ' PICTURES') : t === 'i' ? (live[i] ? 'DAMAGE, ON FRAME ' + live[i] : 'NEEDS A FRAME ABOVE') : !live[i] ? 'NEEDS AN IMPACT RIGHT ABOVE' : nv ? 'PLAYS WITH THE IMPACT' : 'DRAW IT FIRST'; });
+  [...$('ccList').children].forEach((d, i) => {
+    const t = prog[i][0], g = CU_BLK[t].g, ok = live[i] > 0 && (t !== 'x' || nv > 0); d.classList.toggle('off', !ok);
+    d.querySelector('i').textContent = t === 'f' ? (live[i] ? '' : 'ONLY ' + n + ' PICTURES') : t === 'i' ? (live[i] ? 'DAMAGE, ON FRAME ' + live[i] : 'NEEDS A FRAME ABOVE') : g === 'h' ? (live[i] ? '' : 'NEEDS AN IMPACT ABOVE') : g === 'e' ? (!live[i] ? 'NEEDS A FRAME OR AN IMPACT ABOVE' : t === 'x' && !nv ? 'DRAW IT FIRST' : '') : '';
+  });
   cuStrip();
 }
-const CU_FX = [['SPARK', 'ON THE ENEMY'], ['BURST', 'ON THE ENEMY, TWICE AS BIG'], ['FIST', 'ON YOUR FIST'], ['GROUND', 'ON THE FLOOR UNDER HIM'], ['SHOT', 'FLIES FROM YOUR FIST TO HIM']];      // the 5 VFX presets: where the drawing shows when its IMPACT comes
-function cuPreset(b) {      // the VFX block's button: asks which of the 5 presets this effect uses
-  const L = $('ccPreL'); L.innerHTML = '';
-  CU_FX.forEach(([nm, ds], k) => { const x = document.createElement('button'); x.innerHTML = '<span></span><small></small>'; x.firstChild.textContent = nm; x.lastChild.textContent = ds; if (b[1] === k + 1) x.className = 'on'; x.addEventListener('click', () => { b[1] = k + 1; $('ccPre').classList.remove('on'); renderCode(); }); L.appendChild(x); });
+const cuSndPlay = k => { const c = CU_SND[k]; snd(c[2], c[3]); };
+function cuPreset(b) {      // the button of a VFX or SOUND block: asks which of its presets it uses (a sound plays when you pick it)
+  const B = CU_BLK[b[0]], L = $('ccPreL'); L.innerHTML = ''; $('ccPreBox').querySelector('b').textContent = B.n + ' PRESET';
+  B.pre.forEach(([nm, ds], k) => { const x = document.createElement('button'); x.innerHTML = '<span></span><small></small>'; x.firstChild.textContent = nm; x.lastChild.textContent = ds; if (b[1] === k + 1) x.className = 'on'; x.addEventListener('click', () => { b[1] = k + 1; if (b[0] === 's') cuSndPlay(k); $('ccPre').classList.remove('on'); renderCode(); }); L.appendChild(x); });
   $('ccPre').classList.add('on');
 }
-function cuBlock(b) {      // one block of the script: FRAME (a picture number), IMPACT (the damage) or VFX (its preset button and the button that opens its drawing); a finger drags it by its body, the numbers, buttons and the X work as they are
-  const d = document.createElement('div'), t = b[0], mx = t === 'f' ? 15 : 99; d.className = 'blk ' + { f: 'bf', i: 'bi', x: 'bx' }[t]; d.dataset.t = t;
-  if (t === 'x') { d.innerHTML = '<span>VFX</span><button class="vp"></button><button class="vd">DRAW</button><i></i><u>X</u>'; const vp = d.querySelector('.vp'); vp.textContent = CU_FX[b[1] - 1][0]; vp.addEventListener('click', () => cuPreset(b)); d.querySelector('.vd').addEventListener('click', () => { audio(); cuEdit('x' + cuTab); }); }
-  else { d.innerHTML = '<span>' + (t === 'f' ? 'FRAME' : 'IMPACT') + '</span><input type="number" inputmode="numeric" min="1" max="' + mx + '"><i></i><u>X</u>'; const inp = d.querySelector('input'); inp.value = b[1]; inp.addEventListener('change', () => { b[1] = Math.max(1, Math.min(mx, Math.round(+inp.value) || 1)); inp.value = b[1]; cuFlags(); }); }
+function cuBlock(b) {      // one block of the script: its number boxes, or for VFX and SOUND the preset button (VFX also a DRAW button); a finger drags it by its body, the boxes, buttons and the X work as they are
+  const t = b[0], B = CU_BLK[t], d = document.createElement('div'); d.className = 'blk g_' + B.g; d.dataset.t = t;
+  let h = '<span>' + B.n + '</span>';
+  if (B.pre) h += '<button class="vp"></button>' + (t === 'x' ? '<button class="vd">DRAW</button>' : '');
+  else B.v.forEach(sp => { h += (sp[0] ? '<em>' + sp[0] + '</em>' : '') + '<input type="number" inputmode="numeric" min="' + sp[1] + '" max="' + sp[2] + '">'; });
+  d.innerHTML = h + '<i></i><u>X</u>';
+  if (B.pre) { const vp = d.querySelector('.vp'); vp.textContent = B.pre[b[1] - 1][0]; vp.addEventListener('click', () => cuPreset(b)); if (t === 'x') d.querySelector('.vd').addEventListener('click', () => { audio(); cuEdit('x' + cuTab); }); }
+  else d.querySelectorAll('input').forEach((inp, k) => { const sp = B.v[k]; inp.value = b[k + 1]; inp.addEventListener('change', () => { b[k + 1] = Math.max(sp[1], Math.min(sp[2], Math.round(+inp.value) || sp[3])); inp.value = b[k + 1]; cuFlags(); }); });
   d.querySelector('u').addEventListener('click', () => { const p = cuChar.pg[cuTab]; p.splice(p.indexOf(b), 1); renderCode(); });
   d.addEventListener('pointerdown', e => { if (!e.target.closest('input,u,button')) cuDragStart(e, d, b); });
   return d;
+}
+function cuPalette() {      // the list of blocks on the left, by group (built once)
+  const L = $('ccPalL'); L.innerHTML = '';
+  CU_GRP.forEach(([g, nm]) => { const h = document.createElement('h6'); h.textContent = nm; L.appendChild(h); Object.keys(CU_BLK).filter(t => CU_BLK[t].g === g).forEach(t => { const d = document.createElement('div'); d.className = 'blk g_' + g; d.dataset.t = t; d.innerHTML = '<span>' + CU_BLK[t].n + '</span>'; d.addEventListener('pointerdown', e => cuDragStart(e, d, null)); L.appendChild(d); }); });
 }
 function renderCode() {      // the CODE screen: the 4 punches as tabs, the pictures of the open one and its script
   const q = cuTab, tb = $('ccTabs'), ls = $('ccList'); tb.innerHTML = ''; ls.innerHTML = '';
@@ -7025,9 +7045,9 @@ function renderCode() {      // the CODE screen: the 4 punches as tabs, the pict
 const cuIn2 = (e, el) => { const r = el.getBoundingClientRect(); return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; };
 function cuDragStart(e, el, b) {      // a block is picked up: b = its data when it is already in the script (it leaves the script while it is carried), null for a new one from the list on the left
   if (cuDrag || e.button > 0) return; e.preventDefault();
-  const r = el.getBoundingClientRect(), prog = cuChar.pg[cuTab], gh = el.cloneNode(true), ph = document.createElement('div'), gi = gh.querySelector('input'); if (gi && b) gi.value = b[1];
+  const r = el.getBoundingClientRect(), prog = cuChar.pg[cuTab], gh = el.cloneNode(true), ph = document.createElement('div'), gi = gh.querySelectorAll('input'); if (b) gi.forEach((x, k) => { x.value = b[k + 1]; });
   gh.classList.add('gh'); gh.style.width = r.width + 'px'; document.body.appendChild(gh); ph.className = 'blk ph'; ph.style.height = r.height + 'px';
-  cuDrag = { id: e.pointerId, gh, ph, el, orig: b ? prog.indexOf(b) : -1, b: b || [el.dataset.t, el.dataset.t === 'f' ? Math.max(1, Math.ceil(cuChar['m' + cuTab].length / 2)) : el.dataset.t === 'x' ? 1 : 5], ox: e.clientX - r.left, oy: e.clientY - r.top, x0: e.clientX, y0: e.clientY, moved: false, idx: -1 };
+  cuDrag = { id: e.pointerId, gh, ph, el, orig: b ? prog.indexOf(b) : -1, b: b || cuNew(el.dataset.t), ox: e.clientX - r.left, oy: e.clientY - r.top, x0: e.clientX, y0: e.clientY, moved: false, idx: -1 };
   if (b) { prog.splice(cuDrag.orig, 1); el.style.display = 'none'; }
   cuDragMove(e); addEventListener('pointermove', cuDragMove); addEventListener('pointerup', cuDragEnd); addEventListener('pointercancel', cuDragEnd);
 }
@@ -7043,8 +7063,8 @@ function cuDragEnd(e) {
   const D = cuDrag; if (!D || e.pointerId !== D.id) return; cuDrag = null; removeEventListener('pointermove', cuDragMove); removeEventListener('pointerup', cuDragEnd); removeEventListener('pointercancel', cuDragEnd);
   D.gh.remove(); D.ph.remove(); $('ccPal').classList.remove('del'); const prog = cuChar.pg[cuTab], back = () => { if (D.orig >= 0) prog.splice(D.orig, 0, D.b); };
   if (e.type === 'pointercancel') back();
-  else if (D.idx >= 0) { if (prog.length < 12) prog.splice(D.idx, 0, D.b); else back(); }      // (a full script of 12 takes no more)
-  else if (!D.moved) { if (D.orig >= 0) back(); else if (prog.length < 12) prog.push(D.b); }      // (a tap on a block of the list adds it at the end)
+  else if (D.idx >= 0) { if (prog.length < CU_MAXB) prog.splice(D.idx, 0, D.b); else back(); }      // (a full script takes no more)
+  else if (!D.moved) { if (D.orig >= 0) back(); else if (prog.length < CU_MAXB) prog.push(D.b); }      // (a tap on a block of the list adds it at the end)
   else if (!cuIn2(e, $('ccPal'))) back();      // (let go anywhere else: back where it was; over the list on the left: thrown away)
   renderCode();
 }
@@ -7087,7 +7107,7 @@ function customBack() {      // the Android back button inside CUSTOM: the drawi
   $('ca4').addEventListener('click', () => { audio(); cuTab = 0; $('ccPre').classList.remove('on'); show('custcode'); renderCode(); });
   $('ccPreX').addEventListener('click', () => $('ccPre').classList.remove('on'));
   $('ccBack').addEventListener('click', () => { cuSaveChar(); show('custanim'); renderAnim(); });
-  document.querySelectorAll('#ccPal .blk').forEach(el => el.addEventListener('pointerdown', e => cuDragStart(e, el, null)));
+  cuPalette();
   $('caBack').addEventListener('click', () => { show('cust'); renderCust(); });
   $('cdDone').addEventListener('click', () => {
     const has = cuFr.some(f => f.some(v => v)), keep = cuFr.filter(f => f.some(v => v));
@@ -7101,13 +7121,13 @@ function customBack() {      // the Android back button inside CUSTOM: the drawi
 window.__custom = () => ({ c: cuC.slice(), zoom: cuZoom, big: cuBigOn, pal: CU_PAL.length, slots: cuLoad(), art: cuArt, frames: cuFr.length, cur: cuCur, tool: cuTool, color: cuColor, cell: cuCell, dirty: cuDirty });
 
 // ---- v1.65 the custom characters in the game: FREE PLAY (the fighter select screen) has a small card for each drawn slot; in the match the character stands on its idle frames (up to 15, at the speed of the others) and does nothing: it cannot move, attack or block yet (whatever you press is dropped)
-let cuPh = 0, cuJumpAt = -1, cuAtkAt = -1, cuAtkK = 0, cuCmb = 0, cuCmbBy = 0, cuFired = 0, cuVfx = [];      // (the jump, the punch being thrown (which of the 4, since when), the next punch of the combo and until when it goes on)
+let cuPh = 0, cuJumpAt = -1, cuAtkAt = -1, cuAtkK = 0, cuCmb = 0, cuCmbBy = 0, cuFired = 0, cuFiredT = 0, cuMs = 50, cuLunged = 0, cuCd = [0, 0, 0, 0], cuBleed = null, cuVfx = [];      // (the jump, the punch being thrown (which of the 4, since when), the next punch of the combo and until when it goes on)
 const cuMe = () => !!vs && typeof vs.me === 'string' && vs.me.slice(0, 2) === 'cu';
 const CU_GAME = [null, null, null];      // for each slot { name, frames: 64 x 64 canvases }, made again every time the select screen opens
 function cuSelRefresh() {
   const row = $('selCu'), a = cuLoad(); row.innerHTML = ''; for (let i = selPv.length - 1; i >= 0; i--) if (selPv[i].who.slice(0, 2) === 'cu') selPv.splice(i, 1); let n = 0;
   a.forEach((d, i) => {
-    const mk = f => { const c = document.createElement('canvas'); c.width = c.height = 64; cuImg(f, c); return c; }; CU_GAME[i] = d ? { name: d.n || 'CUSTOM', frames: cuFrames(d).map(mk), walk: cuWalkFrames(d).map(mk), jump: cuJumpFrames(d).map(mk), vfx: [0, 1, 2, 3].map(q => cuVfxFrames(d, q).map(mk)), atk: [0, 1, 2, 3].map(q => cuAtkFrames(d, q).map(mk)), an: cuAtkNames(d).map((nm, q) => nm || 'M1 #' + (q + 1)) } : null; if (CU_GAME[i]) { CU_GAME[i].rdy = [0, 1, 2, 3].filter(q => CU_GAME[i].atk[q].length >= 5); CU_GAME[i].imp = cuProgs(d).map((pr, q) => cuImpacts(pr, CU_GAME[i].atk[q].length)); } if (!d) return; n++;      // (rdy: the punches with the 5 frames they need, an: their names for the ATTACK button, imp: the [picture, damage] of their IMPACT blocks)
+    const mk = f => { const c = document.createElement('canvas'); c.width = c.height = 64; cuImg(f, c); return c; }; CU_GAME[i] = d ? { name: d.n || 'CUSTOM', frames: cuFrames(d).map(mk), walk: cuWalkFrames(d).map(mk), jump: cuJumpFrames(d).map(mk), vfx: [0, 1, 2, 3].map(q => cuVfxFrames(d, q).map(mk)), atk: [0, 1, 2, 3].map(q => cuAtkFrames(d, q).map(mk)), an: cuAtkNames(d).map((nm, q) => nm || 'M1 #' + (q + 1)) } : null; if (CU_GAME[i]) { CU_GAME[i].rdy = [0, 1, 2, 3].filter(q => CU_GAME[i].atk[q].length >= 5); const sc = cuProgs(d).map((pr, q) => cuScan(pr, CU_GAME[i].atk[q].length)); CU_GAME[i].imp = sc.map(x => x.imp); CU_GAME[i].tm = sc.map(x => x.tm); CU_GAME[i].set = sc.map(x => x.set); } if (!d) return; n++;      // (rdy: the punches with the 5 frames they need, an: their names for the ATTACK button, imp, tm, set: what their blocks say, see cuScan)
     const b = document.createElement('button'); b.className = 'card pp'; b.dataset.who = 'cu' + i; b.innerHTML = '<canvas width="64" height="64"></canvas><b></b>'; b.querySelector('b').textContent = CU_GAME[i].name; selPv.push({ g: b.querySelector('canvas').getContext('2d'), who: 'cu' + i });
     b.addEventListener('click', () => { NAMES['cu' + i] = CU_GAME[i].name; startPractice('cu' + i); }); row.appendChild(b);
   });
@@ -7115,17 +7135,49 @@ function cuSelRefresh() {
 }
 const cuIdleCv = (who, now) => { const g = CU_GAME[+who.slice(2)]; return g ? g.frames[Math.floor(now / (1000 / IDLE_FPS)) % g.frames.length] : null; };
 const CU_REACH = 36;      // how far in front of its hips an IMPACT reaches (the punches of the others reach 23 to 34)
-function cuHit(dmg, now) {      // an IMPACT of a custom punch: the enemy takes exactly dmg when he is in front of the fighter, within arm's reach and can be touched (the rules of the others' punches: not the smiley form, not folded up, on the floor, flat or dodging; a blocker blocks it); true when it landed
+function cuHit(dmg, now, o) {      // an IMPACT of a custom punch: the enemy takes exactly dmg when he is in front of the fighter, within arm's reach and can be touched (the rules of the others' punches: not the smiley form, not folded up, on the floor, flat or dodging; a blocker blocks it unless GUARD BREAK); o = what the blocks under the impact ask for (knock, stun, launch, gb, bleed [damage, seconds]); true when it landed
+  o = o || {};
   if (!dummy || dummy.ko >= 0 || dummy.cap || now - dummy.born < 600 || vs.ph !== 'fight') return false;
   if (dummy.vform && dummy.vform !== 'verity') { say('IMMUNE', dummy.x, '#ffe9a0', 8, now); return false; }
   if ((dummy.vact && dummy.vact.type === 'crouch') || now < (dummy.down || 0) || (dummy.cact && dummy.cact.flat) || now < (dummy.dodgeUntil || 0)) { say('MISS', dummy.x, '#9fd8ff', 8, now); return false; }
   const gap = dummy.x - wx; if (gap > CU_REACH || gap < -3) return false;
-  if (dBlocks() && gap > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx]) { dummy.counter = now; dummy.vx += 3; shakeUntil = now + 70; shakeAmp = 1; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); return false; }
+  const blk = dBlocks() && gap > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
+  if (blk && !o.gb) { dummy.counter = now; dummy.vx += 3; shakeUntil = now + 70; shakeAmp = 1; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); return false; }
   if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; } hits.n++; hits.dmg += dmg; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = 0; vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n);      // (the combo counter counts it)
-  dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += Math.min(120, 9 + dmg * 2); shakeUntil = now + 110; shakeAmp = dmg >= 20 ? 4 : 2; if (!airUp(dummy)) { dummy.rx = (Math.random() * 10) | 0; dummy.rxAt = now; }
+  dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += o.knock ? o.knock * 6 : Math.min(120, 9 + dmg * 2); shakeUntil = now + 110; shakeAmp = dmg >= 20 ? 4 : 2; if (!airUp(dummy)) { dummy.rx = (Math.random() * 10) | 0; dummy.rxAt = now; }
   say('' + dmg, dummy.x, popCol(), 8, now); spark(dummy.x, gy - 26, dmg >= 20 ? 12 : 7, ['#ffffff', '#ffe9a0', '#7fc4ff'], dmg >= 20, 1); snd('smack', dmg >= 20 ? 3 : dmg >= 10 ? 1 : 0);
+  if (blk) say('GUARD BREAK', dummy.x, '#ffd34d', 8, now + 90);
+  if (o.stun) { const ms = o.stun * 1000; dummy.stunUntil = Math.max(dummy.stunUntil || 0, now + ms); if (dummy.mode === 'fighter' && !dummy.cact && !dummy.vact) { dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = ms; dummy.chain = 0; dummy.hitDone = true; } say('STUN', dummy.x, '#59b8ff', 8, now + 60); snd('stun'); }      // (frozen as long as he is stunned, like the free counter's STUN)
+  if (o.launch && (!dummy.air || dummy.air.kind === 'bounce')) { dummy.air = airMake(now, 0, Math.sqrt(2 * AIR_G * o.launch), AIR_G, 'up'); dummy.rx = AIR_RX; dummy.rxAt = now; }      // (thrown up like the UPPERCUT: o.launch px high at the top)
+  if (o.bleed) cuBleed = { who: dummy, until: now + o.bleed[1] * 1000, next: now + 1000, d: o.bleed[0] };
   if (dummy.hp <= 0) koDummy(now);
   return true;
+}
+function cuBleedStep(now) {      // BLEED: every second of its time he loses its damage
+  const B = cuBleed; if (!B) return; if (B.who !== dummy || dummy.ko >= 0 || vs.ph !== 'fight') { cuBleed = null; return; }
+  while (B.next <= B.until && now >= B.next) { B.next += 1000; dummy.hp = Math.max(0, dummy.hp - B.d); say('' + B.d, dummy.x, '#ff3a4a', 8, now); if (dummy.hp <= 0) { koDummy(now); cuBleed = null; return; } }
+  if (now >= B.until) cuBleed = null;
+}
+function cuFx(fx, now, hit, vf) {      // the effects of an impact or of a picture: VFX, SOUND, SHAKE and HIT STOP (hit: the impact landed)
+  for (const [t, a] of fx) {
+    if (t === 'x') { if (vf.length) cuVfx.push({ fr: vf, pre: a, at: now, hit, x0: wx, ex: dummy ? dummy.x : wx + 40 }); }
+    else if (t === 's') cuSndPlay(a - 1);
+    else if (t === 'w') { shakeAmp = now < shakeUntil ? Math.max(shakeAmp, a) : a; shakeUntil = Math.max(shakeUntil, now + 200); }
+    else if (t === 'h') hitStop(a);
+  }
+}
+function cuImpact(im, now, vf) {      // an IMPACT comes: the hit with what the blocks under it ask for, then their effects
+  const o = {}; for (const [t, a, b] of im[2]) { if (t === 'k') o.knock = a; else if (t === 't') o.stun = a; else if (t === 'l') o.launch = a; else if (t === 'q') o.gb = true; else if (t === 'b') o.bleed = [a, b]; }
+  cuFx(im[2], now, cuHit(im[1], now, o), vf);
+}
+function cuPunch(g, now) {      // the punch being thrown: its time ap (0 to 1, -1 = none), the LUNGE, and every picture effect and IMPACT when its picture comes up; it ends after the last picture
+  if (cuAtkAt < 0 || !g) return -1;
+  const n = g.atk[cuAtkK].length, ap = (now - cuAtkAt) / (n * cuMs), fi = ap >= 1 ? n : Math.floor(ap * n) + 1, im = g.imp[cuAtkK], tm = g.tm[cuAtkK], lg = g.set[cuAtkK].m;
+  if (lg) { const tg = lg * Math.min(1, ap); wx += tg - cuLunged; cuLunged = tg; }
+  for (let j = 0; j < tm.length; j++) if (!(cuFiredT >> j & 1) && tm[j][0] <= fi) { cuFiredT |= 1 << j; cuFx(tm[j][1], now, false, g.vfx[cuAtkK]); }
+  for (let j = 0; j < im.length; j++) if (!(cuFired >> j & 1) && im[j][0] <= fi) { cuFired |= 1 << j; cuImpact(im[j], now, g.vfx[cuAtkK]); }
+  if (ap >= 1) { cuAtkAt = -1; cuCmbBy = now + 700; return -1; }
+  return ap;
 }
 const CU_FXD = [300, 450, 300, 400, 450];      // how long each VFX preset plays (ms), the pictures spread over it
 function cuDrawVfx(now, cx) {      // the VFX of the impacts: preset 1 on the enemy, 2 on him twice as big, 3 on the fighter's fist, 4 on the floor under him (1.5 times), 5 flying from the fist to him (or 80 px ahead); an enemy the impact did not reach gets presets 1, 2 and 4 on the fist instead; the last part fades
@@ -7139,14 +7191,14 @@ function cuDrawVfx(now, cx) {      // the VFX of the impacts: preset 1 on the en
 function customScene(now, dt) {      // one frame of a match with a CUSTOM character as the player: it stands on its idle frames, walks on its walking frames, jumps on its jump frames and plays its punches when ATTACK is pressed (the IMPACT blocks of its CODE hurt the enemy; the other moves are not there yet); the enemy, the HUD and the effects are the shared ones
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3), cx = Math.round(VW / 2), g = CU_GAME[+vs.me.slice(2)]; setDomUI(now);
   const ctl = t >= 1 && now >= pStun && vs.ph === 'fight', jmp = jumpReq, atk = atkReq; jumpReq = atkReq = false;      // (it answers the buttons only when it is there, not stunned and in the FIGHT)
-  if (t < 1) { cuJumpAt = cuAtkAt = -1; cuCmb = 0; cuCmbBy = 0; cuFired = 0; cuVfx = []; }
+  if (t < 1) { cuJumpAt = cuAtkAt = -1; cuCmb = 0; cuCmbBy = 0; cuFired = cuFiredT = 0; cuVfx = []; cuBleed = null; cuCd = [0, 0, 0, 0]; }
   if (jmp && ctl && g && g.jump.length && cuJumpAt < 0 && cuAtkAt < 0) { cuJumpAt = now; snd('jump'); }
-  if (atk && ctl && g && g.rdy.length && cuJumpAt < 0 && cuAtkAt < 0) { if (now > cuCmbBy) cuCmb = 0; cuAtkK = g.rdy[cuCmb % g.rdy.length]; cuAtkAt = now; cuFired = 0; cuCmbBy = now + 1e9; cuCmb = (cuCmb + 1) % g.rdy.length; snd('swing', cuAtkK); }      // (ATTACK: the next of its ready punches plays once; nothing is hit yet)
-  let ap = -1; if (cuAtkAt >= 0 && g) {      // (20 pictures a second; the combo goes on for 0.7 s after a punch; every IMPACT of the punch lands once, when its picture comes up)
-    const n = g.atk[cuAtkK].length, im = g.imp[cuAtkK]; ap = (now - cuAtkAt) / (n * 50); const fi = ap >= 1 ? n : Math.floor(ap * n) + 1;
-    for (let j = 0; j < im.length; j++) if (!(cuFired >> j & 1) && im[j][0] <= fi) { cuFired |= 1 << j; const hit = cuHit(im[j][1], now), vf = g.vfx[cuAtkK]; if (vf.length) for (const pre of im[j][2]) cuVfx.push({ fr: vf, pre, at: now, hit, x0: wx, ex: dummy ? dummy.x : wx + 40 }); }
-    if (ap >= 1) { cuAtkAt = -1; ap = -1; cuCmbBy = now + 700; }
+  if (atk && ctl && g && g.rdy.length && cuJumpAt < 0 && cuAtkAt < 0) {      // (ATTACK: the next of its ready punches plays once, if its COOLDOWN is over and its COST can be paid; 20 pictures a second unless SPEED says otherwise; the combo goes on for 0.7 s after a punch)
+    if (now > cuCmbBy) cuCmb = 0; const k = g.rdy[cuCmb % g.rdy.length], st = g.set[k];
+    if (now < cuCd[k]) say('WAIT', wx, '#9a9aa8', 8, now);
+    else if (!st.c || ceSpend(st.c, now)) { cuAtkK = k; cuAtkAt = now; cuFired = cuFiredT = 0; cuLunged = 0; cuMs = 1000 / st.v; cuCd[k] = st.d ? now + st.d * 1000 : 0; cuCmbBy = now + 1e9; cuCmb = (cuCmb + 1) % g.rdy.length; snd('swing', k); }
   }
+  const ap = cuPunch(g, now); cuBleedStep(now);
   { const lab = g && g.rdy.length ? g.an[g.rdy[(now > cuCmbBy ? 0 : cuCmb) % g.rdy.length]] : 'ATTACK'; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; } }      // (the ATTACK button shows the name of the punch that comes next)
   let jp = -1, lift = 0; if (cuJumpAt >= 0) { jp = (now - cuJumpAt) / 800; if (jp >= 1) { cuJumpAt = -1; jp = -1; snd('land', 1); } else lift = Math.round(46 * 4 * jp * (1 - jp)); }      // (JUMP: 0.8 s, 46 pixels high, the jump frames play once over it)
   gojoLift = lift;
@@ -9187,7 +9239,7 @@ window.__domColors = which => { const im = which === 'void' ? voidImg : domImg, 
 window.__domJump = ph => { if (dom && DOM_ORDER.includes(ph)) { dom.ph = ph; dom.p0 = pnow(); } };
 window.__fill = () => { while (peds.length < 5) peds.push(newPed(wx + 150 + peds.length * 12)); };
 window.__hit = k => gojoHit(k, pnow());           // test hook: the attacker's swing k lands on Gojo right now (a dash dodges it)
-window.__state = () => ({ ehp: dummy ? dummy.hp : -1, cmode: cm, redOrb: !!rdOrb, orbV: rdOrb ? rdOrb.v : 0, coat: rdOrb ? !!rdOrb.coat : false, ride: ride ? ride.phase : '', lift: gojoLift, boom: !!boom, ce: ceOn, ceAmt: +ceAmt.toFixed(2), ho: HOMAP.size, stance, jumpC, mode, wx, stick: { x: stickX, y: stickY, up: stickUp, down: stickDown, held: stickCr }, lapse: lpAt >= 0 ? lpK : -1, dash: dgAt >= 0 ? dgK : -1, dashAir: dgAir, block: blkAt >= 0 ? (blkEnd < 0 ? 1 : 2) : 0, guard: guardUp(pnow()), mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests
+window.__state = () => ({ ex: dummy ? Math.round(dummy.x) : 0, ph: vs ? vs.ph : '', ehp: dummy ? dummy.hp : -1, estun: dummy ? Math.max(0, Math.round(dummy.stunUntil - pnow())) : 0, eair: dummy && dummy.air ? dummy.air.kind : '', bleed: !!cuBleed, cmode: cm, redOrb: !!rdOrb, orbV: rdOrb ? rdOrb.v : 0, coat: rdOrb ? !!rdOrb.coat : false, ride: ride ? ride.phase : '', lift: gojoLift, boom: !!boom, ce: ceOn, ceAmt: +ceAmt.toFixed(2), ho: HOMAP.size, stance, jumpC, mode, wx, stick: { x: stickX, y: stickY, up: stickUp, down: stickDown, held: stickCr }, lapse: lpAt >= 0 ? lpK : -1, dash: dgAt >= 0 ? dgK : -1, dashAir: dgAir, block: blkAt >= 0 ? (blkEnd < 0 ? 1 : 2) : 0, guard: guardUp(pnow()), mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests
 window.__back = () => {                       // Android back button: step back through the menus, otherwise let the app close
   if (settingsOn()) { closeSettings(); return true; }
   if (customBack()) return true;      // (CUSTOM: the slots, the name, the drawing)
