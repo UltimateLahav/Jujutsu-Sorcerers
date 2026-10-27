@@ -2,6 +2,7 @@
 """Hitboxes, measured from the pictures themselves.
 For every move of Gojo, Yuji, Verity, the Cat and Freddy (the hit numbers of the game: 0-1 are also Freddy's two M1 slashes (v1.45: the claw's blades, and the bare hand with the glove held low in front), 0-3 the M1 combo, 6-7 the crouch punches / Verity's claws, 14-21 Gojo's walking and red combos, 22 Verity's bite, 24-29 Yuji's M1, 36-37 his DIVERGENT FIST, 44-45 his RUSH FIST (the super fast DIVERGENT FIST on the run), 46-47 his crouched CONCENTRATED FIST: the UPPERCUT and the FACE KICK (measured against a body 30 px up), 38-43 his cursed energy mode moves: R.KICK, ELBOW, DOWNSLAM, PUSH KICK, CONCENTRATED FIST and the SWEEP) and for every body it can land on, this finds how far apart the two characters' anchors (the middle of the hips) can be while the limb the attacker has stretched out at the moment of impact (the two frames from the impact frame on) still overlaps the drawn body of the target. Both are compared ROW BY ROW, because a fist at chest height, a hanging arm and a foot all stop at different distances. Glow effects (Gojo's blue sparks) are not part of a limb. The target is its standing picture (the widest its idle animation gets in each row).
 Writes hitboxes.json: {attacker: {hit number: {target: the gap in px}}}; the game (HIT in tools/template.html) lands a hit when the gap is at most that.
+v1.85: it also writes the ROWS the gaps come from, under the keys _tip ({attacker: {hit number: {row: how far in front of the hips the limb reaches}}}: the same limbs, plus Freddy and the ten curses, whose blows are hit numbers 49-78 in the order of the CDEF table, a double blow also has 'Nb' for its second blow) and _body ({who: {row: [farthest pixel behind the hips, farthest in front]}}: gojo, yuji, verity, cat, freddy and 'c:<curse>'). The game measures every pair that is not in the table (a custom fighter, Freddy as a target, a curse) from these rows the same way, and checks the old table against them.
 Run from the tools folder, after the art and tools/template.html are final:  python3 -B hitbox_art.py"""
 import base64, io, json, os, re
 from PIL import Image
@@ -48,6 +49,26 @@ def widest(rows):                                                               
         for r, v in d.items(): out[r] = max(out.get(r, -999), v)
     return out
 
+def grid_span(S, fi, skip=''):                                                                    # like grid_rows, but both sides of the anchor: {row: [farthest pixel behind it (negative), farthest pixel in front of it]}
+    a = S['cx'] - S['x0']; lf = S['lift'][fi] if S.get('lift') else 0; out = {}
+    for r, row in enumerate(S['frames'][fi]):
+        xs = [x for x, c in enumerate(row) if c != '.' and c not in skip]
+        if xs: out[r - S['top'] - lf] = [min(xs) - a, max(xs) - a]
+    return out
+def img_span(im, fi, W=64, ax=32, y0=0, h=64, key=lambda y: y):                                   # the same for a cell of a picture strip (W wide, anchor on column ax, rows y0 to y0 + h of the cell)
+    c = im.crop((fi * W, 0, fi * W + W, 64)).load(); out = {}
+    for y in range(y0, y0 + h):
+        xs = [x for x in range(W) if c[x, y][3]]
+        if xs: out[key(y)] = [min(xs) - ax, max(xs) - ax]
+    return out
+def widest_span(spans):                                                                           # several frames -> how far behind and in front of the anchor each row ever reaches
+    out = {}
+    for d in spans:
+        for r, (lo, hi) in d.items():
+            o = out.get(r)
+            out[r] = [lo, hi] if o is None else [min(o[0], lo), max(o[1], hi)]
+    return out
+
 BODY = {'gojo': widest(grid_rows(GOJO['idle'], f, FX) for f in range(len(GOJO['idle']['frames']))),
         'yuji': widest(grid_rows(YUJI['idle'], f) for f in range(len(YUJI['idle']['frames']))),
         'verity': widest(img_rows(strip('idle'), f) for f in range(15)),
@@ -58,19 +79,44 @@ MOVES = {'gojo': {k: (lambda f, S=GOJO['atk%d' % k]: grid_rows(S, f, FX), IMPACT
          'cat': {k: (lambda f, im=cat_strip(n), W=W, a=a: cat_rows(im, f, W, a), imp, 15) for k, n, W, a, imp in ((30, 'm0', 128, 36, 6), (31, 'm1', 128, 36, 7), (32, 'm0', 128, 36, 6), (33, 'm3', 128, 36, 8), (34, 'flatpunch', 64, 32, 6))}}      # (hits 30-34: the stretching grab, the punch, the grab again, the kick, the punch up from the floor)
 MOVES['freddy'] = {k: (lambda f, r=8 + k: fred_rows(r, f), IMPACT[k], 15) for k in (0, 1)}
 MOVES['yuji'][6] = (lambda f, S=YUJI['atk30']: grid_rows(S, f), 6, 15); MOVES['yuji'][7] = (lambda f, S=YUJI['atk31']: grid_rows(S, f), 7, 15)      # (v1.48 his crouch punches: the R.JAB, impact on picture 6, and the L.UPPR, picture 7)
-out = {}
+out = {}; TIP = {}
 for att, moves in MOVES.items():
     out[att] = {}
     for k, (rows, imp, n) in sorted(moves.items()):
         tip = widest(rows(f) for f in range(imp, min(imp + 2, n)))                                # the limb: the impact frame and the one after it
-        out[att][k] = {}
+        out[att][k] = {}; TIP.setdefault(att, {})[k] = tip
         for tgt, body in BODY.items():
             # contact = the attacker's farthest pixel in a row reaches the target's nearest pixel in the same row (the target is drawn mirrored, so its pixel columns count from the other side: +1)
             d = [tip[r] + body[r] + 1 for r in tip if r in body]
             out[att][k][tgt] = max(d)
 out['yuji'][37] = out['yuji'][36]; out['yuji'][45] = out['yuji'][44]                                                              # DIVERGENT FIST's second impact (hit 37) has no limb: it is a delayed shock that lands if the first impact (36) reached, so the AI plans with the first one's reach
+TIP['yuji'][37] = TIP['yuji'][36]; TIP['yuji'][45] = TIP['yuji'][44]
+# ---- v1.85: the ROWS themselves, so the game can measure what is not drawn here: a custom fighter's punch against any body, any blow against a custom body, Freddy and the curses as targets, the curses' own blows
+SPAN = {'gojo': widest_span(grid_span(GOJO['idle'], f, FX) for f in range(len(GOJO['idle']['frames']))),
+        'yuji': widest_span(grid_span(YUJI['idle'], f) for f in range(len(YUJI['idle']['frames']))),
+        'verity': widest_span(img_span(strip('idle'), f) for f in range(15)),
+        'cat': widest_span(img_span(cat_strip('idle'), f) for f in range(15)),
+        'freddy': widest_span(img_span(FRED, f, 64, 31, 0, 64, lambda y: y - 1) for f in range(15))}      # (Freddy's pictures sit one row higher: his whole idle body, the hat and the head too)
+for w in BODY: assert {r: v[1] for r, v in SPAN[w].items()} == BODY[w], w
+CUR = json.load(open(P('curses.json')))
+def curse_span(c, anim, fi):                                                                      # a picture of a curse (a letter grid facing right, drawn with its row g on the floor line): the rows keyed like everyone's (feet at 62)
+    S = c[anim]; out = {}
+    for r, row in enumerate(S['frames'][fi]):
+        xs = [x for x, ch in enumerate(row) if ch != '.']
+        if xs: out[r - c['g'] + 62] = [min(xs) - c['cx'], max(xs) - c['cx']]
+    return out
+for cid, c in CUR.items(): SPAN['c:' + cid] = widest_span(curse_span(c, 'idle', f) for f in range(len(c['idle']['frames'])))
+a0 = tpl.index('const CDEF = ['); CDEF = tpl[a0:tpl.index('}].filter(c => CU[c.id]);', a0)]; ck = 49
+for blk in re.split(r"\n  \{ id: '", CDEF)[1:]:                                                    # the curses' moves: hit numbers from 49 on, in the order of the CDEF table (like CMOVE in the game)
+    cid = re.match(r"(\w+)'", blk).group(1); T = TIP.setdefault('c:' + cid, {})
+    for name, anim, imp, kind in re.findall(r"\{ name: '([^']+)', anim: '(a\d)', fps: \d+, imp: (\d+), kind: '(\w+)'", blk):
+        imp, n = int(imp), len(CUR[cid][anim]['frames']); T[ck] = widest(({r: v[1] for r, v in curse_span(CUR[cid], anim, f).items()}) for f in range(imp, min(imp + 2, n)))      # the limb on the impact picture and the one after it
+        if kind == 'melee2': T[str(ck) + 'b'] = widest(({r: v[1] for r, v in curse_span(CUR[cid], anim, f).items()}) for f in range(imp + 2, min(imp + 4, n)))      # (a double blow lands twice: the second blow has its own limb)
+        ck += 1
+out['_tip'] = TIP; out['_body'] = SPAN
 json.dump(out, open(P('hitboxes.json'), 'w'), separators=(',', ':'))
 OLD = [17, 17, 15, 26, 0, 0, 16, 16, 0, 0, 0, 0, 0, 0, 19, 25, 19, 27, 25, 24, 18, 20, 26, 40, 17, 17, 17, 26, 27, 28]                    # the old fixed reach (the gap was REACH + 6)
 print('body half-widths (front, widest row):', {t: max(b.values()) for t, b in BODY.items()})
 for att, moves in out.items():
+    if att[0] == '_': continue
     for k, v in moves.items(): print('%-6s hit %2d  old %2d | gap now: vs gojo %2d  vs yuji %2d  vs verity %2d' % (att, k, OLD[k] + 6 if k < len(OLD) else 0, v['gojo'], v['yuji'], v['verity']))

@@ -535,24 +535,44 @@ let cuPh = 0, cuJumpAt = -1, cuAtkAt = -1, cuAtkK = 0, cuCmb = 0, cuCmbBy = 0, c
 const cuMe = () => !!vs && typeof vs.me === 'string' && vs.me.slice(0, 2) === 'cu';
 const CU_GAME = [null, null, null];      // for each slot { name, frames: 64 x 64 canvases }, made again every time the select screen opens
 function cuSelRefresh() {
-  const row = $('selCu'), a = cuLoad(); row.innerHTML = ''; for (let i = selPv.length - 1; i >= 0; i--) if (selPv[i].who.slice(0, 2) === 'cu') selPv.splice(i, 1); let n = 0;
+  HB_C.clear(); const row = $('selCu'), a = cuLoad(); row.innerHTML = ''; for (let i = selPv.length - 1; i >= 0; i--) if (selPv[i].who.slice(0, 2) === 'cu') selPv.splice(i, 1); let n = 0;
   a.forEach((d, i) => {
-    const mk = f => { const c = document.createElement('canvas'); c.width = c.height = 64; cuImg(f, c); return c; }; CU_GAME[i] = d ? { name: d.n || 'CUSTOM', frames: cuFrames(d).map(mk), walk: cuWalkFrames(d).map(mk), jump: cuJumpFrames(d).map(mk), hu: cuSet(d, 'hu', 15).map(mk), ko: cuSet(d, 'ko', 15).map(mk), bl: cuBlFrames(d).map(mk), df: cuDfFrames(d).map(mk), db: cuDbFrames(d).map(mk), cr: cuCrFrames(d).map(mk), ci: cuCiFrames(d).map(mk), st: cuStats(d), vfx: [0, 1, 2, 3].map(q => cuVfxFrames(d, q).map(mk)), atk: [0, 1, 2, 3].map(q => cuAtkFrames(d, q).map(mk)), an: cuAtkNames(d).map((nm, q) => nm || 'M1 #' + (q + 1)) } : null; if (CU_GAME[i]) { CU_GAME[i].rdy = [0, 1, 2, 3].filter(q => CU_GAME[i].atk[q].length >= 5); const sc = cuProgs(d).map((pr, q) => cuScan(pr, CU_GAME[i].atk[q].length)); CU_GAME[i].ev = sc.map(x => x.ev); CU_GAME[i].set = sc.map(x => x.set); } if (!d) return; n++;      // (rdy: the punches with the 5 frames they need, an: their names for the ATTACK button, ev, set: what their blocks say, see cuScan)
+    const mk = f => { const c = document.createElement('canvas'); c.width = c.height = 64; cuImg(f, c); return c; }; CU_GAME[i] = d ? { name: d.n || 'CUSTOM', frames: cuFrames(d).map(mk), walk: cuWalkFrames(d).map(mk), jump: cuJumpFrames(d).map(mk), hu: cuSet(d, 'hu', 15).map(mk), ko: cuSet(d, 'ko', 15).map(mk), bl: cuBlFrames(d).map(mk), df: cuDfFrames(d).map(mk), db: cuDbFrames(d).map(mk), cr: cuCrFrames(d).map(mk), ci: cuCiFrames(d).map(mk), st: cuStats(d), vfx: [0, 1, 2, 3].map(q => cuVfxFrames(d, q).map(mk)), atk: [0, 1, 2, 3].map(q => cuAtkFrames(d, q).map(mk)), an: cuAtkNames(d).map((nm, q) => nm || 'M1 #' + (q + 1)) } : null; if (CU_GAME[i]) { CU_GAME[i].rdy = [0, 1, 2, 3].filter(q => CU_GAME[i].atk[q].length >= 5); const sc = cuProgs(d).map((pr, q) => cuScan(pr, CU_GAME[i].atk[q].length)); CU_GAME[i].ev = sc.map(x => x.ev); CU_GAME[i].set = sc.map(x => x.set); cuMeasure(d, CU_GAME[i]); } if (!d) return; n++;      // (rdy: the punches with the 5 frames they need, an: their names for the ATTACK button, ev, set: what their blocks say, see cuScan)
     const b = document.createElement('button'); b.className = 'card pp'; b.dataset.who = 'cu' + i; b.innerHTML = '<canvas width="64" height="64"></canvas><b></b>'; b.querySelector('b').textContent = CU_GAME[i].name; selPv.push({ g: b.querySelector('canvas').getContext('2d'), who: 'cu' + i });
     b.addEventListener('click', () => { NAMES['cu' + i] = CU_GAME[i].name; startPractice('cu' + i); }); row.appendChild(b);
   });
   $('selCuLab').style.display = n ? '' : 'none'; row.style.display = n ? '' : 'none';
 }
+// ---- v1.85 HITBOXES: a custom fighter is measured on its own drawings, like everyone (see HB_TIP in the engine): its body is its idle pictures (the widest every row gets), the limb of an IMPACT is the picture it lands on and the next one, a shot is its drawing; a row of a drawing sits on the row (picture row - 1) of the tables because a custom picture is drawn 61 px above the floor line
+function cuSpan(art, key) {      // the rows of a drawing: { row: [farthest pixel behind its middle column, farthest in front of it] }
+  const o = {}; for (let r = 0; r < 64; r++) { let lo = 99, hi = -99; for (let c = 0; c < 64; c++) if (art[r * 64 + c]) { if (c < lo) lo = c; if (c > hi) hi = c; } if (hi >= 0) o[key(r)] = [lo - 32, hi - 32]; } return o;
+}
+function cuWiden(list) { const o = {}; for (const sp of list) for (const r in sp) { const q = o[r]; o[r] = q ? [Math.min(q[0], sp[r][0]), Math.max(q[1], sp[r][1])] : sp[r].slice(); } return o; }      // (several drawings: how far behind and in front each row ever gets)
+function cuMaxRows(list) { const o = {}; for (const t of list) if (t) for (const r in t) if (o[r] === undefined || t[r] > o[r]) o[r] = t[r]; return o; }      // (several limbs: the farthest each row ever reaches)
+function cuMeasure(d, G) {      // G = the fighter of the match: its body, the limb of each IMPACT (e.tip), of each whole punch (tipAll), how wide it stands (push) and the rows of its shots' pictures
+  G.body = cuWiden(cuFrames(d).map(a => cuSpan(a, r => r - 1))); const hs = Object.values(G.body).map(v => v[1]).sort((a, b) => a - b); G.push = Math.max(5, hs.length ? hs[hs.length >> 1] : 5);      // (it is pushed apart from the enemy by half as wide as its torso is: the middle of its rows)
+  G.tipAll = [0, 1, 2, 3].map(q => {
+    const tips = cuAtkFrames(d, q).map(a => { const o = {}, sp = cuSpan(a, r => r - 1); for (const r in sp) o[r] = sp[r][1]; return o; });
+    for (const e of G.ev[q]) if (e.k === 'i') e.tip = cuMaxRows([tips[e.f - 1], tips[e.f]]);      // (the picture the IMPACT lands on, and the one after it, as for the others)
+    return cuMaxRows(G.ev[q].filter(e => e.k === 'i').map(e => e.tip));
+  });
+  G.vxs = [0, 1, 2, 3].map(q => cuVfxFrames(d, q).map(a => cuSpan(a, r => r - 2)));      // (a shot is drawn 62 px above the floor line)
+}
+const cuHbBody = who => { const G = CU_GAME[+who.slice(2)]; return G && G.body; }, cuTipAll = (who, k) => { const G = CU_GAME[+who.slice(2)]; return G && G.tipAll && G.tipAll[k]; }, cuHbPush = who => { const G = CU_GAME[+who.slice(2)]; return G ? G.push : 5; };
+window.__cuShots = () => cuShots.map(s => ({ x: s.x - wx, born: s.born }));      // test hook
+function cuShotShape(s, now) {      // the pixels of a shot in the world, row by row (its picture changes every 80 ms, as drawn)
+  const sp = s.sp[Math.floor(now / 80) % s.sp.length], o = {}; if (sp) for (const r in sp) o[r] = [s.x + sp[r][0], s.x + sp[r][1] + 1]; return o;
+}
 const cuIdleCv = (who, now) => { const g = CU_GAME[+who.slice(2)]; return g ? g.frames[Math.floor(now / (1000 / IDLE_FPS)) % g.frames.length] : null; };
 const CU_HU_MS = 60, CU_KO_FPS = 12;      // one picture of the HURT lasts 60 ms; the KO plays at 12 a second and its last picture stays
 const CU_CR_MS = 70;      // one picture of the CROUCH lasts 70 ms (4 pictures = 0.28 s down, the same back up)
-const CU_REACH = 36;      // how far in front of its hips an IMPACT reaches (the punches of the others reach 23 to 34)
+const CU_REACH = 36;      // how far in front of its hips an IMPACT reaches when the enemy's body is not known (v1.85: otherwise the limb as drawn on the IMPACT's picture against his body as drawn, see cuMeasure)
 function cuHit(dmg, now, o, ax, rc, lo) {      // an IMPACT (or a shot) of a custom punch: the enemy takes exactly dmg when he is in front of the fighter (ax, default you), within arm's reach (rc) and can be touched (the rules of the others' punches: not the smiley form, not folded up, on the floor, flat or dodging; a blocker blocks it unless GUARD BREAK); o = what the blocks under it ask for (knock, stun, launch, gb, bleed [damage, seconds]); true when it landed
   o = o || {}; dmg = Math.max(1, Math.round(dmg * cuS.dm / 100));      // (the DAMAGE stat)
   if (!dummy || dummy.ko >= 0 || dummy.cap || now - dummy.born < 600 || vs.ph !== 'fight') return false;
   if (dummy.vform && dummy.vform !== 'verity') { say('IMMUNE', dummy.x, '#ffe9a0', 8, now); return false; }
   if ((dummy.vact && dummy.vact.type === 'crouch') || now < (dummy.down || 0) || (dummy.cact && dummy.cact.flat) || now < (dummy.dodgeUntil || 0)) { say('MISS', dummy.x, '#9fd8ff', 8, now); return false; }
-  const gap = dummy.x - (ax === undefined ? wx : ax); if (gap > (rc || CU_REACH) || gap < (lo === undefined ? -3 : lo)) return false;
+  const gap = dummy.x - (ax === undefined ? wx : ax); if (gap > (rc === undefined ? CU_REACH : rc) || gap < (lo === undefined ? -3 : lo)) return false;
   const blk = dBlocks() && gap > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
   if (blk && !o.gb) { dummy.counter = now; dummy.vx += 3; shakeUntil = now + 70; shakeAmp = 1; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); return false; }
   if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; } hits.n++; hits.dmg += dmg; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = 0; vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n);      // (the combo counter counts it)
@@ -589,14 +609,15 @@ function cuEv(e, now, g, k) {      // one event of the punch's timeline comes up
     if (c && !(s === e.id ? c === 1 : cuOk(c, s, res))) continue;      // (a change of the hit under IF HIT of its own IMPACT counts, under IF MISS never)
     if (t === 'k') o.knock = a; else if (t === 't') o.stun = a; else if (t === 'l') o.launch = a; else if (t === 'q') o.gb = true; else if (t === 'b') o.bleed = [a, b];
   }
-  if (e.k === 'o') { if (vf.length) cuShots.push({ x: wx + 12, v: e.sp, d: e.d, o, fx: e.fx, res, id: e.id, born: now, vf }); return; }      // (SHOOT: a shot leaves your body at the fist's height; it hits an enemy as close as he can stand; its blocks work when it hits)
-  const hit = cuHit(e.d, now, o); res[e.id] = hit;
+  if (e.k === 'o') { if (vf.length) cuShots.push({ x: wx + 12, v: e.sp, d: e.d, o, fx: e.fx, res, id: e.id, born: now, vf, sp: g.vxs[k] }); return; }      // (SHOOT: a shot leaves your body at the fist's height; it hits an enemy as close as he can stand; its blocks work when it hits)
+  const T = hbKey(dummy), B = hbBody(T); if (dummy) hbMark(vs.me, 0, wx, false, T, dummy.x, dummy.x - wx > -4, e.tip || {}); const hit = cuHit(e.d, now, o, undefined, e.tip && B ? hbGap(e.tip, B, 0) : undefined); res[e.id] = hit;      // (the limb of this IMPACT against the enemy's body: the rows they share decide how far it reaches)
   cuFx(e.fx.filter(x => cuMods.indexOf(x[0]) < 0 && cuOk(x[3], x[4], res)), now, hit, vf);
 }
 function cuShotStep(now, dt) {      // the shots fly on; the first time one touches the enemy it hurts him and is gone
   cuShots = cuShots.filter(s => {
     s.x += s.v * dt; if (now - s.born > 3000 || s.x - wx > VW) return false;
-    if (dummy && dummy.ko < 0 && Math.abs(dummy.x - s.x) <= 16) { const hit = cuHit(s.d, now, s.o, s.x, 16, -16); s.res[s.id] = hit; if (hit) cuFx(s.fx.filter(x => cuMods.indexOf(x[0]) < 0 && cuOk(x[3], x[4], s.res)), now, true, s.vf); return false; }
+    if (dummy && dummy.ko < 0 && hbTouchFoe(cuShotShape(s, now), dummy)) { const hit = cuHit(s.d, now, s.o, s.x, 1e9, -1e9);      // (its drawing against his body: the rows they share)
+       s.res[s.id] = hit; if (hit) cuFx(s.fx.filter(x => cuMods.indexOf(x[0]) < 0 && cuOk(x[3], x[4], s.res)), now, true, s.vf); return false; }
     return true;
   });
 }
