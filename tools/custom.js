@@ -51,7 +51,7 @@ function cuPaint(art) {      // the board (the part of it that is in view): chec
   if (cuBigOn) { g.fillStyle = '#171127'; g.fillRect(0, 0, V, V); g.drawImage(cuBigCv, cuPX, cuPY, w, w, 0, 0, V, V); }
   else {
     cuImg(art, cuOff);
-    for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) { g.fillStyle = ((x + cuPX + y + cuPY) & 1) ? '#1f1834' : '#171127'; g.fillRect(x * k, y * k, k, k); }
+    for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) { g.fillStyle = ((x + cuPX + y + cuPY) & 1) ? '#2e2750' : '#252042'; g.fillRect(x * k, y * k, k, k); }
     if (cuOnion && cuFr.length > 1) { cuImg(cuFr[(cuCur + cuFr.length - 1) % cuFr.length], cuOn); g.globalAlpha = 0.3; g.drawImage(cuOn, cuPX, cuPY, w, w, 0, 0, V, V); g.globalAlpha = 1; }
     g.drawImage(cuOff, cuPX, cuPY, w, w, 0, 0, V, V);
     if (cuGrid) for (let i = 0; i <= w; i++) { g.fillStyle = (cuPX + i) % 8 === 0 ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.10)'; g.fillRect(Math.min(i * k, V - 1), 0, 1, V); g.fillStyle = (cuPY + i) % 8 === 0 ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.10)'; g.fillRect(0, Math.min(i * k, V - 1), V, 1); }
@@ -59,6 +59,7 @@ function cuPaint(art) {      // the board (the part of it that is in view): chec
     if (cuSel) { g.strokeStyle = '#ffd34d'; g.setLineDash([4, 3]); g.lineWidth = 2; g.strokeRect((cuSel.x0 - cuPX) * k, (cuSel.y0 - cuPY) * k, (cuSel.x1 - cuSel.x0 + 1) * k, (cuSel.y1 - cuSel.y0 + 1) * k); g.setLineDash([]); }
     if (cuShapeStart) { g.strokeStyle = '#ffd34d'; g.lineWidth = 2; g.strokeRect((cuShapeStart[0] - cuPX) * k + 1, (cuShapeStart[1] - cuPY) * k + 1, k - 2, k - 2); }
   }
+  { const fy = ((cuBigOn ? 122 : 61) - cuPY) * k; if (fy >= 0 && fy < V) { g.fillStyle = 'rgba(224,36,47,0.14)'; g.fillRect(0, fy, V, V - fy); g.fillStyle = '#ffd34d'; for (let x = 0; x < V; x += 8) g.fillRect(x, Math.max(0, fy - 1), 5, 2); } }      // THE FLOOR: the game puts the bottom of row 60 on the ground, so the feet of every frame should end on this gold line (below it is under the floor)
   const cc = cuCursor || (cuPad && cuTouchSeen && !cuBigOn ? [Math.floor(cuC[0]), Math.floor(cuC[1])] : null);
   if (cc) { const cx = (cc[0] - cuPX + 0.5) * k, cy = (cc[1] - cuPY + 0.5) * k; g.fillStyle = '#ffd34d'; g.fillRect(cx - 9, cy - 1, 6, 2); g.fillRect(cx + 4, cy - 1, 6, 2); g.fillRect(cx - 1, cy - 9, 2, 6); g.fillRect(cx - 1, cy + 4, 2, 6); }
   const mm = $('cdMini'); if (cuZoom > 1) { mm.style.display = 'block'; const m = mm.getContext('2d'), sc = 64 / n; m.imageSmoothingEnabled = false; m.fillStyle = '#0b0a0f'; m.fillRect(0, 0, 64, 64); m.drawImage(cuBigOn ? cuBigCv : cuOff, 0, 0, 64, 64); m.strokeStyle = '#e0242f'; m.lineWidth = 2; m.strokeRect(cuPX * sc + 1, cuPY * sc + 1, w * sc - 2, w * sc - 2); } else mm.style.display = 'none';
@@ -174,9 +175,9 @@ function cuUp(e) {
 
 // ---- v1.70 ANIMATION TEMPLATES: 5 characters, each with 4 IDLE frames and 5 WALKING frames (20 and 25 frames in all), drawn by code in the colours of the palette; ANIM TEMPLATE loads the next one into the set you are drawing
 const CU_TPLS = [      // name, skin, hair, top, bottom, shoes, accent, hair style
-  ['SORCERER', '#f1cfb8', '#f4f2f8', '#2b2842', '#1a1426', '#0d0a14', '#3b8cff', 'spiky'],
+  ['SORCERER', '#f1cfb8', '#f4f2f8', '#3a3a5e', '#34304c', '#1a1426', '#3b8cff', 'spiky'],
   ['FIGHTER', '#f1cfb8', '#e8788a', '#1f2f6a', '#16204a', '#7a1f1f', '#d93a2f', 'short'],
-  ['HOODED', '#e2a98a', '#4a2a6a', '#4a2a6a', '#2c1840', '#150c20', '#ff3a4a', 'hood'],
+  ['HOODED', '#e2a98a', '#5a3a80', '#5a3a80', '#3a2358', '#1a1426', '#ff3a4a', 'hood'],
   ['KNIGHT', '#f1cfb8', '#8a8aa6', '#7a7a96', '#55556e', '#34344a', '#e8b030', 'helmet'],
   ['ONI', '#c8403a', '#f4f2f8', '#c8403a', '#1a1426', '#1a1426', '#e8b030', 'horns']];
 function cuTplFrame(st, kind, i) {      // one frame (a Uint8Array of 4096 colour numbers) of template st; kind 'idle' (4 frames: it breathes) or 'walk' (5 frames: a full step, the arms swing the other way)
@@ -185,11 +186,11 @@ function cuTplFrame(st, kind, i) {      // one frame (a Uint8Array of 4096 colou
   const th = (x0, y0, x1, y1, w, v) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1); for (let k = 0; k <= n; k++) rc(Math.round(x0 + (x1 - x0) * k / n), Math.round(y0 + (y1 - y0) * k / n), Math.round(x0 + (x1 - x0) * k / n) + w - 1, Math.round(y0 + (y1 - y0) * k / n) + w - 1, v); };
   const ph = kind === 'walk' ? i / 5 * 6.2832 : 0, bob = kind === 'walk' ? -Math.round(Math.abs(Math.sin(ph)) * 2) : [0, 0, 1, 1][i % 4], sw = kind === 'walk' ? Math.round(Math.sin(ph) * 6) : 0, as = kind === 'walk' ? -Math.round(Math.sin(ph) * 5) : [0, 1, 1, 0][i % 4], y0 = bob;
   const dim = v => v;      // (one colour for the far side: the same, the outline separates it)
-  th(30, 41, 30 - sw - (kind === 'idle' ? 1 : 0), 57, 4, dim(bt)); rc(30 - sw - 1 - (kind === 'idle' ? 1 : 0), 57, 33 - sw - (kind === 'idle' ? 1 : 0), 59, sh);      // far leg and shoe
+  th(30, 41, 30 - sw - (kind === 'idle' ? 1 : 0), 56, 4, dim(bt)); rc(30 - sw - 1 - (kind === 'idle' ? 1 : 0), 56, 33 - sw - (kind === 'idle' ? 1 : 0), 58, sh);      // far leg and shoe
   th(29, 22 + y0, 29 - as, 36 + y0, 3, dim(tp)); rc(28 - as, 36 + y0, 31 - as, 38 + y0, sk);      // far arm and hand
   rc(27, 21 + y0, 37, 37 + y0, tp); rc(27, 38 + y0, 37, 43 + y0, bt); rc(27, 33 + y0, 37, 34 + y0, ac);      // body, hips and a belt
   if (T[0] === 'KNIGHT') { rc(26, 21 + y0, 38, 25 + y0, ac); rc(29, 26 + y0, 35, 30 + y0, T[0] === 'KNIGHT' ? hr : tp); } else rc(32, 21 + y0, 35, 24 + y0, ac);      // shoulders / collar
-  th(34, 41, 34 + sw + (kind === 'idle' ? 1 : 0), 57, 4, bt); rc(34 + sw + (kind === 'idle' ? 1 : 0), 57, 38 + sw + (kind === 'idle' ? 1 : 0), 59, sh);      // near leg and shoe
+  th(34, 41, 34 + sw + (kind === 'idle' ? 1 : 0), 56, 4, bt); rc(34 + sw + (kind === 'idle' ? 1 : 0), 56, 38 + sw + (kind === 'idle' ? 1 : 0), 58, sh);      // (the feet and their outline end on row 60: the floor line)      // near leg and shoe
   th(34, 22 + y0, 34 + as, 36 + y0, 3, tp); rc(33 + as, 36 + y0, 36 + as, 38 + y0, sk);      // near arm and hand
   rc(28, 8 + y0, 38, 19 + y0, sk); px(39, 14 + y0, sk); px(39, 15 + y0, sk); rc(34, 12 + y0, 35, 13 + y0, dk); px(36, 17 + y0, dk);      // head, nose, eye, mouth
   if (hs === 'spiky') { rc(27, 5 + y0, 38, 10 + y0, hr); for (const [x, y] of [[27, 3], [30, 1], [33, 0], [36, 2], [38, 4], [25, 6]]) rc(x, y + y0, x + 2, y + 3 + y0, hr); rc(34, 11 + y0, 38, 12 + y0, dk); }      // white spiky hair and a blindfold
@@ -311,7 +312,7 @@ function customBack() {      // the Android back button inside CUSTOM: the drawi
   for (const [id, lab] of CU_TOOLS) { const b = document.createElement('button'); b.textContent = lab; b.dataset.tool = id; b.addEventListener('click', () => { cuTool = id; cuShapeStart = null; cuSync(); cuPaint(); }); t.appendChild(b); }
   for (const [id, lab] of CU_ACTS) { const b = document.createElement('button'); b.textContent = lab; b.dataset.act = id; if (id === 'delfr' || id === 'templ' || id === 'atpl') b.style.gridColumn = '1 / 3'; b.addEventListener('click', () => cuAct(id, b)); t.appendChild(b); }
   for (let i = 0; i < 15; i++) { const b = document.createElement('button'); b.innerHTML = '<canvas width="64" height="64"></canvas><span></span>'; b.setAttribute('aria-label', 'frame ' + (i + 1)); b.addEventListener('click', () => { if (i < cuFr.length) cuSelect(i); else cuAddFrame(); }); $('cdFr').appendChild(b); }
-  setInterval(() => { if (state === 'custdraw') cuImg(cuFr[Math.floor(performance.now() / (1000 / IDLE_FPS)) % cuFr.length], $('cdPrev')); }, 1000 / IDLE_FPS);      // (the real-size preview plays the frames over and over, as they will play in the game)
+  setInterval(() => { if (state === 'custdraw') { const pv = $('cdPrev'); cuImg(cuFr[Math.floor(performance.now() / (1000 / IDLE_FPS)) % cuFr.length], pv); const g = pv.getContext('2d'); g.fillStyle = '#ffd34d'; for (let x = 0; x < 64; x += 4) g.fillRect(x, 61, 2, 1); } }, 1000 / IDLE_FPS);      // (the real-size preview plays the frames over and over, as they will play in the game)
   CU_PAL.forEach((c, i) => { const b = document.createElement('button'); b.style.background = c; b.dataset.i = i; b.setAttribute('aria-label', 'colour ' + (i + 1)); b.addEventListener('click', () => cuSetColor(i)); pal.appendChild(b); });
   const cv = $('cdCv'); cv.addEventListener('pointerdown', cuDown); cv.addEventListener('pointermove', cuMove); cv.addEventListener('pointerup', cuUp); cv.addEventListener('pointercancel', cuUp); cv.addEventListener('lostpointercapture', e => { if (cuPtrs.has(e.pointerId)) cuUp(e); });
   $('customMode').addEventListener('click', () => { audio(); renderCust(); show('cust'); });
@@ -362,7 +363,7 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
   wx += dir * 70 * dt; cuPh = dir ? cuPh + dir * dt * 12 : 0; playerSlide(dt); physCollide(now, dt);
   ctx.save(); shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }
   ctx.imageSmoothingEnabled = false; drawBackdrop(now); drawSmoke(now, dt); drawBloodFloor(now, dt); drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
-  const src = !g ? null : dir ? g.walk[((Math.floor(cuPh) % g.walk.length) + g.walk.length) % g.walk.length] : g.frames[Math.floor(el / (1000 / IDLE_FPS)) % g.frames.length], x = cx - 32, y = gy - 64, ry = Math.round(64 * (1 - e));
+  const src = !g ? null : dir ? g.walk[((Math.floor(cuPh) % g.walk.length) + g.walk.length) % g.walk.length] : g.frames[Math.floor(el / (1000 / IDLE_FPS)) % g.frames.length], x = cx - 32, y = gy - 61, ry = Math.round(64 * (1 - e));
   ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(cx - 9, gy + 3, 18, 2); ctx.fillRect(cx - 6, gy + 2, 12, 1); ctx.fillRect(cx - 6, gy + 5, 12, 1);
   if (src) { ctx.save(); ctx.beginPath(); ctx.rect(x, y + ry, 64, 64 - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, x, y); if (hurtAt >= 0 && now - hurtAt < 70) ctx.drawImage(whiteOf(src), x, y); ctx.restore(); }
   drawGiantNow('foe');
