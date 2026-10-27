@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Hitboxes, measured from the pictures themselves.
-For every move of Gojo, Yuji, Verity, the Cat and Freddy (the hit numbers of the game: 0-1 are also Freddy's two M1 slashes (v1.45: the claw's blades, and the bare hand with the glove held low in front), 0-3 the M1 combo, 6-7 the crouch punches / Verity's claws, 14-21 Gojo's walking and red combos, 22 Verity's bite, 24-29 Yuji's M1, 36-37 his DIVERGENT FIST, 44-45 his RUSH FIST (the super fast DIVERGENT FIST on the run), 46-47 his crouched CONCENTRATED FIST: the UPPERCUT and the FACE KICK (measured against a body 30 px up), 38-43 his cursed energy mode moves: R.KICK, ELBOW, DOWNSLAM, PUSH KICK, CONCENTRATED FIST and the SWEEP) and for every body it can land on, this finds how far apart the two characters' anchors (the middle of the hips) can be while the limb the attacker has stretched out at the moment of impact (the two frames from the impact frame on) still overlaps the drawn body of the target. Both are compared ROW BY ROW, because a fist at chest height, a hanging arm and a foot all stop at different distances. Glow effects (Gojo's blue sparks) are not part of a limb. The target is its standing picture (the widest its idle animation gets in each row).
+For every move of Gojo, Yuji, Verity, the Cat and Freddy (the hit numbers of the game: 6 is also Freddy's CROUCH RAKE (v1.86), 0-1 are also Freddy's two M1 slashes (v1.45: the claw's blades, and the bare hand with the glove held low in front), 0-3 the M1 combo, 6-7 the crouch punches / Verity's claws, 14-21 Gojo's walking and red combos, 22 Verity's bite, 24-29 Yuji's M1, 36-37 his DIVERGENT FIST, 44-45 his RUSH FIST (the super fast DIVERGENT FIST on the run), 46-47 his crouched CONCENTRATED FIST: the UPPERCUT and the FACE KICK (measured against a body 30 px up), 38-43 his cursed energy mode moves: R.KICK, ELBOW, DOWNSLAM, PUSH KICK, CONCENTRATED FIST and the SWEEP) and for every body it can land on, this finds how far apart the two characters' anchors (the middle of the hips) can be while the limb the attacker has stretched out at the moment of impact (the two frames from the impact frame on) still overlaps the drawn body of the target. Both are compared ROW BY ROW, because a fist at chest height, a hanging arm and a foot all stop at different distances. Glow effects (Gojo's blue sparks) are not part of a limb. The target is its standing picture (the widest its idle animation gets in each row).
 Writes hitboxes.json: {attacker: {hit number: {target: the gap in px}}}; the game (HIT in tools/template.html) lands a hit when the gap is at most that.
-v1.85: it also writes the ROWS the gaps come from, under the keys _tip ({attacker: {hit number: {row: how far in front of the hips the limb reaches}}}: the same limbs, plus Freddy and the ten curses, whose blows are hit numbers 49-78 in the order of the CDEF table, a double blow also has 'Nb' for its second blow) and _body ({who: {row: [farthest pixel behind the hips, farthest in front]}}: gojo, yuji, verity, cat, freddy and 'c:<curse>'). The game measures every pair that is not in the table (a custom fighter, Freddy as a target, a curse) from these rows the same way, and checks the old table against them.
+v1.85: it also writes the ROWS the gaps come from, under the keys _tip ({attacker: {hit number: {row: how far in front of the hips the limb reaches}}}: the same limbs, plus Freddy and the ten curses, whose blows are hit numbers 49-78 in the order of the CDEF table, a double blow also has 'Nb' for its second blow) and _body ({who: {row: [farthest pixel behind the hips, farthest in front]}}: gojo, yuji, verity, cat, freddy, 'freddy:c' (Freddy crouched) and 'c:<curse>'). The game measures every pair that is not in the table (a custom fighter, Freddy as a target, a curse) from these rows the same way, and checks the old table against them.
 Run from the tools folder, after the art and tools/template.html are final:  python3 -B hitbox_art.py"""
 import base64, io, json, os, re
 from PIL import Image
@@ -37,11 +37,11 @@ def img_rows(im, fi):                                                           
         xs = [x for x in range(64) if c[x, y][3]]
         if xs: out[y] = max(xs) - 32
     return out
-def fred_rows(row, fi):                                                                           # a picture of Freddy's sheet: how far in front of his hips (column 31) the farthest pixel of every row is; his picture sits one row higher on the screen than Verity's, and the white arc of the slash above the hand is a trail, not a limb (from row 20 down)
+def fred_rows(row, fi, a=31):                                                                           # a picture of Freddy's sheet: how far in front of his hips (column 31) the farthest pixel of every row is; his picture sits one row higher on the screen than Verity's, and the white arc of the slash above the hand is a trail, not a limb (from row 20 down)
     c = FRED.crop((fi * 64, row * 64, fi * 64 + 64, row * 64 + 64)).load(); out = {}
     for y in range(20, 64):
         xs = [x for x in range(64) if c[x, y][3]]
-        if xs: out[y - 1] = max(xs) - 31
+        if xs: out[y - 1] = max(xs) - a
     return out
 def widest(rows):                                                                                 # several frames -> the farthest each row ever gets
     out = {}
@@ -55,8 +55,8 @@ def grid_span(S, fi, skip=''):                                                  
         xs = [x for x, c in enumerate(row) if c != '.' and c not in skip]
         if xs: out[r - S['top'] - lf] = [min(xs) - a, max(xs) - a]
     return out
-def img_span(im, fi, W=64, ax=32, y0=0, h=64, key=lambda y: y):                                   # the same for a cell of a picture strip (W wide, anchor on column ax, rows y0 to y0 + h of the cell)
-    c = im.crop((fi * W, 0, fi * W + W, 64)).load(); out = {}
+def img_span(im, fi, W=64, ax=32, y0=0, h=64, key=lambda y: y, row=0):                                   # the same for a cell of a picture strip (W wide, anchor on column ax, rows y0 to y0 + h of the cell)
+    c = im.crop((fi * W, row * 64, fi * W + W, row * 64 + 64)).load(); out = {}
     for y in range(y0, y0 + h):
         xs = [x for x in range(W) if c[x, y][3]]
         if xs: out[key(y)] = [min(xs) - ax, max(xs) - ax]
@@ -78,6 +78,7 @@ MOVES = {'gojo': {k: (lambda f, S=GOJO['atk%d' % k]: grid_rows(S, f, FX), IMPACT
          'verity': {k: (lambda f, im=strip(n): img_rows(im, f), IMPACT[k], 15) for k, n in ((0, 'm0'), (1, 'm1'), (2, 'm2'), (3, 'm3'), (6, 'c0'), (7, 'c1'), (22, 'bite'))},
          'cat': {k: (lambda f, im=cat_strip(n), W=W, a=a: cat_rows(im, f, W, a), imp, 15) for k, n, W, a, imp in ((30, 'm0', 128, 36, 6), (31, 'm1', 128, 36, 7), (32, 'm0', 128, 36, 6), (33, 'm3', 128, 36, 8), (34, 'flatpunch', 64, 32, 6))}}      # (hits 30-34: the stretching grab, the punch, the grab again, the kick, the punch up from the floor)
 MOVES['freddy'] = {k: (lambda f, r=8 + k: fred_rows(r, f), IMPACT[k], 15) for k in (0, 1)}
+MOVES['freddy'][6] = (lambda f: fred_rows(12, f, 23), IMPACT[6], 15)      # (v1.86 the CROUCH RAKE, row 13 of the sheet: it is drawn 8 px to the left in its picture, so his hips are on column 23 there and the game draws it 8 px to the right)
 MOVES['yuji'][6] = (lambda f, S=YUJI['atk30']: grid_rows(S, f), 6, 15); MOVES['yuji'][7] = (lambda f, S=YUJI['atk31']: grid_rows(S, f), 7, 15)      # (v1.48 his crouch punches: the R.JAB, impact on picture 6, and the L.UPPR, picture 7)
 out = {}; TIP = {}
 for att, moves in MOVES.items():
@@ -97,6 +98,7 @@ SPAN = {'gojo': widest_span(grid_span(GOJO['idle'], f, FX) for f in range(len(GO
         'verity': widest_span(img_span(strip('idle'), f) for f in range(15)),
         'cat': widest_span(img_span(cat_strip('idle'), f) for f in range(15)),
         'freddy': widest_span(img_span(FRED, f, 64, 31, 0, 64, lambda y: y - 1) for f in range(15))}      # (Freddy's pictures sit one row higher: his whole idle body, the hat and the head too)
+SPAN['freddy:c'] = widest_span([img_span(FRED, 14, 64, 31, 0, 64, lambda y: y - 1, 5)] + [img_span(FRED, f, 64, 31, 0, 64, lambda y: y - 1, 11) for f in range(15)])      # (v1.86 crouched: the last picture of going down is the crouch itself, plus the 15 pictures of the crouch walk)
 for w in BODY: assert {r: v[1] for r, v in SPAN[w].items()} == BODY[w], w
 CUR = json.load(open(P('curses.json')))
 def curse_span(c, anim, fi):                                                                      # a picture of a curse (a letter grid facing right, drawn with its row g on the floor line): the rows keyed like everyone's (feet at 62)
