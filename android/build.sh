@@ -15,7 +15,7 @@ printf '%s\n' "This APK file is owned by Lahav. All rights reserved." > assets/O
 
 "$BT/aapt2" compile --dir res -o "$OUT/res.zip"
 "$BT/aapt2" link -o "$OUT/base.apk" -I "$AJ" --manifest AndroidManifest.xml -A assets \
-    --min-sdk-version 21 --target-sdk-version 34 --version-code 157 --version-name 1.82 "$OUT/res.zip"
+    --min-sdk-version 21 --target-sdk-version 34 --version-code 158 --version-name 1.83 "$OUT/res.zip"
 "$JAVAC" --release 8 -Xlint:-options -classpath "$AJ" -d "$OUT/classes" $(find src -name '*.java')
 # build-tools 34 ships an old d8 that crashes on JDK 21 class files, so use a current stable R8/d8 from Google Maven
 R8="$SDK/r8-8.13.25.jar"

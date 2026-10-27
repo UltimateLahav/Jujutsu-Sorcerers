@@ -181,7 +181,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.82</small>
+    <small id="ver">V1.83</small>
   </div>
 </section>
 
@@ -8917,20 +8917,29 @@ let fredJC = false, fredLC = false, fredTD = -1, fredLandC = false, fredCrQ = -1
 // THE WALK (v1.40): an elegant glide. The cycle (15 frames = two steps) is driven by the GROUND he covers, one step per 15 px, so a foot on the ground never slides (the picture's foot moves back exactly as fast as he moves forward); he walks forward at 44 px/s and back at 32 (the cycle plays the other way round); when he stops, the step in progress is finished slowly up to the passing pose (the feet together) and he stands again; a blow, the Cat's hold or the enemy's body stops him.
 const FRED_FWD = 44, FRED_BACK = 32, FRED_STEP = 15, FRED_PASS = 4.65;      // px/s forward, px/s back, px of one step, the frame of the passing pose (the other one is 7.5 frames on)
 let fredPh = 0, fredWalk = false, fredDir = 1, fredStep = -1, fredTg = 0;      // where he is in the cycle (0-15), whether the walk is showing, the way he went last, which footfall was the last
-let fredGrabAt = -1e9, fredGrabY = 24, fredBlkExt = 0; const fredNC = new Map();
+let fredGrabAt = -1e9, fredGrabY = 24, fredBlkExt = 0, fredHx = 24, fredHy = -2; const fredNC = new Map();
 function fredNoClaw(c) { let o = fredNC.get(c); if (!o) { o = document.createElement('canvas'); o.width = c.width; o.height = c.height; const g = o.getContext('2d'); g.drawImage(c, 0, 0); g.clearRect(39, 8, 12, 13); fredNC.set(c, o); } return o; }      // (his idle picture without the claw he holds at the chest: the arm that goes out is drawn on top)
 function fredGrab(k, now) {      // Freddy's BLOCK: a blow that would hit him is caught in the air where it was going to land (low for a kick, high for an uppercut, the chest for the rest): no damage, no push, and the enemy is held for 0.75 s
-  fredGrabAt = now; fredGrabY = isKick(vs ? vs.foe : 'gojo', k) ? 44 : k === 46 ? 12 : 24; const d = dummy;
+  fredGrabAt = now; fredGrabY = isKick(vs ? vs.foe : 'gojo', k) ? 40 : k === 46 ? 12 : 24; const d = dummy;
   say('GRABBED!', wx + 16, '#ffd34d', 8, now); snd('block'); snd('stun'); shakeUntil = now + 90; shakeAmp = 1; spark(wx + 26, gy - 61 + fredGrabY, 10, ['#ffffff', '#d8dce8', '#ffd34d'], false, 1);
   if (d && d.ko < 0 && !d.cap) { d.stunUntil = Math.max(d.stunUntil, now + 750); d.vx = 0; if (d.mode === 'fighter' && !d.cact && !d.vact && !d.net) { d.ai = 'rest'; d.aiAt = now; d.restFor = 750; d.chain = 0; d.hitDone = true; } }
 }
-function fredArm(x, y, cx, now) {      // the claw arm drawn over his picture: from the chest it goes out in front (guard), and when it has caught a blow it is there, at the enemy's fist, until he is let go
-  const sx = x + 37, sy = y + 21, grab = now - fredGrabAt < 700, ext = grab ? 1 : fredBlkExt; let hx = sx + 24 * ext, hy = sy - 2 * ext;
-  if (grab) { hx = cx + Math.max(12, Math.min(34, (dummy ? dummy.x - wx : 20) - 6)); hy = y + fredGrabY; }
-  const n = Math.max(1, Math.round(Math.hypot(hx - sx, hy - sy)));
-  for (let i = 0; i <= n; i++) { const px = Math.round(sx + (hx - sx) * i / n), py = Math.round(sy + (hy - sy) * i / n); ctx.fillStyle = '#000'; ctx.fillRect(px - 1, py - 2, 4, 4); ctx.fillStyle = i % 5 < 3 ? '#a82f3b' : '#2a6b3a'; ctx.fillRect(px, py - 1, 3, 3); }      // (the sleeve: red with green stripes)
-  ctx.fillStyle = '#000'; ctx.fillRect(Math.round(hx) - 1, Math.round(hy) - 3, 6, 6); ctx.fillStyle = '#6b4a2e'; ctx.fillRect(Math.round(hx), Math.round(hy) - 2, 4, 4);      // the glove
-  ctx.fillStyle = '#e4e8f2'; for (let i = 0; i < 4; i++) { const by = Math.round(hy) - 3 + i * 2; ctx.fillRect(Math.round(hx) + 4, by, grab ? 3 : 7, 1); }      // the four blades (short when the hand is closed on a blow)
+const FRED_HOV = [[0, 0], [2, -1], [3, 0], [2, 1], [0, 0]];      // the 5 pictures of the hand held out: it drifts round in a small circle while the blades open and close (fredClaw)
+function fredClaw(hx, hy, k, grip) {      // the claw glove with its centre at (hx, hy): open (the blades fan wider and narrower over the 5 pictures) or closed on a blow
+  const P = (c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(hx + x, hy + y, w, h); };
+  P('#14101a', -1, -3, 7, 7); P('#7a4e2c', 0, -2, 5, 5); P('#a8703f', 0, -2, 5, 1); P('#4a2f1a', 0, 2, 5, 1); P('#c58a52', 1, -1, 1, 1); P('#c58a52', 3, -1, 1, 1);      // the glove: dark outline, brown, a light top and a dark bottom, two knuckles
+  if (grip) { for (let j = 0; j < 4; j++) { P('#e9edf6', 5, -3 + j * 2, 2, 1); P('#9aa3b8', 6, -2 + j * 2, 1, 1); } P('#ffffff', 6, -3, 1, 1); }      // closed: the four blades hook over what it holds
+  else { const sp = [3, 4, 5, 4, 3][k], len = [7, 8, 8, 7, 6][k]; for (let j = 0; j < 4; j++) { const oy = Math.round(-sp + j * (2 * sp) / 3), sl = (j - 1.5) * 0.18; for (let i = 0; i < len; i++) P(j === 3 ? '#9aa3b8' : '#e9edf6', 5 + i, oy + Math.round(sl * i), 1, 1); P('#ffffff', 4 + len, oy + Math.round(sl * (len - 1)), 1, 1); } }      // open: four blades that fan out, the last one in shade, a white tip
+}
+function fredArm(x, y, now) {      // the claw arm drawn over his picture: a red sleeve with green stripes from the chest to the hand, which hovers in front of him (5 pictures), moves round to where the enemy's fist or foot is going and closes on it
+  const sx = x + 37, sy = y + 21, grab = now - fredGrabAt < 700, ext = grab ? 1 : fredBlkExt, hx = Math.round(sx + fredHx * ext), hy = Math.round(sy + fredHy * ext), n = Math.max(1, Math.round(Math.hypot(hx - sx, hy - sy)));
+  const at = i => [Math.round(sx + (hx - sx) * i / n), Math.round(sy + (hy - sy) * i / n)];
+  for (let i = 0; i <= n; i++) { const [px, py] = at(i); ctx.fillStyle = '#14101a'; ctx.fillRect(px - 1, py - 3, 5, 6); }      // (the dark outline of the whole sleeve first, so no step paints over the colours of the one before)
+  for (let i = 0; i <= n; i++) {
+    const [px, py] = at(i), st = Math.floor(i / 3) % 2; ctx.fillStyle = st ? '#2f7a43' : '#b3303d'; ctx.fillRect(px, py - 2, 3, 4);
+    ctx.fillStyle = st ? '#55a868' : '#d6505c'; ctx.fillRect(px, py - 2, 3, 1); ctx.fillStyle = st ? '#1f5430' : '#7a1f2b'; ctx.fillRect(px, py + 1, 3, 1);
+  }
+  fredClaw(hx, hy, Math.floor(now / 100) % 5, grab);
 }
 function freddyScene(now, dt) {      // one frame of a match with FREDDY as the player: he walks, crouches, jumps, slashes and dashes (M1 and DASH: no block or BLUE yet), then the picture (the enemy, the HUD and the effects are the shared ones)
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3), cx = Math.round(VW / 2); setDomUI(now);
@@ -8973,6 +8982,10 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   const free = can && jumpAt < 0 && af < 0 && df < 0;
   if (blockHeld && free && stance === 'stand' && fredSf < 0 && fredCrQ < 0) { if (blkAt < 0) { blkAt = now; blkEnd = -1; fredWalk = false; } } else { blkAt = blkEnd = -1; }      // (BLOCK: hold the button on the ground; the claw hand goes out in front of him, 0.08 s later the guard is up: a blow that would hit him is caught; nothing else starts meanwhile)
   fredBlkExt += ((blkAt >= 0 ? 1 : 0) - fredBlkExt) * Math.min(1, dt * 14);      // (how far the hand is out, 0-1)
+  { const d = dummy, gr = now - fredGrabAt < 700, hv = FRED_HOV[Math.floor(now / 100) % 5]; let tx = 24 + hv[0], ty = -2 + hv[1];      // (where the hand wants to be, from the shoulder: hovering in front of him; when the enemy swings at him it goes round to the fist or the foot, a grab holds it there)
+    if (gr) { tx = Math.max(12, Math.min(34, (d ? d.x - wx : 20) - 6)) - 6; ty = fredGrabY - 21; }
+    else if (blkAt >= 0 && d && d.ko < 0 && d.ai === 'attack' && d.k >= 0 && d.x > wx && d.x - wx < 70) { tx = Math.max(12, Math.min(34, d.x - wx - 6)) - 6; ty = (isKick(vs ? vs.foe : 'gojo', d.k) ? 40 : d.k === 46 ? 12 : 24) - 21; }
+    fredHx += (tx - fredHx) * Math.min(1, dt * 20); fredHy += (ty - fredHy) * Math.min(1, dt * 20); }
   // he is on the ground and nothing holds him, swings or dashes
   if (fredCrQ >= 0) { if (!can || stance !== 'stand' || now - fredCrQ > 700) fredCrQ = -1; else if (free && !fredWalk) { stance = 'down'; stAt = now; fredSf = 0; fredCrQ = -1; } }      // (a crouch asked for while he walks waits for the step to finish: he stops first)
   if (free && stickDown && stance === 'stand' && !fredWalk) { stance = 'down'; stAt = now; fredSf = 0; stickCr = true; }      // (the stick held down crouches him for as long as it is held)
@@ -9022,7 +9035,7 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   ctx.save();
   if (vap) { /* gone */ } else if (gko >= 0) { const rgh = ragXf(vs.rag, gko, cx, gy + 2, -1); if (!rgh) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); } ctx.drawImage(fredF(0), -info.cx, -62 + rgh); }
   else { ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, x, y); if (hf >= 0 && now - hurtAt < 70) ctx.drawImage(whiteOf(src), x, y); }
-  ctx.restore(); drawGiantNow('foe'); if (armOn && t >= 1 && !vap && gko < 0) fredArm(x, y, cx, now);
+  ctx.restore(); drawGiantNow('foe'); if (armOn && t >= 1 && !vap && gko < 0) fredArm(x, y, now);
   if (t < 1) {      // spawn ring + flash
     const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,225,110,' + (1 - t) + ')';
     for (let a = 0; a < 64; a++) { const th = a / 64 * 6.2832; ctx.fillRect(Math.round(cx + Math.cos(th) * R), Math.round(y + 34 + Math.sin(th) * R * 0.45), 1, 1); }
