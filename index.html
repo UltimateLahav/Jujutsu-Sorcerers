@@ -130,7 +130,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #cdLeft{display:flex;flex-direction:column;align-items:center;gap:1.2vh;width:33vh}#cdTools{display:grid;grid-template-columns:1fr 1fr;gap:.8vh;width:100%;max-height:62vh;overflow-y:auto;touch-action:pan-y}
 #cdTools button,#cdSide button{padding:1vh .3vh;font-size:clamp(5px,1.6vh,9px);box-shadow:2px 2px 0 #000;border-width:2px}
 #cdTools button.sel{border-color:var(--acc);background:#2a1f4a;color:#ffd34d}
-#cdBoard{line-height:0}#cdCv{display:block;image-rendering:pixelated;border:3px solid var(--line);background:#120d22;touch-action:none;cursor:crosshair}
+#cdBoard{line-height:0;position:relative}#cdMini{position:absolute;right:6px;bottom:6px;width:11vh;height:11vh;image-rendering:pixelated;border:2px solid #d9d3c4;display:none;pointer-events:none;opacity:.9}#cdCv{display:block;image-rendering:pixelated;border:3px solid var(--line);background:#120d22;touch-action:none;cursor:crosshair}
 #cdSide{display:flex;flex-direction:column;align-items:center;gap:1vh;width:38vh}#cdName{font-size:clamp(7px,2.2vh,12px);color:#ffd34d;font-weight:normal;word-break:break-all}
 #cdPal{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;width:100%}#cdPal button{padding:0;height:3.6vh;min-width:0;border:2px solid #000;box-shadow:none}#cdPal button.sel{outline:2px solid #fff;outline-offset:-1px;z-index:1}
 #cdPv{display:flex;flex-direction:column;align-items:center;gap:.6vh;text-align:center}#cdFr{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;width:100%}#cdFr button{padding:0;height:5.4vh;min-width:0;border:2px solid var(--line);box-shadow:none;background:#120d22;font-size:clamp(8px,2.8vh,16px);color:#ffd34d;line-height:1;display:flex;align-items:center;justify-content:center}#cdFr canvas{width:100%;height:100%;image-rendering:pixelated}#cdFr button.sel{border-color:#ffd34d;background:#2a1f4a}#cdFr button.add{border-style:dashed}#cdFrInfo{font-size:clamp(6px,1.8vh,9px)}#cdPrev{width:64px;height:64px;image-rendering:pixelated;background:#120d22;border:2px solid var(--line)}
@@ -171,7 +171,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.68</small>
+    <small id="ver">V1.69</small>
   </div>
 </section>
 
@@ -282,7 +282,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
 <section id="custDraw" class="screen">
   <div id="cdMain">
     <div id="cdLeft"><div id="cdTools"></div><div id="cdPv"><canvas id="cdPrev" width="64" height="64"></canvas><small>IDLE PREVIEW</small></div></div>
-    <div id="cdBoard"><canvas id="cdCv" width="256" height="256" aria-label="Drawing board, 64 by 64 pixels"></canvas></div>
+    <div id="cdBoard"><canvas id="cdCv" width="256" height="256" aria-label="Drawing board, 64 by 64 pixels"></canvas><canvas id="cdMini" width="64" height="64"></canvas></div>
     <div id="cdSide">
       <b id="cdName"></b>
       <div id="cdPal"></div>
@@ -6636,33 +6636,42 @@ function cuThumb(cv, d) { cv.getContext('2d').clearRect(0, 0, 64, 64); if (d) cu
 // ---- the editor
 let cuChar = null, cuSetKey = 'idle', cuSlot = -1, cuNameV = '', cuFr = [new Uint8Array(4096)], cuCur = 0, cuArt = cuFr[0], cuTool = 'pen', cuColor = 1, cuMirror = false, cuGrid = true, cuUndo = [], cuRedo = [], cuDirty = false, cuCell = 4, cuSt = null, cuArmed = '', cuArmT = 0;
 let cuZoom = 1, cuPX = 0, cuPY = 0, cuOffset = true, cuOnion = false, cuBig = false, cuSel = null, cuCopy = false, cuCursor = null, cuTpl = 0, cuPtrs = new Map(), cuPinch = null, cuIgnore = false;
+let cuPad = true, cuStable = false, cuPerfect = true, cuC = [32, 32], cuTouchSeen = false, cuTap = null, cuLastTap = 0, cuLastTapPos = [0, 0], cuShapeStart = null, cuAutoDone = false, cuBigOn = false, cuBigSt = null, cuBigUndo = [], cuPath = null, cuLazy = null;
+const cuBigCv = document.createElement('canvas'); cuBigCv.width = cuBigCv.height = 128; const cuN = () => cuBigOn ? 128 : 64, cuKk = () => cuCell * 64 / cuN() * cuZoom;
 const cuOff = document.createElement('canvas'); cuOff.width = cuOff.height = 64; const cuOn = document.createElement('canvas'); cuOn.width = cuOn.height = 64;
 const CU_TOOLS = [['pen', 'PEN'], ['era', 'ERASE'], ['fill', 'FILL'], ['pick', 'PICK'], ['line', 'LINE'], ['rect', 'BOX'], ['frect', 'FILL BOX'], ['circ', 'OVAL'], ['fcirc', 'FILL OVAL'], ['sel', 'SELECT']];
-const CU_ACTS = [['mirror', 'MIRROR'], ['grid', 'GRID'], ['onion', 'ONION'], ['big', '32 MODE'], ['offset', 'OFFSET'], ['undo', 'UNDO'], ['redo', 'REDO'], ['clear', 'CLEAR'], ['zin', 'ZOOM +'], ['zout', 'ZOOM -'], ['fit', 'FIT'], ['flipx', 'FLIP H'], ['flipy', 'FLIP V'], ['copy', 'COPY'], ['outline', 'OUTLINE'], ['shade', 'SHADE'], ['import', 'IMPORT'], ['templ', 'TEMPLATE'], ['delfr', 'DEL FRAME']];
+const CU_ACTS = [['mirror', 'MIRROR'], ['grid', 'GRID'], ['onion', 'ONION'], ['big', '32 MODE'], ['offset', 'OFFSET'], ['undo', 'UNDO'], ['redo', 'REDO'], ['clear', 'CLEAR'], ['zin', 'ZOOM +'], ['zout', 'ZOOM -'], ['fit', 'FIT'], ['flipx', 'FLIP H'], ['flipy', 'FLIP V'], ['copy', 'COPY'], ['outline', 'OUTLINE'], ['shade', 'SHADE'], ['import', 'IMPORT'], ['templ', 'TEMPLATE'], ['pad', 'PAD'], ['stable', 'STABLE'], ['perfect', 'PERFECT'], ['bigm', 'BIG'], ['shrink', 'SHRINK'], ['delfr', 'DEL FRAME']];
 function cuSure(key, btn, label) {      // a button that needs a second tap within 2.5 s ("SURE?") before it does something that throws work away; true on the second tap
   if (cuArmed === key && performance.now() - cuArmT < 2500) { cuArmed = ''; return true; }
   cuArmed = key; cuArmT = performance.now(); if (btn) { const t0 = btn.dataset.t || btn.textContent; btn.dataset.t = t0; btn.textContent = label; setTimeout(() => { if (btn.dataset.t) { btn.textContent = btn.dataset.t; delete btn.dataset.t; } }, 2500); } return false;
 }
 function cuFlash(btn, text) { const t0 = btn.dataset.t || btn.textContent; btn.dataset.t = t0; btn.textContent = text; setTimeout(() => { if (btn.dataset.t) { btn.textContent = btn.dataset.t; delete btn.dataset.t; } }, 1400); }
 function cuLayout() { const c = $('cdCv'), k = Math.max(3, Math.min(Math.floor(innerHeight * 0.82 / 64), Math.floor(innerWidth * 0.46 / 64))); cuCell = k; c.width = c.height = 64 * k; c.style.width = c.style.height = 64 * k + 'px'; }
-function cuSetZoom(z, cx, cy) {      // zoom 1, 2, 4 or 8 times, keeping the art point (cx, cy) in the middle of the view; the view never leaves the board
-  z = Math.max(1, Math.min(8, z)); cuZoom = z; const w = 64 / z; cuPX = Math.max(0, Math.min(64 - w, Math.round(cx - w / 2))); cuPY = Math.max(0, Math.min(64 - w, Math.round(cy - w / 2)));
+function cuSetZoom(z, cx, cy) {      // zoom 1, 2, 4 or 8 times, keeping the point (cx, cy) in the middle of the view; the view never leaves the board
+  z = Math.max(1, Math.min(8, z)); cuZoom = z; const n = cuN(), w = n / z; cuPX = Math.max(0, Math.min(n - w, Math.round(cx - w / 2))); cuPY = Math.max(0, Math.min(n - w, Math.round(cy - w / 2)));
 }
 const cuSnap = z => z < 1.5 ? 1 : z < 3 ? 2 : z < 6 ? 4 : 8;
-function cuPaint(art) {      // the board (the part of it that is in view): checkerboard, the frame before it (ONION), the picture, the grid, the mirror line, the selection and the crosshair
-  const real = !art; art = art || cuArt; const c = $('cdCv'), g = c.getContext('2d'), V = 64 * cuCell, k = cuCell * cuZoom, w = 64 / cuZoom; cuImg(art, cuOff); g.imageSmoothingEnabled = false; g.clearRect(0, 0, V, V);
-  for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) { g.fillStyle = ((x + cuPX + y + cuPY) & 1) ? '#1f1834' : '#171127'; g.fillRect(x * k, y * k, k, k); }
-  if (cuOnion && cuFr.length > 1) { cuImg(cuFr[(cuCur + cuFr.length - 1) % cuFr.length], cuOn); g.globalAlpha = 0.3; g.drawImage(cuOn, cuPX, cuPY, w, w, 0, 0, V, V); g.globalAlpha = 1; }
-  g.drawImage(cuOff, cuPX, cuPY, w, w, 0, 0, V, V);
-  if (cuGrid) for (let i = 0; i <= w; i++) { g.fillStyle = (cuPX + i) % 8 === 0 ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.10)'; g.fillRect(Math.min(i * k, V - 1), 0, 1, V); g.fillStyle = (cuPY + i) % 8 === 0 ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.10)'; g.fillRect(0, Math.min(i * k, V - 1), V, 1); }
-  if (cuMirror) { g.fillStyle = 'rgba(255,211,77,0.75)'; g.fillRect((32 - cuPX) * k - 1, 0, 2, V); }
-  if (cuSel) { g.strokeStyle = '#ffd34d'; g.setLineDash([4, 3]); g.lineWidth = 2; g.strokeRect((cuSel.x0 - cuPX) * k, (cuSel.y0 - cuPY) * k, (cuSel.x1 - cuSel.x0 + 1) * k, (cuSel.y1 - cuSel.y0 + 1) * k); g.setLineDash([]); }
-  if (cuCursor) { const cx = (cuCursor[0] - cuPX + 0.5) * k, cy = (cuCursor[1] - cuPY + 0.5) * k; g.fillStyle = '#ffd34d'; g.fillRect(cx - 9, cy - 1, 6, 2); g.fillRect(cx + 4, cy - 1, 6, 2); g.fillRect(cx - 1, cy - 9, 2, 6); g.fillRect(cx - 1, cy + 4, 2, 6); }
-  const fb = $('cdFr').children[cuCur]; if (real && fb) cuImg(cuArt, fb.querySelector('canvas'));
+function cuPaint(art) {      // the board (the part of it that is in view): checkerboard, the frame before it (ONION), the picture, the grid, the mirror line, the selection, the crosshair; a small map of the whole board when zoomed in
+  const real = !art; art = art || cuArt; const c = $('cdCv'), g = c.getContext('2d'), n = cuN(), V = 64 * cuCell, w = n / cuZoom, k = V / w; g.imageSmoothingEnabled = false; g.clearRect(0, 0, V, V);
+  if (cuBigOn) { g.fillStyle = '#171127'; g.fillRect(0, 0, V, V); g.drawImage(cuBigCv, cuPX, cuPY, w, w, 0, 0, V, V); }
+  else {
+    cuImg(art, cuOff);
+    for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) { g.fillStyle = ((x + cuPX + y + cuPY) & 1) ? '#1f1834' : '#171127'; g.fillRect(x * k, y * k, k, k); }
+    if (cuOnion && cuFr.length > 1) { cuImg(cuFr[(cuCur + cuFr.length - 1) % cuFr.length], cuOn); g.globalAlpha = 0.3; g.drawImage(cuOn, cuPX, cuPY, w, w, 0, 0, V, V); g.globalAlpha = 1; }
+    g.drawImage(cuOff, cuPX, cuPY, w, w, 0, 0, V, V);
+    if (cuGrid) for (let i = 0; i <= w; i++) { g.fillStyle = (cuPX + i) % 8 === 0 ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.10)'; g.fillRect(Math.min(i * k, V - 1), 0, 1, V); g.fillStyle = (cuPY + i) % 8 === 0 ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.10)'; g.fillRect(0, Math.min(i * k, V - 1), V, 1); }
+    if (cuMirror) { g.fillStyle = 'rgba(255,211,77,0.75)'; g.fillRect((32 - cuPX) * k - 1, 0, 2, V); }
+    if (cuSel) { g.strokeStyle = '#ffd34d'; g.setLineDash([4, 3]); g.lineWidth = 2; g.strokeRect((cuSel.x0 - cuPX) * k, (cuSel.y0 - cuPY) * k, (cuSel.x1 - cuSel.x0 + 1) * k, (cuSel.y1 - cuSel.y0 + 1) * k); g.setLineDash([]); }
+    if (cuShapeStart) { g.strokeStyle = '#ffd34d'; g.lineWidth = 2; g.strokeRect((cuShapeStart[0] - cuPX) * k + 1, (cuShapeStart[1] - cuPY) * k + 1, k - 2, k - 2); }
+  }
+  const cc = cuCursor || (cuPad && cuTouchSeen && !cuBigOn ? [Math.floor(cuC[0]), Math.floor(cuC[1])] : null);
+  if (cc) { const cx = (cc[0] - cuPX + 0.5) * k, cy = (cc[1] - cuPY + 0.5) * k; g.fillStyle = '#ffd34d'; g.fillRect(cx - 9, cy - 1, 6, 2); g.fillRect(cx + 4, cy - 1, 6, 2); g.fillRect(cx - 1, cy - 9, 2, 6); g.fillRect(cx - 1, cy + 4, 2, 6); }
+  const mm = $('cdMini'); if (cuZoom > 1) { mm.style.display = 'block'; const m = mm.getContext('2d'), sc = 64 / n; m.imageSmoothingEnabled = false; m.fillStyle = '#0b0a0f'; m.fillRect(0, 0, 64, 64); m.drawImage(cuBigOn ? cuBigCv : cuOff, 0, 0, 64, 64); m.strokeStyle = '#e0242f'; m.lineWidth = 2; m.strokeRect(cuPX * sc + 1, cuPY * sc + 1, w * sc - 2, w * sc - 2); } else mm.style.display = 'none';
+  const fb = $('cdFr').children[cuCur]; if (real && fb && !cuBigOn) cuImg(cuArt, fb.querySelector('canvas'));
 }
 function cuSync() {      // which tool, toggle and colour is selected
-  const on = { mirror: cuMirror, grid: cuGrid, onion: cuOnion, big: cuBig, offset: cuOffset, copy: cuCopy };
-  for (const b of $('cdTools').children) { const t = b.dataset.tool, a = b.dataset.act; b.classList.toggle('sel', t ? t === cuTool : !!on[a]); if (a === 'undo') b.disabled = !cuUndo.length; if (a === 'redo') b.disabled = !cuRedo.length; }
+  const on = { mirror: cuMirror, grid: cuGrid, onion: cuOnion, big: cuBig, offset: cuOffset, copy: cuCopy, pad: cuPad, stable: cuStable, perfect: cuPerfect, bigm: cuBigOn };
+  for (const b of $('cdTools').children) { const t = b.dataset.tool, a = b.dataset.act; b.classList.toggle('sel', t ? t === cuTool : !!on[a]); if (a === 'shrink') b.disabled = !cuBigOn; if (a === 'undo') b.disabled = cuBigOn ? !cuBigUndo.length : !cuUndo.length; if (a === 'redo') b.disabled = !cuRedo.length; }
   for (const b of $('cdPal').children) b.classList.toggle('sel', +b.dataset.i === cuColor);
 }
 function cuSetColor(i) { cuColor = i; if (cuTool === 'era' || cuTool === 'pick') cuTool = 'pen'; cuSync(); }
@@ -6689,12 +6698,16 @@ function cuImport() {      // a picture from the phone: shrunk to fit the board 
   f.click();
 }
 function cuAct(id, b) {
-  if (id === 'mirror') cuMirror = !cuMirror; else if (id === 'grid') cuGrid = !cuGrid; else if (id === 'onion') cuOnion = !cuOnion; else if (id === 'big') cuBig = !cuBig; else if (id === 'offset') cuOffset = !cuOffset; else if (id === 'copy') cuCopy = !cuCopy;
+  if (cuBigOn && !['undo', 'zin', 'zout', 'fit', 'bigm', 'shrink', 'clear', 'pad', 'offset'].includes(id)) return;      // (the big canvas only has the brush, the eraser, the bucket, the picker and the line)
+  if (id === 'bigm') { cuBigToggle(!cuBigOn); cuSync(); cuPaint(); return; } if (id === 'shrink') { if (cuBigOn) cuShrink(); cuSync(); cuPaint(); cuFrSync(); return; }
+  if (cuBigOn && id === 'undo') { const sn = cuBigUndo.pop(); if (sn) cuBigCv.getContext('2d').putImageData(sn, 0, 0); cuSync(); cuPaint(); return; }
+  if (cuBigOn && id === 'clear') { if (!cuSure('clear', b, 'SURE?')) return; cuBigPush(); cuBigCv.getContext('2d').clearRect(0, 0, 128, 128); cuPaint(); return; }
+  if (id === 'mirror') cuMirror = !cuMirror; else if (id === 'grid') cuGrid = !cuGrid; else if (id === 'onion') cuOnion = !cuOnion; else if (id === 'big') cuBig = !cuBig; else if (id === 'offset') cuOffset = !cuOffset; else if (id === 'copy') cuCopy = !cuCopy; else if (id === 'pad') cuPad = !cuPad; else if (id === 'stable') cuStable = !cuStable; else if (id === 'perfect') cuPerfect = !cuPerfect;
   else if (id === 'undo') { if (cuUndo.length) { cuRedo.push(cuArt.slice()); cuArt = cuUndo.pop(); cuFr[cuCur] = cuArt; } }
   else if (id === 'redo') { if (cuRedo.length) { cuUndo.push(cuArt.slice()); cuArt = cuRedo.pop(); cuFr[cuCur] = cuArt; } }
   else if (id === 'delfr') { cuDelFrame(b); return; }
   else if (id === 'clear') { if (!cuSure('clear', b, 'SURE?')) return; cuPush(); cuArt.fill(0); }
-  else if (id === 'zin') cuSetZoom(cuZoom * 2, cuPX + 32 / cuZoom, cuPY + 32 / cuZoom); else if (id === 'zout') cuSetZoom(cuZoom / 2, cuPX + 32 / cuZoom, cuPY + 32 / cuZoom); else if (id === 'fit') cuSetZoom(1, 32, 32);
+  else if (id === 'zin') cuSetZoom(cuZoom * 2, cuPX + cuN() / 2 / cuZoom, cuPY + cuN() / 2 / cuZoom); else if (id === 'zout') cuSetZoom(cuZoom / 2, cuPX + cuN() / 2 / cuZoom, cuPY + cuN() / 2 / cuZoom); else if (id === 'fit') cuSetZoom(1, cuN() / 2, cuN() / 2);
   else if (id === 'flipx') cuFlip(true); else if (id === 'flipy') cuFlip(false); else if (id === 'outline') cuOutline(); else if (id === 'shade') cuShade();
   else if (id === 'import') { cuImport(); return; } else if (id === 'templ') { cuTemplate(b); }
   cuSync(); cuPaint(); cuFrSync();
@@ -6704,7 +6717,7 @@ function cuFrSync() {      // the grid of frames: a small picture for each frame
   for (let i = 0; i < 15; i++) { const b = box.children[i], cv = b.querySelector('canvas'); if (i < n) { b.style.display = ''; b.classList.toggle('sel', i === cuCur); b.classList.remove('add'); cv.style.display = ''; b.querySelector('span').textContent = ''; cuImg(cuFr[i], cv); } else if (i === n && n < 15) { b.style.display = ''; b.classList.remove('sel'); b.classList.add('add'); cv.style.display = 'none'; b.querySelector('span').textContent = '+'; } else b.style.display = 'none'; }
   $('cdFrInfo').textContent = 'FRAME ' + (cuCur + 1) + ' OF ' + n; const del = $('cdTools').querySelector('[data-act="delfr"]'); if (del) del.disabled = n < 2;
 }
-function cuSelect(i) { cuCur = i; cuArt = cuFr[i]; cuUndo = []; cuRedo = []; cuSt = null; cuSel = null; cuSync(); cuPaint(); cuFrSync(); }
+function cuSelect(i) { if (cuBigOn) cuBigToggle(false); cuShapeStart = null; cuCur = i; cuArt = cuFr[i]; cuUndo = []; cuRedo = []; cuSt = null; cuSel = null; cuSync(); cuPaint(); cuFrSync(); }
 function cuAddFrame() { if (cuFr.length >= 15) return; cuFr.splice(cuCur + 1, 0, cuArt.slice()); cuDirty = true; cuSelect(cuCur + 1); }
 function cuDelFrame(b) { if (cuFr.length < 2 || !cuSure('delfr', b, 'SURE?')) return; cuFr.splice(cuCur, 1); cuDirty = true; cuSelect(Math.min(cuCur, cuFr.length - 1)); }
 const cuPut = (art, x, y, v) => { if (cuBig) { x &= ~1; y &= ~1; for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) cuPut1(art, x + i, y + j, v); } else cuPut1(art, x, y, v); };
@@ -6723,13 +6736,14 @@ function cuFill(art, x, y, v) {
   const t = art[y * 64 + x]; if (t === v) return; const st = [[x, y]];
   while (st.length) { const [px, py] = st.pop(); if (px < 0 || py < 0 || px > 63 || py > 63 || art[py * 64 + px] !== t) continue; art[py * 64 + px] = v; st.push([px + 1, py], [px - 1, py], [px, py + 1], [px, py - 1]); }
 }
-const cuXY = e => { const c = $('cdCv'), r = c.getBoundingClientRect(), k = cuCell * cuZoom, oy = cuOffset && e.pointerType === 'touch' ? 26 : 0; return [Math.floor(cuPX + (e.clientX - r.left - c.clientLeft) / k), Math.floor(cuPY + (e.clientY - oy - r.top - c.clientTop) / k)]; };      // (a finger draws 26 screen pixels ABOVE where it touches, so it does not hide the pixel; the crosshair shows where)
+const cuXY = e => { const c = $('cdCv'), r = c.getBoundingClientRect(), k = cuKk(), oy = cuOffset && e.pointerType === 'touch' ? 26 : 0; return [Math.floor(cuPX + (e.clientX - r.left - c.clientLeft) / k), Math.floor(cuPY + (e.clientY - oy - r.top - c.clientTop) / k)]; };      // (a finger draws 26 screen pixels ABOVE where it touches in direct mode)
 function cuPush() { cuUndo.push(cuArt.slice()); if (cuUndo.length > 60) cuUndo.shift(); cuRedo.length = 0; cuDirty = true; }
 const cuIn = (x, y) => x >= 0 && y >= 0 && x <= 63 && y <= 63, cuClamp = v => Math.max(0, Math.min(63, v));
 function cuDown(e) {
   e.preventDefault(); cuPtrs.set(e.pointerId, [e.clientX, e.clientY]); try { $('cdCv').setPointerCapture(e.pointerId); } catch (er) { }
-  if (cuPtrs.size >= 2) { if (cuSt && cuSt.base) cuArt.set(cuSt.base); cuSt = null; cuCursor = null; cuIgnore = true; const [a, b] = [...cuPtrs.values()]; cuPinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, z: cuZoom, mx: (a[0] + b[0]) / 2, my: (a[1] + b[1]) / 2 }; cuPaint(); return; }
-  if (cuIgnore) return; const [x, y] = cuXY(e); if (e.pointerType === 'touch' && cuOffset) cuCursor = [cuClamp(x), cuClamp(y)]; if (!cuIn(x, y)) { cuPaint(); return; }
+  if (cuPtrs.size >= 2) { cuCancelStroke(); cuIgnore = true; const [a, b] = [...cuPtrs.values()]; cuPinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, z: cuZoom, mx: (a[0] + b[0]) / 2, my: (a[1] + b[1]) / 2 }; cuPaint(); return; }
+  if (cuIgnore) return; if (cuBigOn) { cuBigDown(e); return; } if (e.pointerType === 'touch' && cuPad) { cuPadDown(e); return; }
+  const [x, y] = cuXY(e); if (e.pointerType === 'touch' && cuOffset) cuCursor = [cuClamp(x), cuClamp(y)]; if (!cuIn(x, y)) { cuPaint(); return; }
   if (cuTool === 'pick') { const v = cuArt[y * 64 + x]; if (v) cuSetColor(v - 1); cuPaint(); return; }
   cuPush(); cuSync(); cuSt = { x0: x, y0: y, lx: x, ly: y, base: cuArt.slice() };
   if (cuTool === 'sel') { if (cuSel && x >= cuSel.x0 && x <= cuSel.x1 && y >= cuSel.y0 && y <= cuSel.y1) { cuSt.mode = 'move'; const r = cuSel, w = r.x1 - r.x0 + 1, h = r.y1 - r.y0 + 1, pix = new Uint8Array(w * h); for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { pix[j * w + i] = cuArt[(r.y0 + j) * 64 + r.x0 + i]; if (!cuCopy) cuSt.base[(r.y0 + j) * 64 + r.x0 + i] = 0; } cuSt.pix = pix; cuSt.r = { ...r }; } else { cuSt.mode = 'rect'; cuSel = { x0: x, y0: y, x1: x, y1: y }; } cuPaint(); return; }
@@ -6739,11 +6753,12 @@ function cuDown(e) {
 function cuMove(e) {
   if (cuPtrs.has(e.pointerId)) cuPtrs.set(e.pointerId, [e.clientX, e.clientY]);
   if (cuPinch && cuPtrs.size >= 2) {      // two fingers: spread to zoom, move to look around
-    const [a, b] = [...cuPtrs.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, k0 = cuCell * cuZoom, nz = cuSnap(cuPinch.z * d / cuPinch.d);
+    const [a, b] = [...cuPtrs.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, k0 = cuKk(), nz = cuSnap(cuPinch.z * d / cuPinch.d);
     if (nz !== cuZoom) { const r = $('cdCv').getBoundingClientRect(), ax = cuPX + (mx - r.left) / k0, ay = cuPY + (my - r.top) / k0; cuSetZoom(nz, ax, ay); cuPinch.mx = mx; cuPinch.my = my; }
-    const k = cuCell * cuZoom, dx = Math.round((cuPinch.mx - mx) / k), dy = Math.round((cuPinch.my - my) / k); if (dx || dy) { const w = 64 / cuZoom; cuPX = Math.max(0, Math.min(64 - w, cuPX + dx)); cuPY = Math.max(0, Math.min(64 - w, cuPY + dy)); cuPinch.mx = mx; cuPinch.my = my; }
+    const k = cuKk(), dx = Math.round((cuPinch.mx - mx) / k), dy = Math.round((cuPinch.my - my) / k); if (dx || dy) { const w = cuN() / cuZoom; cuPX = Math.max(0, Math.min(cuN() - w, cuPX + dx)); cuPY = Math.max(0, Math.min(cuN() - w, cuPY + dy)); cuPinch.mx = mx; cuPinch.my = my; }
     cuPaint(); return;
   }
+  if (cuBigOn) { cuBigMove(e); return; } if (e.pointerType === 'touch' && cuPad) { cuPadMove(e); return; }
   if (!cuSt) return; const [x, y] = cuXY(e); if (e.pointerType === 'touch' && cuOffset) cuCursor = [cuClamp(x), cuClamp(y)]; if (x === cuSt.lx && y === cuSt.ly) { cuPaint(); return; }
   const t = cuTool;
   if (t === 'sel') { if (cuSt.mode === 'rect') { cuSel = { x0: Math.min(cuSt.x0, cuClamp(x)), y0: Math.min(cuSt.y0, cuClamp(y)), x1: Math.max(cuSt.x0, cuClamp(x)), y1: Math.max(cuSt.y0, cuClamp(y)) }; cuPaint(); } else { const tmp = cuSt.base.slice(), dx = x - cuSt.x0, dy = y - cuSt.y0, r = cuSt.r, w = r.x1 - r.x0 + 1, h = r.y1 - r.y0 + 1; for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const v = cuSt.pix[j * w + i], X = r.x0 + i + dx, Y = r.y0 + j + dy; if (v && cuIn(X, Y)) tmp[Y * 64 + X] = v; } cuSt.tmp = tmp; cuSt.dx = dx; cuSt.dy = dy; cuPaint(tmp); } }
@@ -6753,12 +6768,95 @@ function cuMove(e) {
 }
 function cuUp(e) {
   cuPtrs.delete(e.pointerId); if (cuPtrs.size < 2) cuPinch = null; if (cuPtrs.size === 0) cuIgnore = false;
+  if (cuBigOn) { cuBigUp(e); return; } if (e.pointerType === 'touch' && cuPad) { cuPadUp(e); return; }
   if (!cuSt) { cuCursor = null; cuPaint(); return; } const [x, y] = cuXY(e), t = cuTool;
   if (t === 'fill') { if (cuIn(cuSt.x0, cuSt.y0)) cuFill(cuArt, cuSt.x0, cuSt.y0, cuColor + 1); }
   else if (t === 'line') cuLine(cuArt, cuSt.x0, cuSt.y0, x, y, cuColor + 1);
   else if (t === 'rect' || t === 'frect' || t === 'circ' || t === 'fcirc') cuShape(cuArt, t, cuSt.x0, cuSt.y0, x, y, cuColor + 1);
   else if (t === 'sel' && cuSt.mode === 'move' && cuSt.tmp) { cuArt.set(cuSt.tmp); const r = cuSel; cuSel = { x0: r.x0 + cuSt.dx, y0: r.y0 + cuSt.dy, x1: r.x1 + cuSt.dx, y1: r.y1 + cuSt.dy }; }
   cuSt = null; cuCursor = null; cuPaint(); cuFrSync();
+}
+
+// ---- v1.69 TRACKPAD DRAWING (a finger moves a cursor and a TAP puts the pixel down), AUTO-ZOOM, STABILIZER, PIXEL-PERFECT and the BIG 128 x 128 canvas that SHRINKs into the frame
+function cuCancelStroke() { if (cuSt && cuSt.base) cuArt.set(cuSt.base); cuSt = null; cuCursor = null; cuTap = null; cuPath = null; if (cuBigSt) { cuBigCv.getContext('2d').putImageData(cuBigSt.snap, 0, 0); cuBigSt = null; } }
+const cuCell2 = () => [Math.floor(cuC[0]), Math.floor(cuC[1])], cuPutTool = (x, y) => cuPut(cuArt, x, y, cuTool === 'era' ? 0 : cuColor + 1);
+function cuFollow() {      // the view scrolls so that the cursor stays in its middle half
+  if (cuZoom <= 1) return; const w = 64 / cuZoom, m = w * 0.25;
+  if (cuC[0] < cuPX + m) cuPX = Math.max(0, Math.floor(cuC[0] - m)); else if (cuC[0] > cuPX + w - m) cuPX = Math.min(64 - w, Math.ceil(cuC[0] - w + m));
+  if (cuC[1] < cuPY + m) cuPY = Math.max(0, Math.floor(cuC[1] - m)); else if (cuC[1] > cuPY + w - m) cuPY = Math.min(64 - w, Math.ceil(cuC[1] - w + m));
+}
+function cuPadDown(e) {
+  cuTouchSeen = true; if (!cuAutoDone) { cuAutoDone = true; if (cuZoom < 4) cuSetZoom(4, cuC[0], cuC[1]); }
+  const now = performance.now(), dbl = now - cuLastTap < 350 && Math.hypot(e.clientX - cuLastTapPos[0], e.clientY - cuLastTapPos[1]) < 60;
+  cuTap = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, t: now, moved: false, paint: false };
+  if (dbl && (cuTool === 'pen' || cuTool === 'era')) { cuTap.paint = true; cuPush(); const [x, y] = cuCell2(); cuSt = { base: cuArt.slice(), lx: x, ly: y }; cuPath = [[x, y]]; cuLazy = [cuC[0], cuC[1]]; cuPutTool(x, y); cuSync(); }      // (a tap and then a press that stays down: paint while the finger moves)
+  cuPaint();
+}
+function cuStroke(x, y) {      // paint from the last pixel of this stroke to (x, y); PERFECT takes out the corner pixel of every L-shaped step so lines and curves stay one pixel thick
+  const x0 = cuSt.lx, y0 = cuSt.ly, dx = Math.abs(x - x0), dy = -Math.abs(y - y0), sx = x0 < x ? 1 : -1, sy = y0 < y ? 1 : -1; let e = dx + dy, cx = x0, cy = y0, n = 0;
+  for (; ;) {
+    if (cx !== x0 || cy !== y0) { cuPath.push([cx, cy]); cuPutTool(cx, cy); const L = cuPath.length; if (cuPerfect && !cuBig && L >= 3) { const a = cuPath[L - 3], b = cuPath[L - 2], c = cuPath[L - 1]; if (Math.abs(a[0] - c[0]) === 1 && Math.abs(a[1] - c[1]) === 1 && (a[0] === b[0] || a[1] === b[1]) && (c[0] === b[0] || c[1] === b[1])) { cuArt[b[1] * 64 + b[0]] = cuSt.base[b[1] * 64 + b[0]]; if (cuMirror) cuArt[b[1] * 64 + 63 - b[0]] = cuSt.base[b[1] * 64 + 63 - b[0]]; cuPath.splice(L - 2, 1); } } }
+    if ((cx === x && cy === y) || ++n > 300) break; const e2 = 2 * e; if (e2 >= dy) { e += dy; cx += sx; } if (e2 <= dx) { e += dx; cy += sy; }
+  }
+  cuSt.lx = x; cuSt.ly = y;
+}
+function cuPadMove(e) {
+  const T = cuTap; if (!T) return; const k = cuKk(), dx = (e.clientX - T.lx) / k, dy = (e.clientY - T.ly) / k; T.lx = e.clientX; T.ly = e.clientY;
+  if (Math.hypot(e.clientX - T.x, e.clientY - T.y) > 8) T.moved = true;
+  cuC[0] = cuClamp(cuC[0] + dx); cuC[1] = cuClamp(cuC[1] + dy); let tmp = null;
+  if (T.paint) {
+    let [x, y] = cuCell2(); if (cuStable) { const d = Math.hypot(cuC[0] - cuLazy[0], cuC[1] - cuLazy[1]); if (d <= 3) { cuFollow(); cuPaint(); return; } const f = (d - 3) / d; cuLazy = [cuLazy[0] + (cuC[0] - cuLazy[0]) * f, cuLazy[1] + (cuC[1] - cuLazy[1]) * f]; x = Math.floor(cuLazy[0]); y = Math.floor(cuLazy[1]); }      // (STABLE: the brush hangs 3 pixels behind the cursor on a rope, so a shaky finger draws a smooth line)
+    if (x !== cuSt.lx || y !== cuSt.ly) cuStroke(x, y);
+  } else if (cuShapeStart && T.moved) { tmp = cuArt.slice(); const [x, y] = cuCell2(); if (cuTool === 'line') cuLine(tmp, cuShapeStart[0], cuShapeStart[1], x, y, cuColor + 1); else if (cuTool !== 'sel') cuShape(tmp, cuTool, cuShapeStart[0], cuShapeStart[1], x, y, cuColor + 1); }
+  cuFollow(); cuPaint(tmp || undefined);
+}
+function cuPadUp(e) {
+  const T = cuTap; cuTap = null; if (!T) return;
+  if (T.paint) { cuSt = null; cuPath = null; cuPaint(); cuFrSync(); return; }
+  const now = performance.now(); if (!T.moved && now - T.t < 280) { cuLastTap = now; cuLastTapPos = [e.clientX, e.clientY]; cuTapAction(); }
+  cuPaint();
+}
+function cuTapAction() {      // a short tap puts the tool down at the cursor (pen, eraser, bucket, picker); the line, boxes, ovals and SELECT take two taps: the first corner, then the other
+  const [x, y] = cuCell2(), t = cuTool;
+  if (t === 'pick') { const v = cuArt[y * 64 + x]; if (v) cuSetColor(v - 1); return; }
+  if (t === 'fill') { cuPush(); cuFill(cuArt, x, y, cuColor + 1); cuSync(); cuFrSync(); return; }
+  if (t === 'pen' || t === 'era') { cuPush(); cuPutTool(x, y); cuSync(); cuFrSync(); return; }
+  if (!cuShapeStart) { cuShapeStart = [x, y]; return; }
+  const [x0, y0] = cuShapeStart; cuShapeStart = null;
+  if (t === 'sel') { cuSel = { x0: Math.min(x0, x), y0: Math.min(y0, y), x1: Math.max(x0, x), y1: Math.max(y0, y) }; return; }
+  cuPush(); if (t === 'line') cuLine(cuArt, x0, y0, x, y, cuColor + 1); else cuShape(cuArt, t, x0, y0, x, y, cuColor + 1); cuSync(); cuFrSync();
+}
+function cuBigToggle(on) {      // BIG: a 128 x 128 canvas of this frame (it starts as the frame, twice as big) to paint freely with a round brush; SHRINK turns it back into 64 x 64
+  cuBigOn = on; cuZoom = 1; cuPX = cuPY = 0; cuSel = null; cuShapeStart = null; cuCursor = null; cuSt = null; cuTap = null;
+  if (on) { cuImg(cuArt, cuOff); const g = cuBigCv.getContext('2d'); g.clearRect(0, 0, 128, 128); g.imageSmoothingEnabled = false; g.drawImage(cuOff, 0, 0, 128, 128); cuBigUndo = []; }
+}
+function cuBigPush() { cuBigUndo.push(cuBigCv.getContext('2d').getImageData(0, 0, 128, 128)); if (cuBigUndo.length > 20) cuBigUndo.shift(); }
+function cuBigStroke(x0, y0, x1, y1) {
+  const g = cuBigCv.getContext('2d'), er = cuTool === 'era'; g.save(); g.lineCap = g.lineJoin = 'round'; g.lineWidth = er ? 7 : 3; if (er) { g.globalCompositeOperation = 'destination-out'; g.strokeStyle = '#000'; } else g.strokeStyle = CU_PAL[cuColor];
+  g.beginPath(); g.moveTo(x0 + 0.5, y0 + 0.5); g.lineTo(x1 + 0.5, y1 + 0.5); g.stroke(); g.restore();
+}
+function cuBigFill(x, y) {
+  const g = cuBigCv.getContext('2d'), im = g.getImageData(0, 0, 128, 128), d = im.data, i0 = (y * 128 + x) * 4, t = [d[i0], d[i0 + 1], d[i0 + 2], d[i0 + 3]], c = CU_RGB[cuColor], st = [[x, y]], seen = new Uint8Array(16384);
+  if (t[3] > 250 && Math.abs(t[0] - c[0]) + Math.abs(t[1] - c[1]) + Math.abs(t[2] - c[2]) < 8) return;
+  while (st.length) { const [px, py] = st.pop(); if (px < 0 || py < 0 || px > 127 || py > 127 || seen[py * 128 + px]) continue; const i = (py * 128 + px) * 4; if (Math.abs(d[i] - t[0]) + Math.abs(d[i + 1] - t[1]) + Math.abs(d[i + 2] - t[2]) + Math.abs(d[i + 3] - t[3]) >= 60) continue; seen[py * 128 + px] = 1; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255; st.push([px + 1, py], [px - 1, py], [px, py + 1], [px, py - 1]); }
+  g.putImageData(im, 0, 0);
+}
+function cuBigDown(e) {
+  const [x, y] = cuXY(e); if (x < 0 || y < 0 || x > 127 || y > 127) return; const g = cuBigCv.getContext('2d');
+  if (cuTool === 'pick') { const d = g.getImageData(x, y, 1, 1).data; if (d[3] > 100) cuSetColor(cuNearest(d[0], d[1], d[2]) - 1); cuPaint(); return; }
+  cuBigPush(); cuDirty = true; cuBigSt = { x0: x, y0: y, lx: x, ly: y, snap: cuBigUndo[cuBigUndo.length - 1] };
+  if (cuTool === 'fill') { cuBigFill(x, y); cuBigSt = null; } else if (cuTool !== 'line') cuBigStroke(x, y, x, y);
+  cuCursor = e.pointerType === 'touch' && cuOffset ? [Math.max(0, Math.min(127, x)), Math.max(0, Math.min(127, y))] : null; cuPaint(); cuSync();
+}
+function cuBigMove(e) {
+  if (!cuBigSt) return; const [x, y] = cuXY(e); if (e.pointerType === 'touch' && cuOffset) cuCursor = [Math.max(0, Math.min(127, x)), Math.max(0, Math.min(127, y))]; if (x === cuBigSt.lx && y === cuBigSt.ly) { cuPaint(); return; }
+  if (cuTool === 'line') { cuBigCv.getContext('2d').putImageData(cuBigSt.snap, 0, 0); cuBigStroke(cuBigSt.x0, cuBigSt.y0, x, y); } else cuBigStroke(cuBigSt.lx, cuBigSt.ly, x, y);
+  cuBigSt.lx = x; cuBigSt.ly = y; cuPaint();
+}
+function cuBigUp(e) { cuPtrs.size; cuBigSt = null; cuCursor = null; cuPaint(); }
+function cuShrink() {      // the big picture becomes the 64 x 64 frame: shrunk smoothly, then every pixel takes the nearest of the 66 colours (mostly see-through pixels stay see-through)
+  const t = document.createElement('canvas'); t.width = t.height = 64; const g = t.getContext('2d'); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(cuBigCv, 0, 0, 64, 64); const d = g.getImageData(0, 0, 64, 64).data;
+  cuPush(); for (let i = 0; i < 4096; i++) cuArt[i] = d[i * 4 + 3] < 110 ? 0 : cuNearest(d[i * 4], d[i * 4 + 1], d[i * 4 + 2]); cuBigToggle(false);
 }
 
 // ---- the screens: CUSTOM (3 slots) > a slot > the NAME > the DRAWING
@@ -6769,7 +6867,7 @@ function renderAnim() {      // the list after the name: IDLE and WALKING, each 
   for (const [i, k] of [[0, 'idle'], [1, 'walk']]) { const b = $('ca' + i), f = cuChar[k], n = f.filter(a => a.some(v => v)).length; cuImg(f.find(a => a.some(v => v)) || new Uint8Array(4096), b.querySelector('canvas')); b.querySelector('i').textContent = n ? n + (n === 1 ? ' FRAME' : ' FRAMES') : 'EMPTY'; }
   $('caName').textContent = cuNameV;
 }
-function cuEdit(k) { cuSetKey = k; cuFr = cuChar[k].length ? cuChar[k].map(a => a.slice()) : [new Uint8Array(4096)]; cuCur = 0; cuArt = cuFr[0]; cuUndo = []; cuRedo = []; cuDirty = false; cuSt = null; cuSel = null; cuZoom = 1; cuPX = cuPY = 0; cuPtrs.clear(); cuPinch = null; cuIgnore = false; $('cdName').textContent = cuNameV + ' - ' + (k === 'idle' ? 'IDLE' : 'WALKING'); show('custdraw'); cuLayout(); cuSync(); cuPaint(); cuFrSync(); }
+function cuEdit(k) { cuBigOn = false; cuAutoDone = false; cuShapeStart = null; cuC = [32, 32]; cuSetKey = k; cuFr = cuChar[k].length ? cuChar[k].map(a => a.slice()) : [new Uint8Array(4096)]; cuCur = 0; cuArt = cuFr[0]; cuUndo = []; cuRedo = []; cuDirty = false; cuSt = null; cuSel = null; cuZoom = 1; cuPX = cuPY = 0; cuPtrs.clear(); cuPinch = null; cuIgnore = false; $('cdName').textContent = cuNameV + ' - ' + (k === 'idle' ? 'IDLE' : 'WALKING'); show('custdraw'); cuLayout(); cuSync(); cuPaint(); cuFrSync(); }
 function customBack() {      // the Android back button inside CUSTOM: the drawing asks "SURE?" before it is thrown away; true when it was used
   if (state === 'custdraw') { if (cuDirty && !cuSure('back', $('cdBack'), 'SURE?')) return true; show('custanim'); renderAnim(); return true; }
   if (state === 'custanim') { show('cust'); renderCust(); return true; }
@@ -6779,7 +6877,7 @@ function customBack() {      // the Android back button inside CUSTOM: the drawi
 }
 (function cuInit() {
   const t = $('cdTools'), pal = $('cdPal');
-  for (const [id, lab] of CU_TOOLS) { const b = document.createElement('button'); b.textContent = lab; b.dataset.tool = id; b.addEventListener('click', () => { cuTool = id; cuSync(); }); t.appendChild(b); }
+  for (const [id, lab] of CU_TOOLS) { const b = document.createElement('button'); b.textContent = lab; b.dataset.tool = id; b.addEventListener('click', () => { cuTool = id; cuShapeStart = null; cuSync(); cuPaint(); }); t.appendChild(b); }
   for (const [id, lab] of CU_ACTS) { const b = document.createElement('button'); b.textContent = lab; b.dataset.act = id; if (id === 'delfr' || id === 'templ') b.style.gridColumn = '1 / 3'; b.addEventListener('click', () => cuAct(id, b)); t.appendChild(b); }
   for (let i = 0; i < 15; i++) { const b = document.createElement('button'); b.innerHTML = '<canvas width="64" height="64"></canvas><span></span>'; b.setAttribute('aria-label', 'frame ' + (i + 1)); b.addEventListener('click', () => { if (i < cuFr.length) cuSelect(i); else cuAddFrame(); }); $('cdFr').appendChild(b); }
   setInterval(() => { if (state === 'custdraw') cuImg(cuFr[Math.floor(performance.now() / (1000 / IDLE_FPS)) % cuFr.length], $('cdPrev')); }, 1000 / IDLE_FPS);      // (the real-size preview plays the frames over and over, as they will play in the game)
@@ -6809,7 +6907,7 @@ function customBack() {      // the Android back button inside CUSTOM: the drawi
   $('cdBack').addEventListener('click', () => { if (cuDirty && !cuSure('back', $('cdBack'), 'SURE?')) return; show('custanim'); renderAnim(); });
   addEventListener('resize', () => { if (state === 'custdraw') { cuLayout(); cuPaint(); } });
 })();
-window.__custom = () => ({ pal: CU_PAL.length, slots: cuLoad(), art: cuArt, frames: cuFr.length, cur: cuCur, tool: cuTool, color: cuColor, cell: cuCell, dirty: cuDirty });
+window.__custom = () => ({ c: cuC.slice(), zoom: cuZoom, big: cuBigOn, pal: CU_PAL.length, slots: cuLoad(), art: cuArt, frames: cuFr.length, cur: cuCur, tool: cuTool, color: cuColor, cell: cuCell, dirty: cuDirty });
 
 // ---- v1.65 the custom characters in the game: FREE PLAY (the fighter select screen) has a small card for each drawn slot; in the match the character stands on its idle frames (up to 15, at the speed of the others) and does nothing: it cannot move, attack or block yet (whatever you press is dropped)
 let cuPh = 0;
