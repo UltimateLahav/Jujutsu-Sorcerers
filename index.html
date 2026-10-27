@@ -124,7 +124,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #joy.on #knob path{fill:#3d2f6e;stroke:#b9a8ee}
 /* ---- CUSTOM (v1.64): the slots, the name and the drawing board */
 #customMode span{font-size:6vh;margin-top:6.5vh;color:#7be0a0}
-#custAnim .cards,#custAtk .cards{gap:3vh}#custAnim .card canvas,#custAtk .card canvas{width:17vh;height:17vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line);margin-top:1vh}#custAnim .card,#custAtk .card{width:27vh;height:38vh}#cust .cards{gap:3vh}#cust .card{width:26vh;height:38vh;font-size:var(--fs-btn,clamp(8px,2.4vh,13px))}#cust .card canvas{width:17vh;height:17vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line);margin-top:1vh}#cust .card b{font-size:.8em;word-break:break-all;line-height:1.3}
+#custAnim .cards,#custAtk .cards{gap:3vh}#custAnim .card canvas,#custAtk .card canvas{width:17vh;height:17vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line);margin-top:1vh}#custAnim .card,#custAtk .card{width:27vh;height:38vh}#custAtk .card{height:31vh}#custAtk .card canvas{width:15vh;height:15vh}#custAtk .cmc{display:flex;flex-direction:column;align-items:center;gap:1.4vh}#custAtk .cmIn{font:inherit;font-size:var(--fs-btn,clamp(8px,2.4vh,13px));color:var(--ink);background:#120d22;border:3px solid var(--line);padding:1vh;width:27vh;text-transform:uppercase;text-align:center;user-select:text;-webkit-user-select:text;outline:none}#custAtk .cmIn:focus{border-color:var(--acc)}#cust .cards{gap:3vh}#cust .card{width:26vh;height:38vh;font-size:var(--fs-btn,clamp(8px,2.4vh,13px))}#cust .card canvas{width:17vh;height:17vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line);margin-top:1vh}#cust .card b{font-size:.8em;word-break:break-all;line-height:1.3}
 #custName{gap:2.4vh}#custName input{font:inherit;font-size:var(--fs-btn,clamp(9px,3vh,16px));color:var(--ink);background:#120d22;border:3px solid var(--line);padding:1.6vh 2vh;width:44vh;text-transform:uppercase;text-align:center;user-select:text;-webkit-user-select:text;outline:none}#custName input:focus{border-color:var(--acc)}
 #cdMain{display:flex;align-items:center;justify-content:center;gap:2vh}
 #cdLeft{display:flex;flex-direction:column;align-items:center;gap:1.2vh;width:33vh}#cdTools{display:grid;grid-template-columns:1fr 1fr;gap:.8vh;width:100%;max-height:62vh;overflow-y:auto;touch-action:pan-y}
@@ -171,7 +171,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.73</small>
+    <small id="ver">V1.74</small>
   </div>
 </section>
 
@@ -285,12 +285,12 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
   <h2>ATTACK</h2>
   <small id="cmName"></small>
   <div class="cards">
-    <button id="cm0" class="card mode"><canvas width="64" height="64"></canvas><b>M1 #1</b><i>EMPTY</i></button>
-    <button id="cm1" class="card mode"><canvas width="64" height="64"></canvas><b>M1 #2</b><i>EMPTY</i></button>
-    <button id="cm2" class="card mode"><canvas width="64" height="64"></canvas><b>M1 #3</b><i>EMPTY</i></button>
-    <button id="cm3" class="card mode"><canvas width="64" height="64"></canvas><b>M1 #4</b><i>EMPTY</i></button>
+    <div class="cmc"><button id="cm0" class="card mode"><canvas width="64" height="64"></canvas><b>M1 #1</b><i>EMPTY</i></button><input id="cn0" class="cmIn" maxlength="9" placeholder="M1 #1" autocomplete="off" spellcheck="false" aria-label="Name of M1 #1"></div>
+    <div class="cmc"><button id="cm1" class="card mode"><canvas width="64" height="64"></canvas><b>M1 #2</b><i>EMPTY</i></button><input id="cn1" class="cmIn" maxlength="9" placeholder="M1 #2" autocomplete="off" spellcheck="false" aria-label="Name of M1 #2"></div>
+    <div class="cmc"><button id="cm2" class="card mode"><canvas width="64" height="64"></canvas><b>M1 #3</b><i>EMPTY</i></button><input id="cn2" class="cmIn" maxlength="9" placeholder="M1 #3" autocomplete="off" spellcheck="false" aria-label="Name of M1 #3"></div>
+    <div class="cmc"><button id="cm3" class="card mode"><canvas width="64" height="64"></canvas><b>M1 #4</b><i>EMPTY</i></button><input id="cn3" class="cmIn" maxlength="9" placeholder="M1 #4" autocomplete="off" spellcheck="false" aria-label="Name of M1 #4"></div>
   </div>
-  <small>5 FRAMES OR MORE EACH (UP TO 15); AN EMPTY ONE IS LEFT OUT; NOT IN FIGHTS YET</small>
+  <small>NAMES SHOW ON THE ATTACK BUTTON; 5+ FRAMES EACH; EMPTY ONES SKIPPED; NO DAMAGE YET</small>
   <div class="row"><button id="cmBack">DONE</button></div>
 </section>
 
@@ -6632,9 +6632,9 @@ const CU_RGB = CU_PAL.map(c => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3,
 // ---- what is kept on the device
 function cuLoad() { try { const a = JSON.parse(localStorage.getItem(CU_KEY)); if (Array.isArray(a) && a.length === 3) return a; } catch (e) { } return [null, null, null]; }
 function cuStore(a) { try { localStorage.setItem(CU_KEY, JSON.stringify(a)); } catch (e) { } }
-function cuEncode(frames, name, walk, jump, atk) {      // the name, the colours used by any frame of either animation and, for each frame, one character per pixel (48 + the number of its colour in that list; '0' = see-through); .f = the IDLE frames (.a the first, what older versions read), .w = the WALKING frames, .j = the JUMP frames, .m = the 4 ATTACK (M1) sets of frames
+function cuEncode(frames, name, walk, jump, atk, names) {      // the name, the colours used by any frame of either animation and, for each frame, one character per pixel (48 + the number of its colour in that list; '0' = see-through); .f = the IDLE frames (.a the first, what older versions read), .w = the WALKING frames, .j = the JUMP frames, .m = the 4 ATTACK (M1) sets of frames, .mn = their 4 names
   const used = [], idx = new Map(), enc = art => { let s = ''; for (let i = 0; i < 4096; i++) { const v = art[i]; if (!v) { s += '0'; continue; } let k = idx.get(v); if (!k) { used.push(CU_PAL[v - 1]); k = used.length; idx.set(v, k); } s += String.fromCharCode(48 + k); } return s; };
-  const fr = frames.map(enc), w = (walk || []).map(enc), j = (jump || []).map(enc), m = (atk || []).map(set => set.map(enc)); return { n: name, p: used, a: fr[0], f: fr, w, j, m };
+  const fr = frames.map(enc), w = (walk || []).map(enc), j = (jump || []).map(enc), m = (atk || []).map(set => set.map(enc)); return { n: name, p: used, a: fr[0], f: fr, w, j, m, mn: (names || []).slice(0, 4) };
 }
 function cuDecodeOne(d, str) {      // the 4096 colour numbers (0 = see-through, otherwise 1 + the place in CU_PAL) of one frame; anything damaged is simply left empty
   const art = new Uint8Array(4096); if (typeof str !== 'string' || !d || !Array.isArray(d.p)) return art;
@@ -6644,6 +6644,7 @@ function cuDecodeOne(d, str) {      // the 4096 colour numbers (0 = see-through,
 function cuFrames(d) { const l = d && Array.isArray(d.f) && d.f.length ? d.f.slice(0, 15) : [d && d.a]; return l.map(str => cuDecodeOne(d, str)); }      // all the frames of a kept drawing (1 - 15; a drawing kept by v1.64 has one)
 function cuJumpFrames(d) { return d && Array.isArray(d.j) ? d.j.slice(0, 15).map(str => cuDecodeOne(d, str)) : []; }
 function cuAtkFrames(d, n) { return d && Array.isArray(d.m) && Array.isArray(d.m[n]) ? d.m[n].slice(0, 15).map(str => cuDecodeOne(d, str)) : []; }
+const cuAtkNames = d => [0, 1, 2, 3].map(q => d && Array.isArray(d.mn) && typeof d.mn[q] === 'string' ? d.mn[q].slice(0, 9) : '');      // the 4 names of the punches ('' = not named: M1 #1 to #4)
 function cuWalkFrames(d) { return d && Array.isArray(d.w) ? d.w.slice(0, 15).map(str => cuDecodeOne(d, str)) : []; }
 function cuImg(art, cv) {      // a frame on a 64 x 64 canvas (see-through pixels stay see-through)
   const g = cv.getContext('2d'), im = g.createImageData(64, 64); for (let i = 0; i < 4096; i++) { const v = art[i]; if (v) { const c = CU_RGB[v - 1]; im.data[i * 4] = c[0]; im.data[i * 4 + 1] = c[1]; im.data[i * 4 + 2] = c[2]; im.data[i * 4 + 3] = 255; } } g.putImageData(im, 0, 0);
@@ -6931,13 +6932,15 @@ function renderAnim() {      // the list after the name: IDLE, WALKING, JUMP and
 }
 function renderAtk() {      // the 4 punches (M1) of the combo: the first frame and the number of frames of each; under 5 frames a punch is not ready and would be left out, like an empty one
   for (let q = 0; q < 4; q++) { const b = $('cm' + q), f = cuChar['m' + q].filter(a => a.some(v => v)), n = f.length; cuImg(f[0] || new Uint8Array(4096), b.querySelector('canvas')); b.querySelector('i').textContent = !n ? 'EMPTY' : n < 5 ? n + ' (NEEDS 5)' : n + ' FRAMES'; }
+  for (let q = 0; q < 4; q++) $('cn' + q).value = cuChar.mn[q];
   $('cmName').textContent = cuNameV;
 }
+function cuSaveChar() { if (!cuChar.idle.some(f => f.some(v => v))) return false; const a = cuLoad(); a[cuSlot] = cuEncode(cuChar.idle, cuNameV, cuChar.walk, cuChar.jump, [cuChar.m0, cuChar.m1, cuChar.m2, cuChar.m3], cuChar.mn); cuStore(a); return true; }      // (false: the IDLE is still empty, nothing is kept)
 function cuToList() { if (cuSetKey[0] === 'm') { show('custatk'); renderAtk(); } else { show('custanim'); renderAnim(); } }      // (from the drawing back to the list it was opened from)
-function cuEdit(k) { cuBigOn = false; cuAutoDone = false; cuShapeStart = null; cuC = [32, 32]; cuSetKey = k; cuFr = cuChar[k].length ? cuChar[k].map(a => a.slice()) : [new Uint8Array(4096)]; cuCur = 0; cuArt = cuFr[0]; cuUndo = []; cuRedo = []; cuDirty = false; cuSt = null; cuSel = null; cuZoom = 1; cuPX = cuPY = 0; cuPtrs.clear(); cuPinch = null; cuIgnore = false; $('cdName').textContent = cuNameV + ' - ' + ({ idle: 'IDLE', walk: 'WALKING', jump: 'JUMP', m0: 'M1 #1', m1: 'M1 #2', m2: 'M1 #3', m3: 'M1 #4' }[k]); show('custdraw'); cuLayout(); cuSync(); cuPaint(); cuFrSync(); }
+function cuEdit(k) { cuBigOn = false; cuAutoDone = false; cuShapeStart = null; cuC = [32, 32]; cuSetKey = k; cuFr = cuChar[k].length ? cuChar[k].map(a => a.slice()) : [new Uint8Array(4096)]; cuCur = 0; cuArt = cuFr[0]; cuUndo = []; cuRedo = []; cuDirty = false; cuSt = null; cuSel = null; cuZoom = 1; cuPX = cuPY = 0; cuPtrs.clear(); cuPinch = null; cuIgnore = false; $('cdName').textContent = cuNameV + ' - ' + (k[0] === 'm' ? 'M1 #' + (+k[1] + 1) + (cuChar.mn[+k[1]] ? ' ' + cuChar.mn[+k[1]] : '') : { idle: 'IDLE', walk: 'WALKING', jump: 'JUMP' }[k]); show('custdraw'); cuLayout(); cuSync(); cuPaint(); cuFrSync(); }
 function customBack() {      // the Android back button inside CUSTOM: the drawing asks "SURE?" before it is thrown away; true when it was used
   if (state === 'custdraw') { if (cuDirty && !cuSure('back', $('cdBack'), 'SURE?')) return true; cuToList(); return true; }
-  if (state === 'custatk') { show('custanim'); renderAnim(); return true; }
+  if (state === 'custatk') { cuSaveChar(); show('custanim'); renderAnim(); return true; }
   if (state === 'custanim') { show('cust'); renderCust(); return true; }
   if (state === 'custname') { show('cust'); return true; }
   if (state === 'cust') { show('modes'); return true; }
@@ -6962,17 +6965,18 @@ function customBack() {      // the Android back button inside CUSTOM: the drawi
   $('cuDel').addEventListener('click', () => { if (!cuSure('del', $('cuDel'), 'SURE?')) return; const a = cuLoad(); a[cuSlot] = null; cuStore(a); show('cust'); renderCust(); });
   $('cuNext').addEventListener('click', () => {      // on to the list of animations (a new slot starts empty, an old one opens its pictures)
     audio(); cuNameV = $('cuName').value.trim().replace(/\s+/g, ' '); if (!cuNameV) return; $('cuName').blur(); const d = cuLoad()[cuSlot];
-    cuChar = { idle: d ? cuFrames(d) : [], walk: d ? cuWalkFrames(d) : [], jump: d ? cuJumpFrames(d) : [], m0: cuAtkFrames(d, 0), m1: cuAtkFrames(d, 1), m2: cuAtkFrames(d, 2), m3: cuAtkFrames(d, 3) }; show('custanim'); renderAnim();
+    cuChar = { idle: d ? cuFrames(d) : [], walk: d ? cuWalkFrames(d) : [], jump: d ? cuJumpFrames(d) : [], m0: cuAtkFrames(d, 0), m1: cuAtkFrames(d, 1), m2: cuAtkFrames(d, 2), m3: cuAtkFrames(d, 3), mn: cuAtkNames(d) }; show('custanim'); renderAnim();
   });
   $('ca0').addEventListener('click', () => { audio(); cuEdit('idle'); }); $('ca1').addEventListener('click', () => { audio(); cuEdit('walk'); }); $('ca2').addEventListener('click', () => { audio(); cuEdit('jump'); }); $('ca3').addEventListener('click', () => { audio(); show('custatk'); renderAtk(); });
   for (let q = 0; q < 4; q++) $('cm' + q).addEventListener('click', () => { audio(); cuEdit('m' + q); });
-  $('cmBack').addEventListener('click', () => { show('custanim'); renderAnim(); });
+  for (let q = 0; q < 4; q++) { const n = $('cn' + q), norm = () => n.value.toUpperCase().replace(/\s+/g, ' ').trim().slice(0, 9); n.addEventListener('input', () => { cuChar.mn[q] = norm(); }); n.addEventListener('change', () => { n.value = cuChar.mn[q] = norm(); cuSaveChar(); }); }      // (a name is kept as you type, written to the phone when the box is left)
+  $('cmBack').addEventListener('click', () => { cuSaveChar(); show('custanim'); renderAnim(); });
   $('caBack').addEventListener('click', () => { show('cust'); renderCust(); });
   $('cdDone').addEventListener('click', () => {
     const has = cuFr.some(f => f.some(v => v)), keep = cuFr.filter(f => f.some(v => v));
     if (!has && cuSetKey === 'idle') { cuFlash($('cdDone'), 'DRAW FIRST'); return; }
-    cuChar[cuSetKey] = keep; if (!cuChar.idle.some(f => f.some(v => v))) { cuFlash($('cdDone'), 'DO IDLE FIRST'); return; }
-    const a = cuLoad(); a[cuSlot] = cuEncode(cuChar.idle, cuNameV, cuChar.walk, cuChar.jump, [cuChar.m0, cuChar.m1, cuChar.m2, cuChar.m3]); cuStore(a); cuDirty = false; audio(); cuToList();
+    cuChar[cuSetKey] = keep; if (!cuSaveChar()) { cuFlash($('cdDone'), 'DO IDLE FIRST'); return; }
+    cuDirty = false; audio(); cuToList();
   });
   $('cdBack').addEventListener('click', () => { if (cuDirty && !cuSure('back', $('cdBack'), 'SURE?')) return; cuToList(); });
   addEventListener('resize', () => { if (state === 'custdraw') { cuLayout(); cuPaint(); } });
@@ -6980,31 +6984,36 @@ function customBack() {      // the Android back button inside CUSTOM: the drawi
 window.__custom = () => ({ c: cuC.slice(), zoom: cuZoom, big: cuBigOn, pal: CU_PAL.length, slots: cuLoad(), art: cuArt, frames: cuFr.length, cur: cuCur, tool: cuTool, color: cuColor, cell: cuCell, dirty: cuDirty });
 
 // ---- v1.65 the custom characters in the game: FREE PLAY (the fighter select screen) has a small card for each drawn slot; in the match the character stands on its idle frames (up to 15, at the speed of the others) and does nothing: it cannot move, attack or block yet (whatever you press is dropped)
-let cuPh = 0, cuJumpAt = -1;
+let cuPh = 0, cuJumpAt = -1, cuAtkAt = -1, cuAtkK = 0, cuCmb = 0, cuCmbBy = 0;      // (the jump, the punch being thrown (which of the 4, since when), the next punch of the combo and until when it goes on)
 const cuMe = () => !!vs && typeof vs.me === 'string' && vs.me.slice(0, 2) === 'cu';
 const CU_GAME = [null, null, null];      // for each slot { name, frames: 64 x 64 canvases }, made again every time the select screen opens
 function cuSelRefresh() {
   const row = $('selCu'), a = cuLoad(); row.innerHTML = ''; for (let i = selPv.length - 1; i >= 0; i--) if (selPv[i].who.slice(0, 2) === 'cu') selPv.splice(i, 1); let n = 0;
   a.forEach((d, i) => {
-    const mk = f => { const c = document.createElement('canvas'); c.width = c.height = 64; cuImg(f, c); return c; }; CU_GAME[i] = d ? { name: d.n || 'CUSTOM', frames: cuFrames(d).map(mk), walk: cuWalkFrames(d).map(mk), jump: cuJumpFrames(d).map(mk) } : null; if (!d) return; n++;
+    const mk = f => { const c = document.createElement('canvas'); c.width = c.height = 64; cuImg(f, c); return c; }; CU_GAME[i] = d ? { name: d.n || 'CUSTOM', frames: cuFrames(d).map(mk), walk: cuWalkFrames(d).map(mk), jump: cuJumpFrames(d).map(mk), atk: [0, 1, 2, 3].map(q => cuAtkFrames(d, q).map(mk)), an: cuAtkNames(d).map((nm, q) => nm || 'M1 #' + (q + 1)) } : null; if (CU_GAME[i]) CU_GAME[i].rdy = [0, 1, 2, 3].filter(q => CU_GAME[i].atk[q].length >= 5); if (!d) return; n++;      // (rdy: the punches with the 5 frames they need, an: their names for the ATTACK button)
     const b = document.createElement('button'); b.className = 'card pp'; b.dataset.who = 'cu' + i; b.innerHTML = '<canvas width="64" height="64"></canvas><b></b>'; b.querySelector('b').textContent = CU_GAME[i].name; selPv.push({ g: b.querySelector('canvas').getContext('2d'), who: 'cu' + i });
     b.addEventListener('click', () => { NAMES['cu' + i] = CU_GAME[i].name; startPractice('cu' + i); }); row.appendChild(b);
   });
   $('selCuLab').style.display = n ? '' : 'none'; row.style.display = n ? '' : 'none';
 }
 const cuIdleCv = (who, now) => { const g = CU_GAME[+who.slice(2)]; return g ? g.frames[Math.floor(now / (1000 / IDLE_FPS)) % g.frames.length] : null; };
-function customScene(now, dt) {      // one frame of a match with a CUSTOM character as the player: it stands on its idle frames, walks on its walking frames and jumps on its jump frames (the other moves are not there yet); the enemy, the HUD and the effects are the shared ones
+function customScene(now, dt) {      // one frame of a match with a CUSTOM character as the player: it stands on its idle frames, walks on its walking frames, jumps on its jump frames and plays its punches when ATTACK is pressed (nothing is hit yet; the other moves are not there yet); the enemy, the HUD and the effects are the shared ones
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3), cx = Math.round(VW / 2), g = CU_GAME[+vs.me.slice(2)]; setDomUI(now);
-  const jmp = jumpReq; jumpReq = false; if (t < 1) cuJumpAt = -1; if (jmp && cuJumpAt < 0 && g && g.jump.length && t >= 1 && now >= pStun && (!vs || vs.ph === 'fight')) { cuJumpAt = now; snd('jump'); }
+  const ctl = t >= 1 && now >= pStun && vs.ph === 'fight', jmp = jumpReq, atk = atkReq; jumpReq = atkReq = false;      // (it answers the buttons only when it is there, not stunned and in the FIGHT)
+  if (t < 1) { cuJumpAt = cuAtkAt = -1; cuCmb = 0; cuCmbBy = 0; }
+  if (jmp && ctl && g && g.jump.length && cuJumpAt < 0 && cuAtkAt < 0) { cuJumpAt = now; snd('jump'); }
+  if (atk && ctl && g && g.rdy.length && cuJumpAt < 0 && cuAtkAt < 0) { if (now > cuCmbBy) cuCmb = 0; cuAtkK = g.rdy[cuCmb % g.rdy.length]; cuAtkAt = now; cuCmbBy = now + 1e9; cuCmb = (cuCmb + 1) % g.rdy.length; snd('swing', cuAtkK); }      // (ATTACK: the next of its ready punches plays once; nothing is hit yet)
+  let ap = -1; if (cuAtkAt >= 0 && g) { ap = (now - cuAtkAt) / (g.atk[cuAtkK].length * 50); if (ap >= 1) { cuAtkAt = -1; ap = -1; cuCmbBy = now + 700; } }      // (20 pictures a second; the combo goes on for 0.7 s after a punch)
+  { const lab = g && g.rdy.length ? g.an[g.rdy[(now > cuCmbBy ? 0 : cuCmb) % g.rdy.length]] : 'ATTACK'; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; } }      // (the ATTACK button shows the name of the punch that comes next)
   let jp = -1, lift = 0; if (cuJumpAt >= 0) { jp = (now - cuJumpAt) / 800; if (jp >= 1) { cuJumpAt = -1; jp = -1; snd('land', 1); } else lift = Math.round(46 * 4 * jp * (1 - jp)); }      // (JUMP: 0.8 s, 46 pixels high, the jump frames play once over it)
   gojoLift = lift;
-  const can = g && g.walk.length && t >= 1 && now >= pStun && (!vs || vs.ph === 'fight'), dir = can ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0;      // (the only thing it can do: walk, when it has walking frames)
+  const can = g && g.walk.length && ctl && cuAtkAt < 0, dir = can ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0;      // (the only thing it can do: walk, when it has walking frames)
   jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = senseReq = blockHeld = false; atkHold = -1; teleAt = blkAt = blkEnd = -1; gojoGone = false; atkAt = dgAt = jumpAt = -1; stance = 'stand'; stickCr = false; mode = 'idle';      // (it cannot attack or block yet; gojoLift, set above, makes the enemy's swings miss while it is high in the air)
   if (hurtAt >= 0 && now - hurtAt > 700) { hurtAt = -1; hurtEnd = now; }
   wx += dir * 70 * dt; cuPh = dir ? cuPh + dir * dt * 12 : 0; playerSlide(dt); physCollide(now, dt);
   ctx.save(); shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }
   ctx.imageSmoothingEnabled = false; drawBackdrop(now); drawSmoke(now, dt); drawBloodFloor(now, dt); drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
-  const src = !g ? null : jp >= 0 ? g.jump[Math.min(g.jump.length - 1, Math.floor(jp * g.jump.length))] : dir ? g.walk[((Math.floor(cuPh) % g.walk.length) + g.walk.length) % g.walk.length] : g.frames[Math.floor(el / (1000 / IDLE_FPS)) % g.frames.length], x = cx - 32, y = gy - 61 - lift, ry = Math.round(64 * (1 - e));
+  const af = ap >= 0 ? g.atk[cuAtkK] : null, src = !g ? null : af ? af[Math.min(af.length - 1, Math.floor(ap * af.length))] : jp >= 0 ? g.jump[Math.min(g.jump.length - 1, Math.floor(jp * g.jump.length))] : dir ? g.walk[((Math.floor(cuPh) % g.walk.length) + g.walk.length) % g.walk.length] : g.frames[Math.floor(el / (1000 / IDLE_FPS)) % g.frames.length], x = cx - 32, y = gy - 61 - lift, ry = Math.round(64 * (1 - e));
   { const sw = Math.max(5, Math.round(9 * (1 - lift / 70))), sv = Math.round(sw * 2 / 3); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
   if (src) { ctx.save(); ctx.beginPath(); ctx.rect(x, y + ry, 64, 64 - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, x, y); if (hurtAt >= 0 && now - hurtAt < 70) ctx.drawImage(whiteOf(src), x, y); ctx.restore(); }
   drawGiantNow('foe');
@@ -8779,7 +8788,7 @@ joy.addEventListener('contextmenu', e => e.preventDefault());
 
 const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U', KeyJ: 'A', KeyF: 'A', ArrowDown: 'C', KeyS: 'C', KeyC: 'C', KeyL: 'B', KeyK: 'D', ShiftLeft: 'D', ShiftRight: 'D', KeyB: 'G', KeyE: 'E', KeyV: 'V', KeyH: 'H', KeyQ: 'Q' };
 addEventListener('keydown', e => {
-  if (e.target.id === 'lanName' || e.target.id === 'cuName') { if (e.key === 'Enter') e.target.blur(); return; }      // typing a room name: the game keys stay out of it
+  if (e.target.id === 'lanName' || e.target.id === 'cuName' || e.target.className === 'cmIn') { if (e.key === 'Enter') e.target.blur(); return; }      // typing a room name: the game keys stay out of it
   if (paused && !settingsOn()) { if ((e.key === 'Escape' || e.code === 'KeyP') && !e.repeat) setPause(false); return; }      // (paused: only Esc or P do anything)
   if (settingsOn()) { if (e.key === 'Escape') closeSettings(); return; }      // the settings screen takes the keyboard while it is open
   if (e.code === 'KeyP' && state === 'play') { if (!e.repeat) setPause(true); return; }      // P pauses a fight
