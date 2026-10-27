@@ -125,6 +125,8 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 /* ---- CUSTOM (v1.64): the slots, the name and the drawing board */
 #customMode span{font-size:6vh;margin-top:6.5vh;color:#7be0a0}
 #custAnim .cards,#custAtk .cards{gap:3vh}#custAnim .card canvas,#custAtk .card canvas{width:17vh;height:17vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line);margin-top:1vh}#custAnim .card,#custAtk .card{width:27vh;height:38vh}#custAtk .card{height:31vh}#custAtk .card canvas{width:15vh;height:15vh}#custAtk .cmc{display:flex;flex-direction:column;align-items:center;gap:1.4vh}#custAtk .cmIn{font:inherit;font-size:var(--fs-btn,clamp(8px,2.4vh,13px));color:var(--ink);background:#120d22;border:3px solid var(--line);padding:1vh;width:27vh;text-transform:uppercase;text-align:center;user-select:text;-webkit-user-select:text;outline:none}#custAtk .cmIn:focus{border-color:var(--acc)}
+#custAnim{gap:1.4vh}#custAnim .cards{display:grid;grid-template-columns:repeat(4,22vh);gap:2vh;justify-content:center}#custAnim .card{width:22vh;height:26vh;font-size:var(--fs-btn,clamp(7px,2vh,12px))}#custAnim .card canvas{width:12vh;height:12vh}#custAnim .card b{white-space:nowrap}#ca6 b{font-size:.78em}
+#stList{display:grid;grid-template-columns:1fr 1fr;gap:1vh 2vh;width:min(94vw,160vh);max-height:62vh;overflow-y:auto;text-align:left;padding:.5vh}.st{display:flex;align-items:center;gap:1vh;padding:.9vh 1.2vh;background:var(--card);border:2px solid var(--line);font-size:clamp(7px,2vh,12px)}.st b{flex:1;letter-spacing:.06em}.st input{width:9vh;font:inherit;text-align:center;color:var(--ink);background:#120d22;border:2px solid var(--line);padding:.4vh;-moz-appearance:textfield;appearance:textfield}.st input::-webkit-inner-spin-button,.st input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.st em{font-style:normal;opacity:.7;min-width:4vh}.st small{opacity:.55;font-size:.8em;min-width:13vh;text-align:right}.st.off{opacity:.35}
 #custCode{gap:1.2vh}#custCode>small{line-height:1.5}#ccMain{display:flex;gap:2vh;width:min(94vw,170vh);height:68vh}#ccPal,#ccWork{display:flex;flex-direction:column;gap:1vh;padding:1.2vh;background:var(--card);border:3px solid var(--line);text-align:left;min-height:0}#ccPal{width:27vh;flex:none}#ccPal b{font-size:1.6vh;letter-spacing:.12em;color:var(--dim)}#ccPal button{margin-top:auto}#ccPalL{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:.7vh;touch-action:pan-y}#ccPalL h6{margin:.6vh 0 0;font-size:1.4vh;font-weight:400;letter-spacing:.14em;color:var(--dim)}#ccPalL .blk{touch-action:pan-y;padding:.8vh 1vh;font-size:clamp(5px,1.7vh,10px);letter-spacing:.02em}#ccPalL .blk span{white-space:nowrap}#ccPal.del{border-color:var(--acc);background:#2a0d12}#ccWork{flex:1;min-width:0}
 #ccTabs{display:flex;gap:.8vh}#ccTabs button{flex:1;min-width:0;padding:.9vh .3vh;font-size:clamp(5px,1.6vh,9px);border-width:2px;overflow:hidden}#ccTabs button.on{border-color:var(--blue);color:var(--blue)}
 #ccFr{display:flex;gap:.6vh;min-height:9vh;font-size:1.5vh;color:var(--dim);overflow-x:auto;touch-action:pan-x;flex:none}#ccFr .cf{flex:none;width:7vh;text-align:center}#ccFr canvas{display:block;width:7vh;height:7vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line)}#ccFr em{font-style:normal;font-size:1.4vh}#ccFr .cf.hit canvas{border-color:var(--acc)}#ccFr .cf.hit em{color:var(--acc)}
@@ -179,7 +181,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.77</small>
+    <small id="ver">V1.78</small>
   </div>
 </section>
 
@@ -283,11 +285,22 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <button id="ca0" class="card mode"><canvas width="64" height="64"></canvas><b>IDLE</b><i>EMPTY</i></button>
     <button id="ca1" class="card mode"><canvas width="64" height="64"></canvas><b>WALKING</b><i>EMPTY</i></button>
     <button id="ca2" class="card mode"><canvas width="64" height="64"></canvas><b>JUMP</b><i>EMPTY</i></button>
+    <button id="ca5" class="card mode"><canvas width="64" height="64"></canvas><b>CROUCH</b><i>EMPTY</i></button>
+    <button id="ca6" class="card mode"><canvas width="64" height="64"></canvas><b>CROUCH IDLE</b><i>EMPTY</i></button>
     <button id="ca3" class="card mode"><canvas width="64" height="64"></canvas><b>ATTACK</b><i>EMPTY</i></button>
     <button id="ca4" class="card mode"><canvas width="64" height="64"></canvas><b>CODE</b><i>EMPTY</i></button>
+    <button id="ca7" class="card mode"><canvas width="64" height="64"></canvas><b>STATS</b><i>9 NUMBERS</i></button>
   </div>
-  <small>TAP ONE TO DRAW ITS FRAMES (UP TO 15; JUMP ABOUT 10, PUNCH 5+); CODE = BLOCKS</small>
+  <small>TAP ONE TO DRAW IT (UP TO 15 PICTURES; JUMP 10, CROUCH 4, PUNCH 5+); CODE = BLOCKS</small>
   <div class="row"><button id="caBack">DONE</button></div>
+</section>
+
+<section id="custStats" class="screen">
+  <h2>STATS</h2>
+  <small id="stName"></small>
+  <div id="stList"></div>
+  <small>WHAT THE OTHER FIGHTERS HAVE IS NEXT TO EACH ONE; THE GREYED ONES COME WITH DASH AND BLOCK</small>
+  <div class="row"><button id="stBack">DONE</button></div>
 </section>
 
 <section id="custCode" class="screen">
@@ -1301,7 +1314,7 @@ function show(s) {
   $('versus').classList.toggle('on', s === 'versus');
   $('title').classList.toggle('on', s === 'title');
   $('select').classList.toggle('on', s === 'select');
-  $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves'); if (s === 'select') cuSelRefresh(); $('cust').classList.toggle('on', s === 'cust'); $('custName').classList.toggle('on', s === 'custname'); $('custDraw').classList.toggle('on', s === 'custdraw'); $('custAnim').classList.toggle('on', s === 'custanim'); $('custAtk').classList.toggle('on', s === 'custatk'); $('custCode').classList.toggle('on', s === 'custcode');
+  $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves'); if (s === 'select') cuSelRefresh(); $('cust').classList.toggle('on', s === 'cust'); $('custName').classList.toggle('on', s === 'custname'); $('custDraw').classList.toggle('on', s === 'custdraw'); $('custAnim').classList.toggle('on', s === 'custanim'); $('custAtk').classList.toggle('on', s === 'custatk'); $('custCode').classList.toggle('on', s === 'custcode'); $('custStats').classList.toggle('on', s === 'custstats');
   cv.style.display = s === 'play' || s === 'story' ? 'block' : 'none';
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
@@ -2379,7 +2392,7 @@ function vsTick(now, dt) {
   if (vs.me === 'cat') { ceReq = false; if (stance !== 'stand') blockHeld = false; }      // the Cat has no MODE; he blocks standing only (flat nothing can hit him anyway)
   if (vs.me === 'yuji') { if (stance !== 'stand') { if (stance !== 'crouch') atkReq = false; blockHeld = false; if (stance !== 'crouch') lpReq = false; } }      // Yuji has his M1 combo, BLUE (DIVERGENT FIST standing, CONCENTRATED FIST in cursed energy mode, crouched: the SWEEP in normal mode and the UPPERCUT, then the FACE KICK, in cursed energy mode), the cursed energy MODE (off <-> on, no red mode), block, walking, jumping, crouching and dashing (v1.46: the DOMAIN button is his ULTIMATE; v1.48: crouched, ATTACK is his two crouch punches, R.JAB and L.UPPR, with the skill CROUCH PUNCHES)
 }
-function vsHurt(dm, now) { if (dom) return; vs.hp = Math.max(0, vs.hp - dm); vs.hitAt = now; if (vs.hp <= 0) { if (!vs.story || vs.foe === 'cat' || vs.tn) { endRound('enemy', 'ko', now); if (vs.net && vs.ph === 'ko' && vs.who === 'enemy') lanSend('K|'); } else if (!de && !se) deathStart(now); } }      // (in the story fight Gojo's death is a cutscene)
+function vsHurt(dm, now) { if (dom) return; if (cuMe()) dm = Math.max(1, Math.round(dm * PHP / cuS.hp)); vs.hp = Math.max(0, vs.hp - dm); vs.hitAt = now; if (vs.hp <= 0) { if (!vs.story || vs.foe === 'cat' || vs.tn) { endRound('enemy', 'ko', now); if (vs.net && vs.ph === 'ko' && vs.who === 'enemy') lanSend('K|'); } else if (!de && !se) deathStart(now); } }      // (in the story fight Gojo's death is a cutscene)
 function endRound(who, why, now) {
   if (!vs || vs.ph !== 'fight') return; vs.ph = 'ko'; vs.t0 = now; vs.who = who; vs.why = why; if (who === 'player') vs.pw++; else vs.ew++; if (vs.rush && who === 'player') rushPay(now);
   if (why === 'ko') holdUntil = Math.max(holdUntil, now + KO_HOLD); vs.koAt = Math.max(now, holdUntil); snd(who === 'player' ? 'finisher' : 'ko'); buzz(who === 'player' ? 60 : 110);      // (koAt: when the loser starts to topple)
@@ -2473,7 +2486,7 @@ function ceSpend(cost, now) { if (!vs || vs.end || (vs.practice && TR.pce === 0)
 function ceTick(now, dt) {                    // the refill and the cursed mode's drain (only while a round is being fought)
   if (!vs || vs.ph !== 'fight') return;
   if (cm === 1) { ce = Math.max(0, ce - dt); if (ce <= 0) { ceDeny(now); setMode(0, now); } }
-  else if (now - ceLast >= CE_WAIT) ce = Math.min(100, ce + dt * CE_REFILL);
+  else if (now - ceLast >= CE_WAIT) ce = Math.min(100, ce + dt * CE_REFILL * (cuMe() ? cuS.er / 100 : 1));
 }
 window.__ce = () => ({ ce, last: ceLast, flash: ceFlash, now: pnow() }); window.__ceSet = o => { if (o.ce !== undefined) ce = o.ce; if (o.last !== undefined) ceLast = o.last; }; window.__ceCost = () => CE_COST;      // test hooks
 const CEC = { gojo: ['#0b2a3a', '#2fe3ff', '#b8f8ff', '#7df0ff'], verity: ['#2a2208', '#ffd34d', '#fff3b0', '#ffe37d'], cat: ['#2a0b1a', '#ff5a8a', '#ffc0d4', '#ff8fb0'] };      // the cursed energy bar's colours per fighter: [empty part, bar, shine, text] (cyan for Gojo and Yuji, yellow for Verity, pink for the Cat)
@@ -5806,7 +5819,7 @@ joy.addEventListener('contextmenu', e => e.preventDefault());
 
 const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U', KeyJ: 'A', KeyF: 'A', ArrowDown: 'C', KeyS: 'C', KeyC: 'C', KeyL: 'B', KeyK: 'D', ShiftLeft: 'D', ShiftRight: 'D', KeyB: 'G', KeyE: 'E', KeyV: 'V', KeyH: 'H', KeyQ: 'Q' };
 addEventListener('keydown', e => {
-  if (e.target.id === 'lanName' || e.target.id === 'cuName' || e.target.className === 'cmIn' || (e.target.closest && e.target.closest('#custCode'))) { if (e.key === 'Enter') e.target.blur(); return; }      // typing a room name: the game keys stay out of it
+  if (e.target.id === 'lanName' || e.target.id === 'cuName' || e.target.className === 'cmIn' || (e.target.closest && e.target.closest('#custCode, #custStats'))) { if (e.key === 'Enter') e.target.blur(); return; }      // typing a room name: the game keys stay out of it
   if (paused && !settingsOn()) { if ((e.key === 'Escape' || e.code === 'KeyP') && !e.repeat) setPause(false); return; }      // (paused: only Esc or P do anything)
   if (settingsOn()) { if (e.key === 'Escape') closeSettings(); return; }      // the settings screen takes the keyboard while it is open
   if (e.code === 'KeyP' && state === 'play') { if (!e.repeat) setPause(true); return; }      // P pauses a fight
