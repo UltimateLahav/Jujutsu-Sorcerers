@@ -135,6 +135,27 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #cdPal{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;width:100%}#cdPal button{padding:0;height:3.6vh;min-width:0;border:2px solid #000;box-shadow:none}#cdPal button.sel{outline:2px solid #fff;outline-offset:-1px;z-index:1}
 #cdPv{display:flex;flex-direction:column;align-items:center;gap:.6vh;text-align:center}#cdFr{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;width:100%}#cdFr button{padding:0;height:5.4vh;min-width:0;border:2px solid var(--line);box-shadow:none;background:#120d22;font-size:clamp(8px,2.8vh,16px);color:#ffd34d;line-height:1;display:flex;align-items:center;justify-content:center}#cdFr canvas{width:100%;height:100%;image-rendering:pixelated}#cdFr button.sel{border-color:#ffd34d;background:#2a1f4a}#cdFr button.add{border-style:dashed}#cdFrInfo{font-size:clamp(6px,1.8vh,9px)}#cdPrev{width:64px;height:64px;image-rendering:pixelated;background:#120d22;border:2px solid var(--line)}
 #cdDone{border-color:#ffd34d;color:#ffd34d}
+/* ---- v1.68 INK STYLE: manga panels (near-black and bone white, hard edges, slanted corners, halftone dots), blood-red accents, cursed-energy blue only where something is chosen */
+:root{--bg:#07060a;--ink:#f1ecdf;--dim:#a39d90;--acc:#e0242f;--card:#0b0a0f;--line:#d9d3c4;--blue:#39a2ff}
+.screen{background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.05) 0 1px,transparent 1.5px) 0 0/9px 9px,linear-gradient(115deg,transparent 0 62%,rgba(224,36,47,.10) 62% 63.2%,transparent 63.2% 100%),radial-gradient(ellipse at 50% 120%,#1a0508,var(--bg) 62%)}
+h1,h2{font-style:italic;letter-spacing:.06em;text-shadow:3px 3px 0 #b3121f,-1px -1px 0 #000;transform:skewX(-7deg)}
+h2{position:relative;padding:.6vh 3vh;background:#f1ecdf;color:#07060a;text-shadow:none;box-shadow:.7vh .7vh 0 #b3121f;clip-path:polygon(2vh 0,100% 0,calc(100% - 2vh) 100%,0 100%)}
+small{letter-spacing:.04em}
+button,.card{background:linear-gradient(180deg,#14121a,#0b0a0f);border:3px solid var(--line);border-bottom:.9vh solid #b3121f;box-shadow:none;clip-path:polygon(1.4vh 0,100% 0,100% calc(100% - 1.4vh),calc(100% - 1.4vh) 100%,0 100%,0 1.4vh);text-transform:uppercase;letter-spacing:.05em;transition:none}
+button:hover:not(:disabled),.card:hover{border-color:var(--blue);color:#fff;border-bottom-color:var(--blue)}
+button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
+.card.sel,.row button.sel,#cdTools button.sel,#cdFr button.sel{border-color:#e0242f;border-bottom-color:var(--blue);background:linear-gradient(180deg,#2a0b10,#0b0a0f);color:#fff}
+.card i{color:#e0242f}.mode span{color:#f1ecdf;text-shadow:3px 3px 0 #b3121f}#lanMode span{color:#f1ecdf}#customMode span{color:#f1ecdf}
+#pad button,#hud button,.pb{clip-path:none}
+#title{background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.05) 0 1px,transparent 1.5px) 0 0/9px 9px,linear-gradient(105deg,#07060a 0 48%,#150508 48% 49.5%,#07060a 49.5% 100%),var(--bg)}
+#title h1{display:flex;flex-direction:column;align-items:center;gap:.4vh;transform:skewX(-8deg);text-shadow:none}
+#title .j1{font-size:7.5vh;color:#f1ecdf;text-shadow:.7vh .7vh 0 #b3121f,-.3vh -.3vh 0 #000;letter-spacing:.12em}
+#title .j2{font-size:5.1vh;color:#07060a;background:#f1ecdf;padding:.5vh 2vh;box-shadow:.8vh .8vh 0 #b3121f;letter-spacing:.1em}
+.seal{position:absolute;right:7vh;top:6vh;width:9vh;height:9vh;display:flex;align-items:center;justify-content:center;border:.7vh solid #e0242f;color:#e0242f;font:bold 6.4vh/1 "Hiragino Mincho ProN","Noto Serif CJK JP","Noto Serif JP",serif;transform:rotate(9deg);background:rgba(224,36,47,.08);box-shadow:inset 0 0 0 .5vh rgba(7,6,10,.9);opacity:.92}
+#hero{filter:drop-shadow(0 0 1.6vh rgba(57,162,255,.7));animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{50%{filter:drop-shadow(0 0 3.6vh rgba(57,162,255,1))}}
+.blink{color:#f1ecdf;border-color:#e0242f}
+#custAnim .card canvas,#cust .card canvas,#cdPrev,#cdFr button,#cdCv{border-color:var(--line)}
 #rotate{position:fixed;inset:0;z-index:9;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--bg);text-align:center;line-height:1.6;font-size:12px}
 #rotate div{font-size:56px;animation:r 2s ease-in-out infinite}
 @keyframes r{0%,30%{transform:rotate(0)}70%,100%{transform:rotate(-90deg)}}
@@ -147,10 +168,10 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 <section id="title" class="screen on">
   <canvas id="hero" width="64" height="64" role="img" aria-label="Gojo lifting his blindfold, one eye glowing"></canvas>
   <div class="tcol">
-    <h1>JUJUTSU<br>SORCERERS</h1>
+    <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.67</small>
+    <small id="ver">V1.68</small>
   </div>
 </section>
 
