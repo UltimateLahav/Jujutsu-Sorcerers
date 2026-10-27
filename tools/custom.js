@@ -12,9 +12,9 @@ const CU_RGB = CU_PAL.map(c => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3,
 // ---- what is kept on the device
 function cuLoad() { try { const a = JSON.parse(localStorage.getItem(CU_KEY)); if (Array.isArray(a) && a.length === 3) return a; } catch (e) { } return [null, null, null]; }
 function cuStore(a) { try { localStorage.setItem(CU_KEY, JSON.stringify(a)); } catch (e) { } }
-function cuEncode(frames, name, walk, jump, atk, names, progs, vfx, crouch, cidle, stats) {      // the name, the colours used by any frame of either animation and, for each frame, one character per pixel (48 + the number of its colour in that list; '0' = see-through); .f = the IDLE frames (.a the first, what older versions read), .w = the WALKING frames, .j = the JUMP frames, .m = the 4 ATTACK (M1) sets of frames, .mn = their 4 names, .pg = their 4 scripts (CODE blocks), .vx = their 4 VFX drawings (up to 5 frames), .cr = the CROUCH pictures (up to 4), .ci = the CROUCH IDLE ones, .st = the STATS
+function cuEncode(frames, name, walk, jump, atk, names, progs, vfx, crouch, cidle, stats, dfront, dback) {      // the name, the colours used by any frame of either animation and, for each frame, one character per pixel (48 + the number of its colour in that list; '0' = see-through); .f = the IDLE frames (.a the first, what older versions read), .w = the WALKING frames, .j = the JUMP frames, .m = the 4 ATTACK (M1) sets of frames, .mn = their 4 names, .pg = their 4 scripts (CODE blocks), .vx = their 4 VFX drawings (up to 5 frames), .cr = the CROUCH pictures (up to 4), .ci = the CROUCH IDLE ones, .st = the STATS, .df and .db = the FRONT and BACK DASH pictures
   const used = [], idx = new Map(), enc = art => { let s = ''; for (let i = 0; i < 4096; i++) { const v = art[i]; if (!v) { s += '0'; continue; } let k = idx.get(v); if (!k) { used.push(CU_PAL[v - 1]); k = used.length; idx.set(v, k); } s += String.fromCharCode(48 + k); } return s; };
-  const fr = frames.map(enc), w = (walk || []).map(enc), j = (jump || []).map(enc), m = (atk || []).map(set => set.map(enc)); return { n: name, p: used, a: fr[0], f: fr, w, j, m, mn: (names || []).slice(0, 4), pg: (progs || []).slice(0, 4), vx: (vfx || []).slice(0, 4).map(set => set.map(enc)), cr: (crouch || []).map(enc), ci: (cidle || []).map(enc), st: stats || {} };
+  const fr = frames.map(enc), w = (walk || []).map(enc), j = (jump || []).map(enc), m = (atk || []).map(set => set.map(enc)); return { n: name, p: used, a: fr[0], f: fr, w, j, m, mn: (names || []).slice(0, 4), pg: (progs || []).slice(0, 4), vx: (vfx || []).slice(0, 4).map(set => set.map(enc)), cr: (crouch || []).map(enc), ci: (cidle || []).map(enc), st: stats || {}, df: (dfront || []).map(enc), db: (dback || []).map(enc) };
 }
 function cuDecodeOne(d, str) {      // the 4096 colour numbers (0 = see-through, otherwise 1 + the place in CU_PAL) of one frame; anything damaged is simply left empty
   const art = new Uint8Array(4096); if (typeof str !== 'string' || !d || !Array.isArray(d.p)) return art;
@@ -30,10 +30,12 @@ function cuCrFrames(d) { return d && Array.isArray(d.cr) ? d.cr.slice(0, 4).map(
 function cuCiFrames(d) { return d && Array.isArray(d.ci) ? d.ci.slice(0, 15).map(str => cuDecodeOne(d, str)) : []; }
 const CU_STAT = [      // the STATS of a fighter: [key, name, unit, least, most, first value, what the other fighters have]
   ['hp', 'HEALTH', '', 50, 999, 300, 'THEY HAVE 300'], ['fw', 'WALK SPEED', 'PX/S', 10, 200, 70, 'THEY HAVE 56'], ['bk', 'BACK SPEED', 'PX/S', 10, 200, 70, 'THEY HAVE 38'], ['cw', 'CROUCH WALK', '%', 0, 100, 60, 'THEY HAVE 60'],
-  ['jh', 'JUMP HEIGHT', 'PX', 10, 120, 46, 'THEY HAVE 22'], ['jt', 'JUMP TIME', 'MS', 300, 1500, 800, 'THEY HAVE 713'], ['em', 'ENERGY', '%', 20, 300, 100, 'THEY HAVE 100'], ['er', 'ENERGY REFILL', '%', 0, 300, 100, 'THEY HAVE 100'], ['dm', 'DAMAGE', '%', 10, 300, 100, 'THEY HAVE 100']];
-const CU_STAT_OFF = [['DASH SPEED', 'THEY DASH FOR 375 MS'], ['DASH LENGTH', ''], ['BLOCK', ''], ['PARRY TIME', 'THEY HAVE 260 MS']];      // (what the others have and a custom fighter cannot do yet: shown greyed)
+  ['jh', 'JUMP HEIGHT', 'PX', 10, 120, 46, 'THEY HAVE 22'], ['jt', 'JUMP TIME', 'MS', 300, 1500, 800, 'THEY HAVE 713'], ['dfw', 'DASH FORWARD', 'PX', 10, 200, 50, 'THEY HAVE 50'], ['dbk', 'DASH BACK', 'PX', 10, 200, 42, 'THEY HAVE 42'], ['dtm', 'DASH TIME', 'MS', 100, 1000, 375, 'THEY HAVE 375'], ['em', 'ENERGY', '%', 20, 300, 100, 'THEY HAVE 100'], ['er', 'ENERGY REFILL', '%', 0, 300, 100, 'THEY HAVE 100'], ['dm', 'DAMAGE', '%', 10, 300, 100, 'THEY HAVE 100']];
+const CU_STAT_OFF = [['BLOCK', ''], ['PARRY TIME', 'THEY HAVE 260 MS']];      // (what the others have and a custom fighter cannot do yet: shown greyed)
 const cuStats = d => { const o = {}; CU_STAT.forEach(([k, , , lo, hi, df]) => { const v = d && d.st ? Math.round(+d.st[k]) : NaN; o[k] = isNaN(v) ? df : Math.max(lo, Math.min(hi, v)); }); return o; };
 let cuS = cuStats(null);      // the stats of the fighter in the match
+function cuDfFrames(d) { return d && Array.isArray(d.df) ? d.df.slice(0, 15).map(str => cuDecodeOne(d, str)) : []; }
+function cuDbFrames(d) { return d && Array.isArray(d.db) ? d.db.slice(0, 15).map(str => cuDecodeOne(d, str)) : []; }
 function cuWalkFrames(d) { return d && Array.isArray(d.w) ? d.w.slice(0, 15).map(str => cuDecodeOne(d, str)) : []; }
 function cuImg(art, cv) {      // a frame on a 64 x 64 canvas (see-through pixels stay see-through)
   const g = cv.getContext('2d'), im = g.createImageData(64, 64); for (let i = 0; i < 4096; i++) { const v = art[i]; if (v) { const c = CU_RGB[v - 1]; im.data[i * 4] = c[0]; im.data[i * 4 + 1] = c[1]; im.data[i * 4 + 2] = c[2]; im.data[i * 4 + 3] = 255; } } g.putImageData(im, 0, 0);
@@ -203,7 +205,7 @@ function cuTplFrame(st, kind, i) {      // one frame (a Uint8Array of 4096 colou
   const px = (x, y, v) => { if (x >= 0 && y >= 0 && x < 64 && y < 64) a[y * 64 + x] = v; }, rc = (x0, y0, x1, y1, v) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) px(x, y, v); };
   const th = (x0, y0, x1, y1, w, v) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1); for (let k = 0; k <= n; k++) rc(Math.round(x0 + (x1 - x0) * k / n), Math.round(y0 + (y1 - y0) * k / n), Math.round(x0 + (x1 - x0) * k / n) + w - 1, Math.round(y0 + (y1 - y0) * k / n) + w - 1, v); };
   const CRD = kind === 'cr' ? [2, 5, 8, 11][i % 4] : kind === 'ci' ? [11, 11, 12, 12][i % 4] : 0, KN = CRD > 0;      // how far a crouch pose has sunk (CROUCH: 4 pictures down, CROUCH IDLE: it holds and breathes)
-  const JP = [[2, 0, 0, -3, -2], [4, 0, 0, -4, -3], [1, 0, 6, 0, 0], [0, 3, 10, 3, 3], [0, 6, 12, 4, 4], [0, 8, 12, 4, 5], [0, 6, 8, 2, 4], [0, 3, 4, 0, 3], [3, 0, 0, -2, -3], [1, 0, 0, 0, -1]][i % 10], J = kind === 'jump' ? JP : null, A = kind[0] === 'm' ? CU_ATK[+kind[1]][i % 5] : KN ? [38, 28 + CRD, 36, 30 + CRD, 0, CRD] : null;      // a jump frame: [crouch, feet raised, arms up, arm swing, legs apart]
+  const JP = [[2, 0, 0, -3, -2], [4, 0, 0, -4, -3], [1, 0, 6, 0, 0], [0, 3, 10, 3, 3], [0, 6, 12, 4, 4], [0, 8, 12, 4, 5], [0, 6, 8, 2, 4], [0, 3, 4, 0, 3], [3, 0, 0, -2, -3], [1, 0, 0, 0, -1]][i % 10], J = kind === 'jump' ? JP : null, A = kind[0] === 'm' ? CU_ATK[+kind[1]][i % 5] : KN ? [38, 28 + CRD, 36, 30 + CRD, 0, CRD] : kind === 'df' ? [28, 30, 24, 32, Math.round(Math.sin(i / 6 * 6.2832) * 9), 2] : kind === 'db' ? [38, 27, 36, 29, Math.round(Math.sin(i / 6 * 6.2832) * 4), 3] : null;      // a jump frame: [crouch, feet raised, arms up, arm swing, legs apart]
   const ph = kind === 'walk' ? i / 5 * 6.2832 : 0, bob = J ? J[0] : A ? A[5] : kind === 'walk' ? -Math.round(Math.abs(Math.sin(ph)) * 2) : [0, 0, 1, 1][i % 4], sw = J ? J[4] : A ? A[4] : kind === 'walk' ? Math.round(Math.sin(ph) * 6) : 0, as = J ? J[3] : kind === 'walk' ? -Math.round(Math.sin(ph) * 5) : [0, 1, 1, 0][i % 4], y0 = bob, fe = J ? 56 - J[1] : 56, hy = J || A ? 41 + y0 : 41, ay = J ? 22 + y0 + Math.round(14 - J[2] * 20 / 12) : 36 + y0;
   const nx = A ? A[0] : 34 + as, ny = A ? A[1] : ay, fx = A ? A[2] : 29 - as, fy = A ? A[3] : ay, nf = A && A[6] ? [A[6], A[7]] : null;      // (where the hands are, and the foot of a kick)
   const dim = v => v, leg = (hx, fx, v) => { if (KN) { const kx = Math.round((hx + fx) / 2 + 2 + CRD * 0.45), ky = Math.round((hy + fe) / 2); th(hx, hy, kx, ky, 4, v); th(kx, ky, fx, fe, 4, v); } else th(hx, hy, fx, fe, 4, v); };      // (a crouching leg bends: hip, knee, foot)      // (one colour for the far side: the same, the outline separates it)
@@ -225,7 +227,7 @@ function cuTplFrame(st, kind, i) {      // one frame (a Uint8Array of 4096 colou
 let cuAT = 0, cuLastSet = '';
 function cuAnimTemplate(b) {      // a template's frames (4 idle, 5 walking, 10 jump or 5 for a punch) replace the frames of the set you are drawing: the first tap in a set gives the same character as the last set, a second tap in it the next character
   if (cuBigOn) return; if (cuFr.some(f => f.some(v => v)) && !cuSure('atpl', b, 'SURE?')) return;
-  const n = { idle: 4, walk: 5, jump: 10, m0: 5, m1: 5, m2: 5, m3: 5, x0: 5, x1: 5, x2: 5, x3: 5, cr: 4, ci: 4 }[cuSetKey], st = cuLastSet === cuSetKey ? (cuAT = (cuAT + 1) % 5) : cuAT; cuLastSet = cuSetKey; cuFr = []; for (let i = 0; i < n; i++) cuFr.push(cuSetKey[0] === 'x' ? cuVfxTpl(st, i) : cuTplFrame(st, cuSetKey, i)); cuCur = 0; cuArt = cuFr[0]; cuUndo = []; cuRedo = []; cuDirty = true; cuSel = null; cuShapeStart = null;
+  const n = { idle: 4, walk: 5, jump: 10, m0: 5, m1: 5, m2: 5, m3: 5, x0: 5, x1: 5, x2: 5, x3: 5, cr: 4, ci: 4, df: 6, db: 6 }[cuSetKey], st = cuLastSet === cuSetKey ? (cuAT = (cuAT + 1) % 5) : cuAT; cuLastSet = cuSetKey; cuFr = []; for (let i = 0; i < n; i++) cuFr.push(cuSetKey[0] === 'x' ? cuVfxTpl(st, i) : cuTplFrame(st, cuSetKey, i)); cuCur = 0; cuArt = cuFr[0]; cuUndo = []; cuRedo = []; cuDirty = true; cuSel = null; cuShapeStart = null;
   cuSync(); cuPaint(); cuFrSync(); cuFlash(b, (cuSetKey[0] === 'x' ? CU_FXC : CU_TPLS)[st][0]);
 }
 const CU_FXC = [['WHITE', '#ffffff', '#cfd8ff', '#8f9bd6'], ['BLUE', '#ffffff', '#9fd8ff', '#39a2ff'], ['RED', '#ffffff', '#ff9a7a', '#e0242f'], ['GOLD', '#ffffff', '#ffe9a0', '#ffb347'], ['GREEN', '#ffffff', '#b8ffb0', '#3fbf5a']];      // the 5 colours of the VFX template
@@ -326,7 +328,7 @@ function renderCust() {
   const a = cuLoad(); for (let i = 0; i < 3; i++) { const b = $('cu' + i), d = a[i]; cuThumb(b.querySelector('canvas'), d); b.querySelector('b').textContent = d && d.n ? d.n : 'EMPTY'; b.querySelector('i').textContent = d ? 'EDIT' : 'DRAW'; }
 }
 function renderAnim() {      // the list after the name: IDLE, WALKING, JUMP and ATTACK, each with its first frame and how many frames it has (ATTACK: how many of its 4 punches have the 5 frames they need)
-  for (const [i, k] of [[0, 'idle'], [1, 'walk'], [2, 'jump'], [5, 'cr'], [6, 'ci']]) { const b = $('ca' + i), f = cuChar[k], n = f.filter(a => a.some(v => v)).length; cuImg(f.find(a => a.some(v => v)) || new Uint8Array(4096), b.querySelector('canvas')); b.querySelector('i').textContent = n ? n + (n === 1 ? ' FRAME' : ' FRAMES') : 'EMPTY'; }
+  for (const [i, k] of [[0, 'idle'], [1, 'walk'], [2, 'jump'], [5, 'cr'], [6, 'ci'], [8, 'df'], [9, 'db']]) { const b = $('ca' + i), f = cuChar[k], n = f.filter(a => a.some(v => v)).length; cuImg(f.find(a => a.some(v => v)) || new Uint8Array(4096), b.querySelector('canvas')); b.querySelector('i').textContent = n ? n + (n === 1 ? ' FRAME' : ' FRAMES') : 'EMPTY'; }
   const ms = [0, 1, 2, 3].map(q => cuChar['m' + q].filter(a => a.some(v => v))), any = ms.find(f => f.length), b3 = $('ca3'); cuImg(any ? any[0] : new Uint8Array(4096), b3.querySelector('canvas')); b3.querySelector('i').textContent = any ? ms.filter(f => f.length >= 5).length + '/4 READY' : 'EMPTY';
   const cg = $('ca4').querySelector('canvas').getContext('2d'), ni = [0, 1, 2, 3].reduce((a, q) => a + cuImpacts(cuChar.pg[q], cuChar['m' + q].length).length, 0); cg.clearRect(0, 0, 64, 64);
   for (const [c, x, y, w] of [['#39a2ff', 8, 10, 40], ['#e0242f', 8, 28, 48], ['#39a2ff', 8, 46, 32]]) { cg.fillStyle = c; cg.fillRect(x, y, w, 12); cg.fillStyle = '#000'; cg.fillRect(x, y + 12, w, 2); }      // (a picture of two or three blocks)
@@ -348,34 +350,53 @@ function renderAtk() {      // the 4 punches (M1) of the combo: the first frame 
   for (let q = 0; q < 4; q++) $('cn' + q).value = cuChar.mn[q];
   $('cmName').textContent = cuNameV;
 }
-function cuSaveChar() { if (!cuChar.idle.some(f => f.some(v => v))) return false; const a = cuLoad(); a[cuSlot] = cuEncode(cuChar.idle, cuNameV, cuChar.walk, cuChar.jump, [cuChar.m0, cuChar.m1, cuChar.m2, cuChar.m3], cuChar.mn, cuChar.pg, [cuChar.x0, cuChar.x1, cuChar.x2, cuChar.x3], cuChar.cr, cuChar.ci, cuChar.st); cuStore(a); return true; }      // (false: the IDLE is still empty, nothing is kept)
+function cuSaveChar() { if (!cuChar.idle.some(f => f.some(v => v))) return false; const a = cuLoad(); a[cuSlot] = cuEncode(cuChar.idle, cuNameV, cuChar.walk, cuChar.jump, [cuChar.m0, cuChar.m1, cuChar.m2, cuChar.m3], cuChar.mn, cuChar.pg, [cuChar.x0, cuChar.x1, cuChar.x2, cuChar.x3], cuChar.cr, cuChar.ci, cuChar.st, cuChar.df, cuChar.db); cuStore(a); return true; }      // (false: the IDLE is still empty, nothing is kept)
 // ---- v1.75 CODE (blocks for the punches), v1.77 with many more blocks. Every block hangs under the nearest FRAME or IMPACT above it. An IMPACT hurts for its damage on the picture of the FRAME above it (with no good FRAME above it, it does nothing); under an IMPACT, KNOCKBACK, STUN, LAUNCH, GUARD BREAK and BLEED change the hit and VFX, SOUND, SHAKE and HIT STOP play with it; under a FRAME alone the effects play at that picture. SPEED, LUNGE, COST and COOLDOWN are settings of the punch and work anywhere in its script.
 let cuTab = 0, cuDrag = null;
 const CU_MAXB = 20;      // blocks in one script
 const CU_FX = [['SPARK', 'ON THE ENEMY'], ['BURST', 'ON THE ENEMY, TWICE AS BIG'], ['FIST', 'ON YOUR FIST'], ['GROUND', 'ON THE FLOOR UNDER HIM'], ['SHOT', 'FLIES FROM YOUR FIST TO HIM']];      // the 5 VFX presets: where the drawing shows when its IMPACT comes
 const CU_SND = [['PUNCH', 'LIGHT BODY BLOW', 'smack', 0], ['HEAVY', 'HEAVY BODY BLOW', 'smack', 3], ['HIT', 'CRACKLING HIT', 'hit', 0], ['BIG HIT', 'BIG CRACKLING HIT', 'hit', 3], ['SWING', 'WHOOSH', 'swing', 0], ['KICK SWING', 'DEEP WHOOSH', 'swing', 3], ['BLOCK', 'FORCEFIELD BOUNCE', 'block'], ['ZAP', 'BLUE CRACKLE', 'stun'], ['BOOM', 'HUGE BOOM', 'rspunch', 0]];      // the SOUND presets: [name, what it is, the game's cue and its number]
-const CU_BLK = {      // the blocks, in the order of the list: n = name, g = group (t time, h on the hit, e effects, y you), v = its number boxes [label, least, most, first value], pre = its presets instead
-  f: { n: 'FRAME', g: 't', v: [['', 1, 15, 3]] }, i: { n: 'IMPACT', g: 't', v: [['DMG', 1, 99, 5]] },
+const CU_BLK = {      // the blocks, in the order of the list: n = name, g = group (t time, h on the hit, e effects, y you, c logic), v = its number boxes [label, least, most, first value], pre = its presets instead, draw = it has a DRAW button (the VFX drawing of the punch)
+  f: { n: 'FRAME', g: 't', v: [['', 1, 15, 3]] }, i: { n: 'IMPACT', g: 't', v: [['DMG', 1, 99, 5]] }, o: { n: 'SHOOT', g: 't', v: [['SPD', 30, 400, 150], ['DMG', 1, 99, 8]], draw: true },
   k: { n: 'KNOCKBACK', g: 'h', v: [['', 1, 99, 15]] }, t: { n: 'STUN', g: 'h', v: [['SEC', 1, 9, 1]] }, l: { n: 'LAUNCH', g: 'h', v: [['PX', 10, 99, 40]] }, q: { n: 'GUARD BREAK', g: 'h', v: [] }, b: { n: 'BLEED', g: 'h', v: [['DMG', 1, 20, 2], ['SEC', 1, 9, 3]] },
-  x: { n: 'VFX', g: 'e', pre: CU_FX }, s: { n: 'SOUND', g: 'e', pre: CU_SND }, w: { n: 'SHAKE', g: 'e', v: [['', 1, 20, 3]] }, h: { n: 'HIT STOP', g: 'e', v: [['MS', 1, 110, 60]] },
-  v: { n: 'SPEED', g: 'y', v: [['PICS/S', 1, 60, 20]] }, m: { n: 'LUNGE', g: 'y', v: [['PX', 1, 60, 12]] }, c: { n: 'COST', g: 'y', v: [['%', 1, 100, 20]] }, d: { n: 'COOLDOWN', g: 'y', v: [['SEC', 1, 30, 2]] } };
-const CU_GRP = [['t', 'TIME'], ['h', 'ON THE HIT'], ['e', 'EFFECTS'], ['y', 'YOU']];
+  x: { n: 'VFX', g: 'e', pre: CU_FX, draw: true }, s: { n: 'SOUND', g: 'e', pre: CU_SND }, w: { n: 'SHAKE', g: 'e', v: [['', 1, 20, 3]] }, h: { n: 'HIT STOP', g: 'e', v: [['MS', 1, 110, 60]] },
+  v: { n: 'SPEED', g: 'y', v: [['PICS/S', 1, 60, 20]] }, m: { n: 'LUNGE', g: 'y', v: [['PX', 1, 60, 12]] }, c: { n: 'COST', g: 'y', v: [['%', 1, 100, 20]] }, d: { n: 'COOLDOWN', g: 'y', v: [['SEC', 1, 30, 2]] },
+  r: { n: 'REPEAT', g: 'c', v: [['TIMES', 2, 9, 3], ['EVERY', 1, 9, 2]] }, y: { n: 'IF HIT', g: 'c', v: [] }, z: { n: 'IF MISS', g: 'c', v: [] }, e: { n: 'END', g: 'c', v: [] } };
+const CU_GRP = [['t', 'TIME'], ['h', 'ON THE HIT'], ['e', 'EFFECTS'], ['y', 'YOU'], ['c', 'LOGIC']];
 const cuSpec = t => CU_BLK[t].pre ? [['', 1, CU_BLK[t].pre.length, 1]] : CU_BLK[t].v;
 function cuNew(t) { const b = [t, ...cuSpec(t).map(sp => sp[3])]; if (t === 'f') b[1] = Math.max(1, Math.ceil(cuChar['m' + cuTab].length / 2)); return b; }      // a new block with its first values (a FRAME starts on the middle picture)
 const cuProgs = d => [0, 1, 2, 3].map(q => (d && Array.isArray(d.pg) && Array.isArray(d.pg[q]) ? d.pg[q] : []).slice(0, CU_MAXB).filter(b => Array.isArray(b) && CU_BLK[b[0]]).map(b => [b[0], ...cuSpec(b[0]).map((sp, k) => Math.max(sp[1], Math.min(sp[2], Math.round(+b[k + 1]) || sp[3])))]));      // the 4 scripts kept with a character: lists of [block letter, its values]
-function cuScan(prog, n) {      // reads a script of a punch with n pictures: live = for each block 0 if it does nothing (a FRAME past the last picture, an IMPACT with no good FRAME above it, an effect with nothing to hang under, a change of the hit with no IMPACT above it) else the picture (FRAME, IMPACT) or 1; imp = [picture, damage, the blocks under it] of every IMPACT that works; tm = [picture, blocks] of the pictures that have effects under them; set = the settings of the punch (the last block of each kind wins)
-  let f = 0, an = null; const live = [], imp = [], tm = [], set = { v: 20, m: 0, c: 0, d: 0 };
-  prog.forEach(([t, a, b]) => {
-    const g = CU_BLK[t].g;
-    if (t === 'f') { f = a <= n ? a : 0; an = f ? { f, fx: [] } : null; if (an) tm.push(an); live.push(f); }
-    else if (t === 'i') { if (f) { an = { f, d: a, fx: [] }; imp.push(an); } else an = null; live.push(f); }
-    else if (g === 'h') { const ok = !!an && an.d !== undefined; if (ok) an.fx.push([t, a, b]); live.push(ok ? 1 : 0); }
-    else if (g === 'e') { if (an) an.fx.push([t, a, b]); live.push(an ? 1 : 0); }
-    else { set[t] = a; live.push(1); }
+function cuScan(prog, n) {      // reads a script of a punch with n pictures. REPEAT, IF HIT and IF MISS hold the blocks up to their END (or the end of the script); REPEAT plays them again and again, each time `EVERY` pictures later; IF HIT / IF MISS hold what happens only if the IMPACT above them landed / missed. live = for each block 0 if it does nothing, else the picture (FRAME, IMPACT, SHOOT) or 1; ev = the events in the order they come up, each { f: picture, k: 'e' (effects at a picture) / 'i' (IMPACT) / 'o' (SHOOT), d: damage, sp: speed, fx: the blocks under it [letter, a, b, condition, the IMPACT the condition is about], c: its own condition, src, id }; set = the settings of the punch (the last block of each kind wins)
+  const root = { items: [] }, stack = [root], closed = [];
+  prog.forEach((b, i) => {
+    const t = b[0], top = stack[stack.length - 1];
+    if (t === 'r' || t === 'y' || t === 'z') { const gr = { t, a: b[1], b: b[2], i, items: [] }; top.items.push(gr); stack.push(gr); }
+    else if (t === 'e') { if (stack.length > 1) { stack.pop(); closed[i] = true; } }
+    else top.items.push({ t, a: b[1], b: b[2], i });
   });
-  return { live, imp: imp.map(x => [x.f, x.d, x.fx]), tm: tm.filter(x => x.fx.length).map(x => [x.f, x.fx]), set };
+  const live = new Array(prog.length).fill(0), ev = [], set = { v: 20, m: 0, c: 0, d: 0 }; let f0 = 0, an = null, last = -1, cnt = 0;
+  const step = (it, off, c, src) => {
+    const { t, a, b, i } = it, g = CU_BLK[t].g, e = f0 + off, ok = f0 > 0 && e <= n;
+    if (t === 'f') { f0 = a; const e2 = a + off; if (e2 <= n) { an = { f: e2, k: 'e', fx: [], c, src, id: ev.length }; ev.push(an); live[i] = Math.max(live[i], e2); } else an = null; }
+    else if (t === 'i' || t === 'o') { if (ok) { an = { f: e, k: t, d: t === 'i' ? a : b, sp: a, fx: [], c, src, id: ev.length }; ev.push(an); if (t === 'i') last = an.id; live[i] = Math.max(live[i], e); } else an = null; }
+    else if (g === 'h') { if (an && an.k !== 'e') { an.fx.push([t, a, b, c, src]); live[i] = 1; } }
+    else if (g === 'e') { if (an) { an.fx.push([t, a, b, c, src]); live[i] = 1; } }
+    else if (g === 'y') { set[t] = a; live[i] = 1; }
+  };
+  (function walk(items, off, c, src) {
+    for (const it of items) {
+      if (++cnt > 400) return;
+      if (it.items) {
+        if (it.t === 'r') { live[it.i] = 1; for (let k = 0; k < it.a; k++) walk(it.items, off + k * it.b, c, src); }
+        else { live[it.i] = last >= 0 ? 1 : 0; if (last >= 0) walk(it.items, off, it.t === 'y' ? 1 : 2, last); }
+      } else step(it, off, c, src);
+    }
+  })(root.items, 0, 0, -1);
+  prog.forEach((b, i) => { if (b[0] === 'e') live[i] = closed[i] ? 1 : 0; });
+  ev.sort((p, q) => p.f - q.f || p.id - q.id);
+  return { live, ev, set };
 }
-const cuImpacts = (prog, n) => cuScan(prog, n).imp;
+const cuImpacts = (prog, n) => cuScan(prog, n).ev.filter(e => e.k === 'i' || e.k === 'o').map(e => [e.f, e.d]);      // [picture, damage] of every IMPACT and SHOOT that works
 function cuStrip() {      // the pictures of the open punch, numbered; the ones an IMPACT lands on say how much it hurts
   const q = cuTab, fr = cuChar['m' + q], hit = {}, st = $('ccFr'); cuImpacts(cuChar.pg[q], fr.length).forEach(([f, d]) => { hit[f] = (hit[f] || 0) + d; }); st.innerHTML = '';
   if (!fr.length) { st.textContent = 'DRAW THIS PUNCH FIRST (5 FRAMES OR MORE)'; return; }
@@ -384,8 +405,8 @@ function cuStrip() {      // the pictures of the open punch, numbered; the ones 
 function cuFlags() {      // after a change: the blocks that work, the others are dimmed and say why, and the marks on the pictures
   const q = cuTab, n = cuChar['m' + q].length, prog = cuChar.pg[q], live = cuScan(prog, n).live, nv = cuChar['x' + q].length;
   [...$('ccList').children].forEach((d, i) => {
-    const t = prog[i][0], g = CU_BLK[t].g, ok = live[i] > 0 && (t !== 'x' || nv > 0); d.classList.toggle('off', !ok);
-    d.querySelector('i').textContent = t === 'f' ? (live[i] ? '' : 'ONLY ' + n + ' PICTURES') : t === 'i' ? (live[i] ? 'DAMAGE, ON FRAME ' + live[i] : 'NEEDS A FRAME ABOVE') : g === 'h' ? (live[i] ? '' : 'NEEDS AN IMPACT ABOVE') : g === 'e' ? (!live[i] ? 'NEEDS A FRAME OR AN IMPACT ABOVE' : t === 'x' && !nv ? 'DRAW IT FIRST' : '') : '';
+    const t = prog[i][0], g = CU_BLK[t].g, ok = live[i] > 0 && ((t !== 'x' && t !== 'o') || nv > 0); d.classList.toggle('off', !ok);
+    d.querySelector('i').textContent = t === 'f' ? (live[i] ? '' : 'ONLY ' + n + ' PICTURES') : t === 'i' ? (live[i] ? 'DAMAGE, ON FRAME ' + live[i] : 'NEEDS A FRAME ABOVE') : t === 'o' ? (!live[i] ? 'NEEDS A FRAME ABOVE' : nv ? 'FLIES FROM FRAME ' + live[i] : 'DRAW IT FIRST') : g === 'h' ? (live[i] ? '' : 'NEEDS AN IMPACT ABOVE') : g === 'e' ? (!live[i] ? 'NEEDS A FRAME OR AN IMPACT ABOVE' : t === 'x' && !nv ? 'DRAW IT FIRST' : '') : t === 'y' || t === 'z' ? (live[i] ? '' : 'NEEDS AN IMPACT ABOVE') : t === 'e' ? (live[i] ? '' : 'NOTHING TO END') : '';
   });
   cuStrip();
 }
@@ -395,14 +416,14 @@ function cuPreset(b) {      // the button of a VFX or SOUND block: asks which of
   B.pre.forEach(([nm, ds], k) => { const x = document.createElement('button'); x.innerHTML = '<span></span><small></small>'; x.firstChild.textContent = nm; x.lastChild.textContent = ds; if (b[1] === k + 1) x.className = 'on'; x.addEventListener('click', () => { b[1] = k + 1; if (b[0] === 's') cuSndPlay(k); $('ccPre').classList.remove('on'); renderCode(); }); L.appendChild(x); });
   $('ccPre').classList.add('on');
 }
-function cuBlock(b) {      // one block of the script: its number boxes, or for VFX and SOUND the preset button (VFX also a DRAW button); a finger drags it by its body, the boxes, buttons and the X work as they are
+function cuBlock(b) {      // one block of the script: its number boxes, or for VFX and SOUND the preset button; VFX and SHOOT also a DRAW button (the VFX drawing of the punch); a finger drags it by its body, the boxes, buttons and the X work as they are
   const t = b[0], B = CU_BLK[t], d = document.createElement('div'); d.className = 'blk g_' + B.g; d.dataset.t = t;
   let h = '<span>' + B.n + '</span>';
-  if (B.pre) h += '<button class="vp"></button>' + (t === 'x' ? '<button class="vd">DRAW</button>' : '');
-  else B.v.forEach(sp => { h += (sp[0] ? '<em>' + sp[0] + '</em>' : '') + '<input type="number" inputmode="numeric" min="' + sp[1] + '" max="' + sp[2] + '">'; });
-  d.innerHTML = h + '<i></i><u>X</u>';
-  if (B.pre) { const vp = d.querySelector('.vp'); vp.textContent = B.pre[b[1] - 1][0]; vp.addEventListener('click', () => cuPreset(b)); if (t === 'x') d.querySelector('.vd').addEventListener('click', () => { audio(); cuEdit('x' + cuTab); }); }
+  if (B.pre) h += '<button class="vp"></button>'; else B.v.forEach(sp => { h += (sp[0] ? '<em>' + sp[0] + '</em>' : '') + '<input type="number" inputmode="numeric" min="' + sp[1] + '" max="' + sp[2] + '">'; });
+  d.innerHTML = h + (B.draw ? '<button class="vd">DRAW</button>' : '') + '<i></i><u>X</u>';
+  if (B.pre) { const vp = d.querySelector('.vp'); vp.textContent = B.pre[b[1] - 1][0]; vp.addEventListener('click', () => cuPreset(b)); }
   else d.querySelectorAll('input').forEach((inp, k) => { const sp = B.v[k]; inp.value = b[k + 1]; inp.addEventListener('change', () => { b[k + 1] = Math.max(sp[1], Math.min(sp[2], Math.round(+inp.value) || sp[3])); inp.value = b[k + 1]; cuFlags(); }); });
+  if (B.draw) d.querySelector('.vd').addEventListener('click', () => { audio(); cuEdit('x' + cuTab); });
   d.querySelector('u').addEventListener('click', () => { const p = cuChar.pg[cuTab]; p.splice(p.indexOf(b), 1); renderCode(); });
   d.addEventListener('pointerdown', e => { if (!e.target.closest('input,u,button')) cuDragStart(e, d, b); });
   return d;
@@ -411,10 +432,11 @@ function cuPalette() {      // the list of blocks on the left, by group (built o
   const L = $('ccPalL'); L.innerHTML = '';
   CU_GRP.forEach(([g, nm]) => { const h = document.createElement('h6'); h.textContent = nm; L.appendChild(h); Object.keys(CU_BLK).filter(t => CU_BLK[t].g === g).forEach(t => { const d = document.createElement('div'); d.className = 'blk g_' + g; d.dataset.t = t; d.innerHTML = '<span>' + CU_BLK[t].n + '</span>'; d.addEventListener('pointerdown', e => cuDragStart(e, d, null)); L.appendChild(d); }); });
 }
-function renderCode() {      // the CODE screen: the 4 punches as tabs, the pictures of the open one and its script
+function renderCode() {      // the CODE screen: the 4 punches as tabs, the pictures of the open one and its script (the blocks inside a REPEAT or an IF are shown shifted in)
   const q = cuTab, tb = $('ccTabs'), ls = $('ccList'); tb.innerHTML = ''; ls.innerHTML = '';
   for (let k = 0; k < 4; k++) { const b = document.createElement('button'); b.textContent = cuChar.mn[k] || 'M1 #' + (k + 1); b.className = k === q ? 'on' : ''; b.addEventListener('click', () => { cuTab = k; renderCode(); }); tb.appendChild(b); }
-  cuChar.pg[q].forEach(b => ls.appendChild(cuBlock(b))); $('ccName').textContent = cuNameV; cuFlags();
+  let depth = 0; cuChar.pg[q].forEach(b => { const t = b[0]; if (t === 'e') depth = Math.max(0, depth - 1); const el = cuBlock(b); el.style.marginLeft = depth * 2.2 + 'vh'; ls.appendChild(el); if (t === 'r' || t === 'y' || t === 'z') depth++; });
+  $('ccName').textContent = cuNameV; cuFlags();
 }
 const cuIn2 = (e, el) => { const r = el.getBoundingClientRect(); return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; };
 function cuDragStart(e, el, b) {      // a block is picked up: b = its data when it is already in the script (it leaves the script while it is carried), null for a new one from the list on the left
@@ -443,7 +465,7 @@ function cuDragEnd(e) {
   renderCode();
 }
 function cuToList() { if (cuSetKey[0] === 'x') { show('custcode'); renderCode(); } else if (cuSetKey[0] === 'm') { show('custatk'); renderAtk(); } else { show('custanim'); renderAnim(); } }      // (from the drawing back to the list it was opened from)
-function cuEdit(k) { cuBigOn = false; cuAutoDone = false; cuShapeStart = null; cuC = [32, 32]; cuSetKey = k; cuFr = cuChar[k].length ? cuChar[k].map(a => a.slice()) : [new Uint8Array(4096)]; cuCur = 0; cuArt = cuFr[0]; cuUndo = []; cuRedo = []; cuDirty = false; cuSt = null; cuSel = null; cuZoom = 1; cuPX = cuPY = 0; cuPtrs.clear(); cuPinch = null; cuIgnore = false; $('cdName').textContent = cuNameV + ' - ' + (k[0] === 'x' ? 'VFX OF M1 #' + (+k[1] + 1) : k[0] === 'm' ? 'M1 #' + (+k[1] + 1) + (cuChar.mn[+k[1]] ? ' ' + cuChar.mn[+k[1]] : '') : { idle: 'IDLE', walk: 'WALKING', jump: 'JUMP', cr: 'CROUCH', ci: 'CROUCH IDLE' }[k]); show('custdraw'); cuLayout(); cuSync(); cuPaint(); cuFrSync(); }
+function cuEdit(k) { cuBigOn = false; cuAutoDone = false; cuShapeStart = null; cuC = [32, 32]; cuSetKey = k; cuFr = cuChar[k].length ? cuChar[k].map(a => a.slice()) : [new Uint8Array(4096)]; cuCur = 0; cuArt = cuFr[0]; cuUndo = []; cuRedo = []; cuDirty = false; cuSt = null; cuSel = null; cuZoom = 1; cuPX = cuPY = 0; cuPtrs.clear(); cuPinch = null; cuIgnore = false; $('cdName').textContent = cuNameV + ' - ' + (k[0] === 'x' ? 'VFX OF M1 #' + (+k[1] + 1) : k[0] === 'm' ? 'M1 #' + (+k[1] + 1) + (cuChar.mn[+k[1]] ? ' ' + cuChar.mn[+k[1]] : '') : { idle: 'IDLE', walk: 'WALKING', jump: 'JUMP', cr: 'CROUCH', ci: 'CROUCH IDLE', df: 'FRONT DASH', db: 'BACK DASH' }[k]); show('custdraw'); cuLayout(); cuSync(); cuPaint(); cuFrSync(); }
 function customBack() {      // the Android back button inside CUSTOM: the drawing asks "SURE?" before it is thrown away; true when it was used
   if (state === 'custdraw') { if (cuDirty && !cuSure('back', $('cdBack'), 'SURE?')) return true; cuToList(); return true; }
   if (state === 'custstats') { cuSaveChar(); show('custanim'); renderAnim(); return true; }
@@ -473,7 +495,7 @@ function customBack() {      // the Android back button inside CUSTOM: the drawi
   $('cuDel').addEventListener('click', () => { if (!cuSure('del', $('cuDel'), 'SURE?')) return; const a = cuLoad(); a[cuSlot] = null; cuStore(a); show('cust'); renderCust(); });
   $('cuNext').addEventListener('click', () => {      // on to the list of animations (a new slot starts empty, an old one opens its pictures)
     audio(); cuNameV = $('cuName').value.trim().replace(/\s+/g, ' '); if (!cuNameV) return; $('cuName').blur(); const d = cuLoad()[cuSlot];
-    cuChar = { idle: d ? cuFrames(d) : [], walk: d ? cuWalkFrames(d) : [], jump: d ? cuJumpFrames(d) : [], m0: cuAtkFrames(d, 0), m1: cuAtkFrames(d, 1), m2: cuAtkFrames(d, 2), m3: cuAtkFrames(d, 3), cr: cuCrFrames(d), ci: cuCiFrames(d), st: cuStats(d), mn: cuAtkNames(d), pg: cuProgs(d), x0: cuVfxFrames(d, 0), x1: cuVfxFrames(d, 1), x2: cuVfxFrames(d, 2), x3: cuVfxFrames(d, 3) }; show('custanim'); renderAnim();
+    cuChar = { idle: d ? cuFrames(d) : [], walk: d ? cuWalkFrames(d) : [], jump: d ? cuJumpFrames(d) : [], m0: cuAtkFrames(d, 0), m1: cuAtkFrames(d, 1), m2: cuAtkFrames(d, 2), m3: cuAtkFrames(d, 3), cr: cuCrFrames(d), ci: cuCiFrames(d), st: cuStats(d), df: cuDfFrames(d), db: cuDbFrames(d), mn: cuAtkNames(d), pg: cuProgs(d), x0: cuVfxFrames(d, 0), x1: cuVfxFrames(d, 1), x2: cuVfxFrames(d, 2), x3: cuVfxFrames(d, 3) }; show('custanim'); renderAnim();
   });
   $('ca0').addEventListener('click', () => { audio(); cuEdit('idle'); }); $('ca1').addEventListener('click', () => { audio(); cuEdit('walk'); }); $('ca2').addEventListener('click', () => { audio(); cuEdit('jump'); }); $('ca3').addEventListener('click', () => { audio(); show('custatk'); renderAtk(); });
   for (let q = 0; q < 4; q++) $('cm' + q).addEventListener('click', () => { audio(); cuEdit('m' + q); });
@@ -482,6 +504,7 @@ function customBack() {      // the Android back button inside CUSTOM: the drawi
   $('ca4').addEventListener('click', () => { audio(); cuTab = 0; $('ccPre').classList.remove('on'); show('custcode'); renderCode(); });
   $('ca5').addEventListener('click', () => { audio(); cuEdit('cr'); }); $('ca6').addEventListener('click', () => { audio(); cuEdit('ci'); });
   $('ca7').addEventListener('click', () => { audio(); show('custstats'); renderStats(); });
+  $('ca8').addEventListener('click', () => { audio(); cuEdit('df'); }); $('ca9').addEventListener('click', () => { audio(); cuEdit('db'); });
   $('stBack').addEventListener('click', () => { cuSaveChar(); show('custanim'); renderAnim(); });
   $('ccPreX').addEventListener('click', () => $('ccPre').classList.remove('on'));
   $('ccBack').addEventListener('click', () => { cuSaveChar(); show('custanim'); renderAnim(); });
@@ -499,13 +522,13 @@ function customBack() {      // the Android back button inside CUSTOM: the drawi
 window.__custom = () => ({ c: cuC.slice(), zoom: cuZoom, big: cuBigOn, pal: CU_PAL.length, slots: cuLoad(), art: cuArt, frames: cuFr.length, cur: cuCur, tool: cuTool, color: cuColor, cell: cuCell, dirty: cuDirty });
 
 // ---- v1.65 the custom characters in the game: FREE PLAY (the fighter select screen) has a small card for each drawn slot; in the match the character stands on its idle frames (up to 15, at the speed of the others) and does nothing: it cannot move, attack or block yet (whatever you press is dropped)
-let cuPh = 0, cuJumpAt = -1, cuAtkAt = -1, cuAtkK = 0, cuCmb = 0, cuCmbBy = 0, cuFired = 0, cuFiredT = 0, cuMs = 50, cuLunged = 0, cuCd = [0, 0, 0, 0], cuBleed = null, cuVfx = [];      // (the jump, the punch being thrown (which of the 4, since when), the next punch of the combo and until when it goes on)
+let cuPh = 0, cuJumpAt = -1, cuAtkAt = -1, cuAtkK = 0, cuCmb = 0, cuCmbBy = 0, cuFired = [], cuRes = [], cuShots = [], cuMs = 50, cuLunged = 0, cuCd = [0, 0, 0, 0], cuBleed = null, cuVfx = [], cuDash = null, cuDashReady = 0;      // (the jump, the punch being thrown (which of the 4, since when), the next punch of the combo and until when it goes on)
 const cuMe = () => !!vs && typeof vs.me === 'string' && vs.me.slice(0, 2) === 'cu';
 const CU_GAME = [null, null, null];      // for each slot { name, frames: 64 x 64 canvases }, made again every time the select screen opens
 function cuSelRefresh() {
   const row = $('selCu'), a = cuLoad(); row.innerHTML = ''; for (let i = selPv.length - 1; i >= 0; i--) if (selPv[i].who.slice(0, 2) === 'cu') selPv.splice(i, 1); let n = 0;
   a.forEach((d, i) => {
-    const mk = f => { const c = document.createElement('canvas'); c.width = c.height = 64; cuImg(f, c); return c; }; CU_GAME[i] = d ? { name: d.n || 'CUSTOM', frames: cuFrames(d).map(mk), walk: cuWalkFrames(d).map(mk), jump: cuJumpFrames(d).map(mk), cr: cuCrFrames(d).map(mk), ci: cuCiFrames(d).map(mk), st: cuStats(d), vfx: [0, 1, 2, 3].map(q => cuVfxFrames(d, q).map(mk)), atk: [0, 1, 2, 3].map(q => cuAtkFrames(d, q).map(mk)), an: cuAtkNames(d).map((nm, q) => nm || 'M1 #' + (q + 1)) } : null; if (CU_GAME[i]) { CU_GAME[i].rdy = [0, 1, 2, 3].filter(q => CU_GAME[i].atk[q].length >= 5); const sc = cuProgs(d).map((pr, q) => cuScan(pr, CU_GAME[i].atk[q].length)); CU_GAME[i].imp = sc.map(x => x.imp); CU_GAME[i].tm = sc.map(x => x.tm); CU_GAME[i].set = sc.map(x => x.set); } if (!d) return; n++;      // (rdy: the punches with the 5 frames they need, an: their names for the ATTACK button, imp, tm, set: what their blocks say, see cuScan)
+    const mk = f => { const c = document.createElement('canvas'); c.width = c.height = 64; cuImg(f, c); return c; }; CU_GAME[i] = d ? { name: d.n || 'CUSTOM', frames: cuFrames(d).map(mk), walk: cuWalkFrames(d).map(mk), jump: cuJumpFrames(d).map(mk), df: cuDfFrames(d).map(mk), db: cuDbFrames(d).map(mk), cr: cuCrFrames(d).map(mk), ci: cuCiFrames(d).map(mk), st: cuStats(d), vfx: [0, 1, 2, 3].map(q => cuVfxFrames(d, q).map(mk)), atk: [0, 1, 2, 3].map(q => cuAtkFrames(d, q).map(mk)), an: cuAtkNames(d).map((nm, q) => nm || 'M1 #' + (q + 1)) } : null; if (CU_GAME[i]) { CU_GAME[i].rdy = [0, 1, 2, 3].filter(q => CU_GAME[i].atk[q].length >= 5); const sc = cuProgs(d).map((pr, q) => cuScan(pr, CU_GAME[i].atk[q].length)); CU_GAME[i].ev = sc.map(x => x.ev); CU_GAME[i].set = sc.map(x => x.set); } if (!d) return; n++;      // (rdy: the punches with the 5 frames they need, an: their names for the ATTACK button, ev, set: what their blocks say, see cuScan)
     const b = document.createElement('button'); b.className = 'card pp'; b.dataset.who = 'cu' + i; b.innerHTML = '<canvas width="64" height="64"></canvas><b></b>'; b.querySelector('b').textContent = CU_GAME[i].name; selPv.push({ g: b.querySelector('canvas').getContext('2d'), who: 'cu' + i });
     b.addEventListener('click', () => { NAMES['cu' + i] = CU_GAME[i].name; startPractice('cu' + i); }); row.appendChild(b);
   });
@@ -514,12 +537,12 @@ function cuSelRefresh() {
 const cuIdleCv = (who, now) => { const g = CU_GAME[+who.slice(2)]; return g ? g.frames[Math.floor(now / (1000 / IDLE_FPS)) % g.frames.length] : null; };
 const CU_CR_MS = 70;      // one picture of the CROUCH lasts 70 ms (4 pictures = 0.28 s down, the same back up)
 const CU_REACH = 36;      // how far in front of its hips an IMPACT reaches (the punches of the others reach 23 to 34)
-function cuHit(dmg, now, o) {      // an IMPACT of a custom punch: the enemy takes exactly dmg when he is in front of the fighter, within arm's reach and can be touched (the rules of the others' punches: not the smiley form, not folded up, on the floor, flat or dodging; a blocker blocks it unless GUARD BREAK); o = what the blocks under the impact ask for (knock, stun, launch, gb, bleed [damage, seconds]); true when it landed
+function cuHit(dmg, now, o, ax, rc, lo) {      // an IMPACT (or a shot) of a custom punch: the enemy takes exactly dmg when he is in front of the fighter (ax, default you), within arm's reach (rc) and can be touched (the rules of the others' punches: not the smiley form, not folded up, on the floor, flat or dodging; a blocker blocks it unless GUARD BREAK); o = what the blocks under it ask for (knock, stun, launch, gb, bleed [damage, seconds]); true when it landed
   o = o || {}; dmg = Math.max(1, Math.round(dmg * cuS.dm / 100));      // (the DAMAGE stat)
   if (!dummy || dummy.ko >= 0 || dummy.cap || now - dummy.born < 600 || vs.ph !== 'fight') return false;
   if (dummy.vform && dummy.vform !== 'verity') { say('IMMUNE', dummy.x, '#ffe9a0', 8, now); return false; }
   if ((dummy.vact && dummy.vact.type === 'crouch') || now < (dummy.down || 0) || (dummy.cact && dummy.cact.flat) || now < (dummy.dodgeUntil || 0)) { say('MISS', dummy.x, '#9fd8ff', 8, now); return false; }
-  const gap = dummy.x - wx; if (gap > CU_REACH || gap < -3) return false;
+  const gap = dummy.x - (ax === undefined ? wx : ax); if (gap > (rc || CU_REACH) || gap < (lo === undefined ? -3 : lo)) return false;
   const blk = dBlocks() && gap > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
   if (blk && !o.gb) { dummy.counter = now; dummy.vx += 3; shakeUntil = now + 70; shakeAmp = 1; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); return false; }
   if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; } hits.n++; hits.dmg += dmg; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = 0; vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n);      // (the combo counter counts it)
@@ -545,16 +568,34 @@ function cuFx(fx, now, hit, vf) {      // the effects of an impact or of a pictu
     else if (t === 'h') hitStop(a);
   }
 }
-function cuImpact(im, now, vf) {      // an IMPACT comes: the hit with what the blocks under it ask for, then their effects
-  const o = {}; for (const [t, a, b] of im[2]) { if (t === 'k') o.knock = a; else if (t === 't') o.stun = a; else if (t === 'l') o.launch = a; else if (t === 'q') o.gb = true; else if (t === 'b') o.bleed = [a, b]; }
-  cuFx(im[2], now, cuHit(im[1], now, o), vf);
+const cuOk = (c, src, res) => !c || (src >= 0 && res[src] !== undefined && res[src] === (c === 1));      // an IF: 1 = IF HIT, 2 = IF MISS, about the IMPACT src once it has come (before that neither is true)
+const cuMods = 'ktlqb';      // the blocks that change the hit itself
+function cuEv(e, now, g, k) {      // one event of the punch's timeline comes up
+  const res = cuRes, vf = g.vfx[k]; if (!cuOk(e.c, e.src, res)) return;
+  if (e.k === 'e') { cuFx(e.fx.filter(x => cuOk(x[3], x[4], res)), now, false, vf); return; }
+  const o = {};
+  for (const [t, a, b, c, s] of e.fx) {
+    if (cuMods.indexOf(t) < 0) continue;
+    if (c && !(s === e.id ? c === 1 : cuOk(c, s, res))) continue;      // (a change of the hit under IF HIT of its own IMPACT counts, under IF MISS never)
+    if (t === 'k') o.knock = a; else if (t === 't') o.stun = a; else if (t === 'l') o.launch = a; else if (t === 'q') o.gb = true; else if (t === 'b') o.bleed = [a, b];
+  }
+  if (e.k === 'o') { if (vf.length) cuShots.push({ x: wx + 12, v: e.sp, d: e.d, o, fx: e.fx, res, id: e.id, born: now, vf }); return; }      // (SHOOT: a shot leaves your body at the fist's height; it hits an enemy as close as he can stand; its blocks work when it hits)
+  const hit = cuHit(e.d, now, o); res[e.id] = hit;
+  cuFx(e.fx.filter(x => cuMods.indexOf(x[0]) < 0 && cuOk(x[3], x[4], res)), now, hit, vf);
 }
-function cuPunch(g, now) {      // the punch being thrown: its time ap (0 to 1, -1 = none), the LUNGE, and every picture effect and IMPACT when its picture comes up; it ends after the last picture
+function cuShotStep(now, dt) {      // the shots fly on; the first time one touches the enemy it hurts him and is gone
+  cuShots = cuShots.filter(s => {
+    s.x += s.v * dt; if (now - s.born > 3000 || s.x - wx > VW) return false;
+    if (dummy && dummy.ko < 0 && Math.abs(dummy.x - s.x) <= 16) { const hit = cuHit(s.d, now, s.o, s.x, 16, -16); s.res[s.id] = hit; if (hit) cuFx(s.fx.filter(x => cuMods.indexOf(x[0]) < 0 && cuOk(x[3], x[4], s.res)), now, true, s.vf); return false; }
+    return true;
+  });
+}
+function cuDrawShots(now, cx) { for (const s of cuShots) ctx.drawImage(s.vf[Math.floor(now / 80) % s.vf.length], Math.round(cx + s.x - wx - 32), gy - 62, 64, 64); }
+function cuPunch(g, now) {      // the punch being thrown: its time ap (0 to 1, -1 = none), the LUNGE, and every event of its timeline when its picture comes up; it ends after the last picture
   if (cuAtkAt < 0 || !g) return -1;
-  const n = g.atk[cuAtkK].length, ap = (now - cuAtkAt) / (n * cuMs), fi = ap >= 1 ? n : Math.floor(ap * n) + 1, im = g.imp[cuAtkK], tm = g.tm[cuAtkK], lg = g.set[cuAtkK].m;
+  const n = g.atk[cuAtkK].length, ap = (now - cuAtkAt) / (n * cuMs), fi = ap >= 1 ? n : Math.floor(ap * n) + 1, ev = g.ev[cuAtkK], lg = g.set[cuAtkK].m;
   if (lg) { const tg = lg * Math.min(1, ap); wx += tg - cuLunged; cuLunged = tg; }
-  for (let j = 0; j < tm.length; j++) if (!(cuFiredT >> j & 1) && tm[j][0] <= fi) { cuFiredT |= 1 << j; cuFx(tm[j][1], now, false, g.vfx[cuAtkK]); }
-  for (let j = 0; j < im.length; j++) if (!(cuFired >> j & 1) && im[j][0] <= fi) { cuFired |= 1 << j; cuImpact(im[j], now, g.vfx[cuAtkK]); }
+  for (let j = 0; j < ev.length; j++) if (!cuFired[j] && ev[j].f <= fi) { cuFired[j] = 1; cuEv(ev[j], now, g, cuAtkK); }
   if (ap >= 1) { cuAtkAt = -1; cuCmbBy = now + 700; return -1; }
   return ap;
 }
@@ -567,21 +608,26 @@ function cuDrawVfx(now, cx) {      // the VFX of the impacts: preset 1 on the en
     const Y = v.pre === 4 && v.hit ? gy + 2 - 32 * k : gy - 30; ctx.globalAlpha = u > 0.7 ? (1 - u) / 0.3 : 1; ctx.drawImage(img, Math.round(cx + X - wx - 32 * k), Math.round(Y - 32 * k), 64 * k, 64 * k); ctx.globalAlpha = 1;
   }
 }
-function customScene(now, dt) {      // one frame of a match with a CUSTOM character as the player: it stands on its idle frames, walks on its walking frames, crouches, jumps on its jump frames and plays its punches when ATTACK is pressed (the IMPACT blocks of its CODE hurt the enemy; the other moves are not there yet); the enemy, the HUD and the effects are the shared ones
+function customScene(now, dt) {      // one frame of a match with a CUSTOM character as the player: it stands on its idle frames, walks on its walking frames, crouches, dashes, jumps on its jump frames and plays its punches when ATTACK is pressed (the IMPACT blocks of its CODE hurt the enemy; the other moves are not there yet); the enemy, the HUD and the effects are the shared ones
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3), cx = Math.round(VW / 2), g = CU_GAME[+vs.me.slice(2)]; setDomUI(now);
   if (g) cuS = g.st;
-  const ctl = t >= 1 && now >= pStun && vs.ph === 'fight', jmp = jumpReq, atk = atkReq, crq = crReq; jumpReq = atkReq = crReq = false;      // (it answers the buttons only when it is there, not stunned and in the FIGHT)
-  if (t < 1) { stance = 'stand'; stickCr = false; cuJumpAt = cuAtkAt = -1; cuCmb = 0; cuCmbBy = 0; cuFired = cuFiredT = 0; cuVfx = []; cuBleed = null; cuCd = [0, 0, 0, 0]; }
-  if (jmp && ctl && g && g.jump.length && stance === 'stand' && cuJumpAt < 0 && cuAtkAt < 0) { cuJumpAt = now; snd('jump'); }
-  if (atk && ctl && g && g.rdy.length && stance === 'stand' && cuJumpAt < 0 && cuAtkAt < 0) {      // (ATTACK: the next of its ready punches plays once, if its COOLDOWN is over and its COST can be paid; 20 pictures a second unless SPEED says otherwise; the combo goes on for 0.7 s after a punch)
+  const ctl = t >= 1 && now >= pStun && vs.ph === 'fight', jmp = jumpReq, atk = atkReq, crq = crReq, dsh = dashReq; jumpReq = atkReq = crReq = dashReq = false;      // (it answers the buttons only when it is there, not stunned and in the FIGHT)
+  if (t < 1) { stance = 'stand'; stickCr = false; cuJumpAt = cuAtkAt = -1; cuCmb = 0; cuCmbBy = 0; cuFired = []; cuRes = []; cuShots = []; cuVfx = []; cuBleed = null; cuCd = [0, 0, 0, 0]; cuDash = null; cuDashReady = 0; }
+  if (jmp && ctl && g && g.jump.length && stance === 'stand' && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash) { cuJumpAt = now; snd('jump'); }
+  if (atk && ctl && g && g.rdy.length && stance === 'stand' && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash) {      // (ATTACK: the next of its ready punches plays once, if its COOLDOWN is over and its COST can be paid; 20 pictures a second unless SPEED says otherwise; the combo goes on for 0.7 s after a punch)
     if (now > cuCmbBy) cuCmb = 0; const k = g.rdy[cuCmb % g.rdy.length], st = g.set[k];
     if (now < cuCd[k]) say('WAIT', wx, '#9a9aa8', 8, now);
-    else if (!st.c || ceSpend(st.c * 100 / cuS.em, now)) { cuAtkK = k; cuAtkAt = now; cuFired = cuFiredT = 0; cuLunged = 0; cuMs = 1000 / st.v; cuCd[k] = st.d ? now + st.d * 1000 : 0; cuCmbBy = now + 1e9; cuCmb = (cuCmb + 1) % g.rdy.length; snd('swing', k); }
+    else if (!st.c || ceSpend(st.c * 100 / cuS.em, now)) { cuAtkK = k; cuAtkAt = now; cuFired = []; cuRes = []; cuLunged = 0; cuMs = 1000 / st.v; cuCd[k] = st.d ? now + st.d * 1000 : 0; cuCmbBy = now + 1e9; cuCmb = (cuCmb + 1) % g.rdy.length; snd('swing', k); }
   }
+  if (dsh && ctl && g && stance === 'stand' && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && now > cuDashReady && (g.df.length || g.db.length)) {      // (DASH: holding forward is a front dash, anything else a back dash, like the others; the pictures of that dash, or the other dash's pictures backwards; free, a 0.15 s pause after it, and his blows miss you for the first part)
+    const d = (keyR || padR) ? 1 : -1, fr = d > 0 ? (g.df.length ? g.df : g.db.slice().reverse()) : (g.db.length ? g.db : g.df.slice().reverse());
+    cuDash = { at: now, dur: cuS.dtm, len: d * (d > 0 ? cuS.dfw : cuS.dbk), done: 0, fr }; dgK = d > 0 ? 0 : 1; snd('dash', dgK); puff(wx - d * 5, 5);
+  }
+  let dp = -1; if (cuDash) { dp = (now - cuDash.at) / cuDash.dur; const tg = cuDash.len * (1 - Math.pow(1 - Math.min(1, dp), 2)); wx += tg - cuDash.done; cuDash.done = tg; if (dp >= 1) { cuDash = null; dp = -1; cuDashReady = now + 150; } }
   const hasCr = !!g && g.cr.length > 0; let cf = -1;      // (CROUCH: S, the down arrow or C taps down and up again, the stick's down position crouches while it is held, like the other fighters; the pictures of CROUCH play down and the same ones backwards to get up, in between CROUCH IDLE loops; it costs 3% of the energy and needs the CROUCH drawn; no jumping or punching while down)
   if (!hasCr || t < 1) { stance = 'stand'; stickCr = false; }
   else {
-    if (ctl && cuJumpAt < 0 && cuAtkAt < 0) {
+    if (ctl && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash) {
       if (crq) { if (stance === 'stand') { stance = 'down'; stAt = now; } else if (stance === 'crouch') { stance = 'up'; stAt = now; } }
       if (stickDown && stance === 'stand') { stance = 'down'; stAt = now; stickCr = true; }
       else if (!stickDown && stickCr && stance === 'crouch' && now - stickDownEnd > 140) { stance = 'up'; stAt = now; }
@@ -589,20 +635,20 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
     if (stance === 'down' || stance === 'up') { const k = Math.floor((now - stAt) / CU_CR_MS); if (k >= g.cr.length) stance = stance === 'down' ? 'crouch' : 'stand'; else cf = stance === 'down' ? k : g.cr.length - 1 - k; }
     if (stance === 'stand') stickCr = false;
   }
-  const ap = cuPunch(g, now); cuBleedStep(now); ceTick(now, dt);
+  const ap = cuPunch(g, now); cuShotStep(now, dt); cuBleedStep(now); ceTick(now, dt);
   { const lab = g && g.rdy.length ? g.an[g.rdy[(now > cuCmbBy ? 0 : cuCmb) % g.rdy.length]] : 'ATTACK'; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; } }      // (the ATTACK button shows the name of the punch that comes next)
   let jp = -1, lift = 0; if (cuJumpAt >= 0) { jp = (now - cuJumpAt) / cuS.jt; if (jp >= 1) { cuJumpAt = -1; jp = -1; snd('land', 1); } else lift = Math.round(cuS.jh * 4 * jp * (1 - jp)); }      // (JUMP: the jump frames play once over JUMP TIME while it rises JUMP HEIGHT pixels and comes down)
   gojoLift = lift;
-  const can = (stance === 'crouch' ? hasCr : stance === 'stand' && !!g && g.walk.length > 0) && ctl && cuAtkAt < 0, dir = can ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0;      // (the only thing it can do: walk, when it has walking frames)
-  jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = senseReq = blockHeld = false; atkHold = -1; teleAt = blkAt = blkEnd = -1; gojoGone = false; atkAt = dgAt = jumpAt = -1; mode = 'idle';      // (it cannot attack or block yet; gojoLift, set above, makes the enemy's swings miss while it is high in the air)
+  const can = (stance === 'crouch' ? hasCr : stance === 'stand' && !!g && g.walk.length > 0) && ctl && cuAtkAt < 0 && !cuDash, dir = can ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0;      // (the only thing it can do: walk, when it has walking frames)
+  jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = senseReq = blockHeld = false; atkHold = -1; teleAt = blkAt = blkEnd = -1; gojoGone = false; atkAt = jumpAt = -1; dgAt = cuDash ? cuDash.at : -1; mode = 'idle';      // (it cannot attack or block yet; gojoLift, set above, makes the enemy's swings miss while it is high in the air)
   if (hurtAt >= 0 && now - hurtAt > 700) { hurtAt = -1; hurtEnd = now; }
   wx += dir * (dir > 0 ? cuS.fw : cuS.bk) * (stance === 'crouch' ? cuS.cw / 100 : 1) * dt; cuPh = dir ? cuPh + dir * dt * 12 : 0; playerSlide(dt); physCollide(now, dt);
   ctx.save(); shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }
   ctx.imageSmoothingEnabled = false; drawBackdrop(now); drawSmoke(now, dt); drawBloodFloor(now, dt); drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
-  const af = ap >= 0 ? g.atk[cuAtkK] : null, src = !g ? null : af ? af[Math.min(af.length - 1, Math.floor(ap * af.length))] : cf >= 0 ? g.cr[cf] : stance === 'crouch' ? (g.ci.length ? g.ci[Math.floor(el / (1000 / IDLE_FPS)) % g.ci.length] : g.cr[g.cr.length - 1]) : jp >= 0 ? g.jump[Math.min(g.jump.length - 1, Math.floor(jp * g.jump.length))] : dir ? g.walk[((Math.floor(cuPh) % g.walk.length) + g.walk.length) % g.walk.length] : g.frames[Math.floor(el / (1000 / IDLE_FPS)) % g.frames.length], x = cx - 32, y = gy - 61 - lift, ry = Math.round(64 * (1 - e));
+  const af = ap >= 0 ? g.atk[cuAtkK] : null, src = !g ? null : af ? af[Math.min(af.length - 1, Math.floor(ap * af.length))] : dp >= 0 ? cuDash.fr[Math.min(cuDash.fr.length - 1, Math.floor(dp * cuDash.fr.length))] : cf >= 0 ? g.cr[cf] : stance === 'crouch' ? (g.ci.length ? g.ci[Math.floor(el / (1000 / IDLE_FPS)) % g.ci.length] : g.cr[g.cr.length - 1]) : jp >= 0 ? g.jump[Math.min(g.jump.length - 1, Math.floor(jp * g.jump.length))] : dir ? g.walk[((Math.floor(cuPh) % g.walk.length) + g.walk.length) % g.walk.length] : g.frames[Math.floor(el / (1000 / IDLE_FPS)) % g.frames.length], x = cx - 32, y = gy - 61 - lift, ry = Math.round(64 * (1 - e));
   { const sw = Math.max(5, Math.round(9 * (1 - lift / 70))), sv = Math.round(sw * 2 / 3); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
   if (src) { ctx.save(); ctx.beginPath(); ctx.rect(x, y + ry, 64, 64 - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, x, y); if (hurtAt >= 0 && now - hurtAt < 70) ctx.drawImage(whiteOf(src), x, y); ctx.restore(); }
-  drawGiantNow('foe'); cuDrawVfx(now, cx);
+  drawGiantNow('foe'); cuDrawVfx(now, cx); cuDrawShots(now, cx);
   if (t < 1) { const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,225,110,' + (1 - t) + ')'; for (let a = 0; a < 64; a++) { const th = a / 64 * 6.2832; ctx.fillRect(Math.round(cx + Math.cos(th) * R), Math.round(y + 34 + Math.sin(th) * R * 0.45), 1, 1); } ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (it appears with a ring and a flash, like the others)
   drawDivFx(now); drawSparks(now, dt); drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); drawVs(now, -shkX, -shkY);
   ctx.restore();
