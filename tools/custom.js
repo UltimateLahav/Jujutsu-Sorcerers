@@ -12,9 +12,9 @@ const CU_RGB = CU_PAL.map(c => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3,
 // ---- what is kept on the device
 function cuLoad() { try { const a = JSON.parse(localStorage.getItem(CU_KEY)); if (Array.isArray(a) && a.length === 3) return a; } catch (e) { } return [null, null, null]; }
 function cuStore(a) { try { localStorage.setItem(CU_KEY, JSON.stringify(a)); } catch (e) { } }
-function cuEncode(frames, name, walk) {      // the name, the colours used by any frame of either animation and, for each frame, one character per pixel (48 + the number of its colour in that list; '0' = see-through); .f = the IDLE frames (.a the first, what older versions read), .w = the WALKING frames
+function cuEncode(frames, name, walk, jump) {      // the name, the colours used by any frame of either animation and, for each frame, one character per pixel (48 + the number of its colour in that list; '0' = see-through); .f = the IDLE frames (.a the first, what older versions read), .w = the WALKING frames, .j = the JUMP frames
   const used = [], idx = new Map(), enc = art => { let s = ''; for (let i = 0; i < 4096; i++) { const v = art[i]; if (!v) { s += '0'; continue; } let k = idx.get(v); if (!k) { used.push(CU_PAL[v - 1]); k = used.length; idx.set(v, k); } s += String.fromCharCode(48 + k); } return s; };
-  const fr = frames.map(enc), w = (walk || []).map(enc); return { n: name, p: used, a: fr[0], f: fr, w };
+  const fr = frames.map(enc), w = (walk || []).map(enc), j = (jump || []).map(enc); return { n: name, p: used, a: fr[0], f: fr, w, j };
 }
 function cuDecodeOne(d, str) {      // the 4096 colour numbers (0 = see-through, otherwise 1 + the place in CU_PAL) of one frame; anything damaged is simply left empty
   const art = new Uint8Array(4096); if (typeof str !== 'string' || !d || !Array.isArray(d.p)) return art;
@@ -22,6 +22,7 @@ function cuDecodeOne(d, str) {      // the 4096 colour numbers (0 = see-through,
   return art;
 }
 function cuFrames(d) { const l = d && Array.isArray(d.f) && d.f.length ? d.f.slice(0, 15) : [d && d.a]; return l.map(str => cuDecodeOne(d, str)); }      // all the frames of a kept drawing (1 - 15; a drawing kept by v1.64 has one)
+function cuJumpFrames(d) { return d && Array.isArray(d.j) ? d.j.slice(0, 15).map(str => cuDecodeOne(d, str)) : []; }
 function cuWalkFrames(d) { return d && Array.isArray(d.w) ? d.w.slice(0, 15).map(str => cuDecodeOne(d, str)) : []; }
 function cuImg(art, cv) {      // a frame on a 64 x 64 canvas (see-through pixels stay see-through)
   const g = cv.getContext('2d'), im = g.createImageData(64, 64); for (let i = 0; i < 4096; i++) { const v = art[i]; if (v) { const c = CU_RGB[v - 1]; im.data[i * 4] = c[0]; im.data[i * 4 + 1] = c[1]; im.data[i * 4 + 2] = c[2]; im.data[i * 4 + 3] = 255; } } g.putImageData(im, 0, 0);
@@ -184,14 +185,15 @@ function cuTplFrame(st, kind, i) {      // one frame (a Uint8Array of 4096 colou
   const T = CU_TPLS[st % 5], a = new Uint8Array(4096), C = h => cuNearest(parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)), sk = C(T[1]), hr = C(T[2]), tp = C(T[3]), bt = C(T[4]), sh = C(T[5]), ac = C(T[6]), dk = 2, hs = T[7];
   const px = (x, y, v) => { if (x >= 0 && y >= 0 && x < 64 && y < 64) a[y * 64 + x] = v; }, rc = (x0, y0, x1, y1, v) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) px(x, y, v); };
   const th = (x0, y0, x1, y1, w, v) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1); for (let k = 0; k <= n; k++) rc(Math.round(x0 + (x1 - x0) * k / n), Math.round(y0 + (y1 - y0) * k / n), Math.round(x0 + (x1 - x0) * k / n) + w - 1, Math.round(y0 + (y1 - y0) * k / n) + w - 1, v); };
-  const ph = kind === 'walk' ? i / 5 * 6.2832 : 0, bob = kind === 'walk' ? -Math.round(Math.abs(Math.sin(ph)) * 2) : [0, 0, 1, 1][i % 4], sw = kind === 'walk' ? Math.round(Math.sin(ph) * 6) : 0, as = kind === 'walk' ? -Math.round(Math.sin(ph) * 5) : [0, 1, 1, 0][i % 4], y0 = bob;
+  const JP = [[2, 0, 0, -3, -2], [4, 0, 0, -4, -3], [1, 0, 6, 0, 0], [0, 3, 10, 3, 3], [0, 6, 12, 4, 4], [0, 8, 12, 4, 5], [0, 6, 8, 2, 4], [0, 3, 4, 0, 3], [3, 0, 0, -2, -3], [1, 0, 0, 0, -1]][i % 10], J = kind === 'jump' ? JP : null;      // a jump frame: [crouch, feet raised, arms up, arm swing, legs apart]
+  const ph = kind === 'walk' ? i / 5 * 6.2832 : 0, bob = J ? J[0] : kind === 'walk' ? -Math.round(Math.abs(Math.sin(ph)) * 2) : [0, 0, 1, 1][i % 4], sw = J ? J[4] : kind === 'walk' ? Math.round(Math.sin(ph) * 6) : 0, as = J ? J[3] : kind === 'walk' ? -Math.round(Math.sin(ph) * 5) : [0, 1, 1, 0][i % 4], y0 = bob, fe = J ? 56 - J[1] : 56, hy = J ? 41 + y0 : 41, ay = J ? 22 + y0 + Math.round(14 - J[2] * 20 / 12) : 36 + y0;
   const dim = v => v;      // (one colour for the far side: the same, the outline separates it)
-  th(30, 41, 30 - sw - (kind === 'idle' ? 1 : 0), 56, 4, dim(bt)); rc(30 - sw - 1 - (kind === 'idle' ? 1 : 0), 56, 33 - sw - (kind === 'idle' ? 1 : 0), 58, sh);      // far leg and shoe
-  th(29, 22 + y0, 29 - as, 36 + y0, 3, dim(tp)); rc(28 - as, 36 + y0, 31 - as, 38 + y0, sk);      // far arm and hand
+  th(30, hy, 30 - sw - (kind === 'idle' ? 1 : 0), fe, 4, dim(bt)); rc(30 - sw - 1 - (kind === 'idle' ? 1 : 0), fe, 33 - sw - (kind === 'idle' ? 1 : 0), fe + 2, sh);      // far leg and shoe
+  th(29, 22 + y0, 29 - as, ay, 3, dim(tp)); rc(28 - as, ay, 31 - as, ay + 2, sk);      // far arm and hand
   rc(27, 21 + y0, 37, 37 + y0, tp); rc(27, 38 + y0, 37, 43 + y0, bt); rc(27, 33 + y0, 37, 34 + y0, ac);      // body, hips and a belt
   if (T[0] === 'KNIGHT') { rc(26, 21 + y0, 38, 25 + y0, ac); rc(29, 26 + y0, 35, 30 + y0, T[0] === 'KNIGHT' ? hr : tp); } else rc(32, 21 + y0, 35, 24 + y0, ac);      // shoulders / collar
-  th(34, 41, 34 + sw + (kind === 'idle' ? 1 : 0), 56, 4, bt); rc(34 + sw + (kind === 'idle' ? 1 : 0), 56, 38 + sw + (kind === 'idle' ? 1 : 0), 58, sh);      // (the feet and their outline end on row 60: the floor line)      // near leg and shoe
-  th(34, 22 + y0, 34 + as, 36 + y0, 3, tp); rc(33 + as, 36 + y0, 36 + as, 38 + y0, sk);      // near arm and hand
+  th(34, hy, 34 + sw + (kind === 'idle' ? 1 : 0), fe, 4, bt); rc(34 + sw + (kind === 'idle' ? 1 : 0), fe, 38 + sw + (kind === 'idle' ? 1 : 0), fe + 2, sh);      // (the feet and their outline end on row 60: the floor line)      // near leg and shoe
+  th(34, 22 + y0, 34 + as, ay, 3, tp); rc(33 + as, ay, 36 + as, ay + 2, sk);      // near arm and hand
   rc(28, 8 + y0, 38, 19 + y0, sk); px(39, 14 + y0, sk); px(39, 15 + y0, sk); rc(34, 12 + y0, 35, 13 + y0, dk); px(36, 17 + y0, dk);      // head, nose, eye, mouth
   if (hs === 'spiky') { rc(27, 5 + y0, 38, 10 + y0, hr); for (const [x, y] of [[27, 3], [30, 1], [33, 0], [36, 2], [38, 4], [25, 6]]) rc(x, y + y0, x + 2, y + 3 + y0, hr); rc(34, 11 + y0, 38, 12 + y0, dk); }      // white spiky hair and a blindfold
   else if (hs === 'short') { rc(27, 5 + y0, 38, 11 + y0, hr); rc(27, 12 + y0, 29, 17 + y0, hr); px(30, 4 + y0, hr); px(34, 4 + y0, hr); px(37, 4 + y0, hr); }
@@ -202,9 +204,9 @@ function cuTplFrame(st, kind, i) {      // one frame (a Uint8Array of 4096 colou
   return a;
 }
 let cuAT = 0;
-function cuAnimTemplate(b) {      // the next template's frames (4 idle or 5 walking) replace the frames of the set you are drawing
+function cuAnimTemplate(b) {      // the next template's frames (4 idle, 5 walking or 10 jump) replace the frames of the set you are drawing
   if (cuBigOn) return; if (cuFr.some(f => f.some(v => v)) && !cuSure('atpl', b, 'SURE?')) return;
-  const n = cuSetKey === 'idle' ? 4 : 5, st = cuAT++ % 5; cuFr = []; for (let i = 0; i < n; i++) cuFr.push(cuTplFrame(st, cuSetKey, i)); cuCur = 0; cuArt = cuFr[0]; cuUndo = []; cuRedo = []; cuDirty = true; cuSel = null; cuShapeStart = null;
+  const n = { idle: 4, walk: 5, jump: 10 }[cuSetKey], st = cuAT++ % 5; cuFr = []; for (let i = 0; i < n; i++) cuFr.push(cuTplFrame(st, cuSetKey, i)); cuCur = 0; cuArt = cuFr[0]; cuUndo = []; cuRedo = []; cuDirty = true; cuSel = null; cuShapeStart = null;
   cuSync(); cuPaint(); cuFrSync(); cuFlash(b, CU_TPLS[st][0]);
 }
 window.__cuTpl = cuTplFrame; window.__palRgb = CU_RGB;
@@ -295,11 +297,11 @@ function cuShrink() {      // the big picture becomes the 64 x 64 frame: shrunk 
 function renderCust() {
   const a = cuLoad(); for (let i = 0; i < 3; i++) { const b = $('cu' + i), d = a[i]; cuThumb(b.querySelector('canvas'), d); b.querySelector('b').textContent = d && d.n ? d.n : 'EMPTY'; b.querySelector('i').textContent = d ? 'EDIT' : 'DRAW'; }
 }
-function renderAnim() {      // the list after the name: IDLE and WALKING, each with its first frame and how many frames it has
-  for (const [i, k] of [[0, 'idle'], [1, 'walk']]) { const b = $('ca' + i), f = cuChar[k], n = f.filter(a => a.some(v => v)).length; cuImg(f.find(a => a.some(v => v)) || new Uint8Array(4096), b.querySelector('canvas')); b.querySelector('i').textContent = n ? n + (n === 1 ? ' FRAME' : ' FRAMES') : 'EMPTY'; }
+function renderAnim() {      // the list after the name: IDLE, WALKING and JUMP, each with its first frame and how many frames it has
+  for (const [i, k] of [[0, 'idle'], [1, 'walk'], [2, 'jump']]) { const b = $('ca' + i), f = cuChar[k], n = f.filter(a => a.some(v => v)).length; cuImg(f.find(a => a.some(v => v)) || new Uint8Array(4096), b.querySelector('canvas')); b.querySelector('i').textContent = n ? n + (n === 1 ? ' FRAME' : ' FRAMES') : 'EMPTY'; }
   $('caName').textContent = cuNameV;
 }
-function cuEdit(k) { cuBigOn = false; cuAutoDone = false; cuShapeStart = null; cuC = [32, 32]; cuSetKey = k; cuFr = cuChar[k].length ? cuChar[k].map(a => a.slice()) : [new Uint8Array(4096)]; cuCur = 0; cuArt = cuFr[0]; cuUndo = []; cuRedo = []; cuDirty = false; cuSt = null; cuSel = null; cuZoom = 1; cuPX = cuPY = 0; cuPtrs.clear(); cuPinch = null; cuIgnore = false; $('cdName').textContent = cuNameV + ' - ' + (k === 'idle' ? 'IDLE' : 'WALKING'); show('custdraw'); cuLayout(); cuSync(); cuPaint(); cuFrSync(); }
+function cuEdit(k) { cuBigOn = false; cuAutoDone = false; cuShapeStart = null; cuC = [32, 32]; cuSetKey = k; cuFr = cuChar[k].length ? cuChar[k].map(a => a.slice()) : [new Uint8Array(4096)]; cuCur = 0; cuArt = cuFr[0]; cuUndo = []; cuRedo = []; cuDirty = false; cuSt = null; cuSel = null; cuZoom = 1; cuPX = cuPY = 0; cuPtrs.clear(); cuPinch = null; cuIgnore = false; $('cdName').textContent = cuNameV + ' - ' + ({ idle: 'IDLE', walk: 'WALKING', jump: 'JUMP' }[k]); show('custdraw'); cuLayout(); cuSync(); cuPaint(); cuFrSync(); }
 function customBack() {      // the Android back button inside CUSTOM: the drawing asks "SURE?" before it is thrown away; true when it was used
   if (state === 'custdraw') { if (cuDirty && !cuSure('back', $('cdBack'), 'SURE?')) return true; show('custanim'); renderAnim(); return true; }
   if (state === 'custanim') { show('cust'); renderCust(); return true; }
@@ -326,15 +328,15 @@ function customBack() {      // the Android back button inside CUSTOM: the drawi
   $('cuDel').addEventListener('click', () => { if (!cuSure('del', $('cuDel'), 'SURE?')) return; const a = cuLoad(); a[cuSlot] = null; cuStore(a); show('cust'); renderCust(); });
   $('cuNext').addEventListener('click', () => {      // on to the list of animations (a new slot starts empty, an old one opens its pictures)
     audio(); cuNameV = $('cuName').value.trim().replace(/\s+/g, ' '); if (!cuNameV) return; $('cuName').blur(); const d = cuLoad()[cuSlot];
-    cuChar = { idle: d ? cuFrames(d) : [], walk: d ? cuWalkFrames(d) : [] }; show('custanim'); renderAnim();
+    cuChar = { idle: d ? cuFrames(d) : [], walk: d ? cuWalkFrames(d) : [], jump: d ? cuJumpFrames(d) : [] }; show('custanim'); renderAnim();
   });
-  $('ca0').addEventListener('click', () => { audio(); cuEdit('idle'); }); $('ca1').addEventListener('click', () => { audio(); cuEdit('walk'); });
+  $('ca0').addEventListener('click', () => { audio(); cuEdit('idle'); }); $('ca1').addEventListener('click', () => { audio(); cuEdit('walk'); }); $('ca2').addEventListener('click', () => { audio(); cuEdit('jump'); });
   $('caBack').addEventListener('click', () => { show('cust'); renderCust(); });
   $('cdDone').addEventListener('click', () => {
     const has = cuFr.some(f => f.some(v => v)), keep = cuFr.filter(f => f.some(v => v));
     if (!has && cuSetKey === 'idle') { cuFlash($('cdDone'), 'DRAW FIRST'); return; }
     cuChar[cuSetKey] = keep; if (!cuChar.idle.some(f => f.some(v => v))) { cuFlash($('cdDone'), 'DO IDLE FIRST'); return; }
-    const a = cuLoad(); a[cuSlot] = cuEncode(cuChar.idle, cuNameV, cuChar.walk); cuStore(a); cuDirty = false; audio(); show('custanim'); renderAnim();
+    const a = cuLoad(); a[cuSlot] = cuEncode(cuChar.idle, cuNameV, cuChar.walk, cuChar.jump); cuStore(a); cuDirty = false; audio(); show('custanim'); renderAnim();
   });
   $('cdBack').addEventListener('click', () => { if (cuDirty && !cuSure('back', $('cdBack'), 'SURE?')) return; show('custanim'); renderAnim(); });
   addEventListener('resize', () => { if (state === 'custdraw') { cuLayout(); cuPaint(); } });
@@ -342,29 +344,32 @@ function customBack() {      // the Android back button inside CUSTOM: the drawi
 window.__custom = () => ({ c: cuC.slice(), zoom: cuZoom, big: cuBigOn, pal: CU_PAL.length, slots: cuLoad(), art: cuArt, frames: cuFr.length, cur: cuCur, tool: cuTool, color: cuColor, cell: cuCell, dirty: cuDirty });
 
 // ---- v1.65 the custom characters in the game: FREE PLAY (the fighter select screen) has a small card for each drawn slot; in the match the character stands on its idle frames (up to 15, at the speed of the others) and does nothing: it cannot move, attack or block yet (whatever you press is dropped)
-let cuPh = 0;
+let cuPh = 0, cuJumpAt = -1;
 const cuMe = () => !!vs && typeof vs.me === 'string' && vs.me.slice(0, 2) === 'cu';
 const CU_GAME = [null, null, null];      // for each slot { name, frames: 64 x 64 canvases }, made again every time the select screen opens
 function cuSelRefresh() {
   const row = $('selCu'), a = cuLoad(); row.innerHTML = ''; for (let i = selPv.length - 1; i >= 0; i--) if (selPv[i].who.slice(0, 2) === 'cu') selPv.splice(i, 1); let n = 0;
   a.forEach((d, i) => {
-    const mk = f => { const c = document.createElement('canvas'); c.width = c.height = 64; cuImg(f, c); return c; }; CU_GAME[i] = d ? { name: d.n || 'CUSTOM', frames: cuFrames(d).map(mk), walk: cuWalkFrames(d).map(mk) } : null; if (!d) return; n++;
+    const mk = f => { const c = document.createElement('canvas'); c.width = c.height = 64; cuImg(f, c); return c; }; CU_GAME[i] = d ? { name: d.n || 'CUSTOM', frames: cuFrames(d).map(mk), walk: cuWalkFrames(d).map(mk), jump: cuJumpFrames(d).map(mk) } : null; if (!d) return; n++;
     const b = document.createElement('button'); b.className = 'card pp'; b.dataset.who = 'cu' + i; b.innerHTML = '<canvas width="64" height="64"></canvas><b></b>'; b.querySelector('b').textContent = CU_GAME[i].name; selPv.push({ g: b.querySelector('canvas').getContext('2d'), who: 'cu' + i });
     b.addEventListener('click', () => { NAMES['cu' + i] = CU_GAME[i].name; startPractice('cu' + i); }); row.appendChild(b);
   });
   $('selCuLab').style.display = n ? '' : 'none'; row.style.display = n ? '' : 'none';
 }
 const cuIdleCv = (who, now) => { const g = CU_GAME[+who.slice(2)]; return g ? g.frames[Math.floor(now / (1000 / IDLE_FPS)) % g.frames.length] : null; };
-function customScene(now, dt) {      // one frame of a match with a CUSTOM character as the player: it only stands there on its idle frames; the enemy, the HUD and the effects are the shared ones
+function customScene(now, dt) {      // one frame of a match with a CUSTOM character as the player: it stands on its idle frames, walks on its walking frames and jumps on its jump frames (the other moves are not there yet); the enemy, the HUD and the effects are the shared ones
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3), cx = Math.round(VW / 2), g = CU_GAME[+vs.me.slice(2)]; setDomUI(now);
+  const jmp = jumpReq; jumpReq = false; if (t < 1) cuJumpAt = -1; if (jmp && cuJumpAt < 0 && g && g.jump.length && t >= 1 && now >= pStun && (!vs || vs.ph === 'fight')) { cuJumpAt = now; snd('jump'); }
+  let jp = -1, lift = 0; if (cuJumpAt >= 0) { jp = (now - cuJumpAt) / 800; if (jp >= 1) { cuJumpAt = -1; jp = -1; snd('land', 1); } else lift = Math.round(46 * 4 * jp * (1 - jp)); }      // (JUMP: 0.8 s, 46 pixels high, the jump frames play once over it)
+  gojoLift = lift;
   const can = g && g.walk.length && t >= 1 && now >= pStun && (!vs || vs.ph === 'fight'), dir = can ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0;      // (the only thing it can do: walk, when it has walking frames)
-  jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = senseReq = blockHeld = false; atkHold = -1; teleAt = blkAt = blkEnd = -1; gojoGone = false; atkAt = dgAt = jumpAt = -1; stance = 'stand'; stickCr = false; mode = 'idle'; gojoLift = 0;      // (it cannot move yet)
+  jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = senseReq = blockHeld = false; atkHold = -1; teleAt = blkAt = blkEnd = -1; gojoGone = false; atkAt = dgAt = jumpAt = -1; stance = 'stand'; stickCr = false; mode = 'idle';      // (it cannot attack or block yet; gojoLift, set above, makes the enemy's swings miss while it is high in the air)
   if (hurtAt >= 0 && now - hurtAt > 700) { hurtAt = -1; hurtEnd = now; }
   wx += dir * 70 * dt; cuPh = dir ? cuPh + dir * dt * 12 : 0; playerSlide(dt); physCollide(now, dt);
   ctx.save(); shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }
   ctx.imageSmoothingEnabled = false; drawBackdrop(now); drawSmoke(now, dt); drawBloodFloor(now, dt); drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
-  const src = !g ? null : dir ? g.walk[((Math.floor(cuPh) % g.walk.length) + g.walk.length) % g.walk.length] : g.frames[Math.floor(el / (1000 / IDLE_FPS)) % g.frames.length], x = cx - 32, y = gy - 61, ry = Math.round(64 * (1 - e));
-  ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(cx - 9, gy + 3, 18, 2); ctx.fillRect(cx - 6, gy + 2, 12, 1); ctx.fillRect(cx - 6, gy + 5, 12, 1);
+  const src = !g ? null : jp >= 0 ? g.jump[Math.min(g.jump.length - 1, Math.floor(jp * g.jump.length))] : dir ? g.walk[((Math.floor(cuPh) % g.walk.length) + g.walk.length) % g.walk.length] : g.frames[Math.floor(el / (1000 / IDLE_FPS)) % g.frames.length], x = cx - 32, y = gy - 61 - lift, ry = Math.round(64 * (1 - e));
+  { const sw = Math.max(5, Math.round(9 * (1 - lift / 70))), sv = Math.round(sw * 2 / 3); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
   if (src) { ctx.save(); ctx.beginPath(); ctx.rect(x, y + ry, 64, 64 - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, x, y); if (hurtAt >= 0 && now - hurtAt < 70) ctx.drawImage(whiteOf(src), x, y); ctx.restore(); }
   drawGiantNow('foe');
   if (t < 1) { const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,225,110,' + (1 - t) + ')'; for (let a = 0; a < 64; a++) { const th = a / 64 * 6.2832; ctx.fillRect(Math.round(cx + Math.cos(th) * R), Math.round(y + 34 + Math.sin(th) * R * 0.45), 1, 1); } ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (it appears with a ring and a flash, like the others)
