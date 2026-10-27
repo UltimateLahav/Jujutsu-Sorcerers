@@ -125,9 +125,9 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 /* ---- CUSTOM (v1.64): the slots, the name and the drawing board */
 #customMode span{font-size:6vh;margin-top:6.5vh;color:#7be0a0}
 #custAnim .cards,#custAtk .cards{gap:3vh}#custAnim .card canvas,#custAtk .card canvas{width:17vh;height:17vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line);margin-top:1vh}#custAnim .card,#custAtk .card{width:27vh;height:38vh}#custAtk .card{height:31vh}#custAtk .card canvas{width:15vh;height:15vh}#custAtk .cmc{display:flex;flex-direction:column;align-items:center;gap:1.4vh}#custAtk .cmIn{font:inherit;font-size:var(--fs-btn,clamp(8px,2.4vh,13px));color:var(--ink);background:#120d22;border:3px solid var(--line);padding:1vh;width:27vh;text-transform:uppercase;text-align:center;user-select:text;-webkit-user-select:text;outline:none}#custAtk .cmIn:focus{border-color:var(--acc)}
-#custAnim{gap:1.4vh}#custAnim .cards{display:grid;grid-template-columns:repeat(5,21vh);gap:1.6vh;justify-content:center}#custAnim .card{width:21vh;height:26vh;font-size:var(--fs-btn,clamp(7px,2vh,12px))}#custAnim .card canvas{width:12vh;height:12vh}#custAnim .card b{white-space:nowrap;font-size:.7em}#custAnim .card i{white-space:nowrap;font-size:.72em}
+#custAnim{gap:1.4vh}#custAnim .cards{display:grid;grid-template-columns:repeat(6,17.5vh);gap:1.4vh;justify-content:center}#custAnim .card{width:17.5vh;height:26vh;font-size:var(--fs-btn,clamp(7px,2vh,12px))}#custAnim .card canvas{width:12vh;height:12vh}#custAnim .card b{white-space:nowrap;font-size:.62em}#custAnim .card i{white-space:nowrap;font-size:.64em}
 #stList{display:grid;grid-template-columns:1fr 1fr;gap:1vh 2vh;width:min(94vw,160vh);max-height:62vh;overflow-y:auto;text-align:left;padding:.5vh}.st{display:flex;align-items:center;gap:1vh;padding:.9vh 1.2vh;background:var(--card);border:2px solid var(--line);font-size:clamp(7px,2vh,12px)}.st b{flex:1;letter-spacing:.06em}.st input{width:9vh;font:inherit;text-align:center;color:var(--ink);background:#120d22;border:2px solid var(--line);padding:.4vh;-moz-appearance:textfield;appearance:textfield}.st input::-webkit-inner-spin-button,.st input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.st em{font-style:normal;opacity:.7;min-width:4vh}.st small{opacity:.55;font-size:.8em;min-width:13vh;text-align:right}.st.off{opacity:.35}
-#custCode{gap:1.2vh}#custCode>small{line-height:1.5}#ccMain{display:flex;gap:2vh;width:min(94vw,170vh);height:68vh}#ccPal,#ccWork{display:flex;flex-direction:column;gap:1vh;padding:1.2vh;background:var(--card);border:3px solid var(--line);text-align:left;min-height:0}#ccPal{width:27vh;flex:none}#ccPal b{font-size:1.6vh;letter-spacing:.12em;color:var(--dim)}#ccPal button{margin-top:auto}#ccPalL{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:.7vh;touch-action:pan-y}#ccPalL h6{margin:.6vh 0 0;font-size:1.4vh;font-weight:400;letter-spacing:.14em;color:var(--dim)}#ccPalL .blk{touch-action:pan-y;padding:.8vh 1vh;font-size:clamp(5px,1.7vh,10px);letter-spacing:.02em}#ccPalL .blk span{white-space:nowrap}#ccPal.del{border-color:var(--acc);background:#2a0d12}#ccWork{flex:1;min-width:0}
+#custCode{gap:1.2vh}#custCode>small{line-height:1.5}#ccMain{display:flex;gap:2vh;width:min(94vw,170vh);height:68vh}#ccPal,#ccWork{display:flex;flex-direction:column;gap:1vh;padding:1.2vh;background:var(--card);border:3px solid var(--line);text-align:left;min-height:0}#ccPal{width:27vh;flex:none}#ccPal b{font-size:1.6vh;letter-spacing:.12em;color:var(--dim)}#ccPal #ccTest{margin-top:auto}#ccPal #ccBack{margin-top:.8vh}#ccPalL{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:.7vh;touch-action:pan-y}#ccPalL h6{margin:.6vh 0 0;font-size:1.4vh;font-weight:400;letter-spacing:.14em;color:var(--dim)}#ccPalL .blk{touch-action:pan-y;padding:.8vh 1vh;font-size:clamp(5px,1.7vh,10px);letter-spacing:.02em}#ccPalL .blk span{white-space:nowrap}#ccPal.del{border-color:var(--acc);background:#2a0d12}#ccWork{flex:1;min-width:0}
 #ccTabs{display:flex;gap:.8vh}#ccTabs button{flex:1;min-width:0;padding:.9vh .3vh;font-size:clamp(5px,1.6vh,9px);border-width:2px;overflow:hidden}#ccTabs button.on{border-color:var(--blue);color:var(--blue)}
 #ccFr{display:flex;gap:.6vh;min-height:9vh;font-size:1.5vh;color:var(--dim);overflow-x:auto;touch-action:pan-x;flex:none}#ccFr .cf{flex:none;width:7vh;text-align:center}#ccFr canvas{display:block;width:7vh;height:7vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line)}#ccFr em{font-style:normal;font-size:1.4vh}#ccFr .cf.hit canvas{border-color:var(--acc)}#ccFr .cf.hit em{color:var(--acc)}
 #ccList{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:.8vh;padding-bottom:.6vh}
@@ -181,7 +181,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.79</small>
+    <small id="ver">V1.80</small>
   </div>
 </section>
 
@@ -289,12 +289,13 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <button id="ca6" class="card mode"><canvas width="64" height="64"></canvas><b>CROUCH IDLE</b><i>EMPTY</i></button>
     <button id="ca8" class="card mode"><canvas width="64" height="64"></canvas><b>FRONT DASH</b><i>EMPTY</i></button>
     <button id="ca9" class="card mode"><canvas width="64" height="64"></canvas><b>BACK DASH</b><i>EMPTY</i></button>
+    <button id="ca10" class="card mode"><canvas width="64" height="64"></canvas><b>BLOCK</b><i>EMPTY</i></button>
     <button id="ca3" class="card mode"><canvas width="64" height="64"></canvas><b>ATTACK</b><i>EMPTY</i></button>
     <button id="ca4" class="card mode"><canvas width="64" height="64"></canvas><b>CODE</b><i>EMPTY</i></button>
-    <button id="ca7" class="card mode"><canvas width="64" height="64"></canvas><b>STATS</b><i>12 NUMBERS</i></button>
+    <button id="ca7" class="card mode"><canvas width="64" height="64"></canvas><b>STATS</b><i>13 NUMBERS</i></button>
   </div>
   <small>TAP ONE TO DRAW IT (UP TO 15 PICTURES; JUMP 10, CROUCH 4, PUNCH 5+); CODE = BLOCKS</small>
-  <div class="row"><button id="caBack">DONE</button></div>
+  <div class="row"><button id="caTest">TEST</button><button id="caBack">DONE</button></div>
 </section>
 
 <section id="custStats" class="screen">
@@ -309,7 +310,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
   <h2>CODE</h2>
   <small id="ccName"></small>
   <div id="ccMain">
-    <div id="ccPal"><b>BLOCKS</b><div id="ccPalL"></div><button id="ccBack">DONE</button></div>
+    <div id="ccPal"><b>BLOCKS</b><div id="ccPalL"></div><button id="ccTest">TEST</button><button id="ccBack">DONE</button></div>
     <div id="ccWork">
       <div id="ccTabs"></div>
       <div id="ccFr"></div>
@@ -779,7 +780,7 @@ function skillUI() {                          // the buttons of a move you do no
   const L = (id, key) => $(id).classList.toggle('lk', lacks(key));
   L('blk', 'blk'); L('dash', 'dash'); L('ce', 'ce'); L('dom', 'dom'); L('fat', 'fat'); $('lap').classList.toggle('lk', !BLUES[meK()].some(owns));
 }
-function leavePlay() { if (vs && vs.net) lanLeave(); else if (vs && vs.hunt) { show('chal'); buildHunts(); } else if (vs && vs.cv) { show('chal'); buildChal(); } else show('select'); }
+function leavePlay() { if (cuTest) { cuTestBack(); return; } if (vs && vs.net) lanLeave(); else if (vs && vs.hunt) { show('chal'); buildHunts(); } else if (vs && vs.cv) { show('chal'); buildChal(); } else show('select'); }
 
 // ---- the ten curses: sprites (tools/curse_art.py) and what each of them can do
 const CU = __CURSES__;                        // idle, walk, a1 a2 a3 (the three attacks: the blow lands on frame imp) and hurt for every curse; they face right and the game mirrors them
@@ -1311,7 +1312,7 @@ const lanBack = () => { if (lanRole) lanStop(); else show('modes'); };
 
 // ---------------------------------------------------------------- screens
 function show(s) {
-  state = s; if (s !== 'story') { snd('mhumoff'); snd('tmusicoff'); snd('rsmuroff'); snd('bluepulloff'); } if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; track = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
+  state = s; if (s !== 'play') cuTest = false; if (s !== 'story') { snd('mhumoff'); snd('tmusicoff'); snd('rsmuroff'); snd('bluepulloff'); } if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; track = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
   $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); $('chal').classList.toggle('on', s === 'chal'); $('skills').classList.toggle('on', s === 'skills'); $('sns').style.display = 'none'; if (s !== 'lan' && s !== 'lansel' && !(s === 'play' && vs && vs.net) && lanTimer) lanStop();
   $('versus').classList.toggle('on', s === 'versus');
   $('title').classList.toggle('on', s === 'title');
@@ -1709,7 +1710,7 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   if (airMe ? gojoGone : downed ? (!isKick(foeWho, k) || gojoLift > 12 || gojoGone) : ((!held && (hurtAt >= 0 || now - hurtEnd < 250)) || gojoLift > 12 || gojoGone)) { nres('m'); return; }
   const guardWas = (guardUp(now) || autoGuard()) && !!dummy && dummy.x > wx;
   if (guardWas && k !== 42 && k !== 46 && !(k >= 49 && CMOVE[k - 49].nb)) {  // his guard is up and the attacker is in front of him: the swing is blocked (a hit from behind still lands; CONCENTRATED FIST breaks the guard)
-    if (!isD1(k) && blkAt >= 0 && now - blkAt <= PARRY_MS * paceBase() * (assistLvl() >= 1 ? 2 : 1)) { parryHit(now); nres('b'); return; }      // (PARRY: the guard went up just before the blow, see parryHit)
+    if (!isD1(k) && blkAt >= 0 && now - blkAt <= (cuMe() ? cuS.pt : PARRY_MS) * paceBase() * (assistLvl() >= 1 ? 2 : 1)) { parryHit(now); nres('b'); return; }      // (PARRY: the guard went up just before the blow, see parryHit)
     wxv -= KNOCK_G[k] * 0.3 * pScale(); shakeUntil = now + 80; shakeAmp = 1; buzz(8); say('BLOCKED', wx + 14, '#9fd8ff', 8, now); snd('block'); if (isD1(k)) { dummy.divOk = now; dummy.divK = k; }      // (the fist was blocked: the second impact still comes)
     nres('b'); return;
   }
@@ -2526,7 +2527,7 @@ function drawVs0(now, ux, uy, VW) {         // health bars, names, the grade, th
 window.__tu = () => vp ? vp.tuNow : -1;
 window.__yuji = () => ({ idle: YUF.norm.idle.length, fwd: YUF.norm.fwd.length, back: YUF.norm.back.length, jump: YUF.norm.jump.length, atk: YUF.norm.atk.map(a => a.length).join(), moves: [YUF.norm.cdn.length, YUF.norm.cidle.length, YUF.norm.cfwd.length, YUF.norm.cback.length, YUF.norm.cjump.length].join() + '/' + YUF.norm.dash.map(a => a.length).join(), cl: YU.cjump.lift.length, inv: YUF.inv.idle.length, w: YU.idle.w, lift: YU.jump.lift.length, pick: JSON.stringify(vsPick) });
 window.__vs = () => vs && ({ me: vs.me, foe: vs.foe, inv: !!vs.inv, story: !!vs.story, retry: vs.retry | 0, morphed: !!vs.morphed, gi: vs.gi, ph: vs.ph, round: vs.round, pw: vs.pw, ew: vs.ew, hp: vs.hp, tl: vs.tl, ehp: dummy ? dummy.hp : -1, emax: dummy ? dummy.max : -1, ai: dummy ? dummy.ai : '', res: vs.res, who: vs.who, why: vs.why, whiffAt: vs.whiffAt, now: pnow() });
-window.__grades = () => GRADES; window.__vsSet = o => vs && Object.assign(vs, o); window.__vsEnemy = o => dummy && Object.assign(dummy, o);
+window.__trSet = o => Object.assign(TR, o); window.__grades = () => GRADES; window.__vsSet = o => vs && Object.assign(vs, o); window.__vsEnemy = o => dummy && Object.assign(dummy, o);
 window.__vsKo = () => { if (dummy && vs) { dummy.hp = 0; koDummy(pnow()); } };
 // ---------------------------------------------------------------- FATALITY: the finisher cutscene (Versus mode). When Gojo or the enemy is at 20% health or less and the enemy is close, the FATALITY button starts a scripted scene with its own clock (so it can slow down): a 2-second barrage, a kick that throws him up while Max Blue charges, a kick that sends him down, a RED that seems aimed at him but is fired up into the blue, the purple blast, his scream, a white-out and the title. Gojo wins the round.
 const FAT_RANGE = 44, FAT_LOW = 0.2, FAT_AI_GRADE = 3, FAT_SEQ = [14, 15, 16, 14, 15, 16, 14], FAT_RX = [0, 3, 5, 1, 8, 6, 2];      // the barrage: jab, kick, cross, jab, kick, cross, jab (about 2 s); the reaction the enemy shows to each blow
@@ -6077,7 +6078,7 @@ window.__domColors = which => { const im = which === 'void' ? voidImg : domImg, 
 window.__domJump = ph => { if (dom && DOM_ORDER.includes(ph)) { dom.ph = ph; dom.p0 = pnow(); } };
 window.__fill = () => { while (peds.length < 5) peds.push(newPed(wx + 150 + peds.length * 12)); };
 window.__hit = k => gojoHit(k, pnow());           // test hook: the attacker's swing k lands on Gojo right now (a dash dodges it)
-window.__state = () => ({ ex: dummy ? Math.round(dummy.x) : 0, ph: vs ? vs.ph : '', ehp: dummy ? dummy.hp : -1, estun: dummy ? Math.max(0, Math.round(dummy.stunUntil - pnow())) : 0, eair: dummy && dummy.air ? dummy.air.kind : '', bleed: !!cuBleed, cmode: cm, redOrb: !!rdOrb, orbV: rdOrb ? rdOrb.v : 0, coat: rdOrb ? !!rdOrb.coat : false, ride: ride ? ride.phase : '', lift: gojoLift, boom: !!boom, ce: ceOn, ceAmt: +ceAmt.toFixed(2), ho: HOMAP.size, stance, jumpC, mode, wx, stick: { x: stickX, y: stickY, up: stickUp, down: stickDown, held: stickCr }, lapse: lpAt >= 0 ? lpK : -1, dash: dgAt >= 0 ? dgK : -1, dashAir: dgAir, block: blkAt >= 0 ? (blkEnd < 0 ? 1 : 2) : 0, guard: guardUp(pnow()), mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests
+window.__state = () => ({ php: vs ? vs.hp : -1, ex: dummy ? Math.round(dummy.x) : 0, ph: vs ? vs.ph : '', ehp: dummy ? dummy.hp : -1, estun: dummy ? Math.max(0, Math.round(dummy.stunUntil - pnow())) : 0, eair: dummy && dummy.air ? dummy.air.kind : '', bleed: !!cuBleed, cmode: cm, redOrb: !!rdOrb, orbV: rdOrb ? rdOrb.v : 0, coat: rdOrb ? !!rdOrb.coat : false, ride: ride ? ride.phase : '', lift: gojoLift, boom: !!boom, ce: ceOn, ceAmt: +ceAmt.toFixed(2), ho: HOMAP.size, stance, jumpC, mode, wx, stick: { x: stickX, y: stickY, up: stickUp, down: stickDown, held: stickCr }, lapse: lpAt >= 0 ? lpK : -1, dash: dgAt >= 0 ? dgK : -1, dashAir: dgAir, block: blkAt >= 0 ? (blkEnd < 0 ? 1 : 2) : 0, guard: guardUp(pnow()), mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests
 window.__back = () => {                       // Android back button: step back through the menus, otherwise let the app close
   if (settingsOn()) { closeSettings(); return true; }
   if (customBack()) return true;      // (CUSTOM: the slots, the name, the drawing)
