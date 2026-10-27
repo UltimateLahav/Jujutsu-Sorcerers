@@ -35,7 +35,7 @@ let cuPad = true, cuStable = false, cuPerfect = true, cuC = [32, 32], cuTouchSee
 const cuBigCv = document.createElement('canvas'); cuBigCv.width = cuBigCv.height = 128; const cuN = () => cuBigOn ? 128 : 64, cuKk = () => cuCell * 64 / cuN() * cuZoom;
 const cuOff = document.createElement('canvas'); cuOff.width = cuOff.height = 64; const cuOn = document.createElement('canvas'); cuOn.width = cuOn.height = 64;
 const CU_TOOLS = [['pen', 'PEN'], ['era', 'ERASE'], ['fill', 'FILL'], ['pick', 'PICK'], ['line', 'LINE'], ['rect', 'BOX'], ['frect', 'FILL BOX'], ['circ', 'OVAL'], ['fcirc', 'FILL OVAL'], ['sel', 'SELECT']];
-const CU_ACTS = [['mirror', 'MIRROR'], ['grid', 'GRID'], ['onion', 'ONION'], ['big', '32 MODE'], ['offset', 'OFFSET'], ['undo', 'UNDO'], ['redo', 'REDO'], ['clear', 'CLEAR'], ['zin', 'ZOOM +'], ['zout', 'ZOOM -'], ['fit', 'FIT'], ['flipx', 'FLIP H'], ['flipy', 'FLIP V'], ['copy', 'COPY'], ['outline', 'OUTLINE'], ['shade', 'SHADE'], ['import', 'IMPORT'], ['templ', 'TEMPLATE'], ['pad', 'PAD'], ['stable', 'STABLE'], ['perfect', 'PERFECT'], ['bigm', 'BIG'], ['shrink', 'SHRINK'], ['delfr', 'DEL FRAME']];
+const CU_ACTS = [['mirror', 'MIRROR'], ['grid', 'GRID'], ['onion', 'ONION'], ['big', '32 MODE'], ['offset', 'OFFSET'], ['undo', 'UNDO'], ['redo', 'REDO'], ['clear', 'CLEAR'], ['zin', 'ZOOM +'], ['zout', 'ZOOM -'], ['fit', 'FIT'], ['flipx', 'FLIP H'], ['flipy', 'FLIP V'], ['copy', 'COPY'], ['outline', 'OUTLINE'], ['shade', 'SHADE'], ['import', 'IMPORT'], ['templ', 'TEMPLATE'], ['atpl', 'ANIM TEMPLATE'], ['pad', 'PAD'], ['stable', 'STABLE'], ['perfect', 'PERFECT'], ['bigm', 'BIG'], ['shrink', 'SHRINK'], ['delfr', 'DEL FRAME']];
 function cuSure(key, btn, label) {      // a button that needs a second tap within 2.5 s ("SURE?") before it does something that throws work away; true on the second tap
   if (cuArmed === key && performance.now() - cuArmT < 2500) { cuArmed = ''; return true; }
   cuArmed = key; cuArmT = performance.now(); if (btn) { const t0 = btn.dataset.t || btn.textContent; btn.dataset.t = t0; btn.textContent = label; setTimeout(() => { if (btn.dataset.t) { btn.textContent = btn.dataset.t; delete btn.dataset.t; } }, 2500); } return false;
@@ -104,7 +104,7 @@ function cuAct(id, b) {
   else if (id === 'clear') { if (!cuSure('clear', b, 'SURE?')) return; cuPush(); cuArt.fill(0); }
   else if (id === 'zin') cuSetZoom(cuZoom * 2, cuPX + cuN() / 2 / cuZoom, cuPY + cuN() / 2 / cuZoom); else if (id === 'zout') cuSetZoom(cuZoom / 2, cuPX + cuN() / 2 / cuZoom, cuPY + cuN() / 2 / cuZoom); else if (id === 'fit') cuSetZoom(1, cuN() / 2, cuN() / 2);
   else if (id === 'flipx') cuFlip(true); else if (id === 'flipy') cuFlip(false); else if (id === 'outline') cuOutline(); else if (id === 'shade') cuShade();
-  else if (id === 'import') { cuImport(); return; } else if (id === 'templ') { cuTemplate(b); }
+  else if (id === 'atpl') { cuAnimTemplate(b); return; } else if (id === 'import') { cuImport(); return; } else if (id === 'templ') { cuTemplate(b); }
   cuSync(); cuPaint(); cuFrSync();
 }
 function cuFrSync() {      // the grid of frames: a small picture for each frame (the chosen one is framed in gold), a "+" for the next new one
@@ -171,6 +171,42 @@ function cuUp(e) {
   else if (t === 'sel' && cuSt.mode === 'move' && cuSt.tmp) { cuArt.set(cuSt.tmp); const r = cuSel; cuSel = { x0: r.x0 + cuSt.dx, y0: r.y0 + cuSt.dy, x1: r.x1 + cuSt.dx, y1: r.y1 + cuSt.dy }; }
   cuSt = null; cuCursor = null; cuPaint(); cuFrSync();
 }
+
+// ---- v1.70 ANIMATION TEMPLATES: 5 characters, each with 4 IDLE frames and 5 WALKING frames (20 and 25 frames in all), drawn by code in the colours of the palette; ANIM TEMPLATE loads the next one into the set you are drawing
+const CU_TPLS = [      // name, skin, hair, top, bottom, shoes, accent, hair style
+  ['SORCERER', '#f1cfb8', '#f4f2f8', '#2b2842', '#1a1426', '#0d0a14', '#3b8cff', 'spiky'],
+  ['FIGHTER', '#f1cfb8', '#e8788a', '#1f2f6a', '#16204a', '#7a1f1f', '#d93a2f', 'short'],
+  ['HOODED', '#e2a98a', '#4a2a6a', '#4a2a6a', '#2c1840', '#150c20', '#ff3a4a', 'hood'],
+  ['KNIGHT', '#f1cfb8', '#8a8aa6', '#7a7a96', '#55556e', '#34344a', '#e8b030', 'helmet'],
+  ['ONI', '#c8403a', '#f4f2f8', '#c8403a', '#1a1426', '#1a1426', '#e8b030', 'horns']];
+function cuTplFrame(st, kind, i) {      // one frame (a Uint8Array of 4096 colour numbers) of template st; kind 'idle' (4 frames: it breathes) or 'walk' (5 frames: a full step, the arms swing the other way)
+  const T = CU_TPLS[st % 5], a = new Uint8Array(4096), C = h => cuNearest(parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)), sk = C(T[1]), hr = C(T[2]), tp = C(T[3]), bt = C(T[4]), sh = C(T[5]), ac = C(T[6]), dk = 2, hs = T[7];
+  const px = (x, y, v) => { if (x >= 0 && y >= 0 && x < 64 && y < 64) a[y * 64 + x] = v; }, rc = (x0, y0, x1, y1, v) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) px(x, y, v); };
+  const th = (x0, y0, x1, y1, w, v) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1); for (let k = 0; k <= n; k++) rc(Math.round(x0 + (x1 - x0) * k / n), Math.round(y0 + (y1 - y0) * k / n), Math.round(x0 + (x1 - x0) * k / n) + w - 1, Math.round(y0 + (y1 - y0) * k / n) + w - 1, v); };
+  const ph = kind === 'walk' ? i / 5 * 6.2832 : 0, bob = kind === 'walk' ? -Math.round(Math.abs(Math.sin(ph)) * 2) : [0, 0, 1, 1][i % 4], sw = kind === 'walk' ? Math.round(Math.sin(ph) * 6) : 0, as = kind === 'walk' ? -Math.round(Math.sin(ph) * 5) : [0, 1, 1, 0][i % 4], y0 = bob;
+  const dim = v => v;      // (one colour for the far side: the same, the outline separates it)
+  th(30, 41, 30 - sw - (kind === 'idle' ? 1 : 0), 57, 4, dim(bt)); rc(30 - sw - 1 - (kind === 'idle' ? 1 : 0), 57, 33 - sw - (kind === 'idle' ? 1 : 0), 59, sh);      // far leg and shoe
+  th(29, 22 + y0, 29 - as, 36 + y0, 3, dim(tp)); rc(28 - as, 36 + y0, 31 - as, 38 + y0, sk);      // far arm and hand
+  rc(27, 21 + y0, 37, 37 + y0, tp); rc(27, 38 + y0, 37, 43 + y0, bt); rc(27, 33 + y0, 37, 34 + y0, ac);      // body, hips and a belt
+  if (T[0] === 'KNIGHT') { rc(26, 21 + y0, 38, 25 + y0, ac); rc(29, 26 + y0, 35, 30 + y0, T[0] === 'KNIGHT' ? hr : tp); } else rc(32, 21 + y0, 35, 24 + y0, ac);      // shoulders / collar
+  th(34, 41, 34 + sw + (kind === 'idle' ? 1 : 0), 57, 4, bt); rc(34 + sw + (kind === 'idle' ? 1 : 0), 57, 38 + sw + (kind === 'idle' ? 1 : 0), 59, sh);      // near leg and shoe
+  th(34, 22 + y0, 34 + as, 36 + y0, 3, tp); rc(33 + as, 36 + y0, 36 + as, 38 + y0, sk);      // near arm and hand
+  rc(28, 8 + y0, 38, 19 + y0, sk); px(39, 14 + y0, sk); px(39, 15 + y0, sk); rc(34, 12 + y0, 35, 13 + y0, dk); px(36, 17 + y0, dk);      // head, nose, eye, mouth
+  if (hs === 'spiky') { rc(27, 5 + y0, 38, 10 + y0, hr); for (const [x, y] of [[27, 3], [30, 1], [33, 0], [36, 2], [38, 4], [25, 6]]) rc(x, y + y0, x + 2, y + 3 + y0, hr); rc(34, 11 + y0, 38, 12 + y0, dk); }      // white spiky hair and a blindfold
+  else if (hs === 'short') { rc(27, 5 + y0, 38, 11 + y0, hr); rc(27, 12 + y0, 29, 17 + y0, hr); px(30, 4 + y0, hr); px(34, 4 + y0, hr); px(37, 4 + y0, hr); }
+  else if (hs === 'hood') { rc(26, 5 + y0, 39, 20 + y0, hr); rc(33, 9 + y0, 39, 19 + y0, sk); rc(34, 12 + y0, 35, 13 + y0, ac); rc(26, 21 + y0, 38, 23 + y0, hr); }
+  else if (hs === 'helmet') { rc(26, 5 + y0, 39, 13 + y0, hr); rc(26, 14 + y0, 29, 19 + y0, hr); rc(33, 10 + y0, 39, 12 + y0, dk); rc(31, 2 + y0, 33, 4 + y0, ac); }
+  else { rc(27, 6 + y0, 38, 9 + y0, hr); rc(28, 3 + y0, 30, 7 + y0, hr); rc(35, 3 + y0, 37, 7 + y0, hr); rc(34, 12 + y0, 35, 13 + y0, ac); }      // horns
+  const o = a.slice(); for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (!o[y * 64 + x] && ((x > 0 && o[y * 64 + x - 1]) || (x < 63 && o[y * 64 + x + 1]) || (y > 0 && o[(y - 1) * 64 + x]) || (y < 63 && o[(y + 1) * 64 + x]))) a[y * 64 + x] = dk;      // the dark outline
+  return a;
+}
+let cuAT = 0;
+function cuAnimTemplate(b) {      // the next template's frames (4 idle or 5 walking) replace the frames of the set you are drawing
+  if (cuBigOn) return; if (cuFr.some(f => f.some(v => v)) && !cuSure('atpl', b, 'SURE?')) return;
+  const n = cuSetKey === 'idle' ? 4 : 5, st = cuAT++ % 5; cuFr = []; for (let i = 0; i < n; i++) cuFr.push(cuTplFrame(st, cuSetKey, i)); cuCur = 0; cuArt = cuFr[0]; cuUndo = []; cuRedo = []; cuDirty = true; cuSel = null; cuShapeStart = null;
+  cuSync(); cuPaint(); cuFrSync(); cuFlash(b, CU_TPLS[st][0]);
+}
+window.__cuTpl = cuTplFrame; window.__palRgb = CU_RGB;
 
 // ---- v1.69 TRACKPAD DRAWING (a finger moves a cursor and a TAP puts the pixel down), AUTO-ZOOM, STABILIZER, PIXEL-PERFECT and the BIG 128 x 128 canvas that SHRINKs into the frame
 function cuCancelStroke() { if (cuSt && cuSt.base) cuArt.set(cuSt.base); cuSt = null; cuCursor = null; cuTap = null; cuPath = null; if (cuBigSt) { cuBigCv.getContext('2d').putImageData(cuBigSt.snap, 0, 0); cuBigSt = null; } }
@@ -273,7 +309,7 @@ function customBack() {      // the Android back button inside CUSTOM: the drawi
 (function cuInit() {
   const t = $('cdTools'), pal = $('cdPal');
   for (const [id, lab] of CU_TOOLS) { const b = document.createElement('button'); b.textContent = lab; b.dataset.tool = id; b.addEventListener('click', () => { cuTool = id; cuShapeStart = null; cuSync(); cuPaint(); }); t.appendChild(b); }
-  for (const [id, lab] of CU_ACTS) { const b = document.createElement('button'); b.textContent = lab; b.dataset.act = id; if (id === 'delfr' || id === 'templ') b.style.gridColumn = '1 / 3'; b.addEventListener('click', () => cuAct(id, b)); t.appendChild(b); }
+  for (const [id, lab] of CU_ACTS) { const b = document.createElement('button'); b.textContent = lab; b.dataset.act = id; if (id === 'delfr' || id === 'templ' || id === 'atpl') b.style.gridColumn = '1 / 3'; b.addEventListener('click', () => cuAct(id, b)); t.appendChild(b); }
   for (let i = 0; i < 15; i++) { const b = document.createElement('button'); b.innerHTML = '<canvas width="64" height="64"></canvas><span></span>'; b.setAttribute('aria-label', 'frame ' + (i + 1)); b.addEventListener('click', () => { if (i < cuFr.length) cuSelect(i); else cuAddFrame(); }); $('cdFr').appendChild(b); }
   setInterval(() => { if (state === 'custdraw') cuImg(cuFr[Math.floor(performance.now() / (1000 / IDLE_FPS)) % cuFr.length], $('cdPrev')); }, 1000 / IDLE_FPS);      // (the real-size preview plays the frames over and over, as they will play in the game)
   CU_PAL.forEach((c, i) => { const b = document.createElement('button'); b.style.background = c; b.dataset.i = i; b.setAttribute('aria-label', 'colour ' + (i + 1)); b.addEventListener('click', () => cuSetColor(i)); pal.appendChild(b); });
