@@ -490,6 +490,50 @@ function makeSfx(ac) {
     c5shine() {                                          // v1.98 the middle socket shines purple: a glassy shimmer that swells (three high notes of a chord) over a deep rising hum, a bright ping when it is fully lit
       const t = T(), B = C.ce; [1318.5, 1975.5, 2637].forEach((f, i) => tone(B.soft, t + i * 0.06, { f, f2: f * 1.004, dur: 1.7, gain: 0.04, atk: 0.5 })); tone(B.deep, t, { f: 55, f2: 82, dur: 1.9, gain: 0.35, atk: 0.9, cur: 1 }); burst(B.soft, t, { type: 'highpass', f: 3000, f2: 9000, q: 0.7, dur: 1.4, gain: 0.05, atk: 0.8 }); tone(B.soft, t + 1.5, { f: 3136, f2: 3100, dur: 1.0, gain: 0.05, atk: 0.002 });
     },
+    c6scrape() {                                         // v1.102 the Master's claw comes into the picture: a thin metallic shing (noise sweeping up) and a faint ring
+      const t = T(), B = C.atk; burst(B.soft, t, { type: 'bandpass', f: 1800, f2: 6200, q: 4, dur: 0.32, gain: 1.0, atk: 0.12 }); tone(C.tele.soft, t + 0.06, { f: 2637, f2: 2600, dur: 0.4, gain: 0.05, atk: 0.003 });
+    },
+    c6hook() {                                           // v1.102 the blades close on the end of the blindfold: a tiny hard click and a short ring
+      const t = T(), B = C.atk; burst(B.soft, t, { type: 'highpass', f: 3000, f2: 6000, q: 1, dur: 0.02, gain: 0.7, atk: 0.001 }); tone(B.deep, t, { f: 170, f2: 90, dur: 0.05, gain: 0.35, atk: 0.001 }); tone(C.tele.soft, t + 0.01, { f: 1760, f2: 1740, dur: 0.18, gain: 0.04, atk: 0.002 });
+    },
+    c6stretch() {                                        // v1.102 the blindfold strains: a creak that tightens (a low saw rising) with the rasp of cloth on top
+      const t = T(), B = C.atk; tone(B.deep, t, { type: 'sawtooth', f: 70, f2: 190, dur: 0.15, gain: 0.1, atk: 0.1, cur: 1 }); burst(B.soft, t, { type: 'bandpass', f: 900, f2: 2400, q: 2, dur: 0.15, gain: 0.3, atk: 0.1 });
+    },
+    c6rip() {                                            // v1.102 the blindfold is torn off: a ragged tearing of cloth (short bursts of noise, falling), a crack where it lets go, a whip of air and a low thump
+      const t = T(), B = C.atk; for (let i = 0; i < 5; i++) burst(B.soft, t + i * 0.035, { type: 'bandpass', f: R(3200, 4200) - i * 380, q: 1.6, dur: 0.06, gain: 0.5 - i * 0.05, atk: 0.002 });
+      burst(B.soft, t + 0.17, { type: 'highpass', f: 2400, f2: 5200, q: 1, dur: 0.04, gain: 0.9, atk: 0.001 }); burst(B.soft, t + 0.18, { type: 'bandpass', f: 400, f2: 3000, q: 1.2, dur: 0.3, gain: 0.35, atk: 0.04 }); tone(B.deep, t + 0.17, { f: 120, f2: 45, dur: 0.22, gain: 0.5, atk: 0.002 });
+    },
+    c6clamp() {                                          // v1.102 the claw shuts on his eyes: a low wet crunch (noise falling, a bone-like crack) and a metallic scrape
+      const t = T(), B = C.atk; burst(B.soft, t, { type: 'lowpass', f: 1400, f2: 300, q: 1.2, dur: 0.25, gain: 0.6, atk: 0.003 }); burst(B.soft, t + 0.02, { type: 'highpass', f: 2000, f2: 4200, q: 1, dur: 0.04, gain: 0.7, atk: 0.001 }); tone(B.deep, t, { f: 150, f2: 50, dur: 0.22, gain: 0.7, atk: 0.002 }); burst(B.soft, t + 0.05, { type: 'bandpass', f: 2600, f2: 1500, q: 5, dur: 0.18, gain: 0.2, atk: 0.01 });
+    },
+    c6scream(k) {                                        // v1.102 GOJO screams (a man's voice, lower than Yuji's, ripped raw): 0 = the long scream when the claw closes, 1 = the second one while his eyes are pulled, 2 = the scream that is cut off dead when the eye is torn out, 3 = the hoarse howl of the yank
+      const t = T(); if (k === 1) shout(t, { f0: 120, pk: 300, fe: 210, dur: 1.7, gain: 0.42, crack: true, rough: 70, form: [[600, 820, 5, 1], [1300, 1600, 6, 0.7]], vib: 6.6 }); else if (k === 2) shout(t, { f0: 140, pk: 380, fe: 330, dur: 1.0, gain: 0.46, cut: true, rough: 64, form: [[720, 980, 5, 1], [1500, 1900, 6, 0.7]], vib: 6.8 }); else if (k === 3) shout(t, { f0: 110, pk: 280, fe: 190, dur: 1.3, gain: 0.42, crack: true, rough: 76, form: [[560, 760, 5, 1], [1200, 1500, 6, 0.6]], vib: 6 }); else shout(t, { f0: 130, pk: 340, fe: 250, dur: 2.2, gain: 0.46, crack: true, rough: 62, form: [[650, 900, 5, 1], [1400, 1750, 6, 0.7]], vib: 6.2 });
+    },
+    c6thud(h) {                                          // v1.102 a weak punch on the Master's head: a dull thump and a short slap (h = 1: the first, hardest; 0: hardly a touch)
+      const t = T(), B = C.atk, H = 0.4 + 0.6 * (h == null ? 1 : h); tone(B.deep, t, { f: 140, f2: 55, dur: 0.14, gain: 0.6 * H, atk: 0.002 }); burst(B.soft, t, { type: 'bandpass', f: 900, f2: 350, q: 1.1, dur: 0.09, gain: 0.45 * H, atk: 0.001 }); burst(B.soft, t + 0.01, { type: 'highpass', f: 2200, f2: 3800, q: 1, dur: 0.025, gain: 0.3 * H, atk: 0.001 });
+    },
+    c6wet(k) {                                           // v1.102 wet sounds of the eyes: 0 = a squirt of blood, 1 = an eyeball is pushed back into its socket (a squelch and a soft plop), 2 = the eyes drop out and hang (two heavy plops and a slurp), 3 = a vessel snaps (a crisp tick and a splat)
+      const t = T(), B = C.atk; if (k === 1) { burst(B.soft, t, { type: 'lowpass', f: 900, f2: 220, q: 1.4, dur: 0.18, gain: 0.7, atk: 0.004 }); tone(B.deep, t + 0.06, { f: 130, f2: 55, dur: 0.14, gain: 0.5, atk: 0.003 }); burst(B.soft, t + 0.1, { type: 'bandpass', f: 1500, f2: 500, q: 3, dur: 0.12, gain: 0.25, atk: 0.005 }); }
+      else if (k === 2) { for (const [d, f] of [[0, 150], [0.13, 120]]) { tone(B.deep, t + d, { f, f2: f * 0.4, dur: 0.12, gain: 0.6, atk: 0.002 }); burst(B.soft, t + d, { type: 'bandpass', f: 800, f2: 300, q: 1.3, dur: 0.14, gain: 0.5, atk: 0.002 }); } burst(B.soft, t + 0.26, { type: 'bandpass', f: 1800, f2: 400, q: 2.5, dur: 0.3, gain: 0.3, atk: 0.02 }); }
+      else if (k === 3) { burst(B.soft, t, { type: 'highpass', f: 3500, f2: 6500, q: 1.2, dur: 0.03, gain: 0.8, atk: 0.001 }); burst(B.soft, t + 0.02, { type: 'bandpass', f: 1000, f2: 400, q: 1.4, dur: 0.12, gain: 0.45, atk: 0.003 }); tone(B.deep, t + 0.02, { f: 110, f2: 55, dur: 0.1, gain: 0.35, atk: 0.002 }); }
+      else { burst(B.soft, t, { type: 'bandpass', f: 1600, f2: 500, q: 2, dur: 0.14, gain: 0.45, atk: 0.003 }); tone(B.deep, t, { f: 120, f2: 60, dur: 0.1, gain: 0.3, atk: 0.003 }); }
+    },
+    c6domain() {                                         // v1.102 Gojo tries to open his domain: three high notes swell like a gathering ring over a deep hum that rises, a hiss of energy; it ends in c6fizzle
+      const t = T(), B = C.ce; [1568, 2093, 2637].forEach((f, i) => tone(B.soft, t + i * 0.18, { f, f2: f * 1.01, dur: 2.0 - i * 0.18, gain: 0.035, atk: 0.9 })); tone(B.deep, t, { f: 55, f2: 110, dur: 2.1, gain: 0.4, atk: 1.2, cur: 1 }); tone(B.soft, t, { type: 'sawtooth', f: 200, f2: 1500, dur: 2.1, gain: 0.03, atk: 1.7, cur: 1 }); burst(B.soft, t, { type: 'highpass', f: 3000, f2: 9000, q: 0.7, dur: 2.1, gain: 0.05, atk: 1.6 });
+    },
+    c6fizzle() {                                         // v1.102 the domain fails: the ring of notes drops and dies (a falling electric whine), glassy crackle, a dull flat thud where the power should be
+      const t = T(), B = C.ce; tone(B.soft, t, { type: 'sawtooth', f: 2000, f2: 80, dur: 0.55, gain: 0.07, atk: 0.002, cur: 1 }); for (let i = 0; i < 12; i++) burst(B.soft, t + i * 0.035 + R(0, 0.02), { f: R(2500, 8000), q: 4, dur: 0.015, gain: 0.12 * (1 - i / 14), atk: 0.001 }); tone(B.deep, t + 0.05, { f: 90, f2: 30, dur: 0.5, gain: 0.5, atk: 0.003 }); [1568, 1175, 880].forEach((f, i) => tone(B.soft, t + i * 0.07, { f, f2: f * 0.9, dur: 0.4, gain: 0.04, atk: 0.003 }));
+    },
+    c6pluck() {                                          // v1.102 the eye is pulled out: a long wet straining (a creak that tightens under a rasp of tearing noise); the snaps and the pop come on their own
+      const t = T(), B = C.atk; tone(B.deep, t, { type: 'sawtooth', f: 60, f2: 150, dur: 0.9, gain: 0.1, atk: 0.5, cur: 1 }); burst(B.soft, t, { type: 'bandpass', f: 600, f2: 2200, q: 2, dur: 0.9, gain: 0.35, atk: 0.5 });
+    },
+    c6crush() {                                          // v1.102 the claw shuts on the eye: a creak that tightens, then a wet crunch (a crack, a squelch falling away) and a low thud
+      const t = T(), B = C.atk; tone(B.deep, t, { type: 'sawtooth', f: 60, f2: 160, dur: 0.3, gain: 0.12, atk: 0.2, cur: 1 }); burst(B.soft, t, { type: 'bandpass', f: 500, f2: 1600, q: 2.2, dur: 0.3, gain: 0.35, atk: 0.2 });
+      burst(B.soft, t + 0.3, { type: 'highpass', f: 2200, f2: 4800, q: 1, dur: 0.05, gain: 0.9, atk: 0.001 }); burst(B.soft, t + 0.31, { type: 'lowpass', f: 1500, f2: 200, q: 1.2, dur: 0.3, gain: 0.7, atk: 0.003 }); tone(B.deep, t + 0.3, { f: 110, f2: 38, dur: 0.3, gain: 0.7, atk: 0.003 });
+    },
+    c6stone() {                                          // v1.102 the blue stone lights up in the claw: a glassy shimmer that swells (three high notes of a bright chord) over a deep hum, then a clear high ping when it is fully lit
+      const t = T(), B = C.ce; [1568, 2349, 3136].forEach((f, i) => tone(B.soft, t + i * 0.07, { f, f2: f * 1.003, dur: 2.2, gain: 0.04, atk: 0.8 })); tone(B.deep, t, { f: 82, f2: 110, dur: 2.4, gain: 0.35, atk: 1.2, cur: 1 }); burst(B.soft, t, { type: 'highpass', f: 3500, f2: 9500, q: 0.7, dur: 1.8, gain: 0.05, atk: 1.0 }); tone(B.soft, t + 1.8, { f: 3951, f2: 3900, dur: 1.2, gain: 0.05, atk: 0.002 });
+    },
     c3warn() {                                           // v1.96 Verity's STOP is coming: a thin rising shimmer and a dry thump where he will stand (so you hear it even when you look at your own feet)
       const t = T(), B = C.tele; tone(B.soft, t, { type: 'triangle', f: 520, f2: 1300, dur: 0.24, gain: 0.12, atk: 0.01, cur: 1 }); burst(B.soft, t, { type: 'bandpass', f: 900, f2: 3800, q: 1.4, dur: 0.22, gain: 0.35, atk: 0.14 }); tone(B.deep, t + 0.2, { f: 190, f2: 60, dur: 0.14, gain: 0.3, atk: 0.002 });
     },
