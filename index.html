@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.93</small>
+    <small id="ver">V1.94</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -3408,17 +3408,19 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
 // ---------------------------------------------------------------- CURSED ENERGY (Versus mode only): a cyan bar under Gojo's health bar. It starts every round at 100%, each energy move costs some of it, it refills half a percent per second once a second and a half has passed without such a move (hitting, being hit and parrying fill it much faster, see onLand), and the cursed energy mode drains 1% per second (no refill) and switches itself off at 0%.
 const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30, purple: 50, domain: 67, fatal: 50, vBite: 20, vDrag: 25, cStomp: 40, vTele: 10, vBall: 20, vScare: 67, cToon: 30, cUlt: 67, yDiv: 15, yConc: 25, yKick: 5, yZone: 20, yFlash: 40, vTalk: 15, crouch: 3, ceMode: 10, redMode: 10, yInherit: 20, yBlood: 25, yShrine: 30, yGrab: 25, ySimple: 30, yHome: 67 }, CE_WAIT = 1500, CE_REFILL = 0.5;      // what each move costs in % of the bar (slowRed = RED fired while walking back, coat = the BLUE leap onto that slow orb, tele = BLUE in the air, purple = the RED shot fired while Max Blue is out, it costs this instead of the plain RED price); the refill waits 1 s after the last paid move
 CE_COST.vPounce = 25; CE_COST.yUlt = 67;      // (v1.45: Verity's AIR BITE)
+CE_COST.fPierce = 20; CE_COST.fWater = 15; CE_COST.fDream = 67;      // (v1.94 FREDDY: the PIERCE is paid when the claw is driven in, the boiling water when his hand touches the floor (the throw is free), the DREAM like every other ULTIMATE; his slashes, heavy strike, block and dashes stay free, like Gojo's punches)
 let ce = 100, ceLast = -1e9, ceFlash = -1e9;      // the energy in %, when a move last cost some, when a move was last refused (the bar flashes red)
 function ceReset() { ce = 100; ceLast = ceFlash = -1e9; }
 function ceDeny(now) { if (now - ceFlash < 150) return; ceFlash = now; snd('noce'); }      // a refused move: the bar flashes red and says NO CE for a moment (one refusal per press, even if the press falls through to another move that is refused too)
 function ceSpend(cost, now) { if (!vs || vs.end || (vs.practice && TR.pce === 0)) return true; if (ce + 1e-6 < cost) { ceDeny(now); return false; } ce = Math.max(0, ce - cost); ceLast = now; return true; }      // pays for a move (free outside Versus mode); false = not enough energy, the move does not start
+function ceHas(cost) { return !vs || vs.end || (vs.practice && TR.pce === 0) || ce + 1e-6 >= cost; }      // can the energy pay for a move? (looks only, pays nothing)
 function ceTick(now, dt) {                    // the refill and the cursed mode's drain (only while a round is being fought)
   if (!vs || vs.ph !== 'fight') return;
   if (cm === 1) { ce = Math.max(0, ce - dt); if (ce <= 0) { ceDeny(now); setMode(0, now); } }
   else if (now - ceLast >= CE_WAIT) ce = Math.min(100, ce + dt * CE_REFILL * (cuMe() ? cuS.er / 100 : 1));
 }
 window.__ce = () => ({ ce, last: ceLast, flash: ceFlash, now: pnow() }); window.__ceSet = o => { if (o.ce !== undefined) ce = o.ce; if (o.last !== undefined) ceLast = o.last; }; window.__ceCost = () => CE_COST;      // test hooks
-const CEC = { gojo: ['#0b2a3a', '#2fe3ff', '#b8f8ff', '#7df0ff'], verity: ['#2a2208', '#ffd34d', '#fff3b0', '#ffe37d'], cat: ['#2a0b1a', '#ff5a8a', '#ffc0d4', '#ff8fb0'] };      // the cursed energy bar's colours per fighter: [empty part, bar, shine, text] (cyan for Gojo and Yuji, yellow for Verity, pink for the Cat)
+const CEC = { gojo: ['#0b2a3a', '#2fe3ff', '#b8f8ff', '#7df0ff'], verity: ['#2a2208', '#ffd34d', '#fff3b0', '#ffe37d'], cat: ['#2a0b1a', '#ff5a8a', '#ffc0d4', '#ff8fb0'], freddy: ['#2a0a0a', '#e0383a', '#ffb4a8', '#ff8a7a'] };      // the cursed energy bar's colours per fighter: [empty part, bar, shine, text] (cyan for Gojo and Yuji, yellow for Verity, pink for the Cat, blood red for Freddy)
 function drawVs(now, ux = 0, uy = 0) {      // (the bars and names keep clear of a camera notch: they are drawn inside the safe part of the screen)
   if (!safeC) { drawVs0(now, ux, uy, VW); return; }
   ctx.save(); ctx.translate(safeC, 0); drawVs0(now, ux, uy, VW - 2 * safeC); ctx.restore();
@@ -9084,7 +9086,11 @@ function fredP(i) {      // picture i (0-14) of his PIERCE (v1.92, row 24 of the
 }
 // HEAVY, CANCEL and the PIERCE (v1.92): HEAVY STRIKE and DASH CANCEL are the game's own (v1.31): keep ATTACK held after a hit (0.3 s) and he swings his last slash (L.SLASH) slower and harder (1.6 times the damage, it breaks a guard, +34 stagger; his swings are slower still, 0.75 times), press DASH during a slash that has hit and the dash takes over (CANCEL!, flow +20). His taps now fire when the finger lifts (like Verity's, so that a hold can be told from a tap): a hold that is let go before the pierce still slashes. THE PIERCE: press ATTACK and keep it held for 1.3 s with no combo going on (a hold that begins during a combo is a heavy): from 0.4 s he coils (the charge pictures follow the hold, red sparks gather at the claw, he stands still), at 1.3 s he drives the claw straight through the enemy (10 pictures at 20 a second, a short lunge, the blow on picture 3): 30 damage, a big flinch, and he BLEEDS for 4 s (1 damage every 0.1 s, the same as Verity's bite); nothing blocks it; 50 px of reach after the lunge; a miss leaves him open like any whiff.
 const FRED_PIERCE = { charge: 400, hold: 1300, fps: 20, len: 10, whoosh: 1, hit: 3, dmg: 30, knock: 120, bleed: 4000, reach: 50, x: 12 }, FRED_HEAVY_SLOW = 0.75;
-let fredHoldSeen = -1, fredHoldCold = true, fredChTick = -1;      // the press of ATTACK that was looked at last, whether it began with no combo going on (a pierce hold) and the tick of the charge sparks
+let fredHoldSeen = -1, fredHoldCold = true, fredChTick = -1, fredHoldChk = -1, fredHoldYes = true;      // the press of ATTACK that was looked at last, whether it began with no combo going on (a pierce hold) and the tick of the charge sparks
+function fredPierceOk(now) {      // v1.94: once per press, when the coil would start, the energy is looked at: too little (NO CE) and the hold is a plain slash at once; true = the coil may go on
+  if (fredHoldChk !== atkHold) { fredHoldChk = atkHold; fredHoldYes = ceHas(CE_COST.fPierce); if (!fredHoldYes) { ceDeny(now); atkHold = -1; atkReq = true; } }
+  return fredHoldYes && atkHold >= 0;
+}
 function fredPierce(now) {      // the claw goes through the enemy: damage, a big flinch, blood, and he bleeds for 4 s
   const d = dummy; if (!d || d.ko >= 0 || d.cap) return; const g = d.x - wx; if (g > FRED_PIERCE.reach || g < -4) return;
   connectAt = atkAt; cancelFor = atkAt; cancelUntil = now + CANCEL_MS * (flowOn ? 2 : 1);
@@ -9304,12 +9310,15 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   if (atkHold >= 0 && atkHold !== fredHoldSeen) { fredHoldSeen = atkHold; fredHoldCold = !(hits.n > 0 && atkHold <= hits.until); }      // (a new press: does it begin with no combo going on?)
   if (hf >= 0) atkHold = -1;      // (a blow on him ends the hold)
   let fredCh = -1;      // the charge of the pierce (0-1) while he holds ATTACK, -1 = not charging
-  if (atkHold >= 0 && now - atkHold >= FRED_PIERCE.charge && fredHoldCold && can && !fwPh && stance === 'stand' && fredSf < 0 && af < 0 && jumpAt < 0 && df < 0 && blkAt < 0) {
+  if (atkHold >= 0 && now - atkHold >= FRED_PIERCE.charge && fredHoldCold && can && !fwPh && stance === 'stand' && fredSf < 0 && af < 0 && jumpAt < 0 && df < 0 && blkAt < 0 && fredPierceOk(now)) {
     fredCh = Math.min(1, (now - atkHold - FRED_PIERCE.charge) / (FRED_PIERCE.hold - FRED_PIERCE.charge));
     if (((now / 90) | 0) !== fredChTick) { fredChTick = (now / 90) | 0; spark(wx + 14, gy - 24, 1 + Math.round(fredCh * 3), ['#ff3a4a', '#7a0a14', '#ffb0a0'], false, 1); }
-    if (now - atkHold >= FRED_PIERCE.hold) {      // the hold is long enough: THE PIERCE
-      atkHold = -1; atkReq = false; atkQ = false; atkK = 7; atkAt = now; af = 0; fredEv = -1; fredCh = -1; fredWalk = false; fredTg = wvx = 0; fredCrQ = fredUpQ = -1; heavyAt = 0; say('PIERCE!', wx + 10, '#ff4a5a', 8, now);
-      if (dummy && dummy.ko < 0) { const g = dummy.x - wx; if (g > 36) wxv += Math.min(520, (g - 36) * 7); }      // (a short lunge at the enemy)
+    if (now - atkHold >= FRED_PIERCE.hold) {      // the hold is long enough: THE PIERCE (v1.94: paid now; if the energy went meanwhile it is a plain slash instead)
+      if (!ceSpend(CE_COST.fPierce, now)) { atkHold = -1; atkReq = true; fredCh = -1; }
+      else {
+        atkHold = -1; atkReq = false; atkQ = false; atkK = 7; atkAt = now; af = 0; fredEv = -1; fredCh = -1; fredWalk = false; fredTg = wvx = 0; fredCrQ = fredUpQ = -1; heavyAt = 0; say('PIERCE!', wx + 10, '#ff4a5a', 8, now);
+        if (dummy && dummy.ko < 0) { const g = dummy.x - wx; if (g > 36) wxv += Math.min(520, (g - 36) * 7); }      // (a short lunge at the enemy)
+      }
     }
   }
   { const lab = stance === 'crouch' ? FRED_CR : FRED_M1[combo % 2]; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; } }
@@ -9322,7 +9331,7 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
     }
   }
   if (blueReq && can && jumpAt < 0 && af < 0 && df < 0 && blkAt < 0 && stance === 'stand' && fredSf < 0 && fredCrQ < 0 && fredUpQ < 0) {      // BLUE: the first press touches the floor, the second throws the water
-    if (!fwPh && now >= fwCd) { fwPh = 'touch'; fwAt = now; fredWalk = false; fredTg = wvx = 0; atkQ = false; fwPool = 0; fwPoolAt = -1; snd('ripple'); }
+    if (!fwPh && now >= fwCd && ceSpend(CE_COST.fWater, now)) { fwPh = 'touch'; fwAt = now; fredWalk = false; fredTg = wvx = 0; atkQ = false; fwPool = 0; fwPoolAt = -1; snd('ripple'); }
     else if (fwPh === 'ready') { fwPh = 'throw'; fwAt = now; fwFired = false; snd('swing', 3); }
   }
   if (fwPh === 'touch' && now - fwAt >= 15000 / FRED_WATER.touchFps) { fwPh = 'ready'; fwAt = now; }
@@ -9333,7 +9342,7 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
     if (ti >= 15) { fwPh = ''; fwCd = now + FRED_WATER.cd; }
   }
   fwPool += ((fwPh === 'touch' ? Math.min(1, (now - fwAt) * FRED_WATER.touchFps / 1000 / 9) : fwPh === 'ready' ? 1 : fwPh === 'throw' ? Math.max(0, 1 - (now - fwAt) / 260) : 0) - fwPool) * Math.min(1, dt * 12);      // (how big the puddle is)
-  if (domPress && can && !fwPh && jumpAt < 0 && af < 0 && df < 0 && blkAt < 0 && stance === 'stand' && fredSf < 0 && now >= domReadyAt) { if (fdTarget(now)) fdStart(now); else { const gp = dummy ? dummy.x - wx : 999; say(gp <= FD.reach && gp >= -4 ? 'CANT' : 'TOO FAR', wx, '#ff8a7a', 8, now); } }      // (the DREAM button: the ULTIMATE)
+  if (domPress && can && !fwPh && jumpAt < 0 && af < 0 && df < 0 && blkAt < 0 && stance === 'stand' && fredSf < 0 && now >= domReadyAt) { if (fdTarget(now)) { if (ceSpend(CE_COST.fDream, now)) fdStart(now); } else { const gp = dummy ? dummy.x - wx : 999; say(gp <= FD.reach && gp >= -4 ? 'CANT' : 'TOO FAR', wx, '#ff8a7a', 8, now); } }      // (the DREAM button: the ULTIMATE)
   { const dl = $('doml'); if (dl.textContent !== 'DREAM') { dl.textContent = 'DREAM'; $('dom').setAttribute('aria-label', 'Dream: Freddy puts the enemy to sleep and attacks him in his dream; the damage is real'); } const pth = $('dom').querySelector('path'); if (pth && pth.getAttribute('d') !== MOON_D) pth.setAttribute('d', MOON_D); }
   fwStep(now, dt); vpBleed(now); { const bl = fwPh === 'ready' ? 'THROW' : 'WATER', el = $('lapl'); if (el.textContent !== bl) { el.textContent = bl; $('lap').setAttribute('aria-label', 'Boiling water: press once to touch the floor, again to throw it at the enemy'); } }
   const free = can && jumpAt < 0 && af < 0 && df < 0 && !fwPh;
@@ -9426,7 +9435,7 @@ function tick(t) {
   if (freePlay()) trainStep(now, dt);
   ragTick(now);
   trainDraw(now);
-  if (stance === 'down' && stPrev === 'stand' && vs && state === 'play' && !fredMe()) ceSpend(CE_COST.crouch, now); stPrev = stance;      // (the crouch of every fighter, the Cat smashing himself flat: 3% of the energy)
+  if (stance === 'down' && stPrev === 'stand' && vs && state === 'play') ceSpend(CE_COST.crouch, now); stPrev = stance;      // (the crouch of every fighter, the Cat smashing himself flat: 3% of the energy)
   if (lanRole === 'in' && state === 'play') lanTick();      // (the Wi-Fi fight: his pictures are picked up every frame, not every 0.15 s)
   if (story && story.toOutro) { story.toOutro = false; startOutro(now); }
   if (story && story.toEnd) { story.toEnd = false; startTrainEnd(now); }      // (the training fight is won: the happy ending starts)
@@ -9603,6 +9612,7 @@ $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+{"v": "1.94", "t": "FREDDY NOW USES ENERGY", "n": ["Freddy's special moves now cost energy, like the other fighters. The energy bar under his health is blood red now.", "PIERCE costs 20%. It checks your energy when you start charging. If you do not have enough, you just do a normal slash and the bar flashes NO CE.", "BOILING WATER (the BLUE button) costs 15% when his hand touches the floor. Throwing it is free.", "DREAM (the ULTIMATE) costs 67%, like every other ultimate. If you do not have enough, nothing happens and you do not lose the 30 second wait.", "Crouching costs 3% now, the same as everyone else.", "His normal slashes, the crouch slash, the heavy strike, the block and the dashes are still free.", "Hitting the enemy and getting hit fills the bar. It also fills slowly by itself when you wait. In Free Play the energy never runs out, as before."]},
 {"v": "1.93", "t": "FREDDY'S ULTIMATE: THE NIGHTMARE", "n": ["The DOMAIN button is now called DREAM for Freddy. It is free, and you can use it once every 30 seconds.", "The enemy has to be in front of you, close enough (150 steps), alone and standing. If not, it says TOO FAR or CANT and you keep it.", "First a music box plays and music notes float to the enemy. The street turns blue and the enemy falls asleep.", "Then Freddy follows him into his dream: a scary boiler room. He slashes the enemy four times, then drives his claw right through him.", "The damage is REAL. It comes off the enemy's health bar the moment each hit lands: 10, 10, 12, 12 and 36. That is 80 damage.", "Then the enemy wakes up in a white flash, back in the street, and he keeps bleeding for 4 seconds (20 more damage). 100 damage in all.", "While it plays nobody can move and the round timer stops. If the enemy is knocked out in the dream, the round ends right there.", "It works on Gojo, Yuji, Verity and the Cat, but not on small curse spirits.", "4 new sounds (a music box, a nightmare swell, a claw scrape and a wake-up) and a new moon icon for the button."]},
 {"v": "1.92", "t": "FREDDY: HEAVY STRIKE, DASH CANCEL AND THE PIERCE", "n": ["HEAVY STRIKE: land a slash, then keep ATTACK held for a moment. Freddy swings a slow, hard slash. It does 1.6 times the damage and breaks a guard.", "DASH CANCEL: press DASH during a slash that has hit and he dashes out of it right away. It says CANCEL!", "THE PIERCE (new): press ATTACK and keep holding it for a long time, 1.3 seconds, when no combo is going on. He coils back with his claw and red sparks gather.", "Then he drives his claw straight through the enemy: 30 damage, a big knock back, and the enemy bleeds for 4 seconds. Nothing blocks it.", "If you let go too early, you just do a normal slash. If you miss, he is open for a moment, like any miss.", "Because of this, his slashes now start when you let go of the button (the same way Verity's heavy punch works).", "15 new pierce pictures for the charge and the thrust."]},
 {"v": "1.91", "t": "FREDDY: GUARD BREAK AND CROUCH DASH", "n": ["GUARD BREAK: some blows go through a guard (the Concentrated Fist, the uppercut, and curse moves nothing can block). Before, Freddy's hand caught even these.", "Now his guard is broken: he takes the hit and gets a new reaction. The claw arm is knocked up and back, his head snaps, he staggers a step and recovers. It says GUARD BREAK.", "Normal blows are still caught as before.", "CROUCH DASH: press DASH while crouched. Freddy scuttles low with his claw dragging in front, 50 steps forward or a short back-step if you hold back, and stays crouched afterwards.", "It works like his normal dash: free, and the enemy's blows miss him at the start of it.", "10 new guard break pictures and 15 new crouch dash pictures, drawn on the same puppet."]},
