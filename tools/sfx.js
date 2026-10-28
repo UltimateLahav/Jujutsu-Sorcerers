@@ -158,6 +158,22 @@ function makeSfx(ac) {
       burst(B.soft, t, { f: red ? 500 : 900, f2: red ? 160 : 300, q: 0.9, dur: red ? 0.2 : 0.14, gain: red ? 2.8 : 2.2, atk: 0.001 });
       tone(B.soft, t, { type: 'sawtooth', f: red ? 330 : 560, f2: red ? 90 : 160, dur: red ? 0.3 : 0.18, gain: 0.12, atk: 0.004 });
     },
+    lullaby(at) {                                        // v1.93 FREDDY'S DREAM: a music box in a minor key, twenty notes (two plain phrases that sink to the low note), a little out of tune
+      const t0 = T(at), B = C.tele, N = [659, 784, 659, 523, 587, 494, 587, 0, 659, 784, 659, 523, 494, 440, 0, 0, 440, 523, 659, 880];
+      N.forEach((f, i) => { if (!f) return; const t = t0 + i * 0.26, d = 1 + Math.sin(i * 7.3) * 0.004; tone(B.soft, t, { type: 'sine', f: f * d, dur: 0.7, gain: 0.34, atk: 0.003 }); tone(B.soft, t, { type: 'sine', f: f * 2.01 * d, dur: 0.22, gain: 0.13, atk: 0.002 }); tone(B.soft, t, { type: 'triangle', f: f * 3.02, dur: 0.1, gain: 0.05, atk: 0.001 }); });
+    },
+    nightmare(at) {                                      // v1.93 the fall into the dream: a deep swell that sinks, a shimmer that falls with it
+      const t = T(at), B = C.tele;
+      tone(B.deep, t, { type: 'sine', f: 70, f2: 36, dur: 1.5, gain: 0.5, atk: 0.4 }); burst(B.soft, t, { f: 500, f2: 3200, q: 0.5, dur: 1.2, gain: 1.4, atk: 0.5 }); tone(B.soft, t + 0.1, { type: 'sine', f: 880, f2: 220, dur: 1.1, gain: 0.12, atk: 0.2 });
+    },
+    clawscrape(at) {                                     // v1.93 claws dragged along a pipe: a thin screech
+      const t = T(at), B = C.atk;      // (the open bus, not the soft one: the soft one is low-passed at 1400 Hz and would take the screech away)
+      burst(B.deep, t, { type: 'highpass', f: 2400, f2: 5200, q: 2.5, dur: 0.28, gain: 0.45, atk: 0.004 }); tone(B.deep, t, { type: 'sawtooth', f: 2800, f2: 1500, dur: 0.24, gain: 0.025, atk: 0.003 });
+    },
+    wakeup(at) {                                         // v1.93 he wakes up: a rising rush of air and a thump
+      const t = T(at), B = C.tele;
+      burst(B.soft, t, { f: 300, f2: 5000, q: 0.6, dur: 0.5, gain: 2.0, atk: 0.2 }); tone(B.deep, t + 0.35, { type: 'triangle', f: 90, f2: 50, dur: 0.3, gain: 0.4, atk: 0.005 });
+    },
     splash(at) {                                         // v1.90 boiling water hits something: a wet slap, a hiss of steam
       const t = T(at), B = C.atk;
       burst(B.soft, t, { f: 3200, f2: 900, q: 0.6, dur: 0.34, gain: 2.6, atk: 0.002 }); burst(B.soft, t + 0.04, { f: 6500, f2: 2600, q: 0.9, dur: 0.55, gain: 1.3, atk: 0.01 });

@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.92</small>
+    <small id="ver">V1.93</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -1860,7 +1860,7 @@ function drawDummy(now, dt) {
   else if (kt < 0 && dummy.mode === 'fighter' && (dummy.ai === 'block' || dummy.ai === 'dodge')) { fi = 5 + Math.floor(now / 125) % 5; info = D.atk11; src = FS.blk[fi]; }       // the smart enemy: guard up (also while he steps back)
   else if (kt < 0 && dummy.mode === 'blocker') { fi = 5 + Math.floor(now / 125) % 5; info = D.atk11; src = FS.blk[fi]; }       // guard up: the hands-up loop
   else if (kt < 0 && dummy.fear) { fi = Math.floor(now / (1000 / IDLE_FPS)) % 15; info = D.cidle; src = FS.fear[fi]; const o = fearOff(now); ox = o[0]; oy = o[1]; }      // JUMPSCARE: stunned, he cowers and shakes
-  else { fi = Math.floor(now / (1000 / IDLE_FPS)) % FS.idle.length; info = D.idle; src = (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) ? dumW[fi] : (kt < 0 && now < dummy.stunUntil && !ult && ((now / 70) | 0) % 2 === 0) ? dumB[fi] : FS.idle[fi]; }   // white flicker while he goes down
+  else { fi = Math.floor(now / (1000 / IDLE_FPS)) % FS.idle.length; info = D.idle; src = (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) ? dumW[fi] : (kt < 0 && now < dummy.stunUntil && !ult && !fd && ((now / 70) | 0) % 2 === 0) ? dumB[fi] : FS.idle[fi]; }   // white flicker while he goes down
   if (vs && vs.foe === 'verity') { const L = storyLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox || 0; oy = L.oy || 0; }      // the enemy is Verity
   if (vs && vs.foe === 'yuji') { const ys = vs.inv ? YUF.inv : YUF.norm, wk = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'walk', at = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'attack', pw = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'power'; ox = oy = 0; lift = 0;      // the enemy is Yuji
     if (at) { fi = Math.max(0, Math.min(14, Math.floor((now - dummy.aiAt) * YU_ATK.fps[dummy.k] * (dummy.spd || 1) / 1000))); src = ys.atk[dummy.k][fi]; info = YU.atk[dummy.k]; lift = info.lift ? info.lift[fi] : 0; }
@@ -2197,14 +2197,14 @@ const domImg = new Image(); domImg.src = DOMAIN_IMG;
 const VOID_IMG = '__VOIDIMG__', VF_N = 12, VF_W = 160, VF_H = 64, VF_FPS = 6;      // the Infinite Void backdrop (your blue-ring picture): 12 frames of 160 x 64, 16 colours, shown at 2x
 const voidImg = new Image(); voidImg.src = VOID_IMG; let domBox = null;
 const DOM_ORDER = ['blind', 'pose', 'face', 'wide', 'burst', 'void', 'collapse', 'reblind'], DOM_MS = { blind: 2200, pose: 900, face: DF_N * 1000 / DF_FPS, wide: 1500, burst: 1900, void: 10000, collapse: 1400, reblind: 1000 };      // (blind: the blindfold comes down, reblind: it goes back on; both are close-ups of his face)
-let dom = null, domHold = false, domReq = false, domReadyAt = 0, voidCv = null, voidG = null;
+let dom = null, domHold = false, domReq = false, domReadyAt = 0, voidCv = null, voidG = null, fd = null;      // (fd = Freddy's nightmare in progress, see freddyDream)
 function domFrozen() { return !!dom; }      // (the people stand still for the whole domain, the collapse too)
-function domLock() { return !!dom && (dom.kind === 'home' ? dom.ph === 'pose' || dom.ph === 'face' || dom.ph === 'burst' : dom.ph !== 'void' && dom.ph !== 'collapse'); }      // (v1.50 dom.kind 'home' = Yuji's HOMETOWN, see hdom.js: its town lasts as long as the void and is a domain in every other way too)
+function domLock() { return !!fd || !!dom && (dom.kind === 'home' ? dom.ph === 'pose' || dom.ph === 'face' || dom.ph === 'burst' : dom.ph !== 'void' && dom.ph !== 'collapse'); }      // (v1.50 dom.kind 'home' = Yuji's HOMETOWN, see hdom.js: its town lasts as long as the void and is a domain in every other way too)
 function voidOn() { return !!dom && (dom.ph === 'void' || (dom.kind === 'home' && dom.ph === 'town')); }
 function domBgOff(now) { return !!dom && (dom.ph === 'void' || dom.ph === 'town' || (dom.ph === 'burst' && now - dom.p0 >= 350)); }
 const domR = () => Math.hypot(VW, VH);
 function setDomUI(now) { const b = $('dom'); if (!b) return; const cd = dom ? 0 : Math.max(0, (domReadyAt - now) / DOM_CD); b.style.setProperty('--cd', Math.round(cd * 100) + '%'); b.classList.toggle('on', !!dom); b.classList.toggle('cd', !dom && cd > 0); }
-function domReset() { if (dom) { snd('voidoff'); snd('homeoff'); } dom = null; domHold = false; domReq = false; domReadyAt = 0; blindOff = false; bfo = null; bfp = false; setDomUI(0); }
+function domReset() { if (dom) { snd('voidoff'); snd('homeoff'); } dom = null; fd = null; domHold = false; domReq = false; domReadyAt = 0; blindOff = false; bfo = null; bfp = false; setDomUI(0); }
 // ---------------------------------------------------------------- THE BLINDFOLD. DOMAIN EXPANSION: before it starts Gojo hooks the blindfold with one hand and pulls it down to his neck (a full-screen close-up of his face, 1.5 s, his eyes open and glow) and he fights with it down for as long as the domain lasts; when the domain has collapsed it goes back on (a close-up of 0.9 s). HOLLOW PURPLE (RED fired into Max Blue): the blindfold comes off before the red is fired (a close-up of 1 s; the orb and its captive wait for him) and once the purple is over it goes back on if the enemy is still standing (in training: always). While it is down every picture of Gojo is redrawn (blindData): the face seen from the side with big glowing blue eyes and white bangs, and the band hangs round his neck.
 const BF = { purple: 1400, on: 1000 };      // ms of the two quicker close-ups (the DOMAIN's own are DOM_MS.blind and DOM_MS.reblind)
 let blindOff = false, bfo = null, bfp = false, bfAt = 0;      // blindOff = the blindfold is down; bfo = the close-up that is playing over the fight { kind: 'off' | 'on', t0, ms, after }; bfp = a Purple pull is waiting for its blast to be over; bfAt = when the red cast began
@@ -5860,9 +5860,100 @@ function fwDraw(now, cx) {      // the puddle (blue water with a hot orange rim 
   }
   for (const o of fwDrops) { const a = 1 - (now - o.at) / o.life, x = Math.round(cx + o.x - wx), y = Math.round(o.y); if (o.steam) P('rgba(255,255,255,' + (0.55 * a).toFixed(2) + ')', x, y, 3, 3); else P(['#9fdcff', '#ffffff', '#2f7fd0'][o.c], x, y, o.c === 1 ? 1 : 2, o.c === 1 ? 1 : 2); }
 }
+// ---------------------------------------------------------------- v1.93 FREDDY'S ULTIMATE: THE NIGHTMARE (the DOMAIN button, now DREAM: free, 30 s between two). The enemy in front (within 150 px, one enemy, standing, not a curse) is put to sleep and Freddy follows him into his DREAM: 0-1.5 s a music box plays, Freddy coils the claw, the enemy yawns and drops asleep (Zzz); 1.5-2.6 s the picture waves and sinks into the dream; 2.6-9.0 s THE BOILER ROOM: Freddy fades in out of the dark and slashes him four times (10 + 10 + 12 + 12) and drives the claw through him (36): the damage is REAL, it comes off his health bar as it happens; 9.0 s he wakes up (a white flash) lying in the street, still bleeding for 4 s (20 more), and gets up. 80 + 20 = 100 damage in all. Nobody has control for 10.8 s and the round timer stands still; a K.O. in the middle ends it.
+const FD = { cd: 30000, reach: 150, sleep: 0.6, A: 1.5, B: 2.6, appear: [3.1, 3.9], hits: [4.6, 5.1, 5.6, 6.1], dmg: [10, 10, 12, 12], charge: [6.5, 7.6], pierceAt: 7.75, pierce: 36, dream: 9.0, wake: 9.3, rise: 0.9, end: 10.8, bleed: 4000, gap: 200, swing: 32 };
+// (fd, the nightmare in progress { at, x0 (where the enemy stood), slept, sank, dreamed, hit: [landed x4], pierced, woke, fx: [slash marks], glitch }, is declared with dom above: domLock reads it)
+const MOON_D = 'M2 0h3v1H2zM1 1h2v1H1zM0 2h2v4H0zM1 6h2v1H1zM2 7h3v1H2zM6 3h1v1H6z';      // (the DREAM icon: a crescent moon and a star)
+function fdTarget(now) {      // the enemy can be put to sleep: in front within 150 px, alone, on his feet, not a curse (the same rules as Yuji's ULTIMATE)
+  const d = dummy; return !!d && !!vs && !vs.net && vs.ph === 'fight' && !fd && !dom && !ult && !d.curse && !(vs.foes && vs.foes.length > 1) && d.ko < 0 && !d.cap && !d.air && !(d.vform && d.vform !== 'verity') && !(d.vact && d.vact.type === 'crouch') && !(d.cact && d.cact.flat) && now - d.rxAt >= RX_DUR[d.rx] && d.x - wx <= FD.reach && d.x - wx >= -4;
+}
+function fdStart(now) {
+  const d = dummy; fd = { at: now, x0: d.x, slept: false, sank: false, dreamed: false, hit: [false, false, false, false], pierced: false, woke: false, fx: [], glitch: -1e9 };
+  domReadyAt = now + FD.cd; atkQ = false; atkAt = -1; atkHold = -1; combo = 0; fredWalk = false; fredTg = wvx = 0; fredCrQ = fredUpQ = -1; blkAt = blkEnd = -1;
+  fwBalls.length = 0; fwDrops.length = 0; fwPool = 0; fwPoolAt = -1;      // (a ball of BLUE still in the air is gone: the scene does not run it)
+  snd('lullaby');
+}
+function fdBg(now) {      // the BOILER ROOM of the dream, made fresh every frame: a brick wall, pipes that leak steam, a furnace, chains, a swinging bulb, a grated floor
+  const W = VW, H = VH, fy = gy - 7, R = (c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+  const fl = 0.7 + 0.3 * Math.sin(now / 83) * Math.sin(now / 41 + 1), bulb = Math.sin(now / 130) > 0.8 || Math.sin(now / 37) > 0.97 ? 0.35 : 1;
+  R('#0a1411', 0, 0, W, fy);
+  for (let y = 5; y < fy; y += 8) { R('#0f1c17', 0, y, W, 1); for (let x = (((y / 8) | 0) % 2) * 10; x < W; x += 20) R('#0f1c17', x, y, 1, 8); }
+  for (const [py, ph] of [[13, 6], [27, 4], [39, 5]]) { R('#161c19', 0, py + ph - 1, W, 1); R('#2b332e', 0, py, W, ph - 1); R('#4d5a52', 0, py, W, 1); for (let x = 22; x < W; x += 52) { R('#1e2622', x, py - 2, 3, ph + 3); R('#566359', x, py - 2, 1, ph + 2); } }
+  const vx = Math.round(W * 0.62); R('#2b332e', vx, 13, 5, 26); R('#4d5a52', vx, 13, 1, 26); R('#161c19', vx + 4, 13, 1, 26); R('#a8321e', vx - 2, 30, 9, 2); R('#6c1e12', vx - 2, 32, 9, 1);
+  const gx = Math.round(W * 0.38), gyy = 52; for (const [o, w] of [[-3, 5], [-2, 7], [-1, 9], [0, 9], [1, 9], [2, 7], [3, 5]]) R('#d8d0b4', gx - (w >> 1), gyy + o, w, 1); R('#0a1411', gx - 3, gyy - 1, 7, 3); const an = Math.sin(now / 600) * 1.1; for (let i = 0; i < 4; i++) R('#b3222e', gx + Math.round(Math.cos(an) * i), gyy + Math.round(Math.sin(an) * i) - 1, 1, 1);
+  const fx = Math.round(W * 0.07); R('#241814', fx - 4, fy - 42, 36, 42); R('#3a2a22', fx - 4, fy - 42, 36, 2); R('#0a0605', fx, fy - 36, 28, 30);
+  for (let i = 0; i < 5; i++) R('rgba(255,' + (80 + i * 30) + ',30,' + (0.85 * fl).toFixed(2) + ')', fx + 3 + i * 2, fy - 13 - i * 3 * fl, 22 - i * 4, 8 + i * 3);
+  for (let i = 1; i <= 8; i++) R('rgba(255,110,30,' + (0.04 * fl).toFixed(3) + ')', fx - 4 - i * 6, fy - 42 - i * 4, 36 + i * 12, 44 + i * 8);
+  for (const [cx0, len] of [[W * 0.26, 34], [W * 0.5, 14], [W * 0.82, 40]]) for (let y = 0; y < len; y += 3) R(y % 6 ? '#3d4540' : '#6c766e', cx0 + Math.sin(now / 800 + cx0) * (y / 22), y, 2, 2);
+  const bx = Math.round(W * 0.5 + Math.sin(now / 900) * 3); R('#1b1b1b', bx, 0, 1, 11); R(bulb > 0.5 ? '#f0e2a0' : '#6a5f3a', bx - 1, 11, 3, 3);
+  for (let i = 0; i < 14; i++) R('rgba(255,235,160,' + (0.06 * bulb * (1 - i / 16)).toFixed(3) + ')', bx - i * 2 - 3, 14 + i * 5, i * 4 + 7, 5);
+  R('#1a1511', 0, fy, W, H - fy); for (let y = fy + 3; y < H; y += 5) R('#251c16', 0, y, W, 1); for (let x = 0; x < W; x += 9) R('#0e0b09', x, fy + 1, 1, H - fy);
+  const pw = Math.round(W * 0.2); for (let r = 0; r < 4; r++) R('rgba(110,12,22,' + (0.55 - r * 0.08).toFixed(2) + ')', W * 0.58 - pw / 2 + r * 3, gy + 6 + r, pw - r * 6, 1);
+  for (const [sx0, sy0] of [[W * 0.3, 27], [W * 0.7, 39], [W * 0.15, 14]]) for (let i = 0; i < 4; i++) { const ph = (now / 1100 + i / 4 + sx0 / 97) % 1; R('rgba(220,235,230,' + (0.28 * (1 - ph)).toFixed(2) + ')', sx0 + Math.sin(ph * 6 + i) * 3, sy0 - ph * 16, 3 + ph * 4, 3 + ph * 3); }
+  for (let i = 0; i < 9; i++) { R('rgba(0,0,0,' + (0.55 - i * 0.06).toFixed(2) + ')', 0, i, W, 1); R('rgba(0,0,0,' + (0.55 - i * 0.06).toFixed(2) + ')', i, 0, 1, H); R('rgba(0,0,0,' + (0.55 - i * 0.06).toFixed(2) + ')', W - 1 - i, 0, 1, H); }
+  ctx.fillStyle = 'rgba(0,0,0,0.5)'; for (let i = 0; i < 40; i++) ctx.fillRect((Math.random() * W) | 0, (Math.random() * H) | 0, 1, 1);
+  R('rgba(60,0,10,0.12)', 0, 0, W, H);
+}
+function freddyDream(now, dt) {      // every frame of the nightmare: it updates the sleep, the blows and the waking, and draws the whole picture; false = it is over (the normal scene goes on)
+  const d = dummy, t = (now - fd.at) / 1000, cx = Math.round(VW / 2), stop = () => { if (d && fd.dreamed && !fd.woke) d.x = fd.x0; fd = null; return false; };      // (stop: the nightmare ends early; if he was in the dream he is back where he slept)
+  if (!d || d.ko >= 0 || !vs || vs.ph !== 'fight') return stop();
+  d.stunUntil = Math.max(d.stunUntil, now + 400); d.ai = 'rest'; d.aiAt = now; d.restFor = 800; d.vx = 0; d.chain = 0; d.hitDone = true; d.pull = null; d.vact = null; d.cact = null; d.held = null; d.cheld = null;
+  const dream = t >= FD.B && t < FD.dream, ex = () => Math.round(cx + d.x - wx);
+  if (t >= FD.sleep && !fd.slept) { fd.slept = true; d.rx = 4; d.rxAt = now; }
+  if (t >= FD.A && !fd.sank) { fd.sank = true; snd('nightmare'); }
+  if (t >= FD.B && !fd.dreamed) { fd.dreamed = true; d.x = wx + 40; d.rx = 0; d.rxAt = -1e9; shakeUntil = now + 120; shakeAmp = 1; }
+  FD.hits.forEach((h, k) => { if (t >= h && !fd.hit[k]) { fd.hit[k] = true; techDmg(d, FD.dmg[k], now, 0, false); tqBlood(d.x - 4, gy - 34, 16 + k * 4, 1); fd.fx.push({ at: now, k }); fd.glitch = now; shakeUntil = now + 110; shakeAmp = 2; snd('clawscrape'); } });
+  if (t >= FD.pierceAt && !fd.pierced && d.ko < 0) { fd.pierced = true; techDmg(d, FD.pierce, now, 0, true); tqBlood(d.x - 4, gy - 34, 40, 1); tqBlood(d.x - 4, gy - 34, 16, -1); fd.fx.push({ at: now, k: 4 }); fd.glitch = now; shakeUntil = now + 220; shakeAmp = 4; hitStop(80); snd('clawscrape'); snd('hit', 3); say('PIERCED!', d.x, '#ff4a5a', 8, now + 150); }
+  if (d.ko >= 0) return stop();      // (killed in the dream: he dies where he sleeps)
+  if (t >= FD.wake && !fd.woke) { fd.woke = true; d.x = fd.x0; d.rx = 4; d.rxAt = now - 340; d.bleed = { until: now + FD.bleed, next: now + FD.gap, gap: FD.gap }; snd('wakeup'); }
+  if (fd.woke) vpBleed(now);      // (the wounds bleed while he gets up: 1 damage every 0.2 s for 4 s)
+  if (!dream && fd.slept && !(fd.woke && t >= FD.wake + FD.rise) && now - d.rxAt > 340) d.rxAt = now - 340;      // (asleep he lies flat: the picture of the fall is held on its last lying frame; it goes on when he wakes)
+  if (t >= FD.end) { fd = null; d.stunUntil = Math.max(d.stunUntil, now + 500); d.restFor = 500; return false; }
+  ctx.save(); shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }
+  ctx.imageSmoothingEnabled = false;
+  const R = (c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), w, h); };
+  if (dream) fdBg(now);
+  else { drawBackdrop(now); ctx.fillStyle = 'rgba(220,210,255,0.35)'; for (const p of parts) { p.x -= p.v * dt; if (p.x < -p.l) p.x = VW; ctx.fillRect(p.x | 0, p.y | 0, p.l, 1); } drawSmoke(now, dt); drawBloodFloor(now, dt); }
+  drawFoes(now, dt); if (!dream) { updatePeds(now, dt); drawPeds(now, dt, 0); }
+  // Freddy: coiled while he sings, out of the dark in the dream, his own slashes and the pierce, then standing
+  let pic = null, ox = 0, ap = 1;
+  if (!dream) { if (t < FD.dream) { pic = fredP(Math.min(4, t * 5 / 0.9)); ox = FRED_PIERCE.x; } else pic = fredF(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)); }
+  else {
+    ap = Math.max(0, Math.min(1, (t - FD.appear[0]) / (FD.appear[1] - FD.appear[0]))); pic = fredF(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS));
+    FD.hits.forEach((h, k) => { const st = h - 7 / FD.swing; if (t >= st && t < st + 15 / FD.swing) pic = fredA(k % 2, Math.min(14, (t - st) * FD.swing)); });
+    if (t >= FD.charge[0] && t < FD.charge[1]) { pic = fredP(Math.min(4, (t - FD.charge[0]) / (FD.charge[1] - FD.charge[0]) * 5)); ox = FRED_PIERCE.x; if (((now / 90) | 0) % 2 === 0) spark(wx + 14, gy - 24, 2, ['#ff3a4a', '#7a0a14', '#ffb0a0'], false, 1); }
+    else if (t >= FD.charge[1] && t < FD.charge[1] + 10 / FRED_PIERCE.fps) { pic = fredP(5 + Math.min(9, (t - FD.charge[1]) * FRED_PIERCE.fps)); ox = FRED_PIERCE.x; }
+  }
+  if (ap > 0) { const jit = ap < 1 && Math.random() < 0.4 ? (Math.random() < 0.5 ? -2 : 2) : 0; ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(cx - 9, gy + 3, 18, 2); ctx.fillRect(cx - 6, gy + 2, 12, 1); ctx.fillRect(cx - 6, gy + 5, 12, 1); ctx.globalAlpha = ap; ctx.drawImage(pic, cx - 31 + ox + jit, gy - 61); ctx.globalAlpha = 1; }
+  // the lullaby: notes drift from the claw to the enemy; Zzz over his head while he sleeps
+  if (t < FD.B) { for (let i = 0; i < 6; i++) { const u = (t * 0.45 + i / 6) % 1, nx = cx + 12 + u * (ex() - cx - 12), ny = gy - 40 - Math.sin(u * 9) * 7 - u * 10; R('#cdb8ff', nx, ny, 3, 2); R('#cdb8ff', nx + 2, ny - 5, 1, 5); R('#cdb8ff', nx + 3, ny - 5, 2, 1); } }
+  if (t >= FD.sleep && t < FD.B) for (let i = 0; i < 3; i++) pxt('Z', ex() + 4 + i * 6, gy - 20 - i * 7 - ((now / 500) % 1) * 6, '#cfe6ff', 8);
+  for (const f of fd.fx) {      // the marks of the claws: four lines slash across him; the pierce is a bright streak straight through
+    const a = (now - f.at) / 260; if (a >= 1) continue; const sx = ex(), q = Math.min(1, a * 5), al = (1 - a).toFixed(2);
+    if (f.k === 4) { const x0 = cx + 14, len = Math.round((sx - x0 + 22) * q); R('rgba(255,70,90,' + al + ')', x0, gy - 34, len, 1); R('rgba(255,255,255,' + al + ')', x0, gy - 33, len, 2); R('rgba(255,70,90,' + al + ')', x0, gy - 31, len, 1); }
+    else for (let l = 0; l < 4; l++) for (let i = 0, n = Math.round(30 * q); i < n; i++) { const u = i / 30; R(l < 2 ? 'rgba(255,255,255,' + al + ')' : 'rgba(255,90,110,' + al + ')', (f.k % 2 ? sx + 14 - u * 28 : sx - 14 + u * 28) + l * 3, gy - 52 + u * 30, 1, 1); } }
+  fd.fx = fd.fx.filter(f => now - f.at < 260);
+  drawDivFx(now); drawSparks(now, dt); if (!dream) drawPeds(now, dt, 1); drawGibs(now); drawPopups(now);
+  // the transitions: the blue dusk of the lullaby, the waves and rings of the fall, the dark that lifts, the white of the waking
+  if (t < FD.B) { R('rgba(30,50,140,' + Math.min(0.4, t * 0.4).toFixed(2) + ')', 0, 0, VW, VH); }
+  if (t >= FD.A && t < FD.B) { const p = (t - FD.A) / (FD.B - FD.A), amp = 5 * p; if (!(now < shakeUntil) && !SET.lite) for (let y = 0; y < VH; y++) ctx.drawImage(cv, 0, y, VW, 1, Math.round(Math.sin(y / 5 + now / 60) * amp), y, VW, 1); const hx = ex(), hy = gy - 12; ctx.fillStyle = 'rgba(190,170,255,' + (0.8 * p).toFixed(2) + ')'; for (let i = 0; i < 5; i++) { const r = ((p * 60 + i * 14) % 70) + 2; for (let a = 0; a < 28; a++) { const th = a / 28 * 6.2832 + p * 4; ctx.fillRect(Math.round(hx + Math.cos(th) * r), Math.round(hy + Math.sin(th) * r * 0.7), 1, 1); } } R('rgba(10,10,50,' + (p * p).toFixed(2) + ')', 0, 0, VW, VH); }
+  if (t >= FD.B && t < FD.B + 0.5) R('rgba(10,10,50,' + (1 - (t - FD.B) / 0.5).toFixed(2) + ')', 0, 0, VW, VH);
+  if (now - fd.glitch < 150) for (let k = 0; k < 7; k++) { const y = (Math.random() * (VH - 8)) | 0; ctx.drawImage(cv, 0, y, VW, 4 + ((Math.random() * 5) | 0), Math.round((Math.random() * 2 - 1) * 8), y, VW, 4); }
+  const cap = (txt, col, a) => { if (a > 0) { ctx.globalAlpha = Math.min(1, a); pxt(txt, VW / 2, gy - 55, col, 10, 'center'); ctx.globalAlpha = 1; } };      // (the captions sit between the health bars and the heads)
+  if (t < 1.9) cap('NIGHTMARE', '#cdb8ff', Math.min(t / 0.3, (1.9 - t) / 0.4));
+  if (dream && t < FD.B + 1.9) cap('THE DREAM', '#ffffff', 1 - (t - FD.B - 0.5) / 1.4);
+  if (t >= FD.wake && t < FD.wake + 1.2) cap('WAKE UP!', '#ffffff', (FD.wake + 1.2 - t) / 0.5);
+  if (dream && fd.hit[0]) pxt('THE DAMAGE IS REAL', VW / 2, VH - 14, ((now / 200) | 0) % 2 ? '#ff4a5a' : '#ffb0a0', 8, 'center');
+  const bar = Math.round(9 * Math.min(1, t / 0.5) * Math.min(1, (FD.end - t) / 0.5)); if (bar > 0) { R('#000', 0, 0, VW, bar); R('#000', 0, VH - bar, VW, bar); }
+  if (t >= FD.dream - 0.3 && t < FD.wake + 0.5) { const f = t < FD.wake ? (t - FD.dream + 0.3) / (FD.wake - FD.dream + 0.3) : 1 - (t - FD.wake) / 0.5; R('rgba(255,255,255,' + Math.max(0, Math.min(1, f)).toFixed(2) + ')', 0, 0, VW, VH); }
+  drawVs(now, -shkX, -shkY);
+  ctx.restore(); drawHits(now);
+  return true;
+}
 function freddyScene(now, dt) {      // one frame of a match with FREDDY as the player: he walks, crouches, jumps, slashes and dashes (M1 and DASH: no block or BLUE yet), then the picture (the enemy, the HUD and the effects are the shared ones)
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3), cx = Math.round(VW / 2); setDomUI(now);
-  const blueReq = lpReq; lpReq = domReq = ceReq = senseReq = false; teleAt = -1; gojoGone = false;      // (BLUE is his boiling water, see FRED_WATER; his BLOCK is the hand held out: see fredGrab)
+  if (fd && freddyDream(now, dt)) return;      // (v1.93 the nightmare draws the whole picture)
+  const blueReq = lpReq, domPress = domReq; lpReq = domReq = ceReq = senseReq = false; teleAt = -1; gojoGone = false;      // (BLUE is his boiling water, see FRED_WATER; his BLOCK is the hand held out: see fredGrab)
   let hf = -1; if (hurtAt >= 0) { hf = Math.floor(Math.max(0, now - hurtAt) * RX_FPS[hurtK] / 1000); if (hf >= 10) { hurtAt = -1; hf = -1; hurtEnd = now; } }
   if (hf >= 0) { stance = 'stand'; stickCr = false; fredCrQ = fredUpQ = -1; atkAt = -1; atkQ = false; dgAt = -1; }      // (a blow stands him up and stops his swing and his dash, whatever he was doing)
   const can = hf < 0 && t >= 1 && now >= pStun && (!vs || vs.ph === 'fight');      // he may act: not while he flinches, is held, appears or between the rounds
@@ -5922,6 +6013,8 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
     if (ti >= 15) { fwPh = ''; fwCd = now + FRED_WATER.cd; }
   }
   fwPool += ((fwPh === 'touch' ? Math.min(1, (now - fwAt) * FRED_WATER.touchFps / 1000 / 9) : fwPh === 'ready' ? 1 : fwPh === 'throw' ? Math.max(0, 1 - (now - fwAt) / 260) : 0) - fwPool) * Math.min(1, dt * 12);      // (how big the puddle is)
+  if (domPress && can && !fwPh && jumpAt < 0 && af < 0 && df < 0 && blkAt < 0 && stance === 'stand' && fredSf < 0 && now >= domReadyAt) { if (fdTarget(now)) fdStart(now); else { const gp = dummy ? dummy.x - wx : 999; say(gp <= FD.reach && gp >= -4 ? 'CANT' : 'TOO FAR', wx, '#ff8a7a', 8, now); } }      // (the DREAM button: the ULTIMATE)
+  { const dl = $('doml'); if (dl.textContent !== 'DREAM') { dl.textContent = 'DREAM'; $('dom').setAttribute('aria-label', 'Dream: Freddy puts the enemy to sleep and attacks him in his dream; the damage is real'); } const pth = $('dom').querySelector('path'); if (pth && pth.getAttribute('d') !== MOON_D) pth.setAttribute('d', MOON_D); }
   fwStep(now, dt); vpBleed(now); { const bl = fwPh === 'ready' ? 'THROW' : 'WATER', el = $('lapl'); if (el.textContent !== bl) { el.textContent = bl; $('lap').setAttribute('aria-label', 'Boiling water: press once to touch the floor, again to throw it at the enemy'); } }
   const free = can && jumpAt < 0 && af < 0 && df < 0 && !fwPh;
   if (blockHeld && free && (stance === 'stand' || stance === 'crouch') && fredSf < 0 && fredCrQ < 0 && fredUpQ < 0) { if (blkAt < 0) { blkAt = now; blkEnd = -1; fredWalk = false; if (stance === 'crouch') fredTg = wvx = 0; } } else { blkAt = blkEnd = -1; }      // (BLOCK: hold the button on the ground, standing or crouched; the claw hand goes out in front of him, 0.08 s later the guard is up: a blow that would hit him is caught; nothing else starts meanwhile. v1.87: standing he walks with it up (the BLOCK WALK, a third of the speed, only his legs move and the body bops), crouched he does not move at all (the CROUCH BLOCK))
@@ -6352,7 +6445,7 @@ window.__domColors = which => { const im = which === 'void' ? voidImg : domImg, 
 window.__domJump = ph => { if (dom && DOM_ORDER.includes(ph)) { dom.ph = ph; dom.p0 = pnow(); } };
 window.__fill = () => { while (peds.length < 5) peds.push(newPed(wx + 150 + peds.length * 12)); };
 window.__hit = k => gojoHit(k, pnow());           // test hook: the attacker's swing k lands on Gojo right now (a dash dodges it)
-window.__fred = () => ({ pic: fredLast, walk: fredWalk, ph: +fredPh.toFixed(2), atkK, atkAt, upQ: fredUpQ, crQ: fredCrQ, sf: fredSf, dir: fredDir, fw: fwPh, hold: atkHold, cold: fredHoldCold, heavy: heavyAt && atkAt === heavyAt, blk: blkAt >= 0, ext: +fredBlkExt.toFixed(2), grab: pnow() - fredGrabAt < 700 });      // test hook: Freddy's picture number (see fredLast), whether his walk shows, the swing
+window.__fred = () => ({ pic: fredLast, walk: fredWalk, ph: +fredPh.toFixed(2), atkK, atkAt, upQ: fredUpQ, crQ: fredCrQ, sf: fredSf, dir: fredDir, fw: fwPh, fd: fd ? +((pnow() - fd.at) / 1000).toFixed(2) : -1, rx: dummy ? dummy.rx : -1, dr: Math.max(0, Math.round(domReadyAt - pnow())), lock: domLock(), hold: atkHold, cold: fredHoldCold, heavy: heavyAt && atkAt === heavyAt, blk: blkAt >= 0, ext: +fredBlkExt.toFixed(2), grab: pnow() - fredGrabAt < 700 });      // test hook: Freddy's picture number (see fredLast), whether his walk shows, the swing
 window.__state = () => ({ who: vs ? vs.who : '', hurtOn: hurtAt >= 0, php: vs ? vs.hp : -1, ex: dummy ? Math.round(dummy.x) : 0, ph: vs ? vs.ph : '', ehp: dummy ? dummy.hp : -1, estun: dummy ? Math.max(0, Math.round(dummy.stunUntil - pnow())) : 0, eair: dummy && dummy.air ? dummy.air.kind : '', bleed: !!cuBleed, cmode: cm, redOrb: !!rdOrb, orbV: rdOrb ? rdOrb.v : 0, coat: rdOrb ? !!rdOrb.coat : false, ride: ride ? ride.phase : '', lift: gojoLift, boom: !!boom, ce: ceOn, ceAmt: +ceAmt.toFixed(2), ho: HOMAP.size, stance, jumpC, mode, wx, stick: { x: stickX, y: stickY, up: stickUp, down: stickDown, held: stickCr }, lapse: lpAt >= 0 ? lpK : -1, dash: dgAt >= 0 ? dgK : -1, dashAir: dgAir, block: blkAt >= 0 ? (blkEnd < 0 ? 1 : 2) : 0, guard: guardUp(pnow()), mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests
 window.__back = () => {                       // Android back button: step back through the menus, otherwise let the app close
   if (settingsOn()) { closeSettings(); return true; }
