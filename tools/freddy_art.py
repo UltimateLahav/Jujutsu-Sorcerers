@@ -336,6 +336,44 @@ def crouch_block_frames():
     for k, (gf, wr, lean) in enumerate(CBLK):
         Pz = from_pose(list(CROUCH), 0); Pz['sway'] = 0.0; Pz['dx'] = CBLK_DX; Pz['gf'] = gf; Pz['wr'] = wr; Pz['torso'] = (CROUCH[5] + lean, CROUCH[6]); Pz['closed'] = k == 2; FR.append(render(Pz))
     return FR
+# ---------------------------------------------------------------- HURT AND K.O. (v1.89): posed on the same puppet by key poses. The game picks one of ten hit reactions at random for every fighter (10 pictures each, 16-24 a second): his own are four kinds: 0 HEAD SNAP (the head is thrown back, the arms fly), 1 DOUBLED OVER (a blow to the gut), 2 STAGGER (a foot steps back, the arms windmill), 3 KNOCKED DOWN (falls on his back, lies, sits up; for the big blows). The K.O. is 15 pictures: struck, thrown back, falls flat, a small bounce, and he lies (the last picture holds). The game's own tumbling physics moves the picture (how far, how high); the lying pictures are drawn 8 px to the right in their cells (the head is at the left end, so the whole body needs the room).
+def PS(hip=36.0, al=0.0, sy=1.0, bt=0.0, hd=(0.0, 0.0), hb=(0.0, 13.0), gf=(4.0, -2.0), wr=14.0, bz=0, dx=0.0, L=(-1.5, 59.0, 0, 3.0, 59.0, 0)):
+    return dict(hip=hip, al=al, sy=sy, bt=bt, hd=hd, hb=hb, gf=gf, wr=wr, bz=bz, dx=dx, L=L)
+def _mix(a, b, t): return tuple(x + (y - x) * t for x, y in zip(a, b)) if isinstance(a, tuple) else a + (b - a) * t
+def pose_at(keys, k):
+    """the pose at picture k between key poses (frame, PS(...)), eased"""
+    A, B, t = keys[-1][1], keys[-1][1], 0.0
+    for (a, PA), (b, PB) in zip(keys, keys[1:]):
+        if a <= k <= b: A, B, t = PA, PB, (k - a) / float(b - a); t = t * t * (3 - 2 * t); break
+    m = {n: _mix(A[n], B[n], t) for n in A if n != 'bz'}; L = m['L']
+    return dict(hipY=m['hip'], legs=((L[0], L[1], L[2]), (L[3], L[4], L[5])), torso=(m['al'], m['sy']), head=(m['bt'], m['hd'][0], m['hd'][1]), hb=m['hb'], gf=m['gf'], wr=m['wr'], bz=A['bz'], dx=m['dx'], sway=0.0)
+def keyed(keys, n): return [render(pose_at(keys, k)) for k in range(n)]
+PR = PS()
+HK0 = [(0, PR), (1, PS(36.3, -7, 1, -14, (-0.5, 0), (-5, 11), (1, -5), 4, 0, -1, (-2.5, 59, 0, 3.5, 59, 0))),
+       (2, PS(36.6, -14, 1, -27, (-1, 0.5), (-10, 7), (-6, -6), 8, 0, -3, (-3.5, 59, 0, 4, 59, 0))),
+       (4, PS(36.5, -12, 1, -20, (-1, 0), (-9, 8), (-4, -4), 4, 0, -4, (-4, 59, 0, 4.5, 59, 0))),
+       (6, PS(36.2, -6, 1, -9, (0, 0), (-4, 11), (1, -2), 10, 0, -3, (-3, 59, 0, 4, 59, 0))), (9, PR)]
+HK1 = [(0, PR), (1, PS(37.2, 14, 0.99, 6, (0, 0.5), (3, 13), (5, 4), 14, 0, -1, (-2, 59, 0, 3.5, 59, 0))),
+       (2, PS(39.0, 38, 0.97, 12, (0, 1), (6, 12), (6, 10), 20, 1, -4, (-3, 59, 0, 5, 59, 0))),
+       (5, PS(39.5, 44, 0.96, 14, (0, 1.5), (6, 12), (7, 11), 20, 1, -5, (-3.5, 59, 0, 5.5, 59, 0))),
+       (7, PS(38.0, 24, 0.98, 8, (0, 1), (4, 12), (6, 7), 16, 0, -3, (-2.5, 59, 0, 4, 59, 0))), (9, PR)]
+HK2 = [(0, PR), (1, PS(36.8, -12, 1, -12, (-0.5, 0), (-8, 6), (7, -6), 2, 0, -2, (-5, 59, 0, 4, 57, 0))),
+       (3, PS(37.0, -17, 1, -16, (-1, 0), (-9, -2), (8, -7), -4, 0, -5, (-7, 59, 0, 3, 58, 0))),
+       (5, PS(36.6, -4, 1, -5, (0, 0), (-5, 6), (6, -5), 8, 0, -5, (-6, 59, 0, 1, 59, 0))),
+       (7, PS(36.2, 3, 1, 1, (0, 0), (-2, 11), (5, -1), 14, 0, -3, (-4, 59, 0, 2, 59, 0))), (9, PR)]
+LY = dict(hip=55.0, al=-90, bt=-8, hd=(0.0, 0.0), hb=(-9.0, -1.0), gf=(-9.0, -7.0), wr=-20.0, dx=7.0, L=(16.0, 60.0, 45, 19.5, 59.0, 50))      # (lying on his back: the head is at the left end, the knees a little bent)
+HK3 = [(0, PR), (1, PS(37.0, -14, 1, -14, (-0.5, 0), (-8, 7), (-2, -8), 2, 0, -2, (-3, 59, 0, 4, 58, 0))),
+       (2, PS(41.0, -42, 1, -20, (-1, 0), (-12, 2), (-6, -6), -8, 0, 0, (-1, 56, 30, 6, 55, 40))),
+       (4, PS(**LY)), (5, PS(54.2, -90, 1, -10, (0, 0), (-10, -1), (-9, -9), -20, 0, 7, (15.5, 59, 45, 19, 58, 50))),
+       (6, PS(**LY)), (7, PS(50.0, -66, 1, -8, (0, 0), (-8, 2), (-4, -2), 4, 0, 4, (10, 60, 20, 13, 59, 25))),
+       (8, PS(42.0, -30, 1, -8, (0, 0), (-4, 10), (2, -2), 10, 0, -1, (-1, 59, 0, 5, 59, 0))), (9, PS(36.6, -6, 1, -4, (0, 0), (-1, 12), (3, -2), 14, 0, -3, (-2, 59, 0, 3.5, 59, 0)))]
+KK = [(0, PS(36.6, -12, 1, -18, (-1, 0), (-8, 6), (-4, -5), 4, 0, -2, (-3, 59, 0, 4, 59, 0))),
+      (2, PS(41.0, -40, 1, -24, (-1, 0), (-12, 0), (-8, -4), -10, 0, 0, (0, 55, 30, 7, 53, 45))),
+      (4, PS(47.0, -70, 1, -16, (-0.5, 0), (-11, 1), (-10, -8), -20, 0, 4, (8, 57, 40, 13, 55, 48))),
+      (6, PS(**LY)), (7, PS(53.5, -90, 1, -12, (0, 1), (-10, -2), (-10, -11), -25, 0, 7, (15, 58, 45, 18.5, 57, 50))),
+      (9, PS(**LY)), (11, PS(55.0, -90, 1, -9, (0, 0.5), (-10, 0), (-10, -3), -30, 0, 7, (16.5, 60, 45, 19.5, 59, 50))), (14, PS(55.0, -90, 1, -9, (0, 0.5), (-8, 1), (-13, 1), -75, 0, 7, (16.5, 60, 45, 19.5, 59, 50)))]
+def hurt_frames(): return [keyed(HK0, 10), keyed(HK1, 10), keyed(HK2, 10), keyed(HK3, 10)]
+def ko_frames(): return keyed(KK, 15)
 def sheet(FR, FW, FJ, FC):
     A = np.zeros((64 * (5 + len(FC)), 64 * 15, 4), np.uint8)      # row 14: the crouch block (0 the claw coming up, 1 the hold, 2 the catch; drawn 8 px to the left), row 13: the legs of the block walk (and the bop), row 12: the crouch rake (hit 6, drawn 8 px to the left), row 11: the crouch walk, row 10: the run (the dash), row 0: the idle, row 1: the walk, rows 2-4: the jump (frames 0-14, 15-29, 30-39), row 5: going down into the crouch, row 6: from the crouch into the jump, row 7: from the jump into the crouch, row 8: the claw slash, row 9: the slash with the bare hand
     def put(f, r, c):
@@ -347,7 +385,7 @@ def sheet(FR, FW, FJ, FC):
         for i, f in enumerate(fs): put(f, 5 + r, i)
     Image.fromarray(A).save('freddy_sheet.png'); return A
 if __name__ == '__main__':
-    U, RH, hx, gx, gy = upper(); print('hem', RH, 'hips', round(hx, 1)); FR = idle_frames(); FW = walk_frames(); FJ = jump_frames(); FC = [crouch_frames(CD_KEYS), crouch_frames(CJ_KEYS, 0.0, jump_sway(6)), crouch_frames(JC_KEYS, jump_sway(34), 0.0), slash_frames(SL1_KEYS, True), slash_frames(SL2_KEYS, False), run_frames(), crouch_walk_frames(), crouch_rake_frames(), block_walk_frames(), crouch_block_frames()]; A = sheet(FR, FW, FJ, FC)
+    U, RH, hx, gx, gy = upper(); print('hem', RH, 'hips', round(hx, 1)); FR = idle_frames(); FW = walk_frames(); FJ = jump_frames(); FC = [crouch_frames(CD_KEYS), crouch_frames(CJ_KEYS, 0.0, jump_sway(6)), crouch_frames(JC_KEYS, jump_sway(34), 0.0), slash_frames(SL1_KEYS, True), slash_frames(SL2_KEYS, False), run_frames(), crouch_walk_frames(), crouch_rake_frames(), block_walk_frames(), crouch_block_frames()] + hurt_frames() + [ko_frames()]; A = sheet(FR, FW, FJ, FC)
     # contact sheets to look at, x2: the jump (8 x 5) and the three crouch animations (15 x 3)
     def contact(cells, cols, name):
         rows = (len(cells) + cols - 1) // cols; cs = np.zeros((64 * rows, 64 * cols, 4), np.uint8); cs[:] = [120, 116, 132, 255]
@@ -355,5 +393,5 @@ if __name__ == '__main__':
             r, c = divmod(i, cols); m = blk[:, :, 3] > 0; cs[r * 64:(r + 1) * 64, c * 64:(c + 1) * 64][m] = blk[m]
         Image.fromarray(cs).resize((cs.shape[1] * 2, cs.shape[0] * 2), Image.NEAREST).save(name)
     contact([A[(2 + i // 15) * 64:(3 + i // 15) * 64, (i % 15) * 64:(i % 15 + 1) * 64] for i in range(40)], 8, 'freddy_contact.png')
-    contact([A[(5 + r) * 64:(6 + r) * 64, i * 64:(i + 1) * 64] for r in range(3) for i in range(15)], 15, 'freddy_contact2.png'); contact([A[(8 + r) * 64:(9 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact3.png'); contact([A[10 * 64:11 * 64, i * 64:(i + 1) * 64] for i in range(15)], 15, 'freddy_contact4.png'); contact([A[(11 + r) * 64:(12 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact5.png'); contact([A[(13 + r) * 64:(14 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact6.png')
+    contact([A[(5 + r) * 64:(6 + r) * 64, i * 64:(i + 1) * 64] for r in range(3) for i in range(15)], 15, 'freddy_contact2.png'); contact([A[(8 + r) * 64:(9 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact3.png'); contact([A[10 * 64:11 * 64, i * 64:(i + 1) * 64] for i in range(15)], 15, 'freddy_contact4.png'); contact([A[(11 + r) * 64:(12 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact5.png'); contact([A[(13 + r) * 64:(14 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact6.png'); contact([A[(15 + r) * 64:(16 + r) * 64, i * 64:(i + 1) * 64] for r in range(5) for i in range(15)], 15, 'freddy_contact7.png')
     print('sheet', A.shape, 'blade pixels cut off:', CLIP[0], 'farthest ankle', round(REACH[0], 2), 'of', L1 + L2); assert CLIP[0] == 0 and REACH[0] <= L1 + L2 - 0.05

@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.88</small>
+    <small id="ver">V1.89</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -5682,7 +5682,7 @@ function cloth(E, src, ox, oy, flip, kind, dt) {      // the hair and the coat f
 }
 // ---------------------------------------------------------------- v1.39 FREDDY KRUEGER: a CURSED SPIRIT fighter like Verity and the Cartoon Cat (16 bit, 64 x 64 pictures, tools/freddy_art.py makes them from the picture the game's author gave). He has 15 idle frames, WALKS (v1.40), JUMPS (v1.41), CROUCHES (v1.44) and has two M1 slashes (v1.45); he cannot dash or block yet (those buttons do nothing); he can be pushed and hurt, flashes when he is hit and tumbles when he is knocked out. You can play him in FREE PLAY and in VERSUS (as your fighter; he is not offered as the enemy).
 const FRED_IMG = new Image(); FRED_IMG.src = '__FREDDY__';
-let fredLast = -1;      // the picture the scene asked for last: 0-14 idle, 15-29 walk, 100-139 jump, 200-244 crouch (+15 each: 0 going down, 1 into the jump, 2 into the crouch), 300-329 M1 (+15 each: 0 the claw slash, 1 the bare hand), 400-414 the run (the dash), 500-514 the crouch rake, 600-614 the crouch walk, 700-714 the block walk, 800-802 the crouch block
+let fredLast = -1;      // the picture the scene asked for last: 0-14 idle, 15-29 walk, 100-139 jump, 200-244 crouch (+15 each: 0 going down, 1 into the jump, 2 into the crouch), 300-329 M1 (+15 each: 0 the claw slash, 1 the bare hand), 400-414 the run (the dash), 500-514 the crouch rake, 600-614 the crouch walk, 700-714 the block walk, 800-802 the crouch block, 900-939 the hurt reactions (4 kinds of 10), 1000-1014 the K.O.
 const FRED_INFO = { w: 64, h: 64, cx: 31, x0: 0, top: 1 }, FRC = new Map();      // (cx: the column of the picture that stands at the middle of the screen: between his feet)
 function fredF(i, walk) {      // frame i of his idle (15 frames, looping), or of his WALK when walk is true (15 frames too), as a canvas of 64 x 64 (EMPTY until the sheet has loaded)
   i = ((Math.floor(i) % 15) + 15) % 15; const key = fredLast = i + (walk ? 15 : 0); let c = FRC.get(key); if (c) return c;
@@ -5719,6 +5719,17 @@ function fredCB(i) {      // picture i (0-2) of his CROUCH BLOCK (v1.87, row 14 
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
   c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, 14 * 64, 64, 64, 0, 0, 64, 64); FRC.set(key, c); return c;
 }
+function fredH(kind, i) {      // picture i (0-9) of his HURT reaction of kind 0-3 (v1.89, rows 15-18 of the sheet): 0 head snap, 1 doubled over, 2 stagger, 3 knocked down (falls, lies, sits up) as a canvas of 64 x 64
+  kind = Math.max(0, Math.min(3, kind | 0)); i = Math.max(0, Math.min(9, Math.floor(i))); const key = fredLast = 900 + kind * 10 + i; let c = FRC.get(key); if (c) return c;
+  if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
+  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, (15 + kind) * 64, 64, 64, 0, 0, 64, 64); FRC.set(key, c); return c;
+}
+function fredK(i) {      // picture i (0-14) of his K.O. (v1.89, row 19 of the sheet): struck, thrown back, falls flat, a small bounce, lies (the last one holds) as a canvas of 64 x 64
+  i = Math.max(0, Math.min(14, Math.floor(i))); const key = fredLast = 1000 + i; let c = FRC.get(key); if (c) return c;
+  if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
+  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, 19 * 64, 64, 64, 0, 0, 64, 64); FRC.set(key, c); return c;
+}
+const FRED_HF = [0, 1, 2, 0, 3, 2, 1, 3, 3, 2];      // which of his four hurt kinds plays for each of the game's ten hit reactions (the random one: head snap, doubled over, stagger, spin, knocked flat, skid, guard, the launch, the big fall, ...)
 function fredD(i) {      // picture i (0-14) of his RUN (the dash) as a canvas of 64 x 64: row 11 of the sheet
   i = Math.max(0, Math.min(14, Math.floor(i))); const key = fredLast = 400 + i; let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
@@ -5853,7 +5864,7 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   drawSmoke(now, dt);
   drawBloodFloor(now, dt); drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
   const handOut = (fredBlkExt > 0.03 || now - fredGrabAt < 700) && hf < 0 && jumpAt < 0 && af < 0 && df < 0, armOn = handOut && stance === 'stand', cbOn = handOut && stance === 'crouch' && fredSf < 0;      // (the hand is out or holding a caught blow: standing the arm is made fresh every frame (fredPose), crouched it is one of the three pictures of the CROUCH BLOCK)
-  const info = FRED_INFO, py = gAir ? gAirH : lift, src = jpic || (df >= 0 ? fredD(dgK === 1 ? 14 - df : df) : af >= 0 ? fredA(atkK, af) : fredSf >= 0 ? fredC(0, stance === 'down' ? fredSf : 14 - fredSf) : stance === 'crouch' ? (cbOn ? fredCB(now - fredGrabAt < 700 ? 2 : fredBlkExt > 0.5 ? 1 : 0) : fredWalk && hf < 0 ? fredW(Math.floor(fredPh)) : fredC(0, 14)) : armOn ? fredPose(now, fredWalk && hf < 0 ? Math.floor(fredPh) : -1, blkAt >= 0) : fredWalk && hf < 0 ? fredF(Math.floor(fredPh), true) : fredF(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS))); let ox = hf >= 0 ? (((now / 45) | 0) & 1 ? 1 : -1) : 0, oy = 0;      // (hurt: a shiver)
+  const info = FRED_INFO, py = gAir ? gAirH : lift, src = jpic || (hf >= 0 || gAir ? (gAir ? fredH(3, 2) : fredH(FRED_HF[hurtK % 10], hf)) : df >= 0 ? fredD(dgK === 1 ? 14 - df : df) : af >= 0 ? fredA(atkK, af) : fredSf >= 0 ? fredC(0, stance === 'down' ? fredSf : 14 - fredSf) : stance === 'crouch' ? (cbOn ? fredCB(now - fredGrabAt < 700 ? 2 : fredBlkExt > 0.5 ? 1 : 0) : fredWalk && hf < 0 ? fredW(Math.floor(fredPh)) : fredC(0, 14)) : armOn ? fredPose(now, fredWalk && hf < 0 ? Math.floor(fredPh) : -1, blkAt >= 0) : fredWalk && hf < 0 ? fredF(Math.floor(fredPh), true) : fredF(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS))); let ox = 0, oy = 0;      // (v1.89: hurt has its own pictures, no shiver)
   { const uo = ultHeldOff(now); ox += uo[0]; oy += uo[1]; }      // (the enemy Cat's ULTIMATE holds him up by the neck: lifted and shaking)
   if (((af >= 0 && atkK === 6) || cbOn) && df < 0 && !jpic) ox += FRED_RAKE_X;      // (the pictures of the CROUCH RAKE and of the CROUCH BLOCK have him 8 px to the left in the picture, to leave room for the claw: they are drawn 8 px to the right, his hips stay where they are)
   const x = cx - (info.cx - info.x0) + ox, y = gy - 60 - info.top - py + oy;
@@ -5862,7 +5873,7 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   ctx.fillStyle = 'rgba(0,0,0,0.4)'; if (!vap && !rgOn()) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
   const ry = Math.round(info.h * (1 - e)), gko = vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // (spawn: he materialises from the feet up; beaten: he tumbles and stays down until the next round)
   ctx.save();
-  if (vap) { /* gone */ } else if (gko >= 0) { const rgh = ragXf(vs.rag, gko, cx, gy + 2, -1); if (!rgh) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); } ctx.drawImage(fredF(0), -info.cx, -62 + rgh); }
+  if (vap) { /* gone */ } else if (gko >= 0) { const r = vs.rag, c = r ? ragAt(r, gko) : null, air = c ? Math.max(0, c.h - (r.hh * Math.abs(Math.cos(c.a)) + r.hw * Math.abs(Math.sin(c.a)))) : 0, sx = Math.round(cx - (c ? c.x : 0)), w = Math.max(5, Math.round(9 * (1 - Math.min(1, air / 48)))); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(sx - w, gy + 3, w * 2, 2); ctx.fillRect(sx - Math.round(w * 0.66), gy + 2, Math.round(w * 1.32), 1); ctx.fillRect(sx - Math.round(w * 0.66), gy + 5, Math.round(w * 1.32), 1); ctx.drawImage(fredK(gko / 38), sx - info.cx, gy + 2 - 62 - Math.round(air)); }      // (v1.89: his K.O. pictures, carried by the game's tumble: how far he is thrown and how high he is is the physics', the falling and the lying are drawn)
   else { ctx.beginPath(); ctx.rect(x, y + ry, armOn ? 96 : info.w, info.h - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, x, y); if (hf >= 0 && now - hurtAt < 70) ctx.drawImage(whiteOf(src), x, y); }
   ctx.restore(); drawGiantNow('foe');
   if (t < 1) {      // spawn ring + flash
