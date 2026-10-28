@@ -127,7 +127,7 @@ def render(out='gauntlet'):
             for x in range(W):
                 if tone[y, x] < 0: continue
                 dx, dy = x + 0.5 - sx, y + 0.5 - sy; d = math.hypot(dx, dy); q = dx + dy
-                if d < r - 0.8: tone[y, x] = 7 if q < 0.35 * (r - 1) else 8                 # the hole, its lower-right wall lit a little
+                if d < r - 0.45: tone[y, x] = 7 if q < 0.35 * (r - 1) else 8                 # the hole, its lower-right wall lit a little
                 elif d < r + 0.6: tone[y, x] = 0 if q < -0.4 else 2 if q < 1.0 else 3        # the bezel
                 elif d < r + 1.55: tone[y, x] = 5                                                   # the dark ring round it
     img = np.zeros((H, W, 4), np.uint8)
