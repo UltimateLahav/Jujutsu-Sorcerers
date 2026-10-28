@@ -340,7 +340,7 @@ def crouch_block_frames():
 def PS(hip=36.0, al=0.0, sy=1.0, bt=0.0, hd=(0.0, 0.0), hb=(0.0, 13.0), gf=(4.0, -2.0), wr=14.0, bz=0, dx=0.0, L=(-1.5, 59.0, 0, 3.0, 59.0, 0)):
     return dict(hip=hip, al=al, sy=sy, bt=bt, hd=hd, hb=hb, gf=gf, wr=wr, bz=bz, dx=dx, L=L)
 def _mix(a, b, t): return tuple(x + (y - x) * t for x, y in zip(a, b)) if isinstance(a, tuple) else a + (b - a) * t
-def pose_at(keys, k):
+def pose_at(keys, k):      # (see ps_pz below for the same conversion)
     """the pose at picture k between key poses (frame, PS(...)), eased"""
     A, B, t = keys[-1][1], keys[-1][1], 0.0
     for (a, PA), (b, PB) in zip(keys, keys[1:]):
@@ -386,6 +386,28 @@ TH = [(0, TCH), (2, PS(47.5, 50, 0.96, -16, (0, 1.5), (2, 14), (-1, 10.5), 5, 1,
       (9, PS(40.0, 16, 1.0, 1, (0, 0), (-1, 12), (14, -2), 20, 0, WDX, (-2, 59, 0, 4.5, 59, 0))),
       (12, PS(37.5, 6, 1.0, 0, (0, 0), (0, 13), (6, 0), 14, 0, WDX, (-1.5, 59, 0, 3.2, 59, 0))), (14, PS(dx=WDX))]
 def water_frames(): return [keyed(TK, 15), keyed(TH, 15)]
+# ---------------------------------------------------------------- GUARD BREAK and CROUCH DASH (v1.91). GUARD BREAK (10 pictures, row 22, played at the hit reaction's speed): a blow that goes through his guard (the CONCENTRATED FIST, the UPPERCUT, the curses' blows that nothing blocks): he starts in the block (the claw arm out in front), the blow knocks the arm up and back, the head snaps, he staggers back a step and recovers. CROUCH DASH (15 pictures, row 23, 40 a second like the run): a low scuttle in the stalker's crouch, the claw dragging in front, two quick strides with a moment in the air between them (the first and last pictures melt into the crouch, so he settles into it when the dash ends).
+GCR = PS(45.5, 36, 0.97, -16, (0, 0), (-1.4, 15.9), (6.9, 9.9), -20, 1, WDX, (-4, 59, 0, 8, 59, 0))      # (the crouch as a pose, drawn 8 px to the left like the rake: the claw needs the room; the game draws these pictures 8 px to the right)
+GB = [(0, PS(36.0, 3, 1, 0, (0, 0), (2, 12), (13, -1), 2, 0, 0, (-1.5, 59, 0, 3, 59, 0))),
+      (1, PS(36.4, -9, 1, -12, (-0.5, 0), (-3, 10), (9, -8), 0, 0, -2, (-2.5, 59, 0, 3.5, 59, 0))),
+      (2, PS(36.8, -17, 1, -23, (-1, 0.5), (-9, 6), (0, -9), -30, 0, -4, (-4, 59, 0, 2, 59, 0))),
+      (4, PS(36.6, -14, 1, -16, (-1, 0), (-8, 8), (-3, -3), -20, 0, -6, (-6, 59, 0, 0, 57, 0))),
+      (6, PS(36.3, -6, 1, -8, (0, 0), (-4, 11), (3, 0), 8, 0, -5, (-5, 59, 0, 0, 59, 0))), (9, PS())]
+def guard_break_frames(): return keyed(GB, 10)
+CDS = 13.0; CDL = 4.0; CDU = 0.42
+def cd_foot(u):
+    if u < CDU: return CDS / 2 - CDS * (u / CDU), 0.0
+    t = (u - CDU) / (1 - CDU); e = t - np.sin(2 * np.pi * t) / (2 * np.pi); return -CDS / 2 + CDS * e, CDL * np.sin(np.pi * t)
+def psmix(A, B, t):
+    m = {n: _mix(A[n], B[n], t) for n in A if n != 'bz'}; m['bz'] = B['bz']; return m
+def ps_pz(m, bz): return dict(hipY=m['hip'], legs=((m['L'][0], m['L'][1], m['L'][2]), (m['L'][3], m['L'][4], m['L'][5])), torso=(m['al'], m['sy']), head=(m['bt'], m['hd'][0], m['hd'][1]), hb=m['hb'], gf=m['gf'], wr=m['wr'], bz=bz, dx=m['dx'], sway=0.0)
+def crouch_dash_frames():
+    FR = []
+    for k in range(15):
+        ph = k / 15.0; xn, ln = cd_foot(ph % 1.0); xf, lf = cd_foot((ph + 0.5) % 1.0); c = np.cos(4 * np.pi * ph); sw = np.sin(2 * np.pi * ph)
+        D = PS(46.6 - 0.9 * (0.5 + 0.5 * c), 44 + 2.0 * np.sin(4 * np.pi * ph), 0.97, -18, (0, 1), (-1.4 + 2.5 * sw, 14.5), (9.5 + 1.2 * sw, 8.0 - 0.8 * c), -22, 1, WDX, (-4 + xn, 59 - ln, 0, 8 + xf, 59 - lf, 0))
+        w = min(1.0, k / 3.0, (14 - k) / 3.0); w = w * w * (3 - 2 * w); FR.append(render(ps_pz(psmix(GCR, D, w), 1)))
+    return FR
 def sheet(FR, FW, FJ, FC):
     A = np.zeros((64 * (5 + len(FC)), 64 * 15, 4), np.uint8)      # row 14: the crouch block (0 the claw coming up, 1 the hold, 2 the catch; drawn 8 px to the left), row 13: the legs of the block walk (and the bop), row 12: the crouch rake (hit 6, drawn 8 px to the left), row 11: the crouch walk, row 10: the run (the dash), row 0: the idle, row 1: the walk, rows 2-4: the jump (frames 0-14, 15-29, 30-39), row 5: going down into the crouch, row 6: from the crouch into the jump, row 7: from the jump into the crouch, row 8: the claw slash, row 9: the slash with the bare hand
     def put(f, r, c):
@@ -397,7 +419,7 @@ def sheet(FR, FW, FJ, FC):
         for i, f in enumerate(fs): put(f, 5 + r, i)
     Image.fromarray(A).save('freddy_sheet.png'); return A
 if __name__ == '__main__':
-    U, RH, hx, gx, gy = upper(); print('hem', RH, 'hips', round(hx, 1)); FR = idle_frames(); FW = walk_frames(); FJ = jump_frames(); FC = [crouch_frames(CD_KEYS), crouch_frames(CJ_KEYS, 0.0, jump_sway(6)), crouch_frames(JC_KEYS, jump_sway(34), 0.0), slash_frames(SL1_KEYS, True), slash_frames(SL2_KEYS, False), run_frames(), crouch_walk_frames(), crouch_rake_frames(), block_walk_frames(), crouch_block_frames()] + hurt_frames() + [ko_frames()] + water_frames(); A = sheet(FR, FW, FJ, FC)
+    U, RH, hx, gx, gy = upper(); print('hem', RH, 'hips', round(hx, 1)); FR = idle_frames(); FW = walk_frames(); FJ = jump_frames(); FC = [crouch_frames(CD_KEYS), crouch_frames(CJ_KEYS, 0.0, jump_sway(6)), crouch_frames(JC_KEYS, jump_sway(34), 0.0), slash_frames(SL1_KEYS, True), slash_frames(SL2_KEYS, False), run_frames(), crouch_walk_frames(), crouch_rake_frames(), block_walk_frames(), crouch_block_frames()] + hurt_frames() + [ko_frames()] + water_frames() + [guard_break_frames(), crouch_dash_frames()]; A = sheet(FR, FW, FJ, FC)
     # contact sheets to look at, x2: the jump (8 x 5) and the three crouch animations (15 x 3)
     def contact(cells, cols, name):
         rows = (len(cells) + cols - 1) // cols; cs = np.zeros((64 * rows, 64 * cols, 4), np.uint8); cs[:] = [120, 116, 132, 255]
@@ -405,5 +427,5 @@ if __name__ == '__main__':
             r, c = divmod(i, cols); m = blk[:, :, 3] > 0; cs[r * 64:(r + 1) * 64, c * 64:(c + 1) * 64][m] = blk[m]
         Image.fromarray(cs).resize((cs.shape[1] * 2, cs.shape[0] * 2), Image.NEAREST).save(name)
     contact([A[(2 + i // 15) * 64:(3 + i // 15) * 64, (i % 15) * 64:(i % 15 + 1) * 64] for i in range(40)], 8, 'freddy_contact.png')
-    contact([A[(5 + r) * 64:(6 + r) * 64, i * 64:(i + 1) * 64] for r in range(3) for i in range(15)], 15, 'freddy_contact2.png'); contact([A[(8 + r) * 64:(9 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact3.png'); contact([A[10 * 64:11 * 64, i * 64:(i + 1) * 64] for i in range(15)], 15, 'freddy_contact4.png'); contact([A[(11 + r) * 64:(12 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact5.png'); contact([A[(13 + r) * 64:(14 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact6.png'); contact([A[(15 + r) * 64:(16 + r) * 64, i * 64:(i + 1) * 64] for r in range(5) for i in range(15)], 15, 'freddy_contact7.png'); contact([A[(20 + r) * 64:(21 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact8.png')
+    contact([A[(5 + r) * 64:(6 + r) * 64, i * 64:(i + 1) * 64] for r in range(3) for i in range(15)], 15, 'freddy_contact2.png'); contact([A[(8 + r) * 64:(9 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact3.png'); contact([A[10 * 64:11 * 64, i * 64:(i + 1) * 64] for i in range(15)], 15, 'freddy_contact4.png'); contact([A[(11 + r) * 64:(12 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact5.png'); contact([A[(13 + r) * 64:(14 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact6.png'); contact([A[(15 + r) * 64:(16 + r) * 64, i * 64:(i + 1) * 64] for r in range(5) for i in range(15)], 15, 'freddy_contact7.png'); contact([A[(20 + r) * 64:(21 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact8.png'); contact([A[(22 + r) * 64:(23 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact9.png')
     print('sheet', A.shape, 'blade pixels cut off:', CLIP[0], 'farthest ankle', round(REACH[0], 2), 'of', L1 + L2); assert CLIP[0] == 0 and REACH[0] <= L1 + L2 - 0.05

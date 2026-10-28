@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.90</small>
+    <small id="ver">V1.91</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -1787,7 +1787,8 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   const airMe = !!gAir && gAir.kind === 'up';      // you are launched: everything can hit you up there, the hit-stun and the height do not protect you
   if (airMe ? gojoGone : downed ? (!isKick(foeWho, k) || gojoLift > 12 || gojoGone) : ((!held && (hurtAt >= 0 || now - hurtEnd < 250)) || gojoLift > 12 || gojoGone)) { nres('m'); return; }
   const guardWas = (guardUp(now) || autoGuard()) && !!dummy && dummy.x > wx;
-  if (guardWas && fredMe()) { if (stance !== 'stand' && !(netK >= 0 && (k === 6 || k === 7)) && !isKick(foeWho, k) && k !== 46) { nres('m'); return; } fredGrab(k, now); nres('b'); return; }      // (Freddy does not bounce a blow off: his hand catches it, see fredGrab; crouched, what passes over him passes over him, and only a kick or an uppercut is caught: the same blows that hit a crouched fighter)
+  const gbk = k === 42 || k === 46 || (k >= 49 && CMOVE[k - 49].nb);      // (a blow nothing blocks: the CONCENTRATED FIST, the UPPERCUT and the curses' blows that go through a guard)
+  if (guardWas && fredMe() && !gbk) { if (stance !== 'stand' && !(netK >= 0 && (k === 6 || k === 7)) && !isKick(foeWho, k) && k !== 46) { nres('m'); return; } fredGrab(k, now); nres('b'); return; }      // (Freddy does not bounce a blow off: his hand catches it, see fredGrab; crouched, what passes over him passes over him, and only a kick or an uppercut is caught: the same blows that hit a crouched fighter)
   if (guardWas && k !== 42 && k !== 46 && !(k >= 49 && CMOVE[k - 49].nb)) {  // his guard is up and the attacker is in front of him: the swing is blocked (a hit from behind still lands; CONCENTRATED FIST breaks the guard)
     if (!isD1(k) && blkAt >= 0 && now - blkAt <= (cuMe() ? cuS.pt : PARRY_MS) * paceBase() * (assistLvl() >= 1 ? 2 : 1)) { parryHit(now); nres('b'); return; }      // (PARRY: the guard went up just before the blow, see parryHit)
     wxv -= KNOCK_G[k] * 0.3 * pScale(); shakeUntil = now + 80; shakeAmp = 1; buzz(8); say('BLOCKED', wx + 14, '#9fd8ff', 8, now); snd('block'); if (isD1(k)) { dummy.divOk = now; dummy.divK = k; }      // (the fist was blocked: the second impact still comes)
@@ -1797,6 +1798,7 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   if (k === 30 || k === 32) { catGrab(k, now); return; }      // the Cat's grab: no reaction, Gojo is held and pulled in
   if (isD1(k)) { dummy.divOk = now; dummy.divK = k; }      // (DIVERGENT FIST: the fist reached you, the second impact follows)
   if (!(airMe && k !== 47)) { hurtK = isD1(k) ? 0 : k === 29 || k === 33 || k === 35 || (k >= 40 && (k < 49 || CMOVE[k - 49].heavy)) ? 4 : (Math.random() * 10) | 0; hurtAt = now; if (k === 46) { hurtK = AIR_RX; gAir = airMake(now, 0, AIR_V, AIR_G, 'up'); } else if (k === 47) gAir = airMe ? airMake(now, gAirH, -80, 900, 'drop') : null; }      // (a hit on you while you are in the air keeps your flight and your pose; the UPPERCUT launches you, the FACE KICK knocks you out of the air)
+  if (guardWas && fredMe()) fredGBAt = hurtAt;      // (v1.91 Freddy's guard is broken: he has his own reaction, see fredG)
   if ((k === 33 || k === 35) && vs) vs.catHold = 0;                                    // one of ten reactions, picked at random
   atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; wxv -= KNOCK_G[k] * 0.9 * pScale(); shockAt(wx, 90, 45, 0.5); shakeUntil = now + 120; shakeAmp = k === 35 || k === 42 ? 4 : k === 3 || k === 29 || k === 33 || k === 40 || k === 41 ? 3 : 2; if (k === 40 || k === 43 || k === 48 || (k >= 49 && CMOVE[k - 49].heavy)) gDownUntil = now + RX_DUR[4];
   const dm = Math.round((DMG[k] + (k >= 27 ? 0 : (Math.random() * 5) | 0) + (netK >= 0 ? netBonus : 0)) * (vs ? (vs.net ? 1 : vs.cv ? (vs.dmgMul || 1) : GRADES[vs.gi].dmg) : 1) * (assistLvl() >= 2 ? 0.7 : 1)); say('' + dm, wx, '#ff9a5a', 8, now);
@@ -1804,6 +1806,7 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   snd('hurt', hurtK); nres('h', dm, hurtK); onHurt(k, dm, now);
   if (k === 42) { concFx(now, wx); if (guardWas) say('GUARD BREAK', wx, '#ffd34d', 8, now + 90); }      // (CONCENTRATED FIST: the shock, and your guard is broken)
   if (k === 46) { upFx(now, wx); if (guardWas) say('GUARD BREAK', wx, '#ffd34d', 8, now + 90); } if (k === 47) kickFx(now, wx, dummy && dummy.x >= wx ? -1 : 1);      // (the UPPERCUT and the FACE KICK on you)
+  if (guardWas && fredMe() && k >= 49) say('GUARD BREAK', wx, '#ffd34d', 8, now + 90);
 }
 function catGrab(k, now) {                    // the Cat's glove closes on Gojo: no reaction, he is held (no control until the combo ends or the Cat is hit) and pulled in while the glove draws back (that part runs with the Cat's swing, in updateFighterVs)
   const d = dummy; atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1;
@@ -5683,7 +5686,7 @@ function cloth(E, src, ox, oy, flip, kind, dt) {      // the hair and the coat f
 }
 // ---------------------------------------------------------------- v1.39 FREDDY KRUEGER: a CURSED SPIRIT fighter like Verity and the Cartoon Cat (16 bit, 64 x 64 pictures, tools/freddy_art.py makes them from the picture the game's author gave). He has 15 idle frames, WALKS (v1.40), JUMPS (v1.41), CROUCHES (v1.44) and has two M1 slashes (v1.45); he cannot dash or block yet (those buttons do nothing); he can be pushed and hurt, flashes when he is hit and tumbles when he is knocked out. You can play him in FREE PLAY and in VERSUS (as your fighter; he is not offered as the enemy).
 const FRED_IMG = new Image(); FRED_IMG.src = '__FREDDY__';
-let fredLast = -1;      // the picture the scene asked for last: 0-14 idle, 15-29 walk, 100-139 jump, 200-244 crouch (+15 each: 0 going down, 1 into the jump, 2 into the crouch), 300-329 M1 (+15 each: 0 the claw slash, 1 the bare hand), 400-414 the run (the dash), 500-514 the crouch rake, 600-614 the crouch walk, 700-714 the block walk, 800-802 the crouch block, 900-939 the hurt reactions (4 kinds of 10), 1000-1014 the K.O., 1100-1114 water touch, 1200-1214 water throw
+let fredLast = -1;      // the picture the scene asked for last: 0-14 idle, 15-29 walk, 100-139 jump, 200-244 crouch (+15 each: 0 going down, 1 into the jump, 2 into the crouch), 300-329 M1 (+15 each: 0 the claw slash, 1 the bare hand), 400-414 the run (the dash), 500-514 the crouch rake, 600-614 the crouch walk, 700-714 the block walk, 800-802 the crouch block, 900-939 the hurt reactions (4 kinds of 10), 1000-1014 the K.O., 1100-1114 water touch, 1200-1214 water throw, 1300-1309 guard break, 1400-1414 crouch dash
 const FRED_INFO = { w: 64, h: 64, cx: 31, x0: 0, top: 1 }, FRC = new Map();      // (cx: the column of the picture that stands at the middle of the screen: between his feet)
 function fredF(i, walk) {      // frame i of his idle (15 frames, looping), or of his WALK when walk is true (15 frames too), as a canvas of 64 x 64 (EMPTY until the sheet has loaded)
   i = ((Math.floor(i) % 15) + 15) % 15; const key = fredLast = i + (walk ? 15 : 0); let c = FRC.get(key); if (c) return c;
@@ -5744,6 +5747,17 @@ function fredR(i) {      // picture i (0-14) of the THROW of his boiling water m
 const FRED_WATER = { touchFps: 27, throwFps: 30, rel: 7, hold: 6000, speed: 300, reach: 260, dmg: 25, knock: 70, burn: 8000, gap: 800, cd: 600 };
 let fwPh = '', fwAt = -1, fwCd = 0, fwFired = false, fwBalls = [], fwDrops = [], fwPool = 0, fwPoolAt = -1;      // the phase ('' / touch / ready / throw), when it began, the wait before the next, the water has left the hand, the balls of water in flight, the drops and puffs of steam, how big the puddle is (0-1) and when it began to dry
 const FRED_HF = [0, 1, 2, 0, 3, 2, 1, 3, 3, 2];      // which of his four hurt kinds plays for each of the game's ten hit reactions (the random one: head snap, doubled over, stagger, spin, knocked flat, skid, guard, the launch, the big fall, ...)
+function fredG(i) {      // picture i (0-9) of his GUARD BREAK reaction (v1.91, row 22 of the sheet): the claw arm is knocked up and back, the head snaps, he staggers and recovers
+  i = Math.max(0, Math.min(9, Math.floor(i))); const key = fredLast = 1300 + i; let c = FRC.get(key); if (c) return c;
+  if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
+  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, 22 * 64, 64, 64, 0, 0, 64, 64); FRC.set(key, c); return c;
+}
+function fredY(i) {      // picture i (0-14) of his CROUCH DASH (v1.91, row 23 of the sheet, drawn 8 px to the left like the crouch rake: see FRED_RAKE_X): a low scuttle in the crouch, the claw dragging in front
+  i = Math.max(0, Math.min(14, Math.floor(i))); const key = fredLast = 1400 + i; let c = FRC.get(key); if (c) return c;
+  if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
+  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, 23 * 64, 64, 64, 0, 0, 64, 64); FRC.set(key, c); return c;
+}
+let fredGBAt = -1e9, fredDashCr = false;      // when his guard was last broken (the same moment as the hurt reaction it starts), and whether the dash that is going on is the crouch dash
 function fredD(i) {      // picture i (0-14) of his RUN (the dash) as a canvas of 64 x 64: row 11 of the sheet
   i = Math.max(0, Math.min(14, Math.floor(i))); const key = fredLast = 400 + i; let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
@@ -5858,17 +5872,17 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   if (hf >= 0) { jumpAt = -1; jk = -1; lift = 0; jpic = null; }      // (a blow knocks him out of the jump)
   gojoLift = lift; const air = jk >= 6 && jk <= 33;      // (the enemy's blows miss him up there, and he passes over a body)
   if (jk !== fredJf) { if (fredJf < 6 && jk >= 6) { snd('jump'); gritAt(wx, 5, 45, 0); shockAt(wx, 50, 30, 0.5); } if (fredJf < 34 && jk >= 34) { snd('land', 1); gritAt(wx, 7, 60, 0); shockAt(wx, 90, 45, 0.7); } fredJf = jk; }
-  if (crReq) { crReq = false; if (jumpAt >= 0) { if (air) fredLC = !fredLC; else if (fredTD >= 0 && !fredLandC) fredCrQ = now; } else if (can && !fwPh && stance === 'stand') fredCrQ = now; else if (can && stance === 'crouch') { if (fredWalk) fredUpQ = now; else { stance = 'up'; stAt = now; stickCr = false; } } }      // (CROUCH: tap to go down (v1.87: also with BLOCK held: the guard drops while he goes down and goes up again crouched), tap again to stand up (a crouch walk finishes its step first); in the air it makes him land crouched, and again undoes it; during a standing landing it is kept and he goes down when he has landed)
+  if (crReq) { crReq = false; if (jumpAt >= 0) { if (air) fredLC = !fredLC; else if (fredTD >= 0 && !fredLandC) fredCrQ = now; } else if (can && !fwPh && stance === 'stand') fredCrQ = now; else if (can && df < 0 && stance === 'crouch') { if (fredWalk) fredUpQ = now; else { stance = 'up'; stAt = now; stickCr = false; } } }      // (CROUCH: tap to go down (v1.87: also with BLOCK held: the guard drops while he goes down and goes up again crouched), tap again to stand up (a crouch walk finishes its step first); in the air it makes him land crouched, and again undoes it; during a standing landing it is kept and he goes down when he has landed)
   if (stance === 'down' || stance === 'up') { fredSf = Math.floor(Math.max(0, now - stAt) * CR_FPS / 1000); if (fredSf >= 15) { stance = stance === 'down' ? 'crouch' : 'stand'; fredSf = -1; } } else fredSf = -1;      // (15 pictures going down; standing up plays them backwards)
   if (atkReq) { atkReq = false; if (can && !fwPh && jumpAt < 0 && df < 0 && blkAt < 0 && (stance === 'stand' || stance === 'crouch') && fredSf < 0) { if (af >= 0) atkQ = true; else { if (now > comboUntil) combo = 0; atkK = fredPick(); atkAt = now; af = 0; atkQ = false; fredWalk = false; fredCrQ = fredUpQ = -1; } } }      // (M1: the first press slashes, a press during the swing chains the second; crouched it is the CROUCH RAKE, again and again; not going down or standing up, in the air, hurt or held)
   if (af < 0 && combo !== 0 && now > comboUntil) combo = 0;
   { const lab = stance === 'crouch' ? FRED_CR : FRED_M1[combo % 2]; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; } }
   if (dashReq) {      // DASH: forward when he is held forward or stands still, a back-step when back is held; on the ground, standing, not swinging; no room in front of the enemy, no dash
     dashReq = false;
-    if (can && !fwPh && jumpAt < 0 && af < 0 && df < 0 && blkAt < 0 && stance === 'stand' && fredSf < 0 && now > dgReady) {
+    if (can && !fwPh && jumpAt < 0 && af < 0 && df < 0 && blkAt < 0 && (stance === 'stand' || stance === 'crouch') && fredSf < 0 && now > dgReady) {
       const d = (keyL || padL) && !(keyR || padR) ? -1 : 1; let to = wx + d * (d > 0 ? DASH_FWD : DASH_BACK);
       if (dummy && dummy.ko < 0) { if (d > 0 && dummy.x > wx) to = Math.min(to, dummy.x - FRED_DASH.gap); else if (d < 0 && dummy.x < wx) to = Math.max(to, dummy.x + FRED_DASH.gap); }      // (he never runs through the enemy, in front of him or behind him: the enemy walks past him in a real fight)
-      if (d * (to - wx) >= FRED_DASH.room) { dgAt = now; df = 0; dgK = d > 0 ? 0 : 1; dgFrom = wx; dgTo = to; atkQ = false; fredWalk = false; fredCrQ = -1; fredTg = 0; snd('dash', dgK); puff(wx - d * 5, 5); }
+      if (d * (to - wx) >= FRED_DASH.room) { dgAt = now; df = 0; dgK = d > 0 ? 0 : 1; dgFrom = wx; dgTo = to; atkQ = false; fredWalk = false; fredCrQ = fredUpQ = -1; fredTg = 0; fredDashCr = stance === 'crouch'; snd('dash', dgK); puff(wx - d * 5, 5); }
     }
   }
   if (blueReq && can && jumpAt < 0 && af < 0 && df < 0 && blkAt < 0 && stance === 'stand' && fredSf < 0 && fredCrQ < 0 && fredUpQ < 0) {      // BLUE: the first press touches the floor, the second throws the water
@@ -5932,9 +5946,10 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   drawSmoke(now, dt);
   drawBloodFloor(now, dt); drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
   const handOut = (fredBlkExt > 0.03 || now - fredGrabAt < 700) && hf < 0 && jumpAt < 0 && af < 0 && df < 0, armOn = handOut && stance === 'stand', cbOn = handOut && stance === 'crouch' && fredSf < 0;      // (the hand is out or holding a caught blow: standing the arm is made fresh every frame (fredPose), crouched it is one of the three pictures of the CROUCH BLOCK)
-  const info = FRED_INFO, py = gAir ? gAirH : lift, src = jpic || (fwPh && hf < 0 ? (fwPh === 'throw' ? fredR((now - fwAt) * FRED_WATER.throwFps / 1000) : fredT(fwPh === 'touch' ? (now - fwAt) * FRED_WATER.touchFps / 1000 : 14)) : hf >= 0 || gAir ? (gAir ? fredH(3, 2) : fredH(FRED_HF[hurtK % 10], hf)) : df >= 0 ? fredD(dgK === 1 ? 14 - df : df) : af >= 0 ? fredA(atkK, af) : fredSf >= 0 ? fredC(0, stance === 'down' ? fredSf : 14 - fredSf) : stance === 'crouch' ? (cbOn ? fredCB(now - fredGrabAt < 700 ? 2 : fredBlkExt > 0.5 ? 1 : 0) : fredWalk && hf < 0 ? fredW(Math.floor(fredPh)) : fredC(0, 14)) : armOn ? fredPose(now, fredWalk && hf < 0 ? Math.floor(fredPh) : -1, blkAt >= 0) : fredWalk && hf < 0 ? fredF(Math.floor(fredPh), true) : fredF(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS))); let ox = 0, oy = 0;      // (v1.89: hurt has its own pictures, no shiver)
+  const info = FRED_INFO, py = gAir ? gAirH : lift, src = jpic || (fwPh && hf < 0 ? (fwPh === 'throw' ? fredR((now - fwAt) * FRED_WATER.throwFps / 1000) : fredT(fwPh === 'touch' ? (now - fwAt) * FRED_WATER.touchFps / 1000 : 14)) : hf >= 0 || gAir ? (gAir ? fredH(3, 2) : fredGBAt === hurtAt ? fredG(hf) : fredH(FRED_HF[hurtK % 10], hf)) : df >= 0 ? (fredDashCr ? fredY(dgK === 1 ? 14 - df : df) : fredD(dgK === 1 ? 14 - df : df)) : af >= 0 ? fredA(atkK, af) : fredSf >= 0 ? fredC(0, stance === 'down' ? fredSf : 14 - fredSf) : stance === 'crouch' ? (cbOn ? fredCB(now - fredGrabAt < 700 ? 2 : fredBlkExt > 0.5 ? 1 : 0) : fredWalk && hf < 0 ? fredW(Math.floor(fredPh)) : fredC(0, 14)) : armOn ? fredPose(now, fredWalk && hf < 0 ? Math.floor(fredPh) : -1, blkAt >= 0) : fredWalk && hf < 0 ? fredF(Math.floor(fredPh), true) : fredF(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS))); let ox = 0, oy = 0;      // (v1.89: hurt has its own pictures, no shiver)
   { const uo = ultHeldOff(now); ox += uo[0]; oy += uo[1]; }      // (the enemy Cat's ULTIMATE holds him up by the neck: lifted and shaking)
-  if (((af >= 0 && atkK === 6) || cbOn || (fwPh && hf < 0)) && df < 0 && !jpic) ox += FRED_RAKE_X;      // (the pictures of the CROUCH RAKE and of the CROUCH BLOCK have him 8 px to the left in the picture, to leave room for the claw: they are drawn 8 px to the right, his hips stay where they are)
+  if (((af >= 0 && atkK === 6) || cbOn || (fwPh && hf < 0)) && df < 0 && !jpic) ox += FRED_RAKE_X;
+  if (df >= 0 && fredDashCr && !jpic) ox += FRED_RAKE_X;      // (the crouch dash's pictures are drawn 8 px to the left too)      // (the pictures of the CROUCH RAKE and of the CROUCH BLOCK have him 8 px to the left in the picture, to leave room for the claw: they are drawn 8 px to the right, his hips stay where they are)
   const x = cx - (info.cx - info.x0) + ox, y = gy - 60 - info.top - py + oy;
   const sw = Math.max(5, Math.round(9 * (1 - py / 48))), sv = Math.round(sw * 2 / 3);      // the ground shadow stays put and shrinks while he is in the air
   const vap = vs.who === 'enemy' && vs.why === 'fatal' && (vs.ph === 'ko' || vs.ph === 'over');      // (the enemy's FATALITY: he is gone until the next round)
