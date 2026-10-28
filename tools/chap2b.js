@@ -1,13 +1,16 @@
 // ---------------------------------------------------------------- v1.97 THE GRAB (this file is spliced into template.html by build_html.py, in place of the marker line after chap2.js's): the end of chapter 2
-// Yuji is in the portal's mouth: he dives in (the pictures of his dash, turned flat) and Verity's long arm shoots out and closes on his LEG when he is halfway in. A close-up of the hand on the ankle. The other side of the portal: the Master holds Gojo by the neck and clicks a button on his wrist; the portal starts to close, slowly, with Yuji still halfway through it, his hand reaching for Gojo. Back in the alley Verity yanks the leg: Yuji is pulled out of the portal, swung over his head and thrown to the ground, and the portal shuts. Verity pounds him, crouched over him, blow after blow; Yuji coughs blood; the ground gives way into a crater. Verity lifts him, drives his arm through his stomach, the organs fall out, a big hole is left in his chest, he falls. WASTED POTENTIAL. For now that is all: the card.
+// Yuji is in the portal's mouth: he dives in (the pictures of his dash, turned flat) and Verity's long arm shoots out and closes on his LEG when he is halfway in. A close-up of the hand on the ankle. The other side of the portal: the Master holds Gojo by the neck and clicks a button on his wrist; the portal starts to close, slowly, with Yuji still halfway through it, his hand reaching for Gojo. Back in the alley Verity yanks the leg: Yuji is pulled out of the portal, swung over his head and thrown to the ground, and the portal shuts. Verity pounds him, crouched over him, blow after blow; Yuji coughs blood; the ground gives way into a crater. Verity lifts him, drives his arm through his stomach, the organs fall out, a big hole is left in his chest, he falls. WASTED POTENTIAL. Then (v1.98) the last scene, and the card.
+// v1.98 THE CALL goes on after it (the shots room, mtalk, scare, ring, listen and gaunt of C4_SEQ; their code is the block "v1.98 THE CALL" at the end of this file): the Master's void again, he talks to Gojo, the room flashes white, he is afraid, a call comes in from "???" ("DID YOU GET HIM?" "YES... I HAVE HIM.") and the camera pushes in on a gauntlet with no stones, whose middle finger's socket shines purple ("GREAT.").
 // Every shot is made of the game's own pictures (Yuji's dash, hurt and idle pictures, Verity's strips, the Master's, Gojo's) enlarged with hard pixels (a close-up is the same drawing as the wide shot with the camera pushed in), and is a pure function of the scene time T, so a tap that skips to the next cut (or a test that jumps in time) always draws the right picture.
 const C3E = { talk: 0.6, blink: 2.2, dive: 2.66, arm: 2.78, grab: 3.04, hold: 0.14 };      // the times of the first part (seconds): Yuji's line, Verity blinks in behind him, he dives, the arm shoots out, the arm closes on his leg, the picture stops for 0.14 s
 const C3E_TALK = [{ t: C3E.talk, d: 1.8, w: 'YUJI', a: 'SENSEI... I AM COMING!', b: '' }, { t: 0, d: 0, w: 'VERITY', a: 'WASTED POTENTIAL.', b: '' }];      // (the second line's time is set below)
 const C3V0 = { w: 64, h: 64, cx: 32, x0: 0, top: 0 };      // the place of Verity's 64 x 64 pictures
-const C4_SEQ = [{ k: 'grip', d: 1.8 }, { k: 'other', d: 2.7 }, { k: 'wrist', d: 1.8 }, { k: 'shut', d: 2.9 }, { k: 'yank', d: 1.9 }, { k: 'down', d: 1.0 }, { k: 'beat', d: 7.2 }, { k: 'lift', d: 1.4 }, { k: 'pierce', d: 3.2 }, { k: 'fall', d: 2.8 }, { k: 'line', d: 3.8 }, { k: 'black', d: 1.6 }];      // the shots after the grab and how long each one lasts
+const C4_SEQ = [{ k: 'grip', d: 1.8 }, { k: 'other', d: 2.7 }, { k: 'wrist', d: 1.8 }, { k: 'shut', d: 2.9 }, { k: 'yank', d: 1.9 }, { k: 'down', d: 1.0 }, { k: 'beat', d: 7.2 }, { k: 'lift', d: 1.4 }, { k: 'pierce', d: 3.2 }, { k: 'fall', d: 2.8 }, { k: 'line', d: 3.8 }, { k: 'black', d: 1.6 }, { k: 'room', d: 4.6 }, { k: 'mtalk', d: 2.6 }, { k: 'scare', d: 2.6 }, { k: 'ring', d: 2.6 }, { k: 'listen', d: 2.8 }, { k: 'gaunt', d: 9.6 }];      // the shots after the grab and how long each one lasts
 { let t = C3E.grab + C3E.hold; for (const s of C4_SEQ) { s.t0 = t; t += s.d; } C4_SEQ.end = t; }
 const c4T = k => C4_SEQ.find(s => s.k === k).t0;
 C3E.card = C4_SEQ.end; C3E_TALK[1].t = c4T('line') + 0.5; C3E_TALK[1].d = 3.0;
+TN_COL['???'] = '#e8e8f4'; C3E_TALK.push({ t: c4T('room') + 0.8, d: 3.5, w: 'MASTER', vk: 2, a: 'YOUR STUDENT IS GONE, GOJO.', b: 'NOW NOBODY CAN SAVE YOU.' }, { t: c4T('mtalk') + 0.3, d: 1.9, w: 'MASTER', vk: 2, a: 'SOON THE WHOLE WORLD WILL-', b: '' }, { t: c4T('listen') + 0.7, d: 2.0, w: '???', vk: 3, a: 'DID YOU GET HIM?', b: '' }, { t: c4T('gaunt') + 0.5, d: 2.2, w: 'MASTER', vk: 2, a: 'YES... I HAVE HIM.', b: '' }, { t: c4T('gaunt') + 5.5, d: 2.4, w: '???', vk: 3, a: 'GREAT.', b: '' });
+const C5 = { flash: c4T('mtalk') + 2.45, rings: [c4T('scare') + 1.25, c4T('ring') + 0.15, c4T('ring') + 1.1], click: 1.7, shine: 5.0 };      // the last scene's clock (scene seconds): the room's white flash, the three rings of the call, the click of the answer (seconds into the telephone's shot) and the purple shine (seconds into the gauntlet's shot)
 const C3E_CUTS = [C3E.grab + C3E.hold].concat(C4_SEQ.slice(1).map(s => s.t0), [C3E.card]);      // a tap jumps to the next of these
 const C4_ANK = { dx: -17, dy: -8 };      // where the rear ankle is from the pivot (his hips) when Yuji dives flat (found from his picture)
 
@@ -61,18 +64,18 @@ function c4Grip(now, dt, T, st, t1, cx, g) {
 }
 
 // ---- the other side of the portal: the Master's. A dark violet void with a floor, the portal at the left, the Master (his own pictures, black, one red eye) holding Gojo by the neck at the right; Yuji comes out of the portal head first, only as far as the plane of the portal (the rest of him is on the other side, in Verity's hand)
-function c4Void(T, gx) {
+function c4Void(T, gx, lit) {      // lit: how bright the portal's light is (1 if left out)
   const g1 = ctx.createLinearGradient(0, 0, 0, gy); g1.addColorStop(0, '#06030c'); g1.addColorStop(1, '#1b0d30'); ctx.fillStyle = g1; ctx.fillRect(0, 0, VW, gy);
   const g2 = ctx.createLinearGradient(0, gy, 0, VH); g2.addColorStop(0, '#150a26'); g2.addColorStop(1, '#040208'); ctx.fillStyle = g2; ctx.fillRect(0, gy, VW, VH - gy);
   for (let i = 0; i < 8; i++) { const x = ((i * 89 + 31) % (VW + 40)) - 10, w = 9 + (i * 5) % 9; ctx.fillStyle = 'rgba(10,5,20,0.9)'; ctx.fillRect(x, 0, w, gy); ctx.fillStyle = 'rgba(120,60,190,0.2)'; ctx.fillRect(x, 0, 1, gy); }      // (far pillars)
   ctx.fillStyle = 'rgba(160,90,230,0.28)'; ctx.fillRect(0, gy, VW, 1); for (let i = 0; i < 12; i++) ctx.fillRect((i * 53 + 11) % VW, gy + 5 + (i % 3) * 6, 14 + (i % 4) * 4, 1);
   ctx.fillStyle = 'rgba(200,170,255,0.4)'; for (let i = 0; i < 26; i++) ctx.fillRect(Math.round((i * 47 + T * (3 + i % 5)) % VW), Math.round((i * 31 + T * (1 + i % 3)) % gy), 1, 1);
-  const lg = ctx.createRadialGradient(gx, gy - 34, 4, gx, gy - 34, VW * 0.6); lg.addColorStop(0, 'rgba(150,70,220,0.5)'); lg.addColorStop(1, 'rgba(60,20,110,0)'); ctx.fillStyle = lg; ctx.fillRect(0, 0, VW, VH);      // (the portal's light)
+  const lg = ctx.createRadialGradient(gx, gy - 34, 4, gx, gy - 34, VW * 0.6); lg.addColorStop(0, 'rgba(150,70,220,' + (0.5 * (lit == null ? 1 : lit)).toFixed(3) + ')'); lg.addColorStop(1, 'rgba(60,20,110,0)'); ctx.fillStyle = lg; ctx.fillRect(0, 0, VW, VH);      // (the portal's light)
 }
-function c4Other(now, T, o) {      // o: z (zoom), fx (camera shift), k (the portal's width: 1 open, 0 shut), yuji (is he there), yx (his hips from the plane of the portal), tr (how much he shakes), eye, flare, ang (how Gojo hangs), sh (shake), fxf (a function drawn in the scene, over everything)
-  const Px = Math.round(VW * 0.27), Mx = Math.round(VW * 0.76), src = rsCarrySrc(fredF(Math.floor(T * IDLE_FPS)), 1), pal = src.palm; c4Void(T, Px);
-  ctx.save(); ctx.translate(c4Jit(o.sh || 0), c4Jit(o.sh || 0)); c4CamOn(o.z, (Px + Mx) / 2 + (o.fx || 0), gy - 34, VW * 0.5, VH * 0.6);
-  ctx.save(); ctx.translate(Px, 0); ctx.scale(Math.max(0.06, o.k), 1); ctx.translate(-Px, 0); rsPortal(Px, 1, T); ctx.restore();
+function c4Other(now, T, o) {      // o: z (zoom), fx (camera shift) or cx (where the camera looks, from the left of the screen), ty (the screen row of its middle), k (the portal's width: 1 open, 0 = no portal at all), lit (the portal's light), yuji (is he there), yx (his hips from the plane of the portal), tr (how much he shakes), eye, flare, ang (how Gojo hangs), sh (shake), fxf (a function drawn in the scene, over everything)
+  const Px = Math.round(VW * 0.27), Mx = Math.round(VW * 0.76), src = rsCarrySrc(fredF(Math.floor(T * IDLE_FPS)), 1), pal = src.palm; c4Void(T, Px, o.lit);
+  ctx.save(); ctx.translate(c4Jit(o.sh || 0), c4Jit(o.sh || 0)); c4CamOn(o.z, o.cx != null ? o.cx : (Px + Mx) / 2 + (o.fx || 0), gy - 34, VW * 0.5, o.ty != null ? o.ty : VH * 0.6);
+  if (o.k !== 0) { ctx.save(); ctx.translate(Px, 0); ctx.scale(Math.max(0.06, o.k), 1); ctx.translate(-Px, 0); rsPortal(Px, 1, T); ctx.restore(); }
   if (o.yuji) { const p = yujiPick({ dodging: true, dgK: 0, df: 6, dgCr: false }), sr = c4NoStreaks(p.set[p.fi]), ppx = Px + o.yx + c4Jit(o.tr || 0), ppy = gy - 37 + c4Jit(o.tr || 0); ctx.save(); ctx.beginPath(); ctx.rect(Px, -400, 800, 800 + VH); ctx.clip(); rsGojoRot(sr, p.info, ppx, ppy, Math.PI / 2, 34, false, 1); ctx.globalCompositeOperation = 'lighter'; rsGojoRot(rsEdge(sr, [150, 100, 235]), p.info, ppx, ppy, Math.PI / 2, 34, false, 0.55); ctx.restore(); }
   shadow(Mx, 9); rsAura(Mx, T, 1, 60); rsFredDraw(Mx, T, { src, right: false, eye: o.eye == null ? 1 : o.eye, flare: o.flare || 0 });
   { const nx = Mx - (pal[0] - 31), ny = gy - 61 + pal[1]; rsGojoRot(bloody(idleF[0]), D.idle, nx, ny, o.ang == null ? 0.1 + 0.03 * Math.sin(T * 2.2) : o.ang, 19, true, 1); rsBlades(nx, ny, -1); rsDrip(nx + 3, ny + 26, T, 3, 0.2); }
@@ -88,26 +91,26 @@ function c4SOther(now, dt, T, st, t1, cx, g) {      // Yuji's head and shoulders
   if (t1 > 0.9 && t1 < 2.3) c4Shout(T, 'SENSEI!!', t1); msFinish(1);
 }
 
-// ---- close-up B: the Master's wrist: the hand that holds Gojo by the neck, a device on its wrist, the other hand's finger on its button
-function c4SWrist(now, dt, T, st, t1) {
-  const Z = rsZ(), b = rsGoBust(Z), Cx = Math.round(VW * 0.34), Cy = Math.round(VH * 0.5), clk = t1 - 0.8, pr = clk >= 0 ? 1 : clamp01((t1 - 0.5) / 0.3), by = Cy + b.ny - b.my, shk = clk >= 0 && clk < 0.3 ? 2 * (1 - clk / 0.3) : 0.4, k = t1 / st.d;
-  rsCloseBg(T); ctx.save(); ctx.translate(c4Jit(shk), c4Jit(shk)); const zz = 1 + 0.07 * k; ctx.translate(Cx, Cy); ctx.scale(zz, zz); ctx.translate(-Cx, -Cy);
+// ---- close-up B: the Master's wrist: the hand that holds Gojo by the neck, a device on its wrist, the other hand's finger on its button (o: clk = when the button is pressed, fa = when the finger starts to come down; call = the last scene's telephone: "???" on its screen, a camera that comes close to it (o.zoom))
+function c4SWrist(now, dt, T, st, t1, cx, g, o) {
+  o = o || {}; const ck = o.clk == null ? 0.8 : o.clk, fa = o.fa || 0, call = !!o.call, Z = rsZ(), b = rsGoBust(Z), Cx = Math.round(VW * 0.34), Cy = Math.round(VH * 0.5), clk = t1 - ck, pr = clk >= 0 ? 1 : clamp01((t1 - ck + 0.3) / 0.3), by = Cy + b.ny - b.my, tx = Cx - 8 * Z, ty = by + Math.round(Z * 0.5), shk = clk >= 0 && clk < 0.3 ? 2 * (1 - clk / 0.3) : 0.4, k = t1 / st.d;
+  rsCloseBg(T); ctx.save(); ctx.translate(c4Jit(shk), c4Jit(shk)); const zz = o.zoom ? o.zoom * (1 + 0.1 * k) : 1 + 0.07 * k, ax = o.zoom ? Math.round(VW * 0.5) : Cx, ay = o.zoom ? Math.round(VH * 0.56) : Cy, zfx = o.zoom ? tx + 23.5 * Z : Cx, zfy = o.zoom ? ty - 0.5 * Z : Cy; ctx.translate(ax, ay); ctx.scale(zz, zz); ctx.translate(-zfx, -zfy);
   ctx.save(); ctx.translate(Cx, by); ctx.rotate(-0.22 - 0.05 * Math.sin(T * 5)); ctx.drawImage(b.c, -b.nx, -b.ny); ctx.fillStyle = '#3a0c14'; ctx.fillRect(b.mx - b.nx - 1, b.my - b.ny, 3 * Z, 2 * Z); ctx.restore();
-  const tx = Cx - 8 * Z, ty = by + Math.round(Z * 0.5); rsFredArm(tx, ty, Z);
+  rsFredArm(tx, ty, Z);
   { const dx0 = tx + 17 * Z, dw = 13 * Z, dy0 = ty - 7 * Z, dh = 13 * Z; ctx.fillStyle = '#0b0914'; ctx.fillRect(dx0, dy0, dw, dh); ctx.fillStyle = 'rgba(170,100,255,0.55)'; ctx.fillRect(dx0, dy0, dw, 1); ctx.fillRect(dx0, dy0 + dh - 1, dw, 1); ctx.fillRect(dx0, dy0, 1, dh); ctx.fillRect(dx0 + dw - 1, dy0, 1, dh);      // the band
-    const sx0 = dx0 + 2 * Z, sy0 = dy0 + 4 * Z, sw = 9 * Z, sh = 6 * Z, op = clk < 0 ? 1 : 1 - 0.85 * ease3(clamp01(clk / 0.9)), red = clk >= 0 ? clamp01(1 - clk / 0.25) * 0.8 + 0.25 : 0; ctx.fillStyle = '#05020a'; ctx.fillRect(sx0, sy0, sw, sh); ctx.strokeStyle = clk >= 0 ? 'rgba(255,70,80,0.95)' : 'rgba(190,120,255,0.95)'; ctx.lineWidth = Math.max(1, Z * 0.4); ctx.beginPath(); ctx.ellipse(sx0 + sw / 2, sy0 + sh / 2, Math.max(1, (sw / 2 - Z * 0.8) * op), sh / 2 - Z * 0.8, 0, 0, 6.2832); ctx.stroke(); if (red > 0) { ctx.fillStyle = 'rgba(255,40,50,' + (0.3 * red).toFixed(2) + ')'; ctx.fillRect(sx0, sy0, sw, sh); }      // the screen: the portal as a violet oval; after the click it is red and narrows
-    const bx = dx0 + Math.round(dw / 2) - Z, byy = dy0 - Math.round(Z * (pr >= 1 ? 0.4 : 1.2)); ctx.fillStyle = '#1b1530'; ctx.fillRect(bx - 1, byy, 2 * Z + 2, Math.round(Z * 1.6)); ctx.fillStyle = clk >= 0 ? '#ff3a3a' : '#7a3aff'; ctx.fillRect(bx, byy, 2 * Z, Math.round(Z * 0.8));      // the button
-    const fy = -Z * 6 + (byy - Z * 2.2 + Z * 6) * ease3(clamp01(t1 / 0.55)) - (clk > 0.12 ? Z * 3 * ease3(clamp01((clk - 0.12) / 0.3)) : 0), fx0 = bx - Math.round(Z * 0.5); ctx.fillStyle = '#07040e'; ctx.fillRect(fx0, fy - Z * 8, Math.round(3 * Z), Math.round(Z * 8)); ctx.fillRect(fx0 + 1, fy, Math.round(3 * Z) - 2, 2); ctx.fillStyle = 'rgba(190,120,255,0.7)'; ctx.fillRect(fx0, fy - Z * 8, 1, Math.round(Z * 8)); ctx.fillRect(fx0 + Math.round(3 * Z) - 1, fy - Z * 8, 1, Math.round(Z * 8)); ctx.fillRect(fx0 + 1, fy + 1, Math.round(3 * Z) - 2, 1);      // the finger of the other hand
-    if (clk >= 0 && clk < 0.5) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; const R = 14 * Z * (0.4 + clk * 2), gr = ctx.createRadialGradient(bx + Z, byy, 1, bx + Z, byy, R); gr.addColorStop(0, 'rgba(255,60,70,' + (0.8 * (1 - clk / 0.5)).toFixed(2) + ')'); gr.addColorStop(1, 'rgba(255,60,70,0)'); ctx.fillStyle = gr; ctx.fillRect(bx - R, byy - R, 2 * R + 2 * Z, 2 * R); ctx.restore(); } }
+    const sx0 = dx0 + 2 * Z, sy0 = dy0 + 4 * Z, sw = 9 * Z, sh = 6 * Z, op = clk < 0 ? 1 : 1 - 0.85 * ease3(clamp01(clk / 0.9)), red = clk >= 0 ? clamp01(1 - clk / 0.25) * 0.8 + 0.25 : 0; if (call) c5Screen(sx0, sy0, sw, sh, T, clk); else { ctx.fillStyle = '#05020a'; ctx.fillRect(sx0, sy0, sw, sh); ctx.strokeStyle = clk >= 0 ? 'rgba(255,70,80,0.95)' : 'rgba(190,120,255,0.95)'; ctx.lineWidth = Math.max(1, Z * 0.4); ctx.beginPath(); ctx.ellipse(sx0 + sw / 2, sy0 + sh / 2, Math.max(1, (sw / 2 - Z * 0.8) * op), sh / 2 - Z * 0.8, 0, 0, 6.2832); ctx.stroke(); if (red > 0) { ctx.fillStyle = 'rgba(255,40,50,' + (0.3 * red).toFixed(2) + ')'; ctx.fillRect(sx0, sy0, sw, sh); } }      // the screen: the portal as a violet oval; after the click it is red and narrows (the call: see c5Screen)
+    const bx = dx0 + Math.round(dw / 2) - Z, byy = dy0 - Math.round(Z * (pr >= 1 ? 0.4 : 1.2)); ctx.fillStyle = '#1b1530'; ctx.fillRect(bx - 1, byy, 2 * Z + 2, Math.round(Z * 1.6)); ctx.fillStyle = clk >= 0 ? (call ? '#e8d8ff' : '#ff3a3a') : call && c5Ring(T) > 0.3 ? '#c9a8ff' : '#7a3aff'; ctx.fillRect(bx, byy, 2 * Z, Math.round(Z * 0.8));      // the button
+    const fy = -Z * 6 + (byy - Z * 2.2 + Z * 6) * ease3(clamp01((t1 - fa) / 0.55)) - (clk > 0.12 ? Z * 3 * ease3(clamp01((clk - 0.12) / 0.3)) : 0), fx0 = bx - Math.round(Z * 0.5); ctx.fillStyle = '#07040e'; ctx.fillRect(fx0, fy - Z * 8, Math.round(3 * Z), Math.round(Z * 8)); ctx.fillRect(fx0 + 1, fy, Math.round(3 * Z) - 2, 2); ctx.fillStyle = 'rgba(190,120,255,0.7)'; ctx.fillRect(fx0, fy - Z * 8, 1, Math.round(Z * 8)); ctx.fillRect(fx0 + Math.round(3 * Z) - 1, fy - Z * 8, 1, Math.round(Z * 8)); ctx.fillRect(fx0 + 1, fy + 1, Math.round(3 * Z) - 2, 1);      // the finger of the other hand
+    if (clk >= 0 && clk < 0.5) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; const R = 14 * Z * (0.4 + clk * 2), gr = ctx.createRadialGradient(bx + Z, byy, 1, bx + Z, byy, R); gr.addColorStop(0, 'rgba(' + (call ? '210,170,255' : '255,60,70') + ',' + (0.8 * (1 - clk / 0.5)).toFixed(2) + ')'); gr.addColorStop(1, 'rgba(' + (call ? '210,170,255' : '255,60,70') + ',0)'); ctx.fillStyle = gr; ctx.fillRect(bx - R, byy - R, 2 * R + 2 * Z, 2 * R); ctx.restore(); } }
   rsDrip(Cx - 2 * Z, Cy + 4 * Z, T, 4, 0.2); msEye(VW * 0.9, VH * 0.3, Z * 0.5, 1.0, 0, 0.5 + 0.3 * Math.sin(T * 7));
-  ctx.restore(); if (clk >= 0 && clk < 0.1) { ctx.fillStyle = 'rgba(255,200,200,' + (0.35 * (1 - clk / 0.1)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); } msFinish(1);
+  ctx.restore(); if (clk >= 0 && clk < 0.1) { ctx.fillStyle = (call ? 'rgba(230,210,255,' : 'rgba(255,200,200,') + (0.35 * (1 - clk / 0.1)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); } msFinish(1);
 }
 
 // ---- the portal closes, slowly (a wide shot of the other side, then Yuji's face, then the wide shot again): Yuji is still halfway through
 function c4SShut(now, dt, T, st, t1, cx, g) {
   const k = t1 / st.d, shut = ease3(clamp01(t1 / 2.5)), face = t1 >= 1.3 && t1 < 2.15;
   if (face) {
-    rsCloseBg(T); const Z = Math.max(3, Math.floor(VH * 0.85 / 31)), Cx = Math.round(VW * 0.58), Cy = Math.round(VH * 0.5), u = t1 - 1.3, lw = Math.round(VW * 0.5 * (1 - shut)), gr = ctx.createLinearGradient(0, 0, VW * 0.55, 0); gr.addColorStop(0, 'rgba(160,80,240,' + (0.55 * (1 - shut * 0.6)).toFixed(2) + ')'); gr.addColorStop(1, 'rgba(160,80,240,0)'); ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH);
+    rsCloseBg(T); const Z = Math.max(3, Math.floor(VH * 0.85 / 31)), Cx = Math.round(VW * 0.58), Cy = Math.round(VH * 0.5), u = t1 - 1.3, gr = ctx.createLinearGradient(0, 0, VW * 0.55, 0); gr.addColorStop(0, 'rgba(160,80,240,' + (0.55 * (1 - shut * 0.6)).toFixed(2) + ')'); gr.addColorStop(1, 'rgba(160,80,240,0)'); ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH);
     ctx.save(); ctx.translate(c4Jit(2.5), c4Jit(2.5)); rsWindLines(T, 1.4); rsHeadGlow(Cx - 6 * Z, Cy - 6 * Z, Z * 0.3); rsYujiHead(Cx, Cy, Z, T, 1.5, u > 0.15 ? 1 : 2); ctx.restore(); msFinish(1); if (u > 0.1) c4Shout(T, 'SENSEI!!', t1);
     return;
   }
@@ -368,8 +371,106 @@ function c4SLine(now, dt, T, st, t1, cx, g) {
   ctx.restore(); rsDrip(VW * 0.5 + 18, VH * 0.57 + 12, T, 3, 0.3); msFinish(1);
 }
 
+// ---------------------------------------------------------------- v1.98 THE CALL: the last scene
+// The Master's void again, the portal gone: he holds Gojo by the neck and talks to him; the room flashes white; he is afraid; the telephone on his wrist rings ("???"); he answers; a voice asks if he got him and he says he did; the camera pushes in from the whole figure of the caller, standing in the dark, to his gauntlet, which has no stones: the socket of the middle finger shines purple, and the voice says GREAT.
+const C5_ART = __THANOS__;      // the two pictures of the last scene (64 x 64): .body = the whole figure, .gaunt = a close-up of his gauntlet with its six sockets empty (tools/thanos_64.png and tools/gauntlet_64.png)
+const C5I = (() => { const mk = u => { const i = new Image(); i.src = u; return i; }; return { body: mk(C5_ART.body), gaunt: mk(C5_ART.gaunt), c: null }; })();
+const C5G = { o: [27.875, 10.875], f: [36, 20], s: [39.675, 16.35] };      // the close-up on the figure's picture (one sprite pixel is 4 of the close-up's): where its corner is, where the middle of the gauntlet is, where the middle finger's socket is
+function c5Art() {      // the pictures made ready once both have loaded: base = the figure, dark = the figure in the dark, rimR / rimL = its violet rim light (right / left edges), lit = a scratch picture for the pool of light
+  const A = C5I; if (A.c) return A.c; if (!(A.body.complete && A.body.naturalWidth && A.gaunt.complete && A.gaunt.naturalWidth)) return null;
+  const mk = () => { const c = document.createElement('canvas'); c.width = c.height = 64; return c; }, base = mk(), dark = mk(); base.getContext('2d').drawImage(A.body, 0, 0);
+  { const g = dark.getContext('2d'); g.drawImage(A.body, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(8,3,20,0.82)'; g.fillRect(0, 0, 64, 64); }
+  return A.c = { base, dark, rimR: rsRim(dark, 1, [170, 100, 255]), rimL: rsRim(dark, -1, [120, 70, 200]), lit: mk(), gaunt: A.gaunt };
+}
+function c5Flash(T) {      // how white (w) and how violet (v) the whole picture is at scene time T: the room's flash (white at once, a flicker as it dies away) and a smaller pulse of violet light with every ring of the call
+  const a = T - C5.flash; let w = 0, v = 0;
+  if (a >= -0.07 && a < 0) w = (a + 0.07) / 0.07; else if (a >= 0 && a < 1.1) w = a < 0.12 ? 1 : Math.pow(1 - (a - 0.12) / 0.98, 2) * (0.88 + 0.12 * Math.sin(a * 55));
+  for (const tr of C5.rings) { const b = T - tr; if (b >= 0 && b < 0.5) { const f = Math.pow(1 - b / 0.5, 2); w = Math.max(w, 0.4 * f); v = Math.max(v, f); } }
+  return { w: clamp01(w), v };
+}
+const c5Ring = T => { let r = 0; for (const tr of C5.rings) { const b = T - tr; if (b >= 0 && b < 0.5) r = Math.max(r, 1 - b / 0.5); } return r; };      // how fresh the last ring is (1 = it has just rung, 0 = it has died away)
+function c5Disc(x, y, r, col) { x = Math.round(x); y = Math.round(y); r = Math.max(1, Math.round(r)); ctx.fillStyle = col; for (let j = -r; j <= r; j++) { const w = Math.round(Math.sqrt(r * r + 0.5 - j * j)); ctx.fillRect(x - w, y + j, 2 * w + 1, 1); } }      // a round dot made of whole pixels
+function c5Eye(ex, ey, k, T, fear) {      // the Master's eye in fear: it opens wide and round (a dark red rim, a bright red ball, a shine, a pinprick of black) and flickers (fear 0 - 1: the wider it is, the smaller the pinprick)
+  const r = k * (2.2 + 0.9 * fear), f = 0.8 + 0.2 * Math.sin(T * 41), R = k * 16;
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; const gr = ctx.createRadialGradient(ex, ey, 0, ex, ey, R); gr.addColorStop(0, 'rgba(255,40,50,' + (0.55 * f).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(255,40,50,0)'); ctx.fillStyle = gr; ctx.fillRect(ex - R, ey - R, 2 * R, 2 * R); ctx.restore();
+  c5Disc(ex, ey, r + 1, '#7a0610'); c5Disc(ex, ey, r, '#ff3a3a'); c5Disc(ex - r * 0.3, ey - r * 0.3, r * 0.45, '#ffd0c0'); c5Disc(ex + r * 0.15, ey + r * 0.1, Math.max(1, r * (0.32 - 0.14 * fear)), '#1a0208');
+}
+function c5Head(T, Cx, Cy, Z, o) {      // the Master's head and shoulders in a big close-up, afraid (o.rot, o.shift = thrown back; o.tr = how hard he trembles, in pixels; o.fear = how wide the eye is open, 0 - 1); returns where the eye is
+  const j = o.tr > 0.2 ? [Math.round(Math.sin(T * 83) * o.tr), Math.round(Math.sin(T * 71 + 1) * o.tr)] : [0, 0]; ctx.save(); ctx.translate(j[0], j[1]);
+  const e = rsFredHead(Cx, Cy, Z, o.rot || 0, o.shift || 0, 0, 0); c5Eye(e[0], e[1], Z * 0.5, T, o.fear); ctx.restore(); return e;
+}
+function c5Screen(x, y, w, h, T, clk) {      // the telephone's screen: three question marks in a violet frame that lights up with every ring (and a wave runs out of it); after the click, a voice meter
+  const g = Math.max(1, Math.floor((w - 2) / 12)), on = clk >= 0, rg = c5Ring(T), q = ['111', '001', '010', '000', '010'];
+  ctx.fillStyle = '#05020a'; ctx.fillRect(x, y, w, h); ctx.fillStyle = 'rgba(190,120,255,' + (on ? 0.9 : 0.4 + 0.5 * rg).toFixed(2) + ')'; ctx.fillRect(x, y, w, 1); ctx.fillRect(x, y + h - 1, w, 1); ctx.fillRect(x, y, 1, h); ctx.fillRect(x + w - 1, y, 1, h);
+  if (!on) { const x0 = x + Math.round((w - 11 * g) / 2), y0 = y + Math.round((h - 5 * g) / 2); ctx.fillStyle = rg > 0.3 ? '#ffffff' : '#c9a8ff'; for (let n = 0; n < 3; n++) for (let r = 0; r < 5; r++) for (let c = 0; c < 3; c++) if (q[r][c] === '1') ctx.fillRect(x0 + (n * 4 + c) * g, y0 + r * g, g, g); }
+  else { ctx.fillStyle = '#e8d8ff'; for (let i = 0; i < 5; i++) { const hh = Math.max(g, Math.round((0.25 + 0.75 * Math.abs(Math.sin(T * 13 + i * 1.7))) * (h - 4 * g))); ctx.fillRect(x + Math.round((w - 9 * g) / 2) + i * 2 * g, y + Math.round((h - hh) / 2), g, hh); } }
+  for (const tr of C5.rings) { const b = T - tr; if (b >= 0 && b < 0.6) { const r = Math.round(b / 0.6 * 7 * g); ctx.strokeStyle = 'rgba(210,170,255,' + (0.7 * (1 - b / 0.6)).toFixed(2) + ')'; ctx.lineWidth = Math.max(1, g * 0.5); ctx.strokeRect(x - r + 0.5, y - r + 0.5, w + 2 * r - 1, h + 2 * r - 1); } }
+}
+
+// ---- 1. the Master's void, the portal gone: he talks to Gojo
+function c5SRoom(now, dt, T, st, t1) {
+  const z = 1.25 + 0.22 * ease3(t1 / st.d), Mx = Math.round(VW * 0.76), fi = 1 - clamp01(t1 / 0.7);
+  c4Other(now, T, { z, cx: Mx - 14, ty: (VH + 44) / 2, k: 0, lit: 0.2, eye: 0.95 + 0.08 * Math.sin(T * 2.1), flare: 0.1 });      // (a slow push-in; the speech box is in the top 44 rows, so the camera keeps their heads below it)
+  msFinish(1); if (fi > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fi.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (it comes out of the black of the last shot)
+}
+// ---- 2. the two of them close: Gojo, hurt, on the left, the Master's head on the right, talking; it ends in the flash
+function c5STalk(now, dt, T, st, t1) {
+  const U = rsLay().U, Z = rsZ(), b = rsGoBust(Z), p = clamp01(t1 / st.d), talking = t1 > 0.3 && t1 < 2.3, Gx = Math.round(VW * 0.33), Gy = Math.round(VH * 0.6), Mx = Math.round(VW * 0.72), My = Gy + Math.round(2 * Z);
+  rsCloseBg(T); rsCamOn(1 + 0.05 * p, Mx, VH * 0.58, Mx, VH * 0.58); rsSmoke(Mx + 40 * U, My - 10 * U, T, U * 1.2);
+  ctx.drawImage(b.c, Gx - b.mx, Gy - b.my + Math.round(Math.sin(T * 2.2))); rsDrip(Gx + Z, Gy + 3 * Z, T, 3, 0.1);      // (he sways a little: he is hurt)
+  rsFredHead(Mx, My, Z, talking ? 0.02 * Math.sin(T * 9) : 0, 0, 1.0 + 0.25 * Math.sin(T * 6), talking ? 0.7 : 0.15); rsCamOff();
+  { const gr = ctx.createLinearGradient(VW * 0.2, 0, VW * 0.8, 0); gr.addColorStop(0, 'rgba(4,2,10,0.6)'); gr.addColorStop(0.48, 'rgba(4,2,10,0)'); ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH); }      // (Gojo, who is not speaking, is in shadow)
+  msFinish(1);
+}
+// ---- 3. the flash dies away on the Master's face: his head is thrown back and the eye opens wide; he trembles, a drop of sweat, a red ! over his head, a heart that thumps; then the call rings (the room flashes with it)
+function c5SScare(now, dt, T, st, t1) {
+  const Z = rsZ() + 1, Cx = Math.round(VW * 0.4), Cy = Math.round(VH * 0.72), jolt = Math.max(0, 1 - t1 / 0.5), rg = c5Ring(T), z = 1 + 0.07 * ease3(t1 / st.d);
+  rsCloseBg(T); rsCamOn(z, Cx, Cy, Cx, Cy);
+  const e = c5Head(T, Cx, Cy, Z, { rot: 0.3 * jolt * jolt + 0.03 * Math.sin(T * 11), shift: Math.round(6 * Z * jolt * jolt), tr: 0.5 + 1.1 * clamp01(t1 / 1.0), fear: 0.6 + 0.4 * rg });
+  { const sw = (T * 0.9) % 1; ctx.fillStyle = 'rgba(190,232,255,' + (0.9 * (1 - sw)).toFixed(2) + ')'; ctx.fillRect(Math.round(e[0] + 5 * Z), Math.round(e[1] - 7 * Z + sw * sw * 14 * Z), Math.max(1, Math.round(Z * 0.7)), Math.round(Z * 1.2)); }      // (a drop of sweat runs down his head)
+  rsCamOff(); if (t1 > 0.3 && t1 < 1.3) pxt('!', Math.round(e[0] + 7 * Z), Math.round(e[1] - 11 * Z - 3 * Math.sin(Math.min(1, (t1 - 0.3) / 0.15) * 3.14)), '#ff3a3a', 24, 'center');      // (the game's mark of alarm)
+  msFinish(1);
+}
+// ---- 4. the telephone on his wrist rings: "???" on its screen (the room flashes with each ring); his finger comes down on the button and answers
+function c5SRing(now, dt, T, st, t1, cx, g) { c4SWrist(now, dt, T, st, t1, cx, g, { call: 1, clk: C5.click, fa: 1.0, zoom: 2.2 }); }
+// ---- 5. his face again while the voice speaks: a slow push-in on the eye; the violet light of the telephone flickers on him with the letters of the voice
+function c5SListen(now, dt, T, st, t1) {
+  const Z = rsZ() + 1, k = ease3(t1 / st.d), z = 1 + 0.3 * k, Cx = Math.round(VW * 0.4), Cy = Math.round(VH * 0.72), tt = C3E_TALK.find(q => q.w === '???' && q.t >= st.t0), n = Math.floor(Math.max(0, T - tt.t) * TN_RATE), fl = T >= tt.t && T < tt.t + tt.d && n < tt.a.length + 3 ? 0.5 + 0.5 * Math.sin(n * 2.3) : 0;
+  rsCloseBg(T); rsCamOn(z, Cx - 5 * Z * k, Cy - 3 * Z * k, VW * 0.5, VH * 0.56);
+  c5Head(T, Cx, Cy, Z, { rot: 0.04 + 0.01 * Math.sin(T * 3), tr: 0.45 + 0.4 * fl, fear: 0.45 }); rsCamOff();
+  { ctx.save(); ctx.globalCompositeOperation = 'lighter'; const gr = ctx.createRadialGradient(0, VH, 4, 0, VH, VW * 0.7); gr.addColorStop(0, 'rgba(160,90,240,' + (0.1 + 0.2 * fl).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(160,90,240,0)'); ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH); ctx.restore(); }      // (the telephone's light)
+  msFinish(1);
+}
+// ---- 6. the gauntlet: the camera pushes in from the whole figure, in the dark, to his hand; the sprite gives way to the close-up (4 times as fine); the middle finger's socket shines purple
+function c5Thanos(A, R, a) {      // the figure in the dark with a violet rim light, and in its own colours only inside the pool of light of radius R round the gauntlet (in sprite pixels); a = how much of it is seen
+  ctx.globalAlpha = a; ctx.drawImage(A.dark, 0, 0); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.9 * a; ctx.drawImage(A.rimR, 0, 0); ctx.globalAlpha = 0.5 * a; ctx.drawImage(A.rimL, 0, 0); ctx.restore(); ctx.globalAlpha = a;
+  const g = A.lit.getContext('2d'); g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, 64, 64); g.drawImage(A.base, 0, 0); g.globalCompositeOperation = 'destination-in'; const gr = g.createRadialGradient(C5G.f[0], C5G.f[1] - 1, 0, C5G.f[0], C5G.f[1] - 1, R); gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(0.55, 'rgba(0,0,0,0.9)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); g.globalCompositeOperation = 'source-over';
+  ctx.drawImage(A.lit, 0, 0); ctx.globalAlpha = 1;
+}
+function c5Shine(x, y, Z, s, T) {      // the purple shine of the middle finger's socket, s seconds after it begins (Z = how big one pixel of the close-up is on the screen): the hole lights up (it flickers on), a soft purple glow blooms over the gold, a four-pointed glint, sparkles
+  const on = clamp01(s / 0.9) * (s < 0.5 ? (Math.sin(s * 70) > -0.2 ? 1 : 0.35) : 1), bl = ease3(clamp01((s - 0.1) / 1.5)), pul = 0.88 + 0.12 * Math.sin(T * 5), R = (8 + 26 * bl) * Z;
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; const gr = ctx.createRadialGradient(x, y, 0, x, y, R); gr.addColorStop(0, 'rgba(190,110,255,' + (0.6 * on * pul).toFixed(3) + ')'); gr.addColorStop(0.35, 'rgba(150,60,230,' + (0.45 * on * pul).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(90,20,170,0)'); ctx.fillStyle = gr; ctx.fillRect(x - R, y - R, 2 * R, 2 * R);
+  ctx.globalAlpha = on; c5Disc(x, y, 1.5 * Z, '#9a4cff'); c5Disc(x, y, 0.6 * Z, '#e0c4ff'); ctx.globalAlpha = 1;      // (the hole itself: a purple light with a white core)
+  const gl = Math.sin(Math.PI * clamp01((s - 0.35) / 1.4)), L = Math.round(15 * Z * gl); ctx.fillStyle = '#dcc0ff'; for (let i = 1; i <= L; i++) { ctx.globalAlpha = 0.9 * Math.pow(1 - i / L, 1.6); ctx.fillRect(x + i, y, 1, 1); ctx.fillRect(x - i, y, 1, 1); ctx.fillRect(x, y + i, 1, 1); ctx.fillRect(x, y - i, 1, 1); if (i < L * 0.4) { ctx.fillRect(x + i, y + i, 1, 1); ctx.fillRect(x - i, y - i, 1, 1); ctx.fillRect(x + i, y - i, 1, 1); ctx.fillRect(x - i, y + i, 1, 1); } } ctx.globalAlpha = 1;
+  if (s > 0.6) for (let i = 0; i < 16; i++) { const h = Math.imul(i + 5, 2654435761) >>> 0, ph = ((s - 0.6) * (0.5 + (h % 5) * 0.12) + (h >> 8) % 100 / 100) % 1, an = (h >> 4) % 628 / 100, d = ph * (8 + (h >> 12) % 14) * Z; ctx.globalAlpha = 1 - ph; ctx.fillStyle = (h >> 20) & 1 ? '#f4e4ff' : '#b878ff'; ctx.fillRect(Math.round(x + Math.cos(an) * d), Math.round(y + Math.sin(an) * d - ph * 4 * Z), Z > 2 ? 2 : 1, Z > 2 ? 2 : 1); } ctx.globalAlpha = 1;
+  ctx.restore();
+}
+function c5SGaunt(now, dt, T, st, t1) {
+  const A = c5Art(), Zc = Math.max(2, Math.round(VH * 0.8 / 51)), z1 = 4 * Zc, z0 = Math.max(1.3, VH * 0.8 / 62), u = clamp01((t1 - 0.4) / 4.3), e = ease3(u), z = z0 * Math.pow(z1 / z0, e), ca = ease3(clamp01((u - 0.55) / 0.3)), s = t1 - C5.shine;
+  const sx = Math.round(VW * 0.5), sy = Math.round(VH * 0.56), fx0 = lerp(32, C5G.f[0], e), fy0 = lerp(34, C5G.f[1], e), fx = C5G.o[0] - Math.round((C5G.o[0] - fx0) * z) / z, fy = C5G.o[1] - Math.round((C5G.o[1] - fy0) * z) / z;      // (the camera is put so that the close-up's pixels lie on whole pixels of the screen)
+  ctx.fillStyle = '#04020a'; ctx.fillRect(0, 0, VW, VH);
+  { const gr = ctx.createRadialGradient(sx, sy, 4, sx, sy, VW * 0.5); gr.addColorStop(0, 'rgba(70,30,120,0.4)'); gr.addColorStop(1, 'rgba(20,8,40,0)'); ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH); }      // (a faint violet haze behind him, and stars)
+  ctx.fillStyle = '#cfc8ff'; for (let i = 0; i < 46; i++) { ctx.globalAlpha = 0.15 + 0.45 * Math.abs(Math.sin(T * 0.7 + i * 1.3)); ctx.fillRect((i * 53 + 11) % VW, (i * 97 + 7) % VH, i % 7 === 0 ? 2 : 1, 1); } ctx.globalAlpha = 1;
+  if (A) {
+    c4CamOn(z, fx, fy, sx, sy); c5Thanos(A, lerp(11, 30, e), 1 - 0.9 * ca);
+    if (ca > 0) { ctx.save(); ctx.translate(C5G.o[0], C5G.o[1]); ctx.scale(0.25, 0.25); ctx.globalAlpha = ca; ctx.drawImage(A.gaunt, 0, 0); ctx.restore(); }
+    c4Cam0(); if (s > 0) c5Shine(sx + (C5G.s[0] - fx) * z, sy + (C5G.s[1] - fy) * z, Zc, s, T);
+  }
+  msFinish(1); const fa = Math.max(1 - clamp01(t1 / 0.5), clamp01((t1 - 8.1) / 1.4)); if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (it comes out of black and goes back into it)
+}
+
 // ---- the shots after the grab, by name
-const c4Shots = { grip: c4Grip, other: c4SOther, wrist: c4SWrist, shut: c4SShut, yank: c4SYank, down: c4SDown, beat: c4SBeat, lift: c4SLift, pierce: c4SPierce, fall: c4SFall, line: c4SLine };
+const c4Shots = { grip: c4Grip, other: c4SOther, wrist: c4SWrist, shut: c4SShut, yank: c4SYank, down: c4SDown, beat: c4SBeat, lift: c4SLift, pierce: c4SPierce, fall: c4SFall, line: c4SLine, room: c5SRoom, mtalk: c5STalk, scare: c5SScare, ring: c5SRing, listen: c5SListen, gaunt: c5SGaunt };
 c4Shots.black = (now, dt, T, st, t1, cx, g) => { const ln = C4_SEQ.find(q => q.k === 'line'); c4SLine(now, dt, T, ln, ln.d, cx, g); ctx.fillStyle = 'rgba(0,0,0,' + clamp01(t1 / 1.1).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); };      // (the last picture of Verity fades out)
 
 // ---- the ending: the scene
@@ -391,7 +492,11 @@ function c3EndFrame(now, dt) {
     ev('lgrab', Tl + 0.1, () => snd('rsgrab')); ev('lgasp', Tl + 0.9, () => snd('gasp', 1));
     ev('pstab', Tp + C4P.thrust + 0.06, () => { snd('c4stab'); c2Shake(now, 400, 5); }); ev('pcough', Tp + C4P.hit + 0.15, () => snd('c4cough')); ev('ppull', Tp + C4P.pull, () => { snd('c4pull'); c2Shake(now, 300, 4); }); ev('pguts', Tp + C4P.pull + 0.4, () => snd('c4guts'));
     ev('fland', Tf + 0.48 + 4 / 24, () => { snd('land'); snd('c4guts'); c2Shake(now, 350, 3.5); }); }
+  { const Tr = c4T('room'), Ts = c4T('scare'), Tg = c4T('ring'), Tt = c4T('gaunt');      // the last scene: the void's rumble, the flash, the gasp and the heart, the three rings, the answer, the shine
+    ev('rroom', Tr + 0.05, () => snd('rumble', 2.5), 0.4); ev('cflash', C5.flash, () => { snd('c5flash'); c2Shake(now, 500, 4); }); ev('sgasp', Ts + 0.25, () => snd('gasp', 1)); for (let i = 0; i < 3; i++) ev('sbeat' + i, Ts + 0.5 + 0.6 * i, () => snd('c5beat'));
+    C5.rings.forEach((t, i) => ev('ring' + i, t, () => snd('c5ring'), 0.6)); ev('conn', Tg + C5.click, () => snd('c5conn')); ev('shine', Tt + C5.shine, () => snd('c5shine'), 1); }
   c3Talk(T, C3E_TALK);
+  { const fv = c5Flash(T); if (fv.v > 0.01) { ctx.fillStyle = 'rgba(170,110,255,' + (0.35 * fv.v).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); } if (fv.w > 0.01) { ctx.fillStyle = 'rgba(255,255,255,' + fv.w.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); } }      // (the flashes of the last scene lie over everything)
   const wf = 1 - clamp01(T / 0.5); if (wf > 0) { ctx.fillStyle = 'rgba(255,255,255,' + wf.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (the cut from the fight comes out of white)
   const fl = T - C3E.grab; if (fl >= 0 && fl < 0.14) { ctx.fillStyle = 'rgba(255,255,255,' + (0.7 * (1 - fl / 0.14)).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
 }

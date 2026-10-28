@@ -218,8 +218,8 @@ function rsFredHead(Cx, Cy, Z, rot, shift, eyeG, flare) {      // Freddy's head 
   ctx.drawImage(P.body, P.bx * Z - ox, -oy); ctx.fillStyle = '#05030a'; ctx.beginPath(); ctx.ellipse(pvx, pvy, 7 * Z, 4 * Z, 0, 0, 6.2832); ctx.fill();      // (a black patch on the neck fills the wedge that opens when the head turns)
   ctx.save(); ctx.translate(pvx - shift, pvy); ctx.rotate(-rot); ctx.translate(-pvx, -pvy); ctx.drawImage(P.head, P.hx * Z - ox, -oy); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.9; ctx.drawImage(rsRim(P.head, 1, R), P.hx * Z - ox, -oy); ctx.globalAlpha = 0.7; ctx.drawImage(rsRim(P.head, -1, [150, 80, 230]), P.hx * Z - ox, -oy); ctx.globalAlpha = 0.65; ctx.drawImage(P.fullE, (P.hx - P.bx) * Z, 0, P.hw * Z, P.hh * Z, P.hx * Z - ox, -oy, P.hw * Z, P.hh * Z); ctx.restore();
   ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.9; ctx.drawImage(P.rim, P.bx * Z - ox, -oy); ctx.globalAlpha = 0.65; ctx.drawImage(P.edgeB, P.bx * Z - ox, -oy); ctx.restore();
-  const lx = (F.eye[0] + 0.5) * Z - ox - pvx, ly = (F.eye[1] + 0.5) * Z - oy - pvy, c = Math.cos(-rot), s = Math.sin(-rot);
-  msEye(Cx - 1 - (pvx - shift + c * lx - s * ly), Cy + pvy + s * lx + c * ly, Z * 0.5, eyeG, 0, flare);
+  const lx = (F.eye[0] + 0.5) * Z - ox - pvx, ly = (F.eye[1] + 0.5) * Z - oy - pvy, c = Math.cos(-rot), s = Math.sin(-rot), ex = Cx - 1 - (pvx - shift + c * lx - s * ly), ey = Cy + pvy + s * lx + c * ly;
+  msEye(ex, ey, Z * 0.5, eyeG, 0, flare); return [ex, ey];      // (where his eye is on the screen: the last scene draws its own, afraid eye there)
 }
 const rsFaC = new Map();
 function rsFredArm(tx, ty, Z) {      // Freddy's claw arm (his real picture of the slash, black), enlarged and mirrored so that the blades point left; (tx, ty) = the tips of the blades; the sleeve behind the picture's 5 columns of it is those same real sleeve pixels, repeated all the way off the right edge of the screen, with the same violet outline

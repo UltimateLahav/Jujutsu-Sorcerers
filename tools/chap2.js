@@ -88,9 +88,9 @@ function c3Ring(x, y, a, big, col, sc) {      // a blow lands: rings run out fro
   if (a < 0.12) { ctx.fillStyle = '#fff'; ctx.fillRect(x - 3, y, 7, 1); ctx.fillRect(x, y - 3, 1, 7); ctx.fillRect(x - 1, y - 1, 3, 3); }
   ctx.restore();
 }
-function c3Talk(T, L) {      // the speech box of the line that is on now (L: the list of lines, the opening's by default); the letters come out 20 a second, each with a blip of its speaker's voice (Verity's first line is his real voice instead)
+function c3Talk(T, L) {      // the speech box of the line that is on now (L: the list of lines, the opening's by default); the letters come out 20 a second, each with a blip of its speaker's voice (s.vk = the voice's number, as tvoice: 0 Gojo, 1 Yuji, 2 the Master, 3 "???")
   L = L || C3_TALK; const i = L.findIndex(s => T >= s.t && T < s.t + s.d); if (i < 0) return; const s = L[i], n = Math.floor((T - s.t) * TN_RATE), sp = s.a + s.b, c = story.c3;
-  if (c.vi !== i) { c.vi = i; c.vc = 0; } while (c.vc < Math.min(n, sp.length)) { c.vc++; if (sp[c.vc - 1] !== ' ' && !s.voice) snd('tvoice', s.w === 'YUJI' ? 1 : 0); } tnDlg(s.w, s.a, s.b, n);
+  if (c.vi !== i) { c.vi = i; c.vc = 0; } while (c.vc < Math.min(n, sp.length)) { c.vc++; if (sp[c.vc - 1] !== ' ' && !s.voice) snd('tvoice', s.vk != null ? s.vk : s.w === 'YUJI' ? 1 : 0); } tnDlg(s.w, s.a, s.b, n);
 }
 
 // ---- the opening: one frame
