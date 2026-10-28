@@ -374,6 +374,18 @@ KK = [(0, PS(36.6, -12, 1, -18, (-1, 0), (-8, 6), (-4, -5), 4, 0, -2, (-3, 59, 0
       (9, PS(**LY)), (11, PS(55.0, -90, 1, -9, (0, 0.5), (-10, 0), (-10, -3), -30, 0, 7, (16.5, 60, 45, 19.5, 59, 50))), (14, PS(55.0, -90, 1, -9, (0, 0.5), (-8, 1), (-13, 1), -75, 0, 7, (16.5, 60, 45, 19.5, 59, 50)))]
 def hurt_frames(): return [keyed(HK0, 10), keyed(HK1, 10), keyed(HK2, 10), keyed(HK3, 10)]
 def ko_frames(): return keyed(KK, 15)
+# ---------------------------------------------------------------- THE BOILING WATER (v1.90, his BLUE move): TOUCH (15 pictures, row 20): he stoops and lays the claw hand flat on the ground ahead of him (the game makes the floor turn to water there and holds the last picture), THROW (15 pictures, row 21): from that pose he winds the hand back, scoops it up and flings it at the enemy (the water leaves his hand on picture 7, FRED_WATER_REL in tools/template.html) and straightens up. Both are drawn 8 px to the left in their cells (the claw needs the room; the game draws them 8 px to the right, FRED_RAKE_X).
+WDX = -8.0
+TCH = PS(47.0, 46, 0.97, -14, (0, 1), (2, 14), (8.5, 15.5), -62, 1, WDX, (-4, 59, 0, 7, 59, 0))
+TK = [(0, PS(dx=WDX)), (3, PS(40.0, 20, 0.99, -6, (0, 0.5), (0, 13), (6, 6), 0, 0, WDX, (-2.5, 59, 0, 5, 59, 0))),
+      (7, PS(45.0, 36, 0.98, -11, (0, 1), (1, 14), (8, 13), -40, 1, WDX, (-3.5, 59, 0, 6.5, 59, 0))), (10, TCH), (14, TCH)]
+TH = [(0, TCH), (2, PS(47.5, 50, 0.96, -16, (0, 1.5), (2, 14), (-1, 10.5), 5, 1, WDX, (-4.2, 59, 0, 7.5, 59, 0))),
+      (4, PS(46.0, 36, 0.97, -8, (0, 1), (4, 13), (4, 4), -30, 1, WDX, (-3.8, 59, 0, 7, 59, 0))),
+      (6, PS(42.0, 22, 0.99, -2, (0, 0.5), (-1, 12), (13, -3), 5, 0, WDX, (-3, 59, 0, 5.5, 59, 0))),
+      (7, PS(41.0, 14, 1.0, 3, (0, 0), (-3, 12), (16, -7), 25, 0, WDX, (-2.5, 59, 0, 5, 59, 0))),
+      (9, PS(40.0, 16, 1.0, 1, (0, 0), (-1, 12), (14, -2), 20, 0, WDX, (-2, 59, 0, 4.5, 59, 0))),
+      (12, PS(37.5, 6, 1.0, 0, (0, 0), (0, 13), (6, 0), 14, 0, WDX, (-1.5, 59, 0, 3.2, 59, 0))), (14, PS(dx=WDX))]
+def water_frames(): return [keyed(TK, 15), keyed(TH, 15)]
 def sheet(FR, FW, FJ, FC):
     A = np.zeros((64 * (5 + len(FC)), 64 * 15, 4), np.uint8)      # row 14: the crouch block (0 the claw coming up, 1 the hold, 2 the catch; drawn 8 px to the left), row 13: the legs of the block walk (and the bop), row 12: the crouch rake (hit 6, drawn 8 px to the left), row 11: the crouch walk, row 10: the run (the dash), row 0: the idle, row 1: the walk, rows 2-4: the jump (frames 0-14, 15-29, 30-39), row 5: going down into the crouch, row 6: from the crouch into the jump, row 7: from the jump into the crouch, row 8: the claw slash, row 9: the slash with the bare hand
     def put(f, r, c):
@@ -385,7 +397,7 @@ def sheet(FR, FW, FJ, FC):
         for i, f in enumerate(fs): put(f, 5 + r, i)
     Image.fromarray(A).save('freddy_sheet.png'); return A
 if __name__ == '__main__':
-    U, RH, hx, gx, gy = upper(); print('hem', RH, 'hips', round(hx, 1)); FR = idle_frames(); FW = walk_frames(); FJ = jump_frames(); FC = [crouch_frames(CD_KEYS), crouch_frames(CJ_KEYS, 0.0, jump_sway(6)), crouch_frames(JC_KEYS, jump_sway(34), 0.0), slash_frames(SL1_KEYS, True), slash_frames(SL2_KEYS, False), run_frames(), crouch_walk_frames(), crouch_rake_frames(), block_walk_frames(), crouch_block_frames()] + hurt_frames() + [ko_frames()]; A = sheet(FR, FW, FJ, FC)
+    U, RH, hx, gx, gy = upper(); print('hem', RH, 'hips', round(hx, 1)); FR = idle_frames(); FW = walk_frames(); FJ = jump_frames(); FC = [crouch_frames(CD_KEYS), crouch_frames(CJ_KEYS, 0.0, jump_sway(6)), crouch_frames(JC_KEYS, jump_sway(34), 0.0), slash_frames(SL1_KEYS, True), slash_frames(SL2_KEYS, False), run_frames(), crouch_walk_frames(), crouch_rake_frames(), block_walk_frames(), crouch_block_frames()] + hurt_frames() + [ko_frames()] + water_frames(); A = sheet(FR, FW, FJ, FC)
     # contact sheets to look at, x2: the jump (8 x 5) and the three crouch animations (15 x 3)
     def contact(cells, cols, name):
         rows = (len(cells) + cols - 1) // cols; cs = np.zeros((64 * rows, 64 * cols, 4), np.uint8); cs[:] = [120, 116, 132, 255]
@@ -393,5 +405,5 @@ if __name__ == '__main__':
             r, c = divmod(i, cols); m = blk[:, :, 3] > 0; cs[r * 64:(r + 1) * 64, c * 64:(c + 1) * 64][m] = blk[m]
         Image.fromarray(cs).resize((cs.shape[1] * 2, cs.shape[0] * 2), Image.NEAREST).save(name)
     contact([A[(2 + i // 15) * 64:(3 + i // 15) * 64, (i % 15) * 64:(i % 15 + 1) * 64] for i in range(40)], 8, 'freddy_contact.png')
-    contact([A[(5 + r) * 64:(6 + r) * 64, i * 64:(i + 1) * 64] for r in range(3) for i in range(15)], 15, 'freddy_contact2.png'); contact([A[(8 + r) * 64:(9 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact3.png'); contact([A[10 * 64:11 * 64, i * 64:(i + 1) * 64] for i in range(15)], 15, 'freddy_contact4.png'); contact([A[(11 + r) * 64:(12 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact5.png'); contact([A[(13 + r) * 64:(14 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact6.png'); contact([A[(15 + r) * 64:(16 + r) * 64, i * 64:(i + 1) * 64] for r in range(5) for i in range(15)], 15, 'freddy_contact7.png')
+    contact([A[(5 + r) * 64:(6 + r) * 64, i * 64:(i + 1) * 64] for r in range(3) for i in range(15)], 15, 'freddy_contact2.png'); contact([A[(8 + r) * 64:(9 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact3.png'); contact([A[10 * 64:11 * 64, i * 64:(i + 1) * 64] for i in range(15)], 15, 'freddy_contact4.png'); contact([A[(11 + r) * 64:(12 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact5.png'); contact([A[(13 + r) * 64:(14 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact6.png'); contact([A[(15 + r) * 64:(16 + r) * 64, i * 64:(i + 1) * 64] for r in range(5) for i in range(15)], 15, 'freddy_contact7.png'); contact([A[(20 + r) * 64:(21 + r) * 64, i * 64:(i + 1) * 64] for r in range(2) for i in range(15)], 15, 'freddy_contact8.png')
     print('sheet', A.shape, 'blade pixels cut off:', CLIP[0], 'farthest ankle', round(REACH[0], 2), 'of', L1 + L2); assert CLIP[0] == 0 and REACH[0] <= L1 + L2 - 0.05

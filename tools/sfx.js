@@ -158,6 +158,16 @@ function makeSfx(ac) {
       burst(B.soft, t, { f: red ? 500 : 900, f2: red ? 160 : 300, q: 0.9, dur: red ? 0.2 : 0.14, gain: red ? 2.8 : 2.2, atk: 0.001 });
       tone(B.soft, t, { type: 'sawtooth', f: red ? 330 : 560, f2: red ? 90 : 160, dur: red ? 0.3 : 0.18, gain: 0.12, atk: 0.004 });
     },
+    splash(at) {                                         // v1.90 boiling water hits something: a wet slap, a hiss of steam
+      const t = T(at), B = C.atk;
+      burst(B.soft, t, { f: 3200, f2: 900, q: 0.6, dur: 0.34, gain: 2.6, atk: 0.002 }); burst(B.soft, t + 0.04, { f: 6500, f2: 2600, q: 0.9, dur: 0.55, gain: 1.3, atk: 0.01 });
+      tone(B.deep, t, { type: 'triangle', f: 150, f2: 60, dur: 0.18, gain: 0.3, atk: 0.003 });
+    },
+    ripple(at) {                                         // v1.90 the floor turns to water: a soft bubbling rise
+      const t = T(at), B = C.atk;
+      tone(B.soft, t, { type: 'sine', f: 260, f2: 640, dur: 0.16, gain: 0.22, atk: 0.01 }); tone(B.soft, t + 0.12, { type: 'sine', f: 340, f2: 820, dur: 0.14, gain: 0.18, atk: 0.01 });
+      burst(B.soft, t, { f: 1800, f2: 900, q: 0.7, dur: 0.3, gain: 0.9, atk: 0.02 });
+    },
     smack(k, at) {                                       // the body blow when a hit lands on something: deep thump + dull slap
       const t = T(at), B = C.atk, red = [3, 15, 17, 18, 19, 21].includes(k);
       tone(B.deep, t, { type: 'triangle', f: red ? 100 : 124, f2: 46, dur: red ? 0.34 : 0.22, gain: red ? 0.5 : 0.38, atk: 0.003 });

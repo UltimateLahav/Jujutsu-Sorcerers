@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.89</small>
+    <small id="ver">V1.90</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -853,7 +853,7 @@ function gateBlue(now, jf, tf) {              // BLUE of Gojo: teleport up in th
 }
 function skillUI() {                          // the buttons of a move you do not own are dimmed and marked
   const L = (id, key) => $(id).classList.toggle('lk', lacks(key));
-  L('blk', 'blk'); L('dash', 'dash'); L('ce', 'ce'); L('dom', 'dom'); L('fat', 'fat'); $('lap').classList.toggle('lk', !BLUES[meK()].some(owns));
+  L('blk', 'blk'); L('dash', 'dash'); L('ce', 'ce'); L('dom', 'dom'); L('fat', 'fat'); $('lap').classList.toggle('lk', !fredMe() && !BLUES[meK()].some(owns));
 }
 function leavePlay() { if (cuTest) { cuTestBack(); return; } if (vs && vs.net) lanLeave(); else if (vs && vs.hunt) { show('chal'); buildHunts(); } else if (vs && vs.cv) { show('chal'); buildChal(); } else show('select'); }
 
@@ -1895,7 +1895,8 @@ function drawDummy(now, dt) {
   ctx.restore();
   if (vs && vs.foe === 'verity') { if (dummy.vform === 'smoke1') smokePuffs(sx, gy - 28, (now - dummy.vAt) / 450); else if (dummy.vform === 'smoke2') smokeBig(sx, (now - dummy.vAt) / 1000); }
   if (dummy.del) delSparks(sx, now);
-  if (dummy.bleed && kt < 0) { ctx.fillStyle = '#c4121c'; for (let i = 0; i < 3; i++) { const ph = (now / 240 + i / 3) % 1; ctx.fillRect(sx - 5 + i * 5 + (i * 7) % 3, Math.round(gy - 48 + ph * 44), 1, 2); } }      // (the bite: red drops run down him while he bleeds)
+  if (dummy.bleed && dummy.bleed.fire && kt < 0) { for (let i = 0; i < 9; i++) { const fx = Math.round(sx + (i % 2 ? 6 : -7) + Math.sin(now / 110 + i * 2.1) * 2), fh = 4 + Math.round(3 * Math.abs(Math.sin(now / 80 + i * 1.7))), fy = Math.round(gy - 10 - i * 4.6); ctx.fillStyle = '#d0301a'; ctx.fillRect(fx - 1, fy - fh, 3, fh); ctx.fillStyle = '#ff8a1c'; ctx.fillRect(fx - 1, fy - fh + 1, 3, fh - 2); ctx.fillStyle = '#ffe07a'; ctx.fillRect(fx, fy - fh + 2, 1, Math.max(1, fh - 4)); } }      // (v1.90 the boiling water: flames lick up him while he burns)
+  else if (dummy.bleed && kt < 0) { ctx.fillStyle = '#c4121c'; for (let i = 0; i < 3; i++) { const ph = (now / 240 + i / 3) % 1; ctx.fillRect(sx - 5 + i * 5 + (i * 7) % 3, Math.round(gy - 48 + ph * 44), 1, 2); } }      // (the bite: red drops run down him while he bleeds)
   if (kt < 0 && t < 1) { const R = 4 + t * 36; ctx.fillStyle = 'rgba(255,170,90,' + (1 - t) + ')'; for (let a = 0; a < 40; a++) { const th = a / 40 * 6.2832; ctx.fillRect(Math.round(sx + Math.cos(th) * R), Math.round(gy + 2 + Math.sin(th) * R * 0.25), 1, 1); } }
   if (kt < 0 && t >= 0.4) drawBar(sx - 13, gy - 68);   // health bar above his head
 }
@@ -5682,7 +5683,7 @@ function cloth(E, src, ox, oy, flip, kind, dt) {      // the hair and the coat f
 }
 // ---------------------------------------------------------------- v1.39 FREDDY KRUEGER: a CURSED SPIRIT fighter like Verity and the Cartoon Cat (16 bit, 64 x 64 pictures, tools/freddy_art.py makes them from the picture the game's author gave). He has 15 idle frames, WALKS (v1.40), JUMPS (v1.41), CROUCHES (v1.44) and has two M1 slashes (v1.45); he cannot dash or block yet (those buttons do nothing); he can be pushed and hurt, flashes when he is hit and tumbles when he is knocked out. You can play him in FREE PLAY and in VERSUS (as your fighter; he is not offered as the enemy).
 const FRED_IMG = new Image(); FRED_IMG.src = '__FREDDY__';
-let fredLast = -1;      // the picture the scene asked for last: 0-14 idle, 15-29 walk, 100-139 jump, 200-244 crouch (+15 each: 0 going down, 1 into the jump, 2 into the crouch), 300-329 M1 (+15 each: 0 the claw slash, 1 the bare hand), 400-414 the run (the dash), 500-514 the crouch rake, 600-614 the crouch walk, 700-714 the block walk, 800-802 the crouch block, 900-939 the hurt reactions (4 kinds of 10), 1000-1014 the K.O.
+let fredLast = -1;      // the picture the scene asked for last: 0-14 idle, 15-29 walk, 100-139 jump, 200-244 crouch (+15 each: 0 going down, 1 into the jump, 2 into the crouch), 300-329 M1 (+15 each: 0 the claw slash, 1 the bare hand), 400-414 the run (the dash), 500-514 the crouch rake, 600-614 the crouch walk, 700-714 the block walk, 800-802 the crouch block, 900-939 the hurt reactions (4 kinds of 10), 1000-1014 the K.O., 1100-1114 water touch, 1200-1214 water throw
 const FRED_INFO = { w: 64, h: 64, cx: 31, x0: 0, top: 1 }, FRC = new Map();      // (cx: the column of the picture that stands at the middle of the screen: between his feet)
 function fredF(i, walk) {      // frame i of his idle (15 frames, looping), or of his WALK when walk is true (15 frames too), as a canvas of 64 x 64 (EMPTY until the sheet has loaded)
   i = ((Math.floor(i) % 15) + 15) % 15; const key = fredLast = i + (walk ? 15 : 0); let c = FRC.get(key); if (c) return c;
@@ -5729,6 +5730,19 @@ function fredK(i) {      // picture i (0-14) of his K.O. (v1.89, row 19 of the s
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
   c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, 19 * 64, 64, 64, 0, 0, 64, 64); FRC.set(key, c); return c;
 }
+function fredT(i) {      // picture i (0-14) of the TOUCH of his boiling water move (v1.90, row 20 of the sheet, drawn 8 px to the left: FRED_RAKE_X): he stoops and lays the claw hand on the floor; the last one holds
+  i = Math.max(0, Math.min(14, Math.floor(i))); const key = fredLast = 1100 + i; let c = FRC.get(key); if (c) return c;
+  if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
+  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, 20 * 64, 64, 64, 0, 0, 64, 64); FRC.set(key, c); return c;
+}
+function fredR(i) {      // picture i (0-14) of the THROW of his boiling water move (v1.90, row 21 of the sheet, drawn 8 px to the left): he winds the hand back, scoops and flings; the water leaves on picture 7
+  i = Math.max(0, Math.min(14, Math.floor(i))); const key = fredLast = 1200 + i; let c = FRC.get(key); if (c) return c;
+  if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
+  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, 21 * 64, 64, 64, 0, 0, 64, 64); FRC.set(key, c); return c;
+}
+// THE BOILING WATER (v1.90, his BLUE button, free): press BLUE and he stoops and lays his claw hand on the floor: the floor in front of him turns to WATER (27 pictures a second, a puddle spreads and shimmers, steam rises); it waits for 6 s (a blow on him, or the end of the round, dries it); press BLUE again and he scoops it up and FLINGS it (30 pictures a second, it leaves his hand on picture 7): a ball of water, heated until it steams, flies at the enemy (300 px/s, a little arc, 260 px far at the most) and SPLASHES on him: 25 damage, a flinch, and he BURNS for 8 s (1 damage every 0.8 s, flames on him; the same tick as the bite's bleeding). Nothing blocks it (the water goes over a guard). Not while jumping, crouched, swinging, hurt or blocking; while it lasts he stands still; 0.6 s before the next one.
+const FRED_WATER = { touchFps: 27, throwFps: 30, rel: 7, hold: 6000, speed: 300, reach: 260, dmg: 25, knock: 70, burn: 8000, gap: 800, cd: 600 };
+let fwPh = '', fwAt = -1, fwCd = 0, fwFired = false, fwBalls = [], fwDrops = [], fwPool = 0, fwPoolAt = -1;      // the phase ('' / touch / ready / throw), when it began, the wait before the next, the water has left the hand, the balls of water in flight, the drops and puffs of steam, how big the puddle is (0-1) and when it began to dry
 const FRED_HF = [0, 1, 2, 0, 3, 2, 1, 3, 3, 2];      // which of his four hurt kinds plays for each of the game's ten hit reactions (the random one: head snap, doubled over, stagger, spin, knocked flat, skid, guard, the launch, the big fall, ...)
 function fredD(i) {      // picture i (0-14) of his RUN (the dash) as a canvas of 64 x 64: row 11 of the sheet
   i = Math.max(0, Math.min(14, Math.floor(i))); const key = fredLast = 400 + i; let c = FRC.get(key); if (c) return c;
@@ -5778,9 +5792,49 @@ function fredPose(now, wi, bwk) {      // a WHOLE Freddy for the block, made fre
   else { const sp = [3, 4, 5, 4, 3][k], len = [7, 8, 8, 7, 6][k]; for (let j = 0; j < 4; j++) { const o = (j - 1.5) * sp / 1.5; for (let i = 3; i < 3 + len; i++) { const f = 1 + (i - 3) * 0.12; P(j === 3 ? '#9aa3b8' : '#e9edf6', hx + cx * i - cy * o * f, hy + cy * i + cx * o * f, 1, 1); } const f = 1 + (len - 1) * 0.12; P('#ffffff', hx + cx * (2 + len) - cy * o * f, hy + cy * (2 + len) + cx * o * f, 1, 1); } }      // open: four blades that fan out, the last one in shade, a white tip
   g.restore(); return FRED_PC;
 }
+function fwSplash(x, y, n, hot, now) {      // drops of water fly up and fall, and steam rises (hot: a hit on the enemy)
+  for (let i = 0; i < n; i++) fwDrops.push({ x, y, vx: (Math.random() * 2 - 1) * 75, vy: -60 - Math.random() * 110, at: now, life: 450 + Math.random() * 300, c: i % 3 });
+  for (let i = 0; i < (hot ? 7 : 3); i++) fwDrops.push({ x: x + (Math.random() * 2 - 1) * 8, y: y - Math.random() * 6, vx: (Math.random() * 2 - 1) * 10, vy: -20 - Math.random() * 18, at: now, life: 800 + Math.random() * 400, steam: 1 });
+}
+function fwHit(d, now) {      // the water splashes on the enemy: damage, a flinch, and he burns (the bleeding tick, with flames)
+  techDmg(d, FRED_WATER.dmg, now, FRED_WATER.knock, false);
+  d.bleed = { until: now + FRED_WATER.burn, next: now + FRED_WATER.gap, gap: FRED_WATER.gap, fire: 1 };
+  fwSplash(d.x - 6, gy - 28, 16, 1, now); snd('splash'); shakeUntil = now + 90; shakeAmp = 1; say('SCALDED!', d.x, '#ff9a3a', 8, now + 120);
+}
+function fwStep(now, dt) {      // every frame of Freddy: the balls of water in flight (they hit the first enemy they reach), the drops and the steam
+  for (const b of fwBalls) {
+    const p = (now - b.at) / 1000, q = Math.min(1, p * 2.2); b.x = b.x0 + FRED_WATER.speed * p; b.y = gy - 40 + 14 * q - 8 * Math.sin(q * Math.PI); const d = dummy;
+    if (d && d.ko < 0 && !d.cap && d.x - 12 <= b.x && d.x + 20 >= b.x) { b.done = 1; fwHit(d, now); }
+    else if (b.x - wx > FRED_WATER.reach) { b.done = 1; fwSplash(b.x, gy - 4, 7, 0, now); snd('splash'); }
+  }
+  fwBalls = fwBalls.filter(b => !b.done);
+  for (const o of fwDrops) { if (o.steam) { o.x += o.vx * dt; o.y += o.vy * dt; } else { o.vy += 420 * dt; o.x += o.vx * dt; o.y += o.vy * dt; if (o.y > gy + 2) { o.y = gy + 2; o.vy *= -0.3; o.vx *= 0.6; } } }
+  fwDrops = fwDrops.filter(o => now - o.at < o.life);
+}
+function fwDraw(now, cx) {      // the puddle (blue water with a hot orange rim and rising steam), the balls of water and the drops
+  const P = (c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), w, h); };
+  if (fwPool > 0.03) {
+    const px = cx + 30, rx = 21 * fwPool, ry = 3.4 * Math.min(1, fwPool * 1.3), hot = fwPh === 'ready' || fwPh === 'touch';
+    for (let dy = -Math.floor(ry); dy <= Math.floor(ry); dy++) {
+      const hw = Math.round(rx * Math.sqrt(Math.max(0, 1 - (dy / (ry + 0.5)) ** 2))); if (hw < 1) continue;
+      P(dy === -Math.floor(ry) ? '#8fd0ff' : dy >= Math.floor(ry) ? '#1c4f8f' : '#2f7fd0', px - hw, gy + 1 + dy, hw * 2, 1);
+      if (hot && ((now / 120) | 0) % 2 === dy % 2) { P('rgba(255,140,50,.75)', px - hw, gy + 1 + dy, 1, 1); P('rgba(255,140,50,.75)', px + hw - 1, gy + 1 + dy, 1, 1); }
+    }
+    for (let i = 0; i < 2; i++) { const r = ((now / 900 + i / 2) % 1) * rx, h = Math.round(r); if (h > 2) { P('rgba(220,245,255,.7)', px - h, gy + 1, 1, 1); P('rgba(220,245,255,.7)', px + h - 1, gy + 1, 1, 1); P('rgba(220,245,255,.5)', px - (h >> 1), gy - 1 + (i ? 3 : 0), h, 1); } }
+    if (hot && fwPool > 0.6) for (let i = 0; i < 4; i++) { const ph = (now / 900 + i / 4) % 1; P('rgba(255,255,255,' + (0.55 * (1 - ph)).toFixed(2) + ')', px - 14 + i * 9 + Math.round(Math.sin(now / 300 + i) * 2), gy - 2 - ph * 18, 2, 2); }
+  }
+  for (const b of fwBalls) {
+    const bx = Math.round(cx + b.x - wx), by = Math.round(b.y), W = [3, 7, 9, 9, 9, 7, 3];
+    P('rgba(255,130,40,.45)', bx - 6, by - 4, 13, 9);
+    for (let r = 0; r < 7; r++) { const w = W[r] + (((now / 70) | 0) + r) % 2 * 0; P(r > 4 ? '#1b4f9a' : '#2f7fd0', bx - (w >> 1), by - 3 + r, w, 1); }
+    P('#bfeaff', bx - 3, by - 2, 3, 1); P('#ffffff', bx - 3, by - 2, 1, 1);
+    for (let i = 1; i <= 3; i++) { P('#5fb0ff', bx - 5 - i * 4, by - 1 + (i % 2) * 2, 3 - (i >> 1), 2); P('rgba(255,255,255,' + (0.5 / i).toFixed(2) + ')', bx - 6 - i * 5, by - 6 - i * 2 - ((now / 60 + i) | 0) % 2, 3, 3); }
+  }
+  for (const o of fwDrops) { const a = 1 - (now - o.at) / o.life, x = Math.round(cx + o.x - wx), y = Math.round(o.y); if (o.steam) P('rgba(255,255,255,' + (0.55 * a).toFixed(2) + ')', x, y, 3, 3); else P(['#9fdcff', '#ffffff', '#2f7fd0'][o.c], x, y, o.c === 1 ? 1 : 2, o.c === 1 ? 1 : 2); }
+}
 function freddyScene(now, dt) {      // one frame of a match with FREDDY as the player: he walks, crouches, jumps, slashes and dashes (M1 and DASH: no block or BLUE yet), then the picture (the enemy, the HUD and the effects are the shared ones)
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3), cx = Math.round(VW / 2); setDomUI(now);
-  lpReq = domReq = ceReq = senseReq = false; teleAt = -1; gojoGone = false;      // (BLUE is not his yet; his BLOCK is the hand held out: see fredGrab)
+  const blueReq = lpReq; lpReq = domReq = ceReq = senseReq = false; teleAt = -1; gojoGone = false;      // (BLUE is his boiling water, see FRED_WATER; his BLOCK is the hand held out: see fredGrab)
   let hf = -1; if (hurtAt >= 0) { hf = Math.floor(Math.max(0, now - hurtAt) * RX_FPS[hurtK] / 1000); if (hf >= 10) { hurtAt = -1; hf = -1; hurtEnd = now; } }
   if (hf >= 0) { stance = 'stand'; stickCr = false; fredCrQ = fredUpQ = -1; atkAt = -1; atkQ = false; dgAt = -1; }      // (a blow stands him up and stops his swing and his dash, whatever he was doing)
   const can = hf < 0 && t >= 1 && now >= pStun && (!vs || vs.ph === 'fight');      // he may act: not while he flinches, is held, appears or between the rounds
@@ -5789,7 +5843,8 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   let df = -1;      // the picture of his dash (0-14, 40 a second), -1 = no dash
   if (dgAt >= 0) { df = Math.floor(Math.max(0, now - dgAt) * DASH_FPS / 1000); if (df >= 15) { dgAt = -1; df = -1; dgReady = now + 150; } }
   if (jumpAt < 0) { fredJC = fredLC = fredLandC = false; fredTD = -1; }      // (no jump is going on: nothing is left of the last one)
-  if (jumpReq) { jumpReq = false; if (jumpAt < 0 && can && af < 0 && df < 0 && blkAt < 0 && (stance === 'stand' || stance === 'crouch')) { fredJC = stance === 'crouch'; stance = 'stand'; stickCr = false; fredCrQ = -1; jumpAt = now; fredWalk = false; } }      // (a jump from the ground, not in the middle of going down or standing up; from a crouch it is a spring)
+  if (t < 1 || !can) { if (fwPh && (t < 1 || hf >= 0 || !(!vs || vs.ph === 'fight'))) { fwPh = ''; fwPoolAt = now; fwCd = now + FRED_WATER.cd; } if (t < 1) { fwBalls.length = 0; fwDrops.length = 0; fwPool = 0; fwCd = 0; } }      // (a blow, the end of the round or a new match dries the puddle)
+  if (jumpReq) { jumpReq = false; if (jumpAt < 0 && can && !fwPh && af < 0 && df < 0 && blkAt < 0 && (stance === 'stand' || stance === 'crouch')) { fredJC = stance === 'crouch'; stance = 'stand'; stickCr = false; fredCrQ = -1; jumpAt = now; fredWalk = false; } }      // (a jump from the ground, not in the middle of going down or standing up; from a crouch it is a spring)
   let jk = -1, lift = 0, jpic = null;      // the picture of the jump as a number from 0 to 39 (the picture of a standing jump at this moment: it tells every part of the game where in the jump he is), how high the jump has raised him, and the picture itself
   if (jumpAt >= 0) {
     const je = Math.max(0, now - jumpAt), pre = fredJC ? FRED_T.spring : JUMP_T.crouch, fl = fredJC ? FRED_T.airC : JUMP_T.air;      // the time since the jump began, how long the push-off (or the spring) lasts, how long the flight lasts
@@ -5803,20 +5858,33 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   if (hf >= 0) { jumpAt = -1; jk = -1; lift = 0; jpic = null; }      // (a blow knocks him out of the jump)
   gojoLift = lift; const air = jk >= 6 && jk <= 33;      // (the enemy's blows miss him up there, and he passes over a body)
   if (jk !== fredJf) { if (fredJf < 6 && jk >= 6) { snd('jump'); gritAt(wx, 5, 45, 0); shockAt(wx, 50, 30, 0.5); } if (fredJf < 34 && jk >= 34) { snd('land', 1); gritAt(wx, 7, 60, 0); shockAt(wx, 90, 45, 0.7); } fredJf = jk; }
-  if (crReq) { crReq = false; if (jumpAt >= 0) { if (air) fredLC = !fredLC; else if (fredTD >= 0 && !fredLandC) fredCrQ = now; } else if (can && stance === 'stand') fredCrQ = now; else if (can && stance === 'crouch') { if (fredWalk) fredUpQ = now; else { stance = 'up'; stAt = now; stickCr = false; } } }      // (CROUCH: tap to go down (v1.87: also with BLOCK held: the guard drops while he goes down and goes up again crouched), tap again to stand up (a crouch walk finishes its step first); in the air it makes him land crouched, and again undoes it; during a standing landing it is kept and he goes down when he has landed)
+  if (crReq) { crReq = false; if (jumpAt >= 0) { if (air) fredLC = !fredLC; else if (fredTD >= 0 && !fredLandC) fredCrQ = now; } else if (can && !fwPh && stance === 'stand') fredCrQ = now; else if (can && stance === 'crouch') { if (fredWalk) fredUpQ = now; else { stance = 'up'; stAt = now; stickCr = false; } } }      // (CROUCH: tap to go down (v1.87: also with BLOCK held: the guard drops while he goes down and goes up again crouched), tap again to stand up (a crouch walk finishes its step first); in the air it makes him land crouched, and again undoes it; during a standing landing it is kept and he goes down when he has landed)
   if (stance === 'down' || stance === 'up') { fredSf = Math.floor(Math.max(0, now - stAt) * CR_FPS / 1000); if (fredSf >= 15) { stance = stance === 'down' ? 'crouch' : 'stand'; fredSf = -1; } } else fredSf = -1;      // (15 pictures going down; standing up plays them backwards)
-  if (atkReq) { atkReq = false; if (can && jumpAt < 0 && df < 0 && blkAt < 0 && (stance === 'stand' || stance === 'crouch') && fredSf < 0) { if (af >= 0) atkQ = true; else { if (now > comboUntil) combo = 0; atkK = fredPick(); atkAt = now; af = 0; atkQ = false; fredWalk = false; fredCrQ = fredUpQ = -1; } } }      // (M1: the first press slashes, a press during the swing chains the second; crouched it is the CROUCH RAKE, again and again; not going down or standing up, in the air, hurt or held)
+  if (atkReq) { atkReq = false; if (can && !fwPh && jumpAt < 0 && df < 0 && blkAt < 0 && (stance === 'stand' || stance === 'crouch') && fredSf < 0) { if (af >= 0) atkQ = true; else { if (now > comboUntil) combo = 0; atkK = fredPick(); atkAt = now; af = 0; atkQ = false; fredWalk = false; fredCrQ = fredUpQ = -1; } } }      // (M1: the first press slashes, a press during the swing chains the second; crouched it is the CROUCH RAKE, again and again; not going down or standing up, in the air, hurt or held)
   if (af < 0 && combo !== 0 && now > comboUntil) combo = 0;
   { const lab = stance === 'crouch' ? FRED_CR : FRED_M1[combo % 2]; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; } }
   if (dashReq) {      // DASH: forward when he is held forward or stands still, a back-step when back is held; on the ground, standing, not swinging; no room in front of the enemy, no dash
     dashReq = false;
-    if (can && jumpAt < 0 && af < 0 && df < 0 && blkAt < 0 && stance === 'stand' && fredSf < 0 && now > dgReady) {
+    if (can && !fwPh && jumpAt < 0 && af < 0 && df < 0 && blkAt < 0 && stance === 'stand' && fredSf < 0 && now > dgReady) {
       const d = (keyL || padL) && !(keyR || padR) ? -1 : 1; let to = wx + d * (d > 0 ? DASH_FWD : DASH_BACK);
       if (dummy && dummy.ko < 0) { if (d > 0 && dummy.x > wx) to = Math.min(to, dummy.x - FRED_DASH.gap); else if (d < 0 && dummy.x < wx) to = Math.max(to, dummy.x + FRED_DASH.gap); }      // (he never runs through the enemy, in front of him or behind him: the enemy walks past him in a real fight)
       if (d * (to - wx) >= FRED_DASH.room) { dgAt = now; df = 0; dgK = d > 0 ? 0 : 1; dgFrom = wx; dgTo = to; atkQ = false; fredWalk = false; fredCrQ = -1; fredTg = 0; snd('dash', dgK); puff(wx - d * 5, 5); }
     }
   }
-  const free = can && jumpAt < 0 && af < 0 && df < 0;
+  if (blueReq && can && jumpAt < 0 && af < 0 && df < 0 && blkAt < 0 && stance === 'stand' && fredSf < 0 && fredCrQ < 0 && fredUpQ < 0) {      // BLUE: the first press touches the floor, the second throws the water
+    if (!fwPh && now >= fwCd) { fwPh = 'touch'; fwAt = now; fredWalk = false; fredTg = wvx = 0; atkQ = false; fwPool = 0; fwPoolAt = -1; snd('ripple'); }
+    else if (fwPh === 'ready') { fwPh = 'throw'; fwAt = now; fwFired = false; snd('swing', 3); }
+  }
+  if (fwPh === 'touch' && now - fwAt >= 15000 / FRED_WATER.touchFps) { fwPh = 'ready'; fwAt = now; }
+  else if (fwPh === 'ready' && now - fwAt > FRED_WATER.hold) { fwPh = ''; fwPoolAt = now; fwCd = now + FRED_WATER.cd; }
+  else if (fwPh === 'throw') {
+    const ti = Math.floor((now - fwAt) * FRED_WATER.throwFps / 1000);
+    if (!fwFired && ti >= FRED_WATER.rel) { fwFired = true; fwBalls.push({ x0: wx + 25, at: now }); fwPoolAt = now; snd('splash'); }
+    if (ti >= 15) { fwPh = ''; fwCd = now + FRED_WATER.cd; }
+  }
+  fwPool += ((fwPh === 'touch' ? Math.min(1, (now - fwAt) * FRED_WATER.touchFps / 1000 / 9) : fwPh === 'ready' ? 1 : fwPh === 'throw' ? Math.max(0, 1 - (now - fwAt) / 260) : 0) - fwPool) * Math.min(1, dt * 12);      // (how big the puddle is)
+  fwStep(now, dt); vpBleed(now); { const bl = fwPh === 'ready' ? 'THROW' : 'WATER', el = $('lapl'); if (el.textContent !== bl) { el.textContent = bl; $('lap').setAttribute('aria-label', 'Boiling water: press once to touch the floor, again to throw it at the enemy'); } }
+  const free = can && jumpAt < 0 && af < 0 && df < 0 && !fwPh;
   if (blockHeld && free && (stance === 'stand' || stance === 'crouch') && fredSf < 0 && fredCrQ < 0 && fredUpQ < 0) { if (blkAt < 0) { blkAt = now; blkEnd = -1; fredWalk = false; if (stance === 'crouch') fredTg = wvx = 0; } } else { blkAt = blkEnd = -1; }      // (BLOCK: hold the button on the ground, standing or crouched; the claw hand goes out in front of him, 0.08 s later the guard is up: a blow that would hit him is caught; nothing else starts meanwhile. v1.87: standing he walks with it up (the BLOCK WALK, a third of the speed, only his legs move and the body bops), crouched he does not move at all (the CROUCH BLOCK))
   fredBlkExt += ((blkAt >= 0 ? 1 : 0) - fredBlkExt) * Math.min(1, dt * 14);      // (how far the hand is out, 0-1)
   { const d = dummy, gr = now - fredGrabAt < 700, hv = FRED_HOV[Math.floor(now / 100) % 5]; let tx = 55 + hv[0], ty = 21 + hv[1];      // (where the hand wants to be, as a place in his picture: hovering in front of the chest; while the enemy swings at him it follows his fist or foot from the start of the swing to the place the blow lands, and a catch holds it there)
@@ -5831,7 +5899,7 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   if (fredUpQ >= 0) { if (!can || stance !== 'crouch' || now - fredUpQ > 700) fredUpQ = -1; else if (free && !fredWalk) { stance = 'up'; stAt = now; fredSf = 0; stickCr = false; fredUpQ = -1; } }      // (standing up from a crouch walk waits for the step to finish: he stops first, as when he goes down)
   if (stance === 'stand') stickCr = false;
   const crWant = free && stance === 'stand' && (fredCrQ >= 0 || stickDown), upWant = fredUpQ >= 0 && stance === 'crouch';      // (about to crouch or to stand up: he stops walking first)
-  const dir = can && (stance === 'stand' || stance === 'crouch') && !(blkAt >= 0 && stance === 'crouch') && af < 0 && df < 0 && !crWant && !upWant && (jk < 0 || air) ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0, w0 = wx;      // (no walking while he appears, flinches, is held, between the rounds, crouching, squatting or landing)
+  const dir = can && !fwPh && (stance === 'stand' || stance === 'crouch') && !(blkAt >= 0 && stance === 'crouch') && af < 0 && df < 0 && !crWant && !upWant && (jk < 0 || air) ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0, w0 = wx;      // (no walking while he appears, flinches, is held, between the rounds, crouching, squatting or landing)
   { const want = dir * (dir > 0 ? FRED_FWD : FRED_BACK) * (blkAt >= 0 ? 0.3 : 1) * (stance === 'crouch' ? FRED_CWALK : 1), a = want === 0 ? 300 : fredTg * want < 0 ? 400 : 200; fredTg += Math.max(-a * dt, Math.min(a * dt, want - fredTg)); }      // (the speed he WANTS grows softly, in a fifth of a second, and fades in half as long: he glides; his legs' strength against the enemy's body stays that of every walker)
   wx += walkVel(fredTg, dt, jk >= 0 && jk <= 33) * dt; const w1 = wx;      // (in the jump his speed is kept: only a little steering)
   if (df >= 0) { const k = Math.max(0, Math.min(1, (now - dgAt - FRED_DASH.lead) / FRED_DASH.ms)); wx = dgFrom + (dgTo - dgFrom) * k * k * (3 - 2 * k); }      // (the run itself: slow at first, fastest in the middle)
@@ -5864,9 +5932,9 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   drawSmoke(now, dt);
   drawBloodFloor(now, dt); drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
   const handOut = (fredBlkExt > 0.03 || now - fredGrabAt < 700) && hf < 0 && jumpAt < 0 && af < 0 && df < 0, armOn = handOut && stance === 'stand', cbOn = handOut && stance === 'crouch' && fredSf < 0;      // (the hand is out or holding a caught blow: standing the arm is made fresh every frame (fredPose), crouched it is one of the three pictures of the CROUCH BLOCK)
-  const info = FRED_INFO, py = gAir ? gAirH : lift, src = jpic || (hf >= 0 || gAir ? (gAir ? fredH(3, 2) : fredH(FRED_HF[hurtK % 10], hf)) : df >= 0 ? fredD(dgK === 1 ? 14 - df : df) : af >= 0 ? fredA(atkK, af) : fredSf >= 0 ? fredC(0, stance === 'down' ? fredSf : 14 - fredSf) : stance === 'crouch' ? (cbOn ? fredCB(now - fredGrabAt < 700 ? 2 : fredBlkExt > 0.5 ? 1 : 0) : fredWalk && hf < 0 ? fredW(Math.floor(fredPh)) : fredC(0, 14)) : armOn ? fredPose(now, fredWalk && hf < 0 ? Math.floor(fredPh) : -1, blkAt >= 0) : fredWalk && hf < 0 ? fredF(Math.floor(fredPh), true) : fredF(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS))); let ox = 0, oy = 0;      // (v1.89: hurt has its own pictures, no shiver)
+  const info = FRED_INFO, py = gAir ? gAirH : lift, src = jpic || (fwPh && hf < 0 ? (fwPh === 'throw' ? fredR((now - fwAt) * FRED_WATER.throwFps / 1000) : fredT(fwPh === 'touch' ? (now - fwAt) * FRED_WATER.touchFps / 1000 : 14)) : hf >= 0 || gAir ? (gAir ? fredH(3, 2) : fredH(FRED_HF[hurtK % 10], hf)) : df >= 0 ? fredD(dgK === 1 ? 14 - df : df) : af >= 0 ? fredA(atkK, af) : fredSf >= 0 ? fredC(0, stance === 'down' ? fredSf : 14 - fredSf) : stance === 'crouch' ? (cbOn ? fredCB(now - fredGrabAt < 700 ? 2 : fredBlkExt > 0.5 ? 1 : 0) : fredWalk && hf < 0 ? fredW(Math.floor(fredPh)) : fredC(0, 14)) : armOn ? fredPose(now, fredWalk && hf < 0 ? Math.floor(fredPh) : -1, blkAt >= 0) : fredWalk && hf < 0 ? fredF(Math.floor(fredPh), true) : fredF(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS))); let ox = 0, oy = 0;      // (v1.89: hurt has its own pictures, no shiver)
   { const uo = ultHeldOff(now); ox += uo[0]; oy += uo[1]; }      // (the enemy Cat's ULTIMATE holds him up by the neck: lifted and shaking)
-  if (((af >= 0 && atkK === 6) || cbOn) && df < 0 && !jpic) ox += FRED_RAKE_X;      // (the pictures of the CROUCH RAKE and of the CROUCH BLOCK have him 8 px to the left in the picture, to leave room for the claw: they are drawn 8 px to the right, his hips stay where they are)
+  if (((af >= 0 && atkK === 6) || cbOn || (fwPh && hf < 0)) && df < 0 && !jpic) ox += FRED_RAKE_X;      // (the pictures of the CROUCH RAKE and of the CROUCH BLOCK have him 8 px to the left in the picture, to leave room for the claw: they are drawn 8 px to the right, his hips stay where they are)
   const x = cx - (info.cx - info.x0) + ox, y = gy - 60 - info.top - py + oy;
   const sw = Math.max(5, Math.round(9 * (1 - py / 48))), sv = Math.round(sw * 2 / 3);      // the ground shadow stays put and shrinks while he is in the air
   const vap = vs.who === 'enemy' && vs.why === 'fatal' && (vs.ph === 'ko' || vs.ph === 'over');      // (the enemy's FATALITY: he is gone until the next round)
@@ -5875,7 +5943,7 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   ctx.save();
   if (vap) { /* gone */ } else if (gko >= 0) { const r = vs.rag, c = r ? ragAt(r, gko) : null, air = c ? Math.max(0, c.h - (r.hh * Math.abs(Math.cos(c.a)) + r.hw * Math.abs(Math.sin(c.a)))) : 0, sx = Math.round(cx - (c ? c.x : 0)), w = Math.max(5, Math.round(9 * (1 - Math.min(1, air / 48)))); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(sx - w, gy + 3, w * 2, 2); ctx.fillRect(sx - Math.round(w * 0.66), gy + 2, Math.round(w * 1.32), 1); ctx.fillRect(sx - Math.round(w * 0.66), gy + 5, Math.round(w * 1.32), 1); ctx.drawImage(fredK(gko / 38), sx - info.cx, gy + 2 - 62 - Math.round(air)); }      // (v1.89: his K.O. pictures, carried by the game's tumble: how far he is thrown and how high he is is the physics', the falling and the lying are drawn)
   else { ctx.beginPath(); ctx.rect(x, y + ry, armOn ? 96 : info.w, info.h - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, x, y); if (hf >= 0 && now - hurtAt < 70) ctx.drawImage(whiteOf(src), x, y); }
-  ctx.restore(); drawGiantNow('foe');
+  ctx.restore(); drawGiantNow('foe'); fwDraw(now, cx);
   if (t < 1) {      // spawn ring + flash
     const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,225,110,' + (1 - t) + ')';
     for (let a = 0; a < 64; a++) { const th = a / 64 * 6.2832; ctx.fillRect(Math.round(cx + Math.cos(th) * R), Math.round(y + 34 + Math.sin(th) * R * 0.45), 1, 1); }
@@ -6242,7 +6310,7 @@ window.__domColors = which => { const im = which === 'void' ? voidImg : domImg, 
 window.__domJump = ph => { if (dom && DOM_ORDER.includes(ph)) { dom.ph = ph; dom.p0 = pnow(); } };
 window.__fill = () => { while (peds.length < 5) peds.push(newPed(wx + 150 + peds.length * 12)); };
 window.__hit = k => gojoHit(k, pnow());           // test hook: the attacker's swing k lands on Gojo right now (a dash dodges it)
-window.__fred = () => ({ pic: fredLast, walk: fredWalk, ph: +fredPh.toFixed(2), atkK, atkAt, upQ: fredUpQ, crQ: fredCrQ, sf: fredSf, dir: fredDir, blk: blkAt >= 0, ext: +fredBlkExt.toFixed(2), grab: pnow() - fredGrabAt < 700 });      // test hook: Freddy's picture number (see fredLast), whether his walk shows, the swing
+window.__fred = () => ({ pic: fredLast, walk: fredWalk, ph: +fredPh.toFixed(2), atkK, atkAt, upQ: fredUpQ, crQ: fredCrQ, sf: fredSf, dir: fredDir, fw: fwPh, blk: blkAt >= 0, ext: +fredBlkExt.toFixed(2), grab: pnow() - fredGrabAt < 700 });      // test hook: Freddy's picture number (see fredLast), whether his walk shows, the swing
 window.__state = () => ({ who: vs ? vs.who : '', hurtOn: hurtAt >= 0, php: vs ? vs.hp : -1, ex: dummy ? Math.round(dummy.x) : 0, ph: vs ? vs.ph : '', ehp: dummy ? dummy.hp : -1, estun: dummy ? Math.max(0, Math.round(dummy.stunUntil - pnow())) : 0, eair: dummy && dummy.air ? dummy.air.kind : '', bleed: !!cuBleed, cmode: cm, redOrb: !!rdOrb, orbV: rdOrb ? rdOrb.v : 0, coat: rdOrb ? !!rdOrb.coat : false, ride: ride ? ride.phase : '', lift: gojoLift, boom: !!boom, ce: ceOn, ceAmt: +ceAmt.toFixed(2), ho: HOMAP.size, stance, jumpC, mode, wx, stick: { x: stickX, y: stickY, up: stickUp, down: stickDown, held: stickCr }, lapse: lpAt >= 0 ? lpK : -1, dash: dgAt >= 0 ? dgK : -1, dashAir: dgAir, block: blkAt >= 0 ? (blkEnd < 0 ? 1 : 2) : 0, guard: guardUp(pnow()), mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests
 window.__back = () => {                       // Android back button: step back through the menus, otherwise let the app close
   if (settingsOn()) { closeSettings(); return true; }
