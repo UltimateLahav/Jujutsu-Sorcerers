@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.96</small>
+    <small id="ver">V1.97</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -920,6 +920,33 @@ function makeSfx(ac) {
     portalclose() {                                      // v1.62 the portal collapses: a rush sucked into a point, a deep thump, then a trickle of sparks and silence
       const t = T(), B = C.ce; burst(B.soft, t, { type: 'bandpass', f: 200, f2: 2400, q: 1.6, dur: 1.1, gain: 1.0, atk: 0.9 }); tone(B.deep, t, { f: 70, f2: 30, dur: 1.2, gain: 0.5, atk: 0.8 });
       tone(B.deep, t + 1.1, { f: 120, f2: 24, dur: 1.4, gain: 0.9, atk: 0.003 }); burst(B.deep, t + 1.1, { type: 'lowpass', f: 700, f2: 80, q: 0.7, dur: 1.0, gain: 0.5, atk: 0.003 }); for (let i = 0; i < 12; i++) burst(B.deep, t + 1.2 + i * 0.09 + R(0, 0.05), { f: R(2500, 6000), q: 4, dur: 0.02, gain: 0.08 * (1 - i / 14), atk: 0.001 });
+    },
+    c4crunch() {                                         // v1.97 a hand crushes an ankle: a low creak that tightens, a dry double crack of bone and a short wet thump
+      const t = T(), B = C.atk; tone(B.deep, t, { type: 'sawtooth', f: 60, f2: 130, dur: 0.3, gain: 0.12, atk: 0.2, cur: 1 }); burst(B.soft, t, { type: 'bandpass', f: 400, f2: 1400, q: 2.2, dur: 0.3, gain: 0.4, atk: 0.22 });
+      for (const d of [0.3, 0.37]) { burst(B.soft, t + d, { type: 'highpass', f: 1800, f2: 4200, q: 1.1, dur: 0.05, gain: 0.9, atk: 0.001 }); tone(B.deep, t + d, { f: 220, f2: 90, dur: 0.07, gain: 0.5, atk: 0.001 }); }
+      tone(B.deep, t + 0.4, { f: 90, f2: 40, dur: 0.22, gain: 0.7, atk: 0.003 });
+    },
+    c4pound(h) {                                         // v1.97 a heavy fist on a body lying in the ground: a low thud, a dry crack and a wet slap (h = 1: the last blows land harder)
+      const t = T(), B = C.atk, H = h ? 1.25 : 1; tone(B.deep, t, { f: 160, f2: 42, dur: 0.17, gain: 0.7 * H, atk: 0.002 }); burst(B.soft, t, { type: 'bandpass', f: 1100, f2: 320, q: 1.1, dur: 0.1, gain: 0.55, atk: 0.001 }); burst(B.soft, t + 0.012, { type: 'highpass', f: 2400, f2: 4200, q: 1, dur: 0.03, gain: 0.4, atk: 0.001 }); if (h) tone(B.deep, t + 0.03, { f: 90, f2: 30, dur: 0.3, gain: 0.5, atk: 0.003 });
+    },
+    c4cough() {                                          // v1.97 Yuji coughs blood: two wet, choked bursts with a rough low voice under them, then a gurgle
+      const t = T(), B = C.atk; for (const d of [0, 0.14]) { burst(B.soft, t + d, { type: 'bandpass', f: 520, f2: 900, q: 2, dur: 0.1, gain: 0.5, atk: 0.01 }); tone(B.deep, t + d, { type: 'sawtooth', f: 160, f2: 95, dur: 0.11, gain: 0.12, atk: 0.01 }); } burst(B.soft, t + 0.26, { type: 'bandpass', f: 1800, f2: 650, q: 3, dur: 0.14, gain: 0.25, atk: 0.005 });
+    },
+    c4stab() {                                           // v1.97 a hand goes through a body: a wet tearing crunch (noise sweeping down), a bone crack and a low thud
+      const t = T(), B = C.atk; burst(B.soft, t, { type: 'bandpass', f: 2600, f2: 500, q: 1.4, dur: 0.22, gain: 0.6, atk: 0.003 }); burst(B.soft, t + 0.03, { type: 'highpass', f: 1800, f2: 4000, q: 1.1, dur: 0.05, gain: 0.8, atk: 0.001 }); tone(B.deep, t + 0.04, { f: 200, f2: 55, dur: 0.2, gain: 0.75, atk: 0.002 }); burst(B.soft, t + 0.12, { type: 'bandpass', f: 700, f2: 300, q: 2, dur: 0.25, gain: 0.35, atk: 0.02 });
+    },
+    c4pull() {                                           // v1.97 the arm is pulled out: a long wet slurp (a falling band of noise) and a heavy plop
+      const t = T(), B = C.atk; burst(B.soft, t, { type: 'bandpass', f: 1200, f2: 260, q: 2.5, dur: 0.35, gain: 0.5, atk: 0.02 }); tone(B.deep, t + 0.3, { f: 130, f2: 50, dur: 0.14, gain: 0.45, atk: 0.003 });
+    },
+    c4guts() {                                           // v1.97 organs fall on the ground: three heavy wet splats, one after the other
+      const t = T(), B = C.atk; for (const [d, f] of [[0, 150], [0.09, 120], [0.19, 95]]) { tone(B.deep, t + d, { f, f2: f * 0.4, dur: 0.1, gain: 0.5, atk: 0.002 }); burst(B.soft, t + d, { type: 'bandpass', f: 800, f2: 350, q: 1.3, dur: 0.12, gain: 0.45, atk: 0.002 }); }
+    },
+    c4crater() {                                         // v1.97 the ground gives way: a huge crack, a rumble that rolls out and falling stones
+      const t = T(), B = C.atk; tone(B.deep, t, { f: 70, f2: 22, dur: 1.1, gain: 0.95, atk: 0.003 }); burst(B.deep, t, { type: 'lowpass', f: 900, f2: 90, q: 0.7, dur: 0.9, gain: 0.6, atk: 0.003 }); burst(B.soft, t, { type: 'highpass', f: 2000, f2: 5000, q: 1, dur: 0.12, gain: 0.9, atk: 0.001 }); for (let i = 0; i < 10; i++) burst(B.soft, t + 0.15 + i * 0.07 + R(0, 0.04), { f: R(1200, 4200), q: 3, dur: 0.03, gain: 0.12 * (1 - i / 12), atk: 0.001 });
+    },
+    c4click() {                                          // v1.97 the button on the Master's wrist: a hard mechanical click, then two thin electronic beeps (the second lower: something is going to close)
+      const t = T(), B = C.atk; burst(B.soft, t, { type: 'highpass', f: 2500, f2: 5200, q: 1, dur: 0.02, gain: 0.8, atk: 0.001 }); tone(B.deep, t, { f: 190, f2: 90, dur: 0.05, gain: 0.45, atk: 0.001 });
+      tone(C.tele.soft, t + 0.05, { type: 'square', f: 1760, f2: 1760, dur: 0.1, gain: 0.05, atk: 0.002 }); tone(C.tele.soft, t + 0.2, { type: 'square', f: 880, f2: 880, dur: 0.25, gain: 0.05, atk: 0.002 });
     },
     c3warn() {                                           // v1.96 Verity's STOP is coming: a thin rising shimmer and a dry thump where he will stand (so you hear it even when you look at your own feet)
       const t = T(), B = C.tele; tone(B.soft, t, { type: 'triangle', f: 520, f2: 1300, dur: 0.24, gain: 0.12, atk: 0.01, cur: 1 }); burst(B.soft, t, { type: 'bandpass', f: 900, f2: 3800, q: 1.4, dur: 0.22, gain: 0.35, atk: 0.14 }); tone(B.deep, t + 0.2, { f: 190, f2: 60, dur: 0.14, gain: 0.3, atk: 0.002 });
@@ -7476,7 +7503,7 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
 }
 
 // ---------------------------------------------------------------- v1.95 CHAPTER 2: THE PORTAL, the opening (this file is spliced into template.html by build_html.py, in place of the marker line after the custom mode's)
-// After END OF CHAPTER 1 (the Master took Gojo through his portal): night, the alley where it all began. The same dark portal opens at the end of it. Yuji cries out and charges for it, Verity blinks in and stops him with his long arm (his real JUMPSCARE grab picture), says "HEY, IT'S ME, IT'S VERITY" in his real voice, and they throw hands: seven blows, Yuji's and Verity's by turns (the pictures are the fighters' own: Yuji's R.HOOK, L.HOOK, UPPERCUT and R.KICK, Verity's three swings, each hit with its own reaction), and the last two meet in the middle (Yuji's CONCENTRATED FIST against Verity's long arm): equal. Then the fight is yours: you are Yuji with the moves of the training (TN_KIT) against Verity (GRADE 2), and the aim is NOT to knock him out but to get INTO THE PORTAL (v1.96, the last part of this file): he stands in the way, and his STOP (a blink and a long arm) pushes you back. When you are in, Verity's long arm closes on the air where you stood and the portal shuts: TO BE CONTINUED.
+// After END OF CHAPTER 1 (the Master took Gojo through his portal): night, the alley where it all began. The same dark portal opens at the end of it. Yuji cries out and charges for it, Verity blinks in and stops him with his long arm (his real JUMPSCARE grab picture), says "HEY, IT'S ME, IT'S VERITY" in his real voice, and they throw hands: seven blows, Yuji's and Verity's by turns (the pictures are the fighters' own: Yuji's R.HOOK, L.HOOK, UPPERCUT and R.KICK, Verity's three swings, each hit with its own reaction), and the last two meet in the middle (Yuji's CONCENTRATED FIST against Verity's long arm): equal. Then the fight is yours: you are Yuji with the moves of the training (TN_KIT) against Verity (GRADE 2), and the aim is NOT to knock him out but to get INTO THE PORTAL (v1.96, the last part of this file): he stands in the way, and his STOP (a blink and a long arm) pushes you back. When you are in, the ending starts: it is in chap2b.js (v1.97: the grab, the Master's side of the portal, the beating, the pierce, WASTED POTENTIAL).
 // Every actor is a pure function of the scene time T, so a tap that skips to the next cut (or a test that jumps in time) always draws the right picture.
 TN_COL.VERITY = '#f0d84a';
 const C3 = { portal: 1.6, say1: 3.7, charge: 6.0, arrive: 6.25, stop: 6.9, voice: 7.4, brawl: 14.6, step: 0.72, hold: 0.09, hold2: 0.16, gap: 34 };      // the times of the opening (seconds); step = the time of one exchange of blows, hold = the picture stops for that long at every impact (the hit-stop), gap = how far apart their chests stand
@@ -7489,10 +7516,6 @@ const C3_TALK = [
   { t: 13.0, d: 1.5, w: 'VERITY', a: 'NOBODY ENTERS.', b: '' },
   { t: C3.stand + 0.1, d: 1.8, w: 'YUJI', a: 'THEN I WILL GO', b: 'THROUGH YOU!' }];
 const C3_CUTS = [C3.say1, C3.charge, C3.voice, 11.4, C3.brawl, C3.stand, C3.end];      // taps jump to the next of these
-const C3E = { talk: 0.6, blink: 2.3, arm: 2.55, dive: 2.7, flare: 3.0, close: 3.5, ret: 3.9, fade: 5.9, card: 6.8 };      // the times of the ending (seconds): Yuji's line, Verity blinks in behind him, his arm shoots out, Yuji dives into the portal, the flare, the portal shuts, the arm draws back, the fade, the card
-const C3E_TALK = [{ t: C3E.talk, d: 1.8, w: 'YUJI', a: 'SENSEI... I AM COMING!', b: '' }];
-const C3E_CUTS = [C3E.blink, C3E.dive, C3E.close, C3E.fade, C3E.card];
-const C3V0 = { w: 64, h: 64, cx: 32, x0: 0, top: 0 };      // the place of Verity's 64 x 64 pictures
 
 // ---- where everybody is (worked out from the real pictures: Yuji faces right, Verity left)
 const c3YT = (k, f) => { const p = tnPick({ atkOn: true, atkK: k, af: Math.min(14, Math.floor(f)) }); return -(p.info.cx - p.info.x0) + tnEdges(p.set[p.fi]).R; };      // how far in front of his middle Yuji's fist is at frame f of his move k
@@ -7563,8 +7586,8 @@ function c3Sparks(now, dt, cx) {      // the sparks of the blows (the world's sp
   for (const p of sparks) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 230 * dt; p.vx *= Math.exp(-3 * dt); const k = (now - p.born) / p.life, h = Math.abs(p.vx) > Math.abs(p.vy); ctx.globalAlpha = Math.max(0, Math.min(1, 1.7 * (1 - k))); ctx.fillStyle = p.c; ctx.fillRect(Math.round(cx + p.x), Math.round(p.y), h ? p.len : 1, h ? 1 : p.len); }
   ctx.globalAlpha = 1;
 }
-function c3Ring(x, y, a, big, col) {      // a blow lands: rings run out from the point of contact and a white star flashes (a = seconds since contact)
-  if (a < 0 || a > 0.4) return; const f = 1 - a / 0.4; ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineWidth = 1;
+function c3Ring(x, y, a, big, col, sc) {      // a blow lands: rings run out from the point of contact and a white star flashes (a = seconds since contact; sc = the size, 1 if left out: smaller in a close-up)
+  if (a < 0 || a > 0.4) return; const f = 1 - a / 0.4; ctx.save(); if (sc && sc !== 1) { ctx.translate(x, y); ctx.scale(sc, sc); ctx.translate(-x, -y); } ctx.globalCompositeOperation = 'lighter'; ctx.lineWidth = 1 / (sc || 1);
   for (let i = 0; i < 2; i++) { ctx.strokeStyle = 'rgba(' + col + ',' + (0.8 * f * (1 - i * 0.35)).toFixed(3) + ')'; ctx.beginPath(); ctx.arc(x, y, 3 + a * (big ? 80 : 40) + i * 5, 0, 6.2832); ctx.stroke(); }
   if (a < 0.12) { ctx.fillStyle = '#fff'; ctx.fillRect(x - 3, y, 7, 1); ctx.fillRect(x, y - 3, 1, 7); ctx.fillRect(x - 1, y - 1, 3, 3); }
   ctx.restore();
@@ -7601,39 +7624,6 @@ function c3Frame(now, dt) {
   c3Talk(T);
   const fa = T < 0.7 ? 1 - T / 0.7 : T > C3.end - 0.6 ? clamp01((T - (C3.end - 0.6)) / 0.6) : 0; if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
   ctx.restore(); if (T >= C3.end && !story.battle) startC3Battle();
-}
-
-// ---- the ending (you are in the portal's mouth): Yuji stands in front of it with the wind in his hair, Verity blinks in behind him and his long arm shoots out, Yuji dives in a moment before it reaches him, the portal flares and shuts, the arm closes on the air; the card
-function c3EndPose(T, G) {      // everybody at the scene time T: Yuji { x, a (see-through), run } and Verity { x, src (null = not there yet) }
-  const x0 = G.PX - 30, u = clamp01((T - C3E.dive) / 0.32), yx = T < C3E.dive ? x0 : lerp(x0, G.PX + 3, u * u), vx = x0 - 42;      // (he speeds up into the mouth; Verity stands 42 px behind him)
-  let src = null;
-  if (T >= C3E.blink && T < C3E.arm) src = vfr('tele', 6 + 8.99 * clamp01((T - C3E.blink) / 0.25), false);      // blinks in (the second half of his teleport)
-  else if (T >= C3E.arm && T < C3E.ret) src = vfr('scare_grab', Math.min(12, 4 + (T - C3E.arm) * 24), false);      // the arm shoots out (frames 4-12) and holds
-  else if (T >= C3E.ret && T < C3E.ret + 0.7) src = vfr('scare_grab', 12 - (T - C3E.ret) / 0.7 * 12, false);      // draws back
-  else if (T >= C3E.ret + 0.7) src = vfr('idle', T * 10, true);
-  return { Y: { x: yx, a: T < C3E.dive ? 1 : 1 - clamp01((yx - (G.PX - 14)) / 15), run: T >= C3E.dive }, V: { x: vx, src } };
-}
-function c3EndFrame(now, dt) {
-  const T = story.T = Math.max(0, now - story.t0) / 1000, G = c3Geo(), cx = Math.round(VW / 2), sx = x => Math.round(cx + x), ev = (k, t, f, win) => { if (T >= t && T < t + (win || 0.5)) once2(k, f); };
-  if (T >= C3E.card) { c3Card(now, T); return; }
-  wx = 0; ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
-  const sk = story.shk && now < story.shk.until ? story.shk.amp : 0; ctx.save(); if (sk) ctx.translate(Math.round((Math.random() * 2 - 1) * sk), Math.round((Math.random() * 2 - 1) * sk));
-  drawAlley(now); const pp = 1 - ease3((T - C3E.close) / 0.8), P = c3EndPose(T, G), py = gy - Math.round(34 * rsLay().U);
-  if (pp > 0) { rsPortal(sx(G.PX), pp, T); ctx.fillStyle = 'rgba(30,10,60,' + (0.16 * pp).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
-  if (P.V.src) { shadow(sx(P.V.x), 9); sprAt(P.V.src, C3V0, sx(P.V.x), 0, false, 0); }
-  if (P.Y.a > 0) { if (P.Y.run) rsYuji(sx(P.Y.x), 0, 'dash', T, { fps: 36, wind: 0.6, alpha: P.Y.a }); else rsYuji(sx(P.Y.x), 0, 'idle', T, { wind: 0.5 }); }
-  const fk = T - C3E.flare; if (fk > 0 && fk < 0.45) { const g = ctx.createRadialGradient(sx(G.PX), py, 2, sx(G.PX), py, 64), a = 0.95 * (1 - fk / 0.45); ctx.save(); ctx.globalCompositeOperation = 'lighter'; g.addColorStop(0, 'rgba(255,240,255,' + a.toFixed(3) + ')'); g.addColorStop(0.5, 'rgba(190,110,255,' + (a * 0.5).toFixed(3) + ')'); g.addColorStop(1, 'rgba(120,40,200,0)'); ctx.fillStyle = g; ctx.fillRect(sx(G.PX) - 66, py - 66, 132, 132); ctx.restore(); }      // the portal flares as he goes in
-  ev('wind', 0.05, () => snd('rumble', 2.5), 0.4); ev('blink', C3E.blink, () => { snd('arrive'); snd('blink'); spark(P.V.x, gy - 30, 10, ['#c890ff', '#7a3aff', '#ffffff'], false, 1); }); ev('arm', C3E.arm, () => snd('f:swing', 3)); ev('dive', C3E.dive, () => snd('dash', 0));
-  ev('flare', C3E.flare, () => { snd('c3enter'); c2Shake(now, 320, 3); spark(G.PX, py, 24, ['#ffffff', '#d9b3ff', '#b056ff'], true, -1); spark(G.PX, py, 16, ['#ffffff', '#d9b3ff', '#b056ff'], true, 1); }); ev('close', C3E.close, () => snd('portalclose'), 1.0);
-  drawSmoke(now, dt); c3Sparks(now, dt, cx); ctx.restore(); rsWindBits(T, 0.45 * Math.max(0.25, pp), 0, VW);
-  c3Talk(T, C3E_TALK);
-  const wf = 1 - clamp01(T / 0.5); if (wf > 0) { ctx.fillStyle = 'rgba(255,255,255,' + wf.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (the cut from the fight comes out of white)
-  const fa = T > C3E.fade ? clamp01((T - C3E.fade) / 0.8) : 0; if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
-  ctx.restore();
-}
-function c3Card(now, T) {      // CHAPTER 2: THE PORTAL, TO BE CONTINUED
-  const t = T - C3E.card; ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); once2('card', () => { snd('msting'); storyDone5(); }); ctx.globalAlpha = clamp01((t + 0.1) / 1.0);
-  pxt('CHAPTER 2', VW / 2, Math.round(VH / 2) - 10, '#ffffff', 16, 'center'); pxt('THE PORTAL', VW / 2, Math.round(VH / 2) + 8, '#c9a8ff', 8, 'center'); pxt('TO BE CONTINUED', VW / 2, Math.round(VH / 2) + 26, '#ffd34d', 8, 'center'); if (t > 2.2 && Math.floor(now / 600) % 2 === 0) pxt('TAP TO CONTINUE', VW / 2, VH - 8, '#9d8cff', 8, 'center'); ctx.globalAlpha = 1; ctx.restore();
 }
 
 // ---- the chapter: start, frame, taps, the fight, the ending
@@ -7727,6 +7717,410 @@ function c3Hud(now, W) {      // the aim: a bar along the bottom with the portal
 }
 window.__c3 = () => c3s && ({ s: c3s, W: C3W, now: pnow(), wx, dx: dummy && dummy.x, vform: dummy && dummy.vform, vact: dummy && dummy.vact && dummy.vact.type, ph: vs && vs.ph, reach: c3Reach(), hp: dummy && dummy.hp });      // test hook
 window.__c3Set = o => { if (o.s) Object.assign(c3s, o.s); if (o.wx !== undefined) wx = o.wx; if (o.dx !== undefined && dummy) dummy.x = o.dx; };
+
+// ---------------------------------------------------------------- v1.97 THE GRAB (this file is spliced into template.html by build_html.py, in place of the marker line after chap2.js's): the end of chapter 2
+// Yuji is in the portal's mouth: he dives in (the pictures of his dash, turned flat) and Verity's long arm shoots out and closes on his LEG when he is halfway in. A close-up of the hand on the ankle. The other side of the portal: the Master holds Gojo by the neck and clicks a button on his wrist; the portal starts to close, slowly, with Yuji still halfway through it, his hand reaching for Gojo. Back in the alley Verity yanks the leg: Yuji is pulled out of the portal, swung over his head and thrown to the ground, and the portal shuts. Verity pounds him, crouched over him, blow after blow; Yuji coughs blood; the ground gives way into a crater. Verity lifts him, drives his arm through his stomach, the organs fall out, a big hole is left in his chest, he falls. WASTED POTENTIAL. For now that is all: the card.
+// Every shot is made of the game's own pictures (Yuji's dash, hurt and idle pictures, Verity's strips, the Master's, Gojo's) enlarged with hard pixels (a close-up is the same drawing as the wide shot with the camera pushed in), and is a pure function of the scene time T, so a tap that skips to the next cut (or a test that jumps in time) always draws the right picture.
+const C3E = { talk: 0.6, blink: 2.2, dive: 2.66, arm: 2.78, grab: 3.04, hold: 0.14 };      // the times of the first part (seconds): Yuji's line, Verity blinks in behind him, he dives, the arm shoots out, the arm closes on his leg, the picture stops for 0.14 s
+const C3E_TALK = [{ t: C3E.talk, d: 1.8, w: 'YUJI', a: 'SENSEI... I AM COMING!', b: '' }, { t: 0, d: 0, w: 'VERITY', a: 'WASTED POTENTIAL.', b: '' }];      // (the second line's time is set below)
+const C3V0 = { w: 64, h: 64, cx: 32, x0: 0, top: 0 };      // the place of Verity's 64 x 64 pictures
+const C4_SEQ = [{ k: 'grip', d: 1.8 }, { k: 'other', d: 2.7 }, { k: 'wrist', d: 1.8 }, { k: 'shut', d: 2.9 }, { k: 'yank', d: 1.9 }, { k: 'down', d: 1.0 }, { k: 'beat', d: 7.2 }, { k: 'lift', d: 1.4 }, { k: 'pierce', d: 3.2 }, { k: 'fall', d: 2.8 }, { k: 'line', d: 3.8 }, { k: 'black', d: 1.6 }];      // the shots after the grab and how long each one lasts
+{ let t = C3E.grab + C3E.hold; for (const s of C4_SEQ) { s.t0 = t; t += s.d; } C4_SEQ.end = t; }
+const c4T = k => C4_SEQ.find(s => s.k === k).t0;
+C3E.card = C4_SEQ.end; C3E_TALK[1].t = c4T('line') + 0.5; C3E_TALK[1].d = 3.0;
+const C3E_CUTS = [C3E.grab + C3E.hold].concat(C4_SEQ.slice(1).map(s => s.t0), [C3E.card]);      // a tap jumps to the next of these
+const C4_ANK = { dx: -17, dy: -8 };      // where the rear ankle is from the pivot (his hips) when Yuji dives flat (found from his picture)
+
+// ---- helpers
+const c4Jit = a => a > 0.2 ? Math.round((Math.random() * 2 - 1) * a) : 0;
+function c4CamOn(z, fx, fy, tx, ty) { ctx.save(); ctx.translate(Math.round(tx), Math.round(ty)); ctx.scale(z, z); ctx.translate(-fx, -fy); }      // the camera: the point (fx, fy) of the scene is put on the screen point (tx, ty), z times as big (a close-up is the same drawing as the wide shot, so it is made of the same pictures)
+const c4Cam0 = () => ctx.restore();
+function c4Geo() {      // where everybody is in the alley (from the opening's geometry)
+  const key = VW + 'x' + gy + 'x' + FRED_IMG.complete; if (c4Geo.key === key) return c4Geo.v; c4Geo.key = key; const G = c3Geo();
+  return c4Geo.v = { px: G.PX, x0: G.PX - 30, vx: G.PX - 52 };      // the portal's middle, where Yuji stands, where Verity blinks in (22 px behind him)
+}
+function c4Pose0(T, g) {      // the first part: Yuji (standing, then diving into the portal) and Verity (blinking in, the arm shooting out) at the scene time T, which stops at the grab
+  const Tp = Math.min(T, C3E.grab), u = clamp01((Tp - C3E.dive) / (C3E.grab - C3E.dive));
+  const Y = Tp < C3E.dive ? { stand: 1, x: g.x0 } : { stand: 0, x: lerp(g.x0, g.px - 6, ease3(u)), h: lerp(26, 37, ease3(u)) + 12 * Math.sin(Math.PI * u), ang: Math.PI / 2 * ease3(clamp01(u / 0.7)), f: 3 + Math.min(3, Math.floor(u * 4)) };      // (the pivot: his hips; the angle turns him flat, head first)
+  let src = null; if (Tp >= C3E.arm) src = vfr('scare_grab', Math.min(12, 4 + (Tp - C3E.arm) * 24), false); else if (Tp >= C3E.blink) src = vfr('tele', 6 + 8.99 * clamp01((Tp - C3E.blink) / 0.25), false);
+  return { Y, V: { x: g.vx, src } };
+}
+const c4NSC = new WeakMap();
+function c4NoStreaks(src) {      // a copy of one of Yuji's dash pictures without its thin white and blue speed lines (they are drawn behind a runner; turned flat they would stand up in the air)
+  let c = c4NSC.get(src); if (c) return c; c = document.createElement('canvas'); c.width = src.width; c.height = src.height; const g = c.getContext('2d'); g.drawImage(src, 0, 0); const im = g.getImageData(0, 0, c.width, c.height), d = im.data;
+  for (let i = 0; i < d.length; i += 4) if (d[i + 3] && ((d[i + 2] > 225 && d[i + 1] > 205) || (d[i + 2] > 150 && d[i + 2] > d[i] + 45 && d[i + 1] > 90 && d[i] < 150))) d[i + 3] = 0;
+  g.putImageData(im, 0, 0); c4NSC.set(src, c); return c;
+}
+function c4YujiDraw(Y, sx, T, g, o) {      // Yuji: standing with the wind in his hair, or diving (his dash picture turned flat about his hips), cut off at the portal's plane: what has gone through it is not seen
+  o = o || {}; if (Y.stand) { rsYuji(sx(Y.x), 0, 'idle', T, { wind: 0.5 }); return; }
+  const p = yujiPick({ dodging: true, dgK: 0, df: Y.f, dgCr: false }), src = c4NoStreaks(p.set[p.fi]); ctx.save(); ctx.beginPath(); ctx.rect(-400, -400, sx(g.px) + 401, VH + 800); ctx.clip();
+  const px = sx(Y.x) + (o.jx || 0), py = gy - Y.h + (o.jy || 0); shadow(sx(Y.x), Math.max(3, 9 - Y.h * 0.15)); rsGojoRot(src, p.info, px, py, Y.ang, 34, false, 1);
+  ctx.globalCompositeOperation = 'lighter'; rsGojoRot(rsEdge(src, [150, 100, 235]), p.info, px, py, Y.ang, 34, false, 0.55); ctx.restore();      // (a thin violet rim of the portal's light, so that his dark uniform shows against the dark)
+}
+function c4Wide0(now, dt, T, cx, g) {      // the alley: the portal, Yuji's dive, Verity's arm
+  const sx = x => Math.round(cx + x), P = c4Pose0(T, g), Tp = Math.min(T, C3E.grab);
+  drawAlley(now); if (P.V.src) { shadow(sx(P.V.x), 9); sprAt(P.V.src, C3V0, sx(P.V.x), 0, false, 0); }
+  c4YujiDraw(P.Y, sx, Tp, g); rsPortal(sx(g.px), 1, Tp); ctx.fillStyle = 'rgba(30,10,60,0.16)'; ctx.fillRect(0, 0, VW, VH);
+  const a = T - C3E.grab; if (a >= 0) { const y = P.Y, c = c4Contact(g, y); c3Ring(sx(c.x), gy - c.h, a, true, '255,240,190'); }
+}
+function c4Contact(g, Y) { Y = Y || c4Pose0(C3E.grab, g).Y; return { x: Y.x + C4_ANK.dx, h: Y.h - C4_ANK.dy }; }      // where the hand closes on the ankle (x from the middle of the screen, h above the floor)
+
+// ---- close-up A: the hand on the ankle (the wide shot with the camera pushed in on the place where they meet: Verity's own arm and hand, Yuji's own leg)
+function c4Grip(now, dt, T, st, t1, cx, g) {
+  const Pz = c4Pose0(C3E.grab, g), C = c4Contact(g, Pz.Y), k = t1 / st.d, sx = x => Math.round(cx + x), sq = clamp01((t1 - 0.45) / 0.1) * (1 - clamp01((t1 - 0.62) / 0.3)), z = 3.4 + 1.2 * ease3(k) + 0.8 * Math.max(0, 1 - t1 / 0.14), tw = t1 > 0.45 ? 1 : 0;
+  rsCloseBg(T); { const gr = ctx.createLinearGradient(VW * 0.4, 0, VW, 0); gr.addColorStop(0, 'rgba(120,50,190,0)'); gr.addColorStop(1, 'rgba(150,70,220,0.4)'); ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH); }
+  const sh = t1 > 0.45 && t1 < 0.95 ? 3.5 * (1 - (t1 - 0.45) / 0.5) : 0.4; ctx.save(); ctx.translate(c4Jit(sh), c4Jit(sh)); c4CamOn(z, sx(C.x), gy - C.h, VW * 0.46, VH * 0.5);
+  sprAt(vfr('scare_grab', 12, false), C3V0, sx(g.vx), 0, false, 0);
+  c4YujiDraw(Pz.Y, sx, C3E.grab, g, { jx: tw * c4Jit(1.2), jy: tw * c4Jit(1.2) }); rsPortal(sx(g.px), 1, T);
+  { const ax = sx(C.x), ay = gy - C.h, q = 1 - 0.25 * sq; for (let i = -1; i <= 1; i++) { ctx.fillStyle = '#2b2208'; ctx.fillRect(ax + i * 2 - 1, ay - 3.5 * q, 2, 7 * q); ctx.fillStyle = '#b39b2f'; ctx.fillRect(ax + i * 2 - 1, ay - 3 * q, 1, 6 * q); ctx.fillStyle = '#e8d57a'; ctx.fillRect(ax + i * 2 - 1, ay - 3 * q, 1, 1); } ctx.fillStyle = '#2b2208'; ctx.fillRect(ax - 4, ay - 1 * q, 1, 3 * q); ctx.fillStyle = '#b39b2f'; ctx.fillRect(ax - 4, ay - 1 * q, 1, 2 * q);      // the fingers (olive with a dark outline and a lit tip) and the thumb close round the ankle
+    if (sq > 0) { ctx.strokeStyle = 'rgba(255,255,255,' + (0.9 * sq).toFixed(2) + ')'; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(ax - 5, ay - 4); ctx.lineTo(ax - 2, ay - 1); ctx.lineTo(ax - 4, ay + 1); ctx.lineTo(ax + 1, ay + 4); ctx.stroke(); } }      // (the leg creaks: a white crack)
+  c4Cam0(); ctx.restore();
+  { const a = t1 - 0.45; if (a >= 0) c3Ring(VW * 0.5, VH * 0.5, a, true, '255,240,190'); if (sq > 0.2) { ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1; for (let i = 0; i < 16; i++) { const an = i * 0.3927 + 0.2, r0 = 22 + 6 * (i % 3), r1 = r0 + 10 + 8 * sq; ctx.beginPath(); ctx.moveTo(VW * 0.5 + Math.cos(an) * r0, VH * 0.5 + Math.sin(an) * r0 * 0.8); ctx.lineTo(VW * 0.5 + Math.cos(an) * r1, VH * 0.5 + Math.sin(an) * r1 * 0.8); ctx.stroke(); } } }
+  if (t1 > 0.45 && t1 < 0.6) { ctx.fillStyle = 'rgba(255,255,255,' + (0.5 * (1 - (t1 - 0.45) / 0.15)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  msFinish(1);
+}
+
+// ---- the other side of the portal: the Master's. A dark violet void with a floor, the portal at the left, the Master (his own pictures, black, one red eye) holding Gojo by the neck at the right; Yuji comes out of the portal head first, only as far as the plane of the portal (the rest of him is on the other side, in Verity's hand)
+function c4Void(T, gx) {
+  const g1 = ctx.createLinearGradient(0, 0, 0, gy); g1.addColorStop(0, '#06030c'); g1.addColorStop(1, '#1b0d30'); ctx.fillStyle = g1; ctx.fillRect(0, 0, VW, gy);
+  const g2 = ctx.createLinearGradient(0, gy, 0, VH); g2.addColorStop(0, '#150a26'); g2.addColorStop(1, '#040208'); ctx.fillStyle = g2; ctx.fillRect(0, gy, VW, VH - gy);
+  for (let i = 0; i < 8; i++) { const x = ((i * 89 + 31) % (VW + 40)) - 10, w = 9 + (i * 5) % 9; ctx.fillStyle = 'rgba(10,5,20,0.9)'; ctx.fillRect(x, 0, w, gy); ctx.fillStyle = 'rgba(120,60,190,0.2)'; ctx.fillRect(x, 0, 1, gy); }      // (far pillars)
+  ctx.fillStyle = 'rgba(160,90,230,0.28)'; ctx.fillRect(0, gy, VW, 1); for (let i = 0; i < 12; i++) ctx.fillRect((i * 53 + 11) % VW, gy + 5 + (i % 3) * 6, 14 + (i % 4) * 4, 1);
+  ctx.fillStyle = 'rgba(200,170,255,0.4)'; for (let i = 0; i < 26; i++) ctx.fillRect(Math.round((i * 47 + T * (3 + i % 5)) % VW), Math.round((i * 31 + T * (1 + i % 3)) % gy), 1, 1);
+  const lg = ctx.createRadialGradient(gx, gy - 34, 4, gx, gy - 34, VW * 0.6); lg.addColorStop(0, 'rgba(150,70,220,0.5)'); lg.addColorStop(1, 'rgba(60,20,110,0)'); ctx.fillStyle = lg; ctx.fillRect(0, 0, VW, VH);      // (the portal's light)
+}
+function c4Other(now, T, o) {      // o: z (zoom), fx (camera shift), k (the portal's width: 1 open, 0 shut), yuji (is he there), yx (his hips from the plane of the portal), tr (how much he shakes), eye, flare, ang (how Gojo hangs), sh (shake), fxf (a function drawn in the scene, over everything)
+  const Px = Math.round(VW * 0.27), Mx = Math.round(VW * 0.76), src = rsCarrySrc(fredF(Math.floor(T * IDLE_FPS)), 1), pal = src.palm; c4Void(T, Px);
+  ctx.save(); ctx.translate(c4Jit(o.sh || 0), c4Jit(o.sh || 0)); c4CamOn(o.z, (Px + Mx) / 2 + (o.fx || 0), gy - 34, VW * 0.5, VH * 0.6);
+  ctx.save(); ctx.translate(Px, 0); ctx.scale(Math.max(0.06, o.k), 1); ctx.translate(-Px, 0); rsPortal(Px, 1, T); ctx.restore();
+  if (o.yuji) { const p = yujiPick({ dodging: true, dgK: 0, df: 6, dgCr: false }), sr = c4NoStreaks(p.set[p.fi]), ppx = Px + o.yx + c4Jit(o.tr || 0), ppy = gy - 37 + c4Jit(o.tr || 0); ctx.save(); ctx.beginPath(); ctx.rect(Px, -400, 800, 800 + VH); ctx.clip(); rsGojoRot(sr, p.info, ppx, ppy, Math.PI / 2, 34, false, 1); ctx.globalCompositeOperation = 'lighter'; rsGojoRot(rsEdge(sr, [150, 100, 235]), p.info, ppx, ppy, Math.PI / 2, 34, false, 0.55); ctx.restore(); }
+  shadow(Mx, 9); rsAura(Mx, T, 1, 60); rsFredDraw(Mx, T, { src, right: false, eye: o.eye == null ? 1 : o.eye, flare: o.flare || 0 });
+  { const nx = Mx - (pal[0] - 31), ny = gy - 61 + pal[1]; rsGojoRot(bloody(idleF[0]), D.idle, nx, ny, o.ang == null ? 0.1 + 0.03 * Math.sin(T * 2.2) : o.ang, 19, true, 1); rsBlades(nx, ny, -1); rsDrip(nx + 3, ny + 26, T, 3, 0.2); }
+  if (o.fxf) o.fxf(Px, Mx); c4Cam0(); ctx.restore();
+}
+function c4Shout(T, txt, t1, big) {      // a shout in huge letters at the bottom, shaking (the same as SENSEI NO!)
+  const jx = c4Jit(2), jy = c4Jit(2); ctx.save(); pxt(txt, VW / 2 + jx + 1, Math.round(VH * 0.9) + jy + 1, '#7a0a0a', big || 24, 'center'); pxt(txt, VW / 2 + jx, Math.round(VH * 0.9) + jy, '#ffffff', big || 24, 'center'); ctx.restore();
+}
+function c4SOther(now, dt, T, st, t1, cx, g) {      // Yuji's head and shoulders come out of the portal toward Gojo; the Master's eye flares; Yuji screams SENSEI
+  const k = t1 / st.d, arr = ease3(clamp01((t1 - 0.45) / 0.16)), strain = clamp01((t1 - 1.6) / 0.3);
+  c4Other(now, T, { z: 1.4 + 0.3 * ease3(k), fx: -10, yuji: t1 >= 0.42, yx: lerp(-30, 2, arr) - 3 * strain, tr: 0.3 + 0.9 * strain, k: 1, eye: 1 + 0.3 * arr, flare: 0.2 + 0.7 * arr, ang: 0.1 - 0.16 * ease3(clamp01((t1 - 0.7) / 0.4)), sh: t1 > 1.6 && t1 < 1.9 ? 2 : 0,
+    fxf: (Px, Mx) => { c3Ring(Px, gy - 37, t1 - 0.45, true, '200,150,255'); } });
+  if (t1 > 0.9 && t1 < 2.3) c4Shout(T, 'SENSEI!!', t1); msFinish(1);
+}
+
+// ---- close-up B: the Master's wrist: the hand that holds Gojo by the neck, a device on its wrist, the other hand's finger on its button
+function c4SWrist(now, dt, T, st, t1) {
+  const Z = rsZ(), b = rsGoBust(Z), Cx = Math.round(VW * 0.34), Cy = Math.round(VH * 0.5), clk = t1 - 0.8, pr = clk >= 0 ? 1 : clamp01((t1 - 0.5) / 0.3), by = Cy + b.ny - b.my, shk = clk >= 0 && clk < 0.3 ? 2 * (1 - clk / 0.3) : 0.4, k = t1 / st.d;
+  rsCloseBg(T); ctx.save(); ctx.translate(c4Jit(shk), c4Jit(shk)); const zz = 1 + 0.07 * k; ctx.translate(Cx, Cy); ctx.scale(zz, zz); ctx.translate(-Cx, -Cy);
+  ctx.save(); ctx.translate(Cx, by); ctx.rotate(-0.22 - 0.05 * Math.sin(T * 5)); ctx.drawImage(b.c, -b.nx, -b.ny); ctx.fillStyle = '#3a0c14'; ctx.fillRect(b.mx - b.nx - 1, b.my - b.ny, 3 * Z, 2 * Z); ctx.restore();
+  const tx = Cx - 8 * Z, ty = by + Math.round(Z * 0.5); rsFredArm(tx, ty, Z);
+  { const dx0 = tx + 17 * Z, dw = 13 * Z, dy0 = ty - 7 * Z, dh = 13 * Z; ctx.fillStyle = '#0b0914'; ctx.fillRect(dx0, dy0, dw, dh); ctx.fillStyle = 'rgba(170,100,255,0.55)'; ctx.fillRect(dx0, dy0, dw, 1); ctx.fillRect(dx0, dy0 + dh - 1, dw, 1); ctx.fillRect(dx0, dy0, 1, dh); ctx.fillRect(dx0 + dw - 1, dy0, 1, dh);      // the band
+    const sx0 = dx0 + 2 * Z, sy0 = dy0 + 4 * Z, sw = 9 * Z, sh = 6 * Z, op = clk < 0 ? 1 : 1 - 0.85 * ease3(clamp01(clk / 0.9)), red = clk >= 0 ? clamp01(1 - clk / 0.25) * 0.8 + 0.25 : 0; ctx.fillStyle = '#05020a'; ctx.fillRect(sx0, sy0, sw, sh); ctx.strokeStyle = clk >= 0 ? 'rgba(255,70,80,0.95)' : 'rgba(190,120,255,0.95)'; ctx.lineWidth = Math.max(1, Z * 0.4); ctx.beginPath(); ctx.ellipse(sx0 + sw / 2, sy0 + sh / 2, Math.max(1, (sw / 2 - Z * 0.8) * op), sh / 2 - Z * 0.8, 0, 0, 6.2832); ctx.stroke(); if (red > 0) { ctx.fillStyle = 'rgba(255,40,50,' + (0.3 * red).toFixed(2) + ')'; ctx.fillRect(sx0, sy0, sw, sh); }      // the screen: the portal as a violet oval; after the click it is red and narrows
+    const bx = dx0 + Math.round(dw / 2) - Z, byy = dy0 - Math.round(Z * (pr >= 1 ? 0.4 : 1.2)); ctx.fillStyle = '#1b1530'; ctx.fillRect(bx - 1, byy, 2 * Z + 2, Math.round(Z * 1.6)); ctx.fillStyle = clk >= 0 ? '#ff3a3a' : '#7a3aff'; ctx.fillRect(bx, byy, 2 * Z, Math.round(Z * 0.8));      // the button
+    const fy = -Z * 6 + (byy - Z * 2.2 + Z * 6) * ease3(clamp01(t1 / 0.55)) - (clk > 0.12 ? Z * 3 * ease3(clamp01((clk - 0.12) / 0.3)) : 0), fx0 = bx - Math.round(Z * 0.5); ctx.fillStyle = '#07040e'; ctx.fillRect(fx0, fy - Z * 8, Math.round(3 * Z), Math.round(Z * 8)); ctx.fillRect(fx0 + 1, fy, Math.round(3 * Z) - 2, 2); ctx.fillStyle = 'rgba(190,120,255,0.7)'; ctx.fillRect(fx0, fy - Z * 8, 1, Math.round(Z * 8)); ctx.fillRect(fx0 + Math.round(3 * Z) - 1, fy - Z * 8, 1, Math.round(Z * 8)); ctx.fillRect(fx0 + 1, fy + 1, Math.round(3 * Z) - 2, 1);      // the finger of the other hand
+    if (clk >= 0 && clk < 0.5) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; const R = 14 * Z * (0.4 + clk * 2), gr = ctx.createRadialGradient(bx + Z, byy, 1, bx + Z, byy, R); gr.addColorStop(0, 'rgba(255,60,70,' + (0.8 * (1 - clk / 0.5)).toFixed(2) + ')'); gr.addColorStop(1, 'rgba(255,60,70,0)'); ctx.fillStyle = gr; ctx.fillRect(bx - R, byy - R, 2 * R + 2 * Z, 2 * R); ctx.restore(); } }
+  rsDrip(Cx - 2 * Z, Cy + 4 * Z, T, 4, 0.2); msEye(VW * 0.9, VH * 0.3, Z * 0.5, 1.0, 0, 0.5 + 0.3 * Math.sin(T * 7));
+  ctx.restore(); if (clk >= 0 && clk < 0.1) { ctx.fillStyle = 'rgba(255,200,200,' + (0.35 * (1 - clk / 0.1)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); } msFinish(1);
+}
+
+// ---- the portal closes, slowly (a wide shot of the other side, then Yuji's face, then the wide shot again): Yuji is still halfway through
+function c4SShut(now, dt, T, st, t1, cx, g) {
+  const k = t1 / st.d, shut = ease3(clamp01(t1 / 2.5)), face = t1 >= 1.3 && t1 < 2.15;
+  if (face) {
+    rsCloseBg(T); const Z = Math.max(3, Math.floor(VH * 0.85 / 31)), Cx = Math.round(VW * 0.58), Cy = Math.round(VH * 0.5), u = t1 - 1.3, lw = Math.round(VW * 0.5 * (1 - shut)), gr = ctx.createLinearGradient(0, 0, VW * 0.55, 0); gr.addColorStop(0, 'rgba(160,80,240,' + (0.55 * (1 - shut * 0.6)).toFixed(2) + ')'); gr.addColorStop(1, 'rgba(160,80,240,0)'); ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH);
+    ctx.save(); ctx.translate(c4Jit(2.5), c4Jit(2.5)); rsWindLines(T, 1.4); rsHeadGlow(Cx - 6 * Z, Cy - 6 * Z, Z * 0.3); rsYujiHead(Cx, Cy, Z, T, 1.5, u > 0.15 ? 1 : 2); ctx.restore(); msFinish(1); if (u > 0.1) c4Shout(T, 'SENSEI!!', t1);
+    return;
+  }
+  const slide = clamp01((t1 - 2.35) / 0.4);
+  c4Other(now, T, { z: 1.6 + 0.1 * ease3(k), fx: -12, yuji: slide < 1, yx: 2 - 5 * ease3(clamp01(t1 / 2.3)) - 30 * ease3(slide), tr: 1.0, k: lerp(1, 0.12, shut), eye: 1.2, flare: 0.5, ang: -0.06, sh: 0.8 + 1.5 * shut,
+    fxf: (Px, Mx) => { for (let i = 0; i < 9; i++) { const h = Math.imul(i + 3, 2654435761) >>> 0, ph = (T * (1.6 + (h % 5) * 0.4) + (h >> 8) % 100 / 100) % 1; ctx.fillStyle = 'rgba(' + (h & 1 ? '230,190,255' : '255,255,255') + ',' + (0.9 * (1 - ph)).toFixed(2) + ')'; ctx.fillRect(Px + 1 + Math.round(ph * 16), gy - 37 + ((h >> 4) % 22) - 11 + Math.round(ph * ((h >> 12) % 7 - 3)), 1, 1); } } });      // (sparks where the rim of the portal bites)
+  msFinish(1);
+}
+
+// ---------------------------------------------------------------- the alley after the grab (the throw, the beating, the crater, the hole): the helpers
+const C4_OL = '#1a1206', C4_SK = '#807226', C4_SH = '#584c1a', C4_LT = '#cec050', C4_RED = ['#e0192b', '#b3121f', '#8e0c18', '#5a0610'];      // Verity's outline, skin, shadow and lit edge (taken from his pictures) and four reds
+const c4R = (i, k) => ((Math.imul(i * 7919 + k * 104729 + 12345, 2654435761) >>> 0) % 1000) / 1000;      // a repeatable random number (0 to 1) for thing i and trait k: every speck is a function of the scene time, so a skip or a jump draws the same picture
+const c4Lay = g => ({ yL: g.vx - 6, vb: g.vx - 10, cr: g.vx - 34 });      // where Yuji lies (his feet), where Verity crouches over him (turned left) and the middle of the crater, from the middle of the screen
+function c4Cam(cx, z, fx, fh, ty) { const hw = VW / (2 * z); c4CamOn(z, Math.max(hw, Math.min(VW - hw, cx + fx)), gy - fh, VW / 2, ty == null ? VH * 0.56 : ty); }      // the camera on the alley: the place fx (from the middle of the screen), fh pixels over the floor, is put on the middle, z times as big; it never looks past the edge of the alley's picture
+
+function c4Arm(ax, ay, hx, hy, bend, blood) {      // Verity's arm: a 4-pixel-thick limb (outline, skin, shadow, outline: as in his pictures) from the shoulder to the hand, bent at the elbow by `bend` pixels; blood (0-1) smears its last part red
+  const dx = hx - ax, dy = hy - ay, L = Math.hypot(dx, dy) || 1, n = Math.max(3, Math.ceil(L)), pts = [], hor = Math.abs(dx) >= Math.abs(dy), bl = blood || 0, red = p => bl > 0 && p[2] > 1 - 0.75 * bl;
+  for (let i = 0; i <= n; i++) { const t = i / n, b = (bend || 0) * Math.sin(Math.PI * t); pts.push([Math.round(ax + dx * t - dy / L * b), Math.round(ay + dy * t + dx / L * b), t]); }
+  ctx.fillStyle = C4_OL; for (const p of pts) ctx.fillRect(p[0] - 2, p[1] - 2, 4, 4);
+  for (const p of pts) { ctx.fillStyle = red(p) ? C4_RED[2] : C4_SH; ctx.fillRect(p[0] - 1, p[1] - 1, 2, 2); }
+  for (const p of pts) { ctx.fillStyle = red(p) ? C4_RED[1] : C4_SK; if (hor) ctx.fillRect(p[0] - 1, p[1] - 1, 2, 1); else ctx.fillRect(p[0] - 1, p[1] - 1, 1, 2); }
+}
+function c4Fist(x, y, blood) {      // his hand closed into a fist: a knotted 6 x 6 block of the same olive, outlined, the knuckles lit
+  x = Math.round(x); y = Math.round(y); ctx.fillStyle = C4_OL; ctx.fillRect(x - 3, y - 2, 6, 5); ctx.fillRect(x - 2, y - 3, 4, 7);
+  ctx.fillStyle = C4_SH; ctx.fillRect(x - 2, y - 2, 4, 4); ctx.fillStyle = C4_SK; ctx.fillRect(x - 2, y - 2, 4, 2); ctx.fillStyle = C4_LT; ctx.fillRect(x - 1, y - 2, 2, 1);
+  ctx.fillStyle = C4_OL; ctx.fillRect(x, y - 1, 1, 2);      // (the gap between the fingers)
+  if (blood) { ctx.fillStyle = C4_RED[1]; ctx.fillRect(x - 2, y, 4, 2); ctx.fillStyle = C4_RED[0]; ctx.fillRect(x - 2, y, 1, 1); ctx.fillRect(x + 1, y + 1, 1, 2); ctx.fillStyle = C4_RED[2]; ctx.fillRect(x - 2, y + 2, 4, 1); }
+}
+const C4_BODY = new Map(), C4_ST = { stand: ['idle', 0, 43, 15, 42, 17], b8: ['crouch', 8, 43, 30, 42, 33], b10: ['crouch', 10, 43, 34, 42, 37], b12: ['crouch', 12, 45, 39, 44, 42], crouch: ['crouch', 14, 46, 40, 44, 44] };      // Verity's stances without his right arm: [strip, frame, the x and y from which the arm is cleared, the shoulder]
+function c4Verity(x, st, flip, lift, pre) {      // draws him (the right arm is left to c4Arm) and says where his right shoulder is on the screen; pre(shoulder) is called before his body is drawn (an arm that is drawn there is behind him)
+  const S = C4_ST[st], src = vfr(S[0], S[1], false); let c = C4_BODY.get(st);
+  if (!c) { c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.drawImage(src, 0, 0); g.clearRect(S[2], S[3], 64 - S[2], 64 - S[3]); if (src !== SIMG.verity) C4_BODY.set(st, c); }
+  lift = lift || 0; const sh = { x: x + (flip ? -1 : 1) * (S[4] - 32), y: gy - 60 + S[5] - lift }; shadow(x, 9); if (pre) pre(sh); sprAt(c, C3V0, x, lift, flip, 0); return sh;
+}
+const c4YRX = (fi, k) => { k = k == null ? 4 : k; return yujiPick({ hurting: true, hurtK: k, hurtAt: 0, now: (fi + 0.5) * 1000 / RXF15[k] }); };      // one of Yuji's hit pictures by number (k 4 = the knock-down: 0-4 the fall, 5-10 lying on his back, 11-14 getting up)
+const C4_YA = new WeakMap();
+function c4YAn(im) {      // where the hair, face, shoes and so the belly are in one of Yuji's pictures (found by colour), and u: the way along his body from the head to the feet
+  let a = C4_YA.get(im); if (a) return a; const w = im.width, h = im.height; if (!w || !h) return { hair: [8, 8], face: [10, 12], feet: [8, 60], belly: [8, 34], u: [0, 1] };
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.drawImage(im, 0, 0); const d = g.getImageData(0, 0, w, h).data; let hx = 0, hy = 0, hn = 0, fx = 0, fy = 0, fn = 0; const rd = [], sk = [];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = (y * w + x) * 4; if (d[i + 3] < 200) continue; const r = d[i], gg = d[i + 1], b = d[i + 2]; if (r > 200 && gg > 130 && b >= gg - 8) { hx += x; hy += y; hn++; } else if (r > 200 && gg > 170 && b < gg - 10) { sk.push(x, y); } else if (r > 140 && gg < 70 && b < 80) rd.push(x, y); }
+  const hair = hn ? [hx / hn, hy / hn] : [w / 2, 8]; for (let i = 0; i < sk.length; i += 2) if (Math.hypot(sk[i] - hair[0], sk[i + 1] - hair[1]) < 12) { fx += sk[i]; fy += sk[i + 1]; fn++; } const face = fn ? [fx / fn, fy / fn] : hair; let mx = 0; for (let i = 0; i < rd.length; i += 2) mx = Math.max(mx, Math.hypot(rd[i] - hair[0], rd[i + 1] - hair[1]));
+  let sx = 0, sy = 0, sn = 0; for (let i = 0; i < rd.length; i += 2) if (Math.hypot(rd[i] - hair[0], rd[i + 1] - hair[1]) > mx * 0.8) { sx += rd[i]; sy += rd[i + 1]; sn++; }
+  const feet = sn ? [sx / sn, sy / sn] : [hair[0], h - 4], L = Math.hypot(feet[0] - hair[0], feet[1] - hair[1]) || 1;
+  a = { hair, face, feet, belly: [(hair[0] + feet[0]) / 2, (hair[1] + feet[1]) / 2], u: [(feet[0] - hair[0]) / L, (feet[1] - hair[1]) / L] }; C4_YA.set(im, a); return a;
+}
+const C4_YHC = new WeakMap();
+function c4Holed(im) {      // a copy of one of Yuji's pictures with a big gaping wound in the front of his belly (the front is the way the picture faces: f = (u.y, -u.x)): a black-red cavity with pale ribs, wet blood round it and a torn flesh rim; what is left of his back keeps him in one piece
+  let r = C4_YHC.get(im); if (r) return r; const A = c4YAn(im), w = im.width, h = im.height; r = document.createElement('canvas'); r.width = w; r.height = h; const g = r.getContext('2d'); g.drawImage(im, 0, 0);
+  const id = g.getImageData(0, 0, w, h), d = id.data, ux = A.u[0], uy = A.u[1], fx = uy, fy = -ux, cx = A.belly[0] + fx * 4.2, cy = A.belly[1] + fy * 4.2, A1 = 6.2, B1 = 6.4, put = (i, hex) => { d[i] = parseInt(hex.slice(1, 3), 16); d[i + 1] = parseInt(hex.slice(3, 5), 16); d[i + 2] = parseInt(hex.slice(5, 7), 16); d[i + 3] = 255; };      // (A1: half the wound along his body, B1: across it, towards his front)
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = (y * w + x) * 4; if (d[i + 3] < 200) continue; const vx = x - cx, vy = y - cy, al = vx * ux + vy * uy, ac = vx * fx + vy * fy, q = c4R(x * 64 + y, 4), p2 = (al / A1) * (al / A1) + (ac / B1) * (ac / B1) + 0.5 * (c4R(x * 64 + y, 9) - 0.5) * 0.6;
+    if (p2 < 1) { const ro = Math.sqrt(Math.max(0, p2)); put(i, ro < 0.42 ? (q < 0.18 ? '#4a0812' : '#12020a') : ro < 0.72 ? (q < 0.12 ? '#e0192b' : q < 0.5 ? '#b3121f' : '#7a0c18') : (q < 0.3 ? '#e0788a' : q < 0.65 ? '#b3121f' : '#5a0610')); if (ro > 0.18 && ro < 0.55 && ac > -2.2 && Math.abs(((Math.round(al) % 3) + 3) % 3) === 0 && q < 0.85) put(i, '#d8ccb8'); }
+    else if (p2 < 1.5 && q < 0.5) put(i, q < 0.25 ? '#7a0c18' : '#5a0610'); }
+  g.putImageData(id, 0, 0); C4_YHC.set(im, r); return r;
+}
+function c4Spray(T, t0, x, y, n, o) {      // n specks thrown from (x, y) at time t0 (o: v the speed, up how much goes upward, dir -1 / 0 / 1 = left / all round / right, g gravity, life, cols, sz, seed, stain = how long a speck that lands stays as a stain)
+  const a = T - t0, life = o.life || 1; if (a < 0 || a > life + (o.stain || 0)) return;
+  for (let i = 0; i < n; i++) {
+    const s = (o.seed || 0) * 37 + i, sp = (o.v || 60) * (0.35 + 0.65 * c4R(s, 1)), an = o.dir ? (o.dir > 0 ? -0.15 - c4R(s, 2) * 1.2 : -Math.PI + 0.15 + c4R(s, 2) * 1.2) : c4R(s, 2) * 6.2832, G = o.g == null ? 260 : o.g, gnd = o.gnd == null ? gy + 4 : o.gnd;
+    const px = x + Math.cos(an) * sp * a, py = y + Math.sin(an) * sp * (o.up || 1) * a + 0.5 * G * a * a, col = o.cols[i % o.cols.length], sz = (o.sz || 1) + (c4R(s, 3) < 0.25 ? 1 : 0);
+    if (py >= gnd) { if (o.stain) { ctx.globalAlpha = Math.max(0, 1 - (a - (gnd - y) / Math.max(40, sp)) / (life + o.stain)); ctx.fillStyle = col; ctx.fillRect(Math.round(px), Math.round(gnd) + (i % 3), sz + 1, 1); ctx.globalAlpha = 1; } continue; }
+    if (a > life) continue; ctx.globalAlpha = Math.min(1, 2.2 * (1 - a / life)); ctx.fillStyle = col; ctx.fillRect(Math.round(px), Math.round(py), sz, sz); ctx.globalAlpha = 1;
+  }
+}
+function c4Dust(T, t0, x, n, o) {      // a cloud of dust that rolls along the ground out of x and thins (o: w the width it reaches, h how high it rises, life, col 'r,g,b', big the size of the puffs)
+  const a = T - t0, life = o.life || 1; if (a < 0 || a > life) return; const k = a / life;
+  for (let i = 0; i < n; i++) { const r1 = c4R(i + (o.seed || 0) * 29, 5), r2 = c4R(i + (o.seed || 0) * 29, 6), s = Math.round(2 + k * (o.big || 6) * (0.4 + 0.6 * r2)), px = Math.round(x + (r1 - 0.5) * 2 * (o.w || 30) * (0.25 + 0.75 * Math.sqrt(k))), py = Math.round(gy + 4 - k * (o.h || 14) * (0.3 + 0.7 * r2) - r2 * 3);
+    ctx.fillStyle = 'rgba(' + (o.col || '150,140,172') + ',' + (0.42 * (1 - k) * (1 - k)).toFixed(3) + ')'; ctx.fillRect(px - (s >> 1), py - 1, s, Math.max(1, s - 2)); ctx.fillRect(px - (s >> 1) + 1, py - 2, Math.max(1, s - 2), s); }
+}
+function c4Crater(x, k, lip) {      // the pit the beating makes: cracks running out over the floor, a ragged ring of broken ground heaped round a dark hole whose far wall catches a little light (k 0-1.2: how far it has opened); lip = true draws only its near rim (drawn over whoever lies in the pit, so that he is IN it)
+  if (k < 0.05) return; const rx = Math.round(32 * k), ry = Math.max(2, Math.round(8 * k)), y0 = gy + 3;
+  if (!lip) for (let i = 0; i < 13; i++) { const a0 = i / 13 * 6.2832 + 0.3 * c4R(i, 11), len = (12 + 30 * c4R(i, 12)) * k; let px = x + Math.cos(a0) * rx * 0.85, py = y0 + Math.sin(a0) * ry * 0.85;
+    for (let j = 0; j < len; j++) { const a = a0 + 0.4 * Math.sin(j * 0.6 + i * 1.7); px += Math.cos(a); py += Math.sin(a) * 0.3; ctx.fillStyle = 'rgba(170,150,210,0.4)'; ctx.fillRect(Math.round(px), Math.round(py) - 1, 1, 1); ctx.fillStyle = '#05030a'; ctx.fillRect(Math.round(px), Math.round(py), 1, 1); } }
+  for (let yy = -ry - 3; yy <= ry + 3; yy++) { if (lip && yy < ry * 0.3) continue; const e = Math.sqrt(Math.max(0, 1 - (yy / (ry + 3)) * (yy / (ry + 3)))), wo = Math.round((rx + 4) * e) + (((yy * 7) & 3) - 1), wi = Math.round((rx - 2) * Math.sqrt(Math.max(0, 1 - (yy / ry) * (yy / ry)))), y = y0 + yy;
+    if (lip) { if (wo > 0 && wo > wi - 1) { ctx.fillStyle = yy > ry ? '#4a3f5a' : '#6a5a86'; ctx.fillRect(x - wo, y, Math.max(1, wo - wi + 2), 1); ctx.fillRect(x + wi - 2, y, Math.max(1, wo - wi + 2), 1); if (yy >= ry * 0.3 && yy <= ry * 0.3 + 1) ctx.fillRect(x - wi, y, wi * 2, 1); } continue; }
+    if (wo > 0) { ctx.fillStyle = yy < -ry ? '#6a5a86' : '#4a3f5a'; ctx.fillRect(x - wo, y, wo * 2, 1); }
+    if (Math.abs(yy) <= ry && wi > 1) { ctx.fillStyle = yy < -ry * 0.35 ? '#2a1f3a' : '#05030a'; ctx.fillRect(x - wi, y, wi * 2, 1); ctx.fillStyle = '#1a1226'; ctx.fillRect(x - wi, y, 1, 1); ctx.fillRect(x + wi - 1, y, 1, 1); } }
+  for (let i = 0; i < 16; i++) { const a = i / 16 * 6.2832 + 0.2, sn = Math.sin(a); if (lip ? sn < 0.3 : sn >= 0.3) continue; const cxp = Math.round(x + Math.cos(a) * (rx + 2)), cyp = Math.round(y0 + sn * (ry + 2)) - 1; ctx.fillStyle = '#7a6a96'; ctx.fillRect(cxp, cyp - (i % 3), 2 + (i % 2), 2); ctx.fillStyle = '#b0a0d0'; ctx.fillRect(cxp, cyp - (i % 3), 1, 1); }
+}
+function c4Lump(x, y, kind) {      // one organ on its own: a wet red / pink lump (3 kinds) with a dark outline, a shine and a dark underside
+  x = Math.round(x); y = Math.round(y); const O = '#4a0a1c';
+  if (kind === 0) { ctx.fillStyle = O; ctx.fillRect(x - 3, y - 2, 6, 5); ctx.fillRect(x - 4, y - 1, 8, 3); ctx.fillStyle = '#d65a74'; ctx.fillRect(x - 2, y - 1, 4, 3); ctx.fillRect(x - 3, y, 6, 1); ctx.fillStyle = '#ff9aab'; ctx.fillRect(x - 2, y - 1, 2, 1); ctx.fillStyle = '#9a2a42'; ctx.fillRect(x - 2, y + 1, 4, 1); }
+  else if (kind === 1) { ctx.fillStyle = O; ctx.fillRect(x - 3, y - 3, 7, 6); ctx.fillRect(x - 4, y - 2, 9, 4); ctx.fillStyle = '#8a1626'; ctx.fillRect(x - 3, y - 2, 7, 4); ctx.fillRect(x - 2, y - 3 + 1, 5, 1); ctx.fillStyle = '#c4303f'; ctx.fillRect(x - 2, y - 2, 3, 1); ctx.fillStyle = '#5a0c18'; ctx.fillRect(x - 1, y + 1, 4, 1); }
+  else { ctx.fillStyle = O; ctx.fillRect(x - 2, y - 2, 5, 5); ctx.fillRect(x - 3, y - 1, 7, 3); ctx.fillStyle = '#e890a6'; ctx.fillRect(x - 2, y - 1, 5, 3); ctx.fillRect(x - 1, y - 2 + 1, 3, 1); ctx.fillStyle = '#ffd0da'; ctx.fillRect(x - 1, y - 1, 1, 1); ctx.fillStyle = '#b84a66'; ctx.fillRect(x - 1, y + 1, 3, 1); }
+}
+function c4Guts(x, y, len, T, sway) {      // a rope of intestine hanging out of the wound from (x, y): a wet pink tube (dark outline, lit edge, dark underside) that bends in an S, sways a little and curls at its end
+  const n = Math.max(2, Math.round(len)), pts = []; for (let i = 0; i < n; i++) { const t = i / n, sw = Math.sin(T * 2.4 + i * 0.4) * (sway == null ? 1 : sway) * t, curl = i > n - 6 ? (i - n + 6) * 0.9 : 0; pts.push([Math.round(x + Math.sin(i * 0.5) * 2.6 * Math.min(1, i / 4) + sw + curl), Math.round(y + i * 0.9 - (i > n - 6 ? (i - n + 6) * 0.4 : 0))]); }
+  ctx.fillStyle = '#4a0a1c'; for (const p of pts) ctx.fillRect(p[0] - 1, p[1] - 1, 4, 4); ctx.fillStyle = '#d65a74'; for (const p of pts) ctx.fillRect(p[0], p[1], 2, 2);
+  ctx.fillStyle = '#9a2a42'; for (const p of pts) ctx.fillRect(p[0], p[1] + 1, 2, 1); ctx.fillStyle = '#ff9aab'; for (let i = 0; i < pts.length; i += 2) ctx.fillRect(pts[i][0], pts[i][1], 1, 1);
+}
+function c4Organs(T, t0, x, y, n, o) {      // n organs thrown from (x, y) at time t0: they fall and stay where they land (o: v, up, dir, gnd, seed)
+  const a = T - t0; if (a < 0) return; const G = 320, gnd = o.gnd == null ? gy + 3 : o.gnd;
+  for (let i = 0; i < n; i++) { const s = (o.seed || 0) * 41 + i, vx = (o.dir || 1) * (o.v || 40) * (0.25 + c4R(s, 1)) * (c4R(s, 8) < 0.2 ? -0.5 : 1), vy = -(o.up || 50) * (0.4 + c4R(s, 2)), gi = gnd + (c4R(s, 3) - 0.5) * 3, tf = (-vy + Math.sqrt(Math.max(0, vy * vy + 2 * G * (gi - y)))) / G, tt = Math.min(a, tf);
+    c4Lump(x + vx * tt, y + vy * tt + 0.5 * G * tt * tt, i % 3); }
+}
+function c4Pool(x, k) {      // blood on the floor: a flat dark red pool that spreads (k 0-1), with a darker rim and a wet shine
+  if (k <= 0.02) return; const rx = Math.round(3 + 30 * k), ry = Math.max(1, Math.round(1 + 4 * k)), y = gy + 5;
+  ctx.fillStyle = C4_RED[3]; ctx.fillRect(x - rx - 1, y - 1, rx * 2 + 2, ry * 2 + 1); for (let yy = -ry; yy <= ry; yy++) { const w = Math.round(rx * Math.sqrt(Math.max(0, 1 - (yy / ry) * (yy / ry)))) + (((yy * 5) & 1)); ctx.fillStyle = yy < 0 ? C4_RED[2] : C4_RED[1]; ctx.fillRect(x - w, y + yy, w * 2, 1); }
+  ctx.fillStyle = C4_RED[0]; for (let i = 0; i < 5; i++) ctx.fillRect(x - Math.round(rx * 0.7) + Math.round(i * rx * 0.35), y - Math.round(ry * 0.4), 2, 1);
+}
+
+// ---- the yank: Verity pulls Yuji out of the portal (it shuts behind his head), swings him over his head by the ankle and slams him into the ground
+const C4Y = { hold: 0.34, pull: 0.84, shut: 0.88, slam: 1.42 };      // seconds into the shot: the hand holds, the pull is over (his head is out), the portal has shut, the throw hits the ground
+function c4YHand(t, g) {      // where Verity's hand, and so Yuji's ankle, is t seconds into the yank (x from the middle of the screen, height over the floor), and how far the swing has gone (u, 0-1: e, the turning of Yuji's body)
+  const L = c4Lay(g), V = g.vx, A = [V + 29, 45], B = [V + 12, 54], E = [L.yL, 9], Cc = [V + 6, 100];
+  if (t < C4Y.hold) return { x: A[0] + 0.9 * Math.sin(t * 70), y: A[1] + 0.7 * Math.sin(t * 90 + 1), u: 0, e: 0 };      // (the hand trembles: the pull is about to start)
+  if (t < C4Y.pull) { const k = ease3((t - C4Y.hold) / (C4Y.pull - C4Y.hold)); return { x: lerp(A[0], B[0], k), y: lerp(A[1], B[1], k), u: 0, e: 0 }; }
+  const u = clamp01((t - C4Y.pull) / (C4Y.slam - C4Y.pull)), e = 0.35 * u * u * (3 - 2 * u) + 0.65 * u * u, q = 1 - e;      // (the swing speeds up toward the ground)
+  return { x: q * q * B[0] + 2 * q * e * Cc[0] + e * e * E[0], y: q * q * B[1] + 2 * q * e * Cc[1] + e * e * E[1], u, e };
+}
+function c4YSwing(ax, ay, ang, clipX) {      // Yuji (his dash picture without the speed lines) turned by ang about his held ankle, which is on (ax, ay); what is right of clipX is inside the portal and is not seen
+  const p = yujiPick({ dodging: true, dgK: 0, df: 6, dgCr: false }), src = c4NoStreaks(p.set[p.fi]), co = Math.cos(ang), si = Math.sin(ang), px = ax - (-8 * co - 17 * si), py = ay - (-8 * si + 17 * co);
+  ctx.save(); if (clipX != null) { ctx.beginPath(); ctx.rect(-400, -400, clipX + 400, VH + 800); ctx.clip(); } rsGojoRot(src, p.info, px, py, ang, 34, false, 1); ctx.restore();
+}
+function c4Face(im, info, sx, lift) {      // the screen place of Yuji's face (and a little under it, his mouth) when his picture im is drawn by sprAt on sx
+  const A = c4YAn(im), hx = info.cx - info.x0, ox = sx - hx, oy = gy - 60 - (info.top || 0) - (lift || 0); return { x: ox + A.face[0], y: oy + A.face[1], mx: ox + A.face[0] + 3, my: oy + A.face[1] + 3, bx: ox + A.belly[0] + A.u[1] * 4.2, by: oy + A.belly[1] - A.u[0] * 4.2, cx: ox + A.hair[0] + 0.2 * (A.feet[0] - A.hair[0]), cy: oy + A.hair[1] + 0.2 * (A.feet[1] - A.hair[1]), fx: A.u[1], fy: -A.u[0] };      // (the collar; the wound = the belly moved 4 px to the front; f = the way he faces)
+}
+function c4PortalK(ctxK, px, T) { ctx.save(); ctx.translate(px, 0); ctx.scale(Math.max(0.05, ctxK), 1); ctx.translate(-px, 0); rsPortal(px, 1, T); ctx.restore(); }
+function c4SYank(now, dt, T, st, t1, cx, g) {
+  const sx = x => Math.round(cx + x), V = g.vx, L = c4Lay(g), H = c4YHand(Math.min(t1, C4Y.slam), g), post = t1 - C4Y.slam, pk = t1 < C4Y.pull - 0.1 ? 0.12 : lerp(0.12, 0, clamp01((t1 - (C4Y.pull - 0.1)) / (C4Y.shut - C4Y.pull + 0.1)));
+  const kz = ease3(clamp01((t1 - 0.5) / 0.6)), kl = ease3(clamp01((t1 - 1.1) / 0.4)), zoom = lerp(lerp(1.55, 1.25, kz), 1.7, kl), fx = lerp(lerp(V + 14, V - 4, kz), L.yL - 24, kl), fh = lerp(lerp(46, 58, kz), 22, kl);
+  const shk = post >= 0 && post < 0.5 ? 6 * (1 - post / 0.5) : t1 < C4Y.hold ? 0 : 0.6; ctx.save(); ctx.translate(c4Jit(shk), c4Jit(shk)); c4Cam(cx, zoom, fx, fh); drawAlley(now);
+  if (post >= 0) c4Crater(sx(L.cr), 0.12 + 0.3 * ease3(clamp01(post / 0.3)));
+  if (post >= 0) { const f = post < 0.07 ? 6 : post < 0.16 ? 7 : 8, p = c4YRX(f), lf = post < 0.07 ? 0 : 3 * Math.sin(Math.PI * clamp01((post - 0.07) / 0.35)) * (1 - post / 1.2); shadow(sx(L.yL) - 26, 20); sprAt(p.set[p.fi], p.info, sx(L.yL), Math.max(0, lf), false, 0); }
+  else {
+    if (H.u > 0.05) for (let i = 3; i >= 1; i--) { const Hp = c4YHand(Math.max(C4Y.pull, t1 - 0.028 * i), g); ctx.globalAlpha = 0.34 - 0.08 * i; c4YSwing(sx(Hp.x), gy - Hp.y, Math.PI / 2 - Math.PI * Hp.e, null); } ctx.globalAlpha = 1;      // (afterimages of the swing)
+    shadow(sx(H.x), Math.max(3, 9 - H.y * 0.1)); c4YSwing(sx(H.x), gy - H.y, Math.PI / 2 - Math.PI * H.e, t1 < C4Y.shut ? sx(g.px) + 1 : null);
+  }
+  if (t1 < C4Y.hold) { shadow(sx(V), 9); sprAt(vfr('scare_grab', 12, false), C3V0, sx(V), 0, false, 0); c4Fist(sx(H.x) + 1, gy - H.y, 0); }
+  else { const lean = post >= 0 ? 'b10' : H.e > 0.8 ? 'b8' : 'stand', arm = S => { c4Arm(S.x, S.y, sx(H.x), gy - H.y, post >= 0 ? 2 : 3 - 6 * Math.sin(Math.PI * H.u), 0); }, back = sx(H.x) < sx(V) + 4, S = c4Verity(sx(V), lean, false, 0, back ? arm : null); if (!back) arm(S); c4Fist(sx(H.x), gy - H.y, 0); }
+  if (pk > 0.01) c4PortalK(pk, sx(g.px), T);
+  if (t1 > C4Y.pull - 0.1 && t1 < C4Y.shut + 0.25) { const a = (t1 - (C4Y.pull - 0.1)) / 0.35; ctx.fillStyle = 'rgba(255,255,255,' + (0.8 * (1 - clamp01(a))).toFixed(3) + ')'; ctx.fillRect(sx(g.px) - 2, gy - 80, 4, 90); c3Ring(sx(g.px), gy - 36, t1 - (C4Y.shut - 0.04), true, '200,150,255'); }
+  if (post >= 0) { c3Ring(sx(L.yL) - 16, gy - 4, post, true, '255,240,200'); c4Dust(T, st.t0 + C4Y.slam, sx(L.yL) - 20, 22, { w: 46, h: 22, life: 1.3, big: 9, seed: 1 }); c4Spray(T, st.t0 + C4Y.slam, sx(L.yL) - 20, gy - 2, 16, { v: 90, up: 1.2, dir: 0, life: 0.9, cols: ['#6a5a86', '#9a8ab6', '#3a2f4c', '#d0c8e0'], seed: 2 }); }
+  c4Cam0(); ctx.restore();
+  const fl = post >= 0 ? 0.6 * (1 - clamp01(post / 0.14)) : 0; if (fl > 0) { ctx.fillStyle = 'rgba(255,255,255,' + fl.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  ctx.fillStyle = 'rgba(30,10,60,0.14)'; ctx.fillRect(0, 0, VW, VH); msFinish(1);
+}
+
+// ---- Yuji lies in the ground and coughs blood; Verity turns round and crouches over him
+function c4SDown(now, dt, T, st, t1, cx, g) {
+  const sx = x => Math.round(cx + x), V = g.vx, L = c4Lay(g), kz = ease3(clamp01((t1 - 0.1) / 0.6)), zoom = lerp(1.7, 2.9, kz), fx = lerp(L.yL - 24, L.yL - 38, kz), fh = lerp(22, 12, kz), coughs = [0.16, 0.48, 0.76];
+  ctx.save(); c4Cam(cx, zoom, fx, fh); drawAlley(now); c4Crater(sx(L.cr), 0.42); c4Dust(T, st.t0 - 0.48, sx(L.yL) - 20, 26, { w: 52, h: 24, life: 2.4, big: 6, seed: 1 });
+  let cu = -1; for (let i = 0; i < coughs.length; i++) if (t1 >= coughs[i]) cu = i; const cs = cu < 0 ? 9 : t1 - coughs[cu], tw = Math.max(0, 1 - cs / 0.12) * (cu >= 0 ? 1 : 0);      // (cs: seconds since the last cough; tw: how hard he jerks)
+  const p = c4YRX(8), im = p.set[p.fi], lx = sx(L.yL) + (tw > 0.5 ? c4Jit(1) : 0), lf = (tw > 0.2 ? 1 : 0) - 1, F = c4Face(im, p.info, lx, lf); shadow(sx(L.yL) - 26, 20); sprAt(im, p.info, lx, lf, false, 0);
+  if (cu >= 0) { ctx.fillStyle = C4_RED[1]; ctx.fillRect(Math.round(F.mx), Math.round(F.my), 1, 2 + cu); ctx.fillStyle = C4_RED[0]; ctx.fillRect(Math.round(F.mx) - 1, Math.round(F.my), 1, 1); ctx.fillRect(Math.round(F.mx) + 1, Math.round(F.my) + 2 + cu, 1, 1); }
+  for (let i = 0; i < coughs.length; i++) c4Spray(T, st.t0 + coughs[i], F.mx, F.my, 12, { v: 78, up: 1.1, dir: 1, life: 0.55, cols: [C4_RED[0], C4_RED[1], C4_RED[0], C4_RED[2]], seed: 10 + i, stain: 0.8, gnd: gy + 2 });
+  const turn = t1 > 0.2, vx = V - 10 * ease3(clamp01((t1 - 0.2) / 0.7)), hop = t1 > 0.17 && t1 < 0.3 ? Math.round(4 * Math.sin(Math.PI * (t1 - 0.17) / 0.13)) : 0, stn = t1 < 0.3 ? 'b10' : t1 < 0.55 ? 'b12' : 'crouch', hurry = ease3(clamp01((t1 - 0.75) / 0.25));
+  const S = c4Verity(sx(vx), stn, turn, hop); const hx = turn ? S.x - 4 - 6 * hurry : sx(L.yL), hy = turn ? gy - 10 - 26 * hurry : gy - 9; c4Arm(S.x, S.y, hx, hy, 2, 0); c4Fist(hx, hy, 0);
+  if (t1 > 0.17 && t1 < 0.3) c4Dust(T, st.t0 + 0.17, sx(V), 8, { w: 14, h: 8, life: 0.5, big: 4, seed: 3 });
+  c4Cam0(); ctx.restore(); ctx.fillStyle = 'rgba(30,10,60,0.14)'; ctx.fillRect(0, 0, VW, VH); msFinish(1);
+}
+
+// ---- the beating: Verity, crouched on Yuji, pounds him with one fist, blow after blow, faster and faster; the ground gives way under them; the last blow is the greatest
+const C4B = (() => { const b = [0.5]; for (let i = 1; i < 17; i++) b.push(b[i - 1] + Math.max(0.24, 0.62 - 0.04 * i)); return { b, all: b.concat([6.45]), big: 6.45 }; })();      // the times (seconds into the shot) of the 17 blows, and of the great one
+const C4_BLOOD = [C4_RED[0], C4_RED[1], C4_RED[0], C4_RED[2]], C4_STONE = ['#6a5a86', '#9a8ab6', '#3a2f4c', '#d0c8e0'];
+function c4Blow(t) {      // the beating t seconds into the shot: n blows have landed (the great one is the 18th), nu = how high the fist is (0 on the face, 1 at the top of its swing), a = seconds since the last blow, big = the next blow is the great one
+  const A = C4B.all; let n = 0; while (n < A.length && A[n] <= t) n++;
+  const prev = n === 0 ? A[0] - 1.25 : A[n - 1], next = n < A.length ? A[n] : prev + 0.6, u = clamp01((t - prev) / (next - prev)), big = n === A.length - 1;
+  return { n, i: n - 1, nu: n >= A.length ? 0 : u < 0.1 ? 0 : u < 0.62 ? Math.sin(Math.PI / 2 * (u - 0.1) / 0.52) : u < 0.7 ? 1 : 1 - Math.pow((u - 0.7) / 0.3, 2), a: n === 0 ? 9 : t - prev, big };
+}
+function c4SBeat(now, dt, T, st, t1, cx, g) {
+  const sx = x => Math.round(cx + x), V = g.vx, L = c4Lay(g), W = c4Blow(t1), ab = t1 - C4B.big, T0 = st.t0, mid = V - 29, fcx = L.yL - 44;
+  const segs = [[0, 1.75, 1.55, 1.7, mid, 22, VH * 0.5], [1.75, 3.2, 3.5, 3.9, fcx + 6, 15, VH * 0.6], [3.2, 4.4, 2.0, 2.25, L.cr, 8, VH * 0.56], [4.4, 5.75, 4.4, 4.9, fcx + 4, 13, VH * 0.6], [5.75, 99, 1.5, 1.3, mid, 22, VH * 0.5]];
+  const sg = segs.find(q => t1 < q[1]) || segs[segs.length - 1], k = clamp01((t1 - sg[0]) / (Math.min(sg[1], C4B.big + 0.75) - sg[0]));
+  const kc = 0.42 + 0.46 * clamp01((t1 - 0.5) / 5.46) + (t1 >= C4B.big ? 0.22 * ease3(clamp01(ab / 0.3)) : 0), kp = lerp(0.1, 0.95, clamp01(W.n / 17)) + (ab > 0 ? 0.25 * ease3(clamp01(ab / 0.8)) : 0);
+  const shk = Math.max(W.i >= 0 && !W.big ? (0.9 + 0.22 * Math.min(W.i, 16)) * Math.max(0, 1 - W.a / 0.14) : 0, ab >= 0 ? 8 * Math.max(0, 1 - ab / 0.7) : 0);
+  ctx.save(); ctx.translate(c4Jit(shk), c4Jit(shk)); c4Cam(cx, lerp(sg[2], sg[3], k), sg[4], sg[5], sg[6]); drawAlley(now);
+  c4Crater(sx(L.cr), kc); c4Pool(sx(L.yL) - 30, kp);
+  for (let i = Math.max(0, W.i - 2); i <= Math.min(W.i, 16); i++) c4Dust(T, T0 + C4B.b[i], sx(L.yL) - 34 + (i % 3) * 6, 7, { w: 18, h: 10, life: 0.7, big: 4, seed: 40 + i });
+  if (ab >= 0) { c4Dust(T, T0 + C4B.big, sx(L.cr), 40, { w: 80, h: 34, life: 2.2, big: 12, seed: 7 }); c4Dust(T, T0 + C4B.big, sx(L.cr) - 20, 24, { w: 50, h: 44, life: 1.8, big: 8, seed: 8, col: '110,100,130' }); }
+  const jolt = W.i >= 0 ? Math.max(0, 1 - W.a / 0.14) : 0, ox = -Math.round(1.6 * jolt), sink = Math.round(7 * kc), bounce = ab >= 0 && ab < 0.5 ? Math.round(10 * Math.sin(Math.PI * clamp01(ab / 0.5))) : 0, lf = -sink + bounce + (jolt > 0.5 ? -1 : 0);
+  const p = c4YRX(8), im = p.set[p.fi], F = c4Face(im, p.info, sx(L.yL) + ox, lf); shadow(sx(L.yL) - 26, 20); sprAt(im, p.info, sx(L.yL) + ox, lf, false, 0);
+  if (W.i >= 0 && W.a < 0.05) { ctx.globalAlpha = 0.55 * (1 - W.a / 0.05); sprAt(whiteOf(im), p.info, sx(L.yL) + ox, lf, false, 0); ctx.globalAlpha = 1; }
+  c4Crater(sx(L.cr), kc, true);      // (the near rim of the pit is in front of him: he lies in it)
+  if (W.n > 0) { ctx.fillStyle = C4_RED[1]; ctx.fillRect(Math.round(F.mx), Math.round(F.my), 1, 2 + Math.min(7, W.n >> 1)); ctx.fillStyle = C4_RED[0]; ctx.fillRect(Math.round(F.mx) - 1, Math.round(F.my), 1, 1); }
+  for (let i = 0; i < C4B.all.length; i++) { const tb = T0 + C4B.all[i]; if (T < tb) break; const gb = i === 17; c4Spray(T, tb, F.mx, F.my, gb ? 30 : 9 + (i > 8 ? 5 : 0), { v: (gb ? 120 : 70) + 3 * i, up: 1.1, dir: i % 3 === 2 ? 1 : -1, life: 0.5, cols: C4_BLOOD, seed: i, stain: 3.5, gnd: gy + 3 }); if (T < tb + 0.7) c4Spray(T, tb, sx(L.cr) + (c4R(i, 7) - 0.5) * 34, gy + 3, gb ? 34 : 6, { v: (gb ? 150 : 60) + 3 * i, up: 1.4, dir: 0, life: 0.7, cols: C4_STONE, seed: 100 + i, sz: gb ? 2 : 1 }); }
+  const rec = W.i >= 0 ? Math.round(1.4 * jolt) : 0, S = c4Verity(sx(V - 10) + rec, 'crouch', true, Math.round(3 * W.nu), null), F0 = [F.x + 4, F.y - 2], bg = W.big ? 1.45 : 1, hx = F0[0] + 6 * W.nu * bg, hy = F0[1] - 34 * W.nu * bg;
+  c4Arm(S.x, S.y, hx, hy, 3, 0); c4Fist(hx, hy, clamp01(W.n / 5));
+  if (W.i >= 0) c3Ring(F0[0], F0[1] + 2, W.a, W.i === 17, W.i === 17 ? '255,255,255' : '255,225,190', Math.min(1, 1.6 / lerp(sg[2], sg[3], k)));
+  c4Cam0(); ctx.restore();
+  const fl = ab >= 0 ? 0.62 * (1 - clamp01(ab / 0.25)) : W.i >= 0 && !W.big && W.a < 0.03 ? 0.12 : 0; if (fl > 0) { ctx.fillStyle = 'rgba(255,255,255,' + fl.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  ctx.fillStyle = 'rgba(30,10,60,0.14)'; ctx.fillRect(0, 0, VW, VH); msFinish(1);
+}
+
+// ---- after the beating: Verity stands up and lifts Yuji out of the crater by the collar, drives his arm through his belly, pulls it out with his insides, lets go, and Yuji falls
+const C4_ORG = { v: 26, up: 18, dir: 1, seed: 3 };      // how the organs thrown out of the wound when the arm comes out fly (the same in the shots after it, so that they lie where they fell)
+function c4Rot(x, y, a, ox, oy) { const c = Math.cos(a), s = Math.sin(a), dx = x - ox, dy = y - oy; return [ox + dx * c - dy * s, oy + dx * s + dy * c]; }
+function c4YDraw(fi, holed, x, lf, ang, white) {      // Yuji's knock-down picture fi (0-14), with the wound in his belly if holed, its anchor on the screen place x, lifted by lf; ang turns him about his collar (he hangs and swings); returns where his face, mouth, collar and wound are (turned too)
+  const p = c4YRX(fi), im0 = p.set[p.fi], im = holed ? c4Holed(im0) : im0, F = c4Face(im0, p.info, x, lf);
+  if (ang) { ctx.save(); ctx.translate(F.cx, F.cy); ctx.rotate(ang); ctx.translate(-F.cx, -F.cy); sprAt(im, p.info, x, lf, false, 0); if (white) { ctx.globalAlpha = white; sprAt(whiteOf(im), p.info, x, lf, false, 0); ctx.globalAlpha = 1; } ctx.restore(); for (const [a, b] of [['x', 'y'], ['mx', 'my'], ['bx', 'by']]) { const q = c4Rot(F[a], F[b], ang, F.cx, F.cy); F[a] = q[0]; F[b] = q[1]; } }
+  else { sprAt(im, p.info, x, lf, false, 0); if (white) { ctx.globalAlpha = white; sprAt(whiteOf(im), p.info, x, lf, false, 0); ctx.globalAlpha = 1; } }
+  return F;
+}
+function c4SLift(now, dt, T, st, t1, cx, g) {
+  const sx = x => Math.round(cx + x), V = g.vx, L = c4Lay(g), u = clamp01((t1 - 0.2) / 0.7), ku = ease3(u), kh = ease3(clamp01((t1 - 0.85) / 0.4)), xv = lerp(V - 10, V + 28, ease3(clamp01((t1 - 0.25) / 0.85)));
+  const fi = t1 < 0.2 ? 8 : [10, 11, 12, 13, 14][Math.min(4, Math.floor(u * 5))], lf = lerp(-8, 0, ku) + 10 * kh;
+  ctx.save(); c4Cam(cx, lerp(1.6, 1.8, ease3(t1 / 1.4)), lerp(V - 29, L.yL + 12, ku), 24, VH * 0.5); drawAlley(now); c4Crater(sx(L.cr), 1.1); c4Pool(sx(L.yL) - 30, 1.2);
+  const F = c4YDraw(fi, false, sx(L.yL), lf, 0), p8 = c4YRX(8), Fl = c4Face(p8.set[p8.fi], p8.info, sx(L.yL), -8); c4Crater(sx(L.cr), 1.1, true);
+  ctx.fillStyle = C4_RED[1]; ctx.fillRect(Math.round(F.mx), Math.round(F.my), 1, 7); ctx.fillStyle = C4_RED[0]; ctx.fillRect(Math.round(F.mx) - 1, Math.round(F.my), 1, 1); rsDrip(F.mx, F.my + 7, T, 3, 0.2);
+  const stn = t1 < 0.25 ? 'crouch' : t1 < 0.45 ? 'b12' : t1 < 0.65 ? 'b10' : t1 < 0.85 ? 'b8' : 'stand', hop = t1 > 0.25 && t1 < 0.85 ? Math.round(2 * Math.sin(Math.PI * (t1 - 0.25) / 0.6)) : 0, e = ease3(clamp01(t1 / 0.2)), hx = lerp(Fl.x + 4, F.cx, e), hy = lerp(Fl.y - 2, F.cy, e);
+  const S = c4Verity(sx(xv), stn, true, hop, null); c4Arm(S.x, S.y, hx, hy, 3, 0.6); c4Fist(hx, hy, 1);
+  c4Dust(T, st.t0 + 0.25, sx(L.yL) - 14, 14, { w: 30, h: 16, life: 1.0, big: 5, seed: 21 });
+  c4Cam0(); ctx.restore(); ctx.fillStyle = 'rgba(30,10,60,0.14)'; ctx.fillRect(0, 0, VW, VH); msFinish(1);
+}
+
+const C4P = { thrust: 0.62, hit: 0.74, pull: 1.5, gone: 1.65 };      // seconds into the pierce: the arm starts to thrust, it is through him, it is pulled out, it is out
+function c4SPierce(now, dt, T, st, t1, cx, g) {
+  const sx = x => Math.round(cx + x), V = g.vx, L = c4Lay(g), xv = V + 28, T0 = st.t0, hit = t1 >= C4P.hit, out = t1 >= C4P.pull, ah = t1 - C4P.hit;
+  const p14 = c4YRX(14), F0 = c4Face(p14.set[14], p14.info, sx(L.yL), 10), W = [F0.bx, F0.by], E = [W[0] - 14, W[1]], sh = out ? 0.07 * Math.sin((t1 - C4P.pull) * 7) * Math.exp(-(t1 - C4P.pull) * 0.9) : hit ? 0.012 * Math.sin(t1 * 70) : 0.025 * Math.sin(t1 * 3);
+  const segs = [[0, 0.55, 1.6, 1.9, L.yL + 14, 30, VH * 0.52], [0.55, 1.5, 4.0, 4.4, W[0] - cx - 4, gy - W[1], VH * 0.5], [1.5, 2.1, 3.4, 2.4, L.yL + 6, 26, VH * 0.52], [2.1, 99, 1.9, 2.0, L.yL + 10, 28, VH * 0.52]];
+  const sg = segs.find(q => t1 < q[1]) || segs[3], kk = clamp01((t1 - sg[0]) / (Math.min(sg[1], 3.2) - sg[0])), shk = Math.max(hit && ah < 0.4 ? 5 * (1 - ah / 0.4) : 0, out && t1 < C4P.pull + 0.3 ? 4 * (1 - (t1 - C4P.pull) / 0.3) : 0);
+  ctx.save(); ctx.translate(c4Jit(shk), c4Jit(shk)); c4Cam(cx, lerp(sg[2], sg[3], kk), sg[4], sg[5], sg[6]); drawAlley(now); c4Crater(sx(L.cr), 1.1); c4Pool(sx(L.yL) - 30, 1.2 + (out ? 0.12 * ease3(clamp01((t1 - C4P.pull) / 1.2)) : 0));
+  c4Organs(T, T0 + C4P.pull + 0.15, W[0], W[1] + 4, 5, { v: C4_ORG.v, up: C4_ORG.up, dir: C4_ORG.dir, seed: C4_ORG.seed });
+  c4Verity(sx(xv), 'stand', true, 0, S2 => {      // (his other arm is behind Yuji's body: it goes in at the front of the belly and the hand comes out of his back)
+    const R = [S2.x + 5, S2.y + 5], base = [S2.x - 2, S2.y + 2]; let hx, hy;
+    if (t1 < C4P.thrust) { const k = ease3(clamp01((t1 - 0.25) / 0.35)); hx = lerp(base[0], R[0], k); hy = lerp(base[1], R[1], k); }
+    else if (t1 < C4P.hit) { const k = (t1 - C4P.thrust) / (C4P.hit - C4P.thrust); hx = lerp(R[0], E[0], k * k); hy = lerp(R[1], E[1], k * k); }
+    else if (t1 < C4P.pull) { hx = E[0] + 1.2 * Math.sin(t1 * 40); hy = E[1] + 1.2 * Math.sin(t1 * 33); }
+    else { const k = ease3(clamp01((t1 - C4P.pull) / (C4P.gone - C4P.pull))), r = ease3(clamp01((t1 - C4P.gone) / 0.5)); hx = lerp(lerp(E[0], S2.x + 2, k), S2.x - 4, r); hy = lerp(lerp(E[1], S2.y + 6, k), S2.y + 26, r); }
+    c4Arm(S2.x, S2.y + 1, hx, hy, 3, out ? 1 : hit ? 0.35 : 0); c4Fist(hx, hy, out || hit ? 1 : 0);
+    if (out && t1 < C4P.pull + 0.3) { c4Lump(hx + 4, hy + 3, 0); c4Lump(hx + 8, hy + 6, 1); c4Lump(hx + 6, hy + 10, 2); }
+  });
+  const FW = c4YDraw(14, hit, sx(L.yL) + (hit && !out ? c4Jit(0.6) : 0), 10, sh, hit && ah < 0.06 ? 0.6 : 0);
+  ctx.fillStyle = C4_RED[1]; if (hit) { ctx.fillRect(Math.round(FW.mx), Math.round(FW.my), 1, 8); ctx.fillStyle = C4_RED[0]; ctx.fillRect(Math.round(FW.mx) - 1, Math.round(FW.my), 1, 1); }
+  if (hit) { c4Spray(T, T0 + C4P.hit, FW.bx, FW.by, 16, { v: 90, up: 0.7, dir: 1, life: 0.6, cols: C4_BLOOD, seed: 50, stain: 3, gnd: gy + 3 }); c4Spray(T, T0 + C4P.hit, E[0], E[1], 14, { v: 80, up: 0.7, dir: -1, life: 0.6, cols: C4_BLOOD, seed: 51, stain: 3, gnd: gy + 3 }); c4Spray(T, T0 + C4P.hit + 0.1, FW.mx, FW.my, 12, { v: 70, up: 1.1, dir: 1, life: 0.55, cols: C4_BLOOD, seed: 52, stain: 3, gnd: gy + 3 }); for (let i = 0; i < 5; i++) c4Spray(T, T0 + C4P.hit + 0.2 + 0.18 * i, FW.bx + 1, FW.by + 4, 4, { v: 16, up: 0.4, dir: 0, life: 0.6, cols: C4_BLOOD, seed: 60 + i, stain: 3, gnd: gy + 3 }); rsDrip(FW.bx + 1, FW.by + 5, T, 4, 0.1); }
+  if (out) c4Guts(FW.bx + 1, FW.by + 5, 18 * ease3(clamp01((t1 - C4P.pull) / 0.9)), T, 1.5);
+  const SH = { x: sx(xv) - 10, y: gy - 43 }, hx2 = F0.cx, hy2 = F0.cy; c4Arm(SH.x, SH.y, hx2, hy2, 2, hit ? 0.7 : 0.2); c4Fist(hx2, hy2, hit ? 1 : 0.4);
+  if (hit && ah < 0.4) c3Ring(W[0], W[1], ah, true, '255,150,150', Math.min(1, 1.6 / lerp(sg[2], sg[3], kk)));
+  c4Cam0(); ctx.restore(); const fl = hit && ah < 0.12 ? 0.5 * (1 - ah / 0.12) : 0; if (fl > 0) { ctx.fillStyle = 'rgba(255,255,255,' + fl.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  ctx.fillStyle = 'rgba(30,10,60,0.14)'; ctx.fillRect(0, 0, VW, VH); msFinish(1);
+}
+
+function c4SFall(now, dt, T, st, t1, cx, g) {
+  const sx = x => Math.round(cx + x), V = g.vx, L = c4Lay(g), T0 = st.t0, xv0 = V + 28, xv1 = L.yL - 30, TP = c4T('pierce'), drop = clamp01((t1 - 0.22) / 0.26), lf = t1 < 0.22 ? 10 : 10 * (1 - drop * drop), fall = t1 - 0.48, fi = t1 < 0.48 ? 14 : Math.min(8, Math.floor(fall * 24)), imp = 0.48 + 4 / 24, post = t1 - imp;
+  const xv = t1 < 0.9 ? xv0 : lerp(xv0, xv1, ease3((t1 - 0.9) / 1.4)), kz = ease3(clamp01((t1 - 0.4) / 2.2)), shk = post >= 0 && post < 0.4 ? 3.5 * (1 - post / 0.4) : 0;
+  ctx.save(); ctx.translate(c4Jit(shk), c4Jit(shk)); c4Cam(cx, lerp(1.7, 1.85, kz), lerp(L.yL + 10, L.yL - 14, kz), lerp(26, 27, kz), VH * 0.52); drawAlley(now); c4Crater(sx(L.cr), 1.1);
+  c4Pool(sx(L.yL) - 30, 1.32 + 0.22 * ease3(clamp01((t1 - 0.6) / 2.2)));
+  const p14 = c4YRX(14), F0 = c4Face(p14.set[14], p14.info, sx(L.yL), 10), W = [F0.bx, F0.by];
+  c4Organs(T, TP + C4P.pull + 0.15, W[0], W[1] + 4, 5, { v: C4_ORG.v, up: C4_ORG.up, dir: C4_ORG.dir, seed: C4_ORG.seed });
+  const dP = C4_SEQ.find(q => q.k === 'pierce').d - C4P.pull, swing = 0.07 * Math.sin(dP * 7) * Math.exp(-dP * 0.9);      // (he still swings a little from the pierce when he is let go: where the pierce left him)
+  const Sx = sx(xv) - 10, Sy = gy - 43, vlift = t1 > 0.9 && t1 < 2.3 ? Math.round(1.2 * Math.abs(Math.sin((t1 - 0.9) * 6))) : 0;
+  c4Verity(sx(xv), 'stand', true, vlift, S2 => { c4Arm(S2.x, S2.y + 1, S2.x - 4, S2.y + 27, 2, 1); c4Fist(S2.x - 4, S2.y + 27, 1); });
+  const F = c4YDraw(fi, true, sx(L.yL), t1 < 0.48 ? lf : 0, t1 < 0.22 ? swing : 0, post >= 0 && post < 0.05 ? 0.5 : 0);
+  if (t1 < 0.48) { c4Guts(F.bx + 1, F.by + 5, 18, T, 1.2); ctx.fillStyle = C4_RED[1]; ctx.fillRect(Math.round(F.mx), Math.round(F.my), 1, 8); }
+  else { for (let i = 0; i < 3; i++) c4Lump(F.bx + (i - 1) * 5 + (fi >= 8 ? 0 : 3), F.by + 2 + (i % 2) * 2, i % 3); if (fi >= 8) { ctx.fillStyle = C4_RED[1]; ctx.fillRect(Math.round(F.mx), Math.round(F.my), 1, 5); } }
+  { const hand = t1 < 0.22 ? [F0.cx, F0.cy] : null, e = ease3(clamp01((t1 - 0.22) / 0.3)), hx = hand ? hand[0] : lerp(F0.cx, Sx - 3, e), hy = hand ? hand[1] : lerp(F0.cy, Sy + 27, e); c4Arm(Sx, Sy, hx, hy, 2, 1); c4Fist(hx, hy, 1); rsDrip(Sx - 3, Sy + 28, T, 3, 0.4); }
+  if (post >= 0) { c3Ring(sx(L.yL) - 22, gy - 3, post, false, '255,225,200', Math.min(1, 1.6 / lerp(1.7, 1.85, kz))); c4Dust(T, T0 + imp, sx(L.yL) - 22, 18, { w: 40, h: 16, life: 1.2, big: 6, seed: 30 }); c4Spray(T, T0 + imp, F.bx, F.by, 14, { v: 60, up: 1.0, dir: 0, life: 0.6, cols: C4_BLOOD, seed: 70, stain: 3, gnd: gy + 3 }); c4Organs(T, T0 + imp, F.bx, F.by, 4, { v: 16, up: 8, dir: 0, seed: 7, gnd: gy + 2 }); }
+  c4Cam0(); ctx.restore(); ctx.fillStyle = 'rgba(30,10,60,0.14)'; ctx.fillRect(0, 0, VW, VH); msFinish(1);
+}
+
+// ---- WASTED POTENTIAL: Verity's face in a close-up (his own screaming-face picture, enlarged), blood on it, and he speaks
+function c4SLine(now, dt, T, st, t1, cx, g) {
+  const k = t1 / st.d, z = lerp(1.9, 2.3, ease3(k)), tt0 = C3E_TALK[1].t, n = Math.floor(Math.max(0, T - tt0) * TN_RATE), talking = T >= tt0 && T < tt0 + C3E_TALK[1].d && n < C3E_TALK[1].a.length + 3, fr = talking ? [0, 14, 10, 0, 12, 14, 6][n % 7] : 0;
+  rsCloseBg(T); { const gr = ctx.createRadialGradient(VW * 0.5, VH * 0.55, 10, VW * 0.5, VH * 0.55, VW * 0.55); gr.addColorStop(0, 'rgba(110,12,24,0.28)'); gr.addColorStop(1, 'rgba(20,0,10,0)'); ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH); }
+  ctx.save(); ctx.translate(Math.round(VW * 0.5 + 1.5 * Math.sin(T * 0.7)), Math.round(VH * 0.57)); ctx.scale(z, z); ctx.translate(-32, -24); ctx.drawImage(vfr('scare', fr, false), 0, 0);
+  ctx.fillStyle = C4_RED[1]; for (const [x, y, w, h] of [[18, 22, 2, 2], [46, 20, 2, 3], [24, 9, 2, 1], [38, 5, 1, 2], [45, 31, 2, 2], [15, 31, 1, 2], [31, 41, 2, 1], [27, 2, 1, 1]]) ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = C4_RED[0]; for (const [x, y] of [[19, 22], [46, 21], [25, 9], [45, 31]]) ctx.fillRect(x, y, 1, 1);
+  ctx.fillStyle = C4_RED[2]; ctx.fillRect(43, 33, 1, 10); ctx.fillStyle = C4_RED[1]; ctx.fillRect(44, 33, 1, 6); ctx.fillStyle = C4_RED[3]; ctx.fillRect(30, 52, 6, 1); ctx.fillRect(33, 54, 5, 1); ctx.fillRect(27, 57, 4, 1); ctx.fillStyle = C4_RED[1]; ctx.fillRect(34, 51, 2, 1); ctx.fillRect(36, 55, 2, 1);
+  ctx.restore(); rsDrip(VW * 0.5 + 18, VH * 0.57 + 12, T, 3, 0.3); msFinish(1);
+}
+
+// ---- the shots after the grab, by name
+const c4Shots = { grip: c4Grip, other: c4SOther, wrist: c4SWrist, shut: c4SShut, yank: c4SYank, down: c4SDown, beat: c4SBeat, lift: c4SLift, pierce: c4SPierce, fall: c4SFall, line: c4SLine };
+c4Shots.black = (now, dt, T, st, t1, cx, g) => { const ln = C4_SEQ.find(q => q.k === 'line'); c4SLine(now, dt, T, ln, ln.d, cx, g); ctx.fillStyle = 'rgba(0,0,0,' + clamp01(t1 / 1.1).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); };      // (the last picture of Verity fades out)
+
+// ---- the ending: the scene
+function c3EndFrame(now, dt) {
+  const T = story.T = Math.max(0, now - story.t0) / 1000, cx = Math.round(VW / 2), g = c4Geo(), ev = (k, t, f, win) => { if (T >= t && T < t + (win || 0.5)) once2(k, f); };
+  if (T >= C3E.card) { c3Card(now, T); return; }
+  wx = 0; ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
+  const sk = story.shk && now < story.shk.until ? story.shk.amp : 0; ctx.save(); if (sk) ctx.translate(c4Jit(sk), c4Jit(sk));
+  if (T < C3E.grab + C3E.hold) { c4Wide0(now, dt, T, cx, g); drawSmoke(now, dt); c3Sparks(now, dt, cx); rsWindBits(T, 0.45, 0, VW); }
+  else { let st = C4_SEQ[C4_SEQ.length - 1]; for (const s of C4_SEQ) if (T >= s.t0 && T < s.t0 + s.d) st = s; c4Shots[st.k](now, dt, T, st, T - st.t0, cx, g); }
+  ctx.restore();
+  ev('wind', 0.05, () => snd('rumble', 2.5), 0.4); ev('blink', C3E.blink, () => { snd('arrive'); snd('blink'); spark(g.vx, gy - 30, 10, ['#c890ff', '#7a3aff', '#ffffff'], false, 1); }); ev('arm', C3E.arm, () => snd('f:swing', 3)); ev('dive', C3E.dive, () => snd('dash', 0));
+  ev('grab', C3E.grab, () => { snd('rsgrab'); snd('f:hit', 3); c2Shake(now, 260, 3); }); ev('crunch', c4T('grip') + 0.45, () => { snd('c4crunch'); snd('yscream', 1); }); ev('arrive', c4T('other') + 0.42, () => { snd('blink'); snd('gasp', 1); }); ev('sensei', c4T('other') + 0.9, () => snd('yscream', 0), 1); ev('click', c4T('wrist') + 0.8, () => snd('c4click')); ev('pclose', c4T('wrist') + 0.95, () => snd('portalclose'), 1.5); ev('strain', c4T('shut') + 1.35, () => snd('yscream', 2), 1);
+  { const Ty = c4T('yank'), Td = c4T('down'), Tb = c4T('beat'), Tl = c4T('lift'), Tp = c4T('pierce'), Tf = c4T('fall');
+    ev('ypull', Ty + C4Y.hold, () => snd('rsgrab')); ev('yshut', Ty + C4Y.shut - 0.02, () => snd('tink')); ev('yswing', Ty + 0.95, () => snd('f:swing', 3)); ev('yslam', Ty + C4Y.slam, () => { snd('f:hit', 3); snd('c4pound', 1); c2Shake(now, 450, 6); });
+    for (let i = 0; i < 3; i++) ev('dcough' + i, Td + [0.16, 0.48, 0.76][i], () => snd('c4cough'));
+    for (let i = 0; i < C4B.all.length; i++) ev('blow' + i, Tb + C4B.all[i], () => { snd('c4pound', i > 8 ? 1 : 0); c2Shake(now, 130, 1 + 0.2 * Math.min(i, 16)); });
+    ev('crater', Tb + C4B.big, () => { snd('c4crater'); snd('f:hit', 3); c2Shake(now, 700, 8); }, 1);
+    ev('lgrab', Tl + 0.1, () => snd('rsgrab')); ev('lgasp', Tl + 0.9, () => snd('gasp', 1));
+    ev('pstab', Tp + C4P.thrust + 0.06, () => { snd('c4stab'); c2Shake(now, 400, 5); }); ev('pcough', Tp + C4P.hit + 0.15, () => snd('c4cough')); ev('ppull', Tp + C4P.pull, () => { snd('c4pull'); c2Shake(now, 300, 4); }); ev('pguts', Tp + C4P.pull + 0.4, () => snd('c4guts'));
+    ev('fland', Tf + 0.48 + 4 / 24, () => { snd('land'); snd('c4guts'); c2Shake(now, 350, 3.5); }); }
+  c3Talk(T, C3E_TALK);
+  const wf = 1 - clamp01(T / 0.5); if (wf > 0) { ctx.fillStyle = 'rgba(255,255,255,' + wf.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (the cut from the fight comes out of white)
+  const fl = T - C3E.grab; if (fl >= 0 && fl < 0.14) { ctx.fillStyle = 'rgba(255,255,255,' + (0.7 * (1 - fl / 0.14)).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+}
+function c3Card(now, T) {      // CHAPTER 2: THE PORTAL, TO BE CONTINUED
+  const t = T - C3E.card; ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); once2('card', () => { snd('msting'); storyDone5(); }); ctx.globalAlpha = clamp01((t + 0.1) / 1.0);
+  pxt('CHAPTER 2', VW / 2, Math.round(VH / 2) - 10, '#ffffff', 16, 'center'); pxt('THE PORTAL', VW / 2, Math.round(VH / 2) + 8, '#c9a8ff', 8, 'center'); pxt('TO BE CONTINUED', VW / 2, Math.round(VH / 2) + 26, '#ffd34d', 8, 'center'); if (t > 2.2 && Math.floor(now / 600) % 2 === 0) pxt('TAP TO CONTINUE', VW / 2, VH - 8, '#9d8cff', 8, 'center'); ctx.globalAlpha = 1; ctx.restore();
+}
+window.__c3EndT = () => story ? story.T : -1;      // test hook: the scene time
+window.__c3End = t => { if (!story) return; if (!story.c3.end) startC3End(pnow()); story.t0 = pnow() - (t || 0) * 1000; story.ev = {}; };      // test hook: start the ending (or jump in it) at scene time t
 
 function drawScene(now, dt) {
   fatUI(now);
@@ -9881,6 +10275,7 @@ $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+{"v": "1.97", "t": "THE GRAB AND WASTED POTENTIAL", "n": ["Chapter 2 does not stop at the portal any more. When Yuji dives in, Verity's long arm catches his leg. This part of the story is graphic and bloody. It is only a cutscene: you watch it, you do not play it.", "A close-up of the hand closing on the ankle. Then we see the other side of the portal: the Master holds Gojo by the neck and clicks a button on his wrist. The portal starts to close, slowly, with Yuji still halfway in it, screaming for his teacher.", "Verity yanks Yuji back out of the portal, swings him over his head by the leg and slams him into the ground. The portal snaps shut.", "Verity crouches over him and pounds him, harder and faster. Yuji coughs up blood. The ground cracks and gives way into a crater.", "Verity pulls Yuji out of the crater by the collar and drives his arm through his stomach. His organs fall out, a big hole is left in his chest, and he falls.", "Verity says: WASTED POTENTIAL. Then the card: Chapter 2, TO BE CONTINUED.", "Every close-up is made from the same pictures as the wide shots, just bigger. Tap to skip to the next shot.", "New sounds for the blows, the cough, the stab, the organs and the crater."]},
 {"v": "1.96", "t": "GET INTO THE PORTAL", "n": ["Chapter 2 has a new goal. You do not win by knocking Verity out any more. You win by getting INTO the portal while you fight him.", "The portal stands at the end of the street. A bar at the bottom of the screen shows where you, Verity and the portal are.", "Verity is a wall now. You cannot walk through him. DASH forward to slide past his back, or beat him down.", "In this fight the dash needs about a second and a half to come back, so use it wisely.", "Verity will try to stop you. When you get past him he blinks in front of you and shoots out his long arm. A purple ring and a ! warn you first. Block it, jump over it, duck under it, or dash through him. If you just run into it, it hits you and pushes you back.", "When Verity is ready for another STOP, a small diamond shines over his head.", "Verity cannot be knocked out for good. When his health runs out he turns into his ball for a few seconds. That is your chance to run for the portal.", "When you reach the portal, Yuji jumps in. The arm of Verity is too late. Then comes the card: Chapter 2, TO BE CONTINUED."]},
 {"v": "1.95", "t": "CHAPTER 2: THE PORTAL", "n": ["Story mode has Chapter 2 now. Finish Chapter 1 and START takes you to it.", "Night in the alley. A dark portal opens and Yuji runs for it to save Gojo.", "Verity blinks in front of the portal and stops Yuji with his long arm. He says 'Hey, it's me, it's Verity' in his real voice.", "Then they fight with their fists. Yuji and Verity trade seven blows, one after the other, and every hit shakes the screen. The last two punches meet in the middle and throw them apart. They are equal.", "Then it is your turn. You play Yuji with the same moves you had in the training fight against Gojo, and you fight Verity.", "If you lose, REMATCH starts the same fight again. If you win, Verity fades away and Yuji runs for the portal, but it closes just before he gets there.", "The chapter ends with TO BE CONTINUED. Tap the screen to skip a cutscene."]},
 {"v": "1.94", "t": "FREDDY NOW USES ENERGY", "n": ["Freddy's special moves now cost energy, like the other fighters. The energy bar under his health is blood red now.", "PIERCE costs 20%. It checks your energy when you start charging. If you do not have enough, you just do a normal slash and the bar flashes NO CE.", "BOILING WATER (the BLUE button) costs 15% when his hand touches the floor. Throwing it is free.", "DREAM (the ULTIMATE) costs 67%, like every other ultimate. If you do not have enough, nothing happens and you do not lose the 30 second wait.", "Crouching costs 3% now, the same as everyone else.", "His normal slashes, the crouch slash, the heavy strike, the block and the dashes are still free.", "Hitting the enemy and getting hit fills the bar. It also fills slowly by itself when you wait. In Free Play the energy never runs out, as before."]},

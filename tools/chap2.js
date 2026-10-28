@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------- v1.95 CHAPTER 2: THE PORTAL, the opening (this file is spliced into template.html by build_html.py, in place of the marker line after the custom mode's)
-// After END OF CHAPTER 1 (the Master took Gojo through his portal): night, the alley where it all began. The same dark portal opens at the end of it. Yuji cries out and charges for it, Verity blinks in and stops him with his long arm (his real JUMPSCARE grab picture), says "HEY, IT'S ME, IT'S VERITY" in his real voice, and they throw hands: seven blows, Yuji's and Verity's by turns (the pictures are the fighters' own: Yuji's R.HOOK, L.HOOK, UPPERCUT and R.KICK, Verity's three swings, each hit with its own reaction), and the last two meet in the middle (Yuji's CONCENTRATED FIST against Verity's long arm): equal. Then the fight is yours: you are Yuji with the moves of the training (TN_KIT) against Verity (GRADE 2), and the aim is NOT to knock him out but to get INTO THE PORTAL (v1.96, the last part of this file): he stands in the way, and his STOP (a blink and a long arm) pushes you back. When you are in, Verity's long arm closes on the air where you stood and the portal shuts: TO BE CONTINUED.
+// After END OF CHAPTER 1 (the Master took Gojo through his portal): night, the alley where it all began. The same dark portal opens at the end of it. Yuji cries out and charges for it, Verity blinks in and stops him with his long arm (his real JUMPSCARE grab picture), says "HEY, IT'S ME, IT'S VERITY" in his real voice, and they throw hands: seven blows, Yuji's and Verity's by turns (the pictures are the fighters' own: Yuji's R.HOOK, L.HOOK, UPPERCUT and R.KICK, Verity's three swings, each hit with its own reaction), and the last two meet in the middle (Yuji's CONCENTRATED FIST against Verity's long arm): equal. Then the fight is yours: you are Yuji with the moves of the training (TN_KIT) against Verity (GRADE 2), and the aim is NOT to knock him out but to get INTO THE PORTAL (v1.96, the last part of this file): he stands in the way, and his STOP (a blink and a long arm) pushes you back. When you are in, the ending starts: it is in chap2b.js (v1.97: the grab, the Master's side of the portal, the beating, the pierce, WASTED POTENTIAL).
 // Every actor is a pure function of the scene time T, so a tap that skips to the next cut (or a test that jumps in time) always draws the right picture.
 TN_COL.VERITY = '#f0d84a';
 const C3 = { portal: 1.6, say1: 3.7, charge: 6.0, arrive: 6.25, stop: 6.9, voice: 7.4, brawl: 14.6, step: 0.72, hold: 0.09, hold2: 0.16, gap: 34 };      // the times of the opening (seconds); step = the time of one exchange of blows, hold = the picture stops for that long at every impact (the hit-stop), gap = how far apart their chests stand
@@ -12,10 +12,6 @@ const C3_TALK = [
   { t: 13.0, d: 1.5, w: 'VERITY', a: 'NOBODY ENTERS.', b: '' },
   { t: C3.stand + 0.1, d: 1.8, w: 'YUJI', a: 'THEN I WILL GO', b: 'THROUGH YOU!' }];
 const C3_CUTS = [C3.say1, C3.charge, C3.voice, 11.4, C3.brawl, C3.stand, C3.end];      // taps jump to the next of these
-const C3E = { talk: 0.6, blink: 2.3, arm: 2.55, dive: 2.7, flare: 3.0, close: 3.5, ret: 3.9, fade: 5.9, card: 6.8 };      // the times of the ending (seconds): Yuji's line, Verity blinks in behind him, his arm shoots out, Yuji dives into the portal, the flare, the portal shuts, the arm draws back, the fade, the card
-const C3E_TALK = [{ t: C3E.talk, d: 1.8, w: 'YUJI', a: 'SENSEI... I AM COMING!', b: '' }];
-const C3E_CUTS = [C3E.blink, C3E.dive, C3E.close, C3E.fade, C3E.card];
-const C3V0 = { w: 64, h: 64, cx: 32, x0: 0, top: 0 };      // the place of Verity's 64 x 64 pictures
 
 // ---- where everybody is (worked out from the real pictures: Yuji faces right, Verity left)
 const c3YT = (k, f) => { const p = tnPick({ atkOn: true, atkK: k, af: Math.min(14, Math.floor(f)) }); return -(p.info.cx - p.info.x0) + tnEdges(p.set[p.fi]).R; };      // how far in front of his middle Yuji's fist is at frame f of his move k
@@ -86,8 +82,8 @@ function c3Sparks(now, dt, cx) {      // the sparks of the blows (the world's sp
   for (const p of sparks) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 230 * dt; p.vx *= Math.exp(-3 * dt); const k = (now - p.born) / p.life, h = Math.abs(p.vx) > Math.abs(p.vy); ctx.globalAlpha = Math.max(0, Math.min(1, 1.7 * (1 - k))); ctx.fillStyle = p.c; ctx.fillRect(Math.round(cx + p.x), Math.round(p.y), h ? p.len : 1, h ? 1 : p.len); }
   ctx.globalAlpha = 1;
 }
-function c3Ring(x, y, a, big, col) {      // a blow lands: rings run out from the point of contact and a white star flashes (a = seconds since contact)
-  if (a < 0 || a > 0.4) return; const f = 1 - a / 0.4; ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineWidth = 1;
+function c3Ring(x, y, a, big, col, sc) {      // a blow lands: rings run out from the point of contact and a white star flashes (a = seconds since contact; sc = the size, 1 if left out: smaller in a close-up)
+  if (a < 0 || a > 0.4) return; const f = 1 - a / 0.4; ctx.save(); if (sc && sc !== 1) { ctx.translate(x, y); ctx.scale(sc, sc); ctx.translate(-x, -y); } ctx.globalCompositeOperation = 'lighter'; ctx.lineWidth = 1 / (sc || 1);
   for (let i = 0; i < 2; i++) { ctx.strokeStyle = 'rgba(' + col + ',' + (0.8 * f * (1 - i * 0.35)).toFixed(3) + ')'; ctx.beginPath(); ctx.arc(x, y, 3 + a * (big ? 80 : 40) + i * 5, 0, 6.2832); ctx.stroke(); }
   if (a < 0.12) { ctx.fillStyle = '#fff'; ctx.fillRect(x - 3, y, 7, 1); ctx.fillRect(x, y - 3, 1, 7); ctx.fillRect(x - 1, y - 1, 3, 3); }
   ctx.restore();
@@ -124,39 +120,6 @@ function c3Frame(now, dt) {
   c3Talk(T);
   const fa = T < 0.7 ? 1 - T / 0.7 : T > C3.end - 0.6 ? clamp01((T - (C3.end - 0.6)) / 0.6) : 0; if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
   ctx.restore(); if (T >= C3.end && !story.battle) startC3Battle();
-}
-
-// ---- the ending (you are in the portal's mouth): Yuji stands in front of it with the wind in his hair, Verity blinks in behind him and his long arm shoots out, Yuji dives in a moment before it reaches him, the portal flares and shuts, the arm closes on the air; the card
-function c3EndPose(T, G) {      // everybody at the scene time T: Yuji { x, a (see-through), run } and Verity { x, src (null = not there yet) }
-  const x0 = G.PX - 30, u = clamp01((T - C3E.dive) / 0.32), yx = T < C3E.dive ? x0 : lerp(x0, G.PX + 3, u * u), vx = x0 - 42;      // (he speeds up into the mouth; Verity stands 42 px behind him)
-  let src = null;
-  if (T >= C3E.blink && T < C3E.arm) src = vfr('tele', 6 + 8.99 * clamp01((T - C3E.blink) / 0.25), false);      // blinks in (the second half of his teleport)
-  else if (T >= C3E.arm && T < C3E.ret) src = vfr('scare_grab', Math.min(12, 4 + (T - C3E.arm) * 24), false);      // the arm shoots out (frames 4-12) and holds
-  else if (T >= C3E.ret && T < C3E.ret + 0.7) src = vfr('scare_grab', 12 - (T - C3E.ret) / 0.7 * 12, false);      // draws back
-  else if (T >= C3E.ret + 0.7) src = vfr('idle', T * 10, true);
-  return { Y: { x: yx, a: T < C3E.dive ? 1 : 1 - clamp01((yx - (G.PX - 14)) / 15), run: T >= C3E.dive }, V: { x: vx, src } };
-}
-function c3EndFrame(now, dt) {
-  const T = story.T = Math.max(0, now - story.t0) / 1000, G = c3Geo(), cx = Math.round(VW / 2), sx = x => Math.round(cx + x), ev = (k, t, f, win) => { if (T >= t && T < t + (win || 0.5)) once2(k, f); };
-  if (T >= C3E.card) { c3Card(now, T); return; }
-  wx = 0; ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
-  const sk = story.shk && now < story.shk.until ? story.shk.amp : 0; ctx.save(); if (sk) ctx.translate(Math.round((Math.random() * 2 - 1) * sk), Math.round((Math.random() * 2 - 1) * sk));
-  drawAlley(now); const pp = 1 - ease3((T - C3E.close) / 0.8), P = c3EndPose(T, G), py = gy - Math.round(34 * rsLay().U);
-  if (pp > 0) { rsPortal(sx(G.PX), pp, T); ctx.fillStyle = 'rgba(30,10,60,' + (0.16 * pp).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
-  if (P.V.src) { shadow(sx(P.V.x), 9); sprAt(P.V.src, C3V0, sx(P.V.x), 0, false, 0); }
-  if (P.Y.a > 0) { if (P.Y.run) rsYuji(sx(P.Y.x), 0, 'dash', T, { fps: 36, wind: 0.6, alpha: P.Y.a }); else rsYuji(sx(P.Y.x), 0, 'idle', T, { wind: 0.5 }); }
-  const fk = T - C3E.flare; if (fk > 0 && fk < 0.45) { const g = ctx.createRadialGradient(sx(G.PX), py, 2, sx(G.PX), py, 64), a = 0.95 * (1 - fk / 0.45); ctx.save(); ctx.globalCompositeOperation = 'lighter'; g.addColorStop(0, 'rgba(255,240,255,' + a.toFixed(3) + ')'); g.addColorStop(0.5, 'rgba(190,110,255,' + (a * 0.5).toFixed(3) + ')'); g.addColorStop(1, 'rgba(120,40,200,0)'); ctx.fillStyle = g; ctx.fillRect(sx(G.PX) - 66, py - 66, 132, 132); ctx.restore(); }      // the portal flares as he goes in
-  ev('wind', 0.05, () => snd('rumble', 2.5), 0.4); ev('blink', C3E.blink, () => { snd('arrive'); snd('blink'); spark(P.V.x, gy - 30, 10, ['#c890ff', '#7a3aff', '#ffffff'], false, 1); }); ev('arm', C3E.arm, () => snd('f:swing', 3)); ev('dive', C3E.dive, () => snd('dash', 0));
-  ev('flare', C3E.flare, () => { snd('c3enter'); c2Shake(now, 320, 3); spark(G.PX, py, 24, ['#ffffff', '#d9b3ff', '#b056ff'], true, -1); spark(G.PX, py, 16, ['#ffffff', '#d9b3ff', '#b056ff'], true, 1); }); ev('close', C3E.close, () => snd('portalclose'), 1.0);
-  drawSmoke(now, dt); c3Sparks(now, dt, cx); ctx.restore(); rsWindBits(T, 0.45 * Math.max(0.25, pp), 0, VW);
-  c3Talk(T, C3E_TALK);
-  const wf = 1 - clamp01(T / 0.5); if (wf > 0) { ctx.fillStyle = 'rgba(255,255,255,' + wf.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (the cut from the fight comes out of white)
-  const fa = T > C3E.fade ? clamp01((T - C3E.fade) / 0.8) : 0; if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
-  ctx.restore();
-}
-function c3Card(now, T) {      // CHAPTER 2: THE PORTAL, TO BE CONTINUED
-  const t = T - C3E.card; ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); once2('card', () => { snd('msting'); storyDone5(); }); ctx.globalAlpha = clamp01((t + 0.1) / 1.0);
-  pxt('CHAPTER 2', VW / 2, Math.round(VH / 2) - 10, '#ffffff', 16, 'center'); pxt('THE PORTAL', VW / 2, Math.round(VH / 2) + 8, '#c9a8ff', 8, 'center'); pxt('TO BE CONTINUED', VW / 2, Math.round(VH / 2) + 26, '#ffd34d', 8, 'center'); if (t > 2.2 && Math.floor(now / 600) % 2 === 0) pxt('TAP TO CONTINUE', VW / 2, VH - 8, '#9d8cff', 8, 'center'); ctx.globalAlpha = 1; ctx.restore();
 }
 
 // ---- the chapter: start, frame, taps, the fight, the ending

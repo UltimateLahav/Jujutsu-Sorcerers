@@ -447,6 +447,33 @@ function makeSfx(ac) {
       const t = T(), B = C.ce; burst(B.soft, t, { type: 'bandpass', f: 200, f2: 2400, q: 1.6, dur: 1.1, gain: 1.0, atk: 0.9 }); tone(B.deep, t, { f: 70, f2: 30, dur: 1.2, gain: 0.5, atk: 0.8 });
       tone(B.deep, t + 1.1, { f: 120, f2: 24, dur: 1.4, gain: 0.9, atk: 0.003 }); burst(B.deep, t + 1.1, { type: 'lowpass', f: 700, f2: 80, q: 0.7, dur: 1.0, gain: 0.5, atk: 0.003 }); for (let i = 0; i < 12; i++) burst(B.deep, t + 1.2 + i * 0.09 + R(0, 0.05), { f: R(2500, 6000), q: 4, dur: 0.02, gain: 0.08 * (1 - i / 14), atk: 0.001 });
     },
+    c4crunch() {                                         // v1.97 a hand crushes an ankle: a low creak that tightens, a dry double crack of bone and a short wet thump
+      const t = T(), B = C.atk; tone(B.deep, t, { type: 'sawtooth', f: 60, f2: 130, dur: 0.3, gain: 0.12, atk: 0.2, cur: 1 }); burst(B.soft, t, { type: 'bandpass', f: 400, f2: 1400, q: 2.2, dur: 0.3, gain: 0.4, atk: 0.22 });
+      for (const d of [0.3, 0.37]) { burst(B.soft, t + d, { type: 'highpass', f: 1800, f2: 4200, q: 1.1, dur: 0.05, gain: 0.9, atk: 0.001 }); tone(B.deep, t + d, { f: 220, f2: 90, dur: 0.07, gain: 0.5, atk: 0.001 }); }
+      tone(B.deep, t + 0.4, { f: 90, f2: 40, dur: 0.22, gain: 0.7, atk: 0.003 });
+    },
+    c4pound(h) {                                         // v1.97 a heavy fist on a body lying in the ground: a low thud, a dry crack and a wet slap (h = 1: the last blows land harder)
+      const t = T(), B = C.atk, H = h ? 1.25 : 1; tone(B.deep, t, { f: 160, f2: 42, dur: 0.17, gain: 0.7 * H, atk: 0.002 }); burst(B.soft, t, { type: 'bandpass', f: 1100, f2: 320, q: 1.1, dur: 0.1, gain: 0.55, atk: 0.001 }); burst(B.soft, t + 0.012, { type: 'highpass', f: 2400, f2: 4200, q: 1, dur: 0.03, gain: 0.4, atk: 0.001 }); if (h) tone(B.deep, t + 0.03, { f: 90, f2: 30, dur: 0.3, gain: 0.5, atk: 0.003 });
+    },
+    c4cough() {                                          // v1.97 Yuji coughs blood: two wet, choked bursts with a rough low voice under them, then a gurgle
+      const t = T(), B = C.atk; for (const d of [0, 0.14]) { burst(B.soft, t + d, { type: 'bandpass', f: 520, f2: 900, q: 2, dur: 0.1, gain: 0.5, atk: 0.01 }); tone(B.deep, t + d, { type: 'sawtooth', f: 160, f2: 95, dur: 0.11, gain: 0.12, atk: 0.01 }); } burst(B.soft, t + 0.26, { type: 'bandpass', f: 1800, f2: 650, q: 3, dur: 0.14, gain: 0.25, atk: 0.005 });
+    },
+    c4stab() {                                           // v1.97 a hand goes through a body: a wet tearing crunch (noise sweeping down), a bone crack and a low thud
+      const t = T(), B = C.atk; burst(B.soft, t, { type: 'bandpass', f: 2600, f2: 500, q: 1.4, dur: 0.22, gain: 0.6, atk: 0.003 }); burst(B.soft, t + 0.03, { type: 'highpass', f: 1800, f2: 4000, q: 1.1, dur: 0.05, gain: 0.8, atk: 0.001 }); tone(B.deep, t + 0.04, { f: 200, f2: 55, dur: 0.2, gain: 0.75, atk: 0.002 }); burst(B.soft, t + 0.12, { type: 'bandpass', f: 700, f2: 300, q: 2, dur: 0.25, gain: 0.35, atk: 0.02 });
+    },
+    c4pull() {                                           // v1.97 the arm is pulled out: a long wet slurp (a falling band of noise) and a heavy plop
+      const t = T(), B = C.atk; burst(B.soft, t, { type: 'bandpass', f: 1200, f2: 260, q: 2.5, dur: 0.35, gain: 0.5, atk: 0.02 }); tone(B.deep, t + 0.3, { f: 130, f2: 50, dur: 0.14, gain: 0.45, atk: 0.003 });
+    },
+    c4guts() {                                           // v1.97 organs fall on the ground: three heavy wet splats, one after the other
+      const t = T(), B = C.atk; for (const [d, f] of [[0, 150], [0.09, 120], [0.19, 95]]) { tone(B.deep, t + d, { f, f2: f * 0.4, dur: 0.1, gain: 0.5, atk: 0.002 }); burst(B.soft, t + d, { type: 'bandpass', f: 800, f2: 350, q: 1.3, dur: 0.12, gain: 0.45, atk: 0.002 }); }
+    },
+    c4crater() {                                         // v1.97 the ground gives way: a huge crack, a rumble that rolls out and falling stones
+      const t = T(), B = C.atk; tone(B.deep, t, { f: 70, f2: 22, dur: 1.1, gain: 0.95, atk: 0.003 }); burst(B.deep, t, { type: 'lowpass', f: 900, f2: 90, q: 0.7, dur: 0.9, gain: 0.6, atk: 0.003 }); burst(B.soft, t, { type: 'highpass', f: 2000, f2: 5000, q: 1, dur: 0.12, gain: 0.9, atk: 0.001 }); for (let i = 0; i < 10; i++) burst(B.soft, t + 0.15 + i * 0.07 + R(0, 0.04), { f: R(1200, 4200), q: 3, dur: 0.03, gain: 0.12 * (1 - i / 12), atk: 0.001 });
+    },
+    c4click() {                                          // v1.97 the button on the Master's wrist: a hard mechanical click, then two thin electronic beeps (the second lower: something is going to close)
+      const t = T(), B = C.atk; burst(B.soft, t, { type: 'highpass', f: 2500, f2: 5200, q: 1, dur: 0.02, gain: 0.8, atk: 0.001 }); tone(B.deep, t, { f: 190, f2: 90, dur: 0.05, gain: 0.45, atk: 0.001 });
+      tone(C.tele.soft, t + 0.05, { type: 'square', f: 1760, f2: 1760, dur: 0.1, gain: 0.05, atk: 0.002 }); tone(C.tele.soft, t + 0.2, { type: 'square', f: 880, f2: 880, dur: 0.25, gain: 0.05, atk: 0.002 });
+    },
     c3warn() {                                           // v1.96 Verity's STOP is coming: a thin rising shimmer and a dry thump where he will stand (so you hear it even when you look at your own feet)
       const t = T(), B = C.tele; tone(B.soft, t, { type: 'triangle', f: 520, f2: 1300, dur: 0.24, gain: 0.12, atk: 0.01, cur: 1 }); burst(B.soft, t, { type: 'bandpass', f: 900, f2: 3800, q: 1.4, dur: 0.22, gain: 0.35, atk: 0.14 }); tone(B.deep, t + 0.2, { f: 190, f2: 60, dur: 0.14, gain: 0.3, atk: 0.002 });
     },
