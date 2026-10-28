@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.94</small>
+    <small id="ver">V1.95</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -216,7 +216,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
   <div class="cards">
     <button id="chalMode" class="card mode"><span>$</span><b>CHALLENGES</b><i>EARN MONEY</i></button>
     <button id="battles" class="card mode"><span>VS</span><b>BATTLES</b><i>FIGHT THE ENEMY</i></button>
-    <button id="story" class="card mode"><span>?</span><b>STORY MODE</b><i>CHAPTER 1: THE MYSTERY</i></button>
+    <button id="story" class="card mode"><span>?</span><b>STORY MODE</b><i>CHAPTERS 1 AND 2</i></button>
     <button id="lanMode" class="card mode"><span>WIFI</span><b>WI-FI ROOMS</b><i>SAME WI-FI ONLY</i></button>
     <button id="customMode" class="card mode"><span>ART</span><b>CUSTOM</b><i>DRAW YOUR OWN</i></button>
   </div>
@@ -1977,7 +1977,7 @@ function drawSmoke(now, dt) {                 // dust along the ground behind an
 function koDummy(now) {                       // the enemy goes down (every way of finishing him ends here): in a match the round ends and Gojo gets the point
   if (dummy.ko >= 0) return;                  // (only once, even if two hits finish him in the same moment)
   dummy.air = null; dummy.airH = 0; dummy.rag = null;
-  if (vs && vs.story && vs.foe === 'verity' && !vs.endGo) { if (!vs.end) storyEndStart(pnow()); return; }      // the story fight does not end with a fall: it ends with the Reversal Red
+  if (vs && vs.story && vs.foe === 'verity' && !vs.endGo && !vs.c3) { if (!vs.end) storyEndStart(pnow()); return; }      // the story fight does not end with a fall: it ends with the Reversal Red
   if (vs && vs.story && vs.foe === 'cat' && !vs.endGo) { if (!vs.end) catEndStart(pnow()); return; }      // ...and the one with the Cat ends with a cutscene (see keFrame)
   if (vs && vs.hunt) huntFoeKO(now); else if (vs && !(vs.rush && foesOf().some(f => f !== dummy && f.ko < 0))) endRound('player', 'ko', now);      // (a RUSH wave goes on while the other one still stands)
   if (vs && vs.rush && vs.ph === 'fight') hitStop(90);
@@ -2401,7 +2401,7 @@ function buildGrades() {                       // the six grade buttons: locked 
   const sv = vsLoad(), box = $('grades'); box.innerHTML = ''; if (vsSel > sv.un) vsSel = sv.un;
   GRADES.forEach((g, i) => { const b = document.createElement('button'); b.className = 'gr' + (i === vsSel ? ' sel' : '') + (i > sv.un ? ' lk' : ''); b.disabled = i > sv.un; b.dataset.g = i; b.innerHTML = g.name + '<small>' + (i > sv.un ? 'LOCKED' : [0, 1, 2].map(k => '<span class="star' + (k < sv.st[i] ? '' : ' off') + '"></span>').join('')) + '</small>'; b.addEventListener('click', () => { vsSel = i; buildGrades(); }); box.appendChild(b); });
 }
-function startMatch(gi, story, retry, foe) { vs = { story: !!story, gi, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: story ? 1e9 : ROUND_MS, hp: PHP, sh: PHP, hist: [], res: null, retry: retry | 0, me: story ? (foe === 'gojo' ? 'yuji' : 'gojo') : vsPick.me, foe: story ? (foe || 'verity') : vsPick.foe, tn: !!story && foe === 'gojo' };      // (a story fight against Gojo is the training of part 2: you are Yuji, tn = the training's limits)
+function startMatch(gi, story, retry, foe) { vs = { story: story === 'c3' ? 'c3' : !!story, gi, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: story ? 1e9 : ROUND_MS, hp: PHP, sh: PHP, hist: [], res: null, retry: retry | 0, me: story ? (foe === 'gojo' || story === 'c3' ? 'yuji' : 'gojo') : vsPick.me, foe: story ? (foe || 'verity') : vsPick.foe, tn: !!story && (foe === 'gojo' || story === 'c3'), c3: story === 'c3' };      // (a story fight against Gojo is the training of part 2: you are Yuji, tn = the training's limits; 'c3' = chapter 2's fight against Verity: you are Yuji with the same limits; vs.story keeps the word, so REMATCH starts the same fight)
   vs.inv = !story && vs.me === vs.foe; beginRound(pnow()); }      // (retry: the story fight again after a failed red)
 function beginRound(now) {                     // a fresh round: the scene is reset, the enemy steps in, "ROUND n" and "FIGHT!"
   const keep = vs, gore = keep.story && keep.foe === 'cat' ? [gibs, drops, decals, pools] : null; show('play'); vs = keep; if (gore) [gibs, drops, decals, pools] = gore; ceReset(); const t = pnow(), G = GRADES[vs.gi];
@@ -2488,12 +2488,13 @@ function finishMatch(now) {
   if (vs.net) { netOver(now); return; }
   if (vs.hunt) { huntOver(now); return; }
   if (vs.cv) { curseOver(now); return; }
-  vs.ph = 'over'; $('vsAgain').textContent = 'REMATCH'; $('vsAgain').classList.toggle('hot', !(vs.story ? vs.pw >= 1 : vs.pw >= 2)); if (vs.story && vs.foe === 'verity' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s1', 200); storyDone(); story.toOutro = true; return; }      if (vs.story && vs.foe === 'cat' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s2', 300); storyDone2(); story.toMaster = true; return; }      if (vs.story && vs.tn && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s3', 300); storyDone3(); story.toEnd = true; return; }      // (beating Gojo in the training: the happy ending, v1.55)      // (beating the Cat: the Master's scene follows, then END OF CHAPTER 1, v1.54)      // (beating Verity: the report to the higher-ups follows, started by the main loop)
+  vs.ph = 'over'; $('vsAgain').textContent = 'REMATCH'; $('vsAgain').classList.toggle('hot', !(vs.story ? vs.pw >= 1 : vs.pw >= 2)); if (vs.c3 && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s4', 400); story.toC3End = true; return; }      // (beating Verity as Yuji: chapter 2's ending follows, v1.95)
+  if (vs.story && vs.foe === 'verity' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s1', 200); storyDone(); story.toOutro = true; return; }      if (vs.story && vs.foe === 'cat' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s2', 300); storyDone2(); story.toMaster = true; return; }      if (vs.story && vs.tn && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s3', 300); storyDone3(); story.toEnd = true; return; }      // (beating Gojo in the training: the happy ending, v1.55)      // (beating the Cat: the Master's scene follows, then END OF CHAPTER 1, v1.54)      // (beating Verity: the report to the higher-ups follows, started by the main loop)
   const win = vs.story ? vs.pw >= 1 : vs.pw >= 2, pf = vs.hp / PHP, stars = win ? (pf >= 0.7 ? 3 : pf >= 0.35 ? 2 : 1) : 0, sv = vsLoad(), gi = vs.gi;
   if (win && !vs.story) { sv.un = Math.max(sv.un, Math.min(5, gi + 1)); sv.st[gi] = Math.max(sv.st[gi], stars); vsStore(sv.un, sv.st); earn([15, 25, 40, 60, 90, 140][gi]); }
   vs.res = { win, stars }; $('vsTitle').textContent = win ? 'VICTORY' : 'DEFEAT'; $('vsInfo').textContent = GRADES[gi].name + '  -  ROUNDS ' + vs.pw + ' : ' + vs.ew + (win && !vs.story ? '\n+$' + [15, 25, 40, 60, 90, 140][gi] : '');
   $('vsStars').innerHTML = win ? [0, 1, 2].map(i => '<span class="star' + (i < stars ? '' : ' off') + '"></span>').join('') : ''; $('vsNext').textContent = 'NEXT GRADE'; $('vsNext').style.display = win && gi < 5 ? '' : 'none'; $('vsres').classList.add('on'); snd(win ? 'finisher' : 'ko');
-  if (vs.story) { $('vsTitle').textContent = win ? (vs.foe === 'cat' ? 'END OF CHAPTER 1' : 'TO BE CONTINUED') : 'DEFEAT'; $('vsInfo').textContent = vs.foe === 'cat' ? (win ? 'TO BE CONTINUED' : 'THE CAT WAS TOO STRONG') : vs.tn ? 'KEEP TRAINING, YUJI!' : win ? 'THE MYSTERY: VERITY' : 'VERITY WAS TOO STRONG'; $('vsStars').innerHTML = ''; $('vsNext').style.display = 'none'; if (win) { earnOnce(vs.foe === 'cat' ? 's2' : 's1', vs.foe === 'cat' ? 300 : 200); if (vs.foe === 'cat') storyDone2(); else storyDone(); } }
+  if (vs.story) { $('vsTitle').textContent = win ? (vs.foe === 'cat' ? 'END OF CHAPTER 1' : 'TO BE CONTINUED') : 'DEFEAT'; $('vsInfo').textContent = vs.foe === 'cat' ? (win ? 'TO BE CONTINUED' : 'THE CAT WAS TOO STRONG') : vs.c3 ? 'VERITY STILL BLOCKS THE PORTAL' : vs.tn ? 'KEEP TRAINING, YUJI!' : win ? 'THE MYSTERY: VERITY' : 'VERITY WAS TOO STRONG'; $('vsStars').innerHTML = ''; $('vsNext').style.display = 'none'; if (win) { earnOnce(vs.foe === 'cat' ? 's2' : 's1', vs.foe === 'cat' ? 300 : 200); if (vs.foe === 'cat') storyDone2(); else storyDone(); } }
 }
 function updateFighterVs(now, dt) {            // the grade AI (see GRADES): reaction time, block, dodge, combos, and from Grade 2 up it reads and punishes
   const d = dummy, G = GRADES[vs.gi], gap = d.x - wx, ag = Math.abs(gap), toward = gap > 0 ? -1 : 1;
@@ -2594,7 +2595,7 @@ function drawVs0(now, ux, uy, VW) {         // health bars, names, the grade, th
     const fw = Math.round(W * Math.max(0, Math.min(100, flow)) / 100); ctx.fillStyle = '#000'; ctx.fillRect(5, 34, W + 2, 4); ctx.fillStyle = '#241033'; ctx.fillRect(6, 35, W, 2); ctx.fillStyle = flowOn ? (((now / 90) | 0) % 2 ? '#fff3b0' : '#ffd34d') : '#c77dff'; ctx.fillRect(6, 35, fw, 2);
     const d0 = dummy; if (d0 && d0.ko < 0) { const open = now < (d0.openUntil || 0), sw = Math.round(W * (open ? 1 : Math.max(0, Math.min(1, (d0.stg || 0) / STG_MAX)))); ctx.fillStyle = '#000'; ctx.fillRect(VW - 7 - W, 28, W + 2, 6); ctx.fillStyle = '#2a2208'; ctx.fillRect(VW - 6 - W, 29, W, 4); ctx.fillStyle = open ? (((now / 90) | 0) % 2 ? '#ffffff' : '#ffd34d') : '#ffb84a'; ctx.fillRect(VW - 6 - sw, 29, sw, 4); }
   }
-  pxt(NAMES[vs.me] + (vs.meInv ? ' (INV.)' : ''), 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', nx, 45, bad ? '#ff6a5a' : cc[3], 8); let lx = nx + 62; if (vs.bleed) { pxt('BLEED', lx, 45, '#ff4a4a', 8); lx += 48; } if (vs.fear) pxt('FEAR', lx, 45, '#c77dff', 8); pxt(vs.story ? (vs.foe === 'cat' ? 'CARTOON CAT' : vs.tn ? 'GOJO' : 'VERITY') : foeName, VW - 6, 45, '#ffffff', 8, 'right'); let rx2 = VW - 6; if (dummy && dummy.bleed) { pxt('BLEED', rx2, 37, '#ff4a4a', 8, 'right'); rx2 -= 48; } if (dummy && dummy.fear) pxt('FEAR', rx2, 37, '#c77dff', 8, 'right'); pxt(vs.story ? (vs.tn ? 'TRAINING' : 'SPECIAL GRADE') : vs.net ? 'WI-FI' : vs.hunt ? HUNT_SIZE[vs.hunt.h.s] + ' HUNT' : vs.cv ? (vs.rush ? 'WAVE ' + Math.min(vs.round, vs.run.waves.length) + '/' + vs.run.waves.length : (vs.hard ? 'HARD ' : '') + vs.cv.grade) : GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
+  pxt(NAMES[vs.me] + (vs.meInv ? ' (INV.)' : ''), 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', nx, 45, bad ? '#ff6a5a' : cc[3], 8); let lx = nx + 62; if (vs.bleed) { pxt('BLEED', lx, 45, '#ff4a4a', 8); lx += 48; } if (vs.fear) pxt('FEAR', lx, 45, '#c77dff', 8); pxt(vs.story ? (vs.foe === 'cat' ? 'CARTOON CAT' : vs.tn && !vs.c3 ? 'GOJO' : 'VERITY') : foeName, VW - 6, 45, '#ffffff', 8, 'right'); let rx2 = VW - 6; if (dummy && dummy.bleed) { pxt('BLEED', rx2, 37, '#ff4a4a', 8, 'right'); rx2 -= 48; } if (dummy && dummy.fear) pxt('FEAR', rx2, 37, '#c77dff', 8, 'right'); pxt(vs.story ? (vs.c3 ? 'CHAPTER 2' : vs.tn ? 'TRAINING' : 'SPECIAL GRADE') : vs.net ? 'WI-FI' : vs.hunt ? HUNT_SIZE[vs.hunt.h.s] + ' HUNT' : vs.cv ? (vs.rush ? 'WAVE ' + Math.min(vs.round, vs.run.waves.length) + '/' + vs.run.waves.length : (vs.hard ? 'HARD ' : '') + vs.cv.grade) : GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
   if (!vs.story && !vs.practice) pxt(String(Math.max(0, Math.ceil(vs.tl / 1000))), VW / 2, 18, vs.tl < 10000 ? '#ff6a5a' : '#ffffff', 16, 'center');
   if (vs.hunt && !vs.hunt.over) huntHud(now, VW);
   const kob = vs.ph === 'ko';
@@ -4145,6 +4146,7 @@ __TRAIN__
 __REST__
 __CONT__
 __CUSTOM__
+__CHAP2__
 function drawScene(now, dt) {
   fatUI(now);
   if (fat) { fatFrame(now, dt); return; }       // the FATALITY cutscene replaces the whole scene while it plays
@@ -4461,12 +4463,14 @@ function playVoice() {      // "HEY, IT'S ME, IT'S VERITY" (3.9 s), played throu
 const SAVE_KEY = 'jsv_saves'; let svSel = -1;
 function loadSaves() { try { const a = JSON.parse(localStorage.getItem(SAVE_KEY)); if (Array.isArray(a) && a.length === 3) return a; } catch (e) { } return [null, null, null]; }
 function storeSaves(a) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(a)); } catch (e) { } }
-function renderSaves() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].c2 ? 'CHAPTER 1 COMPLETE' : a[i].tn ? 'THE MYSTERY: TRAINING DONE' : a[i].ch2 ? 'THE MYSTERY COMPLETE' : a[i].ch1 ? 'THE MYSTERY: THE CAT' : a[i].beat ? 'THE MYSTERY: VERITY BEATEN' : 'CHAPTER 1: THE MYSTERY') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
-function startStory(slot) { const a = loadSaves(); if (a[slot] && a[slot].ch2) { startTraining(slot); return; } if (a[slot] && a[slot].ch1) { startChapter2(slot); return; }      // (a save that has finished chapter 1 goes on with part 2, the training)
+function renderSaves() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].c3 ? 'CHAPTER 2: THE PORTAL' : a[i].c2 ? 'CHAPTER 1 COMPLETE' : a[i].tn ? 'THE MYSTERY: TRAINING DONE' : a[i].ch2 ? 'THE MYSTERY COMPLETE' : a[i].ch1 ? 'THE MYSTERY: THE CAT' : a[i].beat ? 'THE MYSTERY: VERITY BEATEN' : 'CHAPTER 1: THE MYSTERY') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
+function startStory(slot) { const a = loadSaves(); if (a[slot] && a[slot].c2) { startC3(slot); return; }      // (a save that has finished chapter 1 goes on with chapter 2, v1.95)
+  if (a[slot] && a[slot].ch2) { startTraining(slot); return; } if (a[slot] && a[slot].ch1) { startChapter2(slot); return; }      // (a save that has finished chapter 1 goes on with part 2, the training)
   if (!a[slot]) a[slot] = { ch: 1 }; storeSaves(a); audio(); show('story'); story = { slot, t0: pnow(), battle: false, T: 0, ev: {} }; alley = true; court = false; wx = 0; }      // (a save that has beaten Verity and heard the report goes on with the Cartoon Cat part, the second half of chapter 1)
 function storyDone() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].beat = true; storeSaves(a); }
 function storySkip() {
   if (!story || story.battle) return;
+  if (story.c3) { c3Skip(); return; }
   if (story.tn) { trainSkip(); return; }
   if (story.master) { const n = MS_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; else if (story.T >= MS.card + 1.2) { show('saves'); renderSaves(); } return; }      // (the Master's scene - it is checked before the Cartoon Cat part, whose flag it keeps: on to the next cut; at the very end back to the saves)
   if (story.ch2) { const n = C2_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; return; }      // (part 2: on to the next cut)
@@ -4566,6 +4570,7 @@ const CUT = { see: 10.05, zoom: 10.3, slow: 10.85, slowEnd: 13.8, ask: 11.6, ask
 const wclock = T => T < CUT.slow ? T : T < CUT.slowEnd ? CUT.slow + (T - CUT.slow) * CUT.rate : CUT.slow + (CUT.slowEnd - CUT.slow) * CUT.rate + (T - CUT.slowEnd);      // the world's clock: it crawls (a quarter of the speed) while the slow motion lasts
 const ease3 = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
 function storyFrame(now, dt) {
+  if (story.c3) { c3Frame0(now, dt); return; }      // (chapter 2: the portal, v1.95)
   if (story.tn) { trainFrame(now, dt); return; }      // (part 2: the training morning and its ending)
   if (story.master) { masterFrame(now, dt); return; }      // (the Master's scene, after the Cat)
   if (story.outro) { outroFrame(now, dt); return; }      // (the ending of the chapter, after the fight)
@@ -6118,6 +6123,7 @@ function tick(t) {
   if (stance === 'down' && stPrev === 'stand' && vs && state === 'play') ceSpend(CE_COST.crouch, now); stPrev = stance;      // (the crouch of every fighter, the Cat smashing himself flat: 3% of the energy)
   if (lanRole === 'in' && state === 'play') lanTick();      // (the Wi-Fi fight: his pictures are picked up every frame, not every 0.15 s)
   if (story && story.toOutro) { story.toOutro = false; startOutro(now); }
+  if (story && story.toC3End) { story.toC3End = false; startC3End(now); }      // (chapter 2's fight is won: its ending starts)
   if (story && story.toEnd) { story.toEnd = false; startTrainEnd(now); }      // (the training fight is won: the happy ending starts)
   if (story && story.toMaster) { story.toMaster = false; startMaster(now); }      // (the fight against the Cat is won: the Master's scene starts)      // (the fight against Verity is won: the ending of the chapter starts)
   if (state === 'play') { if (still || now < holdUntil) { last = now; if (impf) impfFrame(); } else drawScene(now, dt); stateDraw(now); msRecord(now); }      // hit-stop: the picture freezes for a split second when the red orb explodes
