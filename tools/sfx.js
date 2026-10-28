@@ -447,6 +447,13 @@ function makeSfx(ac) {
       const t = T(), B = C.ce; burst(B.soft, t, { type: 'bandpass', f: 200, f2: 2400, q: 1.6, dur: 1.1, gain: 1.0, atk: 0.9 }); tone(B.deep, t, { f: 70, f2: 30, dur: 1.2, gain: 0.5, atk: 0.8 });
       tone(B.deep, t + 1.1, { f: 120, f2: 24, dur: 1.4, gain: 0.9, atk: 0.003 }); burst(B.deep, t + 1.1, { type: 'lowpass', f: 700, f2: 80, q: 0.7, dur: 1.0, gain: 0.5, atk: 0.003 }); for (let i = 0; i < 12; i++) burst(B.deep, t + 1.2 + i * 0.09 + R(0, 0.05), { f: R(2500, 6000), q: 4, dur: 0.02, gain: 0.08 * (1 - i / 14), atk: 0.001 });
     },
+    c3warn() {                                           // v1.96 Verity's STOP is coming: a thin rising shimmer and a dry thump where he will stand (so you hear it even when you look at your own feet)
+      const t = T(), B = C.tele; tone(B.soft, t, { type: 'triangle', f: 520, f2: 1300, dur: 0.24, gain: 0.12, atk: 0.01, cur: 1 }); burst(B.soft, t, { type: 'bandpass', f: 900, f2: 3800, q: 1.4, dur: 0.22, gain: 0.35, atk: 0.14 }); tone(B.deep, t + 0.2, { f: 190, f2: 60, dur: 0.14, gain: 0.3, atk: 0.002 });
+    },
+    c3enter() {                                          // v1.96 Yuji goes into the portal: the air is sucked in (a rush that climbs), a glassy ring, then a deep boom that dies away
+      const t = T(), B = C.ce; burst(B.soft, t, { type: 'bandpass', f: 180, f2: 3800, q: 1.4, dur: 0.6, gain: 1.1, atk: 0.45 }); tone(B.deep, t, { type: 'triangle', f: 60, f2: 240, dur: 0.6, gain: 0.35, atk: 0.45, cur: 1 }); tone(B.soft, t + 0.1, { f: 880, f2: 1760, dur: 0.5, gain: 0.05, atk: 0.35 });
+      tone(B.deep, t + 0.6, { f: 140, f2: 26, dur: 1.5, gain: 0.9, atk: 0.003 }); burst(B.deep, t + 0.6, { type: 'lowpass', f: 900, f2: 90, q: 0.7, dur: 1.1, gain: 0.5, atk: 0.003 }); for (let i = 0; i < 8; i++) burst(B.deep, t + 0.7 + i * 0.07 + R(0, 0.04), { f: R(2500, 6000), q: 4, dur: 0.02, gain: 0.07 * (1 - i / 10), atk: 0.001 });
+    },
     rumble(d) {                                          // v1.62 the whole room shakes: a low rumble that swells for d seconds and dies away
       const t = T(), B = C.ce; d = d || 2; burst(B.deep, t, { type: 'lowpass', f: 320, f2: 70, q: 0.7, dur: d, gain: 0.8, atk: d * 0.6 }); tone(B.deep, t, { f: 42, f2: 30, dur: d, gain: 0.35, atk: d * 0.6 });
     },

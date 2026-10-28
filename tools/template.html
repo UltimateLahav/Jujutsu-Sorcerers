@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.95</small>
+    <small id="ver">V1.96</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -1977,6 +1977,7 @@ function drawSmoke(now, dt) {                 // dust along the ground behind an
 function koDummy(now) {                       // the enemy goes down (every way of finishing him ends here): in a match the round ends and Gojo gets the point
   if (dummy.ko >= 0) return;                  // (only once, even if two hits finish him in the same moment)
   dummy.air = null; dummy.airH = 0; dummy.rag = null;
+  if (vs && vs.c3) { c3Fall(now); return; }      // (chapter 2: he folds into his ball and comes back, the fight is won at the portal, see chap2.js)
   if (vs && vs.story && vs.foe === 'verity' && !vs.endGo && !vs.c3) { if (!vs.end) storyEndStart(pnow()); return; }      // the story fight does not end with a fall: it ends with the Reversal Red
   if (vs && vs.story && vs.foe === 'cat' && !vs.endGo) { if (!vs.end) catEndStart(pnow()); return; }      // ...and the one with the Cat ends with a cutscene (see keFrame)
   if (vs && vs.hunt) huntFoeKO(now); else if (vs && !(vs.rush && foesOf().some(f => f !== dummy && f.ko < 0))) endRound('player', 'ko', now);      // (a RUSH wave goes on while the other one still stands)
@@ -2404,7 +2405,7 @@ function buildGrades() {                       // the six grade buttons: locked 
 function startMatch(gi, story, retry, foe) { vs = { story: story === 'c3' ? 'c3' : !!story, gi, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: story ? 1e9 : ROUND_MS, hp: PHP, sh: PHP, hist: [], res: null, retry: retry | 0, me: story ? (foe === 'gojo' || story === 'c3' ? 'yuji' : 'gojo') : vsPick.me, foe: story ? (foe || 'verity') : vsPick.foe, tn: !!story && (foe === 'gojo' || story === 'c3'), c3: story === 'c3' };      // (a story fight against Gojo is the training of part 2: you are Yuji, tn = the training's limits; 'c3' = chapter 2's fight against Verity: you are Yuji with the same limits; vs.story keeps the word, so REMATCH starts the same fight)
   vs.inv = !story && vs.me === vs.foe; beginRound(pnow()); }      // (retry: the story fight again after a failed red)
 function beginRound(now) {                     // a fresh round: the scene is reset, the enemy steps in, "ROUND n" and "FIGHT!"
-  const keep = vs, gore = keep.story && keep.foe === 'cat' ? [gibs, drops, decals, pools] : null; show('play'); vs = keep; if (gore) [gibs, drops, decals, pools] = gore; ceReset(); const t = pnow(), G = GRADES[vs.gi];
+  const keep = vs, gore = keep.story && keep.foe === 'cat' ? [gibs, drops, decals, pools] : null; show('play'); vs = keep; if (gore) [gibs, drops, decals, pools] = gore; ceReset(); const t = pnow(), G = GRADES[vs.gi]; if (vs.c3) c3Begin(t);      // (chapter 2's fight: the street and Verity's STOP are set up, see chap2.js)
   Object.assign(vs, { ph: 'intro', t0: t, tl: vs.story ? 1e9 : ROUND_MS, hp: PHP, sh: PHP, hist: [], seenAtk: -1, seenAt: 0, seenK: 0, rolled: true, whiffAt: -1, prevAtk: -1, hitAt: -9999, why: '', who: '', koAt: 0, crater: null }); blindOff = false; bfo = null; bfp = false;
   spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); if (vs.net) { dummy.net = true; dummy.max = dummy.hp = dummy.shown = PHP; dummy.x = dummy.tx = wx + NET_G0; dummy.pose = null; vs.toSent = false; }      // (the Wi-Fi fight: the other player, drawn from his phone's pictures)
   vdg = cst = null; smear.length = drip.length = 0; cProj = []; if (vs.rush) rushSpawn(t); else if (vs.cv) initCurse(dummy, vs.cv, wx + Math.max(54, Math.min(90, (VW >> 1) - 70)), vs.hard ? 1.5 : 1);      // (a challenge: the curse steps in; a RUSH wave: one or two)
@@ -2488,7 +2489,7 @@ function finishMatch(now) {
   if (vs.net) { netOver(now); return; }
   if (vs.hunt) { huntOver(now); return; }
   if (vs.cv) { curseOver(now); return; }
-  vs.ph = 'over'; $('vsAgain').textContent = 'REMATCH'; $('vsAgain').classList.toggle('hot', !(vs.story ? vs.pw >= 1 : vs.pw >= 2)); if (vs.c3 && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s4', 400); story.toC3End = true; return; }      // (beating Verity as Yuji: chapter 2's ending follows, v1.95)
+  vs.ph = 'over'; $('vsAgain').textContent = 'REMATCH'; $('vsAgain').classList.toggle('hot', !(vs.story ? vs.pw >= 1 : vs.pw >= 2));      // (chapter 2's fight is not won here: it ends when you get into the portal, see c3Enter in chap2.js)
   if (vs.story && vs.foe === 'verity' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s1', 200); storyDone(); story.toOutro = true; return; }      if (vs.story && vs.foe === 'cat' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s2', 300); storyDone2(); story.toMaster = true; return; }      if (vs.story && vs.tn && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s3', 300); storyDone3(); story.toEnd = true; return; }      // (beating Gojo in the training: the happy ending, v1.55)      // (beating the Cat: the Master's scene follows, then END OF CHAPTER 1, v1.54)      // (beating Verity: the report to the higher-ups follows, started by the main loop)
   const win = vs.story ? vs.pw >= 1 : vs.pw >= 2, pf = vs.hp / PHP, stars = win ? (pf >= 0.7 ? 3 : pf >= 0.35 ? 2 : 1) : 0, sv = vsLoad(), gi = vs.gi;
   if (win && !vs.story) { sv.un = Math.max(sv.un, Math.min(5, gi + 1)); sv.st[gi] = Math.max(sv.st[gi], stars); vsStore(sv.un, sv.st); earn([15, 25, 40, 60, 90, 140][gi]); }
@@ -2608,6 +2609,7 @@ function drawVs0(now, ux, uy, VW) {         // health bars, names, the grade, th
   if (vs.rush) for (let i = 0; i < vs.run.waves.length; i++) { const x = Math.round(VW / 2 - vs.run.waves.length * 4 + i * 8), done = i < vs.pw; ctx.fillStyle = '#000'; ctx.fillRect(x - 1, 21, 8, 8); ctx.fillStyle = done ? '#ffd34d' : i === vs.round - 1 && vs.ph !== 'ko' ? '#7a6aa8' : '#3a3050'; ctx.fillRect(x, 22, 6, 6); }      // (RUSH: a pip for every wave, lit when it is cleared)
   if (kob && !vs.story && !vs.rush) { const me = vs.who === 'player'; pxt(me ? 'YOU GET THE POINT' : 'ENEMY GETS THE POINT', VW / 2, gy + 20, me ? '#7dff9a' : '#ff8a7a', 8, 'center'); }      // who got the point (the round restarts in a moment); it stays between the touch controls
   ctx.restore();
+  if (vs.c3) c3Hud(now, VW);      // (chapter 2: the way to the portal, the STOP's warning)
   const bt = vs.ph === 'intro' ? (vs.story ? ['FIGHT!', '#ff4a3a', a] : a < INTRO_ROUND ? [vs.hunt ? 'HUNT ' + (vs.hunt.i + 1) : (vs.rush ? 'WAVE ' : 'ROUND ') + vs.round, '#ffe9a0', a] : [vs.hunt ? 'SEARCH!' : 'FIGHT!', '#ff4a3a', a - INTRO_ROUND]) : kob ? (vs.why === 'fatal' ? ['FATALITY', '#ff3a3a', a] : vs.why === 'time' ? ['TIME!', '#9fd8ff', a] : vs.hunt && vs.why === 'hunt' ? ['HUNT CLEAR', '#7dff9a', a] : vs.rush && vs.who === 'player' ? [vs.pw >= vs.run.waves.length ? vs.run.name + ' CLEAR' : 'WAVE CLEAR', '#7dff9a', a] : ['K.O.', '#ffe9a0', a]) : null;
   if (bt) { const kk = bt[2] / 1000, j = kk < 0.4 ? Math.round((Math.random() - 0.5) * 2) : 0; pxt(bt[0], VW / 2 + j, gy - 26 + j, bt[1], kk < 0.06 ? 48 : kk < 0.12 ? 32 : 24, 'center'); }      // the big banners (ROUND n, FIGHT!, K.O., TIME!, FATALITY) slam in huge and drop to 24 px in two steps, then shake a little, like the FATALITY title
 }
@@ -3228,7 +3230,7 @@ function pickAtk() {                          // crouched: the low jab and the u
 }
 function drawBackdrop(now) {                  // everything behind the fighters (also used by the FATALITY cutscene)
   if (domBgOff(now)) { ctx.fillStyle = '#000'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }
-  else if (alley) drawAlley(now);
+  else if (alley) { drawAlley(now); if (vs && vs.c3 && state === 'play') c3World(now); }      // (chapter 2: the portal stands at the end of the street)
   else { ctx.save(); ctx.translate(0, -FAR); ctx.drawImage(bg, 0, 0);
   layer(far, 0.25); layer(near, 0.55);
   drawProps(now); ctx.restore(); drawGround(); drawBlood(now); drawCrater(now); }
@@ -4318,7 +4320,7 @@ function drawScene(now, dt) {
   wx += walkVel(dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * (crch ? 0.6 : 1) * (bf >= 0 ? 0.3 : 1), dt, (jf >= 0 && jf <= 11) || tf >= 0) * dt;      // crouch-walking is slower, and walking while blocking is much slower still
   if (dash) { const k = Math.min(1, (now - dash.at) / dash.ms); wx = dash.from + (dash.to - dash.from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) dash = null; }   // Lapse Blue blink: a very fast dash
   if (df >= 0) { const k = Math.min(1, Math.max(0, (now - dgAt - 2000 / DASH_FPS) / DASH_MS)); wx = dgFrom + (dgTo - dgFrom) * (1 - Math.pow(1 - k, 3)); }      // the dash itself: fast at first, over frames 3-12
-  playerSlide(dt); if (ride) updateRide(now); physCollide(now, dt); if (vs && vs.net && dummy) wx = Math.max(dummy.x - NET_LEASH, Math.min(dummy.x - 14, wx)); else if (vs && vs.cv) { const lf = leadFoe(); if (lf) wx = Math.min(wx, lf.x - Math.max(12, lf.curse.hw)); }                    // knocked back by the attacking dummy: the world slides past, then friction stops it
+  playerSlide(dt); if (ride) updateRide(now); physCollide(now, dt); if (vs && vs.net && dummy) wx = Math.max(dummy.x - NET_LEASH, Math.min(dummy.x - 14, wx)); else if (vs && vs.cv) { const lf = leadFoe(); if (lf) wx = Math.min(wx, lf.x - Math.max(12, lf.curse.hw)); } else if (vs && vs.c3) c3Block(now, dt);                    // knocked back by the attacking dummy: the world slides past, then friction stops it
 
   ctx.save();
   shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }   // tiny shake on impact (the bars, names and timer are drawn back where they belong, so they stay still)
@@ -4849,6 +4851,7 @@ function vEnd(d, now) { d.vact = null; d.ai = 'think'; d.aiAt = now; d.vNext = n
 function vActTick(d, now, dt) {
   const a = d.vact, t = now - a.at, ag = Math.abs(d.x - wx), toward = d.x > wx ? -1 : 1;
   if (d.rxAt > a.at) { vEnd(d, now); return; }      // he was hit: the move is over
+  if (a.type === 'stop') { c3StopTick(d, a, t, now); return; }      // (chapter 2's STOP, see chap2.js)
   if (a.type === 'bite') {
     a.anim = 'bite'; a.fi = t * 18 / 1000; if (a.fi >= 5 && a.fi < 9 && ag > 14) d.x += toward * 80 * dt;
     if (!a.hit && a.fi >= 8) { a.hit = 1; snd('f:hit', 3); if (ag <= eHit(22)) { const h = hurtAt; gojoHit(0, now); if (hurtAt !== h) vs.bleed = { until: now + 4000, next: now + 100 }; } }
@@ -4941,6 +4944,7 @@ function storyBattleTick(now, dt) {
   if (now < d.stunUntil) { d.vact = null; return; }      // stunned (Lapse Blue, the JUMPSCARE): he does nothing
   if (d.vact && (d.ai === 'dodge' || d.ai === 'block')) d.vact = null;      // the AI saw a swing coming: it takes over
   if (d.vact) { vActTick(d, now, dt); return; }
+  if (vs.c3 && c3StopCheck(d, now)) return;      // (chapter 2: the STOP, see chap2.js)
   if (d.ai === 'dodge') {      // the dodge is a teleport: he vanishes, and half way through he appears again behind or beside Gojo
     if (d.tpFor !== d.aiAt) { d.tpFor = d.aiAt; d.tpDone = false; } d.vx = 0;
     if (!d.tpDone && now - d.aiAt >= (d.until - d.aiAt) / 2) { d.tpDone = true; const away = d.x > wx ? 1 : -1; d.x = Math.random() < 0.6 ? d.x + away * 48 : wx + away * Math.max(12, Math.abs(d.x - wx) - 44); snd('arrive'); }

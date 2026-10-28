@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.95</small>
+    <small id="ver">V1.96</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -920,6 +920,13 @@ function makeSfx(ac) {
     portalclose() {                                      // v1.62 the portal collapses: a rush sucked into a point, a deep thump, then a trickle of sparks and silence
       const t = T(), B = C.ce; burst(B.soft, t, { type: 'bandpass', f: 200, f2: 2400, q: 1.6, dur: 1.1, gain: 1.0, atk: 0.9 }); tone(B.deep, t, { f: 70, f2: 30, dur: 1.2, gain: 0.5, atk: 0.8 });
       tone(B.deep, t + 1.1, { f: 120, f2: 24, dur: 1.4, gain: 0.9, atk: 0.003 }); burst(B.deep, t + 1.1, { type: 'lowpass', f: 700, f2: 80, q: 0.7, dur: 1.0, gain: 0.5, atk: 0.003 }); for (let i = 0; i < 12; i++) burst(B.deep, t + 1.2 + i * 0.09 + R(0, 0.05), { f: R(2500, 6000), q: 4, dur: 0.02, gain: 0.08 * (1 - i / 14), atk: 0.001 });
+    },
+    c3warn() {                                           // v1.96 Verity's STOP is coming: a thin rising shimmer and a dry thump where he will stand (so you hear it even when you look at your own feet)
+      const t = T(), B = C.tele; tone(B.soft, t, { type: 'triangle', f: 520, f2: 1300, dur: 0.24, gain: 0.12, atk: 0.01, cur: 1 }); burst(B.soft, t, { type: 'bandpass', f: 900, f2: 3800, q: 1.4, dur: 0.22, gain: 0.35, atk: 0.14 }); tone(B.deep, t + 0.2, { f: 190, f2: 60, dur: 0.14, gain: 0.3, atk: 0.002 });
+    },
+    c3enter() {                                          // v1.96 Yuji goes into the portal: the air is sucked in (a rush that climbs), a glassy ring, then a deep boom that dies away
+      const t = T(), B = C.ce; burst(B.soft, t, { type: 'bandpass', f: 180, f2: 3800, q: 1.4, dur: 0.6, gain: 1.1, atk: 0.45 }); tone(B.deep, t, { type: 'triangle', f: 60, f2: 240, dur: 0.6, gain: 0.35, atk: 0.45, cur: 1 }); tone(B.soft, t + 0.1, { f: 880, f2: 1760, dur: 0.5, gain: 0.05, atk: 0.35 });
+      tone(B.deep, t + 0.6, { f: 140, f2: 26, dur: 1.5, gain: 0.9, atk: 0.003 }); burst(B.deep, t + 0.6, { type: 'lowpass', f: 900, f2: 90, q: 0.7, dur: 1.1, gain: 0.5, atk: 0.003 }); for (let i = 0; i < 8; i++) burst(B.deep, t + 0.7 + i * 0.07 + R(0, 0.04), { f: R(2500, 6000), q: 4, dur: 0.02, gain: 0.07 * (1 - i / 10), atk: 0.001 });
     },
     rumble(d) {                                          // v1.62 the whole room shakes: a low rumble that swells for d seconds and dies away
       const t = T(), B = C.ce; d = d || 2; burst(B.deep, t, { type: 'lowpass', f: 320, f2: 70, q: 0.7, dur: d, gain: 0.8, atk: d * 0.6 }); tone(B.deep, t, { f: 42, f2: 30, dur: d, gain: 0.35, atk: d * 0.6 });
@@ -2819,6 +2826,7 @@ function drawSmoke(now, dt) {                 // dust along the ground behind an
 function koDummy(now) {                       // the enemy goes down (every way of finishing him ends here): in a match the round ends and Gojo gets the point
   if (dummy.ko >= 0) return;                  // (only once, even if two hits finish him in the same moment)
   dummy.air = null; dummy.airH = 0; dummy.rag = null;
+  if (vs && vs.c3) { c3Fall(now); return; }      // (chapter 2: he folds into his ball and comes back, the fight is won at the portal, see chap2.js)
   if (vs && vs.story && vs.foe === 'verity' && !vs.endGo && !vs.c3) { if (!vs.end) storyEndStart(pnow()); return; }      // the story fight does not end with a fall: it ends with the Reversal Red
   if (vs && vs.story && vs.foe === 'cat' && !vs.endGo) { if (!vs.end) catEndStart(pnow()); return; }      // ...and the one with the Cat ends with a cutscene (see keFrame)
   if (vs && vs.hunt) huntFoeKO(now); else if (vs && !(vs.rush && foesOf().some(f => f !== dummy && f.ko < 0))) endRound('player', 'ko', now);      // (a RUSH wave goes on while the other one still stands)
@@ -3246,7 +3254,7 @@ function buildGrades() {                       // the six grade buttons: locked 
 function startMatch(gi, story, retry, foe) { vs = { story: story === 'c3' ? 'c3' : !!story, gi, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: story ? 1e9 : ROUND_MS, hp: PHP, sh: PHP, hist: [], res: null, retry: retry | 0, me: story ? (foe === 'gojo' || story === 'c3' ? 'yuji' : 'gojo') : vsPick.me, foe: story ? (foe || 'verity') : vsPick.foe, tn: !!story && (foe === 'gojo' || story === 'c3'), c3: story === 'c3' };      // (a story fight against Gojo is the training of part 2: you are Yuji, tn = the training's limits; 'c3' = chapter 2's fight against Verity: you are Yuji with the same limits; vs.story keeps the word, so REMATCH starts the same fight)
   vs.inv = !story && vs.me === vs.foe; beginRound(pnow()); }      // (retry: the story fight again after a failed red)
 function beginRound(now) {                     // a fresh round: the scene is reset, the enemy steps in, "ROUND n" and "FIGHT!"
-  const keep = vs, gore = keep.story && keep.foe === 'cat' ? [gibs, drops, decals, pools] : null; show('play'); vs = keep; if (gore) [gibs, drops, decals, pools] = gore; ceReset(); const t = pnow(), G = GRADES[vs.gi];
+  const keep = vs, gore = keep.story && keep.foe === 'cat' ? [gibs, drops, decals, pools] : null; show('play'); vs = keep; if (gore) [gibs, drops, decals, pools] = gore; ceReset(); const t = pnow(), G = GRADES[vs.gi]; if (vs.c3) c3Begin(t);      // (chapter 2's fight: the street and Verity's STOP are set up, see chap2.js)
   Object.assign(vs, { ph: 'intro', t0: t, tl: vs.story ? 1e9 : ROUND_MS, hp: PHP, sh: PHP, hist: [], seenAtk: -1, seenAt: 0, seenK: 0, rolled: true, whiffAt: -1, prevAtk: -1, hitAt: -9999, why: '', who: '', koAt: 0, crater: null }); blindOff = false; bfo = null; bfp = false;
   spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); if (vs.net) { dummy.net = true; dummy.max = dummy.hp = dummy.shown = PHP; dummy.x = dummy.tx = wx + NET_G0; dummy.pose = null; vs.toSent = false; }      // (the Wi-Fi fight: the other player, drawn from his phone's pictures)
   vdg = cst = null; smear.length = drip.length = 0; cProj = []; if (vs.rush) rushSpawn(t); else if (vs.cv) initCurse(dummy, vs.cv, wx + Math.max(54, Math.min(90, (VW >> 1) - 70)), vs.hard ? 1.5 : 1);      // (a challenge: the curse steps in; a RUSH wave: one or two)
@@ -3330,7 +3338,7 @@ function finishMatch(now) {
   if (vs.net) { netOver(now); return; }
   if (vs.hunt) { huntOver(now); return; }
   if (vs.cv) { curseOver(now); return; }
-  vs.ph = 'over'; $('vsAgain').textContent = 'REMATCH'; $('vsAgain').classList.toggle('hot', !(vs.story ? vs.pw >= 1 : vs.pw >= 2)); if (vs.c3 && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s4', 400); story.toC3End = true; return; }      // (beating Verity as Yuji: chapter 2's ending follows, v1.95)
+  vs.ph = 'over'; $('vsAgain').textContent = 'REMATCH'; $('vsAgain').classList.toggle('hot', !(vs.story ? vs.pw >= 1 : vs.pw >= 2));      // (chapter 2's fight is not won here: it ends when you get into the portal, see c3Enter in chap2.js)
   if (vs.story && vs.foe === 'verity' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s1', 200); storyDone(); story.toOutro = true; return; }      if (vs.story && vs.foe === 'cat' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s2', 300); storyDone2(); story.toMaster = true; return; }      if (vs.story && vs.tn && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s3', 300); storyDone3(); story.toEnd = true; return; }      // (beating Gojo in the training: the happy ending, v1.55)      // (beating the Cat: the Master's scene follows, then END OF CHAPTER 1, v1.54)      // (beating Verity: the report to the higher-ups follows, started by the main loop)
   const win = vs.story ? vs.pw >= 1 : vs.pw >= 2, pf = vs.hp / PHP, stars = win ? (pf >= 0.7 ? 3 : pf >= 0.35 ? 2 : 1) : 0, sv = vsLoad(), gi = vs.gi;
   if (win && !vs.story) { sv.un = Math.max(sv.un, Math.min(5, gi + 1)); sv.st[gi] = Math.max(sv.st[gi], stars); vsStore(sv.un, sv.st); earn([15, 25, 40, 60, 90, 140][gi]); }
@@ -3450,6 +3458,7 @@ function drawVs0(now, ux, uy, VW) {         // health bars, names, the grade, th
   if (vs.rush) for (let i = 0; i < vs.run.waves.length; i++) { const x = Math.round(VW / 2 - vs.run.waves.length * 4 + i * 8), done = i < vs.pw; ctx.fillStyle = '#000'; ctx.fillRect(x - 1, 21, 8, 8); ctx.fillStyle = done ? '#ffd34d' : i === vs.round - 1 && vs.ph !== 'ko' ? '#7a6aa8' : '#3a3050'; ctx.fillRect(x, 22, 6, 6); }      // (RUSH: a pip for every wave, lit when it is cleared)
   if (kob && !vs.story && !vs.rush) { const me = vs.who === 'player'; pxt(me ? 'YOU GET THE POINT' : 'ENEMY GETS THE POINT', VW / 2, gy + 20, me ? '#7dff9a' : '#ff8a7a', 8, 'center'); }      // who got the point (the round restarts in a moment); it stays between the touch controls
   ctx.restore();
+  if (vs.c3) c3Hud(now, VW);      // (chapter 2: the way to the portal, the STOP's warning)
   const bt = vs.ph === 'intro' ? (vs.story ? ['FIGHT!', '#ff4a3a', a] : a < INTRO_ROUND ? [vs.hunt ? 'HUNT ' + (vs.hunt.i + 1) : (vs.rush ? 'WAVE ' : 'ROUND ') + vs.round, '#ffe9a0', a] : [vs.hunt ? 'SEARCH!' : 'FIGHT!', '#ff4a3a', a - INTRO_ROUND]) : kob ? (vs.why === 'fatal' ? ['FATALITY', '#ff3a3a', a] : vs.why === 'time' ? ['TIME!', '#9fd8ff', a] : vs.hunt && vs.why === 'hunt' ? ['HUNT CLEAR', '#7dff9a', a] : vs.rush && vs.who === 'player' ? [vs.pw >= vs.run.waves.length ? vs.run.name + ' CLEAR' : 'WAVE CLEAR', '#7dff9a', a] : ['K.O.', '#ffe9a0', a]) : null;
   if (bt) { const kk = bt[2] / 1000, j = kk < 0.4 ? Math.round((Math.random() - 0.5) * 2) : 0; pxt(bt[0], VW / 2 + j, gy - 26 + j, bt[1], kk < 0.06 ? 48 : kk < 0.12 ? 32 : 24, 'center'); }      // the big banners (ROUND n, FIGHT!, K.O., TIME!, FATALITY) slam in huge and drop to 24 px in two steps, then shake a little, like the FATALITY title
 }
@@ -4070,7 +4079,7 @@ function pickAtk() {                          // crouched: the low jab and the u
 }
 function drawBackdrop(now) {                  // everything behind the fighters (also used by the FATALITY cutscene)
   if (domBgOff(now)) { ctx.fillStyle = '#000'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }
-  else if (alley) drawAlley(now);
+  else if (alley) { drawAlley(now); if (vs && vs.c3 && state === 'play') c3World(now); }      // (chapter 2: the portal stands at the end of the street)
   else { ctx.save(); ctx.translate(0, -FAR); ctx.drawImage(bg, 0, 0);
   layer(far, 0.25); layer(near, 0.55);
   drawProps(now); ctx.restore(); drawGround(); drawBlood(now); drawCrater(now); }
@@ -7467,7 +7476,7 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
 }
 
 // ---------------------------------------------------------------- v1.95 CHAPTER 2: THE PORTAL, the opening (this file is spliced into template.html by build_html.py, in place of the marker line after the custom mode's)
-// After END OF CHAPTER 1 (the Master took Gojo through his portal): night, the alley where it all began. The same dark portal opens at the end of it. Yuji cries out and charges for it, Verity blinks in and stops him with his long arm (his real JUMPSCARE grab picture), says "HEY, IT'S ME, IT'S VERITY" in his real voice, and they throw hands: seven blows, Yuji's and Verity's by turns (the pictures are the fighters' own: Yuji's R.HOOK, L.HOOK, UPPERCUT and R.KICK, Verity's three swings, each hit with its own reaction), and the last two meet in the middle (Yuji's CONCENTRATED FIST against Verity's long arm): equal. Then the fight is yours: you are Yuji with the moves of the training (TN_KIT) against Verity (GRADE 2). When Verity falls the portal collapses just before Yuji reaches it: TO BE CONTINUED.
+// After END OF CHAPTER 1 (the Master took Gojo through his portal): night, the alley where it all began. The same dark portal opens at the end of it. Yuji cries out and charges for it, Verity blinks in and stops him with his long arm (his real JUMPSCARE grab picture), says "HEY, IT'S ME, IT'S VERITY" in his real voice, and they throw hands: seven blows, Yuji's and Verity's by turns (the pictures are the fighters' own: Yuji's R.HOOK, L.HOOK, UPPERCUT and R.KICK, Verity's three swings, each hit with its own reaction), and the last two meet in the middle (Yuji's CONCENTRATED FIST against Verity's long arm): equal. Then the fight is yours: you are Yuji with the moves of the training (TN_KIT) against Verity (GRADE 2), and the aim is NOT to knock him out but to get INTO THE PORTAL (v1.96, the last part of this file): he stands in the way, and his STOP (a blink and a long arm) pushes you back. When you are in, Verity's long arm closes on the air where you stood and the portal shuts: TO BE CONTINUED.
 // Every actor is a pure function of the scene time T, so a tap that skips to the next cut (or a test that jumps in time) always draws the right picture.
 TN_COL.VERITY = '#f0d84a';
 const C3 = { portal: 1.6, say1: 3.7, charge: 6.0, arrive: 6.25, stop: 6.9, voice: 7.4, brawl: 14.6, step: 0.72, hold: 0.09, hold2: 0.16, gap: 34 };      // the times of the opening (seconds); step = the time of one exchange of blows, hold = the picture stops for that long at every impact (the hit-stop), gap = how far apart their chests stand
@@ -7480,8 +7489,10 @@ const C3_TALK = [
   { t: 13.0, d: 1.5, w: 'VERITY', a: 'NOBODY ENTERS.', b: '' },
   { t: C3.stand + 0.1, d: 1.8, w: 'YUJI', a: 'THEN I WILL GO', b: 'THROUGH YOU!' }];
 const C3_CUTS = [C3.say1, C3.charge, C3.voice, 11.4, C3.brawl, C3.stand, C3.end];      // taps jump to the next of these
-const C3E = { talk: 1.2, charge: 3.4, close: 3.9, kneel: 4.6, say: 5.3, fade: 7.3, card: 8.2 };      // the times of the ending (seconds)
-const C3E_CUTS = [C3E.talk, C3E.charge, C3E.say, C3E.fade, C3E.card];
+const C3E = { talk: 0.6, blink: 2.3, arm: 2.55, dive: 2.7, flare: 3.0, close: 3.5, ret: 3.9, fade: 5.9, card: 6.8 };      // the times of the ending (seconds): Yuji's line, Verity blinks in behind him, his arm shoots out, Yuji dives into the portal, the flare, the portal shuts, the arm draws back, the fade, the card
+const C3E_TALK = [{ t: C3E.talk, d: 1.8, w: 'YUJI', a: 'SENSEI... I AM COMING!', b: '' }];
+const C3E_CUTS = [C3E.blink, C3E.dive, C3E.close, C3E.fade, C3E.card];
+const C3V0 = { w: 64, h: 64, cx: 32, x0: 0, top: 0 };      // the place of Verity's 64 x 64 pictures
 
 // ---- where everybody is (worked out from the real pictures: Yuji faces right, Verity left)
 const c3YT = (k, f) => { const p = tnPick({ atkOn: true, atkK: k, af: Math.min(14, Math.floor(f)) }); return -(p.info.cx - p.info.x0) + tnEdges(p.set[p.fi]).R; };      // how far in front of his middle Yuji's fist is at frame f of his move k
@@ -7558,8 +7569,8 @@ function c3Ring(x, y, a, big, col) {      // a blow lands: rings run out from th
   if (a < 0.12) { ctx.fillStyle = '#fff'; ctx.fillRect(x - 3, y, 7, 1); ctx.fillRect(x, y - 3, 1, 7); ctx.fillRect(x - 1, y - 1, 3, 3); }
   ctx.restore();
 }
-function c3Talk(T) {      // the speech box of the line that is on now; the letters come out 20 a second, each with a blip of its speaker's voice (Verity's first line is his real voice instead)
-  const i = C3_TALK.findIndex(s => T >= s.t && T < s.t + s.d); if (i < 0) return; const s = C3_TALK[i], n = Math.floor((T - s.t) * TN_RATE), sp = s.a + s.b, c = story.c3;
+function c3Talk(T, L) {      // the speech box of the line that is on now (L: the list of lines, the opening's by default); the letters come out 20 a second, each with a blip of its speaker's voice (Verity's first line is his real voice instead)
+  L = L || C3_TALK; const i = L.findIndex(s => T >= s.t && T < s.t + s.d); if (i < 0) return; const s = L[i], n = Math.floor((T - s.t) * TN_RATE), sp = s.a + s.b, c = story.c3;
   if (c.vi !== i) { c.vi = i; c.vc = 0; } while (c.vc < Math.min(n, sp.length)) { c.vc++; if (sp[c.vc - 1] !== ' ' && !s.voice) snd('tvoice', s.w === 'YUJI' ? 1 : 0); } tnDlg(s.w, s.a, s.b, n);
 }
 
@@ -7592,25 +7603,32 @@ function c3Frame(now, dt) {
   ctx.restore(); if (T >= C3.end && !story.battle) startC3Battle();
 }
 
-// ---- the ending (after Verity falls): the portal is still open, Verity fades away, Yuji runs for it, it collapses just before he gets there; the card
+// ---- the ending (you are in the portal's mouth): Yuji stands in front of it with the wind in his hair, Verity blinks in behind him and his long arm shoots out, Yuji dives in a moment before it reaches him, the portal flares and shuts, the arm closes on the air; the card
+function c3EndPose(T, G) {      // everybody at the scene time T: Yuji { x, a (see-through), run } and Verity { x, src (null = not there yet) }
+  const x0 = G.PX - 30, u = clamp01((T - C3E.dive) / 0.32), yx = T < C3E.dive ? x0 : lerp(x0, G.PX + 3, u * u), vx = x0 - 42;      // (he speeds up into the mouth; Verity stands 42 px behind him)
+  let src = null;
+  if (T >= C3E.blink && T < C3E.arm) src = vfr('tele', 6 + 8.99 * clamp01((T - C3E.blink) / 0.25), false);      // blinks in (the second half of his teleport)
+  else if (T >= C3E.arm && T < C3E.ret) src = vfr('scare_grab', Math.min(12, 4 + (T - C3E.arm) * 24), false);      // the arm shoots out (frames 4-12) and holds
+  else if (T >= C3E.ret && T < C3E.ret + 0.7) src = vfr('scare_grab', 12 - (T - C3E.ret) / 0.7 * 12, false);      // draws back
+  else if (T >= C3E.ret + 0.7) src = vfr('idle', T * 10, true);
+  return { Y: { x: yx, a: T < C3E.dive ? 1 : 1 - clamp01((yx - (G.PX - 14)) / 15), run: T >= C3E.dive }, V: { x: vx, src } };
+}
 function c3EndFrame(now, dt) {
   const T = story.T = Math.max(0, now - story.t0) / 1000, G = c3Geo(), cx = Math.round(VW / 2), sx = x => Math.round(cx + x), ev = (k, t, f, win) => { if (T >= t && T < t + (win || 0.5)) once2(k, f); };
   if (T >= C3E.card) { c3Card(now, T); return; }
   wx = 0; ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
   const sk = story.shk && now < story.shk.until ? story.shk.amp : 0; ctx.save(); if (sk) ctx.translate(Math.round((Math.random() * 2 - 1) * sk), Math.round((Math.random() * 2 - 1) * sk));
-  drawAlley(now); const pp = 1 - ease3((T - C3E.close) / 0.7);
+  drawAlley(now); const pp = 1 - ease3((T - C3E.close) / 0.8), P = c3EndPose(T, G), py = gy - Math.round(34 * rsLay().U);
   if (pp > 0) { rsPortal(sx(G.PX), pp, T); ctx.fillStyle = 'rgba(30,10,60,' + (0.16 * pp).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
-  const vk = clamp01((T - 0.8) / 1.6);      // Verity lies where he fell and fades away (flickering white at first)
-  if (vk < 1) { const src = vrx(4, 13), I = VRXIN[4]; ctx.globalAlpha = 1 - vk; sprAt(vk < 0.25 && ((T * 14) | 0) % 2 ? whiteOf(src) : src, I, sx(G.Vh), 0, true, 0); ctx.globalAlpha = 1; }
-  let yx = 0, p, run = 0;
-  if (T < C3E.charge) p = tnPick({ now: T * 1000 * 2 }); else if (T < C3E.kneel) { const u = clamp01((T - C3E.charge) / (C3E.kneel - C3E.charge)); yx = lerp(0, G.PX - 34, 1 - Math.pow(1 - u, 1.5)); run = 1; } else p = yujiPick({ hurting: true, hurtK: 9, hurtAt: 0, now: 330 });
-  if (run) rsYuji(sx(yx), 0, 'dash', T, { fps: 36, wind: 0.5 }); else { yx = T < C3E.charge ? 0 : G.PX - 34; shadow(sx(yx), 9); sprAt(p.set[p.fi], p.info, sx(yx), p.lift + (T < C3E.charge ? Math.round(Math.abs(Math.sin(T * 9)) * 1.2) : 0), false, 0); }
-  ev('vanish', 0.9, () => snd('vanish')); ev('go', C3E.charge, () => snd('dash', 0)); { const s = Math.floor((T - C3E.charge) / 0.17); if (T >= C3E.charge && T < C3E.kneel && s !== story.c3.rs) { story.c3.rs = s; snd('yrun', 0); } }
-  ev('close', C3E.close, () => snd('portalclose'), 1.0); ev('end', C3E.kneel, () => { c2Shake(now, 300, 3); snd('land', 1); puff(G.PX - 34, 8); });
-  drawSmoke(now, dt); ctx.restore(); rsWindBits(T, 0.3 * Math.max(0, pp), 0, VW);
-  const L = T >= C3E.say - 0.01 && T < C3E.say + 1.9 ? { w: 'YUJI', a: 'NO... NOT AGAIN.', b: '', t: C3E.say } : T >= C3E.talk && T < C3E.talk + 2.0 ? { w: 'YUJI', a: 'SENSEI... I AM COMING!', b: '', t: C3E.talk } : null;
-  if (L) { const n = Math.floor((T - L.t) * TN_RATE), c = story.c3, i = L.t === C3E.talk ? 0 : 1; if (c.vi !== i) { c.vi = i; c.vc = 0; } while (c.vc < Math.min(n, L.a.length)) { c.vc++; if (L.a[c.vc - 1] !== ' ') snd('tvoice', 1); } tnDlg(L.w, L.a, L.b, n); }
-  const fa = T < 0.6 ? 1 - T / 0.6 : T > C3E.fade ? clamp01((T - C3E.fade) / 0.8) : 0; if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  if (P.V.src) { shadow(sx(P.V.x), 9); sprAt(P.V.src, C3V0, sx(P.V.x), 0, false, 0); }
+  if (P.Y.a > 0) { if (P.Y.run) rsYuji(sx(P.Y.x), 0, 'dash', T, { fps: 36, wind: 0.6, alpha: P.Y.a }); else rsYuji(sx(P.Y.x), 0, 'idle', T, { wind: 0.5 }); }
+  const fk = T - C3E.flare; if (fk > 0 && fk < 0.45) { const g = ctx.createRadialGradient(sx(G.PX), py, 2, sx(G.PX), py, 64), a = 0.95 * (1 - fk / 0.45); ctx.save(); ctx.globalCompositeOperation = 'lighter'; g.addColorStop(0, 'rgba(255,240,255,' + a.toFixed(3) + ')'); g.addColorStop(0.5, 'rgba(190,110,255,' + (a * 0.5).toFixed(3) + ')'); g.addColorStop(1, 'rgba(120,40,200,0)'); ctx.fillStyle = g; ctx.fillRect(sx(G.PX) - 66, py - 66, 132, 132); ctx.restore(); }      // the portal flares as he goes in
+  ev('wind', 0.05, () => snd('rumble', 2.5), 0.4); ev('blink', C3E.blink, () => { snd('arrive'); snd('blink'); spark(P.V.x, gy - 30, 10, ['#c890ff', '#7a3aff', '#ffffff'], false, 1); }); ev('arm', C3E.arm, () => snd('f:swing', 3)); ev('dive', C3E.dive, () => snd('dash', 0));
+  ev('flare', C3E.flare, () => { snd('c3enter'); c2Shake(now, 320, 3); spark(G.PX, py, 24, ['#ffffff', '#d9b3ff', '#b056ff'], true, -1); spark(G.PX, py, 16, ['#ffffff', '#d9b3ff', '#b056ff'], true, 1); }); ev('close', C3E.close, () => snd('portalclose'), 1.0);
+  drawSmoke(now, dt); c3Sparks(now, dt, cx); ctx.restore(); rsWindBits(T, 0.45 * Math.max(0.25, pp), 0, VW);
+  c3Talk(T, C3E_TALK);
+  const wf = 1 - clamp01(T / 0.5); if (wf > 0) { ctx.fillStyle = 'rgba(255,255,255,' + wf.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (the cut from the fight comes out of white)
+  const fa = T > C3E.fade ? clamp01((T - C3E.fade) / 0.8) : 0; if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
   ctx.restore();
 }
 function c3Card(now, T) {      // CHAPTER 2: THE PORTAL, TO BE CONTINUED
@@ -7628,6 +7646,87 @@ function c3Skip() {      // a tap: on to the next cut; on the card (after its fi
   const n = C3_CUTS.find(x => x > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000;
 }
 function storyDone5() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].c3 = true; storeSaves(a); }      // (chapter 2, part 1 is finished: its last scene has reached the card)
+
+// ---------------------------------------------------------------- v1.96 THE PORTAL IS THE GOAL: the fight is not won by knocking Verity out but by getting INTO the portal
+// The street is a corridor: its left end 120 px behind you, the portal 330 px ahead, Verity in between. He is a wall (you cannot walk through him; a forward DASH slides you past his back, and a dash needs 1.4 s to come back), he cannot be knocked out for good (at no health he folds into his ball for 6 s, the free run, and comes back with 40%; the ball at half health is a free run too), and when you are past him, or near the portal with him not in your face, his STOP comes: he blinks out (0.22 s), blinks in where you will be 0.7 s from now (0.22 s), the long arm shoots out (0.25 s) and shoves you 60 px back. Block it (a little push), dash through it, jump over it or duck under it. Then his arm hangs out for 0.65 s: hit him in that time and the move is broken. The next STOP is 2.4 s away (1.8 s in the last 100 px): a little bar over his head fills up and turns into a flashing diamond when he is ready.
+const C3_ARM = 49 + CMOVE.length;      // the STOP ARM has a hit number of its own, so gojoHit (damage, guard, dash, jump and crouch rules) deals with it like with every other blow
+CMOVE.push({ k: C3_ARM, nb: false, heavy: false }); REACH.push(40); KNOCK.push(0); KNOCK_G.push(470); DMG.push(14);      // (14 damage and a push of 470 x 0.9 / 7 = 60 px)
+const C3W = { L: -120, PX: 330, door: 12, sep: 22, dashCd: 1400 };      // the left end of the street and the portal's place (world pixels; you start on 0), how close to its middle you must be to go in, how far apart two bodies stand (measured when the fight begins), how long a dash needs from its start to come back
+let c3s = null;      // the fight's own state: { t0, stopReady, cd (the wait of the last STOP), seen (since when the STOP is wanted), warnAt, warnN, to (where he will stand), fwd (when a forward dash last ran), dgLast (the start of the dash that is running), slide (+1 = you slide past his back), pushing (ms you have pressed against him), hintUntil, hintCool, down (when he last folded into the ball), talkAt (when he said NOBODY ENTERS!), seenP (the portal has been on the screen) }
+const c3Reach = () => Math.max(34, -c3VT('scare_grab', 10) + 2);      // how far from his middle the hand is when the arm is out (read from the picture)
+function c3Begin(now) {      // a fight begins (also a rematch): the width of the two bodies is measured, the first STOP is ready as soon as the intro is over
+  C3W.sep = hbPush('yuji', 5) + hbPush('verity', 6);
+  c3s = { t0: now, stopReady: now + INTRO_MS, cd: 2400, seen: 0, warnAt: -1e9, warnN: 0, to: 0, fwd: -1e9, dgLast: -1, slide: 0, pushing: 0, hintUntil: 0, hintCool: 0, down: -1e9, talkAt: -1e9, seenP: false };
+}
+function c3Block(now, dt) {      // every frame after the movements: the street's ends, Verity as a wall, and the portal's mouth
+  const c = c3s, d = dummy; if (!c || !d || !vs || vs.ph !== 'fight') return;
+  const P = C3W.PX, sep = C3W.sep;
+  if (d.ko < 0) { if (d.x > P - 26 && d.vx > 0 || d.x < C3W.L - 24 && d.vx < 0) d.vx = 0; d.x = Math.max(C3W.L - 24, Math.min(P - 26, d.x)); }      // (Verity can not go into his portal, nor out of the street: a blow that throws him at the end of it leaves him standing against it)
+  if (d.vform && d.vform !== 'verity') c.stopReady = Math.max(c.stopReady, now + 1200);      // (as a ball he does not STOP anybody, and when he is back his STOP needs 1.2 s)
+  wx = Math.max(C3W.L, Math.min(P, wx));
+  if (dgAt >= 0 && dgK === 0) c.fwd = now;
+  if (dgAt >= 0) c.dgLast = dgAt; else if (c.dgLast >= 0) { dgLock = dgReady = Math.max(dgReady, c.dgLast + C3W.dashCd); c.dgLast = -1; }      // (a dash needs 1.4 s from its start to come back, and the DASH button counts it down: it is spent on getting past him or on the arm, not on both)
+  const gap = d.x - wx, wall = d.ko < 0 && (!d.vform || d.vform === 'verity') && now >= (d.openUntil || 0) && now >= d.stunUntil && dgAt < 0 && !dash && teleAt < 0 && hurtAt < 0;      // (he is a wall unless he is down, a ball, OPEN or stunned, or you are dashing, blinking or reeling)
+  if (c.slide) { const to = d.x + c.slide * sep; wx += (to - wx) * Math.min(1, dt * 20); if (Math.abs(to - wx) < 1) { wx = to; c.slide = 0; } }      // (a forward dash that ended inside him: you slide on, out of his back)
+  else if (wall && Math.abs(gap) < sep) { if (now - c.fwd < 50 && gap > -sep + 1) c.slide = 1; else { const to = gap >= 0 ? d.x - sep : d.x + sep; wx += (to - wx) * (Math.abs(to - wx) <= 3 ? 1 : Math.min(1, dt * 24)); } }
+  c.pushing = wall && gap > 0 && gap < sep + 4 && (keyR || padR) ? c.pushing + dt * 1000 : Math.max(0, c.pushing - dt * 2000);
+  if (c.pushing > 700 && now >= c.hintCool) { c.hintUntil = now + 3200; c.hintCool = now + 14000; }
+  if (wx >= P - C3W.door && hurtAt < 0 && now >= gDownUntil) c3Enter(now);
+}
+function c3Enter(now) {      // you are in the portal's mouth: the fight is won (no K.O. banner, no result screen: the ending starts at once)
+  vs.ph = 'over'; vs.pw = 1; vs.res = { win: true, stars: 3 }; earnOnce('s4', 400); story.toC3End = true;
+}
+function c3Fall(now) {      // his health runs out: he does not fall for good, he folds into his ball (the same as at half health: 6 s in which nothing hurts him) and comes back with 40%; the way to the portal is free
+  const d = dummy, c = c3s; if (d.vform && d.vform !== 'verity') return;      // (he is a ball already)
+  d.vform = 'smoke1'; d.vAt = now; d.bAt = now + 200; d.bSnd = false; d.lock = d.hp = d.shown = Math.round(d.max * 0.4); d.vact = null; d.fear = null; d.bleed = null; d.ai = 'rest'; d.vx = 0; d.stunUntil = 0; d.openUntil = 0; d.stg = 0;
+  if (c) c.down = now;
+  snd('vanish'); hitStop(90); shakeUntil = now + 220; shakeAmp = 3; flash(now, 120, 0.3);
+}
+function c3StopCheck(d, now) {      // is it time for the STOP? He is free (no move of his own, no flinch), the STOP is ready, and you are past him or near the portal with him not in your face for a moment
+  const c = c3s, P = C3W.PX; if (!c || vs.ph !== 'fight' || d.vact || now < c.stopReady || !(d.ai === 'think' || d.ai === 'walk' || d.ai === 'rest') || now - d.rxAt < RX_DUR[d.rx]) { if (c) c.seen = 0; return false; }
+  const gap = d.x - wx, left = P - wx, want = !(gap > -6 && gap < 56) && (gap <= -6 || left < 150) && left > 34 && hurtAt < 0 && now >= gDownUntil;
+  if (!want) { c.seen = 0; return false; } if (!c.seen) c.seen = now; if (now - c.seen < 150) return false;
+  const xp = dgAt >= 0 ? dgTo : wx + ((keyR || padR) ? FWD_SPEED * (stance === 'stand' ? 1 : 0.6) * (blkAt >= 0 ? 0.3 : 1) : 0) * 0.69, to = Math.min(xp + 21, P - 22); if (to - wx < 20) return false;      // (he reads the way you are heading and blinks in where you will be when the arm lands, 21 px ahead of that place: so a runner is hit, one who stops or backs away is missed, and a dash through him dodges it)
+  d.vact = { type: 'stop', at: now, hit: 0, anim: 'tele', fi: 0, to, moved: false, swung: false }; d.ai = 'rest'; d.aiAt = now; d.restFor = 99999;
+  c.warnAt = now; c.warnN++; c.to = to; c.cd = left < 100 ? 1800 : 2400; c.stopReady = now + c.cd; c.seen = 0; snd('c3warn'); return true;
+}
+function c3StopTick(d, a, t, now) {      // the STOP: blink out and in (0.44 s), the arm shoots out (0.25 s), the blow, the arm hangs out (0.2 s) and draws back (0.45 s); a hit on him ends it (see vActTick)
+  if (t < 440) { a.anim = 'tele'; a.fi = t / 440 * 14.99; if (!a.moved && t >= 220) { a.moved = true; spark(d.x, gy - 30, 8, ['#c890ff', '#7a3aff', '#ffffff'], false, 1); d.x = a.to; d.vx = 0; snd('blink'); spark(d.x, gy - 30, 8, ['#c890ff', '#7a3aff', '#ffffff'], false, -1); } return; }
+  if (t < 690) { a.anim = 'scare_grab'; a.fi = 4 + (t - 440) / 250 * 6; if (!a.swung) { a.swung = true; snd('f:swing', 3); } return; }
+  if (!a.hit) {
+    a.hit = 1; snd('f:hit', 3); shakeUntil = now + 90; shakeAmp = 1;
+    if (d.x - wx > -4 && Math.abs(d.x - wx) - 8 <= c3Reach()) { const h = hurtAt; gojoHit(C3_ARM, now); if (hurtAt !== h) { say('STOPPED!', wx, '#c890ff', 8, now + 90); puff(wx, 4); } } else say('MISS', wx, '#9fd8ff', 8, now);
+  }
+  a.anim = 'scare_grab'; if (t < 890) a.fi = 10 + (t - 690) / 200 * 2; else if (t < 1340) a.fi = 12 - (t - 890) / 450 * 12; else { if (c3s && c3s.warnN === 1) c3s.talkAt = now; vEnd(d, now); }      // (the first time he has said his line: NOBODY ENTERS!, see c3Hud)
+}
+
+// ---- the picture: the portal in the street, the aim in the HUD
+function c3Crate(x, y, w, h) { ctx.fillStyle = '#2a1d14'; ctx.fillRect(x, y, w, h); ctx.fillStyle = '#5f4531'; ctx.fillRect(x + 1, y + 1, w - 2, h - 2); ctx.fillStyle = '#7a5a40'; ctx.fillRect(x + 1, y + 1, w - 2, 1); ctx.fillStyle = '#4a3425'; for (let i = 1; i < 3; i++) ctx.fillRect(x + 1, y + Math.round(i * h / 3), w - 2, 1); ctx.fillStyle = '#34261b'; for (let i = 0; i < Math.min(w, h) - 4; i++) ctx.fillRect(x + 2 + i, y + 2 + i, 1, 1); }      // (a wooden crate: dark outline, planks, a lit top edge, a brace)
+function c3World(now) {      // behind the fighters: the end of the street (a stack of crates), the portal (when it is on the screen), a purple edge when it is not, the dark violet that grows as it comes near, and its wind
+  if (!c3s) return; const P = C3W.PX, sx = Math.round(VW / 2 + P - wx), bx = Math.round(VW / 2 + C3W.L - wx), k = clamp01(1 - (P - wx) / 260);
+  if (bx > -50 && bx < VW + 20) { c3Crate(bx - 44, gy - 17, 18, 18); c3Crate(bx - 26, gy - 17, 18, 18); c3Crate(bx - 35, gy - 34, 18, 17); }
+  if (!c3s.seenP && sx < VW + 10) { c3s.seenP = true; snd('rumble', 1.8); }      // (the first time the portal comes into the picture)
+  if (sx > -40 && sx < VW + 40) rsPortal(sx, 1, now / 1000);
+  else if (sx >= VW + 40) { const g = ctx.createLinearGradient(VW - 46, 0, VW, 0); g.addColorStop(0, 'rgba(110,40,190,0)'); g.addColorStop(1, 'rgba(150,60,220,' + (0.12 + 0.3 * k).toFixed(3) + ')'); ctx.fillStyle = g; ctx.fillRect(VW - 46, 0, 46, VH); }
+  ctx.fillStyle = 'rgba(30,10,60,' + (0.04 + 0.12 * k).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); rsWindBits(now / 1000, 0.1 + 0.5 * k, 0, VW);
+}
+function c3Hud(now, W) {      // the aim: a bar along the bottom with the portal at its end, you and Verity on it; what to do now; the STOP's warning (a ring where he will stand, a "!" over you); the sign over Verity's head that says when the STOP is ready
+  const c = c3s, d = dummy; if (!c || !d || !vs || (vs.ph !== 'fight' && vs.ph !== 'intro')) return;
+  const mx = Math.round(W / 2), sx = x => Math.round(mx + x - wx), by = gy + 9, x0 = mx - 48, fx = v => x0 + Math.round(clamp01((v - C3W.L) / (C3W.PX - C3W.L)) * 96), ball = !!d.vform && d.vform !== 'verity';
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x0 - 2, by - 2, 100, 5); ctx.fillStyle = '#4a3a8a'; ctx.fillRect(x0, by, 96, 1); ctx.fillStyle = '#b056ff'; ctx.fillRect(x0 + 97, by - 4, 3, 9); ctx.fillStyle = '#e6c8ff'; ctx.fillRect(x0 + 98, by - 3, 1, 7);      // (the way, the portal)
+  ctx.fillStyle = '#f0d84a'; ctx.fillRect(fx(d.x) - 1, by - 1, 3, 3); ctx.fillStyle = '#ff9a5a'; ctx.fillRect(fx(wx) - 1, by - 2, 3, 5);
+  let msg = '', col = '#e6c8ff'; const nar = W < 215;      // (a narrow screen: the middle between the touch controls is only about 100 px wide, so the words are shorter)
+  if (ball && now - c.down < 7000) { msg = nar ? 'RUN FOR IT!' : 'RUN! GET IN THE PORTAL!'; col = ((now / 160) | 0) % 2 ? '#ffffff' : '#ffb070'; } else if (c.warnN <= 2 && now - c.warnAt < 1300) { msg = nar ? 'JUMP OR DUCK!' : 'BLOCK, JUMP OR DUCK!'; col = '#c890ff'; } else if (now - c.talkAt < 1700) { msg = 'NOBODY ENTERS!'; col = '#f0d84a'; } else if (now < c.hintUntil) { msg = 'DASH PAST HIM!'; col = '#ffd34d'; } else if (now - c.t0 < 8000) msg = nar ? 'TO THE PORTAL!' : 'GET INTO THE PORTAL!';
+  if (msg && vs.ph !== 'ko') pxt(msg, mx, gy + 22, col, 8, 'center');
+  if (!nar) pxt(Math.max(0, Math.round((C3W.PX - wx) / 10)) + 'M', x0 + 104, by + 4, '#e6c8ff', 8);      // (how far the portal is: 10 px = 1 M; the touch controls cover the edges of the screen, so it stands by the bar)
+  if (vs.ph === 'fight' && d.ko < 0 && !ball) { const vx = sx(d.x), vy = gy - 62, left = c.stopReady - now; if (left <= 0) { ctx.fillStyle = 'rgba(200,144,255,' + (0.55 + 0.45 * Math.sin(now / 90)).toFixed(2) + ')'; ctx.fillRect(vx - 1, vy - 2, 3, 5); ctx.fillRect(vx - 2, vy - 1, 5, 3); ctx.fillStyle = '#ffffff'; ctx.fillRect(vx, vy, 1, 1); } else { ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(vx - 7, vy - 1, 14, 4); ctx.fillStyle = '#3a2a66'; ctx.fillRect(vx - 6, vy, 12, 2); ctx.fillStyle = '#b056ff'; ctx.fillRect(vx - 6, vy, Math.round(12 * (1 - clamp01(left / c.cd))), 2); } }      // (the sign over his head)
+  const wk = (now - c.warnAt) / 440;
+  if (wk >= 0 && wk < 1.1) { const s = 1 - clamp01(wk) * 0.6; ctx.strokeStyle = 'rgba(200,144,255,' + (0.9 - 0.3 * clamp01(wk)).toFixed(2) + ')'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(sx(c.to), gy + 3, 18 * s + 3, 4 * s + 1, 0, 0, 6.2832); ctx.stroke(); if (wk < 0.95 && ((now / 70) | 0) % 2 === 0) pxt('!', mx, gy - 66, '#c890ff', 16, 'center'); }
+  ctx.restore();
+}
+window.__c3 = () => c3s && ({ s: c3s, W: C3W, now: pnow(), wx, dx: dummy && dummy.x, vform: dummy && dummy.vform, vact: dummy && dummy.vact && dummy.vact.type, ph: vs && vs.ph, reach: c3Reach(), hp: dummy && dummy.hp });      // test hook
+window.__c3Set = o => { if (o.s) Object.assign(c3s, o.s); if (o.wx !== undefined) wx = o.wx; if (o.dx !== undefined && dummy) dummy.x = o.dx; };
 
 function drawScene(now, dt) {
   fatUI(now);
@@ -7800,7 +7899,7 @@ function drawScene(now, dt) {
   wx += walkVel(dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * (crch ? 0.6 : 1) * (bf >= 0 ? 0.3 : 1), dt, (jf >= 0 && jf <= 11) || tf >= 0) * dt;      // crouch-walking is slower, and walking while blocking is much slower still
   if (dash) { const k = Math.min(1, (now - dash.at) / dash.ms); wx = dash.from + (dash.to - dash.from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) dash = null; }   // Lapse Blue blink: a very fast dash
   if (df >= 0) { const k = Math.min(1, Math.max(0, (now - dgAt - 2000 / DASH_FPS) / DASH_MS)); wx = dgFrom + (dgTo - dgFrom) * (1 - Math.pow(1 - k, 3)); }      // the dash itself: fast at first, over frames 3-12
-  playerSlide(dt); if (ride) updateRide(now); physCollide(now, dt); if (vs && vs.net && dummy) wx = Math.max(dummy.x - NET_LEASH, Math.min(dummy.x - 14, wx)); else if (vs && vs.cv) { const lf = leadFoe(); if (lf) wx = Math.min(wx, lf.x - Math.max(12, lf.curse.hw)); }                    // knocked back by the attacking dummy: the world slides past, then friction stops it
+  playerSlide(dt); if (ride) updateRide(now); physCollide(now, dt); if (vs && vs.net && dummy) wx = Math.max(dummy.x - NET_LEASH, Math.min(dummy.x - 14, wx)); else if (vs && vs.cv) { const lf = leadFoe(); if (lf) wx = Math.min(wx, lf.x - Math.max(12, lf.curse.hw)); } else if (vs && vs.c3) c3Block(now, dt);                    // knocked back by the attacking dummy: the world slides past, then friction stops it
 
   ctx.save();
   shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }   // tiny shake on impact (the bars, names and timer are drawn back where they belong, so they stay still)
@@ -8331,6 +8430,7 @@ function vEnd(d, now) { d.vact = null; d.ai = 'think'; d.aiAt = now; d.vNext = n
 function vActTick(d, now, dt) {
   const a = d.vact, t = now - a.at, ag = Math.abs(d.x - wx), toward = d.x > wx ? -1 : 1;
   if (d.rxAt > a.at) { vEnd(d, now); return; }      // he was hit: the move is over
+  if (a.type === 'stop') { c3StopTick(d, a, t, now); return; }      // (chapter 2's STOP, see chap2.js)
   if (a.type === 'bite') {
     a.anim = 'bite'; a.fi = t * 18 / 1000; if (a.fi >= 5 && a.fi < 9 && ag > 14) d.x += toward * 80 * dt;
     if (!a.hit && a.fi >= 8) { a.hit = 1; snd('f:hit', 3); if (ag <= eHit(22)) { const h = hurtAt; gojoHit(0, now); if (hurtAt !== h) vs.bleed = { until: now + 4000, next: now + 100 }; } }
@@ -8423,6 +8523,7 @@ function storyBattleTick(now, dt) {
   if (now < d.stunUntil) { d.vact = null; return; }      // stunned (Lapse Blue, the JUMPSCARE): he does nothing
   if (d.vact && (d.ai === 'dodge' || d.ai === 'block')) d.vact = null;      // the AI saw a swing coming: it takes over
   if (d.vact) { vActTick(d, now, dt); return; }
+  if (vs.c3 && c3StopCheck(d, now)) return;      // (chapter 2: the STOP, see chap2.js)
   if (d.ai === 'dodge') {      // the dodge is a teleport: he vanishes, and half way through he appears again behind or beside Gojo
     if (d.tpFor !== d.aiAt) { d.tpFor = d.aiAt; d.tpDone = false; } d.vx = 0;
     if (!d.tpDone && now - d.aiAt >= (d.until - d.aiAt) / 2) { d.tpDone = true; const away = d.x > wx ? 1 : -1; d.x = Math.random() < 0.6 ? d.x + away * 48 : wx + away * Math.max(12, Math.abs(d.x - wx) - 44); snd('arrive'); }
@@ -9780,6 +9881,7 @@ $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+{"v": "1.96", "t": "GET INTO THE PORTAL", "n": ["Chapter 2 has a new goal. You do not win by knocking Verity out any more. You win by getting INTO the portal while you fight him.", "The portal stands at the end of the street. A bar at the bottom of the screen shows where you, Verity and the portal are.", "Verity is a wall now. You cannot walk through him. DASH forward to slide past his back, or beat him down.", "In this fight the dash needs about a second and a half to come back, so use it wisely.", "Verity will try to stop you. When you get past him he blinks in front of you and shoots out his long arm. A purple ring and a ! warn you first. Block it, jump over it, duck under it, or dash through him. If you just run into it, it hits you and pushes you back.", "When Verity is ready for another STOP, a small diamond shines over his head.", "Verity cannot be knocked out for good. When his health runs out he turns into his ball for a few seconds. That is your chance to run for the portal.", "When you reach the portal, Yuji jumps in. The arm of Verity is too late. Then comes the card: Chapter 2, TO BE CONTINUED."]},
 {"v": "1.95", "t": "CHAPTER 2: THE PORTAL", "n": ["Story mode has Chapter 2 now. Finish Chapter 1 and START takes you to it.", "Night in the alley. A dark portal opens and Yuji runs for it to save Gojo.", "Verity blinks in front of the portal and stops Yuji with his long arm. He says 'Hey, it's me, it's Verity' in his real voice.", "Then they fight with their fists. Yuji and Verity trade seven blows, one after the other, and every hit shakes the screen. The last two punches meet in the middle and throw them apart. They are equal.", "Then it is your turn. You play Yuji with the same moves you had in the training fight against Gojo, and you fight Verity.", "If you lose, REMATCH starts the same fight again. If you win, Verity fades away and Yuji runs for the portal, but it closes just before he gets there.", "The chapter ends with TO BE CONTINUED. Tap the screen to skip a cutscene."]},
 {"v": "1.94", "t": "FREDDY NOW USES ENERGY", "n": ["Freddy's special moves now cost energy, like the other fighters. The energy bar under his health is blood red now.", "PIERCE costs 20%. It checks your energy when you start charging. If you do not have enough, you just do a normal slash and the bar flashes NO CE.", "BOILING WATER (the BLUE button) costs 15% when his hand touches the floor. Throwing it is free.", "DREAM (the ULTIMATE) costs 67%, like every other ultimate. If you do not have enough, nothing happens and you do not lose the 30 second wait.", "Crouching costs 3% now, the same as everyone else.", "His normal slashes, the crouch slash, the heavy strike, the block and the dashes are still free.", "Hitting the enemy and getting hit fills the bar. It also fills slowly by itself when you wait. In Free Play the energy never runs out, as before."]},
 {"v": "1.93", "t": "FREDDY'S ULTIMATE: THE NIGHTMARE", "n": ["The DOMAIN button is now called DREAM for Freddy. It is free, and you can use it once every 30 seconds.", "The enemy has to be in front of you, close enough (150 steps), alone and standing. If not, it says TOO FAR or CANT and you keep it.", "First a music box plays and music notes float to the enemy. The street turns blue and the enemy falls asleep.", "Then Freddy follows him into his dream: a scary boiler room. He slashes the enemy four times, then drives his claw right through him.", "The damage is REAL. It comes off the enemy's health bar the moment each hit lands: 10, 10, 12, 12 and 36. That is 80 damage.", "Then the enemy wakes up in a white flash, back in the street, and he keeps bleeding for 4 seconds (20 more damage). 100 damage in all.", "While it plays nobody can move and the round timer stops. If the enemy is knocked out in the dream, the round ends right there.", "It works on Gojo, Yuji, Verity and the Cat, but not on small curse spirits.", "4 new sounds (a music box, a nightmare swell, a claw scrape and a wake-up) and a new moon icon for the button."]},
