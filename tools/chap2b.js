@@ -375,11 +375,11 @@ function c4SLine(now, dt, T, st, t1, cx, g) {
 // The Master's void again, the portal gone: he holds Gojo by the neck and talks to him; the room flashes white; he is afraid; the telephone on his wrist rings ("???"); he answers; a voice asks if he got him and he says he did; the camera pushes in from the whole figure of the caller, standing in the dark, to his gauntlet, which has no stones: the socket of the middle finger shines purple, and the voice says GREAT.
 const C5_ART = __THANOS__;      // the two pictures of the last scene (64 x 64): .body = the whole figure, .gaunt = a close-up of his gauntlet with its six sockets empty (tools/thanos_64.png and tools/gauntlet_64.png)
 const C5I = (() => { const mk = u => { const i = new Image(); i.src = u; return i; }; return { body: mk(C5_ART.body), gaunt: mk(C5_ART.gaunt), c: null }; })();
-const C5G = { o: [27.875, 10.875], f: [36, 20], s: [39.675, 16.35], sc: [47.2, 21.9] };      // the close-up on the figure's picture (one sprite pixel is 4 of the close-up's): where its corner is, where the middle of the gauntlet is, where the middle finger's socket is (on the figure's picture, and in the close-up's own pixels)
-function c5Art() {      // the pictures made ready once both have loaded: dark = the figure in the dark (almost black), rimR / rimL = its violet rim light (right / left edges), gdark = the close-up in the dark, glit = a scratch picture for the light of the stone, gaunt = the close-up as it is
+const C5G = { o: [27.875, 10.875], f: [36, 20], sc: [47.2, 21.9] };      // the close-up on the figure's picture (one sprite pixel is 4 of the close-up's): where its corner is, where the middle of the gauntlet is; and where the middle finger's socket is in the close-up's own pixels
+function c5Art() {      // the pictures made ready once both have loaded: dark = the figure in the dark (almost black), rimR / rimL = its violet rim light (right / left edges), gdark = the close-up in the dark, pb / pd = the pixels (RGBA, 64 x 64) of the close-up as it is and of the dark one, for the stone's light
   const A = C5I; if (A.c) return A.c; if (!(A.body.complete && A.body.naturalWidth && A.gaunt.complete && A.gaunt.naturalWidth)) return null;
-  const mk = () => { const c = document.createElement('canvas'); c.width = c.height = 64; return c; }, dim = (im, k) => { const c = mk(), g = c.getContext('2d'); g.drawImage(im, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(6,3,14,' + k + ')'; g.fillRect(0, 0, 64, 64); return c; }, dark = dim(A.body, 0.93);
-  return A.c = { dark, rimR: rsRim(dark, 1, [170, 100, 255]), rimL: rsRim(dark, -1, [120, 70, 200]), gdark: dim(A.gaunt, 0.9), glit: mk(), gaunt: A.gaunt };
+  const mk = () => { const c = document.createElement('canvas'); c.width = c.height = 64; return c; }, dim = (im, k) => { const c = mk(), g = c.getContext('2d'); g.drawImage(im, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(6,3,14,' + k + ')'; g.fillRect(0, 0, 64, 64); return c; }, dark = dim(A.body, 0.93), gd = dim(A.gaunt, 0.9), br = mk();
+  br.getContext('2d').drawImage(A.gaunt, 0, 0); return A.c = { dark, rimR: rsRim(dark, 1, [170, 100, 255]), rimL: rsRim(dark, -1, [120, 70, 200]), gdark: gd, gaunt: A.gaunt, pb: br.getContext('2d').getImageData(0, 0, 64, 64).data, pd: gd.getContext('2d').getImageData(0, 0, 64, 64).data };
 }
 function c5Flash(T) {      // how white (w) and how violet (v) the whole picture is at scene time T: the room's flash (white at once, a flicker as it dies away) and a smaller pulse of violet light with every ring of the call
   const a = T - C5.flash; let w = 0, v = 0;
@@ -444,14 +444,23 @@ function c5SListen(now, dt, T, st, t1) {
 function c5Thanos(A, a) {      // the figure in the dark: almost black, with only a faint violet rim light; a = how much of it is seen
   ctx.globalAlpha = a; ctx.drawImage(A.dark, 0, 0); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.3 * a; ctx.drawImage(A.rimR, 0, 0); ctx.globalAlpha = 0.12 * a; ctx.drawImage(A.rimL, 0, 0); ctx.restore(); ctx.globalAlpha = 1;
 }
-const c5Stone = s => ({ on: clamp01(s / 0.9) * (s < 0.5 ? (Math.sin(s * 70) > -0.2 ? 1 : 0.35) : 1), bl: ease3(clamp01((s - 0.1) / 1.5)) });      // the stone s seconds after it appears: how strongly it shines (it flickers on) and how far its light has spread
-function c5Shine(x, y, Z, s, T) {      // the stone (Z = how big one pixel of the close-up is on the screen): a soft purple light round it, the gem itself (shaded purple, a white spark on it), a four-pointed glint, sparkles; everything else stays dark
-  const k = c5Stone(s), on = k.on, pul = 0.88 + 0.12 * Math.sin(T * 5), R = (5 + 14 * k.bl) * Z;
-  ctx.save(); ctx.globalCompositeOperation = 'lighter'; const gr = ctx.createRadialGradient(x, y, 0, x, y, R); gr.addColorStop(0, 'rgba(190,110,255,' + (0.55 * on * pul).toFixed(3) + ')'); gr.addColorStop(0.4, 'rgba(140,60,230,' + (0.3 * on * pul).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(90,20,170,0)'); ctx.fillStyle = gr; ctx.fillRect(x - R, y - R, 2 * R, 2 * R); ctx.restore();
-  { const r = 1.65 * Z; ctx.globalAlpha = on; c5Disc(x, y, r + 0.5 * Z, '#2a0a58'); c5Disc(x, y, r, '#5a1ec0'); c5Disc(x - 0.25 * Z, y - 0.25 * Z, r * 0.78, '#8a3cf0'); c5Disc(x - 0.5 * Z, y - 0.5 * Z, r * 0.48, '#c58aff'); c5Disc(x - 0.75 * Z, y - 0.75 * Z, Math.max(1, r * 0.2), '#fff0ff'); ctx.globalAlpha = 1; }      // (the gem)
-  ctx.save(); ctx.globalCompositeOperation = 'lighter'; const gl = Math.sin(Math.PI * clamp01((s - 0.35) / 1.4)), L = Math.round(13 * Z * gl); ctx.fillStyle = '#dcc0ff'; for (let i = 1; i <= L; i++) { ctx.globalAlpha = 0.85 * Math.pow(1 - i / L, 1.6); ctx.fillRect(x + i, y, 1, 1); ctx.fillRect(x - i, y, 1, 1); ctx.fillRect(x, y + i, 1, 1); ctx.fillRect(x, y - i, 1, 1); if (i < L * 0.4) { ctx.fillRect(x + i, y + i, 1, 1); ctx.fillRect(x - i, y - i, 1, 1); ctx.fillRect(x + i, y - i, 1, 1); ctx.fillRect(x - i, y + i, 1, 1); } } ctx.globalAlpha = 1;
-  if (s > 0.6) for (let i = 0; i < 14; i++) { const h = Math.imul(i + 5, 2654435761) >>> 0, ph = ((s - 0.6) * (0.5 + (h % 5) * 0.12) + (h >> 8) % 100 / 100) % 1, an = (h >> 4) % 628 / 100, d = ph * (6 + (h >> 12) % 12) * Z; ctx.globalAlpha = 1 - ph; ctx.fillStyle = (h >> 20) & 1 ? '#f4e4ff' : '#b878ff'; ctx.fillRect(Math.round(x + Math.cos(an) * d), Math.round(y + Math.sin(an) * d - ph * 4 * Z), Z > 2 ? 2 : 1, Z > 2 ? 2 : 1); } ctx.globalAlpha = 1;
+const c5Stone = s => ({ on: ease3(clamp01(s / 1.8)), bl: ease3(clamp01(s / 2.6)) });      // the stone s seconds after it appears: how strongly it shines (it fades in) and how far its light has spread
+const C5_GEM = ['.dmmd.', 'dmllpd', 'mlhlpm', 'mllpmd', 'dmpmmd', '.dddd.'], C5_GC = { d: '#3a1078', m: '#6a28d8', p: '#9448f8', l: '#d09cff', h: '#ffffff' };      // the gem: 6 x 6 pixels of the close-up, one letter for each tone
+function c5Light(A, s, T) {      // the stone and its light, drawn in the pixels of the close-up (the caller has put the close-up's corner on (0, 0) and its pixel on one unit), so that they lie on the gauntlet's own pixel grid and are made in steps (8 bands) like the rest of the picture: the metal near the stone is lit purple, a halo on the dark behind it, the gem in its socket, now and then a twinkle, a few sparkles
+  const k = c5Stone(s), on = k.on, pul = 0.94 + 0.06 * Math.sin(T * 4), R = 5 + 9 * k.bl, cx = C5G.sc[0], cy = C5G.sc[1], x0 = Math.max(0, Math.floor(cx - R)), x1 = Math.min(63, Math.ceil(cx + R)), y0 = Math.max(0, Math.floor(cy - R)), y1 = Math.min(63, Math.ceil(cy + R)), pb = A.pb, pd = A.pd;
+  const lv = (x, y) => { const d = Math.hypot(x + 0.5 - cx, y + 0.5 - cy); return d >= R ? 0 : Math.floor(on * pul * Math.min(1, 1.35 * Math.pow(1 - d / R, 1.4)) * 8) / 8; }, mixc = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {      // the metal: the colour it would have in the light of the stone (a purple ramp from its own light and dark), mixed with its dark colour by how much light reaches it
+    const q = lv(x, y), i = (y * 64 + x) * 4; if (q <= 0 || pb[i + 3] < 128) continue;
+    const t = Math.min(1, (0.3 * pb[i] + 0.59 * pb[i + 1] + 0.11 * pb[i + 2]) / 255 * 1.1), l = t < 0.55 ? mixc([30, 12, 64], [120, 64, 200], t / 0.55) : mixc([120, 64, 200], [214, 168, 255], (t - 0.55) / 0.45), m = Math.pow(q, 1.25) * 0.9;
+    ctx.fillStyle = 'rgb(' + Math.round(pd[i] + (l[0] - pd[i]) * m) + ',' + Math.round(pd[i + 1] + (l[1] - pd[i + 1]) * m) + ',' + Math.round(pd[i + 2] + (l[2] - pd[i + 2]) * m) + ')'; ctx.fillRect(x, y, 1, 1);
+  }
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = '#8a3ce8';
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const q = lv(x, y); if (q <= 0 || pb[(y * 64 + x) * 4 + 3] >= 128) continue; ctx.globalAlpha = 0.7 * Math.pow(q, 1.5); ctx.fillRect(x, y, 1, 1); }      // (the halo, on the dark behind the gauntlet)
   ctx.restore();
+  ctx.globalAlpha = on * (0.95 + 0.05 * Math.sin(T * 4)); for (let j = 0; j < 6; j++) for (let i = 0; i < 6; i++) { const c = C5_GEM[j][i]; if (c !== '.') { ctx.fillStyle = C5_GC[c]; ctx.fillRect(44 + i, 19 + j, 1, 1); } } ctx.globalAlpha = 1;      // (the gem: it fills the socket)
+  const ph = (s - 1.6) % 2.6, tw = s >= 1.6 && ph < 0.7 ? Math.sin(Math.PI * ph / 0.7) : 0, La = Math.round(6 * tw);      // (a twinkle on the gem's highlight, when it is fully lit and then every 2.6 s)
+  if (La > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = '#e6d0ff'; for (let i = 3; i <= La + 2; i++) { ctx.globalAlpha = 0.9 * (1 - (i - 3) / (La + 1)); ctx.fillRect(46 + i, 21, 1, 1); ctx.fillRect(46 - i, 21, 1, 1); ctx.fillRect(46, 21 + i, 1, 1); ctx.fillRect(46, 21 - i, 1, 1); } ctx.restore(); ctx.globalAlpha = 1; }
+  if (s > 1.2) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < 7; i++) { const h = Math.imul(i + 5, 2654435761) >>> 0, q = ((s - 1.2) * (0.35 + (h % 5) * 0.08) + (h >> 8) % 100 / 100) % 1, an = (h >> 4) % 628 / 100, d = 4 + q * (4 + (h >> 12) % 6); ctx.globalAlpha = (1 - q) * on; ctx.fillStyle = (h >> 20) & 1 ? '#f4e4ff' : '#b878ff'; ctx.fillRect(Math.round(cx + Math.cos(an) * d), Math.round(cy + Math.sin(an) * d - q * 2), 1, 1); } ctx.restore(); ctx.globalAlpha = 1; }      // (sparkles drift off it)
 }
 function c5SGaunt(now, dt, T, st, t1) {
   const A = c5Art(), Zc = Math.max(2, Math.round(VH * 0.8 / 51)), z1 = 4 * Zc, z0 = Math.max(1.3, VH * 0.8 / 62), u = clamp01((t1 - 0.4) / 4.3), e = ease3(u), z = z0 * Math.pow(z1 / z0, e), ca = ease3(clamp01((u - 0.55) / 0.3)), s = t1 - C5.shine;
@@ -461,15 +470,8 @@ function c5SGaunt(now, dt, T, st, t1) {
   ctx.fillStyle = '#cfc8ff'; for (let i = 0; i < 30; i++) { ctx.globalAlpha = 0.04 + 0.18 * Math.abs(Math.sin(T * 0.7 + i * 1.3)); ctx.fillRect((i * 53 + 11) % VW, (i * 97 + 7) % VH, 1, 1); } ctx.globalAlpha = 1;
   if (A) {
     c4CamOn(z, fx, fy, sx, sy); c5Thanos(A, 1 - ca);
-    if (ca > 0) {
-      ctx.save(); ctx.translate(C5G.o[0], C5G.o[1]); ctx.scale(0.25, 0.25); ctx.globalAlpha = ca; ctx.drawImage(A.gdark, 0, 0);
-      if (s > 0) {      // (the stone lights the metal right next to it, tinted purple, and nothing else)
-        const k = c5Stone(s), g = A.glit.getContext('2d'), R = 4 + 6 * k.bl; g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, 64, 64); g.drawImage(A.gaunt, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(150,80,255,0.5)'; g.fillRect(0, 0, 64, 64); g.globalCompositeOperation = 'destination-in';
-        const gr = g.createRadialGradient(C5G.sc[0], C5G.sc[1], 0, C5G.sc[0], C5G.sc[1], R); gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); g.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 0.6 * k.on; ctx.drawImage(A.glit, 0, 0);
-      }
-      ctx.restore();
-    }
-    c4Cam0(); if (s > 0) c5Shine(sx + (C5G.s[0] - fx) * z, sy + (C5G.s[1] - fy) * z, Zc, s, T);
+    if (ca > 0) { ctx.save(); ctx.translate(C5G.o[0], C5G.o[1]); ctx.scale(0.25, 0.25); ctx.globalAlpha = ca; ctx.drawImage(A.gdark, 0, 0); ctx.globalAlpha = 1; if (s > 0) c5Light(A, s, T); ctx.restore(); }      // (the stone is part of the close-up: it is drawn in its pixels, under the same camera)
+    c4Cam0();
   }
   msFinish(1); const fa = Math.max(1 - clamp01(t1 / 0.5), clamp01((t1 - 8.1) / 1.4)); if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (it comes out of black and goes back into it)
 }
