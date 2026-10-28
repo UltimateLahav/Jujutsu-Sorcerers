@@ -170,6 +170,23 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
 #rotate div{font-size:56px;animation:r 2s ease-in-out infinite}
 @keyframes r{0%,30%{transform:rotate(0)}70%,100%{transform:rotate(-90deg)}}
 @media (orientation:portrait){#rotate{display:flex}}
+/* v1.88 UPDATE LOG: a button on the title screen (bottom left, next to the version) and a scrolling list of every version in plain words */
+#logBtn{position:fixed;left:calc(env(safe-area-inset-left) + 2vh);bottom:calc(env(safe-area-inset-bottom) + 1.4vh);display:flex;align-items:center;gap:1vh;padding:1vh 1.6vh;font-size:clamp(7px,2vh,11px)}
+#logBtn b{display:none;background:#e0242f;color:#fff;padding:.4vh .8vh;font-size:.85em;font-weight:normal;animation:b 1s steps(2) infinite}
+#logBtn.new b{display:inline-block}
+#ver{cursor:pointer;pointer-events:auto}
+#ulog.screen{z-index:6;justify-content:flex-start;gap:1.2vh;padding-top:calc(env(safe-area-inset-top) + 1.6vh);padding-bottom:calc(env(safe-area-inset-bottom) + 1.6vh)}
+#ulog h2{flex:none}#ulog>small{flex:none;line-height:1.5;padding:0 2vh}#ulog .row{flex:none}
+#ulList{flex:1;min-height:0;width:min(94vw,150vh);overflow-y:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch;text-align:left;display:flex;flex-direction:column;gap:1.8vh;padding:.6vh 1vh 1vh;outline:none}
+.ule{flex:none;background:var(--card);border:3px solid var(--line);padding:1.5vh 2vh;box-shadow:4px 4px 0 #000}
+.ule.latest{border-color:#ffd34d}
+.ulh{display:flex;align-items:center;flex-wrap:wrap;gap:1.2vh 1.6vh;margin-bottom:1.1vh}
+.ulv{color:#ffd34d;font-weight:normal;font-size:clamp(9px,3vh,16px)}
+.ulh em{font-style:normal;color:var(--ink);font-size:clamp(7px,2.1vh,11px);line-height:1.5}
+.ulh i{font-style:normal;background:#e0242f;color:#fff;padding:.4vh .8vh;font-size:clamp(7px,1.9vh,10px)}
+.ule ul{margin:0;padding-left:2.6vh;display:flex;flex-direction:column;gap:.9vh}
+.ule li{font-size:clamp(8px,2.3vh,12px);line-height:1.7;color:#d9d4e8}
+.ulsep{flex:none;text-align:center;color:var(--acc);font-size:clamp(8px,2.4vh,12px);line-height:1.5;border-top:3px dashed var(--line);padding:2.2vh 0 .6vh;margin-top:.8vh}
 </style>
 </head>
 <body>
@@ -181,8 +198,16 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.87</small>
+    <small id="ver">V1.88</small>
   </div>
+  <button id="logBtn">UPDATE LOG<b>NEW</b></button>
+</section>
+
+<section id="ulog" class="screen">
+  <h2>UPDATE LOG</h2>
+  <small id="ulSub">WHAT CHANGED IN EVERY VERSION, NEWEST FIRST. SCROLL DOWN FOR THE OLD ONES.</small>
+  <div id="ulList" tabindex="0"></div>
+  <div class="row"><button id="ulBack">BACK</button></div>
 </section>
 
 <section id="modes" class="screen">
@@ -1367,7 +1392,7 @@ function show(s) {
   state = s; if (s !== 'play') cuTest = false; if (s !== 'story') { snd('mhumoff'); snd('tmusicoff'); snd('rsmuroff'); snd('bluepulloff'); } if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; track = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
   $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); $('chal').classList.toggle('on', s === 'chal'); $('skills').classList.toggle('on', s === 'skills'); $('sns').style.display = 'none'; if (s !== 'lan' && s !== 'lansel' && !(s === 'play' && vs && vs.net) && lanTimer) lanStop();
   $('versus').classList.toggle('on', s === 'versus');
-  $('title').classList.toggle('on', s === 'title');
+  $('title').classList.toggle('on', s === 'title'); $('ulog').classList.toggle('on', s === 'ulog');
   $('select').classList.toggle('on', s === 'select');
   $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves'); if (s === 'select') cuSelRefresh(); $('cust').classList.toggle('on', s === 'cust'); $('custName').classList.toggle('on', s === 'custname'); $('custDraw').classList.toggle('on', s === 'custdraw'); $('custAnim').classList.toggle('on', s === 'custanim'); $('custAtk').classList.toggle('on', s === 'custatk'); $('custCode').classList.toggle('on', s === 'custcode'); $('custStats').classList.toggle('on', s === 'custstats');
   cv.style.display = s === 'play' || s === 'story' ? 'block' : 'none';
@@ -5946,7 +5971,7 @@ addEventListener('keydown', e => {
     return;
   }
   if (e.key !== 'Escape') return;
-  if (state === 'play') { if (!setPause(true)) leavePlay(); } else if (state === 'select') show('title');
+  if (state === 'play') { if (!setPause(true)) leavePlay(); } else if (state === 'select' || state === 'ulog') show('title');
 });
 addEventListener('keyup', e => {
   if (e.target.id === 'lanName' || e.target.id === 'cuName') return;
@@ -6042,6 +6067,22 @@ $('vsBack').addEventListener('click', () => show('select'));
 $('battles').addEventListener('click', () => { audio(); show('select'); });
 $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
+// ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
+const LOG = __UPDATES__;
+let logBuilt = false;
+const logSeen = () => { try { return localStorage.getItem('js_logseen'); } catch (e) { return null; } };
+const logMark = () => $('logBtn').classList.toggle('new', logSeen() !== LOG[0].v);
+function buildLog() {
+  if (logBuilt) return; logBuilt = true; const box = $('ulList'), mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined) e.textContent = txt; return e; };
+  LOG.forEach((u, i) => {
+    if (u.h) { box.appendChild(mk('div', 'ulsep', u.h)); return; }
+    const card = mk('div', i === 0 ? 'ule latest' : 'ule'), head = mk('div', 'ulh'), ul = mk('ul');
+    if (u.v) head.appendChild(mk('b', 'ulv', 'V' + u.v)); head.appendChild(mk('em', '', u.t)); if (i === 0) head.appendChild(mk('i', '', 'NEW'));
+    u.n.forEach(t => ul.appendChild(mk('li', '', t))); card.appendChild(head); card.appendChild(ul); box.appendChild(card);
+  });
+}
+const openLog = () => { audio(); buildLog(); show('ulog'); $('ulList').scrollTop = 0; $('ulList').focus({ preventScroll: true }); try { localStorage.setItem('js_logseen', LOG[0].v); } catch (e) { /* storage blocked */ } logMark(); };
+$('logBtn').addEventListener('click', openLog); $('ver').addEventListener('click', openLog); $('ulBack').addEventListener('click', () => show('title')); logMark();
 $('story').addEventListener('click', () => { audio(); svSel = -1; renderSaves(); show('saves'); });
 ['sv0', 'sv1', 'sv2'].forEach((id, i) => $(id).addEventListener('click', () => { svSel = i; renderSaves(); }));
 $('svStart').addEventListener('click', () => { if (svSel >= 0) startStory(svSel); });
@@ -6204,6 +6245,7 @@ window.__back = () => {                       // Android back button: step back 
   if (state === 'lan') { lanBack(); return true; }
   if (state === 'select') { show('modes'); return true; }
   if (state === 'modes') { show('title'); return true; }
+  if (state === 'ulog') { show('title'); return true; }
   return false;
 };
 
