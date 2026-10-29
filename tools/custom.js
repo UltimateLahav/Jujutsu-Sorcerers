@@ -531,7 +531,7 @@ function customBack() {      // the Android back button inside CUSTOM: the drawi
 window.__custom = () => ({ c: cuC.slice(), zoom: cuZoom, big: cuBigOn, pal: CU_PAL.length, slots: cuLoad(), art: cuArt, frames: cuFr.length, cur: cuCur, tool: cuTool, color: cuColor, cell: cuCell, dirty: cuDirty });
 
 // ---- v1.65 the custom characters in the game: FREE PLAY (the fighter select screen) has a small card for each drawn slot; in the match the character stands on its idle frames (up to 15, at the speed of the others) and does nothing: it cannot move, attack or block yet (whatever you press is dropped)
-let cuAtkQ = 0, cuPh = 0, cuJumpAt = -1, cuAtkAt = -1, cuAtkK = 0, cuCmb = 0, cuCmbBy = 0, cuFired = [], cuRes = [], cuShots = [], cuMs = 50, cuLunged = 0, cuCd = [0, 0, 0, 0], cuBleed = null, cuVfx = [], cuDash = null, cuDashReady = 0;      // (the jump, the punch being thrown (which of the 4, since when), the next punch of the combo and until when it goes on)
+let cuSn = 0, cuCp = 0, cuAtkQ = 0, cuPh = 0, cuJumpAt = -1, cuAtkAt = -1, cuAtkK = 0, cuCmb = 0, cuCmbBy = 0, cuFired = [], cuRes = [], cuShots = [], cuMs = 50, cuLunged = 0, cuCd = [0, 0, 0, 0], cuBleed = null, cuVfx = [], cuDash = null, cuDashReady = 0;      // (the jump, the punch being thrown (which of the 4, since when), the next punch of the combo and until when it goes on)
 const cuMe = () => !!vs && typeof vs.me === 'string' && vs.me.slice(0, 2) === 'cu';
 const CU_GAME = [null, null, null];      // for each slot { name, frames: 64 x 64 canvases }, made again every time the select screen opens
 function cuSelRefresh() {
@@ -571,7 +571,7 @@ function cuHit(dmg, now, o, ax, rc, lo) {      // an IMPACT (or a shot) of a cus
   o = o || {}; dmg = o.free ? 0 : Math.max(1, Math.round(dmg * cuS.dm / 100));      // (the DAMAGE stat; v1.109 o.free: a hit that takes no health, the slash of Sukuna's counter)
   if (!dummy || dummy.ko >= 0 || dummy.cap || now - dummy.born < 600 || vs.ph !== 'fight') return false;
   if (dummy.vform && dummy.vform !== 'verity') { say('IMMUNE', dummy.x, '#ffe9a0', 8, now); return false; }
-  if ((dummy.vact && dummy.vact.type === 'crouch') || now < (dummy.down || 0) || (dummy.cact && dummy.cact.flat) || now < (dummy.dodgeUntil || 0)) { say('MISS', dummy.x, '#9fd8ff', 8, now); return false; }
+  if ((!o.low && dummy.vact && dummy.vact.type === 'crouch') || now < (dummy.down || 0) || (dummy.cact && dummy.cact.flat) || now < (dummy.dodgeUntil || 0)) { say('MISS', dummy.x, '#9fd8ff', 8, now); return false; }
   const gap = dummy.x - (ax === undefined ? wx : ax); if (gap > (rc === undefined ? CU_REACH : rc) || gap < (lo === undefined ? -3 : lo)) return false;
   const blk = dBlocks() && gap > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
   if (blk && !o.gb) { dummy.counter = now; dummy.vx += 3; shakeUntil = now + 70; shakeAmp = 1; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); return false; }
@@ -601,21 +601,21 @@ function cuFx(fx, now, hit, vf) {      // the effects of an impact or of a pictu
 const cuOk = (c, src, res) => !c || (src >= 0 && res[src] !== undefined && res[src] === (c === 1));      // an IF: 1 = IF HIT, 2 = IF MISS, about the IMPACT src once it has come (before that neither is true)
 const cuMods = 'ktlqb';      // the blocks that change the hit itself
 function cuEv(e, now, g, k) {      // one event of the punch's timeline comes up
-  const res = cuRes, vf = g.vfx[k]; if (!cuOk(e.c, e.src, res)) return;
+  const res = cuRes, vk = e.vk === undefined ? k : e.vk, vf = g.vfx[vk]; if (!cuOk(e.c, e.src, res)) return;
   if (e.k === 'e') { cuFx(e.fx.filter(x => cuOk(x[3], x[4], res)), now, false, vf); return; }
-  const o = {};
+  const o = {}; if (e.low) o.low = true;      // (v1.110 low: the crouch punches of a built-in fighter reach a crouching enemy)
   for (const [t, a, b, c, s] of e.fx) {
     if (cuMods.indexOf(t) < 0) continue;
     if (c && !(s === e.id ? c === 1 : cuOk(c, s, res))) continue;      // (a change of the hit under IF HIT of its own IMPACT counts, under IF MISS never)
     if (t === 'k') o.knock = a; else if (t === 't') o.stun = a; else if (t === 'l') o.launch = a; else if (t === 'q') o.gb = true; else if (t === 'b') o.bleed = [a, b];
   }
-  if (e.k === 'o') { if (vf.length) cuShots.push({ x: wx + 12, v: e.sp, d: e.d, o, fx: e.fx, res, id: e.id, born: now, vf, sp: g.vxs[k] }); return; }      // (SHOOT: a shot leaves your body at the fist's height; it hits an enemy as close as he can stand; its blocks work when it hits)
+  if (e.k === 'o') { if (vf.length) cuShots.push({ x: wx + 12, v: typeof e.sp === 'function' ? e.sp() : e.sp, d: e.d, o, fx: e.fx, res, id: e.id, born: now, vf, sp: g.vxs[vk], ms: e.ms }); return; }      // (SHOOT: a shot leaves your body at the fist's height; it hits an enemy as close as he can stand; its blocks work when it hits)
   const T = hbKey(dummy), B = hbBody(T); if (dummy) hbMark(vs.me, 0, wx, false, T, dummy.x, dummy.x - wx > -4, e.tip || {}); const hit = cuHit(e.d, now, o, undefined, e.tip && B ? hbGap(e.tip, B, e.dy) : undefined); res[e.id] = hit;      // (the limb of this IMPACT against the enemy's body: the rows they share decide how far it reaches)
   cuFx(e.fx.filter(x => cuMods.indexOf(x[0]) < 0 && cuOk(x[3], x[4], res)), now, hit, vf);
 }
 function cuShotStep(now, dt) {      // the shots fly on; the first time one touches the enemy it hurts him and is gone
   cuShots = cuShots.filter(s => {
-    s.x += s.v * dt; if (now - s.born > 3000 || s.x - wx > VW) return false;
+    s.x += s.v * dt; if (now - s.born > (s.ms || 3000) || s.x - wx > VW) return false;      // (v1.110 ms: a shot that flies for less than 3 s, Sukuna's slashes for 0.6 s)
     if (dummy && dummy.ko < 0 && hbTouchFoe(cuShotShape(s, now), dummy)) { const hit = cuHit(s.d, now, s.o, s.x, 1e9, -1e9);      // (its drawing against his body: the rows they share)
        s.res[s.id] = hit; if (hit) cuFx(s.fx.filter(x => cuMods.indexOf(x[0]) < 0 && cuOk(x[3], x[4], s.res)), now, true, s.vf); return false; }
     return true;
@@ -648,11 +648,11 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
   if (hurting && (cuAtkAt >= 0 || cuDash || blkAt >= 0)) { cuAtkAt = -1; cuDash = null; blkAt = blkEnd = -1; cuLunged = 0; if (g) g.cs = null; }
   if (jmp && ctl && g && g.jump.length && stance === 'stand' && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0) { cuJumpAt = now; snd('jump'); }
   if (atk && g && g.yu && cuAtkAt >= 0 && !g.cs) cuAtkQ = now + 450;      // (v1.109: a press while a blow is being thrown is kept for 0.45 s and starts the next blow as soon as this one is over)
-  if ((atk || (cuAtkQ > now && cuAtkAt < 0)) && ctl && g && g.rdy.length && stance === 'stand' && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0) {      // (ATTACK: the next of its ready punches plays once, if its COOLDOWN is over and its COST can be paid; 20 pictures a second unless SPEED says otherwise; the combo goes on for 0.7 s after a punch)
-    cuAtkQ = 0; if (now > cuCmbBy) cuCmb = 0; const k = g.rdy[cuCmb % g.rdy.length], st = g.set[k];
+  if ((atk || (cuAtkQ > now && cuAtkAt < 0)) && ctl && g && g.rdy.length && (stance === 'stand' || (g.yu && stance === 'crouch')) && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0) {      // (ATTACK: the next of its ready punches plays once, if its COOLDOWN is over and its COST can be paid; 20 pictures a second unless SPEED says otherwise; the combo goes on for 0.7 s after a punch)
+    cuAtkQ = 0; if (now > cuCmbBy) { cuCmb = 0; cuSn = 0; cuCp = 0; } const k = g.yu ? suPick(g, now) : g.rdy[cuCmb % g.rdy.length], st = g.set[k];      // (a built-in fighter picks by where he stands and where the enemy is: suPick)
     if (now < cuCd[k]) say('WAIT', wx, '#9a9aa8', 8, now);
     else if (g.yu && k === 3) suStart(g, now);      // (the 4th blow of a built-in fighter is his COUNTER: see suStart in sukuna.js)
-    else if (!st.c || ceSpend(st.c * 100 / cuS.em, now)) { cuAtkK = k; cuAtkAt = now; cuFired = []; cuRes = []; cuLunged = 0; cuMs = 1000 / st.v; cuCd[k] = st.d ? now + st.d * 1000 : 0; cuCmbBy = now + 1e9; cuCmb = (cuCmb + 1) % g.rdy.length; snd('swing', k); }
+    else if (!st.c || ceSpend(st.c * 100 / cuS.em, now)) { cuAtkK = k; cuAtkAt = now; cuFired = []; cuRes = []; cuLunged = 0; cuMs = 1000 / st.v; cuCd[k] = st.d ? now + st.d * 1000 : 0; cuCmbBy = now + 1e9; cuCmb = g.yu ? suNext(k) : (cuCmb + 1) % g.rdy.length; snd('swing', k); }
   }
   if (dsh && ctl && g && stance === 'stand' && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0 && now > cuDashReady && (g.df.length || g.db.length)) {      // (DASH: holding forward is a front dash, anything else a back dash, like the others; the pictures of that dash, or the other dash's pictures backwards; free, a 0.15 s pause after it, and his blows miss you for the first part)
     const d = (keyR || padR) ? 1 : -1, fr = d > 0 ? (g.df.length ? g.df : g.db.slice().reverse()) : (g.db.length ? g.db : g.df.slice().reverse());
@@ -673,7 +673,7 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
     if (stance === 'stand') stickCr = false;
   }
   const ap = cuPunch(g, now); cuShotStep(now, dt); cuBleedStep(now); ceTick(now, dt); const sp = g && g.yu ? suStep(g, now) : null; if (g && g.yu) suBleedFx(now);      // (v1.109 sp: the picture of the counter's dodge and slash, or nothing)
-  { const lab = g && g.cs ? 'COUNTER' : g && g.rdy.length ? g.an[g.rdy[(now > cuCmbBy ? 0 : cuCmb) % g.rdy.length]] : 'ATTACK'; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; } }      // (the ATTACK button shows the name of the punch that comes next)
+  { const lab = g && g.cs ? 'COUNTER' : g && g.yu ? suLabel(g, now) : g && g.rdy.length ? g.an[g.rdy[(now > cuCmbBy ? 0 : cuCmb) % g.rdy.length]] : 'ATTACK'; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; } }      // (the ATTACK button shows the name of the punch that comes next)
   let jp = -1, lift = 0, jfr = -1; if (cuJumpAt >= 0) {      // (JUMP: the jump frames play once over JUMP TIME while it rises JUMP HEIGHT pixels and comes down; v1.108: a fighter with `yu` jumps as Yuji does, with his timing and his height for every picture, and the dust of his push-off and landing)
     if (g && g.yu) { jfr = jumpFrame(Math.max(0, now - cuJumpAt)); if (jfr >= g.jump.length) { cuJumpAt = -1; jfr = -1; snd('land', 1); } else { jp = (jfr + 0.5) / g.jump.length; lift = YU.jump.lift[jfr]; jumpDust(jfr); } }
     else { jp = (now - cuJumpAt) / cuS.jt; if (jp >= 1) { cuJumpAt = -1; jp = -1; snd('land', 1); } else lift = Math.round(cuS.jh * 4 * jp * (1 - jp)); }
