@@ -418,5 +418,106 @@ function c6Events(ev, now) {
   ev('e_yclamp', Ty + 0.3, () => { snd('c6clamp'); snd('rsgrab'); c2Shake(now, 300, 4); }); ev('e_yscream', Ty + 0.35, () => snd('c6scream', 3), 1);
   ev('e_pluck', Tl, () => snd('c6pluck'), 1); ev('e_pscream', Tl, () => snd('c6scream', 2), 1); [0.6, 0.85, 1.0].forEach((t, i) => ev('e_snap' + i, Tl + t, () => snd('c6wet', 3))); ev('e_pop', Tl + 1.0, () => { snd('c6wet', 2); c2Shake(now, 400, 5); });
   ev('e_crush', Tc + 1.2, () => snd('c6crush'), 1); ev('e_stone', Tc + 1.55, () => snd('c6stone'), 1);
+  d6Events(ev, now);
+}
+// ---------------------------------------------------------------- v1.104 THE SUMMONING: after "WASTED POTENTIAL" (the shot line of C4_SEQ) a voice says DID SOMEONE SAY... POTENTIAL?, a cold light comes in, Megumi (the 64 x 64 picture tools/megumi_64.png, 15 colours) stands in it and calls MAHORAGA
+// Six shots (dsay, dpot, dwith, dsword, ddiv, dmaho), each a pure function of the scene time like all the others, so a tap that skips and a test that jumps always draw the right picture. The light does the work: every shot has a key light on the picture (d6Lit: the colour of the light on the edge that faces it, the far side dimmed), a glow behind it (c6Glow), light shafts, mist and motes (d6Bg), and the dark edges, grain and bars of msFinish. The close-ups are whole-number enlargements of the picture (2, 4, 8 and 12 times), so one pixel of it stays a block of whole screen pixels and nothing shimmers; the camera drifts instead of scaling.
+const D6_IMG = (() => { const i = new Image(); i.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAFd0lEQVR4nOVbXWgjVRT+EqSEnSZDs7SdxpZ2my1iWZEiQQrCgi/LwrLIvq+++VD3TVBEVl+UfRVcfVZBxZf6gwjFBxfFVihSZSVLWfsTMs5Ou2TCTDJlyEPrQ/bezkwmaTJzz60/HwQmM3dmzvnuud8999wE+J8jRf2C3HDhCACcppEKn2OIuuY/RwkpLwk7fIgDflyYnodZ2Q20l+U8IIkA4JgEbXom8jojQabzAJCmfkFuuHAUjoCT2lPaEwYpAXGdkUmCNA04xAEK0/M92xmVMtI489/WgGw+DwB47fpFAMAHX20AOHYekKsDj1G/IBzOzPGn5mYAAK+80D6+eqMceQ81GVKnwWw+D9vS4dz/DvrmDiafOAcA0Dd3sPjiLSjZHCbGRrGxvs7vpSZAWgQslEoAgD8fnWfOA8CX36/y47rb4lNlOD+gAPkssFAqYaFUQt1toe62oGRzeP/2p7wNO1ayOQCA59oAgIyiUprGQZ4HAO1e9VybO7e8qvNrH33xOZZXdUyMjSKjqPwjC1IIANo96jYcAMAPn73Oz//607cA2iSdBsgIYOEf7n2gLXp+vP3Scx33b5fXqEwLgDQCtPE8PNcOhDWLAr8OAMCTsxonynNtaQkR6Qv8UcBQM6uwLR3f3H6Tn3v1nVvYbxWgZHNwGw4aliUtGSKfBv347eub/Hjq2Zd9VwoAjqNDJkiHgNM0UiypeW/p+cC1tU/eiLznfLFIaVIHpMwCUYLmT4QYWC4gE+QEOE0jlcYZXL3xLu6s/Hxi+431damLIWl5AABcf+tj6Js70Dd3QhpwepC2GGLL4JNwvliUGgVSSmL+ImgvnNWmiK3phJQhoOYnAXQXOSWb484/2H8owyQOKatB5mBGUSN72b/4mRgbpTSpA1ISofDqzk8CS31ZG228P60QBTIC+h37Mpe+USAbAmz+HxT3tk1cvnJJWmmcdDl8+colvhCqmdW+7quZVZh7FpVZHSCZa5n4Pdh/iImx0chiB6sPGJVyYJZgQ2K3/LuUXIAsArTxPDKK2uG859qomVVeI1DzkzirTfFZgkHWMCAjICqMt8tryChqIB/olvzc2zapTAtAOAHhse/H7PxiQAv8ZbIoLJRK5FEgdTHEYFTKgbm/G2QUSoWKDOv9buHLymFsejzEAWbnF3s+03NtmJVdMkGUFgF+552mkWJ5wknVX+pESRgBvXrfc+2A8+y8n4RuecKIMiTKxEhIiYBe+/6MBNvSI0Wx7rZIxZCcgJpZPbHGz0hg4igTQgjoFv6ea/dd4+9FAmUUCIuAcOLjuTaMSrlL62gwEqL2B6imRGEEhA2M+3sfp2mkGpYVKYoU6XFiAti6P2zwM6WLiZ5rW3rHM809SzgJZCKYpLLrryXUzConou62hJMgrCLEFjWiVPwRebycXjOrULI51KGiLnChJCQCwumsqNSV6QGD23B4NMzMPy0kChIRwAofflDs8NqWHvjeb3WpHwjVAIokxp8pht91iIPEUSBcBMOGikBUgdVtOFDzk4kTJOEEUP60JYrcpDtJsQmI+vkLJbqV2ZMKbqIICO/iyNjWEj3EEhHgz/9HlCHybe1wFIggI5GxbN8/qthBCf+225yWxpaZif3u2JlgbrhwVNQ8AAbGtDS25FSxOeY0Mfodi4DccOFo6ZoKoF2v+3DZlv5nJ4bHR4cAeNgyC0dxbEhM4x/360kfMTCcppHaMjP8e5uEeBiYgOPe/+fgwtxI7HsTR8CFuREUNU/6392AYM8vXVNj2TAQAVG9v7K6l0iFRSIOCX0T0C30T9P5O3c9/PWwxXVoZXVv4Gf0bTir/J4b+gVAW/x+vJs+1Z6P6u1B7Rmoca9/ff9b8TfDwNiReU6YBwAAAABJRU5ErkJggg=='; return i; })();
+const D6 = { cv: null, lit: new Map(), H: [30.5, 9], F: [29, 19], face: [30.6, 11.8] };      // the picture as a canvas, the lit copies, and where his head, his fists and his face are in it (picture pixels)
+function d6Base() { if (D6.cv) return D6.cv; if (!D6_IMG.complete || !D6_IMG.naturalWidth) return null; const c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(D6_IMG, 0, 0); D6.cv = c; return c; }
+function d6Lit(lights, k) {      // the picture lit from the sides: lights = [[lx, ly, 'r,g,b'], ...] (lx, ly: the way to the light, each -1, 0 or 1; the first is the key light). A pixel that faces a light with nothing in front of it takes that light's colour (the rim); the others are brighter on the key side and dimmed by k (0 - 1) on the far side
+  const key = JSON.stringify(lights) + k, hit = D6.lit.get(key); if (hit) return hit; const b = d6Base(); if (!b) return null;
+  const p = b.getContext('2d').getImageData(0, 0, 64, 64).data, c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), o = g.createImageData(64, 64), q = o.data, K = lights[0], rc = lights.map(l => l[2].split(',').map(Number));
+  const A = (x, y) => x < 0 || y < 0 || x > 63 || y > 63 ? 0 : p[(y * 64 + x) * 4 + 3];
+  for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) {
+    const i = (y * 64 + x) * 4; if (!p[i + 3]) continue; let rim = -1; for (let n = 0; n < lights.length; n++) if (!A(x + lights[n][0], y + lights[n][1])) { rim = n; break; }
+    const s = ((x - 32) * K[0] + (y - 32) * K[1]) / 20, lit = Math.max(0, Math.min(1, 0.5 + 0.5 * s)), m = 1 - k + k * (0.45 + lit);
+    for (let j = 0; j < 3; j++) q[i + j] = Math.max(0, Math.min(255, rim >= 0 ? p[i + j] * 0.2 + rc[rim][j] * 0.9 : p[i + j] * m + rc[0][j] * 0.12 * lit));
+    q[i + 3] = 255;
+  }
+  g.putImageData(o, 0, 0); if (D6.lit.size > 20) D6.lit.clear(); D6.lit.set(key, c); return c;
+}
+function d6Put(img, x, y, z) { if (img) ctx.drawImage(img, 0, 0, 64, 64, Math.round(x), Math.round(y), 64 * z, 64 * z); }      // the picture enlarged z times (a whole number), its corner at (x, y)
+function d6Bg(T, o) {      // the place: a gradient (o.top to o.bot), light shafts that fan out from (o.sx, o.sy) around the angle o.ang (o.shaft: how strong), mist along the floor (o.mist), o.mote motes; o.col = the colour of the light, 'r,g,b'
+  const g = ctx.createLinearGradient(0, 0, 0, VH); g.addColorStop(0, o.top); g.addColorStop(1, o.bot); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
+  const fy = Math.round(VH * (o.floor || 0.84)); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, fy, VW, VH - fy); ctx.fillStyle = 'rgba(' + o.col + ',0.12)'; ctx.fillRect(0, fy, VW, 1);
+  if (o.shaft > 0.01) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < 7; i++) { const a = o.ang + (i - 3) * 0.14 + 0.03 * Math.sin(T * 0.6 + i), w = 0.035 + 0.03 * c6H(i, 1), al = o.shaft * (0.05 + 0.07 * c6H(i, 2)) * (0.8 + 0.2 * Math.sin(T * 1.3 + i * 2)), L = VW * 2; ctx.fillStyle = 'rgba(' + o.col + ',' + al.toFixed(3) + ')'; ctx.beginPath(); ctx.moveTo(o.sx, o.sy); ctx.lineTo(o.sx + Math.sin(a - w) * L, o.sy + Math.cos(a - w) * L); ctx.lineTo(o.sx + Math.sin(a + w) * L, o.sy + Math.cos(a + w) * L); ctx.closePath(); ctx.fill(); } ctx.restore(); }
+  if (o.mist > 0.01) for (let i = 0; i < 5; i++) { const W2 = VW * 1.6, x = ((c6H(i, 3) * W2 + T * (4 + 3 * c6H(i, 4))) % W2) - VW * 0.3, y = fy - 4 + 16 * c6H(i, 5), r = VW * (0.2 + 0.15 * c6H(i, 6)); ctx.save(); ctx.translate(x, y); ctx.scale(1, 0.3); const gr = ctx.createRadialGradient(0, 0, 2, 0, 0, r); gr.addColorStop(0, 'rgba(' + o.col + ',' + (o.mist * 0.17).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(' + o.col + ',0)'); ctx.fillStyle = gr; ctx.fillRect(-r, -r, 2 * r, 2 * r); ctx.restore(); }
+  if (o.mote) { ctx.save(); ctx.fillStyle = 'rgb(' + o.col + ')'; for (let i = 0; i < o.mote; i++) { ctx.globalAlpha = 0.2 + 0.5 * Math.abs(Math.sin(T * (1 + 2 * c6H(i, 11)) + i)); ctx.fillRect(Math.round((c6H(i, 7) * VW + T * (3 + 6 * c6H(i, 8))) % VW), Math.round(VH - ((c6H(i, 9) * VH + T * (4 + 8 * c6H(i, 10))) % VH)), 1, 1); } ctx.restore(); }
+}
+function d6Wheel(cx, cy, r, T, a) {      // the wheel of the Divine General: a ring with eight spokes that end in handles, turning slowly, drawn in blocks of 2 px; a = how much of it shows (0 - 1)
+  if (a <= 0.01) return; ctx.save(); ctx.globalAlpha = Math.min(1, a); const P = 2, dot = (x, y, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x / P) * P, Math.round(y / P) * P, P, P); }, n = Math.ceil(6.2832 * r / P);
+  for (let i = 0; i < n; i++) { const t = i / n * 6.2832, c = Math.cos(t), s = Math.sin(t); dot(cx + c * (r + P), cy + s * (r + P), '#b8862a'); dot(cx + c * r, cy + s * r, '#ffd86a'); dot(cx + c * (r - P), cy + s * (r - P), '#fff4c0'); }
+  for (let s = 0; s < 8; s++) { const t = T * 0.45 + s * 0.7854, c = Math.cos(t), si = Math.sin(t); for (let d = P * 2; d < r * 1.3; d += P) dot(cx + c * d, cy + si * d, d > r ? '#ffd86a' : '#fff4c0'); const hx = cx + c * r * 1.3, hy = cy + si * r * 1.3; for (let u = -1; u <= 1; u++) for (let v = -1; v <= 1; v++) dot(hx + u * P, hy + v * P, '#ffd86a'); }
+  ctx.restore();
+}
+function d6Title(txt, x, y, size, a, col) {      // a big title: the words again behind it in the colour col (a glow, shifted a little each way), a dark edge, and the words in gold white; a = how much of it shows
+  if (a <= 0.01) return; ctx.save(); ctx.globalAlpha = Math.min(1, a) * 0.3; for (const [dx, dy] of [[-2, 0], [2, 0], [0, -2], [0, 2]]) pxt(txt, x + dx, y + dy, 'rgb(' + col + ')', size, 'center'); ctx.globalAlpha = Math.min(1, a); pxt(txt, x + 1, y + 1, '#2a1a05', size, 'center'); pxt(txt, x, y, '#fff6d8', size, 'center'); ctx.restore();
+}
+function d6Blade(x0, y0, x1, y1, a) {      // a blade of light from (x0, y0) to (x1, y1), thinner towards the tip: a wide soft body, a gold one and a white edge, in blocks of 2 px
+  if (a <= 0.01) return; const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 2); ctx.save();
+  for (const [w, c, al] of [[10, '#ff9a2a', 0.22], [5, '#ffd86a', 0.9], [2, '#ffffff', 1]]) { ctx.fillStyle = c; ctx.globalAlpha = Math.min(1, a) * al; for (let i = 0; i <= n; i++) { const t = i / n, w2 = w * (1 - 0.6 * t); ctx.fillRect(Math.round((x0 + (x1 - x0) * t) / 2) * 2, Math.round((y0 + (y1 - y0) * t - w2 / 2) / 2) * 2, 2, Math.max(2, Math.round(w2 / 2) * 2)); } }
+  ctx.restore();
+}
+function d6SSay(now, dt, T, st, t1, cx, g) {      // "DID SOMEONE SAY...": Verity's close-up stays, pushed in a little more; the red goes out of it and a cold light comes in from a door on the left
+  const k = t1 / st.d, ln = C4_SEQ.find(q => q.k === 'line'), s = 1 + 0.06 * ease3(k), li = ease3(clamp01((t1 - 0.45) / 1.5)), w = VW * (0.2 + 0.45 * li);
+  ctx.save(); ctx.translate(VW / 2, VH * 0.57); ctx.scale(s, s); ctx.translate(-VW / 2, -VH * 0.57); c4SLine(now, dt, T, ln, ln.d, cx, g); ctx.restore();
+  ctx.fillStyle = 'rgba(4,8,30,' + (0.55 * ease3(clamp01(t1 / 1.6))).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH);
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; const gr = ctx.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, 'rgba(170,205,255,' + (0.62 * li).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(170,205,255,0)'); ctx.fillStyle = gr; ctx.fillRect(0, 0, w, VH); ctx.restore();
+  c6Glow(0, VH * 0.5, VW * 0.55, '150,190,255', 0.4 * li); msDust(T, 0, 0, VW * 0.8, VH, 26, 0.6 * li, 7);
+  if (t1 > 1.95) c6White(0.16 * Math.sin((t1 - 1.95) / 0.45 * 3.14159));      // (the light surges)
+  msFinish(1);
+}
+function d6SPot(now, dt, T, st, t1) {      // "POTENTIAL?": a smash cut to Megumi standing in the light, seen from below, dark against it with a rim of light all the way round; the picture is 2 times its size and starts under the speech box, so his legs go down into the mist
+  const k = t1 / st.d, z = 2, x = VW / 2 - 31 * z + Math.round(4 * (k - 0.5)), y = 33 + Math.round(Math.sin(T * 1.7));
+  d6Bg(T, { top: '#04060e', bot: '#0a1226', sx: VW * 0.5, sy: VH * 0.3, ang: 0, shaft: 1.0, col: '175,205,255', mist: 1, mote: 46, floor: 0.82 });
+  c6Glow(VW * 0.5, VH * 0.42, VW * 0.55, '150,190,255', 0.95); c6Glow(VW * 0.5, VH * 0.5, VW * 0.2, '255,255,255', 0.75);
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(200,225,255,0.35)'; ctx.fillRect(0, Math.round(VH * 0.45), VW, 1); ctx.restore();
+  d6Put(d6Lit([[-1, 0, '190,215,255'], [1, 0, '190,215,255'], [0, -1, '235,245,255']], 0.82), x, y, z);
+  { const gr = ctx.createLinearGradient(0, VH * 0.6, 0, VH * 0.92); gr.addColorStop(0, 'rgba(110,150,225,0)'); gr.addColorStop(1, 'rgba(80,120,205,0.92)'); ctx.fillStyle = gr; ctx.fillRect(0, VH * 0.6, VW, VH * 0.4); }
+  c6Glow(VW * 0.5, VH * 0.45, VW * 0.3, '200,225,255', 0.18);
+  if (t1 < 0.1) c6Black(1); else c6White(Math.max(0, 1 - (t1 - 0.1) / 0.3));      // (black, then a flash that dies)
+  msFinish(1);
+}
+function d6SWith(now, dt, T, st, t1) {      // "WITH THIS SACRED TREASURE, I SUMMON...": his head and fists 4 times the size, under the speech box; a warm key light from the upper right, a cold fill from the left, his fists glowing blue, the wheel beginning to show behind his head
+  const k = t1 / st.d, z = 4, x = VW / 2 - D6.H[0] * z + Math.round(6 * (k - 0.5)), y = 40, hx = Math.round(x + D6.H[0] * z);
+  d6Bg(T, { top: '#05060c', bot: '#0b0b1a', sx: VW * 0.95, sy: -10, ang: -0.5, shaft: 0.7 + 0.5 * k, col: '255,214,140', mist: 0.8, mote: 40, floor: 0.9 });
+  d6Wheel(hx, y + 8 * z, 56, T, ease3(clamp01((t1 - 0.8) / 1.6)) * 0.55); c6Glow(hx, y + 8 * z, 80, '255,214,140', 0.3 * k);
+  d6Put(d6Lit([[1, -1, '255,214,140'], [-1, 0, '120,170,255']], 0.55), x, y, z);
+  c6Glow(x + D6.F[0] * z, y + D6.F[1] * z, 52, '130,190,255', 0.28 + 0.3 * (0.5 + 0.5 * Math.sin(T * 7)) * ease3(clamp01(t1 / 1.0)));
+  ctx.fillStyle = 'rgba(0,0,8,' + (0.35 * (1 - k)).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); msFinish(1);
+}
+function d6SSword(now, dt, T, st, t1) {      // "EIGHT-HANDLED SWORD": his face and fists 6 times the size on the left; a blade of light is drawn from his fists across the picture and the words stand over it; a flash on the draw
+  const k = t1 / st.d, z = 6, x = Math.round(VW * 0.3 - 30 * z + 8 * (k - 0.5)), y = 40 - 8 * z, hx = x + D6.F[0] * z + 4, hy = y + D6.F[1] * z + 3, bl = ease3(clamp01((t1 - 0.35) / 0.35));
+  d6Bg(T, { top: '#05050c', bot: '#0a0a16', sx: VW * 0.3, sy: VH, ang: 3.14159, shaft: 0.5 + 0.8 * bl, col: '255,226,160', mist: 0.6, mote: 36, floor: 0.95 });
+  c6Glow(hx, hy, 90, '255,226,160', 0.5 * bl); d6Put(d6Lit([[0, -1, '255,230,170'], [1, 0, '255,200,120']], 0.5), x, y, z);
+  d6Wheel(hx, hy, 11, T, bl); d6Blade(hx, hy, hx + (VW - 6 - hx) * bl, hy - 36 * bl, bl);
+  const wa = ease3(clamp01((t1 - 0.5) / 0.25)); d6Title('EIGHT-HANDLED', 226, 56, 10, wa, '255,190,80'); d6Title('SWORD', 226, 90, 24, wa, '255,190,80');
+  if (t1 >= 0.35) c6White(0.5 * Math.exp(-(t1 - 0.35) * 8)); msFinish(1);
+}
+function d6SDiv(now, dt, T, st, t1) {      // "DIVERGENT SILA DIVINE GENERAL": his head 6 times the size under the speech box, lit from above in gold; the wheel opens behind it; the two names come one after the other on the right, each with a flash
+  const k = t1 / st.d, z = 6, x = Math.round(VW * 0.28 - D6.H[0] * z + 6 * (k - 0.5)), y = 40, hx = Math.round(x + D6.H[0] * z), hy = Math.round(y + 8 * z), wa = ease3(clamp01((t1 - 0.2) / 0.9)), t0 = 0.35, t2 = 1.55;
+  d6Bg(T, { top: '#06050a', bot: '#120d0a', sx: hx, sy: hy - 30, ang: 0, shaft: 0.6 + 0.8 * ease3(clamp01(t1 / 1.2)), col: '255,220,140', mist: 0.5, mote: 44, floor: 0.97 });
+  d6Wheel(hx, hy, Math.round(26 + 34 * wa), T, wa); c6Glow(hx, hy, 110, '255,214,120', 0.5 * wa);
+  d6Put(d6Lit([[0, -1, '255,226,150'], [1, 0, '255,196,110']], 0.62), x, y, z); c6Glow(hx, hy - 20, 70, '255,240,190', 0.2 * wa);
+  { const a1 = ease3(clamp01((t1 - t0) / 0.2)), a2 = ease3(clamp01((t1 - t2) / 0.2)); d6Title('DIVERGENT', 230, 66, 14, a1, '255,200,90'); d6Title('SILA', 230, 85, 14, a1, '255,200,90'); d6Title('DIVINE', 230, 111, 16, a2, '255,200,90'); d6Title('GENERAL', 230, 129, 16, a2, '255,200,90'); }
+  c6White((t1 >= t0 ? 0.45 * Math.exp(-(t1 - t0) * 9) : 0) + (t1 >= t2 ? 0.5 * Math.exp(-(t1 - t2) * 9) : 0)); msFinish(1);
+}
+function d6SMaho(now, dt, T, st, t1) {      // "MAHORAGA": black, a white flash, and the wheel turns up behind the name in gold with rays; the picture shakes; it fades to black at the end
+  const hit = 0.25, g = ease3(clamp01((t1 - hit) / 0.5)), sh = c6Shk(T, t1 >= hit && t1 < hit + 0.7 ? 3 : 0), mx = VW / 2, my = VH * 0.62;
+  ctx.save(); ctx.translate(sh[0], sh[1]);
+  d6Bg(T, { top: '#0a0806', bot: '#1a1206', sx: mx, sy: my, ang: 0, shaft: 0, col: '255,214,120', mist: 0.4, mote: 50, floor: 0.97 });
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < 16; i++) { const a = T * 0.15 + i * 0.3927, w = 0.05; ctx.fillStyle = 'rgba(255,214,120,' + (0.1 * g * (0.6 + 0.4 * Math.sin(T * 2 + i))).toFixed(3) + ')'; ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(mx + Math.cos(a - w) * VW, my + Math.sin(a - w) * VW); ctx.lineTo(mx + Math.cos(a + w) * VW, my + Math.sin(a + w) * VW); ctx.closePath(); ctx.fill(); } ctx.restore();
+  c6Glow(mx, my, VW * 0.5, '255,214,120', 0.7 * g); d6Wheel(Math.round(mx), Math.round(my), Math.round(40 + 20 * g), T, g);
+  d6Title('MAHORAGA', Math.round(mx), Math.round(VH * 0.55), 30, t1 >= hit ? ease3(clamp01((t1 - hit) / 0.12)) : 0, '255,200,80'); ctx.restore();
+  if (t1 >= hit && t1 < hit + 0.45) c6White(0.85 * (1 - (t1 - hit) / 0.45)); c6Black(clamp01((t1 - (st.d - 0.9)) / 0.9)); msFinish(1);
+}
+TN_COL.MEGUMI = '#8fb8ff'; C3E_TALK.push({ t: c4T('dsay') + 0.35, d: 1.9, w: '???', vk: 3, a: 'DID SOMEONE SAY...', b: '' }, { t: c4T('dpot') + 0.3, d: 1.5, w: '???', vk: 3, a: 'POTENTIAL?', b: '' }, { t: c4T('dwith') + 0.4, d: 2.5, w: 'MEGUMI', vk: 4, a: 'WITH THIS SACRED TREASURE', b: 'I SUMMON...' }, { t: c4T('dsword') + 0.35, d: 2.1, w: 'MEGUMI', vk: 4, a: 'EIGHT-HANDLED SWORD', b: '' }, { t: c4T('ddiv') + 0.3, d: 2.5, w: 'MEGUMI', vk: 4, a: 'DIVERGENT SILA', b: 'DIVINE GENERAL' }, { t: c4T('dmaho') + 0.5, d: 2.2, w: 'MEGUMI', vk: 4, a: 'MAHORAGA', b: '' });
+function d6Events(ev, now) {      // the sounds and shakes of the summoning (each fires once)
+  const Ts = c4T('dsay'), Tp = c4T('dpot'), Tw = c4T('dwith'), Tb = c4T('dsword'), Td = c4T('ddiv'), Tm = c4T('dmaho');
+  ev('m_wind', Ts, () => snd('dwind'), 1); ev('m_smash', Tp, () => { snd('dsmash'); c2Shake(now, 360, 3); }, 0.6);
+  ev('m_c0', Tw + 0.4, () => snd('dchant', 0), 1); ev('m_c1', Tb + 0.35, () => { snd('dchant', 1); c2Shake(now, 200, 2); }, 1);
+  ev('m_c2', Td + 0.35, () => snd('dchant', 2), 1); ev('m_c2b', Td + 1.55, () => { snd('dchant', 2); c2Shake(now, 240, 2); }, 1);
+  ev('m_c3', Tm + 0.25, () => { snd('dchant', 3); c2Shake(now, 700, 5); }, 1.2);
 }
 // ---- end of the eyes
