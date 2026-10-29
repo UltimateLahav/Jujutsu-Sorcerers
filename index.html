@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.104</small>
+    <small id="ver">V1.105</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -1017,6 +1017,69 @@ function makeSfx(ac) {
       else if (k === 1) { burst(B.soft, t, { type: 'highpass', f: 2500, f2: 7000, q: 0.8, dur: 0.5, gain: 0.5, atk: 0.04 }); burst(B.soft, t, { type: 'bandpass', f: 600, f2: 4200, q: 1.5, dur: 0.45, gain: 0.5, atk: 0.1 }); tone(B.soft, t + 0.35, { f: 2349, f2: 2330, dur: 1.4, gain: 0.07, atk: 0.003 }); tone(B.soft, t + 0.35, { f: 3136, f2: 3120, dur: 1.2, gain: 0.04, atk: 0.003 }); tone(B.deep, t + 0.3, { f: 98, f2: 60, dur: 0.6, gain: 0.35, atk: 0.003 }); }
       else if (k === 2) { tone(B.soft, t, { f: 1318, f2: 1310, dur: 2.2, gain: 0.07, atk: 0.003 }); [392, 587, 784].forEach((f, i) => tone(B.soft, t + 0.1 + i * 0.12, { type: 'triangle', f, f2: f * 1.004, dur: 2.0, gain: 0.06, atk: 0.7 })); tone(B.deep, t, { f: 65, f2: 98, dur: 2.0, gain: 0.45, atk: 0.9, cur: 1 }); }
       else { tone(B.deep, t, { f: 98, f2: 24, dur: 2.2, gain: 0.95, atk: 0.003 }); burst(B.deep, t, { type: 'lowpass', f: 2200, f2: 90, q: 0.7, dur: 1.4, gain: 0.8, atk: 0.002 }); for (let i = 0; i < 16; i++) burst(B.soft, t + 0.3 + i * 0.075, { type: 'bandpass', f: 1800 + 350 * (i % 4), q: 9, dur: 0.035, gain: 0.14 * (1 - i / 22), atk: 0.001 }); [1568, 2349, 3136, 4699].forEach((f, i) => tone(B.soft, t + 0.1 + i * 0.09, { f, f2: f * 1.002, dur: 3.0, gain: 0.05, atk: 0.6 })); }
+    },
+    vrush() {                                            // v1.105 Verity charges: air rushing past that climbs for 1.9 s, and running steps that come faster and harder
+      const t = T(), B = C.tele; burst(B.soft, t, { type: 'bandpass', f: 300, f2: 3200, q: 0.9, dur: 1.9, gain: 0.5, atk: 1.4 }); tone(B.deep, t, { type: 'triangle', f: 50, f2: 90, dur: 1.9, gain: 0.25, atk: 1.2, cur: 1 });
+      for (let i = 0, s = 0; i < 10; i++) { s += 0.3 - 0.022 * i; tone(B.deep, t + s, { f: 120, f2: 48, dur: 0.1, gain: 0.3 + 0.03 * i, atk: 0.002 }); burst(B.soft, t + s, { type: 'lowpass', f: 700, f2: 200, q: 0.7, dur: 0.07, gain: 0.7, atk: 0.001 }); }
+    },
+    vleap() {                                            // v1.105 Verity leaps: a hard whoosh, a thin shriek that falls and a thump
+      const t = T(), B = C.atk; burst(B.soft, t, { type: 'bandpass', f: 500, f2: 4500, q: 1.1, dur: 0.35, gain: 0.8, atk: 0.04 }); tone(B.soft, t, { type: 'sawtooth', f: 900, f2: 300, dur: 0.4, gain: 0.05, atk: 0.02 }); tone(B.deep, t, { f: 90, f2: 40, dur: 0.3, gain: 0.4, atk: 0.003 });
+    },
+    vcloth() {                                           // v1.105 the cloth tears itself together: many quick snaps of fabric, more and more of them, over a creak that tightens (0.9 s)
+      const t = T(), B = C.atk; tone(B.deep, t, { type: 'sawtooth', f: 55, f2: 130, dur: 0.9, gain: 0.12, atk: 0.5, cur: 1 }); burst(B.soft, t, { type: 'bandpass', f: 400, f2: 1800, q: 1.2, dur: 0.9, gain: 0.3, atk: 0.6 });
+      for (let i = 0; i < 16; i++) burst(B.soft, t + 0.9 * Math.pow(i / 15, 0.8), { type: 'highpass', f: R(1800, 3200), f2: R(4500, 7000), q: 0.8, dur: R(0.04, 0.08), gain: 0.45, atk: 0.001 });
+    },
+    vlock() {                                            // v1.105 the last strip snaps tight: a boom, a ring of wrapped metal and a long rustle
+      const t = T(), B = C.ce; tone(B.deep, t, { f: 130, f2: 30, dur: 1.2, gain: 0.8, atk: 0.003 }); burst(B.deep, t, { type: 'lowpass', f: 1500, f2: 120, q: 0.7, dur: 0.7, gain: 0.6, atk: 0.002 }); tone(B.soft, t + 0.02, { f: 1109, f2: 1100, dur: 1.4, gain: 0.06, atk: 0.004 }); burst(B.soft, t + 0.1, { type: 'bandpass', f: 3000, f2: 1200, q: 1, dur: 0.8, gain: 0.12, atk: 0.05 });
+    },
+    vawake() {                                           // v1.105 its eyes light: a deep drone that swells (two saws a little apart, so that it beats), a chord of bells that rise over it and a long breath (about 2.4 s)
+      const t = T(), B = C.ce; tone(B.deep, t, { type: 'sawtooth', f: 55, f2: 58, dur: 2.4, gain: 0.2, atk: 1.4, cur: 1 }); tone(B.deep, t, { type: 'sawtooth', f: 55.7, f2: 58.6, dur: 2.4, gain: 0.2, atk: 1.4, cur: 1 });
+      [392, 587, 784, 1175].forEach((f, i) => tone(B.soft, t + 0.3 + 0.18 * i, { type: 'triangle', f, f2: f * 1.003, dur: 2.0, gain: 0.05, atk: 0.6 })); burst(B.soft, t, { type: 'bandpass', f: 500, f2: 900, q: 0.8, dur: 2.2, gain: 0.3, atk: 1.2 });
+    },
+    vthud() {                                            // v1.105 an enormous blow far away: a deep thud that rolls on, a crack and a rattle of falling stones
+      const t = T(), B = C.ce; tone(B.deep, t, { f: 95, f2: 24, dur: 1.6, gain: 0.95, atk: 0.003 }); burst(B.deep, t, { type: 'lowpass', f: 2200, f2: 90, q: 0.7, dur: 1.0, gain: 0.8, atk: 0.002 }); burst(B.soft, t, { type: 'highpass', f: 3000, f2: 8000, q: 0.8, dur: 0.15, gain: 0.5, atk: 0.001 });
+      for (let i = 0; i < 8; i++) burst(B.soft, t + 0.15 + i * 0.09 + R(0, 0.05), { type: 'bandpass', f: R(900, 3000), q: 4, dur: 0.04, gain: 0.12 * (1 - i / 10), atk: 0.001 });
+    },
+    t6open() {                                           // v1.105 the claw lets the stone go: a dry click of the blades and a thin hum under the stone that rises (about 1.5 s)
+      const t = T(), B = C.ce; burst(B.soft, t, { type: 'highpass', f: 3500, f2: 7000, q: 1, dur: 0.05, gain: 0.5, atk: 0.001 }); tone(B.soft, t + 0.02, { f: 1568, f2: 1560, dur: 0.5, gain: 0.04, atk: 0.003 }); tone(B.deep, t, { f: 82, f2: 123, dur: 1.5, gain: 0.3, atk: 0.9, cur: 1 });
+    },
+    t6circle() {                                         // v1.105 a circle opens in the air: a glassy rising sweep with a shimmer of high notes over a low swell (about 1 s)
+      const t = T(), B = C.tele; tone(B.soft, t, { type: 'triangle', f: 400, f2: 1800, dur: 0.9, gain: 0.07, atk: 0.5, cur: 1 }); [1568, 2093, 3136].forEach((f, i) => tone(B.soft, t + 0.1 + i * 0.1, { f, f2: f * 1.004, dur: 0.9, gain: 0.035, atk: 0.4 })); tone(B.deep, t, { f: 65, f2: 110, dur: 1.0, gain: 0.3, atk: 0.6, cur: 1 }); burst(B.soft, t, { type: 'highpass', f: 2500, f2: 8000, q: 0.8, dur: 0.9, gain: 0.08, atk: 0.6 });
+    },
+    t6zip() {                                            // v1.105 the stone is taken away: a pitch that shoots up out of hearing, a snap of air and a deep pop
+      const t = T(), B = C.tele; tone(B.soft, t, { f: 500, f2: 7000, dur: 0.22, gain: 0.12, atk: 0.003, cur: 1 }); burst(B.soft, t, { type: 'bandpass', f: 1000, f2: 6000, q: 1.2, dur: 0.2, gain: 0.7, atk: 0.003 }); tone(B.deep, t + 0.05, { f: 160, f2: 36, dur: 0.6, gain: 0.7, atk: 0.003 }); burst(B.soft, t + 0.05, { type: 'highpass', f: 2800, f2: 9000, q: 0.8, dur: 0.4, gain: 0.3, atk: 0.001 });
+    },
+    t6hum() {                                            // v1.105 space: a very low, quiet hum that swells slowly (about 3 s); nothing else
+      const t = T(), B = C.ce; tone(B.deep, t, { f: 41, f2: 43, dur: 3.2, gain: 0.35, atk: 1.6, cur: 1 }); tone(B.deep, t, { type: 'triangle', f: 82.5, f2: 86, dur: 3.2, gain: 0.1, atk: 1.8, cur: 1 }); burst(B.soft, t, { type: 'bandpass', f: 250, f2: 400, q: 0.6, dur: 3, gain: 0.15, atk: 1.6 });
+    },
+    t6arrive() {                                         // v1.105 the stone comes out of the circle: a clear glassy chord that rings (four high notes), a soft boom and a shimmer
+      const t = T(), B = C.ce; [1568, 2349, 3136, 4699].forEach((f, i) => tone(B.soft, t + i * 0.05, { f, f2: f * 1.002, dur: 2.0, gain: 0.05, atk: 0.01 })); tone(B.deep, t, { f: 110, f2: 40, dur: 0.9, gain: 0.6, atk: 0.004 }); burst(B.soft, t, { type: 'highpass', f: 3000, f2: 9000, q: 0.7, dur: 1.2, gain: 0.1, atk: 0.04 });
+    },
+    t6grasp() {                                          // v1.105 the fingers close on the stone: a tiny glass click, a bright ting and a low pulse
+      const t = T(), B = C.ce; burst(B.soft, t, { type: 'highpass', f: 4000, f2: 9000, q: 1, dur: 0.03, gain: 0.5, atk: 0.001 }); tone(B.soft, t + 0.01, { f: 3136, f2: 3100, dur: 0.7, gain: 0.07, atk: 0.002 }); tone(B.deep, t, { f: 98, f2: 55, dur: 0.4, gain: 0.45, atk: 0.003 });
+    },
+    t6slot() {                                           // v1.105 the stone goes into its socket: a metal click and clack, a deep thud, a bright ring, and a shimmer that swells as the light runs over the gold (about 1.6 s)
+      const t = T(), B = C.ce; burst(B.soft, t, { type: 'bandpass', f: 3500, q: 6, dur: 0.04, gain: 0.7, atk: 0.001 }); burst(B.soft, t + 0.06, { type: 'bandpass', f: 2200, q: 6, dur: 0.05, gain: 0.55, atk: 0.001 }); tone(B.deep, t + 0.06, { f: 120, f2: 38, dur: 0.7, gain: 0.8, atk: 0.003 }); tone(B.soft, t + 0.08, { f: 2093, f2: 2085, dur: 1.4, gain: 0.07, atk: 0.003 });
+      [1568, 2637, 3951].forEach((f, i) => tone(B.soft, t + 0.2 + i * 0.1, { f, f2: f * 1.003, dur: 1.6, gain: 0.04, atk: 0.8 }));
+    },
+    t6power(k) {                                         // v1.105 k = 0 the stone flares: a long rising swell (two saws that climb, a rising hiss, crackles of lightning that come faster, about 1.5 s); k = 1 the surge: a boom with a bright ring and a long fall
+      const t = T(), B = C.ce;
+      if (!k) { tone(B.deep, t, { type: 'sawtooth', f: 55, f2: 220, dur: 1.5, gain: 0.3, atk: 1.2, cur: 1 }); tone(B.soft, t, { type: 'sawtooth', f: 110, f2: 880, dur: 1.5, gain: 0.04, atk: 1.2, cur: 1 }); burst(B.soft, t, { type: 'highpass', f: 1500, f2: 7000, q: 0.8, dur: 1.5, gain: 0.2, atk: 1.2 }); for (let i = 0; i < 14; i++) burst(B.soft, t + 0.3 + 1.1 * Math.pow(i / 13, 0.7), { type: 'bandpass', f: R(2500, 7000), q: 6, dur: R(0.02, 0.05), gain: 0.2, atk: 0.001 }); }
+      else { tone(B.deep, t, { f: 140, f2: 28, dur: 1.8, gain: 0.95, atk: 0.003 }); burst(B.deep, t, { type: 'lowpass', f: 3000, f2: 100, q: 0.7, dur: 1.2, gain: 0.8, atk: 0.002 }); [1568, 2349, 3136, 4699].forEach((f, i) => tone(B.soft, t + 0.03 + i * 0.05, { f, f2: f * 1.002, dur: 2.2, gain: 0.05, atk: 0.003 })); burst(B.soft, t, { type: 'highpass', f: 3500, f2: 10000, q: 0.7, dur: 1.0, gain: 0.3, atk: 0.002 }); }
+    },
+    t6lift() {                                           // v1.105 the arm is raised: a rumble from the ground that climbs (noise through a filter that opens, a deep tone under it), a rush of air and at the end a bright chord that stands (about 3 s)
+      const t = T(), B = C.ce; burst(B.deep, t, { type: 'lowpass', f: 120, f2: 1800, q: 0.9, dur: 2.6, gain: 0.9, atk: 1.8 }); tone(B.deep, t, { type: 'triangle', f: 40, f2: 110, dur: 2.8, gain: 0.45, atk: 1.9, cur: 1 }); burst(B.soft, t + 0.2, { type: 'bandpass', f: 300, f2: 2600, q: 1, dur: 1.6, gain: 0.35, atk: 1.0 });
+      [392, 587, 784, 1175, 1568].forEach((f, i) => tone(B.soft, t + 1.1 + i * 0.12, { type: 'triangle', f, f2: f * 1.003, dur: 2.2, gain: 0.05, atk: 1.0 }));
+    },
+    t6crack(k) {                                         // v1.105 the planet cracks: a sharp crack of rock and a short rattle that is different each time (k = 0 - 4), lower and heavier as k grows
+      const t = T(), B = C.atk, d = (k || 0) / 4; burst(B.soft, t, { type: 'highpass', f: 2500 - 900 * d, f2: 7000 - 2500 * d, q: 0.9, dur: 0.12, gain: 0.7, atk: 0.001 }); tone(B.deep, t, { f: 150 - 60 * d, f2: 40, dur: 0.4 + 0.2 * d, gain: 0.4 + 0.3 * d, atk: 0.003 }); for (let i = 0; i < 5; i++) burst(B.soft, t + 0.05 + i * 0.05 + R(0, 0.03), { type: 'bandpass', f: R(700, 2600), q: 5, dur: 0.03, gain: 0.14, atk: 0.001 });
+    },
+    t6rumble() {                                         // v1.105 the planet shakes before it bursts: a deep rumble that grows and a rising whine (about 2 s)
+      const t = T(), B = C.ce; burst(B.deep, t, { type: 'lowpass', f: 180, f2: 700, q: 0.8, dur: 2.2, gain: 1.0, atk: 1.7 }); tone(B.deep, t, { type: 'sawtooth', f: 32, f2: 60, dur: 2.2, gain: 0.3, atk: 1.7, cur: 1 }); tone(B.soft, t, { f: 300, f2: 2400, dur: 2.2, gain: 0.035, atk: 1.8, cur: 1 });
+    },
+    t6boom() {                                           // v1.105 the planet bursts, the biggest sound of the game: a boom that falls for 3 s, a wall of noise that closes in on a deep rumble, a crack, a ring and the rattle of the pieces
+      const t = T(), B = C.ce; tone(B.deep, t, { f: 80, f2: 18, dur: 3.2, gain: 1.0, atk: 0.003 }); burst(B.deep, t, { type: 'lowpass', f: 4000, f2: 60, q: 0.7, dur: 3.0, gain: 1.0, atk: 0.003 }); burst(B.soft, t, { type: 'highpass', f: 2500, f2: 9000, q: 0.7, dur: 0.6, gain: 0.5, atk: 0.001 }); tone(B.soft, t + 0.03, { f: 1568, f2: 1500, dur: 2.5, gain: 0.07, atk: 0.003 }); tone(B.deep, t + 0.4, { f: 55, f2: 22, dur: 2.6, gain: 0.5, atk: 0.2 });
+      for (let i = 0; i < 24; i++) burst(B.soft, t + 0.2 + i * 0.1 + R(0, 0.06), { type: 'bandpass', f: R(600, 3500), q: 4, dur: R(0.03, 0.07), gain: 0.16 * (1 - i / 28), atk: 0.001 });
     },
     c6stone() {                                          // v1.102 the blue stone lights up in the claw: a glassy shimmer that swells (three high notes of a bright chord) over a deep hum, then a clear high ping when it is fully lit
       const t = T(), B = C.ce; [1568, 2349, 3136].forEach((f, i) => tone(B.soft, t + i * 0.07, { f, f2: f * 1.003, dur: 2.2, gain: 0.04, atk: 0.8 })); tone(B.deep, t, { f: 82, f2: 110, dur: 2.4, gain: 0.35, atk: 1.2, cur: 1 }); burst(B.soft, t, { type: 'highpass', f: 3500, f2: 9500, q: 0.7, dur: 1.8, gain: 0.05, atk: 1.0 }); tone(B.soft, t + 1.8, { f: 3951, f2: 3900, dur: 1.2, gain: 0.05, atk: 0.002 });
@@ -7856,11 +7919,12 @@ window.__c3Set = o => { if (o.s) Object.assign(c3s, o.s); if (o.wx !== undefined
 // v1.98 THE CALL goes on after it (the shots room, mtalk, scare, ring, listen and gaunt of C4_SEQ; their code is the block "v1.98 THE CALL" at the end of this file): the Master's void again, he talks to Gojo, the room flashes white, he is afraid, a call comes in from "???" ("DID YOU GET HIM?" "YES... I HAVE HIM.") and the camera pushes in on a gauntlet with no stones, whose middle finger's socket shines purple ("GREAT.").
 // v1.104 THE SUMMONING comes between WASTED POTENTIAL (line) and the Master's room (the shots dsay ... dmaho of C4_SEQ, their code is chap2c.js): a voice says DID SOMEONE SAY... POTENTIAL?, and Megumi stands in a cold light and calls MAHORAGA.
 // v1.102 THE EYES goes on after that (the shots etalk ... ecrush of C4_SEQ, their code is chap2c.js): the Master tears Gojo's blindfold off, takes his eyes, and crushes one of them to a glowing blue stone.
+// v1.105 THE BLUE EYE: after MAHORAGA Verity charges and a large white being wrapped in tight white cloth tears itself together behind Megumi (the shots vchg, vmaho); after the crushed eye the Master sends the blue stone to "???", who takes it, puts it in the thumb of his gauntlet, powers it up, lifts the gauntlet and tears the planet he stands on apart (the shots tport, tspace, ttake, tthumb, tpower, tlift, tplanet; their code is chap2c.js); then the card.
 // Every shot is made of the game's own pictures (Yuji's dash, hurt and idle pictures, Verity's strips, the Master's, Gojo's) enlarged with hard pixels (a close-up is the same drawing as the wide shot with the camera pushed in), and is a pure function of the scene time T, so a tap that skips to the next cut (or a test that jumps in time) always draws the right picture.
 const C3E = { talk: 0.6, blink: 2.2, dive: 2.66, arm: 2.78, grab: 3.04, hold: 0.14 };      // the times of the first part (seconds): Yuji's line, Verity blinks in behind him, he dives, the arm shoots out, the arm closes on his leg, the picture stops for 0.14 s
 const C3E_TALK = [{ t: C3E.talk, d: 1.8, w: 'YUJI', a: 'SENSEI... I AM COMING!', b: '' }, { t: 0, d: 0, w: 'VERITY', a: 'WASTED POTENTIAL.', b: '' }];      // (the second line's time is set below)
 const C3V0 = { w: 64, h: 64, cx: 32, x0: 0, top: 0 };      // the place of Verity's 64 x 64 pictures
-const C4_SEQ = [{ k: 'grip', d: 1.8 }, { k: 'other', d: 2.7 }, { k: 'wrist', d: 1.8 }, { k: 'shut', d: 2.9 }, { k: 'yank', d: 1.9 }, { k: 'down', d: 1.0 }, { k: 'beat', d: 7.2 }, { k: 'lift', d: 1.4 }, { k: 'pierce', d: 3.2 }, { k: 'fall', d: 2.8 }, { k: 'line', d: 3.8 }, { k: 'dsay', d: 2.4 }, { k: 'dpot', d: 1.9 }, { k: 'dwith', d: 3.0 }, { k: 'dsword', d: 2.6 }, { k: 'ddiv', d: 3.0 }, { k: 'dmaho', d: 3.6 }, { k: 'black', d: 0.9 }, { k: 'room', d: 4.6 }, { k: 'mtalk', d: 2.6 }, { k: 'scare', d: 2.6 }, { k: 'ring', d: 2.6 }, { k: 'listen', d: 2.8 }, { k: 'gaunt', d: 9.6 }, { k: 'etalk', d: 3.6 }, { k: 'erip', d: 3.4 }, { k: 'egrab', d: 2.8 }, { k: 'epun1', d: 2.5 }, { k: 'egrab2', d: 2.2 }, { k: 'epun2', d: 2.1 }, { k: 'ekick', d: 3.2 }, { k: 'edang', d: 2.8 }, { k: 'eshove', d: 3.2 }, { k: 'edom', d: 4.0 }, { k: 'eyank', d: 2.0 }, { k: 'epluck', d: 2.4 }, { k: 'ecrush', d: 7.0 }];      // the shots after the grab and how long each one lasts
+const C4_SEQ = [{ k: 'grip', d: 1.8 }, { k: 'other', d: 2.7 }, { k: 'wrist', d: 1.8 }, { k: 'shut', d: 2.9 }, { k: 'yank', d: 1.9 }, { k: 'down', d: 1.0 }, { k: 'beat', d: 7.2 }, { k: 'lift', d: 1.4 }, { k: 'pierce', d: 3.2 }, { k: 'fall', d: 2.8 }, { k: 'line', d: 3.8 }, { k: 'dsay', d: 2.4 }, { k: 'dpot', d: 1.9 }, { k: 'dwith', d: 3.0 }, { k: 'dsword', d: 2.6 }, { k: 'ddiv', d: 3.0 }, { k: 'dmaho', d: 3.6 }, { k: 'vchg', d: 2.9 }, { k: 'vmaho', d: 4.7 }, { k: 'black', d: 0.9 }, { k: 'room', d: 4.6 }, { k: 'mtalk', d: 2.6 }, { k: 'scare', d: 2.6 }, { k: 'ring', d: 2.6 }, { k: 'listen', d: 2.8 }, { k: 'gaunt', d: 9.6 }, { k: 'etalk', d: 3.6 }, { k: 'erip', d: 3.4 }, { k: 'egrab', d: 2.8 }, { k: 'epun1', d: 2.5 }, { k: 'egrab2', d: 2.2 }, { k: 'epun2', d: 2.1 }, { k: 'ekick', d: 3.2 }, { k: 'edang', d: 2.8 }, { k: 'eshove', d: 3.2 }, { k: 'edom', d: 4.0 }, { k: 'eyank', d: 2.0 }, { k: 'epluck', d: 2.4 }, { k: 'ecrush', d: 5.6 }, { k: 'tport', d: 3.0 }, { k: 'tspace', d: 3.8 }, { k: 'ttake', d: 3.3 }, { k: 'tthumb', d: 3.6 }, { k: 'tpower', d: 4.4 }, { k: 'tlift', d: 3.4 }, { k: 'tplanet', d: 7.2 }];      // the shots after the grab and how long each one lasts
 { let t = C3E.grab + C3E.hold; for (const s of C4_SEQ) { s.t0 = t; t += s.d; } C4_SEQ.end = t; }
 const c4T = k => C4_SEQ.find(s => s.k === k).t0;
 C3E.card = C4_SEQ.end; C3E_TALK[1].t = c4T('line') + 0.5; C3E_TALK[1].d = 3.0;
@@ -8336,7 +8400,7 @@ function c5SGaunt(now, dt, T, st, t1) {
 }
 
 // ---- the shots after the grab, by name
-const c4Shots = { grip: c4Grip, other: c4SOther, wrist: c4SWrist, shut: c4SShut, yank: c4SYank, down: c4SDown, beat: c4SBeat, lift: c4SLift, pierce: c4SPierce, fall: c4SFall, line: c4SLine, dsay: d6SSay, dpot: d6SPot, dwith: d6SWith, dsword: d6SSword, ddiv: d6SDiv, dmaho: d6SMaho, room: c5SRoom, mtalk: c5STalk, scare: c5SScare, ring: c5SRing, listen: c5SListen, gaunt: c5SGaunt, etalk: c6STalk, erip: c6SRip, egrab: c6SGrab, epun1: c6SPun1, egrab2: c6SGrab2, epun2: c6SPun2, ekick: c6SKick, edang: c6SDang, eshove: c6SShove, edom: c6SDom, eyank: c6SYank, epluck: c6SPluck, ecrush: c6SCrush };
+const c4Shots = { grip: c4Grip, other: c4SOther, wrist: c4SWrist, shut: c4SShut, yank: c4SYank, down: c4SDown, beat: c4SBeat, lift: c4SLift, pierce: c4SPierce, fall: c4SFall, line: c4SLine, dsay: d6SSay, dpot: d6SPot, dwith: d6SWith, dsword: d6SSword, ddiv: d6SDiv, dmaho: d6SMaho, vchg: v6SChg, vmaho: v6SMaho, room: c5SRoom, mtalk: c5STalk, scare: c5SScare, ring: c5SRing, listen: c5SListen, gaunt: c5SGaunt, etalk: c6STalk, erip: c6SRip, egrab: c6SGrab, epun1: c6SPun1, egrab2: c6SGrab2, epun2: c6SPun2, ekick: c6SKick, edang: c6SDang, eshove: c6SShove, edom: c6SDom, eyank: c6SYank, epluck: c6SPluck, ecrush: c6SCrush, tport: t6SPort, tspace: t6SSpace, ttake: t6STake, tthumb: t6SThumb, tpower: t6SPower, tlift: t6SLift, tplanet: t6SPlanet };
 c4Shots.black = () => { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); };      // (black between the summoning, which fades itself out, and the Master's room)
 
 // ---- the ending: the scene
@@ -8750,7 +8814,7 @@ function c6SPluck(now, dt, T, st, t1) {
   if (t1 >= 1.0 && t1 < 1.08) c6White(0.55 * (1 - (t1 - 1.0) / 0.08)); if (t1 < 1.0) c4Shout(T, 'AAAAAAAGH!!', t1, 22); c6RedEdge(0.2); msFinish(1);
 }
 
-// ---- 13. the claw holds the eye in front of the camera and shuts: the white of it bursts and runs down the blades, and what is left between their points is the blue part, three pixels of it, glowing: it lights the claw, the dark, the whole picture
+// ---- 13. the claw holds the eye in front of the camera and shuts: the white of it bursts and runs down the blades, and what is left between their points is the blue part, three pixels of it, glowing: it lights the claw, the dark, the whole picture; it does not fade out: the next shot (tport) goes on in the same picture
 function c6SCrush(now, dt, T, st, t1) {
   const Z = Math.max(4, c6Zf() + 3), sx = Math.round(VW * 0.4), sy = Math.round(VH * 0.5), sq = clamp01((t1 - 1.2) / 0.3), burst = t1 >= 1.5, on = ease3(clamp01((t1 - 1.55) / 2.2)), X = -4, Y = -12, rows = burst ? 2 : 3 - sq;
   const tips = [[-2 - X, -Math.round(rows) - Y], [0 - X, -Math.round(rows) - Y], [0 - X, Math.round(rows) - Y], [-2 - X, Math.round(rows) - Y]], cl = { x: X + Math.round(c6H(Math.floor(T * 30), 4) * (burst ? 0 : sq * 2)), y: Y, ct: 1, tips, thick: 1 };
@@ -8762,7 +8826,7 @@ function c6SCrush(now, dt, T, st, t1) {
   c6Spurt(T, st.t0 + 1.5, 0, 0, 30, { v: 50, an: 0, sp: 6.28, seed: 11, life: 0.8, g: 90 });
   c6Claw(cl, 1);
   if (on > 0) { c6StoneLight(0, 0, 4 + 14 * on, on, T); const tw = (T * 0.9) % 2.6; c6Rays(0, 0, Math.round(4 + 10 * on * (tw < 0.8 ? Math.sin(Math.PI * tw / 0.8) : 0)), 0.8 * on); for (let i = 0; i < 8; i++) { const ph = (T * 0.45 + c6H(i, 91)) % 1; ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = on * (1 - ph) * 0.8; c6P(Math.round((c6H(i, 92) - 0.5) * 14), Math.round(-2 - ph * 14), '#9ff0ff'); ctx.restore(); } }
-  c6Off(); if (t1 >= 1.5 && t1 < 1.58) c6White(0.8 * (1 - (t1 - 1.5) / 0.08)); msFinish(1); c6Black(clamp01((t1 - (st.d - 1.1)) / 1.1));
+  c6Off(); if (t1 >= 1.5 && t1 < 1.58) c6White(0.8 * (1 - (t1 - 1.5) / 0.08)); msFinish(1);
 }
 function c6StoneLight(cx, cy, R, a, T) {      // the light of the stone in face pixels, in 8 steps (like the rest of the picture): a blue glow that is brightest close to the stone and fades out, a slow pulse; it lights everything it falls on, the black claw too; the three pixels of the stone itself are left as they are
   ctx.save(); ctx.globalCompositeOperation = 'lighter'; const pul = 0.92 + 0.08 * Math.sin(T * 5);
@@ -8794,26 +8858,30 @@ function c6Events(ev, now) {
   ev('e_yclamp', Ty + 0.3, () => { snd('c6clamp'); snd('rsgrab'); c2Shake(now, 300, 4); }); ev('e_yscream', Ty + 0.35, () => snd('c6scream', 3), 1);
   ev('e_pluck', Tl, () => snd('c6pluck'), 1); ev('e_pscream', Tl, () => snd('c6scream', 2), 1); [0.6, 0.85, 1.0].forEach((t, i) => ev('e_snap' + i, Tl + t, () => snd('c6wet', 3))); ev('e_pop', Tl + 1.0, () => { snd('c6wet', 2); c2Shake(now, 400, 5); });
   ev('e_crush', Tc + 1.2, () => snd('c6crush'), 1); ev('e_stone', Tc + 1.55, () => snd('c6stone'), 1);
-  d6Events(ev, now);
+  d6Events(ev, now); t6Events(ev, now);
 }
 // ---------------------------------------------------------------- v1.104 THE SUMMONING: after "WASTED POTENTIAL" (the shot line of C4_SEQ) a voice says DID SOMEONE SAY... POTENTIAL?, a cold light comes in, Megumi (the 64 x 64 picture tools/megumi_64.png, 15 colours) stands in it and calls MAHORAGA
 // Six shots (dsay, dpot, dwith, dsword, ddiv, dmaho), each a pure function of the scene time like all the others, so a tap that skips and a test that jumps always draw the right picture. The light does the work: every shot has a key light on the picture (d6Lit: the colour of the light on the edge that faces it, the far side dimmed), a glow behind it (c6Glow), light shafts, mist and motes (d6Bg), and the dark edges, grain and bars of msFinish. The close-ups are whole-number enlargements of the picture (2, 4, 8 and 12 times), so one pixel of it stays a block of whole screen pixels and nothing shimmers; the camera drifts instead of scaling.
 const D6_IMG = (() => { const i = new Image(); i.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAFd0lEQVR4nOVbXWgjVRT+EqSEnSZDs7SdxpZ2my1iWZEiQQrCgi/LwrLIvq+++VD3TVBEVl+UfRVcfVZBxZf6gwjFBxfFVihSZSVLWfsTMs5Ou2TCTDJlyEPrQ/bezkwmaTJzz60/HwQmM3dmzvnuud8999wE+J8jRf2C3HDhCACcppEKn2OIuuY/RwkpLwk7fIgDflyYnodZ2Q20l+U8IIkA4JgEbXom8jojQabzAJCmfkFuuHAUjoCT2lPaEwYpAXGdkUmCNA04xAEK0/M92xmVMtI489/WgGw+DwB47fpFAMAHX20AOHYekKsDj1G/IBzOzPGn5mYAAK+80D6+eqMceQ81GVKnwWw+D9vS4dz/DvrmDiafOAcA0Dd3sPjiLSjZHCbGRrGxvs7vpSZAWgQslEoAgD8fnWfOA8CX36/y47rb4lNlOD+gAPkssFAqYaFUQt1toe62oGRzeP/2p7wNO1ayOQCA59oAgIyiUprGQZ4HAO1e9VybO7e8qvNrH33xOZZXdUyMjSKjqPwjC1IIANo96jYcAMAPn73Oz//607cA2iSdBsgIYOEf7n2gLXp+vP3Scx33b5fXqEwLgDQCtPE8PNcOhDWLAr8OAMCTsxonynNtaQkR6Qv8UcBQM6uwLR3f3H6Tn3v1nVvYbxWgZHNwGw4aliUtGSKfBv347eub/Hjq2Zd9VwoAjqNDJkiHgNM0UiypeW/p+cC1tU/eiLznfLFIaVIHpMwCUYLmT4QYWC4gE+QEOE0jlcYZXL3xLu6s/Hxi+431damLIWl5AABcf+tj6Js70Dd3QhpwepC2GGLL4JNwvliUGgVSSmL+ImgvnNWmiK3phJQhoOYnAXQXOSWb484/2H8owyQOKatB5mBGUSN72b/4mRgbpTSpA1ISofDqzk8CS31ZG228P60QBTIC+h37Mpe+USAbAmz+HxT3tk1cvnJJWmmcdDl8+colvhCqmdW+7quZVZh7FpVZHSCZa5n4Pdh/iImx0chiB6sPGJVyYJZgQ2K3/LuUXIAsArTxPDKK2uG859qomVVeI1DzkzirTfFZgkHWMCAjICqMt8tryChqIB/olvzc2zapTAtAOAHhse/H7PxiQAv8ZbIoLJRK5FEgdTHEYFTKgbm/G2QUSoWKDOv9buHLymFsejzEAWbnF3s+03NtmJVdMkGUFgF+552mkWJ5wknVX+pESRgBvXrfc+2A8+y8n4RuecKIMiTKxEhIiYBe+/6MBNvSI0Wx7rZIxZCcgJpZPbHGz0hg4igTQgjoFv6ea/dd4+9FAmUUCIuAcOLjuTaMSrlL62gwEqL2B6imRGEEhA2M+3sfp2mkGpYVKYoU6XFiAti6P2zwM6WLiZ5rW3rHM809SzgJZCKYpLLrryXUzConou62hJMgrCLEFjWiVPwRebycXjOrULI51KGiLnChJCQCwumsqNSV6QGD23B4NMzMPy0kChIRwAofflDs8NqWHvjeb3WpHwjVAIokxp8pht91iIPEUSBcBMOGikBUgdVtOFDzk4kTJOEEUP60JYrcpDtJsQmI+vkLJbqV2ZMKbqIICO/iyNjWEj3EEhHgz/9HlCHybe1wFIggI5GxbN8/qthBCf+225yWxpaZif3u2JlgbrhwVNQ8AAbGtDS25FSxOeY0Mfodi4DccOFo6ZoKoF2v+3DZlv5nJ4bHR4cAeNgyC0dxbEhM4x/360kfMTCcppHaMjP8e5uEeBiYgOPe/+fgwtxI7HsTR8CFuREUNU/6392AYM8vXVNj2TAQAVG9v7K6l0iFRSIOCX0T0C30T9P5O3c9/PWwxXVoZXVv4Gf0bTir/J4b+gVAW/x+vJs+1Z6P6u1B7Rmoca9/ff9b8TfDwNiReU6YBwAAAABJRU5ErkJggg=='; return i; })();
-const D6 = { cv: null, lit: new Map(), H: [30.5, 9], F: [29, 19], face: [30.6, 11.8] };      // the picture as a canvas, the lit copies, and where his head, his fists and his face are in it (picture pixels)
+const D6 = { cv: null, lit: new Map(), cv2: new WeakMap(), n: 0, H: [30.5, 9], F: [29, 19], face: [30.6, 11.8] };      // the picture as a canvas, the lit copies, and where his head, his fists and his face are in it (picture pixels); v1.105: cv2 / n = the readable copies of other pictures and their numbers (the lit copies of every picture share one cache)
 function d6Base() { if (D6.cv) return D6.cv; if (!D6_IMG.complete || !D6_IMG.naturalWidth) return null; const c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(D6_IMG, 0, 0); D6.cv = c; return c; }
-function d6Lit(lights, k) {      // the picture lit from the sides: lights = [[lx, ly, 'r,g,b'], ...] (lx, ly: the way to the light, each -1, 0 or 1; the first is the key light). A pixel that faces a light with nothing in front of it takes that light's colour (the rim); the others are brighter on the key side and dimmed by k (0 - 1) on the far side
-  const key = JSON.stringify(lights) + k, hit = D6.lit.get(key); if (hit) return hit; const b = d6Base(); if (!b) return null;
-  const p = b.getContext('2d').getImageData(0, 0, 64, 64).data, c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), o = g.createImageData(64, 64), q = o.data, K = lights[0], rc = lights.map(l => l[2].split(',').map(Number));
-  const A = (x, y) => x < 0 || y < 0 || x > 63 || y > 63 ? 0 : p[(y * 64 + x) * 4 + 3];
-  for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) {
-    const i = (y * 64 + x) * 4; if (!p[i + 3]) continue; let rim = -1; for (let n = 0; n < lights.length; n++) if (!A(x + lights[n][0], y + lights[n][1])) { rim = n; break; }
-    const s = ((x - 32) * K[0] + (y - 32) * K[1]) / 20, lit = Math.max(0, Math.min(1, 0.5 + 0.5 * s)), m = 1 - k + k * (0.45 + lit);
-    for (let j = 0; j < 3; j++) q[i + j] = Math.max(0, Math.min(255, rim >= 0 ? p[i + j] * 0.2 + rc[rim][j] * 0.9 : p[i + j] * m + rc[0][j] * 0.12 * lit));
+function d6Cv(img) {      // any picture (an image or a canvas) as a canvas whose pixels can be read; null while it is still loading (no picture = Megumi's)
+  if (!img) return d6Base(); if (img.getContext) return img; let c = D6.cv2.get(img); if (c) return c; if (!img.complete || !img.naturalWidth) return null;
+  c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight; c.getContext('2d').drawImage(img, 0, 0); D6.cv2.set(img, c); return c;
+}
+function d6Lit(lights, k, img, dim) {      // the picture lit from the sides: lights = [[lx, ly, 'r,g,b'], ...] (lx, ly: the way to the light, each -1, 0 or 1; the first is the key light). A pixel that faces a light with nothing in front of it takes that light's colour (the rim); the others are brighter on the key side and dimmed by k (0 - 1) on the far side. img = another picture than Megumi's (any size), dim = how much of its own brightness the rest keeps (1 if left out: a picture that is too bright for the room gets less, with a little of the key light's colour instead)
+  const b = d6Cv(img); if (!b) return null; const w = b.width, h = b.height, dm = dim == null ? 1 : dim, key = (img ? img.d6id || (img.d6id = ++D6.n) : 0) + JSON.stringify(lights) + k + '|' + dm, hit = D6.lit.get(key); if (hit) return hit;
+  const p = b.getContext('2d').getImageData(0, 0, w, h).data, c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'), o = g.createImageData(w, h), q = o.data, K = lights[0], rc = lights.map(l => l[2].split(',').map(Number)), sc = w * 0.3125;
+  const A = (x, y) => x < 0 || y < 0 || x >= w || y >= h ? 0 : p[(y * w + x) * 4 + 3];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = (y * w + x) * 4; if (!p[i + 3]) continue; let rim = -1; for (let n = 0; n < lights.length; n++) if (!A(x + lights[n][0], y + lights[n][1])) { rim = n; break; }
+    const s = ((x - w / 2) * K[0] + (y - h / 2) * K[1]) / sc, lit = Math.max(0, Math.min(1, 0.5 + 0.5 * s)), m = 1 - k + k * (0.45 + lit);
+    for (let j = 0; j < 3; j++) q[i + j] = Math.max(0, Math.min(255, rim >= 0 ? p[i + j] * 0.2 + rc[rim][j] * 0.9 : p[i + j] * m * dm + rc[0][j] * (0.12 * lit + (1 - dm) * 0.16)));
     q[i + 3] = 255;
   }
-  g.putImageData(o, 0, 0); if (D6.lit.size > 20) D6.lit.clear(); D6.lit.set(key, c); return c;
+  g.putImageData(o, 0, 0); if (D6.lit.size > 80) D6.lit.clear(); D6.lit.set(key, c); return c;
 }
-function d6Put(img, x, y, z) { if (img) ctx.drawImage(img, 0, 0, 64, 64, Math.round(x), Math.round(y), 64 * z, 64 * z); }      // the picture enlarged z times (a whole number), its corner at (x, y)
+function d6Put(img, x, y, z) { if (img) ctx.drawImage(img, 0, 0, img.width, img.height, Math.round(x), Math.round(y), img.width * z, img.height * z); }      // the picture enlarged z times (a whole number), its corner at (x, y)
 function d6Bg(T, o) {      // the place: a gradient (o.top to o.bot), light shafts that fan out from (o.sx, o.sy) around the angle o.ang (o.shaft: how strong), mist along the floor (o.mist), o.mote motes; o.col = the colour of the light, 'r,g,b'
   const g = ctx.createLinearGradient(0, 0, 0, VH); g.addColorStop(0, o.top); g.addColorStop(1, o.bot); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
   const fy = Math.round(VH * (o.floor || 0.84)); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, fy, VW, VH - fy); ctx.fillStyle = 'rgba(' + o.col + ',0.12)'; ctx.fillRect(0, fy, VW, 1);
@@ -8895,6 +8963,353 @@ function d6Events(ev, now) {      // the sounds and shakes of the summoning (eac
   ev('m_c0', Tw + 0.4, () => snd('dchant', 0), 1); ev('m_c1', Tb + 0.35, () => { snd('dchant', 1); c2Shake(now, 200, 2); }, 1);
   ev('m_c2', Td + 0.35, () => snd('dchant', 2), 1); ev('m_c2b', Td + 1.55, () => { snd('dchant', 2); c2Shake(now, 240, 2); }, 1);
   ev('m_c3', Tm + 0.25, () => { snd('dchant', 3); c2Shake(now, 700, 5); }, 1.2);
+}
+// ---------------------------------------------------------------- v1.105 THE BLUE EYE, part 1: after MAHORAGA (the shot dmaho) Verity charges at Megumi (vchg) and a large white being wrapped in tight white cloth tears itself together behind him (vmaho); then the Master sends the blue eye to "???" and the chapter ends (part 2, below)
+// Lit like the summoning: the cold light from Megumi's end of the room, a gold light from the wheel, a rim of colour on every edge (d6Lit, which lights any picture now). All shots are pure functions of the scene time T.
+const V6_IMG = (() => { const i = new Image(); i.src = 'data:image/png;base64,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'; return i; })();      // the being: 96 x 124, from the front, cut off at the thighs; every part is a shaded dome and the cloth is saw-tooth ridges, the eyes are dark slits (tools/maho_96.png)
+const V6 = { run: 1.9, eyes: [[42, 14, 4], [50, 14, 4], [44, 20, 2], [50, 20, 2]] };      // the charge runs 1.9 s, then he leaps; the eye slits in the picture (x, y, width; each 2 pixels high)
+const t6H = (i, k) => { let h = Math.imul(i ^ Math.imul(k + 1, 0x9e3779b1), 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16; return (h >>> 0) / 4294967296; };      // a repeatable random number (0 to 1) for thing i and trait k, mixed well enough that two traits of the same thing (its x and its y) are not on a line (c6H is not)
+const v6D = t => 60 * t + 271.4 * Math.pow(Math.max(0, t) / 1.9, 2.8);      // how far the camera has run t seconds into the charge (px; the speed climbs from 60 to 460 px/s)
+function v6Streaks(D, n, col, a, y0, y1, m) {      // n thin lines that rush to the left (the camera runs to the right): D = how far the camera has run, m = how long the lines are; each line has its own height, length and share of D
+  ctx.save(); ctx.fillStyle = col; const S = VW + 160; for (let i = 0; i < n; i++) { const x = (((t6H(i, 23) * S - D * (0.5 + 1.1 * t6H(i, 21))) % S) + S) % S - 80; ctx.globalAlpha = a * (0.2 + 0.5 * t6H(i, 25)); ctx.fillRect(Math.round(x), Math.round(y0 + t6H(i, 24) * (y1 - y0)), Math.max(2, Math.round((4 + 40 * t6H(i, 22)) * m)), 1); } ctx.restore();
+}
+function v6Room(T, o) {      // the room of the summoning again (cold blue, the light at one end): o.sx = where the light is, o.glow / o.shaft = how strong, o.fy = the floor (a share of the height)
+  d6Bg(T, { top: '#04060e', bot: '#0a1226', sx: o.sx, sy: VH * 0.45, ang: o.sx > VW / 2 ? -1.4 : 0, shaft: o.shaft, col: '175,205,255', mist: 1, mote: 40, floor: o.fy });
+  c6Glow(o.sx, VH * 0.45, VW * 0.6, '150,190,255', 0.85 * o.glow); c6Glow(o.sx, VH * 0.48, VW * 0.22, '255,255,255', 0.7 * o.glow);
+}
+function v6Ring(x, y, r, a, col) {      // a ring of light (a = how much of it shows), drawn in 2 steps: a wide faint band and a thin bright line
+  if (a <= 0.01) return; ctx.save(); ctx.globalCompositeOperation = 'lighter'; for (const [w, k] of [[5, 0.3], [1.5, 1]]) { ctx.lineWidth = w; ctx.strokeStyle = 'rgba(' + col + ',' + (a * k).toFixed(3) + ')'; ctx.beginPath(); ctx.arc(x, y, Math.max(1, r), 0, 6.2832); ctx.stroke(); } ctx.restore();
+}
+
+// ---- 1. the charge: the camera runs beside Verity along the floor, the speed lines and the cold light of Megumi's end of the room rushing at them, Megumi a small dark shape ahead against it; after 1.9 s Verity leaps
+function v6SChg(now, dt, T, st, t1) {
+  const Fy = Math.round(VH * 0.84), run = V6.run, u = clamp01(t1 / run), lp = clamp01((t1 - run) / (st.d - run)), D = v6D(t1 < run ? t1 : run + (t1 - run) * 0.5), light = [[1, 0, '175,205,255'], [0, -1, '120,150,225']];
+  const sh = c6Shk(T, 1 + 3 * u), vx = t1 < run ? 70 + 24 * u * u : 94 + 160 * Math.pow(Math.min(1.1, (t1 - run) / 0.85), 1.7), air = t1 < run ? 0 : 14 * Math.sin(lp * 3.14159), vf = (nm, f, lp2) => d6Lit(light, 0.7, vfr(nm, f, lp2), 0.62);
+  ctx.save(); ctx.translate(sh[0], sh[1]);
+  v6Room(T, { sx: VW + 20, glow: 0.5 + 0.5 * u, shaft: 0.6 + 0.9 * u, fy: 0.84 });
+  v6Streaks(D, 26, '#cfe0ff', 0.55, 20, Fy - 2, 0.2 + 1.3 * u); v6Streaks(D * 1.4, 18, '#9fb6ee', 0.5, Fy + 2, Fy + 12, 0.3 + 1.6 * u);
+  const mx = Math.round(330 - 0.22 * (v6D(Math.min(t1, run)) - v6D(1.1))), mg = d6Lit([[1, 0, '190,215,255'], [0, -1, '235,245,255']], 0.85);
+  if (mx < VW + 40) d6Put(mg, mx - 32, Fy - 62, 1);      // (Megumi, far ahead)
+  ctx.fillStyle = 'rgba(0,0,10,0.55)'; ctx.fillRect(Math.round(vx) - 6, Fy + 1, 44 + Math.round(30 * u), 2);      // (his shadow, longer the faster he is)
+  if (t1 < run) { for (let i = 3; i >= 1; i--) { ctx.globalAlpha = 0.3 / i; d6Put(vf('run', Math.floor((t1 - 0.04 * i) * 22), true), vx - 15 * i * (0.4 + u), Fy - 62, 1); } ctx.globalAlpha = 1; d6Put(vf('run', Math.floor(t1 * 22), true), vx, Fy - 62, 1); }      // (three ghosts behind him, then himself)
+  else { for (let i = 3; i >= 1; i--) { ctx.globalAlpha = 0.28 / i; d6Put(vf('fx_leap', 5 + Math.min(4, (t1 - run) * 18), false), vx - 26 * i, Fy - 62 - air, 1); } ctx.globalAlpha = 1; d6Put(vf('fx_leap', 5 + Math.min(4, (t1 - run) * 18), false), vx, Fy - 62 - air, 1); }
+  v6Streaks(D * 1.9, 10, '#ffffff', 0.5, 20, Fy + 10, 0.6 + 2.4 * u);      // (a few streaks in front of everybody)
+  ctx.restore(); msDust(T, 0, 0, VW, VH, 20, 0.3, 9); c6Black(1 - t1 / 0.3); c6White(0.95 * clamp01((t1 - (st.d - 0.22)) / 0.2)); msFinish(1);
+}
+
+// ---- 2. the being: the picture of it tears itself together in strips from the sides, from the feet up (the strips come from alternate sides and snap tight), behind Megumi while Verity flies at them; the ring, the wheel and the four eyes; then a cut in close to its face
+function v6Strips(img, x, y, t) {      // the picture in strips 4 px high, the lowest first; each slides in from the side and snaps tight (a small overshoot); t = seconds since the first one moved; returns how many have landed (0 - 1)
+  const n = Math.ceil(img.height / 4); let done = 0;
+  for (let i = 0; i < n; i++) {
+    const u = clamp01((t - (n - 1 - i) * 0.022) / 0.55); if (u >= 1) done++; if (u <= 0) continue;
+    const e = 1 + 1.9 * Math.pow(u - 1, 3) + 0.9 * Math.pow(u - 1, 2); ctx.globalAlpha = clamp01(u * 5); ctx.drawImage(img, 0, i * 4, img.width, 4, Math.round(x + (i % 2 ? 1 : -1) * VW * 0.6 * (1 - e)), y + i * 4, img.width, 4);
+  }
+  ctx.globalAlpha = 1; return done / n;
+}
+function v6Eyes(ox, oy, z, T, on) {      // the four eye slits of the being, lit one after the other (on = 0 - 1 for all of them), each with a bloom
+  V6.eyes.forEach((e, i) => { const a = ease3(clamp01(on * 1.9 - i * 0.22)) * (0.88 + 0.12 * Math.sin(T * 7 + i)); if (a < 0.02) return; ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = '#ffd36a'; ctx.fillRect(ox + e[0] * z, oy + e[1] * z, e[2] * z, 2 * z); ctx.fillStyle = '#fff4c8'; ctx.fillRect(ox + (e[0] + 1) * z, oy + e[1] * z, Math.max(1, e[2] - 2) * z, z); ctx.restore(); c6Glow(ox + (e[0] + e[2] / 2) * z, oy + (e[1] + 1) * z, 5 * z, '255,190,70', 0.32 * a); });
+}
+function v6SMaho(now, dt, T, st, t1) {
+  const Fy = Math.round(VH * 0.84), cut = 2.55;
+  if (t1 >= cut) {      // ---- the close-up: his head and shoulders 3 times the size in the light of the wheel; the eyes are lit
+    const t2 = t1 - cut, z = 3, hx = Math.round(VW / 2), hy = 76, ox = hx - 48 * z, oy = hy - 19 * z + Math.round(Math.sin(T * 1.3)), on = ease3(clamp01(t2 / 0.7)), sh = c6Shk(T, t2 > 1.7 ? 3 : 0);
+    ctx.save(); ctx.translate(sh[0], sh[1]); ctx.fillStyle = '#05040a'; ctx.fillRect(0, 0, VW, VH);
+    c6Glow(hx, hy, VW * 0.6, '255,196,90', 0.55 * on);
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < 16; i++) { const a = T * 0.12 + i * 0.3927, w = 0.045; ctx.fillStyle = 'rgba(255,200,100,' + (0.1 * on * (0.6 + 0.4 * Math.sin(T * 2 + i))).toFixed(3) + ')'; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + Math.cos(a - w) * VW, hy + Math.sin(a - w) * VW); ctx.lineTo(hx + Math.cos(a + w) * VW, hy + Math.sin(a + w) * VW); ctx.closePath(); ctx.fill(); } ctx.restore();
+    d6Wheel(hx, hy, 50, T, on); c6Glow(hx, hy - 20, 60, '255,240,190', 0.3 * on);
+    d6Put(d6Lit([[0, -1, '255,214,140'], [-1, 0, '255,170,90'], [1, 0, '255,170,90']], 0.45, V6_IMG), ox, oy, z); v6Eyes(ox, oy, z, T, ease3(clamp01((t2 - 0.35) / 1.0)));
+    ctx.restore(); c6White(t2 < 0.16 ? 0.7 * (1 - t2 / 0.16) : 0); c6White(0.95 * clamp01((t2 - (st.d - cut - 0.2)) / 0.18)); msFinish(1); return;
+  }
+  const bx = Math.round(VW * 0.62 - 48), by = 16, hx = bx + 48, hy = by + 19, ta = t1 - 0.3, lock = 1.55, sh = c6Shk(T, t1 >= lock && t1 < lock + 0.4 ? 3 : 0), vt = clamp01(t1 / 2.5), vf = d6Lit([[1, 0, '175,205,255'], [0, -1, '120,150,225']], 0.7, vfr('fx_leap', 6 + Math.min(3, t1 * 5), false), 0.62);
+  ctx.save(); ctx.translate(sh[0], sh[1]);
+  v6Room(T, { sx: VW * 0.62, glow: 0.7, shaft: 0.9, fy: 0.84 });
+  const wa = ease3(clamp01((t1 - 1.7) / 0.7)); d6Wheel(hx, hy, 30, T, wa); c6Glow(hx, hy, 80, '255,200,100', 0.5 * wa);      // (the wheel behind his head)
+  const bl = d6Lit([[0, -1, '255,214,140'], [-1, 0, '150,190,255']], 0.5, V6_IMG); if (bl && ta > 0) v6Strips(bl, bx, by, ta);
+  if (t1 >= lock) { c6Glow(hx, by + 60, 120, '255,236,190', 0.5 * Math.exp(-(t1 - lock) * 4)); v6Ring(hx, by + 60, (t1 - lock) * 150, Math.max(0, 1 - (t1 - lock) * 1.8), '255,226,160'); }
+  v6Eyes(bx, by, 1, T, ease3(clamp01((t1 - 1.9) / 0.6)));
+  { const gr = ctx.createLinearGradient(0, Fy - 22, 0, Fy + 6); gr.addColorStop(0, 'rgba(60,90,160,0)'); gr.addColorStop(1, 'rgba(70,105,185,0.85)'); ctx.fillStyle = gr; ctx.fillRect(0, Fy - 22, VW, 28); }      // (the mist rises over the cut-off legs)
+  ctx.fillStyle = 'rgba(0,0,10,0.5)'; ctx.fillRect(Math.round(VW * 0.47) - 16, Fy + 1, 32, 2);
+  d6Put(d6Lit([[1, 0, '190,215,255'], [0, -1, '235,245,255']], 0.85), VW * 0.47 - 32, Fy - 62, 1);      // (Megumi stands in front of it, small)
+  { const vx = lerp(-34, 84, ease3(vt)), vy = Fy - 62 - 24 * Math.sin(vt * 3.14159); for (let i = 3; i >= 1; i--) { ctx.globalAlpha = 0.22 / i; d6Put(vf, vx - 18 * i * (1 - vt), vy, 1); } ctx.globalAlpha = 1; d6Put(vf, vx, vy, 1); }      // (Verity in the air, still coming)
+  if (t1 >= 0.3 && t1 < lock) for (let i = 0; i < 18; i++) { const q = (t1 * 1.3 + c6H(i, 31)) % 1; ctx.globalAlpha = 0.5 * (1 - q); ctx.fillStyle = '#e8ecff'; ctx.fillRect(Math.round(bx + c6H(i, 32) * 96), Math.round(by + 124 - q * 120 * (0.4 + c6H(i, 33))), 2, 1); } ctx.globalAlpha = 1;      // (scraps of cloth fly up)
+  ctx.restore(); msDust(T, 0, 0, VW, VH, 22, 0.35, 5); c6White(t1 < 0.25 ? 1 - t1 / 0.25 : 0); c6White(t1 >= lock ? 0.55 * Math.exp(-(t1 - lock) * 9) : 0); msFinish(1);
+}
+
+// ================================================================ part 2: the blue eye reaches "???"
+// The Master's claw lets go of the stone and a violet circle takes it (tport); "???" stands in space, a violet circle opens in front of him and the stone comes out of it (tspace); his hand takes it (ttake) and puts it in the socket of the thumb (tthumb); it flares (tpower), he lifts the gauntlet (tlift) and the planet he stands on is torn apart (tplanet); then the card. The light does the work again: every picture is lit again at every frame by the lights that are in the picture at that moment (t6Lit: the stone, the violet circle, the other stones), in steps like the rest of the picture.
+const T6 = { px: new Map(), cv: new Map() };
+function t6Px(img) {      // the pixels (RGBA) of a picture, read once
+  let o = T6.px.get(img); if (o) return o; const c = d6Cv(img); if (!c) return null; o = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; T6.px.set(img, o); return o;
+}
+function t6Lit(img, key, L) {      // the picture lit again for this frame: L = { amb: how much of its own colour it keeps in the dark, tint: 'r,g,b' added in the dark, lights: [{ x, y, R, col: 'r,g,b', a, add }] (picture pixels; add = the light adds to the colours the picture has instead of changing them), rim: [{ dx, dy, col: 'r,g,b', a }] (an edge that faces (dx, dy) takes that colour), steps: 7 }; returns the canvas of the lit picture (one per key, made again each time). Where a light reaches a pixel, the pixel's own brightness is looked up in a ramp of that light's colour (deep, strong, pale, white), so the drawing keeps its shading but takes the light's colour (as the purple stone did on the gold)
+  const c = d6Cv(img), px = c && t6Px(img); if (!px) return null; const w = c.width, h = c.height; let o = T6.cv.get(key);
+  if (!o) { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d'); o = { cv, g, im: g.createImageData(w, h) }; T6.cv.set(key, o); }
+  const q = o.im.data, S = L.steps || 7, amb = L.amb, tn = (L.tint || '0,0,0').split(',').map(Number), rm = (c0, t) => c0 + (255 - c0) * t, rs = (L.rim || []).map(r => ({ dx: r.dx, dy: r.dy, a: r.a, c: r.col.split(',').map(Number) }));
+  const ls = L.lights.map(l => { const c3 = l.col.split(',').map(Number); return { x: l.x, y: l.y, R: l.R, a: l.a, add: !!l.add, c3, r: [c3.map(v => v * 0.12), c3.map(v => v * 0.6), c3.map(v => rm(v, 0.4)), c3.map(v => rm(v, 0.88))] }; });
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = (y * w + x) * 4; if (px[i + 3] < 128) { q[i + 3] = 0; continue; }
+    const lum = (0.3 * px[i] + 0.59 * px[i + 1] + 0.11 * px[i + 2]) / 255, t = Math.min(1, lum * 1.2); let r = px[i] * amb + tn[0], g = px[i + 1] * amb + tn[1], b = px[i + 2] * amb + tn[2];
+    for (const l of ls) {
+      const d = Math.hypot(x + 0.5 - l.x, y + 0.5 - l.y) / l.R; if (d >= 1) continue; const f = Math.floor(Math.pow(1 - d, 1.5) * l.a * S) / S; if (f <= 0.12) continue;
+      if (l.add) { const k = f * 0.9, sp = f * Math.max(0, lum - 0.55) * 1.3; r += px[i] * l.c3[0] / 255 * k + l.c3[0] * sp; g += px[i + 1] * l.c3[1] / 255 * k + l.c3[1] * sp; b += px[i + 2] * l.c3[2] / 255 * k + l.c3[2] * sp; continue; } const m = Math.min(0.95, Math.pow(Math.min(1, (f - 0.12) / 0.88), 1.4) * 0.95), A = t < 0.34 ? 0 : t < 0.67 ? 1 : 2, u = A === 0 ? t / 0.34 : A === 1 ? (t - 0.34) / 0.33 : (t - 0.67) / 0.33, c0 = l.r[A], c1 = l.r[A + 1];
+      r += (c0[0] + (c1[0] - c0[0]) * u - r) * m; g += (c0[1] + (c1[1] - c0[1]) * u - g) * m; b += (c0[2] + (c1[2] - c0[2]) * u - b) * m;
+    }
+    for (const e of rs) { const nx = x + e.dx, ny = y + e.dy; if (nx >= 0 && ny >= 0 && nx < w && ny < h && px[(ny * w + nx) * 4 + 3] >= 128) continue; r += (e.c[0] - r) * e.a; g += (e.c[1] - g) * e.a; b += (e.c[2] - b) * e.a; }
+    q[i] = r > 255 ? 255 : r; q[i + 1] = g > 255 ? 255 : g; q[i + 2] = b > 255 ? 255 : b; q[i + 3] = 255;
+  }
+  o.g.putImageData(o.im, 0, 0); return o.cv;
+}
+function t6Stone(x, y, k, a) {      // the blue stone, drawn as the iris of the Six Eyes: a ring of blue, a lighter cross, a bright middle and a white catchlight, 3 x 3 cells of k screen pixels, its middle on (x, y); a = how much of it shows
+  if (a <= 0.01) return; const X = Math.round(x - 1.5 * k), Y = Math.round(y - 1.5 * k); ctx.save(); ctx.globalAlpha = Math.min(1, a);
+  ctx.fillStyle = '#2f7fe0'; ctx.fillRect(X, Y, 3 * k, 3 * k); ctx.fillStyle = '#59b8ff'; ctx.fillRect(X + k, Y, k, 3 * k); ctx.fillRect(X, Y + k, 3 * k, k); ctx.fillStyle = '#d6f5ff'; ctx.fillRect(X + k, Y + k, k, k); ctx.fillStyle = '#ffffff'; ctx.fillRect(X, Y, k, k); ctx.restore();
+}
+function t6Rays(x, y, len, a, k) {      // thin rays of light along the four directions and the four corners, in steps of k screen pixels, getting fainter and ending in a point
+  if (a <= 0.01 || len < 1) return; ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = '#bfeaff';
+  for (let i = 2; i <= len + 1; i++) { ctx.globalAlpha = Math.min(1, a) * (1 - (i - 2) / len); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) ctx.fillRect(x + dx * i * k, y + dy * i * k, k, k); if (i < len * 0.6) { ctx.globalAlpha = Math.min(1, a) * 0.5 * (1 - i / (len * 0.6)); for (const [dx, dy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) ctx.fillRect(x + dx * i * k, y + dy * i * k, k, k); } }
+  ctx.restore();
+}
+function t6Portal(x, y, r, T, a, col) {      // the Master's circle in the air: a dark disc in a ring of light with a second ring and runes (small marks) that turn; r = radius, a = how much of it shows, col = 'r,g,b' (violet)
+  if (a <= 0.01 || r < 2) return; ctx.save(); ctx.globalAlpha = Math.min(1, a); const gr = ctx.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(8,2,18,0)'); gr.addColorStop(0.55, 'rgba(14,4,30,0.25)'); gr.addColorStop(0.85, 'rgba(30,8,60,0.6)'); gr.addColorStop(1, 'rgba(' + col + ',0)'); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill();
+  ctx.globalCompositeOperation = 'lighter'; for (const [rr, w, al] of [[r, 3, 0.35], [r, 1, 1], [r * 0.78, 1, 0.55]]) { ctx.lineWidth = w; ctx.strokeStyle = 'rgba(' + col + ',' + al + ')'; ctx.beginPath(); ctx.arc(x, y, rr, 0, 6.2832); ctx.stroke(); }
+  ctx.fillStyle = 'rgb(' + col + ')'; const n = Math.max(8, Math.round(r / 2.2)); for (let i = 0; i < n; i++) { const an = T * (i & 1 ? -0.9 : 0.9) + i * 6.2832 / n, rr = r * (i % 3 === 0 ? 0.9 : 0.86); ctx.globalAlpha = Math.min(1, a) * (0.5 + 0.5 * Math.sin(T * 5 + i * 2)); ctx.fillRect(Math.round(x + Math.cos(an) * rr), Math.round(y + Math.sin(an) * rr), i % 3 === 0 ? 2 : 1, i % 3 === 0 ? 2 : 1); }
+  ctx.restore();
+}
+
+// ---- 1. the claw lets go: the same picture as the end of the crush (the claw shut on the glowing stone); the claw opens, the stone rises, a violet circle opens round it and closes on it with a flash: the stone is gone
+const T6P = { open: 0.35, go: 1.85 };      // seconds into the shot: the claw starts to open, the circle shuts and the stone is gone
+function t6SPort(now, dt, T, st, t1) {
+  const Z = Math.max(4, c6Zf() + 3), sx = Math.round(VW * 0.4), sy = Math.round(VH * 0.5), X = -4, Y = -12, op = ease3(clamp01((t1 - T6P.open) / 1.0)), rise = ease3(clamp01((t1 - 0.9) / 0.9)), gone = t1 >= T6P.go, pa = clamp01((t1 - 1.05) / 0.5), pr = t1 < T6P.go ? (1 - Math.pow(1 - clamp01((t1 - 1.05) / 0.8), 2)) * 14 * Z : Math.max(0, 1 - (t1 - T6P.go) / 0.25) * 14 * Z;
+  const tips = [[-2 - X, -2 - Y], [0 - X, -2 - Y], [0 - X, 2 - Y], [-2 - X, 2 - Y]], cl = { x: X, y: Y, ct: 1 - op, tips, thick: 1 }, sy2 = -Math.round(7 * rise + Math.sin(T * 3) * 0.6 * rise), on = 1 + 0.5 * pa;
+  const sh = c6Shk(T, !gone ? 2 * pa : 0);
+  ctx.save(); ctx.translate(sh[0], sh[1]); rsCloseBg(T); c6Glow(sx, sy + sy2 * Z, 170, gone ? '150,80,240' : '60,150,255', gone ? 0.25 * Math.max(0, 1 - (t1 - T6P.go) / 0.9) : 0.2 + 0.25 * pa);
+  if (pa > 0) { t6Portal(sx, sy + sy2 * Z, pr, T, pa, '190,130,255'); if (!gone) c6Glow(sx, sy + sy2 * Z, pr * 1.3, '170,100,255', 0.3 * pa); }
+  c6On(Z, 0, 0, sx, sy); c6Claw(cl, 0);
+  if (!gone) { for (let i = 0; i < 3; i++) { const q = (T * 0.9 + i * 0.37) % 1; ctx.globalAlpha = 1 - q * 0.5; c6P(-2 + i * 2, 4 + Math.round(q * q * 16), BLD[0], 1, 2); } ctx.globalAlpha = 1; c6Iris(0, sy2); }
+  c6Claw(cl, 1);
+  if (!gone) { c6StoneLight(0, sy2, 4 + 14 * on, 1, T); const tw = (T * 0.9) % 2.6; c6Rays(0, sy2, Math.round(4 + 10 * (tw < 0.8 ? Math.sin(Math.PI * tw / 0.8) : 0) + 6 * pa), 0.8 + 0.2 * pa); }
+  c6Off();
+  if (gone) { const a = t1 - T6P.go; v6Ring(sx, sy + sy2 * Z, 20 + a * 380, Math.max(0, 1 - a * 2.2), '210,170,255'); for (let i = 0; i < 26; i++) { const an = c6H(i, 81) * 6.2832, v = 40 + 160 * c6H(i, 82), q = Math.min(1, a / 1.2); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 1 - q; ctx.fillStyle = i & 1 ? '#c9a0ff' : '#8fd0ff'; ctx.fillRect(Math.round(sx + Math.cos(an) * v * a * 0.8), Math.round(sy + sy2 * Z + Math.sin(an) * v * a * 0.8 + 30 * a * a), 2, 2); ctx.restore(); } }
+  ctx.restore(); if (gone) { const a = t1 - T6P.go; c6White(0.9 * Math.exp(-a * 11)); if (a > 0.06) { ctx.fillStyle = 'rgba(150,80,240,' + (0.3 * Math.exp(-(a - 0.06) * 6)).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); } }
+  c6Black(clamp01((t1 - (st.d - 0.55)) / 0.5)); msFinish(1);
+}
+
+// ---- the place: space. Stars that twinkle, a faint violet haze, a big banded planet in the sky (its light is the only light "???" has in the dark) and the ground, the curved edge of a dark world with a violet rim and a few rocks
+function t6Sky(T, o) {      // o.neb = how strong the haze is, o.al = how bright the stars are
+  ctx.fillStyle = '#020308'; ctx.fillRect(0, 0, VW, VH);
+  for (const [x, y, r, col, a] of [[0.82, 0.18, 0.7, '120,60,190', 0.16], [0.15, 0.7, 0.6, '40,70,170', 0.12], [0.5, 0.45, 0.9, '70,40,130', 0.08]]) { if (o.neb <= 0) break; const g = ctx.createRadialGradient(VW * x, VH * y, 4, VW * x, VH * y, VW * r); g.addColorStop(0, 'rgba(' + col + ',' + (a * o.neb).toFixed(3) + ')'); g.addColorStop(1, 'rgba(' + col + ',0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH); }
+  for (let i = 0; i < 150; i++) { const b = t6H(i, 43), x = Math.floor(t6H(i, 41) * VW), y = Math.floor(t6H(i, 42) * VH * 0.92), a = (0.25 + 0.75 * b * b) * (0.6 + 0.4 * Math.sin(T * (0.8 + 2 * t6H(i, 44)) + i * 1.7)) * o.al; ctx.globalAlpha = Math.min(1, a); ctx.fillStyle = b > 0.85 ? '#cfe0ff' : b > 0.6 ? '#ffe9cf' : '#b9b9e8'; ctx.fillRect(x, y, 1, 1); if (b > 0.94) { ctx.globalAlpha = Math.min(1, a) * 0.5; ctx.fillRect(x - 1, y, 3, 1); ctx.fillRect(x, y - 1, 1, 3); } }
+  ctx.globalAlpha = 1;
+}
+function t6Giant(x, y, r, a) {      // a big banded planet, lit from the left, with a thin ring behind it
+  ctx.save(); ctx.globalAlpha = a * 0.55; ctx.strokeStyle = 'rgba(190,150,255,0.55)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(x, y, r * 1.75, r * 0.3, -0.3, 0, 6.2832); ctx.stroke(); ctx.restore();
+  ctx.save(); ctx.globalAlpha = a; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.clip();
+  const gr = ctx.createRadialGradient(x - r * 0.5, y - r * 0.3, r * 0.1, x, y, r * 1.1); gr.addColorStop(0, '#7a58a8'); gr.addColorStop(0.5, '#3c2868'); gr.addColorStop(1, '#0a0716'); ctx.fillStyle = gr; ctx.fillRect(x - r, y - r, 2 * r, 2 * r);
+  for (let i = 0; i < 9; i++) { ctx.fillStyle = i % 2 ? 'rgba(170,120,220,0.13)' : 'rgba(16,8,34,0.22)'; ctx.fillRect(x - r, Math.round(y - r + r * 2 * (i + 0.25 * Math.sin(i * 2.1)) / 9), 2 * r, Math.round(r * 0.11 + 3 * (i % 3))); }
+  ctx.restore();
+}
+function t6Gy(x, top) { return Math.round(top + (x - VW / 2) * (x - VW / 2) / 1120); }      // the height of the ground at x (a gentle curve: it is a small world)
+function t6Ground(top, lt) {      // the ground: columns 2 px wide under the curve; a violet rim along its edge, brighter toward the big planet (lt = how much); a few rocks
+  for (let x = 0; x < VW; x += 2) { const y = t6Gy(x, top) + (t6H(x >> 2, 51) < 0.3 ? 1 : 0); ctx.fillStyle = '#06040c'; ctx.fillRect(x, y, 2, VH - y); ctx.fillStyle = 'rgba(' + '150,100,230' + ',' + (lt * (0.18 + 0.5 * x / VW)).toFixed(3) + ')'; ctx.fillRect(x, y, 2, 1); }
+  for (let i = 0; i < 9; i++) { const x = Math.round(t6H(i, 52) * VW), w = 6 + Math.round(t6H(i, 53) * 12), h = 3 + Math.round(t6H(i, 54) * 6), y = t6Gy(x, top); ctx.fillStyle = '#0a0712'; ctx.fillRect(x, y - h, w, h + 2); ctx.fillRect(x + 2, y - h - 2, w - 5, 2); ctx.fillStyle = 'rgba(150,100,230,' + (0.35 * lt).toFixed(3) + ')'; ctx.fillRect(x + 2, y - h - 2, w - 5, 1); ctx.fillRect(x + w - 1, y - h, 1, h); }
+}
+
+// ---- 2. "???" stands in space: wide, dark; a violet circle opens in the air in front of him, the blue stone comes out of it and floats to his gauntlet, and its light floods the ground and him
+const T6S = { fx: 96, top: 114 };      // where he stands (the screen x of his middle) and the height of the ground in the middle of the screen
+function t6SSpace(now, dt, T, st, t1) {
+  const fy = t6Gy(T6S.fx, T6S.top), ox = T6S.fx - 32, oy = fy - 62, pOn = ease3(clamp01((t1 - 1.1) / 0.6)), pOff = 1 - ease3(clamp01((t1 - 2.45) / 0.5)), pa = pOn * pOff, pr = 17 * (1 - Math.pow(1 - clamp01((t1 - 1.1) / 0.8), 2)) * (0.3 + 0.7 * pOff), px = T6S.fx + 36, py = oy + 24;
+  const em = ease3(clamp01((t1 - 1.9) / 0.5)), mv = ease3(clamp01((t1 - 2.15) / 1.0)), sxn = lerp(px, T6S.fx + 11, mv), syn = lerp(py, oy + 21, mv), A = em * (0.88 + 0.12 * Math.sin(T * 6)), sh = c6Shk(T, t1 >= 1.9 && t1 < 2.3 ? 2 : 0);
+  ctx.save(); ctx.translate(sh[0], sh[1]); t6Sky(T, { neb: 1, al: 0.9 }); t6Giant(VW * 0.86, 22, 52, 1); c6Glow(VW * 0.86, 22, 150, '150,100,230', 0.2);
+  t6Ground(T6S.top, 1);
+  c6Glow(sxn, fy, 100, '70,150,255', 0.4 * A);      // (the stone's light on the ground)
+  const fg = t6Lit(C5I.body, 'figS', { amb: 0.32, tint: '8,5,16', lights: [{ x: sxn - ox, y: syn - oy, R: 44, col: '90,175,255', a: 1.15 * A }, { x: px - ox, y: py - oy, R: 36, col: '170,100,255', a: 0.9 * pa }], rim: [{ dx: 1, dy: -1, col: '150,100,230', a: 0.55 }, { dx: 1, dy: 0, col: '110,170,255', a: 0.6 * A }] }); if (fg) d6Put(fg, ox, oy, 1);
+  if (pa > 0) { c6Glow(px, py, 70, '160,90,255', 0.35 * pa); t6Portal(px, py, pr, T, pa, '190,130,255'); }
+  if (A > 0.01) { c6Glow(sxn, syn, 60, '70,150,255', 0.55 * A); c6Glow(sxn, syn, 20, '210,240,255', 0.8 * A); t6Rays(sxn, syn, Math.round(10 * A), A, 1); t6Stone(sxn, syn, 1, A); const a = t1 - 1.9; v6Ring(sxn, syn, a * 150, Math.max(0, 1 - a * 1.4), '150,210,255'); }
+  ctx.restore(); c6Black(1 - t1 / 0.7); c6White(t1 >= 1.9 && t1 < 2.05 ? 0.35 * (1 - (t1 - 1.9) / 0.15) : 0); msFinish(1);
+}
+
+// ---- the hand: his bare hand from the side, pointing left (tools/hand_open.png, hand_shut.png: 64 x 64), pinching: open = the stone floats between the thumb and the finger, shut = the tips meet on it
+const T6H = (() => { const mk = u => { const i = new Image(); i.src = u; return i; }; return { open: mk('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAEF0lEQVR4nO2YTWgbRxTH/y69qBatgtIlOTQ4UOpAG0goFSH44vagUBI3lDQ5xIU2MYQSaIuaQ0+Jk37k0gScgxODbSh2D7LA1HUPTSDZixFBOqxRVzQSQYboIGnx1vJmFfWmHpQZz+pjtYpXkiHvB0KzM6OZeX/NzntvAIIgCIIgCIIgCIIgCIIgCIIgCIIgiJeAvk4O7vVIFSf9zLLW0XXY0ZGJmeHj38wDAHJ5zbb/VDhUV9ctUVydxM5wvbhV9vskyzOrE6kVpVOCuDao1yNV7kUSUBMZpNIZAFtG6xv2O4Dh37UlgihIdHURf6dWbH/7ogK5JkD0z3xFTWRgGCbUR6pjo52wvpnGl6cvwTBM5PIawn/9hIVpmberiQxCP5zkz+2I4eoOuHDmJvSiBn1Dgxybte0/HDjneOxsQcHoye+Qy2vQixr8PgnR1UXc+HESaiJT15+J4USIjpwBTiYX+7YSI1tQ8NGRzwGAC8x2RS2GYfLy+MRoyzX3zP2IeD1SpZkI8WQEZ49fBbBlPICGAojGi7vl/sM5LqDIVDiEV90yYrtkCwoAIL/+GB+8+xniyQhe79+LY0MXWx6mouFAvfd5Vi41nXfHCHDoQPB5KYiosohjQxcBNDZaSS3h2y8m6gwH6mMO8fdsR4j0XADmPk+PDePw4CcAgMGBoab/djwZwaWx23X1jWIONsbm0395XXpNhX+XxNtecc+U7bEwLSNbUBBPRhq2x5MRZAuKxfhcXuMfRrPXRd+onh/MeBZz9HwHMNREhru6+w/nLG359cfYs/ttAMD87zd4vfhuHz38KS/bxSCsjX33VAC2/UX0ooZDB4Lw+yQsy3dglHLof60fk7/8CqAq1LVb57EwLfMYwDBMXL89Br9vHwYHhtpaQ0/doChAdCXBt/KyfAd68Ql8b/gwN3kPLMJksGjw8tczlvEMw8SVibP4MHCe1z2IzVieReTYbOcFsAuOvB6pcvT96un/1Cyh/F8J2dw/WP4tZvl3GbUnPBOhts/8Hz8jcHDE1nigCwLUJkhihmeWtT6xnWHn0xnMnelFDauP7vKzg7VF7l6H1/MmAgdHbNcnx2Y7fwawrZ1eU3Eq+D2AaqY3FQ5VLpy5iehK9RVodWcAWFPq9JrKyyzqA6qHmxPjGR0XoHZx7JuFvq0MF8PfRjwrlyxisCSsNhlrFmp35QxoleyIvrmdNFp8x5nBzZKwZtdzXfECbPJ2UuBWPIjNoE9Y/otciHg9UqWrbtAtIZTUEoqbuivXZD2JA5zeFg8HzkFJLWG3bx+P+gbe2o9TH38FwzAxPjG6bRF6Egk6XbQcm7XcMgHAieAIvxpzgx2TCzTCLGt9U+GQZbe8s/+9lp6hHXbEjVA7tHPtRhAEQRAEQdjwP2c1YIl02DMgAAAAAElFTkSuQmCC'), shut: mk('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAELUlEQVR4nO2YT2gUZxjGnwUv2yxly+oQD7YKoRFswCAGCbloDyvFpqHYejBF0YC0gimrBy/atNbaQw3dHrSBJFiSHjYrIf45GCHuJV3C5pB0MwE3yKZoYbeDW9dx1vU2PWy/r9/M7OxOsrNZKe/vsvN/v+eZ93vfdz6AIAiCIAiCIAiCIAiCIAiCIAiCIAiC+P/jaeSf+7ySbndOKyobMrYNNcAseKB/3PbagXCvYb9ehmyIAUy4KDiTVRzfH1+cxFJqtuI16zVo03pucopZeDnRK6syAm9JyD1TbH8BYPDCFFRVQyarIHLvMiaGY/wZcjKN0KUeHl1rMaNuEeDzSvr9aBLx2aRBeC5f2mbCnPDkrwX09pxFJqsgl1cQ8EuIL07i6rfXICfTlutDl3oAODOiLhHg80r64IUpg/hcXlmTaDOiiSurMgCUFa+qGo+4gXCvbZJluG4AE8/CFfhvwAAQS4xa7tnfccL2efPLURw99DWA6iaqqsa3M1kFh4PnEfBLmJkbw/v7PrNcPxQJuWuAOezZgEXR5cIylhjVW95pR/bpI+zd9QmAkvA3m7biYNfpqtNGFA7AMuVeFgu2Y3bNgPjdrA6UwpKH/b/inczF3TuDAIKIL0wCAA52nebPMLOQuoUvj4ctwgFrohXvZ/lDxNUIYG9+ZVXmb72aeBY1n/btR3vrR2jd3mUZuMj8chTn+q5bjldKtM9f/M2PiVUHcNGAzkPNHrHRWWtdnhiO4YtzxwzTQGR+OYrmzS0G8eXKqt10YftiiQVcjoBaujU5mealbmZuzHAu+/QRmje3AADGp67y4+Lc7mz/mG9XSpTsnOsRsB5Y+Ivk8gp27wwi4JdwJ/Yz1EIGTW804doPvwAoGfXNTycxMRzjZVBVNVy53oeA/20+hZxS11bY3PubI0Q0gOWPmbkxvCwWkMs/xp1fEwaRIj/e6MfFMyOGY6qq4avwURzoOMmPPUiMGPZFYonR+htwP5qEnEwjnpjDzenv+TmtqHh8Xknv3BMEALzQClj983dM3vgNcjJdsbQxIvcu4+KZEUv9H7/9HTrauiuKBzbIgIH+cV4ZgFISCvglDEVCOHVkEFubJdv77T6YWDnL5RUsPpzmuYOdi05fgc+7BR1t3RXHF0uM1j8HyA9lYy1+VmqOWPdX7atQFCtmb7G7ZE0Xe74T8Yy6fw77vJJeqdUFrKVJ3Gb7dqT+mDUkvnKtNlC+3a77FGCwZFjNiLUizvFqjZfd6lNDVoTcMOJBYgQeYfjr6UF8XklvyJqg3dtwasxC6hbyz3OuLJM1dFHUjNmYttbS3C6+KvCub/u2HTj8weel7/5wb80mNLQTNGMWs5Sa1U8dGTSsA3wY7DasNdTKa2WAGa2oeIYiIUNUvLvjvZpXl0ReqynghFq+OAmCIAiCIAiBfwBGAXaRMFaG0AAAAABJRU5ErkJggg=='), P: { open: [18.5, 39.5], shut: [19, 41.5] } }; })();
+function t6Hand(shut, px, py, z, key, a) {      // the hand with the point between its fingertips on the screen point (px, py), lit by the stone that is there (a = how bright the stone is, 0 - 1.3); returns nothing
+  const P = shut ? T6H.P.shut : T6H.P.open, c = t6Lit(shut ? T6H.shut : T6H.open, key, { amb: 0.2, tint: '16,9,30', lights: [{ x: P[0], y: P[1], R: 62, col: '140,170,255', a: 0.9 * a, add: true }, { x: P[0], y: P[1], R: 16, col: '90,175,255', a: 1.2 * a }], rim: [{ dx: -1, dy: 0, col: '120,190,255', a: 0.5 * a }, { dx: 0, dy: -1, col: '120,190,255', a: 0.3 * a }] });
+  if (c) d6Put(c, px - P[0] * z, py - P[1] * z, z);
+}
+
+// ---- 3. his hand takes the stone: black but for the stone's own light; the hand comes in from the right (its fingertips are lit first, then the rest as it gets close), pinches the stone and carries it away to the left
+function t6STake(now, dt, T, st, t1) {
+  const S0 = [190, 70], u = ease3(clamp01((t1 - 0.25) / 1.3)), pinch = t1 >= 1.65, car = ease3(clamp01((t1 - 1.95) / 1.25)), A = 0.9 + 0.1 * Math.sin(T * 6);
+  let hx = lerp(S0[0] + 200, S0[0], u), hy = lerp(S0[1] - 30, S0[1], u); if (t1 >= 1.95) { hx = lerp(S0[0], -70, Math.pow(car, 1.5)); hy = lerp(S0[1], S0[1] + 40, car); }
+  const stx = pinch ? hx : S0[0], sty = pinch ? hy : S0[1] + Math.sin(T * 2.4) * 1.2, k = 4;
+  t6Sky(T, { neb: 0.5, al: 0.35 }); c6Glow(stx, sty, 150, '60,140,255', 0.5 * A); c6Glow(stx, sty, 48, '200,235,255', 0.55 * A);
+  t6Hand(pinch, hx, hy, 3, pinch ? 'hs' : 'ho', A); t6Stone(stx, sty, k, 1); t6Rays(stx, sty, 6, A, k / 2); c6Glow(stx, sty, 22, '230,248,255', 0.5);
+  if (pinch) { const a = t1 - 1.65; v6Ring(stx, sty, a * 120, Math.max(0, 1 - a * 3.5), '170,220,255'); c6White(a < 0.1 ? 0.3 * (1 - a / 0.1) : 0); }
+  c6Black(1 - t1 / 0.3); msFinish(1);
+}
+
+// ---- 4. the stone goes into the thumb: the gauntlet 4 times the size of its picture, dark but for the purple stone; the hand brings the blue stone in from the right, its light running over the gold; it is pressed into the socket of the thumb; the socket flares, the hand lets go and leaves
+function t6Gem() {      // the pixels of the thumb socket's hole (its two dark colours, within 2.8 pixels of its middle) with the colour each has as a blue stone: light at the upper left, deep at the lower right, one white highlight; found once from the picture itself
+  if (T6.gem) return T6.gem; const px = t6Px(C5I.gaunt); if (!px) return null; const cx = 32.6, cy = 20.6, hole = [];
+  for (let y = 15; y < 27; y++) for (let x = 27; x < 39; x++) { const i = (y * 64 + x) * 4, wall = px[i] === 58 && px[i + 1] === 34 && px[i + 2] === 8; if (px[i + 3] > 200 && Math.hypot(x + 0.5 - cx, y + 0.5 - cy) < 2.8 && (wall || (px[i] === 18 && px[i + 1] === 10 && px[i + 2] === 4))) hole.push([x, y, wall]); }
+  const hx = hole.reduce((a, q) => a + q[0] + 0.5, 0) / hole.length, hy = hole.reduce((a, q) => a + q[1] + 0.5, 0) / hole.length, us = hole.map(q => -(q[0] + 0.5 - hx) - (q[1] + 0.5 - hy)), top = us.indexOf(Math.max(...us)), mixh = (a, b, t) => '#' + [1, 3, 5].map(j => Math.round(parseInt(a.slice(j, j + 2), 16) * (1 - t) + parseInt(b.slice(j, j + 2), 16) * t).toString(16).padStart(2, '0')).join('');
+  const C = ['#0b2b70', '#1f60d2', '#3f96ff', '#9bd9ff', '#ffffff'];
+  return T6.gem = { cx: hx, cy: hy, px: hole.map((q, j) => ({ x: q[0], y: q[1], c: mixh(C[j === top ? 4 : us[j] > 0.8 ? 3 : us[j] > -0.3 ? 2 : us[j] > -1.2 ? 1 : 0], q[2] ? '#3a2208' : '#120a04', j === top ? 0 : q[2] ? 0.06 : 0.22) })) };
+}
+const T6G = { z: 4, ox: 12, oy: -9 };      // the gauntlet's picture on the screen (its corner, and how many screen pixels one of its pixels is)
+function t6Gaunt(T, o) {      // the gauntlet lit for this frame: o.stone = [x, y, a] the blue stone in the picture's pixels (or null), o.purple = how bright the purple stone is, o.flare = a white-blue surge over everything, o.amb = how much of its own colour it keeps, o.o = [x, y, z] another place for the picture than T6G; draws it and both gems
+  const A = c5Art(), G = t6Gem(); if (!A || !G) return;
+  const L = { amb: o.amb == null ? 0.18 : o.amb, tint: '6,4,13', lights: [{ x: C5G.sc[0], y: C5G.sc[1], R: 15, col: '160,90,255', a: 0.6 * o.purple }], rim: [], steps: 8 };
+  if (o.stone) L.lights.push({ x: o.stone[0], y: o.stone[1], R: o.stone[3] || 36, col: '70,160,255', a: 1.2 * o.stone[2] });
+  if (o.flare > 0) L.lights.push({ x: 36, y: 22, R: 60, col: '150,210,255', a: o.flare });
+  const c = t6Lit(C5I.gaunt, 'gaunt', L); if (!c) return; const [ox, oy, z] = o.o || [T6G.ox, T6G.oy, T6G.z]; d6Put(c, ox, oy, z);
+  ctx.save(); ctx.translate(ox, oy); ctx.scale(z, z); ctx.globalAlpha = 0.6 + 0.4 * o.purple; for (const g of A.gem) { ctx.fillStyle = g.c; ctx.fillRect(g.x, g.y, 1, 1); } ctx.globalAlpha = 1;
+  if (o.gem > 0) { ctx.globalAlpha = Math.min(1, o.gem) * (0.94 + 0.06 * Math.sin(T * 5)); for (const g of G.px) { ctx.fillStyle = g.c; ctx.fillRect(g.x, g.y, 1, 1); } ctx.globalAlpha = 1; }
+  ctx.restore();
+}
+const t6GP = (x, y) => [T6G.ox + x * T6G.z, T6G.oy + y * T6G.z];      // a point of the gauntlet's picture on the screen
+function t6SThumb(now, dt, T, st, t1) {
+  const G = t6Gem(), sock = G ? t6GP(G.cx, G.cy) : [142, 73], hov = [sock[0] + 26, sock[1] - 30], u = ease3(clamp01((t1 - 0.2) / 1.3)), ins = ease3(clamp01((t1 - 1.8) / 0.2)), inn = t1 >= 2.0, lv = ease3(clamp01((t1 - 2.05) / 0.5)), lv2 = Math.pow(ease3(clamp01((t1 - 2.1) / 0.8)), 1.4);
+  let sx = lerp(VW + 90, hov[0], u), sy = lerp(hov[1] - 40, hov[1], u); if (t1 >= 1.8) { sx = lerp(hov[0], sock[0], ins); sy = lerp(hov[1], sock[1], ins); }
+  const A = 0.9 + 0.1 * Math.sin(T * 6), purple = 0.55 + 0.1 * Math.sin(T * 3) + 0.4 * ease3(clamp01((t1 - 2.4) / 0.6)), sp = [(sx - T6G.ox) / T6G.z, (sy - T6G.oy) / T6G.z], gem = inn ? 1 : 0, shk = c6Shk(T, t1 > 2.0 && t1 < 2.5 ? 3 : 0);
+  ctx.save(); ctx.translate(shk[0], shk[1]); ctx.fillStyle = '#030208'; ctx.fillRect(-4, -4, VW + 8, VH + 8); const hz = ctx.createRadialGradient(VW / 2, VH * 0.55, 4, VW / 2, VH * 0.55, VW * 0.5); hz.addColorStop(0, 'rgba(60,25,100,0.1)'); hz.addColorStop(1, 'rgba(20,8,40,0)'); ctx.fillStyle = hz; ctx.fillRect(0, 0, VW, VH);
+  t6Gaunt(T, { stone: inn ? [sp[0], sp[1], 0.75 + 0.3 * lv, 14 + 14 * lv2] : [sp[0], sp[1], 1.1, 24], purple, flare: 0, gem });
+  const hand = t1 < 2.0 ? [sx, sy, 1] : [lerp(sock[0], VW + 90, Math.pow(ease3(clamp01((t1 - 2.15) / 0.7)), 1.6)), lerp(sock[1], sock[1] - 10, ease3(clamp01((t1 - 2.15) / 0.7))), t1 < 2.2 ? 1 : 0];
+  if (!inn) { c6Glow(sx, sy, 150, '60,140,255', 0.45 * A); c6Glow(sx, sy, 46, '200,235,255', 0.5 * A); }
+  c6Glow(sock[0], sock[1], 60 + 150 * lv2, '60,150,255', (0.15 + 0.6 * lv) * A); if (inn) { c6Glow(sock[0], sock[1], 30, '220,245,255', 0.7 * lv); t6Rays(Math.round(sock[0]), Math.round(sock[1]), Math.round(4 + 12 * lv), 0.9 * lv, 3); }
+  c6Glow(...t6GP(C5G.sc[0], C5G.sc[1]), 60, '150,80,240', 0.35 * purple);
+  if (t1 < 2.9) t6Hand(hand[2], hand[0], hand[1], 4, hand[2] ? 'hs' : 'ho', A);
+  if (!inn) t6Stone(sx, sy, 5, 1);
+  if (inn) { const a = t1 - 2.0; v6Ring(sock[0], sock[1], a * 220, Math.max(0, 1 - a * 1.6), '150,210,255'); c6White(a < 0.12 ? 0.55 * (1 - a / 0.12) : 0); }
+  ctx.restore(); c6Black(1 - t1 / 0.3); msFinish(1);
+}
+
+// ---- 5. the stone flares: the gauntlet as it was (4 times its picture); bolts of blue light jump from the stone to the other sockets, each one flashes, the whole fist floods with light and shakes; then the camera pulls back from the gauntlet to "???" (the gauntlet's picture hands over to his), the stone's light on his body and face, bolts crackling round his arm
+const T6C = { boom: 1.5, zoom: 2.6 };      // seconds into the shot: the white surge, and where the pull-back is over
+function t6SPower(now, dt, T, st, t1) {
+  const G = t6Gem(), A = c5Art(); if (!G || !A) { c6Black(1); return; }
+  const p = ease3(clamp01(t1 / T6C.boom)), pul = 0.9 + 0.1 * Math.sin(T * 7), sock = t6GP(G.cx, G.cy), sh = c6Shk(T, t1 < T6C.boom + 0.3 ? 1 + 5 * p : 0);
+  ctx.save(); ctx.translate(sh[0], sh[1]);
+  if (t1 < T6C.boom + 0.15) {      // ---- the fist, close
+    ctx.fillStyle = '#030208'; ctx.fillRect(-6, -6, VW + 12, VH + 12);
+    const sk = [[41.5, 17.5], [47.2, 21.9], [49.5, 25], [42, 30.5]], hit = i => Math.max(0, Math.sin((T * 9 + i * 1.7) % 6.2832)) * p;      // (the four other sockets and how bright each one is when a bolt has just hit it)
+    t6Gaunt(T, { stone: [G.cx, G.cy, 1.0 + 0.3 * p, 20 + 14 * p], purple: 0.9, flare: 0.55 * p * p, gem: 1 });
+    c6Glow(sock[0], sock[1], 80 + 120 * p, '60,150,255', (0.45 + 0.4 * p) * pul); c6Glow(sock[0], sock[1], 30, '220,245,255', 0.8 * pul); t6Rays(Math.round(sock[0]), Math.round(sock[1]), Math.round(8 + 20 * p), 0.9, 3);
+    ctx.save(); ctx.translate(T6G.ox, T6G.oy); ctx.scale(T6G.z, T6G.z); ctx.globalCompositeOperation = 'lighter';
+    sk.forEach((q, i) => { if (p > 0.08) c6Bolt(G.cx, G.cy, q[0], q[1], i * 31, T, i & 1 ? '#8fd0ff' : '#e6faff'); const h = hit(i); if (h > 0.05) { ctx.globalAlpha = h; ctx.fillStyle = '#d6f5ff'; ctx.fillRect(Math.round(q[0]) - 1, Math.round(q[1]) - 1, 3, 3); ctx.globalAlpha = 1; } });
+    ctx.restore(); sk.forEach((q, i) => { const h = hit(i), s2 = t6GP(q[0], q[1]); if (h > 0.05) c6Glow(s2[0], s2[1], 40, '120,200,255', 0.6 * h); });
+    for (let i = 0; i < 16; i++) { const q = (T * 1.3 + t6H(i, 91)) % 1, an = t6H(i, 92) * 6.2832, d = 10 + q * (60 + 140 * t6H(i, 93)) * (0.4 + p); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = (1 - q) * p; ctx.fillStyle = i & 1 ? '#9fe0ff' : '#ffffff'; ctx.fillRect(Math.round(sock[0] + Math.cos(an) * d), Math.round(sock[1] + Math.sin(an) * d), 2, 2); ctx.restore(); }      // (sparks fly off it)
+  }
+  if (t1 >= T6C.boom - 0.05) {      // ---- the pull-back: the camera goes from the fist (the gauntlet's picture is 4 times as fine as his) out to his body; his picture comes up out of the dark as the camera pulls back, and the gauntlet's picture hands over to his at the end
+    const u = clamp01((t1 - T6C.boom) / (T6C.zoom - T6C.boom)), e = ease3(u), z = 16 * Math.pow(4 / 16, e), ca = 1 - ease3(clamp01((u - 0.8) / 0.2)), fa = ease3(clamp01((u - 0.55) / 0.35)), fx0 = lerp(C5G.o[0] + 36 * 0.25, 35, e), fy0 = lerp(C5G.o[1] + 22 * 0.25, 17.5, e), sx = Math.round(VW * 0.5), sy = Math.round(VH * 0.56);
+    const fx = C5G.o[0] - Math.round((C5G.o[0] - fx0) * z) / z, fy = C5G.o[1] - Math.round((C5G.o[1] - fy0) * z) / z, stn = [C5G.o[0] + G.cx / 4, C5G.o[1] + G.cy / 4], on = 0.85 + 0.15 * Math.sin(T * 6);
+    ctx.fillStyle = '#030208'; ctx.fillRect(-6, -6, VW + 12, VH + 12);
+    ctx.save(); c6Glow(sx + (stn[0] - fx) * z, sy + (stn[1] - fy) * z, Math.max(60, 12 * z), '60,150,255', 0.55 * on);
+    c4CamOn(z, fx, fy, sx, sy);
+    const fg = t6Lit(C5I.body, 'figP', { amb: 0.28, tint: '6,4,14', lights: [{ x: stn[0], y: stn[1], R: 40, col: '120,175,255', a: 1.0 * on, add: true }, { x: stn[0], y: stn[1], R: 7, col: '80,170,255', a: 1.4 * on }], rim: [{ dx: 1, dy: 0, col: '110,170,255', a: 0.5 }, { dx: 0, dy: -1, col: '110,170,255', a: 0.35 }], steps: 8 }); if (fg) { ctx.globalAlpha = fa; ctx.drawImage(fg, 0, 0); ctx.globalAlpha = 1; }
+    if (ca > 0.01) { const gc = t6Lit(C5I.gaunt, 'gauntP', { amb: 0.12, tint: '4,2,10', lights: [{ x: C5G.sc[0], y: C5G.sc[1], R: 15, col: '160,90,255', a: 0.6 }, { x: G.cx, y: G.cy, R: 36, col: '70,160,255', a: 1.7 * on }, { x: 36, y: 22, R: 50, col: '150,210,255', a: 0.8 }], rim: [], steps: 8 }); if (gc) { ctx.save(); ctx.translate(C5G.o[0], C5G.o[1]); ctx.scale(0.25, 0.25); ctx.globalAlpha = ca; ctx.drawImage(gc, 0, 0); ctx.globalAlpha = ca; for (const g of A.gem) { ctx.fillStyle = g.c; ctx.fillRect(g.x, g.y, 1, 1); } for (const g of G.px) { ctx.fillStyle = g.c; ctx.fillRect(g.x, g.y, 1, 1); } ctx.restore(); ctx.globalAlpha = 1; } }
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < 4; i++) { const k = Math.floor(T * 14) * 7 + i * 13, a = t6H(k, 94) * 6.2832, d = 5 + 9 * t6H(k, 95); c6Bolt(stn[0], stn[1], stn[0] + Math.cos(a) * d, stn[1] + Math.sin(a) * d * 0.8, i * 17, T, i & 1 ? '#8fd0ff' : '#e6faff'); } ctx.restore();      // (bolts crackle round the stone: in his pixels, the chunky bolts of the other scenes)
+    c4Cam0(); ctx.restore();
+    { const a2 = t1 - T6C.boom; if (a2 > 0 && a2 < 0.9) { const rx = sx + (stn[0] - fx) * z, ry = sy + (stn[1] - fy) * z; v6Ring(rx, ry, 30 + a2 * 520, 1 - a2 / 0.9, '170,220,255'); if (a2 > 0.12) v6Ring(rx, ry, 20 + (a2 - 0.12) * 420, 0.7 * (1 - a2 / 0.9), '120,180,255'); } }
+    c6Glow(sx + (stn[0] - fx) * z, sy + (stn[1] - fy) * z, 40 + 4 * z, '200,240,255', 0.45 * on); t6Rays(Math.round(sx + (stn[0] - fx) * z), Math.round(sy + (stn[1] - fy) * z), Math.round(10 + 6 * Math.sin(T * 3)), 0.8, 2);
+    for (let i = 0; i < 20; i++) { const q = (T * 0.9 + t6H(i, 96)) % 1, an = t6H(i, 97) * 6.2832, d = 8 + q * (30 + 90 * t6H(i, 98)); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = (1 - q) * 0.9 * e; ctx.fillStyle = '#bfeaff'; ctx.fillRect(Math.round(sx + (stn[0] - fx) * z + Math.cos(an) * d), Math.round(sy + (stn[1] - fy) * z + Math.sin(an) * d), 1, 1); ctx.restore(); }
+  }
+  ctx.restore();
+  if (t1 >= T6C.boom - 0.05 && t1 < T6C.boom + 0.4) c6White(0.95 * (t1 < T6C.boom + 0.02 ? 1 : Math.max(0, 1 - (t1 - T6C.boom - 0.02) / 0.38)));      // (the surge: white at the cut, then it dies down on the pull-back)
+  { const f2 = clamp01((t1 - (st.d - 0.4)) / 0.3); if (f2 > 0) c6White(f2); }      // (white again at the end: the next shot comes out of it)
+  c6Black(1 - t1 / 0.2); msFinish(1);
+}
+
+// ---- 6. "???" lifts the gauntlet: from below, the fist rises out of the bottom of the picture (3 times its picture) with the stone burning in it; a column of blue light stands up from the stone to the top of the picture, rings run out along the ground, the ground cracks and stones rise; the whole picture shakes harder and harder and goes white
+const T6L = { z: 3 };
+function t6SLift(now, dt, T, st, t1) {
+  const G = t6Gem(); if (!G) { c6Black(1); return; } t6Planet();      // (the planet of the next shot is made while this one plays)
+  const e = ease3(clamp01((t1 - 0.2) / 1.7)), z = T6L.z, ox = Math.round(VW * 0.5 - 36 * z), oy = Math.round(lerp(150, 52, e) - 22 * z), sx = ox + G.cx * z, sy = oy + G.cy * z, on = 0.9 + 0.1 * Math.sin(T * 8), colA = ease3(clamp01((t1 - 0.5) / 1.6)), sh = c6Shk(T, 1.5 + 5 * ease3(clamp01(t1 / 3.0)));
+  ctx.save(); ctx.translate(sh[0], sh[1]); t6Sky(T, { neb: 0.4, al: 0.6 }); const gtop = 124;
+  // the column: a wide soft body, a bright one and a white core, from the stone up to the top of the picture; it flickers
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; for (const [w, c, a] of [[90, '40,110,255', 0.2], [46, '80,170,255', 0.4], [20, '170,225,255', 0.7], [8, '255,255,255', 0.95]]) { const ww = w * colA * (0.85 + 0.15 * Math.sin(T * 11 + w)), gr = ctx.createLinearGradient(0, 0, 0, sy); gr.addColorStop(0, 'rgba(' + c + ',' + (a * colA).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(' + c + ',' + (a * colA * 0.6).toFixed(3) + ')'); ctx.fillStyle = gr; ctx.fillRect(Math.round(sx - ww / 2), 0, Math.round(ww), Math.round(sy)); } ctx.restore();
+  c6Glow(sx, sy, 200, '60,150,255', 0.6 * colA * on); c6Glow(sx, 40, 150, '80,170,255', 0.4 * colA);
+  // the ground far below: its edge, lit blue from above; cracks run along it from the middle; rings run out
+  for (let x = 0; x < VW; x += 2) { const y = t6Gy(x, gtop + 6) + (t6H(x >> 2, 51) < 0.3 ? 1 : 0); ctx.fillStyle = '#05040a'; ctx.fillRect(x, y, 2, VH - y); ctx.fillStyle = 'rgba(100,170,255,' + (colA * 0.8 * Math.max(0, 1 - Math.abs(x - sx) / 200)).toFixed(3) + ')'; ctx.fillRect(x, y, 2, 1); }
+  { ctx.save(); ctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < 3; i++) { const q = (T * 0.7 + i / 3) % 1; ctx.strokeStyle = 'rgba(120,190,255,' + (0.7 * (1 - q) * colA).toFixed(3) + ')'; ctx.lineWidth = 1 + 2 * (1 - q); ctx.beginPath(); ctx.ellipse(sx, gtop + 4, 20 + q * 220, 4 + q * 26, 0, 0, 6.2832); ctx.stroke(); } ctx.restore(); }
+  for (let i = 0; i < 9; i++) { const d = colA * (14 + 130 * t6H(i, 101)), sgn = i & 1 ? 1 : -1, y = gtop + 5 + t6H(i, 102) * 3; ctx.fillStyle = 'rgba(150,215,255,' + (0.9 * colA).toFixed(3) + ')'; ctx.fillRect(Math.round(sx + sgn * d * 0.2), Math.round(y), Math.round(d * 0.8) * sgn || 1, 1); }      // (cracks: lines of light along the ground)
+  for (let i = 0; i < 26; i++) { const q = ((t1 - 0.4) * (0.35 + 0.35 * t6H(i, 103)) + t6H(i, 104)) % 1, x = Math.round(sx + (t6H(i, 105) - 0.5) * 300), y = Math.round(gtop + 6 - Math.max(0, q) * (90 + 50 * t6H(i, 106))); if (t1 > 0.4) { ctx.fillStyle = '#05040a'; ctx.fillRect(x, y, 2 + (i & 3), 2 + (i & 1)); ctx.fillStyle = 'rgba(160,220,255,' + (0.7 * colA * (1 - q)).toFixed(3) + ')'; ctx.fillRect(x, y, 2 + (i & 3), 1); } }      // (stones rise off the ground)
+  // the fist
+  t6Gaunt(T, { stone: [G.cx, G.cy, 1.1 + 0.2 * colA, 22 + 10 * colA], purple: 0.9, flare: 0.3 * colA, gem: 1, o: [ox, oy, z] });
+  c6Glow(sx, sy, 60, '220,245,255', 0.55 * on); t6Rays(Math.round(sx), Math.round(sy), Math.round(10 + 10 * colA), 0.9, 3);
+  ctx.restore();
+  c6White(clamp01((t1 - (st.d - 0.55)) / 0.5)); c6Black(1 - t1 / 0.25); msFinish(1);
+}
+
+// ---- 7. the planet: from space, the whole of it in the middle of the picture, a dark violet world lit from the upper left; the column of light stands on the top of it (where "???" is) and shoots up into the sky; cracks of light run from that point over the whole world, wider and brighter; it glows from inside, shakes, and bursts: a white flash, rings of light, the pieces fly out of the picture; the picture fades to black
+const T6B = { crack: 0.9, boom: 3.6 };      // seconds into the shot: the cracks start to run, the planet bursts
+function t6Noise(u, v) {      // smooth noise (0 - 1) from the well-mixed hash: random values on a grid, blended
+  const i = Math.floor(u), j = Math.floor(v), fx = u - i, fy = v - j, sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy), n = (a, b) => t6H(a + b * 977, 13);
+  return lerp(lerp(n(i, j), n(i + 1, j), sx), lerp(n(i, j + 1), n(i + 1, j + 1), sx), sy);
+}
+function t6Planet() {      // the planet (a sphere of rock 92 pixels across, lit from the upper left, with craters and ridges from noise, in 7 steps), cut into 22 shards (every pixel belongs to the nearest of 22 points), and the cracks (jagged lines of light from the top of the planet down over it, each with two branches); made once
+  if (T6.pl) return T6.pl; const R = 46, W2 = 2 * R + 2, c = document.createElement('canvas'); c.width = c.height = W2; const g = c.getContext('2d'), im = g.createImageData(W2, W2), d = im.data, L = [-0.55, -0.6, 0.58], pal = [[14, 10, 26], [28, 20, 46], [48, 36, 74], [76, 58, 108], [110, 86, 142], [150, 122, 182], [196, 170, 222]];
+  const fbm = (u, v) => { let s = 0, a = 0.5; for (let o = 0; o < 4; o++) { s += a * t6Noise(u, v); u = u * 2.1 + 3.7; v = v * 2.1 + 1.3; a *= 0.5; } return s; };
+  const seeds = []; for (let i = 0; i < 22; i++) { const an = t6H(i, 111) * 6.2832, rr = R * Math.sqrt(t6H(i, 112)) * 0.95; seeds.push([R + 1 + Math.cos(an) * rr, R + 1 + Math.sin(an) * rr]); }
+  const sid = new Int16Array(W2 * W2).fill(-1);
+  for (let y = 0; y < W2; y++) for (let x = 0; x < W2; x++) {
+    const nx = (x + 0.5 - W2 / 2) / R, ny = (y + 0.5 - W2 / 2) / R, r2 = nx * nx + ny * ny; if (r2 >= 1) continue; const i = (y * W2 + x) * 4, nz = Math.sqrt(1 - r2), u = nx * 3.2 + 7, v = ny * 3.2 + 3, h = fbm(u, v), hx = fbm(u + 0.07, v) - h, hy = fbm(u, v + 0.07) - h;
+    let bx = nx - hx * 2.4, by = ny - hy * 2.4, bz = nz; const bl = Math.hypot(bx, by, bz); bx /= bl; by /= bl; bz /= bl;
+    let t = Math.max(0, bx * L[0] + by * L[1] + bz * L[2]); t = Math.pow(t, 0.85) * (0.6 + 0.55 * h); if (t6Noise(u * 2.4 + 11, v * 2.4 + 5) > 0.7) t *= 0.7; t *= 0.55 + 0.45 * nz;
+    const k = Math.max(0, Math.min(pal.length - 1, Math.floor(t * pal.length * 1.1))); d[i] = pal[k][0]; d[i + 1] = pal[k][1]; d[i + 2] = pal[k][2]; d[i + 3] = 255;
+    let bi = 0, bd = 1e9; for (let s = 0; s < seeds.length; s++) { const dd = (x - seeds[s][0]) ** 2 + (y - seeds[s][1]) ** 2; if (dd < bd) { bd = dd; bi = s; } } sid[y * W2 + x] = bi;
+  }
+  g.putImageData(im, 0, 0); const shards = [];
+  for (let s = 0; s < seeds.length; s++) {
+    let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1, n = 0, mx = 0, my = 0; for (let y = 0; y < W2; y++) for (let x = 0; x < W2; x++) if (sid[y * W2 + x] === s) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); n++; mx += x; my += y; } if (!n) continue;
+    const w = x1 - x0 + 1, h = y1 - y0 + 1, sc = document.createElement('canvas'); sc.width = w; sc.height = h; const sg = sc.getContext('2d'), si = sg.createImageData(w, h); for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (sid[y * W2 + x] === s) { const a = (y * W2 + x) * 4, b = ((y - y0) * w + x - x0) * 4; si.data[b] = d[a]; si.data[b + 1] = d[a + 1]; si.data[b + 2] = d[a + 2]; si.data[b + 3] = 255; } sg.putImageData(si, 0, 0);
+    const wc = document.createElement('canvas'); wc.width = w; wc.height = h; const wg = wc.getContext('2d'); wg.drawImage(sc, 0, 0); wg.globalCompositeOperation = 'source-in'; wg.fillStyle = '#cfeaff'; wg.fillRect(0, 0, w, h);      // (the same shard all white-blue, for the heat)
+    let dx = mx / n - (R + 1), dy = my / n - (R + 1), dl = Math.hypot(dx, dy); if (dl < 5) { const an = t6H(s, 114) * 6.2832; dx = Math.cos(an); dy = Math.sin(an); dl = 1; } shards.push({ c: sc, w: wc, x: x0, y: y0, dx: dx / dl, dy: dy / dl, v: 80 + 150 * t6H(s, 113) + 1.6 * Math.min(dl, 40), k: 0.8 + 0.7 * t6H(s, 115) });
+  }
+  const cr = []; for (let i = 0; i < 13; i++) { const an = 0.3 + 2.55 * (i + (t6H(i, 61) - 0.5) * 0.6) / 12, len = 70 + 40 * t6H(i, 62), pts = [[0, -R + 2]]; let x = 0, y = -R + 2, a = an; for (let s = 1; s <= 9; s++) { a += (t6H(i * 9 + s, 63) - 0.5) * 0.8; x += Math.cos(a) * len / 9; y += Math.sin(a) * len / 9; pts.push([x, y]); }
+    const br = []; for (const sp of [3, 6]) { let bx = pts[sp][0], by = pts[sp][1], ba = a + (t6H(i * 9 + sp, 64) - 0.5) * 3; const bp = [[bx, by]]; for (let s = 1; s <= 4; s++) { ba += (t6H(i * 9 + sp + s, 65) - 0.5) * 0.9; bx += Math.cos(ba) * 7; by += Math.sin(ba) * 7; bp.push([bx, by]); } br.push(bp); } cr.push({ pts, br, d: 0.4 * t6H(i, 66) }); }
+  return T6.pl = { cv: c, shards, cr, R };
+}
+function t6Cracks(cx, cy, p, w) {      // the cracks, p = how far they have run (0 - 1), w = how thick; each in three passes (a wide blue one, a bright one, a white core), only on the planet
+  const P = t6Planet(); ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, P.R - 0.5, 0, 6.2832); ctx.clip(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const line = (pts, f) => { const L = pts.length - 1, n = Math.floor(f * L), fr = f * L - n; ctx.beginPath(); ctx.moveTo(cx + pts[0][0], cy + pts[0][1]); for (let i = 1; i <= n; i++) ctx.lineTo(cx + pts[i][0], cy + pts[i][1]); if (n < L) ctx.lineTo(cx + lerp(pts[n][0], pts[n + 1][0], fr), cy + lerp(pts[n][1], pts[n + 1][1], fr)); ctx.stroke(); };
+  for (const [lw, col] of [[5 * w, 'rgba(40,110,255,0.35)'], [2.4 * w, 'rgba(110,190,255,0.85)'], [Math.max(1, 1 * w), 'rgba(255,255,255,1)']]) { ctx.lineWidth = lw; ctx.strokeStyle = col; for (const c of P.cr) { const q = clamp01((p - c.d) / (1 - c.d)); if (q <= 0.01) continue; line(c.pts, q); for (const b of c.br) { const qb = clamp01((q - 0.3) / 0.7); if (qb > 0.01) line(b, qb); } } }
+  ctx.restore();
+}
+function t6SPlanet(now, dt, T, st, t1) {
+  const P = t6Planet(), R = P.R, cx = Math.round(VW / 2), cy = Math.round(VH / 2) + 2, a = t1 - T6B.boom, p = clamp01((t1 - T6B.crack) / (T6B.boom - 0.3 - T6B.crack)), pe = ease3(p), ox = cx, oy = cy - R + 2;
+  t6Sky(T, { neb: 0.6, al: 0.85 });
+  if (a < 0) {      // ---- before: the planet, the column of light on its top, the cracks, the light inside
+    const s = c6Shk(T, 4.5 * pe * pe), X = cx + s[0], Y = cy + s[1], bw = ease3(clamp01((t1 - 0.1) / 0.8));
+    c6Glow(X, Y, 80, '120,90,220', 0.22);
+    ctx.drawImage(P.cv, X - R - 1, Y - R - 1);
+    ctx.save(); ctx.beginPath(); ctx.arc(X, Y, R - 0.5, 0, 6.2832); ctx.clip(); ctx.globalCompositeOperation = 'lighter'; const gi = ctx.createRadialGradient(X, Y - R * 0.6, 2, X, Y, R * 1.15); gi.addColorStop(0, 'rgba(160,215,255,' + (0.5 * pe * pe).toFixed(3) + ')'); gi.addColorStop(1, 'rgba(60,130,255,' + (0.32 * pe * pe).toFixed(3) + ')'); ctx.fillStyle = gi; ctx.fillRect(X - R, Y - R, 2 * R, 2 * R); ctx.restore();
+    if (p > 0) t6Cracks(X, Y, pe, 0.55 + 0.7 * pe);
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; for (const [w, c, al] of [[16, '60,140,255', 0.3], [7, '130,200,255', 0.6], [3, '255,255,255', 0.95]]) { const ww = Math.max(1, Math.round(w * bw * (0.9 + 0.1 * Math.sin(T * 12 + w)) * (1 + 1.4 * pe))); const gr = ctx.createLinearGradient(0, 0, 0, oy + s[1]); gr.addColorStop(0, 'rgba(' + c + ',' + (al * 0.5 * bw).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(' + c + ',' + (al * bw).toFixed(3) + ')'); ctx.fillStyle = gr; ctx.fillRect(Math.round(ox + s[0] - ww / 2), 0, ww, oy + s[1]); } ctx.restore();      // (the column of light, from the top of the planet to the top of the picture)
+    c6Glow(ox + s[0], oy + s[1], 30 + 60 * pe, '150,210,255', (0.5 + 0.4 * pe) * bw); t6Rays(ox + s[0], oy + s[1], Math.round(6 + 16 * pe), 0.8 * bw, 2);
+    if (p > 0) c6Glow(X, Y, 100 + 60 * pe, '90,170,255', 0.35 * pe);
+    c6White(a > -0.18 ? clamp01((a + 0.18) / 0.18) : 0);      // (white just before the burst: the picture is flooded)
+  } else {      // ---- after: the flash, the rings, the pieces
+    const q = a, tail = Math.exp(-q * 1.4);
+    c6Glow(cx, cy, 200, '120,190,255', 0.9 * tail); c6Glow(cx, cy, 60, '255,255,255', 0.9 * Math.exp(-q * 3));
+    for (const sh of P.shards) { for (let g = 3; g >= 0; g--) { const qq = Math.max(0, q - 0.05 * g), dd = sh.v * (1 - Math.exp(-sh.k * qq)) / sh.k, px = cx - R - 1 + sh.x + sh.dx * dd, py = cy - R - 1 + sh.y + sh.dy * dd; ctx.globalAlpha = g ? 0.16 / g : 1; ctx.drawImage(sh.c, Math.round(px), Math.round(py)); if (!g) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.max(0, 1 - q * 0.9); ctx.drawImage(sh.w, Math.round(px), Math.round(py)); ctx.restore(); } } ctx.globalAlpha = 1; }
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < 110; i++) { const an = t6H(i, 121) * 6.2832, v = 60 + 320 * t6H(i, 122), k = 1 + 0.9 * t6H(i, 123), dd = v * (1 - Math.exp(-k * q)) / k, al = Math.max(0, 1 - q / (1.4 + 2 * t6H(i, 124))); if (al <= 0) continue; ctx.globalAlpha = al; ctx.fillStyle = i % 3 ? '#9fd8ff' : '#ffffff'; const s2 = i % 7 === 0 ? 2 : 1; ctx.fillRect(Math.round(cx + Math.cos(an) * dd), Math.round(cy + Math.sin(an) * dd), s2, s2); } ctx.restore();      // (dust and sparks)
+    v6Ring(cx, cy, 20 + 380 * (1 - Math.exp(-2.6 * q)), Math.max(0, 1 - q * 1.1), '170,220,255'); if (q > 0.12) v6Ring(cx, cy, 10 + 380 * (1 - Math.exp(-2.2 * (q - 0.12))), Math.max(0, 0.7 - (q - 0.12) * 1.0), '120,180,255');
+    if (q < 0.5) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(210,235,255,' + (0.9 * (1 - q / 0.5)).toFixed(3) + ')'; ctx.fillRect(0, cy - 1, VW, 3); ctx.restore(); }      // (a thin streak of light across the picture)
+    c6White(q < 0.1 ? 1 : Math.exp(-(q - 0.1) * 3.2));
+  }
+  c6Black(clamp01((t1 - (st.d - 1.0)) / 0.9)); c6White(t1 < 0.3 ? 1 - t1 / 0.3 : 0); msFinish(1);
+}
+
+// ---- the sounds and shakes of part 1 and 2: every one fires once, at its own time (ev = the scene's own scheduler: see c3EndFrame)
+function t6Events(ev, now) {
+  const Tv = c4T('vchg'), Tm = c4T('vmaho'), Tp = c4T('tport'), Ts = c4T('tspace'), Tk = c4T('ttake'), Th = c4T('tthumb'), Tw = c4T('tpower'), Tl = c4T('tlift'), Tq = c4T('tplanet');
+  ev('v_run', Tv, () => snd('vrush'), 1); ev('v_leap', Tv + V6.run, () => snd('vleap'), 0.6);
+  ev('v_cloth', Tm + 0.3, () => snd('vcloth'), 1); ev('v_lock', Tm + 1.55, () => { snd('vlock'); c2Shake(now, 450, 5); }, 0.8); ev('v_awake', Tm + 1.85, () => snd('vawake'), 1); ev('v_cut', Tm + 2.55, () => { snd('dsmash'); c2Shake(now, 300, 3); }, 0.5); ev('v_hit', Tm + 4.35, () => { snd('vthud'); c2Shake(now, 600, 7); }, 0.4);
+  ev('t_open', Tp + T6P.open, () => snd('t6open'), 1); ev('t_circ', Tp + 1.05, () => snd('t6circle'), 0.8); ev('t_zip', Tp + T6P.go, () => { snd('t6zip'); snd('blink'); c2Shake(now, 350, 4); }, 0.6);
+  ev('s_hum', Ts, () => snd('t6hum'), 1); ev('s_circ', Ts + 1.1, () => snd('t6circle'), 0.8); ev('s_arr', Ts + 1.9, () => snd('t6arrive'), 0.8);
+  ev('k_grasp', Tk + 1.65, () => snd('t6grasp'), 0.6);
+  ev('h_slot', Th + 1.95, () => { snd('t6slot'); c2Shake(now, 350, 4); }, 0.6);
+  ev('w_swell', Tw, () => snd('t6power', 0), 1); ev('w_surge', Tw + T6C.boom - 0.05, () => { snd('t6power', 1); c2Shake(now, 600, 8); }, 0.6);
+  ev('l_lift', Tl + 0.2, () => snd('t6lift'), 1);
+  ev('p_beam', Tq + 0.2, () => snd('t6circle'), 0.8); for (let i = 0; i < 5; i++) ev('p_crack' + i, Tq + 1.1 + 0.55 * i, () => snd('t6crack', i), 0.5); ev('p_rumble', Tq + 1.4, () => snd('t6rumble'), 1); ev('p_boom', Tq + T6B.boom, () => { snd('t6boom'); c2Shake(now, 900, 10); }, 0.8);
 }
 // ---- end of the eyes
 
@@ -11051,6 +11466,7 @@ $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+{"v": "1.105", "t": "THE BLUE EYE", "n": ["After MAHORAGA, Verity charges at Megumi through a rush of speed lines. A huge white being wrapped in tight white cloth tears itself together behind Megumi: strips of cloth snap in from the sides, a golden wheel and four glowing eyes light up, and the picture cuts in close on its face.", "After the Master crushes Gojo's eye, the claw opens and a violet circle takes the blue stone away.", "The stone arrives in space, where \"???\" stands on a dark planet under a big ringed world. His hand takes it and puts it in the thumb of his gauntlet, and the blue light runs over the gold.", "The stone flares with bolts of blue light, he lifts the gauntlet and a pillar of light stands up from it. Then you see the whole planet from space: cracks of light run over it and it bursts into pieces. Then chapter 2 ends.", "Most of the care went into \"???\": his scenes are lit only by the blue stone, and the light moves over him, his hand and the gauntlet as the stone moves.", "The new part is about 36 seconds long. Tapping still skips from shot to shot. There are 18 new sounds."]},
 {"v": "1.104", "t": "THE SUMMONING", "n": ["Chapter 2 goes on after Verity says WASTED POTENTIAL: a voice in the dark says \"DID SOMEONE SAY...\", then \"POTENTIAL?\", and a cold light comes in.", "Megumi stands in that light, seen from below with a rim of light all around him. He is the new picture from your drawing, shown in big pixels.", "He calls out his summoning in four steps, each one with its own close-up, light and sound: \"WITH THIS SACRED TREASURE, I SUMMON...\", EIGHT-HANDLED SWORD (a blade of light is drawn from his fists), DIVERGENT SILA DIVINE GENERAL (a golden wheel opens behind his head) and MAHORAGA (the wheel and the name flash up, the picture shakes).", "The scene is about 16 seconds long, then it goes on to the Master's room as before. Tapping skips from shot to shot like the rest of the ending.", "Megumi has his own calm voice for the speech box."]},
 {"v": "1.103", "t": "THE PORTAL FIGHTS BACK", "n": ["Getting into the portal in chapter 2 is now really hard. The street is more than twice as long, and every STOP hits much harder and pushes you back further.", "His STOP comes in four kinds, and the colour of the ring on the floor tells you which one: purple (block it, duck or jump), red (nothing blocks it), teal (a low sweep, ducking does not help) and orange (nothing blocks it and ducking does not help, only a well timed jump or dash).", "He waits a random moment before he strikes and then slides at you, so stopping or backing away does not save you. He is solid while he does it, so you cannot dash through the blow.", "The further you get, the harder it gets: the STOPs come sooner, push you back further and hurt more. In the last stretch the wind of the portal blows you back, so crouching or guarding all the way will not get you in.", "A dash needs 2.6 seconds to come back. A blocked STOP still hurts a little. If you stay crouched in front of Verity he swings his low claw at you. After every blow he rests for a moment: that is your time to hit him back.", "When you lose, the screen tells you which ring killed you and what to do about it. If it is too hard, SET > ASSIST > EASY takes 30% off the damage you take."]},
 {"v": "1.102", "t": "THE EYES", "n": ["The story of chapter 2 goes on after the gauntlet: the Master tears Gojo's blindfold off. You now see Gojo's face without it, still bloody, with his eyes shining blue.", "The Master's claw closes on his eyes. Gojo screams and hits the Master again and again, weaker each time, while his eyes get redder and bloodier.", "Gojo kicks the Master away. His eyes hang out of their sockets by a few blood vessels, and he pushes them back in. They are red now, with the blue still in them, and his face is covered in blood.", "He tries to open his domain, but it fails. The Master pulls him back, tears one eye out and crushes it. Only the blue part is left in his hand, glowing.", "All the new pictures are made of the same big pixels as Gojo's own picture, and every moment has its own new sound.", "This part is violent and about 40 seconds long. You can still tap to skip from shot to shot."]},
