@@ -32,6 +32,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 .cards{display:flex;gap:2.5vh}
 .card{width:24vh;height:40vh;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:1.5vh;font-size:clamp(8px,2.4vh,13px)}
 .card canvas{height:24vh;width:auto}
+#select>.cards:not(.mini){--cw:min(24vh,calc((100vw - 18vh) / 6))}#select>.cards:not(.mini) .card{width:var(--cw)}#select>.cards:not(.mini) .card canvas{height:var(--cw)}
 .card i{color:var(--dim);font-style:normal;font-size:.8em}
 #gojo{border-color:var(--acc)}
 #gojo:hover,#gojo:focus-visible{background:#2a1f4a;outline:none}
@@ -198,7 +199,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.106</small>
+    <small id="ver">V1.107</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -384,6 +385,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <button class="card pp" data-who="verity"><canvas></canvas><b>VERITY</b><i>FREE PLAY</i></button>
     <button class="card pp" data-who="cat"><canvas></canvas><b>CARTOON CAT</b><i>FREE PLAY</i></button>
     <button class="card pp" data-who="freddy"><canvas></canvas><b>FREDDY<br>KRUEGER</b><i>FREE PLAY</i></button>
+    <button class="card pp" data-who="cu3"><canvas></canvas><b>SUKUNA</b><i>FREE PLAY</i></button>
   </div>
   <small id="selCuLab" style="display:none">YOUR CUSTOM CHARACTERS (THEY WALK IF YOU DREW WALKING FRAMES)</small>
   <div class="cards mini" id="selCu" style="display:none"></div>
@@ -4149,6 +4151,7 @@ __TRAIN__
 __REST__
 __CONT__
 __CUSTOM__
+__SUKUNA__
 __CHAP2__
 __CHAP2B__
 __CHAP2C__
