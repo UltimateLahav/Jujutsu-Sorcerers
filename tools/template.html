@@ -199,7 +199,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.108</small>
+    <small id="ver">V1.109</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -1782,6 +1782,7 @@ function hitFoe(k, now) {                     // called on the impact frame: a h
 function gojoHit(k, now) {                    // the attacking dummy's swing connects with Gojo
   if (tz && lpAt >= 0 && now - lpAt > 250 && now - lpAt < 720) { nres('m'); return; }      // (the Cat in the giant's glove, or flying: nothing touches him)
   if (dom) { nres('m'); return; }      // (the DOMAIN freezes everyone, whatever they were doing: nothing of the enemy's touches you until it is over)
+  if (cuMe() && suHit(now)) { nres('m'); return; }      // (v1.109 SUKUNA's COUNTER: while he waits the swing is dodged, and until his slash has landed nothing reaches him, see sukuna.js)
   if (isD2(k)) { gojoDiv2(now); return; }      // (DIVERGENT FIST's second impact, normal or RUSH: see gojoDiv2)
   if (dgAt >= 0 && now - dgAt < 11 * 1000 / DASH_FPS) { if (now - dgAt < 7 * 1000 / DASH_FPS && now - dodgeAt > 400 && (!vs || vs.ph === 'fight')) { dodgeAt = now; ceGain(E_DODGE); flowAdd(10, now); say('DODGE!', wx, '#9fd8ff', 8, now); } nres('m'); return; }       // he is dashing: the swing misses (v1.30: a dash started just before the blow gives energy)
   const held = vs && vs.foe === 'cat' && k >= 30 && k <= 33 && now < (vs.catHold || 0);      // (inside the Cat's glove the combo cannot miss because Gojo is 'still reeling')
@@ -3429,7 +3430,7 @@ function pounceStep(v, now, dt, af) {      // Verity's AIR BITE, every frame of 
 function vpBleed(now) {      // the bite's bleeding on the enemy: 1 damage every 0.1 s for 4 s (a ball takes none: nothing hurts it); Yuji's PIERCING BLOOD and CLEAVE in INHERITENCE bleed every 0.2 s (half, v1.53)
   const d = dummy; if (!d || !d.bleed) return; const b = d.bleed;
   if (vs.ph !== 'fight' || d.ko >= 0) { d.bleed = null; return; }
-  while (d.bleed && b.next <= now && b.next <= b.until) { b.next += b.gap || 100; if (d.vform && d.vform !== 'verity') continue; d.hp = Math.max(0, d.hp - 1); d.hitAt = now; if (d.hp <= 0) { d.bleed = null; koDummy(now); } }
+  while (d.bleed && b.next <= now && b.next <= b.until) { b.next += b.gap || 100; if (d.vform && d.vform !== 'verity') continue; d.hp = Math.max(0, d.hp - (b.dm || 1)); if (!b.quiet) d.hitAt = now; if (d.hp <= 0) { d.bleed = null; koDummy(now); } }
   if (d.bleed && now >= b.until) d.bleed = null;
 }
 // ---------------------------------------------------------------- v1.28 TWO NEW VARIANTS (bought in SKILLS like every other variant). BLOOD DRAG (Verity, crouched + BLUE; the bite needs him standing): a low lunge at the enemy's feet, the bite, then he backs away with the enemy by the feet, flat on the floor, and the blood is dragged along the ground. GIANT SMASH (the Cat, flat on the floor + BLUE): the giant's huge leg smashes down on the enemy.
