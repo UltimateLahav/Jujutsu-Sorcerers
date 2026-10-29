@@ -194,6 +194,14 @@ function makeSfx(ac) {
       burst(B.soft, t, { type: 'bandpass', f: 2800 * up, f2: 7600 * up, q: 3.5, dur: 0.1, gain: 1.1, atk: 0.004 });
       tone(C.tele.soft, t + 0.012, { f: 3300 * up, f2: 3150 * up, dur: 0.13, gain: 0.035, atk: 0.002 });
     },
+    sukdis(at) {                                         // v1.112 DISMANTLE: the stop of time and the word: a heavy thump, a deep growl that slides down (a saw through a band that opens and closes, like a voice), a long low swell and a thin cold ring on top
+      const t = T(at), B = C.atk, D = C.tele;
+      tone(B.deep, t, { type: 'triangle', f: 120, f2: 38, dur: 0.9, gain: 0.5, atk: 0.004 });
+      burst(B.soft, t, { f: 400, f2: 80, q: 0.8, dur: 0.12, gain: 2.4, atk: 0.001 });
+      tone(B.deep, t + 0.08, { type: 'sawtooth', f: 96, f2: 70, dur: 0.75, gain: 0.16, atk: 0.12 });
+      burst(B.soft, t + 0.1, { type: 'bandpass', f: 300, f2: 900, q: 2.5, dur: 0.6, gain: 0.5, atk: 0.2 });
+      tone(D.soft, t + 0.3, { f: 1760, f2: 1740, dur: 0.9, gain: 0.04, atk: 0.01 });
+    },
     ko(at) {                                             // the dummy goes down: a heavy hit, a whoosh as he topples, then the thud on the floor
       const t = T(at), B = C.atk;
       tone(B.deep, t, { type: 'triangle', f: 150, f2: 44, dur: 0.55, gain: 0.5, atk: 0.004 });

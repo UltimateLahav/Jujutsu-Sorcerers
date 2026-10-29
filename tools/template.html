@@ -199,7 +199,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.111</small>
+    <small id="ver">V1.112</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -1857,8 +1857,10 @@ function drawDummy(now, dt) {
   }
   const t = Math.min(1, (now - dummy.born) / 650), e = 1 - Math.pow(1 - t, 3), hitT = now - dummy.hitAt, kt = dummy.ko >= 0 ? Math.max(0, now - (dummy.koAt || dummy.ko)) : -1;
   const reacting = kt < 0 && now - dummy.rxAt < RX_DUR[dummy.rx], mirror = !(dummy.mode === 'fighter' && gap < -4), FS = foeSet();   // he faces Gojo (left), or right if Gojo got behind the attacker
+  const kneel = kt < 0 && now < (dummy.kneel || 0);      // (v1.112 Sukuna's LEG CUT: his legs are cut and he drops to his knees, the crouch of his set, for as long as dummy.kneel says; every hit still lands on him)
   let src, info, fi, lift = 0, ox = 0, oy = 0;                // what he is doing: reeling from a hit, swinging, stepping, or standing about
-  if (reacting) { fi = Math.min(9, Math.floor((now - dummy.rxAt) * RX_FPS[dummy.rx] / 1000)); info = D['rx' + dummy.rx]; src = (hitT < 70 ? rxW : FS.rx)[dummy.rx][fi]; lift = info.lift ? info.lift[fi] : 0; }
+  if (kneel) { fi = Math.floor(now / (1000 / IDLE_FPS)) % 15; info = D.cidle; src = hitT < 70 ? whiteOf(FS.fear[fi]) : FS.fear[fi]; }
+  else if (reacting) { fi = Math.min(9, Math.floor((now - dummy.rxAt) * RX_FPS[dummy.rx] / 1000)); info = D['rx' + dummy.rx]; src = (hitT < 70 ? rxW : FS.rx)[dummy.rx][fi]; lift = info.lift ? info.lift[fi] : 0; }
   else if (kt < 0 && dummy.mode === 'fighter' && dummy.ai === 'attack') { fi = Math.min(14, Math.floor((now - dummy.aiAt) * ATK_FPS[dummy.k] * (dummy.spd || 1) / 1000)); info = D['atk' + dummy.k]; src = (FS.atk[dummy.k] || FS.atk[0])[fi]; }      // (k = 4, Yuji's DIVERGENT FIST, has no picture here: the Yuji line below draws it)
   else if (kt < 0 && dummy.mode === 'fighter' && dummy.ai === 'walk') { fi = Math.floor(now * WALK_FPS / 1000) % FS.walk.length; info = D.fwd; src = FS.walk[fi]; }
   else if (kt < 0 && dummy.mode === 'fighter' && (dummy.ai === 'block' || dummy.ai === 'dodge')) { fi = 5 + Math.floor(now / 125) % 5; info = D.atk11; src = FS.blk[fi]; }       // the smart enemy: guard up (also while he steps back)
@@ -1867,12 +1869,13 @@ function drawDummy(now, dt) {
   else { fi = Math.floor(now / (1000 / IDLE_FPS)) % FS.idle.length; info = D.idle; src = (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) ? dumW[fi] : (kt < 0 && now < dummy.stunUntil && !ult && !fd && ((now / 70) | 0) % 2 === 0) ? dumB[fi] : FS.idle[fi]; }   // white flicker while he goes down
   if (vs && vs.foe === 'verity') { const L = storyLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox || 0; oy = L.oy || 0; }      // the enemy is Verity
   if (vs && vs.foe === 'yuji') { const ys = vs.inv ? YUF.inv : YUF.norm, wk = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'walk', at = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'attack', pw = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'power'; ox = oy = 0; lift = 0;      // the enemy is Yuji
-    if (at) { fi = Math.max(0, Math.min(14, Math.floor((now - dummy.aiAt) * YU_ATK.fps[dummy.k] * (dummy.spd || 1) / 1000))); src = ys.atk[dummy.k][fi]; info = YU.atk[dummy.k]; lift = info.lift ? info.lift[fi] : 0; }
+    if (kneel) { fi = Math.floor(now / (1000 / IDLE_FPS)) % 15; src = ys.cidle[fi]; info = YU.cidle; }      // (his legs are cut: his crouch)
+    else if (at) { fi = Math.max(0, Math.min(14, Math.floor((now - dummy.aiAt) * YU_ATK.fps[dummy.k] * (dummy.spd || 1) / 1000))); src = ys.atk[dummy.k][fi]; info = YU.atk[dummy.k]; lift = info.lift ? info.lift[fi] : 0; }
     else if (pw) { fi = Math.max(0, Math.min(14, Math.floor((now - dummy.aiAt) * POW_FPS / 1000))); src = ys.atk[11][fi]; info = YU.atk[11]; }      // (switching cursed energy on: hands up, then slammed down)
     else if (reacting) { const r = dummy.rx; fi = Math.max(0, Math.min(14, Math.floor((now - dummy.rxAt) * RXF15[r] / 1000))); src = ys.rx[r][fi]; info = YU.rx[r]; lift = info.lift ? info.lift[fi] : 0; }      // one of his ten hit reactions
     else if (kt < 0 && dummy.mode === 'fighter' && (dummy.ai === 'block' || dummy.ai === 'dodge')) { const t = now - dummy.aiAt; fi = t < 250 ? Math.max(0, Math.floor(t / 50)) : 5 + Math.floor(now / 125) % 5; src = ys.blk[fi]; info = YU.blk; }      // BLOCK: the guard comes up in a quarter of a second and is held (also while he steps back)
     else { fi = Math.floor(wk ? now * WALK_FPS / 1000 : now / (1000 / IDLE_FPS)) % 15; src = (wk ? ys.fwd : ys.idle)[fi]; info = wk ? YU.fwd : YU.idle; }
-    if ((reacting && hitT < 70) || (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0)) src = whiteOf(src); }
+    if (((reacting || kneel) && hitT < 70) || (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0)) src = whiteOf(src); }
   if (vs && vs.foe === 'cat') { const L = catLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox; oy = L.oy; }      // the enemy is the Cartoon Cat
   if (vs && vs.foe === 'cat' && dummy.cact && dummy.cact.type === 'toon' && kt < 0) pendingGiants.push({ who: 'foe', sx, ff: dummy.cact.fi, dir: mirror ? -1 : 1, inv: !!vs.inv });      // (his CARTOON ATTACK: his giant is drawn after you, then he himself on top of it: see drawGiantNow)
   if (ult && ult.who === 'player' && ult.held && !ult.rel && kt < 0) { const o = ultVictimOff(now); lift += o.lift; ox += o.ox; if (o.flash) src = whiteOf(src); }      // (held up by the Cat's glove and kneed: lifted, shaking, flashing white)
@@ -4844,6 +4847,7 @@ function storyLook(now, reacting, hitT, kt) {      // what the story enemy looks
   else if (f === 'smoke1' || f === 'smoke2') { name = 'idle'; fi = 0; }
   else if (f === 'end') { name = 'hurt'; fi = 8; loop = false; }      // the ending: he staggers, held up, until the red comes
   else if (kt >= 0) fi = 0;
+  else if ((d.kneel || 0) > now) { name = 'crouch'; fi = 14; loop = false; }      // (v1.112 his legs are cut: he is folded up on his knees)
   else if (d.vact) { name = d.vact.anim; fi = d.vact.fi; loop = false; }
   else if (reacting) { name = 'hurt'; rk = d.rx; fi = (now - d.rxAt) / RX_DUR[d.rx] * 15; loop = false; }      // one of his ten hit reactions
   else if (d.fear) { name = 'crouch'; fi = 14; loop = false; const o = fearOff(now); ox = o[0]; oy = o[1]; }      // JUMPSCARE: stunned, he is folded up and shaking
@@ -4852,7 +4856,7 @@ function storyLook(now, reacting, hitT, kt) {      // what the story enemy looks
   else if (d.ai === 'block') { const t = now - d.aiAt; name = 'block'; fi = t < 250 ? t / 50 : 5 + (now / 125) % 5; loop = false; }
   else if (d.ai === 'walk') { name = 'walk'; fi = now * WALK_FPS / 1000; }
   d.anim = name; let src = rk >= 0 ? vrx(rk, fi, vs && vs.inv) : vfr(name, fi, loop, vs && vs.inv); if (d.del) { const k = (now - d.del) / 1400; src = k >= 1 ? EMPTY : dissolve(src, k); }      // deleted: erased in a red dither
-  if ((kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) || (kt < 0 && reacting && hitT < 70)) src = whiteOf(src);
+  if ((kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) || (kt < 0 && (reacting || (d.kneel || 0) > now) && hitT < 70)) src = whiteOf(src);
   if (rk >= 0) { const I = VRXIN[rk]; return { src, info: I, lift: I.lift ? I.lift[Math.min(14, Math.max(0, Math.floor(fi)))] : 0, ox, oy }; }
   return { src, info, lift, ox, oy };
 }
@@ -4890,6 +4894,7 @@ function cfr(name, fi, loop, inv) {      // inv: the colours inverted (an enemy 
 function catLook(now, reacting, hitT, kt) {      // what the Cat looks like: every move has its own 15-frame animation
   const d = dummy, a = d.cact; let name = 'idle', fi = now / 125, loop = true;
   if (kt >= 0) fi = 0;
+  else if ((d.kneel || 0) > now) { name = 'stun'; fi = now / 66; }      // (v1.112 his legs are cut: dizzy on the floor)
   else if (reacting) { name = 'rx' + d.rx; fi = (now - d.rxAt) * RXF15[d.rx] / 1000; loop = false; }
   else if (d.catStunAt && now < d.stunUntil) { name = 'stun'; fi = (now - d.catStunAt) / 66; }
   else if (d.fear && !a) { name = 'stun'; fi = now / 66; }      // (the JUMPSCARE has him: dizzy and shaking)
@@ -4900,7 +4905,7 @@ function catLook(now, reacting, hitT, kt) {      // what the Cat looks like: eve
   else if (d.ai === 'block') { const t = now - d.aiAt; name = 'block'; fi = t < 250 ? t / 50 : 5 + (now / 125) % 5; loop = false; }      // BLOCK: the glove swells into a shield in a quarter of a second and is held
   else if (d.ai === 'walk') { name = 'walk'; fi = now * WALK_FPS / 1000; }
   const I = CAT_CELL[name]; let src = cfr(name, fi, loop, !!(vs && vs.inv));
-  if ((kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) || (kt < 0 && reacting && hitT < 70)) src = whiteOf(src);
+  if ((kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) || (kt < 0 && (reacting || (d.kneel || 0) > now) && hitT < 70)) src = whiteOf(src);
   const o = d.fear && kt < 0 && !reacting ? fearOff(now) : [0, 0];
   return { src, info: { w: I[0], h: I[1], cx: I[2], x0: 0, top: I[3] }, lift: reacting && CAT_RXLIFT[d.rx] ? CAT_RXLIFT[d.rx][Math.min(14, Math.floor(fi))] : 0, ox: o[0], oy: o[1] };
 }
@@ -6141,7 +6146,7 @@ function tick(t) {
   if (story && story.toC3End) { story.toC3End = false; startC3End(now); }      // (chapter 2's fight is won: its ending starts)
   if (story && story.toEnd) { story.toEnd = false; startTrainEnd(now); }      // (the training fight is won: the happy ending starts)
   if (story && story.toMaster) { story.toMaster = false; startMaster(now); }      // (the fight against the Cat is won: the Master's scene starts)      // (the fight against Verity is won: the ending of the chapter starts)
-  if (state === 'play') { if (still || now < holdUntil) { last = now; if (impf) impfFrame(); } else drawScene(now, dt); stateDraw(now); msRecord(now); }      // hit-stop: the picture freezes for a split second when the red orb explodes
+  if (state === 'play') { if (still || now < holdUntil) { last = now; if (impf) impfFrame(); else if (suTs) suTsFrame(); } else drawScene(now, dt); stateDraw(now); msRecord(now); }      // hit-stop: the picture freezes for a split second when the red orb explodes
   else if (state === 'versus') { const fr = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length; for (const q of vsPv) { q.g.clearRect(0, 0, 64, 64); q.g.drawImage(q.who === 'gojo' ? (q.inv ? dumF : idleF)[fr] : q.who === 'yuji' ? (q.inv ? YUF.inv : YUF.norm).idle[fr % 15] : q.who === 'cat' ? cfr('idle', now / 100, true, q.inv) : q.who === 'freddy' ? fredF(now / (1000 / IDLE_FPS)) : vfr('idle', now / 100, true, q.inv), 0, 0); } }
   else if (state === 'lansel') lanSelDraw(now);
   else if (state === 'chal') chalDraw(now);
