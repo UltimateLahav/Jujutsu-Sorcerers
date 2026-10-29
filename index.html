@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.102</small>
+    <small id="ver">V1.103</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -1008,8 +1008,11 @@ function makeSfx(ac) {
     c6stone() {                                          // v1.102 the blue stone lights up in the claw: a glassy shimmer that swells (three high notes of a bright chord) over a deep hum, then a clear high ping when it is fully lit
       const t = T(), B = C.ce; [1568, 2349, 3136].forEach((f, i) => tone(B.soft, t + i * 0.07, { f, f2: f * 1.003, dur: 2.2, gain: 0.04, atk: 0.8 })); tone(B.deep, t, { f: 82, f2: 110, dur: 2.4, gain: 0.35, atk: 1.2, cur: 1 }); burst(B.soft, t, { type: 'highpass', f: 3500, f2: 9500, q: 0.7, dur: 1.8, gain: 0.05, atk: 1.0 }); tone(B.soft, t + 1.8, { f: 3951, f2: 3900, dur: 1.2, gain: 0.05, atk: 0.002 });
     },
-    c3warn() {                                           // v1.96 Verity's STOP is coming: a thin rising shimmer and a dry thump where he will stand (so you hear it even when you look at your own feet)
+    c3warn(k) {                                          // v1.96 Verity's STOP is coming: a thin rising shimmer and a dry thump where he will stand (so you hear it even when you look at your own feet); v1.103 k = 1 the RED arm (a harsh falling buzz and a hard second note: nothing blocks it), k = 2 the LOW sweep (a deep wobbling drop under the shimmer), k = 3 the RED LOW sweep (both at once)
       const t = T(), B = C.tele; tone(B.soft, t, { type: 'triangle', f: 520, f2: 1300, dur: 0.24, gain: 0.12, atk: 0.01, cur: 1 }); burst(B.soft, t, { type: 'bandpass', f: 900, f2: 3800, q: 1.4, dur: 0.22, gain: 0.35, atk: 0.14 }); tone(B.deep, t + 0.2, { f: 190, f2: 60, dur: 0.14, gain: 0.3, atk: 0.002 });
+      if (k === 1) { tone(B.deep, t, { type: 'sawtooth', f: 360, f2: 110, dur: 0.3, gain: 0.14, atk: 0.005 }); tone(B.soft, t + 0.14, { type: 'square', f: 880, f2: 640, dur: 0.12, gain: 0.07, atk: 0.003 }); }
+      else if (k === 2) { tone(B.deep, t, { f: 120, f2: 62, dur: 0.4, gain: 0.34, atk: 0.01 }); tone(B.deep, t + 0.05, { type: 'triangle', f: 240, f2: 120, dur: 0.3, gain: 0.12, atk: 0.01 }); }
+      else if (k === 3) { tone(B.deep, t, { type: 'sawtooth', f: 360, f2: 110, dur: 0.3, gain: 0.14, atk: 0.005 }); tone(B.deep, t, { f: 120, f2: 62, dur: 0.45, gain: 0.34, atk: 0.01 }); tone(B.soft, t + 0.14, { type: 'square', f: 880, f2: 640, dur: 0.14, gain: 0.07, atk: 0.003 }); tone(B.soft, t + 0.26, { type: 'square', f: 1040, f2: 780, dur: 0.12, gain: 0.06, atk: 0.003 }); }
     },
     c3enter() {                                          // v1.96 Yuji goes into the portal: the air is sucked in (a rush that climbs), a glassy ring, then a deep boom that dies away
       const t = T(), B = C.ce; burst(B.soft, t, { type: 'bandpass', f: 180, f2: 3800, q: 1.4, dur: 0.6, gain: 1.1, atk: 0.45 }); tone(B.deep, t, { type: 'triangle', f: 60, f2: 240, dur: 0.6, gain: 0.35, atk: 0.45, cur: 1 }); tone(B.soft, t + 0.1, { f: 880, f2: 1760, dur: 0.5, gain: 0.05, atk: 0.35 });
@@ -2728,6 +2731,7 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   if (guardWas && k !== 42 && k !== 46 && !(k >= 49 && CMOVE[k - 49].nb)) {  // his guard is up and the attacker is in front of him: the swing is blocked (a hit from behind still lands; CONCENTRATED FIST breaks the guard)
     if (!isD1(k) && blkAt >= 0 && now - blkAt <= (cuMe() ? cuS.pt : PARRY_MS) * paceBase() * (assistLvl() >= 1 ? 2 : 1)) { parryHit(now); nres('b'); return; }      // (PARRY: the guard went up just before the blow, see parryHit)
     wxv -= KNOCK_G[k] * 0.3 * pScale(); shakeUntil = now + 80; shakeAmp = 1; buzz(8); say('BLOCKED', wx + 14, '#9fd8ff', 8, now); snd('block'); if (isD1(k)) { dummy.divOk = now; dummy.divK = k; }      // (the fist was blocked: the second impact still comes)
+    if (vs && vs.c3) c3Chip(k, now);      // (chapter 2: a blocked blow of Verity's STOP still hurts a little, see chap2.js)
     nres('b'); return;
   }
   if (stance !== 'stand' && !(netK >= 0 && (k === 6 || k === 7)) && (!!vs && vs.me === 'cat' || (!isKick(foeWho, k) && k !== 46))) { nres('m'); return; }      // crouched (or going down / getting up): only a kick can hit him (punches pass over); the Cat smashed flat is two pixels thin, nothing hits him (already reeling, just recovered, or jumped / teleported out of the way: see above)
@@ -3431,7 +3435,7 @@ function finishMatch(now) {
   if (win && !vs.story) { sv.un = Math.max(sv.un, Math.min(5, gi + 1)); sv.st[gi] = Math.max(sv.st[gi], stars); vsStore(sv.un, sv.st); earn([15, 25, 40, 60, 90, 140][gi]); }
   vs.res = { win, stars }; $('vsTitle').textContent = win ? 'VICTORY' : 'DEFEAT'; $('vsInfo').textContent = GRADES[gi].name + '  -  ROUNDS ' + vs.pw + ' : ' + vs.ew + (win && !vs.story ? '\n+$' + [15, 25, 40, 60, 90, 140][gi] : '');
   $('vsStars').innerHTML = win ? [0, 1, 2].map(i => '<span class="star' + (i < stars ? '' : ' off') + '"></span>').join('') : ''; $('vsNext').textContent = 'NEXT GRADE'; $('vsNext').style.display = win && gi < 5 ? '' : 'none'; $('vsres').classList.add('on'); snd(win ? 'finisher' : 'ko');
-  if (vs.story) { $('vsTitle').textContent = win ? (vs.foe === 'cat' ? 'END OF CHAPTER 1' : 'TO BE CONTINUED') : 'DEFEAT'; $('vsInfo').textContent = vs.foe === 'cat' ? (win ? 'TO BE CONTINUED' : 'THE CAT WAS TOO STRONG') : vs.c3 ? 'VERITY STILL BLOCKS THE PORTAL' : vs.tn ? 'KEEP TRAINING, YUJI!' : win ? 'THE MYSTERY: VERITY' : 'VERITY WAS TOO STRONG'; $('vsStars').innerHTML = ''; $('vsNext').style.display = 'none'; if (win) { earnOnce(vs.foe === 'cat' ? 's2' : 's1', vs.foe === 'cat' ? 300 : 200); if (vs.foe === 'cat') storyDone2(); else storyDone(); } }
+  if (vs.story) { $('vsTitle').textContent = win ? (vs.foe === 'cat' ? 'END OF CHAPTER 1' : 'TO BE CONTINUED') : 'DEFEAT'; $('vsInfo').textContent = vs.foe === 'cat' ? (win ? 'TO BE CONTINUED' : 'THE CAT WAS TOO STRONG') : vs.c3 ? 'VERITY STILL BLOCKS THE PORTAL\n' + c3Tip() : vs.tn ? 'KEEP TRAINING, YUJI!' : win ? 'THE MYSTERY: VERITY' : 'VERITY WAS TOO STRONG'; $('vsStars').innerHTML = ''; $('vsNext').style.display = 'none'; if (win) { earnOnce(vs.foe === 'cat' ? 's2' : 's1', vs.foe === 'cat' ? 300 : 200); if (vs.foe === 'cat') storyDone2(); else storyDone(); } }
 }
 function updateFighterVs(now, dt) {            // the grade AI (see GRADES): reaction time, block, dodge, combos, and from Grade 2 up it reads and punishes
   const d = dummy, G = GRADES[vs.gi], gap = d.x - wx, ag = Math.abs(gap), toward = gap > 0 ? -1 : 1;
@@ -7563,8 +7567,9 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
 }
 
 // ---------------------------------------------------------------- v1.95 CHAPTER 2: THE PORTAL, the opening (this file is spliced into template.html by build_html.py, in place of the marker line after the custom mode's)
-// After END OF CHAPTER 1 (the Master took Gojo through his portal): night, the alley where it all began. The same dark portal opens at the end of it. Yuji cries out and charges for it, Verity blinks in and stops him with his long arm (his real JUMPSCARE grab picture), says "HEY, IT'S ME, IT'S VERITY" in his real voice, and they throw hands: seven blows, Yuji's and Verity's by turns (the pictures are the fighters' own: Yuji's R.HOOK, L.HOOK, UPPERCUT and R.KICK, Verity's three swings, each hit with its own reaction), and the last two meet in the middle (Yuji's CONCENTRATED FIST against Verity's long arm): equal. Then the fight is yours: you are Yuji with the moves of the training (TN_KIT) against Verity (GRADE 2), and the aim is NOT to knock him out but to get INTO THE PORTAL (v1.96, the last part of this file): he stands in the way, and his STOP (a blink and a long arm) pushes you back. When you are in, the ending starts: it is in chap2b.js (v1.97: the grab, the Master's side of the portal, the beating, the pierce, WASTED POTENTIAL).
+// After END OF CHAPTER 1 (the Master took Gojo through his portal): night, the alley where it all began. The same dark portal opens at the end of it. Yuji cries out and charges for it, Verity blinks in and stops him with his long arm (his real JUMPSCARE grab picture), says "HEY, IT'S ME, IT'S VERITY" in his real voice, and they throw hands: seven blows, Yuji's and Verity's by turns (the pictures are the fighters' own: Yuji's R.HOOK, L.HOOK, UPPERCUT and R.KICK, Verity's three swings, each hit with its own reaction), and the last two meet in the middle (Yuji's CONCENTRATED FIST against Verity's long arm): equal. Then the fight is yours: you are Yuji with the moves of the training (TN_KIT) against Verity (GRADE 2), and the aim is NOT to knock him out but to get INTO THE PORTAL (v1.96, the last part of this file): he stands in the way, and his STOP (a blink and a long arm, a red arm, a low sweep) pushes you back. When you are in, the ending starts: it is in chap2b.js (v1.97: the grab, the Master's side of the portal, the beating, the pierce, WASTED POTENTIAL).
 // Every actor is a pure function of the scene time T, so a tap that skips to the next cut (or a test that jumps in time) always draws the right picture.
+// v1.103 THE PORTAL FIGHTS BACK: the run to the portal was far too easy (a bot that only held RIGHT and dashed past him was in after 4 to 9 seconds), so the fight was rebuilt in the last part of this file: a street more than twice as long in three zones that get meaner, four kinds of STOP, the portal's wind, and a free run that is much shorter.
 TN_COL.VERITY = '#f0d84a';
 const C3 = { portal: 1.6, say1: 3.7, charge: 6.0, arrive: 6.25, stop: 6.9, voice: 7.4, brawl: 14.6, step: 0.72, hold: 0.09, hold2: 0.16, gap: 34 };      // the times of the opening (seconds); step = the time of one exchange of blows, hold = the picture stops for that long at every impact (the hit-stop), gap = how far apart their chests stand
 const C3_STEPS = [{ w: 'y', k: 0, r: 6 }, { w: 'v', k: 0, r: 2 }, { w: 'y', k: 1, r: 2 }, { w: 'v', k: 2, r: 5 }, { w: 'y', k: 13, r: 7 }, { w: 'v', k: 3, r: 8 }, { w: 'y', k: 5, r: 0 }];      // w = who strikes (y = Yuji, v = Verity), k = his move (Yuji's numbers are YU_ATK's, Verity's are ATK_FPS's), r = the reaction of the one who is hit (0-9)
@@ -7689,7 +7694,7 @@ function c3Frame(now, dt) {
 // ---- the chapter: start, frame, taps, the fight, the ending
 function startC3(slot) { audio(); show('story'); voiceLoad(); story = { slot, t0: pnow(), battle: false, T: 0, ev: {}, shk: null, c3: { end: false, vi: -1, vc: 0, rs: -1, dust: -1 } }; alley = true; court = false; track = false; wx = 0; }
 function c3Frame0(now, dt) { if (story.c3.end) c3EndFrame(now, dt); else c3Frame(now, dt); }
-function startC3Battle() { story.battle = true; alley = true; court = false; track = false; startMatch(2, 'c3', 0, 'verity'); }      // (a story fight against Verity with you as Yuji: see startMatch)
+function startC3Battle() { story.battle = true; alley = true; court = false; track = false; startMatch(2, 'c3', 0, 'verity'); }      // (a story fight against Verity with you as Yuji: see startMatch; REMATCH starts the same one)
 function startC3End(now) { show('story'); story.c3 = { end: true, vi: -1, vc: 0, rs: -1, dust: -1 }; story.battle = false; story.t0 = now; story.T = 0; story.ev = {}; story.shk = null; alley = true; court = false; track = false; wx = 0; }
 function c3Skip() {      // a tap: on to the next cut; on the card (after its first 1.2 s) back to the saves
   const c = story.c3; if (c.end) { const T = story.T; if (T >= C3E.card + 1.2) { show('saves'); renderSaves(); return; } const n = C3E_CUTS.find(x => x > T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; return; }
@@ -7698,27 +7703,41 @@ function c3Skip() {      // a tap: on to the next cut; on the card (after its fi
 function storyDone5() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].c3 = true; storeSaves(a); }      // (chapter 2, part 1 is finished: its last scene has reached the card)
 
 // ---------------------------------------------------------------- v1.96 THE PORTAL IS THE GOAL: the fight is not won by knocking Verity out but by getting INTO the portal
-// The street is a corridor: its left end 120 px behind you, the portal 330 px ahead, Verity in between. He is a wall (you cannot walk through him; a forward DASH slides you past his back, and a dash needs 1.4 s to come back), he cannot be knocked out for good (at no health he folds into his ball for 6 s, the free run, and comes back with 40%; the ball at half health is a free run too), and when you are past him, or near the portal with him not in your face, his STOP comes: he blinks out (0.22 s), blinks in where you will be 0.7 s from now (0.22 s), the long arm shoots out (0.25 s) and shoves you 60 px back. Block it (a little push), dash through it, jump over it or duck under it. Then his arm hangs out for 0.65 s: hit him in that time and the move is broken. The next STOP is 2.4 s away (1.8 s in the last 100 px): a little bar over his head fills up and turns into a flashing diamond when he is ready.
-const C3_ARM = 49 + CMOVE.length;      // the STOP ARM has a hit number of its own, so gojoHit (damage, guard, dash, jump and crouch rules) deals with it like with every other blow
-CMOVE.push({ k: C3_ARM, nb: false, heavy: false }); REACH.push(40); KNOCK.push(0); KNOCK_G.push(470); DMG.push(14);      // (14 damage and a push of 470 x 0.9 / 7 = 60 px)
-const C3W = { L: -120, PX: 330, door: 12, sep: 22, dashCd: 1400 };      // the left end of the street and the portal's place (world pixels; you start on 0), how close to its middle you must be to go in, how far apart two bodies stand (measured when the fight begins), how long a dash needs from its start to come back
-let c3s = null;      // the fight's own state: { t0, stopReady, cd (the wait of the last STOP), seen (since when the STOP is wanted), warnAt, warnN, to (where he will stand), fwd (when a forward dash last ran), dgLast (the start of the dash that is running), slide (+1 = you slide past his back), pushing (ms you have pressed against him), hintUntil, hintCool, down (when he last folded into the ball), talkAt (when he said NOBODY ENTERS!), seenP (the portal has been on the screen) }
+// The street is a corridor: its left end 120 px behind you, the portal 850 px ahead (v1.103: it was 330), Verity in between. He is a wall (you cannot walk through him; a forward DASH slides you past his back, and a dash needs 1.4 s to come back; fill his stagger bar until he is OPEN and you walk through him too), he cannot be knocked out for good (at no health he folds into his ball for 4 s, the free run, and comes back with 40%; v1.103: there is no ball at half health any more), and when you are past him, or near the portal with him not in your face, his STOP comes: he blinks out (0.22 s), blinks in where you will be (0.22 s), waits (0.2 to 0.6 s at most, never the same twice) and strikes. Four kinds, and the colour of the ring on the floor says which one it is: the ARM (purple: it shoots out in 0.25 s; the guard, a jump, a crouch or a dash gets out of it), the RED arm (red: the same arm, but nothing blocks it), the LOW sweep (teal: he folds up and his claw swings along the floor; a crouch does not save you, a jump, a dash or the guard does) and the RED LOW sweep (orange: nothing blocks it and a crouch does not help: only a jump or a dash). A blocked blow still chips a tenth of its damage. Hit him at any time while he is at it and the move is broken.
+// v1.103 THE PORTAL FIGHTS BACK: the street is cut in three zones (C3_LV): the further you get, the sooner the next STOP comes, the harder it pushes and hurts, the longer he may wait before he strikes, and the more of them are RED, LOW or both. In the last 220 px the portal's wind blows you back (up to 24 px a second at the door: a crouch or a guard is too slow to get in, a dash is not).
+const C3_ARM = 49 + CMOVE.length;      // the STOP's blows have hit numbers of their own, so gojoHit (damage, guard, dash, jump and crouch rules) deals with them like with every other blow: the ARM, the RED arm (nb: nothing blocks it), the LOW sweep (a kick for KICKS: a crouch does not save you) and the RED LOW sweep (both); c3Blow sets the damage and the push from the zone before every blow, the numbers here are only a start
+CMOVE.push({ k: C3_ARM, nb: false, heavy: false }); REACH.push(40); KNOCK.push(0); KNOCK_G.push(470); DMG.push(14);
+const C3_RED = 49 + CMOVE.length; CMOVE.push({ k: C3_RED, nb: true, heavy: false }); REACH.push(40); KNOCK.push(0); KNOCK_G.push(470); DMG.push(14);
+const C3_LOW = 49 + CMOVE.length; CMOVE.push({ k: C3_LOW, nb: false, heavy: false }); REACH.push(30); KNOCK.push(0); KNOCK_G.push(470); DMG.push(14);
+const C3_RL = 49 + CMOVE.length; CMOVE.push({ k: C3_RL, nb: true, heavy: false }); REACH.push(30); KNOCK.push(0); KNOCK_G.push(470); DMG.push(14); KICKS.verity = [C3_LOW, C3_RL];      // (the RED LOW sweep: both at once)
+const C3W = { L: -120, PX: 850, door: 12, sep: 22, dashCd: 2600, wind: 24, windFrom: 220, chip: 0.1 };      // the left end of the street and the portal's place (world pixels; you start on 0), how close to its middle you must be to go in, how far apart two bodies stand (measured when the fight begins), how long a dash needs from its start to come back (v1.103: 2.6 s, it was 1.4), how hard the portal's wind blows at the door and from how far away it reaches, and what share of a blocked blow's damage still hurts (a tenth)
+const C3_LV = [      // the three zones of the street (a third each): the wait for the next STOP (ms; 0.8 of it in the last 100 px), the push (px) and the damage of its blows (100 px and 26, 125 and 36, 150 and 48), the longest wait before he strikes (ms, random: a jump or a dash is safe for 0.3 s, so the longer the wait the more of a gamble the timing is), the chances of a RED, a LOW and a RED LOW one (the rest are the plain arm)
+  { cd: 2100, push: 100, dmg: 26, wait: 200, red: 0, low: 0, rl: 0 },
+  { cd: 1700, push: 125, dmg: 36, wait: 350, red: 0.25, low: 0.2, rl: 0 },
+  { cd: 1450, push: 150, dmg: 48, wait: 600, red: 0.25, low: 0.25, rl: 0.2 }];
+const C3_RGB = { hi: '200,144,255', red: '255,90,74', low: '90,216,255', rl: '255,176,42' }, C3_HEX = { hi: '#c890ff', red: '#ff5a4a', low: '#5ad8ff', rl: '#ffb02a' };      // the colour of the ring on the floor and of the "!" for each kind of STOP
+let c3s = null;      // the fight's own state: { t0, stopReady, cd (the wait of the last STOP), seen (since when the STOP is wanted), warnAt, warnN, to (where he will stand), kind (of the last STOP: hi, red, low or rl), kinds (the last four), tell (how many of each kind have come), hintOn (the last one says what to do), fwd (when a forward dash last ran), dgLast (the start of the dash that is running), slide (+1 = you slide past his back), pushing (ms you have pressed against him), hintUntil, hintCool, down (when he last folded into the ball), talkAt (when he said NOBODY ENTERS!), seenP (the portal has been on the screen), windSeen, windAt (when the portal's wind first reached you), crSince (since when you have been crouched), sweepAt (the next low claw for a crouched fighter), lastAt and lastKind (the last blow of a STOP that reached you: when, and which kind) }
 const c3Reach = () => Math.max(34, -c3VT('scare_grab', 10) + 2);      // how far from his middle the hand is when the arm is out (read from the picture)
+const c3ReachLow = () => Math.max(26, -c3VT('c0', 9) + 2);      // the same for the claw of the low sweep
+const c3Lv = () => C3_LV[Math.min(2, Math.floor(clamp01(wx / C3W.PX) * 3))];      // the zone you are in
+function c3Blow(k, lv) { DMG[k] = Math.round(lv.dmg * (k === C3_RED || k === C3_RL ? 1.25 : 1) / GRADES[vs.gi].dmg); KNOCK_G[k] = Math.round(lv.push * 7 / 0.9); }      // (the damage you will take after the grade's factor, and the push: a hit pushes KNOCK_G x 0.9 / 7 px)
 function c3Begin(now) {      // a fight begins (also a rematch): the width of the two bodies is measured, the first STOP is ready as soon as the intro is over
   C3W.sep = hbPush('yuji', 5) + hbPush('verity', 6);
-  c3s = { t0: now, stopReady: now + INTRO_MS, cd: 2400, seen: 0, warnAt: -1e9, warnN: 0, to: 0, fwd: -1e9, dgLast: -1, slide: 0, pushing: 0, hintUntil: 0, hintCool: 0, down: -1e9, talkAt: -1e9, seenP: false };
+  c3s = { t0: now, stopReady: now + INTRO_MS, cd: C3_LV[0].cd, seen: 0, warnAt: -1e9, warnN: 0, to: 0, kind: 'hi', kinds: [], tell: {}, hintOn: false, lastAt: -1e9, lastKind: '', fwd: -1e9, dgLast: -1, slide: 0, pushing: 0, hintUntil: 0, hintCool: 0, down: -1e9, talkAt: -1e9, seenP: false, windSeen: false, windAt: -1e9 };
 }
-function c3Block(now, dt) {      // every frame after the movements: the street's ends, Verity as a wall, and the portal's mouth
+function c3Block(now, dt) {      // every frame after the movements: the street's ends, the portal's wind, Verity as a wall, and the portal's mouth
   const c = c3s, d = dummy; if (!c || !d || !vs || vs.ph !== 'fight') return;
   const P = C3W.PX, sep = C3W.sep;
   if (d.ko < 0) { if (d.x > P - 26 && d.vx > 0 || d.x < C3W.L - 24 && d.vx < 0) d.vx = 0; d.x = Math.max(C3W.L - 24, Math.min(P - 26, d.x)); }      // (Verity can not go into his portal, nor out of the street: a blow that throws him at the end of it leaves him standing against it)
   if (d.vform && d.vform !== 'verity') c.stopReady = Math.max(c.stopReady, now + 1200);      // (as a ball he does not STOP anybody, and when he is back his STOP needs 1.2 s)
   wx = Math.max(C3W.L, Math.min(P, wx));
+  const wk = clamp01(1 - (P - wx) / C3W.windFrom); if (wk > 0 && hurtAt < 0 && dgAt < 0 && !c.slide) { if (!c.windSeen) { c.windSeen = true; c.windAt = now; } wx = Math.max(C3W.L, wx - C3W.wind * wk * dt); }      // (the portal's wind blows you back, up to 24 px a second at the door; a dash, a slide and a hit are not slowed by it)
   if (dgAt >= 0 && dgK === 0) c.fwd = now;
-  if (dgAt >= 0) c.dgLast = dgAt; else if (c.dgLast >= 0) { dgLock = dgReady = Math.max(dgReady, c.dgLast + C3W.dashCd); c.dgLast = -1; }      // (a dash needs 1.4 s from its start to come back, and the DASH button counts it down: it is spent on getting past him or on the arm, not on both)
-  const gap = d.x - wx, wall = d.ko < 0 && (!d.vform || d.vform === 'verity') && now >= (d.openUntil || 0) && now >= d.stunUntil && dgAt < 0 && !dash && teleAt < 0 && hurtAt < 0;      // (he is a wall unless he is down, a ball, OPEN or stunned, or you are dashing, blinking or reeling)
+  if (dgAt >= 0) c.dgLast = dgAt; else if (c.dgLast >= 0) { dgLock = dgReady = Math.max(dgReady, c.dgLast + C3W.dashCd); c.dgLast = -1; }      // (a dash needs 2.6 s from its start to come back (C3W.dashCd), and the DASH button counts it down: it is spent on getting past him or on the arm, not on both)
+  const gap = d.x - wx, wall = d.ko < 0 && (!d.vform || d.vform === 'verity') && now >= (d.openUntil || 0) && now >= d.stunUntil && dgAt < 0 && !dash && teleAt < 0 && hurtAt < 0, stopOn = !!d.vact && d.vact.type === 'stop' && d.vact.moved;      // (he is a wall unless he is down, a ball, OPEN or stunned, or you are dashing, blinking or reeling; while his STOP is on, with him standing in front of you, he is solid even for a dash: you cannot slip through the blow, only the dash's own dodge time can save you)
+  if (stopOn && d.ko < 0 && gap > 0 && wx > d.x - sep) { wx = d.x - sep; c.slide = 0; }
   if (c.slide) { const to = d.x + c.slide * sep; wx += (to - wx) * Math.min(1, dt * 20); if (Math.abs(to - wx) < 1) { wx = to; c.slide = 0; } }      // (a forward dash that ended inside him: you slide on, out of his back)
-  else if (wall && Math.abs(gap) < sep) { if (now - c.fwd < 50 && gap > -sep + 1) c.slide = 1; else { const to = gap >= 0 ? d.x - sep : d.x + sep; wx += (to - wx) * (Math.abs(to - wx) <= 3 ? 1 : Math.min(1, dt * 24)); } }
+  else if (wall && Math.abs(gap) < sep) { if (now - c.fwd < 50 && gap > -sep + 1 && !stopOn) c.slide = 1; else { const to = gap >= 0 ? d.x - sep : d.x + sep; wx += (to - wx) * (Math.abs(to - wx) <= 3 ? 1 : Math.min(1, dt * 24)); } }
   c.pushing = wall && gap > 0 && gap < sep + 4 && (keyR || padR) ? c.pushing + dt * 1000 : Math.max(0, c.pushing - dt * 2000);
   if (c.pushing > 700 && now >= c.hintCool) { c.hintUntil = now + 3200; c.hintCool = now + 14000; }
   if (wx >= P - C3W.door && hurtAt < 0 && now >= gDownUntil) c3Enter(now);
@@ -7726,56 +7745,97 @@ function c3Block(now, dt) {      // every frame after the movements: the street'
 function c3Enter(now) {      // you are in the portal's mouth: the fight is won (no K.O. banner, no result screen: the ending starts at once)
   vs.ph = 'over'; vs.pw = 1; vs.res = { win: true, stars: 3 }; earnOnce('s4', 400); story.toC3End = true;
 }
-function c3Fall(now) {      // his health runs out: he does not fall for good, he folds into his ball (the same as at half health: 6 s in which nothing hurts him) and comes back with 40%; the way to the portal is free
+function c3Fall(now) {      // his health runs out: he does not fall for good, he folds into his ball (6.45 s in which nothing hurts him; v1.103: 4 s, see storyBattleTick) and comes back with 40%; the way to the portal is free
   const d = dummy, c = c3s; if (d.vform && d.vform !== 'verity') return;      // (he is a ball already)
   d.vform = 'smoke1'; d.vAt = now; d.bAt = now + 200; d.bSnd = false; d.lock = d.hp = d.shown = Math.round(d.max * 0.4); d.vact = null; d.fear = null; d.bleed = null; d.ai = 'rest'; d.vx = 0; d.stunUntil = 0; d.openUntil = 0; d.stg = 0;
   if (c) c.down = now;
   snd('vanish'); hitStop(90); shakeUntil = now + 220; shakeAmp = 3; flash(now, 120, 0.3);
 }
+function c3Pick(lv) {      // which STOP it will be: the arm, the RED arm, the LOW sweep or the RED LOW sweep (the same special one never comes three times in a row)
+  const r = Math.random(), h = c3s.kinds, n = h.length; let k = r < lv.red ? 'red' : r < lv.red + lv.low ? 'low' : r < lv.red + lv.low + lv.rl ? 'rl' : 'hi';
+  if (k !== 'hi' && n >= 2 && h[n - 1] === k && h[n - 2] === k) k = 'hi';
+  return k;
+}
 function c3StopCheck(d, now) {      // is it time for the STOP? He is free (no move of his own, no flinch), the STOP is ready, and you are past him or near the portal with him not in your face for a moment
   const c = c3s, P = C3W.PX; if (!c || vs.ph !== 'fight' || d.vact || now < c.stopReady || !(d.ai === 'think' || d.ai === 'walk' || d.ai === 'rest') || now - d.rxAt < RX_DUR[d.rx]) { if (c) c.seen = 0; return false; }
   const gap = d.x - wx, left = P - wx, want = !(gap > -6 && gap < 56) && (gap <= -6 || left < 150) && left > 34 && hurtAt < 0 && now >= gDownUntil;
   if (!want) { c.seen = 0; return false; } if (!c.seen) c.seen = now; if (now - c.seen < 150) return false;
-  const xp = dgAt >= 0 ? dgTo : wx + ((keyR || padR) ? FWD_SPEED * (stance === 'stand' ? 1 : 0.6) * (blkAt >= 0 ? 0.3 : 1) : 0) * 0.69, to = Math.min(xp + 21, P - 22); if (to - wx < 20) return false;      // (he reads the way you are heading and blinks in where you will be when the arm lands, 21 px ahead of that place: so a runner is hit, one who stops or backs away is missed, and a dash through him dodges it)
-  d.vact = { type: 'stop', at: now, hit: 0, anim: 'tele', fi: 0, to, moved: false, swung: false }; d.ai = 'rest'; d.aiAt = now; d.restFor = 99999;
-  c.warnAt = now; c.warnN++; c.to = to; c.cd = left < 100 ? 1800 : 2400; c.stopReady = now + c.cd; c.seen = 0; snd('c3warn'); return true;
+  const lv = c3Lv(), kind = c3Pick(lv), w = Math.round(Math.random() * lv.wait), lo = kind === 'low' || kind === 'rl', sp = Math.max(0, FWD_SPEED * (stance === 'stand' ? 1 : 0.6) * (blkAt >= 0 ? 0.3 : 1) - C3W.wind * clamp01(1 - left / C3W.windFrom));
+  const xp = dgAt >= 0 ? dgTo : wx + ((keyR || padR) ? sp : 0) * ((lo ? 0.8 : 0.69) + w / 1000), to = Math.min(xp + (lo ? 22 : 21), P - 22); if (to - wx < 20) return false;      // (he reads the way you are heading and blinks in where you will be when the blow lands, 21 px ahead of that place, and then slides at you: so a runner is hit, and so is one who stops or backs away; he is solid, so a dash does not take you through him, only the dash's own dodge time can save you)
+  d.vact = { type: 'stop', at: now, hit: 0, anim: 'tele', fi: 0, to, moved: false, swung: false, kind, w, lv }; d.ai = 'rest'; d.aiAt = now; d.restFor = 99999;
+  c.tell[kind] = (c.tell[kind] || 0) + 1; c.hintOn = kind === 'hi' ? c.tell.hi <= 2 : c.tell[kind] === 1; c.kind = kind; c.kinds.push(kind); if (c.kinds.length > 4) c.kinds.shift();      // (the first two plain arms, the first RED one and the first LOW one say what to do)
+  c.warnAt = now; c.warnN++; c.to = to; c.cd = Math.round(lv.cd * (left < 100 ? 0.8 : 1)); c.stopReady = now + c.cd; c.seen = 0; snd('c3warn', kind === 'red' ? 1 : kind === 'low' ? 2 : kind === 'rl' ? 3 : 0); return true;
 }
-function c3StopTick(d, a, t, now) {      // the STOP: blink out and in (0.44 s), the arm shoots out (0.25 s), the blow, the arm hangs out (0.2 s) and draws back (0.45 s); a hit on him ends it (see vActTick)
-  if (t < 440) { a.anim = 'tele'; a.fi = t / 440 * 14.99; if (!a.moved && t >= 220) { a.moved = true; spark(d.x, gy - 30, 8, ['#c890ff', '#7a3aff', '#ffffff'], false, 1); d.x = a.to; d.vx = 0; snd('blink'); spark(d.x, gy - 30, 8, ['#c890ff', '#7a3aff', '#ffffff'], false, -1); } return; }
-  if (t < 690) { a.anim = 'scare_grab'; a.fi = 4 + (t - 440) / 250 * 6; if (!a.swung) { a.swung = true; snd('f:swing', 3); } return; }
-  if (!a.hit) {
-    a.hit = 1; snd('f:hit', 3); shakeUntil = now + 90; shakeAmp = 1;
-    if (d.x - wx > -4 && Math.abs(d.x - wx) - 8 <= c3Reach()) { const h = hurtAt; gojoHit(C3_ARM, now); if (hurtAt !== h) { say('STOPPED!', wx, '#c890ff', 8, now + 90); puff(wx, 4); } } else say('MISS', wx, '#9fd8ff', 8, now);
+function c3Strike(d, a, now, reach) {      // his blow lands, if he stands in front of you and the tip reaches (gojoHit says whether the guard, a jump, a crouch or a dash saves you)
+  const k = a.kind === 'red' ? C3_RED : a.kind === 'low' ? C3_LOW : a.kind === 'rl' ? C3_RL : C3_ARM;
+  if (d.x - wx > -4 && Math.abs(d.x - wx) - 8 <= reach) {
+    const gu = guardUp(now) && stance === 'stand'; c3Blow(k, a.lv); c3s.lastAt = now; c3s.lastKind = a.kind; const h = hurtAt; gojoHit(k, now);
+    if (hurtAt !== h) { say(gu && (a.kind === 'red' || a.kind === 'rl') ? 'GUARD BREAK' : 'STOPPED!', wx, C3_HEX[a.kind], 8, now + 90); puff(wx, 4); }
+  } else say('MISS', wx, '#9fd8ff', 8, now);
+}
+function c3Chip(k, now) {      // a blocked blow of the STOP still hurts a little: a tenth (C3W.chip) of what it would have done (called by gojoHit when the guard takes it)
+  if ((k !== C3_ARM && k !== C3_LOW) || !vs || vs.ph !== 'fight') return;
+  const dm = Math.max(1, Math.round(DMG[k] * GRADES[vs.gi].dmg * C3W.chip)); say('' + dm, wx, '#ff9a5a', 8, now + 60); vsHurt(dm, now);
+}
+function c3Tip() {      // the line under DEFEAT: what the STOP that took your last health wanted from you (the colour of its ring), or what to do about his fists
+  const c = c3s, k = c && Math.abs(vs.hitAt - c.lastAt) < 50 ? c.lastKind : '';
+  return k === 'hi' ? 'PURPLE RING: BLOCK IT, DUCK OR JUMP' : k === 'red' ? 'RED RING: A GUARD DOES NOT HELP, DUCK OR JUMP' : k === 'low' ? 'TEAL RING: DUCKING DOES NOT HELP, BLOCK OR JUMP' : k === 'rl' ? 'ORANGE RING: ONLY A WELL TIMED JUMP OR DASH' : 'HIT HIM WHEN HE RESTS, GUARD HIS FISTS, DASH PAST HIM';
+}
+function c3StopEnd(d, now) { const a = d.vact; if (c3s && c3s.warnN === 1 && !(a && a.reflex)) c3s.talkAt = now; vEnd(d, now); d.ai = 'rest'; d.aiAt = now; d.restFor = 600 + Math.random() * 300; }      // (the first time he has said his line: NOBODY ENTERS!, see c3Hud; and he rests for 0.6 to 0.9 s after every blow, the moment to hit him back)
+function c3Reflex(d, now) {      // a fighter who stays crouched in front of him (for 0.35 s) is not safe (all his punches pass over a crouch): he folds up and swings his low claw at him, the LOW sweep without the blink, at most once every 1.6 s
+  const c = c3s; if (!c || vs.ph !== 'fight') return false;
+  if (stance === 'stand') c.crSince = 0; else if (!c.crSince) c.crSince = now;      // (since when you have been down)
+  if (d.vact || now < (c.sweepAt || 0) || !(d.ai === 'think' || d.ai === 'walk' || d.ai === 'rest') || now - d.rxAt < RX_DUR[d.rx] || !c.crSince || now - c.crSince < 350 || d.x < wx || d.x - wx > c3ReachLow() + 8) return false;
+  c.sweepAt = now + 1600; d.vact = { type: 'stop', at: now, hit: 0, anim: 'crouch', fi: 0, to: d.x, moved: true, swung: false, kind: 'low', w: 0, lv: c3Lv(), reflex: true }; d.ai = 'rest'; d.aiAt = now; d.restFor = 99999; return true;
+}
+function c3StopTick(d, a, t, now, dt) {      // the STOP: blink out and in (0.44 s), he waits (a.w: 0 to 0.6 s), then the blow: the arm shoots out (0.25 s) or, for the LOW sweep, he folds up (0.15 s) and his claw swings along the floor (0.5 s, the blow on picture 6); the arm hangs out (0.2 s) and draws back (0.45 s) / he rises (0.35 s); a hit on him ends it (see vActTick). While the blow comes he slides at you (220 px a second for the arm, 150 for the sweep, never closer than 25 px), so stopping or backing away does not get you out of it
+  const slide = v => { const g = d.x - wx; if (g > 25) d.x -= Math.min(v * dt, g - 25); };
+  if (a.reflex) t += 440;      // (the low claw for a crouched fighter has no blink: it starts where the blink ends)
+  if (t < 440) {
+    a.anim = 'tele'; a.fi = t / 440 * 14.99;
+    if (!a.moved && t >= 220) { a.moved = true; const sc = a.kind === 'red' ? ['#ff8a7a', '#ff3a2a', '#ffffff'] : a.kind === 'low' ? ['#8aeaff', '#2aa8ff', '#ffffff'] : a.kind === 'rl' ? ['#ffd070', '#ff8a1a', '#ffffff'] : ['#c890ff', '#7a3aff', '#ffffff']; spark(d.x, gy - 30, 8, sc, false, 1); d.x = a.to; d.vx = 0; snd('blink'); spark(d.x, gy - 30, 8, sc, false, -1); }
+    return;
   }
-  a.anim = 'scare_grab'; if (t < 890) a.fi = 10 + (t - 690) / 200 * 2; else if (t < 1340) a.fi = 12 - (t - 890) / 450 * 12; else { if (c3s && c3s.warnN === 1) c3s.talkAt = now; vEnd(d, now); }      // (the first time he has said his line: NOBODY ENTERS!, see c3Hud)
+  const u = t - 440 - a.w;      // (the time since his wait was over: it is random, so the blow cannot be timed by counting)
+  if (u < 0) { a.anim = 'tele'; a.fi = 14.99; return; }
+  if (a.kind === 'low' || a.kind === 'rl') {
+    if (u < 150) { a.anim = 'crouch'; a.fi = u / 150 * 14.99; slide(150); return; }
+    const s = u - 150;
+    if (s < 500) { a.anim = 'c0'; a.fi = s / 500 * 14.99; if (!a.hit) slide(150); if (!a.swung) { a.swung = true; snd('f:swing', 3); } if (!a.hit && a.fi >= 6) { a.hit = 1; snd('f:hit', 3); shakeUntil = now + 90; shakeAmp = 1; c3Strike(d, a, now, c3ReachLow()); } return; }
+    if (s < 850) { a.anim = 'crouch'; a.fi = 14.99 - (s - 500) / 350 * 14.99; return; }
+    c3StopEnd(d, now); return;
+  }
+  if (u < 250) { a.anim = 'scare_grab'; a.fi = 4 + u / 250 * 6; slide(220); if (!a.swung) { a.swung = true; snd('f:swing', 3); } return; }
+  if (!a.hit) { a.hit = 1; snd('f:hit', 3); shakeUntil = now + 90; shakeAmp = 1; c3Strike(d, a, now, c3Reach()); }
+  a.anim = 'scare_grab'; if (u < 450) a.fi = 10 + (u - 250) / 200 * 2; else if (u < 900) a.fi = 12 - (u - 450) / 450 * 12; else c3StopEnd(d, now);
 }
 
 // ---- the picture: the portal in the street, the aim in the HUD
 function c3Crate(x, y, w, h) { ctx.fillStyle = '#2a1d14'; ctx.fillRect(x, y, w, h); ctx.fillStyle = '#5f4531'; ctx.fillRect(x + 1, y + 1, w - 2, h - 2); ctx.fillStyle = '#7a5a40'; ctx.fillRect(x + 1, y + 1, w - 2, 1); ctx.fillStyle = '#4a3425'; for (let i = 1; i < 3; i++) ctx.fillRect(x + 1, y + Math.round(i * h / 3), w - 2, 1); ctx.fillStyle = '#34261b'; for (let i = 0; i < Math.min(w, h) - 4; i++) ctx.fillRect(x + 2 + i, y + 2 + i, 1, 1); }      // (a wooden crate: dark outline, planks, a lit top edge, a brace)
-function c3World(now) {      // behind the fighters: the end of the street (a stack of crates), the portal (when it is on the screen), a purple edge when it is not, the dark violet that grows as it comes near, and its wind
-  if (!c3s) return; const P = C3W.PX, sx = Math.round(VW / 2 + P - wx), bx = Math.round(VW / 2 + C3W.L - wx), k = clamp01(1 - (P - wx) / 260);
+function c3World(now) {      // behind the fighters: the end of the street (a stack of crates), the portal (when it is on the screen), a purple edge when it is not, the dark violet that grows as it comes near, and its wind (as many streaks as it blows hard)
+  if (!c3s) return; const P = C3W.PX, sx = Math.round(VW / 2 + P - wx), bx = Math.round(VW / 2 + C3W.L - wx), k = clamp01(1 - (P - wx) / 260), wk = clamp01(1 - (P - wx) / C3W.windFrom);
   if (bx > -50 && bx < VW + 20) { c3Crate(bx - 44, gy - 17, 18, 18); c3Crate(bx - 26, gy - 17, 18, 18); c3Crate(bx - 35, gy - 34, 18, 17); }
   if (!c3s.seenP && sx < VW + 10) { c3s.seenP = true; snd('rumble', 1.8); }      // (the first time the portal comes into the picture)
   if (sx > -40 && sx < VW + 40) rsPortal(sx, 1, now / 1000);
   else if (sx >= VW + 40) { const g = ctx.createLinearGradient(VW - 46, 0, VW, 0); g.addColorStop(0, 'rgba(110,40,190,0)'); g.addColorStop(1, 'rgba(150,60,220,' + (0.12 + 0.3 * k).toFixed(3) + ')'); ctx.fillStyle = g; ctx.fillRect(VW - 46, 0, 46, VH); }
-  ctx.fillStyle = 'rgba(30,10,60,' + (0.04 + 0.12 * k).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); rsWindBits(now / 1000, 0.1 + 0.5 * k, 0, VW);
+  ctx.fillStyle = 'rgba(30,10,60,' + (0.04 + 0.12 * k).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); rsWindBits(now / 1000, 0.1 + 0.9 * wk, 0, VW);
 }
-function c3Hud(now, W) {      // the aim: a bar along the bottom with the portal at its end, you and Verity on it; what to do now; the STOP's warning (a ring where he will stand, a "!" over you); the sign over Verity's head that says when the STOP is ready
+function c3Hud(now, W) {      // the aim: a bar along the bottom with the portal at its end, you and Verity on it; what to do now; the STOP's warning (a ring where he will stand, in the colour of its kind, and a "!" over you); the sign over Verity's head that says when the STOP is ready
   const c = c3s, d = dummy; if (!c || !d || !vs || (vs.ph !== 'fight' && vs.ph !== 'intro')) return;
   const mx = Math.round(W / 2), sx = x => Math.round(mx + x - wx), by = gy + 9, x0 = mx - 48, fx = v => x0 + Math.round(clamp01((v - C3W.L) / (C3W.PX - C3W.L)) * 96), ball = !!d.vform && d.vform !== 'verity';
   ctx.save();
   ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x0 - 2, by - 2, 100, 5); ctx.fillStyle = '#4a3a8a'; ctx.fillRect(x0, by, 96, 1); ctx.fillStyle = '#b056ff'; ctx.fillRect(x0 + 97, by - 4, 3, 9); ctx.fillStyle = '#e6c8ff'; ctx.fillRect(x0 + 98, by - 3, 1, 7);      // (the way, the portal)
   ctx.fillStyle = '#f0d84a'; ctx.fillRect(fx(d.x) - 1, by - 1, 3, 3); ctx.fillStyle = '#ff9a5a'; ctx.fillRect(fx(wx) - 1, by - 2, 3, 5);
-  let msg = '', col = '#e6c8ff'; const nar = W < 215;      // (a narrow screen: the middle between the touch controls is only about 100 px wide, so the words are shorter)
-  if (ball && now - c.down < 7000) { msg = nar ? 'RUN FOR IT!' : 'RUN! GET IN THE PORTAL!'; col = ((now / 160) | 0) % 2 ? '#ffffff' : '#ffb070'; } else if (c.warnN <= 2 && now - c.warnAt < 1300) { msg = nar ? 'JUMP OR DUCK!' : 'BLOCK, JUMP OR DUCK!'; col = '#c890ff'; } else if (now - c.talkAt < 1700) { msg = 'NOBODY ENTERS!'; col = '#f0d84a'; } else if (now < c.hintUntil) { msg = 'DASH PAST HIM!'; col = '#ffd34d'; } else if (now - c.t0 < 8000) msg = nar ? 'TO THE PORTAL!' : 'GET INTO THE PORTAL!';
+  let msg = '', col = '#e6c8ff'; const nar = W < 215, wn = now - c.warnAt, kd = c.kind;      // (a narrow screen: the middle between the touch controls is only about 100 px wide, so the words are shorter)
+  if (ball && now - c.down < 4200) { msg = nar ? 'RUN FOR IT!' : 'RUN! GET IN THE PORTAL!'; col = ((now / 160) | 0) % 2 ? '#ffffff' : '#ffb070'; } else if (c.hintOn && wn >= 0 && wn < 1300) { msg = kd === 'red' ? (nar ? 'NO BLOCKING!' : 'RED: NO BLOCKING!') : kd === 'low' ? (nar ? 'JUMP OR DASH!' : 'LOW: JUMP OR DASH!') : kd === 'rl' ? (nar ? 'ONLY JUMP!' : 'NO BLOCK, NO DUCK!') : (nar ? 'JUMP OR DUCK!' : 'BLOCK, JUMP OR DUCK!'); col = C3_HEX[kd]; } else if (now - c.talkAt < 1700) { msg = 'NOBODY ENTERS!'; col = '#f0d84a'; } else if (now < c.hintUntil) { msg = 'DASH PAST HIM!'; col = '#ffd34d'; } else if (now - c.windAt < 2400) msg = nar ? 'IT PUSHES BACK!' : 'THE PORTAL PUSHES BACK!'; else if (now - c.t0 < 8000) msg = nar ? 'TO THE PORTAL!' : 'GET INTO THE PORTAL!';
   if (msg && vs.ph !== 'ko') pxt(msg, mx, gy + 22, col, 8, 'center');
   if (!nar) pxt(Math.max(0, Math.round((C3W.PX - wx) / 10)) + 'M', x0 + 104, by + 4, '#e6c8ff', 8);      // (how far the portal is: 10 px = 1 M; the touch controls cover the edges of the screen, so it stands by the bar)
   if (vs.ph === 'fight' && d.ko < 0 && !ball) { const vx = sx(d.x), vy = gy - 62, left = c.stopReady - now; if (left <= 0) { ctx.fillStyle = 'rgba(200,144,255,' + (0.55 + 0.45 * Math.sin(now / 90)).toFixed(2) + ')'; ctx.fillRect(vx - 1, vy - 2, 3, 5); ctx.fillRect(vx - 2, vy - 1, 5, 3); ctx.fillStyle = '#ffffff'; ctx.fillRect(vx, vy, 1, 1); } else { ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(vx - 7, vy - 1, 14, 4); ctx.fillStyle = '#3a2a66'; ctx.fillRect(vx - 6, vy, 12, 2); ctx.fillStyle = '#b056ff'; ctx.fillRect(vx - 6, vy, Math.round(12 * (1 - clamp01(left / c.cd))), 2); } }      // (the sign over his head)
   const wk = (now - c.warnAt) / 440;
-  if (wk >= 0 && wk < 1.1) { const s = 1 - clamp01(wk) * 0.6; ctx.strokeStyle = 'rgba(200,144,255,' + (0.9 - 0.3 * clamp01(wk)).toFixed(2) + ')'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(sx(c.to), gy + 3, 18 * s + 3, 4 * s + 1, 0, 0, 6.2832); ctx.stroke(); if (wk < 0.95 && ((now / 70) | 0) % 2 === 0) pxt('!', mx, gy - 66, '#c890ff', 16, 'center'); }
+  if (wk >= 0 && wk < 1.1) { const s = 1 - clamp01(wk) * 0.6; ctx.strokeStyle = 'rgba(' + C3_RGB[kd] + ',' + (0.9 - 0.3 * clamp01(wk)).toFixed(2) + ')'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(sx(c.to), gy + 3, 18 * s + 3, 4 * s + 1, 0, 0, 6.2832); ctx.stroke(); if (wk < 0.95 && ((now / 70) | 0) % 2 === 0) pxt('!', mx, gy - 66, C3_HEX[kd], 16, 'center'); }
   ctx.restore();
 }
-window.__c3 = () => c3s && ({ s: c3s, W: C3W, now: pnow(), wx, dx: dummy && dummy.x, vform: dummy && dummy.vform, vact: dummy && dummy.vact && dummy.vact.type, ph: vs && vs.ph, reach: c3Reach(), hp: dummy && dummy.hp });      // test hook
+window.__c3 = () => c3s && ({ s: c3s, W: C3W, now: pnow(), wx, dx: dummy && dummy.x, vform: dummy && dummy.vform, vact: dummy && dummy.vact && dummy.vact.type, kind: dummy && dummy.vact && dummy.vact.kind, ph: vs && vs.ph, reach: c3Reach(), hp: dummy && dummy.hp });      // test hook
 window.__c3Set = o => { if (o.s) Object.assign(c3s, o.s); if (o.wx !== undefined) wx = o.wx; if (o.dx !== undefined && dummy) dummy.x = o.dx; };
 
 // ---------------------------------------------------------------- v1.97 THE GRAB (this file is spliced into template.html by build_html.py, in place of the marker line after chap2.js's): the end of chapter 2
@@ -9425,7 +9485,7 @@ function vEnd(d, now) { d.vact = null; d.ai = 'think'; d.aiAt = now; d.vNext = n
 function vActTick(d, now, dt) {
   const a = d.vact, t = now - a.at, ag = Math.abs(d.x - wx), toward = d.x > wx ? -1 : 1;
   if (d.rxAt > a.at) { vEnd(d, now); return; }      // he was hit: the move is over
-  if (a.type === 'stop') { c3StopTick(d, a, t, now); return; }      // (chapter 2's STOP, see chap2.js)
+  if (a.type === 'stop') { c3StopTick(d, a, t, now, dt); return; }      // (chapter 2's STOP, see chap2.js)
   if (a.type === 'bite') {
     a.anim = 'bite'; a.fi = t * 18 / 1000; if (a.fi >= 5 && a.fi < 9 && ag > 14) d.x += toward * 80 * dt;
     if (!a.hit && a.fi >= 8) { a.hit = 1; snd('f:hit', 3); if (ag <= eHit(22)) { const h = hurtAt; gojoHit(0, now); if (hurtAt !== h) vs.bleed = { until: now + 4000, next: now + 100 }; } }
@@ -9509,16 +9569,16 @@ function storyBattleTick(now, dt) {
   if (vs.end && vs.ph === 'fight' && vs.end.stage !== 'done') storyEndTick(now);
   if (vs.bleed) { const b = vs.bleed; if (vs.ph !== 'fight') vs.bleed = null; else { while (vs.bleed && b.next <= now && b.next <= b.until) { vsHurt(1, b.next); b.next += 100; } if (now >= b.until) vs.bleed = null; } }      // the bite's bleeding: 1 damage every 0.1 s for 4 s
   const d = dummy; if (!d || d.ko >= 0) return; if (!d.vform) d.vform = 'verity';
-  if (d.vform === 'verity') { if (!vs.morphed && vs.ph === 'fight' && d.hp <= d.max * 0.5) { vs.morphed = true; d.vform = 'smoke1'; d.vAt = now; d.bAt = now + 200; d.bSnd = false; d.lock = d.hp; d.vact = null; snd('vanish'); } }
+  if (d.vform === 'verity') { if (!vs.morphed && !vs.c3 && vs.ph === 'fight' && d.hp <= d.max * 0.5) { vs.morphed = true; d.vform = 'smoke1'; d.vAt = now; d.bAt = now + 200; d.bSnd = false; d.lock = d.hp; d.vact = null; snd('vanish'); } }
   else if (d.vform === 'smoke1' && now - d.vAt >= 450) { d.vform = 'smiley'; d.vAt = now; }
-  else if (d.vform === 'smiley' && now - d.vAt >= 5000) { d.vform = 'smoke2'; d.vAt = now; snd('arrive'); }      // he changes back: a huge smoke and a deep boom
+  else if (d.vform === 'smiley' && now - d.vAt >= (vs.c3 ? 2600 : 5000)) { d.vform = 'smoke2'; d.vAt = now; snd('arrive'); }      // he changes back: a huge smoke and a deep boom
   else if (d.vform === 'smoke2' && now - d.vAt >= 1000) { d.vform = 'verity'; d.ai = 'think'; d.aiAt = now; }
   if (d.vform !== 'verity' && !d.bSnd && now >= (d.bAt || 0) + 260) { d.bSnd = true; snd('land', 0.7); }      // (the ball hits the floor)
   if (d.vform !== 'verity') { d.hp = d.shown = d.lock; d.vx = 0; d.stunUntil = 0; d.ai = 'rest'; d.rxAt = -9999; return; }      // as the smiley ball nothing hurts him and he does nothing
   if (now < d.stunUntil) { d.vact = null; return; }      // stunned (Lapse Blue, the JUMPSCARE): he does nothing
   if (d.vact && (d.ai === 'dodge' || d.ai === 'block')) d.vact = null;      // the AI saw a swing coming: it takes over
   if (d.vact) { vActTick(d, now, dt); return; }
-  if (vs.c3 && c3StopCheck(d, now)) return;      // (chapter 2: the STOP, see chap2.js)
+  if (vs.c3 && (c3StopCheck(d, now) || c3Reflex(d, now))) return;      // (chapter 2: the STOP, and the low claw for a fighter who crouches in front of him, see chap2.js)
   if (d.ai === 'dodge') {      // the dodge is a teleport: he vanishes, and half way through he appears again behind or beside Gojo
     if (d.tpFor !== d.aiAt) { d.tpFor = d.aiAt; d.tpDone = false; } d.vx = 0;
     if (!d.tpDone && now - d.aiAt >= (d.until - d.aiAt) / 2) { d.tpDone = true; const away = d.x > wx ? 1 : -1; d.x = Math.random() < 0.6 ? d.x + away * 48 : wx + away * Math.max(12, Math.abs(d.x - wx) - 44); snd('arrive'); }
@@ -10876,6 +10936,7 @@ $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+{"v": "1.103", "t": "THE PORTAL FIGHTS BACK", "n": ["Getting into the portal in chapter 2 is now really hard. The street is more than twice as long, and every STOP hits much harder and pushes you back further.", "His STOP comes in four kinds, and the colour of the ring on the floor tells you which one: purple (block it, duck or jump), red (nothing blocks it), teal (a low sweep, ducking does not help) and orange (nothing blocks it and ducking does not help, only a well timed jump or dash).", "He waits a random moment before he strikes and then slides at you, so stopping or backing away does not save you. He is solid while he does it, so you cannot dash through the blow.", "The further you get, the harder it gets: the STOPs come sooner, push you back further and hurt more. In the last stretch the wind of the portal blows you back, so crouching or guarding all the way will not get you in.", "A dash needs 2.6 seconds to come back. A blocked STOP still hurts a little. If you stay crouched in front of Verity he swings his low claw at you. After every blow he rests for a moment: that is your time to hit him back.", "When you lose, the screen tells you which ring killed you and what to do about it. If it is too hard, SET > ASSIST > EASY takes 30% off the damage you take."]},
 {"v": "1.102", "t": "THE EYES", "n": ["The story of chapter 2 goes on after the gauntlet: the Master tears Gojo's blindfold off. You now see Gojo's face without it, still bloody, with his eyes shining blue.", "The Master's claw closes on his eyes. Gojo screams and hits the Master again and again, weaker each time, while his eyes get redder and bloodier.", "Gojo kicks the Master away. His eyes hang out of their sockets by a few blood vessels, and he pushes them back in. They are red now, with the blue still in them, and his face is covered in blood.", "He tries to open his domain, but it fails. The Master pulls him back, tears one eye out and crushes it. Only the blue part is left in his hand, glowing.", "All the new pictures are made of the same big pixels as Gojo's own picture, and every moment has its own new sound.", "This part is violent and about 40 seconds long. You can still tap to skip from shot to shot."]},
 {"v": "1.101", "t": "THE STONE IS IN ITS HOLE", "n": ["The purple stone now sits inside the hole of the socket, and the rim of the socket is on top of it. Before, it looked as if it lay outside the gauntlet.", "The holes of the six sockets are a little bigger, so there is room for the stone.", "The stone is shaded by the rim: darker at the upper left, lit at the lower right, with one white highlight. The metal around it still glows purple and the light still fades out softly.", "The sparkles are fewer and calmer."]},
 {"v": "1.100", "t": "THE STONE LIGHTS UP", "n": ["The purple stone now fades in slowly inside the socket of the middle finger, instead of flashing on.", "It is part of the picture now. The stone, its light and its sparkles are made of the same big pixels as the gauntlet, so nothing floats on top of it any more. The metal right next to the stone is lit purple and a soft halo fades out around it. Everything else stays very dark.", "The big star-shaped glint is gone. A small twinkle shows on the stone now and then.", "The shine sound swells for longer, and its bright ping comes when the stone is fully lit."]},

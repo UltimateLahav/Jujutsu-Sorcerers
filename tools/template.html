@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.102</small>
+    <small id="ver">V1.103</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -1792,6 +1792,7 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   if (guardWas && k !== 42 && k !== 46 && !(k >= 49 && CMOVE[k - 49].nb)) {  // his guard is up and the attacker is in front of him: the swing is blocked (a hit from behind still lands; CONCENTRATED FIST breaks the guard)
     if (!isD1(k) && blkAt >= 0 && now - blkAt <= (cuMe() ? cuS.pt : PARRY_MS) * paceBase() * (assistLvl() >= 1 ? 2 : 1)) { parryHit(now); nres('b'); return; }      // (PARRY: the guard went up just before the blow, see parryHit)
     wxv -= KNOCK_G[k] * 0.3 * pScale(); shakeUntil = now + 80; shakeAmp = 1; buzz(8); say('BLOCKED', wx + 14, '#9fd8ff', 8, now); snd('block'); if (isD1(k)) { dummy.divOk = now; dummy.divK = k; }      // (the fist was blocked: the second impact still comes)
+    if (vs && vs.c3) c3Chip(k, now);      // (chapter 2: a blocked blow of Verity's STOP still hurts a little, see chap2.js)
     nres('b'); return;
   }
   if (stance !== 'stand' && !(netK >= 0 && (k === 6 || k === 7)) && (!!vs && vs.me === 'cat' || (!isKick(foeWho, k) && k !== 46))) { nres('m'); return; }      // crouched (or going down / getting up): only a kick can hit him (punches pass over); the Cat smashed flat is two pixels thin, nothing hits him (already reeling, just recovered, or jumped / teleported out of the way: see above)
@@ -2495,7 +2496,7 @@ function finishMatch(now) {
   if (win && !vs.story) { sv.un = Math.max(sv.un, Math.min(5, gi + 1)); sv.st[gi] = Math.max(sv.st[gi], stars); vsStore(sv.un, sv.st); earn([15, 25, 40, 60, 90, 140][gi]); }
   vs.res = { win, stars }; $('vsTitle').textContent = win ? 'VICTORY' : 'DEFEAT'; $('vsInfo').textContent = GRADES[gi].name + '  -  ROUNDS ' + vs.pw + ' : ' + vs.ew + (win && !vs.story ? '\n+$' + [15, 25, 40, 60, 90, 140][gi] : '');
   $('vsStars').innerHTML = win ? [0, 1, 2].map(i => '<span class="star' + (i < stars ? '' : ' off') + '"></span>').join('') : ''; $('vsNext').textContent = 'NEXT GRADE'; $('vsNext').style.display = win && gi < 5 ? '' : 'none'; $('vsres').classList.add('on'); snd(win ? 'finisher' : 'ko');
-  if (vs.story) { $('vsTitle').textContent = win ? (vs.foe === 'cat' ? 'END OF CHAPTER 1' : 'TO BE CONTINUED') : 'DEFEAT'; $('vsInfo').textContent = vs.foe === 'cat' ? (win ? 'TO BE CONTINUED' : 'THE CAT WAS TOO STRONG') : vs.c3 ? 'VERITY STILL BLOCKS THE PORTAL' : vs.tn ? 'KEEP TRAINING, YUJI!' : win ? 'THE MYSTERY: VERITY' : 'VERITY WAS TOO STRONG'; $('vsStars').innerHTML = ''; $('vsNext').style.display = 'none'; if (win) { earnOnce(vs.foe === 'cat' ? 's2' : 's1', vs.foe === 'cat' ? 300 : 200); if (vs.foe === 'cat') storyDone2(); else storyDone(); } }
+  if (vs.story) { $('vsTitle').textContent = win ? (vs.foe === 'cat' ? 'END OF CHAPTER 1' : 'TO BE CONTINUED') : 'DEFEAT'; $('vsInfo').textContent = vs.foe === 'cat' ? (win ? 'TO BE CONTINUED' : 'THE CAT WAS TOO STRONG') : vs.c3 ? 'VERITY STILL BLOCKS THE PORTAL\n' + c3Tip() : vs.tn ? 'KEEP TRAINING, YUJI!' : win ? 'THE MYSTERY: VERITY' : 'VERITY WAS TOO STRONG'; $('vsStars').innerHTML = ''; $('vsNext').style.display = 'none'; if (win) { earnOnce(vs.foe === 'cat' ? 's2' : 's1', vs.foe === 'cat' ? 300 : 200); if (vs.foe === 'cat') storyDone2(); else storyDone(); } }
 }
 function updateFighterVs(now, dt) {            // the grade AI (see GRADES): reaction time, block, dodge, combos, and from Grade 2 up it reads and punishes
   const d = dummy, G = GRADES[vs.gi], gap = d.x - wx, ag = Math.abs(gap), toward = gap > 0 ? -1 : 1;
@@ -4853,7 +4854,7 @@ function vEnd(d, now) { d.vact = null; d.ai = 'think'; d.aiAt = now; d.vNext = n
 function vActTick(d, now, dt) {
   const a = d.vact, t = now - a.at, ag = Math.abs(d.x - wx), toward = d.x > wx ? -1 : 1;
   if (d.rxAt > a.at) { vEnd(d, now); return; }      // he was hit: the move is over
-  if (a.type === 'stop') { c3StopTick(d, a, t, now); return; }      // (chapter 2's STOP, see chap2.js)
+  if (a.type === 'stop') { c3StopTick(d, a, t, now, dt); return; }      // (chapter 2's STOP, see chap2.js)
   if (a.type === 'bite') {
     a.anim = 'bite'; a.fi = t * 18 / 1000; if (a.fi >= 5 && a.fi < 9 && ag > 14) d.x += toward * 80 * dt;
     if (!a.hit && a.fi >= 8) { a.hit = 1; snd('f:hit', 3); if (ag <= eHit(22)) { const h = hurtAt; gojoHit(0, now); if (hurtAt !== h) vs.bleed = { until: now + 4000, next: now + 100 }; } }
@@ -4937,16 +4938,16 @@ function storyBattleTick(now, dt) {
   if (vs.end && vs.ph === 'fight' && vs.end.stage !== 'done') storyEndTick(now);
   if (vs.bleed) { const b = vs.bleed; if (vs.ph !== 'fight') vs.bleed = null; else { while (vs.bleed && b.next <= now && b.next <= b.until) { vsHurt(1, b.next); b.next += 100; } if (now >= b.until) vs.bleed = null; } }      // the bite's bleeding: 1 damage every 0.1 s for 4 s
   const d = dummy; if (!d || d.ko >= 0) return; if (!d.vform) d.vform = 'verity';
-  if (d.vform === 'verity') { if (!vs.morphed && vs.ph === 'fight' && d.hp <= d.max * 0.5) { vs.morphed = true; d.vform = 'smoke1'; d.vAt = now; d.bAt = now + 200; d.bSnd = false; d.lock = d.hp; d.vact = null; snd('vanish'); } }
+  if (d.vform === 'verity') { if (!vs.morphed && !vs.c3 && vs.ph === 'fight' && d.hp <= d.max * 0.5) { vs.morphed = true; d.vform = 'smoke1'; d.vAt = now; d.bAt = now + 200; d.bSnd = false; d.lock = d.hp; d.vact = null; snd('vanish'); } }
   else if (d.vform === 'smoke1' && now - d.vAt >= 450) { d.vform = 'smiley'; d.vAt = now; }
-  else if (d.vform === 'smiley' && now - d.vAt >= 5000) { d.vform = 'smoke2'; d.vAt = now; snd('arrive'); }      // he changes back: a huge smoke and a deep boom
+  else if (d.vform === 'smiley' && now - d.vAt >= (vs.c3 ? 2600 : 5000)) { d.vform = 'smoke2'; d.vAt = now; snd('arrive'); }      // he changes back: a huge smoke and a deep boom
   else if (d.vform === 'smoke2' && now - d.vAt >= 1000) { d.vform = 'verity'; d.ai = 'think'; d.aiAt = now; }
   if (d.vform !== 'verity' && !d.bSnd && now >= (d.bAt || 0) + 260) { d.bSnd = true; snd('land', 0.7); }      // (the ball hits the floor)
   if (d.vform !== 'verity') { d.hp = d.shown = d.lock; d.vx = 0; d.stunUntil = 0; d.ai = 'rest'; d.rxAt = -9999; return; }      // as the smiley ball nothing hurts him and he does nothing
   if (now < d.stunUntil) { d.vact = null; return; }      // stunned (Lapse Blue, the JUMPSCARE): he does nothing
   if (d.vact && (d.ai === 'dodge' || d.ai === 'block')) d.vact = null;      // the AI saw a swing coming: it takes over
   if (d.vact) { vActTick(d, now, dt); return; }
-  if (vs.c3 && c3StopCheck(d, now)) return;      // (chapter 2: the STOP, see chap2.js)
+  if (vs.c3 && (c3StopCheck(d, now) || c3Reflex(d, now))) return;      // (chapter 2: the STOP, and the low claw for a fighter who crouches in front of him, see chap2.js)
   if (d.ai === 'dodge') {      // the dodge is a teleport: he vanishes, and half way through he appears again behind or beside Gojo
     if (d.tpFor !== d.aiAt) { d.tpFor = d.aiAt; d.tpDone = false; } d.vx = 0;
     if (!d.tpDone && now - d.aiAt >= (d.until - d.aiAt) / 2) { d.tpDone = true; const away = d.x > wx ? 1 : -1; d.x = Math.random() < 0.6 ? d.x + away * 48 : wx + away * Math.max(12, Math.abs(d.x - wx) - 44); snd('arrive'); }
