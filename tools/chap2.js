@@ -129,7 +129,7 @@ function c3Frame0(now, dt) { if (story.c3.end) c3EndFrame(now, dt); else c3Frame
 function startC3Battle() { story.battle = true; alley = true; court = false; track = false; startMatch(2, 'c3', 0, 'verity'); }      // (a story fight against Verity with you as Yuji: see startMatch; REMATCH starts the same one)
 function startC3End(now) { show('story'); story.c3 = { end: true, vi: -1, vc: 0, rs: -1, dust: -1 }; story.battle = false; story.t0 = now; story.T = 0; story.ev = {}; story.shk = null; alley = true; court = false; track = false; wx = 0; }
 function c3Skip() {      // a tap: on to the next cut; on the card (after its first 1.2 s) back to the saves
-  const c = story.c3; if (c.end) { const T = story.T; if (T >= C3E.card + 1.2) { show('saves'); renderSaves(); return; } const n = C3E_CUTS.find(x => x > T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; return; }
+  const c = story.c3; if (c.end) { const T = story.T; if (T >= C3E.card + 1.2) { startC7(story.slot); return; } const n = C3E_CUTS.find(x => x > T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; return; }
   const n = C3_CUTS.find(x => x > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000;
 }
 function storyDone5() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].c3 = true; storeSaves(a); }      // (chapter 2, part 1 is finished: its last scene has reached the card)

@@ -607,6 +607,47 @@ function makeSfx(ac) {
       const t = T(), B = C.ce; tone(B.deep, t, { f: 80, f2: 18, dur: 3.2, gain: 1.0, atk: 0.003 }); burst(B.deep, t, { type: 'lowpass', f: 4000, f2: 60, q: 0.7, dur: 3.0, gain: 1.0, atk: 0.003 }); burst(B.soft, t, { type: 'highpass', f: 2500, f2: 9000, q: 0.7, dur: 0.6, gain: 0.5, atk: 0.001 }); tone(B.soft, t + 0.03, { f: 1568, f2: 1500, dur: 2.5, gain: 0.07, atk: 0.003 }); tone(B.deep, t + 0.4, { f: 55, f2: 22, dur: 2.6, gain: 0.5, atk: 0.2 });
       for (let i = 0; i < 24; i++) burst(B.soft, t + 0.2 + i * 0.1 + R(0, 0.06), { type: 'bandpass', f: R(600, 3500), q: 4, dur: R(0.03, 0.07), gain: 0.16 * (1 - i / 28), atk: 0.001 });
     },
+    c7drone() {                                          // v1.106 the title of chapter 3: a very low drone that swells for 3 s with a faint shimmer of gold high notes over it
+      const t = T(), B = C.ce; tone(B.deep, t, { f: 48, f2: 46, dur: 3.4, gain: 0.4, atk: 1.6, cur: 1 }); tone(B.deep, t, { type: 'triangle', f: 72, f2: 70, dur: 3.4, gain: 0.12, atk: 1.8 }); [1568, 2349].forEach((f, i) => tone(B.soft, t + 0.6 + i * 0.3, { f, f2: f * 1.003, dur: 2.4, gain: 0.03, atk: 1.1 })); burst(B.soft, t, { type: 'bandpass', f: 300, f2: 520, q: 0.6, dur: 3, gain: 0.12, atk: 1.5 });
+    },
+    c7wheel(k) {                                         // v1.106 the wheel turns one notch (k = 0 the title's: a soft click and a ring; k = 1 it adapts: a heavy double clack, a deep thud, a bright chord that rings and a low boom)
+      const t = T(), B = C.ce; burst(B.soft, t, { type: 'bandpass', f: 3500, q: 6, dur: 0.04, gain: k ? 0.8 : 0.4, atk: 0.001 }); burst(B.soft, t + 0.07, { type: 'bandpass', f: 2200, q: 6, dur: 0.05, gain: k ? 0.65 : 0.3, atk: 0.001 }); tone(B.soft, t + 0.01, { f: 2093, f2: 2085, dur: k ? 1.6 : 0.8, gain: k ? 0.07 : 0.04, atk: 0.003 });
+      if (k) { tone(B.deep, t + 0.07, { f: 120, f2: 34, dur: 0.9, gain: 0.85, atk: 0.003 }); [1568, 2349, 3136].forEach((f, i) => tone(B.soft, t + 0.15 + i * 0.08, { f, f2: f * 1.003, dur: 2.0, gain: 0.045, atk: 0.02 })); burst(B.soft, t + 0.07, { type: 'highpass', f: 3000, f2: 8000, q: 0.8, dur: 0.5, gain: 0.2, atk: 0.001 }); }
+    },
+    c7eyes() {                                           // v1.106 his eyes light up gold: a shimmer that rises, a low thump, and two thin high pings
+      const t = T(), B = C.ce; tone(B.soft, t, { type: 'triangle', f: 500, f2: 2400, dur: 0.7, gain: 0.06, atk: 0.4, cur: 1 }); tone(B.deep, t + 0.4, { f: 90, f2: 40, dur: 0.6, gain: 0.55, atk: 0.003 }); [3136, 4699].forEach((f, i) => tone(B.soft, t + 0.45 + i * 0.09, { f, f2: f * 1.002, dur: 0.9, gain: 0.04, atk: 0.003 })); burst(B.soft, t + 0.4, { type: 'highpass', f: 3500, f2: 9000, q: 0.7, dur: 0.5, gain: 0.1, atk: 0.01 });
+    },
+    c7cloth(k) {                                         // v1.106 the cloth of a giant moves (k = 0 he sets off: a long soft rustle and a low shift of weight; k = 1 he settles after the blow: a quicker swish)
+      const t = T(), B = C.atk; burst(B.soft, t, { type: 'bandpass', f: k ? 1400 : 700, f2: k ? 400 : 2200, q: 0.8, dur: k ? 0.35 : 0.6, gain: 0.22, atk: k ? 0.03 : 0.2 }); tone(B.deep, t + 0.05, { f: 70, f2: 50, dur: 0.4, gain: k ? 0.2 : 0.35, atk: 0.05 });
+    },
+    c7step(k) {                                          // v1.106 one step of the giant: a deep boom that falls, a low rumble of the floor and a short grit of stone (k = 1: the near foot, heavier)
+      const t = T(), B = C.atk, H = k ? 1.12 : 1; tone(B.deep, t, { f: 92, f2: 24, dur: 0.55, gain: 0.8 * H, atk: 0.002 }); burst(B.deep, t, { type: 'lowpass', f: 420, f2: 80, q: 0.7, dur: 0.35, gain: 0.5 * H, atk: 0.002 }); burst(B.soft, t, { type: 'bandpass', f: 1600, f2: 700, q: 1.2, dur: 0.07, gain: 0.25, atk: 0.001 }); for (let i = 0; i < 3; i++) burst(B.soft, t + 0.06 + i * 0.05 + R(0, 0.03), { f: R(1200, 3500), q: 4, dur: 0.025, gain: 0.07, atk: 0.001 });
+    },
+    c7stop() {                                           // v1.106 Verity's STOP takes hold: a glassy buzz that falls (1200 to 90 Hz), a low thud, a click, and a thin hum that stays while he is held
+      const t = T(), B = C.tele; tone(B.soft, t, { type: 'sawtooth', f: 1200, f2: 90, dur: 0.5, gain: 0.06, atk: 0.003, cur: 1 }); tone(B.deep, t, { f: 60, f2: 38, dur: 0.9, gain: 0.5, atk: 0.003 }); burst(B.soft, t, { type: 'highpass', f: 3000, f2: 7000, q: 0.8, dur: 0.08, gain: 0.5, atk: 0.001 }); tone(B.soft, t + 0.25, { type: 'triangle', f: 440, f2: 436, dur: 1.6, gain: 0.04, atk: 0.3 });
+    },
+    c7shatter() {                                        // v1.106 the ring of the STOP breaks: a bright burst of glass, a rain of tiny chimes and a low pop
+      const t = T(), B = C.tele; burst(B.soft, t, { type: 'highpass', f: 3000, f2: 9000, q: 0.8, dur: 0.5, gain: 0.5, atk: 0.001 }); tone(B.deep, t, { f: 130, f2: 40, dur: 0.5, gain: 0.5, atk: 0.003 }); for (let i = 0; i < 12; i++) burst(B.soft, t + 0.03 + i * 0.045 + R(0, 0.03), { f: R(2500, 8000), q: 6, dur: 0.03, gain: 0.14 * (1 - i / 14), atk: 0.001 });
+    },
+    c7rise() {                                           // v1.106 he raises his arm: cloth that rushes up (noise sweeping from 200 to 1800 Hz), a deep tone that climbs under it, and a creak (about 1.3 s)
+      const t = T(), B = C.atk; burst(B.soft, t, { type: 'bandpass', f: 200, f2: 1800, q: 0.9, dur: 1.2, gain: 0.3, atk: 0.8 }); tone(B.deep, t, { type: 'sawtooth', f: 36, f2: 90, dur: 1.3, gain: 0.3, atk: 1.0, cur: 1 }); burst(B.deep, t + 0.2, { type: 'lowpass', f: 150, f2: 600, q: 0.8, dur: 1.0, gain: 0.4, atk: 0.7 });
+    },
+    c7whoosh() {                                         // v1.106 the swing: a very fast loud rush of air (400 to 3500 Hz in 0.2 s) over a low swoop
+      const t = T(), B = C.atk; burst(B.soft, t, { type: 'bandpass', f: 400, f2: 3500, q: 0.7, dur: 0.22, gain: 0.9, atk: 0.02 }); tone(B.deep, t, { f: 200, f2: 60, dur: 0.25, gain: 0.4, atk: 0.01 });
+    },
+    c7smash() {                                          // v1.106 the fist lands: a boom that falls for over a second, a wall of noise, a dry bone crack twice, a ring of the floor and a wet slap
+      const t = T(), B = C.atk; tone(B.deep, t, { f: 120, f2: 24, dur: 1.2, gain: 1.0, atk: 0.002 }); burst(B.deep, t, { type: 'lowpass', f: 2500, f2: 80, q: 0.7, dur: 0.8, gain: 0.9, atk: 0.002 }); burst(B.soft, t, { type: 'highpass', f: 2000, f2: 6000, q: 1, dur: 0.1, gain: 1.0, atk: 0.001 });
+      for (const d of [0.02, 0.07]) burst(B.soft, t + d, { type: 'highpass', f: 2500, f2: 6000, q: 1.1, dur: 0.03, gain: 0.9, atk: 0.001 }); tone(B.soft, t + 0.01, { f: 2093, f2: 2000, dur: 0.8, gain: 0.05, atk: 0.003 }); burst(B.soft, t + 0.03, { type: 'bandpass', f: 700, f2: 250, q: 1.2, dur: 0.2, gain: 0.5, atk: 0.002 });
+    },
+    c7tear() {                                           // v1.106 he is torn in two: a long wet rip (noise sweeping from 3000 to 400 Hz), a rattle of wet bursts and a heavy thump
+      const t = T(), B = C.atk; burst(B.soft, t, { type: 'bandpass', f: 3000, f2: 400, q: 1.2, dur: 0.5, gain: 0.6, atk: 0.01 }); for (let i = 0; i < 6; i++) burst(B.soft, t + 0.05 + i * 0.06 + R(0, 0.03), { type: 'bandpass', f: R(600, 1800), q: 2, dur: 0.06, gain: 0.3, atk: 0.003 }); tone(B.deep, t + 0.05, { f: 150, f2: 50, dur: 0.3, gain: 0.6, atk: 0.003 });
+    },
+    c7thud(k) {                                          // v1.106 half a body hits the floor (k = 0 the lower half: a heavy soft thud; k = 1 the upper half: heavier, with a wet slap)
+      const t = T(), B = C.atk; tone(B.deep, t, { f: k ? 140 : 110, f2: k ? 30 : 38, dur: k ? 0.5 : 0.35, gain: k ? 0.8 : 0.6, atk: 0.002 }); burst(B.soft, t, { type: 'bandpass', f: 800, f2: 300, q: 1.2, dur: 0.15, gain: k ? 0.5 : 0.4, atk: 0.002 });
+    },
+    c7slide() {                                          // v1.106 the upper half skids along the floor: a wet scrape that falls in pitch for almost a second
+      const t = T(), B = C.atk; burst(B.soft, t, { type: 'bandpass', f: 500, f2: 150, q: 1.5, dur: 0.9, gain: 0.35, atk: 0.02 }); burst(B.deep, t, { type: 'lowpass', f: 300, f2: 80, q: 0.8, dur: 0.8, gain: 0.3, atk: 0.03 });
+    },
     c6stone() {                                          // v1.102 the blue stone lights up in the claw: a glassy shimmer that swells (three high notes of a bright chord) over a deep hum, then a clear high ping when it is fully lit
       const t = T(), B = C.ce; [1568, 2349, 3136].forEach((f, i) => tone(B.soft, t + i * 0.07, { f, f2: f * 1.003, dur: 2.2, gain: 0.04, atk: 0.8 })); tone(B.deep, t, { f: 82, f2: 110, dur: 2.4, gain: 0.35, atk: 1.2, cur: 1 }); burst(B.soft, t, { type: 'highpass', f: 3500, f2: 9500, q: 0.7, dur: 1.8, gain: 0.05, atk: 1.0 }); tone(B.soft, t + 1.8, { f: 3951, f2: 3900, dur: 1.2, gain: 0.05, atk: 0.002 });
     },
