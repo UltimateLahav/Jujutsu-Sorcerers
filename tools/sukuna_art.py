@@ -1,13 +1,14 @@
-# python3 sukuna_art.py [--preview DIR] -> sukuna_idle.png: SUKUNA in the game's own Yuji style, 15 rows of 15 pictures (960 x 960; 64 x 64 each), facing right like Yuji:
+# python3 sukuna_art.py [--preview DIR] -> sukuna_idle.png: SUKUNA in the game's own Yuji style, 17 rows of 15 pictures (960 x 1088; 64 x 64 each), facing right like Yuji:
 # row 0 idle, 1 walk, 2 jump, 3 crouch down (standing up plays it backwards), 4 crouched idle, 5 crouch walk (walking back plays it backwards), 6 right jab, 7 left jab, 8 face kick (made with Yuji's rig, see kick()),
 # 9 dodge (Yuji's back dash), 10 slash (made with Yuji's rig, see slash()), 11 and 12 the crouch punches (Yuji's own: C.JAB = R.JAB, strip 30, and C.UPPR = L.UPPR, strip 31),
-# 13 the slash with the left hand and 14 the slash with both hands (made with Yuji's rig, see slash_params()).
+# 13 the slash with the left hand and 14 the slash with both hands (made with Yuji's rig, see slash_params()), 15 the AIR CUT (a flick of the hand: the slash itself is not seen) and 16 the CUT STORM (the hand pulled
+# forward with the fingers spread, trembling), both made with Yuji's rig, see cast_params().
 # He is Yuji's idle picture (yuji.json) with a new head: tall swept-up spiky hair in a dustier rose, a bare forehead, a slanted brow, one narrow eye, the black face marks,
 # the ear, a smirk, a rolled red collar and dark nails; same palette letters (a few recoloured), same chunky outline. Every other picture is Yuji's own picture of that move
 # (the breath, the steps, the jump, the crouch, the two hooks that are his jabs, the back dash) with this head and collar put where Yuji's head and collar are in that picture (in all of them the face and the hood move as
 # one piece; only the tips of his hair differ, and an arm that is drawn over the face stays over it), and a blink in 9 and 10 of the two idle rows.
 # Each picture sits on its 64 x 64 canvas where Yuji's sits in the game (column 14, row 1), so he stands exactly where Yuji stands.
-import json, os, sys
+import json, math, os, sys
 from PIL import Image, ImageDraw
 import yuji_art as ya      # (Yuji's rig: the slash is drawn with it)
 
@@ -62,7 +63,7 @@ def head():
     for c in range(16, 21): put(c, 25, 'u')                                             # the light on the top of the roll
     return g
 
-ROWS = ('idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'atk0', 'atk1', 'kick', 'dash1', 'slash', 'atk30', 'atk31', 'slashL', 'slashX')      # the strip's rows: Yuji's sets of the move (idle, walk, jump, crouch down, crouched idle, crouch walk, R.HOOK = his right jab, L.HOOK = his left jab, the back dash = his dodge, C.JAB and C.UPPR = his crouch punches) and the kick and the three slashes made here, 15 pictures each
+ROWS = ('idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'atk0', 'atk1', 'kick', 'dash1', 'slash', 'atk30', 'atk31', 'slashL', 'slashX', 'cut', 'storm')      # the strip's rows: Yuji's sets of the move (idle, walk, jump, crouch down, crouched idle, crouch walk, R.HOOK = his right jab, L.HOOK = his left jab, the back dash = his dodge, C.JAB and C.UPPR = his crouch punches) and the kick, the three slashes and the two BLUE moves made here, 15 pictures each
 BLINK = {'idle': (9, 10), 'cidle': (9, 10)}                 # (his own blinks: the pictures where his eye is shut)
 NAILS = ('idle', 'fwd', 'cdn')                               # (the pictures where the hand is in the pocket, or still on its way up to the guard: the nails show; the guard and the jump hold it up in a fist of another shape)
 WID = 48                                                    # (the widest of Yuji's pictures of these moves is 44)
@@ -106,7 +107,36 @@ def kick(i):
         if pts[0] != pts[-1]: ya.streak(f, pts, (.8, 1.8, 3.0, 4.4), (0, .3, .7, 1), False)
     if i in (5, 6): ya.burst(f, 52, 27, 4 if i == 5 else 3)                    # a star where the sole lands
     return f, nh, fh
-GEN = {'slash': {'top': 0, 'frames': ya.pack(slash, 16, 48, 0)[0]}, 'slashL': {'top': 0, 'frames': ya.pack(slash_pic('slashL'), 16, 48, 0)[0]}, 'slashX': {'top': 0, 'frames': ya.pack(slash_pic('slashX'), 16, 48, 0)[0]}, 'kick': {'top': 0, 'frames': ya.pack(kick, 16, 48, 0)[0]}}      # (the sets made here, in the form of yuji.json's)
+# ---- v1.111 the BLUE moves. 'cut' = the AIR CUT (the standing BLUE): a quick flick of the near hand with the fingers held together, no step and no trail (the slash itself is not seen); the cut lands on picture 7.
+# 'storm' = the CUT STORM (back + BLUE): the near hand is raised and pulled forward with the fingers spread and trembles while the slashes land (one on each of the pictures 6 - 13, a slash on every picture)
+CUT_N = {0: ya.IDLE_N, 2: ya.GUARD_N, 3: ((3, 3), (1, -1)), 4: ((2.5, 2), (-1, -3)), 5: ((6, -1.5), (11, -4.5)), 6: ((8, -2), (15, -4)), 7: ((8.5, -2), (15.5, -4)), 8: ((8, -1.5), (14.5, -3.5)), 9: ((7, 0), (12, -1.5)), 10: ((5, 2.5), (8, 1.5)), 12: ya.GUARD_N, 14: ya.IDLE_N}      # the near hand of the AIR CUT: drawn back to the chest (3 - 4), flicked out at shoulder height (5 - 6), held (7 - 8), pulled back
+STORM_N = {0: ya.IDLE_N, 2: ya.GUARD_N, 3: ((3, 2.5), (7, -.5)), 4: ((4, 0), (10, -3)), 5: ((5.5, -1), (13, -4.2)), 14: ((2.5, 3.5), (4, 1))}      # the near hand of the CUT STORM: it rises and reaches forward and up (3 - 5), trembles (6 - 13: below), drops (14)
+for _j in range(6, 14): STORM_N[_j] = ((5.5, -1.2), (13.7, -4.7)) if _j % 2 == 0 else ((5, -.8), (12.5, -3.7))
+def cast_params(i, kind):
+    kv, GR = ya.kv, ya.GR
+    if kind == 'cut':
+        return dict(by=round(kv({0: 0, 3: 1, 5: 0, 7: 1, 10: 1, 14: 0}, i)), ln=round(kv({0: 0, 3: -1, 4: -1, 6: 2, 8: 2, 11: 1, 14: 0}, i)), hx=round(kv({0: 0, 4: -1, 6: 1, 11: 0, 14: 0}, i)),
+                    lf=(round(kv({0: 34, 4: 34, 6: 36, 11: 35, 14: 34}, i)), GR, 0), lb=(round(kv({0: 31, 6: 30, 14: 31}, i)), GR, 0), na=kv(CUT_N, i), fa=kv(GUARD_ONLY_F, i), hp=i * .8, hback=1 if 5 <= i <= 8 else 0, blink=False)
+    return dict(by=round(kv({0: 0, 3: 0, 5: 1, 13: 1, 14: 0}, i)) + (i % 2 if 6 <= i <= 13 else 0), ln=round(kv({0: 0, 3: 1, 5: 2, 13: 2, 14: 1}, i)), hx=round(kv({0: 0, 5: 1, 13: 1, 14: 0}, i)),
+                lf=(round(kv({0: 34, 4: 35, 6: 36, 13: 36, 14: 35}, i)), GR, 0), lb=(round(kv({0: 31, 6: 30, 14: 31}, i)), GR, 0), na=kv(STORM_N, i), fa=kv(GUARD_ONLY_F, i), hp=i * .8, hup=1 if 5 <= i <= 13 else 0, blink=False)
+def cast_hand(kind, i, P):
+    """the fingers, drawn over the near hand: held together and pointing along the arm (the AIR CUT: a blade of a hand) or spread like a fan (the CUT STORM)"""
+    L = ya.kv({2: 0, 4: 1, 12: 1, 14: 0}, i)                                    # how far the fingers are out (0 = a plain fist)
+    def top(f, sx, sy):
+        if L <= 0: return
+        S0 = (34 + sx, 31 + sy); ne = (S0[0] + P['na'][0][0], S0[1] + P['na'][0][1]); nw = (S0[0] + P['na'][1][0], S0[1] + P['na'][1][1]); d = ya.unit(nw[0] - ne[0], nw[1] - ne[1]); fc = (nw[0] + d[0] * 1.6, nw[1] + d[1] * 1.6)
+        turn = lambda a: (d[0] * math.cos(a) - d[1] * math.sin(a), d[0] * math.sin(a) + d[1] * math.cos(a))
+        if kind == 'cut':
+            f.fill(ya.seg((fc[0] + d[0] * .5, fc[1] + d[1] * .5), (fc[0] + d[0] * 4.4 * L, fc[1] + d[1] * 4.4 * L), 2.4, 1.2), 'S'); f.set(fc[0] + d[0] * 2.4 * L, fc[1] + d[1] * 2.4 * L - 1, 'T')
+        else:
+            for a, ln in ((-.95, 3.8), (-.32, 5.0), (.32, 5.0), (.95, 3.8)):
+                e = turn(a); f.fill(ya.seg((fc[0] + e[0] * .8, fc[1] + e[1] * .8), (fc[0] + e[0] * ln * L, fc[1] + e[1] * ln * L), 1.5, 1.0), 'S')
+    return top
+def cast_pic(kind):
+    def make(i):
+        P = cast_params(i, kind); P['top'] = cast_hand(kind, i, P); return ya.figure(P)
+    return make
+GEN = {'slash': {'top': 0, 'frames': ya.pack(slash, 16, 48, 0)[0]}, 'slashL': {'top': 0, 'frames': ya.pack(slash_pic('slashL'), 16, 48, 0)[0]}, 'slashX': {'top': 0, 'frames': ya.pack(slash_pic('slashX'), 16, 48, 0)[0]}, 'kick': {'top': 0, 'frames': ya.pack(kick, 16, 48, 0)[0]}, 'cut': {'top': 0, 'frames': ya.pack(cast_pic('cut'), 16, 48, 0)[0]}, 'storm': {'top': 0, 'frames': ya.pack(cast_pic('storm'), 16, 48, 0)[0]}}      # (the sets made here, in the form of yuji.json's)
 
 def yuji(name, i):
     """Yuji's picture i of a set as a grid of 64 figure rows x 48 columns (a jump's 4 empty rows above and below the figure are dropped; the game draws them 4 rows higher)"""

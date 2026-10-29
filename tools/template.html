@@ -199,7 +199,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.110</small>
+    <small id="ver">V1.111</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -3199,8 +3199,8 @@ function drawTq(now) {      // the effects of the techniques: the jet of blood, 
   for (const f of tqFx) {
     const t = rn - f.real, k = t / (f.k === 'neg' ? 520 : f.k === 'clap' ? 260 : 300);
     if (f.k === 'slash') {      // a diagonal slash across the enemy's body: a white core, a red edge, a black rim, fading
-      const X = Math.round(cx + f.x - wx); ctx.globalAlpha = Math.max(0, 1 - k);
-      for (let q = 0; q <= 46; q++) { const u = q / 46, sx = X - 9 + u * 22, sy = gy - 58 + u * 50, ww = 1 + 2.2 * Math.sin(u * 3.14); for (let dy = -Math.ceil(ww) - 1; dy <= Math.ceil(ww) + 1; dy++) { const d = Math.abs(dy); ctx.fillStyle = d <= ww * 0.35 ? '#ffffff' : d <= ww * 0.75 ? '#ff2a3a' : d <= ww + 0.8 ? '#12030a' : null; if (ctx.fillStyle && d <= ww + 0.8) ctx.fillRect(Math.round(sx), Math.round(sy + dy), 1, 1); } }
+      const X = Math.round(cx + f.x - wx), P = f.p || [-9, -58, 13, -8]; ctx.globalAlpha = Math.max(0, 1 - k);      // (v1.111 f.p: where the cut starts and ends, from the enemy's middle on the floor line: x0, y0, x1, y1)
+      for (let q = 0; q <= 46; q++) { const u = q / 46, sx = X + P[0] + u * (P[2] - P[0]), sy = gy + P[1] + u * (P[3] - P[1]), ww = 1 + 2.2 * Math.sin(u * 3.14); for (let dy = -Math.ceil(ww) - 1; dy <= Math.ceil(ww) + 1; dy++) { const d = Math.abs(dy); ctx.fillStyle = d <= ww * 0.35 ? '#ffffff' : d <= ww * 0.75 ? '#ff2a3a' : d <= ww + 0.8 ? '#12030a' : null; if (ctx.fillStyle && d <= ww + 0.8) ctx.fillRect(Math.round(sx), Math.round(sy + dy), 1, 1); } }
     } else if (f.k === 'clap') {
       const R = 3 + t * 0.07, X = Math.round(cx + f.x - wx); ctx.globalAlpha = Math.max(0, 1 - k); ctx.fillStyle = '#ffffff'; for (let q = 0; q < 30; q++) { const th = q / 30 * 6.2832; ctx.fillRect(Math.round(X + Math.cos(th) * R), Math.round(f.y + Math.sin(th) * R), 1, 1); }
     } else if (f.k === 'neg') {
@@ -3427,10 +3427,10 @@ function pounceStep(v, now, dt, af) {      // Verity's AIR BITE, every frame of 
   if (fa >= 8.5 && !p.landed) { p.landed = true; snd('land', 1); gritAt(wx, 6, 50, 0); shockAt(wx, 80, 40, 0.6); }
   return fa >= 8.5 ? 0 : p.l0 * (1 - u * u);
 }
-function vpBleed(now) {      // the bite's bleeding on the enemy: 1 damage every 0.1 s for 4 s (a ball takes none: nothing hurts it); Yuji's PIERCING BLOOD and CLEAVE in INHERITENCE bleed every 0.2 s (half, v1.53)
+function vpBleed(now) {      // the bite's bleeding on the enemy: 1 damage every 0.1 s for 4 s (a ball takes none: nothing hurts it); Yuji's PIERCING BLOOD and CLEAVE in INHERITENCE bleed every 0.2 s (half, v1.53); v1.111 st = bleeds stacked on him (the time each one ends): a tick takes dm for every one still on (Sukuna's slashes)
   const d = dummy; if (!d || !d.bleed) return; const b = d.bleed;
   if (vs.ph !== 'fight' || d.ko >= 0) { d.bleed = null; return; }
-  while (d.bleed && b.next <= now && b.next <= b.until) { b.next += b.gap || 100; if (d.vform && d.vform !== 'verity') continue; d.hp = Math.max(0, d.hp - (b.dm || 1)); if (!b.quiet) d.hitAt = now; if (d.hp <= 0) { d.bleed = null; koDummy(now); } }
+  while (d.bleed && b.next <= now && b.next <= b.until) { const t = b.next; b.next += b.gap || 100; if (d.vform && d.vform !== 'verity') continue; d.hp = Math.max(0, d.hp - (b.st ? b.dm * b.st.filter(e => e >= t).length : (b.dm || 1))); if (!b.quiet) d.hitAt = now; if (d.hp <= 0) { d.bleed = null; koDummy(now); } }
   if (d.bleed && now >= b.until) d.bleed = null;
 }
 // ---------------------------------------------------------------- v1.28 TWO NEW VARIANTS (bought in SKILLS like every other variant). BLOOD DRAG (Verity, crouched + BLUE; the bite needs him standing): a low lunge at the enemy's feet, the bite, then he backs away with the enemy by the feet, flat on the floor, and the blood is dragged along the ground. GIANT SMASH (the Cat, flat on the floor + BLUE): the giant's huge leg smashes down on the enemy.

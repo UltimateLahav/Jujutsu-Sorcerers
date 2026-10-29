@@ -189,6 +189,11 @@ function makeSfx(ac) {
       tone(B.deep, t, { type: 'triangle', f: red ? 100 : 124, f2: 46, dur: red ? 0.34 : 0.22, gain: red ? 0.5 : 0.38, atk: 0.003 });
       burst(B.soft, t, { f: red ? 450 : 700, f2: 180, q: 0.8, dur: 0.12, gain: red ? 3.0 : 2.4, atk: 0.001 });
     },
+    sukcut(k, at) {                                      // v1.111 an invisible slash lands (Sukuna's AIR CUT and CUT STORM): a thin, dry "tsk" of air (a very short band of noise sweeping up) with a faint high ring; k 0 - 3 = a little higher each time, so that a flurry of them does not sound the same
+      const t = T(at), B = C.atk, up = 1 + 0.07 * ((k | 0) % 4);
+      burst(B.soft, t, { type: 'bandpass', f: 2800 * up, f2: 7600 * up, q: 3.5, dur: 0.1, gain: 1.1, atk: 0.004 });
+      tone(C.tele.soft, t + 0.012, { f: 3300 * up, f2: 3150 * up, dur: 0.13, gain: 0.035, atk: 0.002 });
+    },
     ko(at) {                                             // the dummy goes down: a heavy hit, a whoosh as he topples, then the thud on the floor
       const t = T(at), B = C.atk;
       tone(B.deep, t, { type: 'triangle', f: 150, f2: 44, dur: 0.55, gain: 0.5, atk: 0.004 });
