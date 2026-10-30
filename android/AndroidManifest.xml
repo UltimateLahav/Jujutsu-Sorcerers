@@ -2,10 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.jujutsusorcerers.game">
 
-    <!-- WI-FI ROOMS: rooms between phones on the same Wi-Fi (UDP broadcast to find rooms, TCP to play) -->
+    <!-- WI-FI ROOMS: rooms between phones on the same Wi-Fi (UDP broadcast to find rooms, TCP and UDP together to play; WAKE_LOCK lets the app keep the Wi-Fi radio out of power save during a fight) -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
