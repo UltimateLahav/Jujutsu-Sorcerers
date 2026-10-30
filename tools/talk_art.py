@@ -3,7 +3,8 @@
  ballTalk  = Verity's smiley ball TALKING (13x13 a frame, the mouth opens and closes);
  cat.hugegrab = the HUGE Cat of the Cartoon Cat's CARTOON ATTACK reaching down, GRABBING the small Cat, lifting him out of sight, and THROWING him at the enemy (drawn 3 times as big by the game, 128x64 a frame like 'huge');
  cat.held  = the small Cat in the giant's glove, wriggling; cat.toss = the small Cat thrown, tumbling head over heels once in the 15 frames;
- hand      = where the giant's hand is on each of the 15 frames (the pose's x / y), so the game can put the held Cat in it."""
+ hand      = where the giant's hand is on each of the 15 frames (the pose's x / y), so the game can put the held Cat in it;
+ v1.114: cat.hangup / hang / hangmv / pound = the Cat's ARM HANG and GROUND POUND (jump + ATTACK, then crouch): the arms shooting up, hanging, hanging and moving hand over hand, and the dive, impact and recovery of the pound."""
 import base64, io, json, math, os, sys
 from PIL import Image
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -23,10 +24,55 @@ def a_held(i):                                    # THE SMALL CAT IN THE GLOVE: 
 def a_toss(i):                                    # THE SMALL CAT, THROWN: curled up in a ball with a big grin, tumbling head over heels once in the 15 frames
     f = float(i)
     return C.pose(rot=24.0*f, piv=(0.0, 32.0), eyes=2, mouth=1, sz=0.9, aL=[(-6, 32), (-3, 41)], aR=[(6, 32), (3, 41)], gL=0.6, gR=0.6, lL=[(-3, 48), (-1, 56)], lR=[(3, 48), (1, 56)])
-POSES = {'hugegrab': (a_hugegrab, (128, 36, 64, 0)), 'held': (a_held, (64, 32, 64, 0)), 'toss': (a_toss, (64, 32, 64, 0))}
+
+# ---------------------------------------------------------------- v1.114 THE ARM HANG and the GROUND POUND (jump + ATTACK, then crouch). The cells of the hanging strips have 48 rows of room above the figure: both arms run straight up out of the top of the cell (his hands hold on somewhere above the screen) and the game stretches the picture's top row up to the top of the screen, so they reach it on any screen.
+HG_OY = 48; HG_PIV = (0.0, -40.0); SH = (5.4, 20.8)                                  # the figure swings about HG_PIV (up by the hands); SH = his near shoulder
+def hg_pose(rot=0.0, lean=0.0, hrot=0.0, ty=0.0, tx=0.0, sa=0.0, sb=0.0, hxL=-17.0, hxR=17.0, eyes=0, mouth=1, hy=9.0, hp=45.0):    # both arms straight up (a wide V, so the head stays clear between them) to the hands at (hxL / hxR, -64), out of the cell; sa / sb: how the legs swing (-1..1)
+    return C.pose(rot=rot, piv=HG_PIV, lean=lean, hrot=hrot, ty=ty, tx=tx, hy=hy, hp=hp, eyes=eyes, mouth=mouth, aL=[(-5.5, 5.0), (hxL, -64.0)], aR=[(5.5, 5.0), (hxR, -64.0)], gL=0.0, gR=0.0,
+                  lL=[(-2.4 + 2.6*sa, 53.0), (-2.6 + 4.6*sa, 60.5)], lR=[(2.4 + 2.6*sb, 53.0), (2.6 + 4.6*sb, 60.5)])
+def a_hang(i):                                      # HANGING (loop): he dangles by his long arms and swings gently, the legs and the head a little behind the body
+    t = 2*math.pi*i/N; s = math.sin(t)
+    return hg_pose(rot=3.4*s, lean=0.5*s, hrot=-6.0*math.sin(t - 0.7), ty=0.6*math.sin(2*t - 0.4), sa=math.sin(t - 1.0), sb=math.sin(t - 1.0 + 0.45))
+def a_hangmv(i):                                    # HANGING AND MOVING (loop, the walking pace): hand over hand, each arm reaches ahead in turn (the hands are above the cell: you see the arms lean one after the other) and the body surges forward with every grab, leaning back, the legs trailing
+    t = 2*math.pi*i/N; s = math.sin(t)
+    return hg_pose(rot=1.6*math.sin(2*t + 0.5), lean=-3.2 + 1.0*math.cos(2*t), hrot=3.0 + 2.5*math.sin(2*t), ty=-1.4*abs(math.sin(t)), tx=1.4*math.sin(2*t - 0.8), sa=-0.75 + 0.55*math.sin(t + 0.6), sb=-0.75 + 0.55*math.sin(t + 0.6 + math.pi),
+                   hxL=-15.0 + 9.0*(-s), hxR=19.0 + 9.0*s, mouth=1)
+def a_hangup(i):                                    # THE ARMS SHOOT UP (15 frames played in 0.3 s): from the top of his jump (arms raised, knees tucked) both arms stretch up like rubber, the body is yanked up after them, bounces on them and settles into the hang (frame 14 = frame 0 of 'hang')
+    f = float(i); u = C.sc(f, [(0, 0.0), (2, 0.35), (5, 1.0), (14, 1.0)]); tuck = 1.0 - C.seg(f, 2, 8); B = a_hang(0); k = C.seg(f, 5, 14)
+    H = lambda a, b_, q: (C.lerp(a[0], b_[0], q), C.lerp(a[1], b_[1], q))
+    HL, HR = H((-12.4, 10.0), (-17.0, -64.0), u), H((12.4, 10.0), (17.0, -64.0), u)
+    bounce = 0.0 if f < 5 else 4.5*math.exp(-(f - 5)/2.6)*math.cos(1.25*(f - 5))
+    lL = [(C.lerp(-2.4 - 0.8*tuck, B['lL'][0][0], k), C.lerp(53.0 - 5.0*tuck, B['lL'][0][1], k)), (C.lerp(-2.6 - 1.3*tuck, B['lL'][1][0], k), C.lerp(60.5 - 9.0*tuck, B['lL'][1][1], k))]
+    lR = [(C.lerp(2.4 + 0.8*tuck, B['lR'][0][0], k), C.lerp(53.0 - 5.0*tuck, B['lR'][0][1], k)), (C.lerp(2.6 + 1.3*tuck, B['lR'][1][0], k), C.lerp(60.5 - 9.0*tuck, B['lR'][1][1], k))]
+    return C.pose(piv=HG_PIV, hy=C.lerp(9.6, 9.0, u), hp=C.lerp(44.0, 45.0, u), ty=bounce*(1 - k) + B['ty']*k - 2.0*C.seg(f, 2, 5)*(1 - C.seg(f, 5, 7)), eyes=2 if f < 9 else 0, mouth=1, hrot=C.lerp(0.0, B['hrot'], k), rot=B['rot']*k, lean=B['lean']*k,
+                  aL=[C.bend((-5.4, 20.8), HL), HL], aR=[C.bend((5.4, 20.8), HR), HR], gL=0.8*(1 - u), gR=0.8*(1 - u), lL=lL, lR=lR)
+def dive_pose(k=0.0):                               # falling like a hammer: stretched, the legs straight down together, the fists up by his head (k: the arms flutter), eyes wide, mouth open
+    return C.pose(sz=1.12, hy=8.4, sy=18.2, mouth=1, eyes=2, aL=[(-9.0, 12.0 + 2*k), (-9.0 - k, 3.0 + 3*k)], aR=[(9.0, 12.0 - 2*k), (9.0 + k, 3.0 - 3*k)], gL=0.2, gR=0.2, lL=[(-1.8, 54.0), (-1.8, 62.0)], lR=[(1.8, 54.0), (1.8, 62.0)])
+def a_pound(i):                                     # THE GROUND POUND. 0-2: he lets go (the arms snap down, he coils up); 3-6: the dive (the game plays these while he falls); 7-14: the impact: squashed flat, a bounce, and back on his feet (the game plays these on the floor)
+    f = float(i)
+    if f <= 2:
+        k = C.seg(f, 0, 2); HL, HR = (C.lerp(-17.0, -9.0, k), C.lerp(-64.0, 16.0, C.ease(k))), (C.lerp(17.0, 9.0, k), C.lerp(-64.0, 16.0, C.ease(k)))
+        return C.pose(piv=(0.0, 62.0), sz=C.lerp(1.0, 0.9, k), hy=C.lerp(9.0, 9.6, k), hp=C.lerp(45.0, 44.0, k), mouth=1, eyes=2 if f > 0 else 0, aL=[C.bend((-5.4, 20.8), HL), HL], aR=[C.bend((5.4, 20.8), HR), HR], gL=0.9*k, gR=0.9*k,
+                      lL=[(-2.4 - 1.0*k, 53.0 - 5.0*k), (-2.6 - 1.4*k, 60.5 - 8.0*k)], lR=[(2.4 + 1.0*k, 53.0 - 5.0*k), (2.6 + 1.4*k, 60.5 - 8.0*k)])
+    if f <= 6: return dive_pose(math.sin(f*2.2))
+    SQ = C.pose(sz=0.92, hy=10.6, sy=20.0, mouth=1, eyes=2, aL=[(-11.0, 36.0), (-16.0, 47.0)], aR=[(11.0, 36.0), (16.0, 47.0)], gL=1.0, gR=1.0, lL=[(-3.4, 53.0), (-4.2, 60.0)], lR=[(3.4, 53.0), (4.2, 60.0)])
+    if f <= 7: return dict(squash=(1.38, 0.6), src=SQ)
+    if f <= 8: return dict(squash=(1.7, 0.46), src=SQ)
+    if f <= 9: return dict(squash=(1.3, 0.8), src=SQ)
+    if f <= 10: return C.pose(sz=1.08, mouth=1, aL=[(-9.0, 30.0), (-12.0, 37.0)], aR=[(9.0, 30.0), (12.0, 37.0)], gL=0.8, gR=0.8)
+    k = C.seg(f, 10, 14); w = math.sin((f - 10)*1.6)*(1 - k)
+    return C.pose(sz=C.lerp(1.08, 1.0, k), mouth=1 if f < 13 else 0, eyes=0, hrot=3*w, lean=1.5*w, aL=[(-9.0 + w, 30.0 + 3*k), (-12.0 + 3*k + 2*w, 37.0 + 8*k)], aR=[(9.0 - w, 30.0 + 3*k), (12.0 - 3*k - 2*w, 37.0 + 8*k)], gL=0.8*(1 - k), gR=0.8*(1 - k))
+
+POSES = {'hugegrab': (a_hugegrab, (128, 36, 64, 0)), 'held': (a_held, (64, 32, 64, 0)), 'toss': (a_toss, (64, 32, 64, 0)),
+         'hang': (a_hang, (64, 32, 64 + HG_OY, HG_OY)), 'hangmv': (a_hangmv, (64, 32, 64 + HG_OY, HG_OY)), 'hangup': (a_hangup, (64, 32, 64 + HG_OY, HG_OY)), 'pound': (a_pound, (64, 32, 80, 16))}
+def frame_of(p, W, ax, H, oy):
+    if isinstance(p, dict) and p.get('squash'):                                   # a cartoon squash: the picture itself is scaled (wider, much lower), standing on the floor
+        src = C.render(p['src'], W, ax, H, oy); bb = src.getbbox(); sx, sz = p['squash']; crop = src.crop(bb); nw, nh = max(1, int(round(crop.width*sx))), max(1, int(round(crop.height*sz)))
+        out = Image.new('RGBA', (W, H), (0, 0, 0, 0)); out.paste(crop.resize((nw, nh), Image.NEAREST), (int(round(ax + 0.5 - nw/2)), bb[3] - nh)); return out
+    return C.render(p, W, ax, H, oy)
 def strip(name):
     fn, (W, ax, H, oy) = POSES[name]; out = Image.new('RGBA', (W*N, H), (0, 0, 0, 0))
-    for i in range(N): out.paste(C.render(fn(i), W, ax, H, oy), (i*W, 0))
+    for i in range(N): out.paste(frame_of(fn(i), W, ax, H, oy), (i*W, 0))
     return out
 def ball_talk():                                  # Verity's smiley ball (13x13, as in story_art.py) with the mouth talking: smile, small o, wide open, ... (the syllables of "hey it's me, it's Verity")
     S_ = 13; c = (S_ - 1)/2; OL, HI, LIT, BASE, SH = (40, 28, 0), (255, 246, 170), (255, 222, 60), (255, 204, 18), (206, 150, 8); DK = (20, 12, 0, 255)
