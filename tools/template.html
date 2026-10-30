@@ -199,7 +199,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.112</small>
+    <small id="ver">V1.113</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -821,7 +821,9 @@ const SK_CAT = [
   ['k_toon', 'CARTOON ATTACK', 'BLUE: THE HUGE CARTOON CAT GRABS YOU AND THROWS YOU ONTO THE ENEMY', 300, ['k_dash']],
   ['k_fatal', 'FATALITY', 'FINISH A WEAK ENEMY IN A CUTSCENE', 500, ['k_toon']],
   ['k_ult', 'ULTIMATE', 'THE DOMAIN BUTTON: CHOKE THE ENEMY, KNEE HIM 15 TIMES AND THROW HIM AWAY', 900, ['k_toon', 'k_block']],
-  ['k_stomp', 'GIANT SMASH', "FLAT ON THE FLOOR + BLUE: THE GIANT CAT'S HUGE LEG SMASHES DOWN ON THE ENEMY (40% ENERGY)", 450, ['k_toon', 'k_crouch']],
+  ['k_stomp', 'GIANT SMASH', "FLAT ON THE FLOOR + BLUE (WITH THE GIANT KICK: HOLD BACK TOO): THE GIANT CAT'S HUGE LEG SMASHES DOWN ON THE ENEMY (40% ENERGY)", 450, ['k_toon', 'k_crouch']],
+  ['k_kick', 'GIANT KICK', 'FLAT ON THE FLOOR + BLUE: THE HUGE CAT BEHIND YOU KICKS THE ENEMY AWAY, 25 DAMAGE, ABOUT 100 PX OF REACH (20% ENERGY)', 250, ['k_toon', 'k_crouch']],
+  ['k_lift', 'GIANT LIFT', 'JUMP + BLUE: THE HUGE CAT CATCHES YOU IN THE AIR AND HOLDS YOU UP HIGH FOR A BREATHER. NOTHING CAN TOUCH YOU, NO DAMAGE (5% ENERGY)', 350, ['k_toon']],
   ['k_heavy', 'HEAVY STRIKE', 'KEEP ATTACK HELD AFTER A HIT: THE LAST M1 WITH 1.6 TIMES THE DAMAGE THAT BREAKS A GUARD AND FILLS THE STAGGER BAR', 150, []],
   ['k_cancel', 'DASH CANCEL', 'DASH DURING A SWING THAT HIT: IT STOPS, +4% ENERGY AND +20 FLOW', 120, ['k_dash']],
   ['k_sense', 'CARTOON NOSE', 'IN HUNTS: THE SENSE BUTTON SHOWS EVERY HIDDEN ITEM, CLUE AND CURSE NEAR YOU FOR 3 SECONDS (8 SECOND COOLDOWN)', 300, []]];
@@ -831,7 +833,7 @@ const GATE = {      // for each fighter the skill each button needs (a button th
   y: { cr: 'y_crouch', dash: 'y_dash', blk: 'y_block', cp: 'y_cpunch', ce: 'y_ce', hv: 'y_heavy', cn: 'y_cancel', sn: 'y_sense', dom: 'y_ult', fat: 'y_fatal' },
   v: { cr: 'v_crouch', dash: 'v_tele', blk: 'v_block', ce: 'v_ball', dom: 'v_scare', fat: 'v_fatal', bl: 'v_bite', hv: 'v_heavy', cn: 'v_cancel', ac: 'v_air', sn: 'v_sense' },
   k: { cr: 'k_crouch', dash: 'k_dash', blk: 'k_block', dom: 'k_ult', fat: 'k_fatal', bl: 'k_toon', hv: 'k_heavy', cn: 'k_cancel', sn: 'k_sense' } };
-const BLUES = { g: ['blue', 'tele', 'mblue'], y: ['y_div', 'y_sweep', 'y_rush', 'y_conc', 'y_elbow', 'y_upper', 'y_flash'], v: ['v_bite'], k: ['k_toon'] };
+const BLUES = { g: ['blue', 'tele', 'mblue'], y: ['y_div', 'y_sweep', 'y_rush', 'y_conc', 'y_elbow', 'y_upper', 'y_flash'], v: ['v_bite'], k: ['k_toon', 'k_kick', 'k_lift'] };
 const lacks = key => { if (fredMe()) return false; const need = GATE[meK()][key]; return !!need && !owns(need); };      // true when the fighter you play has not bought what this button needs
 let lockSayAt = -1e9;
 function lockPop(now) { if (now - lockSayAt > 1200) { lockSayAt = now; say('LOCKED: BUY IT IN SKILLS', wx, '#ff8a7a', 8, now); } }
@@ -845,7 +847,8 @@ function gateSkills(now) {                    // every frame, before the control
   if (ceReq && lacks('ce')) { ceReq = false; lockPop(now); }
   if (domReq && lacks('dom')) { domReq = false; lockPop(now); }
   if (lpReq && lacks('bl')) { lpReq = false; lockPop(now); }
-  if (lpReq && stance === 'crouch' && ((meK() === 'v' && !owns('v_drag')) || (meK() === 'k' && !owns('k_stomp')))) { lpReq = false; lockPop(now); }      // (v1.28: BLUE while crouched is a variant of its own: Verity's BLOOD DRAG, the Cat's GIANT SMASH)
+  if (lpReq && stance === 'crouch' && ((meK() === 'v' && !owns('v_drag')) || (meK() === 'k' && !owns('k_stomp') && !owns('k_kick')))) { lpReq = false; lockPop(now); }      // (v1.28: BLUE while crouched is a variant of its own: Verity's BLOOD DRAG, the Cat's GIANT SMASH; v1.113: or his GIANT KICK)
+  if (lpReq && meK() === 'k' && stance === 'stand' && jumpAt >= 0 && !owns('k_lift')) { const jf = jumpFrame(Math.max(0, now - jumpAt)); if (jf >= 3 && jf <= 11) { lpReq = false; lockPop(now); } }      // (v1.113: BLUE in the air is the Cat's GIANT LIFT)
 }
 function gateBlue(now, jf, tf) {              // BLUE of Gojo: teleport up in the air, Max Blue crouched, Lapse Blue on the ground; in red mode RED (and RED into the Max Blue orb is the PURPLE). BLUE of Yuji: by mode, air, stance and walking forward
   const k = meK(); if (!lpReq || (k !== 'g' && k !== 'y')) return;
@@ -1155,7 +1158,7 @@ const SK_LAY = {      // where every node sits, [column, row] (the root is colum
   g: { _root: [0, 2.5], crouch: [1, 0], cpunch: [2, 0], blue: [1, 1], mblue: [2, 1], dash: [1, 2], tele: [2, 2], purple: [3, 2.5], simple: [3, 4], block: [1, 3], ce: [1, 4], red: [2, 4], fatal: [1, 5], domain: [2, 5], heavy: [1, 6], cancel: [2, 3], sense: [1, 7] },
   y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 4.5], y_pierce: [5, 3], y_shrine: [5, 4], y_cleave: [5, 5], y_simple: [5, 6], y_ult: [4, 5.7], y_fatal: [4, 6.7], y_div: [1, 6], y_rush: [2, 6], y_heavy: [1, 4.7], y_cancel: [3, 1.5], y_sense: [1, 7], y_hometown: [6, 3.5] },
   v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5], v_heavy: [1, 4.5], v_cancel: [3, 0.8], v_air: [2, 4.5], v_pounce: [3, 3.5], v_sense: [1, 5.6] },
-  k: { _root: [0, 1], k_crouch: [1, 0], k_fatal: [3, 0], k_dash: [1, 1], k_toon: [2, 1], k_stomp: [3, 1], k_block: [1, 2], k_ult: [3, 2], k_heavy: [1, 3], k_cancel: [2, 0], k_sense: [1, 4] },
+  k: { _root: [0, 1], k_crouch: [1, 0], k_fatal: [3, 0], k_dash: [1, 1], k_toon: [2, 1], k_stomp: [3, 1], k_kick: [3, 3], k_lift: [3, 4], k_block: [1, 2], k_ult: [3, 2], k_heavy: [1, 3], k_cancel: [2, 0], k_sense: [1, 4] },
   c: { _root: [0, 1], yuji: [1, 0], verity: [1, 1], cat: [1, 2] } };
 const SK_ALL = { y: 'y_hometown' };      // (v1.50 the node of a tab that needs every other node of it: no routed lines, a web of thin straight lines from every node instead)
 const SKI = {}; for (const [t, , rows] of SK_TABS) for (const r of rows) SKI[r[0]] = { r, t };
@@ -1743,7 +1746,7 @@ function hitFoe(k, now) {                     // called on the impact frame: a h
   if (now < (dummy.dodgeUntil || 0)) { say('MISS', dummy.x, '#9fd8ff', 8, now); return; }      // the smart enemy stepped back out of the swing
   const gap = dummy.x - wx;                   // the dummy's centre relative to Gojo's hips
   hbMark(who, k, wx, false, hbKey(dummy), dummy.x, gap > -4, undefined, hbMe());      // (SET > SHOW HITBOXES)
-  if (gap > pHit(k) || gap < -3) return; if (dummy.net) { netAttack(k, now); return; } connectAt = atkAt;      // (pHit: how far the drawn limb of this move really reaches into the drawn body of this enemy; behind you nothing lands)
+  if (gap > pHit(k) || gap < -3) { if (k === 35 && gap > 0) say('MISS', wx + 50, '#9fd8ff', 8, now); return; } if (dummy.net) { netAttack(k, now); return; } connectAt = atkAt;      // (v1.113: the Cat's GIANT KICK, hit 35, says MISS when the enemy is out of its reach; the toss lands next to the enemy and the smash moves its hit onto him, so they never get here)      // (pHit: how far the drawn limb of this move really reaches into the drawn body of this enemy; behind you nothing lands)
   if (isD1(k)) divP = { at: now, k };      // (DIVERGENT FIST: the fist has reached him, landed or blocked: the second impact follows 0.17 s later)
   const broke = (k === 42 || k === 46 || hv) && gap > 0 && dBlocks();      // (CONCENTRATED FIST and its crouched version, the UPPERCUT: nothing stops them, they break the guard of a blocking enemy)
   if (dBlocks() && gap > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx] && k !== 42 && k !== 46 && !hv) {      // (a smart enemy that blocked: he answers with a counter)
@@ -1780,7 +1783,7 @@ function hitFoe(k, now) {                     // called on the impact frame: a h
   if (dummy.hp <= 0) koDummy(now);            // (a normal punch or kick that finishes him ends the round in a match too)
 }
 function gojoHit(k, now) {                    // the attacking dummy's swing connects with Gojo
-  if (tz && lpAt >= 0 && now - lpAt > 250 && now - lpAt < 720) { nres('m'); return; }      // (the Cat in the giant's glove, or flying: nothing touches him)
+  if (catGlove(now)) { nres('m'); return; }      // (the Cat in the giant's glove, lifted or flying: nothing touches him)
   if (dom) { nres('m'); return; }      // (the DOMAIN freezes everyone, whatever they were doing: nothing of the enemy's touches you until it is over)
   if (cuMe() && suHit(now)) { nres('m'); return; }      // (v1.109 SUKUNA's COUNTER: while he waits the swing is dodged, and until his slash has landed nothing reaches him, see sukuna.js)
   if (isD2(k)) { gojoDiv2(now); return; }      // (DIVERGENT FIST's second impact, normal or RUSH: see gojoDiv2)
@@ -2115,7 +2118,7 @@ function setModeUI() {                        // the MODE button (OFF / CURSED /
   $('doml').innerHTML = vy ? 'JUMP<br>SCARE' : 'DOMAIN'; $('dom').querySelector('path').setAttribute('d', vy ? SCARE_D : DOM_D); $('dom').setAttribute('aria-label', vy ? 'Jumpscare: Verity grabs the enemy, who is stunned for 5 seconds and takes fear damage' : 'Domain expansion: Infinite Void');
   $('dashl').textContent = vy ? 'TELE' : 'DASH'; $('dash').setAttribute('aria-label', vy ? 'Teleport dodge' : 'Dash'); $('ce').setAttribute('aria-label', vy ? 'Mode: tap to turn into the ball and back' : 'Mode: tap to switch between normal, cursed energy and red');
   if (vy) { $('ce').classList.toggle('lit', ball); $('ce').setAttribute('aria-pressed', ball ? 'true' : 'false'); $('cel').innerHTML = 'MODE<br>' + (ball ? 'BALL' : 'OFF'); $('lapl').textContent = 'BITE'; $('lap').setAttribute('aria-label', 'Bite: the enemy bleeds for 4 seconds'); }
-  if (!!vs && vs.me === 'cat') { $('lapl').innerHTML = 'CARTOON<br>TOSS'; $('lap').setAttribute('aria-label', 'Cartoon Toss: the huge Cartoon Cat grabs you and throws you onto the enemy'); $('doml').innerHTML = 'ULTI<br>MATE'; $('dom').querySelector('path').setAttribute('d', CHOKE_D); $('dom').setAttribute('aria-label', 'Ultimate: the Cat chokes the enemy, knees him 15 times and throws him away'); }      // playing the Cat: BLUE = CARTOON ATTACK; the DOMAIN button is his ULTIMATE; MODE and BLOCK are hidden by the style sheet
+  if (!!vs && vs.me === 'cat') { $('lapl').innerHTML = lastBlue = 'CARTOON<br>TOSS'; $('lap').setAttribute('aria-label', 'Blue: standing, Cartoon Toss (the huge Cartoon Cat grabs you and throws you onto the enemy); in the air, Giant Lift (he holds you up high for a breather, no damage); flat on the floor, Giant Kick, or Giant Smash while you hold back'); $('doml').innerHTML = 'ULTI<br>MATE'; $('dom').querySelector('path').setAttribute('d', CHOKE_D); $('dom').setAttribute('aria-label', 'Ultimate: the Cat chokes the enemy, knees him 15 times and throws him away'); }      // playing the Cat: BLUE = CARTOON ATTACK; the DOMAIN button is his ULTIMATE; MODE and BLOCK are hidden by the style sheet
   if (!!vs && vs.me === 'yuji') { const hm = cm === 3 && owns('y_hometown'); $('doml').innerHTML = hm ? 'HOME<br>TOWN' : 'ULTI<br>MATE'; $('dom').querySelector('path').setAttribute('d', hm ? HOME_D : YULT_D); $('dom').setAttribute('aria-label', hm ? 'Hometown domain: Yuji makes the domain expansion sign and his hometown opens round him, the enemy is frozen and white scissor marks slice him for about 70 percent of his health' : 'Ultimate: Yuji jumps at the enemy with four Black Flashes in a row, the last one a huge charged punch'); }      // (playing Yuji: the DOMAIN button is his ULTIMATE, v1.46; in INHERITENCE with the HOMETOWN DOMAIN bought it casts that instead, v1.50)
   if (!!vs && vs.me === 'yuji') { lastBlue = cm === 3 ? 'PIERCE<br>BLOOD' : cm === 2 ? 'BLACK<br>FLASH' : cm === 1 ? 'CONC.<br>FIST' : 'DIVERG.<br>FIST'; $('lapl').innerHTML = lastBlue; $('lap').classList.remove('red'); $('lap').setAttribute('aria-label', cm === 3 ? 'Cursed Technique: standing = Piercing Blood, crouched = Shrine, walking forward = Grab and Cleave, in the air = Simple Domain' : cm === 2 ? 'Black Flash: a punch crackling with black sparks that hits twice as hard and sends the enemy flying back' : cm === 1 ? 'Concentrated Fist: one huge cursed energy punch that breaks the guard' : 'Divergent Fist: a punch full of cursed energy, then a second impact in the stomach as the fist is pulled back (crouched: a sweep kick that drops the enemy)'); $('ce').setAttribute('aria-label', 'Mode: tap to switch cursed energy on (hands up, then the flames light up) and off'); }      // playing Yuji: BLUE = DIVERGENT FIST (CONCENTRATED FIST in cursed energy mode, a SWEEP while crouched; the per-frame code in drawScene keeps the label right); MODE = cursed energy on / off (no red mode); DOMAIN is dimmed by the style sheet
   skillUI();
@@ -2573,7 +2576,7 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
   if (move) { d.x += move * FOE_WALK * G.spd * dt; d.ai = 'walk'; } else d.ai = 'think';
 }
 // ---------------------------------------------------------------- CURSED ENERGY (Versus mode only): a cyan bar under Gojo's health bar. It starts every round at 100%, each energy move costs some of it, it refills half a percent per second once a second and a half has passed without such a move (hitting, being hit and parrying fill it much faster, see onLand), and the cursed energy mode drains 1% per second (no refill) and switches itself off at 0%.
-const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30, purple: 50, domain: 67, fatal: 50, vBite: 20, vDrag: 25, cStomp: 40, vTele: 10, vBall: 20, vScare: 67, cToon: 30, cUlt: 67, yDiv: 15, yConc: 25, yKick: 5, yZone: 20, yFlash: 40, vTalk: 15, crouch: 3, ceMode: 10, redMode: 10, yInherit: 20, yBlood: 25, yShrine: 30, yGrab: 25, ySimple: 30, yHome: 67 }, CE_WAIT = 1500, CE_REFILL = 0.5;      // what each move costs in % of the bar (slowRed = RED fired while walking back, coat = the BLUE leap onto that slow orb, tele = BLUE in the air, purple = the RED shot fired while Max Blue is out, it costs this instead of the plain RED price); the refill waits 1 s after the last paid move
+const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30, purple: 50, domain: 67, fatal: 50, vBite: 20, vDrag: 25, cStomp: 40, cKick: 20, cLift: 5, vTele: 10, vBall: 20, vScare: 67, cToon: 30, cUlt: 67, yDiv: 15, yConc: 25, yKick: 5, yZone: 20, yFlash: 40, vTalk: 15, crouch: 3, ceMode: 10, redMode: 10, yInherit: 20, yBlood: 25, yShrine: 30, yGrab: 25, ySimple: 30, yHome: 67 }, CE_WAIT = 1500, CE_REFILL = 0.5;      // what each move costs in % of the bar (slowRed = RED fired while walking back, coat = the BLUE leap onto that slow orb, tele = BLUE in the air, purple = the RED shot fired while Max Blue is out, it costs this instead of the plain RED price); the refill waits 1 s after the last paid move
 CE_COST.vPounce = 25; CE_COST.yUlt = 67;      // (v1.45: Verity's AIR BITE)
 CE_COST.fPierce = 20; CE_COST.fWater = 15; CE_COST.fDream = 67;      // (v1.94 FREDDY: the PIERCE is paid when the claw is driven in, the boiling water when his hand touches the floor (the throw is free), the DREAM like every other ULTIMATE; his slashes, heavy strike, block and dashes stay free, like Gojo's punches)
 let ce = 100, ceLast = -1e9, ceFlash = -1e9;      // the energy in %, when a move last cost some, when a move was last refused (the bar flashes red)
@@ -3901,7 +3904,11 @@ function keFrame(now, dt) {
 // ---------------------------------------------------------------- PLAYABLE CARTOON CAT (Versus mode: YOUR FIGHTER > CURSED SPIRITS). Like Verity he is steered with the same stick and buttons and shares Gojo's state variables (position, hurt, crouch, the swing in progress), so the enemy, its AI and every hit rule work exactly as they do against Gojo. ATTACK = his M1: GRAB (the arm stretches out, grabs the enemy and pulls him close), PUNCH (the other hand hits his face while the first still holds on), GRAB again, KICK (sends him away): 4 + 8 + 4 + 14 = 30 damage. DASH = he pushes himself along the ground with his hands (forward, or back when he stands still; free). DOWN = he smashes himself flat into a strip 2 px thin (nothing can hit him), walks 3 times faster, and can only punch UP (10 damage); tap DOWN again to stand; flat for more than 5 s and he gets up dizzy: stunned for 1 s. BLUE = CARTOON ATTACK (30% of the energy): a HUGE Cat appears behind him and kicks the enemy away (25 damage, about 100 px of reach; a jump or a crouch gets out of it). No MODE and no BLOCK button. His ULTIMATE (the DOMAIN button) and his FATALITY come in the next release.
 const cpNew = () => ({ flatAt: 0, tired: false, stunAt: -1e9 });      // flatAt = when he finished smashing himself flat, tired = he is getting up because he was flat for too long (he is dizzy for 1 s once he stands), stunAt = when the dizziness began
 let cp = null;
-let tz = null; const TOSS_REL = 8.5, TOSS_HIT = 13;      // CARTOON TOSS: tz = { w0: where he stood, tx: where he lands, u: how far the flight is (0-1) }; the giant lets go on frame 8.5 and the Cat lands on the enemy on frame 13 (18 frames a second)
+let tz = null, lk = 0; const TOSS_REL = 8.5, TOSS_HIT = 13;      // CARTOON TOSS: tz = { w0: where he stood, tx: where he lands, u: how far the flight is (0-1) }; the giant lets go on frame 8.5 and the Cat lands on the enemy on frame 13 (18 frames a second)      // lk = which BLUE is going on: 0 the TOSS, 1 the GIANT KICK (v1.113: the old CARTOON ATTACK, from the floor), 2 the GIANT LIFT (in the air; its tz has lift: true)
+const LIFT = { fps: 18, grab: 4.6, top: 8, holdMs: 1000, fadeMs: 110 };      // v1.113 GIANT LIFT (jump + BLUE): the giant's grab-and-throw run forwards to frame 8 (the glove is above the top of the screen with him in it), stand still there for holdMs, run backwards to frame 4.6 and open the glove; times in ms from the press:
+LIFT.grabMs = LIFT.grab / LIFT.fps * 1000; LIFT.t1 = LIFT.top / LIFT.fps * 1000; LIFT.t2 = LIFT.t1 + LIFT.holdMs; LIFT.t3 = LIFT.t2 + (LIFT.top - LIFT.grab) / LIFT.fps * 1000; LIFT.total = LIFT.t3 + LIFT.fadeMs;      // (grabMs: the glove closes on him, t1: he is up, t2: the glove comes down, t3: it opens and puts him down, total: the giant has faded away)
+const liftVF = ms => ms < LIFT.t1 ? ms * LIFT.fps / 1000 : ms < LIFT.t2 ? LIFT.top : ms < LIFT.t3 ? LIFT.top - (ms - LIFT.t2) * LIFT.fps / 1000 : LIFT.grab - (ms - LIFT.t3) * LIFT.fps / 1000;      // the giant's picture (0-14, with decimals) ms after the press
+const catGlove = now => !!tz && lpAt >= 0 && (tz.lift ? now - lpAt > LIFT.grabMs && now - lpAt < LIFT.t3 : now - lpAt > 250 && now - lpAt < 720);      // the Cat is in the giant's glove (lifted, or flying): nothing touches him
 const pendingGiants = []; let pendingEnemy = null;      // the HUGE Cats to draw this frame: { who = 'me' (the player's, drawn behind the player's own picture and in front of the enemy) or 'foe' (the enemy's, drawn in front of the player and behind the enemy Cat, who is painted after it: pendingEnemy), sx = the summoner's screen x, ff = the frame (0-14, with decimals), dir = +1 if the summoner faces right and -1 if left, inv = inverted colours }
 const GSC = [1.2, 2.2, 3.5, 3.3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2.4, 1.6, 1], GAL = [0.55, 0.85, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.8, 0.4, 0];      // the giant's size (times the normal picture) and how solid he is on each of the 15 frames: he pops up with a boing, stands, kicks at frame 10 and shrinks away
 function catRelease(now) { const d = dummy; if (d && d.cheld) { d.cheld = null; d.stunUntil = Math.min(d.stunUntil, now); if (d.ai === 'rest') { d.ai = 'think'; d.aiAt = now; } } }      // the glove lets go of the enemy (he is free to act again)
@@ -3911,7 +3918,7 @@ function drawGiantNow(who) {      // the HUGE Cat of CARTOON ATTACK: his own 15 
     if (g.who !== who) continue;
     const src = cfr(g.strip || 'huge', g.ff, false, g.inv), f = Math.max(0, Math.min(14.999, g.ff)), i = Math.floor(f), u = f - i, s = GSC[i] + (GSC[i + 1] - GSC[i]) * u, al = GAL[i] + (GAL[i + 1] - GAL[i]) * u;
     if (src === EMPTY || al <= 0.01) continue;
-    ctx.save(); ctx.globalAlpha = al; ctx.translate(g.sx - g.dir * CT.back, 0); ctx.scale(g.dir, 1);
+    ctx.save(); ctx.globalAlpha = al * (g.fa === undefined ? 1 : g.fa); ctx.translate(g.sx - g.dir * CT.back, 0); ctx.scale(g.dir, 1);
     ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(-Math.round(20 * s), gy + 3, Math.round(40 * s), 3);      // (his shadow on the ground)
     ctx.drawImage(src, Math.round(-36 * s), Math.round(gy + 4 - 64 * s), Math.round(128 * s), Math.round(64 * s));      // (feet on the ground, anchor column 36: his head is far above the top of the screen)
     ctx.restore();
@@ -3931,15 +3938,21 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
     else { bf = blkFrom - Math.floor(Math.max(0, now - blkEnd) * BLK_FPS / 1000); if (bf < 0) { blkAt = -1; blkEnd = -1; bf = -1; } }
   }
   if (stance === 'down' || stance === 'up') { sf = Math.floor(Math.max(0, now - stAt) * CT.smashFps / 1000); if (sf >= 15) { const was = stance; stance = was === 'down' ? 'crouch' : 'stand'; sf = -1; if (was === 'down') c.flatAt = now; else if (c.tired) { c.tired = false; vs.cStun = now + CT.stunMs; c.stunAt = now; } } }
-  if (lpAt >= 0) { lf = Math.floor(Math.max(0, now - lpAt) * CT.tossFps / 1000); if (lf >= 15 || (vs.who === 'enemy' && (vs.ph === 'ko' || vs.ph === 'over'))) { lpAt = -1; lf = -1; lpReady = now + 700; } }
-  if (lf < 0) tz = null; else if (tz) { const ff = Math.max(0, now - lpAt) * CT.tossFps / 1000, u = Math.max(0, Math.min(1, (ff - TOSS_REL) / (TOSS_HIT - TOSS_REL))); tz.u = u; if (ff >= TOSS_REL) { wx = tz.w0 + (tz.tx - tz.w0) * (u * u * (3 - 2 * u)); wxv = 0; } }      // (thrown: the world rushes past while he tumbles down on the enemy)      // (a cast ends with its 15 frames, or when the enemy has beaten him)
+  if (lpAt >= 0) { const lms = Math.max(0, now - lpAt); lf = lk === 2 ? (lms >= LIFT.total ? 15 : 0) : Math.floor(lms * (lk === 1 ? CT.toonFps : CT.tossFps) / 1000); if (lf >= 15 || (vs.who === 'enemy' && (vs.ph === 'ko' || vs.ph === 'over'))) { lpAt = -1; lf = -1; lpReady = now + 700; } }      // (the lift counts as frame 0 for as long as it lasts)
+  if (lf < 0) { tz = null; lk = 0; } else if (tz && !tz.lift) { const ff = Math.max(0, now - lpAt) * CT.tossFps / 1000, u = Math.max(0, Math.min(1, (ff - TOSS_REL) / (TOSS_HIT - TOSS_REL))); tz.u = u; if (ff >= TOSS_REL) { wx = tz.w0 + (tz.tx - tz.w0) * (u * u * (3 - 2 * u)); wxv = 0; } }      // (thrown: the world rushes past while he tumbles down on the enemy)      // (a cast ends with its 15 frames, or when the enemy has beaten him)
   if (atkAt >= 0) {
     af = Math.floor(Math.max(0, now - atkAt) * CAT_ATK.fps[atkK] / 1000);
     if (af >= 15) { if (atkQ) { atkQ = false; atkK = ctPick(); atkAt = now; af = 0; } else { atkAt = -1; af = -1; comboUntil = now + COMBO_MS; } }      // (a press during a swing chains the next one)
   }
   if (stance === 'crouch' && now - c.flatAt >= CT.flatMax) { stance = 'up'; stAt = now; sf = 0; c.tired = true; atkAt = -1; af = -1; atkQ = false; }      // flat for more than 5 s: he gets up (and is dizzy for 1 s once he stands)
-  const can = () => t >= 1 && !dizzy && !fear && jf < 0 && hf < 0 && df < 0 && sf < 0 && lf < 0 && bf < 0 && !ulting && !cst, free = () => can() && af < 0; cstStep(now, dt);      // (nothing else is going on: asked again after every move that may have started in this frame)
-  if (lpReq) { lpReq = false; if (free() && stance === 'stand' && now > lpReady && ceSpend(CE_COST.cToon, now)) { lpAt = now; lf = 0; atkQ = false; snd('boing'); tz = { w0: wx, tx: Math.max(wx, dummy && dummy.ko < 0 ? dummy.x - 26 : wx + 90), u: 0 }; } else if (free() && stance === 'crouch' && now > lpReady && owns('k_stomp') && ceSpend(CE_COST.cStomp, now)) { cstBegin(now); lpReady = now + 900; } }      // CARTOON ATTACK (the BLUE button): costs 30% of the energy; flat on the floor: the GIANT SMASH (v1.28, 40%)
+  const can = () => t >= 1 && !dizzy && !fear && jf < 0 && hf < 0 && df < 0 && sf < 0 && lf < 0 && bf < 0 && !ulting && !cst, free = () => can() && af < 0, airOk = () => t >= 1 && !dizzy && !fear && jf >= 3 && jf <= 11 && hf < 0 && df < 0 && sf < 0 && lf < 0 && bf < 0 && !ulting && !cst && af < 0 && stance === 'stand'; cstStep(now, dt);      // (airOk: in the air with nothing else going on: the GIANT LIFT may start)      // (nothing else is going on: asked again after every move that may have started in this frame)
+  if (lpReq) { lpReq = false; if (free() && stance === 'stand' && now > lpReady && ceSpend(CE_COST.cToon, now)) { lpAt = now; lf = 0; lk = 0; atkQ = false; snd('boing'); tz = { w0: wx, tx: Math.max(wx, dummy && dummy.ko < 0 ? dummy.x - 26 : wx + 90), u: 0 }; }
+    else if (free() && stance === 'crouch' && now > lpReady) {      // flat on the floor (v1.113): the GIANT SMASH when BACK is held (or when it is the only one you own), the GIANT KICK otherwise
+      if (owns('k_stomp') && (keyL || padL || !owns('k_kick'))) { if (ceSpend(CE_COST.cStomp, now)) { cstBegin(now); lpReady = now + 900; } }
+      else if (owns('k_kick') && ceSpend(CE_COST.cKick, now)) { lpAt = now; lf = 0; lk = 1; atkQ = false; snd('boing'); }
+    }
+    else if (airOk() && now > lpReady && owns('k_lift') && ceSpend(CE_COST.cLift, now)) { lpAt = now; lf = 0; lk = 2; atkQ = false; snd('boing'); tz = { w0: wx, tx: wx, u: 0, lift: true, h: D.jump.lift[jf] || 0, s: 0 }; jumpAt = -1; jf = -1; }      // GIANT LIFT (in the air, 5%): the jump ends, the giant catches him
+  }      // CARTOON TOSS (the BLUE button, standing): costs 30% of the energy; flat on the floor: the GIANT SMASH (v1.28, 40%) or the GIANT KICK (v1.113, 20%, the old CARTOON ATTACK); in the air: the GIANT LIFT (v1.113, 5%)
   if (domReq) {      // the ULTIMATE (the DOMAIN button): the enemy in front and within the glove's reach, 67% of the energy, 30 s between two
     domReq = false;
     if (free() && stance === 'stand' && now >= domReadyAt && !ult) { if (!ultTarget(now)) { const gp = dummy ? dummy.x - wx : 999; say(gp <= pHit(30) && gp >= -4 ? 'CANT GRAB' : 'TOO FAR', wx, '#ff8a7a', 8, now); } else if (ceSpend(CE_COST.cUlt, now)) { ultStart(now, 'player'); ulting = true; } }
@@ -3947,6 +3960,7 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   if (atkReq) { atkReq = false; if (can() && (stance === 'stand' || stance === 'crouch')) { if (af >= 0) atkQ = true; else { if (now > comboUntil) combo = 0; atkK = ctPick(); atkAt = now; af = 0; atkQ = false; } } }      // (flat: only the punch up)
   if (af < 0 && combo !== 0 && now > comboUntil) combo = 0;
   const lab = stance === 'crouch' ? CAT_ATK.names[4] : CAT_ATK.names[combo]; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; }
+  { const bl = (lf >= 0 || cst) ? lastBlue : (jf >= 3 && jf <= 11) ? 'GIANT<br>LIFT' : stance === 'crouch' ? (owns('k_stomp') && (keyL || padL || !owns('k_kick')) ? 'GIANT<br>SMASH' : 'GIANT<br>KICK') : 'CARTOON<br>TOSS'; if (bl !== lastBlue) { lastBlue = bl; $('lapl').innerHTML = bl; } }      // (v1.113: the BLUE button's name follows the air and the floor, and stays while a move is going on)
   if (crReq) { crReq = false; if (free()) { if (stance === 'stand') { stance = 'down'; stAt = now; sf = 0; } else if (stance === 'crouch') { stance = 'up'; stAt = now; sf = 0; } } }      // (tap to smash himself flat, tap to stand again; the stick's down position keeps him flat for as long as it is held)
   if (free()) { if (stickDown && stance === 'stand') { stance = 'down'; stAt = now; sf = 0; stickCr = true; } else if (!stickDown && stickCr && stance === 'crouch' && now - stickDownEnd > 140) { stance = 'up'; stAt = now; sf = 0; } }
   if (stance === 'stand') stickCr = false;
@@ -3965,6 +3979,8 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   if (df >= 0) { const k = Math.min(1, Math.max(0, (now - dgAt - 2000 / DASH_FPS) / DASH_MS)); wx = dgFrom + (dgTo - dgFrom) * (1 - Math.pow(1 - k, 3)); }      // the push itself: fast at first, over frames 3-12
   playerSlide(dt); physCollide(now, dt);      // knocked back by the enemy: the world slides past, then friction stops it
   const lift = jf >= 0 ? D.jump.lift[jf] : 0; gojoLift = lift; gojoGone = false;      // (the enemy's swings miss while he is in the air)
+  if (tz && tz.lift && now - lpAt < LIFT.grabMs) gojoLift = tz.h;      // (the lift: until the glove closes he hangs at the height he jumped to)
+  if (tz && tz.lift && catGlove(now)) gojoGone = true;      // (the glove has him, out of the top of the screen: the enemy's ULTIMATE, JUMPSCARE and FATALITY cannot pick him either, and neither can his own FATALITY start)
   const dm = dummy; if (dm && dm.cheld && (now >= dm.cheld.until || dm.ko >= 0 || hf >= 0 || jf >= 0 || df >= 0 || stance !== 'stand')) catRelease(now);      // (the glove lets go when its time is up or when he does something else)
 
   ctx.save();
@@ -3988,13 +4004,20 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
     }
     evA = af;
   }
-  if (lf !== evL) {      // CARTOON ATTACK: the leg shoots out on frame 8, the kick lands on frame 10
+  if (lf !== evL) {      // the giant's blow: the kick (24 FPS, from the floor) shoots its leg out on frame 8 and lands on frame 10; the TOSS (18 FPS) lands on frame 13; the LIFT (lk 2) stays on frame 0 and has no blow
     if (lf < evL) evL = -1;
     if (lf >= 0) {
       if (evL < 8 && lf >= 8) snd('swing', 3);
-      if (evL < TOSS_HIT && lf >= TOSS_HIT) { snd('land', 1.6); shakeUntil = now + 230; shakeAmp = 4; flash(now, 150, 0.35); hitDummy(35, now); }
+      const hitF = lk === 1 ? CT.toonHit : TOSS_HIT;
+      if (lk !== 2 && evL < hitF && lf >= hitF) { snd('land', 1.6); shakeUntil = now + 230; shakeAmp = 4; flash(now, 150, 0.35); hitDummy(35, now); }
     }
     evL = lf;
+  }
+  if (tz && tz.lift && lpAt >= 0) {      // GIANT LIFT: the glove closes and heaves him up (a whoosh), he is up in the air (a breather), the glove opens and puts him down (a soft landing)
+    const lms = now - lpAt;
+    if (!(tz.s & 1) && lms >= LIFT.grabMs + 70) { tz.s |= 1; snd('swing', 3); }
+    if (!(tz.s & 2) && lms >= LIFT.t1) { tz.s |= 2; say('PHEW', wx + 34, '#9fd8ff', 8, now); }      // (beside the state box, which would hide half of the word)
+    if (!(tz.s & 4) && lms >= LIFT.t3) { tz.s |= 4; snd('land', 1); puff(wx, 5); }
   }
   drawSmoke(now, dt);
   drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
@@ -4003,10 +4026,11 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   else if (fear) { name = 'stun'; fi = now / 66; const o = fearOff(now); ox = o[0]; oy = o[1]; }      // the enemy's JUMPSCARE has him: dizzy and shaking
   else if (dizzy) { name = 'stun'; fi = (now - c.stunAt) / 66; loop = false; }
   else if (ulting) { const A = ultAnim(now); name = A.name; fi = A.fi; loop = A.loop; }      // his ULTIMATE: the grab, the knees, the throw
-  else if (lf >= 0) {      // CARTOON TOSS: he summons (the giant reaches down), sits in the giant's glove (he is lifted out of the top of the screen), is thrown and tumbles down onto the enemy, lands
-    const ff = Math.max(0, now - lpAt) * CT.tossFps / 1000;
-    if (ff < 4.6 || !tz) { name = 'toon'; fi = Math.min(14, ff * 3.2); loop = false; }
-    else if (ff < TOSS_REL) { name = 'held'; fi = ff * 3; loop = true; const f = Math.min(13.999, ff), i = Math.floor(f), u = f - i, sg = GSC[i] + (GSC[i + 1] - GSC[i]) * u, hx = TALK.hand[i][0] + (TALK.hand[i + 1][0] - TALK.hand[i][0]) * u, hy = TALK.hand[i][1] + (TALK.hand[i + 1][1] - TALK.hand[i][1]) * u; ox = Math.round(-64 + hx * sg); py = 0; oy = Math.round(gy + 4 - 64 * sg + hy * sg - gy + 24); }      // (the glove: the giant stands 64 px behind him, his pictures are drawn 3 times as big)
+  else if (lf >= 0 && lk !== 1) {      // CARTOON TOSS: he summons (the giant reaches down), sits in the giant's glove (he is lifted out of the top of the screen), is thrown and tumbles down onto the enemy, lands; GIANT LIFT (v1.113): the same grab, but he stays up in the glove, out of the top of the screen, and is put down again where he was (the kick, lk 1, keeps him flat on the floor: his own picture does not change)
+    const ms = Math.max(0, now - lpAt), up = !!tz && !!tz.lift, ff = up ? liftVF(ms) : ms * CT.tossFps / 1000;
+    if (up ? ms < LIFT.grabMs : (ff < 4.6 || !tz)) { name = 'toon'; fi = Math.min(14, ff * 3.2); loop = false; if (up) py = tz.h; }      // (the lift: he calls the giant while he hangs in the air)
+    else if (up ? ms < LIFT.t3 : ff < TOSS_REL) { name = 'held'; fi = up ? ms * LIFT.fps * 3 / 1000 : ff * 3; loop = true; const f = Math.min(13.999, ff), i = Math.floor(f), u = f - i, sg = GSC[i] + (GSC[i + 1] - GSC[i]) * u, hx = TALK.hand[i][0] + (TALK.hand[i + 1][0] - TALK.hand[i][0]) * u, hy = TALK.hand[i][1] + (TALK.hand[i + 1][1] - TALK.hand[i][1]) * u; ox = Math.round(-64 + hx * sg); py = 0; oy = Math.round(gy + 4 - 64 * sg + hy * sg - gy + 24); if (up) oy -= Math.round(tz.h * (1 - Math.min(1, (ms - LIFT.grabMs) / 90))); }      // (the glove: the giant stands 64 px behind him, his pictures are drawn 3 times as big; the lift: the glove takes him from the height he jumped to in 0.09 s)
+    else if (up) { name = 'jump'; fi = 13; loop = false; }      // (the glove has opened: he stands on the floor again)
     else if (ff < TOSS_HIT) { name = 'toss'; fi = tz.u * 14; loop = false; py = Math.round(150 * (1 - tz.u * tz.u)); }
     else { name = 'jump'; fi = 13; loop = false; }
   }
@@ -4019,7 +4043,7 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   else if (dir !== 0) { const k = Math.floor(Math.max(0, now - modeAt) * WALK_FPS / 1000) % 15; name = 'walk'; fi = dir > 0 ? k : 14 - k; loop = false; }
   { const uo = ultHeldOff(now); ox += uo[0]; oy += uo[1]; }      // (the enemy Cat's ULTIMATE holds him up by the neck: lifted and shaking)
   const I = CAT_CELL[name], src0 = cfr(name, fi, loop), src = white ? whiteOf(src0) : src0, x = cx - I[2] + ox, y = gy - 60 - I[3] - py + oy;
-  if (lf >= 0) pendingGiants.push({ who: 'me', sx: tz ? cx - (wx - tz.w0) : cx, ff: Math.max(0, now - lpAt) * CT.tossFps / 1000, dir: 1, inv: false, strip: tz ? 'hugegrab' : 'huge' });      // (the giant appears behind him)
+  if (lf >= 0) pendingGiants.push({ who: 'me', sx: tz ? cx - (wx - tz.w0) : cx, ff: tz && tz.lift ? liftVF(Math.max(0, now - lpAt)) : Math.max(0, now - lpAt) * (lk === 1 ? CT.toonFps : CT.tossFps) / 1000, fa: tz && tz.lift ? Math.min(1, Math.max(0, (LIFT.total - (now - lpAt)) / LIFT.fadeMs)) : 1, dir: 1, inv: false, strip: tz ? 'hugegrab' : 'huge' });      // (the giant appears behind him)
   const sw = Math.max(5, Math.round(9 * (1 - py / 48))), sv = Math.round(sw * 2 / 3);      // the ground shadow stays put and shrinks while he is in the air
   const vap = vs.who === 'enemy' && vs.why === 'fatal' && (vs.ph === 'ko' || vs.ph === 'over');      // (a FATALITY of the enemy: he is gone until the next round)
   ctx.fillStyle = 'rgba(0,0,0,0.4)'; if (!vap && !rgOn()) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
