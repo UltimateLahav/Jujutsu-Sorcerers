@@ -9,13 +9,15 @@
 - Wi-Fi fight: each phone runs its own fighter; the other fighter is drawn from a picture NAME (`c.__nd`; Gojo/Yuji sets via NETSET). A swing is checked on the attacker's screen and decided on the victim's phone (`gojoHit` via `netSwing`). All moves unlocked online except INHERITENCE things (`NET_NO`).
 - Link (LanNet.java): TCP + UDP together, first copy wins, in order; pictures UDP-only, newest wins; ping measured on UDP; WifiLock low latency.
 - Delivery in steps: V1.115 = faster link + five fighters' basic moves; special moves follow in groups.
+- ONLINE PAUSED after V1.115 (resume only when asked). Work goes on in the offline game.
 
 ## Progress
 - Latest: V1.115 (code 190), pushed (6f164d1).
 - Tests at V1.115: LanNetTest 61 checks; all 25 fighter pairs OK; lint = 19 messages (6 errors, 13 warnings) = baseline.
 
 ## Open Tasks
-- Next online (suggested order): BLUE moves of all 5 fighters -> MODE moves -> cutscene moves (FATALITY, DOMAIN, ULTIMATE, JUMPSCARE, DREAM). Sukuna online only if asked.
+- NOW (offline game, topic to be chosen): new Verity moves (fewest shop skills: 13) / Freddy as an enemy in Versus (not offered yet: `buildFighters`, "he cannot fight yet") / playable chapter 3 fight (only a cutscene so far, v1.106).
+- (Paused) Next online (suggested order): BLUE moves of all 5 fighters -> MODE moves -> cutscene moves (FATALITY, DOMAIN, ULTIMATE, JUMPSCARE, DREAM). Sukuna online only if asked.
 - Off online now: BLUE (except Gojo's air teleport), MODE, DOMAIN, FATAL, heavy strike (`flowOK`), Cat ARM HANG, Freddy PIERCE (see the net filter in `vsTick`).
 - Unverified: real-phone ping and WifiLock effect.
 
