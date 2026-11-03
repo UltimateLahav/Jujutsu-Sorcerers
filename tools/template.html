@@ -199,7 +199,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.117</small>
+    <small id="ver">V1.118</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -1920,7 +1920,7 @@ function drawDummy(now, dt) {
     return;
   }
   const t = Math.min(1, (now - dummy.born) / 650), e = 1 - Math.pow(1 - t, 3), hitT = now - dummy.hitAt, kt = dummy.ko >= 0 ? Math.max(0, now - (dummy.koAt || dummy.ko)) : -1;
-  const reacting = kt < 0 && now - dummy.rxAt < RX_DUR[dummy.rx], mirror = !(dummy.mode === 'fighter' && gap < -4), FS = foeSet();   // he faces Gojo (left), or right if Gojo got behind the attacker
+  const reacting = kt < 0 && now - dummy.rxAt < RX_DUR[dummy.rx], mirror = !(dummy.mode === 'fighter' && gap < -4) || (typeof suKeepFace === 'function' && suKeepFace()), FS = foeSet();   // he faces Gojo (left), or right if Gojo got behind the attacker
   const kneel = kt < 0 && now < (dummy.kneel || 0);      // (v1.112 Sukuna's LEG CUT: his legs are cut and he drops to his knees, the crouch of his set, for as long as dummy.kneel says; every hit still lands on him)
   let src, info, fi, lift = 0, ox = 0, oy = 0;                // what he is doing: reeling from a hit, swinging, stepping, or standing about
   if (kneel) { fi = Math.floor(now / (1000 / IDLE_FPS)) % 15; info = D.cidle; src = hitT < 70 ? whiteOf(FS.fear[fi]) : FS.fear[fi]; }
@@ -1930,7 +1930,7 @@ function drawDummy(now, dt) {
   else if (kt < 0 && dummy.mode === 'fighter' && (dummy.ai === 'block' || dummy.ai === 'dodge')) { fi = 5 + Math.floor(now / 125) % 5; info = D.atk11; src = FS.blk[fi]; }       // the smart enemy: guard up (also while he steps back)
   else if (kt < 0 && dummy.mode === 'blocker') { fi = 5 + Math.floor(now / 125) % 5; info = D.atk11; src = FS.blk[fi]; }       // guard up: the hands-up loop
   else if (kt < 0 && dummy.fear) { fi = Math.floor(now / (1000 / IDLE_FPS)) % 15; info = D.cidle; src = FS.fear[fi]; const o = fearOff(now); ox = o[0]; oy = o[1]; }      // JUMPSCARE: stunned, he cowers and shakes
-  else { fi = Math.floor(now / (1000 / IDLE_FPS)) % FS.idle.length; info = D.idle; src = (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) ? dumW[fi] : (kt < 0 && now < dummy.stunUntil && !ult && !fd && !dummy.rip && !(lagRun && lagRun.ph === 'hit') && ((now / 70) | 0) % 2 === 0) ? dumB[fi] : FS.idle[fi]; }   // white flicker while he goes down
+  else { fi = Math.floor(now / (1000 / IDLE_FPS)) % FS.idle.length; info = D.idle; src = (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) ? dumW[fi] : (kt < 0 && now < dummy.stunUntil && !ult && !fd && !dummy.rip && !(lagRun && lagRun.ph === 'hit') && !suKeepFace() && ((now / 70) | 0) % 2 === 0) ? dumB[fi] : FS.idle[fi]; }   // white flicker while he goes down
   if (vs && vs.foe === 'verity') { const L = storyLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox || 0; oy = L.oy || 0; }      // the enemy is Verity
   if (vs && vs.foe === 'yuji') { const ys = vs.inv ? YUF.inv : YUF.norm, wk = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'walk', at = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'attack', pw = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'power'; ox = oy = 0; lift = 0;      // the enemy is Yuji
     if (kneel) { fi = Math.floor(now / (1000 / IDLE_FPS)) % 15; src = ys.cidle[fi]; info = YU.cidle; }      // (his legs are cut: his crouch)

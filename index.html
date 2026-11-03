@@ -199,7 +199,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.117</small>
+    <small id="ver">V1.118</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -659,6 +659,13 @@ function makeSfx(ac) {
       const t = T(at), B = C.atk, up = 1 + 0.07 * ((k | 0) % 4);
       burst(B.soft, t, { type: 'bandpass', f: 2800 * up, f2: 7600 * up, q: 3.5, dur: 0.1, gain: 1.1, atk: 0.004 });
       tone(C.tele.soft, t + 0.012, { f: 3300 * up, f2: 3150 * up, dur: 0.13, gain: 0.035, atk: 0.002 });
+    },
+    sukimp(at) {                                         // v1.118 the impact frame of Sukuna's DASH SLASH: a hard crack (a flash of noise from high to low), a deep boom that falls away and a cold thin ring, then nothing while the cut opens
+      const t = T(at), B = C.atk, D = C.tele;
+      burst(B.soft, t, { type: 'bandpass', f: 3400, f2: 700, q: 0.8, dur: 0.08, gain: 3.2, atk: 0.001 });
+      tone(B.deep, t, { type: 'triangle', f: 150, f2: 34, dur: 0.6, gain: 0.55, atk: 0.003 });
+      burst(B.soft, t + 0.02, { f: 900, f2: 120, q: 0.8, dur: 0.2, gain: 1.6, atk: 0.002 });
+      tone(D.soft, t + 0.05, { f: 2640, f2: 2600, dur: 0.5, gain: 0.04, atk: 0.004 });
     },
     sukdis(at) {                                         // v1.112 DISMANTLE: the stop of time and the word: a heavy thump, a deep growl that slides down (a saw through a band that opens and closes, like a voice), a long low swell and a thin cold ring on top
       const t = T(at), B = C.atk, D = C.tele;
@@ -2989,7 +2996,7 @@ function drawDummy(now, dt) {
     return;
   }
   const t = Math.min(1, (now - dummy.born) / 650), e = 1 - Math.pow(1 - t, 3), hitT = now - dummy.hitAt, kt = dummy.ko >= 0 ? Math.max(0, now - (dummy.koAt || dummy.ko)) : -1;
-  const reacting = kt < 0 && now - dummy.rxAt < RX_DUR[dummy.rx], mirror = !(dummy.mode === 'fighter' && gap < -4), FS = foeSet();   // he faces Gojo (left), or right if Gojo got behind the attacker
+  const reacting = kt < 0 && now - dummy.rxAt < RX_DUR[dummy.rx], mirror = !(dummy.mode === 'fighter' && gap < -4) || (typeof suKeepFace === 'function' && suKeepFace()), FS = foeSet();   // he faces Gojo (left), or right if Gojo got behind the attacker
   const kneel = kt < 0 && now < (dummy.kneel || 0);      // (v1.112 Sukuna's LEG CUT: his legs are cut and he drops to his knees, the crouch of his set, for as long as dummy.kneel says; every hit still lands on him)
   let src, info, fi, lift = 0, ox = 0, oy = 0;                // what he is doing: reeling from a hit, swinging, stepping, or standing about
   if (kneel) { fi = Math.floor(now / (1000 / IDLE_FPS)) % 15; info = D.cidle; src = hitT < 70 ? whiteOf(FS.fear[fi]) : FS.fear[fi]; }
@@ -2999,7 +3006,7 @@ function drawDummy(now, dt) {
   else if (kt < 0 && dummy.mode === 'fighter' && (dummy.ai === 'block' || dummy.ai === 'dodge')) { fi = 5 + Math.floor(now / 125) % 5; info = D.atk11; src = FS.blk[fi]; }       // the smart enemy: guard up (also while he steps back)
   else if (kt < 0 && dummy.mode === 'blocker') { fi = 5 + Math.floor(now / 125) % 5; info = D.atk11; src = FS.blk[fi]; }       // guard up: the hands-up loop
   else if (kt < 0 && dummy.fear) { fi = Math.floor(now / (1000 / IDLE_FPS)) % 15; info = D.cidle; src = FS.fear[fi]; const o = fearOff(now); ox = o[0]; oy = o[1]; }      // JUMPSCARE: stunned, he cowers and shakes
-  else { fi = Math.floor(now / (1000 / IDLE_FPS)) % FS.idle.length; info = D.idle; src = (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) ? dumW[fi] : (kt < 0 && now < dummy.stunUntil && !ult && !fd && !dummy.rip && !(lagRun && lagRun.ph === 'hit') && ((now / 70) | 0) % 2 === 0) ? dumB[fi] : FS.idle[fi]; }   // white flicker while he goes down
+  else { fi = Math.floor(now / (1000 / IDLE_FPS)) % FS.idle.length; info = D.idle; src = (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) ? dumW[fi] : (kt < 0 && now < dummy.stunUntil && !ult && !fd && !dummy.rip && !(lagRun && lagRun.ph === 'hit') && !suKeepFace() && ((now / 70) | 0) % 2 === 0) ? dumB[fi] : FS.idle[fi]; }   // white flicker while he goes down
   if (vs && vs.foe === 'verity') { const L = storyLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox || 0; oy = L.oy || 0; }      // the enemy is Verity
   if (vs && vs.foe === 'yuji') { const ys = vs.inv ? YUF.inv : YUF.norm, wk = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'walk', at = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'attack', pw = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'power'; ox = oy = 0; lift = 0;      // the enemy is Yuji
     if (kneel) { fi = Math.floor(now / (1000 / IDLE_FPS)) % 15; src = ys.cidle[fi]; info = YU.cidle; }      // (his legs are cut: his crouch)
@@ -7949,7 +7956,7 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
   }
   const ap = cuPunch(g, now); cuShotStep(now, dt); cuBleedStep(now); ceTick(now, dt); const sp = g && g.yu ? suStep(g, now) : null; if (g && g.yu) suBleedFx(now);      // (v1.109 sp: the picture of the counter's dodge and slash, or nothing)
   if (g && g.blue) suBlueLabel(now);
-  { const lab = g && g.cs ? 'COUNTER' : g && g.yu ? suLabel(g, now) : g && g.rdy.length ? g.an[g.rdy[(now > cuCmbBy ? 0 : cuCmb) % g.rdy.length]] : 'ATTACK'; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; } }      // (the ATTACK button shows the name of the punch that comes next)
+  { const lab = g && g.cs && !g.cs.air && !g.cs.dash ? 'COUNTER' : g && g.yu ? suLabel(g, now) : g && g.rdy.length ? g.an[g.rdy[(now > cuCmbBy ? 0 : cuCmb) % g.rdy.length]] : 'ATTACK'; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; } }      // (the ATTACK button shows the name of the punch that comes next)
   let jp = -1, lift = 0, jfr = -1; if (cuJumpAt >= 0) {      // (JUMP: the jump frames play once over JUMP TIME while it rises JUMP HEIGHT pixels and comes down; v1.108: a fighter with `yu` jumps as Yuji does, with his timing and his height for every picture, and the dust of his push-off and landing)
     if (g && g.yu) { jfr = jumpFrame(Math.max(0, now - cuJumpAt)); if (jfr >= g.jump.length) { cuJumpAt = -1; jfr = -1; snd('land', 1); } else { jp = (jfr + 0.5) / g.jump.length; lift = YU.jump.lift[jfr]; jumpDust(jfr); } }
     else { jp = (now - cuJumpAt) / cuS.jt; if (jp >= 1) { cuJumpAt = -1; jp = -1; snd('land', 1); } else lift = Math.round(cuS.jh * 4 * jp * (1 - jp)); }
@@ -7959,11 +7966,12 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
   const can = (stance === 'crouch' ? hasCr : stance === 'stand' && !!g && g.walk.length > 0) && ctl && cuAtkAt < 0 && !cuDash && (jfr < 0 || (jfr >= 3 && jfr <= 11)), dir = can ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0;      // (the only thing it can do: walk, when it has walking frames)
   jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = senseReq = false; atkHold = -1; teleAt = -1; gojoGone = false; atkAt = jumpAt = -1; dgAt = cuDash ? cuDash.at : -1; mode = 'idle';      // (it cannot attack or block yet; gojoLift, set above, makes the enemy's swings miss while it is high in the air)
   if (hurtAt >= 0 && now - hurtAt > 700) { hurtAt = -1; hurtEnd = now; }
-  { const v = dir * (dir > 0 ? cuS.fw : cuS.bk) * (stance === 'crouch' ? cuS.cw / 100 : 1) * (blkAt >= 0 ? 0.3 : 1); wx += (g && g.yu ? walkVel(v, dt, jfr >= 0 && jfr <= 11) : v) * dt; } cuPh = dir ? cuPh + dir * dt * ((g && g.wf) || 12) : 0; playerSlide(dt); physCollide(now, dt);
+  { const v = dir * (dir > 0 ? cuS.fw : cuS.bk) * (stance === 'crouch' ? cuS.cw / 100 : 1) * (blkAt >= 0 ? 0.3 : 1); wx += (g && g.yu ? walkVel(v, dt, jfr >= 0 && jfr <= 11) : v) * dt; } cuPh = dir ? cuPh + dir * dt * ((g && g.wf) || 12) : 0; playerSlide(dt); if (!(g && g.cs && g.cs.dash)) physCollide(now, dt);      // (the DASH SLASH passes through the enemy: the bodies are not solid for it)
   ctx.save(); shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }
   ctx.imageSmoothingEnabled = false; drawBackdrop(now); drawSmoke(now, dt); drawBloodFloor(now, dt); drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
   const af = ap >= 0 ? g.atk[cuAtkK] : null, src = !g ? null : kod && now >= vs.koAt ? g.ko[Math.min(g.ko.length - 1, Math.floor((now - vs.koAt) * CU_KO_FPS / 1000))] : hurting ? g.hu[hf] : sp ? sp : af ? af[Math.min(af.length - 1, Math.floor(ap * af.length))] : dp >= 0 ? cuDash.fr[Math.min(cuDash.fr.length - 1, Math.floor(dp * cuDash.fr.length))] : blkAt >= 0 && g.bl.length ? g.bl[Math.min(g.bl.length - 1, Math.floor((now - blkAt) * BLK_FPS / 1000))] : cf >= 0 ? g.cr[cf] : stance === 'crouch' ? (dir && g.cwk ? g.cwk[((Math.floor(cuPh) % g.cwk.length) + g.cwk.length) % g.cwk.length] : g.ci.length ? g.ci[Math.floor(el / (1000 / IDLE_FPS)) % g.ci.length] : g.cr[g.cr.length - 1]) : jp >= 0 ? g.jump[Math.min(g.jump.length - 1, Math.floor(jp * g.jump.length))] : dir ? g.walk[((Math.floor(cuPh) % g.walk.length) + g.walk.length) % g.walk.length] : g.frames[Math.floor(el / (1000 / IDLE_FPS)) % g.frames.length], x = cx - 32, y = gy - 61 - lift, ry = Math.round(64 * (1 - e));
   { const sw = Math.max(5, Math.round(9 * (1 - lift / 70))), sv = Math.round(sw * 2 / 3); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
+  if (g && g.cs && g.cs.dash) suGhostDraw(now, x, y);      // (the afterimages and speed lines of the DASH SLASH, behind him)
   if (src) { ctx.save(); ctx.beginPath(); ctx.rect(x, y + ry, 64, 64 - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, x, y); if (hurtAt >= 0 && now - hurtAt < 70) ctx.drawImage(whiteOf(src), x, y); ctx.restore(); }
   drawGiantNow('foe'); cuDrawVfx(now, cx); cuDrawShots(now, cx);
   if (t < 1) { const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,225,110,' + (1 - t) + ')'; for (let a = 0; a < 64; a++) { const th = a / 64 * 6.2832; ctx.fillRect(Math.round(cx + Math.cos(th) * R), Math.round(y + 34 + Math.sin(th) * R * 0.45), 1, 1); } ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (it appears with a ring and a flash, like the others)
@@ -7989,6 +7997,7 @@ const SU_NEAR = 60, SU_CP = [['R.JAB', 10, 7], ['L.UPPR', 13, 8]], SU_CP_FPS = 3
 const SU_BLUE = { cut: { fps: 50, hit: 7, cost: 5 }, storm: { fps: 24, first: 7, n: 8, stun: 3, cost: 25 }, knock: 2, reach: 10 };      // v1.111 BLUE: the AIR CUT (pictures a second, the picture the cut lands on, the cost in % of the energy) and the CUT STORM (the same, the picture of the first of its slashes and how many there are, the stun in s); the flinch of the AIR CUT (the knock-back of a hit that takes no health); how far past the edge of the screen's half an enemy can still be cut (px)
 const SU_LEG = { fps: 45, hit: 7, cost: 10, kneel: 800, mark: [-14, -22, 14, -12] };      // v1.112 the LEG CUT (BLUE crouched): pictures a second, the picture the cut lands on, the cost (% of the energy), how long he kneels (stunned, ms) and the line of the cut across his legs
 const SU_DIS = { cost: 20, dash: 40, dashMs: 250, pointMs: 150, freeze: 1500, hold: 120, gap: 110, cuts: 3, endMs: 140, after: 600, bleed: 8000, tip: [22, -27], marks: [[-12, -48, 12, -26], [12, -48, -12, -26], [-14, -37, 14, -37]] };      // v1.112 DISMANTLE (BLUE in the air): the cost; how far he dashes back (px) in how long (ms) and how long he then takes to point (ms); how long the game stops (ms); how long the finger holds after the stop before the first cut, the time between two cuts (ms), how many cuts; how long he holds the last one (ms); how long the enemy stays stunned after the last cut (ms); how long each bleed lasts (ms); where the tip of his finger is from his middle on the floor line (x, y, plus his height); and the line of each cut across the enemy's chest
+const SU_DASH = { cost: 20, reach: 100, behind: 26, dashMs: 210, standMs: 480, freeze: 1230, imp: 260, endMs: 420, dmg: 20, bleed: 6000, nb: 2, mark: [-30, -52, 30, -22] };      // v1.118 DASH SLASH (BLUE with FORWARD held): the cost; how far away the enemy can be (px); how far behind him he stops (px); the dash (ms); how long he stands there before the stop (ms); how long the game stops (ms); how much of that is the impact frame (ms); how long he stands after the cut (ms); the cut's damage; how long each of its bleeds lasts (ms) and how many there are; the line of the cut across the enemy
 const SU_MARKS = [[-10, -52, 12, -12], [12, -54, -10, -14], [-12, -36, 14, -30], [-8, -58, 8, -8], [10, -44, -12, -22], [-12, -26, 12, -42], [-6, -58, 10, -10], [12, -30, -12, -48]];      // where the cut of each slash shows across the enemy (x0, y0, x1, y1 from his middle on the floor line), every one another line
 const SU_WAIT = 2000, SU_DODGE = { ms: 233, px: 30, from: 2, n: 7 }, SU_SLASH = { fps: 30, hit: 7, stand: 24, max: 80 }, SU_BLEED = { ms: 4000, gap: 30, dm: 0.1 };      // the counter: how long he waits (ms); the dodge (ms, how far back, the first picture of Yuji's back dash and how many are used); the slash (pictures a second, the picture the cut lands on, how far from the enemy he stops, the longest step) and the bleeding (ms, ms between two ticks, health a tick)
 NAMES[SUK_WHO] = 'SUKUNA'; CEC[SUK_WHO] = ['#2a0a12', '#d02a3a', '#ffb0b8', '#ff7a86'];      // (his name on the HUD and his energy bar: crimson)
@@ -8011,11 +8020,11 @@ NAMES[SUK_WHO] = 'SUKUNA'; CEC[SUK_WHO] = ['#2a0a12', '#d02a3a', '#ffb0b8', '#ff
     const thrown = (d, share, vk, id) => ({ f: SU_THROW.hit, k: 'o', d, sp: () => (VW * share - SU_THROW.lead) / (SU_THROW.ms / 1000), ms: SU_THROW.ms, fx: [['q', 0, 0, 0, -1]], c: 0, src: -1, id, vk });      // (a slash that leaves the hand: its speed is a function of the screen's width, it cannot be blocked: q = a guard break, and it flies for ms)
     ev.push([thrown(SU_THROW.d, SU_THROW.share, 6, 0)], [thrown(SU_THROW.d, SU_THROW.share, 7, 0)], [thrown(SU_THROW.d * 2, SU_THROW.shareX, 9, 0), thrown(SU_THROW.d * 2, SU_THROW.shareX, 10, 1)]);      // 6 and 7: the single slashes, 8: the two slashes of the X (each with its own picture)
     ev.push([{ f: SU_BLUE.cut.hit, k: 'c', cb: now => suCutAt(now, 0, 1) }], Array.from({ length: SU_BLUE.storm.n }, (_, i) => ({ f: SU_BLUE.storm.first + i, k: 'c', cb: now => suCutAt(now, i, SU_BLUE.storm.n) })));      // 9: the AIR CUT (one slash), 10: the CUT STORM (one slash on each of its pictures, from the first one on)
-    ev.push([{ f: SU_LEG.hit, k: 'c', cb: now => suLegAt(now) }], []);      // 11: the LEG CUT (one cut), 12: DISMANTLE has no events: a state of its own plays it (suDisStep)
-    const one = [0, 1].map(ph => suSlashCv(0, ph)), up = [0, 1].map(ph => suSlashCv(1, ph)), dn = [0, 1].map(ph => suSlashCv(2, ph)), vfx = Array.from({ length: 13 }, () => []), vxs = Array.from({ length: 13 }, () => []), spans = l => l.map(c => cuSpan(suAlpha(c), r => r - 2));
+    ev.push([{ f: SU_LEG.hit, k: 'c', cb: now => suLegAt(now) }], [], []);      // 11: the LEG CUT (one cut), 12: DISMANTLE and 13: the DASH SLASH have no events: a state of their own plays them (suDisStep, suDashStep)
+    const one = [0, 1].map(ph => suSlashCv(0, ph)), up = [0, 1].map(ph => suSlashCv(1, ph)), dn = [0, 1].map(ph => suSlashCv(2, ph)), vfx = Array.from({ length: 14 }, () => []), vxs = Array.from({ length: 14 }, () => []), spans = l => l.map(c => cuSpan(suAlpha(c), r => r - 2));
     vfx[6] = vfx[7] = one; vfx[9] = up; vfx[10] = dn; vxs[6] = vxs[7] = spans(one); vxs[9] = spans(up); vxs[10] = spans(dn);      // (the pictures of the flying slashes and the rows each covers, for the touch with the enemy)
-    CU_GAME[3] = { name: 'SUKUNA', frames: set.frames, walk: set.walk, jump: set.jump, hu: [], ko: [], bl: [], df: [], db: [], cr: set.cr, ci: set.ci, cwk: set.cwk, st: { ...cuStats(null), fw: FWD_SPEED, bk: BACK_SPEED, cw: 60, jh: 22, jt: 713 }, vfx, atk: [set.a0, set.a1, set.a2, set.a3, set.cp0, set.cp1, set.a3, set.sl, set.sx, set.cut, set.storm, set.ccut, set.dis], an: SU_ATK.map(a => a[0]).concat('COUNTER', SU_CP.map(a => a[0]), 'R.SLASH', 'L.SLASH', 'X SLASH', 'AIR CUT', 'CUT STORM', 'LEG CUT', 'DISMANTLE'), rdy: [0, 1, 2, 3], ev, set: [0, 1, 2, 3].map(k => ({ v: k < 3 ? SU_ATK[k][5] : 30, m: k < 3 ? SU_ATK[k][4] : 0, c: 0, d: 0 })).concat([SU_CP_FPS, SU_CP_FPS, SU_THROW.fps, SU_THROW.fps, SU_THROW.fps].map((v, i) => ({ v, m: 0, c: 0, d: i === 4 ? SU_THROW.cd : 0 }))).concat([[SU_BLUE.cut.fps, SU_BLUE.cut.cost], [SU_BLUE.storm.fps, SU_BLUE.storm.cost], [SU_LEG.fps, SU_LEG.cost], [20, SU_DIS.cost]].map(([v, c]) => ({ v, m: 0, c, d: 0 }))), body, push: Math.max(5, hs.length ? hs[hs.length >> 1] : 5),
-      tipAll: ev.map(l => cuMaxRows(l.map(e => e.tip))), vxs, dg: set.dg, al: [null, null, SU_KICK_LIFT, null, null, null, null, null, null, null, null, null, null], cs: null, yu: true, blue: true, wf: WALK_FPS, crMs: 1000 / CR_FPS };      // (the blows: 0 R.JAB, 1 L.JAB, 2 FACE KICK, 3 COUNTER, 4 R.JAB and 5 L.UPPR crouched, 6 R.SLASH, 7 L.SLASH, 8 X SLASH, 9 AIR CUT, 10 CUT STORM, 11 LEG CUT, 12 DISMANTLE (the last four are played by BLUE: blue); yu: he moves like Yuji; wf: his walking pictures a second; crMs: how long a picture of the crouch lasts; al: the height of each picture of a blow that hops; cs: the counter in progress; dg: the pictures of the dodge; the stats are Yuji's: 56 and 38 px/s, 60% while crouched, a jump of 22 px, 713 ms of flight)
+    CU_GAME[3] = { name: 'SUKUNA', frames: set.frames, walk: set.walk, jump: set.jump, hu: [], ko: [], bl: [], df: [], db: [], cr: set.cr, ci: set.ci, cwk: set.cwk, st: { ...cuStats(null), fw: FWD_SPEED, bk: BACK_SPEED, cw: 60, jh: 22, jt: 713 }, vfx, atk: [set.a0, set.a1, set.a2, set.a3, set.cp0, set.cp1, set.a3, set.sl, set.sx, set.cut, set.storm, set.ccut, set.dis, set.a3], an: SU_ATK.map(a => a[0]).concat('COUNTER', SU_CP.map(a => a[0]), 'R.SLASH', 'L.SLASH', 'X SLASH', 'AIR CUT', 'CUT STORM', 'LEG CUT', 'DISMANTLE', 'DASH SLASH'), rdy: [0, 1, 2, 3], ev, set: [0, 1, 2, 3].map(k => ({ v: k < 3 ? SU_ATK[k][5] : 30, m: k < 3 ? SU_ATK[k][4] : 0, c: 0, d: 0 })).concat([SU_CP_FPS, SU_CP_FPS, SU_THROW.fps, SU_THROW.fps, SU_THROW.fps].map((v, i) => ({ v, m: 0, c: 0, d: i === 4 ? SU_THROW.cd : 0 }))).concat([[SU_BLUE.cut.fps, SU_BLUE.cut.cost], [SU_BLUE.storm.fps, SU_BLUE.storm.cost], [SU_LEG.fps, SU_LEG.cost], [20, SU_DIS.cost], [30, SU_DASH.cost]].map(([v, c]) => ({ v, m: 0, c, d: 0 }))), body, push: Math.max(5, hs.length ? hs[hs.length >> 1] : 5),
+      tipAll: ev.map(l => cuMaxRows(l.map(e => e.tip))), vxs, dg: set.dg, al: [null, null, SU_KICK_LIFT, null, null, null, null, null, null, null, null, null, null, null], cs: null, yu: true, blue: true, wf: WALK_FPS, crMs: 1000 / CR_FPS };      // (the blows: 0 R.JAB, 1 L.JAB, 2 FACE KICK, 3 COUNTER, 4 R.JAB and 5 L.UPPR crouched, 6 R.SLASH, 7 L.SLASH, 8 X SLASH, 9 AIR CUT, 10 CUT STORM, 11 LEG CUT, 12 DISMANTLE (the last four are played by BLUE: blue); yu: he moves like Yuji; wf: his walking pictures a second; crMs: how long a picture of the crouch lasts; al: the height of each picture of a blow that hops; cs: the counter in progress; dg: the pictures of the dodge; the stats are Yuji's: 56 and 38 px/s, 60% while crouched, a jump of 22 px, 713 ms of flight)
   };
   im.src = SUK_PNG;
 })();
@@ -8043,6 +8052,7 @@ function suStep(g, now) {      // every frame of the counter: the state moves on
   const c = g.cs; if (!c) return null;
   if (vs.ph !== 'fight') { suEnd(g, now); return null; }
   if (c.air) return suDisStep(g, c, now);      // (v1.112 DISMANTLE is a state of the same kind: g.cs = { air: true, ... })
+  if (c.dash) return suDashStep(g, c, now);      // (v1.118 the DASH SLASH: g.cs = { dash: true, ... })
   const t = now - c.t0;
   if (c.ph === 'wait') { if (t >= SU_WAIT) suEnd(g, now); return null; }
   if (c.ph === 'dodge') {
@@ -8099,7 +8109,7 @@ function suLabel(g, now) {      // what the ATTACK button says: the blow that co
 let suCast = null, suMk = 0;
 function suBlue(now) {      // the BLUE move this moment asks for (-1: none): in the flight of a jump (its pictures 3 to 11) DISMANTLE (12), crouched the LEG CUT (11), standing the CUT STORM (10) with the back direction held and otherwise the AIR CUT (9)
   if (cuJumpAt >= 0) { const f = jumpFrame(Math.max(0, now - cuJumpAt)); return f >= 3 && f <= 11 ? 12 : -1; }
-  return stance === 'crouch' ? 11 : stance === 'stand' ? (keyL || padL ? 10 : 9) : -1;
+  return stance === 'crouch' ? 11 : stance === 'stand' ? (keyL || padL ? 10 : (keyR || padR) && suDashOk(now) ? 13 : 9) : -1;
 }
 function suBlueOk(k, now) {      // can this BLUE move start? DISMANTLE stops time, so it needs a living enemy in front of him on the screen that he can hit (not one lying down, held or beyond the edge): otherwise NO TARGET, and nothing is paid
   if (k !== 12) return true;
@@ -8109,8 +8119,9 @@ function suBlueOk(k, now) {      // can this BLUE move start? DISMANTLE stops ti
 }
 function suBlueStart(k, now) {      // a new BLUE move has started: nothing has landed yet; DISMANTLE is a state of its own (g.cs) in which nothing touches him (suHit)
   suCast = { hits: 0 }; if (k === 12) CU_GAME[3].cs = { air: true, ph: 'air', t0: now, last: now, done: 0, cuts: 0, frozen: false };
+  if (k === 13) { const d = dummy; CU_GAME[3].cs = { dash: true, ph: 'dash', t0: now, done: 0, dx: d.x - wx + SU_DASH.behind, gh: [], cut: false }; cuStun((SU_DASH.dashMs + SU_DASH.standMs + SU_DASH.endMs + 300) / 1000, now, true); d.dodgeUntil = 0; snd('dash', 1); say('DASH SLASH', wx, '#ffe9a0', 8, now); }      // (the enemy stands still from now until after the cut)
 }
-const SU_BLUE_NAMES = { 9: ['AIR<br>CUT', 'Air Cut: an invisible slash cuts the enemy at once wherever he stands on the screen and he bleeds (5 energy). Hold back for the Cut Storm, crouch for the Leg Cut, jump for Dismantle'], 10: ['CUT<br>STORM', 'Cut Storm: eight invisible slashes cut the enemy, he is stunned for 3 seconds and bleeds more with every slash (25 energy)'], 11: ['LEG<br>CUT', 'Leg Cut: an invisible slash cuts the enemy\'s legs, he drops to his knees and is stunned for 0.8 seconds, and every hit lands on him (10 energy)'], 12: ['<span style="font-size:.78em">DISMAN-<br>TLE</span>', 'Dismantle: he dashes back in the air and points, time stops while he says it, then the enemy is cut three times in the chest and bleeds out (20 energy)'] };
+const SU_BLUE_NAMES = { 9: ['AIR<br>CUT', 'Air Cut: an invisible slash cuts the enemy at once wherever he stands on the screen and he bleeds (5 energy). Hold back for the Cut Storm, crouch for the Leg Cut, jump for Dismantle'], 10: ['CUT<br>STORM', 'Cut Storm: eight invisible slashes cut the enemy, he is stunned for 3 seconds and bleeds more with every slash (25 energy)'], 11: ['LEG<br>CUT', 'Leg Cut: an invisible slash cuts the enemy\'s legs, he drops to his knees and is stunned for 0.8 seconds, and every hit lands on him (10 energy)'], 13: ['DASH<br>SLASH', 'Dash Slash: he dashes through the enemy and stops behind him, the game stops for 1.23 seconds with an impact frame, then the enemy is cut and bleeds (20 energy; hold forward with the enemy within 100 pixels)'], 12: ['<span style="font-size:.78em">DISMAN-<br>TLE</span>', 'Dismantle: he dashes back in the air and points, time stops while he says it, then the enemy is cut three times in the chest and bleeds out (20 energy)'] };
 function suBlueLabel(now) {      // the BLUE button's name (and what a screen reader hears): it changes with where he is and with the back direction
   const k = suBlue(now), n = SU_BLUE_NAMES[k < 0 ? 9 : k], el = $('lapl');
   if (el.innerHTML !== n[0]) { el.innerHTML = n[0]; $('lap').setAttribute('aria-label', n[1]); }
@@ -8168,6 +8179,7 @@ function suDisCut(i, now) {      // the i-th of the three cuts of DISMANTLE land
 function suTsFrame() {      // the game is stopped (DISMANTLE): the frame it stopped on, grey and dark, with red bars, a line from his finger to the enemy, the three cuts drawn thin on the enemy's chest in the last moments, and the word; painted by the main loop on every frame of the stop (the time of it is how much of stopMs has run out, so a pause holds it too)
   const T = suTs; if (!T || T.vs !== vs || performance.now() - T.real > T.total + 1500) { suTs = null; return; }
   if (!T.snap) { const c = document.createElement('canvas'); c.width = cv.width; c.height = cv.height; c.getContext('2d').drawImage(cv, 0, 0); T.snap = c; }
+  if (T.kind === 'dash') { suTsDash(T); return; }      // (v1.118 the DASH SLASH's stop: the impact frame and the cut opening)
   const t = Math.max(0, T.total - stopMs), W = cv.width, H = cv.height, cx = Math.round(W / 2), X = cx + Math.round(T.ex), bar = Math.round(H * 0.13 * Math.min(1, t / 180));
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 1;
   ctx.filter = 'grayscale(0.92) contrast(1.15) brightness(0.7)'; ctx.drawImage(T.snap, 0, 0); ctx.filter = 'none';
@@ -8184,6 +8196,94 @@ function suTsFrame() {      // the game is stopped (DISMANTLE): the frame it sto
   });
   const word = 'DISMANTLE', sz = 24, shown = Math.min(word.length, Math.floor(t / 55)), x0 = Math.round(cx - word.length * sz / 2), y0 = Math.round(H * 0.4), jit = t > 520 ? (Math.floor(t / 40) % 3) - 1 : 0;
   if (shown > 0 && !(t > T.total - 260 && Math.floor(t / 45) % 2)) { pxt(word.slice(0, shown), x0 + 2 + jit, y0 + 2, '#8a0c18', sz, 'left'); pxt(word.slice(0, shown), x0 + jit, y0, '#ffffff', sz, 'left'); }      // (the word, a letter at a time, in white over a dark red copy; it flickers out in the end)
+  ctx.restore(); if (stopMs <= 0) suTs = null;
+}
+
+// ---- v1.118 the DASH SLASH (BLUE standing with the FORWARD direction held, an enemy in front within SU_DASH.reach px; 20 CE): he dashes THROUGH the enemy (a teleporting dash with afterimages and speed lines, on the pictures of his slash) and stops behind him, standing, while the enemy stands still (he does not even turn round); then THE GAME FREEZES for 1.23 s: first the IMPACT FRAME (the held frame in hard black and white with a thick white slash across the enemy and rays, flashing to its negative a few times), then the frozen frame again with the cut opening across the enemy and the first drops of blood; then time goes on and the cut lands (a little damage, two bleeds of 6 s, nothing can block it: it comes from behind). Nothing touches him during the move (suHit). See suBlue, suDashStep, suDashCut, suFreezeDash, suTsDash, suGhostDraw.
+function suDashOk(now) {      // can the DASH SLASH start: a living enemy in front of him within SU_DASH.reach px that he can hit (not one lying down, held, in his smoke-ball form or already behind him)
+  const d = dummy, gap = d ? d.x - wx : 1e9;
+  return !!d && d.ko < 0 && !d.cap && now >= (d.down || 0) && !(d.vform && d.vform !== 'verity') && gap >= -4 && gap <= SU_DASH.reach && vs.ph === 'fight';
+}
+function suKeepFace() { const g = CU_GAME[3]; return !!(g && g.cs && g.cs.dash); }      // (the enemy does not turn round to face him while he is being passed: drawDummy asks)
+function suDashStep(g, c, now) {      // DASH SLASH, every frame: the dash, the standing, the stop (suFreezeDash) and the cut; returns the picture to show
+  const D = SU_DASH, S = g.atk[3], d = dummy;
+  if (!d || d.ko >= 0) { suEnd(g, now); return null; }
+  if (c.ph === 'dash') {      // (a fast step through him, slowing down: 0.21 s)
+    const k = Math.min(1, (now - c.t0) / D.dashMs), tg = c.dx * (1 - Math.pow(1 - k, 3)); wx += tg - c.done; c.done = tg;
+    if (!c.gh.length || now - c.gh[c.gh.length - 1].at >= 26) c.gh.push({ x: wx, at: now, f: k < 0.5 ? 8 : 9 });
+    if (k >= 1) { wx += c.dx - c.done; c.done = c.dx; c.ph = 'stand'; c.t1 = now; snd('swing', 3); }
+    return S[k < 0.5 ? 8 : 9];
+  }
+  if (c.ph === 'stand') {      // (he stands behind the enemy: his arm swings down and he is still; the enemy stands still)
+    const t = now - c.t1; d.dodgeUntil = 0;
+    if (t >= D.standMs) { c.ph = 'frozen'; suFreezeDash(now); }
+    return S[Math.min(12, 10 + Math.floor(t / 70))];
+  }
+  if (!c.cut) { c.cut = true; c.t2 = now; suDashCut(now); }      // (the game's clock stood still during the stop: the first frame after it is the cut)
+  if (now - c.t2 >= D.endMs) { suEnd(g, now); return null; }
+  return S[12];
+}
+function suFreezeDash(now) {      // time stops for SU_DASH.freeze ms (stopMs: the main loop holds the frame and calls suTsFrame, which paints the impact frame and then the cut opening)
+  const d = dummy; stopMs = Math.max(stopMs, SU_DASH.freeze); suTs = { kind: 'dash', total: stopMs, snap: null, real: performance.now(), vs, ex: d ? d.x - wx : -SU_DASH.behind };
+  if (d) { d.dodgeUntil = 0; cuStun((SU_DASH.endMs + 300) / 1000, now, true); }
+  snd('sukimp');
+}
+function suDashCut(now) {      // the cut lands on the enemy's back (he is in front of the cut, behind him): a little damage and two bleeds; a guard cannot be in the way (it comes from behind)
+  const d = dummy; if (!d || d.ko >= 0) return; d.dodgeUntil = 0;
+  if (!cuHit(SU_DASH.dmg, now, { gb: true, low: true, knock: -2 }, undefined, 500, -500)) return;
+  let nb = 0; for (let i = 0; i < SU_DASH.nb; i++) nb = suBleed(d, now, SU_DASH.bleed);
+  tqFx.push({ k: 'slash', x: d.x, real: performance.now(), p: SU_DASH.mark }); snd('sukcut', 2); snd('smack', 3);
+  spark(d.x, gy - 34, 14, ['#ffffff', '#ff2a3a', '#ffb0b8'], true, -1); tqBlood(d.x + 2, gy - 36, 44, -1); hitStop(90); shakeUntil = now + 240; shakeAmp = 4;
+  say(nb > 1 ? 'BLEED x' + nb : 'BLEEDING', d.x, '#ff3a4a', 8, now + 90);
+}
+function suGhostDraw(now, x, y) {      // the afterimages of the dash (his slash picture where he was, fading out in 0.24 s) and its speed lines, drawn under his own picture's place
+  const g = CU_GAME[3], c = g && g.cs; if (!c || !c.dash) return;
+  c.gh = c.gh.filter(o => now - o.at < 240);
+  for (const o of c.gh) { ctx.globalAlpha = 0.5 * (1 - (now - o.at) / 240); ctx.drawImage(g.atk[3][o.f], Math.round(x + o.x - wx), y); }
+  ctx.globalAlpha = 1;
+  if (c.ph === 'dash') { ctx.save(); for (let i = 0; i < 8; i++) { const yy = y + 10 + ((i * 37 + Math.floor(now / 28) * 11) % 46), len = 16 + ((i * 29) % 34); ctx.fillStyle = i % 2 ? '#ffffff' : '#bcd4ff'; ctx.fillRect(x + 22 - len - ((i * 13) % 14), yy, len, 1); } ctx.restore(); }
+}
+function suSilhouettes(T, W, H, X, cx) {      // the two fighters as flat white shapes on a clear canvas: what differs between the held frame and an empty backdrop, in a box round them (null when the backdrop cannot be painted again)
+  try {
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; drawBackdrop(pnow()); ctx.restore();
+    const bg = document.createElement('canvas'); bg.width = W; bg.height = H; bg.getContext('2d').drawImage(cv, 0, 0);
+    const a = T.snap.getContext('2d').getImageData(0, 0, W, H).data, b = bg.getContext('2d').getImageData(0, 0, W, H).data;
+    const m = document.createElement('canvas'); m.width = W; m.height = H; const mc = m.getContext('2d'), out = mc.createImageData(W, H), o = out.data;
+    const x0 = Math.max(0, Math.min(X, cx) - 44), x1 = Math.min(W - 1, Math.max(X, cx) + 44), y0 = Math.max(0, gy - 64), y1 = Math.min(H - 1, gy + 8);
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const i = (y * W + x) * 4; if (Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]) > 12) o[i] = o[i + 1] = o[i + 2] = o[i + 3] = 255; }
+    mc.putImageData(out, 0, 0); return m;
+  } catch (e) { return null; }
+}
+function suTsDash(T) {      // the game is stopped (DASH SLASH): the impact frame, then the frozen frame with the cut opening; painted on every frame of the stop (t = how much of it has run)
+  const D = SU_DASH, t = Math.max(0, T.total - stopMs), W = cv.width, H = cv.height, cx = Math.round(W / 2), X = cx + Math.round(T.ex), Y = gy - 36, th = -0.3, ca = Math.cos(th), sa = Math.sin(th);
+  const band = (u0, u1, hh, col) => {      // a blade-shaped streak through (X, Y): from u0 to u1 (-1 to 1) of its length, hh px thick in the middle
+    ctx.fillStyle = col; ctx.beginPath(); const n = 24;
+    for (let i = 0; i <= n; i++) { const u = u0 + (u1 - u0) * i / n, ht = hh * Math.pow(Math.max(0, 1 - u * u), 0.8), px = X + u * 78 * ca - ht * sa, py = Y + u * 78 * sa + ht * ca; if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); }
+    for (let i = n; i >= 0; i--) { const u = u0 + (u1 - u0) * i / n, ht = hh * Math.pow(Math.max(0, 1 - u * u), 0.8), px = X + u * 78 * ca + ht * sa, py = Y + u * 78 * sa - ht * ca; ctx.lineTo(px, py); }
+    ctx.closePath(); ctx.fill();
+  };
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 1;
+  if (t < D.imp) {      // THE IMPACT FRAME: hard black and white, rays, one thick white slash; it flashes to its negative three times in its first 0.2 s
+    const neg = t < 200 && Math.floor(t / 40) % 2 === 0, fg = neg ? '#000000' : '#ffffff', seed = Math.floor(t / 45);
+    if (T.sil === undefined) T.sil = suSilhouettes(T, W, H, X, cx);
+    if (T.sil) { ctx.fillStyle = neg ? '#ffffff' : '#000000'; ctx.fillRect(0, 0, W, H); }
+    else { ctx.filter = 'grayscale(1) contrast(8) brightness(1.1)' + (neg ? ' invert(1)' : ''); ctx.drawImage(T.snap, 0, 0); ctx.filter = 'none'; }      // (without the silhouettes: the held frame itself in hard black and white)
+    ctx.fillStyle = fg;
+    for (let i = 0; i < 28; i++) { const a = i / 28 * 6.2832 + ((i * 17 + seed * 5) % 9) * 0.02, L = 34 + ((i * 53 + seed * 31) % 100), w = 0.025 + ((i * 7) % 5) * 0.012; ctx.beginPath(); ctx.moveTo(X + Math.cos(a) * 30, Y + Math.sin(a) * 30); ctx.lineTo(X + Math.cos(a - w) * (L + 30), Y + Math.sin(a - w) * (L + 30)); ctx.lineTo(X + Math.cos(a + w) * (L + 30), Y + Math.sin(a + w) * (L + 30)); ctx.closePath(); ctx.fill(); }
+    if (T.sil) {      // (the two fighters: flat shapes with a thin edge in the other colour so that the rays do not swallow them; a line for the ground)
+      ctx.fillRect(0, gy + 6, W, 1);
+      ctx.filter = neg ? 'brightness(0) invert(1)' : 'brightness(0)'; for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) ctx.drawImage(T.sil, dx, dy); ctx.filter = neg ? 'invert(1)' : 'none'; ctx.drawImage(T.sil, 0, 0); ctx.filter = 'none';
+    }
+    band(-1, 1, 11, neg ? '#ffffff' : '#000000'); band(-1, 1, 7, fg);      // (the slash: a dark edge round a white core, the other way round in the negative)
+  } else {      // THE CUT OPENS: the held frame, a little darker and greyer, a white and red line growing across the enemy from left to right, blood drops starting to fall; a white flash on the last moment
+    ctx.filter = 'grayscale(0.5) contrast(1.1) brightness(0.62)'; ctx.drawImage(T.snap, 0, 0); ctx.filter = 'none';
+    const gr = ctx.createRadialGradient(W / 2, H * 0.55, H * 0.2, W / 2, H * 0.55, W * 0.7); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(12,0,8,0.6)'); ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+    const k = Math.min(1, (t - D.imp - 40) / 160), open = Math.max(0, Math.min(1, (t - D.imp - 200) / 500));
+    if (k > 0) { band(-1, -1 + 1.35 * k, 4.5 + 2.5 * open, '#8a0c18'); band(-1, -1 + 1.35 * k, 2.2 + 1.2 * open, '#ffffff'); }
+    const t0 = D.imp + 260;
+    if (t > t0) for (let i = 0; i < 16; i++) { const u = -0.8 + (i * 0.08) % 1.1, bx = X + u * 78 * ca, by = Y + u * 78 * sa, st = t0 + i * 22; if (t < st) continue; ctx.fillStyle = i % 3 ? '#c4121c' : '#ff2a3a'; ctx.fillRect(Math.round(bx), Math.round(by + 2 + (t - st) * 0.016 * (1 + (i % 4) * 0.3)), 1, 2 + (i % 2)); }
+    if (t > T.total - 110) { ctx.globalAlpha = (t - (T.total - 110)) / 110 * 0.8; ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
+  }
   ctx.restore(); if (stopMs <= 0) suTs = null;
 }
 
@@ -12340,6 +12440,7 @@ $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+{"v": "1.118", "t": "SUKUNA: DASH SLASH", "n": ["Sukuna has a new slash move, DASH SLASH. Walk forward and tap the BLUE button (it is called DASH SLASH now when you hold forward with the enemy close) and he dashes straight through the enemy and stops behind him. While he stands there the enemy stands still and does not even turn round.", "Then the whole game freezes for 1.23 seconds. First an impact frame flashes: the screen goes black and white with rays and one thick white slash across the enemy. Then the normal picture comes back, frozen, and a red and white cut opens across the enemy while the first drops of blood fall.", "When the game goes on again the cut lands: a little damage (20) and two bleeds of 6 seconds that stack, and nothing can block it because it comes from behind. It costs 20% of the cursed energy and only works when the enemy is within 100 pixels in front of him. If the enemy is farther away, forward + BLUE is the normal AIR CUT as before.", "Nothing can touch Sukuna during the whole move. Afterwards he is standing behind the enemy, so the enemy is behind him."]},
 {"v": "1.117", "t": "VERITY: LAG COUNTER", "n": ["Verity has another new BLUE move, LAG COUNTER. Walk back and tap BLUE: he plays his walking-backwards animation but does not move, and the picture stutters and jumps like a player with a bad connection. It lasts 1.5 seconds.", "If the enemy hits him in that time, the hit does nothing to him. His top body is launched back (his legs stay where they are), then it snaps forward, bites the enemy, and he punches the enemy far away. The bite is his normal bite (12 damage and the bleeding) and the punch does 35 damage and knocks the enemy down. Nothing can touch him until it is over.", "If nothing hits him in 1.5 seconds, the lag just ends and the energy is gone. It costs 15% of the cursed energy. In the SKILLS tree it is a new node under VERITY: LAG COUNTER, $400, and you need BITE first. The BLUE button says LAG when you hold back.", "A blow that is not a fighter's swing (a curse, or a hit from behind) lands as usual and ends the lag. It is not in Wi-Fi fights yet."]},
 {"v": "1.116", "t": "VERITY: RIP AND THROW", "n": ["Verity has a new BLUE move, RIP AND THROW. Walk forward and tap BLUE while the enemy is right in front of you: Verity's arms stretch out, he catches both of the enemy's hands and tries to rip him apart. It does not work, so he throws him back instead: 25 damage and the enemy is knocked down. While Verity holds him the enemy cannot move, and a guard does not help against it.", "While Verity pulls, the enemy is stretched long and thin and shakes, then he snaps back just before the throw. The BLUE button says RIP (instead of BITE) when you are close enough to catch the enemy.", "It costs 15% of the cursed energy. In the SKILLS tree it is a new node under VERITY: RIP AND THROW, $350, and you need BITE first.", "If the enemy hits Verity while he is holding him, the enemy is let go. An enemy who is crouching, lying on the floor, flinching from a hit, or in his smoke ball form cannot be caught, and then BLUE is the normal BITE. Lighter fighters, like the Cat, fly further when they are thrown. It is not in Wi-Fi fights yet, because Verity's BLUE moves are still waiting for their turn there."]},
 {"v": "1.115", "t": "WI-FI ROOMS: EVERY FIGHTER, AND A FASTER LINK", "n": ["Wi-Fi rooms now work with all five fighters of Versus: Gojo, Yuji, Verity, the Cartoon Cat and Freddy Krueger. On the choose screen tap one of the five cards (tap it again to change your mind). When both of you have chosen, the game shows who fights who, and when you both tap FIGHT it starts. If you both choose the same fighter, the dice roll who gets the inverted one, like before.", "Every fighter's basic moves work online, between any two fighters: walking, jumping, crouching, dashing, blocking (and parrying), the ATTACK combos, the crouch attacks, Verity's teleport, the Cat's grab combo (his glove pulls the other player in) and Freddy's catch (his hand holds whoever swung for 0.75 seconds). Everything is unlocked in a Wi-Fi fight, so nothing has to be bought first. Yuji has no INHERITENCE.", "What is not online yet, and comes in the next updates: the BLUE moves (only Gojo's teleport in the air works), the MODE button, DOMAIN, FATAL, the heavy strike, the Cat's arm hang and Freddy's pierce. Those buttons are dimmed in a Wi-Fi fight.", "A much faster link between the two phones. Every message now travels on two roads at once, the old reliable one and a fast one, and the game uses whichever copy arrives first. On a busy Wi-Fi a lost packet can hold everything back for a second or more, which is the most likely reason the ping was around 700 ms; now a lost packet usually costs well under a tenth of a second. The app also asks the phone to keep its Wi-Fi radio awake while you play, because the radio dozing between small packets slows every answer down.", "The ping is shown on the choose screen and at the bottom of the fight (PING 14). It is measured on the fast road. If the router blocks the fast road, the game keeps working on the old one and the choose screen says SLOW ROAD.", "Both phones need this version. If the other phone has another version of the game, the choose screen says so and the cards do nothing until you both update."]},
