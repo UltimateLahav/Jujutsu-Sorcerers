@@ -199,7 +199,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.116</small>
+    <small id="ver">V1.117</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -1873,6 +1873,7 @@ const SK_VERITY = [
   ['v_air', 'AIR COMBO', 'JUMP ON THE LAST M1 (THE PUNCH): THE ENEMY IS KICKED UP. JUMP AGAIN: HE LEVITATES WITH THE ENEMY AND THE 4-HIT M1 STARTS AGAIN IN THE AIR. IF HE DOES NOT ATTACK, OR AFTER THE LAST HIT, HE KICKS THE ENEMY DOWN TO THE FLOOR', 450, ['v_heavy']],
   ['v_pounce', 'AIR BITE', 'BLUE IN THE AIR: HE FALLS ON THE ENEMY HEAD FIRST AND BITES: TWICE THE DAMAGE OF A BITE, IT BREAKS A GUARD, AND THE ENEMY BLEEDS FOR 4 SECONDS (25% ENERGY)', 400, ['v_bite']],
   ['v_rip', 'RIP AND THROW', "WALK FORWARD + BLUE, CLOSE TO THE ENEMY: HE CATCHES BOTH OF THE ENEMY'S HANDS AND TRIES TO RIP HIM APART. IT DOES NOT WORK, SO HE THROWS HIM BACK: 25 DAMAGE AND A KNOCK-DOWN. A GUARD DOES NOT STOP IT (15% ENERGY)", 350, ['v_bite']],
+  ['v_lag', 'LAG COUNTER', "WALK BACK + BLUE: HE WALKS BACKWARDS ON THE SPOT, FROZEN AND STUTTERING LIKE A LAGGING PLAYER, FOR 1.5 SECONDS. IF THE ENEMY HITS HIM IN THAT TIME THE HIT DOES NOTHING: HIS TOP BODY IS LAUNCHED BACK, THEN SNAPS FORWARD, BITES THE ENEMY AND PUNCHES HIM AWAY (15% ENERGY)", 400, ['v_bite']],
   ['v_sense', 'SMELL OF FEAR', 'IN HUNTS: THE SENSE BUTTON SHOWS EVERY HIDDEN ITEM, CLUE AND CURSE NEAR YOU FOR 3 SECONDS (8 SECOND COOLDOWN)', 300, []]];
 const SK_CAT = [
   ['k_crouch', 'FLATTEN', 'DOWN ON THE STICK OR KEY S: SMASH YOURSELF FLAT, TAP AGAIN TO STAND UP (3% ENERGY)', 50, []],
@@ -2219,7 +2220,7 @@ const SK_TABS = [['g', 'skTabG', SK_GOJO], ['y', 'skTabY', SK_YUJI], ['v', 'skTa
 const SK_LAY = {      // where every node sits, [column, row] (the root is column 0): a line runs from the right edge of a skill a node needs to the left edge of the node, so the cells in between have to be empty
   g: { _root: [0, 2.5], crouch: [1, 0], cpunch: [2, 0], blue: [1, 1], mblue: [2, 1], dash: [1, 2], tele: [2, 2], purple: [3, 2.5], simple: [3, 4], block: [1, 3], ce: [1, 4], red: [2, 4], fatal: [1, 5], domain: [2, 5], heavy: [1, 6], cancel: [2, 3], sense: [1, 7] },
   y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 4.5], y_pierce: [5, 3], y_shrine: [5, 4], y_cleave: [5, 5], y_simple: [5, 6], y_ult: [4, 5.7], y_fatal: [4, 6.7], y_div: [1, 6], y_rush: [2, 6], y_heavy: [1, 4.7], y_cancel: [3, 1.5], y_sense: [1, 7], y_hometown: [6, 3.5] },
-  v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5], v_heavy: [1, 4.5], v_cancel: [3, 0.8], v_air: [2, 4.5], v_pounce: [3, 3.5], v_sense: [1, 5.6], v_rip: [3, 4.6] },
+  v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5], v_heavy: [1, 4.5], v_cancel: [3, 0.8], v_air: [2, 4.5], v_pounce: [3, 3.5], v_sense: [1, 5.6], v_rip: [3, 4.6], v_lag: [3, 5.7] },
   k: { _root: [0, 1], k_crouch: [1, 0], k_fatal: [3, 0], k_dash: [1, 1], k_toon: [2, 1], k_stomp: [3, 1], k_kick: [3, 3], k_lift: [3, 4], k_hang: [2, 3], k_block: [1, 2], k_ult: [3, 2], k_heavy: [1, 3], k_cancel: [2, 0], k_sense: [1, 4] },
   c: { _root: [0, 1], yuji: [1, 0], verity: [1, 1], cat: [1, 2] } };
 const SK_ALL = { y: 'y_hometown' };      // (v1.50 the node of a tab that needs every other node of it: no routed lines, a web of thin straight lines from every node instead)
@@ -2913,6 +2914,7 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   if (catGlove(now)) { nres('m'); return; }      // (the Cat in the giant's glove, lifted or flying: nothing touches him)
   if (dom) { nres('m'); return; }      // (the DOMAIN freezes everyone, whatever they were doing: nothing of the enemy's touches you until it is over)
   if (cuMe() && suHit(now)) { nres('m'); return; }      // (v1.109 SUKUNA's COUNTER: while he waits the swing is dodged, and until his slash has landed nothing reaches him, see sukuna.js)
+  if (lagRun && lagHit(k, now)) { nres('m'); return; }      // (v1.117 Verity's LAG COUNTER: the blow does nothing to him and starts his counter)
   if (isD2(k)) { gojoDiv2(now); return; }      // (DIVERGENT FIST's second impact, normal or RUSH: see gojoDiv2)
   if (dgAt >= 0 && now - dgAt < 11 * 1000 / DASH_FPS) { if (now - dgAt < 7 * 1000 / DASH_FPS && now - dodgeAt > 400 && (!vs || vs.ph === 'fight')) { dodgeAt = now; ceGain(E_DODGE); flowAdd(10, now); say('DODGE!', wx, '#9fd8ff', 8, now); } nres('m'); return; }       // he is dashing: the swing misses (v1.30: a dash started just before the blow gives energy)
   const held = vs && vs.foe === 'cat' && k >= 30 && k <= 33 && now < (vs.catHold || 0);      // (inside the Cat's glove the combo cannot miss because Gojo is 'still reeling')
@@ -2997,7 +2999,7 @@ function drawDummy(now, dt) {
   else if (kt < 0 && dummy.mode === 'fighter' && (dummy.ai === 'block' || dummy.ai === 'dodge')) { fi = 5 + Math.floor(now / 125) % 5; info = D.atk11; src = FS.blk[fi]; }       // the smart enemy: guard up (also while he steps back)
   else if (kt < 0 && dummy.mode === 'blocker') { fi = 5 + Math.floor(now / 125) % 5; info = D.atk11; src = FS.blk[fi]; }       // guard up: the hands-up loop
   else if (kt < 0 && dummy.fear) { fi = Math.floor(now / (1000 / IDLE_FPS)) % 15; info = D.cidle; src = FS.fear[fi]; const o = fearOff(now); ox = o[0]; oy = o[1]; }      // JUMPSCARE: stunned, he cowers and shakes
-  else { fi = Math.floor(now / (1000 / IDLE_FPS)) % FS.idle.length; info = D.idle; src = (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) ? dumW[fi] : (kt < 0 && now < dummy.stunUntil && !ult && !fd && !dummy.rip && ((now / 70) | 0) % 2 === 0) ? dumB[fi] : FS.idle[fi]; }   // white flicker while he goes down
+  else { fi = Math.floor(now / (1000 / IDLE_FPS)) % FS.idle.length; info = D.idle; src = (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) ? dumW[fi] : (kt < 0 && now < dummy.stunUntil && !ult && !fd && !dummy.rip && !(lagRun && lagRun.ph === 'hit') && ((now / 70) | 0) % 2 === 0) ? dumB[fi] : FS.idle[fi]; }   // white flicker while he goes down
   if (vs && vs.foe === 'verity') { const L = storyLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox || 0; oy = L.oy || 0; }      // the enemy is Verity
   if (vs && vs.foe === 'yuji') { const ys = vs.inv ? YUF.inv : YUF.norm, wk = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'walk', at = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'attack', pw = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'power'; ox = oy = 0; lift = 0;      // the enemy is Yuji
     if (kneel) { fi = Math.floor(now / (1000 / IDLE_FPS)) % 15; src = ys.cidle[fi]; info = YU.cidle; }      // (his legs are cut: his crouch)
@@ -3549,7 +3551,7 @@ function beginRound(now) {                     // a fresh round: the scene is re
   spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); if (vs.net) { dummy.net = true; dummy.max = dummy.hp = dummy.shown = PHP; dummy.x = dummy.tx = wx + NET_G0; dummy.pose = null; vs.toSent = false; }      // (the Wi-Fi fight: the other player, drawn from his phone's pictures)
   vdg = cst = null; smear.length = drip.length = 0; cProj = []; if (vs.rush) rushSpawn(t); else if (vs.cv) initCurse(dummy, vs.cv, wx + Math.max(54, Math.min(90, (VW >> 1) - 70)), vs.hard ? 1.5 : 1);      // (a challenge: the curse steps in; a RUSH wave: one or two)
   $('vsres').classList.remove('on');      // (REMATCH and NEXT start a new fight: the result screen goes away. Since v7.12 this line had slipped into a comment, so the result screen stayed on top of the new fight)
-  netPull = null; ripRun = null; vp = vpNew(); cp = cpNew(); hg = null; pwFx.length = 0; tz = null; lk = 0; js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; wvx = 0; deb = []; lit = []; vs.rag = null; vh = null; ac = null; acWin = 0; acGo = false; acPend = -1; redAt = -1; redLast = -1e9; escQ = -1; flow = 0; flowOn = false; flowLast = -1; flowSw = -1; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
+  netPull = null; ripRun = null; lagRun = null; vp = vpNew(); cp = cpNew(); hg = null; pwFx.length = 0; tz = null; lk = 0; js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; wvx = 0; deb = []; lit = []; vs.rag = null; vh = null; ac = null; acWin = 0; acGo = false; acPend = -1; redAt = -1; redLast = -1e9; escQ = -1; flow = 0; flowOn = false; flowLast = -1; flowSw = -1; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
   if (vs.retry) { vs.round = 1 + vs.retry; vs.hp = vs.sh = PHP / 2; dummy.hp = dummy.shown = dummy.lock = 1; vs.morphed = true; blackUntil = t + 700; } else blackUntil = 0;      // after a failed red: Gojo at half health, Verity as he was (1 health left, so no smoke change); the picture comes up from black
 }
 // ---------------------------------------------------------------- v1.29 THE STATE TRACKER and the COMBO ESCAPE. A small box by your health bar says what state you are in: green FREE (you can move) or red (HIT: reeling from a blow, DOWN: on the floor, STUN: the JUMPSCARE, the Cat's glove or dizzy, HELD: the enemy Cat's ULTIMATE has you). While you are red, DASH gets you out of it: the stun is gone, you dash (with the dash's own invulnerable start), and when the dash ends you strike back with the LAST M1 of your combo; the dash is then on a cooldown of 4 seconds (the DASH button counts it down). Not possible when you are in the air from a launch, held by the ULTIMATE, in a cutscene or while the DOMAIN lasts.
@@ -3705,7 +3707,7 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
   if (move) { d.x += move * FOE_WALK * G.spd * dt; d.ai = 'walk'; } else d.ai = 'think';
 }
 // ---------------------------------------------------------------- CURSED ENERGY (Versus mode only): a cyan bar under Gojo's health bar. It starts every round at 100%, each energy move costs some of it, it refills half a percent per second once a second and a half has passed without such a move (hitting, being hit and parrying fill it much faster, see onLand), and the cursed energy mode drains 1% per second (no refill) and switches itself off at 0%.
-const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30, purple: 50, domain: 67, fatal: 50, vBite: 20, vDrag: 25, vRip: 15, cStomp: 40, cKick: 20, cLift: 5, cHang: 10, vTele: 10, vBall: 20, vScare: 67, cToon: 30, cUlt: 67, yDiv: 15, yConc: 25, yKick: 5, yZone: 20, yFlash: 40, vTalk: 15, crouch: 3, ceMode: 10, redMode: 10, yInherit: 20, yBlood: 25, yShrine: 30, yGrab: 25, ySimple: 30, yHome: 67 }, CE_WAIT = 1500, CE_REFILL = 0.5;      // what each move costs in % of the bar (slowRed = RED fired while walking back, coat = the BLUE leap onto that slow orb, tele = BLUE in the air, purple = the RED shot fired while Max Blue is out, it costs this instead of the plain RED price); the refill waits 1 s after the last paid move
+const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30, purple: 50, domain: 67, fatal: 50, vBite: 20, vDrag: 25, vRip: 15, vLag: 15, cStomp: 40, cKick: 20, cLift: 5, cHang: 10, vTele: 10, vBall: 20, vScare: 67, cToon: 30, cUlt: 67, yDiv: 15, yConc: 25, yKick: 5, yZone: 20, yFlash: 40, vTalk: 15, crouch: 3, ceMode: 10, redMode: 10, yInherit: 20, yBlood: 25, yShrine: 30, yGrab: 25, ySimple: 30, yHome: 67 }, CE_WAIT = 1500, CE_REFILL = 0.5;      // what each move costs in % of the bar (slowRed = RED fired while walking back, coat = the BLUE leap onto that slow orb, tele = BLUE in the air, purple = the RED shot fired while Max Blue is out, it costs this instead of the plain RED price); the refill waits 1 s after the last paid move
 CE_COST.vPounce = 25; CE_COST.yUlt = 67;      // (v1.45: Verity's AIR BITE)
 CE_COST.fPierce = 20; CE_COST.fWater = 15; CE_COST.fDream = 67;      // (v1.94 FREDDY: the PIERCE is paid when the claw is driven in, the boiling water when his hand touches the floor (the throw is free), the DREAM like every other ULTIMATE; his slashes, heavy strike, block and dashes stay free, like Gojo's punches)
 let ce = 100, ceLast = -1e9, ceFlash = -1e9;      // the energy in %, when a move last cost some, when a move was last refused (the bar flashes red)
@@ -4433,6 +4435,56 @@ function ripStep(now, cancel) {      // every frame of Verity while the move run
   if (!(r.ev & 4) && el >= RIP.t4) { r.ev |= 4; ripThrow(now); }
   if (el >= RIP.end) ripEnd(now, false);
 }
+// ---------------------------------------------------------------- v1.117 VERITY'S LAG COUNTER (BLUE while walking BACK; 15% energy; the skill v_lag). He plays his walking-back pictures but does not move, and the picture stutters (it only changes now and then and then jumps ahead), as if he were lagging, for 1.5 s. If the enemy's blow reaches him in that time it does nothing to him: his top body is launched back (the legs stay where they are), hangs there a moment, snaps forward and bites the enemy (the bite's 12 and its bleeding) and then punches him away (the punch's 35, a knock-down and a hard push). Nothing touches him until it is over; a blow that is not a swing of a fighter (or no blow at all) ends it.
+const LAG = { wait: 1500, launch: 170, hang: 110, snap: 110, bite: 110, pwind: 100, prec: 160, back: 220, D: 22, knock: 650 };
+LAG.t1 = LAG.launch; LAG.t2 = LAG.t1 + LAG.hang; LAG.t3 = LAG.t2 + LAG.snap; LAG.t4 = LAG.t3 + LAG.bite; LAG.t5 = LAG.t4 + LAG.pwind; LAG.t6 = LAG.t5 + LAG.prec; LAG.end = LAG.t6 + LAG.back;
+let lagRun = null;      // the move that is running: { at (he began), ph ('wait' or 'hit'), t0 (the blow reached him), tg (the enemy), gap, F (how far forward his top body reaches), fz (the walking-back picture he froze in), ev (which moments have happened) }
+const LAG_C = document.createElement('canvas'), LAG_INFO = { w: 112, h: 64, cx: 48, x0: 0, top: 0 }, LAG_GAP = [110, 190, 70, 260, 150, 330, 90, 220], LAG_JIT = [0, -1, 1, 0, 1, -1, 0, 1]; LAG_C.width = 112; LAG_C.height = 64;
+function lagStutter(t) {      // the walking-back picture after t ms of lag: it only changes at moments that are not evenly spaced and then jumps ahead (a bad connection), and each jump shifts him a pixel
+  let u = 0, i = 0; while (u + LAG_GAP[i % 8] <= t) { u += LAG_GAP[i % 8]; i++; }
+  return { fi: 14 - (Math.floor(u * WALK_FPS / 1000) % 15), ox: LAG_JIT[i % 8] };
+}
+function lagBuild(src, S) {      // his picture with every row shifted sideways by S times its weight (the head and chest all of it, the waist none): the top body leans or flies while the legs stay, on a 112 x 64 picture (his hips at x 48)
+  const g = LAG_C.getContext('2d'); g.clearRect(0, 0, 112, 64);
+  for (let y = 0; y < 64; y++) { const k = Math.max(0, Math.min(1, (44 - y) / 30)); g.drawImage(src, 0, y, 64, 1, 16 + Math.round(S * k * k * (3 - 2 * k)), y, 64, 1); }
+  return LAG_C;
+}
+function lagPic(now) {      // what he looks like: waiting, the walking-back pictures that stutter; countering, the frozen walking-back picture with the top body flung back, then the bite's pictures with it flung forward, then the punch's
+  const r = lagRun;
+  if (r.ph === 'wait') { const q = lagStutter(now - r.at); return { src: vfr('walk', q.fi, false), info: VINFO, ox: q.ox }; }
+  const el = now - r.t0, F = r.F; let src, S;
+  if (el < LAG.t2) { src = vfr('walk', r.fz, false); S = el < LAG.t1 ? -LAG.D * ease3(el / LAG.t1) : -LAG.D + (Math.floor(el / 40) % 2 ? 1 : -1); }      // (flung back, then held there trembling)
+  else if (el < LAG.t3) { const q = (el - LAG.t2) / LAG.snap; src = vfr('bite', q * 8.99, false); S = -LAG.D + (F + LAG.D) * ease3(q); }      // (the snap: the bite's pictures 0 - 8 and the top body from far back to the enemy)
+  else if (el < LAG.t4) { src = vfr('bite', 8 + (el - LAG.t3) / LAG.bite * 2.99, false); S = F; }
+  else if (el < LAG.t5) { src = vfr('m3', (el - LAG.t4) / LAG.pwind * 8, false); S = F * 0.5; }      // (the punch: its pictures 0 - 8 up to the blow)
+  else if (el < LAG.t6) { src = vfr('m3', 8 + (el - LAG.t5) / LAG.prec * 6.99, false); S = F * 0.5; }
+  else { src = vfr('idle', 0, false); S = F * 0.5 * (1 - ease3(Math.min(1, (el - LAG.t6) / LAG.back))); }
+  return { src: lagBuild(src, S), info: LAG_INFO, ox: 0 };
+}
+function lagOk(now) { const d = dummy; return !!d && !!vs && vs.ph === 'fight' && !vs.net && d.ko < 0 && !ult && !cf && !js && !dom; }
+function lagBegin(now) { lagRun = { at: now, ph: 'wait', t0: now, tg: null, gap: 0, F: 0, fz: 0, ev: 0 }; wvx = 0; atkQ = false; say('LAG', wx, '#9fd8ff', 8, now); snd('ceon'); }
+function lagHit(k, now) {      // a blow of the enemy reaches him (gojoHit): true = it misses; the first one in the lag starts the counter, and until it is over nothing touches him
+  const r = lagRun; if (!r) return false;
+  if (r.ph === 'hit') return true;
+  const d = dummy; if (!d || d.curse || d.ko >= 0 || d.cap || d.x - wx < -4 || !vs || vs.ph !== 'fight') return false;      // (a curse, or an enemy behind him: the blow lands as usual and the lag ends)
+  r.ph = 'hit'; r.t0 = now; r.tg = d; r.ev = 0; r.fz = lagStutter(now - r.at).fi; r.gap = Math.max(10, d.x - wx); r.F = Math.max(0, Math.min(34, r.gap - 22));
+  techHold(d, now, LAG.t5 + 150); d.dodgeUntil = 0; d.counter = 0; d.pull = null;
+  snd('dash', 1); snd('block'); shakeUntil = now + 100; shakeAmp = 2; spark(wx + 12, gy - 34, 10, ['#ffffff', '#9fd8ff'], true, 1); say('LAG!', wx, '#9fd8ff', 8, now);
+  return true;
+}
+function lagEnd(now) { const d = lagRun && lagRun.tg; if (d && d.stunUntil > now + 200) d.stunUntil = now + 200; lagRun = null; }
+function lagStep(now, cancel) {      // every frame of Verity while the lag runs: it ends by itself, or the counter's moments happen
+  const r = lagRun;
+  if (cancel || !vs || vs.ph !== 'fight') { lagEnd(now); return; }
+  if (r.ph === 'wait') { if (now - r.at >= LAG.wait) lagEnd(now); return; }
+  const d = r.tg, el = now - r.t0; if (!d || d !== dummy) { lagEnd(now); return; }
+  if (el < LAG.t5) { d.stunUntil = Math.max(d.stunUntil, now + 150); d.vx = 0; d.ai = 'rest'; d.aiAt = now; d.restFor = 150; }      // (held: he does not move until the punch)
+  if (!(r.ev & 1) && el >= LAG.t2) { r.ev |= 1; snd('swing', 3); say('SNAP!', wx, '#ff8a7a', 8, now); }
+  if (!(r.ev & 2) && el >= LAG.t3) { r.ev |= 2; techDmg(d, DMG[22], now, KNOCK[22], false); d.bleed = { until: now + 4000, next: now + 100 }; snd('hit', 3); shakeUntil = now + 100; shakeAmp = 2; spark(d.x - 4, gy - 32, 8, ['#c4121c', '#ff2a3a'], false, -1); }      // (the bite: its damage and its bleeding, as in hitDummy)
+  if (!(r.ev & 4) && el >= LAG.t4) { r.ev |= 4; snd('swing', 3); }
+  if (!(r.ev & 8) && el >= LAG.t5) { r.ev |= 8; techDmg(d, DMG[3], now, LAG.knock, true); d.down = now + RX_DUR[4]; d.stunUntil = now + 100; puff(d.x, 8); shakeUntil = now + 160; shakeAmp = 4; snd('hit', 3); }      // (the punch: its damage, the big fall and a hard push)
+  if (el >= LAG.end) lagEnd(now);
+}
 function jsTarget(now) {      // the enemy can be grabbed: in front of Verity, within reach, standing in the open
   const d = dummy; return !!d && !!vs && vs.foe !== 'yuji' && vs.ph === 'fight' && d.ko < 0 && !d.cap && !(d.vform && d.vform !== 'verity') && !(d.vact && d.vact.type === 'crouch') && !(d.cact && d.cact.flat) && !ult && !cf && now >= d.stunUntil && now - d.born >= 900 && d.x - wx <= JS.reach && d.x - wx >= -4;
 }
@@ -4701,7 +4753,8 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   }
   if (v.pn && (atkAt !== v.pn.at || atkK !== 24)) v.pn = null;      // (the air bite is over, or a blow stopped it)
   if (ripRun) ripStep(now, hf >= 0 || stun || !hum);      // (v1.116 RIP AND THROW: its moments, or its end when he is hit)
-  const idleOK = t >= 1 && hum && !stun && jf < 0 && tu < 0 && hf < 0 && df < 0 && bf < 0 && sf < 0 && !(vh && vh.phase !== 'hover') && !ripRun, free = idleOK && af < 0 && !vdg; vdgStep(now, dt);
+  if (lagRun) lagStep(now, hf >= 0 || stun || !hum);      // (v1.117 LAG COUNTER: its moments, or its end when something else hurts him)
+  const idleOK = t >= 1 && hum && !stun && jf < 0 && tu < 0 && hf < 0 && df < 0 && bf < 0 && sf < 0 && !(vh && vh.phase !== 'hover') && !ripRun && !lagRun, free = idleOK && af < 0 && !vdg; vdgStep(now, dt);
   if (ceReq) {      // MODE: into the ball (20% of the energy); with the ball out: back into Verity
     ceReq = false;
     if (free && stance === 'stand' && ceSpend(CE_COST.vBall, now)) { voiceLoad(); v.form = 'smoke1'; v.fAt = now; v.bAt = now + 200; v.bSnd = false; v.back = false; atkQ = false; lpReq = atkReq = dashReq = jumpReq = crReq = false; setModeUI(); snd('vanish'); }
@@ -4712,6 +4765,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
     lpReq = false; const inAir = hum && !stun && jf >= 4 && jf <= 11 && tu < 0 && df < 0 && hf < 0 && bf < 0 && af < 0 && stance === 'stand' && !vh && !vdg;
     if (inAir) { if (!owns('v_pounce')) lockPop(now); else if (ceSpend(CE_COST.vPounce, now)) { v.pn = { at: now, l0: D.jump.lift[jf], x0: wx, landed: false }; atkK = 24; atkAt = now; af = 0; atkQ = false; heavyAt = atkAt; jumpAt = -1; jf = -1; wvx = 0; snd('swing', 3); say('AIR BITE', wx, '#ff8a7a', 8, now); } }      // THE AIR BITE (v1.45, BLUE in the air): he falls on the enemy head first; swing 24, a heavy bite (see pounceStep)
     else if (free && stance === 'stand' && (keyR || padR) && owns('v_rip') && ripTarget(now) && ceSpend(CE_COST.vRip, now)) ripBegin(now);      // RIP AND THROW (v1.116): BLUE walking forward, with the enemy in reach
+    else if (free && stance === 'stand' && (keyL || padL) && !(keyR || padR) && owns('v_lag') && lagOk(now) && ceSpend(CE_COST.vLag, now)) lagBegin(now);      // LAG COUNTER (v1.117): BLUE walking back
     else if (free && stance === 'stand' && ceSpend(CE_COST.vBite, now)) { atkK = 22; atkAt = now; af = 0; atkQ = false; }      // BITE: its own swing (number 22)
     else if (free && stance === 'crouch' && owns('v_drag') && ceSpend(CE_COST.vDrag, now)) vdgBegin(now);      // crouched: the BLOOD DRAG (v1.28)
   }
@@ -4726,7 +4780,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   }
   if (af < 0 && (combo !== 0 || cpIdx !== 0) && now > comboUntil) { combo = 0; cpIdx = 0; }
   const lab = !hum ? 'TALK' : stance === 'crouch' ? VP_CR[cpIdx] : VP_M1[combo]; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; }
-  { const bl = hum && jf >= 4 && jf <= 11 && owns('v_pounce') ? 'AIR<br>BITE' : hum && (keyR || padR) && stance === 'stand' && owns('v_rip') && ripTarget(now) ? 'RIP' : 'BITE', el = $('lapl'); if (el.innerHTML !== bl) el.innerHTML = bl; }      // (BLUE in the air is the AIR BITE)
+  { const bl = hum && jf >= 4 && jf <= 11 && owns('v_pounce') ? 'AIR<br>BITE' : hum && (keyR || padR) && stance === 'stand' && owns('v_rip') && ripTarget(now) ? 'RIP' : hum && (keyL || padL) && !(keyR || padR) && stance === 'stand' && owns('v_lag') && lagOk(now) ? 'LAG' : 'BITE', el = $('lapl'); if (el.innerHTML !== bl) el.innerHTML = bl; }      // (BLUE in the air is the AIR BITE)
   if (crReq) { crReq = false; if (free) { if (stance === 'stand') { stance = 'down'; stAt = now; sf = 0; } else if (stance === 'crouch') { stance = 'up'; stAt = now; sf = 0; } } }      // (tap to fold up, tap to rise; the stick's down position folds him for as long as it is held)
   if (free) { if (stickDown && stance === 'stand') { stance = 'down'; stAt = now; sf = 0; stickCr = true; } else if (!stickDown && stickCr && stance === 'crouch' && now - stickDownEnd > 140) { stance = 'up'; stAt = now; sf = 0; } }
   if (stance === 'stand') stickCr = false;
@@ -4742,7 +4796,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
     }
   }
   if (jumpReq) { jumpReq = false; if (free && stance === 'stand') { jumpAt = now; jf = 0; } }
-  const steer = t >= 1 && hum && !stun && !vh && !ripRun && df < 0 && sf < 0 && stance === 'stand' && ((jf < 0 && af < 0 && hf < 0) || (jf >= 3 && jf <= 11));      // (no walking while folded up, swinging, hurt or teleporting)
+  const steer = t >= 1 && hum && !stun && !vh && !ripRun && !lagRun && df < 0 && sf < 0 && stance === 'stand' && ((jf < 0 && af < 0 && hf < 0) || (jf >= 3 && jf <= 11));      // (no walking while folded up, swinging, hurt or teleporting)
   const dir = steer ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0;
   const nm = !hum ? 'ball' : hf >= 0 ? 'hurt' : stun ? 'fear' : df >= 0 ? 'tele' : bf >= 0 && sf < 0 ? 'block' : tu >= 0 || jf >= 0 ? 'jump' : af >= 0 ? 'atk' : sf >= 0 ? 'cdn' : stance === 'crouch' ? 'cidle' : dir > 0 ? 'fwd' : dir < 0 ? 'back' : 'idle';
   if (nm !== mode) { mode = nm; modeAt = now; stepN = -1; }
@@ -4785,6 +4839,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   else if (hf >= 0) { const q = (now - hurtAt) / RX_DUR[hurtK] * 15; src = vrx(hurtK, q, false); info = VRXIN[hurtK]; if (info.lift && !gAir) py += info.lift[Math.min(14, Math.floor(q))]; if (now - hurtAt < 70) src = whiteOf(src); }      // one of his ten hit reactions
   else if (stun) { src = vfr('crouch', 14, false); const o = fearOff(now); ox = o[0]; oy = o[1]; }      // the enemy's JUMPSCARE has him: folded up and shaking
   else if (ripRun) { src = ripPic(now); info = RIP_INFO; }      // (v1.116 RIP AND THROW)
+  else if (lagRun) { const L = lagPic(now); src = L.src; info = L.info; ox += L.ox; }      // (v1.117 LAG COUNTER)
   else if (tu >= 0) src = vfr('tele_up', tu, false);
   else if (df >= 0) src = vfr('tele', df, false);
   else if (bf >= 0 && sf < 0) src = vfr('block', bf, false);
@@ -4804,7 +4859,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   ctx.save();
   if (vap) { /* gone */ } else if (gko >= 0) { const rgh = ragXf(vs.rag, gko, cx, gy + 2, -1); if (!rgh) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); } ctx.drawImage(vs.meInv ? invOf(vfr('idle', 0, false)) : vfr('idle', 0, false), -32, -62 + rgh); }
   else { ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(vs.meInv && !(hf >= 0 && now - hurtAt < 70) ? invOf(src) : src, x, y); if (stun && hf < 0) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(src), x, y); } }
-  ctx.restore(); if (hum && t >= 1 && gko < 0 && !vap) cloth(clMe, src, x + (src === RIP_C ? Math.round(ripK(now, ripRun.at).lean) : 0), y, false, 'verity', dt); drawGiantNow('foe');
+  ctx.restore(); if (hum && t >= 1 && gko < 0 && !vap && !(lagRun && lagRun.ph === 'hit')) cloth(clMe, src, x + (src === RIP_C ? Math.round(ripK(now, ripRun.at).lean) : 0), y, false, 'verity', dt); drawGiantNow('foe');
   if (v.form === 'smoke1') smokePuffs(cx, gy - 28, fa / 450); else if (v.form === 'smoke2') smokeBig(cx, fa / 1000);
   if (t < 1) {      // spawn ring + flash
     const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,225,110,' + (1 - t) + ')';
@@ -12285,6 +12340,7 @@ $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+{"v": "1.117", "t": "VERITY: LAG COUNTER", "n": ["Verity has another new BLUE move, LAG COUNTER. Walk back and tap BLUE: he plays his walking-backwards animation but does not move, and the picture stutters and jumps like a player with a bad connection. It lasts 1.5 seconds.", "If the enemy hits him in that time, the hit does nothing to him. His top body is launched back (his legs stay where they are), then it snaps forward, bites the enemy, and he punches the enemy far away. The bite is his normal bite (12 damage and the bleeding) and the punch does 35 damage and knocks the enemy down. Nothing can touch him until it is over.", "If nothing hits him in 1.5 seconds, the lag just ends and the energy is gone. It costs 15% of the cursed energy. In the SKILLS tree it is a new node under VERITY: LAG COUNTER, $400, and you need BITE first. The BLUE button says LAG when you hold back.", "A blow that is not a fighter's swing (a curse, or a hit from behind) lands as usual and ends the lag. It is not in Wi-Fi fights yet."]},
 {"v": "1.116", "t": "VERITY: RIP AND THROW", "n": ["Verity has a new BLUE move, RIP AND THROW. Walk forward and tap BLUE while the enemy is right in front of you: Verity's arms stretch out, he catches both of the enemy's hands and tries to rip him apart. It does not work, so he throws him back instead: 25 damage and the enemy is knocked down. While Verity holds him the enemy cannot move, and a guard does not help against it.", "While Verity pulls, the enemy is stretched long and thin and shakes, then he snaps back just before the throw. The BLUE button says RIP (instead of BITE) when you are close enough to catch the enemy.", "It costs 15% of the cursed energy. In the SKILLS tree it is a new node under VERITY: RIP AND THROW, $350, and you need BITE first.", "If the enemy hits Verity while he is holding him, the enemy is let go. An enemy who is crouching, lying on the floor, flinching from a hit, or in his smoke ball form cannot be caught, and then BLUE is the normal BITE. Lighter fighters, like the Cat, fly further when they are thrown. It is not in Wi-Fi fights yet, because Verity's BLUE moves are still waiting for their turn there."]},
 {"v": "1.115", "t": "WI-FI ROOMS: EVERY FIGHTER, AND A FASTER LINK", "n": ["Wi-Fi rooms now work with all five fighters of Versus: Gojo, Yuji, Verity, the Cartoon Cat and Freddy Krueger. On the choose screen tap one of the five cards (tap it again to change your mind). When both of you have chosen, the game shows who fights who, and when you both tap FIGHT it starts. If you both choose the same fighter, the dice roll who gets the inverted one, like before.", "Every fighter's basic moves work online, between any two fighters: walking, jumping, crouching, dashing, blocking (and parrying), the ATTACK combos, the crouch attacks, Verity's teleport, the Cat's grab combo (his glove pulls the other player in) and Freddy's catch (his hand holds whoever swung for 0.75 seconds). Everything is unlocked in a Wi-Fi fight, so nothing has to be bought first. Yuji has no INHERITENCE.", "What is not online yet, and comes in the next updates: the BLUE moves (only Gojo's teleport in the air works), the MODE button, DOMAIN, FATAL, the heavy strike, the Cat's arm hang and Freddy's pierce. Those buttons are dimmed in a Wi-Fi fight.", "A much faster link between the two phones. Every message now travels on two roads at once, the old reliable one and a fast one, and the game uses whichever copy arrives first. On a busy Wi-Fi a lost packet can hold everything back for a second or more, which is the most likely reason the ping was around 700 ms; now a lost packet usually costs well under a tenth of a second. The app also asks the phone to keep its Wi-Fi radio awake while you play, because the radio dozing between small packets slows every answer down.", "The ping is shown on the choose screen and at the bottom of the fight (PING 14). It is measured on the fast road. If the router blocks the fast road, the game keeps working on the old one and the choose screen says SLOW ROAD.", "Both phones need this version. If the other phone has another version of the game, the choose screen says so and the cards do nothing until you both update."]},
 {"v": "1.114", "t": "THE CAT: ARM HANG AND GROUND POUND", "n": ["A new move for the Cartoon Cat: the ARM HANG. Jump, then press ATTACK while you are in the air (10 energy, $400 in the shop, needs FLATTEN). The ATTACK button says HANG in the air.", "His arms stretch up off the top of the screen and he hangs from them for up to 5 seconds, out of everybody's reach: the enemy's swings, grabs and finishers cannot touch him up there.", "While he hangs you can still move: push left and right and he walks along his arms, hand over hand, at his normal walking speed (a little slower going back). He can walk right over the enemy.", "Crouch (the S key, or push the stick down) and he lets go and smashes down like a hammer, the GROUND POUND. An enemy under him or next to him (up to about 36 pixels away on either side) takes 35 damage, is knocked down and is shoved away from him, and a shock wave runs out along the floor. The pound itself costs no energy. An enemy who is guarding blocks it, as with his other blows.", "If you do nothing, after 5 seconds he lets go and falls to the floor, with no damage. If something gets through to him while he hangs, he falls too.", "The hint DOWN: SMASH shows under his feet for the first seconds of every hang.", "The pictures (the arms shooting up, hanging, walking hand over hand, and the dive and the squash of the pound) are new, drawn with the Cat's own body rig, so they match the rest of him. On a taller screen the arms simply run up to the top of it."]},
