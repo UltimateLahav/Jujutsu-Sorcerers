@@ -129,18 +129,18 @@ const c4R = (i, k) => ((Math.imul(i * 7919 + k * 104729 + 12345, 2654435761) >>>
 const c4Lay = g => ({ yL: g.vx - 6, vb: g.vx - 10, cr: g.vx - 34 });      // where Yuji lies (his feet), where Verity crouches over him (turned left) and the middle of the crater, from the middle of the screen
 function c4Cam(cx, z, fx, fh, ty) { const hw = VW / (2 * z); c4CamOn(z, Math.max(hw, Math.min(VW - hw, cx + fx)), gy - fh, VW / 2, ty == null ? VH * 0.56 : ty); }      // the camera on the alley: the place fx (from the middle of the screen), fh pixels over the floor, is put on the middle, z times as big; it never looks past the edge of the alley's picture
 
-function c4Arm(ax, ay, hx, hy, bend, blood) {      // Verity's arm: a 4-pixel-thick limb (outline, skin, shadow, outline: as in his pictures) from the shoulder to the hand, bent at the elbow by `bend` pixels; blood (0-1) smears its last part red
-  const dx = hx - ax, dy = hy - ay, L = Math.hypot(dx, dy) || 1, n = Math.max(3, Math.ceil(L)), pts = [], hor = Math.abs(dx) >= Math.abs(dy), bl = blood || 0, red = p => bl > 0 && p[2] > 1 - 0.75 * bl;
+function c4Arm(ax, ay, hx, hy, bend, blood, g) {      // (g: the context to draw on, the screen when it is left out; v1.116) Verity's arm: a 4-pixel-thick limb (outline, skin, shadow, outline: as in his pictures) from the shoulder to the hand, bent at the elbow by `bend` pixels; blood (0-1) smears its last part red
+  g = g || ctx; const dx = hx - ax, dy = hy - ay, L = Math.hypot(dx, dy) || 1, n = Math.max(3, Math.ceil(L)), pts = [], hor = Math.abs(dx) >= Math.abs(dy), bl = blood || 0, red = p => bl > 0 && p[2] > 1 - 0.75 * bl;
   for (let i = 0; i <= n; i++) { const t = i / n, b = (bend || 0) * Math.sin(Math.PI * t); pts.push([Math.round(ax + dx * t - dy / L * b), Math.round(ay + dy * t + dx / L * b), t]); }
-  ctx.fillStyle = C4_OL; for (const p of pts) ctx.fillRect(p[0] - 2, p[1] - 2, 4, 4);
-  for (const p of pts) { ctx.fillStyle = red(p) ? C4_RED[2] : C4_SH; ctx.fillRect(p[0] - 1, p[1] - 1, 2, 2); }
-  for (const p of pts) { ctx.fillStyle = red(p) ? C4_RED[1] : C4_SK; if (hor) ctx.fillRect(p[0] - 1, p[1] - 1, 2, 1); else ctx.fillRect(p[0] - 1, p[1] - 1, 1, 2); }
+  g.fillStyle = C4_OL; for (const p of pts) g.fillRect(p[0] - 2, p[1] - 2, 4, 4);
+  for (const p of pts) { g.fillStyle = red(p) ? C4_RED[2] : C4_SH; g.fillRect(p[0] - 1, p[1] - 1, 2, 2); }
+  for (const p of pts) { g.fillStyle = red(p) ? C4_RED[1] : C4_SK; if (hor) g.fillRect(p[0] - 1, p[1] - 1, 2, 1); else g.fillRect(p[0] - 1, p[1] - 1, 1, 2); }
 }
-function c4Fist(x, y, blood) {      // his hand closed into a fist: a knotted 6 x 6 block of the same olive, outlined, the knuckles lit
-  x = Math.round(x); y = Math.round(y); ctx.fillStyle = C4_OL; ctx.fillRect(x - 3, y - 2, 6, 5); ctx.fillRect(x - 2, y - 3, 4, 7);
-  ctx.fillStyle = C4_SH; ctx.fillRect(x - 2, y - 2, 4, 4); ctx.fillStyle = C4_SK; ctx.fillRect(x - 2, y - 2, 4, 2); ctx.fillStyle = C4_LT; ctx.fillRect(x - 1, y - 2, 2, 1);
-  ctx.fillStyle = C4_OL; ctx.fillRect(x, y - 1, 1, 2);      // (the gap between the fingers)
-  if (blood) { ctx.fillStyle = C4_RED[1]; ctx.fillRect(x - 2, y, 4, 2); ctx.fillStyle = C4_RED[0]; ctx.fillRect(x - 2, y, 1, 1); ctx.fillRect(x + 1, y + 1, 1, 2); ctx.fillStyle = C4_RED[2]; ctx.fillRect(x - 2, y + 2, 4, 1); }
+function c4Fist(x, y, blood, g) {      // his hand closed into a fist: a knotted 6 x 6 block of the same olive, outlined, the knuckles lit
+  g = g || ctx; x = Math.round(x); y = Math.round(y); g.fillStyle = C4_OL; g.fillRect(x - 3, y - 2, 6, 5); g.fillRect(x - 2, y - 3, 4, 7);
+  g.fillStyle = C4_SH; g.fillRect(x - 2, y - 2, 4, 4); g.fillStyle = C4_SK; g.fillRect(x - 2, y - 2, 4, 2); g.fillStyle = C4_LT; g.fillRect(x - 1, y - 2, 2, 1);
+  g.fillStyle = C4_OL; g.fillRect(x, y - 1, 1, 2);      // (the gap between the fingers)
+  if (blood) { g.fillStyle = C4_RED[1]; g.fillRect(x - 2, y, 4, 2); g.fillStyle = C4_RED[0]; g.fillRect(x - 2, y, 1, 1); g.fillRect(x + 1, y + 1, 1, 2); g.fillStyle = C4_RED[2]; g.fillRect(x - 2, y + 2, 4, 1); }
 }
 const C4_BODY = new Map(), C4_ST = { stand: ['idle', 0, 43, 15, 42, 17], b8: ['crouch', 8, 43, 30, 42, 33], b10: ['crouch', 10, 43, 34, 42, 37], b12: ['crouch', 12, 45, 39, 44, 42], crouch: ['crouch', 14, 46, 40, 44, 44] };      // Verity's stances without his right arm: [strip, frame, the x and y from which the arm is cleared, the shoulder]
 function c4Verity(x, st, flip, lift, pre) {      // draws him (the right arm is left to c4Arm) and says where his right shoulder is on the screen; pre(shoulder) is called before his body is drawn (an arm that is drawn there is behind him)

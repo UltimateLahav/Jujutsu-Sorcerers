@@ -199,7 +199,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.115</small>
+    <small id="ver">V1.116</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -803,6 +803,7 @@ const SK_VERITY = [
   ['v_cancel', 'TELEPORT CANCEL', 'TELEPORT DURING A SWING THAT HIT: IT STOPS, +4% ENERGY AND +20 FLOW', 120, ['v_tele']],
   ['v_air', 'AIR COMBO', 'JUMP ON THE LAST M1 (THE PUNCH): THE ENEMY IS KICKED UP. JUMP AGAIN: HE LEVITATES WITH THE ENEMY AND THE 4-HIT M1 STARTS AGAIN IN THE AIR. IF HE DOES NOT ATTACK, OR AFTER THE LAST HIT, HE KICKS THE ENEMY DOWN TO THE FLOOR', 450, ['v_heavy']],
   ['v_pounce', 'AIR BITE', 'BLUE IN THE AIR: HE FALLS ON THE ENEMY HEAD FIRST AND BITES: TWICE THE DAMAGE OF A BITE, IT BREAKS A GUARD, AND THE ENEMY BLEEDS FOR 4 SECONDS (25% ENERGY)', 400, ['v_bite']],
+  ['v_rip', 'RIP AND THROW', "WALK FORWARD + BLUE, CLOSE TO THE ENEMY: HE CATCHES BOTH OF THE ENEMY'S HANDS AND TRIES TO RIP HIM APART. IT DOES NOT WORK, SO HE THROWS HIM BACK: 25 DAMAGE AND A KNOCK-DOWN. A GUARD DOES NOT STOP IT (15% ENERGY)", 350, ['v_bite']],
   ['v_sense', 'SMELL OF FEAR', 'IN HUNTS: THE SENSE BUTTON SHOWS EVERY HIDDEN ITEM, CLUE AND CURSE NEAR YOU FOR 3 SECONDS (8 SECOND COOLDOWN)', 300, []]];
 const SK_CAT = [
   ['k_crouch', 'FLATTEN', 'DOWN ON THE STICK OR KEY S: SMASH YOURSELF FLAT, TAP AGAIN TO STAND UP (3% ENERGY)', 50, []],
@@ -1149,7 +1150,7 @@ const SK_TABS = [['g', 'skTabG', SK_GOJO], ['y', 'skTabY', SK_YUJI], ['v', 'skTa
 const SK_LAY = {      // where every node sits, [column, row] (the root is column 0): a line runs from the right edge of a skill a node needs to the left edge of the node, so the cells in between have to be empty
   g: { _root: [0, 2.5], crouch: [1, 0], cpunch: [2, 0], blue: [1, 1], mblue: [2, 1], dash: [1, 2], tele: [2, 2], purple: [3, 2.5], simple: [3, 4], block: [1, 3], ce: [1, 4], red: [2, 4], fatal: [1, 5], domain: [2, 5], heavy: [1, 6], cancel: [2, 3], sense: [1, 7] },
   y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 4.5], y_pierce: [5, 3], y_shrine: [5, 4], y_cleave: [5, 5], y_simple: [5, 6], y_ult: [4, 5.7], y_fatal: [4, 6.7], y_div: [1, 6], y_rush: [2, 6], y_heavy: [1, 4.7], y_cancel: [3, 1.5], y_sense: [1, 7], y_hometown: [6, 3.5] },
-  v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5], v_heavy: [1, 4.5], v_cancel: [3, 0.8], v_air: [2, 4.5], v_pounce: [3, 3.5], v_sense: [1, 5.6] },
+  v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5], v_heavy: [1, 4.5], v_cancel: [3, 0.8], v_air: [2, 4.5], v_pounce: [3, 3.5], v_sense: [1, 5.6], v_rip: [3, 4.6] },
   k: { _root: [0, 1], k_crouch: [1, 0], k_fatal: [3, 0], k_dash: [1, 1], k_toon: [2, 1], k_stomp: [3, 1], k_kick: [3, 3], k_lift: [3, 4], k_hang: [2, 3], k_block: [1, 2], k_ult: [3, 2], k_heavy: [1, 3], k_cancel: [2, 0], k_sense: [1, 4] },
   c: { _root: [0, 1], yuji: [1, 0], verity: [1, 1], cat: [1, 2] } };
 const SK_ALL = { y: 'y_hometown' };      // (v1.50 the node of a tab that needs every other node of it: no routed lines, a web of thin straight lines from every node instead)
@@ -1927,7 +1928,7 @@ function drawDummy(now, dt) {
   else if (kt < 0 && dummy.mode === 'fighter' && (dummy.ai === 'block' || dummy.ai === 'dodge')) { fi = 5 + Math.floor(now / 125) % 5; info = D.atk11; src = FS.blk[fi]; }       // the smart enemy: guard up (also while he steps back)
   else if (kt < 0 && dummy.mode === 'blocker') { fi = 5 + Math.floor(now / 125) % 5; info = D.atk11; src = FS.blk[fi]; }       // guard up: the hands-up loop
   else if (kt < 0 && dummy.fear) { fi = Math.floor(now / (1000 / IDLE_FPS)) % 15; info = D.cidle; src = FS.fear[fi]; const o = fearOff(now); ox = o[0]; oy = o[1]; }      // JUMPSCARE: stunned, he cowers and shakes
-  else { fi = Math.floor(now / (1000 / IDLE_FPS)) % FS.idle.length; info = D.idle; src = (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) ? dumW[fi] : (kt < 0 && now < dummy.stunUntil && !ult && !fd && ((now / 70) | 0) % 2 === 0) ? dumB[fi] : FS.idle[fi]; }   // white flicker while he goes down
+  else { fi = Math.floor(now / (1000 / IDLE_FPS)) % FS.idle.length; info = D.idle; src = (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0) ? dumW[fi] : (kt < 0 && now < dummy.stunUntil && !ult && !fd && !dummy.rip && ((now / 70) | 0) % 2 === 0) ? dumB[fi] : FS.idle[fi]; }   // white flicker while he goes down
   if (vs && vs.foe === 'verity') { const L = storyLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox || 0; oy = L.oy || 0; }      // the enemy is Verity
   if (vs && vs.foe === 'yuji') { const ys = vs.inv ? YUF.inv : YUF.norm, wk = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'walk', at = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'attack', pw = kt < 0 && !reacting && dummy.mode === 'fighter' && dummy.ai === 'power'; ox = oy = 0; lift = 0;      // the enemy is Yuji
     if (kneel) { fi = Math.floor(now / (1000 / IDLE_FPS)) % 15; src = ys.cidle[fi]; info = YU.cidle; }      // (his legs are cut: his crouch)
@@ -1951,13 +1952,14 @@ function drawDummy(now, dt) {
     const rgh = ragXf(dummy.rag, kt, sx, gy + 2, 1); if (!rgh) { ctx.translate(sx, gy + 2); ctx.rotate(1.4 * Math.pow(Math.min(1, kt / 520), 2)); } ctx.scale(-1, 1);
     ctx.globalAlpha = fade; ctx.drawImage(src, -hx, -62 + rgh);
   } else {
-    const paint = () => {
+    const rk = dummy.rip ? ripK(now, dummy.rip.at) : null, paint = () => {
       ctx.save(); ctx.translate(sx, 0); ctx.scale(mirror ? -1 : 1, 1);
+      if (rk) { ctx.translate(mirror ? -rk.jx : rk.jx, gy + 2); ctx.scale(rk.w, rk.s); ctx.translate(0, -(gy + 2)); }      // (v1.116 RIP AND THROW: he is pulled long and thin, and trembles)
       if (dummy.squash && now - dummy.squash < 420) { const q = Math.sin(Math.min(1, (now - dummy.squash) / 420) * Math.PI); ctx.translate(0, gy + 2); ctx.scale(1 + 0.35 * q, 1 - 0.45 * q); ctx.translate(0, -(gy + 2)); }      // (v1.28 GIANT SMASH: squashed flat for a moment)
       ctx.beginPath(); ctx.rect(-hx - 2, y + Math.round(h * (1 - e)), w + 4, h); ctx.clip();   // materialises from the feet up
       ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(src, -hx + ox, y + oy);
       if (dummy.fear && !reacting) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(src), -hx + ox, y + oy); }      // (a pale pulse: the fear)
-      ctx.restore(); if (kt < 0 && t >= 1 && !dummy.drag) cloth(dummy.cl || (dummy.cl = {}), src, sx + (mirror ? hx - ox : -hx + ox), y + oy, mirror, vs ? vs.foe : 'gojo', dt);
+      ctx.restore(); if (kt < 0 && t >= 1 && !dummy.drag) cloth(dummy.cl || (dummy.cl = {}), src, sx + (mirror ? hx - ox : -hx + ox) + (rk ? rk.jx : 0), rk ? gy + 2 - (gy + 2 - y - oy) * rk.s : y + oy, mirror, vs ? vs.foe : 'gojo', dt);
       if (vs && vs.foe === 'yuji' && kt < 0 && !reacting && dummy.ai === 'attack' && (dummy.k === 4 || dummy.k === 9 || dummy.k === 12 || dummy.k === 13) && info.hn) divGlow(sx + (mirror ? -1 : 1) * (info.hn[fi][0] - hx + ox), y + oy + info.hn[fi][1], fi, now, dummy.k === 9 || dummy.k === 13);      // (his DIVERGENT FIST and CONCENTRATED FIST: the cursed energy round his fist)
       if (vs && vs.foe === 'yuji' && kt < 0 && dummy.ceA > 0.02 && info.hn && info.hf) drawFoeCE(now, sx, y + oy, mirror, hx - ox, info, fi, dummy.ceA, dummy.ceAt || 0);      // (his cursed energy flames, on both fists)
     };
@@ -2478,7 +2480,7 @@ function beginRound(now) {                     // a fresh round: the scene is re
   spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); if (vs.net) { dummy.net = true; dummy.max = dummy.hp = dummy.shown = PHP; dummy.x = dummy.tx = wx + NET_G0; dummy.pose = null; vs.toSent = false; }      // (the Wi-Fi fight: the other player, drawn from his phone's pictures)
   vdg = cst = null; smear.length = drip.length = 0; cProj = []; if (vs.rush) rushSpawn(t); else if (vs.cv) initCurse(dummy, vs.cv, wx + Math.max(54, Math.min(90, (VW >> 1) - 70)), vs.hard ? 1.5 : 1);      // (a challenge: the curse steps in; a RUSH wave: one or two)
   $('vsres').classList.remove('on');      // (REMATCH and NEXT start a new fight: the result screen goes away. Since v7.12 this line had slipped into a comment, so the result screen stayed on top of the new fight)
-  netPull = null; vp = vpNew(); cp = cpNew(); hg = null; pwFx.length = 0; tz = null; lk = 0; js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; wvx = 0; deb = []; lit = []; vs.rag = null; vh = null; ac = null; acWin = 0; acGo = false; acPend = -1; redAt = -1; redLast = -1e9; escQ = -1; flow = 0; flowOn = false; flowLast = -1; flowSw = -1; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
+  netPull = null; ripRun = null; vp = vpNew(); cp = cpNew(); hg = null; pwFx.length = 0; tz = null; lk = 0; js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; wvx = 0; deb = []; lit = []; vs.rag = null; vh = null; ac = null; acWin = 0; acGo = false; acPend = -1; redAt = -1; redLast = -1e9; escQ = -1; flow = 0; flowOn = false; flowLast = -1; flowSw = -1; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
   if (vs.retry) { vs.round = 1 + vs.retry; vs.hp = vs.sh = PHP / 2; dummy.hp = dummy.shown = dummy.lock = 1; vs.morphed = true; blackUntil = t + 700; } else blackUntil = 0;      // after a failed red: Gojo at half health, Verity as he was (1 health left, so no smoke change); the picture comes up from black
 }
 // ---------------------------------------------------------------- v1.29 THE STATE TRACKER and the COMBO ESCAPE. A small box by your health bar says what state you are in: green FREE (you can move) or red (HIT: reeling from a blow, DOWN: on the floor, STUN: the JUMPSCARE, the Cat's glove or dizzy, HELD: the enemy Cat's ULTIMATE has you). While you are red, DASH gets you out of it: the stun is gone, you dash (with the dash's own invulnerable start), and when the dash ends you strike back with the LAST M1 of your combo; the dash is then on a cooldown of 4 seconds (the DASH button counts it down). Not possible when you are in the air from a launch, held by the ULTIMATE, in a cutscene or while the DOMAIN lasts.
@@ -2634,7 +2636,7 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
   if (move) { d.x += move * FOE_WALK * G.spd * dt; d.ai = 'walk'; } else d.ai = 'think';
 }
 // ---------------------------------------------------------------- CURSED ENERGY (Versus mode only): a cyan bar under Gojo's health bar. It starts every round at 100%, each energy move costs some of it, it refills half a percent per second once a second and a half has passed without such a move (hitting, being hit and parrying fill it much faster, see onLand), and the cursed energy mode drains 1% per second (no refill) and switches itself off at 0%.
-const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30, purple: 50, domain: 67, fatal: 50, vBite: 20, vDrag: 25, cStomp: 40, cKick: 20, cLift: 5, cHang: 10, vTele: 10, vBall: 20, vScare: 67, cToon: 30, cUlt: 67, yDiv: 15, yConc: 25, yKick: 5, yZone: 20, yFlash: 40, vTalk: 15, crouch: 3, ceMode: 10, redMode: 10, yInherit: 20, yBlood: 25, yShrine: 30, yGrab: 25, ySimple: 30, yHome: 67 }, CE_WAIT = 1500, CE_REFILL = 0.5;      // what each move costs in % of the bar (slowRed = RED fired while walking back, coat = the BLUE leap onto that slow orb, tele = BLUE in the air, purple = the RED shot fired while Max Blue is out, it costs this instead of the plain RED price); the refill waits 1 s after the last paid move
+const CE_COST = { red: 20, slowRed: 15, coat: 5, blue: 10, tele: 5, maxBlue: 30, purple: 50, domain: 67, fatal: 50, vBite: 20, vDrag: 25, vRip: 15, cStomp: 40, cKick: 20, cLift: 5, cHang: 10, vTele: 10, vBall: 20, vScare: 67, cToon: 30, cUlt: 67, yDiv: 15, yConc: 25, yKick: 5, yZone: 20, yFlash: 40, vTalk: 15, crouch: 3, ceMode: 10, redMode: 10, yInherit: 20, yBlood: 25, yShrine: 30, yGrab: 25, ySimple: 30, yHome: 67 }, CE_WAIT = 1500, CE_REFILL = 0.5;      // what each move costs in % of the bar (slowRed = RED fired while walking back, coat = the BLUE leap onto that slow orb, tele = BLUE in the air, purple = the RED shot fired while Max Blue is out, it costs this instead of the plain RED price); the refill waits 1 s after the last paid move
 CE_COST.vPounce = 25; CE_COST.yUlt = 67;      // (v1.45: Verity's AIR BITE)
 CE_COST.fPierce = 20; CE_COST.fWater = 15; CE_COST.fDream = 67;      // (v1.94 FREDDY: the PIERCE is paid when the claw is driven in, the boiling water when his hand touches the floor (the throw is free), the DREAM like every other ULTIMATE; his slashes, heavy strike, block and dashes stay free, like Gojo's punches)
 let ce = 100, ceLast = -1e9, ceFlash = -1e9;      // the energy in %, when a move last cost some, when a move was last refused (the bar flashes red)
@@ -3309,6 +3311,59 @@ function drawBackdrop(now) {                  // everything behind the fighters 
 const JS = { reach: 40, stun: 5000, tick: 100, dmg: 3, cd: 30000, cut: 2.3 };
 const FEAR_X = [0, 1, -1, 1, 0, -1, 1, -1, 0, 1, -1, 0, 1, -1, 0], FEAR_Y = [0, 0, 1, 0, -1, 0, 0, 1, 0, -1, 0, 1, 0, 0, -1];      // the 15 steps of the victim's trembling (30 FPS)
 const fearOff = now => { const k = Math.floor(now / 33) % 15; return [FEAR_X[k], FEAR_Y[k]]; };
+// ---------------------------------------------------------------- v1.116 VERITY'S RIP AND THROW (BLUE while walking forward, close to the enemy; 15% energy; the skill v_rip). His two stretchy arms catch the enemy by both hands (0.24 s), he pulls them apart (0.95 s: the enemy is stretched long and thin and trembles), it does not work (the enemy snaps back), so he swings him round and throws him back: 25 damage, a knock-down and a push of about 60 px. A guard does not stop it. A blow on Verity, the end of the round or the enemy going down lets the enemy go.
+const RIP = { grab: 240, rip: 950, wind: 160, thr: 150, rec: 280, dmg: 25, knock: 450, reach: 34, front: 9 };
+RIP.t1 = RIP.grab; RIP.t2 = RIP.t1 + RIP.rip; RIP.t3 = RIP.t2 + RIP.wind; RIP.t4 = RIP.t3 + RIP.thr; RIP.end = RIP.t4 + RIP.rec;
+let ripRun = null;      // the move that is running: { at, tg (the enemy), gap, ev (which moments have happened) }
+const RIP_C = document.createElement('canvas'), RIP_INFO = { w: 96, h: 64, cx: 32, x0: 0, top: 0 }; RIP_C.width = 96; RIP_C.height = 64; let RIP_BODY = null;
+function ripK(now, at) {      // what the move looks like now: ph (0 the arms shoot out, 1 the pull, 2 it failed, 3 the throw, 4 the arms come back), how the enemy is stretched (s tall, w wide) and how he trembles (jx), how far Verity leans (lean), how far out his hands are (e: 0 at his shoulders, 1 on the enemy)
+  const el = Math.max(0, now - at); let ph = 0, s = 1, w = 1, jx = 0, lean = 0, e = 1;
+  if (el < RIP.t1) { e = ease3(el / RIP.grab); lean = 2 * e; }
+  else if (el < RIP.t2) { ph = 1; const st = ease3(Math.min(1, (el - RIP.t1) / RIP.rip * 1.6)); s = 1 + 0.17 * st; w = 1 - 0.07 * st; jx = (Math.floor(el / 45) % 2 ? 1 : -1) * Math.round(0.4 + 1.2 * st); lean = -1 - st - (Math.floor(el / 60) % 2 ? 1 : 0) * st; }
+  else if (el < RIP.t3) { ph = 2; lean = -3; const q = (el - RIP.t2) / 90; if (q < 1) { const b = 1 - ease3(q); s = 1 + 0.17 * b; w = 1 - 0.07 * b; } }      // (it did not work: the enemy snaps back, Verity leans back to throw)
+  else if (el < RIP.t4) { ph = 3; lean = -3 + 7 * ease3((el - RIP.t3) / RIP.thr); }
+  else { ph = 4; const q = Math.min(1, (el - RIP.t4) / RIP.rec); e = 1 - ease3(q); lean = 4 * (1 - q); }
+  return { ph, s, w, jx, lean, e };
+}
+function ripBody() {      // Verity as he stands, without either arm (the arms are drawn by ripPic); not kept until his pictures have loaded
+  const src = vfr('idle', 0, false); if (RIP_BODY) return RIP_BODY; if (src === SIMG.verity) return src;
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.drawImage(src, 0, 0); g.clearRect(39, 19, 25, 38); g.clearRect(0, 25, 26, 32); return RIP_BODY = c;      // (his right arm hangs at x 40 - 46, his left at x 17 - 24: both cleared below the shoulders)
+}
+function ripPic(now) {      // Verity in the move: his body without arms and his two stretchy arms to the enemy's hands, on a 96 x 64 picture (his hips at x 32)
+  const g = RIP_C.getContext('2d'), k = ripK(now, ripRun.at), bx = Math.round(k.lean);
+  g.clearRect(0, 0, 96, 64);
+  const fx = Math.max(46, Math.min(86, 32 + ripRun.gap - RIP.front)) + k.jx, y1 = Math.round(62 - 36 * k.s), y2 = Math.round(62 - 23 * k.s);      // where his hands take hold: the front of the enemy, at the height of his chest and of his belly
+  const far = [24 + bx, 21], near = [40 + bx, 21], hand = (p, ty) => [Math.round(p[0] + (fx - p[0]) * k.e), Math.round(p[1] + (ty - p[1]) * k.e)], hf2 = hand(far, y2), hn = hand(near, y1), bend = k.ph === 1 ? 0 : 2;
+  c4Arm(far[0], far[1], hf2[0], hf2[1], bend, 0, g); c4Fist(hf2[0] + 1, hf2[1], 0, g);      // (the far arm goes behind his body)
+  g.drawImage(ripBody(), bx, 0);
+  c4Arm(near[0], near[1], hn[0], hn[1], bend, 0, g); c4Fist(hn[0] + 1, hn[1], 0, g);
+  return RIP_C;
+}
+function ripTarget(now) {      // the enemy can be caught: a fighter (or the dummy) in front of Verity, within reach, standing in the open
+  const d = dummy, gp = d ? d.x - wx : 999;
+  return !!d && !!vs && vs.ph === 'fight' && !vs.net && !d.curse && d.ko < 0 && !d.cap && !d.air && !d.rip && !(d.vform && d.vform !== 'verity') && !(d.cact && d.cact.flat) && !(d.vact && d.vact.type === 'crouch') && !ult && !cf && !js && !dom && !(vs.foes && vs.foes.length > 1) && now >= d.stunUntil && now - d.rxAt >= RX_DUR[d.rx] && now >= (d.down || 0) && now - d.born >= 900 && gp <= RIP.reach && gp >= -2;
+}
+function ripBegin(now) {      // the grab: the enemy cannot act from this moment (a guard does not help him)
+  const d = dummy; if (vs && vs.hunt) huntStrike(now);
+  ripRun = { at: now, tg: d, gap: Math.max(10, d.x - wx), ev: 0 }; techHold(d, now, RIP.t4 + 200); d.rip = { at: now }; d.dodgeUntil = 0; d.counter = 0; d.pull = null;
+  atkQ = false; wvx = 0; snd('swing', 3);
+}
+function ripEnd(now, early) {      // the move is over (early: a blow or the end of the round stopped it before the throw: the enemy is let go)
+  const d = ripRun && ripRun.tg; if (d) { d.rip = null; if (early && d.stunUntil > now + 200) d.stunUntil = now + 200; } ripRun = null;
+}
+function ripThrow(now) {      // the throw: the damage, the knock-down and the push
+  const d = ripRun.tg; d.rip = null; snd('swing', 3);
+  techDmg(d, RIP.dmg, now, RIP.knock, true); d.down = now + RX_DUR[4]; d.stunUntil = now + 100; puff(d.x, 8); shakeUntil = now + 140; shakeAmp = 4;
+}
+function ripStep(now, cancel) {      // every frame of Verity while the move runs: the moments (sounds, words, the throw) and the end
+  const r = ripRun, d = r.tg, el = now - r.at;
+  if (cancel || !d || d !== dummy || d.ko >= 0 || !vs || vs.ph !== 'fight') { ripEnd(now, el < RIP.t4); return; }
+  if (el < RIP.t4) { d.stunUntil = Math.max(d.stunUntil, now + 150); d.vx = 0; d.ai = 'rest'; d.aiAt = now; d.restFor = 150; }      // (held: he does not move)
+  if (!(r.ev & 1) && el >= RIP.t1) { r.ev |= 1; snd('hit', 3); snd('charge'); shakeUntil = now + 80; shakeAmp = 1; say('RIP!', d.x, '#ff8a7a', 8, now); }
+  if (!(r.ev & 2) && el >= RIP.t2) { r.ev |= 2; snd('stun'); say("WON'T RIP", d.x, '#9a9aa8', 8, now); }
+  if (!(r.ev & 4) && el >= RIP.t4) { r.ev |= 4; ripThrow(now); }
+  if (el >= RIP.end) ripEnd(now, false);
+}
 function jsTarget(now) {      // the enemy can be grabbed: in front of Verity, within reach, standing in the open
   const d = dummy; return !!d && !!vs && vs.foe !== 'yuji' && vs.ph === 'fight' && d.ko < 0 && !d.cap && !(d.vform && d.vform !== 'verity') && !(d.vact && d.vact.type === 'crouch') && !(d.cact && d.cact.flat) && !ult && !cf && now >= d.stunUntil && now - d.born >= 900 && d.x - wx <= JS.reach && d.x - wx >= -4;
 }
@@ -3576,7 +3631,8 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
     if (af >= 15) { if (atkQ) { atkQ = false; atkK = pickAtk(); atkAt = now; af = 0; } else { atkAt = -1; af = -1; comboUntil = now + COMBO_MS; } }      // (a press during a swing chains the next one)
   }
   if (v.pn && (atkAt !== v.pn.at || atkK !== 24)) v.pn = null;      // (the air bite is over, or a blow stopped it)
-  const idleOK = t >= 1 && hum && !stun && jf < 0 && tu < 0 && hf < 0 && df < 0 && bf < 0 && sf < 0 && !(vh && vh.phase !== 'hover'), free = idleOK && af < 0 && !vdg; vdgStep(now, dt);
+  if (ripRun) ripStep(now, hf >= 0 || stun || !hum);      // (v1.116 RIP AND THROW: its moments, or its end when he is hit)
+  const idleOK = t >= 1 && hum && !stun && jf < 0 && tu < 0 && hf < 0 && df < 0 && bf < 0 && sf < 0 && !(vh && vh.phase !== 'hover') && !ripRun, free = idleOK && af < 0 && !vdg; vdgStep(now, dt);
   if (ceReq) {      // MODE: into the ball (20% of the energy); with the ball out: back into Verity
     ceReq = false;
     if (free && stance === 'stand' && ceSpend(CE_COST.vBall, now)) { voiceLoad(); v.form = 'smoke1'; v.fAt = now; v.bAt = now + 200; v.bSnd = false; v.back = false; atkQ = false; lpReq = atkReq = dashReq = jumpReq = crReq = false; setModeUI(); snd('vanish'); }
@@ -3586,6 +3642,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   if (lpReq) {
     lpReq = false; const inAir = hum && !stun && jf >= 4 && jf <= 11 && tu < 0 && df < 0 && hf < 0 && bf < 0 && af < 0 && stance === 'stand' && !vh && !vdg;
     if (inAir) { if (!owns('v_pounce')) lockPop(now); else if (ceSpend(CE_COST.vPounce, now)) { v.pn = { at: now, l0: D.jump.lift[jf], x0: wx, landed: false }; atkK = 24; atkAt = now; af = 0; atkQ = false; heavyAt = atkAt; jumpAt = -1; jf = -1; wvx = 0; snd('swing', 3); say('AIR BITE', wx, '#ff8a7a', 8, now); } }      // THE AIR BITE (v1.45, BLUE in the air): he falls on the enemy head first; swing 24, a heavy bite (see pounceStep)
+    else if (free && stance === 'stand' && (keyR || padR) && owns('v_rip') && ripTarget(now) && ceSpend(CE_COST.vRip, now)) ripBegin(now);      // RIP AND THROW (v1.116): BLUE walking forward, with the enemy in reach
     else if (free && stance === 'stand' && ceSpend(CE_COST.vBite, now)) { atkK = 22; atkAt = now; af = 0; atkQ = false; }      // BITE: its own swing (number 22)
     else if (free && stance === 'crouch' && owns('v_drag') && ceSpend(CE_COST.vDrag, now)) vdgBegin(now);      // crouched: the BLOOD DRAG (v1.28)
   }
@@ -3600,7 +3657,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   }
   if (af < 0 && (combo !== 0 || cpIdx !== 0) && now > comboUntil) { combo = 0; cpIdx = 0; }
   const lab = !hum ? 'TALK' : stance === 'crouch' ? VP_CR[cpIdx] : VP_M1[combo]; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; }
-  { const bl = hum && jf >= 4 && jf <= 11 && owns('v_pounce') ? 'AIR<br>BITE' : 'BITE', el = $('lapl'); if (el.innerHTML !== bl) el.innerHTML = bl; }      // (BLUE in the air is the AIR BITE)
+  { const bl = hum && jf >= 4 && jf <= 11 && owns('v_pounce') ? 'AIR<br>BITE' : hum && (keyR || padR) && stance === 'stand' && owns('v_rip') && ripTarget(now) ? 'RIP' : 'BITE', el = $('lapl'); if (el.innerHTML !== bl) el.innerHTML = bl; }      // (BLUE in the air is the AIR BITE)
   if (crReq) { crReq = false; if (free) { if (stance === 'stand') { stance = 'down'; stAt = now; sf = 0; } else if (stance === 'crouch') { stance = 'up'; stAt = now; sf = 0; } } }      // (tap to fold up, tap to rise; the stick's down position folds him for as long as it is held)
   if (free) { if (stickDown && stance === 'stand') { stance = 'down'; stAt = now; sf = 0; stickCr = true; } else if (!stickDown && stickCr && stance === 'crouch' && now - stickDownEnd > 140) { stance = 'up'; stAt = now; sf = 0; } }
   if (stance === 'stand') stickCr = false;
@@ -3616,7 +3673,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
     }
   }
   if (jumpReq) { jumpReq = false; if (free && stance === 'stand') { jumpAt = now; jf = 0; } }
-  const steer = t >= 1 && hum && !stun && !vh && df < 0 && sf < 0 && stance === 'stand' && ((jf < 0 && af < 0 && hf < 0) || (jf >= 3 && jf <= 11));      // (no walking while folded up, swinging, hurt or teleporting)
+  const steer = t >= 1 && hum && !stun && !vh && !ripRun && df < 0 && sf < 0 && stance === 'stand' && ((jf < 0 && af < 0 && hf < 0) || (jf >= 3 && jf <= 11));      // (no walking while folded up, swinging, hurt or teleporting)
   const dir = steer ? ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0) : 0;
   const nm = !hum ? 'ball' : hf >= 0 ? 'hurt' : stun ? 'fear' : df >= 0 ? 'tele' : bf >= 0 && sf < 0 ? 'block' : tu >= 0 || jf >= 0 ? 'jump' : af >= 0 ? 'atk' : sf >= 0 ? 'cdn' : stance === 'crouch' ? 'cidle' : dir > 0 ? 'fwd' : dir < 0 ? 'back' : 'idle';
   if (nm !== mode) { mode = nm; modeAt = now; stepN = -1; }
@@ -3658,6 +3715,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   else if (!hum) src = vfr('idle', 0, false);
   else if (hf >= 0) { const q = (now - hurtAt) / RX_DUR[hurtK] * 15; src = vrx(hurtK, q, false); info = VRXIN[hurtK]; if (info.lift && !gAir) py += info.lift[Math.min(14, Math.floor(q))]; if (now - hurtAt < 70) src = whiteOf(src); }      // one of his ten hit reactions
   else if (stun) { src = vfr('crouch', 14, false); const o = fearOff(now); ox = o[0]; oy = o[1]; }      // the enemy's JUMPSCARE has him: folded up and shaking
+  else if (ripRun) { src = ripPic(now); info = RIP_INFO; }      // (v1.116 RIP AND THROW)
   else if (tu >= 0) src = vfr('tele_up', tu, false);
   else if (df >= 0) src = vfr('tele', df, false);
   else if (bf >= 0 && sf < 0) src = vfr('block', bf, false);
@@ -3677,7 +3735,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   ctx.save();
   if (vap) { /* gone */ } else if (gko >= 0) { const rgh = ragXf(vs.rag, gko, cx, gy + 2, -1); if (!rgh) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); } ctx.drawImage(vs.meInv ? invOf(vfr('idle', 0, false)) : vfr('idle', 0, false), -32, -62 + rgh); }
   else { ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(vs.meInv && !(hf >= 0 && now - hurtAt < 70) ? invOf(src) : src, x, y); if (stun && hf < 0) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(src), x, y); } }
-  ctx.restore(); if (hum && t >= 1 && gko < 0 && !vap) cloth(clMe, src, x, y, false, 'verity', dt); drawGiantNow('foe');
+  ctx.restore(); if (hum && t >= 1 && gko < 0 && !vap) cloth(clMe, src, x + (src === RIP_C ? Math.round(ripK(now, ripRun.at).lean) : 0), y, false, 'verity', dt); drawGiantNow('foe');
   if (v.form === 'smoke1') smokePuffs(cx, gy - 28, fa / 450); else if (v.form === 'smoke2') smokeBig(cx, fa / 1000);
   if (t < 1) {      // spawn ring + flash
     const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,225,110,' + (1 - t) + ')';
