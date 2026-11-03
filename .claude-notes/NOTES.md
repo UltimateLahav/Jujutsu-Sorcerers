@@ -13,7 +13,7 @@
 
 ## Progress
 - Latest: V1.117 (code 192) Verity LAG COUNTER (walk BACK + BLUE, 15%, $400 needs BITE: 1.5 s frozen stuttering walk-back; a fighter's blow does nothing, top body flung back then bite 12 + bleed, punch 35 + knock-away; offline only). V1.116 = RIP AND THROW (fwd + BLUE, pushed bc92915).
-- Tests at V1.117: v117.js 225 checks, fuzz117.js, v116.js, old suites all exit 0, lint = 19 messages (6 errors, 13 warnings) = baseline. (V1.115: LanNetTest 61 checks, 25 fighter pairs.)
+- Tests at V1.117: v117.js 225 checks, fuzz117.js, v116.js, old suites all exit 0 (v114s may flake once on its first jump), lint = 19 messages (6 errors, 13 warnings) = baseline. (V1.115: LanNetTest 61 checks, 25 fighter pairs.)
 
 ## Open Tasks
 - NOW (offline game): new Verity moves. Has 15 skills (crouch, block, teleport, bite, smoke ball, fatal, jumpscare, blood drag, heavy, tele cancel, air combo, air bite, sense, rip and throw, lag counter). Missing: ranged move, STOP (story-only), teleport strike, jump+ATTACK move, power-up MODE, more BLUE variants (he has 5, Yuji 7, Cat 4). Suggested: STOP + ARM GRAB (stretchy arm art exists, `ripPic` shows how to draw it) + TELEPORT STRIKE. Open Verity input slots (code: `verityScene`, branches lpReq/dashReq/ceReq/domReq/atkReq): jump+ATTACK, walk+ATTACK, crouch-back/air+dir+BLUE, crouch/air+MODE, crouch/air/far+DOMAIN (far now says TOO FAR), crouch+DASH, DASH+ATTACK, crouch block, block-walk, crouch+JUMP. Other options:  Freddy as an enemy in Versus (not offered yet: `buildFighters`, "he cannot fight yet") / playable chapter 3 fight (only a cutscene so far, v1.106).
