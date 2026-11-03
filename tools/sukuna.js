@@ -6,7 +6,7 @@
 // v1.111: the BLUE button (key L) is his INVISIBLE SLASH, which nobody sees fly: it cuts the enemy AT ONCE wherever he stands on the screen (nothing travels: the cut lands on the 7th picture of his flick, 0.12 s after the press). Standing, BLUE is the AIR CUT (costs 5 CE): the enemy flinches (no damage by itself) and a cut shows across him, and he BLEEDS. With the BACK direction held it is the CUT STORM (25 CE): he raises his hand forward with the fingers spread and eight slashes land one after the other (0.04 s apart), each flashes a cut across the enemy and adds a bleed, and the enemy is STUNNED for 3 s (from the last slash). The bleeds STACK: every slash that lands (the counter's too) adds its own bleed, 0.1 of health every 0.03 s for 4 s, so 8 slashes bleed 8 times as fast. A blocking enemy blocks them (BLOCKED, no bleed), and one who is crouching, dodging or lying down is not hit. They are made like a blow (g.set 9 and 10: pictures a second and the cost, paid by customScene like any move's; the slashes are events with a callback, `cb`, see cuEv): see suBlue, suCutAt, suBleed.
 // v1.112: BLUE has two more moves, by where he is. CROUCHED it is the LEG CUT (10 CE): a low sweep of his hand and the enemy's legs are cut at once, wherever he stands on the screen (blockable like the AIR CUT; a crouching enemy is cut too): he drops to his KNEES (the crouch of his own pictures) and is stunned for 0.8 s, and while he kneels EVERY hit lands on him (he does not duck, block or dodge: nothing of his kind is in the way), and he bleeds. IN THE AIR (the flight of a jump) it is DISMANTLE (20 CE, and only with a living enemy on the screen in front of him, otherwise NO TARGET and nothing is paid): in the air he dashes back 40 px (the jump he was in is held where it was until it is all over), points one finger at the enemy, and THE GAME STOPS (the clock stands still for 1.5 s, as in a hit stop, and suTsFrame paints the held frame grey and dark with red bars, a line from his finger to the enemy, three thin cuts drawn on the enemy's chest for what is coming, and the word DISMANTLE letter by letter, with a deep sound: no spoken voice); then time goes on and THREE CUTS land one after another on the enemy's chest (0.11 s apart; nothing can block or dodge them, a guard is broken), each adding a bleed that lasts 8 s (0.1 of health every 0.03 s, they stack: about 80 health in all, he bleeds out), and the enemy is stunned from the stop until 0.6 s after the last cut. Nothing touches him during the whole move. See suBlue, suLegAt, suDisStep, suFreeze, suDisCut, suTsFrame.
 // He cannot crouch-jump, dash, block or be hurt in pictures yet (whatever is pressed is dropped, as for a custom fighter that has not drawn them), and his body is measured on his idle pictures like every custom fighter's (cuMeasure). His slot is 3, after the three that can be drawn, so cuSelRefresh leaves his card alone.
-const SUK_WHO = 'cu3', SUK_PNG = '__SUKPNG__', SUK_ROWS = ['frames', 'walk', 'jump', 'cr', 'ci', 'cwk', 'a0', 'a1', 'a2', 'dg', 'a3', 'cp0', 'cp1', 'sl', 'sx', 'cut', 'storm', 'ccut', 'dis'];      // (the rows of the picture strip: idle, walk, jump, crouch down, crouched idle, crouch walk, right jab, left jab, face kick, dodge, slash (the counter's and the right hand's), the two crouch punches, the left hand's slash and the slash of both hands, the AIR CUT and the CUT STORM, the LEG CUT and DISMANTLE; the names are those of the pictures of a custom fighter: a0 to a3 are its four punches)
+const SUK_WHO = 'cu3', SUK_PNG = '__SUKPNG__', SUK_ROWS = ['frames', 'walk', 'jump', 'cr', 'ci', 'cwk', 'a0', 'a1', 'a2', 'dg', 'a3', 'cp0', 'cp1', 'sl', 'sx', 'cut', 'storm', 'ccut', 'dis', 'el', 'tc', 'lift', 'dive'];      // (the rows of the picture strip: idle, walk, jump, crouch down, crouched idle, crouch walk, right jab, left jab, face kick, dodge, slash (the counter's and the right hand's), the two crouch punches, the left hand's slash and the slash of both hands, the AIR CUT and the CUT STORM, the LEG CUT and DISMANTLE, v1.119: the ELBOW, the touch and cut (Yuji's grab and cleave), the LIFT and the DIVE; the names are those of the pictures of a custom fighter: a0 to a3 are its four punches)
 const SU_ATK = [['R.JAB', 8, 0, 8, 6, 30], ['L.JAB', 8, 0, 8, 6, 30], ['FACE KICK', 16, 14, 6, 14, 30]];      // the three blows: name, damage, knock-back, the picture (1 - 15) the blow lands on, how far he steps forward (px), pictures a second (the jabs are Yuji's hooks, 30 a second, landing on his 8th picture; the kick lands its sole on the 6th)
 const SU_KICK_LIFT = [0, 0, 0, 4, 9, 12, 12, 8, 4, 2, 0, 0, 0, 0, 0];      // how high the face kick hops (px) in each of its pictures (Yuji's kick to the head, the first of his three: the foot is 34 px above the ground in the picture and he is lifted 12 more: the height of a standing enemy's face)
 const SU_NEAR = 60, SU_CP = [['R.JAB', 10, 7], ['L.UPPR', 13, 8]], SU_CP_FPS = 38, SU_THROW = { d: 6, share: 0.25, shareX: 0.5, lead: 24, ms: 600, cd: 5, fps: 45, hit: 8 };      // v1.110: an enemy this close in front (px) is punched, a further one slashed at; Yuji's crouch punches: name, damage (his hits 6 and 7: 10 and 13), the picture they land on (1 - 15), 38 pictures a second; the slashes: damage of a single slash (the X's are twice that), how much of the screen's width each flies from him in its 0.6 s (a single one a quarter, the X half: the screen's edge, since he stands in the middle), the lead the slash already has when it leaves (px: where it starts and where its middle is), its life (ms), the wait before the X can be thrown again (s), pictures a second and the picture it leaves the hand on
@@ -14,6 +14,8 @@ const SU_BLUE = { cut: { fps: 50, hit: 7, cost: 5 }, storm: { fps: 24, first: 7,
 const SU_LEG = { fps: 45, hit: 7, cost: 10, kneel: 800, mark: [-14, -22, 14, -12] };      // v1.112 the LEG CUT (BLUE crouched): pictures a second, the picture the cut lands on, the cost (% of the energy), how long he kneels (stunned, ms) and the line of the cut across his legs
 const SU_DIS = { cost: 20, dash: 40, dashMs: 250, pointMs: 150, freeze: 1500, hold: 120, gap: 110, cuts: 3, endMs: 140, after: 600, bleed: 8000, tip: [22, -27], marks: [[-12, -48, 12, -26], [12, -48, -12, -26], [-14, -37, 14, -37]] };      // v1.112 DISMANTLE (BLUE in the air): the cost; how far he dashes back (px) in how long (ms) and how long he then takes to point (ms); how long the game stops (ms); how long the finger holds after the stop before the first cut, the time between two cuts (ms), how many cuts; how long he holds the last one (ms); how long the enemy stays stunned after the last cut (ms); how long each bleed lasts (ms); where the tip of his finger is from his middle on the floor line (x, y, plus his height); and the line of each cut across the enemy's chest
 const SU_DASH = { cost: 20, reach: 100, behind: 26, dashMs: 210, standMs: 480, freeze: 1230, imp: 260, endMs: 420, dmg: 20, bleed: 6000, nb: 2, mark: [-30, -52, 30, -22] };      // v1.118 DASH SLASH (BLUE with FORWARD held): the cost; how far away the enemy can be (px); how far behind him he stops (px); the dash (ms); how long he stands there before the stop (ms); how long the game stops (ms); how much of that is the impact frame (ms); how long he stands after the cut (ms); the cut's damage; how long each of its bleeds lasts (ms) and how many there are; the line of the cut across the enemy
+const SU_ELB = ['ELBOW', 12, 3, 8, 14, 32];      // v1.119 the CLEAVE mode's third blow (Yuji's ELBOW): name, damage, knock-back, the picture (1 - 15) it lands on, how far he steps forward (px: the elbow is 5 px shorter than a jab, so it steps further), pictures a second (the two hooks before it are the jabs' own: SU_ATK)
+const SU_CL = { reach: 44, touchHold: 450, m1: 1, blue: 5, cost: { stand: 5, lift: 10, dive: 10, dash: 10 }, mark: [-16, -50, 18, -18], lift: { reach: 46, stop: 30, step: 18, h: 9, end: 800, mark: [-14, -66, 14, -46], T: [0, 36, 72, 108, 144, 180, 240, 300, 360, 480, 520, 560, 600, 680, 740] }, dive: { range: 150, stop: 25, ms: 190, end: 560, mark: [-2, -62, 4, -6], T: [0, 60, 120, 165, 210, 255, 295, 335, 375, 415, 455, 495] }, dash: { range: 120, stop: 27, ms: 150, end: 420, knock: 60, launch: 12, mark: [-24, -28, 26, -56] } };      // v1.119 CLEAVE (MODE): how far a melee cleave reaches (px); how long the touch holds the enemy still (ms); the % of the enemy's full health the TOUCH CUT (the 4th blow of ATTACK) and every BLUE move take; the energy costs (%); the line of the cut across the enemy; the LIFT (reach, how close his hand needs the enemy and the longest step he takes to get there in px, how high he lifts the enemy in px, how long it all takes in ms, the line of the cut across his head, and when each of the 15 pictures starts in ms); the DIVE (how far away the enemy can be, how far from him he lands, the fall in ms, the whole move in ms, the line of the cut, when each picture of the grab and cut starts after the landing); the DASH CLEAVE (how far away, how far from him he stops, the dash in ms, the whole move, the knock-back, the hop in px, the line of the cut)
 const SU_MARKS = [[-10, -52, 12, -12], [12, -54, -10, -14], [-12, -36, 14, -30], [-8, -58, 8, -8], [10, -44, -12, -22], [-12, -26, 12, -42], [-6, -58, 10, -10], [12, -30, -12, -48]];      // where the cut of each slash shows across the enemy (x0, y0, x1, y1 from his middle on the floor line), every one another line
 const SU_WAIT = 2000, SU_DODGE = { ms: 233, px: 30, from: 2, n: 7 }, SU_SLASH = { fps: 30, hit: 7, stand: 24, max: 80 }, SU_BLEED = { ms: 4000, gap: 30, dm: 0.1 };      // the counter: how long he waits (ms); the dodge (ms, how far back, the first picture of Yuji's back dash and how many are used); the slash (pictures a second, the picture the cut lands on, how far from the enemy he stops, the longest step) and the bleeding (ms, ms between two ticks, health a tick)
 NAMES[SUK_WHO] = 'SUKUNA'; CEC[SUK_WHO] = ['#2a0a12', '#d02a3a', '#ffb0b8', '#ff7a86'];      // (his name on the HUD and his energy bar: crimson)
@@ -37,10 +39,12 @@ NAMES[SUK_WHO] = 'SUKUNA'; CEC[SUK_WHO] = ['#2a0a12', '#d02a3a', '#ffb0b8', '#ff
     ev.push([thrown(SU_THROW.d, SU_THROW.share, 6, 0)], [thrown(SU_THROW.d, SU_THROW.share, 7, 0)], [thrown(SU_THROW.d * 2, SU_THROW.shareX, 9, 0), thrown(SU_THROW.d * 2, SU_THROW.shareX, 10, 1)]);      // 6 and 7: the single slashes, 8: the two slashes of the X (each with its own picture)
     ev.push([{ f: SU_BLUE.cut.hit, k: 'c', cb: now => suCutAt(now, 0, 1) }], Array.from({ length: SU_BLUE.storm.n }, (_, i) => ({ f: SU_BLUE.storm.first + i, k: 'c', cb: now => suCutAt(now, i, SU_BLUE.storm.n) })));      // 9: the AIR CUT (one slash), 10: the CUT STORM (one slash on each of its pictures, from the first one on)
     ev.push([{ f: SU_LEG.hit, k: 'c', cb: now => suLegAt(now) }], [], []);      // 11: the LEG CUT (one cut), 12: DISMANTLE and 13: the DASH SLASH have no events: a state of their own plays them (suDisStep, suDashStep)
-    const one = [0, 1].map(ph => suSlashCv(0, ph)), up = [0, 1].map(ph => suSlashCv(1, ph)), dn = [0, 1].map(ph => suSlashCv(2, ph)), vfx = Array.from({ length: 14 }, () => []), vxs = Array.from({ length: 14 }, () => []), spans = l => l.map(c => cuSpan(suAlpha(c), r => r - 2));
+    const elTips = arts[SUK_ROWS.indexOf('el')].map(tipOf), [, eD, eK, eF] = SU_ELB, eE = { f: eF, k: 'i', d: eD, sp: eD, fx: [['k', eK, 0, 0, -1], ['h', 50, 0, 1, 0], ['w', 3, 0, 1, 0]], c: 0, src: -1, id: 0, dy: 0 }; eE.tip = cuMaxRows([elTips[eF - 1], elTips[eF]]);
+    ev.push(ev[0], ev[1], [eE], [{ f: 4, k: 'c', cb: now => suTouch(now) }, { f: 8, k: 'c', cb: now => suClHit(now, SU_CL.m1, { knock: 1.5 }, SU_CL.reach + 4, -3, SU_CL.mark, false) }], [{ f: 4, k: 'c', cb: now => suTouch(now) }, { f: 8, k: 'c', cb: now => suClHit(now, SU_CL.blue, { gb: true, knock: 5 }, SU_CL.reach + 12, -3, SU_CL.mark, true) }], [], [], []);      // v1.119 14: R.HOOK and 15: L.HOOK (the jabs' own impacts), 16: ELBOW, 17: TOUCH CUT (picture 4 touches him, picture 8 cuts: 1% of his full health), 18: CLEAVE (BLUE: the same, 5%, a guard is broken); 19: LIFT, 20: DIVE and 21: DASH CLEAVE are states of their own (suClStep)
+    const one = [0, 1].map(ph => suSlashCv(0, ph)), up = [0, 1].map(ph => suSlashCv(1, ph)), dn = [0, 1].map(ph => suSlashCv(2, ph)), vfx = Array.from({ length: 22 }, () => []), vxs = Array.from({ length: 22 }, () => []), spans = l => l.map(c => cuSpan(suAlpha(c), r => r - 2));
     vfx[6] = vfx[7] = one; vfx[9] = up; vfx[10] = dn; vxs[6] = vxs[7] = spans(one); vxs[9] = spans(up); vxs[10] = spans(dn);      // (the pictures of the flying slashes and the rows each covers, for the touch with the enemy)
-    CU_GAME[3] = { name: 'SUKUNA', frames: set.frames, walk: set.walk, jump: set.jump, hu: [], ko: [], bl: [], df: [], db: [], cr: set.cr, ci: set.ci, cwk: set.cwk, st: { ...cuStats(null), fw: FWD_SPEED, bk: BACK_SPEED, cw: 60, jh: 22, jt: 713 }, vfx, atk: [set.a0, set.a1, set.a2, set.a3, set.cp0, set.cp1, set.a3, set.sl, set.sx, set.cut, set.storm, set.ccut, set.dis, set.a3], an: SU_ATK.map(a => a[0]).concat('COUNTER', SU_CP.map(a => a[0]), 'R.SLASH', 'L.SLASH', 'X SLASH', 'AIR CUT', 'CUT STORM', 'LEG CUT', 'DISMANTLE', 'DASH SLASH'), rdy: [0, 1, 2, 3], ev, set: [0, 1, 2, 3].map(k => ({ v: k < 3 ? SU_ATK[k][5] : 30, m: k < 3 ? SU_ATK[k][4] : 0, c: 0, d: 0 })).concat([SU_CP_FPS, SU_CP_FPS, SU_THROW.fps, SU_THROW.fps, SU_THROW.fps].map((v, i) => ({ v, m: 0, c: 0, d: i === 4 ? SU_THROW.cd : 0 }))).concat([[SU_BLUE.cut.fps, SU_BLUE.cut.cost], [SU_BLUE.storm.fps, SU_BLUE.storm.cost], [SU_LEG.fps, SU_LEG.cost], [20, SU_DIS.cost], [30, SU_DASH.cost]].map(([v, c]) => ({ v, m: 0, c, d: 0 }))), body, push: Math.max(5, hs.length ? hs[hs.length >> 1] : 5),
-      tipAll: ev.map(l => cuMaxRows(l.map(e => e.tip))), vxs, dg: set.dg, al: [null, null, SU_KICK_LIFT, null, null, null, null, null, null, null, null, null, null, null], cs: null, yu: true, blue: true, wf: WALK_FPS, crMs: 1000 / CR_FPS };      // (the blows: 0 R.JAB, 1 L.JAB, 2 FACE KICK, 3 COUNTER, 4 R.JAB and 5 L.UPPR crouched, 6 R.SLASH, 7 L.SLASH, 8 X SLASH, 9 AIR CUT, 10 CUT STORM, 11 LEG CUT, 12 DISMANTLE (the last four are played by BLUE: blue); yu: he moves like Yuji; wf: his walking pictures a second; crMs: how long a picture of the crouch lasts; al: the height of each picture of a blow that hops; cs: the counter in progress; dg: the pictures of the dodge; the stats are Yuji's: 56 and 38 px/s, 60% while crouched, a jump of 22 px, 713 ms of flight)
+    CU_GAME[3] = { name: 'SUKUNA', frames: set.frames, walk: set.walk, jump: set.jump, hu: [], ko: [], bl: [], df: [], db: [], cr: set.cr, ci: set.ci, cwk: set.cwk, st: { ...cuStats(null), fw: FWD_SPEED, bk: BACK_SPEED, cw: 60, jh: 22, jt: 713 }, vfx, atk: [set.a0, set.a1, set.a2, set.a3, set.cp0, set.cp1, set.a3, set.sl, set.sx, set.cut, set.storm, set.ccut, set.dis, set.a3, set.a0, set.a1, set.el, set.tc, set.tc, set.lift, set.dive, set.a3], an: SU_ATK.map(a => a[0]).concat('COUNTER', SU_CP.map(a => a[0]), 'R.SLASH', 'L.SLASH', 'X SLASH', 'AIR CUT', 'CUT STORM', 'LEG CUT', 'DISMANTLE', 'DASH SLASH', 'R.HOOK', 'L.HOOK', SU_ELB[0], 'TOUCH CUT', 'CLEAVE', 'LIFT CLEAVE', 'DIVE CLEAVE', 'DASH CLEAVE'), rdy: [0, 1, 2, 3], cl: [14, 15, 16, 17], ev, set: [0, 1, 2, 3].map(k => ({ v: k < 3 ? SU_ATK[k][5] : 30, m: k < 3 ? SU_ATK[k][4] : 0, c: 0, d: 0 })).concat([SU_CP_FPS, SU_CP_FPS, SU_THROW.fps, SU_THROW.fps, SU_THROW.fps].map((v, i) => ({ v, m: 0, c: 0, d: i === 4 ? SU_THROW.cd : 0 }))).concat([[SU_BLUE.cut.fps, SU_BLUE.cut.cost], [SU_BLUE.storm.fps, SU_BLUE.storm.cost], [SU_LEG.fps, SU_LEG.cost], [20, SU_DIS.cost], [30, SU_DASH.cost]].map(([v, c]) => ({ v, m: 0, c, d: 0 }))).concat([[30, 6, 0], [30, 6, 0], [SU_ELB[5], SU_ELB[4], 0], [30, 8, 0], [24, 16, SU_CL.cost.stand], [30, 0, SU_CL.cost.lift], [30, 0, SU_CL.cost.dive], [30, 0, SU_CL.cost.dash]].map(([v, m, c]) => ({ v, m, c, d: 0 }))), body, push: Math.max(5, hs.length ? hs[hs.length >> 1] : 5),
+      tipAll: ev.map(l => cuMaxRows(l.map(e => e.tip))), vxs, dg: set.dg, al: [null, null, SU_KICK_LIFT, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], cs: null, yu: true, blue: true, wf: WALK_FPS, crMs: 1000 / CR_FPS };      // (the blows: 0 R.JAB, 1 L.JAB, 2 FACE KICK, 3 COUNTER, 4 R.JAB and 5 L.UPPR crouched, 6 R.SLASH, 7 L.SLASH, 8 X SLASH, 9 AIR CUT, 10 CUT STORM, 11 LEG CUT, 12 DISMANTLE (the last four are played by BLUE: blue); yu: he moves like Yuji; wf: his walking pictures a second; crMs: how long a picture of the crouch lasts; al: the height of each picture of a blow that hops; cs: the counter in progress; dg: the pictures of the dodge; the stats are Yuji's: 56 and 38 px/s, 60% while crouched, a jump of 22 px, 713 ms of flight)
   };
   im.src = SUK_PNG;
 })();
@@ -50,7 +54,10 @@ function suStart(g, now) {      // ATTACK as the 4th blow: he waits (his idle pi
   g.cs = { ph: 'wait', t0: now }; cuAtkK = 3; cuAtkAt = now; cuLunged = 0; cuCmb = 0; cuCmbBy = now + 1e9; cuFired = []; cuRes = [];
   say('COUNTER', wx, '#ff7a86', 8, now); snd('ceon');
 }
-function suEnd(g, now) { g.cs = null; cuAtkAt = -1; cuCmb = 0; cuCmbBy = now + 500; }
+function suEnd(g, now) {
+  const c = g.cs; if (c && c.cl === 'lift' && dummy && dummy.air && dummy.air.hover) dummy.air = airMake(now, dummy.airH || 0, 0, AIR_G, 'up');      // (v1.119 a LIFT that is broken off: the enemy he holds comes down)
+  g.cs = null; cuAtkAt = -1; cuCmb = 0; cuCmbBy = now + 500;
+}
 function suHit(now) {      // a swing of the enemy reaches him (gojoHit): true = it misses; waiting he dodges it, and until the cut has landed nothing touches him
   const g = CU_GAME[3], c = g && g.cs; if (!c || vs.me !== SUK_WHO) return false;
   if (c.ph === 'wait') { c.ph = 'dodge'; c.t0 = now; c.done = 0; snd('dash', 1); puff(wx + 4, 5); say('DODGE!', wx, '#9fd8ff', 8, now); return true; }
@@ -69,6 +76,7 @@ function suStep(g, now) {      // every frame of the counter: the state moves on
   if (vs.ph !== 'fight') { suEnd(g, now); return null; }
   if (c.air) return suDisStep(g, c, now);      // (v1.112 DISMANTLE is a state of the same kind: g.cs = { air: true, ... })
   if (c.dash) return suDashStep(g, c, now);      // (v1.118 the DASH SLASH: g.cs = { dash: true, ... })
+  if (c.cl) return suClStep(g, c, now);      // (v1.119 the LIFT, the DIVE and the DASH CLEAVE of the CLEAVE mode: g.cs = { cl: 'lift' | 'dive' | 'dash', ... })
   const t = now - c.t0;
   if (c.ph === 'wait') { if (t >= SU_WAIT) suEnd(g, now); return null; }
   if (c.ph === 'dodge') {
@@ -106,10 +114,12 @@ function suNear() {      // is a living enemy standing in front of him within SU
 }
 function suPick(g, now) {      // the blow ATTACK plays now: crouched, the crouch punches in turn; standing with an enemy near, the combo (jab, jab, kick, counter); standing with none near, the slashes: right hand, left hand, then both hands if the 5 s of the X are over (otherwise another single slash)
   if (stance === 'crouch') return 4 + cuCp;
+  if (suCl) return g.cl[cuCmb % g.cl.length];      // (v1.119 the CLEAVE mode: always the melee chain, R.HOOK, L.HOOK, ELBOW, TOUCH CUT, with an enemy near or not)
   if (suNear()) return g.rdy[cuCmb % g.rdy.length];
   return cuSn >= 2 && now >= (cuCd[8] || 0) ? 8 : 6 + (cuSn % 2);
 }
 function suNext(k) {      // blow k has started: the index of the combo that comes next (each chain keeps its own place)
+  if (k >= 14 && k <= 17) return (k - 13) % 4;      // (the CLEAVE chain)
   if (k < 3) return (k + 1) % 4;
   if (k === 4 || k === 5) cuCp = k === 4 ? 1 : 0; else if (k === 8) cuSn = 0; else cuSn++;
   return cuCmb;
@@ -117,6 +127,7 @@ function suNext(k) {      // blow k has started: the index of the combo that com
 function suLabel(g, now) {      // what the ATTACK button says: the blow that comes next
   const fresh = now > cuCmbBy;
   if (stance === 'crouch') return g.an[4 + (fresh ? 0 : cuCp)];
+  if (suCl) return g.an[g.cl[(fresh ? 0 : cuCmb) % g.cl.length]];
   if (suNear()) return g.an[g.rdy[(fresh ? 0 : cuCmb) % g.rdy.length]];
   const sn = fresh ? 0 : cuSn; return sn >= 2 && now >= (cuCd[8] || 0) ? g.an[8] : g.an[6 + (sn % 2)];
 }
@@ -124,22 +135,32 @@ function suLabel(g, now) {      // what the ATTACK button says: the blow that co
 // ---- v1.111 BLUE: the AIR CUT and the CUT STORM (the invisible slashes) and the bleeds that stack
 let suCast = null, suMk = 0;
 function suBlue(now) {      // the BLUE move this moment asks for (-1: none): in the flight of a jump (its pictures 3 to 11) DISMANTLE (12), crouched the LEG CUT (11), standing the CUT STORM (10) with the back direction held and otherwise the AIR CUT (9)
-  if (cuJumpAt >= 0) { const f = jumpFrame(Math.max(0, now - cuJumpAt)); return f >= 3 && f <= 11 ? 12 : -1; }
+  if (cuJumpAt >= 0) { const f = jumpFrame(Math.max(0, now - cuJumpAt)); return f >= 3 && f <= 11 ? (suCl ? 20 : 12) : -1; }
+  if (suCl) return stance === 'crouch' ? 19 : stance === 'stand' ? ((keyR || padR) && suClDashOk(now) ? 21 : 18) : -1;      // (v1.119 the CLEAVE mode: crouched the LIFT (19), in the air the DIVE (20), standing with FORWARD held and an enemy ahead the DASH CLEAVE (21), otherwise the CLEAVE (18))
   return stance === 'crouch' ? 11 : stance === 'stand' ? (keyL || padL ? 10 : (keyR || padR) && suDashOk(now) ? 13 : 9) : -1;
 }
 function suBlueOk(k, now) {      // can this BLUE move start? DISMANTLE stops time, so it needs a living enemy in front of him on the screen that he can hit (not one lying down, held or beyond the edge): otherwise NO TARGET, and nothing is paid
+  if (k === 19 || k === 20) {      // (v1.119 the LIFT needs the enemy within arm's reach, the DIVE one ahead of him within SU_CL.dive.range px)
+    const r = k === 19 ? SU_CL.lift.reach : SU_CL.dive.range, d = dummy;
+    if (suClTgt(now, r)) return true;
+    say(d && d.x - wx > r ? 'TOO FAR' : 'NO TARGET', wx, '#9a9aa8', 8, now); return false;
+  }
   if (k !== 12) return true;
   const d = dummy, gap = d ? d.x - wx : 1e9;
   if (d && d.ko < 0 && !d.cap && now >= (d.down || 0) && gap >= -4 && gap <= VW / 2 + SU_BLUE.reach) return true;
   say('NO TARGET', wx, '#9a9aa8', 8, now); return false;
 }
 function suBlueStart(k, now) {      // a new BLUE move has started: nothing has landed yet; DISMANTLE is a state of its own (g.cs) in which nothing touches him (suHit)
-  suCast = { hits: 0 }; if (k === 12) CU_GAME[3].cs = { air: true, ph: 'air', t0: now, last: now, done: 0, cuts: 0, frozen: false };
+  suCast = { hits: 0 }; if (k >= 19 && k <= 21) suClStart(k, now); if (k === 12) CU_GAME[3].cs = { air: true, ph: 'air', t0: now, last: now, done: 0, cuts: 0, frozen: false };
   if (k === 13) { const d = dummy; CU_GAME[3].cs = { dash: true, ph: 'dash', t0: now, done: 0, dx: d.x - wx + SU_DASH.behind, gh: [], cut: false }; cuStun((SU_DASH.dashMs + SU_DASH.standMs + SU_DASH.endMs + 300) / 1000, now, true); d.dodgeUntil = 0; snd('dash', 1); say('DASH SLASH', wx, '#ffe9a0', 8, now); }      // (the enemy stands still from now until after the cut)
 }
 const SU_BLUE_NAMES = { 9: ['AIR<br>CUT', 'Air Cut: an invisible slash cuts the enemy at once wherever he stands on the screen and he bleeds (5 energy). Hold back for the Cut Storm, crouch for the Leg Cut, jump for Dismantle'], 10: ['CUT<br>STORM', 'Cut Storm: eight invisible slashes cut the enemy, he is stunned for 3 seconds and bleeds more with every slash (25 energy)'], 11: ['LEG<br>CUT', 'Leg Cut: an invisible slash cuts the enemy\'s legs, he drops to his knees and is stunned for 0.8 seconds, and every hit lands on him (10 energy)'], 13: ['DASH<br>SLASH', 'Dash Slash: he dashes through the enemy and stops behind him, the game stops for 1.23 seconds with an impact frame, then the enemy is cut and bleeds (20 energy; hold forward with the enemy within 100 pixels)'], 12: ['<span style="font-size:.78em">DISMAN-<br>TLE</span>', 'Dismantle: he dashes back in the air and points, time stops while he says it, then the enemy is cut three times in the chest and bleeds out (20 energy)'] };
+SU_BLUE_NAMES[18] = ['CLEAVE', 'Cleave (Cleave mode): he steps in, touches the enemy and slashes him for 5 percent of his health, a guard does not stop it (5 energy). Crouch for the Lift, jump for the Dive, hold forward for the Dash'];
+SU_BLUE_NAMES[19] = ['LIFT<br>CLEAVE', 'Lift Cleave (Cleave mode): he lifts the enemy up with one hand and slashes his head for 5 percent of his health (10 energy)'];
+SU_BLUE_NAMES[20] = ['DIVE<br>CLEAVE', 'Dive Cleave (Cleave mode): he drops down on the enemy, grabs him and cleaves him to the ground for 5 percent of his health (10 energy)'];
+SU_BLUE_NAMES[21] = ['DASH<br>CLEAVE', 'Dash Cleave (Cleave mode): he dashes forward and cleaves the enemy back for 5 percent of his health (10 energy; hold forward with the enemy within 120 pixels)'];
 function suBlueLabel(now) {      // the BLUE button's name (and what a screen reader hears): it changes with where he is and with the back direction
-  const k = suBlue(now), n = SU_BLUE_NAMES[k < 0 ? 9 : k], el = $('lapl');
+  const k = suBlue(now), n = SU_BLUE_NAMES[k < 0 ? (suCl ? 18 : 9) : k], el = $('lapl');
   if (el.innerHTML !== n[0]) { el.innerHTML = n[0]; $('lap').setAttribute('aria-label', n[1]); }
 }
 function suBleed(d, now, ms) {      // one more bleed on the enemy (every slash that lands adds one, the counter's too): it lasts ms (SU_BLEED.ms: 4 s, DISMANTLE's 8 s) and takes SU_BLEED.dm every SU_BLEED.gap ms; they stack: d.bleed.st lists when each one ends and vpBleed takes dm for every one that is still on; returns how many are on
@@ -253,7 +274,7 @@ function suDashCut(now) {      // the cut lands on the enemy's back (he is in fr
   say(nb > 1 ? 'BLEED x' + nb : 'BLEEDING', d.x, '#ff3a4a', 8, now + 90);
 }
 function suGhostDraw(now, x, y) {      // the afterimages of the dash (his slash picture where he was, fading out in 0.24 s) and its speed lines, drawn under his own picture's place
-  const g = CU_GAME[3], c = g && g.cs; if (!c || !c.dash) return;
+  const g = CU_GAME[3], c = g && g.cs; if (!c || !(c.dash || c.cl === 'dash')) return;      // (v1.119 the DASH CLEAVE leaves the same afterimages)
   c.gh = c.gh.filter(o => now - o.at < 240);
   for (const o of c.gh) { ctx.globalAlpha = 0.5 * (1 - (now - o.at) / 240); ctx.drawImage(g.atk[3][o.f], Math.round(x + o.x - wx), y); }
   ctx.globalAlpha = 1;
@@ -301,4 +322,86 @@ function suTsDash(T) {      // the game is stopped (DASH SLASH): the impact fram
     if (t > T.total - 110) { ctx.globalAlpha = (t - (T.total - 110)) / 110 * 0.8; ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
   }
   ctx.restore(); if (stopMs <= 0) suTs = null;
+}
+
+// ---- v1.119 CLEAVE (the MODE button): he switches in silence: nothing is heard, said or lit on the field (the enemy cannot tell), only the buttons change (MODE shows CLEAVE and glows, ATTACK and BLUE get new names). ATTACK becomes a melee chain whether an enemy is near or not: R.HOOK and L.HOOK (the jabs' own pictures and numbers), ELBOW (12 damage) and TOUCH CUT: he lays a hand on the enemy and slashes him for exactly 1% of the enemy's full health (a guard stops it). BLUE becomes CLEAVE (5 energy): the same touch and cut, but 5% of the enemy's full health, and a guard is broken. Crouched it is the LIFT CLEAVE (10 energy: he lifts the enemy up with one hand and slashes his head), in the air the DIVE CLEAVE (10: he drops on the enemy, grabs him and cleaves him to the ground, knocked down), standing with FORWARD held and an enemy within 120 px the DASH CLEAVE (10: he dashes at him and cleaves him back, a hop and a long knock-back). The 1% and 5% are taken from the enemy's full health (dummy.max) whatever his level, and the cut is blocked or missed like any hit. The three BLUE states are states of g.cs like DISMANTLE (nothing touches him meanwhile, suHit); the CLEAVE and TOUCH CUT are blows with events. The mode is off at the start of every round. See suToggle, suClHit, suClStep.
+let suCl = false;
+function suToggle() { suCl = !suCl; cuCmb = cuSn = cuCp = 0; cuCmbBy = 0; }      // MODE: Cleave on or off (the blows start from the first one again); no sound, no word, no light on the field
+function suModeUI() {      // every frame: the MODE button's name and light follow the mode (setModeUI writes the button too, so it is checked every time, like the BLUE label)
+  const el = $('cel'), b = $('ce'), want = 'MODE<br>' + (suCl ? 'CLEAVE' : 'OFF'), p = suCl ? 'true' : 'false', aria = suCl ? 'Mode: Cleave is on, tap to switch it off. The enemy cannot tell' : 'Mode: tap to switch Cleave on. The enemy cannot tell';
+  if (el.innerHTML !== want) el.innerHTML = want;
+  if (b.classList.contains('lit') !== suCl) b.classList.toggle('lit', suCl);
+  b.classList.remove('red'); if (b.getAttribute('aria-pressed') !== p) b.setAttribute('aria-pressed', p); if (b.getAttribute('aria-label') !== aria) b.setAttribute('aria-label', aria);
+}
+function suClTgt(now, range) {      // a living enemy standing on the floor in front of him within range px that he can touch (not one lying down, held, flat, in the air or in his smoke-ball form)
+  const d = dummy, gap = d ? d.x - wx : 1e9;
+  return !!d && d.ko < 0 && !d.cap && !d.air && now - d.born >= 600 && now >= (d.down || 0) && !(d.cact && d.cact.flat) && !(d.vform && d.vform !== 'verity') && gap >= -4 && gap <= range && vs.ph === 'fight';
+}
+function suClDashOk(now) { return suClTgt(now, SU_CL.dash.range) && dummy.x - wx > SU_CL.dash.stop + 6; }      // (the DASH CLEAVE: an enemy ahead that is far enough for a dash; closer than that standing BLUE is the plain CLEAVE)
+function suPicAt(T, t) { let i = 0; while (i + 1 < T.length && t >= T[i + 1]) i++; return i; }      // (which picture is up t ms into a move whose picture i starts at T[i])
+function suClHit(now, pct, o, rc, lo, p, big) {      // the cut lands: a hit that takes no health of its own (cuHit, free: the flinch, the guard, the combo counter) and then exactly pct % of the enemy's full health; false when it did not land (a guard, a miss, out of reach)
+  const d = dummy; if (!d || d.ko >= 0) return false;
+  if (!cuHit(0, now, Object.assign({ free: true }, o), undefined, rc, lo)) return false;
+  const dm = (d.max || DUMMY_HP) * pct / 100; d.hp = Math.max(0, d.hp - dm); d.hitAt = now; hits.dmg += dm; say(pct + '%', d.x, '#ffe9a0', 10, now + 40);
+  tqFx.push({ k: 'slash', x: d.x, real: performance.now(), p }); snd('sukcut', big ? 2 : 0); snd('smack', big ? 3 : 1);
+  spark(d.x, gy - 34, big ? 12 : 6, ['#ffffff', '#ff2a3a', '#ffb0b8'], big, 1); tqBlood(d.x - 3, gy - 38, big ? 36 : 14, 1); hitStop(big ? 85 : 50); shakeUntil = Math.max(shakeUntil, now + (big ? 200 : 110)); shakeAmp = Math.max(shakeAmp, big ? 4 : 2);
+  if (d.hp <= 0) koDummy(now);
+  return true;
+}
+function suTouch(now) {      // his hand comes down on the enemy (picture 4 of the touch and cut): a pale spark, a soft thud, and he is held still for the cut unless he is guarding
+  const d = dummy; if (!d || d.ko >= 0) return; const gap = d.x - wx; if (gap < -3 || gap > SU_CL.reach + 8) return;
+  spark(d.x - 8, gy - 34, 5, ['#ffffff', '#ffb0b8'], false, -1); snd('smack', 0);
+  if (!dBlocks() && !(d.vform && d.vform !== 'verity')) cuStun(SU_CL.touchHold / 1000, now, true);
+}
+function suClStart(k, now) {      // BLUE 19 (LIFT), 20 (DIVE) or 21 (DASH CLEAVE) has started: the state, and the enemy stands still for all of it
+  const g = CU_GAME[3], d = dummy, gap = d.x - wx; d.dodgeUntil = 0;
+  if (k === 19) { g.cs = { cl: 'lift', t0: now, dx: Math.max(0, Math.min(SU_CL.lift.step, gap - SU_CL.lift.stop)), done: 0 }; cuStun((SU_CL.lift.end + 400) / 1000, now, true); say('LIFT CLEAVE', wx, '#ffe9a0', 8, now); }
+  else if (k === 20) {      // (the jump he was in ends here: his height is the state's now, g.cs.lift)
+    const L0 = YU.jump.lift[jumpFrame(Math.max(0, now - cuJumpAt))] || 0; cuJumpAt = -1;
+    g.cs = { cl: 'dive', ph: 'dive', t0: now, dx: Math.max(0, gap - SU_CL.dive.stop), done: 0, L0, lift: L0 }; cuStun((SU_CL.dive.ms + SU_CL.dive.end + 400) / 1000, now, true); snd('dash', 1); say('DIVE CLEAVE', wx, '#ffe9a0', 8, now);
+  } else { g.cs = { cl: 'dash', ph: 'dash', t0: now, dx: Math.max(0, gap - SU_CL.dash.stop), done: 0, gh: [] }; cuStun((SU_CL.dash.ms + SU_CL.dash.end + 300) / 1000, now, true); snd('dash', 1); say('DASH CLEAVE', wx, '#ffe9a0', 8, now); }
+}
+function suClStep(g, c, now) {      // the LIFT, the DIVE or the DASH CLEAVE, every frame: returns the picture to show (null: his idle pictures)
+  const d = dummy, t = now - c.t0; if (!d || d.ko >= 0) { suEnd(g, now); return null; }
+  d.dodgeUntil = 0;
+  return c.cl === 'lift' ? suLiftStep(g, c, d, t, now) : c.cl === 'dive' ? suDiveStep(g, c, d, t, now) : suCdashStep(g, c, d, t, now);
+}
+function suLiftStep(g, c, d, t, now) {      // LIFT CLEAVE: he rises out of the crouch with a hand out (pictures 0 - 4); at picture 5 the hand closes on the enemy if he is within reach and he is lifted 9 px, hanging; the other hand goes up behind the head and at picture 9 it cuts across the head; at picture 12 he lets go and the enemy comes down
+  const L = SU_CL.lift, f = suPicAt(L.T, t);
+  if (c.done < c.dx) { const k = Math.min(1, t / L.T[5]), tg = c.dx * (1 - Math.pow(1 - k, 2)); wx += tg - c.done; c.done = tg; }      // (he steps in while he rises, so that his hand reaches the enemy)
+  if (!c.grab && f >= 5) {
+    c.grab = true; c.ok = suClTgt(now, L.reach); c.tg = now;
+    if (c.ok) { snd('smack', 1); spark(d.x - 6, gy - 40, 6, ['#ffffff', '#ffb0b8'], false, -1); } else say('MISS', d.x, '#9fd8ff', 8, now);
+  }
+  if (c.ok && !c.rel) { const h = L.h * Math.min(1, (now - c.tg) / 140); if (!d.air || !d.air.hover) d.air = { at: now, h0: h, v0: 0, g: 0, kind: 'up', T: 1e9, hover: true }; d.air.h0 = h; d.airH = h; d.vx = 0; }      // (he hangs in the pose of a launched enemy)
+  if (!c.cut && f >= 9) { c.cut = true; if (c.ok) suClHit(now, SU_CL.blue, { gb: true, low: true, knock: 0.01 }, L.reach + 14, -8, L.mark, true); else snd('swing', 3); }
+  if (c.ok && !c.rel && f >= 12) { c.rel = true; if (d.air && d.air.hover) d.air = airMake(now, d.airH || 0, 0, AIR_G, 'up'); }
+  if (t >= L.end) { stance = 'stand'; suEnd(g, now); return null; }      // (he rose out of the crouch: he stands when it is over)
+  return g.atk[19][f];
+}
+function suDiveStep(g, c, d, t, now) {      // DIVE CLEAVE: he plunges at the enemy (the height he had falls away, the way forward is even) and lands next to him; his hand closes on the enemy (the touch and cut's pictures 3 - 4) and the cut comes down through him (picture 7): 5% and the enemy is cleaved to the ground, knocked down
+  const D = SU_CL.dive;
+  if (c.ph === 'dive') {
+    const k = Math.min(1, t / D.ms), tg = c.dx * k; wx += tg - c.done; c.done = tg; c.lift = Math.round(c.L0 * (1 - k * k));
+    if (k >= 1) { c.ph = 'grab'; c.t1 = now; c.lift = 0; puff(wx + 6, 6); snd('land', 1.4); shakeUntil = Math.max(shakeUntil, now + 90); shakeAmp = Math.max(shakeAmp, 2); }
+    return g.atk[20][Math.min(8, Math.floor(k * 9))];
+  }
+  const t1 = now - c.t1, i = suPicAt(D.T, t1);
+  if (!c.cut && i >= 4) {
+    c.cut = true;
+    if (suClHit(now, SU_CL.blue, { gb: true, low: true, knock: 0.01 }, D.stop + 40, -8, D.mark, true) && d.ko < 0) { d.air = null; d.airH = 0; d.rx = 4; d.rxAt = now; d.down = now + RX_DUR[4]; d.vx = 0; d.stunUntil = Math.max(d.stunUntil || 0, now + RX_DUR[4] + 300); puff(d.x, 10); snd('land', 1.8); shakeUntil = now + 240; shakeAmp = 5; }
+  }
+  if (t1 >= D.end) { suEnd(g, now); return null; }
+  return g.atk[17][3 + i];
+}
+function suCdashStep(g, c, d, t, now) {      // DASH CLEAVE: a fast step at the enemy with afterimages (the pictures of his slash), then the cut: 5%, a hop and a long knock-back
+  const D = SU_CL.dash, S = g.atk[3];
+  if (c.ph === 'dash') {
+    const k = Math.min(1, t / D.ms), tg = c.dx * (1 - Math.pow(1 - k, 3)); wx += tg - c.done; c.done = tg;
+    if (!c.gh.length || now - c.gh[c.gh.length - 1].at >= 26) c.gh.push({ x: wx, at: now, f: k < 0.5 ? 8 : 9 });
+    if (k >= 1) { wx += c.dx - c.done; c.done = c.dx; c.ph = 'cut'; c.t1 = now; snd('swing', 3); suClHit(now, SU_CL.blue, { gb: true, knock: D.knock, launch: D.launch }, D.stop + 30, -8, D.mark, true); }
+    return S[k < 0.5 ? 8 : 9];
+  }
+  const t1 = now - c.t1; if (t1 >= D.end) { suEnd(g, now); return null; }
+  return S[Math.min(12, 10 + Math.floor(t1 / 120))];
 }

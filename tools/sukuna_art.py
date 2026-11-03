@@ -64,7 +64,7 @@ def head():
     for c in range(16, 21): put(c, 25, 'u')                                             # the light on the top of the roll
     return g
 
-ROWS = ('idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'atk0', 'atk1', 'kick', 'dash1', 'slash', 'atk30', 'atk31', 'slashL', 'slashX', 'cut', 'storm', 'ccut', 'dis')      # the strip's rows: Yuji's sets of the move (idle, walk, jump, crouch down, crouched idle, crouch walk, R.HOOK = his right jab, L.HOOK = his left jab, the back dash = his dodge, C.JAB and C.UPPR = his crouch punches) and the kick, the three slashes and the four BLUE moves made here, 15 pictures each
+ROWS = ('idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'atk0', 'atk1', 'kick', 'dash1', 'slash', 'atk30', 'atk31', 'slashL', 'slashX', 'cut', 'storm', 'ccut', 'dis', 'atk6', 'atk26', 'lift', 'dive')      # the strip's rows: Yuji's sets of the move (idle, walk, jump, crouch down, crouched idle, crouch walk, R.HOOK = his right jab, L.HOOK = his left jab, the back dash = his dodge, C.JAB and C.UPPR = his crouch punches) and the kick, the three slashes and the four BLUE moves made here, 15 pictures each
 BLINK = {'idle': (9, 10), 'cidle': (9, 10)}                 # (his own blinks: the pictures where his eye is shut)
 NAILS = ('idle', 'fwd', 'cdn')                               # (the pictures where the hand is in the pocket, or still on its way up to the guard: the nails show; the guard and the jump hold it up in a fist of another shape)
 WID = 48                                                    # (the widest of Yuji's pictures of these moves is 44)
@@ -152,7 +152,31 @@ def cast_pic(kind):
             for y0, w in ((24, 0), (31, 1)): ya.streak(f, [(58 - w * 2, y0), (52 - w * 2, y0 + 1), (46 - w * 2, y0 + 1)], (.6, 1.4, 2.2), (0, .5, 1), False)
         return f, nh, fh
     return make
-GEN = {'slash': {'top': 0, 'frames': ya.pack(slash, 16, 48, 0)[0]}, 'slashL': {'top': 0, 'frames': ya.pack(slash_pic('slashL'), 16, 48, 0)[0]}, 'slashX': {'top': 0, 'frames': ya.pack(slash_pic('slashX'), 16, 48, 0)[0]}, 'kick': {'top': 0, 'frames': ya.pack(kick, 16, 48, 0)[0]}, 'cut': {'top': 0, 'frames': ya.pack(cast_pic('cut'), 16, 48, 0)[0]}, 'storm': {'top': 0, 'frames': ya.pack(cast_pic('storm'), 16, 48, 0)[0]}, 'ccut': {'top': 0, 'frames': ya.pack(cast_pic('ccut'), 16, 48, 0)[0]}, 'dis': {'top': 0, 'frames': ya.pack(cast_pic('dis'), 16, 48, 0)[0]}}      # (the sets made here, in the form of yuji.json's)
+# ---- v1.119 CLEAVE (the MODE of Sukuna). 'atk6' = Yuji's ELBOW and 'atk26' = Yuji's GRAB + CLEAVE (the hand reaches out and closes on the enemy at 3 - 4, the other arm comes down in a red cut at 5 - 8), both with his head.
+# 'lift' = the LIFT (BLUE crouched): he rises out of the crouch with the near hand reaching forward and up, the fingers spread: it closes on the enemy's face and holds him up (4 - 12); the far hand goes up behind the head (5 - 7) and cuts across the enemy's head (9 - 11), a pale trail behind it.
+# 'dive' = the DIVE (BLUE in the air): the hang at the top of a jump (0), then he tips forward with the feet trailing and the near hand reaching forward and down with the fingers spread (2 - 11), then the landing crouch (12 - 14)
+LIFT_N = {0: ((1, 5), (-1, 8)), 2: ((3, 1), (7, -4)), 4: ((4, -3), (9, -10)), 5: ((4.5, -3.5), (10, -11)), 12: ((4.5, -3.5), (10, -11)), 13: ((3, -1), (6, -4)), 14: ya.IDLE_N}      # the near hand of the LIFT: low by the hip in the crouch, up and forward to the height of the enemy's face (4), held there (5 - 12), let go (13 - 14)
+FA_LIFT = {0: ya.IDLE_F, 3: ya.GUARD_F, 5: ((-1, -5), (-2, -13)), 6: ((0, -8), (0, -18)), 7: ((3, -9), (4, -19)), 9: ((8, -8), (15, -16)), 10: ((9, -4), (16, -9)), 11: ((8, 0), (14, -1)), 12: ((6, 4), (10, 5)), 14: ya.IDLE_F}      # the far hand: high up behind the head (5 - 7: the enemy hangs up there), thrown down across his head (9 - 11), back (12 - 14)
+def lift_params(i):
+    kv, GR = ya.kv, ya.GR
+    return dict(by=round(kv({0: 7, 2: 4, 4: 0, 14: 0}, i)), ln=round(kv({0: 2, 4: 1, 9: 3, 12: 1, 14: 0}, i)), lf=(round(kv({0: 37, 4: 35, 14: 34}, i)), GR, 0), lb=(round(kv({0: 30, 4: 30, 14: 31}, i)), GR, 0), na=kv(LIFT_N, i), fa=kv(FA_LIFT, i), hp=i * .8, hback=0, hup=1 if 4 <= i <= 12 else 0, blink=False)
+def lift_pic(i):
+    P = lift_params(i); P['top'] = cast_hand('storm', i, P); f, nh, fh = ya.figure(P)
+    if 8 <= i <= 12:
+        pts = []
+        for j in range(max(0, i - 3), i + 1): Q = lift_params(j); pts.append((36 + Q['ln'] + Q['fa'][1][0], 31 + Q['by'] + Q['fa'][1][1]))
+        if pts[0] != pts[-1]: ya.streak(f, pts, (.8, 1.6, 2.6, 3.4)[-len(pts):], (0, .5, .8, 1.0)[-len(pts):], False)
+    return f, nh, fh
+DIVEK = {0: (-2, 0, (39, ya.GR - 11, 0), (35, ya.GR - 10, 0), ((5, 0), (10, -2)), ((4, 1), (9, 0))), 2: (-2, 2, (36, ya.GR - 12, -10), (31, ya.GR - 10, -8), ((6, 2), (11, 5)), ((2, 3), (-1, 6))),
+         4: (-3, 4, (22, ya.GR - 19, -35), (19, ya.GR - 17, -35), ((6, 4), (12, 10)), ((0, 3), (-4, 5))), 8: (-3, 5, (20, ya.GR - 21, -35), (17, ya.GR - 19, -35), ((6, 4), (13, 10)), ((0, 3), (-5, 5))),
+         11: (-3, 5, (20, ya.GR - 21, -35), (17, ya.GR - 19, -35), ((6, 4), (13, 10)), ((0, 3), (-5, 5))), 12: (3, 2, (36, ya.GR, 0), (30, ya.GR, 0), ((4, 3), (8, 2)), ((3, 3), (6, 3))),
+         13: (6, 3, (37, ya.GR, 0), (29, ya.GR, 0), ((3, 4), (6, 0)), ya.GUARD_F), 14: (1, 0, (34, ya.GR, 0), (31, ya.GR, 0), ya.GUARD_N, ya.GUARD_F)}      # the DIVE: key pictures like DISK
+def dive_pic(i):
+    P = ya.jpar(DIVEK, i, 0, 0); P['top'] = cast_hand('storm', i, P); f, nh, fh = ya.figure(P)
+    if 3 <= i <= 11:                                                            # the speed lines behind him (he falls toward the right)
+        for y0, w in ((22, 0), (30, 1), (38, 2)): ya.streak(f, [(26 - w * 3, y0 - 6), (31 - w * 3, y0 - 3), (36 - w * 3, y0)], (.6, 1.4, 2.2), (0, .5, 1), False)
+    return f, nh, fh
+GEN = {'slash': {'top': 0, 'frames': ya.pack(slash, 16, 48, 0)[0]}, 'slashL': {'top': 0, 'frames': ya.pack(slash_pic('slashL'), 16, 48, 0)[0]}, 'slashX': {'top': 0, 'frames': ya.pack(slash_pic('slashX'), 16, 48, 0)[0]}, 'kick': {'top': 0, 'frames': ya.pack(kick, 16, 48, 0)[0]}, 'cut': {'top': 0, 'frames': ya.pack(cast_pic('cut'), 16, 48, 0)[0]}, 'storm': {'top': 0, 'frames': ya.pack(cast_pic('storm'), 16, 48, 0)[0]}, 'ccut': {'top': 0, 'frames': ya.pack(cast_pic('ccut'), 16, 48, 0)[0]}, 'dis': {'top': 0, 'frames': ya.pack(cast_pic('dis'), 16, 48, 0)[0]}, 'lift': {'top': 0, 'frames': ya.pack(lift_pic, 16, 48, 0)[0]}, 'dive': {'top': 0, 'frames': ya.pack(dive_pic, 16, 48, 0)[0]}}      # (the sets made here, in the form of yuji.json's)
 
 def yuji(name, i):
     """Yuji's picture i of a set as a grid of 64 figure rows x 48 columns (a jump's 4 empty rows above and below the figure are dropped; the game draws them 4 rows higher)"""
