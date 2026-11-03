@@ -16,7 +16,7 @@
 - Tests at V1.115: LanNetTest 61 checks; all 25 fighter pairs OK; lint = 19 messages (6 errors, 13 warnings) = baseline.
 
 ## Open Tasks
-- NOW (offline game, topic to be chosen): new Verity moves (fewest shop skills: 13) / Freddy as an enemy in Versus (not offered yet: `buildFighters`, "he cannot fight yet") / playable chapter 3 fight (only a cutscene so far, v1.106).
+- NOW (offline game): new Verity moves. Has 13 skills (crouch, block, teleport, bite, smoke ball, fatal, jumpscare, blood drag, heavy, tele cancel, air combo, air bite, sense). Missing: ranged move, STOP (story-only), teleport strike, jump+ATTACK move, power-up MODE, more BLUE variants (he has 3, Yuji 7, Cat 4). Suggested: STOP + ARM GRAB (stretchy arm art exists) + TELEPORT STRIKE. Other options:  Freddy as an enemy in Versus (not offered yet: `buildFighters`, "he cannot fight yet") / playable chapter 3 fight (only a cutscene so far, v1.106).
 - (Paused) Next online (suggested order): BLUE moves of all 5 fighters -> MODE moves -> cutscene moves (FATALITY, DOMAIN, ULTIMATE, JUMPSCARE, DREAM). Sukuna online only if asked.
 - Off online now: BLUE (except Gojo's air teleport), MODE, DOMAIN, FATAL, heavy strike (`flowOK`), Cat ARM HANG, Freddy PIERCE (see the net filter in `vsTick`).
 - Unverified: real-phone ping and WifiLock effect.
