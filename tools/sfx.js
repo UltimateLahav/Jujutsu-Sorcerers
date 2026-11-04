@@ -203,6 +203,13 @@ function makeSfx(ac) {
       else if (k === 4) { burst(B.soft, t, { f: 2600, f2: 400, q: 0.8, dur: 0.35, gain: 1.6, atk: 0.002 }); tone(B.deep, t, { type: 'triangle', f: 120, f2: 40, dur: 0.5, gain: 0.5, atk: 0.003 }); crackle(10, t + 0.03, 0.5, 0.6); }
       else { crackle(4, t, 0.15, 2); burst(B.soft, t, { f: 900, f2: 300, q: 0.8, dur: 0.12, gain: 0.5, atk: 0.005 }); }
     },
+    sukfuga(k, at) {                                     // v1.127 Sukuna's FUGA inside the domain (the cutscene): k 0 = the charge (a low growl and a hiss of fire that swell for 7 s), 1 = the arrow is let go and flies (a rising whoosh over a low roar), 2 = it lands (a hard crack, a huge deep boom, a long roar of fire and a rain of crackles), 3 = the fire after it (a long dying roar and crackles)
+      const t = T(at), B = C.atk, crackle = (n, t0, span, gain) => { for (let i = 0; i < n; i++) burst(B.soft, t0 + R(0, span), { type: 'highpass', f: R(2800, 6000), q: 0.7, dur: R(0.008, 0.02), gain, atk: 0.001 }); };
+      if (k === 0) { tone(B.deep, t, { type: 'sawtooth', f: 48, f2: 150, dur: 7.2, gain: 0.09, atk: 6 }); burst(B.soft, t, { f: 300, f2: 2200, q: 1.1, dur: 7.2, gain: 0.5, atk: 6.2 }); crackle(40, t + 1, 6, 0.35); }
+      else if (k === 1) { burst(B.soft, t, { type: 'bandpass', f: 400, f2: 3200, q: 1.2, dur: 0.9, gain: 1.5, atk: 0.5 }); tone(B.deep, t, { type: 'triangle', f: 70, f2: 140, dur: 0.9, gain: 0.35, atk: 0.4 }); crackle(14, t, 0.9, 0.5); }
+      else if (k === 2) { burst(B.soft, t, { type: 'bandpass', f: 3600, f2: 600, q: 0.8, dur: 0.1, gain: 3.6, atk: 0.001 }); tone(B.deep, t, { type: 'triangle', f: 90, f2: 26, dur: 1.3, gain: 0.75, atk: 0.003 }); burst(B.soft, t + 0.02, { type: 'lowpass', f: 2200, f2: 160, q: 0.7, dur: 1.7, gain: 1.9, atk: 0.01 }); tone(B.deep, t + 0.05, { type: 'sine', f: 52, f2: 30, dur: 1.6, gain: 0.5, atk: 0.01 }); crackle(34, t + 0.05, 1.6, 0.6); }
+      else { burst(B.soft, t, { type: 'lowpass', f: 1500, f2: 120, q: 0.7, dur: 3, gain: 0.8, atk: 0.2 }); crackle(46, t, 3.2, 0.4); }
+    },
     sukimp(at) {                                         // v1.118 the impact frame of Sukuna's DASH SLASH: a hard crack (a flash of noise from high to low), a deep boom that falls away and a cold thin ring, then nothing while the cut opens
       const t = T(at), B = C.atk, D = C.tele;
       burst(B.soft, t, { type: 'bandpass', f: 3400, f2: 700, q: 0.8, dur: 0.08, gain: 3.2, atk: 0.001 });

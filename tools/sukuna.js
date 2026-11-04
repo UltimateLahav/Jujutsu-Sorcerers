@@ -58,6 +58,7 @@ function suStart(g, now) {      // ATTACK as the 4th blow: he waits (his idle pi
 }
 function suEnd(g, now) {
   const c = g.cs; if (c && c.cl === 'lift' && dummy && dummy.air && dummy.air.hover) dummy.air = airMake(now, dummy.airH || 0, 0, AIR_G, 'up');      // (v1.119 a LIFT that is broken off: the enemy he holds comes down)
+  if (suFg) suFgEnd(now);
   g.cs = null; cuAtkAt = -1; cuCmb = 0; cuCmbBy = now + 500;
 }
 function suHit(now) {      // a swing of the enemy reaches him (gojoHit): true = it misses; waiting he dodges it, and until the cut has landed nothing touches him
@@ -166,7 +167,7 @@ SU_BLUE_NAMES[20] = ['DIVE<br>CLEAVE', 'Dive Cleave (Cleave mode): he drops down
 SU_BLUE_NAMES[21] = ['DASH<br>CLEAVE', 'Dash Cleave (Cleave mode): he dashes forward and cleaves the enemy back for 5 percent of his health (10 energy; hold forward with the enemy within 120 pixels)'];
 SU_BLUE_NAMES[22] = ['OPEN', 'Open (Flame mode): flames light on his hands, he claps and plays with the fire like slime, takes the pose of an archer and lets go of a fire arrow that no guard can stop and that burns the enemy for 8 seconds (50 energy)'];
 function suBlueLabel(now) {      // the BLUE button's name (and what a screen reader hears): it changes with where he is and with the back direction
-  const k = suBlue(now), n = SU_BLUE_NAMES[k < 0 ? (suFl ? 22 : suCl ? 18 : 9) : k], el = $('lapl');
+  const k = suBlue(now), ix = k < 0 ? (suFl ? 22 : suCl ? 18 : 9) : k, n = ix === 22 && suDom && suDom.sink < 0 && dummy && dummy.ko < 0 && !suFg ? SU_FG_NAME : SU_BLUE_NAMES[ix], el = $('lapl');      // (v1.127 with the domain open OPEN is called FUGA)
   if (el.innerHTML !== n[0]) { el.innerHTML = n[0]; $('lap').setAttribute('aria-label', n[1]); }
 }
 function suBleed(d, now, ms) {      // one more bleed on the enemy (every slash that lands adds one, the counter's too): it lasts ms (SU_BLEED.ms: 4 s, DISMANTLE's 8 s) and takes SU_BLEED.dm every SU_BLEED.gap ms; they stack: d.bleed.st lists when each one ends and vpBleed takes dm for every one that is still on; returns how many are on
@@ -223,6 +224,7 @@ function suTsFrame() {      // the game is stopped (DISMANTLE): the frame it sto
   const T = suTs; if (!T || T.vs !== vs || performance.now() - T.real > T.total + 1500) { suTs = null; return; }
   if (!T.snap) { const c = document.createElement('canvas'); c.width = cv.width; c.height = cv.height; c.getContext('2d').drawImage(cv, 0, 0); T.snap = c; }
   if (T.kind === 'dash') { suTsDash(T); return; }      // (v1.118 the DASH SLASH's stop: the impact frame and the cut opening)
+  if (T.kind === 'fuga') { suTsFuga(T); return; }      // (v1.127 the moment the FUGA lands)
   const t = Math.max(0, T.total - stopMs), W = cv.width, H = cv.height, cx = Math.round(W / 2), X = cx + Math.round(T.ex), bar = Math.round(H * 0.13 * Math.min(1, t / 180));
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 1;
   ctx.filter = 'grayscale(0.92) contrast(1.15) brightness(0.7)'; ctx.drawImage(T.snap, 0, 0); ctx.filter = 'none';
@@ -333,7 +335,7 @@ function suTsDash(T) {      // the game is stopped (DASH SLASH): the impact fram
 // ---- v1.119 CLEAVE (the MODE button): he switches in silence: nothing is heard, said or lit on the field (the enemy cannot tell), only the buttons change (MODE shows CLEAVE and glows, ATTACK and BLUE get new names). ATTACK becomes a melee chain whether an enemy is near or not: R.HOOK and L.HOOK (the jabs' own pictures and numbers), ELBOW (12 damage) and TOUCH CUT: he lays a hand on the enemy and slashes him for exactly 1% of the enemy's full health (a guard stops it). BLUE becomes CLEAVE (5 energy): the same touch and cut, but 5% of the enemy's full health, and a guard is broken. Crouched it is the LIFT CLEAVE (10 energy: he lifts the enemy up with one hand and slashes his head), in the air the DIVE CLEAVE (10: he drops on the enemy, grabs him and cleaves him to the ground, knocked down), standing with FORWARD held and an enemy within 120 px the DASH CLEAVE (10: he dashes at him and cleaves him back, a hop and a long knock-back). The 1% and 5% are taken from the enemy's full health (dummy.max) whatever his level, and the cut is blocked or missed like any hit. The three BLUE states are states of g.cs like DISMANTLE (nothing touches him meanwhile, suHit); the CLEAVE and TOUCH CUT are blows with events. The mode is off at the start of every round. See suToggle, suClHit, suClStep.
 let suCl = false, suFl = false;
 function suToggle() { if (!suCl && !suFl) suCl = true; else if (suCl) { suCl = false; suFl = true; } else suFl = false; cuCmb = cuSn = cuCp = 0; cuCmbBy = 0; }      // MODE: OFF > CLEAVE > FLAME > OFF (v1.120: one more tap goes on to FLAME); the blows start from the first one again; no sound, no word, no light on the field
-function suReset() { suCl = suFl = false; suArrows.length = 0; suFlBursts.length = 0; suFlTalk = null; if (dummy) dummy.sburn = null; suDom = suDomPt = null; suDomSl.length = 0; domReadyAt = 0; }      // (a new round: both modes off, no arrow in the air, no burn, no domain and the ULTIMATE ready again)
+function suReset() { suCl = suFl = false; suArrows.length = 0; suFlBursts.length = 0; suFlTalk = null; if (dummy) dummy.sburn = null; suDom = suDomPt = null; suDomSl.length = 0; domReadyAt = 0; suFgEnd(pnow()); }      // (a new round: both modes off, no arrow in the air, no burn, no domain and the ULTIMATE ready again)
 function suModeUI() {      // every frame: the MODE button's name and light and the BLUE button's colour follow the mode (setModeUI writes the buttons too, so it is checked every time, like the BLUE label): CLEAVE lights MODE blue, FLAME lights MODE and BLUE orange
   const el = $('cel'), b = $('ce'), lp = $('lap'), want = 'MODE<br>' + (suFl ? 'FLAME' : suCl ? 'CLEAVE' : 'OFF'), p = suCl || suFl ? 'true' : 'false', aria = suFl ? 'Mode: Flame is on, tap to switch it off. BLUE is Open: a fire arrow that burns the enemy' : suCl ? 'Mode: Cleave is on, tap for Flame. The enemy cannot tell' : 'Mode: tap to switch Cleave on, tap again for Flame. The enemy cannot tell';
   if (el.innerHTML !== want) el.innerHTML = want;
@@ -466,10 +468,11 @@ function suFlBuild() {      // the flame pictures, made once: flames of 4 sizes 
   if (suFlSpr) return;
   suFlSpr = { fire: [[8, 13], [12, 20], [18, 30], [26, 42]].map(([w, h]) => Array.from({ length: 6 }, (_, f) => suFlFlame(w, h, f))), arrow: Array.from({ length: 10 }, (_, f) => suFlArrow(f)) };
 }
-function suFlStart(now) {      // BLUE 22 (OPEN) has started: the cast is a state of its own; the enemy is not touched at all; from the crouch he stands up first
-  stance = 'stand'; stickCr = false; suFlBuild(); CU_GAME[3].cs = { fl: true, ph: 'light', t0: now, pic: 0, t: 0 }; suFlTalk = { t0: now };
+function suFlStart(now) {      // BLUE 22 (OPEN) has started: the cast is a state of its own; the enemy is not touched at all; from the crouch he stands up first (v1.127 with the domain open and the enemy alive it is FUGA, the cutscene: suFgBegin)
+  const fg = !!(suDom && suDom.sink < 0 && dummy && dummy.ko < 0); stance = 'stand'; stickCr = false; suFlBuild(); CU_GAME[3].cs = { fl: true, ph: 'light', t0: now, pic: 0, t: 0, fuga: fg }; suFlTalk = fg ? null : { t0: now }; if (fg) suFgBegin(now);
 }
 function suFlStep(g, c, now) {      // OPEN, every frame: the events of the cast and the picture to show
+  if (c.fuga) return suFgStep(g, c, now);      // (v1.127 FUGA: the same cast on a slowed time, with the cutscene's own events)
   const F = SU_FL, t = now - c.t0, i = suPicAt(F.T, t);
   if (!c.lit) { c.lit = true; snd('sukfire', 0); }
   if (!c.clap && t >= F.T[6]) { c.clap = true; snd('sukfire', 1); const h = SU_FL_HANDS[6]; spark(wx + (h[0] + h[2]) / 2 - 32, gy - 61 + (h[1] + h[3]) / 2, 22, F.cols, true, 1); shakeUntil = Math.max(shakeUntil, now + 120); shakeAmp = Math.max(shakeAmp, 1); }
@@ -528,7 +531,7 @@ function suFlCast(now, c, x, y) {      // the flames, the slime and the arrow of
   const fade = Math.min(1, t / 250) * Math.max(0, Math.min(1, (F.end - t) / 250)), lvl = t < F.T[5] ? 0 : t < F.T[7] && t >= F.T[6] ? 3 : t < F.T[6] ? 1 : 1, gr = [9, 12, 16, 22][lvl];
   ctx.globalCompositeOperation = 'lighter'; suFlGlow(hn[0], hn[1], gr, 0.5 * fade); suFlGlow(hf[0], hf[1], gr, 0.5 * fade); ctx.globalCompositeOperation = 'source-over';
   const sk = Math.max(0, Math.min(1, (t - F.T[6]) / 200)) * Math.max(0, Math.min(1, (F.T[11] + 150 - t) / 250)); if (sk > 0) suFlSlime(hn[0], hn[1], hf[0], hf[1], now, sk * fade);
-  if (t >= F.T[11]) suFlAim(now, t, hf, fade);
+  if (t >= F.T[11] && !(c.fuga && t >= F.T[13])) suFlAim(now, t, hf, fade);      // (in the cutscene the arrow in his hand goes when he lets go of it)
   ctx.globalAlpha = fade; const sp = S.fire[lvl];
   for (const [px, py, o] of [[hn[0], hn[1], 0], [hf[0], hf[1], 3]]) { const fr = Math.floor(now / 70 + o) % 6, a = sp[fr], b = sp[(fr + 3) % 6]; ctx.drawImage(a, Math.round(px - a.width / 2), Math.round(py - a.height + 3)); if (lvl >= 2) ctx.drawImage(b, Math.round(px - b.width / 2 + (o ? 4 : -4)), Math.round(py - b.height + 5)); }
   ctx.globalAlpha = 1;
@@ -682,6 +685,7 @@ function suDomStep(now) {      // every frame (suBleedFx): the cuts of the domai
   if (P && !D && !(g && g.cs && g.cs.dom)) { suDomPt = null; domReadyAt = Math.min(domReadyAt, now + SU_DOM.cd); }      // (a sign that was broken off before the domain opened leaves nothing behind, and the button waits its 30 s from now, not for a domain that never came)
   else if (P && now - P.t0 > SU_DOM.ptEnd) suDomPt = null;
   if (!D) return;
+  if (suFg && D.sink < 0) { const w = now - suFg.hl; suFg.hl = now; D.until += w; D.next += w; return; }      // (v1.127 the FUGA cutscene: the 20 s stand still)
   if (D.sink >= 0) { if (now - D.sink >= SU_DOM.sink + 300) suDom = null; return; }
   if (!vs || vs.ph !== 'fight' || !d || d.ko >= 0) { suDomEnd(now); return; }
   while (D.n < SU_DOM.n && now >= D.next) { D.next += SU_DOM.gap; D.n++; suDomTick(now); if (D.sink >= 0 || !dummy || dummy.ko >= 0) break; }
@@ -819,7 +823,7 @@ function suDomFlash(now) {      // a red flash when the face appears and a white
 function suDomFront(now, cx, x, y, dt) {      // every frame of his scene, after his picture: the aura of the sign, the slashes (new ones keep coming for as long as the domain is open: about 32 a second, twice that in the first 0.5 s) and the flashes
   const g = CU_GAME[3], c = g && g.cs && g.cs.dom ? g.cs : null, D = suDom, P = suDomPt; if (!c && !D && !P && !suDomSl.length) return;
   ctx.save(); ctx.imageSmoothingEnabled = false; dt = Math.min(0.05, dt || 0.016);
-  if (D && D.sink < 0) {
+  if (D && D.sink < 0 && !suFg) {
     D.sl += dt * (now - D.open < 500 ? 2 : 1) * (SET.lite ? 12 : 32);
     while (D.sl >= 1) { D.sl -= 1; const big = Math.random() < 0.25; suDomSpawn(now, big); if (big && now >= D.snd) { D.snd = now + 280; snd('sukdom', 5); } }
   }
@@ -827,5 +831,176 @@ function suDomFront(now, cx, x, y, dt) {      // every frame of his scene, after
   suDomSlashes(now);
   if (P) suDomFlash(now);
   ctx.restore();
+}
+// ---------------------------------------------------------------- v1.127 FUGA inside the domain: the special cutscene
+// FUGA is the OPEN fire arrow (FLAME mode, BLUE). With the domain open (and the enemy alive) it is a cutscene of 12.4 s with nine camera shots instead of the plain cast: the 15 pictures of the cast of OPEN are stretched, slowed and held (SU_FG.W says which moment of the cast is shown at each moment of the cutscene, so every drawing of the cast follows), the camera is a list of shots (SU_FG_SHOTS: a zoom, the place it looks at, a tilt and a shake, cut by cut), the arrow is a huge slow one, and it lands as a 40% hit with a fireball, a shock wave, flames along the floor and the 8 s burn. The 20 s of the domain stand still meanwhile; the enemy is held (and pulled in front of Sukuna if he stood elsewhere); a button pressed after 0.9 s skips to the end.
+const SU_FG = { end: 12400, rel: 7600, hit: 8300, dmg: 40, skipAt: 900, gap: 104, bar: 0.12, W: [[0, 0], [1500, 560], [1900, 820], [2500, 1000], [2900, 1180], [4500, 1900], [5800, 1960], [7600, 2650], [8000, 2800], [8400, 3049]] };      // how long it lasts (ms), when the arrow is let go and when it lands, the hit (% of the enemy's full health), from when a button press skips it, how far in front of Sukuna the enemy stands (px), how tall each black bar is (of the screen's height), and the time of the cast of OPEN (ms) that is shown at each moment of the cutscene (the first number of each pair: 0 = lights, 1900 = the clap, 4500 = the bow pose, 7600 = the arrow is let go)
+const SU_FG_NAME = ['FUGA', 'Fuga (the domain is open): the special cutscene of the fire arrow with many camera shots. A huge arrow that no guard can stop takes 40% of the enemy\'s health and burns him for 8 seconds (50 energy)'];
+const SU_FG_SHOTS = [      // the camera, shot by shot: [from, to (ms of the cutscene), (k: 0 - 1 eased, A: where things are, k2: 0 - 1 straight, u) => [zoom, x and y of the scene it looks at, tilt (rad), shake (px)]]
+  [0, 1900, (k, A) => [1 + 0.4 * k, VW / 2 + ((A.cx + A.ex) / 2 - VW / 2) * k, VH / 2 + (gy - 40 - VH / 2) * k, 0, 0]],      // 1 wide: the whole domain, a slow push in
+  [1900, 2900, (k, A) => [2.8 + 0.3 * k, A.hands[0] + 4, A.hands[1], 0, 1.2]],      // 2 the clap: a hard cut to his hands
+  [2900, 4500, (k, A, k2) => [2, A.cx - 12 + 36 * k2, gy - 38, -0.075 + 0.04 * k2, 0.5]],      // 3 a tilted medium shot, a slow slide along him while the fire plays like slime
+  [4500, 5800, (k, A) => [2.2, A.ex - 18 - 4 * k, gy - 40, 0.02, 0.3]],      // 4 from the enemy's side: Sukuna's dark shape looms in front
+  [5800, 7600, (k, A) => [3 + 0.6 * k, A.cx + 10, gy - 46, 0, 0.9 * k]],      // 5 a close-up of his face and the arrow while it is drawn
+  [7600, 8300, (k, A) => [1.7 + 0.3 * k, A.ar.hd + 24, gy - 38, 0, 1.5]],      // 6 the arrow: a tracking shot that runs ahead of it
+  [8300, 9700, (k, A) => [2.8 - 1.2 * k, A.en[0] + 2, A.en[1] - 2, 0, 4 * (1 - k)]],      // 7 the impact: a close-up on the enemy that pulls back
+  [9700, 10900, (k, A, k2) => [1.5, VW / 2, VH * (0.86 - 0.5 * k), 0.03 * (1 - k2), 0]],      // 8 looking up: the camera tilts up along the shrine over the fire
+  [10900, 12400, (k) => [1.5 - 0.5 * k, VW / 2, VH * (0.36 + 0.14 * k), 0, 0]]      // 9 a slow pull back to the wide shot
+];
+let suFg = null, suFgDk = new Map();      // the cutscene that is running ({ t0, jump (ms skipped), hl, p (particles), fl (flashes), em, hit, hitAt, hx, cam, shot, ... } or null), the dark shapes of his pictures
+function suFgOn() { return !!suFg; }
+function suFgU(now) { return suFg ? Math.max(0, now - suFg.t0 + suFg.jump) : 0; }      // (ms into the cutscene)
+function suFgCastT(u) {      // the time of the cast of OPEN that is shown u ms into the cutscene (SU_FG.W: straight lines between its points)
+  const W = SU_FG.W; if (u >= W[W.length - 1][0]) return W[W.length - 1][1];
+  let i = 0; while (i + 2 < W.length && u >= W[i + 1][0]) i++; const a = W[i], b = W[i + 1]; return a[1] + (b[1] - a[1]) * Math.max(0, (u - a[0]) / (b[0] - a[0]));
+}
+function suFgArrow(cx, ex, ap) { const s = Math.pow(ap, 2.2); return { hd: cx + 40 + (ex - 8 - (cx + 40)) * s, sc: 0.8 + 0.7 * ap }; }      // the arrow in the air (ap: 0 - 1 of its flight): where its head is and how big it is (x 96 x 38 px)
+function suFgAnch(now) {      // where things are on the screen: him, his head, his hands (on the picture of the cast that is up), the enemy and the arrow
+  const cx = Math.round(VW / 2), d = dummy, c = CU_GAME[3].cs, H = SU_FL_HANDS[c && c.fl ? Math.min(14, c.pic | 0) : 0], ex = cx + (d ? d.x - wx : SU_FG.gap), ap = Math.max(0, Math.min(1, (suFgU(now) - SU_FG.rel) / (SU_FG.hit - SU_FG.rel)));
+  return { cx, ex, head: [cx + 4, gy - 47], hands: [cx - 32 + (H[0] + H[2]) / 2, gy - 61 + (H[1] + H[3]) / 2], en: [ex, gy - 34], ar: suFgArrow(cx, ex, ap) };
+}
+function suFgBegin(now) {      // FUGA starts: the enemy is held for all of it (and slides to stand in front of Sukuna), the controls hide, the 20 s of the domain are stopped (suDomStep)
+  const d = dummy; suFg = { t0: now, jump: 0, hl: now, p: [], fl: [], em: 0, em2: 0, hit: false, hitAt: -1, hx: 0, slow: false, skipped: false, tapAt: -1e9, cam: null, shot: 0 };
+  if (d) { cuStun((SU_FG.end + 600) / 1000, now, true); d.dodgeUntil = 0; const to = wx + SU_FG.gap; if (Math.abs(d.x - to) > 6) d.pull = { from: d.x, to, at: now, ms: 500 }; }
+  $('pad').classList.add('cine'); $('hud').classList.add('cine');
+}
+function suFgEnd(now) {      // the cutscene is over (or broken off): the controls come back and the enemy is free
+  if (!suFg) return; suFg = null; $('pad').classList.remove('cine'); $('hud').classList.remove('cine');
+  const d = dummy; if (d && d.stunUntil > now) d.stunUntil = now;
+}
+function suFgSkip(now) {      // a button was pressed: after the first 0.9 s the cutscene jumps to its last 0.8 s (the arrow lands at once if it has not yet)
+  const F = suFg; if (!F || F.skipped) return; const u = suFgU(now); if (u < SU_FG.skipAt || u >= SU_FG.end - 800) return;
+  F.skipped = true; F.jump += SU_FG.end - 800 - u; const c = CU_GAME[3].cs; if (c) c.lit = c.clap = c.draw = c.fired = true; if (!F.hit) suFgHit(now, true);
+}
+function suFgTap(now) {      // a tap on the screen (the controls are hidden, so a phone has no button to press): the first says how to skip, a second one within a second and a half skips
+  const F = suFg; if (!F || F.skipped) return; if (now - F.tapAt < 1500) suFgSkip(now); else F.tapAt = now;
+}
+function suFgRelease(now) {      // the back hand lets go: a flash, the crack and the whoosh, a knock
+  snd('sukfire', 3); snd('sukfuga', 1); suFg.fl.push({ at: now, dur: 300, a: 0.85, col: '255,246,216' }); shakeUntil = Math.max(shakeUntil, now + 300); shakeAmp = Math.max(shakeAmp, 3);
+}
+function suFgP(F, x, y, vx, vy, life, col, sz, g) { if (F.p.length < (SET.lite ? 90 : 260)) F.p.push({ x, y, vx, vy, life, age: 0, col, sz, g }); }      // (one spark or ember: where it is, how fast it moves, how long it lives (s), its colour, its size and the pull on it (px/s/s, negative = it rises))
+function suFgHit(now, quiet) {      // the arrow lands: a flinch and a knock back, 40% of his full health (a smoke ball takes nothing), the 8 s burn, sparks and debris, the white flash, the boom; and unless skipped: the game stops for 0.3 s (suTsFuga) and then runs in slow motion for a moment
+  const F = suFg, d = dummy, cx = Math.round(VW / 2); F.hit = true; F.hitAt = now; F.hx = d ? d.x : wx + SU_FG.gap; const X = cx + F.hx - wx;
+  if (d && d.ko < 0) {
+    cuHit(0, now, { free: true, gb: true, low: true, knock: 4 }, d.x + 1, 1e9, -1e9);      // (the flinch and the combo counter: it cannot miss, so whether it counted does not matter)
+    if (!(d.vform && d.vform !== 'verity')) { const dm = (d.max || DUMMY_HP) * SU_FG.dmg / 100; d.hp = Math.max(0, d.hp - dm); hits.dmg += dm; }
+    d.hitAt = now; d.sburn = { until: now + SU_FL.burn.ms, next: now + SU_FL.burn.gap }; spark(d.x, gy - 34, 40, SU_FL.cols, true, 1); spark(d.x, gy - 34, 24, SU_FL.cols, true, -1);
+    if (d.hp <= 0) koDummy(now);
+  }
+  for (let i = 0, n = SET.lite ? 24 : 64; i < n; i++) { const a = -Math.random() * Math.PI, v = 40 + Math.random() * 170; suFgP(F, X, gy - 30, Math.cos(a) * v, Math.sin(a) * v, 0.8 + Math.random() * 0.9, i % 5 === 0 ? '#2a1008' : SU_FL.cols[i % 4], i % 7 === 0 ? 3 : i % 3 ? 1 : 2, 240); }
+  F.fl.push({ at: now + 1, dur: 380, a: 0.75, col: '255,255,255' }); snd('sukfire', 4); snd('sukfuga', 2); shakeUntil = Math.max(shakeUntil, now + 900); shakeAmp = Math.max(shakeAmp, 5);
+  if (quiet) { F.slow = true; snd('sukfuga', 3); return; }
+  const c = F.cam || { z: 1, fx: VW / 2, fy: VH / 2, sx: 0, sy: 0 }; stopMs = Math.max(stopMs, 300); suTs = { kind: 'fuga', total: stopMs, snap: null, real: performance.now(), vs, sx: VW / 2 + (X - c.fx) * c.z + c.sx, sy: VH / 2 + (gy - 34 - c.fy) * c.z + c.sy };
+}
+function suFgStep(g, c, now) {      // OPEN as the FUGA cutscene, every frame: the cast runs on its own slowed time (c.t: everything drawn for the cast follows it), the events of the cutscene come when they are due, and the picture to show
+  const F = suFg, S = SU_FG, FL = SU_FL; if (!F) { suEnd(g, now); return null; }
+  const u = Math.min(S.end, suFgU(now)), t = suFgCastT(u), i = suPicAt(FL.T, t);
+  if (!c.lit) { c.lit = true; snd('sukfire', 0); snd('sukfuga', 0); }
+  if (!c.clap && t >= FL.T[6]) { c.clap = true; snd('sukfire', 1); const h = SU_FL_HANDS[6]; spark(wx + (h[0] + h[2]) / 2 - 32, gy - 61 + (h[1] + h[3]) / 2, 26, FL.cols, true, 1); shakeUntil = Math.max(shakeUntil, now + 160); shakeAmp = Math.max(shakeAmp, 2); F.fl.push({ at: now, dur: 200, a: 0.5, col: '255,200,120' }); }
+  if (!c.draw && t >= FL.T[11]) { c.draw = true; snd('sukfire', 2); }
+  if (!c.fired && u >= S.rel) { c.fired = true; suFgRelease(now); }
+  if (!F.hit && u >= S.hit) suFgHit(now);
+  if (F.hit && !F.slow && now > F.hitAt) { F.slow = true; slowMo(1300, 0.3); snd('sukfuga', 3); }      // (the first frame after the stop: a moment of slow motion)
+  c.ph = t < FL.T[5] ? 'light' : t < FL.T[7] ? 'clap' : t < FL.T[11] ? 'play' : t < FL.T[13] ? 'aim' : 'fire'; c.pic = i; c.t = t; c.u = u;
+  if (u >= S.end) { suEnd(g, now); return null; }
+  return g.atk[22][i];
+}
+function suFgCam(now) {      // the camera of this frame (null when there is no cutscene): { z (zoom), fx, fy (the place of the scene in the middle of the screen), roll (tilt, rad), sx, sy (shake, px) }; it never shows anything beyond the domain's picture
+  const F = suFg; if (!F) return null;
+  const u = Math.min(SU_FG.end, suFgU(now)), A = suFgAnch(now); let s = 0; while (s + 1 < SU_FG_SHOTS.length && u >= SU_FG_SHOTS[s + 1][0]) s++;
+  const [u0, u1, fn] = SU_FG_SHOTS[s], k2 = Math.max(0, Math.min(1, (u - u0) / (u1 - u0))), k = k2 * k2 * (3 - 2 * k2), v = fn(k, A, k2, u), z = v[0], hw = VW / (2 * z), hh = VH / (2 * z), cl = (a, lo, hi) => lo > hi ? (lo + hi) / 2 : Math.max(lo, Math.min(hi, a)), sh = SET.lite ? 0 : v[4];
+  F.shot = s; F.cam = { z, fx: cl(v[1], hw + 4, VW - hw - 4), fy: cl(v[2], hh + 4, VH - hh - 4), roll: SET.lite ? 0 : v[3], sx: sh * (Math.sin(u * 0.093) + Math.sin(u * 0.211 + 1.7)) / 2, sy: sh * (Math.sin(u * 0.117 + 0.6) + Math.sin(u * 0.183 + 2.9)) / 2 };
+  return F.cam;
+}
+function suFgCamBegin(c) { ctx.fillStyle = '#12030a'; ctx.fillRect(-8, -8, VW + 16, VH + 16); ctx.save(); ctx.translate(Math.round(VW / 2 + c.sx), Math.round(VH / 2 + c.sy)); if (c.roll) ctx.rotate(c.roll); ctx.scale(c.z, c.z); ctx.translate(-Math.round(c.fx), -Math.round(c.fy)); }      // (what the scene draws from here on is seen through the camera)
+function suFgCamEnd(now, shkX, shkY) { ctx.restore(); ctx.save(); ctx.translate(-shkX, -shkY); suFgOverlay(now); ctx.restore(); }      // (back to the screen: the things the camera does not move)
+function suFgDark(src) {      // his picture as one dark shape and as one orange one (the rim light behind it), cached: { d, r }
+  let c = suFgDk.get(src);
+  if (!c) { if (suFgDk.size > 40) suFgDk.clear(); c = {}; for (const [k, col] of [['d', '#12030a'], ['r', '#ff7408']]) { const cv2 = document.createElement('canvas'); cv2.width = src.width; cv2.height = src.height; const g = cv2.getContext('2d'); g.drawImage(src, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = col; g.fillRect(0, 0, cv2.width, cv2.height); c[k] = cv2; } suFgDk.set(src, c); }
+  return c;
+}
+function suFgDisc(x, y, r, col) { ctx.fillStyle = col; for (let dy = -r; dy <= r; dy++) { const w = Math.floor(Math.sqrt(r * r - dy * dy)); ctx.fillRect(Math.round(x) - w, Math.round(y) + dy, 2 * w + 1, 1); } }      // (a round blob made of pixel rows)
+function suFgBlast(X, Y, R, k, now) {      // the fireball: a cluster of 18 round puffs, the hot ones (cream and yellow) in the middle and the cool ones (red and rust) at the rim, swelling and flickering and cooling as k (s since the hit) grows
+  const cols = ['#7a2c00', '#c24600', '#ff7408', '#ffb84a', '#ffe9a8', '#fff6d8'], cool = Math.min(3, Math.floor(k * 3.5));
+  for (let i = 17; i >= 0; i--) { const a = i * 2.399, d = Math.sqrt((i + 0.5) / 18) * R * 0.6, h = 1 - d / (R * 0.6), rr = Math.round(R * (0.32 - 0.14 * (1 - h)) * (1 + 0.08 * Math.sin(now / 80 + i))); suFgDisc(X + Math.cos(a) * d, Y + Math.sin(a) * d * 0.85 - k * 8, rr, cols[Math.max(0, Math.min(5, Math.floor(h * 4.5 + 1) - cool))]); }
+}
+function suFgParts(F, dt) {      // the sparks and embers: they move, fall or rise, and fade (and stay small on the screen when the camera is close: zs)
+  const zs = Math.min(1, 2 / (F.cam ? F.cam.z : 1));
+  for (let i = F.p.length - 1; i >= 0; i--) {
+    const q = F.p[i]; q.age += dt; if (q.age >= q.life) { F.p.splice(i, 1); continue; }
+    q.vy += q.g * dt; q.x += q.vx * dt; q.y += q.vy * dt; ctx.globalAlpha = Math.min(1, (1 - q.age / q.life) * 1.6); ctx.fillStyle = q.col; const w = q.sz * zs; ctx.fillRect(q.x - w / 2, q.y - w / 2, w, w);
+  }
+  ctx.globalAlpha = 1;
+}
+function suFgCharge(u) { return Math.max(0, Math.min(1, (u - 500) / 6800)) * (u < SU_FG.rel + 200 ? 1 : Math.max(0, 1 - (u - SU_FG.rel - 200) / 800)); }      // (how much fire there is round him: it grows while the arrow is drawn and is gone when it leaves)
+function suFgBack(now, cx) {      // behind both fighters while the cutscene runs: the glow round him, the ring on the floor and the flames that grow beside him as the arrow is drawn
+  const F = suFg; if (!F || !suFlSpr) return; const u = Math.min(SU_FG.end, suFgU(now)), ch = suFgCharge(u), S = suFlSpr; if (ch <= 0.01) return;
+  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.globalCompositeOperation = 'lighter'; suFlGlow(cx, gy - 32, 28 + 40 * ch, 0.35 * ch);
+  const rp = (u % 900) / 900; ctx.strokeStyle = 'rgba(255,150,50,' + (0.5 * ch * (1 - rp)).toFixed(3) + ')'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(cx, gy + 3, 8 + 52 * rp, 2 + 12 * rp, 0, 0, 6.2832); ctx.stroke(); ctx.globalCompositeOperation = 'source-over';
+  const lvl = ch > 0.6 ? 2 : 1, sc = 0.9 + 0.4 * ch; ctx.globalAlpha = Math.min(1, ch * 1.8);
+  [-48, -37, -26, 30, 42, 54].forEach((o, i) => { const sp = S.fire[lvl][(Math.floor(now / 70) + i * 2) % 6], w = Math.round(sp.width * sc), h = Math.round(sp.height * sc); ctx.drawImage(sp, Math.round(cx + o - w / 2), gy + 2 - h, w, h); });
+  ctx.restore();
+}
+function suFgDraw(now, dt, cx, x, y, src) {      // every frame of his scene while the cutscene runs, inside the camera and over his picture: the fire round him as the arrow is drawn, the huge arrow, the explosion and the fire after it, the dark shape of him in front of the enemy in shot 4
+  const F = suFg; if (!F || !suFlSpr) return;
+  const u = Math.min(SU_FG.end, suFgU(now)), A = suFgAnch(now), S = suFlSpr, lite = SET.lite; dt = Math.min(0.05, dt || 0.016);
+  ctx.save(); ctx.imageSmoothingEnabled = false;
+  const ch = suFgCharge(u);
+  if (ch > 0.01) { F.em += dt * (6 + 70 * ch) * (lite ? 0.4 : 1); while (F.em >= 1) { F.em -= 1; suFgP(F, cx + (Math.random() - 0.5) * 50, gy - Math.random() * 56, (Math.random() - 0.5) * 14, -(18 + Math.random() * 40), 0.9 + Math.random() * 0.9, SU_FL.cols[Math.floor(Math.random() * 4)], Math.random() < 0.3 ? 2 : 1, -10); } }
+  if (u >= 1900 && u < 2500) { const q = (u - 1900) / 600; ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = 'rgba(255,225,170,' + (0.9 * (1 - q)).toFixed(3) + ')'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(A.hands[0], A.hands[1], 3 + 22 * q, 0, 6.2832); ctx.stroke(); ctx.globalCompositeOperation = 'source-over'; }      // (the ring of the clap)
+  if (u >= 4500 && u < 5800 && src) {      // (shot 4: his own dark shape, big, in front of the enemy at the edge of the picture)
+    const c = F.cam, hw = VW / (2 * c.z), a = Math.min(1, (u - 4500) / 250) * Math.min(1, (5800 - u) / 200), sc = 2.2, w = Math.round(64 * sc);
+    const dk = suFgDark(src), dx = Math.round(c.fx - hw - 14), dy = Math.round(c.fy - 14 * sc - 12); ctx.globalAlpha = 0.85 * a; ctx.drawImage(dk.r, dx + 3, dy - 1, w, w); ctx.globalAlpha = 0.95 * a; ctx.drawImage(dk.d, dx, dy, w, w); ctx.globalAlpha = 1;
+  }
+  if (u >= SU_FG.rel - 40 && u < SU_FG.hit + 60) {      // the arrow: a glow, afterimages behind it, a trail of embers
+    const ar = A.ar, w = Math.round(96 * ar.sc), h = Math.round(38 * ar.sc), tail = Math.round(ar.hd - w), ay = gy - 38, fr = Math.floor(now / 45) % 10;
+    ctx.globalCompositeOperation = 'lighter'; suFlGlow(ar.hd - w * 0.3, ay, 56 * ar.sc, 0.55); ctx.globalCompositeOperation = 'source-over';
+    for (let i = 4; i >= 1; i--) { ctx.globalAlpha = 0.5 / (i + 1); ctx.drawImage(S.arrow[(fr + i) % 10], tail - i * 12, Math.round(ay - h / 2), w, h); } ctx.globalAlpha = 1;
+    ctx.drawImage(S.arrow[fr], tail, Math.round(ay - h / 2), w, h);
+    for (let i = 0, n = lite ? 1 : 3; i < n; i++) suFgP(F, tail + Math.random() * w * 0.8, ay + (Math.random() - 0.5) * h * 0.7, -(10 + Math.random() * 50), (Math.random() - 0.5) * 20, 0.5 + Math.random() * 0.6, SU_FL.cols[Math.floor(Math.random() * 5)], Math.random() < 0.4 ? 2 : 1, -20);
+  }
+  if (F.hit) {      // the explosion: a flash of a fireball in layers that thins out so that the enemy shows through, two shock rings, a pillar of fire on the enemy, flames running along the floor, smoke, "40%"
+    const k = (now - F.hitAt) / 1000, X = Math.round(cx + F.hx - wx), EY = gy - 34, kk = Math.min(1, k / 0.7), er = 1 - Math.pow(1 - kk, 3), R = 4 + 40 * er, fa = k < 0.25 ? 1 : Math.max(0, 1 - (k - 0.25) / 0.75);
+    if (fa > 0) { ctx.globalAlpha = fa * 0.4; suFgDisc(X, EY - 3 * er, Math.round(R), '#7a2c00'); ctx.globalAlpha = fa * 0.8; suFgBlast(X, EY, R, k, now); ctx.globalAlpha = 1; }
+    ctx.globalCompositeOperation = 'lighter'; for (const [d0, w] of [[0, 3], [0.12, 2]]) { const q = (k - d0) / 0.7; if (q > 0 && q < 1) { ctx.strokeStyle = 'rgba(255,225,170,' + (0.9 * (1 - q)).toFixed(3) + ')'; ctx.lineWidth = w; ctx.beginPath(); ctx.arc(X, EY, 6 + 90 * (1 - Math.pow(1 - q, 2)), 0, 6.2832); ctx.stroke(); } } ctx.globalCompositeOperation = 'source-over';
+    const fall = k < 2.4 ? 1 : Math.max(0, 1 - (k - 2.4) / 0.9);
+    for (let i = -5; i <= 5; i++) { const dist = Math.abs(i) * 18, a = Math.min(1, (k * 200 - dist) / 20) * fall * 0.9; if (a <= 0) continue; const sp = S.fire[i % 2 ? 1 : 2][(Math.floor(now / 70) + i + 6) % 6], sc = 1 + (i % 3 + 3) % 3 * 0.12, w = Math.round(sp.width * sc), h = Math.round(sp.height * sc); ctx.globalAlpha = a; ctx.drawImage(sp, Math.round(X + i * 18 - w / 2), gy + 3 - h, w, h); } ctx.globalAlpha = 1;
+    const pa = Math.min(1, Math.max(0, (k - 0.15) / 0.4)) * (k < 2.2 ? 1 : Math.max(0, 1 - (k - 2.2) / 1)) * 0.6; if (pa > 0) { const sp = S.fire[3][Math.floor(now / 60) % 6], w = Math.round(sp.width * 1.5), h = Math.round(sp.height * 1.5); ctx.globalAlpha = pa; ctx.drawImage(sp, Math.round(X - w / 2), gy + 3 - h, w, h); ctx.globalAlpha = 1; }
+    if (k > 0.3 && k < 3.2) for (let i = 0; i < 4; i++) { ctx.globalAlpha = 0.22 * (1 - k / 3.2); suFgDisc(X + (i - 1.5) * 12, EY - 12 - k * 20 - i * 6, Math.round(7 + 5 * k + i * 2), '#1e0808'); } ctx.globalAlpha = 1;
+    if (k > 0.04 && k < 1.6) { ctx.globalAlpha = k > 1.2 ? Math.max(0, 1 - (k - 1.2) / 0.4) : 1; pxt(SU_FG.dmg + '%', X, Math.round(EY - 36 - 10 * Math.min(1, k * 4)), '#ffe08a', 16, 'center'); ctx.globalAlpha = 1; }
+    if (u < SU_FG.end - 300) { F.em2 += dt * (lite ? 14 : 36); while (F.em2 >= 1) { F.em2 -= 1; suFgP(F, Math.random() * VW, gy - 10 + Math.random() * (VH - gy + 10), (Math.random() - 0.5) * 16, -(25 + Math.random() * 45), 1 + Math.random() * 1.2, SU_FL.cols[Math.floor(Math.random() * 4)], Math.random() < 0.3 ? 2 : 1, -6); } }
+  }
+  if (u >= 9300 && u < 11600) {      // (shots 8 and 9: a row of flames along the foot of the shrine)
+    const a = Math.min(1, (u - 9300) / 500) * Math.min(1, (11600 - u) / 600); ctx.globalAlpha = 0.65 * a;
+    for (let i = 0; i < 9; i++) { const sp = S.fire[3][(Math.floor(now / 75) + i * 5) % 6], sc = 1.3 + (i % 3) * 0.25, w = Math.round(sp.width * sc), h = Math.round(sp.height * sc); ctx.drawImage(sp, Math.round(i * (VW / 8) - w / 2), VH - 4 - h, w, h); }
+    ctx.globalAlpha = 1;
+  }
+  suFgParts(F, dt); ctx.restore();
+}
+function suFgOverlay(now) {      // over the whole picture, not moved by the camera: the orange grading and the dark edges, the flashes, the speed lines, the word FUGA, the line he says, the black bars, the hint to skip
+  const F = suFg; if (!F) return; const u = Math.min(SU_FG.end, suFgU(now)), S = SU_FG;
+  const kin = Math.min(1, u / 500), kout = Math.max(0, Math.min(1, (S.end - u) / 450)), bk = Math.min(kin * kin * (3 - 2 * kin), kout * kout * (3 - 2 * kout)), bh = Math.round(VH * S.bar * bk);
+  ctx.save(); ctx.imageSmoothingEnabled = false;
+  const gr = Math.max(0, Math.min(1, (u - 1900) / 5700)) * (u < S.rel ? 1 : Math.max(0, 1 - (u - S.rel) / 600)) * 0.2 + (u > S.hit ? Math.max(0, 1 - (u - S.hit) / 2500) * 0.12 : 0);
+  if (gr > 0.002) { ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(255,120,30,' + gr.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); ctx.globalCompositeOperation = 'source-over'; }
+  ctx.globalAlpha = 0.55; ctx.drawImage(yfVignette(), 0, 0); ctx.globalAlpha = 1;
+  for (let i = F.fl.length - 1; i >= 0; i--) { const f = F.fl[i], k = (now - f.at) / f.dur; if (k >= 1) { F.fl.splice(i, 1); continue; } if (k < 0) continue; ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(' + f.col + ',' + (f.a * (1 - k) * (1 - k)).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); ctx.globalCompositeOperation = 'source-over'; }
+  if (u >= S.rel - 100 && u < S.hit + 200) { const seed = Math.floor(u / 40); for (let i = 0; i < 16; i++) { ctx.fillStyle = i % 3 ? 'rgba(255,240,200,0.8)' : 'rgba(255,150,50,0.8)'; ctx.fillRect(Math.round(((i * 91 + seed * 47) % 100) / 100 * (VW + 60) - 30), Math.round(((i * 53 + seed * 29) % 100) / 100 * VH), 24 + ((i * 37 + seed * 11) % 70), 1); } }
+  const tk = (u - S.rel) / 760; if (tk >= 0 && tk < 1) { ctx.globalAlpha = tk < 0.65 ? 1 : 1 - (tk - 0.65) / 0.35; pxt('FUGA', Math.round(VW / 2) + Math.round(Math.sin(u * 0.9) * 2 * (1 - tk)), Math.round(VH * 0.52) + Math.round(Math.cos(u * 0.8) * 2 * (1 - tk)), '#ffb24a', VH >= 150 ? 32 : 24, 'center'); ctx.globalAlpha = 1; }
+  ctx.fillStyle = '#05000a'; ctx.fillRect(0, 0, VW, bh); ctx.fillRect(0, VH - bh, VW, bh); if (bh > 1) { ctx.fillStyle = '#8a3a08'; ctx.fillRect(0, bh, VW, 1); ctx.fillRect(0, VH - bh - 1, VW, 1); }
+  const n = Math.floor((u - 300) / 45); if (n > 0 && u < 2700 && bh > 6) { const say = SU_FL.say; ctx.globalAlpha = u > 2300 ? Math.max(0, 1 - (u - 2300) / 400) : 1; pxt(say.slice(0, Math.min(say.length, n)), Math.round(VW / 2), VH - Math.round(bh / 2) + 4, '#ffb24a', 8, 'center'); ctx.globalAlpha = 1; }
+  if (u >= S.skipAt && u < S.end - 500 && bh > 6) { const tp = now - F.tapAt < 1500; if (tp || u < 5400) { ctx.globalAlpha = tp ? 1 : Math.min(0.85, (5400 - u) / 600); pxt(tp ? 'TAP AGAIN TO SKIP' : 'DOUBLE TAP TO SKIP', VW - 6, bh - 3, '#c89a6a', 8, 'right'); ctx.globalAlpha = 1; } }
+  ctx.restore();
+}
+function suTsFuga(T) {      // the game is stopped for the moment the FUGA lands: 0.14 s of a hard black and white frame with rays out of the hit (flipping to its negative), then the frame it stopped on, bright and fading back
+  const t = Math.max(0, T.total - stopMs), W = cv.width, H = cv.height, X = T.sx, Y = T.sy;
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 1;
+  if (t < 140) {
+    const neg = Math.floor(t / 35) % 2 === 1, seed = Math.floor(t / 35); ctx.filter = 'grayscale(1) contrast(9) brightness(1.2)' + (neg ? ' invert(1)' : ''); ctx.drawImage(T.snap, 0, 0); ctx.filter = 'none'; ctx.fillStyle = neg ? '#000000' : '#ffffff';
+    for (let i = 0; i < 30; i++) { const a = i / 30 * 6.2832 + ((i * 17 + seed * 5) % 9) * 0.02, L = 30 + ((i * 53 + seed * 31) % 140), w = 0.02 + ((i * 7) % 5) * 0.01; ctx.beginPath(); ctx.moveTo(X + Math.cos(a) * 14, Y + Math.sin(a) * 14); ctx.lineTo(X + Math.cos(a - w) * (L + 14), Y + Math.sin(a - w) * (L + 14)); ctx.lineTo(X + Math.cos(a + w) * (L + 14), Y + Math.sin(a + w) * (L + 14)); ctx.closePath(); ctx.fill(); }
+  } else {
+    ctx.drawImage(T.snap, 0, 0); const k = (t - 140) / Math.max(1, T.total - 140); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(255,200,120,' + (0.55 * (1 - k)).toFixed(3) + ')'; ctx.fillRect(0, 0, W, H); ctx.globalCompositeOperation = 'source-over';
+  }
+  ctx.restore(); if (stopMs <= 0) suTs = null;
 }
 window.__suDom = () => ({ last: suDomLast, cover: suDomCover(pnow()) });      // (test hook: where the shrine was drawn last and how much of the screen the domain covers)

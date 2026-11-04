@@ -204,7 +204,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.126</small>
+    <small id="ver">V1.127</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -2532,7 +2532,7 @@ function comboEscape(now) {      // every frame, before the controls are gated
 function stateDraw(now) {      // the tracker, over the picture: green FREE or red (it blinks), a yellow DASH! when a dash can get you out, the seconds of the cooldown while the dash is locked; and the same seconds on the DASH button
   const b = $('dash'), cd = now < dgLock ? Math.ceil((dgLock - now) / (1000 * paceBase())) : 0;
   if (b && (+b.dataset.cd || 0) !== cd) { b.dataset.cd = cd || ''; b.classList.toggle('cd', cd > 0); }
-  if (state !== 'play' || yf || (vs && vs.ph !== 'fight')) return;
+  if (state !== 'play' || yf || (typeof suFgOn === 'function' && suFgOn()) || (vs && vs.ph !== 'fight')) return;
   const why = redWhy(now), red = !!why, x = vs ? Math.max(60, Math.min(96, (VW - 52) >> 1)) + 10 : 6, h = vs && vs.rush ? 9 : 10, y = vs ? (vs.rush ? 30 : 21) : 20, pulse = red && ((now / 140) | 0) % 2 === 0;
   ctx.save(); ctx.globalAlpha = 1; ctx.fillStyle = '#000'; ctx.fillRect(x - 1, y - 1, 42, h + 2); ctx.fillStyle = red ? (pulse ? '#ff3a3a' : '#b01c1c') : '#2fb868'; ctx.fillRect(x, y, 40, h);
   pxt(red ? (why === 'hit' ? 'HIT' : why === 'down' ? 'DOWN' : why === 'held' ? 'HELD' : 'STUN') : 'FREE', x + 20, y + h - 1, '#ffffff', 8, 'center');
@@ -6614,6 +6614,7 @@ $('lsAgain').addEventListener('click', () => lanAgain(true));
 $('lsBack').addEventListener('click', lanLeave);
 addEventListener('pointerdown', () => { if (state === 'story') storySkip(); });      // a tap skips to the next part of the cutscene
 addEventListener('pointerdown', () => { if (yf && !paused) yfTap(pnow()); });      // (v1.49 Yuji's FATALITY: two taps skip it)
+addEventListener('pointerdown', () => { if (typeof suFgOn === 'function' && suFgOn() && !paused) suFgTap(pnow()); });      // (v1.127 Sukuna's FUGA cutscene: two taps skip it)
 $('vsGo').addEventListener('click', () => startMatch(vsSel));
 $('vsNext').addEventListener('click', () => { if (vs && vs.cv) { startCurse(vs.ci + 1, 0); return; } const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
 $('vsAgain').addEventListener('click', () => vs && vs.hunt ? startHunt(vs.hunt.i) : vs && vs.rush ? (vs.run === ROUL ? startRoulette() : startRush()) : vs && vs.cv ? startCurse(vs.ci, vs.hard, vs.daily) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe));
