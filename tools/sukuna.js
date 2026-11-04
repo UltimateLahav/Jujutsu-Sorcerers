@@ -561,13 +561,25 @@ function suFlDraw(now, cx, x, y) {      // every frame of his scene, after his p
 
 // ---------------------------------------------------------------- v1.124 the ULTIMATE: the MALEVOLENT SHRINE (the DOMAIN button, key V; free play)
 // He makes the hand sign (both hands in front of his chin, the two middle fingers touching: the 'sg' row of the strip, made by tools/sukuna_art.py) and a 64 x 64 picture of his face (tools/sukuna_domain_art.py) appears behind him; then the DOMAIN opens: a shrine (the same tool) rises out of the ground behind him, the map stays as it is and slashes fly across the whole screen. For 20 s the enemy loses exactly 1% of his full health every 0.5 s (40 cuts that nothing blocks or dodges; a smoke ball takes nothing); he is NOT held for that and Sukuna can attack, walk and use BLUE all the time. It costs 67% of the energy; the enemy is held, and can not touch Sukuna, only while the sign is made, and the button can be used again 30 s after the domain has ended (or the enemy has gone down, or the round is over). See suDomTry, suDomCast, suDomStep, suDomTick, suDomBack and suDomFront.
-const SU_DOM = { cost: 67, cd: 30000, dur: 20000, gap: 500, pct: 1, T: [0, 110, 230, 350, 470], hold: 560, held: 110, rel: 110, port: 600, open: 1900, end: 2340, grow: 700, riseAt: 300, rise: 1700, sink: 1100, shrinkAt: 350, shrink: 700, foot: 6, t1: 600, t2: 1000, tEnd: 1900, ptEnd: 2800, say1: 'DOMAIN EXPANSION', say2: 'MALEVOLENT SHRINE', cols: ['#ffffff', '#ff2a3a', '#ffb0b8', '#c4121c'] };      // the cost (% of the energy), the wait after it (ms), how long it lasts (ms), the time between two cuts (ms), how much of the enemy's full health each takes (%); the sign: when its pictures 0 - 4 start (ms), when the held pictures 5 - 10 begin and how long each is shown, how long each of the lowered pictures 11 - 14 is shown; when the face appears behind him, when the domain opens (the shrine starts to rise and the 20 s begin), when the sign is over; how long the domain takes to spread over the screen when it opens (ms), when the shrine starts to rise (ms after it opened) and how long it takes to rise and to sink (ms), when the domain starts to shrink away after the shrine began to sink and how long that takes (ms), and how far above the bottom of the screen the foot of the shrine stands (px); when the two words begin to be written and when they are gone (before the domain opens: once it covers the screen only the two fighters are there), and when the face and the sign are cleared; the colours of the sparks
+const SU_DOM = { cost: 67, cd: 30000, dur: 20000, gap: 500, pct: 1, T: [0, 110, 230, 350, 470], hold: 560, held: 110, rel: 110, port: 600, open: 1900, end: 2340, grow: 700, riseAt: 300, rise: 1700, sink: 1100, shrinkAt: 350, shrink: 700, foot: 6, t1: 600, t2: 1000, tEnd: 1900, ptEnd: 2800, fdelay: 300, fgrow: 600, say1: 'DOMAIN EXPANSION', say2: 'MALEVOLENT SHRINE', cols: ['#ffffff', '#ff2a3a', '#ffb0b8', '#c4121c'] };      // the cost (% of the energy), the wait after it (ms), how long it lasts (ms), the time between two cuts (ms), how much of the enemy's full health each takes (%); the sign: when its pictures 0 - 4 start (ms), when the held pictures 5 - 10 begin and how long each is shown, how long each of the lowered pictures 11 - 14 is shown; when the face appears behind him, when the domain opens (the shrine starts to rise and the 20 s begin), when the sign is over; how long the domain takes to spread over the screen when it opens (ms), when the shrine starts to rise (ms after it opened) and how long it takes to rise and to sink (ms), when the domain starts to shrink away after the shrine began to sink and how long that takes (ms), and how far above the bottom of the screen the foot of the shrine stands (px); when the two words begin to be written and when they are gone (before the domain opens: once it covers the screen only the two fighters are there), and when the face and the sign are cleared; how long the small face stays small after it appeared (ms) and how long it then takes to grow until it covers the whole screen (ms; v1.126); the colours of the sparks
 SU_DOM.n = SU_DOM.dur / SU_DOM.gap;      // (40 cuts)
 const SU_SIGN_TIP = [[33.2, 40.1], [36.5, 36.6], [39.8, 32.2], [42.3, 30.2], [42.1, 24.6], [41.7, 21.7], [41.7, 21.7], [41.7, 21.7], [41.7, 21.7], [41.7, 20.7], [41.7, 20.7], [41.9, 25.0], [40.7, 30.7], [37.8, 35.2], [34.2, 40.1]];      // where the two fingertips touch in each picture of the sign (tools/sukuna_art.py prints them): the sparks start there
 const SU_SHRINE_D = 'M3 0h2v1H3zM1 1h6v1H1zM0 2h8v1H0zM0 3h1v1H0zM2 3h4v1H2zM7 3h1v1H7zM2 4h1v1H2zM5 4h1v1H5zM2 5h1v1H2zM5 5h1v1H5zM2 6h1v1H2zM5 6h1v1H5zM1 7h6v1H1z';      // the icon of the button: a little shrine, a roof with lifted corners on two pillars (8 x 8)
-const SU_PORT_PNG = '__SUKPORT__', SU_SHR_PNG = '__SUKSHR__';      // (build_html.py puts the two pictures here)
+const SU_PORT_PNG = '__SUKPORT__', SU_PORB_PNG = '__SUKPORB__', SU_SHR_PNG = '__SUKSHR__';      // (build_html.py puts the three pictures here: the small face, 64 x 64, the same face with twice the detail, 128 x 128, and the sheet of the shrines)
 const SU_SHR_LOD = [[128, 139, 0, 65], [152, 165, 128, 52], [176, 191, 280, 39], [200, 217, 456, 26], [224, 243, 656, 13], [248, 269, 880, 0]];      // the six pictures of the shrine in the sheet (tools/sukuna_domain_art.py prints it): height, width, the row and the column of its top left corner; the biggest one that fits the height of the screen is used
 let suDom = null, suDomPt = null, suDomSl = [], suPortCv = null, suShrSheet = null, suShrCache = {}, suSlSpr = null, suDomCv = null, suDomBg = null, suDomKey = '', suDomLast = null;      // the domain that is open (or sinking), the sign and the face behind him, the slashes in the air, the pictures (the face, the sheet of the shrines and the ones cut from it), the slash pictures (a list for each length), the domain's own picture of the screen (the frame it is drawn into and its unmoving background), and where the shrine was drawn last (for the tests)
+const SU_BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => v / 16), SU_BROW = 41, SU_EDGE0 = 32, SU_EDGE1 = 49;      // the 4 x 4 dither of the face's edge, the row of the 128 x 128 face picture where the eyebrows are (the covering face is placed so that they are just under the health bars: the eyes, the nose and the hands show below them), and the radius of its dissolving edge when it floats (32) and when every pixel shows (49: the far corner of the picture is 39.6 from the middle, and the edge fades over 9 pixels)
+let suPortBig = null, suPic = [null, null];      // (v1.126) the 128 x 128 face, and for each of the two faces (0: 64 x 64, 1: 128 x 128) { n, d (for each pixel its distance from the middle, in the units of the 64 x 64 one), w (the frame its dissolving edge is made in: { cv, g, id, r (the radius it shows) }) }
+function suPortInit(i, c) {      // a face has loaded (an opaque picture): measure every pixel's distance from the middle (the largest of its two distances, plus 0.6 of how far it is past the 22 pixels of the flat middle, in the corners) and make its frame
+  const n = c.width, f = 64 / n, g = c.getContext('2d'), d = new Float32Array(n * n), base = g.getImageData(0, 0, n, n);
+  for (let k = 0; k < n * n; k++) { const ax = Math.abs(((k % n) + 0.5) * f - 32), ay = Math.abs((Math.floor(k / n) + 0.5) * f - 32); d[k] = Math.max(ax, ay) + Math.hypot(Math.max(0, ax - 22), Math.max(0, ay - 22)) * 0.6; }
+  const w = document.createElement('canvas'); w.width = w.height = n; const wg = w.getContext('2d'), id = wg.createImageData(n, n); id.data.set(base.data); suPic[i] = { n, d, w: { cv: w, g: wg, id, r: -1 } };
+}
+function suPortEdge(i, R) {      // face i (0: the small one, 1: the one with twice the detail) with its edge dissolved into a 4 x 4 dither: opaque inside a rounded square, fading out over 9 pixels (of the 64 x 64 one) to nothing at radius R (R = 32 is the small, floating face of v1.124; the larger R, the further out the dissolving edge: from SU_EDGE1 on it is the whole, opaque picture, with which the face covers the screen)
+  const P = suPic[i], W = P.w, n = P.n; if (R >= SU_EDGE1) return i ? suPortBig : suPortCv; R = Math.round(R * 4) / 4; if (R === W.r) return W.cv;
+  const o = W.id.data; for (let k = 0; k < n * n; k++) o[k * 4 + 3] = Math.max(0, Math.min(1, (R - P.d[k]) / 9)) > SU_BAYER[(Math.floor(k / n) & 3) * 4 + ((k % n) & 3)] ? 255 : 0;
+  W.g.putImageData(W.id, 0, 0); W.r = R; return W.cv;
+}
 function suShrLod(maxH) {      // the biggest picture of the shrine that is not taller than maxH (the smallest if none): { cv, glow (the same in flat red: drawn over it with a pulsing alpha it makes it glow), w, h }, cut from the sheet once
   let k = 0; for (let i = 0; i < SU_SHR_LOD.length; i++) if (SU_SHR_LOD[i][0] <= maxH) k = i;
   if (!suShrCache[k]) {
@@ -576,7 +588,7 @@ function suShrLod(maxH) {      // the biggest picture of the shrine that is not 
   }
   return suShrCache[k];
 }
-[[SU_PORT_PNG, c => { suPortCv = c; }], [SU_SHR_PNG, c => { suShrSheet = c; }]].forEach(([src, set]) => { const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; c.getContext('2d').drawImage(im, 0, 0); set(c); }; im.src = src; });
+[[SU_PORT_PNG, c => { suPortCv = c; suPortInit(0, c); }], [SU_PORB_PNG, c => { suPortBig = c; suPortInit(1, c); }], [SU_SHR_PNG, c => { suShrSheet = c; }]].forEach(([src, set]) => { const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; c.getContext('2d').drawImage(im, 0, 0); set(c); }; im.src = src; });
 
 const SU_SL_ANG = [-64, -40, -16, 16, 40, 64], SU_SL_LEN = [34, 62, 96, 140, 220], SU_SL_W = [3, 3, 2, 1.4, 0.6], SU_SL_WB = [0, 3, 3.5, 2.5, 1];      // the angles (degrees) and lengths (px) of the slash pictures, and how often each length is picked (a slash anywhere on the screen, and one of the four that cross the enemy at a cut)
 function suSlBuild() {      // the pictures of the slashes, made once: for each angle and length a HOT one (a white core, a pink and a red edge and a dark rim, thin at both ends: the cut as it lands) and a COOL one (a thin pink scratch with a red edge and a dark side: what it leaves in the air)
@@ -631,7 +643,7 @@ function suDomTry(now) {      // the DOMAIN button (or V): the ULTIMATE starts i
 }
 function suDomStart(g, now) {      // the sign begins: he stands (from the crouch too), the enemy is held until it is over, nothing of his touches him (suHit), and the button's wait is kept long until the domain is over (suDomEnd sets the real one)
   const S = SU_DOM; stance = 'stand'; stickCr = false; suSlBuild();
-  g.cs = { dom: true, ph: 'sign', t0: now, t: 0, pic: 0, touched: false, port: false, opened: false, spk: 0 }; suDomPt = { t0: now };
+  g.cs = { dom: true, ph: 'sign', t0: now, t: 0, pic: 0, touched: false, port: false, full: false, opened: false, spk: 0 }; suDomPt = { t0: now };
   cuAtkK = 23; cuAtkAt = now; cuFired = []; cuRes = []; cuLunged = 0; cuMs = 1000 / 30; cuCmb = cuSn = cuCp = 0; cuCmbBy = now + 1e9;
   cuStun(S.end / 1000 + 0.1, now, true); dummy.dodgeUntil = 0; domReadyAt = now + S.open + S.dur + S.sink + S.cd; snd('sukdom', 0);
 }
@@ -641,6 +653,7 @@ function suDomCast(g, c, now) {      // the sign, every frame: the events of the
   if (!c.touched && t >= S.T[4]) { c.touched = true; snd('sukdom', 1); suDomTipSpark(4, 12); }
   if (c.touched && t >= S.hold && t < S.open && now >= c.spk) { c.spk = now + 90; suDomTipSpark(c.pic, 1); }
   if (!c.port && t >= S.port) { c.port = true; snd('sukdom', 2); shakeUntil = Math.max(shakeUntil, now + 260); shakeAmp = Math.max(shakeAmp, 2); }
+  if (!c.full && t >= S.port + S.fdelay + S.fgrow) { c.full = true; shakeUntil = Math.max(shakeUntil, now + 200); shakeAmp = Math.max(shakeAmp, 2); }      // (the face has grown to cover the whole screen: a knock)
   if (!c.opened && t >= S.open) { c.opened = true; suDomOpen(now); }
   if (t >= S.end) { suEnd(g, now); return null; }
   return g.atk[23][c.pic];
@@ -681,12 +694,21 @@ function suUltUI(now) {      // every frame: the DOMAIN button is his ULTIMATE (
 }
 
 // ---- what is seen: behind the fighters (the face, the domain with the shrine and the two words) and in front of them (the aura of the sign, the slashes and the flashes)
-function suDomPortrait(now, cx) {      // the 64 x 64 face behind him: it fades in and floats up (0.26 s after it appears: a red flash and a glitch), a dark red haze round it, and it fades away while the shrine rises
-  const P = suDomPt, S = SU_DOM, t = now - P.t0; if (!suPortCv || t < S.port || t > S.open + 800) return;
-  const a = Math.max(0, Math.min(1, (t - S.port) / 260, (S.open + 800 - t) / 800)), k = Math.max(1, Math.round(VH * 0.86 / 64)), W = 64 * k, X = Math.round(cx - W / 2), Y = Math.round(gy - 38 - W / 2) + Math.round(10 * Math.pow(1 - Math.min(1, (t - S.port) / 420), 2)), my = Y + W / 2;
-  const gr = ctx.createRadialGradient(cx, my, W * 0.2, cx, my, W * 0.95); gr.addColorStop(0, 'rgba(70,0,12,1)'); gr.addColorStop(1, 'rgba(70,0,12,0)'); ctx.globalAlpha = a * 0.55; ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH);
-  ctx.globalAlpha = a; ctx.drawImage(suPortCv, X, Y, W, W);
-  if (t - S.port < 140) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = a * 0.4; ctx.drawImage(suPortCv, X + 3, Y, W, W); ctx.drawImage(suPortCv, X - 3, Y, W, W); ctx.globalCompositeOperation = 'source-over'; }
+function suFaceRect(t) {      // where the face is t ms after the sign began (from SU_DOM.port on): { X, Y, W (its size, px), e (how far it has grown, 0 - 1) }. It appears small (about 0.86 of the screen's height, behind him), floats up for SU_DOM.fdelay ms and then GROWS (slowly at first and at the end) until it is the smallest whole multiple of the 128 pixels of the big face that covers the screen with 8 pixels to spare on every side (a shake never shows an edge): centred on him, its eyebrows at 0.36 of the screen's height (just under the health bars, so that the eyes, the nose and the hands are seen below them), moved just far enough to cover
+  const S = SU_DOM, u = Math.min(1, Math.max(0, (t - S.port - S.fdelay) / S.fgrow)), e = u * u * (3 - 2 * u), cx = Math.round(VW / 2);
+  const k0 = Math.max(1, Math.round(VH * 0.86 / 64)), W0 = 64 * k0, X0 = Math.round(cx - W0 / 2), Y0 = Math.round(gy - 38 - W0 / 2) + Math.round(10 * Math.pow(1 - Math.min(1, (t - S.port) / 420), 2));      // (the small face: where it floats up)
+  const k1 = Math.ceil((Math.max(VW, VH) + 16) / 128), W1 = 128 * k1, X1 = Math.min(-8, Math.max(VW + 8 - W1, Math.round(cx - W1 / 2))), Y1 = Math.min(-8, Math.max(VH + 8 - W1, Math.round(VH * 0.36 - SU_BROW * k1)));      // (the face that covers the screen)
+  return { X: Math.round(X0 + (X1 - X0) * e), Y: Math.round(Y0 + (Y1 - Y0) * e), W: Math.round(W0 + (W1 - W0) * e), e };
+}
+function suDomPortrait(now, cx) {      // the face of him making the sign, behind both fighters: the small 64 x 64 face appears 0.6 s in (a red flash and a glitch) and floats up; 0.3 s later it GROWS until it covers the whole screen (suFaceRect), turning into the 128 x 128 face as it passes about twice its size (the dissolving edge it has at first grows out past the screen), goes a little dark so that the two fighters stand out, stays until the domain opens, and goes dark while the domain spreads over it
+  const P = suDomPt, S = SU_DOM, t = now - P.t0; if (!suPortCv || !suPortBig || !suPic[0] || !suPic[1] || t < S.port || (suDom && suDomR(now) >= suDomFull())) return;
+  const f = suFaceRect(t), a = Math.min(1, (t - S.port) / 160), od = suDom ? Math.min(1, Math.max(0, now - suDom.open) / S.grow) : 0, R = SU_EDGE0 + (SU_EDGE1 - SU_EDGE0) * f.e, bw = Math.max(0, Math.min(1, (f.W - 160) / 100)), my = f.Y + f.W / 2;      // (bw: how much of the big face is mixed in: none up to 160 px wide, all of it from 260)
+  if (f.e < 1) { const gr = ctx.createRadialGradient(cx, my, f.W * 0.2, cx, my, f.W * 0.95); gr.addColorStop(0, 'rgba(70,0,12,1)'); gr.addColorStop(1, 'rgba(70,0,12,0)'); ctx.globalAlpha = a * 0.55 * (1 - f.e); ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH); }      // (the dark red haze round the small face goes when it covers the screen)
+  const small = bw < 1 ? suPortEdge(0, R) : null, big = bw > 0 ? suPortEdge(1, R) : null;
+  if (small) { ctx.globalAlpha = a; ctx.drawImage(small, f.X, f.Y, f.W, f.W); }
+  if (big) { ctx.globalAlpha = a * bw; ctx.drawImage(big, f.X, f.Y, f.W, f.W); }
+  if (t - S.port < 140) { const pic = big && bw > 0.5 ? big : small; ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = a * 0.4; ctx.drawImage(pic, f.X + 3, f.Y, f.W, f.W); ctx.drawImage(pic, f.X - 3, f.Y, f.W, f.W); ctx.globalCompositeOperation = 'source-over'; }
+  const dark = Math.max(0.3 * f.e, od * 0.85); if (dark > 0) { ctx.globalAlpha = dark; ctx.fillStyle = '#12030a'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }      // (a veil over it: 0.3 once it covers the screen, so that the fighters in front of it can be told from it; it grows to 0.85 while the domain spreads)
   ctx.globalAlpha = 1;
 }
 function suDomC() { return [Math.round(VW / 2), gy - 38]; }      // (the middle of the fight: where the domain spreads from)
@@ -696,7 +718,12 @@ function suDomR(now) {      // how far the domain has spread (px): a hard-edged 
   if (D.sink >= 0) return full * Math.max(0, 1 - Math.max(0, now - D.sink - S.shrinkAt) / S.shrink);
   const u = Math.min(1, Math.max(0, now - D.open) / S.grow); return full * (1 - (1 - u) * (1 - u));
 }
-function suDomCover(now) { if (!suDom) return 0; const R = suDomR(now); return R >= suDomFull() ? 1 : R > 0 ? 0.5 : 0; }      // (1: the domain hides the whole map: only the two fighters, their effects and the buttons are on the screen; 0.5: it is spreading or shrinking; 0: there is none)
+function suDomCover(now) {      // how much of the map the picture hides: 1 = all of it (the face or the domain covers the whole screen: no map and no passers-by are drawn, only the two fighters, their effects and the buttons are on the screen), 0.5 = it is growing, spreading or shrinking, 0 = nothing is there
+  const P = suDomPt, S = SU_DOM; let c = 0;
+  if (suDom) { const R = suDomR(now); c = R >= suDomFull() ? 1 : R > 0 ? 0.5 : 0; }
+  if (c < 1 && P && suPortCv && suPortBig && suPic[0] && suPic[1] && now - P.t0 >= S.port) c = now - P.t0 >= S.port + S.fdelay + S.fgrow ? 1 : Math.max(c, 0.5);      // (v1.126 the face from the moment it appears; it covers the screen once it has grown)
+  return c;
+}
 function suDomBgBuild() {      // the domain's own picture, made once for the size of the screen (8 pixels more on every side, so that a shake never shows an edge): a blood-red sky with a dim moon over where the shrine stands, spires of bone on the horizon, a dark floor of cracked ground with skulls and bones lying on it, and dark corners
   const W = VW + 16, H = VH + 16, cx = Math.round(VW / 2), hz = gy - 12, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); g.translate(8, 8); g.imageSmoothingEnabled = false;
   let seed = 7 + VW * 3 + VH; const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296, px = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), w, h); };
@@ -774,10 +801,10 @@ function suDomAura(now, cx, y, c) {      // the cursed energy that streams in to
   }
   ctx.globalAlpha = k; const fx = cx + tp[0] - 32, fyy = y + tp[1], gr = ctx.createRadialGradient(fx, fyy, 0, fx, fyy, 16); gr.addColorStop(0, 'rgba(255,90,100,0.9)'); gr.addColorStop(1, 'rgba(255,30,50,0)'); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = gr; ctx.fillRect(fx - 16, fyy - 16, 32, 32); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
 }
-function suDomText(now, cx) {      // the two words, written letter by letter on a dark band BEHIND the fighters (so the sign stays in sight) while the face and the shrine come: DOMAIN EXPANSION, then MALEVOLENT SHRINE (big if the part of the screen that the buttons leave free is wide enough for it)
+function suDomText(now, cx) {      // the two words, written letter by letter on a dark band BEHIND the fighters, on the floor strip under their feet (v1.126: so that the eyes of the face and the sign stay clear) while the face and the shrine come: DOMAIN EXPANSION, then MALEVOLENT SHRINE (big if the part of the screen that the buttons leave free is wide enough for it)
   const P = suDomPt, S = SU_DOM, t = now - P.t0; if (t < S.t1 || t > S.tEnd) return;
   const n1 = Math.min(S.say1.length, Math.floor((t - S.t1) / 36)), n2 = Math.min(S.say2.length, Math.floor(Math.max(0, t - S.t2) / 30)), s2 = VW * 0.84 >= S.say2.length * 16 + 8 ? 16 : 8, w2 = S.say2.length * s2, w1 = S.say1.length * 8, vc = s2 >= 16 ? Math.round(VW * 0.42) : cx;
-  const cy = Math.round(VH * 0.44), a = Math.max(0, Math.min(1, (S.tEnd - t) / 400, (t - S.t1) / 150)), bh = 10 + 4 + s2 + 8;
+  const a = Math.max(0, Math.min(1, (S.tEnd - t) / 400, (t - S.t1) / 150)), bh = 10 + 4 + s2 + 8, cy = Math.min(gy + 10, VH - bh + 13);
   ctx.globalAlpha = 0.6 * a; ctx.fillStyle = '#12030a'; ctx.fillRect(0, cy - 13, VW, bh); ctx.fillStyle = '#c4121c'; ctx.fillRect(0, cy - 13, VW, 1); ctx.fillRect(0, cy - 13 + bh - 1, VW, 1);
   ctx.globalAlpha = a;
   if (n1 > 0) pxt(S.say1.slice(0, n1), Math.round(vc - w1 / 2), cy, '#ffe9ee', 8, 'left');

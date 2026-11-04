@@ -1,8 +1,8 @@
-# python3 sukuna_domain_art.py [--preview DIR] -> sukuna_portrait.png + sukuna_shrines.png: the two pictures of SUKUNA'S ULTIMATE (v1.124, the Malevolent Shrine; v1.125: the shrine fills the screen), made from the two reference pictures kept in ../art/ :
-#   sukuna_domain_ref1_portrait.jpg (Sukuna with his hands pressed together, the picture that appears behind him while he makes the sign) -> a 64 x 64 pixel picture in the style of a 16 bit game (28 colours, no smooth shading, a dark line where the picture changes sharply)
+# python3 sukuna_domain_art.py [--preview DIR] -> sukuna_portrait.png + sukuna_shrines.png: the two pictures of SUKUNA'S ULTIMATE (v1.124, the Malevolent Shrine; v1.125: the shrine fills the screen; v1.126: the face fills the screen while he makes the sign), made from the two reference pictures kept in ../art/ :
+#   sukuna_domain_ref1_portrait.jpg (Sukuna with his hands pressed together, the picture that appears behind him while he makes the sign and grows to cover the whole screen) -> TWO pixel pictures in the style of a 16 bit game (no smooth shading, a dark line where the picture changes sharply): sukuna_portrait.png 64 x 64 (28 colours: the small face that appears behind him) and, since v1.126, sukuna_portrait_big.png 128 x 128 (36 colours: the same face with twice the detail, which the small one turns into while it grows, because at 3 times its size it covers the whole screen); every pixel of both is kept (the game dissolves the edge of the face itself, in a dither: suPortEdge in sukuna.js, the same rounded square that portrait() returns as its second result)
 #   sukuna_domain_ref2_shrine.jpg   (the Malevolent Shrine: a roof of horns over two mouths, in a ring of skulls) -> pixel pictures of it on a see-through background in SIX SIZES (128 to 248 pixels tall, one under the other in one sheet, all with the same 64 colours and a dark line round them):
 #                                   the game picks the biggest one that fits the height of the screen, so that the shrine fills it (the grey background of the reference is cut away by growing it in from the edges over pixels that are grey and change smoothly, so the dark blue-grey roof and horns stay).
-# Both are palette PNGs (colour 0 = see-through) that build_html.py embeds (__SUKPORT__, __SUKSHR__); the sizes of the six pictures and where they are in the sheet are printed: they are SU_SHR_LOD in sukuna.js.
+# All three are palette PNGs (colour 0 = see-through) that build_html.py embeds (__SUKPORT__, __SUKPORB__, __SUKSHR__); the sizes of the six pictures and where they are in the sheet are printed: they are SU_SHR_LOD in sukuna.js.
 import os, sys, collections
 import numpy as np
 from PIL import Image, ImageEnhance, ImageFilter
@@ -24,22 +24,23 @@ def to_palette_png(rgb, alpha, path, ncol):
             if alpha[y, x]: idx[y, x] = look[tuple(int(v) for v in rgb[y, x])]
     im = Image.fromarray(idx, 'P'); im.putpalette([0, 0, 0] + [v for c in cols for v in c]); im.save(path, transparency=0, optimize=True); return len(cols)
 
-def portrait(ncol=28, edge=True):
+def portrait(ncol=28, edge=True, n=64):
+    """the face as an n x n pixel picture (colours, the soft-edged mask of the small floating face: only meaningful for n = 64, the game draws that edge itself)"""
     im = Image.open(os.path.join(ART, 'sukuna_domain_ref1_portrait.jpg')).convert('RGB')
-    a = ImageEnhance.Contrast(im).enhance(1.3); a = ImageEnhance.Color(a).enhance(1.2); a = a.filter(ImageFilter.UnsharpMask(radius=2, percent=100, threshold=2))
-    a = a.resize((64, 64), Image.LANCZOS)
+    a = ImageEnhance.Contrast(im).enhance(1.3); a = ImageEnhance.Color(a).enhance(1.2); a = a.filter(ImageFilter.UnsharpMask(radius=2 * n / 64, percent=100, threshold=2))
+    a = a.resize((n, n), Image.LANCZOS)
     q = np.asarray(a.quantize(colors=ncol, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).convert('RGB')).copy()
     if edge:                                                    # a dark line where a dark pixel meets a much lighter one (the 16 bit look), only on the inside of the dark side
         L = (q[..., 0].astype(int) * 30 + q[..., 1] * 59 + q[..., 2] * 11) // 100; out = q.copy()
-        for y in range(64):
-            for x in range(64):
+        for y in range(n):
+            for x in range(n):
                 for dy, dx in ((0, 1), (1, 0), (0, -1), (-1, 0)):
                     yy, xx = y + dy, x + dx
-                    if 0 <= yy < 64 and 0 <= xx < 64 and L[yy, xx] - L[y, x] > 70 and L[y, x] < 120: out[y, x] = (np.array(INK) * .6 + q[y, x] * .4).astype(np.uint8); break
+                    if 0 <= yy < n and 0 <= xx < n and L[yy, xx] - L[y, x] > 70 and L[y, x] < 120: out[y, x] = (np.array(INK) * .6 + q[y, x] * .4).astype(np.uint8); break
         q = out
     # the edge fades away in a dither (so the picture can float on the map): opaque inside a rounded square, a 4 x 4 ordered dither over the last 9 pixels
-    yy, xx = np.mgrid[0:64, 0:64]; d = np.maximum(np.abs(xx - 31.5), np.abs(yy - 31.5)) + np.hypot(np.maximum(0, np.abs(xx - 31.5) - 22), np.maximum(0, np.abs(yy - 31.5) - 22)) * .6
-    k = np.clip((32.0 - d) / 9.0, 0, 1); B = bayer4()[yy % 4, xx % 4]; alpha = k > B
+    yy, xx = np.mgrid[0:n, 0:n]; yy = yy * 64.0 / n; xx = xx * 64.0 / n; d = np.maximum(np.abs(xx - 31.5), np.abs(yy - 31.5)) + np.hypot(np.maximum(0, np.abs(xx - 31.5) - 22), np.maximum(0, np.abs(yy - 31.5) - 22)) * .6
+    k = np.clip((32.0 - d) / 9.0, 0, 1); B = bayer4()[(np.mgrid[0:n, 0:n][0]) % 4, (np.mgrid[0:n, 0:n][1]) % 4]; alpha = k > B
     return q, alpha
 
 def shrine_cut():
@@ -91,8 +92,8 @@ def preview(rgb, alpha, path, S, bg=(18, 19, 31)):
     h, w = alpha.shape; im = Image.new('RGB', (w, h), bg); src = Image.fromarray(rgb); im.paste(src, (0, 0), Image.fromarray((alpha * 255).astype(np.uint8))); im.resize((w * S, h * S), Image.NEAREST).save(path)
 
 if __name__ == '__main__':
-    q, a = portrait(); n1 = to_palette_png(q, a, os.path.join(HERE, 'sukuna_portrait.png'), 28); Q, A, lay = shrine_sheet(); n2 = to_palette_png(Q, A, os.path.join(HERE, 'sukuna_shrines.png'), 64)
-    print('wrote sukuna_portrait.png 64 x 64,', n1, 'colours; sukuna_shrines.png', A.shape[1], 'x', A.shape[0], ',', n2, 'colours'); print('SU_SHR_LOD =', lay)
+    q, a = portrait(); n1 = to_palette_png(q, np.ones((64, 64), bool), os.path.join(HERE, 'sukuna_portrait.png'), 28); qb, _ = portrait(36, True, 128); n3 = to_palette_png(qb, np.ones((128, 128), bool), os.path.join(HERE, 'sukuna_portrait_big.png'), 36); Q, A, lay = shrine_sheet(); n2 = to_palette_png(Q, A, os.path.join(HERE, 'sukuna_shrines.png'), 64)
+    print('wrote sukuna_portrait.png 64 x 64,', n1, 'colours; sukuna_portrait_big.png 128 x 128,', n3, 'colours; sukuna_shrines.png', A.shape[1], 'x', A.shape[0], ',', n2, 'colours'); print('SU_SHR_LOD =', lay)
     if '--preview' in sys.argv:
-        out = sys.argv[sys.argv.index('--preview') + 1]; os.makedirs(out, exist_ok=True); preview(q, a, os.path.join(out, 'portrait_x8.png'), 8); preview(Q, A, os.path.join(out, 'shrines_x2.png'), 2)
+        out = sys.argv[sys.argv.index('--preview') + 1]; os.makedirs(out, exist_ok=True); preview(q, a, os.path.join(out, 'portrait_x8.png'), 8); preview(qb, np.ones((128, 128), bool), os.path.join(out, 'portrait_big_x4.png'), 4); preview(Q, A, os.path.join(out, 'shrines_x2.png'), 2)
         for i, (h, w, y0, x0) in enumerate(lay): preview(Q[y0:y0 + h, x0:x0 + w], A[y0:y0 + h, x0:x0 + w], os.path.join(out, 'shrine_%d.png' % h), 3)
