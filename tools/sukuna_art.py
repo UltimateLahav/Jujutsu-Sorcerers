@@ -1,4 +1,4 @@
-# python3 sukuna_art.py [--preview DIR] -> sukuna_idle.png: SUKUNA in the game's own Yuji style, 19 rows of 15 pictures (960 x 1216; 64 x 64 each), facing right like Yuji:
+# python3 sukuna_art.py [--preview DIR] -> sukuna_idle.png: SUKUNA in the game's own Yuji style, 25 rows of 15 pictures (960 x 1600; 64 x 64 each; the last rows: the FLAME poses and, v1.124, the DOMAIN SIGN), facing right like Yuji:
 # row 0 idle, 1 walk, 2 jump, 3 crouch down (standing up plays it backwards), 4 crouched idle, 5 crouch walk (walking back plays it backwards), 6 right jab, 7 left jab, 8 face kick (made with Yuji's rig, see kick()),
 # 9 dodge (Yuji's back dash), 10 slash (made with Yuji's rig, see slash()), 11 and 12 the crouch punches (Yuji's own: C.JAB = R.JAB, strip 30, and C.UPPR = L.UPPR, strip 31),
 # 13 the slash with the left hand and 14 the slash with both hands (made with Yuji's rig, see slash_params()), 15 the AIR CUT (a flick of the hand: the slash itself is not seen) and 16 the CUT STORM (the hand pulled
@@ -64,7 +64,7 @@ def head():
     for c in range(16, 21): put(c, 25, 'u')                                             # the light on the top of the roll
     return g
 
-ROWS = ('idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'atk0', 'atk1', 'kick', 'dash1', 'slash', 'atk30', 'atk31', 'slashL', 'slashX', 'cut', 'storm', 'ccut', 'dis', 'atk6', 'atk26', 'lift', 'dive', 'flame')      # the strip's rows: Yuji's sets of the move (idle, walk, jump, crouch down, crouched idle, crouch walk, R.HOOK = his right jab, L.HOOK = his left jab, the back dash = his dodge, C.JAB and C.UPPR = his crouch punches) and the kick, the three slashes and the four BLUE moves made here, 15 pictures each
+ROWS = ('idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'atk0', 'atk1', 'kick', 'dash1', 'slash', 'atk30', 'atk31', 'slashL', 'slashX', 'cut', 'storm', 'ccut', 'dis', 'atk6', 'atk26', 'lift', 'dive', 'flame', 'sign')      # the strip's rows: Yuji's sets of the move (idle, walk, jump, crouch down, crouched idle, crouch walk, R.HOOK = his right jab, L.HOOK = his left jab, the back dash = his dodge, C.JAB and C.UPPR = his crouch punches) and the kick, the three slashes and the four BLUE moves made here, 15 pictures each
 BLINK = {'idle': (9, 10), 'cidle': (9, 10)}                 # (his own blinks: the pictures where his eye is shut)
 NAILS = ('idle', 'fwd', 'cdn')                               # (the pictures where the hand is in the pocket, or still on its way up to the guard: the nails show; the guard and the jump hold it up in a fist of another shape)
 WID = 48                                                    # (the widest of Yuji's pictures of these moves is 44)
@@ -194,7 +194,41 @@ def flame_hands(i):
         ne, nw = P[key]; S = (sx0 + P['ln'], 31 + P['by']); e = (S[0] + ne[0], S[1] + ne[1]); w = (S[0] + nw[0], S[1] + nw[1]); d = ya.unit(w[0] - e[0], w[1] - e[1]); fc = (w[0] + d[0] * 1.6, w[1] + d[1] * 1.6)
         out += [round(fc[0] - 2, 1), round(fc[1], 1)]      # (the figure's column 16 is the picture's column 14, and its row 0 the picture's row 0: see render())
     return out
-GEN = {'slash': {'top': 0, 'frames': ya.pack(slash, 16, 48, 0)[0]}, 'slashL': {'top': 0, 'frames': ya.pack(slash_pic('slashL'), 16, 48, 0)[0]}, 'slashX': {'top': 0, 'frames': ya.pack(slash_pic('slashX'), 16, 48, 0)[0]}, 'kick': {'top': 0, 'frames': ya.pack(kick, 16, 48, 0)[0]}, 'cut': {'top': 0, 'frames': ya.pack(cast_pic('cut'), 16, 48, 0)[0]}, 'storm': {'top': 0, 'frames': ya.pack(cast_pic('storm'), 16, 48, 0)[0]}, 'ccut': {'top': 0, 'frames': ya.pack(cast_pic('ccut'), 16, 48, 0)[0]}, 'dis': {'top': 0, 'frames': ya.pack(cast_pic('dis'), 16, 48, 0)[0]}, 'lift': {'top': 0, 'frames': ya.pack(lift_pic, 16, 48, 0)[0]}, 'dive': {'top': 0, 'frames': ya.pack(dive_pic, 16, 48, 0)[0]}, 'flame': {'top': 0, 'frames': ya.pack(flame_pic, 16, 48, 0)[0]}}      # (the sets made here, in the form of yuji.json's)
+# ---- v1.124 the DOMAIN SIGN (the ULTIMATE of Sukuna, the Malevolent Shrine). 'sign' = his hand sign, made on Yuji's rig like Yuji's own DOMAIN EXPANSION sign (yuji_art.py, hs_pose) but with BOTH hands in front of his chin, side by side, and the MIDDLE FINGER of each hand stretched straight up so that the two fingertips touch:
+# 0 he stands as he was, 1 - 4 the hands rise and come together (the fingers stretch on 4), 5 - 10 HELD (he breathes: the game plays 0 - 4, keeps 5 - 10 going for as long as the sign lasts, and then plays 11 - 14), 11 - 14 the hands come down again and the picture ends in the standing pose
+SG_N = {0: ya.IDLE_N, 1: ((1.2, 5.6), (2.8, 6.4)), 2: ((2.8, 5.2), (5.2, 3.6)), 3: ((3.9, 4.9), (7.0, 1.0)), 4: ((4.5, 4.6), (8.0, -1.2)), 5: ((4.7, 4.5), (8.3, -1.8)), 10: ((4.7, 4.5), (8.3, -1.8)), 11: ((4.4, 4.7), (7.8, -.8)), 12: ((3.3, 5.0), (5.8, 2.4)), 13: ((1.4, 5.7), (3.0, 6.2)), 14: ya.IDLE_N}      # the near hand (elbow, wrist from its shoulder)
+SG_F = {0: ya.IDLE_F, 1: ((.6, 5.0), (1.4, 6.2)), 2: ((2.2, 5.0), (4.3, 3.4)), 3: ((3.2, 5.0), (6.2, .8)), 4: ((3.7, 5.0), (7.2, -1.4)), 5: ((3.8, 4.9), (7.5, -2.0)), 10: ((3.8, 4.9), (7.5, -2.0)), 11: ((3.6, 5.0), (7.0, -1.0)), 12: ((2.6, 5.0), (5.0, 2.2)), 13: ((1.0, 5.0), (1.8, 6.0)), 14: ya.IDLE_F}      # the far hand (behind the near one: its arm is hidden by his body)
+def sign_params(i):
+    kv, GR = ya.kv, ya.GR; br = round(.6 + .6 * math.sin(2 * math.pi * (i - 5) / 6)) if 5 <= i <= 10 else 0
+    return dict(by=round(kv({0: 0, 3: 2, 5: 2, 10: 2, 14: 0}, i)) + br, ln=round(kv({0: 0, 4: 2, 10: 2, 14: 1}, i)), hx=round(kv({0: 0, 4: -1, 10: -1, 14: 0}, i)), hd=round(kv({0: 0, 4: 1, 10: 1, 14: 0}, i)),
+                lf=(round(kv({0: 34, 4: 38, 10: 38, 14: 34}, i)), GR, 0), lb=(round(kv({0: 31, 4: 28, 10: 28, 14: 31}, i)), GR, 0), na=kv(SG_N, i), fa=kv(SG_F, i), hp=i * .9, hup=1 if 3 <= i <= 12 else 0, hback=0, blink=False)
+def sign_fist(P):
+    """where the near fist is (x, y on the figure) for these parameters"""
+    ne, nw = P['na']; S = (34 + P['ln'], 31 + P['by']); e = (S[0] + ne[0], S[1] + ne[1]); w = (S[0] + nw[0], S[1] + nw[1]); d = ya.unit(w[0] - e[0], w[1] - e[1]); return (w[0] + d[0] * 1.6, w[1] + d[1] * 1.6)
+def sign_top(i, P):
+    kv = ya.kv; L = 6.6 * kv({0: 0, 3: 0, 5: 1, 10: 1, 12: 0, 14: 0}, i)      # how long the middle fingers are (0 = a plain fist)
+    def top(f, sx, sy):
+        if L < .6 and i < 4: return
+        cn = sign_fist(P); sp = 3.4 * kv({0: 0, 3: 0, 4: .6, 5: 1, 10: 1, 11: .6, 13: 0, 14: 0}, i)      # (sp: how far the far hand is behind the near hand)
+        cf = (cn[0] - sp, cn[1] + .5 * min(1, sp / 3.4)); tip = (cn[0] - sp * .5 + .3, cn[1] - 1.5 - L)
+        def hand(c, col, hi, lo, lean):      # a fist and, from its top, the middle finger leaning in to the tip where the two meet
+            fd = ya.disc(c[0], c[1], 1.9); f.fill(fd, col); f.rim(fd, 'O'); f.fill(fd, col); f.set(c[0] - 1, c[1] - .6, hi); f.set(c[0] + .6, c[1] + 1.4, lo)
+            if L >= 1:
+                p0 = (c[0] + lean * .3, c[1] - 1.3); p1 = (tip[0] + (0 if lean > 0 else .1), tip[1] + (0 if lean > 0 else .3)); fm = ya.seg(p0, p1, 1.5, 1.0) | ya.disc(p0[0], p0[1], .9)
+                f.fill(fm, col); f.rim(fm, 'O'); f.fill(fm, col)
+                for x, y in fm:
+                    if (x - 1, y) not in fm: f.set(x, y, hi)
+                    elif (x + 1, y) not in fm: f.set(x, y, lo)
+        hand(cf, 'U', 'S', 'V', -1); hand(cn, 'S', 'T', 'U', 1)      # (the far hand first, in the darker skin, the near one over it)
+        if L >= 1: f.set(tip[0], tip[1] - 1, 'T')      # (a light pixel on the two fingertips where they touch)
+    return top
+def sign_pic(i):
+    P = sign_params(i); P['top'] = sign_top(i, P); return ya.figure(P)
+def sign_tip(i):
+    """where the touching fingertips are on the 64 x 64 picture (x, y): the game puts a spark there"""
+    P = sign_params(i); cn = sign_fist(P); sp = 3.4 * ya.kv({0: 0, 3: 0, 4: .6, 5: 1, 10: 1, 11: .6, 13: 0, 14: 0}, i); L = 6.6 * ya.kv({0: 0, 3: 0, 5: 1, 10: 1, 12: 0, 14: 0}, i)
+    return [round(cn[0] - sp * .5 + .3 - 2, 1), round(cn[1] - 1.5 - L - 1, 1)]      # (the figure's column 16 is the picture's column 14)
+GEN = {'slash': {'top': 0, 'frames': ya.pack(slash, 16, 48, 0)[0]}, 'slashL': {'top': 0, 'frames': ya.pack(slash_pic('slashL'), 16, 48, 0)[0]}, 'slashX': {'top': 0, 'frames': ya.pack(slash_pic('slashX'), 16, 48, 0)[0]}, 'kick': {'top': 0, 'frames': ya.pack(kick, 16, 48, 0)[0]}, 'cut': {'top': 0, 'frames': ya.pack(cast_pic('cut'), 16, 48, 0)[0]}, 'storm': {'top': 0, 'frames': ya.pack(cast_pic('storm'), 16, 48, 0)[0]}, 'ccut': {'top': 0, 'frames': ya.pack(cast_pic('ccut'), 16, 48, 0)[0]}, 'dis': {'top': 0, 'frames': ya.pack(cast_pic('dis'), 16, 48, 0)[0]}, 'lift': {'top': 0, 'frames': ya.pack(lift_pic, 16, 48, 0)[0]}, 'dive': {'top': 0, 'frames': ya.pack(dive_pic, 16, 48, 0)[0]}, 'flame': {'top': 0, 'frames': ya.pack(flame_pic, 16, 48, 0)[0]}, 'sign': {'top': 0, 'frames': ya.pack(sign_pic, 16, 48, 0)[0]}}      # (the sets made here, in the form of yuji.json's)
 
 def yuji(name, i):
     """Yuji's picture i of a set as a grid of 64 figure rows x 48 columns (a jump's 4 empty rows above and below the figure are dropped; the game draws them 4 rows higher)"""
@@ -273,7 +307,7 @@ if __name__ == '__main__':
         for i in range(15):
             g, nfo = picture(name, i, H); info[name, i] = nfo; row.append(render(g))
         rows.append(row)
-    strip(rows).save(os.path.join(HERE, 'sukuna_idle.png'), transparency=0, optimize=True); print('wrote sukuna_idle.png', 64 * 15, 'x', 64 * len(ROWS)); print('SU_FL_HANDS =', [flame_hands(i) for i in range(15)])
+    strip(rows).save(os.path.join(HERE, 'sukuna_idle.png'), transparency=0, optimize=True); print('wrote sukuna_idle.png', 64 * 15, 'x', 64 * len(ROWS)); print('SU_FL_HANDS =', [flame_hands(i) for i in range(15)]); print('SU_SIGN_TIP =', [sign_tip(i) for i in range(15)])
     if '--preview' in sys.argv:
         out = sys.argv[sys.argv.index('--preview') + 1]; os.makedirs(out, exist_ok=True); S = 4
         for r, name in enumerate(ROWS):

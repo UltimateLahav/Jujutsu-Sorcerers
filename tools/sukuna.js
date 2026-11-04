@@ -6,7 +6,7 @@
 // v1.111: the BLUE button (key L) is his INVISIBLE SLASH, which nobody sees fly: it cuts the enemy AT ONCE wherever he stands on the screen (nothing travels: the cut lands on the 7th picture of his flick, 0.12 s after the press). Standing, BLUE is the AIR CUT (costs 5 CE): the enemy flinches (no damage by itself) and a cut shows across him, and he BLEEDS. With the BACK direction held it is the CUT STORM (25 CE): he raises his hand forward with the fingers spread and eight slashes land one after the other (0.04 s apart), each flashes a cut across the enemy and adds a bleed, and the enemy is STUNNED for 3 s (from the last slash). The bleeds STACK: every slash that lands (the counter's too) adds its own bleed, 0.1 of health every 0.03 s for 4 s, so 8 slashes bleed 8 times as fast. A blocking enemy blocks them (BLOCKED, no bleed), and one who is crouching, dodging or lying down is not hit. They are made like a blow (g.set 9 and 10: pictures a second and the cost, paid by customScene like any move's; the slashes are events with a callback, `cb`, see cuEv): see suBlue, suCutAt, suBleed.
 // v1.112: BLUE has two more moves, by where he is. CROUCHED it is the LEG CUT (10 CE): a low sweep of his hand and the enemy's legs are cut at once, wherever he stands on the screen (blockable like the AIR CUT; a crouching enemy is cut too): he drops to his KNEES (the crouch of his own pictures) and is stunned for 0.8 s, and while he kneels EVERY hit lands on him (he does not duck, block or dodge: nothing of his kind is in the way), and he bleeds. IN THE AIR (the flight of a jump) it is DISMANTLE (20 CE, and only with a living enemy on the screen in front of him, otherwise NO TARGET and nothing is paid): in the air he dashes back 40 px (the jump he was in is held where it was until it is all over), points one finger at the enemy, and THE GAME STOPS (the clock stands still for 1.5 s, as in a hit stop, and suTsFrame paints the held frame grey and dark with red bars, a line from his finger to the enemy, three thin cuts drawn on the enemy's chest for what is coming, and the word DISMANTLE letter by letter, with a deep sound: no spoken voice); then time goes on and THREE CUTS land one after another on the enemy's chest (0.11 s apart; nothing can block or dodge them, a guard is broken), each adding a bleed that lasts 8 s (0.1 of health every 0.03 s, they stack: about 80 health in all, he bleeds out), and the enemy is stunned from the stop until 0.6 s after the last cut. Nothing touches him during the whole move. See suBlue, suLegAt, suDisStep, suFreeze, suDisCut, suTsFrame.
 // He cannot crouch-jump, dash, block or be hurt in pictures yet (whatever is pressed is dropped, as for a custom fighter that has not drawn them), and his body is measured on his idle pictures like every custom fighter's (cuMeasure). His slot is 3, after the three that can be drawn, so cuSelRefresh leaves his card alone.
-const SUK_WHO = 'cu3', SUK_PNG = '__SUKPNG__', SUK_ROWS = ['frames', 'walk', 'jump', 'cr', 'ci', 'cwk', 'a0', 'a1', 'a2', 'dg', 'a3', 'cp0', 'cp1', 'sl', 'sx', 'cut', 'storm', 'ccut', 'dis', 'el', 'tc', 'lift', 'dive', 'fl'];      // (the rows of the picture strip: idle, walk, jump, crouch down, crouched idle, crouch walk, right jab, left jab, face kick, dodge, slash (the counter's and the right hand's), the two crouch punches, the left hand's slash and the slash of both hands, the AIR CUT and the CUT STORM, the LEG CUT and DISMANTLE, v1.119: the ELBOW, the touch and cut (Yuji's grab and cleave), the LIFT and the DIVE, v1.120: the FLAME poses; the names are those of the pictures of a custom fighter: a0 to a3 are its four punches)
+const SUK_WHO = 'cu3', SUK_PNG = '__SUKPNG__', SUK_ROWS = ['frames', 'walk', 'jump', 'cr', 'ci', 'cwk', 'a0', 'a1', 'a2', 'dg', 'a3', 'cp0', 'cp1', 'sl', 'sx', 'cut', 'storm', 'ccut', 'dis', 'el', 'tc', 'lift', 'dive', 'fl', 'sg'];      // (the rows of the picture strip: idle, walk, jump, crouch down, crouched idle, crouch walk, right jab, left jab, face kick, dodge, slash (the counter's and the right hand's), the two crouch punches, the left hand's slash and the slash of both hands, the AIR CUT and the CUT STORM, the LEG CUT and DISMANTLE, v1.119: the ELBOW, the touch and cut (Yuji's grab and cleave), the LIFT and the DIVE, v1.120: the FLAME poses, v1.124: the DOMAIN SIGN; the names are those of the pictures of a custom fighter: a0 to a3 are its four punches)
 const SU_ATK = [['R.JAB', 8, 0, 8, 6, 30], ['L.JAB', 8, 0, 8, 6, 30], ['FACE KICK', 16, 14, 6, 14, 30]];      // the three blows: name, damage, knock-back, the picture (1 - 15) the blow lands on, how far he steps forward (px), pictures a second (the jabs are Yuji's hooks, 30 a second, landing on his 8th picture; the kick lands its sole on the 6th)
 const SU_KICK_LIFT = [0, 0, 0, 4, 9, 12, 12, 8, 4, 2, 0, 0, 0, 0, 0];      // how high the face kick hops (px) in each of its pictures (Yuji's kick to the head, the first of his three: the foot is 34 px above the ground in the picture and he is lifted 12 more: the height of a standing enemy's face)
 const SU_NEAR = 60, SU_CP = [['R.JAB', 10, 7], ['L.UPPR', 13, 8]], SU_CP_FPS = 38, SU_THROW = { d: 6, share: 0.25, shareX: 0.5, lead: 24, ms: 600, cd: 5, fps: 45, hit: 8 };      // v1.110: an enemy this close in front (px) is punched, a further one slashed at; Yuji's crouch punches: name, damage (his hits 6 and 7: 10 and 13), the picture they land on (1 - 15), 38 pictures a second; the slashes: damage of a single slash (the X's are twice that), how much of the screen's width each flies from him in its 0.6 s (a single one a quarter, the X half: the screen's edge, since he stands in the middle), the lead the slash already has when it leaves (px: where it starts and where its middle is), its life (ms), the wait before the X can be thrown again (s), pictures a second and the picture it leaves the hand on
@@ -41,9 +41,10 @@ NAMES[SUK_WHO] = 'SUKUNA'; CEC[SUK_WHO] = ['#2a0a12', '#d02a3a', '#ffb0b8', '#ff
     ev.push([{ f: SU_LEG.hit, k: 'c', cb: now => suLegAt(now) }], [], []);      // 11: the LEG CUT (one cut), 12: DISMANTLE and 13: the DASH SLASH have no events: a state of their own plays them (suDisStep, suDashStep)
     const elTips = arts[SUK_ROWS.indexOf('el')].map(tipOf), [, eD, eK, eF] = SU_ELB, eE = { f: eF, k: 'i', d: eD, sp: eD, fx: [['k', eK, 0, 0, -1], ['h', 50, 0, 1, 0], ['w', 3, 0, 1, 0]], c: 0, src: -1, id: 0, dy: 0 }; eE.tip = cuMaxRows([elTips[eF - 1], elTips[eF]]);
     ev.push(ev[0], ev[1], [eE], [{ f: 4, k: 'c', cb: now => suTouch(now) }, { f: 8, k: 'c', cb: now => suClHit(now, SU_CL.m1, { knock: 1.5 }, SU_CL.reach + 4, -3, SU_CL.mark, false) }], [{ f: 4, k: 'c', cb: now => suTouch(now) }, { f: 8, k: 'c', cb: now => suClHit(now, SU_CL.blue, { gb: true, knock: 5 }, SU_CL.reach + 12, -3, SU_CL.mark, true) }], [], [], [], []);      // v1.119 14: R.HOOK and 15: L.HOOK (the jabs' own impacts), 16: ELBOW, 17: TOUCH CUT (picture 4 touches him, picture 8 cuts: 1% of his full health), 18: CLEAVE (BLUE: the same, 5%, a guard is broken); 19: LIFT, 20: DIVE and 21: DASH CLEAVE are states of their own (suClStep), and so is 22: OPEN of the FLAME mode (suFlStep)
-    const one = [0, 1].map(ph => suSlashCv(0, ph)), up = [0, 1].map(ph => suSlashCv(1, ph)), dn = [0, 1].map(ph => suSlashCv(2, ph)), vfx = Array.from({ length: 23 }, () => []), vxs = Array.from({ length: 23 }, () => []), spans = l => l.map(c => cuSpan(suAlpha(c), r => r - 2));
+    ev.push([]);      // v1.124 23: the DOMAIN SIGN of the ULTIMATE is a state of its own too (suDomCast)
+    const one = [0, 1].map(ph => suSlashCv(0, ph)), up = [0, 1].map(ph => suSlashCv(1, ph)), dn = [0, 1].map(ph => suSlashCv(2, ph)), vfx = Array.from({ length: 24 }, () => []), vxs = Array.from({ length: 24 }, () => []), spans = l => l.map(c => cuSpan(suAlpha(c), r => r - 2));
     vfx[6] = vfx[7] = one; vfx[9] = up; vfx[10] = dn; vxs[6] = vxs[7] = spans(one); vxs[9] = spans(up); vxs[10] = spans(dn);      // (the pictures of the flying slashes and the rows each covers, for the touch with the enemy)
-    CU_GAME[3] = { name: 'SUKUNA', frames: set.frames, walk: set.walk, jump: set.jump, hu: [], ko: [], bl: [], df: [], db: [], cr: set.cr, ci: set.ci, cwk: set.cwk, st: { ...cuStats(null), fw: FWD_SPEED, bk: BACK_SPEED, cw: 60, jh: 22, jt: 713 }, vfx, atk: [set.a0, set.a1, set.a2, set.a3, set.cp0, set.cp1, set.a3, set.sl, set.sx, set.cut, set.storm, set.ccut, set.dis, set.a3, set.a0, set.a1, set.el, set.tc, set.tc, set.lift, set.dive, set.a3, set.fl], an: SU_ATK.map(a => a[0]).concat('COUNTER', SU_CP.map(a => a[0]), 'R.SLASH', 'L.SLASH', 'X SLASH', 'AIR CUT', 'CUT STORM', 'LEG CUT', 'DISMANTLE', 'DASH SLASH', 'R.HOOK', 'L.HOOK', SU_ELB[0], 'TOUCH CUT', 'CLEAVE', 'LIFT CLEAVE', 'DIVE CLEAVE', 'DASH CLEAVE', 'OPEN'), rdy: [0, 1, 2, 3], cl: [14, 15, 16, 17], ev, set: [0, 1, 2, 3].map(k => ({ v: k < 3 ? SU_ATK[k][5] : 30, m: k < 3 ? SU_ATK[k][4] : 0, c: 0, d: 0 })).concat([SU_CP_FPS, SU_CP_FPS, SU_THROW.fps, SU_THROW.fps, SU_THROW.fps].map((v, i) => ({ v, m: 0, c: 0, d: i === 4 ? SU_THROW.cd : 0 }))).concat([[SU_BLUE.cut.fps, SU_BLUE.cut.cost], [SU_BLUE.storm.fps, SU_BLUE.storm.cost], [SU_LEG.fps, SU_LEG.cost], [20, SU_DIS.cost], [30, SU_DASH.cost]].map(([v, c]) => ({ v, m: 0, c, d: 0 }))).concat([[30, 6, 0], [30, 6, 0], [SU_ELB[5], SU_ELB[4], 0], [30, 8, 0], [24, 16, SU_CL.cost.stand], [30, 0, SU_CL.cost.lift], [30, 0, SU_CL.cost.dive], [30, 0, SU_CL.cost.dash], [30, 0, SU_FL.cost]].map(([v, m, c]) => ({ v, m, c, d: 0 }))), body, push: Math.max(5, hs.length ? hs[hs.length >> 1] : 5),
+    CU_GAME[3] = { name: 'SUKUNA', frames: set.frames, walk: set.walk, jump: set.jump, hu: [], ko: [], bl: [], df: [], db: [], cr: set.cr, ci: set.ci, cwk: set.cwk, st: { ...cuStats(null), fw: FWD_SPEED, bk: BACK_SPEED, cw: 60, jh: 22, jt: 713 }, vfx, atk: [set.a0, set.a1, set.a2, set.a3, set.cp0, set.cp1, set.a3, set.sl, set.sx, set.cut, set.storm, set.ccut, set.dis, set.a3, set.a0, set.a1, set.el, set.tc, set.tc, set.lift, set.dive, set.a3, set.fl, set.sg], an: SU_ATK.map(a => a[0]).concat('COUNTER', SU_CP.map(a => a[0]), 'R.SLASH', 'L.SLASH', 'X SLASH', 'AIR CUT', 'CUT STORM', 'LEG CUT', 'DISMANTLE', 'DASH SLASH', 'R.HOOK', 'L.HOOK', SU_ELB[0], 'TOUCH CUT', 'CLEAVE', 'LIFT CLEAVE', 'DIVE CLEAVE', 'DASH CLEAVE', 'OPEN', 'DOMAIN'), rdy: [0, 1, 2, 3], cl: [14, 15, 16, 17], ev, set: [0, 1, 2, 3].map(k => ({ v: k < 3 ? SU_ATK[k][5] : 30, m: k < 3 ? SU_ATK[k][4] : 0, c: 0, d: 0 })).concat([SU_CP_FPS, SU_CP_FPS, SU_THROW.fps, SU_THROW.fps, SU_THROW.fps].map((v, i) => ({ v, m: 0, c: 0, d: i === 4 ? SU_THROW.cd : 0 }))).concat([[SU_BLUE.cut.fps, SU_BLUE.cut.cost], [SU_BLUE.storm.fps, SU_BLUE.storm.cost], [SU_LEG.fps, SU_LEG.cost], [20, SU_DIS.cost], [30, SU_DASH.cost]].map(([v, c]) => ({ v, m: 0, c, d: 0 }))).concat([[30, 6, 0], [30, 6, 0], [SU_ELB[5], SU_ELB[4], 0], [30, 8, 0], [24, 16, SU_CL.cost.stand], [30, 0, SU_CL.cost.lift], [30, 0, SU_CL.cost.dive], [30, 0, SU_CL.cost.dash], [30, 0, SU_FL.cost], [30, 0, 0]].map(([v, m, c]) => ({ v, m, c, d: 0 }))), body, push: Math.max(5, hs.length ? hs[hs.length >> 1] : 5),
       tipAll: ev.map(l => cuMaxRows(l.map(e => e.tip))), vxs, dg: set.dg, al: [null, null, SU_KICK_LIFT, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], cs: null, yu: true, blue: true, wf: WALK_FPS, crMs: 1000 / CR_FPS };      // (the blows: 0 R.JAB, 1 L.JAB, 2 FACE KICK, 3 COUNTER, 4 R.JAB and 5 L.UPPR crouched, 6 R.SLASH, 7 L.SLASH, 8 X SLASH, 9 AIR CUT, 10 CUT STORM, 11 LEG CUT, 12 DISMANTLE (the last four are played by BLUE: blue); yu: he moves like Yuji; wf: his walking pictures a second; crMs: how long a picture of the crouch lasts; al: the height of each picture of a blow that hops; cs: the counter in progress; dg: the pictures of the dodge; the stats are Yuji's: 56 and 38 px/s, 60% while crouched, a jump of 22 px, 713 ms of flight)
   suFlBuild();      // (v1.120 the flame pictures of the FLAME mode are made as soon as he is there)
   };
@@ -77,6 +78,7 @@ function suStep(g, now) {      // every frame of the counter: the state moves on
   if (vs.ph !== 'fight') { suEnd(g, now); return null; }
   if (c.air) return suDisStep(g, c, now);      // (v1.112 DISMANTLE is a state of the same kind: g.cs = { air: true, ... })
   if (c.dash) return suDashStep(g, c, now);      // (v1.118 the DASH SLASH: g.cs = { dash: true, ... })
+  if (c.dom) return suDomCast(g, c, now);      // (v1.124 the DOMAIN SIGN of the ULTIMATE: g.cs = { dom: true, ... })
   if (c.fl) return suFlStep(g, c, now);      // (v1.120 OPEN of the FLAME mode: g.cs = { fl: true, ... })
   if (c.cl) return suClStep(g, c, now);      // (v1.119 the LIFT, the DIVE and the DASH CLEAVE of the CLEAVE mode: g.cs = { cl: 'lift' | 'dive' | 'dash', ... })
   const t = now - c.t0;
@@ -93,7 +95,7 @@ function suStep(g, now) {      // every frame of the counter: the state moves on
 }
 let suDrop = 0;
 function suBleedFx(now) {      // every frame: the bleeding of the enemy goes on (vpBleed ticks dummy.bleed; the scenes of the others call it, the custom scene did not need it before) and drops fly off him (about 7 a second)
-  vpBleed(now); suBurnStep(now); const d = dummy; if (!d || !d.bleed || !d.bleed.quiet || d.ko >= 0 || now < suDrop) return;
+  vpBleed(now); suBurnStep(now); suDomStep(now); const d = dummy; if (!d || !d.bleed || !d.bleed.quiet || d.ko >= 0 || now < suDrop) return;
   suDrop = now + 140 / Math.min(4, d.bleed.st ? d.bleed.st.length : 1); spark(d.x + Math.random() * 6 - 3, gy - 20 - Math.random() * 24, 1, ['#c4121c', '#ff2a3a'], false, Math.random() < 0.5 ? 1 : -1);
 }
 
@@ -331,7 +333,7 @@ function suTsDash(T) {      // the game is stopped (DASH SLASH): the impact fram
 // ---- v1.119 CLEAVE (the MODE button): he switches in silence: nothing is heard, said or lit on the field (the enemy cannot tell), only the buttons change (MODE shows CLEAVE and glows, ATTACK and BLUE get new names). ATTACK becomes a melee chain whether an enemy is near or not: R.HOOK and L.HOOK (the jabs' own pictures and numbers), ELBOW (12 damage) and TOUCH CUT: he lays a hand on the enemy and slashes him for exactly 1% of the enemy's full health (a guard stops it). BLUE becomes CLEAVE (5 energy): the same touch and cut, but 5% of the enemy's full health, and a guard is broken. Crouched it is the LIFT CLEAVE (10 energy: he lifts the enemy up with one hand and slashes his head), in the air the DIVE CLEAVE (10: he drops on the enemy, grabs him and cleaves him to the ground, knocked down), standing with FORWARD held and an enemy within 120 px the DASH CLEAVE (10: he dashes at him and cleaves him back, a hop and a long knock-back). The 1% and 5% are taken from the enemy's full health (dummy.max) whatever his level, and the cut is blocked or missed like any hit. The three BLUE states are states of g.cs like DISMANTLE (nothing touches him meanwhile, suHit); the CLEAVE and TOUCH CUT are blows with events. The mode is off at the start of every round. See suToggle, suClHit, suClStep.
 let suCl = false, suFl = false;
 function suToggle() { if (!suCl && !suFl) suCl = true; else if (suCl) { suCl = false; suFl = true; } else suFl = false; cuCmb = cuSn = cuCp = 0; cuCmbBy = 0; }      // MODE: OFF > CLEAVE > FLAME > OFF (v1.120: one more tap goes on to FLAME); the blows start from the first one again; no sound, no word, no light on the field
-function suReset() { suCl = suFl = false; suArrows.length = 0; suFlBursts.length = 0; suFlTalk = null; if (dummy) dummy.sburn = null; }      // (a new round: both modes off, no arrow in the air, no burn)
+function suReset() { suCl = suFl = false; suArrows.length = 0; suFlBursts.length = 0; suFlTalk = null; if (dummy) dummy.sburn = null; suDom = suDomPt = null; suDomSl.length = 0; domReadyAt = 0; }      // (a new round: both modes off, no arrow in the air, no burn, no domain and the ULTIMATE ready again)
 function suModeUI() {      // every frame: the MODE button's name and light and the BLUE button's colour follow the mode (setModeUI writes the buttons too, so it is checked every time, like the BLUE label): CLEAVE lights MODE blue, FLAME lights MODE and BLUE orange
   const el = $('cel'), b = $('ce'), lp = $('lap'), want = 'MODE<br>' + (suFl ? 'FLAME' : suCl ? 'CLEAVE' : 'OFF'), p = suCl || suFl ? 'true' : 'false', aria = suFl ? 'Mode: Flame is on, tap to switch it off. BLUE is Open: a fire arrow that burns the enemy' : suCl ? 'Mode: Cleave is on, tap for Flame. The enemy cannot tell' : 'Mode: tap to switch Cleave on, tap again for Flame. The enemy cannot tell';
   if (el.innerHTML !== want) el.innerHTML = want;
@@ -554,5 +556,197 @@ function suFlDraw(now, cx, x, y) {      // every frame of his scene, after his p
   const d = dummy; if (d && d.sburn && d.ko < 0) suFlBurnDraw(now, d, cx);
   if (suFlTalk) { const tt = now - suFlTalk.t0, n = Math.min(SU_FL.say.length, Math.floor(tt / 38)); if (tt > 2300) suFlTalk = null; else if (n > 0) { ctx.globalAlpha = tt > 1900 ? 1 - (tt - 1900) / 400 : 1; const cut = SU_FL.say.indexOf(' ', 8) + 1, l1 = SU_FL.say.slice(0, Math.min(n, cut - 1)), l2 = n > cut ? SU_FL.say.slice(cut, n) : ''; pxt(l1, Math.round(cx), Math.round(y - 8), '#ffb24a', 8, 'center'); if (l2) pxt(l2, Math.round(cx), Math.round(y + 1), '#ffb24a', 8, 'center'); ctx.globalAlpha = 1; } }
   const fk = (now - suFlFlashAt) / 160; if (fk >= 0 && fk < 1) { ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(255,120,20,' + (0.28 * (1 - fk)) + ')'; ctx.fillRect(0, 0, VW, VH); ctx.globalCompositeOperation = 'source-over'; }
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------- v1.124 the ULTIMATE: the MALEVOLENT SHRINE (the DOMAIN button, key V; free play)
+// He makes the hand sign (both hands in front of his chin, the two middle fingers touching: the 'sg' row of the strip, made by tools/sukuna_art.py) and a 64 x 64 picture of his face (tools/sukuna_domain_art.py) appears behind him; then the DOMAIN opens: a shrine (the same tool) rises out of the ground behind him, the map stays as it is and slashes fly across the whole screen. For 20 s the enemy loses exactly 1% of his full health every 0.5 s (40 cuts that nothing blocks or dodges; a smoke ball takes nothing); he is NOT held for that and Sukuna can attack, walk and use BLUE all the time. It costs 67% of the energy; the enemy is held, and can not touch Sukuna, only while the sign is made, and the button can be used again 30 s after the domain has ended (or the enemy has gone down, or the round is over). See suDomTry, suDomCast, suDomStep, suDomTick, suDomBack and suDomFront.
+const SU_DOM = { cost: 67, cd: 30000, dur: 20000, gap: 500, pct: 1, T: [0, 110, 230, 350, 470], hold: 560, held: 110, rel: 110, port: 600, open: 1900, end: 2340, rise: 1700, sink: 1100, base: 9, t1: 900, t2: 1500, tEnd: 3300, say1: 'DOMAIN EXPANSION', say2: 'MALEVOLENT SHRINE', cols: ['#ffffff', '#ff2a3a', '#ffb0b8', '#c4121c'] };      // the cost (% of the energy), the wait after it (ms), how long it lasts (ms), the time between two cuts (ms), how much of the enemy's full health each takes (%); the sign: when its pictures 0 - 4 start (ms), when the held pictures 5 - 10 begin and how long each is shown, how long each of the lowered pictures 11 - 14 is shown; when the face appears behind him, when the domain opens (the shrine starts to rise and the 20 s begin), when the sign is over; how long the shrine takes to rise and to sink (ms) and how far below his floor line its foot stands (px); when the two words begin to be written and when they are gone; the colours of the sparks
+SU_DOM.n = SU_DOM.dur / SU_DOM.gap;      // (40 cuts)
+const SU_SIGN_TIP = [[33.2, 40.1], [36.5, 36.6], [39.8, 32.2], [42.3, 30.2], [42.1, 24.6], [41.7, 21.7], [41.7, 21.7], [41.7, 21.7], [41.7, 21.7], [41.7, 20.7], [41.7, 20.7], [41.9, 25.0], [40.7, 30.7], [37.8, 35.2], [34.2, 40.1]];      // where the two fingertips touch in each picture of the sign (tools/sukuna_art.py prints them): the sparks start there
+const SU_SHRINE_D = 'M3 0h2v1H3zM1 1h6v1H1zM0 2h8v1H0zM0 3h1v1H0zM2 3h4v1H2zM7 3h1v1H7zM2 4h1v1H2zM5 4h1v1H5zM2 5h1v1H2zM5 5h1v1H5zM2 6h1v1H2zM5 6h1v1H5zM1 7h6v1H1z';      // the icon of the button: a little shrine, a roof with lifted corners on two pillars (8 x 8)
+const SU_PORT_PNG = '__SUKPORT__', SU_SHR_PNG = '__SUKSHR__';      // (build_html.py puts the two pictures here)
+let suDom = null, suDomPt = null, suDomSl = [], suPortCv = null, suShrCv = null, suShrGlow = null, suSlSpr = null;      // the domain that is open (or sinking), the sign and the face behind him, the slashes in the air, the pictures (the face, the shrine, the shrine in red) and the slash pictures (a list for each length)
+function suDomRed(c) {      // the shrine as one flat red picture: drawn over the shrine with a pulsing alpha it makes it glow
+  const r = document.createElement('canvas'); r.width = c.width; r.height = c.height; const g = r.getContext('2d'); g.drawImage(c, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = '#ff3040'; g.fillRect(0, 0, r.width, r.height); return r;
+}
+[[SU_PORT_PNG, c => { suPortCv = c; }], [SU_SHR_PNG, c => { suShrCv = c; suShrGlow = suDomRed(c); }]].forEach(([src, set]) => { const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; c.getContext('2d').drawImage(im, 0, 0); set(c); }; im.src = src; });
+
+const SU_SL_ANG = [-64, -40, -16, 16, 40, 64], SU_SL_LEN = [34, 62, 96, 140, 220], SU_SL_W = [3, 3, 2, 1.4, 0.6], SU_SL_WB = [0, 3, 3.5, 2.5, 1];      // the angles (degrees) and lengths (px) of the slash pictures, and how often each length is picked (a slash anywhere on the screen, and one of the four that cross the enemy at a cut)
+function suSlBuild() {      // the pictures of the slashes, made once: for each angle and length a HOT one (a white core, a pink and a red edge and a dark rim, thin at both ends: the cut as it lands) and a COOL one (a thin pink scratch with a red edge and a dark side: what it leaves in the air)
+  if (suSlSpr) return; suSlSpr = SU_SL_LEN.map(() => []);
+  for (const A of SU_SL_ANG) for (const [li, L] of SU_SL_LEN.entries()) {
+    const r = A * Math.PI / 180, dx = Math.cos(r) * L, dy = Math.sin(r) * L, w = Math.ceil(Math.abs(dx)) + 9, h = Math.ceil(Math.abs(dy)) + 9, ox = 4, oy = dy < 0 ? Math.ceil(-dy) + 4 : 4, nx = -Math.sin(r), ny = Math.cos(r), N = Math.ceil(L * 1.6);
+    const hot = document.createElement('canvas'), cool = document.createElement('canvas'); hot.width = cool.width = w; hot.height = cool.height = h;
+    const gh = hot.getContext('2d'), gc = cool.getContext('2d'), lay = [[], [], [], []], cc = ['#12030a', '#ff2a3a', '#ffc0c8', '#ffffff'];      // (the four layers of the hot one, the widest first)
+    for (let q = 0; q <= N; q++) {
+      const u = q / N, px = ox + dx * u, py = oy + dy * u, wd = 0.35 + 1.9 * Math.pow(Math.sin(Math.PI * u), 0.75);
+      for (let s = -Math.ceil(wd) - 1; s <= Math.ceil(wd) + 1; s += 0.5) { const a = Math.abs(s); if (a > wd + 0.9) continue; lay[a <= wd * 0.3 ? 3 : a <= wd * 0.62 ? 2 : a <= wd * 0.95 ? 1 : 0].push(Math.round(px + nx * s), Math.round(py + ny * s)); }
+      gc.fillStyle = '#ff7a8a'; gc.fillRect(Math.round(px), Math.round(py), 1, 1); if (wd > 0.9) { gc.fillStyle = '#c4121c'; gc.fillRect(Math.round(px + nx), Math.round(py + ny), 1, 1); gc.fillStyle = '#12030a'; gc.fillRect(Math.round(px - nx * 1.2), Math.round(py - ny * 1.2), 1, 1); }
+    }
+    lay.forEach((l, i) => { gh.fillStyle = cc[i]; for (let k = 0; k < l.length; k += 2) gh.fillRect(l[k], l[k + 1], 1, 1); });
+    suSlSpr[li].push({ hot, cool, w, h, L });
+  }
+}
+function suDomSpawn(now, big, tx, ty) {      // one more slash in the air: at a random place of the screen (or round (tx, ty)), at a random angle, one of the longer ones if big
+  if (!suSlSpr) return; const wt = big ? SU_SL_WB : SU_SL_W; let r = Math.random() * wt.reduce((a, b) => a + b, 0), li = 0; while (li < wt.length - 1 && r >= wt[li]) { r -= wt[li]; li++; } const pool = suSlSpr[li], sp = pool[Math.floor(Math.random() * pool.length)];
+  const mx = tx === undefined ? Math.random() * (VW + 40) - 20 : tx, my = ty === undefined ? 6 + Math.random() * (VH - 12) : ty;
+  suDomSl.push({ sp, x: Math.round(mx - sp.w / 2), y: Math.round(my - sp.h / 2), fx: Math.random() < 0.5, fy: Math.random() < 0.5, born: now });
+  if (suDomSl.length > 90) suDomSl.shift();
+}
+function suDomSlashes(now) {      // every slash in the air: it sweeps in (the first 55 ms), is white and red until 110 ms and fades into a thin pink scratch by 230 ms that fades away until 1000 ms
+  for (let i = suDomSl.length - 1; i >= 0; i--) {
+    const s = suDomSl[i], age = now - s.born; if (age > 1000) { suDomSl.splice(i, 1); continue; } if (age < 0) continue;
+    const w = s.sp.w, h = s.sp.h; ctx.save(); ctx.translate(s.x + (s.fx ? w : 0), s.y + (s.fy ? h : 0)); ctx.scale(s.fx ? -1 : 1, s.fy ? -1 : 1);
+    if (age < 230) { const sw = age < 55 ? Math.max(1, Math.ceil(w * age / 55)) : w; ctx.globalAlpha = age < 110 ? 1 : 1 - (age - 110) / 120; ctx.drawImage(s.sp.hot, 0, 0, sw, h, 0, 0, sw, h); }
+    if (age >= 60) { ctx.globalAlpha = 0.95 * Math.min(1, (age - 60) / 80) * (1 - Math.max(0, age - 230) / 770); ctx.drawImage(s.sp.cool, 0, 0); }
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+}
+function suDomCracks() {      // the cracks the shrine opens in the ground, made at the moment it opens: from its foot out to both sides and toward the screen, each a list of (x from the middle of the shrine, y from its foot line)
+  const out = [];
+  for (let k = 0; k < 7; k++) {
+    let x = Math.round((Math.random() - 0.5) * 50), y = k % 3; const dir = (k % 2 ? 1 : -1) * (0.5 + Math.random() * 0.7), len = 26 + Math.floor(Math.random() * 40), pts = [];
+    for (let i = 0; i < len; i++) { pts.push([x, y]); x += Math.round(dir * (0.8 + Math.random() * 0.9)); if (Math.random() < 0.45) y += Math.random() < 0.7 ? 1 : -1; y = Math.max(0, Math.min(14, y)); }
+    out.push(pts);
+  }
+  return out;
+}
+
+// ---- the button, the sign and the opening
+function suDomPic(t) { const S = SU_DOM; return t < S.hold ? suPicAt(S.T, t) : t < S.open ? 5 + Math.floor((t - S.hold) / S.held) % 6 : 11 + Math.min(3, Math.floor((t - S.open) / S.rel)); }      // (the picture of the sign t ms in: 0 - 4 rise, 5 - 10 held in turn, 11 - 14 lowered)
+function suDomTry(now) {      // the DOMAIN button (or V): the ULTIMATE starts if he stands or crouches with nothing else going on, the wait is over, a living enemy is there to catch and the energy is there (67%)
+  const g = CU_GAME[3], d = dummy; if (!g || (suDom && suDom.sink < 0) || g.cs || cuAtkAt >= 0 || cuDash || blkAt >= 0 || cuJumpAt >= 0 || (stance !== 'stand' && stance !== 'crouch')) return;
+  if (now < domReadyAt) { say('WAIT', wx, '#9a9aa8', 8, now); return; }
+  if (!d || d.ko >= 0 || d.cap || !vs || vs.ph !== 'fight') { say('NO TARGET', wx, '#9a9aa8', 8, now); return; }
+  if (!ceSpend(SU_DOM.cost * 100 / cuS.em, now)) return;
+  suDomStart(g, now);
+}
+function suDomStart(g, now) {      // the sign begins: he stands (from the crouch too), the enemy is held until it is over, nothing of his touches him (suHit), and the button's wait is kept long until the domain is over (suDomEnd sets the real one)
+  const S = SU_DOM; stance = 'stand'; stickCr = false; suSlBuild();
+  g.cs = { dom: true, ph: 'sign', t0: now, t: 0, pic: 0, touched: false, port: false, opened: false, spk: 0 }; suDomPt = { t0: now };
+  cuAtkK = 23; cuAtkAt = now; cuFired = []; cuRes = []; cuLunged = 0; cuMs = 1000 / 30; cuCmb = cuSn = cuCp = 0; cuCmbBy = now + 1e9;
+  cuStun(S.end / 1000 + 0.1, now, true); dummy.dodgeUntil = 0; domReadyAt = now + S.open + S.dur + S.sink + S.cd; snd('sukdom', 0);
+}
+function suDomTipSpark(pic, n) { const p = SU_SIGN_TIP[pic]; spark(wx + p[0] - 32, gy - 61 + p[1], n, SU_DOM.cols, false, 1); }      // (sparks where the two fingertips touch)
+function suDomCast(g, c, now) {      // the sign, every frame: the events of the cast (the fingertips touch, the face appears behind him, the domain opens) and the picture to show
+  const S = SU_DOM, t = now - c.t0; c.t = t; c.pic = suDomPic(t);
+  if (!c.touched && t >= S.T[4]) { c.touched = true; snd('sukdom', 1); suDomTipSpark(4, 12); }
+  if (c.touched && t >= S.hold && t < S.open && now >= c.spk) { c.spk = now + 90; suDomTipSpark(c.pic, 1); }
+  if (!c.port && t >= S.port) { c.port = true; snd('sukdom', 2); shakeUntil = Math.max(shakeUntil, now + 260); shakeAmp = Math.max(shakeAmp, 2); }
+  if (!c.opened && t >= S.open) { c.opened = true; suDomOpen(now); }
+  if (t >= S.end) { suEnd(g, now); return null; }
+  return g.atk[23][c.pic];
+}
+function suDomOpen(now) {      // the domain opens: the shrine starts to rise (suDomShrine), a flood of slashes, and the 20 s begin
+  const S = SU_DOM; suDom = { open: now, until: now + S.dur, next: now + S.gap, n: 0, hits: 0, sink: -1, x0: wx, sl: 0, dust: 0, snd: 0, ck: suDomCracks() };
+  suDomSl.length = 0; for (let i = 0; i < 14; i++) suDomSpawn(now - Math.random() * 60, i % 3 === 0);
+  snd('sukdom', 3); snd('sukdom', 4); shakeUntil = Math.max(shakeUntil, now + S.rise); shakeAmp = Math.max(shakeAmp, 2); hitStop(70);
+}
+
+// ---- the 20 s: the cuts
+function suDomTick(now) {      // one cut of the domain: slashes across the enemy, sparks and blood, and exactly 1% of his full health (not from a smoke ball); the last one that takes him down knocks him out
+  const d = dummy; if (!d || d.ko >= 0) return;
+  const S = SU_DOM, cx = Math.round(VW / 2), ex = cx + d.x - wx, ey = gy - 30 - Math.round(d.airH || 0);
+  snd('sukdom', 5); for (let i = 0; i < 4; i++) suDomSpawn(now, true, ex + (Math.random() - 0.5) * 22, ey + (Math.random() - 0.5) * 34);
+  spark(d.x + Math.random() * 8 - 4, ey - 6 + Math.random() * 16, 4, S.cols, false, Math.random() < 0.5 ? 1 : -1); tqBlood(d.x - 4 + Math.random() * 8, ey - 6 + Math.random() * 16, 8, 1);
+  if (d.vform && d.vform !== 'verity') return;      // (a smoke ball takes nothing, as with the burn)
+  const dm = (d.max || DUMMY_HP) * S.pct / 100; d.hp = Math.max(0, d.hp - dm); hits.dmg += dm; if (suDom) suDom.hits++; say(S.pct + '%', d.x + Math.random() * 10 - 5, '#ff3a4a', 8, now);
+  if (d.hp <= 0) koDummy(now);
+}
+function suDomEnd(now) {      // the 20 s are over, the enemy is down or the round has ended: the shrine sinks back into the ground and the button starts its 30 s
+  const D = suDom; if (!D || D.sink >= 0) return; D.sink = now; domReadyAt = now + SU_DOM.cd; snd('sukdom', 6); shakeUntil = Math.max(shakeUntil, now + 500); shakeAmp = Math.max(shakeAmp, 1);
+}
+function suDomStep(now) {      // every frame (suBleedFx): the cuts of the domain come when they are due, it ends when it should, the words and the face are cleared when they are over
+  const g = CU_GAME[3], D = suDom, P = suDomPt, d = dummy;
+  if (P && !D && !(g && g.cs && g.cs.dom)) { suDomPt = null; domReadyAt = Math.min(domReadyAt, now + SU_DOM.cd); }      // (a sign that was broken off before the domain opened leaves nothing behind, and the button waits its 30 s from now, not for a domain that never came)
+  else if (P && now - P.t0 > SU_DOM.tEnd) suDomPt = null;
+  if (!D) return;
+  if (D.sink >= 0) { if (now - D.sink >= SU_DOM.sink + 300) suDom = null; return; }
+  if (!vs || vs.ph !== 'fight' || !d || d.ko >= 0) { suDomEnd(now); return; }
+  while (D.n < SU_DOM.n && now >= D.next) { D.next += SU_DOM.gap; D.n++; suDomTick(now); if (D.sink >= 0 || !dummy || dummy.ko >= 0) break; }
+  if (D.n >= SU_DOM.n && now >= D.until) suDomEnd(now);
+}
+function suUltUI(now) {      // every frame: the DOMAIN button is his ULTIMATE (a shrine on a crimson button; it is lit while the sign or the domain lasts, and its fill counts the 30 s down); setModeUI and setDomUI write it too, so it is checked every time
+  const b = $('dom'), l = $('doml'), p = b.querySelector('path'), g = CU_GAME[3], act = !!suDom || !!(g && g.cs && g.cs.dom), cd = act ? 0 : Math.max(0, (domReadyAt - now) / DOM_CD), aria = 'Ultimate: Domain Expansion, Malevolent Shrine. He makes the hand sign and a shrine rises behind him: for 20 seconds slashes cut the enemy for 1 percent of his health every half second, and you can still fight (67 energy)';
+  if (l.innerHTML !== 'ULTI<br>MATE') l.innerHTML = 'ULTI<br>MATE'; if (p.getAttribute('d') !== SU_SHRINE_D) p.setAttribute('d', SU_SHRINE_D); if (b.getAttribute('aria-label') !== aria) b.setAttribute('aria-label', aria);
+  if (!b.classList.contains('su')) b.classList.add('su'); b.style.setProperty('--cd', Math.round(cd * 100) + '%'); b.classList.toggle('on', act); b.classList.toggle('cd', !act && cd > 0);
+}
+
+// ---- what is seen: behind the fighters (the face, the shrine, the cracks and the two words) and in front of them (the aura of the sign, the slashes and the flashes)
+function suDomPortrait(now, cx) {      // the 64 x 64 face behind him: it fades in and floats up (0.26 s after it appears: a red flash and a glitch), a dark red haze round it, and it fades away while the shrine rises
+  const P = suDomPt, S = SU_DOM, t = now - P.t0; if (!suPortCv || t < S.port || t > S.open + 800) return;
+  const a = Math.max(0, Math.min(1, (t - S.port) / 260, (S.open + 800 - t) / 800)), k = Math.max(1, Math.round(VH * 0.86 / 64)), W = 64 * k, X = Math.round(cx - W / 2), Y = Math.round(gy - 38 - W / 2) + Math.round(10 * Math.pow(1 - Math.min(1, (t - S.port) / 420), 2)), my = Y + W / 2;
+  const gr = ctx.createRadialGradient(cx, my, W * 0.2, cx, my, W * 0.95); gr.addColorStop(0, 'rgba(70,0,12,1)'); gr.addColorStop(1, 'rgba(70,0,12,0)'); ctx.globalAlpha = a * 0.55; ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH);
+  ctx.globalAlpha = a; ctx.drawImage(suPortCv, X, Y, W, W);
+  if (t - S.port < 140) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = a * 0.4; ctx.drawImage(suPortCv, X + 3, Y, W, W); ctx.drawImage(suPortCv, X - 3, Y, W, W); ctx.globalCompositeOperation = 'source-over'; }
+  ctx.globalAlpha = 1;
+}
+function suDomShrine(now, cx, dt, D) {      // the shrine: it comes up out of the ground (it is only drawn above its foot line, so it grows out of it), cracks open in the floor, dust and rubble fly, a red glow pulses over it and embers rise; at the end it sinks back the same way
+  const S = SU_DOM, W = suShrCv.width, H = suShrCv.height, baseY = gy + S.base, my0 = Math.round(H * 0.5), my1 = Math.round(H * 0.8);
+  const e = D.sink >= 0 ? 1 - Math.pow(Math.min(1, (now - D.sink) / S.sink), 2) : 1 - Math.pow(1 - Math.min(1, (now - D.open) / S.rise), 3);      // (how far up it is: 0 = under the ground, 1 = all the way)
+  const off = Math.round(Math.max(-24, Math.min(24, (D.x0 - wx) * 0.12))), sxc = cx + off, X = sxc - (W >> 1), top = Math.round(baseY - H + (1 - e) * (H + 6)), fa = D.sink >= 0 ? Math.max(0, 1 - (now - D.sink) / S.sink) : 1;
+  const u = Math.min(1, (now - D.open) / 500), fy = baseY - 8;
+  if (u > 0 && fa > 0) {      // the cracks (they grow for 0.5 s): a dark line with a red light in it
+    ctx.globalAlpha = fa;
+    for (const pts of D.ck) { const n = Math.ceil(pts.length * u); for (let i = 0; i < n; i++) { const q = pts[i]; ctx.fillStyle = '#12030a'; ctx.fillRect(sxc + q[0], fy + q[1], 1, 2); if (i % 3 === 0) { ctx.fillStyle = '#ff2a3a'; ctx.fillRect(sxc + q[0], fy + q[1] - 1, 1, 1); } } }
+    ctx.globalAlpha = 1;
+  }
+  if (e > 0.001) {
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, VW, baseY); ctx.clip();
+    const gyy = top + H * 0.5, gr = ctx.createRadialGradient(sxc, gyy, 6, sxc, gyy, 96); gr.addColorStop(0, 'rgba(210,24,48,' + (0.3 * e).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(210,24,48,0)');
+    ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = gr; ctx.fillRect(sxc - 96, gyy - 96, 192, 192); ctx.globalCompositeOperation = 'source-over';
+    ctx.drawImage(suShrCv, X, top);
+    const mj = Math.round(Math.sin(now / 190) * 1.2); if (mj && e > 0.99) ctx.drawImage(suShrCv, 0, my0, W, my1 - my0, X, top + my0 + mj, W, my1 - my0);      // (the two mouths chew: the band of the picture with the teeth is drawn again a pixel higher or lower)
+    ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = (0.1 + 0.08 * Math.sin(now / 260)) * e; ctx.drawImage(suShrGlow, X, top); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    ctx.restore();
+  }
+  const moving = D.sink >= 0 ? now - D.sink < S.sink : now - D.open < S.rise + 100;
+  if (moving) { D.dust += dt * (SET.lite ? 20 : 60); while (D.dust >= 1) { D.dust -= 1; const wp = wx + off + (Math.random() - 0.5) * W * 0.95; spark(wp, baseY - 1 - Math.random() * 6, 1, ['#6b5a4a', '#3b2f2a', '#8a7a68'], false, Math.random() < 0.5 ? 1 : -1); if (Math.random() < 0.22) puff(wp, 1); } }      // (rubble thrown up and clouds of dust along the ground)
+  else if (D.sink < 0 && Math.random() < dt * 9) spark(wx + off + (Math.random() - 0.5) * 60, top + 18 + Math.random() * 24, 1, ['#ff2a3a', '#c4121c'], false, Math.random() < 0.5 ? 1 : -1);      // (embers)
+}
+function suDomBack(now, cx, dt) {      // every frame of his scene, right after the backdrop: behind both fighters the face (while the sign is made), then the shrine
+  const g = CU_GAME[3], D = suDom, P = suDomPt; if (!(D || (P && g && g.cs && g.cs.dom))) return;
+  ctx.save(); ctx.imageSmoothingEnabled = false; dt = Math.min(0.05, dt || 0.016);
+  if (P) suDomPortrait(now, cx);
+  if (D && suShrCv) suDomShrine(now, cx, dt, D);
+  if (P) suDomText(now, cx);
+  ctx.restore();
+}
+function suDomAura(now, cx, y, c) {      // the cursed energy that streams in to him while the sign is held: red and black specks that spiral inward, and a red glow on the touching fingertips
+  const S = SU_DOM, t = c.t; if (t < 250 || t > S.open + 200) return;
+  const k = Math.min(1, (t - 250) / 500) * Math.min(1, (S.open + 200 - t) / 300), N = SET.lite ? 12 : 28, mx = cx + 2, my = y + 34, tp = SU_SIGN_TIP[c.pic] || SU_SIGN_TIP[5];
+  for (let i = 0; i < N; i++) {
+    const ph = (now / 650 + i / N * 1.37) % 1, R = 8 + 56 * (1 - ph), th = i * 2.399 + now / 2600;
+    ctx.globalAlpha = k * Math.min(1, ph * 3) * 0.9; ctx.fillStyle = i % 3 === 0 ? '#12030a' : i % 3 === 1 ? '#c4121c' : '#ff2a3a'; const z = ph > 0.7 ? 1 : 2; ctx.fillRect(Math.round(mx + Math.cos(th) * R), Math.round(my + Math.sin(th) * R * 0.75), z, z);
+  }
+  ctx.globalAlpha = k; const fx = cx + tp[0] - 32, fyy = y + tp[1], gr = ctx.createRadialGradient(fx, fyy, 0, fx, fyy, 16); gr.addColorStop(0, 'rgba(255,90,100,0.9)'); gr.addColorStop(1, 'rgba(255,30,50,0)'); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = gr; ctx.fillRect(fx - 16, fyy - 16, 32, 32); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+}
+function suDomText(now, cx) {      // the two words, written letter by letter on a dark band BEHIND the fighters (so the sign stays in sight) while the face and the shrine come: DOMAIN EXPANSION, then MALEVOLENT SHRINE (big if the part of the screen that the buttons leave free is wide enough for it)
+  const P = suDomPt, S = SU_DOM, t = now - P.t0; if (t < S.t1 || t > S.tEnd) return;
+  const n1 = Math.min(S.say1.length, Math.floor((t - S.t1) / 40)), n2 = Math.min(S.say2.length, Math.floor(Math.max(0, t - S.t2) / 34)), s2 = VW * 0.84 >= S.say2.length * 16 + 8 ? 16 : 8, w2 = S.say2.length * s2, w1 = S.say1.length * 8, vc = s2 >= 16 ? Math.round(VW * 0.42) : cx;
+  const cy = Math.round(VH * 0.44), a = Math.max(0, Math.min(1, (S.tEnd - t) / 400, (t - S.t1) / 150)), bh = 10 + 4 + s2 + 8;
+  ctx.globalAlpha = 0.6 * a; ctx.fillStyle = '#12030a'; ctx.fillRect(0, cy - 13, VW, bh); ctx.fillStyle = '#c4121c'; ctx.fillRect(0, cy - 13, VW, 1); ctx.fillRect(0, cy - 13 + bh - 1, VW, 1);
+  ctx.globalAlpha = a;
+  if (n1 > 0) pxt(S.say1.slice(0, n1), Math.round(vc - w1 / 2), cy, '#ffe9ee', 8, 'left');
+  if (n2 > 0) pxt(S.say2.slice(0, n2), Math.round(vc - w2 / 2), cy + 4 + s2, '#ff3a4a', s2, 'left');
+  ctx.globalAlpha = 1;
+}
+function suDomFlash(now) {      // a red flash when the face appears and a white one when the domain opens
+  const P = suDomPt, S = SU_DOM, f1 = (now - P.t0 - S.port) / 220, f2 = suDom ? (now - suDom.open) / 380 : 2; let a = 0, col = '255,30,50';
+  if (f1 >= 0 && f1 < 1) a = 0.35 * (1 - f1); if (f2 >= 0 && f2 < 1) { a = Math.max(a, 0.6 * (1 - f2)); col = '255,255,255'; }
+  if (a > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(' + col + ',' + a.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); ctx.globalCompositeOperation = 'source-over'; }
+}
+function suDomFront(now, cx, x, y, dt) {      // every frame of his scene, after his picture: the aura of the sign, the slashes (new ones keep coming for as long as the domain is open: about 32 a second, twice that in the first 0.5 s) and the flashes
+  const g = CU_GAME[3], c = g && g.cs && g.cs.dom ? g.cs : null, D = suDom, P = suDomPt; if (!c && !D && !P && !suDomSl.length) return;
+  ctx.save(); ctx.imageSmoothingEnabled = false; dt = Math.min(0.05, dt || 0.016);
+  if (D && D.sink < 0) {
+    D.sl += dt * (now - D.open < 500 ? 2 : 1) * (SET.lite ? 12 : 32);
+    while (D.sl >= 1) { D.sl -= 1; const big = Math.random() < 0.25; suDomSpawn(now, big); if (big && now >= D.snd) { D.snd = now + 280; snd('sukdom', 5); } }
+  }
+  if (c) suDomAura(now, cx, y, c);
+  suDomSlashes(now);
+  if (P) suDomFlash(now);
   ctx.restore();
 }
