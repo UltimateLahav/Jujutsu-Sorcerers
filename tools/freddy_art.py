@@ -1,7 +1,9 @@
 """FREDDY KRUEGER, the 16-bit fighter (v1.39): turns freddy_ref.jpg (the picture the game's author gave: a full-length photo on a checkerboard) into freddy_sheet.png, 15 idle frames of 64 x 64 pixels side by side (960 x 64), 16 colours, facing right like every fighter.
 Run from tools/:  python3 freddy_art.py   (needs numpy, scipy, pillow). v1.42: the body is a PUPPET: the head (with the hat) and the torso are cut out of the picture and turned about the neck and the hips (a real rotation, redrawn clean at 4 times the size), the two arms are drawn from scratch as chains of two bones with striped, shaded sleeves, and the same figure is used for the idle, the walk and the jump, so in the jump he leans into the squat, throws his arms up, tucks, stretches and lands, instead of sliding one rigid block about. v1.40: the sheet has a second row, the 15-frame WALK (and, v1.41, rows 3 to 5: the 40-frame JUMP, 20 jumping + 20 landing): the legs are drawn from scratch with two-bone inverse kinematics (a foot on the ground moves back at the body's speed, so it never slides; the swinging foot only rises 2.6 px: an elegant glide), the upper body leans and sways, and the standing figure uses the same legs. Steps: cut him out of the checkerboard (15 px squares, rows offset by 2) -> stocky 16-bit proportions (big head, short legs: three bands resized separately) -> the 16-colour palette below -> hand-drawn details (hat band, shadowed eyes, burn scars, the glove and its four blades) -> a 1 px outline -> flip -> 15 frames of idle (breathing, sway, hat, claw, a glint that runs up the blades)."""
-import numpy as np
+import numpy as np, os
 from PIL import Image, ImageEnhance
+_GM = dict(kv.split('=') for kv in os.environ.get('GORE_MODE', '').split(';') if '=' in kv)      # v1.128 GRAPHIC DAMAGE (tools/gore_export.py): 'omit=an,af' pictures without a limb, 'foot=an' only the pixels of that limb, 'joint=1' the joints marked (an = the claw arm in front, af = the back arm, lf = the near leg, lb = the far leg)
+OMIT = set(filter(None, _GM.get('omit', '').split(','))); FOOT = _GM.get('foot', ''); JMARK = _GM.get('joint') == '1'; FOOTV = [None]      # (FOOTV: the footprint of the limb that FOOT names, filled in by render)
 from scipy import ndimage as ndi
 PAL = ['#120e18', '#35221a', '#5a3a28', '#7a4234', '#b87c58', '#dca878', '#6a1220', '#b01c2c', '#de4452', '#1c2a22', '#34503a', '#8a6a3c', '#c4c8d8', '#ffffff', '#2a2634', '#4a4660']
 OL, HAT, BAND, SK0, SK1, SK2, R0, R1, R2, G0, G1, GLV, BLD, GLT, PNT, PN2 = range(16)
@@ -178,7 +180,11 @@ def streak(G, p, q, c):
 def render(Pz):
     """one picture from a pose: dx (the whole figure moved sideways, 0 as a rule), hipY, legs ((x, y, toe angle) of the near and the far foot's lowest point, x from the hips), torso (turn in degrees, stretch), head (turn relative to the torso, dx, dy), hb (the back hand, from the back shoulder), gf (the glove, from the front shoulder), sway of the blades, glint"""
     HEAD, TORSO = pieces(); hy = Pz['hipY']; (fxn, fyn, an), (fxf, fyf, af) = Pz['legs']; F = -np.ones((64, 64), int)
-    dx = Pz.get('dx', 0.0); leg3(F, HX + dx + 1, hy, HX + dx + fxf, fyf, af, True); leg3(F, HX + dx - 1, hy, HX + dx + fxn, fyn, an, False)
+    dx = Pz.get('dx', 0.0)
+    if 'lb' not in OMIT: leg3(F, HX + dx + 1, hy, HX + dx + fxf, fyf, af, True)
+    if 'lf' not in OMIT: leg3(F, HX + dx - 1, hy, HX + dx + fxn, fyn, an, False)
+    if FOOT in ('lb', 'lf'):      # (only the pixels of that leg)
+        FT = -np.ones((64, 64), int); leg3(FT, HX + dx + 1, hy, HX + dx + fxf, fyf, af, True) if FOOT == 'lb' else leg3(FT, HX + dx - 1, hy, HX + dx + fxn, fyn, an, False); FOOTV[0] = np.where(FT >= 0, 0, -1)
     al, sy = Pz['torso']; tr = (dx, hy - 36.0); T = xform(TORSO, TORSO_PIV, al, tr, sy); Np = fpt(HEAD_PIV, TORSO_PIV, al, tr, sy); bt, hdx, hdy = Pz['head']
     Hh = xform(HEAD, HEAD_PIV, al + bt, (Np[0] - HEAD_PIV[0] + hdx, Np[1] - HEAD_PIV[1] + hdy))
     HEADL = Hh
@@ -186,18 +192,30 @@ def render(Pz):
     Eb, Wb = two_bone(Sb, (Sb[0] + hb[0], Sb[1] + hb[1]), LB1, LB2, lambda e: -e[0]); Ef, Wf = two_bone(Sf, (Sf[0] + gf[0], Sf[1] + gf[1]), LF1, LF2, lambda e: e[1])
     u0 = unit((Wf[0] - Ef[0], Wf[1] - Ef[1])); th = np.radians(Pz.get('wr', 14.0)); u = (u0[0] * np.cos(th) - u0[1] * np.sin(th), u0[0] * np.sin(th) + u0[1] * np.cos(th))      # (the blades lean wr degrees to the right of the forearm, 14 as a rule, more when the arm is up: the hand tips forward)
     LEGL = F; F = -np.ones((64, 64), int)      # the back arm is in front of the torso (behind it when bz is set: in a crouch it hangs down behind him) but behind the head, the claw arm in front of everything
-    bz = int(Pz.get('bz') or 0); limbs(F, [(Sb, Eb, 5, 4.5, LB1, 'sleeve'), (Eb, Wb, 4.5, 3.5, LB2, 'sleeve')] + ([] if bz == 1 else [(Wb, Wb, 3, 3, 1, 'hand')])); BA = F.copy(); F = -np.ones((64, 64), int)
-    if bz == 1: limbs(F, [(Wb, Wb, 3, 3, 1, 'hand')])      # (the hand stays in front of the body: it rests on his thigh)
+    bz = int(Pz.get('bz') or 0)
+    if 'af' not in OMIT or FOOT == 'af': limbs(F, [(Sb, Eb, 5, 4.5, LB1, 'sleeve'), (Eb, Wb, 4.5, 3.5, LB2, 'sleeve')] + ([] if bz == 1 else [(Wb, Wb, 3, 3, 1, 'hand')]))
+    BA = F.copy(); F = -np.ones((64, 64), int)
+    if bz == 1 and ('af' not in OMIT or FOOT == 'af'): limbs(F, [(Wb, Wb, 3, 3, 1, 'hand')])      # (the hand stays in front of the body: it rests on his thigh)
     BH = F.copy(); F = -np.ones((64, 64), int)
-    limbs(F, [(Sf, Ef, 5, 4.5, LF1, 'sleeve'), (Ef, Wf, 4.5, 3.5, LF2, 'sleeve'), ((Wf[0] - u0[0] * 1.2, Wf[1] - u0[1] * 1.2), (Wf[0] + u0[0] * 0.8, Wf[1] + u0[1] * 0.8), 3, 3, 1, 'glove')]); FA = F.copy()
+    if 'an' not in OMIT or FOOT == 'an': limbs(F, [(Sf, Ef, 5, 4.5, LF1, 'sleeve'), (Ef, Wf, 4.5, 3.5, LF2, 'sleeve'), ((Wf[0] - u0[0] * 1.2, Wf[1] - u0[1] * 1.2), (Wf[0] + u0[0] * 0.8, Wf[1] + u0[1] * 0.8), 3, 3, 1, 'glove')])
+    FA = F.copy()
+    if FOOT == 'af': FOOTV[0] = np.where((BA >= 0) | (BH >= 0), 0, -1)
+    if FOOT == 'an': FOOTV[0] = np.where(FA >= 0, 0, -1)
     F = LEGL
     if bz == 1: F[BA >= 0] = BA[BA >= 0]; F[T >= 0] = T[T >= 0]; F[BH >= 0] = BH[BH >= 0]
     else: F[T >= 0] = T[T >= 0]; F[BA >= 0] = BA[BA >= 0] if bz != 2 else F[BA >= 0]
     F[HEADL >= 0] = HEADL[HEADL >= 0]
     if bz == 2: F[BA >= 0] = BA[BA >= 0]      # (2: the back arm is in front of the head too: the swipe)
     F[FA >= 0] = FA[FA >= 0]
-    G = finish(F); LAST['tips'] = blades(G, Wf, u, Pz.get('sway', 0.0), Pz.get('glint'), Pz.get('closed', False)); LAST['hand'] = Wb; LAST['glove'] = Wf
+    G = finish(F); LAST['tips'] = blades(G.copy() if 'an' in OMIT else G, Wf, u, Pz.get('sway', 0.0), Pz.get('glint'), Pz.get('closed', False)); LAST['hand'] = Wb; LAST['glove'] = Wf
     for p, q, c in Pz.get('trail', ()): streak(G, p, q, c)
+    if JMARK:      # (the joints as 3 x 3 blocks of the values 16 - 19: 16 the claw arm's shoulder, 17 the back arm's, 18 the near hip, 19 the far hip)
+        for v, (jx, jy) in ((16, Sf), (17, Sb), (18, (HX + dx - 1, hy)), (19, (HX + dx + 1, hy))):
+            for ddx in (-1, 0, 1):
+                for ddy in (-1, 0, 1):
+                    X, Y = int(round(jx)) + ddx, int(round(jy)) + ddy
+                    if 0 <= X < 64 and 0 <= Y < 64: G[Y, X] = v
+    if FOOT: return FOOTV[0]
     return G
 REST = dict(hipY=36.0, legs=((-1.5, 59.0, 0), (3.0, 59.0, 0)), torso=(0.0, 1.0), head=(0.0, 0.0, 0.0), hb=(0.0, 13.0), gf=(4.0, -2.0))
 def idle_frames():

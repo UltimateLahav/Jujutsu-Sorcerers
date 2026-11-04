@@ -4,6 +4,9 @@ strips() -> {name: PNG data URL, 15 frames wide}; cells are 64x64 (idle, walk, t
 The BLOCK strips (block, 10 of the 15 frames are used; bwalk = the slow walk with the shield up) swell one glove into a giant shield: the pose key gsL / gsR is how big a glove is (1 = a normal one).
 Run on its own to write contact sheets:  python3 -B cat_rig.py <dir>"""
 import base64, io, math, os, sys, copy
+_GM = dict(kv.split('=') for kv in os.environ.get('GORE_MODE', '').split(';') if '=' in kv)      # v1.128 GRAPHIC DAMAGE (tools/gore_export.py): 'omit=an,af' pictures without a limb, 'foot=an' only the pixels of that limb, 'joint=1' the joints marked, 'swap=1' the arms exchanged (an = the right arm, af = the left, lf = the right leg, lb = the left)
+OMIT = set(filter(None, _GM.get('omit', '').split(','))); FOOT = _GM.get('foot', ''); JMARK = _GM.get('joint') == '1'; SWAP = _GM.get('swap') == '1'
+JCOL = {'an': (1, 2, 3, 255), 'af': (1, 2, 4, 255), 'lf': (1, 2, 5, 255), 'lb': (1, 2, 6, 255)}
 import numpy as np
 from PIL import Image, ImageDraw
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -64,6 +67,9 @@ def shade(m, tones):                                                      # ligh
 # ---------------------------------------------------------------- the figure
 def render(p, W=64, ax=32, Hc=64, oy=0):
     """One frame: the pose p drawn in a W x Hc cell (Hc = 64 + oy: oy rows of room above him) with the middle of his body on column ax."""
+    if SWAP:      # (the arms change roles: each arm gets the other's pose, measured from its own shoulder, and the other's glove)
+        p = dict(p); (e1, h1), (e2, h2) = p['aL'], p['aR']; p['aL'], p['aR'] = ((e2[0] - 10.8, e2[1]), (h2[0] - 10.8, h2[1])), ((e1[0] + 10.8, e1[1]), (h1[0] + 10.8, h1[1]))
+        p['gL'], p['gR'], p['gsL'], p['gsR'] = p['gR'], p['gL'], p['gsR'], p['gsL']
     s_x, s_z, rot, tx, ty, pv = p['sx'], p['sz'], math.radians(p['rot']), p['tx'], p['ty'], p['piv']
     cr, sr = math.cos(rot), math.sin(rot)
     def T(x, y):                                                           # squash / stretch about the feet, turn about the pivot, move
@@ -73,13 +79,17 @@ def render(p, W=64, ax=32, Hc=64, oy=0):
     lean, sy, hp = p['lean'], p['sy'], p['hp']; up = lambda y: lean * max(0.0, min(1.0, (hp - y) / 26.0))      # (the upper body leans: the higher a point is above the hips the more it moves)
     hy = p['hy']; hx = p['hx'] + up(hy)
     parts = []                                                             # (mask layer, tones) in drawing order, back to front
-    def layer(fn, tones):
-        c = Cv(W, Hc, ax, oy); fn(c); parts.append((c.mask(), tones))
+    FOOTM = []; JT = {}      # (v1.128: the layers of the limb that FOOT names; where the limbs join the body)
+    def layer(fn, tones, tag=None):
+        c = Cv(W, Hc, ax, oy); fn(c); mk = c.mask()
+        if tag in OMIT: return
+        parts.append((mk, tones))
+        if FOOT and tag == FOOT: FOOTM.append(mk)
     # legs and feet
     for key, sgn in (('lL', -1), ('lR', 1)):
-        K, A = p[key]; hip = (sgn * 2.2, hp - 1)
-        layer(lambda c: (c.line(TL([hip, K, A]), 2.6)), BODY)
-        layer(lambda c: c.poly(TL([(A[0] - 1.8, A[1] - 0.8), (A[0] + 1.0, A[1] - 0.8), (A[0] + 4.6, A[1] + 1.0), (A[0] + 4.6, A[1] + 2.4), (A[0] - 1.8, A[1] + 2.4)])), BODY)
+        K, A = p[key]; hip = (sgn * 2.2, hp - 1); tg = 'lb' if key == 'lL' else 'lf'; JT[tg] = hip
+        layer(lambda c: (c.line(TL([hip, K, A]), 2.6)), BODY, tg)
+        layer(lambda c: c.poly(TL([(A[0] - 1.8, A[1] - 0.8), (A[0] + 1.0, A[1] - 0.8), (A[0] + 4.6, A[1] + 1.0), (A[0] + 4.6, A[1] + 2.4), (A[0] - 1.8, A[1] + 2.4)])), BODY, tg)
     # torso and neck
     chest, waist = 5.8, 4.7
     layer(lambda c: c.poly(TL([(-chest + up(sy), sy), (chest + up(sy), sy), (waist + up(36), 36), (4.9, hp), (-4.9, hp), (-waist + up(36), 36)])), BODY)
@@ -99,9 +109,10 @@ def render(p, W=64, ax=32, Hc=64, oy=0):
     for key, sgn, gk, sk in (('aL', -1, 'gL', 'gsL'), ('aR', 1, 'gR', 'gsR')):
         E, H = p[key]; S0 = (sgn * 5.4 + up(sy + 1.6), sy + 1.8); d = (H[0] - E[0], H[1] - E[1]); L = math.hypot(*d) or 1; d = (d[0] / L, d[1] / L); n = (-d[1], d[0]); o = p[gk]
         if math.hypot(H[0] - S0[0], H[1] - S0[1]) > 30: E = ((S0[0] + H[0]) / 2, (S0[1] + H[1]) / 2)          # (a stretched arm is straight)
-        layer(lambda c: c.line(TL([S0, E, H]), 1.9), BODY)
-        gl.append((H, d, n, o, p[sk]))
-    for H, d, n, o, g in gl:
+        tg = 'af' if key == 'aL' else 'an'; JT[tg] = S0
+        layer(lambda c: c.line(TL([S0, E, H]), 1.9), BODY, tg)
+        gl.append((H, d, n, o, p[sk], tg))
+    for H, d, n, o, g, tg in gl:
         def glove(c, H=H, d=d, n=n, o=o, g=g):                                                           # (g: how big the glove is: 1 = a normal glove, about 3 = the GIANT one of his block)
             pc = (H[0] + d[0] * 1.8 * g, H[1] + d[1] * 1.8 * g)
             pts = [(pc[0] + n[0] * 3.0 * g * math.cos(a) + d[0] * 3.3 * g * math.sin(a), pc[1] + n[1] * 3.0 * g * math.cos(a) + d[1] * 3.3 * g * math.sin(a)) for a in np.linspace(0, 2 * math.pi, 14 if g < 1.5 else 28, endpoint=False)]
@@ -111,7 +122,12 @@ def render(p, W=64, ax=32, Hc=64, oy=0):
                 c.line(TL([b, (b[0] + fd[0] * (1.4 + 2.2 * o) * g, b[1] + fd[1] * (1.4 + 2.2 * o) * g)]), 1.5 * g)
             tb = (pc[0] - n[0] * 2.6 * g, pc[1] - n[1] * 2.6 * g); c.line(TL([tb, (tb[0] - n[0] * (0.6 + 1.4 * o) * g + d[0] * (0.8 + 1.0 * o) * g, tb[1] - n[1] * (0.6 + 1.4 * o) * g + d[1] * (0.8 + 1.0 * o) * g)]), 1.6 * g)    # the thumb
             c.poly(TL([(H[0] - d[0] * 1.4 * g + n[0] * 2.4 * g, H[1] - d[1] * 1.4 * g + n[1] * 2.4 * g), (H[0] + d[0] * 0.6 * g + n[0] * 2.4 * g, H[1] + d[1] * 0.6 * g + n[1] * 2.4 * g), (H[0] + d[0] * 0.6 * g - n[0] * 2.4 * g, H[1] + d[1] * 0.6 * g - n[1] * 2.4 * g), (H[0] - d[0] * 1.4 * g - n[0] * 2.4 * g, H[1] - d[1] * 1.4 * g - n[1] * 2.4 * g)]))   # the cuff
-        layer(glove, GLOVE); gaps.append((H, d, n, o, g))
+        layer(glove, GLOVE, tg)
+        if tg not in OMIT: gaps.append((H, d, n, o, g))
+    if FOOT:      # (only the pixels of the limb)
+        o2 = np.zeros((Hc, W, 4), np.uint8)
+        for mk in FOOTM: o2[mk] = (255, 255, 255, 255)
+        return Image.fromarray(o2, 'RGBA')
     # ---- compose
     out = np.zeros((Hc, W, 4), np.uint8)
     for m, tones in parts:
@@ -168,6 +184,12 @@ def render(p, W=64, ax=32, Hc=64, oy=0):
     a = out[..., 3] > 0; edge = np.zeros_like(a)
     edge[1:, :] |= a[:-1, :]; edge[:-1, :] |= a[1:, :]; edge[:, 1:] |= a[:, :-1]; edge[:, :-1] |= a[:, 1:]
     out[edge & ~a] = OL
+    if JMARK:      # (the joints as 3 x 3 blocks of colours no picture has)
+        for tg, (jx, jy) in JT.items():
+            X, Y = T(jx, jy); gx, gy_ = int(math.floor(ax + 0.5 + X)), int(math.floor(Y)) + oy
+            for ddx in (-1, 0, 1):
+                for ddy in (-1, 0, 1):
+                    if 0 <= gx + ddx < W and 0 <= gy_ + ddy < Hc: out[gy_ + ddy, gx + ddx] = JCOL[tg]
     return Image.fromarray(out, 'RGBA')
 
 def flat(p, W=64, ax=32, H=64, oy=0):

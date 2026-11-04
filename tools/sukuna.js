@@ -25,7 +25,7 @@ NAMES[SUK_WHO] = 'SUKUNA'; CEC[SUK_WHO] = ['#2a0a12', '#d02a3a', '#ffb0b8', '#ff
     const n = Math.floor(im.width / 64), set = {}, arts = [], tipOf = a => { const sp = cuSpan(a, r => r - 1), o = {}; for (const r in sp) o[r] = sp[r][1]; return o; };      // (tipOf: how far each row of a picture reaches in front of his middle column)
     SUK_ROWS.forEach((k, r) => {
       set[k] = []; arts[r] = []; for (let i = 0; i < n; i++) {
-        const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.drawImage(im, i * 64, r * 64, 64, 64, 0, 0, 64, 64); set[k].push(c);
+        const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.drawImage(im, i * 64, r * 64, 64, 64, 0, 0, 64, 64); set[k].push(c); if (GSK[k]) { MKM.set(c, { s: GSK[k], i, pal: GD.sukuna._pal }); (GSKC[k] = GSKC[k] || []).push(c); }      // (v1.128 GRAPHIC DAMAGE: the picture knows its patches)
         arts[r].push(suAlpha(c));
       }
     });

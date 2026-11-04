@@ -49,6 +49,16 @@ class F:                                         # one frame of palette letters 
             n = max(abs(x1 - x0), abs(y1 - y0), 1)
             for k in range(int(n) + 1): s.set(x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n, c)
 
+import os      # v1.128 GRAPHIC DAMAGE (tools/gore_export.py sets GORE_MODE: 'omit=an,af;mark=lf;joint=1;swap=1'): pictures without a limb, with a limb drawn in the marker letter, with the joints marked, with the arms exchanged
+_GM = dict(kv.split('=') for kv in os.environ.get('GORE_MODE', '').split(';') if '=' in kv)
+OMIT = set(filter(None, _GM.get('omit', '').split(','))); MARK = set(filter(None, _GM.get('mark', '').split(','))); JMARK = _GM.get('joint') == '1'; SWAP = _GM.get('swap') == '1'
+PAL.update({c: '#808080' for c in '!1234'})      # (the marker letters are grey where a colour is looked up)
+class FM(F):      # a grid that shares the picture's pixels but writes the marker letter whatever it is given
+    def __init__(s, f): s.g = f.g
+    def set(s, x, y, c):
+        x, y = round(x), round(y)
+        if 0 <= x < N and 0 <= y < NH: s.g[y][x] = '!'
+def Fo(tag, f): return F() if tag in OMIT else FM(f) if tag in MARK else f
 def gait(q, amp, kmax):                          # hip angle (forward +) and knee flex for a leg at phase q
     th = amp * cos(2 * math.pi * q)
     k = kmax * sin(2 * math.pi * (q - .5)) if q >= .5 else .12 * kmax * sin(2 * math.pi * q)
@@ -605,9 +615,10 @@ def build(kind, i):
     dxb = round(hx - 33)                                   # the body follows the hips (the planted feet stay put)
     oy = hy - 34; hb = bob
     if hoa: nua, nfa, fua, ffa = ho_arms(kind, i)
+    if SWAP and (atk or rxk or blkk or hoa): nua, nfa, fua, ffa = fua, ffa, nua, nfa      # (v1.128: the arms change roles)
     wave = round(sin(2 * math.pi * 2 * i / NW)) if kind in ('fwd', 'back') else [0, 1, 0, -1, 0, 1][i % 6]      # tail sway: whole cycles per loop, so the walk loops without a pop
-    kf_, af_ = leg(f, hx, hy, thf, kf, swf, False, foot, rc_f if atk else 'O')
-    kn, an = leg(f, hx, hy, thn, kn_, swn, True, foot if foot2 is None else foot2, rc_n if atk else 'O')
+    kf_, af_ = leg(Fo('lb', f), hx, hy, thf, kf, swf, False, foot, rc_f if atk else 'O')
+    kn, an = leg(Fo('lf', f), hx, hy, thn, kn_, swn, True, foot if foot2 is None else foot2, rc_n if atk else 'O')
 
     # jacket (+ flap trailing behind in the wind)
     jk = set()
@@ -620,9 +631,9 @@ def build(kind, i):
         sw = round(1.2 * sin(2 * math.pi * p)) * (-1 if kind == 'back' else 1) if kind in ('fwd', 'back') else 0
         S, E, P = (32, 18 + oy), (30 + sw, 25 + oy), (35, 30 + oy)
         arm = seg(S, E, 4.2, 3.6) | seg(E, P, 3.4, 2.6) | disc(E[0], E[1], 2.0)
-        u.fill(arm, 'B'); u.bands(arm, 'B', 'C', 'A'); u.rim(arm, 'O')
-        u.line([(S[0] + 1, S[1] + 2), (E[0] + 1, E[1] - 1)], 'D'); u.line([(E[0] + 2, E[1] + 2), (P[0] - 1, P[1] - 1)], 'D')
-        u.set(P[0] + 1, P[1], 'S'); u.set(P[0] + 1, P[1] + 1, 'U')
+        ua = Fo('an', u); ua.fill(arm, 'B'); ua.bands(arm, 'B', 'C', 'A'); ua.rim(arm, 'O')
+        ua.line([(S[0] + 1, S[1] + 2), (E[0] + 1, E[1] - 1)], 'D'); ua.line([(E[0] + 2, E[1] + 2), (P[0] - 1, P[1] - 1)], 'D')
+        ua.set(P[0] + 1, P[1], 'S'); ua.set(P[0] + 1, P[1] + 1, 'U')
     # jacket sheen
     u.line([(32, 17 + oy), (35, 17 + oy)], 'D'); u.set(34, 17 + oy, 'E')
     u.line([(35, 19 + oy), (35, 22 + oy)], 'D'); u.line([(32, 24 + oy), (34, 27 + oy)], 'D')
@@ -656,15 +667,19 @@ def build(kind, i):
         if ch != 'M' and any(u.at(x + dx, y + dy) == '.' for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))): u.set(x, y, 'M')
     if atk or rxk or blkk or hoa:                         # the far arm goes first so the torso covers its shoulder
         Sy = hy - 16; Sx = 32 + dxb + round(.8 * lean); fxc = BLUE_FX
-        gf = gl if atk and 'f' in ATK_HANDS[k_] else 0
-        _, Hf = draw_arm(f, (Sx - 1, Sy), fua, ffa, False, gf, fxc, 'j' if (atk and k_ in STRIKES and gf > .25) else 'O')
+        gf = gl if atk and ('n' if SWAP else 'f') in ATK_HANDS[k_] else 0
+        _, Hf = draw_arm(Fo('af', f), (Sx - 1, Sy), fua, ffa, False, gf, fxc, 'j' if (atk and k_ in STRIKES and gf > .25) else 'O')
+    if JMARK:      # (v1.128) the four joints as 3 x 3 blocks of 1 near shoulder, 2 far shoulder, 3 front hip, 4 back hip: they are carried along with the body
+        for tg, (jx, jy) in (('1', (32, 18 + oy)), ('2', (31, 18 + oy)), ('3', (34, hy)), ('4', (32, hy))):
+            for ddx in (-1, 0, 1):
+                for ddy in (-1, 0, 1): u.set(jx + ddx, jy + ddy, tg)
     for y in range(NH):                                                   # lean the torso/head forward and slide it over the planted feet
         for x in range(N):
             c = u.g[y][x]
             if c != '.': f.set(x + dxb + round(lean * max(0.0, (34 + oy - y) / 20.0)) + (round(hs) if y < oy + 15 else 0), y, c)
     if atk or rxk or blkk or hoa:                         # near arm in front of everything, then (attacks) glow trail and impact flash
-        gn = gl if atk and 'n' in ATK_HANDS[k_] else 0
-        E, Hn = draw_arm(f, (Sx, Sy), nua, nfa, True, gn, fxc, 'j' if (atk and k_ in STRIKES and gn > .25) else 'O')
+        gn = gl if atk and ('f' if SWAP else 'n') in ATK_HANDS[k_] else 0
+        E, Hn = draw_arm(Fo('an', f), (Sx, Sy), nua, nfa, True, gn, fxc, 'j' if (atk and k_ in STRIKES and gn > .25) else 'O')
         if atk and k_ in (11, 22): peace_hand(f, Hn, nfa)
         if blkk: peace_hand(f, Hn, nfa)
         if atk and k_ in (9, 10, 12, 13): dash_fx(f, idx, k_ if k_ < 11 else k_ - 3)

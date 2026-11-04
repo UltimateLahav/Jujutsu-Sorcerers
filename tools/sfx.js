@@ -242,6 +242,14 @@ function makeSfx(ac) {
       tone(B.deep, t + 0.4, { type: 'triangle', f: 112, f2: 40, dur: 0.45, gain: 0.45, atk: 0.003 });
       burst(B.soft, t + 0.4, { f: 600, f2: 160, q: 0.8, dur: 0.18, gain: 3.2, atk: 0.001 });
     },
+    rip(at) {                                            // v1.128 GRAPHIC DAMAGE: a limb comes off: a snap, a wet tearing rasp, a heavy thump, a splash and the piece landing
+      const t = T(at), B = C.atk;
+      burst(B.soft, t, { type: 'bandpass', f: 2400, f2: 700, q: 2.2, dur: 0.07, gain: 2.0, atk: 0.001 });
+      burst(B.soft, t + 0.02, { type: 'bandpass', f: 500, f2: 260, q: 1.4, dur: 0.35, gain: 1.1, atk: 0.04 });
+      tone(B.deep, t, { type: 'triangle', f: 130, f2: 42, dur: 0.5, gain: 0.55, atk: 0.004 });
+      burst(B.soft, t + 0.18, { type: 'lowpass', f: 900, f2: 200, q: 0.8, dur: 0.3, gain: 1.4, atk: 0.01 });
+      tone(B.deep, t + 0.42, { type: 'triangle', f: 100, f2: 36, dur: 0.3, gain: 0.4, atk: 0.003 });
+    },
     finisher(at) {                                       // all four hits landed in order: a low swell with a faint shimmer
       const t = T(at), B = C.atk;
       tone(B.deep, t, { type: 'triangle', f: 80, f2: 200, dur: 0.36, gain: 0.3, atk: 0.05 });

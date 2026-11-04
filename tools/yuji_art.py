@@ -93,33 +93,51 @@ def head_block(P):                               # hood, face and hair, drawn at
     f.set(39, 18, 'V'); f.set(40, 18, 'V')
     if P.get('mo'): f.set(39, 18, 'e'); f.set(40, 18, 'e'); f.set(39, 19, 'e')                  # a pained, open mouth
     return f
+OMIT = set()      # v1.128 GRAPHIC DAMAGE (tools/gore_export.py): limbs left out of every picture: 'an' near arm, 'af' far arm, 'lf' front (near) leg, 'lb' back (far) leg
+JMARK = False      # (tools/gore_export.py) draw the joint markers
+MARK = set()      # (tools/gore_export.py) limbs drawn with the marker letter '!' instead of their own letters: the pixels they cover in the finished picture
+class FM(F):      # a grid that shares the picture's pixels but writes the marker letter whatever it is given
+    def __init__(s, f): s.g = f.g
+    def set(s, x, y, c):
+        x, y = round(x), round(y)
+        if 0 <= x < N and 0 <= y < N: s.g[y][x] = '!'
+def Fo(tag, f): return F() if tag in OMIT else FM(f) if tag in MARK else f      # (a limb that is left out is drawn on a scratch grid)
+SWAP = False      # (tools/gore_export.py) the two arms change roles: the near arm does what the far arm did and the other way round
 def figure(P):
+    if SWAP:
+        P = dict(P); va, vb, wa, wb = P.pop('na', None), P.pop('fa', None), P.pop('nf', None), P.pop('ff', None)
+        for k, v in (('na', vb), ('fa', va), ('nf', wb), ('ff', wa)):
+            if v is not None: P[k] = v
     by, ln = P.get('by', 0), P.get('ln', 0); nf, ff = P.get('nf', (0, 0)), P.get('ff', (0, 0)); f = F()
     sx, sy = ln, by                                                       # shoulders and head move with the lean and the bob
     if P.get('fa'):                                                       # an explicit far arm: elbow and wrist relative to its shoulder
         S0 = (36+sx, 31+sy); fe = (S0[0]+P['fa'][0][0], S0[1]+P['fa'][0][1]); fw = (S0[0]+P['fa'][1][0], S0[1]+P['fa'][1][1]); d = unit(fw[0]-fe[0], fw[1]-fe[1])
-        limb(f, S0, fe, fw, (3.2, 3.0, 2.8), 'B', 'C', 'A'); f.fill(seg((fw[0]-d[0]*2.4, fw[1]-d[1]*2.4), (fw[0]-d[0]*.4, fw[1]-d[1]*.4), 3.0, 3.0), 't'); fc = (fw[0]+d[0]*1.6, fw[1]+d[1]*1.6)
-        fist = disc(fc[0], fc[1], 1.8); f.fill(fist, 'U'); f.rim(fist, 'O'); f.fill(fist, 'U'); far_h = (fc[0], fc[1]-1)
+        g = Fo('af', f); limb(g, S0, fe, fw, (3.2, 3.0, 2.8), 'B', 'C', 'A'); g.fill(seg((fw[0]-d[0]*2.4, fw[1]-d[1]*2.4), (fw[0]-d[0]*.4, fw[1]-d[1]*.4), 3.0, 3.0), 't'); fc = (fw[0]+d[0]*1.6, fw[1]+d[1]*1.6)
+        fist = disc(fc[0], fc[1], 1.8); g.fill(fist, 'U'); g.rim(fist, 'O'); g.fill(fist, 'U'); far_h = (fc[0], fc[1]-1)
     else:
         fx, fy = 35.5 + sx + ff[0], 38.0 + sy + ff[1]                     # far arm: behind the body, only its fist shows in front of the chest
-        limb(f, (36+sx, 31+sy), (35.5+sx+ff[0]*.5, 36+sy+ff[1]*.5), (fx, fy), (2.8, 2.8, 2.6), 'B', 'C', 'A'); fist = disc(fx+.8, fy+.6, 1.7); f.fill(fist, 'U'); f.rim(fist, 'O'); f.fill(fist, 'U'); far_h = (fx+1.0, fy+.6-1)
+        g = Fo('af', f); limb(g, (36+sx, 31+sy), (35.5+sx+ff[0]*.5, 36+sy+ff[1]*.5), (fx, fy), (2.8, 2.8, 2.6), 'B', 'C', 'A'); fist = disc(fx+.8, fy+.6, 1.7); g.fill(fist, 'U'); g.rim(fist, 'O'); g.fill(fist, 'U'); far_h = (fx+1.0, fy+.6-1)
     lb, lf = P['lb'], P['lf']; hipB, hipF = (32 + P.get('hx', 0), 44 + by), (34 + P.get('hx', 0), 44 + by)
-    leg(f, hipB, lb[:2], False, lb[2], 'B', 'C', 'A', P.get('kb'))
+    leg(Fo('lb', f), hipB, lb[:2], False, lb[2], 'B', 'C', 'A', P.get('kb'))
     T = pm([(32+sx, 29+sy), (37+sx, 29+sy), (37, 40+by), (36, 44+by), (32, 44+by)]); f.fill(T, 'C'); f.bands(T, 'C', 'D', 'B'); f.rim(T, 'O'); f.fill(T, 'C'); f.bands(T, 'C', 'D', 'B')
     f.line([(32, 44+by), (36, 44+by)], 'A'); f.line([(33+sx, 31+sy), (33, 41+by)], 'D'); f.set(36, 35+sy, 'g')
-    leg(f, hipF, lf[:2], True, lf[2], 'B', 'C', 'A', P.get('kf'))
+    leg(Fo('lf', f), hipF, lf[:2], True, lf[2], 'B', 'C', 'A', P.get('kf'))
     f.blit(head_block(P), sx + P.get('hs', 0), sy + 3 + P.get('hd', 0))
     if P.get('na'):                                                       # an explicit near arm: elbow and wrist relative to its shoulder
         S0 = (34+sx, 31+sy); ne = (S0[0]+P['na'][0][0], S0[1]+P['na'][0][1]); nw = (S0[0]+P['na'][1][0], S0[1]+P['na'][1][1]); d = unit(nw[0]-ne[0], nw[1]-ne[1])
-        limb(f, S0, ne, nw, (3.4, 3.0, 2.8), 'C', 'D', 'B'); f.fill(seg((nw[0]-d[0]*2.4, nw[1]-d[1]*2.4), (nw[0]-d[0]*.4, nw[1]-d[1]*.4), 3.0, 3.0), 's'); fc = (nw[0]+d[0]*1.6, nw[1]+d[1]*1.6)
-        fist = disc(fc[0], fc[1], 1.9); f.fill(fist, 'S'); f.rim(fist, 'O'); f.fill(fist, 'S'); f.set(fc[0]-.4, fc[1]-1.3, 'T'); f.set(fc[0]+.3, fc[1]+1.4, 'U'); near_h = (fc[0], fc[1]-1)
+        g = Fo('an', f); limb(g, S0, ne, nw, (3.4, 3.0, 2.8), 'C', 'D', 'B'); g.fill(seg((nw[0]-d[0]*2.4, nw[1]-d[1]*2.4), (nw[0]-d[0]*.4, nw[1]-d[1]*.4), 3.0, 3.0), 's'); fc = (nw[0]+d[0]*1.6, nw[1]+d[1]*1.6)
+        fist = disc(fc[0], fc[1], 1.9); g.fill(fist, 'S'); g.rim(fist, 'O'); g.fill(fist, 'S'); g.set(fc[0]-.4, fc[1]-1.3, 'T'); g.set(fc[0]+.3, fc[1]+1.4, 'U'); near_h = (fc[0], fc[1]-1)
     else:
         wx, wy = 34.6 + sx + nf[0], 41.0 + sy + nf[1]                     # near arm: down the side of the body, forearm forward to a fist at the belt
-        limb(f, (34+sx, 31+sy), (34+sx+nf[0]*.5, 37.5+sy+nf[1]*.5), (wx, wy), (3.4, 3.0, 2.8), 'C', 'D', 'B'); f.fill(seg((wx-.8, wy-2.0), (wx+.1, wy-.4), 3.0, 3.0), 's')
-        fist = disc(wx+.9, wy+.9, 1.8); f.fill(fist, 'S'); f.rim(fist, 'O'); f.fill(fist, 'S'); f.line([(wx+.2, wy+2.3), (wx+2.0, wy+2.3)], 'U'); f.set(wx+.2, wy-.7, 'T'); near_h = (wx+.9, wy+.9-1)
+        g = Fo('an', f); limb(g, (34+sx, 31+sy), (34+sx+nf[0]*.5, 37.5+sy+nf[1]*.5), (wx, wy), (3.4, 3.0, 2.8), 'C', 'D', 'B'); g.fill(seg((wx-.8, wy-2.0), (wx+.1, wy-.4), 3.0, 3.0), 's')
+        fist = disc(wx+.9, wy+.9, 1.8); g.fill(fist, 'S'); g.rim(fist, 'O'); g.fill(fist, 'S'); g.line([(wx+.2, wy+2.3), (wx+2.0, wy+2.3)], 'U'); g.set(wx+.2, wy-.7, 'T'); near_h = (wx+.9, wy+.9-1)
     if P.get('top'): P['top'](f, sx, sy)                                  # (v1.50: a caller's own drawing over the near arm, e.g. fingers)
     out = [(x, y) for y in range(N) for x in range(N) if f.g[y][x] == '.' and any(f.at(x+dx, y+dy) != '.' for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))]
     for x, y in out: f.set(x, y, 'O')
+    if JMARK:      # (tools/gore_export.py) the four joints as 3 x 3 blocks of the letters 1 near shoulder, 2 far shoulder, 3 front hip, 4 back hip: they move with the picture whatever is done to it afterwards
+        for tg, (jx, jy) in (('1', (34+sx, 31+sy)), ('2', (36+sx, 31+sy)), ('3', hipF), ('4', hipB)):
+            for ddx in (-1, 0, 1):
+                for ddy in (-1, 0, 1): f.set(jx+ddx, jy+ddy, tg)
     f.g = f.g[1:] + [['.']*N]                                             # feet on row 62, as in Gojo's sprites
     return f, near_h, far_h
 GR = 59                                                                    # ankle row on the ground
@@ -1052,7 +1070,7 @@ def pack(fn, x0, w, top, n=15):
         f, nh, fh = fn(i); rows = ['.'*w for _ in range(sh)] + [''.join(f.g[y][x0:x0+w]) for y in range(N)] + ['.'*w for _ in range(top)]
         frames.append(rows); hn.append([round(nh[0]-x0, 1), round(nh[1]+top, 1)]); hf.append([round(fh[0]-x0, 1), round(fh[1]+top, 1)])
     return frames, hn, hf
-if __name__ == '__main__':
+def build():      # (v1.128: the whole set of strips as a dict; tools/gore_export.py builds it again with limbs left out)
     X0, W = 16, 40; out = {'pal': PAL}
     for k, fn, top in (('idle', idle, 0), ('fwd', walk, 0), ('jump', jump, 4)):
         fr, hn, hf = pack(fn, X0, W, top); out[k] = {'x0': X0, 'w': W, 'h': N + (2*top), 'top': top, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}
@@ -1077,6 +1095,9 @@ if __name__ == '__main__':
         if k == 'atk27': out[k]['lift'] = SD_LIFT
     fr, hn, hf = pack(block, X0, 44, 0, 10); out['blk'] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}      # BLOCK (10 frames)
     fr, hn, hf = pack(bwalk, X0, 44, 0); out['bfwd'] = {'x0': X0, 'w': 44, 'h': N, 'top': 0, 'cx': 34, 'frames': fr, 'hn': hn, 'hf': hf}      # walking with the guard up
+    return out
+if __name__ == '__main__':
+    out = build()
     json.dump(out, open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'yuji.json'), 'w'), separators=(',', ':'))
     for k in ('idle', 'fwd', 'jump', 'atk0', 'atk1', 'atk2', 'atk3', 'atk4', 'atk5', 'atk6', 'atk7', 'atk8', 'atk9', 'atk10', 'atk11', 'atk12', 'atk13', 'atk14', 'atk15', 'atk16', 'atk17', 'atk18', 'atk19', 'atk24', 'atk25', 'atk26', 'atk27', 'blk', 'bfwd', 'cdn', 'cidle', 'cfwd', 'cjump', 'dash0', 'dash1', 'dash2', 'dash3', 'run', *['rx%d' % j for j in range(10)]): print(k, len(out[k]['frames']), 'frames,', len({tuple(f) for f in out[k]['frames']}), 'distinct', 'x0', out[k]['x0'], 'w', out[k]['w'])
     if len(sys.argv) > 1:                                                  # contact sheets: python3 -B yuji_art.py sheets <dir>

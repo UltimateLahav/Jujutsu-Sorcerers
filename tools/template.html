@@ -558,13 +558,14 @@ const hero = $('hero'), hctx = hero.getContext('2d');
 
 // turn a sprite set's text rows into tiny offscreen canvases
 const rgbOf = h => (0xff000000 | (parseInt(h.substr(5, 2), 16) << 16) | (parseInt(h.substr(3, 2), 16) << 8) | parseInt(h.substr(1, 2), 16)) >>> 0;   // ABGR, as a little-endian Uint32 sees RGBA bytes
+const MKM = new WeakMap();      // v1.128 GRAPHIC DAMAGE: every picture made by mk() -> {s: its strip, i: its number, pal} (tools/gore.js builds the pictures without a lost limb from it)
 const mk = (set, pal = D.pal) => {
   const cols = {}; for (const k in pal) cols[k] = rgbOf(pal[k]);
-  return set.frames.map(rows => {
+  return set.frames.map((rows, fi) => {
     const c = document.createElement('canvas'); c.width = set.w; c.height = set.h;
     const g = c.getContext('2d'), im = g.createImageData(set.w, set.h), px = new Uint32Array(im.data.buffer);
     rows.forEach((row, y) => { for (let x = 0; x < row.length; x++) { const ch = row[x]; if (ch !== '.') px[y * set.w + x] = cols[ch]; } });
-    g.putImageData(im, 0, 0); return c;
+    g.putImageData(im, 0, 0); MKM.set(c, { s: set, i: fi, pal }); return c;
   });
 };
 const idleF = mk(D.idle), fwdF = mk(D.fwd), backF = mk(D.back), jumpF = mk(D.jump), teleF = mk(D.tele), atkF = [0, 1, 2, 3].map(k => mk(D['atk' + k]));
@@ -1361,7 +1362,7 @@ function invNow(c) {                          // a picture that is made fresh ev
 function invOf(c) {                           // the same picture in inverted colours (the colours of the inverted fighter)
   if (!c || !c.getContext || !c.width) return c;      // (a picture that is not there yet, or an image that is not a canvas, stays as it is)
   let r = INV_CACHE.get(c); if (r) return r;
-  r = document.createElement('canvas'); r.width = c.width; r.height = c.height;
+  r = document.createElement('canvas'); r.width = c.width; r.height = c.height; GDER.set(r, { from: c, fn: 'inv' });      // (v1.128: a picture made from another one: tools/gore.js builds it from the variant of that one)
   const im = c.getContext('2d').getImageData(0, 0, c.width, c.height), d = im.data;
   for (let i = 0; i < d.length; i += 4) if (d[i + 3]) { d[i] = 255 - d[i]; d[i + 1] = 255 - d[i + 1]; d[i + 2] = 255 - d[i + 2]; }
   r.getContext('2d').putImageData(im, 0, 0); INV_CACHE.set(c, r); return r;
@@ -1502,7 +1503,7 @@ function scarePeds(x, now) {                  // somebody just died: everybody w
   }
 }
 function updatePeds(now, dt) {
-  if (!pedsOn()) return; pedT += dt; updateGore(now, dt); if (domFrozen()) return;      // during the domain the people stand perfectly still
+  if (!pedsOn()) { if (gdLive()) updateGore(now, dt); return; } pedT += dt; updateGore(now, dt); if (domFrozen()) return;      // during the domain the people stand perfectly still
   for (const p of peds) {
     const gap = p.x - wx, T = HUM[p.t];
     if (p.mode === 'shock' && pedT >= p.shockUntil) p.mode = 'run';
@@ -1554,10 +1555,10 @@ function updateGore(now, dt) {
   for (let i = fount.length - 1; i >= 0; i--) { const f = fount[i]; if (now > f.until) { fount.splice(i, 1); continue; } for (let n = 0; n < 3; n++) spawnDrop(f.x + rnd() * 4 - 2, f.fl - 32 - rnd() * 10, (rnd() - 0.5) * 80, -(80 + rnd() * 100), f.fl); }      // the stump of the body keeps spurting
   for (const g of gibs) {
     if (g.rest) continue; g.vy += G * dt; g.x += g.vx * dt; g.y += g.vy * dt;
-    if (g.cv.width > 4 && rnd() < 0.12) spawnDrop(g.x, g.y, g.vx * 0.2, 0, g.fl);
+    if (g.cv.width > 4 && g.gore !== 2 && rnd() < 0.12) spawnDrop(g.x, g.y, g.vx * 0.2, 0, g.fl);
     if (g.y + g.hh >= g.fl) {
       g.y = g.fl - g.hh;
-      if (!g.l) { g.l = 1; if (g.cv.width > 4) { addDecal(g.x - 2, g.fl, 5, BLD[3]); addDecal(g.x - 3, g.fl + 1, 7, BLD[2]); addDecal(g.x - 1, g.fl + 2, 4, BLD[3]); } if (g.lay) { g.cv = laid(g.cv, rnd() < 0.5); g.hw = g.cv.width / 2; g.hh = g.cv.height / 2; g.y = g.fl - g.hh; } }
+      if (!g.l) { g.l = 1; if (g.cv.width > 4 && g.gore !== 2) { addDecal(g.x - 2, g.fl, 5, BLD[3]); addDecal(g.x - 3, g.fl + 1, 7, BLD[2]); addDecal(g.x - 1, g.fl + 2, 4, BLD[3]); } if (g.lay) { g.cv = laid(g.cv, rnd() < 0.5); g.hw = g.cv.width / 2; g.hh = g.cv.height / 2; g.y = g.fl - g.hh; } }
       if (g.vy > 80) { g.vy *= -0.3; g.vx *= 0.55; } else { g.vy = g.vx = 0; g.rest = true; }
     }
   }
@@ -1565,14 +1566,14 @@ function updateGore(now, dt) {
   if (drops.length > 900) drops.splice(0, drops.length - 900);
 }
 function drawBlood(now) {                     // pools, spatter and the bits lying on the road (they are in world coordinates, so they scroll with the crossing and stay)
-  if ((!pedsOn() && !catGore()) || !(pools.length || decals.length || gibs.length)) return; const cx = Math.round(VW / 2) - wx;
+  if ((!pedsOn() && !catGore() && !gdLive()) || !(pools.length || decals.length || gibs.length)) return; const cx = Math.round(VW / 2) - wx;
   const ell = (sx, sy, rx, ry, col) => { ctx.fillStyle = col; const h = Math.floor(ry); for (let yy = -h; yy <= h; yy++) { const w = Math.floor(rx * Math.sqrt(Math.max(0, 1 - yy * yy / ((ry + 0.5) * (ry + 0.5))))); ctx.fillRect(sx - w, sy + yy, 2 * w + 1, 1); } };
   for (const p of pools) { const k = Math.min(1, (now - p.born) / p.g), sx = Math.round(cx + p.x), sy = Math.round(gy + p.y); if (k <= 0 || sx < -20 || sx > VW + 20) continue; const rx = p.rx * (0.3 + 0.7 * k), ry = p.ry * (0.3 + 0.7 * k); ell(sx, sy, rx, ry, '#4a0810'); ell(sx, sy, rx - 1.5, ry - 0.8, '#7a0c16'); ctx.fillStyle = '#b3121f'; ctx.fillRect(sx - Math.round(rx * 0.4), sy - Math.round(ry * 0.4), 2, 1); }
   for (const d of decals) { const sx = Math.round(cx + d.x); if (sx < -8 || sx > VW + 8) continue; ctx.fillStyle = d.c; ctx.fillRect(sx, Math.round(gy + d.y), d.s, 1); }
   for (const g of gibs) if (g.rest) { const sx = Math.round(cx + g.x); if (sx < -20 || sx > VW + 20) continue; ctx.drawImage(g.cv, Math.round(sx - g.hw), Math.round(gy + g.y - g.hh)); }
 }
 function drawGibs(now) {                      // the flying pieces, the blood in the air and the flash of the burst (drawn over everything)
-  if (!pedsOn() && !catGore()) return; const cx = Math.round(VW / 2) - wx;
+  goreOver(now); if (!pedsOn() && !catGore() && !gdLive()) return; const cx = Math.round(VW / 2) - wx;
   for (const g of gibs) if (!g.rest) { const sx = Math.round(cx + g.x); if (sx < -20 || sx > VW + 20) continue; ctx.drawImage(g.cv, Math.round(sx - g.hw), Math.round(gy + g.y - g.hh)); }
   for (const d of drops) { ctx.fillStyle = d.c; ctx.fillRect(Math.round(cx + d.x), Math.round(gy + d.y), d.s, d.s); }
   for (let i = flashes.length - 1; i >= 0; i--) { const f = flashes[i], a = now - f.born; if (a > 140) { flashes.splice(i, 1); continue; } const r = 4 + a / 140 * 9, sx = Math.round(cx + f.x), sy = Math.round(gy + f.y); ctx.fillStyle = a < 50 ? '#ff9a88' : a < 100 ? '#e8242c' : '#8e0c18'; for (let yy = -Math.round(r); yy <= r; yy++) { const w = Math.floor(Math.sqrt(r * r - yy * yy)); ctx.fillRect(sx - w, sy + yy, 2 * w + 1, 1); } }
@@ -1828,6 +1829,7 @@ function hitFoe(k, now) {                     // called on the impact frame: a h
   if (dmg > dBase * DMG_CAP) dmg = Math.round(dBase * DMG_CAP);      // (v1.33: the free counter, the heavy, OPEN and FLOW together never do more than 2.8 times the blow)
   const cb = comboBonus(k, now); dmg += cb; hits.n++; hits.dmg += dmg; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = cb; cancelFor = atkAt; cancelUntil = now + CANCEL_MS * (flowOn ? 2 : 1); if (atkK === 3 && meK() === 'v' && !vh && !ac) { acWin = now + AC_WIN; if (acPend === atkAt) acGo = true; } if (vs) vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n);
   const grab = !!vs && vs.me === 'cat' && (k === 30 || k === 32), held = !!vs && vs.me === 'cat' && k >= 31 && k <= 33 && !!dummy.cheld;      // (the playable Cat's glove: a grab holds the enemy and pulls him in, the punch lands on the held enemy where he stands, the kick sends him away)
+  goreHint = { side: 'f', h: isKick(who, k) || stance === 'crouch' ? 'l' : jumpAt >= 0 ? 'h' : 'm', at: now };      // (v1.128 GRAPHIC DAMAGE: where the blow lands)
   dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += held && k !== 33 ? 0 : KNOCK[k]; if (k === 3 || k === 17 || k === 21 || k === 29 || k === 33 || k === 35 || k === 41 || k === 42) { dummy.smokeUntil = now + 520; puff(dummy.x, 8); } shakeUntil = now + 110; shakeAmp = k === 21 || k === 35 || k === 42 ? 4 : [3, 15, 17, 18, 19, 29, 33, 40, 41].includes(k) ? 3 : 2;
   if (k === 40 || k === 43 || k === 48 || hitOv) dummy.down = now + RX_DUR[4];      // (a DOWNSLAM or a SWEEP puts him on the floor for as long as the fall lasts)
   if (k === 43) dummy.sweptAt = now;      // (the sweep landed: your next M1 press is the 3 KICKS)
@@ -1911,7 +1913,7 @@ function drawDummy(now, dt) {
   pendingGiants.length = 0; pendingEnemy = null; if (!dummy || dummy.gone) return; if (dummy.net) { drawRemote(now, dt); return; } if (dummy.curse) { drawCurse(dummy, now, dt); return; }
   if (dummy.ko >= 0 && now - dummy.ko > 2300 && !vs) spawnDummy(now, dummy.mode);            // knocked out: a fresh one steps in after a moment
   airStepDummy(now);      // (an enemy in the air: his height and the frame of his reaction)
-  if (dummy.mode === 'fighter' && !dom && !(dummy.vform && dummy.vform !== 'verity')) { if (vs) updateFighterVs(now, dt); else updateFighter(now, dt); }      // (as the smiley ball he does nothing)
+  if (dummy.mode === 'fighter' && !dom && !(dummy.vform && dummy.vform !== 'verity')) { if (vs) updateFighterVs(now, dt); else updateFighter(now, dt); if (vs) goreFoe(now); }      // (as the smiley ball he does nothing)
   if (dummy.pull) { const k = Math.min(1, (now - dummy.pull.at) / dummy.pull.ms); dummy.x = dummy.pull.from + (dummy.pull.to - dummy.pull.from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) dummy.pull = null; }
   foeSlide(dummy, dt);                              // knock-back slide with friction
   if (vs && vs.foe === 'yuji') { const on = !!dummy.ce && now >= (dummy.ceFlame || 0); dummy.ceA = (dummy.ceA || 0) + ((on ? 1 : 0) - (dummy.ceA || 0)) * Math.min(1, dt * (on ? 16 : 10)); if (!on && dummy.ceA < 0.03) dummy.ceA = 0; }      // (the enemy Yuji's flames swell in quickly and die away a little slower, as yours do)
@@ -1951,6 +1953,7 @@ function drawDummy(now, dt) {
   if (dummy.del && now - dummy.del > 1700) return;      // deleted: nothing of him is left
   if (dummy.airH > 0 && kt < 0) lift = dummy.airH;      // (launched by the UPPERCUT: he is raised by his flight, whatever he is drawn as)
   const w = info.w, h = info.h, hx = info.cx - info.x0, y = gy - 60 - (info.top || 0) - lift, fade = kt > 1200 ? Math.max(0, 1 - (kt - 1200) / 700) : 1;
+  if (gdActive('f')) src = goreSrc('f', src, (px, py) => ({ x: dummy.x + (mirror ? -1 : 1) * (px - hx + ox), y: y + oy + py - gy })), oy += goreBob('f', now);      // (v1.128 GRAPHIC DAMAGE: without the limbs he has lost)
   if (!(kt >= 0 && dummy.rag && dummy.rag.ko === dummy.ko)) { ctx.fillStyle = 'rgba(0,0,0,' + 0.4 * fade + ')'; ctx.fillRect(sx - 9, gy + 3, 18, 2); ctx.fillRect(sx - 6, gy + 2, 12, 1); ctx.fillRect(sx - 6, gy + 5, 12, 1); }
   ctx.save();
   if (dummy.drag && kt < 0) {                 // v1.28 BLOOD DRAG: he lies flat on the floor, feet towards Verity, and is dragged by the feet
@@ -2484,7 +2487,7 @@ function startMatch(gi, story, retry, foe) { vs = { story: story === 'c3' ? 'c3'
 function beginRound(now) {                     // a fresh round: the scene is reset, the enemy steps in, "ROUND n" and "FIGHT!"
   const keep = vs, gore = keep.story && keep.foe === 'cat' ? [gibs, drops, decals, pools] : null; show('play'); vs = keep; if (gore) [gibs, drops, decals, pools] = gore; ceReset(); const t = pnow(), G = GRADES[vs.gi]; if (vs.c3) c3Begin(t);      // (chapter 2's fight: the street and Verity's STOP are set up, see chap2.js)
   Object.assign(vs, { ph: 'intro', t0: t, tl: vs.story ? 1e9 : ROUND_MS, hp: PHP, sh: PHP, hist: [], seenAtk: -1, seenAt: 0, seenK: 0, rolled: true, whiffAt: -1, prevAtk: -1, hitAt: -9999, why: '', who: '', koAt: 0, crater: null }); blindOff = false; bfo = null; bfp = false;
-  spawnDummy(t, 'fighter'); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); if (vs.net) { dummy.net = true; dummy.max = dummy.hp = dummy.shown = PHP; dummy.x = dummy.tx = wx + NET_G0; dummy.pose = null; vs.toSent = false; }      // (the Wi-Fi fight: the other player, drawn from his phone's pictures)
+  spawnDummy(t, 'fighter'); goreReset(); dummy.max = Math.round(DUMMY_HP * G.hp); dummy.hp = dummy.shown = dummy.max; dummy.spd = G.spd; dummy.x = wx + Math.max(44, Math.min(90, (VW >> 1) - 84)); if (vs.net) { dummy.net = true; dummy.max = dummy.hp = dummy.shown = PHP; dummy.x = dummy.tx = wx + NET_G0; dummy.pose = null; vs.toSent = false; }      // (the Wi-Fi fight: the other player, drawn from his phone's pictures)
   vdg = cst = null; smear.length = drip.length = 0; cProj = []; if (vs.rush) rushSpawn(t); else if (vs.cv) initCurse(dummy, vs.cv, wx + Math.max(54, Math.min(90, (VW >> 1) - 70)), vs.hard ? 1.5 : 1);      // (a challenge: the curse steps in; a RUSH wave: one or two)
   $('vsres').classList.remove('on');      // (REMATCH and NEXT start a new fight: the result screen goes away. Since v7.12 this line had slipped into a comment, so the result screen stayed on top of the new fight)
   netPull = null; ripRun = null; lagRun = null; vp = vpNew(); cp = cpNew(); hg = null; pwFx.length = 0; tz = null; lk = 0; js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; wvx = 0; deb = []; lit = []; vs.rag = null; vh = null; ac = null; acWin = 0; acGo = false; acPend = -1; redAt = -1; redLast = -1e9; escQ = -1; flow = 0; flowOn = false; flowLast = -1; flowSw = -1; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
@@ -2547,7 +2550,7 @@ function vsTick(now, dt) {
     if (!domLock()) vs.tl -= dt * 1000 / paceNow();      // (the round timer counts real seconds, whatever the pace)
     if (vs.hunt) huntTick(now, dt);
     if (atkAt < 0 && vs.prevAtk >= 0 && dummy && dummy.hitAt < vs.prevAtk) vs.whiffAt = now;      // Gojo's swing ended without hitting: he is open for a moment
-    vs.prevAtk = atkAt;
+    vs.prevAtk = atkAt; goreTick(now, dt);      // (v1.128 GRAPHIC DAMAGE)
     if (vs.tl <= 0) { if (vs.net) netTimeUp(now); else endRound(!vs.rush && !vs.hunt && vs.hp / PHP > (dummy ? dummy.hp / dummy.max : 0) ? 'player' : 'enemy', 'time', now); }
   } else if (vs.ph === 'ko' && a >= KO_MS) { if (vs.story || vs.hunt || (vs.rush ? vs.ew >= 1 || vs.pw >= vs.run.waves.length : vs.pw >= 2 || vs.ew >= 2)) finishMatch(now); else { vs.round++; beginRound(now); return; } }      // the round is over: whoever got the point, the next round starts fresh (full health, new positions)
   if (now - vs.hitAt > 350) vs.sh += (vs.hp - vs.sh) * Math.min(1, dt * 4);
@@ -2556,6 +2559,7 @@ function vsTick(now, dt) {
   if (vs.net) { ceReq = domReq = false; fatReq = 0; senseReq = false; if (!(vs.me === 'gojo' && jumpAt >= 0)) lpReq = false; if (vs.me === 'cat' && jumpAt >= 0) atkReq = false; }      // (the Wi-Fi fight: no MODE, DOMAIN or FATAL for now, BLUE only as Gojo's teleport in the air, no ARM HANG for the Cat (ATTACK in the air), no PIERCE for Freddy (a long hold); everything is unlocked, INHERITENCE and what hangs on it excepted)
   if (vs.me === 'cat') { ceReq = false; if (stance !== 'stand') blockHeld = false; }      // the Cat has no MODE; he blocks standing only (flat nothing can hit him anyway)
   if (vs.me === 'yuji') { if (stance !== 'stand') { if (stance !== 'crouch') atkReq = false; blockHeld = false; if (stance !== 'crouch') lpReq = false; } }      // Yuji has his M1 combo, BLUE (DIVERGENT FIST standing, CONCENTRATED FIST in cursed energy mode, crouched: the SWEEP in normal mode and the UPPERCUT, then the FACE KICK, in cursed energy mode), the cursed energy MODE (off <-> on, no red mode), block, walking, jumping, crouching and dashing (v1.46: the DOMAIN button is his ULTIMATE; v1.48: crouched, ATTACK is his two crouch punches, R.JAB and L.UPPR, with the skill CROUCH PUNCHES)
+  goreGate(now);      // (v1.128 GRAPHIC DAMAGE: the controls with the limbs you have lost)
 }
 function vsHurt(dm, now) { if (dom) return; if (cuMe()) dm = Math.max(1, Math.round(dm * PHP / cuS.hp)); vs.hp = Math.max(0, vs.hp - dm); vs.hitAt = now; if (vs.hp <= 0) { if (!vs.story || vs.foe === 'cat' || vs.tn) { endRound('enemy', 'ko', now); if (vs.net && vs.ph === 'ko' && vs.who === 'enemy') lanSend('K|'); } else if (!de && !se) deathStart(now); } }      // (in the story fight Gojo's death is a cutscene)
 function endRound(who, why, now) {
@@ -3299,7 +3303,8 @@ function drawCE(now, x, y, info, fi) {       // CURSED ENERGY: unstable cyan fla
   }
 }
 const yLunge = () => { if (vs && vs.me === 'yuji' && atkK === 3) wxv += 100; if (vs && vs.me === 'yuji' && cm === 3 && atkK >= 20 && atkK <= 22 && dummy && dummy.ko < 0) { const g = dummy.x - wx; if (g > 18) wxv += Math.min(170, (g - 18) * 7); } };      // (INHERITENCE: every hit of its chain closes up to the enemy, so the chain connects)      // Yuji's jump kick hops forward about 14 px
-function pickAtk() {                          // crouched: the low jab and the uppercut; cursed energy on: the 4-hit combo (jab, kick, cross with the other hand, kick with the other leg; Yuji: roundhouse, elbow, downslam, push kick); otherwise the normal combo
+function pickAtk() { let k = pickAtk0(); for (let n = 0; n < 6 && !goreOkMove('p', k); n++) k = pickAtk0(); return k; }      // (v1.128 GRAPHIC DAMAGE: a swing that needs a lost limb is skipped)
+function pickAtk0() {                          // crouched: the low jab and the uppercut; cursed energy on: the 4-hit combo (jab, kick, cross with the other hand, kick with the other leg; Yuji: roundhouse, elbow, downslam, push kick); otherwise the normal combo
   if (stance === 'crouch') { const k = (vs && vs.me === 'yuji' ? 30 : 6) + cpIdx; cpIdx ^= 1; return k; }      // (Yuji's own two, v1.48: swings 30 and 31, the hits are the same 6 and 7)
   if (cm === 3 && vs && vs.me === 'yuji') { const k = 20 + rdIdx; rdIdx = (rdIdx + 1) % 4; return k; }      // INHERITENCE: black flash punch, black flash kick to the head, black flash blow to the stomach, the CHARGED BLACK FLASH
   if (cm === 1) { const k = (vs && vs.me === 'yuji' ? 5 : 14) + wcIdx; wcIdx = (wcIdx + 1) % 4; return k; }
@@ -3794,7 +3799,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   const ry = Math.round(info.h * (1 - e)), gko = vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // (spawn: he materialises from the feet up; beaten: he topples backwards and stays down until the next round)
   ctx.save();
   if (vap) { /* gone */ } else if (gko >= 0) { const rgh = ragXf(vs.rag, gko, cx, gy + 2, -1); if (!rgh) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); } ctx.drawImage(vs.meInv ? invOf(vfr('idle', 0, false)) : vfr('idle', 0, false), -32, -62 + rgh); }
-  else { ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(vs.meInv && !(hf >= 0 && now - hurtAt < 70) ? invOf(src) : src, x, y); if (stun && hf < 0) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(src), x, y); } }
+  else { ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); { const gs = gdActive('p') ? goreSrc('p', src, (px, py) => ({ x: wx + (x + px - cx), y: y + py - gy })) : src; ctx.drawImage(vs.meInv && !(hf >= 0 && now - hurtAt < 70) ? invOf(gs) : gs, x, y); } if (stun && hf < 0) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(src), x, y); } }
   ctx.restore(); if (hum && t >= 1 && gko < 0 && !vap && !(lagRun && lagRun.ph === 'hit')) cloth(clMe, src, x + (src === RIP_C ? Math.round(ripK(now, ripRun.at).lean) : 0), y, false, 'verity', dt); drawGiantNow('foe');
   if (v.form === 'smoke1') smokePuffs(cx, gy - 28, fa / 450); else if (v.form === 'smoke2') smokeBig(cx, fa / 1000);
   if (t < 1) {      // spawn ring + flash
@@ -4286,7 +4291,7 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   if (hg && hg.ph === 'hang' && now - hg.at < 3200) pxt('DOWN: SMASH', cx, Math.round(gy + 2 - py + 13), ((now / 220) | 0) % 2 ? '#fff3b0' : '#ffd34d', 8, 'center');      // (v1.114 the hint, under his feet for the first three seconds)
   ctx.save();
   if (vap) { /* gone */ } else if (gko >= 0) { const rgh = ragXf(vs.rag, gko, cx, gy + 2, -1); if (!rgh) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); } ctx.drawImage(vs.meInv ? invOf(cfr('idle', 0, false)) : cfr('idle', 0, false), -32, -63 + rgh); }
-  else { ctx.beginPath(); ctx.rect(x, y + ry, I[0], I[1] - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(vs.meInv && !white ? invOf(src) : src, x, y); if (fear && hf < 0) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(src), x, y); } }
+  else { ctx.beginPath(); ctx.rect(x, y + ry, I[0], I[1] - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); { const gs = gdActive('p') ? goreSrc('p', src, (px, py) => ({ x: wx + (x + px - cx), y: y + py - gy })) : src; ctx.drawImage(vs.meInv && !white ? invOf(gs) : gs, x, y); } if (fear && hf < 0) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(src), x, y); } }
   ctx.restore(); if (!flat && t >= 1 && gko < 0 && !vap) cloth(clMe, src, x, y, false, 'cat', dt);
   drawGiantNow('foe'); drawCst(now);      // (the enemy Cat's giant, if he summoned one: in front of the player, behind the enemy)
   if (t < 1) {      // spawn ring + flash
@@ -4414,6 +4419,7 @@ __TRAIN__
 __REST__
 __CONT__
 __CUSTOM__
+__GORE__
 __SUKUNA__
 __CHAP2__
 __CHAP2B__
@@ -4670,7 +4676,7 @@ function drawScene(now, dt) {
   const lk = tele && info.lift_k ? info.lift_k[tf] : 0;      // teleport: stays where he vanished (null), then the fixed height he reappears at, falling back to the ground (v1.52: no lift_k while another picture has priority, e.g. the blindfold going back on at the end of his own void: that crashed the frame)
   const lift = gAir ? gAirH : yj ? (yu ? yu.lift : yj.lift) : riding ? ride.lift : tele ? (lk === null ? teleL0 : Math.round(Math.min(34, gy - 66) * lk)) : jumping ? (jumpC ? D.cjump : D.jump).lift[jf] : hurting && info.lift ? info.lift[hf] : 0;   // how far the sprite is raised off the ground
   gojoLift = lift; gojoGone = tele && tf < 6;   // the attacking dummy misses him while he is up in the air or vanished
-  const cx = Math.round(VW / 2), fo = fearing ? fearOff(now) : ultHeldOff(now), x = cx - (info.cx - info.x0) + fo[0], y = gy - 60 - info.top - lift + fo[1];
+  const cx = Math.round(VW / 2), fo = fearing ? fearOff(now) : ultHeldOff(now), x = cx - (info.cx - info.x0) + fo[0], y = gy - 60 - info.top - lift + fo[1] + goreBob('p', now);
   if (vs && vs.net) netPic(set[fi], cx, x, y, lift);
 
   const vap = vs && vs.who === 'enemy' && vs.why === 'fatal' && (vs.ph === 'ko' || vs.ph === 'over');      // the enemy's FATALITY: Gojo is gone until the next round
@@ -4686,7 +4692,7 @@ function drawScene(now, dt) {
   else {
     ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip();
     ctx.globalAlpha = Math.min(1, t * 2);
-    { const gp = (ceOn && (cm === 2 ? HOMAPR : HOMAP).get(set) || set)[fi]; const pp = rmvK ? rmvPic(gp, rmvI) : blindOff && !yj ? blindDown(gp) : gp; const zn = yj && (cm >= 2 || yu) ? zoneFxPre(now, info, set[fi], x, y, af, atkOn) : false; ctx.drawImage(vs && vs.meInv && !(hurting && now - hurtAt < 70) ? invOf(pp) : pp, x, y); if (zn) ctx.restore(); } if (yj && hurting && now - hurtAt < 70) ctx.drawImage(whiteOf(set[fi]), x, y);        // cursed energy on: both hands out of the pockets
+    { const gp0 = (ceOn && (cm === 2 ? HOMAPR : HOMAP).get(set) || set)[fi], gp = gdActive('p') ? goreSrc('p', gp0, (px, py) => ({ x: wx + (x + px - cx), y: y + py - gy })) : gp0; const pp = rmvK ? rmvPic(gp, rmvI) : blindOff && !yj ? blindDown(gp) : gp; const zn = yj && (cm >= 2 || yu) ? zoneFxPre(now, info, set[fi], x, y, af, atkOn) : false; ctx.drawImage(vs && vs.meInv && !(hurting && now - hurtAt < 70) ? invOf(pp) : pp, x, y); if (zn) ctx.restore(); } if (yj && hurting && now - hurtAt < 70) ctx.drawImage(whiteOf(set[fi]), x, y);        // cursed energy on: both hands out of the pockets
     if (fearing) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(blindOff && !yj ? blindDown(set[fi]) : set[fi]), x, y); }      // (JUMPSCARE: a pale pulse; with the blindfold down it follows the redrawn head)
   }
   ctx.restore(); if (!again) drawGiantNow('foe');
@@ -5083,14 +5089,14 @@ function c2Court(now, dt, t) {      // the grounds of Jujutsu High: the Cat on t
   const fa = t < 0.5 ? 1 - t / 0.5 : t > C2_B.fade ? Math.min(1, (t - C2_B.fade) / 0.6) : 0; if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
 }
 const WCACHE = new Map();
-function whiteOf(img) { let c = WCACHE.get(img); if (c) return c; c = document.createElement('canvas'); c.width = img.naturalWidth || img.width || 64; c.height = img.naturalHeight || img.height || 64; const g = c.getContext('2d'); g.drawImage(img, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); c.__base = img; if (!(img instanceof HTMLImageElement) || (img.complete && img.naturalWidth)) WCACHE.set(img, c); return c; }
+function whiteOf(img) { let c = WCACHE.get(img); if (c) return c; c = document.createElement('canvas'); c.width = img.naturalWidth || img.width || 64; c.height = img.naturalHeight || img.height || 64; const g = c.getContext('2d'); g.drawImage(img, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); c.__base = img; { const m = MKM.get(img); if (m) MKM.set(c, { s: m.s, i: m.i, pal: GWHITE }); } if (!(img instanceof HTMLImageElement) || (img.complete && img.naturalWidth)) WCACHE.set(img, c); return c; }
 const VFC = new Map();      // Verity's pictures: one 64x64 canvas per frame, cut out of the 15-frame strips the first time it is needed
 function vfr(name, fi, loop, inv) {      // inv: the colours inverted (an enemy Verity fighting a Verity)
   fi = loop ? ((Math.floor(fi) % 15) + 15) % 15 : Math.max(0, Math.min(14, Math.floor(fi))); const key = name + fi + (inv ? 'i' : ''), hit = VFC.get(key); if (hit) return hit;
   const s = SIMG.vanim && SIMG.vanim[name]; if (!s || !s.complete || !s.naturalWidth) return SIMG.verity;
   const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.drawImage(s, fi * 64, 0, 64, 64, 0, 0, 64, 64);
   if (inv) { const im = g.getImageData(0, 0, 64, 64), d = im.data; for (let i = 0; i < d.length; i += 4) if (d[i + 3]) { d[i] = 255 - d[i]; d[i + 1] = 255 - d[i + 1]; d[i + 2] = 255 - d[i + 2]; } g.putImageData(im, 0, 0); }
-  c.__nd = 'v:' + name + ',' + fi + ',false,' + !!inv; VFC.set(key, c); return c;
+  goreReg(c, GVE, name, fi, GD.verity, inv); c.__nd = 'v:' + name + ',' + fi + ',false,' + !!inv; VFC.set(key, c); return c;
 }
 const VRXI = { w: 96, h: 64, cx: 64, x0: 0, top: 0 }, VRX_LIFT = { 7: [0, 3, 6, 9, 10, 10, 10, 9, 7, 5, 3, 2, 1, 0, 0] }, VRXIN = Array.from({ length: 10 }, (_, k) => VRX_LIFT[k] ? { ...VRXI, lift: VRX_LIFT[k] } : VRXI), VRC = new Map();      // (the hop of reaction 7 is raised by the game)
 function vrx(k, fi, inv) {      // Verity's hit reaction k (0-9), frame fi (0-14): a 96x64 picture cut out of the strip rx<k>; the colours inverted for the enemy Verity fighting a Verity
@@ -5099,7 +5105,7 @@ function vrx(k, fi, inv) {      // Verity's hit reaction k (0-9), frame fi (0-14
   if (!s || !s.complete || !s.naturalWidth) { g.drawImage(vfr('hurt', fi, false, inv), 32, 0); return c; }      // (not loaded yet: his old hurt picture in the same place, not kept)
   g.drawImage(s, fi * 96, 0, 96, 64, 0, 0, 96, 64);
   if (inv) { const im = g.getImageData(0, 0, 96, 64), d = im.data; for (let i = 0; i < d.length; i += 4) if (d[i + 3]) { d[i] = 255 - d[i]; d[i + 1] = 255 - d[i + 1]; d[i + 2] = 255 - d[i + 2]; } g.putImageData(im, 0, 0); }
-  c.__nd = 'r:' + k + ',' + fi + ',' + !!inv; VRC.set(key, c); return c;
+  goreReg(c, GVE, 'rx' + k, fi, GD.verity, inv); c.__nd = 'r:' + k + ',' + fi + ',' + !!inv; VRC.set(key, c); return c;
 }
 function storyLook(now, reacting, hitT, kt) {      // what the story enemy looks like: every move has its own 15-frame animation
   const d = dummy, f = d.vform || 'verity', info = { w: 64, h: 64, cx: 32, x0: 0, top: 0 }; let name = 'idle', fi = now / 100, loop = true, lift = 0, ox = 0, oy = 0, rk = -1;
@@ -5149,7 +5155,7 @@ function cfr(name, fi, loop, inv) {      // inv: the colours inverted (an enemy 
   const s = SIMG.cat && SIMG.cat[name], I = CAT_CELL[name]; if (!s || !s.complete || !s.naturalWidth) return EMPTY;
   const c = document.createElement('canvas'); c.width = I[0]; c.height = I[1]; const g = c.getContext('2d'); g.drawImage(s, fi * I[0], 0, I[0], I[1], 0, 0, I[0], I[1]);
   if (inv) { const im = g.getImageData(0, 0, I[0], I[1]), d = im.data; for (let i = 0; i < d.length; i += 4) if (d[i + 3]) { d[i] = 255 - d[i]; d[i + 1] = 255 - d[i + 1]; d[i + 2] = 255 - d[i + 2]; } g.putImageData(im, 0, 0); }
-  c.__nd = 'c:' + name + ',' + fi + ',false,' + !!inv; CFC.set(key, c); return c;
+  goreReg(c, GCA, name, fi, GD.cat, inv); c.__nd = 'c:' + name + ',' + fi + ',false,' + !!inv; CFC.set(key, c); return c;
 }
 function catLook(now, reacting, hitT, kt) {      // what the Cat looks like: every move has its own 15-frame animation
   const d = dummy, a = d.cact; let name = 'idle', fi = now / 125, loop = true;
@@ -5703,6 +5709,7 @@ function playerSlide(dt) {      // yours
   const v1 = slideV(wxv, dt); wx += 0.5 * (wxv + v1) * dt; wxv = v1; if (Math.abs(v1) > 110) slideGrit(wx, v1, slGr);
 }
 function walkVel(target, dt, air) {      // the legs: a limited push towards the speed you want (the old game: straight to it)
+  target *= goreSpd();      // (v1.128 GRAPHIC DAMAGE: one leg is a hop, none a crawl)
   if (!physOn()) return wvx = target;
   const a = (air ? 140 : target === 0 ? 800 : (wvx * target < 0 ? 900 : 520)) * Math.max(1, Math.max(Math.abs(target), Math.abs(wvx)) / FWD_SPEED), d = target - wvx;
   wvx += Math.max(-a * dt, Math.min(a * dt, d)); if (!air && Math.abs(wvx) > 44) runGrit(); return wvx;
@@ -5978,57 +5985,57 @@ const FRED_INFO = { w: 64, h: 64, cx: 31, x0: 0, top: 1 }, FRC = new Map();     
 function fredF(i, walk) {      // frame i of his idle (15 frames, looping), or of his WALK when walk is true (15 frames too), as a canvas of 64 x 64 (EMPTY until the sheet has loaded)
   i = ((Math.floor(i) % 15) + 15) % 15; const key = fredLast = i + (walk ? 15 : 0); let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
-  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, walk ? 64 : 0, 64, 64, 0, 0, 64, 64); c.__nd = 'F:' + i + ',' + !!walk; FRC.set(key, c); return c;
+  c = document.createElement('canvas'); c.width = c.height = 64; goreFredCut(c, i * 64, walk ? 64 : 0, 64, 64, 0, 0, 64, 64); c.__nd = 'F:' + i + ',' + !!walk; FRC.set(key, c); return c;
 }
 function fredJ(k) {      // frame k (0-39) of his JUMP as a canvas of 64 x 64: the sheet has them in rows 3 to 5, 15 to a row
   k = Math.max(0, Math.min(39, Math.floor(k))); const key = fredLast = 100 + k; let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
-  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, (k % 15) * 64, (2 + ((k / 15) | 0)) * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'J:' + k; FRC.set(key, c); return c;
+  c = document.createElement('canvas'); c.width = c.height = 64; goreFredCut(c, (k % 15) * 64, (2 + ((k / 15) | 0)) * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'J:' + k; FRC.set(key, c); return c;
 }
 function fredC(kind, i) {      // picture i (0-14) of the crouch family as a canvas of 64 x 64: kind 0 = going down into the crouch (standing up plays them backwards, picture 14 is the crouch itself), 1 = from the crouch into the jump (it ends with the take-off picture of the jump), 2 = from the jump into the crouch (it starts with the touch-down picture of the jump): the sheet has them in rows 6 to 8
   i = Math.max(0, Math.min(14, Math.floor(i))); const key = fredLast = 200 + kind * 15 + i; let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
-  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, (5 + kind) * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'C:' + kind + ',' + i; FRC.set(key, c); return c;
+  c = document.createElement('canvas'); c.width = c.height = 64; goreFredCut(c, i * 64, (5 + kind) * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'C:' + kind + ',' + i; FRC.set(key, c); return c;
 }
 function fredA(kind, i) {      // picture i (0-14) of his M1 as a canvas of 64 x 64: kind 0 = the claw slash, 1 = the slash with his bare hand: the sheet has them in rows 9 and 10; kind 6 = the CROUCH RAKE (v1.86, row 13 of the sheet, drawn 8 px to the left: see FRED_RAKE_X)
   i = Math.max(0, Math.min(14, Math.floor(i))); const key = fredLast = kind === 6 ? 500 + i : 300 + kind * 15 + i; let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
-  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, (kind === 6 ? 12 : 8 + kind) * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'A:' + kind + ',' + i; FRC.set(key, c); return c;
+  c = document.createElement('canvas'); c.width = c.height = 64; goreFredCut(c, i * 64, (kind === 6 ? 12 : 8 + kind) * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'A:' + kind + ',' + i; FRC.set(key, c); return c;
 }
 function fredW(i) {      // picture i (0-14) of his CROUCH WALK (v1.86: two small steps in the crouch's own stance, row 12 of the sheet) as a canvas of 64 x 64
   i = ((Math.floor(i) % 15) + 15) % 15; const key = fredLast = 600 + i; let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
-  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, 11 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'W:' + i; FRC.set(key, c); return c;
+  c = document.createElement('canvas'); c.width = c.height = 64; goreFredCut(c, i * 64, 11 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'W:' + i; FRC.set(key, c); return c;
 }
 function fredBW(i) {      // picture i (0-14) of his BLOCK WALK (v1.87: row 13 of the sheet; only its legs and hips are used, fredPose draws the rest) as a canvas of 64 x 64
   i = ((Math.floor(i) % 15) + 15) % 15; const key = fredLast = 700 + i; let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
-  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, 13 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'B:' + i; FRC.set(key, c); return c;
+  c = document.createElement('canvas'); c.width = c.height = 64; goreFredCut(c, i * 64, 13 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'B:' + i; FRC.set(key, c); return c;
 }
 function fredCB(i) {      // picture i (0-2) of his CROUCH BLOCK (v1.87, row 14 of the sheet, drawn 8 px to the left like the crouch rake: see FRED_RAKE_X): 0 the claw coming up, 1 the hold, 2 the catch
   i = Math.max(0, Math.min(2, Math.floor(i))); const key = fredLast = 800 + i; let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
-  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, 14 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'X:' + i; FRC.set(key, c); return c;
+  c = document.createElement('canvas'); c.width = c.height = 64; goreFredCut(c, i * 64, 14 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'X:' + i; FRC.set(key, c); return c;
 }
 function fredH(kind, i) {      // picture i (0-9) of his HURT reaction of kind 0-3 (v1.89, rows 15-18 of the sheet): 0 head snap, 1 doubled over, 2 stagger, 3 knocked down (falls, lies, sits up) as a canvas of 64 x 64
   kind = Math.max(0, Math.min(3, kind | 0)); i = Math.max(0, Math.min(9, Math.floor(i))); const key = fredLast = 900 + kind * 10 + i; let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
-  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, (15 + kind) * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'H:' + kind + ',' + i; FRC.set(key, c); return c;
+  c = document.createElement('canvas'); c.width = c.height = 64; goreFredCut(c, i * 64, (15 + kind) * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'H:' + kind + ',' + i; FRC.set(key, c); return c;
 }
 function fredK(i) {      // picture i (0-14) of his K.O. (v1.89, row 19 of the sheet): struck, thrown back, falls flat, a small bounce, lies (the last one holds) as a canvas of 64 x 64
   i = Math.max(0, Math.min(14, Math.floor(i))); const key = fredLast = 1000 + i; let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
-  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, 19 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'K:' + i; FRC.set(key, c); return c;
+  c = document.createElement('canvas'); c.width = c.height = 64; goreFredCut(c, i * 64, 19 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'K:' + i; FRC.set(key, c); return c;
 }
 function fredT(i) {      // picture i (0-14) of the TOUCH of his boiling water move (v1.90, row 20 of the sheet, drawn 8 px to the left: FRED_RAKE_X): he stoops and lays the claw hand on the floor; the last one holds
   i = Math.max(0, Math.min(14, Math.floor(i))); const key = fredLast = 1100 + i; let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
-  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, 20 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'T:' + i; FRC.set(key, c); return c;
+  c = document.createElement('canvas'); c.width = c.height = 64; goreFredCut(c, i * 64, 20 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'T:' + i; FRC.set(key, c); return c;
 }
 function fredR(i) {      // picture i (0-14) of the THROW of his boiling water move (v1.90, row 21 of the sheet, drawn 8 px to the left): he winds the hand back, scoops and flings; the water leaves on picture 7
   i = Math.max(0, Math.min(14, Math.floor(i))); const key = fredLast = 1200 + i; let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
-  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, 21 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'R:' + i; FRC.set(key, c); return c;
+  c = document.createElement('canvas'); c.width = c.height = 64; goreFredCut(c, i * 64, 21 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'R:' + i; FRC.set(key, c); return c;
 }
 // THE BOILING WATER (v1.90, his BLUE button, free): press BLUE and he stoops and lays his claw hand on the floor: the floor in front of him turns to WATER (27 pictures a second, a puddle spreads and shimmers, steam rises); it waits for 6 s (a blow on him, or the end of the round, dries it); press BLUE again and he scoops it up and FLINGS it (30 pictures a second, it leaves his hand on picture 7): a ball of water, heated until it steams, flies at the enemy (300 px/s, a little arc, 260 px far at the most) and SPLASHES on him: 25 damage, a flinch, and he BURNS for 8 s (1 damage every 0.8 s, flames on him; the same tick as the bite's bleeding). Nothing blocks it (the water goes over a guard). Not while jumping, crouched, swinging, hurt or blocking; while it lasts he stands still; 0.6 s before the next one.
 const FRED_WATER = { touchFps: 27, throwFps: 30, rel: 7, hold: 6000, speed: 300, reach: 260, dmg: 25, knock: 70, burn: 8000, gap: 800, cd: 600 };
@@ -6037,17 +6044,17 @@ const FRED_HF = [0, 1, 2, 0, 3, 2, 1, 3, 3, 2];      // which of his four hurt k
 function fredG(i) {      // picture i (0-9) of his GUARD BREAK reaction (v1.91, row 22 of the sheet): the claw arm is knocked up and back, the head snaps, he staggers and recovers
   i = Math.max(0, Math.min(9, Math.floor(i))); const key = fredLast = 1300 + i; let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
-  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, 22 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'G:' + i; FRC.set(key, c); return c;
+  c = document.createElement('canvas'); c.width = c.height = 64; goreFredCut(c, i * 64, 22 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'G:' + i; FRC.set(key, c); return c;
 }
 function fredY(i) {      // picture i (0-14) of his CROUCH DASH (v1.91, row 23 of the sheet, drawn 8 px to the left like the crouch rake: see FRED_RAKE_X): a low scuttle in the crouch, the claw dragging in front
   i = Math.max(0, Math.min(14, Math.floor(i))); const key = fredLast = 1400 + i; let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
-  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, 23 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'Y:' + i; FRC.set(key, c); return c;
+  c = document.createElement('canvas'); c.width = c.height = 64; goreFredCut(c, i * 64, 23 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'Y:' + i; FRC.set(key, c); return c;
 }
 function fredP(i) {      // picture i (0-14) of his PIERCE (v1.92, row 24 of the sheet, drawn 12 px to the left: FRED_PIERCE.x): 0-4 the charge (the claw drawn back and cocked), 5-14 the thrust (the blow lands on picture 8)
   i = Math.max(0, Math.min(14, Math.floor(i))); const key = fredLast = 1500 + i; let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
-  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, 24 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'P:' + i; FRC.set(key, c); return c;
+  c = document.createElement('canvas'); c.width = c.height = 64; goreFredCut(c, i * 64, 24 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'P:' + i; FRC.set(key, c); return c;
 }
 // HEAVY, CANCEL and the PIERCE (v1.92): HEAVY STRIKE and DASH CANCEL are the game's own (v1.31): keep ATTACK held after a hit (0.3 s) and he swings his last slash (L.SLASH) slower and harder (1.6 times the damage, it breaks a guard, +34 stagger; his swings are slower still, 0.75 times), press DASH during a slash that has hit and the dash takes over (CANCEL!, flow +20). His taps now fire when the finger lifts (like Verity's, so that a hold can be told from a tap): a hold that is let go before the pierce still slashes. THE PIERCE: press ATTACK and keep it held for 1.3 s with no combo going on (a hold that begins during a combo is a heavy): from 0.4 s he coils (the charge pictures follow the hold, red sparks gather at the claw, he stands still), at 1.3 s he drives the claw straight through the enemy (10 pictures at 20 a second, a short lunge, the blow on picture 3): 30 damage, a big flinch, and he BLEEDS for 4 s (1 damage every 0.1 s, the same as Verity's bite); nothing blocks it; 50 px of reach after the lunge; a miss leaves him open like any whiff.
 const FRED_PIERCE = { charge: 400, hold: 1300, fps: 20, len: 10, whoosh: 1, hit: 3, dmg: 30, knock: 120, bleed: 4000, reach: 50, x: 12 }, FRED_HEAVY_SLOW = 0.75;
@@ -6066,7 +6073,7 @@ let fredGBAt = -1e9, fredDashCr = false;      // when his guard was last broken 
 function fredD(i) {      // picture i (0-14) of his RUN (the dash) as a canvas of 64 x 64: row 11 of the sheet
   i = Math.max(0, Math.min(14, Math.floor(i))); const key = fredLast = 400 + i; let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
-  c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(FRED_IMG, i * 64, 10 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'D:' + i; FRC.set(key, c); return c;
+  c = document.createElement('canvas'); c.width = c.height = 64; goreFredCut(c, i * 64, 10 * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'D:' + i; FRC.set(key, c); return c;
 }
 // THE JUMP (v1.41, the whole body moves since v1.42: the torso leans into the squat and arches at the take-off, the head tips on the neck, both arms swing up and come down, see tools/freddy_art.py): 40 pictures over the whole jump (the same time line as every fighter's jump: 160 ms of squatting and pushing off, 713 ms in the air under gravity, 160 ms of landing: 1033 ms, 38.7 pictures a second): pictures 0-19 JUMP (the squat, the push-off, the take-off at picture 6, the rise and the tuck at the top), 20-39 LAND (the fall with the legs reaching down, the touch-down at picture 34, the knees absorbing, standing up). The picture is raised by the real height of the jump (22 px at the top), he keeps the speed he took off with and steers only a little in the air, and a blow knocks him out of it.
 const FRED_JUMP = JUMP_T.crouch + JUMP_T.air + JUMP_T.land; let fredJf = -1;
@@ -6372,7 +6379,7 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   const ry = Math.round(info.h * (1 - e)), gko = vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // (spawn: he materialises from the feet up; beaten: he tumbles and stays down until the next round)
   ctx.save();
   if (vap) { /* gone */ } else if (gko >= 0) { const r = vs.rag, c = r ? ragAt(r, gko) : null, air = c ? Math.max(0, c.h - (r.hh * Math.abs(Math.cos(c.a)) + r.hw * Math.abs(Math.sin(c.a)))) : 0, sx = Math.round(cx - (c ? c.x : 0)), w = Math.max(5, Math.round(9 * (1 - Math.min(1, air / 48)))); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(sx - w, gy + 3, w * 2, 2); ctx.fillRect(sx - Math.round(w * 0.66), gy + 2, Math.round(w * 1.32), 1); ctx.fillRect(sx - Math.round(w * 0.66), gy + 5, Math.round(w * 1.32), 1); ctx.drawImage(vs.meInv ? invOf(fredK(gko / 38)) : fredK(gko / 38), sx - info.cx, gy + 2 - 62 - Math.round(air)); }      // (v1.89: his K.O. pictures, carried by the game's tumble: how far he is thrown and how high he is is the physics', the falling and the lying are drawn)
-  else { ctx.beginPath(); ctx.rect(x, y + ry, armOn ? 96 : info.w, info.h - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(vs.meInv ? (src === FRED_PC ? invNow(src) : invOf(src)) : src, x, y); if (hf >= 0 && now - hurtAt < 70 && src !== FRED_PC) ctx.drawImage(whiteOf(src), x, y); }
+  else { ctx.beginPath(); ctx.rect(x, y + ry, armOn ? 96 : info.w, info.h - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); { const gs = src !== FRED_PC && gdActive('p') ? goreSrc('p', src, (px, py) => ({ x: wx + (x + px - cx), y: y + py - gy })) : src; ctx.drawImage(vs.meInv ? (src === FRED_PC ? invNow(src) : invOf(gs)) : gs, x, y); } if (hf >= 0 && now - hurtAt < 70 && src !== FRED_PC) ctx.drawImage(whiteOf(src), x, y); }
   ctx.restore(); drawGiantNow('foe'); fwDraw(now, cx);
   if (t < 1) {      // spawn ring + flash
     const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,225,110,' + (1 - t) + ')';
@@ -6657,7 +6664,7 @@ function applyCtl() {      // the size, see-through-ness, height and side of the
 }
 const OPT_DEF = {      // [key, name, 'r' (a slider: min, max, step, unit) or 't' (a button that cycles: names, values)]
   optC: [['sz', 'BUTTON SIZE', 'r', 70, 120, 5, '%'], ['op', 'BUTTON OPACITY', 'r', 30, 100, 5, '%'], ['up', 'RAISE BUTTONS', 'r', 0, 20, 1, ''], ['lh', 'SIDE', 't', ['RIGHT-HANDED', 'LEFT-HANDED']], ['hap', 'VIBRATION', 't', ['OFF', 'LIGHT', 'STRONG']]],
-  optG: [['fps', 'FRAME RATE', 't', ['AUTO', '30 FPS', '60 FPS'], [0, 30, 60]], ['lite', 'BATTERY SAVER', 't', ['OFF', 'ON']], ['ap', 'AUTO-PAUSE', 't', ['OFF', 'ON']], ['assist', 'ASSIST', 't', ['OFF', 'PARRY+', 'EASY', 'AUTO-GUARD']], ['pace', 'GAME PACE', 't', ['NORMAL', 'FAST', 'TURBO']], ['hb', 'SHOW HITBOXES', 't', ['OFF', 'ON']]] };
+  optG: [['fps', 'FRAME RATE', 't', ['AUTO', '30 FPS', '60 FPS'], [0, 30, 60]], ['lite', 'BATTERY SAVER', 't', ['OFF', 'ON']], ['ap', 'AUTO-PAUSE', 't', ['OFF', 'ON']], ['assist', 'ASSIST', 't', ['OFF', 'PARRY+', 'EASY', 'AUTO-GUARD']], ['pace', 'GAME PACE', 't', ['NORMAL', 'FAST', 'TURBO']], ['hb', 'SHOW HITBOXES', 't', ['OFF', 'ON']], ['gore', 'GRAPHIC DAMAGE', 't', ['FULL', 'CLEAN', 'OFF']]] };
 function buildOpts() {
   for (const id in OPT_DEF) {
     const box = $(id); box.innerHTML = '';

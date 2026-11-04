@@ -1,7 +1,10 @@
 """Verity's 15-frame animations (64x64, facing right; the game mirrors them). A little rig of joints is drawn with polygons, shaded, detailed and outlined like the first-form sprite.
 anim(name) -> 15 frames. run: python3 verity_rig.py  ->  verity_anims.json (name -> png strip, 15 frames wide) and verity_sheet.png. The ten hit reactions rx0..rx9 are 15 cells of 96x64 (not 64x64): the figure is pasted 32 px to the right, so his centre column lands on x=64."""
-import math, io, json, base64, copy
+import math, io, json, base64, copy, os
 from PIL import Image, ImageDraw
+_GM = dict(kv.split('=') for kv in os.environ.get('GORE_MODE', '').split(';') if '=' in kv)      # v1.128 GRAPHIC DAMAGE (tools/gore_export.py): 'omit=an,af' pictures without a limb, 'foot=an' only the pixels of that limb, 'joint=1' the joints marked, 'swap=1' the arms exchanged (an = the right arm, af = the left, lf = the right leg, lb = the left)
+OMIT = set(filter(None, _GM.get('omit', '').split(','))); FOOT = _GM.get('foot', ''); JMARK = _GM.get('joint') == '1'; SWAP = _GM.get('swap') == '1'
+JCOL = {'an': (1, 2, 3, 255), 'af': (1, 2, 4, 255), 'lf': (1, 2, 5, 255), 'lb': (1, 2, 6, 255)}
 S = 64; BASE, LIT, HI, SH, DK, OL, RIB, CLAW = (172,156,48), (206,192,80), (232,218,134), (128,114,38), (88,76,26), (26,18,6), (104,90,26), (62,52,16)
 STAND = dict(hx=32, hy=6.5, sy=17, hp=36, lean=0, m=0, aL=((21,34),(20.5,52)), aR=((43,34),(43.5,52)), lL=((29.5,47),(30,59)), lR=((34.5,47),(34,59)), fade=0, glitch=0, vg=0, ribs=1, bl=0, nohead=0)
 mix = lambda a, b, t: tuple(mix(x, y, t) for x, y in zip(a, b)) if isinstance(a, tuple) else a + (b - a) * t
@@ -14,6 +17,8 @@ def keys(kf, f):                                    # kf: [(frame, pose)], eased
         if f0 <= f <= f1: return blend(p0, p1, ease((f - f0) / max(1, f1 - f0)))
     return kf[-1][1] if f > kf[-1][0] else kf[0][1]
 def render(p):
+    if SWAP:      # (the arms change roles: each arm gets the other's pose, measured from its own shoulder)
+        p = dict(p); (e1, h1), (e2, h2) = p['aL'], p['aR']; p['aL'], p['aR'] = ((e2[0] - 16, e2[1]), (h2[0] - 16, h2[1])), ((e1[0] + 16, e1[1]), (h1[0] + 16, h1[1]))
     m = Image.new('L', (S, S), 0); d = ImageDraw.Draw(m); hx, hy, sy, hp, ln = p['hx'], p['hy'], p['sy'], p['hp'], p['lean']
     sh = lambda y: ln * max(0.0, min(1.2, (hp - y) / 20))
     ty = lambda y: (sy - 2) + (y - 15) * (hp - (sy - 2)) / 21
@@ -23,15 +28,22 @@ def render(p):
         d.polygon([(hx - 2, hy + 3.5), (hx + 2, hy + 3.5), (33 + sh(sy), sy - 1), (31 + sh(sy), sy - 1)], fill=255)      # neck
     T = [(30,15),(34,15),(40,17),(37,19),(37,24),(36,29),(35,33),(36,36),(28,36),(29,33),(28,29),(27,24),(27,19),(24,17)]
     d.polygon([(x + sh(ty(y)), ty(y)) for x, y in T], fill=255)                                                           # shoulders, ribcage, belly
+    mf = Image.new('L', (S, S), 0); df = ImageDraw.Draw(mf); JT = {}      # (mf: the pixels of the limb that FOOT names; JT: where the limbs join the body)
     for k, (E, H) in (('L', p['aL']), ('R', p['aR'])):
-        S0 = (24 + sh(sy) if k == 'L' else 40 + sh(sy), sy); d.line([S0, E, H], fill=255, width=2); d.ellipse((H[0] - 1.6, H[1] - 1.6, H[0] + 1.6, H[1] + 1.6), fill=255)
+        tg = 'af' if k == 'L' else 'an'; S0 = (24 + sh(sy) if k == 'L' else 40 + sh(sy), sy); JT[tg] = S0
+        if tg in OMIT: continue
+        for dd in ((d, df) if FOOT == tg else (d,)): dd.line([S0, E, H], fill=255, width=2); dd.ellipse((H[0] - 1.6, H[1] - 1.6, H[0] + 1.6, H[1] + 1.6), fill=255)
     for k, (K, A) in (('L', p['lL']), ('R', p['lR'])):
-        x0 = 30 if k == 'L' else 34; sg = -1 if k == 'L' else 1; d.line([(x0, hp - 1), K, A], fill=255, width=3); ay = A[1]
-        d.polygon([(A[0] - 2 * sg + 0, ay), (A[0] + sg, ay), (A[0] + sg, ay + 2), (A[0] + 6 * sg, ay + 3), (A[0] + 6 * sg, ay + 2)] if sg > 0 else [(A[0] - 1.5, ay), (A[0] + 2, ay), (A[0] + 2, ay + 2), (A[0] - 6, ay + 3), (A[0] - 6, ay + 2)], fill=255)
+        tg = 'lb' if k == 'L' else 'lf'; x0 = 30 if k == 'L' else 34; sg = -1 if k == 'L' else 1; ay = A[1]; JT[tg] = (x0, hp - 1)
+        if tg in OMIT: continue
+        for dd in ((d, df) if FOOT == tg else (d,)): dd.line([(x0, hp - 1), K, A], fill=255, width=3)
+        for dd in ((d, df) if FOOT == tg else (d,)): dd.polygon([(A[0] - 2 * sg + 0, ay), (A[0] + sg, ay), (A[0] + sg, ay + 2), (A[0] + 6 * sg, ay + 3), (A[0] + 6 * sg, ay + 2)] if sg > 0 else [(A[0] - 1.5, ay), (A[0] + 2, ay), (A[0] + 2, ay + 2), (A[0] - 6, ay + 3), (A[0] - 6, ay + 2)], fill=255)
     cl = Image.new('L', (S, S), 0); dc = ImageDraw.Draw(cl)
-    for E, H in (p['aL'], p['aR']):                                                                                        # claws continue the forearm
+    for tg, (E, H) in (('af', p['aL']), ('an', p['aR'])):                                                                                        # claws continue the forearm
+        if tg in OMIT: continue
         dx, dy = H[0] - E[0], H[1] - E[1]; n = math.hypot(dx, dy) or 1; dx, dy = dx / n, dy / n
-        for o in (-1.2, 0, 1.2): dc.line([(H[0] + o * -dy, H[1] + o * dx), (H[0] + dx * 4.5 + o * -dy * 1.8, H[1] + dy * 4.5 + o * dx * 1.8)], fill=255)
+        for o in (-1.2, 0, 1.2):
+          for dc_ in ((dc, df) if FOOT == tg else (dc,)): dc_.line([(H[0] + o * -dy, H[1] + o * dx), (H[0] + dx * 4.5 + o * -dy * 1.8, H[1] + dy * 4.5 + o * dx * 1.8)], fill=255)
     mk, ck = m.load(), cl.load(); on = lambda x, y: 0 <= x < S and 0 <= y < S and (mk[x, y] > 0 or ck[x, y] > 0)
     img = Image.new('RGBA', (S, S), (0, 0, 0, 0)); o = img.load()
     for y in range(S):
@@ -71,6 +83,18 @@ def render(p):
             for j in range(int(n * p['bl'])):
                 xx, yy = x + bx, 14 + g + by + j
                 if 0 <= xx < S and 0 <= yy < S: o[xx, yy] = (150, 10, 22, 255) if j % 2 else (190, 16, 30, 255)
+    if JMARK:      # (the joints as 3 x 3 blocks of colours no picture has)
+        for tg, (jx, jy) in JT.items():
+            for ddx in (-1, 0, 1):
+                for ddy in (-1, 0, 1):
+                    X, Y = round(jx) + ddx, round(jy) + ddy
+                    if 0 <= X < S and 0 <= Y < S: o[X, Y] = JCOL[tg]
+    if FOOT:      # (only the pixels of the limb)
+        out = Image.new('RGBA', (S, S), (0, 0, 0, 0)); oo = out.load(); mm = mf.load()
+        for y in range(S):
+            for x in range(S):
+                if mm[x, y]: oo[x, y] = (255, 255, 255, 255)
+        return out
     if p['glitch'] or p['fade'] or p['vg']:                                                                                           # teleport: rows slide sideways and pixels drop out
         src = img.copy().load(); img = Image.new('RGBA', (S, S), (0, 0, 0, 0)); o = img.load(); B = [[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]]
         for y in range(S):
@@ -221,7 +245,7 @@ def outline(im, add):                                                          #
         for q in new: o[q] = OL + (255,)
     return im
 def cell(p):                                                                   # pose -> one 96x64 cell (everything is done on a padded canvas, and nothing may be lost at the cell's edges: that is asserted)
-    r64 = render({**p, 'back': p['sx'] < 0}); bb = r64.getchannel('A').getbbox(); assert bb[0] > 0 and bb[2] < S, 'a limb is clipped by the 64 px render'      # (turned round: the back of his skull, no face)
+    r64 = render({**p, 'back': p['sx'] < 0}); bb = r64.getchannel('A').getbbox(); assert OMIT or SWAP or FOOT or JMARK or (bb[0] > 0 and bb[2] < S), 'a limb is clipped by the 64 px render'      # (turned round: the back of his skull, no face)
     PX, PY = 40, 28; im = Image.new('RGBA', (CW + 2 * PX, S + 2 * PY), (0, 0, 0, 0)); im.paste(r64, (32 + PX, PY)); sx, r = p['sx'], p['rot']
     if sx != 1 or r:
         outline(im, False)
@@ -229,7 +253,7 @@ def cell(p):                                                                   #
         if r: a = math.radians(r); ca, sa = math.cos(a), math.sin(a); fb = im.crop((0, PY + 60, im.size[0], PY + 63)).getchannel('A').getbbox(); px, py = (fb[0] if fb else FEET[0] + PX), FEET[1] + PY; im = nn(im, lambda x, y: (round(px + (x - px) * ca + (y - py) * sa), round(py - (x - px) * sa + (y - py) * ca)))
         outline(im, True)
     dx, dy = round(p['dx']), round(p['dy']); box = (PX - dx, PY - dy, PX - dx + CW, PY - dy + S); a = im.getchannel('A').getbbox()
-    assert box[0] <= a[0] and a[2] <= box[2] and box[1] <= a[1] and a[3] <= box[3], 'something is clipped by the edge of the cell: %s %s' % (a, box)
+    assert OMIT or SWAP or FOOT or JMARK or (box[0] <= a[0] and a[2] <= box[2] and box[1] <= a[1] and a[3] <= box[3]), 'something is clipped by the edge of the cell: %s %s' % (a, box)
     return im.crop(box)
 part = lambda pk, t: blend(P(), pk, t)                                         # a reaction pose t of the way from standing to its peak pose pk
 def stride(X, k=10):                                                           # the legs of a stagger, tied to how far the body has travelled (X px; one full step cycle per k px)
