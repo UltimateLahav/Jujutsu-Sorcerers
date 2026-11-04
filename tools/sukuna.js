@@ -117,7 +117,7 @@ function suNear() {      // is a living enemy standing in front of him within SU
 function suPick(g, now) {      // the blow ATTACK plays now: crouched, the crouch punches in turn; standing with an enemy near, the combo (jab, jab, kick, counter); standing with none near, the slashes: right hand, left hand, then both hands if the 5 s of the X are over (otherwise another single slash)
   if (stance === 'crouch') return 4 + cuCp;
   if (suCl) return g.cl[cuCmb % g.cl.length];      // (v1.119 the CLEAVE mode: always the melee chain, R.HOOK, L.HOOK, ELBOW, TOUCH CUT, with an enemy near or not)
-  if (suNear()) return g.rdy[cuCmb % g.rdy.length];
+  if (suNear() || suFl) return g.rdy[cuCmb % g.rdy.length];      // (v1.123 the FLAME mode has no flying slashes: the jab chain, with an enemy near or not)
   return cuSn >= 2 && now >= (cuCd[8] || 0) ? 8 : 6 + (cuSn % 2);
 }
 function suNext(k) {      // blow k has started: the index of the combo that comes next (each chain keeps its own place)
@@ -130,16 +130,16 @@ function suLabel(g, now) {      // what the ATTACK button says: the blow that co
   const fresh = now > cuCmbBy;
   if (stance === 'crouch') return g.an[4 + (fresh ? 0 : cuCp)];
   if (suCl) return g.an[g.cl[(fresh ? 0 : cuCmb) % g.cl.length]];
-  if (suNear()) return g.an[g.rdy[(fresh ? 0 : cuCmb) % g.rdy.length]];
+  if (suNear() || suFl) return g.an[g.rdy[(fresh ? 0 : cuCmb) % g.rdy.length]];
   const sn = fresh ? 0 : cuSn; return sn >= 2 && now >= (cuCd[8] || 0) ? g.an[8] : g.an[6 + (sn % 2)];
 }
 
 // ---- v1.111 BLUE: the AIR CUT and the CUT STORM (the invisible slashes) and the bleeds that stack
 let suCast = null, suMk = 0;
 function suBlue(now) {      // the BLUE move this moment asks for (-1: none): in the flight of a jump (its pictures 3 to 11) DISMANTLE (12), crouched the LEG CUT (11), standing the CUT STORM (10) with the back direction held and otherwise the AIR CUT (9)
+  if (suFl) return cuJumpAt < 0 && (stance === 'stand' || stance === 'crouch') ? 22 : -1;      // (v1.123 the FLAME mode has no variants: BLUE is OPEN, standing or crouched (he stands up for it), whichever way he holds, and nothing in the air)
   if (cuJumpAt >= 0) { const f = jumpFrame(Math.max(0, now - cuJumpAt)); return f >= 3 && f <= 11 ? (suCl ? 20 : 12) : -1; }
   if (suCl) return stance === 'crouch' ? 19 : stance === 'stand' ? ((keyR || padR) && suClDashOk(now) ? 21 : 18) : -1;      // (v1.119 the CLEAVE mode: crouched the LIFT (19), in the air the DIVE (20), standing with FORWARD held and an enemy ahead the DASH CLEAVE (21), otherwise the CLEAVE (18))
-  if (suFl && stance === 'stand') return 22;      // (v1.120 the FLAME mode: standing, whichever way he holds, BLUE is OPEN; crouched and in the air the old moves stay)
   return stance === 'crouch' ? 11 : stance === 'stand' ? (keyL || padL ? 10 : (keyR || padR) && suDashOk(now) ? 13 : 9) : -1;
 }
 function suBlueOk(k, now) {      // can this BLUE move start? DISMANTLE stops time, so it needs a living enemy in front of him on the screen that he can hit (not one lying down, held or beyond the edge): otherwise NO TARGET, and nothing is paid
@@ -413,7 +413,7 @@ function suCdashStep(g, c, d, t, now) {      // DASH CLEAVE: a fast step at the 
   return S[Math.min(12, 10 + Math.floor(t1 / 120))];
 }
 
-// ---- v1.120 FLAME (the second MODE: one more tap of MODE after CLEAVE; it is off at the start of every round too). BLUE standing (whichever way he holds) turns into OPEN: the button turns orange (crouched and in the air his old BLUE moves stay, in orange too), 50 energy, about 3 s: flames light on both hands while he says "Wanna See Something Cool?" (the line is typed out above his head, there is no voice), he lifts the hands and CLAPS them (the flames flare up in a burst), plays with the fire like slime (a stretchy flame between the hands that squashes and stretches as the hands move), turns into the pose of an archer (the arrow held at his cheek by the back hand, growing; v1.122: no bow is drawn) and lets go with the back hand: the fire arrow (96 px long, made of flame: a round head with flame tongues streaming back, 10 frames of idle animation, 14 shades of orange from cream to rust) flies across the screen. No guard stops it (the enemy can still jump over it, lie down or dash out of its way); the enemy it hits BURNS: exactly 1 damage every 0.5 s for 8 s (16 in all, quiet: no flinch), and a second arrow restarts the 8 s (the burns do not add up). During the cast the enemy is free to move and fight, but nothing touches Sukuna (suHit) and the cast always finishes. The flames, the slime, the speech and the arrow are drawn by the game over the pictures of the 'flame' row (tools/sukuna_art.py), at the places of his two hands (SU_FL_HANDS, printed by the art tool). See suFlStart, suFlStep, suFlDraw, suFlStepArrows, suFlHit, suBurnStep.
+// ---- v1.120 FLAME (the second MODE: one more tap of MODE after CLEAVE; it is off at the start of every round too). BLUE turns into OPEN: the button turns orange; v1.123: the mode has no other BLUE move (OPEN standing or crouched, whichever way he holds, he stands up for it; nothing in the air) and ATTACK has no flying slashes (the jab chain with the enemy near or far); 50 energy, about 3 s: flames light on both hands while he says "Wanna See Something Cool?" (the line is typed out above his head, there is no voice), he lifts the hands and CLAPS them (the flames flare up in a burst), plays with the fire like slime (a stretchy flame between the hands that squashes and stretches as the hands move), turns into the pose of an archer (the arrow held at his cheek by the back hand, growing; v1.122: no bow is drawn) and lets go with the back hand: the fire arrow (96 px long, made of flame: a round head with flame tongues streaming back, 10 frames of idle animation, 14 shades of orange from cream to rust) flies across the screen. No guard stops it (the enemy can still jump over it, lie down or dash out of its way); the enemy it hits BURNS: exactly 1 damage every 0.5 s for 8 s (16 in all, quiet: no flinch), and a second arrow restarts the 8 s (the burns do not add up). During the cast the enemy is free to move and fight, but nothing touches Sukuna (suHit) and the cast always finishes. The flames, the slime, the speech and the arrow are drawn by the game over the pictures of the 'flame' row (tools/sukuna_art.py), at the places of his two hands (SU_FL_HANDS, printed by the art tool). See suFlStart, suFlStep, suFlDraw, suFlStepArrows, suFlHit, suBurnStep.
 const SU_FL = {
   cost: 50, say: 'Wanna See Something Cool?',
   T: [0, 140, 280, 420, 560, 700, 820, 1000, 1180, 1360, 1540, 1900, 2050, 2650, 2800], end: 3050,      // when each of the 15 pictures of the cast starts (ms): 0 - 4 the hands lift and the flames light, 5 the hands high, 6 THE CLAP (820), 7 - 10 the slime, 11 the bow pose, 12 the full draw, 13 THE RELEASE (2650: the arrow is let go), 14 back to his guard; the cast ends at `end`
@@ -464,8 +464,8 @@ function suFlBuild() {      // the flame pictures, made once: flames of 4 sizes 
   if (suFlSpr) return;
   suFlSpr = { fire: [[8, 13], [12, 20], [18, 30], [26, 42]].map(([w, h]) => Array.from({ length: 6 }, (_, f) => suFlFlame(w, h, f))), arrow: Array.from({ length: 10 }, (_, f) => suFlArrow(f)) };
 }
-function suFlStart(now) {      // BLUE 22 (OPEN) has started: the cast is a state of its own; the enemy is not touched at all
-  suFlBuild(); CU_GAME[3].cs = { fl: true, ph: 'light', t0: now, pic: 0, t: 0 }; suFlTalk = { t0: now };
+function suFlStart(now) {      // BLUE 22 (OPEN) has started: the cast is a state of its own; the enemy is not touched at all; from the crouch he stands up first
+  stance = 'stand'; stickCr = false; suFlBuild(); CU_GAME[3].cs = { fl: true, ph: 'light', t0: now, pic: 0, t: 0 }; suFlTalk = { t0: now };
 }
 function suFlStep(g, c, now) {      // OPEN, every frame: the events of the cast and the picture to show
   const F = SU_FL, t = now - c.t0, i = suPicAt(F.T, t);
