@@ -413,11 +413,11 @@ function suCdashStep(g, c, d, t, now) {      // DASH CLEAVE: a fast step at the 
   return S[Math.min(12, 10 + Math.floor(t1 / 120))];
 }
 
-// ---- v1.120 FLAME (the second MODE: one more tap of MODE after CLEAVE; it is off at the start of every round too). BLUE standing (whichever way he holds) turns into OPEN: the button turns orange (crouched and in the air his old BLUE moves stay, in orange too), 50 energy, about 3 s: flames light on both hands while he says "Wanna See Something Cool?" (the line is typed out above his head, there is no voice), he lifts the hands and CLAPS them (the flames flare up in a burst), plays with the fire like slime (a stretchy flame between the hands that squashes and stretches as the hands move), turns into the pose of an archer (a bow of flame in the front hand, the arrow on the string at his cheek, growing) and lets go with the back hand: a HUGE fire arrow (168 px long, 14 shades of orange from cream to rust) flies across the screen. No guard stops it (the enemy can still jump over it, lie down or dash out of its way); the enemy it hits BURNS: exactly 1 damage every 0.5 s for 8 s (16 in all, quiet: no flinch), and a second arrow restarts the 8 s (the burns do not add up). During the cast the enemy is free to move and fight, but nothing touches Sukuna (suHit) and the cast always finishes. The flames, the slime, the bow, the speech and the arrow are drawn by the game over the pictures of the 'flame' row (tools/sukuna_art.py), at the places of his two hands (SU_FL_HANDS, printed by the art tool). See suFlStart, suFlStep, suFlDraw, suFlStepArrows, suFlHit, suBurnStep.
+// ---- v1.120 FLAME (the second MODE: one more tap of MODE after CLEAVE; it is off at the start of every round too). BLUE standing (whichever way he holds) turns into OPEN: the button turns orange (crouched and in the air his old BLUE moves stay, in orange too), 50 energy, about 3 s: flames light on both hands while he says "Wanna See Something Cool?" (the line is typed out above his head, there is no voice), he lifts the hands and CLAPS them (the flames flare up in a burst), plays with the fire like slime (a stretchy flame between the hands that squashes and stretches as the hands move), turns into the pose of an archer (a bow of flame in the front hand, the arrow on the string at his cheek, growing) and lets go with the back hand: the fire arrow (96 px long, made of flame: a round head with flame tongues streaming back, 10 frames of idle animation, 14 shades of orange from cream to rust) flies across the screen. No guard stops it (the enemy can still jump over it, lie down or dash out of its way); the enemy it hits BURNS: exactly 1 damage every 0.5 s for 8 s (16 in all, quiet: no flinch), and a second arrow restarts the 8 s (the burns do not add up). During the cast the enemy is free to move and fight, but nothing touches Sukuna (suHit) and the cast always finishes. The flames, the slime, the bow, the speech and the arrow are drawn by the game over the pictures of the 'flame' row (tools/sukuna_art.py), at the places of his two hands (SU_FL_HANDS, printed by the art tool). See suFlStart, suFlStep, suFlDraw, suFlStepArrows, suFlHit, suBurnStep.
 const SU_FL = {
   cost: 50, say: 'Wanna See Something Cool?',
   T: [0, 140, 280, 420, 560, 700, 820, 1000, 1180, 1360, 1540, 1900, 2050, 2650, 2800], end: 3050,      // when each of the 15 pictures of the cast starts (ms): 0 - 4 the hands lift and the flames light, 5 the hands high, 6 THE CLAP (820), 7 - 10 the slime, 11 the bow pose, 12 the full draw, 13 THE RELEASE (2650: the arrow is let go), 14 back to his guard; the cast ends at `end`
-  arrow: { speed: 560, w: 168, h: 60, y: 39, hw: 10, grow: 0.7, top: 56 },      // the fire arrow: px a second, its picture (168 x 60), how high above the floor its axis flies, how far from the enemy's middle it touches him, how big it is when it leaves (it grows to full size in 0.14 s), the highest his feet may be for it to hit him
+  arrow: { speed: 560, w: 96, h: 38, y: 39, hw: 10, grow: 0.7, top: 56 },      // the fire arrow: px a second, its picture (96 x 38), how high above the floor its axis flies, how far from the enemy's middle it touches him, how big it is when it leaves (it grows to full size in 0.14 s), the highest his feet may be for it to hit him
   burn: { ms: 8000, gap: 500, dmg: 1 },      // the burn: how long (ms), the time between two ticks (ms), health a tick
   pal: ['#fff6d8', '#ffeaa8', '#ffdb86', '#ffcb66', '#ffb84a', '#ffa733', '#ff9622', '#ff8512', '#ff7408', '#f26400', '#dc5400', '#c24600', '#a03800', '#7a2c00'],      // the 14 shades of orange, from a cream white to a dark rust: every flame is painted in them
   cols: ['#fff0c0', '#ffd27a', '#ffb84a', '#ff9622', '#ff7408', '#dc5400', '#c24600']      // (the colours of the sparks)
@@ -445,23 +445,24 @@ function suFlFlame(w, h, fr) {      // one fire standing on its bottom middle (w
     return Math.max(0, Math.min(13, Math.floor((1 - Math.min(1, I)) * 13.99)));
   });
 }
-function suFlArrow(fr) {      // the HUGE fire arrow pointing right (168 x 60): a big leaf-shaped spear head, a thin burning shaft, swept fire fins and a flame streaming from the tail, with a dark rust edge round the head and shaft and licking flames round all of it: all 14 shades of orange, from the cream core to the rust edge
-  const W = 168, H = 60, cy = 29.5;
+function suFlArrow(fr) {      // the fire arrow, made of FLAME and not in the shape of an arrow (96 x 38, flying to the right): a round bright head (no point) with five flame tongues streaming back from it, waving and flickering; 10 frames that loop; all 14 shades of orange, from the cream core to the rust edge
+  const W = 96, H = 38, cy = 18.5, hx = 72, ph = fr / 10 * 2 * Math.PI;
   return suFlCv(W, H, (x, y) => {
-    const dy = Math.abs(y - cy); let I = 0, body = false;
-    const part = (hh, k) => { if (dy <= hh) { const e = 1 - dy / (hh + 0.001); I = Math.max(I, k * (e < 0.14 ? 0.1 + e * 0.9 : Math.pow(e, 0.55))); body = true; } };      // (inside a part: cream in the middle, dark at its edge)
-    if (x >= 100 && x <= 166) part(x <= 124 ? 6 + 16 * Math.sin((x - 100) / 24 * Math.PI / 2) : 22 * Math.pow(1 - (x - 124) / 42, 0.85), 1);      // (the head)
-    if (x >= 28 && x < 106) part(4.4 + 0.7 * Math.sin(x * 0.3 + fr * 0.9), 0.95);      // (the shaft)
-    if (x <= 46) for (const sg of [-1, 1]) { const off = 3 + (46 - x) * 0.3, hh = 3.6 + 0.8 * Math.sin(x * 0.35 - fr * 1.1), e = Math.abs(y - (cy + sg * off)); if (e <= hh) { I = Math.max(I, 0.82 * (1 - e / hh) ** 0.55); body = true; } }      // (the fins)
-    if (x <= 40) { const hh = 3 + 2.5 * Math.sin(x * 0.5 + fr) + x / 40 * 3; part(hh, 0.7 * Math.pow(x / 40, 0.5)); }      // (the streaming tail)
-    if (!body || I < 0.3) { const hh = 6 + 14 * Math.min(1, x / 120) + 2.5 * Math.sin(x * 0.17 + fr * 0.7); if (x >= 12 && x <= 160 && dy <= hh) { const f = 0.42 * Math.pow(1 - dy / hh, 1.3) * Math.min(1, (x - 12) / 40) * (suFlNoise(x >> 1, y >> 1, fr) > 0.28 ? 1 : 0.45); I = Math.max(I, f); } }      // (the flames licking round it: dark oranges, flickering)
-    I += (suFlNoise(x, y, fr) - 0.5) * 0.12; if (suFlNoise(x * 3, y * 7, fr + 5) > 0.994 && x < 150) I = Math.max(I, 0.45);      // (flicker, and now and then an ember)
+    const dy = y - cy; let I = 0;
+    { const ang = Math.atan2(dy, x - hx), rip = 1 + 0.13 * Math.sin(5 * ang + ph * 2) + 0.07 * Math.sin(3 * ang - ph), d = Math.hypot((x - hx) / 16, dy / 12) / rip; if (d <= 1) I = Math.pow(1 - d * d, 1.15); }      // (the head: round, its edge rippling, cream in the middle)
+    for (let k = 0; k < 5; k++) {      // (the tongues: each starts inside the head, tapers toward the tail and waves)
+      const len = [60, 44, 44, 32, 32][k], off = [0, -6, 6, -10, 10][k], amp = [4.2, 3.4, 3.4, 2.6, 2.6][k], half = [8.5, 5.6, 5.6, 4.2, 4.2][k], t0 = (hx - 6 - x) / len, base = Math.max(0, Math.min(1, (hx + 4 - x) / 10)), t = Math.max(0, t0);
+      if (t0 > 1 || base <= 0) continue;
+      const yc = cy + off * (0.5 + 0.5 * t) + amp * Math.sin(t * 6.5 - ph * (1 + k % 2) + k * 1.3) * t, hh = half * Math.pow(1 - t, 0.75) * (1 + 0.15 * Math.sin(t * 9 + ph * 2 + k)), e = Math.abs(y - yc);
+      if (e <= hh) I = Math.max(I, (1 - Math.pow(e / (hh + 0.001), 1.3)) * (1 - t * 0.5) * 0.8 * base);
+    }
+    I += (suFlNoise(x, y, fr) - 0.5) * 0.12; if (suFlNoise(x * 3, y * 7, fr + 5) > 0.992 && x < 90) I = Math.max(I, 0.4);      // (flicker, and now and then an ember)
     if (I < 0.07) return -1; return Math.max(0, Math.min(13, Math.floor((1 - Math.min(1, I)) * 13.99)));
   });
 }
-function suFlBuild() {      // the flame pictures, made once: flames of 4 sizes in 6 frames each and the arrow in 8 frames
+function suFlBuild() {      // the flame pictures, made once: flames of 4 sizes in 6 frames each and the fire arrow in 10 frames
   if (suFlSpr) return;
-  suFlSpr = { fire: [[8, 13], [12, 20], [18, 30], [26, 42]].map(([w, h]) => Array.from({ length: 6 }, (_, f) => suFlFlame(w, h, f))), arrow: Array.from({ length: 8 }, (_, f) => suFlArrow(f)) };
+  suFlSpr = { fire: [[8, 13], [12, 20], [18, 30], [26, 42]].map(([w, h]) => Array.from({ length: 6 }, (_, f) => suFlFlame(w, h, f))), arrow: Array.from({ length: 10 }, (_, f) => suFlArrow(f)) };
 }
 function suFlStart(now) {      // BLUE 22 (OPEN) has started: the cast is a state of its own; the enemy is not touched at all
   suFlBuild(); CU_GAME[3].cs = { fl: true, ph: 'light', t0: now, pic: 0, t: 0 }; suFlTalk = { t0: now };
@@ -521,8 +522,8 @@ function suFlBow(now, t, hn, hf, fade) {      // the pose of an archer: a bow of
   ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.globalAlpha = fade;
   [[12, 5], [10, 4], [8, 3], [5, 2], [2, 1]].forEach(([c, w]) => { ctx.strokeStyle = F.pal[c]; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(tt[0], tt[1]); ctx.quadraticCurveTo(bx + 12 * k, by, tb[0], tb[1]); ctx.stroke(); });
   ctx.strokeStyle = F.pal[1]; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(tt[0], tt[1]); ctx.lineTo(hf[0], hf[1]); ctx.lineTo(tb[0], tb[1]); ctx.stroke();
-  const sa = 0.15 + 0.55 * Math.max(0, Math.min(1, (t - F.T[11]) / 650)), ar = suFlSpr.arrow[Math.floor(now / 55) % 8];
-  ctx.drawImage(ar, 30, 0, 138, 60, Math.round(hf[0] - 2 * sa), Math.round(hf[1] - 29.5 * sa), Math.round(138 * sa), Math.round(60 * sa)); ctx.globalAlpha = 1;
+  const sa = 0.2 + 0.5 * Math.max(0, Math.min(1, (t - F.T[11]) / 650)), ar = suFlSpr.arrow[Math.floor(now / 50) % 10];
+  ctx.drawImage(ar, Math.round(hf[0] - 6 * sa), Math.round(hf[1] - 18.5 * sa), Math.round(96 * sa), Math.round(38 * sa)); ctx.globalAlpha = 1;
 }
 function suFlCast(now, c, x, y) {      // the flames, the slime and the bow of the cast, over his picture (x, y = where its top left is)
   const F = SU_FL, S = suFlSpr, t = c.t, H = SU_FL_HANDS[c.pic], hn = [x + H[0], y + H[1]], hf = [x + H[2], y + H[3]];
@@ -535,8 +536,8 @@ function suFlCast(now, c, x, y) {      // the flames, the slime and the bow of t
   ctx.globalAlpha = 1;
 }
 function suFlArrowDraw(now, a, cx) {      // an arrow in the air: a glow behind it and the arrow itself
-  const s = a.s, ar = suFlSpr.arrow[Math.floor(now / 55) % 8], sx = Math.round(cx + a.x - wx), sy = Math.round(gy - SU_FL.arrow.y - 29.5 * s);
-  ctx.globalCompositeOperation = 'lighter'; suFlGlow(sx + 100 * s, gy - SU_FL.arrow.y, 70 * s, 0.35); ctx.globalCompositeOperation = 'source-over';
+  const s = a.s, ar = suFlSpr.arrow[Math.floor(now / 50) % 10], sx = Math.round(cx + a.x - wx), sy = Math.round(gy - SU_FL.arrow.y - SU_FL.arrow.h / 2 * s);
+  ctx.globalCompositeOperation = 'lighter'; suFlGlow(sx + 72 * s, gy - SU_FL.arrow.y, 40 * s, 0.4); ctx.globalCompositeOperation = 'source-over';
   ctx.drawImage(ar, sx, sy, Math.round(SU_FL.arrow.w * s), Math.round(SU_FL.arrow.h * s));
 }
 function suFlBurstDraw(now, b, cx) {      // where an arrow landed: a ring and flames leaping up, for 0.45 s
