@@ -5,11 +5,11 @@
 // Not in the story, not on the Wi-Fi, not against curses. SETTINGS > GAME > GRAPHIC DAMAGE: FULL / CLEAN (no blood) / OFF.
 const GD = __GOREDATA__, GWHITE = new Proxy({}, { get: () => '#ffffff' });      // (GWHITE: the palette of a white flash picture)
 const GAB = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_', GAI = {}; for (let i = 0; i < 64; i++) GAI[GAB[i]] = i;
-const GPT = new WeakMap(), GVC = new WeakMap();      // a picture set (YU.idle ...) -> its patches; a plain picture -> its variants by mask
+const GPT = new WeakMap(); let GVC = new WeakMap(), GVPX = 0; const GVMAX = 8e6;      // a picture set (YU.idle ...) -> its patches; a plain picture -> its variants by mask (GVPX: the pixels of all of them; past GVMAX the lot is thrown away and made again when it is needed, so a long game does not fill the memory)
 const GLIMB = ['an', 'af', 'lf', 'lb'];      // near arm, far arm, front (near) leg, back (far) leg
 const GT = { rip: 0.42, sho: 0.3, bod: 0.35, huge: 0.15, hugeP: 0.15, sharp: 2, bleed: 0.003, slow: 0.15, weak: 0.1, vuln: 0.25 };      // tuning: meter that rips a limb / kills a shoulder / hurts the body (fractions of the full health), a huge hit and the chance it rips at once, sharp attacks fill twice as fast, bleeding per 0.5 s per limb
 const GSHARP = { freddy: 1, verity: 1, sukuna: 1 };      // whose blows are cuts, claws and bites
-const gdSet = () => (typeof SET === 'object' && SET.gore) | 0;      // 0 FULL, 1 CLEAN, 2 OFF
+const gdSet = () => window.__noGore ? 2 : (typeof SET === 'object' && SET.gore) | 0;      // 0 FULL, 1 CLEAN, 2 OFF (window.__noGore: the automatic tests of the older versions run without it)
 function goreLink(sets, data) { if (data) for (const k in data) if (sets[k]) GPT.set(sets[k], data[k]); }
 goreLink(YU, GD.yuji); goreLink(D, GD.gojo);
 const GDER = new WeakMap(), GVE = {}, GCA = {}, GFR = {}, GICACHE = new WeakMap();      // the pictures made from others (see invOf); the patches of Verity's, the Cat's and Freddy's strips
@@ -28,9 +28,10 @@ const GCOL = { r0: '#b3121f', r1: '#d4141f', r2: '#6e0a12', w0: '#e8ecf4', w1: '
 const GSTAT = { builds: 0, fly: 0, hits: 0, rips: 0 };      // (counters for the tests)
 const GB = { p: goreBody(), f: goreBody() };
 function goreBody() { return { dm: { an: 0, af: 0, lf: 0, lb: 0, sn: 0, sf: 0, ch: 0, bl: 0, hd: 0 }, st: { an: 0, af: 0, lf: 0, lb: 0 }, hurt: { ch: 0, bl: 0, hd: 0 }, last: null, bleedAt: 0, coughAt: 0, pend: [], flash: 0, dripAt: 0, kind: '' }; }
-function goreReset() { GB.p = goreBody(); GB.f = goreBody(); }
+function goreReset() { GB.p = goreBody(); GB.f = goreBody(); goreAft = null; }
 const gdKind = side => !vs ? null : side === 'p' ? (cuMe() ? (vs.me === 'cu3' ? 'sukuna' : null) : vs.me) : (dummy && dummy.mode === 'fighter' && !dummy.curse && !dummy.net ? vs.foe : null);
-function gdActive(side) { return !!vs && !vs.story && !vs.net && !vs.hunt && gdSet() < 2 && !!GD[gdKind(side)]; }
+function gdActive(side) { return !!vs && !vs.story && !vs.net && gdSet() < 2 && !!GD[gdKind(side)]; }
+const gdBall = side => side === 'p' && gdKind('p') === 'verity' && !!vp && vp.form !== 'verity';      // (Verity as the smoke ball: no limbs to lose, none of the rules applies; ATTACK is his TALK)
 const gdLive = () => !!vs && !vs.story && gdSet() < 2 && (gibs.length > 0 || decals.length > 0 || drops.length > 0);      // (the street's blood and pieces are drawn and moved in a match too)
 // ---- the picture without its limbs
 function gorePatch(g, ps, W, H, rec, ox, oy, col) {      // lays a patch string over the pixels g (Uint32, W x H); the patch's own origin lies at (ox, oy) of the picture; col(letter) = its colour; rec collects the ids (y * W + x) of the pixels that were drawn and are changed or marked as the limb ('*')
@@ -98,14 +99,14 @@ function goreBuild(src, mask) {      // src: a picture; mask: the limbs ripped (
 function goreVar(src, mask) {
   const meta = MKM.get(src); if (!meta || !GPT.get(meta.s)) { const d = GDER.get(src); if (!d) return src; const v = goreVar(d.from, mask); return v === d.from ? src : invOf(v); }      // (a picture made from another one by invOf: the inverted variant)
   let m = GVC.get(src); if (!m) GVC.set(src, m = new Map());
-  const key = mask | gdSet() << 12; let v = m.get(key); if (v === undefined) m.set(key, v = goreBuild(src, mask) || src); return v;
+  const key = mask | gdSet() << 12; let v = m.get(key); if (v === undefined) { v = goreBuild(src, mask) || src; if (v !== src && (GVPX += v.width * v.height) > GVMAX) { GVC = new WeakMap(); GVPX = 0; } else m.set(key, v); } return v;
 }
 function goreMask(B) { return (B.st.an === 2 ? 1 : 0) | (B.st.af === 2 ? 2 : 0) | (B.st.lf === 2 ? 4 : 0) | (B.st.lb === 2 ? 8 : 0) | (B.st.an === 1 ? 16 : 0) | (B.st.af === 1 ? 32 : 0) | (B.hurt.ch ? 64 : 0) | (B.hurt.bl ? 128 : 0) | (B.hurt.hd ? 256 : 0) | (B.st.lf === 2 && B.st.lb === 2 ? 512 : 0); }
 function goreSrc(side, src, geom) {      // the picture a fighter is drawn with: src without the limbs he has lost; geom(px, py) -> {x: world x, y: height from the ground line} places the pieces that fly off
   const B = GB[side]; if (!B || !gdActive(side)) return src; const mask = goreMask(B);
   if (B.pend.length && geom) { const pend = B.pend; B.pend = []; for (const k of pend) goreFly(side, k, src, geom); }      // (a piece that has just been ripped off is cut from the picture that still has the limb)
   const v = mask ? goreVar(src, mask) : src, dx = B.hb ? gdLunge(side, pnow()) : 0;
-  return dx ? goreLunge(v, dx) : v;
+  return dx && v && v.getContext ? goreLunge(v, dx) : v;
 }
 // ---- pieces and blood
 function gorePiece(pic, k, flip) {      // the ripped limb as a picture of its own (the pixels it covered, in the colours they had)
@@ -117,7 +118,7 @@ function gorePiece(pic, k, flip) {      // the ripped limb as a picture of its o
   c2.putImageData(im, 0, 0); return { cv, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, w, h: hh };
 }
 function goreFly(side, k, pic, geom) {
-  const meta = MKM.get(pic); if (!meta) return; const dir = side === 'f' ? (dummy.x >= wx ? 1 : -1) : (wx >= dummy.x ? 1 : -1), clean = gdSet() === 1;
+  const meta = MKM.get(pic); if (!meta) return; const ex = dummy ? dummy.x : wx - 1, dir = side === 'f' ? (ex >= wx ? 1 : -1) : (wx >= ex ? 1 : -1), clean = gdSet() === 1;      // (in a HUNT there may be no enemy at all)
   const pc = gorePiece(pic, k, false); if (!pc) return; const at = geom(pc.cx, pc.cy), fl = 1 + ((Math.random() * 4) | 0), flipped = geom(pc.cx + 1, pc.cy).x < at.x;
   const p2 = flipped ? gorePiece(pic, k, true) : pc;
   GSTAT.fly++; gibs.push({ x: at.x, y: at.y, vx: dir * (60 + Math.random() * 60), vy: -(110 + Math.random() * 60), cv: p2.cv, hw: p2.w / 2, hh: p2.h / 2, fl, rest: false, l: 0, lay: 1, gore: clean ? 2 : 1 });
@@ -129,7 +130,7 @@ const GAREA = { h: { hd: 22, sn: 20, sf: 10, ch: 30, an: 10, af: 8 }, m: { ch: 2
 function gorePick(h) { const w = GAREA[h] || GAREA.m; let t = 0; for (const k in w) t += w[k]; let r = Math.random() * t; for (const k in w) { r -= w[k]; if (r <= 0) return k; } return 'ch'; }
 let goreHint = null;      // {side, h: 'h' high | 'm' middle | 'l' low, sharp, at}: set where a blow lands (hitFoe, gojoHit); the next frame's damage is explained by it
 function goreHit(side, d, now) {      // the fighter on `side` has just lost d health
-  GSTAT.hits++;
+  if (gdBall(side)) return; GSTAT.hits++;
   const B = GB[side], mx = side === 'p' ? PHP : dummy.max || PHP, f = d / mx; if (f <= 0) return;
   const hint = goreHint && goreHint.side === side && now - goreHint.at < 120 ? goreHint : null, h = hint ? hint.h : 'm', att = side === 'p' ? (dummy && dummy.mode === 'fighter' ? vs.foe : null) : (cuMe() ? (vs.me === 'cu3' ? 'sukuna' : null) : vs.me), sharp = (hint && hint.sharp) || (att && GSHARP[att]) ? GT.sharp : 1;
   let part = gorePick(h), n = 0; const ok = k => !((k === 'an' || k === 'af' || k === 'lf' || k === 'lb') && B.st[k] === 2) && !((k === 'sn' && B.st.an) || (k === 'sf' && B.st.af));
@@ -153,10 +154,10 @@ let goreRedUntil = 0;
 const GHB = 420, GDOM = { gojo: 2, yuji: 2, sukuna: 2, cat: 2, verity: 1, freddy: 0 };      // a headbutt takes 0.42 s; how many hands a hand-sign domain needs
 const gdArmsOk = B => B.kind === 'freddy' ? (B.st.an === 0 ? 1 : 0) : (B.st.an === 0 ? 1 : 0) + (B.st.af === 0 ? 1 : 0),      // (Freddy fights with the claw arm alone)
   gdLegsOk = B => (B.st.lf === 0 ? 1 : 0) + (B.st.lb === 0 ? 1 : 0), gdHurtN = B => B.hurt.ch + B.hurt.bl + B.hurt.hd;
-function goreSpdF(side) { const B = GB[side]; if (!B || !gdActive(side)) return 1; const l = gdLegsOk(B); return (l === 2 ? 1 : l === 1 ? 0.35 : 0.15) * Math.max(0.4, 1 - GT.slow * gdHurtN(B)); }      // walking speed: one leg 35%, none 15%, and a hurt body is slower
+function goreSpdF(side) { const B = GB[side]; if (!B || !gdActive(side) || gdBall(side)) return 1; const l = gdLegsOk(B); return (l === 2 ? 1 : l === 1 ? 0.35 : 0.15) * Math.max(0.4, 1 - GT.slow * gdHurtN(B)); }      // walking speed: one leg 35%, none 15%, and a hurt body is slower
 const goreSpd = () => goreSpdF('p');
 function goreBob(side, now) {      // a hop on one leg lifts him with every step; a crawler bobs a little
-  const B = GB[side]; if (!B || !gdActive(side)) return 0; const l = gdLegsOk(B); if (l === 2) return 0;
+  const B = GB[side]; if (!B || !gdActive(side) || gdBall(side)) return 0; const l = gdLegsOk(B); if (l === 2) return 0;
   const mv = side === 'p' ? Math.abs(wvx) > 8 : !!dummy && dummy.ai === 'walk'; if (!mv) return 0; return l === 1 ? -Math.round(Math.abs(Math.sin(now / 110)) * 3) : Math.round(Math.sin(now / 150));
 }
 const GLC = new WeakMap();
@@ -174,9 +175,10 @@ function goreOkMove(side, k) {      // may the fighter on `side` make swing k wi
   return (u[0] === '1' ? 1 : 0) + (u[1] === '1' ? 1 : 0) <= gdArmsOk(B) && !((u[2] === '1' || u[3] === '1') && gdLegsOk(B) < 2);      // (a swing with one arm can be made with either; a swing with both needs both; a swing with a leg needs both legs)
 }
 function goreGate(now) {      // the player's controls with the limbs he has lost (the end of vsTick)
-  if (!gdActive('p')) return; const B = GB.p, arms = gdArmsOk(B), legs = gdLegsOk(B), kind = gdKind('p');
-  if (B.hb && now - B.hb.at < GHB) { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = false; return; }
-  if (legs < 2) jumpReq = dashReq = false; if (legs === 0) { crReq = false; blockHeld = false; }
+  if (!gdActive('p') || gdBall('p')) return; const B = GB.p, arms = gdArmsOk(B), legs = gdLegsOk(B), kind = gdKind('p');
+  if (B.hb && now - B.hb.at < GHB) { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; return; }
+  if (legs < 2) jumpReq = dashReq = false;
+  if (legs === 0) { blockHeld = stickDown = false; if (stance === 'crouch' && now - (B.rise || -1e9) > 500) { B.rise = now; crReq = true; } else crReq = false; }      // (a crawler cannot crouch and cannot guard; one who was crouched when his legs went taps to stand up, again every half second until he does)
   if (arms === 0) { lpReq = ceReq = false; blockHeld = false; if (GDOM[kind] !== 0) domReq = false; if (atkReq) { atkReq = false; goreHeadbutt('p', now); } }
   else if (arms === 1 && GDOM[kind] === 2) domReq = false;      // (a hand-sign domain needs both hands)
 }
@@ -187,6 +189,10 @@ function goreFoe(now) {      // the enemy's decisions with the limbs he has lost
     if (gdArmsOk(B) === 0) { goreHeadbutt('f', now); d.ai = 'rest'; d.aiAt = now; d.restFor = GHB + 250; d.chain = 0; }
     else if (!goreOkMove('f', d.k)) { d.k = (d.k + 1) % 4; d.ai = 'think'; d.aiAt = now; d.chain = 0; }
   }
+}
+function goreFoeBlock(d, type, now) {      // vStart / cStart: a move of Verity or the Cat that needs hands is not made by an enemy without arms (he butts with his head; Verity can still bite)
+  if (!vs || !gdActive('f') || d.ko >= 0 || gdArmsOk(GB.f) > 0 || (vs.foe === 'verity' && type === 'bite')) return false;
+  goreHeadbutt('f', now); d.ai = 'rest'; d.aiAt = now; d.restFor = GHB + 250; return true;
 }
 function goreCough(side, now) {
   say('COUGH', side === 'f' ? dummy.x : wx, '#ff6a5a', 8, now); const x = side === 'f' ? dummy.x : wx; if (gdSet() === 0) for (let n = 0; n < 8; n++) spawnDrop(x + 4 + Math.random() * 4, -(34 + Math.random() * 6), 20 + Math.random() * 40, -20 - Math.random() * 30, 1 + ((Math.random() * 3) | 0));
@@ -216,4 +222,29 @@ function goreTick(now, dt) {      // every frame of a fight (vsTick): looks for 
   }
   if (gdSet() === 1) for (let i = gibs.length - 1; i >= 0; i--) { const g = gibs[i]; if (g.gore === 2) { g.born = g.born || now; if (now - g.born > 2500) gibs.splice(i, 1); } }      // (CLEAN: the pieces fade away after a while)
 }
-const goreOver = now => { if (now < goreRedUntil) { ctx.fillStyle = 'rgba(200,0,24,' + (0.4 * (goreRedUntil - now) / 220) + ')'; ctx.fillRect(-8, 0, VW + 16, VH); } };      // (the red flash of a rip)
+// ---- the HEAD: it only ever comes off in a FATALITY (the end of every one of them: the loser's head is ripped off, the body stands a moment with blood spurting, then falls)
+const GNECK = { yuji: 0.4, sukuna: 0.4, gojo: 0.32, verity: 0.22, cat: 0.26, freddy: 0.3 };      // where the neck is: the fraction of the figure's height from the top
+let goreAft = null;      // the aftermath: { at, x, dir, body, head, hx, ny }
+function goreIdleOf(kind) { try { return kind === 'yuji' ? YUF.norm.idle[0] : kind === 'gojo' ? idleF[0] : kind === 'verity' ? vfr('idle', 0, false) : kind === 'cat' ? cfr('idle', 0, false) : kind === 'freddy' ? fredF(0) : kind === 'sukuna' ? (GSKC.frames && GSKC.frames[0]) : null; } catch (e) { return null; } }
+function goreSplit(pic, kind) {      // the picture cut at the neck: {body (with a red stump and blood), head (a piece of its own), ny (the neck row)} or null
+  if (!pic || !pic.width) return null; const W = pic.width, H = pic.height, a = pic.getContext('2d').getImageData(0, 0, W, H).data; let y0 = H, y1 = -1; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (a[(y * W + x) * 4 + 3]) { y0 = Math.min(y0, y); y1 = Math.max(y1, y); } if (y1 < 0) return null;
+  const ny = y0 + Math.round((y1 - y0 + 1) * (GNECK[kind] || 0.3)), clean = gdSet() === 1, red = ['#6e0a12', '#b3121f', '#d4141f'], mkc = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+  const body = mkc(W, H), g = body.getContext('2d'); g.drawImage(pic, 0, ny, W, H - ny, 0, ny, W, H - ny);
+  let x0 = W, x1 = -1; for (let x = 0; x < W; x++) if (a[(ny * W + x) * 4 + 3]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); }
+  if (x1 >= 0) { for (let x = x0 + 1; x < x1; x++) { g.fillStyle = clean ? '#cfd3dc' : red[(x + ny) % 3]; g.fillRect(x, ny - 1, 1, 1); g.fillRect(x, ny, 1, 1); } if (!clean) for (let k = 0; k < 4; k++) { const x = x0 + 1 + ((k * 5 + 2) % Math.max(1, x1 - x0 - 1)); g.save(); g.globalCompositeOperation = 'source-atop'; g.fillStyle = red[1 + (k & 1)]; g.fillRect(x, ny + 1, 1, 6 + (k * 3) % 5); g.restore(); } }
+  const hh = ny - y0, head = mkc(W, Math.max(1, hh)); head.getContext('2d').drawImage(pic, 0, y0, W, hh, 0, 0, W, hh); if (!clean && hh > 1) { const hg = head.getContext('2d'); for (let x = x0 + 1; x < x1; x += 2) { hg.fillStyle = red[(x >> 1) % 3]; hg.fillRect(x, hh - 1, 1, 1); } }
+  return { body, head, ny, y0, W };
+}
+function goreFatal(who, now) {      // endRound(who, 'fatal'): the loser's head comes off
+  if (!vs || vs.story || vs.net || gdSet() >= 2 || (who !== 'player' && who !== 'enemy')) return; const side = who === 'player' ? 'f' : 'p', kind = side === 'p' ? (cuMe() ? (vs.me === 'cu3' ? 'sukuna' : null) : vs.me) : (dummy && dummy.mode === 'fighter' && !dummy.curse ? vs.foe : null);
+  if (!kind || !GNECK[kind]) return; const sp = goreSplit(goreIdleOf(kind), kind); if (!sp) return; const x = side === 'f' ? dummy.x : wx, dir = side === 'f' ? (dummy.x >= wx ? 1 : -1) : -1, clean = gdSet() === 1, mirror = side === 'f' && dummy.x >= wx;
+  goreAft = { at: now, x, dir, body: sp.body, mirror, ny: sp.ny, W: sp.W }; GSTAT.fatal = (GSTAT.fatal | 0) + 1;
+  const hp = 62 - sp.ny + 1; gibs.push({ x: x + dir * 2, y: -hp, vx: dir * (50 + Math.random() * 40), vy: -(150 + Math.random() * 60), cv: sp.head, hw: sp.head.width / 2, hh: sp.head.height / 2, fl: 2, rest: false, l: 0, lay: 0, gore: clean ? 2 : 1 });
+  if (!clean) { fount.push({ x, fl: 0, until: now + 2400 }); for (let n = 0; n < 40; n++) { const th = -Math.PI * (0.1 + Math.random() * 0.8), v = 50 + Math.random() * 130; spawnDrop(x + Math.random() * 6 - 3, -hp + Math.random() * 4, Math.cos(th) * v + dir * 20, Math.sin(th) * v, 1 + ((Math.random() * 3) | 0)); } }
+  goreRedUntil = now + 260; snd('rip');
+}
+function goreAftDraw(now) {      // the headless body: it sways for a moment, then falls backwards and stays down until the next round
+  const A = goreAft; if (!A || !vs || vs.story) return; const t = now - A.at, cx = Math.round(VW / 2), sx = Math.round(cx + A.x - wx), fall = Math.max(0, Math.min(1, (t - 1100) / 700)), ang = -A.dir * 1.45 * fall * fall;
+  ctx.save(); ctx.translate(sx, gy + 2); ctx.rotate(ang); if (A.mirror) ctx.scale(-1, 1); ctx.globalAlpha = 1; ctx.drawImage(A.body, -Math.round(A.W / 2) + (t < 1100 ? Math.round(Math.sin(t / 90)) : 0), -62); ctx.restore();
+}
+const goreOver = now => { goreAftDraw(now); if (now < goreRedUntil) { ctx.fillStyle = 'rgba(200,0,24,' + (0.4 * (goreRedUntil - now) / 220) + ')'; ctx.fillRect(-8, 0, VW + 16, VH); } };      // (the red flash of a rip)

@@ -204,7 +204,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.127</small>
+    <small id="ver">V1.128</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
 </section>
@@ -1856,7 +1856,7 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   if (isD2(k)) { gojoDiv2(now); return; }      // (DIVERGENT FIST's second impact, normal or RUSH: see gojoDiv2)
   if (dgAt >= 0 && now - dgAt < 11 * 1000 / DASH_FPS) { if (now - dgAt < 7 * 1000 / DASH_FPS && now - dodgeAt > 400 && (!vs || vs.ph === 'fight')) { dodgeAt = now; ceGain(E_DODGE); flowAdd(10, now); say('DODGE!', wx, '#9fd8ff', 8, now); } nres('m'); return; }       // he is dashing: the swing misses (v1.30: a dash started just before the blow gives energy)
   const held = vs && vs.foe === 'cat' && k >= 30 && k <= 33 && now < (vs.catHold || 0);      // (inside the Cat's glove the combo cannot miss because Gojo is 'still reeling')
-  const foeWho = vs ? vs.foe : 'gojo', downed = now < gDownUntil;      // (whose swing this is; and after a DOWNSLAM or a SWEEP you are on the floor: only a kick reaches you there, even while you reel)
+  const foeWho = vs ? vs.foe : 'gojo', downed = now < gDownUntil;      goreHint = { side: 'p', h: isKick(foeWho, k) ? 'l' : 'm', at: now };      // (v1.128 GRAPHIC DAMAGE: where the blow lands)      // (whose swing this is; and after a DOWNSLAM or a SWEEP you are on the floor: only a kick reaches you there, even while you reel)
   const airMe = !!gAir && gAir.kind === 'up';      // you are launched: everything can hit you up there, the hit-stun and the height do not protect you
   if (airMe ? gojoGone : downed ? (!isKick(foeWho, k) || gojoLift > 12 || gojoGone) : ((!held && (hurtAt >= 0 || now - hurtEnd < 250)) || gojoLift > 12 || gojoGone)) { nres('m'); return; }
   const guardWas = (guardUp(now) || autoGuard()) && !!dummy && dummy.x > wx;
@@ -2565,6 +2565,7 @@ function vsHurt(dm, now) { if (dom) return; if (cuMe()) dm = Math.max(1, Math.ro
 function endRound(who, why, now) {
   if (!vs || vs.ph !== 'fight') return; vs.ph = 'ko'; vs.t0 = now; vs.who = who; vs.why = why; if (who === 'player') vs.pw++; else vs.ew++; if (vs.rush && who === 'player') rushPay(now);
   if (why === 'ko') holdUntil = Math.max(holdUntil, now + KO_HOLD); vs.koAt = Math.max(now, holdUntil); snd(who === 'player' ? 'finisher' : 'ko'); buzz(who === 'player' ? 60 : 110);      // (koAt: when the loser starts to topple)
+  if (why === 'fatal') goreFatal(who, now);      // (v1.128 GRAPHIC DAMAGE: the loser's head comes off)
 }
 function finishMatch(now) {
   if (vs.net) { netOver(now); return; }
@@ -5127,7 +5128,7 @@ function storyLook(now, reacting, hitT, kt) {      // what the story enemy looks
   return { src, info, lift, ox, oy };
 }
 // Verity's own moves run beside the grade AI, which rests while one lasts: the BITE (the head draws back, lunges, the jaws shut on frame 8; Gojo bleeds 1 damage every 0.1 s for 4 s) and the CROUCH (the legs fold up to his head, two claws, then he rises; every swing of Gojo's passes over him except the low kick and the crouching punches)
-function vStart(d, type, now) { d.vact = { type, at: now, hit: 0, anim: type === 'bite' ? 'bite' : type === 'scare' ? 'scare_grab' : 'crouch', fi: 0 }; d.ai = 'rest'; d.aiAt = now; d.restFor = 99999; snd('f:swing', 3); }
+function vStart(d, type, now) { if (goreFoeBlock(d, type, now)) return; d.vact = { type, at: now, hit: 0, anim: type === 'bite' ? 'bite' : type === 'scare' ? 'scare_grab' : 'crouch', fi: 0 }; d.ai = 'rest'; d.aiAt = now; d.restFor = 99999; snd('f:swing', 3); }
 function vEnd(d, now) { d.vact = null; d.ai = 'think'; d.aiAt = now; d.vNext = now + 1500 + Math.random() * 1800; }
 function vActTick(d, now, dt) {
   const a = d.vact, t = now - a.at, ag = Math.abs(d.x - wx), toward = d.x > wx ? -1 : 1;
@@ -5176,7 +5177,7 @@ function catLook(now, reacting, hitT, kt) {      // what the Cat looks like: eve
   return { src, info: { w: I[0], h: I[1], cx: I[2], x0: 0, top: I[3] }, lift: reacting && CAT_RXLIFT[d.rx] ? CAT_RXLIFT[d.rx][Math.min(14, Math.floor(fi))] : 0, ox: o[0], oy: o[1] };
 }
 // The Cat's own moves run beside the grade AI, which rests while one lasts: the SMASH (he smashes himself flat into a strip two pixels thin - nothing can hit him - slides to Gojo at three times the walking speed, punches up and stands up again; flat for more than 5 s and he gets up dizzy: stunned for 1 s) and the PUSH DASH (both gloves on the ground, he shoves himself at Gojo)
-function cStart(d, type, now) { d.cact = { type, at: now, ph: type === 'flat' ? 'smash' : type === 'toon' ? 'toon' : 'dash', anim: type === 'flat' ? 'smash' : type === 'toon' ? 'toon' : 'dashf', fi: 0, flat: false, hit: 0, loop: false }; d.ai = 'rest'; d.aiAt = now; d.restFor = 99999; if (type === 'toon') snd('boing'); else snd('f:swing', 3); }
+function cStart(d, type, now) { if (goreFoeBlock(d, type, now)) return; d.cact = { type, at: now, ph: type === 'flat' ? 'smash' : type === 'toon' ? 'toon' : 'dash', anim: type === 'flat' ? 'smash' : type === 'toon' ? 'toon' : 'dashf', fi: 0, flat: false, hit: 0, loop: false }; d.ai = 'rest'; d.aiAt = now; d.restFor = 99999; if (type === 'toon') snd('boing'); else snd('f:swing', 3); }
 function cEnd(d, now) { d.cact = null; d.ai = 'think'; d.aiAt = now; d.vNext = now + 1800 + Math.random() * 1800; }
 function catTick(now, dt) {
   updateGore(now, dt); const d = dummy; if (!d || d.ko >= 0 || vs.ph !== 'fight') return; if (vs.end) { if (vs.end.stage === 'back') catEndTick(now); return; } const a = d.cact, G = GRADES[vs.gi], ag = Math.abs(d.x - wx), toward = d.x > wx ? -1 : 1;
