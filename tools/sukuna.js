@@ -162,7 +162,7 @@ SU_BLUE_NAMES[18] = ['CLEAVE', 'Cleave (Cleave mode): he steps in, touches the e
 SU_BLUE_NAMES[19] = ['LIFT<br>CLEAVE', 'Lift Cleave (Cleave mode): he lifts the enemy up with one hand and slashes his head for 5 percent of his health (10 energy)'];
 SU_BLUE_NAMES[20] = ['DIVE<br>CLEAVE', 'Dive Cleave (Cleave mode): he drops down on the enemy, grabs him and cleaves him to the ground for 5 percent of his health (10 energy)'];
 SU_BLUE_NAMES[21] = ['DASH<br>CLEAVE', 'Dash Cleave (Cleave mode): he dashes forward and cleaves the enemy back for 5 percent of his health (10 energy; hold forward with the enemy within 120 pixels)'];
-SU_BLUE_NAMES[22] = ['OPEN', 'Open (Flame mode): flames light on his hands, he claps and plays with the fire like slime, draws a bow of flame and lets go of a huge fire arrow that no guard can stop and that burns the enemy for 8 seconds (50 energy)'];
+SU_BLUE_NAMES[22] = ['OPEN', 'Open (Flame mode): flames light on his hands, he claps and plays with the fire like slime, takes the pose of an archer and lets go of a fire arrow that no guard can stop and that burns the enemy for 8 seconds (50 energy)'];
 function suBlueLabel(now) {      // the BLUE button's name (and what a screen reader hears): it changes with where he is and with the back direction
   const k = suBlue(now), n = SU_BLUE_NAMES[k < 0 ? (suFl ? 22 : suCl ? 18 : 9) : k], el = $('lapl');
   if (el.innerHTML !== n[0]) { el.innerHTML = n[0]; $('lap').setAttribute('aria-label', n[1]); }
@@ -333,7 +333,7 @@ let suCl = false, suFl = false;
 function suToggle() { if (!suCl && !suFl) suCl = true; else if (suCl) { suCl = false; suFl = true; } else suFl = false; cuCmb = cuSn = cuCp = 0; cuCmbBy = 0; }      // MODE: OFF > CLEAVE > FLAME > OFF (v1.120: one more tap goes on to FLAME); the blows start from the first one again; no sound, no word, no light on the field
 function suReset() { suCl = suFl = false; suArrows.length = 0; suFlBursts.length = 0; suFlTalk = null; if (dummy) dummy.sburn = null; }      // (a new round: both modes off, no arrow in the air, no burn)
 function suModeUI() {      // every frame: the MODE button's name and light and the BLUE button's colour follow the mode (setModeUI writes the buttons too, so it is checked every time, like the BLUE label): CLEAVE lights MODE blue, FLAME lights MODE and BLUE orange
-  const el = $('cel'), b = $('ce'), lp = $('lap'), want = 'MODE<br>' + (suFl ? 'FLAME' : suCl ? 'CLEAVE' : 'OFF'), p = suCl || suFl ? 'true' : 'false', aria = suFl ? 'Mode: Flame is on, tap to switch it off. BLUE is Open: a huge fire arrow that burns the enemy' : suCl ? 'Mode: Cleave is on, tap for Flame. The enemy cannot tell' : 'Mode: tap to switch Cleave on, tap again for Flame. The enemy cannot tell';
+  const el = $('cel'), b = $('ce'), lp = $('lap'), want = 'MODE<br>' + (suFl ? 'FLAME' : suCl ? 'CLEAVE' : 'OFF'), p = suCl || suFl ? 'true' : 'false', aria = suFl ? 'Mode: Flame is on, tap to switch it off. BLUE is Open: a fire arrow that burns the enemy' : suCl ? 'Mode: Cleave is on, tap for Flame. The enemy cannot tell' : 'Mode: tap to switch Cleave on, tap again for Flame. The enemy cannot tell';
   if (el.innerHTML !== want) el.innerHTML = want;
   if (b.classList.contains('lit') !== suCl) b.classList.toggle('lit', suCl);
   if (b.classList.contains('fl') !== suFl) b.classList.toggle('fl', suFl);
@@ -413,7 +413,7 @@ function suCdashStep(g, c, d, t, now) {      // DASH CLEAVE: a fast step at the 
   return S[Math.min(12, 10 + Math.floor(t1 / 120))];
 }
 
-// ---- v1.120 FLAME (the second MODE: one more tap of MODE after CLEAVE; it is off at the start of every round too). BLUE standing (whichever way he holds) turns into OPEN: the button turns orange (crouched and in the air his old BLUE moves stay, in orange too), 50 energy, about 3 s: flames light on both hands while he says "Wanna See Something Cool?" (the line is typed out above his head, there is no voice), he lifts the hands and CLAPS them (the flames flare up in a burst), plays with the fire like slime (a stretchy flame between the hands that squashes and stretches as the hands move), turns into the pose of an archer (a bow of flame in the front hand, the arrow on the string at his cheek, growing) and lets go with the back hand: the fire arrow (96 px long, made of flame: a round head with flame tongues streaming back, 10 frames of idle animation, 14 shades of orange from cream to rust) flies across the screen. No guard stops it (the enemy can still jump over it, lie down or dash out of its way); the enemy it hits BURNS: exactly 1 damage every 0.5 s for 8 s (16 in all, quiet: no flinch), and a second arrow restarts the 8 s (the burns do not add up). During the cast the enemy is free to move and fight, but nothing touches Sukuna (suHit) and the cast always finishes. The flames, the slime, the bow, the speech and the arrow are drawn by the game over the pictures of the 'flame' row (tools/sukuna_art.py), at the places of his two hands (SU_FL_HANDS, printed by the art tool). See suFlStart, suFlStep, suFlDraw, suFlStepArrows, suFlHit, suBurnStep.
+// ---- v1.120 FLAME (the second MODE: one more tap of MODE after CLEAVE; it is off at the start of every round too). BLUE standing (whichever way he holds) turns into OPEN: the button turns orange (crouched and in the air his old BLUE moves stay, in orange too), 50 energy, about 3 s: flames light on both hands while he says "Wanna See Something Cool?" (the line is typed out above his head, there is no voice), he lifts the hands and CLAPS them (the flames flare up in a burst), plays with the fire like slime (a stretchy flame between the hands that squashes and stretches as the hands move), turns into the pose of an archer (the arrow held at his cheek by the back hand, growing; v1.122: no bow is drawn) and lets go with the back hand: the fire arrow (96 px long, made of flame: a round head with flame tongues streaming back, 10 frames of idle animation, 14 shades of orange from cream to rust) flies across the screen. No guard stops it (the enemy can still jump over it, lie down or dash out of its way); the enemy it hits BURNS: exactly 1 damage every 0.5 s for 8 s (16 in all, quiet: no flinch), and a second arrow restarts the 8 s (the burns do not add up). During the cast the enemy is free to move and fight, but nothing touches Sukuna (suHit) and the cast always finishes. The flames, the slime, the speech and the arrow are drawn by the game over the pictures of the 'flame' row (tools/sukuna_art.py), at the places of his two hands (SU_FL_HANDS, printed by the art tool). See suFlStart, suFlStep, suFlDraw, suFlStepArrows, suFlHit, suBurnStep.
 const SU_FL = {
   cost: 50, say: 'Wanna See Something Cool?',
   T: [0, 140, 280, 420, 560, 700, 820, 1000, 1180, 1360, 1540, 1900, 2050, 2650, 2800], end: 3050,      // when each of the 15 pictures of the cast starts (ms): 0 - 4 the hands lift and the flames light, 5 the hands high, 6 THE CLAP (820), 7 - 10 the slime, 11 the bow pose, 12 the full draw, 13 THE RELEASE (2650: the arrow is let go), 14 back to his guard; the cast ends at `end`
@@ -517,20 +517,16 @@ function suFlSlime(ax, ay, bx, by, now, k) {      // the flame played with like 
     }
   }
 }
-function suFlBow(now, t, hn, hf, fade) {      // the pose of an archer: a bow of flame in the front hand (it opens in 0.2 s), the string pulled back to the back hand at his cheek and the arrow on it, growing; only the shaft and the head of the arrow show (the tail flames would hide his face)
-  const F = SU_FL, k = Math.max(0, Math.min(1, (t - F.T[11]) / 200)), bx = hn[0] + 2, by = hn[1], R = 21 * k, tt = [bx - 5, by - R], tb = [bx - 5, by + R];
-  ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.globalAlpha = fade;
-  [[12, 5], [10, 4], [8, 3], [5, 2], [2, 1]].forEach(([c, w]) => { ctx.strokeStyle = F.pal[c]; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(tt[0], tt[1]); ctx.quadraticCurveTo(bx + 12 * k, by, tb[0], tb[1]); ctx.stroke(); });
-  ctx.strokeStyle = F.pal[1]; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(tt[0], tt[1]); ctx.lineTo(hf[0], hf[1]); ctx.lineTo(tb[0], tb[1]); ctx.stroke();
-  const sa = 0.2 + 0.5 * Math.max(0, Math.min(1, (t - F.T[11]) / 650)), ar = suFlSpr.arrow[Math.floor(now / 50) % 10];
-  ctx.drawImage(ar, Math.round(hf[0] - 6 * sa), Math.round(hf[1] - 18.5 * sa), Math.round(96 * sa), Math.round(38 * sa)); ctx.globalAlpha = 1;
+function suFlAim(now, t, hf, fade) {      // the pose of an archer, without a bow (v1.122: the bow of flame and its string are gone, only the fire arrow is drawn): the arrow is held at his cheek by the back hand and grows as he draws it
+  const F = SU_FL, sa = 0.2 + 0.5 * Math.max(0, Math.min(1, (t - F.T[11]) / 650)), ar = suFlSpr.arrow[Math.floor(now / 50) % 10];
+  ctx.globalAlpha = fade; ctx.drawImage(ar, Math.round(hf[0] - 6 * sa), Math.round(hf[1] - 18.5 * sa), Math.round(96 * sa), Math.round(38 * sa)); ctx.globalAlpha = 1;
 }
-function suFlCast(now, c, x, y) {      // the flames, the slime and the bow of the cast, over his picture (x, y = where its top left is)
+function suFlCast(now, c, x, y) {      // the flames, the slime and the arrow of the cast, over his picture (x, y = where its top left is)
   const F = SU_FL, S = suFlSpr, t = c.t, H = SU_FL_HANDS[c.pic], hn = [x + H[0], y + H[1]], hf = [x + H[2], y + H[3]];
   const fade = Math.min(1, t / 250) * Math.max(0, Math.min(1, (F.end - t) / 250)), lvl = t < F.T[5] ? 0 : t < F.T[7] && t >= F.T[6] ? 3 : t < F.T[6] ? 1 : 1, gr = [9, 12, 16, 22][lvl];
   ctx.globalCompositeOperation = 'lighter'; suFlGlow(hn[0], hn[1], gr, 0.5 * fade); suFlGlow(hf[0], hf[1], gr, 0.5 * fade); ctx.globalCompositeOperation = 'source-over';
   const sk = Math.max(0, Math.min(1, (t - F.T[6]) / 200)) * Math.max(0, Math.min(1, (F.T[11] + 150 - t) / 250)); if (sk > 0) suFlSlime(hn[0], hn[1], hf[0], hf[1], now, sk * fade);
-  if (t >= F.T[11]) suFlBow(now, t, hn, hf, fade);
+  if (t >= F.T[11]) suFlAim(now, t, hf, fade);
   ctx.globalAlpha = fade; const sp = S.fire[lvl];
   for (const [px, py, o] of [[hn[0], hn[1], 0], [hf[0], hf[1], 3]]) { const fr = Math.floor(now / 70 + o) % 6, a = sp[fr], b = sp[(fr + 3) % 6]; ctx.drawImage(a, Math.round(px - a.width / 2), Math.round(py - a.height + 3)); if (lvl >= 2) ctx.drawImage(b, Math.round(px - b.width / 2 + (o ? 4 : -4)), Math.round(py - b.height + 5)); }
   ctx.globalAlpha = 1;
