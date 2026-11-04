@@ -6,7 +6,7 @@
 // v1.111: the BLUE button (key L) is his INVISIBLE SLASH, which nobody sees fly: it cuts the enemy AT ONCE wherever he stands on the screen (nothing travels: the cut lands on the 7th picture of his flick, 0.12 s after the press). Standing, BLUE is the AIR CUT (costs 5 CE): the enemy flinches (no damage by itself) and a cut shows across him, and he BLEEDS. With the BACK direction held it is the CUT STORM (25 CE): he raises his hand forward with the fingers spread and eight slashes land one after the other (0.04 s apart), each flashes a cut across the enemy and adds a bleed, and the enemy is STUNNED for 3 s (from the last slash). The bleeds STACK: every slash that lands (the counter's too) adds its own bleed, 0.1 of health every 0.03 s for 4 s, so 8 slashes bleed 8 times as fast. A blocking enemy blocks them (BLOCKED, no bleed), and one who is crouching, dodging or lying down is not hit. They are made like a blow (g.set 9 and 10: pictures a second and the cost, paid by customScene like any move's; the slashes are events with a callback, `cb`, see cuEv): see suBlue, suCutAt, suBleed.
 // v1.112: BLUE has two more moves, by where he is. CROUCHED it is the LEG CUT (10 CE): a low sweep of his hand and the enemy's legs are cut at once, wherever he stands on the screen (blockable like the AIR CUT; a crouching enemy is cut too): he drops to his KNEES (the crouch of his own pictures) and is stunned for 0.8 s, and while he kneels EVERY hit lands on him (he does not duck, block or dodge: nothing of his kind is in the way), and he bleeds. IN THE AIR (the flight of a jump) it is DISMANTLE (20 CE, and only with a living enemy on the screen in front of him, otherwise NO TARGET and nothing is paid): in the air he dashes back 40 px (the jump he was in is held where it was until it is all over), points one finger at the enemy, and THE GAME STOPS (the clock stands still for 1.5 s, as in a hit stop, and suTsFrame paints the held frame grey and dark with red bars, a line from his finger to the enemy, three thin cuts drawn on the enemy's chest for what is coming, and the word DISMANTLE letter by letter, with a deep sound: no spoken voice); then time goes on and THREE CUTS land one after another on the enemy's chest (0.11 s apart; nothing can block or dodge them, a guard is broken), each adding a bleed that lasts 8 s (0.1 of health every 0.03 s, they stack: about 80 health in all, he bleeds out), and the enemy is stunned from the stop until 0.6 s after the last cut. Nothing touches him during the whole move. See suBlue, suLegAt, suDisStep, suFreeze, suDisCut, suTsFrame.
 // He cannot crouch-jump, dash, block or be hurt in pictures yet (whatever is pressed is dropped, as for a custom fighter that has not drawn them), and his body is measured on his idle pictures like every custom fighter's (cuMeasure). His slot is 3, after the three that can be drawn, so cuSelRefresh leaves his card alone.
-const SUK_WHO = 'cu3', SUK_PNG = '__SUKPNG__', SUK_ROWS = ['frames', 'walk', 'jump', 'cr', 'ci', 'cwk', 'a0', 'a1', 'a2', 'dg', 'a3', 'cp0', 'cp1', 'sl', 'sx', 'cut', 'storm', 'ccut', 'dis', 'el', 'tc', 'lift', 'dive'];      // (the rows of the picture strip: idle, walk, jump, crouch down, crouched idle, crouch walk, right jab, left jab, face kick, dodge, slash (the counter's and the right hand's), the two crouch punches, the left hand's slash and the slash of both hands, the AIR CUT and the CUT STORM, the LEG CUT and DISMANTLE, v1.119: the ELBOW, the touch and cut (Yuji's grab and cleave), the LIFT and the DIVE; the names are those of the pictures of a custom fighter: a0 to a3 are its four punches)
+const SUK_WHO = 'cu3', SUK_PNG = '__SUKPNG__', SUK_ROWS = ['frames', 'walk', 'jump', 'cr', 'ci', 'cwk', 'a0', 'a1', 'a2', 'dg', 'a3', 'cp0', 'cp1', 'sl', 'sx', 'cut', 'storm', 'ccut', 'dis', 'el', 'tc', 'lift', 'dive', 'fl'];      // (the rows of the picture strip: idle, walk, jump, crouch down, crouched idle, crouch walk, right jab, left jab, face kick, dodge, slash (the counter's and the right hand's), the two crouch punches, the left hand's slash and the slash of both hands, the AIR CUT and the CUT STORM, the LEG CUT and DISMANTLE, v1.119: the ELBOW, the touch and cut (Yuji's grab and cleave), the LIFT and the DIVE, v1.120: the FLAME poses; the names are those of the pictures of a custom fighter: a0 to a3 are its four punches)
 const SU_ATK = [['R.JAB', 8, 0, 8, 6, 30], ['L.JAB', 8, 0, 8, 6, 30], ['FACE KICK', 16, 14, 6, 14, 30]];      // the three blows: name, damage, knock-back, the picture (1 - 15) the blow lands on, how far he steps forward (px), pictures a second (the jabs are Yuji's hooks, 30 a second, landing on his 8th picture; the kick lands its sole on the 6th)
 const SU_KICK_LIFT = [0, 0, 0, 4, 9, 12, 12, 8, 4, 2, 0, 0, 0, 0, 0];      // how high the face kick hops (px) in each of its pictures (Yuji's kick to the head, the first of his three: the foot is 34 px above the ground in the picture and he is lifted 12 more: the height of a standing enemy's face)
 const SU_NEAR = 60, SU_CP = [['R.JAB', 10, 7], ['L.UPPR', 13, 8]], SU_CP_FPS = 38, SU_THROW = { d: 6, share: 0.25, shareX: 0.5, lead: 24, ms: 600, cd: 5, fps: 45, hit: 8 };      // v1.110: an enemy this close in front (px) is punched, a further one slashed at; Yuji's crouch punches: name, damage (his hits 6 and 7: 10 and 13), the picture they land on (1 - 15), 38 pictures a second; the slashes: damage of a single slash (the X's are twice that), how much of the screen's width each flies from him in its 0.6 s (a single one a quarter, the X half: the screen's edge, since he stands in the middle), the lead the slash already has when it leaves (px: where it starts and where its middle is), its life (ms), the wait before the X can be thrown again (s), pictures a second and the picture it leaves the hand on
@@ -40,11 +40,12 @@ NAMES[SUK_WHO] = 'SUKUNA'; CEC[SUK_WHO] = ['#2a0a12', '#d02a3a', '#ffb0b8', '#ff
     ev.push([{ f: SU_BLUE.cut.hit, k: 'c', cb: now => suCutAt(now, 0, 1) }], Array.from({ length: SU_BLUE.storm.n }, (_, i) => ({ f: SU_BLUE.storm.first + i, k: 'c', cb: now => suCutAt(now, i, SU_BLUE.storm.n) })));      // 9: the AIR CUT (one slash), 10: the CUT STORM (one slash on each of its pictures, from the first one on)
     ev.push([{ f: SU_LEG.hit, k: 'c', cb: now => suLegAt(now) }], [], []);      // 11: the LEG CUT (one cut), 12: DISMANTLE and 13: the DASH SLASH have no events: a state of their own plays them (suDisStep, suDashStep)
     const elTips = arts[SUK_ROWS.indexOf('el')].map(tipOf), [, eD, eK, eF] = SU_ELB, eE = { f: eF, k: 'i', d: eD, sp: eD, fx: [['k', eK, 0, 0, -1], ['h', 50, 0, 1, 0], ['w', 3, 0, 1, 0]], c: 0, src: -1, id: 0, dy: 0 }; eE.tip = cuMaxRows([elTips[eF - 1], elTips[eF]]);
-    ev.push(ev[0], ev[1], [eE], [{ f: 4, k: 'c', cb: now => suTouch(now) }, { f: 8, k: 'c', cb: now => suClHit(now, SU_CL.m1, { knock: 1.5 }, SU_CL.reach + 4, -3, SU_CL.mark, false) }], [{ f: 4, k: 'c', cb: now => suTouch(now) }, { f: 8, k: 'c', cb: now => suClHit(now, SU_CL.blue, { gb: true, knock: 5 }, SU_CL.reach + 12, -3, SU_CL.mark, true) }], [], [], []);      // v1.119 14: R.HOOK and 15: L.HOOK (the jabs' own impacts), 16: ELBOW, 17: TOUCH CUT (picture 4 touches him, picture 8 cuts: 1% of his full health), 18: CLEAVE (BLUE: the same, 5%, a guard is broken); 19: LIFT, 20: DIVE and 21: DASH CLEAVE are states of their own (suClStep)
-    const one = [0, 1].map(ph => suSlashCv(0, ph)), up = [0, 1].map(ph => suSlashCv(1, ph)), dn = [0, 1].map(ph => suSlashCv(2, ph)), vfx = Array.from({ length: 22 }, () => []), vxs = Array.from({ length: 22 }, () => []), spans = l => l.map(c => cuSpan(suAlpha(c), r => r - 2));
+    ev.push(ev[0], ev[1], [eE], [{ f: 4, k: 'c', cb: now => suTouch(now) }, { f: 8, k: 'c', cb: now => suClHit(now, SU_CL.m1, { knock: 1.5 }, SU_CL.reach + 4, -3, SU_CL.mark, false) }], [{ f: 4, k: 'c', cb: now => suTouch(now) }, { f: 8, k: 'c', cb: now => suClHit(now, SU_CL.blue, { gb: true, knock: 5 }, SU_CL.reach + 12, -3, SU_CL.mark, true) }], [], [], [], []);      // v1.119 14: R.HOOK and 15: L.HOOK (the jabs' own impacts), 16: ELBOW, 17: TOUCH CUT (picture 4 touches him, picture 8 cuts: 1% of his full health), 18: CLEAVE (BLUE: the same, 5%, a guard is broken); 19: LIFT, 20: DIVE and 21: DASH CLEAVE are states of their own (suClStep), and so is 22: OPEN of the FLAME mode (suFlStep)
+    const one = [0, 1].map(ph => suSlashCv(0, ph)), up = [0, 1].map(ph => suSlashCv(1, ph)), dn = [0, 1].map(ph => suSlashCv(2, ph)), vfx = Array.from({ length: 23 }, () => []), vxs = Array.from({ length: 23 }, () => []), spans = l => l.map(c => cuSpan(suAlpha(c), r => r - 2));
     vfx[6] = vfx[7] = one; vfx[9] = up; vfx[10] = dn; vxs[6] = vxs[7] = spans(one); vxs[9] = spans(up); vxs[10] = spans(dn);      // (the pictures of the flying slashes and the rows each covers, for the touch with the enemy)
-    CU_GAME[3] = { name: 'SUKUNA', frames: set.frames, walk: set.walk, jump: set.jump, hu: [], ko: [], bl: [], df: [], db: [], cr: set.cr, ci: set.ci, cwk: set.cwk, st: { ...cuStats(null), fw: FWD_SPEED, bk: BACK_SPEED, cw: 60, jh: 22, jt: 713 }, vfx, atk: [set.a0, set.a1, set.a2, set.a3, set.cp0, set.cp1, set.a3, set.sl, set.sx, set.cut, set.storm, set.ccut, set.dis, set.a3, set.a0, set.a1, set.el, set.tc, set.tc, set.lift, set.dive, set.a3], an: SU_ATK.map(a => a[0]).concat('COUNTER', SU_CP.map(a => a[0]), 'R.SLASH', 'L.SLASH', 'X SLASH', 'AIR CUT', 'CUT STORM', 'LEG CUT', 'DISMANTLE', 'DASH SLASH', 'R.HOOK', 'L.HOOK', SU_ELB[0], 'TOUCH CUT', 'CLEAVE', 'LIFT CLEAVE', 'DIVE CLEAVE', 'DASH CLEAVE'), rdy: [0, 1, 2, 3], cl: [14, 15, 16, 17], ev, set: [0, 1, 2, 3].map(k => ({ v: k < 3 ? SU_ATK[k][5] : 30, m: k < 3 ? SU_ATK[k][4] : 0, c: 0, d: 0 })).concat([SU_CP_FPS, SU_CP_FPS, SU_THROW.fps, SU_THROW.fps, SU_THROW.fps].map((v, i) => ({ v, m: 0, c: 0, d: i === 4 ? SU_THROW.cd : 0 }))).concat([[SU_BLUE.cut.fps, SU_BLUE.cut.cost], [SU_BLUE.storm.fps, SU_BLUE.storm.cost], [SU_LEG.fps, SU_LEG.cost], [20, SU_DIS.cost], [30, SU_DASH.cost]].map(([v, c]) => ({ v, m: 0, c, d: 0 }))).concat([[30, 6, 0], [30, 6, 0], [SU_ELB[5], SU_ELB[4], 0], [30, 8, 0], [24, 16, SU_CL.cost.stand], [30, 0, SU_CL.cost.lift], [30, 0, SU_CL.cost.dive], [30, 0, SU_CL.cost.dash]].map(([v, m, c]) => ({ v, m, c, d: 0 }))), body, push: Math.max(5, hs.length ? hs[hs.length >> 1] : 5),
-      tipAll: ev.map(l => cuMaxRows(l.map(e => e.tip))), vxs, dg: set.dg, al: [null, null, SU_KICK_LIFT, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], cs: null, yu: true, blue: true, wf: WALK_FPS, crMs: 1000 / CR_FPS };      // (the blows: 0 R.JAB, 1 L.JAB, 2 FACE KICK, 3 COUNTER, 4 R.JAB and 5 L.UPPR crouched, 6 R.SLASH, 7 L.SLASH, 8 X SLASH, 9 AIR CUT, 10 CUT STORM, 11 LEG CUT, 12 DISMANTLE (the last four are played by BLUE: blue); yu: he moves like Yuji; wf: his walking pictures a second; crMs: how long a picture of the crouch lasts; al: the height of each picture of a blow that hops; cs: the counter in progress; dg: the pictures of the dodge; the stats are Yuji's: 56 and 38 px/s, 60% while crouched, a jump of 22 px, 713 ms of flight)
+    CU_GAME[3] = { name: 'SUKUNA', frames: set.frames, walk: set.walk, jump: set.jump, hu: [], ko: [], bl: [], df: [], db: [], cr: set.cr, ci: set.ci, cwk: set.cwk, st: { ...cuStats(null), fw: FWD_SPEED, bk: BACK_SPEED, cw: 60, jh: 22, jt: 713 }, vfx, atk: [set.a0, set.a1, set.a2, set.a3, set.cp0, set.cp1, set.a3, set.sl, set.sx, set.cut, set.storm, set.ccut, set.dis, set.a3, set.a0, set.a1, set.el, set.tc, set.tc, set.lift, set.dive, set.a3, set.fl], an: SU_ATK.map(a => a[0]).concat('COUNTER', SU_CP.map(a => a[0]), 'R.SLASH', 'L.SLASH', 'X SLASH', 'AIR CUT', 'CUT STORM', 'LEG CUT', 'DISMANTLE', 'DASH SLASH', 'R.HOOK', 'L.HOOK', SU_ELB[0], 'TOUCH CUT', 'CLEAVE', 'LIFT CLEAVE', 'DIVE CLEAVE', 'DASH CLEAVE', 'OPEN'), rdy: [0, 1, 2, 3], cl: [14, 15, 16, 17], ev, set: [0, 1, 2, 3].map(k => ({ v: k < 3 ? SU_ATK[k][5] : 30, m: k < 3 ? SU_ATK[k][4] : 0, c: 0, d: 0 })).concat([SU_CP_FPS, SU_CP_FPS, SU_THROW.fps, SU_THROW.fps, SU_THROW.fps].map((v, i) => ({ v, m: 0, c: 0, d: i === 4 ? SU_THROW.cd : 0 }))).concat([[SU_BLUE.cut.fps, SU_BLUE.cut.cost], [SU_BLUE.storm.fps, SU_BLUE.storm.cost], [SU_LEG.fps, SU_LEG.cost], [20, SU_DIS.cost], [30, SU_DASH.cost]].map(([v, c]) => ({ v, m: 0, c, d: 0 }))).concat([[30, 6, 0], [30, 6, 0], [SU_ELB[5], SU_ELB[4], 0], [30, 8, 0], [24, 16, SU_CL.cost.stand], [30, 0, SU_CL.cost.lift], [30, 0, SU_CL.cost.dive], [30, 0, SU_CL.cost.dash], [30, 0, SU_FL.cost]].map(([v, m, c]) => ({ v, m, c, d: 0 }))), body, push: Math.max(5, hs.length ? hs[hs.length >> 1] : 5),
+      tipAll: ev.map(l => cuMaxRows(l.map(e => e.tip))), vxs, dg: set.dg, al: [null, null, SU_KICK_LIFT, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], cs: null, yu: true, blue: true, wf: WALK_FPS, crMs: 1000 / CR_FPS };      // (the blows: 0 R.JAB, 1 L.JAB, 2 FACE KICK, 3 COUNTER, 4 R.JAB and 5 L.UPPR crouched, 6 R.SLASH, 7 L.SLASH, 8 X SLASH, 9 AIR CUT, 10 CUT STORM, 11 LEG CUT, 12 DISMANTLE (the last four are played by BLUE: blue); yu: he moves like Yuji; wf: his walking pictures a second; crMs: how long a picture of the crouch lasts; al: the height of each picture of a blow that hops; cs: the counter in progress; dg: the pictures of the dodge; the stats are Yuji's: 56 and 38 px/s, 60% while crouched, a jump of 22 px, 713 ms of flight)
+  suFlBuild();      // (v1.120 the flame pictures of the FLAME mode are made as soon as he is there)
   };
   im.src = SUK_PNG;
 })();
@@ -76,6 +77,7 @@ function suStep(g, now) {      // every frame of the counter: the state moves on
   if (vs.ph !== 'fight') { suEnd(g, now); return null; }
   if (c.air) return suDisStep(g, c, now);      // (v1.112 DISMANTLE is a state of the same kind: g.cs = { air: true, ... })
   if (c.dash) return suDashStep(g, c, now);      // (v1.118 the DASH SLASH: g.cs = { dash: true, ... })
+  if (c.fl) return suFlStep(g, c, now);      // (v1.120 OPEN of the FLAME mode: g.cs = { fl: true, ... })
   if (c.cl) return suClStep(g, c, now);      // (v1.119 the LIFT, the DIVE and the DASH CLEAVE of the CLEAVE mode: g.cs = { cl: 'lift' | 'dive' | 'dash', ... })
   const t = now - c.t0;
   if (c.ph === 'wait') { if (t >= SU_WAIT) suEnd(g, now); return null; }
@@ -91,7 +93,7 @@ function suStep(g, now) {      // every frame of the counter: the state moves on
 }
 let suDrop = 0;
 function suBleedFx(now) {      // every frame: the bleeding of the enemy goes on (vpBleed ticks dummy.bleed; the scenes of the others call it, the custom scene did not need it before) and drops fly off him (about 7 a second)
-  vpBleed(now); const d = dummy; if (!d || !d.bleed || !d.bleed.quiet || d.ko >= 0 || now < suDrop) return;
+  vpBleed(now); suBurnStep(now); const d = dummy; if (!d || !d.bleed || !d.bleed.quiet || d.ko >= 0 || now < suDrop) return;
   suDrop = now + 140 / Math.min(4, d.bleed.st ? d.bleed.st.length : 1); spark(d.x + Math.random() * 6 - 3, gy - 20 - Math.random() * 24, 1, ['#c4121c', '#ff2a3a'], false, Math.random() < 0.5 ? 1 : -1);
 }
 
@@ -137,6 +139,7 @@ let suCast = null, suMk = 0;
 function suBlue(now) {      // the BLUE move this moment asks for (-1: none): in the flight of a jump (its pictures 3 to 11) DISMANTLE (12), crouched the LEG CUT (11), standing the CUT STORM (10) with the back direction held and otherwise the AIR CUT (9)
   if (cuJumpAt >= 0) { const f = jumpFrame(Math.max(0, now - cuJumpAt)); return f >= 3 && f <= 11 ? (suCl ? 20 : 12) : -1; }
   if (suCl) return stance === 'crouch' ? 19 : stance === 'stand' ? ((keyR || padR) && suClDashOk(now) ? 21 : 18) : -1;      // (v1.119 the CLEAVE mode: crouched the LIFT (19), in the air the DIVE (20), standing with FORWARD held and an enemy ahead the DASH CLEAVE (21), otherwise the CLEAVE (18))
+  if (suFl && stance === 'stand') return 22;      // (v1.120 the FLAME mode: standing, whichever way he holds, BLUE is OPEN; crouched and in the air the old moves stay)
   return stance === 'crouch' ? 11 : stance === 'stand' ? (keyL || padL ? 10 : (keyR || padR) && suDashOk(now) ? 13 : 9) : -1;
 }
 function suBlueOk(k, now) {      // can this BLUE move start? DISMANTLE stops time, so it needs a living enemy in front of him on the screen that he can hit (not one lying down, held or beyond the edge): otherwise NO TARGET, and nothing is paid
@@ -151,7 +154,7 @@ function suBlueOk(k, now) {      // can this BLUE move start? DISMANTLE stops ti
   say('NO TARGET', wx, '#9a9aa8', 8, now); return false;
 }
 function suBlueStart(k, now) {      // a new BLUE move has started: nothing has landed yet; DISMANTLE is a state of its own (g.cs) in which nothing touches him (suHit)
-  suCast = { hits: 0 }; if (k >= 19 && k <= 21) suClStart(k, now); if (k === 12) CU_GAME[3].cs = { air: true, ph: 'air', t0: now, last: now, done: 0, cuts: 0, frozen: false };
+  suCast = { hits: 0 }; if (k >= 19 && k <= 21) suClStart(k, now); if (k === 22) suFlStart(now); if (k === 12) CU_GAME[3].cs = { air: true, ph: 'air', t0: now, last: now, done: 0, cuts: 0, frozen: false };
   if (k === 13) { const d = dummy; CU_GAME[3].cs = { dash: true, ph: 'dash', t0: now, done: 0, dx: d.x - wx + SU_DASH.behind, gh: [], cut: false }; cuStun((SU_DASH.dashMs + SU_DASH.standMs + SU_DASH.endMs + 300) / 1000, now, true); d.dodgeUntil = 0; snd('dash', 1); say('DASH SLASH', wx, '#ffe9a0', 8, now); }      // (the enemy stands still from now until after the cut)
 }
 const SU_BLUE_NAMES = { 9: ['AIR<br>CUT', 'Air Cut: an invisible slash cuts the enemy at once wherever he stands on the screen and he bleeds (5 energy). Hold back for the Cut Storm, crouch for the Leg Cut, jump for Dismantle'], 10: ['CUT<br>STORM', 'Cut Storm: eight invisible slashes cut the enemy, he is stunned for 3 seconds and bleeds more with every slash (25 energy)'], 11: ['LEG<br>CUT', 'Leg Cut: an invisible slash cuts the enemy\'s legs, he drops to his knees and is stunned for 0.8 seconds, and every hit lands on him (10 energy)'], 13: ['DASH<br>SLASH', 'Dash Slash: he dashes through the enemy and stops behind him, the game stops for 1.23 seconds with an impact frame, then the enemy is cut and bleeds (20 energy; hold forward with the enemy within 100 pixels)'], 12: ['<span style="font-size:.78em">DISMAN-<br>TLE</span>', 'Dismantle: he dashes back in the air and points, time stops while he says it, then the enemy is cut three times in the chest and bleeds out (20 energy)'] };
@@ -159,8 +162,9 @@ SU_BLUE_NAMES[18] = ['CLEAVE', 'Cleave (Cleave mode): he steps in, touches the e
 SU_BLUE_NAMES[19] = ['LIFT<br>CLEAVE', 'Lift Cleave (Cleave mode): he lifts the enemy up with one hand and slashes his head for 5 percent of his health (10 energy)'];
 SU_BLUE_NAMES[20] = ['DIVE<br>CLEAVE', 'Dive Cleave (Cleave mode): he drops down on the enemy, grabs him and cleaves him to the ground for 5 percent of his health (10 energy)'];
 SU_BLUE_NAMES[21] = ['DASH<br>CLEAVE', 'Dash Cleave (Cleave mode): he dashes forward and cleaves the enemy back for 5 percent of his health (10 energy; hold forward with the enemy within 120 pixels)'];
+SU_BLUE_NAMES[22] = ['OPEN', 'Open (Flame mode): flames light on his hands, he claps and plays with the fire like slime, draws a bow of flame and lets go of a huge fire arrow that no guard can stop and that burns the enemy for 8 seconds (50 energy)'];
 function suBlueLabel(now) {      // the BLUE button's name (and what a screen reader hears): it changes with where he is and with the back direction
-  const k = suBlue(now), n = SU_BLUE_NAMES[k < 0 ? (suCl ? 18 : 9) : k], el = $('lapl');
+  const k = suBlue(now), n = SU_BLUE_NAMES[k < 0 ? (suFl ? 22 : suCl ? 18 : 9) : k], el = $('lapl');
   if (el.innerHTML !== n[0]) { el.innerHTML = n[0]; $('lap').setAttribute('aria-label', n[1]); }
 }
 function suBleed(d, now, ms) {      // one more bleed on the enemy (every slash that lands adds one, the counter's too): it lasts ms (SU_BLEED.ms: 4 s, DISMANTLE's 8 s) and takes SU_BLEED.dm every SU_BLEED.gap ms; they stack: d.bleed.st lists when each one ends and vpBleed takes dm for every one that is still on; returns how many are on
@@ -325,12 +329,15 @@ function suTsDash(T) {      // the game is stopped (DASH SLASH): the impact fram
 }
 
 // ---- v1.119 CLEAVE (the MODE button): he switches in silence: nothing is heard, said or lit on the field (the enemy cannot tell), only the buttons change (MODE shows CLEAVE and glows, ATTACK and BLUE get new names). ATTACK becomes a melee chain whether an enemy is near or not: R.HOOK and L.HOOK (the jabs' own pictures and numbers), ELBOW (12 damage) and TOUCH CUT: he lays a hand on the enemy and slashes him for exactly 1% of the enemy's full health (a guard stops it). BLUE becomes CLEAVE (5 energy): the same touch and cut, but 5% of the enemy's full health, and a guard is broken. Crouched it is the LIFT CLEAVE (10 energy: he lifts the enemy up with one hand and slashes his head), in the air the DIVE CLEAVE (10: he drops on the enemy, grabs him and cleaves him to the ground, knocked down), standing with FORWARD held and an enemy within 120 px the DASH CLEAVE (10: he dashes at him and cleaves him back, a hop and a long knock-back). The 1% and 5% are taken from the enemy's full health (dummy.max) whatever his level, and the cut is blocked or missed like any hit. The three BLUE states are states of g.cs like DISMANTLE (nothing touches him meanwhile, suHit); the CLEAVE and TOUCH CUT are blows with events. The mode is off at the start of every round. See suToggle, suClHit, suClStep.
-let suCl = false;
-function suToggle() { suCl = !suCl; cuCmb = cuSn = cuCp = 0; cuCmbBy = 0; }      // MODE: Cleave on or off (the blows start from the first one again); no sound, no word, no light on the field
-function suModeUI() {      // every frame: the MODE button's name and light follow the mode (setModeUI writes the button too, so it is checked every time, like the BLUE label)
-  const el = $('cel'), b = $('ce'), want = 'MODE<br>' + (suCl ? 'CLEAVE' : 'OFF'), p = suCl ? 'true' : 'false', aria = suCl ? 'Mode: Cleave is on, tap to switch it off. The enemy cannot tell' : 'Mode: tap to switch Cleave on. The enemy cannot tell';
+let suCl = false, suFl = false;
+function suToggle() { if (!suCl && !suFl) suCl = true; else if (suCl) { suCl = false; suFl = true; } else suFl = false; cuCmb = cuSn = cuCp = 0; cuCmbBy = 0; }      // MODE: OFF > CLEAVE > FLAME > OFF (v1.120: one more tap goes on to FLAME); the blows start from the first one again; no sound, no word, no light on the field
+function suReset() { suCl = suFl = false; suArrows.length = 0; suFlBursts.length = 0; suFlTalk = null; if (dummy) dummy.sburn = null; }      // (a new round: both modes off, no arrow in the air, no burn)
+function suModeUI() {      // every frame: the MODE button's name and light and the BLUE button's colour follow the mode (setModeUI writes the buttons too, so it is checked every time, like the BLUE label): CLEAVE lights MODE blue, FLAME lights MODE and BLUE orange
+  const el = $('cel'), b = $('ce'), lp = $('lap'), want = 'MODE<br>' + (suFl ? 'FLAME' : suCl ? 'CLEAVE' : 'OFF'), p = suCl || suFl ? 'true' : 'false', aria = suFl ? 'Mode: Flame is on, tap to switch it off. BLUE is Open: a huge fire arrow that burns the enemy' : suCl ? 'Mode: Cleave is on, tap for Flame. The enemy cannot tell' : 'Mode: tap to switch Cleave on, tap again for Flame. The enemy cannot tell';
   if (el.innerHTML !== want) el.innerHTML = want;
   if (b.classList.contains('lit') !== suCl) b.classList.toggle('lit', suCl);
+  if (b.classList.contains('fl') !== suFl) b.classList.toggle('fl', suFl);
+  if (lp.classList.contains('fl') !== suFl) lp.classList.toggle('fl', suFl);
   b.classList.remove('red'); if (b.getAttribute('aria-pressed') !== p) b.setAttribute('aria-pressed', p); if (b.getAttribute('aria-label') !== aria) b.setAttribute('aria-label', aria);
 }
 function suClTgt(now, range) {      // a living enemy standing on the floor in front of him within range px that he can touch (not one lying down, held, flat, in the air or in his smoke-ball form)
@@ -404,4 +411,151 @@ function suCdashStep(g, c, d, t, now) {      // DASH CLEAVE: a fast step at the 
   }
   const t1 = now - c.t1; if (t1 >= D.end) { suEnd(g, now); return null; }
   return S[Math.min(12, 10 + Math.floor(t1 / 120))];
+}
+
+// ---- v1.120 FLAME (the second MODE: one more tap of MODE after CLEAVE; it is off at the start of every round too). BLUE standing (whichever way he holds) turns into OPEN: the button turns orange (crouched and in the air his old BLUE moves stay, in orange too), 50 energy, about 3 s: flames light on both hands while he says "Wanna See Something Cool?" (the line is typed out above his head, there is no voice), he lifts the hands and CLAPS them (the flames flare up in a burst), plays with the fire like slime (a stretchy flame between the hands that squashes and stretches as the hands move), turns into the pose of an archer (a bow of flame in the front hand, the arrow on the string at his cheek, growing) and lets go with the back hand: a HUGE fire arrow (168 px long, 14 shades of orange from cream to rust) flies across the screen. No guard stops it (the enemy can still jump over it, lie down or dash out of its way); the enemy it hits BURNS: exactly 1 damage every 0.5 s for 8 s (16 in all, quiet: no flinch), and a second arrow restarts the 8 s (the burns do not add up). During the cast the enemy is free to move and fight, but nothing touches Sukuna (suHit) and the cast always finishes. The flames, the slime, the bow, the speech and the arrow are drawn by the game over the pictures of the 'flame' row (tools/sukuna_art.py), at the places of his two hands (SU_FL_HANDS, printed by the art tool). See suFlStart, suFlStep, suFlDraw, suFlStepArrows, suFlHit, suBurnStep.
+const SU_FL = {
+  cost: 50, say: 'Wanna See Something Cool?',
+  T: [0, 140, 280, 420, 560, 700, 820, 1000, 1180, 1360, 1540, 1900, 2050, 2650, 2800], end: 3050,      // when each of the 15 pictures of the cast starts (ms): 0 - 4 the hands lift and the flames light, 5 the hands high, 6 THE CLAP (820), 7 - 10 the slime, 11 the bow pose, 12 the full draw, 13 THE RELEASE (2650: the arrow is let go), 14 back to his guard; the cast ends at `end`
+  arrow: { speed: 560, w: 168, h: 60, y: 39, hw: 10, grow: 0.7, top: 56 },      // the fire arrow: px a second, its picture (168 x 60), how high above the floor its axis flies, how far from the enemy's middle it touches him, how big it is when it leaves (it grows to full size in 0.14 s), the highest his feet may be for it to hit him
+  burn: { ms: 8000, gap: 500, dmg: 1 },      // the burn: how long (ms), the time between two ticks (ms), health a tick
+  pal: ['#fff6d8', '#ffeaa8', '#ffdb86', '#ffcb66', '#ffb84a', '#ffa733', '#ff9622', '#ff8512', '#ff7408', '#f26400', '#dc5400', '#c24600', '#a03800', '#7a2c00'],      // the 14 shades of orange, from a cream white to a dark rust: every flame is painted in them
+  cols: ['#fff0c0', '#ffd27a', '#ffb84a', '#ff9622', '#ff7408', '#dc5400', '#c24600']      // (the colours of the sparks)
+};
+const SU_FL_HANDS = [[32.9, 42.6, 33.5, 39.6], [36.0, 37.5, 38.0, 36.5], [37.6, 31.9, 39.4, 33.3], [42.7, 27.0, 44.7, 28.0], [45.3, 25.1, 45.6, 31.0], [39.4, 18.5, 39.2, 19.4], [47.5, 28.4, 49.4, 28.2], [48.2, 22.0, 46.4, 36.7], [50.0, 27.6, 40.5, 36.3], [45.4, 25.2, 47.6, 32.0], [51.6, 26.6, 43.4, 29.3], [52.6, 24.6, 38.0, 22.4], [53.0, 22.5, 31.9, 20.7], [52.0, 22.5, 18.6, 24.2], [39.0, 29.7, 38.9, 30.7]];      // where his near hand and his far hand are on each of the 15 pictures (x, y, x, y on the 64 x 64 picture), from tools/sukuna_art.py's flame_hands()
+const SU_FL_RGB = SU_FL.pal.map(h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
+let suArrows = [], suFlBursts = [], suFlTalk = null, suFlSpr = null, suFlFlashAt = -1e9;      // the arrows in the air, the bursts where they landed, the line he is saying, the flame pictures (made once), when the last arrow left
+function suFlNoise(a, b, c) { const n = Math.sin(a * 12.9898 + b * 78.233 + c * 37.719) * 43758.5453; return n - Math.floor(n); }      // (a cheap noise from 0 to 1)
+function suFlCv(w, h, fill) {      // a canvas of w x h pixels painted by fill(x, y), which gives a shade (0 = cream .. 13 = rust) or -1 for nothing
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'), im = g.createImageData(w, h), d = im.data;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const k = fill(x, y); if (k < 0) continue; const o = (y * w + x) * 4, rgb = SU_FL_RGB[k]; d[o] = rgb[0]; d[o + 1] = rgb[1]; d[o + 2] = rgb[2]; d[o + 3] = 255; }
+  g.putImageData(im, 0, 0); return c;
+}
+function suFlFlame(w, h, fr) {      // one fire standing on its bottom middle (w x h): 2 to 4 tongues of different heights that sway with the frame fr, cream in the middle of each and darker toward its edge and tip
+  const L = w >= 24 ? 4 : w >= 16 ? 3 : 2, lobes = [];
+  for (let i = 0; i < L; i++) { const m = i - (L - 1) / 2; lobes.push({ cx: m * 0.5, hh: (0.62 + 0.38 * (1 - Math.abs(m) / (L / 2 + 0.5))) * (0.85 + 0.15 * Math.sin(fr * 1.3 + i * 2.1)), wd: 0.6 + 0.1 * Math.cos(i + fr), ph: i * 1.7 }); }
+  return suFlCv(w, h, (x, y) => {
+    const u = (x + 0.5 - w / 2) / (w / 2), v0 = 1 - (y + 0.5) / h; let I = 0;
+    for (const o of lobes) {
+      const v = v0 / o.hh; if (v < 0 || v > 1) continue;
+      const sway = Math.sin(v * 4.2 + fr * 1.1 + o.ph) * 0.22 * Math.pow(v, 1.3), hw = (v < 0.14 ? Math.sqrt(1 - Math.pow((0.14 - v) / 0.14, 2)) : Math.pow(1 - (v - 0.14) / 0.86, 1.2)) * o.wd, dist = Math.abs(u - o.cx - sway) / Math.max(0.001, hw);
+      if (dist <= 1) I = Math.max(I, (1 - dist * dist) * (1 - v * 0.6));
+    }
+    I += (suFlNoise(x, y, fr) - 0.5) * 0.12; if (I < 0.05) return -1;
+    return Math.max(0, Math.min(13, Math.floor((1 - Math.min(1, I)) * 13.99)));
+  });
+}
+function suFlArrow(fr) {      // the HUGE fire arrow pointing right (168 x 60): a big leaf-shaped spear head, a thin burning shaft, swept fire fins and a flame streaming from the tail, with a dark rust edge round the head and shaft and licking flames round all of it: all 14 shades of orange, from the cream core to the rust edge
+  const W = 168, H = 60, cy = 29.5;
+  return suFlCv(W, H, (x, y) => {
+    const dy = Math.abs(y - cy); let I = 0, body = false;
+    const part = (hh, k) => { if (dy <= hh) { const e = 1 - dy / (hh + 0.001); I = Math.max(I, k * (e < 0.14 ? 0.1 + e * 0.9 : Math.pow(e, 0.55))); body = true; } };      // (inside a part: cream in the middle, dark at its edge)
+    if (x >= 100 && x <= 166) part(x <= 124 ? 6 + 16 * Math.sin((x - 100) / 24 * Math.PI / 2) : 22 * Math.pow(1 - (x - 124) / 42, 0.85), 1);      // (the head)
+    if (x >= 28 && x < 106) part(4.4 + 0.7 * Math.sin(x * 0.3 + fr * 0.9), 0.95);      // (the shaft)
+    if (x <= 46) for (const sg of [-1, 1]) { const off = 3 + (46 - x) * 0.3, hh = 3.6 + 0.8 * Math.sin(x * 0.35 - fr * 1.1), e = Math.abs(y - (cy + sg * off)); if (e <= hh) { I = Math.max(I, 0.82 * (1 - e / hh) ** 0.55); body = true; } }      // (the fins)
+    if (x <= 40) { const hh = 3 + 2.5 * Math.sin(x * 0.5 + fr) + x / 40 * 3; part(hh, 0.7 * Math.pow(x / 40, 0.5)); }      // (the streaming tail)
+    if (!body || I < 0.3) { const hh = 6 + 14 * Math.min(1, x / 120) + 2.5 * Math.sin(x * 0.17 + fr * 0.7); if (x >= 12 && x <= 160 && dy <= hh) { const f = 0.42 * Math.pow(1 - dy / hh, 1.3) * Math.min(1, (x - 12) / 40) * (suFlNoise(x >> 1, y >> 1, fr) > 0.28 ? 1 : 0.45); I = Math.max(I, f); } }      // (the flames licking round it: dark oranges, flickering)
+    I += (suFlNoise(x, y, fr) - 0.5) * 0.12; if (suFlNoise(x * 3, y * 7, fr + 5) > 0.994 && x < 150) I = Math.max(I, 0.45);      // (flicker, and now and then an ember)
+    if (I < 0.07) return -1; return Math.max(0, Math.min(13, Math.floor((1 - Math.min(1, I)) * 13.99)));
+  });
+}
+function suFlBuild() {      // the flame pictures, made once: flames of 4 sizes in 6 frames each and the arrow in 8 frames
+  if (suFlSpr) return;
+  suFlSpr = { fire: [[8, 13], [12, 20], [18, 30], [26, 42]].map(([w, h]) => Array.from({ length: 6 }, (_, f) => suFlFlame(w, h, f))), arrow: Array.from({ length: 8 }, (_, f) => suFlArrow(f)) };
+}
+function suFlStart(now) {      // BLUE 22 (OPEN) has started: the cast is a state of its own; the enemy is not touched at all
+  suFlBuild(); CU_GAME[3].cs = { fl: true, ph: 'light', t0: now, pic: 0, t: 0 }; suFlTalk = { t0: now };
+}
+function suFlStep(g, c, now) {      // OPEN, every frame: the events of the cast and the picture to show
+  const F = SU_FL, t = now - c.t0, i = suPicAt(F.T, t);
+  if (!c.lit) { c.lit = true; snd('sukfire', 0); }
+  if (!c.clap && t >= F.T[6]) { c.clap = true; snd('sukfire', 1); const h = SU_FL_HANDS[6]; spark(wx + (h[0] + h[2]) / 2 - 32, gy - 61 + (h[1] + h[3]) / 2, 22, F.cols, true, 1); shakeUntil = Math.max(shakeUntil, now + 120); shakeAmp = Math.max(shakeAmp, 1); }
+  if (!c.draw && t >= F.T[11]) { c.draw = true; snd('sukfire', 2); }
+  if (!c.fired && t >= F.T[13]) { c.fired = true; suFlFire(now); }
+  c.ph = t < F.T[5] ? 'light' : t < F.T[7] ? 'clap' : t < F.T[11] ? 'play' : t < F.T[13] ? 'aim' : 'fire'; c.pic = i; c.t = t;
+  if (t >= F.end) { suEnd(g, now); return null; }
+  return g.atk[22][i];
+}
+function suFlFire(now) {      // the back hand lets go: the arrow leaves from the string at his cheek
+  const h = SU_FL_HANDS[12]; suArrows.push({ x: wx + h[2] - 32 - 2, s: SU_FL.arrow.grow, born: now, tried: false }); suFlFlashAt = now; snd('sukfire', 3);
+  shakeUntil = Math.max(shakeUntil, now + 240); shakeAmp = Math.max(shakeAmp, 3); spark(wx + h[2] - 32, gy - 61 + h[3], 18, SU_FL.cols, true, -1);
+}
+function suFlHit(now, a) {      // the arrow reaches the enemy: a hit that takes no health (cuHit, free: the flinch and the combo counter; no guard is asked: the arrow is already past his middle) and the BURN: exactly 1 health every 0.5 s for 8 s; a second arrow restarts the 8 s, nothing adds up
+  const d = dummy; if (!cuHit(0, now, { free: true, gb: true, low: true, knock: 2 }, d.x + 1, 1e9, -1e9)) return false;
+  d.sburn = { until: now + SU_FL.burn.ms, next: now + SU_FL.burn.gap }; snd('sukfire', 4); spark(d.x, gy - 34, 30, SU_FL.cols, true, 1); hitStop(70); shakeUntil = Math.max(shakeUntil, now + 260); shakeAmp = Math.max(shakeAmp, 4);
+  say('BURNING', d.x, '#ff9a2a', 10, now + 60); suFlBursts.push({ x: d.x, born: now }); return true;
+}
+function suFlStepArrows(now, dt) {      // every frame: the arrows fly on; the first time one touches the enemy it hits him (once, hit or miss)
+  const d = dummy, A = SU_FL.arrow;
+  for (let i = suArrows.length - 1; i >= 0; i--) {
+    const a = suArrows[i]; a.x += A.speed * dt; a.s = Math.min(1, a.s + dt * 2.2);
+    if (vs.ph !== 'fight') { suArrows.splice(i, 1); continue; }
+    if (!a.tried && d && d.ko < 0 && a.x + A.w * a.s >= d.x - A.hw && a.x <= d.x + A.hw && (d.airH || 0) < A.top) { a.tried = true; if (suFlHit(now, a)) { suArrows.splice(i, 1); continue; } }
+    if (Math.random() < dt * 40) spark(a.x + A.w * a.s * 0.45, gy - A.y + Math.random() * 20 - 10, 1, SU_FL.cols, false, -1);
+    if (a.x - wx > VW) suArrows.splice(i, 1);
+  }
+}
+function suBurnStep(now) {      // every frame: the burn of the enemy goes on (1 health every 0.5 s: quiet, no flinch); a smoke ball is immune; it stops when he is down or the round is over
+  const d = dummy, b = d && d.sburn; if (!b) return;
+  if (d.ko >= 0 || !vs || vs.ph !== 'fight') { d.sburn = null; return; }
+  while (b.next <= b.until && now >= b.next) {
+    b.next += SU_FL.burn.gap; if (d.vform && d.vform !== 'verity') continue;
+    d.hp = Math.max(0, d.hp - SU_FL.burn.dmg); say('' + SU_FL.burn.dmg, d.x, '#ff9a2a', 8, now); snd('sukfire', 5); spark(d.x + Math.random() * 8 - 4, gy - 20 - Math.random() * 30, 3, SU_FL.cols, false, Math.random() < 0.5 ? 1 : -1);
+    if (d.hp <= 0) { koDummy(now); d.sburn = null; return; }
+  }
+  if (now >= b.until) d.sburn = null;
+}
+function suFlGlow(px, py, r, a) { const gr = ctx.createRadialGradient(px, py, 0, px, py, r); gr.addColorStop(0, 'rgba(255,210,120,' + a + ')'); gr.addColorStop(0.45, 'rgba(255,130,20,' + a * 0.5 + ')'); gr.addColorStop(1, 'rgba(255,90,0,0)'); ctx.fillStyle = gr; ctx.fillRect(px - r, py - r, r * 2, r * 2); }
+function suFlSlime(ax, ay, bx, by, now, k) {      // the flame played with like slime: a stretchy blob between his two hands, thick at the hands and thin in the middle when the hands are far apart, wobbling and sagging, in layers from rust to cream
+  const L = Math.hypot(bx - ax, by - ay) || 1, w0 = (6 + 5 / (1 + L / 12)) * k, N = 14;
+  for (let layer = 0; layer < 7; layer++) {
+    ctx.fillStyle = SU_FL.pal[12 - layer * 2];
+    for (let j = 0; j <= N; j++) {
+      const s = j / N, neck = 0.36 + 0.64 * Math.pow(Math.abs(2 * s - 1), 1.4), wob = Math.sin(now * 0.012 + s * 7) * 0.12 + Math.sin(now * 0.021 + s * 3) * 0.1, droop = Math.sin(Math.PI * s) * (2.5 + L * 0.5) * (0.8 + 0.2 * Math.sin(now * 0.01)), r = Math.max(0.8, w0 * neck * (1 + wob) * (1 - layer * 0.13));
+      ctx.beginPath(); ctx.arc(ax + (bx - ax) * s, ay + (by - ay) * s + droop, r, 0, 6.2832); ctx.fill();
+    }
+  }
+}
+function suFlBow(now, t, hn, hf, fade) {      // the pose of an archer: a bow of flame in the front hand (it opens in 0.2 s), the string pulled back to the back hand at his cheek and the arrow on it, growing; only the shaft and the head of the arrow show (the tail flames would hide his face)
+  const F = SU_FL, k = Math.max(0, Math.min(1, (t - F.T[11]) / 200)), bx = hn[0] + 2, by = hn[1], R = 21 * k, tt = [bx - 5, by - R], tb = [bx - 5, by + R];
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.globalAlpha = fade;
+  [[12, 5], [10, 4], [8, 3], [5, 2], [2, 1]].forEach(([c, w]) => { ctx.strokeStyle = F.pal[c]; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(tt[0], tt[1]); ctx.quadraticCurveTo(bx + 12 * k, by, tb[0], tb[1]); ctx.stroke(); });
+  ctx.strokeStyle = F.pal[1]; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(tt[0], tt[1]); ctx.lineTo(hf[0], hf[1]); ctx.lineTo(tb[0], tb[1]); ctx.stroke();
+  const sa = 0.15 + 0.55 * Math.max(0, Math.min(1, (t - F.T[11]) / 650)), ar = suFlSpr.arrow[Math.floor(now / 55) % 8];
+  ctx.drawImage(ar, 30, 0, 138, 60, Math.round(hf[0] - 2 * sa), Math.round(hf[1] - 29.5 * sa), Math.round(138 * sa), Math.round(60 * sa)); ctx.globalAlpha = 1;
+}
+function suFlCast(now, c, x, y) {      // the flames, the slime and the bow of the cast, over his picture (x, y = where its top left is)
+  const F = SU_FL, S = suFlSpr, t = c.t, H = SU_FL_HANDS[c.pic], hn = [x + H[0], y + H[1]], hf = [x + H[2], y + H[3]];
+  const fade = Math.min(1, t / 250) * Math.max(0, Math.min(1, (F.end - t) / 250)), lvl = t < F.T[5] ? 0 : t < F.T[7] && t >= F.T[6] ? 3 : t < F.T[6] ? 1 : 1, gr = [9, 12, 16, 22][lvl];
+  ctx.globalCompositeOperation = 'lighter'; suFlGlow(hn[0], hn[1], gr, 0.5 * fade); suFlGlow(hf[0], hf[1], gr, 0.5 * fade); ctx.globalCompositeOperation = 'source-over';
+  const sk = Math.max(0, Math.min(1, (t - F.T[6]) / 200)) * Math.max(0, Math.min(1, (F.T[11] + 150 - t) / 250)); if (sk > 0) suFlSlime(hn[0], hn[1], hf[0], hf[1], now, sk * fade);
+  if (t >= F.T[11]) suFlBow(now, t, hn, hf, fade);
+  ctx.globalAlpha = fade; const sp = S.fire[lvl];
+  for (const [px, py, o] of [[hn[0], hn[1], 0], [hf[0], hf[1], 3]]) { const fr = Math.floor(now / 70 + o) % 6, a = sp[fr], b = sp[(fr + 3) % 6]; ctx.drawImage(a, Math.round(px - a.width / 2), Math.round(py - a.height + 3)); if (lvl >= 2) ctx.drawImage(b, Math.round(px - b.width / 2 + (o ? 4 : -4)), Math.round(py - b.height + 5)); }
+  ctx.globalAlpha = 1;
+}
+function suFlArrowDraw(now, a, cx) {      // an arrow in the air: a glow behind it and the arrow itself
+  const s = a.s, ar = suFlSpr.arrow[Math.floor(now / 55) % 8], sx = Math.round(cx + a.x - wx), sy = Math.round(gy - SU_FL.arrow.y - 29.5 * s);
+  ctx.globalCompositeOperation = 'lighter'; suFlGlow(sx + 100 * s, gy - SU_FL.arrow.y, 70 * s, 0.35); ctx.globalCompositeOperation = 'source-over';
+  ctx.drawImage(ar, sx, sy, Math.round(SU_FL.arrow.w * s), Math.round(SU_FL.arrow.h * s));
+}
+function suFlBurstDraw(now, b, cx) {      // where an arrow landed: a ring and flames leaping up, for 0.45 s
+  const k = (now - b.born) / 450, X = Math.round(cx + b.x - wx), Y = gy - 34;
+  ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = 'rgba(255,170,60,' + (1 - k) + ')'; ctx.lineWidth = 3 * (1 - k) + 1; ctx.beginPath(); ctx.arc(X, Y, 8 + 46 * k, 0, 6.2832); ctx.stroke(); ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1 - k; for (let i = 0; i < 5; i++) { const sp = suFlSpr.fire[3][(i + Math.floor(now / 60)) % 6]; ctx.drawImage(sp, Math.round(X + (i - 2) * 11 - sp.width / 2), Math.round(gy - sp.height * (0.45 + k * 0.5) - 4)); } ctx.globalAlpha = 1;
+}
+function suFlBurnDraw(now, d, cx) {      // the burning enemy: flames lick up his body until the last 0.7 s of the burn
+  const X = Math.round(cx + d.x - wx), base = gy - Math.round(d.airH || 0), k = Math.min(1, (d.sburn.until - now) / 700);
+  ctx.globalAlpha = 0.92 * k; for (let i = 0; i < 4; i++) { const sp = suFlSpr.fire[i % 2 ? 1 : 2][Math.floor(now / 85 + i * 2) % 6]; ctx.drawImage(sp, Math.round(X + [-7, 6, -3, 8][i] - sp.width / 2), Math.round(base - [4, 12, 30, 40][i] - sp.height + 6)); } ctx.globalAlpha = 1;
+}
+function suFlDraw(now, cx, x, y) {      // every frame of his scene, after his picture: the cast, the arrows, the bursts, the burning enemy, his line, and a short orange flash when the arrow leaves
+  const g = CU_GAME[3], c = g && g.cs && g.cs.fl ? g.cs : null; if (!suFlSpr) return;
+  ctx.save(); ctx.imageSmoothingEnabled = false;
+  if (c) suFlCast(now, c, x, y);
+  for (const a of suArrows) suFlArrowDraw(now, a, cx);
+  for (let i = suFlBursts.length - 1; i >= 0; i--) { if (now - suFlBursts[i].born > 450) suFlBursts.splice(i, 1); else suFlBurstDraw(now, suFlBursts[i], cx); }
+  const d = dummy; if (d && d.sburn && d.ko < 0) suFlBurnDraw(now, d, cx);
+  if (suFlTalk) { const tt = now - suFlTalk.t0, n = Math.min(SU_FL.say.length, Math.floor(tt / 38)); if (tt > 2300) suFlTalk = null; else if (n > 0) { ctx.globalAlpha = tt > 1900 ? 1 - (tt - 1900) / 400 : 1; const cut = SU_FL.say.indexOf(' ', 8) + 1, l1 = SU_FL.say.slice(0, Math.min(n, cut - 1)), l2 = n > cut ? SU_FL.say.slice(cut, n) : ''; pxt(l1, Math.round(cx), Math.round(y - 8), '#ffb24a', 8, 'center'); if (l2) pxt(l2, Math.round(cx), Math.round(y + 1), '#ffb24a', 8, 'center'); ctx.globalAlpha = 1; } }
+  const fk = (now - suFlFlashAt) / 160; if (fk >= 0 && fk < 1) { ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(255,120,20,' + (0.28 * (1 - fk)) + ')'; ctx.fillRect(0, 0, VW, VH); ctx.globalCompositeOperation = 'source-over'; }
+  ctx.restore();
 }

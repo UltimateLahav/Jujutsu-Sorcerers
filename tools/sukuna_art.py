@@ -64,7 +64,7 @@ def head():
     for c in range(16, 21): put(c, 25, 'u')                                             # the light on the top of the roll
     return g
 
-ROWS = ('idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'atk0', 'atk1', 'kick', 'dash1', 'slash', 'atk30', 'atk31', 'slashL', 'slashX', 'cut', 'storm', 'ccut', 'dis', 'atk6', 'atk26', 'lift', 'dive')      # the strip's rows: Yuji's sets of the move (idle, walk, jump, crouch down, crouched idle, crouch walk, R.HOOK = his right jab, L.HOOK = his left jab, the back dash = his dodge, C.JAB and C.UPPR = his crouch punches) and the kick, the three slashes and the four BLUE moves made here, 15 pictures each
+ROWS = ('idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'atk0', 'atk1', 'kick', 'dash1', 'slash', 'atk30', 'atk31', 'slashL', 'slashX', 'cut', 'storm', 'ccut', 'dis', 'atk6', 'atk26', 'lift', 'dive', 'flame')      # the strip's rows: Yuji's sets of the move (idle, walk, jump, crouch down, crouched idle, crouch walk, R.HOOK = his right jab, L.HOOK = his left jab, the back dash = his dodge, C.JAB and C.UPPR = his crouch punches) and the kick, the three slashes and the four BLUE moves made here, 15 pictures each
 BLINK = {'idle': (9, 10), 'cidle': (9, 10)}                 # (his own blinks: the pictures where his eye is shut)
 NAILS = ('idle', 'fwd', 'cdn')                               # (the pictures where the hand is in the pocket, or still on its way up to the guard: the nails show; the guard and the jump hold it up in a fist of another shape)
 WID = 48                                                    # (the widest of Yuji's pictures of these moves is 44)
@@ -176,7 +176,25 @@ def dive_pic(i):
     if 3 <= i <= 11:                                                            # the speed lines behind him (he falls toward the right)
         for y0, w in ((22, 0), (30, 1), (38, 2)): ya.streak(f, [(26 - w * 3, y0 - 6), (31 - w * 3, y0 - 3), (36 - w * 3, y0)], (.6, 1.4, 2.2), (0, .5, 1), False)
     return f, nh, fh
-GEN = {'slash': {'top': 0, 'frames': ya.pack(slash, 16, 48, 0)[0]}, 'slashL': {'top': 0, 'frames': ya.pack(slash_pic('slashL'), 16, 48, 0)[0]}, 'slashX': {'top': 0, 'frames': ya.pack(slash_pic('slashX'), 16, 48, 0)[0]}, 'kick': {'top': 0, 'frames': ya.pack(kick, 16, 48, 0)[0]}, 'cut': {'top': 0, 'frames': ya.pack(cast_pic('cut'), 16, 48, 0)[0]}, 'storm': {'top': 0, 'frames': ya.pack(cast_pic('storm'), 16, 48, 0)[0]}, 'ccut': {'top': 0, 'frames': ya.pack(cast_pic('ccut'), 16, 48, 0)[0]}, 'dis': {'top': 0, 'frames': ya.pack(cast_pic('dis'), 16, 48, 0)[0]}, 'lift': {'top': 0, 'frames': ya.pack(lift_pic, 16, 48, 0)[0]}, 'dive': {'top': 0, 'frames': ya.pack(dive_pic, 16, 48, 0)[0]}}      # (the sets made here, in the form of yuji.json's)
+# ---- v1.120 FLAME (the second MODE of Sukuna). 'flame' = the pictures of OPEN, the BLUE move of that mode (the flames, the slime, the bow and the arrow are drawn by the game over these pictures, at the places of the two hands that flame_hands() gives):
+# 0 - 4 he lifts both hands in front of his chest (the flames light), 5 the hands high for the clap, 6 the clap, 7 - 10 the hands apart playing with the flame (up and down, near and far), 11 he turns into the bow pose, 12 the full draw (the front arm straight out, the back hand at his cheek),
+# 13 the release (the back hand flies open behind him), 14 he comes back to his guard
+FL_N = {0: ya.IDLE_N, 1: ((1, 5.5), (2.5, 6)), 2: ((2.5, 4), (4.5, 2)), 3: ((5, 1), (8.5, -2)), 4: ((6.5, -1), (11, -4)), 5: ((3, -3), (5, -10)), 6: ((7, -1), (12, -3)), 7: ((8, -3), (14, -8)), 8: ((8.5, -1), (15.5, -3)), 9: ((6, -2), (11, -5)), 10: ((9, -2), (17, -4)), 11: ((10, -4), (18, -6)), 12: ((9.5, -5), (18.5, -8)), 13: ((9.5, -5), (18.5, -8)), 14: ya.GUARD_N}      # the near hand of each picture (elbow, hand from his shoulder)
+FL_F = {0: ya.IDLE_F, 1: ((1, 4.5), (2.5, 5)), 2: ((2, 4), (4, 3)), 3: ((5, 2), (8.5, -1)), 4: ((5, 1), (9, 1)), 5: ((2, -2), (3, -9)), 6: ((7, 0), (12, -3)), 7: ((6, 3), (10, 5)), 8: ((3, 2), (4.5, 4)), 9: ((6, 1), (11, 1)), 10: ((5, 0), (7, -1)), 11: ((3, -3), (3, -7)), 12: ((-8, -3), (-4, -9)), 13: ((-9, -3), (-14, -6)), 14: ya.GUARD_F}      # the far hand (the back hand of the bow: at his cheek in 12, flying open behind him in 13)
+def flame_params(i):
+    kv, GR = ya.kv, ya.GR
+    return dict(by=round(kv({0: 0, 5: -1, 6: 1, 7: 0, 14: 0}, i)), ln=round(kv({0: 0, 4: 1, 6: 2, 7: 1, 11: 1, 14: 0}, i)), lf=(round(kv({0: 34, 10: 34, 11: 36, 12: 38, 13: 38, 14: 35}, i)), GR, 0), lb=(round(kv({0: 31, 10: 31, 11: 30, 12: 28, 13: 28, 14: 30}, i)), GR, 0),
+                na=FL_N[i], fa=FL_F[i], hp=i * .8, hback=0, blink=False)
+def flame_pic(i):
+    return ya.figure(flame_params(i))
+def flame_hands(i):
+    """where the two hands are on the 64 x 64 picture (x, y of the near hand, x, y of the far hand): the game puts the flames there"""
+    P = flame_params(i); out = []
+    for key, sx0 in (('na', 34), ('fa', 36)):
+        ne, nw = P[key]; S = (sx0 + P['ln'], 31 + P['by']); e = (S[0] + ne[0], S[1] + ne[1]); w = (S[0] + nw[0], S[1] + nw[1]); d = ya.unit(w[0] - e[0], w[1] - e[1]); fc = (w[0] + d[0] * 1.6, w[1] + d[1] * 1.6)
+        out += [round(fc[0] - 2, 1), round(fc[1], 1)]      # (the figure's column 16 is the picture's column 14, and its row 0 the picture's row 0: see render())
+    return out
+GEN = {'slash': {'top': 0, 'frames': ya.pack(slash, 16, 48, 0)[0]}, 'slashL': {'top': 0, 'frames': ya.pack(slash_pic('slashL'), 16, 48, 0)[0]}, 'slashX': {'top': 0, 'frames': ya.pack(slash_pic('slashX'), 16, 48, 0)[0]}, 'kick': {'top': 0, 'frames': ya.pack(kick, 16, 48, 0)[0]}, 'cut': {'top': 0, 'frames': ya.pack(cast_pic('cut'), 16, 48, 0)[0]}, 'storm': {'top': 0, 'frames': ya.pack(cast_pic('storm'), 16, 48, 0)[0]}, 'ccut': {'top': 0, 'frames': ya.pack(cast_pic('ccut'), 16, 48, 0)[0]}, 'dis': {'top': 0, 'frames': ya.pack(cast_pic('dis'), 16, 48, 0)[0]}, 'lift': {'top': 0, 'frames': ya.pack(lift_pic, 16, 48, 0)[0]}, 'dive': {'top': 0, 'frames': ya.pack(dive_pic, 16, 48, 0)[0]}, 'flame': {'top': 0, 'frames': ya.pack(flame_pic, 16, 48, 0)[0]}}      # (the sets made here, in the form of yuji.json's)
 
 def yuji(name, i):
     """Yuji's picture i of a set as a grid of 64 figure rows x 48 columns (a jump's 4 empty rows above and below the figure are dropped; the game draws them 4 rows higher)"""
@@ -255,7 +273,7 @@ if __name__ == '__main__':
         for i in range(15):
             g, nfo = picture(name, i, H); info[name, i] = nfo; row.append(render(g))
         rows.append(row)
-    strip(rows).save(os.path.join(HERE, 'sukuna_idle.png'), transparency=0, optimize=True); print('wrote sukuna_idle.png', 64 * 15, 'x', 64 * len(ROWS))
+    strip(rows).save(os.path.join(HERE, 'sukuna_idle.png'), transparency=0, optimize=True); print('wrote sukuna_idle.png', 64 * 15, 'x', 64 * len(ROWS)); print('SU_FL_HANDS =', [flame_hands(i) for i in range(15)])
     if '--preview' in sys.argv:
         out = sys.argv[sys.argv.index('--preview') + 1]; os.makedirs(out, exist_ok=True); S = 4
         for r, name in enumerate(ROWS):

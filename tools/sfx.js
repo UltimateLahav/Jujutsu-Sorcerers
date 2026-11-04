@@ -194,6 +194,15 @@ function makeSfx(ac) {
       burst(B.soft, t, { type: 'bandpass', f: 2800 * up, f2: 7600 * up, q: 3.5, dur: 0.1, gain: 1.1, atk: 0.004 });
       tone(C.tele.soft, t + 0.012, { f: 3300 * up, f2: 3150 * up, dur: 0.13, gain: 0.035, atk: 0.002 });
     },
+    sukfire(k, at) {                                     // v1.120 Sukuna's FLAME (the BLUE move OPEN): k 0 = the flames light on his hands (a soft whoomp that opens upward, a low rumble, a few crackles), 1 = the clap (a sharp clap and a whump of fire), 2 = the bow is drawn (a creak and a rising roar), 3 = the arrow is let go (a hard crack, a huge whoosh, a deep boom and a roar), 4 = the arrow lands (a sizzling burst and a boom), 5 = one tick of the burn (a tiny crackle)
+      const t = T(at), B = C.atk, D = C.tele, crackle = (n, t0, span, gain) => { for (let i = 0; i < n; i++) burst(B.soft, t0 + R(0, span), { type: 'highpass', f: R(2800, 6000), q: 0.7, dur: R(0.008, 0.02), gain, atk: 0.001 }); };
+      if (k === 0) { burst(B.soft, t, { f: 260, f2: 1700, q: 0.9, dur: 0.38, gain: 1.1, atk: 0.06 }); tone(B.deep, t, { type: 'triangle', f: 80, f2: 120, dur: 0.45, gain: 0.25, atk: 0.1 }); crackle(9, t + 0.05, 0.5, 0.5); }
+      else if (k === 1) { burst(B.soft, t, { f: 1900, f2: 900, q: 0.8, dur: 0.06, gain: 2.6, atk: 0.001 }); burst(B.soft, t + 0.01, { f: 180, f2: 1500, q: 0.8, dur: 0.45, gain: 1.4, atk: 0.02 }); tone(B.deep, t, { type: 'triangle', f: 130, f2: 50, dur: 0.5, gain: 0.5, atk: 0.003 }); crackle(8, t + 0.05, 0.4, 0.55); }
+      else if (k === 2) { tone(B.deep, t, { type: 'sawtooth', f: 90, f2: 240, dur: 0.7, gain: 0.1, atk: 0.2 }); burst(B.soft, t, { f: 500, f2: 2600, q: 1.6, dur: 0.7, gain: 0.7, atk: 0.3 }); tone(D.soft, t + 0.05, { type: 'square', f: 620, f2: 430, dur: 0.12, gain: 0.03, atk: 0.005 }); crackle(10, t, 0.7, 0.45); }
+      else if (k === 3) { burst(B.soft, t, { f: 4200, f2: 800, q: 0.8, dur: 0.07, gain: 3.4, atk: 0.001 }); burst(B.soft, t, { f: 700, f2: 180, q: 0.7, dur: 0.95, gain: 1.9, atk: 0.01 }); tone(B.deep, t, { type: 'triangle', f: 170, f2: 38, dur: 0.75, gain: 0.6, atk: 0.003 }); burst(B.soft, t + 0.05, { type: 'lowpass', f: 1400, f2: 300, q: 0.7, dur: 0.9, gain: 0.8, atk: 0.1 }); crackle(14, t + 0.05, 0.8, 0.5); }
+      else if (k === 4) { burst(B.soft, t, { f: 2600, f2: 400, q: 0.8, dur: 0.35, gain: 1.6, atk: 0.002 }); tone(B.deep, t, { type: 'triangle', f: 120, f2: 40, dur: 0.5, gain: 0.5, atk: 0.003 }); crackle(10, t + 0.03, 0.5, 0.6); }
+      else { crackle(4, t, 0.15, 2); burst(B.soft, t, { f: 900, f2: 300, q: 0.8, dur: 0.12, gain: 0.5, atk: 0.005 }); }
+    },
     sukimp(at) {                                         // v1.118 the impact frame of Sukuna's DASH SLASH: a hard crack (a flash of noise from high to low), a deep boom that falls away and a cold thin ring, then nothing while the cut opens
       const t = T(at), B = C.atk, D = C.tele;
       burst(B.soft, t, { type: 'bandpass', f: 3400, f2: 700, q: 0.8, dur: 0.08, gain: 3.2, atk: 0.001 });
