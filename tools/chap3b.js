@@ -49,15 +49,16 @@ function c8Moon(x, y, R) {      // a huge pixel moon: a pale disc (made once as 
   }
   const gr = ctx.createRadialGradient(x, y, R * 0.8, x, y, R * 3.2); gr.addColorStop(0, 'rgba(190,205,255,0.30)'); gr.addColorStop(1, 'rgba(190,205,255,0)'); ctx.fillStyle = gr; ctx.fillRect(x - R * 3.2, y - R * 3.2, R * 6.4, R * 6.4); ctx.drawImage(C8W.moonC, x - R - 1, y - R - 1);
 }
-function c8Camp(cam, p) { c4CamOn(cam.z, C8W.ref.x + (cam.fx - C8W.ref.x) * p, C8W.ref.y + (cam.fy - C8W.ref.y) * p, cam.tx, cam.ty); }      // the camera for a layer that moves p times as much as the near world (0 = never, 1 = the world itself)
+function c8On(cam, fx, fy) { if (cam.rot) { ctx.save(); ctx.translate(Math.round(cam.tx), Math.round(cam.ty)); ctx.rotate(cam.rot); ctx.scale(cam.z, cam.z); ctx.translate(-fx, -fy); } else c4CamOn(cam.z, fx, fy, cam.tx, cam.ty); }      // (v1.135: the camera may also roll: cam.rot, in radians, about the screen point (tx, ty))
+function c8Camp(cam, p) { c8On(cam, C8W.ref.x + (cam.fx - C8W.ref.x) * p, C8W.ref.y + (cam.fy - C8W.ref.y) * p); }      // the camera for a layer that moves p times as much as the near world (0 = never, 1 = the world itself)
 function c8Bg(cam, T) {      // everything behind the actors: sky, stars, moon, the three layers of the city, then the alley (cam = { z, fx, fy, tx, ty })
-  c8Build(); const fxp = C8W.ref.x + (cam.fx - C8W.ref.x) * 0.15, fyp = C8W.ref.y + (cam.fy - C8W.ref.y) * 0.15, lx0 = fxp - cam.tx / cam.z - 4, lx1 = fxp + (VW - cam.tx) / cam.z + 4, ly0 = fyp - cam.ty / cam.z - 4, ly1 = Math.min(0, fyp + (VH - cam.ty) / cam.z + 4);      // (the part of the star layer that is on the screen)
+  c8Build(); const fxp = C8W.ref.x + (cam.fx - C8W.ref.x) * 0.15, fyp = C8W.ref.y + (cam.fy - C8W.ref.y) * 0.15, rr = cam.rot ? (Math.hypot(VW, VH) + Math.abs(cam.tx - VW / 2) + Math.abs(cam.ty - VH / 2)) / cam.z : 0, lx0 = rr ? fxp - rr : fxp - cam.tx / cam.z - 4, lx1 = rr ? fxp + rr : fxp + (VW - cam.tx) / cam.z + 4, ly0 = rr ? fyp - rr : fyp - cam.ty / cam.z - 4, ly1 = Math.min(0, rr ? fyp + rr : fyp + (VH - cam.ty) / cam.z + 4);      // (the part of the star layer that is on the screen)
   ctx.fillStyle = '#02030a'; ctx.fillRect(0, 0, VW, VH);
   c8Camp(cam, 0.15); const g = ctx.createLinearGradient(0, -1400, 0, 16); g.addColorStop(0, '#02030a'); g.addColorStop(0.6, '#060a20'); g.addColorStop(1, '#0a1030'); ctx.fillStyle = g; ctx.fillRect(-2 * VW, -1400, 5 * VW, 1416);
   for (let gx = Math.floor(lx0 / 36); gx <= lx1 / 36; gx++) for (let gy2 = Math.floor(ly0 / 36); gy2 * 36 < ly1; gy2++) { const r = c4R(gx * 131 + gy2 * 7, 91); if (r < 0.55) continue; const a = 0.35 + 0.5 * c4R(gx * 17 + gy2, 92) * (0.7 + 0.3 * Math.sin(T * 2 + gx + gy2)); ctx.fillStyle = 'rgba(205,215,255,' + a.toFixed(2) + ')'; ctx.fillRect(gx * 36 + Math.floor(c4R(gx + gy2 * 5, 93) * 34), gy2 * 36 + Math.floor(c4R(gx * 3 + gy2, 94) * 34), 1, 1); }
   c4Cam0(); c8Camp(cam, 0.25); c8Moon(C8W.ref.x - 50, -105, 60); c4Cam0(); c8Camp(cam, 0.5); const hz = ctx.createLinearGradient(0, -110, 0, 20); hz.addColorStop(0, 'rgba(255,150,80,0)'); hz.addColorStop(1, 'rgba(255,150,80,0.13)'); ctx.fillStyle = hz; ctx.fillRect(-2 * VW, -110, 5 * VW, 130); c4Cam0();      // (the glow of the city over the roofs)
   for (const L of C8W.L) { c8Camp(cam, L.p); ctx.drawImage(L.c, L.x0, L.y0); c4Cam0(); }
-  c4CamOn(cam.z, cam.fx, cam.fy, cam.tx, cam.ty); ctx.drawImage(C8W.near, -VW, 0);
+  c8On(cam, cam.fx, cam.fy); ctx.drawImage(C8W.near, -VW, 0);
 }
 
 const C8V = { run: 172, fl: 98 };      // Mahoraga's speed while he runs (px/s: the stride of 92 px of the run clip at 30 pictures a second), and the column of his pelvis in his pictures (flipped: 168 - 70)
@@ -267,3 +268,24 @@ function c8Events(T, ev) {      // the sounds of the alley fight (each fires onc
   ev('c8d2', R + t.d2, () => { snd('c7cloth', 0); snd('c7step', 1); }, 0.5); ev('c8d2b', R + t.d2 + 0.2, () => snd('c7step', 0), 0.4); ev('c8up2', R + t.up2, () => snd('c7whoosh'), 0.4);
   ev('c8hit', R + t.hit, () => { snd('c7smash'); snd('c4crater'); }, 0.6); ev('c8launch', R + t.hit + 0.15, () => snd('c7rise'), 1.2);
 }
+
+
+// ---- v1.135 the SONG of the air fight (the first 2:06 of the song the user gave, tools/fight_music.mp3, 117 bpm): an <audio> element kept on the scene time T: m = seconds since the song began (C9 in tools/chap3.js); a tap that skips a cut, a pause or a test jump seeks it
+const C9_MUSIC = '__FIGHTMUSIC__';
+const c9Start = () => c8R() + C9.m0;      // (the scene time at which the song begins)
+let c9A = null;
+function c9Audio() {
+  if (c9A) return c9A; if (!C9_MUSIC || C9_MUSIC.length < 100) return null;
+  try { const bin = atob(C9_MUSIC.slice(C9_MUSIC.indexOf(',') + 1)), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); c9A = new Audio(URL.createObjectURL(new Blob([u], { type: 'audio/mpeg' }))); c9A.preload = 'auto'; } catch (e) { c9A = null; }
+  return c9A;
+}
+function c9Music(T) {
+  const m = T - c9Start(), on = m >= 0 && m < C9.D && !document.hidden && !(typeof paused !== 'undefined' && paused);
+  if (!on) { if (c9A && !c9A.paused) c9A.pause(); return; }
+  const a = c9Audio(); if (!a) return;
+  const k = Math.min(1, m / C9.fadeIn), g = C9.vol * k * k * Math.min(1, (C9.D - m) / C9.fadeOut), node = sfx && soundOn && sfx.ac.state === 'running' ? sfx.music(a) : null;
+  if (node) node.gain.setTargetAtTime(Math.max(0, g), sfx.ac.currentTime, 0.04); else a.volume = soundOn ? Math.max(0, Math.min(1, g)) : 0;
+  if (a.paused) { try { a.currentTime = m; } catch (e) { /* not ready yet */ } const pr = a.play(); if (pr && pr.catch) pr.catch(() => { }); } else if (Math.abs(a.currentTime - m) > 0.3) { try { a.currentTime = m; } catch (e) { /* not ready yet */ } }
+}
+function c9Stop() { if (c9A) { try { c9A.pause(); c9A.currentTime = 0; } catch (e) { /* nothing to stop */ } } if (typeof C10W !== 'undefined' && C10W.sl) { C10W.sl = false; snd('slowout'); } }      // (the song stops with the story; so does the slow-motion sound if it was on)
+window.__c9 = () => c9A ? { t: c9A.currentTime, paused: c9A.paused, vol: c9A.volume, gain: c9A.__g ? c9A.__g.gain.value : null, len: c9A.duration } : null;      // test hook

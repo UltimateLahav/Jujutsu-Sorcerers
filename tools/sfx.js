@@ -1011,5 +1011,9 @@ function makeSfx(ac) {
     windOff(at) { windOnNow = false; windGain.gain.setTargetAtTime(0, T(at), 0.15); },
     windPush(k) { if (k !== st.windMul) { st.windMul = k; if (windBuilt && windOnNow) windGain.gain.setTargetAtTime(LEVEL.wind * vol.wind * k, ac.currentTime, 0.4); } },   // a bit more wind when he walks into it
     setOn(on) { st.on = on; applyMaster(); },
+    music(el) {                                          // v1.135 a song (an <audio> element) goes through the same master, compressor and slow-motion filter as the sounds; returns the gain node of the song (its fades are made on it)
+      if (!el.__g) { const s = ac.createMediaElementSource(el), g = ac.createGain(); g.gain.value = 0; s.connect(g); g.connect(master); el.__g = g; }
+      return el.__g;
+    },
   };
 }

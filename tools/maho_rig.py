@@ -8,6 +8,7 @@ GY = 136.0                       # the ground line: the soles of the feet
 yy, xx = np.mgrid[0:H, 0:W].astype(float); xx += 0.5; yy += 0.5
 Lv = np.array([-0.5, -0.7, 0.55]); Lv /= np.linalg.norm(Lv)
 PAL = [(30, 34, 66), (56, 62, 104), (88, 98, 144), (132, 144, 188), (180, 190, 224), (220, 226, 246), (244, 246, 255), (255, 255, 255)]
+BLOOD = [(112, 12, 26), (172, 22, 40), (226, 44, 58)]      # v1.135 the red of a cut: dark, middle, bright (the sheet's colours 11 - 13)
 OUT = (12, 14, 38)
 EYE = (10, 10, 26)               # the eye slits (not an outline colour: the sheet keeps them as pixels of their own)
 rad = math.radians
@@ -15,7 +16,8 @@ def dirv(a): return np.array([math.sin(rad(a)), math.cos(rad(a))])      # a = an
 def hh(i, k=0): return ((int(i) * 7919 + k * 104729 + 12345) * 2654435761 % 4294967296) / 4294967296.0
 
 class Part:
-    def __init__(self, m, I, u, v, zz, grp, tone=1.0, period=5.0, tilt=0.5, wrap=3.0, bands=True, wob=0.0, seed=0, amb=0.24):
+    def __init__(self, m, I, u, v, zz, grp, tone=1.0, period=5.0, tilt=0.5, wrap=3.0, bands=True, wob=0.0, seed=0, amb=0.24, blood=False):
+        self.blood = blood
         self.m, self.I, self.u, self.v, self.zz = m, I, u, v, zz
         self.grp, self.tone, self.period, self.tilt, self.wrap, self.bands, self.wob, self.seed, self.amb = grp, tone, period, tilt, wrap, bands, wob, seed, amb
 
@@ -51,6 +53,7 @@ def ik(H0, A, l1, l2, fwd=1.0):
     return k1 if (k1[0] - k2[0]) * fwd >= 0 else k2
 
 def render(pose):
+    if pose.get('piece'): return render_piece(pose['piece'])
     P = np.array([pose['Px'], pose['Py']], float); lam = pose.get('lam', 0.0); ht = pose.get('head', 0.0)
     up = np.array([math.sin(rad(lam)), -math.cos(rad(lam))]); fw = np.array([math.cos(rad(lam)), math.sin(rad(lam))])
     C = P + 31 * up; S = P + 26 * up + 3.5 * fw
@@ -58,15 +61,33 @@ def render(pose):
     N = C + 4.5 * np.array([math.sin(rad(lam + 0.5 * ht)), -math.cos(rad(lam + 0.5 * ht))]); Hc = N + 7.5 * hu + 0.8 * hf
     cl = pose.get('cloth', 0.0); amp = pose.get('amp', 6.0); vx = pose.get('vx', 0.0)
     parts = []
-    def arm(sh, a1, flex, grp, tone):
-        E = sh + 27 * dirv(a1); Wr = E + 25 * dirv(a1 + flex); F = Wr + 6.5 * dirv(a1 + flex)
+    def arm(sh, a1, flex, grp, tone, cut=1.0, op=0.0):
+        """cut < 1: the forearm ends at that share of its length in a red cut (no hand); op > 0: an open hand (palm and four fingers that fan out) instead of the fist"""
+        E = sh + 27 * dirv(a1); dr = dirv(a1 + flex); Wr = E + 25 * dr; F = Wr + 6.5 * dr
+        if cut < 0.999:
+            Wc = E + 25 * cut * dr; r1 = 7.6 + (6.2 - 7.6) * cut
+            return [tube(sh, E, 9.0, 7.6, grp, tone=tone, period=5.2, tilt=0.45), tube(E, Wc, 7.6, r1, grp + 1, tone=tone, period=4.8, tilt=-0.4), ell(Wc + 0.8 * dr, 3.4, r1 * 1.02, 90 - (a1 + flex), grp + 2, tone=1.0, period=9.0, tilt=0.2, wrap=0.5, bands=False, blood=True)], (sh, E, Wc, Wc)
+        if op > 0.02:
+            pk = Wr + 4.0 * dr; ps = [tube(sh, E, 9.0, 7.6, grp, tone=tone, period=5.2, tilt=0.45), tube(E, Wr, 7.6, 6.2, grp + 1, tone=tone, period=4.8, tilt=-0.4), sphere(pk, 7.4, grp + 2, tone=tone, period=3.4, tilt=0.9, wrap=1.0, amb=0.26)]
+            for k in range(4):
+                an = a1 + flex + (k - 1.5) * 21.0 * op; base = pk + 3.4 * dirv(an); tip = pk + (12.5 + 2.0 * op) * dirv(an) + 4.0 * op * dirv(an + 90 * (1 if k < 2 else -1)) * 0.0
+                ps.append(tube(base, tip, 3.5, 2.4, grp + 3 + k, tone=tone, bands=False, amb=0.3))
+            th = a1 + flex - 62.0 * op - 8; ps.append(tube(pk - 2.0 * dr, pk - 2.0 * dr + 8.5 * dirv(th), 2.9, 2.0, grp + 7, tone=tone, bands=False, amb=0.3))
+            return ps, (sh, E, Wr, pk + 8.0 * dr)
         return [tube(sh, E, 9.0, 7.6, grp, tone=tone, period=5.2, tilt=0.45), tube(E, Wr, 7.6, 6.2, grp + 1, tone=tone, period=4.8, tilt=-0.4), sphere(F, 8.8, grp + 2, tone=tone, period=3.4, tilt=0.9, wrap=1.0, amb=0.26)], (sh, E, Wr, F)
     def leg(A, pitch, grp, tone, hip):
         A = np.array(A, float); K = ik(hip, A, 24.0, 23.0); c, s_ = math.cos(rad(-pitch)), math.sin(rad(-pitch)); R = np.array([[c, -s_], [s_, c]])
         hl = A + R @ np.array([-3.5, 2.6]); toe = A + R @ np.array([12.5, 3.2])
         return [tube(hip, K, 11.0, 8.8, grp, tone=tone, period=5.4, tilt=0.4), tube(K, A, 8.6, 6.2, grp + 1, tone=tone, period=5.0, tilt=-0.4), tube(hl, toe, 5.4, 3.9, grp + 2, tone=tone, bands=False, amb=0.3)], (K, A, hl, toe)
     # --- far arm and far leg, the cloth behind
-    fa1, ff = pose['arm_f']; sp, jf = arm(S + np.array([-3.0, -1.0]), fa1, ff, 10, 0.78); parts += sp
+    fa1, ff = pose['arm_f']; smf = int(round(pose.get('smear_f', 0)))
+    if smf:      # (the far arm's smear: the same copies of it as the near arm's)
+        pa1, pfl = pose.get('arm_prev_f', pose['arm_f'])
+        for k in range(smf, 0, -1):
+            q = k / (smf + 1.0); s2, _ = arm(S + np.array([-3.0, -1.0]), fa1 + (pa1 - fa1) * q, ff + (pfl - ff) * q, 120 + 3 * k, 0.7)
+            for p in s2[1:]: p.bands = False; p.m = p.m & ((np.floor((p.v + 1.4 * k) / 1.6).astype(int) % 2) == 0)
+            parts += s2[1:]
+    sp, jf = arm(S + np.array([-3.0, -1.0]), fa1, ff, 10, 0.78, pose.get('cut_f', 1.0), pose.get('open_f', 0.0)); parts += sp
     sp, jlf = leg(pose['ankle_f'], pose.get('pitch_f', 0.0), 20, 0.78, P + np.array([-1.5, 1.0])); parts += sp
     scarf = chain(N + np.array([-1.5, 1.5]), -78 + pose.get('scarf_a', 0.0), [9, 9, 8, 8, 7, 6], cl, amp * 1.6, vx, 1.0, 0.3)
     for i in range(len(scarf) - 1): parts.append(tube(scarf[i], scarf[i + 1], 5.0 - 0.5 * i, 4.5 - 0.5 * i, 30 + i, period=4.4, tilt=0.8, amb=0.22))
@@ -88,39 +109,68 @@ def render(pose):
     parts.append(ell(Hc + 5.2 * hf + 0.4 * hu, 4.6, 8.4, headang, 81, pw=3.2, period=3.8, tilt=0.2, wrap=1.5))
     parts.append(ell(Hc + 2.2 * hf - 8.8 * hu, 6.6, 3.2, headang, 82, pw=3.0, period=3.4, tilt=0.3, wrap=1.0))
     # --- the near arm last (with its smear: copies of it between the last pose and this one, paler and paler)
-    a1, fl = pose['arm_n']; sm = pose.get('smear', 0)
+    a1, fl = pose['arm_n']; sm = int(round(pose.get('smear', 0)))
     if sm:
         pa1, pfl = pose.get('arm_prev', pose['arm_n'])
         for k in range(sm, 0, -1):
             q = k / (sm + 1.0); s2, _ = arm(S, a1 + (pa1 - a1) * q, fl + (pfl - fl) * q, 100 + 3 * k, 0.8)
             for p in s2[1:]: p.bands = False; p.m = p.m & ((np.floor((p.v + 1.4 * k) / 1.6).astype(int) % 2) == 0)      # (streaks along the limb: speed lines)
             parts += s2[1:]
-    sp, jn = arm(S, a1, fl, 90, 1.0); parts += sp
+    sp, jn = arm(S, a1, fl, 90, 1.0, pose.get('cut_n', 1.0), pose.get('open_n', 0.0)); parts += sp
     # --- compose
-    pid = np.full((H, W), -1, int); val = np.zeros((H, W)); grp = np.full((H, W), -1, int)
+    pid = np.full((H, W), -1, int); val = np.zeros((H, W)); grp = np.full((H, W), -1, int); bl = np.zeros((H, W), bool)
     for i, p in enumerate(parts):
         v0 = p.amb + (1 - p.amb) * p.I
         if p.bands:
             uu = p.u + p.tilt * p.v + p.wrap * (p.zz / 8.0) + p.wob; f = (uu / p.period) % 1.0; idx = np.floor(uu / p.period).astype(int)
             v0 = np.where(f < 0.14, v0 * 0.6, np.where(f < 0.34, v0 + 0.11, v0)) + 0.025 * (((idx * 7919 + p.seed * 131) % 11) / 11.0 - 0.5)
         v0 = np.clip(v0 * p.tone, 0, 1)
-        pid = np.where(p.m, i, pid); val = np.where(p.m, v0, val); grp = np.where(p.m, p.grp, grp)
+        pid = np.where(p.m, i, pid); val = np.where(p.m, v0, val); grp = np.where(p.m, p.grp, grp); bl = np.where(p.m, p.blood, bl)
     body = pid >= 0
     img = np.zeros((H, W, 4), np.uint8); q = np.clip((val * 8).astype(int), 0, 7)
     for k, c in enumerate(PAL):
         s = body & (q == k); img[s, :3] = c; img[s, 3] = 255
+    q3 = np.where(val < 0.42, 0, np.where(val < 0.72, 1, 2))
+    for k, c in enumerate(BLOOD):
+        sel = body & bl & (q3 == k); img[sel, :3] = c; img[sel, 3] = 255
     def nb(a, dx, dy): return np.roll(np.roll(a, dy, axis=0), dx, axis=1)
     edge_bg = np.zeros((H, W), bool); edge_in = np.zeros((H, W), bool)
     for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
         npid = nb(pid, dx, dy); ngrp = nb(grp, dx, dy)
         edge_bg |= body & (npid < 0); edge_in |= body & (npid >= 0) & (ngrp != grp) & (npid < pid)
     img[edge_in & ~edge_bg, :3] = (img[edge_in & ~edge_bg, :3] * 0.5).astype(np.uint8)
-    img[edge_bg, :3] = OUT
+    img[edge_bg, :3] = OUT; img[body & bl & ~edge_bg & edge_in, :3] = BLOOD[0]
     e1 = Hc + 6.0 * hf - 1.6 * hu; e2 = Hc + 6.4 * hf + 3.2 * hu
     for (e, w) in ((e1, 4), (e2, 3)):      # the eye slits: dark, two pixels high, with the dark wrapping pulled round them
         for k in range(w):
             for j in range(2):
                 x = int(round(e[0] - k * hf[0] * 0.95 + 1)); y = int(round(e[1] - k * hf[1] * 0.95 + j))
                 if 0 <= x < W and 0 <= y < H and body[y, x]: img[y, x, :3] = EYE
-    anchors = dict(head=Hc.tolist(), eye1=e1.tolist(), eye2=e2.tolist(), fist=jn[3].tolist(), wrist=jn[2].tolist(), elbow=jn[1].tolist(), shoulder=jn[0].tolist(), pelvis=P.tolist(), footN=jln[1].tolist(), footF=jlf[1].tolist(), toeN=jln[3].tolist(), toeF=jlf[3].tolist(), chest=C.tolist())
+    anchors = dict(head=Hc.tolist(), eye1=e1.tolist(), eye2=e2.tolist(), fist=jn[3].tolist(), wrist=jn[2].tolist(), elbow=jn[1].tolist(), shoulder=jn[0].tolist(), pelvis=P.tolist(), fistF=jf[3].tolist(), stump=jn[3].tolist(), footN=jln[1].tolist(), footF=jlf[1].tolist(), toeN=jln[3].tolist(), toeF=jlf[3].tolist(), chest=C.tolist())
+    return img, anchors
+
+
+def render_piece(cut):
+    """v1.135 the forearm Sukuna cuts off: the part beyond the cut (cut = the share of the forearm that stays on the arm), lying along x with its red cut face on the left, centred on the picture (the game turns it as it flies)"""
+    Lp = 25.0 * (1 - cut); C = np.array([84.0 - (Lp + 6.5 + 8.8) / 2 + 2.0, 70.0]); Wr = C + np.array([Lp, 0.0]); F = Wr + np.array([6.5, 0.0]); r0 = 7.6 + (6.2 - 7.6) * cut
+    parts = [tube(C, Wr, r0, 6.2, 91, tone=1.0, period=4.8, tilt=-0.4), sphere(F, 8.8, 92, tone=1.0, period=3.4, tilt=0.9, wrap=1.0, amb=0.26), ell(C - np.array([0.8, 0.0]), 2.6, r0 * 0.98, 0.0, 93, tone=1.0, period=9.0, tilt=0.2, wrap=0.5, bands=False, blood=True)]
+    pid = np.full((H, W), -1, int); val = np.zeros((H, W)); grp = np.full((H, W), -1, int); bl = np.zeros((H, W), bool)
+    for i, p in enumerate(parts):
+        v0 = p.amb + (1 - p.amb) * p.I
+        if p.bands:
+            uu = p.u + p.tilt * p.v + p.wrap * (p.zz / 8.0) + p.wob; f = (uu / p.period) % 1.0; idx = np.floor(uu / p.period).astype(int)
+            v0 = np.where(f < 0.14, v0 * 0.6, np.where(f < 0.34, v0 + 0.11, v0)) + 0.025 * (((idx * 7919 + p.seed * 131) % 11) / 11.0 - 0.5)
+        v0 = np.clip(v0 * p.tone, 0, 1); pid = np.where(p.m, i, pid); val = np.where(p.m, v0, val); grp = np.where(p.m, p.grp, grp); bl = np.where(p.m, p.blood, bl)
+    body = pid >= 0; img = np.zeros((H, W, 4), np.uint8); q = np.clip((val * 8).astype(int), 0, 7)
+    for k, c in enumerate(PAL):
+        s_ = body & (q == k); img[s_, :3] = c; img[s_, 3] = 255
+    q3 = np.where(val < 0.42, 0, np.where(val < 0.72, 1, 2))
+    for k, c in enumerate(BLOOD):
+        sel = body & bl & (q3 == k); img[sel, :3] = c; img[sel, 3] = 255
+    def nb(a, dx, dy): return np.roll(np.roll(a, dy, axis=0), dx, axis=1)
+    edge_bg = np.zeros((H, W), bool)
+    for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]: edge_bg |= body & (nb(pid, dx, dy) < 0)
+    img[edge_bg, :3] = OUT
+    z = [84.0, 70.0]; anchors = {k: z for k in ('head', 'eye1', 'eye2', 'fist', 'wrist', 'elbow', 'shoulder', 'pelvis', 'footN', 'footF', 'toeN', 'toeF', 'chest', 'fistF', 'stump')}
+    anchors['fist'] = F.tolist(); anchors['stump'] = C.tolist(); anchors['pelvis'] = [(C[0] + F[0]) / 2, 70.0]
     return img, anchors

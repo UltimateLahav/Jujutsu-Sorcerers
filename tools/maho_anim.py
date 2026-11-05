@@ -111,7 +111,79 @@ def uppercut(i, n=8):
         base(Px=83, Py=84 + 6, lam=14, head=-9, arm_n=(144, 8), arm_f=(2, 44), ankle_n=(98, GY - AH - 8), ankle_f=(56, GY - AH), pitch_n=-18, vx=0.0, amp=5),
     ]
     return P[i]
-CLIPS = [('idle', 12, idle), ('walk', 32, walk), ('windup', 12, windup), ('punch', 8, punch), ('recover', 12, recover), ('start', 8, start), ('halt', 8, halt), ('run', 16, run), ('lunge', 6, lunge), ('uppercut', 8, uppercut)]      # (new clips go at the END: the numbers of the older pictures must not move)
+# ---- v1.135 (the air fight of chapter 3): everything here is in the air (no ground: the pelvis is where the clip puts it, the game hangs each picture on its pelvis anchor)
+CUT = 0.38      # the share of the forearm that stays when Sukuna cuts the arm off
+AY = 90.0       # the height of the pelvis in the air pictures (the arms up reach the top of the 140-pixel picture)
+def air(**kw):
+    p = base(Px=PX, Py=AY, lam=4.0, head=-4.0, arm_n=(46, 74), arm_f=(28, 82), ankle_n=(PX + 6, AY + 38), ankle_f=(PX - 8, AY + 41), pitch_n=-16.0, pitch_f=-20.0, cloth=0.0, amp=6.5, vx=-0.5, scarf_a=0.0, tail_a=0.0)
+    p.update(kw); return p
+def keyed(K, i):      # a pose between key poses {picture: pose}
+    ks = sorted(K)
+    if i <= ks[0]: return K[ks[0]]
+    for a, b in zip(ks, ks[1:]):
+        if a <= i <= b: return mix(K[a], K[b], ease((i - a) / float(b - a)))
+    return K[ks[-1]]
+def floatp(i, n=12, guard=0.0, **kw):      # hovering: calm and upright (the arms a little away from the body, the legs straight and hanging, the toes down), the body breathes, the cloth waves; guard 0 - 1 brings the fists up in front
+    f = 2 * math.pi * i / n; sn = math.sin; py = AY + 1.6 * sn(f)
+    calm = air(Py=py, lam=2 + 1.2 * sn(f - 0.4), head=-2 + 1.2 * sn(f - 0.8), arm_n=(16 + 3 * sn(f), 20 + 3 * sn(f + 0.5)), arm_f=(-8 + 3 * sn(f + 1), 22 + 2 * sn(f)), ankle_n=(PX + 4, py + 43 + sn(f)), ankle_f=(PX - 5, py + 44 + sn(f - 1)), pitch_n=-38, pitch_f=-42, cloth=f, amp=6.5)
+    gd = air(Py=py, lam=6 + 1.5 * sn(f - 0.4), head=-5 + 1.5 * sn(f - 0.8), arm_n=(50 + 5 * sn(f), 78 + 4 * sn(f + 0.5)), arm_f=(30 + 4 * sn(f + 1), 86 + 3 * sn(f)), ankle_n=(PX + 7, py + 39 + 2 * sn(f)), ankle_f=(PX - 8, py + 42 + 2 * sn(f - 1)), pitch_n=-22, pitch_f=-26, cloth=f, amp=6.5)
+    q = mix(calm, gd, guard) if guard > 0 else calm; q.update(kw); return q
+def floatg(i, n=12): return floatp(i, n, guard=1.0)      # (the ready stance)
+def crouch(i, n=8):      # the look up and the dip before the leap: he watches Sukuna, then folds down into a deep crouch with the arms swept back
+    K0 = base(lam=3, head=-6, ankle_n=(80, GY - AH), ankle_f=(58, GY - AH)); K0['Py'] = 63 + Y0
+    K1 = dict(K0, lam=0, head=-26, Py=63 + Y0 - 1)
+    K2 = base(Px=66, Py=GY - AH - 36, lam=10, head=-20, arm_n=(-30, 14), arm_f=(-36, 12), ankle_n=(PX + 15, GY - AH), ankle_f=(PX - 10, GY - AH), cloth=0.6, amp=5)
+    K3 = base(Px=62, Py=GY - AH - 28, lam=22, head=-24, arm_n=(-58, 10), arm_f=(-66, 8), ankle_n=(PX + 17, GY - AH), ankle_f=(PX - 12, GY - AH), cloth=0.6, amp=4)
+    q = keyed({0: K0, 1: K1, 3: K2, 5: K3, 7: K3}, i)
+    if i >= 6: q = dict(q, Py=q['Py'] + (1.0 if i == 6 else -0.5))
+    q['cloth'] = 0.45 * i; return q
+def leap(i, n=8):      # the push-off (0: the legs straight, the toes on the floor, the arms swung up), then up: the body stretched, the arms overhead, the legs trailing, the cloth streaming down
+    P0 = base(Px=PX, Py=AY + 3, lam=12, head=-8, arm_n=(112, 24), arm_f=(124, 20), ankle_n=(PX + 2, AY + 3 + 41), ankle_f=(PX - 12, AY + 3 + 43), pitch_n=-35, pitch_f=-40, cloth=0.2, amp=7, vx=-2.5)
+    P1 = air(Py=AY + 6, lam=8, head=-6, arm_n=(116, 24), arm_f=(126, 20), ankle_n=(PX - 3, AY + 6 + 43), ankle_f=(PX - 11, AY + 6 + 45), pitch_n=-30, pitch_f=-34, cloth=1.0, amp=9, vx=-4.0, scarf_a=50, tail_a=20)
+    P2 = air(Py=AY, lam=6, head=-4, arm_n=(120, 22), arm_f=(130, 18), ankle_n=(PX - 4, AY + 43), ankle_f=(PX - 10, AY + 45), pitch_n=-28, pitch_f=-32, cloth=2.2, amp=10, vx=-5.0, scarf_a=60, tail_a=28)
+    q = keyed({0: P0, 2: P1, 7: P2}, i); q['cloth'] = 0.9 * i; return q
+def apunch(i, n=16):      # the flying punch: the wind-up in the air (0 - 5), the burst (6 - 11: smears), the arm out (12 - 13) and the recovery (14 - 15)
+    A0 = floatp(0, guard=1.0)
+    A1 = air(Px=61, Py=AY + 3, lam=-20, head=-8, arm_n=(196, 22), arm_f=(56, 38), ankle_n=(PX - 2, AY + 40), ankle_f=(PX - 14, AY + 43), pitch_n=-20, pitch_f=-24, cloth=1.0, amp=4, vx=-1.5)
+    A2 = air(Px=76, Py=AY - 1, lam=14, head=-10, arm_n=(124, 62), arm_f=(10, 30), ankle_n=(PX - 8, AY + 38), ankle_f=(PX - 22, AY + 40), pitch_n=-30, pitch_f=-34, vx=4.5, amp=7, smear=2, arm_prev=(198, 22), cloth=2.0)
+    A3 = air(Px=84, Py=AY - 2, lam=30, head=-12, arm_n=(82, 34), arm_f=(-18, 40), ankle_n=(PX - 20, AY + 35), ankle_f=(PX - 34, AY + 37), pitch_n=-40, pitch_f=-42, vx=5.5, amp=8, smear=3, arm_prev=(124, 62), cloth=2.6)
+    A4 = air(Px=88, Py=AY - 2, lam=44, head=-14, arm_n=(66, 10), arm_f=(-36, 46), ankle_n=(PX - 34, AY + 28), ankle_f=(PX - 46, AY + 30), pitch_n=-50, pitch_f=-50, vx=5.0, amp=8, smear=3, arm_prev=(82, 34), cloth=3.0)
+    A5 = air(Px=89, Py=AY - 1, lam=48, head=-14, arm_n=(78, 4), arm_f=(-40, 50), ankle_n=(PX - 38, AY + 26), ankle_f=(PX - 50, AY + 28), pitch_n=-52, pitch_f=-52, vx=2.0, amp=6, cloth=3.4)
+    A6 = air(Px=86, Py=AY, lam=40, head=-12, arm_n=(76, 6), arm_f=(-34, 46), ankle_n=(PX - 30, AY + 30), ankle_f=(PX - 42, AY + 33), pitch_n=-46, pitch_f=-48, vx=0.0, amp=5, cloth=3.8)
+    if i < 6: return mix(A0, A1, ease(i / 5.0))
+    if i < 12: return {6: A2, 7: mix(A2, A3, 0.5), 8: A3, 9: mix(A3, A4, 0.5), 10: A4, 11: A5}[i]
+    return {12: A5, 13: A5, 14: mix(A5, A6, 0.6), 15: A6}[i]
+def stump_pose(i, n=6):      # the reaction to the cut: thrown back, the head snaps, the stump drawn in to the chest
+    K = {0: air(Px=62, Py=AY + 2, lam=-26, head=-22, arm_n=(52, 30), cut_n=CUT, arm_f=(56, 44), ankle_n=(PX, AY + 40), ankle_f=(PX - 14, AY + 43), pitch_n=-20, pitch_f=-26, vx=-3.5, amp=7, cloth=0.5),
+         1: air(Px=58, Py=AY + 3, lam=-34, head=-26, arm_n=(46, 34), cut_n=CUT, arm_f=(70, 50), ankle_n=(PX - 2, AY + 40), ankle_f=(PX - 16, AY + 42), pitch_n=-24, pitch_f=-28, vx=-3.0, amp=8, cloth=1.0),
+         3: air(Px=62, Py=AY + 2, lam=-22, head=-18, arm_n=(44, 30), cut_n=CUT, arm_f=(50, 56), ankle_n=(PX + 2, AY + 40), ankle_f=(PX - 12, AY + 43), vx=-1.5, amp=6, cloth=1.8),
+         5: floatp(0, cut_n=CUT, arm_n=(40, 22))}
+    q = keyed(K, i); return q
+def floats(i, n=12):      # hovering with the stump (the far arm up, the stump hanging low)
+    return floatp(i, n, cut_n=CUT, arm_n=(40 + 3 * math.sin(2 * math.pi * i / n), 22))
+def grab(i, n=8):      # the other hand opens and reaches across to Sukuna, the fingers wide (0 - 3), then closes on him (4 - 7)
+    G0 = floats(0)
+    G1 = air(Px=78, Py=AY, lam=18, head=-8, arm_n=(-10, 14), cut_n=CUT, arm_f=(70, 30), open_f=0.4, ankle_n=(PX - 4, AY + 40), ankle_f=(PX - 18, AY + 42), pitch_n=-26, pitch_f=-30, vx=3.0, amp=7, cloth=1.4)
+    G2 = air(Px=84, Py=AY - 1, lam=30, head=-10, arm_n=(-14, 14), cut_n=CUT, arm_f=(92, 8), open_f=1.0, ankle_n=(PX - 20, AY + 36), ankle_f=(PX - 34, AY + 38), pitch_n=-40, pitch_f=-42, vx=4.0, amp=8, cloth=2.2, smear_f=2, arm_prev_f=(70, 30))
+    G3 = air(Px=85, Py=AY - 1, lam=32, head=-10, arm_n=(-14, 14), cut_n=CUT, arm_f=(95, 4), open_f=1.0, ankle_n=(PX - 22, AY + 35), ankle_f=(PX - 36, AY + 37), pitch_n=-42, pitch_f=-44, vx=1.0, amp=6, cloth=2.8)
+    G4 = dict(G3, open_f=0.35, arm_f=(94, 2), Px=84, cloth=3.2)
+    q = {0: G0, 2: G1, 3: G2, 4: G3, 5: G4, 7: dict(G4, Px=83, cloth=4.0)}; return keyed(q, i)
+def throw(i, n=10):      # the heave: from the grip (0) the arm lifts him up and back (1 - 3), swings down hard (4 - 6: the body folds forward, the head goes down; he is let go on 6), follows through (7 - 9)
+    G4 = grab(5)
+    T0 = air(Px=80, Py=AY, lam=22, head=-12, arm_n=(-12, 12), cut_n=CUT, arm_f=(150, 20), open_f=0.35, ankle_n=(PX - 14, AY + 38), ankle_f=(PX - 28, AY + 40), pitch_n=-34, pitch_f=-36, vx=-1.0, amp=6, cloth=0.5)
+    T1 = air(Px=84, Py=AY + 1, lam=28, head=-6, arm_n=(-16, 12), cut_n=CUT, arm_f=(112, 16), open_f=0.35, ankle_n=(PX - 22, AY + 36), ankle_f=(PX - 36, AY + 38), pitch_n=-42, pitch_f=-44, vx=3.0, amp=8, cloth=1.2, smear_f=2, arm_prev_f=(150, 20))
+    T2 = air(Px=86, Py=AY + 3, lam=34, head=2, arm_n=(-20, 12), cut_n=CUT, arm_f=(64, 14), open_f=0.4, ankle_n=(PX - 30, AY + 32), ankle_f=(PX - 44, AY + 34), pitch_n=-50, pitch_f=-52, vx=5.0, amp=9, cloth=2.0, smear_f=3, arm_prev_f=(112, 16))
+    T3 = air(Px=88, Py=AY + 5, lam=40, head=8, arm_n=(-22, 12), cut_n=CUT, arm_f=(26, 8), open_f=0.7, ankle_n=(PX - 34, AY + 28), ankle_f=(PX - 48, AY + 30), pitch_n=-54, pitch_f=-54, vx=5.0, amp=9, cloth=2.8, smear_f=3, arm_prev_f=(64, 14))
+    T4 = air(Px=89, Py=AY + 6, lam=42, head=10, arm_n=(-22, 12), cut_n=CUT, arm_f=(14, 8), open_f=0.9, ankle_n=(PX - 36, AY + 27), ankle_f=(PX - 50, AY + 29), pitch_n=-54, pitch_f=-54, vx=1.0, amp=7, cloth=3.4)
+    return keyed({0: G4, 2: T0, 4: T1, 5: T2, 6: T3, 7: T4, 9: dict(T4, Px=88, lam=38, head=8, cloth=4.2)}, i)
+def flyp(i, n=6, **kw):      # flung: the body stretched out, head first, the arms reaching ahead (for the rope), the legs together trailing, the cloth whipping (the game turns the picture to the way he flies)
+    f = 2 * math.pi * i / n
+    q = air(Px=62, Py=AY - 8, lam=74, head=-10, arm_n=(98 + 3 * math.sin(f), 8), arm_f=(106 + 3 * math.sin(f + 1), 6), ankle_n=(30, AY - 8 + 22), ankle_f=(24, AY - 8 + 24), pitch_n=-60, pitch_f=-64, cloth=f * 1.5, amp=10, vx=-4.0, scarf_a=30, tail_a=20); q.update(kw); return q
+def regrow(i, n=10):      # the same flung pose while the arm grows back out of the stump
+    u = ease(i / (n - 1.0)); return flyp(i % 6, cut_n=CUT + (1.0 - CUT) * u)
+def armpiece(i, n=1): return dict(piece=CUT)      # the forearm that was cut off
+def flys(i, n=6): return flyp(i, n, cut_n=CUT)      # the flung pose with the stump (the arm has not grown back yet)
+CLIPS = [('idle', 12, idle), ('walk', 32, walk), ('windup', 12, windup), ('punch', 8, punch), ('recover', 12, recover), ('start', 8, start), ('halt', 8, halt), ('run', 16, run), ('lunge', 6, lunge), ('uppercut', 8, uppercut), ('crouch', 8, crouch), ('leap', 8, leap), ('float', 12, floatp), ('apunch', 16, apunch), ('stump', 6, stump_pose), ('floats', 12, floats), ('grab', 8, grab), ('throw', 10, throw), ('fly', 6, flyp), ('regrow', 10, regrow), ('arm', 1, armpiece), ('flys', 6, flys), ('floatg', 12, floatg)]      # (new clips go at the END: the numbers of the older pictures must not move)
 def build(flip=True, outdir=None):
     outdir = outdir or os.path.dirname(os.path.abspath(__file__)); frames = []; meta = {'w': rig.W, 'h': rig.H, 'clips': {}, 'frames': []}
     for name, n, fn in CLIPS:
@@ -124,7 +196,7 @@ def build(flip=True, outdir=None):
             frames.append(img); meta['frames'].append(a)
     cols = 8; rows = (len(frames) + cols - 1) // cols; sheet = np.zeros((rows * rig.H, cols * rig.W, 4), np.uint8)
     for k, im in enumerate(frames): r, c = divmod(k, cols); sheet[r * rig.H:(r + 1) * rig.H, c * rig.W:(c + 1) * rig.W] = im
-    meta['cols'] = cols; pal = [c for c in rig.PAL] + [rig.OUT, rig.EYE]; pi = Image.new('P', (sheet.shape[1], sheet.shape[0]), 0); pi.putpalette([0, 0, 0] + [v for c in pal for v in c]); idx = np.zeros(sheet.shape[:2], np.uint8)
+    meta['cols'] = cols; pal = [c for c in rig.PAL] + [rig.OUT, rig.EYE] + list(rig.BLOOD); pi = Image.new('P', (sheet.shape[1], sheet.shape[0]), 0); pi.putpalette([0, 0, 0] + [v for c in pal for v in c]); idx = np.zeros(sheet.shape[:2], np.uint8)
     for k, c in enumerate(pal): idx[(sheet[:, :, :3] == c).all(axis=2) & (sheet[:, :, 3] > 0)] = k + 1
     pi = Image.fromarray(idx, 'P'); pi.putpalette([0, 0, 0] + [v for c in pal for v in c]); pi.save(os.path.join(outdir, 'maho_anim.png'), transparency=0, optimize=True)
     json.dump(meta, open(os.path.join(outdir, 'maho_anim.json'), 'w'), separators=(',', ':'))

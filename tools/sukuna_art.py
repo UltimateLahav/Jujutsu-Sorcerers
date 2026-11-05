@@ -18,6 +18,7 @@ Y = json.load(open(os.path.join(HERE, 'yuji.json'))); PAL = dict(Y['pal']); FR =
 NEW = dict(H='#f2bcc4', I='#dc94a0', K='#b4707e', L='#7a4258',            # his hair: a dustier rose than Yuji's
            S='#ecc0a0', T='#f8d8bc', U='#d09c80', V='#a46c60', k='#2a1a26', n='#3a1f4a', r='#b03a3a', s='#782a30', u='#d85a5a', t='#4e1620')
 PAL.update(NEW)
+GR_ = ya.GR      # (the ground row of the figure)
 GX, GY = 14, 1      # where the 40 x 64 picture goes on the 64 x 64 canvas: Yuji's place in the game (x = cx - 32 + 14, y = gy - 61 + 1)
 
 def head():
@@ -64,7 +65,7 @@ def head():
     for c in range(16, 21): put(c, 25, 'u')                                             # the light on the top of the roll
     return g
 
-ROWS = ('idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'atk0', 'atk1', 'kick', 'dash1', 'slash', 'atk30', 'atk31', 'slashL', 'slashX', 'cut', 'storm', 'ccut', 'dis', 'atk6', 'atk26', 'lift', 'dive', 'flame', 'sign')      # the strip's rows: Yuji's sets of the move (idle, walk, jump, crouch down, crouched idle, crouch walk, R.HOOK = his right jab, L.HOOK = his left jab, the back dash = his dodge, C.JAB and C.UPPR = his crouch punches) and the kick, the three slashes and the four BLUE moves made here, 15 pictures each
+ROWS = ('idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'atk0', 'atk1', 'kick', 'dash1', 'slash', 'atk30', 'atk31', 'slashL', 'slashX', 'cut', 'storm', 'ccut', 'dis', 'atk6', 'atk26', 'lift', 'dive', 'flame', 'sign', 'air')      # the strip's rows: Yuji's sets of the move (idle, walk, jump, crouch down, crouched idle, crouch walk, R.HOOK = his right jab, L.HOOK = his left jab, the back dash = his dodge, C.JAB and C.UPPR = his crouch punches) and the kick, the three slashes and the four BLUE moves made here, 15 pictures each
 BLINK = {'idle': (9, 10), 'cidle': (9, 10)}                 # (his own blinks: the pictures where his eye is shut)
 NAILS = ('idle', 'fwd', 'cdn')                               # (the pictures where the hand is in the pocket, or still on its way up to the guard: the nails show; the guard and the jump hold it up in a fist of another shape)
 WID = 48                                                    # (the widest of Yuji's pictures of these moves is 44)
@@ -228,7 +229,36 @@ def sign_tip(i):
     """where the touching fingertips are on the 64 x 64 picture (x, y): the game puts a spark there"""
     P = sign_params(i); cn = sign_fist(P); sp = 3.4 * ya.kv({0: 0, 3: 0, 4: .6, 5: 1, 10: 1, 11: .6, 13: 0, 14: 0}, i); L = 6.6 * ya.kv({0: 0, 3: 0, 5: 1, 10: 1, 12: 0, 14: 0}, i)
     return [round(cn[0] - sp * .5 + .3 - 2, 1), round(cn[1] - 1.5 - L - 1, 1)]      # (the figure's column 16 is the picture's column 14)
-GEN = {'slash': {'top': 0, 'frames': ya.pack(slash, 16, 48, 0)[0]}, 'slashL': {'top': 0, 'frames': ya.pack(slash_pic('slashL'), 16, 48, 0)[0]}, 'slashX': {'top': 0, 'frames': ya.pack(slash_pic('slashX'), 16, 48, 0)[0]}, 'kick': {'top': 0, 'frames': ya.pack(kick, 16, 48, 0)[0]}, 'cut': {'top': 0, 'frames': ya.pack(cast_pic('cut'), 16, 48, 0)[0]}, 'storm': {'top': 0, 'frames': ya.pack(cast_pic('storm'), 16, 48, 0)[0]}, 'ccut': {'top': 0, 'frames': ya.pack(cast_pic('ccut'), 16, 48, 0)[0]}, 'dis': {'top': 0, 'frames': ya.pack(cast_pic('dis'), 16, 48, 0)[0]}, 'lift': {'top': 0, 'frames': ya.pack(lift_pic, 16, 48, 0)[0]}, 'dive': {'top': 0, 'frames': ya.pack(dive_pic, 16, 48, 0)[0]}, 'flame': {'top': 0, 'frames': ya.pack(flame_pic, 16, 48, 0)[0]}, 'sign': {'top': 0, 'frames': ya.pack(sign_pic, 16, 48, 0)[0]}}      # (the sets made here, in the form of yuji.json's)
+# ---- v1.135 the AIR FIGHT (chapter 3, Sukuna against Mahoraga high over the city): 'air' = 15 pictures on Yuji's rig with the feet hanging free (the game turns each picture about his hips as he tilts and spins):
+# 0 - 3 balanced in the air (the arms out, the feet hanging, the hair lifting: a loop), 4 the hand that beckons, 5 - 6 leaning back out of the way (the feet kicked forward, the arms thrown out), 7 the chop wound up (the hand high behind the head), 8 the chop (the hand through, a pale trail),
+# 9 pulling a rope (the hands at the chest, leaning back, the legs braced), 10 holding the rope out while he spins (one arm straight out along it, the other thrown back), 11 the heave wound up (both arms low and back), 12 the heave let go (both arms thrown up and forward),
+# 13 held in a hand (limp), 14 falling (straight, the hands at the hips, the hair streaming)
+AIRP = [
+    dict(by=0, ln=0, lf=(35, GR_ - 3, 38), lb=(31, GR_ - 5, 32), na=((4, 3.5), (8, 7)), fa=((-3, 3.5), (-6, 7.5)), hp=0.0, hup=1, hback=0),
+    dict(by=-1, ln=0, lf=(35, GR_ - 2, 36), lb=(31, GR_ - 4, 34), na=((4.5, 2.5), (9, 5)), fa=((-3.5, 2.5), (-7, 5.5)), hp=1.6, hup=1, hback=0),
+    dict(by=0, ln=0, lf=(34, GR_ - 4, 34), lb=(31, GR_ - 3, 38), na=((4, 3.5), (8, 7)), fa=((-3, 3.5), (-6, 7.5)), hp=3.2, hup=0, hback=0),
+    dict(by=1, ln=0, lf=(35, GR_ - 3, 38), lb=(31, GR_ - 5, 33), na=((3.5, 4), (7, 8)), fa=((-2.5, 4), (-5, 8.5)), hp=4.8, hup=0, hback=1),
+    dict(by=0, ln=-1, lf=(35, GR_ - 3, 36), lb=(31, GR_ - 4, 34), na=((4.5, 1), (9.5, -4)), fa=((-2, 4.5), (-3.5, 9)), hp=2.0, hup=1, hback=0, hd=0),
+    dict(by=1, ln=-2, hx=-1, lf=(40, GR_ - 11, -8), lb=(36, GR_ - 8, -4), na=((5, -2), (10, -6)), fa=((3, -3), (7, -8)), hp=1.0, hup=1, hback=2, hs=-1),
+    dict(by=2, ln=-3, hx=-2, lf=(45, GR_ - 16, -22), lb=(40, GR_ - 12, -14), na=((4, -3), (8, -9)), fa=((2, -4), (5, -10)), hp=2.5, hup=1, hback=3, hs=-2, hd=1),
+    dict(by=0, ln=-1, lf=(36, GR_ - 5, 34), lb=(31, GR_ - 6, 30), na=((-2, -4.5), (-4, -11.5)), fa=((-3, 4), (-6, 8)), hp=1.2, hup=1, hback=1),
+    dict(by=1, ln=2, hx=1, lf=(38, GR_ - 6, 28), lb=(31, GR_ - 6, 26), na=((7, 1), (13.5, 5.5)), fa=((-3, 4), (-6, 8)), hp=2.2, hup=0, hback=0),
+    dict(by=2, ln=-3, hx=-1, lf=(43, GR_ - 9, -10), lb=(38, GR_ - 6, -8), na=((-1, 4), (6, 3.5)), fa=((-2, 5), (4.5, 5)), hp=0.6, hup=0, hback=1, hs=-1),
+    dict(by=1, ln=-2, hx=0, lf=(41, GR_ - 6, 12), lb=(28, GR_ - 4, 14), na=((7.5, -.5), (16, -1.5)), fa=((-5, 2), (-9.5, 0)), hp=1.8, hup=0, hback=2),
+    dict(by=2, ln=-2, lf=(37, GR_ - 6, 22), lb=(30, GR_ - 6, 22), na=((-3, 5), (-6, 10)), fa=((-4, 5), (-7, 10)), hp=0.4, hup=0, hback=1, hd=1),
+    dict(by=-1, ln=3, hx=1, lf=(38, GR_ - 8, 4), lb=(32, GR_ - 7, 8), na=((5, -4), (9, -11)), fa=((4, -4), (8, -10)), hp=2.8, hup=1, hback=0),
+    dict(by=3, ln=-2, lf=(33, GR_ - 2, 46), lb=(30, GR_ - 4, 40), na=((-1, 6), (-1.5, 11)), fa=((-2, 6), (-3, 11)), hp=0.8, hup=0, hback=0, hd=2),
+    dict(by=0, ln=0, lf=(34, GR_ - 1, 22), lb=(32, GR_ - 2, 18), na=((.5, 5.5), (1, 10)), fa=((-.5, 5), (-1, 9.5)), hp=3.5, hup=1, hback=2),
+]
+def air_pic(i):
+    P = dict(AIRP[i]); P['blink'] = False
+    if i in (4, 10): P['top'] = cast_hand('cut' if i == 10 else 'storm', 6, P)      # (the blade of a hand along the rope; the open palm that beckons)
+    f, nh, fh = ya.figure(P)
+    if i == 8:                                                                          # the chop's trail: a pale ribbon along the path of the hand
+        pts = [(34 + AIRP[j]['ln'] + AIRP[j]['na'][1][0], 31 + AIRP[j]['by'] + AIRP[j]['na'][1][1]) for j in (7, 7, 8)]; pts = [(pts[0][0] - 1, pts[0][1] - 5), (pts[0][0] + 4, pts[0][1] + 1), pts[2]]
+        ya.streak(f, pts, (.8, 1.8, 3.0), (0, .6, 1.0), False)
+    return f, nh, fh
+GEN = {'slash': {'top': 0, 'frames': ya.pack(slash, 16, 48, 0)[0]}, 'slashL': {'top': 0, 'frames': ya.pack(slash_pic('slashL'), 16, 48, 0)[0]}, 'slashX': {'top': 0, 'frames': ya.pack(slash_pic('slashX'), 16, 48, 0)[0]}, 'kick': {'top': 0, 'frames': ya.pack(kick, 16, 48, 0)[0]}, 'cut': {'top': 0, 'frames': ya.pack(cast_pic('cut'), 16, 48, 0)[0]}, 'storm': {'top': 0, 'frames': ya.pack(cast_pic('storm'), 16, 48, 0)[0]}, 'ccut': {'top': 0, 'frames': ya.pack(cast_pic('ccut'), 16, 48, 0)[0]}, 'dis': {'top': 0, 'frames': ya.pack(cast_pic('dis'), 16, 48, 0)[0]}, 'lift': {'top': 0, 'frames': ya.pack(lift_pic, 16, 48, 0)[0]}, 'dive': {'top': 0, 'frames': ya.pack(dive_pic, 16, 48, 0)[0]}, 'flame': {'top': 0, 'frames': ya.pack(flame_pic, 16, 48, 0)[0]}, 'sign': {'top': 0, 'frames': ya.pack(sign_pic, 16, 48, 0)[0]}, 'air': {'top': 0, 'frames': ya.pack(air_pic, 16, 48, 0)[0]}}      # (the sets made here, in the form of yuji.json's)
 
 def yuji(name, i):
     """Yuji's picture i of a set as a grid of 64 figure rows x 48 columns (a jump's 4 empty rows above and below the figure are dropped; the game draws them 4 rows higher)"""

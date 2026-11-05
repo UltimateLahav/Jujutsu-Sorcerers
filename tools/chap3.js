@@ -36,8 +36,17 @@ const C8T = {      // v1.134 the alley fight (tools/chap3b.js): the times of the
   apart: 9.3, wheel: 11.3, whole: 12.5,      // the cuts open and the pieces fall; the wheel turns; the pieces are one again
   look: 12.2, d2: 14.1, up2: 14.5, hit: 14.72, end: 20.6      // Sukuna turns his face to him; Mahoraga bursts at him, begins the uppercut (up2), it lands (hit: Sukuna leaves the ground); the scene ends (the card follows)
 };
+const C9 = { m0: C8T.hit + 1.3, fadeIn: 4.5, fadeOut: 2.5, vol: 0.62, bpm: 117, beat: 0.5128, first: 0.44 };      // v1.135 the song of the air fight (tools/fight_music.mp3, 117 bpm): it begins m0 seconds after Sukuna starts to rise (fading in over fadeIn seconds) and fades out over fadeOut seconds at the end of what is made so far (D); a beat is 0.5128 s, a bar (4 beats) 2.051 s, the first beat 0.44 s into the song
+const c9B = (bar, beat) => C9.first + (bar * 4 + (beat || 0)) * C9.beat;      // the time in the song of beat `beat` (0 - 3) of bar `bar`: the hits of the air fight are put on these
+C9.D = c9B(21, 0); C8T.end = C9.m0 + C9.D;      // (the scene ends with the 22nd bar of the song)
+const C10K = {      // v1.135 the key moments of the air fight in SONG time m (seconds after the song began; the scene time is s = m + C9.m0)
+  catch: 0.55,      // Sukuna stops his spin and finds his balance
+  look: c9B(2, 0), crouch: c9B(2, 2), launch: c9B(3, 0), arrive: c9B(4, 0), beckon: c9B(4, 2),      // Mahoraga looks up, crouches, leaps off the street (the groove of the song begins), arrives and hovers, Sukuna beckons
+  wind: c9B(5, 0), dash: c9B(5, 2), cut: c9B(7, 1), kick: c9B(7, 2), aCut: 0.85,      // the wind-up in the air; the dash and the blow (the slow motion begins); Sukuna cuts the arm off (the slow motion ends: aCut = how many seconds of the action the slow motion shows) and kicks it away
+  gslot: c9B(8, 1), throwAt: c9B(9, 1), lasso: c9B(10, 2), spin: c9B(12, 0), regrow: c9B(14, 0), whole: c9B(15, 0), fling: c9B(17, 0), rise: c9B(18, 0)      // the grab; the throw down; the slashes catch him like a rope; the spin; the arm grows back; it is whole; the throw up; Sukuna rises after him
+};
 const C8 = {      // the shots of the alley fight (name, start) and Sukuna's lines (start, length, the two rows)
-  shots: [['rise', 0], ['look', 1.9], ['see', 4.0], ['charge', 5.8], ['whiff', 7.25], ['slash', 7.95], ['fall', 8.95], ['walk', 10.5], ['wheel', 11.3], ['back', 12.2], ['punch', 14.0], ['sky', C8T.hit]],
+  shots: [['rise', 0], ['look', 1.9], ['see', 4.0], ['charge', 5.8], ['whiff', 7.25], ['slash', 7.95], ['fall', 8.95], ['walk', 10.5], ['wheel', 11.3], ['back', 12.2], ['punch', 14.0], ['sky', C8T.hit], ['aface', C9.m0 + c9B(1, 0)], ['alook', C9.m0 + c9B(2, 0)], ['aleap', C9.m0 + c9B(3, 0)], ['aduel', C9.m0 + c9B(4, 0)], ['aslow', C9.m0 + c9B(5, 2)], ['acut', C9.m0 + c9B(7, 1)], ['agrab', C9.m0 + c9B(8, 0)], ['aplunge', C9.m0 + c9B(9, 1)], ['arope', C9.m0 + c9B(10, 2)], ['aspin', C9.m0 + c9B(12, 0)], ['aregrow', C9.m0 + c9B(14, 0)], ['awhirl', C9.m0 + c9B(15, 0)], ['afling', C9.m0 + c9B(17, 0)], ['arise', C9.m0 + c9B(18, 0)]],
   talk: [[4.6, 2.2, 'A SHIKIGAMI?', 'HOW CUTE.'], [9.9, 1.9, 'TOO EASY.', ''], [12.75, 2.0, 'OH? THE WHEEL TURNS...', 'HOW AMUSING.']], end: C8T.end
 };
 const C7_SEQ = [['title', 0], ['wide', 3.2], ['face', M7W.go + 0.35], ['track', M7W.tr], ['stop', M7W.fz - 0.2], ['wind', M7W.hs - 0.03], ['punch', M7W.pn], ['break', M7W.hit + 0.45], ['after', M7W.hit + 0.45 + 3.7], ['yuji', M7W.hit + 0.45 + 3.7 + 5.6], ['eyes', M7W.hit + 0.45 + 3.7 + 5.6 + C7Y.tap]].concat(C8.shots.map(a => [a[0], M7W.hit + 0.45 + 3.7 + 5.6 + C7Y.rise + a[1]])).map(a => ({ k: a[0], t0: a[1] }));
@@ -376,7 +385,7 @@ function c7Events(T, ev) {
   for (let j = 0; j < 9; j++) ev('org' + j, B + Y.o0 + j * Y.os + Y.fl - 0.05, () => snd('c7slurp'), 0.4);
   ev('mend', B + Y.c0, () => snd('c7mend'), 0.8); ev('whole', B + Y.c1, () => snd('rct', 1), 0.8); ev('breath', B + Y.open - 0.1, () => snd('c7cloth', 1), 0.5);
   ev('redeye', B + Y.swap - 0.4, () => snd('c7eyes'), 1.0); ev('suk', B + Y.swap, () => snd('c7suk'), 1.0);
-  c8Events(T, ev);
+  c8Events(T, ev); c10Events(T, ev);
 }
 function c7Card(now, T) {      // CHAPTER 3: THE DIVINE GENERAL, TO BE CONTINUED
   const t = T - C7.card; ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); once2('card', () => { snd('msting'); storyDone6(); }); ctx.globalAlpha = clamp01((t + 0.1) / 1.0);
@@ -387,6 +396,7 @@ function c7Card(now, T) {      // CHAPTER 3: THE DIVINE GENERAL, TO BE CONTINUED
 function startC7(slot) { audio(); show('story'); story = { slot, t0: pnow(), battle: false, T: 0, ev: {}, shk: null, c7: { vi: -1, vc: 0 } }; alley = true; court = false; track = false; wx = 0; }
 function c7Frame(now, dt) {
   const T = story.T = Math.max(0, now - story.t0) / 1000, ev = (k, t, f, win) => { if (T >= t && T < t + (win || 0.5)) once2(k, f); };
+  c9Music(T);
   if (T >= C7.card) { c7Card(now, T); return; }
   wx = 0; ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
   const st = c7Shot(T); c7Shots[st.k](now, dt, T, st, T - st.t0); c7Events(T, ev); c7Talk(T); ctx.restore();
