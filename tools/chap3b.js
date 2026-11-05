@@ -287,5 +287,23 @@ function c9Music(T) {
   if (node) node.gain.setTargetAtTime(Math.max(0, g), sfx.ac.currentTime, 0.04); else a.volume = soundOn ? Math.max(0, Math.min(1, g)) : 0;
   if (a.paused) { try { a.currentTime = m; } catch (e) { /* not ready yet */ } const pr = a.play(); if (pr && pr.catch) pr.catch(() => { }); } else if (Math.abs(a.currentTime - m) > 0.3) { try { a.currentTime = m; } catch (e) { /* not ready yet */ } }
 }
-function c9Stop() { if (c9A) { try { c9A.pause(); c9A.currentTime = 0; } catch (e) { /* nothing to stop */ } } if (typeof C10W !== 'undefined' && C10W.sl) { C10W.sl = false; snd('slowout'); } }      // (the song stops with the story; so does the slow-motion sound if it was on)
+function c9Stop() { if (c9A) { try { c9A.pause(); c9A.currentTime = 0; } catch (e) { /* nothing to stop */ } } if (c12A) { try { c12A.pause(); c12A.currentTime = 0; } catch (e) { /* nothing to stop */ } } if (typeof C10W !== 'undefined' && C10W.sl) { C10W.sl = false; snd('slowout'); } }      // (the song stops with the story; so does the slow-motion sound if it was on)
+// ---- v1.137 the SECOND SONG (the Snowman part: tools/snowman_music.mp3, the user's second song from 1:20.7 to its end, 105 bpm): the same kind of <audio> element, on the scene time too; n = seconds since the clip began (C12K in tools/chap3.js)
+const C12_MUSIC = '__SNOWMUSIC__', C12V = { vol: 0.62, len: 85.29, fadeOut: 1.2 };
+const c12Start = () => c8R() + C12K.t0;      // (the scene time at which the second song begins)
+let c12A = null;
+function c12Audio() {
+  if (c12A) return c12A; if (!C12_MUSIC || C12_MUSIC.length < 100) return null;
+  try { const bin = atob(C12_MUSIC.slice(C12_MUSIC.indexOf(',') + 1)), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); c12A = new Audio(URL.createObjectURL(new Blob([u], { type: 'audio/mpeg' }))); c12A.preload = 'auto'; } catch (e) { c12A = null; }
+  return c12A;
+}
+function c12Music(T) {
+  const n = T - c12Start(), on = n >= 0 && n < C12V.len && T < C7.card && !document.hidden && !(typeof paused !== 'undefined' && paused);
+  if (!on) { if (c12A && !c12A.paused) c12A.pause(); return; }
+  const a = c12Audio(); if (!a) return;
+  const g = C12V.vol * Math.min(1, n / 0.04) * Math.min(1, (C12V.len - n) / C12V.fadeOut), node = sfx && soundOn && sfx.ac.state === 'running' ? sfx.music(a) : null;
+  if (node) node.gain.setTargetAtTime(Math.max(0, g), sfx.ac.currentTime, 0.04); else a.volume = soundOn ? Math.max(0, Math.min(1, g)) : 0;
+  if (a.paused) { try { a.currentTime = n; } catch (e) { /* not ready yet */ } const pr = a.play(); if (pr && pr.catch) pr.catch(() => { }); } else if (Math.abs(a.currentTime - n) > 0.3) { try { a.currentTime = n; } catch (e) { /* not ready yet */ } }
+}
+window.__c12 = () => c12A ? { t: c12A.currentTime, paused: c12A.paused, vol: c12A.volume, gain: c12A.__g ? c12A.__g.gain.value : null, len: c12A.duration } : null;      // test hook
 window.__c9 = () => c9A ? { t: c9A.currentTime, paused: c9A.paused, vol: c9A.volume, gain: c9A.__g ? c9A.__g.gain.value : null, len: c9A.duration } : null;      // test hook

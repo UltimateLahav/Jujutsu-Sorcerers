@@ -319,7 +319,7 @@ function c10Stage(m, cam) {
 function c10Shot(now, dt, T, st, t1) {
   const s = T - c8R(), m = s - C9.m0, K = C10K, cam = c10Cam(m, st.k), sh = c10Shake(m), j = n => sh < 0.3 ? 0 : (c6H(Math.floor(T * 36), n) - 0.5) * 2 * sh; c10Warm(m);
   if (st.k === 'd03') { c11Gif(m); c6Black((s - (C8T.end - 0.9)) / 0.9); return; }      // (v1.136: the GIF fills the screen)
-  if (st.k === 'd05') { c11Blood(m); ctx.fillStyle = 'rgba(40,0,10,0.12)'; ctx.fillRect(0, 0, VW, VH); msFinish(1); c6Black((s - (C8T.end - 0.9)) / 0.9); return; }      // (Mahoraga comes apart into blood in the domain)
+  if (st.k === 'd05') { c11Blood(m); ctx.fillStyle = 'rgba(40,0,10,0.12)'; ctx.fillRect(0, 0, VW, VH); msFinish(1); c6Black((s - (C12K.s0 - 0.9)) / 0.9); return; }      // (Mahoraga comes apart into blood in the domain; the picture goes black before the look down of v1.137)
   ctx.save(); ctx.translate(Math.round(j(11)), Math.round(j(12))); const R = c10Stage(m, cam); c4Cam0(); ctx.restore();
   if (st.k === 'd04') { c11Domain(m, cam, R.S); ctx.save(); c8On(cam, cam.fx, cam.fy); c10DrawSuk(R.S, s); c4Cam0(); ctx.restore(); }      // (the domain's circle grows out of Sukuna; he is drawn over it)
   const E = c10Env(), sl = clamp01(1 - c10Slow(m)), vel = (t) => { const a = c10Cam(m + 0.06, st.k), b = c10Cam(m - 0.06, st.k); return [(a.fx - b.fx) / 0.12 * cam.z, (a.fy - b.fy) / 0.12 * cam.z]; };
@@ -351,7 +351,7 @@ function c10Events(T, ev) {
   at('c10l0', K.lasso - 0.1, () => snd('c6scrape'), 0.5); at('c10l1', K.lasso + 0.12, () => snd('c6scrape'), 0.5); at('c10l2', K.lasso + 0.35, () => snd('c6scrape'), 0.5); at('c10l3', K.lasso + 0.5, () => snd('c7wheel', 0), 0.8); at('c10jerk', K.lasso + 0.88, () => { snd('smack', 3); snd('c7smash'); }, 0.6);
   { if (!C10W.orbT) { C10W.orbT = []; for (let t = K.spin, n = 0; t < K.fling; n++) { const th = c10Th(t); let dt = 0.05; while (c10Th(t + dt) - th < Math.PI * (n < 12 ? 1 : 2) && t + dt < K.fling + 1) dt += 0.02; t += dt; if (t >= K.fling) break; C10W.orbT.push(t - 0.02); } } C10W.orbT.forEach((t, n) => at('c10o' + n, t, () => snd('c7whoosh'), 0.3)); }      // (a whoosh each time he passes: every half turn at first, every turn when it is fast)
   at('c10rg0', K.regrow, () => snd('rct', 0), 0.8); at('c10rg1', K.whole, () => snd('rct', 1), 0.8);
-  at('c10fl0', K.fling - 0.02, () => { snd('c7smash'); snd('c8crack'); }, 0.6); at('c10fl1', K.fling + 0.1, () => snd('c7rise'), 1.2); at('c10up', K.fling + 0.6, () => snd('c7whoosh'), 0.6); at('c10top', K.fling + 2.4, () => snd('c7wheel', 1), 0.8); at('c10end', K.rise + 3.2, () => snd('c7eyes'), 1.0); c11Events(T, ev);
+  at('c10fl0', K.fling - 0.02, () => { snd('c7smash'); snd('c8crack'); }, 0.6); at('c10fl1', K.fling + 0.1, () => snd('c7rise'), 1.2); at('c10up', K.fling + 0.6, () => snd('c7whoosh'), 0.6); at('c10top', K.fling + 2.4, () => snd('c7wheel', 1), 0.8); at('c10end', K.rise + 3.2, () => snd('c7eyes'), 1.0); c11Events(T, ev); c12Events(T, ev);
 }
 const C10_SHOTS = ['sky', 'aface', 'alook', 'aleap', 'aduel', 'aslow', 'acut', 'agrab', 'aplunge', 'arope', 'aspin', 'aregrow', 'awhirl', 'afling', 'arise'];
 for (const k of C10_SHOTS) c7Shots[k] = c10Shot;      // (the shots after the uppercut are drawn by this file: 'sky' too, which c8Shot drew until v1.134)

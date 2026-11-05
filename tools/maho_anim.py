@@ -217,7 +217,39 @@ def hurt(i, n=6):      # hit in the face: the head snaps back, the body arches, 
     U2 = air(Px=56, Py=AY + 3, lam=-36, head=-46, arm_n=(250, 30), arm_f=(262, 28), ankle_n=(PX - 4, AY + 40), ankle_f=(PX - 16, AY + 42), pitch_n=-28, pitch_f=-30, cloth=1.4, amp=8, vx=-3.0)
     U3 = air(Px=60, Py=AY + 2, lam=-24, head=-28, arm_n=(200, 40), arm_f=(220, 36), ankle_n=(PX, AY + 40), ankle_f=(PX - 12, AY + 43), pitch_n=-22, pitch_f=-26, cloth=2.0, amp=7, vx=-1.5)
     return keyed({0: U1, 1: U2, 3: U3, 5: g}, i)
-CLIPS = [('idle', 12, idle), ('walk', 32, walk), ('windup', 12, windup), ('punch', 8, punch), ('recover', 12, recover), ('start', 8, start), ('halt', 8, halt), ('run', 16, run), ('lunge', 6, lunge), ('uppercut', 8, uppercut), ('crouch', 8, crouch), ('leap', 8, leap), ('float', 12, floatp), ('apunch', 16, apunch), ('stump', 6, stump_pose), ('floats', 12, floats), ('grab', 8, grab), ('throw', 10, throw), ('fly', 6, flyp), ('regrow', 10, regrow), ('arm', 1, armpiece), ('flys', 6, flys), ('floatg', 12, floatg), ('hookN', 12, hookN), ('hookF', 12, hookF), ('kick', 12, kick), ('hurt', 6, hurt)]      # (new clips go at the END: the numbers of the older pictures must not move)
+# ---- v1.137 (the Snowman part, in Sukuna's domain): KNEEL (on one knee, a fist on the floor, the head hanging; breathes), RISE (kneel to standing), SWAY (standing bent under the slashes), TRUDGE (a hunched, heavy walk), GUP (the hands come up) and GUARD (both open hands held out in front, the stance planted)
+GA = GY - AH      # (the height of the ankles when a foot is on the floor)
+def kneel_pose(f=0.0, **kw):
+    s = math.sin
+    q = base(Px=PX, Py=103 + 0.6 * s(f), lam=24 + 1.6 * s(f - 0.3), head=22 + 2 * s(f - 0.8), arm_n=(23 + 1.5 * s(f), 0), arm_f=(-10 + 2 * s(f - 0.9), 34), ankle_n=(PX + 25.5, GA), ankle_f=(PX - 25.5, GA - 1), pitch_n=0.0, pitch_f=-170.0, cloth=f, amp=3.5, vx=0.0)
+    q.update(kw); return q
+def kneel(i, n=12): return kneel_pose(2 * math.pi * i / n)
+def sway_pose(f=0.0, **kw):
+    s = math.sin
+    q = base(Px=PX, Py=63 + Y0 + 4 + 1.2 * s(f), lam=17 + 2.5 * s(f - 0.3), head=16 + 2 * s(f - 0.8), arm_n=(14 + 4 * s(f - 0.4), 22 + 4 * s(f)), arm_f=(-2 + 3 * s(f - 0.9), 26 + 3 * s(f)), ankle_n=(PX + 14, GA), ankle_f=(PX - 13, GA), cloth=f, amp=4.5)
+    q.update(kw); return q
+def sway(i, n=12): return sway_pose(2 * math.pi * i / n)
+def rise(i, n=10):      # kneel (0) - the weight comes forward over the front foot, the fist pushes off the floor (1 - 3) - the back foot is brought up and the body heaves up bent double (4 - 7) - he is standing, hunched (8 - 9)
+    K0 = kneel_pose(0.0)
+    K1 = kneel_pose(0.0, lam=32, head=26, Py=100, arm_n=(30, 4), ankle_f=(PX - 20, GA - 1), pitch_f=-150)
+    K2 = base(Px=PX + 2, Py=GA - 36, lam=34, head=24, arm_n=(36, 20), arm_f=(10, 40), ankle_n=(PX + 24, GA), ankle_f=(PX - 8, GA), pitch_n=0, pitch_f=-20, cloth=0.6, amp=4)
+    K3 = base(Px=PX + 1, Py=GA - 40, lam=32, head=22, arm_n=(26, 24), arm_f=(6, 30), ankle_n=(PX + 17, GA), ankle_f=(PX - 11, GA), cloth=1.2, amp=4.5)
+    K4 = sway_pose(0.0)
+    q = keyed({0: K0, 2: K1, 4: K2, 6: K3, 9: K4}, i); q['cloth'] = 0.5 * i; return q
+def trudge(i, n=32):      # a hunched walk: the shoulders down, the head hanging, the arms swinging a little, short heavy steps (stride 30)
+    f = 2 * math.pi * i / n; fn = foot(i / float(n), S=TRS, lift=7.0); ff = foot(i / float(n) + 0.5, S=TRS, lift=7.0)
+    h = min([math.sqrt(max(LLEG ** 2 - x[0] ** 2, 100)) for x in (fn, ff) if x[3]] or [43.0])
+    return base(Py=GY - AH - h + 2.5, lam=15 + 2 * math.cos(2 * f), head=12, ankle_n=(PX + fn[0], GY - AH - fn[1]), ankle_f=(PX + ff[0], GY - AH - ff[1]), pitch_n=fn[2], pitch_f=ff[2], arm_n=(10 - 9 * math.cos(f), 24), arm_f=(0 + 9 * math.cos(f), 26), cloth=f, amp=5, vx=1.2)
+TRS = 30.0      # (the stride of the trudge: the game moves him S / duty = 51.7 px (before the scale) for one cycle of 32 pictures)
+def guard_pose(f=0.0, **kw):
+    s = math.sin
+    q = base(Px=PX, Py=63 + Y0 + 5 + 0.8 * s(f), lam=-3 + 1.2 * s(f - 0.3), head=-3 + 1.5 * s(f - 0.8), arm_n=(104 + 3 * s(f), -16 + 2 * s(f + 0.5)), arm_f=(92 + 3 * s(f + 1), -10 + 2 * s(f)), open_n=1.0, open_f=1.0, ankle_n=(PX + 17, GA), ankle_f=(PX - 15, GA), cloth=f, amp=5.5, vx=-0.8)
+    q.update(kw); return q
+def guard(i, n=12): return guard_pose(2 * math.pi * i / n)
+def gup(i, n=6):      # the hands come up from the hanging arms to the guard: the shoulders pull back (a flinch), the arms swing up, the palms open
+    K0 = sway_pose(0.0); K1 = sway_pose(0.0, lam=8, head=6, arm_n=(60, 30), arm_f=(48, 36), open_n=0.4, open_f=0.4, Py=63 + Y0 + 6); K2 = guard_pose(0.0)
+    return keyed({0: K0, 2: K1, 5: K2}, i)
+CLIPS = [('idle', 12, idle), ('walk', 32, walk), ('windup', 12, windup), ('punch', 8, punch), ('recover', 12, recover), ('start', 8, start), ('halt', 8, halt), ('run', 16, run), ('lunge', 6, lunge), ('uppercut', 8, uppercut), ('crouch', 8, crouch), ('leap', 8, leap), ('float', 12, floatp), ('apunch', 16, apunch), ('stump', 6, stump_pose), ('floats', 12, floats), ('grab', 8, grab), ('throw', 10, throw), ('fly', 6, flyp), ('regrow', 10, regrow), ('arm', 1, armpiece), ('flys', 6, flys), ('floatg', 12, floatg), ('hookN', 12, hookN), ('hookF', 12, hookF), ('kick', 12, kick), ('hurt', 6, hurt), ('kneel', 12, kneel), ('rise', 10, rise), ('sway', 12, sway), ('trudge', 32, trudge), ('gup', 6, gup), ('guard', 12, guard)]      # (new clips go at the END: the numbers of the older pictures must not move)
 def build(flip=True, outdir=None):
     outdir = outdir or os.path.dirname(os.path.abspath(__file__)); frames = []; meta = {'w': rig.W, 'h': rig.H, 'clips': {}, 'frames': []}
     for name, n, fn in CLIPS:
