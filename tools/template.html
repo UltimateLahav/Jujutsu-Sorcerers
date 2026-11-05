@@ -208,7 +208,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.131</small>
+    <small id="ver">V1.132</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -832,7 +832,11 @@ const SK_VERITY = [
   ['v_pounce', 'AIR BITE', 'BLUE IN THE AIR: HE FALLS ON THE ENEMY HEAD FIRST AND BITES: TWICE THE DAMAGE OF A BITE, IT BREAKS A GUARD, AND THE ENEMY BLEEDS FOR 4 SECONDS (25% ENERGY)', 400, ['v_bite']],
   ['v_rip', 'RIP AND THROW', "WALK FORWARD + BLUE, CLOSE TO THE ENEMY: HE CATCHES BOTH OF THE ENEMY'S HANDS AND TRIES TO RIP HIM APART. IT DOES NOT WORK, SO HE THROWS HIM BACK: 25 DAMAGE AND A KNOCK-DOWN. A GUARD DOES NOT STOP IT (15% ENERGY)", 350, ['v_bite']],
   ['v_lag', 'LAG COUNTER', "WALK BACK + BLUE: HE WALKS BACKWARDS ON THE SPOT, FROZEN AND STUTTERING LIKE A LAGGING PLAYER, FOR 1.5 SECONDS. IF THE ENEMY HITS HIM IN THAT TIME THE HIT DOES NOTHING: HIS TOP BODY IS LAUNCHED BACK, THEN SNAPS FORWARD, BITES THE ENEMY AND PUNCHES HIM AWAY (15% ENERGY)", 400, ['v_bite']],
-  ['v_sense', 'SMELL OF FEAR', 'IN HUNTS: THE SENSE BUTTON SHOWS EVERY HIDDEN ITEM, CLUE AND CURSE NEAR YOU FOR 3 SECONDS (8 SECOND COOLDOWN)', 300, []]];
+  ['v_sense', 'SMELL OF FEAR', 'IN HUNTS: THE SENSE BUTTON SHOWS EVERY HIDDEN ITEM, CLUE AND CURSE NEAR YOU FOR 3 SECONDS (8 SECOND COOLDOWN)', 300, []],
+  ['v_rct1', 'RCT 1', 'REVERSE CURSED TECHNIQUE: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). EACH ONE IS WHOLE AGAIN 10 SECONDS AFTER IT HAPPENED. NEEDS THE FATALITY. VERITY\'S BODY TEARS 3 TIMES AS EASILY AS ANYONE ELSE\'S, THAT IS WHY HE NEEDS THIS.', 1500, ['v_fatal']],
+  ['v_rct2', 'RCT 2', 'REVERSE CURSED TECHNIQUE 2: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). 5 SECONDS.', 2500, ['v_rct1']],
+  ['v_rct3', 'RCT 3', 'REVERSE CURSED TECHNIQUE 3: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). 1 SECOND.', 4000, ['v_rct2']],
+  ['v_rct4', 'RCT 4', 'REVERSE CURSED TECHNIQUE 4: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). THE STAGE ONLY VERITY HAS: INSTANT. A TORN PIECE STILL FLIES OFF, THE BODY IS WHOLE AT ONCE.', 8000, ['v_rct3']]];
 const SK_CAT = [
   ['k_crouch', 'FLATTEN', 'DOWN ON THE STICK OR KEY S: SMASH YOURSELF FLAT, TAP AGAIN TO STAND UP (3% ENERGY)', 50, []],
   ['k_block', 'GLOVE SHIELD', 'HOLD TO GUARD WITH A GIANT GLOVE. RAISE IT JUST BEFORE A HIT TO PARRY: NO DAMAGE, THE ENEMY IS STUNNED', 80, []],
@@ -1201,7 +1205,7 @@ const SK_TABS = [['g', 'skTabG', SK_GOJO], ['y', 'skTabY', SK_YUJI], ['v', 'skTa
 const SK_LAY = {      // where every node sits, [column, row] (the root is column 0): a line runs from the right edge of a skill a node needs to the left edge of the node, so the cells in between have to be empty
   g: { _root: [0, 2.5], crouch: [1, 0], cpunch: [2, 0], blue: [1, 1], mblue: [2, 1], dash: [1, 2], tele: [2, 2], purple: [3, 2.5], simple: [3, 4], block: [1, 3], ce: [1, 4], red: [2, 4], fatal: [1, 5], domain: [2, 5], heavy: [1, 6], cancel: [2, 3], sense: [1, 7], rct1: [2, 6], rct2: [3, 6], rct3: [4, 6] },
   y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 4.5], y_pierce: [5, 3], y_shrine: [5, 4], y_cleave: [5, 5], y_simple: [5, 6], y_ult: [4, 5.7], y_fatal: [4, 6.7], y_div: [1, 6], y_rush: [2, 6], y_heavy: [1, 4.7], y_cancel: [3, 1.5], y_sense: [1, 7], y_hometown: [6, 3.5], y_rct1: [5, 7.5], y_rct2: [6, 7.5], y_rct3: [7, 7.5] },
-  v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5], v_heavy: [1, 4.5], v_cancel: [3, 0.8], v_air: [2, 4.5], v_pounce: [3, 3.5], v_sense: [1, 5.6], v_rip: [3, 4.6], v_lag: [3, 5.7] },
+  v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5], v_heavy: [1, 4.5], v_cancel: [3, 0.8], v_air: [2, 4.5], v_pounce: [3, 3.5], v_sense: [1, 5.6], v_rip: [3, 4.6], v_lag: [3, 5.7], v_rct1: [3, 6.9], v_rct2: [4, 6.9], v_rct3: [5, 6.9], v_rct4: [6, 6.9] },
   k: { _root: [0, 1], k_crouch: [1, 0], k_fatal: [3, 0], k_dash: [1, 1], k_toon: [2, 1], k_stomp: [3, 1], k_kick: [3, 3], k_lift: [3, 4], k_hang: [2, 3], k_block: [1, 2], k_ult: [3, 2], k_heavy: [1, 3], k_cancel: [2, 0], k_sense: [1, 4], k_rct1: [4, 0], k_rct2: [5, 0], k_rct3: [6, 0] },
   s: { _root: [0, 4], s_crouch: [1, 0], s_slash: [1, 1], s_air: [1, 2], s_cleave: [1, 6.5], s_cpunch: [2, 0], s_leg: [2, 1], s_dashslash: [2, 2], s_storm: [2, 3], s_dismantle: [2, 4], s_lift: [2, 5.5], s_dive: [2, 6.5], s_dcleave: [2, 7.5], s_flame: [2, 8.5], s_domain: [2, 9.5], s_fuga: [3, 9], s_rct1: [1, 11], s_rct2: [2, 11], s_rct3: [3, 11] },
   c: { _root: [0, 1.5], yuji: [1, 0], verity: [1, 1], cat: [1, 2], sukuna: [1, 3] } };

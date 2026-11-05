@@ -8,7 +8,8 @@ const GAB = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_', 
 const GPT = new WeakMap(); let GVC = new WeakMap(), GVPX = 0; const GVMAX = 8e6;      // a picture set (YU.idle ...) -> its patches; a plain picture -> its variants by mask (GVPX: the pixels of all of them; past GVMAX the lot is thrown away and made again when it is needed, so a long game does not fill the memory)
 const GLIMB = ['an', 'af', 'lf', 'lb'];      // near arm, far arm, front (near) leg, back (far) leg
 const GT = { rip: 0.42, sho: 0.3, bod: 0.35, huge: 0.15, hugeP: 0.15, sharp: 2, bleed: 0.003, slow: 0.15, weak: 0.1, vuln: 0.25 };      // tuning: meter that rips a limb / kills a shoulder / hurts the body (fractions of the full health), a huge hit and the chance it rips at once, sharp attacks fill twice as fast, bleeding per 0.5 s per limb
-const GSHARP = { freddy: 1, verity: 1, sukuna: 1 };      // whose blows are cuts, claws and bites
+const GSHARP = { freddy: 1, verity: 1, sukuna: 1 };
+const GFRAIL = { verity: 3 };      // v1.132 whose body tears easiest: every blow fills Verity's meters 3 times as fast (and a blow of a sixth of the health may rip him at once, 45% of the time)      // whose blows are cuts, claws and bites
 const gdSet = () => window.__noGore ? 2 : (typeof SET === 'object' && SET.gore) | 0;      // 0 FULL, 1 CLEAN, 2 OFF (window.__noGore: the automatic tests of the older versions run without it)
 function goreLink(sets, data) { if (data) for (const k in data) if (sets[k]) GPT.set(sets[k], data[k]); }
 goreLink(YU, GD.yuji); goreLink(D, GD.gojo);
@@ -27,7 +28,7 @@ if (GD.sukuna) for (const k in GD.sukuna) if (k[0] !== '_') { GSK[k] = {}; GPT.s
 const GCOL = { r0: '#b3121f', r1: '#d4141f', r2: '#6e0a12', w0: '#e8ecf4', w1: '#9aa2b4' };      // the stump: blood red (CLEAN: pale grey)
 const GSTAT = { builds: 0, fly: 0, hits: 0, rips: 0 };      // (counters for the tests)
 const GB = { p: goreBody(), f: goreBody() };
-function goreBody() { return { dm: { an: 0, af: 0, lf: 0, lb: 0, sn: 0, sf: 0, ch: 0, bl: 0, hd: 0 }, st: { an: 0, af: 0, lf: 0, lb: 0 }, hurt: { ch: 0, bl: 0, hd: 0 }, last: null, bleedAt: 0, coughAt: 0, pend: [], flash: 0, dripAt: 0, kind: '', rc: {}, rcOn: false, rcp: [], rcAt: -1e9, rcMt: 0, rcRun: 0 }; }
+function goreBody() { return { dm: { an: 0, af: 0, lf: 0, lb: 0, sn: 0, sf: 0, ch: 0, bl: 0, hd: 0 }, st: { an: 0, af: 0, lf: 0, lb: 0 }, hurt: { ch: 0, bl: 0, hd: 0 }, last: null, bleedAt: 0, coughAt: 0, pend: [], flash: 0, dripAt: 0, kind: '', rc: {}, rcOn: false, rcp: [], rcAt: -1e9, rcMt: 0, rcRun: 0, late: [], glowUntil: 0 }; }
 function goreReset() { GB.p = goreBody(); GB.f = goreBody(); goreAft = null; }
 const gdKind = side => !vs ? null : side === 'p' ? (cuMe() ? (vs.me === 'cu3' ? 'sukuna' : null) : vs.me) : (dummy && dummy.mode === 'fighter' && !dummy.curse && !dummy.net ? vs.foe : null);
 function gdActive(side) { return !!vs && !vs.story && !vs.net && gdSet() < 2 && !!GD[gdKind(side)]; }
@@ -141,8 +142,8 @@ function goreHit(side, d, now) {      // the fighter on `side` has just lost d h
   while (!ok(part) && n++ < 8) part = gorePick(h);
   if (!ok(part)) part = 'ch';
   if (part === 'sn' && B.st.an === 2 || part === 'sf' && B.st.af === 2) part = 'ch';
-  B.dm[part] += f * sharp;
-  const limb = part === 'an' || part === 'af' || part === 'lf' || part === 'lb', huge = f >= GT.huge && Math.random() < GT.hugeP;
+  const fr = GFRAIL[B.kind] || 1; B.dm[part] += f * sharp * fr;
+  const limb = part === 'an' || part === 'af' || part === 'lf' || part === 'lb', huge = f * fr >= GT.huge && Math.random() < Math.min(1, GT.hugeP * fr);
   if (limb && (B.dm[part] >= GT.rip || huge)) goreRip(side, part, now);
   else if (part === 'sn' || part === 'sf') { const a = part === 'sn' ? 'an' : 'af'; if (B.st[a] === 0 && (B.dm[part] >= GT.sho || huge)) goreDead(side, a, now); }
   else if (part === 'ch' || part === 'bl' || part === 'hd') { if (!B.hurt[part] && (B.dm[part] >= GT.bod || huge)) { B.hurt[part] = 1; say('BADLY HURT', side === 'f' ? dummy.x : wx, '#ff6a5a', 8, now); } }
@@ -228,8 +229,8 @@ function goreTick(now, dt) {      // every frame of a fight (vsTick): looks for 
   if (gdSet() === 1) for (let i = gibs.length - 1; i >= 0; i--) { const g = gibs[i]; if (g.gore === 2) { g.born = g.born || now; if (now - g.born > 2500) gibs.splice(i, 1); } }      // (CLEAN: the pieces fade away after a while)
 }
 // ---- v1.129 RCT (reverse cursed technique): white cursed energy heals what is ripped or hurt (not the health). Three stages bought in the skill trees (tools/template.html: rct1..3, y_rct1..3, k_rct1..3, s_rct1..3); each hurt part has its own clock
-const RCT_T = { gojo: [15, 10, 5], sukuna: [15, 8, 4], yuji: [20, 16, 10], cat: [20, 14, 7] };      // seconds a part needs to grow back, stages 1 2 3 (Gojo's and Sukuna's last stage: up to that, by how bad it is; a small hurt is healed almost at once)
-const RCT_ID = { gojo: ['rct1', 'rct2', 'rct3'], yuji: ['y_rct1', 'y_rct2', 'y_rct3'], cat: ['k_rct1', 'k_rct2', 'k_rct3'], sukuna: ['s_rct1', 's_rct2', 's_rct3'] };
+const RCT_T = { gojo: [15, 10, 5], sukuna: [15, 8, 4], yuji: [20, 16, 10], cat: [20, 14, 7], verity: [10, 5, 1, 0] };      // seconds a part needs to grow back, stages 1 2 3 (Gojo's and Sukuna's last stage: up to that, by how bad it is; a small hurt is healed almost at once)
+const RCT_ID = { gojo: ['rct1', 'rct2', 'rct3'], yuji: ['y_rct1', 'y_rct2', 'y_rct3'], cat: ['k_rct1', 'k_rct2', 'k_rct3'], sukuna: ['s_rct1', 's_rct2', 's_rct3'], verity: ['v_rct1', 'v_rct2', 'v_rct3', 'v_rct4'] };
 const GINJ = ['an', 'af', 'lf', 'lb', 'ch', 'bl', 'hd'], GHALO = [[-3, 0], [3, 0], [0, -3], [0, 3], [-2, 0], [2, 0], [0, -2], [0, 2], [-1, -1], [1, 1], [-1, 1], [1, -1], [-1, 0], [1, 0], [0, -1], [0, 1]];      // (the halo: three rings, the outer ones fainter)
 function rctStage(kind) { const ids = RCT_ID[kind]; if (!ids) return 0; let n = 0; for (const id of ids) { if (kind === 'sukuna' ? PROG.own[id] : owns(id)) n++; else break; } return n; }      // (how many stages the fighter has: Sukuna has no shop of his moves, so his are the ones really bought even in free play)
 function goreRG(B) { let c = 0; const t = pnow(); for (let i = 0; i < 4; i++) { const k = GLIMB[i], h = B.rc[k]; if (h && B.st[k] === 2) { const s = Math.min(7, Math.floor((t - h.t0) / h.dur * 8)); if (s > 0) c |= s << (3 * i); } } return c; }      // (how far each lost limb has grown back, 0..7 eighths, three bits a limb)
@@ -252,6 +253,7 @@ function goreHeal(B, k, now) {      // a part is whole again: its state, its dam
 }
 function goreRct(B, kind, now) {      // every frame of a fight, for the player: each hurt part runs its own clock; Yuji's clocks only START while INHERITENCE is on (they run on after it ends)
   const stage = rctStage(kind); B.rcOn = false; if (!stage) { B.rcRun = 0; B.rc = {}; return; }
+  for (let i = B.late.length - 1; i >= 0; i--) if (now >= B.late[i].at) { goreVanish('p', B.late[i].k, now); B.late.splice(i, 1); }      // (an instant heal: the piece that flew off is taken back a moment later)
   const can = kind !== 'yuji' || (cm === 3 && !!vs && vs.me === 'yuji'), scaled = stage === 3 && (kind === 'gojo' || kind === 'sukuna'); let run = 0;
   for (const k of GINJ) {
     const lvl = k in B.st ? B.st[k] : B.hurt[k] ? 1 : 0; let h = B.rc[k];
@@ -263,10 +265,10 @@ function goreRct(B, kind, now) {      // every frame of a fight, for the player:
       h = B.rc[k] = { t0: now, lvl, dur: 1000 * paceBase() * RCT_T[kind][stage - 1] * (scaled ? 0.95 * w : 1) };      // (seconds of the real clock, like INHERITENCE's 10: the game runs faster than that at FAST pace, see paceBase)
       if (now - B.rcAt > 600) { B.rcAt = now; say('RCT', wx, '#ffffff', 8, now); snd('rct', 0); }
     }
-    if (now - h.t0 >= h.dur) { if (lvl === 2) goreVanish('p', k, now); goreHeal(B, k, now); delete B.rc[k]; continue; }
+    if (now - h.t0 >= h.dur) { if (lvl === 2) { if (h.dur > 0) goreVanish('p', k, now); else B.late.push({ k, at: now + 700 }); } goreHeal(B, k, now); delete B.rc[k]; B.glowUntil = now + 300; continue; }
     run++;
   }
-  B.rcOn = run > 0;
+  B.rcOn = run > 0 || now < B.glowUntil;
   if (B.rcRun > 0 && !run) { say('HEALED', wx, '#bfe6ff', 8, now); snd('rct', 1); }
   B.rcRun = run;
   if (run && now - B.rcMt > 70) { B.rcMt = now; if (B.rcp.length < 40) B.rcp.push({ ox: Math.random() * 18 - 9, oy: -(6 + Math.random() * 50), vx: Math.random() * 10 - 5, vy: 14 + Math.random() * 16, born: now, life: 800 + Math.random() * 500, big: Math.random() < 0.3 }); }

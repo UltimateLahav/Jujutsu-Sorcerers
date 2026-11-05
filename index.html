@@ -208,7 +208,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.131</small>
+    <small id="ver">V1.132</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -1947,7 +1947,11 @@ const SK_VERITY = [
   ['v_pounce', 'AIR BITE', 'BLUE IN THE AIR: HE FALLS ON THE ENEMY HEAD FIRST AND BITES: TWICE THE DAMAGE OF A BITE, IT BREAKS A GUARD, AND THE ENEMY BLEEDS FOR 4 SECONDS (25% ENERGY)', 400, ['v_bite']],
   ['v_rip', 'RIP AND THROW', "WALK FORWARD + BLUE, CLOSE TO THE ENEMY: HE CATCHES BOTH OF THE ENEMY'S HANDS AND TRIES TO RIP HIM APART. IT DOES NOT WORK, SO HE THROWS HIM BACK: 25 DAMAGE AND A KNOCK-DOWN. A GUARD DOES NOT STOP IT (15% ENERGY)", 350, ['v_bite']],
   ['v_lag', 'LAG COUNTER', "WALK BACK + BLUE: HE WALKS BACKWARDS ON THE SPOT, FROZEN AND STUTTERING LIKE A LAGGING PLAYER, FOR 1.5 SECONDS. IF THE ENEMY HITS HIM IN THAT TIME THE HIT DOES NOTHING: HIS TOP BODY IS LAUNCHED BACK, THEN SNAPS FORWARD, BITES THE ENEMY AND PUNCHES HIM AWAY (15% ENERGY)", 400, ['v_bite']],
-  ['v_sense', 'SMELL OF FEAR', 'IN HUNTS: THE SENSE BUTTON SHOWS EVERY HIDDEN ITEM, CLUE AND CURSE NEAR YOU FOR 3 SECONDS (8 SECOND COOLDOWN)', 300, []]];
+  ['v_sense', 'SMELL OF FEAR', 'IN HUNTS: THE SENSE BUTTON SHOWS EVERY HIDDEN ITEM, CLUE AND CURSE NEAR YOU FOR 3 SECONDS (8 SECOND COOLDOWN)', 300, []],
+  ['v_rct1', 'RCT 1', 'REVERSE CURSED TECHNIQUE: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). EACH ONE IS WHOLE AGAIN 10 SECONDS AFTER IT HAPPENED. NEEDS THE FATALITY. VERITY\'S BODY TEARS 3 TIMES AS EASILY AS ANYONE ELSE\'S, THAT IS WHY HE NEEDS THIS.', 1500, ['v_fatal']],
+  ['v_rct2', 'RCT 2', 'REVERSE CURSED TECHNIQUE 2: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). 5 SECONDS.', 2500, ['v_rct1']],
+  ['v_rct3', 'RCT 3', 'REVERSE CURSED TECHNIQUE 3: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). 1 SECOND.', 4000, ['v_rct2']],
+  ['v_rct4', 'RCT 4', 'REVERSE CURSED TECHNIQUE 4: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). THE STAGE ONLY VERITY HAS: INSTANT. A TORN PIECE STILL FLIES OFF, THE BODY IS WHOLE AT ONCE.', 8000, ['v_rct3']]];
 const SK_CAT = [
   ['k_crouch', 'FLATTEN', 'DOWN ON THE STICK OR KEY S: SMASH YOURSELF FLAT, TAP AGAIN TO STAND UP (3% ENERGY)', 50, []],
   ['k_block', 'GLOVE SHIELD', 'HOLD TO GUARD WITH A GIANT GLOVE. RAISE IT JUST BEFORE A HIT TO PARRY: NO DAMAGE, THE ENEMY IS STUNNED', 80, []],
@@ -2316,7 +2320,7 @@ const SK_TABS = [['g', 'skTabG', SK_GOJO], ['y', 'skTabY', SK_YUJI], ['v', 'skTa
 const SK_LAY = {      // where every node sits, [column, row] (the root is column 0): a line runs from the right edge of a skill a node needs to the left edge of the node, so the cells in between have to be empty
   g: { _root: [0, 2.5], crouch: [1, 0], cpunch: [2, 0], blue: [1, 1], mblue: [2, 1], dash: [1, 2], tele: [2, 2], purple: [3, 2.5], simple: [3, 4], block: [1, 3], ce: [1, 4], red: [2, 4], fatal: [1, 5], domain: [2, 5], heavy: [1, 6], cancel: [2, 3], sense: [1, 7], rct1: [2, 6], rct2: [3, 6], rct3: [4, 6] },
   y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 4.5], y_pierce: [5, 3], y_shrine: [5, 4], y_cleave: [5, 5], y_simple: [5, 6], y_ult: [4, 5.7], y_fatal: [4, 6.7], y_div: [1, 6], y_rush: [2, 6], y_heavy: [1, 4.7], y_cancel: [3, 1.5], y_sense: [1, 7], y_hometown: [6, 3.5], y_rct1: [5, 7.5], y_rct2: [6, 7.5], y_rct3: [7, 7.5] },
-  v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5], v_heavy: [1, 4.5], v_cancel: [3, 0.8], v_air: [2, 4.5], v_pounce: [3, 3.5], v_sense: [1, 5.6], v_rip: [3, 4.6], v_lag: [3, 5.7] },
+  v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5], v_heavy: [1, 4.5], v_cancel: [3, 0.8], v_air: [2, 4.5], v_pounce: [3, 3.5], v_sense: [1, 5.6], v_rip: [3, 4.6], v_lag: [3, 5.7], v_rct1: [3, 6.9], v_rct2: [4, 6.9], v_rct3: [5, 6.9], v_rct4: [6, 6.9] },
   k: { _root: [0, 1], k_crouch: [1, 0], k_fatal: [3, 0], k_dash: [1, 1], k_toon: [2, 1], k_stomp: [3, 1], k_kick: [3, 3], k_lift: [3, 4], k_hang: [2, 3], k_block: [1, 2], k_ult: [3, 2], k_heavy: [1, 3], k_cancel: [2, 0], k_sense: [1, 4], k_rct1: [4, 0], k_rct2: [5, 0], k_rct3: [6, 0] },
   s: { _root: [0, 4], s_crouch: [1, 0], s_slash: [1, 1], s_air: [1, 2], s_cleave: [1, 6.5], s_cpunch: [2, 0], s_leg: [2, 1], s_dashslash: [2, 2], s_storm: [2, 3], s_dismantle: [2, 4], s_lift: [2, 5.5], s_dive: [2, 6.5], s_dcleave: [2, 7.5], s_flame: [2, 8.5], s_domain: [2, 9.5], s_fuga: [3, 9], s_rct1: [1, 11], s_rct2: [2, 11], s_rct3: [3, 11] },
   c: { _root: [0, 1.5], yuji: [1, 0], verity: [1, 1], cat: [1, 2], sukuna: [1, 3] } };
@@ -8092,7 +8096,8 @@ const GAB = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_', 
 const GPT = new WeakMap(); let GVC = new WeakMap(), GVPX = 0; const GVMAX = 8e6;      // a picture set (YU.idle ...) -> its patches; a plain picture -> its variants by mask (GVPX: the pixels of all of them; past GVMAX the lot is thrown away and made again when it is needed, so a long game does not fill the memory)
 const GLIMB = ['an', 'af', 'lf', 'lb'];      // near arm, far arm, front (near) leg, back (far) leg
 const GT = { rip: 0.42, sho: 0.3, bod: 0.35, huge: 0.15, hugeP: 0.15, sharp: 2, bleed: 0.003, slow: 0.15, weak: 0.1, vuln: 0.25 };      // tuning: meter that rips a limb / kills a shoulder / hurts the body (fractions of the full health), a huge hit and the chance it rips at once, sharp attacks fill twice as fast, bleeding per 0.5 s per limb
-const GSHARP = { freddy: 1, verity: 1, sukuna: 1 };      // whose blows are cuts, claws and bites
+const GSHARP = { freddy: 1, verity: 1, sukuna: 1 };
+const GFRAIL = { verity: 3 };      // v1.132 whose body tears easiest: every blow fills Verity's meters 3 times as fast (and a blow of a sixth of the health may rip him at once, 45% of the time)      // whose blows are cuts, claws and bites
 const gdSet = () => window.__noGore ? 2 : (typeof SET === 'object' && SET.gore) | 0;      // 0 FULL, 1 CLEAN, 2 OFF (window.__noGore: the automatic tests of the older versions run without it)
 function goreLink(sets, data) { if (data) for (const k in data) if (sets[k]) GPT.set(sets[k], data[k]); }
 goreLink(YU, GD.yuji); goreLink(D, GD.gojo);
@@ -8111,7 +8116,7 @@ if (GD.sukuna) for (const k in GD.sukuna) if (k[0] !== '_') { GSK[k] = {}; GPT.s
 const GCOL = { r0: '#b3121f', r1: '#d4141f', r2: '#6e0a12', w0: '#e8ecf4', w1: '#9aa2b4' };      // the stump: blood red (CLEAN: pale grey)
 const GSTAT = { builds: 0, fly: 0, hits: 0, rips: 0 };      // (counters for the tests)
 const GB = { p: goreBody(), f: goreBody() };
-function goreBody() { return { dm: { an: 0, af: 0, lf: 0, lb: 0, sn: 0, sf: 0, ch: 0, bl: 0, hd: 0 }, st: { an: 0, af: 0, lf: 0, lb: 0 }, hurt: { ch: 0, bl: 0, hd: 0 }, last: null, bleedAt: 0, coughAt: 0, pend: [], flash: 0, dripAt: 0, kind: '', rc: {}, rcOn: false, rcp: [], rcAt: -1e9, rcMt: 0, rcRun: 0 }; }
+function goreBody() { return { dm: { an: 0, af: 0, lf: 0, lb: 0, sn: 0, sf: 0, ch: 0, bl: 0, hd: 0 }, st: { an: 0, af: 0, lf: 0, lb: 0 }, hurt: { ch: 0, bl: 0, hd: 0 }, last: null, bleedAt: 0, coughAt: 0, pend: [], flash: 0, dripAt: 0, kind: '', rc: {}, rcOn: false, rcp: [], rcAt: -1e9, rcMt: 0, rcRun: 0, late: [], glowUntil: 0 }; }
 function goreReset() { GB.p = goreBody(); GB.f = goreBody(); goreAft = null; }
 const gdKind = side => !vs ? null : side === 'p' ? (cuMe() ? (vs.me === 'cu3' ? 'sukuna' : null) : vs.me) : (dummy && dummy.mode === 'fighter' && !dummy.curse && !dummy.net ? vs.foe : null);
 function gdActive(side) { return !!vs && !vs.story && !vs.net && gdSet() < 2 && !!GD[gdKind(side)]; }
@@ -8225,8 +8230,8 @@ function goreHit(side, d, now) {      // the fighter on `side` has just lost d h
   while (!ok(part) && n++ < 8) part = gorePick(h);
   if (!ok(part)) part = 'ch';
   if (part === 'sn' && B.st.an === 2 || part === 'sf' && B.st.af === 2) part = 'ch';
-  B.dm[part] += f * sharp;
-  const limb = part === 'an' || part === 'af' || part === 'lf' || part === 'lb', huge = f >= GT.huge && Math.random() < GT.hugeP;
+  const fr = GFRAIL[B.kind] || 1; B.dm[part] += f * sharp * fr;
+  const limb = part === 'an' || part === 'af' || part === 'lf' || part === 'lb', huge = f * fr >= GT.huge && Math.random() < Math.min(1, GT.hugeP * fr);
   if (limb && (B.dm[part] >= GT.rip || huge)) goreRip(side, part, now);
   else if (part === 'sn' || part === 'sf') { const a = part === 'sn' ? 'an' : 'af'; if (B.st[a] === 0 && (B.dm[part] >= GT.sho || huge)) goreDead(side, a, now); }
   else if (part === 'ch' || part === 'bl' || part === 'hd') { if (!B.hurt[part] && (B.dm[part] >= GT.bod || huge)) { B.hurt[part] = 1; say('BADLY HURT', side === 'f' ? dummy.x : wx, '#ff6a5a', 8, now); } }
@@ -8312,8 +8317,8 @@ function goreTick(now, dt) {      // every frame of a fight (vsTick): looks for 
   if (gdSet() === 1) for (let i = gibs.length - 1; i >= 0; i--) { const g = gibs[i]; if (g.gore === 2) { g.born = g.born || now; if (now - g.born > 2500) gibs.splice(i, 1); } }      // (CLEAN: the pieces fade away after a while)
 }
 // ---- v1.129 RCT (reverse cursed technique): white cursed energy heals what is ripped or hurt (not the health). Three stages bought in the skill trees (tools/template.html: rct1..3, y_rct1..3, k_rct1..3, s_rct1..3); each hurt part has its own clock
-const RCT_T = { gojo: [15, 10, 5], sukuna: [15, 8, 4], yuji: [20, 16, 10], cat: [20, 14, 7] };      // seconds a part needs to grow back, stages 1 2 3 (Gojo's and Sukuna's last stage: up to that, by how bad it is; a small hurt is healed almost at once)
-const RCT_ID = { gojo: ['rct1', 'rct2', 'rct3'], yuji: ['y_rct1', 'y_rct2', 'y_rct3'], cat: ['k_rct1', 'k_rct2', 'k_rct3'], sukuna: ['s_rct1', 's_rct2', 's_rct3'] };
+const RCT_T = { gojo: [15, 10, 5], sukuna: [15, 8, 4], yuji: [20, 16, 10], cat: [20, 14, 7], verity: [10, 5, 1, 0] };      // seconds a part needs to grow back, stages 1 2 3 (Gojo's and Sukuna's last stage: up to that, by how bad it is; a small hurt is healed almost at once)
+const RCT_ID = { gojo: ['rct1', 'rct2', 'rct3'], yuji: ['y_rct1', 'y_rct2', 'y_rct3'], cat: ['k_rct1', 'k_rct2', 'k_rct3'], sukuna: ['s_rct1', 's_rct2', 's_rct3'], verity: ['v_rct1', 'v_rct2', 'v_rct3', 'v_rct4'] };
 const GINJ = ['an', 'af', 'lf', 'lb', 'ch', 'bl', 'hd'], GHALO = [[-3, 0], [3, 0], [0, -3], [0, 3], [-2, 0], [2, 0], [0, -2], [0, 2], [-1, -1], [1, 1], [-1, 1], [1, -1], [-1, 0], [1, 0], [0, -1], [0, 1]];      // (the halo: three rings, the outer ones fainter)
 function rctStage(kind) { const ids = RCT_ID[kind]; if (!ids) return 0; let n = 0; for (const id of ids) { if (kind === 'sukuna' ? PROG.own[id] : owns(id)) n++; else break; } return n; }      // (how many stages the fighter has: Sukuna has no shop of his moves, so his are the ones really bought even in free play)
 function goreRG(B) { let c = 0; const t = pnow(); for (let i = 0; i < 4; i++) { const k = GLIMB[i], h = B.rc[k]; if (h && B.st[k] === 2) { const s = Math.min(7, Math.floor((t - h.t0) / h.dur * 8)); if (s > 0) c |= s << (3 * i); } } return c; }      // (how far each lost limb has grown back, 0..7 eighths, three bits a limb)
@@ -8336,6 +8341,7 @@ function goreHeal(B, k, now) {      // a part is whole again: its state, its dam
 }
 function goreRct(B, kind, now) {      // every frame of a fight, for the player: each hurt part runs its own clock; Yuji's clocks only START while INHERITENCE is on (they run on after it ends)
   const stage = rctStage(kind); B.rcOn = false; if (!stage) { B.rcRun = 0; B.rc = {}; return; }
+  for (let i = B.late.length - 1; i >= 0; i--) if (now >= B.late[i].at) { goreVanish('p', B.late[i].k, now); B.late.splice(i, 1); }      // (an instant heal: the piece that flew off is taken back a moment later)
   const can = kind !== 'yuji' || (cm === 3 && !!vs && vs.me === 'yuji'), scaled = stage === 3 && (kind === 'gojo' || kind === 'sukuna'); let run = 0;
   for (const k of GINJ) {
     const lvl = k in B.st ? B.st[k] : B.hurt[k] ? 1 : 0; let h = B.rc[k];
@@ -8347,10 +8353,10 @@ function goreRct(B, kind, now) {      // every frame of a fight, for the player:
       h = B.rc[k] = { t0: now, lvl, dur: 1000 * paceBase() * RCT_T[kind][stage - 1] * (scaled ? 0.95 * w : 1) };      // (seconds of the real clock, like INHERITENCE's 10: the game runs faster than that at FAST pace, see paceBase)
       if (now - B.rcAt > 600) { B.rcAt = now; say('RCT', wx, '#ffffff', 8, now); snd('rct', 0); }
     }
-    if (now - h.t0 >= h.dur) { if (lvl === 2) goreVanish('p', k, now); goreHeal(B, k, now); delete B.rc[k]; continue; }
+    if (now - h.t0 >= h.dur) { if (lvl === 2) { if (h.dur > 0) goreVanish('p', k, now); else B.late.push({ k, at: now + 700 }); } goreHeal(B, k, now); delete B.rc[k]; B.glowUntil = now + 300; continue; }
     run++;
   }
-  B.rcOn = run > 0;
+  B.rcOn = run > 0 || now < B.glowUntil;
   if (B.rcRun > 0 && !run) { say('HEALED', wx, '#bfe6ff', 8, now); snd('rct', 1); }
   B.rcRun = run;
   if (run && now - B.rcMt > 70) { B.rcMt = now; if (B.rcp.length < 40) B.rcp.push({ ox: Math.random() * 18 - 9, oy: -(6 + Math.random() * 50), vx: Math.random() * 10 - 5, vy: 14 + Math.random() * 16, born: now, life: 800 + Math.random() * 500, big: Math.random() < 0.3 }); }
@@ -13554,6 +13560,7 @@ $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+{"v": "1.132", "t": "VERITY'S RCT", "n": ["Verity has the RCT now, with four stages (the fourth is only his): $1500, $2500, $4000 and $8000. You need his FATALITY first, and each stage needs the one before. A hurt part (a ripped off limb, a dead shoulder, a hurt chest, belly or head) is whole again after: stage 1: 10 seconds, stage 2: 5 seconds, stage 3: 1 second, stage 4: at once. At stage 4 a torn piece still flies off, but his body is whole again the moment the hit is over, and the piece is taken back a moment later. In free play Verity has all four stages.", "Verity's body is the most fragile one in the game: every blow fills his body's damage 3 times as fast as anyone else's, and a hard blow can rip a piece off at once much more often. This is true for the enemy Verity too, and it does not matter whether you bought the RCT."]},
 {"v": "1.131", "t": "SUKUNA IN THE SHOP", "n": ["Sukuna is in the shop now. He costs $3000 (SKILLS > CHARACTERS) and until you buy him his card in free play is locked. Once he is yours, the SUKUNA tab sells his moves, and they are locked until you buy them, free play too. Walking, jumping and his first blows (jab, jab, kick and the counter) stay free.", "The moves, with their prices: CROUCH $50, CROUCH PUNCHES $120 (needs CROUCH), FLYING SLASHES $150 (ATTACK with no enemy near), AIR CUT $250 (BLUE), CUT STORM $400 (back + BLUE), LEG CUT $300 (crouch + BLUE), DISMANTLE $600 (jump + BLUE), DASH SLASH $500 (forward + BLUE), CLEAVE MODE $700 (the MODE button), LIFT CLEAVE $300, DIVE CLEAVE $350 and DASH CLEAVE $400 (all three in Cleave mode), FLAME MODE $900 (MODE again, BLUE is OPEN), MALEVOLENT SHRINE $2000 (the DOMAIN button), FUGA $2500 (Flame mode + BLUE while the domain is open), and the three RCT stages. A move you have not bought shows LOCKED: BUY IT IN SKILLS when you press it. If a BLUE variant is not bought, BLUE does the plain AIR CUT instead.", "Everyone else is unchanged: in free play all the moves of Gojo, Yuji, Verity and the Cat are still free. Old saves have to buy Sukuna again."]},
 {"v": "1.130", "t": "CODES", "n": ["There is a new CODES button on the title screen (bottom right). It opens a page with a box where you type a code and press REDEEM (or Enter). A right code gives you money: Diddy25 gives $1000, Gojo69Me gives $700, and the very long one (PutinKimjongUnDiddyDaddyPeopleNightyNighty) gives $1,000,000. Type them exactly as written, capital letters too.", "Each code works once; typing it again says ALREADY USED. Your money and the used codes are saved on the phone, so a used code stays used after you close the game."]},
 {"v": "1.129", "t": "RCT", "n": ["RCT (reverse cursed technique) is a new skill for Gojo, Yuji, the Cartoon Cat and Sukuna: white cursed energy heals your injuries, meaning ripped off arms and legs, dead shoulders and a hurt chest, belly or head from GRAPHIC DAMAGE. It does not give health back. You need the FATALITY first (Yuji needs INHERITENCE too; Sukuna needs nothing first because he has no fatality) and it has three expensive stages: $1500, $2500 and $4000. Sukuna has a new SUKUNA tab in SKILLS for his stages, and they are really bought even in free play.", "How long a hurt part takes to heal. Stage 1: Gojo 15 seconds, Sukuna 15, Yuji 20, Cat 20. Stage 2: Gojo 10, Sukuna 8, Yuji 16, Cat 14. Stage 3: Gojo under 5 seconds and Sukuna 4 or less (the worse the injury the longer it takes, a small one is healed almost at once), Yuji 10, Cat 7. Every hurt part has its own clock, which starts when it is hurt. Yuji's RCT only starts while INHERITENCE is on (a heal that has started goes on after it ends).", "While a fighter heals, a white halo glows round him, white specks rise off him, and a lost limb grows back slowly from the stump outwards, white at first. When a lost limb is whole again, the old piece on the floor is taken back into the energy. In free play, Gojo, Yuji and the Cat have all three stages, like all their other moves.", "Fixed: the GRAPHIC DAMAGE setting (FULL / CLEAN / OFF) was forgotten every time the game was closed. It is kept now."]},
