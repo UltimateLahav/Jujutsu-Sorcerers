@@ -71,7 +71,7 @@ const C12A = ['chest', 'shoulder', 'head', 'pelvis', 'elbow', 'fist', 'chest', '
 function c12E() {
   if (C12.ev) return C12.ev; const E = [], add = (t, big) => { const sd = E.length * 7 + 3; E.push({ t, a: C12A[Math.floor(c4R(sd, 1) * C12A.length)], dx: (c4R(sd, 2) - 0.5) * 14, dy: (c4R(sd, 3) - 0.5) * 16, ai: Math.floor(c4R(sd, 4) * 6), fx: c4R(sd, 5) < 0.5, fy: c4R(sd, 6) < 0.5, big, idx: E.length }); };
   for (let j = 0; j < 6; j++) add(C12.hit + 0.04 * j, true);
-  for (let k = 0; k <= 33; k++) { const t = c12P(k), m = k >= 24 ? 5 : 3; for (let j = 0; j < m; j++) add(t + (k >= 24 ? 0.05 : 0.06) * j, j === 0); add(t + 0.5714, false); add(t + 1.1429, false); }
+  for (let k = 0; k <= 33; k++) { const t = c12P(k), m = k >= 24 ? 9 : 6; for (let j = 0; j < m; j++) add(t + (k >= 24 ? 0.03 : 0.04) * j, j < 2); for (let j = 0; j < 3; j++) { add(t + 0.5714 + 0.05 * j, false); add(t + 1.1429 + 0.05 * j, false); } }
   E.sort((a, b) => a.t - b.t); E.forEach((e, q) => { e.idx = q; }); return C12.ev = E;
 }
 function c12Heal(e, n) { let a = 1; for (const t of C12N) if (t > e.t && n >= t) a *= 1 - 0.75 * ease3((n - t) / 1.2); return a; }      // (the wounds from before a turn of the wheel close: they fade to a quarter)
@@ -93,7 +93,7 @@ function c12Body(M, n, lit) {      // his picture with the scars on it, eroded t
   if (!scars && v < 0.01 && b <= 0) return base;
   g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, 168, 140); g.drawImage(base, 0, 0);
   if (scars) {
-    g.globalCompositeOperation = 'source-atop'; let lo = 0, hi = E.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (E[mid].t <= n) lo = mid + 1; else hi = mid; } const first = Math.max(0, lo - 60);
+    g.globalCompositeOperation = 'source-atop'; let lo = 0, hi = E.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (E[mid].t <= n) lo = mid + 1; else hi = mid; } const first = Math.max(0, lo - 90);
     for (let q = first; q < lo; q++) {
       const e = E[q], age = n - e.t, al = c12Heal(e, n), an = P[e.a]; if (!an || al < 0.05) continue; const ang = SU_SL_ANG[e.ai] * Math.PI / 180, ca = Math.cos(ang) * (e.fx ? -1 : 1), sa = Math.sin(ang) * (e.fy ? -1 : 1), x0 = an[0] + e.dx, y0 = an[1] + e.dy, len = e.big ? 14 : 8;
       g.globalAlpha = al; for (let t = -len / 2; t <= len / 2; t++) { const px = Math.round(x0 + ca * t), py = Math.round(y0 + sa * t); g.fillStyle = '#3a0710'; g.fillRect(px, py + 1, 1, 1); g.fillStyle = age < 0.12 ? '#ffffff' : age < 0.7 ? '#ff4a5a' : '#b3121f'; g.fillRect(px, py, 1, 1); }
@@ -175,8 +175,8 @@ function c12Dens(n) {
   if (n < C12.hit || n > C12.fire + 0.2) return 0; let d;
   if (n < c12P(0)) d = 3; else if (n < C12.walk0) d = 6 + 16 * clamp01((n - c12P(0)) / (C12.walk0 - c12P(0))); else if (n < C12.walk1) d = 22 + 12 * clamp01((n - C12.walk0) / (C12.walk1 - C12.walk0));
   else if (n < C12.lull) d = 38 + 10 * clamp01((n - C12.walk1) / (C12.lull - C12.walk1)); else d = 48 + (2 - 48) * ease3((n - C12.lull) / 1.2);
-  d += 110 * Math.exp(-Math.pow((n - C12.hit - 0.05) / 0.08, 2)); for (let k = 0; k <= 33; k++) d += 60 * Math.exp(-Math.pow((n - c12P(k) - 0.06) / 0.07, 2));
-  return d * 0.75;
+  d += 300 * Math.exp(-Math.pow((n - C12.hit - 0.05) / 0.08, 2)); for (let k = 0; k <= 33; k++) d += 150 * Math.exp(-Math.pow((n - c12P(k) - 0.06) / 0.09, 2));
+  return d * 4.2;      // (v1.139: a LOT more slashes)
 }
 function c12Sl(sp, x, y, fx, fy, age) {      // one slash (the pictures of Sukuna's domain, suSlBuild): sweeps in (55 ms), white and red until 110 ms, a thin scratch that fades by 1 s
   const w = sp.w, h = sp.h; ctx.save(); ctx.translate(Math.round(x - w / 2) + (fx ? w : 0), Math.round(y - h / 2) + (fy ? h : 0)); ctx.scale(fx ? -1 : 1, fy ? -1 : 1);
@@ -185,9 +185,9 @@ function c12Sl(sp, x, y, fx, fy, age) {      // one slash (the pictures of Sukun
   ctx.restore();
 }
 function c12Rain(n) {
-  if (n < C12.hit || n > C12.fire + 1.5) return; if (!suSlSpr) suSlBuild(); const dt = 1 / 30, k1 = Math.floor(n / dt), W = [3, 3, 2, 1, 0.35], tw = W.reduce((a, b) => a + b, 0);
-  for (let k = k1 - 31; k <= k1; k++) {
-    const tk = k * dt, c = Math.floor(c12Dens(tk) * dt + c4R(k, 91)), age = (n - tk) * 1000; if (age > 1000 || age < 0) continue;
+  if (n < C12.hit || n > C12.fire + 1.5) return; if (!suSlSpr) suSlBuild(); const dt = 1 / 30, k1 = Math.floor(n / dt), W = [2, 2.5, 2.5, 2, 1.2], tw = W.reduce((a, b) => a + b, 0);
+  for (let k = k1 - 21; k <= k1; k++) {
+    const tk = k * dt, c = Math.floor(c12Dens(tk) * dt + c4R(k, 91)), age = (n - tk) * 1500; if (age > 1000 || age < 0) continue;
     for (let q = 0; q < c; q++) { const sd = k * 16 + q; let r = c4R(sd, 1) * tw, li = 0; while (li < 4 && r >= W[li]) { r -= W[li]; li++; } const sp = suSlSpr[li][Math.floor(c4R(sd, 2) * 6)]; c12Sl(sp, c4R(sd, 3) * (VW + 40) - 20, 6 + c4R(sd, 4) * (VH - 12), c4R(sd, 5) < 0.5, c4R(sd, 6) < 0.5, age); }
   }
   ctx.globalAlpha = 1;
@@ -196,7 +196,7 @@ function c12Cuts(n, M, s) {      // the cuts that land on him: a long slash thro
   if (!suSlSpr) suSlBuild(); const E = c12E(), P = M7.frames[M.i], Q = c12Wq(M), guard = n >= C12.walk1 + 0.3;
   let lo = 0, hi = E.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (E[mid].t <= n - 0.7) lo = mid + 1; else hi = mid; }
   for (let q = lo; q < E.length && E[q].t <= n; q++) {
-    const e = E[q], age = n - e.t, an = P[e.a]; if (!an) continue; const p = c10An(Q, [an[0] + e.dx, an[1] + e.dy]), sp = suSlSpr[e.big ? 2 : 1][e.ai];
+    const e = E[q], age = n - e.t, an = P[e.a]; if (!an) continue; const p = c10An(Q, [an[0] + e.dx, an[1] + e.dy]), sp = suSlSpr[e.big ? 3 : 2][e.ai];
     if (age < 0.25) c12Sl(sp, p[0], p[1], e.fx, e.fy, age * 1000);
     if (guard) c4Spray(n, e.t, p[0], p[1], 5, { v: 80, up: 1, dir: 0, life: 0.5, cols: ['#ffffff', '#ffe08a', '#ffb0b0'], sz: 1, seed: e.idx, g: 120, gnd: c12Fl() + 4 }); else c4Spray(n, e.t, p[0], p[1], e.big ? 7 : 3, { v: 85, up: 1, dir: 0, life: 0.7, cols: C4_BLOOD, sz: 1, seed: e.idx, g: 190, gnd: c12Fl() + 4 });
   }
@@ -252,8 +252,8 @@ function c12Cam(n, k) {
 function c12Shake(n) {
   const K = C12; let a = 0; if (n < K.hit) return 0;
   for (const [t, v, q] of [[K.hit, 5, 6], [K.walk1, 3, 6], [K.leap, 3, 5], [K.fire, 3, 8], [K.hit2, 9, 5], [K.land, 6, 5], [K.brk, 3.5, 6], ...C12N.map(t => [t, 2.2, 6])]) if (n >= t) a += v * Math.exp(-(n - t) * q);
-  for (let k = 0; k <= 33; k++) { const t = c12P(k); if (n >= t) a += (k >= 24 ? 1.8 : 0.9) * Math.exp(-(n - t) * 7); }
-  return a + (n > K.hit && n < K.lull ? 0.3 : 0);
+  for (let k = 0; k <= 33; k++) { const t = c12P(k); if (n >= t) a += (k >= 24 ? 3.5 : 2.2) * Math.exp(-(n - t) * 7); }
+  return a + (n > K.hit && n < K.lull ? 1.0 : 0);
 }
 
 // ---- the shot
@@ -273,6 +273,7 @@ function c12Shot(now, dt, T, st) {
 function c12Over(n, s, cam, M) {      // light over the picture: the flash of the song's hit, of every heavy hit of the guard, the fire, the dark red of the domain, the fade at the end
   const K = C12; ctx.fillStyle = 'rgba(40,0,10,0.12)'; ctx.fillRect(0, 0, VW, VH);
   { const a = n - K.hit; if (a >= 0 && a < 0.5) c6White(0.55 * Math.exp(-a * 9)); }
+  for (let k = 0; k <= 33; k++) { const a = n - c12P(k); if (a >= 0 && a < 0.3) { ctx.fillStyle = 'rgba(255,30,50,' + (0.2 * Math.exp(-a * 10)).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); } }      // (a red flash with every volley)
   for (let k = 24; k <= 33; k++) { const a = n - c12P(k); if (a >= 0 && a < 0.2) c6White(0.16 * Math.exp(-a * 14)); }
   { const k = c8NotchK(s); if (k > 0.02) c6White(0.26 * k * k); }
   { const a = n - K.fire; if (a >= 0 && a < 0.3) { ctx.fillStyle = 'rgba(255,120,20,' + (0.3 * (1 - a / 0.3)).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); } }

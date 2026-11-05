@@ -208,7 +208,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.138</small>
+    <small id="ver">V1.139</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -12383,7 +12383,7 @@ function c11Events(T, ev) {
   ev('c11s0', R + K + 0.1, () => snd('c7whoosh'), 0.6); ev('c11s1', R + K + 1.0, () => snd('c7whoosh'), 0.6); ev('c11s2', R + K + 2.0, () => snd('c7cloth', 0), 0.6);
   ev('c11sg0', R + K + 3.4, () => snd('sukdom', 0), 1.0); ev('c11sg1', R + K + 3.9, () => snd('sukdom', 1), 0.8); ev('c11gif', R + K + 5.6, () => { snd('sukdom', 2); snd('c7beat', 0); }, 1.0);
   ev('c11w1', R + K + 5.6 + C11R.word1, () => snd('c7beat', 1), 0.6); ev('c11w2', R + K + 5.6 + C11R.word2, () => snd('c7beat', 1), 0.6);
-  ev('c11dom', R + K + 9.9, () => snd('sukdom', 3), 1.2); ev('c11bl0', R + K + 12.2 + 0.5, () => { snd('c7tear'); snd('c4guts'); snd('c7shatter'); }, 1.0); ev('c11bl1', R + K + 12.2 + 1.6, () => snd('c4guts'), 0.8);
+  ev('c11dom', R + K + 9.9, () => snd('sukdom', 3), 1.2); ev('c11bl0', R + K + 12.2 + 0.5, () => { snd('c7tear'); snd('c4guts'); snd('c7shatter'); }, 1.0); ev('c11bl1', R + K + 12.2 + 1.6, () => snd('c4guts'), 0.8); ev('c11wind', R + K + 12.2 + 0.9, () => { snd('c7whoosh'); snd('c7rise'); }, 1.0);
 }
 for (const a of C11S) c7Shots[a[0]] = c10Shot;      // (the shots of the second half are drawn by c10Shot too)
 C8N.push(...C11NOTCH.map(t => C9.m0 + t));
@@ -12424,20 +12424,19 @@ function c11MPx(i) {      // the pixels of Mahoraga's picture i (lit), once: x, 
   if (C11.px && C11.px.i === i) return C11.px; const img = m7Lit(i, 'cold'); if (!img) return null; const d = img.getContext('2d').getImageData(0, 0, img.width, img.height).data, xs = [], ys = [], cs = [];
   for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++) { const a = (y * img.width + x) * 4; if (d[a + 3] > 200) { xs.push(x); ys.push(y); cs.push([d[a], d[a + 1], d[a + 2]]); } } return C11.px = { i, xs, ys, cs };
 }
-function c11Blood(m) {      // Mahoraga hangs in the domain, the red wave goes through him from the left, and he comes apart pixel by pixel into blood that rains down on the floor and pools there
+function c11Blood(m) {      // Mahoraga hangs in the domain, the red wave goes through him from the left, and he comes apart pixel by pixel into blood that a strong wind blows away to the right (v1.139)
   const r = m - C11K.kick - 12.2, bg = c11DomBg(), i = c10mf('idle', Math.floor((m + C9.m0) * 8) % 12), P = M7.frames[i], sc = 0.8, X = Math.round(VW * 0.62), fl = gy + 2, Y = fl - (P.footN[1] + 7 - P.pelvis[1]) * sc, t0 = 0.5, tw = 1.0;      // (he stands on the floor of the domain)
   ctx.imageSmoothingEnabled = false; ctx.drawImage(bg, -8, -8); c11Shrine(10);
   const wx = X + (P.head[0] - P.pelvis[0]) * sc + 4 * sc, wy = Y + (P.head[1] - P.pelvis[1]) * sc - 6 * sc, wa = 1 - clamp01((r - t0 - 0.2) / 0.8);
   if (wa > 0.01) { ctx.save(); ctx.globalAlpha = wa; c6Glow(wx, wy, 60 * sc, '255,200,100', 0.25 * wa); m7Wheel(wx, wy, 27 * sc, c8Ang(m + C9.m0), 1); ctx.restore(); }
-  const px = c11MPx(i); if (!px) return; const n = px.xs.length, G = 240;
+  const px = c11MPx(i); if (!px) return; const n = px.xs.length;
   for (let k = 0; k < n; k++) {
     const x = X + (px.xs[k] - P.pelvis[0]) * sc, y = Y + (px.ys[k] - P.pelvis[1]) * sc, dl = t0 + tw * (0.65 * (1 - px.xs[k] / 168) + 0.35 * c4R(k, 7)), a = r - dl;
     if (a < 0) { const q = clamp01(r / dl); const c = px.cs[k], f = q * q * q; ctx.fillStyle = 'rgb(' + Math.round(c[0] + (200 - c[0]) * f) + ',' + Math.round(c[1] * (1 - 0.85 * f)) + ',' + Math.round(c[2] * (1 - 0.85 * f)) + ')'; ctx.fillRect(Math.round(x), Math.round(y), 1, 1); continue; }
-    const vx = 18 + 26 * c4R(k, 8), vy = -30 * c4R(k, 9), px2 = x + vx * a * (1 - Math.exp(-a)), py = y + vy * a + 0.5 * G * a * a * 0.5;
-    if (py >= fl + 1 + 3 * c4R(k, 10)) { ctx.fillStyle = k % 3 ? '#7a0c18' : '#b3121f'; ctx.globalAlpha = 0.85; ctx.fillRect(Math.round(x + vx * 0.6 + (c4R(k, 11) - 0.5) * 30), fl + 1 + (k % 3), 2, 1); ctx.globalAlpha = 1; }
-    else { ctx.fillStyle = k % 4 === 0 ? '#ff2a3a' : k % 4 === 1 ? '#e0192b' : '#b3121f'; ctx.globalAlpha = 0.95; ctx.fillRect(Math.round(px2), Math.round(py), 1 + (k & 1), 1 + (k & 1)); ctx.globalAlpha = 1; }
+    const wd = 150 + 330 * c4R(k, 8), px2 = x + wd * a * (1 + 1.6 * a), py = y + (c4R(k, 9) - 0.6) * 38 * a + 22 * a * a, ln = Math.min(10, 1 + Math.floor(wd * a * 0.04));      // (v1.139 a strong wind takes it: it streaks away to the right, faster and faster, and is gone off the screen)
+    if (px2 - ln > VW + 4) continue; ctx.fillStyle = k % 4 === 0 ? '#ff2a3a' : k % 4 === 1 ? '#e0192b' : '#b3121f'; ctx.globalAlpha = 0.95; ctx.fillRect(Math.round(px2 - ln), Math.round(py), ln, 1 + (k & 1)); ctx.globalAlpha = 1;
   }
-  if (r > 1.2) c4Pool(Math.round(X), clamp01((r - 1.2) / 1.6) * 1.2);
+  { const wk = clamp01((r - 0.6) / 0.3) * (1 - clamp01((r - 2.6) / 0.7)); if (wk > 0.01) c10Wind(m, 900, 0, wk, 41); }      // (and streaks of wind across the picture)
 }
 
 // ================================================================ v1.137 CHAPTER 3, PART 5: THE SNOWMAN (the end of the domain, to the second song)
@@ -12513,7 +12512,7 @@ const C12A = ['chest', 'shoulder', 'head', 'pelvis', 'elbow', 'fist', 'chest', '
 function c12E() {
   if (C12.ev) return C12.ev; const E = [], add = (t, big) => { const sd = E.length * 7 + 3; E.push({ t, a: C12A[Math.floor(c4R(sd, 1) * C12A.length)], dx: (c4R(sd, 2) - 0.5) * 14, dy: (c4R(sd, 3) - 0.5) * 16, ai: Math.floor(c4R(sd, 4) * 6), fx: c4R(sd, 5) < 0.5, fy: c4R(sd, 6) < 0.5, big, idx: E.length }); };
   for (let j = 0; j < 6; j++) add(C12.hit + 0.04 * j, true);
-  for (let k = 0; k <= 33; k++) { const t = c12P(k), m = k >= 24 ? 5 : 3; for (let j = 0; j < m; j++) add(t + (k >= 24 ? 0.05 : 0.06) * j, j === 0); add(t + 0.5714, false); add(t + 1.1429, false); }
+  for (let k = 0; k <= 33; k++) { const t = c12P(k), m = k >= 24 ? 9 : 6; for (let j = 0; j < m; j++) add(t + (k >= 24 ? 0.03 : 0.04) * j, j < 2); for (let j = 0; j < 3; j++) { add(t + 0.5714 + 0.05 * j, false); add(t + 1.1429 + 0.05 * j, false); } }
   E.sort((a, b) => a.t - b.t); E.forEach((e, q) => { e.idx = q; }); return C12.ev = E;
 }
 function c12Heal(e, n) { let a = 1; for (const t of C12N) if (t > e.t && n >= t) a *= 1 - 0.75 * ease3((n - t) / 1.2); return a; }      // (the wounds from before a turn of the wheel close: they fade to a quarter)
@@ -12535,7 +12534,7 @@ function c12Body(M, n, lit) {      // his picture with the scars on it, eroded t
   if (!scars && v < 0.01 && b <= 0) return base;
   g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, 168, 140); g.drawImage(base, 0, 0);
   if (scars) {
-    g.globalCompositeOperation = 'source-atop'; let lo = 0, hi = E.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (E[mid].t <= n) lo = mid + 1; else hi = mid; } const first = Math.max(0, lo - 60);
+    g.globalCompositeOperation = 'source-atop'; let lo = 0, hi = E.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (E[mid].t <= n) lo = mid + 1; else hi = mid; } const first = Math.max(0, lo - 90);
     for (let q = first; q < lo; q++) {
       const e = E[q], age = n - e.t, al = c12Heal(e, n), an = P[e.a]; if (!an || al < 0.05) continue; const ang = SU_SL_ANG[e.ai] * Math.PI / 180, ca = Math.cos(ang) * (e.fx ? -1 : 1), sa = Math.sin(ang) * (e.fy ? -1 : 1), x0 = an[0] + e.dx, y0 = an[1] + e.dy, len = e.big ? 14 : 8;
       g.globalAlpha = al; for (let t = -len / 2; t <= len / 2; t++) { const px = Math.round(x0 + ca * t), py = Math.round(y0 + sa * t); g.fillStyle = '#3a0710'; g.fillRect(px, py + 1, 1, 1); g.fillStyle = age < 0.12 ? '#ffffff' : age < 0.7 ? '#ff4a5a' : '#b3121f'; g.fillRect(px, py, 1, 1); }
@@ -12617,8 +12616,8 @@ function c12Dens(n) {
   if (n < C12.hit || n > C12.fire + 0.2) return 0; let d;
   if (n < c12P(0)) d = 3; else if (n < C12.walk0) d = 6 + 16 * clamp01((n - c12P(0)) / (C12.walk0 - c12P(0))); else if (n < C12.walk1) d = 22 + 12 * clamp01((n - C12.walk0) / (C12.walk1 - C12.walk0));
   else if (n < C12.lull) d = 38 + 10 * clamp01((n - C12.walk1) / (C12.lull - C12.walk1)); else d = 48 + (2 - 48) * ease3((n - C12.lull) / 1.2);
-  d += 110 * Math.exp(-Math.pow((n - C12.hit - 0.05) / 0.08, 2)); for (let k = 0; k <= 33; k++) d += 60 * Math.exp(-Math.pow((n - c12P(k) - 0.06) / 0.07, 2));
-  return d * 0.75;
+  d += 300 * Math.exp(-Math.pow((n - C12.hit - 0.05) / 0.08, 2)); for (let k = 0; k <= 33; k++) d += 150 * Math.exp(-Math.pow((n - c12P(k) - 0.06) / 0.09, 2));
+  return d * 4.2;      // (v1.139: a LOT more slashes)
 }
 function c12Sl(sp, x, y, fx, fy, age) {      // one slash (the pictures of Sukuna's domain, suSlBuild): sweeps in (55 ms), white and red until 110 ms, a thin scratch that fades by 1 s
   const w = sp.w, h = sp.h; ctx.save(); ctx.translate(Math.round(x - w / 2) + (fx ? w : 0), Math.round(y - h / 2) + (fy ? h : 0)); ctx.scale(fx ? -1 : 1, fy ? -1 : 1);
@@ -12627,9 +12626,9 @@ function c12Sl(sp, x, y, fx, fy, age) {      // one slash (the pictures of Sukun
   ctx.restore();
 }
 function c12Rain(n) {
-  if (n < C12.hit || n > C12.fire + 1.5) return; if (!suSlSpr) suSlBuild(); const dt = 1 / 30, k1 = Math.floor(n / dt), W = [3, 3, 2, 1, 0.35], tw = W.reduce((a, b) => a + b, 0);
-  for (let k = k1 - 31; k <= k1; k++) {
-    const tk = k * dt, c = Math.floor(c12Dens(tk) * dt + c4R(k, 91)), age = (n - tk) * 1000; if (age > 1000 || age < 0) continue;
+  if (n < C12.hit || n > C12.fire + 1.5) return; if (!suSlSpr) suSlBuild(); const dt = 1 / 30, k1 = Math.floor(n / dt), W = [2, 2.5, 2.5, 2, 1.2], tw = W.reduce((a, b) => a + b, 0);
+  for (let k = k1 - 21; k <= k1; k++) {
+    const tk = k * dt, c = Math.floor(c12Dens(tk) * dt + c4R(k, 91)), age = (n - tk) * 1500; if (age > 1000 || age < 0) continue;
     for (let q = 0; q < c; q++) { const sd = k * 16 + q; let r = c4R(sd, 1) * tw, li = 0; while (li < 4 && r >= W[li]) { r -= W[li]; li++; } const sp = suSlSpr[li][Math.floor(c4R(sd, 2) * 6)]; c12Sl(sp, c4R(sd, 3) * (VW + 40) - 20, 6 + c4R(sd, 4) * (VH - 12), c4R(sd, 5) < 0.5, c4R(sd, 6) < 0.5, age); }
   }
   ctx.globalAlpha = 1;
@@ -12638,7 +12637,7 @@ function c12Cuts(n, M, s) {      // the cuts that land on him: a long slash thro
   if (!suSlSpr) suSlBuild(); const E = c12E(), P = M7.frames[M.i], Q = c12Wq(M), guard = n >= C12.walk1 + 0.3;
   let lo = 0, hi = E.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (E[mid].t <= n - 0.7) lo = mid + 1; else hi = mid; }
   for (let q = lo; q < E.length && E[q].t <= n; q++) {
-    const e = E[q], age = n - e.t, an = P[e.a]; if (!an) continue; const p = c10An(Q, [an[0] + e.dx, an[1] + e.dy]), sp = suSlSpr[e.big ? 2 : 1][e.ai];
+    const e = E[q], age = n - e.t, an = P[e.a]; if (!an) continue; const p = c10An(Q, [an[0] + e.dx, an[1] + e.dy]), sp = suSlSpr[e.big ? 3 : 2][e.ai];
     if (age < 0.25) c12Sl(sp, p[0], p[1], e.fx, e.fy, age * 1000);
     if (guard) c4Spray(n, e.t, p[0], p[1], 5, { v: 80, up: 1, dir: 0, life: 0.5, cols: ['#ffffff', '#ffe08a', '#ffb0b0'], sz: 1, seed: e.idx, g: 120, gnd: c12Fl() + 4 }); else c4Spray(n, e.t, p[0], p[1], e.big ? 7 : 3, { v: 85, up: 1, dir: 0, life: 0.7, cols: C4_BLOOD, sz: 1, seed: e.idx, g: 190, gnd: c12Fl() + 4 });
   }
@@ -12694,8 +12693,8 @@ function c12Cam(n, k) {
 function c12Shake(n) {
   const K = C12; let a = 0; if (n < K.hit) return 0;
   for (const [t, v, q] of [[K.hit, 5, 6], [K.walk1, 3, 6], [K.leap, 3, 5], [K.fire, 3, 8], [K.hit2, 9, 5], [K.land, 6, 5], [K.brk, 3.5, 6], ...C12N.map(t => [t, 2.2, 6])]) if (n >= t) a += v * Math.exp(-(n - t) * q);
-  for (let k = 0; k <= 33; k++) { const t = c12P(k); if (n >= t) a += (k >= 24 ? 1.8 : 0.9) * Math.exp(-(n - t) * 7); }
-  return a + (n > K.hit && n < K.lull ? 0.3 : 0);
+  for (let k = 0; k <= 33; k++) { const t = c12P(k); if (n >= t) a += (k >= 24 ? 3.5 : 2.2) * Math.exp(-(n - t) * 7); }
+  return a + (n > K.hit && n < K.lull ? 1.0 : 0);
 }
 
 // ---- the shot
@@ -12715,6 +12714,7 @@ function c12Shot(now, dt, T, st) {
 function c12Over(n, s, cam, M) {      // light over the picture: the flash of the song's hit, of every heavy hit of the guard, the fire, the dark red of the domain, the fade at the end
   const K = C12; ctx.fillStyle = 'rgba(40,0,10,0.12)'; ctx.fillRect(0, 0, VW, VH);
   { const a = n - K.hit; if (a >= 0 && a < 0.5) c6White(0.55 * Math.exp(-a * 9)); }
+  for (let k = 0; k <= 33; k++) { const a = n - c12P(k); if (a >= 0 && a < 0.3) { ctx.fillStyle = 'rgba(255,30,50,' + (0.2 * Math.exp(-a * 10)).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); } }      // (a red flash with every volley)
   for (let k = 24; k <= 33; k++) { const a = n - c12P(k); if (a >= 0 && a < 0.2) c6White(0.16 * Math.exp(-a * 14)); }
   { const k = c8NotchK(s); if (k > 0.02) c6White(0.26 * k * k); }
   { const a = n - K.fire; if (a >= 0 && a < 0.3) { ctx.fillStyle = 'rgba(255,120,20,' + (0.3 * (1 - a / 0.3)).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); } }
@@ -14908,6 +14908,7 @@ $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+{"v": "1.139", "t": "A LOT MORE SLASHES IN THE DOMAIN, AND THE BLOOD IS BLOWN AWAY BY THE WIND", "n": ["The rain of slashes in Sukuna's domain is about four times as thick and much more violent: long thick cuts everywhere, a huge burst with every heavy hit of the song (and a red flash), many more cuts landing on Mahoraga, and the screen shakes hard all the time.", "When Mahoraga comes apart in the first domain shot, his blood no longer falls to the floor: a strong wind blows it away to the right in streaks that get faster and faster until the screen is empty, with streaks of wind across the picture and the sound of the gust."]},
 {"v": "1.138", "t": "MAHORAGA WALKS ON WITH HIS ARMS COMING UP, SLOWLY AND HURT", "n": ["At the big hit at 2:03 Mahoraga no longer stops. He keeps walking forward in short, dragging, painful steps (his feet really step on the ground and never slide) while his arms come up very slowly: one tenth more with every heavy hit of the song, ten hits in all, from hanging at his sides to both open hands held out in front of him. His head hangs, his body is bent, his arms tremble, and he gets slower and slower until he stops just before the lull.", "He starts farther away now (he kneels about 470 px from Sukuna) so that he can walk the whole way. The slashes, the steam and the regrowing go on exactly as before, and the leap and the arrow are unchanged.", "New: ten shuffle pictures sets for Mahoraga (gs1 - gs10), a new speed for the whole walk (a slow start, steady, a little slower at 2:03, then slower and slower)."]},
 {"v": "1.137", "t": "SUKUNA VS MAHORAGA, PART 4: THE SNOWMAN (THE END OF THE DOMAIN)", "n": ["After the blood there is a short silence while the camera looks down from the red sky and the moon to the floor of the domain and finds Mahoraga on one knee in his own blood. The second song (Snowman, from 1:21 to its end) hits as he is found, and the whole part is timed to it: every heavy hit of the song (one every 1.7 seconds) is a hit of the domain.", "Mahoraga stands up in the rain of Sukuna's slashes and is cut to ribbons, covered in red wounds that bleed. The wheel turns again and again (he adapts, the old wounds close) but it is too much, so he walks forward through the rain, leaving blood behind him, while the shrine slides in behind Sukuna, until the big hit at 2:03.", "At 2:03 he lifts both hands to shield himself. Every heavy hit blows his body apart into steam and he grows back before the next one, ten times in a row. Then the song thins out, Sukuna lights the fire in his hands (FUGA), Mahoraga crouches and jumps up to punch, and the arrow hits him in the face: the head is gone, the body falls and burns away, the wheel breaks, and the domain goes dark as the song ends. The chapter card follows.", "New: Mahoraga's kneel, stand-up, hunched walk, hands-up and guard pictures, the endless slash rain, wounds and blood trails, the steam and the fire, 36 camera shots (every tap still skips one). The song is a real recording inside the game files, so keep the game to yourself."]},
 {"v": "1.136", "t": "SUKUNA VS MAHORAGA, PART 3: THE AIR FIGHT TO 2:00, THE SONG STOPS, THE DOMAIN", "n": ["The air fight goes on to the end of the first two minutes of the song, every blow on a beat. Mahoraga throws hooks with both arms and a high kick, Sukuna dodges, blocks and hits back with jabs, a kick and a cut, and the fists meet in three big clashes. They fall together through the clouds to the roofs of the city (a long calm there while the song breaks down, the wheel turning again and again), climb back to the moon, and the big hits flash in black and white.", "At 2:00 Sukuna dodges a hook and punches Mahoraga in the face, Mahoraga kicks him back, and the song STOPS dead as the kick lands. In silence Sukuna flies far back, makes the domain hand sign with red energy streaming into his fingers, and your GIF (turned into pixel art, all 38 frames) fills the whole screen while DOMAIN EXPANSION / MALEVOLENT SHRINE is written on it. The red domain spreads out of him, the shrine rises, and Mahoraga comes apart into blood that rains on the floor. The chapter card follows; the Snowman part (Mahoraga on one knee, the rain of slashes, Fuga) comes in the next update.", "New: Mahoraga's hook (two arms), kick and hurt pictures, 27 scripted blows with impact flashes, shakes, sparks and blood, the calm with drifting embers, the GIF in pixel form, the domain circle and the dissolving into blood. Taps still skip cut by cut. The song is a real recording inside the game files, so keep the game to yourself."]},

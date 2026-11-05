@@ -195,7 +195,7 @@ function c11Events(T, ev) {
   ev('c11s0', R + K + 0.1, () => snd('c7whoosh'), 0.6); ev('c11s1', R + K + 1.0, () => snd('c7whoosh'), 0.6); ev('c11s2', R + K + 2.0, () => snd('c7cloth', 0), 0.6);
   ev('c11sg0', R + K + 3.4, () => snd('sukdom', 0), 1.0); ev('c11sg1', R + K + 3.9, () => snd('sukdom', 1), 0.8); ev('c11gif', R + K + 5.6, () => { snd('sukdom', 2); snd('c7beat', 0); }, 1.0);
   ev('c11w1', R + K + 5.6 + C11R.word1, () => snd('c7beat', 1), 0.6); ev('c11w2', R + K + 5.6 + C11R.word2, () => snd('c7beat', 1), 0.6);
-  ev('c11dom', R + K + 9.9, () => snd('sukdom', 3), 1.2); ev('c11bl0', R + K + 12.2 + 0.5, () => { snd('c7tear'); snd('c4guts'); snd('c7shatter'); }, 1.0); ev('c11bl1', R + K + 12.2 + 1.6, () => snd('c4guts'), 0.8);
+  ev('c11dom', R + K + 9.9, () => snd('sukdom', 3), 1.2); ev('c11bl0', R + K + 12.2 + 0.5, () => { snd('c7tear'); snd('c4guts'); snd('c7shatter'); }, 1.0); ev('c11bl1', R + K + 12.2 + 1.6, () => snd('c4guts'), 0.8); ev('c11wind', R + K + 12.2 + 0.9, () => { snd('c7whoosh'); snd('c7rise'); }, 1.0);
 }
 for (const a of C11S) c7Shots[a[0]] = c10Shot;      // (the shots of the second half are drawn by c10Shot too)
 C8N.push(...C11NOTCH.map(t => C9.m0 + t));
@@ -236,18 +236,17 @@ function c11MPx(i) {      // the pixels of Mahoraga's picture i (lit), once: x, 
   if (C11.px && C11.px.i === i) return C11.px; const img = m7Lit(i, 'cold'); if (!img) return null; const d = img.getContext('2d').getImageData(0, 0, img.width, img.height).data, xs = [], ys = [], cs = [];
   for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++) { const a = (y * img.width + x) * 4; if (d[a + 3] > 200) { xs.push(x); ys.push(y); cs.push([d[a], d[a + 1], d[a + 2]]); } } return C11.px = { i, xs, ys, cs };
 }
-function c11Blood(m) {      // Mahoraga hangs in the domain, the red wave goes through him from the left, and he comes apart pixel by pixel into blood that rains down on the floor and pools there
+function c11Blood(m) {      // Mahoraga hangs in the domain, the red wave goes through him from the left, and he comes apart pixel by pixel into blood that a strong wind blows away to the right (v1.139)
   const r = m - C11K.kick - 12.2, bg = c11DomBg(), i = c10mf('idle', Math.floor((m + C9.m0) * 8) % 12), P = M7.frames[i], sc = 0.8, X = Math.round(VW * 0.62), fl = gy + 2, Y = fl - (P.footN[1] + 7 - P.pelvis[1]) * sc, t0 = 0.5, tw = 1.0;      // (he stands on the floor of the domain)
   ctx.imageSmoothingEnabled = false; ctx.drawImage(bg, -8, -8); c11Shrine(10);
   const wx = X + (P.head[0] - P.pelvis[0]) * sc + 4 * sc, wy = Y + (P.head[1] - P.pelvis[1]) * sc - 6 * sc, wa = 1 - clamp01((r - t0 - 0.2) / 0.8);
   if (wa > 0.01) { ctx.save(); ctx.globalAlpha = wa; c6Glow(wx, wy, 60 * sc, '255,200,100', 0.25 * wa); m7Wheel(wx, wy, 27 * sc, c8Ang(m + C9.m0), 1); ctx.restore(); }
-  const px = c11MPx(i); if (!px) return; const n = px.xs.length, G = 240;
+  const px = c11MPx(i); if (!px) return; const n = px.xs.length;
   for (let k = 0; k < n; k++) {
     const x = X + (px.xs[k] - P.pelvis[0]) * sc, y = Y + (px.ys[k] - P.pelvis[1]) * sc, dl = t0 + tw * (0.65 * (1 - px.xs[k] / 168) + 0.35 * c4R(k, 7)), a = r - dl;
     if (a < 0) { const q = clamp01(r / dl); const c = px.cs[k], f = q * q * q; ctx.fillStyle = 'rgb(' + Math.round(c[0] + (200 - c[0]) * f) + ',' + Math.round(c[1] * (1 - 0.85 * f)) + ',' + Math.round(c[2] * (1 - 0.85 * f)) + ')'; ctx.fillRect(Math.round(x), Math.round(y), 1, 1); continue; }
-    const vx = 18 + 26 * c4R(k, 8), vy = -30 * c4R(k, 9), px2 = x + vx * a * (1 - Math.exp(-a)), py = y + vy * a + 0.5 * G * a * a * 0.5;
-    if (py >= fl + 1 + 3 * c4R(k, 10)) { ctx.fillStyle = k % 3 ? '#7a0c18' : '#b3121f'; ctx.globalAlpha = 0.85; ctx.fillRect(Math.round(x + vx * 0.6 + (c4R(k, 11) - 0.5) * 30), fl + 1 + (k % 3), 2, 1); ctx.globalAlpha = 1; }
-    else { ctx.fillStyle = k % 4 === 0 ? '#ff2a3a' : k % 4 === 1 ? '#e0192b' : '#b3121f'; ctx.globalAlpha = 0.95; ctx.fillRect(Math.round(px2), Math.round(py), 1 + (k & 1), 1 + (k & 1)); ctx.globalAlpha = 1; }
+    const wd = 150 + 330 * c4R(k, 8), px2 = x + wd * a * (1 + 1.6 * a), py = y + (c4R(k, 9) - 0.6) * 38 * a + 22 * a * a, ln = Math.min(10, 1 + Math.floor(wd * a * 0.04));      // (v1.139 a strong wind takes it: it streaks away to the right, faster and faster, and is gone off the screen)
+    if (px2 - ln > VW + 4) continue; ctx.fillStyle = k % 4 === 0 ? '#ff2a3a' : k % 4 === 1 ? '#e0192b' : '#b3121f'; ctx.globalAlpha = 0.95; ctx.fillRect(Math.round(px2 - ln), Math.round(py), ln, 1 + (k & 1)); ctx.globalAlpha = 1;
   }
-  if (r > 1.2) c4Pool(Math.round(X), clamp01((r - 1.2) / 1.6) * 1.2);
+  { const wk = clamp01((r - 0.6) / 0.3) * (1 - clamp01((r - 2.6) / 0.7)); if (wk > 0.01) c10Wind(m, 900, 0, wk, 41); }      // (and streaks of wind across the picture)
 }
