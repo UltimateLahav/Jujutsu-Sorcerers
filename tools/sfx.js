@@ -255,6 +255,11 @@ function makeSfx(ac) {
       tone(B.deep, t, { type: 'triangle', f: 80, f2: 200, dur: 0.36, gain: 0.3, atk: 0.05 });
       tone(B.soft, t + 0.05, { f: 392, dur: 0.5, gain: 0.07, atk: 0.03 }); tone(B.soft, t + 0.1, { f: 523, dur: 0.5, gain: 0.05, atk: 0.03 });
     },
+    rct(k, at) {                                         // v1.129 RCT (white cursed energy heals the body): 0 = it starts (a soft rising shimmer over a low swell), 1 = everything is whole again (a bright three-note chime)
+      const t = T(at), B = C.atk;
+      if (!k) { tone(B.deep, t, { type: 'triangle', f: 130, f2: 260, dur: 0.6, gain: 0.1, atk: 0.12 }); for (let i = 0; i < 4; i++) tone(B.soft, t + i * 0.09, { f: 392 * Math.pow(1.26, i), dur: 0.7, gain: 0.05, atk: 0.06 }); }
+      else for (let i = 0; i < 3; i++) tone(B.soft, t + i * 0.07, { f: 659 * Math.pow(1.5, i), dur: 0.55, gain: 0.06, atk: 0.01 });
+    },
     hurt(k, at) {                                        // Gojo takes a hit: a dull thump and slap (a different, softer voice than the hit he deals)
       const t = T(at), B = C.atk;
       tone(B.deep, t, { type: 'triangle', f: 112, f2: 50, dur: 0.3, gain: 0.45, atk: 0.003 });

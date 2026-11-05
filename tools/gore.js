@@ -27,7 +27,7 @@ if (GD.sukuna) for (const k in GD.sukuna) if (k[0] !== '_') { GSK[k] = {}; GPT.s
 const GCOL = { r0: '#b3121f', r1: '#d4141f', r2: '#6e0a12', w0: '#e8ecf4', w1: '#9aa2b4' };      // the stump: blood red (CLEAN: pale grey)
 const GSTAT = { builds: 0, fly: 0, hits: 0, rips: 0 };      // (counters for the tests)
 const GB = { p: goreBody(), f: goreBody() };
-function goreBody() { return { dm: { an: 0, af: 0, lf: 0, lb: 0, sn: 0, sf: 0, ch: 0, bl: 0, hd: 0 }, st: { an: 0, af: 0, lf: 0, lb: 0 }, hurt: { ch: 0, bl: 0, hd: 0 }, last: null, bleedAt: 0, coughAt: 0, pend: [], flash: 0, dripAt: 0, kind: '' }; }
+function goreBody() { return { dm: { an: 0, af: 0, lf: 0, lb: 0, sn: 0, sf: 0, ch: 0, bl: 0, hd: 0 }, st: { an: 0, af: 0, lf: 0, lb: 0 }, hurt: { ch: 0, bl: 0, hd: 0 }, last: null, bleedAt: 0, coughAt: 0, pend: [], flash: 0, dripAt: 0, kind: '', rc: {}, rcOn: false, rcp: [], rcAt: -1e9, rcMt: 0, rcRun: 0 }; }
 function goreReset() { GB.p = goreBody(); GB.f = goreBody(); goreAft = null; }
 const gdKind = side => !vs ? null : side === 'p' ? (cuMe() ? (vs.me === 'cu3' ? 'sukuna' : null) : vs.me) : (dummy && dummy.mode === 'fighter' && !dummy.curse && !dummy.net ? vs.foe : null);
 function gdActive(side) { return !!vs && !vs.story && !vs.net && gdSet() < 2 && !!GD[gdKind(side)]; }
@@ -50,7 +50,8 @@ function goreEnds(ids, W) {      // the two ends of the biggest piece of a pixel
   let best = null, left = new Set(ids); while (left.size) { const a = bfs(left.values().next().value); for (const p of a.d.keys()) left.delete(p); if (!best || a.d.size > best.d.size) best = a; }
   if (best.d.size < 10) return null; const b = bfs(best.last), c = bfs(b.last); return { u: best.last, v: b.last, du: b.d, dv: c.d };
 }
-function goreBuild(src, mask) {      // src: a picture; mask: the limbs ripped (1 near arm, 2 far arm, 4 front leg, 8 back leg) + the dead arms (16 near, 32 far: they hang limp) + the wounds (64 chest, 128 belly, 256 head) + the crawl (512); returns a canvas or null
+const gtint = (c, f) => { const r = c & 255, g = (c >>> 8) & 255, b = (c >>> 16) & 255; return ((c & 0xff000000) | (Math.round(b + (255 - b) * f) << 16) | (Math.round(g + (255 - g) * f) << 8) | Math.round(r + (255 - r) * f)) >>> 0; };      // (a colour pulled towards white by f)
+function goreBuild(src, mask, rg) {      // src: a picture; mask: the limbs ripped (1 near arm, 2 far arm, 4 front leg, 8 back leg) + the dead arms (16 near, 32 far: they hang limp) + the wounds (64 chest, 128 belly, 256 head) + the crawl (512); returns a canvas or null
   const meta = MKM.get(src), P = meta && GPT.get(meta.s); if (!P) return null;
   GSTAT.builds++; const W = src.width, H = src.height, i = meta.i, ox = meta.ox | 0, oy = meta.oy | 0, clean = gdSet() === 1, base = new Uint32Array(src.getContext('2d').getImageData(0, 0, W, H).data.buffer.slice(0)); let g = Uint32Array.from(base);
   const lc = {}, col = ch => lc[ch] !== undefined ? lc[ch] : (lc[ch] = rgbOf(meta.pal[ch] || '#ff00ff')), rem = {};
@@ -84,6 +85,8 @@ function goreBuild(src, mask) {      // src: a picture; mask: the limbs ripped (
       const c = base[root], br = []; for (let s = 0; s <= nb; s++) { const x = Math.round(bx + (rx - bx) * s / nb), y = Math.round(by + (ry - by) * s / nb); for (const [dx, dy] of [[0, 0], [0, 1], [1, 0]]) { const X = x + dx, Y = y + dy; if (X >= 0 && Y >= 0 && X < W && Y < H && !g[Y * W + X]) { g[Y * W + X] = c; br.push(Y * W + X); } } }
       for (const id of br) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const X = id % W + dx, Y = ((id / W) | 0) + dy; if (X >= 0 && Y >= 0 && X < W && Y < H && !g[Y * W + X]) g[Y * W + X] = OL; } } }
     for (const id of ids) { const d = dr.get(id); if (d === undefined || d > 3) continue; g[id] = d <= 1 ? base[id] : d === 2 ? RC[0] : RC[1]; }      // the stump: three pixels of the limb stay, the end is red
+    const gs = (rg >> (3 * GLIMB.indexOf(k))) & 7;      // v1.129 RCT: the limb grows back (1..7 of 8): the pixels nearest the stump first, white at first and settling into their own colours
+    if (gs) { let md = 1; for (const d of dr.values()) if (d > md) md = d; const thr = Math.round(md * gs / 8), f = 0.15 + 0.5 * (1 - gs / 8); for (const id of ids) { const d = dr.get(id); if (d !== undefined && d <= thr) g[id] = gtint(base[id], f); } }
     if (!clean) for (let c = 0; c < 2; c++) { const x = rx + c - (k[0] === 'a' ? 0 : 1), len = 3 + ((i * 5 + c * 3 + (k === 'an' || k === 'lf' ? 1 : 2)) % 5); for (let t = 0; t < len; t++) { const y = ry + 3 + t; if (y < H && x >= 0 && x < W && g[y * W + x] && RC.indexOf(g[y * W + x]) < 0) g[y * W + x] = t < 2 ? RC[1] : RC[2]; } }      // blood runs down the body in two lines
   }
   if (!clean && (mask & 448)) { let y0 = H, y1 = 0; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (g[y * W + x]) { y0 = Math.min(y0, y); y1 = Math.max(y1, y); } const hh = y1 - y0 + 1;      // wounds: a red mark on the chest, the belly and the head
@@ -96,17 +99,18 @@ function goreBuild(src, mask) {      // src: a picture; mask: the limbs ripped (
   }
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c2 = cv.getContext('2d'), im = c2.createImageData(W, H); new Uint32Array(im.data.buffer).set(g); c2.putImageData(im, 0, 0); return cv;
 }
-function goreVar(src, mask) {
-  const meta = MKM.get(src); if (!meta || !GPT.get(meta.s)) { const d = GDER.get(src); if (!d) return src; const v = goreVar(d.from, mask); return v === d.from ? src : invOf(v); }      // (a picture made from another one by invOf: the inverted variant)
+function goreVar(src, mask, rg) {
+  const meta = MKM.get(src); if (!meta || !GPT.get(meta.s)) { const d = GDER.get(src); if (!d) return src; const v = goreVar(d.from, mask, rg); return v === d.from ? src : invOf(v); }      // (a picture made from another one by invOf: the inverted variant)
   let m = GVC.get(src); if (!m) GVC.set(src, m = new Map());
-  const key = mask | gdSet() << 12; let v = m.get(key); if (v === undefined) { v = goreBuild(src, mask) || src; if (v !== src && (GVPX += v.width * v.height) > GVMAX) { GVC = new WeakMap(); GVPX = 0; } else m.set(key, v); } return v;
+  const key = mask | gdSet() << 12 | (rg | 0) << 14; let v = m.get(key); if (v === undefined) { v = goreBuild(src, mask, rg) || src; if (v !== src && (GVPX += v.width * v.height) > GVMAX) { GVC = new WeakMap(); GVPX = 0; } else m.set(key, v); } return v;
 }
 function goreMask(B) { return (B.st.an === 2 ? 1 : 0) | (B.st.af === 2 ? 2 : 0) | (B.st.lf === 2 ? 4 : 0) | (B.st.lb === 2 ? 8 : 0) | (B.st.an === 1 ? 16 : 0) | (B.st.af === 1 ? 32 : 0) | (B.hurt.ch ? 64 : 0) | (B.hurt.bl ? 128 : 0) | (B.hurt.hd ? 256 : 0) | (B.st.lf === 2 && B.st.lb === 2 ? 512 : 0); }
 function goreSrc(side, src, geom) {      // the picture a fighter is drawn with: src without the limbs he has lost; geom(px, py) -> {x: world x, y: height from the ground line} places the pieces that fly off
-  const B = GB[side]; if (!B || !gdActive(side)) return src; const mask = goreMask(B);
+  const B = GB[side]; if (!B || !gdActive(side)) return src; const mask = goreMask(B), rg = goreRG(B);
   if (B.pend.length && geom) { const pend = B.pend; B.pend = []; for (const k of pend) goreFly(side, k, src, geom); }      // (a piece that has just been ripped off is cut from the picture that still has the limb)
-  const v = mask ? goreVar(src, mask) : src, dx = B.hb ? gdLunge(side, pnow()) : 0;
-  return dx && v && v.getContext ? goreLunge(v, dx) : v;
+  const v = mask ? goreVar(src, mask, rg) : src, dx = B.hb ? gdLunge(side, pnow()) : 0, w = dx && v && v.getContext ? goreLunge(v, dx) : v;
+  if (B.rcOn && geom && w && w.getContext) goreGlow(w, geom);
+  return w;
 }
 // ---- pieces and blood
 function gorePiece(pic, k, flip) {      // the ripped limb as a picture of its own (the pixels it covered, in the colours they had)
@@ -121,7 +125,7 @@ function goreFly(side, k, pic, geom) {
   const meta = MKM.get(pic); if (!meta) return; const ex = dummy ? dummy.x : wx - 1, dir = side === 'f' ? (ex >= wx ? 1 : -1) : (wx >= ex ? 1 : -1), clean = gdSet() === 1;      // (in a HUNT there may be no enemy at all)
   const pc = gorePiece(pic, k, false); if (!pc) return; const at = geom(pc.cx, pc.cy), fl = 1 + ((Math.random() * 4) | 0), flipped = geom(pc.cx + 1, pc.cy).x < at.x;
   const p2 = flipped ? gorePiece(pic, k, true) : pc;
-  GSTAT.fly++; gibs.push({ x: at.x, y: at.y, vx: dir * (60 + Math.random() * 60), vy: -(110 + Math.random() * 60), cv: p2.cv, hw: p2.w / 2, hh: p2.h / 2, fl, rest: false, l: 0, lay: 1, gore: clean ? 2 : 1 });
+  GSTAT.fly++; gibs.push({ x: at.x, y: at.y, vx: dir * (60 + Math.random() * 60), vy: -(110 + Math.random() * 60), cv: p2.cv, hw: p2.w / 2, hh: p2.h / 2, fl, rest: false, l: 0, lay: 1, gore: clean ? 2 : 1, gk: side + k });
   if (!clean) for (let n = 0; n < 26; n++) { const th = -Math.PI * (0.1 + Math.random() * 0.8), v = 40 + Math.random() * 120; spawnDrop(at.x + Math.random() * 4 - 2, at.y + Math.random() * 4 - 2, Math.cos(th) * v + dir * 30, Math.sin(th) * v, fl); }
   GB[side].stumpAt = pnow();
 }
@@ -217,10 +221,60 @@ function goreTick(now, dt) {      // every frame of a fight (vsTick): looks for 
     }
     if (lost && gdSet() === 0 && now >= B.dripAt) { B.dripAt = now + 140; const x = side === 'f' ? dummy.x : wx; spawnDrop(x + Math.random() * 6 - 3, -(10 + Math.random() * 20), (Math.random() - 0.5) * 30, -20 - Math.random() * 20, 1 + ((Math.random() * 3) | 0)); }
     if (gdHurtN(B)) { if (!B.coughAt) B.coughAt = now + 3000 + Math.random() * 2000; else if (now >= B.coughAt) { B.coughAt = now + 4000 + Math.random() * 2500; goreCough(side, now); } }      // a hurt body coughs blood and doubles over now and then
+    if (side === 'p') goreRct(B, kind, now);
     if (side === 'f') { if (B.spd0 === undefined) B.spd0 = dummy.spd || 1; dummy.spd = B.spd0 * goreSpdF('f'); }
     if (B.hb) { if (!B.hb.hit && now - B.hb.at >= 150) { B.hb.hit = true; if (side === 'p') hitFoe(0, now); else if (Math.abs(dummy.x - wx) <= 34) gojoHit(0, now); } if (now - B.hb.at >= GHB) B.hb = null; }
   }
   if (gdSet() === 1) for (let i = gibs.length - 1; i >= 0; i--) { const g = gibs[i]; if (g.gore === 2) { g.born = g.born || now; if (now - g.born > 2500) gibs.splice(i, 1); } }      // (CLEAN: the pieces fade away after a while)
+}
+// ---- v1.129 RCT (reverse cursed technique): white cursed energy heals what is ripped or hurt (not the health). Three stages bought in the skill trees (tools/template.html: rct1..3, y_rct1..3, k_rct1..3, s_rct1..3); each hurt part has its own clock
+const RCT_T = { gojo: [15, 10, 5], sukuna: [15, 8, 4], yuji: [20, 16, 10], cat: [20, 14, 7] };      // seconds a part needs to grow back, stages 1 2 3 (Gojo's and Sukuna's last stage: up to that, by how bad it is; a small hurt is healed almost at once)
+const RCT_ID = { gojo: ['rct1', 'rct2', 'rct3'], yuji: ['y_rct1', 'y_rct2', 'y_rct3'], cat: ['k_rct1', 'k_rct2', 'k_rct3'], sukuna: ['s_rct1', 's_rct2', 's_rct3'] };
+const GINJ = ['an', 'af', 'lf', 'lb', 'ch', 'bl', 'hd'], GHALO = [[-3, 0], [3, 0], [0, -3], [0, 3], [-2, 0], [2, 0], [0, -2], [0, 2], [-1, -1], [1, 1], [-1, 1], [1, -1], [-1, 0], [1, 0], [0, -1], [0, 1]];      // (the halo: three rings, the outer ones fainter)
+function rctStage(kind) { const ids = RCT_ID[kind]; if (!ids) return 0; let n = 0; for (const id of ids) { if (kind === 'sukuna' ? PROG.own[id] : owns(id)) n++; else break; } return n; }      // (how many stages the fighter has: Sukuna has no shop of his moves, so his are the ones really bought even in free play)
+function goreRG(B) { let c = 0; const t = pnow(); for (let i = 0; i < 4; i++) { const k = GLIMB[i], h = B.rc[k]; if (h && B.st[k] === 2) { const s = Math.min(7, Math.floor((t - h.t0) / h.dur * 8)); if (s > 0) c |= s << (3 * i); } } return c; }      // (how far each lost limb has grown back, 0..7 eighths, three bits a limb)
+const GWS = new WeakMap();
+function goreGlow(w, geom) {      // a white halo round the body while it heals: the picture's own shape in white, a little to every side, pulsing (drawn before the body, which covers the middle)
+  let wc = GWS.get(w); if (!wc) { wc = document.createElement('canvas'); wc.width = w.width; wc.height = w.height; const g = wc.getContext('2d'); g.drawImage(w, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = '#ffffff'; g.fillRect(0, 0, wc.width, wc.height); GWS.set(w, wc); }
+  const q = geom(0, 0), sx = Math.round(VW / 2) + q.x - wx, sy = gy + q.y, a = 0.34 + 0.18 * Math.sin(pnow() / 140), o = ctx.globalAlpha;
+  for (let i = 0; i < GHALO.length; i++) { ctx.globalAlpha = o * a * (i < 4 ? 0.3 : i < 8 ? 0.55 : 1); ctx.drawImage(wc, Math.round(sx + GHALO[i][0]), Math.round(sy + GHALO[i][1])); }
+  ctx.globalAlpha = o;
+}
+function goreVanish(side, k, now) {      // the lost piece on the floor is taken back into the white energy when the new limb is whole
+  for (let i = gibs.length - 1; i >= 0; i--) if (gibs[i].gk === side + k) { spark(gibs[i].x, gy + gibs[i].y, 10, ['#ffffff', '#bfe6ff'], false, 1); gibs.splice(i, 1); }
+  GB[side].pend = GB[side].pend.filter(p => p !== k);
+}
+function goreHeal(B, k, now) {      // a part is whole again: its state, its damage meter, and the bleeding and coughing that came with it
+  if (k in B.st) { B.st[k] = 0; B.dm[k] = 0; if (k === 'an') B.dm.sn = 0; if (k === 'af') B.dm.sf = 0; } else { B.hurt[k] = 0; B.dm[k] = 0; }
+  if (B.st.an !== 2 && B.st.af !== 2 && B.st.lf !== 2 && B.st.lb !== 2) B.bleedAt = 0;
+  if (!(B.hurt.ch || B.hurt.bl || B.hurt.hd)) B.coughAt = 0;
+  spark(wx, gy - 30, 10, ['#ffffff', '#bfe6ff'], false, 1); spark(wx, gy - 30, 10, ['#ffffff', '#bfe6ff'], false, -1);
+}
+function goreRct(B, kind, now) {      // every frame of a fight, for the player: each hurt part runs its own clock; Yuji's clocks only START while INHERITENCE is on (they run on after it ends)
+  const stage = rctStage(kind); B.rcOn = false; if (!stage) { B.rcRun = 0; B.rc = {}; return; }
+  const can = kind !== 'yuji' || (cm === 3 && !!vs && vs.me === 'yuji'), scaled = stage === 3 && (kind === 'gojo' || kind === 'sukuna'); let run = 0;
+  for (const k of GINJ) {
+    const lvl = k in B.st ? B.st[k] : B.hurt[k] ? 1 : 0; let h = B.rc[k];
+    if (!lvl) { if (h) delete B.rc[k]; continue; }
+    if (h && h.lvl !== lvl) { delete B.rc[k]; h = null; }      // (it got worse: the clock starts again)
+    if (!h) {
+      if (!can) continue;
+      const w = lvl === 2 ? 1 : k in B.st ? 0.4 : 0.08;      // how bad it is: a lost limb, a dead shoulder, a wound
+      h = B.rc[k] = { t0: now, lvl, dur: 1000 * paceBase() * RCT_T[kind][stage - 1] * (scaled ? 0.95 * w : 1) };      // (seconds of the real clock, like INHERITENCE's 10: the game runs faster than that at FAST pace, see paceBase)
+      if (now - B.rcAt > 600) { B.rcAt = now; say('RCT', wx, '#ffffff', 8, now); snd('rct', 0); }
+    }
+    if (now - h.t0 >= h.dur) { if (lvl === 2) goreVanish('p', k, now); goreHeal(B, k, now); delete B.rc[k]; continue; }
+    run++;
+  }
+  B.rcOn = run > 0;
+  if (B.rcRun > 0 && !run) { say('HEALED', wx, '#bfe6ff', 8, now); snd('rct', 1); }
+  B.rcRun = run;
+  if (run && now - B.rcMt > 70) { B.rcMt = now; if (B.rcp.length < 40) B.rcp.push({ ox: Math.random() * 18 - 9, oy: -(6 + Math.random() * 50), vx: Math.random() * 10 - 5, vy: 14 + Math.random() * 16, born: now, life: 800 + Math.random() * 500, big: Math.random() < 0.3 }); }
+}
+function goreMotes(now) {      // the white motes that rise off the body while it heals (they stay with him)
+  const B = GB.p; if (!B || !B.rcp.length) return; B.rcp = B.rcp.filter(m => now - m.born < m.life); const cx = Math.round(VW / 2);
+  for (const m of B.rcp) { const t = (now - m.born) / 1000, k = (now - m.born) / m.life; ctx.globalAlpha = Math.max(0, Math.min(1, 1.6 * (1 - k))) * 0.9; ctx.fillStyle = k < 0.5 ? '#ffffff' : '#bfe6ff'; ctx.fillRect(Math.round(cx + m.ox + m.vx * t), Math.round(gy + m.oy - m.vy * t), m.big ? 2 : 1, m.big ? 2 : 1); }
+  ctx.globalAlpha = 1;
 }
 // ---- the HEAD: it only ever comes off in a FATALITY (the end of every one of them: the loser's head is ripped off, the body stands a moment with blood spurting, then falls)
 const GNECK = { yuji: 0.4, sukuna: 0.4, gojo: 0.32, verity: 0.22, cat: 0.26, freddy: 0.3 };      // where the neck is: the fraction of the figure's height from the top
@@ -247,4 +301,4 @@ function goreAftDraw(now) {      // the headless body: it sways for a moment, th
   const A = goreAft; if (!A || !vs || vs.story) return; const t = now - A.at, cx = Math.round(VW / 2), sx = Math.round(cx + A.x - wx), fall = Math.max(0, Math.min(1, (t - 1100) / 700)), ang = -A.dir * 1.45 * fall * fall;
   ctx.save(); ctx.translate(sx, gy + 2); ctx.rotate(ang); if (A.mirror) ctx.scale(-1, 1); ctx.globalAlpha = 1; ctx.drawImage(A.body, -Math.round(A.W / 2) + (t < 1100 ? Math.round(Math.sin(t / 90)) : 0), -62); ctx.restore();
 }
-const goreOver = now => { goreAftDraw(now); if (now < goreRedUntil) { ctx.fillStyle = 'rgba(200,0,24,' + (0.4 * (goreRedUntil - now) / 220) + ')'; ctx.fillRect(-8, 0, VW + 16, VH); } };      // (the red flash of a rip)
+const goreOver = now => { goreAftDraw(now); goreMotes(now); if (now < goreRedUntil) { ctx.fillStyle = 'rgba(200,0,24,' + (0.4 * (goreRedUntil - now) / 220) + ')'; ctx.fillRect(-8, 0, VW + 16, VH); } };      // (the red flash of a rip)
