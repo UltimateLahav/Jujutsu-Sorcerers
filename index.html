@@ -183,6 +183,10 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
 #ver{cursor:pointer;pointer-events:auto}
 #ulog.screen{z-index:6;justify-content:flex-start;gap:1.2vh;padding-top:calc(env(safe-area-inset-top) + 1.6vh);padding-bottom:calc(env(safe-area-inset-bottom) + 1.6vh)}
 #ulog h2{flex:none}#ulog>small{flex:none;line-height:1.5;padding:0 2vh}#ulog .row{flex:none}
+/* v1.130 CODES: a button on the title screen (bottom right) and a page with a box to type a code in (capitals matter, so no capital letters are forced) */
+#codeBtn{position:fixed;right:calc(env(safe-area-inset-right) + 2vh);bottom:calc(env(safe-area-inset-bottom) + 1.4vh);padding:1vh 1.6vh;font-size:clamp(7px,2vh,11px)}
+#codes{gap:2vh}#codes>small{line-height:1.5;padding:0 2vh}#codes input{font:inherit;font-size:clamp(7px,1.9vh,11px);color:var(--ink);background:#120d22;border:3px solid var(--line);padding:1.6vh 2vh;width:min(94vw,92vh);text-align:center;user-select:text;-webkit-user-select:text;outline:none}#codes input:focus{border-color:var(--acc)}
+#codeMsg{min-height:2.6vh;font-size:clamp(8px,2.4vh,13px)}#codeMsg.ok{color:#5be37a}#codeMsg.bad{color:#ff6a5a}#codeMoney{color:#ffd34d}
 #ulList{flex:1;min-height:0;width:min(94vw,150vh);overflow-y:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch;text-align:left;display:flex;flex-direction:column;gap:1.8vh;padding:.6vh 1vh 1vh;outline:none}
 .ule{flex:none;background:var(--card);border:3px solid var(--line);padding:1.5vh 2vh;box-shadow:4px 4px 0 #000}
 .ule.latest{border-color:#ffd34d}
@@ -204,9 +208,10 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.129</small>
+    <small id="ver">V1.130</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
+  <button id="codeBtn">CODES</button>
 </section>
 
 <section id="ulog" class="screen">
@@ -214,6 +219,15 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
   <small id="ulSub">WHAT CHANGED IN EVERY VERSION, NEWEST FIRST. SCROLL DOWN FOR THE OLD ONES.</small>
   <div id="ulList" tabindex="0"></div>
   <div class="row"><button id="ulBack">BACK</button></div>
+</section>
+
+<section id="codes" class="screen">
+  <h2>CODES</h2>
+  <small id="codeSub">TYPE A CODE EXACTLY AS YOU WERE GIVEN IT, CAPITALS TOO. EACH CODE WORKS ONCE.</small>
+  <small id="codeMoney"></small>
+  <input id="codeIn" type="text" maxlength="60" placeholder="CODE" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="Code">
+  <small id="codeMsg" role="status" aria-live="polite">&nbsp;</small>
+  <div class="row"><button id="codeGo">REDEEM</button><button id="codeBack">BACK</button></div>
 </section>
 
 <section id="modes" class="screen">
@@ -1865,7 +1879,7 @@ const autoGuard = () => assistLvl() >= 3 && !lacks('blk') && stance === 'stand' 
 const freePlay = () => state === 'play' && (!vs || !!vs.practice);      // v1.14 FREE PLAY (the fighter select screen): in it every move of every fighter is free
 const NET_NO = new Set(['y_inherit', 'y_pierce', 'y_shrine', 'y_cleave', 'y_simple', 'y_hometown']), owns = id => id === 'freddy' || id === 'sukuna' || freePlay() || (vs && vs.net ? !NET_NO.has(id) : vs && vs.tn ? TN_KIT.has(id) : !!PROG.own[id]), gojoMe = () => !vs || vs.me === 'gojo', fredMe = () => !!vs && vs.me === 'freddy';
 const meK = () => !vs ? 'g' : vs.me === 'yuji' ? 'y' : vs.me === 'verity' ? 'v' : vs.me === 'cat' ? 'k' : 'g';      // the fighter you play: g = Gojo (and everything outside a match), y = Yuji, v = Verity, k = the Cat
-const setMoneyUI = () => { const t = 'MONEY $' + PROG.m; for (const id of ['modesMoney', 'chalMoney', 'skMoney']) $(id).textContent = t; };
+const setMoneyUI = () => { const t = 'MONEY $' + PROG.m; for (const id of ['modesMoney', 'chalMoney', 'skMoney', 'codeMoney']) $(id).textContent = t; };
 const earn = n => { PROG.m += n; saveProg(); setMoneyUI(); };
 const earnOnce = (key, n) => { if (!PROG.once[key]) { PROG.once[key] = 1; earn(n); } };
 const SK_GOJO = [      // [id, name, what it does, price, needs]
@@ -2592,7 +2606,7 @@ function show(s) {
   state = s; if (s !== 'play') cuTest = false; if (s !== 'story') { snd('mhumoff'); snd('tmusicoff'); snd('rsmuroff'); snd('bluepulloff'); } if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; track = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
   $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); $('chal').classList.toggle('on', s === 'chal'); $('skills').classList.toggle('on', s === 'skills'); $('sns').style.display = 'none'; if (s !== 'lan' && s !== 'lansel' && !(s === 'play' && vs && vs.net) && lanTimer) lanStop();
   $('versus').classList.toggle('on', s === 'versus');
-  $('title').classList.toggle('on', s === 'title'); $('ulog').classList.toggle('on', s === 'ulog');
+  $('title').classList.toggle('on', s === 'title'); $('ulog').classList.toggle('on', s === 'ulog'); $('codes').classList.toggle('on', s === 'codes');
   $('select').classList.toggle('on', s === 'select');
   $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves'); if (s === 'select') cuSelRefresh(); $('cust').classList.toggle('on', s === 'cust'); $('custName').classList.toggle('on', s === 'custname'); $('custDraw').classList.toggle('on', s === 'custdraw'); $('custAnim').classList.toggle('on', s === 'custanim'); $('custAtk').classList.toggle('on', s === 'custatk'); $('custCode').classList.toggle('on', s === 'custcode'); $('custStats').classList.toggle('on', s === 'custstats');
   cv.style.display = s === 'play' || s === 'story' ? 'block' : 'none';
@@ -13406,7 +13420,7 @@ joy.addEventListener('contextmenu', e => e.preventDefault());
 
 const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U', KeyJ: 'A', KeyF: 'A', ArrowDown: 'C', KeyS: 'C', KeyC: 'C', KeyL: 'B', KeyK: 'D', ShiftLeft: 'D', ShiftRight: 'D', KeyB: 'G', KeyE: 'E', KeyV: 'V', KeyH: 'H', KeyQ: 'Q' };
 addEventListener('keydown', e => {
-  if (e.target.id === 'lanName' || e.target.id === 'cuName' || e.target.className === 'cmIn' || (e.target.closest && e.target.closest('#custCode, #custStats'))) { if (e.key === 'Enter') e.target.blur(); return; }      // typing a room name: the game keys stay out of it
+  if (e.target.id === 'lanName' || e.target.id === 'cuName' || e.target.id === 'codeIn' || e.target.className === 'cmIn' || (e.target.closest && e.target.closest('#custCode, #custStats'))) { if (e.key === 'Enter') e.target.blur(); return; }      // typing a room name: the game keys stay out of it
   if (paused && !settingsOn()) { if ((e.key === 'Escape' || e.code === 'KeyP') && !e.repeat) setPause(false); return; }      // (paused: only Esc or P do anything)
   if (settingsOn()) { if (e.key === 'Escape') closeSettings(); return; }      // the settings screen takes the keyboard while it is open
   if (e.code === 'KeyP' && state === 'play') { if (!e.repeat) setPause(true); return; }      // P pauses a fight
@@ -13418,10 +13432,10 @@ addEventListener('keydown', e => {
     return;
   }
   if (e.key !== 'Escape') return;
-  if (state === 'play') { if (!setPause(true)) leavePlay(); } else if (state === 'select' || state === 'ulog') show('title');
+  if (state === 'play') { if (!setPause(true)) leavePlay(); } else if (state === 'select' || state === 'ulog' || state === 'codes') show('title');
 });
 addEventListener('keyup', e => {
-  if (e.target.id === 'lanName' || e.target.id === 'cuName') return;
+  if (e.target.id === 'lanName' || e.target.id === 'cuName' || e.target.id === 'codeIn') return;
   if (se && SE_KEYS.has(e.code)) sePress(false);
   const k = KEYS[e.code];
   if (k === 'L') keyL = false; else if (k === 'R') keyR = false; else if (k === 'G') blockHeld = false; else if (k === 'A') { if (atkHold >= 0 && atkDefer() && pnow() - atkHold < holdMax()) atkReq = true; atkHold = -1; }
@@ -13516,6 +13530,7 @@ $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+{"v": "1.130", "t": "CODES", "n": ["There is a new CODES button on the title screen (bottom right). It opens a page with a box where you type a code and press REDEEM (or Enter). A right code gives you money: Diddy25 gives $1000, Gojo69Me gives $700, and the very long one (PutinKimjongUnDiddyDaddyPeopleNightyNighty) gives $1,000,000. Type them exactly as written, capital letters too.", "Each code works once; typing it again says ALREADY USED. Your money and the used codes are saved on the phone, so a used code stays used after you close the game."]},
 {"v": "1.129", "t": "RCT", "n": ["RCT (reverse cursed technique) is a new skill for Gojo, Yuji, the Cartoon Cat and Sukuna: white cursed energy heals your injuries, meaning ripped off arms and legs, dead shoulders and a hurt chest, belly or head from GRAPHIC DAMAGE. It does not give health back. You need the FATALITY first (Yuji needs INHERITENCE too; Sukuna needs nothing first because he has no fatality) and it has three expensive stages: $1500, $2500 and $4000. Sukuna has a new SUKUNA tab in SKILLS for his stages, and they are really bought even in free play.", "How long a hurt part takes to heal. Stage 1: Gojo 15 seconds, Sukuna 15, Yuji 20, Cat 20. Stage 2: Gojo 10, Sukuna 8, Yuji 16, Cat 14. Stage 3: Gojo under 5 seconds and Sukuna 4 or less (the worse the injury the longer it takes, a small one is healed almost at once), Yuji 10, Cat 7. Every hurt part has its own clock, which starts when it is hurt. Yuji's RCT only starts while INHERITENCE is on (a heal that has started goes on after it ends).", "While a fighter heals, a white halo glows round him, white specks rise off him, and a lost limb grows back slowly from the stump outwards, white at first. When a lost limb is whole again, the old piece on the floor is taken back into the energy. In free play, Gojo, Yuji and the Cat have all three stages, like all their other moves.", "Fixed: the GRAPHIC DAMAGE setting (FULL / CLEAN / OFF) was forgotten every time the game was closed. It is kept now."]},
 {"v": "1.128", "t": "GRAPHIC DAMAGE", "n": ["Fighters can now lose their arms and legs (everywhere except Story Mode: Free play, Challenges and Versus). Every body has hidden damage on its arms, legs, shoulders, chest, belly and head. Where a blow lands decides which part takes it (high, middle or low), and cuts, claws and bites (Sukuna, Freddy, Verity) fill it twice as fast. A part that has taken enough, or a rare huge hit, rips off: the piece flies away and lies on the floor until the round ends, blood sprays, the screen flashes red, the game slows down for a moment and the body bleeds a little every half second until the round is over. A badly hurt shoulder leaves the arm hanging limp and useless. A badly hurt chest, belly or head shows wounds, makes the fighter slower and weaker, makes him cough blood now and then (stunned for half a second) and he takes 25% more damage.", "What a fighter can still do: with one arm gone only the swings that do not need it work (Yuji and Gojo check every move, and a swing of the lost arm is done by the other one; the other fighters keep all their moves), with no arms there are no hand moves, no blocking and no BLUE, MODE or DOMAIN, and ATTACK becomes a new HEADBUTT. With one leg he hops at 35% speed and cannot jump, kick or dash. With no legs he crawls along the floor at 15% speed and cannot block, jump or dash. Hand-sign domains (Gojo, Yuji, Sukuna, the Cat) need both hands. Verity as the smoke ball is not affected, and a crawler who was crouched when his legs went gets up by himself. Enemies follow the same rules: one without arms headbutts you.", "At the end of every FATALITY the loser's head is ripped off. Everything grows back at the start of the next round. SETTINGS > GAME > GRAPHIC DAMAGE has three levels: FULL, CLEAN (no blood: the parts just pop off and fade) and OFF."]},
 {"v": "1.127", "t": "SUKUNA'S FUGA CUTSCENE", "n": ["If Sukuna uses FUGA (the OPEN fire arrow of FLAME mode, the BLUE button) while his domain is open, it is now a special cutscene of about 12 seconds with nine camera shots: a wide shot of the domain, a close-up of the clap, a tilted shot while the fire plays like slime, a shot from the enemy's side with Sukuna's dark shape in front of it, a close-up of his face while he draws the arrow, a tracking shot that runs ahead of the huge arrow with the word FUGA, the moment it lands (the game stops for an instant in a black and white frame), a fireball and a slow motion close-up on the enemy, a look up at the shrine over the fire, and a slow pull back. Black bars slide in and the health bars and buttons hide while it plays; two taps on the screen (or a button) skip it.", "FUGA costs the normal 50% of your energy, and your energy comes back 1% every second, so you can afford it in the last seconds of the 20 second domain. The arrow takes 40% of the enemy's full health and burns him for 8 seconds. The 20 seconds of the domain stand still during the cutscene, the enemy is held and slides to stand in front of Sukuna, and the BLUE button says FUGA instead of OPEN while the domain is open. Outside the domain OPEN works as before."]},
@@ -13704,6 +13719,19 @@ function buildLog() {
 }
 const openLog = () => { audio(); buildLog(); show('ulog'); $('ulList').scrollTop = 0; $('ulList').focus({ preventScroll: true }); try { localStorage.setItem('js_logseen', LOG[0].v); } catch (e) { /* storage blocked */ } logMark(); };
 $('logBtn').addEventListener('click', openLog); $('ver').addEventListener('click', openLog); $('ulBack').addEventListener('click', () => show('title')); logMark();
+// ---------------------------------------------------------------- v1.130 CODES: the CODES button of the title screen opens a page where a code typed EXACTLY (capitals too) gives money, once per code (PROG.once remembers it)
+const CODES = { Diddy25: 1000, Gojo69Me: 700, PutinKimjongUnDiddyDaddyPeopleNightyNighty: 1000000 };      // code -> money
+const codeSay = (txt, cls) => { const m = $('codeMsg'); m.textContent = txt; m.className = cls || ''; };
+function redeemCode() {
+  const v = $('codeIn').value.trim();
+  if (!v) { codeSay('TYPE A CODE FIRST', 'bad'); return; }
+  if (!Object.prototype.hasOwnProperty.call(CODES, v)) { codeSay('THAT IS NOT A CODE', 'bad'); snd('block'); return; }
+  const key = 'code:' + v; if (PROG.once[key]) { codeSay('ALREADY USED', 'bad'); snd('block'); return; }
+  PROG.once[key] = 1; earn(CODES[v]); $('codeIn').value = ''; codeSay('+$' + CODES[v] + ' MONEY!', 'ok'); snd('finisher');
+}
+$('codeBtn').addEventListener('click', () => { audio(); $('codeIn').value = ''; codeSay('\u00a0'); setMoneyUI(); show('codes'); });
+$('codeGo').addEventListener('click', redeemCode); $('codeBack').addEventListener('click', () => show('title'));
+$('codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') redeemCode(); });
 $('story').addEventListener('click', () => { audio(); svSel = -1; renderSaves(); show('saves'); });
 ['sv0', 'sv1', 'sv2'].forEach((id, i) => $(id).addEventListener('click', () => { svSel = i; renderSaves(); }));
 $('svStart').addEventListener('click', () => { if (svSel >= 0) startStory(svSel); });
@@ -13866,7 +13894,7 @@ window.__back = () => {                       // Android back button: step back 
   if (state === 'lan') { lanBack(); return true; }
   if (state === 'select') { show('modes'); return true; }
   if (state === 'modes') { show('title'); return true; }
-  if (state === 'ulog') { show('title'); return true; }
+  if (state === 'ulog' || state === 'codes') { show('title'); return true; }
   return false;
 };
 
