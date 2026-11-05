@@ -208,7 +208,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.139</small>
+    <small id="ver">V1.140</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -4479,6 +4479,7 @@ __CHAP3B__
 __CHAP3C__
 __CHAP3D__
 __CHAP3E__
+__CHAP3F__
 function drawScene(now, dt) {
   fatUI(now);
   if (fat) { fatFrame(now, dt); return; }       // the FATALITY cutscene replaces the whole scene while it plays
@@ -4802,9 +4803,9 @@ function startStory(slot) { const a = loadSaves(); if (a[slot] && a[slot].c3) { 
   if (a[slot] && a[slot].ch2) { startTraining(slot); return; } if (a[slot] && a[slot].ch1) { startChapter2(slot); return; }      // (a save that has finished chapter 1 goes on with part 2, the training)
   if (!a[slot]) a[slot] = { ch: 1 }; storeSaves(a); audio(); show('story'); story = { slot, t0: pnow(), battle: false, T: 0, ev: {} }; alley = true; court = false; wx = 0; }      // (a save that has beaten Verity and heard the report goes on with the Cartoon Cat part, the second half of chapter 1)
 function storyDone() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].beat = true; storeSaves(a); }
-function storySkip() {
+function storySkip(ev) {
   if (!story || story.battle) return;
-  if (story.c7) { c7Skip(); return; }
+  if (story.c7) { if (c13Tap(ev)) return; c7Skip(); return; }
   if (story.c3) { c3Skip(); return; }
   if (story.tn) { trainSkip(); return; }
   if (story.master) { const n = MS_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; else if (story.T >= MS.card + 1.2) { show('saves'); renderSaves(); } return; }      // (the Master's scene - it is checked before the Cartoon Cat part, whose flag it keeps: on to the next cut; at the very end back to the saves)
@@ -6686,7 +6687,7 @@ for (const [k, id] of SK_TABS) $(id).addEventListener('click', () => { skTab = k
 $('lsFight').addEventListener('click', lanFight);
 $('lsAgain').addEventListener('click', () => lanAgain(true));
 $('lsBack').addEventListener('click', lanLeave);
-addEventListener('pointerdown', () => { if (state === 'story') storySkip(); });      // a tap skips to the next part of the cutscene
+addEventListener('pointerdown', e => { if (state === 'story') storySkip(e); });      // a tap skips to the next part of the cutscene
 addEventListener('pointerdown', () => { if (yf && !paused) yfTap(pnow()); });      // (v1.49 Yuji's FATALITY: two taps skip it)
 addEventListener('pointerdown', () => { if (typeof suFgOn === 'function' && suFgOn() && !paused) suFgTap(pnow()); });      // (v1.127 Sukuna's FUGA cutscene: two taps skip it)
 $('vsGo').addEventListener('click', () => startMatch(vsSel));

@@ -114,7 +114,8 @@ function c10Orbit(m) {      // the orbit: Mahoraga whirls round Sukuna on the ro
 }
 
 // ---- Sukuna at the song time m: { pic, pv: the pivot, x, y, rot, sx, a, back: { pic, pv, a }, ei: his eye (C10E) }
-function c10Suk(m) {
+function c10Suk(m) { return c13P0(c10Suk0(m), m); }      // (v1.140 the first punch may hit him: c13P0 in tools/chap3f.js)
+function c10Suk0(m) {
   if (m >= C11K.air2) return c11Suk(m);      // (v1.136: from the end of v1.135 on the fight is the script of tools/chap3d.js)
   const D = CU_GAME[3]; if (!D || !D.air || !D.air.length || !D.atk || !D.atk[2] || !D.atk[2].length || !D.frames || !D.frames.length) return null;
   const E = c10Env(), K = C10K, SF = E.SF, s = m + C9.m0, w = c10U(m), air = D.air, kick = D.atk[2], f4 = Math.floor(m * 7) & 3, PV = C10PV, fl = c8Fly(s);
@@ -230,7 +231,7 @@ function c10GhostsS(m, dt, n, a0) { for (let j = n; j >= 1; j--) { const Sg = c1
 function c10Warm(m) { const W = C10W; if (W.wi == null) W.wi = 122; for (let n = 0; n < 2 && W.wi < Math.min(M7.frames.length, 363); n++) { if (m7Lit(W.wi, 'cold')) W.wi++; } }      // (his new pictures are lit a few at a time while the earlier shots play)
 function c10Shake(m) {      // how hard the picture shakes: each blow shakes it and the shake dies away; the spin shakes more and more
   const K = C10K; let a = 0; if (m >= C11K.air2) return c11Shake(m); for (const [t, v, k] of [[K.launch, 3.4, 5], [K.arrive, 1.3, 7], [K.cut, 4.5, 6], [K.kick + 0.1, 2.6, 8], [K.gslot + 0.3, 2.2, 6], [K.throwAt, 4.2, 5], [K.lasso + 0.9, 4.2, 6], [K.fling, 5.2, 5], [K.regrow, 1.2, 4], [K.whole, 2.2, 6]]) if (m >= t) a += v * Math.exp(-(m - t) * k);
-  if (m >= K.spin && m < K.fling) a += 0.5 + 1.2 * clamp01(c10Om(m) / 16); if (m >= K.gslot + 0.4 && m < K.throwAt - 0.4) a += 0.6; return a;
+  if (m >= K.spin && m < K.fling) a += 0.5 + 1.2 * clamp01(c10Om(m) / 16); if (m >= K.gslot + 0.4 && m < K.throwAt - 0.4) a += 0.6; if (C13Q.res.p0 === 'miss') { const t0 = c13T0(); if (m >= t0) a += 5 * Math.exp(-(m - t0) * 6); } return a;
 }
 function c10Fx(m, S, M, A, cam) {      // the effects that belong to the world (drawn with the camera on, over the actors)
   const K = C10K, E = c10Env(), AC = E.AC;
@@ -329,6 +330,7 @@ function c10Shot(now, dt, T, st, t1) {
   c10Impact(m, K.cut, cam, cpt[0], cpt[1], 0.55); c10Impact(m, K.throwAt, cam, R.S ? R.S.x : E.SF.x, R.S ? R.S.y : E.SF.y, 0.4); c10Impact(m, K.fling, cam, E.CS.x, E.CS.y, 0.5);
   { const r = m - K.launch; if (r >= 0 && r < 0.07) c6White(0.8 * (1 - r / 0.07)); }
   if (m >= C11K.air2) c11Impacts(m, cam);
+  c13Draw(m, cam, R.S);      // (v1.140 the ring of the quick time event, the counter, the verdict)
   { const k = c8NotchK(s); if (k > 0.02) c6White(0.26 * k * k); }
   ctx.fillStyle = 'rgba(30,10,60,0.12)'; ctx.fillRect(0, 0, VW, VH); msFinish(1);
   c6Black((s - (C8T.end - 0.9)) / 0.9);

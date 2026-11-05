@@ -402,7 +402,7 @@ function c7Card(now, T) {      // CHAPTER 3: THE DIVINE GENERAL, TO BE CONTINUED
 function startC7(slot) { audio(); show('story'); story = { slot, t0: pnow(), battle: false, T: 0, ev: {}, shk: null, c7: { vi: -1, vc: 0 } }; alley = true; court = false; track = false; wx = 0; }
 function c7Frame(now, dt) {
   const T = story.T = Math.max(0, now - story.t0) / 1000, ev = (k, t, f, win) => { if (T >= t && T < t + (win || 0.5)) once2(k, f); };
-  c9Music(T); c12Music(T);
+  c9Music(T); c12Music(T); c13Step(now, T);
   if (T >= C7.card) { c7Card(now, T); return; }
   wx = 0; ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
   const st = c7Shot(T); c7Shots[st.k](now, dt, T, st, T - st.t0); c7Events(T, ev); c7Talk(T); ctx.restore();

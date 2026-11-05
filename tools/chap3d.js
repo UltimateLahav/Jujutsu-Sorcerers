@@ -56,10 +56,10 @@ function c11K(keys, u) { if (u <= keys[0][0]) return keys[0][1]; for (let i = 0;
 // ---- the windows. A window = what one fighter does for a while: { t0, dur, pose(u) -> { dx, dy, rot, pic } } with u = seconds since t0, dx / dy = where he is from where he hangs
 function c11MFrame(clip, k) { return c10mf(clip, k); }
 function c11Build() {
-  const key = VW + 'x' + gy + 'x' + c8X0(); if (C11.b && C11.b.key === key) return C11.b;
+  const key = VW + 'x' + gy + 'x' + c8X0() + 'x' + C13Q.ver; if (C11.b && C11.b.key === key) return C11.b;
   const W = { S: [], M: [] }, EV = [], D = CU_GAME[3], atk = D && D.atk, air = D && D.air;
   if (!atk || !air || !air.length) return null;
-  C11EV.forEach((e, idx) => {
+  c11Eff().forEach((e, idx) => {
     const A = e.a, Dd = A === 'M' ? 'S' : 'M', tc = e.t;
     // where the blow lands: on the defender's head (or body) at the moment of contact (the defender's base, plus his own offset in that moment)
     const bD = c11Base(Dd, tc), PF = M7.frames[c10mf('floatg', 0)], mh = [PF.head[0] - PF.pelvis[0], PF.head[1] - PF.pelvis[1] + 4], mc = [PF.chest[0] - PF.pelvis[0], PF.chest[1] - PF.pelvis[1]], tgOff = Dd === 'S' ? (e.tg === 'body' ? [0, -4] : [3.5, -18.5]) : (e.tg === 'body' ? mc : mh);
@@ -185,7 +185,7 @@ function c11Shake(m) { const B = c11Build(); let a = 0; if (B) for (const e of B
 function c11Events(T, ev) {
   const B = c11Build(); if (!B) return; const R = c9Start();
   B.EV.forEach(e => {
-    const mv = C11MV[e.mv], lead = mv.hit / mv.fps, k = 'c11' + e.idx;
+    const mv = C11MV[e.mv], lead = mv.hit / mv.fps, k = 'c11' + e.id;
     ev(k + 'w', R + e.t - lead, () => snd(e.a === 'M' ? 'c7cloth' : 'dash', e.a === 'M' ? 1 : 1), 0.4);
     ev(k + 'a', R + e.t - 0.04, () => { snd('c7whoosh'); if (e.re === 'block') snd('c8crack'); else if (e.re === 'slash') { snd('c6scrape'); snd('c7tear'); } else if (e.re !== 'dodge') snd('smack', e.imp === 2 ? 3 : e.a === 'M' ? 2 : 1); if (e.imp === 2 || e.re === 'clash') snd('c7smash'); if (e.imp === 2 && e.re !== 'clash') snd('c7thud', 0); }, 0.5);
     if (e.re === 'dodge') ev(k + 'd', R + e.t - 0.3, () => snd('dash', 0), 0.4);

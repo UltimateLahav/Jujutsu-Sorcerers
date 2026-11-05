@@ -280,7 +280,7 @@ function c9Audio() {
   return c9A;
 }
 function c9Music(T) {
-  const m = T - c9Start(), on = m >= 0 && m < C9.D && !document.hidden && !(typeof paused !== 'undefined' && paused);
+  const m = T - c9Start(), on = m >= 0 && m < C9.D && !document.hidden && !(typeof paused !== 'undefined' && paused) && !C13Q.def;
   if (!on) { if (c9A && !c9A.paused) c9A.pause(); return; }
   const a = c9Audio(); if (!a) return;
   const k = Math.min(1, m / C9.fadeIn), g = C9.vol * k * k * Math.min(1, (C9.D - m) / C9.fadeOut), node = sfx && soundOn && sfx.ac.state === 'running' ? sfx.music(a) : null;
