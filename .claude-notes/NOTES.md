@@ -34,5 +34,6 @@
 
 ## Notes
 - Test harness lives in the session scratchpad (not in the repo): two Playwright pages with a fake `AndroidLan`; a debug copy of the page adds `window.__ev`.
+- V1.136 release run: v136.js 49, v135.js 64, c28/v135_regress.js 45 (shot-list expectation now ends b01..b29,d01..d05), c27/v133.js 56 all OK (FILE=c28/dbg.html); lint 19 = baseline.
 - Known test flakes: c27/v133.js 'it flies above the floor' failed 2 of 5 runs on the V1.135 build (timing; passes on repeat); also on v1.114: v113s first crouch, v114s first jump ("no air"), v116 "holding forward in reach: BITE" (1 run in 3, old page too).
 - Lint: eslint on the extracted page script; messages must equal the baseline.
