@@ -34,6 +34,6 @@
 
 ## Notes
 - Test harness lives in the session scratchpad (not in the repo): two Playwright pages with a fake `AndroidLan`; a debug copy of the page adds `window.__ev`.
-- V1.138 release run (FILE=c28/dbg2.html): c32/v137.js 56, c30/v136.js 49, c30/v135.js 64, c28/v135_regress.js 45, c27/v133.js 56 all OK (the old three are adapted for the longer scene: card at the end of the Snowman part, 523 pictures); lint 19 = baseline.
+- V1.140 release run: c33/v140.js 67 (QTE, FILE = c28/dbg2.html = mkdbg.py without noqte); with the QTE OFF (FILE = c28/dbgn.html = `mkdbg.py index.html out.html noqte`): c32/v137.js 56, c30/v136.js 49, c30/v135.js 64, c28/v135_regress.js 45, c27/v133.js 56 all OK; lint 19 = baseline. Old tests must run on a `noqte` copy (the QTE would miss every prompt in real-time runs).
 - Known test flakes: c27/v133.js 'it flies above the floor' failed 2 of 5 runs on the V1.135 build (timing; passes on repeat); also on v1.114: v113s first crouch, v114s first jump ("no air"), v116 "holding forward in reach: BITE" (1 run in 3, old page too).
 - Lint: eslint on the extracted page script; messages must equal the baseline.
