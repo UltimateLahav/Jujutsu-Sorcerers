@@ -203,10 +203,13 @@ function c4Guts(x, y, len, T, sway) {      // a rope of intestine hanging out of
   ctx.fillStyle = '#4a0a1c'; for (const p of pts) ctx.fillRect(p[0] - 1, p[1] - 1, 4, 4); ctx.fillStyle = '#d65a74'; for (const p of pts) ctx.fillRect(p[0], p[1], 2, 2);
   ctx.fillStyle = '#9a2a42'; for (const p of pts) ctx.fillRect(p[0], p[1] + 1, 2, 1); ctx.fillStyle = '#ff9aab'; for (let i = 0; i < pts.length; i += 2) ctx.fillRect(pts[i][0], pts[i][1], 1, 1);
 }
+function c4OrgAt(x, y, i, a, o) {      // where organ i of the ones thrown from (x, y) is a seconds after the throw (a big a = where it lies for good); v1.133: the shots that put them back (chapter 3) need it
+  const G = 320, gnd = o.gnd == null ? gy + 3 : o.gnd, s = (o.seed || 0) * 41 + i, vx = (o.dir || 1) * (o.v || 40) * (0.25 + c4R(s, 1)) * (c4R(s, 8) < 0.2 ? -0.5 : 1), vy = -(o.up || 50) * (0.4 + c4R(s, 2)), gi = gnd + (c4R(s, 3) - 0.5) * 3, tf = (-vy + Math.sqrt(Math.max(0, vy * vy + 2 * G * (gi - y)))) / G, tt = Math.min(a, tf);
+  return [x + vx * tt, y + vy * tt + 0.5 * G * tt * tt];
+}
 function c4Organs(T, t0, x, y, n, o) {      // n organs thrown from (x, y) at time t0: they fall and stay where they land (o: v, up, dir, gnd, seed)
-  const a = T - t0; if (a < 0) return; const G = 320, gnd = o.gnd == null ? gy + 3 : o.gnd;
-  for (let i = 0; i < n; i++) { const s = (o.seed || 0) * 41 + i, vx = (o.dir || 1) * (o.v || 40) * (0.25 + c4R(s, 1)) * (c4R(s, 8) < 0.2 ? -0.5 : 1), vy = -(o.up || 50) * (0.4 + c4R(s, 2)), gi = gnd + (c4R(s, 3) - 0.5) * 3, tf = (-vy + Math.sqrt(Math.max(0, vy * vy + 2 * G * (gi - y)))) / G, tt = Math.min(a, tf);
-    c4Lump(x + vx * tt, y + vy * tt + 0.5 * G * tt * tt, i % 3); }
+  const a = T - t0; if (a < 0) return;
+  for (let i = 0; i < n; i++) { const q = c4OrgAt(x, y, i, a, o); c4Lump(q[0], q[1], i % 3); }
 }
 function c4Pool(x, k) {      // blood on the floor: a flat dark red pool that spreads (k 0-1), with a darker rim and a wet shine
   if (k <= 0.02) return; const rx = Math.round(3 + 30 * k), ry = Math.max(1, Math.round(1 + 4 * k)), y = gy + 5;
