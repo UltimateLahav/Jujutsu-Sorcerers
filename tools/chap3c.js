@@ -50,6 +50,7 @@ function c10Hp(S, rel) { const c = Math.cos(S.rot || 0), s = Math.sin(S.rot || 0
 
 // ---- Mahoraga at the song time m: { i: his picture, x, y: his pelvis, rot, sx, back: { i, a }, mode } (every picture hangs by its pelvis; on the street by the middle of his feet)
 function c10Mah(m) {
+  if (m >= C11K.air2) return c11Mah(m);
   const E = c10Env(), K = C10K, AC = E.AC, SF = E.SF, s = m + C9.m0, w = c10U(m), X = E.X, G = C10G, hs = s * 8;
   const idle = () => c10mf('idle', Math.floor(hs) % 12), bob = (t) => ({ x: 1.5 * Math.sin(t * 1.6), y: 2.4 * Math.sin(t * 2.3) });
   if (m < K.look) return { ...c10Gr(c10mf('idle', Math.floor(hs) % 12), X), i: idle(), rot: 0, sx: 1, mode: 'idle' };
@@ -114,6 +115,7 @@ function c10Orbit(m) {      // the orbit: Mahoraga whirls round Sukuna on the ro
 
 // ---- Sukuna at the song time m: { pic, pv: the pivot, x, y, rot, sx, a, back: { pic, pv, a }, ei: his eye (C10E) }
 function c10Suk(m) {
+  if (m >= C11K.air2) return c11Suk(m);      // (v1.136: from the end of v1.135 on the fight is the script of tools/chap3d.js)
   const D = CU_GAME[3]; if (!D || !D.air || !D.air.length || !D.atk || !D.atk[2] || !D.atk[2].length || !D.frames || !D.frames.length) return null;
   const E = c10Env(), K = C10K, SF = E.SF, s = m + C9.m0, w = c10U(m), air = D.air, kick = D.atk[2], f4 = Math.floor(m * 7) & 3, PV = C10PV, fl = c8Fly(s);
   const mk = (pic, x, y, rot, o) => ({ pic, pv: PV, x, y, rot: rot || 0, sx: 1, a: 1, ...o }), fp = t => { const f = c8Fly(t + C9.m0); return { x: f.x + 1.2 * Math.sin(t * 1.9), y: f.y + 2.4 * Math.sin(t * 2.7) }; };
@@ -167,9 +169,9 @@ function c10Draw(img, pv, x, y, rot, sx, sy, a) {
 }
 function c10DrawSuk(S, T) {
   if (!S) return; if (S.back) c10Draw(S.back.pic, S.back.pv, S.x, S.y, S.rot, S.sx, 1, S.back.a * S.a); c10Draw(S.pic, S.pv, S.x, S.y, S.rot, S.sx, 1, S.a);
-  if (S.ei != null && C10E[S.ei]) { const p = c10Hp(S, C10E[S.ei]); c8Glint(p[0] - 1, p[1], T); }
+  const eye = S.eye || (S.ei != null && C10E[S.ei]); if (eye) { const p = c10Hp(S, eye); c8Glint(p[0] - 1, p[1], T); }
 }
-function c10Lit(m) { const K = C10K; if (Math.abs(m - K.cut) < 0.07 || Math.abs(m - K.fling) < 0.07 || Math.abs(m - K.launch) < 0.05) return 'white'; if (m >= K.regrow && m < K.whole + 0.8) return 'gold'; return 'cold'; }
+function c10Lit(m) { if (m >= C11K.air2) return c11Lit(m); const K = C10K; if (Math.abs(m - K.cut) < 0.07 || Math.abs(m - K.fling) < 0.07 || Math.abs(m - K.launch) < 0.05) return 'white'; if (m >= K.regrow && m < K.whole + 0.8) return 'gold'; return 'cold'; }
 function c10DrawMah(M, s, m, lit) {      // the wheel behind his head, his picture lit by the light of the moment, his eyes
   if (!M) return; const P = M7.frames[M.i], sx = M.sx == null ? 1 : M.sx, sy = M.sy == null ? Math.abs(sx) : M.sy, sc = Math.abs(sy), wc = c10An(M, [P.head[0] + 4, P.head[1] - 6]), k = c8NotchK(s), ea = ease3(clamp01((m - 3) / 0.8));
   c6Glow(wc[0], wc[1], 78 * sc, '255,200,100', 0.22 + 0.3 * k + 0.2 * ea + (M.mode === 'dash' || M.mode === 'leap' ? 0.2 : 0)); m7Wheel(wc[0], wc[1], 27 * sc, c8Ang(s), 1);
@@ -227,7 +229,7 @@ function c10Ghosts(m, dt, n, a0, lit) {      // afterimages: where they were a m
 function c10GhostsS(m, dt, n, a0) { for (let j = n; j >= 1; j--) { const Sg = c10Suk(m - dt * j); if (Sg) c10Draw(Sg.pic, Sg.pv, Sg.x, Sg.y, Sg.rot, Sg.sx, 1, a0 / j); } }
 function c10Warm(m) { const W = C10W; if (W.wi == null) W.wi = 122; for (let n = 0; n < 2 && W.wi < M7.frames.length; n++) { if (m7Lit(W.wi, 'cold')) W.wi++; } }      // (his new pictures are lit a few at a time while the earlier shots play)
 function c10Shake(m) {      // how hard the picture shakes: each blow shakes it and the shake dies away; the spin shakes more and more
-  const K = C10K; let a = 0; for (const [t, v, k] of [[K.launch, 3.4, 5], [K.arrive, 1.3, 7], [K.cut, 4.5, 6], [K.kick + 0.1, 2.6, 8], [K.gslot + 0.3, 2.2, 6], [K.throwAt, 4.2, 5], [K.lasso + 0.9, 4.2, 6], [K.fling, 5.2, 5], [K.regrow, 1.2, 4], [K.whole, 2.2, 6]]) if (m >= t) a += v * Math.exp(-(m - t) * k);
+  const K = C10K; let a = 0; if (m >= C11K.air2) return c11Shake(m); for (const [t, v, k] of [[K.launch, 3.4, 5], [K.arrive, 1.3, 7], [K.cut, 4.5, 6], [K.kick + 0.1, 2.6, 8], [K.gslot + 0.3, 2.2, 6], [K.throwAt, 4.2, 5], [K.lasso + 0.9, 4.2, 6], [K.fling, 5.2, 5], [K.regrow, 1.2, 4], [K.whole, 2.2, 6]]) if (m >= t) a += v * Math.exp(-(m - t) * k);
   if (m >= K.spin && m < K.fling) a += 0.5 + 1.2 * clamp01(c10Om(m) / 16); if (m >= K.gslot + 0.4 && m < K.throwAt - 0.4) a += 0.6; return a;
 }
 function c10Fx(m, S, M, A, cam) {      // the effects that belong to the world (drawn with the camera on, over the actors)
@@ -276,6 +278,7 @@ function c10Kf(keys, m) {
   return o;
 }
 function c10Cam(m, k) {
+  if (/^[bd]\d\d$/.test(k)) return c11Cam(m, k);      // (v1.136: the shots of the second half)
   const E = c10Env(), K = C10K, AC = E.AC, cx = VW / 2, cy = VH * 0.5, C = (z, fx, fy, tx, ty, rot) => ({ z, fx, fy, tx: tx == null ? cx : tx, ty: ty == null ? cy : ty, rot: rot || 0 });
   const Sa = t => c10Suk(t) || { x: AC.x, y: AC.y, rot: 0, sx: 1 }, Ma = t => c10Mah(t), head = t => { const S = Sa(t); return c10Hp(S, C10E[S.ei == null ? 0 : S.ei] || [3.5, -18.5]); }, hd = t => c10An(Ma(t), 'head'), cp = () => { const a = c10Arm(K.cut); return a ? a.cp : [AC.x + 6, AC.y - 22]; };
   const mid = (a, b, f) => [lerp(a[0], b[0], f), lerp(a[1], b[1], f)];
@@ -297,7 +300,7 @@ function c10Cam(m, k) {
     case 'aregrow': { const g = t => { const Mq = Ma(t), st = c10An(Mq, 'stump'); return [(Mq.x + st[0]) / 2 - 6, (Mq.y + st[1]) / 2]; }, a = g(K.regrow + 0.05), b = g(K.whole - 0.4); return c10Kf([[K.regrow, C(1.65, a[0], a[1], cx + 8, cy, 0)], [K.whole - 0.4, C(2.05, b[0], b[1], cx + 12, cy, 0.03)], [K.whole, C(2.05, b[0], b[1], cx + 12, cy, 0.03)]], m); }
     case 'awhirl': { const bt = (b, n) => c9B(b, n), CS = E.CS, o = c10Orb(E.thf), cam = c10Kf([[K.whole, C(0.95, CS.x, CS.y - 30, cx, cy, 0.12)], [bt(16, 0), C(0.84, CS.x, CS.y - 22, cx, cy, -0.26)], [bt(16, 3), C(0.86, CS.x, CS.y - 25, cx, cy, 0.3)], [K.fling - 0.4, C(1.35, CS.x + o[0] * 0.5, CS.y + o[1] * 0.3 - 20, cx, cy, 0)], [K.fling, C(1.35, CS.x + o[0] * 0.5, CS.y + o[1] * 0.3 - 20, cx, cy, 0)]], m); cam.z *= 1 + 0.05 * Math.exp(-((m - K.spin) % (4 * C9.beat)) * 5); return cam; }
     case 'afling': { const q = t => Ma(t), R0 = q(K.fling), mk = (t, z, dy) => C(z, q(t).x, q(t).y + (dy || 0)); return c10Kf([[K.fling, C(1.4, R0.x, R0.y - 10)], [K.fling + 0.25, mk(K.fling + 0.25, 1.15, -30)], [K.fling + 0.6, mk(K.fling + 0.6, 1.0, -30)], [K.fling + 1.1, mk(K.fling + 1.1, 0.95, 10)], [K.rise, mk(K.rise, 0.95, 10)]], m); }
-    default: { const q = t => Sa(t), fin = mid([E.ST.x, E.ST.y], [E.MT.x, E.MT.y], 0.5); return c10Kf([[K.rise, C(1.0, q(K.rise).x, q(K.rise).y - 40)], [K.rise + 1.6, C(1.0, q(K.rise + 1.6).x, q(K.rise + 1.6).y - 40)], [K.rise + 3.2, C(0.95, fin[0], fin[1] - 4, cx, cy, 0.02)], [C9.D, C(1.02, fin[0], fin[1] - 4, cx, cy, -0.02)]], m); }
+    default: { const q = t => Sa(t), fin = mid([E.ST.x, E.ST.y], [E.MT.x, E.MT.y], 0.5); return c10Kf([[K.rise, C(1.0, q(K.rise).x, q(K.rise).y - 40)], [K.rise + 1.6, C(1.0, q(K.rise + 1.6).x, q(K.rise + 1.6).y - 40)], [K.rise + 3.2, C(0.95, fin[0], fin[1] - 4, cx, cy, 0.02)], [C11K.air2, C(1.02, fin[0], fin[1] - 4, cx, cy, -0.02)]], m); }
   }
 }
 
@@ -310,18 +313,22 @@ function c10Stage(m, cam) {
   const cut = M.mode === 'regrow'; let ropeP = null; if (S && ro) { const hand = cut ? [M.x + 170, M.y - 34] : c10Hp(S, C10H[S.ei] || [14, -5.5]), wst = c10An(M, 'chest'); ropeP = [hand[0], hand[1], wst[0], wst[1]]; }
   const rope = () => { if (!ropeP) return; const tl = m - K.lasso, g = clamp01((tl + 0.1) / 0.4), tk = m < K.lasso + 0.9 ? 0.15 + 0.5 * clamp01((tl - 0.3) / 0.6) : 1, a = m >= K.fling ? 0 : 1; c10Rope(m, ropeP[0], ropeP[1], ropeP[2], ropeP[3], { g, k: Math.min(1, tk), a }); if (g >= 1) c10Coil(M, m, m >= K.fling ? 0 : 1); };
   if (behind) { rope(); c10DrawMah(M, s, m, lit); c10DrawSuk(S, s); } else { if (!cut) c10DrawSuk(S, s); c10DrawMah(M, s, m, lit); rope(); }
-  c10DrawArm(A, lit); c10Fx(m, S, M, A, cam);
+  c10DrawArm(A, lit); c10Fx(m, S, M, A, cam); if (m >= C11K.air2) c11Fx(m);
   return { S, M, A };
 }
 function c10Shot(now, dt, T, st, t1) {
   const s = T - c8R(), m = s - C9.m0, K = C10K, cam = c10Cam(m, st.k), sh = c10Shake(m), j = n => sh < 0.3 ? 0 : (c6H(Math.floor(T * 36), n) - 0.5) * 2 * sh; c10Warm(m);
+  if (st.k === 'd03') { c11Gif(m); c6Black((s - (C8T.end - 0.9)) / 0.9); return; }      // (v1.136: the GIF fills the screen)
+  if (st.k === 'd05') { c11Blood(m); ctx.fillStyle = 'rgba(40,0,10,0.12)'; ctx.fillRect(0, 0, VW, VH); msFinish(1); c6Black((s - (C8T.end - 0.9)) / 0.9); return; }      // (Mahoraga comes apart into blood in the domain)
   ctx.save(); ctx.translate(Math.round(j(11)), Math.round(j(12))); const R = c10Stage(m, cam); c4Cam0(); ctx.restore();
+  if (st.k === 'd04') { c11Domain(m, cam, R.S); ctx.save(); c8On(cam, cam.fx, cam.fy); c10DrawSuk(R.S, s); c4Cam0(); ctx.restore(); }      // (the domain's circle grows out of Sukuna; he is drawn over it)
   const E = c10Env(), sl = clamp01(1 - c10Slow(m)), vel = (t) => { const a = c10Cam(m + 0.06, st.k), b = c10Cam(m - 0.06, st.k); return [(a.fx - b.fx) / 0.12 * cam.z, (a.fy - b.fy) / 0.12 * cam.z]; };
   { const v = vel(), sp = Math.hypot(v[0], v[1]); if (sp > 160) c10Wind(m, -v[0], -v[1], clamp01((sp - 160) / 500), 41); }
   if (sl > 0.02 && m >= K.dash) { ctx.fillStyle = 'rgba(60,90,190,' + (0.13 * sl).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
   const cutP = c10Arm(K.cut), cpt = cutP ? cutP.cp : [E.AC.x, E.AC.y];
   c10Impact(m, K.cut, cam, cpt[0], cpt[1], 0.55); c10Impact(m, K.throwAt, cam, R.S ? R.S.x : E.SF.x, R.S ? R.S.y : E.SF.y, 0.4); c10Impact(m, K.fling, cam, E.CS.x, E.CS.y, 0.5);
   { const r = m - K.launch; if (r >= 0 && r < 0.07) c6White(0.8 * (1 - r / 0.07)); }
+  if (m >= C11K.air2) c11Impacts(m, cam);
   { const k = c8NotchK(s); if (k > 0.02) c6White(0.26 * k * k); }
   ctx.fillStyle = 'rgba(30,10,60,0.12)'; ctx.fillRect(0, 0, VW, VH); msFinish(1);
   c6Black((s - (C8T.end - 0.9)) / 0.9);
@@ -344,7 +351,7 @@ function c10Events(T, ev) {
   at('c10l0', K.lasso - 0.1, () => snd('c6scrape'), 0.5); at('c10l1', K.lasso + 0.12, () => snd('c6scrape'), 0.5); at('c10l2', K.lasso + 0.35, () => snd('c6scrape'), 0.5); at('c10l3', K.lasso + 0.5, () => snd('c7wheel', 0), 0.8); at('c10jerk', K.lasso + 0.88, () => { snd('smack', 3); snd('c7smash'); }, 0.6);
   { if (!C10W.orbT) { C10W.orbT = []; for (let t = K.spin, n = 0; t < K.fling; n++) { const th = c10Th(t); let dt = 0.05; while (c10Th(t + dt) - th < Math.PI * (n < 12 ? 1 : 2) && t + dt < K.fling + 1) dt += 0.02; t += dt; if (t >= K.fling) break; C10W.orbT.push(t - 0.02); } } C10W.orbT.forEach((t, n) => at('c10o' + n, t, () => snd('c7whoosh'), 0.3)); }      // (a whoosh each time he passes: every half turn at first, every turn when it is fast)
   at('c10rg0', K.regrow, () => snd('rct', 0), 0.8); at('c10rg1', K.whole, () => snd('rct', 1), 0.8);
-  at('c10fl0', K.fling - 0.02, () => { snd('c7smash'); snd('c8crack'); }, 0.6); at('c10fl1', K.fling + 0.1, () => snd('c7rise'), 1.2); at('c10up', K.fling + 0.6, () => snd('c7whoosh'), 0.6); at('c10top', K.fling + 2.4, () => snd('c7wheel', 1), 0.8); at('c10end', K.rise + 3.2, () => snd('c7eyes'), 1.0);
+  at('c10fl0', K.fling - 0.02, () => { snd('c7smash'); snd('c8crack'); }, 0.6); at('c10fl1', K.fling + 0.1, () => snd('c7rise'), 1.2); at('c10up', K.fling + 0.6, () => snd('c7whoosh'), 0.6); at('c10top', K.fling + 2.4, () => snd('c7wheel', 1), 0.8); at('c10end', K.rise + 3.2, () => snd('c7eyes'), 1.0); c11Events(T, ev);
 }
 const C10_SHOTS = ['sky', 'aface', 'alook', 'aleap', 'aduel', 'aslow', 'acut', 'agrab', 'aplunge', 'arope', 'aspin', 'aregrow', 'awhirl', 'afling', 'arise'];
 for (const k of C10_SHOTS) c7Shots[k] = c10Shot;      // (the shots after the uppercut are drawn by this file: 'sky' too, which c8Shot drew until v1.134)

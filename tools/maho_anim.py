@@ -183,7 +183,41 @@ def regrow(i, n=10):      # the same flung pose while the arm grows back out of 
     u = ease(i / (n - 1.0)); return flyp(i % 6, cut_n=CUT + (1.0 - CUT) * u)
 def armpiece(i, n=1): return dict(piece=CUT)      # the forearm that was cut off
 def flys(i, n=6): return flyp(i, n, cut_n=CUT)      # the flung pose with the stump (the arm has not grown back yet)
-CLIPS = [('idle', 12, idle), ('walk', 32, walk), ('windup', 12, windup), ('punch', 8, punch), ('recover', 12, recover), ('start', 8, start), ('halt', 8, halt), ('run', 16, run), ('lunge', 6, lunge), ('uppercut', 8, uppercut), ('crouch', 8, crouch), ('leap', 8, leap), ('float', 12, floatp), ('apunch', 16, apunch), ('stump', 6, stump_pose), ('floats', 12, floats), ('grab', 8, grab), ('throw', 10, throw), ('fly', 6, flyp), ('regrow', 10, regrow), ('arm', 1, armpiece), ('flys', 6, flys), ('floatg', 12, floatg)]      # (new clips go at the END: the numbers of the older pictures must not move)
+# ---- v1.136 (the rest of the air fight): HOOKS with the near arm (hookN) and the far arm (hookF, drawn behind the body: it comes out from behind him), a KICK and the HURT pictures (the head snaps back)
+def hook_keys(far):
+    arm = 'arm_f' if far else 'arm_n'; oth = 'arm_n' if far else 'arm_f'; sm = ('smear_f', 'arm_prev_f') if far else ('smear', 'arm_prev')
+    def K(**kw):
+        d = dict(kw); a1 = d.pop('a'); o = {arm: a1}
+        if 'sm' in d: o[sm[0]] = d.pop('sm'); o[sm[1]] = d.pop('prev')
+        o[oth] = d.pop('oth', (50, 70) if not far else (46, 74)); return air(**d, **o)
+    return K
+def hook(i, far, n=12):
+    K = hook_keys(far); g = floatp(0, guard=1.0)
+    H1 = K(a=(244, 30), oth=(62, 40), Px=52, Py=AY + 4, lam=-22, head=-8, ankle_n=(PX - 2, AY + 40), ankle_f=(PX - 14, AY + 43), pitch_n=-20, pitch_f=-24, cloth=1.0, amp=4, vx=-1.5)
+    H2 = K(a=(252, 36), oth=(64, 42), Px=50, Py=AY + 5, lam=-27, head=-10, ankle_n=(PX - 4, AY + 39), ankle_f=(PX - 16, AY + 42), pitch_n=-22, pitch_f=-26, cloth=1.4, amp=4, vx=-2.0)
+    H3 = K(a=(206, 40), sm=2, prev=(252, 36), oth=(60, 44), Px=60, Py=AY + 3, lam=-8, head=-9, ankle_n=(PX - 8, AY + 38), ankle_f=(PX - 22, AY + 40), pitch_n=-28, pitch_f=-32, vx=3.0, amp=7, cloth=2.0)
+    H4 = K(a=(152, 30), sm=3, prev=(206, 40), oth=(56, 46), Px=68, Py=AY + 3, lam=8, head=-11, ankle_n=(PX - 14, AY + 36), ankle_f=(PX - 28, AY + 38), pitch_n=-34, pitch_f=-38, vx=5.0, amp=8, cloth=2.6)
+    H5 = K(a=(114, 14), sm=3, prev=(152, 30), oth=(50, 50), Px=82, Py=AY - 2, lam=22, head=-12, ankle_n=(PX - 22, AY + 34), ankle_f=(PX - 36, AY + 36), pitch_n=-40, pitch_f=-42, vx=5.5, amp=8, cloth=3.0)
+    H6 = K(a=(88, 6), oth=(44, 54), Px=88, Py=AY - 2, lam=30, head=-13, ankle_n=(PX - 28, AY + 31), ankle_f=(PX - 42, AY + 34), pitch_n=-46, pitch_f=-48, vx=2.0, amp=7, cloth=3.4)
+    H7 = K(a=(74, 4), oth=(42, 56), Px=90, Py=AY - 1, lam=33, head=-12, ankle_n=(PX - 30, AY + 30), ankle_f=(PX - 44, AY + 33), pitch_n=-48, pitch_f=-50, vx=0.0, amp=6, cloth=3.8)
+    return keyed({0: g, 1: H1, 3: H2, 4: H3, 5: H4, 6: H5, 7: H6, 8: H7, 11: g}, i)
+def hookN(i, n=12): return hook(i, False, n)
+def hookF(i, n=12): return hook(i, True, n)
+def kick(i, n=12):      # a high kick with the near leg: the knee comes up (1 - 3), the leg whips out to the height of his head (4 - 6: the foot lands on 6), the body leaning back for balance, and comes back
+    g = floatp(0, guard=1.0)
+    K1 = air(Px=60, Py=AY + 2, lam=-8, head=-4, arm_n=(246, 30), arm_f=(64, 70), ankle_n=(PX + 20, AY + 22), ankle_f=(PX - 8, AY + 42), pitch_n=-6, pitch_f=-24, cloth=1.0, amp=5, vx=-1.0)
+    K2 = air(Px=58, Py=AY + 2, lam=-18, head=-6, arm_n=(252, 26), arm_f=(66, 68), ankle_n=(PX + 36, AY + 6), ankle_f=(PX - 10, AY + 43), pitch_n=14, pitch_f=-26, cloth=1.6, amp=6, vx=-1.5)
+    K3 = air(Px=57, Py=AY + 3, lam=-28, head=-8, arm_n=(256, 24), arm_f=(70, 64), ankle_n=(PX + 46, AY - 8), ankle_f=(PX - 12, AY + 44), pitch_n=34, pitch_f=-28, cloth=2.2, amp=8, vx=-2.5, smear=0)
+    K4 = air(Px=58, Py=AY + 3, lam=-32, head=-8, arm_n=(258, 22), arm_f=(72, 62), ankle_n=(PX + 52, AY - 14), ankle_f=(PX - 14, AY + 44), pitch_n=42, pitch_f=-30, cloth=2.8, amp=8, vx=-1.0)
+    K5 = air(Px=58, Py=AY + 3, lam=-24, head=-6, arm_n=(250, 24), arm_f=(66, 66), ankle_n=(PX + 38, AY + 2), ankle_f=(PX - 10, AY + 43), pitch_n=20, pitch_f=-28, cloth=3.4, amp=6, vx=0.5)
+    return keyed({0: g, 2: K1, 3: K2, 5: K3, 6: K4, 7: K4, 9: K5, 11: g}, i)
+def hurt(i, n=6):      # hit in the face: the head snaps back, the body arches, the arms fly out; then he finds his feet
+    g = floatp(0, guard=1.0)
+    U1 = air(Px=60, Py=AY + 2, lam=-26, head=-36, arm_n=(236, 40), arm_f=(250, 36), ankle_n=(PX - 2, AY + 40), ankle_f=(PX - 14, AY + 43), pitch_n=-24, pitch_f=-28, cloth=0.8, amp=7, vx=-3.5)
+    U2 = air(Px=56, Py=AY + 3, lam=-36, head=-46, arm_n=(250, 30), arm_f=(262, 28), ankle_n=(PX - 4, AY + 40), ankle_f=(PX - 16, AY + 42), pitch_n=-28, pitch_f=-30, cloth=1.4, amp=8, vx=-3.0)
+    U3 = air(Px=60, Py=AY + 2, lam=-24, head=-28, arm_n=(200, 40), arm_f=(220, 36), ankle_n=(PX, AY + 40), ankle_f=(PX - 12, AY + 43), pitch_n=-22, pitch_f=-26, cloth=2.0, amp=7, vx=-1.5)
+    return keyed({0: U1, 1: U2, 3: U3, 5: g}, i)
+CLIPS = [('idle', 12, idle), ('walk', 32, walk), ('windup', 12, windup), ('punch', 8, punch), ('recover', 12, recover), ('start', 8, start), ('halt', 8, halt), ('run', 16, run), ('lunge', 6, lunge), ('uppercut', 8, uppercut), ('crouch', 8, crouch), ('leap', 8, leap), ('float', 12, floatp), ('apunch', 16, apunch), ('stump', 6, stump_pose), ('floats', 12, floats), ('grab', 8, grab), ('throw', 10, throw), ('fly', 6, flyp), ('regrow', 10, regrow), ('arm', 1, armpiece), ('flys', 6, flys), ('floatg', 12, floatg), ('hookN', 12, hookN), ('hookF', 12, hookF), ('kick', 12, kick), ('hurt', 6, hurt)]      # (new clips go at the END: the numbers of the older pictures must not move)
 def build(flip=True, outdir=None):
     outdir = outdir or os.path.dirname(os.path.abspath(__file__)); frames = []; meta = {'w': rig.W, 'h': rig.H, 'clips': {}, 'frames': []}
     for name, n, fn in CLIPS:
