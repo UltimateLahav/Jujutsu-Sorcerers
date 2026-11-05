@@ -542,6 +542,7 @@ function cuSelRefresh() {
     b.addEventListener('click', () => { NAMES['cu' + i] = CU_GAME[i].name; startPractice('cu' + i); }); row.appendChild(b);
   });
   $('selCuLab').style.display = n ? '' : 'none'; row.style.display = n ? '' : 'none';
+  { const sk = document.querySelector('#select [data-who="cu3"]'); if (sk) { const has = suHas(); sk.disabled = !has; sk.querySelector('i').textContent = has ? 'FREE PLAY' : 'LOCKED: $3000 IN SKILLS'; } }      // (v1.131 Sukuna's card is open once he is bought in SKILLS > CHARACTERS)
 }
 // ---- v1.85 HITBOXES: a custom fighter is measured on its own drawings, like everyone (see HB_TIP in the engine): its body is its idle pictures (the widest every row gets), the limb of an IMPACT is the picture it lands on and the next one, a shot is its drawing; a row of a drawing sits on the row (picture row - 1) of the tables because a custom picture is drawn 61 px above the floor line
 function cuSpan(art, key) {      // the rows of a drawing: { row: [farthest pixel behind its middle column, farthest in front of it] }
@@ -661,7 +662,8 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
     else if (g.yu && k === 3) suStart(g, now);      // (the 4th blow of a built-in fighter is his COUNTER: see suStart in sukuna.js)
     else if (!st.c || ceSpend(st.c * 100 / cuS.em, now)) { cuAtkK = k; cuAtkAt = now; cuFired = []; cuRes = []; cuLunged = 0; cuMs = 1000 / st.v; cuCd[k] = st.d ? now + st.d * 1000 : 0; cuCmbBy = now + 1e9; cuCmb = g.yu ? suNext(k) : (cuCmb + 1) % g.rdy.length; snd('swing', k); }
   }
-  const bk = g && g.blue ? suBlue(now) : -1;      // (v1.112 the BLUE move this stance asks for: standing the AIR CUT or, holding back, the CUT STORM; crouched the LEG CUT; in the air DISMANTLE; -1 = none)
+  const bk = g && g.blue ? suBlue(now) : -1; if (lpr && ctl && g && g.blue && bk < 0 && suBlueLocked(now)) lockPop(now);      // (v1.131 a BLUE move he has not bought: LOCKED)
+       // (v1.112 the BLUE move this stance asks for: standing the AIR CUT or, holding back, the CUT STORM; crouched the LEG CUT; in the air DISMANTLE; -1 = none)
   if (lpr && g && g.blue && cuAtkAt >= 0 && !g.cs) cuLpQ = now + 300;      // (v1.111: a BLUE press while a blow is being thrown is kept for 0.3 s)
   if ((lpr || (cuLpQ > now && cuAtkAt < 0)) && ctl && bk >= 0 && cuAtkAt < 0 && !cuDash && blkAt < 0 && !g.cs) {      // (BLUE of a built-in fighter: his own move, see suBlue in sukuna.js; it is paid for and played like a blow)
     cuLpQ = 0; const st = g.set[bk];

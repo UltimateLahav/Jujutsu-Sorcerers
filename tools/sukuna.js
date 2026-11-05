@@ -19,6 +19,10 @@ const SU_CL = { reach: 44, touchHold: 450, m1: 1, blue: 5, cost: { stand: 5, lif
 const SU_MARKS = [[-10, -52, 12, -12], [12, -54, -10, -14], [-12, -36, 14, -30], [-8, -58, 8, -8], [10, -44, -12, -22], [-12, -26, 12, -42], [-6, -58, 10, -10], [12, -30, -12, -48]];      // where the cut of each slash shows across the enemy (x0, y0, x1, y1 from his middle on the floor line), every one another line
 const SU_WAIT = 2000, SU_DODGE = { ms: 233, px: 30, from: 2, n: 7 }, SU_SLASH = { fps: 30, hit: 7, stand: 24, max: 80 }, SU_BLEED = { ms: 4000, gap: 30, dm: 0.1 };      // the counter: how long he waits (ms); the dodge (ms, how far back, the first picture of Yuji's back dash and how many are used); the slash (pictures a second, the picture the cut lands on, how far from the enemy he stops, the longest step) and the bleeding (ms, ms between two ticks, health a tick)
 NAMES[SUK_WHO] = 'SUKUNA'; CEC[SUK_WHO] = ['#2a0a12', '#d02a3a', '#ffb0b8', '#ff7a86'];      // (his name on the HUD and his energy bar: crimson)
+// ---- v1.131 SUKUNA IN THE SHOP: he is bought ($3000, SKILLS > CHARACTERS) and so is every move but walking, jumping and the first blows (jab, jab, kick, counter), even in free play (window.__suAll: the automatic tests of the older versions play him with everything)
+const suOwn = id => !!window.__suAll || !!PROG.own[id], suHas = () => !!window.__suAll || !!PROG.own.sukuna;
+const SUK_GATE = { cr: 's_crouch', cp: 's_cpunch', ce: 's_cleave', dom: 's_domain' };      // (the buttons lacks() asks about for him, see template.html)
+const SU_BLUE_ID = { 9: 's_air', 10: 's_storm', 11: 's_leg', 12: 's_dismantle', 13: 's_dashslash', 18: 's_cleave', 19: 's_lift', 20: 's_dive', 21: 's_dcleave', 22: 's_flame' };      // (the skill each BLUE move needs)
 (() => {
   const im = new Image();
   im.onload = () => {      // the strip is cut into 64 x 64 pictures, a row for each move (until then he is not there: his card shows nothing and a match shows no picture)
@@ -120,7 +124,7 @@ function suNear() {      // is a living enemy standing in front of him within SU
 function suPick(g, now) {      // the blow ATTACK plays now: crouched, the crouch punches in turn; standing with an enemy near, the combo (jab, jab, kick, counter); standing with none near, the slashes: right hand, left hand, then both hands if the 5 s of the X are over (otherwise another single slash)
   if (stance === 'crouch') return 4 + cuCp;
   if (suCl) return g.cl[cuCmb % g.cl.length];      // (v1.119 the CLEAVE mode: always the melee chain, R.HOOK, L.HOOK, ELBOW, TOUCH CUT, with an enemy near or not)
-  if (suNear() || suFl) return g.rdy[cuCmb % g.rdy.length];      // (v1.123 the FLAME mode has no flying slashes: the jab chain, with an enemy near or not)
+  if (suNear() || suFl || !suOwn('s_slash')) return g.rdy[cuCmb % g.rdy.length];      // (v1.123 the FLAME mode has no flying slashes: the jab chain, with an enemy near or not; v1.131 nor has he without the skill)
   return cuSn >= 2 && now >= (cuCd[8] || 0) ? 8 : 6 + (cuSn % 2);
 }
 function suNext(k) {      // blow k has started: the index of the combo that comes next (each chain keeps its own place)
@@ -133,18 +137,20 @@ function suLabel(g, now) {      // what the ATTACK button says: the blow that co
   const fresh = now > cuCmbBy;
   if (stance === 'crouch') return g.an[4 + (fresh ? 0 : cuCp)];
   if (suCl) return g.an[g.cl[(fresh ? 0 : cuCmb) % g.cl.length]];
-  if (suNear() || suFl) return g.an[g.rdy[(fresh ? 0 : cuCmb) % g.rdy.length]];
+  if (suNear() || suFl || !suOwn('s_slash')) return g.an[g.rdy[(fresh ? 0 : cuCmb) % g.rdy.length]];
   const sn = fresh ? 0 : cuSn; return sn >= 2 && now >= (cuCd[8] || 0) ? g.an[8] : g.an[6 + (sn % 2)];
 }
 
 // ---- v1.111 BLUE: the AIR CUT and the CUT STORM (the invisible slashes) and the bleeds that stack
 let suCast = null, suMk = 0;
-function suBlue(now) {      // the BLUE move this moment asks for (-1: none): in the flight of a jump (its pictures 3 to 11) DISMANTLE (12), crouched the LEG CUT (11), standing the CUT STORM (10) with the back direction held and otherwise the AIR CUT (9)
+function suBlue0(now) {      // the BLUE move this moment asks for (-1: none): in the flight of a jump (its pictures 3 to 11) DISMANTLE (12), crouched the LEG CUT (11), standing the CUT STORM (10) with the back direction held and otherwise the AIR CUT (9)
   if (suFl) return cuJumpAt < 0 && (stance === 'stand' || stance === 'crouch') ? 22 : -1;      // (v1.123 the FLAME mode has no variants: BLUE is OPEN, standing or crouched (he stands up for it), whichever way he holds, and nothing in the air)
   if (cuJumpAt >= 0) { const f = jumpFrame(Math.max(0, now - cuJumpAt)); return f >= 3 && f <= 11 ? (suCl ? 20 : 12) : -1; }
-  if (suCl) return stance === 'crouch' ? 19 : stance === 'stand' ? ((keyR || padR) && suClDashOk(now) ? 21 : 18) : -1;      // (v1.119 the CLEAVE mode: crouched the LIFT (19), in the air the DIVE (20), standing with FORWARD held and an enemy ahead the DASH CLEAVE (21), otherwise the CLEAVE (18))
-  return stance === 'crouch' ? 11 : stance === 'stand' ? (keyL || padL ? 10 : (keyR || padR) && suDashOk(now) ? 13 : 9) : -1;
+  if (suCl) return stance === 'crouch' ? 19 : stance === 'stand' ? ((keyR || padR) && suOwn('s_dcleave') && suClDashOk(now) ? 21 : 18) : -1;      // (v1.119 the CLEAVE mode: crouched the LIFT (19), in the air the DIVE (20), standing with FORWARD held and an enemy ahead the DASH CLEAVE (21), otherwise the CLEAVE (18))
+  return stance === 'crouch' ? 11 : stance === 'stand' ? ((keyL || padL) && suOwn('s_storm') ? 10 : (keyR || padR) && suOwn('s_dashslash') && suDashOk(now) ? 13 : 9) : -1;      // (a variant he has not bought falls back to the plain AIR CUT)
 }
+function suBlue(now) { const k = suBlue0(now); return k >= 0 && !suOwn(SU_BLUE_ID[k]) ? -1 : k; }      // (v1.131 the move BLUE plays: -1 when he has not bought it)
+const suBlueLocked = now => { const k = suBlue0(now); return k >= 0 && !suOwn(SU_BLUE_ID[k]); };      // (BLUE asks for a move he has not bought: LOCKED)
 function suBlueOk(k, now) {      // can this BLUE move start? DISMANTLE stops time, so it needs a living enemy in front of him on the screen that he can hit (not one lying down, held or beyond the edge): otherwise NO TARGET, and nothing is paid
   if (k === 19 || k === 20) {      // (v1.119 the LIFT needs the enemy within arm's reach, the DIVE one ahead of him within SU_CL.dive.range px)
     const r = k === 19 ? SU_CL.lift.reach : SU_CL.dive.range, d = dummy;
@@ -167,7 +173,7 @@ SU_BLUE_NAMES[20] = ['DIVE<br>CLEAVE', 'Dive Cleave (Cleave mode): he drops down
 SU_BLUE_NAMES[21] = ['DASH<br>CLEAVE', 'Dash Cleave (Cleave mode): he dashes forward and cleaves the enemy back for 5 percent of his health (10 energy; hold forward with the enemy within 120 pixels)'];
 SU_BLUE_NAMES[22] = ['OPEN', 'Open (Flame mode): flames light on his hands, he claps and plays with the fire like slime, takes the pose of an archer and lets go of a fire arrow that no guard can stop and that burns the enemy for 8 seconds (50 energy)'];
 function suBlueLabel(now) {      // the BLUE button's name (and what a screen reader hears): it changes with where he is and with the back direction
-  const k = suBlue(now), ix = k < 0 ? (suFl ? 22 : suCl ? 18 : 9) : k, n = ix === 22 && suDom && suDom.sink < 0 && dummy && dummy.ko < 0 && !suFg ? SU_FG_NAME : SU_BLUE_NAMES[ix], el = $('lapl');      // (v1.127 with the domain open OPEN is called FUGA)
+  const k = suBlue(now), ix = k < 0 ? (suFl ? 22 : suCl ? 18 : 9) : k, n = ix === 22 && suDom && suDom.sink < 0 && dummy && dummy.ko < 0 && !suFg && suOwn('s_fuga') ? SU_FG_NAME : SU_BLUE_NAMES[ix], el = $('lapl');      // (v1.127 with the domain open OPEN is called FUGA)
   if (el.innerHTML !== n[0]) { el.innerHTML = n[0]; $('lap').setAttribute('aria-label', n[1]); }
 }
 function suBleed(d, now, ms) {      // one more bleed on the enemy (every slash that lands adds one, the counter's too): it lasts ms (SU_BLEED.ms: 4 s, DISMANTLE's 8 s) and takes SU_BLEED.dm every SU_BLEED.gap ms; they stack: d.bleed.st lists when each one ends and vpBleed takes dm for every one that is still on; returns how many are on
@@ -334,7 +340,7 @@ function suTsDash(T) {      // the game is stopped (DASH SLASH): the impact fram
 
 // ---- v1.119 CLEAVE (the MODE button): he switches in silence: nothing is heard, said or lit on the field (the enemy cannot tell), only the buttons change (MODE shows CLEAVE and glows, ATTACK and BLUE get new names). ATTACK becomes a melee chain whether an enemy is near or not: R.HOOK and L.HOOK (the jabs' own pictures and numbers), ELBOW (12 damage) and TOUCH CUT: he lays a hand on the enemy and slashes him for exactly 1% of the enemy's full health (a guard stops it). BLUE becomes CLEAVE (5 energy): the same touch and cut, but 5% of the enemy's full health, and a guard is broken. Crouched it is the LIFT CLEAVE (10 energy: he lifts the enemy up with one hand and slashes his head), in the air the DIVE CLEAVE (10: he drops on the enemy, grabs him and cleaves him to the ground, knocked down), standing with FORWARD held and an enemy within 120 px the DASH CLEAVE (10: he dashes at him and cleaves him back, a hop and a long knock-back). The 1% and 5% are taken from the enemy's full health (dummy.max) whatever his level, and the cut is blocked or missed like any hit. The three BLUE states are states of g.cs like DISMANTLE (nothing touches him meanwhile, suHit); the CLEAVE and TOUCH CUT are blows with events. The mode is off at the start of every round. See suToggle, suClHit, suClStep.
 let suCl = false, suFl = false;
-function suToggle() { if (!suCl && !suFl) suCl = true; else if (suCl) { suCl = false; suFl = true; } else suFl = false; cuCmb = cuSn = cuCp = 0; cuCmbBy = 0; }      // MODE: OFF > CLEAVE > FLAME > OFF (v1.120: one more tap goes on to FLAME); the blows start from the first one again; no sound, no word, no light on the field
+function suToggle() { const cl = suOwn('s_cleave'), fl = suOwn('s_flame'); if (!suCl && !suFl) { if (cl) suCl = true; else if (fl) suFl = true; else return; } else if (suCl) { suCl = false; if (fl) suFl = true; } else suFl = false; cuCmb = cuSn = cuCp = 0; cuCmbBy = 0; }      // MODE: OFF > CLEAVE > FLAME > OFF (v1.120: one more tap goes on to FLAME); the blows start from the first one again; no sound, no word, no light on the field
 function suReset() { suCl = suFl = false; suArrows.length = 0; suFlBursts.length = 0; suFlTalk = null; if (dummy) dummy.sburn = null; suDom = suDomPt = null; suDomSl.length = 0; domReadyAt = 0; suFgEnd(pnow()); }      // (a new round: both modes off, no arrow in the air, no burn, no domain and the ULTIMATE ready again)
 function suModeUI() {      // every frame: the MODE button's name and light and the BLUE button's colour follow the mode (setModeUI writes the buttons too, so it is checked every time, like the BLUE label): CLEAVE lights MODE blue, FLAME lights MODE and BLUE orange
   const el = $('cel'), b = $('ce'), lp = $('lap'), want = 'MODE<br>' + (suFl ? 'FLAME' : suCl ? 'CLEAVE' : 'OFF'), p = suCl || suFl ? 'true' : 'false', aria = suFl ? 'Mode: Flame is on, tap to switch it off. BLUE is Open: a fire arrow that burns the enemy' : suCl ? 'Mode: Cleave is on, tap for Flame. The enemy cannot tell' : 'Mode: tap to switch Cleave on, tap again for Flame. The enemy cannot tell';
@@ -469,7 +475,7 @@ function suFlBuild() {      // the flame pictures, made once: flames of 4 sizes 
   suFlSpr = { fire: [[8, 13], [12, 20], [18, 30], [26, 42]].map(([w, h]) => Array.from({ length: 6 }, (_, f) => suFlFlame(w, h, f))), arrow: Array.from({ length: 10 }, (_, f) => suFlArrow(f)) };
 }
 function suFlStart(now) {      // BLUE 22 (OPEN) has started: the cast is a state of its own; the enemy is not touched at all; from the crouch he stands up first (v1.127 with the domain open and the enemy alive it is FUGA, the cutscene: suFgBegin)
-  const fg = !!(suDom && suDom.sink < 0 && dummy && dummy.ko < 0); stance = 'stand'; stickCr = false; suFlBuild(); CU_GAME[3].cs = { fl: true, ph: 'light', t0: now, pic: 0, t: 0, fuga: fg }; suFlTalk = fg ? null : { t0: now }; if (fg) suFgBegin(now);
+  const fg = !!(suDom && suDom.sink < 0 && dummy && dummy.ko < 0 && suOwn('s_fuga')); stance = 'stand'; stickCr = false; suFlBuild(); CU_GAME[3].cs = { fl: true, ph: 'light', t0: now, pic: 0, t: 0, fuga: fg }; suFlTalk = fg ? null : { t0: now }; if (fg) suFgBegin(now);
 }
 function suFlStep(g, c, now) {      // OPEN, every frame: the events of the cast and the picture to show
   if (c.fuga) return suFgStep(g, c, now);      // (v1.127 FUGA: the same cast on a slowed time, with the cutscene's own events)

@@ -208,7 +208,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.130</small>
+    <small id="ver">V1.131</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -1877,7 +1877,7 @@ const assistLvl = () => vs && vs.net ? 0 : SET.assist;      // (assist is for th
 const soft = dm => assistLvl() >= 2 ? Math.max(1, Math.round(dm * 0.7)) : dm;      // EASY: 30% less damage to you
 const autoGuard = () => assistLvl() >= 3 && !lacks('blk') && stance === 'stand' && atkAt < 0 && lpAt < 0 && jumpAt < 0 && teleAt < 0 && dgAt < 0 && mbAt < 0 && !dash && !keyL && !keyR && !padL && !padR;      // AUTO-GUARD: standing still with nothing going on, the front is guarded as if BLOCK were held
 const freePlay = () => state === 'play' && (!vs || !!vs.practice);      // v1.14 FREE PLAY (the fighter select screen): in it every move of every fighter is free
-const NET_NO = new Set(['y_inherit', 'y_pierce', 'y_shrine', 'y_cleave', 'y_simple', 'y_hometown']), owns = id => id === 'freddy' || id === 'sukuna' || freePlay() || (vs && vs.net ? !NET_NO.has(id) : vs && vs.tn ? TN_KIT.has(id) : !!PROG.own[id]), gojoMe = () => !vs || vs.me === 'gojo', fredMe = () => !!vs && vs.me === 'freddy';
+const NET_NO = new Set(['y_inherit', 'y_pierce', 'y_shrine', 'y_cleave', 'y_simple', 'y_hometown']), owns = id => id === 'freddy' || freePlay() || (vs && vs.net ? !NET_NO.has(id) : vs && vs.tn ? TN_KIT.has(id) : !!PROG.own[id]), gojoMe = () => !vs || vs.me === 'gojo', fredMe = () => !!vs && vs.me === 'freddy';
 const meK = () => !vs ? 'g' : vs.me === 'yuji' ? 'y' : vs.me === 'verity' ? 'v' : vs.me === 'cat' ? 'k' : 'g';      // the fighter you play: g = Gojo (and everything outside a match), y = Yuji, v = Verity, k = the Cat
 const setMoneyUI = () => { const t = 'MONEY $' + PROG.m; for (const id of ['modesMoney', 'chalMoney', 'skMoney', 'codeMoney']) $(id).textContent = t; };
 const earn = n => { PROG.m += n; saveProg(); setMoneyUI(); };
@@ -1902,7 +1902,7 @@ const SK_GOJO = [      // [id, name, what it does, price, needs]
   ['rct1', 'RCT 1', 'REVERSE CURSED TECHNIQUE: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). EACH ONE IS WHOLE AGAIN 15 SECONDS AFTER IT HAPPENED. NEEDS THE FATALITY.', 1500, ['fatal']],
   ['rct2', 'RCT 2', 'REVERSE CURSED TECHNIQUE 2: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). EACH ONE IS WHOLE AGAIN 10 SECONDS AFTER IT HAPPENED.', 2500, ['rct1']],
   ['rct3', 'RCT 3', 'REVERSE CURSED TECHNIQUE 3: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). UNDER 5 SECONDS: THE WORSE THE INJURY THE LONGER IT TAKES, A SMALL ONE IS HEALED ALMOST AT ONCE.', 4000, ['rct2']]];
-const SK_CHAR = [['yuji', 'YUJI ITADORI', 'FIGHT AS OR AGAINST YUJI IN VERSUS, ALL HIS MOVES', 1500, []], ['verity', 'VERITY', 'FIGHT AS OR AGAINST VERITY IN VERSUS, ALL HIS MOVES', 1800, []], ['cat', 'CARTOON CAT', 'FIGHT AS OR AGAINST THE CAT IN VERSUS, ALL HIS MOVES', 2200, []], ['sukuna', 'SUKUNA', 'THE KING OF CURSES. HE FIGHTS IN FREE PLAY, WITH ALL HIS MOVES. HIS TREE SELLS THE RCT', 0, []]];
+const SK_CHAR = [['yuji', 'YUJI ITADORI', 'FIGHT AS OR AGAINST YUJI IN VERSUS, ALL HIS MOVES', 1500, []], ['verity', 'VERITY', 'FIGHT AS OR AGAINST VERITY IN VERSUS, ALL HIS MOVES', 1800, []], ['cat', 'CARTOON CAT', 'FIGHT AS OR AGAINST THE CAT IN VERSUS, ALL HIS MOVES', 2200, []], ['sukuna', 'SUKUNA', 'THE KING OF CURSES: FIGHT AS HIM IN FREE PLAY. HIS TREE SELLS ALL HIS MOVES', 3000, []]];
 const SK_YUJI = [      // (v1.11) the moves of Yuji, bought like Gojo's; only walking, jumping and the M1 combo are free
   ['y_crouch', 'CROUCH', 'DOWN ON THE STICK OR KEY S: DUCK UNDER HIGH HITS (3% ENERGY)', 50, []],
   ['y_dash', 'DASH', 'A QUICK EVADE FORWARD OR BACK THAT DODGES HITS', 80, []],
@@ -1965,10 +1965,26 @@ const SK_CAT = [
   ['k_rct1', 'RCT 1', 'REVERSE CURSED TECHNIQUE: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). EACH ONE IS WHOLE AGAIN 20 SECONDS AFTER IT HAPPENED. NEEDS THE FATALITY.', 1500, ['k_fatal']],
   ['k_rct2', 'RCT 2', 'REVERSE CURSED TECHNIQUE 2: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). EACH ONE IS WHOLE AGAIN 14 SECONDS AFTER IT HAPPENED.', 2500, ['k_rct1']],
   ['k_rct3', 'RCT 3', 'REVERSE CURSED TECHNIQUE 3: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). EACH ONE IS WHOLE AGAIN 7 SECONDS AFTER IT HAPPENED.', 4000, ['k_rct2']]];
-const SK_SUKUNA = [      // (v1.129 Sukuna fights in free play only and has no moves to buy: his tree is the RCT, which is bought for real even in free play)
+const SK_SUKUNA = [      // (v1.131 SUKUNA IN THE SHOP: he is bought in CHARACTERS ($3000), then every move but walking, jumping and the first blows (jab, jab, kick, counter) is a node here, bought for real even in free play; the RCT comes last)
+  ['s_crouch', 'CROUCH', 'DOWN ON THE STICK OR KEY S: DUCK DOWN (3% ENERGY). THE LOW MOVES NEED IT', 50, []],
+  ['s_cpunch', 'CROUCH PUNCHES', 'ATTACK WHILE CROUCHED: LOW PUNCHES THAT HIT DUCKING ENEMIES', 120, ['s_crouch']],
+  ['s_slash', 'FLYING SLASHES', 'ATTACK WITH NO ENEMY NEAR: A FLYING SLASH THAT NO GUARD STOPS (RIGHT HAND, LEFT HAND, THEN BOTH HANDS EVERY 5 SECONDS). WITHOUT IT ATTACK IS ALWAYS THE JAB COMBO', 150, []],
+  ['s_air', 'AIR CUT', 'BLUE: AN INVISIBLE SLASH CUTS THE ENEMY AT ONCE, WHEREVER HE STANDS ON THE SCREEN, AND HE BLEEDS (5% ENERGY)', 250, []],
+  ['s_storm', 'CUT STORM', 'BACK + BLUE: EIGHT INVISIBLE SLASHES. THE ENEMY IS STUNNED FOR 3 SECONDS AND BLEEDS MORE WITH EVERY ONE (25% ENERGY)', 400, ['s_air']],
+  ['s_leg', 'LEG CUT', 'CROUCH + BLUE: AN INVISIBLE SLASH CUTS THE ENEMY\'S LEGS, HE DROPS TO HIS KNEES FOR 0.8 SECONDS AND EVERY HIT LANDS (10% ENERGY)', 300, ['s_air', 's_crouch']],
+  ['s_dismantle', 'DISMANTLE', 'JUMP + BLUE: HE DASHES BACK IN THE AIR AND POINTS. TIME STOPS AND THREE CUTS HIT THE ENEMY\'S CHEST, HE BLEEDS FOR 8 SECONDS (20% ENERGY)', 600, ['s_air']],
+  ['s_dashslash', 'DASH SLASH', 'FORWARD + BLUE WITH AN ENEMY NEAR: HE DASHES BEHIND THE ENEMY, TIME STOPS AND THE CUT LANDS ON HIS BACK', 500, ['s_air']],
+  ['s_cleave', 'CLEAVE MODE', 'THE MODE BUTTON: CLEAVE MODE. ATTACK BECOMES THE MELEE CHAIN (R.HOOK, L.HOOK, ELBOW, TOUCH CUT) AND BLUE IS THE CLEAVE: 5% OF HIS HEALTH, NO GUARD STOPS IT (5% ENERGY)', 700, []],
+  ['s_lift', 'LIFT CLEAVE', 'CLEAVE MODE, CROUCHED + BLUE: HE LIFTS THE ENEMY WITH ONE HAND AND SLASHES HIS HEAD (10% ENERGY)', 300, ['s_cleave', 's_crouch']],
+  ['s_dive', 'DIVE CLEAVE', 'CLEAVE MODE, IN THE AIR + BLUE: HE DROPS ON THE ENEMY AND CLEAVES HIM TO THE GROUND (10% ENERGY)', 350, ['s_cleave']],
+  ['s_dcleave', 'DASH CLEAVE', 'CLEAVE MODE, FORWARD + BLUE WITH AN ENEMY NEAR: HE DASHES AT THE ENEMY AND CLEAVES HIM BACK (10% ENERGY)', 400, ['s_cleave']],
+  ['s_flame', 'FLAME MODE', 'THE MODE BUTTON AGAIN: FLAME MODE. BLUE IS OPEN: FLAMES, A CLAP, AN ARCHER\'S POSE AND A FIRE ARROW THAT NO GUARD STOPS AND THAT BURNS THE ENEMY FOR 8 SECONDS (50% ENERGY)', 900, ['s_cleave']],
+  ['s_domain', 'MALEVOLENT SHRINE', 'THE DOMAIN BUTTON: HIS ULTIMATE. FOR 20 SECONDS EVERY SLASH OF THE SHRINE CUTS THE ENEMY, ABOUT 1% OF HIS HEALTH EVERY HALF SECOND (67% ENERGY)', 2000, ['s_cleave']],
+  ['s_fuga', 'FUGA', 'WITH THE DOMAIN OPEN, FLAME MODE + BLUE IS FUGA: A 12 SECOND CUTSCENE, 40% OF HIS HEALTH AND A BURN (50% ENERGY)', 2500, ['s_flame', 's_domain']],
   ['s_rct1', 'RCT 1', 'REVERSE CURSED TECHNIQUE: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). EACH ONE IS WHOLE AGAIN 15 SECONDS AFTER IT HAPPENED. HE HAS NO FATALITY, SO NOTHING IS NEEDED FIRST.', 1500, []],
   ['s_rct2', 'RCT 2', 'REVERSE CURSED TECHNIQUE 2: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). EACH ONE IS WHOLE AGAIN 8 SECONDS AFTER IT HAPPENED.', 2500, ['s_rct1']],
-  ['s_rct3', 'RCT 3', 'REVERSE CURSED TECHNIQUE 3: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). UP TO 4 SECONDS: THE WORSE THE INJURY THE LONGER IT TAKES, A SMALL ONE IS HEALED ALMOST AT ONCE.', 4000, ['s_rct2']]];
+  ['s_rct3', 'RCT 3', 'REVERSE CURSED TECHNIQUE 3: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). UP TO 4 SECONDS: THE WORSE THE INJURY THE LONGER IT TAKES, A SMALL ONE IS HEALED ALMOST AT ONCE.', 4000, ['s_rct2']]
+];
 const SKN = {}; for (const s of [].concat(SK_GOJO, SK_YUJI, SK_VERITY, SK_CAT, SK_SUKUNA, SK_CHAR)) SKN[s[0]] = s[1];
 const GATE = {      // for each fighter the skill each button needs (a button that is not listed is free): cr crouch, dash, blk block, cp crouched punches, ce MODE, dom DOMAIN, fat FATALITY, bl BLUE (Verity and the Cat; Gojo's and Yuji's BLUE depends on the mode, the air and the stance: gateBlue)
   g: { cr: 'crouch', dash: 'dash', blk: 'block', cp: 'cpunch', ce: 'ce', dom: 'domain', fat: 'fatal', hv: 'heavy', cn: 'cancel', sn: 'sense' },
@@ -1976,7 +1992,7 @@ const GATE = {      // for each fighter the skill each button needs (a button th
   v: { cr: 'v_crouch', dash: 'v_tele', blk: 'v_block', ce: 'v_ball', dom: 'v_scare', fat: 'v_fatal', bl: 'v_bite', hv: 'v_heavy', cn: 'v_cancel', ac: 'v_air', sn: 'v_sense' },
   k: { cr: 'k_crouch', dash: 'k_dash', blk: 'k_block', dom: 'k_ult', fat: 'k_fatal', bl: 'k_toon', hv: 'k_heavy', cn: 'k_cancel', sn: 'k_sense' } };
 const BLUES = { g: ['blue', 'tele', 'mblue'], y: ['y_div', 'y_sweep', 'y_rush', 'y_conc', 'y_elbow', 'y_upper', 'y_flash'], v: ['v_bite'], k: ['k_toon', 'k_kick', 'k_lift'] };
-const lacks = key => { if (fredMe()) return false; const need = GATE[meK()][key]; return !!need && !owns(need); };      // true when the fighter you play has not bought what this button needs
+const lacks = key => { if (fredMe()) return false; if (vs && vs.me === 'cu3') { const need = SUK_GATE[key]; return !!need && !suOwn(need); } const need = GATE[meK()][key]; return !!need && !owns(need); };      // (v1.131 Sukuna: his own skills, bought for real even in free play, see tools/sukuna.js)      // true when the fighter you play has not bought what this button needs
 let lockSayAt = -1e9;
 function lockPop(now) { if (now - lockSayAt > 1200) { lockSayAt = now; say('LOCKED: BUY IT IN SKILLS', wx, '#ff8a7a', 8, now); } }
 function gateSkills(now) {                    // every frame, before the controls are read: a move you do not own is simply not there (any fighter)
@@ -2001,7 +2017,7 @@ function gateBlue(now, jf, tf) {              // BLUE of Gojo: teleport up in th
 }
 function skillUI() {                          // the buttons of a move you do not own are dimmed and marked
   const L = (id, key) => $(id).classList.toggle('lk', lacks(key));
-  L('blk', 'blk'); L('dash', 'dash'); L('ce', 'ce'); L('dom', 'dom'); L('fat', 'fat'); $('lap').classList.toggle('lk', !fredMe() && !BLUES[meK()].some(owns));
+  L('blk', 'blk'); L('dash', 'dash'); L('ce', 'ce'); L('dom', 'dom'); L('fat', 'fat'); $('lap').classList.toggle('lk', !fredMe() && !(vs && vs.me === 'cu3' ? Object.values(SU_BLUE_ID).some(suOwn) : BLUES[meK()].some(owns)));
 }
 function leavePlay() { if (cuTest) { cuTestBack(); return; } if (vs && vs.net) lanLeave(); else if (vs && vs.hunt) { show('chal'); buildHunts(); } else if (vs && vs.cv) { show('chal'); buildChal(); } else show('select'); }
 
@@ -2302,7 +2318,7 @@ const SK_LAY = {      // where every node sits, [column, row] (the root is colum
   y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 4.5], y_pierce: [5, 3], y_shrine: [5, 4], y_cleave: [5, 5], y_simple: [5, 6], y_ult: [4, 5.7], y_fatal: [4, 6.7], y_div: [1, 6], y_rush: [2, 6], y_heavy: [1, 4.7], y_cancel: [3, 1.5], y_sense: [1, 7], y_hometown: [6, 3.5], y_rct1: [5, 7.5], y_rct2: [6, 7.5], y_rct3: [7, 7.5] },
   v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5], v_heavy: [1, 4.5], v_cancel: [3, 0.8], v_air: [2, 4.5], v_pounce: [3, 3.5], v_sense: [1, 5.6], v_rip: [3, 4.6], v_lag: [3, 5.7] },
   k: { _root: [0, 1], k_crouch: [1, 0], k_fatal: [3, 0], k_dash: [1, 1], k_toon: [2, 1], k_stomp: [3, 1], k_kick: [3, 3], k_lift: [3, 4], k_hang: [2, 3], k_block: [1, 2], k_ult: [3, 2], k_heavy: [1, 3], k_cancel: [2, 0], k_sense: [1, 4], k_rct1: [4, 0], k_rct2: [5, 0], k_rct3: [6, 0] },
-  s: { _root: [0, 0.5], s_rct1: [1, 0.5], s_rct2: [2, 0.5], s_rct3: [3, 0.5] },
+  s: { _root: [0, 4], s_crouch: [1, 0], s_slash: [1, 1], s_air: [1, 2], s_cleave: [1, 6.5], s_cpunch: [2, 0], s_leg: [2, 1], s_dashslash: [2, 2], s_storm: [2, 3], s_dismantle: [2, 4], s_lift: [2, 5.5], s_dive: [2, 6.5], s_dcleave: [2, 7.5], s_flame: [2, 8.5], s_domain: [2, 9.5], s_fuga: [3, 9], s_rct1: [1, 11], s_rct2: [2, 11], s_rct3: [3, 11] },
   c: { _root: [0, 1.5], yuji: [1, 0], verity: [1, 1], cat: [1, 2], sukuna: [1, 3] } };
 const SK_ALL = { y: 'y_hometown' };      // (v1.50 the node of a tab that needs every other node of it: no routed lines, a web of thin straight lines from every node instead)
 const SKI = {}; for (const [t, , rows] of SK_TABS) for (const r of rows) SKI[r[0]] = { r, t };
@@ -7892,6 +7908,7 @@ function cuSelRefresh() {
     b.addEventListener('click', () => { NAMES['cu' + i] = CU_GAME[i].name; startPractice('cu' + i); }); row.appendChild(b);
   });
   $('selCuLab').style.display = n ? '' : 'none'; row.style.display = n ? '' : 'none';
+  { const sk = document.querySelector('#select [data-who="cu3"]'); if (sk) { const has = suHas(); sk.disabled = !has; sk.querySelector('i').textContent = has ? 'FREE PLAY' : 'LOCKED: $3000 IN SKILLS'; } }      // (v1.131 Sukuna's card is open once he is bought in SKILLS > CHARACTERS)
 }
 // ---- v1.85 HITBOXES: a custom fighter is measured on its own drawings, like everyone (see HB_TIP in the engine): its body is its idle pictures (the widest every row gets), the limb of an IMPACT is the picture it lands on and the next one, a shot is its drawing; a row of a drawing sits on the row (picture row - 1) of the tables because a custom picture is drawn 61 px above the floor line
 function cuSpan(art, key) {      // the rows of a drawing: { row: [farthest pixel behind its middle column, farthest in front of it] }
@@ -8011,7 +8028,8 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
     else if (g.yu && k === 3) suStart(g, now);      // (the 4th blow of a built-in fighter is his COUNTER: see suStart in sukuna.js)
     else if (!st.c || ceSpend(st.c * 100 / cuS.em, now)) { cuAtkK = k; cuAtkAt = now; cuFired = []; cuRes = []; cuLunged = 0; cuMs = 1000 / st.v; cuCd[k] = st.d ? now + st.d * 1000 : 0; cuCmbBy = now + 1e9; cuCmb = g.yu ? suNext(k) : (cuCmb + 1) % g.rdy.length; snd('swing', k); }
   }
-  const bk = g && g.blue ? suBlue(now) : -1;      // (v1.112 the BLUE move this stance asks for: standing the AIR CUT or, holding back, the CUT STORM; crouched the LEG CUT; in the air DISMANTLE; -1 = none)
+  const bk = g && g.blue ? suBlue(now) : -1; if (lpr && ctl && g && g.blue && bk < 0 && suBlueLocked(now)) lockPop(now);      // (v1.131 a BLUE move he has not bought: LOCKED)
+       // (v1.112 the BLUE move this stance asks for: standing the AIR CUT or, holding back, the CUT STORM; crouched the LEG CUT; in the air DISMANTLE; -1 = none)
   if (lpr && g && g.blue && cuAtkAt >= 0 && !g.cs) cuLpQ = now + 300;      // (v1.111: a BLUE press while a blow is being thrown is kept for 0.3 s)
   if ((lpr || (cuLpQ > now && cuAtkAt < 0)) && ctl && bk >= 0 && cuAtkAt < 0 && !cuDash && blkAt < 0 && !g.cs) {      // (BLUE of a built-in fighter: his own move, see suBlue in sukuna.js; it is paid for and played like a blow)
     cuLpQ = 0; const st = g.set[bk];
@@ -8390,6 +8408,10 @@ const SU_CL = { reach: 44, touchHold: 450, m1: 1, blue: 5, cost: { stand: 5, lif
 const SU_MARKS = [[-10, -52, 12, -12], [12, -54, -10, -14], [-12, -36, 14, -30], [-8, -58, 8, -8], [10, -44, -12, -22], [-12, -26, 12, -42], [-6, -58, 10, -10], [12, -30, -12, -48]];      // where the cut of each slash shows across the enemy (x0, y0, x1, y1 from his middle on the floor line), every one another line
 const SU_WAIT = 2000, SU_DODGE = { ms: 233, px: 30, from: 2, n: 7 }, SU_SLASH = { fps: 30, hit: 7, stand: 24, max: 80 }, SU_BLEED = { ms: 4000, gap: 30, dm: 0.1 };      // the counter: how long he waits (ms); the dodge (ms, how far back, the first picture of Yuji's back dash and how many are used); the slash (pictures a second, the picture the cut lands on, how far from the enemy he stops, the longest step) and the bleeding (ms, ms between two ticks, health a tick)
 NAMES[SUK_WHO] = 'SUKUNA'; CEC[SUK_WHO] = ['#2a0a12', '#d02a3a', '#ffb0b8', '#ff7a86'];      // (his name on the HUD and his energy bar: crimson)
+// ---- v1.131 SUKUNA IN THE SHOP: he is bought ($3000, SKILLS > CHARACTERS) and so is every move but walking, jumping and the first blows (jab, jab, kick, counter), even in free play (window.__suAll: the automatic tests of the older versions play him with everything)
+const suOwn = id => !!window.__suAll || !!PROG.own[id], suHas = () => !!window.__suAll || !!PROG.own.sukuna;
+const SUK_GATE = { cr: 's_crouch', cp: 's_cpunch', ce: 's_cleave', dom: 's_domain' };      // (the buttons lacks() asks about for him, see template.html)
+const SU_BLUE_ID = { 9: 's_air', 10: 's_storm', 11: 's_leg', 12: 's_dismantle', 13: 's_dashslash', 18: 's_cleave', 19: 's_lift', 20: 's_dive', 21: 's_dcleave', 22: 's_flame' };      // (the skill each BLUE move needs)
 (() => {
   const im = new Image();
   im.onload = () => {      // the strip is cut into 64 x 64 pictures, a row for each move (until then he is not there: his card shows nothing and a match shows no picture)
@@ -8491,7 +8513,7 @@ function suNear() {      // is a living enemy standing in front of him within SU
 function suPick(g, now) {      // the blow ATTACK plays now: crouched, the crouch punches in turn; standing with an enemy near, the combo (jab, jab, kick, counter); standing with none near, the slashes: right hand, left hand, then both hands if the 5 s of the X are over (otherwise another single slash)
   if (stance === 'crouch') return 4 + cuCp;
   if (suCl) return g.cl[cuCmb % g.cl.length];      // (v1.119 the CLEAVE mode: always the melee chain, R.HOOK, L.HOOK, ELBOW, TOUCH CUT, with an enemy near or not)
-  if (suNear() || suFl) return g.rdy[cuCmb % g.rdy.length];      // (v1.123 the FLAME mode has no flying slashes: the jab chain, with an enemy near or not)
+  if (suNear() || suFl || !suOwn('s_slash')) return g.rdy[cuCmb % g.rdy.length];      // (v1.123 the FLAME mode has no flying slashes: the jab chain, with an enemy near or not; v1.131 nor has he without the skill)
   return cuSn >= 2 && now >= (cuCd[8] || 0) ? 8 : 6 + (cuSn % 2);
 }
 function suNext(k) {      // blow k has started: the index of the combo that comes next (each chain keeps its own place)
@@ -8504,18 +8526,20 @@ function suLabel(g, now) {      // what the ATTACK button says: the blow that co
   const fresh = now > cuCmbBy;
   if (stance === 'crouch') return g.an[4 + (fresh ? 0 : cuCp)];
   if (suCl) return g.an[g.cl[(fresh ? 0 : cuCmb) % g.cl.length]];
-  if (suNear() || suFl) return g.an[g.rdy[(fresh ? 0 : cuCmb) % g.rdy.length]];
+  if (suNear() || suFl || !suOwn('s_slash')) return g.an[g.rdy[(fresh ? 0 : cuCmb) % g.rdy.length]];
   const sn = fresh ? 0 : cuSn; return sn >= 2 && now >= (cuCd[8] || 0) ? g.an[8] : g.an[6 + (sn % 2)];
 }
 
 // ---- v1.111 BLUE: the AIR CUT and the CUT STORM (the invisible slashes) and the bleeds that stack
 let suCast = null, suMk = 0;
-function suBlue(now) {      // the BLUE move this moment asks for (-1: none): in the flight of a jump (its pictures 3 to 11) DISMANTLE (12), crouched the LEG CUT (11), standing the CUT STORM (10) with the back direction held and otherwise the AIR CUT (9)
+function suBlue0(now) {      // the BLUE move this moment asks for (-1: none): in the flight of a jump (its pictures 3 to 11) DISMANTLE (12), crouched the LEG CUT (11), standing the CUT STORM (10) with the back direction held and otherwise the AIR CUT (9)
   if (suFl) return cuJumpAt < 0 && (stance === 'stand' || stance === 'crouch') ? 22 : -1;      // (v1.123 the FLAME mode has no variants: BLUE is OPEN, standing or crouched (he stands up for it), whichever way he holds, and nothing in the air)
   if (cuJumpAt >= 0) { const f = jumpFrame(Math.max(0, now - cuJumpAt)); return f >= 3 && f <= 11 ? (suCl ? 20 : 12) : -1; }
-  if (suCl) return stance === 'crouch' ? 19 : stance === 'stand' ? ((keyR || padR) && suClDashOk(now) ? 21 : 18) : -1;      // (v1.119 the CLEAVE mode: crouched the LIFT (19), in the air the DIVE (20), standing with FORWARD held and an enemy ahead the DASH CLEAVE (21), otherwise the CLEAVE (18))
-  return stance === 'crouch' ? 11 : stance === 'stand' ? (keyL || padL ? 10 : (keyR || padR) && suDashOk(now) ? 13 : 9) : -1;
+  if (suCl) return stance === 'crouch' ? 19 : stance === 'stand' ? ((keyR || padR) && suOwn('s_dcleave') && suClDashOk(now) ? 21 : 18) : -1;      // (v1.119 the CLEAVE mode: crouched the LIFT (19), in the air the DIVE (20), standing with FORWARD held and an enemy ahead the DASH CLEAVE (21), otherwise the CLEAVE (18))
+  return stance === 'crouch' ? 11 : stance === 'stand' ? ((keyL || padL) && suOwn('s_storm') ? 10 : (keyR || padR) && suOwn('s_dashslash') && suDashOk(now) ? 13 : 9) : -1;      // (a variant he has not bought falls back to the plain AIR CUT)
 }
+function suBlue(now) { const k = suBlue0(now); return k >= 0 && !suOwn(SU_BLUE_ID[k]) ? -1 : k; }      // (v1.131 the move BLUE plays: -1 when he has not bought it)
+const suBlueLocked = now => { const k = suBlue0(now); return k >= 0 && !suOwn(SU_BLUE_ID[k]); };      // (BLUE asks for a move he has not bought: LOCKED)
 function suBlueOk(k, now) {      // can this BLUE move start? DISMANTLE stops time, so it needs a living enemy in front of him on the screen that he can hit (not one lying down, held or beyond the edge): otherwise NO TARGET, and nothing is paid
   if (k === 19 || k === 20) {      // (v1.119 the LIFT needs the enemy within arm's reach, the DIVE one ahead of him within SU_CL.dive.range px)
     const r = k === 19 ? SU_CL.lift.reach : SU_CL.dive.range, d = dummy;
@@ -8538,7 +8562,7 @@ SU_BLUE_NAMES[20] = ['DIVE<br>CLEAVE', 'Dive Cleave (Cleave mode): he drops down
 SU_BLUE_NAMES[21] = ['DASH<br>CLEAVE', 'Dash Cleave (Cleave mode): he dashes forward and cleaves the enemy back for 5 percent of his health (10 energy; hold forward with the enemy within 120 pixels)'];
 SU_BLUE_NAMES[22] = ['OPEN', 'Open (Flame mode): flames light on his hands, he claps and plays with the fire like slime, takes the pose of an archer and lets go of a fire arrow that no guard can stop and that burns the enemy for 8 seconds (50 energy)'];
 function suBlueLabel(now) {      // the BLUE button's name (and what a screen reader hears): it changes with where he is and with the back direction
-  const k = suBlue(now), ix = k < 0 ? (suFl ? 22 : suCl ? 18 : 9) : k, n = ix === 22 && suDom && suDom.sink < 0 && dummy && dummy.ko < 0 && !suFg ? SU_FG_NAME : SU_BLUE_NAMES[ix], el = $('lapl');      // (v1.127 with the domain open OPEN is called FUGA)
+  const k = suBlue(now), ix = k < 0 ? (suFl ? 22 : suCl ? 18 : 9) : k, n = ix === 22 && suDom && suDom.sink < 0 && dummy && dummy.ko < 0 && !suFg && suOwn('s_fuga') ? SU_FG_NAME : SU_BLUE_NAMES[ix], el = $('lapl');      // (v1.127 with the domain open OPEN is called FUGA)
   if (el.innerHTML !== n[0]) { el.innerHTML = n[0]; $('lap').setAttribute('aria-label', n[1]); }
 }
 function suBleed(d, now, ms) {      // one more bleed on the enemy (every slash that lands adds one, the counter's too): it lasts ms (SU_BLEED.ms: 4 s, DISMANTLE's 8 s) and takes SU_BLEED.dm every SU_BLEED.gap ms; they stack: d.bleed.st lists when each one ends and vpBleed takes dm for every one that is still on; returns how many are on
@@ -8705,7 +8729,7 @@ function suTsDash(T) {      // the game is stopped (DASH SLASH): the impact fram
 
 // ---- v1.119 CLEAVE (the MODE button): he switches in silence: nothing is heard, said or lit on the field (the enemy cannot tell), only the buttons change (MODE shows CLEAVE and glows, ATTACK and BLUE get new names). ATTACK becomes a melee chain whether an enemy is near or not: R.HOOK and L.HOOK (the jabs' own pictures and numbers), ELBOW (12 damage) and TOUCH CUT: he lays a hand on the enemy and slashes him for exactly 1% of the enemy's full health (a guard stops it). BLUE becomes CLEAVE (5 energy): the same touch and cut, but 5% of the enemy's full health, and a guard is broken. Crouched it is the LIFT CLEAVE (10 energy: he lifts the enemy up with one hand and slashes his head), in the air the DIVE CLEAVE (10: he drops on the enemy, grabs him and cleaves him to the ground, knocked down), standing with FORWARD held and an enemy within 120 px the DASH CLEAVE (10: he dashes at him and cleaves him back, a hop and a long knock-back). The 1% and 5% are taken from the enemy's full health (dummy.max) whatever his level, and the cut is blocked or missed like any hit. The three BLUE states are states of g.cs like DISMANTLE (nothing touches him meanwhile, suHit); the CLEAVE and TOUCH CUT are blows with events. The mode is off at the start of every round. See suToggle, suClHit, suClStep.
 let suCl = false, suFl = false;
-function suToggle() { if (!suCl && !suFl) suCl = true; else if (suCl) { suCl = false; suFl = true; } else suFl = false; cuCmb = cuSn = cuCp = 0; cuCmbBy = 0; }      // MODE: OFF > CLEAVE > FLAME > OFF (v1.120: one more tap goes on to FLAME); the blows start from the first one again; no sound, no word, no light on the field
+function suToggle() { const cl = suOwn('s_cleave'), fl = suOwn('s_flame'); if (!suCl && !suFl) { if (cl) suCl = true; else if (fl) suFl = true; else return; } else if (suCl) { suCl = false; if (fl) suFl = true; } else suFl = false; cuCmb = cuSn = cuCp = 0; cuCmbBy = 0; }      // MODE: OFF > CLEAVE > FLAME > OFF (v1.120: one more tap goes on to FLAME); the blows start from the first one again; no sound, no word, no light on the field
 function suReset() { suCl = suFl = false; suArrows.length = 0; suFlBursts.length = 0; suFlTalk = null; if (dummy) dummy.sburn = null; suDom = suDomPt = null; suDomSl.length = 0; domReadyAt = 0; suFgEnd(pnow()); }      // (a new round: both modes off, no arrow in the air, no burn, no domain and the ULTIMATE ready again)
 function suModeUI() {      // every frame: the MODE button's name and light and the BLUE button's colour follow the mode (setModeUI writes the buttons too, so it is checked every time, like the BLUE label): CLEAVE lights MODE blue, FLAME lights MODE and BLUE orange
   const el = $('cel'), b = $('ce'), lp = $('lap'), want = 'MODE<br>' + (suFl ? 'FLAME' : suCl ? 'CLEAVE' : 'OFF'), p = suCl || suFl ? 'true' : 'false', aria = suFl ? 'Mode: Flame is on, tap to switch it off. BLUE is Open: a fire arrow that burns the enemy' : suCl ? 'Mode: Cleave is on, tap for Flame. The enemy cannot tell' : 'Mode: tap to switch Cleave on, tap again for Flame. The enemy cannot tell';
@@ -8840,7 +8864,7 @@ function suFlBuild() {      // the flame pictures, made once: flames of 4 sizes 
   suFlSpr = { fire: [[8, 13], [12, 20], [18, 30], [26, 42]].map(([w, h]) => Array.from({ length: 6 }, (_, f) => suFlFlame(w, h, f))), arrow: Array.from({ length: 10 }, (_, f) => suFlArrow(f)) };
 }
 function suFlStart(now) {      // BLUE 22 (OPEN) has started: the cast is a state of its own; the enemy is not touched at all; from the crouch he stands up first (v1.127 with the domain open and the enemy alive it is FUGA, the cutscene: suFgBegin)
-  const fg = !!(suDom && suDom.sink < 0 && dummy && dummy.ko < 0); stance = 'stand'; stickCr = false; suFlBuild(); CU_GAME[3].cs = { fl: true, ph: 'light', t0: now, pic: 0, t: 0, fuga: fg }; suFlTalk = fg ? null : { t0: now }; if (fg) suFgBegin(now);
+  const fg = !!(suDom && suDom.sink < 0 && dummy && dummy.ko < 0 && suOwn('s_fuga')); stance = 'stand'; stickCr = false; suFlBuild(); CU_GAME[3].cs = { fl: true, ph: 'light', t0: now, pic: 0, t: 0, fuga: fg }; suFlTalk = fg ? null : { t0: now }; if (fg) suFgBegin(now);
 }
 function suFlStep(g, c, now) {      // OPEN, every frame: the events of the cast and the picture to show
   if (c.fuga) return suFgStep(g, c, now);      // (v1.127 FUGA: the same cast on a slowed time, with the cutscene's own events)
@@ -13522,7 +13546,7 @@ function trainDraw(now) {      // the two overlays of the TRAIN page, as a small
   if ($('trI').textContent !== a) $('trI').textContent = a; if ($('trM').textContent !== m) $('trM').textContent = m;
   if (!trShown) { $('trHud').classList.add('on'); trShown = true; }
 }
-for (const b of document.querySelectorAll('#select .pp')) { const who = b.dataset.who, c = b.querySelector('canvas'); c.width = who === 'yuji' ? YU.idle.w : 64; c.height = 64; selPv.push({ g: c.getContext('2d'), who }); b.addEventListener('click', () => startPractice(who)); }
+for (const b of document.querySelectorAll('#select .pp')) { const who = b.dataset.who, c = b.querySelector('canvas'); c.width = who === 'yuji' ? YU.idle.w : 64; c.height = 64; selPv.push({ g: c.getContext('2d'), who }); b.addEventListener('click', () => { if (who === 'cu3' && !suHas()) return; startPractice(who); }); }      // (v1.131: Sukuna's card is locked until he is bought, see cuSelRefresh)
 $('vsBtn').addEventListener('click', () => { buildGrades(); buildFighters(); show('versus'); });
 $('vsBack').addEventListener('click', () => show('select'));
 $('battles').addEventListener('click', () => { audio(); show('select'); });
@@ -13530,6 +13554,7 @@ $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+{"v": "1.131", "t": "SUKUNA IN THE SHOP", "n": ["Sukuna is in the shop now. He costs $3000 (SKILLS > CHARACTERS) and until you buy him his card in free play is locked. Once he is yours, the SUKUNA tab sells his moves, and they are locked until you buy them, free play too. Walking, jumping and his first blows (jab, jab, kick and the counter) stay free.", "The moves, with their prices: CROUCH $50, CROUCH PUNCHES $120 (needs CROUCH), FLYING SLASHES $150 (ATTACK with no enemy near), AIR CUT $250 (BLUE), CUT STORM $400 (back + BLUE), LEG CUT $300 (crouch + BLUE), DISMANTLE $600 (jump + BLUE), DASH SLASH $500 (forward + BLUE), CLEAVE MODE $700 (the MODE button), LIFT CLEAVE $300, DIVE CLEAVE $350 and DASH CLEAVE $400 (all three in Cleave mode), FLAME MODE $900 (MODE again, BLUE is OPEN), MALEVOLENT SHRINE $2000 (the DOMAIN button), FUGA $2500 (Flame mode + BLUE while the domain is open), and the three RCT stages. A move you have not bought shows LOCKED: BUY IT IN SKILLS when you press it. If a BLUE variant is not bought, BLUE does the plain AIR CUT instead.", "Everyone else is unchanged: in free play all the moves of Gojo, Yuji, Verity and the Cat are still free. Old saves have to buy Sukuna again."]},
 {"v": "1.130", "t": "CODES", "n": ["There is a new CODES button on the title screen (bottom right). It opens a page with a box where you type a code and press REDEEM (or Enter). A right code gives you money: Diddy25 gives $1000, Gojo69Me gives $700, and the very long one (PutinKimjongUnDiddyDaddyPeopleNightyNighty) gives $1,000,000. Type them exactly as written, capital letters too.", "Each code works once; typing it again says ALREADY USED. Your money and the used codes are saved on the phone, so a used code stays used after you close the game."]},
 {"v": "1.129", "t": "RCT", "n": ["RCT (reverse cursed technique) is a new skill for Gojo, Yuji, the Cartoon Cat and Sukuna: white cursed energy heals your injuries, meaning ripped off arms and legs, dead shoulders and a hurt chest, belly or head from GRAPHIC DAMAGE. It does not give health back. You need the FATALITY first (Yuji needs INHERITENCE too; Sukuna needs nothing first because he has no fatality) and it has three expensive stages: $1500, $2500 and $4000. Sukuna has a new SUKUNA tab in SKILLS for his stages, and they are really bought even in free play.", "How long a hurt part takes to heal. Stage 1: Gojo 15 seconds, Sukuna 15, Yuji 20, Cat 20. Stage 2: Gojo 10, Sukuna 8, Yuji 16, Cat 14. Stage 3: Gojo under 5 seconds and Sukuna 4 or less (the worse the injury the longer it takes, a small one is healed almost at once), Yuji 10, Cat 7. Every hurt part has its own clock, which starts when it is hurt. Yuji's RCT only starts while INHERITENCE is on (a heal that has started goes on after it ends).", "While a fighter heals, a white halo glows round him, white specks rise off him, and a lost limb grows back slowly from the stump outwards, white at first. When a lost limb is whole again, the old piece on the floor is taken back into the energy. In free play, Gojo, Yuji and the Cat have all three stages, like all their other moves.", "Fixed: the GRAPHIC DAMAGE setting (FULL / CLEAN / OFF) was forgotten every time the game was closed. It is kept now."]},
 {"v": "1.128", "t": "GRAPHIC DAMAGE", "n": ["Fighters can now lose their arms and legs (everywhere except Story Mode: Free play, Challenges and Versus). Every body has hidden damage on its arms, legs, shoulders, chest, belly and head. Where a blow lands decides which part takes it (high, middle or low), and cuts, claws and bites (Sukuna, Freddy, Verity) fill it twice as fast. A part that has taken enough, or a rare huge hit, rips off: the piece flies away and lies on the floor until the round ends, blood sprays, the screen flashes red, the game slows down for a moment and the body bleeds a little every half second until the round is over. A badly hurt shoulder leaves the arm hanging limp and useless. A badly hurt chest, belly or head shows wounds, makes the fighter slower and weaker, makes him cough blood now and then (stunned for half a second) and he takes 25% more damage.", "What a fighter can still do: with one arm gone only the swings that do not need it work (Yuji and Gojo check every move, and a swing of the lost arm is done by the other one; the other fighters keep all their moves), with no arms there are no hand moves, no blocking and no BLUE, MODE or DOMAIN, and ATTACK becomes a new HEADBUTT. With one leg he hops at 35% speed and cannot jump, kick or dash. With no legs he crawls along the floor at 15% speed and cannot block, jump or dash. Hand-sign domains (Gojo, Yuji, Sukuna, the Cat) need both hands. Verity as the smoke ball is not affected, and a crawler who was crouched when his legs went gets up by himself. Enemies follow the same rules: one without arms headbutts you.", "At the end of every FATALITY the loser's head is ripped off. Everything grows back at the start of the next round. SETTINGS > GAME > GRAPHIC DAMAGE has three levels: FULL, CLEAN (no blood: the parts just pop off and fade) and OFF."]},

@@ -208,7 +208,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.130</small>
+    <small id="ver">V1.131</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -762,7 +762,7 @@ const assistLvl = () => vs && vs.net ? 0 : SET.assist;      // (assist is for th
 const soft = dm => assistLvl() >= 2 ? Math.max(1, Math.round(dm * 0.7)) : dm;      // EASY: 30% less damage to you
 const autoGuard = () => assistLvl() >= 3 && !lacks('blk') && stance === 'stand' && atkAt < 0 && lpAt < 0 && jumpAt < 0 && teleAt < 0 && dgAt < 0 && mbAt < 0 && !dash && !keyL && !keyR && !padL && !padR;      // AUTO-GUARD: standing still with nothing going on, the front is guarded as if BLOCK were held
 const freePlay = () => state === 'play' && (!vs || !!vs.practice);      // v1.14 FREE PLAY (the fighter select screen): in it every move of every fighter is free
-const NET_NO = new Set(['y_inherit', 'y_pierce', 'y_shrine', 'y_cleave', 'y_simple', 'y_hometown']), owns = id => id === 'freddy' || id === 'sukuna' || freePlay() || (vs && vs.net ? !NET_NO.has(id) : vs && vs.tn ? TN_KIT.has(id) : !!PROG.own[id]), gojoMe = () => !vs || vs.me === 'gojo', fredMe = () => !!vs && vs.me === 'freddy';
+const NET_NO = new Set(['y_inherit', 'y_pierce', 'y_shrine', 'y_cleave', 'y_simple', 'y_hometown']), owns = id => id === 'freddy' || freePlay() || (vs && vs.net ? !NET_NO.has(id) : vs && vs.tn ? TN_KIT.has(id) : !!PROG.own[id]), gojoMe = () => !vs || vs.me === 'gojo', fredMe = () => !!vs && vs.me === 'freddy';
 const meK = () => !vs ? 'g' : vs.me === 'yuji' ? 'y' : vs.me === 'verity' ? 'v' : vs.me === 'cat' ? 'k' : 'g';      // the fighter you play: g = Gojo (and everything outside a match), y = Yuji, v = Verity, k = the Cat
 const setMoneyUI = () => { const t = 'MONEY $' + PROG.m; for (const id of ['modesMoney', 'chalMoney', 'skMoney', 'codeMoney']) $(id).textContent = t; };
 const earn = n => { PROG.m += n; saveProg(); setMoneyUI(); };
@@ -787,7 +787,7 @@ const SK_GOJO = [      // [id, name, what it does, price, needs]
   ['rct1', 'RCT 1', 'REVERSE CURSED TECHNIQUE: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). EACH ONE IS WHOLE AGAIN 15 SECONDS AFTER IT HAPPENED. NEEDS THE FATALITY.', 1500, ['fatal']],
   ['rct2', 'RCT 2', 'REVERSE CURSED TECHNIQUE 2: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). EACH ONE IS WHOLE AGAIN 10 SECONDS AFTER IT HAPPENED.', 2500, ['rct1']],
   ['rct3', 'RCT 3', 'REVERSE CURSED TECHNIQUE 3: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). UNDER 5 SECONDS: THE WORSE THE INJURY THE LONGER IT TAKES, A SMALL ONE IS HEALED ALMOST AT ONCE.', 4000, ['rct2']]];
-const SK_CHAR = [['yuji', 'YUJI ITADORI', 'FIGHT AS OR AGAINST YUJI IN VERSUS, ALL HIS MOVES', 1500, []], ['verity', 'VERITY', 'FIGHT AS OR AGAINST VERITY IN VERSUS, ALL HIS MOVES', 1800, []], ['cat', 'CARTOON CAT', 'FIGHT AS OR AGAINST THE CAT IN VERSUS, ALL HIS MOVES', 2200, []], ['sukuna', 'SUKUNA', 'THE KING OF CURSES. HE FIGHTS IN FREE PLAY, WITH ALL HIS MOVES. HIS TREE SELLS THE RCT', 0, []]];
+const SK_CHAR = [['yuji', 'YUJI ITADORI', 'FIGHT AS OR AGAINST YUJI IN VERSUS, ALL HIS MOVES', 1500, []], ['verity', 'VERITY', 'FIGHT AS OR AGAINST VERITY IN VERSUS, ALL HIS MOVES', 1800, []], ['cat', 'CARTOON CAT', 'FIGHT AS OR AGAINST THE CAT IN VERSUS, ALL HIS MOVES', 2200, []], ['sukuna', 'SUKUNA', 'THE KING OF CURSES: FIGHT AS HIM IN FREE PLAY. HIS TREE SELLS ALL HIS MOVES', 3000, []]];
 const SK_YUJI = [      // (v1.11) the moves of Yuji, bought like Gojo's; only walking, jumping and the M1 combo are free
   ['y_crouch', 'CROUCH', 'DOWN ON THE STICK OR KEY S: DUCK UNDER HIGH HITS (3% ENERGY)', 50, []],
   ['y_dash', 'DASH', 'A QUICK EVADE FORWARD OR BACK THAT DODGES HITS', 80, []],
@@ -850,10 +850,26 @@ const SK_CAT = [
   ['k_rct1', 'RCT 1', 'REVERSE CURSED TECHNIQUE: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). EACH ONE IS WHOLE AGAIN 20 SECONDS AFTER IT HAPPENED. NEEDS THE FATALITY.', 1500, ['k_fatal']],
   ['k_rct2', 'RCT 2', 'REVERSE CURSED TECHNIQUE 2: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). EACH ONE IS WHOLE AGAIN 14 SECONDS AFTER IT HAPPENED.', 2500, ['k_rct1']],
   ['k_rct3', 'RCT 3', 'REVERSE CURSED TECHNIQUE 3: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). EACH ONE IS WHOLE AGAIN 7 SECONDS AFTER IT HAPPENED.', 4000, ['k_rct2']]];
-const SK_SUKUNA = [      // (v1.129 Sukuna fights in free play only and has no moves to buy: his tree is the RCT, which is bought for real even in free play)
+const SK_SUKUNA = [      // (v1.131 SUKUNA IN THE SHOP: he is bought in CHARACTERS ($3000), then every move but walking, jumping and the first blows (jab, jab, kick, counter) is a node here, bought for real even in free play; the RCT comes last)
+  ['s_crouch', 'CROUCH', 'DOWN ON THE STICK OR KEY S: DUCK DOWN (3% ENERGY). THE LOW MOVES NEED IT', 50, []],
+  ['s_cpunch', 'CROUCH PUNCHES', 'ATTACK WHILE CROUCHED: LOW PUNCHES THAT HIT DUCKING ENEMIES', 120, ['s_crouch']],
+  ['s_slash', 'FLYING SLASHES', 'ATTACK WITH NO ENEMY NEAR: A FLYING SLASH THAT NO GUARD STOPS (RIGHT HAND, LEFT HAND, THEN BOTH HANDS EVERY 5 SECONDS). WITHOUT IT ATTACK IS ALWAYS THE JAB COMBO', 150, []],
+  ['s_air', 'AIR CUT', 'BLUE: AN INVISIBLE SLASH CUTS THE ENEMY AT ONCE, WHEREVER HE STANDS ON THE SCREEN, AND HE BLEEDS (5% ENERGY)', 250, []],
+  ['s_storm', 'CUT STORM', 'BACK + BLUE: EIGHT INVISIBLE SLASHES. THE ENEMY IS STUNNED FOR 3 SECONDS AND BLEEDS MORE WITH EVERY ONE (25% ENERGY)', 400, ['s_air']],
+  ['s_leg', 'LEG CUT', 'CROUCH + BLUE: AN INVISIBLE SLASH CUTS THE ENEMY\'S LEGS, HE DROPS TO HIS KNEES FOR 0.8 SECONDS AND EVERY HIT LANDS (10% ENERGY)', 300, ['s_air', 's_crouch']],
+  ['s_dismantle', 'DISMANTLE', 'JUMP + BLUE: HE DASHES BACK IN THE AIR AND POINTS. TIME STOPS AND THREE CUTS HIT THE ENEMY\'S CHEST, HE BLEEDS FOR 8 SECONDS (20% ENERGY)', 600, ['s_air']],
+  ['s_dashslash', 'DASH SLASH', 'FORWARD + BLUE WITH AN ENEMY NEAR: HE DASHES BEHIND THE ENEMY, TIME STOPS AND THE CUT LANDS ON HIS BACK', 500, ['s_air']],
+  ['s_cleave', 'CLEAVE MODE', 'THE MODE BUTTON: CLEAVE MODE. ATTACK BECOMES THE MELEE CHAIN (R.HOOK, L.HOOK, ELBOW, TOUCH CUT) AND BLUE IS THE CLEAVE: 5% OF HIS HEALTH, NO GUARD STOPS IT (5% ENERGY)', 700, []],
+  ['s_lift', 'LIFT CLEAVE', 'CLEAVE MODE, CROUCHED + BLUE: HE LIFTS THE ENEMY WITH ONE HAND AND SLASHES HIS HEAD (10% ENERGY)', 300, ['s_cleave', 's_crouch']],
+  ['s_dive', 'DIVE CLEAVE', 'CLEAVE MODE, IN THE AIR + BLUE: HE DROPS ON THE ENEMY AND CLEAVES HIM TO THE GROUND (10% ENERGY)', 350, ['s_cleave']],
+  ['s_dcleave', 'DASH CLEAVE', 'CLEAVE MODE, FORWARD + BLUE WITH AN ENEMY NEAR: HE DASHES AT THE ENEMY AND CLEAVES HIM BACK (10% ENERGY)', 400, ['s_cleave']],
+  ['s_flame', 'FLAME MODE', 'THE MODE BUTTON AGAIN: FLAME MODE. BLUE IS OPEN: FLAMES, A CLAP, AN ARCHER\'S POSE AND A FIRE ARROW THAT NO GUARD STOPS AND THAT BURNS THE ENEMY FOR 8 SECONDS (50% ENERGY)', 900, ['s_cleave']],
+  ['s_domain', 'MALEVOLENT SHRINE', 'THE DOMAIN BUTTON: HIS ULTIMATE. FOR 20 SECONDS EVERY SLASH OF THE SHRINE CUTS THE ENEMY, ABOUT 1% OF HIS HEALTH EVERY HALF SECOND (67% ENERGY)', 2000, ['s_cleave']],
+  ['s_fuga', 'FUGA', 'WITH THE DOMAIN OPEN, FLAME MODE + BLUE IS FUGA: A 12 SECOND CUTSCENE, 40% OF HIS HEALTH AND A BURN (50% ENERGY)', 2500, ['s_flame', 's_domain']],
   ['s_rct1', 'RCT 1', 'REVERSE CURSED TECHNIQUE: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). EACH ONE IS WHOLE AGAIN 15 SECONDS AFTER IT HAPPENED. HE HAS NO FATALITY, SO NOTHING IS NEEDED FIRST.', 1500, []],
   ['s_rct2', 'RCT 2', 'REVERSE CURSED TECHNIQUE 2: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). EACH ONE IS WHOLE AGAIN 8 SECONDS AFTER IT HAPPENED.', 2500, ['s_rct1']],
-  ['s_rct3', 'RCT 3', 'REVERSE CURSED TECHNIQUE 3: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). UP TO 4 SECONDS: THE WORSE THE INJURY THE LONGER IT TAKES, A SMALL ONE IS HEALED ALMOST AT ONCE.', 4000, ['s_rct2']]];
+  ['s_rct3', 'RCT 3', 'REVERSE CURSED TECHNIQUE 3: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). UP TO 4 SECONDS: THE WORSE THE INJURY THE LONGER IT TAKES, A SMALL ONE IS HEALED ALMOST AT ONCE.', 4000, ['s_rct2']]
+];
 const SKN = {}; for (const s of [].concat(SK_GOJO, SK_YUJI, SK_VERITY, SK_CAT, SK_SUKUNA, SK_CHAR)) SKN[s[0]] = s[1];
 const GATE = {      // for each fighter the skill each button needs (a button that is not listed is free): cr crouch, dash, blk block, cp crouched punches, ce MODE, dom DOMAIN, fat FATALITY, bl BLUE (Verity and the Cat; Gojo's and Yuji's BLUE depends on the mode, the air and the stance: gateBlue)
   g: { cr: 'crouch', dash: 'dash', blk: 'block', cp: 'cpunch', ce: 'ce', dom: 'domain', fat: 'fatal', hv: 'heavy', cn: 'cancel', sn: 'sense' },
@@ -861,7 +877,7 @@ const GATE = {      // for each fighter the skill each button needs (a button th
   v: { cr: 'v_crouch', dash: 'v_tele', blk: 'v_block', ce: 'v_ball', dom: 'v_scare', fat: 'v_fatal', bl: 'v_bite', hv: 'v_heavy', cn: 'v_cancel', ac: 'v_air', sn: 'v_sense' },
   k: { cr: 'k_crouch', dash: 'k_dash', blk: 'k_block', dom: 'k_ult', fat: 'k_fatal', bl: 'k_toon', hv: 'k_heavy', cn: 'k_cancel', sn: 'k_sense' } };
 const BLUES = { g: ['blue', 'tele', 'mblue'], y: ['y_div', 'y_sweep', 'y_rush', 'y_conc', 'y_elbow', 'y_upper', 'y_flash'], v: ['v_bite'], k: ['k_toon', 'k_kick', 'k_lift'] };
-const lacks = key => { if (fredMe()) return false; const need = GATE[meK()][key]; return !!need && !owns(need); };      // true when the fighter you play has not bought what this button needs
+const lacks = key => { if (fredMe()) return false; if (vs && vs.me === 'cu3') { const need = SUK_GATE[key]; return !!need && !suOwn(need); } const need = GATE[meK()][key]; return !!need && !owns(need); };      // (v1.131 Sukuna: his own skills, bought for real even in free play, see tools/sukuna.js)      // true when the fighter you play has not bought what this button needs
 let lockSayAt = -1e9;
 function lockPop(now) { if (now - lockSayAt > 1200) { lockSayAt = now; say('LOCKED: BUY IT IN SKILLS', wx, '#ff8a7a', 8, now); } }
 function gateSkills(now) {                    // every frame, before the controls are read: a move you do not own is simply not there (any fighter)
@@ -886,7 +902,7 @@ function gateBlue(now, jf, tf) {              // BLUE of Gojo: teleport up in th
 }
 function skillUI() {                          // the buttons of a move you do not own are dimmed and marked
   const L = (id, key) => $(id).classList.toggle('lk', lacks(key));
-  L('blk', 'blk'); L('dash', 'dash'); L('ce', 'ce'); L('dom', 'dom'); L('fat', 'fat'); $('lap').classList.toggle('lk', !fredMe() && !BLUES[meK()].some(owns));
+  L('blk', 'blk'); L('dash', 'dash'); L('ce', 'ce'); L('dom', 'dom'); L('fat', 'fat'); $('lap').classList.toggle('lk', !fredMe() && !(vs && vs.me === 'cu3' ? Object.values(SU_BLUE_ID).some(suOwn) : BLUES[meK()].some(owns)));
 }
 function leavePlay() { if (cuTest) { cuTestBack(); return; } if (vs && vs.net) lanLeave(); else if (vs && vs.hunt) { show('chal'); buildHunts(); } else if (vs && vs.cv) { show('chal'); buildChal(); } else show('select'); }
 
@@ -1187,7 +1203,7 @@ const SK_LAY = {      // where every node sits, [column, row] (the root is colum
   y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 4.5], y_pierce: [5, 3], y_shrine: [5, 4], y_cleave: [5, 5], y_simple: [5, 6], y_ult: [4, 5.7], y_fatal: [4, 6.7], y_div: [1, 6], y_rush: [2, 6], y_heavy: [1, 4.7], y_cancel: [3, 1.5], y_sense: [1, 7], y_hometown: [6, 3.5], y_rct1: [5, 7.5], y_rct2: [6, 7.5], y_rct3: [7, 7.5] },
   v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5], v_heavy: [1, 4.5], v_cancel: [3, 0.8], v_air: [2, 4.5], v_pounce: [3, 3.5], v_sense: [1, 5.6], v_rip: [3, 4.6], v_lag: [3, 5.7] },
   k: { _root: [0, 1], k_crouch: [1, 0], k_fatal: [3, 0], k_dash: [1, 1], k_toon: [2, 1], k_stomp: [3, 1], k_kick: [3, 3], k_lift: [3, 4], k_hang: [2, 3], k_block: [1, 2], k_ult: [3, 2], k_heavy: [1, 3], k_cancel: [2, 0], k_sense: [1, 4], k_rct1: [4, 0], k_rct2: [5, 0], k_rct3: [6, 0] },
-  s: { _root: [0, 0.5], s_rct1: [1, 0.5], s_rct2: [2, 0.5], s_rct3: [3, 0.5] },
+  s: { _root: [0, 4], s_crouch: [1, 0], s_slash: [1, 1], s_air: [1, 2], s_cleave: [1, 6.5], s_cpunch: [2, 0], s_leg: [2, 1], s_dashslash: [2, 2], s_storm: [2, 3], s_dismantle: [2, 4], s_lift: [2, 5.5], s_dive: [2, 6.5], s_dcleave: [2, 7.5], s_flame: [2, 8.5], s_domain: [2, 9.5], s_fuga: [3, 9], s_rct1: [1, 11], s_rct2: [2, 11], s_rct3: [3, 11] },
   c: { _root: [0, 1.5], yuji: [1, 0], verity: [1, 1], cat: [1, 2], sukuna: [1, 3] } };
 const SK_ALL = { y: 'y_hometown' };      // (v1.50 the node of a tab that needs every other node of it: no routed lines, a web of thin straight lines from every node instead)
 const SKI = {}; for (const [t, , rows] of SK_TABS) for (const r of rows) SKI[r[0]] = { r, t };
@@ -6608,7 +6624,7 @@ function trainDraw(now) {      // the two overlays of the TRAIN page, as a small
   if ($('trI').textContent !== a) $('trI').textContent = a; if ($('trM').textContent !== m) $('trM').textContent = m;
   if (!trShown) { $('trHud').classList.add('on'); trShown = true; }
 }
-for (const b of document.querySelectorAll('#select .pp')) { const who = b.dataset.who, c = b.querySelector('canvas'); c.width = who === 'yuji' ? YU.idle.w : 64; c.height = 64; selPv.push({ g: c.getContext('2d'), who }); b.addEventListener('click', () => startPractice(who)); }
+for (const b of document.querySelectorAll('#select .pp')) { const who = b.dataset.who, c = b.querySelector('canvas'); c.width = who === 'yuji' ? YU.idle.w : 64; c.height = 64; selPv.push({ g: c.getContext('2d'), who }); b.addEventListener('click', () => { if (who === 'cu3' && !suHas()) return; startPractice(who); }); }      // (v1.131: Sukuna's card is locked until he is bought, see cuSelRefresh)
 $('vsBtn').addEventListener('click', () => { buildGrades(); buildFighters(); show('versus'); });
 $('vsBack').addEventListener('click', () => show('select'));
 $('battles').addEventListener('click', () => { audio(); show('select'); });
