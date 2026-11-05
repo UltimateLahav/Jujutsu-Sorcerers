@@ -1,5 +1,5 @@
 # python3 maho_anim.py [--sheets] -> maho_anim.png (all frames, 8 per row, facing LEFT: the light is from the upper right) + maho_anim.json (the frames of every clip and their anchors)
-# Clips: idle (12, loops), walk (32, loops, one stride = two steps), windup (12), punch (8), recover (12), start (8), halt (8). Every frame is rig.render(pose).
+# Clips: idle (12, loops), walk (32, loops, one stride = two steps), windup (12), punch (8), recover (12), start (8), halt (8), run (16, loops: v1.134), lunge (6), uppercut (8). Every frame is rig.render(pose).
 import numpy as np, json, math, sys, os
 from PIL import Image
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -79,7 +79,39 @@ def halt(i, n=8):
     t = (i + 1) / float(n); e = ease(t); W0 = walk(0); p = mix(W0, STAND, e)
     p['ankle_n'] = (lerp(W0['ankle_n'][0], STAND['ankle_n'][0], e), GY - AH - 4 * math.sin(math.pi * e)); p['lam'] += 3 * math.sin(math.pi * t); p['vx'] = W0['vx'] * (1 - t) - 1.4 * math.sin(math.pi * t)
     return p
-CLIPS = [('idle', 12, idle), ('walk', 32, walk), ('windup', 12, windup), ('punch', 8, punch), ('recover', 12, recover), ('start', 8, start), ('halt', 8, halt)]
+
+# ---- v1.134 (the alley fight of chapter 3): RUN = the charge (a foot is always down, the body leans 22 degrees forward, the arms pump); LUNGE = the straight punch at the height of a man's body from a deep crouch (the fist goes out and stays); UPPERCUT = from a crouch the near fist swings from low behind him up and forward past the face (the arm stops at 146 degrees: higher would leave the 140-pixel picture)
+def run(i, n=16):
+    f = 2 * math.pi * i / n; S, L, D = 46.0, 13.0, 0.5
+    fn = foot(i / n, S, L, D); ff = foot(i / n + 0.5, S, L, D)
+    on = [x for x in (fn, ff) if x[3]]
+    h = min([math.sqrt(max(LLEG ** 2 - x[0] ** 2, 100)) for x in on]) if on else 41.0
+    return base(Py=GY - AH - h + 1 + (3.0 * math.sin(2 * f) if not on else 0), lam=22, head=-11,
+                ankle_n=(PX + fn[0], GY - AH - fn[1]), ankle_f=(PX + ff[0], GY - AH - ff[1]), pitch_n=fn[2], pitch_f=ff[2],
+                arm_n=(10 + 50 * math.cos(f), 78), arm_f=(10 - 50 * math.cos(f), 78), cloth=f * 1.7, amp=8, vx=5.5)
+def lunge(i, n=6):
+    P = [
+        base(Px=66, Py=84 + 4, lam=24, head=-12, arm_n=(-40, 40), arm_f=(60, 60), ankle_n=(92, GY - AH - 6), ankle_f=(48, GY - AH), pitch_n=-10, vx=5.0, amp=8),
+        base(Px=66, Py=84 + 10, lam=26, head=-12, arm_n=(-60, 30), arm_f=(70, 60), ankle_n=(96, GY - AH), ankle_f=(46, GY - AH), vx=2.0, amp=6),
+        base(Px=76, Py=84 + 15, lam=36, head=-14, arm_n=(60, 40), arm_f=(10, 50), ankle_n=(106, GY - AH - 1), ankle_f=(50, GY - AH), vx=5.0, amp=8, smear=2, arm_prev=(-60, 30)),
+        base(Px=86, Py=84 + 18, lam=40, head=-15, arm_n=(98, 8), arm_f=(-10, 50), ankle_n=(112, GY - AH), ankle_f=(54, GY - AH), vx=5.5, amp=9, smear=3, arm_prev=(60, 40)),
+        base(Px=88, Py=84 + 18, lam=40, head=-14, arm_n=(98, 6), arm_f=(-12, 52), ankle_n=(112, GY - AH), ankle_f=(54, GY - AH), vx=2.0, amp=7),
+        base(Px=88, Py=84 + 17, lam=38, head=-13, arm_n=(96, 6), arm_f=(-10, 52), ankle_n=(112, GY - AH), ankle_f=(54, GY - AH), vx=-1.0, amp=6),
+    ]
+    return P[i]
+def uppercut(i, n=8):
+    P = [
+        base(Px=62, Py=84 + 11, lam=-12, head=-6, arm_n=(-30, 12), arm_f=(70, 50), ankle_n=(84, GY - AH), ankle_f=(46, GY - AH), vx=-1.0, amp=4),
+        base(Px=64, Py=84 + 13, lam=-16, head=-8, arm_n=(-40, 8), arm_f=(76, 52), ankle_n=(84, GY - AH), ankle_f=(46, GY - AH), vx=-1.5, amp=4),
+        base(Px=70, Py=84 + 9, lam=4, head=-10, arm_n=(30, 26), arm_f=(60, 50), ankle_n=(90, GY - AH), ankle_f=(48, GY - AH), vx=2.5, amp=6, smear=2, arm_prev=(-40, 8)),
+        base(Px=76, Py=84 + 6, lam=14, head=-12, arm_n=(78, 30), arm_f=(40, 50), ankle_n=(95, GY - AH), ankle_f=(50, GY - AH), vx=4.0, amp=7, smear=3, arm_prev=(30, 26)),
+        base(Px=80, Py=84 + 5, lam=20, head=-14, arm_n=(118, 20), arm_f=(20, 50), ankle_n=(98, GY - AH - 2), ankle_f=(52, GY - AH), vx=5.0, amp=8, smear=3, arm_prev=(78, 30)),
+        base(Px=82, Py=84 + 5, lam=20, head=-12, arm_n=(140, 12), arm_f=(10, 46), ankle_n=(98, GY - AH - 6), ankle_f=(54, GY - AH), pitch_n=-12, vx=4.0, amp=8, smear=2, arm_prev=(118, 20)),
+        base(Px=83, Py=84 + 5, lam=16, head=-10, arm_n=(146, 8), arm_f=(0, 44), ankle_n=(98, GY - AH - 10), ankle_f=(56, GY - AH), pitch_n=-20, vx=1.5, amp=7),
+        base(Px=83, Py=84 + 6, lam=14, head=-9, arm_n=(144, 8), arm_f=(2, 44), ankle_n=(98, GY - AH - 8), ankle_f=(56, GY - AH), pitch_n=-18, vx=0.0, amp=5),
+    ]
+    return P[i]
+CLIPS = [('idle', 12, idle), ('walk', 32, walk), ('windup', 12, windup), ('punch', 8, punch), ('recover', 12, recover), ('start', 8, start), ('halt', 8, halt), ('run', 16, run), ('lunge', 6, lunge), ('uppercut', 8, uppercut)]      # (new clips go at the END: the numbers of the older pictures must not move)
 def build(flip=True, outdir=None):
     outdir = outdir or os.path.dirname(os.path.abspath(__file__)); frames = []; meta = {'w': rig.W, 'h': rig.H, 'clips': {}, 'frames': []}
     for name, n, fn in CLIPS:

@@ -27,9 +27,21 @@ M7W.step = 58.6206 / M7W.cyc; M7W.n = M7W.cyc * M7W.loops; M7W.fk = 2 * M7W.cyc 
 M7W.x0f = -M7.frames[M7.clips.punch[0] + 5].fist[0]; M7W.x0s = M7W.x0f + M7W.step * M7W.n;      // where his picture's left edge is when the fist of the blow lands on x = 0, and where it was when he set off
 M7W.loop0 = M7W.go + M7.clips.start[1] / M7R.start; M7W.fz = M7W.loop0 + M7W.fk / M7W.fps; M7W.fe = M7W.fz + M7W.hold; M7W.hs = M7W.fe + (M7W.n - M7W.fk) / M7W.fps; M7W.hd = M7W.hs + M7.clips.halt[1] / M7R.halt; M7W.wu = M7W.hd + 0.17; M7W.pn = M7W.wu + M7.clips.windup[1] / M7R.windup + 0.73;
 M7W.hit = M7W.pn + 0.28; M7W.rc = M7W.pn + 0.86; M7W.eyes = 4.5; M7W.tr = M7W.go + 1.85; M7W.c1 = M7W.wu + M7.clips.windup[1] / M7R.windup; M7W.c2 = M7W.c1 + 0.4;      // (the blow starts at pn, lands at hit; the recovery starts at rc; the eyes light at eyes; the shots: track at tr (Verity lies still for 0.4 s of it, then tries to get up); while the arm rises (wu to c1) the camera is close on him, then Verity's face again (c1 to c2), then the fist (c2 to pn))
-const C7Y = { beats: [1.1, 2.3, 3.4, 4.4, 5.3, 6.1, 6.8, 7.4, 7.9], lump: 2.0, o0: 2.8, os: 0.3, fl: 0.6, c0: 3.2, c1: 7.0, open: 8.2, pan0: 8.4, pan1: 10.0, swap: 10.05, talk: 11.0, end: 15.2, tap: 7.8 };      // v1.133, seconds into the Yuji shot: the beats of his heart, when the 3 lumps on his belly go in, when the 9 organs on the floor start to go in (o0; one every os; each flight lasts fl), when the wound closes (c0 to c1), the eyes open, the camera goes to them (pan0 to pan1), the body becomes Sukuna's, the line, the end of the shot (the card follows); tap = where a tap during the first part of the shot lands
-const C7_SEQ = [['title', 0], ['wide', 3.2], ['face', M7W.go + 0.35], ['track', M7W.tr], ['stop', M7W.fz - 0.2], ['wind', M7W.hs - 0.03], ['punch', M7W.pn], ['break', M7W.hit + 0.45], ['after', M7W.hit + 0.45 + 3.7], ['yuji', M7W.hit + 0.45 + 3.7 + 5.6], ['eyes', M7W.hit + 0.45 + 3.7 + 5.6 + C7Y.tap]].map(a => ({ k: a[0], t0: a[1] }));
-C7_SEQ.forEach((s, i) => { s.d = i < C7_SEQ.length - 1 ? C7_SEQ[i + 1].t0 - s.t0 : C7Y.end - C7Y.tap; });      // (the hall's last shot, 'after', still lasts 5.6 s; 'yuji' and 'eyes' are one picture drawn by c7SYuji from the time u = T - c7T('yuji'): the split is only where a tap lands)
+const C7Y = { beats: [1.1, 2.3, 3.4, 4.4, 5.3, 6.1, 6.8, 7.4, 7.9], lump: 2.0, o0: 2.8, os: 0.3, fl: 0.6, c0: 3.2, c1: 7.0, open: 8.2, pan0: 8.4, pan1: 10.0, swap: 10.05, talk: 11.0, rise: 14.6, tap: 7.8 };      // v1.133, seconds into the Yuji shot: the beats of his heart, when the 3 lumps on his belly go in, when the 9 organs on the floor start to go in (o0; one every os; each flight lasts fl), when the wound closes (c0 to c1), the eyes open, the camera goes to them (pan0 to pan1), the body becomes Sukuna's, the line, rise = where he begins to get up (the alley fight of chapter 3's part 2 takes over, C8); tap = where a tap during the first part of the shot lands
+const C8T = {      // v1.134 the alley fight (tools/chap3b.js): the times of the scene, seconds after Sukuna begins to rise (s = T - c8R())
+  up: [0.55, 0.85, 1.05, 1.2, 1.35, 1.5],      // the pictures 9 - 14 of the get-up begin here; at 1.65 he stands
+  neck: [2.1, 2.7], left: 3.0, right: 3.9, eyes: 4.2,      // the neck rolls; his face turns left, then right (he sees Mahoraga, whose eyes light)
+  start: 5.8, run: 6.3, lunge: 7.36, step: 7.3,      // Mahoraga sets off, runs, lunges; Sukuna steps back (0.233 s)
+  dash: 8.0, cut: 8.1, turn: 8.55, walk: [8.75, 11.1],      // Sukuna dashes in and cuts (the X slash lands at cut), turns his back, walks away
+  apart: 9.3, wheel: 11.3, whole: 12.5,      // the cuts open and the pieces fall; the wheel turns; the pieces are one again
+  look: 12.2, d2: 14.1, up2: 14.5, hit: 14.72, end: 20.6      // Sukuna turns his face to him; Mahoraga bursts at him, begins the uppercut (up2), it lands (hit: Sukuna leaves the ground); the scene ends (the card follows)
+};
+const C8 = {      // the shots of the alley fight (name, start) and Sukuna's lines (start, length, the two rows)
+  shots: [['rise', 0], ['look', 1.9], ['see', 4.0], ['charge', 5.8], ['whiff', 7.25], ['slash', 7.95], ['fall', 8.95], ['walk', 10.5], ['wheel', 11.3], ['back', 12.2], ['punch', 14.0], ['sky', C8T.hit]],
+  talk: [[4.6, 2.2, 'A SHIKIGAMI?', 'HOW CUTE.'], [9.9, 1.9, 'TOO EASY.', ''], [12.75, 2.0, 'OH? THE WHEEL TURNS...', 'HOW AMUSING.']], end: C8T.end
+};
+const C7_SEQ = [['title', 0], ['wide', 3.2], ['face', M7W.go + 0.35], ['track', M7W.tr], ['stop', M7W.fz - 0.2], ['wind', M7W.hs - 0.03], ['punch', M7W.pn], ['break', M7W.hit + 0.45], ['after', M7W.hit + 0.45 + 3.7], ['yuji', M7W.hit + 0.45 + 3.7 + 5.6], ['eyes', M7W.hit + 0.45 + 3.7 + 5.6 + C7Y.tap]].concat(C8.shots.map(a => [a[0], M7W.hit + 0.45 + 3.7 + 5.6 + C7Y.rise + a[1]])).map(a => ({ k: a[0], t0: a[1] }));
+C7_SEQ.forEach((s, i) => { s.d = i < C7_SEQ.length - 1 ? C7_SEQ[i + 1].t0 - s.t0 : C8.end - C8.shots[C8.shots.length - 1][1]; });      // (the hall's last shot, 'after', still lasts 5.6 s; 'yuji' and 'eyes' are one picture drawn by c7SYuji from the time u = T - c7T('yuji'): the split is only where a tap lands; the shots of C8 are one stage drawn by c8Shot)
 const C7 = { card: C7_SEQ[C7_SEQ.length - 1].t0 + C7_SEQ[C7_SEQ.length - 1].d };
 const c7T = k => C7_SEQ.find(s => s.k === k).t0;
 const C7_CUTS = C7_SEQ.slice(1).map(s => s.t0).concat([C7.card]);      // a tap jumps to the next of these
@@ -142,8 +154,8 @@ function m7Dust(T, t0, x, n, o) {      // a cloud of dust that rolls along the f
   for (let i = 0; i < n; i++) { const r1 = c4R(i + (o.seed || 0) * 29, 5), r2 = c4R(i + (o.seed || 0) * 29, 6), s = Math.round(2 + k * (o.big || 6) * (0.4 + 0.6 * r2)), px = Math.round(x + (r1 - 0.5) * 2 * (o.w || 30) * (0.25 + 0.75 * Math.sqrt(k))), py = Math.round(Fy + 1 - k * (o.h || 14) * (0.3 + 0.7 * r2) - r2 * 3);
     ctx.fillStyle = 'rgba(' + (o.col || '120,140,190') + ',' + (0.42 * (1 - k) * (1 - k)).toFixed(3) + ')'; ctx.fillRect(px - (s >> 1), py - 1, s, Math.max(1, s - 2)); ctx.fillRect(px - (s >> 1) + 1, py - 2, Math.max(1, s - 2), s); }
 }
-function m7Pool(x, k, rx0) {      // blood on the floor: a flat dark red pool that spreads (k 0 - 1, rx0 = how wide it gets), a darker rim, a ragged edge and a wet shine
-  if (k <= 0.02) return; const Fy = m7Fy(), rx = Math.round(3 + rx0 * k), ry = Math.max(1, Math.round(1 + 3 * k)), y = Fy + 4;
+function m7Pool(x, k, rx0, fy) {      // blood on the floor: a flat dark red pool that spreads (k 0 - 1, rx0 = how wide it gets), a darker rim, a ragged edge and a wet shine (fy: the floor line, the hall's when left out)
+  if (k <= 0.02) return; const Fy = fy == null ? m7Fy() : fy, rx = Math.round(3 + rx0 * k), ry = Math.max(1, Math.round(1 + 3 * k)), y = Fy + 4;
   for (let yy = -ry; yy <= ry; yy++) { const e = Math.sqrt(Math.max(0, 1 - (yy / ry) * (yy / ry))), w = Math.round(rx * e) + (((yy * 7 + x) & 3) - 1), w2 = Math.round(rx * e * 0.78); ctx.fillStyle = C4_RED[3]; ctx.fillRect(x - w, y + yy, w * 2, 1); ctx.fillStyle = yy < 0 ? C4_RED[2] : '#7a0c18'; ctx.fillRect(x - w2, y + yy, w2 * 2, 1); }
   ctx.fillStyle = C4_RED[1]; ctx.fillRect(x - Math.round(rx * 0.5), y - Math.round(ry * 0.4), Math.round(rx), 1); ctx.fillStyle = '#c4303f'; for (let i = 0; i < 3; i++) ctx.fillRect(x - Math.round(rx * 0.5) + i * Math.round(rx * 0.35), y - Math.round(ry * 0.4), 2, 1);
 }
@@ -238,7 +250,7 @@ function m7Stage(T, cam, o) {
 }
 
 // ---- the shots: the camera and what is laid over the stage
-const C7_TALK = [{ t: M7W.go + 0.7, d: 1.9, w: 'VERITY', a: '...WHAT ARE YOU?', b: '' }, { t: M7W.tr + 1.45, d: 1.2, w: 'VERITY', a: 'STOP.', b: '' }, { t: M7W.fe + 0.15, d: 1.3, w: 'VERITY', a: 'IT... ADAPTED.', b: '' }, { t: M7W.c1 + 0.05, d: 0.9, w: 'VERITY', a: 'NO...', b: '' }, { t: c7T('yuji') + C7Y.talk, d: 3.0, w: 'SUKUNA', vk: 5, a: 'THIS BRAT IS A', b: 'PAIN IN THE ASS' }];      // (vk: the speaker's voice for the blips, 'tvoice'; b: a second line)
+const C7_TALK = [{ t: M7W.go + 0.7, d: 1.9, w: 'VERITY', a: '...WHAT ARE YOU?', b: '' }, { t: M7W.tr + 1.45, d: 1.2, w: 'VERITY', a: 'STOP.', b: '' }, { t: M7W.fe + 0.15, d: 1.3, w: 'VERITY', a: 'IT... ADAPTED.', b: '' }, { t: M7W.c1 + 0.05, d: 0.9, w: 'VERITY', a: 'NO...', b: '' }, { t: c7T('yuji') + C7Y.talk, d: 3.0, w: 'SUKUNA', vk: 5, a: 'THIS BRAT IS A', b: 'PAIN IN THE ASS' }].concat(C8.talk.map(t => ({ t: c7T('yuji') + C7Y.rise + t[0], d: t[1], w: 'SUKUNA', vk: 5, a: t[2], b: t[3] })));      // (vk: the speaker's voice for the blips, 'tvoice'; b: a second line)
 const c7Shot = T => { let st = C7_SEQ[C7_SEQ.length - 1]; for (const s of C7_SEQ) if (T >= s.t0 && T < s.t0 + s.d) st = s; return st; };
 const m7WheelPos = T => { const M = m7Mah(T), P = M7.frames[M.i]; return [Math.round(M.x) + Math.round(P.head[0]) + 4, m7Fy() - 136 + Math.round(P.head[1]) - 6]; };
 function m7Cam(T) {      // where the camera is at T
@@ -302,12 +314,17 @@ function c7Eye(x, y, open, red, T) {      // one eye seen from the side on a fac
   ctx.fillStyle = red ? '#ffc8c8' : '#f4eee8'; ctx.fillRect(x, y, 1, 3); ctx.fillStyle = red ? '#ff1226' : '#b8741e'; ctx.fillRect(x + 1, y, 1, 3); ctx.fillStyle = red ? '#ff7a82' : '#e0a050'; ctx.fillRect(x + 1, y, 1, 1); ctx.fillStyle = red ? '#5a0008' : '#2a1204'; ctx.fillRect(x + 1, y + 1, 1, 1);
   if (red) c6Glow(x + 1, y + 1.5, 10 + 2 * Math.sin(T * 9), '255,30,45', 0.7);
 }
+function c7YCam(u) {      // the camera of the Yuji shot at u: { z, tx, ty, fx, fy } (the scene of chapter 3's end goes on from where it is when he rises)
+  const Y = C7Y, g = c4Geo(), L = c4Lay(g), cx = Math.round(VW / 2), p = c4YRX(8), im0 = p.set[p.fi], A = c4YAn(im0), F0 = c4Face(im0, p.info, Math.round(cx + L.yL), 0), ox = Math.round(F0.x - A.face[0]), oy = Math.round(F0.y - A.face[1]);
+  const ka = ease3(clamp01(u / Y.pan0)), kp = ease3(clamp01((u - Y.pan0) / (Y.pan1 - Y.pan0))), z = u < Y.pan0 ? lerp(2.1, 2.8, ka) : lerp(2.8, 5.6, kp) + 0.2 * clamp01((u - Y.pan1) / 5), tx = lerp(VW * 0.5, VW * 0.7, kp), ty = lerp(VH * 0.56, VH * 0.43, kp);      // the camera: it creeps in on the wound, then goes up the body to his face (z: how big, tx / ty: where on the screen the point it looks at stands)
+  const fx = Math.max(tx / z, Math.min(VW - (VW - tx) / z, lerp(F0.bx, ox + 13, kp))), fy = Math.max(ty / z, Math.min(VH - (VH - ty) / z, lerp(F0.by, oy + 47, kp)));      // (it looks at the point between his two eyes, Yuji's and Sukuna's, so that it does not jump at the swap)
+  return { z, tx, ty, fx, fy };
+}
 function c7SYuji(now, dt, T, st, t1) {      // 'yuji' and 'eyes': one picture, a function of u (the seconds since the shot began)
   const Y = C7Y, u = T - c7T('yuji'), cx = Math.round(VW / 2), g = c4Geo(), L = c4Lay(g), sx = x => Math.round(cx + x), p = c4YRX(8), im0 = p.set[p.fi], A = c4YAn(im0), sw = u >= Y.swap, r = u - Y.swap;
   let beat = 0; Y.beats.forEach((t, i) => { const a = u - t; if (a >= 0) beat = Math.max(beat, Math.exp(-a * 7) * (1 - Math.exp(-a * 60)) * (i < 2 ? 0.5 : 1)); });      // (how hard his heart has just beaten, 0 - 1)
   const lf = beat > 0.4 ? 1 : 0, F0 = c4Face(im0, p.info, sx(L.yL), 0), F = c4Face(im0, p.info, sx(L.yL), lf), ox = Math.round(F0.x - A.face[0]), oy = Math.round(F0.y - A.face[1]), E = sw ? C7E.s : C7E.y;
-  const ka = ease3(clamp01(u / Y.pan0)), kp = ease3(clamp01((u - Y.pan0) / (Y.pan1 - Y.pan0))), z = u < Y.pan0 ? lerp(2.1, 2.8, ka) : lerp(2.8, 5.6, kp) + 0.2 * clamp01((u - Y.pan1) / 5), tx = lerp(VW * 0.5, VW * 0.7, kp), ty = lerp(VH * 0.56, VH * 0.43, kp);      // the camera: it creeps in on the wound, then goes up the body to his face (z: how big, tx / ty: where on the screen the point it looks at stands)
-  const fx = Math.max(tx / z, Math.min(VW - (VW - tx) / z, lerp(F0.bx, ox + 13, kp))), fy = Math.max(ty / z, Math.min(VH - (VH - ty) / z, lerp(F0.by, oy + 47, kp)));      // (it looks at the point between his two eyes, Yuji's and Sukuna's, so that it does not jump at the swap)
+  const cam = c7YCam(u), z = cam.z, tx = cam.tx, ty = cam.ty, fx = cam.fx, fy = cam.fy;
   ctx.save(); if (r >= 0 && r < 0.5) ctx.translate(c4Jit(5 * (1 - r / 0.5)), c4Jit(5 * (1 - r / 0.5))); c4CamOn(z, fx, fy, tx, ty); drawAlley(now); c4Crater(sx(L.cr), 1.1); c4Pool(sx(L.yL) - 30, 1.54);
   const p14 = c4YRX(14), F14 = c4Face(p14.set[14], p14.info, sx(L.yL), 10), orgs = []; for (let i = 0; i < 5; i++) { const q = c4OrgAt(F14.bx, F14.by + 4, i, 99, { v: C4_ORG.v, up: C4_ORG.up, dir: C4_ORG.dir, seed: C4_ORG.seed }); orgs.push([q[0], q[1], i % 3]); }
   for (let i = 0; i < 4; i++) { const q = c4OrgAt(F0.bx, F0.by, i, 99, { v: 16, up: 8, dir: 0, seed: 7, gnd: gy + 2 }); orgs.push([q[0], q[1], i % 3]); }      // (the 9 organs where chapter 2 left them: the 5 of the pierce and the 4 of the fall)
@@ -324,9 +341,10 @@ function c7SYuji(now, dt, T, st, t1) {      // 'yuji' and 'eyes': one picture, a
   c4Cam0(); ctx.restore();
   if (r >= 0 && r < 0.05) { ctx.save(); ctx.globalCompositeOperation = 'difference'; ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, VW, VH); ctx.restore(); } else if (r >= 0) c6White(0.9 * Math.exp(-r * 9));      // (the swap: the picture is inverted for 3 frames, then white fades)
   c6RedEdge(0.5 * beat * (sw ? 0 : 1) + (sw ? 0.3 + 0.12 * Math.sin(u * 3) : 0)); ctx.fillStyle = sw ? 'rgba(70,0,12,0.16)' : 'rgba(30,10,60,0.14)'; ctx.fillRect(0, 0, VW, VH); msFinish(1);
-  c6Black(1 - u / 0.9); c6Black((u - (Y.end - 0.9)) / 0.9);
+  c6Black(1 - u / 0.9);
 }
 const c7Shots = { title: c7STitle, wide: c7SHall, face: c7SHall, track: c7SHall, stop: c7SHall, wind: c7SHall, punch: c7SHall, break: c7SHall, after: c7SHall, yuji: c7SYuji, eyes: c7SYuji };
+for (const a of C8.shots) c7Shots[a[0]] = c8Shot;      // (v1.134)
 
 // ---- the sounds and the speech of the scene (each fires once: the window keeps a skipped step from firing late)
 function c7Dlg(name, a, n, b) {      // the speech box, in the upper left corner (Verity speaks, and Mahoraga with his wheel is on the right): as wide as the whole line, whatever has been typed so far; b = a second line (a taller box); Sukuna's name tag is red
@@ -358,6 +376,7 @@ function c7Events(T, ev) {
   for (let j = 0; j < 9; j++) ev('org' + j, B + Y.o0 + j * Y.os + Y.fl - 0.05, () => snd('c7slurp'), 0.4);
   ev('mend', B + Y.c0, () => snd('c7mend'), 0.8); ev('whole', B + Y.c1, () => snd('rct', 1), 0.8); ev('breath', B + Y.open - 0.1, () => snd('c7cloth', 1), 0.5);
   ev('redeye', B + Y.swap - 0.4, () => snd('c7eyes'), 1.0); ev('suk', B + Y.swap, () => snd('c7suk'), 1.0);
+  c8Events(T, ev);
 }
 function c7Card(now, T) {      // CHAPTER 3: THE DIVINE GENERAL, TO BE CONTINUED
   const t = T - C7.card; ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); once2('card', () => { snd('msting'); storyDone6(); }); ctx.globalAlpha = clamp01((t + 0.1) / 1.0);

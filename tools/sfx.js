@@ -707,6 +707,9 @@ function makeSfx(ac) {
     c7slide() {                                          // v1.106 the upper half skids along the floor: a wet scrape that falls in pitch for almost a second
       const t = T(), B = C.atk; burst(B.soft, t, { type: 'bandpass', f: 500, f2: 150, q: 1.5, dur: 0.9, gain: 0.35, atk: 0.02 }); burst(B.deep, t, { type: 'lowpass', f: 300, f2: 80, q: 0.8, dur: 0.8, gain: 0.3, atk: 0.03 });
     },
+    c8crack() {                                          // v1.134 he rolls his neck: two dry bone clicks (a short noise burst at 2.5 kHz and a tiny low knock), a little apart
+      const t = T(), B = C.atk; for (const d of [0, 0.07]) { burst(B.soft, t + d, { type: 'bandpass', f: R(1800, 3000), q: 5, dur: 0.025, gain: 0.5, atk: 0.001 }); tone(B.deep, t + d, { f: 150, f2: 90, dur: 0.05, gain: 0.25, atk: 0.001 }); }
+    },
     c7beat(k) {                                          // v1.133 a heart beats in the dead alley (k = 0 faint, k = 1 strong): two deep thumps, "lub-dub", the second a little lower
       const t = T(), B = C.atk, g = k ? 1 : 0.5; [[0, 64], [0.17, 52]].forEach(([d, f]) => { tone(B.deep, t + d, { f, f2: f * 0.5, dur: 0.3, gain: 0.75 * g, atk: 0.004 }); burst(B.deep, t + d, { type: 'lowpass', f: 280, f2: 90, q: 0.8, dur: 0.2, gain: 0.35 * g, atk: 0.003 }); });
     },
