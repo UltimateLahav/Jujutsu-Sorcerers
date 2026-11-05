@@ -249,7 +249,16 @@ def guard(i, n=12): return guard_pose(2 * math.pi * i / n)
 def gup(i, n=6):      # the hands come up from the hanging arms to the guard: the shoulders pull back (a flinch), the arms swing up, the palms open
     K0 = sway_pose(0.0); K1 = sway_pose(0.0, lam=8, head=6, arm_n=(60, 30), arm_f=(48, 36), open_n=0.4, open_f=0.4, Py=63 + Y0 + 6); K2 = guard_pose(0.0)
     return keyed({0: K0, 2: K1, 5: K2}, i)
-CLIPS = [('idle', 12, idle), ('walk', 32, walk), ('windup', 12, windup), ('punch', 8, punch), ('recover', 12, recover), ('start', 8, start), ('halt', 8, halt), ('run', 16, run), ('lunge', 6, lunge), ('uppercut', 8, uppercut), ('crouch', 8, crouch), ('leap', 8, leap), ('float', 12, floatp), ('apunch', 16, apunch), ('stump', 6, stump_pose), ('floats', 12, floats), ('grab', 8, grab), ('throw', 10, throw), ('fly', 6, flyp), ('regrow', 10, regrow), ('arm', 1, armpiece), ('flys', 6, flys), ('floatg', 12, floatg), ('hookN', 12, hookN), ('hookF', 12, hookF), ('kick', 12, kick), ('hurt', 6, hurt), ('kneel', 12, kneel), ('rise', 10, rise), ('sway', 12, sway), ('trudge', 32, trudge), ('gup', 6, gup), ('guard', 12, guard)]      # (new clips go at the END: the numbers of the older pictures must not move)
+# ---- v1.138 the HURT SHUFFLE: he keeps walking as his hands come up, slowly: short dragging steps (stride 14, the feet hardly leave the floor), the knees bent, the body bent, the head hanging, the arms trembling; gs1 - gs10 = how far up the arms are (a tenth more with each heavy hit of the song)
+TRS2 = 14.0      # (the stride of the shuffle: the game moves him S / duty = 24.1 px (before the scale) for one cycle of 16 pictures)
+def shuffle(i, n, t):
+    f = 2 * math.pi * i / n; fn = foot(i / float(n), S=TRS2, lift=4.0); ff = foot(i / float(n) + 0.5, S=TRS2, lift=4.0); sn, cs = math.sin, math.cos
+    h = min([math.sqrt(max(LLEG ** 2 - x[0] ** 2, 100)) for x in (fn, ff) if x[3]] or [43.0])
+    op = max(0.0, min(1.0, (t - 0.35) / 0.65)); tr = 2.2 * sn(3 * f + 0.7)      # (the arms tremble)
+    an = (10 - 9 * cs(f)) * (1 - t) + (104 + 3 * sn(f)) * t + tr; fln = 24 + (-16 - 24) * t
+    af = (0 + 9 * cs(f)) * (1 - t) + 92 * t - tr; flf = 26 + (-10 - 26) * t
+    return base(Py=GY - AH - h + 3.5, lam=18 - 8 * t + 3 * cs(f), head=14 - 8 * t + 2 * sn(2 * f), ankle_n=(PX + fn[0], GY - AH - fn[1]), ankle_f=(PX + ff[0], GY - AH - ff[1]), pitch_n=fn[2], pitch_f=ff[2], arm_n=(an, fln), arm_f=(af, flf), open_n=op, open_f=op, cloth=f, amp=5, vx=0.6)
+CLIPS = [('idle', 12, idle), ('walk', 32, walk), ('windup', 12, windup), ('punch', 8, punch), ('recover', 12, recover), ('start', 8, start), ('halt', 8, halt), ('run', 16, run), ('lunge', 6, lunge), ('uppercut', 8, uppercut), ('crouch', 8, crouch), ('leap', 8, leap), ('float', 12, floatp), ('apunch', 16, apunch), ('stump', 6, stump_pose), ('floats', 12, floats), ('grab', 8, grab), ('throw', 10, throw), ('fly', 6, flyp), ('regrow', 10, regrow), ('arm', 1, armpiece), ('flys', 6, flys), ('floatg', 12, floatg), ('hookN', 12, hookN), ('hookF', 12, hookF), ('kick', 12, kick), ('hurt', 6, hurt), ('kneel', 12, kneel), ('rise', 10, rise), ('sway', 12, sway), ('trudge', 32, trudge), ('gup', 6, gup), ('guard', 12, guard)] + [('gs%d' % j, 16, (lambda i, n, j=j: shuffle(i, n, j / 10.0))) for j in range(1, 11)]      # (new clips go at the END: the numbers of the older pictures must not move)
 def build(flip=True, outdir=None):
     outdir = outdir or os.path.dirname(os.path.abspath(__file__)); frames = []; meta = {'w': rig.W, 'h': rig.H, 'clips': {}, 'frames': []}
     for name, n, fn in CLIPS:

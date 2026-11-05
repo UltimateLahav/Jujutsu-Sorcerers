@@ -7,31 +7,29 @@
 // World = the screen of the first shot of the domain (x to the right, y down); Sukuna stands at x = 0 on the floor, Mahoraga kneels 400 px to his right and walks left.
 
 const C12 = {
-  sc: 0.8, X0: 400, SX: 0, X1: 112, hit: 0.25,      // his size (the same as in the blood shot), where he kneels, where Sukuna stands, where he stands when he lifts his hands, the big hit of the song that finds him
+  sc: 0.8, SX: 0, XS: 106, V: 11, Vs: 9, Ve: 4.5, hit: 0.25,      // his size (the same as in the blood shot), where Sukuna stands, where he stops (before the leap), his speed on the long walk and at the hit at 2:03 and at the end of the shuffle (px / s), the big hit of the song that finds him
   walk0: c12P(11), walk1: c12P(24), lull: c12P(34), look: c12P(35), crouch: c12P(36), leap: c12P(37), draw: c12P(38), hold: c12P(39), fire: c12P(40), arrow: 0.14, land: c12P(41), brk: c12P(42), last: c12P(43), chord: 75.7, burnEnd: 76.4, black: 78.6
 };
 C12.hit2 = C12.fire + C12.arrow;      // the arrow reaches his face
+C12.W = [[C12.walk0, C12.walk0 + 1.5, 0, C12.V], [C12.walk0 + 1.5, C12.walk1 - 1.0, C12.V, C12.V], [C12.walk1 - 1.0, C12.walk1, C12.V, C12.Vs], [C12.walk1, C12.lull - 0.5, C12.Vs, C12.Ve], [C12.lull - 0.5, C12.lull, C12.Ve, 0]];      // v1.138 the speed of his walk: a slow start, steady, a little slower at the hit at 2:03 (he does NOT stop: he walks on with his arms coming up), a slower and slower shuffle, stopped at the lull
 const C12N = [c12P(3), c12P(6), c12P(8), c12P(10), c12P(34)];      // the wheel turns a notch here (it adapts)
 C8N.push(...C12N.map(t => C12K.t0 + t));
 const c12Fl = () => gy + 2;      // the floor line
 const c12Lp = (nm, n, fps, len) => c10mf(nm, ((Math.floor(n * fps) % len) + len) % len);      // a picture of a looping clip
 
-// ---- where he is: the distance walked (a slow start, steady, a slow stop), his x, his height over the floor
-function c12D(n) {
-  const T = C12.walk1 - C12.walk0, t = Math.max(0, Math.min(T, n - C12.walk0)), V = (C12.X0 - C12.X1) / (T - 1.25), up = 1.5, dn = 1.0;
-  if (t < up) return V * t * t / (2 * up); if (t < T - dn) return V * (up / 2 + (t - up));
-  const u = t - (T - dn); return V * (up / 2 + (T - dn - up) + u - u * u / (2 * dn));
-}
+// ---- where he is: the distance walked (the speed profile C12.W: a slow start, steady, a slower and slower shuffle), his x, his height over the floor
+function c12D(n) { let d = 0; for (const [a, b, v0, v1] of C12.W) { if (n <= a) break; const t = Math.min(n, b) - a, v = v0 + (v1 - v0) * t / (b - a); d += (v0 + v) / 2 * t; } return d; }
+C12.X0 = C12.XS + c12D(C12.lull);      // (where he kneels: the walk ends at XS)
 function c12X(n) {
-  const K = C12; if (n < K.walk0) return K.X0; if (n < K.walk1) return K.X0 - c12D(n);
-  let x = K.X1 - 0.35 * (Math.min(n, K.lull) - K.walk1);      // (he inches forward behind his guard)
-  for (let k = 24; k <= 33; k++) { const a = n - c12P(k); if (a >= 0) x += 3 * Math.exp(-a / 0.4); }      // (every heavy hit shoves him back a little)
+  const K = C12; let x = K.X0 - c12D(n);
+  if (n >= K.walk1) for (let k = 24; k <= 33; k++) { const a = n - c12P(k); if (a >= 0) x += 3 * Math.exp(-a / 0.4); }      // (every heavy hit shoves him back a little)
   if (n >= K.leap) x -= 58 * (1 - Math.pow(1 - clamp01((n - K.leap) / (K.hit2 - K.leap)), 2));
   return x;
 }
 const c12H = n => n < C12.leap ? 0 : 74 * (1 - Math.pow(1 - clamp01((n - C12.leap) / (C12.hit2 - C12.leap)), 2.4));      // the leap: fast off the floor and slower and slower as the arrow is drawn
 
 // ---- Mahoraga at the clip time n: { i: picture, x, y: his pelvis, rot, back: { i, a } }
+const c12Gs = (st, n) => c10mf('gs' + st, ((Math.floor(16 * (c12D(n) - c12D(C12.walk1)) / (24.14 * C12.sc)) % 16) + 16) % 16);      // (a picture of the shuffle with his arms at a tenth `st` of the way up: the feet go by the distance walked, so they do not slide)
 function c12M(n) {
   const K = C12, sc = K.sc, FL = c12Fl(), pel = i => M7.frames[i].pelvis[1], on = (i, h) => FL - (136 - pel(i)) * sc - (h || 0), o = { x: c12X(n), rot: 0, back: null }, P0 = c12P(0), P2 = c12P(2);
   const flinch = (k0, k1) => { let f = 0; for (let k = k0; k <= k1; k++) { const a = n - c12P(k); if (a >= 0) f += Math.exp(-a / 0.16); } return f; };
@@ -40,9 +38,11 @@ function c12M(n) {
   else if (n < P2) { const u = clamp01((n - P0) / (P2 - P0)); i = c10mf('rise', Math.min(9, Math.floor(ease3(u) * 10))); }
   else if (n < K.walk0) { i = c12Lp('sway', n, 7, 12); o.x += 3.5 * flinch(2, 11); o.rot = 0.05 * flinch(2, 11); }
   else if (n < K.walk1) i = c10mf('trudge', ((Math.floor(32 * c12D(n) / (51.72 * sc)) % 32) + 32) % 32);
-  else if (n < K.walk1 + 0.5) { const u = (n - K.walk1) / 0.5; i = c10mf('gup', Math.min(5, Math.floor(u * 6))); o.back = { i: c10mf('trudge', ((Math.floor(32 * c12D(K.walk1) / (51.72 * sc)) % 32) + 32) % 32), a: 1 - clamp01((n - K.walk1) / 0.18) }; }
-  else if (n < K.lull) i = c12Lp('guard', n, 8, 12);
-  else if (n < K.lull + 0.5) i = c10mf('gup', 5 - Math.min(5, Math.floor((n - K.lull) / 0.5 * 6)));
+  else if (n < K.lull) {      // (v1.138 he walks on, in short dragging steps, and his arms come up a tenth more with every heavy hit: gs1 - gs10)
+    i = c12Gs(Math.min(10, 1 + Math.floor((n - K.walk1) / 1.7142857)), n);
+    if (n < K.walk1 + 0.12) o.back = { i: c10mf('trudge', ((Math.floor(32 * c12D(K.walk1) / (51.72 * sc)) % 32) + 32) % 32), a: 1 - (n - K.walk1) / 0.12 };
+  }
+  else if (n < K.lull + 0.5) { i = c10mf('gup', 5 - Math.min(5, Math.floor((n - K.lull) / 0.5 * 6))); if (n < K.lull + 0.2) o.back = { i: c12Gs(10, K.lull), a: 1 - (n - K.lull) / 0.2 }; }
   else if (n < K.look) i = c12Lp('sway', n, 6, 12);
   else if (n < K.crouch) i = c10mf('crouch', n > K.look + 0.4 ? 1 : 0);
   else if (n < K.leap) i = c10mf('crouch', 1 + Math.floor(clamp01((n - K.crouch) / (K.leap - K.crouch)) * 6.99));
@@ -141,7 +141,7 @@ function c12Deco() {
   const key = VW + 'x' + VH + 'x' + gy; if (C12.deco && C12.deco.key === key) return C12.deco;
   const skull = (s, horn) => { const c = document.createElement('canvas'), B = ['.#####.', '#######', '##.#.##', '#######', '.#.#.#.', '..###..']; c.width = 11 * s; c.height = 6 * s; const g = c.getContext('2d'); for (let r = 0; r < 6; r++) for (let q = 0; q < 7; q++) if (B[r][q] !== '.') { g.fillStyle = (r === 2 && (q === 2 || q === 4)) ? '#1a0a0a' : r >= 4 ? '#b4a482' : (q + r) % 3 === 0 ? '#c9bb9a' : '#e6dac0'; g.fillRect((q + 2) * s, r * s, s, s); } if (horn) { g.fillStyle = '#8a6a3a'; for (const [qx, qy] of [[1, 1], [0, 0], [9, 1], [10, 0]]) g.fillRect(qx * s, qy * s, s, s); } return c; };
   const sp = [1, 2, 3].map(s => [skull(s, false), skull(s, true)]), items = [];
-  for (let i = 0; i < 170; i++) items.push({ x: -700 + 1900 * c4R(i, 41), t: 0.05 + 1.1 * Math.pow(c4R(i, 42), 1.3), k: c4R(i, 43) < 0.7 ? 0 : 1, h: c4R(i, 44) < 0.35 ? 1 : 0, f: c4R(i, 45) });
+  for (let i = 0; i < 210; i++) items.push({ x: -900 + 2400 * c4R(i, 41), t: 0.05 + 1.1 * Math.pow(c4R(i, 42), 1.3), k: c4R(i, 43) < 0.7 ? 0 : 1, h: c4R(i, 44) < 0.35 ? 1 : 0, f: c4R(i, 45) });
   items.sort((a, b) => a.t - b.t); return C12.deco = { key, sp, items };
 }
 function c12Backdrop(n, cam) {
@@ -151,7 +151,7 @@ function c12Backdrop(n, cam) {
   if (hyS < VH) {
     const top = Math.max(0, Math.round(hyS)), hh = Math.max(1, Math.round(z)); ctx.fillStyle = '#c8262c'; ctx.fillRect(0, top, VW, hh); const cols = ['#2a0610', '#220510', '#1c040e', '#16030c', '#10020a', '#0b0207'];
     for (let b = 0; b < 6; b++) { const y0 = Math.round(hyS + hh + Fh * 0.95 * b / 6), y1 = b === 5 ? VH : Math.round(hyS + hh + Fh * 0.95 * (b + 1) / 6); if (y1 > 0 && y0 < VH) { ctx.fillStyle = cols[b]; ctx.fillRect(0, Math.max(0, y0), VW, y1 - Math.max(0, y0) + 1); } }
-    ctx.fillStyle = 'rgba(58,11,26,0.9)'; for (let q = -8; q <= 14; q++) { const xw = q * 70; for (let y = Math.max(0, Math.floor(hyS) + 3); y < VH; y += 2) { const t = Math.pow((y - hyS) / Fh, 0.625), sx = Math.round(tx + (xw - cam.fx) * z * t / 0.44); if (sx >= 0 && sx < VW && ((y >> 1) + q & 1) === 0) ctx.fillRect(sx, y, 1, 1); } }      // (lines that run away to the horizon: near ones move faster)
+    ctx.fillStyle = 'rgba(58,11,26,0.9)'; for (let q = -8; q <= 26; q++) { const xw = q * 70; for (let y = Math.max(0, Math.floor(hyS) + 3); y < VH; y += 2) { const t = Math.pow((y - hyS) / Fh, 0.625), sx = Math.round(tx + (xw - cam.fx) * z * t / 0.44); if (sx >= 0 && sx < VW && ((y >> 1) + q & 1) === 0) ctx.fillRect(sx, y, 1, 1); } }      // (lines that run away to the horizon: near ones move faster)
     ctx.fillStyle = 'rgba(70,12,28,0.55)'; for (let k = 1; k < 8; k++) { const y = Math.round(hyS + Fh * Math.pow(k / 7, 1.6)); if (y >= 0 && y < VH) ctx.fillRect(0, y, VW, 1); }
     for (const it of D.items) {
       const y = hyS + Fh * Math.pow(it.t, 1.6), sx = tx + (it.x - cam.fx) * z * it.t / 0.44, cl = it.t < 0.4 ? 0 : it.t < 0.8 ? 1 : 2, im = D.sp[cl][it.h];
@@ -166,7 +166,7 @@ function c12Shrine(cam, n) {      // the shrine, far behind Sukuna: it slides in
 }
 function c12Pools(n, M) {      // blood on the floor: the pool he knelt in, and a pool every 36 px of the way he walked
   const k = clamp01((n + 2) / 3) * 1.25; c4Pool(Math.round(C12.X0 + 4), k);
-  for (let j = 1; j < 12; j++) { const xp = C12.X0 - 36 * j; if (xp > M.x + 10 && n > C12.walk0) c4Pool(Math.round(xp), 0.3 + 0.12 * (j % 3)); }
+  for (let j = 1; j < 16; j++) { const xp = C12.X0 - 36 * j; if (xp > M.x + 10 && n > C12.walk0) c4Pool(Math.round(xp), 0.3 + 0.12 * (j % 3)); }
   if (n > C12.hit2) c4Pool(Math.round(M.x), clamp01((n - C12.land) / 4) * 1.1);
 }
 
@@ -223,7 +223,7 @@ function c12Blast(n, M) {      // the arrow hits his face: a fireball where his 
 const C12C = {
   e02: [2.0, 2.3, 'Mh', 22, -6], e03: [1.8, 1.3, 'Mc', 25, 5], e04: [1.0, 1.1, 'Mc', 34, 6], e05: [2.6, 2.9, 'Mw', 20, -4], e06: [1.0, 1.0, 'Sc>Mc', 0, 0], e07: [2.2, 2.0, 'Mw', 18, 8], e08: [1.5, 1.5, 'Mc', 28, 10],
   e09: [2.8, 3.0, 'Mw', 15, 0], e10: [2.2, 1.7, 'Mh', 22, 0], e11: [1.15, 1.15, 'Mc', 38, 0], e12: [2.4, 2.4, 'Mf', 30, 16], e13: [1.1, 1.1, 'Mc', [70, -50], 0], e14: [2.4, 2.0, 'Mh', 25, -2], e15: [1.0, 1.0, 'Mc', 40, 0],
-  e16: [1.4, 1.6, 'Mc', 30, 8], e17: [1.2, 1.8, 'Mc', 24, 0], e18: [2.2, 1.5, 'Mc', 28, 0], e19: [1.2, 1.2, 'X', 0, 0], e20: [1.8, 1.7, 'Mc', 30, -6], e21: [1.3, 1.2, 'Mc', 36, 6], e22: [2.3, 2.3, 'Sh', -20, 0],
+  e16: [1.4, 1.6, 'Mc', 30, 8], e17: [1.2, 1.8, 'Mc', 24, 0], e18: [2.2, 1.5, 'Mc', 28, 0], e19: [1.0, 1.05, 'X', 0, 0], e20: [1.8, 1.7, 'Mc', 30, -6], e21: [1.3, 1.2, 'Mc', 36, 6], e22: [2.3, 2.3, 'Sh', -20, 0],
   e23: [1.3, 1.3, 'X', 10, 0], e24: [2.3, 2.5, 'Sf', -25, 0], e25: [2.4, 2.7, 'Mh', 30, -2], e26: [1.25, 1.25, 'X', 0, 6], e27: [1.3, 1.1, 'Mc', 20, 0], e28: [2.3, 2.7, 'Sf', -20, 4], e29: [2.0, 2.8, 'Mh', 30, 0],
   e30: [2.7, 2.9, 'Sf', -30, 0], e31: [3.0, 3.6, 'Mh', 18, 0], e32: [1.4, 1.0, 'Mc', 10, 0], e33: [1.0, 1.0, 'Mf', 30, 22], e34: [2.4, 2.8, 'Mw', 15, 0], e35: [1.7, 1.5, 'Sc', -18, 0], e36: [1.02, 1.0, 'X', 0, 0]
 };
@@ -284,8 +284,9 @@ function c12Over(n, s, cam, M) {      // light over the picture: the flash of th
 }
 
 // ---- the sounds (each fires once)
-function c12Steps() {      // the time of every step of the walk: two to a cycle of the walk's 32 pictures (the distance 51.72 * 0.8 px)
-  if (C12.steps) return C12.steps; const out = [], half = 51.72 * C12.sc / 2; let j = 1; for (let n = C12.walk0; n < C12.walk1; n += 0.02) while (c12D(n) >= j * half) { out.push(n); j++; }
+function c12Steps() {      // the time of every step: two to a cycle of the walk's 32 pictures (51.72 * 0.8 px), two to a cycle of the shuffle's 16 (24.14 * 0.8 px)
+  if (C12.steps) return C12.steps; const out = [], h1 = 51.72 * C12.sc / 2, h2 = 24.14 * C12.sc / 2, d1 = c12D(C12.walk1); let j = 1, q = 1;
+  for (let n = C12.walk0; n < C12.lull; n += 0.02) { const d = c12D(n); if (n < C12.walk1) { while (d >= j * h1) { out.push(n); j++; } } else { while (d - d1 >= q * h2) { out.push(n); q++; } } }
   return C12.steps = out;
 }
 function c12Events(T, ev) {

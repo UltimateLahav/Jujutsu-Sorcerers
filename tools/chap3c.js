@@ -227,7 +227,7 @@ function c10Ghosts(m, dt, n, a0, lit) {      // afterimages: where they were a m
   for (let j = n; j >= 1; j--) { const q = m - dt * j, Mg = c10Mah(q), img = m7Lit(Mg.i, lit), Q = M7.frames[Mg.i]; if (img) c10Draw(img, Q.pelvis, Mg.x, Mg.y, Mg.rot, Mg.sx == null ? 1 : Mg.sx, Mg.sy == null ? Math.abs(Mg.sx == null ? 1 : Mg.sx) : Mg.sy, a0 / j); }
 }
 function c10GhostsS(m, dt, n, a0) { for (let j = n; j >= 1; j--) { const Sg = c10Suk(m - dt * j); if (Sg) c10Draw(Sg.pic, Sg.pv, Sg.x, Sg.y, Sg.rot, Sg.sx, 1, a0 / j); } }
-function c10Warm(m) { const W = C10W; if (W.wi == null) W.wi = 122; for (let n = 0; n < 2 && W.wi < M7.frames.length; n++) { if (m7Lit(W.wi, 'cold')) W.wi++; } }      // (his new pictures are lit a few at a time while the earlier shots play)
+function c10Warm(m) { const W = C10W; if (W.wi == null) W.wi = 122; for (let n = 0; n < 2 && W.wi < Math.min(M7.frames.length, 363); n++) { if (m7Lit(W.wi, 'cold')) W.wi++; } }      // (his new pictures are lit a few at a time while the earlier shots play)
 function c10Shake(m) {      // how hard the picture shakes: each blow shakes it and the shake dies away; the spin shakes more and more
   const K = C10K; let a = 0; if (m >= C11K.air2) return c11Shake(m); for (const [t, v, k] of [[K.launch, 3.4, 5], [K.arrive, 1.3, 7], [K.cut, 4.5, 6], [K.kick + 0.1, 2.6, 8], [K.gslot + 0.3, 2.2, 6], [K.throwAt, 4.2, 5], [K.lasso + 0.9, 4.2, 6], [K.fling, 5.2, 5], [K.regrow, 1.2, 4], [K.whole, 2.2, 6]]) if (m >= t) a += v * Math.exp(-(m - t) * k);
   if (m >= K.spin && m < K.fling) a += 0.5 + 1.2 * clamp01(c10Om(m) / 16); if (m >= K.gslot + 0.4 && m < K.throwAt - 0.4) a += 0.6; return a;
