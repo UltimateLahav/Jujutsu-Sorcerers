@@ -299,6 +299,7 @@ function c12Audio() {
 }
 function c12Music(T) {
   const n = T - c12Start(), on = n >= 0 && n < C12V.len && T < C7.card && !document.hidden && !(typeof paused !== 'undefined' && paused);
+  if (n > -8 && n < 0) c12Audio();      // (the song is made and starts to load a few seconds before it plays: its first hit comes 0.25 s after it starts)
   if (!on) { if (c12A && !c12A.paused) c12A.pause(); return; }
   const a = c12Audio(); if (!a) return;
   const g = C12V.vol * Math.min(1, n / 0.04) * Math.min(1, (C12V.len - n) / C12V.fadeOut), node = sfx && soundOn && sfx.ac.state === 'running' ? sfx.music(a) : null;
