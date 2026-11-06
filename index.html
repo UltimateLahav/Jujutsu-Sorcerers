@@ -208,7 +208,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.140</small>
+    <small id="ver">V1.141</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -11146,7 +11146,7 @@ const C12K = { look: 2.4, end: 84.4 };      // v1.137 (tools/chap3e.js, the Snow
 C12K.s0 = C9.m0 + C11K.kick + C11K.len; C12K.t0 = C12K.s0 + C12K.look; C8T.end = C12K.t0 + C12K.end;      // (s0: where v1.136 ended; t0: the scene time at which the second song begins; the scene ends `end` s later)
 const c12P = k => 1.126 + k * 1.7142857;      // the heavy hit k of the second song, in seconds into it (it has one every 3 beats = 1.714 s at 105 bpm; hit 0 is 1.126 s into the clip and hit 24 is the one at 2:03 of the song)
 const C12S = [['e01', -C12K.look], ['e02', 0], ['e03', c12P(0)], ['e04', c12P(2)], ['e05', c12P(3)], ['e06', c12P(4)], ['e07', c12P(6)], ['e08', c12P(7)], ['e09', c12P(8)], ['e10', c12P(10)], ['e11', c12P(11)], ['e12', c12P(13)], ['e13', c12P(15)], ['e14', c12P(17)], ['e15', c12P(19)], ['e16', c12P(21)], ['e17', c12P(23)], ['e18', c12P(24)], ['e19', c12P(25)], ['e20', c12P(27)], ['e21', c12P(29)], ['e22', c12P(31)], ['e23', c12P(33)], ['e24', c12P(34)], ['e25', c12P(35)], ['e26', c12P(36)], ['e27', c12P(37)], ['e28', c12P(38)], ['e29', c12P(39)], ['e30', c12P(40) - 0.14], ['e31', c12P(40) + 0.12], ['e32', c12P(40) + 0.9], ['e33', c12P(41)], ['e34', c12P(42)], ['e35', c12P(43)], ['e36', 76.6]].map(a => [a[0], C12K.t0 + a[1]]);      // the shots of the second song (name, scene time)
-const C11S = [['b01', c9B(21, 0)], ['b02', c9B(22, 0)], ['b03', c9B(24, 0)], ['b04', c9B(26, 0)], ['b05', c9B(27, 0)], ['b06', c9B(29, 0)], ['b07', c9B(30, 0)], ['b08', c9B(31, 0)], ['b09', c9B(32, 0)], ['b10', c9B(33, 0)], ['b11', c9B(34, 0)], ['b12', c9B(35, 0)], ['b13', c9B(36, 0)], ['b14', c9B(38, 2)], ['b15', c9B(40, 0)], ['b16', c9B(41, 2)], ['b17', c9B(43, 0)], ['b18', c9B(45, 0)], ['b19', c9B(47, 0)], ['b20', c9B(48, 0)], ['b21', c9B(49, 0)], ['b22', c9B(50, 0)], ['b23', c9B(51, 0)], ['b24', c9B(53, 0)], ['b25', c9B(54, 0)], ['b26', c9B(55, 0)], ['b27', c9B(56, 0)], ['b28', c9B(57, 0)], ['b29', c9B(58, 0)], ['d01', c9B(58, 1)], ['d02', c9B(58, 1) + 3.4], ['d03', c9B(58, 1) + 5.6], ['d04', c9B(58, 1) + 9.9], ['d05', c9B(58, 1) + 12.2]];      // the shots of the second half of the air fight (their cameras: tools/chap3d.js) and the five silent ones after the kick (d01 Sukuna flies back, d02 the hand sign, d03 the GIF, d04 the domain spreads, d05 Mahoraga into blood)
+const C11S = (() => { const o = []; let i = 1; for (let bar = 21; bar < 58; bar++) for (const bt of [0, 2]) o.push(['b' + String(i++).padStart(2, '0'), c9B(bar, bt)]); return o; })().concat([['d01', c9B(58, 1)], ['d02', c9B(58, 1) + 3.4], ['d03', c9B(58, 1) + 5.6], ['d04', c9B(58, 1) + 9.9], ['d05', c9B(58, 1) + 12.2]]);      // the shots of the second half of the air fight (their cameras: tools/chap3d.js) and the five silent ones after the kick (d01 Sukuna flies back, d02 the hand sign, d03 the GIF, d04 the domain spreads, d05 Mahoraga into blood)
 const C10K = {      // v1.135 the key moments of the air fight in SONG time m (seconds after the song began; the scene time is s = m + C9.m0)
   catch: 0.55,      // Sukuna stops his spin and finds his balance
   look: c9B(2, 0), crouch: c9B(2, 2), launch: c9B(3, 0), arrive: c9B(4, 0), beckon: c9B(4, 2),      // Mahoraga looks up, crouches, leaps off the street (the groove of the song begins), arrives and hovers, Sukuna beckons
@@ -11559,13 +11559,13 @@ function c8Build() {
   C8W.L = [c8City({ p: 0.25, skip: [C8W.ref.x - 50 - 90, C8W.ref.x - 50 + 90], seed: 11, wMin: 30, wMax: 70, hMin: 40, hMax: 250, col: '#0b1233', edge: '#18245a', win: ['#2c3b78', '#3b4f94'], dens: 0.08, gap: 0.5, g0: 10, g1: 50 }), c8City({ p: 0.5, seed: 31, wMin: 40, wMax: 90, hMin: 30, hMax: 150, col: '#090e2a', edge: '#1a2760', win: ['#ffd98a', '#9fc4ff'], dens: 0.15, gap: 0.55, g0: 15, g1: 65 }), c8City({ p: 0.8, seed: 51, wMin: 50, wMax: 110, hMin: 14, hMax: 70, col: '#070a1d', edge: '#16205a', win: ['#ffd98a', '#ffb86a'], dens: 0.22, gap: 0.5, g0: 10, g1: 50 })];
 }
 function c8Moon(x, y, R) {      // a huge pixel moon: a pale disc (made once as a picture, so that it is a clean shape at any zoom), a few darker seas and craters, the right limb in shade, a halo
-  if (!C8W.moonC || C8W.moonR !== R) {
+  C8W.moons = C8W.moons || {}; if (!C8W.moons[R]) {      // (one picture for each size: the sky has the moon of 60 and the climb of v1.141 one of 85)
     const c = document.createElement('canvas'); c.width = c.height = 2 * R + 2; const g = c.getContext('2d'), o = R + 1;
     for (let yy = -R; yy <= R; yy++) { const hw = Math.floor(Math.sqrt(R * R - yy * yy)); g.fillStyle = '#e4e9fa'; g.fillRect(o - hw, o + yy, hw * 2, 1); g.fillStyle = '#c9d0ec'; g.fillRect(o + Math.floor(hw * 0.55), o + yy, hw - Math.floor(hw * 0.55), 1); }
     for (const [dx, dy, r, col] of [[-0.35, -0.2, 0.28, '#c4cbe8'], [0.1, 0.25, 0.22, '#bcc4e4'], [-0.1, -0.55, 0.14, '#cfd5ee'], [0.4, -0.3, 0.12, '#c4cbe8'], [-0.5, 0.35, 0.16, '#cfd5ee'], [0.25, 0.6, 0.1, '#c4cbe8']]) { const rr = Math.round(R * r), cx = o + Math.round(R * dx), cy = o + Math.round(R * dy); for (let yy = -rr; yy <= rr; yy++) { const hw = Math.floor(Math.sqrt(rr * rr - yy * yy)); g.fillStyle = col; g.fillRect(cx - hw, cy + yy, hw * 2, 1); } }
-    C8W.moonC = c; C8W.moonR = R;
+    C8W.moons[R] = c;
   }
-  const gr = ctx.createRadialGradient(x, y, R * 0.8, x, y, R * 3.2); gr.addColorStop(0, 'rgba(190,205,255,0.30)'); gr.addColorStop(1, 'rgba(190,205,255,0)'); ctx.fillStyle = gr; ctx.fillRect(x - R * 3.2, y - R * 3.2, R * 6.4, R * 6.4); ctx.drawImage(C8W.moonC, x - R - 1, y - R - 1);
+  const gr = ctx.createRadialGradient(x, y, R * 0.8, x, y, R * 3.2); gr.addColorStop(0, 'rgba(190,205,255,0.30)'); gr.addColorStop(1, 'rgba(190,205,255,0)'); ctx.fillStyle = gr; ctx.fillRect(x - R * 3.2, y - R * 3.2, R * 6.4, R * 6.4); ctx.drawImage(C8W.moons[R], x - R - 1, y - R - 1);
 }
 function c8On(cam, fx, fy) { if (cam.rot) { ctx.save(); ctx.translate(Math.round(cam.tx), Math.round(cam.ty)); ctx.rotate(cam.rot); ctx.scale(cam.z, cam.z); ctx.translate(-fx, -fy); } else c4CamOn(cam.z, fx, fy, cam.tx, cam.ty); }      // (v1.135: the camera may also roll: cam.rot, in radians, about the screen point (tx, ty))
 function c8Camp(cam, p) { c8On(cam, C8W.ref.x + (cam.fx - C8W.ref.x) * p, C8W.ref.y + (cam.fy - C8W.ref.y) * p); }      // the camera for a layer that moves p times as much as the near world (0 = never, 1 = the world itself)
@@ -11798,7 +11798,7 @@ function c9Audio() {
   return c9A;
 }
 function c9Music(T) {
-  const m = T - c9Start(), on = m >= 0 && m < C9.D && !document.hidden && !(typeof paused !== 'undefined' && paused) && !C13Q.def;
+  const m = T - c9Start(), on = m >= 0 && m < C9.D && !document.hidden && !(typeof paused !== 'undefined' && paused) && !C13Q.def && !C13Q.intro;
   if (!on) { if (c9A && !c9A.paused) c9A.pause(); return; }
   const a = c9Audio(); if (!a) return;
   const k = Math.min(1, m / C9.fadeIn), g = C9.vol * k * k * Math.min(1, (C9.D - m) / C9.fadeOut), node = sfx && soundOn && sfx.ac.state === 'running' ? sfx.music(a) : null;
@@ -12138,12 +12138,12 @@ function c10Cam(m, k) {
 function c10Stage(m, cam) {
   const s = m + C9.m0, K = C10K, S = c10Suk(m), M = c10Mah(m), A = c10Arm(m), lit = c10Lit(m); c8Bg(cam, s);
   if (m < K.launch + 2.5) { const L = c4Lay(c4Geo()), cx = Math.round(VW / 2); c4Crater(cx + L.cr, 1.1); c4Pool(cx + L.yL - 30, 1.54); }      // (the crater and the pool at the street, as part 2 left them)
-  c4Cam0(); c10Clouds(cam, m); c8On(cam, cam.fx, cam.fy);      // (the camera c8Bg left on is turned off for the clouds, which have a camera of their own, and put on again for the actors)
+  c4Cam0(); c10Clouds(cam, m); c8On(cam, cam.fx, cam.fy); c14Rear(m, cam);      // (v1.141 the city of the air fight behind the pair; the camera c8Bg left on is turned off for the clouds, which have a camera of their own, and put on again for the actors)
   const behind = M.mode === 'spin' && M.depth < 0, ro = S && (S.mode === 'rope' || S.mode === 'spin');
   const cut = M.mode === 'regrow'; let ropeP = null; if (S && ro) { const hand = cut ? [M.x + 170, M.y - 34] : c10Hp(S, C10H[S.ei] || [14, -5.5]), wst = c10An(M, 'chest'); ropeP = [hand[0], hand[1], wst[0], wst[1]]; }
   const rope = () => { if (!ropeP) return; const tl = m - K.lasso, g = clamp01((tl + 0.1) / 0.4), tk = m < K.lasso + 0.9 ? 0.15 + 0.5 * clamp01((tl - 0.3) / 0.6) : 1, a = m >= K.fling ? 0 : 1; c10Rope(m, ropeP[0], ropeP[1], ropeP[2], ropeP[3], { g, k: Math.min(1, tk), a }); if (g >= 1) c10Coil(M, m, m >= K.fling ? 0 : 1); };
   if (behind) { rope(); c10DrawMah(M, s, m, lit); c10DrawSuk(S, s); } else { if (!cut) c10DrawSuk(S, s); c10DrawMah(M, s, m, lit); rope(); }
-  c10DrawArm(A, lit); c10Fx(m, S, M, A, cam); if (m >= C11K.air2) c11Fx(m);
+  c10DrawArm(A, lit); c10Fx(m, S, M, A, cam); if (m >= C11K.air2) { c11Fx(m); c14Front(m); }
   return { S, M, A };
 }
 function c10Shot(now, dt, T, st, t1) {
@@ -12159,10 +12159,12 @@ function c10Shot(now, dt, T, st, t1) {
   c10Impact(m, K.cut, cam, cpt[0], cpt[1], 0.55); c10Impact(m, K.throwAt, cam, R.S ? R.S.x : E.SF.x, R.S ? R.S.y : E.SF.y, 0.4); c10Impact(m, K.fling, cam, E.CS.x, E.CS.y, 0.5);
   { const r = m - K.launch; if (r >= 0 && r < 0.07) c6White(0.8 * (1 - r / 0.07)); }
   if (m >= C11K.air2) c11Impacts(m, cam);
+  c14Over(m);
   c13Draw(m, cam, R.S);      // (v1.140 the ring of the quick time event, the counter, the verdict)
   { const k = c8NotchK(s); if (k > 0.02) c6White(0.26 * k * k); }
   ctx.fillStyle = 'rgba(30,10,60,0.12)'; ctx.fillRect(0, 0, VW, VH); msFinish(1);
   c6Black((s - (C8T.end - 0.9)) / 0.9);
+  c13Top(m);      // (v1.141 the card, the counter and the verdict are over the cinema bars)
 }
 
 // ---- the sounds (each fires once; m = the song time)
@@ -12182,7 +12184,7 @@ function c10Events(T, ev) {
   at('c10l0', K.lasso - 0.1, () => snd('c6scrape'), 0.5); at('c10l1', K.lasso + 0.12, () => snd('c6scrape'), 0.5); at('c10l2', K.lasso + 0.35, () => snd('c6scrape'), 0.5); at('c10l3', K.lasso + 0.5, () => snd('c7wheel', 0), 0.8); at('c10jerk', K.lasso + 0.88, () => { snd('smack', 3); snd('c7smash'); }, 0.6);
   { if (!C10W.orbT) { C10W.orbT = []; for (let t = K.spin, n = 0; t < K.fling; n++) { const th = c10Th(t); let dt = 0.05; while (c10Th(t + dt) - th < Math.PI * (n < 12 ? 1 : 2) && t + dt < K.fling + 1) dt += 0.02; t += dt; if (t >= K.fling) break; C10W.orbT.push(t - 0.02); } } C10W.orbT.forEach((t, n) => at('c10o' + n, t, () => snd('c7whoosh'), 0.3)); }      // (a whoosh each time he passes: every half turn at first, every turn when it is fast)
   at('c10rg0', K.regrow, () => snd('rct', 0), 0.8); at('c10rg1', K.whole, () => snd('rct', 1), 0.8);
-  at('c10fl0', K.fling - 0.02, () => { snd('c7smash'); snd('c8crack'); }, 0.6); at('c10fl1', K.fling + 0.1, () => snd('c7rise'), 1.2); at('c10up', K.fling + 0.6, () => snd('c7whoosh'), 0.6); at('c10top', K.fling + 2.4, () => snd('c7wheel', 1), 0.8); at('c10end', K.rise + 3.2, () => snd('c7eyes'), 1.0); c11Events(T, ev); c12Events(T, ev);
+  at('c10fl0', K.fling - 0.02, () => { snd('c7smash'); snd('c8crack'); }, 0.6); at('c10fl1', K.fling + 0.1, () => snd('c7rise'), 1.2); at('c10up', K.fling + 0.6, () => snd('c7whoosh'), 0.6); at('c10top', K.fling + 2.4, () => snd('c7wheel', 1), 0.8); at('c10end', K.rise + 3.2, () => snd('c7eyes'), 1.0); c11Events(T, ev); c14Events(T, ev); c12Events(T, ev);
 }
 const C10_SHOTS = ['sky', 'aface', 'alook', 'aleap', 'aduel', 'aslow', 'acut', 'agrab', 'aplunge', 'arope', 'aspin', 'aregrow', 'awhirl', 'afling', 'arise'];
 for (const k of C10_SHOTS) c7Shots[k] = c10Shot;      // (the shots after the uppercut are drawn by this file: 'sky' too, which c8Shot drew until v1.134)
@@ -12203,30 +12205,37 @@ const C11MV = {
   skick: { who: 'S', row: 2, n: 15, fps: 30, hit: 5, reach: [24, -8], tail: 0.3 }, chop: { who: 'S', air: [7, 8], n: 2, fps: 9, hit: 1, reach: [20, 0], tail: 0.3 }
 };
 
-// ---- the script of the fight: t = the moment the blow lands (a beat of the song), a = who hits (M Mahoraga, S Sukuna), mv = the blow, re = what the other does (dodge, block, hit: thrown back, hurt: the head snaps back, slash: cut and the wheel adapts, clash: both hit at once),
-// imp = the impact frame (0 none, 1 a flash, 2 the black-and-white one), kb = how far the other is thrown (px), sh = shake, tg = where it lands ('head' or 'body')
-const C11EV = [
-  { t: c9B(22, 1), a: 'M', mv: 'hookN', re: 'dodge' }, { t: c9B(23, 0), a: 'S', mv: 'jab', re: 'hurt', imp: 1, tg: 'head' },
-  { t: c9B(24, 2), a: 'M', mv: 'hookF', re: 'block', kb: 22 }, { t: c9B(25, 1), a: 'S', mv: 'skick', re: 'hurt', imp: 1, tg: 'head' },
-  { t: c9B(26, 3), a: 'M', mv: 'kick', re: 'block', kb: 34, sh: 3 }, { t: c9B(27, 1), a: 'S', mv: 'jab2', re: 'hurt', tg: 'head' },
-  { t: c9B(28, 1), a: 'M', mv: 'hookN', re: 'dodge' }, { t: c9B(29, 0), a: 'S', mv: 'skick', re: 'hurt', imp: 2, tg: 'head', kb: 30, sh: 4 },
-  { t: c9B(30, 0), a: 'M', mv: 'punch', re: 'hit', imp: 2, kb: 120, sh: 6 }, { t: c9B(31, 0), a: 'S', mv: 'chop', re: 'slash', imp: 1, tg: 'body', sh: 3 },
-  { t: c9B(32, 0), a: 'M', mv: 'hookF', re: 'dodge' }, { t: c9B(32, 3), a: 'S', mv: 'jab2', re: 'hurt', tg: 'head' },
-  { t: c9B(33, 2), a: 'M', mv: 'punch', re: 'clash', imp: 2, sh: 6, with: { a: 'S', mv: 'jab' } }, { t: c9B(34, 1), a: 'M', mv: 'hookN', re: 'hit', kb: 70, sh: 4 },
-  { t: c9B(35, 0), a: 'M', mv: 'kick', re: 'clash', imp: 2, sh: 8, with: { a: 'S', mv: 'skick' } },
-  { t: c9B(43, 3), a: 'M', mv: 'hookN', re: 'hit', imp: 1, kb: 60, sh: 4, blood: 1 }, { t: c9B(44, 2), a: 'M', mv: 'hookF', re: 'hit', kb: 60, sh: 4 },
-  { t: c9B(45, 3), a: 'S', mv: 'jab', re: 'hurt', tg: 'head' }, { t: c9B(47, 0), a: 'M', mv: 'kick', re: 'hit', imp: 1, kb: 80, sh: 5 },
-  { t: c9B(49, 0), a: 'S', mv: 'chop', re: 'slash', imp: 1, tg: 'body', sh: 3 }, { t: c9B(50, 2), a: 'M', mv: 'punch', re: 'clash', imp: 2, sh: 6, with: { a: 'S', mv: 'jab2' } },
-  { t: c9B(51, 0), a: 'M', mv: 'hookN', re: 'block', kb: 26 }, { t: c9B(52, 0), a: 'M', mv: 'punch', re: 'hit', imp: 1, kb: 90, sh: 5 },
-  { t: c9B(53, 0), a: 'S', mv: 'jab2', re: 'hurt', imp: 1, tg: 'head', sh: 4 },
-  { t: c9B(55, 2), a: 'M', mv: 'hookF', re: 'dodge' }, { t: c9B(56, 3), a: 'S', mv: 'jab', re: 'hurt', imp: 2, tg: 'head', kb: 40, sh: 6 },
-  { t: c9B(58, 1), a: 'M', mv: 'kick', re: 'hit', imp: 2, kb: 400, sh: 9, last: true }
+// ---- the script of the fight (v1.141: ACTION ONLY, seven acts, a blow on every beat or two): [bar, beat, who hits (M Mahoraga, S Sukuna, W = only a SWIPE prompt), the blow, what the other does, extras]; the moment it lands is a beat of the song (c9B)
+// re = what the other does (dodge, block, hit: thrown back, hurt: the head snaps back, slash: cut and the wheel adapts, adapt: the wheel has learnt it and the slash only sparks, clash: both hit at once),
+// extras: imp = the impact frame (0 none, 1 a flash, 2 the black-and-white one), kb = how far the other is thrown (px), sh = shake, tg = where it lands ('head' or 'body'), with = the other fist of a clash, last = the blow that ends the song, id = a name, dir = the direction of a swipe
+// Acts: SKY (bars 21 - 28, high up with the moon), CHASE (28 - 34, through three skyscrapers), CUT (34 - 39, Sukuna cuts a tower and they fight on the falling half), FALL (39 - 45, through the roof into a building that collapses under them),
+// THROW (45 - 51, Mahoraga throws him back through the towers: swipes), ROOF (51 - 56, a rooftop; the wheel adapts to his slash), MOON (56 - 58, straight up through the clouds to the moon, the last kick)
+const C11T = [
+  [21, 3, 'M', 'hookN', 'dodge'], [22, 1, 'S', 'jab', 'hurt', { tg: 'head', imp: 1 }], [22, 3, 'M', 'hookF', 'dodge'], [23, 1, 'S', 'skick', 'hurt', { tg: 'head', imp: 1 }], [23, 3, 'M', 'kick', 'block', { kb: 30 }], [24, 1, 'S', 'jab2', 'hurt', { tg: 'head' }],
+  [24, 3, 'M', 'hookN', 'dodge'], [25, 1, 'S', 'skick', 'hurt', { tg: 'head', imp: 2, kb: 30, sh: 4 }], [25, 3, 'M', 'punch', 'hit', { imp: 2, kb: 110, sh: 6 }], [26, 1, 'S', 'chop', 'slash', { tg: 'body', imp: 1, sh: 3 }], [26, 3, 'M', 'hookF', 'dodge'],
+  [27, 1, 'S', 'jab', 'hurt', { tg: 'head' }], [27, 3, 'M', 'punch', 'clash', { imp: 2, sh: 6, with: { a: 'S', mv: 'jab' } }],
+  [28, 3, 'M', 'kick', 'hit', { imp: 1, kb: 70, sh: 4 }], [29, 1, 'S', 'jab', 'hurt', { tg: 'head' }], [29, 3, 'M', 'hookN', 'dodge'], [30, 1, 'S', 'skick', 'hurt', { tg: 'head', imp: 1 }], [30, 3, 'M', 'hookF', 'block', { kb: 26 }],
+  [31, 1, 'S', 'jab2', 'hurt', { tg: 'head' }], [31, 3, 'M', 'kick', 'dodge'], [32, 1, 'S', 'chop', 'slash', { tg: 'body', imp: 1, sh: 3 }], [32, 3, 'M', 'punch', 'hit', { imp: 2, kb: 110, sh: 6 }], [33, 1, 'S', 'skick', 'hurt', { tg: 'head', imp: 2, kb: 30, sh: 4 }], [33, 3, 'M', 'hookN', 'dodge'],
+  [34, 1, 'M', 'hookF', 'dodge'], [34, 3, 'S', 'chop', 'slash', { tg: 'body', imp: 2, sh: 6, id: 'cut' }], [35, 1, 'M', 'kick', 'block', { kb: 34 }], [35, 3, 'S', 'jab', 'hurt', { tg: 'head' }], [36, 1, 'M', 'hookN', 'dodge'], [36, 3, 'S', 'skick', 'hurt', { tg: 'head', imp: 1 }],
+  [37, 1, 'M', 'punch', 'hit', { imp: 1, kb: 80, sh: 5 }], [37, 3, 'S', 'jab2', 'hurt', { tg: 'head', imp: 1 }], [38, 1, 'M', 'hookF', 'dodge'], [38, 3, 'S', 'chop', 'slash', { tg: 'body', imp: 1, sh: 3 }],
+  [39, 3, 'M', 'punch', 'hit', { imp: 2, kb: 90, sh: 6 }], [40, 1, 'S', 'jab', 'hurt', { tg: 'head' }], [40, 3, 'M', 'kick', 'dodge'], [41, 1, 'S', 'skick', 'hurt', { tg: 'head', imp: 1 }], [41, 3, 'M', 'hookN', 'block', { kb: 26 }], [42, 1, 'S', 'jab2', 'hurt', { tg: 'head' }],
+  [42, 3, 'M', 'hookF', 'dodge'], [43, 1, 'S', 'chop', 'slash', { tg: 'body', imp: 1, sh: 3 }], [43, 3, 'M', 'punch', 'dodge'], [44, 1, 'S', 'skick', 'hurt', { tg: 'head', imp: 1, kb: 40 }], [44, 3, 'M', 'kick', 'clash', { imp: 2, sh: 8, with: { a: 'S', mv: 'skick' } }],
+  [45, 3, 'M', 'punch', 'hit', { imp: 2, kb: 100, sh: 7, id: 'throw' }], [46, 3, 'W', null, null, { dir: 'U', id: 'w0' }], [47, 1, 'W', null, null, { dir: 'L', id: 'w1' }], [47, 3, 'W', null, null, { dir: 'D', id: 'w2' }], [48, 3, 'S', 'chop', 'slash', { tg: 'body', imp: 2, sh: 6 }],
+  [49, 1, 'M', 'hookN', 'dodge'], [49, 3, 'S', 'jab', 'hurt', { tg: 'head' }], [50, 1, 'M', 'kick', 'dodge'], [50, 3, 'S', 'skick', 'hurt', { tg: 'head', imp: 1 }],
+  [51, 1, 'M', 'hookF', 'dodge'], [51, 3, 'S', 'jab', 'hurt', { tg: 'head' }], [52, 1, 'M', 'hookN', 'hit', { imp: 1, kb: 60, sh: 4 }], [52, 3, 'S', 'chop', 'slash', { tg: 'body', imp: 1, sh: 3 }], [53, 1, 'M', 'kick', 'dodge'], [53, 3, 'S', 'chop', 'slash', { tg: 'body', imp: 1, sh: 3 }],
+  [54, 1, 'M', 'punch', 'block', { kb: 30 }], [54, 3, 'S', 'chop', 'adapt', { tg: 'body', sh: 3, id: 'adapt' }], [55, 1, 'S', 'jab', 'hurt', { tg: 'head', imp: 1 }], [55, 3, 'M', 'hookF', 'dodge'],
+  [56, 1, 'M', 'hookN', 'dodge'], [56, 3, 'M', 'hookF', 'dodge'], [57, 1, 'S', 'jab', 'hurt', { tg: 'head', imp: 2, kb: 40, sh: 6 }], [57, 3, 'M', 'hookF', 'dodge'], [58, 1, 'M', 'kick', 'hit', { imp: 2, kb: 400, sh: 9, last: true }]
 ];
-// the slow parts: the wheel turns a notch (the times in song time), the first at the end of the first quiet bars
-const C11NOTCH = [c9B(31, 1), c9B(36, 3), c9B(40, 2), c9B(43, 1), c9B(49, 1), c9B(57, 2)];
-const C11POSE = [{ who: 'S', t0: c9B(37, 0), dur: 2.0, pic: { air: 4 } }, { who: 'S', t0: c9B(41, 0), dur: 1.6, pic: { air: 4 } }];      // (poses on their own in the calm: Sukuna beckons)
-// where the middle of the pair is: [song time, x from the arena, y from the arena]: high up with the moon, the fall together to the roofs, the calm there, the climb back
-const C11PATH = [[c9B(21, 0), 2, -298], [c9B(29, 0), 14, -304], [c9B(33, 2), -6, -298], [c9B(35, 0), 10, 455], [c9B(46, 0), -16, 455], [c9B(50, 2), 8, -250], [c9B(58, 1), 0, -300]];
+const C11EV = C11T.map(([bar, beat, a, mv, re, x]) => ({ t: c9B(bar, beat), a, mv, re, ...x }));
+// the wheel turns a notch (the times in song time): at the first slashes it learns, and when it has learnt the slash of the roof
+const C11NOTCH = [c9B(26, 1), c9B(43, 1), c9B(54, 3)];
+const C11POSE = [{ who: 'S', t0: c9B(45, 3) + 0.25, dur: 2.6, pic: { fall: 4 }, rot: u => -9 * u }];      // (poses on their own: Sukuna tumbles through the towers when he is thrown)
+// where the middle of the pair is: [song time, x from the arena, y from the arena]: see the layout of the city in tools/chap3g.js (the towers are where the path goes through them)
+const C11PATH = [
+  [c9B(21, 0), 2, -298], [c9B(24, 0), 120, -290], [c9B(27, 0), 240, -240], [c9B(28, 0), 320, -170], [c9B(28, 3), 300, -120], [c9B(29, 1), 380, -95], [c9B(29, 3), 470, -75], [c9B(30, 2), 650, -40], [c9B(31, 0), 760, -20], [c9B(31, 2), 870, 0], [c9B(32, 0), 990, 30], [c9B(32, 2), 1080, 50], [c9B(32, 3), 1180, 70], [c9B(33, 2), 1380, 110], [c9B(34, 0), 1500, 130],
+  [c9B(34, 3), 1540, 60], [c9B(35, 2), 1600, 70], [c9B(36, 2), 1700, 150], [c9B(37, 2), 1800, 120], [c9B(38, 2), 1860, 170], [c9B(38, 3), 1890, 200], [c9B(40, 0), 1930, 330], [c9B(41, 2), 1980, 420], [c9B(42, 3), 2020, 500], [c9B(43, 3), 2060, 560], [c9B(44, 3), 2140, 600],
+  [c9B(45, 3), 2180, 590], [c9B(46, 0), 2000, 560], [c9B(46, 3), 1800, 540], [c9B(47, 1), 1600, 520], [c9B(47, 3), 1420, 560], [c9B(48, 1), 1330, 580], [c9B(51, 0), 1320, 550], [c9B(55, 0), 1340, 545], [c9B(55, 3), 1340, 540], [c9B(56, 2), 1350, 300], [c9B(57, 2), 1370, -50], [c9B(58, 1), 1380, -300]
+];
 const C11G = { sep: 108, dy: 12 };      // how far apart they hang (px) and how much lower Sukuna hangs than Mahoraga
 
 function c11Spl(keys, m, comp) {      // a smooth path through keys [t, a, b, ...] (the same spline as the cameras, c10Kf, for any numbers: comp = which of the numbers)
@@ -12249,7 +12258,9 @@ function c11Build() {
   const key = VW + 'x' + gy + 'x' + c8X0() + 'x' + C13Q.ver; if (C11.b && C11.b.key === key) return C11.b;
   const W = { S: [], M: [] }, EV = [], D = CU_GAME[3], atk = D && D.atk, air = D && D.air;
   if (!atk || !air || !air.length) return null;
+  const WL = [];
   c11Eff().forEach((e, idx) => {
+    if (e.a === 'W') { WL.push({ ...e, idx }); return; }      // (a marker of a set piece: only a prompt, no blow)
     const A = e.a, Dd = A === 'M' ? 'S' : 'M', tc = e.t;
     // where the blow lands: on the defender's head (or body) at the moment of contact (the defender's base, plus his own offset in that moment)
     const bD = c11Base(Dd, tc), PF = M7.frames[c10mf('floatg', 0)], mh = [PF.head[0] - PF.pelvis[0], PF.head[1] - PF.pelvis[1] + 4], mc = [PF.chest[0] - PF.pelvis[0], PF.chest[1] - PF.pelvis[1]], tgOff = Dd === 'S' ? (e.tg === 'body' ? [0, -4] : [3.5, -18.5]) : (e.tg === 'body' ? mc : mh);
@@ -12260,7 +12271,8 @@ function c11Build() {
     const decay = (a, tau, u0) => Math.exp(-Math.max(0, a - u0) / tau);
     let rpose = null;
     if (re === 'dodge') rpose = u => { const e1 = c11K([[0, 0], [0.22, 1], [0.62, 1], [0.95, 0]], u); return { dx: -13 * e1, dy: 14 * e1, rot: -0.58 * e1, pic: { air: u < 0.1 ? 5 : u < 0.7 ? 6 : 5 } }; };
-    else if (re === 'block') rpose = u => { const k = Math.exp(-Math.max(0, u - 0.12) / 0.22); return { dx: -kb * (1 - k) + 2 * Math.sin(u * 90) * k, dy: 0, rot: -0.1 * (1 - k), pic: { air: 9 } }; };
+    else if (re === 'block') rpose = u => { const k = Math.exp(-Math.max(0, u - 0.12) / 0.22); return { dx: (Dd === 'S' ? -1 : 1) * kb * (1 - k) + 2 * Math.sin(u * 90) * k, dy: 0, rot: (Dd === 'S' ? -0.1 : 0.06) * (1 - k), pic: Dd === 'S' ? { air: 9 } : null }; };      // (Mahoraga blocks with his own ready stance)
+    else if (re === 'adapt') rpose = u => { const k = Math.exp(-Math.max(0, u - 0.05) / 0.15); return { dx: 5 * (1 - k), dy: 0, rot: 0, pic: null }; };      // (v1.141 the wheel has learnt the slash: it only sparks on him)
     else if (re === 'hurt') rpose = u => { const k = 1 - Math.exp(-Math.max(0, u - 0.02) / 0.1); return { dx: (Dd === 'S' ? -1 : 1) * (kb * 0.3) * k * decay(u, 0.5, 0.2), dy: -3 * k * decay(u, 0.3, 0.1), rot: 0, pic: Dd === 'M' ? { clip: 'hurt', f: u * 15 } : { fall: u < 0.1 ? 1 : 2 } }; };
     if (e.last) rpose = u => {      // (the blow that ends the song: he is thrown far back, tumbles, finds his balance, hangs there; at 3.4 s the hand sign: his hands rise, the fingertips touch, the sign is held)
       const k = 1 - Math.exp(-Math.max(0, u - 0.02) / 0.75), t = Math.max(0, u - 1.5) / 0.45, tum = -7 * (1 - Math.exp(-u / 0.6)), rot = u < 1.5 ? tum : lerp(-7 * (1 - Math.exp(-1.5 / 0.6)), -2 * Math.PI, c10bk(t)), r = u - 3.4;
@@ -12288,9 +12300,9 @@ function c11Build() {
     if (re === 'clash') { const o = e.with; W[o.a].push(mkAtk(o.a, o.mv)); }
     EV.push({ ...e, px: target[0], py: target[1], t: tc, idx });
   });
-  for (const q of C11POSE) W[q.who].push({ t0: q.t0, dur: q.dur, kind: 'pose', pose: () => ({ dx: 0, dy: 0, rot: 0, pic: q.pic }) });
+  for (const q of C11POSE) W[q.who].push({ t0: q.t0, dur: q.dur, kind: 'pose', pose: u => ({ dx: 0, dy: 0, rot: q.rot ? q.rot(u) : 0, pic: q.pic }) });
   for (const w of [W.S, W.M]) w.sort((a, b) => a.t0 - b.t0);
-  return C11.b = { key, W, EV };
+  return C11.b = { key, W, EV, WL };
 }
 const C11 = { b: null };
 
@@ -12322,28 +12334,41 @@ function c11Mah(m) {
 }
 
 // ---- the cameras: every shot (b01 - b29) is a scene of the fight with its own zoom (z0 to z1 over the shot), where it looks (mode: the middle of the two, or Sukuna, or Mahoraga, or toward the blow that lands next to it), a slow roll (amplitude and turns) and a punch-in on every blow
-const C11CAM = {
-  b01: { z: [1.0, 1.18] }, b02: { z: [1.25, 1.5], roll: 0.03 }, b03: { z: [1.4, 1.3], mode: 'hit', roll: 0.04 }, b04: { z: [1.7, 1.9], mode: 'hit' }, b05: { z: [1.35, 1.2], roll: 0.12, cyc: 1 }, b06: { z: [1.9, 1.5], mode: 'hit' },
-  b07: { z: [1.15, 0.95], roll: 0.05 }, b08: { z: [1.8, 1.5], mode: 'hit' }, b09: { z: [1.35, 1.2], roll: 0.05 }, b10: { z: [1.3, 1.05], roll: 0.15, cyc: 1 }, b11: { z: [0.95, 0.85], roll: 0.08 }, b12: { z: [1.6, 1.3], mode: 'hit' },
-  b13: { z: [0.95, 1.1], roll: 0.1, cyc: 0.5 }, b14: { z: [2.4, 2.8], mode: 'S', roll: 0.03 }, b15: { z: [2.2, 2.6], mode: 'M', roll: 0.03 }, b16: { z: [1.0, 1.35], roll: 0.06 }, b17: { z: [1.4, 1.6], mode: 'hit' }, b18: { z: [1.3, 1.15], roll: 0.05 },
-  b19: { z: [1.7, 1.9], mode: 'hit' }, b20: { z: [1.05, 0.95], roll: 0.1, cyc: 1 }, b21: { z: [1.8, 1.6], mode: 'hit' }, b22: { z: [1.5, 1.7], mode: 'hit' }, b23: { z: [1.3, 1.2], roll: 0.05 }, b24: { z: [1.9, 1.6], mode: 'hit' },
-  b25: { z: [1.0, 1.1] }, b26: { z: [1.3, 1.45] }, b27: { z: [1.9, 2.2], mode: 'hit' }, b28: { z: [2.4, 2.9], mode: 'M', roll: 0.02 }, b29: { z: [1.6, 1.3], mode: 'hit' }
+const C14CAMS = {      // v1.141 the cameras, a cycle for every act (a cut every two beats): zoom at the start and the end of the shot, where it looks (the middle of the pair; 'hit' = towards the blow that lands next, 'S' / 'M' = at his head), a slow roll
+  sky: [{ z: [1.3, 1.55], mode: 'hit' }, { z: [1.0, 1.15], roll: 0.06 }, { z: [2.3, 2.6], mode: 'S' }, { z: [1.6, 1.4], mode: 'hit' }, { z: [2.3, 2.6], mode: 'M' }, { z: [1.0, 0.9], roll: 0.1, cyc: 1 }],
+  chase: [{ z: [0.85, 0.95] }, { z: [1.7, 1.9], mode: 'hit' }, { z: [0.9, 0.8], roll: 0.05 }, { z: [2.2, 2.5], mode: 'S' }, { z: [1.2, 1.0], mode: 'hit' }, { z: [0.8, 0.9] }],
+  cut: [{ z: [0.75, 0.8] }, { z: [1.8, 2.0], mode: 'hit' }, { z: [0.7, 0.8] }, { z: [1.5, 1.3], mode: 'hit' }],
+  fall: [{ z: [1.0, 1.2], mode: 'hit' }, { z: [0.8, 0.9] }, { z: [2.0, 2.2], mode: 'M' }, { z: [0.9, 0.8], roll: 0.04 }, { z: [1.8, 1.9], mode: 'S' }, { z: [0.8, 0.95] }],
+  throw: [{ z: [0.8, 0.8] }, { z: [1.3, 1.5], mode: 'hit' }, { z: [0.75, 0.85] }, { z: [1.6, 1.8], mode: 'hit' }],
+  roof: [{ z: [1.2, 1.4], mode: 'hit' }, { z: [0.9, 1.0] }, { z: [2.0, 2.2], mode: 'S' }, { z: [1.0, 1.2] }, { z: [1.5, 1.7], mode: 'hit' }, { z: [2.0, 2.3], mode: 'M' }, { z: [0.85, 0.95] }],
+  moon: [{ z: [0.9, 0.8] }, { z: [1.4, 1.6], mode: 'hit' }, { z: [0.8, 0.7] }, { z: [1.6, 1.8], mode: 'hit' }]
 };
+const C14ACT = m => m < c9B(28, 0) ? 'sky' : m < c9B(34, 0) ? 'chase' : m < c9B(39, 0) ? 'cut' : m < c9B(45, 0) ? 'fall' : m < c9B(51, 0) ? 'throw' : m < c9B(56, 0) ? 'roof' : 'moon';
+const C11CAM = {}; C11S.forEach(([name, st], i) => { if (name[0] !== 'b') return; const L = C14CAMS[C14ACT(st)]; C11CAM[name] = L[i % L.length]; });
 function c11CamD(m, name) {      // the silent shots: after the kick Sukuna flies back and the camera chases him; the sign: in on his hands; the domain: on him as it spreads
   const K = C11K.kick, cx = VW / 2, cy = VH * 0.5, C = (z, fx, fy, rot) => ({ z, fx, fy, tx: cx, ty: cy, rot: rot || 0 }), S = t => c11Suk(t) || { x: 0, y: 0, rot: 0, sx: 1 }, B = c11Build(), e = B ? B.EV[B.EV.length - 1] : { px: 0, py: 0 };
   if (name === 'd01') return c10Kf([[K, C(1.5, e.px, e.py)], [K + 0.6, C(1.2, (S(K + 0.6).x + e.px) / 2, (S(K + 0.6).y + e.py) / 2)], [K + 1.6, C(1.0, S(K + 1.6).x + 40, S(K + 1.6).y - 10, 0.04)], [K + 3.4, C(1.1, S(K + 3.4).x + 30, S(K + 3.4).y - 12)]], m);
   if (name === 'd02') return c10Kf([[K + 3.4, C(1.4, S(K + 3.4).x + 22, S(K + 3.4).y - 8)], [K + 4.4, C(2.4, S(K + 4.4).x + 12, S(K + 4.4).y - 12)], [K + 5.6, C(3.3, S(K + 5.6).x + 10, S(K + 5.6).y - 14, -0.02)]], m);
   return c10Kf([[K + 9.9, C(1.6, S(K + 9.9).x, S(K + 9.9).y - 10)], [K + 12.2, C(1.45, S(K + 12.2).x, S(K + 12.2).y - 10)]], m);
 }
+function c11Frame(z, fx, fy, B) {      // keeps the boxes B = [[x0, x1, y0, y1], ...] in the picture: the zoom is lowered if they do not fit (never raised) and the centre moves only as much as is needed (v1.141: nobody is thrown out of the picture)
+  if (!B.length) return [z, fx, fy]; const x0 = Math.min(...B.map(b => b[0])), x1 = Math.max(...B.map(b => b[1])), y0 = Math.min(...B.map(b => b[2])), y1 = Math.max(...B.map(b => b[3]));
+  z = Math.min(z, 0.94 * VW / (x1 - x0), 0.9 * VH / (y1 - y0)); const hw = VW / 2 / z * 0.94, hh = VH / 2 / z * 0.9; return [z, Math.max(x1 - hw, Math.min(x0 + hw, fx)), Math.max(y1 - hh, Math.min(y0 + hh, fy))];
+}
 function c11Cam(m, name) {
   if (/^d0[1-5]$/.test(name)) return c11CamD(m, name);
   const B = c11Build(), cx = VW / 2, cy = VH * 0.5, sc = C11CAM[name] || { z: [1.2, 1.2] }, i = C11S.findIndex(a => a[0] === name), t0 = i >= 0 ? C11S[i][1] : m, t1 = i >= 0 && i + 1 < C11S.length ? C11S[i + 1][1] : t0 + 4, u = clamp01((m - t0) / (t1 - t0));
-  const pos = (mm) => { const S = c11Suk(mm), M = c11Mah(mm); return S && M ? [(S.x + M.x) / 2, (S.y - 12 + M.y - 38) / 2] : [c11Mid(mm).x, c11Mid(mm).y - 20]; };
+  const S = c11Suk(m), M = c11Mah(m), pos = (mm) => { const s = c11Suk(mm), h = c11Mah(mm); return s && h ? [(s.x + h.x) / 2, (s.y - 12 + h.y - 38) / 2] : [c11Mid(mm).x, c11Mid(mm).y - 20]; };
   let fx = 0, fy = 0; for (let j = 0; j < 4; j++) { const p = pos(m - 0.12 * j); fx += p[0] / 4; fy += p[1] / 4; }      // (the middle, smoothed over the last half second)
-  if (sc.mode === 'S' || sc.mode === 'M') { const q = sc.mode === 'S' ? c11Suk(m) : c11Mah(m); const h = sc.mode === 'S' ? c10Hp(q, C10E[q.ei == null ? 0 : q.ei] || [3.5, -18.5]) : c10An(q, 'head'); fx = lerp(fx, h[0], 0.85); fy = lerp(fy, h[1], 0.85); }
+  const sb = S ? [S.x, S.y - 2] : null, mb = M ? [M.x, M.y - 38] : null; let boxes;
+  if (sc.mode === 'S' || sc.mode === 'M') {
+    const q = sc.mode === 'S' ? sb : mb, f = mm => { const s1 = c11Suk(mm), h1 = c11Mah(mm); return sc.mode === 'S' ? (s1 ? [s1.x, s1.y - 2] : null) : (h1 ? [h1.x, h1.y - 38] : null); }, q1 = f(m - 0.05) || q, q2 = f(m - 0.1) || q;      // (the camera follows his last tenth of a second, so that a lunge is not a jerk)
+    if (q) { fx = lerp(fx, (q[0] + q1[0] + q2[0]) / 3, 0.9); fy = lerp(fy, (q[1] + q1[1] + q2[1]) / 3, 0.9); boxes = [sc.mode === 'S' ? [q[0] - 16, q[0] + 16, q[1] - 26, q[1] + 20] : [q[0] - 30, q[0] + 30, q[1] - 26, q[1] + 16]]; } }      // (a close-up: on him, his upper body stays in)
+  else boxes = sc.mode === 'hit' ? [sb && [sb[0] - 17, sb[0] + 17, sb[1] - 28, sb[1] + 28], mb && [mb[0] - 26, mb[0] + 26, mb[1] - 30, mb[1] + 30]] : [sb && [sb[0] - 24, sb[0] + 24, sb[1] - 30, sb[1] + 26], mb && [mb[0] - 50, mb[0] + 50, mb[1] - 26, mb[1] + 56]];      // (two figures: the middles of both, or the whole of both)
+  boxes = (boxes || []).filter(Boolean);
   let zp = 1; if (B) for (const e of B.EV) { const a = m - e.t; if (a >= 0 && a < 1.2) zp += (e.imp ? 0.12 : 0.06) * Math.exp(-a * 8); if (sc.mode === 'hit' && a > -0.5 && a < 0.7) { const w = Math.exp(-a * a / 0.18) * 0.65; fx = lerp(fx, e.px, w); fy = lerp(fy, e.py, w); } }
-  const z = lerp(sc.z[0], sc.z[1], ease3(u)) * zp;
-  return { z, fx, fy, tx: cx, ty: cy, rot: (sc.roll || 0) * Math.sin(Math.PI * 2 * (sc.cyc || 0.5) * u) };
+  const F = c11Frame(lerp(sc.z[0], sc.z[1], ease3(u)) * zp, fx, fy, boxes);
+  return { z: F[0], fx: F[1], fy: F[2], tx: cx, ty: cy, rot: (sc.roll || 0) * Math.sin(Math.PI * 2 * (sc.cyc || 0.5) * u) };
 }
 
 // ---- effects of the blows: the ring at the contact, sparks where he blocks or is cut, blood where he is hit, after-images of whoever strikes, the shake and the lights
@@ -12360,7 +12385,7 @@ function c11Fx(m) {
     if (Math.abs(a) < 0.17) { if (e.a === 'M' || e.re === 'clash') c10Ghosts(m, 0.035, 3, 0.3, 'cold'); if (e.a === 'S' || e.re === 'clash') c10GhostsS(m, 0.035, 3, 0.34); }
     if (a < 0) continue; const big = e.imp === 2 || e.sh >= 5;
     c3Ring(e.px, e.py, a, big, '255,235,200', big ? 1 : 0.7); if (a < 0.7 && e.re !== 'dodge') v6Ring(e.px, e.py, 8 + (big ? 140 : 90) * c10out(a / 0.7), 0.8 * (1 - a / 0.7), '255,230,210');
-    if (e.re === 'block' || e.re === 'slash' || e.re === 'clash') c4Spray(m, e.t, e.px, e.py, 16, { v: 170, up: 1, dir: 0, life: 0.5, cols: ['#ffffff', '#ffe08a', '#ffb0b0', '#ff7a8a'], sz: 1, seed: 40 + e.idx, g: 60, gnd: 1e9 });
+    if (e.re === 'block' || e.re === 'slash' || e.re === 'clash' || e.re === 'adapt') c4Spray(m, e.t, e.px, e.py, 16, { v: 170, up: 1, dir: 0, life: 0.5, cols: ['#ffffff', '#ffe08a', '#ffb0b0', '#ff7a8a'], sz: 1, seed: 40 + e.idx, g: 60, gnd: 1e9 });
     if ((e.a === 'M' && (e.re === 'hit' || e.re === 'slash')) || e.blood) c10Blood(m, e.t, e.px, e.py, e.blood ? 16 : 6, 70 + e.idx, 100, 0.8);
     if (e.re === 'slash') { const L = 46 + 40 * c10out(a / 0.1), al = a < 0.1 ? 1 : Math.exp(-(a - 0.1) * 5); if (al > 0.03) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = al; c6Line(Math.round(e.px - L * 0.8), Math.round(e.py + L * 0.6), Math.round(e.px + L * 0.8), Math.round(e.py - L * 0.6), a < 0.1 ? '#ffffff' : '#ff5a6a'); c6Line(Math.round(e.px - L * 0.8), Math.round(e.py - L * 0.6), Math.round(e.px + L * 0.8), Math.round(e.py + L * 0.6), a < 0.1 ? '#ffffff' : '#ff5a6a'); ctx.restore(); } }
   }
@@ -12369,7 +12394,7 @@ function c11Impacts(m, cam) {
   const B = c11Build(); if (!B) return;
   for (const e of B.EV) { if (!e.imp) continue; const k = m - e.t; if (k < 0 || k > 0.55) continue; if (e.imp === 2) c10Impact(m, e.t, cam, e.px, e.py, 0.45); else if (k < 0.04) { ctx.save(); ctx.globalCompositeOperation = 'difference'; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, VW, VH); ctx.restore(); } else c6White(0.34 * Math.exp(-(k - 0.04) * 13)); }
 }
-function c11Shake(m) { const B = c11Build(); let a = 0; if (B) for (const e of B.EV) if (e.sh && m >= e.t) a += e.sh * Math.exp(-(m - e.t) * 6); return a; }
+function c11Shake(m) { const B = c11Build(); let a = 0; if (B) for (const e of B.EV) if (e.sh && m >= e.t) a += e.sh * Math.exp(-(m - e.t) * 6); return a + c14Rumble(m); }
 
 // ---- the sounds of the fight
 function c11Events(T, ev) {
@@ -12757,21 +12782,30 @@ for (const a of C12S) c7Shots[a[0]] = c12Shot;
 // Like everything in chapter 3 the picture is a function of the scene time, now also of the OUTCOMES so far (C13Q.res: prompt id -> 'perfect' / 'good' / 'miss' / 'skip'): c11Eff() makes the list of blows from the script (C11EV) and the outcomes
 // and c11Build() (tools/chap3d.js) turns it into the windows of the two fighters; every new outcome rebuilds them (C13Q.ver). An unanswered prompt (or one skipped with the SKIP button or a test jump) leaves the script as v1.136 made it.
 
-const C13 = { lead: 0.4, win: [-0.18, 0.14], early: 0.6, perfect: 0.06, show: 0.9, need: 0.75, upper: 3.6, mvs: ['hookN', 'hookF', 'hookN', 'kick', 'hookF', 'punch'] };      // the ring closes `lead` s before the blow; a tap from win[0] to win[1] s round that moment counts (perfect: within `perfect`); a tap a little early is a miss; the ring shows `show` s ahead; 75% needed; after a miss Sukuna cannot attack for `upper` s
-let C13Q = { res: {}, shown: {}, rt: {}, early: {}, ver: 0, evald: false, def: null, pass: null };      // the outcomes so far, which prompts were seen, when each was decided (song time), which were too early, a counter that changes with every outcome, the verdict
+const C13 = { lead: 0.4, win: [-0.18, 0.14], early: 0.35, perfect: 0.06, need: 0.75, upper: 3.6, mashN: 5, mvs: ['hookN', 'hookF', 'hookN', 'kick', 'hookF', 'punch'] };      // a tap or a release from win[0] to win[1] s round the moment the ring closes counts (perfect: within `perfect`); a tap a little early is a miss; 75% needed; after a miss Sukuna cannot attack for `upper` s; a clash needs `mashN` taps
+const C13P = { tap: { lead: 0.40, vis: 0.90, dl: 0.14 }, hold: { lead: 0.40, vis: 0.65, dl: 0.14 }, mash: { lead: 0.30, vis: 0.90, dl: 0 }, swipe: { lead: 0.30, vis: 0.80, dl: 0.25 } };      // per kind of prompt: how long before the blow the ring closes, how long it shows before that, how long after that it can still be answered
+const c13Tc = e => e.t - C13P[e.pt].lead, c13Dl = e => c13Tc(e) + C13P[e.pt].dl, c13Vis = e => c13Tc(e) - C13P[e.pt].vis;
+const c13New = () => ({ res: {}, shown: {}, rt: {}, early: {}, why: {}, mash: {}, hold: null, sw: null, ver: 0, evald: false, def: null, pass: null, intro: null, introDone: false });      // the outcomes so far, which prompts were seen, when each was decided (song time), which were too early, a counter that changes with every outcome, the verdict, the how-to-play card
+let C13Q = c13New();
 const c13Off = () => !!window.__noQte;      // (test pages only: no prompts, taps skip the cuts as before)
-function c13Reset() { C13Q = { res: {}, shown: {}, rt: {}, early: {}, ver: 0, evald: false, def: null, pass: null }; C11.b = null; }
+function c13Reset() { C13Q = c13New(); C11.b = null; }
 
-// ---- the list of blows: the script and the outcomes. A prompt belongs to every blow of Mahoraga's except the last (the kick that ends the song): the success is a dodge (or the block / the clash the script has), a miss is a hit
+// ---- the list of blows: the script and the outcomes. Every blow has a prompt except the last (the kick that ends the song) and the ones marked np:
+// Mahoraga's blow: TAP (a hit is a dodge); a clash: MASH; Sukuna's blow: HOLD and release (a miss: Mahoraga blocks and gets the upper hand); a SWIPE marker (a: 'W') in a set piece. A miss: the blow lands or is blocked, Sukuna cannot attack for a few
+// seconds, Mahoraga follows up with one blow of his own (with a prompt); from the 4th miss a flurry of blows on every beat (5, and 2 more with every miss after that)
 function c11Eff() {
-  const R = C13Q.res, ok = id => R[id] === 'perfect' || R[id] === 'good', bad = id => R[id] === 'miss', base = C11EV.map((e, i) => ({ ...e, id: 'b' + i })), out = [], beat = C9.beat, wins = [], lim = C11K.kick - 1.7;
-  const after = t => C9.first + Math.ceil((t - C9.first) / beat - 1e-9) * beat, inW = t => wins.some(w => t > w[0] && t < w[1] + 0.6);
+  const R = C13Q.res, ok = id => R[id] === 'perfect' || R[id] === 'good', bad = id => R[id] === 'miss', base = C11EV.map((e, i) => ({ ...e, id: e.id || 'b' + i })), out = [], beat = C9.beat, wins = [], lim = C11K.kick - 1.7;
+  const after = t => C9.first + Math.ceil((t - C9.first) / beat - 1e-9) * beat, inW = t => wins.some(w => t > w[0] && t < w[1] + 1.0);
   let misses = R.p0 === 'miss' ? 1 : 0, cancel = -1e9, nx = 0, nf = 0;      // (a miss at the first punch counts too)
   const place = e => {
-    const lab = e.re === 'block' ? 'BLOCK' : e.re === 'clash' ? 'CLASH' : 'DODGE';
-    if (bad(e.id)) return { ...e, pr: true, lab, re: 'hit', kb: Math.max(e.kb || 0, e.fl ? 45 : 60), imp: Math.max(e.imp || 0, e.fl ? 0 : 1), sh: Math.max(e.sh || 0, e.fl ? 3 : 4), blood: 1, with: null };      // (the blow lands)
-    if (ok(e.id) && e.re === 'hit') return { ...e, pr: true, lab, re: 'dodge', kb: undefined, imp: 0, sh: 0, blood: 0 };      // (a hit of the script is dodged)
-    return { ...e, pr: true, lab };
+    const pt = e.pt || (e.a === 'W' ? 'swipe' : e.a === 'S' ? 'hold' : e.re === 'clash' ? 'mash' : 'tap'), lab = pt === 'hold' ? 'HOLD' : pt === 'mash' ? 'MASH' : pt === 'swipe' ? 'SWIPE' : e.re === 'block' ? 'BLOCK' : 'DODGE', p = { ...e, pr: true, pt, lab };
+    if (bad(e.id)) {
+      if (pt === 'hold') return { ...p, re: 'block', kb: 16, imp: 0, sh: 1, blood: 0 };      // (Mahoraga blocks his blow)
+      if (pt === 'swipe') return p;
+      return { ...p, re: 'hit', kb: Math.max(e.kb || 0, e.fl ? 45 : 60), imp: Math.max(e.imp || 0, e.fl ? 0 : 1), sh: Math.max(e.sh || 0, e.fl ? 3 : 4), blood: 1, with: null };      // (the blow lands)
+    }
+    if (ok(e.id) && pt === 'tap' && e.re === 'hit') return { ...p, re: 'dodge', kb: undefined, imp: 0, sh: 0, blood: 0 };      // (a hit of the script is dodged)
+    return p;
   };
   const flurry = e => {      // more than 3 misses: he attacks again and again, on every beat, and more of them every time
     const n = Math.min(15, 5 + 2 * (misses - 4)), t0 = after(e.t + 1.6); let t1 = e.t;
@@ -12779,19 +12813,20 @@ function c11Eff() {
     wins.push([e.t, t1]);
   };
   for (const e of base) {
-    if (inW(e.t) || (e.a === 'S' && e.t < cancel)) continue;      // (replaced by a flurry; or Sukuna is still on the floor)
-    if (e.a !== 'M' || e.last) { out.push(e); continue; }
+    if (inW(e.t) || ((e.a === 'S' || e.a === 'W') && e.t < cancel)) continue;      // (replaced by a flurry; or Sukuna is still on the floor)
+    if (e.last || e.np) { out.push(e); continue; }
     out.push(place(e)); if (!bad(e.id)) continue;
-    misses++; cancel = Math.max(cancel, e.t + C13.upper);
+    misses++; if (e.a === 'W') { if (misses > 3) flurry(e); continue; }      // (a swipe that is missed only counts: the wall breaks the ragged way, in tools/chap3g.js)
+    const mine = e.a === 'M'; cancel = Math.max(cancel, e.t + (mine ? C13.upper : 2.2));
     if (misses > 3) flurry(e);
-    else if (!base.some(x => x.a === 'M' && !x.last && x.t > e.t + 0.6 && x.t < e.t + 2.4)) {      // a miss: he follows up with one more blow (a miss on that one is a miss too, and the fourth miss brings the flurry)
-      const t = after(e.t + 1.0), b = { t, a: 'M', mv: nx++ % 2 ? 'hookF' : 'hookN', re: 'dodge', id: 'x' + e.id }; out.push(place(b));
+    else if (!base.some(x => x.a === 'M' && !x.last && x.t > e.t + (mine ? 0.6 : 0.4) && x.t < e.t + (mine ? 2.4 : 2.2))) {      // a miss: he follows up with one more blow (a miss on that one is a miss too, and the fourth miss brings the flurry)
+      const t = after(e.t + (mine ? 1.0 : 0.9)), b = { t, a: 'M', mv: nx++ % 2 ? 'hookF' : 'hookN', re: 'dodge', id: 'x' + e.id }; out.push(place(b));
       if (bad(b.id)) { misses++; cancel = Math.max(cancel, t + 2.0); if (misses > 3) flurry(b); }
     }
   }
   const res = out.filter(e => e.fl || e.last || !inW(e.t)); res.sort((a, b) => a.t - b.t); return res;
 }
-const c13List = B => [{ id: 'p0', t: C10K.dash - 0.15 + C13.lead, pr: true, lab: 'DODGE' }].concat(B.EV.filter(e => e.pr));      // (the first punch of the fight, in bullet time (tools/chap3c.js), and then every blow of the second half)
+const c13List = B => [{ id: 'p0', t: C10K.dash - 0.15 + C13P.tap.lead, pr: true, pt: 'tap', lab: 'DODGE' }].concat(B.EV.filter(e => e.pr), (B.WL || []).filter(e => e.pr));      // (the first punch of the fight, in bullet time (tools/chap3c.js), and then every blow of the second half)
 function c13T0() {      // when the fist of the first punch is at Sukuna: the nearest it gets to him while he hangs where he dashed from
   if (C13.t0 && C13.key === VW + 'x' + gy) return C13.t0; const K = C10K, f = c8Fly(K.dash + C9.m0), B0 = { x: f.x + 1.2 * Math.sin(K.dash * 1.9), y: f.y + 2.4 * Math.sin(K.dash * 2.7) }; let best = 1e9, bt = K.dash + 0.5;
   for (let m = K.dash; m < K.cut; m += 0.01) { const M = c10Mah(m), a = M ? c10An(M, 'fist') : null; if (!a) continue; const d = Math.hypot(a[0] - B0.x, a[1] - B0.y); if (d < best) { best = d; bt = m; } }
@@ -12809,64 +12844,239 @@ function c13P0(S, m) {      // the first punch was not dodged: he hangs where he
   return o;
 }
 function c13Score() { let hits = 0, n = 0; for (const id in C13Q.res) { const r = C13Q.res[id]; if (r === 'miss') n++; else if (r === 'perfect' || r === 'good') { n++; hits++; } } return { hits, n, pct: n ? hits / n : 1 }; }
-function c13Resolve(id, r, m) { const Q = C13Q; Q.res[id] = r; Q.rt[id] = m; if (r !== 'skip') { Q.ver++; C11.b = null; } }      // (a new outcome changes the future of the fight: the windows are built again)
+function c13Resolve(id, r, m, why) { const Q = C13Q; Q.res[id] = r; Q.rt[id] = m; if (why) Q.why[id] = why; if (r !== 'skip') { Q.ver++; C11.b = null; } }      // (a new outcome changes the future of the fight: the windows are built again)
 const c13Zone = m => (m >= C11K.air2 - 1.2 && m <= C11K.kick + 0.3) || (m >= C10K.dash - 1.6 && m <= C10K.dash + 1.4);      // (the fight: the first punch and then bars 21 - 58; in between the taps skip the cuts as before)
+const c13Intro0 = () => C10K.dash - 1.7;      // (the how-to-play card comes just before the first ring)
 
-// ---- every frame (c7Frame): the prompts that were seen and not answered in time are misses; at the end of the fight the verdict
+// ---- every frame (c7Frame): the how-to-play card, the prompts that were seen and not answered in time are misses, at the end of the fight the verdict
 function c13Step(now, T) {
   const Q = C13Q; if (c13Off() || !story || !story.c7) return; const m = T - c9Start();
   if (Q.def) { story.t0 = now - Q.def.T * 1000; return; }      // (defeated: the picture stands still on the last moment)
+  if (Q.intro) { story.t0 = now - Q.intro.T * 1000; return; }      // (the how-to-play card stands on the picture until a tap)
+  if (!Q.introDone && m >= c13Intro0() && m <= C11K.kick) { Q.intro = { T, at: now }; return; }      // (also if a skip jumped past the first ring: it comes at the first frame of the fight)
   if (!c13Zone(m)) return; const B = c11Build(); if (!B) return;
   for (const e of c13List(B)) {
-    if (!e.pr || Q.res[e.id] !== undefined) continue; const Tc = e.t - C13.lead;
-    if (m >= Tc - C13.show + 0.2 && m < Tc + C13.win[1]) Q.shown[e.id] = true;
-    if (m >= Tc + C13.win[1]) { c13Resolve(e.id, Q.shown[e.id] ? 'miss' : 'skip', m); if (Q.shown[e.id]) { snd('c7thud', 1); break; } }
+    if (!e.pr || Q.res[e.id] !== undefined) continue; const dl = c13Dl(e);
+    if (m >= c13Vis(e) + 0.2 && m < dl) Q.shown[e.id] = true;
+    if (m >= dl) {
+      const seen = Q.shown[e.id]; let why = null; if (e.pt === 'hold' && Q.hold && Q.hold.id === e.id) { why = 'TOO LATE'; Q.hold = null; } else if (e.pt === 'hold' && seen) why = 'NO HOLD'; else if (e.pt === 'mash') why = 'TOO SLOW';
+      c13Resolve(e.id, seen ? 'miss' : 'skip', m, why); if (seen) { snd('c7thud', 1); break; }
+    }
   }
-  if (m >= C11K.kick - 0.5 && !Q.evald) { Q.evald = true; const s = c13Score(); if (s.n > 0 && s.pct < C13.need) { Q.def = { T, at: now, s }; snd('c7smash'); snd('c7wheel', 1); } else Q.pass = s; }
+  if (m >= C11K.kick - 0.5 && !Q.evald) { Q.evald = true; const s = c13Score(); if (s.n > 0 && s.pct < C13.need) { Q.def = { T, at: now, s }; Q.hold = Q.sw = null; snd('c7smash'); snd('c7wheel', 1); } else Q.pass = s; }
 }
 function c13InSkip(ev) { try { const r = cv.getBoundingClientRect(), x = (ev.clientX - r.left) / r.width * VW, y = (ev.clientY - r.top) / r.height * VH; return x > VW - 48 && y < 18; } catch (e) { return false; } }      // (the SKIP button in the corner)
-function c13Restart() { if (story && story.c7) { story.t0 = pnow() - (c8R() + C8T.hit) * 1000; story.ev = {}; } c13Reset(); }      // (the air fight again from the beginning: the shot after the uppercut)
-function c13Tap(ev) {      // a tap on the screen: true = the quick time events used it (otherwise it skips the cut as before)
-  const Q = C13Q; if (c13Off() || !story || !story.c7) return false; const T = Math.max(0, pnow() - story.t0) / 1000, m = T - c9Start();
-  if (Q.def) { if (pnow() - Q.def.at > 900) c13Restart(); return true; }
+function c13Restart() { if (story && story.c7) { story.t0 = pnow() - (c8R() + C8T.hit) * 1000; story.ev = {}; } c13Reset(); }      // (the air fight again from the beginning: the shot after the uppercut; the how-to-play card comes again)
+function c13Tap(ev) {      // a finger goes down: true = the quick time events used it (otherwise it skips the cut as before)
+  const Q = C13Q; if (c13Off() || !story || !story.c7) return false; const now = pnow(), T = Math.max(0, now - story.t0) / 1000, m = T - c9Start();
+  if (Q.intro) { if (now - Q.intro.at > 1800) { story.t0 = now - Q.intro.T * 1000; Q.intro = null; Q.introDone = true; } return true; }
+  if (Q.def) { if (now - Q.def.at > 900) c13Restart(); return true; }
   if (!c13Zone(m) || m > C11K.kick + 0.1) return false; if (ev && c13InSkip(ev)) return false;
-  const B = c11Build(); if (!B) return true; let hit = null, early = null;
-  for (const e of c13List(B)) { if (!e.pr || Q.res[e.id] !== undefined) continue; const u = m - (e.t - C13.lead); if (u >= C13.win[0] && u <= C13.win[1]) { hit = e; break; } if (u >= -C13.early && u < C13.win[0] && !early) early = e; }
-  if (hit) { const u = m - (hit.t - C13.lead); c13Resolve(hit.id, Math.abs(u) <= C13.perfect ? 'perfect' : 'good', m); snd('dash', 1); }
-  else if (early) { Q.early[early.id] = true; c13Resolve(early.id, 'miss', m); snd('c7thud', 1); }
+  const B = c11Build(); if (!B) return true; const L = c13List(B).filter(e => e.pr && Q.res[e.id] === undefined);
+  for (const e of L) if (e.pt === 'mash' && m >= c13Vis(e) && m < c13Tc(e)) { const n = (Q.mash[e.id] = (Q.mash[e.id] || 0) + 1); if (n >= C13.mashN) { c13Resolve(e.id, 'perfect', m); snd('dash', 1); } else snd('c7beat', 1); return true; }
+  for (const e of L) if (e.pt === 'hold') { if (m >= c13Vis(e) && m < c13Tc(e) - 0.2) { Q.hold = { id: e.id, m }; return true; } if (m >= c13Tc(e) - 0.2 && m <= c13Dl(e)) { c13Resolve(e.id, 'miss', m, 'TOO LATE'); snd('c7thud', 1); return true; } }
+  for (const e of L) if (e.pt === 'swipe' && m >= c13Vis(e) && m < c13Dl(e)) { Q.sw = { id: e.id, m, x: ev ? ev.clientX : 0, y: ev ? ev.clientY : 0 }; return true; }
+  let hit = null, early = null;
+  for (const e of L) { if (e.pt !== 'tap') continue; const u = m - c13Tc(e); if (u >= C13.win[0] && u <= C13.win[1]) { hit = e; break; } if (u >= -C13.early && u < C13.win[0] && !early) early = e; }
+  if (hit) { const u = m - c13Tc(hit); c13Resolve(hit.id, Math.abs(u) <= C13.perfect ? 'perfect' : 'good', m); snd('dash', 1); }
+  else if (early) { Q.early[early.id] = true; c13Resolve(early.id, 'miss', m, 'TOO EARLY'); snd('c7thud', 1); }
   return true;
 }
+function c13Up(ev) {      // the finger comes up: a HOLD is let go (on the ring: it counts), a SWIPE is judged by where the finger went
+  const Q = C13Q; if (c13Off() || !story || !story.c7 || (!Q.hold && !Q.sw)) return; const m = Math.max(0, pnow() - story.t0) / 1000 - c9Start(), B = c11Build(); if (!B) return; const L = c13List(B);
+  if (Q.hold) { const h = Q.hold, e = L.find(x => x.id === h.id); Q.hold = null; if (e && Q.res[e.id] === undefined) { const u = m - c13Tc(e); if (u >= C13.win[0] && u <= C13.win[1]) { c13Resolve(e.id, Math.abs(u) <= C13.perfect ? 'perfect' : 'good', m); snd('dash', 0); } else { c13Resolve(e.id, 'miss', m, u < C13.win[0] ? 'TOO EARLY' : 'TOO LATE'); snd('c7thud', 1); } } }
+  if (Q.sw) { const s = Q.sw, e = L.find(x => x.id === s.id); Q.sw = null; if (e && Q.res[e.id] === undefined) { const dx = (ev ? ev.clientX : 0) - s.x, dy = (ev ? ev.clientY : 0) - s.y, dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'R' : 'L') : (dy > 0 ? 'D' : 'U'), good = Math.hypot(dx, dy) >= 30 && dir === e.dir && m >= c13Tc(e) - 0.25 && m <= c13Dl(e); c13Resolve(e.id, good ? 'good' : 'miss', m, good ? null : Math.hypot(dx, dy) < 30 ? 'TOO SHORT' : dir !== e.dir ? 'WRONG WAY' : 'TOO EARLY'); snd(good ? 'dash' : 'c7thud', good ? 0 : 1); } }
+}
 
-// ---- the picture: the ring that closes on Sukuna, what was made of the tap, the counter, the SKIP button, the verdict
-function c13Draw(m, cam, S) {
-  if (c13Off() || !(c13Zone(m) || (m >= C11K.air2 - 2 && m <= C11K.kick + 2.2) || (m >= C10K.dash - 1.6 && m <= C10K.dash + 2.2))) return; const Q = C13Q, B = c11Build(); if (!B) return;
-  const sc = c13Score(), sp = S ? c10Scr(cam, S.x, S.y - 26) : [VW / 2, VH / 2], px = Math.max(36, Math.min(VW - 36, sp[0])), py = Math.max(36, Math.min(VH - 40, sp[1]));
+// ---- the picture: the ring that closes on Sukuna (white = TAP, orange = HOLD, blue = SWIPE, a bar = MASH), what was made of the finger, the counter, the SKIP button, the how-to-play card, the verdict
+function c13Arrow(px, py, dir, r, col) { const v = { U: [0, -1], D: [0, 1], L: [-1, 0], R: [1, 0] }[dir] || [0, -1], nx = -v[1], ny = v[0]; ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px - v[0] * r, py - v[1] * r); ctx.lineTo(px + v[0] * r, py + v[1] * r); ctx.moveTo(px + v[0] * r, py + v[1] * r); ctx.lineTo(px + v[0] * r * 0.3 + nx * r * 0.7, py + v[1] * r * 0.3 + ny * r * 0.7); ctx.moveTo(px + v[0] * r, py + v[1] * r); ctx.lineTo(px + v[0] * r * 0.3 - nx * r * 0.7, py + v[1] * r * 0.3 - ny * r * 0.7); ctx.stroke(); }
+function c13Ring(px, py, rad, col, gold, core, txt, lab) {
+  ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.beginPath(); ctx.arc(px, py, 11, 0, 6.2832); ctx.stroke();
+  ctx.strokeStyle = gold ? '#ffe08a' : col; ctx.beginPath(); ctx.arc(px, py, Math.max(rad, 11), 0, 6.2832); ctx.stroke(); ctx.fillStyle = core; ctx.beginPath(); ctx.arc(px, py, 9, 0, 6.2832); ctx.fill();
+  if (txt) pxt(txt, px, py + 3, '#ffffff', 8, 'center'); if (lab) pxt(lab, px, py + 25, '#ffd36a', 8, 'center');
+}
+function c13Intro() {      // the card that says how to play: a looping demo of a TAP and of a HOLD, and the rules (the letters are 8 px wide: a line from x = 52 has 30 letters at most)
+  const Q = C13Q, t = (pnow() - Q.intro.at) / 1000, a = Math.min(1, t / 0.4); ctx.save(); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = a; ctx.fillStyle = 'rgba(3,3,12,0.92)'; ctx.fillRect(0, 0, VW, VH); ctx.strokeStyle = '#ffd36a'; ctx.lineWidth = 1; ctx.strokeRect(2.5, 2.5, VW - 5, VH - 5);
+  pxt('HOW TO PLAY', VW / 2, 14, '#ffd36a', 8, 'center');
+  const p = (t % 1.8) / 1.8, rad = 11 + 10 * (1 - Math.min(1, p / 0.8)), fl = p > 0.8; c13Ring(26, 34, rad, '#ffffff', fl, '#c4121c', 'TAP');
+  pxt('TAP WHEN THE CIRCLE REACHES', 52, 30, '#ffffff', 8, 'left'); pxt('THE MIDDLE CIRCLE: DODGE', 52, 40, '#8dff9a', 8, 'left');
+  const h = (t % 2.4) / 2.4, down = h > 0.08, rh = 11 + 10 * (1 - clamp01((h - 0.08) / 0.72)), rel = h > 0.8; c13Ring(26, 76, rh, '#ff9a3a', rel, down && !rel ? '#27c75a' : '#d4570f', 'HOLD');
+  if (down && !rel) { ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(8, 94, 36, 3); ctx.fillStyle = '#27c75a'; ctx.fillRect(8, 94, 36 * clamp01((h - 0.08) / 0.72), 3); }
+  pxt('HOLD WHEN SUKUNA ATTACKS:', 52, 62, '#ffffff', 8, 'left'); pxt('PRESS WHEN THE RING SHOWS,', 52, 72, '#ffffff', 8, 'left'); pxt('LET GO WHEN IT REACHES THE', 52, 82, '#ffffff', 8, 'left'); pxt('MIDDLE CIRCLE', 52, 92, '#8dff9a', 8, 'left');
+  pxt('CLASH: MASH TAPS  THROW: SWIPE', VW / 2, 106, '#9fd4ff', 8, 'center'); pxt('MISS: MAHORAGA GETS THE UPPER HAND', VW / 2, 116, '#ff8a8a', 8, 'center'); pxt('75% HIT OR SUKUNA FALLS', VW / 2, 126, '#ffd36a', 8, 'center');
+  if (t > 1.8) { ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 6); pxt('TAP TO START', VW / 2, 135, '#ffffff', 8, 'center'); } ctx.restore();
+}
+function c13Draw(m, cam, S) {      // in the picture (the cinema bars come over it): the rings, what was made of the finger, the first punch landing
+  const Q = C13Q; if (c13Off() || Q.intro) return; if (!(c13Zone(m) || (m >= C11K.air2 - 2 && m <= C11K.kick + 2.2) || (m >= C10K.dash - 1.6 && m <= C10K.dash + 2.2))) return; const B = c11Build(); if (!B) return;
+  const sp = S ? c10Scr(cam, S.x, S.y - 26) : [VW / 2, VH / 2], px = Math.max(58, Math.min(VW - 58, sp[0])), py = Math.max(36, Math.min(VH - 40, sp[1]));      // (the labels are up to 14 letters of 8 px)
   ctx.save(); ctx.imageSmoothingEnabled = false; ctx.lineWidth = 2;
   for (const e of c13List(B)) {
-    if (!e.pr) continue; const Tc = e.t - C13.lead, u = m - Tc, r = Q.res[e.id];
-    if (r === undefined && u > -C13.show && u < C13.win[1] + 0.2 && !Q.def) {
-      const rad = 11 + 26 * Math.pow(clamp01(-u / C13.show), 1.2), gold = Math.abs(u) <= C13.perfect + 0.02;
-      ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.beginPath(); ctx.arc(px, py, 11, 0, 6.2832); ctx.stroke();
-      ctx.strokeStyle = gold ? '#ffe08a' : '#ffffff'; ctx.beginPath(); ctx.arc(px, py, Math.max(rad, 11), 0, 6.2832); ctx.stroke();
-      ctx.fillStyle = '#c4121c'; ctx.beginPath(); ctx.arc(px, py, 9, 0, 6.2832); ctx.fill(); pxt('TAP', px, py + 3, '#ffffff', 8, 'center'); pxt(e.lab, px, py + 25, '#ffd36a', 8, 'center');
+    if (!e.pr) continue; const Tc = c13Tc(e), u = m - Tc, r = Q.res[e.id], P = C13P[e.pt];
+    if (r === undefined && u > -P.vis && u < P.dl + 0.25 && !Q.def) {
+      const rad = 11 + 26 * Math.pow(clamp01(-u / P.vis), 1.2), gold = Math.abs(u) <= C13.perfect + 0.02;
+      if (e.pt === 'tap') c13Ring(px, py, rad, '#ffffff', gold, '#c4121c', 'TAP', e.lab);
+      else if (e.pt === 'hold') { const hd = Q.hold && Q.hold.id === e.id; c13Ring(px, py, rad, '#ff9a3a', gold, hd ? '#27c75a' : '#d4570f', hd && u > -0.3 ? 'GO!' : 'HOLD', hd ? (u > -0.3 ? 'RELEASE!' : 'KEEP HOLDING') : 'PRESS AND HOLD'); if (hd) { ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(px - 20, py + 30, 40, 3); ctx.fillStyle = '#27c75a'; ctx.fillRect(px - 20, py + 30, 40 * clamp01((m - Q.hold.m) / Math.max(0.05, Tc - Q.hold.m)), 3); } }
+      else if (e.pt === 'swipe') { c13Ring(px, py, rad, '#7fd4ff', gold, '#1c5a8a', null, 'SWIPE'); c13Arrow(px, py, e.dir, 6, '#ffffff'); }
+      else { const n = Q.mash[e.id] || 0; pxt('MASH!', px, py - 6 + 2 * Math.sin(m * 40), '#ffd36a', 10, 'center'); ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(px - 30, py, 60, 6); ctx.fillStyle = '#ff6a3a'; ctx.fillRect(px - 30, py, 60 * clamp01(n / C13.mashN), 6); ctx.fillStyle = '#ffffff'; ctx.fillRect(px - 30, py + 8, 60 * clamp01(-u / P.vis), 2); }
     } else if (r !== undefined && r !== 'skip') {
-      const t = m - Q.rt[e.id]; if (t < 0 || t > 0.8) continue; ctx.globalAlpha = 1 - t / 0.8; const txt = r === 'perfect' ? 'PERFECT' : r === 'good' ? 'GOOD' : Q.early[e.id] ? 'TOO EARLY' : 'MISS';
+      const t = m - Q.rt[e.id]; if (t < 0 || t > 0.8) continue; ctx.globalAlpha = 1 - t / 0.8; const txt = r === 'perfect' ? (e.pt === 'mash' ? 'CLASH WON' : 'PERFECT') : r === 'good' ? 'GOOD' : (Q.why[e.id] || 'MISS');
       pxt(txt, px, py - 22 - t * 12, r === 'miss' ? '#ff3347' : r === 'perfect' ? '#ffe08a' : '#ffffff', 10, 'center'); ctx.globalAlpha = 1;
       if (r === 'miss' && t < 0.4) { ctx.fillStyle = 'rgba(255,0,20,' + (0.3 * (1 - t / 0.4)).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
     }
   }
   if (Q.res.p0 === 'miss' && m >= c13T0() && m < c13T0() + 0.7 && S) { const a = m - c13T0(), q = c10Scr(cam, S.x, S.y); c3Ring(q[0], q[1], a, true, '255,235,200', 0.8); c4Spray(m, c13T0(), q[0], q[1], 9, { v: 90, up: 1, dir: 0, life: 0.7, cols: C4_BLOOD, sz: 1, seed: 5, g: 160, gnd: 1e9 }); c6White(0.4 * Math.exp(-a * 9)); }      // (the punch lands on him)
-  if (c13Zone(m) && m < C11K.kick + 0.3 && !Q.def) { pxt('DODGE ' + sc.hits + '/' + sc.n + '  ' + Math.round(sc.pct * 100) + '%', 4, 10, sc.pct >= C13.need ? '#8dff9a' : '#ff6a7a', 8, 'left'); ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(VW - 40, 2, 38, 12); pxt('SKIP', VW - 21, 11, '#ffffff', 8, 'center'); }
-  if (Q.pass && m > C11K.kick - 0.4 && m < C11K.kick + 2.0) pxt('DODGES ' + Q.pass.hits + '/' + Q.pass.n + '  ' + Math.round(Q.pass.pct * 100) + '%', VW / 2, 16, '#8dff9a', 10, 'center');
+  ctx.restore();
+}
+function c13Top(m) {      // over everything, the cinema bars too: the how-to-play card, the counter and the SKIP button (in the top bar), the verdict, the defeat
+  const Q = C13Q; if (c13Off()) return; if (Q.intro) { c13Intro(); return; } const sc = c13Score(); ctx.save(); ctx.imageSmoothingEnabled = false; ctx.lineWidth = 2;
+  if (c13Zone(m) && m < C11K.kick + 0.3 && !Q.def) { pxt('SCORE ' + sc.hits + '/' + sc.n + '  ' + Math.round(sc.pct * 100) + '%', 4, 11, sc.pct >= C13.need ? '#8dff9a' : '#ff6a7a', 8, 'left'); ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1; ctx.strokeRect(VW - 39.5, 2.5, 36, 10); pxt('SKIP', VW - 21, 11, '#ffffff', 8, 'center'); }
+  if (Q.pass && m > C11K.kick - 0.4 && m < C11K.kick + 2.0) pxt('SCORE ' + Q.pass.hits + '/' + Q.pass.n + '  ' + Math.round(Q.pass.pct * 100) + '%', VW / 2, 32, '#8dff9a', 10, 'center');
   if (Q.def) {
     const a = Math.min(1, (pnow() - Q.def.at) / 600); ctx.fillStyle = 'rgba(50,0,10,' + (0.78 * a).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); ctx.globalAlpha = a;
-    pxt('DEFEATED', VW / 2, 52, '#ff3347', 20, 'center'); pxt('SUKUNA WAS OVERWHELMED', VW / 2, 70, '#ffffff', 8, 'center'); pxt(Q.def.s.hits + '/' + Q.def.s.n + ' DODGED = ' + Math.round(Q.def.s.pct * 100) + '%   75% NEEDED', VW / 2, 86, '#ffd36a', 8, 'center');
+    pxt('DEFEATED', VW / 2, 52, '#ff3347', 20, 'center'); pxt('SUKUNA WAS OVERWHELMED', VW / 2, 70, '#ffffff', 8, 'center'); pxt(Q.def.s.hits + '/' + Q.def.s.n + ' HIT = ' + Math.round(Q.def.s.pct * 100) + '%   75% NEEDED', VW / 2, 86, '#ffd36a', 8, 'center');
     if (pnow() - Q.def.at > 900) { ctx.globalAlpha = 0.5 + 0.5 * Math.sin(pnow() / 200); pxt('TAP TO TRY AGAIN', VW / 2, 112, '#ffffff', 8, 'center'); } ctx.globalAlpha = 1;
   }
   ctx.restore();
 }
-window.__c13 = () => ({ res: { ...C13Q.res }, ...c13Score(), def: !!C13Q.def, pass: !!C13Q.pass, ver: C13Q.ver, early: { ...C13Q.early } });      // test hooks
-window.__c13Press = () => c13Tap(null); window.__c13Reset = () => { c13Reset(); };
+window.__c13 = () => ({ res: { ...C13Q.res }, ...c13Score(), def: !!C13Q.def, pass: !!C13Q.pass, intro: !!C13Q.intro, ver: C13Q.ver, early: { ...C13Q.early }, why: { ...C13Q.why }, mash: { ...C13Q.mash } });      // test hooks
+window.__c13Press = () => c13Tap(null); window.__c13Down = (x, y) => c13Tap({ clientX: x == null ? 450 : x, clientY: y == null ? 210 : y }); window.__c13Up = (x, y) => c13Up({ clientX: x == null ? 450 : x, clientY: y == null ? 210 : y }); window.__c13Reset = () => { c13Reset(); }; window.__c13Done = () => { C13Q.intro = null; C13Q.introDone = true; };
+
+// ================================================================ v1.141 THE CITY OF THE AIR FIGHT: the custom scenes (drawn in the world of the arena, behind and in front of the two fighters)
+// Layout (x and y from the arena AC, y down; the street is 705 below it): the pair's path (C11PATH in tools/chap3d.js) goes through three skyscrapers T1, T2, T3 (act CHASE: they smash through the glass of each), then TC, a tower that Sukuna CUTS in half with a slash
+// (act CUT: the top half slides along the cut and falls onto the roof of TI, a wide building; they fight beside it), it breaks the roof (act FALL: the front of TI fades away and they fall through its floors, each one breaks under them), out through its right wall;
+// Mahoraga throws him back (act THROW: through TI and the stump of TC; the three SWIPES are the walls he goes through), to the roof R of a low building (act ROOF: a water tower, an antenna; the wheel adapts to his slash), then straight up (act MOON: the clouds, a huge moon).
+// Everything is a function of the song time m (and of the outcomes of the swipes, C13Q.res.w0 - w2: a clean cut or a ragged smash).
+
+const C14L = {
+  T: [{ id: 'T1', x: 380, w: 190, top: -170 }, { id: 'T2', x: 760, w: 210, top: -130 }, { id: 'T3', x: 1080, w: 190, top: -90 }, { id: 'TC', x: 1560, w: 240, top: -150 }, { id: 'TI', x: 1960, w: 320, top: 180 }, { id: 'R', x: 1305, w: 250, top: 600 }],
+  bottom: 720, cut: { t: c9B(34, 3), cx: 1560, cy: 40, sl: 0.3 }, breach: c9B(34, 3) + 5.0, moon: [1430, -380, 85], roof: 600
+};
+const C14H = [      // the holes: [tower, wall x, the moment, direction the glass flies (1 right, -1 left), id of the swipe]
+  ['T1', 285, c9B(28, 3), 1], ['T1', 475, c9B(29, 3), 1], ['T2', 655, c9B(30, 2), 1], ['T2', 865, c9B(31, 2), 1], ['T3', 985, c9B(32, 0), 1], ['T3', 1175, c9B(32, 3), 1], ['TI', 2120, c9B(44, 3), 1], ['TI', 2120, c9B(45, 3) + 0.15, -1],
+  ['TI', 1800, c9B(46, 3), -1, 'w0'], ['TC', 1680, c9B(47, 1), -1, 'w1'], ['TC', 1440, c9B(47, 3), -1, 'w2']
+];
+const C14PASS = [['T1', 285, 475, c9B(28, 3), c9B(29, 3), 1], ['T2', 655, 865, c9B(30, 2), c9B(31, 2), 1], ['T3', 985, 1175, c9B(32, 0), c9B(32, 3), 1], ['TC', 1440, 1680, c9B(47, 1), c9B(47, 3), -1]];      // the tunnels they leave: [tower, from wall, to wall, entered, left, direction]
+const C14HALF = [[0, 0, 0, 0], [0.6, 8, 2, 0.003], [1.6, 45, 14, 0.02], [2.8, 100, 32, 0.07], [4, 150, 46, 0.17], [5, 190, 64, 0.3], [5.6, 200, 112, 0.36], [6.4, 205, 190, 0.4]];      // the top half of TC: [seconds after the cut, how far it has slid and fallen (x, y), how far it has turned]: it lands on the roof of TI at 5 s
+const C14W = { img: {} };
+const c14O = () => c10Env().AC, c14T = id => C14L.T.find(t => t.id === id);
+const c14P = t => { const O = c14O(); return { x: O.x + c11Spl(C11PATH, t, 1), y: O.y + c11Spl(C11PATH, t, 2) }; };      // the middle of the pair (without its sway)
+
+function c14Img(T) {      // a skyscraper as one picture: the glass body, the floors, the windows (some lit, warm and cool), the edges and the roof line
+  const h = C14L.bottom - T.top, key = T.id + T.w + 'x' + h; if (C14W.img[key]) return C14W.img[key];
+  const c = document.createElement('canvas'); c.width = T.w; c.height = h; const g = c.getContext('2d'), sd = T.id.split('').reduce((a, ch) => a * 31 + ch.charCodeAt(0), 7), gr = g.createLinearGradient(0, 0, 0, h);
+  gr.addColorStop(0, '#0e1740'); gr.addColorStop(1, '#070b22'); g.fillStyle = gr; g.fillRect(0, 0, T.w, h); g.fillStyle = '#1b2862'; g.fillRect(0, 0, 3, h); g.fillRect(T.w - 3, 0, 3, h); g.fillStyle = '#2a3a80'; g.fillRect(0, 0, T.w, 4);
+  for (let gy2 = 0; gy2 * 14 < h - 10; gy2++) {
+    g.fillStyle = 'rgba(8,12,34,0.55)'; g.fillRect(3, gy2 * 14 + 12, T.w - 6, 2);
+    for (let gx = 0; gx * 12 < T.w - 18; gx++) { const r = c4R(sd + gx * 131 + gy2 * 7, 5); g.fillStyle = r < 0.34 ? '#ffd98a' : r < 0.5 ? '#9fc4ff' : '#111c4a'; g.fillRect(9 + gx * 12, 4 + gy2 * 14, 7, 7); }
+  }
+  g.fillStyle = 'rgba(160,190,255,0.06)'; for (let k = 0; k < 4; k++) g.fillRect(Math.round(T.w * (0.15 + 0.22 * k)), 0, 6, h);      // (the shine of the glass)
+  return C14W.img[key] = c;
+}
+function c14Half(u) { return { dx: c11Spl(C14HALF, u, 1), dy: c11Spl(C14HALF, u, 2), rot: c11Spl(C14HALF, u, 3) }; }
+function c14Poly(p) { ctx.beginPath(); ctx.moveTo(p[0][0], p[0][1]); for (let i = 1; i < p.length; i++) ctx.lineTo(p[i][0], p[i][1]); ctx.closePath(); }
+function c14Puff(m, t0, x, y, n, w, life, seed) {      // a cloud of dust at a height (c4Dust rolls along the street): n puffs spread over w that rise and thin out
+  const a = m - t0; if (a < 0 || a > life) return; const k = a / life;
+  for (let i = 0; i < n; i++) { const r1 = c4R(i + seed * 29, 5), r2 = c4R(i + seed * 29, 6), s = Math.round(3 + k * 12 * (0.4 + 0.6 * r2)); ctx.fillStyle = 'rgba(150,140,172,' + (0.36 * (1 - k) * (1 - k)).toFixed(3) + ')'; ctx.fillRect(Math.round(x + (r1 - 0.5) * 2 * w * (0.3 + 0.7 * Math.sqrt(k))), Math.round(y - k * 26 * r2 + (r1 - 0.5) * 10), s, Math.max(2, s - 2)); }
+}
+function c14Floors() {      // the floors of TI: [{ dy: where it is (from the arena), tp: the moment the pair is down to it, px: where it breaks, broken }], found once from the path
+  if (C14W.fl) return C14W.fl; const T = c14T('TI'), a = C14L.breach, b = c9B(45, 0); C14W.fl = [];
+  for (let k = 0; k < 7; k++) { const dy = T.top + 60 + 76 * k; let tp = b; for (let t = a; t < b; t += 0.05) if (c11Spl(C11PATH, t, 2) >= dy) { tp = t; break; } C14W.fl.push({ dy, tp, px: c11Spl(C11PATH, tp, 1), broken: tp < b }); }
+  return C14W.fl;
+}
+function c14Rumble(m) {      // the building shakes while it comes down, and the half grinds along the cut (added to the shake of the blows)
+  const L = C14L, K = L.cut, b = c9B(45, 0); let a = 0; if (m > L.breach && m < b) a += (1.1 + 0.5 * Math.sin(m * 9)) * Math.min(clamp01((m - L.breach) / 0.5), clamp01((b - m) / 0.6)); if (m > K.t + 0.3 && m < L.breach) a += 0.8 * Math.min(clamp01((m - K.t - 0.3) / 0.5), clamp01((L.breach - m) / 0.4)); return a;
+}
+
+// ---- behind the fighters
+function c14Rear(m, cam) {
+  if (m < C11K.air2 - 3 || m > C11K.kick + 1) return; const O = c14O(), vx0 = cam.fx - VW / (2 * cam.z) - 80, vx1 = cam.fx + VW / (2 * cam.z) + 80, vy0 = cam.fy - VH / (2 * cam.z) - 80, vy1 = cam.fy + VH / (2 * cam.z) + 80, L = C14L, K = L.cut;
+  ctx.save(); ctx.imageSmoothingEnabled = false;
+  for (let i = -3; i < 16; i++) {      // (a skyline further back: dark slabs with a few lit floors)
+    const w = 130 + 50 * c4R(i, 71), x0 = O.x + i * 190 - 200 + 60 * c4R(i, 72), top = O.y + 20 + 330 * c4R(i, 73); if (x0 + w < vx0 || x0 > vx1 || O.y + 720 < vy0 || top > vy1) continue;
+    ctx.fillStyle = '#080c26'; ctx.fillRect(x0, top, w, O.y + 720 - top); ctx.fillStyle = '#0d1436'; ctx.fillRect(x0, top, 3, O.y + 720 - top); ctx.fillStyle = 'rgba(255,217,138,0.18)'; for (let k = 0; k < 5; k++) { const fy = top + 20 + 70 * k + 50 * c4R(i * 7 + k, 74); ctx.fillRect(x0 + 10 + 30 * c4R(i * 9 + k, 75), fy, 40 + 40 * c4R(i * 5 + k, 76), 4); }
+  }
+  if (m >= L.breach + 0.3) c14Interior(m, O, vx0, vx1);
+  for (const T of L.T) {
+    const x0 = O.x + T.x - T.w / 2, y0 = O.y + T.top, h = L.bottom - T.top; if (x0 + T.w < vx0 || x0 > vx1 || y0 + h < vy0 || y0 > vy1) continue; const img = c14Img(T);
+    if (T.id === 'TC' && m >= K.t) {      // (cut in two: the stump stands under the cut; the top half is drawn after the others)
+      const u = m - K.t, cx = O.x + K.cx, cy = O.y + K.cy, xl = x0 - 30, xr = x0 + T.w + 30, yl = cy + K.sl * (xl - cx), yr = cy + K.sl * (xr - cx);
+      ctx.save(); c14Poly([[xl, yl], [xr, yr], [xr, y0 + h + 10], [xl, y0 + h + 10]]); ctx.clip(); ctx.drawImage(img, x0, y0); ctx.restore();
+      if (u < 0.9) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 1 - u / 0.9; ctx.strokeStyle = u < 0.15 ? '#ffffff' : '#ff6a7a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(xl, yl); ctx.lineTo(xr, yr); ctx.stroke(); ctx.restore(); }
+    } else if (T.id === 'TI' && m >= L.breach + 0.3) { ctx.globalAlpha = Math.max(0.16, 1 - clamp01((m - L.breach - 0.3) / 1.2) * 0.84); ctx.drawImage(img, x0, y0); ctx.globalAlpha = 1; }
+    else ctx.drawImage(img, x0, y0);
+  }
+  c14HalfDraw(m, O, vx0, vx1);
+  for (const [id, a, b, t0, t1, dir] of C14PASS) {      // (the tunnels: a dark band cut through the tower, as far as the pair has got)
+    if (m < t0) continue; const T = c14T(id), tm = Math.min(m, t1), px = O.x + c11Spl(C11PATH, tm, 1), yy = O.y + c11Spl(C11PATH, (t0 + t1) / 2, 2), xa = O.x + Math.min(a, b), xb = O.x + Math.max(a, b), e = dir > 0 ? Math.min(xb, px) : Math.max(xa, px), q = dir > 0 ? [xa, e] : [e, xb];
+    if (q[1] < q[0] || q[1] < vx0 || q[0] > vx1 || !T) continue; ctx.fillStyle = '#03050d'; ctx.fillRect(q[0], yy - 40, q[1] - q[0], 80); ctx.fillStyle = '#2c3d86'; ctx.fillRect(q[0], yy - 41, q[1] - q[0], 2); ctx.fillRect(q[0], yy + 39, q[1] - q[0], 2);
+    for (let k = 0; k < 14; k++) { const fx = q[0] + (q[1] - q[0]) * c4R(k + id.length * 9, 77); ctx.fillStyle = k & 1 ? '#7d8ac8' : '#1d2a63'; ctx.fillRect(Math.round(fx), yy - 40 + (k % 3) * 2, 3, 4 + (k % 4)); ctx.fillRect(Math.round(fx + 5), yy + 36 - (k % 3) * 2, 2, 5); }
+  }
+  for (const [, wx, t, dir, sw] of C14H) {      // (a hole in the glass at each wall: a clean one where he cut his way out, a ragged one where he was smashed through)
+    if (m < t) continue; const y = O.y + c11Spl(C11PATH, t, 2), x = O.x + wx, miss = sw && C13Q.res[sw] === 'miss', big = miss ? 56 : 44;
+    if (x < vx0 - 60 || x > vx1 + 60) continue; ctx.fillStyle = '#03050d'; ctx.beginPath(); ctx.moveTo(x - 8, y - big / 2); for (let k = 0; k < 7; k++) ctx.lineTo(x + 8 * dir + (miss ? 8 * dir * (c4R(k + wx, 78) - 0.3) : 0), y - big / 2 + k * big / 6 + (miss ? (c4R(k + wx, 79) - 0.5) * 10 : 0)); ctx.lineTo(x - 8, y + big / 2); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#9fc4ff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, y - big / 2); ctx.lineTo(x + dir * (miss ? 10 : 14), y + big / 2); ctx.stroke(); if (sw && !miss && m < t + 0.9) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 1 - (m - t) / 0.9; ctx.strokeStyle = '#ff6a7a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 80 * dir, y - 22); ctx.lineTo(x + 70 * dir, y + 24); ctx.stroke(); ctx.restore(); }
+  }
+  if (m >= L.breach) { const a = m - L.breach, x = O.x + 1880, y = O.y + 180; ctx.fillStyle = '#03050d'; ctx.beginPath(); ctx.moveTo(x - 60, y - 2); for (let k = 0; k <= 8; k++) ctx.lineTo(x - 60 + k * 15, y + 4 + 26 * c4R(k, 80) * Math.min(1, a / 0.3)); ctx.lineTo(x + 60, y - 2); ctx.closePath(); ctx.fill(); }
+  c14Roof(m, O, vx0, vx1); if (m >= c9B(55, 3) - 1) { const mo = L.moon; c8Moon(O.x + mo[0], O.y + mo[1], mo[2]); }
+  ctx.restore();
+}
+function c14HalfDraw(m, O, vx0, vx1) {      // the top half of the tower that was cut: it slides off along the cut, tips and falls on the roof of TI, where it sinks and thins out in the dust
+  const L = C14L, K = L.cut, u = m - K.t; if (u < 0 || u > 7) return; const T = c14T('TC'), x0 = O.x + T.x - T.w / 2, y0 = O.y + T.top, cx = O.x + K.cx, cy = O.y + K.cy; if (cx + 500 < vx0 || cx - 300 > vx1) return;
+  const xl = x0 - 30, xr = x0 + T.w + 30, yl = cy + K.sl * (xl - cx), yr = cy + K.sl * (xr - cx), q = c14Half(u);
+  ctx.save(); if (u > 5.6) ctx.globalAlpha = clamp01(1 - (u - 5.6) / 1.4); ctx.translate(cx + q.dx, cy + q.dy); ctx.rotate(q.rot); ctx.translate(-cx, -cy); c14Poly([[xl, y0 - 10], [xr, y0 - 10], [xr, yr], [xl, yl]]); ctx.clip(); ctx.drawImage(c14Img(T), x0, y0); ctx.restore();
+}
+function c14Interior(m, O, vx0, vx1) {      // the inside of TI once the half has gone through its roof: pillars, floors with lights under them and desks on them, a floor that breaks where the pair falls through (pieces fall), dust
+  const L = C14L, T = c14T('TI'), x0 = O.x + T.x - T.w / 2, y0 = O.y + T.top, y1 = O.y + L.bottom; if (x0 + T.w < vx0 || x0 > vx1) return;
+  ctx.save(); ctx.globalAlpha = clamp01((m - L.breach - 0.3) / 0.7); ctx.beginPath(); ctx.rect(x0, y0, T.w, y1 - y0); ctx.clip();
+  const gr = ctx.createLinearGradient(0, y0, 0, y1); gr.addColorStop(0, '#0d1436'); gr.addColorStop(1, '#19224f'); ctx.fillStyle = gr; ctx.fillRect(x0, y0, T.w, y1 - y0);
+  for (let j = 0; j < 5; j++) { ctx.fillStyle = '#121a44'; ctx.fillRect(x0 + 30 + j * 66, y0, 8, y1 - y0); ctx.fillStyle = '#26347a'; ctx.fillRect(x0 + 30 + j * 66, y0, 1, y1 - y0); }
+  c14Floors().forEach((F, k) => {
+    const fy = O.y + F.dy, px = O.x + F.px, s = m - F.tp, br = F.broken && s >= 0, ho = br ? 44 : 0;
+    for (let i = 0; i < 5; i++) {      // (what stands on the floor: desks with a screen each)
+      const dx = x0 + 18 + i * 62 + 14 * c4R(i + k * 5, 82); if (br && Math.abs(dx + 9 - px) < ho + 12) continue; ctx.fillStyle = '#26347a'; ctx.fillRect(dx, fy - 9, 18, 3); ctx.fillStyle = '#16204e'; ctx.fillRect(dx + 1, fy - 6, 2, 6); ctx.fillRect(dx + 15, fy - 6, 2, 6);
+      ctx.fillStyle = c4R(i + k * 5, 83) < 0.5 ? '#9fc4ff' : '#ffd98a'; ctx.fillRect(dx + 5, fy - 15, 7, 5); ctx.fillStyle = '#0d1436'; ctx.fillRect(dx + 6, fy - 14, 5, 3);
+    }
+    ctx.fillStyle = '#3b4f94'; ctx.fillRect(x0, fy, br ? Math.max(0, px - ho - x0) : T.w, 2); ctx.fillRect(px + ho, fy, br ? Math.max(0, x0 + T.w - px - ho) : 0, 2); ctx.fillStyle = '#1e2a66'; ctx.fillRect(x0, fy + 2, br ? Math.max(0, px - ho - x0) : T.w, 7); if (br) ctx.fillRect(px + ho, fy + 2, Math.max(0, x0 + T.w - px - ho), 7);
+    for (let i = 0; i < 4; i++) { const lx = x0 + 22 + i * 74 + 18 * c4R(i + k * 4, 84); if (br && Math.abs(lx + 15 - px) < ho + 16) continue; ctx.globalAlpha = 0.55 + 0.45 * Math.sin(m * 13 + i * 3 + k); ctx.fillStyle = '#ffe9a8'; ctx.fillRect(lx, fy + 10, 30, 3); ctx.globalAlpha = 1; }
+    if (br && s < 3) for (let i = 0; i < 9; i++) {      // (the pieces of the floor that has broken: they turn and fall)
+      const r = c4R(k * 13 + i, 92), vx = (i - 4) * 16 + (c4R(k * 13 + i, 93) - 0.5) * 20, w = 12 + 16 * c4R(k * 13 + i, 94); ctx.save(); ctx.globalAlpha = clamp01(1 - s / 2.6); ctx.translate(px + (i - 4) * 9 + vx * s * 0.5, fy + 4 + 0.5 * 260 * s * s * (0.6 + 0.6 * r)); ctx.rotate((r - 0.5) * 4.4 * s); ctx.fillStyle = i & 1 ? '#2a3a80' : '#1e2a66'; ctx.fillRect(-w / 2, -3, w, 6); ctx.restore();
+    }
+    if (br) c14Puff(m, F.tp, px, fy, 14, 70, 1.5, k + 3);
+  });
+  const dg = ctx.createLinearGradient(0, y0, 0, y1); dg.addColorStop(0, 'rgba(140,120,150,0.16)'); dg.addColorStop(1, 'rgba(90,70,110,0.05)'); ctx.fillStyle = dg; ctx.fillRect(x0, y0, T.w, y1 - y0); ctx.restore();
+}
+function c14Roof(m, O, vx0, vx1) {      // the rooftop of the low building: its edge, a water tower on legs, an antenna with a red light, boxes
+  const T = c14T('R'), x0 = O.x + T.x - T.w / 2, y = O.y + C14L.roof; if (x0 + T.w < vx0 || x0 > vx1) return;
+  ctx.fillStyle = '#2a3a80'; ctx.fillRect(x0 - 4, y - 2, T.w + 8, 6); ctx.fillStyle = '#16204e'; ctx.fillRect(x0, y + 4, T.w, 10); const cx = O.x + T.x;
+  ctx.fillStyle = '#1c2860'; for (const lx of [-34, -22, 22, 34]) ctx.fillRect(cx + lx, y - 34, 3, 32); ctx.fillStyle = '#26347a'; ctx.fillRect(cx - 38, y - 70, 76, 38); ctx.fillStyle = '#34459a'; for (let k = 0; k < 4; k++) ctx.fillRect(cx - 38, y - 68 + k * 10, 76, 2); ctx.fillStyle = '#1c2860'; ctx.fillRect(cx - 40, y - 74, 80, 5); ctx.fillRect(cx - 4, y - 90, 8, 18);
+  ctx.fillStyle = '#26347a'; ctx.fillRect(cx - 100, y - 18, 36, 18); ctx.fillRect(cx + 70, y - 24, 30, 24); ctx.fillStyle = '#1c2860'; ctx.fillRect(cx + 108, y - 90, 3, 90); ctx.fillStyle = Math.sin(m * 5) > 0 ? '#ff3347' : '#5a0f1a'; ctx.fillRect(cx + 107, y - 94, 5, 5);
+}
+
+// ---- in front of the fighters: the glass that flies, the dust and the pieces of the cut and of the roof, the debris that falls past in the building
+function c14Front(m) {
+  if (m < C11K.air2 - 1 || m > C11K.kick + 1) return; const O = c14O(), L = C14L, K = L.cut; ctx.save();
+  for (const [, wx, t, dir, sw] of C14H) {
+    if (m < t || m > t + 1.4) continue; const y = O.y + c11Spl(C11PATH, t, 2), x = O.x + wx, miss = sw && C13Q.res[sw] === 'miss', n = miss ? 36 : 26;
+    c4Spray(m, t, x, y, n, { v: 240, up: 1, dir, life: 1.1, cols: ['#cfe8ff', '#9fc4ff', '#ffffff', '#5a78c8'], sz: 1, seed: wx + 3, g: 260, gnd: 1e9 }); c4Spray(m, t, x, y, 12, { v: 150, up: 1, dir, life: 1.2, cols: ['#1c2860', '#26347a', '#0b1233'], sz: 2, seed: wx + 9, g: 300, gnd: 1e9 }); if (miss) c4Spray(m, t, x, y, 10, { v: 120, up: 1, dir: 0, life: 0.9, cols: C4_BLOOD, sz: 1, seed: wx + 5, g: 200, gnd: 1e9 });
+    if (m - t < 0.35) { ctx.globalAlpha = 1 - (m - t) / 0.35; ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 3, y - 24, 6, 48); ctx.globalAlpha = 1; }
+  }
+  const u = m - K.t; if (u >= 0 && u < 2.4) c4Spray(m, K.t, O.x + K.cx, O.y + K.cy, 40, { v: 140, up: 1, dir: 0, life: 2.2, cols: ['#8b93c0', '#5a6296', '#cfd5ee', '#2a3568'], sz: 2, seed: 21, g: 120, gnd: 1e9 });
+  for (let i = 0; i < 4; i++) c14Puff(m, K.t + 0.4 + 0.8 * i, O.x + K.cx + 30 + 45 * i, O.y + K.cy + 12 + 14 * i, 10, 40, 1.6, 40 + i);      // (the half grinds along the cut)
+  const b = m - L.breach; if (b >= 0 && b < 2.4) c4Spray(m, L.breach, O.x + 1880, O.y + 180, 50, { v: 200, up: 1, dir: 0, life: 2.2, cols: ['#8b93c0', '#5a6296', '#cfd5ee', '#2a3568', '#ffe9a8'], sz: 2, seed: 23, g: 220, gnd: 1e9 }); c14Puff(m, L.breach, O.x + 1880, O.y + 180, 22, 80, 2.2, 60);
+  if (m >= L.breach + 0.5 && m < c9B(45, 0)) {      // (debris falls past the pair all the time he is in the building)
+    const P = c14P(m), a = clamp01((m - L.breach - 0.5) / 0.6) * clamp01((c9B(45, 0) - m) / 0.6); for (let i = 0; i < 16; i++) { const f = ((c4R(i, 86) * 240 + m * (80 + 70 * c4R(i, 87))) % 240) / 240; ctx.globalAlpha = Math.sin(Math.PI * f) * 0.85 * a; ctx.fillStyle = i % 3 ? '#4a5aa6' : '#8b93c0'; ctx.fillRect(Math.round(P.x + (c4R(i, 88) - 0.5) * 300), Math.round(P.y - 120 + f * 240), 2 + (i & 1), 2 + (i % 3 === 0 ? 2 : 0)); }
+  }
+  ctx.restore();
+}
+function c14Over(m) {      // on the screen (not moved by the camera): the wheel learns the slash
+  const t = m - c9B(54, 3); if (t < 0 || t > 1.3) return; const a = t < 0.15 ? t / 0.15 : Math.max(0, 1 - (t - 0.5) / 0.8); ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = 'rgba(255,225,140,0.16)'; ctx.fillRect(0, VH * 0.38, VW, VH * 0.2); pxt('THE WHEEL ADAPTS', VW / 2, VH * 0.52, '#ffe08a', 16, 'center'); ctx.restore();
+}
+function c14Events(T, ev) {      // the sounds of the city: glass at every wall, the cut, the roof, each floor that breaks
+  const R = c9Start(), L = C14L;
+  C14H.forEach(([, , t], i) => ev('c14g' + i, R + t - 0.02, () => snd('c7shatter'), 0.5));
+  ev('c14cut', R + L.cut.t + 0.1, () => { snd('c7tear'); snd('c7whoosh'); }, 0.8); ev('c14slide', R + L.cut.t + 1.2, () => snd('c7rise'), 1.0); ev('c14roof', R + L.breach - 0.05, () => { snd('c7smash'); snd('c7shatter'); }, 0.8);
+  c14Floors().forEach((F, i) => { if (F.broken) ev('c14f' + i, R + F.tp, () => { snd('c7thud', 0); snd('c7shatter'); }, 0.6); });
+}
 
 function drawScene(now, dt) {
   fatUI(now);
@@ -15029,6 +15239,7 @@ $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+{"v": "1.141", "t": "A FIGHT THAT NEVER STOPS: HOW-TO-PLAY CARD, HOLD AND MASH PROMPTS, AND THE WHOLE CITY AS THE ARENA", "n": ["A how-to-play card now comes before the first ring of the air fight: an animated TAP ring and an animated HOLD ring, and the rules in plain words. TAP when the circle reaches the middle circle: Sukuna dodges Mahoraga. HOLD when Sukuna attacks: press when the ring appears and let go exactly when it reaches the middle circle. Tap the screen (after a second) to start. It comes every time the fight starts, also after DEFEATED.", "New prompts. Every blow of Sukuna now asks for a HOLD (orange ring, the middle turns green while your finger is down); miss it and Mahoraga blocks, Sukuna cannot attack for a moment and Mahoraga gets the upper hand with a blow of his own. The clashes ask you to MASH (tap five times fast). The throw asks for three SWIPES (up, left, down); a missed swipe smashes Sukuna through the wall the ragged way, with blood. Taps, holds, mashes and swipes all count the same toward the 75% you need, and more than 3 misses still brings the flurry.", "The fight is action only now: no more calm and no more face-offs between the blows, a blow every beat or two, and every camera cut is a new angle. The city is the arena: a chase through three skyscrapers (the glass breaks as they go through), Sukuna cuts a whole tower in half and they fight beside its falling top, which crashes through the roof of the next building; they fall through its floors as it comes down (each floor breaks under them), Mahoraga throws Sukuna back through the buildings, they land on a rooftop with a water tower where the wheel learns Sukuna's slash (THE WHEEL ADAPTS), and then it is straight up through the clouds to a huge moon, up to the last kick.", "The camera keeps both fighters in the picture (nobody is thrown out of the shot any more) and follows a lunge smoothly. Fixed: the score counter and the SKIP button of the quick time events were hidden under the black cinema bars; they now show in the top bar."]},
 {"v": "1.140", "t": "QUICK TIME EVENTS IN THE AIR FIGHT: DODGE MAHORAGA'S BLOWS", "n": ["Now you fight too. Every time Mahoraga is about to hit Sukuna in the air fight (the first punch in the slow motion and then each of his hooks, kicks and punches) a ring closes on Sukuna: TAP anywhere as it closes (the ring turns gold at the perfect moment). A tap in time makes Sukuna dodge, block or meet the fist; PERFECT, GOOD, TOO EARLY or MISS shows. A counter in the corner shows how many you got.", "If you miss, the story branches a little: the blow lands and throws Sukuna back, he cannot attack for a few seconds (his next blows are cancelled), and Mahoraga follows up with one more blow (with its own prompt). Then the fight goes back to normal.", "If you miss MORE THAN 3 times, Mahoraga attacks again and again: a flurry of blows on every beat of the song (5 at the 4th miss, 2 more every time you miss after that), each with its own prompt.", "At the end of the fight (just before the last kick) the game counts your taps. Under 75% and Sukuna is overwhelmed: DEFEATED, and the air fight starts again from the beginning. 75% or more and the story goes on as before. A SKIP button in the corner skips a cut (and counts for nothing)."]},
 {"v": "1.139", "t": "A LOT MORE SLASHES IN THE DOMAIN, AND THE BLOOD IS BLOWN AWAY BY THE WIND", "n": ["The rain of slashes in Sukuna's domain is about four times as thick and much more violent: long thick cuts everywhere, a huge burst with every heavy hit of the song (and a red flash), many more cuts landing on Mahoraga, and the screen shakes hard all the time.", "When Mahoraga comes apart in the first domain shot, his blood no longer falls to the floor: a strong wind blows it away to the right in streaks that get faster and faster until the screen is empty, with streaks of wind across the picture and the sound of the gust."]},
 {"v": "1.138", "t": "MAHORAGA WALKS ON WITH HIS ARMS COMING UP, SLOWLY AND HURT", "n": ["At the big hit at 2:03 Mahoraga no longer stops. He keeps walking forward in short, dragging, painful steps (his feet really step on the ground and never slide) while his arms come up very slowly: one tenth more with every heavy hit of the song, ten hits in all, from hanging at his sides to both open hands held out in front of him. His head hangs, his body is bent, his arms tremble, and he gets slower and slower until he stops just before the lull.", "He starts farther away now (he kneels about 470 px from Sukuna) so that he can walk the whole way. The slashes, the steam and the regrowing go on exactly as before, and the leap and the arrow are unchanged.", "New: ten shuffle pictures sets for Mahoraga (gs1 - gs10), a new speed for the whole walk (a slow start, steady, a little slower at 2:03, then slower and slower)."]},
@@ -15260,7 +15471,8 @@ for (const [k, id] of SK_TABS) $(id).addEventListener('click', () => { skTab = k
 $('lsFight').addEventListener('click', lanFight);
 $('lsAgain').addEventListener('click', () => lanAgain(true));
 $('lsBack').addEventListener('click', lanLeave);
-addEventListener('pointerdown', e => { if (state === 'story') storySkip(e); });      // a tap skips to the next part of the cutscene
+addEventListener('pointerdown', e => { if (state === 'story') storySkip(e); });      // a tap skips to the next part of the cutscene (in the fight of chapter 3 it answers the prompts: c13Tap)
+addEventListener('pointerup', e => { if (state === 'story' && typeof c13Up === 'function') c13Up(e); }); addEventListener('pointercancel', e => { if (state === 'story' && typeof c13Up === 'function') c13Up(e); });      // a tap skips to the next part of the cutscene
 addEventListener('pointerdown', () => { if (yf && !paused) yfTap(pnow()); });      // (v1.49 Yuji's FATALITY: two taps skip it)
 addEventListener('pointerdown', () => { if (typeof suFgOn === 'function' && suFgOn() && !paused) suFgTap(pnow()); });      // (v1.127 Sukuna's FUGA cutscene: two taps skip it)
 $('vsGo').addEventListener('click', () => startMatch(vsSel));

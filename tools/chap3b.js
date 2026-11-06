@@ -41,13 +41,13 @@ function c8Build() {
   C8W.L = [c8City({ p: 0.25, skip: [C8W.ref.x - 50 - 90, C8W.ref.x - 50 + 90], seed: 11, wMin: 30, wMax: 70, hMin: 40, hMax: 250, col: '#0b1233', edge: '#18245a', win: ['#2c3b78', '#3b4f94'], dens: 0.08, gap: 0.5, g0: 10, g1: 50 }), c8City({ p: 0.5, seed: 31, wMin: 40, wMax: 90, hMin: 30, hMax: 150, col: '#090e2a', edge: '#1a2760', win: ['#ffd98a', '#9fc4ff'], dens: 0.15, gap: 0.55, g0: 15, g1: 65 }), c8City({ p: 0.8, seed: 51, wMin: 50, wMax: 110, hMin: 14, hMax: 70, col: '#070a1d', edge: '#16205a', win: ['#ffd98a', '#ffb86a'], dens: 0.22, gap: 0.5, g0: 10, g1: 50 })];
 }
 function c8Moon(x, y, R) {      // a huge pixel moon: a pale disc (made once as a picture, so that it is a clean shape at any zoom), a few darker seas and craters, the right limb in shade, a halo
-  if (!C8W.moonC || C8W.moonR !== R) {
+  C8W.moons = C8W.moons || {}; if (!C8W.moons[R]) {      // (one picture for each size: the sky has the moon of 60 and the climb of v1.141 one of 85)
     const c = document.createElement('canvas'); c.width = c.height = 2 * R + 2; const g = c.getContext('2d'), o = R + 1;
     for (let yy = -R; yy <= R; yy++) { const hw = Math.floor(Math.sqrt(R * R - yy * yy)); g.fillStyle = '#e4e9fa'; g.fillRect(o - hw, o + yy, hw * 2, 1); g.fillStyle = '#c9d0ec'; g.fillRect(o + Math.floor(hw * 0.55), o + yy, hw - Math.floor(hw * 0.55), 1); }
     for (const [dx, dy, r, col] of [[-0.35, -0.2, 0.28, '#c4cbe8'], [0.1, 0.25, 0.22, '#bcc4e4'], [-0.1, -0.55, 0.14, '#cfd5ee'], [0.4, -0.3, 0.12, '#c4cbe8'], [-0.5, 0.35, 0.16, '#cfd5ee'], [0.25, 0.6, 0.1, '#c4cbe8']]) { const rr = Math.round(R * r), cx = o + Math.round(R * dx), cy = o + Math.round(R * dy); for (let yy = -rr; yy <= rr; yy++) { const hw = Math.floor(Math.sqrt(rr * rr - yy * yy)); g.fillStyle = col; g.fillRect(cx - hw, cy + yy, hw * 2, 1); } }
-    C8W.moonC = c; C8W.moonR = R;
+    C8W.moons[R] = c;
   }
-  const gr = ctx.createRadialGradient(x, y, R * 0.8, x, y, R * 3.2); gr.addColorStop(0, 'rgba(190,205,255,0.30)'); gr.addColorStop(1, 'rgba(190,205,255,0)'); ctx.fillStyle = gr; ctx.fillRect(x - R * 3.2, y - R * 3.2, R * 6.4, R * 6.4); ctx.drawImage(C8W.moonC, x - R - 1, y - R - 1);
+  const gr = ctx.createRadialGradient(x, y, R * 0.8, x, y, R * 3.2); gr.addColorStop(0, 'rgba(190,205,255,0.30)'); gr.addColorStop(1, 'rgba(190,205,255,0)'); ctx.fillStyle = gr; ctx.fillRect(x - R * 3.2, y - R * 3.2, R * 6.4, R * 6.4); ctx.drawImage(C8W.moons[R], x - R - 1, y - R - 1);
 }
 function c8On(cam, fx, fy) { if (cam.rot) { ctx.save(); ctx.translate(Math.round(cam.tx), Math.round(cam.ty)); ctx.rotate(cam.rot); ctx.scale(cam.z, cam.z); ctx.translate(-fx, -fy); } else c4CamOn(cam.z, fx, fy, cam.tx, cam.ty); }      // (v1.135: the camera may also roll: cam.rot, in radians, about the screen point (tx, ty))
 function c8Camp(cam, p) { c8On(cam, C8W.ref.x + (cam.fx - C8W.ref.x) * p, C8W.ref.y + (cam.fy - C8W.ref.y) * p); }      // the camera for a layer that moves p times as much as the near world (0 = never, 1 = the world itself)
@@ -280,7 +280,7 @@ function c9Audio() {
   return c9A;
 }
 function c9Music(T) {
-  const m = T - c9Start(), on = m >= 0 && m < C9.D && !document.hidden && !(typeof paused !== 'undefined' && paused) && !C13Q.def;
+  const m = T - c9Start(), on = m >= 0 && m < C9.D && !document.hidden && !(typeof paused !== 'undefined' && paused) && !C13Q.def && !C13Q.intro;
   if (!on) { if (c9A && !c9A.paused) c9A.pause(); return; }
   const a = c9Audio(); if (!a) return;
   const k = Math.min(1, m / C9.fadeIn), g = C9.vol * k * k * Math.min(1, (C9.D - m) / C9.fadeOut), node = sfx && soundOn && sfx.ac.state === 'running' ? sfx.music(a) : null;

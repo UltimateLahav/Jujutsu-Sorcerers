@@ -309,12 +309,12 @@ function c10Cam(m, k) {
 function c10Stage(m, cam) {
   const s = m + C9.m0, K = C10K, S = c10Suk(m), M = c10Mah(m), A = c10Arm(m), lit = c10Lit(m); c8Bg(cam, s);
   if (m < K.launch + 2.5) { const L = c4Lay(c4Geo()), cx = Math.round(VW / 2); c4Crater(cx + L.cr, 1.1); c4Pool(cx + L.yL - 30, 1.54); }      // (the crater and the pool at the street, as part 2 left them)
-  c4Cam0(); c10Clouds(cam, m); c8On(cam, cam.fx, cam.fy);      // (the camera c8Bg left on is turned off for the clouds, which have a camera of their own, and put on again for the actors)
+  c4Cam0(); c10Clouds(cam, m); c8On(cam, cam.fx, cam.fy); c14Rear(m, cam);      // (v1.141 the city of the air fight behind the pair; the camera c8Bg left on is turned off for the clouds, which have a camera of their own, and put on again for the actors)
   const behind = M.mode === 'spin' && M.depth < 0, ro = S && (S.mode === 'rope' || S.mode === 'spin');
   const cut = M.mode === 'regrow'; let ropeP = null; if (S && ro) { const hand = cut ? [M.x + 170, M.y - 34] : c10Hp(S, C10H[S.ei] || [14, -5.5]), wst = c10An(M, 'chest'); ropeP = [hand[0], hand[1], wst[0], wst[1]]; }
   const rope = () => { if (!ropeP) return; const tl = m - K.lasso, g = clamp01((tl + 0.1) / 0.4), tk = m < K.lasso + 0.9 ? 0.15 + 0.5 * clamp01((tl - 0.3) / 0.6) : 1, a = m >= K.fling ? 0 : 1; c10Rope(m, ropeP[0], ropeP[1], ropeP[2], ropeP[3], { g, k: Math.min(1, tk), a }); if (g >= 1) c10Coil(M, m, m >= K.fling ? 0 : 1); };
   if (behind) { rope(); c10DrawMah(M, s, m, lit); c10DrawSuk(S, s); } else { if (!cut) c10DrawSuk(S, s); c10DrawMah(M, s, m, lit); rope(); }
-  c10DrawArm(A, lit); c10Fx(m, S, M, A, cam); if (m >= C11K.air2) c11Fx(m);
+  c10DrawArm(A, lit); c10Fx(m, S, M, A, cam); if (m >= C11K.air2) { c11Fx(m); c14Front(m); }
   return { S, M, A };
 }
 function c10Shot(now, dt, T, st, t1) {
@@ -330,10 +330,12 @@ function c10Shot(now, dt, T, st, t1) {
   c10Impact(m, K.cut, cam, cpt[0], cpt[1], 0.55); c10Impact(m, K.throwAt, cam, R.S ? R.S.x : E.SF.x, R.S ? R.S.y : E.SF.y, 0.4); c10Impact(m, K.fling, cam, E.CS.x, E.CS.y, 0.5);
   { const r = m - K.launch; if (r >= 0 && r < 0.07) c6White(0.8 * (1 - r / 0.07)); }
   if (m >= C11K.air2) c11Impacts(m, cam);
+  c14Over(m);
   c13Draw(m, cam, R.S);      // (v1.140 the ring of the quick time event, the counter, the verdict)
   { const k = c8NotchK(s); if (k > 0.02) c6White(0.26 * k * k); }
   ctx.fillStyle = 'rgba(30,10,60,0.12)'; ctx.fillRect(0, 0, VW, VH); msFinish(1);
   c6Black((s - (C8T.end - 0.9)) / 0.9);
+  c13Top(m);      // (v1.141 the card, the counter and the verdict are over the cinema bars)
 }
 
 // ---- the sounds (each fires once; m = the song time)
@@ -353,7 +355,7 @@ function c10Events(T, ev) {
   at('c10l0', K.lasso - 0.1, () => snd('c6scrape'), 0.5); at('c10l1', K.lasso + 0.12, () => snd('c6scrape'), 0.5); at('c10l2', K.lasso + 0.35, () => snd('c6scrape'), 0.5); at('c10l3', K.lasso + 0.5, () => snd('c7wheel', 0), 0.8); at('c10jerk', K.lasso + 0.88, () => { snd('smack', 3); snd('c7smash'); }, 0.6);
   { if (!C10W.orbT) { C10W.orbT = []; for (let t = K.spin, n = 0; t < K.fling; n++) { const th = c10Th(t); let dt = 0.05; while (c10Th(t + dt) - th < Math.PI * (n < 12 ? 1 : 2) && t + dt < K.fling + 1) dt += 0.02; t += dt; if (t >= K.fling) break; C10W.orbT.push(t - 0.02); } } C10W.orbT.forEach((t, n) => at('c10o' + n, t, () => snd('c7whoosh'), 0.3)); }      // (a whoosh each time he passes: every half turn at first, every turn when it is fast)
   at('c10rg0', K.regrow, () => snd('rct', 0), 0.8); at('c10rg1', K.whole, () => snd('rct', 1), 0.8);
-  at('c10fl0', K.fling - 0.02, () => { snd('c7smash'); snd('c8crack'); }, 0.6); at('c10fl1', K.fling + 0.1, () => snd('c7rise'), 1.2); at('c10up', K.fling + 0.6, () => snd('c7whoosh'), 0.6); at('c10top', K.fling + 2.4, () => snd('c7wheel', 1), 0.8); at('c10end', K.rise + 3.2, () => snd('c7eyes'), 1.0); c11Events(T, ev); c12Events(T, ev);
+  at('c10fl0', K.fling - 0.02, () => { snd('c7smash'); snd('c8crack'); }, 0.6); at('c10fl1', K.fling + 0.1, () => snd('c7rise'), 1.2); at('c10up', K.fling + 0.6, () => snd('c7whoosh'), 0.6); at('c10top', K.fling + 2.4, () => snd('c7wheel', 1), 0.8); at('c10end', K.rise + 3.2, () => snd('c7eyes'), 1.0); c11Events(T, ev); c14Events(T, ev); c12Events(T, ev);
 }
 const C10_SHOTS = ['sky', 'aface', 'alook', 'aleap', 'aduel', 'aslow', 'acut', 'agrab', 'aplunge', 'arope', 'aspin', 'aregrow', 'awhirl', 'afling', 'arise'];
 for (const k of C10_SHOTS) c7Shots[k] = c10Shot;      // (the shots after the uppercut are drawn by this file: 'sky' too, which c8Shot drew until v1.134)

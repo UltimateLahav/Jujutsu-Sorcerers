@@ -13,30 +13,37 @@ const C11MV = {
   skick: { who: 'S', row: 2, n: 15, fps: 30, hit: 5, reach: [24, -8], tail: 0.3 }, chop: { who: 'S', air: [7, 8], n: 2, fps: 9, hit: 1, reach: [20, 0], tail: 0.3 }
 };
 
-// ---- the script of the fight: t = the moment the blow lands (a beat of the song), a = who hits (M Mahoraga, S Sukuna), mv = the blow, re = what the other does (dodge, block, hit: thrown back, hurt: the head snaps back, slash: cut and the wheel adapts, clash: both hit at once),
-// imp = the impact frame (0 none, 1 a flash, 2 the black-and-white one), kb = how far the other is thrown (px), sh = shake, tg = where it lands ('head' or 'body')
-const C11EV = [
-  { t: c9B(22, 1), a: 'M', mv: 'hookN', re: 'dodge' }, { t: c9B(23, 0), a: 'S', mv: 'jab', re: 'hurt', imp: 1, tg: 'head' },
-  { t: c9B(24, 2), a: 'M', mv: 'hookF', re: 'block', kb: 22 }, { t: c9B(25, 1), a: 'S', mv: 'skick', re: 'hurt', imp: 1, tg: 'head' },
-  { t: c9B(26, 3), a: 'M', mv: 'kick', re: 'block', kb: 34, sh: 3 }, { t: c9B(27, 1), a: 'S', mv: 'jab2', re: 'hurt', tg: 'head' },
-  { t: c9B(28, 1), a: 'M', mv: 'hookN', re: 'dodge' }, { t: c9B(29, 0), a: 'S', mv: 'skick', re: 'hurt', imp: 2, tg: 'head', kb: 30, sh: 4 },
-  { t: c9B(30, 0), a: 'M', mv: 'punch', re: 'hit', imp: 2, kb: 120, sh: 6 }, { t: c9B(31, 0), a: 'S', mv: 'chop', re: 'slash', imp: 1, tg: 'body', sh: 3 },
-  { t: c9B(32, 0), a: 'M', mv: 'hookF', re: 'dodge' }, { t: c9B(32, 3), a: 'S', mv: 'jab2', re: 'hurt', tg: 'head' },
-  { t: c9B(33, 2), a: 'M', mv: 'punch', re: 'clash', imp: 2, sh: 6, with: { a: 'S', mv: 'jab' } }, { t: c9B(34, 1), a: 'M', mv: 'hookN', re: 'hit', kb: 70, sh: 4 },
-  { t: c9B(35, 0), a: 'M', mv: 'kick', re: 'clash', imp: 2, sh: 8, with: { a: 'S', mv: 'skick' } },
-  { t: c9B(43, 3), a: 'M', mv: 'hookN', re: 'hit', imp: 1, kb: 60, sh: 4, blood: 1 }, { t: c9B(44, 2), a: 'M', mv: 'hookF', re: 'hit', kb: 60, sh: 4 },
-  { t: c9B(45, 3), a: 'S', mv: 'jab', re: 'hurt', tg: 'head' }, { t: c9B(47, 0), a: 'M', mv: 'kick', re: 'hit', imp: 1, kb: 80, sh: 5 },
-  { t: c9B(49, 0), a: 'S', mv: 'chop', re: 'slash', imp: 1, tg: 'body', sh: 3 }, { t: c9B(50, 2), a: 'M', mv: 'punch', re: 'clash', imp: 2, sh: 6, with: { a: 'S', mv: 'jab2' } },
-  { t: c9B(51, 0), a: 'M', mv: 'hookN', re: 'block', kb: 26 }, { t: c9B(52, 0), a: 'M', mv: 'punch', re: 'hit', imp: 1, kb: 90, sh: 5 },
-  { t: c9B(53, 0), a: 'S', mv: 'jab2', re: 'hurt', imp: 1, tg: 'head', sh: 4 },
-  { t: c9B(55, 2), a: 'M', mv: 'hookF', re: 'dodge' }, { t: c9B(56, 3), a: 'S', mv: 'jab', re: 'hurt', imp: 2, tg: 'head', kb: 40, sh: 6 },
-  { t: c9B(58, 1), a: 'M', mv: 'kick', re: 'hit', imp: 2, kb: 400, sh: 9, last: true }
+// ---- the script of the fight (v1.141: ACTION ONLY, seven acts, a blow on every beat or two): [bar, beat, who hits (M Mahoraga, S Sukuna, W = only a SWIPE prompt), the blow, what the other does, extras]; the moment it lands is a beat of the song (c9B)
+// re = what the other does (dodge, block, hit: thrown back, hurt: the head snaps back, slash: cut and the wheel adapts, adapt: the wheel has learnt it and the slash only sparks, clash: both hit at once),
+// extras: imp = the impact frame (0 none, 1 a flash, 2 the black-and-white one), kb = how far the other is thrown (px), sh = shake, tg = where it lands ('head' or 'body'), with = the other fist of a clash, last = the blow that ends the song, id = a name, dir = the direction of a swipe
+// Acts: SKY (bars 21 - 28, high up with the moon), CHASE (28 - 34, through three skyscrapers), CUT (34 - 39, Sukuna cuts a tower and they fight on the falling half), FALL (39 - 45, through the roof into a building that collapses under them),
+// THROW (45 - 51, Mahoraga throws him back through the towers: swipes), ROOF (51 - 56, a rooftop; the wheel adapts to his slash), MOON (56 - 58, straight up through the clouds to the moon, the last kick)
+const C11T = [
+  [21, 3, 'M', 'hookN', 'dodge'], [22, 1, 'S', 'jab', 'hurt', { tg: 'head', imp: 1 }], [22, 3, 'M', 'hookF', 'dodge'], [23, 1, 'S', 'skick', 'hurt', { tg: 'head', imp: 1 }], [23, 3, 'M', 'kick', 'block', { kb: 30 }], [24, 1, 'S', 'jab2', 'hurt', { tg: 'head' }],
+  [24, 3, 'M', 'hookN', 'dodge'], [25, 1, 'S', 'skick', 'hurt', { tg: 'head', imp: 2, kb: 30, sh: 4 }], [25, 3, 'M', 'punch', 'hit', { imp: 2, kb: 110, sh: 6 }], [26, 1, 'S', 'chop', 'slash', { tg: 'body', imp: 1, sh: 3 }], [26, 3, 'M', 'hookF', 'dodge'],
+  [27, 1, 'S', 'jab', 'hurt', { tg: 'head' }], [27, 3, 'M', 'punch', 'clash', { imp: 2, sh: 6, with: { a: 'S', mv: 'jab' } }],
+  [28, 3, 'M', 'kick', 'hit', { imp: 1, kb: 70, sh: 4 }], [29, 1, 'S', 'jab', 'hurt', { tg: 'head' }], [29, 3, 'M', 'hookN', 'dodge'], [30, 1, 'S', 'skick', 'hurt', { tg: 'head', imp: 1 }], [30, 3, 'M', 'hookF', 'block', { kb: 26 }],
+  [31, 1, 'S', 'jab2', 'hurt', { tg: 'head' }], [31, 3, 'M', 'kick', 'dodge'], [32, 1, 'S', 'chop', 'slash', { tg: 'body', imp: 1, sh: 3 }], [32, 3, 'M', 'punch', 'hit', { imp: 2, kb: 110, sh: 6 }], [33, 1, 'S', 'skick', 'hurt', { tg: 'head', imp: 2, kb: 30, sh: 4 }], [33, 3, 'M', 'hookN', 'dodge'],
+  [34, 1, 'M', 'hookF', 'dodge'], [34, 3, 'S', 'chop', 'slash', { tg: 'body', imp: 2, sh: 6, id: 'cut' }], [35, 1, 'M', 'kick', 'block', { kb: 34 }], [35, 3, 'S', 'jab', 'hurt', { tg: 'head' }], [36, 1, 'M', 'hookN', 'dodge'], [36, 3, 'S', 'skick', 'hurt', { tg: 'head', imp: 1 }],
+  [37, 1, 'M', 'punch', 'hit', { imp: 1, kb: 80, sh: 5 }], [37, 3, 'S', 'jab2', 'hurt', { tg: 'head', imp: 1 }], [38, 1, 'M', 'hookF', 'dodge'], [38, 3, 'S', 'chop', 'slash', { tg: 'body', imp: 1, sh: 3 }],
+  [39, 3, 'M', 'punch', 'hit', { imp: 2, kb: 90, sh: 6 }], [40, 1, 'S', 'jab', 'hurt', { tg: 'head' }], [40, 3, 'M', 'kick', 'dodge'], [41, 1, 'S', 'skick', 'hurt', { tg: 'head', imp: 1 }], [41, 3, 'M', 'hookN', 'block', { kb: 26 }], [42, 1, 'S', 'jab2', 'hurt', { tg: 'head' }],
+  [42, 3, 'M', 'hookF', 'dodge'], [43, 1, 'S', 'chop', 'slash', { tg: 'body', imp: 1, sh: 3 }], [43, 3, 'M', 'punch', 'dodge'], [44, 1, 'S', 'skick', 'hurt', { tg: 'head', imp: 1, kb: 40 }], [44, 3, 'M', 'kick', 'clash', { imp: 2, sh: 8, with: { a: 'S', mv: 'skick' } }],
+  [45, 3, 'M', 'punch', 'hit', { imp: 2, kb: 100, sh: 7, id: 'throw' }], [46, 3, 'W', null, null, { dir: 'U', id: 'w0' }], [47, 1, 'W', null, null, { dir: 'L', id: 'w1' }], [47, 3, 'W', null, null, { dir: 'D', id: 'w2' }], [48, 3, 'S', 'chop', 'slash', { tg: 'body', imp: 2, sh: 6 }],
+  [49, 1, 'M', 'hookN', 'dodge'], [49, 3, 'S', 'jab', 'hurt', { tg: 'head' }], [50, 1, 'M', 'kick', 'dodge'], [50, 3, 'S', 'skick', 'hurt', { tg: 'head', imp: 1 }],
+  [51, 1, 'M', 'hookF', 'dodge'], [51, 3, 'S', 'jab', 'hurt', { tg: 'head' }], [52, 1, 'M', 'hookN', 'hit', { imp: 1, kb: 60, sh: 4 }], [52, 3, 'S', 'chop', 'slash', { tg: 'body', imp: 1, sh: 3 }], [53, 1, 'M', 'kick', 'dodge'], [53, 3, 'S', 'chop', 'slash', { tg: 'body', imp: 1, sh: 3 }],
+  [54, 1, 'M', 'punch', 'block', { kb: 30 }], [54, 3, 'S', 'chop', 'adapt', { tg: 'body', sh: 3, id: 'adapt' }], [55, 1, 'S', 'jab', 'hurt', { tg: 'head', imp: 1 }], [55, 3, 'M', 'hookF', 'dodge'],
+  [56, 1, 'M', 'hookN', 'dodge'], [56, 3, 'M', 'hookF', 'dodge'], [57, 1, 'S', 'jab', 'hurt', { tg: 'head', imp: 2, kb: 40, sh: 6 }], [57, 3, 'M', 'hookF', 'dodge'], [58, 1, 'M', 'kick', 'hit', { imp: 2, kb: 400, sh: 9, last: true }]
 ];
-// the slow parts: the wheel turns a notch (the times in song time), the first at the end of the first quiet bars
-const C11NOTCH = [c9B(31, 1), c9B(36, 3), c9B(40, 2), c9B(43, 1), c9B(49, 1), c9B(57, 2)];
-const C11POSE = [{ who: 'S', t0: c9B(37, 0), dur: 2.0, pic: { air: 4 } }, { who: 'S', t0: c9B(41, 0), dur: 1.6, pic: { air: 4 } }];      // (poses on their own in the calm: Sukuna beckons)
-// where the middle of the pair is: [song time, x from the arena, y from the arena]: high up with the moon, the fall together to the roofs, the calm there, the climb back
-const C11PATH = [[c9B(21, 0), 2, -298], [c9B(29, 0), 14, -304], [c9B(33, 2), -6, -298], [c9B(35, 0), 10, 455], [c9B(46, 0), -16, 455], [c9B(50, 2), 8, -250], [c9B(58, 1), 0, -300]];
+const C11EV = C11T.map(([bar, beat, a, mv, re, x]) => ({ t: c9B(bar, beat), a, mv, re, ...x }));
+// the wheel turns a notch (the times in song time): at the first slashes it learns, and when it has learnt the slash of the roof
+const C11NOTCH = [c9B(26, 1), c9B(43, 1), c9B(54, 3)];
+const C11POSE = [{ who: 'S', t0: c9B(45, 3) + 0.25, dur: 2.6, pic: { fall: 4 }, rot: u => -9 * u }];      // (poses on their own: Sukuna tumbles through the towers when he is thrown)
+// where the middle of the pair is: [song time, x from the arena, y from the arena]: see the layout of the city in tools/chap3g.js (the towers are where the path goes through them)
+const C11PATH = [
+  [c9B(21, 0), 2, -298], [c9B(24, 0), 120, -290], [c9B(27, 0), 240, -240], [c9B(28, 0), 320, -170], [c9B(28, 3), 300, -120], [c9B(29, 1), 380, -95], [c9B(29, 3), 470, -75], [c9B(30, 2), 650, -40], [c9B(31, 0), 760, -20], [c9B(31, 2), 870, 0], [c9B(32, 0), 990, 30], [c9B(32, 2), 1080, 50], [c9B(32, 3), 1180, 70], [c9B(33, 2), 1380, 110], [c9B(34, 0), 1500, 130],
+  [c9B(34, 3), 1540, 60], [c9B(35, 2), 1600, 70], [c9B(36, 2), 1700, 150], [c9B(37, 2), 1800, 120], [c9B(38, 2), 1860, 170], [c9B(38, 3), 1890, 200], [c9B(40, 0), 1930, 330], [c9B(41, 2), 1980, 420], [c9B(42, 3), 2020, 500], [c9B(43, 3), 2060, 560], [c9B(44, 3), 2140, 600],
+  [c9B(45, 3), 2180, 590], [c9B(46, 0), 2000, 560], [c9B(46, 3), 1800, 540], [c9B(47, 1), 1600, 520], [c9B(47, 3), 1420, 560], [c9B(48, 1), 1330, 580], [c9B(51, 0), 1320, 550], [c9B(55, 0), 1340, 545], [c9B(55, 3), 1340, 540], [c9B(56, 2), 1350, 300], [c9B(57, 2), 1370, -50], [c9B(58, 1), 1380, -300]
+];
 const C11G = { sep: 108, dy: 12 };      // how far apart they hang (px) and how much lower Sukuna hangs than Mahoraga
 
 function c11Spl(keys, m, comp) {      // a smooth path through keys [t, a, b, ...] (the same spline as the cameras, c10Kf, for any numbers: comp = which of the numbers)
@@ -59,7 +66,9 @@ function c11Build() {
   const key = VW + 'x' + gy + 'x' + c8X0() + 'x' + C13Q.ver; if (C11.b && C11.b.key === key) return C11.b;
   const W = { S: [], M: [] }, EV = [], D = CU_GAME[3], atk = D && D.atk, air = D && D.air;
   if (!atk || !air || !air.length) return null;
+  const WL = [];
   c11Eff().forEach((e, idx) => {
+    if (e.a === 'W') { WL.push({ ...e, idx }); return; }      // (a marker of a set piece: only a prompt, no blow)
     const A = e.a, Dd = A === 'M' ? 'S' : 'M', tc = e.t;
     // where the blow lands: on the defender's head (or body) at the moment of contact (the defender's base, plus his own offset in that moment)
     const bD = c11Base(Dd, tc), PF = M7.frames[c10mf('floatg', 0)], mh = [PF.head[0] - PF.pelvis[0], PF.head[1] - PF.pelvis[1] + 4], mc = [PF.chest[0] - PF.pelvis[0], PF.chest[1] - PF.pelvis[1]], tgOff = Dd === 'S' ? (e.tg === 'body' ? [0, -4] : [3.5, -18.5]) : (e.tg === 'body' ? mc : mh);
@@ -70,7 +79,8 @@ function c11Build() {
     const decay = (a, tau, u0) => Math.exp(-Math.max(0, a - u0) / tau);
     let rpose = null;
     if (re === 'dodge') rpose = u => { const e1 = c11K([[0, 0], [0.22, 1], [0.62, 1], [0.95, 0]], u); return { dx: -13 * e1, dy: 14 * e1, rot: -0.58 * e1, pic: { air: u < 0.1 ? 5 : u < 0.7 ? 6 : 5 } }; };
-    else if (re === 'block') rpose = u => { const k = Math.exp(-Math.max(0, u - 0.12) / 0.22); return { dx: -kb * (1 - k) + 2 * Math.sin(u * 90) * k, dy: 0, rot: -0.1 * (1 - k), pic: { air: 9 } }; };
+    else if (re === 'block') rpose = u => { const k = Math.exp(-Math.max(0, u - 0.12) / 0.22); return { dx: (Dd === 'S' ? -1 : 1) * kb * (1 - k) + 2 * Math.sin(u * 90) * k, dy: 0, rot: (Dd === 'S' ? -0.1 : 0.06) * (1 - k), pic: Dd === 'S' ? { air: 9 } : null }; };      // (Mahoraga blocks with his own ready stance)
+    else if (re === 'adapt') rpose = u => { const k = Math.exp(-Math.max(0, u - 0.05) / 0.15); return { dx: 5 * (1 - k), dy: 0, rot: 0, pic: null }; };      // (v1.141 the wheel has learnt the slash: it only sparks on him)
     else if (re === 'hurt') rpose = u => { const k = 1 - Math.exp(-Math.max(0, u - 0.02) / 0.1); return { dx: (Dd === 'S' ? -1 : 1) * (kb * 0.3) * k * decay(u, 0.5, 0.2), dy: -3 * k * decay(u, 0.3, 0.1), rot: 0, pic: Dd === 'M' ? { clip: 'hurt', f: u * 15 } : { fall: u < 0.1 ? 1 : 2 } }; };
     if (e.last) rpose = u => {      // (the blow that ends the song: he is thrown far back, tumbles, finds his balance, hangs there; at 3.4 s the hand sign: his hands rise, the fingertips touch, the sign is held)
       const k = 1 - Math.exp(-Math.max(0, u - 0.02) / 0.75), t = Math.max(0, u - 1.5) / 0.45, tum = -7 * (1 - Math.exp(-u / 0.6)), rot = u < 1.5 ? tum : lerp(-7 * (1 - Math.exp(-1.5 / 0.6)), -2 * Math.PI, c10bk(t)), r = u - 3.4;
@@ -98,9 +108,9 @@ function c11Build() {
     if (re === 'clash') { const o = e.with; W[o.a].push(mkAtk(o.a, o.mv)); }
     EV.push({ ...e, px: target[0], py: target[1], t: tc, idx });
   });
-  for (const q of C11POSE) W[q.who].push({ t0: q.t0, dur: q.dur, kind: 'pose', pose: () => ({ dx: 0, dy: 0, rot: 0, pic: q.pic }) });
+  for (const q of C11POSE) W[q.who].push({ t0: q.t0, dur: q.dur, kind: 'pose', pose: u => ({ dx: 0, dy: 0, rot: q.rot ? q.rot(u) : 0, pic: q.pic }) });
   for (const w of [W.S, W.M]) w.sort((a, b) => a.t0 - b.t0);
-  return C11.b = { key, W, EV };
+  return C11.b = { key, W, EV, WL };
 }
 const C11 = { b: null };
 
@@ -132,28 +142,41 @@ function c11Mah(m) {
 }
 
 // ---- the cameras: every shot (b01 - b29) is a scene of the fight with its own zoom (z0 to z1 over the shot), where it looks (mode: the middle of the two, or Sukuna, or Mahoraga, or toward the blow that lands next to it), a slow roll (amplitude and turns) and a punch-in on every blow
-const C11CAM = {
-  b01: { z: [1.0, 1.18] }, b02: { z: [1.25, 1.5], roll: 0.03 }, b03: { z: [1.4, 1.3], mode: 'hit', roll: 0.04 }, b04: { z: [1.7, 1.9], mode: 'hit' }, b05: { z: [1.35, 1.2], roll: 0.12, cyc: 1 }, b06: { z: [1.9, 1.5], mode: 'hit' },
-  b07: { z: [1.15, 0.95], roll: 0.05 }, b08: { z: [1.8, 1.5], mode: 'hit' }, b09: { z: [1.35, 1.2], roll: 0.05 }, b10: { z: [1.3, 1.05], roll: 0.15, cyc: 1 }, b11: { z: [0.95, 0.85], roll: 0.08 }, b12: { z: [1.6, 1.3], mode: 'hit' },
-  b13: { z: [0.95, 1.1], roll: 0.1, cyc: 0.5 }, b14: { z: [2.4, 2.8], mode: 'S', roll: 0.03 }, b15: { z: [2.2, 2.6], mode: 'M', roll: 0.03 }, b16: { z: [1.0, 1.35], roll: 0.06 }, b17: { z: [1.4, 1.6], mode: 'hit' }, b18: { z: [1.3, 1.15], roll: 0.05 },
-  b19: { z: [1.7, 1.9], mode: 'hit' }, b20: { z: [1.05, 0.95], roll: 0.1, cyc: 1 }, b21: { z: [1.8, 1.6], mode: 'hit' }, b22: { z: [1.5, 1.7], mode: 'hit' }, b23: { z: [1.3, 1.2], roll: 0.05 }, b24: { z: [1.9, 1.6], mode: 'hit' },
-  b25: { z: [1.0, 1.1] }, b26: { z: [1.3, 1.45] }, b27: { z: [1.9, 2.2], mode: 'hit' }, b28: { z: [2.4, 2.9], mode: 'M', roll: 0.02 }, b29: { z: [1.6, 1.3], mode: 'hit' }
+const C14CAMS = {      // v1.141 the cameras, a cycle for every act (a cut every two beats): zoom at the start and the end of the shot, where it looks (the middle of the pair; 'hit' = towards the blow that lands next, 'S' / 'M' = at his head), a slow roll
+  sky: [{ z: [1.3, 1.55], mode: 'hit' }, { z: [1.0, 1.15], roll: 0.06 }, { z: [2.3, 2.6], mode: 'S' }, { z: [1.6, 1.4], mode: 'hit' }, { z: [2.3, 2.6], mode: 'M' }, { z: [1.0, 0.9], roll: 0.1, cyc: 1 }],
+  chase: [{ z: [0.85, 0.95] }, { z: [1.7, 1.9], mode: 'hit' }, { z: [0.9, 0.8], roll: 0.05 }, { z: [2.2, 2.5], mode: 'S' }, { z: [1.2, 1.0], mode: 'hit' }, { z: [0.8, 0.9] }],
+  cut: [{ z: [0.75, 0.8] }, { z: [1.8, 2.0], mode: 'hit' }, { z: [0.7, 0.8] }, { z: [1.5, 1.3], mode: 'hit' }],
+  fall: [{ z: [1.0, 1.2], mode: 'hit' }, { z: [0.8, 0.9] }, { z: [2.0, 2.2], mode: 'M' }, { z: [0.9, 0.8], roll: 0.04 }, { z: [1.8, 1.9], mode: 'S' }, { z: [0.8, 0.95] }],
+  throw: [{ z: [0.8, 0.8] }, { z: [1.3, 1.5], mode: 'hit' }, { z: [0.75, 0.85] }, { z: [1.6, 1.8], mode: 'hit' }],
+  roof: [{ z: [1.2, 1.4], mode: 'hit' }, { z: [0.9, 1.0] }, { z: [2.0, 2.2], mode: 'S' }, { z: [1.0, 1.2] }, { z: [1.5, 1.7], mode: 'hit' }, { z: [2.0, 2.3], mode: 'M' }, { z: [0.85, 0.95] }],
+  moon: [{ z: [0.9, 0.8] }, { z: [1.4, 1.6], mode: 'hit' }, { z: [0.8, 0.7] }, { z: [1.6, 1.8], mode: 'hit' }]
 };
+const C14ACT = m => m < c9B(28, 0) ? 'sky' : m < c9B(34, 0) ? 'chase' : m < c9B(39, 0) ? 'cut' : m < c9B(45, 0) ? 'fall' : m < c9B(51, 0) ? 'throw' : m < c9B(56, 0) ? 'roof' : 'moon';
+const C11CAM = {}; C11S.forEach(([name, st], i) => { if (name[0] !== 'b') return; const L = C14CAMS[C14ACT(st)]; C11CAM[name] = L[i % L.length]; });
 function c11CamD(m, name) {      // the silent shots: after the kick Sukuna flies back and the camera chases him; the sign: in on his hands; the domain: on him as it spreads
   const K = C11K.kick, cx = VW / 2, cy = VH * 0.5, C = (z, fx, fy, rot) => ({ z, fx, fy, tx: cx, ty: cy, rot: rot || 0 }), S = t => c11Suk(t) || { x: 0, y: 0, rot: 0, sx: 1 }, B = c11Build(), e = B ? B.EV[B.EV.length - 1] : { px: 0, py: 0 };
   if (name === 'd01') return c10Kf([[K, C(1.5, e.px, e.py)], [K + 0.6, C(1.2, (S(K + 0.6).x + e.px) / 2, (S(K + 0.6).y + e.py) / 2)], [K + 1.6, C(1.0, S(K + 1.6).x + 40, S(K + 1.6).y - 10, 0.04)], [K + 3.4, C(1.1, S(K + 3.4).x + 30, S(K + 3.4).y - 12)]], m);
   if (name === 'd02') return c10Kf([[K + 3.4, C(1.4, S(K + 3.4).x + 22, S(K + 3.4).y - 8)], [K + 4.4, C(2.4, S(K + 4.4).x + 12, S(K + 4.4).y - 12)], [K + 5.6, C(3.3, S(K + 5.6).x + 10, S(K + 5.6).y - 14, -0.02)]], m);
   return c10Kf([[K + 9.9, C(1.6, S(K + 9.9).x, S(K + 9.9).y - 10)], [K + 12.2, C(1.45, S(K + 12.2).x, S(K + 12.2).y - 10)]], m);
 }
+function c11Frame(z, fx, fy, B) {      // keeps the boxes B = [[x0, x1, y0, y1], ...] in the picture: the zoom is lowered if they do not fit (never raised) and the centre moves only as much as is needed (v1.141: nobody is thrown out of the picture)
+  if (!B.length) return [z, fx, fy]; const x0 = Math.min(...B.map(b => b[0])), x1 = Math.max(...B.map(b => b[1])), y0 = Math.min(...B.map(b => b[2])), y1 = Math.max(...B.map(b => b[3]));
+  z = Math.min(z, 0.94 * VW / (x1 - x0), 0.9 * VH / (y1 - y0)); const hw = VW / 2 / z * 0.94, hh = VH / 2 / z * 0.9; return [z, Math.max(x1 - hw, Math.min(x0 + hw, fx)), Math.max(y1 - hh, Math.min(y0 + hh, fy))];
+}
 function c11Cam(m, name) {
   if (/^d0[1-5]$/.test(name)) return c11CamD(m, name);
   const B = c11Build(), cx = VW / 2, cy = VH * 0.5, sc = C11CAM[name] || { z: [1.2, 1.2] }, i = C11S.findIndex(a => a[0] === name), t0 = i >= 0 ? C11S[i][1] : m, t1 = i >= 0 && i + 1 < C11S.length ? C11S[i + 1][1] : t0 + 4, u = clamp01((m - t0) / (t1 - t0));
-  const pos = (mm) => { const S = c11Suk(mm), M = c11Mah(mm); return S && M ? [(S.x + M.x) / 2, (S.y - 12 + M.y - 38) / 2] : [c11Mid(mm).x, c11Mid(mm).y - 20]; };
+  const S = c11Suk(m), M = c11Mah(m), pos = (mm) => { const s = c11Suk(mm), h = c11Mah(mm); return s && h ? [(s.x + h.x) / 2, (s.y - 12 + h.y - 38) / 2] : [c11Mid(mm).x, c11Mid(mm).y - 20]; };
   let fx = 0, fy = 0; for (let j = 0; j < 4; j++) { const p = pos(m - 0.12 * j); fx += p[0] / 4; fy += p[1] / 4; }      // (the middle, smoothed over the last half second)
-  if (sc.mode === 'S' || sc.mode === 'M') { const q = sc.mode === 'S' ? c11Suk(m) : c11Mah(m); const h = sc.mode === 'S' ? c10Hp(q, C10E[q.ei == null ? 0 : q.ei] || [3.5, -18.5]) : c10An(q, 'head'); fx = lerp(fx, h[0], 0.85); fy = lerp(fy, h[1], 0.85); }
+  const sb = S ? [S.x, S.y - 2] : null, mb = M ? [M.x, M.y - 38] : null; let boxes;
+  if (sc.mode === 'S' || sc.mode === 'M') {
+    const q = sc.mode === 'S' ? sb : mb, f = mm => { const s1 = c11Suk(mm), h1 = c11Mah(mm); return sc.mode === 'S' ? (s1 ? [s1.x, s1.y - 2] : null) : (h1 ? [h1.x, h1.y - 38] : null); }, q1 = f(m - 0.05) || q, q2 = f(m - 0.1) || q;      // (the camera follows his last tenth of a second, so that a lunge is not a jerk)
+    if (q) { fx = lerp(fx, (q[0] + q1[0] + q2[0]) / 3, 0.9); fy = lerp(fy, (q[1] + q1[1] + q2[1]) / 3, 0.9); boxes = [sc.mode === 'S' ? [q[0] - 16, q[0] + 16, q[1] - 26, q[1] + 20] : [q[0] - 30, q[0] + 30, q[1] - 26, q[1] + 16]]; } }      // (a close-up: on him, his upper body stays in)
+  else boxes = sc.mode === 'hit' ? [sb && [sb[0] - 17, sb[0] + 17, sb[1] - 28, sb[1] + 28], mb && [mb[0] - 26, mb[0] + 26, mb[1] - 30, mb[1] + 30]] : [sb && [sb[0] - 24, sb[0] + 24, sb[1] - 30, sb[1] + 26], mb && [mb[0] - 50, mb[0] + 50, mb[1] - 26, mb[1] + 56]];      // (two figures: the middles of both, or the whole of both)
+  boxes = (boxes || []).filter(Boolean);
   let zp = 1; if (B) for (const e of B.EV) { const a = m - e.t; if (a >= 0 && a < 1.2) zp += (e.imp ? 0.12 : 0.06) * Math.exp(-a * 8); if (sc.mode === 'hit' && a > -0.5 && a < 0.7) { const w = Math.exp(-a * a / 0.18) * 0.65; fx = lerp(fx, e.px, w); fy = lerp(fy, e.py, w); } }
-  const z = lerp(sc.z[0], sc.z[1], ease3(u)) * zp;
-  return { z, fx, fy, tx: cx, ty: cy, rot: (sc.roll || 0) * Math.sin(Math.PI * 2 * (sc.cyc || 0.5) * u) };
+  const F = c11Frame(lerp(sc.z[0], sc.z[1], ease3(u)) * zp, fx, fy, boxes);
+  return { z: F[0], fx: F[1], fy: F[2], tx: cx, ty: cy, rot: (sc.roll || 0) * Math.sin(Math.PI * 2 * (sc.cyc || 0.5) * u) };
 }
 
 // ---- effects of the blows: the ring at the contact, sparks where he blocks or is cut, blood where he is hit, after-images of whoever strikes, the shake and the lights
@@ -170,7 +193,7 @@ function c11Fx(m) {
     if (Math.abs(a) < 0.17) { if (e.a === 'M' || e.re === 'clash') c10Ghosts(m, 0.035, 3, 0.3, 'cold'); if (e.a === 'S' || e.re === 'clash') c10GhostsS(m, 0.035, 3, 0.34); }
     if (a < 0) continue; const big = e.imp === 2 || e.sh >= 5;
     c3Ring(e.px, e.py, a, big, '255,235,200', big ? 1 : 0.7); if (a < 0.7 && e.re !== 'dodge') v6Ring(e.px, e.py, 8 + (big ? 140 : 90) * c10out(a / 0.7), 0.8 * (1 - a / 0.7), '255,230,210');
-    if (e.re === 'block' || e.re === 'slash' || e.re === 'clash') c4Spray(m, e.t, e.px, e.py, 16, { v: 170, up: 1, dir: 0, life: 0.5, cols: ['#ffffff', '#ffe08a', '#ffb0b0', '#ff7a8a'], sz: 1, seed: 40 + e.idx, g: 60, gnd: 1e9 });
+    if (e.re === 'block' || e.re === 'slash' || e.re === 'clash' || e.re === 'adapt') c4Spray(m, e.t, e.px, e.py, 16, { v: 170, up: 1, dir: 0, life: 0.5, cols: ['#ffffff', '#ffe08a', '#ffb0b0', '#ff7a8a'], sz: 1, seed: 40 + e.idx, g: 60, gnd: 1e9 });
     if ((e.a === 'M' && (e.re === 'hit' || e.re === 'slash')) || e.blood) c10Blood(m, e.t, e.px, e.py, e.blood ? 16 : 6, 70 + e.idx, 100, 0.8);
     if (e.re === 'slash') { const L = 46 + 40 * c10out(a / 0.1), al = a < 0.1 ? 1 : Math.exp(-(a - 0.1) * 5); if (al > 0.03) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = al; c6Line(Math.round(e.px - L * 0.8), Math.round(e.py + L * 0.6), Math.round(e.px + L * 0.8), Math.round(e.py - L * 0.6), a < 0.1 ? '#ffffff' : '#ff5a6a'); c6Line(Math.round(e.px - L * 0.8), Math.round(e.py - L * 0.6), Math.round(e.px + L * 0.8), Math.round(e.py + L * 0.6), a < 0.1 ? '#ffffff' : '#ff5a6a'); ctx.restore(); } }
   }
@@ -179,7 +202,7 @@ function c11Impacts(m, cam) {
   const B = c11Build(); if (!B) return;
   for (const e of B.EV) { if (!e.imp) continue; const k = m - e.t; if (k < 0 || k > 0.55) continue; if (e.imp === 2) c10Impact(m, e.t, cam, e.px, e.py, 0.45); else if (k < 0.04) { ctx.save(); ctx.globalCompositeOperation = 'difference'; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, VW, VH); ctx.restore(); } else c6White(0.34 * Math.exp(-(k - 0.04) * 13)); }
 }
-function c11Shake(m) { const B = c11Build(); let a = 0; if (B) for (const e of B.EV) if (e.sh && m >= e.t) a += e.sh * Math.exp(-(m - e.t) * 6); return a; }
+function c11Shake(m) { const B = c11Build(); let a = 0; if (B) for (const e of B.EV) if (e.sh && m >= e.t) a += e.sh * Math.exp(-(m - e.t) * 6); return a + c14Rumble(m); }
 
 // ---- the sounds of the fight
 function c11Events(T, ev) {
