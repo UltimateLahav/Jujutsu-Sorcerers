@@ -208,7 +208,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.141</small>
+    <small id="ver">V1.142</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -285,13 +285,18 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
 </section>
 
 <section id="saves" class="screen">
-  <h2>CHOOSE A SAVE</h2>
-  <div class="cards">
+  <h2 id="svTitle">CHOOSE A SAVE</h2>
+  <div class="cards" id="svSlots">
     <button id="sv0" class="card mode"><span>1</span><b>SAVE 1</b><i>EMPTY</i></button>
     <button id="sv1" class="card mode"><span>2</span><b>SAVE 2</b><i>EMPTY</i></button>
     <button id="sv2" class="card mode"><span>3</span><b>SAVE 3</b><i>EMPTY</i></button>
   </div>
-  <div class="row"><button id="svStart" disabled>START</button><button id="svBack">BACK</button></div>
+  <div class="cards" id="svChaps" style="display:none">
+    <button id="svc0" class="card mode"><span>1</span><b>CH. 1</b><i>THE MYSTERY</i></button>
+    <button id="svc1" class="card mode"><span>2</span><b>CH. 2</b><i>THE PORTAL</i></button>
+    <button id="svc2" class="card mode"><span>3</span><b>CH. 3</b><i>THE DIVINE GENERAL</i></button>
+  </div>
+  <div class="row"><button id="svStart" disabled>START</button><button id="svChap" disabled>CHOOSE CHAPTER</button><button id="svBack">BACK</button></div>
 </section>
 
 <section id="cust" class="screen">
@@ -4798,10 +4803,17 @@ function playVoice() {      // "HEY, IT'S ME, IT'S VERITY" (3.9 s), played throu
 const SAVE_KEY = 'jsv_saves'; let svSel = -1;
 function loadSaves() { try { const a = JSON.parse(localStorage.getItem(SAVE_KEY)); if (Array.isArray(a) && a.length === 3) return a; } catch (e) { } return [null, null, null]; }
 function storeSaves(a) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(a)); } catch (e) { } }
-function renderSaves() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].c7 ? 'CHAPTER 3: THE DIVINE GENERAL' : a[i].c3 ? 'CHAPTER 2: THE PORTAL' : a[i].c2 ? 'CHAPTER 1 COMPLETE' : a[i].tn ? 'THE MYSTERY: TRAINING DONE' : a[i].ch2 ? 'THE MYSTERY COMPLETE' : a[i].ch1 ? 'THE MYSTERY: THE CAT' : a[i].beat ? 'THE MYSTERY: VERITY BEATEN' : 'CHAPTER 1: THE MYSTERY') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
-function startStory(slot) { const a = loadSaves(); if (a[slot] && a[slot].c3) { startC7(slot); return; }      // (a save that has finished chapter 2 goes on with chapter 3, v1.106)
-  if (a[slot] && a[slot].c2) { startC3(slot); return; }      // (a save that has finished chapter 1 goes on with chapter 2, v1.95)
-  if (a[slot] && a[slot].ch2) { startTraining(slot); return; } if (a[slot] && a[slot].ch1) { startChapter2(slot); return; }      // (a save that has finished chapter 1 goes on with part 2, the training)
+function renderSaves0() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].c7 ? 'CHAPTER 3: THE DIVINE GENERAL' : a[i].c3 ? 'CHAPTER 2: THE PORTAL' : a[i].c2 ? 'CHAPTER 1 COMPLETE' : a[i].tn ? 'THE MYSTERY: TRAINING DONE' : a[i].ch2 ? 'THE MYSTERY COMPLETE' : a[i].ch1 ? 'THE MYSTERY: THE CAT' : a[i].beat ? 'THE MYSTERY: VERITY BEATEN' : 'CHAPTER 1: THE MYSTERY') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
+let svView = 0;      // v1.142: 0 = the three saves, 1 = the chapters of the chosen save (only the ones it has reached; replaying one never takes progress away: the flags are only ever set)
+const SV_CH = ['THE MYSTERY', 'THE PORTAL', 'THE DIVINE GENERAL'], svReached = s => s ? 1 + (s.c2 || s.c3 || s.c7 ? 1 : 0) + (s.c3 || s.c7 ? 1 : 0) : 0;
+function renderSaves() {
+  renderSaves0(); const sel = svSel >= 0 ? loadSaves()[svSel] : null, n = svReached(sel); $('svSlots').style.display = svView ? 'none' : ''; $('svChaps').style.display = svView ? '' : 'none'; $('svTitle').textContent = svView ? 'CHOOSE A CHAPTER' : 'CHOOSE A SAVE';
+  for (let i = 0; i < 3; i++) { const b = $('svc' + i); b.disabled = i >= n; b.style.opacity = i >= n ? '0.4' : ''; b.querySelector('i').textContent = SV_CH[i] + (i >= n ? ' (LOCKED)' : ''); }
+  $('svStart').style.display = $('svChap').style.display = svView ? 'none' : ''; $('svStart').textContent = sel ? 'CONTINUE' : 'START'; $('svChap').disabled = !sel;
+}
+function startStory(slot, ch) { const a = loadSaves(); if (ch === 3 || (!ch && a[slot] && a[slot].c3)) { startC7(slot); return; }      // (a save that has finished chapter 2 goes on with chapter 3, v1.106)
+  if (ch === 2 || (!ch && a[slot] && a[slot].c2)) { startC3(slot); return; }      // (a save that has finished chapter 1 goes on with chapter 2, v1.95)
+  if (!ch && a[slot] && a[slot].ch2) { startTraining(slot); return; } if (!ch && a[slot] && a[slot].ch1) { startChapter2(slot); return; }      // (ch = 1: chapter 1 from its first scene)      // (a save that has finished chapter 1 goes on with part 2, the training)
   if (!a[slot]) a[slot] = { ch: 1 }; storeSaves(a); audio(); show('story'); story = { slot, t0: pnow(), battle: false, T: 0, ev: {} }; alley = true; court = false; wx = 0; }      // (a save that has beaten Verity and heard the report goes on with the Cartoon Cat part, the second half of chapter 1)
 function storyDone() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].beat = true; storeSaves(a); }
 function storySkip(ev) {
@@ -4809,7 +4821,7 @@ function storySkip(ev) {
   if (story.c7) { if (c13Tap(ev)) return; c7Skip(); return; }
   if (story.c3) { c3Skip(); return; }
   if (story.tn) { trainSkip(); return; }
-  if (story.master) { const n = MS_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; else if (story.T >= MS.card + 1.2) { show('saves'); renderSaves(); } return; }      // (the Master's scene - it is checked before the Cartoon Cat part, whose flag it keeps: on to the next cut; at the very end back to the saves)
+  if (story.master) { const n = MS_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; else if (story.T >= MS.card + 1.2) { svView = 0; show('saves'); renderSaves(); } return; }      // (the Master's scene - it is checked before the Cartoon Cat part, whose flag it keeps: on to the next cut; at the very end back to the saves)
   if (story.ch2) { const n = C2_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; return; }      // (part 2: on to the next cut)
   if (story.outro) { const n = OUT_CUTS.find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; return; }      // (the report: on to the next cut; the last cut is the seam into the Cartoon Cat part)
   const n = [6.9, 10.0, CUT.slowEnd, CUT.fade].find(c => c > story.T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000; }      // a tap: on to the next part of the cutscene (the dialogue, Verity's attack, the close-up of Verity, the fade)
@@ -6669,10 +6681,12 @@ function redeemCode() {
 $('codeBtn').addEventListener('click', () => { audio(); $('codeIn').value = ''; codeSay('\u00a0'); setMoneyUI(); show('codes'); });
 $('codeGo').addEventListener('click', redeemCode); $('codeBack').addEventListener('click', () => show('title'));
 $('codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') redeemCode(); });
-$('story').addEventListener('click', () => { audio(); svSel = -1; renderSaves(); show('saves'); });
+$('story').addEventListener('click', () => { audio(); svSel = -1; svView = 0; renderSaves(); show('saves'); });
 ['sv0', 'sv1', 'sv2'].forEach((id, i) => $(id).addEventListener('click', () => { svSel = i; renderSaves(); }));
 $('svStart').addEventListener('click', () => { if (svSel >= 0) startStory(svSel); });
-$('svBack').addEventListener('click', () => show('modes'));
+$('svChap').addEventListener('click', () => { if (svSel >= 0) { audio(); svView = 1; renderSaves(); } });
+[0, 1, 2].forEach(i => $('svc' + i).addEventListener('click', () => { if (svSel >= 0 && i < svReached(loadSaves()[svSel])) startStory(svSel, i + 1); }));
+$('svBack').addEventListener('click', () => { if (svView) { svView = 0; renderSaves(); } else show('modes'); });
 $('lanMode').addEventListener('click', () => { audio(); show('lan'); lanStop(); $('lanCreate').disabled = $('lanBrowse').disabled = !LAN; });
 $('lanCreate').addEventListener('click', lanCreate);
 $('lanBrowse').addEventListener('click', lanBrowse);
@@ -6695,7 +6709,7 @@ addEventListener('pointerdown', () => { if (typeof suFgOn === 'function' && suFg
 $('vsGo').addEventListener('click', () => startMatch(vsSel));
 $('vsNext').addEventListener('click', () => { if (vs && vs.cv) { startCurse(vs.ci + 1, 0); return; } const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
 $('vsAgain').addEventListener('click', () => vs && vs.hunt ? startHunt(vs.hunt.i) : vs && vs.rush ? (vs.run === ROUL ? startRoulette() : startRush()) : vs && vs.cv ? startCurse(vs.ci, vs.hard, vs.daily) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe));
-$('vsMenu').addEventListener('click', () => { if (vs && vs.net) { lanLeave(); return; } if (vs && vs.hunt) { show('chal'); buildHunts(); return; } if (vs && vs.cv) { show('chal'); buildChal(); return; } if (vs && vs.story) { show('saves'); renderSaves(); } else { buildGrades(); buildFighters(); show('versus'); } });
+$('vsMenu').addEventListener('click', () => { if (vs && vs.net) { lanLeave(); return; } if (vs && vs.hunt) { show('chal'); buildHunts(); return; } if (vs && vs.cv) { show('chal'); buildChal(); return; } if (vs && vs.story) { svView = 0; show('saves'); renderSaves(); } else { buildGrades(); buildFighters(); show('versus'); } });
 $('back').addEventListener('click', () => { leavePlay(); });
 VOLS.forEach(([k, name]) => {
   const row = document.createElement('label');
@@ -6824,8 +6838,8 @@ window.__back = () => {                       // Android back button: step back 
   if (settingsOn()) { closeSettings(); return true; }
   if (customBack()) return true;      // (CUSTOM: the slots, the name, the drawing)
   if (state === 'play') { if (paused) setPause(false); else if (!setPause(true)) leavePlay(); return true; }      // (back pauses a fight, back again goes on; the MENU button of the pause screen leaves)
-  if (state === 'story') { show('saves'); renderSaves(); return true; }
-  if (state === 'saves') { show('modes'); return true; }
+  if (state === 'story') { svView = 0; show('saves'); renderSaves(); return true; }
+  if (state === 'saves') { if (svView) { svView = 0; renderSaves(); } else show('modes'); return true; }
   if (state === 'chal' || state === 'skills') { show('modes'); return true; }
   if (state === 'versus') { show('select'); return true; }      // (the Versus setup: the back button goes back to the character select instead of closing the app)
   if (state === 'lansel') { lanLeave(); return true; }

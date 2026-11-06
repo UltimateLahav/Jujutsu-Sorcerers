@@ -399,7 +399,7 @@ function c7Card(now, T) {      // CHAPTER 3: THE DIVINE GENERAL, TO BE CONTINUED
 }
 
 // ---- the chapter: start, one frame, taps, the card
-function startC7(slot) { audio(); show('story'); story = { slot, t0: pnow(), battle: false, T: 0, ev: {}, shk: null, c7: { vi: -1, vc: 0 } }; alley = true; court = false; track = false; wx = 0; }
+function startC7(slot) { audio(); c13Reset(); show('story'); story = { slot, t0: pnow(), battle: false, T: 0, ev: {}, shk: null, c7: { vi: -1, vc: 0 } }; alley = true; court = false; track = false; wx = 0; }
 function c7Frame(now, dt) {
   const T = story.T = Math.max(0, now - story.t0) / 1000, ev = (k, t, f, win) => { if (T >= t && T < t + (win || 0.5)) once2(k, f); };
   c9Music(T); c12Music(T); c13Step(now, T);
