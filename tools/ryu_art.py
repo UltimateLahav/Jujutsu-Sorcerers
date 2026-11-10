@@ -1,40 +1,85 @@
 #!/usr/bin/env python3
-"""python3 ryu_art.py [--preview DIR] -> ryu_sheet.png + ryu_sheet.json: RYU ISHIGORI's sprite sheet for the game: 64 x 64 pictures, 15 to an animation, one animation to a row (ROWS), facing right.
-Every picture is the DESIGN the user chose (tools/ryu_src/master.png) put together again in another pose with tools/ryu_parts.py: the head, the two arms (a sleeve, a fur cuff and a hand each), the torso with the open jacket,
-and the legs are turned, stretched and moved about their joints, and the whole is made small (52 px high in his stance). Fast limbs leave ACTION LINES, and the middle of the dash is smudged.
-The idle is the design itself, breathing."""
+"""python3 ryu_art.py [row names] [--preview DIR] -> ryu_sheet.png: RYU ISHIGORI's sprite sheet for the game: 64 x 64 pictures, 15 to an animation, one animation to a row (ROWS), facing right.
+Every picture is the LOOK the user chose (tools/ryu_src/master.png: face, hair, fur, jacket, belt, jeans, boots) put together again in a NEW pose by tools/ryu_parts.py. A pose (see mkpose) says where the pelvis is, how the chest, head and arms are turned
+and where the two ankles are (the legs are solved from them); the hair, the collar fur, the jacket with its tail and the fur cuffs then SWING ON THEIR OWN (swing(): a spring that is pushed by how the part they hang on moves), and fast limbs leave ACTION LINES.
+He is a heavy brawler who mixes styles: boxer's bounce, stomping walk, one knee down to crouch, high guard, a shoulder-charge dash, boxing hooks, a capoeira rising kick, an anime flying punch, a Muay Thai low kick and push kick,
+a pro-wrestling slam and a karate straight punch. `python3 -B ryu_art.py idle walk` rebuilds only those rows (the others stay as they are in the sheet)."""
 import json, math, os, sys
 import numpy as np
 from PIL import Image
 import ryu_parts as rp
-from yuji_art import kv
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 F0, B0 = rp.FOOT0['R'], rp.FOOT0['L']      # the ankles of the design: the front foot and the back one (master coordinates)
 HAND_A, HAND_B = (172, 14), (173, 50)      # the tips of the two cuffs in the design (where the fists are)
 LINE, LINE2 = (244, 244, 248), (150, 178, 236)      # the white and the light blue of the action lines
+sin, cos, pi = math.sin, math.cos, math.pi
 
 def sm(t): t = max(0.0, min(1.0, t)); return t * t * (3 - 2 * t)
-def mkpose(T):
-    """T: the picture's numbers {channel: value}; channels: tr torso (dx, dy, rot), hd head, A / B arms (dx, dy, rot, sx, sy), F / K front and back ankle (x, y), ft / bt the shoes' angles, g the shift in the cell (px).
-    Returns the pose and the shift."""
-    g = lambda c, d: T.get(c, d)
-    tr = g('tr', (0, 0, 0)); pose = {'head': g('hd', (0, 0, 0)), 'armA': g('A', (0, 0, 0, 1, 1)), 'armB': g('B', (0, 0, 0, 1, 1))}
-    rp.feet(pose, g('F', F0), g('K', B0), tr, g('ft', 0), g('bt', 0)); return pose, g('g', (0, 0))
+def mix(a, b, t):
+    if a is None or b is None: return b if t >= 1 else a      # (a choice such as which way a knee points does not blend: it changes at the next key)
+    if isinstance(a, (tuple, list)): return tuple(mix(x, y, t) for x, y in zip(a, b))
+    return a + (b - a) * t
+def kv(keys, i, ease=sm):
+    """keyframes {picture: value} -> the value at picture i, eased between the keys (tuples are mixed part by part)"""
+    ks = sorted(keys.items())
+    if i <= ks[0][0]: return ks[0][1]
+    for (a, va), (b, vb) in zip(ks, ks[1:]):
+        if a <= i <= b: return mix(va, vb, ease((i - a) / (b - a)))
+    return ks[-1][1]
+def lin(t): return t
+def tup(T): return {c: (kv(v, T_i[0]) if isinstance(v, dict) else v) for c, v in T.items()}
+T_i = [0]
+def K(T, i):      # one picture of an animation given as {channel: {picture: value}} (a channel that is no table is the same in every picture)
+    return {c: (kv(v, i) if isinstance(v, dict) else v) for c, v in T.items()}
 
-# ---------------------------------------------------------------- where things are (for the action lines)
+# ---------------------------------------------------------------- a pose and where things are
+def mkpose(T):
+    """T: the picture's numbers {channel: value}; channels: pel pelvis (dx, dy, rot), chs chest (dx, dy, rot) about the waist, hd head, A / B arms (dx, dy, rot, sx, sy) about the shoulder, F / K front and back ankle (x, y),
+    ft / bt the boots' angles, fb / kb which way the knees point (+1 out, -1 in), g the shift in the cell (px). Returns the pose."""
+    g = lambda c, d: T.get(c, d)
+    pose = {'chest': g('chs', (0, 0, 0)), 'head': g('hd', (0, 0, 0)), 'armA': g('A', (0, 0, 0, 1, 1)), 'armB': g('B', (0, 0, 0, 1, 1))}
+    rp.feet(pose, g('F', F0), g('K', B0), g('pel', (0, 0, 0)), g('ft', 0), g('bt', 0), g('fb', None), g('kb', None)); return pose
 def locate(pose, part, p):
     """the world position (master coordinates) of the design's point p of `part` in the pose"""
     q = part; x, y = p
     while q:
         t = pose.get(q)
         if rp._moves(t):
-            sx, sy = (t[3], t[4]) if len(t) > 3 else (1, 1); cx, cy = rp.PIV[q]; X, Y = (x - cx) * sx, (y - cy) * sy; a = math.radians(t[2]); c, s = math.cos(a), math.sin(a)
+            sx, sy = (t[3], t[4]) if len(t) > 3 else (1, 1); shx = t[5] if len(t) > 5 else 0; cx, cy = rp.PIV[q]; X, Y = (x - cx), (y - cy); X = (X + shx * Y) * sx; Y = Y * sy; a = math.radians(t[2]); c, s = math.cos(a), math.sin(a)
             x, y = cx + X * c - Y * s + t[0], cy + X * s + Y * c + t[1]
         q = rp.PARENT.get(q)
     return (x, y)
 def gxy(p, gs):      # master -> game pixels
     return (rp.CX + gs[0] + (p[0] - rp.HX) * rp.SCALE, rp.GROUND + gs[1] + 1 - (rp.SOLE + 1 - p[1]) * rp.SCALE)
+
+# ---------------------------------------------------------------- the loose parts: a spring pushed by the part they hang on
+SW = {      # name: (the part it hangs on, its joint (design point), the way it hangs (design), spring speed (radians a picture), damping, push from acceleration, push from speed, most it turns (degrees), strength)
+ 'hair': ('head', (108, 20), (0, -1), 0.95, 0.30, 1.5, 0.55, 20, 1.0),
+ 'collarL': ('chest', (100, 34), (-1, 0), 0.85, 0.28, 1.2, 0.50, 26, 1.0),
+ 'jacketO': ('chest', (100, 38), (0, 1), 0.75, 0.26, 1.35, 0.60, 17, 1.0),
+ 'cuffN': ('chest', (116, 50), (0, 1), 1.05, 0.30, 1.3, 0.40, 22, 1.0),
+ 'cuffA': ('armA', (138, 24), (1, 0), 1.05, 0.28, 1.3, 0.50, 26, 1.0),
+ 'cuffB': ('armB', (150, 48), (1, 0), 1.05, 0.28, 1.3, 0.50, 26, 1.0)}
+def swing(poses, wv, loop, mult=1.0, sub=4):
+    """works out the swing of every loose part picture by picture: the joint's own movement (and `wv`, how fast the whole body is moving through the world, master px a picture: pictures have no walking in them but the game moves him)
+    pushes it; a part hangs in the direction d and turns clockwise (positive) about its joint. Returns one dict of pose entries per picture."""
+    n = len(poses); out = [dict() for _ in range(n)]
+    for name, (par, joint, d, w, z, ka, kvv, mx, st) in SW.items():
+        pts = [locate(p, par, joint) for p in poses]
+        vel = [((pts[k][0] - pts[k - 1][0]) + wv[k][0], (pts[k][1] - pts[k - 1][1]) + wv[k][1]) if (k or loop) else (wv[0][0], wv[0][1]) for k in range(n)]      # (how fast the joint moves: its own move plus the whole body's)
+        acc = [(vel[k][0] - vel[k - 1][0], vel[k][1] - vel[k - 1][1]) if (k or loop) else (0, 0) for k in range(n)]
+        tx, ty = -d[1], d[0]; th = 0.0; om = 0.0; res = [0.0] * n; passes = 4 if loop else 1
+        for ps in range(passes):
+            for k in range(n):
+                drive = -ka * (acc[k][0] * tx + acc[k][1] * ty) * st * mult; eq = -kvv * (vel[k][0] * tx + vel[k][1] * ty) * st * mult; eq = mx * math.tanh(eq / mx)
+                for _ in range(sub):
+                    h = 1.0 / sub; alpha = drive - w * w * (th - eq) - 2 * z * w * om; om += alpha * h; th += om * h
+                res[k] = mx * math.tanh(th / mx)      # (soft limit: a part never turns further than mx, and does not stick there)
+        for k in range(n):
+            if name == 'hair': out[k][name] = (0, 0, res[k] * .55, 1, 1, math.tan(math.radians(res[k])) * .5)
+            else: out[k][name] = (0, 0, res[k])
+    return out
 
 # ---------------------------------------------------------------- action lines and the smudge of the dash
 def put(a, x, y, c, over=True):
@@ -63,126 +108,170 @@ def smudge(a, k, sgn=1):
                         t = d / (k + 1); out[y, xx] = (*[int(c[j] * (1 - .55 * t) + LINE2[j] * .55 * t) for j in range(3)], 255)
     return out
 
-# ---------------------------------------------------------------- the animations (15 pictures each); each returns the pose tables of the animation
-def foot(p, base, S, lift, toeup=0):
+# ---------------------------------------------------------------- the animations (15 pictures each); each returns the numbers of picture i (see mkpose)
+def foot(p, base, S, lift, toeup=0, stomp=1.4):
+    """a walking foot: p = how far through the step (0 - 1); the first half it is on the ground and slides back, the second half it swings forward: up slowly and down fast (the stomp)"""
     p %= 1.0
     if p < .5: return (base[0] + S * (1 - 4 * p), base[1]), 0
-    q = (p - .5) * 2; return (base[0] - S + 2 * S * sm(q), base[1] - lift * math.sin(math.pi * q)), -toeup * math.sin(math.pi * q)
+    q = (p - .5) * 2; x = base[0] - S + 2 * S * sm(q ** .85); lf = math.sin(math.pi * q ** stomp)
+    return (x, base[1] - lift * lf), -toeup * lf
+def dip(p, w=.09):      # the weight comes down when a foot lands (p = 0 and .5 of the step)
+    d = min(abs(((p + .25) % .5) - .25), 1); return math.exp(-(d / w) ** 2)
 
-def a_idle(i):
-    ph = 2 * math.pi * i / 15; b = .5 - .5 * math.cos(ph)
-    return dict(
-        tr=(0, 3.5 * b, 0), hd=(0, -1.2 * b, 1.2 * math.sin(ph)), A=(0, 1.8 * math.sin(ph + .6), 1.6 * math.sin(ph + .6), 1, 1), B=(0, 2.0 * math.sin(ph + 1.1), -1.8 * math.sin(ph + 1.1), 1, 1), F=F0, K=B0)
-def a_walk(i, back=False):
-    p = (14 - i) / 15 if back else i / 15; S = 16 if back else 20; lf, tf = foot(p, F0, S, 15, 14); lb, tb = foot(p + .5, B0, S, 15, 14)
-    bob = 3.2 * math.cos(4 * math.pi * p); ph = 4 * math.pi * p
-    return dict(tr=(0, bob + 1, -3.5 if back else 3), hd=(0, -bob * .3, 0), A=(0, 2 * math.sin(ph), -2 * math.sin(ph), 1, 1), B=(0, -2 * math.sin(ph), 2 * math.sin(ph), 1, 1), F=lf, K=lb, ft=tf, bt=tb)
-def a_jump(i):
+def a_idle(i):      # BOXER'S BOUNCE: two bounces a loop on bent knees, the weight goes from one foot to the other, the fists drift, the chest breathes
+    f = 2 * pi * 2 * i / 15; s = 2 * pi * i / 15; b = .5 - .5 * cos(f)
+    return dict(pel=(6 * sin(s), 9.5 * b + 1.5, 3 * sin(s + .5)), chs=(1 * sin(s + 1), -2.2 * b, -3 * sin(s + .9) + 1.8 * b), hd=(0.6 * sin(s + 1.2), 1.6 * b, 3 * sin(s + 1.6) - 1.8 * b),
+                A=(0, 3 * sin(f + .8), 3.5 * sin(f + .8), 1, 1), B=(0, 3 * sin(f + 2.0), -3.5 * sin(f + 2.0), 1, 1),
+                F=(F0[0] + 3 * sin(s), F0[1] - 3.4 * max(0, sin(f - .4))), K=(B0[0] - 3 * sin(s), B0[1] - 3.4 * max(0, sin(f + 2.7))), ft=-12 * max(0, sin(f - .4)), bt=-12 * max(0, sin(f + 2.7)))
+def a_walk(i, back=False):      # HEAVY STOMP: a foot comes up slowly and comes down hard, the whole body rocks from side to side and drops on every landing, the fists pump
+    p = (14 - i) / 15 if back else i / 15; S = 17 if back else 22; L = 19 if back else 24; lf, tf = foot(p, F0, S, L, 16); lb, tb = foot(p + .5, B0, S, L, 16)
+    d = dip(p); sw = sin(2 * pi * p); ph = 4 * pi * p; up = B0[1] - lb[1] > 2.5
+    return dict(pel=(7 * sw * (-1 if back else 1), 3 + 7.5 * d + 1.5 * cos(ph), (-3 if back else 3) * sw + 1.5), chs=(1.2 * sw, -2 * d, (-1 if back else 1) * 4 * sw - (3 if back else 0)), hd=(0.5 * sw, 1.8 * d, -3 * sw),
+                A=(0, 3.5 * sin(ph) - (4 if back else 0), -3.5 * sin(ph) + (-4 if back else 0), 1, 1), B=(0, -3.5 * sin(ph) - (4 if back else 0), 3.5 * sin(ph) + (-4 if back else 0), 1, 1), F=lf, K=lb, ft=tf, bt=tb, kb=1 if up else None)
+STEPS = (0, 7)      # (the pictures of the walk on which a foot comes down: the game puffs dust and shakes the screen a hair there)
+
+def a_jump(i):      # KNEES TUCKED: he drops and springs (0-3), the legs fold up under him while the fists stay up (4-8), they come down again (9-11) and he lands (12-14)
     T = dict(
-        tr={0: (0, 0, 0), 1: (0, 12, 3), 2: (0, 18, 5), 3: (0, 4, -2), 4: (0, -2, -3), 5: (0, -4, -4), 6: (0, -6, -4), 7: (0, -8, -3), 8: (0, -8, -2), 9: (0, -6, 0), 10: (0, -2, 2), 11: (0, 2, 3), 12: (0, 12, 4), 13: (0, 16, 4), 14: (0, 6, 1)},
-        A={0: (0, 0, 0, 1, 1), 2: (-6, 12, 16, .8, 1), 3: (0, -4, -26, 1, 1), 5: (0, -14, -36, 1, 1), 8: (0, -12, -30, 1, 1), 11: (0, 2, -8, 1, 1), 13: (-4, 12, 12, .8, 1), 14: (0, 0, 0, 1, 1)},
-        B={0: (0, 0, 0, 1, 1), 2: (-8, 10, 14, .8, 1), 3: (0, -4, -22, 1, 1), 5: (0, -12, -30, 1, 1), 8: (0, -10, -26, 1, 1), 11: (0, 2, -8, 1, 1), 13: (-6, 10, 10, .8, 1), 14: (0, 0, 0, 1, 1)},
-        F={0: F0, 2: F0, 3: (F0[0] - 2, F0[1]), 4: (F0[0] - 8, F0[1] - 14), 5: (150, 128), 6: (146, 118), 8: (146, 116), 9: (150, 124), 10: (156, 138), 11: (158, 148), 12: F0, 14: F0},
-        K={0: B0, 2: B0, 3: (B0[0] + 2, B0[1]), 4: (B0[0] + 12, B0[1] - 14), 5: (66, 130), 6: (72, 120), 8: (72, 118), 9: (66, 126), 10: (52, 140), 11: (42, 148), 12: B0, 14: B0},
-        ft={0: 0, 5: 18, 8: 22, 11: 6, 12: 0}, bt={0: 0, 5: 14, 8: 18, 11: 6, 12: 0})
-    return {c: kv(v, i) if isinstance(v, dict) else v for c, v in T.items()}
-def crouch_t(i):      # the crouch: the hips drop, the feet stay, the legs fold and the knees go out
-    t = sm(i / 14)
-    return dict(tr=(2 * t, 30 * t, 4 * t), hd=(1 * t, 3 * t, 0), A=(0, 14 * t, -6 * t, 1, 1), B=(-2 * t, 16 * t, -4 * t, 1, 1), F=F0, K=B0)
-def a_cdown(i): return crouch_t(i)
-def a_cidle(i):
-    ph = 2 * math.pi * i / 15; b = .5 - .5 * math.cos(ph)
-    return dict(tr=(2, 30 + 2.5 * b, 4), hd=(1, 3 - .8 * b, 1.2 * math.sin(ph)), A=(0, 14 + 1.6 * math.sin(ph + .6), -6 + 1.4 * math.sin(ph + .6), 1, 1), B=(-2, 16 + 1.8 * math.sin(ph + 1.1), -4 - 1.5 * math.sin(ph + 1.1), 1, 1), F=F0, K=B0)
-def a_cwalk(i):
-    p = i / 15; lf, tf = foot(p, F0, 10, 9, 8); lb, tb = foot(p + .5, B0, 10, 9, 8); bob = 2 * math.cos(4 * math.pi * p); ph = 4 * math.pi * p
-    return dict(tr=(2, 30 + bob, 4), hd=(1, 3, 0), A=(0, 14 + math.sin(ph), -6, 1, 1), B=(-2, 16 - math.sin(ph), -4, 1, 1), F=lf, K=lb, ft=tf, bt=tb)
-def a_block(i):
-    r = sm(i / 6); ph = 2 * math.pi * (i - 6) / 9; sw = math.sin(ph) if i >= 6 else 0
-    return dict(tr=(2 * r, 7 * r + .8 * sw, 5 * r), hd=(2 * r, 4 * r, 0), A=(4 * r, 12 * r, -10 * r, 1 - .45 * r, 1), B=(-6 * r, -12 * r + 1.2 * sw, -16 * r, 1 - .38 * r, 1), F=F0, K=B0)
-def a_dash(i):
-    t = {0: 0, 1: .3, 2: .7, 3: 1, 11: 1, 12: .6, 13: .25, 14: 0}; r = kv(t, i)
-    return dict(tr=(10 * r, 6 * r, 15 * r), hd=(0, 0, 2 * r), A=(-12 * r, 6 * r, 22 * r, 1, 1), B=(-10 * r, 4 * r, 16 * r, 1, 1), F=(F0[0] + 24 * r, F0[1] - 6 * r * (1 if 2 <= i <= 11 else 0)), K=(B0[0] + 6 * r, B0[1] - 12 * r * (1 if 3 <= i <= 11 else 0)), ft=-18 * r, bt=30 * r, g=(0, 0))
-def a_dashb(i):
-    t = {0: 0, 1: .3, 2: .7, 3: 1, 11: 1, 12: .6, 13: .25, 14: 0}; r = kv(t, i)
-    return dict(tr=(-8 * r, 4 * r, -12 * r), hd=(0, 0, -2 * r), A=(6 * r, 0, -6 * r, 1, 1), B=(4 * r, 0, -4 * r, 1, 1), F=(F0[0] - 20 * r, F0[1] - 4 * r), K=(B0[0] - 14 * r, B0[1] - 8 * r), ft=10 * r, bt=-10 * r)
-def hook_t(i, arm):      # a hook: the arm is cocked back (1-4), the body turns and the arm swings round and forward (5-7, the impact is 7), and it comes back
-    T = {'tr': {0: (0, 0, 0), 2: (-4, 2, -7), 4: (-6, 3, -9), 5: (2, 2, 6), 7: (8, 2, 15), 9: (6, 3, 10), 12: (1, 1, 2), 14: (0, 0, 0)},
-         'hd': {0: (0, 0, 0), 4: (-2, 0, -4), 7: (3, 1, 5), 14: (0, 0, 0)},
-         'F': {0: F0, 4: (F0[0] - 4, F0[1]), 6: (F0[0] + 8, F0[1]), 8: (F0[0] + 14, F0[1]), 11: (F0[0] + 6, F0[1]), 14: F0}, 'K': {0: B0, 5: (B0[0] + 2, B0[1]), 8: (B0[0] + 10, B0[1]), 12: (B0[0] + 4, B0[1]), 14: B0}}
+        pel={0: (0, 2, 0), 1: (1, 10, 2), 2: (1, 17, 3), 3: (0, 8, 0), 4: (0, -1, -2), 5: (0, -3, -3), 6: (0, -3, -3), 7: (0, -2, -2), 8: (0, -2, -2), 9: (0, -1, -1), 10: (0, 0, 0), 11: (0, 3, 2), 12: (0, 13, 3), 13: (0, 17, 3), 14: (0, 4, 0)},
+        chs={0: (0, 0, 0), 2: (0, 0, 8), 3: (0, -1, -3), 5: (0, -1, -7), 8: (0, 0, -4), 11: (0, 0, 2), 13: (0, 0, 8), 14: (0, 0, 0)}, hd={0: (0, 0, 0), 2: (0, 3, 5), 5: (0, -1, -4), 11: (0, 1, 3), 13: (0, 3, 6), 14: (0, 0, 0)},
+        A={0: (0, 0, 0, 1, 1), 2: (-4, 10, 18, .85, 1), 4: (-2, -6, -26, 1, 1), 6: (0, -12, -34, 1, 1), 8: (0, -10, -28, 1, 1), 11: (0, 0, -6, 1, 1), 13: (-2, 10, 14, .85, 1), 14: (0, 0, 0, 1, 1)},
+        B={0: (0, 0, 0, 1, 1), 2: (-6, 8, 16, .8, 1), 4: (-2, -4, -20, 1, 1), 6: (0, -10, -40, .8, 1), 8: (0, -8, -36, .8, 1), 11: (0, 0, -8, 1, 1), 13: (-4, 8, 12, .85, 1), 14: (0, 0, 0, 1, 1)},
+        F={0: F0, 2: F0, 3: (F0[0], F0[1] - 2), 4: (F0[0] - 2, F0[1] - 8), 5: (152, 130), 6: (150, 118), 8: (148, 112), 9: (150, 122), 10: (154, 136), 11: (158, 148), 12: F0, 14: F0},
+        K={0: B0, 2: B0, 3: (B0[0], B0[1] - 2), 4: (B0[0] + 4, B0[1] - 8), 5: (64, 130), 6: (72, 120), 8: (74, 112), 9: (68, 124), 10: (54, 138), 11: (42, 148), 12: B0, 14: B0},
+        ft={0: 0, 4: -10, 6: 20, 8: 24, 11: 6, 12: 0}, bt={0: 0, 4: -10, 6: 16, 8: 20, 11: 6, 12: 0}, kb={0: None, 4: 1, 11: 1, 12: None})
+    return K(T, i)
+LIFT = [0, 0, 0, 0, 10, 16, 20, 22, 22, 20, 16, 10, 0, 0, 0]      # (the game's own height of the jump, picture by picture, game px: it moves the whole picture, so the cloth feels it)
+def w_jump(i): return (0, -(LIFT[i] - LIFT[i - 1]) * 3.3 if i else 0)
+
+# the one knee down CROUCH: the front foot stays, the hips drop between the feet, the back knee goes to the floor
+KNEEL = dict(pel=(-6, 34, 0), chs=(0, 0, 11), hd=(0, 2, -6), A=(0, 6, -2, 1, 1), B=(-2, 16, 52, .92, 1), F=(F0[0] + 6, F0[1]), K=(36, 150), ft=0, bt=-62, kb=1)
+def kneel_mix(i, t):      # the stand (picture 0 of the idle) mixed into the kneel by t
+    a = a_idle(0); out = {}
+    for c in ('pel', 'chs', 'hd', 'A', 'B', 'F', 'K', 'ft', 'bt'): out[c] = mix(a[c], KNEEL[c], t)
+    out['kb'] = KNEEL['kb'] if t > .45 else None; return out
+def a_cdown(i):
+    t = {0: 0, 3: .22, 7: .72, 10: 1.07, 12: .98, 14: 1}; r = kv(t, i); return kneel_mix(i, r)
+def a_cidle(i):      # kneeling: he breathes, the weight rocks a little, the fur and the jacket move
+    ph = 2 * pi * i / 15; b = .5 - .5 * cos(ph); d = dict(KNEEL)
+    d.update(pel=(-6 + 1.2 * sin(ph), 34 + 2.2 * b, 0.8 * sin(ph + .5)), chs=(0, -1 * b, 11 - 1.5 * sin(ph + .8)), hd=(0, 2 + .8 * b, -6 + 1.5 * sin(ph + 1.2)), A=(0, 6 + 1.6 * sin(ph + .6), -2 + 1.4 * sin(ph + .6), 1, 1), B=(-2, 16 + 1.2 * sin(ph + 1.5), 52 - 1.5 * sin(ph + 1.5), .92, 1)); return d
+def a_cwalk(i):      # a low crawl-step: the front foot reaches and sets down, the back knee drags after it
+    p = i / 15; lf, tf = foot(p, (KNEEL['F'][0], F0[1]), 9, 7, 6); lb, tb = foot(p + .5, KNEEL['K'], 9, 6, 0, 1.0); ph = 4 * pi * p; d = dict(KNEEL)
+    d.update(pel=(-6 + 3 * sin(2 * pi * p), 34 + 2 * cos(ph), 1.5 * sin(2 * pi * p)), chs=(0, 0, 11 + 2 * sin(2 * pi * p)), A=(0, 6 + 1.5 * sin(ph), -2, 1, 1), B=(-2, 16 - 1.5 * sin(ph), 52, .92, 1), F=lf, K=lb, ft=tf, bt=-62 + tb); return d
+def a_block(i):      # HIGH GUARD: both forearms come up in front of his face, elbows in, knees bent, he leans back a little
+    T = dict(pel={0: (0, 1.5, 0), 3: (3, 8, 0), 6: (4, 12, 0), 14: (4, 12.5, 0)}, chs={0: (0, 0, 0), 3: (0, 0, -3), 6: (-1, 0, -7), 14: (-1, 0, -7.5)}, hd={0: (0, 0, 0), 6: (3, 6, 5), 14: (3, 6, 5)},
+             A={0: (0, 0, 0, 1, 1), 3: (-2, 2, -10, .95, 1), 6: (-8, 6, -22, .78, 1), 14: (-8, 6, -22, .78, 1)}, B={0: (0, 0, 0, 1, 1), 3: (-10, -6, -38, .82, 1), 6: (-22, -12, -78, .62, 1), 14: (-22, -12, -78, .62, 1)},
+             F={0: F0, 6: (F0[0] + 2, F0[1]), 14: (F0[0] + 2, F0[1])}, K={0: B0, 6: (B0[0] - 2, B0[1]), 14: (B0[0] - 2, B0[1])}, ft={0: 0}, bt={0: 0})
+    d = K(T, i); d['pel'] = (d['pel'][0], d['pel'][1] + (0.7 * sin(2 * pi * (i - 6) / 9) if i >= 6 else 0), 0); return d
+def a_dash(i):      # SHOULDER CHARGE: he loads (0-2), then drives forward head down with the big cuff in front of him, the back leg pushing and the jacket flying behind (3-11), and pulls up (12-14)
+    r = kv({0: 0, 1: .3, 2: .6, 3: 1, 11: 1, 12: .6, 13: .25, 14: 0}, i); lo = kv({0: 0, 1: .5, 2: 1, 3: 0, 14: 0}, i)
+    return dict(pel=(11 * r - 3 * lo, 9 * r + 5 * lo, 7 * r - 2 * lo), chs=(2 * r, 0, 22 * r - 4 * lo), hd=(3 * r, 5 * r, 8 * r), A=(-10 * r, 8 * r, 30 * r, .9, 1), B=(-14 * r, -8 * r, -32 * r, .7, 1),
+                F=(F0[0] + 20 * r, F0[1] - 2 * r * (1 if 4 <= i <= 10 else 0)), K=(B0[0] - 24 * r + 2 * lo, B0[1] - 5 * r * (1 if 3 <= i <= 11 else 0)), ft=-8 * r, bt=34 * r)
+def w_dash(i): return (27 * max(0.0, 1 - i / 15), 0)
+def a_dashb(i):      # the back dash: a quick hop back with the guard up, the feet trailing forward
+    r = kv({0: 0, 1: .3, 2: .7, 3: 1, 11: 1, 12: .6, 13: .25, 14: 0}, i); hop = kv({0: 0, 2: 0, 5: 1, 9: 1, 12: 0, 14: 0}, i)
+    return dict(pel=(-14 * r, 4 * r - 10 * hop, -8 * r), chs=(-2 * r, 0, -8 * r), hd=(-2 * r, 2 * r, -3 * r), A=(-4 * r, 3 * r, -12 * r, .95, 1), B=(-10 * r, -4 * r, -34 * r, .78, 1),
+                F=(F0[0] - 22 * r + 18 * hop, F0[1] - 18 * hop), K=(B0[0] - 6 * r + 20 * hop, B0[1] - 14 * hop), ft=14 * hop, bt=-10 * hop)
+def w_dashb(i): return (-20 * max(0.0, 1 - i / 15), 0)
+
+def hook_t(i, arm):      # a BOXING hook: the hips and shoulders wind away (0-4), then the hips drive round, the chest follows and the arm whips through (5-7: the impact is 7), the body follows through (8-10) and he comes back
+    s = 1 if arm == 'A' else -1
+    T = dict(pel={0: (0, 0, 0), 2: (-3, 3, -5), 4: (-5, 5, -9), 5: (0, 5, 3), 7: (7, 6, 12), 9: (6, 6, 9), 12: (1, 2, 2), 14: (0, 1, 0)},
+             chs={0: (0, 0, 0), 2: (-1, 0, -6), 4: (-2, 0, -10), 5: (0, 0, 6), 7: (3, 0, 14), 9: (2, 0, 10), 12: (0, 0, 2), 14: (0, 0, 0)}, hd={0: (0, 0, 0), 4: (-2, 1, -5), 7: (3, 1, 6), 14: (0, 0, 0)},
+             F={0: F0, 4: (F0[0] - 5, F0[1]), 6: (F0[0] + 6, F0[1]), 8: (F0[0] + 12, F0[1]), 11: (F0[0] + 6, F0[1]), 14: F0}, K={0: B0, 5: (B0[0] + 2, B0[1] - 3), 8: (B0[0] + 10, B0[1] - 5), 12: (B0[0] + 3, B0[1]), 14: B0},
+             ft={0: 0, 4: 8, 7: -6, 12: 0}, bt={0: 0, 5: -16, 8: -22, 12: 0})
     cock = (-14, 2, -34, .62, 1) if arm == 'A' else (-16, -8, -42, .6, 1); swing = (14, 0, 6, 1.32, 1) if arm == 'A' else (14, -14, 4, 1.32, 1)
     T[arm] = {0: (0, 0, 0, 1, 1), 2: (-6, 2, -14, .86, 1), 4: cock, 5: (0, 0, -10, 1.1, 1), 7: swing, 9: (8, 0, 4, 1.2, 1), 12: (2, 0, 1, 1.05, 1), 14: (0, 0, 0, 1, 1)}
     oth = 'B' if arm == 'A' else 'A'; T[oth] = {0: (0, 0, 0, 1, 1), 4: (-4, 6, -16, .8, 1), 7: (-2, 8, -10, .75, 1), 14: (0, 0, 0, 1, 1)}
-    return {c: kv(v, i) if isinstance(v, dict) else v for c, v in T.items()}
+    return K(T, i)
 def a_hookL(i): return hook_t(i, 'B')
 def a_hookR(i): return hook_t(i, 'A')
-def a_kickup(i):      # the front leg: the knee comes up (2-3), the foot whips up and forward (4-7, the impact is 6), and comes down
-    Fp = {0: F0, 1: (F0[0] - 4, F0[1] - 8), 2: (F0[0] + 2, F0[1] - 22), 3: (168, 120), 4: (180, 104), 5: (192, 88), 6: (200, 76), 7: (204, 70), 8: (198, 82), 9: (186, 102), 10: (172, 126), 11: (162, 144), 12: F0, 14: F0}
-    T = dict(tr={0: (0, 0, 0), 2: (-4, -2, -8), 4: (-8, -4, -12), 7: (-6, -6, -14), 10: (-2, -2, -6), 12: (0, 0, -1), 14: (0, 0, 0)}, hd={0: (0, 0, 0), 5: (0, 0, 8), 14: (0, 0, 0)},
-             A={0: (0, 0, 0, 1, 1), 3: (-8, 10, 20, .8, 1), 7: (-10, 14, 26, .75, 1), 12: (0, 0, 2, 1, 1), 14: (0, 0, 0, 1, 1)}, B={0: (0, 0, 0, 1, 1), 3: (-12, -8, -26, .8, 1), 7: (-16, -12, -34, .7, 1), 12: (0, 0, -2, 1, 1), 14: (0, 0, 0, 1, 1)},
-             F=Fp, K={0: B0, 3: (B0[0] - 4, B0[1]), 8: (B0[0] - 6, B0[1]), 12: B0, 14: B0}, ft={0: 0, 3: -20, 6: -52, 8: -40, 10: -10, 12: 0}, bt={0: 0, 4: 12, 9: 12, 12: 0})
-    return {c: kv(v, i) if isinstance(v, dict) else v for c, v in T.items()}
-def a_jpunch(i):      # a jump and a punch forward: crouch (0-2), the arm cocked back as he leaps (3-5), the punch (6-8, the impact is 7), the fall (9-11) and the landing (12-14)
+def a_kickup(i):      # a CAPOEIRA RISING KICK: he leans back and a hand drops for balance (0-3), the front leg swings from low to high in a long arc (4-7: the impact is 6) and comes back down
+    Fp = {0: F0, 1: (F0[0] - 6, F0[1] - 8), 2: (F0[0] - 4, F0[1] - 16), 3: (162, 128), 4: (178, 108), 5: (194, 82), 6: (204, 60), 7: (208, 46), 8: (200, 56), 9: (188, 82), 10: (174, 112), 11: (164, 138), 12: F0, 14: F0}
+    T = dict(pel={0: (0, 0, 0), 2: (-6, 3, -6), 5: (-12, 4, -12), 7: (-12, 3, -14), 10: (-4, 2, -5), 12: (0, 1, -1), 14: (0, 0, 0)}, chs={0: (0, 0, 0), 3: (-2, 0, -10), 6: (-3, 0, -18), 8: (-3, 0, -18), 12: (0, 0, -2), 14: (0, 0, 0)}, hd={0: (0, 0, 0), 5: (0, 0, 9), 14: (0, 0, 0)},
+             A={0: (0, 0, 0, 1, 1), 3: (-8, -4, -34, .9, 1), 7: (-12, -6, -46, .9, 1), 12: (0, 0, -3, 1, 1), 14: (0, 0, 0, 1, 1)}, B={0: (0, 0, 0, 1, 1), 3: (-10, 4, 36, .9, 1), 7: (-14, 8, 56, .85, 1), 12: (0, 0, 3, 1, 1), 14: (0, 0, 0, 1, 1)},
+             F=Fp, K={0: B0, 3: (B0[0] - 3, B0[1]), 8: (B0[0] - 5, B0[1]), 12: B0, 14: B0}, ft={0: 0, 3: -20, 6: -58, 8: -42, 10: -10, 12: 0}, bt={0: 0, 4: 14, 9: 14, 12: 0})
+    return K(T, i)
+def a_jpunch(i):      # an ANIME FLYING PUNCH: crouch (0-2), the arm cocked back as he leaps (3-5), the body stretches out behind the fist (6-8, the impact is 7), the fall (9-11) and the landing (12-14)
     T = dict(
-        tr={0: (0, 0, 0), 2: (0, 14, 4), 3: (-2, 2, -8), 5: (-4, -4, -10), 6: (4, -6, 8), 7: (12, -6, 18), 9: (8, -4, 12), 11: (2, 2, 4), 12: (0, 12, 5), 13: (0, 10, 3), 14: (0, 0, 0)}, hd={0: (0, 0, 0), 7: (3, 1, 6), 14: (0, 0, 0)},
+        pel={0: (0, 0, 0), 2: (0, 14, 4), 3: (-2, 4, -4), 5: (-4, -2, 4), 6: (4, -6, 18), 7: (12, -8, 26), 9: (8, -4, 18), 11: (2, 2, 6), 12: (0, 12, 5), 13: (0, 10, 3), 14: (0, 0, 0)}, chs={0: (0, 0, 0), 2: (0, 0, 6), 4: (0, 0, -6), 7: (4, 0, 14), 9: (2, 0, 8), 12: (0, 0, 6), 14: (0, 0, 0)}, hd={0: (0, 0, 0), 7: (3, 1, 6), 14: (0, 0, 0)},
         A={0: (0, 0, 0, 1, 1), 2: (-4, 10, 14, .8, 1), 4: (-18, 6, -40, .6, 1), 5: (-18, 4, -40, .6, 1), 7: (22, 6, 6, 1.5, 1), 9: (14, 6, 12, 1.35, 1), 11: (2, 6, 14, 1, 1), 13: (-2, 10, 10, .85, 1), 14: (0, 0, 0, 1, 1)},
         B={0: (0, 0, 0, 1, 1), 4: (-10, 6, -18, .8, 1), 7: (-6, 12, 16, .7, 1), 11: (0, 6, 12, 1, 1), 14: (0, 0, 0, 1, 1)},
-        F={0: F0, 2: F0, 4: (150, 128), 5: (146, 122), 7: (160, 124), 9: (166, 130), 11: (158, 146), 12: F0, 14: F0}, K={0: B0, 2: B0, 4: (66, 130), 5: (70, 124), 7: (48, 132), 9: (44, 138), 11: (40, 148), 12: B0, 14: B0}, ft={0: 0, 5: 18, 9: 8, 12: 0}, bt={0: 0, 5: 14, 12: 0})
-    return {c: kv(v, i) if isinstance(v, dict) else v for c, v in T.items()}
-def a_cleg(i):      # crouched, the front leg shoots out along the floor into the enemy's legs (the impact is 6)
-    Fp = {0: F0, 1: (F0[0] - 8, F0[1] - 10), 2: (F0[0] - 4, F0[1] - 14), 3: (172, 150), 4: (196, 150), 5: (214, 150), 6: (224, 150), 7: (226, 150), 8: (212, 150), 10: (186, 150), 12: (160, 152), 14: F0}
-    T = dict(tr={0: (2, 30, 4), 3: (-4, 32, -4), 6: (-12, 34, -10), 8: (-10, 34, -8), 12: (0, 31, 2), 14: (2, 30, 4)}, hd={0: (1, 3, 0), 6: (-2, 2, 6), 14: (1, 3, 0)},
-             A={0: (0, 14, -6, 1, 1), 3: (-6, 14, 16, .8, 1), 7: (-10, 14, 24, .75, 1), 14: (0, 14, -6, 1, 1)}, B={0: (-2, 16, -4, 1, 1), 3: (-8, 4, -22, .8, 1), 7: (-14, 0, -34, .7, 1), 14: (-2, 16, -4, 1, 1)},
-             F=Fp, K={0: B0, 5: (B0[0] - 6, B0[1]), 9: (B0[0] - 6, B0[1]), 14: B0}, ft={0: 0, 3: -8, 6: -4, 10: 0}, bt={0: 0, 6: 8, 12: 0})
-    return {c: kv(v, i) if isinstance(v, dict) else v for c, v in T.items()}
-def a_slam(i):      # in the air: both fists up over his head (1-4), then the whole body drops into a hammer blow (the impact is 6); the legs are tucked
+        F={0: F0, 2: F0, 4: (150, 128), 5: (140, 128), 7: (112, 126), 9: (130, 134), 11: (158, 146), 12: F0, 14: F0}, K={0: B0, 2: B0, 4: (66, 130), 5: (62, 128), 7: (62, 120), 9: (52, 134), 11: (40, 148), 12: B0, 14: B0},
+        ft={0: 0, 5: 18, 7: 34, 9: 8, 12: 0}, bt={0: 0, 5: 14, 7: 26, 12: 0}, kb={0: None, 5: 1, 11: 1, 12: None})
+    return K(T, i)
+def a_cleg(i):      # a MUAY THAI LOW KICK from one knee: he twists away (0-3), the front leg shoots out along the floor into the enemy's legs (4-7: the impact is 6) and comes back to the kneel
+    Fp = {0: KNEEL['F'], 1: (KNEEL['F'][0] - 6, F0[1] - 8), 2: (KNEEL['F'][0] - 2, F0[1] - 12), 3: (176, 150), 4: (198, 152), 5: (214, 153), 6: (224, 153), 7: (226, 153), 8: (214, 153), 10: (190, 153), 12: (170, 153), 14: KNEEL['F']}
+    T = dict(pel={0: KNEEL['pel'], 3: (-12, 35, -6), 6: (-18, 36, -10), 8: (-16, 36, -8), 12: (-8, 34, -1), 14: KNEEL['pel']}, chs={0: KNEEL['chs'], 3: (0, 0, 3), 6: (-2, 0, -4), 8: (-2, 0, -2), 12: (0, 0, 9), 14: KNEEL['chs']},
+             hd={0: KNEEL['hd'], 6: (-2, 2, 4), 14: KNEEL['hd']}, A={0: KNEEL['A'], 3: (-8, 12, 14, .8, 1), 7: (-12, 12, 26, .75, 1), 14: KNEEL['A']}, B={0: KNEEL['B'], 3: (-8, 2, -10, .8, 1), 7: (-14, -2, -32, .7, 1), 14: KNEEL['B']},
+             F=Fp, K={0: KNEEL['K'], 5: (KNEEL['K'][0] - 4, KNEEL['K'][1]), 9: (KNEEL['K'][0] - 4, KNEEL['K'][1]), 14: KNEEL['K']}, ft={0: 0, 3: -8, 6: -4, 10: 0}, bt={0: KNEEL['bt']}, kb={0: 1})
+    return K(T, i)
+def a_slam(i):      # a PRO-WRESTLING SLAM in the air: both fists go up over his head and he arches back (0-4), then his whole body folds forward into a hammer blow (5-8: the impact is 6)
     T = dict(
-        tr={0: (0, -2, 0), 2: (-6, -4, -12), 4: (-8, -4, -16), 5: (2, 0, 14), 6: (12, 4, 30), 9: (10, 4, 26), 12: (4, 0, 10), 14: (0, -2, 0)}, hd={0: (0, 0, 0), 4: (-2, -2, -6), 6: (4, 4, 12), 14: (0, 0, 0)},
+        pel={0: (0, -2, 0), 2: (-6, -4, -8), 4: (-8, -4, -12), 5: (2, 0, 10), 6: (12, 4, 22), 9: (10, 4, 20), 12: (4, 0, 8), 14: (0, -2, 0)}, chs={0: (0, 0, 0), 4: (-2, 0, -12), 5: (2, 0, 10), 6: (6, 2, 20), 9: (5, 2, 16), 12: (2, 0, 6), 14: (0, 0, 0)}, hd={0: (0, 0, 0), 4: (-2, -2, -8), 6: (4, 4, 12), 14: (0, 0, 0)},
         A={0: (0, 0, 0, 1, 1), 2: (-8, -8, -52, .75, 1), 4: (-10, -12, -72, .7, 1), 5: (0, 0, -10, .9, 1), 6: (14, 14, 56, 1.15, 1), 9: (12, 14, 50, 1.1, 1), 12: (4, 6, 20, 1, 1), 14: (0, 0, 0, 1, 1)},
         B={0: (0, 0, 0, 1, 1), 2: (-10, -10, -46, .75, 1), 4: (-12, -14, -62, .7, 1), 5: (0, 4, -6, .9, 1), 6: (14, 16, 50, 1.15, 1), 9: (12, 16, 46, 1.1, 1), 12: (4, 6, 18, 1, 1), 14: (0, 0, 0, 1, 1)},
-        F={0: (150, 124), 4: (148, 116), 6: (160, 120), 9: (164, 128), 12: (158, 140), 14: (150, 124)}, K={0: (66, 126), 4: (72, 118), 6: (54, 126), 9: (48, 132), 12: (46, 140), 14: (66, 126)}, ft={0: 16, 6: 20, 14: 16}, bt={0: 12, 6: 14, 14: 12})
-    return {c: kv(v, i) if isinstance(v, dict) else v for c, v in T.items()}
-def a_hard(i):      # walking forward + ATTACK: a hard straight punch: the weight goes back (1-4), he lunges and drives the big cuff straight out (the impact is 7), and it comes back
+        F={0: (150, 124), 4: (146, 112), 6: (152, 120), 9: (160, 128), 12: (158, 140), 14: (150, 124)}, K={0: (66, 126), 4: (74, 114), 6: (60, 122), 9: (50, 130), 12: (46, 140), 14: (66, 126)}, ft={0: 16, 6: 20, 14: 16}, bt={0: 12, 6: 14, 14: 12}, kb={0: 1})
+    return K(T, i)
+def a_hard(i):      # a KARATE STRAIGHT PUNCH with the whole body: the weight goes back and the fist is drawn to the hip (0-4), he steps in, the hips drive and the big cuff shoots out straight (5-7: the impact is 7), and it comes back
     T = dict(
-        tr={0: (0, 0, 0), 3: (-8, 3, -10), 5: (0, 3, 4), 7: (14, 4, 20), 10: (10, 4, 14), 13: (2, 1, 3), 14: (0, 0, 0)}, hd={0: (0, 0, 0), 3: (-3, 0, -5), 7: (4, 1, 8), 14: (0, 0, 0)},
-        B={0: (0, 0, 0, 1, 1), 3: (-14, 6, -18, .62, 1), 5: (-4, 2, -6, .9, 1), 7: (24, -4, 0, 1.6, 1), 10: (18, -2, 2, 1.45, 1), 13: (2, 0, 1, 1.05, 1), 14: (0, 0, 0, 1, 1)},
-        A={0: (0, 0, 0, 1, 1), 3: (-6, 8, -20, .8, 1), 7: (-6, 12, 18, .7, 1), 14: (0, 0, 0, 1, 1)},
-        F={0: F0, 3: (F0[0] - 6, F0[1]), 5: (F0[0] + 2, F0[1] - 6), 7: (F0[0] + 22, F0[1]), 11: (F0[0] + 14, F0[1]), 14: F0}, K={0: B0, 5: (B0[0] + 4, B0[1]), 7: (B0[0] + 16, B0[1]), 11: (B0[0] + 8, B0[1]), 14: B0}, ft={0: 0, 5: -10, 7: 0}, bt={0: 0, 7: 10, 12: 0})
-    return {c: kv(v, i) if isinstance(v, dict) else v for c, v in T.items()}
-def a_front(i):      # walking back + ATTACK: a front kick forward at the belly (the knee comes up, the sole drives out: the impact is 6)
-    Fp = {0: F0, 1: (F0[0] - 4, F0[1] - 12), 2: (F0[0] + 2, F0[1] - 30), 3: (166, 112), 4: (188, 102), 5: (210, 100), 6: (222, 100), 7: (224, 100), 8: (208, 106), 9: (188, 118), 10: (170, 136), 11: (160, 148), 12: F0, 14: F0}
-    T = dict(tr={0: (0, 0, 0), 2: (-6, -2, -10), 6: (-14, -2, -16), 9: (-8, -2, -10), 12: (0, 0, -1), 14: (0, 0, 0)}, hd={0: (0, 0, 0), 6: (0, 0, 8), 14: (0, 0, 0)},
-             A={0: (0, 0, 0, 1, 1), 3: (-6, 10, 18, .8, 1), 7: (-8, 14, 26, .72, 1), 12: (0, 0, 2, 1, 1), 14: (0, 0, 0, 1, 1)}, B={0: (0, 0, 0, 1, 1), 3: (-12, -6, -22, .8, 1), 7: (-16, -10, -30, .7, 1), 12: (0, 0, -2, 1, 1), 14: (0, 0, 0, 1, 1)},
+        pel={0: (0, 0, 0), 3: (-8, 4, -4), 5: (0, 6, 6), 7: (12, 8, 14), 10: (9, 7, 10), 13: (2, 2, 2), 14: (0, 1, 0)}, chs={0: (0, 0, 0), 3: (-2, 0, -8), 5: (0, 0, 4), 7: (3, 0, 10), 10: (2, 0, 7), 13: (0, 0, 1), 14: (0, 0, 0)}, hd={0: (0, 0, 0), 3: (-3, 0, -5), 7: (4, 1, 8), 14: (0, 0, 0)},
+        B={0: (0, 0, 0, 1, 1), 3: (-14, 6, -18, .62, 1), 5: (-4, 2, -6, .9, 1), 7: (24, -4, 0, 1.65, 1), 10: (18, -2, 2, 1.45, 1), 13: (2, 0, 1, 1.05, 1), 14: (0, 0, 0, 1, 1)}, A={0: (0, 0, 0, 1, 1), 3: (-6, 8, -20, .8, 1), 7: (-8, 16, 36, .7, 1), 12: (0, 0, 4, 1, 1), 14: (0, 0, 0, 1, 1)},
+        F={0: F0, 3: (F0[0] - 6, F0[1]), 5: (F0[0] + 4, F0[1] - 8), 7: (F0[0] + 24, F0[1]), 11: (F0[0] + 16, F0[1]), 14: F0}, K={0: B0, 5: (B0[0] + 4, B0[1]), 7: (B0[0] - 8, B0[1] - 2), 11: (B0[0] + 4, B0[1]), 14: B0}, ft={0: 0, 5: -10, 7: 0}, bt={0: 0, 7: 18, 12: 0})
+    return K(T, i)
+def a_front(i):      # a MUAY THAI PUSH KICK: he leans back, the knee comes up (0-3) and the sole drives straight out at the enemy's belly (4-7: the impact is 6)
+    Fp = {0: F0, 1: (F0[0] - 4, F0[1] - 14), 2: (F0[0] + 2, F0[1] - 34), 3: (168, 108), 4: (190, 100), 5: (212, 98), 6: (224, 98), 7: (226, 98), 8: (210, 104), 9: (190, 118), 10: (172, 136), 11: (162, 148), 12: F0, 14: F0}
+    T = dict(pel={0: (0, 0, 0), 2: (-6, 2, -6), 6: (-14, 3, -12), 9: (-8, 2, -8), 12: (0, 1, -1), 14: (0, 0, 0)}, chs={0: (0, 0, 0), 3: (-2, 0, -8), 6: (-4, 0, -14), 9: (-2, 0, -8), 12: (0, 0, -1), 14: (0, 0, 0)}, hd={0: (0, 0, 0), 6: (0, 0, 8), 14: (0, 0, 0)},
+             A={0: (0, 0, 0, 1, 1), 3: (-6, 10, 8, .85, 1), 7: (-8, 12, 14, .8, 1), 12: (0, 0, 2, 1, 1), 14: (0, 0, 0, 1, 1)}, B={0: (0, 0, 0, 1, 1), 3: (-12, -6, -34, .8, 1), 7: (-16, -10, -48, .7, 1), 12: (0, 0, -2, 1, 1), 14: (0, 0, 0, 1, 1)},
              F=Fp, K={0: B0, 3: (B0[0] - 6, B0[1]), 9: (B0[0] - 8, B0[1]), 12: B0, 14: B0}, ft={0: 0, 3: -18, 6: -72, 9: -30, 12: 0}, bt={0: 0, 4: 10, 10: 10, 12: 0})
-    return {c: kv(v, i) if isinstance(v, dict) else v for c, v in T.items()}
+    return K(T, i)
+def a_hurt(i):      # HURT: the head snaps back and the chest folds away from the blow (0-3), he staggers back (4-8) and finds his stance again (9-14)
+    k = kv({0: 0, 2: 1, 5: .85, 8: .35, 11: .08, 14: 0}, i, ease=sm)
+    return dict(pel=(-14 * k, 4 * k, -7 * k), chs=(-2 * k, 0, -14 * k), hd=(-4 * k, 1 * k, -22 * k), A=(-10 * k, -6 * k, -30 * k, .9, 1), B=(-8 * k, 4 * k, -36 * k, .85, 1),
+                F=(F0[0] - 10 * k, F0[1]), K=(B0[0] - 8 * k, B0[1]), ft=6 * k, bt=-8 * k)
+def a_ko(i):      # K.O.: knocked back (0-3), falling over backwards with his feet leaving the floor (4-8), hitting the ground with a small bounce (9-11) and lying on his back (12-14: the last picture stays)
+    T = dict(
+        pel={0: (0, 0, 0), 2: (-8, 2, -8), 4: (-22, -6, -26), 6: (-34, -4, -52), 8: (-44, 34, -80), 9: (-46, 76, -90), 10: (-46, 66, -91), 11: (-46, 77, -90), 14: (-46, 76, -90)},
+        chs={0: (0, 0, 0), 3: (0, 0, -10), 6: (0, 0, -6), 9: (0, 0, 2), 14: (0, 0, 0)}, hd={0: (0, 0, 0), 3: (-4, 0, -22), 8: (-2, 2, -10), 11: (0, 3, 8), 14: (0, 3, 10)},
+        A={0: (0, 0, 0, 1, 1), 3: (-14, -6, -48, .85, 1), 8: (-12, 2, -20, .9, 1), 11: (0, 6, 40, .9, 1), 14: (2, 8, 52, .9, 1)}, B={0: (0, 0, 0, 1, 1), 3: (-12, 6, -52, .85, 1), 8: (-8, 4, -10, .9, 1), 11: (2, 8, 30, .85, 1), 14: (4, 10, 44, .85, 1)},
+        F={0: F0, 3: (F0[0] - 12, F0[1] - 4), 5: (158, 128), 7: (166, 112), 9: (190, 128), 11: (206, 150), 14: (208, 152)}, K={0: B0, 3: (B0[0] - 12, B0[1] - 4), 5: (70, 130), 7: (96, 128), 9: (150, 132), 11: (192, 150), 14: (194, 156)},
+        ft={0: 0, 5: 20, 9: -30, 14: -70}, bt={0: 0, 5: 10, 9: -30, 14: -80}, kb={0: None, 6: 1, 12: 1})
+    return K(T, i)
 
-# the rows of the sheet: name, the function of the picture's number, the effector points whose speed makes action lines (part, design point, 'foot' for the front ankle), smudge profile
-ROWS = [('frames', a_idle, []), ('walk', a_walk, []), ('wback', lambda i: a_walk(i, True), []), ('jump', a_jump, []), ('cr', a_cdown, []), ('ci', a_cidle, []), ('cwk', a_cwalk, []), ('bl', a_block, []),
-        ('dg', a_dash, ['body']), ('db', a_dashb, ['body']), ('a0', a_hookL, [('armB', HAND_B)]), ('a1', a_hookR, [('armA', HAND_A)]), ('a2', a_kickup, ['foot']), ('a3', a_jpunch, [('armA', HAND_A)]),
-        ('cp', a_cleg, ['foot']), ('as', a_slam, [('armA', HAND_A), ('armB', HAND_B)]), ('hp', a_hard, [('armB', HAND_B)]), ('fk', a_front, ['foot'])]
+ROWS = [('frames', a_idle, [], True, None, 2.4), ('walk', a_walk, [], True, (11.8, 0), 1.3), ('wback', lambda i: a_walk(i, True), [], True, (-8.8, 0), 1.3), ('jump', a_jump, [], False, w_jump, .35), ('cr', a_cdown, [], False, None, 1.2), ('ci', a_cidle, [], True, None, 2.4),
+        ('cwk', a_cwalk, [], True, (4, 0), 1.6), ('bl', a_block, [], False, None, 1.5), ('dg', a_dash, ['body'], False, w_dash, .35), ('db', a_dashb, ['body'], False, w_dashb, .4), ('a0', a_hookL, [('armB', HAND_B)], False, None, .5), ('a1', a_hookR, [('armA', HAND_A)], False, None, .5),
+        ('a2', a_kickup, ['foot'], False, None, .6), ('a3', a_jpunch, [('armB', HAND_B)], False, (3, 0), .45), ('cp', a_cleg, ['foot'], False, None, .8), ('as', a_slam, [('armA', HAND_A), ('armB', HAND_B)], False, None, .45), ('hp', a_hard, [('armB', HAND_B)], False, (2, 0), .5),
+        ('fk', a_front, ['foot'], False, None, .6), ('hu', a_hurt, [], False, (-6, 0), .5), ('ko', a_ko, [], False, (-9, 0), .4)]
+ROWN = [r[0] for r in ROWS]
 
-def build_row(name, fn, eff):
-    poses = []; gs = []
-    for i in range(15):
-        pose, g = mkpose(fn(i)); poses.append(pose); gs.append(g)
-    ext = []      # how far each picture's figure reaches in the cell (game px) when it is not shifted
+def build_row(name, fn, eff, loop, wvel, mult=1.0):
+    T = [fn(i) for i in range(15)]; poses = [mkpose(t) for t in T]; gs = [t.get('g', (0, 0)) for t in T]
+    wv = [(wvel(i) if callable(wvel) else wvel) if wvel else (0, 0) for i in range(15)]
+    sec = swing(poses, wv, loop, mult)
+    for p, s in zip(poses, sec): p.update(s)
+    ext = []; canv = []      # how far each picture's figure reaches in the cell (game px) when it is not shifted
     for pose in poses:
-        m = rp.downscale(rp.render(pose), dx=0, dy=0)[..., 3] > 0; xs = np.where(m.any(axis=0))[0]; ext.append((xs.min(), xs.max()) if len(xs) else (32, 32))
-    need = [min(0, 59 - e[1]) + max(0, 4 - e[0]) + int(round(gs[i][0])) for i, e in enumerate(ext)]      # (a negative number moves him left, a positive one right)
-    near = [min(need[max(0, i - 2):i + 3]) if min(need) < 0 else max(need[max(0, i - 2):i + 3]) for i in range(15)]      # (the shift of a picture also holds for its neighbours ...)
-    sh = [int(round(sum(near[max(0, i - 1):i + 2]) / len(near[max(0, i - 1):i + 2]))) for i in range(15)]      # (... and is softened, so that nothing jumps from one picture to the next, but never less than the picture needs)
+        cv = rp.render(pose); canv.append(cv); al = cv[..., 3] > 0; xs = np.where(al.any(axis=0))[0]; ys = np.where(al.any(axis=1))[0]
+        if not len(xs): ext.append((32, 32, 0, 0)); continue
+        gx = lambda x: rp.CX + (x - 50 - rp.HX) * rp.SCALE; gyy = lambda y: rp.GROUND + 1 - (rp.SOLE + 1 - (y - 36)) * rp.SCALE      # (the figure's own edges in game px, before the cell cuts them off)
+        ext.append((int(math.floor(gx(xs.min()))), int(math.ceil(gx(xs.max() + 1))) - 1, int(math.floor(gyy(ys.min()))), int(math.ceil(gyy(ys.max() + 1))) - 1))
+    need = [min(0, 61 - e[1]) + max(0, 3 - e[0]) + int(round(gs[i][0])) for i, e in enumerate(ext)]      # (a negative number moves him left, a positive one right)
+    near = [min(need[max(0, i - 2):i + 3]) if min(need) < 0 else max(need[max(0, i - 2):i + 3]) for i in range(15)]
+    sh = [int(round(sum(near[max(0, i - 1):i + 2]) / len(near[max(0, i - 1):i + 2]))) for i in range(15)]
     sh = [min(sh[i], need[i]) if min(need) < 0 else max(sh[i], need[i]) for i in range(15)]
-    gs = [(sh[i], gs[i][1]) for i in range(15)]
+    gy = [int(round(gs[i][1])) + max(0, 1 - (ext[i][2] + int(round(gs[i][1])))) - max(0, ext[i][3] + int(round(gs[i][1])) - 62) for i in range(15)]      # (and down when the head would go through the top, up when he would sink into the floor)
+    gs = [(sh[i], gy[i]) for i in range(15)]
     pos = []      # the effectors' positions picture by picture (game px)
     for i, pose in enumerate(poses):
         pts = []
         for e in eff:
-            if e == 'foot': pts.append(gxy(fn(i).get('F', F0), gs[i]))
+            if e == 'foot': pts.append(gxy(T[i].get('F', F0), gs[i]))
             elif e == 'body': pts.append(gxy((rp.HX, 100), gs[i]))
             else: pts.append(gxy(locate(pose, *e), gs[i]))
         pos.append(pts)
+    raw = rp.calm(rp.calm([rp.downscale(canv[i], dx=int(round(gs[i][0])), dy=int(round(gs[i][1]))) for i in range(15)], loop), loop)      # (the shading is calmed: no flicker from one picture to the next)
     frames = []
     for i, pose in enumerate(poses):
-        a = rp.frame(pose, int(round(gs[i][0])), int(round(gs[i][1])))
+        a = rp.outline(raw[i])
         if eff:
             if name in ('dg', 'db'):
                 r = max(0.0, 1 - abs(i - 7) / 4.5)
@@ -197,17 +286,18 @@ def build_row(name, fn, eff):
     return frames
 
 if __name__ == '__main__':
-    only = [a for a in sys.argv[1:] if not a.startswith('--') and a in [r[0] for r in ROWS]]
-    rows = [r for r in ROWS if not only or r[0] in only]; sheet = Image.new('RGBA', (15 * 64, len(ROWS) * 64), (0, 0, 0, 0)); meta = {}
-    if only and os.path.exists(os.path.join(HERE, 'ryu_sheet.png')): sheet = Image.open(os.path.join(HERE, 'ryu_sheet.png')).convert('RGBA')      # (a partial rebuild keeps the other rows)
-    for r, (name, fn, eff) in enumerate(ROWS):
+    only = [a for a in sys.argv[1:] if not a.startswith('--') and a in ROWN]
+    sheet = Image.new('RGBA', (15 * 64, len(ROWS) * 64), (0, 0, 0, 0)); path = sys.argv[sys.argv.index('--out') + 1] if '--out' in sys.argv else os.path.join(HERE, 'ryu_sheet.png')
+    if only and os.path.exists(path): sheet = Image.open(path).convert('RGBA')      # (a partial rebuild keeps the other rows)
+    if sheet.height < len(ROWS) * 64: s2 = Image.new('RGBA', (15 * 64, len(ROWS) * 64), (0, 0, 0, 0)); s2.paste(sheet, (0, 0)); sheet = s2
+    for r, (name, fn, eff, loop, wv, mult) in enumerate(ROWS):
         if only and name not in only: continue
-        fr = build_row(name, fn, eff)
+        fr = build_row(name, fn, eff, loop, wv, mult)
         for i, a in enumerate(fr): sheet.paste(Image.fromarray(a, 'RGBA'), (i * 64, r * 64))
-    sheet.save(os.path.join(HERE, 'ryu_sheet.png'))
+    sheet.save(path)
     if '--preview' in sys.argv:
         d = sys.argv[sys.argv.index('--preview') + 1]; os.makedirs(d, exist_ok=True)
-        for r, (name, fn, eff) in enumerate(ROWS):
+        for r, (name, fn, eff, loop, wv, mult) in enumerate(ROWS):
             if only and name not in only: continue
             row = sheet.crop((0, r * 64, 15 * 64, r * 64 + 64)); bg = Image.new('RGBA', row.size, (58, 62, 92, 255)); bg.alpha_composite(row); bg.resize((row.width * 2, row.height * 2), Image.NEAREST).save(os.path.join(d, 'row_%s.png' % name))
     print('ryu_sheet.png', sheet.size)
