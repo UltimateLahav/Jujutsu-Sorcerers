@@ -71,7 +71,8 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 .col.vs #dom{grid-area:1/2}.col.vs #ce{grid-area:1/3}.col.vs #blk{grid-area:2/2}.col.vs #lap{grid-area:2/3}.col.vs #dash{grid-area:3/2}.col.vs #atk{grid-area:3/3}
 #fat.rdy{opacity:1;background:#3a0d12;border-color:#ff8a7a;color:#fff;box-shadow:0 0 1.8vh #ff4a3a,0 0 .5vh #ff4a3a inset,4px 4px 0 #000;animation:fatglow .5s steps(2) infinite}
 @keyframes fatglow{50%{box-shadow:0 0 3.2vh #ff2a2a,0 0 .9vh #ff2a2a inset,4px 4px 0 #000}}
-#pad.cine,#hud.cine{visibility:hidden}      /* the controls hide while a cutscene plays (the FATALITY, the red ending) */
+#pad.cine,#hud.cine{visibility:hidden}
+body.ry #dom,body.ry #ce,body.ry #fat,body.ry #lap{visibility:hidden}      /* (v1.143 Ryu has no BLUE, MODE, DOMAIN or FATAL: those buttons are hidden while he fights) */      /* the controls hide while a cutscene plays (the FATALITY, the red ending) */
 #qte{position:fixed;inset:0;z-index:4;display:none;pointer-events:none}#qte.show{display:block}      /* the quick-time event of the red ending: the red button, and the ring that closes on it */
 #qBtn,#qRing{position:absolute;border-radius:50%}
 #qBtn{display:none;pointer-events:auto;touch-action:none;padding:0;font-size:var(--fs-q,12px);white-space:nowrap;align-items:center;justify-content:center;background:#d8281c;border:.9vh solid #ffd0b0;color:#fff;text-shadow:2px 2px 0 #000;box-shadow:0 0 2.4vh #ff3a2a,0 0 .8vh #ffd0b0 inset,.5vh .5vh 0 #000}#qBtn.show{display:flex}#qBtn.on{background:#ff5a42;box-shadow:0 0 3.6vh #ff6a4a,0 0 1.2vh #fff inset,.2vh .2vh 0 #000}
@@ -208,7 +209,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.142</small>
+    <small id="ver">V1.143</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -400,6 +401,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <button class="card pp" data-who="cat"><canvas></canvas><b>CARTOON CAT</b><i>FREE PLAY</i></button>
     <button class="card pp" data-who="freddy"><canvas></canvas><b>FREDDY<br>KRUEGER</b><i>FREE PLAY</i></button>
     <button class="card pp" data-who="cu3"><canvas></canvas><b>SUKUNA</b><i>FREE PLAY</i></button>
+    <button class="card pp" data-who="cu4"><canvas></canvas><b>RYU</b><i>FREE PLAY</i></button>
   </div>
   <small id="selCuLab" style="display:none">YOUR CUSTOM CHARACTERS (THEY WALK IF YOU DREW WALKING FRAMES)</small>
   <div class="cards mini" id="selCu" style="display:none"></div>
@@ -886,7 +888,7 @@ const GATE = {      // for each fighter the skill each button needs (a button th
   v: { cr: 'v_crouch', dash: 'v_tele', blk: 'v_block', ce: 'v_ball', dom: 'v_scare', fat: 'v_fatal', bl: 'v_bite', hv: 'v_heavy', cn: 'v_cancel', ac: 'v_air', sn: 'v_sense' },
   k: { cr: 'k_crouch', dash: 'k_dash', blk: 'k_block', dom: 'k_ult', fat: 'k_fatal', bl: 'k_toon', hv: 'k_heavy', cn: 'k_cancel', sn: 'k_sense' } };
 const BLUES = { g: ['blue', 'tele', 'mblue'], y: ['y_div', 'y_sweep', 'y_rush', 'y_conc', 'y_elbow', 'y_upper', 'y_flash'], v: ['v_bite'], k: ['k_toon', 'k_kick', 'k_lift'] };
-const lacks = key => { if (fredMe()) return false; if (vs && vs.me === 'cu3') { const need = SUK_GATE[key]; return !!need && !suOwn(need); } const need = GATE[meK()][key]; return !!need && !owns(need); };      // (v1.131 Sukuna: his own skills, bought for real even in free play, see tools/sukuna.js)      // true when the fighter you play has not bought what this button needs
+const lacks = key => { if (fredMe() || (vs && vs.me === 'cu4')) return false; if (vs && vs.me === 'cu3') { const need = SUK_GATE[key]; return !!need && !suOwn(need); } const need = GATE[meK()][key]; return !!need && !owns(need); };      // (v1.131 Sukuna: his own skills, bought for real even in free play, see tools/sukuna.js)      // true when the fighter you play has not bought what this button needs
 let lockSayAt = -1e9;
 function lockPop(now) { if (now - lockSayAt > 1200) { lockSayAt = now; say('LOCKED: BUY IT IN SKILLS', wx, '#ff8a7a', 8, now); } }
 function gateSkills(now) {                    // every frame, before the controls are read: a move you do not own is simply not there (any fighter)
@@ -911,7 +913,7 @@ function gateBlue(now, jf, tf) {              // BLUE of Gojo: teleport up in th
 }
 function skillUI() {                          // the buttons of a move you do not own are dimmed and marked
   const L = (id, key) => $(id).classList.toggle('lk', lacks(key));
-  L('blk', 'blk'); L('dash', 'dash'); L('ce', 'ce'); L('dom', 'dom'); L('fat', 'fat'); $('lap').classList.toggle('lk', !fredMe() && !(vs && vs.me === 'cu3' ? Object.values(SU_BLUE_ID).some(suOwn) : BLUES[meK()].some(owns)));
+  L('blk', 'blk'); L('dash', 'dash'); L('ce', 'ce'); L('dom', 'dom'); L('fat', 'fat'); $('lap').classList.toggle('lk', !fredMe() && !(vs && vs.me === 'cu4') && !(vs && vs.me === 'cu3' ? Object.values(SU_BLUE_ID).some(suOwn) : BLUES[meK()].some(owns)));
 }
 function leavePlay() { if (cuTest) { cuTestBack(); return; } if (vs && vs.net) lanLeave(); else if (vs && vs.hunt) { show('chal'); buildHunts(); } else if (vs && vs.cv) { show('chal'); buildChal(); } else show('select'); }
 
@@ -4476,6 +4478,7 @@ __CONT__
 __CUSTOM__
 __GORE__
 __SUKUNA__
+__RYU__
 __CHAP2__
 __CHAP2B__
 __CHAP2C__
@@ -6474,6 +6477,7 @@ function tick(t) {
   if (still) { stopMs = Math.max(0, stopMs - rdt); vOff += now - last; now = last; } else if (state !== 'play') stopMs = 0;
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
   if (freePlay()) trainStep(now, dt);
+  { const ry = state === 'play' && !!vs && vs.me === RYU_WHO; if (ry !== ryUI) { ryUI = ry; document.body.classList.toggle('ry', ry); } }      // (v1.143 Ryu has no BLUE, MODE, DOMAIN or FATAL: while he fights those buttons are hidden, see the CSS of body.ry)
   ragTick(now);
   trainDraw(now);
   if (stance === 'down' && stPrev === 'stand' && vs && state === 'play') ceSpend(CE_COST.crouch, now); stPrev = stance;      // (the crouch of every fighter, the Cat smashing himself flat: 3% of the energy)
