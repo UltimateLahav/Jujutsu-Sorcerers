@@ -558,12 +558,6 @@ function c15CActors(T, Tp) {      // Megumi and Sukuna on the roof (Tp = the tim
   ctx.save(); ctx.translate(Math.round(m.x), 0); if (m.sx !== 1) ctx.scale(m.sx, 1); const pp = m.pose; pp.blood = 0.6; c15Sprite(c15Meg(pp), 0, -m.lift, m.flip, C15MG.BASE); ctx.restore();
   ctx.save(); ctx.translate(Math.round(s.x), 0); if (s.sx !== 1) ctx.scale(s.sx, 1); c15Sprite(c15Suk(s.pose), 0, 0, s.flip, 70); ctx.restore();
 }
-function c15CEye(T, o) {      // Megumi's eye, large, and the fingers on his cheek; o.open, o.pup, o.refl, o.sweat, o.tr (how much he shakes), o.fp (how far in the fingers are), o.dx, o.dy
-  ctx.fillStyle = '#080408'; ctx.fillRect(0, 0, VW, VH); const im = c15Big.eye({ open: Math.round(o.open * 20) / 20, pup: Math.round(o.pup), refl: o.refl ? 1 : 0, sweat: o.sweat || 0, brow: o.brow || 0 }), z = 2, w = im.width * z, h = im.height * z, bx = Math.round((VW - w) / 2 + (o.dx || 0) + Math.sin(T * 17) * (o.tr || 0)), by = Math.round((VH - h) / 2 + 4 + (o.dy || 0));
-  ctx.drawImage(im, bx, by, w, h); ctx.fillStyle = 'rgba(10,2,14,0.42)'; ctx.fillRect(0, 0, VW, VH); const g = ctx.createLinearGradient(VW * 0.5, 0, VW, 0); g.addColorStop(0, 'rgba(200,20,40,0)'); g.addColorStop(1, 'rgba(200,20,40,0.28)'); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
-  const fp = o.fp === undefined ? 1 : o.fp, fi = c15Big.fingers({ press: fp > 0.8 ? 1 : 0 }); ctx.globalAlpha = 0.95; ctx.drawImage(fi, Math.round(VW - 100 + (1 - fp) * 70 + Math.sin(T * 13) * (o.tr || 0) * 0.5), Math.round(VH - 78 + (1 - fp) * 60), 96, 96); ctx.globalAlpha = 1;
-  ctx.fillStyle = 'rgba(8,2,12,0.3)'; ctx.fillRect(0, 0, VW, VH); c15Embers(T, 18, '255,90,70', 1);
-}
 function c15CEvents(T) {      // the sounds and the things that happen once
   const st = story.c15, ct = st.ct, f = c15CFin(ct); while (ct.cb + 1 < C15CB.length && T >= C15CB[ct.cb + 1]) { ct.cb++; if (T - C15CB[ct.cb] < 0.5) snd('c7beat', 1); }
   const at = (k, t0, fn) => { if (T >= t0 && T < t0 + 0.6) once2(k, fn); };
@@ -587,11 +581,11 @@ function c15Catch(now, dt, T) {
     if (sh === 'clamp' || sh === 'wide' || sh === 'hang') { ctx.fillStyle = 'rgba(110,10,24,0.18)'; ctx.fillRect(0, 0, VW, VH); c15Embers(T, 20, '255,100,70', 1); }
   } else if (sh === 'eye' || sh === 'eye2') {
     const a = sh === 'eye' ? c15S(T, C15T.eye1, C15T.boots) : c15S(T, C15T.last, C15.p2), [shx, shy] = c15ShakeOff();
-    ctx.save(); ctx.translate(Math.round(shx), Math.round(shy)); c15CEye(T, sh === 'eye' ? { open: 1.0 + 0.2 * c15E(a * 2), pup: 7 - 2 * a, sweat: 1 + a * 0.6, brow: 4, tr: 0.6, fp: c15E(c15S(T, C15T.eye1, C15T.eye1 + 0.3)), dx: Math.round(-3 * a) } : { open: 1.25 + 0.05 * a, pup: 5 - 3 * c15E(a), refl: a > 0.35, sweat: 1.4 + a * 0.9, brow: 8, tr: 1.2, fp: 1, dx: Math.round(-5 * a), dy: Math.round(2 * a) }); ctx.restore(); c15CVig(T, 0.55, 60);
+    ctx.save(); ctx.translate(Math.round(shx), Math.round(shy)); c15BEye(T, sh === 'eye' ? { lid: -0.1 - 0.15 * c15E(a * 2), pr: 3.8 - 0.8 * a, veins: 0.3, sweat: 1 + a * 0.6, bf: 3, tr: 0.6, fp: c15E(c15S(T, C15T.eye1, C15T.eye1 + 0.3)), row: 58, dx: Math.round(-3 * a) } : { lid: -0.25 - 0.05 * a, pr: 3.2 - 1.4 * c15E(a), refl: a > 0.35 ? 1 : 0, veins: 0.7, sweat: 1.4 + a * 0.9, bf: 7, tr: 1.2, fp: 1, row: 58, dx: Math.round(-5 * a), dy: Math.round(2 * a) }); ctx.restore(); c15CVig(T, 0.55, 60);
   } else if (sh === 'suk') {
-    const u = c15S(T, C15T.face, C15T.wide), bt = T >= C15T.beat, sw = 0.5, e2 = bt ? c15S(T, C15T.beat, C15T.beat + 1.6) : 0.25 * c15S(T, C15T.face, C15T.beat), im = c15Big.suk({ m: 1, sw, e2: Math.round(e2 * 10) / 10, lid: bt ? 0.75 : 0.5 }), z = 2, w = im.width * z, h = im.height * z;
+    const u = c15S(T, C15T.face, C15T.wide), bt = T >= C15T.beat, e2 = bt ? c15S(T, C15T.beat, C15T.beat + 1.6) : 0.25 * c15S(T, C15T.face, C15T.beat), im = c15Faces.face({ who: 'suk', m: 'smirk', e2: Math.round(e2 * 10) / 10, lid: bt ? 0.55 : 0.35 });
     ctx.fillStyle = '#0c0306'; ctx.fillRect(0, 0, VW, VH); const g = ctx.createRadialGradient(VW / 2, VH * 0.6, 10, VW / 2, VH * 0.6, 170); g.addColorStop(0, 'rgba(150,22,34,0.5)'); g.addColorStop(1, 'rgba(150,22,34,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
-    const [shx, shy] = c15ShakeOff(); ctx.drawImage(im, Math.round((VW - w) / 2 + shx + Math.sin(T * 0.7) * 2), Math.round(-92 - 18 * u + shy), w, h); ctx.fillStyle = 'rgba(8,0,10,0.28)'; ctx.fillRect(0, 0, VW, VH); c15Embers(T, 26, '255,120,80', 1); c15CVig(T, 0.7, 80);
+    const [shx, shy] = c15ShakeOff(); ctx.drawImage(im, Math.round((VW - im.width) / 2 + shx + Math.sin(T * 0.7) * 2), Math.round(VH / 2 - c15Faces.FY - 12 * u + shy)); ctx.fillStyle = 'rgba(8,0,10,0.28)'; ctx.fillRect(0, 0, VW, VH); c15Embers(T, 26, '255,120,80', 1); c15CVig(T, 0.7, 80);
   }
   if (st.flash > 0.01) { ctx.fillStyle = 'rgba(255,255,255,' + Math.min(0.92, st.flash).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }
 }

@@ -1,0 +1,331 @@
+// ================================================================ v1.148 THE FACES: the close-ups of chapter 4 drawn as cel-shaded pixel portraits at the game's own pixel size (1 picture pixel = 1 game pixel).
+// Everything is made of flat-coloured polygons and tapered strokes (splines through a few points) that are filled straight into the pixel grid of tools/megumi.js (no smoothing, no blur): the head, the neck and the ears, the cel shadows and lights on the skin
+// (a tone is only painted over the tones it is darker / lighter than, so it stays inside the face), the eyes (lid, eyeball, iris in 3 tones, pupil, two lights, lashes), the brows, the nose, the mouth, the marks of Sukuna, the hair in spikes with a dark outline.
+// All the numbers below are in "design" units (1 unit = 1.3 pixels, measured from the middle between the eyes); the painter scales them. c15Faces.face({ who: 'suk' | 'yuji' | 'meg', ... }) -> a 320 x 330 canvas (the eyes on row 170).
+// Pictures are cached by their numbers: pass numbers cut into steps.
+const c15Faces = (() => {
+  const { Pix, K } = c15MegKit, W = 320, H = 330, CX = 160, EY = 170, SC = 1.3, cache = new Map(), lerp = (a, b, t) => a + (b - a) * t, cl = (v, a, b) => Math.max(a, Math.min(b, v)), BAY = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  const C = h => K(h) >>> 0, hexMix = (a, b, t) => { const u = [1, 3, 5].map(i => parseInt(a.slice(i, i + 2), 16)), v = [1, 3, 5].map(i => parseInt(b.slice(i, i + 2), 16)); return '#' + u.map((x, i) => Math.round(x + (v[i] - x) * t).toString(16).padStart(2, '0')).join(''); };
+  const memo = (k, f, max) => { let c = cache.get(k); if (!c) { c = f(); cache.set(k, c); if (cache.size > (max || 24)) cache.delete(cache.keys().next().value); } return c; };
+  // ---- the pixel painter: polygons, tapered strokes, 1 px lines, with "only over these colours" and a dither (a number 0 - 1, or a function of x, y)
+  function spl(pts, closed, seg) {      // a smooth curve through the points (Catmull-Rom), as a list of points
+    const n = pts.length, out = [], sg = seg || 6, P = i => closed ? pts[(i + n) % n] : pts[cl(i, 0, n - 1)];
+    for (let i = 0; i < (closed ? n : n - 1); i++) { const p0 = P(i - 1), p1 = P(i), p2 = P(i + 1), p3 = P(i + 2); for (let s = 0; s < sg; s++) { const t = s / sg, t2 = t * t, t3 = t2 * t; out.push([0.5 * (2 * p1[0] + (-p0[0] + p2[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3), 0.5 * (2 * p1[1] + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)]); } }
+    if (!closed) out.push(pts[n - 1]); return out;
+  }
+  const elp = (cx, cy, rx, ry, rot, n) => { const o = [], c = Math.cos(rot || 0), s = Math.sin(rot || 0), m = n || 28; for (let i = 0; i < m; i++) { const a = i / m * Math.PI * 2, x = Math.cos(a) * rx, y = Math.sin(a) * ry; o.push([cx + x * c - y * s, cy + x * s + y * c]); } return o; };
+  class Cv extends Pix {
+    constructor(w, h, sc, ox, oy) { super(w || W, h || H); this.sc = sc || SC; this.ox = ox === undefined ? CX : ox; this.oy = oy === undefined ? EY : oy; }
+    tr(q) { return [this.ox + (q[0] - CX) * this.sc, this.oy + (q[1] - EY) * this.sc]; }
+    poly(pts0, col, over, d) {      // fills a polygon with a flat colour; over = only where the pixel has one of these colours; d = 0 - 1: a dither (0.5 = every other pixel), or a function (x, y) -> true where to paint
+      const pts = pts0.map(q => this.tr(q)), n = pts.length, g = this.g, w = this.w, fn = typeof d === 'function', lim = d === undefined || fn ? 99 : Math.round(d * 16), xs = []; let y0 = 1e9, y1 = -1e9; for (let i = 0; i < n; i++) { const y = pts[i][1]; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      y0 = Math.max(0, Math.ceil(y0 - 0.5)); y1 = Math.min(this.h - 1, Math.floor(y1 - 0.5));
+      for (let y = y0; y <= y1; y++) {
+        const yc = y + 0.5; xs.length = 0; for (let i = 0; i < n; i++) { const a = pts[i], b = pts[i + 1 === n ? 0 : i + 1]; if ((a[1] <= yc) !== (b[1] <= yc)) xs.push(a[0] + (yc - a[1]) * (b[0] - a[0]) / (b[1] - a[1])); }
+        xs.sort((p, q) => p - q);
+        for (let k = 0; k + 1 < xs.length; k += 2) for (let x = Math.max(0, Math.ceil(xs[k] - 0.5)), xe = Math.min(w - 1, Math.floor(xs[k + 1] - 0.5)); x <= xe; x++) { if (fn ? !d(x, y) : BAY[(y & 3) * 4 + (x & 3)] >= lim) continue; const i = y * w + x; if (over === undefined || over.includes(g[i])) g[i] = col; }
+      }
+    }
+    stroke(pts, ws, col, over, d) {      // a line along the points whose width goes through the numbers of ws (design units; it can taper to a point)
+      const n = pts.length, L = [], R = [], cum = [0]; let tot = 0; for (let i = 1; i < n; i++) { tot += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); cum.push(tot); }
+      for (let i = 0; i < n; i++) {
+        const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, f = (tot ? cum[i] / tot : 0) * (ws.length - 1), k = Math.min(ws.length - 2, Math.floor(f)), wd = (ws.length === 1 ? ws[0] : lerp(ws[k], ws[k + 1], f - k)) / 2;
+        L.push([pts[i][0] - dy / l * wd, pts[i][1] + dx / l * wd]); R.push([pts[i][0] + dy / l * wd, pts[i][1] - dx / l * wd]);
+      }
+      this.poly(L.concat(R.reverse()), col, over, d);
+    }
+    pl(pts, col, over) {      // a 1 px line through the points
+      const q = pts.map(a => this.tr(a)); for (let i = 0; i + 1 < q.length; i++) { const a = q[i], b = q[i + 1], m = Math.ceil(Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]))) || 1; for (let k = 0; k <= m; k++) { const x = Math.round(a[0] + (b[0] - a[0]) * k / m), y = Math.round(a[1] + (b[1] - a[1]) * k / m); if (x < 0 || y < 0 || x >= this.w || y >= this.h) continue; const j = y * this.w + x; if (over === undefined || over.includes(this.g[j])) this.g[j] = col; } }
+    }
+  }
+  // ---- the colours: skin = deep shade mid light hi; hair = ink dark shade mid light hi
+  const SKIN = { sy: ['#8a4e46', '#bc7864', '#e0a083', '#f4c5a6', '#fddcc2'].map(C), meg: ['#7a5a5e', '#ab8884', '#d3b4a6', '#ead2c4', '#f7e8de'].map(C) };
+  const HAIR = { sy: ['#3a1a2c', '#7e4660', '#bb7486', '#e49aaa', '#f8c4d0', '#fee6ea'].map(C), meg: ['#04030a', '#0c0a18', '#141228', '#222046', '#3e3e72', '#7070aa'].map(C) };
+  const INK = C('#0a0610'), WHITE = C('#fff8f0'), TEARC = C('#cfe8f4'), TEARH = C('#ffffff'), TEETH = C('#f4eee8'), TEETHS = C('#c9bfc0'), MOUTH = C('#2a0a12'), TONGUE = C('#b04a58'), TONGUEH = C('#dc7884');
+  const IRIS = { suk: ['#5c0c18', '#c42234', '#f0585c'], yuji: ['#3a200c', '#8a5428', '#d49648'], meg: ['#08121e', '#1c3a52', '#4a7e94'] };
+  // ---- the looks: the head (the right half from the top to the chin: dx, dy from the eyes), the ears, the lips, the eyes, the brows
+  const ST = {
+    sy: { skin: SKIN.sy, hair: HAIR.sy, head: [[0, -62], [27, -60], [42, -51], [49, -36], [51, -12], [50, 12], [47, 32], [40, 50], [30, 62], [16, 69], [0, 71]], ear: [55, 3, 7, 15], lipU: C('#b9665a'), lipL: C('#d4806f'), lipLine: C('#5a2630'), nose: 1, socket: 0.5 },
+    meg: { skin: SKIN.meg, hair: HAIR.meg, head: [[0, -62], [25, -60], [39, -51], [45, -36], [47, -12], [46, 12], [42, 32], [34, 52], [22, 65], [9, 73], [0, 75]], ear: [51, 4, 6, 13], lipU: C('#a8766f'), lipL: C('#c68e86'), lipLine: C('#4a2a34'), nose: 0.85, socket: 0.9 },
+  };
+  const EYE = {
+    suk: { x0: 13, w: 31, h: 6.2, tilt: 3.6, ir: 7.0, pup: 'slit', pr: 1.5, ink: 2.4, lashes: 2, lash: 5, wing: 5 },
+    yuji: { x0: 13, w: 31, h: 10, tilt: -0.4, ir: 8.8, pup: 'round', pr: 3.2, ink: 2.6, lashes: 2, lash: 4, wing: 2.4 },
+    meg: { x0: 12, w: 29, h: 7.6, tilt: 1.8, ir: 7.6, pup: 'round', pr: 3.5, ink: 2.2, lashes: 3, lash: 7, wing: 4 },
+  };
+  const BROW = {      // the centre line of a brow (dx, dy from the eyes: the inner end first) and its widths
+    suk: { pts: [[9, -15], [21, -21], [34, -24], [48, -22]], w: [3.4, 2.8, 1.0] },
+    yuji: { pts: [[8, -19], [19, -25], [33, -26], [47, -20]], w: [5, 4.6, 2.6] },
+    meg: { pts: [[9, -16], [21, -21], [34, -22], [48, -17]], w: [2.8, 2.4, 1.0] },
+  };
+  const mixO = (a, b, t) => { const o = {}; for (const k in a) o[k] = typeof a[k] === 'number' ? lerp(a[k], b[k], t) : t < 0.5 ? a[k] : b[k]; return o; };
+  const mixB = (a, b, t) => ({ pts: a.pts.map((q, i) => [lerp(q[0], b.pts[i][0], t), lerp(q[1], b.pts[i][1], t)]), w: a.w.map((v, i) => lerp(v, b.w[i], t)) });
+  const Q = (dx, dy) => [CX + dx, EY + dy], mid2 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t)];
+  // ---- the hair: a spike = base left, base right, tip, bend; filled, shaded on its right half, lit along its left edge, with strands, outlined
+  function spike(p, Hc, b0, b1, tip, bend) {
+    const mid = mid2(b0, b1, 0.5), nx = -(tip[1] - mid[1]), ny = tip[0] - mid[0], nl = Math.hypot(nx, ny) || 1, bd = bend || 0, bx = nx / nl * bd, by = ny / nl * bd;
+    const cL = [lerp(b0[0], tip[0], 0.55) + bx, lerp(b0[1], tip[1], 0.55) + by], cR = [lerp(b1[0], tip[0], 0.55) + bx, lerp(b1[1], tip[1], 0.55) + by], cM = [lerp(mid[0], tip[0], 0.55) + bx, lerp(mid[1], tip[1], 0.55) + by];
+    const left = spl([b0, cL, tip], false, 5), right = spl([tip, cR, b1], false, 5), outline = left.concat(right), centre = spl([mid, cM, tip], false, 5);
+    p.poly(outline, Hc[3]); p.poly(right.concat([mid]), Hc[2], [Hc[3]]); p.poly(left.slice(0, Math.ceil(left.length * 0.8)).concat(spl([mid2(tip, mid, 0.3), mid2(b0, mid, 0.5)], false, 2)), Hc[4], [Hc[3]]);
+    p.pl(centre.slice(2, -3), Hc[2], [Hc[3], Hc[4]]); p.pl(outline, Hc[0]);      // (the outline is open at the base: the spike grows out of the hair)
+  }
+  const SPY = { back: [[[-62, -18], [-60, -46], [-80, -22], -5], [[-60, -46], [-46, -70], [-82, -76], 6], [[-48, -70], [-24, -86], [-54, -112], -8], [[-26, -86], [2, -92], [-12, -124], 6], [[0, -92], [28, -86], [20, -122], -6], [[26, -86], [50, -70], [56, -108], 8], [[48, -70], [61, -46], [86, -72], -6], [[60, -46], [62, -18], [80, -20], 5]],
+    crown: [[[-58, -48], [-40, -72], [-66, -92], -5], [[-44, -72], [-20, -82], [-42, -108], 6], [[-22, -82], [4, -86], [-10, -114], -4], [[2, -86], [28, -82], [18, -112], 5], [[26, -82], [48, -70], [44, -102], -6], [[46, -70], [60, -50], [74, -84], 5]],
+    front: [[[-56, -36], [-34, -58], [-56, -10], 6], [[-38, -58], [-14, -62], [-24, -30], -4], [[-16, -62], [8, -62], [-2, -34], 3], [[4, -62], [30, -58], [18, -26], -5], [[26, -58], [52, -44], [46, -16], 5], [[58, -24], [50, -4], [54, 16], 0], [[-58, -24], [-50, -4], [-54, 18], 0]] };
+  const SPM = { back: [[[-60, -36], [-50, -66], [-84, -80], 5], [[-52, -66], [-30, -84], [-58, -112], -4], [[-32, -84], [-8, -92], [-32, -122], 6], [[-10, -92], [14, -92], [2, -126], 0], [[12, -92], [36, -84], [36, -118], -6], [[34, -84], [54, -64], [64, -104], 4], [[52, -66], [60, -36], [86, -78], -5]],
+    crown: [[[-52, -50], [-34, -74], [-58, -98], -4], [[-36, -74], [-12, -86], [-28, -114], 5], [[-14, -86], [12, -88], [0, -118], -3], [[10, -88], [34, -80], [28, -112], 5], [[32, -80], [54, -62], [62, -96], -5]],
+    front: [[[-52, -34], [-34, -56], [-44, -4], 3], [[-36, -56], [-14, -60], [-24, 2], 0], [[-16, -60], [10, -60], [-4, 10], 0], [[6, -60], [30, -56], [14, -6], 0], [[26, -56], [50, -40], [40, -14], -3], [[54, -30], [48, -8], [52, 28], 0], [[-54, -30], [-48, -8], [-50, 26], 0]] };
+  function hairBack(p, st, ms) {
+    const Hc = st.hair, back = ms === 'sy' ? SPY.back : SPM.back, top = ms === 'sy' ? 88 : 92;
+    p.poly(spl([Q(-62, -10), Q(-66, -34), Q(-62, -58), Q(-48, -top + 12), Q(-24, -top + 2), Q(0, -top), Q(24, -top + 2), Q(48, -top + 12), Q(62, -58), Q(66, -34), Q(62, -10)], false, 5).concat([Q(40, 10), Q(-40, 10)]), Hc[1]);
+    for (const b of back) spike(p, Hc, Q(b[0][0], b[0][1]), Q(b[1][0], b[1][1]), Q(b[2][0], b[2][1]), b[3]);
+  }
+  function hairFront(p, st, ms, o) {
+    const Hc = st.hair, fr = ms === 'sy' ? SPY.front : SPM.front, cr = ms === 'sy' ? SPY.crown : SPM.crown, hl = o.hair || 0;
+    const line = [Q(-54, -26), Q(-48, -44), Q(-30, -54), Q(0, -58), Q(30, -54), Q(48, -44), Q(54, -26)];
+    p.poly(spl([Q(-60, -22), Q(-66, -42), Q(-60, -64), Q(-44, -80), Q(-22, -90), Q(0, -93), Q(22, -90), Q(44, -80), Q(60, -64), Q(66, -42), Q(60, -22)], false, 5).concat(spl(line, false, 5).reverse()), Hc[3]);
+    for (const b of cr) spike(p, Hc, Q(b[0][0], b[0][1]), Q(b[1][0], b[1][1]), Q(b[2][0], b[2][1]), b[3]);
+    const S = st.skin; for (const b of fr) { const lo = ms === 'meg' && hl > 0 && Math.abs(b[2][0]) < 30 ? hl * 32 : 0; p.poly([Q(b[0][0] + 2, b[0][1] + 3), Q(b[1][0] + 3, b[1][1] + 4), Q(b[2][0] + 3, b[2][1] + lo + 5)], S[1], [S[2], S[3]], 0.7); }
+    for (const b of fr) { const lo = ms === 'meg' && hl > 0 && Math.abs(b[2][0]) < 30 ? hl * 32 : 0; spike(p, Hc, Q(b[0][0], b[0][1]), Q(b[1][0], b[1][1]), Q(b[2][0], b[2][1] + lo), b[3]); }
+  }
+  // ---- one eye (s = -1: the left one on the picture, +1: the right one); e = the numbers of the eye
+  function eyeAt(p, s, e, st) {
+    const X = u => CX + s * (e.x0 + u), Y = v => e.y + v, N = 18, up = [], lo = [], lid = e.lid, S = st.skin, base = t => 2.4 - 1.3 * t - e.tilt * t;
+    const hu = e.h * (lid >= 0 ? 1 - lid : 1 - 0.5 * lid), hl = e.h * 0.5 * (lid >= 0 ? 1 - 0.55 * lid : 1 - 0.25 * lid);
+    for (let i = 0; i <= N; i++) { const t = i / N, bt = base(t); up.push([X(t * e.w), Y(bt - hu * Math.pow(Math.sin(Math.PI * Math.pow(t, 0.76)), 0.85))]); lo.push([X(t * e.w), Y(bt + hl * Math.pow(Math.sin(Math.PI * t), 0.9))]); }
+    const scl = C(e.scl || '#f2ece4'), scl2 = C(e.scl2 || '#cdbfbb'), closed = lid > 0.93, so = e.socket || 0;
+    if (so > 0.05) p.poly(up.map(q => [q[0], q[1] - 1.5]).concat(up.slice().reverse().map(q => [q[0] + s * 1.5, q[1] - e.h * 0.9 * so - 5])), S[1], [S[2]]);      // (the shadow of the brow bone over the lid)
+    if (!closed) {
+      p.poly(up.concat(lo.slice().reverse()), scl);
+      const band = up.concat(up.slice().reverse().map(q => [q[0], q[1] + Math.max(1.6, hu * 0.32)])); p.poly(band, scl2, [scl]);
+      const ic = [X(e.w * 0.5) + (e.look ? e.look[0] : 0), Y(-0.06 * e.h) + (e.look ? e.look[1] : 0)], r = e.ir, all = [scl, scl2, e.iD, e.iM, e.iL, e.pupC];
+      p.poly(elp(ic[0], ic[1], r, r * 1.04), e.iD, all); p.poly(elp(ic[0], ic[1] + 0.8, r * 0.82, r * 0.84), e.iL, all); p.poly(elp(ic[0], ic[1] - 0.5, r * 0.82, r * 0.7), e.iM, all);
+      if (e.pup === 'slit') p.poly(elp(ic[0], ic[1], Math.max(0.9, e.pr * 0.55), r * 0.9), e.pupC, all); else p.poly(elp(ic[0], ic[1], e.pr, e.pr * 1.04), e.pupC, all);
+      const wi = e.hi === undefined ? 1 : e.hi; if (wi) { p.poly(elp(ic[0] - r * 0.36, ic[1] - r * 0.38, r * 0.2, r * 0.22, 0, 12), WHITE, all); p.poly(elp(ic[0] + r * 0.32, ic[1] + r * 0.36, r * 0.1, r * 0.1, 0, 8), WHITE, all); }
+      if (p.sc > 3) {      // a big eye: the fibres of the iris, the dark ring, a wet light, the veins in the white
+        const rr = i => c4R(i, 71);
+        for (let k = 0; k < 64; k++) { const a = k / 64 * Math.PI * 2 + rr(k) * 0.08, r0 = r * (0.34 + 0.14 * rr(k + 100)), r1 = r * (0.74 + 0.16 * rr(k + 200)); p.pl([[ic[0] + Math.cos(a) * r0, ic[1] + Math.sin(a) * r0 * 1.02], [ic[0] + Math.cos(a) * r1, ic[1] + Math.sin(a) * r1 * 1.02]], k % 3 ? e.iL : e.iD, [e.iM]); }
+        p.poly(elp(ic[0], ic[1], r * 0.6, r * 0.6, 0, 28), e.iD, [e.iM, e.iL], 0.4); p.poly(elp(ic[0], ic[1], e.pr * 1.25, e.pr * 1.3, 0, 22), e.pupC, [e.iM, e.iL, e.iD]);
+        if (e.veins) for (const [u0, v0, u1, v1] of [[0.04, 0.2, 0.3, 0.1], [0.06, 0.5, 0.26, 0.55], [0.96, 0.15, 0.74, 0.1], [0.97, 0.45, 0.78, 0.5], [0.9, 0.7, 0.72, 0.62]]) p.stroke(spl([[X(e.w * u0), Y(e.h * v0 * 0.5)], [X(e.w * (u0 + u1) / 2), Y(e.h * (v0 + v1) * 0.25 + 1)], [X(e.w * u1), Y(e.h * v1 * 0.5)]], false, 4), [0.5 * e.veins, 0.2], C('#c4585c'), [scl, scl2]);
+        if (e.refl) { const fx2 = ic[0], fy2 = ic[1] + r * 0.36, fr = r * 0.52, io = [e.iM, e.iL, e.iD, e.pupC], hc = e.refl === 2 ? C('#14122a') : C('#e8909e'), sk = C('#e8c9bd'), skd = C('#c8a096');
+          p.poly(elp(fx2, fy2, fr, fr * 1.05, 0, 20), skd, io); p.poly(elp(fx2 - 0.5, fy2 - 0.3, fr * 0.9, fr, 0, 20), sk, [skd]); p.poly(spl([[fx2 - fr * 1.02, fy2 - fr * 0.2], [fx2 - fr * 0.8, fy2 - fr * 0.9], [fx2, fy2 - fr * 1.15], [fx2 + fr * 0.8, fy2 - fr * 0.9], [fx2 + fr * 1.02, fy2 - fr * 0.2], [fx2 + fr * 0.4, fy2 - fr * 0.55], [fx2 - fr * 0.4, fy2 - fr * 0.5]], false, 4), hc, [sk, skd, e.iM, e.iL, e.iD, e.pupC]);
+          for (const sx of [-1, 1]) p.poly(elp(fx2 + sx * fr * 0.38, fy2 - fr * 0.08, fr * 0.14, fr * 0.1, 0, 8), C('#ff2a3c'), [sk]); p.stroke(spl([[fx2 - fr * 0.55, fy2 + fr * 0.38], [fx2, fy2 + fr * 0.62], [fx2 + fr * 0.55, fy2 + fr * 0.38]], false, 4), [fr * 0.2, fr * 0.2], C('#fff4ee'), [sk]); }
+      }
+      p.poly(band, INK, [e.iM, e.iL], 0.45);      // (the lid shadows the eye)
+      p.stroke(lo.slice(2), [0.6, 1.0, 1.0, 0.6], C(e.lowC || '#8a5a58'), undefined, 0.9);
+    }
+    const ink = e.ink * (closed ? 0.8 : 1), lidPts = closed ? lo.map((q, i) => [q[0], q[1] + 1.2 * Math.sin(Math.PI * i / N)]) : up;
+    p.stroke(lidPts.map(q => [q[0], q[1] - 0.6]), [ink * 0.55, ink * 0.8, ink, ink * 0.9, ink * 0.8], INK);
+    const ot = lidPts[N], wing = spl([lidPts[N - 3], lidPts[N], [ot[0] + s * e.wing * 0.7, ot[1] - e.wing * 0.18], [ot[0] + s * e.wing * 1.5, ot[1] - e.wing * 0.5]], false, 4); p.stroke(wing, [ink * 0.9, ink * 0.5, 0.4], INK);
+    for (let k = 0; k < e.lashes; k++) { const t = 0.62 + 0.34 * k / Math.max(1, e.lashes - 1), i = Math.round(t * N), a = lidPts[i], l = e.lash * (0.75 + 0.35 * Math.sin(Math.PI * (k + 0.5) / e.lashes)); p.stroke([a, [a[0] + s * l * 0.5, a[1] - l * 0.35], [a[0] + s * l * 0.95, a[1] - l * 0.2 - 1]], [1.4, 0.9, 0.3], INK); }
+    if (!closed) { p.stroke(up.map(q => [q[0] + s * 0.4, q[1] - e.h * 0.62 - 3]).slice(1, N - 1), [0.5, 1.0, 1.0, 0.5], S[1], [S[2], S[3]], 0.8); p.poly(elp(X(0.8), Y(2.2), 1.4, 1.1, 0, 8), C('#d98a86'), [scl, S[2], S[3]]); }
+    return { up, lo };
+  }
+  const ms2 = who => who === 'meg' ? 'meg' : 'sy';
+  // ---- the brows (bw: worry = the inner end up, bf: anger = the inner end down and in, br: raised)
+  function brow(p, s, who, o, st, ey) {
+    const B = who === 'meg' ? BROW.meg : mixB(BROW.suk, BROW.yuji, ey), bw = o.bw || 0, bf = o.bf || 0, br = o.br || 0, n = B.pts.length;
+    const pts = B.pts.map((q, i) => { const k = 1 - i / (n - 1); return [CX + s * (q[0] - bf * 0.3 * k), EY + q[1] - br - bw * k + bf * 0.9 * k]; }), c = spl(pts, false, 5);
+    const bc = ms2(who) === 'meg' ? st.hair[1] : C('#6a3a44'); p.stroke(c, B.w, bc); if (who !== 'meg' && ey > 0.5) p.stroke(c.map(q => [q[0], q[1] - B.w[0] * 0.22]), [1.1, 1.1, 0.6], C('#94545e'), [bc]);
+  }
+  // ---- the mouth: m = 'closed' 'slack' 'smirk' 'sad' (shut), 'smile' (a wide grin with teeth), 'scream' / 'horror' (open: mo = how far, 0 - 1)
+  const MY = 43;
+  function mouth(p, st, o) {
+    const m = o.m || 'closed', S = st.skin, U = st.lipU, L = st.lipL, LN = st.lipLine, mo = o.mo === undefined ? 1 : o.mo, P = (dx, dy) => Q(dx, MY + dy), rev = a => a.slice().reverse();
+    if (m === 'smile' || m === 'scream' || m === 'horror') {
+      const w = m === 'smile' ? 27 : m === 'scream' ? (o.mw || 22) : 17, op = m === 'smile' ? 1 : mo;
+      const top = m === 'smile' ? spl([P(-w, -7), P(-15, -1), P(0, 1), P(15, -1), P(w, -7)], false, 6) : spl([P(-w, -9 * op), P(-w * 0.55, -14 * op), P(0, -16 * op), P(w * 0.55, -14 * op), P(w, -9 * op)], false, 6);
+      const bot = m === 'smile' ? spl([P(w, -6), P(18, 9), P(0, 14), P(-18, 9), P(-w, -6)], false, 6) : spl([P(w, -8 * op), P(w * 0.9, 8 * op), P(w * 0.45, 18 * op), P(0, 21 * op), P(-w * 0.45, 18 * op), P(-w * 0.9, 8 * op), P(-w, -8 * op)], false, 6);
+      p.poly(top.concat(bot), MOUTH);
+      const th = x => (m === 'smile' ? 6.5 : 7 * op) * (1 - Math.pow(x / (w + 1), 2)), tt = top.filter(q => Math.abs(q[0] - CX) < w - 2);
+      p.poly(tt.concat(rev(tt).map(q => [q[0], q[1] + th(q[0] - CX)])), TEETH);
+      for (let x = -w + 4; x < w - 3; x += 4.6) { const q = tt.reduce((a, b) => Math.abs(b[0] - (CX + x)) < Math.abs(a[0] - (CX + x)) ? b : a); p.pl([[q[0], q[1] + 0.5], [q[0], q[1] + th(x) - 0.5]], TEETHS); }
+      const bt = bot.filter(q => Math.abs(q[0] - CX) < w * 0.8 && q[1] > EY + MY + (m === 'smile' ? 5 : 3)); if (bt.length > 3 && op > 0.4) p.poly(bt.concat(rev(bt).map(q => [q[0], q[1] - 3.4 * op])), TEETH, [MOUTH]);
+      const tg = elp(CX, EY + MY + (m === 'smile' ? 10 : 12 * op), (m === 'smile' ? 11 : 12) * 0.9, 3.6 + 2.6 * op, 0, 16); p.poly(tg, TONGUE, [MOUTH]); p.poly(elp(CX - 2, EY + MY + (m === 'smile' ? 9 : 10 * op), 6, 1.6, 0, 10), TONGUEH, [TONGUE]);
+      p.poly(top.map(q => [q[0], q[1] - 0.5]).concat(rev(top).map(q => [q[0], q[1] - 3.4])), U, [S[2], S[1], S[3]]); p.poly(bot.map(q => [q[0], q[1] + 0.5]).concat(rev(bot).map(q => [q[0], q[1] + 4.6])), L, [S[2], S[1], S[3]]);
+      p.stroke(top, [0.8, 1.4, 0.8], LN); p.stroke(bot, [0.8, 1.4, 0.8], LN, undefined, 0.8);
+      if (m === 'smile') for (const s of [-1, 1]) p.stroke(spl([P(s * 27, -6), P(s * 31, -10), P(s * 33.5, -15)], false, 4), [1.4, 0.5], LN);
+      return;
+    }
+    const sm = m === 'smirk', sd = m === 'sad', cL = sm ? 0.8 : sd ? 2.6 : 0.8, cR = sm ? -4.2 : sd ? 2.6 : 0.8;
+    const line = spl([P(-18, cL), P(-9, (cL + 2.2) / 2 + 0.4), P(0, 2.2), P(9, (cR + 2.2) / 2 + 0.4), P(18, cR)], false, 6);
+    p.poly(spl([P(-17, cL - 0.6), P(-8, -2.4), P(-3, -3.8), P(0, -2.6), P(3, -3.8), P(8, -2.4 + cR * 0.3), P(17, cR - 0.6)], false, 4).concat(rev(line)), U, [S[2], S[1], S[3]]);
+    p.poly(line.concat(spl([P(17, cR + 0.6), P(10, 4.8 + cR * 0.3 - (sd ? 1.5 : 0)), P(0, 7.6 - (sd ? 1.6 : 0)), P(-10, 4.8 + cL * 0.3 - (sd ? 1.5 : 0)), P(-17, cL + 0.6)], false, 4)), L, [S[2], S[1], S[3]]);
+    p.stroke(line, [0.8, 1.8, 0.8], LN); p.poly(elp(CX - 3, EY + MY + 4.6, 4.5, 1, 0, 10), S[4], [L]); p.poly(elp(CX, EY + MY + 11, 9, 2.2, 0, 14), S[1], [S[2]]);
+    if (sm) { p.stroke(spl([P(19, cR + 1), P(22, cR - 1), P(23, cR - 4)], false, 4), [1.2, 0.4], LN); p.poly([P(13, cR + 2.4), P(16.4, cR + 1.6), P(14.8, cR + 5)], TEETH, [L, U]); }      // (a fang shows at the raised corner)
+    if (sd) for (const s of [-1, 1]) p.stroke(spl([P(s * 6, 13), P(s * 3, 15.5), P(0, 14.4)], false, 4), [0.8, 0.8], S[1], [S[2]]);
+  }
+  // ---- the marks of Sukuna: the band across the nose, a mark on each cheek, two on the forehead (mk: 0 - 1 how strong; they fade away)
+  function marks(p, mk) {
+    if (mk < 0.12) return; const d = mk >= 0.98 ? undefined : mk, wk = 0.55 + 0.45 * mk;
+    p.stroke(spl([Q(-47, 12.5), Q(-30, 9.5), Q(-12, 8.8), Q(0, 9.2), Q(12, 8.8), Q(30, 9.5), Q(47, 12.5)], false, 5), [1.6 * wk, 4.6 * wk, 4.2 * wk, 4.6 * wk, 1.6 * wk], INK, undefined, d);
+    for (const s of [-1, 1]) { p.stroke(spl([Q(s * 34, 25), Q(s * 40, 34), Q(s * 43, 47)], false, 4), [3 * wk, 2 * wk, 0.5], INK, undefined, d); p.stroke([Q(s * 3, -50), Q(s * 3, -38)], [1.8 * wk, 0.8], INK, undefined, d); }
+  }
+  // ---- tears (0 - 1: how long the streaks are), sweat drops
+  function fx(p, o, eyes) {
+    if (o.tear) for (let i = 0; i < eyes.length; i++) { const s = i ? 1 : -1, lo = eyes[i].lo, a = lo[11], len = 6 + 34 * o.tear; p.stroke(lo.slice(2, 16).map(q => [q[0], q[1] + 1.2]), [0.6, 1.8, 1.8, 0.6], TEARC); const pts = spl([[a[0], a[1] + 1], [a[0] + s * 1.5, a[1] + len * 0.45], [a[0] + s * 0.5, a[1] + len]], false, 5); p.stroke(pts, [2.4, 2, 2.4], TEARC); p.stroke(pts.map(q => [q[0] - 0.6, q[1]]).slice(1, -2), [0.9, 0.9], TEARH); p.poly(elp(pts[pts.length - 1][0], pts[pts.length - 1][1] + 1, 1.8, 2.6, 0, 10), TEARC); }
+    if (o.sweat) for (const [dx, dy] of [[-44, -46], [47, -36], [34, -54], [-30, -58]]) { const x = CX + dx, y = EY + dy + (o.sweat > 1 ? (o.sweat - 1) * 14 : 0); p.poly([[x, y - 5.5], [x + 3, y + 0.5], [x, y + 3.6], [x - 3, y + 0.5]], TEARC); p.poly(elp(x - 1, y + 0.6, 0.9, 1.3, 0, 8), TEARH); }
+  }
+  function fingerAt(p, x0, y0, x1, y1, w0, w1, nonail, ramp) {      // a finger of Sukuna's hand from (x0, y0) to its tip (x1, y1) with a nail and two creases at the joints (the painter must be in pixel coordinates)
+    const H2 = ramp || SKIN.sy, a = Math.atan2(y1 - y0, x1 - x0), nx = -Math.sin(a), ny = Math.cos(a);
+    p.stroke([[x0, y0], [x1, y1]], [w0 + 3, w1 + 3], H2[0]); p.stroke([[x0 + nx, y0 + ny], [x1 + nx, y1 + ny]], [w0, w1], H2[1]); p.stroke([[x0 - nx * w0 * 0.18, y0 - ny * w0 * 0.18], [x1 - nx * w1 * 0.18, y1 - ny * w1 * 0.18]], [w0 * 0.7, w1 * 0.7], H2[2]); p.stroke([[x0 + (x1 - x0) * 0.2 - nx * w0 * 0.34, y0 + (y1 - y0) * 0.2 - ny * w0 * 0.34], [x1 - (x1 - x0) * 0.06 - nx * w1 * 0.34, y1 - (y1 - y0) * 0.06 - ny * w1 * 0.34]], [4, 3], H2[3]);
+    for (const t of [0.4, 0.7]) { const cx2 = lerp(x0, x1, t), cy2 = lerp(y0, y1, t), wd = lerp(w0, w1, t) * 0.36; p.pl([[cx2 - nx * wd, cy2 - ny * wd], [cx2 + nx * wd, cy2 + ny * wd]], H2[0], [H2[1], H2[2], H2[3]]); }
+    if (!nonail) { p.poly(elp(x1 - Math.cos(a) * 3, y1 - Math.sin(a) * 3, w1 * 0.62, w1 * 0.5, a), H2[0]); p.poly(elp(x1 - Math.cos(a) * 3, y1 - Math.sin(a) * 3, w1 * 0.52, w1 * 0.4, a), C('#f0d8cc')); }
+    else p.poly(elp(x1, y1, w1 * 0.5, w1 * 0.5, a, 16), H2[1]);
+  }
+  // ---- a big eye for the close-ups of the eyes (the eye on the left of the picture, the nose on the right): o.who 'meg' | 'yuji', o.lid (0 normal, < 0 wide), o.look [x, y], o.pr (the pupil), o.red (0 - 1), o.veins, o.refl (a grin in the iris),
+  // o.tear, o.sweat (0 - 2), o.bw / o.bf / o.br (the brow), o.fp (the fingers of Sukuna on his cheek: 0 - 1 how far they are in)
+  function eyeEcu(o) {
+    const who = o.who === 'yuji' ? 'yuji' : 'meg', st = ST[who === 'meg' ? 'meg' : 'sy'], S = st.skin, ek = who === 'meg' ? EYE.meg : EYE.yuji, EW = 360, EH = 250, SE = 6.2, ir = irisOf(who, o.red || 0);
+    const p = new Cv(EW, EH, SE, EW * 0.5 - 6 + (ek.x0 + ek.w * 0.5) * SE, 150); p.g.fill(S[2]);
+    const e = Object.assign({}, ek, { y: EY, lid: o.lid || 0, look: o.look || [0, 0], iD: ir[0], iM: ir[1], iL: ir[2], pupC: C('#10040a'), socket: who === 'meg' ? 0.9 : 0.5, pr: o.pr === undefined ? ek.pr : o.pr, veins: o.veins || 0, refl: o.refl || 0, ink: ek.ink * 1.2, hi: 1 });
+    p.poly([Q(-8, -44), Q(-2, -44), Q(3, 44), Q(-9, 44)], S[1], [S[2]]); p.poly([Q(-12, -40), Q(-9, -40), Q(-11, 40), Q(-14, 40)], S[3], [S[2]]);      // (the side of the nose: a shadow, a light)
+    p.poly(elp(CX - 30, EY + 16, 16, 5, 0.1), S[3], [S[2]]); p.poly(elp(CX - 24, EY + 28, 30, 12), S[1], [S[2]], 0.5);
+    const ey = eyeAt(p, -1, e, st), bw = o.bw || 0, bf = o.bf || 0, br = o.br || 0, B = who === 'meg' ? BROW.meg : BROW.yuji, n = B.pts.length;
+    const bp = spl(B.pts.map((q, i) => { const k = 1 - i / (n - 1); return [CX - (q[0] - bf * 0.3 * k) - 4, EY + q[1] - br - bw * k + bf * 0.9 * k]; }), false, 6), bc = who === 'meg' ? st.hair[1] : C('#6a3a44'), bh = who === 'meg' ? st.hair[3] : C('#a4606a');
+    if (br > 1) for (let k = 0; k < 3; k++) p.stroke(spl([Q(-14 - k, -34 - br - k * 5), Q(-26, -37 - br - k * 5.5), Q(-40 + k * 2, -34 - br - k * 5)], false, 4), [0.3, 0.9, 0.3], S[1], [S[2]]);
+    p.stroke(bp, B.w.map(v => v * 1.15), bc);
+    for (let k = 0; k < 46; k++) { const t = k / 45, i = Math.min(bp.length - 2, Math.floor(t * (bp.length - 1))), a = bp[i], b = bp[i + 1], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, wd = lerp(B.w[0], B.w[2], t), sd = (c4R(k, 5) - 0.5) * wd * 0.9; p.pl([[a[0] - dy / l * sd, a[1] + dx / l * sd], [a[0] - dy / l * sd - dx / l * (3 + 3 * c4R(k, 6)), a[1] + dx / l * sd - dy / l * (3 + 3 * c4R(k, 6)) - 1]], k % 3 ? bh : bc, [bc, S[2], S[1]]); }
+    if (o.tear) { const a = ey.lo[10], len = 4 + 30 * o.tear; p.stroke(ey.lo.slice(1, 17).map(q => [q[0], q[1] + 1.4]), [0.6, 1.8, 1.8, 0.6], TEARC); const pts = spl([[a[0], a[1] + 1], [a[0] - 1.2, a[1] + len * 0.5], [a[0] - 0.3, a[1] + len]], false, 6); p.stroke(pts, [2.6, 2.2, 3], TEARC); p.stroke(pts.map(q => [q[0] - 0.8, q[1]]).slice(2, -3), [0.9, 0.9], TEARH); p.poly(elp(pts[pts.length - 1][0], pts[pts.length - 1][1] + 2, 2.2, 3.2, 0, 12), TEARC); }
+    if (o.sweat) for (const [dx, dy] of [[-42, -30], [-24, -38]]) { const x = CX + dx, y = EY + dy + (o.sweat > 1 ? (o.sweat - 1) * 16 : 0); p.poly([[x, y - 6.5], [x + 3.6, y + 0.6], [x, y + 4.4], [x - 3.6, y + 0.6]], TEARC); p.poly(elp(x - 1.2, y + 0.8, 1.1, 1.6, 0, 8), TEARH); }
+    if (o.fp) fingers(p, o.fp);
+    return p.canvas();
+  }
+  function fingers(p, k) {      // four fingers press on the cheek from the lower right (pixel coordinates); the warm skin of Sukuna's hand
+    const sv = [p.sc, p.ox, p.oy], H2 = SKIN.sy; p.sc = 1; p.ox = CX; p.oy = EY; const d = [0.75, 0.66], pe = [0.66, -0.75], nail = C('#f0d8cc'), sl = (1 - k) * 90;
+    for (let i = 3; i >= 0; i--) {
+      const tx = 262 + 32 * i * pe[0] + d[0] * sl, ty = 214 + 32 * i * pe[1] + d[1] * sl, ex = tx + d[0] * 190, ey2 = ty + d[1] * 190, sh = (a, b, w0, w1, c) => p.stroke([[tx + pe[0] * a + d[0] * b, ty + pe[1] * a + d[1] * b], [ex + pe[0] * a, ey2 + pe[1] * a]], [w0, w1], c);
+      p.poly(elp(tx - d[0] * 8 + 2, ty - d[1] * 8 + 6, 24, 17, 0.7), SKIN.meg[1], [SKIN.meg[2], SKIN.meg[3]]);      // (the dent in the cheek)
+      sh(0, 0, 31, 34, H2[0]); sh(-1, 0, 28, 31, H2[1]); sh(-3, 0, 22, 25, H2[2]); sh(-8, 2, 6, 7, H2[3]);
+      p.poly(elp(tx + d[0] * 12, ty + d[1] * 12, 15, 11.5, 0.72), H2[0]); p.poly(elp(tx + d[0] * 13, ty + d[1] * 13, 13, 9.5, 0.72), nail); p.poly(elp(tx + d[0] * 9, ty + d[1] * 9, 7, 3, 0.72), C('#ffffff'), [nail]);
+      p.pl([[tx + 7, ty - 6], [tx + 17, ty - 2]], H2[0]);
+    }
+    p.sc = sv[0]; p.ox = sv[1]; p.oy = sv[2];
+  }
+  // ---- the lower face of Megumi with his mouth forced open: o.mo (how far open, 0 - 1), o.mw (how wide the corners are pulled), o.fin (the finger with the black nail: 0 - 1 how far in), o.tear, o.spit
+  function mouthEcu(o) {
+    const st = ST.meg, S = st.skin, EW = 360, EH = 250, SM = 3.9, p = new Cv(EW, EH, SM, EW * 0.5, 125 - 43 * SM), mo = o.mo === undefined ? 1 : o.mo; p.g.fill(S[2]);
+    p.poly([Q(-60, 14), Q(-8, 14), Q(-8, 120), Q(-60, 120)], S[3], [S[2]], 0.3); p.poly([Q(34, 14), Q(70, 14), Q(70, 120), Q(34, 120)], S[1], [S[2]]);      // (a light on the left, the shadow side on the right)
+    p.poly([Q(-11, 24), Q(11, 24), Q(9, 29), Q(0, 31), Q(-9, 29)], S[1], [S[2], S[3]]); for (const s of [-1, 1]) { p.poly(elp(CX + s * 5, EY + 27, 2.4, 1.6), S[0]); p.stroke(spl([Q(s * 6.5, 19), Q(s * 9.5, 22), Q(s * 8, 26.5)], false, 4), [1.4, 1.2, 0.5], s > 0 ? S[0] : S[1]); }
+    p.poly([Q(-3.5, 31), Q(3.5, 31), Q(4.5, 38), Q(-4.5, 38)], S[1], [S[2]]); p.stroke([Q(-1.2, 32), Q(-1.6, 37)], [0.8, 0.8], S[3], [S[1]]);
+    p.poly(elp(CX, EY + 54 + 8 * mo, 22, 9), S[1], [S[2]], 0.5); p.poly(elp(CX - 2, EY + 62 + 8 * mo, 11, 4.4), S[3], [S[2]]);
+    mouth(p, st, { m: 'scream', mo, mw: o.mw || 22 });
+    if (o.spit) for (const x of [-9, -2, 7, 13]) { const y0 = EY + MY - 8 * mo + 2, y1 = EY + MY + 4 * mo; p.stroke([[CX + x, y0], [CX + x + 0.8, (y0 + y1) / 2 + 2], [CX + x - 0.4, y1 + 3 * o.spit]], [0.7 * o.spit, 0.4, 0.8], TEARC, [MOUTH, TONGUE, TEETH]); }
+    if (o.tear) for (const s of [-1, 1]) { const len = 10 + 36 * o.tear; p.stroke(spl([Q(s * 40, 14), Q(s * 41, 14 + len * 0.5), Q(s * 40.4, 14 + len)], false, 5), [2.4, 2, 2.6], TEARC); p.stroke([Q(s * 40 - 0.7, 20), Q(s * 40 - 0.7, 12 + len * 0.9)], [0.8, 0.8], TEARH); }
+    const sv = [p.sc, p.ox, p.oy]; p.sc = 1; p.ox = CX; p.oy = EY;      // (Sukuna's fingers, in pixel coordinates: four on his left cheek pull the corner of the mouth out, the thumb on the right)
+    const pull = (o.mw || 22) > 24 ? 1 : 0.6; for (let i = 0; i < 4; i++) fingerAt(p, -30, 40 + i * 58, 54 + 12 * pull + (i === 1 || i === 2 ? 12 : 0), 46 + i * 56, 38, 36 - i * 2); fingerAt(p, 400, 150, 296, 146, 42, 38);
+    if (o.fin) { const fin = o.fin, tx = lerp(340, 120, fin), ty = 128, body = [C('#5a0a14'), C('#8a1220'), C('#b8202e'), C('#e0505c')];
+      p.poly([[tx + 30, ty - 20], [420, ty - 26], [420, ty + 26], [tx + 30, ty + 22]], body[1]); p.poly([[tx + 30, ty - 20], [420, ty - 26], [420, ty - 4], [tx + 30, ty - 2]], body[2]); p.stroke([[tx + 40, ty - 16], [380, ty - 20]], [5, 5], body[3]); p.stroke([[tx + 120, ty - 24], [tx + 120, ty + 24]], [3, 3], body[0]); p.stroke([[tx + 200, ty - 25], [tx + 200, ty + 25]], [3, 3], body[0]);
+      p.poly([[tx + 30, ty - 19], [tx - 4, ty - 14], [tx - 90, ty + 6], [tx - 4, ty + 15], [tx + 30, ty + 21]], C('#0e0a16')); p.poly([[tx + 30, ty - 19], [tx - 4, ty - 14], [tx - 80, ty + 4], [tx + 30, ty - 5]], C('#3a3050')); p.pl([[tx + 26, ty - 14], [tx - 60, ty + 2]], C('#6a5a88')); }
+    p.sc = sv[0]; p.ox = sv[1]; p.oy = sv[2];
+    return p.canvas();
+  }
+  // ---- Megumi's throat when he swallows: the jaw of Sukuna's hand under his chin, the lump (Adam's apple) goes down: o.g (0 - 1), o.strain (the tendons stand out), o.drool, o.sweat
+  function neckEcu(o) {
+    const st = ST.meg, S = st.skin, EW = 360, EH = 250, SN = 2.7, p = new Cv(EW, EH, SN, EW * 0.5, 30 - 62 * SN), g = o.g || 0; p.g.fill(C('#140a10'));
+    p.poly([Q(-32, 56), Q(32, 56), Q(38, 140), Q(-38, 140)], S[1]); p.poly([Q(-32, 56), Q(-2, 56), Q(-4, 140), Q(-38, 140)], S[2], [S[1]]);
+    p.poly(elp(CX, EY + 40, 40, 24), S[2]); p.poly(elp(CX - 6, EY + 52, 26, 8), S[3], [S[2]]);      // (the underside of his jaw)
+    p.poly([Q(-44, 56), Q(44, 56), Q(44, 62), Q(30, 72), Q(0, 76), Q(-30, 72), Q(-44, 62)], S[0], [S[1], S[2]]);      // (the shadow of the jaw on the neck)
+    if (o.strain) for (const s of [-1, 1]) { p.stroke(spl([Q(s * 26, 66), Q(s * 17, 92), Q(s * 7, 122)], false, 5), [3, 3.4, 2.6], S[0]); p.stroke(spl([Q(s * 23, 68), Q(s * 14, 92), Q(s * 4, 120)], false, 5), [1.4, 1.6, 1], S[3], [S[1], S[2]]); }
+    const ay = EY + 84 + 26 * g; p.poly(elp(CX + 1.4, ay + 2.4, 6.6, 8.6, 0.1), S[0], [S[1], S[2]], 0.6); p.poly(elp(CX, ay, 5.8, 7.8, 0.1), S[2]); p.poly(elp(CX - 1.4, ay - 1.2, 3.6, 5, 0.1), S[3]); p.poly(elp(CX - 2, ay - 2.6, 1.4, 2, 0.1), S[4], [S[3]]); p.stroke(spl([Q(-6, 84 + 26 * g + 9), Q(0, 84 + 26 * g + 10.6), Q(6, 84 + 26 * g + 9)], false, 4), [0.8, 0.8], S[0], [S[2], S[1]]);
+    p.poly([Q(-70, 118), Q(-34, 106), Q(0, 116), Q(34, 106), Q(70, 118), Q(110, 140), Q(-110, 140)], C('#26304c')); p.poly([Q(-70, 118), Q(-34, 106), Q(0, 116), Q(34, 106), Q(70, 118), Q(70, 124), Q(0, 122), Q(-70, 124)], C('#3e4a72'));
+    if (o.drool) p.stroke(spl([Q(-14, 74), Q(-13, 92), Q(-15, 108 + 14 * o.drool)], false, 5), [1.6, 1.2, 1.8], TEARC, undefined);
+    if (o.sweat) for (const [dx, dy] of [[-30, 78], [32, 92]]) { const x = CX + dx, y = EY + dy + o.sweat * 6; p.poly([[x, y - 5], [x + 3, y + 0.6], [x, y + 3.6], [x - 3, y + 0.6]], TEARC); p.poly(elp(x - 1, y + 0.6, 0.9, 1.3, 0, 8), TEARH); }
+    const sv = [p.sc, p.ox, p.oy]; p.sc = 1; p.ox = CX; p.oy = EY;      // (Sukuna's hand holds his jaw: the thumb on the left, four fingers on the right)
+    fingerAt(p, -40, 20, 112, 54, 40, 36); for (let i = 0; i < 4; i++) fingerAt(p, 420, 10 + i * 34, 252 - (i === 1 || i === 2 ? 10 : 0), 34 + i * 30, 36, 32);
+    p.sc = sv[0]; p.ox = sv[1]; p.oy = sv[2];
+    return p.canvas();
+  }
+  // ---- Megumi's head hanging: the black hair falls over his face in locks, the shadowed face and the neck show between them (o.sway: -2 .. 2, how far the tips swing)
+  function hairdownEcu(o) {
+    const Hc = HAIR.meg, S = SKIN.meg, EW = 360, EH = 250, p = new Cv(EW, EH, 0.74, 166, 157), sw = o.sway || 0; p.g.fill(C('#1c0c14'));
+    p.poly([[110, 190], [250, 190], [270, 250], [90, 250]], S[0]); p.poly([[130, 200], [230, 200], [236, 250], [124, 250]], S[1], [S[0]], 0.5);
+    p.poly([[-120, 250], [-40, 226], [100, 214], [180, 226], [260, 214], [400, 226], [480, 250], [480, 300], [-120, 300]], C('#26304c')); p.poly([[-40, 226], [100, 214], [180, 226], [260, 214], [400, 226], [400, 234], [260, 222], [180, 234], [100, 222], [-40, 234]], C('#3e4a72'));
+    p.poly([[96, 110], [264, 110], [262, 200], [180, 228], [98, 200]], S[0]);
+    p.poly(spl([[-90, -40], [-70, 60], [20, 108], [180, 122], [340, 108], [430, 60], [450, -40]], false, 5), Hc[2]); p.poly(elp(150, 64, 90, 16, -0.05), Hc[3], [Hc[2]]); p.poly(elp(132, 56, 52, 7, -0.05), Hc[4], [Hc[3]]);
+    const back = [[-60, 170, 7], [-18, 190, -7], [24, 190, 7], [86, 226, -6], [142, 206, 8], [200, 236, -7], [262, 212, 6], [322, 196, -8], [380, 188, 7], [420, 170, -7]], front = [[-30, 150, 6], [54, 168, 8], [112, 214, -7], [172, 190, 6], [232, 228, -8], [292, 186, 7], [350, 170, -6], [20, 150, 5], [400, 150, 6]];
+    for (const [x, ty, bd] of back) spike(p, Hc, [x - 38, 78], [x + 38, 82], [x + sw * (ty / 100) + (x - 180) * 0.05, ty * 1.28 + 22], bd);
+    for (const [x, ty, bd] of front) spike(p, Hc, [x - 30, 92], [x + 30, 96], [x + 6 - sw * (ty / 120) + (x - 180) * 0.04, ty * 1.25 + 16], -bd);
+    for (const [x, ty] of [[70, 290], [128, 300], [214, 306], [270, 296]]) { p.stroke(spl([[x, 150], [x + 6 + sw * 2, 220], [x + 2 + sw * 3, ty]], false, 6), [5, 3.2, 0.8], Hc[1]); p.stroke(spl([[x - 1, 156], [x + 5 + sw * 2, 220], [x + 1 + sw * 3, ty - 6]], false, 6), [1.4, 1, 0.4], Hc[4], [Hc[1]]); }
+    if (o.drop !== undefined && o.drop >= 0) { const dx = 200, dy = 224 + o.drop * 40; p.poly([[dx, dy - 7], [dx + 4, dy + 1], [dx, dy + 5], [dx - 4, dy + 1]], o.blood ? C('#b8121c') : TEARC); p.poly(elp(dx - 1.4, dy, 1.2, 1.8, 0, 8), o.blood ? C('#e8606a') : TEARH); }
+    return p.canvas();
+  }
+  // ---- Sukuna's right hand holds Megumi's jaw (three fingers across his cheek, the thumb under his chin, the little finger out to the right) and his left hand takes that little finger: o.pull (0 - 1: how far it is pulled), o.torn (1: it is off), o.blood
+  function handsEcu(o) {
+    const S = SKIN.meg, H2 = SKIN.sy, EW = 360, EH = 250, p = new Cv(EW, EH, 0.74, 165.2, 158.3), pull = o.pull || 0, tn = o.torn, FL = [C('#4a0a12'), C('#7a1018'), C('#a8202a'), C('#c8404a')], PK = [C('#a06a60'), C('#c88a78'), C('#e0a898'), C('#f0c0b0')], ST2 = o.blood ? FL : PK; p.g.fill(C('#140a10'));
+    p.poly(spl([[-20, -20], [240, -20], [232, 50], [216, 110], [186, 166], [140, 214], [80, 248], [-20, 262]], false, 5).concat([[-20, 262]]), S[2]); p.poly([[150, -20], [250, -20], [232, 50], [216, 110], [186, 166], [140, 214], [100, 240], [150, 150]], S[1], [S[2]]); p.poly(elp(60, 70, 70, 50, 0.3), S[3], [S[2]]);
+    p.stroke(spl([[240, -20], [232, 50], [216, 110], [186, 166], [140, 214], [80, 248]], false, 5), [3, 3.4, 3.4, 3, 2.4, 2], S[0]);      // (the edge of his jaw)
+    p.poly(elp(150, 140, 90, 70, 0.4), S[0], [S[1], S[2]], 0.55);      // (the shadow of the hand on his face)
+    p.poly(spl([[150, 40], [226, 30], [262, 76], [268, 150], [240, 212], [190, 220], [152, 170], [136, 100]], true, 5), H2[2]); p.poly(spl([[196, 36], [226, 30], [262, 76], [268, 150], [240, 212], [214, 214], [226, 150], [220, 80]], false, 5), H2[1], [H2[2]]); p.poly(elp(176, 78, 20, 30, 0.2), H2[3], [H2[2]]);
+    for (const [x0, y0, x1, y1] of [[160, 56, 62, 50], [150, 106, 50, 108], [160, 152, 70, 166]]) fingerAt(p, x0, y0, x1, y1, 30, 26);
+    fingerAt(p, 190, 196, 108, 232, 32, 27);      // (the thumb under his chin)
+    if (!tn) { const ex = 296 + pull * 24, ey = 128 + pull * 4; fingerAt(p, 244, 126, ex, ey, 24, 19); } else { p.poly(elp(262, 128, 9, 11), ST2[1]); p.poly(elp(260, 127, 6, 7.5), ST2[2]); if (o.blood) for (const [bx, by] of [[268, 150], [280, 168], [258, 176]]) p.poly(elp(bx, by, 2.6, 4), FL[1]); }
+    const lx = 372 + pull * 26 + (tn ? 40 : 0);      // (his left hand: the arm, the palm, the thumb above the little finger and the first finger below it)
+    p.poly(spl([[lx - 10, 20], [lx + 60, 20], [lx + 70, 230], [lx - 10, 232], [lx - 40, 160], [lx - 40, 90]], true, 5), H2[2]); p.poly([[lx + 30, 20], [lx + 60, 20], [lx + 70, 230], [lx + 30, 232]], H2[1], [H2[2]]);
+    fingerAt(p, lx - 8, 74, lx - 62, 118, 24, 19); fingerAt(p, lx - 8, 176, lx - 60, 140, 24, 19);
+    if (tn) { fingerAt(p, lx - 52, 128, lx - 118, 129, 22, 18); p.poly(elp(lx - 54, 128, 7, 10), ST2[1]); }
+    return p.canvas();
+  }
+  // ---- the finger in the pinch of his thumb and first finger, ripped off: o.red (0 - 1: it turns red), o.nl (0 - 1: the black nail grows long), o.blood
+  function fingerEcu(o) {
+    const EW = 360, EH = 250, p = new Cv(EW, EH, 0.86, 162.8, 163.7), rd = o.red || 0, nl = o.nl || 0, mix = (a, b) => C(hexMix(a, b, rd)), H2 = SKIN.sy; p.g.fill(C('#10060a'));
+    const B = [mix('#8a4e46', '#3a0810'), mix('#bc7864', '#6a0c18'), mix('#e0a083', '#a01c28'), mix('#f4c5a6', '#c83a44'), mix('#fddcc2', '#e0505c')];
+    const y = 132, x0 = 70, x1 = 236;
+    p.stroke([[x0, y], [x1, y - 3]], [58, 46], B[0]); p.stroke([[x0, y - 1], [x1, y - 4]], [54, 42], B[1]); p.stroke([[x0, y - 4], [x1, y - 7]], [44, 34], B[2]); p.stroke([[x0 + 6, y - 16], [x1 - 10, y - 20]], [8, 6], B[3]);
+    for (const t of [0.34, 0.66]) { const cx2 = lerp(x0, x1, t); p.stroke([[cx2, y - 26 + t * 6], [cx2 + 2, y + 24 - t * 6]], [2.6, 2.6], B[0]); }
+    if (rd > 0.3) for (const [vx, vy] of [[110, 120], [160, 140], [200, 118]]) p.stroke([[vx, vy], [vx + 14, vy + 4], [vx + 26, vy - 2]], [1.4, 1.4], C('#e0505a'), [B[2], B[1]]);
+    p.poly(elp(x0 - 2, y, 12, 28), o.blood ? C('#7a1018') : C('#c88a78')); p.poly(elp(x0 - 4, y - 1, 7, 20), o.blood ? C('#a8202a') : C('#e0a898')); if (o.blood) for (const [bx, by] of [[40, 170], [56, 196], [30, 214]]) p.poly(elp(bx, by, 3.4, 5), C('#7a1018'));
+    const L = 40 + nl * 130, th = 24 - nl * 6, nx0 = x1 - 2;      // (the nail: a short human one, then a long black claw)
+    if (nl < 0.2) { p.poly(elp(nx0 + 14, y - 4, 26, 20, 0), H2[0]); p.poly(elp(nx0 + 14, y - 4, 23, 17, 0), C('#e8d4cc')); p.poly(elp(nx0 + 8, y - 9, 12, 4, 0), C('#ffffff'), [C('#e8d4cc')]); }
+    else { const claw = [C('#0a0608'), C('#16101a'), C('#2c2238'), C('#4a3c5c')]; p.poly([[nx0 - 4, y - th - 4], [nx0 + L * 0.7, y - th * 0.7], [nx0 + L, y - 2 + nl * 12], [nx0 + L * 0.7, y + th * 0.7], [nx0 - 4, y + th - 2]], claw[1]); p.poly([[nx0 - 4, y - th - 4], [nx0 + L * 0.7, y - th * 0.7], [nx0 + L, y - 2 + nl * 12], [nx0 + L * 0.6, y - 2]], claw[2], [claw[1]]); p.stroke([[nx0 + 6, y - th + 3], [nx0 + L * 0.85, y - th * 0.5 + 1]], [3, 1.6], claw[3]); p.pl([[nx0 - 4, y - th - 4], [nx0 + L * 0.7, y - th * 0.7], [nx0 + L, y - 2 + nl * 12], [nx0 + L * 0.7, y + th * 0.7], [nx0 - 4, y + th - 2]], claw[0]); }
+    fingerAt(p, 150, 6, 118, 96, 38, 34, true); fingerAt(p, 150, 262, 118, 168, 38, 34, true);      // (the thumb and the first finger that hold it)
+    return p.canvas();
+  }
+  // ---- Yuji's right hand seen from his own eyes (palm to him, fingers up, the thumb on the right): the little finger is gone; o.blood (FULL): the stump bleeds, else a clean pink stump
+  function yhandEcu(o) {
+    const H2 = SKIN.sy, EW = 360, EH = 250, p = new Cv(EW, EH, 0.8, 164, 161), FL = [C('#4a0a12'), C('#7a1018'), C('#a8202a'), C('#c8404a')], PK = [C('#a06a60'), C('#c88a78'), C('#e0a898'), C('#f0c0b0')]; p.g.fill(C('#120608'));
+    for (const [x0, y0, x1, y1, w0, w1] of [[158, 210, 138, 70, 34, 27], [194, 200, 190, 36, 36, 29], [230, 210, 244, 62, 34, 27]]) fingerAt(p, x0, y0, x1, y1, w0, w1, true);
+    p.poly(spl([[120, 250], [124, 190], [140, 160], [190, 150], [244, 160], [262, 196], [268, 250]], false, 5), H2[2]); p.poly(spl([[196, 154], [244, 160], [262, 196], [268, 250], [226, 250], [230, 190]], false, 5), H2[1], [H2[2]]); p.poly(elp(170, 200, 24, 30, 0.1), H2[3], [H2[2]]);
+    fingerAt(p, 262, 214, 322, 124, 38, 29, true);      // (the thumb)
+    fingerAt(p, 126, 214, 112, 168, 30, 26, true); const st = o.blood ? FL : PK; p.poly(elp(111, 164, 14, 7), st[1]); p.poly(elp(111, 163, 10, 4.6), st[2]); if (o.blood) for (const [bx, by] of [[104, 150], [118, 150], [96, 174]]) p.poly(elp(bx, by, 2.4, 4), FL[1]);      // (the stump where the little finger was)
+    for (const [cx2, cy2, w] of [[148, 120, 11], [192, 100, 12], [244, 116, 11], [146, 160, 10], [192, 158, 11], [240, 160, 10]]) p.pl([[cx2 - w, cy2], [cx2 + w, cy2]], H2[0], [H2[1], H2[2], H2[3]]);
+    p.pl(spl([[150, 214], [190, 196], [240, 206]], false, 5), H2[0]); p.pl(spl([[158, 236], [196, 222], [250, 230]], false, 5), H2[0], [H2[1], H2[2]]);
+    return p.canvas();
+  }
+  const irisOf = (who, red) => { const b = IRIS[who === 'meg' ? 'meg' : who === 'yuji' ? 'yuji' : 'suk'], r = IRIS.suk, t = who === 'suk' ? 1 : red; return b.map((h, i) => C(hexMix(h, r[i], t))); };
+  // ---- the whole face
+  function face(o) {
+    const who = o.who || 'suk', ms = who === 'meg' ? 'meg' : 'sy', st = ST[ms], S = st.skin, p = new Cv(), lid = o.lid === undefined ? 0 : o.lid, mk = o.marks === undefined ? (who === 'suk' ? 1 : 0) : o.marks, red = o.red === undefined ? (who === 'suk' ? 1 : 0) : o.red, e2 = o.e2 || 0;
+    const hd = st.head, right = hd.map(q => Q(q[0], q[1])), left = hd.slice(1, -1).reverse().map(q => Q(-q[0], q[1])), outline = spl(right.concat(left), true, 6), n6 = outline.length;
+    hairBack(p, st, ms);
+    // the neck and the collar
+    p.poly([Q(-34, 30), Q(34, 30), Q(40, 130), Q(-40, 130)], S[1]); p.poly([Q(-34, 30), Q(2, 30), Q(2, 130), Q(-40, 130)], S[2], [S[1]]);
+    const jaw = outline.filter(q => q[1] > EY + 26 && q[1] < EY + 71); p.poly(jaw.concat(jaw.slice().reverse().map(q => [q[0], q[1] + 9])), S[0], [S[1], S[2]]);      // (the shadow of the head on the neck)
+    if (ms === 'sy') { p.poly([Q(-50, 66), Q(-24, 76), Q(0, 84), Q(24, 76), Q(50, 66), Q(100, 88), Q(120, 130), Q(-120, 130), Q(-100, 88)], C('#a8202e')); p.poly([Q(-50, 66), Q(-24, 76), Q(0, 84), Q(24, 76), Q(50, 66), Q(54, 74), Q(0, 96), Q(-54, 74)], C('#d84a52')); }
+    else p.poly([Q(-60, 62), Q(-30, 74), Q(0, 80), Q(30, 74), Q(60, 62), Q(110, 90), Q(120, 130), Q(-120, 130), Q(-110, 90)], C('#26304c'));
+    // the ears, the head and the cel shadows
+    for (const s of [-1, 1]) { const ea = st.ear; p.poly(elp(CX + s * ea[0], EY + ea[1], ea[2], ea[3], s * 0.12), S[2]); p.poly(elp(CX + s * (ea[0] - s * 0.5), EY + ea[1] + 1, ea[2] * 0.5, ea[3] * 0.6, s * 0.12), S[1], [S[2]]); p.pl(spl([Q(s * (ea[0] + ea[2] * 0.7), ea[1] - ea[3] * 0.8), Q(s * (ea[0] + ea[2]), ea[1]), Q(s * (ea[0] + ea[2] * 0.6), ea[1] + ea[3] * 0.9)], false, 4), S[0]); }
+    p.poly(outline, S[2]);
+    p.poly([Q(40, -48), Q(42, -26), Q(40, -4), Q(37, 18), Q(31, 38), Q(22, 54), Q(10, 64), Q(12, 90), Q(100, 90), Q(100, -70)], S[1], [S[2]], 0.5);
+    p.poly([Q(44, -48), Q(46, -26), Q(44, -4), Q(41, 18), Q(35, 38), Q(25, 54), Q(12, 64), Q(12, 90), Q(100, 90), Q(100, -70)], S[1], [S[2]]);      // (the shadow side: the right side of the face)
+    p.poly(elp(CX - 8, EY - 38, 20, 8), S[3], [S[2]]); p.stroke(spl([Q(-42, 6), Q(-34, 13), Q(-22, 20)], false, 4), [0.6, 3.6, 0.6], S[3], [S[2]]); p.poly(elp(CX - 2, EY + 60, 10, 4), S[3], [S[2]]);      // (the lights: forehead, cheekbone, chin)
+    p.stroke(outline.slice(Math.round(n6 * 0.1), Math.round(n6 * 0.62)), [0.5, 1.5, 1.7, 1.7, 1.3, 0.5], S[0]);      // (the dark edge of the face on the shadow side and under the chin)
+    // the nose: a soft shadow on its right side, the tip lit, the wings and the nostrils, the shadow under it
+    const nz = st.nose; p.poly([Q(4, -22), Q(7.5, -12), Q(9, 4), Q(12 * nz, 14), Q(10 * nz, 21), Q(5, 19), Q(3, 4), Q(3.5, -14)], S[1], [S[2]]); p.poly(elp(CX - 1.5, EY + 17, 4.2 * nz, 2.6), S[3], [S[2]]);
+    p.poly([Q(-10 * nz, 25), Q(10 * nz, 25), Q(8 * nz, 29), Q(0, 31), Q(-8 * nz, 29)], S[1], [S[2], S[3]]);
+    for (const s of [-1, 1]) { p.stroke(spl([Q(s * 6.5 * nz, 19), Q(s * 9.5 * nz, 22), Q(s * 8 * nz, 26.5)], false, 4), [1.4, 1.2, 0.5], s > 0 ? S[0] : S[1]); p.poly(elp(CX + s * 4.6 * nz, EY + 27, 2.1, 1.3, 0, 10), S[0]); }
+    p.poly([Q(-3.5, 31), Q(3.5, 31), Q(4.5, 37.5), Q(-4.5, 37.5)], S[1], [S[2]]); p.stroke([Q(-1.2, 32), Q(-1.6, 37)], [0.8, 0.8], S[3], [S[1]]);
+    // the eyes, the second eyes
+    const ey = o.ey === undefined ? (who === 'yuji' ? 1 : 0) : o.ey, ek = who === 'meg' ? EYE.meg : mixO(EYE.suk, EYE.yuji, ey), ir = irisOf(who, red), hy = o.look || [0, 0], eyes = [];
+    for (const s of [-1, 1]) {
+      const e = Object.assign({}, ek, { y: EY, lid, look: hy, iD: ir[0], iM: ir[1], iL: ir[2], pupC: C('#10040a'), socket: st.socket }); eyes.push(eyeAt(p, s, e, st)); brow(p, s, who, o, st, ey);
+      if (e2 > 0 && mk > 0.3) { const e3 = Object.assign({}, EYE.suk, { x0: 14, w: 23, h: 4.2 * e2, tilt: 2.2, ir: 5.2, pr: 1.2, ink: 1.8, lashes: 0, wing: 3, y: EY + 19, lid: 0, look: [0, 0], iD: ir[0], iM: ir[1], iL: ir[2], pupC: C('#10040a'), hi: 0 }); eyeAt(p, s, e3, st); }
+    }
+    if (who === 'meg' || ey < 0.5) for (const s of [-1, 1]) p.stroke(spl([Q(s * 14, 9), Q(s * 26, 11.5), Q(s * 38, 9)], false, 4), [0.4, 1.0, 0.4], S[1], [S[2]]);      // (the bags under the eyes)
+    if (o.m === 'smile' || o.m === 'smirk') for (const s of [-1, 1]) p.stroke(spl([Q(s * 12, 22), Q(s * 20, 32), Q(s * 24, 42)], false, 4), [0.4, 1.2, 0.4], S[1], [S[2]]);      // (the folds from the nose to the corners of the mouth)
+    mouth(p, st, o); marks(p, mk); fx(p, o, eyes); hairFront(p, st, ms, o);
+    return p.canvas();
+  }
+  const FY = EY + 16;      // (the row of the picture to put in the middle of the screen: the eyes are a little above the middle, the mouth a little below)
+  return { face: o => memo('F' + JSON.stringify(o), () => face(o)), eye: o => memo('E' + JSON.stringify(o), () => eyeEcu(o)), mouth: o => memo('M' + JSON.stringify(o), () => mouthEcu(o)), neck: o => memo('N' + JSON.stringify(o), () => neckEcu(o)), hair: o => memo('H' + JSON.stringify(o), () => hairdownEcu(o)), hands: o => memo('X' + JSON.stringify(o), () => handsEcu(o)), finger: o => memo('R' + JSON.stringify(o), () => fingerEcu(o)), yhand: o => memo('Y' + JSON.stringify(o), () => yhandEcu(o)), FY };
+})();

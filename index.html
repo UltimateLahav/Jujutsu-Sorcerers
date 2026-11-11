@@ -209,7 +209,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.147</small>
+    <small id="ver">V1.148</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -13295,173 +13295,6 @@ c15MegPoses.backstep = function (ph) {      // backing away with small steps, th
   const r = c15MegPoses.run(ph, 5.5), s = c15MegPoses.shock(0); r.lean = -7; r.hdx = 0.9; r.hdt = -5; r.wind = 0; r.arms = s.arms; r.ex = 'shock'; r.blood = 0.8; return r;
 };
 
-// ================================================================ the close-ups of the catch: bigger pictures made with the same shaded shapes (c15Big.eye = Megumi's eye, c15Big.suk = Sukuna's face from below, grinning)
-const c15Big = (() => {
-  const { Pix, cap, ell, uni, clip, M, K } = c15MegKit, RAD = Math.PI / 180, P = { rose: ['#f2bcc4', '#dc94a0', '#b4707e', '#7a4258'], skin: '#ecc0a0', red: '#aa3636' }, cache = new Map();
-  const memo = (k, f) => { let c = cache.get(k); if (!c) { c = f(); cache.set(k, c); if (cache.size > 160) cache.delete(cache.keys().next().value); } return c; };
-  const line = (p, pts, col, w = 1) => { for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1], n = Math.ceil(Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]))) || 1; for (let k = 0; k <= n; k++) for (let j = 0; j < w; j++) p.px(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n + j, col); } };
-  const almond = (cx, cy, rx, ry, tilt) => ({ b: [cx - rx, cy - ry - 3, cx + rx, cy + ry + 3], f(x, y) { const u = (x - cx) / rx; if (Math.abs(u) >= 1) return null; const hh = ry * Math.pow(1 - u * u, 0.7), d = y - cy - u * tilt; if (Math.abs(d) >= hh) return null; return [u, d / hh, Math.sqrt(1 - (d / hh) * (d / hh))]; } });
-  function eye(o) {      // Megumi's right eye (the nose is on the right), 176 x 96: o.open (how wide, 0.3 - 1.25), o.pup (the pupil, px), o.lx (look), o.brow (how high the brow is), o.sweat
-    const W = 176, H = 96, p = new Pix(W, H), cx = 88, cy = 52, op = o.open === undefined ? 1 : o.open, pup = o.pup === undefined ? 6 : o.pup, lx = o.lx || 0, Y = o.who === 'yuji', E = Y ? EYY : EYS, sk = E[1], skd = E[0], skdd = E[2], dk = K(Y ? '#2a140c' : '#0c0a14'), wt = K('#f6f2ea'), bl = o.brow || 0;
-    p.rect(0, 0, W, H, sk[2]); p.put(ell(cx, cy + 46, 96, 34), skd, 1); p.put(ell(cx - 6, cy - 42, 84, 24 - bl), skdd, 1); p.put(ell(cx, cy - 26, 62, 9), skd, 1);      // (the skin: the cheek under the eye, the shadow of the brow bone, the fold of the lid)
-    const sh = almond(cx, cy, 54, 25 * op, 3), pe = (x, y) => sh.f(x, y);
-    p.put(clip(ell(cx, cy, 56, 28), (x, y) => !!pe(x, y)), M('#e6e0d6'), 3);
-    for (const [vx, vy, ex, ey] of [[cx - 52, cy + 1, cx - 36, cy - 3], [cx - 50, cy + 3, cx - 38, cy + 8], [cx + 52, cy + 4, cx + 38, cy + 1], [cx + 50, cy + 5, cx + 36, cy + 12], [cx + 48, cy, cx + 34, cy - 6]]) line(p, [[vx, vy], [ex, ey]], K('#b8423e'), 1);      // (little red veins)
-    const ic = [cx + lx, cy + 1];
-    p.put(clip(ell(ic[0], ic[1], 22, 22), (x, y) => !!pe(x, y)), M(Y ? '#2a1608' : '#0c1220'), 3); p.put(clip(ell(ic[0], ic[1], 16.5, 16.5), (x, y) => !!pe(x, y)), M(Y ? '#5a3a1e' : '#1c3048'), 3); p.put(clip(ell(ic[0], ic[1] + 3, 11, 9), (x, y) => !!pe(x, y)), M(Y ? '#8a5a30' : '#2c5068'), 3);
-    p.put(clip(ell(ic[0], ic[1], pup, pup), (x, y) => !!pe(x, y)), M('#03040a'), 3);
-    p.rect(Math.round(ic[0] - 12), Math.round(ic[1] - 12), 4, 3, wt); p.rect(Math.round(ic[0] + 8), Math.round(ic[1] + 9), 2, 2, wt);
-    if (o.refl) { const r = Math.round(ic[1] + 10 * Math.min(op, 1)); line(p, [[ic[0] - 7, r - 1], [ic[0] - 3, r + 2], [ic[0] + 3, r + 2], [ic[0] + 7, r - 1]], wt, 1); p.px(ic[0] - 4, r - 5, K('#ff3a48')); p.px(ic[0] + 4, r - 5, K('#ff3a48')); }      // (in his eye: Sukuna's face, tiny, grinning)
-    const top = [], bot = []; for (let u = -1; u <= 1.001; u += 0.05) { const hh = 25 * op * Math.pow(Math.max(0, 1 - u * u), 0.7); top.push([cx + u * 54, cy + u * 3 - hh]); bot.push([cx + u * 54, cy + u * 3 + hh]); }
-    line(p, top, dk, 4); line(p, top.map(q => [q[0], q[1] - 6]), K('#c49a78'), 1); line(p, bot, K('#8a5a58'), 1);
-    for (const [dx, dy, l] of [[50, -2, 9], [47, -5, 8], [42, -8, 8], [36, -10, 7]]) line(p, [[cx + dx, cy + dy], [cx + dx + l * 0.7, cy + dy - l * 0.7]], dk, 1);      // (lashes at the outer corner)
-    const hc = Y ? '#6a3a1e' : '#0e0c18', hr = K(hc); p.put(cap(cx - 70, cy - 45 - bl, cx + 66, cy - 37 - bl * 0.6, 3.4, 4.6), M(hc), 3); for (let k = 0; k < 20; k++) { const x = cx - 66 + k * 6.6, y = cy - 46 - bl + (k * 8 / 20) * 1.0; line(p, [[x, y - 3], [x + 3, y - 8 - (k % 3)]], hr, 1); }
-    if (o.sweat) { const sx = cx + 38, sy = cy - 58 + (o.sweat > 1 ? (o.sweat - 1) * 22 : 0); p.put(ell(sx, sy, 3.2, 4.6), M('#cfe6f0'), 1); p.px(sx - 1, sy - 1, K('#ffffff')); }
-    if (o.tear) { const tw = o.tear, bx = cx + 6, by = cy + 25 * op * 0.9 + 1, ty = by + 8 + tw * 30; p.put(ell(bx, by, 24, 2.4 + 2 * tw), M('#cfe6f0'), 1); line(p, [[bx + 16, by + 2], [bx + 18, (ty + by) / 2], [bx + 16, ty]], K('#cfe6f0'), 2); if (ty < H - 8) p.put(ell(bx + 16, ty + 2, 2.6, 3.8), M('#e4f4fa'), 1); }      // (a tear: it wells along the lower lid and runs down his cheek)
-    return p;
-  }
-  const mat = (t, o) => { const m = t.map(K); m.o = K(o); return m; };      // (a material from four tones and an outline colour: the shadow, the shade, the mid tone, the light)
-  const SKS = mat(['#a46c60', '#d09c80', '#ecc0a0', '#f8d8bc'], '#3a1c24'), SKD = mat(['#6e4048', '#a46c60', '#c48c76', '#e0b090'], '#2a1218');
-  const EYS = [mat(['#a88a7c', '#c8a898', '#e4c8b4', '#f6e2cc'], '#3a2430'), mat(['#c8a898', '#e4c8b4', '#f6e2cc', '#fff0dc'], '#3a2430'), mat(['#7a5a58', '#a88a7c', '#c8a898', '#e4c8b4'], '#2a1820')];      // (Megumi's skin in the dark: paler and greyer than the sprite's)
-  const EYY = [mat(['#8a5a46', '#b07a5c', '#cc9a78', '#e4b894'], '#3a2018'), mat(['#a46a50', '#c88a68', '#e0a888', '#f4c8a4'], '#3a2018'), mat(['#6a4034', '#8a5a46', '#a87258', '#c08a6a'], '#2a1410')];      // (Yuji's: warmer, tan)
-  function suk(o) {      // Sukuna's face seen from below (Megumi's eyes), grinning, 150 x 130: o.sw (how wide the smile is, 0.4 - 1.2), o.e2 (how far the second pair of eyes has opened, 0 - 1), o.lid (how heavy the lids are)
-    const W = 150, H = 130, p = new Pix(W, H), cx = 75, sw = o.sw === undefined ? 0.8 : o.sw, e2 = o.e2 === undefined ? 0.6 : o.e2, lid = o.lid === undefined ? 0.5 : o.lid, rose = P.rose.map(h => M(h)), blk = K('#0e0a1a'), wt = K('#f2ece4');
-    p.put(uni(ell(cx, 34, 50, 28), cap(34, 46, 24, 88, 8, 1), cap(116, 46, 126, 88, 8, 1)), rose[2], 2);      // (the hair behind: a mass and the locks at the sides)
-    for (const [ang, len, r] of [[-170, 40, 8], [-152, 46, 8.5], [-134, 52, 9], [-114, 56, 9], [-94, 58, 9.5], [-74, 56, 9], [-54, 52, 8.5], [-36, 46, 8], [-20, 38, 7]]) { const a = ang * RAD, bx = cx + Math.cos(a) * 34, by = 40 + Math.sin(a) * 22; p.put(cap(bx, by, bx + Math.cos(a) * len, by + Math.sin(a) * len, r, 0.6), rose[ang < -100 ? 1 : 2], 0); }
-    p.put(uni(ell(cx, 74, 40, 44), cap(cx - 30, 96, cx, 119, 12, 9), cap(cx + 30, 96, cx, 119, 12, 9)), SKS); p.put(cap(cx, 112, cx, 130, 15, 17), SKD, 1); p.put(cap(cx - 44, 128, cx + 44, 130, 10, 10), M('#aa3636'), 0);      // (the face, the chin, the neck and the red collar)
-    for (const [x0, x1, y1, r] of [[-38, -30, 62, 7], [-26, -18, 56, 7.5], [-12, -6, 52, 7.5], [2, 6, 52, 7.5], [14, 20, 55, 7.5], [26, 32, 58, 7.5], [36, 42, 64, 7]]) p.put(cap(cx + x0 * 0.9, 38, cx + x1, y1, r, 0.5), rose[1], 0);      // (the fringe: pointed locks over the forehead)
-    p.put(cap(cx - 41, 52, cx - 44, 80, 5, 0.8), rose[1], 0); p.put(cap(cx + 41, 52, cx + 44, 80, 5, 0.8), rose[1], 0);
-    for (let k = -1; k <= 1; k += 2) {
-      const ex = cx + k * 21, ey = 66, al = almond(ex, ey, 16, 6.2 - lid * 3.2, k * -3);
-      p.put(al, mat(['#7a6a62', '#a89a90', '#cdbfb4', '#e4d8cc'], '#1a1018'), 3); p.put(clip(ell(ex, ey + 0.5, 6.4, 7), (x, y) => !!al.f(x, y)), M('#d4283a'), 3); p.put(clip(ell(ex, ey + 0.5, 2, 6), (x, y) => !!al.f(x, y)), M('#0a0408'), 3);
-      line(p, Array.from({ length: 11 }, (_, i) => { const u = -1 + i * 0.2; return [ex + u * 16, ey - 6.2 * Math.pow(Math.max(0, 1 - u * u), 0.7) * (1 - lid * 0.5) + u * k * -3]; }), blk, 3);
-      p.put(cap(ex - k * 16, 54 + lid * 4, ex + k * 17, 61 + lid * 3, 2.4, 1.6), M('#7a4258'), 3);      // (the brows, slanting down to the middle)
-      const a2 = almond(ex + k * 3, 80, 13, 3.8 * e2, k * -2); if (e2 > 0.05) { p.put(a2, mat(['#5a4a48', '#8a7a72', '#b8a8a0', '#d4c8c0'], '#1a1018'), 3); p.put(clip(ell(ex + k * 3, 80, 2.4, 3.6), (x, y) => !!a2.f(x, y)), M('#d4283a'), 3); p.px(ex + k * 3, 80, K('#0a0408')); }      // (the second pair of eyes)
-      line(p, [[ex + k * 10, 92], [ex + k * 13, 100], [ex + k * 15, 106]], blk, 1);      // (a mark on the cheek)
-    }
-    line(p, [[cx - 38, 74], [cx - 20, 72], [cx + 20, 72], [cx + 38, 74]], blk, 2); line(p, [[cx - 2, 42], [cx - 2, 52]], blk, 2); line(p, [[cx + 2, 42], [cx + 2, 52]], blk, 2);      // (the band across the nose, a mark on the forehead)
-    p.px(cx - 4, 90, blk); p.px(cx + 4, 90, blk); line(p, [[cx - 3, 76], [cx - 5, 89]], K('#a46c60'), 1);      // (the nose)
-    if (o.m) {      // a calm smirk: closed lips, one corner up, a dimple at the corner
-      const my = 100; line(p, [[cx - 20, my + 1], [cx - 8, my + 2.6], [cx + 8, my + 1.4], [cx + 22, my - 3]], K('#5a2630'), 2); line(p, [[cx - 17, my + 5], [cx, my + 6.6], [cx + 16, my + 3]], K('#c88a78'), 1); line(p, [[cx + 24, my - 4], [cx + 28, my - 10]], blk, 1); line(p, [[cx - 22, my], [cx - 24, my - 3]], blk, 1);
-    } else {
-      const my = 99, mw = 26 + 12 * sw, lift = 3 + 6 * sw, ph = u => my + u * u * lift - lift * 0.4;      // the grin: a dark red mouth, a row of teeth, the lips; the corners go up into the cheeks
-    const mouth = []; for (let u = -1; u <= 1.001; u += 0.1) mouth.push([cx + u * mw, ph(u)]);
-    line(p, mouth, K('#3a0a14'), 7); for (let u = -0.86; u <= 0.87; u += 0.115) { const x = cx + u * mw, y = ph(u); p.rect(Math.round(x) - 2, Math.round(y) - 1, 4, 5, wt); p.px(x - 2, y + 4, K('#c8bcb0')); }
-    line(p, mouth.map(q => [q[0], q[1] - 3]), K('#7a2838'), 1); line(p, mouth.map(q => [q[0], q[1] + 7]), K('#7a2838'), 1); line(p, [[cx - mw - 2, ph(-1) - 3], [cx - mw - 6, ph(-1) - 9]], blk, 1); line(p, [[cx + mw + 2, ph(1) - 3], [cx + mw + 6, ph(1) - 9]], blk, 1);
-    }
-    return p;
-  }
-  const hexMix = (a, b, t) => { const u = [1, 3, 5].map(i => parseInt(a.slice(i, i + 2), 16)), v = [1, 3, 5].map(i => parseInt(b.slice(i, i + 2), 16)); return '#' + u.map((x, i) => Math.round(x + (v[i] - x) * t).toString(16).padStart(2, '0')).join(''); };
-  const matMix = (A, B, t, o1, o2) => mat(A.map((h, i) => hexMix(h, B[i], t)), hexMix(o1, o2, t));
-  const FP = { rose: ['#7a4258', '#b4707e', '#dc94a0', '#f2bcc4'], orange: ['#8a4a22', '#b86a30', '#d88c44', '#f0b468'], black: ['#08060e', '#120e1c', '#1e1a2e', '#34304a'], skS: ['#a46c60', '#d09c80', '#ecc0a0', '#f8d8bc'], skY: ['#a46a50', '#c88a68', '#e0a888', '#f4c8a4'], skM: ['#a8887c', '#c8a898', '#e4c8b4', '#f6e2cc'] };
-  function face(o) {      // a face seen from the front, 150 x 130. o.who: 'suk' | 'yuji' | 'meg'; o.yj: 0 = Sukuna's look .. 1 = Yuji's (hair pink -> orange, the marks and the red eyes fade); o.m: the mouth ('smirk' 'smile' 'closed' 'scream' 'horror'); o.lid (0 - 1 heavy, < 0 wide open), o.e2 (the second pair of eyes), o.marks (0 - 1), o.red (0 - 1: red eyes), o.hair (0 - 1: the hair has fallen over the eyes), o.sweat, o.tear, o.blood
-    const W = 150, H = 130, p = new Pix(W, H), cx = 75, who = o.who || 'suk', yj = o.yj === undefined ? (who === 'yuji' ? 1 : 0) : o.yj, lid = o.lid === undefined ? 0.4 : o.lid, e2 = o.e2 || 0, marks = o.marks === undefined ? (who === 'yuji' ? 0 : 1) : o.marks, red = o.red === undefined ? (who === 'suk' ? 1 : who === 'meg' ? 0 : 0) : o.red, m = o.m || 'closed', blk = K('#0e0a1a'), wt = K('#f2ece4'), hair = o.hair || 0;
-    const hr = who === 'meg' ? matMix(FP.black, FP.black, 0, '#0a0610', '#0a0610') : matMix(FP.rose, FP.orange, yj, '#3a1c2c', '#3a1c20'), sk = who === 'meg' ? matMix(FP.skM, FP.skM, 0, '#3a2430', '#3a2430') : matMix(FP.skS, FP.skY, yj, '#3a1c24', '#3a2018'), skd = who === 'meg' ? matMix(FP.skM.map(h => hexMix(h, '#000000', 0.25)), FP.skM, 0, '#2a1820', '#2a1820') : matMix(FP.skS.map(h => hexMix(h, '#000000', 0.25)), FP.skY.map(h => hexMix(h, '#000000', 0.25)), yj, '#2a1218', '#2a1810');
-    const sp = who === 'meg' ? [[-172, 44, 8], [-154, 52, 8.5], [-136, 56, 9], [-116, 60, 9], [-96, 62, 9.5], [-76, 60, 9], [-56, 54, 8.5], [-38, 48, 8], [-22, 40, 7]] : [[-170, 40, 8], [-152, 46, 8.5], [-134, 52, 9], [-114, 56, 9], [-94, 58, 9.5], [-74, 56, 9], [-54, 52, 8.5], [-36, 46, 8], [-20, 38, 7]];
-    p.put(uni(ell(cx, 34, 50, 28), cap(34, 46, 24, 88, 8, 1), cap(116, 46, 126, 88, 8, 1)), hr, 2);
-    for (const [ang, len, r] of sp) { const a = ang * RAD, bx = cx + Math.cos(a) * 34, by = 40 + Math.sin(a) * 22; p.put(cap(bx, by, bx + Math.cos(a) * len, by + Math.sin(a) * len, r, 0.6), hr, who === 'meg' ? 2 : 0); }
-    const fw = who === 'meg' ? 36 : 40; p.put(uni(ell(cx, 74, fw, 44), cap(cx - fw * 0.75, 96, cx, 119, 12, 9), cap(cx + fw * 0.75, 96, cx, 119, 12, 9)), sk); p.put(cap(cx, 112, cx, 130, 15, 17), skd, 1);
-    if (who === 'meg') p.put(uni(cap(cx - 40, 122, cx + 40, 124, 12, 12), cap(cx - 30, 112, cx - 34, 130, 9, 9), cap(cx + 30, 112, cx + 34, 130, 9, 9)), M('#2a3350'), 0); else p.put(cap(cx - 44, 128, cx + 44, 130, 10, 10), M('#aa3636'), 0);      // (the high collar: his uniform, or the red hood)
-    const fr = who === 'meg' ? [[-40, -34, 66 + hair * 22, 7.5], [-28, -22, 62 + hair * 24, 8], [-14, -10, 58 + hair * 26, 8], [0, 2, 56 + hair * 28, 8], [12, 16, 60 + hair * 26, 8], [24, 28, 64 + hair * 24, 8], [36, 40, 68 + hair * 22, 7.5]] : [[-38, -30, 62, 7], [-26, -18, 56, 7.5], [-12, -6, 52, 7.5], [2, 6, 52, 7.5], [14, 20, 55, 7.5], [26, 32, 58, 7.5], [36, 42, 64, 7]];
-    for (const [x0, x1, y1, r] of fr) p.put(cap(cx + x0 * 0.9, 38, cx + x1, y1, r, 0.5), hr, who === 'meg' ? 2 : 0);      // (the fringe: pointed locks over the forehead)
-    p.put(cap(cx - 41, 52, cx - 44, 80, 5, 0.8), hr, who === 'meg' ? 2 : 0); p.put(cap(cx + 41, 52, cx + 44, 80, 5, 0.8), hr, who === 'meg' ? 2 : 0);
-    const iris = hexMix(who === 'meg' ? '#1c2a3e' : '#6a4426', '#d4283a', who === 'suk' ? 1 - yj : red), wide = lid < 0, ry = wide ? 8.6 : 6.2 - lid * 3.2, squeeze = m === 'scream';
-    for (let k = -1; k <= 1; k += 2) {
-      const ex = cx + k * 21, ey = 66;
-      if (squeeze) { line(p, [[ex - 16, ey + 1], [ex - 8, ey - 5], [ex + 8, ey - 5], [ex + 16, ey + 1]], blk, 3); line(p, [[ex - 14, ey - 9], [ex + 14, ey - 9]], K('#a06a60'), 1); line(p, [[ex + k * 17, ey + 3], [ex + k * 21, ey + 8]], K('#a06a60'), 1); }
-      else {
-        const al = almond(ex, ey, 16, ry, k * -3); p.put(al, mat(['#9a8a82', '#c0b2a8', '#e6dcd2', '#f8f2ea'], '#1a1018'), 3); const ir = wide ? 4.4 : 6.4; p.put(clip(ell(ex, ey + 0.5, ir, ir + 0.6), (x, y) => !!al.f(x, y)), mat([hexMix(iris, '#000000', 0.5), hexMix(iris, '#000000', 0.25), iris, hexMix(iris, '#ffffff', 0.25)], '#0a0408'), 3); p.put(clip(ell(ex, ey + 0.5, wide ? 1.4 : 2, wide ? 1.6 : 6), (x, y) => !!al.f(x, y)), M('#0a0408'), 3);
-        line(p, Array.from({ length: 11 }, (_, i) => { const u = -1 + i * 0.2; return [ex + u * 16, ey - ry * Math.pow(Math.max(0, 1 - u * u), 0.7) * (wide ? 1 : 1 - lid * 0.5) + u * k * -3]; }), blk, 3);
-      }
-      const bh = wide ? -7 : 0; p.put(cap(ex - k * 16, 54 + lid * 4 + bh, ex + k * 17, 61 + lid * 3 + (wide ? -11 : 0) + (squeeze ? 4 : 0), 2.6, 1.7), who === 'meg' ? M('#0e0c18') : hexMix('#7a4258', '#6a3a1e', yj) && matMix(['#5a2c3a', '#7a4258', '#8a4e62', '#9a5a70'], ['#4a2a12', '#6a3a1e', '#7a4a26', '#8a5a30'], yj, '#2a1218', '#2a1408'), 3);
-      if (e2 > 0.05 && marks > 0.3) { const a2 = almond(ex + k * 3, 80, 13, 3.8 * e2, k * -2); p.put(a2, mat(['#5a4a48', '#8a7a72', '#b8a8a0', '#d4c8c0'], '#1a1018'), 3); p.put(clip(ell(ex + k * 3, 80, 2.4, 3.6), (x, y) => !!a2.f(x, y)), M('#d4283a'), 3); p.px(ex + k * 3, 80, K('#0a0408')); }
-      if (marks > 0.15) line(p, [[ex + k * 10, 92], [ex + k * 13, 100], [ex + k * 15, 106]], blk, 1);
-    }
-    if (marks > 0.5) { line(p, [[cx - 38, 74], [cx - 20, 72], [cx + 20, 72], [cx + 38, 74]], blk, 2); line(p, [[cx - 2, 42], [cx - 2, 52]], blk, 2); line(p, [[cx + 2, 42], [cx + 2, 52]], blk, 2); } else if (marks > 0.15) line(p, [[cx - 20, 72], [cx + 20, 72]], K('#6a4440'), 1);
-    p.px(cx - 4, 90, blk); p.px(cx + 4, 90, blk); line(p, [[cx - 3, 76], [cx - 5, 89]], K('#a46c60'), 1);      // (the nose)
-    const my = 100;
-    if (m === 'smirk') { line(p, [[cx - 20, my + 1], [cx - 8, my + 2.6], [cx + 8, my + 1.4], [cx + 22, my - 3]], K('#5a2630'), 2); line(p, [[cx - 17, my + 5], [cx, my + 6.6], [cx + 16, my + 3]], K('#c88a78'), 1); line(p, [[cx + 24, my - 4], [cx + 28, my - 10]], blk, 1); }
-    else if (m === 'smile') { const yy = u => my + 3 - 12 * u * u; line(p, Array.from({ length: 13 }, (_, i) => { const u = -1 + i / 6; return [cx + u * 31, yy(u)]; }), K('#4a1a26'), 3); for (let u = -0.84; u <= 0.85; u += 0.12) p.rect(Math.round(cx + u * 27), Math.round(yy(u) + 1), 3, 3, wt); line(p, [[cx - 20, my + 7], [cx, my + 9.4], [cx + 20, my + 6]], K('#c88a78'), 1); line(p, [[cx - 32, my - 10], [cx - 36, my - 16]], blk, 1); line(p, [[cx + 32, my - 10], [cx + 36, my - 16]], blk, 1); }      // (a wide smile, the corners up in the cheeks)
-    else if (m === 'scream') { p.put(ell(cx, my + 2, 16, 15), M('#2a0a12'), 3); for (let i = -3; i <= 3; i++) { p.rect(cx + i * 4 - 2, my - 11 + Math.abs(i) * 0.6, 4, 4, wt); p.rect(cx + i * 4 - 2, my + 9 - Math.abs(i) * 0.6, 4, 4, wt); } p.put(ell(cx, my + 8, 10, 5), M('#a8404c'), 3); line(p, [[cx - 17, my - 4], [cx - 22, my - 11]], blk, 1); line(p, [[cx + 17, my - 4], [cx + 22, my - 11]], blk, 1); }
-    else if (m === 'horror') { p.put(ell(cx, my + 1, 12, 10), M('#2a0a12'), 3); for (let i = -2; i <= 2; i++) p.rect(cx + i * 4 - 2, my - 8, 4, 3, wt); p.put(ell(cx, my + 6, 7, 3), M('#a8404c'), 3); }
-    else line(p, [[cx - 18, my + 2], [cx, my + 3], [cx + 18, my + 2]], K('#6a3a40'), 2);
-    if (o.sweat) for (const [sx, sy] of [[cx - 30, 52], [cx + 34, 60], [cx + 8, 38]]) { p.put(ell(sx, sy + (o.sweat > 1 ? (o.sweat - 1) * 14 : 0), 2.2, 3.4), M('#cfe6f0'), 1); p.px(sx - 1, sy - 1, K('#ffffff')); }
-    if (o.tear) for (const sx of [cx - 21, cx + 21]) line(p, [[sx - 2, 74], [sx - 3, 84 + o.tear * 8], [sx - 2, 96 + o.tear * 10]], K('#cfe6f0'), 1);
-    if (o.blood) { line(p, [[cx + 14, my + 4], [cx + 15, my + 14], [cx + 14, my + 22]], K('#b8121c'), 2); }
-    return p;
-  }
-  const PINK = mat(['#a06a60', '#c88a78', '#e0a898', '#f0c0b0'], '#3a1c24'), NAIL = mat(['#5a3a46', '#8a6a70', '#b89898', '#e0c8c0'], '#2a1820'), SKH = mat(['#8a5a52', '#b8806a', '#dcaa8e', '#f2cdb0'], '#2e1620'), FLESH = mat(['#4a0a12', '#7a1018', '#a8202a', '#c8404a'], '#1c0408'), CLAW = mat(['#0a0608', '#16101a', '#241a2a', '#3a2c44'], '#050304'), PALE = mat(['#a8887c', '#c8a898', '#e4c8b4', '#f6e2cc'], '#3a2430');
-  function hands(o) {      // 176 x 96: Sukuna's right hand holds Megumi's jaw (the edge of it: the palm, the fingers wrapped round the cheek, the little finger out to the right) and his left hand takes that little finger: o.pull (0 - 1: how far it is pulled), o.torn (1: it is off: the stump), o.blood
-    const p = new Pix(176, 96), pull = o.pull || 0, tn = o.torn;
-    p.rect(0, 0, 176, 96, PALE[1]); p.put(ell(36, 56, 62, 54), PALE, 1); p.put(ell(20, 70, 40, 30), mat(['#98786c', '#b89888', '#d4b8a4', '#e8d0bc'], '#3a2430'), 1);      // (Megumi's cheek and jaw)
-    p.put(uni(cap(76, 76, 50, 86, 6.4, 5.2), cap(50, 86, 34, 82, 5.2, 4.4)), SKH);      // (the thumb under his chin)
-    for (const [y0, y1, x1, r] of [[36, 28, 26, 5.2], [46, 44, 24, 5.4], [56, 58, 28, 5.2]]) p.put(uni(cap(80, y0, 56, y1 - 2, r, r * 0.95), cap(56, y1 - 2, x1, y1, r * 0.95, r * 0.8)), SKH);      // (three fingers wrapped round his cheek)
-    p.put(ell(90, 52, 20, 26), SKH);      // (the palm)
-    if (!tn) { const ex = 124 + pull * 22, ey = 66 + pull * 3; p.put(uni(cap(100, 64, 114, 66, 5, 4.6), cap(114, 66, ex, ey, 4.6, 4.0)), SKH); p.put(ell(ex + 1, ey, 3, 2.6), mat(['#5a3a46', '#8a6a70', '#b89898', '#e0c8c0'], '#2a1820'), 3); for (const jx of [112, 122 + pull * 8]) p.px(jx, 62, K('#6a3a30')); }
-    else { p.put(ell(103, 65, 5, 6), o.clean ? PINK : FLESH); if (o.blood) { for (const [bx, by] of [[100, 74], [108, 80], [96, 84]]) p.put(ell(bx, by, 1.6, 2.4), FLESH, 3); } }
-    const lx = 150 + pull * 24 + (tn ? 24 : 0);      // (his left hand: the forearm, the palm, the thumb above the finger and the first finger below it)
-    p.put(uni(cap(190, 40, lx + 10, 52, 12, 10), ell(lx, 56, 14, 13)), SKH); p.put(cap(lx - 4, 49, lx - 26 - (tn ? 0 : 2), 62, 4.4, 4.0), SKH); p.put(cap(lx - 4, 63, lx - 26 - (tn ? 0 : 2), 70, 4.4, 4.0), SKH);
-    if (tn) { const ex = lx - 36; p.put(cap(lx - 22, 65, ex, 66, 4.4, 4.0), SKH); p.put(ell(ex - 1, 66, 3, 2.8), NAIL, 3); p.put(ell(lx - 22, 65, 3, 4), o.clean ? PINK : FLESH); }      // (the finger in his pinch: his own skin, the torn end at the back)
-    return p;
-  }
-  function finger(o) {      // 160 x 64: the finger in the pinch of his thumb and first finger, ripped off; o.red (0 - 1: it turns red), o.nl (0 - 1: the black nail grows long), o.blood
-    const p = new Pix(160, 64), rd = o.red || 0, nl = o.nl || 0, body = matMix(['#8a5a52', '#b8806a', '#dcaa8e', '#f2cdb0'], ['#3a0810', '#6a0c18', '#a01c28', '#c83a44'], rd, '#2e1620', '#1c0408');
-    p.rect(0, 0, 160, 64, K('#10060a'));
-    p.put(uni(cap(34, 32, 80, 31, 7.2, 6.4), cap(80, 31, 110, 30, 6.4, 5.4)), body); for (const jx of [58, 86]) { p.rect(jx, 27, 1, 10, body.o); } if (rd > 0.3) for (const [vx, vy] of [[44, 26], [66, 38], [92, 26], [100, 36]]) p.px(vx, vy, K('#e0505a'));
-    const L = 14 + nl * 34, th = 5.4 - nl * 1.6; p.put(uni(cap(108, 30, 108 + L * 0.7, 31, th, th * 0.8), cap(108 + L * 0.7, 31, 110 + L, 31 + nl * 6, th * 0.8, 0.5)), nl > 0.2 ? CLAW : mat(['#8a6a70', '#b89898', '#e0c8c0', '#f4e8e0'], '#2a1820'), 0);      // (the nail: a short human one, then a long black claw)
-    if (nl > 0.2) p.line([112, 28], [108 + L * 0.8, 29 + nl * 3], K('#5a4a6a'));
-    p.put(ell(33, 32, 5, 7), o.clean ? PINK : FLESH); p.px(31, 30, K('#f0e0d0')); if (o.blood) for (const [bx, by] of [[26, 42], [30, 50], [22, 56]]) p.put(ell(bx, by, 1.6, 2.6), FLESH, 3);      // (the torn end)
-    p.put(uni(cap(104, 2, 70, 27, 5.2, 4.4), ell(106, 0, 8, 5)), SKH); p.put(uni(cap(104, 62, 72, 37, 5.2, 4.4), ell(106, 64, 8, 5)), SKH);      // (the thumb and the first finger that hold it)
-    return p;
-  }
-  function yhand(o) {      // 176 x 96: Yuji's right hand seen from his own eyes (palm to him, fingers up, the thumb on the right): the little finger is gone; o.blood (FULL): the stump bleeds, else a clean pink stump
-    const p = new Pix(176, 96), YS = mat(['#a46a50', '#c88a68', '#e0a888', '#f4c8a4'], '#3a2018'), YD = mat(['#8a5440', '#a87258', '#c48c6c', '#d8a484'], '#2a1410');
-    p.rect(0, 0, 176, 96, K('#120608')); p.put(ell(88, 104, 48, 40), YD, 1);
-    for (const [x0, y0, x1, y1, r0, r1] of [[70, 76, 68, 22, 7, 5.6], [89, 72, 89, 8, 7.4, 6], [108, 76, 110, 20, 7, 5.6]]) p.put(cap(x0, y0, x1, y1, r0, r1), YS, 1);      // (the ring, middle and first fingers)
-    p.put(cap(126, 90, 150, 50, 8, 6), YS, 1); p.put(ell(88, 88, 38, 28), YS, 1);      // (the thumb, the palm)
-    p.put(cap(51, 84, 50, 66, 7, 6.6), YS, 1); p.put(ell(50, 66, 6.4, 3.6), o.blood ? FLESH : PINK, 3);      // (the stump where the little finger was)
-    for (const x of [68, 89, 110]) for (const y of [38, 54]) p.rect(x - 5, y, 10, 1, K('#8a5440')); p.line([62, 90], [112, 82], K('#8a5440')); p.line([70, 84], [66, 70], K('#8a5440'));      // (the folds of the fingers, the lines of the palm)
-    if (o.blood) for (const [bx, by] of [[50, 58], [47, 70], [53, 76]]) p.put(ell(bx, by, 1.8, 3), FLESH, 3);
-    return p;
-  }
-  function mouth(o) {      // 176 x 96: Megumi's lower face from the front: the nose, the mouth forced open by the fingers on his cheeks (o.open 0 - 1), the finger with its black nail coming in from the right (o.fin 0 - 1), tears
-    const p = new Pix(176, 96), op = o.open === undefined ? 0.5 : o.open, fin = o.fin || 0;
-    p.rect(0, 0, 176, 96, PALE[1]); p.put(ell(88, 120, 100, 60), PALE, 1); p.put(ell(88, 6, 70, 22), mat(['#98786c', '#b89888', '#d4b8a4', '#e8d0bc'], '#3a2430'), 1);
-    p.put(uni(ell(88, 14, 11, 8), ell(80, 18, 3.4, 2.4), ell(96, 18, 3.4, 2.4)), PALE); p.px(80, 19, K('#5a3a40')); p.px(96, 19, K('#5a3a40')); p.line([88, 22], [88, 30], K('#c0a090'));      // (the nose, the groove under it)
-    const cy = 56, rx = 14 + 28 * op, ry = 3 + 22 * op; p.put(ell(88, cy - 1, rx + 5, ry + 5), mat(['#a8586a', '#c47080', '#e09098', '#f0b0b4'], '#4a1820'), 1);      // (the lips)
-    p.put(ell(88, cy, rx, ry), M('#2a0a12'), 3); if (op > 0.15) { for (let i = -5; i <= 5; i++) { p.rect(88 + i * Math.max(3, rx / 6) - 2, cy - ry + 1 + Math.abs(i) * 0.4, 4, 4, K('#f2ece4')); if (op > 0.45) p.rect(88 + i * Math.max(3, rx / 6) - 2, cy + ry - 5 - Math.abs(i) * 0.4, 4, 4, K('#e8e0d6')); } p.put(ell(88, cy + ry * 0.45, rx * 0.6, ry * 0.45), mat(['#7a2a38', '#a04050', '#c8606c', '#e08890'], '#3a0a14'), 3); }
-    for (const [y0, x1, y1, r] of [[30, 38, 40, 5.4], [44, 36, 50, 5.6], [58, 40, 62, 5.4], [72, 46, 74, 5]]) p.put(cap(-6, y0, x1, y1, r, r * 0.8), SKH);      // (the fingers on his left cheek: they pull the corner of the mouth out)
-    p.put(cap(188, 46, 148, 60, 7, 6.4), SKH);      // (the thumb on his right cheek)
-    if (fin > 0) { const tx = 176 - 118 * fin, ty = cy; p.put(cap(210, ty - 2, tx + 30, ty, 9, 6.4), mat(['#4a0a12', '#7a1018', '#a8202a', '#c8404a'], '#1c0408')); p.put(uni(cap(tx + 30, ty, tx + 2, ty + 2, 5.6, 3.2), cap(tx + 2, ty + 2, tx - 18, ty + 7, 3.2, 0.5)), CLAW, 0); }
-    if (o.tear) for (const [x0, x1] of [[34, 30], [142, 146]]) p.line([x0, 0], [x1, 14 + o.tear * 14], K('#cfe6f0'));
-    return p;
-  }
-  function neck(o) {      // 176 x 96: Megumi's chin, neck and the high collar from the front; o.g (0 - 1): the lump of the swallow goes down the throat; o.strain
-    const p = new Pix(176, 96), g = o.g || 0;
-    p.rect(0, 0, 176, 96, K('#140a10')); p.put(cap(88, 20, 88, 96, 31, 40), mat(['#7a5a52', '#a07c70', '#c4a090', '#e2c4b0'], '#3a2430'), 1); p.put(ell(88, -10, 68, 34), PALE, 1);      // (the neck, wider at the bottom, and the underside of his jaw)
-    p.put(ell(88, 25, 60, 9), mat(['#4a3038', '#6a4a50', '#8a6a68', '#a88a84'], '#2a1820'), 1);      // (the shadow of the chin on the neck)
-    p.put(uni(cap(2, 92, 62, 80, 16, 14), cap(174, 92, 114, 80, 16, 14)), M('#2a3350'), 0);      // (the high collar)
-    if (o.strain) for (const x of [64, 112]) p.line([x, 34], [x + (x < 88 ? 5 : -5), 84], K('#8a6a78'));      // (the tendons)
-    const gy = 34 + 40 * g; p.put(ell(88, gy + 6, 13, 8), mat(['#5a3a40', '#7a5a58', '#9a7a74', '#b8968c'], '#2a1820'), 1); p.put(ell(88, gy, 10, 12), mat(['#8a6a62', '#b08e84', '#d4b0a4', '#ecd0c4'], '#3a2430'), 0);      // (the lump: a bulge with its shadow under it)
-    if (o.blood) p.line([62, 30], [60, 58], K('#b8121c'));
-    return p;
-  }
-  function hairdown(o) {      // 176 x 96: Megumi's head hanging: the black hair falls over his face, the strands hang down to the collar, a drop at the tip of one of them (o.drop 0 - 1: it falls)
-    const p = new Pix(176, 96), hr = mat(['#06050a', '#0e0c18', '#1c1a34', '#38345c'], '#030208'); p.rect(0, 0, 176, 96, K('#1c0c14'));
-    p.put(uni(cap(8, 94, 70, 96, 18, 16), cap(168, 94, 106, 96, 18, 16)), M('#2a3350'), 0); p.put(cap(88, 70, 88, 96, 16, 18), mat(['#7a5a50', '#98786c', '#b89888', '#d4b8a4'], '#2a1820'), 1);
-    p.put(ell(88, 22, 78, 34), hr, 2);
-    for (let i = 0; i < 17; i++) { const x = 14 + i * 9.4 + (c4R(i, 91) - 0.5) * 6, y0 = 30 + c4R(i, 92) * 10, len = 40 + c4R(i, 93) * 34 + (Math.abs(i - 8) < 5 ? 12 : 0), sw = (c4R(i, 94) - 0.5) * 12; p.put(cap(x, y0, x + sw, y0 + len, 5.6 + c4R(i, 95) * 2, 0.6), hr, 2); }
-    for (let i = 0; i < 7; i++) { const x = 30 + i * 20 + (c4R(i, 96) - 0.5) * 8; p.px(x, 40 + c4R(i, 97) * 20, K('#34304a')); p.px(x + 1, 44 + c4R(i, 97) * 20, K('#34304a')); }
-    return p;
-  }
-  function fingers(o) {      // the fingers of the hand on his jaw, seen from the front (they come in from the lower right and press on his cheek), 64 x 64: o.press (0 - 1: how hard)
-    const p = new Pix(64, 64), SKH = mat(['#8a5a52', '#b8806a', '#dcaa8e', '#f2cdb0'], '#2e1620'), pr = o.press || 0, nail = mat(['#3a2430', '#5a3a46', '#8a6a70', '#c0a0a0'], '#1c1018');
-    for (let i = 3; i >= 0; i--) { const bx = 46 + i * 5, by = 66, tx = 22 + i * 9 - pr * 2, ty = 12 + i * 6 + pr * 2; p.put(cap(bx, by, tx, ty, 5.6, 4.6), SKH); const a = Math.atan2(ty - by, tx - bx); p.put(ell(tx - Math.cos(a) * 1.5, ty - Math.sin(a) * 1.5, 3.2, 2.6), nail, 0); }
-    p.put(cap(64, 60, 56 - pr, 34 + pr * 2, 6.6, 5.2), SKH); return p;
-  }
-  return { eye: o => memo('e' + JSON.stringify(o), () => eye(o).canvas()), fingers: o => memo('f' + JSON.stringify(o), () => fingers(o).canvas()), suk: o => memo('s' + JSON.stringify(o), () => suk(o).canvas()), face: o => memo('F' + JSON.stringify(o), () => face(o).canvas()), hands: o => memo('H' + JSON.stringify(o), () => hands(o).canvas()), finger: o => memo('G' + JSON.stringify(o), () => finger(o).canvas()), mouth: o => memo('O' + JSON.stringify(o), () => mouth(o).canvas()), yhand: o => memo('Y' + JSON.stringify(o), () => yhand(o).canvas()), neck: o => memo('N' + JSON.stringify(o), () => neck(o).canvas()), hairdown: o => memo('D' + JSON.stringify(o), () => hairdown(o).canvas()), line, P, memo, almond };
-})();
-
 c15MegPoses.lookup = function (ph, w) {      // running, the head thrown up to see what flies over him (w = 0 - 1)
   const o = c15MegPoses.run(ph); o.hdt = -30 * w; o.hdy = -1.2 * w; o.hdx = 2.5 - 1.2 * w; o.lean = 15 - 8 * w; o.ex = w > 0.35 ? 'shock' : 'grit'; return o;
 };
@@ -13471,7 +13304,7 @@ c15MegPoses.lookup = function (ph, w) {      // running, the head thrown up to s
 const c15SukKit = (() => {
   const { Pix, cap, ell, uni, K, OY } = c15MegKit, RAD = Math.PI / 180, GY = 63, cache = new Map(), cl = (v, a, b) => Math.max(a, Math.min(b, v));
   const mat = (t, o) => { const m = t.map(K); m.o = K(o); return m; };
-  const SK = mat(['#a46c60', '#d09c80', '#ecc0a0', '#f8d8bc'], '#3a1c24'), SKF = mat(['#7a4a44', '#a46c60', '#c48c76', '#e0b090'], '#2e1620'), HR = mat(['#7a4258', '#b4707e', '#dc94a0', '#f2bcc4'], '#3a1c2c'), hrMix = {},
+  const SK = mat(['#a46c60', '#d09c80', '#ecc0a0', '#f8d8bc'], '#3a1c24'), SKF = mat(['#7a4a44', '#a46c60', '#c48c76', '#e0b090'], '#2e1620'), HR = mat(['#7a4258', '#b4707e', '#dc94a0', '#f2bcc4'], '#3a1c2c'),
     JK = mat(['#161c3a', '#222a52', '#34407a', '#4c5aa0'], '#080a1c'), JKF = mat(['#10142a', '#181e3c', '#242c58', '#343e74'], '#04060e'), HD = mat(['#541424', '#782a30', '#aa3636', '#d85a5a'], '#2a0a14'),
     PN = mat(['#0a0c16', '#10131f', '#181c2c', '#262c42'], '#04050a'), PNF = mat(['#06070e', '#0a0c16', '#10131f', '#181c2c'], '#030408'), BT = mat(['#3a0c18', '#782a30', '#aa3636', '#d85a5a'], '#1a0810'), BTF = mat(['#2a0812', '#541424', '#782a30', '#aa3636'], '#14060c');
   const S = 1.1, L1 = 12.9 * S, L2 = 12.4 * S, LT = 17.6 * S, AH = 3.5 * S, UA = 10.6 * S, FA = 9.8 * S, GROUND = GY - AH;
@@ -13488,10 +13321,8 @@ const c15SukKit = (() => {
     const al = Math.atan2(E[0] - Sh[0], E[1] - Sh[1]) / RAD, a2 = Math.atan2(wx - E[0], wy - E[1]) / RAD; o.arms = o.arms.slice(); o.arms[k] = { al, el: a2 - al, pk: 0 }; return o;
   }
   function ik(hx, hy, ax, ay, L1_, L2_) { const dx = ax - hx, dy = ay - hy, d = Math.max(0.1, Math.min(Math.hypot(dx, dy), (L1_ + L2_) * 0.999)), a = Math.acos(cl((L1_ * L1_ + d * d - L2_ * L2_) / (2 * L1_ * d), -1, 1)), th = Math.atan2(dy, dx) - a; return [hx + L1_ * Math.cos(th), hy + L1_ * Math.sin(th)]; }
-  const hexMix = (a, b, t) => { const u = [1, 3, 5].map(i => parseInt(a.slice(i, i + 2), 16)), v = [1, 3, 5].map(i => parseInt(b.slice(i, i + 2), 16)); return '#' + u.map((x, i) => Math.round(x + (v[i] - x) * t).toString(16).padStart(2, '0')).join(''); };
-  const hairOf = yj => { const k = Math.round(yj * 10); if (k <= 0) return HR; return hrMix[k] || (hrMix[k] = mat(['#7a4258', '#b4707e', '#dc94a0', '#f2bcc4'].map((h, i) => hexMix(h, ['#8a4a22', '#b86a30', '#d88c44', '#f0b468'][i], k / 10)), hexMix('#3a1c2c', '#3a2010', k / 10))); };
   function draw(o) {
-    const p = new Pix(64, 72), g = geom(o), yj = o.yj || 0, HRM = hairOf(yj), { P, at, Wd, W2, Nk, Sh, hd, ht, arms } = g, lg = (o.legs || [{ ax: 28, ay: GROUND, a: 0 }, { ax: 36, ay: GROUND, a: 0 }]).map(l => ({ ax: l.ax, ay: l.ay + OY, a: l.a }));
+    const p = new Pix(64, 72), g = geom(o), yj = o.yj || 0, HRM = HR, { P, at, Wd, W2, Nk, Sh, hd, ht, arms } = g, lg = (o.legs || [{ ax: 28, ay: GROUND, a: 0 }, { ax: 36, ay: GROUND, a: 0 }]).map(l => ({ ax: l.ax, ay: l.ay + OY, a: l.a }));
     const drawArm = k => { const a = arms[k], far = k === 0, m = far ? JKF : JK; p.put(uni(ell(Sh[0], Sh[1], 3.1 * S, 3.1 * S), cap(Sh[0], Sh[1], a.E[0], a.E[1], 2.7 * S, 2.3 * S), cap(a.E[0], a.E[1], a.W[0], a.W[1], 2.3 * S, 1.8 * S)), m); if (!a.pk) p.put(ell(a.h[0], a.h[1], 2.1 * S, 2.3 * S), far ? SKF : SK); };
     const drawLeg = k => { const l = lg[k], far = k === 0, Hp = [P[0] + 0.4, P[1]], Kn = ik(Hp[0], Hp[1], l.ax, l.ay, L1, L2); p.put(uni(cap(Hp[0], Hp[1], Kn[0], Kn[1], 3.5 * S, 3.0 * S), cap(Kn[0], Kn[1], l.ax, l.ay, 3.0 * S, 1.9 * S)), far ? PNF : PN);
       const a = -(l.a || 0) * RAD, cs = Math.cos(a), sn = Math.sin(a), R = (x, y) => [l.ax + (x * cs - y * sn) * S, l.ay + (x * sn + y * cs) * S], hh = R(-2.4, 1.6), tt = R(4.8, 2.0); p.put(cap(hh[0], hh[1], tt[0], tt[1], 2.1 * S, 1.7 * S), far ? BTF : BT); p.line(R(-1.8, 2.9), R(4.4, 3.2), K('#1a1018')); };
@@ -13586,6 +13417,338 @@ c15SukPoses.horror = function (t) {      // Yuji, frightened: leaning away, the 
   const b = Math.sin(t * 9) * 0.4; return { x: 32, y: 32.8, lean: -9, hdx: 0.6, hdt: -6, wind: 0, arms: [{ al: 34 + b, el: 86 }, { al: 22 - b, el: 96 }], legs: [{ ax: 24, ay: C15SG, a: 0 }, { ax: 40, ay: C15SG, a: 0 }], ex: 'horror', yj: 1 };
 };
 c15SukPoses.backstep = function (ph) { const o = c15SukPoses.run(-ph, 7); o.lean = -6; o.wind = 0; o.arms = c15SukPoses.horror(0).arms; o.ex = 'horror'; o.yj = 1; o.hdt = -6; return o; };
+
+// ================================================================ v1.148 THE FACES: the close-ups of chapter 4 drawn as cel-shaded pixel portraits at the game's own pixel size (1 picture pixel = 1 game pixel).
+// Everything is made of flat-coloured polygons and tapered strokes (splines through a few points) that are filled straight into the pixel grid of tools/megumi.js (no smoothing, no blur): the head, the neck and the ears, the cel shadows and lights on the skin
+// (a tone is only painted over the tones it is darker / lighter than, so it stays inside the face), the eyes (lid, eyeball, iris in 3 tones, pupil, two lights, lashes), the brows, the nose, the mouth, the marks of Sukuna, the hair in spikes with a dark outline.
+// All the numbers below are in "design" units (1 unit = 1.3 pixels, measured from the middle between the eyes); the painter scales them. c15Faces.face({ who: 'suk' | 'yuji' | 'meg', ... }) -> a 320 x 330 canvas (the eyes on row 170).
+// Pictures are cached by their numbers: pass numbers cut into steps.
+const c15Faces = (() => {
+  const { Pix, K } = c15MegKit, W = 320, H = 330, CX = 160, EY = 170, SC = 1.3, cache = new Map(), lerp = (a, b, t) => a + (b - a) * t, cl = (v, a, b) => Math.max(a, Math.min(b, v)), BAY = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  const C = h => K(h) >>> 0, hexMix = (a, b, t) => { const u = [1, 3, 5].map(i => parseInt(a.slice(i, i + 2), 16)), v = [1, 3, 5].map(i => parseInt(b.slice(i, i + 2), 16)); return '#' + u.map((x, i) => Math.round(x + (v[i] - x) * t).toString(16).padStart(2, '0')).join(''); };
+  const memo = (k, f, max) => { let c = cache.get(k); if (!c) { c = f(); cache.set(k, c); if (cache.size > (max || 24)) cache.delete(cache.keys().next().value); } return c; };
+  // ---- the pixel painter: polygons, tapered strokes, 1 px lines, with "only over these colours" and a dither (a number 0 - 1, or a function of x, y)
+  function spl(pts, closed, seg) {      // a smooth curve through the points (Catmull-Rom), as a list of points
+    const n = pts.length, out = [], sg = seg || 6, P = i => closed ? pts[(i + n) % n] : pts[cl(i, 0, n - 1)];
+    for (let i = 0; i < (closed ? n : n - 1); i++) { const p0 = P(i - 1), p1 = P(i), p2 = P(i + 1), p3 = P(i + 2); for (let s = 0; s < sg; s++) { const t = s / sg, t2 = t * t, t3 = t2 * t; out.push([0.5 * (2 * p1[0] + (-p0[0] + p2[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3), 0.5 * (2 * p1[1] + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)]); } }
+    if (!closed) out.push(pts[n - 1]); return out;
+  }
+  const elp = (cx, cy, rx, ry, rot, n) => { const o = [], c = Math.cos(rot || 0), s = Math.sin(rot || 0), m = n || 28; for (let i = 0; i < m; i++) { const a = i / m * Math.PI * 2, x = Math.cos(a) * rx, y = Math.sin(a) * ry; o.push([cx + x * c - y * s, cy + x * s + y * c]); } return o; };
+  class Cv extends Pix {
+    constructor(w, h, sc, ox, oy) { super(w || W, h || H); this.sc = sc || SC; this.ox = ox === undefined ? CX : ox; this.oy = oy === undefined ? EY : oy; }
+    tr(q) { return [this.ox + (q[0] - CX) * this.sc, this.oy + (q[1] - EY) * this.sc]; }
+    poly(pts0, col, over, d) {      // fills a polygon with a flat colour; over = only where the pixel has one of these colours; d = 0 - 1: a dither (0.5 = every other pixel), or a function (x, y) -> true where to paint
+      const pts = pts0.map(q => this.tr(q)), n = pts.length, g = this.g, w = this.w, fn = typeof d === 'function', lim = d === undefined || fn ? 99 : Math.round(d * 16), xs = []; let y0 = 1e9, y1 = -1e9; for (let i = 0; i < n; i++) { const y = pts[i][1]; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      y0 = Math.max(0, Math.ceil(y0 - 0.5)); y1 = Math.min(this.h - 1, Math.floor(y1 - 0.5));
+      for (let y = y0; y <= y1; y++) {
+        const yc = y + 0.5; xs.length = 0; for (let i = 0; i < n; i++) { const a = pts[i], b = pts[i + 1 === n ? 0 : i + 1]; if ((a[1] <= yc) !== (b[1] <= yc)) xs.push(a[0] + (yc - a[1]) * (b[0] - a[0]) / (b[1] - a[1])); }
+        xs.sort((p, q) => p - q);
+        for (let k = 0; k + 1 < xs.length; k += 2) for (let x = Math.max(0, Math.ceil(xs[k] - 0.5)), xe = Math.min(w - 1, Math.floor(xs[k + 1] - 0.5)); x <= xe; x++) { if (fn ? !d(x, y) : BAY[(y & 3) * 4 + (x & 3)] >= lim) continue; const i = y * w + x; if (over === undefined || over.includes(g[i])) g[i] = col; }
+      }
+    }
+    stroke(pts, ws, col, over, d) {      // a line along the points whose width goes through the numbers of ws (design units; it can taper to a point)
+      const n = pts.length, L = [], R = [], cum = [0]; let tot = 0; for (let i = 1; i < n; i++) { tot += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); cum.push(tot); }
+      for (let i = 0; i < n; i++) {
+        const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, f = (tot ? cum[i] / tot : 0) * (ws.length - 1), k = Math.min(ws.length - 2, Math.floor(f)), wd = (ws.length === 1 ? ws[0] : lerp(ws[k], ws[k + 1], f - k)) / 2;
+        L.push([pts[i][0] - dy / l * wd, pts[i][1] + dx / l * wd]); R.push([pts[i][0] + dy / l * wd, pts[i][1] - dx / l * wd]);
+      }
+      this.poly(L.concat(R.reverse()), col, over, d);
+    }
+    pl(pts, col, over) {      // a 1 px line through the points
+      const q = pts.map(a => this.tr(a)); for (let i = 0; i + 1 < q.length; i++) { const a = q[i], b = q[i + 1], m = Math.ceil(Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]))) || 1; for (let k = 0; k <= m; k++) { const x = Math.round(a[0] + (b[0] - a[0]) * k / m), y = Math.round(a[1] + (b[1] - a[1]) * k / m); if (x < 0 || y < 0 || x >= this.w || y >= this.h) continue; const j = y * this.w + x; if (over === undefined || over.includes(this.g[j])) this.g[j] = col; } }
+    }
+  }
+  // ---- the colours: skin = deep shade mid light hi; hair = ink dark shade mid light hi
+  const SKIN = { sy: ['#8a4e46', '#bc7864', '#e0a083', '#f4c5a6', '#fddcc2'].map(C), meg: ['#7a5a5e', '#ab8884', '#d3b4a6', '#ead2c4', '#f7e8de'].map(C) };
+  const HAIR = { sy: ['#3a1a2c', '#7e4660', '#bb7486', '#e49aaa', '#f8c4d0', '#fee6ea'].map(C), meg: ['#04030a', '#0c0a18', '#141228', '#222046', '#3e3e72', '#7070aa'].map(C) };
+  const INK = C('#0a0610'), WHITE = C('#fff8f0'), TEARC = C('#cfe8f4'), TEARH = C('#ffffff'), TEETH = C('#f4eee8'), TEETHS = C('#c9bfc0'), MOUTH = C('#2a0a12'), TONGUE = C('#b04a58'), TONGUEH = C('#dc7884');
+  const IRIS = { suk: ['#5c0c18', '#c42234', '#f0585c'], yuji: ['#3a200c', '#8a5428', '#d49648'], meg: ['#08121e', '#1c3a52', '#4a7e94'] };
+  // ---- the looks: the head (the right half from the top to the chin: dx, dy from the eyes), the ears, the lips, the eyes, the brows
+  const ST = {
+    sy: { skin: SKIN.sy, hair: HAIR.sy, head: [[0, -62], [27, -60], [42, -51], [49, -36], [51, -12], [50, 12], [47, 32], [40, 50], [30, 62], [16, 69], [0, 71]], ear: [55, 3, 7, 15], lipU: C('#b9665a'), lipL: C('#d4806f'), lipLine: C('#5a2630'), nose: 1, socket: 0.5 },
+    meg: { skin: SKIN.meg, hair: HAIR.meg, head: [[0, -62], [25, -60], [39, -51], [45, -36], [47, -12], [46, 12], [42, 32], [34, 52], [22, 65], [9, 73], [0, 75]], ear: [51, 4, 6, 13], lipU: C('#a8766f'), lipL: C('#c68e86'), lipLine: C('#4a2a34'), nose: 0.85, socket: 0.9 },
+  };
+  const EYE = {
+    suk: { x0: 13, w: 31, h: 6.2, tilt: 3.6, ir: 7.0, pup: 'slit', pr: 1.5, ink: 2.4, lashes: 2, lash: 5, wing: 5 },
+    yuji: { x0: 13, w: 31, h: 10, tilt: -0.4, ir: 8.8, pup: 'round', pr: 3.2, ink: 2.6, lashes: 2, lash: 4, wing: 2.4 },
+    meg: { x0: 12, w: 29, h: 7.6, tilt: 1.8, ir: 7.6, pup: 'round', pr: 3.5, ink: 2.2, lashes: 3, lash: 7, wing: 4 },
+  };
+  const BROW = {      // the centre line of a brow (dx, dy from the eyes: the inner end first) and its widths
+    suk: { pts: [[9, -15], [21, -21], [34, -24], [48, -22]], w: [3.4, 2.8, 1.0] },
+    yuji: { pts: [[8, -19], [19, -25], [33, -26], [47, -20]], w: [5, 4.6, 2.6] },
+    meg: { pts: [[9, -16], [21, -21], [34, -22], [48, -17]], w: [2.8, 2.4, 1.0] },
+  };
+  const mixO = (a, b, t) => { const o = {}; for (const k in a) o[k] = typeof a[k] === 'number' ? lerp(a[k], b[k], t) : t < 0.5 ? a[k] : b[k]; return o; };
+  const mixB = (a, b, t) => ({ pts: a.pts.map((q, i) => [lerp(q[0], b.pts[i][0], t), lerp(q[1], b.pts[i][1], t)]), w: a.w.map((v, i) => lerp(v, b.w[i], t)) });
+  const Q = (dx, dy) => [CX + dx, EY + dy], mid2 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t)];
+  // ---- the hair: a spike = base left, base right, tip, bend; filled, shaded on its right half, lit along its left edge, with strands, outlined
+  function spike(p, Hc, b0, b1, tip, bend) {
+    const mid = mid2(b0, b1, 0.5), nx = -(tip[1] - mid[1]), ny = tip[0] - mid[0], nl = Math.hypot(nx, ny) || 1, bd = bend || 0, bx = nx / nl * bd, by = ny / nl * bd;
+    const cL = [lerp(b0[0], tip[0], 0.55) + bx, lerp(b0[1], tip[1], 0.55) + by], cR = [lerp(b1[0], tip[0], 0.55) + bx, lerp(b1[1], tip[1], 0.55) + by], cM = [lerp(mid[0], tip[0], 0.55) + bx, lerp(mid[1], tip[1], 0.55) + by];
+    const left = spl([b0, cL, tip], false, 5), right = spl([tip, cR, b1], false, 5), outline = left.concat(right), centre = spl([mid, cM, tip], false, 5);
+    p.poly(outline, Hc[3]); p.poly(right.concat([mid]), Hc[2], [Hc[3]]); p.poly(left.slice(0, Math.ceil(left.length * 0.8)).concat(spl([mid2(tip, mid, 0.3), mid2(b0, mid, 0.5)], false, 2)), Hc[4], [Hc[3]]);
+    p.pl(centre.slice(2, -3), Hc[2], [Hc[3], Hc[4]]); p.pl(outline, Hc[0]);      // (the outline is open at the base: the spike grows out of the hair)
+  }
+  const SPY = { back: [[[-62, -18], [-60, -46], [-80, -22], -5], [[-60, -46], [-46, -70], [-82, -76], 6], [[-48, -70], [-24, -86], [-54, -112], -8], [[-26, -86], [2, -92], [-12, -124], 6], [[0, -92], [28, -86], [20, -122], -6], [[26, -86], [50, -70], [56, -108], 8], [[48, -70], [61, -46], [86, -72], -6], [[60, -46], [62, -18], [80, -20], 5]],
+    crown: [[[-58, -48], [-40, -72], [-66, -92], -5], [[-44, -72], [-20, -82], [-42, -108], 6], [[-22, -82], [4, -86], [-10, -114], -4], [[2, -86], [28, -82], [18, -112], 5], [[26, -82], [48, -70], [44, -102], -6], [[46, -70], [60, -50], [74, -84], 5]],
+    front: [[[-56, -36], [-34, -58], [-56, -10], 6], [[-38, -58], [-14, -62], [-24, -30], -4], [[-16, -62], [8, -62], [-2, -34], 3], [[4, -62], [30, -58], [18, -26], -5], [[26, -58], [52, -44], [46, -16], 5], [[58, -24], [50, -4], [54, 16], 0], [[-58, -24], [-50, -4], [-54, 18], 0]] };
+  const SPM = { back: [[[-60, -36], [-50, -66], [-84, -80], 5], [[-52, -66], [-30, -84], [-58, -112], -4], [[-32, -84], [-8, -92], [-32, -122], 6], [[-10, -92], [14, -92], [2, -126], 0], [[12, -92], [36, -84], [36, -118], -6], [[34, -84], [54, -64], [64, -104], 4], [[52, -66], [60, -36], [86, -78], -5]],
+    crown: [[[-52, -50], [-34, -74], [-58, -98], -4], [[-36, -74], [-12, -86], [-28, -114], 5], [[-14, -86], [12, -88], [0, -118], -3], [[10, -88], [34, -80], [28, -112], 5], [[32, -80], [54, -62], [62, -96], -5]],
+    front: [[[-52, -34], [-34, -56], [-44, -4], 3], [[-36, -56], [-14, -60], [-24, 2], 0], [[-16, -60], [10, -60], [-4, 10], 0], [[6, -60], [30, -56], [14, -6], 0], [[26, -56], [50, -40], [40, -14], -3], [[54, -30], [48, -8], [52, 28], 0], [[-54, -30], [-48, -8], [-50, 26], 0]] };
+  function hairBack(p, st, ms) {
+    const Hc = st.hair, back = ms === 'sy' ? SPY.back : SPM.back, top = ms === 'sy' ? 88 : 92;
+    p.poly(spl([Q(-62, -10), Q(-66, -34), Q(-62, -58), Q(-48, -top + 12), Q(-24, -top + 2), Q(0, -top), Q(24, -top + 2), Q(48, -top + 12), Q(62, -58), Q(66, -34), Q(62, -10)], false, 5).concat([Q(40, 10), Q(-40, 10)]), Hc[1]);
+    for (const b of back) spike(p, Hc, Q(b[0][0], b[0][1]), Q(b[1][0], b[1][1]), Q(b[2][0], b[2][1]), b[3]);
+  }
+  function hairFront(p, st, ms, o) {
+    const Hc = st.hair, fr = ms === 'sy' ? SPY.front : SPM.front, cr = ms === 'sy' ? SPY.crown : SPM.crown, hl = o.hair || 0;
+    const line = [Q(-54, -26), Q(-48, -44), Q(-30, -54), Q(0, -58), Q(30, -54), Q(48, -44), Q(54, -26)];
+    p.poly(spl([Q(-60, -22), Q(-66, -42), Q(-60, -64), Q(-44, -80), Q(-22, -90), Q(0, -93), Q(22, -90), Q(44, -80), Q(60, -64), Q(66, -42), Q(60, -22)], false, 5).concat(spl(line, false, 5).reverse()), Hc[3]);
+    for (const b of cr) spike(p, Hc, Q(b[0][0], b[0][1]), Q(b[1][0], b[1][1]), Q(b[2][0], b[2][1]), b[3]);
+    const S = st.skin; for (const b of fr) { const lo = ms === 'meg' && hl > 0 && Math.abs(b[2][0]) < 30 ? hl * 32 : 0; p.poly([Q(b[0][0] + 2, b[0][1] + 3), Q(b[1][0] + 3, b[1][1] + 4), Q(b[2][0] + 3, b[2][1] + lo + 5)], S[1], [S[2], S[3]], 0.7); }
+    for (const b of fr) { const lo = ms === 'meg' && hl > 0 && Math.abs(b[2][0]) < 30 ? hl * 32 : 0; spike(p, Hc, Q(b[0][0], b[0][1]), Q(b[1][0], b[1][1]), Q(b[2][0], b[2][1] + lo), b[3]); }
+  }
+  // ---- one eye (s = -1: the left one on the picture, +1: the right one); e = the numbers of the eye
+  function eyeAt(p, s, e, st) {
+    const X = u => CX + s * (e.x0 + u), Y = v => e.y + v, N = 18, up = [], lo = [], lid = e.lid, S = st.skin, base = t => 2.4 - 1.3 * t - e.tilt * t;
+    const hu = e.h * (lid >= 0 ? 1 - lid : 1 - 0.5 * lid), hl = e.h * 0.5 * (lid >= 0 ? 1 - 0.55 * lid : 1 - 0.25 * lid);
+    for (let i = 0; i <= N; i++) { const t = i / N, bt = base(t); up.push([X(t * e.w), Y(bt - hu * Math.pow(Math.sin(Math.PI * Math.pow(t, 0.76)), 0.85))]); lo.push([X(t * e.w), Y(bt + hl * Math.pow(Math.sin(Math.PI * t), 0.9))]); }
+    const scl = C(e.scl || '#f2ece4'), scl2 = C(e.scl2 || '#cdbfbb'), closed = lid > 0.93, so = e.socket || 0;
+    if (so > 0.05) p.poly(up.map(q => [q[0], q[1] - 1.5]).concat(up.slice().reverse().map(q => [q[0] + s * 1.5, q[1] - e.h * 0.9 * so - 5])), S[1], [S[2]]);      // (the shadow of the brow bone over the lid)
+    if (!closed) {
+      p.poly(up.concat(lo.slice().reverse()), scl);
+      const band = up.concat(up.slice().reverse().map(q => [q[0], q[1] + Math.max(1.6, hu * 0.32)])); p.poly(band, scl2, [scl]);
+      const ic = [X(e.w * 0.5) + (e.look ? e.look[0] : 0), Y(-0.06 * e.h) + (e.look ? e.look[1] : 0)], r = e.ir, all = [scl, scl2, e.iD, e.iM, e.iL, e.pupC];
+      p.poly(elp(ic[0], ic[1], r, r * 1.04), e.iD, all); p.poly(elp(ic[0], ic[1] + 0.8, r * 0.82, r * 0.84), e.iL, all); p.poly(elp(ic[0], ic[1] - 0.5, r * 0.82, r * 0.7), e.iM, all);
+      if (e.pup === 'slit') p.poly(elp(ic[0], ic[1], Math.max(0.9, e.pr * 0.55), r * 0.9), e.pupC, all); else p.poly(elp(ic[0], ic[1], e.pr, e.pr * 1.04), e.pupC, all);
+      const wi = e.hi === undefined ? 1 : e.hi; if (wi) { p.poly(elp(ic[0] - r * 0.36, ic[1] - r * 0.38, r * 0.2, r * 0.22, 0, 12), WHITE, all); p.poly(elp(ic[0] + r * 0.32, ic[1] + r * 0.36, r * 0.1, r * 0.1, 0, 8), WHITE, all); }
+      if (p.sc > 3) {      // a big eye: the fibres of the iris, the dark ring, a wet light, the veins in the white
+        const rr = i => c4R(i, 71);
+        for (let k = 0; k < 64; k++) { const a = k / 64 * Math.PI * 2 + rr(k) * 0.08, r0 = r * (0.34 + 0.14 * rr(k + 100)), r1 = r * (0.74 + 0.16 * rr(k + 200)); p.pl([[ic[0] + Math.cos(a) * r0, ic[1] + Math.sin(a) * r0 * 1.02], [ic[0] + Math.cos(a) * r1, ic[1] + Math.sin(a) * r1 * 1.02]], k % 3 ? e.iL : e.iD, [e.iM]); }
+        p.poly(elp(ic[0], ic[1], r * 0.6, r * 0.6, 0, 28), e.iD, [e.iM, e.iL], 0.4); p.poly(elp(ic[0], ic[1], e.pr * 1.25, e.pr * 1.3, 0, 22), e.pupC, [e.iM, e.iL, e.iD]);
+        if (e.veins) for (const [u0, v0, u1, v1] of [[0.04, 0.2, 0.3, 0.1], [0.06, 0.5, 0.26, 0.55], [0.96, 0.15, 0.74, 0.1], [0.97, 0.45, 0.78, 0.5], [0.9, 0.7, 0.72, 0.62]]) p.stroke(spl([[X(e.w * u0), Y(e.h * v0 * 0.5)], [X(e.w * (u0 + u1) / 2), Y(e.h * (v0 + v1) * 0.25 + 1)], [X(e.w * u1), Y(e.h * v1 * 0.5)]], false, 4), [0.5 * e.veins, 0.2], C('#c4585c'), [scl, scl2]);
+        if (e.refl) { const fx2 = ic[0], fy2 = ic[1] + r * 0.36, fr = r * 0.52, io = [e.iM, e.iL, e.iD, e.pupC], hc = e.refl === 2 ? C('#14122a') : C('#e8909e'), sk = C('#e8c9bd'), skd = C('#c8a096');
+          p.poly(elp(fx2, fy2, fr, fr * 1.05, 0, 20), skd, io); p.poly(elp(fx2 - 0.5, fy2 - 0.3, fr * 0.9, fr, 0, 20), sk, [skd]); p.poly(spl([[fx2 - fr * 1.02, fy2 - fr * 0.2], [fx2 - fr * 0.8, fy2 - fr * 0.9], [fx2, fy2 - fr * 1.15], [fx2 + fr * 0.8, fy2 - fr * 0.9], [fx2 + fr * 1.02, fy2 - fr * 0.2], [fx2 + fr * 0.4, fy2 - fr * 0.55], [fx2 - fr * 0.4, fy2 - fr * 0.5]], false, 4), hc, [sk, skd, e.iM, e.iL, e.iD, e.pupC]);
+          for (const sx of [-1, 1]) p.poly(elp(fx2 + sx * fr * 0.38, fy2 - fr * 0.08, fr * 0.14, fr * 0.1, 0, 8), C('#ff2a3c'), [sk]); p.stroke(spl([[fx2 - fr * 0.55, fy2 + fr * 0.38], [fx2, fy2 + fr * 0.62], [fx2 + fr * 0.55, fy2 + fr * 0.38]], false, 4), [fr * 0.2, fr * 0.2], C('#fff4ee'), [sk]); }
+      }
+      p.poly(band, INK, [e.iM, e.iL], 0.45);      // (the lid shadows the eye)
+      p.stroke(lo.slice(2), [0.6, 1.0, 1.0, 0.6], C(e.lowC || '#8a5a58'), undefined, 0.9);
+    }
+    const ink = e.ink * (closed ? 0.8 : 1), lidPts = closed ? lo.map((q, i) => [q[0], q[1] + 1.2 * Math.sin(Math.PI * i / N)]) : up;
+    p.stroke(lidPts.map(q => [q[0], q[1] - 0.6]), [ink * 0.55, ink * 0.8, ink, ink * 0.9, ink * 0.8], INK);
+    const ot = lidPts[N], wing = spl([lidPts[N - 3], lidPts[N], [ot[0] + s * e.wing * 0.7, ot[1] - e.wing * 0.18], [ot[0] + s * e.wing * 1.5, ot[1] - e.wing * 0.5]], false, 4); p.stroke(wing, [ink * 0.9, ink * 0.5, 0.4], INK);
+    for (let k = 0; k < e.lashes; k++) { const t = 0.62 + 0.34 * k / Math.max(1, e.lashes - 1), i = Math.round(t * N), a = lidPts[i], l = e.lash * (0.75 + 0.35 * Math.sin(Math.PI * (k + 0.5) / e.lashes)); p.stroke([a, [a[0] + s * l * 0.5, a[1] - l * 0.35], [a[0] + s * l * 0.95, a[1] - l * 0.2 - 1]], [1.4, 0.9, 0.3], INK); }
+    if (!closed) { p.stroke(up.map(q => [q[0] + s * 0.4, q[1] - e.h * 0.62 - 3]).slice(1, N - 1), [0.5, 1.0, 1.0, 0.5], S[1], [S[2], S[3]], 0.8); p.poly(elp(X(0.8), Y(2.2), 1.4, 1.1, 0, 8), C('#d98a86'), [scl, S[2], S[3]]); }
+    return { up, lo };
+  }
+  const ms2 = who => who === 'meg' ? 'meg' : 'sy';
+  // ---- the brows (bw: worry = the inner end up, bf: anger = the inner end down and in, br: raised)
+  function brow(p, s, who, o, st, ey) {
+    const B = who === 'meg' ? BROW.meg : mixB(BROW.suk, BROW.yuji, ey), bw = o.bw || 0, bf = o.bf || 0, br = o.br || 0, n = B.pts.length;
+    const pts = B.pts.map((q, i) => { const k = 1 - i / (n - 1); return [CX + s * (q[0] - bf * 0.3 * k), EY + q[1] - br - bw * k + bf * 0.9 * k]; }), c = spl(pts, false, 5);
+    const bc = ms2(who) === 'meg' ? st.hair[1] : C('#6a3a44'); p.stroke(c, B.w, bc); if (who !== 'meg' && ey > 0.5) p.stroke(c.map(q => [q[0], q[1] - B.w[0] * 0.22]), [1.1, 1.1, 0.6], C('#94545e'), [bc]);
+  }
+  // ---- the mouth: m = 'closed' 'slack' 'smirk' 'sad' (shut), 'smile' (a wide grin with teeth), 'scream' / 'horror' (open: mo = how far, 0 - 1)
+  const MY = 43;
+  function mouth(p, st, o) {
+    const m = o.m || 'closed', S = st.skin, U = st.lipU, L = st.lipL, LN = st.lipLine, mo = o.mo === undefined ? 1 : o.mo, P = (dx, dy) => Q(dx, MY + dy), rev = a => a.slice().reverse();
+    if (m === 'smile' || m === 'scream' || m === 'horror') {
+      const w = m === 'smile' ? 27 : m === 'scream' ? (o.mw || 22) : 17, op = m === 'smile' ? 1 : mo;
+      const top = m === 'smile' ? spl([P(-w, -7), P(-15, -1), P(0, 1), P(15, -1), P(w, -7)], false, 6) : spl([P(-w, -9 * op), P(-w * 0.55, -14 * op), P(0, -16 * op), P(w * 0.55, -14 * op), P(w, -9 * op)], false, 6);
+      const bot = m === 'smile' ? spl([P(w, -6), P(18, 9), P(0, 14), P(-18, 9), P(-w, -6)], false, 6) : spl([P(w, -8 * op), P(w * 0.9, 8 * op), P(w * 0.45, 18 * op), P(0, 21 * op), P(-w * 0.45, 18 * op), P(-w * 0.9, 8 * op), P(-w, -8 * op)], false, 6);
+      p.poly(top.concat(bot), MOUTH);
+      const th = x => (m === 'smile' ? 6.5 : 7 * op) * (1 - Math.pow(x / (w + 1), 2)), tt = top.filter(q => Math.abs(q[0] - CX) < w - 2);
+      p.poly(tt.concat(rev(tt).map(q => [q[0], q[1] + th(q[0] - CX)])), TEETH);
+      for (let x = -w + 4; x < w - 3; x += 4.6) { const q = tt.reduce((a, b) => Math.abs(b[0] - (CX + x)) < Math.abs(a[0] - (CX + x)) ? b : a); p.pl([[q[0], q[1] + 0.5], [q[0], q[1] + th(x) - 0.5]], TEETHS); }
+      const bt = bot.filter(q => Math.abs(q[0] - CX) < w * 0.8 && q[1] > EY + MY + (m === 'smile' ? 5 : 3)); if (bt.length > 3 && op > 0.4) p.poly(bt.concat(rev(bt).map(q => [q[0], q[1] - 3.4 * op])), TEETH, [MOUTH]);
+      const tg = elp(CX, EY + MY + (m === 'smile' ? 10 : 12 * op), (m === 'smile' ? 11 : 12) * 0.9, 3.6 + 2.6 * op, 0, 16); p.poly(tg, TONGUE, [MOUTH]); p.poly(elp(CX - 2, EY + MY + (m === 'smile' ? 9 : 10 * op), 6, 1.6, 0, 10), TONGUEH, [TONGUE]);
+      p.poly(top.map(q => [q[0], q[1] - 0.5]).concat(rev(top).map(q => [q[0], q[1] - 3.4])), U, [S[2], S[1], S[3]]); p.poly(bot.map(q => [q[0], q[1] + 0.5]).concat(rev(bot).map(q => [q[0], q[1] + 4.6])), L, [S[2], S[1], S[3]]);
+      p.stroke(top, [0.8, 1.4, 0.8], LN); p.stroke(bot, [0.8, 1.4, 0.8], LN, undefined, 0.8);
+      if (m === 'smile') for (const s of [-1, 1]) p.stroke(spl([P(s * 27, -6), P(s * 31, -10), P(s * 33.5, -15)], false, 4), [1.4, 0.5], LN);
+      return;
+    }
+    const sm = m === 'smirk', sd = m === 'sad', cL = sm ? 0.8 : sd ? 2.6 : 0.8, cR = sm ? -4.2 : sd ? 2.6 : 0.8;
+    const line = spl([P(-18, cL), P(-9, (cL + 2.2) / 2 + 0.4), P(0, 2.2), P(9, (cR + 2.2) / 2 + 0.4), P(18, cR)], false, 6);
+    p.poly(spl([P(-17, cL - 0.6), P(-8, -2.4), P(-3, -3.8), P(0, -2.6), P(3, -3.8), P(8, -2.4 + cR * 0.3), P(17, cR - 0.6)], false, 4).concat(rev(line)), U, [S[2], S[1], S[3]]);
+    p.poly(line.concat(spl([P(17, cR + 0.6), P(10, 4.8 + cR * 0.3 - (sd ? 1.5 : 0)), P(0, 7.6 - (sd ? 1.6 : 0)), P(-10, 4.8 + cL * 0.3 - (sd ? 1.5 : 0)), P(-17, cL + 0.6)], false, 4)), L, [S[2], S[1], S[3]]);
+    p.stroke(line, [0.8, 1.8, 0.8], LN); p.poly(elp(CX - 3, EY + MY + 4.6, 4.5, 1, 0, 10), S[4], [L]); p.poly(elp(CX, EY + MY + 11, 9, 2.2, 0, 14), S[1], [S[2]]);
+    if (sm) { p.stroke(spl([P(19, cR + 1), P(22, cR - 1), P(23, cR - 4)], false, 4), [1.2, 0.4], LN); p.poly([P(13, cR + 2.4), P(16.4, cR + 1.6), P(14.8, cR + 5)], TEETH, [L, U]); }      // (a fang shows at the raised corner)
+    if (sd) for (const s of [-1, 1]) p.stroke(spl([P(s * 6, 13), P(s * 3, 15.5), P(0, 14.4)], false, 4), [0.8, 0.8], S[1], [S[2]]);
+  }
+  // ---- the marks of Sukuna: the band across the nose, a mark on each cheek, two on the forehead (mk: 0 - 1 how strong; they fade away)
+  function marks(p, mk) {
+    if (mk < 0.12) return; const d = mk >= 0.98 ? undefined : mk, wk = 0.55 + 0.45 * mk;
+    p.stroke(spl([Q(-47, 12.5), Q(-30, 9.5), Q(-12, 8.8), Q(0, 9.2), Q(12, 8.8), Q(30, 9.5), Q(47, 12.5)], false, 5), [1.6 * wk, 4.6 * wk, 4.2 * wk, 4.6 * wk, 1.6 * wk], INK, undefined, d);
+    for (const s of [-1, 1]) { p.stroke(spl([Q(s * 34, 25), Q(s * 40, 34), Q(s * 43, 47)], false, 4), [3 * wk, 2 * wk, 0.5], INK, undefined, d); p.stroke([Q(s * 3, -50), Q(s * 3, -38)], [1.8 * wk, 0.8], INK, undefined, d); }
+  }
+  // ---- tears (0 - 1: how long the streaks are), sweat drops
+  function fx(p, o, eyes) {
+    if (o.tear) for (let i = 0; i < eyes.length; i++) { const s = i ? 1 : -1, lo = eyes[i].lo, a = lo[11], len = 6 + 34 * o.tear; p.stroke(lo.slice(2, 16).map(q => [q[0], q[1] + 1.2]), [0.6, 1.8, 1.8, 0.6], TEARC); const pts = spl([[a[0], a[1] + 1], [a[0] + s * 1.5, a[1] + len * 0.45], [a[0] + s * 0.5, a[1] + len]], false, 5); p.stroke(pts, [2.4, 2, 2.4], TEARC); p.stroke(pts.map(q => [q[0] - 0.6, q[1]]).slice(1, -2), [0.9, 0.9], TEARH); p.poly(elp(pts[pts.length - 1][0], pts[pts.length - 1][1] + 1, 1.8, 2.6, 0, 10), TEARC); }
+    if (o.sweat) for (const [dx, dy] of [[-44, -46], [47, -36], [34, -54], [-30, -58]]) { const x = CX + dx, y = EY + dy + (o.sweat > 1 ? (o.sweat - 1) * 14 : 0); p.poly([[x, y - 5.5], [x + 3, y + 0.5], [x, y + 3.6], [x - 3, y + 0.5]], TEARC); p.poly(elp(x - 1, y + 0.6, 0.9, 1.3, 0, 8), TEARH); }
+  }
+  function fingerAt(p, x0, y0, x1, y1, w0, w1, nonail, ramp) {      // a finger of Sukuna's hand from (x0, y0) to its tip (x1, y1) with a nail and two creases at the joints (the painter must be in pixel coordinates)
+    const H2 = ramp || SKIN.sy, a = Math.atan2(y1 - y0, x1 - x0), nx = -Math.sin(a), ny = Math.cos(a);
+    p.stroke([[x0, y0], [x1, y1]], [w0 + 3, w1 + 3], H2[0]); p.stroke([[x0 + nx, y0 + ny], [x1 + nx, y1 + ny]], [w0, w1], H2[1]); p.stroke([[x0 - nx * w0 * 0.18, y0 - ny * w0 * 0.18], [x1 - nx * w1 * 0.18, y1 - ny * w1 * 0.18]], [w0 * 0.7, w1 * 0.7], H2[2]); p.stroke([[x0 + (x1 - x0) * 0.2 - nx * w0 * 0.34, y0 + (y1 - y0) * 0.2 - ny * w0 * 0.34], [x1 - (x1 - x0) * 0.06 - nx * w1 * 0.34, y1 - (y1 - y0) * 0.06 - ny * w1 * 0.34]], [4, 3], H2[3]);
+    for (const t of [0.4, 0.7]) { const cx2 = lerp(x0, x1, t), cy2 = lerp(y0, y1, t), wd = lerp(w0, w1, t) * 0.36; p.pl([[cx2 - nx * wd, cy2 - ny * wd], [cx2 + nx * wd, cy2 + ny * wd]], H2[0], [H2[1], H2[2], H2[3]]); }
+    if (!nonail) { p.poly(elp(x1 - Math.cos(a) * 3, y1 - Math.sin(a) * 3, w1 * 0.62, w1 * 0.5, a), H2[0]); p.poly(elp(x1 - Math.cos(a) * 3, y1 - Math.sin(a) * 3, w1 * 0.52, w1 * 0.4, a), C('#f0d8cc')); }
+    else p.poly(elp(x1, y1, w1 * 0.5, w1 * 0.5, a, 16), H2[1]);
+  }
+  // ---- a big eye for the close-ups of the eyes (the eye on the left of the picture, the nose on the right): o.who 'meg' | 'yuji', o.lid (0 normal, < 0 wide), o.look [x, y], o.pr (the pupil), o.red (0 - 1), o.veins, o.refl (a grin in the iris),
+  // o.tear, o.sweat (0 - 2), o.bw / o.bf / o.br (the brow), o.fp (the fingers of Sukuna on his cheek: 0 - 1 how far they are in)
+  function eyeEcu(o) {
+    const who = o.who === 'yuji' ? 'yuji' : 'meg', st = ST[who === 'meg' ? 'meg' : 'sy'], S = st.skin, ek = who === 'meg' ? EYE.meg : EYE.yuji, EW = 360, EH = 250, SE = 6.2, ir = irisOf(who, o.red || 0);
+    const p = new Cv(EW, EH, SE, EW * 0.5 - 6 + (ek.x0 + ek.w * 0.5) * SE, 150); p.g.fill(S[2]);
+    const e = Object.assign({}, ek, { y: EY, lid: o.lid || 0, look: o.look || [0, 0], iD: ir[0], iM: ir[1], iL: ir[2], pupC: C('#10040a'), socket: who === 'meg' ? 0.9 : 0.5, pr: o.pr === undefined ? ek.pr : o.pr, veins: o.veins || 0, refl: o.refl || 0, ink: ek.ink * 1.2, hi: 1 });
+    p.poly([Q(-8, -44), Q(-2, -44), Q(3, 44), Q(-9, 44)], S[1], [S[2]]); p.poly([Q(-12, -40), Q(-9, -40), Q(-11, 40), Q(-14, 40)], S[3], [S[2]]);      // (the side of the nose: a shadow, a light)
+    p.poly(elp(CX - 30, EY + 16, 16, 5, 0.1), S[3], [S[2]]); p.poly(elp(CX - 24, EY + 28, 30, 12), S[1], [S[2]], 0.5);
+    const ey = eyeAt(p, -1, e, st), bw = o.bw || 0, bf = o.bf || 0, br = o.br || 0, B = who === 'meg' ? BROW.meg : BROW.yuji, n = B.pts.length;
+    const bp = spl(B.pts.map((q, i) => { const k = 1 - i / (n - 1); return [CX - (q[0] - bf * 0.3 * k) - 4, EY + q[1] - br - bw * k + bf * 0.9 * k]; }), false, 6), bc = who === 'meg' ? st.hair[1] : C('#6a3a44'), bh = who === 'meg' ? st.hair[3] : C('#a4606a');
+    if (br > 1) for (let k = 0; k < 3; k++) p.stroke(spl([Q(-14 - k, -34 - br - k * 5), Q(-26, -37 - br - k * 5.5), Q(-40 + k * 2, -34 - br - k * 5)], false, 4), [0.3, 0.9, 0.3], S[1], [S[2]]);
+    p.stroke(bp, B.w.map(v => v * 1.15), bc);
+    for (let k = 0; k < 46; k++) { const t = k / 45, i = Math.min(bp.length - 2, Math.floor(t * (bp.length - 1))), a = bp[i], b = bp[i + 1], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, wd = lerp(B.w[0], B.w[2], t), sd = (c4R(k, 5) - 0.5) * wd * 0.9; p.pl([[a[0] - dy / l * sd, a[1] + dx / l * sd], [a[0] - dy / l * sd - dx / l * (3 + 3 * c4R(k, 6)), a[1] + dx / l * sd - dy / l * (3 + 3 * c4R(k, 6)) - 1]], k % 3 ? bh : bc, [bc, S[2], S[1]]); }
+    if (o.tear) { const a = ey.lo[10], len = 4 + 30 * o.tear; p.stroke(ey.lo.slice(1, 17).map(q => [q[0], q[1] + 1.4]), [0.6, 1.8, 1.8, 0.6], TEARC); const pts = spl([[a[0], a[1] + 1], [a[0] - 1.2, a[1] + len * 0.5], [a[0] - 0.3, a[1] + len]], false, 6); p.stroke(pts, [2.6, 2.2, 3], TEARC); p.stroke(pts.map(q => [q[0] - 0.8, q[1]]).slice(2, -3), [0.9, 0.9], TEARH); p.poly(elp(pts[pts.length - 1][0], pts[pts.length - 1][1] + 2, 2.2, 3.2, 0, 12), TEARC); }
+    if (o.sweat) for (const [dx, dy] of [[-42, -30], [-24, -38]]) { const x = CX + dx, y = EY + dy + (o.sweat > 1 ? (o.sweat - 1) * 16 : 0); p.poly([[x, y - 6.5], [x + 3.6, y + 0.6], [x, y + 4.4], [x - 3.6, y + 0.6]], TEARC); p.poly(elp(x - 1.2, y + 0.8, 1.1, 1.6, 0, 8), TEARH); }
+    if (o.fp) fingers(p, o.fp);
+    return p.canvas();
+  }
+  function fingers(p, k) {      // four fingers press on the cheek from the lower right (pixel coordinates); the warm skin of Sukuna's hand
+    const sv = [p.sc, p.ox, p.oy], H2 = SKIN.sy; p.sc = 1; p.ox = CX; p.oy = EY; const d = [0.75, 0.66], pe = [0.66, -0.75], nail = C('#f0d8cc'), sl = (1 - k) * 90;
+    for (let i = 3; i >= 0; i--) {
+      const tx = 262 + 32 * i * pe[0] + d[0] * sl, ty = 214 + 32 * i * pe[1] + d[1] * sl, ex = tx + d[0] * 190, ey2 = ty + d[1] * 190, sh = (a, b, w0, w1, c) => p.stroke([[tx + pe[0] * a + d[0] * b, ty + pe[1] * a + d[1] * b], [ex + pe[0] * a, ey2 + pe[1] * a]], [w0, w1], c);
+      p.poly(elp(tx - d[0] * 8 + 2, ty - d[1] * 8 + 6, 24, 17, 0.7), SKIN.meg[1], [SKIN.meg[2], SKIN.meg[3]]);      // (the dent in the cheek)
+      sh(0, 0, 31, 34, H2[0]); sh(-1, 0, 28, 31, H2[1]); sh(-3, 0, 22, 25, H2[2]); sh(-8, 2, 6, 7, H2[3]);
+      p.poly(elp(tx + d[0] * 12, ty + d[1] * 12, 15, 11.5, 0.72), H2[0]); p.poly(elp(tx + d[0] * 13, ty + d[1] * 13, 13, 9.5, 0.72), nail); p.poly(elp(tx + d[0] * 9, ty + d[1] * 9, 7, 3, 0.72), C('#ffffff'), [nail]);
+      p.pl([[tx + 7, ty - 6], [tx + 17, ty - 2]], H2[0]);
+    }
+    p.sc = sv[0]; p.ox = sv[1]; p.oy = sv[2];
+  }
+  // ---- the lower face of Megumi with his mouth forced open: o.mo (how far open, 0 - 1), o.mw (how wide the corners are pulled), o.fin (the finger with the black nail: 0 - 1 how far in), o.tear, o.spit
+  function mouthEcu(o) {
+    const st = ST.meg, S = st.skin, EW = 360, EH = 250, SM = 3.9, p = new Cv(EW, EH, SM, EW * 0.5, 125 - 43 * SM), mo = o.mo === undefined ? 1 : o.mo; p.g.fill(S[2]);
+    p.poly([Q(-60, 14), Q(-8, 14), Q(-8, 120), Q(-60, 120)], S[3], [S[2]], 0.3); p.poly([Q(34, 14), Q(70, 14), Q(70, 120), Q(34, 120)], S[1], [S[2]]);      // (a light on the left, the shadow side on the right)
+    p.poly([Q(-11, 24), Q(11, 24), Q(9, 29), Q(0, 31), Q(-9, 29)], S[1], [S[2], S[3]]); for (const s of [-1, 1]) { p.poly(elp(CX + s * 5, EY + 27, 2.4, 1.6), S[0]); p.stroke(spl([Q(s * 6.5, 19), Q(s * 9.5, 22), Q(s * 8, 26.5)], false, 4), [1.4, 1.2, 0.5], s > 0 ? S[0] : S[1]); }
+    p.poly([Q(-3.5, 31), Q(3.5, 31), Q(4.5, 38), Q(-4.5, 38)], S[1], [S[2]]); p.stroke([Q(-1.2, 32), Q(-1.6, 37)], [0.8, 0.8], S[3], [S[1]]);
+    p.poly(elp(CX, EY + 54 + 8 * mo, 22, 9), S[1], [S[2]], 0.5); p.poly(elp(CX - 2, EY + 62 + 8 * mo, 11, 4.4), S[3], [S[2]]);
+    mouth(p, st, { m: 'scream', mo, mw: o.mw || 22 });
+    if (o.spit) for (const x of [-9, -2, 7, 13]) { const y0 = EY + MY - 8 * mo + 2, y1 = EY + MY + 4 * mo; p.stroke([[CX + x, y0], [CX + x + 0.8, (y0 + y1) / 2 + 2], [CX + x - 0.4, y1 + 3 * o.spit]], [0.7 * o.spit, 0.4, 0.8], TEARC, [MOUTH, TONGUE, TEETH]); }
+    if (o.tear) for (const s of [-1, 1]) { const len = 10 + 36 * o.tear; p.stroke(spl([Q(s * 40, 14), Q(s * 41, 14 + len * 0.5), Q(s * 40.4, 14 + len)], false, 5), [2.4, 2, 2.6], TEARC); p.stroke([Q(s * 40 - 0.7, 20), Q(s * 40 - 0.7, 12 + len * 0.9)], [0.8, 0.8], TEARH); }
+    const sv = [p.sc, p.ox, p.oy]; p.sc = 1; p.ox = CX; p.oy = EY;      // (Sukuna's fingers, in pixel coordinates: four on his left cheek pull the corner of the mouth out, the thumb on the right)
+    const pull = (o.mw || 22) > 24 ? 1 : 0.6; for (let i = 0; i < 4; i++) fingerAt(p, -30, 40 + i * 58, 54 + 12 * pull + (i === 1 || i === 2 ? 12 : 0), 46 + i * 56, 38, 36 - i * 2); fingerAt(p, 400, 150, 296, 146, 42, 38);
+    if (o.fin) { const fin = o.fin, tx = lerp(340, 120, fin), ty = 128, body = [C('#5a0a14'), C('#8a1220'), C('#b8202e'), C('#e0505c')];
+      p.poly([[tx + 30, ty - 20], [420, ty - 26], [420, ty + 26], [tx + 30, ty + 22]], body[1]); p.poly([[tx + 30, ty - 20], [420, ty - 26], [420, ty - 4], [tx + 30, ty - 2]], body[2]); p.stroke([[tx + 40, ty - 16], [380, ty - 20]], [5, 5], body[3]); p.stroke([[tx + 120, ty - 24], [tx + 120, ty + 24]], [3, 3], body[0]); p.stroke([[tx + 200, ty - 25], [tx + 200, ty + 25]], [3, 3], body[0]);
+      p.poly([[tx + 30, ty - 19], [tx - 4, ty - 14], [tx - 90, ty + 6], [tx - 4, ty + 15], [tx + 30, ty + 21]], C('#0e0a16')); p.poly([[tx + 30, ty - 19], [tx - 4, ty - 14], [tx - 80, ty + 4], [tx + 30, ty - 5]], C('#3a3050')); p.pl([[tx + 26, ty - 14], [tx - 60, ty + 2]], C('#6a5a88')); }
+    p.sc = sv[0]; p.ox = sv[1]; p.oy = sv[2];
+    return p.canvas();
+  }
+  // ---- Megumi's throat when he swallows: the jaw of Sukuna's hand under his chin, the lump (Adam's apple) goes down: o.g (0 - 1), o.strain (the tendons stand out), o.drool, o.sweat
+  function neckEcu(o) {
+    const st = ST.meg, S = st.skin, EW = 360, EH = 250, SN = 2.7, p = new Cv(EW, EH, SN, EW * 0.5, 30 - 62 * SN), g = o.g || 0; p.g.fill(C('#140a10'));
+    p.poly([Q(-32, 56), Q(32, 56), Q(38, 140), Q(-38, 140)], S[1]); p.poly([Q(-32, 56), Q(-2, 56), Q(-4, 140), Q(-38, 140)], S[2], [S[1]]);
+    p.poly(elp(CX, EY + 40, 40, 24), S[2]); p.poly(elp(CX - 6, EY + 52, 26, 8), S[3], [S[2]]);      // (the underside of his jaw)
+    p.poly([Q(-44, 56), Q(44, 56), Q(44, 62), Q(30, 72), Q(0, 76), Q(-30, 72), Q(-44, 62)], S[0], [S[1], S[2]]);      // (the shadow of the jaw on the neck)
+    if (o.strain) for (const s of [-1, 1]) { p.stroke(spl([Q(s * 26, 66), Q(s * 17, 92), Q(s * 7, 122)], false, 5), [3, 3.4, 2.6], S[0]); p.stroke(spl([Q(s * 23, 68), Q(s * 14, 92), Q(s * 4, 120)], false, 5), [1.4, 1.6, 1], S[3], [S[1], S[2]]); }
+    const ay = EY + 84 + 26 * g; p.poly(elp(CX + 1.4, ay + 2.4, 6.6, 8.6, 0.1), S[0], [S[1], S[2]], 0.6); p.poly(elp(CX, ay, 5.8, 7.8, 0.1), S[2]); p.poly(elp(CX - 1.4, ay - 1.2, 3.6, 5, 0.1), S[3]); p.poly(elp(CX - 2, ay - 2.6, 1.4, 2, 0.1), S[4], [S[3]]); p.stroke(spl([Q(-6, 84 + 26 * g + 9), Q(0, 84 + 26 * g + 10.6), Q(6, 84 + 26 * g + 9)], false, 4), [0.8, 0.8], S[0], [S[2], S[1]]);
+    p.poly([Q(-70, 118), Q(-34, 106), Q(0, 116), Q(34, 106), Q(70, 118), Q(110, 140), Q(-110, 140)], C('#26304c')); p.poly([Q(-70, 118), Q(-34, 106), Q(0, 116), Q(34, 106), Q(70, 118), Q(70, 124), Q(0, 122), Q(-70, 124)], C('#3e4a72'));
+    if (o.drool) p.stroke(spl([Q(-14, 74), Q(-13, 92), Q(-15, 108 + 14 * o.drool)], false, 5), [1.6, 1.2, 1.8], TEARC, undefined);
+    if (o.sweat) for (const [dx, dy] of [[-30, 78], [32, 92]]) { const x = CX + dx, y = EY + dy + o.sweat * 6; p.poly([[x, y - 5], [x + 3, y + 0.6], [x, y + 3.6], [x - 3, y + 0.6]], TEARC); p.poly(elp(x - 1, y + 0.6, 0.9, 1.3, 0, 8), TEARH); }
+    const sv = [p.sc, p.ox, p.oy]; p.sc = 1; p.ox = CX; p.oy = EY;      // (Sukuna's hand holds his jaw: the thumb on the left, four fingers on the right)
+    fingerAt(p, -40, 20, 112, 54, 40, 36); for (let i = 0; i < 4; i++) fingerAt(p, 420, 10 + i * 34, 252 - (i === 1 || i === 2 ? 10 : 0), 34 + i * 30, 36, 32);
+    p.sc = sv[0]; p.ox = sv[1]; p.oy = sv[2];
+    return p.canvas();
+  }
+  // ---- Megumi's head hanging: the black hair falls over his face in locks, the shadowed face and the neck show between them (o.sway: -2 .. 2, how far the tips swing)
+  function hairdownEcu(o) {
+    const Hc = HAIR.meg, S = SKIN.meg, EW = 360, EH = 250, p = new Cv(EW, EH, 0.74, 166, 157), sw = o.sway || 0; p.g.fill(C('#1c0c14'));
+    p.poly([[110, 190], [250, 190], [270, 250], [90, 250]], S[0]); p.poly([[130, 200], [230, 200], [236, 250], [124, 250]], S[1], [S[0]], 0.5);
+    p.poly([[-120, 250], [-40, 226], [100, 214], [180, 226], [260, 214], [400, 226], [480, 250], [480, 300], [-120, 300]], C('#26304c')); p.poly([[-40, 226], [100, 214], [180, 226], [260, 214], [400, 226], [400, 234], [260, 222], [180, 234], [100, 222], [-40, 234]], C('#3e4a72'));
+    p.poly([[96, 110], [264, 110], [262, 200], [180, 228], [98, 200]], S[0]);
+    p.poly(spl([[-90, -40], [-70, 60], [20, 108], [180, 122], [340, 108], [430, 60], [450, -40]], false, 5), Hc[2]); p.poly(elp(150, 64, 90, 16, -0.05), Hc[3], [Hc[2]]); p.poly(elp(132, 56, 52, 7, -0.05), Hc[4], [Hc[3]]);
+    const back = [[-60, 170, 7], [-18, 190, -7], [24, 190, 7], [86, 226, -6], [142, 206, 8], [200, 236, -7], [262, 212, 6], [322, 196, -8], [380, 188, 7], [420, 170, -7]], front = [[-30, 150, 6], [54, 168, 8], [112, 214, -7], [172, 190, 6], [232, 228, -8], [292, 186, 7], [350, 170, -6], [20, 150, 5], [400, 150, 6]];
+    for (const [x, ty, bd] of back) spike(p, Hc, [x - 38, 78], [x + 38, 82], [x + sw * (ty / 100) + (x - 180) * 0.05, ty * 1.28 + 22], bd);
+    for (const [x, ty, bd] of front) spike(p, Hc, [x - 30, 92], [x + 30, 96], [x + 6 - sw * (ty / 120) + (x - 180) * 0.04, ty * 1.25 + 16], -bd);
+    for (const [x, ty] of [[70, 290], [128, 300], [214, 306], [270, 296]]) { p.stroke(spl([[x, 150], [x + 6 + sw * 2, 220], [x + 2 + sw * 3, ty]], false, 6), [5, 3.2, 0.8], Hc[1]); p.stroke(spl([[x - 1, 156], [x + 5 + sw * 2, 220], [x + 1 + sw * 3, ty - 6]], false, 6), [1.4, 1, 0.4], Hc[4], [Hc[1]]); }
+    if (o.drop !== undefined && o.drop >= 0) { const dx = 200, dy = 224 + o.drop * 40; p.poly([[dx, dy - 7], [dx + 4, dy + 1], [dx, dy + 5], [dx - 4, dy + 1]], o.blood ? C('#b8121c') : TEARC); p.poly(elp(dx - 1.4, dy, 1.2, 1.8, 0, 8), o.blood ? C('#e8606a') : TEARH); }
+    return p.canvas();
+  }
+  // ---- Sukuna's right hand holds Megumi's jaw (three fingers across his cheek, the thumb under his chin, the little finger out to the right) and his left hand takes that little finger: o.pull (0 - 1: how far it is pulled), o.torn (1: it is off), o.blood
+  function handsEcu(o) {
+    const S = SKIN.meg, H2 = SKIN.sy, EW = 360, EH = 250, p = new Cv(EW, EH, 0.74, 165.2, 158.3), pull = o.pull || 0, tn = o.torn, FL = [C('#4a0a12'), C('#7a1018'), C('#a8202a'), C('#c8404a')], PK = [C('#a06a60'), C('#c88a78'), C('#e0a898'), C('#f0c0b0')], ST2 = o.blood ? FL : PK; p.g.fill(C('#140a10'));
+    p.poly(spl([[-20, -20], [240, -20], [232, 50], [216, 110], [186, 166], [140, 214], [80, 248], [-20, 262]], false, 5).concat([[-20, 262]]), S[2]); p.poly([[150, -20], [250, -20], [232, 50], [216, 110], [186, 166], [140, 214], [100, 240], [150, 150]], S[1], [S[2]]); p.poly(elp(60, 70, 70, 50, 0.3), S[3], [S[2]]);
+    p.stroke(spl([[240, -20], [232, 50], [216, 110], [186, 166], [140, 214], [80, 248]], false, 5), [3, 3.4, 3.4, 3, 2.4, 2], S[0]);      // (the edge of his jaw)
+    p.poly(elp(150, 140, 90, 70, 0.4), S[0], [S[1], S[2]], 0.55);      // (the shadow of the hand on his face)
+    p.poly(spl([[150, 40], [226, 30], [262, 76], [268, 150], [240, 212], [190, 220], [152, 170], [136, 100]], true, 5), H2[2]); p.poly(spl([[196, 36], [226, 30], [262, 76], [268, 150], [240, 212], [214, 214], [226, 150], [220, 80]], false, 5), H2[1], [H2[2]]); p.poly(elp(176, 78, 20, 30, 0.2), H2[3], [H2[2]]);
+    for (const [x0, y0, x1, y1] of [[160, 56, 62, 50], [150, 106, 50, 108], [160, 152, 70, 166]]) fingerAt(p, x0, y0, x1, y1, 30, 26);
+    fingerAt(p, 190, 196, 108, 232, 32, 27);      // (the thumb under his chin)
+    if (!tn) { const ex = 296 + pull * 24, ey = 128 + pull * 4; fingerAt(p, 244, 126, ex, ey, 24, 19); } else { p.poly(elp(262, 128, 9, 11), ST2[1]); p.poly(elp(260, 127, 6, 7.5), ST2[2]); if (o.blood) for (const [bx, by] of [[268, 150], [280, 168], [258, 176]]) p.poly(elp(bx, by, 2.6, 4), FL[1]); }
+    const lx = 372 + pull * 26 + (tn ? 40 : 0);      // (his left hand: the arm, the palm, the thumb above the little finger and the first finger below it)
+    p.poly(spl([[lx - 10, 20], [lx + 60, 20], [lx + 70, 230], [lx - 10, 232], [lx - 40, 160], [lx - 40, 90]], true, 5), H2[2]); p.poly([[lx + 30, 20], [lx + 60, 20], [lx + 70, 230], [lx + 30, 232]], H2[1], [H2[2]]);
+    fingerAt(p, lx - 8, 74, lx - 62, 118, 24, 19); fingerAt(p, lx - 8, 176, lx - 60, 140, 24, 19);
+    if (tn) { fingerAt(p, lx - 52, 128, lx - 118, 129, 22, 18); p.poly(elp(lx - 54, 128, 7, 10), ST2[1]); }
+    return p.canvas();
+  }
+  // ---- the finger in the pinch of his thumb and first finger, ripped off: o.red (0 - 1: it turns red), o.nl (0 - 1: the black nail grows long), o.blood
+  function fingerEcu(o) {
+    const EW = 360, EH = 250, p = new Cv(EW, EH, 0.86, 162.8, 163.7), rd = o.red || 0, nl = o.nl || 0, mix = (a, b) => C(hexMix(a, b, rd)), H2 = SKIN.sy; p.g.fill(C('#10060a'));
+    const B = [mix('#8a4e46', '#3a0810'), mix('#bc7864', '#6a0c18'), mix('#e0a083', '#a01c28'), mix('#f4c5a6', '#c83a44'), mix('#fddcc2', '#e0505c')];
+    const y = 132, x0 = 70, x1 = 236;
+    p.stroke([[x0, y], [x1, y - 3]], [58, 46], B[0]); p.stroke([[x0, y - 1], [x1, y - 4]], [54, 42], B[1]); p.stroke([[x0, y - 4], [x1, y - 7]], [44, 34], B[2]); p.stroke([[x0 + 6, y - 16], [x1 - 10, y - 20]], [8, 6], B[3]);
+    for (const t of [0.34, 0.66]) { const cx2 = lerp(x0, x1, t); p.stroke([[cx2, y - 26 + t * 6], [cx2 + 2, y + 24 - t * 6]], [2.6, 2.6], B[0]); }
+    if (rd > 0.3) for (const [vx, vy] of [[110, 120], [160, 140], [200, 118]]) p.stroke([[vx, vy], [vx + 14, vy + 4], [vx + 26, vy - 2]], [1.4, 1.4], C('#e0505a'), [B[2], B[1]]);
+    p.poly(elp(x0 - 2, y, 12, 28), o.blood ? C('#7a1018') : C('#c88a78')); p.poly(elp(x0 - 4, y - 1, 7, 20), o.blood ? C('#a8202a') : C('#e0a898')); if (o.blood) for (const [bx, by] of [[40, 170], [56, 196], [30, 214]]) p.poly(elp(bx, by, 3.4, 5), C('#7a1018'));
+    const L = 40 + nl * 130, th = 24 - nl * 6, nx0 = x1 - 2;      // (the nail: a short human one, then a long black claw)
+    if (nl < 0.2) { p.poly(elp(nx0 + 14, y - 4, 26, 20, 0), H2[0]); p.poly(elp(nx0 + 14, y - 4, 23, 17, 0), C('#e8d4cc')); p.poly(elp(nx0 + 8, y - 9, 12, 4, 0), C('#ffffff'), [C('#e8d4cc')]); }
+    else { const claw = [C('#0a0608'), C('#16101a'), C('#2c2238'), C('#4a3c5c')]; p.poly([[nx0 - 4, y - th - 4], [nx0 + L * 0.7, y - th * 0.7], [nx0 + L, y - 2 + nl * 12], [nx0 + L * 0.7, y + th * 0.7], [nx0 - 4, y + th - 2]], claw[1]); p.poly([[nx0 - 4, y - th - 4], [nx0 + L * 0.7, y - th * 0.7], [nx0 + L, y - 2 + nl * 12], [nx0 + L * 0.6, y - 2]], claw[2], [claw[1]]); p.stroke([[nx0 + 6, y - th + 3], [nx0 + L * 0.85, y - th * 0.5 + 1]], [3, 1.6], claw[3]); p.pl([[nx0 - 4, y - th - 4], [nx0 + L * 0.7, y - th * 0.7], [nx0 + L, y - 2 + nl * 12], [nx0 + L * 0.7, y + th * 0.7], [nx0 - 4, y + th - 2]], claw[0]); }
+    fingerAt(p, 150, 6, 118, 96, 38, 34, true); fingerAt(p, 150, 262, 118, 168, 38, 34, true);      // (the thumb and the first finger that hold it)
+    return p.canvas();
+  }
+  // ---- Yuji's right hand seen from his own eyes (palm to him, fingers up, the thumb on the right): the little finger is gone; o.blood (FULL): the stump bleeds, else a clean pink stump
+  function yhandEcu(o) {
+    const H2 = SKIN.sy, EW = 360, EH = 250, p = new Cv(EW, EH, 0.8, 164, 161), FL = [C('#4a0a12'), C('#7a1018'), C('#a8202a'), C('#c8404a')], PK = [C('#a06a60'), C('#c88a78'), C('#e0a898'), C('#f0c0b0')]; p.g.fill(C('#120608'));
+    for (const [x0, y0, x1, y1, w0, w1] of [[158, 210, 138, 70, 34, 27], [194, 200, 190, 36, 36, 29], [230, 210, 244, 62, 34, 27]]) fingerAt(p, x0, y0, x1, y1, w0, w1, true);
+    p.poly(spl([[120, 250], [124, 190], [140, 160], [190, 150], [244, 160], [262, 196], [268, 250]], false, 5), H2[2]); p.poly(spl([[196, 154], [244, 160], [262, 196], [268, 250], [226, 250], [230, 190]], false, 5), H2[1], [H2[2]]); p.poly(elp(170, 200, 24, 30, 0.1), H2[3], [H2[2]]);
+    fingerAt(p, 262, 214, 322, 124, 38, 29, true);      // (the thumb)
+    fingerAt(p, 126, 214, 112, 168, 30, 26, true); const st = o.blood ? FL : PK; p.poly(elp(111, 164, 14, 7), st[1]); p.poly(elp(111, 163, 10, 4.6), st[2]); if (o.blood) for (const [bx, by] of [[104, 150], [118, 150], [96, 174]]) p.poly(elp(bx, by, 2.4, 4), FL[1]);      // (the stump where the little finger was)
+    for (const [cx2, cy2, w] of [[148, 120, 11], [192, 100, 12], [244, 116, 11], [146, 160, 10], [192, 158, 11], [240, 160, 10]]) p.pl([[cx2 - w, cy2], [cx2 + w, cy2]], H2[0], [H2[1], H2[2], H2[3]]);
+    p.pl(spl([[150, 214], [190, 196], [240, 206]], false, 5), H2[0]); p.pl(spl([[158, 236], [196, 222], [250, 230]], false, 5), H2[0], [H2[1], H2[2]]);
+    return p.canvas();
+  }
+  const irisOf = (who, red) => { const b = IRIS[who === 'meg' ? 'meg' : who === 'yuji' ? 'yuji' : 'suk'], r = IRIS.suk, t = who === 'suk' ? 1 : red; return b.map((h, i) => C(hexMix(h, r[i], t))); };
+  // ---- the whole face
+  function face(o) {
+    const who = o.who || 'suk', ms = who === 'meg' ? 'meg' : 'sy', st = ST[ms], S = st.skin, p = new Cv(), lid = o.lid === undefined ? 0 : o.lid, mk = o.marks === undefined ? (who === 'suk' ? 1 : 0) : o.marks, red = o.red === undefined ? (who === 'suk' ? 1 : 0) : o.red, e2 = o.e2 || 0;
+    const hd = st.head, right = hd.map(q => Q(q[0], q[1])), left = hd.slice(1, -1).reverse().map(q => Q(-q[0], q[1])), outline = spl(right.concat(left), true, 6), n6 = outline.length;
+    hairBack(p, st, ms);
+    // the neck and the collar
+    p.poly([Q(-34, 30), Q(34, 30), Q(40, 130), Q(-40, 130)], S[1]); p.poly([Q(-34, 30), Q(2, 30), Q(2, 130), Q(-40, 130)], S[2], [S[1]]);
+    const jaw = outline.filter(q => q[1] > EY + 26 && q[1] < EY + 71); p.poly(jaw.concat(jaw.slice().reverse().map(q => [q[0], q[1] + 9])), S[0], [S[1], S[2]]);      // (the shadow of the head on the neck)
+    if (ms === 'sy') { p.poly([Q(-50, 66), Q(-24, 76), Q(0, 84), Q(24, 76), Q(50, 66), Q(100, 88), Q(120, 130), Q(-120, 130), Q(-100, 88)], C('#a8202e')); p.poly([Q(-50, 66), Q(-24, 76), Q(0, 84), Q(24, 76), Q(50, 66), Q(54, 74), Q(0, 96), Q(-54, 74)], C('#d84a52')); }
+    else p.poly([Q(-60, 62), Q(-30, 74), Q(0, 80), Q(30, 74), Q(60, 62), Q(110, 90), Q(120, 130), Q(-120, 130), Q(-110, 90)], C('#26304c'));
+    // the ears, the head and the cel shadows
+    for (const s of [-1, 1]) { const ea = st.ear; p.poly(elp(CX + s * ea[0], EY + ea[1], ea[2], ea[3], s * 0.12), S[2]); p.poly(elp(CX + s * (ea[0] - s * 0.5), EY + ea[1] + 1, ea[2] * 0.5, ea[3] * 0.6, s * 0.12), S[1], [S[2]]); p.pl(spl([Q(s * (ea[0] + ea[2] * 0.7), ea[1] - ea[3] * 0.8), Q(s * (ea[0] + ea[2]), ea[1]), Q(s * (ea[0] + ea[2] * 0.6), ea[1] + ea[3] * 0.9)], false, 4), S[0]); }
+    p.poly(outline, S[2]);
+    p.poly([Q(40, -48), Q(42, -26), Q(40, -4), Q(37, 18), Q(31, 38), Q(22, 54), Q(10, 64), Q(12, 90), Q(100, 90), Q(100, -70)], S[1], [S[2]], 0.5);
+    p.poly([Q(44, -48), Q(46, -26), Q(44, -4), Q(41, 18), Q(35, 38), Q(25, 54), Q(12, 64), Q(12, 90), Q(100, 90), Q(100, -70)], S[1], [S[2]]);      // (the shadow side: the right side of the face)
+    p.poly(elp(CX - 8, EY - 38, 20, 8), S[3], [S[2]]); p.stroke(spl([Q(-42, 6), Q(-34, 13), Q(-22, 20)], false, 4), [0.6, 3.6, 0.6], S[3], [S[2]]); p.poly(elp(CX - 2, EY + 60, 10, 4), S[3], [S[2]]);      // (the lights: forehead, cheekbone, chin)
+    p.stroke(outline.slice(Math.round(n6 * 0.1), Math.round(n6 * 0.62)), [0.5, 1.5, 1.7, 1.7, 1.3, 0.5], S[0]);      // (the dark edge of the face on the shadow side and under the chin)
+    // the nose: a soft shadow on its right side, the tip lit, the wings and the nostrils, the shadow under it
+    const nz = st.nose; p.poly([Q(4, -22), Q(7.5, -12), Q(9, 4), Q(12 * nz, 14), Q(10 * nz, 21), Q(5, 19), Q(3, 4), Q(3.5, -14)], S[1], [S[2]]); p.poly(elp(CX - 1.5, EY + 17, 4.2 * nz, 2.6), S[3], [S[2]]);
+    p.poly([Q(-10 * nz, 25), Q(10 * nz, 25), Q(8 * nz, 29), Q(0, 31), Q(-8 * nz, 29)], S[1], [S[2], S[3]]);
+    for (const s of [-1, 1]) { p.stroke(spl([Q(s * 6.5 * nz, 19), Q(s * 9.5 * nz, 22), Q(s * 8 * nz, 26.5)], false, 4), [1.4, 1.2, 0.5], s > 0 ? S[0] : S[1]); p.poly(elp(CX + s * 4.6 * nz, EY + 27, 2.1, 1.3, 0, 10), S[0]); }
+    p.poly([Q(-3.5, 31), Q(3.5, 31), Q(4.5, 37.5), Q(-4.5, 37.5)], S[1], [S[2]]); p.stroke([Q(-1.2, 32), Q(-1.6, 37)], [0.8, 0.8], S[3], [S[1]]);
+    // the eyes, the second eyes
+    const ey = o.ey === undefined ? (who === 'yuji' ? 1 : 0) : o.ey, ek = who === 'meg' ? EYE.meg : mixO(EYE.suk, EYE.yuji, ey), ir = irisOf(who, red), hy = o.look || [0, 0], eyes = [];
+    for (const s of [-1, 1]) {
+      const e = Object.assign({}, ek, { y: EY, lid, look: hy, iD: ir[0], iM: ir[1], iL: ir[2], pupC: C('#10040a'), socket: st.socket }); eyes.push(eyeAt(p, s, e, st)); brow(p, s, who, o, st, ey);
+      if (e2 > 0 && mk > 0.3) { const e3 = Object.assign({}, EYE.suk, { x0: 14, w: 23, h: 4.2 * e2, tilt: 2.2, ir: 5.2, pr: 1.2, ink: 1.8, lashes: 0, wing: 3, y: EY + 19, lid: 0, look: [0, 0], iD: ir[0], iM: ir[1], iL: ir[2], pupC: C('#10040a'), hi: 0 }); eyeAt(p, s, e3, st); }
+    }
+    if (who === 'meg' || ey < 0.5) for (const s of [-1, 1]) p.stroke(spl([Q(s * 14, 9), Q(s * 26, 11.5), Q(s * 38, 9)], false, 4), [0.4, 1.0, 0.4], S[1], [S[2]]);      // (the bags under the eyes)
+    if (o.m === 'smile' || o.m === 'smirk') for (const s of [-1, 1]) p.stroke(spl([Q(s * 12, 22), Q(s * 20, 32), Q(s * 24, 42)], false, 4), [0.4, 1.2, 0.4], S[1], [S[2]]);      // (the folds from the nose to the corners of the mouth)
+    mouth(p, st, o); marks(p, mk); fx(p, o, eyes); hairFront(p, st, ms, o);
+    return p.canvas();
+  }
+  const FY = EY + 16;      // (the row of the picture to put in the middle of the screen: the eyes are a little above the middle, the mouth a little below)
+  return { face: o => memo('F' + JSON.stringify(o), () => face(o)), eye: o => memo('E' + JSON.stringify(o), () => eyeEcu(o)), mouth: o => memo('M' + JSON.stringify(o), () => mouthEcu(o)), neck: o => memo('N' + JSON.stringify(o), () => neckEcu(o)), hair: o => memo('H' + JSON.stringify(o), () => hairdownEcu(o)), hands: o => memo('X' + JSON.stringify(o), () => handsEcu(o)), finger: o => memo('R' + JSON.stringify(o), () => fingerEcu(o)), yhand: o => memo('Y' + JSON.stringify(o), () => yhandEcu(o)), FY };
+})();
 
 // ================================================================ v1.145 CHAPTER 4: THE VESSEL (update 1 of 2: the title, the aftermath on the roof, the playable rooftop chase as Megumi, the catch and the grab of his face)
 // The whole chapter is as long as the user's song (tools/vessel_music.mp3, Andrea Garner, L'AMOUR TOUJOURS, organ, slowed: 5:47.6, a steady organ wash with no beat; its swells are on C15.sw). Everything is a function of the scene time T = the song time
@@ -14147,12 +14310,6 @@ function c15CActors(T, Tp) {      // Megumi and Sukuna on the roof (Tp = the tim
   ctx.save(); ctx.translate(Math.round(m.x), 0); if (m.sx !== 1) ctx.scale(m.sx, 1); const pp = m.pose; pp.blood = 0.6; c15Sprite(c15Meg(pp), 0, -m.lift, m.flip, C15MG.BASE); ctx.restore();
   ctx.save(); ctx.translate(Math.round(s.x), 0); if (s.sx !== 1) ctx.scale(s.sx, 1); c15Sprite(c15Suk(s.pose), 0, 0, s.flip, 70); ctx.restore();
 }
-function c15CEye(T, o) {      // Megumi's eye, large, and the fingers on his cheek; o.open, o.pup, o.refl, o.sweat, o.tr (how much he shakes), o.fp (how far in the fingers are), o.dx, o.dy
-  ctx.fillStyle = '#080408'; ctx.fillRect(0, 0, VW, VH); const im = c15Big.eye({ open: Math.round(o.open * 20) / 20, pup: Math.round(o.pup), refl: o.refl ? 1 : 0, sweat: o.sweat || 0, brow: o.brow || 0 }), z = 2, w = im.width * z, h = im.height * z, bx = Math.round((VW - w) / 2 + (o.dx || 0) + Math.sin(T * 17) * (o.tr || 0)), by = Math.round((VH - h) / 2 + 4 + (o.dy || 0));
-  ctx.drawImage(im, bx, by, w, h); ctx.fillStyle = 'rgba(10,2,14,0.42)'; ctx.fillRect(0, 0, VW, VH); const g = ctx.createLinearGradient(VW * 0.5, 0, VW, 0); g.addColorStop(0, 'rgba(200,20,40,0)'); g.addColorStop(1, 'rgba(200,20,40,0.28)'); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
-  const fp = o.fp === undefined ? 1 : o.fp, fi = c15Big.fingers({ press: fp > 0.8 ? 1 : 0 }); ctx.globalAlpha = 0.95; ctx.drawImage(fi, Math.round(VW - 100 + (1 - fp) * 70 + Math.sin(T * 13) * (o.tr || 0) * 0.5), Math.round(VH - 78 + (1 - fp) * 60), 96, 96); ctx.globalAlpha = 1;
-  ctx.fillStyle = 'rgba(8,2,12,0.3)'; ctx.fillRect(0, 0, VW, VH); c15Embers(T, 18, '255,90,70', 1);
-}
 function c15CEvents(T) {      // the sounds and the things that happen once
   const st = story.c15, ct = st.ct, f = c15CFin(ct); while (ct.cb + 1 < C15CB.length && T >= C15CB[ct.cb + 1]) { ct.cb++; if (T - C15CB[ct.cb] < 0.5) snd('c7beat', 1); }
   const at = (k, t0, fn) => { if (T >= t0 && T < t0 + 0.6) once2(k, fn); };
@@ -14176,11 +14333,11 @@ function c15Catch(now, dt, T) {
     if (sh === 'clamp' || sh === 'wide' || sh === 'hang') { ctx.fillStyle = 'rgba(110,10,24,0.18)'; ctx.fillRect(0, 0, VW, VH); c15Embers(T, 20, '255,100,70', 1); }
   } else if (sh === 'eye' || sh === 'eye2') {
     const a = sh === 'eye' ? c15S(T, C15T.eye1, C15T.boots) : c15S(T, C15T.last, C15.p2), [shx, shy] = c15ShakeOff();
-    ctx.save(); ctx.translate(Math.round(shx), Math.round(shy)); c15CEye(T, sh === 'eye' ? { open: 1.0 + 0.2 * c15E(a * 2), pup: 7 - 2 * a, sweat: 1 + a * 0.6, brow: 4, tr: 0.6, fp: c15E(c15S(T, C15T.eye1, C15T.eye1 + 0.3)), dx: Math.round(-3 * a) } : { open: 1.25 + 0.05 * a, pup: 5 - 3 * c15E(a), refl: a > 0.35, sweat: 1.4 + a * 0.9, brow: 8, tr: 1.2, fp: 1, dx: Math.round(-5 * a), dy: Math.round(2 * a) }); ctx.restore(); c15CVig(T, 0.55, 60);
+    ctx.save(); ctx.translate(Math.round(shx), Math.round(shy)); c15BEye(T, sh === 'eye' ? { lid: -0.1 - 0.15 * c15E(a * 2), pr: 3.8 - 0.8 * a, veins: 0.3, sweat: 1 + a * 0.6, bf: 3, tr: 0.6, fp: c15E(c15S(T, C15T.eye1, C15T.eye1 + 0.3)), row: 58, dx: Math.round(-3 * a) } : { lid: -0.25 - 0.05 * a, pr: 3.2 - 1.4 * c15E(a), refl: a > 0.35 ? 1 : 0, veins: 0.7, sweat: 1.4 + a * 0.9, bf: 7, tr: 1.2, fp: 1, row: 58, dx: Math.round(-5 * a), dy: Math.round(2 * a) }); ctx.restore(); c15CVig(T, 0.55, 60);
   } else if (sh === 'suk') {
-    const u = c15S(T, C15T.face, C15T.wide), bt = T >= C15T.beat, sw = 0.5, e2 = bt ? c15S(T, C15T.beat, C15T.beat + 1.6) : 0.25 * c15S(T, C15T.face, C15T.beat), im = c15Big.suk({ m: 1, sw, e2: Math.round(e2 * 10) / 10, lid: bt ? 0.75 : 0.5 }), z = 2, w = im.width * z, h = im.height * z;
+    const u = c15S(T, C15T.face, C15T.wide), bt = T >= C15T.beat, e2 = bt ? c15S(T, C15T.beat, C15T.beat + 1.6) : 0.25 * c15S(T, C15T.face, C15T.beat), im = c15Faces.face({ who: 'suk', m: 'smirk', e2: Math.round(e2 * 10) / 10, lid: bt ? 0.55 : 0.35 });
     ctx.fillStyle = '#0c0306'; ctx.fillRect(0, 0, VW, VH); const g = ctx.createRadialGradient(VW / 2, VH * 0.6, 10, VW / 2, VH * 0.6, 170); g.addColorStop(0, 'rgba(150,22,34,0.5)'); g.addColorStop(1, 'rgba(150,22,34,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
-    const [shx, shy] = c15ShakeOff(); ctx.drawImage(im, Math.round((VW - w) / 2 + shx + Math.sin(T * 0.7) * 2), Math.round(-92 - 18 * u + shy), w, h); ctx.fillStyle = 'rgba(8,0,10,0.28)'; ctx.fillRect(0, 0, VW, VH); c15Embers(T, 26, '255,120,80', 1); c15CVig(T, 0.7, 80);
+    const [shx, shy] = c15ShakeOff(); ctx.drawImage(im, Math.round((VW - im.width) / 2 + shx + Math.sin(T * 0.7) * 2), Math.round(VH / 2 - c15Faces.FY - 12 * u + shy)); ctx.fillStyle = 'rgba(8,0,10,0.28)'; ctx.fillRect(0, 0, VW, VH); c15Embers(T, 26, '255,120,80', 1); c15CVig(T, 0.7, 80);
   }
   if (st.flash > 0.01) { ctx.fillStyle = 'rgba(255,255,255,' + Math.min(0.92, st.flash).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }
 }
@@ -14188,7 +14345,7 @@ function c15Catch(now, dt, T) {
 // ================================================================ v1.147 CHAPTER 4: THE VESSEL, PART 2 (199.4 - 346.6 s). It goes on from the clamp of part 1 without a break: the left hand leaves his pocket and takes the little finger of the right hand, the RIP (216 s),
 // the finger turns red with a long black nail, Megumi's jaw is forced open, the finger goes in (237 - 241 s), the muffled scream (250.8 s), the swallow, Sukuna lets go and Megumi falls to his knees, his head hangs, Sukuna leaves Yuji's body (hair pink -> orange, the marks fade),
 // Yuji sees his missing finger, steps back and whispers "Fushiguro...?", a long silence, and then Megumi lifts his head: Sukuna's smile, his marks and his red eyes (the loudest swell, 342.5 s). A hard cut to black on the last swell (346.6 s), then the saves.
-// Every shot is a function of the song time T and starts and ends on a swell of the organ (C15B). The art is made in tools/megumi.js (c15Big: face, hands, finger, mouth, neck, hairdown, eye, yhand).
+// Every shot is a function of the song time T and starts and ends on a swell of the organ (C15B). The art is made in tools/faces.js (c15Faces: face, eye, mouth, neck, hair, hands, finger, yhand).
 const C15B = [[199.4, 'hold'], [205.8, 'eyeL'], [210.5, 'grip'], [216.0, 'rip'], [218.5, 'finger'], [224.5, 'sukL'], [229.2, 'mouthOpen'], [232.0, 'approach'], [237.5, 'shove'], [241.2, 'gag'], [245.5, 'spasm'], [250.8, 'scream'], [254.8, 'gulp'], [258.5, 'fall'], [262.8, 'down'], [271.2, 'turn'], [278.2, 'stump'], [281.2, 'yeye'], [284.0, 'step'], [286.0, 'yhorror'], [292.0, 'whisper'], [301.5, 'silence'], [312.0, 'hand'], [320.2, 'yface'], [326.5, 'lift1'], [332.0, 'yeye2'], [337.0, 'reveal'], [342.5, 'smile']];
 function c15BShot(T) { let k = 0; while (k + 1 < C15B.length && T >= C15B[k + 1][0]) k++; const a = C15B[k][0], b = k + 1 < C15B.length ? C15B[k + 1][0] : C15.black; return { id: C15B[k][1], t0: a, t1: b, u: c15Cl((T - a) / (b - a), 0, 1) }; }
 const c15BGore = () => typeof SET !== 'undefined' && SET.gore === 0;      // (blood only when GRAPHIC DAMAGE is FULL)
@@ -14200,8 +14357,9 @@ const c15BHeart = T => { let b = 0; for (const t of C15BB) { const d = T - t; if
 function c15BVig(T, a0, red) { const hb = c15BHeart(T), vg = ctx.createRadialGradient(VW / 2, VH / 2, VH * 0.4, VW / 2, VH / 2, VH * 1.0); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(' + red + ',0,8,' + Math.min(0.95, a0 + 0.2 * hb).toFixed(2) + ')'); ctx.fillStyle = vg; ctx.fillRect(0, 0, VW, VH); }
 function c15BLook(T, a0, red, tint, emb) { c15BVig(T, a0, red); if (tint) { ctx.fillStyle = 'rgba(110,10,24,' + tint + ')'; ctx.fillRect(0, 0, VW, VH); } if (emb) c15Embers(T, emb, '255,100,70', 1); }
 function c15BBack(col, glow) { ctx.fillStyle = col; ctx.fillRect(0, 0, VW, VH); if (glow) { const g = ctx.createRadialGradient(VW / 2, VH * 0.6, 10, VW / 2, VH * 0.6, 190); g.addColorStop(0, glow); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH); } }
-function c15BArt(img, dx, dy) { ctx.drawImage(img, Math.round((VW - img.width * 2) / 2 + dx), Math.round((VH - img.height * 2) / 2 + dy), img.width * 2, img.height * 2); }      // (a close-up picture at 2 x, in the middle)
-function c15BFace(o, dx, dy, fy) { const im = c15Big.face(o); ctx.drawImage(im, Math.round((VW - 300) / 2 + dx), Math.round(VH / 2 - fy * 2 + dy), 300, 260); }      // (a face at 2 x with the row fy (of 130: the eyes are 66, the mouth 100) in the middle of the screen)
+function c15BPic(im, dx, dy) { ctx.drawImage(im, Math.round(VW / 2 - im.width / 2 + dx), Math.round(VH / 2 - im.height / 2 + dy)); }      // (a close-up picture of tools/faces.js (360 x 250) 1 : 1, in the middle of the screen)
+const c15BMouth = (o, dx, dy) => c15BPic(c15Faces.mouth(o), dx, dy);      // (the lower face with the mouth forced open)
+function c15BFace(o, dx, dy, fy) { const im = c15Faces.face(o); ctx.drawImage(im, Math.round((VW - im.width) / 2 + dx), Math.round(VH / 2 - (fy === undefined ? c15Faces.FY : fy) + dy)); }      // (a face from tools/faces.js, 1 picture pixel = 1 game pixel, the row fy of it in the middle of the screen)
 const c15BTr = (T, a, f) => [Math.round(Math.sin(T * (f || 29)) * a), Math.round(Math.cos(T * (f || 29) * 1.3) * a)];      // (a tremble)
 const c15BNarrow = k => Math.round(Math.max(0, 285 - VW) * k);      // (on a narrower screen (16:9) the pictures that are wider than it are pushed over so the hands, the finger and its nail stay in view)
 function c15BPos() { const f = c15CFin(story.c15.ct); return { xs: f.xSF, xm: f.xMF + 4 }; }
@@ -14250,11 +14408,10 @@ function c15BActors(T, extra) {
 function c15BWorld(T, cam, extra) { c15CWorld(T, cam, () => c15BActors(T, extra)); }
 
 // ---- the close-ups
-function c15BEye(T, o) {      // an eye, large (Megumi's, or Yuji's with o.who = 'yuji'): o.open, o.pup, o.lx (look), o.sweat, o.tear, o.refl, o.brow, o.tr (how much it shakes), o.fp (the fingers on the cheek), o.dx, o.dy
-  c15BBack('#080408'); const im = c15Big.eye({ who: o.who, open: c15BQ(o.open, 20), pup: Math.round(o.pup), lx: Math.round(o.lx || 0), refl: o.refl ? 1 : 0, sweat: c15BQ(o.sweat || 0, 10), brow: Math.round(o.brow || 0), tear: c15BQ(o.tear || 0, 10) }), [tx, ty] = c15BTr(T, o.tr || 0, 17);
-  ctx.drawImage(im, Math.round((VW - 352) / 2 + (o.dx || 0) + tx), Math.round((VH - 192) / 2 + 4 + (o.dy || 0) + ty), 352, 192); ctx.fillStyle = 'rgba(10,2,14,' + (o.dark === undefined ? 0.4 : o.dark) + ')'; ctx.fillRect(0, 0, VW, VH);
-  const g = ctx.createLinearGradient(VW * 0.5, 0, VW, 0); g.addColorStop(0, 'rgba(200,20,40,0)'); g.addColorStop(1, 'rgba(200,20,40,' + (o.who === 'yuji' ? 0.1 : 0.28) + ')'); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
-  if (o.fp) { ctx.globalAlpha = 0.95; ctx.drawImage(c15Big.fingers({ press: 1 }), Math.round(VW - 100 + Math.sin(T * 13) * (o.tr || 0) * 0.5), VH - 78, 96, 96); ctx.globalAlpha = 1; }
+function c15BEye(T, o) {      // an eye, large (Megumi's, or Yuji's with o.who = 'yuji'; tools/faces.js): o.lid, o.pr (the pupil), o.look [x, y], o.red, o.veins, o.refl (1: Sukuna's face in it, 2: Megumi's), o.sweat, o.tear, o.br / o.bw / o.bf (the brow), o.fp (the fingers on the cheek), o.tr (how much it shakes), o.row (the screen row of the eye), o.dx, o.dy
+  c15BBack('#080408'); const lk = o.look || [0, 0], im = c15Faces.eye({ who: o.who, lid: c15BQ(o.lid || 0, 10), pr: c15BQ(o.pr === undefined ? 3.2 : o.pr, 2), look: [c15BQ(lk[0], 1), c15BQ(lk[1], 1)], red: c15BQ(o.red || 0, 5), veins: c15BQ(o.veins || 0, 4), refl: o.refl || 0, tear: c15BQ(o.tear || 0, 10), sweat: c15BQ(o.sweat || 0, 5), br: c15BQ(o.br || 0, 1), bw: c15BQ(o.bw || 0, 1), bf: c15BQ(o.bf || 0, 1), fp: c15BQ(o.fp || 0, 4) }), [tx, ty] = c15BTr(T, o.tr || 0, 17);
+  ctx.drawImage(im, Math.round(VW / 2 - 174 + (o.dx || 0) + tx), Math.round((o.row || 66) - 150 + (o.dy || 0) + ty)); ctx.fillStyle = 'rgba(10,2,14,' + (o.dark === undefined ? 0.3 : o.dark) + ')'; ctx.fillRect(0, 0, VW, VH);
+  const g = ctx.createLinearGradient(VW * 0.5, 0, VW, 0); g.addColorStop(0, 'rgba(200,20,40,0)'); g.addColorStop(1, 'rgba(200,20,40,' + (o.who === 'yuji' ? 0.1 : 0.26) + ')'); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
   c15Embers(T, 16, '255,90,70', 1);
 }
 function c15BSpray(x, y, te, n, sp, seed) {      // blood in the air (FULL only): droplets thrown up and out of (x, y) that fall back, te seconds after the burst
@@ -14272,78 +14429,78 @@ const C15BD = {
     const e = c15E(sh.u); c15BWorld(T, { x: c15BMid() - 2, y: c15Lerp(-26, -38, e), z: c15Lerp(1.7, 2.3, e) }); c15BLook(T, 0.55, 50, 0.16, 18);
   },
   eyeL(T, sh) {      // 205.8 - 210.5: his eye follows the hand; its shadow comes across his face
-    const u = sh.u; c15BEye(T, { open: 1.15 + 0.1 * c15E(u), pup: 6 - 2 * u, lx: -18 * c15E(c15S(T, 206.4, 208.4)), sweat: 1 + u * 0.5, brow: 3, tr: 0.5, fp: 1, dx: Math.round(-4 * u) });
+    const u = sh.u; c15BEye(T, { lid: -0.1 - 0.1 * c15E(u), pr: 3.6 - 1.2 * u, look: [-5.5 * c15E(c15S(T, 206.4, 208.4)), 0.5], veins: 0.4 * u, sweat: 1 + u * 0.5, bf: 2, tr: 0.5, fp: 1, row: 58, dx: Math.round(-4 * u) });
     const k = c15E(c15S(T, 208.4, 210.3)); if (k > 0) { const g = ctx.createLinearGradient(0, 0, VW * 0.95 * k, 0); g.addColorStop(0, 'rgba(0,0,0,0.92)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH); }
     c15BVig(T, 0.55, 60);
   },
   grip(T, sh) {      // 210.5 - 216.0: his hand on Megumi's jaw, the other hand takes the little finger and pulls
     const u = sh.u, tr = 0.4 + 1.6 * u * u, [tx, ty] = c15BTr(T, tr, 31);
-    c15BBack('#0a0508', 'rgba(150,22,34,0.35)'); c15BArt(c15Big.hands({ pull: c15BQ(c15E(c15S(T, 210.9, 215.9)), 24) }), -10 - c15BNarrow(0.5) + tx, ty); ctx.fillStyle = 'rgba(10,2,14,0.25)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.55 + 0.15 * u, 60, 0, 14);
+    c15BBack('#0a0508', 'rgba(150,22,34,0.35)'); c15BPic(c15Faces.hands({ pull: c15BQ(c15E(c15S(T, 210.9, 215.9)), 12) }), -6 - c15BNarrow(0.5) + tx, ty); ctx.fillStyle = 'rgba(10,2,14,0.25)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.55 + 0.15 * u, 60, 0, 14);
   },
   rip(T) {      // 216.0 - 218.5: it comes off (a stop frame, a white flash, blood in slow motion); OFF: a short black cut instead
     const rt = T - 216; if (c15BOff() && rt < 0.55) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); return; }
-    const full = c15BGore(), stop = rt < 0.16, [tx, ty] = c15BTr(T, stop ? 3 : 1.2, 47), pull = stop ? 1 : c15BQ(0.35 + 0.55 * c15E(c15S(T, 216.3, 218.3)), 24);
-    c15BBack('#0a0508', 'rgba(170,22,34,0.5)'); c15BArt(c15Big.hands(stop ? { pull: 1 } : { torn: 1, pull, blood: full ? 1 : 0, clean: full ? 0 : 1 }), -10 - c15BNarrow(0.5) + tx, ty);
-    if (!stop) c15BSpray(VW * 0.42, VH * 0.58, c15BSlow(rt - 0.16, 1.4, 0.3), 26, 90, 5); c15BLook(T, 0.6, 90, full ? 0.1 + 0.2 * Math.max(0, 1 - rt) : 0.05, 16);
+    const full = c15BGore(), stop = rt < 0.16, [tx, ty] = c15BTr(T, stop ? 3 : 1.2, 47), pull = stop ? 1 : c15BQ(0.35 + 0.55 * c15E(c15S(T, 216.3, 218.3)), 12);
+    c15BBack('#0a0508', 'rgba(170,22,34,0.5)'); c15BPic(c15Faces.hands(stop ? { pull: 1 } : { torn: 1, pull, blood: full ? 1 : 0 }), -6 - c15BNarrow(0.5) + tx, ty);
+    if (!stop) c15BSpray(VW / 2 + 74, VH / 2 + 6, c15BSlow(rt - 0.16, 1.4, 0.3), 26, 90, 5); c15BLook(T, 0.6, 90, full ? 0.1 + 0.2 * Math.max(0, 1 - rt) : 0.05, 16);
   },
   finger(T) {      // 218.5 - 224.5: the finger in his fingers: it turns red and the black nail grows long
-    const red = c15BQ(c15E(c15S(T, 219.2, 222.0)), 20), nl = c15BQ(c15E(c15S(T, 221.2, 224.2)), 20), full = c15BGore(), [tx, ty] = c15BTr(T, 0.7, 23);
-    c15BBack('#10060a'); c15BArt(c15Big.finger({ red, nl, blood: full ? 1 : 0, clean: full ? 0 : 1 }), tx - c15BNarrow(0.25), ty); ctx.fillStyle = 'rgba(200,20,40,' + (0.1 * red).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH);
-    if (full) { const ox = Math.round((VW - 320) / 2) + tx - c15BNarrow(0.25); for (const t0 of [219.0, 220.4, 221.9, 223.1]) { const te = T - t0; if (te > 0 && te < 1.4) { ctx.fillStyle = '#b8121c'; ctx.fillRect(ox + 60 + Math.round(c4R(t0 * 10, 3) * 8), Math.round(76 + 90 * te * te) + ty, 2, 3); } } }
+    const red = c15BQ(c15E(c15S(T, 219.2, 222.0)), 12), nl = c15BQ(c15E(c15S(T, 221.2, 224.2)), 12), full = c15BGore(), [tx, ty] = c15BTr(T, 0.7, 23);
+    c15BBack('#10060a'); c15BPic(c15Faces.finger({ red, nl, blood: full ? 1 : 0 }), tx - c15BNarrow(0.25), ty); ctx.fillStyle = 'rgba(200,20,40,' + (0.1 * red).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH);
+    if (full) { const ox = Math.round(VW / 2 - 180) + tx - c15BNarrow(0.25); for (const t0 of [219.0, 220.4, 221.9, 223.1]) { const te = T - t0; if (te > 0 && te < 1.4) { ctx.fillStyle = '#b8121c'; ctx.fillRect(ox + 62 + Math.round(c4R(t0 * 10, 3) * 8), Math.round(VH / 2 + 24 + 90 * te * te) + ty, 2, 3); } } }
     c15BLook(T, 0.5, 80, 0, 22);
   },
   sukL(T, sh) {      // 224.5 - 229.2: his face: calm, red eyes, the second pair of eyes; the smile comes slowly
     const u = sh.u, lid = c15BQ(0.6 - 0.25 * c15E(c15S(T, 226.8, 228.2)), 10), [tx, ty] = c15BTr(T, 0.5, 11);
-    c15BBack('#0c0306', 'rgba(150,22,34,0.5)'); c15BFace({ who: 'suk', m: T < 227.4 ? 'smirk' : 'smile', lid, e2: 0.9 }, tx, ty + Math.round(8 - 8 * c15E(u)), 82); ctx.fillStyle = 'rgba(8,0,10,0.25)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.7, 80, 0, 26);
+    c15BBack('#0c0306', 'rgba(150,22,34,0.5)'); c15BFace({ who: 'suk', m: T < 227.4 ? 'smirk' : 'smile', lid, e2: 0.9 }, tx, ty + Math.round(8 - 8 * c15E(u))); ctx.fillStyle = 'rgba(8,0,10,0.25)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.7, 80, 0, 26);
   },
   mouthOpen(T) {      // 229.2 - 232.0: his jaw is forced open
-    const [tx, ty] = c15BTr(T, 1.2, 37); c15BBack('#140a10'); c15BArt(c15Big.mouth({ open: c15BQ(0.1 + 0.9 * c15E(c15S(T, 229.4, 231.4)), 20), tear: c15BQ(c15S(T, 229.8, 232), 10) }), tx, ty); ctx.fillStyle = 'rgba(10,2,14,0.3)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.6, 60, 0, 12);
+    const [tx, ty] = c15BTr(T, 1.2, 37), op = c15E(c15S(T, 229.4, 231.4)); c15BBack('#140a10'); c15BMouth({ mo: c15BQ(0.15 + 0.85 * op, 20), mw: Math.round(22 + 5 * op), tear: c15BQ(c15S(T, 229.8, 232), 10), spit: c15BQ(c15S(T, 230.2, 232), 5) }, tx, ty); ctx.fillStyle = 'rgba(10,2,14,0.25)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.6, 60, 0, 12);
   },
   approach(T, sh) {      // 232.0 - 237.5: from the side: the finger comes towards his mouth
     const { jw } = c15BPts(T); c15BWorld(T, c15BCam(jw[0] + 3, jw[1], 3, 62)); c15BLook(T, 0.62 + 0.1 * sh.u, 50, 0.12, 14);
   },
   shove(T) {      // 237.5 - 241.2: the finger creeps in (slow motion) until the nail touches his lip, then it is pushed in
     const fin = T < 239.6 ? 0.12 + 0.33 * c15E((T - 237.5) / 2.1) : 0.45 + 0.55 * c15E((T - 239.6) / 0.7), [tx, ty] = c15BTr(T, 0.8 + 1.6 * c15S(T, 238, 240.5), 33);
-    c15BBack('#140a10'); c15BArt(c15Big.mouth({ open: 1, fin: c15BQ(fin, 25), tear: 1 }), tx, ty); ctx.fillStyle = 'rgba(10,2,14,0.3)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.65, 90, 0.08, 14);
+    c15BBack('#140a10'); c15BMouth({ mo: 1, mw: 28, fin: c15BQ(fin, 25), tear: 1, spit: 1 }, tx, ty); ctx.fillStyle = 'rgba(10,2,14,0.25)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.65, 90, 0.08, 14);
   },
   gag(T, sh) {      // 241.2 - 245.5: his eye: he gags, tears
-    const u = sh.u; c15BEye(T, { open: 1.0 + 0.25 * Math.abs(Math.sin(T * 6.5)), pup: 3 + Math.round(1.5 * Math.sin(T * 9)), lx: Math.round(2 * Math.sin(T * 23)), sweat: 1.3 + 0.5 * u, tear: 0.2 + 0.8 * c15S(T, 241.5, 244.5), brow: 6, tr: 1.4, fp: 1 }); c15BVig(T, 0.6, 70);
+    const u = sh.u; c15BEye(T, { lid: -0.1 - 0.2 * Math.abs(Math.sin(T * 5.2)), pr: 2.4, look: [0, -1], veins: 0.8, sweat: 1.3 + 0.5 * u, tear: 0.2 + 0.8 * c15S(T, 241.5, 244.5), bf: 5, tr: 1.4, fp: 1, row: 52 }); c15BVig(T, 0.6, 70);
   },
   spasm(T, sh) {      // 245.5 - 250.8: all of him shakes in his grip
     c15BWorld(T, { x: c15BMid() - 4, y: -30, z: c15Lerp(1.9, 1.7, sh.u) }); c15BLook(T, 0.62, 80, 0.14, 22);
   },
   scream(T) {      // 250.8 - 254.8: the scream under the organ
     const a = Math.min(c15S(T, 250.8, 251.6), c15S(T, 254.8, 254.0)), [tx, ty] = c15BTr(T, 0.6 + 2.2 * a, 43);
-    c15BBack('#10060a', 'rgba(170,22,34,0.45)'); c15BRings(T, VW / 2, 84, 250.8, '230,60,70'); c15BFace({ who: 'meg', m: 'scream', lid: 0.9, tear: c15BQ(0.5 + 0.5 * c15S(T, 250.8, 253), 4), sweat: 1 }, tx, ty, 80);
-    ctx.globalAlpha = 0.95; ctx.drawImage(c15Big.fingers({ press: 1 }), VW - 96 + tx, VH - 80 + ty, 96, 96); ctx.globalAlpha = 1; c15BLook(T, 0.65, 100, 0.12, 20);
+    c15BBack('#10060a', 'rgba(170,22,34,0.45)'); c15BRings(T, VW / 2, 84, 250.8, '230,60,70'); c15BFace({ who: 'meg', m: 'scream', mo: c15BQ(0.75 + 0.25 * Math.sin(T * 11), 8), lid: 1, bf: 8, tear: c15BQ(0.5 + 0.5 * c15S(T, 250.8, 253), 8), sweat: 1 }, tx, ty);
+    c15BLook(T, 0.65, 100, 0.12, 20);
   },
   gulp(T) {      // 254.8 - 258.5: he swallows: the lump goes down his throat
-    const [tx, ty] = c15BTr(T, 0.9, 27); c15BBack('#140a10'); c15BArt(c15Big.neck({ g: c15BQ(c15E(c15S(T, 255.2, 257.7)), 30), strain: 1 }), tx, ty); ctx.fillStyle = 'rgba(10,2,14,0.25)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.6, 70, 0, 12);
+    const g = c15BQ(c15E(c15S(T, 255.2, 257.7)), 30), [tx, ty] = c15BTr(T, 0.9, 27); c15BBack('#140a10'); c15BPic(c15Faces.neck({ g, strain: 1, sweat: c15BQ(c15S(T, 254.8, 258), 5), drool: c15BQ(c15S(T, 255, 258), 5) }), tx, ty - Math.round(44 * g)); ctx.fillStyle = 'rgba(10,2,14,0.2)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.6, 70, 0, 12);
   },
   fall(T, sh) {      // 258.5 - 262.8: he lets go; Megumi falls to his knees
     c15BWorld(T, { x: c15BMid() - 6, y: c15Lerp(-34, -22, c15E(sh.u)), z: 2.2 }); c15BLook(T, 0.6, 60, 0.1, 12);
   },
   down(T, sh) {      // 262.8 - 271.2: his head hangs, the hair over his face, a drop falls
-    const [tx, ty] = c15BTr(T, 0.4, 7); c15BBack('#10060a'); c15BArt(c15Big.hairdown({}), tx, Math.round(14 * (1 - c15E(sh.u * 2))) + ty);
-    for (const t0 of [264.6, 267.6, 270.0]) { const te = T - t0; if (te > 0 && te < 2.2) { ctx.fillStyle = c15BGore() ? '#b8121c' : '#cfe6f0'; ctx.fillRect(VW / 2 + 5 + Math.round(c4R(t0, 5) * 20), Math.round(VH * 0.5 + 40 * te * te), 2, 3); } }
+    const [tx, ty] = c15BTr(T, 0.4, 7); c15BBack('#10060a'); c15BPic(c15Faces.hair({ sway: c15BQ(1.6 * Math.sin(T * 0.9), 4) }), tx, Math.round(30 * (1 - c15E(sh.u * 2))) + ty - 30);
+    for (const t0 of [264.6, 267.6, 270.0]) { const te = T - t0; if (te > 0 && te < 2.2) { ctx.fillStyle = c15BGore() ? '#b8121c' : '#cfe8f4'; ctx.fillRect(Math.round(VW / 2 + 12 + c4R(t0, 5) * 24), Math.round(VH * 0.5 + 24 + 40 * te * te), 2, 3); } }
     c15BLook(T, 0.65, 40, 0, 10);
   },
-  turn(T, sh) {      // 271.2 - 278.2: his face: Sukuna leaves, Yuji is there
+  turn(T, sh) {      // 271.2 - 278.2: his face: Sukuna leaves, Yuji is there (the hair stays pink)
     const yj = c15BQ(c15E(c15S(T, 272.0, 277.0)), 20), mk = c15BQ(c15Cl(1 - yj * 1.6, 0, 1), 20), e2 = c15BQ(c15Cl(0.9 - yj * 1.8, 0, 0.9), 20), [tx, ty] = c15BTr(T, 0.5, 9);
-    c15BBack('#0c0306', yj < 0.5 ? 'rgba(150,22,34,0.4)' : 'rgba(160,110,50,0.3)'); c15BFace({ who: 'suk', yj, marks: mk, e2, m: yj < 0.4 ? 'smirk' : 'closed', lid: c15BQ(0.4 - 0.5 * c15E(c15S(T, 276, 278)), 10) }, tx, ty, 82); ctx.fillStyle = 'rgba(8,0,10,0.22)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.6 - 0.2 * sh.u, 70, 0, 18);
+    c15BBack('#0c0306', yj < 0.5 ? 'rgba(150,22,34,0.4)' : 'rgba(160,110,50,0.3)'); c15BFace({ who: 'yuji', ey: yj, red: 1 - yj, marks: mk, e2, m: yj < 0.4 ? 'smirk' : 'slack', lid: c15BQ(0.35 - 0.35 * yj, 10) }, tx, ty); ctx.fillStyle = 'rgba(8,0,10,0.22)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.6 - 0.2 * sh.u, 70, 0, 18);
   },
   stump(T) {      // 278.2 - 281.2: his hand; the little finger is gone
     const rise = Math.round(46 * (1 - c15E(c15S(T, 278.2, 279.1)))), [tx, ty] = c15BTr(T, 1.1, 21);
-    c15BBack('#120608'); c15BArt(c15Big.yhand({ blood: c15BGore() ? 1 : 0 }), tx, rise + ty); ctx.fillStyle = 'rgba(40,20,10,0.18)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.55, 60, 0, 10);
+    c15BBack('#120608'); c15BPic(c15Faces.yhand({ blood: c15BGore() ? 1 : 0 }), tx, rise + ty); ctx.fillStyle = 'rgba(40,20,10,0.18)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.55, 60, 0, 10);
   },
   yeye(T, sh) {      // 281.2 - 284.0: Yuji's eye, wide
-    const u = sh.u; c15BEye(T, { who: 'yuji', open: 1.25, pup: 2, lx: -10 * (1 - c15E(c15S(T, 281.2, 282.6))), sweat: 1 + 0.6 * u, tear: 0.2 + 0.7 * u, brow: 9, tr: 1.2, dark: 0.3 }); c15BVig(T, 0.55, 60);
+    const u = sh.u; c15BEye(T, { who: 'yuji', lid: -0.9, pr: 1.8, look: [-3 * (1 - c15E(c15S(T, 281.2, 282.6))), 1], veins: 0.5, sweat: 1 + 0.6 * u, tear: 0.2 + 0.7 * u, br: 6, bw: 5, tr: 1.2, dark: 0.22, row: 84 }); c15BVig(T, 0.55, 60);
   },
   step(T) {      // 284.0 - 286.0: he steps back
     c15BWorld(T, { x: c15BMid() + 8, y: -30, z: 2.1 }); c15BLook(T, 0.55, 40, 0.06, 10);
   },
   yhorror(T, sh) {      // 286.0 - 292.0: Yuji's face, frightened
-    const [tx, ty] = c15BTr(T, 0.9, 19); c15BBack('#0e0606', 'rgba(160,110,50,0.25)'); c15BFace({ who: 'yuji', m: 'horror', lid: -1, sweat: c15BQ(1 + 0.8 * sh.u, 10), tear: c15BQ(sh.u, 4) }, tx, ty, 82); ctx.fillStyle = 'rgba(8,0,10,0.2)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.6, 60, 0, 12);
+    const [tx, ty] = c15BTr(T, 0.9, 19); c15BBack('#0e0606', 'rgba(160,110,50,0.25)'); c15BFace({ who: 'yuji', m: 'horror', mo: c15BQ(0.55 + 0.1 * Math.sin(T * 8), 8), lid: -0.8, bw: 6, sweat: c15BQ(1 + 0.8 * sh.u, 10), tear: c15BQ(sh.u, 8) }, tx, ty); ctx.fillStyle = 'rgba(8,0,10,0.2)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.6, 60, 0, 12);
   },
   whisper(T, sh) {      // 292.0 - 301.5: "Fushiguro...?"; his hand reaches out
     c15BWorld(T, { x: c15BMid() + 4, y: -30, z: c15Lerp(1.9, 2.3, c15E(sh.u)) }); c15BLook(T, 0.55, 40, 0.05, 10);
@@ -14355,21 +14512,21 @@ const C15BD = {
     const { hd } = c15BPts(T); c15BWorld(T, c15BCam(hd[0] + 8, hd[1] + 4, 4, 60)); c15BLook(T, 0.6 + 0.1 * sh.u, 30, 0, 12);
   },
   yface(T, sh) {      // 320.2 - 326.5: Yuji's face: it is quiet, the tears run
-    const [tx, ty] = c15BTr(T, 0.5, 13); c15BBack('#0e0606', 'rgba(160,110,50,0.22)'); c15BFace({ who: 'yuji', m: 'closed', lid: 0.15, tear: c15BQ(0.4 + 0.6 * sh.u, 10) }, tx, ty, 82); ctx.fillStyle = 'rgba(8,0,10,0.2)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.65, 40, 0, 10);
+    const [tx, ty] = c15BTr(T, 0.5, 13); c15BBack('#0e0606', 'rgba(160,110,50,0.22)'); c15BFace({ who: 'yuji', m: 'sad', lid: 0.2, bw: 5, tear: c15BQ(0.4 + 0.6 * sh.u, 10) }, tx, ty); ctx.fillStyle = 'rgba(8,0,10,0.2)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.65, 40, 0, 10);
   },
   lift1(T, sh) {      // 326.5 - 332.0: Megumi's head begins to come up
     const { hd } = c15BPts(T); c15BWorld(T, c15BCam(hd[0] + 8, hd[1], 3, 56)); c15BLook(T, 0.62 + 0.1 * sh.u, 60, 0.08 * sh.u, 14);
   },
-  yeye2(T, sh) {      // 332.0 - 337.0: Yuji's eye; in it, a grin
-    const u = sh.u; c15BEye(T, { who: 'yuji', open: 1.25, pup: 4 - Math.round(3 * c15E(u)), refl: u > 0.3, sweat: 1.4, tear: 1, brow: 9, tr: 0.8 + 1.2 * u, dark: 0.3 }); c15BVig(T, 0.6 + 0.15 * u, 90);
+  yeye2(T, sh) {      // 332.0 - 337.0: Yuji's eye; in it, Megumi's face with a grin
+    const u = sh.u; c15BEye(T, { who: 'yuji', lid: -0.6, pr: 3 - 1.4 * c15E(u), refl: u > 0.3 ? 2 : 0, veins: 0.6, sweat: 1.4, tear: 1, br: 4, bw: 5, tr: 0.8 + 1.2 * u, dark: 0.22, row: 84 }); c15BVig(T, 0.6 + 0.15 * u, 90);
   },
   reveal(T) {      // 337.0 - 342.5: his face rises out of the dark; the hair falls aside, the marks and the red eyes come
-    const rise = Math.round(c15Lerp(125, 0, c15E(c15S(T, 337, 340.2)))), hair = c15BQ(1 - c15E(c15S(T, 339.6, 341.2)), 5), a = c15E(c15S(T, 341.0, 342.4)), [tx, ty] = c15BTr(T, 0.4, 7);
-    c15BBack('#0c0306', 'rgba(150,22,34,0.4)'); c15BFace({ who: 'meg', hair, marks: c15BQ(a, 10), red: c15BQ(a, 10), e2: c15BQ(0.9 * a, 10), m: 'closed', lid: 0.35 }, tx, ty + rise, 82); ctx.fillStyle = 'rgba(8,0,10,0.22)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.7, 90, 0.05 + 0.15 * a, 14);
+    const rise = Math.round(c15Lerp(200, 0, c15E(c15S(T, 337, 340.2)))), hair = c15BQ(1 - c15E(c15S(T, 339.6, 341.2)), 5), a = c15E(c15S(T, 341.0, 342.4)), [tx, ty] = c15BTr(T, 0.4, 7);
+    c15BBack('#0c0306', 'rgba(150,22,34,0.4)'); c15BFace({ who: 'meg', hair, marks: c15BQ(a, 10), red: c15BQ(a, 10), e2: c15BQ(0.9 * a, 10), m: 'slack', lid: 0.45 }, tx, ty + rise); ctx.fillStyle = 'rgba(8,0,10,0.22)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.7, 90, 0.05 + 0.15 * a, 14);
   },
   smile(T, sh) {      // 342.5 - 346.6: Sukuna's smile on Megumi's face, red eyes; no words; cut to black
     const [tx, ty] = c15BTr(T, T < 343.4 ? 1.2 : 0.3, 7);
-    c15BBack('#0c0306', 'rgba(170,22,34,0.55)'); c15BFace({ who: 'meg', hair: 0, marks: 1, red: 1, e2: 0.9, m: 'smile', lid: 0.4 }, tx, ty - Math.round(5 * c15E(sh.u)), 82); ctx.fillStyle = 'rgba(8,0,10,0.2)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.75, 110, 0.06, 22);
+    c15BBack('#0c0306', 'rgba(170,22,34,0.55)'); c15BFace({ who: 'meg', hair: 0, marks: 1, red: 1, e2: 0.9, m: 'smile', lid: 0.3 }, tx, ty - Math.round(5 * c15E(sh.u))); ctx.fillStyle = 'rgba(8,0,10,0.2)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.75, 110, 0.06, 22);
   },
 };
 
@@ -16566,6 +16723,7 @@ $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+{"v": "1.148", "t": "NEW FACES: THE CLOSE-UPS OF CHAPTER 4 REDRAWN, AND YUJI KEEPS HIS PINK HAIR", "n": ["YUJI'S HAIR IS THE SAME AS SUKUNA'S: when Sukuna leaves, the hair stays pink (it no longer turns orange). The marks fade, the extra eyes close and the eyes turn from red to brown, as before.", "ALL THE CLOSE-UP FACES ARE REDRAWN, much bigger and more detailed, in the game's own pixel size: Sukuna (narrow red eyes, the extra pair of eyes, the marks, a smirk with a fang, a wide grin), Yuji (big brown eyes, thick brows, fear, tears, quiet sadness) and Megumi (long lashes, the fringe of black hair, his scream with the eyes shut, the face that rises out of the dark with Sukuna's marks, red eyes and smile). Real shading, a dark edge on the shadow side, lids, lashes, nose, lips and teeth.", "THE EYE CLOSE-UPS ARE REDRAWN: iris fibres, a wet light, veins in the white, lashes, the brow with its hairs, tears and sweat, and Sukuna's face (or Megumi's) as a tiny reflection in the eye. Sukuna's fingers on the cheek are drawn properly too.", "THE MOUTH CLOSE-UP IS REDRAWN: his jaw pulled open by Sukuna's fingers, teeth, tongue, strings of spit, tears, and the red finger with the long black nail going in. The swallow (his throat, the lump going down), his head hanging with the hair over his face, Sukuna's hand on his jaw pulling his little finger, the red finger with the black nail and Yuji's hand without its little finger are redrawn in the same style."]},
 {"v": "1.147", "t": "CHAPTER 4, PART 2: THE FINGER, THE SCREAM AND THE SMILE", "n": ["THE STORY GOES ON from the moment Sukuna holds Megumi by the jaw, with no black card, all the way to the end of your song (about 2 and a half more minutes, 28 shots, every one with something new). His left hand leaves his pocket and takes the little finger of his own right hand. He pulls and it comes off (GRAPHIC DAMAGE: FULL shows the blood, CLEAN shows none, OFF cuts away from the tearing). In close-up the finger turns red and a long black nail grows out of it.", "HE FORCES MEGUMI'S JAW OPEN and pushes the finger in (slow motion as it goes in). Megumi gags, tears run, his whole body shakes, and he screams: a muffled scream under the organ. Then the swallow. Sukuna lets go and Megumi falls on his knees with his head down and the hair over his face.", "SUKUNA LEAVES YUJI'S BODY: the pink hair turns orange, the marks fade and the red eyes turn brown. Yuji sees his missing finger, looks at Megumi, steps back in horror and whispers \"FUSHIGURO...?\". A long silence, his hand shakes a hand's breadth from Megumi's hair.", "THEN MEGUMI SLOWLY LIFTS HIS HEAD: the hair falls aside, Sukuna's marks appear on his face, his eyes turn red with a second pair of eyes under them, and he smiles Sukuna's smile on the loudest swell of the song. No words. A hard cut to black on the last swell and you are straight back at the saves. Reaching the end is remembered on your save."]},
 {"v": "1.146", "t": "CHAPTER 4 MADE REALISTIC: A MUCH FASTER CHASE AND A NEW SUKUNA", "n": ["THE CHASE IS ABOUT TWICE AS FAST: Megumi sprints, the jump is quicker and snappier, the roofs and the skyline rush past and there are no empty stretches any more (the things on the roofs come from a recipe: jump over crates, vents and air conditioners, slide under pipes, washing lines and water tanks, jump the gaps (the wide ones need a held jump), two crates in a row, a pipe followed by a crate). The slashes and the cuts in the roofs are gone. You still cannot lose.", "A NEW SUKUNA, like the manga (Yuji's body): short spiky pink hair, the high red hood round his neck, the dark uniform with gold buttons, a narrow red eye, a second pair of eyes and the marks on his face. He is no longer a black shape: he runs and leaps on the far roofs, then right behind Megumi, jumping the same gaps and crates and closing in when you stumble. From 2:37 he gains on Megumi for good.", "THE CATCH IS BELIEVABLE NOW: no flying, no teleport, no afterimages. Sukuna runs up behind Megumi, leaps over him in a long jump (slow motion), lands in a crouch in the dust, stands up and turns round. Megumi skids, backs away, turns and runs; Sukuna runs after him, takes him by the collar and swings him round. Then his hand, on a normal arm that is bent a little, closes on Megumi's jaw and cheeks and lifts him a little off the roof. You see them in colour, Megumi's eye with the fingers on his cheek, his boots, and Sukuna's face looking down at him with a calm smirk. Hard cut to black on the last swell, as before.", "A swipe down in the middle of a jump now cuts the jump short and slides."]},
 {"v": "1.145", "t": "CHAPTER 4: THE VESSEL (PART 1): THE ROOFTOP CHASE AND THE CATCH", "n": ["A new story chapter after chapter 3: THE VESSEL. Open it from CONTINUE / CHOOSE CHAPTER in the saves screen, or go straight on from the end of chapter 3. It is made to the whole of your song (L'AMOUR TOUJOURS, the slowed organ). This first part runs to 3:19 and ends with TO BE CONTINUED; the rest (the finger, Yuji, the smile) comes in the next update.", "THE AFTERMATH: Megumi kneels, bleeding, in the ruins of the wheel and gets up. Sukuna steps out of the smoke on the swell of the organ, walks to him while the camera cuts between his boots, Megumi's face and the whole roof, and says RUN. Megumi turns and runs.", "THE CHASE (about 2 minutes, you play it): Megumi runs across the rooftops by himself. TAP = JUMP (hold = higher), SWIPE DOWN or tap the LEFT side of the screen = SLIDE (keys: Space / Up = jump, Down = slide). Jump over crates, vents and air conditioners and over the gaps (the wide gaps need a held jump); slide under pipes, washing lines and water tanks. Sukuna's slashes cut the roof in front of you (a moment of slow motion) and sweep in from behind at head height. You cannot lose: a stumble only slows Megumi and drops him back on the screen, Sukuna comes closer, the heartbeat speeds up and the edges of the screen go red. The place changes as you run: the rooftops, a crane, glass towers, the collapse; a black shape runs and leaps along the far roofs.", "THE CATCH: in slow motion a black shape leaps over the moon and falls in front of Megumi. He skids, turns and runs, a flash, and Sukuna is in front of him. He backs away, and a hand clamps over his face: a black two-shot against the moon, his eye (twice), his boots kicking in the air, Sukuna's face grinning in the dark. Hard cut to black on the last swell of the song. Blood on Megumi follows the GRAPHIC DAMAGE setting (only on FULL). SKIP jumps to the next part. Everything is pixel art."]},
