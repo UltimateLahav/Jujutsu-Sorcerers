@@ -6,6 +6,11 @@ const C15B = [[199.4, 'hold'], [205.8, 'eyeL'], [210.5, 'grip'], [216.0, 'rip'],
 function c15BShot(T) { let k = 0; while (k + 1 < C15B.length && T >= C15B[k + 1][0]) k++; const a = C15B[k][0], b = k + 1 < C15B.length ? C15B[k + 1][0] : C15.black; return { id: C15B[k][1], t0: a, t1: b, u: c15Cl((T - a) / (b - a), 0, 1) }; }
 const c15BGore = () => typeof SET !== 'undefined' && SET.gore === 0;      // (blood only when GRAPHIC DAMAGE is FULL)
 const c15BOff = () => typeof SET !== 'undefined' && SET.gore === 2;      // (OFF: the rip is hidden)
+let c15BWi = 0;      // (how many of the pictures of the hands are made: they are made one by one in the shot before, so that no frame has to wait for one)
+function c15BWarmHands(T) {
+  if (T < 206) c15BWi = 0; if (c15BWi >= 21 || c15BWi > (T - 205.8) / 0.2) return; const i = c15BWi++;
+  if (i < 13) c15Faces.hands({ pull: i / 12 }); else c15Faces.hands({ torn: 1, pull: (4 + i - 13) / 12, blood: c15BGore() ? 1 : 0 });
+}
 const c15BQ = (v, n) => Math.round(v * n) / n;      // (a number cut into steps, so that the pictures of the close-ups are made once and kept)
 const c15BSlow = (rt, len, k) => rt < len ? rt * k : len * k + (rt - len);      // (slow motion for len seconds at k times the speed, then normal)
 const C15BB = (() => { const o = []; let t = 199.6; while (t < 346.4) { o.push(t); t += t < 216 ? 0.62 - 0.12 * c15S(t, 199, 216) : t < 250.8 ? 0.46 : t < 258.5 ? 0.36 : t < 301.5 ? 0.9 : t < 326.5 ? 1.25 : 1.0 - 0.5 * c15S(t, 326.5, 342.5); } return o; })();      // (his heart: faster to the rip and the scream, slow in the silence, then faster and faster to the smile)
@@ -66,7 +71,7 @@ function c15BWorld(T, cam, extra) { c15CWorld(T, cam, () => c15BActors(T, extra)
 // ---- the close-ups
 function c15BEye(T, o) {      // an eye, large (Megumi's, or Yuji's with o.who = 'yuji'; tools/faces.js): o.lid, o.pr (the pupil), o.look [x, y], o.red, o.veins, o.refl (1: Sukuna's face in it, 2: Megumi's), o.sweat, o.circles (dark rings under the eye), o.dead (no light in the eye), o.pale (the skin loses its blood), o.br / o.bw / o.bf (the brow), o.fp (the fingers on the cheek), o.tr (how much it shakes), o.row (the screen row of the eye), o.dx, o.dy
   c15BBack('#080408'); const lk = o.look || [0, 0], im = c15Faces.eye({ who: o.who, lid: c15BQ(o.lid || 0, 10), pr: c15BQ(o.pr === undefined ? 3.2 : o.pr, 2), look: [c15BQ(lk[0], 1), c15BQ(lk[1], 1)], red: c15BQ(o.red || 0, 5), veins: c15BQ(o.veins || 0, 4), refl: o.refl || 0, circles: c15BQ(o.circles || 0, 4), dead: o.dead ? 1 : 0, pale: c15BQ(o.pale || 0, 4), sweat: c15BQ(o.sweat || 0, 5), br: c15BQ(o.br || 0, 1), bw: c15BQ(o.bw || 0, 1), bf: c15BQ(o.bf || 0, 1), fp: c15BQ(o.fp || 0, 4) }), [tx, ty] = c15BTr(T, o.tr || 0, 17);
-  ctx.drawImage(im, Math.round(VW / 2 - 174 + (o.dx || 0) + tx), Math.round((o.row || 66) - 150 + (o.dy || 0) + ty)); ctx.fillStyle = 'rgba(10,2,14,' + (o.dark === undefined ? 0.3 : o.dark) + ')'; ctx.fillRect(0, 0, VW, VH);
+  ctx.drawImage(im, Math.round(VW / 2 - 174 + (o.dx || 0) + tx), Math.round((o.row || 66) - 150 + (o.dy || 0) + ty)); ctx.fillStyle = 'rgba(10,2,14,' + (o.dark === undefined ? 0.12 : o.dark) + ')'; ctx.fillRect(0, 0, VW, VH);
   const g = ctx.createLinearGradient(VW * 0.5, 0, VW, 0); g.addColorStop(0, 'rgba(200,20,40,0)'); g.addColorStop(1, 'rgba(200,20,40,' + (o.who === 'yuji' ? 0.1 : 0.26) + ')'); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
   c15Embers(T, 16, '255,90,70', 1);
 }
@@ -85,19 +90,19 @@ const C15BD = {
     const e = c15E(sh.u); c15BWorld(T, { x: c15BMid() - 2, y: c15Lerp(-26, -38, e), z: c15Lerp(1.7, 2.3, e) }); c15BLook(T, 0.55, 50, 0.16, 18);
   },
   eyeL(T, sh) {      // 205.8 - 210.5: his eye follows the hand; its shadow comes across his face
-    const u = sh.u; c15BEye(T, { lid: -0.1 - 0.1 * c15E(u), pr: 3.6 - 1.2 * u, look: [-5.5 * c15E(c15S(T, 206.4, 208.4)), 0.5], veins: 0.4 + 0.4 * u, circles: 0.4 + 0.3 * u, pale: 0.3 + 0.3 * u, sweat: 1 + u * 0.5, bf: 2, tr: 0.7, fp: 1, row: 58, dx: Math.round(-4 * u) });
+    const u = sh.u; c15BWarmHands(T); c15BEye(T, { lid: -0.1 - 0.1 * c15E(u), pr: 3.6 - 1.2 * u, look: [-5.5 * c15E(c15S(T, 206.4, 208.4)), 0.5], veins: 0.4 + 0.4 * u, circles: 0.4 + 0.3 * u, pale: 0.3 + 0.3 * u, sweat: 1 + u * 0.5, bf: 2, tr: 0.7, fp: 1, row: 58, dx: Math.round(-4 * u) });
     const k = c15E(c15S(T, 208.4, 210.3)); if (k > 0) { const g = ctx.createLinearGradient(0, 0, VW * 0.95 * k, 0); g.addColorStop(0, 'rgba(0,0,0,0.92)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH); }
     c15BVig(T, 0.55, 60);
   },
   grip(T, sh) {      // 210.5 - 216.0: his hand on Megumi's jaw, the other hand takes the little finger and pulls
     const u = sh.u, tr = 0.4 + 1.6 * u * u, [tx, ty] = c15BTr(T, tr, 31);
-    c15BBack('#0a0508', 'rgba(150,22,34,0.35)'); c15BPic(c15Faces.hands({ pull: c15BQ(c15E(c15S(T, 210.9, 215.9)), 12) }), -6 - c15BNarrow(0.5) + tx, ty); ctx.fillStyle = 'rgba(10,2,14,0.25)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.55 + 0.15 * u, 60, 0, 14);
+    c15BBack('#0a0508', 'rgba(150,22,34,0.35)'); c15BPic(c15Faces.hands({ pull: c15BQ(c15E(c15S(T, 210.9, 215.9)), 12) }), -6 - c15BNarrow(0.5) + tx, ty); ctx.fillStyle = 'rgba(10,2,14,0.1)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.55 + 0.15 * u, 60, 0, 14);
   },
   rip(T) {      // 216.0 - 218.5: it comes off (a stop frame, a white flash, blood in slow motion); OFF: a short black cut instead
     const rt = T - 216; if (c15BOff() && rt < 0.55) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); return; }
     const full = c15BGore(), stop = rt < 0.16, [tx, ty] = c15BTr(T, stop ? 3 : 1.2, 47), pull = stop ? 1 : c15BQ(0.35 + 0.55 * c15E(c15S(T, 216.3, 218.3)), 12);
     c15BBack('#0a0508', 'rgba(170,22,34,0.5)'); c15BPic(c15Faces.hands(stop ? { pull: 1 } : { torn: 1, pull, blood: full ? 1 : 0 }), -6 - c15BNarrow(0.5) + tx, ty);
-    if (!stop) c15BSpray(VW / 2 + 74, VH / 2 + 6, c15BSlow(rt - 0.16, 1.4, 0.3), 26, 90, 5); c15BLook(T, 0.6, 90, full ? 0.1 + 0.2 * Math.max(0, 1 - rt) : 0.05, 16);
+    if (!stop) c15BSpray(VW / 2 + 14 - c15BNarrow(0.5), VH / 2 - 16, c15BSlow(rt - 0.16, 1.4, 0.3), 26, 90, 5); c15BLook(T, 0.6, 90, full ? 0.1 + 0.2 * Math.max(0, 1 - rt) : 0.05, 16);
   },
   finger(T) {      // 218.5 - 224.5: the finger in his fingers: it turns red and the black nail grows long
     const red = c15BQ(c15E(c15S(T, 219.2, 222.0)), 12), nl = c15BQ(c15E(c15S(T, 221.2, 224.2)), 12), full = c15BGore(), [tx, ty] = c15BTr(T, 0.7, 23);
@@ -107,17 +112,17 @@ const C15BD = {
   },
   sukL(T, sh) {      // 224.5 - 229.2: his face: calm, red eyes, the second pair of eyes; the smile comes slowly
     const u = sh.u, lid = c15BQ(0.6 - 0.25 * c15E(c15S(T, 226.8, 228.2)), 10), [tx, ty] = c15BTr(T, 0.5, 11);
-    c15BBack('#0c0306', 'rgba(150,22,34,0.5)'); c15BFace({ who: 'suk', m: T < 227.4 ? 'smirk' : 'smile', lid, e2: 0.9 }, tx, ty + Math.round(8 - 8 * c15E(u))); ctx.fillStyle = 'rgba(8,0,10,0.25)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.7, 80, 0, 26);
+    c15BBack('#0c0306', 'rgba(150,22,34,0.5)'); c15BFace({ who: 'suk', m: T < 227.4 ? 'smirk' : 'smile', lid, e2: 0.9 }, tx, ty + Math.round(8 - 8 * c15E(u))); ctx.fillStyle = 'rgba(8,0,10,0.07)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.7, 80, 0, 26);
   },
   mouthOpen(T) {      // 229.2 - 232.0: his jaw is forced open
-    const [tx, ty] = c15BTr(T, 1.2, 37), op = c15E(c15S(T, 229.4, 231.4)); c15BBack('#140a10'); c15BMouth({ mo: c15BQ(0.15 + 0.85 * op, 20), mw: Math.round(22 + 5 * op), pale: c15BQ(0.6 * c15S(T, 229.4, 232), 4), spit: c15BQ(c15S(T, 230.2, 232), 5) }, tx, ty); ctx.fillStyle = 'rgba(10,2,14,0.25)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.6, 60, 0, 12);
+    const [tx, ty] = c15BTr(T, 1.2, 37), op = c15E(c15S(T, 229.4, 231.4)); c15BBack('#140a10'); c15BMouth({ mo: c15BQ(0.15 + 0.85 * op, 20), mw: Math.round(22 + 5 * op), pale: c15BQ(0.6 * c15S(T, 229.4, 232), 4), spit: c15BQ(c15S(T, 230.2, 232), 5) }, tx, ty); ctx.fillStyle = 'rgba(10,2,14,0.08)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.6, 60, 0, 12);
   },
   approach(T, sh) {      // 232.0 - 237.5: from the side: the finger comes towards his mouth
     const { jw } = c15BPts(T); c15BWorld(T, c15BCam(jw[0] + 3, jw[1], 3, 62)); c15BLook(T, 0.62 + 0.1 * sh.u, 50, 0.12, 14);
   },
   shove(T) {      // 237.5 - 241.2: the finger creeps in (slow motion) until the nail touches his lip, then it is pushed in
     const fin = T < 239.6 ? 0.12 + 0.33 * c15E((T - 237.5) / 2.1) : 0.45 + 0.55 * c15E((T - 239.6) / 0.7), [tx, ty] = c15BTr(T, 0.8 + 1.6 * c15S(T, 238, 240.5), 33);
-    c15BBack('#140a10'); c15BMouth({ mo: 1, mw: 28, fin: c15BQ(fin, 25), pale: 0.8, spit: 1 }, tx, ty); ctx.fillStyle = 'rgba(10,2,14,0.25)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.65, 90, 0.08, 14);
+    c15BBack('#140a10'); c15BMouth({ mo: 1, mw: 28, fin: c15BQ(fin, 25), pale: 0.8, spit: 1 }, tx, ty); ctx.fillStyle = 'rgba(10,2,14,0.08)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.65, 90, 0.08, 14);
   },
   gag(T, sh) {      // 241.2 - 245.5: his eye: he gags
     const u = sh.u; c15BEye(T, { lid: -0.1 - 0.2 * Math.abs(Math.sin(T * 5.2)), pr: 2.4 - 1.3 * c15S(T, 241.5, 244), look: [0, -1], veins: 0.6 + 0.4 * c15S(T, 241.5, 243), circles: 0.5 + 0.5 * u, pale: 0.5 + 0.4 * u, dead: T > 243.2 ? 1 : 0, sweat: 1.3 + 0.5 * u, bf: 5, tr: 1.4, fp: 1, row: 52 }); c15BVig(T, 0.6, 70);
@@ -131,7 +136,7 @@ const C15BD = {
     c15BLook(T, 0.65, 100, 0.12, 20);
   },
   gulp(T) {      // 254.8 - 258.5: he swallows: the lump goes down his throat
-    const g = c15BQ(c15E(c15S(T, 255.2, 257.7)), 30), [tx, ty] = c15BTr(T, 0.9, 27); c15BBack('#140a10'); c15BPic(c15Faces.neck({ g, strain: 1, sweat: c15BQ(c15S(T, 254.8, 258), 5), drool: c15BQ(c15S(T, 255, 258), 5) }), tx, ty - Math.round(44 * g)); ctx.fillStyle = 'rgba(10,2,14,0.2)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.6, 70, 0, 12);
+    const g = c15BQ(c15E(c15S(T, 255.2, 257.7)), 30), [tx, ty] = c15BTr(T, 0.9, 27); c15BBack('#140a10'); c15BPic(c15Faces.neck({ g, strain: 1, sweat: c15BQ(c15S(T, 254.8, 258), 5), drool: c15BQ(c15S(T, 255, 258), 5) }), tx, ty - Math.round(44 * g)); ctx.fillStyle = 'rgba(10,2,14,0.08)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.6, 70, 0, 12);
   },
   fall(T, sh) {      // 258.5 - 262.8: he lets go; Megumi falls to his knees
     c15BWorld(T, { x: c15BMid() - 6, y: c15Lerp(-34, -22, c15E(sh.u)), z: 2.2 }); c15BLook(T, 0.6, 60, 0.1, 12);
@@ -143,20 +148,20 @@ const C15BD = {
   },
   turn(T, sh) {      // 271.2 - 278.2: his face: Sukuna leaves, Yuji is there (the hair stays pink)
     const yj = c15BQ(c15E(c15S(T, 272.0, 277.0)), 20), mk = c15BQ(c15Cl(1 - yj * 1.6, 0, 1), 20), e2 = c15BQ(c15Cl(0.9 - yj * 1.8, 0, 0.9), 20), [tx, ty] = c15BTr(T, 0.5, 9);
-    c15BBack('#0c0306', yj < 0.5 ? 'rgba(150,22,34,0.4)' : 'rgba(160,110,50,0.3)'); c15BFace({ who: 'yuji', ey: yj, red: 1 - yj, marks: mk, e2, m: yj < 0.4 ? 'smirk' : 'slack', lid: c15BQ(0.35 - 0.85 * yj, 10), pale: c15BQ(0.8 * yj, 4), circles: c15BQ(0.9 * yj, 4), veins: c15BQ(yj, 4), pr: c15BQ(3 - 1.4 * yj, 4) }, tx, ty); ctx.fillStyle = 'rgba(8,0,10,0.22)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.6 - 0.2 * sh.u, 70, 0, 18);
+    c15BBack('#0c0306', yj < 0.5 ? 'rgba(150,22,34,0.4)' : 'rgba(160,110,50,0.3)'); c15BFace({ who: 'yuji', ey: yj, red: 1 - yj, marks: mk, e2, m: yj < 0.4 ? 'smirk' : 'slack', lid: c15BQ(0.35 - 0.85 * yj, 10), pale: c15BQ(0.8 * yj, 4), circles: c15BQ(0.9 * yj, 4), veins: c15BQ(yj, 4), pr: c15BQ(3 - 1.4 * yj, 4) }, tx, ty); ctx.fillStyle = 'rgba(8,0,10,0.07)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.6 - 0.2 * sh.u, 70, 0, 18);
   },
   stump(T) {      // 278.2 - 281.2: his hand; the little finger is gone
     const rise = Math.round(46 * (1 - c15E(c15S(T, 278.2, 279.1)))), [tx, ty] = c15BTr(T, 1.1, 21);
     c15BBack('#120608'); c15BPic(c15Faces.yhand({ blood: c15BGore() ? 1 : 0 }), tx, rise + ty); ctx.fillStyle = 'rgba(40,20,10,0.18)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.55, 60, 0, 10);
   },
   yeye(T, sh) {      // 281.2 - 284.0: Yuji's eye, wide
-    const u = sh.u; c15BEye(T, { who: 'yuji', lid: -0.9, pr: 1.1, look: [-3 * (1 - c15E(c15S(T, 281.2, 282.6))), 1], veins: 1, circles: 0.9, pale: 0.7, dead: 1, sweat: 1 + 0.6 * u, br: 6, bw: 5, tr: 1.6, dark: 0.22, row: 84 }); c15BVig(T, 0.55, 60);
+    const u = sh.u; c15BEye(T, { who: 'yuji', lid: -0.9, pr: 1.1, look: [-3 * (1 - c15E(c15S(T, 281.2, 282.6))), 1], veins: 1, circles: 0.9, pale: 0.7, dead: 1, sweat: 1 + 0.6 * u, br: 6, bw: 5, tr: 1.6, dark: 0.1, row: 84 }); c15BVig(T, 0.55, 60);
   },
   step(T) {      // 284.0 - 286.0: he steps back
     c15BWorld(T, { x: c15BMid() + 8, y: -30, z: 2.1 }); c15BLook(T, 0.55, 40, 0.06, 10);
   },
   yhorror(T, sh) {      // 286.0 - 292.0: Yuji's face, frightened
-    const [tx, ty] = c15BTr(T, 1.3, 19); c15BBack('#0e0606', 'rgba(160,110,50,0.25)'); c15BFace({ who: 'yuji', m: 'horror', mo: c15BQ(0.5 + 0.1 * Math.sin(T * 8), 8), lid: -0.9, pr: 1.5, bw: 6, veins: 1, circles: 1, pale: 0.85, dead: 1, sweat: c15BQ(1 + 0.8 * sh.u, 10) }, tx, ty); ctx.fillStyle = 'rgba(8,0,10,0.2)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.6, 60, 0, 12);
+    const [tx, ty] = c15BTr(T, 1.3, 19); c15BBack('#0e0606', 'rgba(160,110,50,0.25)'); c15BFace({ who: 'yuji', m: 'horror', mo: c15BQ(0.5 + 0.1 * Math.sin(T * 8), 8), lid: -0.9, pr: 1.5, bw: 6, veins: 1, circles: 1, pale: 0.85, dead: 1, sweat: c15BQ(1 + 0.8 * sh.u, 10) }, tx, ty); ctx.fillStyle = 'rgba(8,0,10,0.07)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.6, 60, 0, 12);
   },
   whisper(T, sh) {      // 292.0 - 301.5: "Fushiguro...?"; his hand reaches out
     c15BWorld(T, { x: c15BMid() + 4, y: -30, z: c15Lerp(1.9, 2.3, c15E(sh.u)) }); c15BLook(T, 0.55, 40, 0.05, 10);
@@ -168,21 +173,21 @@ const C15BD = {
     const { hd } = c15BPts(T); c15BWorld(T, c15BCam(hd[0] + 8, hd[1] + 4, 4, 60)); c15BLook(T, 0.6 + 0.1 * sh.u, 30, 0, 12);
   },
   yface(T, sh) {      // 320.2 - 326.5: Yuji's face: it is quiet, a blank stare
-    const [tx, ty] = c15BTr(T, 0.9, 13); c15BBack('#0e0606', 'rgba(160,110,50,0.22)'); c15BFace({ who: 'yuji', m: 'horror', mo: c15BQ(0.22 + 0.04 * Math.sin(T * 5), 20), lid: -0.5, pr: 1.6, bw: 5, veins: 0.7, circles: 1, pale: 1, dead: 1, sweat: c15BQ(1.2 + 0.5 * sh.u, 10) }, tx, ty); ctx.fillStyle = 'rgba(8,0,10,0.2)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.65, 40, 0, 10);
+    const [tx, ty] = c15BTr(T, 0.9, 13); c15BBack('#0e0606', 'rgba(160,110,50,0.22)'); c15BFace({ who: 'yuji', m: 'horror', mo: c15BQ(0.22 + 0.04 * Math.sin(T * 5), 20), lid: -0.5, pr: 1.6, bw: 5, veins: 0.7, circles: 1, pale: 1, dead: 1, sweat: c15BQ(1.2 + 0.5 * sh.u, 10) }, tx, ty); ctx.fillStyle = 'rgba(8,0,10,0.07)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.65, 40, 0, 10);
   },
   lift1(T, sh) {      // 326.5 - 332.0: Megumi's head begins to come up
     const { hd } = c15BPts(T); c15BWorld(T, c15BCam(hd[0] + 8, hd[1], 3, 56)); c15BLook(T, 0.62 + 0.1 * sh.u, 60, 0.08 * sh.u, 14);
   },
   yeye2(T, sh) {      // 332.0 - 337.0: Yuji's eye; in it, Megumi's face with a grin
-    const u = sh.u; c15BEye(T, { who: 'yuji', lid: -0.6, pr: 3 - 1.4 * c15E(u), refl: u > 0.3 ? 2 : 0, veins: 1, circles: 1, pale: 0.9, dead: 1, sweat: 1.4, br: 4, bw: 5, tr: 0.8 + 1.2 * u, dark: 0.22, row: 84 }); c15BVig(T, 0.6 + 0.15 * u, 90);
+    const u = sh.u; c15BEye(T, { who: 'yuji', lid: -0.6, pr: 3 - 1.4 * c15E(u), refl: u > 0.3 ? 2 : 0, veins: 1, circles: 1, pale: 0.9, dead: 1, sweat: 1.4, br: 4, bw: 5, tr: 0.8 + 1.2 * u, dark: 0.1, row: 84 }); c15BVig(T, 0.6 + 0.15 * u, 90);
   },
   reveal(T) {      // 337.0 - 342.5: his face rises out of the dark; the hair falls aside, the marks and the red eyes come
     const rise = Math.round(c15Lerp(200, 0, c15E(c15S(T, 337, 340.2)))), hair = c15BQ(1 - c15E(c15S(T, 339.6, 341.2)), 5), a = c15E(c15S(T, 341.0, 342.4)), [tx, ty] = c15BTr(T, 0.4, 7);
-    c15BBack('#0c0306', 'rgba(150,22,34,0.4)'); c15BFace({ who: 'meg', hair, marks: c15BQ(a, 10), red: c15BQ(a, 10), e2: c15BQ(0.9 * a, 10), m: 'slack', lid: 0.45 }, tx, ty + rise); ctx.fillStyle = 'rgba(8,0,10,0.22)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.7, 90, 0.05 + 0.15 * a, 14);
+    c15BBack('#0c0306', 'rgba(150,22,34,0.4)'); c15BFace({ who: 'meg', hair, marks: c15BQ(a, 10), red: c15BQ(a, 10), e2: c15BQ(0.9 * a, 10), m: 'slack', lid: 0.45 }, tx, ty + rise); ctx.fillStyle = 'rgba(8,0,10,0.07)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.7, 90, 0.05 + 0.15 * a, 14);
   },
   smile(T, sh) {      // 342.5 - 346.6: Sukuna's smile on Megumi's face, red eyes; no words; cut to black
     const [tx, ty] = c15BTr(T, T < 343.4 ? 1.2 : 0.3, 7);
-    c15BBack('#0c0306', 'rgba(170,22,34,0.55)'); c15BFace({ who: 'meg', hair: 0, marks: 1, red: 1, e2: 0.9, m: 'smile', lid: 0.3 }, tx, ty - Math.round(5 * c15E(sh.u))); ctx.fillStyle = 'rgba(8,0,10,0.2)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.75, 110, 0.06, 22);
+    c15BBack('#0c0306', 'rgba(170,22,34,0.55)'); c15BFace({ who: 'meg', hair: 0, marks: 1, red: 1, e2: 0.9, m: 'smile', lid: 0.3 }, tx, ty - Math.round(5 * c15E(sh.u))); ctx.fillStyle = 'rgba(8,0,10,0.07)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.75, 110, 0.06, 22);
   },
 };
 
