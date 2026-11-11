@@ -209,11 +209,14 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.151</small>
+    <small id="ver">V1.152</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
+  <button id="msBtn">SETTINGS</button>
 </section>
+
+<section id="mset" class="screen"></section>
 
 <section id="ulog" class="screen">
   <h2>UPDATE LOG</h2>
@@ -242,7 +245,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <button id="customMode" class="card mode"><span>ART</span><b>CUSTOM</b><i>DRAW YOUR OWN</i></button>
   </div>
   <small>YOU START WITH PUNCHES ONLY: BEAT CURSES IN CHALLENGES, EARN MONEY, BUY SKILLS</small>
-  <div class="row"><button id="skillsMode">SKILLS</button><button id="modesBack">BACK</button></div>
+  <div class="row"><button id="skillsMode">SKILLS</button><button id="msModes">SETTINGS</button><button id="modesBack">BACK</button></div>
 </section>
 
 <section id="lan" class="screen">
@@ -1903,8 +1906,11 @@ function drawHero(i) {
 const PROG = (() => { const OLD = ['grub', 'stalker', 'wisp', 'ogre', 'imp']; try { const p = JSON.parse(localStorage.getItem('js_prog') || '{}'), r = p.rush || {}, P = { m: Math.max(0, +p.m || 0), own: p.own || {}, beat: p.beat || {}, once: p.once || {}, rush: { best: +r.best || 0, clears: +r.clears || 0, rb: +r.rb || 0, rc: +r.rc || 0 }, hunt: Object.fromEntries(Object.entries(p.hunt && typeof p.hunt === 'object' ? p.hunt : {}).filter(([k, v]) => typeof v === 'string' && v.length === 1 && 'CBAS'.includes(v))) }; for (const k of Object.keys(P.beat)) { const m = /^c(\d)(h?)$/.exec(k); if (m && OLD[+m[1]]) { P.beat['c:' + OLD[+m[1]] + m[2]] = 1; delete P.beat[k]; } } return P; } catch (e) { return { m: 0, own: {}, beat: {}, once: {}, rush: { best: 0, clears: 0, rb: 0, rc: 0 }, hunt: {} }; } })();      // (v1.00 saved the curses you beat as c0..c4; they are called by name now so the ladder can grow)      // saved on the device: money, what you own (skills and characters), which challenges you beat
 const saveProg = () => { try { localStorage.setItem('js_prog', JSON.stringify(PROG)); } catch (e) { /* storage blocked */ } };
 // ---- v1.11 MOBILE: the options (kept in js_set), vibration, the assist levels, the pause flag and the margin a camera notch needs
-const SET = (() => { const D = { hap: 1, sz: 100, op: 78, up: 0, lh: 0, fps: 0, lite: 0, ap: 1, assist: 0, pace: 1, hb: 0, gore: 0 }, R = { hap: [0, 2], sz: [70, 120], op: [30, 100], up: [0, 20], lh: [0, 1], fps: [0, 60], lite: [0, 1], ap: [0, 1], assist: [0, 3], pace: [0, 2], hb: [0, 1], gore: [0, 2] }; try { const p = JSON.parse(localStorage.getItem('js_set') || '{}'); for (const k in D) if (typeof p[k] === 'number' && isFinite(p[k])) D[k] = Math.max(R[k][0], Math.min(R[k][1], Math.round(p[k]))); } catch (e) { /* storage blocked: the defaults */ } if (![0, 30, 60].includes(D.fps)) D.fps = 0; return D; })();
+const SET = (() => { const D = { hap: 1, sz: 100, op: 78, up: 0, lh: 0, fps: 0, lite: 0, ap: 1, assist: 0, pace: 1, hb: 0, gore: 0, shk: 100, fl: 100, dn: 1, hs: 100, br: 100, ct: 100, sat: 100, scan: 0, cb: 0, fpsc: 0, edm: 100, pdm: 100, reg: 0, ien: 0, ihp: 0, ohk: 0, sub: 1, nf: 0, hc: 0, th: 0 }, R = { hap: [0, 2], sz: [70, 120], op: [30, 100], up: [0, 20], lh: [0, 1], fps: [0, 60], lite: [0, 1], ap: [0, 1], assist: [0, 3], pace: [0, 3], hb: [0, 1], gore: [0, 2], shk: [0, 150], fl: [0, 100], dn: [0, 1], hs: [0, 150], br: [70, 130], ct: [80, 140], sat: [0, 150], scan: [0, 2], cb: [0, 3], fpsc: [0, 1], edm: [25, 200], pdm: [50, 300], reg: [0, 5], ien: [0, 1], ihp: [0, 1], ohk: [0, 1], sub: [0, 1], nf: [0, 1], hc: [0, 1], th: [0, 5] }; try { const p = JSON.parse(localStorage.getItem('js_set') || '{}'); for (const k in D) if (typeof p[k] === 'number' && isFinite(p[k])) D[k] = Math.max(R[k][0], Math.min(R[k][1], Math.round(p[k]))); } catch (e) { /* storage blocked: the defaults */ } if (![0, 30, 60].includes(D.fps)) D.fps = 0; return D; })();
 const saveSet = () => { try { localStorage.setItem('js_set', JSON.stringify(SET)); } catch (e) { /* storage blocked */ } };
+const STAT = (() => { const D = { t: 0, w: 0, l: 0, h: 0, p: 0 }; try { const p = JSON.parse(localStorage.getItem('js_stats') || '{}'); for (const k in D) if (typeof p[k] === 'number' && isFinite(p[k]) && p[k] >= 0) D[k] = Math.floor(p[k]); } catch { /* storage blocked */ } return D; })();      // (v1.152 the numbers of the DATA page of the settings: seconds played, fights won / lost, hits landed, parries)
+const statSave = () => { try { localStorage.setItem('js_stats', JSON.stringify(STAT)); } catch { /* storage blocked */ } };
+const cheatOn = () => !!(SET.ien || SET.ihp || SET.ohk || SET.pdm > 100 || SET.edm < 100);      // (a cheat is on: no money is earned; the cheats do nothing in a Wi-Fi fight)
 const hash32 = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };      // (FNV-1a: the day's pick and the check of a save code)
 const buzz = ms => { if (!SET.hap) return; ms = Math.round(ms * (SET.hap === 2 ? 1.6 : 1)); try { if (window.AndroidApp) window.AndroidApp.vibrate(ms); else if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* no motor: no buzz */ } };
 let paused = false, pauseAt = 0, tDraw = 0, powerSave = false, safeC = 0;      // safeC = the notch margin in canvas pixels
@@ -1917,8 +1923,8 @@ const freePlay = () => state === 'play' && (!vs || !!vs.practice);      // v1.14
 const NET_NO = new Set(['y_inherit', 'y_pierce', 'y_shrine', 'y_cleave', 'y_simple', 'y_hometown']), owns = id => id === 'freddy' || freePlay() || (vs && vs.net ? !NET_NO.has(id) : vs && vs.tn ? TN_KIT.has(id) : !!PROG.own[id]), gojoMe = () => !vs || vs.me === 'gojo', fredMe = () => !!vs && vs.me === 'freddy';
 const meK = () => !vs ? 'g' : vs.me === 'yuji' ? 'y' : vs.me === 'verity' ? 'v' : vs.me === 'cat' ? 'k' : 'g';      // the fighter you play: g = Gojo (and everything outside a match), y = Yuji, v = Verity, k = the Cat
 const setMoneyUI = () => { const t = 'MONEY $' + PROG.m; for (const id of ['modesMoney', 'chalMoney', 'skMoney', 'codeMoney']) $(id).textContent = t; };
-const earn = n => { PROG.m += n; saveProg(); setMoneyUI(); };
-const earnOnce = (key, n) => { if (!PROG.once[key]) { PROG.once[key] = 1; earn(n); } };
+const earn = n => { if (cheatOn()) return; PROG.m += n; saveProg(); setMoneyUI(); };
+const earnOnce = (key, n) => { if (!PROG.once[key] && !cheatOn()) { PROG.once[key] = 1; earn(n); } };
 const SK_GOJO = [      // [id, name, what it does, price, needs]
   ['crouch', 'CROUCH', 'DOWN ON THE STICK OR KEY S: DUCK UNDER HIGH HITS (3% ENERGY)', 50, []],
   ['dash', 'DASH', 'A QUICK EVADE FORWARD OR BACK THAT DODGES HITS', 80, []],
@@ -2663,7 +2669,7 @@ function show(s) {
   state = s; if (s !== 'play') cuTest = false; if (s !== 'story') { snd('mhumoff'); snd('tmusicoff'); snd('rsmuroff'); snd('bluepulloff'); c9Stop(); c15Stop(); } if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; track = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
   $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); $('chal').classList.toggle('on', s === 'chal'); $('skills').classList.toggle('on', s === 'skills'); $('sns').style.display = 'none'; if (s !== 'lan' && s !== 'lansel' && !(s === 'play' && vs && vs.net) && lanTimer) lanStop();
   $('versus').classList.toggle('on', s === 'versus');
-  $('title').classList.toggle('on', s === 'title'); $('ulog').classList.toggle('on', s === 'ulog'); $('codes').classList.toggle('on', s === 'codes');
+  $('title').classList.toggle('on', s === 'title'); $('ulog').classList.toggle('on', s === 'ulog'); $('mset').classList.toggle('on', s === 'mset'); $('codes').classList.toggle('on', s === 'codes');
   $('select').classList.toggle('on', s === 'select');
   $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves'); if (s === 'select') cuSelRefresh(); $('cust').classList.toggle('on', s === 'cust'); $('custName').classList.toggle('on', s === 'custname'); $('custDraw').classList.toggle('on', s === 'custdraw'); $('custAnim').classList.toggle('on', s === 'custanim'); $('custAtk').classList.toggle('on', s === 'custatk'); $('custCode').classList.toggle('on', s === 'custcode'); $('custStats').classList.toggle('on', s === 'custstats');
   cv.style.display = s === 'play' || s === 'story' ? 'block' : 'none';
@@ -2881,7 +2887,7 @@ function layer(c, k) {                        // parallax: far layers move less 
 function newFoe(now, mode) { return { mode: mode || 'dummy', x: wx + (mode === 'fighter' ? 78 : 32), born: now, vx: 0, hitAt: -9999, hp: DUMMY_HP, shown: DUMMY_HP, ko: -1, rx: 0, rxAt: -9999, stunUntil: 0, pull: null, smokeUntil: 0, ai: 'rest', aiAt: now, restFor: 1200, k: 0, hitDone: true, swung: true }; }
 function spawnDummy(now, mode) { dummy = newFoe(now, mode); }
 function guardUp(now) { return blkAt >= 0 && blkEnd < 0 && now - blkAt >= 2000 / BLK_FPS; }       // hands are up (from the 3rd frame): attacks from the front bounce off
-function say(txt, x, col, size, now) { popups.push({ born: now, x, txt, col, size: size || 8 }); }
+function say(txt, x, col, size, now) { if (!SET.dn && /^[+-]?\d+$/.test(String(txt))) return; popups.push({ born: now, x, txt, col, size: size || 8 }); }
 // ---------------------------------------------------------------- DIVERGENT FIST. Yuji's own move (the BLUE button while you play Yuji, 15% of the energy; the enemy Yuji throws it too): a straight punch with a fist full of cursed energy. 1. The fist reaches the enemy (hit 36: a short shove; he can block it), 2. it stays pressed in, 3. as Yuji pulls it back, 0.17 s later, a SECOND impact lands in the enemy's stomach (hit 37: a long push, a shock ring, a flash, a shake and a moment of slow motion). The second one only needs the first to have reached him (divP: yours on the enemy, dummy.divOk: the enemy's on you): blocking the fist, or stepping away after it, does not stop it.
 let divP = null;      // you: { at } once the first impact has reached the enemy
 const divFx = [];      // the shock rings: { wx (where in the world), y (on the screen), born }
@@ -2958,7 +2964,7 @@ function drawDivFx(now) {      // the shock rings of the second impact: a thick 
 // HIT-STOP: when a blow lands the whole game stands still for a moment (its clock stops, see tick) and then goes on from the same picture, so the hit feels heavy. A COMBO is the hits you land within COMBO_WIN ms of each other: from the third hit on every hit does 1 more damage per extra hit (at most +6; Yuji's and the Cat's own moves keep their exact totals), every landed hit fills the cursed energy bar, and a challenge pays a little extra for the best combo. The PARRY: a guard that went up no more than PARRY_MS before the blow turns it aside, stuns whoever struck and fills the bar.
 const COMBO_WIN = 1200, PARRY_MS = 260, E_HIT = 3, E_HURT = 2, E_PARRY = 12;      // energy in % of the bar for a landed hit (plus 1 per extra hit of the combo, at most +3), a hit taken and a parry
 let stopMs = 0, sparks = [];
-const hitStop = ms => { if (state === 'play') stopMs = Math.max(stopMs, Math.min(110, ms)); };
+const hitStop = ms => { if (state === 'play') stopMs = Math.max(stopMs, Math.min(110, ms * SET.hs / 100)); };
 const ceGain = n => { if (vs && vs.ph === 'fight' && !vs.end) ce = Math.min(100, ce + n); };
 const comboBonus = (k, now) => k < 22 ? Math.min(6, Math.max(0, (now > hits.until ? 0 : hits.n) - 1)) : 0;      // the extra damage of the hit that is about to land (hits.n = the hits already landed in this combo)
 function spark(x, y, n, cols, big, dir) {      // a burst of hit sparks at the world place x, screen height y; dir 1 = thrown to the right, -1 = to the left
@@ -2986,7 +2992,7 @@ function onHurt(k, dm, now) {      // a blow landed on you: sparks, a longer hit
   ceGain(E_HURT); hits.until = 0; flowHurt(now);
 }
 function parryHit(now) {      // PARRY: the blow is turned aside (no damage, no push), whoever struck is stunned and open for a counter, and the energy bar fills
-  const d = dummy; say('PARRY!', wx + 16, '#ffd34d', 8, now); snd('stun'); snd('block'); flash(now, 90, 0.22); hitStop(80); buzz(35); if (vs) vs.par = (vs.par | 0) + 1; shakeUntil = now + 90; shakeAmp = 2;
+  const d = dummy; say('PARRY!', wx + 16, '#ffd34d', 8, now); snd('stun'); snd('block'); flash(now, 90, 0.22); hitStop(80); buzz(35); if (vs) vs.par = (vs.par | 0) + 1; STAT.p++; shakeUntil = now + 90; shakeAmp = 2;
   spark(wx + 14, gy - 34, 14, ['#ffffff', '#ffd34d', '#fff2a0'], true, 1); divFx.push({ wx: wx + 14, y: gy - 34, born: now }); if (divFx.length > 8) divFx.shift(); ceGain(E_PARRY);
   if (!(vs && vs.net) && (!vs || vs.ph === 'fight')) { slowMo(520, 0.3); ctr = { at: now, until: now + 70 }; }      // (v1.30: a short slow motion, then the free counter)
   flowAdd(15, now); if (d) stgAdd(d, 45, now);      // (v1.32: Flow for you, stagger for him)
@@ -3031,6 +3037,7 @@ function hitFoe(k, now) {                     // called on the impact frame: a h
   const cb = comboBonus(k, now); dmg += cb; hits.n++; hits.dmg += dmg; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = cb; cancelFor = atkAt; cancelUntil = now + CANCEL_MS * (flowOn ? 2 : 1); if (atkK === 3 && meK() === 'v' && !vh && !ac) { acWin = now + AC_WIN; if (acPend === atkAt) acGo = true; } if (vs) vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n);
   const grab = !!vs && vs.me === 'cat' && (k === 30 || k === 32), held = !!vs && vs.me === 'cat' && k >= 31 && k <= 33 && !!dummy.cheld;      // (the playable Cat's glove: a grab holds the enemy and pulls him in, the punch lands on the held enemy where he stands, the kick sends him away)
   goreHint = { side: 'f', h: isKick(who, k) || stance === 'crouch' ? 'l' : jumpAt >= 0 ? 'h' : 'm', at: now };      // (v1.128 GRAPHIC DAMAGE: where the blow lands)
+  if (!(vs && vs.net)) dmg = SET.ohk ? Math.max(dmg, (dummy.max || 5000) * 2) : Math.max(1, Math.round(dmg * SET.pdm / 100)); STAT.h++;
   dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += held && k !== 33 ? 0 : KNOCK[k]; if (k === 3 || k === 17 || k === 21 || k === 29 || k === 33 || k === 35 || k === 41 || k === 42) { dummy.smokeUntil = now + 520; puff(dummy.x, 8); } shakeUntil = now + 110; shakeAmp = k === 21 || k === 35 || k === 42 ? 4 : [3, 15, 17, 18, 19, 29, 33, 40, 41].includes(k) ? 3 : 2;
   if (k === 40 || k === 43 || k === 48 || hitOv) dummy.down = now + RX_DUR[4];      // (a DOWNSLAM or a SWEEP puts him on the floor for as long as the fall lasts)
   if (k === 43) dummy.sweptAt = now;      // (the sweep landed: your next M1 press is the 3 KICKS)
@@ -3266,7 +3273,7 @@ function koDummy(now) {                       // the enemy goes down (every way 
   dummy.ko = now; dummy.koAt = Math.max(now, holdUntil);        // he starts to topple when the hit-stop is over, so the fall is seen
   dummy.vx += 70; shakeUntil = now + 260; shakeAmp = 4; kos++; if (!vs) say('K.O.', dummy.x, '#ffd34d', 16, now + 120); snd('ko');      // (a match has its own big K.O. banner)
 }
-function flash(now, ms, a) { flashUntil = now + ms; flashMs = ms; flashA = a; }               // a pale-blue flash over the whole screen that fades out
+function flash(now, ms, a) { a = a * SET.fl / 100; if (SET.nf) a = Math.min(a, 0.1); if (a <= 0.004) return; flashUntil = now + ms; flashMs = ms; flashA = a; }               // a pale-blue flash over the whole screen that fades out
 const STONE = ['#5b516b', '#9a8fb0', '#3d3548', '#6d5f86'];                                      // the greys of the rooftop rubble
 function spawnOrb(now) {                      // MAX BLUE: the orb leaves his palm, grows into a huge pixelated sphere in front of him and pulls everything in
   orb = { born: now, x0: wx + 10, x1: wx + 42, tick: now + 500, acc: 0, n: 0 }; debris = [];
@@ -3754,6 +3761,7 @@ function vsTick(now, dt) {
     vs.prevAtk = atkAt; goreTick(now, dt);      // (v1.128 GRAPHIC DAMAGE)
     if (vs.tl <= 0) { if (vs.net) netTimeUp(now); else endRound(!vs.rush && !vs.hunt && vs.hp / PHP > (dummy ? dummy.hp / dummy.max : 0) ? 'player' : 'enemy', 'time', now); }
   } else if (vs.ph === 'ko' && a >= KO_MS) { if (vs.story || vs.hunt || (vs.rush ? vs.ew >= 1 || vs.pw >= vs.run.waves.length : vs.pw >= 2 || vs.ew >= 2)) finishMatch(now); else { vs.round++; beginRound(now); return; } }      // the round is over: whoever got the point, the next round starts fresh (full health, new positions)
+  if (SET.reg && vs.ph === 'fight' && !vs.net && vs.hp > 0) vs.hp = Math.min(PHP, vs.hp + SET.reg * PHP / 100 * dt);
   if (now - vs.hitAt > 350) vs.sh += (vs.hp - vs.sh) * Math.min(1, dt * 4);
   if (vs.ph !== 'fight') { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = false; }      // no control before FIGHT! and after the K.O.
   if (now < pStun || now < (vs.catHold || 0) || now < (vs.cStun || 0) || now < (vs.nHold || 0)) { keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; stickDown = false; }      // ...and none while he is stunned by the JUMPSCARE, held in the Cat's glove or dizzy (the Cat after 5 s flat)
@@ -3762,7 +3770,7 @@ function vsTick(now, dt) {
   if (vs.me === 'yuji') { if (stance !== 'stand') { if (stance !== 'crouch') atkReq = false; blockHeld = false; if (stance !== 'crouch') lpReq = false; } }      // Yuji has his M1 combo, BLUE (DIVERGENT FIST standing, CONCENTRATED FIST in cursed energy mode, crouched: the SWEEP in normal mode and the UPPERCUT, then the FACE KICK, in cursed energy mode), the cursed energy MODE (off <-> on, no red mode), block, walking, jumping, crouching and dashing (v1.46: the DOMAIN button is his ULTIMATE; v1.48: crouched, ATTACK is his two crouch punches, R.JAB and L.UPPR, with the skill CROUCH PUNCHES)
   goreGate(now);      // (v1.128 GRAPHIC DAMAGE: the controls with the limbs you have lost)
 }
-function vsHurt(dm, now) { if (dom) return; if (cuMe()) dm = Math.max(1, Math.round(dm * PHP / cuS.hp)); vs.hp = Math.max(0, vs.hp - dm); vs.hitAt = now; if (vs.hp <= 0) { if (!vs.story || vs.foe === 'cat' || vs.tn) { endRound('enemy', 'ko', now); if (vs.net && vs.ph === 'ko' && vs.who === 'enemy') lanSend('K|'); } else if (!de && !se) deathStart(now); } }      // (in the story fight Gojo's death is a cutscene)
+function vsHurt(dm, now) { if (dom) return; if (!(vs && vs.net)) { if (SET.ihp) return; if (dm > 0) dm = Math.max(1, Math.round(dm * SET.edm / 100)); } if (cuMe()) dm = Math.max(1, Math.round(dm * PHP / cuS.hp)); vs.hp = Math.max(0, vs.hp - dm); vs.hitAt = now; if (vs.hp <= 0) { if (!vs.story || vs.foe === 'cat' || vs.tn) { endRound('enemy', 'ko', now); if (vs.net && vs.ph === 'ko' && vs.who === 'enemy') lanSend('K|'); } else if (!de && !se) deathStart(now); } }      // (in the story fight Gojo's death is a cutscene)
 function endRound(who, why, now) {
   if (!vs || vs.ph !== 'fight') return; vs.ph = 'ko'; vs.t0 = now; vs.who = who; vs.why = why; if (who === 'player') vs.pw++; else vs.ew++; if (vs.rush && who === 'player') rushPay(now);
   if (why === 'ko') holdUntil = Math.max(holdUntil, now + KO_HOLD); vs.koAt = Math.max(now, holdUntil); snd(who === 'player' ? 'finisher' : 'ko'); buzz(who === 'player' ? 60 : 110);      // (koAt: when the loser starts to topple)
@@ -3774,7 +3782,7 @@ function finishMatch(now) {
   if (vs.cv) { curseOver(now); return; }
   vs.ph = 'over'; $('vsAgain').textContent = 'REMATCH'; $('vsAgain').classList.toggle('hot', !(vs.story ? vs.pw >= 1 : vs.pw >= 2));      // (chapter 2's fight is not won here: it ends when you get into the portal, see c3Enter in chap2.js)
   if (vs.story && vs.foe === 'verity' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s1', 200); storyDone(); story.toOutro = true; return; }      if (vs.story && vs.foe === 'cat' && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s2', 300); storyDone2(); story.toMaster = true; return; }      if (vs.story && vs.tn && vs.pw >= 1 && story) { vs.res = { win: true, stars: 3 }; earnOnce('s3', 300); storyDone3(); story.toEnd = true; return; }      // (beating Gojo in the training: the happy ending, v1.55)      // (beating the Cat: the Master's scene follows, then END OF CHAPTER 1, v1.54)      // (beating Verity: the report to the higher-ups follows, started by the main loop)
-  const win = vs.story ? vs.pw >= 1 : vs.pw >= 2, pf = vs.hp / PHP, stars = win ? (pf >= 0.7 ? 3 : pf >= 0.35 ? 2 : 1) : 0, sv = vsLoad(), gi = vs.gi;
+  const win = vs.story ? vs.pw >= 1 : vs.pw >= 2, pf = vs.hp / PHP, stars = win ? (pf >= 0.7 ? 3 : pf >= 0.35 ? 2 : 1) : 0, sv = vsLoad(), gi = vs.gi; if (win) STAT.w++; else STAT.l++; statSave();
   if (win && !vs.story) { sv.un = Math.max(sv.un, Math.min(5, gi + 1)); sv.st[gi] = Math.max(sv.st[gi], stars); vsStore(sv.un, sv.st); earn([15, 25, 40, 60, 90, 140][gi]); }
   vs.res = { win, stars }; $('vsTitle').textContent = win ? 'VICTORY' : 'DEFEAT'; $('vsInfo').textContent = GRADES[gi].name + '  -  ROUNDS ' + vs.pw + ' : ' + vs.ew + (win && !vs.story ? '\n+$' + [15, 25, 40, 60, 90, 140][gi] : '');
   $('vsStars').innerHTML = win ? [0, 1, 2].map(i => '<span class="star' + (i < stars ? '' : ' off') + '"></span>').join('') : ''; $('vsNext').textContent = 'NEXT GRADE'; $('vsNext').style.display = win && gi < 5 ? '' : 'none'; $('vsres').classList.add('on'); snd(win ? 'finisher' : 'ko');
@@ -3855,9 +3863,10 @@ CE_COST.fPierce = 20; CE_COST.fWater = 15; CE_COST.fDream = 67;      // (v1.94 F
 let ce = 100, ceLast = -1e9, ceFlash = -1e9;      // the energy in %, when a move last cost some, when a move was last refused (the bar flashes red)
 function ceReset() { ce = 100; ceLast = ceFlash = -1e9; }
 function ceDeny(now) { if (now - ceFlash < 150) return; ceFlash = now; snd('noce'); }      // a refused move: the bar flashes red and says NO CE for a moment (one refusal per press, even if the press falls through to another move that is refused too)
-function ceSpend(cost, now) { if (!vs || vs.end || (vs.practice && TR.pce === 0)) return true; if (ce + 1e-6 < cost) { ceDeny(now); return false; } ce = Math.max(0, ce - cost); ceLast = now; return true; }      // pays for a move (free outside Versus mode); false = not enough energy, the move does not start
-function ceHas(cost) { return !vs || vs.end || (vs.practice && TR.pce === 0) || ce + 1e-6 >= cost; }      // can the energy pay for a move? (looks only, pays nothing)
-function ceTick(now, dt) {                    // the refill and the cursed mode's drain (only while a round is being fought)
+function ceSpend(cost, now) { if (!vs || vs.end || (vs.practice && TR.pce === 0) || (SET.ien && !vs.net)) return true; if (ce + 1e-6 < cost) { ceDeny(now); return false; } ce = Math.max(0, ce - cost); ceLast = now; return true; }      // pays for a move (free outside Versus mode); false = not enough energy, the move does not start
+function ceHas(cost) { return !vs || vs.end || (vs.practice && TR.pce === 0) || (SET.ien && !vs.net) || ce + 1e-6 >= cost; }      // can the energy pay for a move? (looks only, pays nothing)
+function ceTick(now, dt) {
+  if (SET.ien && vs && !vs.net) ce = 100;                    // the refill and the cursed mode's drain (only while a round is being fought)
   if (!vs || vs.ph !== 'fight') return;
   if (cm === 1) { ce = Math.max(0, ce - dt); if (ce <= 0) { ceDeny(now); setMode(0, now); } }
   else if (now - ceLast >= CE_WAIT) ce = Math.min(100, ce + dt * CE_REFILL * (cuMe() ? cuS.er / 100 : 1));
@@ -4057,7 +4066,7 @@ function fatFrame(now, dt) {                           // one frame of the cutsc
   const shotA = t >= P.TW && t < P.TB - 0.03, push = t >= P.TR - 0.02 && t < P.TBL + 0.05, z = shotA || push ? 2 : 1, px = shotA ? mx + 10 : push ? mx + 36 : mx, hT = t < P.TD + 0.05 ? Math.max(en.vis ? en.lift : 0, go.vis ? go.lift : 0) : (en.vis ? en.lift : 0);
   f.pan += (Math.max(0, Math.min(50, hT - 20)) - f.pan) * Math.min(1, dt * 10); const py = shotA ? gy - 38 : push ? gy - 58 : my - Math.round(f.pan);      // (the picture tilts up with whoever is highest; after the kick down it follows him to the floor)
   f.z = z; ctx.save(); ctx.imageSmoothingEnabled = false;
-  if (now < shakeUntil) ctx.translate(Math.round((Math.random() * 2 - 1) * shakeAmp), Math.round((Math.random() * 2 - 1) * shakeAmp));
+  if (now < shakeUntil) ctx.translate(Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100), Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100));
   ctx.translate(mx, my); if (z !== 1) ctx.scale(z, z); ctx.translate(-px, -py);
   ctx.fillStyle = '#070b1e'; ctx.fillRect(-VW, -400, VW * 3, 400 + gy);        // (sky above and beside the picture when the camera tilts)
   drawBackdrop(now); ctx.fillStyle = 'rgba(10,6,30,0.3)'; ctx.fillRect(-VW, -400, VW * 3, 900);      // the world darkens a little around the two of them
@@ -4952,7 +4961,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   const tuH = Math.min(40, gy - 61), lift = vh ? vhLift(now) : pnL >= 0 ? pnL : tu >= 0 ? (tu < 7 ? teleL0 : Math.max(0, Math.round(tuH * (1 - Math.pow((tu - 7) / 7, 1.7))))) : jf >= 0 ? D.jump.lift[jf] : 0; gojoLift = hum ? lift : 0; gojoGone = !hum || (df >= 3 && df <= 11) || (tu >= 3 && tu <= 11); v.tuNow = tu;      // (the double jump: he vanishes where he is, comes back at the fixed height of 40 px and falls to the ground)      // (the enemy's swings miss while he is in the air, gone, or a ball)
 
   ctx.save();
-  shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }
+  shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100); ctx.translate(shkX, shkY); }
   ctx.imageSmoothingEnabled = false;
   drawBackdrop(now);
   ctx.fillStyle = 'rgba(220,210,255,0.35)';      // wind streaks
@@ -5413,7 +5422,7 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   const dm = dummy; if (dm && dm.cheld && (now >= dm.cheld.until || dm.ko >= 0 || hf >= 0 || jf >= 0 || df >= 0 || stance !== 'stand')) catRelease(now);      // (the glove lets go when its time is up or when he does something else)
 
   ctx.save();
-  shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }
+  shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100); ctx.translate(shkX, shkY); }
   ctx.imageSmoothingEnabled = false;
   drawBackdrop(now);
   ctx.fillStyle = 'rgba(220,210,255,0.35)';      // wind streaks
@@ -14771,7 +14780,7 @@ function drawScene(now, dt) {
   playerSlide(dt); if (ride) updateRide(now); physCollide(now, dt); if (vs && vs.net && dummy) wx = Math.max(dummy.x - NET_LEASH, Math.min(dummy.x - 14, wx)); else if (vs && vs.cv) { const lf = leadFoe(); if (lf) wx = Math.min(wx, lf.x - Math.max(12, lf.curse.hw)); } else if (vs && vs.c3) c3Block(now, dt);                    // knocked back by the attacking dummy: the world slides past, then friction stops it
 
   ctx.save();
-  shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }   // tiny shake on impact (the bars, names and timer are drawn back where they belong, so they stay still)
+  shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100); ctx.translate(shkX, shkY); }   // tiny shake on impact (the bars, names and timer are drawn back where they belong, so they stay still)
   ctx.imageSmoothingEnabled = false;
   drawBackdrop(now); drawSMD(now, false);               // the sky, the city, traffic lights and lamps, then the zebra crossing under his feet (it scrolls with the world)
   const rush = df >= 2 && df <= 11 ? (dgK === 0 ? 700 : -500) : 0;        // the wind streaks race past during a dash
@@ -15003,10 +15012,12 @@ function sprAt(src, info, sx, lift, flip, mouth) {      // Gojo's picture at (sx
 function vsp(img, sx, lift, flip) { ctx.save(); ctx.translate(sx, 0); ctx.scale(flip ? -1 : 1, 1); ctx.drawImage(img, -32, gy + 2 - 62 - lift); ctx.restore(); }
 function windStreaks(dt, m) { ctx.fillStyle = 'rgba(176,176,214,0.35)'; for (const p of parts) { p.x -= p.v * dt * m; if (p.x < -p.l) { p.x = VW + rnd() * 30; p.y = rnd() * gy; } ctx.fillRect(Math.round(p.x), Math.round(p.y), p.l, 1); } }
 function dlg(name, text, n) {      // a dialogue box at the bottom with a name tag; n letters of the text are shown so far
+  if (!SET.sub) return;
   const x = 6, w = VW - 12, h = 20, y = VH - h - 4; ctx.fillStyle = 'rgba(8,6,22,0.92)'; ctx.fillRect(x, y, w, h); ctx.fillStyle = '#9d8cff'; ctx.fillRect(x, y, w, 2); ctx.fillRect(x, y + h - 2, w, 2); ctx.fillRect(x, y, 2, h); ctx.fillRect(x + w - 2, y, 2, h);
   ctx.fillStyle = '#2a2060'; ctx.fillRect(x, y - 10, name.length * 8 + 10, 10); ctx.fillStyle = '#9d8cff'; ctx.fillRect(x, y - 10, name.length * 8 + 10, 2); pxt(name, x + 5, y - 2, '#ffd34d', 8); pxt(text.slice(0, Math.max(0, n)), x + 8, y + 14, '#ffffff', 8);
 }
-function dlg2(name, l1, l2, n, col) {      // a taller dialogue box: two lines of text (n letters of the two lines are shown so far); col = the colour of the name tag
+function dlg2(name, l1, l2, n, col) {
+  if (!SET.sub) return;      // a taller dialogue box: two lines of text (n letters of the two lines are shown so far); col = the colour of the name tag
   const x = 6, w = VW - 12, h = 30, y = VH - h - 4; ctx.fillStyle = 'rgba(8,6,22,0.94)'; ctx.fillRect(x, y, w, h); ctx.fillStyle = '#9d8cff'; ctx.fillRect(x, y, w, 2); ctx.fillRect(x, y + h - 2, w, 2); ctx.fillRect(x, y, 2, h); ctx.fillRect(x + w - 2, y, 2, h);
   ctx.fillStyle = '#2a2060'; ctx.fillRect(x, y - 10, name.length * 8 + 10, 10); ctx.fillStyle = '#9d8cff'; ctx.fillRect(x, y - 10, name.length * 8 + 10, 2); pxt(name, x + 5, y - 2, col || '#ffd34d', 8);
   pxt(l1.slice(0, Math.max(0, n)), x + 8, y + 13, '#ffffff', 8); if (l2) pxt(l2.slice(0, Math.max(0, n - l1.length)), x + 8, y + 24, '#ffffff', 8);
@@ -15610,7 +15621,7 @@ window.__se = () => se ? ({ ph: se.ph, lvl: +se.lvl.toFixed(3), shown: +se.shown
 window.__story = () => story ? ({ T: +(story.T || 0).toFixed(2), battle: !!story.battle, slot: story.slot, state, cam: story.cam || null, g: story.g || null }) : null; window.__storyJump = t => { if (story && !story.battle) story.t0 = pnow() - t * 1000; }; window.__saves = loadSaves; window.__simg = () => SIMG; window.__mouths = () => { const chk = c => { const m = mouthOf(c); if (!m) return null; const d = c.getContext('2d').getImageData(m.x, m.y, 3, 2).data; let skin = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] && d[i] > 140 && d[i + 1] > 90 && d[i + 2] > 80) skin++; return { x: m.x, y: m.y, skin }; }; return { idle: idleF.map(chk), jump: jumpF.map(chk), red: redF.map(chk) }; }; window.__hd = k => hitDummy(k, pnow()); window.__vact = t => { if (dummy && vs) vStart(dummy, t, pnow()); }; window.__vanim = () => dummy ? ({ anim: dummy.anim || '', act: dummy.vact ? dummy.vact.type : '', fi: dummy.vact ? +dummy.vact.fi.toFixed(1) : -1, x: dummy.x - wx, hp: vs ? vs.hp : -1 }) : null; window.__bleed = () => vs && vs.bleed ? ({ until: vs.bleed.until }) : null;      // test hooks
 
 // ---------------------------------------------------------------- v1.30 A FASTER GAME. GAME PACE (SETTINGS > GAME: NORMAL / FAST 1.25x / TURBO 1.5x, FAST is the default): in a fight everything runs faster than the real clock (walking, swings, the enemy, the cooldowns, the combo window), but the round timer and the 10 seconds of the Inheritence still count real seconds; not in the Wi-Fi fight, the story, cutscenes (FATALITY, JUMPSCARE, DOMAIN, the ULTIMATE) or the menus. PARRY: slow motion and a free counter. DODGE: a dash just before a blow gives energy. PRESSURE: the longer you do not hurt the enemy, the shorter his rests. SPEED BONUS: a RUSH or ROULETTE wave cleared under its par time pays extra.
-const PACE_X = [1, 1.25, 1.5], E_DODGE = 8;
+const PACE_X = [1, 1.25, 1.5, 0.8], E_DODGE = 8;
 const paceBase = () => state === 'play' && SET.pace && !(vs && (vs.net || vs.story)) ? PACE_X[SET.pace] : 1;      // (the pace of this kind of fight: not the Wi-Fi fight, not the story)
 const paceNow = () => (!vs || vs.ph === 'fight') && !fat && !yf && !se && !de && !js && !vf && !cf && !ke && !dom && !ult ? paceBase() : 1;      // (how many times faster than the real clock the game runs right now: 1 in a cutscene and between the rounds)
 let ctr = null, ctrBoost = 0, dodgeAt = -1e9;      // ctr = { at, until }: the free counter that follows a PARRY; ctrBoost: the time stamp (atkAt) of that counter's swing, the hits of that swing do 1.5 times the damage; dodgeAt: the last DODGE reward
@@ -16389,7 +16400,7 @@ function freddyDream(now, dt) {      // every frame of the nightmare: it updates
   if (fd.woke) vpBleed(now);      // (the wounds bleed while he gets up: 1 damage every 0.2 s for 4 s)
   if (!dream && fd.slept && !(fd.woke && t >= FD.wake + FD.rise) && now - d.rxAt > 340) d.rxAt = now - 340;      // (asleep he lies flat: the picture of the fall is held on its last lying frame; it goes on when he wakes)
   if (t >= FD.end) { fd = null; d.stunUntil = Math.max(d.stunUntil, now + 500); d.restFor = 500; return false; }
-  ctx.save(); shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }
+  ctx.save(); shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100); ctx.translate(shkX, shkY); }
   ctx.imageSmoothingEnabled = false;
   const R = (c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), w, h); };
   if (dream) fdBg(now);
@@ -16539,7 +16550,7 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   }
   if (fredWalk && moving) { const si = Math.floor(fredPh / 7.5); if (si !== fredStep) { if (fredStep >= 0) snd('step', si & 1, true); fredStep = si; } }      // (a soft footfall each time a foot touches down)
   ctx.save();
-  shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }
+  shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100); ctx.translate(shkX, shkY); }
   ctx.imageSmoothingEnabled = false;
   drawBackdrop(now);
   ctx.fillStyle = 'rgba(220,210,255,0.35)';      // wind streaks
@@ -16672,7 +16683,7 @@ addEventListener('keydown', e => {
     return;
   }
   if (e.key !== 'Escape') return;
-  if (state === 'play') { if (!setPause(true)) leavePlay(); } else if (state === 'select' || state === 'ulog' || state === 'codes') show('title');
+  if (state === 'play') { if (!setPause(true)) leavePlay(); } else if (state === 'select' || state === 'ulog' || state === 'codes') show('title'); else if (state === 'mset') msBack();
 });
 addEventListener('keyup', e => {
   if (e.target.id === 'lanName' || e.target.id === 'cuName' || e.target.id === 'codeIn') return;
@@ -16771,6 +16782,7 @@ $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+{"v": "1.152", "t": "A BIG SETTINGS SCREEN IN THE MAIN MENU", "n": ["NEW SETTINGS BUTTON on the title screen (top right) and on the CHOOSE A MODE screen. It opens a big screen with pages: GRAPHICS, GAMEPLAY, STORY, SOUND, CONTROLS, ACCESS, LOOK, DATA and PRESETS. Every option has a line that explains it and a DEF button that puts it back to the default. A search box finds any option by its words, and RESET PAGE resets a whole page. All your old settings are still there and the pause-menu settings show the same numbers.", "GRAPHICS: screen shake strength, flash strength, hit pause, damage numbers on/off, brightness, contrast, colour (0 = black and white), scanlines, frame rate, battery saver, an FPS counter and hitboxes. GAMEPLAY: assist, game pace (now also SLOW), enemy damage, your damage, health regen, auto-pause and three cheats (infinite energy, infinite health, one-hit kills; not in Wi-Fi fights; while a cheat is on you earn no money).", "STORY: subtitles on/off and blood level. ACCESS: reduce flashing, high contrast, colour-blind help, slow motion, bigger buttons. LOOK: six menu colours. SOUND: every volume plus the sound switch. CONTROLS: button size, opacity, height, side, vibration.", "DATA: your play time, fights won and lost, hits landed, parries and story chapter; the save code, a SETTINGS-ONLY code you can share, reset stats, reset settings and reset all progress (asks twice). PRESETS: DEFAULT, BATTERY, PERFORMANCE, CINEMATIC, CASUAL and HARDCORE in one tap."]},
 {"v": "1.151", "t": "CHAPTER 4: THE HANDS ARE NOW REAL 3D HANDS", "n": ["THE HANDS OF THE FINGER RIP ARE DRAWN AGAIN, THIS TIME AS REAL HANDS: every hand is built from bones, knuckles, nails and skin as a small 3D model, lit from the upper left with soft shadows between the fingers, and turned into the game's pixel art. They look like real hands now (knuckles, tendons, the webs between the fingers, nails, the sleeve), not like flat shapes.", "THE RIP: Sukuna's hand holds Megumi's face (you see his face, dark, behind it) with the little finger stuck out, and his other hand pinches it from below and pulls. The skin of the hand stretches and goes pale, then the finger tears off. With blood on you see the raw hole with the blood running down his hand; with blood off it is a clean wound. The other hand takes the finger away.", "THE RIPPED FINGER close-up is a real finger with a torn end (ragged skin, red flesh, the white bone), held between a thumb and a first finger; it turns dark red while the black claw grows out of its nail. Yuji's open hand without its little finger is a real hand too."]},
 {"v": "1.150", "t": "CHAPTER 4: HUMAN SKIN COLOURS AND A REALISTIC HAND FOR THE FINGER RIP", "n": ["THE FACES HAVE A HUMAN COLOUR: Sukuna, Yuji and Megumi now have warm peach skin with red-brown shadows (before it was a dull brown and a grey). When they are frightened the skin goes pale and cool but still looks like skin, not stone. The dark layer over the close-ups is much lighter, so the colours show.", "THE HAND THAT RIPS THE FINGER IS REDRAWN FROM THE START: a real hand with the proper shape and proportions: knuckles with wrinkles, the tendons on the back, jointed fingers with creases, real nails (pink with a half moon and a white edge), a shaded wrist and the blue sleeve. It holds Megumi's face (you see his face behind it, out of focus), the little finger sticks out and his other hand pinches it, then pulls: the skin of the hand stretches between the knuckle and the finger, turns pale, splits, and the finger comes off. With blood on, the stump is raw red flesh with the white of the bone and the blood runs down his hand; with blood off it is a clean pink stump.", "THE RIPPED FINGER AND YUJI'S HAND ARE REDRAWN TOO: the finger between his thumb and first finger is a real finger (nail, creases, a ragged torn end with the bone) that turns dark red and cracked while the black claw grows; the same red finger is what goes into Megumi's mouth. Yuji's hand without its little finger is a real open hand with the lines of the palm. All the fingers of Sukuna on Megumi's cheek, mouth and throat now have real nails, creases and shading."]},
 {"v": "1.149", "t": "CHAPTER 4: MORE MASCULINE FACES, NO TEARS, AND A TRAUMATISED MEGUMI AND YUJI", "n": ["EVERY FACE NOW LOOKS LIKE A MAN: a longer, squarer jaw with a bevelled chin, a thick neck with its tendons showing, heavy straight brows, narrower sharper eyes with no lashes, a bigger nose with a light edge on the bridge, thin lips with no shine, a day of beard on the jaw, bigger ears and shorter hair (Megumi's fringe stops above his brows and there are no long locks along the cheeks). Sukuna's robe opens in a deep V. The eye, mouth and neck close-ups got the same changes.", "NO MORE TEARS: Megumi and Yuji do not cry anywhere in the chapter any more (the gag, the scream, the open mouth, Yuji's eyes, his frightened face and his quiet face).", "MEGUMI AND YUJI LOOK TRAUMATISED: the skin goes pale and grey, dark rings grow under the eyes, the eyes open wide with a small iris in a bloodshot white, a pin of a pupil and no light in it (a dead stare), the mouth hangs open, they sweat and they shake. Megumi stares wide-eyed while he gags and screams; Yuji's eye, his frightened face and his quiet face afterwards are the same blank, white-faced stare."]},
@@ -17057,7 +17069,7 @@ $('pResume').addEventListener('click', () => setPause(false));
 $('pSet').addEventListener('click', () => $('setBtn').click());
 $('pMenu').addEventListener('click', () => { setPause(false); leavePlay(); });
 function applyCtl() {      // the size, see-through-ness, height and side of the on-screen buttons
-  const rs = document.documentElement.style; rs.setProperty('--pbs', SET.sz / 100); rs.setProperty('--pbo', SET.op / 100); rs.setProperty('--pbu', SET.up + 'vh'); $('pad').classList.toggle('lh', !!SET.lh);
+  const rs = document.documentElement.style; rs.setProperty('--pbs', SET.sz / 100); rs.setProperty('--pbo', SET.op / 100); rs.setProperty('--pbu', SET.up + 'vh'); $('pad').classList.toggle('lh', !!SET.lh); if (window.__msReady) msApply();
 }
 const OPT_DEF = {      // [key, name, 'r' (a slider: min, max, step, unit) or 't' (a button that cycles: names, values)]
   optC: [['sz', 'BUTTON SIZE', 'r', 70, 120, 5, '%'], ['op', 'BUTTON OPACITY', 'r', 30, 100, 5, '%'], ['up', 'RAISE BUTTONS', 'r', 0, 20, 1, ''], ['lh', 'SIDE', 't', ['RIGHT-HANDED', 'LEFT-HANDED']], ['hap', 'VIBRATION', 't', ['OFF', 'LIGHT', 'STRONG']]],
@@ -17115,6 +17127,200 @@ $('bkLoad').addEventListener('click', () => {
   try { const del = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (bkOwn(k)) del.push(k); } del.forEach(k => localStorage.removeItem(k)); for (const k in o) localStorage.setItem(k, o[k]); bkSay('LOADED'); location.reload(); } catch (e) { bkSay('COULD NOT SAVE ON THIS DEVICE'); }
 });
 applyCtl(); buildOpts(); setTab(0); refreshPower();
+// ================================================================ v1.152 THE SETTINGS SCREEN OF THE MAIN MENU: every option in pages (graphics, gameplay, story, sound, controls, accessibility, look, data, presets), a search box,
+// a DEF button on every option, presets, stats, a save code and a settings code. The numbers live in SET (see the top of tools/template.html); msApply() puts them to work (colours, filters, scanlines, the FPS counter),
+// the rest is read by the game itself (shake, flash, damage, energy, money ...). The old SETTINGS of the pause menu stays and shows the same numbers.
+const MSD = { hap: 1, sz: 100, op: 78, up: 0, lh: 0, fps: 0, lite: 0, ap: 1, assist: 0, pace: 1, hb: 0, gore: 0, shk: 100, fl: 100, dn: 1, hs: 100, br: 100, ct: 100, sat: 100, scan: 0, cb: 0, fpsc: 0, edm: 100, pdm: 100, reg: 0, ien: 0, ihp: 0, ohk: 0, sub: 1, nf: 0, hc: 0, th: 0 };
+const MS_THEMES = [['RED', '#e0242f'], ['BLUE', '#39a2ff'], ['PURPLE', '#8f7ac4'], ['GREEN', '#3fd17a'], ['GOLD', '#ffd34d'], ['PINK', '#ff6fb1']];
+const ONOFF = ['OFF', 'ON'];
+const MSP = [      // the pages: a row is { k: the key in SET, n: name, t: 'r' (slider a - b, step c, unit u) or 't' (a button that cycles the names a (the numbers b)), h: the hint }
+  { id: 'gfx', n: 'GRAPHICS', rows: [
+    { k: 'shk', n: 'SCREEN SHAKE', t: 'r', a: 0, b: 150, c: 10, u: '%', h: 'HOW HARD THE SCREEN SHAKES WHEN YOU HIT OR GET HIT, ALSO IN THE STORY. 0 = NO SHAKE.' },
+    { k: 'fl', n: 'FLASH STRENGTH', t: 'r', a: 0, b: 100, c: 10, u: '%', h: 'THE FLASHES OF LIGHT ON BIG HITS AND MOVES. 0 = NO FLASHES.' },
+    { k: 'hs', n: 'HIT PAUSE', t: 'r', a: 0, b: 150, c: 10, u: '%', h: 'THE SHORT FREEZE WHEN A BLOW LANDS. 0 = NONE, MORE = HEAVIER HITS.' },
+    { k: 'dn', n: 'DAMAGE NUMBERS', t: 't', a: ONOFF, h: 'THE NUMBERS THAT POP UP WHEN YOU HIT SOMEONE.' },
+    { k: 'br', n: 'BRIGHTNESS', t: 'r', a: 70, b: 130, c: 5, u: '%', h: 'HOW LIGHT THE GAME PICTURE IS.' },
+    { k: 'ct', n: 'CONTRAST', t: 'r', a: 80, b: 140, c: 5, u: '%', h: 'THE DIFFERENCE BETWEEN DARK AND LIGHT.' },
+    { k: 'sat', n: 'COLOUR', t: 'r', a: 0, b: 150, c: 10, u: '%', h: 'HOW STRONG THE COLOURS ARE. 0 = BLACK AND WHITE.' },
+    { k: 'scan', n: 'SCANLINES', t: 't', a: ['OFF', 'LIGHT', 'HEAVY'], h: 'THIN DARK LINES OVER THE SCREEN, LIKE AN OLD TV.' },
+    { k: 'fps', n: 'FRAME RATE', t: 't', a: ['AUTO', '30 FPS', '60 FPS'], b: [0, 30, 60], h: 'FPS = HOW MANY PICTURES THE GAME DRAWS EVERY SECOND. 30 SAVES BATTERY, 60 IS SMOOTHER.' },
+    { k: 'lite', n: 'BATTERY SAVER', t: 't', a: ONOFF, h: '30 FPS, NO SCREEN SHAKE AND FEWER SPARKS.' },
+    { k: 'fpsc', n: 'FPS COUNTER', t: 't', a: ONOFF, h: 'SHOWS HOW MANY FRAMES PER SECOND THE PHONE REALLY MAKES (TOP RIGHT).' },
+    { k: 'hb', n: 'SHOW HITBOXES', t: 't', a: ONOFF, h: 'DRAWS THE BOXES THE GAME TESTS A HIT WITH (FOR TESTING).' }] },
+  { id: 'game', n: 'GAMEPLAY', rows: [
+    { k: 'assist', n: 'ASSIST', t: 't', a: ['OFF', 'PARRY+', 'EASY', 'AUTO-GUARD'], h: 'NOT IN WI-FI FIGHTS. PARRY+ = WIDER PARRY WINDOW, EASY = ALSO 30% LESS DAMAGE TO YOU, AUTO-GUARD = ALSO BLOCKS FOR YOU WHILE YOU STAND STILL.' },
+    { k: 'pace', n: 'GAME PACE', t: 't', a: ['NORMAL', 'FAST', 'TURBO', 'SLOW'], h: 'HOW FAST OFFLINE FIGHTS RUN (NOT WI-FI, NOT THE STORY). THE TIMERS STILL COUNT REAL SECONDS.' },
+    { k: 'edm', n: 'ENEMY DAMAGE', t: 'r', a: 25, b: 200, c: 5, u: '%', h: 'HOW HARD THE ENEMY HITS YOU. BELOW 100% COUNTS AS A CHEAT (NO MONEY).' },
+    { k: 'pdm', n: 'YOUR DAMAGE', t: 'r', a: 50, b: 300, c: 10, u: '%', h: 'HOW HARD YOU HIT. ABOVE 100% COUNTS AS A CHEAT (NO MONEY).' },
+    { k: 'reg', n: 'HEALTH REGEN', t: 'r', a: 0, b: 5, c: 1, u: '%/S', h: 'YOU SLOWLY GET HEALTH BACK DURING A FIGHT (PERCENT OF YOUR HEALTH PER SECOND).' },
+    { k: 'ap', n: 'AUTO-PAUSE', t: 't', a: ONOFF, h: 'A CALL OR LEAVING THE APP PAUSES THE FIGHT.' },
+    { n: 'CHEATS: NOT IN WI-FI FIGHTS. WHILE ANY CHEAT IS ON YOU EARN NO MONEY AND NO MONEY REWARDS ARE GIVEN.', t: 'n' },
+    { k: 'ien', n: 'INFINITE ENERGY', t: 't', a: ONOFF, h: 'MOVES COST NO CURSED ENERGY.' },
+    { k: 'ihp', n: 'INFINITE HEALTH', t: 't', a: ONOFF, h: 'YOU CANNOT BE HURT.' },
+    { k: 'ohk', n: 'ONE-HIT KILLS', t: 't', a: ONOFF, h: 'EVERY BLOW YOU LAND KNOCKS THE ENEMY OUT.' }] },
+  { id: 'story', n: 'STORY', rows: [
+    { k: 'sub', n: 'SUBTITLES', t: 't', a: ONOFF, h: 'THE TEXT BOX WITH WHAT THE CHARACTERS SAY IN THE STORY.' },
+    { k: 'gore', n: 'GRAPHIC DAMAGE', t: 't', a: ['FULL', 'CLEAN', 'OFF'], h: 'BLOOD AND TORN LIMBS IN FIGHTS AND THE STORY. CLEAN = NO BLOOD, OFF = NONE OF IT.' },
+    { n: 'THE STORY ALSO USES SCREEN SHAKE AND FLASH STRENGTH FROM THE GRAPHICS PAGE, AND THE SOUND PAGE. THE GAME PACE DOES NOT CHANGE THE STORY.', t: 'n' },
+    { n: 'IN A CUTSCENE, TAP THE SKIP BUTTON AT THE TOP RIGHT TO LEAVE IT.', t: 'n' }] },
+  { id: 'snd', n: 'SOUND', rows: [{ t: 'snd' }] },
+  { id: 'ctl', n: 'CONTROLS', rows: [
+    { k: 'sz', n: 'BUTTON SIZE', t: 'r', a: 70, b: 120, c: 5, u: '%', h: 'HOW BIG THE ON-SCREEN BUTTONS ARE.' },
+    { k: 'op', n: 'BUTTON OPACITY', t: 'r', a: 30, b: 100, c: 5, u: '%', h: 'HOW SEE-THROUGH THE BUTTONS ARE.' },
+    { k: 'up', n: 'RAISE BUTTONS', t: 'r', a: 0, b: 20, c: 1, u: '', h: 'MOVES THE BUTTONS UP, AWAY FROM THE EDGE OF THE SCREEN.' },
+    { k: 'lh', n: 'SIDE', t: 't', a: ['RIGHT-HANDED', 'LEFT-HANDED'], h: 'SWAPS THE MOVE STICK AND THE ATTACK BUTTONS.' },
+    { k: 'hap', n: 'VIBRATION', t: 't', a: ['OFF', 'LIGHT', 'STRONG'], h: 'THE PHONE BUZZES WHEN YOU HIT, GET HIT OR PARRY.' }] },
+  { id: 'acc', n: 'ACCESS', rows: [
+    { k: 'nf', n: 'REDUCE FLASHING', t: 't', a: ONOFF, h: 'KEEPS EVERY FLASH OF LIGHT FAINT (FOR PEOPLE WHO ARE SENSITIVE TO IT).' },
+    { k: 'hc', n: 'HIGH CONTRAST', t: 't', a: ONOFF, h: 'STRONGER CONTRAST AND COLOUR, SO THINGS STAND OUT MORE.' },
+    { k: 'cb', n: 'COLOUR-BLIND HELP', t: 't', a: ['OFF', 'RED WEAK', 'GREEN WEAK', 'BLUE WEAK'], h: 'SHIFTS THE COLOURS SO THAT THEY ARE EASIER TO TELL APART (AN APPROXIMATION). THE GAME PICTURE ONLY.' },
+    { k: 'pace', n: 'SLOW MOTION HELP', t: 't', a: ['NORMAL', 'FAST', 'TURBO', 'SLOW'], h: 'SLOW = OFFLINE FIGHTS RUN AT 0.8 SPEED.' },
+    { k: 'assist', n: 'ASSIST', t: 't', a: ['OFF', 'PARRY+', 'EASY', 'AUTO-GUARD'], h: 'A WIDER PARRY, LESS DAMAGE, OR AUTOMATIC BLOCKING.' },
+    { k: 'sub', n: 'SUBTITLES', t: 't', a: ONOFF, h: 'THE TEXT OF THE STORY.' },
+    { k: 'hap', n: 'VIBRATION', t: 't', a: ['OFF', 'LIGHT', 'STRONG'], h: 'BUZZ WHEN YOU HIT, GET HIT OR PARRY.' },
+    { k: 'sz', n: 'BUTTON SIZE', t: 'r', a: 70, b: 120, c: 5, u: '%', h: 'BIGGER BUTTONS ARE EASIER TO HIT.' }] },
+  { id: 'look', n: 'LOOK', rows: [
+    { k: 'th', n: 'MENU COLOUR', t: 't', a: MS_THEMES.map(c => c[0]), h: 'THE COLOUR OF THE MENUS AND BUTTONS.' },
+    { k: 'scan', n: 'SCANLINES', t: 't', a: ['OFF', 'LIGHT', 'HEAVY'], h: 'THIN DARK LINES OVER THE SCREEN.' },
+    { k: 'br', n: 'BRIGHTNESS', t: 'r', a: 70, b: 130, c: 5, u: '%', h: 'HOW LIGHT THE GAME PICTURE IS.' },
+    { k: 'sat', n: 'COLOUR', t: 'r', a: 0, b: 150, c: 10, u: '%', h: '0 = BLACK AND WHITE.' },
+    { k: 'dn', n: 'DAMAGE NUMBERS', t: 't', a: ONOFF, h: 'THE NUMBERS ON HITS.' },
+    { k: 'fpsc', n: 'FPS COUNTER', t: 't', a: ONOFF, h: 'FRAMES PER SECOND, TOP RIGHT.' }] },
+  { id: 'data', n: 'DATA', rows: [{ t: 'data' }] },
+  { id: 'pre', n: 'PRESETS', rows: [{ t: 'pre' }] },
+];
+const MSR = {}; MSP.forEach(p => p.rows.forEach(r => { if (r.k && !MSR[r.k]) MSR[r.k] = r; }));
+const MS_PRE = [
+  ['DEFAULT', 'EVERYTHING BACK TO HOW THE GAME CAME.', MSD],
+  ['BATTERY', 'SAVES BATTERY: 30 FPS, LESS SHAKE AND FLASH.', { lite: 1, fps: 30, shk: 50, fl: 40, scan: 0, fpsc: 0 }],
+  ['PERFORMANCE', 'SMOOTHEST: 60 FPS, NO SAVER, FPS COUNTER ON.', { lite: 0, fps: 60, shk: 100, fl: 100, scan: 0, fpsc: 1 }],
+  ['CINEMATIC', 'HEAVY HITS, SCANLINES, RICH COLOURS, NO NUMBERS.', { shk: 130, fl: 100, hs: 130, scan: 1, ct: 110, sat: 110, dn: 0, pace: 0 }],
+  ['CASUAL', 'EASY ASSIST, SLOW HEALTH REGEN, NORMAL PACE.', { assist: 2, reg: 2, ap: 1, pace: 0 }],
+  ['HARDCORE', 'NO ASSIST, ENEMIES HIT 50% HARDER, NO REGEN.', { assist: 0, reg: 0, edm: 150, pdm: 100, pace: 1 }],
+];
+let msPage = 0, msFrom = 'title', msQ = '';
+const msEl = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined) e.textContent = txt; return e; };
+const msSave = () => { saveSet(); msApply(); buildOpts(); };
+function msSet(o) { for (const k in o) if (k in MSD) SET[k] = o[k]; msSave(); msBuild(); }
+const msClamp = (r, v) => { v = Math.round(+v); if (!isFinite(v)) return null; if (r.t === 'r') return Math.max(r.a, Math.min(r.b, v)); const vals = r.b || r.a.map((_, i) => i); return vals.includes(v) ? v : null; };
+function msRow(r) {      // one option: its name, its control, DEF (back to the default) and a line about it
+  const row = msEl('div', 'mr'), top = msEl('div', 'mt'), ctl = msEl('div', 'mc'), def = msEl('button', 'mx', 'DEF'); top.appendChild(msEl('span', 'mn', r.n)); top.appendChild(ctl); top.appendChild(def); row.appendChild(top);
+  if (r.h) row.appendChild(msEl('small', 'mh', r.h));
+  const set = v => { SET[r.k] = v; saveSet(); msApply(); buildOpts(); };
+  if (r.t === 'r') {
+    const inp = msEl('input'), val = msEl('b', '', ''); inp.type = 'range'; inp.min = r.a; inp.max = r.b; inp.step = r.c; inp.value = SET[r.k]; inp.setAttribute('aria-label', r.n); val.textContent = SET[r.k] + r.u;
+    inp.addEventListener('input', () => { SET[r.k] = +inp.value; val.textContent = SET[r.k] + r.u; msApply(); }); inp.addEventListener('change', () => { saveSet(); buildOpts(); });
+    def.addEventListener('click', () => { set(MSD[r.k]); inp.value = SET[r.k]; val.textContent = SET[r.k] + r.u; }); ctl.appendChild(inp); ctl.appendChild(val);
+  } else {
+    const btn = msEl('button', 'mb'), vals = r.b || r.a.map((_, i) => i), at = () => Math.max(0, vals.indexOf(SET[r.k])), label = () => { btn.textContent = r.a[at()]; }; label();
+    btn.addEventListener('click', () => { set(vals[(at() + 1) % vals.length]); label(); if (r.k === 'hap') buzz(40); });
+    def.addEventListener('click', () => { set(MSD[r.k]); label(); }); ctl.appendChild(btn);
+  }
+  return row;
+}
+function msSound(box) {      // the volume of each sound (the same sliders as in the pause settings) and the sound switch
+  const sw = msEl('div', 'mr'), top = msEl('div', 'mt'), ctl = msEl('div', 'mc'), b = msEl('button', 'mb'); top.appendChild(msEl('span', 'mn', 'SOUND')); top.appendChild(ctl); sw.appendChild(top); sw.appendChild(msEl('small', 'mh', 'THE SAME SWITCH AS THE SND BUTTON IN A FIGHT.'));
+  const lab = () => { b.textContent = soundOn ? 'ON' : 'OFF'; }; lab(); b.addEventListener('click', () => { $('snd').click(); lab(); }); ctl.appendChild(b); box.appendChild(sw);
+  VOLS.forEach(([k, name]) => {
+    const row = msEl('div', 'mr'), t2 = msEl('div', 'mt'), c2 = msEl('div', 'mc'), d2 = msEl('button', 'mx', 'DEF'), inp = msEl('input'), val = msEl('b', '', vol[k] + '%'); inp.type = 'range'; inp.min = 0; inp.max = 200; inp.step = 5; inp.value = vol[k]; inp.setAttribute('aria-label', name + ' volume');
+    const put = v => { vol[k] = v; val.textContent = v + '%'; if (sfx) sfx.setVol(k, v / 100); };
+    inp.addEventListener('input', () => put(+inp.value)); inp.addEventListener('change', () => { try { localStorage.setItem('js_vol', JSON.stringify(vol)); } catch { /* storage blocked */ } preview(k); });
+    d2.addEventListener('click', () => { put(100); inp.value = 100; try { localStorage.setItem('js_vol', JSON.stringify(vol)); } catch { /* storage blocked */ } });
+    t2.appendChild(msEl('span', 'mn', name + ' VOLUME')); c2.appendChild(inp); c2.appendChild(val); t2.appendChild(c2); t2.appendChild(d2); row.appendChild(t2); box.appendChild(row);
+  });
+}
+const msFmtT = s => { const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h + 'H ' + String(m).padStart(2, '0') + 'M ' + String(s % 60).padStart(2, '0') + 'S'; };
+let msArm = 0, msArm2 = 0;
+function msData(box) {      // the numbers, the save code, the settings code, the resets
+  const sv = loadSaves(), ch = Math.max(0, ...sv.map(s => s && typeof s.ch === 'number' ? s.ch : 0)), st = msEl('div', 'mst');
+  [['PLAY TIME', msFmtT(STAT.t)], ['FIGHTS WON', STAT.w], ['FIGHTS LOST', STAT.l], ['HITS LANDED', STAT.h], ['PARRIES', STAT.p], ['STORY CHAPTER REACHED', ch || '-'], ['MONEY', '$' + PROG.m], ['VERSION', ($('ver') || {}).textContent || '']].forEach(([a, b]) => { const r = msEl('div', 'ms'); r.appendChild(msEl('span', '', a)); r.appendChild(msEl('b', '', String(b))); st.appendChild(r); });
+  box.appendChild(st); const say = msEl('small', 'mh', ''), mkBtn = (t, f) => { const b = msEl('button', '', t); b.addEventListener('click', f); return b; };
+  const row1 = msEl('div', 'mrow'); row1.appendChild(mkBtn('RESET STATS', () => { STAT.t = STAT.w = STAT.l = STAT.h = STAT.p = 0; statSave(); msBuild(); })); box.appendChild(row1);
+  box.appendChild(msEl('small', 'mh', 'THE SAVE CODE HOLDS YOUR MONEY, SKILLS, PROGRESS AND SETTINGS. COPY IT TO ANOTHER DEVICE AND LOAD IT THERE.'));
+  const ta = msEl('textarea'); ta.rows = 2; ta.spellcheck = false; ta.setAttribute('aria-label', 'Code'); box.appendChild(ta); const row2 = msEl('div', 'mrow');
+  const copy = t => { let ok = false; try { if (window.AndroidApp) { window.AndroidApp.copy(t); ok = true; } else { ta.select(); ok = document.execCommand('copy'); } } catch { ok = false; } say.textContent = ok ? 'COPIED' : 'COULD NOT COPY: SELECT THE CODE AND COPY IT BY HAND'; };
+  row2.appendChild(mkBtn('SAVE CODE', () => { ta.value = bkMake(); say.textContent = 'CODE MADE. TAP COPY.'; }));
+  row2.appendChild(mkBtn('SETTINGS CODE', () => { const j = JSON.stringify(SET); ta.value = 'JSET1.' + btoa(unescape(encodeURIComponent(j))) + '.' + hash32(j).toString(36); say.textContent = 'ONLY YOUR SETTINGS. TAP COPY.'; }));
+  row2.appendChild(mkBtn('COPY', () => { if (!ta.value) ta.value = bkMake(); copy(ta.value); }));
+  row2.appendChild(mkBtn('PASTE', () => { let t = ''; try { t = window.AndroidApp ? String(window.AndroidApp.paste() || '') : ''; } catch { t = ''; } const got = x => { ta.value = x; say.textContent = x ? 'PASTED. TAP LOAD.' : 'NOTHING TO PASTE'; }; if (t) got(t); else if (navigator.clipboard && navigator.clipboard.readText) navigator.clipboard.readText().then(got, () => got('')); else got(''); }));
+  row2.appendChild(mkBtn('LOAD', () => {
+    const code = ta.value.replace(/\s+/g, ''), m = /^JSET1\.([A-Za-z0-9+/=]+)\.([a-z0-9]+)$/.exec(code);
+    if (m) { try { const j = decodeURIComponent(escape(atob(m[1]))); if (hash32(j).toString(36) !== m[2]) throw 0; const o = JSON.parse(j), ok = {}; for (const k in o) if (MSR[k]) { const v = msClamp(MSR[k], o[k]); if (v !== null) ok[k] = v; } msSet(ok); say.textContent = 'SETTINGS LOADED'; } catch { say.textContent = 'THAT SETTINGS CODE IS NOT VALID.'; } return; }
+    const o = bkRead(code); if (!o) { say.textContent = 'THAT CODE IS NOT VALID. USE THE WHOLE CODE.'; return; }
+    const n = performance.now(); if (n > msArm) { msArm = n + 5000; say.textContent = 'THIS REPLACES THE SAVE ON THIS DEVICE. TAP LOAD AGAIN TO GO ON.'; return; }
+    try { const del = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (bkOwn(k)) del.push(k); } del.forEach(k => localStorage.removeItem(k)); for (const k in o) localStorage.setItem(k, o[k]); location.reload(); } catch { say.textContent = 'COULD NOT SAVE ON THIS DEVICE'; }
+  }));
+  box.appendChild(row2); box.appendChild(say);
+  const row3 = msEl('div', 'mrow'); row3.appendChild(mkBtn('RESET SETTINGS', () => { msSet(MSD); say.textContent = 'ALL SETTINGS ARE BACK TO THE DEFAULT.'; }));
+  row3.appendChild(mkBtn('RESET ALL PROGRESS', () => {
+    const n = performance.now(); if (n > msArm2) { msArm2 = n + 5000; say.textContent = 'THIS DELETES YOUR MONEY, SKILLS AND STORY SAVES. TAP AGAIN WITHIN 5 SECONDS TO DO IT.'; return; }
+    try { const del = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (bkOwn(k) && k !== 'js_set' && k !== 'js_vol' && k !== 'js_snd') del.push(k); } del.forEach(k => localStorage.removeItem(k)); location.reload(); } catch { say.textContent = 'COULD NOT DELETE'; }
+  })); box.appendChild(row3);
+}
+function msPresets(box) {
+  MS_PRE.forEach(([n, d, o]) => { const row = msEl('div', 'mr'), top = msEl('div', 'mt'), b = msEl('button', 'mb', 'APPLY'); top.appendChild(msEl('span', 'mn', n)); const c = msEl('div', 'mc'); c.appendChild(b); top.appendChild(c); row.appendChild(top); row.appendChild(msEl('small', 'mh', d)); b.addEventListener('click', () => { msSet(o); b.textContent = 'DONE'; setTimeout(() => { b.textContent = 'APPLY'; }, 900); }); box.appendChild(row); });
+}
+function msBuild() {
+  const root = $('mset'), keep = root.querySelector('.mbody'), top = keep ? keep.scrollTop : 0; root.textContent = '';
+  root.appendChild(msEl('h2', '', 'SETTINGS'));
+  const bar = msEl('div', 'mbar'), q = msEl('input'); q.type = 'text'; q.placeholder = 'SEARCH AN OPTION'; q.value = msQ; q.maxLength = 24; q.setAttribute('aria-label', 'Search'); q.autocomplete = 'off'; q.autocapitalize = 'characters'; q.spellcheck = false;
+  q.addEventListener('input', () => { msQ = q.value.toUpperCase(); const body = root.querySelector('.mbody'); msFill(body); }); bar.appendChild(q);
+  const rp = msEl('button', '', 'RESET PAGE'); rp.addEventListener('click', () => { const o = {}; MSP[msPage].rows.forEach(r => { if (r.k) o[r.k] = MSD[r.k]; }); msSet(o); }); bar.appendChild(rp); root.appendChild(bar);
+  const lay = msEl('div', 'mlay'), nav = msEl('div', 'mnav'), body = msEl('div', 'mbody');
+  MSP.forEach((p, i) => { const b = msEl('button', i === msPage && !msQ ? 'sel' : '', p.n); b.addEventListener('click', () => { msPage = i; msQ = ''; msBuild(); }); nav.appendChild(b); });
+  lay.appendChild(nav); lay.appendChild(body); root.appendChild(lay);
+  const br = msEl('div', 'row'), back = msEl('button', '', 'BACK'); back.addEventListener('click', msBack); br.appendChild(back); root.appendChild(br);
+  msFill(body); body.scrollTop = top;
+}
+function msFill(body) {      // the options of the page, or of every page that has the words of the search
+  body.textContent = '';
+  if (msQ) {
+    let n = 0; const seen = new Set();
+    MSP.forEach(p => p.rows.forEach(r => { if (!r.k || seen.has(r.k) || !((r.n + ' ' + (r.h || '')).includes(msQ))) return; seen.add(r.k); body.appendChild(msRow(r)); n++; }));
+    if (!n) body.appendChild(msEl('small', 'mh', 'NO OPTION HAS THOSE WORDS.'));
+    return;
+  }
+  const p = MSP[msPage]; p.rows.forEach(r => { if (r.t === 'n') body.appendChild(msEl('small', 'mh', r.n)); else if (r.t === 'snd') msSound(body); else if (r.t === 'data') msData(body); else if (r.t === 'pre') msPresets(body); else body.appendChild(msRow(r)); });
+}
+function msOpen(from) { msFrom = from; audio(); msQ = ''; msBuild(); show('mset'); }
+function msBack() { show(msFrom); }
+// ---------------------------------------------------------------- what the numbers do on the screen
+const msCss = document.createElement('style');
+msCss.textContent = '#mset.screen{z-index:6;justify-content:flex-start;gap:1vh;padding-top:calc(env(safe-area-inset-top) + 1.2vh);padding-bottom:calc(env(safe-area-inset-bottom) + 1.2vh)}#mset h2{flex:none}'
+  + '#mset .mbar{flex:none;display:flex;gap:1.4vh;align-items:center;width:min(96vw,900px)}#mset .mbar input{flex:1;min-width:0;font:inherit;font-size:clamp(7px,1.9vh,11px);color:var(--ink);background:#120d22;border:3px solid var(--line);padding:1vh 1.4vh;outline:none;user-select:text;-webkit-user-select:text}'
+  + '#mset .mlay{flex:1;min-height:0;display:flex;gap:1.6vh;width:min(96vw,900px)}#mset .mnav{flex:none;display:flex;flex-direction:column;gap:.8vh;overflow-y:auto;width:19%}#mset .mnav button{width:100%;padding:1vh .6vh;font-size:clamp(6px,1.8vh,10px)}'
+  + '#mset .mnav button.sel{border-color:var(--acc);color:var(--acc)}#mset .mbody{flex:1;min-width:0;overflow-y:auto;display:flex;flex-direction:column;gap:1.1vh;text-align:left;padding-right:.8vh;-webkit-overflow-scrolling:touch}'
+  + '#mset .mr{display:flex;flex-direction:column;gap:.4vh;padding:.9vh 1.2vh;background:rgba(255,255,255,.04);border-left:3px solid var(--line)}#mset .mt{display:flex;align-items:center;gap:1vh}#mset .mn{flex:1;font-size:clamp(7px,2.1vh,12px)}'
+  + '#mset .mc{flex:none;display:flex;align-items:center;gap:1vh;font-size:clamp(7px,2vh,11px);color:var(--acc)}#mset .mc input{width:clamp(70px,26vh,240px);height:3vh;accent-color:var(--acc)}#mset .mc b{font-weight:normal;min-width:6ch;text-align:right}'
+  + '#mset .mb{padding:.9vh 1.4vh;font-size:clamp(7px,1.9vh,11px);min-width:11ch}#mset .mx{flex:none;padding:.6vh .9vh;font-size:clamp(5px,1.5vh,9px);opacity:.7}#mset .mh{font-size:clamp(5px,1.6vh,9px);line-height:1.5;color:var(--dim)}'
+  + '#mset .mst{display:grid;grid-template-columns:1fr 1fr;gap:.6vh 2vh;font-size:clamp(7px,2vh,11px)}#mset .ms{display:flex;justify-content:space-between;gap:1vh;padding:.5vh 1vh;background:rgba(255,255,255,.04)}#mset .ms b{font-weight:normal;color:var(--acc)}'
+  + '#mset .mrow{display:flex;gap:1vh;flex-wrap:wrap}#mset textarea{width:100%;font:inherit;font-size:clamp(6px,1.6vh,9px);color:var(--ink);background:#120d22;border:3px solid var(--line);user-select:text;-webkit-user-select:text}'
+  + '#msBtn{position:fixed;right:calc(env(safe-area-inset-right) + 2vh);top:calc(env(safe-area-inset-top) + 1.4vh);padding:1vh 1.6vh;font-size:clamp(7px,2vh,11px)}'
+  + '#msScan{position:fixed;inset:0;z-index:3;pointer-events:none;display:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.5) 0 1px,transparent 1px 3px)}#msFps{position:fixed;right:1vh;top:1vh;z-index:7;display:none;pointer-events:none;color:#7dff7d;background:rgba(0,0,0,.55);padding:.4vh .8vh;font-size:clamp(7px,1.8vh,10px)}';
+document.head.appendChild(msCss);
+const msSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); msSvg.setAttribute('width', '0'); msSvg.setAttribute('height', '0'); msSvg.style.position = 'absolute'; msSvg.innerHTML = '<filter id="msCB" color-interpolation-filters="sRGB"><feColorMatrix id="msCBm" type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0"/></filter>'; document.body.appendChild(msSvg);
+const msScan = msEl('div'); msScan.id = 'msScan'; document.body.appendChild(msScan); const msFps = msEl('div'); msFps.id = 'msFps'; document.body.appendChild(msFps);
+function msCbMatrix(mode) {      // colour-blind help: the colours the eye misses are moved into the ones it sees (an approximation of the usual "daltonize" method)
+  const sim = [[[0.567, 0.433, 0], [0.558, 0.442, 0], [0, 0.242, 0.758]], [[0.625, 0.375, 0], [0.7, 0.3, 0], [0, 0.3, 0.7]], [[0.95, 0.05, 0], [0, 0.433, 0.567], [0, 0.475, 0.525]]][mode - 1];
+  const sh = mode < 3 ? [[0, 0, 0], [0.7, 1, 0], [0.7, 0, 1]] : [[1, 0, 0.7], [0, 1, 0.7], [0, 0, 0]], out = [];
+  for (let i = 0; i < 3; i++) { for (let j = 0; j < 3; j++) { let v = i === j ? 1 : 0; for (let k = 0; k < 3; k++) v += sh[i][k] * ((k === j ? 1 : 0) - sim[k][j]); out.push(v.toFixed(3)); } out.push('0 0'); }
+  return out.join(' ') + ' 0 0 0 1 0';
+}
+let msFpsOn = false, msFpsN = 0, msFpsT = 0;
+function msFpsLoop(t) { msFpsN++; if (t - msFpsT >= 500) { msFps.textContent = Math.round(msFpsN * 1000 / (t - msFpsT)) + ' FPS'; msFpsN = 0; msFpsT = t; } if (SET.fpsc) requestAnimationFrame(msFpsLoop); else msFpsOn = false; }
+function msApply() {
+  const rs = document.documentElement.style, cv = $('game'), f = [];
+  if (SET.th) rs.setProperty('--acc', MS_THEMES[SET.th][1]); else rs.removeProperty('--acc');
+  if (SET.cb) { $('msCBm').setAttribute('values', msCbMatrix(SET.cb)); f.push('url(#msCB)'); }
+  const hc = SET.hc ? 1 : 0; if (SET.br !== 100) f.push('brightness(' + SET.br / 100 + ')'); if (SET.ct !== 100 || hc) f.push('contrast(' + (SET.ct / 100 * (hc ? 1.2 : 1)).toFixed(2) + ')'); if (SET.sat !== 100 || hc) f.push('saturate(' + (SET.sat / 100 * (hc ? 1.15 : 1)).toFixed(2) + ')');
+  cv.style.filter = f.join(' ');
+  msScan.style.display = SET.scan ? 'block' : 'none'; msScan.style.opacity = SET.scan === 2 ? 0.55 : 0.25;
+  msFps.style.display = SET.fpsc ? 'block' : 'none'; if (SET.fpsc && !msFpsOn) { msFpsOn = true; msFpsN = 0; msFpsT = performance.now(); requestAnimationFrame(msFpsLoop); }
+}
+$('msBtn').addEventListener('click', () => msOpen('title')); $('msModes').addEventListener('click', () => msOpen('modes'));
+setInterval(() => { if (state === 'play' || state === 'story') { STAT.t++; if (STAT.t % 15 === 0) statSave(); } }, 1000);
+window.__msReady = 1; msApply();
+
 const toggleDummy = mode => { if (dummy && dummy.mode === mode) dummy = null; else spawnDummy(pnow(), mode); closeSettings(); };
 $('dummyBtn').addEventListener('click', () => toggleDummy('dummy'));      // a punching bag that reacts to every hit
 $('fighterBtn').addEventListener('click', () => toggleDummy('fighter'));
@@ -17160,6 +17366,7 @@ window.__back = () => {                       // Android back button: step back 
   if (state === 'select') { show('modes'); return true; }
   if (state === 'modes') { show('title'); return true; }
   if (state === 'ulog' || state === 'codes') { show('title'); return true; }
+  if (state === 'mset') { msBack(); return true; }
   return false;
 };
 
