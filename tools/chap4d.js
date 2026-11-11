@@ -4,26 +4,25 @@
 // it breaks a guard), if he has moved out of it (or the blow only grazes him) it is a weak punch (a quarter of the damage), and if he is out of reach or dodging it misses. All of Yuji's damage is HALVED (the BF_DMG numbers x INH_DMG, as in INHERITENCE).
 // MEGUNA: only walking, jumping, dashing, blocking, an M1 chain of 2 - 4 blows (jab, jab, elbow, then the face kick that knocks you back) and, rarely, the SHADOW SINK (he sinks, his pool slides under your feet, a ring warns, and he comes up with an uppercut that nothing blocks);
 // his BRAIN (c4xThink) sees Yuji as he was `rt` seconds ago (c4xSee: a reaction time), reads the wind-up of a Black Flash and dodges or blocks it, punishes a blow that missed, remembers what Yuji does (c4xHab: jumps, dashes in and out, long Black Flashes, blocking) and counters it, baits with feints,
-// and gets smarter and faster with every loss (c4xLevel: 0 - 6: reaction time, the chance of a correct reaction, fewer slips, speed, damage). You win when Meguna is at HALF health (the bar has a mark); if you lose he cuts you down (c4xLoseStep in chap4c.js).
+// and gets smarter and faster while the fight goes on (c4xLevel: 0 - 6, from the health Meguna has lost and the time: reaction time, the chance of a correct reaction, fewer slips, speed, damage). You win when Meguna is at HALF health (the bar has a mark); a win and a loss both go on with RANOS stepping in (c4xRanosStart in chap4e.js).
 const C4YJ = (() => { const o = {}; [['p', 20, 26, 12, 46, 16, 0], ['k', 21, 30, -2, 40, 0, 1], ['g', 22, 28, 0, 32, 10, 2]].forEach(([n, k, reach, y0, y1, lunge, i]) => { o[n] = { k, fps: YU_ATK.fps[k], imp: YU_ATK.imp[k][0], reach, y0, y1, lunge, dmg: Math.round(BF_DMG[i] * INH_DMG), ring: [32, 30, 18][i] }; }); return o; })();      // (the three Black Flashes: strip, pictures a second, the impact picture, how far the fist is in front of him, the band of height it hits (px above the floor), how far he lunges, the damage (half of the normal one), the height of the ring)
 const C4MB = [      // Meguna's blows: his row, pictures a second, the impact picture (0 - 14), how far the fist reaches in front of him, how far he steps (px), damage, the push (px/s), Yuji's reaction (his strip rx), high = a crouching Yuji ducks it
   { row: 'a0', fps: 34, imp: 7, reach: 28, step: 8, dmg: 7, push: 25, rx: 0, snd: 0 }, { row: 'a1', fps: 34, imp: 7, reach: 28, step: 8, dmg: 7, push: 25, rx: 1, snd: 1 },
   { row: 'el', fps: 34, imp: 7, reach: 22, step: 14, dmg: 9, push: 30, rx: 2, snd: 2 }, { row: 'a2', fps: 30, imp: 5, reach: 32, step: 14, dmg: 13, push: 150, rx: 9, snd: 3, high: true, brk: true }];
 const C4_SINK = { in: 0.32, travel: 0.6, warn: 0.5, up: 7 / 38, dmg: 22, cd: 9 };      // the shadow sink: sinking (s), the pool's travel to Yuji, the warning ring under his feet, the uppercut's impact (s after the eruption), its damage, the wait before he may do it again
 const c4xRxMs = rx => 15 / RXF15[rx] * 1000;
-const c4xLevel = () => Math.min(6, c4xLoss);
-function c4xAIP() { const L = c4xLevel(); return { L, rt: 0.2 - 0.0133 * L, reactP: 0.4 + 0.07 * L, mist: 0.2 - 0.025 * L, aggr: 0.78 + 0.07 * L, spd: 0.94 + 0.02 * L, dmg: 0.85 + 0.035 * L }; }      // (what the losses so far have made of him (0 - 6): reaction time in s (0.2 - 0.12), the chance that he reacts to a Black Flash (0.4 - 0.82), slips (0.2 - 0.05), eagerness, speed, damage)
+const c4xLevel = () => { if (window.__c4xLv !== undefined) return window.__c4xLv; const F = c4x && c4x.F; return F ? Math.max(0, Math.min(6, Math.floor((PHP - F.mhp) / 30) + Math.floor((pnow() - F.t0 - 1300) / 30000))) : 0; };      // (he learns as the fight goes: +1 for every 30 health he has lost and for every 30 seconds)
+function c4xAIP() { const L = c4xLevel(); return { L, rt: 0.2 - 0.0133 * L, reactP: 0.4 + 0.07 * L, mist: 0.2 - 0.025 * L, aggr: 0.78 + 0.07 * L, spd: 0.94 + 0.02 * L, dmg: 0.85 + 0.035 * L }; }      // (what the fight so far has made of him (0 - 6): reaction time in s (0.2 - 0.12), the chance that he reacts to a Black Flash (0.4 - 0.82), slips (0.2 - 0.05), eagerness, speed, damage)
 const c4xClamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-// ---- the start of the fight (after the cutscene, or after a loss)
-function c4xBegin(now, retry) {
+// ---- the start of the fight (after the cutscene)
+function c4xBegin(now) {
   const c = c4x, Y = c.y, M = c.m; c.ph = 'fight'; c.t0 = now; c.ev = {}; c.res = false; c.cutAt = 0; c.lose = null; c.pool = c.pool2 = null; c.fx = []; c.gib = null; c.black = null; c.glow = null; c.mFront = false;
-  if (retry) { Y.x = -40; M.x = 60; }
   Object.assign(Y, { face: 1, lift: 0, vx: 0, rot: 0, white: 0, gone: false, alpha: undefined, st: 'idle', hurt: null, atk: null, dash: null, jump: null, fly: null, blk: false, blkAt: 0, cr: 0, crAt: 0, crTog: false, inv: 0, dashCd: 0, breakCd: 0, aBuf: -1e9, jBuf: -1e9, dBuf: -1e9, ph: 0, guard: 0, hitAt: -1e9 });
   Object.assign(M, { face: -1, lift: 0, sink: 0, vx: 0, white: 0, gone: false, alpha: undefined, st: 'idle', t0: now, atk: null, dash: null, jump: null, blk: 0, blkAt: 0, hurt: null, sk: null, inv: 0, dashCd: now + 800, sinkCd: now + 3000, actAt: now + 1300, walk: 0, wspd: 0, plan: null, guard: 0, hitAt: -1e9 });
   Y.x = c4xClamp(Y.x, C4X.arL + 12, C4X.arR - 12); M.x = c4xClamp(M.x, C4X.arL + 12, C4X.arR - 12);
   c.F = { ph: 'intro', t0: now, hp: PHP, sh: PHP, mhp: PHP, msh: PHP, half: PHP / 2, hist: [], log: [], hitAt: -1e9, mhitAt: -1e9, bfN: 0, weakN: 0, ai: { seenAtk: -1, punished: -1, followAt: -1e9 }, banner: now };
-  if (retry) c.camOk = false; c4xMus(c, true, now);      // (the song is on in every fight: after a skip of the cutscene it begins here)
+  c4xMus(c, true, now);      // (the song is on in the fight: after a skip of the cutscene it begins here)
   c4xUi(true); c4xCine(false); keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false;
 }
 
@@ -342,26 +341,16 @@ function c4xHud(c, now) {
 function c4xBanner(c, now) {
   const F = c.F; if (c.ph === 'fight' && F) {
     const a = now - F.t0; if (a < 1300) { const k = a < 200 ? a / 200 : a > 1000 ? (1300 - a) / 300 : 1; ctx.globalAlpha = Math.max(0, Math.min(1, k)); pxt('FIGHT!', VW / 2, Math.round(VH * 0.4), '#ffffff', 24, 'center'); ctx.globalAlpha = 1; }
-    if (a >= 600 && a < 3800) { const k = a < 900 ? (a - 600) / 300 : a > 3500 ? (3800 - a) / 300 : 1; ctx.globalAlpha = Math.max(0, Math.min(1, k)); pxt('BRING MEGUNA TO HALF HEALTH', VW / 2, Math.round(VH * 0.4) + 14, '#ffd34d', 8, 'center'); if (c4xLoss > 0) pxt('HE LEARNED FROM THE LAST FIGHT', VW / 2, Math.round(VH * 0.4) + 26, '#ff8a7a', 8, 'center'); ctx.globalAlpha = 1; }
-  } else if (c.ph === 'win') { const t = (now - c.t0) / 1000; if (t > 0.3 && t < 2.2) { ctx.globalAlpha = Math.min(1, (t - 0.3) / 0.2); pxt('HALF HEALTH!', VW / 2, Math.round(VH * 0.4), '#ffd34d', 16, 'center'); ctx.globalAlpha = 1; } }
+    if (a >= 600 && a < 3800) { const k = a < 900 ? (a - 600) / 300 : a > 3500 ? (3800 - a) / 300 : 1; ctx.globalAlpha = Math.max(0, Math.min(1, k)); pxt('BRING MEGUNA TO HALF HEALTH', VW / 2, Math.round(VH * 0.4) + 14, '#ffd34d', 8, 'center'); ctx.globalAlpha = 1; }
+  } else if (c.ph === 'ranos' && c.rs && c.rs.win) { const t = (now - c.t0) / 1000; if (t > 0.2 && t < 1.9) { ctx.globalAlpha = Math.min(1, (t - 0.2) / 0.2) * Math.min(1, (1.9 - t) / 0.3); pxt('HALF HEALTH!', VW / 2, Math.round(VH * 0.4), '#ffd34d', 16, 'center'); ctx.globalAlpha = 1; } }
 }
 
-// ---- the end of the fight: half health = the chapter is done (the chapter menu); no health = Meguna cuts him down
-function c4xWin(now) {
-  const c = c4x, F = c.F; F.ph = 'over'; c.ph = 'win'; c.t0 = now; c.ev = {}; c4xCine(true); F.mhp = F.half; F.msh = Math.max(F.half, F.msh);
-  const Y = c.y, M = c.m; Y.atk = Y.dash = null; M.plan = null;
-  snd('finisher'); hitStop(150); slowMo(1300, 0.25); flash(now, 260, 0.7); buzz(120); shakeUntil = now + 420; shakeAmp = 4;
-  c4xMus(c, false, now);
+// ---- the end of the fight: half health (a win) and no health (a loss) go on the same way: Ranos steps in (tools/chap4e.js)
+function c4xWin(now) {      // the Black Flash that took Meguna to half health: the long freeze, the flash, and the lead-in of the Ranos scene
+  const c = c4x; c.y.atk = c.y.dash = null; c.m.plan = null; c.F.mhp = c.F.half; c.F.msh = Math.max(c.F.half, c.F.msh);
+  snd('finisher'); hitStop(150); slowMo(1100, 0.3); flash(now, 260, 0.7); buzz(120); shakeUntil = now + 420; shakeAmp = 4; c4xRanosStart(now, true);
 }
-function c4xWinStep(c, now, dt, T) {
-  const F = c.F, Y = c.y, M = c.m; c4xYStep(c, now, dt); c4xMStep(c, now, dt); c4xYPose(c, now); c4xMPose(c, now); c.fx = []; c.pool = null; c.glow = null;
-  c.black = n => c4xEase(((n - c.t0) / 1000 - 1.7) / 0.9);
-  if (T >= 2.9) { const slot = story ? story.slot : -1; storyDone15(); c4xOff(); svSel = slot; svView = 1; $('vsres').classList.remove('on'); show('saves'); renderSaves(); }
-  void F; void Y; void M;
-}
-function c4xLose(now) {
-  const c = c4x, F = c.F, Y = c.y, M = c.m; F.ph = 'over'; c.ph = 'lose'; c.t0 = now; c.ev = {}; c4xLoss++; c4xMus(c, false, now); c4xCine(true);
-  Y.atk = Y.dash = null; Y.blk = false; M.plan = null; M.atk = null; M.dash = null; M.jump = null; M.sk = null; M.sink = 0; M.lift = 0; M.hurt = null; M.walk = 0; M.blk = 0;
-  const dir = Math.sign(Y.x - M.x) || M.face; c.lose = { x0: M.x, yx: Y.x, dir, pose: Y.pose, lift: Y.lift, face: Y.face };
-  c.gib = null; c.black = null; hitStop(150); slowMo(900, 0.3); buzz(150);
+function c4xLose(now) {      // Yuji's health is gone: Meguna's last blow punches him back (and no more), and Meguna comes for the slash
+  const c = c4x, Y = c.y, M = c.m; Y.atk = Y.dash = null; Y.blk = false; Y.jump = null; Y.lift = 0; Y.fly = null; Y.hurt = { t0: now, rx: 9, ms: c4xRxMs(9) }; Y.vx += M.face * 150; M.plan = null; M.atk = null; M.dash = null; M.jump = null; M.sk = null; M.sink = 0; M.lift = 0; M.hurt = null; M.walk = 0; M.blk = 0;
+  hitStop(110); slowMo(900, 0.35); buzz(120); c4xRanosStart(now, false);
 }

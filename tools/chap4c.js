@@ -2,8 +2,8 @@
 // After the hard cut to black of part 2 (346.6 s) the chapter goes on in the NORMAL look of the game: the same rooftop city (c15Sky / c15Roof / c15Prop of chap4.js), Yuji in his own pixel pictures (YUF.norm) and Sukuna in Megumi's body, "MEGUNA": black spiky hair,
 // Megumi's dark uniform with the gold buttons, Sukuna's black face marks and RED eyes (tools/meguna_idle.png = `MEGUNA=1 python3 sukuna_art.py`: the same 36 rows of 15 pictures as Sukuna's strip, SUK_ROWS; only the rows C4_USE are cut).
 // It runs in the game's 'play' state on top of the normal touch controls: the hook is at the top of drawScene (`if (c4x) { c4xFrame(now, dt); return; }`, like the FATALITY cutscenes), there is no `vs` (no Versus engine) and `story` stays set (it knows the save slot).
-// c4x.ph: 'cut' (c4xCutStep: the cutscene, 7.6 s, plain fade from black, silence, the fight song from Yuji's first punch) -> 'fight' (chap4d.js: c4xFightStep) -> 'win' (Meguna is at half health: freeze, flash, black, the chapter menu; the flag c15 is set)
-// or 'lose' (c4xLoseStep: Meguna cuts Yuji down and he bursts into pieces - the gore follows SET.gore: FULL pieces + blood, CLEAN slash lines + dark pieces without blood, OFF the slash lines and a cut to black - then TRY AGAIN / MENU on the result screen).
+// c4x.ph: 'cut' (c4xCutStep: the cutscene, 7.5 s, plain fade from black, silence, the fight song from Yuji's first punch) -> 'fight' (chap4d.js: c4xFightStep) -> 'ranos' (v1.157, chap4e.js: a win and a loss both end the same way: RANOS steps in between Yuji and Sukuna, punches Yuji in the stomach
+// and takes him away through a violet circle) -> 'ny' (New York: Yuji falls onto a freeway, the cars honk, Iron Man lands and threatens him with a blade, a hard cut, TO BE CONTINUED, the chapter menu; the flag c15 is set there).
 const MEG_PNG = '__MEGPNG__', C4_USE = new Set(['frames', 'walk', 'jump', 'cr', 'ci', 'a0', 'a1', 'a2', 'el', 'cp1', 'sx', 'df', 'dg', 'bl', 'h0', 'h1', 'h2', 'h5', 'h9']), C4M = {};      // (C4M[row] = the 15 pictures of a row, 64 x 64 each, cut from the strip when it has loaded)
 (() => {
   const im = new Image();
@@ -12,7 +12,7 @@ const MEG_PNG = '__MEGPNG__', C4_USE = new Set(['frames', 'walk', 'jump', 'cr', 
 })();
 const C4X = { arL: -230, arR: 230, hw: 9, fadeIn: 1.0, end: 7.5, vol: 0.62 };      // (the roof: x from arL to arR; hw = half the width of a fighter; the cutscene lasts `end` seconds, C4S.shock is when Sukuna's shock close-up begins)
 const C4X_PROPS = [[-205, 'antenna'], [-150, 'vent'], [-70, 'ac'], [60, 'tank'], [150, 'crate'], [205, 'vent']];
-let c4x = null, c4xLoss = 0;      // (c4xLoss: how many times he has lost since the part began: the AI gets smarter and faster with every loss, see c4xLevel)
+let c4x = null;
 const C4S = (() => {      // the cutscene's clock (seconds): every picture of it is a function of T; the timings of the blows are the pictures' own (YU_ATK, SU_CP_FPS)
   const j = YU_ATK.imp[0][0] / YU_ATK.fps[0], k = YU_ATK.imp[8][0] / YU_ATK.fps[8], b = YU_ATK.imp[20][0] / YU_ATK.fps[20], u = 7 / SU_CP_FPS, o = { glow: 1.0, run: 1.45, punch: 1.9, sink: 1.88, sunk: 2.14, slide: 2.2, slideEnd: 2.6, erupt: 2.85, flyMs: 0.81, j, k, b, u };
   o.fly = o.erupt + u;                                        // the uppercut lands on the 8th picture of Meguna's blow
@@ -30,9 +30,9 @@ function c4xYPic(p) {
 const c4xSX = x => Math.round(VW / 2 + x - c4x.cam);      // (a world x on the screen)
 function c4xHand(Y, P) { const h = P.info.hn && P.info.hn[P.i]; return h ? [c4xSX(Y.x) + Math.round((h[0] - (P.info.cx - P.info.x0)) * Y.face), gy - 60 - P.info.top - Math.round(Y.lift) + Math.round(h[1])] : null; }      // (where his hand is on the screen)
 function c4xDrawY(Y) {
-  const P = Y.pose && c4xYPic(Y.pose); if (!P) return; const top = gy - 60 - P.info.top - Math.round(Y.lift), off = P.info.cx - P.info.x0;
-  ctx.save(); ctx.translate(c4xSX(Y.x), top + 32); if (Y.rot) ctx.rotate(Y.rot * Y.face); if (Y.face < 0) ctx.scale(-1, 1); if (Y.alpha !== undefined) ctx.globalAlpha = Y.alpha;
-  ctx.drawImage(P.cv, -off, -32); if (Y.white) ctx.drawImage(whiteOf(P.cv), -off, -32); ctx.restore();
+  const P = Y.pose && c4xYPic(Y.pose); if (!P) return; const top = gy - 60 - P.info.top - Math.round(Y.lift) + Math.round((Y.sink || 0) * 58), off = P.info.cx - P.info.x0;
+  ctx.save(); if (Y.sink > 0) { ctx.beginPath(); ctx.rect(0, 0, VW, gy + 2); ctx.clip(); } ctx.translate(c4xSX(Y.x), top + 32); if (Y.rot) ctx.rotate(Y.rot * Y.face); if (Y.face < 0) ctx.scale(-1, 1); if (Y.alpha !== undefined) ctx.globalAlpha = Y.alpha;
+  ctx.drawImage(P.cv, -off, -32); if (Y.white) ctx.drawImage(whiteOf(P.cv), -off, -32); if (Y.tint > 0) { ctx.globalAlpha = Y.tint; ctx.drawImage(c15Tint(P.cv, '#b46aff'), -off, -32); } ctx.restore();
 }
 function c4xDrawM(M) {
   const a = M.pose && C4M[M.pose.row]; if (!a) return; const cv = a[Math.max(0, Math.min(a.length - 1, Math.floor(M.pose.fi) || 0))], y = gy - 61 - Math.round(M.lift) + Math.round((M.sink || 0) * 58);
@@ -65,32 +65,31 @@ function c4xCam(c, dt, snap) {
 function c4xStart() {      // called by chapter 4 when its black cut is over: the part begins with the cutscene
   show('play'); const now = pnow(); c4xUi(true); c4xCine(true);
   c4x = { ph: 'cut', t0: now, T: 0, ev: {}, cam: 0, camOk: false, vi: -1, vc: 0, mus: 'off', musAt: now, musGo: false, y: { x: -72, face: 1, lift: 0, pose: null }, m: { x: 36, face: -1, lift: 0, sink: 0, pose: null }, pool: null, fx: [] };
-  c4xLoss = 0; popups = []; sparks = []; smoke = []; bfList = []; stopMs = 0; shakeUntil = 0; flashUntil = 0; blackUntil = 0;
+  popups = []; sparks = []; smoke = []; bfList = []; stopMs = 0; shakeUntil = 0; flashUntil = 0; blackUntil = 0;
 }
 function c4xCine(on) { $('pad').classList.toggle('cine', on); $('hud').classList.toggle('cine', on); }      // (the touch buttons and the top bar are hidden while a cutscene plays, as in the other cutscenes)
 function c4xUi(on) { if (!on) c4xCine(false); document.body.classList.toggle('c4', on); $('hud').classList.toggle('vs', on); $('fat').parentNode.classList.toggle('vs', on); $('fat').parentNode.classList.toggle('yj', on); if (on) $('atkl').textContent = 'FLASH'; else lastLabel = ''; }      // (the buttons and the top bar as they are in a Versus match as Yuji: the name of Gojo is hidden, the buttons that Yuji has no use for are hidden by the CSS of body.c4)
 function c4xOff() { if (!c4x) return; c4x = null; c4xUi(false); if (c9A) { try { c9A.pause(); c9A.currentTime = 0; } catch { /* nothing to stop */ } } }      // (called by show(): any other screen ends the part)
 function c4xLeave() { const a = story ? story.slot : -1; c4xOff(); svSel = a; svView = 0; $('vsres').classList.remove('on'); show('saves'); renderSaves(); }      // (the MENU button: back to the saves)
-function c4xRetry() {      // TRY AGAIN: straight into the fight again (no cutscene), with a smarter Meguna
-  $('vsres').classList.remove('on'); const c = c4x; if (!c) return; popups = []; sparks = []; smoke = []; bfList = []; stopMs = 0; shakeUntil = 0; flashUntil = 0; c.ev = {}; c.fx = []; c.pool = null; c.gib = null;
-  c4xBegin(pnow(), true);
+window.__c4x = () => c4x ? { ph: c4x.ph, T: c4x.T, yx: c4x.y.x, mx: c4x.m.x, hp: c4x.F ? c4x.F.hp : -1, mhp: c4x.F ? c4x.F.mhp : -1, fph: c4x.F ? c4x.F.ph : '', bf: c4x.F ? c4x.F.bfN : 0, weak: c4x.F ? c4x.F.weakN : 0, my: c4x.m.st, ys: c4x.y.st, lv: c4xLevel(), win: c4x.rs ? !!c4x.rs.win : null } : null;      // test hook
+window.__c4xSkip = () => { if (c4x) c4xSkip(); };
+function c4xSkip() {      // the SKIP button: the cutscene -> the fight; Ranos -> New York; New York -> the black and the card; the card -> the chapter menu (the events that are over are not played, see c4xEv)
+  const c = c4x; if (!c) return; const now = pnow();
+  if (c.ph === 'cut') c.t0 = now - C4X.end * 1000; else if (c.ph === 'ranos') c.t0 = now - (C4RS.lw + C4RS.end) * 1000; else if (c.ph === 'ny') c.t0 = now - (c.T < C4NS.cut ? C4NS.cut + 0.05 : C4NS.end + 0.05) * 1000;
 }
-window.__c4x = () => c4x ? { ph: c4x.ph, T: c4x.T, yx: c4x.y.x, mx: c4x.m.x, hp: c4x.F ? c4x.F.hp : -1, mhp: c4x.F ? c4x.F.mhp : -1, fph: c4x.F ? c4x.F.ph : '', bf: c4x.F ? c4x.F.bfN : 0, weak: c4x.F ? c4x.F.weakN : 0, my: c4x.m.st, ys: c4x.y.st, loss: c4xLoss, lv: c4xLevel() } : null;      // test hook
-window.__c4xSkip = () => { if (c4x && c4x.ph === 'cut') c4xSkip(); };
-function c4xSkip() { const c = c4x; if (!c || c.ph !== 'cut') return; c.t0 = pnow() - C4X.end * 1000; }      // (the SKIP button of the cutscene: on to the fight; the events that are over are not played, see c4xEv)
-addEventListener('pointerdown', e => { if (c4x && c4x.ph === 'cut' && c4x.T > 0.2 && c13InSkip(e)) c4xSkip(); });
+addEventListener('pointerdown', e => { if (c4x && (c4x.ph === 'cut' || c4x.ph === 'ranos' || c4x.ph === 'ny') && c4x.T > 0.2 && c13InSkip(e)) c4xSkip(); });
 
 // ---- the frame (the hook at the top of drawScene)
 function c4xEv(c, T, name, t, fn) { if (T >= t && !c.ev[name]) { c.ev[name] = 1; if (T - t < 0.4) fn(); } }      // (a step of the cutscene fires once; one that a skip jumped over by more than 0.4 s is not played late)
 function c4xFrame(now, dt) {
   const c = c4x; if (!c) return; const T = c.T = (now - c.t0) / 1000;
-  if (c.ph === 'cut') c4xCutStep(c, now, dt, T); else if (c.ph === 'fight') c4xFightStep(c, now, dt); else if (c.ph === 'lose') c4xLoseStep(c, now, dt, T); else if (c.ph === 'win') c4xWinStep(c, now, dt, T);
+  if (c.ph === 'cut') c4xCutStep(c, now, dt, T); else if (c.ph === 'fight') c4xFightStep(c, now, dt); else if (c.ph === 'ranos') c4xRanosStep(c, now, dt, T); else if (c.ph === 'ny') c4xNyStep(c, now, dt, T);
   if (c4x !== c) return;      // (a step may have ended the part)
-  c4xCam(c, dt, !c.camOk); c.camOk = true; wx = Math.round(c.cam); shkX = shkY = 0;
+  if (c.ph !== 'ny') { c4xCam(c, dt, !c.camOk); c.camOk = true; wx = Math.round(c.cam); } else wx = 0; shkX = shkY = 0;
   ctx.save(); ctx.imageSmoothingEnabled = false;
   if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100); ctx.translate(shkX, shkY); }
-  c4xWorld(now); if (c.pool) for (const p of c.pool) c4xPool(p.x, p.rx, now, p.a);
-  drawSmoke(now, dt); c4xDrawActors(c, now); c4xFx(c, now); drawSparks(now, dt); drawPopups(now);
+  if (c.ph === 'ny') c4xNyDraw(c, now, dt, T);
+  else { c4xWorld(now); if (c.pool) for (const p of c.pool) { if (p.violet) c4xPortal(p.x, p.rx, now, p.a); else c4xPool(p.x, p.rx, now, p.a); } drawSmoke(now, dt); c4xDrawActors(c, now); c4xFx(c, now); drawSparks(now, dt); drawPopups(now); }
   ctx.restore(); c4xOverlay(c, now, T); c4xMusic(c, now);
 }
 function c4xDrawActors(c, now) {
@@ -100,16 +99,18 @@ function c4xDrawActors(c, now) {
 }
 function c4xOverlay(c, now, T) {
   if (now < flashUntil) { ctx.fillStyle = 'rgba(190,225,255,' + (flashA * (flashUntil - now) / flashMs) + ')'; ctx.fillRect(0, 0, VW, VH); }
-  if (c.ph === 'cut') {
-    c4xTalk(c, T); if (T >= C4S.shock && T < C4X.end - 0.1) c4xCloseUp(c, T);
-    if (T > 0.2 && T < C4X.end - 0.4) { ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1; ctx.strokeRect(VW - 39.5, 2.5, 36, 10); pxt('SKIP', VW - 21, 11, '#ffffff', 8, 'center'); }
-  } else if (c.ph === 'fight') c4xHud(c, now);
+  if (c.vf && now < c.vf) { ctx.fillStyle = 'rgba(' + (c.vfc || '190,130,255') + ',' + (c.vfa * (c.vf - now) / c.vfm).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  const skip = (end, from) => { if (T > (from || 0.2) && T < end - 0.4) { ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1; ctx.strokeRect(VW - 39.5, 2.5, 36, 10); pxt('SKIP', VW - 21, 11, '#ffffff', 8, 'center'); } };
+  if (c.ph === 'cut') { c4xTalk(c, T, C4_TALK); if (T >= C4S.shock && T < C4X.end - 0.1) c4xCloseUp(c, T); skip(C4X.end); }
+  else if (c.ph === 'ranos') { c4xTalk(c, T, C4_TALK_R); skip(C4RS.lw + C4RS.end, 0.8); if (c.whiteA > 0) { ctx.fillStyle = 'rgba(236,222,255,' + c.whiteA.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); } }
+  else if (c.ph === 'ny') { if (T < C4NS.cut) { c4xTalk(c, T, C4_TALK_N); skip(C4NS.cut, 0.8); } }
+  else if (c.ph === 'fight') c4xHud(c, now);
   const a = c.ph === 'cut' ? 1 - c4xEase(T / C4X.fadeIn) : c.black ? c.black(now) : 0; if (a > 0.004) { ctx.fillStyle = 'rgba(0,0,0,' + Math.min(1, a).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
-  if (c.ph === 'fight' || c.ph === 'win') c4xBanner(c, now);
+  if (c.ph === 'fight' || c.ph === 'ranos') c4xBanner(c, now);
 }
 const c4xEase = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); }, c4xOut = u => { u = Math.max(0, Math.min(1, u)); return 1 - (1 - u) * (1 - u); };
-function c4xTalk(c, T) {      // the few lines: the speech box in the corner, the letters come out with the blips of the speaker's voice
-  const i = C4_TALK.findIndex(s => T >= s.t && T < s.t + s.d); if (i < 0) return; const s = C4_TALK[i], n = Math.floor((T - s.t) * TN_RATE);
+function c4xTalk(c, T, L) {      // the few lines: the speech box in the corner, the letters come out with the blips of the speaker's voice
+  const i = L.findIndex(s => T >= s.t && T < s.t + s.d); if (i < 0) return; const s = L[i], n = Math.floor((T - s.t) * TN_RATE);
   if (c.vi !== i) { c.vi = i; c.vc = 0; } while (c.vc < Math.min(n, s.a.length)) { c.vc++; if (s.a[c.vc - 1] !== ' ') snd('tvoice', s.vk || 0); } c7Dlg(s.w, s.a, n, s.b);
 }
 function c4xCloseUp(c, T) {      // Sukuna is shocked: his face from the picture, four times as big, in a frame on the right
@@ -178,55 +179,9 @@ function c4xCutStep(c, now, dt, T) {
   ev('bfswing', C4S.bf + 0.18, () => snd('swing', 3));
   ev('bfHit', C4S.bfHit, () => { bfFx(now, M.x, 20); snd('hit', 3); snd('smack', 3); snd('yfbf'); shakeUntil = now + 420; shakeAmp = 5; flash(now, 140, 0.5); }); if (T >= C4S.bfHit && T < C4S.bfHit + 0.5) M.white = ((now / 60) & 1) ? 1 : 0;
   ev('gasp', C4S.shock, () => snd('gasp'));
-  if (T >= C4X.end) c4xBegin(now, false);
+  if (T >= C4X.end) c4xBegin(now);
 }
 function c4xFx(c, now) {
   if (c.glow) { c4xGlow(c.glow.x, c.glow.y, c.glow.r, c.glow.cols); if (c.glow.cols === C4_BF) for (let i = 0; i < 4; i++) bfBolt(c.glow.x, c.glow.y, Math.random() * 6.283, 4 + ((Math.random() * 6) | 0)); else if (Math.random() < 0.5) { ctx.fillStyle = '#d6fcff'; ctx.fillRect(c.glow.x + Math.round((Math.random() - 0.5) * 12), c.glow.y + Math.round((Math.random() - 0.5) * 12), 1, 1); } }
-  if (c.gib) c4xGibDraw(c);
   if (c.fx) for (const f of c.fx) f(now);
-}
-
-// ================================================================ THE DEFEAT (c4xLose in chap4d.js): Meguna dashes in and cuts Yuji down with an X slash; he bursts into pieces (the gore follows SET.gore: 0 FULL = pieces, blood and a pool; 1 CLEAN = slash lines and dark pieces that melt away, no blood; 2 OFF = slash lines, a flash, a cut to black)
-function c4xLoseStep(c, now, dt, T) {
-  const Y = c.y, M = c.m, L = c.lose, g = gdSet(), ev = (n, t, f) => c4xEv(c, T, n, t, f), idle = now / (1000 / IDLE_FPS), ex = L.yx - L.dir * 24, t0 = 0.3, t1 = 0.52, imp = t1 + 6 / 30;
-  c.mFront = true; Y.rot = 0; Y.white = 0; M.white = 0; M.sink = 0; M.lift = 0; c.pool = null; c.pool2 = null; c.glow = null; c.fx = [];
-  if (!Y.gone) { Y.pose = L.pose; Y.lift = L.lift; Y.face = L.face; Y.x = L.yx; }
-  M.face = L.dir;
-  if (T < t0) { M.x = L.x0; M.pose = { row: 'frames', fi: idle }; }
-  else if (T < t1) { const u = c4xEase((T - t0) / (t1 - t0)); M.x = L.x0 + (ex - L.x0) * u; M.pose = { row: 'df', fi: Math.min(14, u * 14.9) }; }
-  else { M.x = ex; M.pose = { row: 'sx', fi: Math.min(14, (T - t1) * 30) }; }
-  ev('dash', t0, () => { snd('dash', 0); snd('sukimp'); });
-  ev('cut', imp, () => { snd('sukcut'); snd('slice'); hitStop(90); shakeUntil = now + 420; shakeAmp = 5; buzz(200); flash(now, 160, 0.8); c.cutAt = now; if (g < 2) c4xBurst(c, now, g === 0); else Y.gone = true; if (g === 0) { snd('splat'); snd('rip'); } else if (g === 1) snd('shatter'); });
-  if (c.cutAt) { const a = now - c.cutAt; if (a < 320) { const sx = c4xSX(L.yx), k = 1 - a / 320; c.fx.push(() => { ctx.globalAlpha = k; for (const [w, col] of [[3, '#ff2a3a'], [1, '#ffffff']]) { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(sx - 20, gy - 58); ctx.lineTo(sx + 20, gy - 6); ctx.moveTo(sx + 20, gy - 58); ctx.lineTo(sx - 20, gy - 6); ctx.stroke(); } ctx.globalAlpha = 1; }); } if (g === 0 && a < 260) c.fx.push(() => { ctx.fillStyle = 'rgba(200,0,24,' + (0.45 * (1 - a / 260)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }); }
-  if (c.gib) c4xGibStep(c, now, dt);
-  const fadeAt = g === 2 ? 1.0 : 2.3, fadeMs = g === 2 ? 0.7 : 0.8;
-  c.black = n => c4xEase(((n - c.t0) / 1000 - fadeAt) / fadeMs);
-  if (T >= fadeAt + fadeMs + 0.2 && !c.res) { c.res = true; $('vsTitle').textContent = 'DEFEAT'; $('vsInfo').textContent = 'SUKUNA WAS TOO STRONG\nTHE NEXT TRY HE WILL BE FASTER AND SMARTER'; $('vsStars').innerHTML = ''; $('vsNext').style.display = 'none'; $('vsAgain').textContent = 'TRY AGAIN'; $('vsAgain').classList.add('hot'); $('vsres').classList.add('on'); snd('ko'); }
-}
-function c4xBurst(c, now, full) {      // Yuji's picture of this moment is cut into chunks that fly; with blood (full) the drops, the splashes on the roof and a pool; without it (CLEAN) the chunks are dark and melt away
-  const Y = c.y, P = c4xYPic(Y.pose); Y.gone = true; if (!P) return;
-  const cv = P.cv, off = P.info.cx - P.info.x0, top = -60 - P.info.top - Math.round(Y.lift), cw = 6, ch = 8, bx = Y.x, by = top + 30, im = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data, G = c.gib = { p: [], d: [], dec: [], pool: null, born: now, full };
-  for (let cy = 0; cy < cv.height; cy += ch) for (let cx = 0; cx < cv.width; cx += cw) {
-    let n = 0; for (let yy = cy; yy < Math.min(cv.height, cy + ch); yy++) for (let xx = cx; xx < Math.min(cv.width, cx + cw); xx++) if (im[(yy * cv.width + xx) * 4 + 3] > 0) n++;
-    if (n < 5) continue;
-    const pc = document.createElement('canvas'); pc.width = cw; pc.height = ch; const pg = pc.getContext('2d'); if (Y.face < 0) { pg.translate(cw, 0); pg.scale(-1, 1); } pg.drawImage(cv, cx, cy, cw, ch, 0, 0, cw, ch);
-    if (!full) { pg.setTransform(1, 0, 0, 1, 0, 0); pg.globalCompositeOperation = 'source-atop'; pg.fillStyle = 'rgba(12,10,24,0.92)'; pg.fillRect(0, 0, cw, ch); }
-    const px = Y.x + Y.face * (cx + cw / 2 - off), py = top + cy + ch / 2, ang = Math.atan2(py - by, px - bx) + (Math.random() - 0.5) * 0.7, sp = 50 + Math.random() * 160;
-    G.p.push({ cv: pc, x: px, y: py, vx: Math.cos(ang) * sp + L4_PUSH(c), vy: Math.sin(ang) * sp - 80 - Math.random() * 60, rest: false, a: 1 });
-  }
-  if (full) { for (let i = 0; i < 150; i++) { const a = Math.random() * 6.2832, sp = 30 + Math.random() * 190; G.d.push({ x: bx + (Math.random() - 0.5) * 12, y: by + (Math.random() - 0.5) * 30, vx: Math.cos(a) * sp + L4_PUSH(c) * 0.5, vy: Math.sin(a) * sp - 90, c: BLD[i % 4], s: i % 5 === 0 ? 2 : 1 }); } G.pool = { x: bx, rx: 0 }; }
-}
-const L4_PUSH = c => (c.lose ? c.lose.dir * 25 : 0);      // (the chunks go on the way the slash went)
-function c4xGibStep(c, now, dt) {
-  const G = c.gib, age = (now - G.born) / 1000;
-  for (const p of G.p) { if (!p.rest) { p.vy += 520 * dt; p.x += p.vx * dt; p.y += p.vy * dt; if (p.y > -4) { p.y = -4; if (Math.abs(p.vy) > 45) { p.vy = -p.vy * 0.3; p.vx *= 0.6; } else { p.vy = 0; p.vx = 0; p.rest = true; } } } if (!G.full && age > 1.0) p.a = Math.max(0, 1 - (age - 1.0) / 0.9); }
-  for (let i = G.d.length - 1; i >= 0; i--) { const d = G.d[i]; d.vy += 420 * dt; d.x += d.vx * dt; d.y += d.vy * dt; if (d.y > 0) { if (G.dec.length < 320) G.dec.push({ x: d.x, y: Math.round(Math.random() * 5), c: d.c, s: d.s }); G.d.splice(i, 1); } }
-  if (G.pool) G.pool.rx = Math.min(24, G.pool.rx + dt * 16);
-}
-function c4xGibDraw(c) {
-  const G = c.gib; if (!G) return;
-  if (G.pool) { const sx = c4xSX(G.pool.x), ry = Math.max(1, Math.round(G.pool.rx * 0.2)); for (let dy = -ry; dy <= ry; dy++) { const w = Math.round(G.pool.rx * Math.sqrt(Math.max(0, 1 - dy * dy / (ry * ry + 0.01)))); ctx.fillStyle = Math.abs(dy) >= ry ? BLD[2] : BLD[1]; ctx.fillRect(sx - w, gy + 3 + dy, 2 * w, 1); } }
-  for (const d of G.dec) { ctx.fillStyle = d.c; ctx.fillRect(c4xSX(d.x), gy + 2 + d.y, d.s, 1); }
-  for (const p of G.p) { if (p.a <= 0) continue; ctx.globalAlpha = p.a; ctx.drawImage(p.cv, c4xSX(p.x) - 3, Math.round(gy + p.y - 4)); } ctx.globalAlpha = 1;
-  for (const d of G.d) { ctx.fillStyle = d.c; ctx.fillRect(c4xSX(d.x), Math.round(gy + d.y), d.s, d.s); }
 }

@@ -186,7 +186,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.156</small>
+    <small id="ver">V1.157</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -4392,6 +4392,7 @@ __CHAP4__
 __CHAP4B__
 __CHAP4C__
 __CHAP4D__
+__CHAP4E__
 function drawScene(now, dt) {
   if (c4x) { c4xFrame(now, dt); return; }      // (v1.156 chapter 4, part 3: Yuji against Meguna, see tools/chap4c.js)
   fatUI(now);
@@ -6625,8 +6626,8 @@ addEventListener('pointerdown', () => { if (yf && !paused) yfTap(pnow()); });   
 addEventListener('pointerdown', () => { if (typeof suFgOn === 'function' && suFgOn() && !paused) suFgTap(pnow()); });      // (v1.127 Sukuna's FUGA cutscene: two taps skip it)
 $('vsGo').addEventListener('click', () => startMatch(vsSel));
 $('vsNext').addEventListener('click', () => { if (vs && vs.cv) { startCurse(vs.ci + 1, 0); return; } const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
-$('vsAgain').addEventListener('click', () => c4x ? c4xRetry() : vs && vs.hunt ? startHunt(vs.hunt.i) : vs && vs.rush ? (vs.run === ROUL ? startRoulette() : startRush()) : vs && vs.cv ? startCurse(vs.ci, vs.hard, vs.daily) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe));
-$('vsMenu').addEventListener('click', () => { if (c4x) { c4xLeave(); return; } if (vs && vs.net) { lanLeave(); return; } if (vs && vs.hunt) { show('chal'); buildHunts(); return; } if (vs && vs.cv) { show('chal'); buildChal(); return; } if (vs && vs.story) { svView = 0; show('saves'); renderSaves(); } else { buildGrades(); buildFighters(); show('versus'); } });
+$('vsAgain').addEventListener('click', () => vs && vs.hunt ? startHunt(vs.hunt.i) : vs && vs.rush ? (vs.run === ROUL ? startRoulette() : startRush()) : vs && vs.cv ? startCurse(vs.ci, vs.hard, vs.daily) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe));
+$('vsMenu').addEventListener('click', () => { if (vs && vs.net) { lanLeave(); return; } if (vs && vs.hunt) { show('chal'); buildHunts(); return; } if (vs && vs.cv) { show('chal'); buildChal(); return; } if (vs && vs.story) { svView = 0; show('saves'); renderSaves(); } else { buildGrades(); buildFighters(); show('versus'); } });
 $('back').addEventListener('click', () => { leavePlay(); });
 VOLS.forEach(([k, name]) => {
   const row = document.createElement('label');

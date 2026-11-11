@@ -1010,6 +1010,21 @@ function makeSfx(ac) {
     yfstop(at) {                                         // the score stops (the cutscene was skipped or is over)
       const t = T(at); if (st.bed) { st.bed.gain.cancelScheduledValues(t); st.bed.gain.setTargetAtTime(0, t, 0.08); st.bed = null; }
     },
+    honk(k, at) {                                        // v1.157 a car horn (New York): two square tones a third apart (a different pair for every car, k = 0 - 5), a little out of tune with each other, a hard start and a quick end; about 0.3 s
+      const t = T(at), B = C.atk.soft, P = [[392, 494], [349, 440], [440, 554], [311, 392], [466, 587], [370, 466]][((k | 0) % 6 + 6) % 6], d = R(0.25, 0.42), j = R(0.992, 1.008);
+      tone(B, t, { type: 'square', f: P[0] * j, dur: d, gain: 0.07, atk: 0.006 }); tone(B, t, { type: 'square', f: P[1] / j, dur: d, gain: 0.06, atk: 0.006 }); tone(B, t, { type: 'sawtooth', f: P[0] * 0.5, dur: d, gain: 0.05, atk: 0.01 });
+      burst(B, t, { type: 'bandpass', f: 2400, q: 0.8, dur: 0.05, gain: 0.05, atk: 0.001 });
+    },
+    thrust(d, at) {                                      // v1.157 a repulsor / jet (Iron Man): a rush of air that rises in pitch for d seconds (his descent: it falls away again at the end), a whining tone under it and a low roar
+      const t = T(at), B = C.tele.soft, D = d || 1.2;
+      burst(B, t, { type: 'bandpass', f: 600, f2: 3200, q: 0.9, dur: D, gain: 0.4, atk: D * 0.5 }); burst(B, t + D * 0.5, { type: 'bandpass', f: 3200, f2: 900, q: 0.9, dur: D * 0.5, gain: 0.25, atk: 0.02 });
+      tone(B, t, { type: 'sawtooth', f: 260, f2: 1500, dur: D, gain: 0.07, atk: D * 0.4 }); tone(C.tele.deep, t, { type: 'triangle', f: 70, f2: 140, dur: D, gain: 0.3, atk: D * 0.5, cur: 1 });
+    },
+    shing(at) {                                          // v1.157 a blade slides out of an armoured forearm: a short scrape of metal that rises, then a bright ring that dies away
+      const t = T(at), B = C.atk.soft;
+      burst(B, t, { type: 'highpass', f: 2800, f2: 7000, q: 0.8, dur: 0.22, gain: 0.3, atk: 0.01 }); tone(B, t + 0.1, { f: 3150, f2: 3000, dur: 0.7, gain: 0.07, atk: 0.002 }); tone(B, t + 0.1, { f: 4720, f2: 4600, dur: 0.5, gain: 0.04, atk: 0.002 });
+      tone(C.atk.deep, t, { type: 'triangle', f: 220, f2: 140, dur: 0.1, gain: 0.12, atk: 0.003 });
+    },
     setVol(name, v) {                                    // per-sound volume, 0 = silent, 1 = designed level, 2 = twice as loud
       vol[name] = v;
       if (name === 'master') applyMaster();
