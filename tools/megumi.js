@@ -170,19 +170,126 @@ const c15Big = (() => {
     }
     line(p, [[cx - 38, 74], [cx - 20, 72], [cx + 20, 72], [cx + 38, 74]], blk, 2); line(p, [[cx - 2, 42], [cx - 2, 52]], blk, 2); line(p, [[cx + 2, 42], [cx + 2, 52]], blk, 2);      // (the band across the nose, a mark on the forehead)
     p.px(cx - 4, 90, blk); p.px(cx + 4, 90, blk); line(p, [[cx - 3, 76], [cx - 5, 89]], K('#a46c60'), 1);      // (the nose)
-    const my = 99, mw = 26 + 12 * sw, lift = 3 + 6 * sw, ph = u => my + u * u * lift - lift * 0.4;      // the grin: a dark red mouth, a row of teeth, the lips; the corners go up into the cheeks
+    if (o.m) {      // a calm smirk: closed lips, one corner up, a dimple at the corner
+      const my = 100; line(p, [[cx - 20, my + 1], [cx - 8, my + 2.6], [cx + 8, my + 1.4], [cx + 22, my - 3]], K('#5a2630'), 2); line(p, [[cx - 17, my + 5], [cx, my + 6.6], [cx + 16, my + 3]], K('#c88a78'), 1); line(p, [[cx + 24, my - 4], [cx + 28, my - 10]], blk, 1); line(p, [[cx - 22, my], [cx - 24, my - 3]], blk, 1);
+    } else {
+      const my = 99, mw = 26 + 12 * sw, lift = 3 + 6 * sw, ph = u => my + u * u * lift - lift * 0.4;      // the grin: a dark red mouth, a row of teeth, the lips; the corners go up into the cheeks
     const mouth = []; for (let u = -1; u <= 1.001; u += 0.1) mouth.push([cx + u * mw, ph(u)]);
     line(p, mouth, K('#3a0a14'), 7); for (let u = -0.86; u <= 0.87; u += 0.115) { const x = cx + u * mw, y = ph(u); p.rect(Math.round(x) - 2, Math.round(y) - 1, 4, 5, wt); p.px(x - 2, y + 4, K('#c8bcb0')); }
     line(p, mouth.map(q => [q[0], q[1] - 3]), K('#7a2838'), 1); line(p, mouth.map(q => [q[0], q[1] + 7]), K('#7a2838'), 1); line(p, [[cx - mw - 2, ph(-1) - 3], [cx - mw - 6, ph(-1) - 9]], blk, 1); line(p, [[cx + mw + 2, ph(1) - 3], [cx + mw + 6, ph(1) - 9]], blk, 1);
+    }
     return p;
   }
-  return { eye: o => memo('e' + JSON.stringify(o), () => eye(o).canvas()), suk: o => memo('s' + JSON.stringify(o), () => suk(o).canvas()), line, P, memo, almond };
+  function fingers(o) {      // the fingers of the hand on his jaw, seen from the front (they come in from the lower right and press on his cheek), 64 x 64: o.press (0 - 1: how hard)
+    const p = new Pix(64, 64), SKH = mat(['#8a5a52', '#b8806a', '#dcaa8e', '#f2cdb0'], '#2e1620'), pr = o.press || 0, nail = mat(['#3a2430', '#5a3a46', '#8a6a70', '#c0a0a0'], '#1c1018');
+    for (let i = 3; i >= 0; i--) { const bx = 46 + i * 5, by = 66, tx = 22 + i * 9 - pr * 2, ty = 12 + i * 6 + pr * 2; p.put(cap(bx, by, tx, ty, 5.6, 4.6), SKH); const a = Math.atan2(ty - by, tx - bx); p.put(ell(tx - Math.cos(a) * 1.5, ty - Math.sin(a) * 1.5, 3.2, 2.6), nail, 0); }
+    p.put(cap(64, 60, 56 - pr, 34 + pr * 2, 6.6, 5.2), SKH); return p;
+  }
+  return { eye: o => memo('e' + JSON.stringify(o), () => eye(o).canvas()), fingers: o => memo('f' + JSON.stringify(o), () => fingers(o).canvas()), suk: o => memo('s' + JSON.stringify(o), () => suk(o).canvas()), line, P, memo, almond };
 })();
 
-c15MegPoses.grabbed = function (t) {      // held up by the face: leaning back, the head thrown back, both hands on the wrist that holds him, the legs hanging and kicking weakly
-  const k = Math.sin(t * 5.5) * 3, k2 = Math.sin(t * 5.5 + 1.6) * 3;
-  return { x: 32, y: 33, lean: -22, hdx: 0.4, hdt: -30, wind: 0, arms: [{ al: 150, el: 22 }, { al: 168, el: 8 }], legs: [{ ax: 25 + k * 0.4, ay: 55 + k, a: 22 }, { ax: 36 - k * 0.3, ay: 57 + k2, a: 34 }], ex: 'shock', blood: 0.85 };
-};
 c15MegPoses.lookup = function (ph, w) {      // running, the head thrown up to see what flies over him (w = 0 - 1)
   const o = c15MegPoses.run(ph); o.hdt = -30 * w; o.hdy = -1.2 * w; o.hdx = 2.5 - 1.2 * w; o.lean = 15 - 8 * w; o.ex = w > 0.35 ? 'shock' : 'grit'; return o;
+};
+
+// ================================================================ SUKUNA in Yuji's body, v1.146: the same kind of shaded-shape figure as Megumi, but bigger and broader (1.1), with the look of the manga: short spiky pink hair, the high red hood round his neck, the dark uniform with its gold buttons,
+// a thin mark across the bridge of his nose and under his eye, a second pair of eyes under the first, a narrow red eye. A pose = numbers (see c15SukPoses); c15Suk(pose) -> a 64 x 72 picture facing right (soles on row 70); c15SukPts(pose) = where his head, jaw and hands are (picture coordinates).
+const c15SukKit = (() => {
+  const { Pix, cap, ell, uni, K, OY } = c15MegKit, RAD = Math.PI / 180, GY = 63, cache = new Map(), cl = (v, a, b) => Math.max(a, Math.min(b, v));
+  const mat = (t, o) => { const m = t.map(K); m.o = K(o); return m; };
+  const SK = mat(['#a46c60', '#d09c80', '#ecc0a0', '#f8d8bc'], '#3a1c24'), SKF = mat(['#7a4a44', '#a46c60', '#c48c76', '#e0b090'], '#2e1620'), HR = mat(['#7a4258', '#b4707e', '#dc94a0', '#f2bcc4'], '#3a1c2c'),
+    JK = mat(['#161c3a', '#222a52', '#34407a', '#4c5aa0'], '#080a1c'), JKF = mat(['#10142a', '#181e3c', '#242c58', '#343e74'], '#04060e'), HD = mat(['#541424', '#782a30', '#aa3636', '#d85a5a'], '#2a0a14'),
+    PN = mat(['#0a0c16', '#10131f', '#181c2c', '#262c42'], '#04050a'), PNF = mat(['#06070e', '#0a0c16', '#10131f', '#181c2c'], '#030408'), BT = mat(['#3a0c18', '#782a30', '#aa3636', '#d85a5a'], '#1a0810'), BTF = mat(['#2a0812', '#541424', '#782a30', '#aa3636'], '#14060c');
+  const S = 1.1, L1 = 12.9 * S, L2 = 12.4 * S, LT = 17.6 * S, AH = 3.5 * S, UA = 10.6 * S, FA = 9.8 * S, GROUND = GY - AH;
+  function geom(o) {
+    const lean = (o.lean === undefined ? 3 : o.lean) * RAD, ux = Math.sin(lean), uy = -Math.cos(lean), fx = -uy, fy = ux, P = [o.x === undefined ? 32 : o.x, (o.y === undefined ? 32.6 : o.y) + OY];
+    const at = (t, d) => [P[0] + ux * LT * t + fx * d * S, P[1] + uy * LT * t + fy * d * S], Wd = at(0.3, 0), W2 = at(0.68, 0), Nk = at(1, 0), Sh = at(0.84, -0.2);
+    const ht = (o.hdt || 0) * RAD, hox = (o.hdx === undefined ? 1.2 : o.hdx) * S, hoy = -6.9 * S + (o.hdy || 0), hd = [Nk[0] + hox * Math.cos(ht) - hoy * Math.sin(ht), Nk[1] + hox * Math.sin(ht) + hoy * Math.cos(ht)];
+    const ar = o.arms || [{ al: -8, el: 20 }, { al: 6, el: 24 }], arms = ar.map(a => { const a1 = a.al * RAD, a2 = (a.al + a.el) * RAD, E = [Sh[0] + Math.sin(a1) * UA, Sh[1] + Math.cos(a1) * UA], W = [E[0] + Math.sin(a2) * FA, E[1] + Math.cos(a2) * FA]; return { E, W, h: [W[0] + Math.sin(a2) * 2.3 * S, W[1] + Math.cos(a2) * 2.3 * S], pk: a.pk }; });
+    return { P, at, Wd, W2, Nk, Sh, hd, ht, arms };
+  }
+  function reach(o, k, tx, ty) {      // sets o.arms[k] so that the hand is at (tx, ty) (picture coordinates): the elbow points down and back, like a real arm
+    const Sh = geom(o).Sh, dx = tx - Sh[0], dy = ty - Sh[1], d0 = Math.hypot(dx, dy) || 1, d = Math.min(d0 - 2.3 * S, (UA + FA) * 0.995), ux = dx / d0, uy = dy / d0, wx = Sh[0] + ux * d, wy = Sh[1] + uy * d;
+    const a = Math.acos(cl((UA * UA + d * d - FA * FA) / (2 * UA * d), -1, 1)), th = Math.atan2(wy - Sh[1], wx - Sh[0]) + a, E = [Sh[0] + UA * Math.cos(th), Sh[1] + UA * Math.sin(th)];
+    const al = Math.atan2(E[0] - Sh[0], E[1] - Sh[1]) / RAD, a2 = Math.atan2(wx - E[0], wy - E[1]) / RAD; o.arms = o.arms.slice(); o.arms[k] = { al, el: a2 - al, pk: 0 }; return o;
+  }
+  function ik(hx, hy, ax, ay, L1_, L2_) { const dx = ax - hx, dy = ay - hy, d = Math.max(0.1, Math.min(Math.hypot(dx, dy), (L1_ + L2_) * 0.999)), a = Math.acos(cl((L1_ * L1_ + d * d - L2_ * L2_) / (2 * L1_ * d), -1, 1)), th = Math.atan2(dy, dx) - a; return [hx + L1_ * Math.cos(th), hy + L1_ * Math.sin(th)]; }
+  function draw(o) {
+    const p = new Pix(64, 72), g = geom(o), { P, at, Wd, W2, Nk, Sh, hd, ht, arms } = g, lg = (o.legs || [{ ax: 28, ay: GROUND, a: 0 }, { ax: 36, ay: GROUND, a: 0 }]).map(l => ({ ax: l.ax, ay: l.ay + OY, a: l.a }));
+    const drawArm = k => { const a = arms[k], far = k === 0, m = far ? JKF : JK; p.put(uni(ell(Sh[0], Sh[1], 3.1 * S, 3.1 * S), cap(Sh[0], Sh[1], a.E[0], a.E[1], 2.7 * S, 2.3 * S), cap(a.E[0], a.E[1], a.W[0], a.W[1], 2.3 * S, 1.8 * S)), m); if (!a.pk) p.put(ell(a.h[0], a.h[1], 2.1 * S, 2.3 * S), far ? SKF : SK); };
+    const drawLeg = k => { const l = lg[k], far = k === 0, Hp = [P[0] + 0.4, P[1]], Kn = ik(Hp[0], Hp[1], l.ax, l.ay, L1, L2); p.put(uni(cap(Hp[0], Hp[1], Kn[0], Kn[1], 3.5 * S, 3.0 * S), cap(Kn[0], Kn[1], l.ax, l.ay, 3.0 * S, 1.9 * S)), far ? PNF : PN);
+      const a = -(l.a || 0) * RAD, cs = Math.cos(a), sn = Math.sin(a), R = (x, y) => [l.ax + (x * cs - y * sn) * S, l.ay + (x * sn + y * cs) * S], hh = R(-2.4, 1.6), tt = R(4.8, 2.0); p.put(cap(hh[0], hh[1], tt[0], tt[1], 2.1 * S, 1.7 * S), far ? BTF : BT); p.line(R(-1.8, 2.9), R(4.4, 3.2), K('#1a1018')); };
+    drawArm(0); drawLeg(0);
+    p.put(uni(cap(P[0], P[1], Wd[0], Wd[1], 5.2 * S, 4.8 * S), cap(Wd[0], Wd[1], W2[0], W2[1], 4.8 * S, 5.8 * S), cap(W2[0], W2[1], Nk[0], Nk[1], 5.8 * S, 4.0 * S)), JK);      // (the jacket: broad shoulders)
+    const b1 = at(0.45, 5.0), b2 = at(0.62, 5.3); p.px(b1[0], b1[1], K('#deb040')); p.px(b2[0], b2[1], K('#deb040'));      // (two gold buttons)
+    p.put(cap(hd[0] - 1.1 * S, hd[1] + 3.2 * S, Nk[0] + 0.3 * S, Nk[1] - 0.5 * S, 2.3 * S, 2.7 * S), SK);      // (the neck)
+    p.put(uni(cap(Nk[0] - 0.4, Nk[1] + 2.4, Nk[0] + 0.4, Nk[1] - 2.6, 3.8 * S, 4.1 * S), ell(Nk[0] - 2.6 * S, Nk[1] + 0.6, 3.2 * S, 3.4 * S)), HD);      // (the high red hood round his neck)
+    const [hx, hy] = hd; p.put(uni(ell(hx - 0.3 * S, hy - 0.4 * S, 4.6 * S, 4.7 * S), ell(hx + 1.1 * S, hy + 1.4 * S, 3.6 * S, 3.5 * S), cap(hx + 3.5 * S, hy + 0.3 * S, hx + 4.9 * S, hy + 1.4 * S, 0.75 * S, 0.55 * S)), SK);      // (the head, the nose)
+    // the hair: short spikes brushed up and back, the pink of the picture, a lighter point on each
+    const wd = o.wind || 0, sway = wd * 24 * RAD, hl = K('#f8d4da'), hs = K('#7a4258');
+    p.put(uni(ell(hx - 1.0 * S, hy - 2.1 * S, 4.8 * S, 3.5 * S), ell(hx - 3.4 * S, hy + 0.3 * S, 1.9 * S, 2.8 * S)), HR, 2);
+    for (const [ang, len, r] of [[-178, 6.4, 2.0], [-160, 7.4, 2.2], [-142, 7.8, 2.3], [-124, 7.8, 2.3], [-106, 7.4, 2.3], [-88, 7.2, 2.3], [-70, 6.8, 2.2], [-54, 6.2, 2.0], [-40, 5.2, 1.7]]) {
+      const a = ang * RAD - sway * (ang < -80 ? 0.9 : 0.5) + ht * 0.5, bx = hx - 0.8 * S + Math.cos(a) * 3.7 * S, by = hy - 2.2 * S + Math.sin(a) * 3.1 * S, tx = bx + Math.cos(a) * len * S * 0.62, ty = by + Math.sin(a) * len * S * 0.62; p.put(cap(bx, by, tx, ty, r * 0.58 * S, 0.25), HR, 2); p.px(tx - Math.cos(a) * 1.7 + 0.7, ty - Math.sin(a) * 1.7 - 0.5, hl); p.px(bx - Math.sin(a) * 1.1, by + Math.cos(a) * 1.1, hs);
+    }
+    p.put(cap(hx + 0.4 * S, hy - 3.8 * S, hx + 3.2 * S, hy - 1.7 * S, 1.1 * S, 0.3), HR, 2); p.put(cap(hx - 1.2 * S, hy - 3.9 * S, hx + 1.2 * S, hy - 2.2 * S, 1.0 * S, 0.3), HR, 2);      // (the fringe)
+    // the face: a narrow red eye under a heavy lid, the second eye below it, the marks, the mouth (ex: 'smirk', 'grit', 'calm', 'grin')
+    const X = Math.round(hx + 2.7 * S), Y = Math.round(hy - 0.3 * S), dk = K('#180c16'), rd = K('#d4283a'), wt = K('#f0e8e0'), br = K('#6a3448'), ex = o.ex || 'smirk', mx = Math.round(hx + 3.1 * S), my = Math.round(hy + 3.1 * S);
+    p.rect(X - 1, Y - 1, 4, 1, dk); p.rect(X, Y, 2, 1, wt); p.px(X + 1, Y, rd); if (ex === 'grin') p.px(X - 1, Y + 1, dk);
+    p.rect(X, Y + 2, 2, 1, dk); p.px(X + 1, Y + 2, rd);      // (the second eye)
+    p.rect(X - 1, Y - 3, 4, 1, br); p.px(X + 3, Y - 2, br); if (ex === 'grit') p.px(X - 1, Y - 2, br);      // (the brow)
+    p.rect(Math.round(hx + 3.6 * S), Math.round(hy + 0.5 * S), 2, 1, dk); p.rect(X - 1, Y + 4, 1, 3, dk);      // (the mark across his nose, the mark under his eye)
+    if (ex === 'grin') { p.rect(mx - 1, my, 4, 2, K('#3a0a14')); p.rect(mx - 1, my, 4, 1, wt); p.px(mx + 3, my - 1, dk); } else if (ex === 'grit') { p.rect(mx - 1, my, 3, 1, wt); p.rect(mx - 2, my - 1, 4, 1, dk); } else if (ex === 'calm') p.rect(mx - 1, my, 3, 1, K('#6a3a40')); else { p.rect(mx - 1, my, 3, 1, K('#6a3a40')); p.px(mx + 2, my - 1, K('#6a3a40')); p.px(mx + 3, my - 2, dk); }      // (a smirk: one corner up)
+    p.rect(Math.round(hx - 2.4 * S), Math.round(hy - 0.2 * S), 2, 3, SKF[1]);      // (the ear)
+    drawLeg(1);
+    p.put(cap(P[0] - 0.3, P[1] - 2.2, P[0] + 0.4, P[1] + 2.6 * S, 4.5 * S, 4.6 * S), JK);      // (the hem of the jacket)
+    drawArm(1); return p;
+  }
+  function canvas(o) { const key = JSON.stringify(o, (k, v) => typeof v === 'number' ? Math.round(v * 2) / 2 : v); let c = cache.get(key); if (!c) { c = draw(o).canvas(); cache.set(key, c); if (cache.size > 700) cache.delete(cache.keys().next().value); } return c; }
+  return { canvas, geom, reach, GROUND, S, AH, UA, FA, OY };
+})();
+const c15Suk = o => c15SukKit.canvas(o);
+const C15SG = c15SukKit.GROUND, C15SS = c15SukKit.S;
+const c15SukMix = (a, b, t) => { const o = c15MegMixPose(a, b, t); o.arms = o.arms.map((u, i) => ({ ...u, pk: t < 0.5 ? a.arms[i].pk : b.arms[i].pk })); o.ex = t < 0.5 ? a.ex : b.ex; return o; };
+const c15SukPoses = {
+  stand(t) { const b = Math.sin(t * 1.6) * 0.22; return { x: 32, y: 32.8 + b, lean: 2, hdx: 1.2, hdt: 5, arms: [{ al: -12, el: 52, pk: 1 }, { al: -4, el: 58, pk: 1 }], legs: [{ ax: 27.5, ay: C15SG, a: 0 }, { ax: 36.5, ay: C15SG, a: 0 }], ex: 'smirk' }; },
+  run(ph, A = 16) {      // a sprint: long strides, the arms pumping, leaning into it, the hair streaming back
+    ph = ((ph % 1) + 1) % 1; const S = C15SS, Lm = (12.9 + 12.4) * S * 0.965, cx = 32, legs = [0, 1].map(k => { const f = c15MegStride((ph + 0.5 * k) % 1, A, 0.4, 12); return { ax: cx + f.x * S, ay: C15SG - f.y * S, a: f.a }; });
+    let py = 0; for (const l of legs) py = Math.max(py, l.ay - Math.sqrt(Math.max(0, Lm * Lm - (l.ax - cx) * (l.ax - cx)))); const w = Math.cos(2 * Math.PI * ph); return { x: cx, y: py, lean: 20, hdx: 2.2, hdt: 2, wind: 0.8, arms: [{ al: 56 * w, el: 88 + 10 * w }, { al: -56 * w, el: 88 - 10 * w }], legs, ex: 'smirk' };
+  },
+  walk(ph) {      // the slow walk of a man who has all the time in the world: hands in his pockets
+    ph = ((ph % 1) + 1) % 1; const S = C15SS, Lm = (12.9 + 12.4) * S * 0.965, cx = 32, legs = [0, 1].map(k => { const f = c15MegStride((ph + 0.5 * k) % 1, 9, 0.55, 6); return { ax: cx + f.x * S, ay: C15SG - f.y * S, a: f.a }; });
+    let py = 0; for (const l of legs) py = Math.max(py, l.ay - Math.sqrt(Math.max(0, Lm * Lm - (l.ax - cx) * (l.ax - cx)))); const s = c15SukPoses.stand(0); return { x: cx, y: py, lean: 4, hdx: 1.4, hdt: 6, wind: 0.05, arms: s.arms, legs, ex: 'smirk' };
+  },
+  leap(u) {      // a long jump: the push off, the stretched flight (front knee up, the other leg trailing, an arm forward), the legs coming down to land
+    const to = { x: 32, y: 35, lean: 30, hdx: 2.4, hdt: 4, wind: 0.5, arms: [{ al: 118, el: 22 }, { al: -48, el: 30 }], legs: [{ ax: 41, ay: 51, a: -20 }, { ax: 20, ay: C15SG, a: -40 }], ex: 'grit' },
+      ar = { x: 32, y: 31, lean: 16, hdx: 2.0, hdt: 0, wind: 0.9, arms: [{ al: 142, el: 8 }, { al: -62, el: 20 }], legs: [{ ax: 47, ay: 49, a: -10 }, { ax: 13, ay: 52, a: -48 }], ex: 'smirk' },
+      lp = { x: 32, y: 31.5, lean: 8, hdx: 1.8, hdt: -2, wind: 0.4, arms: [{ al: 72, el: 40 }, { al: 30, el: 50 }], legs: [{ ax: 39, ay: 56, a: 10 }, { ax: 27, ay: 57.5, a: 6 }], ex: 'smirk' };
+    return u < 0.14 ? c15SukMix(to, ar, c15Sm(u / 0.14)) : u < 0.8 ? ar : c15SukMix(ar, lp, c15Sm((u - 0.8) / 0.2));
+  },
+  crouch(u) {      // the landing: deep in his knees, a hand near the roof; then he straightens up (u 0 - 1)
+    const d = { x: 30, y: 45, lean: 38, hdx: 2.0, hdt: 12, wind: 0.2, arms: [{ al: 30, el: 24 }, { al: 74, el: 18 }], legs: [{ ax: 40, ay: C15SG, a: 0 }, { ax: 21, ay: C15SG, a: 0 }], ex: 'smirk' }; c15SukKit.reach(d, 1, 47, C15SG + 8 - 0.5);
+    return c15SukMix(d, c15SukPoses.stand(0), c15Sm((u - 0.15) / 0.85));
+  },
+  stop(ph) { const o = c15SukPoses.run(ph, 9); o.lean = 8; o.wind = 0.3; o.arms = c15SukPoses.stand(0).arms; return o; },
+};
+
+c15MegPoses.lookback = function (ph, w) {      // running, the head turned back over the shoulder, frightened (w = 0 - 1)
+  const o = c15MegPoses.run(ph, 15); o.hdt = 10 * w; o.hdx = 2.5 - 3.4 * w; o.hdy = 0.6 * w; o.lean = 15 - 6 * w; o.ex = w > 0.3 ? 'shock' : 'grit'; return o;
+};
+
+const c15MegPts = o => {      // where his neck, head and jaw are in the picture of a pose (the same sums as in c15MegKit.draw)
+  const S = c15MegKit.S, OY = c15MegKit.OY, LT = c15MegKit.LT, lean = (o.lean === undefined ? 3 : o.lean) * Math.PI / 180, ux = Math.sin(lean), uy = -Math.cos(lean), P = [o.x === undefined ? 32 : o.x, (o.y === undefined ? 35.2 : o.y) + OY];
+  const Nk = [P[0] + ux * LT, P[1] + uy * LT], ht = (o.hdt || 0) * Math.PI / 180, hox = (o.hdx === undefined ? 1.3 : o.hdx) * S, hoy = -6.7 * S + (o.hdy || 0), hd = [Nk[0] + hox * Math.cos(ht) - hoy * Math.sin(ht), Nk[1] + hox * Math.sin(ht) + hoy * Math.cos(ht)];
+  const jx = 2.6 * S, jy = 3.0 * S; return { neck: Nk, hd, jaw: [hd[0] + jx * Math.cos(ht) - jy * Math.sin(ht), hd[1] + jx * Math.sin(ht) + jy * Math.cos(ht)] };
+};
+c15MegPoses.yank = function (u) {      // yanked back by the collar at a run: the body pitches back, the head snaps, the arms fly, the feet come off the roof (u 0 - 1)
+  const a = c15MegPoses.run(0.25, 15), b = { x: 31, y: 36, lean: -32, hdx: 0.6, hdt: -26, wind: 0.2, arms: [{ al: 125, el: 30 }, { al: 60, el: 60 }], legs: [{ ax: 44, ay: 50, a: -30 }, { ax: 33, ay: 54, a: 12 }], ex: 'shock' };
+  return c15MegMixPose(a, b, c15Sm(u));
+};
+c15MegPoses.collar = function (t) {      // held up by the collar: on his toes, leaning away, both hands round the wrist that holds him, shaking
+  const k = Math.sin(t * 11) * 0.3; return { x: 31 + k, y: 34.5, lean: -16, hdx: 0.8, hdt: -12, wind: 0, arms: [{ al: 140, el: 8 }, { al: 156, el: 4 }], legs: [{ ax: 26, ay: C15MG.GROUND - 1.5, a: -26 }, { ax: 34, ay: C15MG.GROUND - 1, a: -30 }], ex: 'shock', blood: 0.7 };
+};
+c15MegPoses.grabbed = function (t) {      // held by the jaw at arm's length, his toes just off the roof: the head pulled back, both hands on the wrist, the legs kicking a little
+  const k = Math.sin(t * 6) * 1.6, k2 = Math.sin(t * 6 + 1.6) * 1.6;
+  return { x: 31, y: 33.6, lean: -13, hdx: 0.5, hdt: -22, wind: 0, arms: [{ al: 150, el: 10 }, { al: 164, el: 4 }], legs: [{ ax: 27 + k * 0.3, ay: C15MG.GROUND - 3 + k, a: -34 }, { ax: 35 - k * 0.2, ay: C15MG.GROUND - 2 + k2, a: -38 }], ex: 'shock', blood: 0.85 };
 };
