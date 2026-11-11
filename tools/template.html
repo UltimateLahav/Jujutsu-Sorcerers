@@ -209,7 +209,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.144</small>
+    <small id="ver">V1.145</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -296,6 +296,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <button id="svc0" class="card mode"><span>1</span><b>CH. 1</b><i>THE MYSTERY</i></button>
     <button id="svc1" class="card mode"><span>2</span><b>CH. 2</b><i>THE PORTAL</i></button>
     <button id="svc2" class="card mode"><span>3</span><b>CH. 3</b><i>THE DIVINE GENERAL</i></button>
+    <button id="svc3" class="card mode"><span>4</span><b>CH. 4</b><i>THE VESSEL</i></button>
   </div>
   <div class="row"><button id="svStart" disabled>START</button><button id="svChap" disabled>CHOOSE CHAPTER</button><button id="svBack">BACK</button></div>
 </section>
@@ -1515,7 +1516,7 @@ const lanBack = () => { if (lanRole) lanStop(); else show('modes'); };
 
 // ---------------------------------------------------------------- screens
 function show(s) {
-  state = s; if (s !== 'play') cuTest = false; if (s !== 'story') { snd('mhumoff'); snd('tmusicoff'); snd('rsmuroff'); snd('bluepulloff'); c9Stop(); } if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; track = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
+  state = s; if (s !== 'play') cuTest = false; if (s !== 'story') { snd('mhumoff'); snd('tmusicoff'); snd('rsmuroff'); snd('bluepulloff'); c9Stop(); c15Stop(); } if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; track = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
   $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); $('chal').classList.toggle('on', s === 'chal'); $('skills').classList.toggle('on', s === 'skills'); $('sns').style.display = 'none'; if (s !== 'lan' && s !== 'lansel' && !(s === 'play' && vs && vs.net) && lanTimer) lanStop();
   $('versus').classList.toggle('on', s === 'versus');
   $('title').classList.toggle('on', s === 'title'); $('ulog').classList.toggle('on', s === 'ulog'); $('codes').classList.toggle('on', s === 'codes');
@@ -4489,6 +4490,8 @@ __CHAP3D__
 __CHAP3E__
 __CHAP3F__
 __CHAP3G__
+__MEGUMI__
+__CHAP4__
 function drawScene(now, dt) {
   fatUI(now);
   if (fat) { fatFrame(now, dt); return; }       // the FATALITY cutscene replaces the whole scene while it plays
@@ -4808,19 +4811,21 @@ function loadSaves() { try { const a = JSON.parse(localStorage.getItem(SAVE_KEY)
 function storeSaves(a) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(a)); } catch (e) { } }
 function renderSaves0() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].c7 ? 'CHAPTER 3: THE DIVINE GENERAL' : a[i].c3 ? 'CHAPTER 2: THE PORTAL' : a[i].c2 ? 'CHAPTER 1 COMPLETE' : a[i].tn ? 'THE MYSTERY: TRAINING DONE' : a[i].ch2 ? 'THE MYSTERY COMPLETE' : a[i].ch1 ? 'THE MYSTERY: THE CAT' : a[i].beat ? 'THE MYSTERY: VERITY BEATEN' : 'CHAPTER 1: THE MYSTERY') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
 let svView = 0;      // v1.142: 0 = the three saves, 1 = the chapters of the chosen save (only the ones it has reached; replaying one never takes progress away: the flags are only ever set)
-const SV_CH = ['THE MYSTERY', 'THE PORTAL', 'THE DIVINE GENERAL'], svReached = s => s ? 1 + (s.c2 || s.c3 || s.c7 ? 1 : 0) + (s.c3 || s.c7 ? 1 : 0) : 0;
+const SV_CH = ['THE MYSTERY', 'THE PORTAL', 'THE DIVINE GENERAL', 'THE VESSEL'], svReached = s => s ? 1 + (s.c2 || s.c3 || s.c7 ? 1 : 0) + (s.c3 || s.c7 ? 1 : 0) + (s.c7 || s.c15 ? 1 : 0) : 0;
 function renderSaves() {
   renderSaves0(); const sel = svSel >= 0 ? loadSaves()[svSel] : null, n = svReached(sel); $('svSlots').style.display = svView ? 'none' : ''; $('svChaps').style.display = svView ? '' : 'none'; $('svTitle').textContent = svView ? 'CHOOSE A CHAPTER' : 'CHOOSE A SAVE';
-  for (let i = 0; i < 3; i++) { const b = $('svc' + i); b.disabled = i >= n; b.style.opacity = i >= n ? '0.4' : ''; b.querySelector('i').textContent = SV_CH[i] + (i >= n ? ' (LOCKED)' : ''); }
+  for (let i = 0; i < 4; i++) { const b = $('svc' + i); b.disabled = i >= n; b.style.opacity = i >= n ? '0.4' : ''; b.querySelector('i').textContent = SV_CH[i] + (i >= n ? ' (LOCKED)' : ''); }
   $('svStart').style.display = $('svChap').style.display = svView ? 'none' : ''; $('svStart').textContent = sel ? 'CONTINUE' : 'START'; $('svChap').disabled = !sel;
 }
-function startStory(slot, ch) { const a = loadSaves(); if (ch === 3 || (!ch && a[slot] && a[slot].c3)) { startC7(slot); return; }      // (a save that has finished chapter 2 goes on with chapter 3, v1.106)
+function startStory(slot, ch) { const a = loadSaves(); if (ch === 4 || (!ch && a[slot] && (a[slot].c7 || a[slot].c15))) { startC15(slot); return; }      // (a save that has finished chapter 3 goes on with chapter 4, the vessel, v1.145)
+  if (ch === 3 || (!ch && a[slot] && a[slot].c3)) { startC7(slot); return; }      // (a save that has finished chapter 2 goes on with chapter 3, v1.106)
   if (ch === 2 || (!ch && a[slot] && a[slot].c2)) { startC3(slot); return; }      // (a save that has finished chapter 1 goes on with chapter 2, v1.95)
   if (!ch && a[slot] && a[slot].ch2) { startTraining(slot); return; } if (!ch && a[slot] && a[slot].ch1) { startChapter2(slot); return; }      // (ch = 1: chapter 1 from its first scene)      // (a save that has finished chapter 1 goes on with part 2, the training)
   if (!a[slot]) a[slot] = { ch: 1 }; storeSaves(a); audio(); show('story'); story = { slot, t0: pnow(), battle: false, T: 0, ev: {} }; alley = true; court = false; wx = 0; }      // (a save that has beaten Verity and heard the report goes on with the Cartoon Cat part, the second half of chapter 1)
 function storyDone() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].beat = true; storeSaves(a); }
 function storySkip(ev) {
   if (!story || story.battle) return;
+  if (story.c15) { c15Tap(ev); return; }      // (chapter 4: the vessel, v1.145)
   if (story.c7) { if (c13Tap(ev)) return; c7Skip(); return; }
   if (story.c3) { c3Skip(); return; }
   if (story.tn) { trainSkip(); return; }
@@ -4922,6 +4927,7 @@ const CUT = { see: 10.05, zoom: 10.3, slow: 10.85, slowEnd: 13.8, ask: 11.6, ask
 const wclock = T => T < CUT.slow ? T : T < CUT.slowEnd ? CUT.slow + (T - CUT.slow) * CUT.rate : CUT.slow + (CUT.slowEnd - CUT.slow) * CUT.rate + (T - CUT.slowEnd);      // the world's clock: it crawls (a quarter of the speed) while the slow motion lasts
 const ease3 = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
 function storyFrame(now, dt) {
+  if (story.c15) { c15Frame(now, dt); return; }      // (chapter 4: the vessel, v1.145)
   if (story.c7) { c7Frame(now, dt); return; }      // (chapter 3: the Divine General, v1.106)
   if (story.c3) { c3Frame0(now, dt); return; }      // (chapter 2: the portal, v1.95)
   if (story.tn) { trainFrame(now, dt); return; }      // (part 2: the training morning and its ending)
@@ -6552,6 +6558,7 @@ addEventListener('keydown', e => {
   if (paused && !settingsOn()) { if ((e.key === 'Escape' || e.code === 'KeyP') && !e.repeat) setPause(false); return; }      // (paused: only Esc or P do anything)
   if (settingsOn()) { if (e.key === 'Escape') closeSettings(); return; }      // the settings screen takes the keyboard while it is open
   if (e.code === 'KeyP' && state === 'play') { if (!e.repeat) setPause(true); return; }      // P pauses a fight
+  if (state === 'story' && story && story.c15 && c15Key(e, true)) { e.preventDefault(); return; }      // (chapter 4: Space / Up = jump, Down = slide)
   if (se && SE_KEYS.has(e.code)) { e.preventDefault(); if (!e.repeat) sePress(true); return; }      // (in the red ending the keys mash and hold)
   const k = KEYS[e.code];
   if (k) {
@@ -6564,6 +6571,7 @@ addEventListener('keydown', e => {
 });
 addEventListener('keyup', e => {
   if (e.target.id === 'lanName' || e.target.id === 'cuName' || e.target.id === 'codeIn') return;
+  if (state === 'story' && story && story.c15 && c15Key(e, false)) return;
   if (se && SE_KEYS.has(e.code)) sePress(false);
   const k = KEYS[e.code];
   if (k === 'L') keyL = false; else if (k === 'R') keyR = false; else if (k === 'G') blockHeld = false; else if (k === 'A') { if (atkHold >= 0 && atkDefer() && pnow() - atkHold < holdMax()) atkReq = true; atkHold = -1; }
@@ -6689,7 +6697,7 @@ $('story').addEventListener('click', () => { audio(); svSel = -1; svView = 0; re
 ['sv0', 'sv1', 'sv2'].forEach((id, i) => $(id).addEventListener('click', () => { svSel = i; renderSaves(); }));
 $('svStart').addEventListener('click', () => { if (svSel >= 0) startStory(svSel); });
 $('svChap').addEventListener('click', () => { if (svSel >= 0) { audio(); svView = 1; renderSaves(); } });
-[0, 1, 2].forEach(i => $('svc' + i).addEventListener('click', () => { if (svSel >= 0 && i < svReached(loadSaves()[svSel])) startStory(svSel, i + 1); }));
+[0, 1, 2, 3].forEach(i => $('svc' + i).addEventListener('click', () => { if (svSel >= 0 && i < svReached(loadSaves()[svSel])) startStory(svSel, i + 1); }));
 $('svBack').addEventListener('click', () => { if (svView) { svView = 0; renderSaves(); } else show('modes'); });
 $('lanMode').addEventListener('click', () => { audio(); show('lan'); lanStop(); $('lanCreate').disabled = $('lanBrowse').disabled = !LAN; });
 $('lanCreate').addEventListener('click', lanCreate);
@@ -6707,7 +6715,7 @@ $('lsFight').addEventListener('click', lanFight);
 $('lsAgain').addEventListener('click', () => lanAgain(true));
 $('lsBack').addEventListener('click', lanLeave);
 addEventListener('pointerdown', e => { if (state === 'story') storySkip(e); });      // a tap skips to the next part of the cutscene (in the fight of chapter 3 it answers the prompts: c13Tap)
-addEventListener('pointerup', e => { if (state === 'story' && typeof c13Up === 'function') c13Up(e); }); addEventListener('pointercancel', e => { if (state === 'story' && typeof c13Up === 'function') c13Up(e); });      // a tap skips to the next part of the cutscene
+addEventListener('pointerup', e => { if (state === 'story') { if (story && story.c15) c15Up(e); else if (typeof c13Up === 'function') c13Up(e); } }); addEventListener('pointercancel', e => { if (state === 'story') { if (story && story.c15) c15Up(e); else if (typeof c13Up === 'function') c13Up(e); } });      // a tap skips to the next part of the cutscene
 addEventListener('pointerdown', () => { if (yf && !paused) yfTap(pnow()); });      // (v1.49 Yuji's FATALITY: two taps skip it)
 addEventListener('pointerdown', () => { if (typeof suFgOn === 'function' && suFgOn() && !paused) suFgTap(pnow()); });      // (v1.127 Sukuna's FUGA cutscene: two taps skip it)
 $('vsGo').addEventListener('click', () => startMatch(vsSel));

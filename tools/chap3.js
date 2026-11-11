@@ -395,7 +395,7 @@ function c7Events(T, ev) {
 }
 function c7Card(now, T) {      // CHAPTER 3: THE DIVINE GENERAL, TO BE CONTINUED
   const t = T - C7.card; ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); once2('card', () => { snd('msting'); storyDone6(); }); ctx.globalAlpha = clamp01((t + 0.1) / 1.0);
-  pxt('CHAPTER 3', VW / 2, Math.round(VH / 2) - 10, '#ffffff', 16, 'center'); pxt('THE DIVINE GENERAL', VW / 2, Math.round(VH / 2) + 8, '#ffd86a', 8, 'center'); pxt('TO BE CONTINUED', VW / 2, Math.round(VH / 2) + 26, '#ffd34d', 8, 'center'); if (t > 2.2 && Math.floor(now / 600) % 2 === 0) pxt('TAP TO CONTINUE', VW / 2, VH - 8, '#9d8cff', 8, 'center'); ctx.globalAlpha = 1; ctx.restore();
+  pxt('CHAPTER 3', VW / 2, Math.round(VH / 2) - 10, '#ffffff', 16, 'center'); pxt('THE DIVINE GENERAL', VW / 2, Math.round(VH / 2) + 8, '#ffd86a', 8, 'center'); pxt('CHAPTER 4 FOLLOWS', VW / 2, Math.round(VH / 2) + 26, '#e0505e', 8, 'center'); if (t > 2.2 && Math.floor(now / 600) % 2 === 0) pxt('TAP TO CONTINUE', VW / 2, VH - 8, '#9d8cff', 8, 'center'); ctx.globalAlpha = 1; ctx.restore();
 }
 
 // ---- the chapter: start, one frame, taps, the card
@@ -407,8 +407,8 @@ function c7Frame(now, dt) {
   wx = 0; ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
   const st = c7Shot(T); c7Shots[st.k](now, dt, T, st, T - st.t0); c7Events(T, ev); c7Talk(T); ctx.restore();
 }
-function c7Skip() {      // a tap: on to the next cut; on the card (after its first 1.2 s) back to the saves
-  const T = story.T; if (T >= C7.card + 1.2) { show('saves'); renderSaves(); return; } const n = C7_CUTS.find(x => x > T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000;
+function c7Skip() {      // a tap: on to the next cut; on the card (after its first 1.2 s) on to chapter 4, the vessel (v1.145)
+  const T = story.T; if (T >= C7.card + 1.2) { startC15(story.slot); return; } const n = C7_CUTS.find(x => x > T + 0.05); if (n !== undefined) story.t0 = pnow() - n * 1000;
 }
 function storyDone6() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].c7 = true; storeSaves(a); }      // (chapter 3's scene is over: its card has been reached)
 window.__c7At = t => { if (!story) return; if (!story.c7) startC7(story.slot); story.t0 = pnow() - (t || 0) * 1000; story.ev = {}; };      // test hook: start the chapter (or jump in it) at scene time t

@@ -713,6 +713,10 @@ function makeSfx(ac) {
     c7beat(k) {                                          // v1.133 a heart beats in the dead alley (k = 0 faint, k = 1 strong): two deep thumps, "lub-dub", the second a little lower
       const t = T(), B = C.atk, g = k ? 1 : 0.5; [[0, 64], [0.17, 52]].forEach(([d, f]) => { tone(B.deep, t + d, { f, f2: f * 0.5, dur: 0.3, gain: 0.75 * g, atk: 0.004 }); burst(B.deep, t + d, { type: 'lowpass', f: 280, f2: 90, q: 0.8, dur: 0.2, gain: 0.35 * g, atk: 0.003 }); });
     },
+    c15step(k) {                                         // v1.145 a quick running step on a roof (k = 0 / 1: the foot): a short dull tap and a low thump, much lighter than the walking step
+      const t = T(), B = C.steps, f = R(0.94, 1.06) * (k ? 1.05 : 0.95), v = R(0.85, 1);
+      burst(B.step, t, { dur: 0.045, f: 520 * f, q: 0.9, gain: 0.8 * v, atk: 0.002 }); tone(B.step, t, { type: 'triangle', f: 105 * f, f2: 58 * f, dur: 0.1, gain: 0.13 * v, atk: 0.003 });
+    },
     c7slurp() {                                          // v1.133 an organ slips back into the belly: a short wet suck (noise sweeping up from 250 to 900 Hz) and a soft slap
       const t = T(), B = C.atk; burst(B.soft, t, { type: 'bandpass', f: 250, f2: 900, q: 1.6, dur: 0.16, gain: 0.4, atk: 0.01 }); tone(B.deep, t + 0.12, { f: 130, f2: 60, dur: 0.13, gain: 0.4, atk: 0.003 }); burst(B.soft, t + 0.12, { type: 'bandpass', f: 700, f2: 300, q: 1.2, dur: 0.08, gain: 0.3, atk: 0.002 });
     },
