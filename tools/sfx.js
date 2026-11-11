@@ -717,6 +717,11 @@ function makeSfx(ac) {
       const t = T(), B = C.steps, f = R(0.94, 1.06) * (k ? 1.05 : 0.95), v = R(0.85, 1);
       burst(B.step, t, { dur: 0.045, f: 520 * f, q: 0.9, gain: 0.8 * v, atk: 0.002 }); tone(B.step, t, { type: 'triangle', f: 105 * f, f2: 58 * f, dur: 0.1, gain: 0.13 * v, atk: 0.003 });
     },
+    c15scream() {                                        // v1.147 a scream muffled by a hand over the mouth (about 3.6 s): a voice that climbs and shakes (a sawtooth round 200 - 310 Hz, restarted every 0.1 s with a little wobble), a low-passed rush of breath under it and a choke at the end
+      const t = T(), B = C.atk, n = 34;
+      for (let i = 0; i < n; i++) { const u = i / n, f = 200 + 110 * Math.sin(u * 1.4) + R(-14, 14); tone(B.deep, t + i * 0.1, { type: 'sawtooth', f, f2: f * R(0.92, 1.06), dur: 0.16, gain: 0.055 * (0.4 + 0.6 * Math.sin(Math.PI * Math.min(1, u * 1.15))), atk: 0.015 }); }
+      burst(B.soft, t, { type: 'lowpass', f: 900, f2: 400, q: 0.8, dur: 3.5, gain: 0.22, atk: 0.2 }); burst(B.soft, t + 3.3, { type: 'bandpass', f: 500, f2: 250, q: 1.6, dur: 0.3, gain: 0.3, atk: 0.01 });
+    },
     c7slurp() {                                          // v1.133 an organ slips back into the belly: a short wet suck (noise sweeping up from 250 to 900 Hz) and a soft slap
       const t = T(), B = C.atk; burst(B.soft, t, { type: 'bandpass', f: 250, f2: 900, q: 1.6, dur: 0.16, gain: 0.4, atk: 0.01 }); tone(B.deep, t + 0.12, { f: 130, f2: 60, dur: 0.13, gain: 0.4, atk: 0.003 }); burst(B.soft, t + 0.12, { type: 'bandpass', f: 700, f2: 300, q: 1.2, dur: 0.08, gain: 0.3, atk: 0.002 });
     },

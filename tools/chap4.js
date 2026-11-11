@@ -2,10 +2,10 @@
 // The whole chapter is as long as the user's song (tools/vessel_music.mp3, Andrea Garner, L'AMOUR TOUJOURS, organ, slowed: 5:47.6, a steady organ wash with no beat; its swells are on C15.sw). Everything is a function of the scene time T = the song time
 // (story.t0 is "now" at the start): title 0 - 5.6 s, the aftermath on the roof 5.6 - 38 s (Sukuna steps out of the smoke on the swell at 17.0 s, says "Run." on 34.5 s), the CHASE 38 - 158 s (you are Megumi: auto-run, tap = jump, hold = higher,
 // swipe down / Down = slide; you cannot lose, a stumble only slows him and brings Sukuna closer), the catch 158 - 199.4 s (the slow-motion leap, Sukuna lands in front of him on the swell at 172 s, Megumi turns and runs, Sukuna has his face on the swell at 182 s)
-// and a hard cut to black on the swell at 199.4 s and the TO BE CONTINUED card (update 2 goes on from there: the finger, the shove, the scream, Yuji, the smile at 342 s).
+// then part 2 (tools/chap4b.js, 199.4 - 346.6 s: the finger, the shove, the scream, Yuji, the smile at 342.5 s), a hard cut to black on the last swell and back to the saves.
 // pictures: Megumi is drawn pose by pose by tools/megumi.js (c15Meg); Sukuna is the sprite of FREE PLAY (CU_GAME[3]); the city, the roofs and the obstacles are drawn here.
 const C15 = {
-  title: 0.5, titleEnd: 5.6, after: 5.6, run: 38.0, appr: 157.0, inEnd: 166.0, jump: 168.2, land: 172.0, grab: 181.8, black: 199.4, card: 201.6, len: 347.6, fade1: 203.0,
+  title: 0.5, titleEnd: 5.6, after: 5.6, run: 38.0, appr: 157.0, inEnd: 166.0, jump: 168.2, land: 172.0, grab: 181.8, p2: 199.4, black: 346.6, end: 347.6, len: 347.6, fade1: 347.5,
   sw: [5.8, 8.5, 13.0, 15.5, 17.2, 20.5, 22.2, 26.2, 30.5, 32.2, 34.5, 41.0, 43.5, 47.2, 51.2, 55.5, 61.0, 64.8, 67.0, 69.8, 71.8, 77.2, 79.8, 84.2, 87.0, 90.2, 93.8, 98.8, 104.2, 106.8, 110.2, 113.2, 118.5, 121.0, 126.0, 129.8, 134.0, 137.2, 142.2, 144.5, 147.8, 151.5, 153.2, 157.0, 159.5, 161.2, 164.5, 166.5, 168.2, 172.0, 173.8, 176.8, 181.8, 186.5, 188.8, 190.8, 194.0, 197.2, 199.0]
 };
 const C15_MUSIC = '__VESSELMUSIC__', C15V = { vol: 0.74, len: 347.6 };
@@ -33,16 +33,17 @@ function c15New() { return { run: null, shake: 0, shakeAt: 0, shakeMs: 400, flas
 function c15Frame(now, dt) {
   const T = story.T = Math.max(0, now - story.t0) / 1000; c15Music(T); c15Events(T); wx = 0;
   ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
-  if (T >= C15.card) c15Card(now, T);
-  else if (T < C15.after) c15Title(now, T);
+  if (T >= C15.end) { storyDone15(); show('saves'); renderSaves(); ctx.restore(); return; }
+  if (T < C15.after) c15Title(now, T);
   else if (T < C15.run) c15After(now, dt, T);
   else if (T < C15.land) c15Run(now, dt, T);
-  else if (T < C15.black) c15Catch(now, dt, T);
-  if (T >= C15.title && T < C15.card && T < C15.black - 0.3) { ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1; ctx.strokeRect(VW - 39.5, 2.5, 36, 10); pxt('SKIP', VW - 21, 11, '#ffffff', 8, 'center'); }      // (the SKIP button: on to the next part)
+  else if (T < C15.p2) c15Catch(now, dt, T);
+  else if (T < C15.black) c15Part2(now, dt, T);
+  if (T >= C15.title && T < C15.black - 0.3) { ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1; ctx.strokeRect(VW - 39.5, 2.5, 36, 10); pxt('SKIP', VW - 21, 11, '#ffffff', 8, 'center'); }      // (the SKIP button: on to the next part)
   ctx.restore();
 }
 function c15Tap(ev) {      // a finger goes down: in the chase it is a jump (the SKIP button in the corner skips); otherwise it skips to the next part
-  const T = story.T; if (T >= C15.card) { if (T >= C15.card + 1.2) { show('saves'); renderSaves(); } return; }
+  const T = story.T;
   if (ev && c13InSkip(ev)) { c15Skip(); return; }
   if (T >= C15.run && T < C15.inEnd && c15RunInput) { c15RunInput('down', ev); return; }
 }
@@ -50,17 +51,11 @@ function c15Up(ev) { if (story && story.c15 && story.T >= C15.run && story.T < C
 function c15Key(e, down) {      // the keyboard: Space / Up / W / J = jump (hold = higher), Down / S = slide; true = the key was used
   if (!story || !story.c15) return false; const T = story.T, c = e.code;
   if (T >= C15.run && T < C15.inEnd && c15RunInput) { if (c === 'Space' || c === 'ArrowUp' || c === 'KeyW' || c === 'KeyJ') { if (!e.repeat) c15RunInput(down ? 'down' : 'up', null); return true; } if (c === 'ArrowDown' || c === 'KeyS') { if (down && !e.repeat) c15RunInput('slide', null); return true; } }
-  if (down && !e.repeat && (c === 'Space' || c === 'Enter') && T >= C15.card + 1.2) { show('saves'); renderSaves(); return true; }
   return false;
 }
-const C15_CUTS = [C15.after, C15.run, C15.appr, C15.jump, C15.land, C15.grab, C15.black];      // (the SKIP button: the start of the aftermath, the chase, the leap, the landing, the grab, the black)
+const C15_CUTS = [C15.after, C15.run, C15.appr, C15.jump, C15.land, C15.grab, C15.p2, 216.0, 237.5, 250.8, 262.8, 284.0, 301.5, 326.5, 342.5, C15.black];      // (the SKIP button: the start of the aftermath, the chase, the approach, the leap, the landing, the grab, part 2, the rip, the shove, the scream, the fall, Yuji, the silence, the lift, the smile, the black)
 function c15Skip() { const T = story.T, n = C15_CUTS.find(x => x > T + 0.05); if (n !== undefined) { story.t0 = pnow() - n * 1000; story.ev = {}; } }
-function c15Card(now, T) {      // the card of update 1: the song has been cut, the chapter goes on in the next update
-  const t = T - C15.card; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); once2('card', () => { snd('msting'); storyDone15(); }); ctx.globalAlpha = clamp01((t + 0.1) / 1.0);
-  pxt('CHAPTER 4', VW / 2, Math.round(VH / 2) - 10, '#ffffff', 16, 'center'); pxt('THE VESSEL', VW / 2, Math.round(VH / 2) + 8, '#e0505e', 8, 'center'); pxt('TO BE CONTINUED', VW / 2, Math.round(VH / 2) + 26, '#ffd34d', 8, 'center');
-  if (t > 2.2 && Math.floor(now / 600) % 2 === 0) pxt('TAP TO CONTINUE', VW / 2, VH - 8, '#9d8cff', 8, 'center'); ctx.globalAlpha = 1;
-}
-function storyDone15() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].c15 = true; storeSaves(a); }      // (the card of chapter 4 has been reached)
+function storyDone15() { if (!story) return; const a = loadSaves(); if (a[story.slot]) a[story.slot].c15 = true; storeSaves(a); }      // (chapter 4 is finished)
 window.__c15At = t => { if (!story) return; if (!story.c15) startC15(story.slot); story.t0 = pnow() - (t || 0) * 1000; story.ev = {}; story.c15 = c15New(); };      // test hook: start the chapter (or jump in it) at scene time t
 window.__c15T = () => story ? story.T : -1;
 
@@ -146,9 +141,9 @@ function c15ShakeOff() { const st = story.c15, t = (pnow() - st.shakeAt) / (st.s
 // ================================================================ PART 1: THE AFTERMATH (5.6 - 38 s)
 // The roof where the fight ended, at night. Megumi kneels in the dust and ash among the pieces of the broken wheel (facing left, towards where the fight was), bleeding, heaving; he gets up. Sukuna (Yuji's body) steps out of the smoke on the swell at 17.2 s
 // and walks to him slowly while the camera cuts between his boots, Megumi's face and the whole roof; Megumi backs away; at 34.5 s Sukuna says "RUN." and Megumi spins and runs: the chase begins at 38 s.
-const C15_TALK = [{ t: 34.5, d: 2.3, w: 'SUKUNA', vk: 5, a: 'RUN.', b: '' }];
+const C15_TALK = [{ t: 34.5, d: 2.3, w: 'SUKUNA', vk: 5, a: 'RUN.', b: '' }, { t: 292.8, d: 5.2, w: 'YUJI', vk: 1, r: 5, a: 'FUSHIGURO...?', b: '' }];      // (r: how many letters a second: he whispers it)
 function c15Talk(T) {
-  const i = C15_TALK.findIndex(s => T >= s.t && T < s.t + s.d); if (i < 0) return; const s = C15_TALK[i], n = Math.floor((T - s.t) * TN_RATE), st = story.c15, sp = s.a + s.b;
+  const i = C15_TALK.findIndex(s => T >= s.t && T < s.t + s.d); if (i < 0) return; const s = C15_TALK[i], n = Math.floor((T - s.t) * (s.r || TN_RATE)), st = story.c15, sp = s.a + s.b;
   if (st.vi !== i) { st.vi = i; st.vc = 0; } while (st.vc < Math.min(n, sp.length)) { st.vc++; if (sp[st.vc - 1] !== ' ') snd('tvoice', s.vk || 0); } c7Dlg(s.w, s.a, n, s.b);
 }
 const C15A = { mx: 96, sx0: -128, sx1: 38, sIn: 17.2, sStop: 30.0, back0: 22.0, turn: 35.0, go: 35.35, xg: 96 + 3.6 * (30.0 - 22.0) };      // (xg: where he stands when he starts to run)
@@ -504,7 +499,7 @@ function c15CInit(T) {
   const st = story.c15, run = st.run, X = run ? run.x : c15MegX(C15.run) + 330 * (T - C15.run), cam = st.cam || { x: X + 58, y: -34, z: 1.32 };
   st.ct = { X, ph: run ? run.ph : 0, cam0: { x: cam.x, y: cam.y, z: cam.z }, run0: { gaps: [], obs: [], x: X, x0: run ? run.x0 : X - 40000, h: 0, G: 0, inv: 0, noMeg: true, noSuk: true, sk: null }, cb: -1 };
 }
-const C15CB = (() => { const o = []; let t = C15.land + 0.5; while (t < C15.black) { o.push(t); t += 0.78 - 0.3 * Math.min(1, (t - C15.land) / 25); } return o; })();      // (his heart, faster and faster)
+const C15CB = (() => { const o = []; let t = C15.land + 0.5; while (t < C15.p2) { o.push(t); t += 0.78 - 0.3 * Math.min(1, (t - C15.land) / 25); } return o; })();      // (his heart, faster and faster)
 const c15CHeart = T => { let b = 0; for (const t of C15CB) { const d = T - t; if (d >= 0 && d < 0.4) b = Math.max(b, 1 - d / 0.4); } return b; };
 function c15CFin(ct) { const X = ct.X, xcS = X - 162.4, xSF = X - 222; return { xcS, xSF, xcM: X + 76 - C15FLEE, xMF: xSF - 19 }; }      // (where they are when he catches him, and where they stand after)
 function c15CMeg(T) {      // Megumi: { x, flip (faces left), pose, sx (the width of the turn), lift }
@@ -577,7 +572,7 @@ function c15CEvents(T) {      // the sounds and the things that happen once
   at('cl2', C15T.back, () => snd('gasp', 0)); at('cl3', C15T.turn, () => snd('gasp', 1)); at('cl4', C15T.go, () => snd('dash', 0)); at('cl5', C15T.sGo, () => snd('dash', 1));
   at('cl6', C15T.catch, () => { snd('c7thud', 0); snd('gasp', 1); snd('dash', 1); st.flash = 0.35; c15Shake(3, 450); c15Spawn('dust', f.xSF, -1, 12, { sx: 30, rx: 100, vy: -8, ry: 14, life: 1.2, s: 1.8 }); });
   at('cl7', C15T.grab, () => { snd('c4crunch'); snd('c7thud', 1); snd('gasp', 1); st.flash = 1; c15Shake(6, 900); });
-  at('cl8', C15T.eye1, () => { snd('c7thud', 0); c15Shake(1.2, 400); }); at('cl9', C15T.beat, () => { snd('c7thud', 0); c15Shake(2.5, 500); st.flash = 0.25; }); at('cl10', C15.black - 0.5, () => { snd('c7thud', 1); c15Shake(2, 400); });
+  at('cl8', C15T.eye1, () => { snd('c7thud', 0); c15Shake(1.2, 400); }); at('cl9', C15T.beat, () => { snd('c7thud', 0); c15Shake(2.5, 500); st.flash = 0.25; }); at('cl10', C15.p2 - 0.5, () => { snd('c7thud', 1); c15Shake(2, 400); });
   if (T >= C15T.boots && T < C15T.face && T - (ct.dust || 0) > 0.3) { ct.dust = T; c15Spawn('dust', f.xMF + 4 + (Math.random() - 0.5) * 16, -2, 1, { sx: 4, vy: -6, ry: 6, life: 1.1, s: 1 }); }
 }
 function c15Catch(now, dt, T) {
@@ -591,7 +586,7 @@ function c15Catch(now, dt, T) {
     c15CVig(T, sh === 'clamp' || sh === 'wide' ? 0.62 : 0.5, 50);
     if (sh === 'clamp' || sh === 'wide' || sh === 'hang') { ctx.fillStyle = 'rgba(110,10,24,0.18)'; ctx.fillRect(0, 0, VW, VH); c15Embers(T, 20, '255,100,70', 1); }
   } else if (sh === 'eye' || sh === 'eye2') {
-    const a = sh === 'eye' ? c15S(T, C15T.eye1, C15T.boots) : c15S(T, C15T.last, C15.black), [shx, shy] = c15ShakeOff();
+    const a = sh === 'eye' ? c15S(T, C15T.eye1, C15T.boots) : c15S(T, C15T.last, C15.p2), [shx, shy] = c15ShakeOff();
     ctx.save(); ctx.translate(Math.round(shx), Math.round(shy)); c15CEye(T, sh === 'eye' ? { open: 1.0 + 0.2 * c15E(a * 2), pup: 7 - 2 * a, sweat: 1 + a * 0.6, brow: 4, tr: 0.6, fp: c15E(c15S(T, C15T.eye1, C15T.eye1 + 0.3)), dx: Math.round(-3 * a) } : { open: 1.25 + 0.05 * a, pup: 5 - 3 * c15E(a), refl: a > 0.35, sweat: 1.4 + a * 0.9, brow: 8, tr: 1.2, fp: 1, dx: Math.round(-5 * a), dy: Math.round(2 * a) }); ctx.restore(); c15CVig(T, 0.55, 60);
   } else if (sh === 'suk') {
     const u = c15S(T, C15T.face, C15T.wide), bt = T >= C15T.beat, sw = 0.5, e2 = bt ? c15S(T, C15T.beat, C15T.beat + 1.6) : 0.25 * c15S(T, C15T.face, C15T.beat), im = c15Big.suk({ m: 1, sw, e2: Math.round(e2 * 10) / 10, lid: bt ? 0.75 : 0.5 }), z = 2, w = im.width * z, h = im.height * z;
