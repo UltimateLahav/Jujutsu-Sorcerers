@@ -66,9 +66,14 @@ def head():
     return g
 
 ROWS = ('idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'atk0', 'atk1', 'kick', 'dash1', 'slash', 'atk30', 'atk31', 'slashL', 'slashX', 'cut', 'storm', 'ccut', 'dis', 'atk6', 'atk26', 'lift', 'dive', 'flame', 'sign', 'air')      # the strip's rows: Yuji's sets of the move (idle, walk, jump, crouch down, crouched idle, crouch walk, R.HOOK = his right jab, L.HOOK = his left jab, the back dash = his dodge, C.JAB and C.UPPR = his crouch punches) and the kick, the three slashes and the four BLUE moves made here, 15 pictures each
+NEWROWS = {'df': 'dash0', 'bl': 'blk', 'h0': 'rx0', 'h1': 'rx1', 'h2': 'rx2', 'h5': 'rx5', 'h6': 'rx6', 'h8': 'rx8', 'h9': 'rx9', 'cj': 'cju'}      # v1.154: rows that are Yuji's own set of another name (the forward dash, the block (10 pictures), his hit reactions 0 1 2 5 6 8 9 (3 spins, 7 hops and 4 is a fall: they need more room than 64 pictures give) and the spring of a crouch jump) with this head
+ROWS = ROWS + tuple(NEWROWS)
+MIDX = 22      # (in those sets the figure's middle column is put at column 22 of the grid: Yuji's reaction sets are cut from different columns, and the idle's is 18)
+def gx(name): return GX - (MIDX - 18) if name in NEWROWS else GX      # (where the grid of a row goes on its 64 x 64 canvas: the middle column is always column 32)
 BLINK = {'idle': (9, 10), 'cidle': (9, 10)}                 # (his own blinks: the pictures where his eye is shut)
 NAILS = ('idle', 'fwd', 'cdn')                               # (the pictures where the hand is in the pocket, or still on its way up to the guard: the nails show; the guard and the jump hold it up in a fist of another shape)
 WID = 48                                                    # (the widest of Yuji's pictures of these moves is 44)
+def wid(name): return WID + 8 if name in NEWROWS else WID      # (v1.154: the new rows are put 4 columns further right and have 8 more columns; the old rows are exactly as they were)
 
 NA = {0: ya.IDLE_N, 2: ya.GUARD_N, 4: ((-1, -2), (-3, -9)), 5: ((0, -3), (-1, -11)), 6: ((3, -3), (6, -9)), 7: ((6, -1), (12, -4)), 8: ((8, 3), (14, 2)), 9: ((8, 6), (13, 8)), 10: ((6, 8), (9, 11)), 12: ((3, 6), (4, 7)), 14: ya.IDLE_N}      # the near hand of the SLASH: up behind the head (4 - 6), over and down in front of him (7 - 10: the blow lands on 7), back
 FA = {0: ya.IDLE_F, 2: ya.GUARD_F, 5: ((-2, 4), (-5, 6)), 7: ((-3, 5), (-6, 8)), 9: ((-2, 5), (-4, 8)), 12: ya.GUARD_F, 14: ya.IDLE_F}      # the far hand, pulled back for balance
@@ -262,18 +267,20 @@ GEN = {'slash': {'top': 0, 'frames': ya.pack(slash, 16, 48, 0)[0]}, 'slashL': {'
 
 def yuji(name, i):
     """Yuji's picture i of a set as a grid of 64 figure rows x 48 columns (a jump's 4 empty rows above and below the figure are dropped; the game draws them 4 rows higher)"""
-    s = GEN.get(name) or Y[name]; top = s['top']; rows = s['frames'][i]
+    s = GEN.get(name) or Y[NEWROWS.get(name, name)]; top = s['top']; rows = s['frames'][min(i, len(s['frames']) - 1)]      # (the block has 10 pictures: its row holds the last one for the other 5)
     assert len(rows) == 64 + 2 * top and all(set(r) == {'.'} for r in rows[:top] + rows[top + 64:]), (name, i, 'figure outside its 64 rows')
-    return [list(r.ljust(WID, '.')) for r in rows[top:top + 64]]
+    off = MIDX - (s['cx'] - s['x0']) if name in NEWROWS else 0
+    assert name not in NEWROWS or (off >= 0 and all(len(r) + off <= wid(name) for r in rows)), (name, i, 'too wide')
+    return [list(('.' * off + r).ljust(wid(name), '.')) for r in rows[top:top + 64]]
 
 TPL = [(r, c) for r in range(15, 30) for c in range(14, 27) if FR[0][r][c] != '.']      # Yuji's face and hood in his first idle picture: the pattern to find in every picture
 
-def shift_of(g):
+def shift_of(g, wide=False, W=WID):
     """how far Yuji's face and hood are moved in picture g from his first idle picture: the shift with the fewest differences (a fist drawn over the face makes some)"""
     best = None
     for dy in range(-8, 17):
-        for dx in range(-6, 11):
-            mis = sum(1 for r, c in TPL if not (0 <= r + dy < 64 and 0 <= c + dx < WID) or g[r + dy][c + dx] != FR[0][r][c])
+        for dx in (range(-8, 17) if wide else range(-6, 11)):      # (the new rows of v1.154 are put 4 columns further right: they search further)
+            mis = sum(1 for r, c in TPL if not (0 <= r + dy < 64 and 0 <= c + dx < W) or g[r + dy][c + dx] != FR[0][r][c])
             if best is None or (mis, abs(dx) + abs(dy)) < best[0]: best = ((mis, abs(dx) + abs(dy)), dx, dy)
     return best[1], best[2], best[0][0]
 
@@ -288,17 +295,17 @@ def fist_of(g):
 
 def picture(name, i, H):
     """Sukuna's picture i of a move (a grid of 64 rows x 48 letters): Yuji's picture with his head and collar in the place of Yuji's"""
-    g = yuji(name, i); dx, dy, mis = shift_of(g); blink = i in BLINK.get(name, ()); keep = 0
+    g = yuji(name, i); dx, dy, mis = shift_of(g, name in NEWROWS, wid(name)); WD = wid(name); blink = i in BLINK.get(name, ()); keep = 0
     for r in range(30):                                          # Yuji's head out: the hair (rows 0 - 14) all of it, below it only what is still the pixel of his head (a fist over the face stays)
-        for c in range(WID):
+        for c in range(WD):
             x, y = c + dx, r + dy
-            if not (0 <= x < WID and 0 <= y < 64): continue
+            if not (0 <= x < WD and 0 <= y < 64): continue
             if r <= 14 or g[y][x] == (FR[0][r][c] if c < C else '.') or (blink and 15 <= r <= 19 and 21 <= c <= 25): g[y][x] = '.'
             else: keep += 1
     for r in range(30):                                          # ... his in, wherever it is free
         for c in range(C):
             x, y = c + dx, r + dy
-            if H[r][c] != '.' and 0 <= x < WID and 0 <= y < 64 and g[y][x] == '.': g[y][x] = H[r][c]
+            if H[r][c] != '.' and 0 <= x < WD and 0 <= y < 64 and g[y][x] == '.': g[y][x] = H[r][c]
     if blink and g[16 + dy][22 + dx] == 'W': g[16 + dy][22 + dx] = 'e'      # (the eye shuts to a dark line)
     f = fist_of(g) if name in NAILS else None
     if f:                                                        # dark nails on the hand in the pocket, where the hand is
@@ -307,10 +314,10 @@ def picture(name, i, H):
             if g[y][x] in 'STUV': g[y][x] = 'n'
     return g, (dx, dy, mis, keep, f)
 
-def render(grid, x0=GX, y0=GY):
+def render(grid, x0=GX, y0=GY, w=WID):
     im = Image.new('RGBA', (64, 64), (0, 0, 0, 0))
     for r in range(64):
-        for c in range(WID):
+        for c in range(w):
             ch = grid[r][c] if c < len(grid[r]) else '.'
             if ch != '.' and ch in PAL and 0 <= c + x0 < 64 and 0 <= r + y0 < 64: im.putpixel((c + x0, r + y0), tuple(int(PAL[ch][k:k + 2], 16) for k in (1, 3, 5)) + (255,))
             elif ch != '.' and ch not in PAL: raise KeyError(ch)
@@ -335,7 +342,7 @@ if __name__ == '__main__':
     for name in ROWS:
         row = []
         for i in range(15):
-            g, nfo = picture(name, i, H); info[name, i] = nfo; row.append(render(g))
+            g, nfo = picture(name, i, H); info[name, i] = nfo; row.append(render(g, gx(name), GY, wid(name)))
         rows.append(row)
     strip(rows).save(os.path.join(HERE, 'sukuna_idle.png'), transparency=0, optimize=True); print('wrote sukuna_idle.png', 64 * 15, 'x', 64 * len(ROWS)); print('SU_FL_HANDS =', [flame_hands(i) for i in range(15)]); print('SU_SIGN_TIP =', [sign_tip(i) for i in range(15)])
     if '--preview' in sys.argv:

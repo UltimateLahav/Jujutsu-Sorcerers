@@ -171,7 +171,7 @@ def png_strips(urls, names):      # the strips of a data-URL sheet (15 cells wid
         im = Image.open(io.BytesIO(base64.b64decode(urls[name].split(',')[1]))).convert('RGBA'); w = im.size[0] // 15
         out[name] = {'x0': 0, 'w': w, 'h': im.size[1], 'frames': [im_rows(im.crop((i * w, 0, (i + 1) * w, im.size[1]))) for i in range(15)]}
     return out
-JSN = ['frames', 'walk', 'jump', 'cr', 'ci', 'cwk', 'a0', 'a1', 'a2', 'dg', 'a3', 'cp0', 'cp1', 'sl', 'sx', 'cut', 'storm', 'ccut', 'dis', 'el', 'tc', 'lift', 'dive', 'fl', 'sg']      # (the names tools/sukuna.js gives the rows of the strip, in the order of sukuna_art.ROWS)
+JSN = ['frames', 'walk', 'jump', 'cr', 'ci', 'cwk', 'a0', 'a1', 'a2', 'dg', 'a3', 'cp0', 'cp1', 'sl', 'sx', 'cut', 'storm', 'ccut', 'dis', 'el', 'tc', 'lift', 'dive', 'fl', 'sg', 'air', 'df', 'bl', 'h0', 'h1', 'h2', 'h5', 'h6', 'h8', 'h9', 'cj']      # (the names tools/sukuna.js gives the rows of the strip, in the order of sukuna_art.ROWS; v1.154: 'air' and the new rows df bl h0 h1 h2 h5 h6 h8 h9 cj)
 def sukuna_build():
     """Sukuna's rows as strips of 64 x 64 pictures (letters on the picture's own canvas): the generator is read again, so whatever yuji_art.OMIT / MARK / JMARK / SWAP say is in it"""
     import importlib, yuji_art as ya, sukuna_art as S
@@ -181,9 +181,9 @@ def sukuna_build():
         for i in range(15):
             grid, _ = S.picture(name, i, H); cv = [['.'] * 64 for _ in range(64)]
             for r in range(64):
-                for c in range(S.WID):
+                for c in range(S.wid(name)):
                     ch = grid[r][c] if c < len(grid[r]) else '.'
-                    if ch != '.' and 0 <= c + S.GX < 64 and 0 <= r + S.GY < 64: cv[r + S.GY][c + S.GX] = ch
+                    if ch != '.' and 0 <= c + S.gx(name) < 64 and 0 <= r + S.GY < 64: cv[r + S.GY][c + S.gx(name)] = ch
             frames.append([''.join(r) for r in cv])
         out[JSN[S.ROWS.index(name)]] = {'x0': 0, 'w': 64, 'h': 64, 'frames': frames}
     return out
