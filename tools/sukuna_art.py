@@ -18,6 +18,9 @@ Y = json.load(open(os.path.join(HERE, 'yuji.json'))); PAL = dict(Y['pal']); FR =
 NEW = dict(H='#f2bcc4', I='#dc94a0', K='#b4707e', L='#7a4258',            # his hair: a dustier rose than Yuji's
            S='#ecc0a0', T='#f8d8bc', U='#d09c80', V='#a46c60', k='#2a1a26', n='#3a1f4a', r='#b03a3a', s='#782a30', u='#d85a5a', t='#4e1620')
 PAL.update(NEW)
+MEG = os.environ.get('MEGUNA') == '1'      # v1.156 MEGUNA=1 python3 sukuna_art.py -> meguna_idle.png: the same pictures for Sukuna in MEGUMI's body (chapter 4, part 3): black spiky hair, the dark uniform with a navy collar and dark shoes, the black face marks and RED eyes
+EYE = 'X' if MEG else 'W'      # (the letter of his eye: white for Sukuna, red for Meguna)
+if MEG: PAL.update(H='#4a547c', I='#2c3354', K='#1f2542', L='#121730', Q='#2a3052', P='#141830', R='#46507a', r='#2c3668', u='#46548e', s='#1c2348', t='#121730')
 GR_ = ya.GR      # (the ground row of the figure)
 GX, GY = 14, 1      # where the 40 x 64 picture goes on the 64 x 64 canvas: Yuji's place in the game (x = cx - 32 + 14, y = gy - 61 + 1)
 
@@ -56,7 +59,7 @@ def head():
         for r in (13, 14): put(c, r, 'S')                                              # the forehead (Yuji's fringe is gone)
     put(22, 13, 'T'); put(23, 13, 'T')
     for c, r in ((20, 14), (21, 14), (22, 15), (23, 15), (24, 15)): put(c, r, 'L')    # the brow, slanting down toward the nose
-    put(21, 15, 'S'); put(22, 16, 'W'); put(23, 16, 'e'); put(22, 17, 'S'); put(23, 17, 'S')   # the eye: one narrow row (Yuji's was two tall)
+    put(21, 15, 'S'); put(22, 16, EYE); put(23, 16, 'e'); put(22, 17, 'S'); put(23, 17, 'S')   # the eye: one narrow row (Yuji's was two tall)
     for c, r in ((23, 18), (22, 18), (21, 19), (20, 19), (19, 20)): put(c, r, 'k')   # the long mark under the eye: from the nose side down toward the ear
     for c, r in ((20, 21), (20, 22), (22, 21), (22, 22)): put(c, r, 'k')           # the two short marks on the chin (they stand upright)
     put(17, 16, 'U'); put(17, 17, 'V'); put(17, 18, 'U')                               # the ear
@@ -306,7 +309,7 @@ def picture(name, i, H):
         for c in range(C):
             x, y = c + dx, r + dy
             if H[r][c] != '.' and 0 <= x < WD and 0 <= y < 64 and g[y][x] == '.': g[y][x] = H[r][c]
-    if blink and g[16 + dy][22 + dx] == 'W': g[16 + dy][22 + dx] = 'e'      # (the eye shuts to a dark line)
+    if blink and g[16 + dy][22 + dx] == EYE: g[16 + dy][22 + dx] = 'e'      # (the eye shuts to a dark line)
     f = fist_of(g) if name in NAILS else None
     if f:                                                        # dark nails on the hand in the pocket, where the hand is
         for c, r in ((21, 40), (22, 41)):
@@ -344,7 +347,7 @@ if __name__ == '__main__':
         for i in range(15):
             g, nfo = picture(name, i, H); info[name, i] = nfo; row.append(render(g, gx(name), GY, wid(name)))
         rows.append(row)
-    strip(rows).save(os.path.join(HERE, 'sukuna_idle.png'), transparency=0, optimize=True); print('wrote sukuna_idle.png', 64 * 15, 'x', 64 * len(ROWS)); print('SU_FL_HANDS =', [flame_hands(i) for i in range(15)]); print('SU_SIGN_TIP =', [sign_tip(i) for i in range(15)])
+    OUTN = 'meguna_idle.png' if MEG else 'sukuna_idle.png'; strip(rows).save(os.path.join(HERE, OUTN), transparency=0, optimize=True); print('wrote', OUTN, 64 * 15, 'x', 64 * len(ROWS)); print('SU_FL_HANDS =', [flame_hands(i) for i in range(15)]); print('SU_SIGN_TIP =', [sign_tip(i) for i in range(15)])
     if '--preview' in sys.argv:
         out = sys.argv[sys.argv.index('--preview') + 1]; os.makedirs(out, exist_ok=True); S = 4
         for r, name in enumerate(ROWS):

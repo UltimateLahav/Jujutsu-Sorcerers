@@ -33,7 +33,7 @@ function c15New() { return { run: null, shake: 0, shakeAt: 0, shakeMs: 400, flas
 function c15Frame(now, dt) {
   const T = story.T = Math.max(0, now - story.t0) / 1000; c15Music(T); c15Events(T); wx = 0;
   ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
-  if (T >= C15.end) { storyDone15(); show('saves'); renderSaves(); ctx.restore(); return; }
+  if (T >= C15.end) { c4xStart(); ctx.restore(); return; }      // (v1.156 the chapter goes on after the black: part 3, Yuji against Meguna, tools/chap4c.js; the flag c15 is set when it is won)
   if (T < C15.after) c15Title(now, T);
   else if (T < C15.run) c15After(now, dt, T);
   else if (T < C15.land) c15Run(now, dt, T);

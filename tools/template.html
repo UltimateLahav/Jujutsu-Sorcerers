@@ -72,7 +72,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #fat.rdy{opacity:1;background:#3a0d12;border-color:#ff8a7a;color:#fff;box-shadow:0 0 1.8vh #ff4a3a,0 0 .5vh #ff4a3a inset,4px 4px 0 #000;animation:fatglow .5s steps(2) infinite}
 @keyframes fatglow{50%{box-shadow:0 0 3.2vh #ff2a2a,0 0 .9vh #ff2a2a inset,4px 4px 0 #000}}
 #pad.cine,#hud.cine{visibility:hidden}
-body.ry #dom,body.ry #ce,body.ry #fat,body.ry #lap{visibility:hidden}      /* (v1.143 Ryu has no BLUE, MODE, DOMAIN or FATAL: those buttons are hidden while he fights) */      /* the controls hide while a cutscene plays (the FATALITY, the red ending) */
+body.ry #dom,body.ry #ce,body.ry #fat,body.ry #lap,body.c4 #dom,body.c4 #ce,body.c4 #fat,body.c4 #lap,body.c4 #sns{visibility:hidden}      /* (v1.143 Ryu has no BLUE, MODE, DOMAIN or FATAL: those buttons are hidden while he fights) */      /* the controls hide while a cutscene plays (the FATALITY, the red ending) */
 #qte{position:fixed;inset:0;z-index:4;display:none;pointer-events:none}#qte.show{display:block}      /* the quick-time event of the red ending: the red button, and the ring that closes on it */
 #qBtn,#qRing{position:absolute;border-radius:50%}
 #qBtn{display:none;pointer-events:auto;touch-action:none;padding:0;font-size:var(--fs-q,12px);white-space:nowrap;align-items:center;justify-content:center;background:#d8281c;border:.9vh solid #ffd0b0;color:#fff;text-shadow:2px 2px 0 #000;box-shadow:0 0 2.4vh #ff3a2a,0 0 .8vh #ffd0b0 inset,.5vh .5vh 0 #000}#qBtn.show{display:flex}#qBtn.on{background:#ff5a42;box-shadow:0 0 3.6vh #ff6a4a,0 0 1.2vh #fff inset,.2vh .2vh 0 #000}
@@ -186,7 +186,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.155</small>
+    <small id="ver">V1.156</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -431,7 +431,7 @@ function hbMark(att, k, ax, am, tgt, tx, tm, tipRows, own) {      // a blow reac
 }
 const hbE = k => hbMark(vs ? vs.foe : 'gojo', k, dummy.x, dummy.x - wx > -4, hbMe(), wx, false);      // (the enemy's blow reaches its impact picture)
 function hbDraw(now) {
-  if (!SET.hb || state !== 'play' || js || vf || fat || yf || dom || ult || cf) return;      // (not in the cutscenes of the finishers and domains: the camera is somewhere else)
+  if (!SET.hb || state !== 'play' || c4x || js || vf || fat || yf || dom || ult || cf) return;      // (not in the cutscenes of the finishers and domains: the camera is somewhere else)
   const cx = Math.round(VW / 2), top = gy - 60, row = (r, a, b, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(a), top + r, Math.max(1, Math.round(b - a)), 1); };
   const body = (key, x, mir, lift) => { const B = hbBody(key); if (!B) return; for (const r in B) { const b = B[r]; row(+r - lift, mir ? x - b[1] - 1 : x + b[0], mir ? x - b[0] : x + b[1] + 1, 'rgba(70,160,255,0.42)'); } ctx.fillStyle = '#ffe14a'; ctx.fillRect(Math.round(x), top + 28 - lift, 1, 9); };
   ctx.save(); body(hbMe(), cx, false, Math.max(gojoLift || 0, gAir ? gAirH || 0 : 0));
@@ -804,7 +804,7 @@ function skillUI() {                          // the buttons of a move you do no
   const L = (id, key) => $(id).classList.toggle('lk', lacks(key));
   L('blk', 'blk'); L('dash', 'dash'); L('ce', 'ce'); L('dom', 'dom'); L('fat', 'fat'); $('lap').classList.toggle('lk', !fredMe() && !(vs && vs.me === 'cu4') && !(vs && vs.me === 'cu3' ? Object.values(SU_BLUE_ID).some(suOwn) : BLUES[meK()].some(owns)));
 }
-function leavePlay() { if (vs && vs.net) lanLeave(); else if (vs && vs.hunt) { show('chal'); buildHunts(); } else if (vs && vs.cv) { show('chal'); buildChal(); } else show('select'); }
+function leavePlay() { if (c4x) c4xLeave(); else if (vs && vs.net) lanLeave(); else if (vs && vs.hunt) { show('chal'); buildHunts(); } else if (vs && vs.cv) { show('chal'); buildChal(); } else show('select'); }
 
 // ---- the ten curses: sprites (tools/curse_art.py) and what each of them can do
 const CU = __CURSES__;                        // idle, walk, a1 a2 a3 (the three attacks: the blow lands on frame imp) and hurt for every curse; they face right and the game mirrors them
@@ -1404,6 +1404,7 @@ const lanBack = () => { if (lanRole) lanStop(); else show('modes'); };
 
 // ---------------------------------------------------------------- screens
 function show(s) {
+  if (s !== 'play') c4xOff();      // (v1.156 any other screen ends chapter 4's part 3)
   state = s; if (s !== 'story') { snd('mhumoff'); snd('tmusicoff'); snd('rsmuroff'); snd('bluepulloff'); c9Stop(); c15Stop(); } if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; track = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
   $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); $('chal').classList.toggle('on', s === 'chal'); $('skills').classList.toggle('on', s === 'skills'); $('sns').style.display = 'none'; if (s !== 'lan' && s !== 'lansel' && !(s === 'play' && vs && vs.net) && lanTimer) lanStop();
   $('versus').classList.toggle('on', s === 'versus');
@@ -2484,7 +2485,7 @@ function comboEscape(now) {      // every frame, before the controls are gated
 function stateDraw(now) {      // the tracker, over the picture: green FREE or red (it blinks), a yellow DASH! when a dash can get you out, the seconds of the cooldown while the dash is locked; and the same seconds on the DASH button
   const b = $('dash'), cd = now < dgLock ? Math.ceil((dgLock - now) / (1000 * paceBase())) : 0;
   if (b && (+b.dataset.cd || 0) !== cd) { b.dataset.cd = cd || ''; b.classList.toggle('cd', cd > 0); }
-  if (state !== 'play' || yf || (typeof suFgOn === 'function' && suFgOn()) || (vs && vs.ph !== 'fight')) return;
+  if (state !== 'play' || c4x || yf || (typeof suFgOn === 'function' && suFgOn()) || (vs && vs.ph !== 'fight')) return;
   const why = redWhy(now), red = !!why, x = vs ? Math.max(60, Math.min(96, (VW - 52) >> 1)) + 10 : 6, h = vs && vs.rush ? 9 : 10, y = vs ? (vs.rush ? 30 : 21) : 20, pulse = red && ((now / 140) | 0) % 2 === 0;
   ctx.save(); ctx.globalAlpha = 1; ctx.fillStyle = '#000'; ctx.fillRect(x - 1, y - 1, 42, h + 2); ctx.fillStyle = red ? (pulse ? '#ff3a3a' : '#b01c1c') : '#2fb868'; ctx.fillRect(x, y, 40, h);
   pxt(red ? (why === 'hit' ? 'HIT' : why === 'down' ? 'DOWN' : why === 'held' ? 'HELD' : 'STUN') : 'FREE', x + 20, y + h - 1, '#ffffff', 8, 'center');
@@ -4389,7 +4390,10 @@ __MEGUMI__
 __FACES__
 __CHAP4__
 __CHAP4B__
+__CHAP4C__
+__CHAP4D__
 function drawScene(now, dt) {
+  if (c4x) { c4xFrame(now, dt); return; }      // (v1.156 chapter 4, part 3: Yuji against Meguna, see tools/chap4c.js)
   fatUI(now);
   if (fat) { fatFrame(now, dt); return; }       // the FATALITY cutscene replaces the whole scene while it plays
   if (yf) { yfFrame(now, dt); return; }         // ...and so does Yuji's (30 seconds, eight BLACK FLASHES)
@@ -4706,7 +4710,7 @@ function playVoice() {      // "HEY, IT'S ME, IT'S VERITY" (3.9 s), played throu
 const SAVE_KEY = 'jsv_saves'; let svSel = -1;
 function loadSaves() { try { const a = JSON.parse(localStorage.getItem(SAVE_KEY)); if (Array.isArray(a) && a.length === 3) return a; } catch (e) { } return [null, null, null]; }
 function storeSaves(a) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(a)); } catch (e) { } }
-function renderSaves0() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].c7 ? 'CHAPTER 3: THE DIVINE GENERAL' : a[i].c3 ? 'CHAPTER 2: THE PORTAL' : a[i].c2 ? 'CHAPTER 1 COMPLETE' : a[i].tn ? 'THE MYSTERY: TRAINING DONE' : a[i].ch2 ? 'THE MYSTERY COMPLETE' : a[i].ch1 ? 'THE MYSTERY: THE CAT' : a[i].beat ? 'THE MYSTERY: VERITY BEATEN' : 'CHAPTER 1: THE MYSTERY') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
+function renderSaves0() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].c15 ? 'CHAPTER 4: THE VESSEL' : a[i].c7 ? 'CHAPTER 3: THE DIVINE GENERAL' : a[i].c3 ? 'CHAPTER 2: THE PORTAL' : a[i].c2 ? 'CHAPTER 1 COMPLETE' : a[i].tn ? 'THE MYSTERY: TRAINING DONE' : a[i].ch2 ? 'THE MYSTERY COMPLETE' : a[i].ch1 ? 'THE MYSTERY: THE CAT' : a[i].beat ? 'THE MYSTERY: VERITY BEATEN' : 'CHAPTER 1: THE MYSTERY') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
 let svView = 0;      // v1.142: 0 = the three saves, 1 = the chapters of the chosen save (only the ones it has reached; replaying one never takes progress away: the flags are only ever set)
 const SV_CH = ['THE MYSTERY', 'THE PORTAL', 'THE DIVINE GENERAL', 'THE VESSEL'], svReached = s => s ? 1 + (s.c2 || s.c3 || s.c7 ? 1 : 0) + (s.c3 || s.c7 ? 1 : 0) + (s.c7 || s.c15 ? 1 : 0) : 0;
 function renderSaves() {
@@ -5406,7 +5410,7 @@ window.__story = () => story ? ({ T: +(story.T || 0).toFixed(2), battle: !!story
 // ---------------------------------------------------------------- v1.30 A FASTER GAME. GAME PACE (SETTINGS > GAME: NORMAL / FAST 1.25x / TURBO 1.5x, FAST is the default): in a fight everything runs faster than the real clock (walking, swings, the enemy, the cooldowns, the combo window), but the round timer and the 10 seconds of the Inheritence still count real seconds; not in the Wi-Fi fight, the story, cutscenes (FATALITY, JUMPSCARE, DOMAIN, the ULTIMATE) or the menus. PARRY: slow motion and a free counter. DODGE: a dash just before a blow gives energy. PRESSURE: the longer you do not hurt the enemy, the shorter his rests. SPEED BONUS: a RUSH or ROULETTE wave cleared under its par time pays extra.
 const PACE_X = [1, 1.25, 1.5, 0.8], E_DODGE = 8;
 const paceBase = () => state === 'play' && SET.pace && !(vs && (vs.net || vs.story)) ? PACE_X[SET.pace] : 1;      // (the pace of this kind of fight: not the Wi-Fi fight, not the story)
-const paceNow = () => (!vs || vs.ph === 'fight') && !fat && !yf && !se && !de && !js && !vf && !cf && !ke && !dom && !ult ? paceBase() : 1;      // (how many times faster than the real clock the game runs right now: 1 in a cutscene and between the rounds)
+const paceNow = () => !c4x && (!vs || vs.ph === 'fight') && !fat && !yf && !se && !de && !js && !vf && !cf && !ke && !dom && !ult ? paceBase() : 1;      // (how many times faster than the real clock the game runs right now: 1 in a cutscene and between the rounds)
 let ctr = null, ctrBoost = 0, dodgeAt = -1e9;      // ctr = { at, until }: the free counter that follows a PARRY; ctrBoost: the time stamp (atkAt) of that counter's swing, the hits of that swing do 1.5 times the damage; dodgeAt: the last DODGE reward
 function strikeBack(now) {      // the LAST M1 of your combo, lunging at the enemy so that it reaches (the combo escape and the free counter of a parry)
   if (!dummy || dummy.ko >= 0) return false;
@@ -6621,8 +6625,8 @@ addEventListener('pointerdown', () => { if (yf && !paused) yfTap(pnow()); });   
 addEventListener('pointerdown', () => { if (typeof suFgOn === 'function' && suFgOn() && !paused) suFgTap(pnow()); });      // (v1.127 Sukuna's FUGA cutscene: two taps skip it)
 $('vsGo').addEventListener('click', () => startMatch(vsSel));
 $('vsNext').addEventListener('click', () => { if (vs && vs.cv) { startCurse(vs.ci + 1, 0); return; } const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
-$('vsAgain').addEventListener('click', () => vs && vs.hunt ? startHunt(vs.hunt.i) : vs && vs.rush ? (vs.run === ROUL ? startRoulette() : startRush()) : vs && vs.cv ? startCurse(vs.ci, vs.hard, vs.daily) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe));
-$('vsMenu').addEventListener('click', () => { if (vs && vs.net) { lanLeave(); return; } if (vs && vs.hunt) { show('chal'); buildHunts(); return; } if (vs && vs.cv) { show('chal'); buildChal(); return; } if (vs && vs.story) { svView = 0; show('saves'); renderSaves(); } else { buildGrades(); buildFighters(); show('versus'); } });
+$('vsAgain').addEventListener('click', () => c4x ? c4xRetry() : vs && vs.hunt ? startHunt(vs.hunt.i) : vs && vs.rush ? (vs.run === ROUL ? startRoulette() : startRush()) : vs && vs.cv ? startCurse(vs.ci, vs.hard, vs.daily) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe));
+$('vsMenu').addEventListener('click', () => { if (c4x) { c4xLeave(); return; } if (vs && vs.net) { lanLeave(); return; } if (vs && vs.hunt) { show('chal'); buildHunts(); return; } if (vs && vs.cv) { show('chal'); buildChal(); return; } if (vs && vs.story) { svView = 0; show('saves'); renderSaves(); } else { buildGrades(); buildFighters(); show('versus'); } });
 $('back').addEventListener('click', () => { leavePlay(); });
 VOLS.forEach(([k, name]) => {
   const row = document.createElement('label');
