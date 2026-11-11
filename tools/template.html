@@ -129,29 +129,7 @@ body.ry #dom,body.ry #ce,body.ry #fat,body.ry #lap{visibility:hidden}      /* (v
 #knob path{fill:#2a1f4a;stroke:#8f7ac4;stroke-width:2}
 #joy.on .jbase{stroke:#8f7ac4}
 #joy.on #knob path{fill:#3d2f6e;stroke:#b9a8ee}
-/* ---- CUSTOM (v1.64): the slots, the name and the drawing board */
-#customMode span{font-size:6vh;margin-top:6.5vh;color:#7be0a0}
-#custAnim .cards,#custAtk .cards{gap:3vh}#custAnim .card canvas,#custAtk .card canvas{width:17vh;height:17vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line);margin-top:1vh}#custAnim .card,#custAtk .card{width:27vh;height:38vh}#custAtk .card{height:31vh}#custAtk .card canvas{width:15vh;height:15vh}#custAtk .cmc{display:flex;flex-direction:column;align-items:center;gap:1.4vh}#custAtk .cmIn{font:inherit;font-size:var(--fs-btn,clamp(8px,2.4vh,13px));color:var(--ink);background:#120d22;border:3px solid var(--line);padding:1vh;width:27vh;text-transform:uppercase;text-align:center;user-select:text;-webkit-user-select:text;outline:none}#custAtk .cmIn:focus{border-color:var(--acc)}
-#custAnim{gap:1.4vh}#custAnim .cards{display:grid;grid-template-columns:repeat(7,15.5vh);gap:1.2vh;justify-content:center}#custAnim .card{width:15.5vh;height:26vh;font-size:var(--fs-btn,clamp(7px,2vh,12px))}#custAnim .card canvas{width:12vh;height:12vh}#custAnim .card b{white-space:nowrap;font-size:.56em}#custAnim .card i{white-space:nowrap;font-size:.58em}
-#stList{display:grid;grid-template-columns:1fr 1fr;gap:1vh 2vh;width:min(94vw,160vh);max-height:62vh;overflow-y:auto;text-align:left;padding:.5vh}.st{display:flex;align-items:center;gap:1vh;padding:.9vh 1.2vh;background:var(--card);border:2px solid var(--line);font-size:clamp(7px,2vh,12px)}.st b{flex:1;letter-spacing:.06em}.st input{width:9vh;font:inherit;text-align:center;color:var(--ink);background:#120d22;border:2px solid var(--line);padding:.4vh;-moz-appearance:textfield;appearance:textfield}.st input::-webkit-inner-spin-button,.st input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.st em{font-style:normal;opacity:.7;min-width:4vh}.st small{opacity:.55;font-size:.8em;min-width:13vh;text-align:right}.st.off{opacity:.35}
-#custCode{gap:1.2vh}#custCode>small{line-height:1.5}#ccMain{display:flex;gap:2vh;width:min(94vw,170vh);height:68vh}#ccPal,#ccWork{display:flex;flex-direction:column;gap:1vh;padding:1.2vh;background:var(--card);border:3px solid var(--line);text-align:left;min-height:0}#ccPal{width:27vh;flex:none}#ccPal b{font-size:1.6vh;letter-spacing:.12em;color:var(--dim)}#ccPal #ccTest{margin-top:auto}#ccPal #ccBack{margin-top:.8vh}#ccPalL{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:.7vh;touch-action:pan-y}#ccPalL h6{margin:.6vh 0 0;font-size:1.4vh;font-weight:400;letter-spacing:.14em;color:var(--dim)}#ccPalL .blk{touch-action:pan-y;padding:.8vh 1vh;font-size:clamp(5px,1.7vh,10px);letter-spacing:.02em}#ccPalL .blk span{white-space:nowrap}#ccPal.del{border-color:var(--acc);background:#2a0d12}#ccWork{flex:1;min-width:0}
-#ccTabs{display:flex;gap:.8vh}#ccTabs button{flex:1;min-width:0;padding:.9vh .3vh;font-size:clamp(5px,1.6vh,9px);border-width:2px;overflow:hidden}#ccTabs button.on{border-color:var(--blue);color:var(--blue)}
-#ccFr{display:flex;gap:.6vh;min-height:9vh;font-size:1.5vh;color:var(--dim);overflow-x:auto;touch-action:pan-x;flex:none}#ccFr .cf{flex:none;width:7vh;text-align:center}#ccFr canvas{display:block;width:7vh;height:7vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line)}#ccFr em{font-style:normal;font-size:1.4vh}#ccFr .cf.hit canvas{border-color:var(--acc)}#ccFr .cf.hit em{color:var(--acc)}
-#ccList{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:.8vh;padding-bottom:.6vh}
-.blk{display:flex;align-items:center;gap:1vh;padding:1vh 1.4vh;font-size:clamp(7px,2vh,12px);font-weight:700;letter-spacing:.08em;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;border:2px solid #000;box-shadow:2px 2px 0 #000;color:#000;flex:none}
-.blk[data-t=x]{background:#ffd34d}.blk[data-t=s]{background:#7be0a8}.blk[data-t=w]{background:#c9a0ff}.blk[data-t=h]{background:#ff9f43}.blk.g_h{background:#9a2a35;color:var(--ink)}.blk.g_y{background:#d9d3c4}.blk.g_c{background:#b8b0d8}.blk[data-t=o]{background:#ff6a3c}.blk em{font-style:normal;font-size:.75em;opacity:.8}.blk button{padding:.5vh 1.2vh;font-size:.9em;border-width:2px;color:#000;background:#fff;box-shadow:1px 1px 0 #000}#ccPre{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);z-index:3}#ccPre.on{display:flex}#ccPreBox{display:flex;flex-direction:column;gap:1vh;padding:2vh;background:var(--card);border:3px solid var(--line);min-width:62vh}#ccPreBox>b{font-size:1.8vh;letter-spacing:.12em;color:var(--dim)}#ccPreL{display:flex;flex-direction:column;gap:.8vh}#ccPreL button{display:flex;justify-content:space-between;gap:2vh;padding:1.1vh 1.6vh;font-size:clamp(7px,2vh,12px)}#ccPreL button.on{border-color:var(--blue);color:var(--blue)}#ccPreL small{opacity:.7}
-.blk[data-t=f]{background:var(--blue)}.blk[data-t=i]{background:var(--acc);color:var(--ink)}.blk.hat{background:var(--ink);cursor:default}.blk input{width:8.5vh;-moz-appearance:textfield;appearance:textfield;font:inherit;text-align:center;color:#000;background:#fff;border:2px solid #000;padding:.3vh}.blk input::-webkit-inner-spin-button,.blk input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.blk i{font-style:normal;font-size:.8em;opacity:.85;letter-spacing:.04em}.blk u{margin-left:auto;text-decoration:none;cursor:pointer;padding:0 .8vh}
-.blk.off{opacity:.5;background-image:repeating-linear-gradient(135deg,transparent 0 6px,rgba(0,0,0,.35) 6px 8px)}.blk.ph{background:transparent;border:2px dashed var(--dim);box-shadow:none;padding:0}.blk.gh{position:fixed;z-index:9;pointer-events:none;opacity:.92;margin:0}#cust .cards{gap:3vh}#cust .card{width:26vh;height:38vh;font-size:var(--fs-btn,clamp(8px,2.4vh,13px))}#cust .card canvas{width:17vh;height:17vh;image-rendering:pixelated;background:#120d22;border:2px solid var(--line);margin-top:1vh}#cust .card b{font-size:.8em;word-break:break-all;line-height:1.3}
-#custName{gap:2.4vh}#custName input{font:inherit;font-size:var(--fs-btn,clamp(9px,3vh,16px));color:var(--ink);background:#120d22;border:3px solid var(--line);padding:1.6vh 2vh;width:44vh;text-transform:uppercase;text-align:center;user-select:text;-webkit-user-select:text;outline:none}#custName input:focus{border-color:var(--acc)}
-#cdMain{display:flex;align-items:center;justify-content:center;gap:2vh}
-#cdLeft{display:flex;flex-direction:column;align-items:center;gap:1.2vh;width:33vh}#cdTools{display:grid;grid-template-columns:1fr 1fr;gap:.8vh;width:100%;max-height:62vh;overflow-y:auto;touch-action:pan-y}
-#cdTools button,#cdSide button{padding:1vh .3vh;font-size:clamp(5px,1.6vh,9px);box-shadow:2px 2px 0 #000;border-width:2px}
-#cdTools button.sel{border-color:var(--acc);background:#2a1f4a;color:#ffd34d}
-#cdBoard{line-height:0;position:relative}#cdMini{position:absolute;right:6px;bottom:6px;width:11vh;height:11vh;image-rendering:pixelated;border:2px solid #d9d3c4;display:none;pointer-events:none;opacity:.9}#cdCv{display:block;image-rendering:pixelated;border:3px solid var(--line);background:#120d22;touch-action:none;cursor:crosshair}
-#cdSide{display:flex;flex-direction:column;align-items:center;gap:1vh;width:38vh}#cdName{font-size:clamp(7px,2.2vh,12px);color:#ffd34d;font-weight:normal;word-break:break-all}
-#cdPal{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;width:100%}#cdPal button{padding:0;height:3.6vh;min-width:0;border:2px solid #000;box-shadow:none}#cdPal button.sel{outline:2px solid #fff;outline-offset:-1px;z-index:1}
-#cdPv{display:flex;flex-direction:column;align-items:center;gap:.6vh;text-align:center}#cdFr{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;width:100%}#cdFr button{padding:0;height:5.4vh;min-width:0;border:2px solid var(--line);box-shadow:none;background:#120d22;font-size:clamp(8px,2.8vh,16px);color:#ffd34d;line-height:1;display:flex;align-items:center;justify-content:center}#cdFr canvas{width:100%;height:100%;image-rendering:pixelated}#cdFr button.sel{border-color:#ffd34d;background:#2a1f4a}#cdFr button.add{border-style:dashed}#cdFrInfo{font-size:clamp(6px,1.8vh,9px)}#cdPrev{width:64px;height:64px;image-rendering:pixelated;background:#120d22;border:2px solid var(--line)}
-#cdDone{border-color:#ffd34d;color:#ffd34d}
+/* ---- CUSTOM (v1.64): the slots, the name and the drawing board */.st{display:flex;align-items:center;gap:1vh;padding:.9vh 1.2vh;background:var(--card);border:2px solid var(--line);font-size:clamp(7px,2vh,12px)}.st b{flex:1;letter-spacing:.06em}.st input{width:9vh;font:inherit;text-align:center;color:var(--ink);background:#120d22;border:2px solid var(--line);padding:.4vh;-moz-appearance:textfield;appearance:textfield}.st input::-webkit-inner-spin-button,.st input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.st em{font-style:normal;opacity:.7;min-width:4vh}.st small{opacity:.55;font-size:.8em;min-width:13vh;text-align:right}.st.off{opacity:.35}
 /* ---- v1.68 INK STYLE: manga panels (near-black and bone white, hard edges, slanted corners, halftone dots), blood-red accents, cursed-energy blue only where something is chosen */
 :root{--bg:#07060a;--ink:#f1ecdf;--dim:#a39d90;--acc:#e0242f;--card:#0b0a0f;--line:#d9d3c4;--blue:#39a2ff}
 .screen{background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.05) 0 1px,transparent 1.5px) 0 0/9px 9px,linear-gradient(115deg,transparent 0 62%,rgba(224,36,47,.10) 62% 63.2%,transparent 63.2% 100%),radial-gradient(ellipse at 50% 120%,#1a0508,var(--bg) 62%)}
@@ -161,8 +139,8 @@ small{letter-spacing:.04em}
 button,.card{background:linear-gradient(180deg,#14121a,#0b0a0f);border:3px solid var(--line);border-bottom:.9vh solid #b3121f;box-shadow:none;clip-path:polygon(1.4vh 0,100% 0,100% calc(100% - 1.4vh),calc(100% - 1.4vh) 100%,0 100%,0 1.4vh);text-transform:uppercase;letter-spacing:.05em;transition:none}
 button:hover:not(:disabled),.card:hover{border-color:var(--blue);color:#fff;border-bottom-color:var(--blue)}
 button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
-.card.sel,.row button.sel,#cdTools button.sel,#cdFr button.sel{border-color:#e0242f;border-bottom-color:var(--blue);background:linear-gradient(180deg,#2a0b10,#0b0a0f);color:#fff}
-.card i{color:#e0242f}.mode span{color:#f1ecdf;text-shadow:3px 3px 0 #b3121f}#lanMode span{color:#f1ecdf}#customMode span{color:#f1ecdf}
+.card.sel,.row button.sel{border-color:#e0242f;border-bottom-color:var(--blue);background:linear-gradient(180deg,#2a0b10,#0b0a0f);color:#fff}
+.card i{color:#e0242f}.mode span{color:#f1ecdf;text-shadow:3px 3px 0 #b3121f}#lanMode span{color:#f1ecdf}
 #pad button,#hud button,.pb{clip-path:none}
 #title{background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.05) 0 1px,transparent 1.5px) 0 0/9px 9px,linear-gradient(105deg,#07060a 0 48%,#150508 48% 49.5%,#07060a 49.5% 100%),var(--bg)}
 #title h1{display:flex;flex-direction:column;align-items:center;gap:.4vh;transform:skewX(-8deg);text-shadow:none}
@@ -172,7 +150,6 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
 #hero{filter:drop-shadow(0 0 1.6vh rgba(57,162,255,.7));animation:pulse 2.4s ease-in-out infinite}
 @keyframes pulse{50%{filter:drop-shadow(0 0 3.6vh rgba(57,162,255,1))}}
 .blink{color:#f1ecdf;border-color:#e0242f}
-#custAnim .card canvas,#custAtk .card canvas,#cust .card canvas,#cdPrev,#cdFr button,#cdCv{border-color:var(--line)}
 #rotate{position:fixed;inset:0;z-index:9;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--bg);text-align:center;line-height:1.6;font-size:12px}
 #rotate div{font-size:56px;animation:r 2s ease-in-out infinite}
 @keyframes r{0%,30%{transform:rotate(0)}70%,100%{transform:rotate(-90deg)}}
@@ -209,7 +186,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.154</small>
+    <small id="ver">V1.155</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -242,7 +219,6 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <button id="battles" class="card mode"><span>VS</span><b>BATTLES</b><i>FIGHT THE ENEMY</i></button>
     <button id="story" class="card mode"><span>?</span><b>STORY MODE</b><i>CHAPTERS 1 AND 2</i></button>
     <button id="lanMode" class="card mode"><span>WIFI</span><b>WI-FI ROOMS</b><i>SAME WI-FI ONLY</i></button>
-    <button id="customMode" class="card mode"><span>ART</span><b>CUSTOM</b><i>DRAW YOUR OWN</i></button>
   </div>
   <small>YOU START WITH PUNCHES ONLY: BEAT CURSES IN CHALLENGES, EARN MONEY, BUY SKILLS</small>
   <div class="row"><button id="skillsMode">SKILLS</button><button id="msModes">SETTINGS</button><button id="modesBack">BACK</button></div>
@@ -304,98 +280,6 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
   <div class="row"><button id="svStart" disabled>START</button><button id="svChap" disabled>CHOOSE CHAPTER</button><button id="svBack">BACK</button></div>
 </section>
 
-<section id="cust" class="screen">
-  <h2>CUSTOM</h2>
-  <small>CHOOSE A SLOT TO DRAW YOUR OWN CHARACTER</small>
-  <div class="cards">
-    <button id="cu0" class="card mode"><canvas width="64" height="64"></canvas><b>EMPTY</b><i>DRAW</i></button>
-    <button id="cu1" class="card mode"><canvas width="64" height="64"></canvas><b>EMPTY</b><i>DRAW</i></button>
-    <button id="cu2" class="card mode"><canvas width="64" height="64"></canvas><b>EMPTY</b><i>DRAW</i></button>
-  </div>
-  <div class="row"><button id="cuBack">BACK</button></div>
-</section>
-
-<section id="custName" class="screen">
-  <h2>NAME YOUR CHARACTER</h2>
-  <small id="cuNameSlot">SLOT 1</small>
-  <input id="cuName" type="text" maxlength="12" placeholder="NAME" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done" aria-label="Character name">
-  <small>UP TO 12 LETTERS OR NUMBERS</small>
-  <div class="row"><button id="cuNext" disabled>NEXT: DRAW</button><button id="cuDel">DELETE</button><button id="cuNameBack">BACK</button></div>
-</section>
-
-<section id="custAnim" class="screen">
-  <h2>ANIMATIONS</h2>
-  <small id="caName"></small>
-  <div class="cards">
-    <button id="ca0" class="card mode"><canvas width="64" height="64"></canvas><b>IDLE</b><i>EMPTY</i></button>
-    <button id="ca1" class="card mode"><canvas width="64" height="64"></canvas><b>WALKING</b><i>EMPTY</i></button>
-    <button id="ca2" class="card mode"><canvas width="64" height="64"></canvas><b>JUMP</b><i>EMPTY</i></button>
-    <button id="ca5" class="card mode"><canvas width="64" height="64"></canvas><b>CROUCH</b><i>EMPTY</i></button>
-    <button id="ca6" class="card mode"><canvas width="64" height="64"></canvas><b>CROUCH IDLE</b><i>EMPTY</i></button>
-    <button id="ca8" class="card mode"><canvas width="64" height="64"></canvas><b>FRONT DASH</b><i>EMPTY</i></button>
-    <button id="ca9" class="card mode"><canvas width="64" height="64"></canvas><b>BACK DASH</b><i>EMPTY</i></button>
-    <button id="ca10" class="card mode"><canvas width="64" height="64"></canvas><b>BLOCK</b><i>EMPTY</i></button>
-    <button id="ca11" class="card mode"><canvas width="64" height="64"></canvas><b>HURT</b><i>EMPTY</i></button>
-    <button id="ca12" class="card mode"><canvas width="64" height="64"></canvas><b>KO</b><i>EMPTY</i></button>
-    <button id="ca3" class="card mode"><canvas width="64" height="64"></canvas><b>ATTACK</b><i>EMPTY</i></button>
-    <button id="ca4" class="card mode"><canvas width="64" height="64"></canvas><b>CODE</b><i>EMPTY</i></button>
-    <button id="ca7" class="card mode"><canvas width="64" height="64"></canvas><b>STATS</b><i>13 NUMBERS</i></button>
-  </div>
-  <small>TAP ONE TO DRAW IT (UP TO 15 PICTURES; JUMP 10, CROUCH 4, PUNCH 5+); CODE = BLOCKS</small>
-  <div class="row"><button id="caTest">TEST</button><button id="caBack">DONE</button></div>
-</section>
-
-<section id="custStats" class="screen">
-  <h2>STATS</h2>
-  <small id="stName"></small>
-  <div id="stList"></div>
-  <small>WHAT THE OTHER FIGHTERS HAVE IS NEXT TO EACH ONE; THE GREYED ONES COME WITH DASH AND BLOCK</small>
-  <div class="row"><button id="stBack">DONE</button></div>
-</section>
-
-<section id="custCode" class="screen">
-  <h2>CODE</h2>
-  <small id="ccName"></small>
-  <div id="ccMain">
-    <div id="ccPal"><b>BLOCKS</b><div id="ccPalL"></div><button id="ccTest">TEST</button><button id="ccBack">DONE</button></div>
-    <div id="ccWork">
-      <div id="ccTabs"></div>
-      <div id="ccFr"></div>
-      <div class="blk hat"><span>WHEN THE PUNCH STARTS</span></div>
-      <div id="ccList"></div>
-    </div>
-  </div>
-  <small>BLOCKS HANG UNDER A FRAME OR AN IMPACT; AN IMPACT HITS ON THE FRAME ABOVE IT. X OR DRAG LEFT = DELETE</small>
-  <div id="ccPre"><div id="ccPreBox"><b>VFX PRESET</b><div id="ccPreL"></div><button id="ccPreX">CANCEL</button></div></div>
-</section>
-
-<section id="custAtk" class="screen">
-  <h2>ATTACK</h2>
-  <small id="cmName"></small>
-  <div class="cards">
-    <div class="cmc"><button id="cm0" class="card mode"><canvas width="64" height="64"></canvas><b>M1 #1</b><i>EMPTY</i></button><input id="cn0" class="cmIn" maxlength="9" placeholder="M1 #1" autocomplete="off" spellcheck="false" aria-label="Name of M1 #1"></div>
-    <div class="cmc"><button id="cm1" class="card mode"><canvas width="64" height="64"></canvas><b>M1 #2</b><i>EMPTY</i></button><input id="cn1" class="cmIn" maxlength="9" placeholder="M1 #2" autocomplete="off" spellcheck="false" aria-label="Name of M1 #2"></div>
-    <div class="cmc"><button id="cm2" class="card mode"><canvas width="64" height="64"></canvas><b>M1 #3</b><i>EMPTY</i></button><input id="cn2" class="cmIn" maxlength="9" placeholder="M1 #3" autocomplete="off" spellcheck="false" aria-label="Name of M1 #3"></div>
-    <div class="cmc"><button id="cm3" class="card mode"><canvas width="64" height="64"></canvas><b>M1 #4</b><i>EMPTY</i></button><input id="cn3" class="cmIn" maxlength="9" placeholder="M1 #4" autocomplete="off" spellcheck="false" aria-label="Name of M1 #4"></div>
-  </div>
-  <small>NAMES SHOW ON THE ATTACK BUTTON; 5+ FRAMES EACH; EMPTY ONES SKIPPED; NO DAMAGE YET</small>
-  <div class="row"><button id="cmBack">DONE</button></div>
-</section>
-
-<section id="custDraw" class="screen">
-  <div id="cdMain">
-    <div id="cdLeft"><div id="cdTools"></div><div id="cdPv"><canvas id="cdPrev" width="64" height="64"></canvas><small>IDLE PREVIEW</small></div></div>
-    <div id="cdBoard"><canvas id="cdCv" width="256" height="256" aria-label="Drawing board, 64 by 64 pixels"></canvas><canvas id="cdMini" width="64" height="64"></canvas></div>
-    <div id="cdSide">
-      <b id="cdName"></b>
-      <div id="cdPal"></div>
-      <small id="cdFrInfo">FRAME 1 OF 1</small>
-      <div id="cdFr"></div>
-      <div class="row"><button id="cdDone">DONE</button><button id="cdBack">BACK</button></div>
-    </div>
-  </div>
-</section>
-
 <section id="select" class="screen">
   <h2>CHOOSE YOUR FIGHTER</h2>
   <div class="cards">
@@ -407,8 +291,6 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <button class="card pp" data-who="cu3"><canvas></canvas><b>SUKUNA</b><i>FREE PLAY</i></button>
     <button class="card pp" data-who="cu4"><canvas></canvas><b>RYU</b><i>FREE PLAY</i></button>
   </div>
-  <small id="selCuLab" style="display:none">YOUR CUSTOM CHARACTERS (THEY WALK IF YOU DREW WALKING FRAMES)</small>
-  <div class="cards mini" id="selCu" style="display:none"></div>
   <small>FREE PLAY: EVERY MOVE OF EVERY FIGHTER IS FREE HERE, THE ENERGY NEVER RUNS OUT AND YOU CANNOT LOSE (SET > GAME: THE ENEMY CAN FIGHT BACK)</small>
   <div class="row"><button id="vsBtn">VERSUS MODE</button><button id="selBack">BACK</button></div>
 </section>
@@ -922,7 +804,7 @@ function skillUI() {                          // the buttons of a move you do no
   const L = (id, key) => $(id).classList.toggle('lk', lacks(key));
   L('blk', 'blk'); L('dash', 'dash'); L('ce', 'ce'); L('dom', 'dom'); L('fat', 'fat'); $('lap').classList.toggle('lk', !fredMe() && !(vs && vs.me === 'cu4') && !(vs && vs.me === 'cu3' ? Object.values(SU_BLUE_ID).some(suOwn) : BLUES[meK()].some(owns)));
 }
-function leavePlay() { if (cuTest) { cuTestBack(); return; } if (vs && vs.net) lanLeave(); else if (vs && vs.hunt) { show('chal'); buildHunts(); } else if (vs && vs.cv) { show('chal'); buildChal(); } else show('select'); }
+function leavePlay() { if (vs && vs.net) lanLeave(); else if (vs && vs.hunt) { show('chal'); buildHunts(); } else if (vs && vs.cv) { show('chal'); buildChal(); } else show('select'); }
 
 // ---- the ten curses: sprites (tools/curse_art.py) and what each of them can do
 const CU = __CURSES__;                        // idle, walk, a1 a2 a3 (the three attacks: the blow lands on frame imp) and hurt for every curse; they face right and the game mirrors them
@@ -1522,12 +1404,12 @@ const lanBack = () => { if (lanRole) lanStop(); else show('modes'); };
 
 // ---------------------------------------------------------------- screens
 function show(s) {
-  state = s; if (s !== 'play') cuTest = false; if (s !== 'story') { snd('mhumoff'); snd('tmusicoff'); snd('rsmuroff'); snd('bluepulloff'); c9Stop(); c15Stop(); } if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; track = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
+  state = s; if (s !== 'story') { snd('mhumoff'); snd('tmusicoff'); snd('rsmuroff'); snd('bluepulloff'); c9Stop(); c15Stop(); } if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; track = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
   $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); $('chal').classList.toggle('on', s === 'chal'); $('skills').classList.toggle('on', s === 'skills'); $('sns').style.display = 'none'; if (s !== 'lan' && s !== 'lansel' && !(s === 'play' && vs && vs.net) && lanTimer) lanStop();
   $('versus').classList.toggle('on', s === 'versus');
   $('title').classList.toggle('on', s === 'title'); $('ulog').classList.toggle('on', s === 'ulog'); $('mset').classList.toggle('on', s === 'mset'); $('codes').classList.toggle('on', s === 'codes');
   $('select').classList.toggle('on', s === 'select');
-  $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves'); if (s === 'select') cuSelRefresh(); $('cust').classList.toggle('on', s === 'cust'); $('custName').classList.toggle('on', s === 'custname'); $('custDraw').classList.toggle('on', s === 'custdraw'); $('custAnim').classList.toggle('on', s === 'custanim'); $('custAtk').classList.toggle('on', s === 'custatk'); $('custCode').classList.toggle('on', s === 'custcode'); $('custStats').classList.toggle('on', s === 'custstats');
+  $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves'); if (s === 'select') cuSelRefresh();
   cv.style.display = s === 'play' || s === 'story' ? 'block' : 'none';
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
@@ -4529,7 +4411,7 @@ function drawScene(now, dt) {
   if (vs && vs.me === 'verity') { verityScene(now, dt); return; }      // YOUR FIGHTER is Verity: his own controls and pictures (below)
   if (vs && vs.me === 'freddy') { freddyScene(now, dt); return; }      // YOUR FIGHTER is Freddy Krueger: he walks, crouches, jumps, slashes and dashes (v1.39 to v1.48)
   if (vs && vs.me === 'cat') { catScene(now, dt); return; }      // YOUR FIGHTER is the Cartoon Cat: his own controls and pictures (below)
-  if (cuMe()) { customScene(now, dt); return; }      // YOUR FIGHTER is a CUSTOM character: it stands on its idle frames and cannot move yet (custom.js)
+  if (cuMe()) { customScene(now, dt); return; }      // YOUR FIGHTER is Sukuna or Ryu (the fighters of the custom kind, see custom.js)
   const el = Math.max(0, now - spawnAt), t = Math.min(1, el / 900), e = 1 - Math.pow(1 - t, 3);
   if (mbAt < 0) mbK = 0;
   if (ceReq && !(vs && vs.me === 'yuji')) { ceReq = false; if (t >= 1) cycleMode(now); }        // CURSED ENERGY button / key: on <-> off (Yuji's MODE is handled below, once it is known whether he is free for the power-up)
@@ -6573,7 +6455,7 @@ joy.addEventListener('contextmenu', e => e.preventDefault());
 
 const KEYS = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', Space: 'U', KeyJ: 'A', KeyF: 'A', ArrowDown: 'C', KeyS: 'C', KeyC: 'C', KeyL: 'B', KeyK: 'D', ShiftLeft: 'D', ShiftRight: 'D', KeyB: 'G', KeyE: 'E', KeyV: 'V', KeyH: 'H', KeyQ: 'Q' };
 addEventListener('keydown', e => {
-  if (e.target.id === 'lanName' || e.target.id === 'cuName' || e.target.id === 'codeIn' || e.target.className === 'cmIn' || (e.target.closest && e.target.closest('#custCode, #custStats'))) { if (e.key === 'Enter') e.target.blur(); return; }      // typing a room name: the game keys stay out of it
+  if (e.target.id === 'lanName' || e.target.id === 'codeIn') { if (e.key === 'Enter') e.target.blur(); return; }      // typing a room name: the game keys stay out of it
   if (paused && !settingsOn()) { if ((e.key === 'Escape' || e.code === 'KeyP') && !e.repeat) setPause(false); return; }      // (paused: only Esc or P do anything)
   if (settingsOn()) { if (e.key === 'Escape') closeSettings(); return; }      // the settings screen takes the keyboard while it is open
   if (e.code === 'KeyP' && state === 'play') { if (!e.repeat) setPause(true); return; }      // P pauses a fight
@@ -6869,7 +6751,6 @@ window.__fred = () => ({ pic: fredLast, walk: fredWalk, ph: +fredPh.toFixed(2), 
 window.__state = () => ({ who: vs ? vs.who : '', hurtOn: hurtAt >= 0, php: vs ? vs.hp : -1, ex: dummy ? Math.round(dummy.x) : 0, ph: vs ? vs.ph : '', ehp: dummy ? dummy.hp : -1, estun: dummy ? Math.max(0, Math.round(dummy.stunUntil - pnow())) : 0, eair: dummy && dummy.air ? dummy.air.kind : '', bleed: !!cuBleed, cmode: cm, redOrb: !!rdOrb, orbV: rdOrb ? rdOrb.v : 0, coat: rdOrb ? !!rdOrb.coat : false, ride: ride ? ride.phase : '', lift: gojoLift, boom: !!boom, ce: ceOn, ceAmt: +ceAmt.toFixed(2), ho: HOMAP.size, stance, jumpC, mode, wx, stick: { x: stickX, y: stickY, up: stickUp, down: stickDown, held: stickCr }, lapse: lpAt >= 0 ? lpK : -1, dash: dgAt >= 0 ? dgK : -1, dashAir: dgAir, block: blkAt >= 0 ? (blkEnd < 0 ? 1 : 2) : 0, guard: guardUp(pnow()), mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests
 window.__back = () => {                       // Android back button: step back through the menus, otherwise let the app close
   if (settingsOn()) { closeSettings(); return true; }
-  if (customBack()) return true;      // (CUSTOM: the slots, the name, the drawing)
   if (state === 'play') { if (paused) setPause(false); else if (!setPause(true)) leavePlay(); return true; }      // (back pauses a fight, back again goes on; the MENU button of the pause screen leaves)
   if (state === 'story') { svView = 0; show('saves'); renderSaves(); return true; }
   if (state === 'saves') { if (svView) { svView = 0; renderSaves(); } else show('modes'); return true; }
