@@ -1,23 +1,42 @@
 // ================================================================ v1.152 THE SETTINGS SCREEN OF THE MAIN MENU: every option in pages (graphics, gameplay, story, sound, controls, accessibility, look, data, presets), a search box,
-// a DEF button on every option, presets, stats, a save code and a settings code. The numbers live in SET (see the top of tools/template.html); msApply() puts them to work (colours, filters, scanlines, the FPS counter),
+// a DEF button on every option, presets, stats, a save code and a settings code. The numbers live in SET (see the top of tools/template.html); msApply() puts them to work (colours, filters, scanlines, then gfxApply() in tools/gfx.js),
 // the rest is read by the game itself (shake, flash, damage, energy, money ...). The old SETTINGS of the pause menu stays and shows the same numbers.
-const MSD = { hap: 1, sz: 100, op: 78, up: 0, lh: 0, fps: 0, lite: 0, ap: 1, assist: 0, pace: 1, hb: 0, gore: 0, shk: 100, fl: 100, dn: 1, hs: 100, br: 100, ct: 100, sat: 100, scan: 0, cb: 0, fpsc: 0, edm: 100, pdm: 100, reg: 0, ien: 0, ihp: 0, ohk: 0, sub: 1, nf: 0, hc: 0, th: 0 };
+// v1.153 the GRAPHICS page was rebuilt: quality presets, a live preview, less / more / picture / frame rate options and the tools; what they do is in tools/gfx.js.
+const MSD = { hap: 1, sz: 100, op: 78, up: 0, lh: 0, fps: 0, lite: 0, ap: 1, assist: 0, pace: 1, hb: 0, gore: 0, shk: 100, fl: 100, dn: 1, hs: 100, br: 100, ct: 100, sat: 100, scan: 0, cb: 0, fpsc: 0, edm: 100, pdm: 100, reg: 0, ien: 0, ihp: 0, ohk: 0, sub: 1, nf: 0, hc: 0, th: 0, pt: 3, bgd: 3, au: 2, ov: 2, glow: 0, trl: 0, shd: 0, zoom: 100, smooth: 0, retro: 0 };
 const MS_THEMES = [['RED', '#e0242f'], ['BLUE', '#39a2ff'], ['PURPLE', '#8f7ac4'], ['GREEN', '#3fd17a'], ['GOLD', '#ffd34d'], ['PINK', '#ff6fb1']];
 const ONOFF = ['OFF', 'ON'];
 const MSP = [      // the pages: a row is { k: the key in SET, n: name, t: 'r' (slider a - b, step c, unit u) or 't' (a button that cycles the names a (the numbers b)), h: the hint }
   { id: 'gfx', n: 'GRAPHICS', rows: [
+    { t: 'gq' },
+    { n: 'LESS: TURN DOWN WHAT THE PHONE HAS TO DRAW', t: 'h' },
+    { k: 'pt', n: 'PARTICLES', t: 't', a: ['NONE', 'FEW', 'SOME', 'NORMAL', 'MANY'], h: 'SPARKS, SMOKE AND FLYING BITS. NORMAL IS HOW THE GAME CAME. MANY MAKES MORE THAN TWICE AS MANY.' },
+    { k: 'bgd', n: 'BACKGROUND DETAIL', t: 't', a: ['FLAT', 'LOW', 'MEDIUM', 'FULL'], h: 'FLAT = JUST THE SKY AND THE ROAD. LOW ADDS THE FAR TOWERS, MEDIUM THE SHOPS AND LAMPS, FULL THE WIND STREAKS.' },
+    { k: 'au', n: 'AURA AND RINGS', t: 't', a: ['OFF', 'FLAMES ONLY', 'ALL'], h: 'THE CURSED ENERGY FLAMES, THE LIGHTNING AND THE SHOCK RINGS OF BIG HITS. FLAMES ONLY = THE FLAMES AND LIGHTNING BUT NO RINGS. OFF = NONE.' },
+    { k: 'ov', n: 'SCREEN OVERLAYS', t: 't', a: ['OFF', 'LIGHT', 'FULL'], h: 'THE SEE-THROUGH TINTS OVER THE WHOLE PICTURE IN A FIGHT (DARKENING, FLICKER, WASHES OF COLOUR). LIGHT = HALF AS STRONG.' },
     { k: 'shk', n: 'SCREEN SHAKE', t: 'r', a: 0, b: 150, c: 10, u: '%', h: 'HOW HARD THE SCREEN SHAKES WHEN YOU HIT OR GET HIT, ALSO IN THE STORY. 0 = NO SHAKE.' },
     { k: 'fl', n: 'FLASH STRENGTH', t: 'r', a: 0, b: 100, c: 10, u: '%', h: 'THE FLASHES OF LIGHT ON BIG HITS AND MOVES. 0 = NO FLASHES.' },
     { k: 'hs', n: 'HIT PAUSE', t: 'r', a: 0, b: 150, c: 10, u: '%', h: 'THE SHORT FREEZE WHEN A BLOW LANDS. 0 = NONE, MORE = HEAVIER HITS.' },
     { k: 'dn', n: 'DAMAGE NUMBERS', t: 't', a: ONOFF, h: 'THE NUMBERS THAT POP UP WHEN YOU HIT SOMEONE.' },
+    { n: 'MORE: EXTRA EFFECTS (FOR FAST PHONES)', t: 'h' },
+    { k: 'glow', n: 'GLOW', t: 't', a: ['OFF', 'LOW', 'MEDIUM', 'HIGH'], h: 'BRIGHT THINGS GLOW (BLOOM). HEAVY: THE PICTURE IS DRAWN AGAIN, BLURRED, ON TOP OF ITSELF.' },
+    { k: 'trl', n: 'MOTION TRAILS', t: 't', a: ['OFF', 'SHORT', 'MEDIUM', 'LONG'], h: 'FAST FIGHTERS LEAVE FADING COPIES OF THEMSELVES BEHIND, IN FIGHTS.' },
+    { k: 'shd', n: 'SHADOWS AND LIGHT', t: 't', a: ['OFF', 'SIMPLE', 'SOFT', 'SOFT + LIGHT'], h: 'A SHADOW ON THE FLOOR UNDER EVERY FIGHTER, IN FIGHTS. SOFT = MORE ROWS. LIGHT = ALSO A PALE POOL OF LIGHT ROUND HIM.' },
+    { n: 'FOR MORE PARTICLES THAN NORMAL, SET PARTICLES (ABOVE) TO MANY.', t: 'n' },
+    { n: 'PICTURE', t: 'h' },
+    { k: 'zoom', n: 'CAMERA ZOOM', t: 't', a: ['75%', '90%', '100%', '110%', '125%'], b: [75, 90, 100, 110, 125], h: 'BIGGER PIXELS = A CLOSER CAMERA, SMALLER PIXELS = A WIDER ONE. ONLY IN FIGHTS AND FREE PLAY: THE STORY STAYS NORMAL SIZE. THE PIXELS STAY WHOLE, SO ON A SMALL SCREEN TWO STEPS CAN LOOK ALIKE.' },
+    { k: 'retro', n: 'FIXED RETRO SIZE', t: 't', a: ONOFF, h: 'ALWAYS THE SAME 288 X 128 PICTURE, WITH BLACK BARS ROUND IT WHERE THE SCREEN IS A DIFFERENT SHAPE. THE ZOOM IS OFF WHILE THIS IS ON.' },
+    { k: 'smooth', n: 'PIXEL SMOOTHING', t: 't', a: ONOFF, h: 'BLURS THE BIG PIXELS A LITTLE INSTEAD OF SHOWING THEM SHARP.' },
     { k: 'br', n: 'BRIGHTNESS', t: 'r', a: 70, b: 130, c: 5, u: '%', h: 'HOW LIGHT THE GAME PICTURE IS.' },
     { k: 'ct', n: 'CONTRAST', t: 'r', a: 80, b: 140, c: 5, u: '%', h: 'THE DIFFERENCE BETWEEN DARK AND LIGHT.' },
     { k: 'sat', n: 'COLOUR', t: 'r', a: 0, b: 150, c: 10, u: '%', h: 'HOW STRONG THE COLOURS ARE. 0 = BLACK AND WHITE.' },
     { k: 'scan', n: 'SCANLINES', t: 't', a: ['OFF', 'LIGHT', 'HEAVY'], h: 'THIN DARK LINES OVER THE SCREEN, LIKE AN OLD TV.' },
-    { k: 'fps', n: 'FRAME RATE', t: 't', a: ['AUTO', '30 FPS', '60 FPS'], b: [0, 30, 60], h: 'FPS = HOW MANY PICTURES THE GAME DRAWS EVERY SECOND. 30 SAVES BATTERY, 60 IS SMOOTHER.' },
+    { k: 'hb', n: 'SHOW HITBOXES', t: 't', a: ONOFF, h: 'DRAWS THE BOXES THE GAME TESTS A HIT WITH (FOR TESTING).' },
+    { n: 'FRAME RATE', t: 'h' },
+    { k: 'fps', n: 'FRAME RATE', t: 't', a: ['AUTO', '30 FPS', '45 FPS', '60 FPS', '72 FPS', '90 FPS', '120 FPS', '144 FPS', 'UNLIMITED'], b: [0, 30, 45, 60, 72, 90, 120, 144, 999], h: 'FPS = HOW MANY PICTURES THE GAME DRAWS EVERY SECOND. AUTO = AS MANY AS THE SCREEN SHOWS. UNLIMITED = NO LIMIT: THE APP ASKS ANDROID FOR THE FASTEST SCREEN MODE.' },
     { k: 'lite', n: 'BATTERY SAVER', t: 't', a: ONOFF, h: '30 FPS, NO SCREEN SHAKE AND FEWER SPARKS.' },
-    { k: 'fpsc', n: 'FPS COUNTER', t: 't', a: ONOFF, h: 'SHOWS HOW MANY FRAMES PER SECOND THE PHONE REALLY MAKES (TOP RIGHT).' },
-    { k: 'hb', n: 'SHOW HITBOXES', t: 't', a: ONOFF, h: 'DRAWS THE BOXES THE GAME TESTS A HIT WITH (FOR TESTING).' }] },
+    { n: 'TOOLS', t: 'h' },
+    { k: 'fpsc', n: 'STATS OVERLAY', t: 't', a: ['OFF', 'FPS', 'DETAILED'], h: 'NUMBERS AT THE TOP RIGHT: THE FPS, AND WITH DETAILED ALSO HOW LONG A PICTURE TAKES AND THE SCREEN RATE.' },
+    { t: 'gtools' }] },
   { id: 'game', n: 'GAMEPLAY', rows: [
     { k: 'assist', n: 'ASSIST', t: 't', a: ['OFF', 'PARRY+', 'EASY', 'AUTO-GUARD'], h: 'NOT IN WI-FI FIGHTS. PARRY+ = WIDER PARRY WINDOW, EASY = ALSO 30% LESS DAMAGE TO YOU, AUTO-GUARD = ALSO BLOCKS FOR YOU WHILE YOU STAND STILL.' },
     { k: 'pace', n: 'GAME PACE', t: 't', a: ['NORMAL', 'FAST', 'TURBO', 'SLOW'], h: 'HOW FAST OFFLINE FIGHTS RUN (NOT WI-FI, NOT THE STORY). THE TIMERS STILL COUNT REAL SECONDS.' },
@@ -56,7 +75,7 @@ const MSP = [      // the pages: a row is { k: the key in SET, n: name, t: 'r' (
     { k: 'br', n: 'BRIGHTNESS', t: 'r', a: 70, b: 130, c: 5, u: '%', h: 'HOW LIGHT THE GAME PICTURE IS.' },
     { k: 'sat', n: 'COLOUR', t: 'r', a: 0, b: 150, c: 10, u: '%', h: '0 = BLACK AND WHITE.' },
     { k: 'dn', n: 'DAMAGE NUMBERS', t: 't', a: ONOFF, h: 'THE NUMBERS ON HITS.' },
-    { k: 'fpsc', n: 'FPS COUNTER', t: 't', a: ONOFF, h: 'FRAMES PER SECOND, TOP RIGHT.' }] },
+    { k: 'fpsc', n: 'STATS OVERLAY', t: 't', a: ['OFF', 'FPS', 'DETAILED'], h: 'FRAMES PER SECOND AND MORE, TOP RIGHT.' }] },
   { id: 'data', n: 'DATA', rows: [{ t: 'data' }] },
   { id: 'pre', n: 'PRESETS', rows: [{ t: 'pre' }] },
 ];
@@ -69,7 +88,8 @@ const MS_PRE = [
   ['CASUAL', 'EASY ASSIST, SLOW HEALTH REGEN, NORMAL PACE.', { assist: 2, reg: 2, ap: 1, pace: 0 }],
   ['HARDCORE', 'NO ASSIST, ENEMIES HIT 50% HARDER, NO REGEN.', { assist: 0, reg: 0, edm: 150, pdm: 100, pace: 1 }],
 ];
-let msPage = 0, msFrom = 'title', msQ = '';
+let msPage = 0, msFrom = 'title', msQ = '', msNote = '';
+const msSyncs = [];      // (the functions of the GRAPHICS page that refresh its preset bar and its warnings when an option changes)
 const msEl = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined) e.textContent = txt; return e; };
 const msSave = () => { saveSet(); msApply(); buildOpts(); };
 function msSet(o) { for (const k in o) if (k in MSD) SET[k] = o[k]; msSave(); msBuild(); }
@@ -77,10 +97,10 @@ const msClamp = (r, v) => { v = Math.round(+v); if (!isFinite(v)) return null; i
 function msRow(r) {      // one option: its name, its control, DEF (back to the default) and a line about it
   const row = msEl('div', 'mr'), top = msEl('div', 'mt'), ctl = msEl('div', 'mc'), def = msEl('button', 'mx', 'DEF'); top.appendChild(msEl('span', 'mn', r.n)); top.appendChild(ctl); top.appendChild(def); row.appendChild(top);
   if (r.h) row.appendChild(msEl('small', 'mh', r.h));
-  const set = v => { SET[r.k] = v; saveSet(); msApply(); buildOpts(); };
+  const set = v => { SET[r.k] = v; saveSet(); msApply(); buildOpts(); msSyncs.forEach(f => f()); };
   if (r.t === 'r') {
     const inp = msEl('input'), val = msEl('b', '', ''); inp.type = 'range'; inp.min = r.a; inp.max = r.b; inp.step = r.c; inp.value = SET[r.k]; inp.setAttribute('aria-label', r.n); val.textContent = SET[r.k] + r.u;
-    inp.addEventListener('input', () => { SET[r.k] = +inp.value; val.textContent = SET[r.k] + r.u; msApply(); }); inp.addEventListener('change', () => { saveSet(); buildOpts(); });
+    inp.addEventListener('input', () => { SET[r.k] = +inp.value; val.textContent = SET[r.k] + r.u; msApply(); msSyncs.forEach(f => f()); }); inp.addEventListener('change', () => { saveSet(); buildOpts(); });
     def.addEventListener('click', () => { set(MSD[r.k]); inp.value = SET[r.k]; val.textContent = SET[r.k] + r.u; }); ctl.appendChild(inp); ctl.appendChild(val);
   } else {
     const btn = msEl('button', 'mb'), vals = r.b || r.a.map((_, i) => i), at = () => Math.max(0, vals.indexOf(SET[r.k])), label = () => { btn.textContent = r.a[at()]; }; label();
@@ -125,11 +145,24 @@ function msData(box) {      // the numbers, the save code, the settings code, th
   const row3 = msEl('div', 'mrow'); row3.appendChild(mkBtn('RESET SETTINGS', () => { msSet(MSD); say.textContent = 'ALL SETTINGS ARE BACK TO THE DEFAULT.'; }));
   row3.appendChild(mkBtn('RESET ALL PROGRESS', () => {
     const n = performance.now(); if (n > msArm2) { msArm2 = n + 5000; say.textContent = 'THIS DELETES YOUR MONEY, SKILLS AND STORY SAVES. TAP AGAIN WITHIN 5 SECONDS TO DO IT.'; return; }
-    try { const del = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (bkOwn(k) && k !== 'js_set' && k !== 'js_vol' && k !== 'js_snd') del.push(k); } del.forEach(k => localStorage.removeItem(k)); location.reload(); } catch { say.textContent = 'COULD NOT DELETE'; }
+    try { const del = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (bkOwn(k) && k !== 'js_set' && k !== 'js_vol' && k !== 'js_snd' && k !== 'js_gtest') del.push(k); } del.forEach(k => localStorage.removeItem(k)); location.reload(); } catch { say.textContent = 'COULD NOT DELETE'; }
   })); box.appendChild(row3);
 }
 function msPresets(box) {
   MS_PRE.forEach(([n, d, o]) => { const row = msEl('div', 'mr'), top = msEl('div', 'mt'), b = msEl('button', 'mb', 'APPLY'); top.appendChild(msEl('span', 'mn', n)); const c = msEl('div', 'mc'); c.appendChild(b); top.appendChild(c); row.appendChild(top); row.appendChild(msEl('small', 'mh', d)); b.addEventListener('click', () => { msSet(o); b.textContent = 'DONE'; setTimeout(() => { b.textContent = 'APPLY'; }, 900); }); box.appendChild(row); });
+}
+function msGq(box) {      // the quality presets (POTATO to ULTRA, CUSTOM when you changed an option) and the little live picture
+  const bar = msEl('div', 'gq'), lab = msEl('small', 'mh', ''), pv = msEl('canvas', 'mpv'), btns = GFX_PRE.map(([n], i) => { const b = msEl('button', '', n); b.addEventListener('click', () => { gfxPreset(i); msBuild(); }); bar.appendChild(b); return b; });
+  pv.width = 128; pv.height = 48; box.appendChild(bar); box.appendChild(lab); box.appendChild(pv); box.appendChild(msEl('small', 'mh', 'THE PICTURE SHOWS YOUR OPTIONS LIVE. HIGH IS HOW THE GAME CAME. ULTRA ADDS GLOW, TRAILS, SHADOWS AND MORE PARTICLES.'));
+  const sync = () => { const q = gfxQ(); btns.forEach((b, i) => b.classList.toggle('sel', i === q)); lab.textContent = 'QUALITY: ' + (q < 5 ? GFX_PRE[q][0] : 'CUSTOM (YOU CHANGED AN OPTION)'); };
+  msSyncs.push(sync); sync(); gfxPreview(pv);
+}
+function msGtools(box) {      // TEST MY PHONE, what the screen can do, and what the options cost
+  const row = msEl('div', 'mrow'), test = msEl('button', '', 'TEST MY PHONE'), say = msEl('small', 'mh', ''), warn = msEl('small', 'mw', ''), note = msNote, info = () => { say.textContent = (note ? note + '\n' : '') + gfxInfo(); };
+  test.addEventListener('click', () => gfxBench((id, hz) => { msNote = id < 0 ? 'TEST CANCELLED.' : 'THE TEST SAYS ' + GFX_PRE[id][0] + ' (SCREEN RATE ' + hz + ' HZ). IT IS SET: CHANGE IT ABOVE IF YOU LIKE.'; if (id >= 0) gfxBenchApply(id, false); msBuild(); }));
+  row.appendChild(test); box.appendChild(row); box.appendChild(say); box.appendChild(warn); info(); msNote = '';
+  const sync = () => { warn.textContent = gfxWarn().join('\n\n'); }; msSyncs.push(sync); sync();
+  gfxMeasure(() => { if (say.isConnected) info(); });
 }
 function msBuild() {
   const root = $('mset'), keep = root.querySelector('.mbody'), top = keep ? keep.scrollTop : 0; root.textContent = '';
@@ -144,14 +177,14 @@ function msBuild() {
   msFill(body); body.scrollTop = top;
 }
 function msFill(body) {      // the options of the page, or of every page that has the words of the search
-  body.textContent = '';
+  body.textContent = ''; msSyncs.length = 0;
   if (msQ) {
     let n = 0; const seen = new Set();
     MSP.forEach(p => p.rows.forEach(r => { if (!r.k || seen.has(r.k) || !((r.n + ' ' + (r.h || '')).includes(msQ))) return; seen.add(r.k); body.appendChild(msRow(r)); n++; }));
     if (!n) body.appendChild(msEl('small', 'mh', 'NO OPTION HAS THOSE WORDS.'));
     return;
   }
-  const p = MSP[msPage]; p.rows.forEach(r => { if (r.t === 'n') body.appendChild(msEl('small', 'mh', r.n)); else if (r.t === 'snd') msSound(body); else if (r.t === 'data') msData(body); else if (r.t === 'pre') msPresets(body); else body.appendChild(msRow(r)); });
+  const p = MSP[msPage]; p.rows.forEach(r => { if (r.t === 'n') body.appendChild(msEl('small', 'mh', r.n)); else if (r.t === 'h') body.appendChild(msEl('div', 'mhd', r.n)); else if (r.t === 'gq') msGq(body); else if (r.t === 'gtools') msGtools(body); else if (r.t === 'snd') msSound(body); else if (r.t === 'data') msData(body); else if (r.t === 'pre') msPresets(body); else body.appendChild(msRow(r)); });
 }
 function msOpen(from) { msFrom = from; audio(); msQ = ''; msBuild(); show('mset'); }
 function msBack() { show(msFrom); }
@@ -167,18 +200,19 @@ msCss.textContent = '#mset.screen{z-index:6;justify-content:flex-start;gap:1vh;p
   + '#mset .mst{display:grid;grid-template-columns:1fr 1fr;gap:.6vh 2vh;font-size:clamp(7px,2vh,11px)}#mset .ms{display:flex;justify-content:space-between;gap:1vh;padding:.5vh 1vh;background:rgba(255,255,255,.04)}#mset .ms b{font-weight:normal;color:var(--acc)}'
   + '#mset .mrow{display:flex;gap:1vh;flex-wrap:wrap}#mset textarea{width:100%;font:inherit;font-size:clamp(6px,1.6vh,9px);color:var(--ink);background:#120d22;border:3px solid var(--line);user-select:text;-webkit-user-select:text}'
   + '#msBtn{position:fixed;right:calc(env(safe-area-inset-right) + 2vh);top:calc(env(safe-area-inset-top) + 1.4vh);padding:1vh 1.6vh;font-size:clamp(7px,2vh,11px)}'
-  + '#msScan{position:fixed;inset:0;z-index:3;pointer-events:none;display:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.5) 0 1px,transparent 1px 3px)}#msFps{position:fixed;right:1vh;top:1vh;z-index:7;display:none;pointer-events:none;color:#7dff7d;background:rgba(0,0,0,.55);padding:.4vh .8vh;font-size:clamp(7px,1.8vh,10px)}';
+  + '#msScan{position:fixed;inset:0;z-index:3;pointer-events:none;display:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.5) 0 1px,transparent 1px 3px)}'
+  + '#mset .gq{display:flex;gap:.8vh;flex-wrap:wrap}#mset .gq button{flex:1;min-width:8ch;padding:1vh .6vh;font-size:clamp(6px,1.8vh,10px)}#mset .gq button.sel{border-color:var(--acc);color:var(--acc)}'
+  + '#mset .mpv{width:100%;max-width:min(320px,70vh);align-self:center;aspect-ratio:128/48;image-rendering:pixelated;border:3px solid var(--line);background:#0d0a17}#mset .mh{white-space:pre-wrap}'
+  + '#mset .mhd{margin-top:1vh;padding-bottom:.4vh;border-bottom:2px solid var(--line);font-size:clamp(7px,2vh,11px);color:var(--acc)}#mset .mw{white-space:pre-wrap;font-size:clamp(5px,1.6vh,9px);line-height:1.6;color:#ffd34d}';
 document.head.appendChild(msCss);
 const msSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); msSvg.setAttribute('width', '0'); msSvg.setAttribute('height', '0'); msSvg.style.position = 'absolute'; msSvg.innerHTML = '<filter id="msCB" color-interpolation-filters="sRGB"><feColorMatrix id="msCBm" type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0"/></filter>'; document.body.appendChild(msSvg);
-const msScan = msEl('div'); msScan.id = 'msScan'; document.body.appendChild(msScan); const msFps = msEl('div'); msFps.id = 'msFps'; document.body.appendChild(msFps);
+const msScan = msEl('div'); msScan.id = 'msScan'; document.body.appendChild(msScan);
 function msCbMatrix(mode) {      // colour-blind help: the colours the eye misses are moved into the ones it sees (an approximation of the usual "daltonize" method)
   const sim = [[[0.567, 0.433, 0], [0.558, 0.442, 0], [0, 0.242, 0.758]], [[0.625, 0.375, 0], [0.7, 0.3, 0], [0, 0.3, 0.7]], [[0.95, 0.05, 0], [0, 0.433, 0.567], [0, 0.475, 0.525]]][mode - 1];
   const sh = mode < 3 ? [[0, 0, 0], [0.7, 1, 0], [0.7, 0, 1]] : [[1, 0, 0.7], [0, 1, 0.7], [0, 0, 0]], out = [];
   for (let i = 0; i < 3; i++) { for (let j = 0; j < 3; j++) { let v = i === j ? 1 : 0; for (let k = 0; k < 3; k++) v += sh[i][k] * ((k === j ? 1 : 0) - sim[k][j]); out.push(v.toFixed(3)); } out.push('0 0'); }
   return out.join(' ') + ' 0 0 0 1 0';
 }
-let msFpsOn = false, msFpsN = 0, msFpsT = 0;
-function msFpsLoop(t) { msFpsN++; if (t - msFpsT >= 500) { msFps.textContent = Math.round(msFpsN * 1000 / (t - msFpsT)) + ' FPS'; msFpsN = 0; msFpsT = t; } if (SET.fpsc) requestAnimationFrame(msFpsLoop); else msFpsOn = false; }
 function msApply() {
   const rs = document.documentElement.style, cv = $('game'), f = [];
   if (SET.th) rs.setProperty('--acc', MS_THEMES[SET.th][1]); else rs.removeProperty('--acc');
@@ -186,7 +220,7 @@ function msApply() {
   const hc = SET.hc ? 1 : 0; if (SET.br !== 100) f.push('brightness(' + SET.br / 100 + ')'); if (SET.ct !== 100 || hc) f.push('contrast(' + (SET.ct / 100 * (hc ? 1.2 : 1)).toFixed(2) + ')'); if (SET.sat !== 100 || hc) f.push('saturate(' + (SET.sat / 100 * (hc ? 1.15 : 1)).toFixed(2) + ')');
   cv.style.filter = f.join(' ');
   msScan.style.display = SET.scan ? 'block' : 'none'; msScan.style.opacity = SET.scan === 2 ? 0.55 : 0.25;
-  msFps.style.display = SET.fpsc ? 'block' : 'none'; if (SET.fpsc && !msFpsOn) { msFpsOn = true; msFpsN = 0; msFpsT = performance.now(); requestAnimationFrame(msFpsLoop); }
+  if (window.__gfxReady) gfxApply();      // (the stats overlay, the frame rate request, the zoom, the effects of the GRAPHICS page)
 }
 $('msBtn').addEventListener('click', () => msOpen('title')); $('msModes').addEventListener('click', () => msOpen('modes'));
 setInterval(() => { if (state === 'play' || state === 'story') { STAT.t++; if (STAT.t % 15 === 0) statSave(); } }, 1000);

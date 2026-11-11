@@ -209,7 +209,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.152</small>
+    <small id="ver">V1.153</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -762,7 +762,7 @@ function drawHero(i) {
 const PROG = (() => { const OLD = ['grub', 'stalker', 'wisp', 'ogre', 'imp']; try { const p = JSON.parse(localStorage.getItem('js_prog') || '{}'), r = p.rush || {}, P = { m: Math.max(0, +p.m || 0), own: p.own || {}, beat: p.beat || {}, once: p.once || {}, rush: { best: +r.best || 0, clears: +r.clears || 0, rb: +r.rb || 0, rc: +r.rc || 0 }, hunt: Object.fromEntries(Object.entries(p.hunt && typeof p.hunt === 'object' ? p.hunt : {}).filter(([k, v]) => typeof v === 'string' && v.length === 1 && 'CBAS'.includes(v))) }; for (const k of Object.keys(P.beat)) { const m = /^c(\d)(h?)$/.exec(k); if (m && OLD[+m[1]]) { P.beat['c:' + OLD[+m[1]] + m[2]] = 1; delete P.beat[k]; } } return P; } catch (e) { return { m: 0, own: {}, beat: {}, once: {}, rush: { best: 0, clears: 0, rb: 0, rc: 0 }, hunt: {} }; } })();      // (v1.00 saved the curses you beat as c0..c4; they are called by name now so the ladder can grow)      // saved on the device: money, what you own (skills and characters), which challenges you beat
 const saveProg = () => { try { localStorage.setItem('js_prog', JSON.stringify(PROG)); } catch (e) { /* storage blocked */ } };
 // ---- v1.11 MOBILE: the options (kept in js_set), vibration, the assist levels, the pause flag and the margin a camera notch needs
-const SET = (() => { const D = { hap: 1, sz: 100, op: 78, up: 0, lh: 0, fps: 0, lite: 0, ap: 1, assist: 0, pace: 1, hb: 0, gore: 0, shk: 100, fl: 100, dn: 1, hs: 100, br: 100, ct: 100, sat: 100, scan: 0, cb: 0, fpsc: 0, edm: 100, pdm: 100, reg: 0, ien: 0, ihp: 0, ohk: 0, sub: 1, nf: 0, hc: 0, th: 0 }, R = { hap: [0, 2], sz: [70, 120], op: [30, 100], up: [0, 20], lh: [0, 1], fps: [0, 60], lite: [0, 1], ap: [0, 1], assist: [0, 3], pace: [0, 3], hb: [0, 1], gore: [0, 2], shk: [0, 150], fl: [0, 100], dn: [0, 1], hs: [0, 150], br: [70, 130], ct: [80, 140], sat: [0, 150], scan: [0, 2], cb: [0, 3], fpsc: [0, 1], edm: [25, 200], pdm: [50, 300], reg: [0, 5], ien: [0, 1], ihp: [0, 1], ohk: [0, 1], sub: [0, 1], nf: [0, 1], hc: [0, 1], th: [0, 5] }; try { const p = JSON.parse(localStorage.getItem('js_set') || '{}'); for (const k in D) if (typeof p[k] === 'number' && isFinite(p[k])) D[k] = Math.max(R[k][0], Math.min(R[k][1], Math.round(p[k]))); } catch (e) { /* storage blocked: the defaults */ } if (![0, 30, 60].includes(D.fps)) D.fps = 0; return D; })();
+const SET = (() => { const D = { hap: 1, sz: 100, op: 78, up: 0, lh: 0, fps: 0, lite: 0, ap: 1, assist: 0, pace: 1, hb: 0, gore: 0, shk: 100, fl: 100, dn: 1, hs: 100, br: 100, ct: 100, sat: 100, scan: 0, cb: 0, fpsc: 0, edm: 100, pdm: 100, reg: 0, ien: 0, ihp: 0, ohk: 0, sub: 1, nf: 0, hc: 0, th: 0, pt: 3, bgd: 3, au: 2, ov: 2, glow: 0, trl: 0, shd: 0, zoom: 100, smooth: 0, retro: 0 }, R = { hap: [0, 2], sz: [70, 120], op: [30, 100], up: [0, 20], lh: [0, 1], fps: [0, 999], lite: [0, 1], ap: [0, 1], assist: [0, 3], pace: [0, 3], hb: [0, 1], gore: [0, 2], shk: [0, 150], fl: [0, 100], dn: [0, 1], hs: [0, 150], br: [70, 130], ct: [80, 140], sat: [0, 150], scan: [0, 2], cb: [0, 3], fpsc: [0, 2], edm: [25, 200], pdm: [50, 300], reg: [0, 5], ien: [0, 1], ihp: [0, 1], ohk: [0, 1], sub: [0, 1], nf: [0, 1], hc: [0, 1], th: [0, 5], pt: [0, 4], bgd: [0, 3], au: [0, 2], ov: [0, 2], glow: [0, 3], trl: [0, 3], shd: [0, 3], zoom: [75, 125], smooth: [0, 1], retro: [0, 1] }; try { const p = JSON.parse(localStorage.getItem('js_set') || '{}'); for (const k in D) if (typeof p[k] === 'number' && isFinite(p[k])) D[k] = Math.max(R[k][0], Math.min(R[k][1], Math.round(p[k]))); } catch (e) { /* storage blocked: the defaults */ } if (![0, 30, 45, 60, 72, 90, 120, 144, 999].includes(D.fps)) D.fps = 0; if (![75, 90, 100, 110, 125].includes(D.zoom)) D.zoom = 100; return D; })();
 const saveSet = () => { try { localStorage.setItem('js_set', JSON.stringify(SET)); } catch (e) { /* storage blocked */ } };
 const STAT = (() => { const D = { t: 0, w: 0, l: 0, h: 0, p: 0 }; try { const p = JSON.parse(localStorage.getItem('js_stats') || '{}'); for (const k in D) if (typeof p[k] === 'number' && isFinite(p[k]) && p[k] >= 0) D[k] = Math.floor(p[k]); } catch { /* storage blocked */ } return D; })();      // (v1.152 the numbers of the DATA page of the settings: seconds played, fights won / lost, hits landed, parries)
 const statSave = () => { try { localStorage.setItem('js_stats', JSON.stringify(STAT)); } catch { /* storage blocked */ } };
@@ -771,7 +771,7 @@ const hash32 = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h
 const buzz = ms => { if (!SET.hap) return; ms = Math.round(ms * (SET.hap === 2 ? 1.6 : 1)); try { if (window.AndroidApp) window.AndroidApp.vibrate(ms); else if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* no motor: no buzz */ } };
 let paused = false, pauseAt = 0, tDraw = 0, powerSave = false, safeC = 0;      // safeC = the notch margin in canvas pixels
 function refreshPower() { try { powerSave = !!(window.AndroidApp && window.AndroidApp.powerSave()); } catch (e) { powerSave = false; } }
-const fpsCap = () => SET.lite || SET.fps === 30 || (!SET.fps && powerSave) ? 30 : SET.fps === 60 ? 60 : 0;      // the most frames per second the game draws (0 = as many as the screen shows)
+const fpsCap = () => SET.lite || (!SET.fps && powerSave) ? 30 : SET.fps === 999 ? 0 : SET.fps;      // the most frames per second the game draws (0 = as many as the screen shows: AUTO has the battery saver, UNLIMITED has no limit at all)
 const assistLvl = () => vs && vs.net ? 0 : SET.assist;      // (assist is for the offline fights only)
 const soft = dm => assistLvl() >= 2 ? Math.max(1, Math.round(dm * 0.7)) : dm;      // EASY: 30% less damage to you
 const autoGuard = () => assistLvl() >= 3 && !lacks('blk') && stance === 'stand' && atkAt < 0 && lpAt < 0 && jumpAt < 0 && teleAt < 0 && dgAt < 0 && mbAt < 0 && !dash && !keyL && !keyR && !padL && !padR;      // AUTO-GUARD: standing still with nothing going on, the front is guarded as if BLOCK were held
@@ -1651,19 +1651,22 @@ function drawPeds(now, dt, ly) {
   }
 }
 function resize() {
-  const dpr = window.devicePixelRatio || 1, w = innerWidth, h = innerHeight;
+  const dpr = window.devicePixelRatio || 1, w = innerWidth, h = innerHeight, ret = !!SET.retro;
   S = Math.max(1, Math.floor(h * dpr / 128));
-  VW = Math.ceil(w * dpr / S); VH = Math.ceil(h * dpr / S);
+  if (ret) { S = Math.max(1, Math.min(S, Math.floor(w * dpr / 288))); VW = 288; VH = 128; }      // (v1.153 FIXED RETRO SIZE: always the same 288 x 128 picture with black bars round it)
+  else { S = Math.max(1, Math.round(S * gfxZoomK())); VW = Math.ceil(w * dpr / S); VH = Math.ceil(h * dpr / S); }      // (CAMERA ZOOM: bigger or smaller pixels, in fights and free play)
+  gfxZ = gfxKey();
   cv.width = VW; cv.height = VH;
   { const sc = getComputedStyle($('safe')); safeC = Math.round(Math.max(parseFloat(sc.paddingLeft) || 0, parseFloat(sc.paddingRight) || 0) * dpr / S); }      // (the margin a camera notch needs, in canvas pixels: the bars and names are drawn inside it)
   const q = 8 / dpr, fs = (frac, lo, hi, maxPx) => { let n = Math.max(1, Math.round(Math.max(lo, Math.min(hi, frac * h)) / q)); if (maxPx) n = Math.min(n, Math.max(1, Math.floor(maxPx / q))); return (n * q).toFixed(3) + 'px'; }, rs = document.documentElement.style;      // the pixel font is only sharp at multiples of 8 device pixels: q = the CSS size of 8 device pixels
   rs.setProperty('--fs-hud', fs(0.026, 8, 13, (0.34 * w - 4 * (0.032 * h + 6) - 24) / 17)); rs.setProperty('--fs-pb', fs(0.017, 5, 9, 0.15 * h / 6.5)); rs.setProperty('--fs-h1', fs(0.08, 14, 44)); rs.setProperty('--fs-btn', fs(0.03, 9, 16)); rs.setProperty('--fs-q', fs(0.04, 8, 24, (0.24 * h - 8) / 5));      // (the top-left buttons may use about a third of the width, so they never run into the timer)
   cv.style.width = (VW * S / dpr) + 'px'; cv.style.height = (VH * S / dpr) + 'px';
+  cv.style.left = ret ? Math.max(0, Math.floor((w - VW * S / dpr) / 2)) + 'px' : ''; cv.style.top = ret ? Math.max(0, Math.floor((h - VH * S / dpr) / 2)) + 'px' : ''; cv.style.boxShadow = ret ? '0 0 0 100vmax #000' : '';
   gy = Math.floor(VH * 0.78);
   buildBg();
   far = buildFar(); near = buildMid(); buildGround();
   seed = 3;
-  parts = Array.from({ length: 30 }, () => ({ x: rnd() * VW, y: rnd() * gy, l: 3 + ((rnd() * 7) | 0), v: 40 + rnd() * 80 }));
+  parts = gfxParts(rnd);
 }
 
 function buildBg() {                          // static: the night sky over the city, the far sidewalk and kerb, and the road (the crossing is drawn over it)
@@ -1808,7 +1811,7 @@ function divGlow(px, py, f, now, conc) {      // the cursed energy round Yuji's 
 }
 function drawDivFx(now) {      // the shock rings of the second impact: a thick pixel ring and a thin white one that spread (seen from the side, so they are tall and thin) and a bright cross at the start
   for (let i = divFx.length - 1; i >= 0; i--) {
-    const e = divFx[i], age = now - e.born; if (age >= 520) { divFx.splice(i, 1); continue; } if (age < 0) continue;      // (a ring that has not started yet waits; vx = a ring that travels with the victim)
+    const e = divFx[i], age = now - e.born; if (age >= 520) { divFx.splice(i, 1); continue; } if (age < 0 || SET.au < 2) continue;      // (v1.153 AURA AND RINGS: below ALL the rings are not drawn, but they still run out) (a ring that has not started yet waits; vx = a ring that travels with the victim)
     const t = age / 520, R = 3 + 26 * (e.big ? 1.7 : 1) * (1 - Math.pow(1 - t, 3)), xs = Math.round(VW / 2 + e.wx + (e.vx || 0) * age / 1000 - wx);
     ctx.save(); ctx.globalAlpha = 1 - t;
     for (const [rr, col] of [[R, '#7df0ff'], [R - 1.4, '#7df0ff'], [R * 0.62, '#ffffff']]) { ctx.fillStyle = col; const n = Math.max(24, Math.round(rr * 7)); for (let a = 0; a < n; a++) { const th = a / n * 6.2832; ctx.fillRect(Math.round(xs + Math.cos(th) * rr * 0.55), Math.round(e.y + Math.sin(th) * rr), 1, 1); } }
@@ -1824,9 +1827,9 @@ const hitStop = ms => { if (state === 'play') stopMs = Math.max(stopMs, Math.min
 const ceGain = n => { if (vs && vs.ph === 'fight' && !vs.end) ce = Math.min(100, ce + n); };
 const comboBonus = (k, now) => k < 22 ? Math.min(6, Math.max(0, (now > hits.until ? 0 : hits.n) - 1)) : 0;      // the extra damage of the hit that is about to land (hits.n = the hits already landed in this combo)
 function spark(x, y, n, cols, big, dir) {      // a burst of hit sparks at the world place x, screen height y; dir 1 = thrown to the right, -1 = to the left
-  const t = pnow(); if (SET.lite) n = Math.ceil(n / 2);
+  const t = pnow(); if (SET.lite) n = Math.ceil(n / 2); n = pq(n);
   for (let i = 0; i < n; i++) { const a = (dir < 0 ? Math.PI : 0) + (Math.random() - 0.5) * 2.4, v = (big ? 70 : 45) + Math.random() * (big ? 110 : 70); sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 16, born: t, life: 150 + Math.random() * 170, c: cols[i % cols.length], len: big && i % 3 === 0 ? 3 : 2 }); }
-  if (sparks.length > 140) sparks.splice(0, sparks.length - 140);
+  const cp = gfxCap(140); if (sparks.length > cp) sparks.splice(0, sparks.length - cp);
 }
 function drawSparks(now, dt) {
   drawBolts(now); drawBig(now); drawYuBig(now); drawSMD(now, true); drawTq(now); drawTalkFx(now); drawPoundFx(now);
@@ -2107,7 +2110,7 @@ function startBlink(now) {                    // Lapse Blue: blink forward to th
   const lf = vs && vs.foes && vs.foes.length > 1 ? leadFoe() : dummy, gap = lf && lf.ko < 0 ? lf.x - wx : -1, dist = gap > 20 ? gap - 15 : gap >= 0 ? 0 : 50;
   if (dist > 0) dash = { from: wx, to: wx + dist, at: now, ms: 150 };
 }
-function puff(x, n) { for (let i = 0; i < n; i++) smoke.push({ x: x + Math.random() * 8 - 4, y: gy + 1 + Math.random() * 2, born: pnow(), vx: Math.random() * 10 - 5, vy: -(6 + Math.random() * 12), r: 1.6 + Math.random() * 2 }); if (smoke.length > 120) smoke.splice(0, smoke.length - 120); }
+function puff(x, n) { n = pq(n); for (let i = 0; i < n; i++) smoke.push({ x: x + Math.random() * 8 - 4, y: gy + 1 + Math.random() * 2, born: pnow(), vx: Math.random() * 10 - 5, vy: -(6 + Math.random() * 12), r: 1.6 + Math.random() * 2 }); const cp = gfxCap(120); if (smoke.length > cp) smoke.splice(0, smoke.length - cp); }
 function drawSmoke(now, dt) {                 // dust along the ground behind an enemy who is sliding after the kick
   if (dummy && dummy.smokeUntil > now && Math.abs(dummy.vx) > 10) puff(dummy.x, Math.random() < 0.5 ? 3 : 2);
   smoke = smoke.filter(p => now - p.born < 700);
@@ -3025,6 +3028,7 @@ function drawRedFx(now, dt, x, y, info, fi, charging, mf) {      // the red orb 
   drawBoom(now); drawPBoom(now);
 }
 function drawFoeCE(now, sx, y, mirror, hx, info, fi, amt, igAt) {      // the enemy Yuji's cursed energy flames, on both fists (the far hand first), as drawCE does for you; the sprite is mirrored when he faces left (sx = his middle on the screen, hx = his anchor column in the picture, y = the top of the picture)
+  if (!SET.au) return;
   const k = Math.floor(now * CE_FPS / 1000) % 15, cx = D.ce.cx, cy = D.ce.cy, ig = now - igAt;
   for (const [pt, off] of [[info.hf[fi], 7], [info.hn[fi], 0]]) {
     if (!pt) continue;
@@ -3083,8 +3087,8 @@ function drawBolts(now) {      // the lightning, the shock ring and the darkness
     const a = now - b.born, k = a / 350, X = Math.round(cx + b.x - wx);
     if (a < 200) { ctx.globalAlpha = 0.55 * (1 - a / 200); ctx.fillStyle = '#12030a'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }      // (the world goes dark)
     ctx.globalAlpha = Math.min(1, 1.6 * (1 - k));
-    for (let i = 0; i < 12; i++) bfBolt(X, b.y, (i / 12) * 6.283 + Math.random() * 0.5, Math.round(14 + 22 * Math.min(1, a / 140)));
-    const R = 5 + a * 0.13; for (const [col, rr] of [['#12030a', R], ['#ff2a3a', R + 1.5]]) { ctx.fillStyle = col; for (let t = 0; t < 56; t++) { if (t % 7 === 6) continue; const th = (t / 56) * 6.283; ctx.fillRect(Math.round(X + Math.cos(th) * rr), Math.round(b.y + Math.sin(th) * rr * 0.9), 1, 1); } }
+    if (SET.au) for (let i = 0; i < 12; i++) bfBolt(X, b.y, (i / 12) * 6.283 + Math.random() * 0.5, Math.round(14 + 22 * Math.min(1, a / 140)));
+    const R = 5 + a * 0.13; if (SET.au >= 2) for (const [col, rr] of [['#12030a', R], ['#ff2a3a', R + 1.5]]) { ctx.fillStyle = col; for (let t = 0; t < 56; t++) { if (t % 7 === 6) continue; const th = (t / 56) * 6.283; ctx.fillRect(Math.round(X + Math.cos(th) * rr), Math.round(b.y + Math.sin(th) * rr * 0.9), 1, 1); } }
     if (a < 120) { ctx.globalAlpha = 1; ctx.fillStyle = '#ffffff'; const r = 5 - a / 30; ctx.fillRect(Math.round(X - r), b.y - 1, Math.round(2 * r), 3); ctx.fillRect(X - 1, Math.round(b.y - r), 3, Math.round(2 * r)); }
   }
   ctx.globalAlpha = 1;
@@ -3174,19 +3178,19 @@ function drawBig(now) {      // the darkness, white flash, speed lines, three sh
     const t = Math.max(0, rn - b.real), fz = rn < b.real, X = Math.round(cx + b.x - wx), Y = b.y;
     if (b.k === 'on') {
       const R = t * 0.22; ctx.globalAlpha = Math.max(0, 1 - t / 650);
-      for (const [col, rr] of [['#12030a', R], ['#ff2a3a', R + 2]]) { ctx.fillStyle = col; for (let q = 0; q < 90; q++) { if (q % 6 === 5) continue; const th = q / 90 * 6.2832; ctx.fillRect(Math.round(X + Math.cos(th) * rr), Math.round(Y + Math.sin(th) * rr * 0.8), 1, 2); } }
-      for (let i = 0; i < 6; i++) bfBolt(X, Y, i / 6 * 6.2832 + t * 0.002, 6 + Math.round(18 * Math.min(1, t / 250)));
+      if (SET.au >= 2) for (const [col, rr] of [['#12030a', R], ['#ff2a3a', R + 2]]) { ctx.fillStyle = col; for (let q = 0; q < 90; q++) { if (q % 6 === 5) continue; const th = q / 90 * 6.2832; ctx.fillRect(Math.round(X + Math.cos(th) * rr), Math.round(Y + Math.sin(th) * rr * 0.8), 1, 2); } }
+      if (SET.au) for (let i = 0; i < 6; i++) bfBolt(X, Y, i / 6 * 6.2832 + t * 0.002, 6 + Math.round(18 * Math.min(1, t / 250)));
       continue;
     }
     if (fz || t < 520) { ctx.globalAlpha = fz ? 0.5 : 0.5 * (1 - t / 520); ctx.fillStyle = '#12030a'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }      // (dark during the freeze, then it clears)
     if (!fz && t < 160) { ctx.globalAlpha = 0.85 * (1 - t / 160); ctx.fillStyle = '#ffffff'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }      // (the white flash as the freeze ends)
     ctx.globalAlpha = Math.max(0, 1 - t / 560);
     for (let k = 0; k < 40; k++) { const a = k / 40 * 6.2832 + Math.sin(k * 12.9) * 0.08, r0 = 10 + t * 0.12, len = 22 + (k % 5) * 9; ctx.fillStyle = k % 3 === 0 ? '#ffffff' : k % 2 ? '#ff2a3a' : '#12030a'; for (let q = 0; q < len; q += 2) ctx.fillRect(Math.round(X + Math.cos(a) * (r0 + q)), Math.round(Y + Math.sin(a) * (r0 + q) * 0.8), 1, q < len / 3 ? 2 : 1); }
-    for (let n = 0; n < 3; n++) {
+    if (SET.au >= 2) for (let n = 0; n < 3; n++) {
       const R = (t - n * 80) * 0.26; if (R < 3) continue; ctx.globalAlpha = Math.max(0, 1 - R / 130); const m = Math.min(180, Math.round(R * 4));
       for (const [col, rr] of [['#12030a', R], ['#ff2a3a', R + 2], ['#ffb0a0', R + 3.5]]) { ctx.fillStyle = col; for (let q = 0; q < m; q++) { if (q % 9 === 8) continue; const th = q / m * 6.2832; ctx.fillRect(Math.round(X + Math.cos(th) * rr), Math.round(Y + Math.sin(th) * rr * 0.8), 1, R < 40 ? 2 : 1); } }
     }
-    ctx.globalAlpha = Math.max(0, 1.4 - t / 500); for (let i = 0; i < 16; i++) bfBolt(X, Y, i / 16 * 6.2832 + Math.random() * 0.4, Math.round(10 + 34 * Math.min(1, t / 200)));
+    ctx.globalAlpha = Math.max(0, 1.4 - t / 500); if (SET.au) for (let i = 0; i < 16; i++) bfBolt(X, Y, i / 16 * 6.2832 + Math.random() * 0.4, Math.round(10 + 34 * Math.min(1, t / 200)));
     if (t < 220) { ctx.globalAlpha = 1; ctx.fillStyle = '#ffffff'; const r = 12 - t / 20; ctx.fillRect(Math.round(X - r), Y - 1, Math.round(2 * r), 3); ctx.fillRect(X - 1, Math.round(Y - r), 3, Math.round(2 * r)); }
   }
   ctx.globalAlpha = 1;
@@ -3355,7 +3359,7 @@ function drawTq(now) {      // the effects of the techniques: the jet of blood, 
   ctx.restore();
 }
 function drawCE(now, x, y, info, fi) {       // CURSED ENERGY: unstable cyan flames on both fists (the far hand first, so the near one is on top). x, y = where Gojo's sprite is drawn
-  if (ceAmt <= 0.02 || cm >= 2) return;      // red mode has no flames: its hands just have a red outline (drawn in its sprites)
+  if (ceAmt <= 0.02 || cm >= 2 || !SET.au) return;      // red mode has no flames: its hands just have a red outline (drawn in its sprites)
   const A = ceOn && info.ho ? info.ho : info, k = Math.floor(now * CE_FPS / 1000) % 15, cx = D.ce.cx, cy = D.ce.cy, ig = now - ceAt;
   for (const [pt, off] of [[A.hf[fi], 7], [A.hn[fi], 0]]) {
     if (!pt) continue;                         // (no hands to light while he turns into a streak of light)
@@ -3382,8 +3386,8 @@ function drawBackdrop(now) {                  // everything behind the fighters 
   if (domBgOff(now)) { ctx.fillStyle = '#000'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }
   else if (alley) { drawAlley(now); if (vs && vs.c3 && state === 'play') c3World(now); }      // (chapter 2: the portal stands at the end of the street)
   else { ctx.save(); ctx.translate(0, -FAR); ctx.drawImage(bg, 0, 0);
-  layer(far, 0.25); layer(near, 0.55);
-  drawProps(now); ctx.restore(); drawGround(); drawBlood(now); drawCrater(now); }
+  if (SET.bgd >= 1) layer(far, 0.25); if (SET.bgd >= 2) { layer(near, 0.55); drawProps(now); }      // (v1.153 BACKGROUND DETAIL: FLAT = the sky and the road, LOW + the far towers, MEDIUM + the shops and the lamps, FULL + the wind)
+  ctx.restore(); drawGround(); drawBlood(now); drawCrater(now); }
   domVoidLayer(now);
 }
 // ---------------------------------------------------------------- JUMPSCARE (Verity's DOMAIN button; the enemy Verity uses it too from GRADE 2 up). Verity lunges and grabs the other fighter by the throat (15 frames, swing number 23), the screen cuts to the screaming Verity (a 64x64 close-up in 15 frames that shakes and zooms, 2.3 s), and then the victim is STUNNED for 5 s (he cowers and shakes, can not act, but can still be hit) and takes 3 FEAR damage every 0.1 s (150 in all). It costs 67% of the energy and can be used again after 30 s. The victim of the player's JUMPSCARE is frozen from the first moment (nothing dodges it); the player who sees the enemy's coming (0.5 s of wind-up) can jump, teleport, dash or crouch out of it.
@@ -4193,7 +4197,7 @@ function poundImpact(now) {      // the ground pound lands: every enemy under hi
 function drawPoundFx(now) {      // the shock wave of the pound: two pale crests run out along the floor, low and fast, and fade (0.42 s)
   if (!pwFx.length) return; const cx = Math.round(VW / 2);
   for (let i = pwFx.length - 1; i >= 0; i--) {
-    const p = pwFx[i], a = now - p.born; if (a > 420) { pwFx.splice(i, 1); continue; }
+    const p = pwFx[i], a = now - p.born; if (a > 420) { pwFx.splice(i, 1); continue; } if (SET.au < 2) continue;
     const k = Math.max(0, a) / 420, r = 6 + 150 * (1 - Math.pow(1 - k, 2)), X = Math.round(cx + p.x - wx); ctx.globalAlpha = Math.max(0, 1 - k) * 0.9;
     for (const sg of [-1, 1]) for (let j = 0; j < 7; j++) { const hh = Math.max(1, Math.round((5 - j * 0.6) * (1 - k))); ctx.fillStyle = j < 2 ? '#ffffff' : '#c9c2dc'; ctx.fillRect(X + sg * Math.round(r - j * 4) - (sg < 0 ? 1 : 0), gy + 2 - hh, 2, hh); }
   }
@@ -4889,7 +4893,7 @@ function buildCourt() {      // the grounds of Jujutsu High at night: a big moon
 }
 function drawAlley(now) {
   buildAlley(); if (track) { drawTrack(now); return; }      // (the training field of part 2 draws all of itself)
-  ctx.drawImage(alleyBg, 0, 0); layer(alleyProps, 0.55);
+  ctx.drawImage(alleyBg, 0, 0); if (SET.bgd >= 1) layer(alleyProps, 0.55);
   const o = Math.round(((-wx % 28) + 28) % 28); for (let x = o - 28; x < VW; x += 28) ctx.drawImage(alleyTile, x, gy - 12);
   drawBlood(now); if ((now / 1000) % 3.3 < 0.08) { ctx.fillStyle = 'rgba(0,0,12,0.35)'; ctx.fillRect(0, 0, VW, VH); }      // the lamp flickers now and then
 }
@@ -5912,9 +5916,9 @@ let deb = [];
 const DEB = { wood: ['#b07a3a', '#8a5a2b', '#5a3a1a'], stone: ['#9a8fb0', '#6d5f86', '#5b516b'], metal: ['#9aa2b8', '#6d7488', '#4a5064'], glass: ['#e8f6ff', '#9fd8ff', '#2c63c9'], dust: ['#b8b0a0', '#8a8478', '#6a6458'], doll: ['#e8d6c0', '#a02a3a', '#2a1a22'], lamp: ['#ffd27a', '#3a3f55'], sign: ['#c9b27a', '#6a2a2a'] };
 const PDEB = { crate: 'wood', bin: 'metal', vend: 'glass', statue: 'stone', doll: 'doll', lamp: 'lamp', sign: 'sign' };
 function debBurst(x, h, n, cols, spd, size) {      // n pieces fly out of the world place x, h px above the floor
-  const t = pnow();
+  const t = pnow(); n = pq(n);
   for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI, v = spd * (0.4 + Math.random() * 0.8); deb.push({ x: x + Math.random() * 6 - 3, h: h + Math.random() * 4, vx: Math.cos(a) * v, vy: Math.sin(a) * v * 0.9 + 20, dz: Math.random() * 4, s: size || (Math.random() < 0.3 ? 2 : 1), c: cols[i % cols.length], born: t, life: 2400 + Math.random() * 1400, rest: false }); }
-  if (deb.length > 100) deb.splice(0, deb.length - 100);
+  const cp = gfxCap(100); if (deb.length > cp) deb.splice(0, deb.length - cp);
 }
 function drawDeb(now, dt) {
   if (physOn() && state === 'play') litStep(dt);
@@ -6485,7 +6489,8 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
 function tick(t) {
   requestAnimationFrame(tick);                // schedule first so one bad frame can't stop the loop
   if (paused) { if (state !== 'play') setPause(false); return; }      // PAUSE: nothing moves and the game's clock stands still
-  const cap = fpsCap(); if (cap && t - tDraw < 1000 / cap - 3) return; tDraw = t;      // the 30 / 60 FPS option and the battery saver: the frames in between are skipped
+  const cap = fpsCap(); if (cap) { const iv = 1000 / cap; if (t - tDraw < iv - 2) return; tDraw = t - tDraw > iv * 2 ? t : tDraw + iv; } else tDraw = t;      // the FPS option and the battery saver: the frames in between are skipped (the next frame is due one interval after the LAST due time, so 45 or 72 FPS really average 45 or 72)
+  gfxFrame(); if (gfxZ >= 0 && gfxZ !== gfxKey()) resize();      // (v1.153 the zoom of the camera follows the screen: fights and free play only)
   const rdt = Math.max(0, Math.min(100, t - tLast)); tLast = t;
   let rate = (TR.spd && freePlay() ? TRS[TR.spd] : 1) * paceNow();      // GAME SPEED (SETTINGS > TRAIN: half or a quarter in free play) times GAME PACE (SETTINGS > GAME: 1.25 or 1.5 times in a fight): the game's clock runs at that rate of the real one, and the slow motion below is a fraction of that
   if (t < slowAt + slowMs) { const k = (t - slowAt) / slowMs; rate *= k < 0.35 ? slowRate : slowRate + (1 - slowRate) * Math.pow((k - 0.35) / 0.65, 2); }      // slow motion: the game's clock falls behind the real one
@@ -6515,6 +6520,7 @@ function tick(t) {
     pctx.drawImage(idleF[Math.floor(now / (1000 / IDLE_FPS)) % idleF.length], 0, 0);
     for (const q of selPv) { const cu = q.who.slice(0, 2) === 'cu' ? cuIdleCv(q.who, now) : null; if (q.who.slice(0, 2) === 'cu' && !cu) continue; q.g.clearRect(0, 0, q.g.canvas.width, 64); q.g.drawImage(cu || (q.who === 'yuji' ? YUF.norm.idle[Math.floor(now / (1000 / IDLE_FPS)) % 15] : q.who === 'cat' ? cfr('idle', now / 100, true, false) : q.who === 'freddy' ? fredF(now / (1000 / IDLE_FPS)) : vfr('idle', now / 100, true, false)), 0, 0); }
   } else if (state === 'title') drawHero(updateBlink(now));
+  gfxPost(still || now < holdUntil); gfxEnd();      // (v1.153 the glow over the finished picture, and the numbers of the stats overlay)
 }
 
 // ---------------------------------------------------------------- input
@@ -6773,7 +6779,7 @@ function applyCtl() {      // the size, see-through-ness, height and side of the
 }
 const OPT_DEF = {      // [key, name, 'r' (a slider: min, max, step, unit) or 't' (a button that cycles: names, values)]
   optC: [['sz', 'BUTTON SIZE', 'r', 70, 120, 5, '%'], ['op', 'BUTTON OPACITY', 'r', 30, 100, 5, '%'], ['up', 'RAISE BUTTONS', 'r', 0, 20, 1, ''], ['lh', 'SIDE', 't', ['RIGHT-HANDED', 'LEFT-HANDED']], ['hap', 'VIBRATION', 't', ['OFF', 'LIGHT', 'STRONG']]],
-  optG: [['fps', 'FRAME RATE', 't', ['AUTO', '30 FPS', '60 FPS'], [0, 30, 60]], ['lite', 'BATTERY SAVER', 't', ['OFF', 'ON']], ['ap', 'AUTO-PAUSE', 't', ['OFF', 'ON']], ['assist', 'ASSIST', 't', ['OFF', 'PARRY+', 'EASY', 'AUTO-GUARD']], ['pace', 'GAME PACE', 't', ['NORMAL', 'FAST', 'TURBO']], ['hb', 'SHOW HITBOXES', 't', ['OFF', 'ON']], ['gore', 'GRAPHIC DAMAGE', 't', ['FULL', 'CLEAN', 'OFF']]] };
+  optG: [['fps', 'FRAME RATE', 't', ['AUTO', '30 FPS', '45 FPS', '60 FPS', '72 FPS', '90 FPS', '120 FPS', '144 FPS', 'UNLIMITED'], [0, 30, 45, 60, 72, 90, 120, 144, 999]], ['lite', 'BATTERY SAVER', 't', ['OFF', 'ON']], ['ap', 'AUTO-PAUSE', 't', ['OFF', 'ON']], ['assist', 'ASSIST', 't', ['OFF', 'PARRY+', 'EASY', 'AUTO-GUARD']], ['pace', 'GAME PACE', 't', ['NORMAL', 'FAST', 'TURBO']], ['hb', 'SHOW HITBOXES', 't', ['OFF', 'ON']], ['gore', 'GRAPHIC DAMAGE', 't', ['FULL', 'CLEAN', 'OFF']]] };
 function buildOpts() {
   for (const id in OPT_DEF) {
     const box = $(id); box.innerHTML = '';
@@ -6827,6 +6833,7 @@ $('bkLoad').addEventListener('click', () => {
   try { const del = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (bkOwn(k)) del.push(k); } del.forEach(k => localStorage.removeItem(k)); for (const k in o) localStorage.setItem(k, o[k]); bkSay('LOADED'); location.reload(); } catch (e) { bkSay('COULD NOT SAVE ON THIS DEVICE'); }
 });
 applyCtl(); buildOpts(); setTab(0); refreshPower();
+__GFX__
 __MSET__
 const toggleDummy = mode => { if (dummy && dummy.mode === mode) dummy = null; else spawnDummy(pnow(), mode); closeSettings(); };
 $('dummyBtn').addEventListener('click', () => toggleDummy('dummy'));      // a punching bag that reacts to every hit

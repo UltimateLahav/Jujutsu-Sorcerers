@@ -209,7 +209,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.152</small>
+    <small id="ver">V1.153</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -1906,7 +1906,7 @@ function drawHero(i) {
 const PROG = (() => { const OLD = ['grub', 'stalker', 'wisp', 'ogre', 'imp']; try { const p = JSON.parse(localStorage.getItem('js_prog') || '{}'), r = p.rush || {}, P = { m: Math.max(0, +p.m || 0), own: p.own || {}, beat: p.beat || {}, once: p.once || {}, rush: { best: +r.best || 0, clears: +r.clears || 0, rb: +r.rb || 0, rc: +r.rc || 0 }, hunt: Object.fromEntries(Object.entries(p.hunt && typeof p.hunt === 'object' ? p.hunt : {}).filter(([k, v]) => typeof v === 'string' && v.length === 1 && 'CBAS'.includes(v))) }; for (const k of Object.keys(P.beat)) { const m = /^c(\d)(h?)$/.exec(k); if (m && OLD[+m[1]]) { P.beat['c:' + OLD[+m[1]] + m[2]] = 1; delete P.beat[k]; } } return P; } catch (e) { return { m: 0, own: {}, beat: {}, once: {}, rush: { best: 0, clears: 0, rb: 0, rc: 0 }, hunt: {} }; } })();      // (v1.00 saved the curses you beat as c0..c4; they are called by name now so the ladder can grow)      // saved on the device: money, what you own (skills and characters), which challenges you beat
 const saveProg = () => { try { localStorage.setItem('js_prog', JSON.stringify(PROG)); } catch (e) { /* storage blocked */ } };
 // ---- v1.11 MOBILE: the options (kept in js_set), vibration, the assist levels, the pause flag and the margin a camera notch needs
-const SET = (() => { const D = { hap: 1, sz: 100, op: 78, up: 0, lh: 0, fps: 0, lite: 0, ap: 1, assist: 0, pace: 1, hb: 0, gore: 0, shk: 100, fl: 100, dn: 1, hs: 100, br: 100, ct: 100, sat: 100, scan: 0, cb: 0, fpsc: 0, edm: 100, pdm: 100, reg: 0, ien: 0, ihp: 0, ohk: 0, sub: 1, nf: 0, hc: 0, th: 0 }, R = { hap: [0, 2], sz: [70, 120], op: [30, 100], up: [0, 20], lh: [0, 1], fps: [0, 60], lite: [0, 1], ap: [0, 1], assist: [0, 3], pace: [0, 3], hb: [0, 1], gore: [0, 2], shk: [0, 150], fl: [0, 100], dn: [0, 1], hs: [0, 150], br: [70, 130], ct: [80, 140], sat: [0, 150], scan: [0, 2], cb: [0, 3], fpsc: [0, 1], edm: [25, 200], pdm: [50, 300], reg: [0, 5], ien: [0, 1], ihp: [0, 1], ohk: [0, 1], sub: [0, 1], nf: [0, 1], hc: [0, 1], th: [0, 5] }; try { const p = JSON.parse(localStorage.getItem('js_set') || '{}'); for (const k in D) if (typeof p[k] === 'number' && isFinite(p[k])) D[k] = Math.max(R[k][0], Math.min(R[k][1], Math.round(p[k]))); } catch (e) { /* storage blocked: the defaults */ } if (![0, 30, 60].includes(D.fps)) D.fps = 0; return D; })();
+const SET = (() => { const D = { hap: 1, sz: 100, op: 78, up: 0, lh: 0, fps: 0, lite: 0, ap: 1, assist: 0, pace: 1, hb: 0, gore: 0, shk: 100, fl: 100, dn: 1, hs: 100, br: 100, ct: 100, sat: 100, scan: 0, cb: 0, fpsc: 0, edm: 100, pdm: 100, reg: 0, ien: 0, ihp: 0, ohk: 0, sub: 1, nf: 0, hc: 0, th: 0, pt: 3, bgd: 3, au: 2, ov: 2, glow: 0, trl: 0, shd: 0, zoom: 100, smooth: 0, retro: 0 }, R = { hap: [0, 2], sz: [70, 120], op: [30, 100], up: [0, 20], lh: [0, 1], fps: [0, 999], lite: [0, 1], ap: [0, 1], assist: [0, 3], pace: [0, 3], hb: [0, 1], gore: [0, 2], shk: [0, 150], fl: [0, 100], dn: [0, 1], hs: [0, 150], br: [70, 130], ct: [80, 140], sat: [0, 150], scan: [0, 2], cb: [0, 3], fpsc: [0, 2], edm: [25, 200], pdm: [50, 300], reg: [0, 5], ien: [0, 1], ihp: [0, 1], ohk: [0, 1], sub: [0, 1], nf: [0, 1], hc: [0, 1], th: [0, 5], pt: [0, 4], bgd: [0, 3], au: [0, 2], ov: [0, 2], glow: [0, 3], trl: [0, 3], shd: [0, 3], zoom: [75, 125], smooth: [0, 1], retro: [0, 1] }; try { const p = JSON.parse(localStorage.getItem('js_set') || '{}'); for (const k in D) if (typeof p[k] === 'number' && isFinite(p[k])) D[k] = Math.max(R[k][0], Math.min(R[k][1], Math.round(p[k]))); } catch (e) { /* storage blocked: the defaults */ } if (![0, 30, 45, 60, 72, 90, 120, 144, 999].includes(D.fps)) D.fps = 0; if (![75, 90, 100, 110, 125].includes(D.zoom)) D.zoom = 100; return D; })();
 const saveSet = () => { try { localStorage.setItem('js_set', JSON.stringify(SET)); } catch (e) { /* storage blocked */ } };
 const STAT = (() => { const D = { t: 0, w: 0, l: 0, h: 0, p: 0 }; try { const p = JSON.parse(localStorage.getItem('js_stats') || '{}'); for (const k in D) if (typeof p[k] === 'number' && isFinite(p[k]) && p[k] >= 0) D[k] = Math.floor(p[k]); } catch { /* storage blocked */ } return D; })();      // (v1.152 the numbers of the DATA page of the settings: seconds played, fights won / lost, hits landed, parries)
 const statSave = () => { try { localStorage.setItem('js_stats', JSON.stringify(STAT)); } catch { /* storage blocked */ } };
@@ -1915,7 +1915,7 @@ const hash32 = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h
 const buzz = ms => { if (!SET.hap) return; ms = Math.round(ms * (SET.hap === 2 ? 1.6 : 1)); try { if (window.AndroidApp) window.AndroidApp.vibrate(ms); else if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* no motor: no buzz */ } };
 let paused = false, pauseAt = 0, tDraw = 0, powerSave = false, safeC = 0;      // safeC = the notch margin in canvas pixels
 function refreshPower() { try { powerSave = !!(window.AndroidApp && window.AndroidApp.powerSave()); } catch (e) { powerSave = false; } }
-const fpsCap = () => SET.lite || SET.fps === 30 || (!SET.fps && powerSave) ? 30 : SET.fps === 60 ? 60 : 0;      // the most frames per second the game draws (0 = as many as the screen shows)
+const fpsCap = () => SET.lite || (!SET.fps && powerSave) ? 30 : SET.fps === 999 ? 0 : SET.fps;      // the most frames per second the game draws (0 = as many as the screen shows: AUTO has the battery saver, UNLIMITED has no limit at all)
 const assistLvl = () => vs && vs.net ? 0 : SET.assist;      // (assist is for the offline fights only)
 const soft = dm => assistLvl() >= 2 ? Math.max(1, Math.round(dm * 0.7)) : dm;      // EASY: 30% less damage to you
 const autoGuard = () => assistLvl() >= 3 && !lacks('blk') && stance === 'stand' && atkAt < 0 && lpAt < 0 && jumpAt < 0 && teleAt < 0 && dgAt < 0 && mbAt < 0 && !dash && !keyL && !keyR && !padL && !padR;      // AUTO-GUARD: standing still with nothing going on, the front is guarded as if BLOCK were held
@@ -2795,19 +2795,22 @@ function drawPeds(now, dt, ly) {
   }
 }
 function resize() {
-  const dpr = window.devicePixelRatio || 1, w = innerWidth, h = innerHeight;
+  const dpr = window.devicePixelRatio || 1, w = innerWidth, h = innerHeight, ret = !!SET.retro;
   S = Math.max(1, Math.floor(h * dpr / 128));
-  VW = Math.ceil(w * dpr / S); VH = Math.ceil(h * dpr / S);
+  if (ret) { S = Math.max(1, Math.min(S, Math.floor(w * dpr / 288))); VW = 288; VH = 128; }      // (v1.153 FIXED RETRO SIZE: always the same 288 x 128 picture with black bars round it)
+  else { S = Math.max(1, Math.round(S * gfxZoomK())); VW = Math.ceil(w * dpr / S); VH = Math.ceil(h * dpr / S); }      // (CAMERA ZOOM: bigger or smaller pixels, in fights and free play)
+  gfxZ = gfxKey();
   cv.width = VW; cv.height = VH;
   { const sc = getComputedStyle($('safe')); safeC = Math.round(Math.max(parseFloat(sc.paddingLeft) || 0, parseFloat(sc.paddingRight) || 0) * dpr / S); }      // (the margin a camera notch needs, in canvas pixels: the bars and names are drawn inside it)
   const q = 8 / dpr, fs = (frac, lo, hi, maxPx) => { let n = Math.max(1, Math.round(Math.max(lo, Math.min(hi, frac * h)) / q)); if (maxPx) n = Math.min(n, Math.max(1, Math.floor(maxPx / q))); return (n * q).toFixed(3) + 'px'; }, rs = document.documentElement.style;      // the pixel font is only sharp at multiples of 8 device pixels: q = the CSS size of 8 device pixels
   rs.setProperty('--fs-hud', fs(0.026, 8, 13, (0.34 * w - 4 * (0.032 * h + 6) - 24) / 17)); rs.setProperty('--fs-pb', fs(0.017, 5, 9, 0.15 * h / 6.5)); rs.setProperty('--fs-h1', fs(0.08, 14, 44)); rs.setProperty('--fs-btn', fs(0.03, 9, 16)); rs.setProperty('--fs-q', fs(0.04, 8, 24, (0.24 * h - 8) / 5));      // (the top-left buttons may use about a third of the width, so they never run into the timer)
   cv.style.width = (VW * S / dpr) + 'px'; cv.style.height = (VH * S / dpr) + 'px';
+  cv.style.left = ret ? Math.max(0, Math.floor((w - VW * S / dpr) / 2)) + 'px' : ''; cv.style.top = ret ? Math.max(0, Math.floor((h - VH * S / dpr) / 2)) + 'px' : ''; cv.style.boxShadow = ret ? '0 0 0 100vmax #000' : '';
   gy = Math.floor(VH * 0.78);
   buildBg();
   far = buildFar(); near = buildMid(); buildGround();
   seed = 3;
-  parts = Array.from({ length: 30 }, () => ({ x: rnd() * VW, y: rnd() * gy, l: 3 + ((rnd() * 7) | 0), v: 40 + rnd() * 80 }));
+  parts = gfxParts(rnd);
 }
 
 function buildBg() {                          // static: the night sky over the city, the far sidewalk and kerb, and the road (the crossing is drawn over it)
@@ -2952,7 +2955,7 @@ function divGlow(px, py, f, now, conc) {      // the cursed energy round Yuji's 
 }
 function drawDivFx(now) {      // the shock rings of the second impact: a thick pixel ring and a thin white one that spread (seen from the side, so they are tall and thin) and a bright cross at the start
   for (let i = divFx.length - 1; i >= 0; i--) {
-    const e = divFx[i], age = now - e.born; if (age >= 520) { divFx.splice(i, 1); continue; } if (age < 0) continue;      // (a ring that has not started yet waits; vx = a ring that travels with the victim)
+    const e = divFx[i], age = now - e.born; if (age >= 520) { divFx.splice(i, 1); continue; } if (age < 0 || SET.au < 2) continue;      // (v1.153 AURA AND RINGS: below ALL the rings are not drawn, but they still run out) (a ring that has not started yet waits; vx = a ring that travels with the victim)
     const t = age / 520, R = 3 + 26 * (e.big ? 1.7 : 1) * (1 - Math.pow(1 - t, 3)), xs = Math.round(VW / 2 + e.wx + (e.vx || 0) * age / 1000 - wx);
     ctx.save(); ctx.globalAlpha = 1 - t;
     for (const [rr, col] of [[R, '#7df0ff'], [R - 1.4, '#7df0ff'], [R * 0.62, '#ffffff']]) { ctx.fillStyle = col; const n = Math.max(24, Math.round(rr * 7)); for (let a = 0; a < n; a++) { const th = a / n * 6.2832; ctx.fillRect(Math.round(xs + Math.cos(th) * rr * 0.55), Math.round(e.y + Math.sin(th) * rr), 1, 1); } }
@@ -2968,9 +2971,9 @@ const hitStop = ms => { if (state === 'play') stopMs = Math.max(stopMs, Math.min
 const ceGain = n => { if (vs && vs.ph === 'fight' && !vs.end) ce = Math.min(100, ce + n); };
 const comboBonus = (k, now) => k < 22 ? Math.min(6, Math.max(0, (now > hits.until ? 0 : hits.n) - 1)) : 0;      // the extra damage of the hit that is about to land (hits.n = the hits already landed in this combo)
 function spark(x, y, n, cols, big, dir) {      // a burst of hit sparks at the world place x, screen height y; dir 1 = thrown to the right, -1 = to the left
-  const t = pnow(); if (SET.lite) n = Math.ceil(n / 2);
+  const t = pnow(); if (SET.lite) n = Math.ceil(n / 2); n = pq(n);
   for (let i = 0; i < n; i++) { const a = (dir < 0 ? Math.PI : 0) + (Math.random() - 0.5) * 2.4, v = (big ? 70 : 45) + Math.random() * (big ? 110 : 70); sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 16, born: t, life: 150 + Math.random() * 170, c: cols[i % cols.length], len: big && i % 3 === 0 ? 3 : 2 }); }
-  if (sparks.length > 140) sparks.splice(0, sparks.length - 140);
+  const cp = gfxCap(140); if (sparks.length > cp) sparks.splice(0, sparks.length - cp);
 }
 function drawSparks(now, dt) {
   drawBolts(now); drawBig(now); drawYuBig(now); drawSMD(now, true); drawTq(now); drawTalkFx(now); drawPoundFx(now);
@@ -3251,7 +3254,7 @@ function startBlink(now) {                    // Lapse Blue: blink forward to th
   const lf = vs && vs.foes && vs.foes.length > 1 ? leadFoe() : dummy, gap = lf && lf.ko < 0 ? lf.x - wx : -1, dist = gap > 20 ? gap - 15 : gap >= 0 ? 0 : 50;
   if (dist > 0) dash = { from: wx, to: wx + dist, at: now, ms: 150 };
 }
-function puff(x, n) { for (let i = 0; i < n; i++) smoke.push({ x: x + Math.random() * 8 - 4, y: gy + 1 + Math.random() * 2, born: pnow(), vx: Math.random() * 10 - 5, vy: -(6 + Math.random() * 12), r: 1.6 + Math.random() * 2 }); if (smoke.length > 120) smoke.splice(0, smoke.length - 120); }
+function puff(x, n) { n = pq(n); for (let i = 0; i < n; i++) smoke.push({ x: x + Math.random() * 8 - 4, y: gy + 1 + Math.random() * 2, born: pnow(), vx: Math.random() * 10 - 5, vy: -(6 + Math.random() * 12), r: 1.6 + Math.random() * 2 }); const cp = gfxCap(120); if (smoke.length > cp) smoke.splice(0, smoke.length - cp); }
 function drawSmoke(now, dt) {                 // dust along the ground behind an enemy who is sliding after the kick
   if (dummy && dummy.smokeUntil > now && Math.abs(dummy.vx) > 10) puff(dummy.x, Math.random() < 0.5 ? 3 : 2);
   smoke = smoke.filter(p => now - p.born < 700);
@@ -4169,6 +4172,7 @@ function drawRedFx(now, dt, x, y, info, fi, charging, mf) {      // the red orb 
   drawBoom(now); drawPBoom(now);
 }
 function drawFoeCE(now, sx, y, mirror, hx, info, fi, amt, igAt) {      // the enemy Yuji's cursed energy flames, on both fists (the far hand first), as drawCE does for you; the sprite is mirrored when he faces left (sx = his middle on the screen, hx = his anchor column in the picture, y = the top of the picture)
+  if (!SET.au) return;
   const k = Math.floor(now * CE_FPS / 1000) % 15, cx = D.ce.cx, cy = D.ce.cy, ig = now - igAt;
   for (const [pt, off] of [[info.hf[fi], 7], [info.hn[fi], 0]]) {
     if (!pt) continue;
@@ -4227,8 +4231,8 @@ function drawBolts(now) {      // the lightning, the shock ring and the darkness
     const a = now - b.born, k = a / 350, X = Math.round(cx + b.x - wx);
     if (a < 200) { ctx.globalAlpha = 0.55 * (1 - a / 200); ctx.fillStyle = '#12030a'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }      // (the world goes dark)
     ctx.globalAlpha = Math.min(1, 1.6 * (1 - k));
-    for (let i = 0; i < 12; i++) bfBolt(X, b.y, (i / 12) * 6.283 + Math.random() * 0.5, Math.round(14 + 22 * Math.min(1, a / 140)));
-    const R = 5 + a * 0.13; for (const [col, rr] of [['#12030a', R], ['#ff2a3a', R + 1.5]]) { ctx.fillStyle = col; for (let t = 0; t < 56; t++) { if (t % 7 === 6) continue; const th = (t / 56) * 6.283; ctx.fillRect(Math.round(X + Math.cos(th) * rr), Math.round(b.y + Math.sin(th) * rr * 0.9), 1, 1); } }
+    if (SET.au) for (let i = 0; i < 12; i++) bfBolt(X, b.y, (i / 12) * 6.283 + Math.random() * 0.5, Math.round(14 + 22 * Math.min(1, a / 140)));
+    const R = 5 + a * 0.13; if (SET.au >= 2) for (const [col, rr] of [['#12030a', R], ['#ff2a3a', R + 1.5]]) { ctx.fillStyle = col; for (let t = 0; t < 56; t++) { if (t % 7 === 6) continue; const th = (t / 56) * 6.283; ctx.fillRect(Math.round(X + Math.cos(th) * rr), Math.round(b.y + Math.sin(th) * rr * 0.9), 1, 1); } }
     if (a < 120) { ctx.globalAlpha = 1; ctx.fillStyle = '#ffffff'; const r = 5 - a / 30; ctx.fillRect(Math.round(X - r), b.y - 1, Math.round(2 * r), 3); ctx.fillRect(X - 1, Math.round(b.y - r), 3, Math.round(2 * r)); }
   }
   ctx.globalAlpha = 1;
@@ -4318,19 +4322,19 @@ function drawBig(now) {      // the darkness, white flash, speed lines, three sh
     const t = Math.max(0, rn - b.real), fz = rn < b.real, X = Math.round(cx + b.x - wx), Y = b.y;
     if (b.k === 'on') {
       const R = t * 0.22; ctx.globalAlpha = Math.max(0, 1 - t / 650);
-      for (const [col, rr] of [['#12030a', R], ['#ff2a3a', R + 2]]) { ctx.fillStyle = col; for (let q = 0; q < 90; q++) { if (q % 6 === 5) continue; const th = q / 90 * 6.2832; ctx.fillRect(Math.round(X + Math.cos(th) * rr), Math.round(Y + Math.sin(th) * rr * 0.8), 1, 2); } }
-      for (let i = 0; i < 6; i++) bfBolt(X, Y, i / 6 * 6.2832 + t * 0.002, 6 + Math.round(18 * Math.min(1, t / 250)));
+      if (SET.au >= 2) for (const [col, rr] of [['#12030a', R], ['#ff2a3a', R + 2]]) { ctx.fillStyle = col; for (let q = 0; q < 90; q++) { if (q % 6 === 5) continue; const th = q / 90 * 6.2832; ctx.fillRect(Math.round(X + Math.cos(th) * rr), Math.round(Y + Math.sin(th) * rr * 0.8), 1, 2); } }
+      if (SET.au) for (let i = 0; i < 6; i++) bfBolt(X, Y, i / 6 * 6.2832 + t * 0.002, 6 + Math.round(18 * Math.min(1, t / 250)));
       continue;
     }
     if (fz || t < 520) { ctx.globalAlpha = fz ? 0.5 : 0.5 * (1 - t / 520); ctx.fillStyle = '#12030a'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }      // (dark during the freeze, then it clears)
     if (!fz && t < 160) { ctx.globalAlpha = 0.85 * (1 - t / 160); ctx.fillStyle = '#ffffff'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }      // (the white flash as the freeze ends)
     ctx.globalAlpha = Math.max(0, 1 - t / 560);
     for (let k = 0; k < 40; k++) { const a = k / 40 * 6.2832 + Math.sin(k * 12.9) * 0.08, r0 = 10 + t * 0.12, len = 22 + (k % 5) * 9; ctx.fillStyle = k % 3 === 0 ? '#ffffff' : k % 2 ? '#ff2a3a' : '#12030a'; for (let q = 0; q < len; q += 2) ctx.fillRect(Math.round(X + Math.cos(a) * (r0 + q)), Math.round(Y + Math.sin(a) * (r0 + q) * 0.8), 1, q < len / 3 ? 2 : 1); }
-    for (let n = 0; n < 3; n++) {
+    if (SET.au >= 2) for (let n = 0; n < 3; n++) {
       const R = (t - n * 80) * 0.26; if (R < 3) continue; ctx.globalAlpha = Math.max(0, 1 - R / 130); const m = Math.min(180, Math.round(R * 4));
       for (const [col, rr] of [['#12030a', R], ['#ff2a3a', R + 2], ['#ffb0a0', R + 3.5]]) { ctx.fillStyle = col; for (let q = 0; q < m; q++) { if (q % 9 === 8) continue; const th = q / m * 6.2832; ctx.fillRect(Math.round(X + Math.cos(th) * rr), Math.round(Y + Math.sin(th) * rr * 0.8), 1, R < 40 ? 2 : 1); } }
     }
-    ctx.globalAlpha = Math.max(0, 1.4 - t / 500); for (let i = 0; i < 16; i++) bfBolt(X, Y, i / 16 * 6.2832 + Math.random() * 0.4, Math.round(10 + 34 * Math.min(1, t / 200)));
+    ctx.globalAlpha = Math.max(0, 1.4 - t / 500); if (SET.au) for (let i = 0; i < 16; i++) bfBolt(X, Y, i / 16 * 6.2832 + Math.random() * 0.4, Math.round(10 + 34 * Math.min(1, t / 200)));
     if (t < 220) { ctx.globalAlpha = 1; ctx.fillStyle = '#ffffff'; const r = 12 - t / 20; ctx.fillRect(Math.round(X - r), Y - 1, Math.round(2 * r), 3); ctx.fillRect(X - 1, Math.round(Y - r), 3, Math.round(2 * r)); }
   }
   ctx.globalAlpha = 1;
@@ -4499,7 +4503,7 @@ function drawTq(now) {      // the effects of the techniques: the jet of blood, 
   ctx.restore();
 }
 function drawCE(now, x, y, info, fi) {       // CURSED ENERGY: unstable cyan flames on both fists (the far hand first, so the near one is on top). x, y = where Gojo's sprite is drawn
-  if (ceAmt <= 0.02 || cm >= 2) return;      // red mode has no flames: its hands just have a red outline (drawn in its sprites)
+  if (ceAmt <= 0.02 || cm >= 2 || !SET.au) return;      // red mode has no flames: its hands just have a red outline (drawn in its sprites)
   const A = ceOn && info.ho ? info.ho : info, k = Math.floor(now * CE_FPS / 1000) % 15, cx = D.ce.cx, cy = D.ce.cy, ig = now - ceAt;
   for (const [pt, off] of [[A.hf[fi], 7], [A.hn[fi], 0]]) {
     if (!pt) continue;                         // (no hands to light while he turns into a streak of light)
@@ -4526,8 +4530,8 @@ function drawBackdrop(now) {                  // everything behind the fighters 
   if (domBgOff(now)) { ctx.fillStyle = '#000'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }
   else if (alley) { drawAlley(now); if (vs && vs.c3 && state === 'play') c3World(now); }      // (chapter 2: the portal stands at the end of the street)
   else { ctx.save(); ctx.translate(0, -FAR); ctx.drawImage(bg, 0, 0);
-  layer(far, 0.25); layer(near, 0.55);
-  drawProps(now); ctx.restore(); drawGround(); drawBlood(now); drawCrater(now); }
+  if (SET.bgd >= 1) layer(far, 0.25); if (SET.bgd >= 2) { layer(near, 0.55); drawProps(now); }      // (v1.153 BACKGROUND DETAIL: FLAT = the sky and the road, LOW + the far towers, MEDIUM + the shops and the lamps, FULL + the wind)
+  ctx.restore(); drawGround(); drawBlood(now); drawCrater(now); }
   domVoidLayer(now);
 }
 // ---------------------------------------------------------------- JUMPSCARE (Verity's DOMAIN button; the enemy Verity uses it too from GRADE 2 up). Verity lunges and grabs the other fighter by the throat (15 frames, swing number 23), the screen cuts to the screaming Verity (a 64x64 close-up in 15 frames that shakes and zooms, 2.3 s), and then the victim is STUNNED for 5 s (he cowers and shakes, can not act, but can still be hit) and takes 3 FEAR damage every 0.1 s (150 in all). It costs 67% of the energy and can be used again after 30 s. The victim of the player's JUMPSCARE is frozen from the first moment (nothing dodges it); the player who sees the enemy's coming (0.5 s of wind-up) can jump, teleport, dash or crouch out of it.
@@ -5337,7 +5341,7 @@ function poundImpact(now) {      // the ground pound lands: every enemy under hi
 function drawPoundFx(now) {      // the shock wave of the pound: two pale crests run out along the floor, low and fast, and fade (0.42 s)
   if (!pwFx.length) return; const cx = Math.round(VW / 2);
   for (let i = pwFx.length - 1; i >= 0; i--) {
-    const p = pwFx[i], a = now - p.born; if (a > 420) { pwFx.splice(i, 1); continue; }
+    const p = pwFx[i], a = now - p.born; if (a > 420) { pwFx.splice(i, 1); continue; } if (SET.au < 2) continue;
     const k = Math.max(0, a) / 420, r = 6 + 150 * (1 - Math.pow(1 - k, 2)), X = Math.round(cx + p.x - wx); ctx.globalAlpha = Math.max(0, 1 - k) * 0.9;
     for (const sg of [-1, 1]) for (let j = 0; j < 7; j++) { const hh = Math.max(1, Math.round((5 - j * 0.6) * (1 - k))); ctx.fillStyle = j < 2 ? '#ffffff' : '#c9c2dc'; ctx.fillRect(X + sg * Math.round(r - j * 4) - (sg < 0 ? 1 : 0), gy + 2 - hh, 2, hh); }
   }
@@ -14992,7 +14996,7 @@ function buildCourt() {      // the grounds of Jujutsu High at night: a big moon
 }
 function drawAlley(now) {
   buildAlley(); if (track) { drawTrack(now); return; }      // (the training field of part 2 draws all of itself)
-  ctx.drawImage(alleyBg, 0, 0); layer(alleyProps, 0.55);
+  ctx.drawImage(alleyBg, 0, 0); if (SET.bgd >= 1) layer(alleyProps, 0.55);
   const o = Math.round(((-wx % 28) + 28) % 28); for (let x = o - 28; x < VW; x += 28) ctx.drawImage(alleyTile, x, gy - 12);
   drawBlood(now); if ((now / 1000) % 3.3 < 0.08) { ctx.fillStyle = 'rgba(0,0,12,0.35)'; ctx.fillRect(0, 0, VW, VH); }      // the lamp flickers now and then
 }
@@ -16015,9 +16019,9 @@ let deb = [];
 const DEB = { wood: ['#b07a3a', '#8a5a2b', '#5a3a1a'], stone: ['#9a8fb0', '#6d5f86', '#5b516b'], metal: ['#9aa2b8', '#6d7488', '#4a5064'], glass: ['#e8f6ff', '#9fd8ff', '#2c63c9'], dust: ['#b8b0a0', '#8a8478', '#6a6458'], doll: ['#e8d6c0', '#a02a3a', '#2a1a22'], lamp: ['#ffd27a', '#3a3f55'], sign: ['#c9b27a', '#6a2a2a'] };
 const PDEB = { crate: 'wood', bin: 'metal', vend: 'glass', statue: 'stone', doll: 'doll', lamp: 'lamp', sign: 'sign' };
 function debBurst(x, h, n, cols, spd, size) {      // n pieces fly out of the world place x, h px above the floor
-  const t = pnow();
+  const t = pnow(); n = pq(n);
   for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI, v = spd * (0.4 + Math.random() * 0.8); deb.push({ x: x + Math.random() * 6 - 3, h: h + Math.random() * 4, vx: Math.cos(a) * v, vy: Math.sin(a) * v * 0.9 + 20, dz: Math.random() * 4, s: size || (Math.random() < 0.3 ? 2 : 1), c: cols[i % cols.length], born: t, life: 2400 + Math.random() * 1400, rest: false }); }
-  if (deb.length > 100) deb.splice(0, deb.length - 100);
+  const cp = gfxCap(100); if (deb.length > cp) deb.splice(0, deb.length - cp);
 }
 function drawDeb(now, dt) {
   if (physOn() && state === 'play') litStep(dt);
@@ -16588,7 +16592,8 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
 function tick(t) {
   requestAnimationFrame(tick);                // schedule first so one bad frame can't stop the loop
   if (paused) { if (state !== 'play') setPause(false); return; }      // PAUSE: nothing moves and the game's clock stands still
-  const cap = fpsCap(); if (cap && t - tDraw < 1000 / cap - 3) return; tDraw = t;      // the 30 / 60 FPS option and the battery saver: the frames in between are skipped
+  const cap = fpsCap(); if (cap) { const iv = 1000 / cap; if (t - tDraw < iv - 2) return; tDraw = t - tDraw > iv * 2 ? t : tDraw + iv; } else tDraw = t;      // the FPS option and the battery saver: the frames in between are skipped (the next frame is due one interval after the LAST due time, so 45 or 72 FPS really average 45 or 72)
+  gfxFrame(); if (gfxZ >= 0 && gfxZ !== gfxKey()) resize();      // (v1.153 the zoom of the camera follows the screen: fights and free play only)
   const rdt = Math.max(0, Math.min(100, t - tLast)); tLast = t;
   let rate = (TR.spd && freePlay() ? TRS[TR.spd] : 1) * paceNow();      // GAME SPEED (SETTINGS > TRAIN: half or a quarter in free play) times GAME PACE (SETTINGS > GAME: 1.25 or 1.5 times in a fight): the game's clock runs at that rate of the real one, and the slow motion below is a fraction of that
   if (t < slowAt + slowMs) { const k = (t - slowAt) / slowMs; rate *= k < 0.35 ? slowRate : slowRate + (1 - slowRate) * Math.pow((k - 0.35) / 0.65, 2); }      // slow motion: the game's clock falls behind the real one
@@ -16618,6 +16623,7 @@ function tick(t) {
     pctx.drawImage(idleF[Math.floor(now / (1000 / IDLE_FPS)) % idleF.length], 0, 0);
     for (const q of selPv) { const cu = q.who.slice(0, 2) === 'cu' ? cuIdleCv(q.who, now) : null; if (q.who.slice(0, 2) === 'cu' && !cu) continue; q.g.clearRect(0, 0, q.g.canvas.width, 64); q.g.drawImage(cu || (q.who === 'yuji' ? YUF.norm.idle[Math.floor(now / (1000 / IDLE_FPS)) % 15] : q.who === 'cat' ? cfr('idle', now / 100, true, false) : q.who === 'freddy' ? fredF(now / (1000 / IDLE_FPS)) : vfr('idle', now / 100, true, false)), 0, 0); }
   } else if (state === 'title') drawHero(updateBlink(now));
+  gfxPost(still || now < holdUntil); gfxEnd();      // (v1.153 the glow over the finished picture, and the numbers of the stats overlay)
 }
 
 // ---------------------------------------------------------------- input
@@ -16782,6 +16788,7 @@ $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+{"v": "1.153", "t": "A BIG GRAPHICS PAGE AND UNLIMITED FPS", "n": ["The GRAPHICS page of the settings screen is rebuilt. At the top: five quality presets (POTATO, LOW, MEDIUM, HIGH and ULTRA; it says CUSTOM when you change an option yourself) and a little live picture that shows your options at once. HIGH is exactly how the game looked before. ULTRA adds the extra effects.", "LESS (for slower phones): PARTICLES (none, few, some, normal, many), BACKGROUND DETAIL (flat, low, medium, full), AURA AND RINGS (off, flames only, all), SCREEN OVERLAYS (off, light, full), plus screen shake, flash strength, hit pause and damage numbers.", "MORE (for fast phones): GLOW (bloom), MOTION TRAILS (fading copies behind fast fighters), SHADOWS AND LIGHT (a shadow under every fighter and a pale pool of light) and MANY particles (more than twice as many).", "PICTURE: CAMERA ZOOM (75% to 125%, in fights and free play only), FIXED RETRO SIZE (always 288 x 128 with black bars round it), PIXEL SMOOTHING, brightness, contrast, colour, scanlines and hitboxes.", "FRAME RATE: AUTO, 30, 45, 60, 72, 90, 120, 144 and UNLIMITED. The old 60 limit is gone. UNLIMITED has no limit at all, and the app now asks Android for the fastest screen mode your phone has (FPS = pictures the game draws a second, Hz = pictures the screen can show a second), so a 120 Hz phone really gets 120 in the app. The same list is in the pause settings.", "TOOLS: a STATS OVERLAY (the FPS, or detailed: how long a picture takes, the screen's rate, the picture size and the quality) and TEST MY PHONE, a 5 second test that finds the preset your phone can handle. The test also runs by itself ONCE on the title screen the first time you start this version and sets that preset (it tells you; change it in SETTINGS, GRAPHICS). Heavy options show a warning under the tools."]},
 {"v": "1.152", "t": "A BIG SETTINGS SCREEN IN THE MAIN MENU", "n": ["NEW SETTINGS BUTTON on the title screen (top right) and on the CHOOSE A MODE screen. It opens a big screen with pages: GRAPHICS, GAMEPLAY, STORY, SOUND, CONTROLS, ACCESS, LOOK, DATA and PRESETS. Every option has a line that explains it and a DEF button that puts it back to the default. A search box finds any option by its words, and RESET PAGE resets a whole page. All your old settings are still there and the pause-menu settings show the same numbers.", "GRAPHICS: screen shake strength, flash strength, hit pause, damage numbers on/off, brightness, contrast, colour (0 = black and white), scanlines, frame rate, battery saver, an FPS counter and hitboxes. GAMEPLAY: assist, game pace (now also SLOW), enemy damage, your damage, health regen, auto-pause and three cheats (infinite energy, infinite health, one-hit kills; not in Wi-Fi fights; while a cheat is on you earn no money).", "STORY: subtitles on/off and blood level. ACCESS: reduce flashing, high contrast, colour-blind help, slow motion, bigger buttons. LOOK: six menu colours. SOUND: every volume plus the sound switch. CONTROLS: button size, opacity, height, side, vibration.", "DATA: your play time, fights won and lost, hits landed, parries and story chapter; the save code, a SETTINGS-ONLY code you can share, reset stats, reset settings and reset all progress (asks twice). PRESETS: DEFAULT, BATTERY, PERFORMANCE, CINEMATIC, CASUAL and HARDCORE in one tap."]},
 {"v": "1.151", "t": "CHAPTER 4: THE HANDS ARE NOW REAL 3D HANDS", "n": ["THE HANDS OF THE FINGER RIP ARE DRAWN AGAIN, THIS TIME AS REAL HANDS: every hand is built from bones, knuckles, nails and skin as a small 3D model, lit from the upper left with soft shadows between the fingers, and turned into the game's pixel art. They look like real hands now (knuckles, tendons, the webs between the fingers, nails, the sleeve), not like flat shapes.", "THE RIP: Sukuna's hand holds Megumi's face (you see his face, dark, behind it) with the little finger stuck out, and his other hand pinches it from below and pulls. The skin of the hand stretches and goes pale, then the finger tears off. With blood on you see the raw hole with the blood running down his hand; with blood off it is a clean wound. The other hand takes the finger away.", "THE RIPPED FINGER close-up is a real finger with a torn end (ragged skin, red flesh, the white bone), held between a thumb and a first finger; it turns dark red while the black claw grows out of its nail. Yuji's open hand without its little finger is a real hand too."]},
 {"v": "1.150", "t": "CHAPTER 4: HUMAN SKIN COLOURS AND A REALISTIC HAND FOR THE FINGER RIP", "n": ["THE FACES HAVE A HUMAN COLOUR: Sukuna, Yuji and Megumi now have warm peach skin with red-brown shadows (before it was a dull brown and a grey). When they are frightened the skin goes pale and cool but still looks like skin, not stone. The dark layer over the close-ups is much lighter, so the colours show.", "THE HAND THAT RIPS THE FINGER IS REDRAWN FROM THE START: a real hand with the proper shape and proportions: knuckles with wrinkles, the tendons on the back, jointed fingers with creases, real nails (pink with a half moon and a white edge), a shaded wrist and the blue sleeve. It holds Megumi's face (you see his face behind it, out of focus), the little finger sticks out and his other hand pinches it, then pulls: the skin of the hand stretches between the knuckle and the finger, turns pale, splits, and the finger comes off. With blood on, the stump is raw red flesh with the white of the bone and the blood runs down his hand; with blood off it is a clean pink stump.", "THE RIPPED FINGER AND YUJI'S HAND ARE REDRAWN TOO: the finger between his thumb and first finger is a real finger (nail, creases, a ragged torn end with the bone) that turns dark red and cracked while the black claw grows; the same red finger is what goes into Megumi's mouth. Yuji's hand without its little finger is a real open hand with the lines of the palm. All the fingers of Sukuna on Megumi's cheek, mouth and throat now have real nails, creases and shading."]},
@@ -17073,7 +17080,7 @@ function applyCtl() {      // the size, see-through-ness, height and side of the
 }
 const OPT_DEF = {      // [key, name, 'r' (a slider: min, max, step, unit) or 't' (a button that cycles: names, values)]
   optC: [['sz', 'BUTTON SIZE', 'r', 70, 120, 5, '%'], ['op', 'BUTTON OPACITY', 'r', 30, 100, 5, '%'], ['up', 'RAISE BUTTONS', 'r', 0, 20, 1, ''], ['lh', 'SIDE', 't', ['RIGHT-HANDED', 'LEFT-HANDED']], ['hap', 'VIBRATION', 't', ['OFF', 'LIGHT', 'STRONG']]],
-  optG: [['fps', 'FRAME RATE', 't', ['AUTO', '30 FPS', '60 FPS'], [0, 30, 60]], ['lite', 'BATTERY SAVER', 't', ['OFF', 'ON']], ['ap', 'AUTO-PAUSE', 't', ['OFF', 'ON']], ['assist', 'ASSIST', 't', ['OFF', 'PARRY+', 'EASY', 'AUTO-GUARD']], ['pace', 'GAME PACE', 't', ['NORMAL', 'FAST', 'TURBO']], ['hb', 'SHOW HITBOXES', 't', ['OFF', 'ON']], ['gore', 'GRAPHIC DAMAGE', 't', ['FULL', 'CLEAN', 'OFF']]] };
+  optG: [['fps', 'FRAME RATE', 't', ['AUTO', '30 FPS', '45 FPS', '60 FPS', '72 FPS', '90 FPS', '120 FPS', '144 FPS', 'UNLIMITED'], [0, 30, 45, 60, 72, 90, 120, 144, 999]], ['lite', 'BATTERY SAVER', 't', ['OFF', 'ON']], ['ap', 'AUTO-PAUSE', 't', ['OFF', 'ON']], ['assist', 'ASSIST', 't', ['OFF', 'PARRY+', 'EASY', 'AUTO-GUARD']], ['pace', 'GAME PACE', 't', ['NORMAL', 'FAST', 'TURBO']], ['hb', 'SHOW HITBOXES', 't', ['OFF', 'ON']], ['gore', 'GRAPHIC DAMAGE', 't', ['FULL', 'CLEAN', 'OFF']]] };
 function buildOpts() {
   for (const id in OPT_DEF) {
     const box = $(id); box.innerHTML = '';
@@ -17127,26 +17134,223 @@ $('bkLoad').addEventListener('click', () => {
   try { const del = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (bkOwn(k)) del.push(k); } del.forEach(k => localStorage.removeItem(k)); for (const k in o) localStorage.setItem(k, o[k]); bkSay('LOADED'); location.reload(); } catch (e) { bkSay('COULD NOT SAVE ON THIS DEVICE'); }
 });
 applyCtl(); buildOpts(); setTab(0); refreshPower();
+// ================================================================ v1.153 GFX: what the graphics options do (the page is in tools/mset.js, the numbers live in SET, see the top of tools/template.html).
+//   pt particles (0 none .. 3 normal .. 4 many), bgd background detail (0 flat .. 3 full), au auras and shock rings (0 off, 1 only the flames, 2 all), ov screen tints (0 off, 1 half, 2 full), glow (the bloom), trl (motion trails), shd (shadows and light),
+//   zoom (the camera, fights and free play), smooth, retro (a fixed 288 x 128 picture with black bars), fps (0 auto, 30 ... 144, 999 unlimited), fpsc (0 off, 1 fps, 2 details).
+// The game calls pq() and gfxCap() (how many particles), gfxParts() (the wind), gfxFrame() / gfxPost() / gfxEnd() (every frame), gfxKey() (resize() runs again when it changes: the zoom) and gfxApply() (when an option changes, from msApply).
+const GFX_PTK = [0, 0.35, 0.7, 1, 2.2], GFX_KEYS = ['pt', 'bgd', 'au', 'ov', 'glow', 'trl', 'shd'];
+const GFX_PRE = [['POTATO', [0, 0, 0, 0, 0, 0, 0]], ['LOW', [1, 1, 1, 1, 0, 0, 0]], ['MEDIUM', [2, 2, 2, 1, 0, 0, 0]], ['HIGH', [3, 3, 2, 2, 0, 0, 0]], ['ULTRA', [4, 3, 2, 2, 2, 2, 2]]];      // (the presets set the seven keys above; HIGH is how the game looked before this version; shake, flash and the rest are yours)
+const pq = n => { const k = GFX_PTK[SET.pt]; return k === 1 || n <= 0 ? n : k === 0 ? 0 : Math.max(1, Math.round(n * k)); };      // (how many particles a burst of n makes)
+const gfxCap = c => SET.pt === 4 ? Math.round(c * 2.2) : c;      // (and how many of them may live at once)
+const gfxParts = rf => Array.from({ length: [0, 0, 14, 30][SET.bgd] }, () => ({ x: rf() * VW, y: rf() * gy, l: 3 + ((rf() * 7) | 0), v: 40 + rf() * 80 }));      // (the wind streaks: none, half, all)
+const gfxZoomK = () => !SET.retro && SET.zoom !== 100 && state === 'play' && !story && !(vs && vs.story) ? SET.zoom / 100 : 1;      // (the zoom is for fights and free play, not for the story; the fixed retro size has none)
+const gfxKey = () => Math.round(gfxZoomK() * 100) + (SET.retro ? 1000 : 0);
+let gfxZ = -1;      // the zoom key resize() used last (-1 until the first resize)
+const gfxQ = () => { const i = GFX_PRE.findIndex(p => GFX_KEYS.every((k, j) => SET[k] === p[1][j])); return i < 0 ? 5 : i; };      // which preset the options match (5 = CUSTOM)
+function gfxPreset(i) { GFX_KEYS.forEach((k, j) => { SET[k] = GFX_PRE[i][1][j]; }); saveSet(); gfxApply(); buildOpts(); }
+const gCss = document.createElement('style');
+gCss.textContent = '#gfxSt{position:fixed;right:1vh;top:1vh;z-index:7;display:none;pointer-events:none;white-space:pre;text-align:right;color:#7dff7d;background:rgba(0,0,0,.6);padding:.4vh .8vh;font-size:clamp(7px,1.7vh,10px);line-height:1.5}'
+  + '#gbOv{position:fixed;inset:0;z-index:60;background:#06040d;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh}#gbOv canvas{width:min(70vw,120vh);image-rendering:pixelated;border:3px solid var(--line,#39305a)}'
+  + '#gbOv .gbT{white-space:pre;text-align:center;font-size:clamp(8px,2.4vh,14px);line-height:1.8;color:var(--ink,#fff)}'
+  + '#gbMsg{position:fixed;left:50%;bottom:6vh;transform:translateX(-50%);z-index:60;background:rgba(10,6,24,.94);border:3px solid var(--acc,#e0242f);padding:1.2vh 2vh;white-space:pre;text-align:center;font-size:clamp(7px,2vh,11px);line-height:1.7;pointer-events:none}';
+document.head.appendChild(gCss);
+// ---------------------------------------------------------------- shadows and the glow (the game and the preview of the page use the same two functions)
+function gfxShadow(g, cx, gnd, w, air, level) {      // a pixel oval on the floor under a fighter: 3 rows (SIMPLE), 5 softer rows (SOFT), and a pale pool of light round it (SOFT + LIGHT); it shrinks and fades while he is in the air
+  const k = Math.max(0.3, 1 - air / 90), W = Math.max(4, Math.round(w * 0.5 * k)), rows = level === 1 ? [[-1, 0.6, 0.3], [0, 1, 0.34], [1, 0.6, 0.3]] : [[-2, 0.4, 0.1], [-1, 0.7, 0.18], [0, 1, 0.26], [1, 0.7, 0.18], [2, 0.4, 0.1]];
+  g.save();
+  if (level >= 3) { g.globalCompositeOperation = 'lighter'; g.fillStyle = 'rgba(255,230,170,0.07)'; for (const [dy, f] of [[-2, 1.9], [-1, 2.3], [0, 2.5], [1, 2.3], [2, 1.9]]) { const ww = Math.round(W * f); g.fillRect(Math.round(cx - ww / 2), gnd + dy, ww, 1); } g.globalCompositeOperation = 'source-over'; }
+  for (const [dy, f, a] of rows) { g.fillStyle = 'rgba(0,0,0,' + (a * k + 0.04).toFixed(2) + ')'; const ww = Math.max(2, Math.round(W * f)); g.fillRect(Math.round(cx - ww / 2), gnd + dy, ww, 1); }
+  g.restore();
+}
+const gCP = Object.getPrototypeOf(ctx), gDI = gCP.drawImage, gFR = gCP.fillRect, gBC = document.createElement('canvas'), gBG = gBC.getContext('2d'), gBloomOk = 'filter' in gBG;
+function gfxBloom(src, g, tmpC, tmpG, level) {      // the GLOW: the bright parts of the picture, blurred on a small copy (3 or 4 times smaller: that is the blur), are added back on top of it
+  if (!level || !gBloomOk) return;
+  const d = level >= 3 ? 3 : 4, w = Math.max(8, Math.ceil(src.width / d)), h = Math.max(8, Math.ceil(src.height / d));
+  if (tmpC.width !== w || tmpC.height !== h) { tmpC.width = w; tmpC.height = h; }
+  tmpG.globalCompositeOperation = 'copy'; tmpG.imageSmoothingEnabled = true; tmpG.filter = 'brightness(0.85) contrast(2)'; gDI.call(tmpG, src, 0, 0, w, h); tmpG.filter = 'none';
+  g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'lighter'; g.globalAlpha = [0, 0.34, 0.5, 0.7][level]; g.imageSmoothingEnabled = true; gDI.call(g, tmpC, 0, 0, src.width, src.height); g.restore();
+}
+const gfxPost = still => { if (SET.glow && state === 'play' && !still) gfxBloom(cv, ctx, gBC, gBG, SET.glow); };      // (only on a picture that was drawn afresh: in a hit-stop the old picture stays and would glow brighter and brighter)
+// ---------------------------------------------------------------- the pictures of the fighters: a trail behind the fast ones and a shadow under them. These two are put on ctx.drawImage only while one of the options is on.
+const gTr = [], gHasTf = typeof gCP.getTransform === 'function', gS = { n: 0, t: 0, ms: 0, worst: 0, at: 0, hz: 0, hzAt: -9999, f: 0 };
+let gGhost = false;
+function gfxDI(img) {
+  const A = arguments, n = A.length;
+  if (gGhost || state !== 'play' || img === cv || (n !== 3 && n !== 5 && n !== 9)) return gDI.apply(ctx, A);
+  const dw = n === 3 ? img.width : n === 5 ? A[3] : A[7], dh = n === 3 ? img.height : n === 5 ? A[4] : A[8];
+  if (!(dw >= 40 && dw <= 140 && dh >= 48 && dh <= 100)) return gDI.apply(ctx, A);      // (only the pictures of fighters: a spark or a tile is not 40 x 48 or bigger)
+  const dx = n === 9 ? A[5] : A[1], dy = n === 9 ? A[6] : A[2], m = ctx.getTransform(), px = m.a * dx + m.c * dy + m.e, py = m.b * dx + m.d * dy + m.f, now = gS.t;      // (px, py = where it lands on the screen, whatever was moved or flipped before)
+  if (SET.trl) {
+    let t = null, best = 40; for (const q of gTr) if (q.f !== gS.f) { const d = Math.abs(q.x - px) + Math.abs(q.y - py); if (d < best) { best = d; t = q; } }      // (the same fighter as in the last frames: the nearest track)
+    if (!t) { t = { x: px, y: py, h: [], f: gS.f }; gTr.push(t); }
+    const life = [0, 110, 170, 260][SET.trl], h = t.h; while (h.length && now - h[0].t > life) h.shift();
+    gGhost = true; ctx.save();
+    for (const q of h) { if (Math.abs(q.x - px) + Math.abs(q.y - py) < 4) continue; ctx.setTransform(q.m); ctx.globalAlpha = 0.32 * (1 - (now - q.t) / life); gDI.apply(ctx, q.a); }
+    ctx.restore(); gGhost = false;
+    if (!h.length || Math.abs(h[h.length - 1].x - px) + Math.abs(h[h.length - 1].y - py) >= 4) { h.push({ a: Array.from(A), m, x: px, y: py, t: now }); if (h.length > 14) h.shift(); }
+    t.x = px; t.y = py; t.f = gS.f;
+  }
+  if (SET.shd) { const gnd = gy + 1 + (shkY || 0), air = gnd - (py + m.d * dh - 3); if (air > -12 && air < 130) { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); gfxShadow(ctx, px + m.a * dw / 2, gnd, dw, Math.max(0, air), SET.shd); ctx.restore(); } }      // (his feet are 3 rows above the bottom of the picture)
+  return gDI.apply(ctx, A);
+}
+function gfxFR(x, y, w, h) {      // the tints over the whole screen in a fight (a see-through fill of the whole picture): off, or half as strong
+  if (w >= VW - 2 && h >= VH - 2 && state === 'play') {
+    const fs = ctx.fillStyle, ga = ctx.globalAlpha, m = typeof fs === 'string' ? /^rgba\((\d+), (\d+), (\d+), ([\d.]+)\)$/.exec(fs) : null;
+    if (ga * (m ? +m[4] : 1) < 0.5 && (m || ga < 1)) { if (!SET.ov) return; ctx.globalAlpha = ga * 0.5; gFR.call(ctx, x, y, w, h); ctx.globalAlpha = ga; return; }
+  }
+  gFR.call(ctx, x, y, w, h);
+}
+// ---------------------------------------------------------------- the numbers on the screen (FPS, how long a picture takes, the screen's rate) and the screen's own refresh rate
+const gSt = document.createElement('div'); gSt.id = 'gfxSt'; document.body.appendChild(gSt);
+function gfxFrame() { gS.t = performance.now(); gS.f++; gS.n++; for (let i = gTr.length - 1; i >= 0; i--) if (gS.f - gTr[i].f > 30) gTr.splice(i, 1); }
+function gfxEnd() {
+  const now = performance.now(), c = now - gS.t; gS.ms += c; if (c > gS.worst) gS.worst = c;
+  if (now - gS.at < 500) return;
+  if (SET.fpsc) { const fps = Math.round(gS.n * 1000 / (now - gS.at)), cap = fpsCap(); gSt.textContent = SET.fpsc === 1 ? fps + ' FPS' : 'FPS ' + fps + (cap ? ' (CAP ' + cap + ')' : ' (NO CAP)') + '\nFRAME ' + (gS.ms / Math.max(1, gS.n)).toFixed(1) + ' MS, WORST ' + gS.worst.toFixed(0) + ' MS\nSCREEN ' + (gS.hz || '?') + ' HZ\nPICTURE ' + VW + ' X ' + VH + ', PIXEL ' + S + '\nQUALITY ' + (GFX_PRE[gfxQ()] || ['CUSTOM'])[0]; if (SET.fpsc === 2 && now - gS.hzAt > 4000) { gS.hzAt = now; gfxMeasure(); } }
+  gS.n = 0; gS.ms = 0; gS.worst = 0; gS.at = now;
+}
+function gfxMeasure(cb) {      // how many pictures a second the SCREEN really shows: 0.6 s of requestAnimationFrame calls (the screen's rate, not the game's; a very busy phone shows less)
+  let n = 0, t0 = 0; const f = t => { if (!t0) t0 = t; else n++; if (t - t0 >= 600) { gS.hz = Math.round(n * 1000 / (t - t0)); if (cb) cb(gS.hz); } else requestAnimationFrame(f); }; requestAnimationFrame(f);
+}
+const gfxMaxHz = () => { try { return window.AndroidApp && window.AndroidApp.maxRefresh ? window.AndroidApp.maxRefresh() : 0; } catch { return 0; } };      // (the app tells the fastest rate the screen offers; 0 = a browser or an older app)
+let gHzWant = -1;
+function gfxRefresh() {      // 72 FPS and more and UNLIMITED ask Android for a fast screen mode (without it many phones keep an app at 60 Hz); everything else lets Android choose
+  const want = SET.lite ? 0 : SET.fps === 999 ? 1000 : SET.fps >= 72 ? SET.fps : 0; if (want === gHzWant) return; const first = gHzWant < 0; gHzWant = want; if (first && !want) return;      // (nothing to ask for at the first start with the default)
+  try { if (window.AndroidApp && window.AndroidApp.setRefresh) window.AndroidApp.setRefresh(want); } catch { /* an older app: nothing to ask for */ }
+}
+function gfxApply() {
+  if ((SET.trl || SET.shd) && gHasTf) ctx.drawImage = gfxDI; else { delete ctx.drawImage; gTr.length = 0; }      // (the trail and the shadow need ctx.getTransform: an old WebView goes without them)
+  if (SET.ov < 2) ctx.fillRect = gfxFR; else delete ctx.fillRect;
+  cv.style.imageRendering = SET.smooth ? 'auto' : '';
+  gSt.style.display = SET.fpsc ? 'block' : 'none';
+  gfxRefresh();
+  if (parts.length !== [0, 0, 14, 30][SET.bgd]) parts = gfxParts(Math.random);
+  if (gfxZ >= 0 && gfxZ !== gfxKey()) resize();
+}
+function gfxWarn() {      // what the options cost, in words (the page shows it under the tools)
+  const w = [], mx = gfxMaxHz();
+  if (SET.fps === 999) w.push('UNLIMITED: THE GAME DRAWS AS MANY PICTURES AS THE SCREEN CAN SHOW' + (mx ? ' (YOURS: UP TO ' + mx + ' HZ)' : '') + '. THIS USES THE MOST BATTERY AND CAN MAKE THE PHONE WARM.');
+  else if (SET.fps >= 72) w.push(SET.fps + ' FPS ' + (mx && mx < SET.fps ? 'IS MORE THAN YOUR SCREEN CAN SHOW (' + mx + ' HZ): YOU GET ' + mx + '.' : 'NEEDS A FAST SCREEN AND USES MORE BATTERY.'));
+  if (SET.fps === 45 || SET.fps === 72) w.push(SET.fps + ' FPS CAN LOOK A LITTLE UNEVEN: IT DOES NOT FIT EVENLY INTO A 60 OR 120 HZ SCREEN.');
+  if (SET.lite && SET.fps) w.push('THE BATTERY SAVER WINS: IT KEEPS THE GAME AT 30 FPS.');
+  if (SET.glow || SET.trl || SET.shd || SET.pt === 4) w.push('GLOW, TRAILS, SHADOWS AND MANY PARTICLES ARE HEAVY: ON AN OLDER PHONE THE GAME CAN DROP BELOW 30 FPS. TRY TEST MY PHONE.');
+  if (SET.glow && !gBloomOk) w.push('GLOW DOES NOTHING HERE: THIS PHONE DOES NOT SUPPORT IT.');
+  if (SET.retro) w.push('FIXED RETRO SIZE SHOWS BLACK BARS WHEN THE SCREEN IS NOT THE SAME SHAPE. THE CAMERA ZOOM IS OFF WHILE IT IS ON.');
+  else if (SET.zoom !== 100) w.push('THE ZOOM WORKS IN FIGHTS AND FREE PLAY ONLY, NOT IN THE STORY.');
+  if (SET.smooth) w.push('SMOOTHING BLURS THE PIXELS ON PURPOSE.');
+  return w;
+}
+const gfxInfo = () => { const mx = gfxMaxHz(); return 'YOUR SCREEN: ' + (gS.hz ? gS.hz + ' HZ NOW' : 'MEASURING...') + (mx ? ', UP TO ' + mx + ' HZ' : '') + '. PICTURE: ' + VW + ' X ' + VH + ' PIXELS, EACH ' + S + ' ON THE SCREEN.\nHZ = HOW MANY PICTURES A SECOND THE SCREEN CAN SHOW.'; };
+// ---------------------------------------------------------------- TEST MY PHONE: a 5 second test that draws more and more (pictures, glows, trails, a bloom pass) and counts how many pictures a second the phone keeps up with
+function gfxBench(done) {      // 6 steps of 0.8 s; a step passes when the phone still shows (nearly) its screen's whole rate. done(0 to 4, the screen's rate) = the preset that fits, done(-1) = cancelled
+  if (document.getElementById('gbOv')) return;
+  const ov = document.createElement('div'), c = document.createElement('canvas'), tx = document.createElement('div'), W = Math.max(160, VW), H = Math.max(80, VH);
+  ov.id = 'gbOv'; tx.className = 'gbT'; c.width = W; c.height = H; ov.appendChild(c); ov.appendChild(tx); document.body.appendChild(ov);
+  const g = c.getContext('2d'), sp = document.createElement('canvas'), tmpC = document.createElement('canvas'), tmpG = tmpC.getContext('2d');
+  sp.width = sp.height = 32; { const q = sp.getContext('2d'); for (let i = 0; i < 40; i++) { q.fillStyle = 'hsl(' + (i * 37 % 360) + ',70%,' + (45 + i % 4 * 10) + '%)'; q.fillRect(i * 7 % 28, i * 11 % 28, 4 + i % 5, 4 + i % 3); } }
+  const LV = [[80, 0, 0, 0], [220, 6, 0, 0], [420, 12, 1, 0], [650, 18, 1, 1], [900, 26, 1, 1], [1300, 36, 1, 1]], PER = 800, WARM = 450, iv = [], pick = p => p <= 0 ? 0 : p === 1 ? 1 : p === 2 ? 2 : p <= 4 ? 3 : 4;      // (a level = pictures, glows, bloom, trails)
+  let lv = -1, t0 = 0, last = 0, lvT = 0, pass = 0, fails = 0, hz = 60, stop = false;
+  const med = a => { const s = a.slice().sort((x, y) => x - y); return s[s.length >> 1] || 16.7; }, finish = id => { if (stop) return; stop = true; ov.remove(); done(id, hz); };
+  ov.addEventListener('pointerdown', () => finish(-1));
+  const draw = (k, t) => {
+    const [n, gl, bl, tr] = LV[Math.max(0, k)]; g.globalAlpha = 1; g.fillStyle = '#0d0a17'; g.fillRect(0, 0, W, H);
+    for (let i = 0; i < n; i++) { g.globalAlpha = 0.6 + (i % 3) * 0.2; const s = 24 + i % 3 * 6; g.drawImage(sp, (i * 53 + Math.sin(t / 300 + i) * 6 + W) % W, (i * 29 + Math.cos(t / 280 + i) * 5 + H) % H, s, s); }
+    g.globalAlpha = 1;
+    for (let i = 0; i < gl; i++) { const x = (i * 71) % W, y = (i * 37) % H, gr = g.createRadialGradient(x, y, 0, x, y, 30); gr.addColorStop(0, 'rgba(120,220,255,0.7)'); gr.addColorStop(1, 'rgba(120,220,255,0)'); g.fillStyle = gr; g.fillRect(x - 30, y - 30, 60, 60); }
+    if (tr) for (let i = 0; i < 40; i++) { g.globalAlpha = 0.2; g.drawImage(sp, (i * 41 + t / 8) % W, (i * 23) % H, 28, 28); g.globalAlpha = 0.3; g.fillStyle = '#000'; g.fillRect((i * 41) % W, (i * 23 + 28) % H, 20, 2); }
+    g.globalAlpha = 1; if (bl) gfxBloom(c, g, tmpC, tmpG, 2);
+  };
+  const frame = t => {
+    if (stop) return; requestAnimationFrame(frame);
+    if (last) iv.push(t - last); last = t;
+    if (lv < 0) { tx.textContent = 'TESTING YOUR PHONE...\nTAP TO CANCEL'; draw(0, t); if (!t0) t0 = t; if (t - t0 > WARM) { hz = Math.round(1000 / med(iv)); iv.length = 0; lv = 0; lvT = t; } return; }
+    draw(lv, t); tx.textContent = 'TESTING YOUR PHONE...\nTAP TO CANCEL\n' + Math.min(99, Math.round((lv + (t - lvT) / PER) / LV.length * 100)) + '%';
+    if (t - lvT >= PER) {
+      const ok = 1000 / med(iv) >= Math.min(54, hz * 0.9); iv.length = 0;
+      if (ok) { pass++; fails = 0; } else if (++fails >= 2) { finish(pick(pass)); return; }
+      if (++lv >= LV.length) { finish(pick(pass)); return; } lvT = t;
+    }
+  };
+  requestAnimationFrame(frame);
+}
+function gfxBenchApply(id, auto) {      // the answer of the test: the preset is set (an automatic test says so in a message)
+  gfxPreset(id); if (!auto) return; const m = document.createElement('div'); m.id = 'gbMsg'; m.textContent = 'GRAPHICS SET TO ' + GFX_PRE[id][0] + '\nCHANGE IT IN SETTINGS, GRAPHICS'; document.body.appendChild(m); setTimeout(() => m.remove(), 4500);
+}
+function gfxAuto() {      // once, after the first start with this version: the test runs by itself on the title screen and its preset is applied (not in an automated browser)
+  let seen = '1'; try { seen = localStorage.getItem('js_gtest'); } catch { seen = '1'; }
+  if (seen || navigator.webdriver) return;
+  const go = () => { if (state !== 'title') { setTimeout(go, 2500); return; } try { localStorage.setItem('js_gtest', '1'); } catch { /* storage blocked */ } gfxBench(id => { if (id >= 0) gfxBenchApply(id, true); }); };
+  setTimeout(go, 2500);
+}
+// ---------------------------------------------------------------- the little live picture at the top of the graphics page: a fighter runs back and forth and jumps and throws sparks; every option changes it at once
+let gPrevId = 0;
+function gfxPreview(c) {
+  const g = c.getContext('2d'), id = ++gPrevId, tC = document.createElement('canvas'), tG = tC.getContext('2d'), W = c.width, H = c.height, gnd = H - 10, trail = [], sp = [], t0 = performance.now();
+  let next = 400, shake = 0;
+  const loop = t => {
+    if (id !== gPrevId || !c.isConnected || !c.offsetParent) return;      // (the page was rebuilt or left: the loop ends)
+    requestAnimationFrame(loop);
+    const e = t - t0, x = W * 0.5 + Math.sin(e / 900) * W * 0.3, dir = Math.cos(e / 900) > 0 ? 1 : -1, air = Math.max(0, Math.sin(e / 450) * 10), by = Math.round(gnd - air);
+    if (e > next) { next = e + 1300; shake = SET.shk / 100 * 2; for (let i = pq(14); i > 0; i--) sp.push({ x: x + dir * 8, y: gnd - 12 - air, vx: dir * (10 + Math.random() * 30), vy: -20 - Math.random() * 30, b: e }); }
+    g.save(); g.fillStyle = SET.bgd === 0 ? '#1a1530' : '#0d0a17'; g.fillRect(0, 0, W, H);
+    if (shake > 0.05) g.translate(Math.round((Math.random() * 2 - 1) * shake), 0); shake *= 0.8;
+    if (SET.bgd >= 1) { g.fillStyle = '#17122a'; for (let i = 0; i < 9; i++) g.fillRect(i * 16 - (e / 90) % 16, gnd - 30 - (i * 7 % 5) * 5, 12, 40); }
+    if (SET.bgd >= 2) { g.fillStyle = '#231b3d'; for (let i = 0; i < 6; i++) g.fillRect(i * 26 - (e / 45) % 26, gnd - 18 - (i * 5 % 3) * 4, 16, 30); }
+    if (SET.bgd >= 3) { g.fillStyle = 'rgba(220,210,255,0.35)'; for (let i = 0; i < 8; i++) g.fillRect(((i * 37 - e / 12) % W + W) % W, 6 + i * 4, 6, 1); }
+    g.fillStyle = '#241c3f'; g.fillRect(-4, gnd, W + 8, H - gnd + 4);
+    if (SET.shd) gfxShadow(g, x, gnd + 1, 12, air, SET.shd);
+    trail.push([x, by, e]); while (trail.length && e - trail[0][2] > 260) trail.shift();
+    if (SET.trl) { const life = [0, 110, 170, 260][SET.trl]; for (const q of trail) { const a = 0.32 * (1 - (e - q[2]) / life); if (a <= 0 || Math.abs(q[0] - x) < 4) continue; g.globalAlpha = a; g.fillStyle = '#f2eefc'; g.fillRect(Math.round(q[0] - 3), q[1] - 14, 6, 14); } g.globalAlpha = 1; }
+    g.fillStyle = '#f2eefc'; g.fillRect(Math.round(x - 3), by - 14, 6, 6); g.fillStyle = '#39a2ff'; g.fillRect(Math.round(x - 3), by - 8, 6, 5); g.fillStyle = '#1b1e2c'; g.fillRect(Math.round(x - 3), by - 3, 2, 3); g.fillRect(Math.round(x + 1), by - 3, 2, 3);
+    if (SET.au >= 1) for (let i = 0; i < 6; i++) { g.fillStyle = i % 2 ? '#6cf3ff' : '#2aa8d8'; g.fillRect(Math.round(x + dir * 5 + Math.sin(e / 60 + i * 2) * 2), Math.round(by - 8 - (e / 40 + i * 3) % 7), 1, 2); }
+    if (SET.au >= 2) { const rr = (e % 1300) / 1300; g.strokeStyle = 'rgba(160,230,255,' + (0.7 * (1 - rr)).toFixed(2) + ')'; g.strokeRect(Math.round(x - rr * 22) + 0.5, gnd - 4 - rr * 3 + 0.5, Math.round(rr * 44), 3 + rr * 3); }
+    for (let i = sp.length - 1; i >= 0; i--) { const q = sp[i], a = (e - q.b) / 1000; if (a > 0.55) { sp.splice(i, 1); continue; } g.fillStyle = i % 3 ? '#ffd34d' : '#ffffff'; g.fillRect(Math.round(q.x + q.vx * a), Math.round(q.y + q.vy * a + 120 * a * a), 1, 1); }
+    if (SET.ov > 0) { g.fillStyle = 'rgba(200,20,40,' + (SET.ov === 2 ? 0.12 + 0.06 * Math.sin(e / 400) : 0.06).toFixed(2) + ')'; g.fillRect(-4, 0, W + 8, H); }
+    g.restore(); gfxBloom(c, g, tC, tG, SET.glow);
+  };
+  requestAnimationFrame(loop);
+}
+window.__gfxReady = 1; gfxAuto();
+
 // ================================================================ v1.152 THE SETTINGS SCREEN OF THE MAIN MENU: every option in pages (graphics, gameplay, story, sound, controls, accessibility, look, data, presets), a search box,
-// a DEF button on every option, presets, stats, a save code and a settings code. The numbers live in SET (see the top of tools/template.html); msApply() puts them to work (colours, filters, scanlines, the FPS counter),
+// a DEF button on every option, presets, stats, a save code and a settings code. The numbers live in SET (see the top of tools/template.html); msApply() puts them to work (colours, filters, scanlines, then gfxApply() in tools/gfx.js),
 // the rest is read by the game itself (shake, flash, damage, energy, money ...). The old SETTINGS of the pause menu stays and shows the same numbers.
-const MSD = { hap: 1, sz: 100, op: 78, up: 0, lh: 0, fps: 0, lite: 0, ap: 1, assist: 0, pace: 1, hb: 0, gore: 0, shk: 100, fl: 100, dn: 1, hs: 100, br: 100, ct: 100, sat: 100, scan: 0, cb: 0, fpsc: 0, edm: 100, pdm: 100, reg: 0, ien: 0, ihp: 0, ohk: 0, sub: 1, nf: 0, hc: 0, th: 0 };
+// v1.153 the GRAPHICS page was rebuilt: quality presets, a live preview, less / more / picture / frame rate options and the tools; what they do is in tools/gfx.js.
+const MSD = { hap: 1, sz: 100, op: 78, up: 0, lh: 0, fps: 0, lite: 0, ap: 1, assist: 0, pace: 1, hb: 0, gore: 0, shk: 100, fl: 100, dn: 1, hs: 100, br: 100, ct: 100, sat: 100, scan: 0, cb: 0, fpsc: 0, edm: 100, pdm: 100, reg: 0, ien: 0, ihp: 0, ohk: 0, sub: 1, nf: 0, hc: 0, th: 0, pt: 3, bgd: 3, au: 2, ov: 2, glow: 0, trl: 0, shd: 0, zoom: 100, smooth: 0, retro: 0 };
 const MS_THEMES = [['RED', '#e0242f'], ['BLUE', '#39a2ff'], ['PURPLE', '#8f7ac4'], ['GREEN', '#3fd17a'], ['GOLD', '#ffd34d'], ['PINK', '#ff6fb1']];
 const ONOFF = ['OFF', 'ON'];
 const MSP = [      // the pages: a row is { k: the key in SET, n: name, t: 'r' (slider a - b, step c, unit u) or 't' (a button that cycles the names a (the numbers b)), h: the hint }
   { id: 'gfx', n: 'GRAPHICS', rows: [
+    { t: 'gq' },
+    { n: 'LESS: TURN DOWN WHAT THE PHONE HAS TO DRAW', t: 'h' },
+    { k: 'pt', n: 'PARTICLES', t: 't', a: ['NONE', 'FEW', 'SOME', 'NORMAL', 'MANY'], h: 'SPARKS, SMOKE AND FLYING BITS. NORMAL IS HOW THE GAME CAME. MANY MAKES MORE THAN TWICE AS MANY.' },
+    { k: 'bgd', n: 'BACKGROUND DETAIL', t: 't', a: ['FLAT', 'LOW', 'MEDIUM', 'FULL'], h: 'FLAT = JUST THE SKY AND THE ROAD. LOW ADDS THE FAR TOWERS, MEDIUM THE SHOPS AND LAMPS, FULL THE WIND STREAKS.' },
+    { k: 'au', n: 'AURA AND RINGS', t: 't', a: ['OFF', 'FLAMES ONLY', 'ALL'], h: 'THE CURSED ENERGY FLAMES, THE LIGHTNING AND THE SHOCK RINGS OF BIG HITS. FLAMES ONLY = THE FLAMES AND LIGHTNING BUT NO RINGS. OFF = NONE.' },
+    { k: 'ov', n: 'SCREEN OVERLAYS', t: 't', a: ['OFF', 'LIGHT', 'FULL'], h: 'THE SEE-THROUGH TINTS OVER THE WHOLE PICTURE IN A FIGHT (DARKENING, FLICKER, WASHES OF COLOUR). LIGHT = HALF AS STRONG.' },
     { k: 'shk', n: 'SCREEN SHAKE', t: 'r', a: 0, b: 150, c: 10, u: '%', h: 'HOW HARD THE SCREEN SHAKES WHEN YOU HIT OR GET HIT, ALSO IN THE STORY. 0 = NO SHAKE.' },
     { k: 'fl', n: 'FLASH STRENGTH', t: 'r', a: 0, b: 100, c: 10, u: '%', h: 'THE FLASHES OF LIGHT ON BIG HITS AND MOVES. 0 = NO FLASHES.' },
     { k: 'hs', n: 'HIT PAUSE', t: 'r', a: 0, b: 150, c: 10, u: '%', h: 'THE SHORT FREEZE WHEN A BLOW LANDS. 0 = NONE, MORE = HEAVIER HITS.' },
     { k: 'dn', n: 'DAMAGE NUMBERS', t: 't', a: ONOFF, h: 'THE NUMBERS THAT POP UP WHEN YOU HIT SOMEONE.' },
+    { n: 'MORE: EXTRA EFFECTS (FOR FAST PHONES)', t: 'h' },
+    { k: 'glow', n: 'GLOW', t: 't', a: ['OFF', 'LOW', 'MEDIUM', 'HIGH'], h: 'BRIGHT THINGS GLOW (BLOOM). HEAVY: THE PICTURE IS DRAWN AGAIN, BLURRED, ON TOP OF ITSELF.' },
+    { k: 'trl', n: 'MOTION TRAILS', t: 't', a: ['OFF', 'SHORT', 'MEDIUM', 'LONG'], h: 'FAST FIGHTERS LEAVE FADING COPIES OF THEMSELVES BEHIND, IN FIGHTS.' },
+    { k: 'shd', n: 'SHADOWS AND LIGHT', t: 't', a: ['OFF', 'SIMPLE', 'SOFT', 'SOFT + LIGHT'], h: 'A SHADOW ON THE FLOOR UNDER EVERY FIGHTER, IN FIGHTS. SOFT = MORE ROWS. LIGHT = ALSO A PALE POOL OF LIGHT ROUND HIM.' },
+    { n: 'FOR MORE PARTICLES THAN NORMAL, SET PARTICLES (ABOVE) TO MANY.', t: 'n' },
+    { n: 'PICTURE', t: 'h' },
+    { k: 'zoom', n: 'CAMERA ZOOM', t: 't', a: ['75%', '90%', '100%', '110%', '125%'], b: [75, 90, 100, 110, 125], h: 'BIGGER PIXELS = A CLOSER CAMERA, SMALLER PIXELS = A WIDER ONE. ONLY IN FIGHTS AND FREE PLAY: THE STORY STAYS NORMAL SIZE. THE PIXELS STAY WHOLE, SO ON A SMALL SCREEN TWO STEPS CAN LOOK ALIKE.' },
+    { k: 'retro', n: 'FIXED RETRO SIZE', t: 't', a: ONOFF, h: 'ALWAYS THE SAME 288 X 128 PICTURE, WITH BLACK BARS ROUND IT WHERE THE SCREEN IS A DIFFERENT SHAPE. THE ZOOM IS OFF WHILE THIS IS ON.' },
+    { k: 'smooth', n: 'PIXEL SMOOTHING', t: 't', a: ONOFF, h: 'BLURS THE BIG PIXELS A LITTLE INSTEAD OF SHOWING THEM SHARP.' },
     { k: 'br', n: 'BRIGHTNESS', t: 'r', a: 70, b: 130, c: 5, u: '%', h: 'HOW LIGHT THE GAME PICTURE IS.' },
     { k: 'ct', n: 'CONTRAST', t: 'r', a: 80, b: 140, c: 5, u: '%', h: 'THE DIFFERENCE BETWEEN DARK AND LIGHT.' },
     { k: 'sat', n: 'COLOUR', t: 'r', a: 0, b: 150, c: 10, u: '%', h: 'HOW STRONG THE COLOURS ARE. 0 = BLACK AND WHITE.' },
     { k: 'scan', n: 'SCANLINES', t: 't', a: ['OFF', 'LIGHT', 'HEAVY'], h: 'THIN DARK LINES OVER THE SCREEN, LIKE AN OLD TV.' },
-    { k: 'fps', n: 'FRAME RATE', t: 't', a: ['AUTO', '30 FPS', '60 FPS'], b: [0, 30, 60], h: 'FPS = HOW MANY PICTURES THE GAME DRAWS EVERY SECOND. 30 SAVES BATTERY, 60 IS SMOOTHER.' },
+    { k: 'hb', n: 'SHOW HITBOXES', t: 't', a: ONOFF, h: 'DRAWS THE BOXES THE GAME TESTS A HIT WITH (FOR TESTING).' },
+    { n: 'FRAME RATE', t: 'h' },
+    { k: 'fps', n: 'FRAME RATE', t: 't', a: ['AUTO', '30 FPS', '45 FPS', '60 FPS', '72 FPS', '90 FPS', '120 FPS', '144 FPS', 'UNLIMITED'], b: [0, 30, 45, 60, 72, 90, 120, 144, 999], h: 'FPS = HOW MANY PICTURES THE GAME DRAWS EVERY SECOND. AUTO = AS MANY AS THE SCREEN SHOWS. UNLIMITED = NO LIMIT: THE APP ASKS ANDROID FOR THE FASTEST SCREEN MODE.' },
     { k: 'lite', n: 'BATTERY SAVER', t: 't', a: ONOFF, h: '30 FPS, NO SCREEN SHAKE AND FEWER SPARKS.' },
-    { k: 'fpsc', n: 'FPS COUNTER', t: 't', a: ONOFF, h: 'SHOWS HOW MANY FRAMES PER SECOND THE PHONE REALLY MAKES (TOP RIGHT).' },
-    { k: 'hb', n: 'SHOW HITBOXES', t: 't', a: ONOFF, h: 'DRAWS THE BOXES THE GAME TESTS A HIT WITH (FOR TESTING).' }] },
+    { n: 'TOOLS', t: 'h' },
+    { k: 'fpsc', n: 'STATS OVERLAY', t: 't', a: ['OFF', 'FPS', 'DETAILED'], h: 'NUMBERS AT THE TOP RIGHT: THE FPS, AND WITH DETAILED ALSO HOW LONG A PICTURE TAKES AND THE SCREEN RATE.' },
+    { t: 'gtools' }] },
   { id: 'game', n: 'GAMEPLAY', rows: [
     { k: 'assist', n: 'ASSIST', t: 't', a: ['OFF', 'PARRY+', 'EASY', 'AUTO-GUARD'], h: 'NOT IN WI-FI FIGHTS. PARRY+ = WIDER PARRY WINDOW, EASY = ALSO 30% LESS DAMAGE TO YOU, AUTO-GUARD = ALSO BLOCKS FOR YOU WHILE YOU STAND STILL.' },
     { k: 'pace', n: 'GAME PACE', t: 't', a: ['NORMAL', 'FAST', 'TURBO', 'SLOW'], h: 'HOW FAST OFFLINE FIGHTS RUN (NOT WI-FI, NOT THE STORY). THE TIMERS STILL COUNT REAL SECONDS.' },
@@ -17185,7 +17389,7 @@ const MSP = [      // the pages: a row is { k: the key in SET, n: name, t: 'r' (
     { k: 'br', n: 'BRIGHTNESS', t: 'r', a: 70, b: 130, c: 5, u: '%', h: 'HOW LIGHT THE GAME PICTURE IS.' },
     { k: 'sat', n: 'COLOUR', t: 'r', a: 0, b: 150, c: 10, u: '%', h: '0 = BLACK AND WHITE.' },
     { k: 'dn', n: 'DAMAGE NUMBERS', t: 't', a: ONOFF, h: 'THE NUMBERS ON HITS.' },
-    { k: 'fpsc', n: 'FPS COUNTER', t: 't', a: ONOFF, h: 'FRAMES PER SECOND, TOP RIGHT.' }] },
+    { k: 'fpsc', n: 'STATS OVERLAY', t: 't', a: ['OFF', 'FPS', 'DETAILED'], h: 'FRAMES PER SECOND AND MORE, TOP RIGHT.' }] },
   { id: 'data', n: 'DATA', rows: [{ t: 'data' }] },
   { id: 'pre', n: 'PRESETS', rows: [{ t: 'pre' }] },
 ];
@@ -17198,7 +17402,8 @@ const MS_PRE = [
   ['CASUAL', 'EASY ASSIST, SLOW HEALTH REGEN, NORMAL PACE.', { assist: 2, reg: 2, ap: 1, pace: 0 }],
   ['HARDCORE', 'NO ASSIST, ENEMIES HIT 50% HARDER, NO REGEN.', { assist: 0, reg: 0, edm: 150, pdm: 100, pace: 1 }],
 ];
-let msPage = 0, msFrom = 'title', msQ = '';
+let msPage = 0, msFrom = 'title', msQ = '', msNote = '';
+const msSyncs = [];      // (the functions of the GRAPHICS page that refresh its preset bar and its warnings when an option changes)
 const msEl = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined) e.textContent = txt; return e; };
 const msSave = () => { saveSet(); msApply(); buildOpts(); };
 function msSet(o) { for (const k in o) if (k in MSD) SET[k] = o[k]; msSave(); msBuild(); }
@@ -17206,10 +17411,10 @@ const msClamp = (r, v) => { v = Math.round(+v); if (!isFinite(v)) return null; i
 function msRow(r) {      // one option: its name, its control, DEF (back to the default) and a line about it
   const row = msEl('div', 'mr'), top = msEl('div', 'mt'), ctl = msEl('div', 'mc'), def = msEl('button', 'mx', 'DEF'); top.appendChild(msEl('span', 'mn', r.n)); top.appendChild(ctl); top.appendChild(def); row.appendChild(top);
   if (r.h) row.appendChild(msEl('small', 'mh', r.h));
-  const set = v => { SET[r.k] = v; saveSet(); msApply(); buildOpts(); };
+  const set = v => { SET[r.k] = v; saveSet(); msApply(); buildOpts(); msSyncs.forEach(f => f()); };
   if (r.t === 'r') {
     const inp = msEl('input'), val = msEl('b', '', ''); inp.type = 'range'; inp.min = r.a; inp.max = r.b; inp.step = r.c; inp.value = SET[r.k]; inp.setAttribute('aria-label', r.n); val.textContent = SET[r.k] + r.u;
-    inp.addEventListener('input', () => { SET[r.k] = +inp.value; val.textContent = SET[r.k] + r.u; msApply(); }); inp.addEventListener('change', () => { saveSet(); buildOpts(); });
+    inp.addEventListener('input', () => { SET[r.k] = +inp.value; val.textContent = SET[r.k] + r.u; msApply(); msSyncs.forEach(f => f()); }); inp.addEventListener('change', () => { saveSet(); buildOpts(); });
     def.addEventListener('click', () => { set(MSD[r.k]); inp.value = SET[r.k]; val.textContent = SET[r.k] + r.u; }); ctl.appendChild(inp); ctl.appendChild(val);
   } else {
     const btn = msEl('button', 'mb'), vals = r.b || r.a.map((_, i) => i), at = () => Math.max(0, vals.indexOf(SET[r.k])), label = () => { btn.textContent = r.a[at()]; }; label();
@@ -17254,11 +17459,24 @@ function msData(box) {      // the numbers, the save code, the settings code, th
   const row3 = msEl('div', 'mrow'); row3.appendChild(mkBtn('RESET SETTINGS', () => { msSet(MSD); say.textContent = 'ALL SETTINGS ARE BACK TO THE DEFAULT.'; }));
   row3.appendChild(mkBtn('RESET ALL PROGRESS', () => {
     const n = performance.now(); if (n > msArm2) { msArm2 = n + 5000; say.textContent = 'THIS DELETES YOUR MONEY, SKILLS AND STORY SAVES. TAP AGAIN WITHIN 5 SECONDS TO DO IT.'; return; }
-    try { const del = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (bkOwn(k) && k !== 'js_set' && k !== 'js_vol' && k !== 'js_snd') del.push(k); } del.forEach(k => localStorage.removeItem(k)); location.reload(); } catch { say.textContent = 'COULD NOT DELETE'; }
+    try { const del = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (bkOwn(k) && k !== 'js_set' && k !== 'js_vol' && k !== 'js_snd' && k !== 'js_gtest') del.push(k); } del.forEach(k => localStorage.removeItem(k)); location.reload(); } catch { say.textContent = 'COULD NOT DELETE'; }
   })); box.appendChild(row3);
 }
 function msPresets(box) {
   MS_PRE.forEach(([n, d, o]) => { const row = msEl('div', 'mr'), top = msEl('div', 'mt'), b = msEl('button', 'mb', 'APPLY'); top.appendChild(msEl('span', 'mn', n)); const c = msEl('div', 'mc'); c.appendChild(b); top.appendChild(c); row.appendChild(top); row.appendChild(msEl('small', 'mh', d)); b.addEventListener('click', () => { msSet(o); b.textContent = 'DONE'; setTimeout(() => { b.textContent = 'APPLY'; }, 900); }); box.appendChild(row); });
+}
+function msGq(box) {      // the quality presets (POTATO to ULTRA, CUSTOM when you changed an option) and the little live picture
+  const bar = msEl('div', 'gq'), lab = msEl('small', 'mh', ''), pv = msEl('canvas', 'mpv'), btns = GFX_PRE.map(([n], i) => { const b = msEl('button', '', n); b.addEventListener('click', () => { gfxPreset(i); msBuild(); }); bar.appendChild(b); return b; });
+  pv.width = 128; pv.height = 48; box.appendChild(bar); box.appendChild(lab); box.appendChild(pv); box.appendChild(msEl('small', 'mh', 'THE PICTURE SHOWS YOUR OPTIONS LIVE. HIGH IS HOW THE GAME CAME. ULTRA ADDS GLOW, TRAILS, SHADOWS AND MORE PARTICLES.'));
+  const sync = () => { const q = gfxQ(); btns.forEach((b, i) => b.classList.toggle('sel', i === q)); lab.textContent = 'QUALITY: ' + (q < 5 ? GFX_PRE[q][0] : 'CUSTOM (YOU CHANGED AN OPTION)'); };
+  msSyncs.push(sync); sync(); gfxPreview(pv);
+}
+function msGtools(box) {      // TEST MY PHONE, what the screen can do, and what the options cost
+  const row = msEl('div', 'mrow'), test = msEl('button', '', 'TEST MY PHONE'), say = msEl('small', 'mh', ''), warn = msEl('small', 'mw', ''), note = msNote, info = () => { say.textContent = (note ? note + '\n' : '') + gfxInfo(); };
+  test.addEventListener('click', () => gfxBench((id, hz) => { msNote = id < 0 ? 'TEST CANCELLED.' : 'THE TEST SAYS ' + GFX_PRE[id][0] + ' (SCREEN RATE ' + hz + ' HZ). IT IS SET: CHANGE IT ABOVE IF YOU LIKE.'; if (id >= 0) gfxBenchApply(id, false); msBuild(); }));
+  row.appendChild(test); box.appendChild(row); box.appendChild(say); box.appendChild(warn); info(); msNote = '';
+  const sync = () => { warn.textContent = gfxWarn().join('\n\n'); }; msSyncs.push(sync); sync();
+  gfxMeasure(() => { if (say.isConnected) info(); });
 }
 function msBuild() {
   const root = $('mset'), keep = root.querySelector('.mbody'), top = keep ? keep.scrollTop : 0; root.textContent = '';
@@ -17273,14 +17491,14 @@ function msBuild() {
   msFill(body); body.scrollTop = top;
 }
 function msFill(body) {      // the options of the page, or of every page that has the words of the search
-  body.textContent = '';
+  body.textContent = ''; msSyncs.length = 0;
   if (msQ) {
     let n = 0; const seen = new Set();
     MSP.forEach(p => p.rows.forEach(r => { if (!r.k || seen.has(r.k) || !((r.n + ' ' + (r.h || '')).includes(msQ))) return; seen.add(r.k); body.appendChild(msRow(r)); n++; }));
     if (!n) body.appendChild(msEl('small', 'mh', 'NO OPTION HAS THOSE WORDS.'));
     return;
   }
-  const p = MSP[msPage]; p.rows.forEach(r => { if (r.t === 'n') body.appendChild(msEl('small', 'mh', r.n)); else if (r.t === 'snd') msSound(body); else if (r.t === 'data') msData(body); else if (r.t === 'pre') msPresets(body); else body.appendChild(msRow(r)); });
+  const p = MSP[msPage]; p.rows.forEach(r => { if (r.t === 'n') body.appendChild(msEl('small', 'mh', r.n)); else if (r.t === 'h') body.appendChild(msEl('div', 'mhd', r.n)); else if (r.t === 'gq') msGq(body); else if (r.t === 'gtools') msGtools(body); else if (r.t === 'snd') msSound(body); else if (r.t === 'data') msData(body); else if (r.t === 'pre') msPresets(body); else body.appendChild(msRow(r)); });
 }
 function msOpen(from) { msFrom = from; audio(); msQ = ''; msBuild(); show('mset'); }
 function msBack() { show(msFrom); }
@@ -17296,18 +17514,19 @@ msCss.textContent = '#mset.screen{z-index:6;justify-content:flex-start;gap:1vh;p
   + '#mset .mst{display:grid;grid-template-columns:1fr 1fr;gap:.6vh 2vh;font-size:clamp(7px,2vh,11px)}#mset .ms{display:flex;justify-content:space-between;gap:1vh;padding:.5vh 1vh;background:rgba(255,255,255,.04)}#mset .ms b{font-weight:normal;color:var(--acc)}'
   + '#mset .mrow{display:flex;gap:1vh;flex-wrap:wrap}#mset textarea{width:100%;font:inherit;font-size:clamp(6px,1.6vh,9px);color:var(--ink);background:#120d22;border:3px solid var(--line);user-select:text;-webkit-user-select:text}'
   + '#msBtn{position:fixed;right:calc(env(safe-area-inset-right) + 2vh);top:calc(env(safe-area-inset-top) + 1.4vh);padding:1vh 1.6vh;font-size:clamp(7px,2vh,11px)}'
-  + '#msScan{position:fixed;inset:0;z-index:3;pointer-events:none;display:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.5) 0 1px,transparent 1px 3px)}#msFps{position:fixed;right:1vh;top:1vh;z-index:7;display:none;pointer-events:none;color:#7dff7d;background:rgba(0,0,0,.55);padding:.4vh .8vh;font-size:clamp(7px,1.8vh,10px)}';
+  + '#msScan{position:fixed;inset:0;z-index:3;pointer-events:none;display:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.5) 0 1px,transparent 1px 3px)}'
+  + '#mset .gq{display:flex;gap:.8vh;flex-wrap:wrap}#mset .gq button{flex:1;min-width:8ch;padding:1vh .6vh;font-size:clamp(6px,1.8vh,10px)}#mset .gq button.sel{border-color:var(--acc);color:var(--acc)}'
+  + '#mset .mpv{width:100%;max-width:min(320px,70vh);align-self:center;aspect-ratio:128/48;image-rendering:pixelated;border:3px solid var(--line);background:#0d0a17}#mset .mh{white-space:pre-wrap}'
+  + '#mset .mhd{margin-top:1vh;padding-bottom:.4vh;border-bottom:2px solid var(--line);font-size:clamp(7px,2vh,11px);color:var(--acc)}#mset .mw{white-space:pre-wrap;font-size:clamp(5px,1.6vh,9px);line-height:1.6;color:#ffd34d}';
 document.head.appendChild(msCss);
 const msSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); msSvg.setAttribute('width', '0'); msSvg.setAttribute('height', '0'); msSvg.style.position = 'absolute'; msSvg.innerHTML = '<filter id="msCB" color-interpolation-filters="sRGB"><feColorMatrix id="msCBm" type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0"/></filter>'; document.body.appendChild(msSvg);
-const msScan = msEl('div'); msScan.id = 'msScan'; document.body.appendChild(msScan); const msFps = msEl('div'); msFps.id = 'msFps'; document.body.appendChild(msFps);
+const msScan = msEl('div'); msScan.id = 'msScan'; document.body.appendChild(msScan);
 function msCbMatrix(mode) {      // colour-blind help: the colours the eye misses are moved into the ones it sees (an approximation of the usual "daltonize" method)
   const sim = [[[0.567, 0.433, 0], [0.558, 0.442, 0], [0, 0.242, 0.758]], [[0.625, 0.375, 0], [0.7, 0.3, 0], [0, 0.3, 0.7]], [[0.95, 0.05, 0], [0, 0.433, 0.567], [0, 0.475, 0.525]]][mode - 1];
   const sh = mode < 3 ? [[0, 0, 0], [0.7, 1, 0], [0.7, 0, 1]] : [[1, 0, 0.7], [0, 1, 0.7], [0, 0, 0]], out = [];
   for (let i = 0; i < 3; i++) { for (let j = 0; j < 3; j++) { let v = i === j ? 1 : 0; for (let k = 0; k < 3; k++) v += sh[i][k] * ((k === j ? 1 : 0) - sim[k][j]); out.push(v.toFixed(3)); } out.push('0 0'); }
   return out.join(' ') + ' 0 0 0 1 0';
 }
-let msFpsOn = false, msFpsN = 0, msFpsT = 0;
-function msFpsLoop(t) { msFpsN++; if (t - msFpsT >= 500) { msFps.textContent = Math.round(msFpsN * 1000 / (t - msFpsT)) + ' FPS'; msFpsN = 0; msFpsT = t; } if (SET.fpsc) requestAnimationFrame(msFpsLoop); else msFpsOn = false; }
 function msApply() {
   const rs = document.documentElement.style, cv = $('game'), f = [];
   if (SET.th) rs.setProperty('--acc', MS_THEMES[SET.th][1]); else rs.removeProperty('--acc');
@@ -17315,7 +17534,7 @@ function msApply() {
   const hc = SET.hc ? 1 : 0; if (SET.br !== 100) f.push('brightness(' + SET.br / 100 + ')'); if (SET.ct !== 100 || hc) f.push('contrast(' + (SET.ct / 100 * (hc ? 1.2 : 1)).toFixed(2) + ')'); if (SET.sat !== 100 || hc) f.push('saturate(' + (SET.sat / 100 * (hc ? 1.15 : 1)).toFixed(2) + ')');
   cv.style.filter = f.join(' ');
   msScan.style.display = SET.scan ? 'block' : 'none'; msScan.style.opacity = SET.scan === 2 ? 0.55 : 0.25;
-  msFps.style.display = SET.fpsc ? 'block' : 'none'; if (SET.fpsc && !msFpsOn) { msFpsOn = true; msFpsN = 0; msFpsT = performance.now(); requestAnimationFrame(msFpsLoop); }
+  if (window.__gfxReady) gfxApply();      // (the stats overlay, the frame rate request, the zoom, the effects of the GRAPHICS page)
 }
 $('msBtn').addEventListener('click', () => msOpen('title')); $('msModes').addEventListener('click', () => msOpen('modes'));
 setInterval(() => { if (state === 'play' || state === 'story') { STAT.t++; if (STAT.t % 15 === 0) statSave(); } }, 1000);
