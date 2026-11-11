@@ -173,7 +173,6 @@ const c15Faces = (() => {
   // o.cr = where the creases of the joints lie (0 - 1 along the finger), o.lit = the direction the light comes from, o.sh = [dx, dy, colour, over] a cast shadow on what is under it. It returns the spine (sp) and the length along it (T).
   const OLC = C('#5a2820'), NAIL = ['#e8b4a2', '#f4d0c0', '#fbe8de', '#fff6ee'].map(C), FLESH = ['#3c0810', '#6e0e1a', '#a81c28', '#d4404c'].map(C), PINK = ['#a8625a', '#cc857a', '#e8a79a', '#f6c4b8'].map(C), BONE = C('#f0e6d6');
   const dimC = (v, k) => { const r = v & 255, g = (v >>> 8) & 255, b = (v >>> 16) & 255; return ((255 << 24) | (Math.round(b + (16 - b) * k) << 16) | (Math.round(g + (10 - g) * k) << 8) | Math.round(r + (24 - r) * k)) >>> 0; }, dimG = (g, k) => { const lut = new Map(); for (let i = 0; i < g.length; i++) { const v = g[i]; let d = lut.get(v); if (d === undefined) { d = dimC(v, k); lut.set(v, d); } g[i] = d; } };      // (mix a colour / a whole picture a part of the way to the dark)
-  const chain = (b, th, L) => { const pts = [b]; let x = b[0], y = b[1]; for (let i = 0; i < L.length; i++) { x += Math.cos(th[i]) * L[i]; y += Math.sin(th[i]) * L[i]; pts.push([x, y]); } return pts; };
   function digit(p, o) {
     const R = o.R || SKIN.sy, lt = o.lit || [-0.55, -0.83], sp = spl(o.pts, false, 8), n = sp.length, cum = [0];
     for (let i = 1; i < n; i++) cum.push(cum[i - 1] + Math.hypot(sp[i][0] - sp[i - 1][0], sp[i][1] - sp[i - 1][1]));
@@ -294,73 +293,45 @@ const c15Faces = (() => {
     p.poly(ring(22, 1.18, 1, 0), OLC); p.poly(ring(22, 1.08, 1, 0), SKIN.sy[1]); p.poly(ring(16, 0.84, 0, 30, -rx * 0.04, ry * 0.05), WD[1]); p.poly(ring(14, 0.6, 0, 60, -rx * 0.1, -ry * 0.04), WD[2], [WD[1]]); p.poly(ring(10, 0.26, 0, 90, -rx * 0.14, -ry * 0.1), BONE); p.poly(ring(8, 0.12, 0, 5, -rx * 0.16, -ry * 0.16), C('#ffffff'), [BONE]);
     p.poly(elp(x - rx * 0.2, y + ry * 0.5, 2.2, 1.4, rot, 8), WD[3]);
   }
-  // ---- Sukuna's right hand holds Megumi's cheek (the back of the hand, the fingers on his face, the little finger sticking out) and his left hand takes the little finger: o.pull (0 - 1: how far it is pulled out of the hand), o.torn (1: it is off and held away), o.blood
+  // ---- the pictures of the hands: tools/hands_make.js draws small 3D hands once and packs them (run length coded bytes: 0 - 3 a shadow on what is behind, 8 + = (material << 3) | tone); here they get their colours.
+  const HD = __HANDSDATA__, HPIX = new Map();
+  function hdata(key) {
+    let a = HPIX.get(key); if (a) return a; const f = HD.f[key]; if (!f) return null;
+    const bin = atob(f.d); a = new Uint8Array(HD.w * HD.h); let o = 0; for (let i = 0; i + 1 < bin.length; i += 2) { const c = bin.charCodeAt(i + 1); a.fill(bin.charCodeAt(i), o, o + c); o += c; }
+    HPIX.set(key, a); return a;
+  }
+  function hramps(o) {      // the colours of the materials: skin, nail, sleeve, flesh, bone, stretched skin, claw (5 tones and the dark line)
+    const RR = ['#3a0810', '#6a0c18', '#a01c28', '#c83a44', '#e0505a'], skin = SKINH.sy.slice(), mk = (a, l) => a.concat([l]).map(C);
+    return [null, mk(skin, '#5a2820'), mk(['#b8706a', '#e8a8a0', '#f4c8bc', '#fce4dc', '#fff6f0'].map(h => hexMix(h, '#5a1018', (o.red || 0) * 0.7)), '#7a3a36'), mk(['#0c1428', '#1c2a52', '#2e3f74', '#44589a', '#6678b8'], '#060a18'),
+      o.blood ? mk(['#3c0810', '#6e0e1a', '#a81c28', '#d4404c', '#f07078'], '#240408') : mk(['#a8625a', '#cc857a', '#e8a79a', '#f6c4b8', '#fadcd4'], '#6a3a34'), mk(['#a89c8c', '#cfc4b2', '#f0e6d6', '#fff8ec', '#ffffff'], '#6a5e50'),
+      mk(skin.map(h => hexMix(h, '#fff0e8', 0.35)), '#6a3a30'), mk(['#0a0608', '#16101a', '#2c2238', '#4a3c5c', '#6a5a88'], '#000000'), mk(SKINH.sy.map((h, i) => hexMix(h, RR[i], o.red || 0)), '#5a2820')];
+  }
+  function hpaint(p, key, rp) {      // draws the hand picture over the painter: its colours where the hand is, a darker tone where it throws a shadow
+    const a = hdata(key); if (!a) return; const g = p.g, n = a.length, lut = [new Map(), new Map(), new Map(), new Map()], SH = [0, 0.22, 0.4, 0.58];
+    for (let i = 0; i < n; i++) { const b = a[i]; if (b >= 8) g[i] = rp[b >> 3][b & 7]; else if (b) { const v = g[i]; let d = lut[b].get(v); if (d === undefined) { d = dimC(v, SH[b]); lut[b].set(v, d); } g[i] = d; } }
+  }
   let HBG = null;
+  // ---- Sukuna's hand holds Megumi's cheek (Megumi's face is dark behind it) and his other hand takes the little finger: o.pull (0 - 1: how far it is pulled out, in steps of 1/8), o.torn (1: it is off and the other hand takes it away: o.pull 0 - 1 in steps of 1/6), o.blood
   function handsEcu(o) {
-    const EW = 360, EH = 250, p = new Cv(EW, EH, 0.95, 112, 100), pull = o.pull || 0, tn = !!o.torn, H = SKIN.sy, Sf = ptone('meg', 0.35).skin, P = Math.PI, WD = o.blood ? FLESH : PINK, NV = ['#101830', '#1c2a52', '#2e3f74', '#44589a'].map(C), O8 = [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [1, -1], [-1, 1]];
-    if (!HBG) { p.g.fill(C('#140a10')); faceDraw(p, { who: 'meg', m: 'sad', lid: -0.3, pr: 2, bw: 4, circles: 0.4, pale: 0.35, sweat: 1 }); dimG(p.g, 0.5); HBG = p.g.slice(); } else p.g.set(HBG);      // (Megumi's face under the hand, dark and a little out of focus: drawn once)
-    const Sm = Sf.map(c => dimC(c, 0.5));
-    p.sc = 0.8; p.ox = 158; p.oy = 163;      // (the hand and what is under it are drawn in their own numbers, a little smaller than the face)
-    const F = [[[204, 161], [20, 16], [33, 21, 17], [P - 0.05, P - 0.4, P - 0.85]], [[201, 141], [20, 16], [36, 23, 18], [P - 0.1, P - 0.45, P - 0.95]], [[205, 121], [19, 15], [34, 22, 17], [P - 0.12, P - 0.5, P - 1]]], chs = F.map(f => chain(f[0], f[3], f[2]));
-    const ab = 0.34 * (tn ? 1 : pull), dist = 44 * (tn ? 1 : pull), pth = [P + 0.36 + ab, P + 0.26 + ab, P + 0.12 + ab], b0 = [212, 102], pb = [b0[0] + Math.cos(pth[0]) * dist, b0[1] + Math.sin(pth[0]) * dist], pc = chain(pb, pth, [27, 17, 15]), ps = spl(pc, false, 8), pp0 = ps[ps.length >> 1];
-    const q = tn ? cl((pull - 0.3) / 0.6, 0, 1) : 0, rot = -0.4 * q, fo = tn ? [-34 * q - 8, -40 * q - 10] : [0, 0], mv = pt => { const dx = pt[0] - pp0[0], dy = pt[1] - pp0[1], c = Math.cos(rot), s = Math.sin(rot); return [pp0[0] + dx * c - dy * s + fo[0], pp0[1] + dx * s + dy * c + fo[1]]; }, Lp = mv(pp0);
-    for (const c of chs) { const t = c[3]; p.poly(elp(t[0] + 4, t[1] + 6, 22, 17, 0.5), Sm[1], [Sm[2], Sm[3]]); p.poly(elp(t[0] - 3, t[1] + 3, 14, 11, 0.5), Sm[0], [Sm[1]], 0.55); p.poly(elp(t[0] - 9, t[1] - 5, 15, 9, 0.5), Sm[3], [Sm[2]], 0.5); }      // (a dent in the cheek under each finger tip, the skin pushed up beside it)
-    const shd = [6, 8, Sm[0], [Sm[1], Sm[2], Sm[3]]];
-    if (pull > 0.02 && !tn) {      // the skin of the hand stretches between the knuckle and the finger that is pulled out of it
-      const dx = Math.cos(pth[0]), dy = Math.sin(pth[0]), nx = -dy, ny = dx, wk = 1 - 0.28 * pull, mid = [(b0[0] + pb[0]) / 2, (b0[1] + pb[1]) / 2], sk = C(hexMix(SKINH.sy[2], '#f0a898', pull * 0.7)), cone = spl([[b0[0] + nx * 11, b0[1] + ny * 11], [mid[0] + nx * 10 * wk, mid[1] + ny * 10 * wk], [pb[0] + nx * 8, pb[1] + ny * 8], [pb[0] - nx * 8, pb[1] - ny * 8], [mid[0] - nx * 10 * wk, mid[1] - ny * 10 * wk], [b0[0] - nx * 11, b0[1] - ny * 11]], true, 4);
-      for (const [ox, oy] of O8) p.poly(cone.map(a => [a[0] + ox, a[1] + oy]), OLC); p.poly(cone, sk); p.poly(cone.map(a => [a[0], a[1] + 3]), H[1], [sk], 0.5);
-      for (const k of [-0.4, 0, 0.4]) p.pl([[b0[0] + nx * 10 * k, b0[1] + ny * 10 * k], [mid[0] + nx * 10 * wk * k, mid[1] + ny * 10 * wk * k], [pb[0] + nx * 7.5 * k, pb[1] + ny * 7.5 * k]], H[1]);      // (stretch lines)
-      if (pull > 0.8) p.stroke([[b0[0] + nx * 9, b0[1] + ny * 9], [mid[0] + nx * 9 * wk, mid[1] + ny * 9 * wk]], [1, 2.4], WD[2]);      // (the skin begins to split)
+    const EW = 360, EH = 250, p = new Cv(EW, EH, 0.95, 104, 82), tn = !!o.torn, key = tn ? 't' + Math.round((o.pull || 0) * 6) : 'g' + Math.round((o.pull || 0) * 8), f = HD.f[key], Sf = ptone('meg', 0.35).skin, WD = o.blood ? FLESH : PINK;
+    if (!HBG) { p.g.fill(C('#140a10')); faceDraw(p, { who: 'meg', m: 'sad', lid: -0.3, pr: 2, bw: 4, circles: 0.4, pale: 0.35, sweat: 1 }); dimG(p.g, 0.5); HBG = p.g.slice(); } else p.g.set(HBG);      // (Megumi's face, dark and a little out of focus: drawn once)
+    const Sm = Sf.map(c => dimC(c, 0.5)); p.sc = 1; p.ox = CX; p.oy = EY;      // (pixel coordinates from here on)
+    if (f) for (const k in f.m.tips) { const t = f.m.tips[k]; p.poly(elp(t[0] + 3, t[1] + 4, 14, 10, 0.5), Sm[1], [Sm[2], Sm[3]]); p.poly(elp(t[0] - 1, t[1] + 1, 9, 6, 0.5), Sm[0], [Sm[1]], 0.55); p.poly(elp(t[0] - 7, t[1] - 5, 10, 6, 0.5), Sm[3], [Sm[2]], 0.5); }      // (a dent in the cheek under each finger tip)
+    hpaint(p, key, hramps(o));
+    if (tn && f) {      // the raw hole where the finger was, the raw end of the finger in the other hand
+      const s0 = f.m.stump; rawEnd(p, s0[0], s0[1], 8, 11, Math.atan2(f.m.stump[3], f.m.stump[2]) + 1.57, WD, 5);
+      if (o.blood) for (const [x, y, l] of [[s0[0] + 1, s0[1] + 8, 30], [s0[0] + 8, s0[1] + 9, 20], [s0[0] - 6, s0[1] + 9, 16]]) { p.stroke(spl([[x, y], [x + 1.5, y + l * 0.5], [x + 1, y + l]], false, 5), [3, 2.4, 1.4], FLESH[1]); p.stroke([[x - 0.7, y + 1], [x - 0.7, y + l * 0.8]], [0.8, 0.8], FLESH[3]); }
     }
-    for (let i = 0; i < 3; i++) digit(p, { pts: chs[i], w: F[i][1], nail: 'top', sh: shd });
-    if (!tn) digit(p, { pts: pc, w: [16, 12.5], nail: 'top', cr: [0.46, 0.76], sh: shd });
-    // the back of the hand: the knuckles, the tendons, a vein, the sleeve
-    for (const k of [[212, 102], [205, 121], [201, 141], [204, 161]]) { const e = elp(k[0] + 5, k[1], 12, 10.4, 0.1, 22); for (const [ox, oy] of O8) p.poly(e.map(a => [a[0] + ox, a[1] + oy]), OLC); p.poly(e, H[2]); }      // (the knuckles stand out from the line of the hand)
-    const kn = spl([[216, 92], [203, 110], [198, 132], [201, 154], [212, 174]], false, 6), dors = kn.concat([[240, 186], [272, 182], [298, 168], [304, 140], [298, 112], [270, 98], [240, 90]]);
-    p.poly(dors.map(a => [a[0] + 7, a[1] + 9]), Sm[0], [Sm[1], Sm[2], Sm[3]]); for (const [ox, oy] of O8) p.poly(dors.map(a => [a[0] + ox, a[1] + oy]), OLC);
-    p.poly(dors, H[2]); p.poly([[196, 168], [236, 176], [306, 178], [306, 200], [196, 200]], H[1], [H[2]], 0.65); p.poly([[250, 184], [310, 178], [310, 196], [250, 198]], H[0], [H[1]], 0.5); p.stroke(spl([[214, 93], [244, 90], [282, 99]], false, 5), [3, 5, 3], H[3], [H[2]]);
-    const K = [[212, 102], [205, 121], [201, 141], [204, 161]];
-    for (const k of K) { for (const d of [-3.4, 0, 3.4]) p.pl(spl([[k[0] + 15, k[1] + d - 4], [k[0] + 19, k[1] + d], [k[0] + 15, k[1] + d + 4]], false, 3), H[1], [H[2], H[3]]); }      // (the knuckles with their wrinkles)
-    for (const k of K) { const t = spl([[k[0] + 18, k[1]], [k[0] + 46, lerp(k[1], 138, 0.3)], [k[0] + 76, lerp(k[1], 138, 0.6)]], false, 6); p.stroke(t, [0.6, 2.4, 0.5], H[1], [H[2]], 0.6); p.stroke(t.map(a => [a[0], a[1] - 2.4]), [0.5, 1.2, 0.4], H[3], [H[2]], 0.5); }      // (the tendons)
-    p.stroke(spl([[238, 152], [262, 148], [292, 144]], false, 5), [0.5, 1.8, 0.5], C('#c29088'), [H[2], H[3]], 0.45);      // (a vein)
-    p.poly([[294, 92], [322, 86], [366, 80], [366, 198], [322, 196], [296, 184], [290, 140]], NV[1]); p.poly([[294, 92], [322, 86], [366, 80], [366, 100], [322, 106], [296, 112]], NV[2], [NV[1]]); p.poly([[296, 184], [322, 196], [366, 198], [366, 176], [322, 172], [296, 160]], NV[0], [NV[1]]); p.stroke([[300, 100], [330, 94], [364, 88]], [2, 2, 2], NV[3], [NV[2]]); p.pl([[290, 140], [296, 112], [294, 92]], NV[0]);
-    const dd = [-0.85, 0.52], nn = [0.52, 0.85], at = (Lc, a, b) => [Lc[0] + dd[0] * a + nn[0] * b, Lc[1] + dd[1] * a + nn[1] * b];      // (the left hand comes from the upper right: dd runs to its finger tips, nn to the side of its first finger)
-    const lthumb = Lc => digit(p, { pts: [at(Lc, -64, -28), at(Lc, -42, -21), at(Lc, -21, -14), at(Lc, -3, -9)], w: [29, 23], nail: 'top', cr: [0.5, 0.8] }), lindex = Lc => digit(p, { pts: [at(Lc, -74, 20), at(Lc, -46, 16), at(Lc, -22, 12), at(Lc, -2, 9)], w: [25, 19], nail: 'top', cr: [0.46, 0.76] });
-    if (tn) {      // the raw hole where the finger was, and the finger in the left hand
-      rawEnd(p, b0[0] - 2, b0[1] - 1, 9, 11, -0.4, WD, 5); if (o.blood) { for (const [x, y, l] of [[b0[0] + 4, b0[1] + 8, 34], [b0[0] + 12, b0[1] + 10, 24], [b0[0] - 3, b0[1] + 10, 18]]) { p.stroke(spl([[x, y], [x + 2, y + l * 0.5], [x + 1, y + l]], false, 5), [3.2, 2.6, 1.4], FLESH[1]); p.stroke([[x - 0.8, y + 1], [x - 0.8, y + l * 0.8]], [0.9, 0.9], FLESH[3]); } p.poly(elp(b0[0] - 2, b0[1] + 2, 12, 5, -0.3), FLESH[1], [H[2], H[3], H[1]], 0.6); }
-      const hp = pc.map(mv), fo2 = digit(p, { pts: hp, w: [16, 12.5], nail: 'top', cr: [0.46, 0.76] }), a0 = Math.atan2(fo2.sp[1][1] - fo2.sp[0][1], fo2.sp[1][0] - fo2.sp[0][0]); rawEnd(p, hp[0][0] - Math.cos(a0) * 1.5, hp[0][1] - Math.sin(a0) * 1.5, 3.6, 8.4, a0, WD, 9);
-    }
-    lthumb(Lp); lindex(Lp);
     return p.canvas();
   }
-  // ---- the finger in the pinch of his thumb and first finger, ripped off: o.red (0 - 1: it turns red), o.nl (0 - 1: the black nail grows long), o.blood
+  // ---- the finger in the pinch of his thumb and first finger, ripped off (seen large): o.red (0 - 1: it turns dark red), o.nl (0 - 1, in steps of 1/8: the black claw grows out of its nail), o.blood
   function fingerEcu(o) {
-    const EW = 360, EH = 250, p = new Cv(EW, EH, 1, CX, EY), rd = o.red || 0, nl = o.nl || 0, RR = ['#3a0810', '#6a0c18', '#a01c28', '#c83a44', '#e0505a'], B = SKINH.sy.map((h, i) => C(hexMix(h, RR[i], rd))), WD = o.blood ? FLESH : PINK;
-    p.g.fill(C('#10060a'));
-    const x0 = 60, x1 = 236, yy = 128, tipy = yy - 8; digit(p, { pts: [[x0, yy + 5], [x0 + 58, yy + 1], [x0 + 118, yy - 4], [x1, tipy]], w: [50, 37], R: B, nail: nl < 0.2 ? 'top' : 0, cr: [0.33, 0.67] });
-    if (rd > 0.3) { for (const [vx, vy] of [[96, 118], [150, 138], [196, 118]]) p.stroke([[vx, vy], [vx + 14, vy + 4], [vx + 26, vy - 2]], [1.4, 1.4], C('#e0505a'), [B[2], B[1]]); for (let k = 0; k < 9; k++) { const cx2 = 84 + k * 17 + c4R(k, 4) * 8, cy2 = 112 + c4R(k, 5) * 34, l = 7 + c4R(k, 6) * 12; p.pl([[cx2, cy2], [cx2 + l * 0.4, cy2 + l * 0.5], [cx2 + l * 0.1, cy2 + l]], RR[0], [B[1], B[2], B[3]]); } p.poly([[x0 + 20, 106], [x1 - 40, 100], [x1 - 40, 156], [x0 + 20, 158]], RR[0], [B[1], B[2]], (x, y) => c4R(y * 331 + x, 11) < rd * 0.2); }
-    rawEnd(p, x0 - 1, yy + 5, 12, 26, 0, WD, 3); if (o.blood) { p.poly(elp(x0 - 6, yy + 24, 12, 8), FLESH[1]); p.stroke(spl([[x0 + 2, yy + 22], [x0 + 3, yy + 44], [x0 + 1, yy + 70]], false, 5), [4, 3.2, 2], FLESH[1]); p.stroke([[x0 + 1, yy + 24], [x0 + 1, yy + 58]], [1, 1], FLESH[3]); }
-    if (nl >= 0.2) {      // the nail turns into a long black claw
-      const L = 40 + nl * 130, th = 24 - nl * 6, nx0 = x1 - 4, cy = tipy, claw = [C('#0a0608'), C('#16101a'), C('#2c2238'), C('#4a3c5c')], cp = [[nx0 - 8, cy - th - 6], [nx0 + L * 0.7, cy - th * 0.7], [nx0 + L, cy - 2 + nl * 12], [nx0 + L * 0.7, cy + th * 0.7], [nx0 - 8, cy + th - 2]];
-      p.poly(cp, claw[1]); p.poly([cp[0], cp[1], cp[2], [nx0 + L * 0.6, cy - 2]], claw[2], [claw[1]]); p.stroke([[nx0 + 4, cy - th + 3], [nx0 + L * 0.85, cy - th * 0.5 + 1]], [3, 1.6], claw[3]); p.pl(cp, claw[0]);
-      p.poly(elp(nx0 - 6, cy - 2, 6, th + 2, 0, 14), B[1], [B[2], B[3], B[4]]);      // (the ring of skin around the root of the claw)
-    }
-    digit(p, { pts: [[246, -50], [206, 6], [176, 56], [160, 98]], w: [66, 54], nail: 'side', cr: [0.5, 0.8] });      // (the thumb from above and the first finger from below hold it)
-    digit(p, { pts: [[240, 310], [212, 244], [180, 192], [162, 158]], w: [60, 48], nail: 0, cr: [0.5, 0.8] });
-    return p.canvas();
+    const p = new Cv(360, 250, 1, CX, EY); p.g.fill(C('#10060a')); hpaint(p, 'f' + Math.round((o.nl || 0) * 8), hramps(o)); return p.canvas();
   }
   // ---- Yuji's right hand seen from his own eyes (palm to him, fingers up, the thumb on the right): the little finger is gone; o.blood (FULL): the stump bleeds, else a clean pink stump
   function yhandEcu(o) {
-    const EW = 360, EH = 250, p = new Cv(EW, EH, 1, CX, EY), H = SKIN.sy, P = Math.PI, WD = o.blood ? FLESH : PINK, O8 = [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [1, -1], [-1, 1]];
-    p.g.fill(C('#120608'));
-    const FG = [[[142, 164], [35, 29], [38, 25, 19], 0.02], [[180, 160], [36, 30], [42, 27, 21], 0], [[218, 164], [35, 29], [38, 24, 19], -0.02]];      // (the ring, the middle and the first finger: the base, the widths, the bones, a slight lean)
-    for (const f of FG) digit(p, { pts: chain(f[0], [-P / 2 + f[3], -P / 2 + f[3] + 0.05, -P / 2 + f[3] + 0.1], f[2]), w: f[1], nail: 0, cr: [0.45, 0.75] });
-    const palm = spl([[112, 172], [128, 160], [160, 156], [200, 154], [236, 158], [260, 170], [274, 198], [282, 250], [110, 250], [100, 206]], true, 5);
-    for (const [ox, oy] of O8) p.poly(palm.map(a => [a[0] + ox, a[1] + oy]), OLC); p.poly(palm, H[2]); p.poly([[236, 156], [262, 170], [276, 200], [284, 250], [226, 250], [232, 190]], H[1], [H[2]], 0.6); p.poly(elp(150, 196, 36, 22, 0.1), H[3], [H[2]], 0.5); p.poly(elp(236, 230, 40, 24), H[1], [H[2]], 0.4);
-    for (const l of [[[112, 186], [150, 180], [196, 184], [248, 194]], [[116, 206], [160, 210], [214, 222], [262, 236]], [[216, 164], [204, 196], [208, 230], [228, 250]]]) { p.stroke(spl(l, false, 5), [1.6, 2.6, 1.8], H[1], [H[2], H[3]]); p.stroke(spl(l.map(a => [a[0], a[1] + 3]), false, 5), [1, 1.6, 1], H[3], [H[2]], 0.6); }      // (the lines of the palm)
-    digit(p, { pts: chain([262, 206], [-0.95, -1.15], [48, 38]), w: [44, 34], nail: 0, cr: [0.52] });
-    const sx = 107, sy = 166; digit(p, { pts: [[sx - 1, sy + 14], [sx, sy + 7], [sx + 1, sy]], w: [31, 28], nail: 0, cr: [] }); rawEnd(p, sx + 1, sy - 3, 14.5, 5.6, 0, WD, 7);      // (the stump where the little finger was)
-    if (o.blood) for (const [x, l] of [[sx - 6, 40], [sx + 2, 62], [sx + 9, 30]]) { p.stroke(spl([[x, sy + 6], [x + 1, sy + l * 0.5], [x - 1, sy + l]], false, 5), [3.4, 2.8, 1.6], FLESH[1]); p.stroke([[x - 0.8, sy + 8], [x - 0.8, sy + l * 0.8]], [0.9, 0.9], FLESH[3]); }
+    const p = new Cv(360, 250, 1, CX, EY), f = HD.f.y0, WD = o.blood ? FLESH : PINK; p.g.fill(C('#120608')); hpaint(p, 'y0', hramps(o));
+    if (f) { const s0 = f.m.stump; rawEnd(p, s0[0] - 2, s0[1] + 4, 12, 7, 0.3, WD, 7); if (o.blood) for (const [x, l] of [[s0[0] - 6, 40], [s0[0] + 1, 60], [s0[0] + 8, 30]]) { p.stroke(spl([[x, s0[1] + 8], [x + 1, s0[1] + 8 + l * 0.5], [x - 1, s0[1] + 8 + l]], false, 5), [3.2, 2.6, 1.5], FLESH[1]); p.stroke([[x - 0.8, s0[1] + 10], [x - 0.8, s0[1] + 8 + l * 0.8]], [0.9, 0.9], FLESH[3]); } }
     return p.canvas();
   }
   const irisOf = (who, red) => { const b = IRIS[who === 'meg' ? 'meg' : who === 'yuji' ? 'yuji' : 'suk'], r = IRIS.suk, t = who === 'suk' ? 1 : red; return b.map((h, i) => C(hexMix(h, r[i], t))); };
@@ -403,5 +374,6 @@ const c15Faces = (() => {
   }
   function face(o) { const p = new Cv(); faceDraw(p, o); return p.canvas(); }
   const FY = EY + 16;      // (the row of the picture to put in the middle of the screen: the eyes are a little above the middle, the mouth a little below)
-  return { face: o => memo('F' + JSON.stringify(o), () => face(o)), eye: o => memo('E' + JSON.stringify(o), () => eyeEcu(o)), mouth: o => memo('M' + JSON.stringify(o), () => mouthEcu(o)), neck: o => memo('N' + JSON.stringify(o), () => neckEcu(o)), hair: o => memo('H' + JSON.stringify(o), () => hairdownEcu(o)), hands: o => memo('X' + JSON.stringify(o), () => handsEcu(o), 40, hcache), finger: o => memo('R' + JSON.stringify(o), () => fingerEcu(o)), yhand: o => memo('Y' + JSON.stringify(o), () => yhandEcu(o)), FY };
+  const hbg = (fx0, fy0, fs) => { const q = new Cv(360, 250, fs || 0.95, fx0 === undefined ? 112 : fx0, fy0 === undefined ? 100 : fy0); q.g.fill(C('#140a10')); faceDraw(q, { who: 'meg', m: 'sad', lid: -0.3, pr: 2, bw: 4, circles: 0.4, pale: 0.35, sweat: 1 }); dimG(q.g, 0.5); return q.canvas(); };      // (Megumi's face, dark and a little out of focus: the backdrop of the hands)
+  return { hmeta: k => HD.f[k] && HD.f[k].m, hbg, face: o => memo('F' + JSON.stringify(o), () => face(o)), eye: o => memo('E' + JSON.stringify(o), () => eyeEcu(o)), mouth: o => memo('M' + JSON.stringify(o), () => mouthEcu(o)), neck: o => memo('N' + JSON.stringify(o), () => neckEcu(o)), hair: o => memo('H' + JSON.stringify(o), () => hairdownEcu(o)), hands: o => memo('X' + JSON.stringify(o), () => handsEcu(o), 40, hcache), finger: o => memo('R' + JSON.stringify(o), () => fingerEcu(o)), yhand: o => memo('Y' + JSON.stringify(o), () => yhandEcu(o)), FY };
 })();

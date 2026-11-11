@@ -6,11 +6,6 @@ const C15B = [[199.4, 'hold'], [205.8, 'eyeL'], [210.5, 'grip'], [216.0, 'rip'],
 function c15BShot(T) { let k = 0; while (k + 1 < C15B.length && T >= C15B[k + 1][0]) k++; const a = C15B[k][0], b = k + 1 < C15B.length ? C15B[k + 1][0] : C15.black; return { id: C15B[k][1], t0: a, t1: b, u: c15Cl((T - a) / (b - a), 0, 1) }; }
 const c15BGore = () => typeof SET !== 'undefined' && SET.gore === 0;      // (blood only when GRAPHIC DAMAGE is FULL)
 const c15BOff = () => typeof SET !== 'undefined' && SET.gore === 2;      // (OFF: the rip is hidden)
-let c15BWi = 0;      // (how many of the pictures of the hands are made: they are made one by one in the shot before, so that no frame has to wait for one)
-function c15BWarmHands(T) {
-  if (T < 206) c15BWi = 0; if (c15BWi >= 21 || c15BWi > (T - 205.8) / 0.2) return; const i = c15BWi++;
-  if (i < 13) c15Faces.hands({ pull: i / 12 }); else c15Faces.hands({ torn: 1, pull: (4 + i - 13) / 12, blood: c15BGore() ? 1 : 0 });
-}
 const c15BQ = (v, n) => Math.round(v * n) / n;      // (a number cut into steps, so that the pictures of the close-ups are made once and kept)
 const c15BSlow = (rt, len, k) => rt < len ? rt * k : len * k + (rt - len);      // (slow motion for len seconds at k times the speed, then normal)
 const C15BB = (() => { const o = []; let t = 199.6; while (t < 346.4) { o.push(t); t += t < 216 ? 0.62 - 0.12 * c15S(t, 199, 216) : t < 250.8 ? 0.46 : t < 258.5 ? 0.36 : t < 301.5 ? 0.9 : t < 326.5 ? 1.25 : 1.0 - 0.5 * c15S(t, 326.5, 342.5); } return o; })();      // (his heart: faster to the rip and the scream, slow in the silence, then faster and faster to the smile)
@@ -90,24 +85,24 @@ const C15BD = {
     const e = c15E(sh.u); c15BWorld(T, { x: c15BMid() - 2, y: c15Lerp(-26, -38, e), z: c15Lerp(1.7, 2.3, e) }); c15BLook(T, 0.55, 50, 0.16, 18);
   },
   eyeL(T, sh) {      // 205.8 - 210.5: his eye follows the hand; its shadow comes across his face
-    const u = sh.u; c15BWarmHands(T); c15BEye(T, { lid: -0.1 - 0.1 * c15E(u), pr: 3.6 - 1.2 * u, look: [-5.5 * c15E(c15S(T, 206.4, 208.4)), 0.5], veins: 0.4 + 0.4 * u, circles: 0.4 + 0.3 * u, pale: 0.3 + 0.3 * u, sweat: 1 + u * 0.5, bf: 2, tr: 0.7, fp: 1, row: 58, dx: Math.round(-4 * u) });
+    const u = sh.u; c15BEye(T, { lid: -0.1 - 0.1 * c15E(u), pr: 3.6 - 1.2 * u, look: [-5.5 * c15E(c15S(T, 206.4, 208.4)), 0.5], veins: 0.4 + 0.4 * u, circles: 0.4 + 0.3 * u, pale: 0.3 + 0.3 * u, sweat: 1 + u * 0.5, bf: 2, tr: 0.7, fp: 1, row: 58, dx: Math.round(-4 * u) });
     const k = c15E(c15S(T, 208.4, 210.3)); if (k > 0) { const g = ctx.createLinearGradient(0, 0, VW * 0.95 * k, 0); g.addColorStop(0, 'rgba(0,0,0,0.92)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH); }
     c15BVig(T, 0.55, 60);
   },
   grip(T, sh) {      // 210.5 - 216.0: his hand on Megumi's jaw, the other hand takes the little finger and pulls
     const u = sh.u, tr = 0.4 + 1.6 * u * u, [tx, ty] = c15BTr(T, tr, 31);
-    c15BBack('#0a0508', 'rgba(150,22,34,0.35)'); c15BPic(c15Faces.hands({ pull: c15BQ(c15E(c15S(T, 210.9, 215.9)), 12) }), -6 - c15BNarrow(0.5) + tx, ty); ctx.fillStyle = 'rgba(10,2,14,0.1)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.55 + 0.15 * u, 60, 0, 14);
+    c15BBack('#0a0508', 'rgba(150,22,34,0.35)'); c15BPic(c15Faces.hands({ pull: c15BQ(c15E(c15S(T, 210.9, 215.9)), 8) }), -6 - c15BNarrow(0.5) + tx, ty); ctx.fillStyle = 'rgba(10,2,14,0.1)'; ctx.fillRect(0, 0, VW, VH); c15BLook(T, 0.55 + 0.15 * u, 60, 0, 14);
   },
   rip(T) {      // 216.0 - 218.5: it comes off (a stop frame, a white flash, blood in slow motion); OFF: a short black cut instead
     const rt = T - 216; if (c15BOff() && rt < 0.55) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); return; }
-    const full = c15BGore(), stop = rt < 0.16, [tx, ty] = c15BTr(T, stop ? 3 : 1.2, 47), pull = stop ? 1 : c15BQ(0.35 + 0.55 * c15E(c15S(T, 216.3, 218.3)), 12);
+    const full = c15BGore(), stop = rt < 0.16, [tx, ty] = c15BTr(T, stop ? 3 : 1.2, 47), pull = stop ? 1 : c15BQ(c15E(c15S(T, 216.3, 218.3)), 6);
     c15BBack('#0a0508', 'rgba(170,22,34,0.5)'); c15BPic(c15Faces.hands(stop ? { pull: 1 } : { torn: 1, pull, blood: full ? 1 : 0 }), -6 - c15BNarrow(0.5) + tx, ty);
-    if (!stop) c15BSpray(VW / 2 + 14 - c15BNarrow(0.5), VH / 2 - 16, c15BSlow(rt - 0.16, 1.4, 0.3), 26, 90, 5); c15BLook(T, 0.6, 90, full ? 0.1 + 0.2 * Math.max(0, 1 - rt) : 0.05, 16);
+    if (!stop) { const sm = c15Faces.hmeta('t0').stump; c15BSpray(VW / 2 + sm[0] - 180 - 6 - c15BNarrow(0.5), VH / 2 + sm[1] - 125, c15BSlow(rt - 0.16, 1.4, 0.3), 26, 90, 5); } c15BLook(T, 0.6, 90, full ? 0.1 + 0.2 * Math.max(0, 1 - rt) : 0.05, 16);
   },
   finger(T) {      // 218.5 - 224.5: the finger in his fingers: it turns red and the black nail grows long
-    const red = c15BQ(c15E(c15S(T, 219.2, 222.0)), 12), nl = c15BQ(c15E(c15S(T, 221.2, 224.2)), 12), full = c15BGore(), [tx, ty] = c15BTr(T, 0.7, 23);
+    const red = c15BQ(c15E(c15S(T, 219.2, 222.0)), 12), nl = c15BQ(c15E(c15S(T, 221.2, 224.2)), 8), full = c15BGore(), [tx, ty] = c15BTr(T, 0.7, 23);
     c15BBack('#10060a'); c15BPic(c15Faces.finger({ red, nl, blood: full ? 1 : 0 }), tx - c15BNarrow(0.25), ty); ctx.fillStyle = 'rgba(200,20,40,' + (0.1 * red).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH);
-    if (full) { const ox = Math.round(VW / 2 - 180) + tx - c15BNarrow(0.25); for (const t0 of [219.0, 220.4, 221.9, 223.1]) { const te = T - t0; if (te > 0 && te < 1.4) { ctx.fillStyle = '#b8121c'; ctx.fillRect(ox + 62 + Math.round(c4R(t0 * 10, 3) * 8), Math.round(VH / 2 + 24 + 90 * te * te) + ty, 2, 3); } } }
+    if (full) { const ox = Math.round(VW / 2 - 180) + tx - c15BNarrow(0.25), fb = c15Faces.hmeta('f0').base; for (const t0 of [219.0, 220.4, 221.9, 223.1]) { const te = T - t0; if (te > 0 && te < 1.4) { ctx.fillStyle = '#b8121c'; ctx.fillRect(ox + fb[0] - 3 + Math.round(c4R(t0 * 10, 3) * 8), Math.round(VH / 2 + fb[1] - 125 + 8 + 90 * te * te) + ty, 2, 3); } } }
     c15BLook(T, 0.5, 80, 0, 22);
   },
   sukL(T, sh) {      // 224.5 - 229.2: his face: calm, red eyes, the second pair of eyes; the smile comes slowly
