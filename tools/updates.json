@@ -1,5 +1,14 @@
 [
  {
+  "v": "1.171",
+  "t": "RYU: 0.2 S MORE IN THE AIR",
+  "n": [
+   "Ryu stays in the air 0.2 seconds longer when he jumps (the push-off and the landing are the same, the flight is longer, so his air moves have more time: the DIVE PUNCH in his normal mode, and the AIR BLAST and the TRIPLE BLAST in the Granite Blast mode).",
+   "An enemy that Ryu launches (the KICK UP, the uppercut, the blast that pops him up and the one that throws him up) stays in the air 0.2 seconds longer too. He goes just as high, he only comes down slower.",
+   "The 0.2 seconds are real seconds: the GAME PACE setting makes the game clock run faster than the real one, so the game adds 0.25 s of its own time on FAST and 0.3 s on TURBO. The other fighters are not changed."
+  ]
+ },
+ {
   "v": "1.170",
   "t": "RYU: GRANITE BLAST MODE",
   "n": [

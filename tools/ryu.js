@@ -63,7 +63,21 @@ NAMES[RYU_WHO] = 'RYU'; CEC[RYU_WHO] = ['#10142a', '#3a58c8', '#a8c0f0', '#7aa0f
 })();
 
 // ---- which blow ATTACK plays now: in the air the downslam, crouched the kick at the legs, holding BACK the front kick, holding FORWARD the hard punch, otherwise the next of the chain
-const ryAir = now => { const jf = jumpFrame(Math.max(0, now - cuJumpAt)); return cuJumpAt >= 0 && jf >= 4 && jf <= 11; };      // (he is in the air: after the push-off and before the landing)
+const RY_AIR_PLUS = 200;      // v1.171 ms of real time: his flight, and the flight of an enemy he launches, last this much longer than the others', so that his air moves (the DIVE PUNCH, the blasts) have time. The game's clock runs PACE times faster than the real one in a fight (GAME PACE), so the extra time is 200 x PACE game ms
+let ryJpAt = -1, ryJp = RY_AIR_PLUS;      // (the extra flight of the jump that began at ryJpAt, game ms: worked out once for every jump)
+function ryJumpFrame(e) {      // the picture of Ryu's jump that began e ms ago: the push-off and the landing are everyone's, the flight (the pictures at the top included) lasts 0.2 s longer
+  if (!physOn()) return jumpFrame(e);
+  if (ryJpAt !== cuJumpAt) { ryJpAt = cuJumpAt; ryJp = RY_AIR_PLUS * paceNow(); }
+  const c = JUMP_T.crouch, A = JUMP_T.air + ryJp;
+  if (e < c) return jumpFrame(e);
+  const t = e - c; return t < A ? jumpFrame(c + t * JUMP_T.air / A) : jumpFrame(c + JUMP_T.air + (t - A));
+}
+function ryArc(now, h0, hTop) {      // the arc of an enemy he launches: from the height h0 to the same top (hTop), 0.2 s longer in the air (a weaker gravity: the time is 1 / the square root of it)
+  if (!(hTop > 0)) return airMake(now, h0, 0, AIR_G, 'up');
+  const T = Math.sqrt(2 / AIR_G) * (Math.sqrt(Math.max(0, hTop - h0)) + Math.sqrt(hTop)), g = AIR_G * Math.pow(T / (T + RY_AIR_PLUS / 1000 * paceNow()), 2);
+  return airMake(now, h0, Math.sqrt(2 * g * Math.max(0, hTop - h0)), g, 'up');
+}
+const ryAir = now => { const jf = ryJumpFrame(Math.max(0, now - cuJumpAt)); return cuJumpAt >= 0 && jf >= 4 && jf <= 11; };      // (he is in the air: after the push-off and before the landing)
 function ryPick(g, now, cmb) {
   if (ryGb) return cuJumpAt >= 0 ? 15 : stance === 'crouch' ? 14 : 12 + ((cmb === undefined ? cuCmb : cmb) % 2);      // (v1.170 GRANITE BLAST mode: every ATTACK is a blast: in the air the AIR BLAST, crouched the LOW BLAST, otherwise BLAST 1 and BLAST 2 one after the other)
   if (cuJumpAt >= 0) return 5;
@@ -196,7 +210,7 @@ function ryBeamShape(ox, oh, ang, th) {      // the place a beam takes up in the
   for (let dx = 0; dx <= 300; dx += 2) { const h = oh - dx * t; for (let q = lo; q <= hi; q++) { const r = Math.round(60 - (h + q)), c = s[r]; if (c) c[1] = ox + dx + 2; else s[r] = [ox + dx, ox + dx + 2]; } }
   return s;
 }
-function ryThrowUp(now, h) { const d = dummy; if (!d || d.ko >= 0) return; d.air = airMake(now, d.airH || 0, Math.sqrt(2 * AIR_G * h), AIR_G, 'up'); d.rx = AIR_RX; d.rxAt = now; }      // (thrown up from where he is, even when he is in the air already)
+function ryThrowUp(now, h) { const d = dummy; if (!d || d.ko >= 0) return; d.air = ryArc(now, d.airH || 0, (d.airH || 0) + h); d.rx = AIR_RX; d.rxAt = now; }      // (thrown up from where he is, even when he is in the air already)
 function ryBeam(now, k, sp) {      // one beam leaves the hair: it is drawn from the hair's front tip, and what is in its way is hit at once
   const row = RY_MV[k].r, T = RY_GB[row] && RY_GB[row][sp.f - 1]; if (!T) return;
   const ox = wx + T[0] - 32, oh = 61 + (gojoLift || 0) - T[1];      // (where it starts: the world column and the height above the floor)

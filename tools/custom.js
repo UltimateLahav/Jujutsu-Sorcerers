@@ -43,7 +43,7 @@ function cuHit(dmg, now, o, ax, rc, lo) {      // an IMPACT (or a shot) of a cus
   if (dmg) say('' + dmg, dummy.x, popCol(), 8, now); spark(dummy.x - (o.sy ? 4 : 0), gy - (o.sy || 26), dmg >= 20 ? 12 : 7, ['#ffffff', '#ffe9a0', '#7fc4ff'], dmg >= 20, 1); snd('smack', dmg >= 20 ? 3 : dmg >= 10 ? 1 : 0);
   if (blk) say('GUARD BREAK', dummy.x, '#ffd34d', 8, now + 90);
   if (o.stun) cuStun(o.stun, now);
-  if (o.launch && (!dummy.air || dummy.air.kind === 'bounce')) { dummy.air = airMake(now, 0, Math.sqrt(2 * AIR_G * o.launch), AIR_G, 'up'); dummy.rx = AIR_RX; dummy.rxAt = now; }      // (thrown up like the UPPERCUT: o.launch px high at the top)
+  if (o.launch && (!dummy.air || dummy.air.kind === 'bounce')) { dummy.air = vs.me === RYU_WHO ? ryArc(now, 0, o.launch) : airMake(now, 0, Math.sqrt(2 * AIR_G * o.launch), AIR_G, 'up'); dummy.rx = AIR_RX; dummy.rxAt = now; }      // (thrown up like the UPPERCUT: o.launch px high at the top)
   if (o.bleed) cuBleed = { who: dummy, until: now + o.bleed[1] * 1000, next: now + 1000, d: o.bleed[0] };
   if (dummy.hp <= 0) koDummy(now);
   return true;
@@ -119,7 +119,7 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
   if (hurting && (cuAtkAt >= 0 || cuDash || blkAt >= 0)) { cuAtkAt = -1; cuDash = null; blkAt = blkEnd = -1; cuLunged = 0; if (g) g.cs = null; }
   if (jmp && ctl && g && g.jump.length && stance === 'stand' && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0) { cuJumpAt = now; cuJumpC = false; snd('jump'); }
   else if (jmp && ctl && g && g.cj && g.jump.length && stance === 'crouch' && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0 && !g.cs) { cuJumpAt = now; cuJumpC = true; stance = 'stand'; stickCr = false; snd('jump'); }      // (v1.154 CROUCH JUMP of a built-in fighter: from a crouch he springs up (the spring pictures g.cj, 250 ms), then the jump goes on a little higher than a standing one: Yuji's own crouch jump)
-  if (atk && g && g.ry && cuJumpAt >= 0 && cuAtkAt < 0 && jumpFrame(Math.max(0, now - cuJumpAt)) < 4) cuAtkQ = now + 300;      // (v1.143 Ryu: JUMP and ATTACK pressed together: the press is kept through the push-off and the DOWNSLAM starts as soon as he is in the air)
+  if (atk && g && g.ry && cuJumpAt >= 0 && cuAtkAt < 0 && ryJumpFrame(Math.max(0, now - cuJumpAt)) < 4) cuAtkQ = now + 300;      // (v1.143 Ryu: JUMP and ATTACK pressed together: the press is kept through the push-off and the DOWNSLAM starts as soon as he is in the air)
   if (atk && g && (g.yu || g.ry) && cuAtkAt >= 0 && !g.cs) cuAtkQ = now + 450;      // (v1.109: a press while a blow is being thrown is kept for 0.45 s and starts the next blow as soon as this one is over)
   if ((atk || (cuAtkQ > now && cuAtkAt < 0)) && ctl && g && g.rdy.length && (stance === 'stand' || ((g.yu || g.ry) && stance === 'crouch')) && (cuJumpAt < 0 || (g.ry && ryAir(now))) && cuAtkAt < 0 && !cuDash && blkAt < 0) {      // (ATTACK: the next of its ready punches plays once, if its COOLDOWN is over and its COST can be paid; 20 pictures a second unless SPEED says otherwise; the combo goes on for 0.7 s after a punch)
     cuAtkQ = 0; if (now > cuCmbBy) { cuCmb = 0; cuSn = 0; cuCp = 0; } const k = g.yu ? suPick(g, now) : g.ry ? ryPick(g, now) : g.rdy[cuCmb % g.rdy.length], st = g.set[k];      // (a built-in fighter picks by where he stands and where the enemy is: suPick)
@@ -157,7 +157,8 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
   if (g && g.blue) { suBlueLabel(now); suModeUI(); suUltUI(now); } else if (g && g.ry) ryBlueLabel(now);
   { const lab = g && g.cs && !g.cs.air && !g.cs.dash && !g.cs.cl && !g.cs.fl && !g.cs.dom ? 'COUNTER' : g && g.yu ? suLabel(g, now) : g && g.ry ? ryLabel(g, now) : g && g.rdy.length ? g.an[g.rdy[(now > cuCmbBy ? 0 : cuCmb) % g.rdy.length]] : 'ATTACK'; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; } }      // (the ATTACK button shows the name of the punch that comes next)
   let jp = -1, lift = 0, jfr = -1; if (cuJumpAt >= 0) {      // (JUMP: the jump frames play once over JUMP TIME while it rises JUMP HEIGHT pixels and comes down; v1.108: a fighter with `yu` jumps as Yuji does, with his timing and his height for every picture, and the dust of his push-off and landing)
-    if (g && (g.yu || g.ry)) { jfr = jumpFrame(Math.max(0, now - cuJumpAt)); if (jfr >= g.jump.length) { cuJumpAt = -1; jfr = -1; snd('land', 1); if (g.ry) ryLand(now); } else { jp = (jfr + 0.5) / g.jump.length; lift = (cuJumpC && g.cj ? YU.cjump : YU.jump).lift[jfr]; jumpDust(jfr); } }
+    if (g && (g.yu || g.ry)) { jfr = (g.ry ? ryJumpFrame : jumpFrame)(Math.max(0, now - cuJumpAt));      // (v1.171 Ryu's flight is 0.2 s longer, see ryu.js)
+    if (jfr >= g.jump.length) { cuJumpAt = -1; jfr = -1; snd('land', 1); if (g.ry) ryLand(now); } else { jp = (jfr + 0.5) / g.jump.length; lift = (cuJumpC && g.cj ? YU.cjump : YU.jump).lift[jfr]; jumpDust(jfr); } }
     else { jp = (now - cuJumpAt) / cuS.jt; if (jp >= 1) { cuJumpAt = -1; jp = -1; snd('land', 1); } else lift = Math.round(cuS.jh * 4 * jp * (1 - jp)); }
   }
   if (ap >= 0 && g.al && g.al[cuAtkK]) lift = g.al[cuAtkK][Math.min(g.al[cuAtkK].length - 1, Math.floor(ap * g.al[cuAtkK].length))];      // (v1.109: a blow that hops, with its own height for every picture)
