@@ -1,10 +1,10 @@
 // ================================================================ v1.157 CHAPTER 4, PART 4 (tools/chap4e.js): the figures of RANOS (the one at the end of chapter 2, who blew up the planet; rebuilt in v1.159 with a hand-drawn head and an arm that reaches) and IRON MAN, the cars and the sky of NEW YORK
-// Both are drawn at run time with the shaded capsules of chapter 4 (c15MegKit: the same look as the people of the street), pose by pose, facing right, and cached by the numbers of the pose: c4xIron(pose) -> a 96 x 100 canvas (soles on row 92, middle column 48); c4xRanos(pose) -> a 112 x 104 canvas (see below).
+// Both are drawn at run time with the shaded capsules of chapter 4 (c15MegKit: the same look as the people of the street), pose by pose, facing right, and cached by the numbers of the pose: c4xIron(pose) -> a 128 x 100 canvas (soles on row 92, middle column 48; the room on the right is for the blade); c4xRanos(pose) -> a 112 x 104 canvas (see below).
 // A POSE of Iron Man: x, y = the hip, lean (degrees, forward), hdx, hdy, hdt = the head, arms [{ al: the upper arm's angle from straight down, forward positive, el: the bend of the elbow }, ...] (the first is the far arm),
-// legs [{ ax, ay: where the ankle is, a: the foot's angle }, ...], fl (the flames under the boots), bl (the blade, 0 - 1), rep (the palm repulsors, 0 - 1), vis (the faceplate is shut and lit).
+// legs [{ ax, ay: where the ankle is, a: the foot's angle }, ...], fl (the flames under the boots), bl (the length of the blade in pixels, 0 - 26: a whole number, so that every length has its own picture), rep (the palm repulsors, 0 - 1), vis (the faceplate is shut and lit).
 const { Pix: C4Pix, cap: c4cap, ell: c4ell, uni: c4uni, clip: c4clip, M: c4M, K: c4K, ik: c4ik } = c15MegKit;
-const C4I = { W: 96, H: 100, GY: 92, cx: 48, L1: 14, L2: 14, LT: 20, UA: 11, FA: 10.5, AH: 3.5 };
-const C4IC = { red: '#c4202c', gold: '#e4b636', dark: '#34343f', glow: '#aef6ff', white: '#f4fdff', blade: '#e9eff6' };
+const C4I = { W: 128, H: 100, GY: 92, cx: 48, L1: 14, L2: 14, LT: 20, UA: 11, FA: 10.5, AH: 3.5 };
+const C4IC = { red: '#c4202c', gold: '#e4b636', dark: '#34343f', glow: '#aef6ff', white: '#f4fdff', blade: '#ff2a3a' };
 const C4RAD = Math.PI / 180;
 function c4xMixPose(a, b, t) {      // two poses mixed number by number (the arms and legs too)
   const o = {}; for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) { if (k === 'arms' || k === 'legs') continue; const x = a[k], y = b[k]; o[k] = Array.isArray(x) && Array.isArray(y) ? x.map((v, i) => v + (y[i] - v) * t) : typeof x === 'number' || typeof y === 'number' ? (x === undefined ? y : x) + ((y === undefined ? x : y) - (x === undefined ? y : x)) * t : (t < 0.5 ? x : y); }
@@ -101,7 +101,14 @@ function c4xDrawIron(o) {
     p.put(c4uni(c4ell(Sh[0], Sh[1], 4.2, 4.2), c4cap(Sh[0], Sh[1], a.E[0], a.E[1], 3.5, 3.0)), rd); p.put(c4cap(a.E[0], a.E[1], a.W[0], a.W[1], 3.1, 2.7), c4M(C.red, far)); p.put(c4cap(a.E[0] + (a.W[0] - a.E[0]) * 0.4, a.E[1] + (a.W[1] - a.E[1]) * 0.4, a.W[0], a.W[1], 3.2, 2.9), gd, 1);
     p.put(c4ell(a.h[0], a.h[1], 3.0, 3.2), rd);
     if (rep > 0 && k === 0) { const gx = a.h[0] + Math.sin(a.a2) * 2.4, gy2 = a.h[1] + Math.cos(a.a2) * 2.4; for (const [dx, dy, c] of [[0, 0, C.white], [1, 0, C.glow], [-1, 0, C.glow], [0, 1, C.glow], [0, -1, C.glow], [2, 0, C.glow], [-2, 0, C.glow], [0, 2, C.glow], [0, -2, C.glow]]) if (rep > 0.5 || (dx === 0 && dy === 0)) p.px(gx + dx, gy2 + dy, K(c)); }
-    if (k === 1 && o.bl > 0) { const L = 28 * o.bl, ex = a.h[0] + Math.sin(a.a2) * (L + 1), ey = a.h[1] + Math.cos(a.a2) * (L + 1); p.put(c4cap(a.W[0], a.W[1], a.W[0] + Math.sin(a.a2) * 3, a.W[1] + Math.cos(a.a2) * 3, 3.6, 3.6), gd, 1); p.put(c4cap(a.h[0] + Math.sin(a.a2) * 1, a.h[1] + Math.cos(a.a2) * 1, ex, ey, 1.9, 0.4), c4M(C.blade), 1); p.line([a.h[0] + Math.sin(a.a2) * 3, a.h[1] + Math.cos(a.a2) * 3 - 1], [ex - Math.sin(a.a2) * 2, ey - Math.cos(a.a2) * 2 - 1], K('#ffffff')); }
+    if (k === 1 && o.bl > 0) {      // the blade: red, it comes out of the front of the fist along the forearm (its base is inside the fist), with a golden guard where they meet and a golden housing on the wrist
+      const ux = Math.sin(a.a2), uy = Math.cos(a.a2), vx = uy, vy = -ux, L = o.bl, bx = a.h[0] + ux * 0.5, by = a.h[1] + uy * 0.5, tx = a.h[0] + ux * (L + 4), ty = a.h[1] + uy * (L + 4);
+      p.put(c4cap(a.W[0], a.W[1], a.W[0] + ux * 3, a.W[1] + uy * 3, 3.6, 3.6), gd, 1);      // (the housing on the wrist)
+      p.put(c4cap(bx, by, tx, ty, 2.7, 0.5), c4M(C.blade));      // (the blade: thick at the hand, a point at the end)
+      p.line([bx + ux * 2.5 + vx * 0.9, by + uy * 2.5 + vy * 0.9], [tx - ux * 2.5 + vx * 0.4, ty - uy * 2.5 + vy * 0.4], K('#ffc4c8'));      // (the bright edge along it)
+      p.put(c4cap(a.h[0] + ux * 3.2 + vx * 3.6, a.h[1] + uy * 3.2 + vy * 3.6, a.h[0] + ux * 3.2 - vx * 3.6, a.h[1] + uy * 3.2 - vy * 3.6, 1.3, 1.3), gd, 1);      // (the guard)
+      if (L > 6) p.px(tx - ux, ty - uy, K('#ffffff'));      // (the glint of the point)
+    }
   };
   const drawLeg = k => { const l = legs[k], far = k ? 0 : 0.1, Hp = [P[0] + 0.3, P[1]]; p.put(c4uni(c4cap(Hp[0], Hp[1], l.K[0], l.K[1], 4.4, 3.5), c4cap(l.K[0], l.K[1], l.ax, l.ay, 3.5, 2.7)), c4M(C.red, far)); p.put(c4cap(l.K[0] + (l.ax - l.K[0]) * 0.35, l.K[1] + (l.ay - l.K[1]) * 0.35, l.ax, l.ay, 3.4, 2.8), c4M(C.gold, far), 1); c4xFoot(p, l, c4M(C.gold, far), K('#3a2a08'));
     if (o.fl > 0) { const fl = o.fl, len = 10 + 14 * fl + 3 * Math.sin(k * 3 + (o.ph || 0) * 9), fx = l.ax + 1, fy = l.ay + 3; p.put(c4cap(fx, fy, fx - 0.5, fy + len, 2.6, 0.3), c4M('#ff8a1e'), 3); p.put(c4cap(fx, fy, fx - 0.3, fy + len * 0.65, 1.7, 0.3), c4M('#ffd24a'), 3); p.put(c4cap(fx, fy, fx, fy + len * 0.35, 0.9, 0.3), c4M('#ffffff'), 3); } };
@@ -116,13 +123,16 @@ function c4xDrawIron(o) {
   drawArm(1); return p;
 }
 const c4xIron = o => c4xCv('i', o, c4xDrawIron);
+function c4xIronBlade(o) {      // the blade of a pose: [fist, point], each [forward, up] in game pixels from the middle of his feet; null when it is not out
+  if (!(o.bl > 0)) return null; const a = c4xRig(C4I, o).arms[1], ux = Math.sin(a.a2), uy = Math.cos(a.a2), L = o.bl + 4, f = (x, y) => [x - C4I.cx, C4I.GY - y]; return [f(a.h[0], a.h[1]), f(a.h[0] + ux * L, a.h[1] + uy * L)];
+}
 const C4IG = C4I.GY - C4I.AH;
 const c4xIronPose = {
   fall(t) { const w = Math.sin(t * 40) * 0.5; return { x: 48, y: 50, lean: 0, hdx: 0.8, hdt: 0, fl: 1, ph: t, rep: 0, arms: [{ al: -22, el: 10 }, { al: -26, el: 12 }], legs: [{ ax: 45, ay: C4IG - 1 + w, a: -42 }, { ax: 51, ay: C4IG + w, a: -46 }] }; },
   land() { return { x: 44, y: 79, lean: 40, hdx: 1.6, hdy: 1.5, hdt: 24, fl: 0, arms: [{ al: -34, el: 36 }, { al: 34, el: 10 }], legs: [{ ax: 25, ay: C4IG + 0.5, a: -52 }, { ax: 55, ay: C4IG, a: 0 }] }; },
   crouch() { return { x: 46, y: 66, lean: 24, hdx: 1.4, hdy: 1.0, hdt: 12, fl: 0, arms: [{ al: -22, el: 30 }, { al: 30, el: 20 }], legs: [{ ax: 33, ay: C4IG + 0.5, a: -30 }, { ax: 58, ay: C4IG, a: 0 }] }; },
   stand(t) { const b = Math.sin(t * 2.2) * 0.3; return { x: 48, y: 59.5 + b * 0.3, lean: 3, hdx: 1.2, hdt: 1, rep: 0.2, vis: 1, arms: [{ al: 30, el: 62 }, { al: 18, el: 26 - b }], legs: [{ ax: 41, ay: C4IG, a: 0 }, { ax: 55, ay: C4IG, a: 0 }] }; },
-  blade(u) { const e = c15Sm(u); return { x: 49, y: 60, lean: 9, hdx: 1.4, hdt: 3, rep: 0.9, vis: 1, bl: e, arms: [{ al: 78, el: 4 }, { al: 86, el: 2 + 2 * (1 - e) }], legs: [{ ax: 39, ay: C4IG, a: 0 }, { ax: 59, ay: C4IG, a: 0 }] }; },
+  blade(u) { const e = c15Sm(u); return { x: 49, y: 60, lean: 9, hdx: 1.4, hdt: 3, rep: 0.9, vis: 1, bl: Math.round(26 * e), arms: [{ al: 78, el: 4 }, { al: 86, el: 2 + 2 * (1 - e) }], legs: [{ ax: 39, ay: C4IG, a: 0 }, { ax: 59, ay: C4IG, a: 0 }] }; },
 };
 
 // ================================================================ NEW YORK: the sky, the skyline (the Empire State and the Chrysler Building), the freeway with a green sign, the cars and the crater of Iron Man
@@ -314,9 +324,9 @@ function c4xNyStep(c, now, dt, T) {
   if (T >= N.dive && T < N.land) { const u = (T - N.dive) / (N.land - N.dive); ix = IMx + 64 * (1 - out(u)); il = 150 * (1 - u) * (1 - u); ip = c4xIronPose.fall(T); ia = 1 - u; }
   else if (T >= N.land && T < N.rise) { ip = c4xIronPose.land(); il = 0; }
   else if (T >= N.rise && T < N.rise1) ip = c4xMixPose(c4xIronPose.land(), c4xIronPose.stand(T), ease((T - N.rise) / (N.rise1 - N.rise)));
-  else if (T >= N.rise1 && T < N.blade) { ip = c4xIronPose.stand(T); ix = IMx - 12 * ease((T - N.adv0) / (N.adv1 - N.adv0)); }
+  else if (T >= N.rise1 && T < N.blade) { ip = c4xIronPose.stand(T); ix = IMx - 12 * ease((T - N.adv0) / (N.adv1 - N.adv0)); if (T >= N.blade - 0.2) ip = c4xMixPose(ip, c4xIronPose.blade(0), ease((T - N.blade + 0.2) / 0.2)); }      // (the arm is raised before the blade comes out)
   else if (T >= N.blade) { ip = c4xIronPose.blade((T - N.blade) / 0.3); ix = IMx - 12; }
-  ny.im = ip && { cv: c4xIron(ip), x: ix, lift: il, ia, fall: T >= N.dive && T < N.land };
+  ny.im = ip && { cv: c4xIron(ip), pose: ip, x: ix, lift: il, ia, fall: T >= N.dive && T < N.land };
   // ---- sounds and effects
   ev('land1', N.fall, () => { snd('land', 2); puff(0, 10); shakeUntil = now + 220; shakeAmp = 4; buzz(60); spark(0, gy - 4, 10, ['#d8d8d0', '#9a9ca6'], false, 1); });
   ev('thrust', N.dive - 0.9, () => snd('thrust', 1.6)); ev('land2', N.land, () => { snd('concboom'); snd('land', 2.2); puff(IMx, 14); puff(IMx - 12, 8); puff(IMx + 12, 8); shakeUntil = now + 420; shakeAmp = 6; buzz(120); hitStop(70); spark(IMx, gy, 20, ['#ffd27a', '#ff8a1e', '#ffffff', '#9a9ca6'], true, 1); spark(IMx, gy, 14, ['#ffd27a', '#ff8a1e', '#9a9ca6'], true, -1); });
@@ -334,7 +344,14 @@ function c4xNyDraw(c, now, dt, T) {
   const im = ny.im; if (im) {
     if (im.fall) { const sx = c4xSX(im.x), top = gy - Math.round(im.lift) - 56, len = Math.round(26 + 70 * im.ia); for (let i = 0; i < len; i += 2) { const k = i / len, w = Math.max(1, Math.round(5 * (1 - k))); ctx.fillStyle = i < len * 0.3 ? '#ffffff' : i < len * 0.6 ? '#ffd24a' : '#ff8a1e'; ctx.globalAlpha = 1 - k * 0.8; ctx.fillRect(sx - (w >> 1) + (((i * 7) % 3) - 1), top + 52 + i, w, 2); } ctx.globalAlpha = 1; c4xGlow(sx, top + 54, 7, ['rgba(255,138,30,0.3)', 'rgba(255,210,74,0.55)', 'rgba(255,255,255,0.9)']); }
     c4xBigDraw(im.cv, C4I, im.x, im.lift, -1, 0);
-    if (T >= N.blade && T < N.cut) { const sx = c4xSX(im.x - 40), sy = gy - 46, k = ((now / 90) | 0) % 2; ctx.fillStyle = k ? '#ffffff' : '#aef6ff'; ctx.fillRect(sx - 1, sy - 5, 1, 4); ctx.fillRect(sx - 3, sy - 3, 5, 1); }
+    if (T >= N.blade && T < N.cut) {      // the red light of the blade (from the real place of the blade: the fist and the point), and a glint at the point
+      const bd = c4xIronBlade(im.pose); if (bd) {
+        const bx = c4xSX(im.x), x0 = bx - bd[0][0], y0 = gy - Math.round(im.lift) - bd[0][1], x1 = bx - bd[1][0], y1 = gy - Math.round(im.lift) - bd[1][1], gx = Math.round(x1), gy1 = Math.round(y1), k = ((now / 90) | 0) % 2;
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round'; for (const [w, al] of [[8, 0.12], [4, 0.22]]) { ctx.strokeStyle = 'rgba(255,40,56,' + al + ')'; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); } ctx.restore();
+        if (T < N.blade + 0.2) c4xGlow(Math.round(x0), Math.round(y0), Math.round(7 * (1 - (T - N.blade) / 0.2)) + 1, ['rgba(255,40,56,0.3)', 'rgba(255,150,160,0.6)', 'rgba(255,240,242,0.95)']);      // (a burst at the fist when the blade shoots out)
+        c4xGlow(gx, gy1, 3 + (k ? 1 : 0), ['rgba(255,40,56,0.3)', 'rgba(255,110,120,0.55)', 'rgba(255,220,224,0.95)']); ctx.fillStyle = k ? '#ffffff' : '#ffc4c8'; ctx.fillRect(gx - 1, gy1 - 5, 1, 4); ctx.fillRect(gx - 4, gy1 - 3, 7, 1);
+      }
+    }
     if (T >= N.land && T < N.land + 0.6) { const a = (T - N.land) / 0.6; ctx.globalAlpha = 1 - a; c4xRing(c4xSX(im.x), gy + 2, Math.round(6 + 34 * a), '#ffd27a'); ctx.globalAlpha = 1; }
   }
   for (const h of ny.hn) { const a = (now - h.t0) / 480; if (a < 1) { ctx.globalAlpha = 1 - a; pxt('HONK!', c4xSX(h.x), gy - 36 - Math.round(a * 8), a < 0.3 ? '#fff6a0' : '#ffd34d', 8, 'center'); ctx.globalAlpha = 1; } }
@@ -351,7 +368,7 @@ function c4xFear(c, T) {      // Yuji's eye, close and full screen (a hard cut t
   for (let yy = -ry; yy <= ry; yy++) { const ww = Math.round(rx * Math.sqrt(Math.max(0, 1 - yy * yy / (ry * ry)))); ctx.fillStyle = '#f6f2ec'; ctx.fillRect(cx - ww, cy + yy, ww * 2, 1); }
   const tr = Math.round(Math.sin(T * 45) * q * 0.5), ir = Math.round(ry * 0.52), disc = (r, col) => { ctx.fillStyle = col; for (let yy = -r; yy <= r; yy++) { const w = Math.floor(Math.sqrt(r * r - yy * yy)); ctx.fillRect(cx - w + tr, cy + yy, w * 2 + 1, 1); } };
   disc(ir, '#7a4a2a'); disc(ir - q, '#3a2214'); disc(Math.max(2, q * 2), '#0c0810'); ctx.fillStyle = '#ffffff'; ctx.fillRect(cx - Math.round(ir * 0.55) + tr, cy - Math.round(ir * 0.55), q * 2, q * 2);
-  if (u > 0.5) { const k = Math.min(1, (u - 0.5) / 0.35); ctx.fillStyle = '#ffffff'; for (let i = 0; i < ir * 1.6 * k; i++) ctx.fillRect(cx + q * 2 + i + tr, cy + q * 2 - Math.round(i * 0.6), 2, 1); }      // (the glint of the blade)
+  if (u > 0.5) { const k = Math.min(1, (u - 0.5) / 0.35); const n = ir * 1.6 * k; ctx.fillStyle = '#ff2a3a'; for (let i = 0; i < n; i++) ctx.fillRect(cx + q * 2 + i + tr, cy + q * 2 - Math.round(i * 0.6) - 1, 2, 3); ctx.fillStyle = '#ffd0d4'; for (let i = 0; i < n; i++) ctx.fillRect(cx + q * 2 + i + tr, cy + q * 2 - Math.round(i * 0.6), 2, 1); }      // (the glint of the blade: red with a pink core)
   ctx.fillStyle = '#9fd8ff'; const sd = ((u * 10) | 0) % 3; for (const [dx, dy] of [[0.36, 0.2], [0.42, 0.36]]) { ctx.fillRect(Math.round(W * (0.5 + dx)), Math.round(H * dy) + sd * q, q * 2, q * 4); ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(W * (0.5 + dx)) + q, Math.round(H * dy) + sd * q + q, 1, q * 2); ctx.fillStyle = '#9fd8ff'; }
   ctx.restore();
 }
