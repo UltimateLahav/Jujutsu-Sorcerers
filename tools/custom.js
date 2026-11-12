@@ -39,8 +39,8 @@ function cuHit(dmg, now, o, ax, rc, lo) {      // an IMPACT (or a shot) of a cus
   const blk = dBlocks() && gap > 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
   if (blk && !o.gb) { dummy.counter = now; dummy.vx += 3; shakeUntil = now + 70; shakeAmp = 1; say('BLOCKED', dummy.x, '#9fd8ff', 8, now); snd('block'); return false; }
   if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; } hits.n++; hits.dmg += dmg; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = 0; vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n);      // (the combo counter counts it)
-  dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += o.knock ? o.knock * 6 : Math.min(120, 9 + dmg * 2); shakeUntil = now + 110; shakeAmp = dmg >= 20 ? 4 : 2; if (!airUp(dummy)) { dummy.rx = (Math.random() * 10) | 0; dummy.rxAt = now; }
-  if (dmg) say('' + dmg, dummy.x, popCol(), 8, now); spark(dummy.x, gy - 26, dmg >= 20 ? 12 : 7, ['#ffffff', '#ffe9a0', '#7fc4ff'], dmg >= 20, 1); snd('smack', dmg >= 20 ? 3 : dmg >= 10 ? 1 : 0);
+  dummy.hp = Math.max(0, dummy.hp - dmg); dummy.hitAt = now; dummy.vx += o.knock ? o.knock * 6 : Math.min(120, 9 + dmg * 2); shakeUntil = now + 110; shakeAmp = dmg >= 20 ? 4 : 2; if (!airUp(dummy)) { dummy.rx = o.rx !== undefined ? o.rx : (Math.random() * 10) | 0; dummy.rxAt = now; }
+  if (dmg) say('' + dmg, dummy.x, popCol(), 8, now); spark(dummy.x - (o.sy ? 4 : 0), gy - (o.sy || 26), dmg >= 20 ? 12 : 7, ['#ffffff', '#ffe9a0', '#7fc4ff'], dmg >= 20, 1); snd('smack', dmg >= 20 ? 3 : dmg >= 10 ? 1 : 0);
   if (blk) say('GUARD BREAK', dummy.x, '#ffd34d', 8, now + 90);
   if (o.stun) cuStun(o.stun, now);
   if (o.launch && (!dummy.air || dummy.air.kind === 'bounce')) { dummy.air = airMake(now, 0, Math.sqrt(2 * AIR_G * o.launch), AIR_G, 'up'); dummy.rx = AIR_RX; dummy.rxAt = now; }      // (thrown up like the UPPERCUT: o.launch px high at the top)
@@ -66,7 +66,7 @@ function cuFx(fx, now, hit, vf) {      // the effects of an impact or of a pictu
   }
 }
 const cuOk = (c, src, res) => !c || (src >= 0 && res[src] !== undefined && res[src] === (c === 1));      // an IF: 1 = IF HIT, 2 = IF MISS, about the IMPACT src once it has come (before that neither is true)
-const cuMods = 'ktlqb';      // the blocks that change the hit itself
+const cuMods = 'ktlqbry';      // the blocks that change the hit itself (v1.164 r = which of the enemy's ten hit reactions he plays, y = how high above the floor the blow lands: where the sparks are)
 function cuEv(e, now, g, k) {      // one event of the punch's timeline comes up
   const res = cuRes, vk = e.vk === undefined ? k : e.vk, vf = g.vfx[vk]; if (!cuOk(e.c, e.src, res)) return;
   if (e.cb) { e.cb(now, g, k); return; }      // (v1.111 a callback: a slash of Sukuna's BLUE moves, see suCutAt in sukuna.js)
@@ -75,7 +75,7 @@ function cuEv(e, now, g, k) {      // one event of the punch's timeline comes up
   for (const [t, a, b, c, s] of e.fx) {
     if (cuMods.indexOf(t) < 0) continue;
     if (c && !(s === e.id ? c === 1 : cuOk(c, s, res))) continue;      // (a change of the hit under IF HIT of its own IMPACT counts, under IF MISS never)
-    if (t === 'k') o.knock = a; else if (t === 't') o.stun = a; else if (t === 'l') o.launch = a; else if (t === 'q') o.gb = true; else if (t === 'b') o.bleed = [a, b];
+    if (t === 'k') o.knock = a; else if (t === 't') o.stun = a; else if (t === 'l') o.launch = a; else if (t === 'q') o.gb = true; else if (t === 'b') o.bleed = [a, b]; else if (t === 'r') o.rx = a; else if (t === 'y') o.sy = a;
   }
   if (e.k === 'o') { if (vf.length) cuShots.push({ x: wx + 12, v: typeof e.sp === 'function' ? e.sp() : e.sp, d: e.d, o, fx: e.fx, res, id: e.id, born: now, vf, sp: g.vxs[vk], ms: e.ms }); return; }      // (SHOOT: a shot leaves your body at the fist's height; it hits an enemy as close as he can stand; its blocks work when it hits)
   const T = hbKey(dummy), B = hbBody(T); if (dummy) hbMark(vs.me, 0, wx, false, T, dummy.x, dummy.x - wx > -4, e.tip || {}); const hit = cuHit(e.d, now, o, undefined, e.tip && B ? hbGap(e.tip, B, e.dy) : undefined); res[e.id] = hit;      // (the limb of this IMPACT against the enemy's body: the rows they share decide how far it reaches)
@@ -90,10 +90,11 @@ function cuShotStep(now, dt) {      // the shots fly on; the first time one touc
   });
 }
 function cuDrawShots(now, cx) { for (const s of cuShots) ctx.drawImage(s.vf[Math.floor(now / 80) % s.vf.length], Math.round(cx + s.x - wx - 32), gy - 62, 64, 64); }
-function cuPunch(g, now) {      // the punch being thrown: its time ap (0 to 1, -1 = none), the LUNGE, and every event of its timeline when its picture comes up; it ends after the last picture
+function cuPunch(g, now, dt) {      // the punch being thrown: its time ap (0 to 1, -1 = none), the LUNGE, and every event of its timeline when its picture comes up; it ends after the last picture
   if (cuAtkAt < 0 || !g || g.cs) return -1;      // (the counter of a built-in fighter, g.cs, is played by suStep)
   const n = g.atk[cuAtkK].length, ap = (now - cuAtkAt) / (n * cuMs), fi = ap >= 1 ? n : Math.floor(ap * n) + 1, ev = g.ev[cuAtkK], lg = g.set[cuAtkK].m;
-  if (lg) { const st = g.set[cuAtkK], u = Math.min(1, ap / (st.lt || 1)), tg = lg * (st.e ? 1 - (1 - u) * (1 - u) : u); wx += tg - cuLunged; cuLunged = tg; }      // (v1.163 e: the step is fast at first and slows down, lt: it is over after that part of the blow, Ryu's BLUE moves)
+  if (lg) { const st = g.set[cuAtkK], u = Math.min(1, ap / (st.lt || 1)), tg = lg * (st.e ? 1 - (1 - u) * (1 - u) : u); if (g.ry && lg > 0 && tg < cuLunged) { /* v1.164 Ryu skipped part of the step (see ryMagnet): it waits until the blow's own step has caught up, he never goes back */ } else { wx += tg - cuLunged; cuLunged = tg; } }      // (v1.163 e: the step is fast at first and slows down, lt: it is over after that part of the blow, Ryu's BLUE moves)
+  if (g.ry) ryMagnet(g, ap, dt);      // (v1.164 Ryu closes in on the enemy before a blow lands, so that the fist or foot touches him)
   for (let j = 0; j < ev.length; j++) if (!cuFired[j] && ev[j].f <= fi) { cuFired[j] = 1; cuEv(ev[j], now, g, cuAtkK); }
   if (ap >= 1) { cuAtkAt = -1; cuCmbBy = now + 700; return -1; }
   return ap;
@@ -152,7 +153,7 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
     if (stance === 'down' || stance === 'up') { const k = Math.floor((now - stAt) / (g.crMs || CU_CR_MS)); if (k >= g.cr.length) stance = stance === 'down' ? 'crouch' : 'stand'; else cf = stance === 'down' ? k : g.cr.length - 1 - k; }
     if (stance === 'stand') stickCr = false;
   }
-  const ap = cuPunch(g, now); cuShotStep(now, dt); if (g && g.blue) suFlStepArrows(now, dt); cuBleedStep(now); ceTick(now, dt); const sp = g && g.yu ? suStep(g, now) : null; if (g && g.yu) suBleedFx(now);      // (v1.109 sp: the picture of the counter's dodge and slash, or nothing)
+  const ap = cuPunch(g, now, dt); cuShotStep(now, dt); if (g && g.blue) suFlStepArrows(now, dt); cuBleedStep(now); ceTick(now, dt); const sp = g && g.yu ? suStep(g, now) : null; if (g && g.yu) suBleedFx(now);      // (v1.109 sp: the picture of the counter's dodge and slash, or nothing)
   if (g && g.blue) { suBlueLabel(now); suModeUI(); suUltUI(now); } else if (g && g.ry) ryBlueLabel(now);
   { const lab = g && g.cs && !g.cs.air && !g.cs.dash && !g.cs.cl && !g.cs.fl && !g.cs.dom ? 'COUNTER' : g && g.yu ? suLabel(g, now) : g && g.ry ? ryLabel(g, now) : g && g.rdy.length ? g.an[g.rdy[(now > cuCmbBy ? 0 : cuCmb) % g.rdy.length]] : 'ATTACK'; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; } }      // (the ATTACK button shows the name of the punch that comes next)
   let jp = -1, lift = 0, jfr = -1; if (cuJumpAt >= 0) {      // (JUMP: the jump frames play once over JUMP TIME while it rises JUMP HEIGHT pixels and comes down; v1.108: a fighter with `yu` jumps as Yuji does, with his timing and his height for every picture, and the dust of his push-off and landing)

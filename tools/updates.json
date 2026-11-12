@@ -1,5 +1,15 @@
 [
  {
+  "v": "1.164",
+  "t": "RYU FIGHTS LIKE A REAL FIGHTER",
+  "n": [
+   "Ryu faces the enemy again (the mirror of V1.162 is gone): his fists and feet go toward the enemy, not behind him.",
+   "He steps in so that every blow touches the enemy: the fist or foot meets his body on the hit picture (he closes in up to about 30 steps of distance, and a blow from farther away misses). A blow that hits nothing carries him forward and takes longer to recover from; a blow that lands pushes him back a little, and the heavy ones kick up dust at the enemy's feet. Sparks fly from the place where the blow lands.",
+   "The enemy reacts to the blow: a hook snaps his head round, an uppercut lifts him off the floor, a body kick folds him over, a leg kick or a slam puts him on the floor, and the big punches and the dash kick throw him back.",
+   "The blows are remade like real mixed martial arts: the hooks and the straight punch turn the hips and the shoulders into the blow, keep the other hand at the chin and reach level with the shoulder (the arm is now fixed to the shoulder, it used to float), and the front kick leans back less. Ryu has five different hurt pictures now: a hit to the head, to the belly, a heavy hit that makes him stagger, a hit that knocks him off his feet and a hit to the legs."
+  ]
+ },
+ {
   "v": "1.163",
   "t": "RYU'S BLUE MOVES",
   "n": [

@@ -1,28 +1,28 @@
 // ---------------------------------------------------------------- v1.144 RYU ISHIGORI (this file is spliced into template.html by build_html.py, right after sukuna.js)
 // A fighter of FREE PLAY of the custom kind (customScene in custom.js): his pictures are made by tools/ryu_art.py out of the LOOK the user chose (tools/ryu_src/master.png: face, hair, fur, jacket, belt, jeans, boots; the picture is only his look, every pose
-// is new: tools/ryu_parts.py cuts it into a body that bends at the waist and the knees, with hair, fur, jacket tail and cuffs that swing on their own). build_html.py fills RYU_PNG with the picture strip: 25 rows of 15 pictures, the rows named in RYU_ROWS.
+// is new: tools/ryu_parts.py cuts it into a body that bends at the waist and the knees, with hair, fur, jacket tail and cuffs that swing on their own). build_html.py fills RYU_PNG with the picture strip: 29 rows of 15 pictures, the rows named in RYU_ROWS.
 // He is slot 4 of CU_GAME (the three slots of the drawings and Sukuna come first) and moves like Yuji (g.ry: the jump, the walk and the push of the legs are Yuji's, see customScene) but is a big, heavy man: he walks at 46 px/s forward and 34 back with
 // STOMPING steps (dust, a step sound and a hair of screen shake on every one), his DASH is a 0.2 s shoulder charge and his BLOCK is a high guard with both hands; he has HURT and K.O. pictures.
 // v1.163 BLUE (the button is back for him): standing a hard BLUE PUNCH, in the air a DIVE PUNCH, holding forward a BLUE COMBO, and DASH right after the punch or the combo is a DASH KICK; see 'his BLUE moves' below.
 // His blows (ATTACK): standing still, a CHAIN within 0.7 s: LEFT HOOK (boxing), RIGHT HOOK, KICK UP (capoeira: the enemy is thrown up) and JUMP PUNCH (an anime flying punch: it hits the enemy who was kicked up and sends him flying forward); CROUCHED (one knee down) a
 // Muay Thai kick at the enemy's LEGS; in the AIR a pro-wrestling DOWNSLAM (both fists drive down onto the enemy); holding FORWARD a karate HARD PUNCH (a lunge: the enemy is sent back); holding BACK a Muay Thai FRONT KICK. ATTACK pressed during a blow is kept for 0.45 s.
-const RYU_WHO = 'cu4', RYU_PNG = '__RYUPNG__', RYU_ROWS = ['frames', 'walk', 'wback', 'jump', 'cr', 'ci', 'cwk', 'bl', 'dg', 'db', 'a0', 'a1', 'a2', 'a3', 'cp', 'as', 'hp', 'fk', 'hu', 'ko', 'uc', 'el', 'bp', 'dv', 'dk'];      // (idle, walk, walk back, jump, crouch down, crouched idle, crouch walk, block, dash, dash back, the four chain blows, the leg kick, the downslam, the hard punch, the front kick, hurt, K.O.; v1.163: the uppercut, the elbow, the blue punch, the dive punch, the dash kick)
+const RYU_WHO = 'cu4', RYU_PNG = '__RYUPNG__', RYU_ROWS = ['frames', 'walk', 'wback', 'jump', 'cr', 'ci', 'cwk', 'bl', 'dg', 'db', 'a0', 'a1', 'a2', 'a3', 'cp', 'as', 'hp', 'fk', 'hu', 'ko', 'uc', 'el', 'bp', 'dv', 'dk', 'hb', 'hs', 'hf', 'hl'];      // (idle, walk, walk back, jump, crouch down, crouched idle, crouch walk, block, dash, dash back, the four chain blows, the leg kick, the downslam, the hard punch, the front kick, hurt, K.O.; v1.163: the uppercut, the elbow, the blue punch, the dive punch, the dash kick; v1.164: four more hurt pictures: doubled over, a stagger, a fall, the legs buckling)
 const RY_MV = [      // the blows: name, row, damage, the picture (1 - 15) it lands on, pictures a second, how far he steps forward (px), knock-back (x 6 = the enemy's speed in px/s: 100 sends him ~85 px, 140 ~130 px), launch (px high at the top), stun (s), shake, hit stop (ms), dn = he is put on the floor (a sweep / a slam)
-  { n: 'L.HOOK', r: 'a0', d: 8, f: 8, v: 38, m: 4, kn: 10, l: 0, st: 0, w: 2, h: 40 },
-  { n: 'R.HOOK', r: 'a1', d: 9, f: 8, v: 38, m: 4, kn: 14, l: 0, st: 0, w: 2, h: 45 },
-  { n: 'KICK UP', r: 'a2', d: 14, f: 7, v: 32, m: 0, kn: 8, l: 44, st: 0, w: 3, h: 70 },
-  { n: 'JUMP PUNCH', r: 'a3', d: 18, f: 8, v: 30, m: 24, kn: 140, l: 8, st: 0, w: 4, h: 80 },
-  { n: 'LEG KICK', r: 'cp', d: 11, f: 7, v: 34, m: 6, kn: 15, l: 0, st: 0, w: 2, h: 50, low: true, dn: true },
-  { n: 'DOWNSLAM', r: 'as', d: 17, f: 7, v: 30, m: 0, kn: 10, l: 0, st: 0, w: 4, h: 80, dn: true },
-  { n: 'HARD PUNCH', r: 'hp', d: 16, f: 8, v: 30, m: 8, kn: 100, l: 0, st: 0, w: 4, h: 80 },
-  { n: 'FRONT KICK', r: 'fk', d: 12, f: 7, v: 32, m: 6, kn: 40, l: 0, st: 0, w: 3, h: 60 },
-  { n: 'BLUE PUNCH', r: 'bp', d: 28, f: 9, v: 30, m: 16, e: 1, lt: .6, kn: 105, l: 0, st: 0, w: 5, h: 100, x: 2, cd: .7 },      // (v1.163 his BLUE moves, see ryBlue: e = the step forward is fast at first, lt = how much of the blow it takes, x = the burst of blue light (1 on the enemy, 2 twice as big), cd = cooldown (s))
-  { n: 'DIVE PUNCH', r: 'dv', d: 26, f: 9, v: 30, m: 0, e: 1, lt: .45, kn: 6, l: 0, st: 1.4, w: 5, h: 90, dn: true, x: 1, cd: 3 },      // (m is set when it starts: the way to the enemy; he is put on the floor and stunned)
+  { n: 'L.HOOK', r: 'a0', d: 8, f: 8, v: 38, m: 4, kn: 10, l: 0, st: 0, w: 2, h: 40, rx: 5, sy: 38 },
+  { n: 'R.HOOK', r: 'a1', d: 9, f: 8, v: 38, m: 4, kn: 14, l: 0, st: 0, w: 2, h: 45, rx: 6, sy: 38 },
+  { n: 'KICK UP', r: 'a2', d: 14, f: 7, v: 32, m: 0, kn: 8, l: 44, st: 0, w: 3, h: 70, sy: 30 },
+  { n: 'JUMP PUNCH', r: 'a3', d: 18, f: 8, v: 30, m: 24, kn: 140, l: 8, st: 0, w: 4, h: 80, rx: 3, sy: 36 },
+  { n: 'LEG KICK', r: 'cp', d: 11, f: 7, v: 34, m: 6, kn: 15, l: 0, st: 0, w: 2, h: 50, low: true, dn: true, sy: 10 },
+  { n: 'DOWNSLAM', r: 'as', d: 17, f: 7, v: 30, m: 0, kn: 10, l: 0, st: 0, w: 4, h: 80, dn: true, sy: 44 },
+  { n: 'HARD PUNCH', r: 'hp', d: 16, f: 8, v: 30, m: 8, kn: 100, l: 0, st: 0, w: 4, h: 80, rx: 3, sy: 36 },
+  { n: 'FRONT KICK', r: 'fk', d: 12, f: 7, v: 32, m: 6, kn: 40, l: 0, st: 0, w: 3, h: 60, rx: 1, sy: 28 },
+  { n: 'BLUE PUNCH', r: 'bp', d: 28, f: 9, v: 30, m: 16, e: 1, lt: .6, kn: 105, l: 0, st: 0, w: 5, h: 100, x: 2, cd: .7, rx: 3, sy: 36 },      // (v1.163 his BLUE moves, see ryBlue: e = the step forward is fast at first, lt = how much of the blow it takes, x = the burst of blue light (1 on the enemy, 2 twice as big), cd = cooldown (s))
+  { n: 'DIVE PUNCH', r: 'dv', d: 26, f: 9, v: 30, m: 0, e: 1, lt: .45, kn: 6, l: 0, st: 1.4, w: 5, h: 90, dn: true, x: 1, cd: 3, sy: 46, nm: 1 },      // (m is set when it starts: the way to the enemy; he is put on the floor and stunned)
   { n: 'BLUE COMBO', combo: true, v: 40, m: 34, cd: 2.5 },      // (cut out of five blows, see RY_COMBO)
-  { n: 'DASH KICK', r: 'dk', d: 24, f: 8, v: 34, m: 80, e: 1, lt: .45, kn: 170, l: 0, st: 0, w: 5, h: 110, x: 2, cd: 1.5 }];      // (DASH right after a blue punch or a blue combo)
+  { n: 'DASH KICK', r: 'dk', d: 24, f: 8, v: 34, m: 80, e: 1, lt: .45, kn: 170, l: 0, st: 0, w: 5, h: 110, x: 2, cd: 1.5, rx: 3, sy: 30 }];      // (DASH right after a blue punch or a blue combo)
 const RY_COMBO = [      // the BLUE COMBO: right hook, left hook, uppercut, kick, and an elbow that pushes the enemy back; each is the row's pictures a to b (1 - 15) of the blow, f = the picture it lands on, kn = knock-back (the first four only nudge the enemy, so he stays in reach)
-  { r: 'a1', a: 5, b: 10, f: 8, d: 7, kn: 4, w: 2, h: 40, x: 1 }, { r: 'a0', a: 5, b: 10, f: 8, d: 7, kn: 4, w: 2, h: 40, x: 1 }, { r: 'uc', a: 5, b: 11, f: 8, d: 10, kn: 5, w: 3, h: 55, x: 1 },
-  { r: 'fk', a: 4, b: 10, f: 7, d: 9, kn: 10, w: 3, h: 55, x: 1 }, { r: 'el', a: 5, b: 11, f: 8, d: 14, kn: 95, w: 5, h: 100, x: 2 }];
+  { r: 'a1', a: 5, b: 10, f: 8, d: 7, kn: 4, w: 2, h: 40, x: 1, rx: 6, sy: 38 }, { r: 'a0', a: 5, b: 10, f: 8, d: 7, kn: 4, w: 2, h: 40, x: 1, rx: 5, sy: 38 }, { r: 'uc', a: 5, b: 11, f: 8, d: 10, kn: 5, l: 14, w: 3, h: 55, x: 1, sy: 40 },
+  { r: 'fk', a: 4, b: 10, f: 7, d: 9, kn: 10, w: 3, h: 55, x: 1, rx: 1, sy: 28 }, { r: 'el', a: 5, b: 11, f: 8, d: 14, kn: 95, w: 5, h: 100, x: 2, rx: 2, sy: 38 }];
 const RY_DIVE_HI = 34;      // (how high above the floor he is when the dive punch lands)
 const RY_HOP = [0, 0, 0, 6, 15, 24, 30, 30, 26, 20, 12, 6, 0, 0, 0];      // the hop of the JUMP PUNCH (px, picture by picture)
 let ryUI = false;      // (is Ryu's HUD on: the buttons he does not use are hidden, see tick)
@@ -33,28 +33,27 @@ NAMES[RYU_WHO] = 'RYU'; CEC[RYU_WHO] = ['#10142a', '#3a58c8', '#a8c0f0', '#7aa0f
   const im = new Image();
   im.onload = () => {      // the strip is cut into 64 x 64 pictures, a row for each animation (until then he is not there: his card shows nothing)
     const n = Math.floor(im.width / 64), set = {}, arts = {}, tipOf = a => { const sp = cuSpan(a, r => r - 1), o = {}; for (const r in sp) o[r] = sp[r][1]; return o; };      // (tipOf: how far each row of a picture reaches in front of his middle column)
-    const mir = c => { const m = document.createElement('canvas'); m.width = m.height = 64; const g = m.getContext('2d'); g.translate(64, 0); g.scale(-1, 1); g.drawImage(c, 0, 0); return m; };      // (v1.162: his pictures are MIRRORED, left and right swapped, the way the game draws an enemy that turns round; every place that draws him (the fight, his card) uses them. The numbers for his reach and his body (arts, below) are taken from the pictures as they were drawn, before the mirror, so that his blows hit where they always did)
     RYU_ROWS.forEach((k, r) => {
-      set[k] = []; arts[k] = []; for (let i = 0; i < n; i++) { const c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(im, i * 64, r * 64, 64, 64, 0, 0, 64, 64); set[k].push(mir(c)); arts[k].push(suAlpha(c)); }
+      set[k] = []; arts[k] = []; for (let i = 0; i < n; i++) { const c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(im, i * 64, r * 64, 64, 64, 0, 0, 64, 64); set[k].push(c); arts[k].push(suAlpha(c)); }
     });
     const body = cuWiden(arts.frames.map(a => cuSpan(a, r => r - 1))), hs = Object.values(body).map(v => v[1]).sort((a, b) => a - b);      // (the widest every row gets over his idle pictures, and half as wide as his torso for the push)
     const hit = (r, fr, f, id, o) => {      // one impact: f = the picture of the blow it comes on, fr = the picture of the row it lands on (the limb on that picture and the next gives the reach), id = its place in cuRes; { f: its picture, k: 'i', d: damage, fx: knock-back, launch, stun and, if it hit, a hit stop, a shake and the blue burst, tip: the limb on the impact's pictures, dy: how high the body is then }
-      const tips = arts[r].map(tipOf), fx = [['k', o.kn, 0, 0, -1]].concat(o.l ? [['l', o.l, 0, 0, -1]] : [], o.st ? [['t', o.st, 0, 0, -1]] : [], [['h', o.h, 0, 1, id], ['w', o.w, 0, 1, id]], o.dn ? [['d', 0, 0, 1, id]] : [], o.x ? [['x', o.x, 0, 1, id]] : []);
+      const tips = arts[r].map(tipOf), fx = [['k', o.kn, 0, 0, -1]].concat(o.l ? [['l', o.l, 0, 0, -1]] : [], o.st ? [['t', o.st, 0, 0, -1]] : [], [['h', o.h, 0, 1, id], ['w', o.w, 0, 1, id]], o.dn ? [['d', 0, 0, 1, id]] : [], o.x ? [['x', o.x, 0, 1, id]] : [], o.rx !== undefined ? [['r', o.rx, 0, 0, -1]] : [], o.sy ? [['y', o.sy, 0, 0, -1]] : []);
       const e = { f, k: 'i', d: o.d, sp: o.d, fx, c: 0, src: -1, id }; Object.defineProperty(e, 'dy', { get: () => Math.round(((dummy && dummy.airH) || 0) - (gojoLift || 0)), enumerable: true }); if (o.low) e.low = true;      // (dy: how many rows higher the enemy's body is than his limb: an enemy thrown up, or he himself in the air, is met where they are NOW)
       e.tip = cuMaxRows([tips[fr - 1], tips[fr]]); return e;
     };
-    const cb = (f, fn, c, src, id) => ({ f, k: 'cb', cb: fn, c, src, id });      // (a callback of a blow's timeline: it runs when its picture comes up, and, with c = 1, only if the impact src hit)
-    const comboPics = [], comboEv = []; { let off = 0; RY_COMBO.forEach((q, j) => { if (j) comboEv.push(cb(off + 1, () => snd('swing', j === 3 ? 3 : 0))); comboEv.push(hit(q.r, q.f, off + q.f - q.a + 1, j, q)); for (let i = q.a - 1; i < q.b; i++) comboPics.push(set[q.r][i]); off += q.b - q.a + 1; }); comboEv.push(cb(comboEv[comboEv.length - 1].f, now => { ryBlImp = now; })); }      // (the BLUE COMBO is the pictures a to b of five blows one after the other: the impact of each is on its own picture, the last callback marks the end of the combo for the DASH KICK)
+    const cb = (f, fn, c, src, id) => ({ f, k: 'cb', cb: fn, c, src, id }), blow = (r, fr, f, id, o) => [hit(r, fr, f, id, o), cb(f, now => ryOnHit(now, o), 1, id), cb(f, now => ryOnMiss(now), 2, id)];      // (blow: an impact and what he feels when it lands (a push back, dust) or does not (off balance))      // (a callback of a blow's timeline: it runs when its picture comes up, and, with c = 1, only if the impact src hit)
+    const comboPics = [], comboEv = []; { let off = 0; RY_COMBO.forEach((q, j) => { if (j) comboEv.push(cb(off + 1, () => snd('swing', j === 3 ? 3 : 0))); comboEv.push(...blow(q.r, q.f, off + q.f - q.a + 1, j, q)); for (let i = q.a - 1; i < q.b; i++) comboPics.push(set[q.r][i]); off += q.b - q.a + 1; }); comboEv.push(cb(comboEv[comboEv.length - 1].f, now => { ryBlImp = now; })); }      // (the BLUE COMBO is the pictures a to b of five blows one after the other: the impact of each is on its own picture, the last callback marks the end of the combo for the DASH KICK)
     const ev = RY_MV.map((mv, k) => {
       if (mv.combo) return comboEv;
-      const e = [hit(mv.r, mv.f, mv.f, 0, mv)];
+      const e = blow(mv.r, mv.f, mv.f, 0, mv);
       if (k === 8) e.push(cb(mv.f, now => { ryBlImp = now; }));      // (the blue punch has landed: a DASH now is the DASH KICK; the combo's last callback does the same)
       if (k === 9) { e.push(cb(mv.f, () => ryDust(dummy ? dummy.x : wx + 20, 1), 1, 0, 1)); e.push(cb(mv.f + 2, now => { snd('land', 1); ryLand(now); ryDust(wx, .5); }, 0, -1, 2)); }      // (the dive punch: smoke where the enemy hits the floor, then he lands)
       return e;
     });
     const burst = ryBurst(), vfx = RY_MV.map(m => m.x || m.combo ? burst : []);
-    CU_GAME[4] = { name: 'RYU', frames: set.frames, walk: set.walk, wbk: set.wback, jump: set.jump, hu: set.hu, ko: set.ko, huMs: RY_HU_MS, bl: set.bl, df: set.dg, db: set.db, cr: set.cr, ci: set.ci, cwk: set.cwk, st: { ...cuStats(null), fw: 46, bk: 34, cw: 55, jh: 22, jt: 713, dfw: 62, dbk: 40, dtm: 200, hp: 340 }, vfx, atk: RY_MV.map(m => m.combo ? comboPics : set[m.r]),
-      an: RY_MV.map(m => m.n), rdy: [0, 1, 2, 3], cl: [], ev, set: RY_MV.map(m => ({ v: m.v, m: m.m, c: 0, d: m.cd || 0, e: m.e, lt: m.lt })), body, push: Math.max(6, hs.length ? hs[hs.length >> 1] : 6), tipAll: ev.map(l => cuMaxRows(l.map(e => e.tip))), vxs: vfx.map(() => []),
+    CU_GAME[4] = { name: 'RYU', frames: set.frames, walk: set.walk, wbk: set.wback, jump: set.jump, hu: set.hu, hus: ryHus(set), ko: set.ko, huMs: RY_HU_MS, bl: set.bl, df: set.dg, db: set.db, cr: set.cr, ci: set.ci, cwk: set.cwk, st: { ...cuStats(null), fw: 46, bk: 34, cw: 55, jh: 22, jt: 713, dfw: 62, dbk: 40, dtm: 200, hp: 340 }, vfx, atk: RY_MV.map(m => m.combo ? comboPics : set[m.r]),
+      an: RY_MV.map(m => m.n), rdy: [0, 1, 2, 3], cl: [], ev, set: RY_MV.map(m => ({ v: m.v, m: m.m, c: 0, d: m.cd || 0, e: m.e, lt: m.lt, nm: m.nm })), body, push: Math.max(6, hs.length ? hs[hs.length >> 1] : 6), tipAll: ev.map(l => cuMaxRows(l.map(e => e.tip))), vxs: vfx.map(() => []),
       al: RY_MV.map((m, k) => k === 3 ? RY_HOP : null), cs: null, ry: true, wf: RY_WF, crMs: 1000 / CR_FPS };      // (ry: he moves like Yuji and picks his blow by what is held, see ryPick; wbk: the pictures of walking back; wf: his walking pictures a second; crMs: how long a picture of the crouch lasts; al: the height of each picture of a blow that hops)
   };
   im.src = RYU_PNG;
@@ -71,6 +70,30 @@ function ryPick(g, now, cmb) {
 }
 function ryNext(k) { return k < 4 ? (k + 1) % 4 : cuCmb; }      // (blow k has started: the chain goes on with the next one; the other blows leave its place alone)
 function ryLabel(g, now) { return g.an[ryPick(g, now, now > cuCmbBy ? 0 : cuCmb)]; }      // (what the ATTACK button says: the blow that comes next)
+
+// ---- v1.164 CONTACT: a blow touches the enemy, and both of them feel it
+const RY_CLOSE = 30, RY_CLOSE_V = 450;      // (the most he steps in for a blow, px, and how fast, px/s)
+let ryStepAt = -1, ryMissAt = -1;      // (the blow (cuAtkAt) whose step-in dust has been made / whose miss has been felt: once for a whole move)
+function ryMagnet(g, ap, dt) {      // before a blow lands he closes in on the enemy: the way still to go is what the enemy's body and the limb on the impact's picture ask for (hbGap), less what the blow's own step will still cover; the fist or foot then touches him, within RY_CLOSE px of steps; farther away the blow misses
+  if (!dummy || dummy.ko >= 0 || !(dt > 0) || g.set[cuAtkK].nm) return;      // (nm: the dive punch flies to a place just above the enemy by itself)
+  const ev = g.ev[cuAtkK], j = ev.findIndex((e, q) => e.k === 'i' && !cuFired[q]); if (j < 0) return;
+  const e = ev[j], B = hbBody(hbKey(dummy)); if (!B || !e.tip) return;
+  const rc = hbGap(e.tip, B, e.dy); if (rc < -1e8) return;      // (the limb and the body share no row: there is nothing to touch)
+  const st = g.set[cuAtkK], lg = st.m || 0, lt = st.lt || 1, n = g.atk[cuAtkK].length, fl = u => { u = Math.min(1, u / lt); return lg * (st.e ? 1 - (1 - u) * (1 - u) : u); };
+  const left = Math.max(0, fl((e.f - 1) / n) - cuLunged), need = dummy.x - wx - left - (rc - 2);      // (left: the step of the blow itself that is still to come before it lands; need: how far the enemy then still is from the place where the limb just touches him)
+  if (need > .5 && need <= RY_CLOSE) { wx += Math.min(need, RY_CLOSE_V * dt); if (ryStepAt !== cuAtkAt) { ryStepAt = cuAtkAt; if (need > 10) { gritAt(wx, 3, 40, 0); puff(wx - 4, 2); } } }
+  else if (need < -.5 && left > 0) cuLunged += Math.min(left, -need);      // (he is close enough already: the blow's own step would carry him into the enemy, so that much of it is not taken)
+}
+function ryOnHit(now, o) {      // a blow landed: it pushes him back a little (more for a heavy one) and a heavy one kicks up dust at the enemy's feet
+  if (!dummy) return; wxv -= 10 + o.d * .8;
+  if (o.d >= 14) { gritAt(dummy.x - 4, 4, 55, 1); puff(dummy.x - 8, 2); }
+}
+function ryOnMiss(now) {      // a blow that hit nothing carries him forward and the rest of it takes half as long again (once for a whole move): he is off balance
+  wxv += 14; if (ryMissAt === cuAtkAt) return;
+  const n = CU_GAME[4].atk[cuAtkK].length, ap = (now - cuAtkAt) / (n * cuMs); cuMs *= 1.5; cuAtkAt = now - ap * n * cuMs; ryMissAt = cuAtkAt;      // (the picture he is on stays the same: only the time per picture grows; ryMissAt is the NEW start time, so a second miss in the same move (the combo) does not slow it down again)
+}
+const RY_HUR = ['hu', 'hb', 'hs', 'hs', 'hf', 'hu', 'hu', 'hf', 'hl', 'hl'];      // (his hurt picture row for each of the ten reactions the game picks from: 0, 5 and 6 the head snap, 1 doubled over, 2 and 3 a stagger back, 4 and 7 knocked down, 8 and 9 the legs buckle)
+const ryHus = set => RY_HUR.map((r, k) => ({ f: set[r], ms: 1000 / RXF15[k] }));      // (15 pictures last as long as the reaction does)
 
 // ---- v1.163 his BLUE moves: BLUE standing is a hard BLUE PUNCH, in the air a DIVE PUNCH (he flies above the enemy and punches him down into the floor: smoke and a stun), holding FORWARD a BLUE COMBO (right hook, left hook, uppercut, kick, and an elbow that pushes the enemy back); DASH right after the punch or the combo (within 0.6 s of its last blow, or pressed during it) is a DASH KICK that sends the enemy flying back
 let ryBlImp = 0, ryDkQ = 0;      // (when the last blow of a BLUE PUNCH / BLUE COMBO landed, 0 = not yet; until when a DASH press is kept for the DASH KICK)
