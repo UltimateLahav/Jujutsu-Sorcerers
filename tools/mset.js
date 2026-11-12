@@ -77,6 +77,7 @@ const MSP = [      // the pages: a row is { k: the key in SET, n: name, t: 'r' (
     { k: 'dn', n: 'DAMAGE NUMBERS', t: 't', a: ONOFF, h: 'THE NUMBERS ON HITS.' },
     { k: 'fpsc', n: 'STATS OVERLAY', t: 't', a: ['OFF', 'FPS', 'DETAILED'], h: 'FRAMES PER SECOND AND MORE, TOP RIGHT.' }] },
   { id: 'data', n: 'DATA', rows: [{ t: 'data' }] },
+  { id: 'err', n: 'ERRORS', rows: [{ t: 'err' }] },
   { id: 'pre', n: 'PRESETS', rows: [{ t: 'pre' }] },
 ];
 const MSR = {}; MSP.forEach(p => p.rows.forEach(r => { if (r.k && !MSR[r.k]) MSR[r.k] = r; }));
@@ -164,6 +165,20 @@ function msGtools(box) {      // TEST MY PHONE, what the screen can do, and what
   const sync = () => { warn.textContent = gfxWarn().join('\n\n'); }; msSyncs.push(sync); sync();
   gfxMeasure(() => { if (say.isConnected) info(); });
 }
+function msCopyText(t) { try { if (window.AndroidApp) { window.AndroidApp.copy(t); return true; } const ta = document.createElement('textarea'); ta.value = t; ta.style.cssText = 'position:fixed;left:-9999px;top:0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok; } catch { return false; } }
+function errReport() {      // the text of COPY REPORT: what to send when something looked wrong
+  const L = ['JUJUTSU SORCERERS ERROR REPORT', 'VERSION: ' + (($('ver') || {}).textContent || ''), 'WINDOW: ' + innerWidth + 'X' + innerHeight + '  SCREEN: ' + state, 'SETTINGS: ' + JSON.stringify(SET), 'ERRORS: ' + ERRS.length];
+  ERRS.forEach(e => L.push('[' + e.d + ' UTC] ' + e.m + (e.w ? ' (' + e.w + ')' : '') + (e.n > 1 ? ' X' + e.n : ''))); return L.join('\n');
+}
+function msErrs(box) {      // v1.168 the errors the game ran into (ERRS in tools/template.html): the newest first, COPY REPORT and CLEAR
+  box.appendChild(msEl('small', 'mh', 'THE GAME WRITES DOWN EVERY ERROR IT RUNS INTO AND KEEPS GOING. IF SOMETHING LOOKED WRONG, TAP COPY REPORT AND SEND IT.'));
+  const st = msEl('div', 'mst'); [['VERSION', ($('ver') || {}).textContent || ''], ['ERRORS WRITTEN DOWN', ERRS.length]].forEach(([a, b]) => { const r = msEl('div', 'ms'); r.appendChild(msEl('span', '', a)); r.appendChild(msEl('b', '', String(b))); st.appendChild(r); }); box.appendChild(st);
+  const say = msEl('small', 'mh', ''), row = msEl('div', 'mrow'), mk = (t, f) => { const b = msEl('button', '', t); b.addEventListener('click', f); return b; };
+  row.appendChild(mk('COPY REPORT', () => { say.textContent = msCopyText(errReport()) ? 'COPIED' : 'COULD NOT COPY: THE LIST IS BELOW, COPY IT BY HAND'; }));
+  row.appendChild(mk('CLEAR', () => { ERRS.length = 0; errSave(); msBuild(); })); box.appendChild(row); box.appendChild(say);
+  if (!ERRS.length) box.appendChild(msEl('small', 'mh', 'NO ERRORS SO FAR.'));
+  for (let i = ERRS.length - 1; i >= 0; i--) { const e = ERRS[i], r = msEl('div', 'mr'); r.appendChild(msEl('span', 'mn', e.m.toUpperCase())); r.appendChild(msEl('small', 'mh', e.d + ' UTC' + (e.w ? '  ' + e.w.toUpperCase() : '') + (e.n > 1 ? '  X' + e.n : ''))); box.appendChild(r); }
+}
 function msBuild() {
   const root = $('mset'), keep = root.querySelector('.mbody'), top = keep ? keep.scrollTop : 0; root.textContent = '';
   root.appendChild(msEl('h2', '', 'SETTINGS'));
@@ -171,7 +186,7 @@ function msBuild() {
   q.addEventListener('input', () => { msQ = q.value.toUpperCase(); const body = root.querySelector('.mbody'); msFill(body); }); bar.appendChild(q);
   const rp = msEl('button', '', 'RESET PAGE'); rp.addEventListener('click', () => { const o = {}; MSP[msPage].rows.forEach(r => { if (r.k) o[r.k] = MSD[r.k]; }); msSet(o); }); bar.appendChild(rp); root.appendChild(bar);
   const lay = msEl('div', 'mlay'), nav = msEl('div', 'mnav'), body = msEl('div', 'mbody');
-  MSP.forEach((p, i) => { const b = msEl('button', i === msPage && !msQ ? 'sel' : '', p.n); b.addEventListener('click', () => { msPage = i; msQ = ''; msBuild(); }); nav.appendChild(b); });
+  MSP.forEach((p, i) => { const b = msEl('button', i === msPage && !msQ ? 'sel' : '', p.n + (p.id === 'err' && ERRS.length ? ' ' + ERRS.length : '')); b.addEventListener('click', () => { msPage = i; msQ = ''; msBuild(); }); nav.appendChild(b); });
   lay.appendChild(nav); lay.appendChild(body); root.appendChild(lay);
   const br = msEl('div', 'row'), back = msEl('button', '', 'BACK'); back.addEventListener('click', msBack); br.appendChild(back); root.appendChild(br);
   msFill(body); body.scrollTop = top;
@@ -184,7 +199,7 @@ function msFill(body) {      // the options of the page, or of every page that h
     if (!n) body.appendChild(msEl('small', 'mh', 'NO OPTION HAS THOSE WORDS.'));
     return;
   }
-  const p = MSP[msPage]; p.rows.forEach(r => { if (r.t === 'n') body.appendChild(msEl('small', 'mh', r.n)); else if (r.t === 'h') body.appendChild(msEl('div', 'mhd', r.n)); else if (r.t === 'gq') msGq(body); else if (r.t === 'gtools') msGtools(body); else if (r.t === 'snd') msSound(body); else if (r.t === 'data') msData(body); else if (r.t === 'pre') msPresets(body); else body.appendChild(msRow(r)); });
+  const p = MSP[msPage]; p.rows.forEach(r => { if (r.t === 'n') body.appendChild(msEl('small', 'mh', r.n)); else if (r.t === 'h') body.appendChild(msEl('div', 'mhd', r.n)); else if (r.t === 'gq') msGq(body); else if (r.t === 'gtools') msGtools(body); else if (r.t === 'snd') msSound(body); else if (r.t === 'data') msData(body); else if (r.t === 'err') msErrs(body); else if (r.t === 'pre') msPresets(body); else body.appendChild(msRow(r)); });
 }
 function msOpen(from) { msFrom = from; audio(); msQ = ''; msBuild(); show('mset'); }
 function msBack() { show(msFrom); }

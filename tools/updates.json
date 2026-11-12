@@ -1,5 +1,15 @@
 [
  {
+  "v": "1.168",
+  "t": "SKIP BUTTON AND ERROR LIST",
+  "n": [
+   "Every story cutscene has a SKIP button in the top right corner now, like chapter 4: it goes on to the next shot. Tapping anywhere on a cutscene still does the same. It is in chapter 1 (the alley), part 2 (the hall, the training, the Master, the report), chapter 2 and chapter 3. Chapter 4 keeps its own. In chapter 3 it hides while the how-to-play card or the defeat card is on the screen, because tapping does something else there.",
+   "SETTINGS (from the main menu) has a new ERRORS page. The game writes down every error it runs into (and keeps going), newest first, with the time and where it happened. COPY REPORT copies the version, the window size, your settings and the errors, so you can send it to me. CLEAR empties the list. The page button shows how many errors there are. The last 30 are kept, even after you close the game.",
+   "The NEW MISSION message of chapter 1 moved down a little so the SKIP button does not touch it.",
+   "Not included: the cutscenes inside fights (the FATALITIES, domains and finishers) have no SKIP button yet. Sukuna's finisher has its own skip."
+  ]
+ },
+ {
   "v": "1.167",
   "t": "BUG FIXES",
   "n": [

@@ -153,7 +153,7 @@ function c13Draw(m, cam, S) {      // in the picture (the cinema bars come over 
 }
 function c13Top(m) {      // over everything, the cinema bars too: the how-to-play card, the counter and the SKIP button (in the top bar), the verdict, the defeat
   const Q = C13Q; if (c13Off()) return; if (Q.intro) { c13Intro(); return; } const sc = c13Score(); ctx.save(); ctx.imageSmoothingEnabled = false; ctx.lineWidth = 2;
-  if (c13Zone(m) && m < C11K.kick + 0.3 && !Q.def) { pxt('SCORE ' + sc.hits + '/' + sc.n + '  ' + Math.round(sc.pct * 100) + '%', 4, 11, sc.pct >= C13.need ? '#8dff9a' : '#ff6a7a', 8, 'left'); ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1; ctx.strokeRect(VW - 39.5, 2.5, 36, 10); pxt('SKIP', VW - 21, 11, '#ffffff', 8, 'center'); }
+  if (c13Zone(m) && m < C11K.kick + 0.3 && !Q.def) { pxt('SCORE ' + sc.hits + '/' + sc.n + '  ' + Math.round(sc.pct * 100) + '%', 4, 11, sc.pct >= C13.need ? '#8dff9a' : '#ff6a7a', 8, 'left'); ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1; }      // (the SKIP button itself is drawn by storySkipBtn)
   if (Q.pass && m > C11K.kick - 0.4 && m < C11K.kick + 2.0) pxt('SCORE ' + Q.pass.hits + '/' + Q.pass.n + '  ' + Math.round(Q.pass.pct * 100) + '%', VW / 2, 32, '#8dff9a', 10, 'center');
   if (Q.def) {
     const a = Math.min(1, (pnow() - Q.def.at) / 600); ctx.fillStyle = 'rgba(50,0,10,' + (0.78 * a).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); ctx.globalAlpha = a;

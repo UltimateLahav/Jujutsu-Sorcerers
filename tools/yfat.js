@@ -201,7 +201,7 @@ function yfEvents(now, t) {
   if (!s.ev.end && t >= s.end && (s.skip || s.real >= YF_LEN - 0.005)) { s.ev.end = 1; yfEnd(now); }
 }
 function yfFrame(now, dt) {
-  try { yfFrame0(now, dt); } catch (e) { console.error('yf', e); while (yfDepth > 0) yfRestore(); yfDepth = 0; ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.filter = 'none'; if (yf) yfEnd(now); }      // (whatever goes wrong, the fight goes on: the enemy is gone and the round is won)
+  try { yfFrame0(now, dt); } catch (e) { console.error('yf', e); errLog('YF: ' + e, ''); while (yfDepth > 0) yfRestore(); yfDepth = 0; ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.filter = 'none'; if (yf) yfEnd(now); }      // (whatever goes wrong, the fight goes on: the enemy is gone and the round is won)
 }
 function yfTitle(k, a, yc) {      // the word FATALITY like the other cutscenes' (it slams in huge, drops to its size in three steps, shakes a little), a little above the middle so that Yuji stays in view
   const base = Math.max(8, Math.min(32, Math.floor((VW - 12) / 64) * 8)), sz = k < 0.06 ? base * 2 : k < 0.12 ? base * 1.5 : base, j = k < 0.9 ? Math.round((Math.random() - 0.5) * 2) : 0, x = Math.round(VW / 2) + j, y = yc + Math.round(sz / 2) + j;

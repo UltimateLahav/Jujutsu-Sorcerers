@@ -186,7 +186,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.167</small>
+    <small id="ver">V1.168</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -376,6 +376,18 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
 (() => {
 'use strict';
 const OWNER = 'This APK file is owned by Lahav. All rights reserved.'; window.__owner = OWNER;      // ownership notice (hidden: nothing is drawn on screen)
+const ERRS = [];      // v1.168 the errors the game ran into (SETTINGS > ERRORS): { d: when (UTC), m: the message, w: where, n: how many times in a row }; the last 30 stay in the storage (jserrlog: not part of the save code)
+try { const o = JSON.parse(localStorage.getItem('jserrlog') || '[]'); if (Array.isArray(o)) for (const e of o.slice(-30)) if (e && typeof e.m === 'string') ERRS.push({ d: String(e.d || '').slice(0, 16), m: e.m.slice(0, 300), w: String(e.w || '').slice(0, 80), n: Math.max(1, +e.n || 1) }); } catch { /* storage blocked */ }
+let errTimer = 0; const errSave = () => { errTimer = 0; try { localStorage.setItem('jserrlog', JSON.stringify(ERRS)); } catch { /* storage blocked: the list in memory is still right */ } };
+function errLog(m, w) {      // one more error (the same one again and again is counted, not listed); the storage is written at most once in 0.8 s
+  try {
+    m = String(m || 'ERROR').slice(0, 300); w = String(w || '').slice(0, 80); const last = ERRS[ERRS.length - 1], d = new Date().toISOString().slice(0, 16).replace('T', ' ');
+    if (last && last.m === m && last.w === w) { last.n++; last.d = d; } else { ERRS.push({ d, m, w, n: 1 }); if (ERRS.length > 30) ERRS.shift(); }
+    if (!errTimer) errTimer = setTimeout(errSave, 800);
+  } catch { /* the list is only a help: it must never make an error of its own */ }
+}
+addEventListener('error', e => errLog(e.message, (e.filename ? String(e.filename).split('/').pop().slice(-24) + ':' : '') + (e.lineno || '') + (e.colno ? ':' + e.colno : '')));
+addEventListener('unhandledrejection', e => errLog('PROMISE: ' + (e.reason && e.reason.message || e.reason), ''));
 __SFX__
 __HUMAN__
 const D = __SPR__;                 // palette + idle / walk-forward / walk-back / jump / double-jump (teleport) sprite frames (rows of palette letters)
@@ -4834,7 +4846,13 @@ function smokeBig(sx, k) {      // a HUGE cloud of grey smoke around (sx, floor)
 const CUT = { see: 10.05, zoom: 10.3, slow: 10.85, slowEnd: 13.8, ask: 11.6, askCps: 6, reply: 14.6, name: 15.9, fade: 17.7, fight: 18.8, rate: 0.25, Z: 4 };
 const wclock = T => T < CUT.slow ? T : T < CUT.slowEnd ? CUT.slow + (T - CUT.slow) * CUT.rate : CUT.slow + (CUT.slowEnd - CUT.slow) * CUT.rate + (T - CUT.slowEnd);      // the world's clock: it crawls (a quarter of the speed) while the slow motion lasts
 const ease3 = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
-function storyFrame(now, dt) {
+function storyFrame(now, dt) { storyFrame0(now, dt); storySkipBtn(); }
+const storySkipOn = () => !!story && state === 'story' && !story.battle && !story.c15 && !(story.c7 && (C13Q.intro || C13Q.def));      // (chapter 4 draws its own; in chapter 3 the how-to-play card and the defeat card use the taps themselves)
+function storySkipBtn() {      // v1.168 the SKIP button in the top right corner of every cutscene: a tap on it (like a tap anywhere) goes on to the next shot, see storySkip
+  if (!storySkipOn()) return;
+  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(VW - 39.5, 2.5, 36, 10); ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1; ctx.strokeRect(VW - 39.5, 2.5, 36, 10); pxt('SKIP', VW - 21, 11, '#ffffff', 8, 'center'); ctx.restore();
+}
+function storyFrame0(now, dt) {
   if (story.c15) { c15Frame(now, dt); return; }      // (chapter 4: the vessel, v1.145)
   if (story.c7) { c7Frame(now, dt); return; }      // (chapter 3: the Divine General, v1.106)
   if (story.c3) { c3Frame0(now, dt); return; }      // (chapter 2: the portal, v1.95)
@@ -4890,7 +4908,7 @@ function alleyScene(now, dt, T, gx) {
   ctx.restore();
   windStreaks(dt * (T >= CUT.slow && T < CUT.slowEnd ? CUT.rate : 1), 1.4 + 1.6 * ze);      // (the wind is drawn on the screen itself, so it stays fine however far the camera is in)
   if (T >= 1.2) once('msg', 1.2, () => snd('ceon')); if (T >= CUT.see) once('alert', CUT.see, () => snd('stun')); if (T >= CUT.slow) once('slow', CUT.slow, () => snd('slowin')); if (W >= 11.15) once('bite', CUT.slow + (11.15 - CUT.slow) / CUT.rate, () => snd('smack', 3)); if (T >= CUT.slowEnd) once('slowend', CUT.slowEnd, () => snd('slowout'));
-  if (T > 1.2 && T < 4.8) { const k = Math.min(1, (T - 1.2) / 0.3, (4.8 - T) / 0.3), y = Math.round(-44 + 50 * k), x = VW - 174; ctx.fillStyle = '#0b0a1e'; ctx.fillRect(x, y, 166, 40); ctx.fillStyle = '#8f7cff'; ctx.fillRect(x, y, 166, 2); ctx.fillRect(x, y + 38, 166, 2); ctx.fillRect(x, y, 2, 40); ctx.fillRect(x + 164, y, 2, 40);
+  if (T > 1.2 && T < 4.8) { const k = Math.min(1, (T - 1.2) / 0.3, (4.8 - T) / 0.3), y = Math.round(-36 + 50 * k), x = VW - 174; ctx.fillStyle = '#0b0a1e'; ctx.fillRect(x, y, 166, 40); ctx.fillStyle = '#8f7cff'; ctx.fillRect(x, y, 166, 2); ctx.fillRect(x, y + 38, 166, 2); ctx.fillRect(x, y, 2, 40); ctx.fillRect(x + 164, y, 2, 40);
     pxt('NEW MISSION', x + 8, y + 14, '#ffd34d', 8); pxt('SPECIAL GRADE CURSE', x + 8, y + 25, '#ffffff', 8); pxt('SPOTTED NEARBY.', x + 8, y + 35, '#ffffff', 8); }      // the message that comes in
   if (T >= 6.9 && T < 9.4) dlg('GOJO', 'WHERE IS THE SPECIAL GRADE?', Math.floor((T - 6.9) * 22));
   if (T >= CUT.ask - 0.1 && T < CUT.slowEnd) dlg('GOJO', ask, askN);

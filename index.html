@@ -186,7 +186,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.167</small>
+    <small id="ver">V1.168</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -376,6 +376,18 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
 (() => {
 'use strict';
 const OWNER = 'This APK file is owned by Lahav. All rights reserved.'; window.__owner = OWNER;      // ownership notice (hidden: nothing is drawn on screen)
+const ERRS = [];      // v1.168 the errors the game ran into (SETTINGS > ERRORS): { d: when (UTC), m: the message, w: where, n: how many times in a row }; the last 30 stay in the storage (jserrlog: not part of the save code)
+try { const o = JSON.parse(localStorage.getItem('jserrlog') || '[]'); if (Array.isArray(o)) for (const e of o.slice(-30)) if (e && typeof e.m === 'string') ERRS.push({ d: String(e.d || '').slice(0, 16), m: e.m.slice(0, 300), w: String(e.w || '').slice(0, 80), n: Math.max(1, +e.n || 1) }); } catch { /* storage blocked */ }
+let errTimer = 0; const errSave = () => { errTimer = 0; try { localStorage.setItem('jserrlog', JSON.stringify(ERRS)); } catch { /* storage blocked: the list in memory is still right */ } };
+function errLog(m, w) {      // one more error (the same one again and again is counted, not listed); the storage is written at most once in 0.8 s
+  try {
+    m = String(m || 'ERROR').slice(0, 300); w = String(w || '').slice(0, 80); const last = ERRS[ERRS.length - 1], d = new Date().toISOString().slice(0, 16).replace('T', ' ');
+    if (last && last.m === m && last.w === w) { last.n++; last.d = d; } else { ERRS.push({ d, m, w, n: 1 }); if (ERRS.length > 30) ERRS.shift(); }
+    if (!errTimer) errTimer = setTimeout(errSave, 800);
+  } catch { /* the list is only a help: it must never make an error of its own */ }
+}
+addEventListener('error', e => errLog(e.message, (e.filename ? String(e.filename).split('/').pop().slice(-24) + ':' : '') + (e.lineno || '') + (e.colno ? ':' + e.colno : '')));
+addEventListener('unhandledrejection', e => errLog('PROMISE: ' + (e.reason && e.reason.message || e.reason), ''));
 // Procedural sound effects for Jujutsu Sorcerers (Web Audio, no audio files): footsteps, wind, jump, landing, teleport.
 // makeSfx(ctx) works with a real AudioContext and with an OfflineAudioContext (the tests render it to WAV and measure it).
 // Mix rule for jump / landing / teleport: the DEEP layers (bass) go out at full level, everything else (air, noise, shimmer)
@@ -5731,7 +5743,7 @@ function yfEvents(now, t) {
   if (!s.ev.end && t >= s.end && (s.skip || s.real >= YF_LEN - 0.005)) { s.ev.end = 1; yfEnd(now); }
 }
 function yfFrame(now, dt) {
-  try { yfFrame0(now, dt); } catch (e) { console.error('yf', e); while (yfDepth > 0) yfRestore(); yfDepth = 0; ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.filter = 'none'; if (yf) yfEnd(now); }      // (whatever goes wrong, the fight goes on: the enemy is gone and the round is won)
+  try { yfFrame0(now, dt); } catch (e) { console.error('yf', e); errLog('YF: ' + e, ''); while (yfDepth > 0) yfRestore(); yfDepth = 0; ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.filter = 'none'; if (yf) yfEnd(now); }      // (whatever goes wrong, the fight goes on: the enemy is gone and the round is won)
 }
 function yfTitle(k, a, yc) {      // the word FATALITY like the other cutscenes' (it slams in huge, drops to its size in three steps, shakes a little), a little above the middle so that Yuji stays in view
   const base = Math.max(8, Math.min(32, Math.floor((VW - 12) / 64) * 8)), sz = k < 0.06 ? base * 2 : k < 0.12 ? base * 1.5 : base, j = k < 0.9 ? Math.round((Math.random() - 0.5) * 2) : 0, x = Math.round(VW / 2) + j, y = yc + Math.round(sz / 2) + j;
@@ -12644,7 +12656,7 @@ function c13Draw(m, cam, S) {      // in the picture (the cinema bars come over 
 }
 function c13Top(m) {      // over everything, the cinema bars too: the how-to-play card, the counter and the SKIP button (in the top bar), the verdict, the defeat
   const Q = C13Q; if (c13Off()) return; if (Q.intro) { c13Intro(); return; } const sc = c13Score(); ctx.save(); ctx.imageSmoothingEnabled = false; ctx.lineWidth = 2;
-  if (c13Zone(m) && m < C11K.kick + 0.3 && !Q.def) { pxt('SCORE ' + sc.hits + '/' + sc.n + '  ' + Math.round(sc.pct * 100) + '%', 4, 11, sc.pct >= C13.need ? '#8dff9a' : '#ff6a7a', 8, 'left'); ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1; ctx.strokeRect(VW - 39.5, 2.5, 36, 10); pxt('SKIP', VW - 21, 11, '#ffffff', 8, 'center'); }
+  if (c13Zone(m) && m < C11K.kick + 0.3 && !Q.def) { pxt('SCORE ' + sc.hits + '/' + sc.n + '  ' + Math.round(sc.pct * 100) + '%', 4, 11, sc.pct >= C13.need ? '#8dff9a' : '#ff6a7a', 8, 'left'); ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1; }      // (the SKIP button itself is drawn by storySkipBtn)
   if (Q.pass && m > C11K.kick - 0.4 && m < C11K.kick + 2.0) pxt('SCORE ' + Q.pass.hits + '/' + Q.pass.n + '  ' + Math.round(Q.pass.pct * 100) + '%', VW / 2, 32, '#8dff9a', 10, 'center');
   if (Q.def) {
     const a = Math.min(1, (pnow() - Q.def.at) / 600); ctx.fillStyle = 'rgba(50,0,10,' + (0.78 * a).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); ctx.globalAlpha = a;
@@ -15586,7 +15598,13 @@ function smokeBig(sx, k) {      // a HUGE cloud of grey smoke around (sx, floor)
 const CUT = { see: 10.05, zoom: 10.3, slow: 10.85, slowEnd: 13.8, ask: 11.6, askCps: 6, reply: 14.6, name: 15.9, fade: 17.7, fight: 18.8, rate: 0.25, Z: 4 };
 const wclock = T => T < CUT.slow ? T : T < CUT.slowEnd ? CUT.slow + (T - CUT.slow) * CUT.rate : CUT.slow + (CUT.slowEnd - CUT.slow) * CUT.rate + (T - CUT.slowEnd);      // the world's clock: it crawls (a quarter of the speed) while the slow motion lasts
 const ease3 = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
-function storyFrame(now, dt) {
+function storyFrame(now, dt) { storyFrame0(now, dt); storySkipBtn(); }
+const storySkipOn = () => !!story && state === 'story' && !story.battle && !story.c15 && !(story.c7 && (C13Q.intro || C13Q.def));      // (chapter 4 draws its own; in chapter 3 the how-to-play card and the defeat card use the taps themselves)
+function storySkipBtn() {      // v1.168 the SKIP button in the top right corner of every cutscene: a tap on it (like a tap anywhere) goes on to the next shot, see storySkip
+  if (!storySkipOn()) return;
+  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(VW - 39.5, 2.5, 36, 10); ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1; ctx.strokeRect(VW - 39.5, 2.5, 36, 10); pxt('SKIP', VW - 21, 11, '#ffffff', 8, 'center'); ctx.restore();
+}
+function storyFrame0(now, dt) {
   if (story.c15) { c15Frame(now, dt); return; }      // (chapter 4: the vessel, v1.145)
   if (story.c7) { c7Frame(now, dt); return; }      // (chapter 3: the Divine General, v1.106)
   if (story.c3) { c3Frame0(now, dt); return; }      // (chapter 2: the portal, v1.95)
@@ -15642,7 +15660,7 @@ function alleyScene(now, dt, T, gx) {
   ctx.restore();
   windStreaks(dt * (T >= CUT.slow && T < CUT.slowEnd ? CUT.rate : 1), 1.4 + 1.6 * ze);      // (the wind is drawn on the screen itself, so it stays fine however far the camera is in)
   if (T >= 1.2) once('msg', 1.2, () => snd('ceon')); if (T >= CUT.see) once('alert', CUT.see, () => snd('stun')); if (T >= CUT.slow) once('slow', CUT.slow, () => snd('slowin')); if (W >= 11.15) once('bite', CUT.slow + (11.15 - CUT.slow) / CUT.rate, () => snd('smack', 3)); if (T >= CUT.slowEnd) once('slowend', CUT.slowEnd, () => snd('slowout'));
-  if (T > 1.2 && T < 4.8) { const k = Math.min(1, (T - 1.2) / 0.3, (4.8 - T) / 0.3), y = Math.round(-44 + 50 * k), x = VW - 174; ctx.fillStyle = '#0b0a1e'; ctx.fillRect(x, y, 166, 40); ctx.fillStyle = '#8f7cff'; ctx.fillRect(x, y, 166, 2); ctx.fillRect(x, y + 38, 166, 2); ctx.fillRect(x, y, 2, 40); ctx.fillRect(x + 164, y, 2, 40);
+  if (T > 1.2 && T < 4.8) { const k = Math.min(1, (T - 1.2) / 0.3, (4.8 - T) / 0.3), y = Math.round(-36 + 50 * k), x = VW - 174; ctx.fillStyle = '#0b0a1e'; ctx.fillRect(x, y, 166, 40); ctx.fillStyle = '#8f7cff'; ctx.fillRect(x, y, 166, 2); ctx.fillRect(x, y + 38, 166, 2); ctx.fillRect(x, y, 2, 40); ctx.fillRect(x + 164, y, 2, 40);
     pxt('NEW MISSION', x + 8, y + 14, '#ffd34d', 8); pxt('SPECIAL GRADE CURSE', x + 8, y + 25, '#ffffff', 8); pxt('SPOTTED NEARBY.', x + 8, y + 35, '#ffffff', 8); }      // the message that comes in
   if (T >= 6.9 && T < 9.4) dlg('GOJO', 'WHERE IS THE SPECIAL GRADE?', Math.floor((T - 6.9) * 22));
   if (T >= CUT.ask - 0.1 && T < CUT.slowEnd) dlg('GOJO', ask, askN);
@@ -17329,6 +17347,16 @@ $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+ {
+  "v": "1.168",
+  "t": "SKIP BUTTON AND ERROR LIST",
+  "n": [
+   "Every story cutscene has a SKIP button in the top right corner now, like chapter 4: it goes on to the next shot. Tapping anywhere on a cutscene still does the same. It is in chapter 1 (the alley), part 2 (the hall, the training, the Master, the report), chapter 2 and chapter 3. Chapter 4 keeps its own. In chapter 3 it hides while the how-to-play card or the defeat card is on the screen, because tapping does something else there.",
+   "SETTINGS (from the main menu) has a new ERRORS page. The game writes down every error it runs into (and keeps going), newest first, with the time and where it happened. COPY REPORT copies the version, the window size, your settings and the errors, so you can send it to me. CLEAR empties the list. The page button shows how many errors there are. The last 30 are kept, even after you close the game.",
+   "The NEW MISSION message of chapter 1 moved down a little so the SKIP button does not touch it.",
+   "Not included: the cutscenes inside fights (the FATALITIES, domains and finishers) have no SKIP button yet. Sukuna's finisher has its own skip."
+  ]
+ },
  {
   "v": "1.167",
   "t": "BUG FIXES",
@@ -19597,6 +19625,7 @@ const MSP = [      // the pages: a row is { k: the key in SET, n: name, t: 'r' (
     { k: 'dn', n: 'DAMAGE NUMBERS', t: 't', a: ONOFF, h: 'THE NUMBERS ON HITS.' },
     { k: 'fpsc', n: 'STATS OVERLAY', t: 't', a: ['OFF', 'FPS', 'DETAILED'], h: 'FRAMES PER SECOND AND MORE, TOP RIGHT.' }] },
   { id: 'data', n: 'DATA', rows: [{ t: 'data' }] },
+  { id: 'err', n: 'ERRORS', rows: [{ t: 'err' }] },
   { id: 'pre', n: 'PRESETS', rows: [{ t: 'pre' }] },
 ];
 const MSR = {}; MSP.forEach(p => p.rows.forEach(r => { if (r.k && !MSR[r.k]) MSR[r.k] = r; }));
@@ -19684,6 +19713,20 @@ function msGtools(box) {      // TEST MY PHONE, what the screen can do, and what
   const sync = () => { warn.textContent = gfxWarn().join('\n\n'); }; msSyncs.push(sync); sync();
   gfxMeasure(() => { if (say.isConnected) info(); });
 }
+function msCopyText(t) { try { if (window.AndroidApp) { window.AndroidApp.copy(t); return true; } const ta = document.createElement('textarea'); ta.value = t; ta.style.cssText = 'position:fixed;left:-9999px;top:0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok; } catch { return false; } }
+function errReport() {      // the text of COPY REPORT: what to send when something looked wrong
+  const L = ['JUJUTSU SORCERERS ERROR REPORT', 'VERSION: ' + (($('ver') || {}).textContent || ''), 'WINDOW: ' + innerWidth + 'X' + innerHeight + '  SCREEN: ' + state, 'SETTINGS: ' + JSON.stringify(SET), 'ERRORS: ' + ERRS.length];
+  ERRS.forEach(e => L.push('[' + e.d + ' UTC] ' + e.m + (e.w ? ' (' + e.w + ')' : '') + (e.n > 1 ? ' X' + e.n : ''))); return L.join('\n');
+}
+function msErrs(box) {      // v1.168 the errors the game ran into (ERRS in tools/template.html): the newest first, COPY REPORT and CLEAR
+  box.appendChild(msEl('small', 'mh', 'THE GAME WRITES DOWN EVERY ERROR IT RUNS INTO AND KEEPS GOING. IF SOMETHING LOOKED WRONG, TAP COPY REPORT AND SEND IT.'));
+  const st = msEl('div', 'mst'); [['VERSION', ($('ver') || {}).textContent || ''], ['ERRORS WRITTEN DOWN', ERRS.length]].forEach(([a, b]) => { const r = msEl('div', 'ms'); r.appendChild(msEl('span', '', a)); r.appendChild(msEl('b', '', String(b))); st.appendChild(r); }); box.appendChild(st);
+  const say = msEl('small', 'mh', ''), row = msEl('div', 'mrow'), mk = (t, f) => { const b = msEl('button', '', t); b.addEventListener('click', f); return b; };
+  row.appendChild(mk('COPY REPORT', () => { say.textContent = msCopyText(errReport()) ? 'COPIED' : 'COULD NOT COPY: THE LIST IS BELOW, COPY IT BY HAND'; }));
+  row.appendChild(mk('CLEAR', () => { ERRS.length = 0; errSave(); msBuild(); })); box.appendChild(row); box.appendChild(say);
+  if (!ERRS.length) box.appendChild(msEl('small', 'mh', 'NO ERRORS SO FAR.'));
+  for (let i = ERRS.length - 1; i >= 0; i--) { const e = ERRS[i], r = msEl('div', 'mr'); r.appendChild(msEl('span', 'mn', e.m.toUpperCase())); r.appendChild(msEl('small', 'mh', e.d + ' UTC' + (e.w ? '  ' + e.w.toUpperCase() : '') + (e.n > 1 ? '  X' + e.n : ''))); box.appendChild(r); }
+}
 function msBuild() {
   const root = $('mset'), keep = root.querySelector('.mbody'), top = keep ? keep.scrollTop : 0; root.textContent = '';
   root.appendChild(msEl('h2', '', 'SETTINGS'));
@@ -19691,7 +19734,7 @@ function msBuild() {
   q.addEventListener('input', () => { msQ = q.value.toUpperCase(); const body = root.querySelector('.mbody'); msFill(body); }); bar.appendChild(q);
   const rp = msEl('button', '', 'RESET PAGE'); rp.addEventListener('click', () => { const o = {}; MSP[msPage].rows.forEach(r => { if (r.k) o[r.k] = MSD[r.k]; }); msSet(o); }); bar.appendChild(rp); root.appendChild(bar);
   const lay = msEl('div', 'mlay'), nav = msEl('div', 'mnav'), body = msEl('div', 'mbody');
-  MSP.forEach((p, i) => { const b = msEl('button', i === msPage && !msQ ? 'sel' : '', p.n); b.addEventListener('click', () => { msPage = i; msQ = ''; msBuild(); }); nav.appendChild(b); });
+  MSP.forEach((p, i) => { const b = msEl('button', i === msPage && !msQ ? 'sel' : '', p.n + (p.id === 'err' && ERRS.length ? ' ' + ERRS.length : '')); b.addEventListener('click', () => { msPage = i; msQ = ''; msBuild(); }); nav.appendChild(b); });
   lay.appendChild(nav); lay.appendChild(body); root.appendChild(lay);
   const br = msEl('div', 'row'), back = msEl('button', '', 'BACK'); back.addEventListener('click', msBack); br.appendChild(back); root.appendChild(br);
   msFill(body); body.scrollTop = top;
@@ -19704,7 +19747,7 @@ function msFill(body) {      // the options of the page, or of every page that h
     if (!n) body.appendChild(msEl('small', 'mh', 'NO OPTION HAS THOSE WORDS.'));
     return;
   }
-  const p = MSP[msPage]; p.rows.forEach(r => { if (r.t === 'n') body.appendChild(msEl('small', 'mh', r.n)); else if (r.t === 'h') body.appendChild(msEl('div', 'mhd', r.n)); else if (r.t === 'gq') msGq(body); else if (r.t === 'gtools') msGtools(body); else if (r.t === 'snd') msSound(body); else if (r.t === 'data') msData(body); else if (r.t === 'pre') msPresets(body); else body.appendChild(msRow(r)); });
+  const p = MSP[msPage]; p.rows.forEach(r => { if (r.t === 'n') body.appendChild(msEl('small', 'mh', r.n)); else if (r.t === 'h') body.appendChild(msEl('div', 'mhd', r.n)); else if (r.t === 'gq') msGq(body); else if (r.t === 'gtools') msGtools(body); else if (r.t === 'snd') msSound(body); else if (r.t === 'data') msData(body); else if (r.t === 'err') msErrs(body); else if (r.t === 'pre') msPresets(body); else body.appendChild(msRow(r)); });
 }
 function msOpen(from) { msFrom = from; audio(); msQ = ''; msBuild(); show('mset'); }
 function msBack() { show(msFrom); }
