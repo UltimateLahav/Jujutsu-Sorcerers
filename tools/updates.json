@@ -1,5 +1,16 @@
 [
  {
+  "v": "1.169",
+  "t": "SCAN THE GAME",
+  "n": [
+   "SETTINGS > ERRORS has a new part on top: SCAN THE GAME. It takes about a minute. The game plays itself with the sound off, on a fast clock of its own, and looks for errors in: every screen, all 7 fighters (free play and versus, with all three GRAPHIC DAMAGE settings), every button in every direction for every fighter, every FATALITY and DOMAIN played to the end, every story scene shot by shot (through the SKIP button), and the game's own tables (skills, settings, update log, sounds, page elements). A bar shows the minute, CANCEL (or the back button) stops it.",
+   "Your saves are safe: they are copied first and put back afterwards, even if the game is closed in the middle of a scan. At the end the page restarts and shows the result on the ERRORS page: how many checks passed, the errors and notes it found and where, and COPY SCAN REPORT to send it to me.",
+   "It finds errors thrown by the code, numbers that are not numbers, effect lists that only grow, cutscenes that do not start or never end, SKIP buttons that do nothing, text that does not fit your screen, and mistakes in the tables (for example a skill that has no place in the tree, which is what crashed the SUKUNA page in V1.166). It cannot see if something just looks wrong, and it cannot prove that there is no bug.",
+   "How it was tested: 10 faults were put into the game on purpose (a skill with no place, a skill that needs a skill that does not exist, an error in a hit, a broken number, a list that grows, a FATALITY that does not start, a broken SKIP button, a screen that crashes, an error in a timer, a missing update log entry) and the scan found all 10. On the game as it is, it found nothing in 120000 frames. The more time is left of the minute, the more extra random fights it plays.",
+   "Also: the back button of the phone stops a running scan."
+  ]
+ },
+ {
   "v": "1.168",
   "t": "SKIP BUTTON AND ERROR LIST",
   "n": [

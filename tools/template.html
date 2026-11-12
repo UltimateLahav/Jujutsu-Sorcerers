@@ -186,7 +186,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.168</small>
+    <small id="ver">V1.169</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -376,6 +376,11 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
 (() => {
 'use strict';
 const OWNER = 'This APK file is owned by Lahav. All rights reserved.'; window.__owner = OWNER;      // ownership notice (hidden: nothing is drawn on screen)
+var SCAN_ON = false, SCAN_STEP = false, SCAN_HOOK = null;      // v1.169 the scan (tools/scan.js): while SCAN_ON, tick() only runs the frames the scan asks for (SCAN_STEP); SCAN_HOOK hears every error
+function scRestoreSaves() {      // a scan copies the saves first (jsscanbak) and puts them back when it is over; if the page was closed in the middle of one, this does it here, before anything reads the saves
+  try { const b = localStorage.getItem('jsscanbak'); if (!b) return false; const o = JSON.parse(b); for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k !== 'jsscanbak' && k !== 'jsscanres') localStorage.removeItem(k); } for (const k in o) localStorage.setItem(k, o[k]); localStorage.removeItem('jsscanbak'); return true; } catch { return false; }
+}
+scRestoreSaves();
 const ERRS = [];      // v1.168 the errors the game ran into (SETTINGS > ERRORS): { d: when (UTC), m: the message, w: where, n: how many times in a row }; the last 30 stay in the storage (jserrlog: not part of the save code)
 try { const o = JSON.parse(localStorage.getItem('jserrlog') || '[]'); if (Array.isArray(o)) for (const e of o.slice(-30)) if (e && typeof e.m === 'string') ERRS.push({ d: String(e.d || '').slice(0, 16), m: e.m.slice(0, 300), w: String(e.w || '').slice(0, 80), n: Math.max(1, +e.n || 1) }); } catch { /* storage blocked */ }
 let errTimer = 0; const errSave = () => { errTimer = 0; try { localStorage.setItem('jserrlog', JSON.stringify(ERRS)); } catch { /* storage blocked: the list in memory is still right */ } };
@@ -384,6 +389,7 @@ function errLog(m, w) {      // one more error (the same one again and again is 
     m = String(m || 'ERROR').slice(0, 300); w = String(w || '').slice(0, 80); const last = ERRS[ERRS.length - 1], d = new Date().toISOString().slice(0, 16).replace('T', ' ');
     if (last && last.m === m && last.w === w) { last.n++; last.d = d; } else { ERRS.push({ d, m, w, n: 1 }); if (ERRS.length > 30) ERRS.shift(); }
     if (!errTimer) errTimer = setTimeout(errSave, 800);
+    if (SCAN_HOOK) SCAN_HOOK(m, w);
   } catch { /* the list is only a help: it must never make an error of its own */ }
 }
 addEventListener('error', e => errLog(e.message, (e.filename ? String(e.filename).split('/').pop().slice(-24) + ':' : '') + (e.lineno || '') + (e.colno ? ':' + e.colno : '')));
@@ -6396,6 +6402,7 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   drawHits(now);
 }
 function tick(t) {
+  if (SCAN_ON && !SCAN_STEP) return;      // (the scan runs the frames itself)
   requestAnimationFrame(tick);                // schedule first so one bad frame can't stop the loop
   if (paused) { if (state !== 'play') setPause(false); return; }      // PAUSE: nothing moves and the game's clock stands still
   const cap = fpsCap(); if (cap) { const iv = 1000 / cap; if (t - tDraw < iv - 2) return; tDraw = t - tDraw > iv * 2 ? t : tDraw + iv; } else tDraw = t;      // the FPS option and the battery saver: the frames in between are skipped (the next frame is due one interval after the LAST due time, so 45 or 72 FPS really average 45 or 72)
@@ -6745,6 +6752,7 @@ $('bkLoad').addEventListener('click', () => {
 applyCtl(); buildOpts(); setTab(0); refreshPower();
 __GFX__
 __MSET__
+__SCAN__
 const toggleDummy = mode => { if (dummy && dummy.mode === mode) dummy = null; else spawnDummy(pnow(), mode); closeSettings(); };
 $('dummyBtn').addEventListener('click', () => toggleDummy('dummy'));      // a punching bag that reacts to every hit
 $('fighterBtn').addEventListener('click', () => toggleDummy('fighter'));
@@ -6778,6 +6786,7 @@ window.__hit = k => gojoHit(k, pnow());           // test hook: the attacker's s
 window.__fred = () => ({ pic: fredLast, walk: fredWalk, ph: +fredPh.toFixed(2), atkK, atkAt, upQ: fredUpQ, crQ: fredCrQ, sf: fredSf, dir: fredDir, fw: fwPh, fd: fd ? +((pnow() - fd.at) / 1000).toFixed(2) : -1, rx: dummy ? dummy.rx : -1, dr: Math.max(0, Math.round(domReadyAt - pnow())), lock: domLock(), hold: atkHold, cold: fredHoldCold, heavy: heavyAt && atkAt === heavyAt, blk: blkAt >= 0, ext: +fredBlkExt.toFixed(2), grab: pnow() - fredGrabAt < 700 });      // test hook: Freddy's picture number (see fredLast), whether his walk shows, the swing
 window.__state = () => ({ who: vs ? vs.who : '', hurtOn: hurtAt >= 0, php: vs ? vs.hp : -1, ex: dummy ? Math.round(dummy.x) : 0, ph: vs ? vs.ph : '', ehp: dummy ? dummy.hp : -1, estun: dummy ? Math.max(0, Math.round(dummy.stunUntil - pnow())) : 0, eair: dummy && dummy.air ? dummy.air.kind : '', bleed: !!cuBleed, cmode: cm, redOrb: !!rdOrb, orbV: rdOrb ? rdOrb.v : 0, coat: rdOrb ? !!rdOrb.coat : false, ride: ride ? ride.phase : '', lift: gojoLift, boom: !!boom, ce: ceOn, ceAmt: +ceAmt.toFixed(2), ho: HOMAP.size, stance, jumpC, mode, wx, stick: { x: stickX, y: stickY, up: stickUp, down: stickDown, held: stickCr }, lapse: lpAt >= 0 ? lpK : -1, dash: dgAt >= 0 ? dgK : -1, dashAir: dgAir, block: blkAt >= 0 ? (blkEnd < 0 ? 1 : 2) : 0, guard: guardUp(pnow()), mb: mbAt >= 0, orb: !!orb, debris: debris.length });   // read-only view for the tests
 window.__back = () => {                       // Android back button: step back through the menus, otherwise let the app close
+  if (SCAN_ON) { $('scCancel').click(); return true; }      // (during a scan the back button stops it)
   if (settingsOn()) { closeSettings(); return true; }
   if (state === 'play') { if (paused) setPause(false); else if (!setPause(true)) leavePlay(); return true; }      // (back pauses a fight, back again goes on; the MENU button of the pause screen leaves)
   if (state === 'story') { svView = 0; show('saves'); renderSaves(); return true; }

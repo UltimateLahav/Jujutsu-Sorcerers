@@ -171,6 +171,7 @@ function errReport() {      // the text of COPY REPORT: what to send when someth
   ERRS.forEach(e => L.push('[' + e.d + ' UTC] ' + e.m + (e.w ? ' (' + e.w + ')' : '') + (e.n > 1 ? ' X' + e.n : ''))); return L.join('\n');
 }
 function msErrs(box) {      // v1.168 the errors the game ran into (ERRS in tools/template.html): the newest first, COPY REPORT and CLEAR
+  scPage(box); box.appendChild(msEl('div', 'mhd', 'ERRORS THE GAME RAN INTO'));
   box.appendChild(msEl('small', 'mh', 'THE GAME WRITES DOWN EVERY ERROR IT RUNS INTO AND KEEPS GOING. IF SOMETHING LOOKED WRONG, TAP COPY REPORT AND SEND IT.'));
   const st = msEl('div', 'mst'); [['VERSION', ($('ver') || {}).textContent || ''], ['ERRORS WRITTEN DOWN', ERRS.length]].forEach(([a, b]) => { const r = msEl('div', 'ms'); r.appendChild(msEl('span', '', a)); r.appendChild(msEl('b', '', String(b))); st.appendChild(r); }); box.appendChild(st);
   const say = msEl('small', 'mh', ''), row = msEl('div', 'mrow'), mk = (t, f) => { const b = msEl('button', '', t); b.addEventListener('click', f); return b; };
