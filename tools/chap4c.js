@@ -102,16 +102,16 @@ function c4xOverlay(c, now, T) {
   if (c.vf && now < c.vf) { ctx.fillStyle = 'rgba(' + (c.vfc || '190,130,255') + ',' + (c.vfa * (c.vf - now) / c.vfm).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
   const skip = (end, from) => { if (T > (from || 0.2) && T < end - 0.4) { ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1; ctx.strokeRect(VW - 39.5, 2.5, 36, 10); pxt('SKIP', VW - 21, 11, '#ffffff', 8, 'center'); } };
   if (c.ph === 'cut') { c4xTalk(c, T, C4_TALK); if (T >= C4S.shock && T < C4X.end - 0.1) c4xCloseUp(c, T); skip(C4X.end); }
-  else if (c.ph === 'ranos') { c4xTalk(c, T, C4_TALK_R); skip(C4RS.lw + C4RS.end, 0.8); if (c.whiteA > 0) { ctx.fillStyle = 'rgba(236,222,255,' + c.whiteA.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); } }
+  else if (c.ph === 'ranos') { c4xTalk(c, T, C4_TALK_R, VH - 38); skip(C4RS.lw + C4RS.end, 0.8); if (c.whiteA > 0) { ctx.fillStyle = 'rgba(236,222,255,' + c.whiteA.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); } }
   else if (c.ph === 'ny') { if (T < C4NS.cut) { c4xTalk(c, T, C4_TALK_N); skip(C4NS.cut, 0.8); } }
   else if (c.ph === 'fight') c4xHud(c, now);
   const a = c.ph === 'cut' ? 1 - c4xEase(T / C4X.fadeIn) : c.black ? c.black(now) : 0; if (a > 0.004) { ctx.fillStyle = 'rgba(0,0,0,' + Math.min(1, a).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
   if (c.ph === 'fight' || c.ph === 'ranos') c4xBanner(c, now);
 }
 const c4xEase = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); }, c4xOut = u => { u = Math.max(0, Math.min(1, u)); return 1 - (1 - u) * (1 - u); };
-function c4xTalk(c, T, L) {      // the few lines: the speech box in the corner, the letters come out with the blips of the speaker's voice
+function c4xTalk(c, T, L, oy) {      // the few lines: the speech box in the corner (oy = how far down it is moved), the letters come out with the blips of the speaker's voice
   const i = L.findIndex(s => T >= s.t && T < s.t + s.d); if (i < 0) return; const s = L[i], n = Math.floor((T - s.t) * TN_RATE);
-  if (c.vi !== i) { c.vi = i; c.vc = 0; } while (c.vc < Math.min(n, s.a.length)) { c.vc++; if (s.a[c.vc - 1] !== ' ') snd('tvoice', s.vk || 0); } c7Dlg(s.w, s.a, n, s.b);
+  if (c.vi !== i) { c.vi = i; c.vc = 0; } while (c.vc < Math.min(n, s.a.length)) { c.vc++; if (s.a[c.vc - 1] !== ' ') snd('tvoice', s.vk || 0); } if (oy) { ctx.save(); ctx.translate(0, oy); } c7Dlg(s.w, s.a, n, s.b); if (oy) ctx.restore();
 }
 function c4xCloseUp(c, T) {      // Sukuna is shocked: his face from the picture, four times as big, in a frame on the right
   const a = C4M.frames; if (!a) return; const cv = a[0], S = 3, w = 28, h = 26, x0 = VW - 8 - w * S, y0 = 22, k = c4xEase((T - C4S.shock) / 0.12);

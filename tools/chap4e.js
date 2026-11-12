@@ -1,10 +1,10 @@
-// ================================================================ v1.157 CHAPTER 4, PART 4 (tools/chap4e.js): the figures of RANOS (the one at the end of chapter 2: purple skin, dark-blue and gold armour, a gauntlet with a purple stone) and IRON MAN, the cars and the sky of NEW YORK
-// They are drawn at run time with the shaded capsules of chapter 4 (c15MegKit: the same look as the people of the street), pose by pose, facing right, and cached by the numbers of the pose: c4xRanos(pose) -> a 112 x 104 canvas (soles on row 100, middle column 56),
-// c4xIron(pose) -> a 96 x 100 canvas (soles on row 92, middle column 48). A POSE: x, y = the hip, lean (degrees, forward), hdx, hdy, hdt = the head, arms [{ al: the upper arm's angle from straight down, forward positive, el: the bend of the elbow }, ...] (the first is the far arm),
-// legs [{ ax, ay: where the ankle is, a: the foot's angle }, ...], and for Ranos glow (the stone) and for Iron Man fl (the flames under the boots), bl (the blade, 0 - 1), rep (the palm repulsors, 0 - 1), vis (the faceplate is shut and lit).
+// ================================================================ v1.157 CHAPTER 4, PART 4 (tools/chap4e.js): the figures of RANOS (v1.158: the one at the end of chapter 2, who blew up the planet: his own picture, C5I.body) and IRON MAN, the cars and the sky of NEW YORK
+// Iron Man is drawn at run time with the shaded capsules of chapter 4 (c15MegKit: the same look as the people of the street), pose by pose, facing right, and cached by the numbers of the pose: c4xIron(pose) -> a 96 x 100 canvas (soles on row 92, middle column 48); Ranos is his picture of chapter 2 with an arm drawn on it (see below).
+// A POSE of Iron Man: x, y = the hip, lean (degrees, forward), hdx, hdy, hdt = the head, arms [{ al: the upper arm's angle from straight down, forward positive, el: the bend of the elbow }, ...] (the first is the far arm),
+// legs [{ ax, ay: where the ankle is, a: the foot's angle }, ...], fl (the flames under the boots), bl (the blade, 0 - 1), rep (the palm repulsors, 0 - 1), vis (the faceplate is shut and lit).
 const { Pix: C4Pix, cap: c4cap, ell: c4ell, uni: c4uni, clip: c4clip, M: c4M, K: c4K, ik: c4ik } = c15MegKit;
-const C4R = { W: 112, H: 104, GY: 100, cx: 56, L1: 17, L2: 17, LT: 27, UA: 14, FA: 13, AH: 4 }, C4I = { W: 96, H: 100, GY: 92, cx: 48, L1: 14, L2: 14, LT: 20, UA: 11, FA: 10.5, AH: 3.5 };
-const C4RC = { skin: '#8d5db5', armor: '#27357a', trim: '#e2b53c', pants: '#2c2f5c', boot: '#2a2048', eye: '#ffd84a', stone: '#c98bff', stoneL: '#f1dcff' }, C4IC = { red: '#c4202c', gold: '#e4b636', dark: '#34343f', glow: '#aef6ff', white: '#f4fdff', blade: '#e9eff6' };
+const C4I = { W: 96, H: 100, GY: 92, cx: 48, L1: 14, L2: 14, LT: 20, UA: 11, FA: 10.5, AH: 3.5 };
+const C4IC = { red: '#c4202c', gold: '#e4b636', dark: '#34343f', glow: '#aef6ff', white: '#f4fdff', blade: '#e9eff6' };
 const C4RAD = Math.PI / 180;
 function c4xMixPose(a, b, t) {      // two poses mixed number by number (the arms and legs too)
   const o = {}; for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) { if (k === 'arms' || k === 'legs') continue; const x = a[k], y = b[k]; o[k] = typeof x === 'number' || typeof y === 'number' ? (x === undefined ? y : x) + ((y === undefined ? x : y) - (x === undefined ? y : x)) * t : (t < 0.5 ? x : y); }
@@ -20,46 +20,50 @@ function c4xRig(R, o) {      // the joints of a pose: the hip, the neck, the sho
 const c4xCache = new Map(), c4xCv = (kind, o, draw) => { const key = kind + JSON.stringify(o, (k, v) => typeof v === 'number' ? Math.round(v * 2) / 2 : v); let c = c4xCache.get(key); if (!c) { c = draw(o).canvas(); c4xCache.set(key, c); if (c4xCache.size > 700) c4xCache.delete(c4xCache.keys().next().value); } return c; };
 const c4xFoot = (p, l, m, soleC) => { const a = -(l.a || 0) * C4RAD, cs = Math.cos(a), sn = Math.sin(a), R = (x, y) => [l.ax + x * cs - y * sn, l.ay + x * sn + y * cs], hh = R(-2.6, 1.8), tt = R(5.6, 2.2); p.put(c4cap(hh[0], hh[1], tt[0], tt[1], 2.3, 1.8), m); p.line(R(-2, 3.4), R(5.2, 3.8), soleC); };
 
-// ---------------------------------------------------------------- RANOS
-function c4xDrawRanos(o) {
-  const R = C4R, p = new C4Pix(R.W, R.H), J = c4xRig(R, o), { P, at, Nk, Sh, hd, arms, legs } = J, C = C4RC, skin = c4M(C.skin), armor = c4M(C.armor), trim = c4M(C.trim);
-  const drawArm = k => {
-    const a = arms[k], far = k ? 0 : 0.1, gaunt = k === 1, sk = c4M(C.skin, far), tr = c4M(C.trim, far);
-    p.put(c4uni(c4ell(Sh[0], Sh[1], 5.2, 5.2), c4cap(Sh[0], Sh[1], a.E[0], a.E[1], 4.8, 4.1)), sk);      // (the shoulder and the upper arm)
-    p.put(c4cap(a.E[0], a.E[1], a.W[0], a.W[1], gaunt ? 4.5 : 3.8, gaunt ? 4.3 : 3.2), gaunt ? tr : sk); if (!gaunt) p.put(c4cap(a.E[0] + (a.W[0] - a.E[0]) * 0.45, a.E[1] + (a.W[1] - a.E[1]) * 0.45, a.W[0], a.W[1], 3.9, 3.5), tr);      // (the gold of the bracer; the near arm is the gauntlet)
-    p.put(c4ell(a.h[0], a.h[1], gaunt ? 4.6 : 3.7, gaunt ? 4.8 : 3.9), gaunt ? tr : sk);
-    if (gaunt) { const g = o.glow || 0, sx = a.h[0] + Math.sin(a.a2) * 1.2, sy = a.h[1] + Math.cos(a.a2) * 1.2; p.px(sx, sy, c4K(g > 0.5 ? C.stoneL : C.stone)); p.px(sx + 1, sy, c4K(C.stone)); p.px(sx, sy + 1, c4K(C.stone)); if (g > 0.3) { p.px(sx - 1, sy, c4K(C.stone)); p.px(sx, sy - 1, c4K(C.stone)); if (g > 0.7) for (const [dx, dy] of [[-2, 0], [2, 0], [0, -2], [0, 2], [-2, -2], [2, 2], [2, -2], [-2, 2]]) p.px(sx + dx, sy + dy, c4K(C.stone)); } }
-  };
-  const drawLeg = k => { const l = legs[k], far = k ? 0 : 0.1, Hp = [P[0] + 0.4, P[1]];
-    p.put(c4uni(c4cap(Hp[0], Hp[1], l.K[0], l.K[1], 6.2, 5.0), c4cap(l.K[0], l.K[1], l.ax, l.ay, 5.0, 3.4)), c4M(C.pants, far)); c4xFoot(p, l, c4M(C.boot, far), c4K('#150f26')); };
-  drawArm(0); drawLeg(0);
-  p.put(c4uni(c4cap(P[0], P[1], at(0.3, 0)[0], at(0.3, 0)[1], 8.4, 9.2), c4cap(at(0.3, 0)[0], at(0.3, 0)[1], at(0.7, 0)[0], at(0.7, 0)[1], 9.2, 13.4), c4cap(at(0.7, 0)[0], at(0.7, 0)[1], Nk[0], Nk[1], 13.4, 8.4)), armor);      // (the body: the waist, the broad chest, the shoulders)
-  const cr = at(0.6, 6.6), bl = at(0.09, 0); p.put(c4ell(cr[0], cr[1], 4.4, 6.6), trim, 1); p.put(c4cap(bl[0] - 7.5, bl[1], bl[0] + 7.5, bl[1], 1.6, 1.6), trim, 1);      // (the gold on the chest, the belt)
-  p.put(c4ell(Sh[0] + 0.5, Sh[1] - 0.8, 6.2, 5.2), trim);      // (the shoulder plate)
-  p.put(c4cap(hd[0] - 1.2, hd[1] + 4, Nk[0] + 0.4, Nk[1] - 0.6, 3.6, 4.4), skin);      // (the neck)
-  const [hx, hy] = hd, K = c4K;
-  p.put(c4uni(c4ell(hx - 0.4, hy - 0.4, 7.6, 8.0), c4ell(hx + 2.0, hy + 3.8, 6.0, 5.6)), skin);      // (the head and the great chin)
-  p.put(c4uni(c4ell(hx - 2.4, hy - 4.8, 6.8, 3.8), c4ell(hx - 6.2, hy + 0.2, 2.6, 5.2)), trim);      // (the helmet over the top and the back of the head)
-  p.put(c4cap(hx - 6, hy - 6.8, hx - 12.5, hy - 4.6, 2.2, 0.5), trim, 1);      // (the crest)
-  const X = Math.round(hx + 3.8), Y = Math.round(hy - 0.8), dk = K('#120a1e');
-  p.rect(X - 1, Y - 2, 5, 1, dk); p.rect(X, Y - 1, 3, 2, dk); p.px(X + 1, Y - 1, K(C.eye)); p.px(X + 2, Y - 1, K(C.eye));      // (the brow, the eye)
-  p.rect(Math.round(hx + 3.4), Math.round(hy + 4.6), 4, 1, dk); p.px(Math.round(hx + 3), Math.round(hy + 2.4), c4M(C.skin)[0]); p.px(Math.round(hx + 6.4), Math.round(hy + 3.8), c4M(C.skin)[0]);      // (the mouth, the lines of the face)
-  drawLeg(1); const sk = at(0.02, 0); p.put(c4cap(sk[0] - 0.3, sk[1] - 1.5, sk[0] + 0.4, sk[1] + 6, 8.4, 8.9), c4M(C.pants), 1);
-  drawArm(1); return p;
+// ---------------------------------------------------------------- RANOS (v1.158): the figure of the end of chapter 2, the one who blew up the planet ("???"): his own picture, C5I.body (tools/thanos_64.png, 64 x 64), drawn 1.25 times as big
+// The picture as it is (o) is the standing figure, his gauntlet is on his chest. For the moments when his arm moves (the catch, the throw, the punch) there is a second copy (p): the gold of the gauntlet is painted over with the vest and the shoulder, and an arm is drawn on it in the colours of the picture (his purple skin, the gold of the gauntlet) that reaches for a point.
+// A POSE: p = 1 (the arm is drawn), ln = how far his head leans forward (picture pixels: the rows above the hip slide, the legs stay), ax / ay = where his fist is, seen from the shoulder (picture pixels, forward and down positive, only with p), g = the light of the stone (0 - 2). It is drawn once per pose (cached by its numbers).
+const C4RK = 1.25, C4RW = 150, C4RH = 100, C4RCX = 75, C4RGY = 90, C4RHIP = 38, C4RSH = [39, 17], C4RL1 = 12, C4RL2 = 12;      // (the size of the figure's canvas, the place of the middle of his feet on it, the row of his hip, his shoulder in the picture, the two bones of his arm)
+const C4RGOLD = new Set(['248,224,130', '220,174,68', '168,120,32', '94,64,18', '34,20,10', '138,132,112', '142,100,52']);      // (the colours of the gauntlet in the picture)
+const C4RP = { shA: '#9a86c6', shE: '#7360a4', vP: '#181c50', vQ: '#3b449e', vS: '#5560bc', stone: '#c98bff', stoneL: '#f1dcff' };      // (the colours the gold is painted over with: his skin, the vest; and the stone)
+const c4xRMat = (cols, out) => { const m = cols.map(c4K); m.o = c4K(out); return m; }, C4RMS = c4xRMat(['#4d3f78', '#7360a4', '#9a86c6', '#c6b4e8'], '#0c0916'), C4RMG = c4xRMat(['#5e4012', '#a87820', '#dcae44', '#f8e082'], '#22140a');      // (the purple of his skin and the gold of the gauntlet, in the four tones of the picture)
+const C4RB = { o: null, p: null };
+function c4xRBase() {      // the picture as it is (o) and with the gold of the gauntlet painted over (p); null while the picture has not loaded
+  if (C4RB.o) return C4RB; const im = C5I.body; if (!(im.complete && im.naturalWidth)) return null;
+  const mk = () => { const c = document.createElement('canvas'); c.width = c.height = 64; return c; }, o = mk(), p = mk(), pg = p.getContext('2d'), rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); o.getContext('2d').drawImage(im, 0, 0); pg.drawImage(im, 0, 0);
+  const d = pg.getImageData(0, 0, 64, 64), D = d.data;
+  for (let y = 14; y <= 25; y++) for (let x = 32; x <= 42; x++) { const i = (y * 64 + x) * 4; if (D[i + 3] < 128 || !C4RGOLD.has(D[i] + ',' + D[i + 1] + ',' + D[i + 2])) continue; const c = rgb(y <= 19 ? (x < 38 ? C4RP.shA : C4RP.shE) : (x < 36 ? C4RP.vP : x < 38 ? C4RP.vQ : C4RP.vS)); D[i] = c[0]; D[i + 1] = c[1]; D[i + 2] = c[2]; }      // (the shoulder up in the corner, the vest below it)
+  pg.putImageData(d, 0, 0); C4RB.o = o; C4RB.p = p; return C4RB;
 }
-const c4xRanos = o => c4xCv('r', o, c4xDrawRanos);
-const C4RG = C4R.GY - C4R.AH;      // (the height of an ankle on the floor)
-const c4xRanosPose = {
-  stand(t) { const b = Math.sin(t * 2) * 0.35; return { x: 56, y: 63.5 + b * 0.4, lean: 2, hdx: 1.4, hdt: 1, glow: 0.35 + 0.15 * Math.sin(t * 3), arms: [{ al: -8, el: 12 + b }, { al: 7, el: 20 - b }], legs: [{ ax: 48, ay: C4RG, a: 0 }, { ax: 63, ay: C4RG, a: 0 }] }; },
-  walk(ph) {      // a stride: the foot on the floor goes back, then swings forward through the air
-    const leg = k => { const q = (ph + 0.5 * k) % 1; if (q < 0.5) return { ax: 69 - 26 * (q / 0.5), ay: C4RG, a: 0 }; const u = (q - 0.5) / 0.5; return { ax: 43 + 26 * u, ay: C4RG - 6 * Math.sin(Math.PI * u), a: 12 * Math.sin(Math.PI * u) }; }, w = Math.cos(2 * Math.PI * ph);
-    return { x: 56, y: 63.5 + 0.6 * Math.abs(Math.sin(2 * Math.PI * ph)), lean: 5, hdx: 1.6, glow: 0.4, arms: [{ al: 16 * w, el: 18 }, { al: -16 * w, el: 24 }], legs: [leg(0), leg(1)] };
-  },
-  catch(t) { const b = Math.sin(t * 20) * 0.25; return { x: 55, y: 63.5, lean: 9, hdx: 1.8, hdt: 2, glow: 0.8, arms: [{ al: -16, el: 20 }, { al: 98 + b, el: -12 }], legs: [{ ax: 46, ay: C4RG, a: 0 }, { ax: 66, ay: C4RG, a: 0 }] }; },
-  throw(u) { return c4xMixPose(c4xRanosPose.catch(0), { x: 54, y: 64, lean: -6, hdx: 1.2, hdt: -3, glow: 1, arms: [{ al: 8, el: 16 }, { al: 168, el: -20 }], legs: [{ ax: 49, ay: C4RG, a: 0 }, { ax: 64, ay: C4RG, a: 0 }] }, c15Sm(u)); },
-  windup() { return { x: 54, y: 66, lean: -10, hdx: 1.0, hdt: -3, glow: 1, arms: [{ al: 20, el: 40 }, { al: -56, el: 50 }], legs: [{ ax: 42, ay: C4RG, a: 0 }, { ax: 70, ay: C4RG, a: 0 }] }; },
-  punch() { return { x: 60, y: 70, lean: 24, hdx: 2.4, hdt: 8, glow: 1, arms: [{ al: 20, el: 30 }, { al: 38, el: 2 }], legs: [{ ax: 42, ay: C4RG, a: 0 }, { ax: 72, ay: C4RG, a: 0 }] }; },
-};
+const c4xRSh = (ln, r) => Math.round(ln * Math.max(0, C4RHIP - r) / (C4RHIP - 5));      // (how far the row r of the picture slides forward when he leans: nothing at the hip, all of it at the top of the head)
+function c4xRArm(o) {      // the joints of his arm in picture pixels: the shoulder S, the elbow E (it hangs below the line from S to F), the fist F (pulled in when it is out of reach)
+  const S = [C4RSH[0] + c4xRSh(o.ln || 0, C4RSH[1]), C4RSH[1]], mx = (C4RL1 + C4RL2) * 0.985; let tx = o.ax || 0, ty = o.ay || 0; const dl = Math.hypot(tx, ty); if (dl > mx) { tx *= mx / dl; ty *= mx / dl; }
+  const d = Math.max(1, Math.hypot(tx, ty)), a = Math.acos(Math.max(-1, Math.min(1, (C4RL1 * C4RL1 + d * d - C4RL2 * C4RL2) / (2 * C4RL1 * d)))), th = Math.atan2(ty, tx) + (tx >= 0 ? a : -a);
+  return { S, E: [S[0] + C4RL1 * Math.cos(th), S[1] + C4RL1 * Math.sin(th)], F: [S[0] + tx, S[1] + ty] };
+}
+function c4xDrawRanos(o) {
+  const B = c4xRBase(), cv = document.createElement('canvas'), g = cv.getContext('2d'), ox = C4RCX - 31, oy = C4RGY - 61, src = o.p ? B.p : B.o, ln = o.ln || 0, gl = o.g === undefined ? 1 : o.g, p = new C4Pix(C4RW, C4RH), st = c4K(gl > 1 ? C4RP.stoneL : C4RP.stone), sd = c4K('#6a28d8'); cv.width = C4RW; cv.height = C4RH; g.imageSmoothingEnabled = false;
+  g.drawImage(src, 0, C4RHIP, 64, 64 - C4RHIP, ox, oy + C4RHIP, 64, 64 - C4RHIP);      // (the legs stand)
+  for (let r = 0; r < C4RHIP; r++) g.drawImage(src, 0, r, 64, 1, ox + c4xRSh(ln, r), oy + r, 64, 1);      // (the body leans: every row above the hip slides forward, the more the higher it is)
+  if (o.p) {
+    const A = c4xRArm(o), S = [A.S[0] + ox, A.S[1] + oy], E = [A.E[0] + ox, A.E[1] + oy], F = [A.F[0] + ox, A.F[1] + oy], ux = F[0] - E[0], uy = F[1] - E[1], ul = Math.hypot(ux, uy) || 1, W = [F[0] - ux / ul * 3, F[1] - uy / ul * 3];
+    p.put(c4uni(c4ell(S[0], S[1], 3.7, 3.5), c4cap(S[0], S[1], E[0], E[1], 3.0, 2.6)), C4RMS);      // (the shoulder and the upper arm: his skin)
+    p.put(c4cap(E[0], E[1], W[0], W[1], 2.4, 2.8), C4RMG); p.put(c4ell(F[0], F[1], 3.3, 3.5), C4RMG);      // (the bracer and the fist: the gold of the gauntlet)
+    if (gl > 0) { const sx = F[0] + 0.5, sy = F[1] - 2; p.px(sx, sy, st); p.px(sx + 1, sy, gl > 1 ? st : sd); p.px(sx, sy + 1, gl > 1 ? st : sd); p.px(sx + 1, sy + 1, sd); }      // (the stone on the back of his hand)
+  } else if (gl > 0) { const sx = ox + 34 + c4xRSh(ln, 21), sy = oy + 21; p.px(sx, sy, st); p.px(sx + 1, sy, gl > 1 ? st : sd); p.px(sx, sy + 1, gl > 1 ? st : sd); p.px(sx + 1, sy + 1, sd); }      // (the stone on the gauntlet of the picture)
+  g.drawImage(p.canvas(), 0, 0); return { canvas: () => cv };
+}
+const c4xRanos = o => c4xRBase() ? c4xCv('r', o, c4xDrawRanos) : null;
+function c4xRFist(o) {      // where the stone is: [forward, up] in game pixels from the middle of his feet (without a squash)
+  if (!o.p) return [(34.5 + c4xRSh(o.ln || 0, 21) - 31) * C4RK, (61 - 21.5) * C4RK];
+  const F = c4xRArm(o).F; return [(F[0] - 31) * C4RK, (61 - F[1]) * C4RK];
+}
+function c4xRReach(wx, wy, ln) {      // the numbers of the arm (ax, ay) that put the fist on the point wx pixels in front of the middle of his feet and wy pixels up
+  return { ax: wx / C4RK + 31 - (C4RSH[0] + c4xRSh(ln, C4RSH[1])), ay: 61 - wy / C4RK - C4RSH[1] };
+}
+function c4xRDraw(cv, x, lift, face, sx, sy) {      // Ranos standing on the roof at the world x (lift = how high above it, sx / sy = the squash of a landing)
+  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.translate(c4xSX(x), gy - Math.round(lift)); if (face < 0) ctx.scale(-1, 1); ctx.scale(C4RK * sx, C4RK * sy); ctx.drawImage(cv, -C4RCX, -C4RGY); ctx.restore();
+}
 // ---------------------------------------------------------------- IRON MAN
 function c4xDrawIron(o) {
   const R = C4I, p = new C4Pix(R.W, R.H), J = c4xRig(R, o), { P, at, Nk, Sh, hd, arms, legs } = J, C = C4IC, K = c4K, red = c4M(C.red), gold = c4M(C.gold);
@@ -163,57 +167,79 @@ function c4xBigDraw(cv, R, x, lift, face, sink, alpha) {      // a figure (Ranos
 }
 
 // ================================================================ RANOS STEPS IN (c4x.ph 'ranos'): the same scene after a win or a loss
-// WIN: the Black Flash has just thrown Meguna back; LOSS: Meguna's last blow has punched Yuji back. LW = 0.7 s of lead-in (the fight's own bodies move on, no control, no brain), then it is one script: Meguna comes back in a dash and starts a slash, a violet circle opens on the roof between them and RANOS
-// rises out of it, his gauntlet (the purple stone) catches Meguna's wrist (a freeze, "NOT YET, SUKUNA." - "...YOU?!"), he throws Meguna away, turns to Yuji and punches him in the stomach ("YOU ARE NEEDED ELSEWHERE."); a second circle opens under Yuji and takes him; a violet-white flash and New York.
+// WIN: the Black Flash has just thrown Meguna back; LOSS: Meguna's last blow has punched Yuji back. LW = 0.7 s of lead-in (the fight's own bodies move on, no control, no brain), then it is one script: a line of violet light comes down out of the sky over the roof, Meguna comes back in a dash and starts a slash, and RANOS (v1.158: the figure of the end of chapter 2) falls out of the sky in a column of light and lands between them (the roof cracks, a ring of dust runs out),
+// his arm, the gauntlet with the purple stone, reaches out and catches Meguna's wrist (a freeze, "NOT YET, SUKUNA." - "...YOU?!"), he throws Meguna away, turns to Yuji and punches him in the stomach ("YOU ARE NEEDED ELSEWHERE."); a violet circle opens under Yuji and takes him; a violet-white flash and New York.
 // All times are seconds after the lead-in: s. u = a place on the roof in pixels from where Yuji stood, positive towards Meguna (d = +-1 is the way to Meguna in the world).
-const C4RS = { lw: 0.7, back: 0.4, dash0: 0.15, dash1: 0.45, port0: 0.3, port1: 0.62, rise0: 0.42, rise1: 0.9, grab: 0.66, l1: 1.0, l2: 2.4, throw: 3.7, thrown: 4.2, turn: 4.3, wind: 4.9, punch: 5.12, sink0: 5.24, sink1: 5.9, flash: 6.4, end: 6.8 };
-const C4_TALK_R = [{ t: C4RS.lw + C4RS.l1, d: 1.9, w: 'RANOS', vk: 3, a: 'NOT YET, SUKUNA.', b: '' }, { t: C4RS.lw + C4RS.l2, d: 1.2, w: 'SUKUNA', vk: 5, a: '...YOU?!', b: '' }, { t: C4RS.lw + 4.4, d: 2.0, w: 'RANOS', vk: 3, a: 'YOU ARE NEEDED ELSEWHERE.', b: '' }];
+const C4RS = { lw: 0.7, back: 0.4, dash0: 0.35, dash1: 0.65, fall0: 0.5, land: 0.9, grab: 1.0, l1: 1.3, l2: 2.7, throw: 4.0, thrown: 4.5, turn: 4.6, wind: 5.2, punch: 5.42, sink0: 5.54, sink1: 6.2, flash: 6.7, end: 7.1 };
+const C4_TALK_R = [{ t: C4RS.lw + C4RS.l1, d: 1.4, w: 'RANOS', vk: 3, a: 'NOT YET, SUKUNA.', b: '' }, { t: C4RS.lw + C4RS.l2, d: 1.2, w: 'SUKUNA', vk: 5, a: '...YOU?!', b: '' }, { t: C4RS.lw + 4.7, d: 2.0, w: 'RANOS', vk: 3, a: 'YOU ARE NEEDED ELSEWHERE.', b: '' }];
 const C4_TALK_N = [{ t: 5.7, d: 2.0, w: 'YUJI', vk: 1, a: 'WHERE... AM I?!', b: '' }, { t: 8.2, d: 2.8, w: 'IRON MAN', vk: 0, a: 'BACK DOWN, KID...', b: 'OR YOU GET STABBED.' }];
 const C4_VIO = ['#ffffff', '#f1dcff', '#c98bff', '#8a4de0'];
+function c4xEllRing(sx, sy, r, col) { ctx.fillStyle = col; const n = Math.max(16, r * 4), ry = r * 0.28; for (let i = 0; i < n; i++) { const th = i / n * 6.2832; ctx.fillRect(Math.round(sx + Math.cos(th) * r), Math.round(sy + Math.sin(th) * ry), 1, 1); } }      // (a ring on the floor: a circle seen from the side)
+function c4xBeam(sx, k, now) {      // a column of violet light from the top of the picture to the roof (k = 0 - 1: how bright and how wide)
+  if (k <= 0) return; const fl = (now / 45) & 1; ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  for (const [w, col, al] of [[11, '120,70,220', 0.28], [6, '190,130,255', 0.5], [2, '255,255,255', 0.95]]) { const ww = Math.max(1, Math.round(w * k) + (w > 2 ? fl : 0)); ctx.fillStyle = 'rgba(' + col + ',' + (al * Math.min(1, k * 1.6)).toFixed(3) + ')'; ctx.fillRect(sx - (ww >> 1), 0, ww, gy + 3); }
+  ctx.restore();
+}
 function c4xRanosStart(now, win) {
-  const c = c4x, F = c.F; F.ph = 'over'; c.ph = 'ranos'; c.t0 = now; c.ev = {}; c.rs = { win, set: false, d: 1, y0: 0, m0: 0, u0: 0, uT: 46 }; c.fx = []; c.pool = c.pool2 = null; c.black = null; c.glow = null; c.vf = 0; c4xCine(true); c.y.sink = 0; c.y.tint = 0;
+  const c = c4x, F = c.F; F.ph = 'over'; c.ph = 'ranos'; c.t0 = now; c.ev = {}; c.rs = { win, set: false, d: 1, y0: 0, m0: 0, u0: 0, uT: 46, uR: 16 }; c.stp = 0; c.fx = []; c.pool = c.pool2 = null; c.black = null; c.glow = null; c.vf = 0; c4xCine(true); c.y.sink = 0; c.y.tint = 0;
 }
 function c4xRanosStep(c, now, dt, T) {
   const R = C4RS, Y = c.y, M = c.m, S = c.rs, s = T - R.lw, ev = (n, t, f) => c4xEv(c, T, n, t + R.lw, f), idle = now / (1000 / IDLE_FPS), ease = c4xEase, out = c4xOut;
   c.pool = null; c.pool2 = null; c.fx = []; c.glow = null; c.mFront = false;
   if (s < 0) { c4xYStep(c, now, dt); c4xMStep(c, now, dt); c4xYPose(c, now); c4xMPose(c, now); return; }
-  if (!S.set) { S.set = true; S.d = Math.sign(M.x - Y.x) || 1; S.y0 = Y.x; S.m0 = M.x; S.u0 = Math.abs(M.x - Y.x); S.uT = Math.max(46, S.u0 - 50); }
-  const d = S.d, X = u => S.y0 + d * u, uR = 20;
+  if (!S.set) { S.set = true; S.d = Math.sign(M.x - Y.x) || 1; S.y0 = Y.x; S.m0 = M.x; S.u0 = Math.abs(M.x - Y.x); S.uT = Math.max(46, S.u0 - 50); S.uR = Math.max(16, S.uT - 38); }
+  const d = S.d, X = u => S.y0 + d * u, uR = S.uR, uT = S.uT, uP = 15;
   // ---- Yuji: backs away, watches, is punched, goes into the circle
-  let yu = -8 * ease(s / R.back), yp = { set: 'idle', fi: idle }, ylift = 0; Y.sink = 0; Y.tint = 0;
+  let yu = -12 * ease(s / R.back), yp = { set: 'idle', fi: idle }, ylift = 0; Y.sink = 0; Y.tint = 0;
   if (s < R.back) yp = { set: 'fwd', fi: 14 - ((s * WALK_FPS) % 15) };
-  if (s >= R.punch) { const k = s - R.punch; yu = -8 - 7 * out(k / 0.25); yp = { set: 'rx', k: 1, fi: Math.min(9, 3 + k * 22) }; ylift = 5 * Math.sin(Math.PI * Math.min(1, k / 0.5)); if (s >= R.sink0) { Y.sink = ease((s - R.sink0) / (R.sink1 - R.sink0)); Y.tint = 0.7 * Y.sink; ylift = 0; } }
+  if (s >= R.punch) { const k = s - R.punch; yu = -12 - 7 * out(k / 0.25); yp = { set: 'rx', k: 1, fi: Math.min(9, 3 + k * 22) }; ylift = 5 * Math.sin(Math.PI * Math.min(1, k / 0.5)); if (s >= R.sink0) { Y.sink = ease((s - R.sink0) / (R.sink1 - R.sink0)); Y.tint = 0.7 * Y.sink; ylift = 0; } }
   Y.x = X(yu); Y.face = d; Y.pose = yp; Y.lift = ylift; Y.gone = s >= R.sink1;
   // ---- Meguna: comes back with a dash and a slash, is held, is thrown, lies there
-  const u0 = S.u0, uT = S.uT; let mu = u0, mp = { row: 'frames', fi: idle }, ml = 0;
+  const u0 = S.u0; let mu = u0, mp = { row: 'frames', fi: idle }, ml = 0;
   if (s >= R.dash0 && s < R.dash1) { const k = out((s - R.dash0) / (R.dash1 - R.dash0)); mu = u0 + (uT - u0) * k; mp = { row: uT < u0 ? 'df' : 'dg', fi: Math.min(14, k * 14.9) }; }
   else if (s >= R.dash1 && s < R.throw) { mu = uT; const e = s - R.dash1; mp = { row: 'sx', fi: e < R.grab - R.dash1 ? Math.min(6, e * 30) : 6 }; if (s >= R.grab) mu += 0.7 * Math.sin(now / 30); }
   else if (s >= R.throw && s < R.thrown) { const k = out((s - R.throw) / (R.thrown - R.throw)); mu = uT + 70 * k; ml = 16 * Math.sin(Math.PI * k); mp = { row: 'h9', fi: Math.min(14, (s - R.throw) * 26) }; }
   else if (s >= R.thrown) { mu = uT + 70; mp = s < R.end - 1.0 ? { row: 'h1', fi: 9 } : { row: 'frames', fi: idle }; }
   if (s < R.dash0) mp = { row: 'frames', fi: idle };
   M.x = X(mu); M.face = -d; M.pose = mp; M.lift = ml; M.sink = 0; M.white = 0; M.rot = 0;
-  // ---- Ranos: out of the circle, the catch, the throw, the turn, the punch
-  const rs = s < R.rise0 ? 1 : s < R.rise1 ? 1 - ease((s - R.rise0) / (R.rise1 - R.rise0)) : 0, rx = X(uR); let rpose = c4xRanosPose.stand(now / 1000), rface = d;
-  if (s >= R.grab - 0.12 && s < R.throw) rpose = c4xMixPose(rpose, c4xRanosPose.catch(now / 1000), ease((s - R.grab + 0.12) / 0.12));
-  else if (s >= R.throw && s < R.throw + 0.35) rpose = c4xRanosPose.throw((s - R.throw) / 0.35);
-  else if (s >= R.throw + 0.35 && s < R.turn) rpose = c4xMixPose(c4xRanosPose.throw(1), c4xRanosPose.stand(now / 1000), ease((s - R.throw - 0.35) / (R.turn - R.throw - 0.35)));
-  if (s >= R.turn) { rface = -d; rpose = c4xRanosPose.stand(now / 1000); if (s >= R.wind - 0.15 && s < R.punch) rpose = c4xMixPose(rpose, c4xRanosPose.windup(), ease((s - R.wind + 0.15) / 0.15)); if (s >= R.punch) rpose = c4xMixPose(c4xRanosPose.punch(), rpose, ease((s - R.punch - 0.45) / 0.45)); if (s >= R.punch && s < R.punch + 0.05) rpose = c4xRanosPose.punch(); }
-  if (s >= R.punch && s < R.punch + 0.45) rpose = c4xRanosPose.punch(); if (s >= R.wind && s < R.punch) rpose = c4xRanosPose.windup();
-  const rcv = c4xRanos(rpose), rglow = rpose.glow || 0;
-  c.fx.push(() => { if (rs < 1 || s >= R.rise0) c4xBigDraw(rcv, C4R, rx, 0, rface, rs); });
-  // ---- the circles
-  const p1 = s < R.port0 ? 0 : s < R.port1 ? ease((s - R.port0) / (R.port1 - R.port0)) : s < R.rise1 ? 1 : Math.max(0, 1 - (s - R.rise1) / 0.3);
-  if (p1 > 0) c.pool = [{ x: rx, rx: 20 * p1, a: 1, violet: true }];
+  // ---- Ranos: down the column of light, the landing, the reach and the catch, the throw, the turn, the walk, the punch
+  const rx0 = X(uR), cwx = X(uT) - d * 12, cwy = 44, rest = { p: 1, ln: 0, ax: -7, ay: 3.5, g: 1 }, mix = (a, b, t) => ({ p: 1, ln: a.ln + (b.ln - a.ln) * t, ax: a.ax + (b.ax - a.ax) * t, ay: a.ay + (b.ay - a.ay) * t, g: a.g + (b.g - a.g) * t });      // (where he lands; the point where Meguna's fist is raised: the one he catches)
+  let rface = d, rx = rx0, rl = 0, rsx = 1, rsy = 1, ro = { g: 1 };
+  if (s >= R.fall0 && s < R.land) { const u = (s - R.fall0) / (R.land - R.fall0); rl = 170 * (1 - u * u); ro = { g: 1, ln: 1 }; }
+  else if (s >= R.land) {
+    const k = s - R.land, reach = (ln, wx, wy, g) => { const r = c4xRReach(wx, wy, ln); return { p: 1, ln, ax: r.ax, ay: r.ay, g }; };
+    rsy = k < 0.06 ? 1 - 0.16 * ease(k / 0.06) : 1 - 0.16 * (1 - ease((k - 0.06) / 0.2)); rsx = 1 + (1 - rsy) * 0.7;      // (the landing: he is pressed down and comes up again)
+    if (s < R.land + 0.02) ro = { g: 1, ln: 0 };
+    else if (s < R.grab) ro = mix(rest, reach(3, (cwx - rx0) * d, cwy, 2), out((s - R.land - 0.02) / (R.grab - R.land - 0.02)));
+    else if (s < R.throw) ro = reach(3, (cwx - rx0) * d, cwy, 2);
+    else if (s < R.throw + 0.3) ro = mix(reach(3, (cwx - rx0) * d, cwy, 2), reach(-2, 34, 72, 2), out((s - R.throw) / 0.3));
+    else if (s < R.turn) ro = mix(reach(-2, 34, 72, 2), rest, ease((s - R.throw - 0.3) / (R.turn - R.throw - 0.3)));
+    else {
+      rface = -d; const w = ease((s - R.turn) / (R.wind - R.turn)), ywx = X(-12) + d * 5; rx = X(uR + (uP - uR) * w); if (w > 0 && w < 1 && Math.abs(uR - uP) > 4) { rl = 1.5 * Math.abs(Math.sin((s - R.turn) * 9)); const n = Math.floor((s - R.turn) * 9 / Math.PI); if (n > c.stp) { c.stp = n; snd('land', 1); puff(rx, 3); shakeUntil = now + 90; shakeAmp = 1.5; } }      // (he turns and walks to Yuji with heavy steps: a thud and a little dust at each)
+      if (s < R.wind - 0.15) ro = { g: 1, ln: 0 };      // (his arm rests: the picture as it is, the gauntlet on his chest)
+      else if (s < R.wind) { const u = ease((s - R.wind + 0.15) / 0.15); ro = mix(rest, reach(-6, -14, 46, 2), u); rsy = 1 - 0.05 * u; rsx = 1 + 0.03 * u; }
+      else if (s < R.punch) { ro = reach(-6, -14, 46, 2); rsy = 0.95; rsx = 1.03; }
+      else { const kk = s - R.punch, u = out(kk / 0.06); rx = X(uP - 6 * u); ro = kk < 0.4 ? reach(Math.round(9 * u), (rx - ywx) * d, 30, 2) : kk < 0.7 ? mix(reach(9, (rx - ywx) * d, 30, 2), rest, ease((kk - 0.4) / 0.3)) : { g: 1, ln: 0 }; }
+    }
+  }
+  const rcv = s >= R.fall0 ? c4xRanos(ro) : null;
+  if (s >= R.land) c.fx.push(() => c4xCrater(rx0, Math.min(1, (s - R.land) / 0.2)));      // (the roof under him cracks)
+  const bk = s < R.fall0 ? 0.12 + 0.5 * (s / R.fall0) : s < R.land ? 1 : Math.max(0, 1 - (s - R.land) / 0.25); c.fx.push(() => c4xBeam(c4xSX(rx0), bk, now));
+  if (s >= R.land && s < R.land + 0.6) { const a = (s - R.land) / 0.6; c.fx.push(() => { ctx.globalAlpha = 1 - a; c4xEllRing(c4xSX(rx0), gy + 3, Math.round(6 + 64 * a), '#d6a8ff'); c4xEllRing(c4xSX(rx0), gy + 3, Math.round(3 + 52 * a), '#ffffff'); ctx.globalAlpha = 1; }); }
+  if (rcv) {
+    c.fx.push(() => c4xShadow(rx, rl, 13)); c.fx.push(() => c4xRDraw(rcv, rx, rl, rface, rsx, rsy));
+    if (s >= R.land + 0.02) { const f = c4xRFist(ro), gx = Math.round(c4xSX(rx) + rface * f[0] * rsx), gyy = Math.round(gy - rl - f[1] * rsy), r = (ro.g > 1 ? 6 : 4) + ((now / 80) & 1); c.fx.push(() => c4xGlow(gx, gyy, r, ['rgba(138,77,224,0.35)', 'rgba(201,139,255,0.6)', 'rgba(241,220,255,0.95)'])); }      // (the stone's light on his fist)
+  }
+  // ---- the circle that takes Yuji
   const p2 = s < R.punch + 0.04 ? 0 : s < R.sink0 ? ease((s - R.punch - 0.04) / (R.sink0 - R.punch - 0.04)) : s < R.sink1 ? 1 : Math.max(0, 1 - (s - R.sink1) / 0.35);
-  if (p2 > 0) (c.pool = c.pool || []).push({ x: X(yu), rx: 17 * p2, a: 1, violet: true });
+  if (p2 > 0) c.pool = [{ x: X(yu), rx: 17 * p2, a: 1, violet: true }];
   if (Y.sink > 0 && Y.sink < 1) c.fx.push(() => { for (let i = 0; i < 5; i++) { ctx.fillStyle = i % 2 ? '#f1dcff' : '#c98bff'; ctx.fillRect(c4xSX(Y.x) + Math.round((Math.random() - 0.5) * 18), gy - Math.round(Math.random() * 40), 1, 3); } });
-  // ---- the stone's light on the near hand
-  if (rglow > 0.4 && rs <= 0) { const gx = c4xSX(rx) + rface * (rpose.arms[1].al > 60 ? 33 : 9), gyy = gy - (rpose.arms[1].al > 60 ? 29 : 34); if (s >= R.grab - 0.1) c.fx.push(() => c4xGlow(Math.round(gx), Math.round(gyy), 4 + ((now / 80) & 1), ['rgba(138,77,224,0.35)', 'rgba(201,139,255,0.6)', 'rgba(241,220,255,0.95)'])); }
   // ---- sounds and effects
-  ev('fade', 0, () => c4xMus(c, false, now)); ev('port', R.port0, () => { snd('vanish'); snd('rumble', 1.4); }); ev('rise', R.rise0, () => snd('arrive'));
+  ev('sky', 0, () => { snd('charge'); snd('rumble', 1.6); c.vf = now + 260; c.vfm = 260; c.vfa = 0.25; c.vfc = '150,100,255'; }); ev('fall', R.fall0 - 0.05, () => snd('vanish'));
+  ev('land', R.land, () => { snd('concboom'); snd('land', 2.4); puff(rx0, 16); puff(rx0 - 16, 8); puff(rx0 + 16, 8); shakeUntil = now + 450; shakeAmp = 6; buzz(120); hitStop(80); c.vf = now + 420; c.vfm = 420; c.vfa = 0.85; c.vfc = '236,222,255'; spark(rx0, gy - 2, 18, C4_VIO, true, 1); spark(rx0, gy - 2, 12, C4_VIO, true, -1); });
   ev('dash', R.dash0, () => snd('dash', 0)); ev('slash', R.dash1 + 0.1, () => snd('swing', 3));
-  ev('grab', R.grab, () => { hitStop(90); snd('block'); snd('stun'); buzz(60); shakeUntil = now + 200; shakeAmp = 3; c.vf = now + 260; c.vfm = 260; c.vfa = 0.5; c.vfc = '190,130,255'; spark(M.x - d * 2, gy - 50, 18, C4_VIO, true, -d); spark(M.x - d * 2, gy - 50, 10, C4_VIO, false, d); });
-  ev('throw', R.throw, () => { snd('swing', 3); snd('smack', 2); shakeUntil = now + 120; shakeAmp = 2; }); ev('land', R.thrown - 0.05, () => { snd('land', 1.8); puff(M.x, 8); shakeUntil = now + 160; shakeAmp = 3; });
+  ev('grab', R.grab, () => { hitStop(90); snd('block'); snd('stun'); buzz(60); shakeUntil = now + 200; shakeAmp = 3; c.vf = now + 260; c.vfm = 260; c.vfa = 0.5; c.vfc = '190,130,255'; spark(cwx, gy - cwy, 18, C4_VIO, true, -d); spark(cwx, gy - cwy, 10, C4_VIO, false, d); });
+  ev('throw', R.throw, () => { snd('swing', 3); snd('smack', 2); shakeUntil = now + 120; shakeAmp = 2; spark(cwx, gy - cwy, 12, C4_VIO, true, d); }); ev('land2', R.thrown - 0.05, () => { snd('land', 1.8); puff(M.x, 8); shakeUntil = now + 160; shakeAmp = 3; });
   ev('wind', R.wind - 0.15, () => snd('charge'));
   ev('punch', R.punch, () => { hitStop(130); snd('hit', 3); snd('smack', 3); snd('concboom'); buzz(120); shakeUntil = now + 380; shakeAmp = 6; c.vf = now + 420; c.vfm = 420; c.vfa = 0.75; c.vfc = '190,130,255'; spark(Y.x + d * 2, gy - 28, 22, C4_VIO, true, -d); c.ring = now; });
   ev('sink', R.sink0, () => { snd('vanish'); snd('portalclose'); });
