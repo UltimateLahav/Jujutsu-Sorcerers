@@ -32,7 +32,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 .cards{display:flex;gap:2.5vh}
 .card{width:24vh;height:40vh;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:1.5vh;font-size:clamp(8px,2.4vh,13px)}
 .card canvas{height:24vh;width:auto}
-#select>.cards:not(.mini){--cw:min(24vh,calc((100vw - 18vh) / 6))}#select>.cards:not(.mini) .card{width:var(--cw)}#select>.cards:not(.mini) .card canvas{height:var(--cw)}
+#select>.cards:not(.mini){--cw:min(24vh,calc((100vw - 21vh) / 7))}#select>.cards:not(.mini) .card{width:var(--cw)}#select>.cards:not(.mini) .card canvas{height:var(--cw)}
 .card i{color:var(--dim);font-style:normal;font-size:.8em}
 #gojo{border-color:var(--acc)}
 #gojo:hover,#gojo:focus-visible{background:#2a1f4a;outline:none}
@@ -42,7 +42,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #hud button{padding:1vh 1.6vh;font-size:inherit}
 #pad{position:fixed;left:0;right:0;bottom:0;display:none;justify-content:space-between;align-items:flex-end;padding:0 calc(env(safe-area-inset-right) + 3vh) calc(env(safe-area-inset-bottom) + 3vh) calc(env(safe-area-inset-left) + 3vh);pointer-events:none}
 .pb{pointer-events:auto;touch-action:none;width:15vh;height:15vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6vh;padding:0;font-size:clamp(10px,5vh,24px);opacity:.78}
-.pb span{font-size:var(--fs-pb,clamp(5px,1.7vh,9px));color:var(--dim)}
+.pb span{font-size:var(--fs-pb,clamp(5px,1.7vh,9px));color:var(--dim);letter-spacing:0}      /* (the spacing of the big icon would be inherited as pixels: DOMAIN did not fit its button on a 360 high window) */
 .pb.on{background:#2a1f4a;border-color:var(--acc);opacity:1}
 .col{display:grid;grid-template-columns:auto auto;gap:1.6vh;align-items:end;justify-items:end}      /* CURSED ENERGY above BLUE, then BLOCK BLUE / DASH ATTACK */
 #ce{grid-area:1/2;border-color:#35e8d8;color:#35e8d8}
@@ -116,8 +116,8 @@ body.ry #dom,body.ry #ce,body.ry #fat,body.c4 #dom,body.c4 #ce,body.c4 #fat,body
 #pad.lh{flex-direction:row-reverse}#pad.lh .col{justify-items:start}
 #safe{position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 #pause.screen{z-index:4;background:rgba(13,10,23,.82)}#pause.hid{background:transparent}#pause.hid>*{visibility:hidden}      /* (while the settings are open on top of it) */
-#settings.screen{gap:1.4vh}#settings.ctl{background:rgba(13,10,23,.55)}
-.setp{display:none;flex-direction:column;align-items:center;gap:1.2vh;width:min(92vw,820px)}.setp.on{display:flex}.setp small{font-size:clamp(6px,1.9vh,10px);line-height:1.5}
+#settings.screen{gap:1vh}#settings.ctl{background:rgba(13,10,23,.55)}
+.setp{display:none;flex-direction:column;align-items:center;gap:1.2vh;width:min(92vw,820px);min-height:0;overflow-y:auto}.setp>*{flex-shrink:0}.setp.on{display:flex}      /* (a short window: the page scrolls inside, the title and CLOSE stay on the screen) */.setp small{font-size:clamp(6px,1.9vh,10px);line-height:1.5}
 .opt{display:grid;grid-template-columns:1fr 1fr;gap:1.2vh 4vh;width:100%;text-align:left}.opt label{display:grid;grid-template-columns:1fr auto;gap:.6vh 1vh;font-size:clamp(7px,2.2vh,12px)}.opt input{grid-column:1/3;width:100%;height:3.4vh;accent-color:var(--acc)}.opt b{font-weight:normal;color:var(--acc)}.opt button{padding:1vh 1.4vh;font-size:clamp(7px,2.2vh,12px)}
 #bkCode{width:100%;height:11vh;background:#120d22;color:var(--ink);border:2px solid var(--line);font:inherit;font-size:clamp(6px,1.9vh,10px);resize:none;word-break:break-all}
 .cc.daily{border-color:#ffd34d}.cc.roul{border-color:#ff5a4a}#dash.cd{position:relative;opacity:.4}#dash.cd::after{content:attr(data-cd);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#ffd34d;font-size:clamp(10px,6vh,28px);text-shadow:2px 2px 0 #000}
@@ -186,7 +186,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.166</small>
+    <small id="ver">V1.167</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -1462,18 +1462,18 @@ function makeHumans(doc) {
 
   // ---- the five people. thS = how much of the thigh is the upper material (0.5 = shorts); back / det / hem / hair / hold draw the clothes and things they carry
   const HT = [
-    { name: 'businessman', H: 59, lean: 2, fwd: 1.2, skin: '#e0ae88', hc: '#1d1b26', top: '#2b3558', armU: '#2b3558', armL: '#2b3558', thA: '#232a45', thS: 1, shk: '#232a45', shoe: '#17141c', armSw: 20, hold: 'case', walk: { A: 6.6, sp: 24 }, run: { A: 12.5, sp: 64 },
+    { name: 'businessman', H: 59, lean: 2, fwd: 1.2, skin: '#e0ae88', hc: '#1d1b26', top: '#2b3558', armU: '#2b3558', armL: '#2b3558', thA: '#232a45', thS: 1, shk: '#232a45', shoe: '#17141c', armSw: 20, hk: 'case', walk: { A: 6.6, sp: 24 }, run: { A: 12.5, sp: 64 },
       det(p, J) { const a = J.at; p.put(cap(...a(0.97, 3), ...a(0.4, 4.2), 1.1, 1.3), M('#ecebf2'), 3); p.put(cap(...a(0.9, 3.5), ...a(0.34, 4.4), 0.75, 1.1), M('#b8283a'), 3); p.line(a(0.99, 2.3), a(0.4, 4.7), K('#4a5788')); p.px(...a(0.28, 4.5), K('#0d0b14')); p.px(...a(0.14, 4.7), K('#0d0b14')); },
       hem(p, J) { p.put(cap(J.P[0] - 0.3, J.P[1] - 1.5, J.P[0] + 0.4, J.P[1] + 5 * J.s, 4.7 * J.s, 4.9 * J.s), M('#2b3558')); },
       hair(p, J, [hx, hy], s) { p.put(clip(ell(hx - 0.8 * s, hy - 1.1 * s, 5 * s, 4.9 * s), (x, y) => y < hy - 3.1 * s + Math.max(0, hx - x) * 0.5 || (x < hx - 2.7 * s && y < hy + 1.1 * s)), M('#1d1b26')); p.line([hx - 1.5 * s, hy - 5 * s], [hx + 2.2 * s, hy - 4.7 * s], K('#4a4660')); p.px(hx + 3 * s, hy - 3.9 * s, K('#4a4660')); },
       hold(p, J) { const [x, y] = J.arms[1].h; p.line([x, y + 1], [x, y + 3], K('#2a1a10')); p.box(x - 4.5, y + 3, 9, 7, M('#7a4a2c')); p.px(x, y + 5, K('#d9b050')); } },
-    { name: 'office woman', H: 55, lean: 1, fwd: 1.0, skin: '#f0c4a6', hc: '#4a2a1c', top: '#cfd8f0', armU: '#cfd8f0', armL: '#f0c4a6', chest: 4.7, thA: '#e3b295', thS: 1, shk: '#e3b295', shoe: '#201a22', armSw: 17, hold: 'bag', walk: { A: 5.2, sp: 19 }, run: { A: 10.5, sp: 54 }, lip: '#b03a52',
+    { name: 'office woman', H: 55, lean: 1, fwd: 1.0, skin: '#f0c4a6', hc: '#4a2a1c', top: '#cfd8f0', armU: '#cfd8f0', armL: '#f0c4a6', chest: 4.7, thA: '#e3b295', thS: 1, shk: '#e3b295', shoe: '#201a22', armSw: 17, hk: 'bag', walk: { A: 5.2, sp: 19 }, run: { A: 10.5, sp: 54 }, lip: '#b03a52',
       back(p, J) { const [hx, hy] = J.hd; p.put(uni(cap(hx - 2.2, hy - 1, hx - 3.6, hy + 11, 3.5, 2.6)), M('#4a2a1c')); },
       det(p, J) { const a = J.at; p.put(ell(...a(0.75, 3.5), 2.2, 2.7), M('#cfd8f0'), 1); p.line(a(1, 2.6), a(0.78, 4.4), K('#8aa0d8')); p.line(a(1, 1.6), a(0.84, 3.4), K('#8aa0d8')); },
       hem(p, J) { p.put(cap(J.P[0] - 0.2, J.P[1] - 2, J.P[0] + 0.3, J.P[1] + 10.5 * J.s, 4.8 * J.s, 4.1 * J.s), M('#3b3a4e')); },
       hair(p, J, [hx, hy], s) { p.put(clip(ell(hx - 0.8 * s, hy - 1.1 * s, 5 * s, 5 * s), (x, y) => y < hy - 3.1 * s + Math.max(0, hx - x) * 0.45 || (x < hx - 2.5 * s && y < hy + 1.8 * s)), M('#4a2a1c')); p.px(hx - 1.8 * s, hy + 2.6 * s, K('#e8c860')); p.line([hx - 1.5 * s, hy - 5 * s], [hx + 2.4 * s, hy - 4.6 * s], K('#7a4a34')); },
       hold(p, J) { const a = J.arms[1], [x, y] = [J.P[0] - 3, J.P[1] + 3]; p.line(J.S, [x + 4, y], K('#5a3020')); p.box(x, y, 9, 8, M('#a23a3a')); p.px(x + 4, y + 2, K('#e8c860')); } },
-    { name: 'old man', H: 53, lean: 15, fwd: 3.2, skin: '#d9a888', hc: '#c9c6c4', top: '#6a7152', armU: '#6a7152', armL: '#6a7152', thA: '#5a4a3a', thS: 1, shk: '#5a4a3a', shoe: '#2a2018', armSw: 12, hold: 'cane', walk: { A: 3.6, sp: 12 }, run: { A: 6.5, sp: 36 }, brow: '#aaa6a4',
+    { name: 'old man', H: 53, lean: 15, fwd: 3.2, skin: '#d9a888', hc: '#c9c6c4', top: '#6a7152', armU: '#6a7152', armL: '#6a7152', thA: '#5a4a3a', thS: 1, shk: '#5a4a3a', shoe: '#2a2018', armSw: 12, hk: 'cane', walk: { A: 3.6, sp: 12 }, run: { A: 6.5, sp: 36 }, brow: '#aaa6a4',
       det(p, J) { const a = J.at; p.put(ell(...a(0.4, 3.2), 2.9, 4), M('#6a7152'), 1); p.line(a(0.98, 2.2), a(0.2, 4.6), K('#4a5038')); [0.62, 0.42, 0.24].forEach(t => p.px(...a(t, 4.4), K('#2a2e1c'))); p.line(a(0.99, 2), a(0.86, 3.3), K('#d9d4c4')); },
       hem(p, J) { p.put(cap(J.P[0], J.P[1] - 2, J.P[0], J.P[1] + 4 * J.s, 4.5 * J.s, 4.6 * J.s), M('#6a7152')); },
       hair(p, J, [hx, hy], s) { p.put(clip(ell(hx - 0.8 * s, hy - 1.1 * s, 4.9 * s, 4.7 * s), (x, y) => (x < hx - 2.6 * s && y > hy - 2.4 * s && y < hy + 1.8 * s) || (y < hy - 3.7 * s && x < hx + 1 * s)), M('#c9c6c4')); p.rect(Math.round(hx + 3 * s), Math.round(hy + 2 * s), 2, 1, K('#aaa6a4')); const X = Math.round(hx + 2.4 * s), Y = Math.round(hy - 0.7 * s), g = K('#8a8a96'); p.rect(X - 1, Y - 1, 3, 1, g); p.rect(X - 1, Y + 1, 3, 1, g); p.px(X - 1, Y, g); p.px(X + 1, Y, g); p.line([X - 1, Y], [hx - 1.6 * s, hy - 0.4 * s], g); },
@@ -1500,7 +1500,7 @@ function makeHumans(doc) {
     const Ua = 10.4 * s, Fa = 9.6 * s, arms = [0, 1].map(k => {
       let al, el; const sw = (c.armSw || 22) * (run ? 1.9 : 1), w = Math.cos(2 * Math.PI * ph) * (k ? 1 : -1);
       if (shock) { al = k ? 38 : 24; el = 108; } else { al = sw * w; el = run ? 88 + 10 * w : 12 + 14 * (w + 1) / 2; }
-      if (k && c.hold && !shock && !run) { al = c.hold === 'case' ? 4 : c.hold === 'cane' ? 12 : 8; el = c.hold === 'case' ? 3 : c.hold === 'cane' ? 18 : 12; }
+      if (k && c.hold && !shock && !run) { al = c.hk === 'case' ? 4 : c.hk === 'cane' ? 12 : 8; el = c.hk === 'case' ? 3 : c.hk === 'cane' ? 18 : 12; }
       const a1 = al * RAD, a2 = (al + el) * RAD, E = [S[0] + Math.sin(a1) * Ua, S[1] + Math.cos(a1) * Ua], W = [E[0] + Math.sin(a2) * Fa, E[1] + Math.cos(a2) * Fa];
       return { E, W, h: [W[0] + Math.sin(a2) * 2.3 * s, W[1] + Math.cos(a2) * 2.3 * s] };
     });
@@ -2263,7 +2263,7 @@ const SK_LAY = {      // where every node sits, [column, row] (the root is colum
   y: { _root: [0, 3], y_crouch: [1, 0.5], y_cpunch: [2, 0], y_sweep: [2, 1], y_dash: [1, 1.5], y_upper: [2, 2], y_block: [1, 2.5], y_ce: [1, 3.5], y_conc: [2, 3], y_elbow: [2, 4], y_zone: [2, 5], y_flash: [3, 5], y_inherit: [4, 4.5], y_pierce: [5, 3], y_shrine: [5, 4], y_cleave: [5, 5], y_simple: [5, 6], y_ult: [4, 5.7], y_fatal: [4, 6.7], y_div: [1, 6], y_rush: [2, 6], y_heavy: [1, 4.7], y_cancel: [3, 1.5], y_sense: [1, 7], y_hometown: [6, 3.5], y_rct1: [5, 7.5], y_rct2: [6, 7.5], y_rct3: [7, 7.5] },
   v: { _root: [0, 1.7], v_crouch: [1, 0], v_bite: [1, 1], v_tele: [1, 2.2], v_block: [1, 3.4], v_drag: [2, 0.5], v_fatal: [2, 1.7], v_ball: [2, 3.4], v_scare: [3, 2.5], v_heavy: [1, 4.5], v_cancel: [3, 0.8], v_air: [2, 4.5], v_pounce: [3, 3.5], v_sense: [1, 5.6], v_rip: [3, 4.6], v_lag: [3, 5.7], v_rct1: [3, 6.9], v_rct2: [4, 6.9], v_rct3: [5, 6.9], v_rct4: [6, 6.9] },
   k: { _root: [0, 1], k_crouch: [1, 0], k_fatal: [3, 0], k_dash: [1, 1], k_toon: [2, 1], k_stomp: [3, 1], k_kick: [3, 3], k_lift: [3, 4], k_hang: [2, 3], k_block: [1, 2], k_ult: [3, 2], k_heavy: [1, 3], k_cancel: [2, 0], k_sense: [1, 4], k_rct1: [4, 0], k_rct2: [5, 0], k_rct3: [6, 0] },
-  s: { _root: [0, 4], s_crouch: [1, 0], s_slash: [1, 1], s_air: [1, 2], s_cleave: [1, 6.5], s_cpunch: [2, 0], s_leg: [2, 1], s_dashslash: [2, 2], s_storm: [2, 3], s_dismantle: [2, 4], s_lift: [2, 5.5], s_dive: [2, 6.5], s_dcleave: [2, 7.5], s_flame: [2, 8.5], s_domain: [2, 9.5], s_fuga: [3, 9], s_rct1: [1, 11], s_rct2: [2, 11], s_rct3: [3, 11] },
+  s: { _root: [0, 4], s_crouch: [1, 0], s_slash: [1, 1], s_air: [1, 2], s_cleave: [1, 6.5], s_cpunch: [2, 0], s_leg: [2, 1], s_dashslash: [2, 2], s_storm: [2, 3], s_dismantle: [2, 4], s_lift: [2, 5.5], s_dive: [2, 6.5], s_dcleave: [2, 7.5], s_flame: [2, 8.5], s_domain: [2, 9.5], s_fuga: [3, 9], s_rct1: [1, 11], s_rct2: [2, 11], s_rct3: [3, 11], s_fatal: [2, 12] },
   c: { _root: [0, 1.5], yuji: [1, 0], verity: [1, 1], cat: [1, 2], sukuna: [1, 3] } };
 const SK_ALL = { y: 'y_hometown' };      // (v1.50 the node of a tab that needs every other node of it: no routed lines, a web of thin straight lines from every node instead)
 const SKI = {}; for (const [t, , rows] of SK_TABS) for (const r of rows) SKI[r[0]] = { r, t };
@@ -15598,7 +15598,7 @@ function storyFrame(now, dt) {
   ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
   alleyScene(now, dt, T, Math.round(VW * 0.42));
   const fa = T < 0.7 ? 1 - T / 0.7 : T > CUT.fade ? Math.min(1, (T - CUT.fade) / 0.7) : 0; if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
-  if (T > 0.7 && T < 3.9) { const a = clamp01(Math.min((T - 0.7) / 0.6, (3.9 - T) / 0.6)); ctx.globalAlpha = a; pxt('CHAPTER 1', VW / 2, Math.round(VH * 0.38), '#ffffff', 16, 'center'); pxt('THE MYSTERY', VW / 2, Math.round(VH * 0.38) + 16, '#c9a8ff', 8, 'center'); ctx.globalAlpha = 1; }      // (the title card of the chapter: where Verity, the Cat, the special grade curses and the new villain come from)
+  if (T > 0.7 && T < 3.9) { const a = clamp01(Math.min((T - 0.7) / 0.6, (3.9 - T) / 0.6)); ctx.globalAlpha = a; pxt('CHAPTER 1', VW / 2, Math.round(VH * 0.56), '#ffffff', 16, 'center'); pxt('THE MYSTERY', VW / 2, Math.round(VH * 0.56) + 16, '#c9a8ff', 8, 'center'); ctx.globalAlpha = 1; }      // (lower than the message box in the corner, so the two never touch; the title card of the chapter: where Verity, the Cat, the special grade curses and the new villain come from)
   ctx.restore(); if (T >= CUT.fight && !story.battle) startStoryBattle();
 }
 function gojoAt(W, T, gx) {      // Gojo at world time W (T = real time): his picture, place and face. He looks around, turns his back on the alley, looks back when he senses Verity; then (slow motion) he jumps away, rises and hangs in the air for good
@@ -17229,7 +17229,7 @@ addEventListener('keydown', e => {
     return;
   }
   if (e.key !== 'Escape') return;
-  if (state === 'play') { if (!setPause(true)) leavePlay(); } else if (state === 'select' || state === 'ulog' || state === 'codes') show('title'); else if (state === 'mset') msBack();
+  if (state === 'play') { if (!setPause(true)) leavePlay(); } else if (state === 'select' || state === 'ulog' || state === 'codes') show('title'); else if (state === 'mset') msBack(); else if (state === 'story') window.__back();      // (a story scene: Esc steps back like the Android back button)
 });
 addEventListener('keyup', e => {
   if (e.target.id === 'lanName' || e.target.id === 'cuName' || e.target.id === 'codeIn') return;
@@ -17329,6 +17329,20 @@ $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+ {
+  "v": "1.167",
+  "t": "BUG FIXES",
+  "n": [
+   "SKILLS > SUKUNA opened with an error since the last update: the new FATALITY skill had no place in the tree. It sits at the bottom of Sukuna's tree now, and it needs the AIR CUT like before.",
+   "The people walking in the street carry their things properly: the businessman's briefcase, the woman's bag and the old man's cane (a double name in the code made the carry pose never apply, so their arms hung wrong).",
+   "Chapter 1: the title card (CHAPTER 1, THE MYSTERY) lay on top of the NEW MISSION message. It is lower now, so the two never touch.",
+   "The fighter select shows seven fighters but was sized for six. On a 16:9 screen (most computers and some tablets) and on small phones (640 x 360) GOJO and RYU were cut off at the edges. All seven fit now.",
+   "SETTINGS > GAME on a short screen: the title and the CLOSE button went off the edge. The page scrolls inside now, and the title and CLOSE always stay on the screen.",
+   "DOMAIN fits its button on small screens (on a 360 pixel high screen the letters were cut at the sides).",
+   "On a computer the Esc key leaves a story scene, like the Android back button does. Before, there was no way out of a cutscene with the keyboard.",
+   "How it was checked: every fighter played at random (free play and versus, all three GRAPHIC DAMAGE settings), every button of every screen clicked at random, chapters 1 to 4 played at random, and every screen looked at in ten window sizes. Nothing else came up. I cannot promise that no bug is left, so if you see one, tell me."
+  ]
+ },
  {
   "v": "1.166",
   "t": "SUKUNA'S FINISHER",

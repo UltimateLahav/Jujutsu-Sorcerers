@@ -1,5 +1,19 @@
 [
  {
+  "v": "1.167",
+  "t": "BUG FIXES",
+  "n": [
+   "SKILLS > SUKUNA opened with an error since the last update: the new FATALITY skill had no place in the tree. It sits at the bottom of Sukuna's tree now, and it needs the AIR CUT like before.",
+   "The people walking in the street carry their things properly: the businessman's briefcase, the woman's bag and the old man's cane (a double name in the code made the carry pose never apply, so their arms hung wrong).",
+   "Chapter 1: the title card (CHAPTER 1, THE MYSTERY) lay on top of the NEW MISSION message. It is lower now, so the two never touch.",
+   "The fighter select shows seven fighters but was sized for six. On a 16:9 screen (most computers and some tablets) and on small phones (640 x 360) GOJO and RYU were cut off at the edges. All seven fit now.",
+   "SETTINGS > GAME on a short screen: the title and the CLOSE button went off the edge. The page scrolls inside now, and the title and CLOSE always stay on the screen.",
+   "DOMAIN fits its button on small screens (on a 360 pixel high screen the letters were cut at the sides).",
+   "On a computer the Esc key leaves a story scene, like the Android back button does. Before, there was no way out of a cutscene with the keyboard.",
+   "How it was checked: every fighter played at random (free play and versus, all three GRAPHIC DAMAGE settings), every button of every screen clicked at random, chapters 1 to 4 played at random, and every screen looked at in ten window sizes. Nothing else came up. I cannot promise that no bug is left, so if you see one, tell me."
+  ]
+ },
+ {
   "v": "1.166",
   "t": "SUKUNA'S FINISHER",
   "n": [

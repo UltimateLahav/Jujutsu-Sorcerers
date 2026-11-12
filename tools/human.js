@@ -40,18 +40,18 @@ function makeHumans(doc) {
 
   // ---- the five people. thS = how much of the thigh is the upper material (0.5 = shorts); back / det / hem / hair / hold draw the clothes and things they carry
   const HT = [
-    { name: 'businessman', H: 59, lean: 2, fwd: 1.2, skin: '#e0ae88', hc: '#1d1b26', top: '#2b3558', armU: '#2b3558', armL: '#2b3558', thA: '#232a45', thS: 1, shk: '#232a45', shoe: '#17141c', armSw: 20, hold: 'case', walk: { A: 6.6, sp: 24 }, run: { A: 12.5, sp: 64 },
+    { name: 'businessman', H: 59, lean: 2, fwd: 1.2, skin: '#e0ae88', hc: '#1d1b26', top: '#2b3558', armU: '#2b3558', armL: '#2b3558', thA: '#232a45', thS: 1, shk: '#232a45', shoe: '#17141c', armSw: 20, hk: 'case', walk: { A: 6.6, sp: 24 }, run: { A: 12.5, sp: 64 },
       det(p, J) { const a = J.at; p.put(cap(...a(0.97, 3), ...a(0.4, 4.2), 1.1, 1.3), M('#ecebf2'), 3); p.put(cap(...a(0.9, 3.5), ...a(0.34, 4.4), 0.75, 1.1), M('#b8283a'), 3); p.line(a(0.99, 2.3), a(0.4, 4.7), K('#4a5788')); p.px(...a(0.28, 4.5), K('#0d0b14')); p.px(...a(0.14, 4.7), K('#0d0b14')); },
       hem(p, J) { p.put(cap(J.P[0] - 0.3, J.P[1] - 1.5, J.P[0] + 0.4, J.P[1] + 5 * J.s, 4.7 * J.s, 4.9 * J.s), M('#2b3558')); },
       hair(p, J, [hx, hy], s) { p.put(clip(ell(hx - 0.8 * s, hy - 1.1 * s, 5 * s, 4.9 * s), (x, y) => y < hy - 3.1 * s + Math.max(0, hx - x) * 0.5 || (x < hx - 2.7 * s && y < hy + 1.1 * s)), M('#1d1b26')); p.line([hx - 1.5 * s, hy - 5 * s], [hx + 2.2 * s, hy - 4.7 * s], K('#4a4660')); p.px(hx + 3 * s, hy - 3.9 * s, K('#4a4660')); },
       hold(p, J) { const [x, y] = J.arms[1].h; p.line([x, y + 1], [x, y + 3], K('#2a1a10')); p.box(x - 4.5, y + 3, 9, 7, M('#7a4a2c')); p.px(x, y + 5, K('#d9b050')); } },
-    { name: 'office woman', H: 55, lean: 1, fwd: 1.0, skin: '#f0c4a6', hc: '#4a2a1c', top: '#cfd8f0', armU: '#cfd8f0', armL: '#f0c4a6', chest: 4.7, thA: '#e3b295', thS: 1, shk: '#e3b295', shoe: '#201a22', armSw: 17, hold: 'bag', walk: { A: 5.2, sp: 19 }, run: { A: 10.5, sp: 54 }, lip: '#b03a52',
+    { name: 'office woman', H: 55, lean: 1, fwd: 1.0, skin: '#f0c4a6', hc: '#4a2a1c', top: '#cfd8f0', armU: '#cfd8f0', armL: '#f0c4a6', chest: 4.7, thA: '#e3b295', thS: 1, shk: '#e3b295', shoe: '#201a22', armSw: 17, hk: 'bag', walk: { A: 5.2, sp: 19 }, run: { A: 10.5, sp: 54 }, lip: '#b03a52',
       back(p, J) { const [hx, hy] = J.hd; p.put(uni(cap(hx - 2.2, hy - 1, hx - 3.6, hy + 11, 3.5, 2.6)), M('#4a2a1c')); },
       det(p, J) { const a = J.at; p.put(ell(...a(0.75, 3.5), 2.2, 2.7), M('#cfd8f0'), 1); p.line(a(1, 2.6), a(0.78, 4.4), K('#8aa0d8')); p.line(a(1, 1.6), a(0.84, 3.4), K('#8aa0d8')); },
       hem(p, J) { p.put(cap(J.P[0] - 0.2, J.P[1] - 2, J.P[0] + 0.3, J.P[1] + 10.5 * J.s, 4.8 * J.s, 4.1 * J.s), M('#3b3a4e')); },
       hair(p, J, [hx, hy], s) { p.put(clip(ell(hx - 0.8 * s, hy - 1.1 * s, 5 * s, 5 * s), (x, y) => y < hy - 3.1 * s + Math.max(0, hx - x) * 0.45 || (x < hx - 2.5 * s && y < hy + 1.8 * s)), M('#4a2a1c')); p.px(hx - 1.8 * s, hy + 2.6 * s, K('#e8c860')); p.line([hx - 1.5 * s, hy - 5 * s], [hx + 2.4 * s, hy - 4.6 * s], K('#7a4a34')); },
       hold(p, J) { const a = J.arms[1], [x, y] = [J.P[0] - 3, J.P[1] + 3]; p.line(J.S, [x + 4, y], K('#5a3020')); p.box(x, y, 9, 8, M('#a23a3a')); p.px(x + 4, y + 2, K('#e8c860')); } },
-    { name: 'old man', H: 53, lean: 15, fwd: 3.2, skin: '#d9a888', hc: '#c9c6c4', top: '#6a7152', armU: '#6a7152', armL: '#6a7152', thA: '#5a4a3a', thS: 1, shk: '#5a4a3a', shoe: '#2a2018', armSw: 12, hold: 'cane', walk: { A: 3.6, sp: 12 }, run: { A: 6.5, sp: 36 }, brow: '#aaa6a4',
+    { name: 'old man', H: 53, lean: 15, fwd: 3.2, skin: '#d9a888', hc: '#c9c6c4', top: '#6a7152', armU: '#6a7152', armL: '#6a7152', thA: '#5a4a3a', thS: 1, shk: '#5a4a3a', shoe: '#2a2018', armSw: 12, hk: 'cane', walk: { A: 3.6, sp: 12 }, run: { A: 6.5, sp: 36 }, brow: '#aaa6a4',
       det(p, J) { const a = J.at; p.put(ell(...a(0.4, 3.2), 2.9, 4), M('#6a7152'), 1); p.line(a(0.98, 2.2), a(0.2, 4.6), K('#4a5038')); [0.62, 0.42, 0.24].forEach(t => p.px(...a(t, 4.4), K('#2a2e1c'))); p.line(a(0.99, 2), a(0.86, 3.3), K('#d9d4c4')); },
       hem(p, J) { p.put(cap(J.P[0], J.P[1] - 2, J.P[0], J.P[1] + 4 * J.s, 4.5 * J.s, 4.6 * J.s), M('#6a7152')); },
       hair(p, J, [hx, hy], s) { p.put(clip(ell(hx - 0.8 * s, hy - 1.1 * s, 4.9 * s, 4.7 * s), (x, y) => (x < hx - 2.6 * s && y > hy - 2.4 * s && y < hy + 1.8 * s) || (y < hy - 3.7 * s && x < hx + 1 * s)), M('#c9c6c4')); p.rect(Math.round(hx + 3 * s), Math.round(hy + 2 * s), 2, 1, K('#aaa6a4')); const X = Math.round(hx + 2.4 * s), Y = Math.round(hy - 0.7 * s), g = K('#8a8a96'); p.rect(X - 1, Y - 1, 3, 1, g); p.rect(X - 1, Y + 1, 3, 1, g); p.px(X - 1, Y, g); p.px(X + 1, Y, g); p.line([X - 1, Y], [hx - 1.6 * s, hy - 0.4 * s], g); },
@@ -78,7 +78,7 @@ function makeHumans(doc) {
     const Ua = 10.4 * s, Fa = 9.6 * s, arms = [0, 1].map(k => {
       let al, el; const sw = (c.armSw || 22) * (run ? 1.9 : 1), w = Math.cos(2 * Math.PI * ph) * (k ? 1 : -1);
       if (shock) { al = k ? 38 : 24; el = 108; } else { al = sw * w; el = run ? 88 + 10 * w : 12 + 14 * (w + 1) / 2; }
-      if (k && c.hold && !shock && !run) { al = c.hold === 'case' ? 4 : c.hold === 'cane' ? 12 : 8; el = c.hold === 'case' ? 3 : c.hold === 'cane' ? 18 : 12; }
+      if (k && c.hold && !shock && !run) { al = c.hk === 'case' ? 4 : c.hk === 'cane' ? 12 : 8; el = c.hk === 'case' ? 3 : c.hk === 'cane' ? 18 : 12; }
       const a1 = al * RAD, a2 = (al + el) * RAD, E = [S[0] + Math.sin(a1) * Ua, S[1] + Math.cos(a1) * Ua], W = [E[0] + Math.sin(a2) * Fa, E[1] + Math.cos(a2) * Fa];
       return { E, W, h: [W[0] + Math.sin(a2) * 2.3 * s, W[1] + Math.cos(a2) * 2.3 * s] };
     });
