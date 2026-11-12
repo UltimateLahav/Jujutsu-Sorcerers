@@ -297,8 +297,8 @@ function c4xRanosStep(c, now, dt, T) {
   if (T >= R.lw + R.end) c4xNyStart(now);
 }
 
-// ================================================================ NEW YORK (c4x.ph 'ny', N = seconds): Yuji falls out of the sky onto the freeway, the cars stop and honk, Iron Man comes down and lands in a little crater, Yuji asks where he is, a blade slides out of the armour: "BACK DOWN, KID... OR YOU GET STABBED."; at 11.2 s a hard cut to black, then TO BE CONTINUED and the chapter menu.
-const C4NS = { fall: 0.6, lie: 1.3, up: 1.75, look: [2.3, 3.0, 3.7], wh: 3.1, dive: 4.0, land: 4.8, rise: 5.35, rise1: 5.9, adv0: 6.4, adv1: 8.0, blade: 8.0, eye: 9.0, cut: 11.2, card: 12.2, end: 15.8 };
+// ================================================================ NEW YORK (c4x.ph 'ny', N = seconds): Yuji falls out of the sky onto the freeway, the cars stop and honk, Iron Man comes down and lands in a little crater, Yuji asks where he is, a blade slides out of the armour: "BACK DOWN, KID... OR YOU GET STABBED."; at 11.2 s a hard cut to black, then the card END OF CHAPTER 4 (12.0 - 14.5 s), the card TO BE CONTINUED (14.8 - 17.3 s) and the chapter menu.
+const C4NS = { fall: 0.6, lie: 1.3, up: 1.75, look: [2.3, 3.0, 3.7], wh: 3.1, dive: 4.0, land: 4.8, rise: 5.35, rise1: 5.9, adv0: 6.4, adv1: 8.0, blade: 8.0, eye: 9.0, cut: 11.2, card: 12.0, card1: 14.5, card2: 14.8, end: 17.3 };
 function c4xNyStart(now) {
   const c = c4x, Y = c.y; c.ph = 'ny'; c.t0 = now; c.ev = {}; c.vi = -1; c.vc = 0; c.fx = []; c.pool = c.pool2 = null; c.glow = null; c.black = null; c.whiteA = 0; c.cam = 0; c.camOk = true; wx = 0; c.vf = now + 700; c.vfm = 700; c.vfa = 1; c.vfc = '236,222,255';
   Object.assign(Y, { x: 0, face: 1, lift: 0, rot: 0, white: 0, sink: 0, tint: 0, gone: false, alpha: undefined, pose: null });
@@ -330,8 +330,7 @@ function c4xNyStep(c, now, dt, T) {
   // ---- sounds and effects
   ev('land1', N.fall, () => { snd('land', 2); puff(0, 10); shakeUntil = now + 220; shakeAmp = 4; buzz(60); spark(0, gy - 4, 10, ['#d8d8d0', '#9a9ca6'], false, 1); });
   ev('thrust', N.dive - 0.9, () => snd('thrust', 1.6)); ev('land2', N.land, () => { snd('concboom'); snd('land', 2.2); puff(IMx, 14); puff(IMx - 12, 8); puff(IMx + 12, 8); shakeUntil = now + 420; shakeAmp = 6; buzz(120); hitStop(70); spark(IMx, gy, 20, ['#ffd27a', '#ff8a1e', '#ffffff', '#9a9ca6'], true, 1); spark(IMx, gy, 14, ['#ffd27a', '#ff8a1e', '#9a9ca6'], true, -1); });
-  ev('blade', N.blade, () => snd('shing')); ev('cut', N.cut, () => { c.black = () => 1; snd('windOff'); }); ev('card', N.card, () => snd('c7drone'));
-  if (T >= N.cut) c.black = () => 1;
+  ev('blade', N.blade, () => snd('shing')); ev('cut', N.cut, () => snd('windOff')); ev('card', N.card, () => snd('c7drone'));
   if (T >= N.end) { const slot = story ? story.slot : -1; storyDone15(); c4xOff(); svSel = slot; svView = 1; $('vsres').classList.remove('on'); show('saves'); renderSaves(); }
 }
 function c4xNyDraw(c, now, dt, T) {
@@ -372,6 +371,8 @@ function c4xFear(c, T) {      // Yuji's eye, close and full screen (a hard cut t
   ctx.fillStyle = '#9fd8ff'; const sd = ((u * 10) | 0) % 3; for (const [dx, dy] of [[0.36, 0.2], [0.42, 0.36]]) { ctx.fillRect(Math.round(W * (0.5 + dx)), Math.round(H * dy) + sd * q, q * 2, q * 4); ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(W * (0.5 + dx)) + q, Math.round(H * dy) + sd * q + q, 1, q * 2); ctx.fillStyle = '#9fd8ff'; }
   ctx.restore();
 }
-function c4xTbc(T) {      // black, then the words
-  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); const a = c4xEase((T - C4NS.card) / 0.8) * (T > C4NS.end - 0.7 ? Math.max(0, (C4NS.end - T) / 0.7) : 1); if (a <= 0) return; ctx.globalAlpha = a; pxt('TO BE CONTINUED', VW / 2, Math.round(VH * 0.5), '#ffffff', 16, 'center'); ctx.globalAlpha = 1;
+function c4xTbc(T) {      // black, then the words: END OF CHAPTER 4 (with the name of the chapter), then TO BE CONTINUED
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); const N = C4NS, cx = Math.round(VW / 2), y = Math.round(VH * 0.44), wide = VW >= 272, fade = (t0, t1, t2, t3) => T < t0 ? 0 : T < t1 ? c4xEase((T - t0) / (t1 - t0)) : T < t2 ? 1 : T < t3 ? 1 - c4xEase((T - t2) / (t3 - t2)) : 0, a = fade(N.card, N.card + 0.8, N.card1 - 0.6, N.card1), b = fade(N.card2, N.card2 + 0.8, N.end - 0.7, N.end);
+  if (a > 0) { ctx.globalAlpha = a; if (wide) pxt('END OF CHAPTER 4', cx, y, '#ffffff', 16, 'center'); else { pxt('END OF', cx, y - 10, '#ffffff', 16, 'center'); pxt('CHAPTER 4', cx, y + 10, '#ffffff', 16, 'center'); } ctx.fillStyle = '#ff2a3a'; ctx.fillRect(cx - 40, y + (wide ? 8 : 20), 80, 1); pxt('THE VESSEL', cx, y + (wide ? 24 : 36), '#ff5a6a', 8, 'center'); ctx.globalAlpha = 1; }      // (the first card; two lines on a narrow screen, so that the letters keep their size)
+  if (b > 0) { ctx.globalAlpha = b; pxt('TO BE CONTINUED', cx, Math.round(VH * 0.5), '#ffffff', 16, 'center'); ctx.globalAlpha = 1; }      // (the second card)
 }

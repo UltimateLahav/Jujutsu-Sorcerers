@@ -1,5 +1,14 @@
 [
  {
+  "v": "1.161",
+  "t": "THE END OF CHAPTER 4",
+  "n": [
+   "After the blade scene (the hard cut to black) the game now shows the card END OF CHAPTER 4, with the name of the chapter, THE VESSEL, in red under it, and then the card TO BE CONTINUED, and then the chapter menu. On a narrow screen the first card is written in two lines so that the letters keep their size.",
+   "Fixed: since V1.157 the TO BE CONTINUED card was never seen: a black layer was drawn over it, so the ending was only a black screen. Both cards show now.",
+   "The save slot of a save that has finished chapter 4 says CHAPTER 4 COMPLETE."
+  ]
+ },
+ {
   "v": "1.160",
   "t": "THE BLADE IS RED AND IN HIS HAND",
   "n": [
