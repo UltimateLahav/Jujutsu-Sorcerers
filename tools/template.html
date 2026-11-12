@@ -186,7 +186,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.165</small>
+    <small id="ver">V1.166</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -766,7 +766,8 @@ const SK_SUKUNA = [      // (v1.131 SUKUNA IN THE SHOP: he is bought in CHARACTE
   ['s_flame', 'FLAME MODE', 'THE MODE BUTTON AGAIN: FLAME MODE. BLUE IS OPEN: FLAMES, A CLAP, AN ARCHER\'S POSE AND A FIRE ARROW THAT NO GUARD STOPS AND THAT BURNS THE ENEMY FOR 8 SECONDS (50% ENERGY)', 900, ['s_cleave']],
   ['s_domain', 'MALEVOLENT SHRINE', 'THE DOMAIN BUTTON: HIS ULTIMATE. FOR 20 SECONDS EVERY SLASH OF THE SHRINE CUTS THE ENEMY, ABOUT 1% OF HIS HEALTH EVERY HALF SECOND (67% ENERGY)', 2000, ['s_cleave']],
   ['s_fuga', 'FUGA', 'WITH THE DOMAIN OPEN, FLAME MODE + BLUE IS FUGA: A 12 SECOND CUTSCENE, 40% OF HIS HEALTH AND A BURN (50% ENERGY)', 2500, ['s_flame', 's_domain']],
-  ['s_rct1', 'RCT 1', 'REVERSE CURSED TECHNIQUE: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). EACH ONE IS WHOLE AGAIN 15 SECONDS AFTER IT HAPPENED. HE HAS NO FATALITY, SO NOTHING IS NEEDED FIRST.', 1500, []],
+  ['s_fatal', 'FATALITY', 'THE FATAL BUTTON: FINISH A WEAK ENEMY (20% HEALTH OR LESS, CLOSE) IN A CUTSCENE. THE ENEMY KNEELS, SUKUNA PUTS A HAND IN HIS HAIR AND TALKS DOWN TO HIM, A HUGE SLASH PASSES AN INCH OVER HIS HEAD, THE ENEMY CHARGES AND SUKUNA IS GONE: BEHIND HIM, HIS HEAD IN THREE SLICES. A SLOW MOTION REPLAY SHOWS THAT HE TOUCHED HIS FACE FIRST. FREE, AND THE ROUND IS WON', 1200, ['s_air']],
+  ['s_rct1', 'RCT 1', 'REVERSE CURSED TECHNIQUE: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). EACH ONE IS WHOLE AGAIN 15 SECONDS AFTER IT HAPPENED.', 1500, []],
   ['s_rct2', 'RCT 2', 'REVERSE CURSED TECHNIQUE 2: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). EACH ONE IS WHOLE AGAIN 8 SECONDS AFTER IT HAPPENED.', 2500, ['s_rct1']],
   ['s_rct3', 'RCT 3', 'REVERSE CURSED TECHNIQUE 3: WHITE CURSED ENERGY HEALS YOUR INJURIES: A RIPPED OFF LIMB, A DEAD SHOULDER, A HURT BODY PART GROWS BACK (NOT YOUR HEALTH). UP TO 4 SECONDS: THE WORSE THE INJURY THE LONGER IT TAKES, A SMALL ONE IS HEALED ALMOST AT ONCE.', 4000, ['s_rct2']]
 ];
@@ -1904,6 +1905,7 @@ function drawDummy(now, dt) {
   if (dummy.airH > 0 && kt < 0) lift = dummy.airH;      // (launched by the UPPERCUT: he is raised by his flight, whatever he is drawn as)
   const w = info.w, h = info.h, hx = info.cx - info.x0, y = gy - 60 - (info.top || 0) - lift, fade = kt > 1200 ? Math.max(0, 1 - (kt - 1200) / 700) : 1;
   if (gdActive('f')) src = goreSrc('f', src, (px, py) => ({ x: dummy.x + (mirror ? -1 : 1) * (px - hx + ox), y: y + oy + py - gy })), oy += goreBob('f', now);      // (v1.128 GRAPHIC DAMAGE: without the limbs he has lost)
+  if (typeof suFatOn === 'function' && (suFatOn() || dummy.suCut)) { dummy.suTop = y + oy + suFatTopRow(src); src = suFatLook(dummy, src, now); }      // (v1.166 Sukuna's FINISHER: where the top of his head is, and his head in three slices once it is cut)
   if (!(kt >= 0 && dummy.rag && dummy.rag.ko === dummy.ko)) { ctx.fillStyle = 'rgba(0,0,0,' + 0.4 * fade + ')'; ctx.fillRect(sx - 9, gy + 3, 18, 2); ctx.fillRect(sx - 6, gy + 2, 12, 1); ctx.fillRect(sx - 6, gy + 5, 12, 1); }
   ctx.save();
   if (dummy.drag && kt < 0) {                 // v1.28 BLOOD DRAG: he lies flat on the floor, feet towards Verity, and is dragged by the feet
@@ -1931,7 +1933,7 @@ function drawDummy(now, dt) {
   if (dummy.bleed && dummy.bleed.fire && kt < 0) { for (let i = 0; i < 9; i++) { const fx = Math.round(sx + (i % 2 ? 6 : -7) + Math.sin(now / 110 + i * 2.1) * 2), fh = 4 + Math.round(3 * Math.abs(Math.sin(now / 80 + i * 1.7))), fy = Math.round(gy - 10 - i * 4.6); ctx.fillStyle = '#d0301a'; ctx.fillRect(fx - 1, fy - fh, 3, fh); ctx.fillStyle = '#ff8a1c'; ctx.fillRect(fx - 1, fy - fh + 1, 3, fh - 2); ctx.fillStyle = '#ffe07a'; ctx.fillRect(fx, fy - fh + 2, 1, Math.max(1, fh - 4)); } }      // (v1.90 the boiling water: flames lick up him while he burns)
   else if (dummy.bleed && kt < 0) { ctx.fillStyle = '#c4121c'; for (let i = 0; i < 3; i++) { const ph = (now / 240 + i / 3) % 1; ctx.fillRect(sx - 5 + i * 5 + (i * 7) % 3, Math.round(gy - 48 + ph * 44), 1, 2); } }      // (the bite: red drops run down him while he bleeds)
   if (kt < 0 && t < 1) { const R = 4 + t * 36; ctx.fillStyle = 'rgba(255,170,90,' + (1 - t) + ')'; for (let a = 0; a < 40; a++) { const th = a / 40 * 6.2832; ctx.fillRect(Math.round(sx + Math.cos(th) * R), Math.round(gy + 2 + Math.sin(th) * R * 0.25), 1, 1); } }
-  if (kt < 0 && t >= 0.4) drawBar(sx - 13, gy - 68);   // health bar above his head
+  if (kt < 0 && t >= 0.4 && !(typeof suFatOn === 'function' && suFatOn())) drawBar(sx - 13, gy - 68);   // health bar above his head (not in Sukuna's finisher)
 }
 // ---------------------------------------------------------------- crisp pixel text. The pixel font is drawn on an 8x8 grid, so it is only sharp at sizes that are multiples of 8 (8, 16, 24 ...) and at whole-pixel positions; any other size or half-pixel position smears it (a 6, 10, 14 or 20 px text is 25-85% blurred). Every battle text goes through pxt(): the size is snapped to a multiple of 8 (and shrunk to fit the screen), the position is rounded, and the letters are drawn once into a small image with hard pixels, a solid outline and (from 16 px up) a drop shadow, like the FATALITY title, then reused.
 const TXT_OUT = '#0b0618', TXC = new Map();
@@ -2677,6 +2679,7 @@ function fatSets(rev) {                                // the pictures of the at
 let fat = null, fatReq = 0;                            // fat = the running cutscene (null when there is none); fatReq = until when a press of the FATALITY button is remembered
 const orbAt = (set, n, sx, sy, s) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));      // an orb frame centred on (sx, sy)
 function fatState(now) {                               // Gojo's FATALITY (and Verity's). 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far away; 3 = not possible right now
+  if (vs && vs.me === 'cu4') return 3;      // (v1.166 Ryu has no FATALITY; before, his button played Gojo's)
   if (!vs || vs.story || vs.cv || fredMe() || lacks('fat') || vs.ph !== 'fight' || js || vf || fat || yf || yu || dom || ult || cf || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (Verity and the Cat have their own FATALITY: the same rules; so has Yuji since v1.49, the 30-second one; Freddy has none yet, v1.52: his button used to play Gojo's FATALITY with Gojo in it)      // (no FATALITY in the story fight: his ending is a Reversal Red)
   if (!(dummy.hp <= dummy.max * FAT_LOW)) return 1;      // Gojo's FATALITY: only when the enemy is at 20% health or less
   if (Math.abs(dummy.x - wx) > FAT_RANGE) return 2;
@@ -4407,7 +4410,8 @@ function drawScene(now, dt) {
   comboEscape(now); flowTick(now); yuTick(now, dt); counterTick(now); domTick(now); bfTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); netLeash(now); if (!dom && !(vs && vs.net)) { if (vs && vs.foe === 'verity') storyBattleTick(now, dt); else if (vs && vs.foe === 'cat') catTick(now, dt); ultTick(now, dt); }      // (the DOMAIN freezes everyone: none of the enemy's own clocks run while it lasts)
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
     const fs = fatState(now);
-    if (fs === 0) { fatReq = 0; if (ceSpend(CE_COST.fatal, now)) { fatGo(now, dt, false); return; } }      // (his own FATALITY costs 50% cursed energy; the enemy's is free)
+    if (fs === 0 && vs.me === 'cu3') { if (suFatOk(now)) { fatReq = 0; suFatBegin(now); } }      // (v1.166 Sukuna's FINISHER: a scene of his own, see tools/sukuna.js; it is free, and a press while he is busy is kept for half a second)
+    else if (fs === 0) { fatReq = 0; if (ceSpend(CE_COST.fatal, now)) { fatGo(now, dt, false); return; } }      // (his own FATALITY costs 50% cursed energy; the enemy's is free)
     if (now > fatReq) { fatReq = 0; if (fs === 1 || fs === 2) say(fs === 1 ? 'ENEMY BELOW 20%' : 'GET CLOSER', wx, '#ff8a7a', 8, now); }
   }
   if (fatAiState(now)) { fatGo(now, dt, true); return; }      // the top grades do it to the player
@@ -6514,6 +6518,7 @@ function trainStep(now, dt) {      // every frame of free play, before the pictu
   if (d.born !== TR.born) { TR.born = d.born; if (TR.ehp === 2 && !d.curse) d.hp = d.shown = Math.max(1, Math.round(mx * 0.1)); TR.hpPrev = d.hp; TR.xHold = d.x; }      // (a new enemy: LOW health starts at 10%)
   const lost = TR.hpPrev - d.hp; if (lost > 0) trLog(lost, now); TR.best = Math.max(TR.best, hits.n);      // (the damage meter counts every point he lost since the last frame, bleeding too)
   if (d.ko >= 0 || d.cap || !fight) { TR.hpPrev = d.hp; TR.xHold = d.x; TR.hitSeen = d.hitAt; return; }
+  if (typeof suFatOn === 'function' && suFatOn()) { TR.hpPrev = d.hp; TR.xHold = d.x; TR.hitSeen = d.hitAt; return; }      // (v1.166 Sukuna's finisher moves the enemy by itself)
   if (TR.arm === 2) { if (d.hitAt !== TR.hitSeen) d.x = TR.xHold; d.vx = 0; }      // (NO PUSH: the frame after a hit he is put back where he stood, and his speed is zero; his own walking is not touched)
   const gap = d.x - wx, b = TR.beh;
   if (b === 0 || b === 3) { d.stunUntil = now + 500; d.ai = 'rest'; d.aiAt = now; d.restFor = 500; if (b === 3) d.dodgeUntil = now + 150; }      // DUMMY: he stands still, a punching bag (v1.14). DODGES: the same, and everything you throw misses him

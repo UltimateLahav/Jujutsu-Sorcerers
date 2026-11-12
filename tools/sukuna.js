@@ -6,7 +6,7 @@
 // v1.111: the BLUE button (key L) is his INVISIBLE SLASH, which nobody sees fly: it cuts the enemy AT ONCE wherever he stands on the screen (nothing travels: the cut lands on the 7th picture of his flick, 0.12 s after the press). Standing, BLUE is the AIR CUT (costs 5 CE): the enemy flinches (no damage by itself) and a cut shows across him, and he BLEEDS. With the BACK direction held it is the CUT STORM (25 CE): he raises his hand forward with the fingers spread and eight slashes land one after the other (0.04 s apart), each flashes a cut across the enemy and adds a bleed, and the enemy is STUNNED for 3 s (from the last slash). The bleeds STACK: every slash that lands (the counter's too) adds its own bleed, 0.1 of health every 0.03 s for 4 s, so 8 slashes bleed 8 times as fast. A blocking enemy blocks them (BLOCKED, no bleed), and one who is crouching, dodging or lying down is not hit. They are made like a blow (g.set 9 and 10: pictures a second and the cost, paid by customScene like any move's; the slashes are events with a callback, `cb`, see cuEv): see suBlue, suCutAt, suBleed.
 // v1.112: BLUE has two more moves, by where he is. CROUCHED it is the LEG CUT (10 CE): a low sweep of his hand and the enemy's legs are cut at once, wherever he stands on the screen (blockable like the AIR CUT; a crouching enemy is cut too): he drops to his KNEES (the crouch of his own pictures) and is stunned for 0.8 s, and while he kneels EVERY hit lands on him (he does not duck, block or dodge: nothing of his kind is in the way), and he bleeds. IN THE AIR (the flight of a jump) it is DISMANTLE (20 CE, and only with a living enemy on the screen in front of him, otherwise NO TARGET and nothing is paid): in the air he dashes back 40 px (the jump he was in is held where it was until it is all over), points one finger at the enemy, and THE GAME STOPS (the clock stands still for 1.5 s, as in a hit stop, and suTsFrame paints the held frame grey and dark with red bars, a line from his finger to the enemy, three thin cuts drawn on the enemy's chest for what is coming, and the word DISMANTLE letter by letter, with a deep sound: no spoken voice); then time goes on and THREE CUTS land one after another on the enemy's chest (0.11 s apart; nothing can block or dodge them, a guard is broken), each adding a bleed that lasts 8 s (0.1 of health every 0.03 s, they stack: about 80 health in all, he bleeds out), and the enemy is stunned from the stop until 0.6 s after the last cut. Nothing touches him during the whole move. See suBlue, suLegAt, suDisStep, suFreeze, suDisCut, suTsFrame.
 // v1.154: he DASHES (the forward dash row df and the back dash row dg, Yuji's own: the stats are Yuji's too), BLOCKS (the 10 pictures of row bl: hands up in front of his face), is HURT (g.hus: seven of Yuji's hit reactions, picked by the game's hurtK, see SU_HUR; not while a special state g.cs runs) and CROUCH-JUMPS (row cj = the spring; the jump is 30 px high), all in customScene (custom.js). He still has no K.O. pictures (in free play you cannot lose), no dash from a crouch and no crouch landing; his body is measured on his idle pictures like every custom fighter's (cuMeasure). His slot is 3, after the three that can be drawn, so cuSelRefresh leaves his card alone.
-const SUK_WHO = 'cu3', SUK_PNG = '__SUKPNG__', SUK_ROWS = ['frames', 'walk', 'jump', 'cr', 'ci', 'cwk', 'a0', 'a1', 'a2', 'dg', 'a3', 'cp0', 'cp1', 'sl', 'sx', 'cut', 'storm', 'ccut', 'dis', 'el', 'tc', 'lift', 'dive', 'fl', 'sg', 'air', 'df', 'bl', 'h0', 'h1', 'h2', 'h5', 'h6', 'h8', 'h9', 'cj'];      // (v1.154: the forward dash, the block, seven hit reactions and the spring of the crouch jump come last) (the rows of the picture strip: idle, walk, jump, crouch down, crouched idle, crouch walk, right jab, left jab, face kick, dodge, slash (the counter's and the right hand's), the two crouch punches, the left hand's slash and the slash of both hands, the AIR CUT and the CUT STORM, the LEG CUT and DISMANTLE, v1.119: the ELBOW, the touch and cut (Yuji's grab and cleave), the LIFT and the DIVE, v1.120: the FLAME poses, v1.124: the DOMAIN SIGN; the names are those of the pictures of a custom fighter: a0 to a3 are its four punches)
+const SUK_WHO = 'cu3', SUK_PNG = '__SUKPNG__', SUK_ROWS = ['frames', 'walk', 'jump', 'cr', 'ci', 'cwk', 'a0', 'a1', 'a2', 'dg', 'a3', 'cp0', 'cp1', 'sl', 'sx', 'cut', 'storm', 'ccut', 'dis', 'el', 'tc', 'lift', 'dive', 'fl', 'sg', 'air', 'df', 'bl', 'h0', 'h1', 'h2', 'h5', 'h6', 'h8', 'h9', 'cj', 'hr'];      // (v1.154: the forward dash, the block, seven hit reactions and the spring of the crouch jump come last) (the rows of the picture strip: idle, walk, jump, crouch down, crouched idle, crouch walk, right jab, left jab, face kick, dodge, slash (the counter's and the right hand's), the two crouch punches, the left hand's slash and the slash of both hands, the AIR CUT and the CUT STORM, the LEG CUT and DISMANTLE, v1.119: the ELBOW, the touch and cut (Yuji's grab and cleave), the LIFT and the DIVE, v1.120: the FLAME poses, v1.124: the DOMAIN SIGN; the names are those of the pictures of a custom fighter: a0 to a3 are its four punches)
 const SU_ATK = [['R.JAB', 8, 0, 8, 6, 30], ['L.JAB', 8, 0, 8, 6, 30], ['FACE KICK', 16, 14, 6, 14, 30]];      // the three blows: name, damage, knock-back, the picture (1 - 15) the blow lands on, how far he steps forward (px), pictures a second (the jabs are Yuji's hooks, 30 a second, landing on his 8th picture; the kick lands its sole on the 6th)
 const SU_KICK_LIFT = [0, 0, 0, 4, 9, 12, 12, 8, 4, 2, 0, 0, 0, 0, 0];      // how high the face kick hops (px) in each of its pictures (Yuji's kick to the head, the first of his three: the foot is 34 px above the ground in the picture and he is lifted 12 more: the height of a standing enemy's face)
 const SU_NEAR = 60, SU_CP = [['R.JAB', 10, 7], ['L.UPPR', 13, 8]], SU_CP_FPS = 38, SU_THROW = { d: 6, share: 0.25, shareX: 0.5, lead: 24, ms: 600, cd: 5, fps: 45, hit: 8 };      // v1.110: an enemy this close in front (px) is punched, a further one slashed at; Yuji's crouch punches: name, damage (his hits 6 and 7: 10 and 13), the picture they land on (1 - 15), 38 pictures a second; the slashes: damage of a single slash (the X's are twice that), how much of the screen's width each flies from him in its 0.6 s (a single one a quarter, the X half: the screen's edge, since he stands in the middle), the lead the slash already has when it leaves (px: where it starts and where its middle is), its life (ms), the wait before the X can be thrown again (s), pictures a second and the picture it leaves the hand on
@@ -23,7 +23,7 @@ NAMES[SUK_WHO] = 'SUKUNA'; CEC[SUK_WHO] = ['#2a0a12', '#d02a3a', '#ffb0b8', '#ff
 const suOwn = id => !!window.__suAll || !!PROG.own[id], suHas = () => !!window.__suAll || !!PROG.own.sukuna;
 const SU_HUR = ['h0', 'h1', 'h2', 'h5', 'h4', 'h5', 'h6', 'h8', 'h8', 'h9'], SU_HUR_RX = { h0: 0, h1: 1, h2: 2, h5: 5, h6: 6, h8: 8, h9: 9, h4: 9 };      // v1.154 his hit reactions: the picture row for each of the ten the game picks from (Yuji's own: the spin (3), the fall (4) and the hop (7) need more room than a 64 x 64 picture has, so 3 is the doubled-over 5, 4 (a heavy blow) the kneeling 9 and 7 the sway 8) and which of Yuji's ten each row is, for how fast it plays (15 pictures at 1.5 times the game's reaction speed, like Yuji's)
 const suHus = set => SU_HUR.map(k => { const r = k === 'h4' ? 'h9' : k; return { f: set[r], ms: 1000 / RXF15[SU_HUR_RX[k]] }; });
-const SUK_GATE = { cr: 's_crouch', cp: 's_cpunch', ce: 's_cleave', dom: 's_domain' };      // (the buttons lacks() asks about for him, see template.html)
+const SUK_GATE = { cr: 's_crouch', cp: 's_cpunch', ce: 's_cleave', dom: 's_domain', fat: 's_fatal' };      // (the buttons lacks() asks about for him, see template.html)
 const SU_BLUE_ID = { 9: 's_air', 10: 's_storm', 11: 's_leg', 12: 's_dismantle', 13: 's_dashslash', 18: 's_cleave', 19: 's_lift', 20: 's_dive', 21: 's_dcleave', 22: 's_flame' };      // (the skill each BLUE move needs)
 (() => {
   const im = new Image();
@@ -47,10 +47,10 @@ const SU_BLUE_ID = { 9: 's_air', 10: 's_storm', 11: 's_leg', 12: 's_dismantle', 
     ev.push([{ f: SU_LEG.hit, k: 'c', cb: now => suLegAt(now) }], [], []);      // 11: the LEG CUT (one cut), 12: DISMANTLE and 13: the DASH SLASH have no events: a state of their own plays them (suDisStep, suDashStep)
     const elTips = arts[SUK_ROWS.indexOf('el')].map(tipOf), [, eD, eK, eF] = SU_ELB, eE = { f: eF, k: 'i', d: eD, sp: eD, fx: [['k', eK, 0, 0, -1], ['h', 50, 0, 1, 0], ['w', 3, 0, 1, 0]], c: 0, src: -1, id: 0, dy: 0 }; eE.tip = cuMaxRows([elTips[eF - 1], elTips[eF]]);
     ev.push(ev[0], ev[1], [eE], [{ f: 4, k: 'c', cb: now => suTouch(now) }, { f: 8, k: 'c', cb: now => suClHit(now, SU_CL.m1, { knock: 1.5 }, SU_CL.reach + 4, -3, SU_CL.mark, false) }], [{ f: 4, k: 'c', cb: now => suTouch(now) }, { f: 8, k: 'c', cb: now => suClHit(now, SU_CL.blue, { gb: true, knock: 5 }, SU_CL.reach + 12, -3, SU_CL.mark, true) }], [], [], [], []);      // v1.119 14: R.HOOK and 15: L.HOOK (the jabs' own impacts), 16: ELBOW, 17: TOUCH CUT (picture 4 touches him, picture 8 cuts: 1% of his full health), 18: CLEAVE (BLUE: the same, 5%, a guard is broken); 19: LIFT, 20: DIVE and 21: DASH CLEAVE are states of their own (suClStep), and so is 22: OPEN of the FLAME mode (suFlStep)
-    ev.push([]);      // v1.124 23: the DOMAIN SIGN of the ULTIMATE is a state of its own too (suDomCast)
+    ev.push([], []);      // v1.124 23: the DOMAIN SIGN of the ULTIMATE is a state of its own too (suDomCast); v1.166 24: so is the FINISHER (suFatStep), its picture row 'hr' is the hand in his hair
     const one = [0, 1].map(ph => suSlashCv(0, ph)), up = [0, 1].map(ph => suSlashCv(1, ph)), dn = [0, 1].map(ph => suSlashCv(2, ph)), vfx = Array.from({ length: 24 }, () => []), vxs = Array.from({ length: 24 }, () => []), spans = l => l.map(c => cuSpan(suAlpha(c), r => r - 2));
     vfx[6] = vfx[7] = one; vfx[9] = up; vfx[10] = dn; vxs[6] = vxs[7] = spans(one); vxs[9] = spans(up); vxs[10] = spans(dn);      // (the pictures of the flying slashes and the rows each covers, for the touch with the enemy)
-    CU_GAME[3] = { name: 'SUKUNA', frames: set.frames, walk: set.walk, jump: set.jump, hu: [], hus: suHus(set), ko: [], bl: set.bl.slice(0, 10), df: set.df, db: set.dg, cj: set.cj, cr: set.cr, ci: set.ci, cwk: set.cwk, st: { ...cuStats(null), fw: FWD_SPEED, bk: BACK_SPEED, cw: 60, jh: 22, jt: 713 }, vfx, atk: [set.a0, set.a1, set.a2, set.a3, set.cp0, set.cp1, set.a3, set.sl, set.sx, set.cut, set.storm, set.ccut, set.dis, set.a3, set.a0, set.a1, set.el, set.tc, set.tc, set.lift, set.dive, set.a3, set.fl, set.sg], an: SU_ATK.map(a => a[0]).concat('COUNTER', SU_CP.map(a => a[0]), 'R.SLASH', 'L.SLASH', 'X SLASH', 'AIR CUT', 'CUT STORM', 'LEG CUT', 'DISMANTLE', 'DASH SLASH', 'R.HOOK', 'L.HOOK', SU_ELB[0], 'TOUCH CUT', 'CLEAVE', 'LIFT CLEAVE', 'DIVE CLEAVE', 'DASH CLEAVE', 'OPEN', 'DOMAIN'), rdy: [0, 1, 2, 3], cl: [14, 15, 16, 17], ev, set: [0, 1, 2, 3].map(k => ({ v: k < 3 ? SU_ATK[k][5] : 30, m: k < 3 ? SU_ATK[k][4] : 0, c: 0, d: 0 })).concat([SU_CP_FPS, SU_CP_FPS, SU_THROW.fps, SU_THROW.fps, SU_THROW.fps].map((v, i) => ({ v, m: 0, c: 0, d: i === 4 ? SU_THROW.cd : 0 }))).concat([[SU_BLUE.cut.fps, SU_BLUE.cut.cost], [SU_BLUE.storm.fps, SU_BLUE.storm.cost], [SU_LEG.fps, SU_LEG.cost], [20, SU_DIS.cost], [30, SU_DASH.cost]].map(([v, c]) => ({ v, m: 0, c, d: 0 }))).concat([[30, 6, 0], [30, 6, 0], [SU_ELB[5], SU_ELB[4], 0], [30, 8, 0], [24, 16, SU_CL.cost.stand], [30, 0, SU_CL.cost.lift], [30, 0, SU_CL.cost.dive], [30, 0, SU_CL.cost.dash], [30, 0, SU_FL.cost], [30, 0, 0]].map(([v, m, c]) => ({ v, m, c, d: 0 }))), body, push: Math.max(5, hs.length ? hs[hs.length >> 1] : 5),
+    CU_GAME[3] = { name: 'SUKUNA', frames: set.frames, walk: set.walk, jump: set.jump, hu: [], hus: suHus(set), ko: [], bl: set.bl.slice(0, 10), df: set.df, db: set.dg, cj: set.cj, cr: set.cr, ci: set.ci, cwk: set.cwk, st: { ...cuStats(null), fw: FWD_SPEED, bk: BACK_SPEED, cw: 60, jh: 22, jt: 713 }, vfx, atk: [set.a0, set.a1, set.a2, set.a3, set.cp0, set.cp1, set.a3, set.sl, set.sx, set.cut, set.storm, set.ccut, set.dis, set.a3, set.a0, set.a1, set.el, set.tc, set.tc, set.lift, set.dive, set.a3, set.fl, set.sg, set.hr], an: SU_ATK.map(a => a[0]).concat('COUNTER', SU_CP.map(a => a[0]), 'R.SLASH', 'L.SLASH', 'X SLASH', 'AIR CUT', 'CUT STORM', 'LEG CUT', 'DISMANTLE', 'DASH SLASH', 'R.HOOK', 'L.HOOK', SU_ELB[0], 'TOUCH CUT', 'CLEAVE', 'LIFT CLEAVE', 'DIVE CLEAVE', 'DASH CLEAVE', 'OPEN', 'DOMAIN', 'FINISHER'), rdy: [0, 1, 2, 3], cl: [14, 15, 16, 17], ev, set: [0, 1, 2, 3].map(k => ({ v: k < 3 ? SU_ATK[k][5] : 30, m: k < 3 ? SU_ATK[k][4] : 0, c: 0, d: 0 })).concat([SU_CP_FPS, SU_CP_FPS, SU_THROW.fps, SU_THROW.fps, SU_THROW.fps].map((v, i) => ({ v, m: 0, c: 0, d: i === 4 ? SU_THROW.cd : 0 }))).concat([[SU_BLUE.cut.fps, SU_BLUE.cut.cost], [SU_BLUE.storm.fps, SU_BLUE.storm.cost], [SU_LEG.fps, SU_LEG.cost], [20, SU_DIS.cost], [30, SU_DASH.cost]].map(([v, c]) => ({ v, m: 0, c, d: 0 }))).concat([[30, 6, 0], [30, 6, 0], [SU_ELB[5], SU_ELB[4], 0], [30, 8, 0], [24, 16, SU_CL.cost.stand], [30, 0, SU_CL.cost.lift], [30, 0, SU_CL.cost.dive], [30, 0, SU_CL.cost.dash], [30, 0, SU_FL.cost], [30, 0, 0], [30, 0, 0]].map(([v, m, c]) => ({ v, m, c, d: 0 }))), body, push: Math.max(5, hs.length ? hs[hs.length >> 1] : 5),
       tipAll: ev.map(l => cuMaxRows(l.map(e => e.tip))), vxs, dg: set.dg, air: set.air, al: [null, null, SU_KICK_LIFT, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], cs: null, yu: true, blue: true, wf: WALK_FPS, crMs: 1000 / CR_FPS };      // (the blows: 0 R.JAB, 1 L.JAB, 2 FACE KICK, 3 COUNTER, 4 R.JAB and 5 L.UPPR crouched, 6 R.SLASH, 7 L.SLASH, 8 X SLASH, 9 AIR CUT, 10 CUT STORM, 11 LEG CUT, 12 DISMANTLE (the last four are played by BLUE: blue); yu: he moves like Yuji; wf: his walking pictures a second; crMs: how long a picture of the crouch lasts; al: the height of each picture of a blow that hops; cs: the counter in progress; dg: the pictures of the dodge; the stats are Yuji's: 56 and 38 px/s, 60% while crouched, a jump of 22 px, 713 ms of flight)
   suFlBuild();      // (v1.120 the flame pictures of the FLAME mode are made as soon as he is there)
   };
@@ -65,10 +65,12 @@ function suStart(g, now) {      // ATTACK as the 4th blow: he waits (his idle pi
 function suEnd(g, now) {
   const c = g.cs; if (c && c.cl === 'lift' && dummy && dummy.air && dummy.air.hover) dummy.air = airMake(now, dummy.airH || 0, 0, AIR_G, 'up');      // (v1.119 a LIFT that is broken off: the enemy he holds comes down)
   if (suFg) suFgEnd(now);
+  if (suFat) suFatEnd(now);
   g.cs = null; cuAtkAt = -1; cuCmb = 0; cuCmbBy = now + 500;
 }
 function suHit(now) {      // a swing of the enemy reaches him (gojoHit): true = it misses; waiting he dodges it, and until the cut has landed nothing touches him
   const g = CU_GAME[3], c = g && g.cs; if (!c || vs.me !== SUK_WHO) return false;
+  if (c.fat) return true;      // (v1.166 the finisher: nothing touches him)
   if (c.ph === 'wait') { c.ph = 'dodge'; c.t0 = now; c.done = 0; snd('dash', 1); puff(wx + 4, 5); say('DODGE!', wx, '#9fd8ff', 8, now); return true; }
   return c.ph === 'dodge' || !c.hit;
 }
@@ -84,6 +86,7 @@ function suStep(g, now) {      // every frame of the counter: the state moves on
   const c = g.cs; if (!c) return null;
   if (vs.ph !== 'fight') { suEnd(g, now); return null; }
   if (c.air) return suDisStep(g, c, now);      // (v1.112 DISMANTLE is a state of the same kind: g.cs = { air: true, ... })
+  if (c.fat) return suFatStep(g, c, now);      // (v1.166 the FINISHER: g.cs = { fat: true })
   if (c.dash) return suDashStep(g, c, now);      // (v1.118 the DASH SLASH: g.cs = { dash: true, ... })
   if (c.dom) return suDomCast(g, c, now);      // (v1.124 the DOMAIN SIGN of the ULTIMATE: g.cs = { dom: true, ... })
   if (c.fl) return suFlStep(g, c, now);      // (v1.120 OPEN of the FLAME mode: g.cs = { fl: true, ... })
@@ -257,7 +260,7 @@ function suDashOk(now) {      // can the DASH SLASH start: a living enemy in fro
   const d = dummy, gap = d ? d.x - wx : 1e9;
   return !!d && d.ko < 0 && !d.cap && now >= (d.down || 0) && !(d.vform && d.vform !== 'verity') && gap >= -4 && gap <= SU_DASH.reach && vs.ph === 'fight';
 }
-function suKeepFace() { const g = CU_GAME[3]; return !!(g && g.cs && g.cs.dash); }      // (the enemy does not turn round to face him while he is being passed: drawDummy asks)
+function suKeepFace() { const g = CU_GAME[3]; return !!(g && g.cs && (g.cs.dash || g.cs.fat)); }      // (the enemy does not turn round to face him while he is being passed: drawDummy asks)
 function suDashStep(g, c, now) {      // DASH SLASH, every frame: the dash, the standing, the stop (suFreezeDash) and the cut; returns the picture to show
   const D = SU_DASH, S = g.atk[3], d = dummy;
   if (!d || d.ko >= 0) { suEnd(g, now); return null; }
@@ -343,7 +346,7 @@ function suTsDash(T) {      // the game is stopped (DASH SLASH): the impact fram
 // ---- v1.119 CLEAVE (the MODE button): he switches in silence: nothing is heard, said or lit on the field (the enemy cannot tell), only the buttons change (MODE shows CLEAVE and glows, ATTACK and BLUE get new names). ATTACK becomes a melee chain whether an enemy is near or not: R.HOOK and L.HOOK (the jabs' own pictures and numbers), ELBOW (12 damage) and TOUCH CUT: he lays a hand on the enemy and slashes him for exactly 1% of the enemy's full health (a guard stops it). BLUE becomes CLEAVE (5 energy): the same touch and cut, but 5% of the enemy's full health, and a guard is broken. Crouched it is the LIFT CLEAVE (10 energy: he lifts the enemy up with one hand and slashes his head), in the air the DIVE CLEAVE (10: he drops on the enemy, grabs him and cleaves him to the ground, knocked down), standing with FORWARD held and an enemy within 120 px the DASH CLEAVE (10: he dashes at him and cleaves him back, a hop and a long knock-back). The 1% and 5% are taken from the enemy's full health (dummy.max) whatever his level, and the cut is blocked or missed like any hit. The three BLUE states are states of g.cs like DISMANTLE (nothing touches him meanwhile, suHit); the CLEAVE and TOUCH CUT are blows with events. The mode is off at the start of every round. See suToggle, suClHit, suClStep.
 let suCl = false, suFl = false;
 function suToggle() { const cl = suOwn('s_cleave'), fl = suOwn('s_flame'); if (!suCl && !suFl) { if (cl) suCl = true; else if (fl) suFl = true; else return; } else if (suCl) { suCl = false; if (fl) suFl = true; } else suFl = false; cuCmb = cuSn = cuCp = 0; cuCmbBy = 0; }      // MODE: OFF > CLEAVE > FLAME > OFF (v1.120: one more tap goes on to FLAME); the blows start from the first one again; no sound, no word, no light on the field
-function suReset() { suCl = suFl = false; suArrows.length = 0; suFlBursts.length = 0; suFlTalk = null; if (dummy) dummy.sburn = null; suDom = suDomPt = null; suDomSl.length = 0; domReadyAt = 0; suFgEnd(pnow()); }      // (a new round: both modes off, no arrow in the air, no burn, no domain and the ULTIMATE ready again)
+function suReset() { suCl = suFl = false; suArrows.length = 0; suFlBursts.length = 0; suFlTalk = null; if (dummy) dummy.sburn = null; suDom = suDomPt = null; suDomSl.length = 0; domReadyAt = 0; suFgEnd(pnow()); if (suFat) suFatEnd(pnow()); }      // (a new round: both modes off, no arrow in the air, no burn, no domain and the ULTIMATE ready again)
 function suModeUI() {      // every frame: the MODE button's name and light and the BLUE button's colour follow the mode (setModeUI writes the buttons too, so it is checked every time, like the BLUE label): CLEAVE lights MODE blue, FLAME lights MODE and BLUE orange
   const el = $('cel'), b = $('ce'), lp = $('lap'), want = 'MODE<br>' + (suFl ? 'FLAME' : suCl ? 'CLEAVE' : 'OFF'), p = suCl || suFl ? 'true' : 'false', aria = suFl ? 'Mode: Flame is on, tap to switch it off. BLUE is Open: a fire arrow that burns the enemy' : suCl ? 'Mode: Cleave is on, tap for Flame. The enemy cannot tell' : 'Mode: tap to switch Cleave on, tap again for Flame. The enemy cannot tell';
   if (el.innerHTML !== want) el.innerHTML = want;
@@ -856,7 +859,7 @@ const SU_FG_SHOTS = [      // the camera, shot by shot: [from, to (ms of the cut
   [10900, 12400, (k) => [1.5 - 0.5 * k, VW / 2, VH * (0.36 + 0.14 * k), 0, 0]]      // 9 a slow pull back to the wide shot
 ];
 let suFg = null, suFgDk = new Map();      // the cutscene that is running ({ t0, jump (ms skipped), hl, p (particles), fl (flashes), em, hit, hitAt, hx, cam, shot, ... } or null), the dark shapes of his pictures
-function suFgOn() { return !!suFg; }
+function suFgOn() { return !!suFg || !!suFat; }
 function suFgU(now) { return suFg ? Math.max(0, now - suFg.t0 + suFg.jump) : 0; }      // (ms into the cutscene)
 function suFgCastT(u) {      // the time of the cast of OPEN that is shown u ms into the cutscene (SU_FG.W: straight lines between its points)
   const W = SU_FG.W; if (u >= W[W.length - 1][0]) return W[W.length - 1][1];
@@ -877,11 +880,12 @@ function suFgEnd(now) {      // the cutscene is over (or broken off): the contro
   const d = dummy; if (d && d.stunUntil > now) d.stunUntil = now;
 }
 function suFgSkip(now) {      // a button was pressed: after the first 0.9 s the cutscene jumps to its last 0.8 s (the arrow lands at once if it has not yet)
+  if (suFat) { suFatSkip(now); return; }
   const F = suFg; if (!F || F.skipped) return; const u = suFgU(now); if (u < SU_FG.skipAt || u >= SU_FG.end - 800) return;
   F.skipped = true; F.jump += SU_FG.end - 800 - u; const c = CU_GAME[3].cs; if (c) c.lit = c.clap = c.draw = c.fired = true; if (!F.hit) suFgHit(now, true);
 }
 function suFgTap(now) {      // a tap on the screen (the controls are hidden, so a phone has no button to press): the first says how to skip, a second one within a second and a half skips
-  const F = suFg; if (!F || F.skipped) return; if (now - F.tapAt < 1500) suFgSkip(now); else F.tapAt = now;
+  const F = suFg || suFat; if (!F || F.skipped) return; if (now - F.tapAt < 1500) suFgSkip(now); else F.tapAt = now;
 }
 function suFgRelease(now) {      // the back hand lets go: a flash, the crack and the whoosh, a knock
   snd('sukfire', 3); snd('sukfuga', 1); suFg.fl.push({ at: now, dur: 300, a: 0.85, col: '255,246,216' }); shakeUntil = Math.max(shakeUntil, now + 300); shakeAmp = Math.max(shakeAmp, 3);
@@ -914,6 +918,7 @@ function suFgStep(g, c, now) {      // OPEN as the FUGA cutscene, every frame: t
   return g.atk[22][i];
 }
 function suFgCam(now) {      // the camera of this frame (null when there is no cutscene): { z (zoom), fx, fy (the place of the scene in the middle of the screen), roll (tilt, rad), sx, sy (shake, px) }; it never shows anything beyond the domain's picture
+  if (suFat) return suFatCam(now);
   const F = suFg; if (!F) return null;
   const u = Math.min(SU_FG.end, suFgU(now)), A = suFgAnch(now); let s = 0; while (s + 1 < SU_FG_SHOTS.length && u >= SU_FG_SHOTS[s + 1][0]) s++;
   const [u0, u1, fn] = SU_FG_SHOTS[s], k2 = Math.max(0, Math.min(1, (u - u0) / (u1 - u0))), k = k2 * k2 * (3 - 2 * k2), v = fn(k, A, k2, u), z = v[0], hw = VW / (2 * z), hh = VH / (2 * z), cl = (a, lo, hi) => lo > hi ? (lo + hi) / 2 : Math.max(lo, Math.min(hi, a)), sh = SET.lite ? 0 : v[4];
@@ -950,6 +955,7 @@ function suFgBack(now, cx) {      // behind both fighters while the cutscene run
   ctx.restore();
 }
 function suFgDraw(now, dt, cx, x, y, src) {      // every frame of his scene while the cutscene runs, inside the camera and over his picture: the fire round him as the arrow is drawn, the huge arrow, the explosion and the fire after it, the dark shape of him in front of the enemy in shot 4
+  if (suFat) { suFatDraw(now, dt, cx, x, y, src); return; }
   const F = suFg; if (!F || !suFlSpr) return;
   const u = Math.min(SU_FG.end, suFgU(now)), A = suFgAnch(now), S = suFlSpr, lite = SET.lite; dt = Math.min(0.05, dt || 0.016);
   ctx.save(); ctx.imageSmoothingEnabled = false;
@@ -986,6 +992,7 @@ function suFgDraw(now, dt, cx, x, y, src) {      // every frame of his scene whi
   suFgParts(F, dt); ctx.restore();
 }
 function suFgOverlay(now) {      // over the whole picture, not moved by the camera: the orange grading and the dark edges, the flashes, the speed lines, the word FUGA, the line he says, the black bars, the hint to skip
+  if (suFat) { suFatOverlay(now); return; }
   const F = suFg; if (!F) return; const u = Math.min(SU_FG.end, suFgU(now)), S = SU_FG;
   const kin = Math.min(1, u / 500), kout = Math.max(0, Math.min(1, (S.end - u) / 450)), bk = Math.min(kin * kin * (3 - 2 * kin), kout * kout * (3 - 2 * kout)), bh = Math.round(VH * S.bar * bk);
   ctx.save(); ctx.imageSmoothingEnabled = false;
@@ -1010,5 +1017,158 @@ function suTsFuga(T) {      // the game is stopped for the moment the FUGA lands
     ctx.drawImage(T.snap, 0, 0); const k = (t - 140) / Math.max(1, T.total - 140); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(255,200,120,' + (0.55 * (1 - k)).toFixed(3) + ')'; ctx.fillRect(0, 0, W, H); ctx.globalCompositeOperation = 'source-over';
   }
   ctx.restore(); if (stopMs <= 0) suTs = null;
+}
+
+// ---------------------------------------------------------------- v1.166 SUKUNA'S FINISHER (the FATAL button, the skill s_fatal; the enemy at 20% health or less and close). A cutscene on the game's own clock with its own camera (so a slow motion slows all of it): the enemy KNEELS; Sukuna puts a hand in his hair and says "You hold your head quite high"; a huge SLASH passes an inch over the kneeling head; the enemy stares up at him and CHARGES; Sukuna touches his face and is gone, BEHIND him; the head falls apart in THREE SLICES; then a SLOW MOTION REPLAY of that moment shows that Sukuna touched the face before the enemy even reacted; and at normal speed again the enemy falls: K.O. (GRAPHIC DAMAGE: FULL = the slices and the blood, CLEAN = the slices without blood, OFF = nothing is cut: a flash and he falls). The track of the move (the charge, the touch, the vanishing, the cut) is a function of e, the ms into it: the first time it runs 2.4 times as fast as the replay, which runs while the clock is slowed. See suFatOk, suFatBegin, suFatStep, suFatCam, suFatDraw, suFatOverlay, suFatLook (called by drawDummy) and suFatFinish.
+const SU_FAT = { gap: 72, setMs: 420, hair: 450, up: 110, hold: 100, down: 3600, say: 'You hold your head quite high', sayAt: 1250, sayMs: 62, sayOff: 4300, slash: 3900, shit: 240, stare: 4700, charge: 6000, chargeMs: 520, act: 6520, actK: 2.4, rep: 7380, track: 1570, repMs: 4200, repRate: 0.2, skipAt: 1000, bar: 0.12, touchE: 120, holdE: 300, tpE: 340, cutE: 480, dxT: 64, d0: 44, dT: 34, dEnd: 12 };      // the enemy's distance from him when he kneels (px), the ms of the enemy's slide in, when the hand goes up, how long a picture of the rise and of the hold lasts, when it comes down again, the line, when its letters start and how long each takes, when it is gone, when the swing starts and the slash leaves the hand, the stare, the charge (start, length), the move (start, how much faster than the replay it runs), the replay (start, length of its track, the real ms of its slow motion and how slow), from when a button skips, the height of the bars (of the screen), the track's own times (the hand reaches the face, the touch ends and he is gone, he is behind the enemy, the head is cut), how far behind his first place he stands afterwards, how far the enemy is when the track starts, where his face is when the hand is on it and where the enemy stops
+const SU_FAT_SHOTS = [      // the camera, shot by shot: [from, to (ms of the cutscene), (k: 0 - 1 eased, A: where things are, k2: 0 - 1 straight) => [zoom, x and y of the scene it looks at, tilt (rad), shake (px)]]
+  [0, 1250, (k, A) => [1.1 + 0.3 * k, (A.sx + A.ex) / 2, gy - 36, 0, 0]],      // 1 wide: both of them, a slow push in while the enemy drops to his knees
+  [1250, 3600, (k, A, k2) => [2 + 0.4 * k, A.sx + 12 + 8 * k2, gy - 42, 0, 0]],      // 2 close on him: the hand in his hair and the words
+  [3600, 4700, (k, A, k2) => [1.7 - 0.3 * k, (A.sx + A.ex) / 2 + 24 * k2, gy - 40, 0, 0]],      // 3 the hand comes down and the slash passes: the camera backs off and slides over to the enemy
+  [4700, 6000, (k, A, k2) => [2.8 + 1.2 * k, A.ex - 6, A.hy + 8, 0.025 * (1 - k2), 0.3]],      // 4 the stare: a close-up of his face, pushing in
+  [6000, 6520, (k, A) => [3.2 - 1.5 * k, A.ex - 8 - 24 * k, gy - 38, 0, 0.6 * k]],      // 5 the charge: pulling back
+  [6520, 7380, (k, A) => [1.9, (A.sx + A.ex) / 2 + 4, gy - 40, 0, 1.4 * (1 - k)]],      // 6 the move at full speed: he is gone and the head is cut
+  [7380, 7710, (k, A) => [3, A.sx + 26, gy - 42, 0.02, 0.4]],      // 7 the replay: his hand and the enemy's face
+  [7710, 8080, (k, A) => [3 - 1.1 * k, A.sx + 26 + (A.ex + A.sx - A.sx - 26 - 10) * 0.5 * k, gy - 42 + 2 * k, 0, 0.3]],      // 8 he vanishes: the camera pulls out to show where he went
+  [8080, 8500, (k, A) => [2.2 + 0.7 * k, A.ex, A.hy + 8, -0.02 * k, 0.4]],      // 9 the slices
+  [8500, 8950, (k, A) => [2.9 - 1.8 * k, A.ex + (A.sx - A.ex) * 0.5 * k, A.hy + 8 + (gy - 40 - A.hy - 8) * k, -0.02 * (1 - k), 0]]      // 10 back to the wide shot (the cutscene ends and the game is as it was)
+];
+let suFat = null, suFatBlank = null;      // the finisher that is running ({ t0, u (ms into it), wx0 (where he stood), dx (how far he is from there), e (ms into the track, -1 before it), p (particles), fl (flashes), did (what has happened), cam, skipped, tapAt } or null), an empty picture for the moment he is gone
+const suFatTopC = new WeakMap(), suFatSlC = new WeakMap();
+function suFatOn() { return !!suFat; }
+function suFatD(e) {      // the track: how far in front of his first place the enemy's middle is (px), e ms into the move: the last steps of the charge bring his face up to the hand, the hand is on his face, then Sukuna is gone and the enemy carries on through the place where he stood and stops
+  const S = SU_FAT; if (e < 0) return S.d0; if (e < S.touchE) return S.d0 + (S.dT - S.d0) * e / S.touchE;
+  if (e < S.holdE) return S.dT - 0.8 * (e - S.touchE) / (S.holdE - S.touchE);
+  const q = Math.min(1, (e - S.holdE) / 600); return S.dT - 0.8 + (S.dEnd - S.dT + 0.8) * (1 - (1 - q) * (1 - q));
+}
+function suFatU(now) { return suFat ? Math.max(0, now - suFat.t0 + suFat.jump) : 0; }
+function suFatDx() { return suFat ? suFat.dx || 0 : 0; }      // (where his picture is drawn: how far from where he stands (wx); the camera and the world stay where they were)
+function suFatOk(now) {      // can the finisher start: nothing else of his is going on, a living enemy in front of him at 20% health or less (fatState: the button's own rules, the skill included)
+  const g = CU_GAME[3], d = dummy;
+  return !!g && !!vs && vs.me === SUK_WHO && !suFat && !suFg && !suDom && !g.cs && cuAtkAt < 0 && !cuDash && blkAt < 0 && cuJumpAt < 0 && stance === 'stand' && !!d && d.ko < 0 && !d.cap && fatState(now) === 0;
+}
+function suFatBegin(now) {      // the finisher starts: the enemy is held for all of it, he slides to a place in front of him and kneels, the controls hide
+  const g = CU_GAME[3], d = dummy, S = SU_FAT; stance = 'stand'; stickCr = false; wxv = wvx = 0;
+  suFat = { t0: now, jump: 0, u: 0, wx0: wx, dx: 0, e: -1, p: [], fl: [], did: {}, cam: null, skipped: false, tapAt: -1e9 };
+  g.cs = { fat: true, t0: now }; cuAtkK = 3; cuAtkAt = now; cuLunged = 0; cuCmb = 0; cuCmbBy = now + 1e9; cuFired = []; cuRes = []; cuAtkQ = cuLpQ = 0;
+  cuStun(60, now, true); d.dodgeUntil = 0; d.vx = 0; d.pull = { from: d.x, to: wx + S.gap, at: now, ms: S.setMs }; d.kneel = now + 1e9; d.ai = 'rest'; d.suCut = null;
+  $('pad').classList.add('cine'); $('hud').classList.add('cine'); puff(wx + S.gap, 6);
+}
+function suFatEnd(now) {      // the finisher is over (or broken off): the controls come back, the clock runs at its own speed again
+  if (!suFat) return; suFat = null; $('pad').classList.remove('cine'); $('hud').classList.remove('cine'); slowAt = -1e9;
+  const d = dummy; if (d && d.ko < 0) { d.kneel = 0; d.pull = null; d.stunUntil = Math.min(d.stunUntil || 0, now + 300); d.aiAt = now; d.restFor = 300; d.ai = 'rest'; }
+}
+function suFatFinish(now, quick) {      // the last moment (or a skip): he stands behind the enemy, the head is cut, and the enemy falls: K.O. and the round is his
+  const F = suFat, d = dummy, g = CU_GAME[3]; if (!F) return;
+  if (d && d.ko < 0) { const gs = gdSet(); if (gs < 2) { if (!d.suCut) d.suCut = { at: now - (quick ? 800 : 0), gs }; else if (quick) d.suCut.at = Math.min(d.suCut.at, now - 800); } d.x = F.wx0 + suFatD(1e9); d.kneel = 0; d.ai = 'rest'; }
+  wx = F.wx0 + SU_FAT.dxT; suFatEnd(now); suEnd(g, now);
+  if (d && d.ko < 0) { d.hp = 0; koDummy(now); }
+}
+function suFatSkip(now) { const F = suFat; if (!F || F.skipped || F.u < SU_FAT.skipAt) return; F.skipped = true; suFatFinish(now, true); }
+function suFatCut(now, e) {      // the head is cut (the first time at full speed, and again in the replay): two thin white lines across it, a flash and a crack, then the three slices slide apart
+  const F = suFat, d = dummy, gs = gdSet(), ex = d.x, hy = d.suTop !== undefined ? d.suTop : gy - 40;
+  F.fl.push({ at: now, dur: 220, a: gs === 2 ? 0.8 : 0.6, col: '255,255,255' }); shakeUntil = Math.max(shakeUntil, now + 260); shakeAmp = Math.max(shakeAmp, 4); snd('slice'); snd('sukcut', 2);
+  if (gs < 2) { d.suCut = { at: now, gs }; if (gs === 0) { snd('splat'); tqBlood(ex - 2, hy + 7, 30, 1); tqBlood(ex + 2, hy + 10, 22, -1); const X = Math.round(VW / 2) + ex - wx; for (let i = 0, n = SET.lite ? 10 : 26; i < n; i++) suFgP(F, X + (Math.random() - 0.5) * 12, hy + 4 + Math.random() * 12, (Math.random() - 0.3) * 70, -20 - Math.random() * 60, 0.6 + Math.random() * 0.8, ['#c4121c', '#ff2a3a', '#7a0f1e'][i % 3], i % 5 === 0 ? 2 : 1, 260); } }
+}
+function suFatStep(g, c, now) {      // the finisher, every frame: the enemy's place and look, his place and picture, what happens when it is due
+  const F = suFat, S = SU_FAT, d = dummy; if (!F || !d || d.ko >= 0) { suEnd(g, now); return null; }
+  const u = suFatU(now), P = u >= S.rep ? 'B' : 'A', once = (k, fn) => { if (!F.did[k]) { F.did[k] = 1; fn(); } };
+  F.u = u; d.vx = 0; wxv = wvx = 0; d.stunUntil = Math.max(d.stunUntil || 0, now + 5000);
+  const e = u >= S.rep ? u - S.rep : u >= S.act ? (u - S.act) * S.actK : -1; F.e = e;
+  if (u >= S.rep) once('rep', () => { d.suCut = null; F.fl.push({ at: now, dur: 300, a: 0.9, col: '255,255,255' }); slowMo(S.repMs, S.repRate); });      // (the replay: the enemy and he are as they were before the move, the head is whole again, the clock slows down)
+  if (u >= S.rep + S.track) { suFatFinish(now, false); return null; }
+  // the enemy
+  if (u >= S.hair) once('hair', () => snd('cloth'));
+  if (u >= S.charge) once('ch', () => { d.kneel = 0; d.ai = 'walk'; d.aiAt = now; puff(wx + S.gap, 4); });
+  if (e >= 0) { d.x = F.wx0 + suFatD(e); d.ai = e >= 900 ? 'rest' : 'walk'; d.kneel = 0; }      // (he walks until he has stopped, in the replay too)
+  else if (u >= S.charge) { const t = Math.min(1, (u - S.charge) / S.chargeMs); d.x = F.wx0 + S.gap - (S.gap - S.d0) * Math.pow(t, 1.6); if (now >= (F.dust || 0)) { F.dust = now + 90; puff(d.x + 6, 2); } }
+  else if (u >= S.setMs) d.x = F.wx0 + S.gap;
+  // the slash over the kneeling head, the stare
+  if (u >= S.slash) once('sw', () => snd('swing', 3));
+  if (u >= S.slash + S.shit) once('slash', () => { snd('sukcut', 2); snd('swing', 1); F.fl.push({ at: now, dur: 260, a: 0.45, col: '255,230,230' }); shakeUntil = Math.max(shakeUntil, now + 380); shakeAmp = Math.max(shakeAmp, 3); });
+  if (u >= S.slash + S.shit + 50) once('pass', () => { const hy = d.suTop !== undefined ? d.suTop : gy - 40, X = Math.round(VW / 2) + d.x - wx; for (let i = 0, n = SET.lite ? 6 : 14; i < n; i++) suFgP(F, X + (Math.random() - 0.5) * 18, hy - 4 + Math.random() * 3, (Math.random() - 0.2) * 120, -10 - Math.random() * 40, 0.4 + Math.random() * 0.5, i % 2 ? '#ffffff' : '#ffc0c8', 1, 120); });
+  // the track
+  if (e >= S.touchE) once(P + 'touch', () => { if (P === 'B') { F.fl.push({ at: now, dur: 130, a: 0.7, col: '255,255,255' }); shakeUntil = Math.max(shakeUntil, now + 200); shakeAmp = Math.max(shakeAmp, 2); snd('sukimp'); spark(d.x - 6, gy - 36, 8, ['#ffffff', '#ffc0c8', '#ff2a3a'], false, -1); } });
+  if (e >= S.holdE) once(P + 'tp', () => { snd('vanish'); puff(F.wx0 + 2, 5); });
+  if (e >= S.tpE) once(P + 'arr', () => { snd('arrive'); puff(F.wx0 + S.dxT, 5); });
+  if (e >= S.cutE) once(P + 'cut', () => suFatCut(now, e));
+  F.dx = e >= S.holdE ? S.dxT : 0;
+  // his picture
+  const idle = g.frames[Math.floor(now / (1000 / IDLE_FPS)) % g.frames.length];
+  if (e >= S.holdE && e < S.tpE) return suFatBlank || (suFatBlank = (() => { const b = document.createElement('canvas'); b.width = b.height = 64; return b; })());
+  if (e >= S.tpE) return idle;
+  if (e >= 0) return g.atk[17][Math.min(4, Math.floor(e * 30 / 1000))];      // (the touch: Sukuna's TOUCH CUT pictures, the hand reaches out and stays on the face)
+  if (u < S.hair) return idle;
+  if (u < S.down) { const k = Math.floor((u - S.hair) / S.up); return g.atk[24][k < 5 ? k : 5 + Math.floor((u - S.hair - 5 * S.up) / S.hold) % 6]; }
+  if (u < S.slash) return g.atk[24][11 + Math.min(3, Math.floor((u - S.down) / 75))];
+  if (u < S.slash + 500) return g.atk[6][Math.min(14, Math.floor((u - S.slash) * 30 / 1000))];
+  return idle;
+}
+function suFatCam(now) {      // the camera of this frame: { z, fx, fy, roll, sx, sy } as suFgCam
+  const F = suFat; if (!F) return null;
+  const S = SU_FAT, u = Math.min(S.rep + S.track, F.u === undefined ? suFatU(now) : F.u), cx = Math.round(VW / 2), d = dummy;
+  const A = { cx, sx: cx + (F.dx || 0), ex: cx + (d ? d.x - wx : S.gap), hy: d && d.suTop !== undefined ? d.suTop : gy - 40 };
+  let s = 0; while (s + 1 < SU_FAT_SHOTS.length && u >= SU_FAT_SHOTS[s + 1][0]) s++;
+  const [u0, u1, fn] = SU_FAT_SHOTS[s], k2 = Math.max(0, Math.min(1, (u - u0) / (u1 - u0))), k = k2 * k2 * (3 - 2 * k2), v = fn(k, A, k2), z = v[0], hw = VW / (2 * z), hh = VH / (2 * z), cl = (a, lo, hi) => lo > hi ? (lo + hi) / 2 : Math.max(lo, Math.min(hi, a)), sh = SET.lite ? 0 : v[4];
+  F.cam = { z, fx: cl(v[1], hw + 4, VW - hw - 4), fy: cl(v[2], hh + 4, VH - hh - 4), roll: SET.lite ? 0 : v[3], sx: sh * (Math.sin(u * 0.093) + Math.sin(u * 0.211 + 1.7)) / 2, sy: sh * (Math.sin(u * 0.117 + 0.6) + Math.sin(u * 0.183 + 2.9)) / 2 };
+  return F.cam;
+}
+function suFatTopRow(src) {      // the first row of a picture that has something in it (the top of the enemy's head), cached
+  if (!src || !src.getContext) return 0; let r = suFatTopC.get(src);
+  if (r === undefined) { const w = src.width, h = src.height, dt = src.getContext('2d').getImageData(0, 0, w, h).data; r = 0; for (let y = 0; y < h; y++) { let any = false; for (let x = 0; x < w; x++) if (dt[(y * w + x) * 4 + 3] > 127) { any = true; break; } if (any) { r = y; break; } } suFatTopC.set(src, r); }
+  return r;
+}
+function suFatSlice(src, k, gs) {      // the head of a picture cut in three slabs by two horizontal cuts: the top slab slides forward, the middle one back (k = 0 - 1: how far, 6 px at most), a thin red (white when CLEAN) line along each cut face
+  const key = Math.round(k * 12) / 2 + (gs ? 'c' : 'r'); let m = suFatSlC.get(src); if (!m) suFatSlC.set(src, m = new Map());
+  let c = m.get(key); if (c) return c;
+  const w = src.width, h = src.height, r0 = suFatTopRow(src), a = 5, kk = Math.round(k * 12) / 2; c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+  g.drawImage(src, 0, 0); g.clearRect(0, r0, w, a * 3); const sh = [Math.round(kk), -Math.round(kk * 0.6), 0], up = [-Math.min(r0, Math.round(kk * 0.5)), -Math.min(r0, Math.round(kk * 0.25)), 0];      // (the top slab also lifts and the middle one a little, as far as the picture has room above the head)
+  for (let i = 0; i < 3; i++) g.drawImage(src, 0, r0 + i * a, w, a, sh[i], r0 + i * a + up[i], w, a);
+  g.globalCompositeOperation = 'source-atop'; g.fillStyle = gs ? '#e8e8f0' : '#b0101c'; g.fillRect(0, r0 + a - 1 + up[0], w, 1); g.fillRect(0, r0 + 2 * a - 1 + up[1], w, 1);
+  if (m.size > 24) m.clear(); m.set(key, c); return c;
+}
+function suFatLook(d, src, now) {      // (drawDummy asks, for every enemy picture while a finisher runs or his head has been cut) where the top of his head is, and the picture with the head in its three slices
+  const c = d.suCut; if (!src || !src.getContext) return src;
+  if (c && c.gs < 2) { const k = Math.max(0, Math.min(1, (now - c.at) / 700)); if (k > 0) return suFatSlice(src, k, c.gs); }
+  return src;
+}
+function suFatSlashDraw(now, cx, hy, u) {      // the huge slash: a long streak with a white core and a pink and a red edge, flying from his hand across the screen, its lower edge 3 px over the kneeling head
+  const S = SU_FAT, ts = u - S.slash - S.shit; if (ts < 0 || ts > 700) return;
+  const hx = cx + 22 + ts * 0.9, L = 120, t0 = hx - L, fade = Math.max(0, Math.min(1, (700 - ts) / 200));
+  ctx.save(); ctx.globalAlpha = fade;
+  for (let x = Math.max(-4, Math.floor(t0)); x <= Math.min(VW + 4, Math.ceil(hx)); x++) {
+    const q = (x - t0) / L, th = 1 + 9 * Math.pow(Math.sin(Math.PI * q), 0.8), yc = hy - 2 - th / 2 + (1 - q) * 1.5, bands = [[th, '#12030a'], [th * 0.82, '#ff2a3a'], [th * 0.56, '#ffc0c8'], [th * 0.3, '#ffffff']];
+    for (const [w, col] of bands) { ctx.fillStyle = col; const hh = Math.max(1, Math.round(w)); ctx.fillRect(x, Math.round(yc - hh / 2), 1, hh); }
+  }
+  ctx.fillStyle = '#ffffff'; for (let i = 0; i < 7; i++) { const yy = Math.round(hy - 14 + i * 2 + ((i * 7 + Math.floor(ts / 40)) % 3)), len = 14 + ((i * 29) % 40); ctx.globalAlpha = fade * 0.55; ctx.fillRect(Math.round(t0 - len + 10), yy, len, 1); }
+  ctx.restore();
+}
+function suFatDraw(now, dt, cx, x, y, src) {      // every frame of his scene while the finisher runs, inside the camera and over his picture: the slash, the trail of his vanishing, the two lines of the cut, the sparks and the blood
+  const F = suFat, S = SU_FAT, d = dummy, u = F.u || 0, e = F.e === undefined ? -1 : F.e; dt = Math.min(0.05, dt || 0.016); if (!d) return;
+  const X = cx + d.x - wx, hy = d.suTop !== undefined ? d.suTop : gy - 40, g = CU_GAME[3];
+  ctx.save(); ctx.imageSmoothingEnabled = false;
+  suFatSlashDraw(now, cx, hy, u);
+  if (e >= S.holdE && e < S.holdE + 260) {      // (the trail of the vanishing: his hand-out picture where he was and on the way, fading, and speed lines to where he is now)
+    const q = (e - S.holdE) / 260, pic = g.atk[17][4], to = F.wx0 + S.dxT - wx;
+    for (let i = 0; i < 3; i++) { ctx.globalAlpha = 0.4 * (1 - q); ctx.drawImage(pic, Math.round(cx - 32 + to * (i / 2) * Math.min(1, q * 3)), y); }
+    ctx.globalAlpha = 0.8 * (1 - q); for (let i = 0; i < 5; i++) { ctx.fillStyle = i % 2 ? '#ffffff' : '#bcd4ff'; const yy = y + 12 + i * 8, run = Math.round(to * Math.min(1, q * 3)); ctx.fillRect(Math.round(cx + 6), yy, run, 1); }
+    ctx.globalAlpha = 1;
+  }
+  const ce = d.suCut ? now - d.suCut.at : -1;
+  if (ce >= 0 && ce < 160 || (e >= S.cutE && e < S.cutE + 70)) { const a = e >= 0 && e < S.cutE + 70 ? 1 - (e - S.cutE) / 70 : 1 - ce / 160; ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.max(0, a); ctx.fillStyle = '#ffffff'; for (const r of [5, 10]) ctx.fillRect(Math.round(X - 16), Math.round(hy + r), 32, 1); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }
+  if (d.suCut && d.suCut.gs === 0 && now - d.suCut.at < 900 && Math.random() < 0.5 * (1 - (now - d.suCut.at) / 900)) suFgP(F, X + (Math.random() - 0.5) * 10, hy + 6 + Math.random() * 10, (Math.random() - 0.5) * 12, 10 + Math.random() * 20, 0.5 + Math.random() * 0.4, '#c4121c', 1, 240);
+  suFgParts(F, dt); ctx.restore();
+}
+function suFatOverlay(now) {      // over the whole picture, not moved by the camera: the dark edges, the flashes, the black bars, the line he says, the hint to skip
+  const F = suFat, S = SU_FAT, u = Math.min(S.rep + S.track, F.u || 0), end = S.rep + S.track;
+  const kin = Math.min(1, u / 500), kout = Math.max(0, Math.min(1, (end - u) / 450)), bk = Math.min(kin * kin * (3 - 2 * kin), kout * kout * (3 - 2 * kout)), bh = Math.round(VH * S.bar * bk);
+  ctx.save(); ctx.imageSmoothingEnabled = false;
+  if (u >= S.rep) { ctx.fillStyle = 'rgba(40,60,110,0.16)'; ctx.fillRect(0, 0, VW, VH); }      // (the replay is a memory: a cold tint)
+  ctx.globalAlpha = 0.5; ctx.drawImage(yfVignette(), 0, 0); ctx.globalAlpha = 1;
+  for (let i = F.fl.length - 1; i >= 0; i--) { const f = F.fl[i], k = (now - f.at) / f.dur; if (k >= 1) { F.fl.splice(i, 1); continue; } if (k < 0) continue; ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(' + f.col + ',' + (f.a * (1 - k) * (1 - k)).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); ctx.globalCompositeOperation = 'source-over'; }
+  ctx.fillStyle = '#05000a'; ctx.fillRect(0, 0, VW, bh); ctx.fillRect(0, VH - bh, VW, bh); if (bh > 1) { ctx.fillStyle = '#5a0a14'; ctx.fillRect(0, bh, VW, 1); ctx.fillRect(0, VH - bh - 1, VW, 1); }
+  const n = Math.floor((u - S.sayAt) / S.sayMs); if (n > 0 && u < S.sayOff + 300 && bh > 6) { ctx.globalAlpha = u > S.sayOff ? Math.max(0, 1 - (u - S.sayOff) / 300) : 1; pxt(S.say.slice(0, Math.min(S.say.length, n)), Math.round(VW / 2), VH - Math.round(bh / 2) + 4, '#f2d6dc', 8, 'center'); ctx.globalAlpha = 1; }
+  if (u >= S.skipAt && u < end - 500 && bh > 6) { const tp = now - F.tapAt < 1500; if (tp || u < 5400) { ctx.globalAlpha = tp ? 1 : Math.min(0.85, (5400 - u) / 600); pxt(tp ? 'TAP AGAIN TO SKIP' : 'DOUBLE TAP TO SKIP', VW - 6, bh - 3, '#c89a9a', 8, 'right'); ctx.globalAlpha = 1; } }
+  ctx.restore();
 }
 window.__suDom = () => ({ last: suDomLast, cover: suDomCover(pnow()) });      // (test hook: where the shrine was drawn last and how much of the screen the domain covers)

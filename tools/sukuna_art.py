@@ -70,7 +70,7 @@ def head():
 
 ROWS = ('idle', 'fwd', 'jump', 'cdn', 'cidle', 'cfwd', 'atk0', 'atk1', 'kick', 'dash1', 'slash', 'atk30', 'atk31', 'slashL', 'slashX', 'cut', 'storm', 'ccut', 'dis', 'atk6', 'atk26', 'lift', 'dive', 'flame', 'sign', 'air')      # the strip's rows: Yuji's sets of the move (idle, walk, jump, crouch down, crouched idle, crouch walk, R.HOOK = his right jab, L.HOOK = his left jab, the back dash = his dodge, C.JAB and C.UPPR = his crouch punches) and the kick, the three slashes and the four BLUE moves made here, 15 pictures each
 NEWROWS = {'df': 'dash0', 'bl': 'blk', 'h0': 'rx0', 'h1': 'rx1', 'h2': 'rx2', 'h5': 'rx5', 'h6': 'rx6', 'h8': 'rx8', 'h9': 'rx9', 'cj': 'cju'}      # v1.154: rows that are Yuji's own set of another name (the forward dash, the block (10 pictures), his hit reactions 0 1 2 5 6 8 9 (3 spins, 7 hops and 4 is a fall: they need more room than 64 pictures give) and the spring of a crouch jump) with this head
-ROWS = ROWS + tuple(NEWROWS)
+ROWS = ROWS + tuple(NEWROWS) + ('hair',)      # (v1.166 the FINISHER's pose comes last, so that every other row keeps its place in the strip)
 MIDX = 22      # (in those sets the figure's middle column is put at column 22 of the grid: Yuji's reaction sets are cut from different columns, and the idle's is 18)
 def gx(name): return GX - (MIDX - 18) if name in NEWROWS else GX      # (where the grid of a row goes on its 64 x 64 canvas: the middle column is always column 32)
 BLINK = {'idle': (9, 10), 'cidle': (9, 10)}                 # (his own blinks: the pictures where his eye is shut)
@@ -266,7 +266,15 @@ def air_pic(i):
         pts = [(34 + AIRP[j]['ln'] + AIRP[j]['na'][1][0], 31 + AIRP[j]['by'] + AIRP[j]['na'][1][1]) for j in (7, 7, 8)]; pts = [(pts[0][0] - 1, pts[0][1] - 5), (pts[0][0] + 4, pts[0][1] + 1), pts[2]]
         ya.streak(f, pts, (.8, 1.8, 3.0), (0, .6, 1.0), False)
     return f, nh, fh
-GEN = {'slash': {'top': 0, 'frames': ya.pack(slash, 16, 48, 0)[0]}, 'slashL': {'top': 0, 'frames': ya.pack(slash_pic('slashL'), 16, 48, 0)[0]}, 'slashX': {'top': 0, 'frames': ya.pack(slash_pic('slashX'), 16, 48, 0)[0]}, 'kick': {'top': 0, 'frames': ya.pack(kick, 16, 48, 0)[0]}, 'cut': {'top': 0, 'frames': ya.pack(cast_pic('cut'), 16, 48, 0)[0]}, 'storm': {'top': 0, 'frames': ya.pack(cast_pic('storm'), 16, 48, 0)[0]}, 'ccut': {'top': 0, 'frames': ya.pack(cast_pic('ccut'), 16, 48, 0)[0]}, 'dis': {'top': 0, 'frames': ya.pack(cast_pic('dis'), 16, 48, 0)[0]}, 'lift': {'top': 0, 'frames': ya.pack(lift_pic, 16, 48, 0)[0]}, 'dive': {'top': 0, 'frames': ya.pack(dive_pic, 16, 48, 0)[0]}, 'flame': {'top': 0, 'frames': ya.pack(flame_pic, 16, 48, 0)[0]}, 'sign': {'top': 0, 'frames': ya.pack(sign_pic, 16, 48, 0)[0]}, 'air': {'top': 0, 'frames': ya.pack(air_pic, 16, 48, 0)[0]}}      # (the sets made here, in the form of yuji.json's)
+# ---- v1.166 the FINISHER's pose ('hair'): his near hand goes up to the back of his head and rests in his hair while he talks down to the kneeling enemy:
+# 0 he stands as he was, 1 - 4 the hand rises behind his head (his head bows a little), 5 - 10 HELD (he breathes: the game plays 0 - 4, keeps 5 - 10 going while he speaks, and then plays 11 - 14), 11 - 14 the hand comes down again and the picture ends in the standing pose
+HR_POSE = ((-3, -5), (-4.5, -13))      # (the elbow and the wrist from the near shoulder: the hand at the back of his head, in the roots of his hair)
+HR_N = {0: ya.IDLE_N, 4: HR_POSE, 10: HR_POSE, 14: ya.IDLE_N}
+def hair_params(i):
+    kv, GR = ya.kv, ya.GR; br = round(.5 + .5 * math.sin(2 * math.pi * (i - 5) / 6)) if 5 <= i <= 10 else 0
+    return dict(by=br, ln=round(kv({0: 0, 4: -1, 10: -1, 14: 0}, i) * .5), hd=round(kv({0: 0, 4: 1, 10: 1, 14: 0}, i)), lf=(35, GR, 0), lb=(31, GR, 0), na=kv(HR_N, i), fa=ya.IDLE_F, hp=i * .9, hup=1, hback=0, blink=False)
+def hair_pic(i): return ya.figure(hair_params(i))
+GEN = {'slash': {'top': 0, 'frames': ya.pack(slash, 16, 48, 0)[0]}, 'slashL': {'top': 0, 'frames': ya.pack(slash_pic('slashL'), 16, 48, 0)[0]}, 'slashX': {'top': 0, 'frames': ya.pack(slash_pic('slashX'), 16, 48, 0)[0]}, 'kick': {'top': 0, 'frames': ya.pack(kick, 16, 48, 0)[0]}, 'cut': {'top': 0, 'frames': ya.pack(cast_pic('cut'), 16, 48, 0)[0]}, 'storm': {'top': 0, 'frames': ya.pack(cast_pic('storm'), 16, 48, 0)[0]}, 'ccut': {'top': 0, 'frames': ya.pack(cast_pic('ccut'), 16, 48, 0)[0]}, 'dis': {'top': 0, 'frames': ya.pack(cast_pic('dis'), 16, 48, 0)[0]}, 'lift': {'top': 0, 'frames': ya.pack(lift_pic, 16, 48, 0)[0]}, 'dive': {'top': 0, 'frames': ya.pack(dive_pic, 16, 48, 0)[0]}, 'flame': {'top': 0, 'frames': ya.pack(flame_pic, 16, 48, 0)[0]}, 'sign': {'top': 0, 'frames': ya.pack(sign_pic, 16, 48, 0)[0]}, 'air': {'top': 0, 'frames': ya.pack(air_pic, 16, 48, 0)[0]}, 'hair': {'top': 0, 'frames': ya.pack(hair_pic, 16, 48, 0)[0]}}      # (the sets made here, in the form of yuji.json's)
 
 def yuji(name, i):
     """Yuji's picture i of a set as a grid of 64 figure rows x 48 columns (a jump's 4 empty rows above and below the figure are dropped; the game draws them 4 rows higher)"""

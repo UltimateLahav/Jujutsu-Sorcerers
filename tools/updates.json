@@ -1,5 +1,15 @@
 [
  {
+  "v": "1.166",
+  "t": "SUKUNA'S FINISHER",
+  "n": [
+   "Sukuna has a FATALITY now: the FATAL button (key H). It is a new skill in SKILLS > SUKUNA (1200, it needs the AIR CUT), it works when the enemy is close and at 20% health or less, and it costs nothing.",
+   "The scene: the enemy drops to his knees. Sukuna puts a hand in his hair and says \"You hold your head quite high\" (typed letter by letter at the bottom). A huge slash passes an inch over the kneeling head. The enemy stares up at him, gets up and charges. Sukuna touches his face and is gone: he stands behind him, and the enemy's head falls apart in three slices. Then a slow motion replay shows that Sukuna touched his face before he even reacted, and at normal speed again the enemy falls: K.O. and the round is Sukuna's.",
+   "GRAPHIC DAMAGE decides what you see of the cut: FULL shows the slices and the blood, CLEAN the slices without blood, OFF no cut at all (a flash, and he falls). A button pressed after the first second skips to the end (on a phone, tap the screen twice).",
+   "Ryu has no FATAL button, so the key H does nothing for him now. Before, it could start Gojo's finisher in a Ryu fight."
+  ]
+ },
+ {
   "v": "1.165",
   "t": "RYU'S MOVES LOSE THE WORD BLUE",
   "n": [
