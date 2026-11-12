@@ -1,5 +1,14 @@
 [
  {
+  "v": "1.163",
+  "t": "RYU'S BLUE MOVES",
+  "n": [
+   "Ryu has the BLUE button now, and its move changes with what he does. Standing it is the BLUE PUNCH: a hard punch with blue light round the fist that sends the enemy flying back. In the air it is the DIVE PUNCH: he flies fast to a place above the enemy and punches him down into the floor, smoke comes up and the enemy is stunned for 1.4 seconds. Holding forward it is the BLUE COMBO: right hook, left hook, uppercut, a kick, and an elbow that pushes the enemy far back.",
+   "DASH right after a blue punch or a blue combo is a DASH KICK: press it within half a second of the last blow (or already while the move is on) and Ryu dashes to where the enemy was thrown and kicks him far back. While that works the DASH button says DASH KICK.",
+   "Five new animations for him (uppercut, elbow, blue punch, dive punch, dash kick) and a burst of blue light on every blue blow. The blue moves have short cooldowns (0.7 s the punch, 3 s the dive, 2.5 s the combo, 1.5 s the kick), so they cannot be thrown again at once."
+  ]
+ },
+ {
   "v": "1.162",
   "t": "RYU IS MIRRORED",
   "n": [

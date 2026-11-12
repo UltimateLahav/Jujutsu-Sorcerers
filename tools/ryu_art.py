@@ -3,7 +3,7 @@
 Every picture is the LOOK the user chose (tools/ryu_src/master.png: face, hair, fur, jacket, belt, jeans, boots) put together again in a NEW pose by tools/ryu_parts.py. A pose (see mkpose) says where the pelvis is, how the chest, head and arms are turned
 and where the two ankles are (the legs are solved from them); the hair, the collar fur, the jacket with its tail and the fur cuffs then SWING ON THEIR OWN (swing(): a spring that is pushed by how the part they hang on moves), and fast limbs leave ACTION LINES.
 He is a heavy brawler who mixes styles: boxer's bounce, stomping walk, one knee down to crouch, high guard, a shoulder-charge dash, boxing hooks, a capoeira rising kick, an anime flying punch, a Muay Thai low kick and push kick,
-a pro-wrestling slam and a karate straight punch. `python3 -B ryu_art.py idle walk` rebuilds only those rows (the others stay as they are in the sheet)."""
+a pro-wrestling slam and a karate straight punch; v1.163 adds an uppercut and an elbow (the BLUE COMBO), a blue punch, a dive punch and a dash kick (ROWS_V1163). `python3 -B ryu_art.py idle walk` rebuilds only those rows (the others stay as they are in the sheet)."""
 import json, math, os, sys
 import numpy as np
 from PIL import Image
@@ -237,10 +237,61 @@ def a_ko(i):      # K.O.: knocked back (0-3), falling over backwards with his fe
         ft={0: 0, 5: 20, 9: -30, 14: -70}, bt={0: 0, 5: 10, 9: -30, 14: -80}, kb={0: None, 6: 1, 12: 1})
     return K(T, i)
 
+
+# ---------------------------------------------------------------- v1.163 the BLUE moves (see ryu.js): five more animations
+def a_upper(i):      # an UPPERCUT with the right fist: he sinks and the fist drops low behind the hip (0-4), the legs drive him up and the fist rises in an arc (5-6) to the impact at the chin (7), the body is stretched up behind it (8-10)
+    T = dict(pel={0: (0, 0, 0), 2: (-3, 10, -5), 4: (-5, 15, -9), 6: (4, 3, 8), 7: (8, -2, 12), 9: (7, 0, 8), 12: (1, 1, 1), 14: (0, 0, 0)},
+             chs={0: (0, 0, 0), 3: (-1, 0, -8), 4: (-2, 0, -11), 6: (1, 0, 6), 7: (3, -1, 12), 9: (2, 0, 8), 12: (0, 0, 1), 14: (0, 0, 0)}, hd={0: (0, 0, 0), 4: (-2, 2, -6), 7: (3, -2, 8), 14: (0, 0, 0)},
+             A={0: (0, 0, 0, 1, 1), 2: (-6, 10, 24, .9, 1), 4: (-12, 18, 52, .7, 1), 6: (8, 8, -30, 1.1, 1), 7: (16, -8, -64, 1.35, 1), 9: (12, -10, -58, 1.25, 1), 12: (2, 0, -10, 1.05, 1), 14: (0, 0, 0, 1, 1)},
+             B={0: (0, 0, 0, 1, 1), 4: (-6, -4, -30, .8, 1), 7: (-4, -2, -20, .8, 1), 14: (0, 0, 0, 1, 1)},
+             F={0: F0, 4: (F0[0] - 6, F0[1]), 6: (F0[0] + 6, F0[1]), 8: (F0[0] + 14, F0[1]), 11: (F0[0] + 6, F0[1]), 14: F0}, K={0: B0, 5: (B0[0] + 2, B0[1] - 2), 8: (B0[0] + 8, B0[1] - 6), 12: (B0[0] + 2, B0[1]), 14: B0},
+             ft={0: 0, 4: 8, 7: -4, 12: 0}, bt={0: 0, 5: -14, 8: -22, 12: 0})
+    return K(T, i)
+def a_elbow(i):      # a Muay Thai ELBOW with the left arm: he turns away and the arm folds back (0-5), then he steps in and the hips snap round so that the point of the elbow drives straight into the enemy (6-7: the impact is 7)
+    T = dict(pel={0: (0, 0, 0), 3: (-6, 4, -8), 5: (-4, 5, -4), 6: (8, 6, 10), 7: (14, 6, 16), 9: (12, 6, 14), 12: (2, 2, 2), 14: (0, 0, 0)},
+             chs={0: (0, 0, 0), 3: (-2, 0, -12), 5: (-1, 0, -6), 6: (3, 0, 12), 7: (6, 0, 20), 9: (5, 0, 16), 12: (0, 0, 2), 14: (0, 0, 0)}, hd={0: (0, 0, 0), 3: (-2, 0, -4), 7: (4, 1, 8), 14: (0, 0, 0)},
+             B={0: (0, 0, 0, 1, 1), 3: (-10, -2, -30, .7, 1), 5: (-12, 0, -40, .6, 1), 6: (6, -4, -14, .62, 1), 7: (20, -6, -8, .7, 1), 9: (16, -4, -6, .7, 1), 12: (2, 0, -1, 1, 1), 14: (0, 0, 0, 1, 1)},
+             A={0: (0, 0, 0, 1, 1), 4: (-8, 6, -20, .8, 1), 7: (-10, 8, -14, .8, 1), 14: (0, 0, 0, 1, 1)},
+             F={0: F0, 5: (F0[0] - 4, F0[1]), 7: (F0[0] + 18, F0[1]), 10: (F0[0] + 12, F0[1]), 14: F0}, K={0: B0, 6: (B0[0] + 4, B0[1] - 2), 8: (B0[0] + 4, B0[1] - 4), 12: (B0[0] + 2, B0[1]), 14: B0}, ft={0: 0, 5: 6, 7: -6, 12: 0}, bt={0: 0, 6: -12, 8: -16, 12: 0})
+    return K(T, i)
+def a_bluep(i):      # the BLUE PUNCH: a straight punch with everything he has: he leans far back and the fist is drawn back to the hip (0-5), then a long lunge, the hips and the chest drive and the big cuff shoots out (6-8: the impact is 8), blue light round it
+    T = dict(pel={0: (0, 0, 0), 3: (-10, 6, -6), 5: (-12, 8, -8), 7: (6, 8, 12), 8: (16, 9, 18), 11: (12, 8, 12), 14: (0, 0, 0)}, chs={0: (0, 0, 0), 3: (-3, 0, -12), 5: (-3, 0, -14), 7: (2, 0, 8), 8: (5, 0, 16), 11: (4, 0, 12), 14: (0, 0, 0)}, hd={0: (0, 0, 0), 5: (-3, 0, -6), 8: (5, 1, 10), 14: (0, 0, 0)},
+             B={0: (0, 0, 0, 1, 1), 3: (-16, 6, -22, .6, 1), 5: (-20, 8, -26, .55, 1), 7: (10, -2, -2, 1.2, 1), 8: (30, -4, 0, 1.85, 1), 11: (22, -2, 2, 1.6, 1), 14: (0, 0, 0, 1, 1)}, A={0: (0, 0, 0, 1, 1), 5: (-8, 6, -24, .8, 1), 8: (-10, 10, -20, .75, 1), 13: (0, 0, 0, 1, 1)},
+             F={0: F0, 4: (F0[0] - 8, F0[1]), 7: (F0[0] + 8, F0[1] - 6), 8: (F0[0] + 30, F0[1]), 12: (F0[0] + 22, F0[1]), 14: F0}, K={0: B0, 6: (B0[0] + 2, B0[1]), 8: (B0[0] - 10, B0[1] - 2), 12: (B0[0] + 6, B0[1]), 14: B0}, ft={0: 0, 6: -10, 8: 0}, bt={0: 0, 8: 20, 12: 0})
+    return K(T, i)
+def a_dive(i):      # the DIVE PUNCH: he springs up (0-2), shoots forward through the air flat (3-5), pitches up above the enemy with the fist cocked over his head (6-7), leans over it and drives it straight down (8: the impact) and lands in a crouch (9-12)
+    T = dict(pel={0: (0, 0, 0), 1: (0, 12, 4), 2: (-2, -4, -6), 3: (6, -6, 22), 4: (8, -8, 34), 5: (10, -8, 40), 6: (8, -6, 22), 7: (4, -4, 8), 8: (8, -2, 26), 9: (8, 4, 24), 10: (6, 14, 22), 12: (0, 8, 6), 14: (0, 0, 0)},
+             chs={0: (0, 0, 0), 2: (0, 0, 4), 3: (2, 0, 14), 5: (3, 0, 22), 6: (2, 0, 8), 7: (0, 0, -6), 8: (4, 0, 14), 10: (2, 0, 12), 14: (0, 0, 0)}, hd={0: (0, 0, 0), 5: (3, 2, 10), 7: (-1, 0, -6), 8: (5, 3, 14), 12: (0, 0, 4), 14: (0, 0, 0)},
+             A={0: (0, 0, 0, 1, 1), 2: (-4, -4, -30, .8, 1), 4: (-10, -6, -62, .7, 1), 6: (-12, -10, -104, .62, 1), 7: (-6, -4, -60, .9, 1), 8: (16, 14, 52, 1.7, 1), 10: (12, 12, 44, 1.4, 1), 12: (2, 4, 20, 1, 1), 14: (0, 0, 0, 1, 1)},
+             B={0: (0, 0, 0, 1, 1), 3: (-6, 4, 20, .85, 1), 7: (-12, 6, 36, .8, 1), 8: (-14, 8, 50, .75, 1), 10: (-4, 10, 30, .8, 1), 14: (0, 0, 0, 1, 1)},
+             F={0: F0, 1: F0, 2: (F0[0] - 4, F0[1] - 18), 4: (F0[0] - 14, F0[1] - 30), 6: (F0[0] - 16, F0[1] - 42), 8: (F0[0] - 22, F0[1] - 46), 10: (F0[0] - 6, F0[1] - 6), 12: F0, 14: F0},
+             K={0: B0, 1: B0, 2: (B0[0] - 6, B0[1] - 12), 4: (B0[0] - 18, B0[1] - 24), 6: (B0[0] - 22, B0[1] - 38), 8: (B0[0] - 28, B0[1] - 40), 10: (B0[0] - 6, B0[1] - 4), 12: B0, 14: B0},
+             ft={0: 0, 3: 24, 8: 40, 10: 10, 12: 0}, bt={0: 0, 3: 20, 8: 34, 12: 0}, kb={0: None, 3: 1, 11: 1, 12: None})
+    return K(T, i)
+def a_dkick(i):      # the DASH KICK: he leans back and the knee comes up (0-3), then he slides in on the standing foot and the other one drives straight out, flat, into the enemy (4-8: the impact is 7), the body leans far back behind it
+    Fp = {0: F0, 1: (F0[0] - 4, F0[1] - 14), 2: (F0[0] + 2, F0[1] - 34), 3: (168, 108), 4: (192, 98), 5: (214, 94), 6: (228, 94), 7: (232, 94), 8: (224, 98), 9: (204, 108), 10: (180, 130), 11: (164, 148), 12: F0, 14: F0}
+    T = dict(pel={0: (0, 0, 0), 2: (-6, 2, -8), 5: (-18, 3, -22), 7: (-24, 3, -26), 9: (-12, 3, -12), 12: (0, 1, -1), 14: (0, 0, 0)}, chs={0: (0, 0, 0), 3: (-2, 0, -10), 6: (-4, 0, -20), 8: (-4, 0, -20), 12: (0, 0, -1), 14: (0, 0, 0)}, hd={0: (0, 0, 0), 6: (0, 0, 10), 14: (0, 0, 0)},
+             A={0: (0, 0, 0, 1, 1), 3: (-6, 8, 14, .85, 1), 7: (-10, 10, 24, .8, 1), 12: (0, 0, 2, 1, 1), 14: (0, 0, 0, 1, 1)}, B={0: (0, 0, 0, 1, 1), 3: (-12, -6, -34, .8, 1), 7: (-18, -8, -52, .7, 1), 12: (0, 0, -2, 1, 1), 14: (0, 0, 0, 1, 1)},
+             F=Fp, K={0: B0, 3: (B0[0] - 6, B0[1]), 5: (B0[0] + 14, B0[1]), 9: (B0[0] + 20, B0[1]), 12: B0, 14: B0}, ft={0: 0, 3: -18, 6: -78, 9: -30, 12: 0}, bt={0: 0, 4: 10, 10: 10, 12: 0})
+    return K(T, i)
+def glow(a, x, y, r=4.6):      # BLUE LIGHT round a fist: where the picture is empty a blue ball of light (light blue inside, blue further out, the outer ring on every other pixel so it looks soft), and the bright parts of the fist itself (the white cuff, the skin) are tinted blue, the dark parts and the outline stay
+    for yy in range(int(y - r) - 1, int(y + r) + 2):
+        for xx in range(int(x - r) - 1, int(x + r) + 2):
+            d = math.hypot(xx - x, yy - y)
+            if d > r or not (0 <= xx < 64 and 0 <= yy < 64): continue
+            if a[yy, xx, 3] == 0:
+                if d < r * .5: put(a, xx, yy, (170, 214, 255))
+                elif d < r * .8: put(a, xx, yy, (80, 142, 252))
+                elif (xx + yy) % 2 == 0: put(a, xx, yy, (46, 96, 224))
+            elif a[yy, xx, :3].astype(int).sum() > 420 and d < r * .8:
+                t = .75 if d < r * .5 else .5; c = a[yy, xx, :3].astype(float); a[yy, xx, :3] = np.clip(c * (1 - t) + np.array([120, 182, 255]) * t, 0, 255).astype(np.uint8)
+
+ROWS_V1163 = [('uc', a_upper, [('armA', HAND_A)], False, None, .5), ('el', a_elbow, [('armB', HAND_B)], False, None, .5), ('bp', a_bluep, [('armB', HAND_B)], False, (3, 0), .5), ('dv', a_dive, ['body'], False, (2, 0), .4), ('dk', a_dkick, ['foot'], False, (3, 0), .6)]
+
 ROWS = [('frames', a_idle, [], True, None, 2.4), ('walk', a_walk, [], True, (11.8, 0), 1.3), ('wback', lambda i: a_walk(i, True), [], True, (-8.8, 0), 1.3), ('jump', a_jump, [], False, w_jump, .35), ('cr', a_cdown, [], False, None, 1.2), ('ci', a_cidle, [], True, None, 2.4),
         ('cwk', a_cwalk, [], True, (4, 0), 1.6), ('bl', a_block, [], False, None, 1.5), ('dg', a_dash, ['body'], False, w_dash, .35), ('db', a_dashb, ['body'], False, w_dashb, .4), ('a0', a_hookL, [('armB', HAND_B)], False, None, .5), ('a1', a_hookR, [('armA', HAND_A)], False, None, .5),
         ('a2', a_kickup, ['foot'], False, None, .6), ('a3', a_jpunch, [('armB', HAND_B)], False, (3, 0), .45), ('cp', a_cleg, ['foot'], False, None, .8), ('as', a_slam, [('armA', HAND_A), ('armB', HAND_B)], False, None, .45), ('hp', a_hard, [('armB', HAND_B)], False, (2, 0), .5),
-        ('fk', a_front, ['foot'], False, None, .6), ('hu', a_hurt, [], False, (-6, 0), .5), ('ko', a_ko, [], False, (-9, 0), .4)]
+        ('fk', a_front, ['foot'], False, None, .6), ('hu', a_hurt, [], False, (-6, 0), .5), ('ko', a_ko, [], False, (-9, 0), .4)] + ROWS_V1163
 ROWN = [r[0] for r in ROWS]
 
 def build_row(name, fn, eff, loop, wvel, mult=1.0):
@@ -272,6 +323,8 @@ def build_row(name, fn, eff, loop, wvel, mult=1.0):
     frames = []
     for i, pose in enumerate(poses):
         a = rp.outline(raw[i])
+        if name == 'bp' and 6 <= i <= 11:      # (v1.163 the fist of the blue punch: the right-most part of the figure above the legs, found before the action lines are drawn; the cell may cut the figure off, so this is read from the picture and not from the arm's numbers)
+            ys, xs = np.where(a[..., 3] > 0); up = ys < 50; fx = int(xs[up].max()); sel = up & (xs >= fx - 5); fist = (min(pos[i][0][0] + 1, fx - 3), float(ys[sel].mean()))
         if eff:
             if name in ('dg', 'db'):
                 r = max(0.0, 1 - abs(i - 7) / 4.5)
@@ -279,9 +332,14 @@ def build_row(name, fn, eff, loop, wvel, mult=1.0):
                 if r > .25:
                     sgn = 1 if name == 'dg' else -1; pts = [(14 + (j % 3) * 9 - sgn * 4 * r + (3 if name == 'db' else 0), 20 + j * 6 + (i % 2), sgn * 8 * r, 0) for j in range(7)]
                     lines(a, pts, i, length=8, n=1, spread=0, over=False)
+            elif name == 'dv':      # (v1.163 the dive: the body is smeared along its flight (pictures 2 - 7) and white lines run against it)
+                r = max(0.0, 1 - abs(i - 4.5) / 3.2)
+                if r > 0: a = smudge(a, int(2 + 8 * r), 1)
+                if r > .3: lines(a, [(18 + (j % 3) * 9, 14 + j * 6 + (i % 2), 9 * r, 0) for j in range(6)], i, length=8, n=1, spread=0, over=False)
             else:
                 prev = pos[i - 1] if i else pos[i]; vel = [(p[0] - q[0], p[1] - q[1]) for p, q in zip(pos[i], prev)]
                 lines(a, [(p[0], p[1], v[0], v[1]) for p, v in zip(pos[i], vel)], i, n=3, spread=2.6, over=True)
+            if name == 'bp' and 6 <= i <= 11: glow(a, fist[0], fist[1], {6: 3.6, 7: 4.6, 8: 6.2, 9: 6.0, 10: 5.2, 11: 4.0}[i])      # (v1.163 blue light round the fist while it flies and at the impact)
         frames.append(a)
     return frames
 

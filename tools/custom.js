@@ -93,7 +93,7 @@ function cuDrawShots(now, cx) { for (const s of cuShots) ctx.drawImage(s.vf[Math
 function cuPunch(g, now) {      // the punch being thrown: its time ap (0 to 1, -1 = none), the LUNGE, and every event of its timeline when its picture comes up; it ends after the last picture
   if (cuAtkAt < 0 || !g || g.cs) return -1;      // (the counter of a built-in fighter, g.cs, is played by suStep)
   const n = g.atk[cuAtkK].length, ap = (now - cuAtkAt) / (n * cuMs), fi = ap >= 1 ? n : Math.floor(ap * n) + 1, ev = g.ev[cuAtkK], lg = g.set[cuAtkK].m;
-  if (lg) { const tg = lg * Math.min(1, ap); wx += tg - cuLunged; cuLunged = tg; }
+  if (lg) { const st = g.set[cuAtkK], u = Math.min(1, ap / (st.lt || 1)), tg = lg * (st.e ? 1 - (1 - u) * (1 - u) : u); wx += tg - cuLunged; cuLunged = tg; }      // (v1.163 e: the step is fast at first and slows down, lt: it is over after that part of the blow, Ryu's BLUE moves)
   for (let j = 0; j < ev.length; j++) if (!cuFired[j] && ev[j].f <= fi) { cuFired[j] = 1; cuEv(ev[j], now, g, cuAtkK); }
   if (ap >= 1) { cuAtkAt = -1; cuCmbBy = now + 700; return -1; }
   return ap;
@@ -133,6 +133,7 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
     cuLpQ = 0; const st = g.set[bk];
     if (suBlueOk(bk, now) && (!st.c || ceSpend(st.c * 100 / cuS.em, now))) { cuAtkK = bk; cuAtkAt = now; cuFired = []; cuRes = []; cuLunged = 0; cuMs = 1000 / st.v; cuCmb = cuSn = cuCp = 0; cuCmbBy = now + 1e9; suBlueStart(bk, now); snd('swing', bk); }
   }
+  if (g && g.ry) ryBlueStep(g, now, ctl, lpr, dsh);      // (v1.163 Ryu's BLUE moves and the DASH KICK, see ryu.js; before the dash, which a kick that has just started takes the place of)
   if (dsh && ctl && g && stance === 'stand' && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0 && now > cuDashReady && (g.df.length || g.db.length)) {      // (DASH: holding forward is a front dash, anything else a back dash, like the others; the pictures of that dash, or the other dash's pictures backwards; free, a 0.15 s pause after it, and his blows miss you for the first part)
     const d = (keyR || padR) ? 1 : -1, fr = d > 0 ? (g.df.length ? g.df : g.db.slice().reverse()) : (g.db.length ? g.db : g.df.slice().reverse());
     cuDash = { at: now, dur: cuS.dtm, len: d * (d > 0 ? cuS.dfw : cuS.dbk), done: 0, fr }; dgK = d > 0 ? 0 : 1; snd('dash', dgK); puff(wx - d * 5, 5);
@@ -152,7 +153,7 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
     if (stance === 'stand') stickCr = false;
   }
   const ap = cuPunch(g, now); cuShotStep(now, dt); if (g && g.blue) suFlStepArrows(now, dt); cuBleedStep(now); ceTick(now, dt); const sp = g && g.yu ? suStep(g, now) : null; if (g && g.yu) suBleedFx(now);      // (v1.109 sp: the picture of the counter's dodge and slash, or nothing)
-  if (g && g.blue) { suBlueLabel(now); suModeUI(); suUltUI(now); }
+  if (g && g.blue) { suBlueLabel(now); suModeUI(); suUltUI(now); } else if (g && g.ry) ryBlueLabel(now);
   { const lab = g && g.cs && !g.cs.air && !g.cs.dash && !g.cs.cl && !g.cs.fl && !g.cs.dom ? 'COUNTER' : g && g.yu ? suLabel(g, now) : g && g.ry ? ryLabel(g, now) : g && g.rdy.length ? g.an[g.rdy[(now > cuCmbBy ? 0 : cuCmb) % g.rdy.length]] : 'ATTACK'; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; } }      // (the ATTACK button shows the name of the punch that comes next)
   let jp = -1, lift = 0, jfr = -1; if (cuJumpAt >= 0) {      // (JUMP: the jump frames play once over JUMP TIME while it rises JUMP HEIGHT pixels and comes down; v1.108: a fighter with `yu` jumps as Yuji does, with his timing and his height for every picture, and the dust of his push-off and landing)
     if (g && (g.yu || g.ry)) { jfr = jumpFrame(Math.max(0, now - cuJumpAt)); if (jfr >= g.jump.length) { cuJumpAt = -1; jfr = -1; snd('land', 1); if (g.ry) ryLand(now); } else { jp = (jfr + 0.5) / g.jump.length; lift = (cuJumpC && g.cj ? YU.cjump : YU.jump).lift[jfr]; jumpDust(jfr); } }

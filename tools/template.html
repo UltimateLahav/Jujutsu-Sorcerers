@@ -72,7 +72,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #fat.rdy{opacity:1;background:#3a0d12;border-color:#ff8a7a;color:#fff;box-shadow:0 0 1.8vh #ff4a3a,0 0 .5vh #ff4a3a inset,4px 4px 0 #000;animation:fatglow .5s steps(2) infinite}
 @keyframes fatglow{50%{box-shadow:0 0 3.2vh #ff2a2a,0 0 .9vh #ff2a2a inset,4px 4px 0 #000}}
 #pad.cine,#hud.cine{visibility:hidden}
-body.ry #dom,body.ry #ce,body.ry #fat,body.ry #lap,body.c4 #dom,body.c4 #ce,body.c4 #fat,body.c4 #lap,body.c4 #sns{visibility:hidden}      /* (v1.143 Ryu has no BLUE, MODE, DOMAIN or FATAL: those buttons are hidden while he fights) */      /* the controls hide while a cutscene plays (the FATALITY, the red ending) */
+body.ry #dom,body.ry #ce,body.ry #fat,body.c4 #dom,body.c4 #ce,body.c4 #fat,body.c4 #lap,body.c4 #sns{visibility:hidden}      /* (v1.143 Ryu has no MODE, DOMAIN or FATAL: those buttons are hidden while he fights; v1.163 he has BLUE) */      /* the controls hide while a cutscene plays (the FATALITY, the red ending) */
 #qte{position:fixed;inset:0;z-index:4;display:none;pointer-events:none}#qte.show{display:block}      /* the quick-time event of the red ending: the red button, and the ring that closes on it */
 #qBtn,#qRing{position:absolute;border-radius:50%}
 #qBtn{display:none;pointer-events:auto;touch-action:none;padding:0;font-size:var(--fs-q,12px);white-space:nowrap;align-items:center;justify-content:center;background:#d8281c;border:.9vh solid #ffd0b0;color:#fff;text-shadow:2px 2px 0 #000;box-shadow:0 0 2.4vh #ff3a2a,0 0 .8vh #ffd0b0 inset,.5vh .5vh 0 #000}#qBtn.show{display:flex}#qBtn.on{background:#ff5a42;box-shadow:0 0 3.6vh #ff6a4a,0 0 1.2vh #fff inset,.2vh .2vh 0 #000}
@@ -186,7 +186,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.162</small>
+    <small id="ver">V1.163</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
