@@ -342,7 +342,7 @@ function c4xBanner(c, now) {
   const F = c.F; if (c.ph === 'fight' && F) {
     const a = now - F.t0; if (a < 1300) { const k = a < 200 ? a / 200 : a > 1000 ? (1300 - a) / 300 : 1; ctx.globalAlpha = Math.max(0, Math.min(1, k)); pxt('FIGHT!', VW / 2, Math.round(VH * 0.4), '#ffffff', 24, 'center'); ctx.globalAlpha = 1; }
     if (a >= 600 && a < 3800) { const k = a < 900 ? (a - 600) / 300 : a > 3500 ? (3800 - a) / 300 : 1; ctx.globalAlpha = Math.max(0, Math.min(1, k)); pxt('BRING MEGUNA TO HALF HEALTH', VW / 2, Math.round(VH * 0.4) + 14, '#ffd34d', 8, 'center'); ctx.globalAlpha = 1; }
-  } else if (c.ph === 'ranos' && c.rs && c.rs.win) { const t = (now - c.t0) / 1000; if (t > 0.2 && t < 1.9) { ctx.globalAlpha = Math.min(1, (t - 0.2) / 0.2) * Math.min(1, (1.9 - t) / 0.3); pxt('HALF HEALTH!', VW / 2, Math.round(VH * 0.4), '#ffd34d', 16, 'center'); ctx.globalAlpha = 1; } }
+  } else if (c.ph === 'ranos' && c.rs && c.rs.win) { const t = (now - c.t0) / 1000; if (t > 0.2 && t < 1.2) { ctx.globalAlpha = Math.min(1, (t - 0.2) / 0.2) * Math.min(1, (1.2 - t) / 0.3); pxt('HALF HEALTH!', VW / 2, Math.round(VH * 0.4), '#ffd34d', 16, 'center'); ctx.globalAlpha = 1; } }
 }
 
 // ---- the end of the fight: half health (a win) and no health (a loss) go on the same way: Ranos steps in (tools/chap4e.js)

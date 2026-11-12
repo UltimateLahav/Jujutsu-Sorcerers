@@ -57,8 +57,8 @@ function c4xWorld(now) {
   ctx.restore();
 }
 function c4xCam(c, dt, snap) {
-  const mid = (c.y.x + c.m.x) / 2, lo = C4X.arL + VW / 2 - 24, hi = C4X.arR - VW / 2 + 24, tg = lo > hi ? 0 : Math.max(lo, Math.min(hi, mid));
-  c.cam = snap ? tg : c.cam + (tg - c.cam) * Math.min(1, dt * 7);
+  const lock = c.ph === 'ranos' && c.camTo !== undefined, mid = lock ? c.camTo : (c.y.x + c.m.x) / 2, lo = C4X.arL + VW / 2 - 24, hi = C4X.arR - VW / 2 + 24, tg = lo > hi ? 0 : Math.max(lo, Math.min(hi, mid));      // (in the scene of Ranos the camera finds him and then stands still: no sliding about the picture, no flicker from a body that shakes)
+  c.cam = snap ? tg : c.cam + (tg - c.cam) * Math.min(1, dt * 7); if (lock && Math.abs(c.cam - tg) < 0.05) c.cam = tg;
 }
 
 // ---- start, leave, retry
