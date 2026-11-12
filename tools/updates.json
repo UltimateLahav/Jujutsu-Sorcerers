@@ -1,5 +1,12 @@
 [
  {
+  "v": "1.162",
+  "t": "RYU IS MIRRORED",
+  "n": [
+   "Ryu's sprite is mirrored now (left and right swapped): in the fight and on his card in the character select. Only the picture changed: his moves, his reach and the place where his blows hit are exactly as before (in front of him, to the right)."
+  ]
+ },
+ {
   "v": "1.161",
   "t": "THE END OF CHAPTER 4",
   "n": [

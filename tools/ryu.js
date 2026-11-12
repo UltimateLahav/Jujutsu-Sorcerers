@@ -24,8 +24,9 @@ NAMES[RYU_WHO] = 'RYU'; CEC[RYU_WHO] = ['#10142a', '#3a58c8', '#a8c0f0', '#7aa0f
   const im = new Image();
   im.onload = () => {      // the strip is cut into 64 x 64 pictures, a row for each animation (until then he is not there: his card shows nothing)
     const n = Math.floor(im.width / 64), set = {}, arts = {}, tipOf = a => { const sp = cuSpan(a, r => r - 1), o = {}; for (const r in sp) o[r] = sp[r][1]; return o; };      // (tipOf: how far each row of a picture reaches in front of his middle column)
+    const mir = c => { const m = document.createElement('canvas'); m.width = m.height = 64; const g = m.getContext('2d'); g.translate(64, 0); g.scale(-1, 1); g.drawImage(c, 0, 0); return m; };      // (v1.162: his pictures are MIRRORED, left and right swapped, the way the game draws an enemy that turns round; every place that draws him (the fight, his card) uses them. The numbers for his reach and his body (arts, below) are taken from the pictures as they were drawn, before the mirror, so that his blows hit where they always did)
     RYU_ROWS.forEach((k, r) => {
-      set[k] = []; arts[k] = []; for (let i = 0; i < n; i++) { const c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(im, i * 64, r * 64, 64, 64, 0, 0, 64, 64); set[k].push(c); arts[k].push(suAlpha(c)); }
+      set[k] = []; arts[k] = []; for (let i = 0; i < n; i++) { const c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(im, i * 64, r * 64, 64, 64, 0, 0, 64, 64); set[k].push(mir(c)); arts[k].push(suAlpha(c)); }
     });
     const body = cuWiden(arts.frames.map(a => cuSpan(a, r => r - 1))), hs = Object.values(body).map(v => v[1]).sort((a, b) => a - b);      // (the widest every row gets over his idle pictures, and half as wide as his torso for the push)
     const ev = RY_MV.map((mv, k) => {      // the impact of each blow: { f: its picture, k: 'i', d: damage, fx: knock-back, launch, stun and, if it hit, a hit stop and a shake, tip: the limb on the impact's pictures, dy: how high the body is then }
