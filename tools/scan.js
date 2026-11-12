@@ -190,20 +190,24 @@ async function scMore() {      // the time that is left of the minute: more rand
 async function scMoves() {
   SC.sec = 'MOVES'; const DIRS = [['', 'STANDING'], ['KeyD', 'FORWARD'], ['KeyA', 'BACK'], ['KeyS', 'CROUCHING'], ['Space', 'JUMPING']], BTN = [['KeyJ', 'ATTACK'], ['KeyL', 'BLUE'], ['KeyK', 'DASH']];
   const V = []; for (const [d, dn] of DIRS) for (const [k, kn] of BTN) V.push([d, k, 0, dn + ' ' + kn]); V.push(['', 'KeyJ', 1, 'HOLD ATTACK'], ['KeyD', 'KeyJ', 1, 'FORWARD HOLD ATTACK'], ['', 'KeyE', 0, 'CURSED ENERGY'], ['', 'KeyQ', 0, 'SENSE'], ['', 'KeyB', 1, 'BLOCK']);
-  scCov('MOVES', 0, SC_WHO.length * V.length); SC.plan = SC_WHO.length * (V.length * 20 + 30); SC.done = 0;
+  scCov('MOVES', 0, SC_WHO.length * V.length + V.length - 1); SC.plan = SC_WHO.length * (V.length * 20 + 30); SC.done = 0;
   for (let i = 0; i < SC_WHO.length; i++) {
     const w = SC_WHO[i]; SC.say = SC_NAME[w] + ' START'; SET.gore = 0;
     try { Object.assign(TR, { beh: 0, ehp: 1, php: 0, pce: 0, put: 2 }); startPractice(w, 'gojo'); } catch (e) { scErr(e, SC_NAME[w] + ' START'); continue; }
     if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; scNote('fail', 'THE FIGHT NEVER BEGAN: ' + SC_NAME[w], 'FREE PLAY'); continue; }
     await scFrames(2, null, 600);
-    for (const [d, k, hold, nm] of V) {
-      SC.say = SC_NAME[w] + ': ' + nm;
-      try { trainReset(); TR.put = 2; trainPut(); if (d) scKey(d, true); } catch (e) { scErr(e, SC.say); }
-      if (d === 'Space') { await scFrames(5); scKey(d, false); await scFrames(2); }
-      scKey(k, true); const a = await scFrames(hold ? 18 : 2); scKey(k, false); const b = a && await scFrames(hold ? 6 : 10);
-      if (d && d !== 'Space') scKey(d, false); const c = b && await scFrames(3); scCheck();
-      if (!c) { for (const x of ['KeyD', 'KeyA', 'KeyS', 'Space', 'KeyJ', 'KeyL', 'KeyK', 'KeyE', 'KeyQ', 'KeyB']) scKey(x, false); show('title'); return; }
-      scCov('MOVES', 1, 0);
+    for (const gbm of (w === 'cu4' ? [false, true] : [false])) {      // (Ryu twice: the second time with his GRANITE BLAST mode on, v1.170)
+      if (gbm) { scKey('KeyE', true); await scFrames(2); scKey('KeyE', false); await scFrames(4); }
+      for (const [d, k, hold, nm] of (gbm ? V.filter(v => v[1] !== 'KeyE') : V)) {
+        SC.say = SC_NAME[w] + (gbm ? ' (GRANITE MODE)' : '') + ': ' + nm;
+        try { trainReset(); TR.put = 2; trainPut(); if (d) scKey(d, true); } catch (e) { scErr(e, SC.say); }
+        if (d === 'Space') { await scFrames(5); scKey(d, false); await scFrames(2); }
+        scKey(k, true); const a = await scFrames(hold ? 18 : 2); scKey(k, false); const b = a && await scFrames(hold ? 6 : 10);
+        if (d && d !== 'Space') scKey(d, false); const c = b && await scFrames(3); scCheck();
+        if (!c) { for (const x of ['KeyD', 'KeyA', 'KeyS', 'Space', 'KeyJ', 'KeyL', 'KeyK', 'KeyE', 'KeyQ', 'KeyB']) scKey(x, false); show('title'); return; }
+        scCov('MOVES', 1, 0);
+      }
+
     }
     show('title');
   }

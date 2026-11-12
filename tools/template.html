@@ -72,7 +72,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #fat.rdy{opacity:1;background:#3a0d12;border-color:#ff8a7a;color:#fff;box-shadow:0 0 1.8vh #ff4a3a,0 0 .5vh #ff4a3a inset,4px 4px 0 #000;animation:fatglow .5s steps(2) infinite}
 @keyframes fatglow{50%{box-shadow:0 0 3.2vh #ff2a2a,0 0 .9vh #ff2a2a inset,4px 4px 0 #000}}
 #pad.cine,#hud.cine{visibility:hidden}
-body.ry #dom,body.ry #ce,body.ry #fat,body.c4 #dom,body.c4 #ce,body.c4 #fat,body.c4 #lap,body.c4 #sns{visibility:hidden}      /* (v1.143 Ryu has no MODE, DOMAIN or FATAL: those buttons are hidden while he fights; v1.163 he has BLUE) */      /* the controls hide while a cutscene plays (the FATALITY, the red ending) */
+body.ry #dom,body.ry #fat,body.c4 #dom,body.c4 #ce,body.c4 #fat,body.c4 #lap,body.c4 #sns{visibility:hidden}      /* (v1.143 Ryu has no DOMAIN or FATAL: those buttons are hidden while he fights; v1.163 he has BLUE, v1.170 the MODE button is his GRANITE BLAST mode) */      /* the controls hide while a cutscene plays (the FATALITY, the red ending) */
 #qte{position:fixed;inset:0;z-index:4;display:none;pointer-events:none}#qte.show{display:block}      /* the quick-time event of the red ending: the red button, and the ring that closes on it */
 #qBtn,#qRing{position:absolute;border-radius:50%}
 #qBtn{display:none;pointer-events:auto;touch-action:none;padding:0;font-size:var(--fs-q,12px);white-space:nowrap;align-items:center;justify-content:center;background:#d8281c;border:.9vh solid #ffd0b0;color:#fff;text-shadow:2px 2px 0 #000;box-shadow:0 0 2.4vh #ff3a2a,0 0 .8vh #ffd0b0 inset,.5vh .5vh 0 #000}#qBtn.show{display:flex}#qBtn.on{background:#ff5a42;box-shadow:0 0 3.6vh #ff6a4a,0 0 1.2vh #fff inset,.2vh .2vh 0 #000}
@@ -186,7 +186,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.169</small>
+    <small id="ver">V1.170</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -426,12 +426,12 @@ const hbKey = d => d && d.curse ? 'c:' + d.curse.id : vs ? vs.foe : 'gojo';     
 const hbMe = () => vs && vs.me === 'freddy' && stance === 'crouch' ? 'freddy:c' : vs ? vs.me : 'gojo';      // which body I have in the tables (v1.86: Freddy crouched is lower, with his claw out in front)
 const HB_PW = {}, hbPush = (who, least) => { if (who.slice(0, 2) === 'cu') return Math.max(least, cuHbPush(who)); let w = HB_PW[who]; if (w === undefined) { const B = HB_BODY[who], h = B ? Object.values(B).map(v => v[1]).sort((a, b) => a - b) : []; w = HB_PW[who] = h.length ? h[h.length >> 1] : 0; } return Math.max(least, w); };      // how far in front of his hips a fighter pushes another one away: the middle of the rows' reach (the arms, feet and weapons that stick out do not push), never less than the old 5 (6 for an enemy)
 function hbTouchMe(shape) {      // does a shape in the world ({ row: [from column, to column) }) touch my body (my hips are on wx, I face right, a jump or a launch lifts my rows)
-  const B = hbBody(hbMe()); if (!B) return true; const lift = Math.max(gojoLift || 0, gAir ? gAirH || 0 : 0);
+  const B = hbBody(hbMe()); if (!B) return true; const lift = Math.round(Math.max(gojoLift || 0, gAir ? gAirH || 0 : 0));      // (v1.170 a whole number of rows: the height of a jump or a launch is not, and a row between two rows is no row)
   for (const r in shape) { const b = B[+r + lift]; if (b && shape[r][0] < wx + b[1] + 1 && wx + b[0] < shape[r][1]) return true; }
   return false;
 }
 function hbTouchFoe(shape, d) {      // does a shape in the world touch an enemy's body (he is drawn facing me unless he is behind me; an enemy in the air has his rows lifted)
-  const B = hbBody(hbKey(d)); if (!B) return Math.abs(d.x - wx) < 20; const mir = d.x - wx > -4, lift = d.airH || 0;
+  const B = hbBody(hbKey(d)); if (!B) return Math.abs(d.x - wx) < 20; const mir = d.x - wx > -4, lift = Math.round(d.airH || 0);      // (v1.170 rounded: a launched enemy's height is a fraction of a row, and then no row of his body was ever found: a shot never touched an enemy in the air)
   for (const r in shape) { const b = B[+r + lift]; if (!b) continue; const b0 = mir ? d.x - b[1] - 1 : d.x + b[0], b1 = mir ? d.x - b[0] : d.x + b[1] + 1; if (shape[r][0] < b1 && b0 < shape[r][1]) return true; }
   return false;
 }

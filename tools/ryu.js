@@ -1,12 +1,12 @@
 // ---------------------------------------------------------------- v1.144 RYU ISHIGORI (this file is spliced into template.html by build_html.py, right after sukuna.js)
 // A fighter of FREE PLAY of the custom kind (customScene in custom.js): his pictures are made by tools/ryu_art.py out of the LOOK the user chose (tools/ryu_src/master.png: face, hair, fur, jacket, belt, jeans, boots; the picture is only his look, every pose
-// is new: tools/ryu_parts.py cuts it into a body that bends at the waist and the knees, with hair, fur, jacket tail and cuffs that swing on their own). build_html.py fills RYU_PNG with the picture strip: 29 rows of 15 pictures, the rows named in RYU_ROWS.
+// is new: tools/ryu_parts.py cuts it into a body that bends at the waist and the knees, with hair, fur, jacket tail and cuffs that swing on their own). build_html.py fills RYU_PNG with the picture strip: 36 rows of 15 pictures, the rows named in RYU_ROWS.
 // He is slot 4 of CU_GAME (the three slots of the drawings and Sukuna come first) and moves like Yuji (g.ry: the jump, the walk and the push of the legs are Yuji's, see customScene) but is a big, heavy man: he walks at 46 px/s forward and 34 back with
 // STOMPING steps (dust, a step sound and a hair of screen shake on every one), his DASH is a 0.2 s shoulder charge and his BLOCK is a high guard with both hands; he has HURT and K.O. pictures.
 // v1.163 BLUE (the button is back for him): standing a hard POWER PUNCH, in the air a DIVE PUNCH, holding forward a 5-HIT COMBO, and DASH right after the punch or the combo is a DASH KICK; see 'his BLUE moves' below.
 // His blows (ATTACK): standing still, a CHAIN within 0.7 s: LEFT HOOK (boxing), RIGHT HOOK, KICK UP (capoeira: the enemy is thrown up) and JUMP PUNCH (an anime flying punch: it hits the enemy who was kicked up and sends him flying forward); CROUCHED (one knee down) a
 // Muay Thai kick at the enemy's LEGS; in the AIR a pro-wrestling DOWNSLAM (both fists drive down onto the enemy); holding FORWARD a karate HARD PUNCH (a lunge: the enemy is sent back); holding BACK a Muay Thai FRONT KICK. ATTACK pressed during a blow is kept for 0.45 s.
-const RYU_WHO = 'cu4', RYU_PNG = '__RYUPNG__', RYU_ROWS = ['frames', 'walk', 'wback', 'jump', 'cr', 'ci', 'cwk', 'bl', 'dg', 'db', 'a0', 'a1', 'a2', 'a3', 'cp', 'as', 'hp', 'fk', 'hu', 'ko', 'uc', 'el', 'bp', 'dv', 'dk', 'hb', 'hs', 'hf', 'hl'];      // (idle, walk, walk back, jump, crouch down, crouched idle, crouch walk, block, dash, dash back, the four chain blows, the leg kick, the downslam, the hard punch, the front kick, hurt, K.O.; v1.163: the uppercut, the elbow, the blue punch, the dive punch, the dash kick; v1.164: four more hurt pictures: doubled over, a stagger, a fall, the legs buckling)
+const RYU_WHO = 'cu4', RYU_PNG = '__RYUPNG__', RYU_ROWS = ['frames', 'walk', 'wback', 'jump', 'cr', 'ci', 'cwk', 'bl', 'dg', 'db', 'a0', 'a1', 'a2', 'a3', 'cp', 'as', 'hp', 'fk', 'hu', 'ko', 'uc', 'el', 'bp', 'dv', 'dk', 'hb', 'hs', 'hf', 'hl', 'g1', 'g2', 'gs', 'gd', 'gj', 'gc', 'ga'];      // (idle, walk, walk back, jump, crouch down, crouched idle, crouch walk, block, dash, dash back, the four chain blows, the leg kick, the downslam, the hard punch, the front kick, hurt, K.O.; v1.163: the uppercut, the elbow, the blue punch, the dive punch, the dash kick; v1.164: four more hurt pictures: doubled over, a stagger, a fall, the legs buckling; v1.170: the GRANITE BLAST rows: blast 1, blast 2, the strong blast, the double blast, the air blast with the look up, the low blast, the blast in the air)
 const RY_MV = [      // the blows: name, row, damage, the picture (1 - 15) it lands on, pictures a second, how far he steps forward (px), knock-back (x 6 = the enemy's speed in px/s: 100 sends him ~85 px, 140 ~130 px), launch (px high at the top), stun (s), shake, hit stop (ms), dn = he is put on the floor (a sweep / a slam)
   { n: 'L.HOOK', r: 'a0', d: 8, f: 8, v: 38, m: 4, kn: 10, l: 0, st: 0, w: 2, h: 40, rx: 5, sy: 38 },
   { n: 'R.HOOK', r: 'a1', d: 9, f: 8, v: 38, m: 4, kn: 14, l: 0, st: 0, w: 2, h: 45, rx: 6, sy: 38 },
@@ -19,7 +19,9 @@ const RY_MV = [      // the blows: name, row, damage, the picture (1 - 15) it la
   { n: 'POWER PUNCH', r: 'bp', d: 28, f: 9, v: 30, m: 16, e: 1, lt: .6, kn: 105, l: 0, st: 0, w: 5, h: 100, x: 2, cd: .7, rx: 3, sy: 36 },      // (v1.163 his BLUE moves, see ryBlue: e = the step forward is fast at first, lt = how much of the blow it takes, x = the burst of blue light (1 on the enemy, 2 twice as big), cd = cooldown (s))
   { n: 'DIVE PUNCH', r: 'dv', d: 26, f: 9, v: 30, m: 0, e: 1, lt: .45, kn: 6, l: 0, st: 1.4, w: 5, h: 90, dn: true, x: 1, cd: 3, sy: 46, nm: 1 },      // (m is set when it starts: the way to the enemy; he is put on the floor and stunned)
   { n: '5-HIT COMBO', combo: true, v: 40, m: 34, cd: 2.5 },      // (cut out of five blows, see RY_COMBO)
-  { n: 'DASH KICK', r: 'dk', d: 24, f: 8, v: 34, m: 80, e: 1, lt: .45, kn: 170, l: 0, st: 0, w: 5, h: 110, x: 2, cd: 1.5, rx: 3, sy: 30 }];      // (DASH right after a blue punch or a blue combo)
+  { n: 'DASH KICK', r: 'dk', d: 24, f: 8, v: 34, m: 80, e: 1, lt: .45, kn: 170, l: 0, st: 0, w: 5, h: 110, x: 2, cd: 1.5, rx: 3, sy: 30 },      // (DASH right after a blue punch or a blue combo)
+  { n: 'BLAST 1', r: 'g1', gb: 1, f: 7, v: 26, m: 0, c: 4, cd: .15 }, { n: 'BLAST 2', r: 'g2', gb: 1, f: 6, v: 28, m: 0, c: 4, cd: .15 }, { n: 'LOW BLAST', r: 'gc', gb: 1, f: 5, v: 26, m: 0, c: 4, cd: .2 }, { n: 'AIR BLAST', r: 'ga', gb: 1, f: 5, v: 26, m: 0, c: 4, cd: .3 },
+  { n: 'GRANITE BLAST', r: 'gs', gb: 1, f: 9, v: 17, m: 0, c: 10, cd: 1.2 }, { n: 'DOUBLE BLAST', r: 'gd', gb: 1, f: 4, v: 22, m: 0, c: 18, cd: 2.4 }, { n: 'TRIPLE BLAST', r: 'gj', gb: 1, f: 4, v: 17, m: 0, c: 30, cd: 4, nm: 1 }];      // (v1.170 the GRANITE BLAST mode, 12 - 18: the two blasts of ATTACK (12, 13), crouched (14) and in the air (15), and the blue move: GRANITE BLAST (16), back DOUBLE BLAST (17), jump TRIPLE BLAST (18); c = what it costs in percent of his energy)
 const RY_COMBO = [      // the 5-HIT COMBO: right hook, left hook, uppercut, kick, and an elbow that pushes the enemy back; each is the row's pictures a to b (1 - 15) of the blow, f = the picture it lands on, kn = knock-back (the first four only nudge the enemy, so he stays in reach)
   { r: 'a1', a: 5, b: 10, f: 8, d: 7, kn: 4, w: 2, h: 40, x: 1, rx: 6, sy: 38 }, { r: 'a0', a: 5, b: 10, f: 8, d: 7, kn: 4, w: 2, h: 40, x: 1, rx: 5, sy: 38 }, { r: 'uc', a: 5, b: 11, f: 8, d: 10, kn: 5, l: 14, w: 3, h: 55, x: 1, sy: 40 },
   { r: 'fk', a: 4, b: 10, f: 7, d: 9, kn: 10, w: 3, h: 55, x: 1, rx: 1, sy: 28 }, { r: 'el', a: 5, b: 11, f: 8, d: 14, kn: 95, w: 5, h: 100, x: 2, rx: 2, sy: 38 }];
@@ -46,6 +48,7 @@ NAMES[RYU_WHO] = 'RYU'; CEC[RYU_WHO] = ['#10142a', '#3a58c8', '#a8c0f0', '#7aa0f
     const comboPics = [], comboEv = []; { let off = 0; RY_COMBO.forEach((q, j) => { if (j) comboEv.push(cb(off + 1, () => snd('swing', j === 3 ? 3 : 0))); comboEv.push(...blow(q.r, q.f, off + q.f - q.a + 1, j, q)); for (let i = q.a - 1; i < q.b; i++) comboPics.push(set[q.r][i]); off += q.b - q.a + 1; }); comboEv.push(cb(comboEv[comboEv.length - 1].f, now => { ryBlImp = now; })); }      // (the 5-HIT COMBO is the pictures a to b of five blows one after the other: the impact of each is on its own picture, the last callback marks the end of the combo for the DASH KICK)
     const ev = RY_MV.map((mv, k) => {
       if (mv.combo) return comboEv;
+      if (mv.gb) return ryGbEv(k, cb);      // (v1.170 a blast: its beams come out of the hair on their pictures, see ryBeam)
       const e = blow(mv.r, mv.f, mv.f, 0, mv);
       if (k === 8) e.push(cb(mv.f, now => { ryBlImp = now; }));      // (the blue punch has landed: a DASH now is the DASH KICK; the combo's last callback does the same)
       if (k === 9) { e.push(cb(mv.f, () => ryDust(dummy ? dummy.x : wx + 20, 1), 1, 0, 1)); e.push(cb(mv.f + 2, now => { snd('land', 1); ryLand(now); ryDust(wx, .5); }, 0, -1, 2)); }      // (the dive punch: smoke where the enemy hits the floor, then he lands)
@@ -53,7 +56,7 @@ NAMES[RYU_WHO] = 'RYU'; CEC[RYU_WHO] = ['#10142a', '#3a58c8', '#a8c0f0', '#7aa0f
     });
     const burst = ryBurst(), vfx = RY_MV.map(m => m.x || m.combo ? burst : []);
     CU_GAME[4] = { name: 'RYU', frames: set.frames, walk: set.walk, wbk: set.wback, jump: set.jump, hu: set.hu, hus: ryHus(set), ko: set.ko, huMs: RY_HU_MS, bl: set.bl, df: set.dg, db: set.db, cr: set.cr, ci: set.ci, cwk: set.cwk, st: { ...cuStats(null), fw: 46, bk: 34, cw: 55, jh: 22, jt: 713, dfw: 62, dbk: 40, dtm: 200, hp: 340 }, vfx, atk: RY_MV.map(m => m.combo ? comboPics : set[m.r]),
-      an: RY_MV.map(m => m.n), rdy: [0, 1, 2, 3], cl: [], ev, set: RY_MV.map(m => ({ v: m.v, m: m.m, c: 0, d: m.cd || 0, e: m.e, lt: m.lt, nm: m.nm })), body, push: Math.max(6, hs.length ? hs[hs.length >> 1] : 6), tipAll: ev.map(l => cuMaxRows(l.map(e => e.tip))), vxs: vfx.map(() => []),
+      an: RY_MV.map(m => m.n), rdy: [0, 1, 2, 3], cl: [], ev, set: RY_MV.map(m => ({ v: m.v, m: m.m, c: m.c || 0, d: m.cd || 0, e: m.e, lt: m.lt, nm: m.nm })), body, push: Math.max(6, hs.length ? hs[hs.length >> 1] : 6), tipAll: ev.map(l => cuMaxRows(l.map(e => e.tip))), vxs: vfx.map(() => []),
       al: RY_MV.map((m, k) => k === 3 ? RY_HOP : null), cs: null, ry: true, wf: RY_WF, crMs: 1000 / CR_FPS };      // (ry: he moves like Yuji and picks his blow by what is held, see ryPick; wbk: the pictures of walking back; wf: his walking pictures a second; crMs: how long a picture of the crouch lasts; al: the height of each picture of a blow that hops)
   };
   im.src = RYU_PNG;
@@ -62,13 +65,14 @@ NAMES[RYU_WHO] = 'RYU'; CEC[RYU_WHO] = ['#10142a', '#3a58c8', '#a8c0f0', '#7aa0f
 // ---- which blow ATTACK plays now: in the air the downslam, crouched the kick at the legs, holding BACK the front kick, holding FORWARD the hard punch, otherwise the next of the chain
 const ryAir = now => { const jf = jumpFrame(Math.max(0, now - cuJumpAt)); return cuJumpAt >= 0 && jf >= 4 && jf <= 11; };      // (he is in the air: after the push-off and before the landing)
 function ryPick(g, now, cmb) {
+  if (ryGb) return cuJumpAt >= 0 ? 15 : stance === 'crouch' ? 14 : 12 + ((cmb === undefined ? cuCmb : cmb) % 2);      // (v1.170 GRANITE BLAST mode: every ATTACK is a blast: in the air the AIR BLAST, crouched the LOW BLAST, otherwise BLAST 1 and BLAST 2 one after the other)
   if (cuJumpAt >= 0) return 5;
   if (stance === 'crouch') return 4;
   if (keyL || padL) return 7;
   if (keyR || padR) return 6;
   return g.rdy[(cmb === undefined ? cuCmb : cmb) % g.rdy.length];
 }
-function ryNext(k) { return k < 4 ? (k + 1) % 4 : cuCmb; }      // (blow k has started: the chain goes on with the next one; the other blows leave its place alone)
+function ryNext(k) { return k === 12 ? 1 : k === 13 ? 0 : k < 4 ? (k + 1) % 4 : cuCmb; }      // (blow k has started: the chain goes on with the next one; the other blows leave its place alone)
 function ryLabel(g, now) { return g.an[ryPick(g, now, now > cuCmbBy ? 0 : cuCmb)]; }      // (what the ATTACK button says: the blow that comes next)
 
 // ---- v1.164 CONTACT: a blow touches the enemy, and both of them feel it
@@ -97,24 +101,30 @@ const ryHus = set => RY_HUR.map((r, k) => ({ f: set[r], ms: 1000 / RXF15[k] }));
 
 // ---- v1.163 his BLUE moves: BLUE standing is a hard POWER PUNCH, in the air a DIVE PUNCH (he flies above the enemy and punches him down into the floor: smoke and a stun), holding FORWARD a 5-HIT COMBO (right hook, left hook, uppercut, kick, and an elbow that pushes the enemy back); DASH right after the punch or the combo (within 0.6 s of its last blow, or pressed during it) is a DASH KICK that sends the enemy flying back
 let ryBlImp = 0, ryDkQ = 0;      // (when the last blow of a POWER PUNCH / 5-HIT COMBO landed, 0 = not yet; until when a DASH press is kept for the DASH KICK)
-const RY_BLN = [['POWER<br>PUNCH', 'Power punch: a hard punch that sends the enemy flying back'], ['DIVE<br>PUNCH', 'Dive punch: in the air, he flies above the enemy and punches him down to the floor in a cloud of smoke, the enemy is stunned'], ['5-HIT<br>COMBO', 'Five-hit combo: holding forward, right hook, left hook, uppercut, kick and an elbow that pushes the enemy back. Press dash right after it for a dash kick']];      // (the names of his moves on the BLUE button: v1.165 the two that said BLUE are POWER PUNCH and 5-HIT COMBO)
-function ryBlue(now) { return ryAir(now) ? 9 : (keyR || padR) ? 10 : 8; }      // (the BLUE move this stance asks for: the number in RY_MV)
+const RY_BLN = { 8: ['POWER<br>PUNCH', 'Power punch: a hard punch that sends the enemy flying back'], 9: ['DIVE<br>PUNCH', 'Dive punch: in the air, he flies above the enemy and punches him down to the floor in a cloud of smoke, the enemy is stunned'], 10: ['5-HIT<br>COMBO', 'Five-hit combo: holding forward, right hook, left hook, uppercut, kick and an elbow that pushes the enemy back. Press dash right after it for a dash kick'],
+  16: ['GRANITE<br>BLAST', 'Granite blast: a strong, concentrated blast out of his hair that does more damage than the attack blasts. Holding back: two blasts. In the air: two blasts and then a third, looking up, that throws the enemy up'], 17: ['DOUBLE<br>BLAST', 'Double blast: two concentrated blasts one after the other'], 18: ['TRIPLE<br>BLAST', 'Triple blast: two blasts from the air, then he looks up and the third throws the enemy up'] };      // (the names of his moves on the BLUE button: v1.165 the two that said BLUE are POWER PUNCH and 5-HIT COMBO)
+function ryBlue(now) { if (ryGb) return ryAir(now) ? 18 : (keyL || padL) ? 17 : 16; return ryAir(now) ? 9 : (keyR || padR) ? 10 : 8; }      // (the BLUE move this stance asks for: the number in RY_MV; v1.170 in the GRANITE BLAST mode: GRANITE BLAST, holding back the DOUBLE BLAST, in the air the TRIPLE BLAST)
 function ryBlueLabel(now) {      // the BLUE button's name; the DASH button says DASH KICK while that is what it does
-  const n = RY_BLN[ryBlue(now) - 8], el = $('lapl'), dk = ryDkOk(now) || (cuAtkAt >= 0 && (cuAtkK === 8 || cuAtkK === 10)) ? 'DASH<br>KICK' : 'DASH', d = $('dashl');
+  ryModeUI(); const n = RY_BLN[ryBlue(now)], el = $('lapl'), dk = ryDkOk(now) || (cuAtkAt >= 0 && (cuAtkK === 8 || cuAtkK === 10)) ? 'DASH<br>KICK' : 'DASH', d = $('dashl');
   if (el.innerHTML !== n[0]) { el.innerHTML = n[0]; $('lap').setAttribute('aria-label', n[1]); }
   if (d.innerHTML !== dk) { d.innerHTML = dk; $('dash').setAttribute('aria-label', dk === 'DASH' ? 'Dash' : 'Dash kick: a flying kick that sends the enemy back'); }
 }
 const ryDkOk = now => ryBlImp > 0 && now - ryBlImp < 600 && now >= (cuCd[11] || 0);      // (the last blow of a blue punch or combo landed less than 0.6 s ago)
-function ryBlueGo(g, k, now) {      // BLUE move k (8 - 10), or the DASH KICK (11), starts; false when its cooldown is not over
+function ryBlueGo(g, k, now) {      // BLUE move k (8 - 10, 16 - 18), or the DASH KICK (11), starts; false when its cooldown is not over (or, for the blasts, the energy is not there)
   const st = g.set[k];
   if (now < (cuCd[k] || 0)) { say('WAIT', wx, '#9a9aa8', 8, now); return false; }
+  if (st.c && !ceSpend(st.c * 100 / cuS.em, now)) return false;
   if (stance === 'crouch') { stance = 'stand'; stickCr = false; }      // (he gets up and throws it)
   if (k === 9) {      // (the dive: how far to fly is the way to a place just short of the enemy; his height goes from where he is now up to RY_DIVE_HI over the enemy and down to the floor, and the jump is over)
     const L0 = Math.max(0, Math.round(gojoLift || 0)), H = Math.max(RY_DIVE_HI, L0 + 4);
     st.m = Math.max(0, Math.min(150, (dummy && dummy.ko < 0 ? dummy.x - wx : 44) - 14)); g.al[9] = [L0, L0 + 3, L0 + 7, H - 10, H - 4, H, H, H, H - 3, 18, 8, 2, 0, 0, 0]; cuJumpAt = -1;
   }
+  if (k === 18) {      // (v1.170 the TRIPLE BLAST: he stays up where he is, a little higher, for the three blasts, then he falls: the jump is over, the blow has its own heights)
+    const L0 = Math.max(0, Math.round(gojoLift || 0)), H = Math.max(24, L0 + 4); g.al[18] = [L0, L0 + 3, H - 4, H, H + 2, H + 2, H + 1, H, H - 1, H - 2, H - 3, H - 8, Math.round(H * .5), 4, 0]; cuJumpAt = -1;
+  }
+  if (k >= 16) snd('concgather');
   if (k === 11) st.m = Math.max(36, Math.min(135, (dummy && dummy.ko < 0 ? dummy.x - wx + .14 * Math.max(0, dummy.vx || 0) : 60) - 14));      // (the dash kick: he flies to where the enemy will be, which is farther when the enemy is still flying back from the last blow)
-  cuAtkK = k; cuAtkAt = now; cuFired = []; cuRes = []; cuLunged = 0; cuMs = 1000 / st.v; cuCd[k] = st.d ? now + st.d * 1000 : 0; cuCmb = cuSn = cuCp = 0; cuCmbBy = now + 1e9; ryBlImp = 0; ryDkQ = 0; snd('swing', k === 11 ? 3 : 0);
+  cuAtkK = k; cuAtkAt = now; cuFired = []; cuRes = []; cuLunged = 0; cuMs = 1000 / st.v; cuCd[k] = st.d ? now + st.d * 1000 : 0; cuCmb = cuSn = cuCp = 0; cuCmbBy = now + 1e9; ryBlImp = 0; ryDkQ = 0; if (k < 16) snd('swing', k === 11 ? 3 : 0);
   return true;
 }
 function ryBlueStep(g, now, ctl, lpr, dsh) {      // one frame of his BLUE and the DASH KICK (customScene calls it every frame he fights)
@@ -153,3 +163,92 @@ function ryStep(now, dir) {
 }
 function ryDashEnd(now) { gritAt(wx, 5, 50, 0); puff(wx, 4); ryShake(now, 80); }
 function ryLand(now) { ryShake(now, 90); }
+
+// ---------------------------------------------------------------- v1.170 THE GRANITE BLAST MODE: the MODE button (key E) switches it on and off. While it is on every ATTACK is a blast out of his HAIR: BLAST 1 and BLAST 2 one after the other, crouched a LOW BLAST along the floor, in the air an AIR BLAST angled down at the enemy;
+// and BLUE is GRANITE BLAST: standing one strong, concentrated (thinner, greyer) blast that does more damage than the others, holding back the DOUBLE BLAST (two of them one after the other), in the air the TRIPLE BLAST: two blasts from the air, the first pops the enemy up a little, then he tips his
+// head back and looks up and the third one goes up through the enemy and throws him high. Every blast costs energy (4%, and 10 / 18 / 30% for the three blue ones). The beam is white in the middle, cyan (the beam itself) round that and a very light blue outline; the concentrated one is the same but grey.
+// The pictures are the rows g1 g2 gs gd gj gc ga of the sheet (tools/ryu_art.py): the hair turns to energy at its front and stands out when he drives his head forward; RY_GB says where the hair's front tip is in every one of their pictures: the beam starts there.
+const RY_GB = __RYUGB__;
+let ryGb = false, ryBeams = [], ryAura = [], ryAuraAt = 0, ryAuraT = 0;      // (the mode is on; the beams in the air; the sparks round the hair)
+const RY_GBS = {      // the beams of each blow: f = the picture (1 - 15) it fires on: the first of the pictures with the flash at the hair, see GB_FIRE in tools/ryu_art.py plus one, dmg, th = how thick (px), gray = how concentrated (0 - 1), dur = how long it stays (ms), ang = its angle (degrees, down is +) or aim = [least, most] angle towards the enemy, kn = knock-back (x 6 = the enemy's speed), st = stun (s), launch = pops the enemy up (px high) when he is on the floor, up = throws him up (px high) even when he is in the air, low = hits a crouching enemy too, hs = hit stop (ms), sh = shake
+  12: [{ f: 7, dmg: 9, th: 6, dur: 380, kn: 8, hs: 40, sh: 2 }], 13: [{ f: 6, dmg: 11, th: 7, dur: 400, kn: 16, hs: 55, sh: 3 }], 14: [{ f: 5, dmg: 9, th: 5, dur: 380, ang: 9, kn: 10, low: true, hs: 40, sh: 2 }], 15: [{ f: 5, dmg: 10, th: 6, dur: 380, aim: [12, 42], kn: 6, hs: 40, sh: 2 }],
+  16: [{ f: 9, dmg: 20, th: 5, gray: 1, dur: 560, kn: 60, hs: 90, sh: 4, st: 0.35, big: 1 }],
+  17: [{ f: 4, dmg: 12, th: 5, gray: .7, dur: 420, kn: 8, hs: 55, sh: 3 }, { f: 8, dmg: 13, th: 6, gray: .7, dur: 520, kn: 55, hs: 80, sh: 4 }],
+  18: [{ f: 4, dmg: 10, th: 6, dur: 420, aim: [10, 45], launch: 44, kn: 3, hs: 50, sh: 3 }, { f: 7, dmg: 10, th: 6, dur: 420, aim: [6, 45], kn: 3, hs: 50, sh: 3 }, { f: 11, dmg: 16, th: 9, gray: .35, dur: 600, aim: [-70, -14], up: 66, kn: 6, hs: 90, sh: 5, big: 1 }]};
+function ryGbEv(k, cb) {      // the events of a blast's timeline: one callback for each beam on its picture (the triple blast also lands)
+  const ev = RY_GBS[k].map(sp => cb(sp.f, now => ryBeam(now, k, sp)));
+  if (k === 18) ev.push(cb(15, now => { snd('land', 1); ryLand(now); }));
+  return ev;
+}
+function ryReset() { ryGb = false; ryBeams = []; ryAura = []; ryAuraAt = 0; }
+function ryToggle(now) {      // the MODE button: the mode on / off, with a ring of sparks round the hair
+  ryGb = !ryGb; snd(ryGb ? 'ceon' : 'ceoff'); if (ryGb) flash(now, 140, .25);
+  const t = ryHairTop(ryCur); if (t) for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; ryAura.push({ x: wx + t[0] - 32 + Math.cos(a) * 3, y: ryCurY + t[1] + Math.sin(a) * 3, vx: Math.cos(a) * (ryGb ? 38 : 22), vy: Math.sin(a) * (ryGb ? 30 : 18) - 6, born: now, life: 420 + (i % 3) * 120, c: i % 3 === 0 ? '#ffffff' : i % 3 === 1 ? '#9ff3ff' : '#17e3ff' }); }
+}
+function ryModeUI() {      // every frame: the MODE button's name and light follow the mode
+  const el = $('cel'), b = $('ce'), want = 'MODE<br>' + (ryGb ? 'GRANITE' : 'OFF'), aria = ryGb ? 'Mode: Granite blast is on, tap to switch it off. His attacks are blasts out of his hair' : 'Mode: tap to switch Granite blast on. His attacks become blasts out of his hair';
+  if (el.innerHTML !== want) el.innerHTML = want;
+  if (b.classList.contains('lit') !== ryGb) b.classList.toggle('lit', ryGb);
+  b.classList.remove('red', 'fl'); if (b.getAttribute('aria-pressed') !== (ryGb ? 'true' : 'false')) b.setAttribute('aria-pressed', ryGb ? 'true' : 'false'); if (b.getAttribute('aria-label') !== aria) b.setAttribute('aria-label', aria);
+}
+function ryBeamShape(ox, oh, ang, th) {      // the place a beam takes up in the world, row by row (the rows of the hit tables: 60 minus the height above the floor)
+  const s = {}, t = Math.tan(ang * Math.PI / 180), lo = -Math.floor((th - 1) / 2), hi = Math.ceil((th - 1) / 2);
+  for (let dx = 0; dx <= 300; dx += 2) { const h = oh - dx * t; for (let q = lo; q <= hi; q++) { const r = Math.round(60 - (h + q)), c = s[r]; if (c) c[1] = ox + dx + 2; else s[r] = [ox + dx, ox + dx + 2]; } }
+  return s;
+}
+function ryThrowUp(now, h) { const d = dummy; if (!d || d.ko >= 0) return; d.air = airMake(now, d.airH || 0, Math.sqrt(2 * AIR_G * h), AIR_G, 'up'); d.rx = AIR_RX; d.rxAt = now; }      // (thrown up from where he is, even when he is in the air already)
+function ryBeam(now, k, sp) {      // one beam leaves the hair: it is drawn from the hair's front tip, and what is in its way is hit at once
+  const row = RY_MV[k].r, T = RY_GB[row] && RY_GB[row][sp.f - 1]; if (!T) return;
+  const ox = wx + T[0] - 32, oh = 61 + (gojoLift || 0) - T[1];      // (where it starts: the world column and the height above the floor)
+  let ang = sp.ang || 0;
+  if (sp.aim && dummy && dummy.ko < 0) ang = Math.max(sp.aim[0], Math.min(sp.aim[1], Math.atan2(oh - (30 + (dummy.airH || 0)), Math.max(14, dummy.x - ox)) * 180 / Math.PI));      // (towards the enemy's middle, within the limits)
+  const b = { born: now, dur: sp.dur || 380, th: sp.th, gray: sp.gray || 0, ang, ox, oh, k, f: sp.f, row, hit: false, ix: 0, ih: 0, live: true, big: !!sp.big };
+  if (window.__ryLog) window.__ryLog.push({ k, f: sp.f, ang: +ang.toFixed(1), ox: Math.round(ox - wx), oh: Math.round(oh), dx: dummy ? Math.round(dummy.x - ox) : null, airH: dummy ? Math.round(dummy.airH || 0) : null });      // (test hook)
+  if (dummy && dummy.ko < 0 && dummy.x - ox > -4 && hbTouchFoe(ryBeamShape(ox, oh, ang, sp.th), dummy)) {
+    const h = oh - (dummy.x - ox) * Math.tan(ang * Math.PI / 180), o = { knock: sp.kn, sy: Math.max(6, Math.min(58, Math.round(h))) }; if (sp.st) o.stun = sp.st; if (sp.launch) o.launch = sp.launch; if (sp.low) o.low = true;
+    if (cuHit(sp.dmg, now, o, undefined, 1e9, -3)) {
+      b.hit = true; b.ix = dummy.x; b.ih = h; hitStop(sp.hs || 0); shakeAmp = Math.max(shakeAmp, sp.sh || 2); shakeUntil = Math.max(shakeUntil, now + 170);
+      spark(dummy.x, gy - Math.round(h), sp.big ? 16 : 9, ['#ffffff', '#9ff3ff', '#17e3ff'], !!sp.big, 1); if (sp.up) ryThrowUp(now, sp.up);
+    }
+  }
+  snd('redfire'); if (sp.big) { snd('concboom'); flash(now, 120, .3); }
+  ryBeams.push(b);
+}
+const RY_TOP = new Map();
+function ryHairTop(src) {      // the top of the head in a picture (column, row), found once for every picture: where the sparks of the mode rise
+  if (!src) return null; let t = RY_TOP.get(src); if (t !== undefined) return t; t = null;
+  try { const d = src.getContext('2d').getImageData(0, 0, 64, 64).data; for (let y = 0; y < 64 && !t; y++) { let n = 0, sx = 0; for (let x = 0; x < 64; x++) if (d[(y * 64 + x) * 4 + 3] > 0) { n++; sx += x; } if (n) t = [sx / n, y + 1]; } } catch { t = null; }
+  RY_TOP.set(src, t); return t;
+}
+let ryCur = null, ryCurY = 0;      // (the picture he is drawn with and the screen row of its top, for the sparks)
+function ryCol(g) {      // the three colours of a beam (the outline, the beam itself, the middle): cyan and white, and the same greyed down for the concentrated ones (g = 0 - 1)
+  const mix = (a, b) => '#' + [0, 2, 4].map(i => Math.round(parseInt(a.substr(1 + i, 2), 16) * (1 - g) + parseInt(b.substr(1 + i, 2), 16) * g).toString(16).padStart(2, '0')).join('');
+  return { o: mix('#e4f7ff', '#c9d8dd'), m: mix('#17e3ff', '#6f98a3'), c: mix('#ffffff', '#eef5f6') };
+}
+function ryDrawBeam(now, cx, x, y, b, g) {
+  const u = (now - b.born) / b.dur, tf = u < .1 ? .35 + .65 * (u / .1) : u < .5 ? 1 : Math.max(0, 1 - Math.pow((u - .5) / .5, 1.4)), fl = (Math.floor(now / 35) % 3) - 1, th = Math.max(1, Math.round(b.th * tf + (u < .5 ? fl * .5 : 0)));
+  let sx, sy;
+  if (b.live && cuAtkAt >= 0 && cuAtkK === b.k && g) {      // (while the blow is still being thrown the beam sits on the hair's front tip of the picture he is in)
+    const n = g.atk[b.k].length, ap = (now - cuAtkAt) / (n * cuMs), fi = Math.min(n, Math.floor(ap * n) + 1), T = RY_GB[b.row] && RY_GB[b.row][Math.min(14, fi - 1)];
+    if (T && fi <= b.f + 3) { sx = x + T[0]; sy = y + T[1]; b.ox = wx + sx - cx; b.oh = gy - sy; } else b.live = false;
+  } else b.live = false;
+  if (sx === undefined) { sx = cx + (b.ox - wx); sy = gy - b.oh; }
+  sx = Math.round(sx); sy = Math.round(sy); const co = ryCol(b.gray), sl = Math.tan(b.ang * Math.PI / 180), n = Math.ceil(VW - sx) + 4;
+  ctx.globalAlpha = u > .75 ? Math.max(0, (1 - u) / .25) : 1;
+  for (const [t, c] of [[th + 2, co.o], [th, co.m], [Math.max(1, Math.round(th * .45)), co.c]]) {      // (three layers: the outline, the beam, the white middle; the columns that share a row are drawn in one piece)
+    ctx.fillStyle = c; let ry = null, r0 = 0;
+    for (let i = 0; i <= n; i++) { const yy = i === n ? null : Math.round(sy + i * sl - t / 2); if (yy !== ry) { if (ry !== null) ctx.fillRect(sx + r0, ry, i - r0, t); ry = yy; r0 = i; } }
+  }
+  if (u < .6) for (let j = 0; j < 7; j++) { const i = ((now * 7 + j * 97) | 0) % Math.max(8, n), yy = Math.round(sy + i * sl + ((j * 5 + (now / 40 | 0)) % 5 - 2) * (th / 2 + 1)); ctx.fillStyle = j % 2 ? co.c : co.m; ctx.fillRect(sx + i, yy, 1, 1); }      // (the crackle along it)
+  if (u < .28) { const R = Math.round((b.big ? 7 : 5) * (1 - u / .28)) + 1; ctx.fillStyle = co.m; for (let dy = -R; dy <= R; dy++) { const w = Math.round(Math.sqrt(R * R - dy * dy)); ctx.fillRect(sx - w, sy + dy, 2 * w + 1, 1); } ctx.fillStyle = co.c; const r2 = Math.max(1, R - 2); for (let dy = -r2; dy <= r2; dy++) { const w = Math.round(Math.sqrt(r2 * r2 - dy * dy)); ctx.fillRect(sx - w, sy + dy, 2 * w + 1, 1); } }      // (the flash at the hair)
+  if (b.hit && u < .4) { const ix = Math.round(cx + b.ix - wx), iy = Math.round(gy - b.ih), R = Math.round((b.big ? 9 : 6) * Math.min(1, u / .12) * (1 - u / .4)) + 1; ctx.strokeStyle = co.m; ctx.lineWidth = 1; ctx.strokeRect(ix - R + .5, iy - R + .5, 2 * R, 2 * R); ctx.fillStyle = co.c; ctx.fillRect(ix - 1, iy - 1, 3, 3); }      // (where it hit: a square ring and a white dot)
+  ctx.globalAlpha = 1;
+}
+function ryDraw(now, cx, x, y, src) {      // the beams and the sparks of the mode (customScene calls it every frame he fights, after he is drawn)
+  const g = CU_GAME[4]; ryCur = src; ryCurY = y;
+  ryBeams = ryBeams.filter(b => now - b.born < b.dur); for (const b of ryBeams) ryDrawBeam(now, cx, x, y, b, g);
+  const dt = Math.min(.05, Math.max(0, (now - ryAuraT) / 1000)); ryAuraT = now;
+  if (ryGb && vs && vs.ph === 'fight' && now - ryAuraAt > 70) { ryAuraAt = now; const t = ryHairTop(src); if (t) for (let i = 0; i < 3; i++) ryAura.push({ x: wx + t[0] - 32 + Math.random() * 8 - 4, y: y + t[1] + Math.random() * 3, vx: Math.random() * 8 - 4, vy: -(8 + Math.random() * 12), born: now, life: 420 + Math.random() * 300, c: Math.random() < .4 ? '#ffffff' : Math.random() < .5 ? '#9ff3ff' : '#17e3ff' }); }
+  ryAura = ryAura.filter(p => now - p.born < p.life); for (const p of ryAura) { p.x += p.vx * dt; p.y += p.vy * dt; ctx.globalAlpha = Math.min(1, 1.6 * (1 - (now - p.born) / p.life)); ctx.fillStyle = p.c; ctx.fillRect(Math.round(cx + p.x - wx), Math.round(p.y), 1, 1); } ctx.globalAlpha = 1;
+}
+window.__ryGb = () => ({ on: ryGb, beams: ryBeams.map(b => ({ k: b.k, f: b.f, ang: +b.ang.toFixed(1), ox: Math.round(b.ox - wx), oh: Math.round(b.oh), hit: b.hit, th: b.th, gray: b.gray })), aura: ryAura.length });      // test hook

@@ -1,5 +1,17 @@
 [
  {
+  "v": "1.170",
+  "t": "RYU: GRANITE BLAST MODE",
+  "n": [
+   "Ryu has a MODE button now (key E). It switches the GRANITE BLAST mode on and off. While it is on, a ring of cyan sparks rises from his hair and the button is lit.",
+   "In the mode every ATTACK is a blast out of his hair. He drives his head forward like a bull and the front of his hair turns to energy (the pictures are new: a charge, the snap of the head, the recoil). BLAST 1 and BLAST 2 come one after the other (9 and 11 damage), crouched you fire a LOW BLAST along the floor, in the air an AIR BLAST angled down at the enemy. Each costs 4% of your energy.",
+   "The beam is white in the middle, cyan round that (the beam itself) and has a very light blue outline. It reaches across the whole screen, it hits an enemy anywhere in front of you at the height of the beam, and a crouching enemy ducks under the high ones.",
+   "BLUE is GRANITE BLAST in the mode (it says so on the button): standing it is one blast that is more concentrated, so thinner and greyer, and it does 20 damage, more than the attack blasts (10% energy, 1.2 s wait). Holding back it is the DOUBLE BLAST: two blasts one after the other (12 + 13, 18% energy). In the air it is the TRIPLE BLAST: two blasts from the air (the first pops the enemy up a little), then Ryu tips his head back and looks up and the third one goes up through the enemy and throws him high (10 + 10 + 16, 30% energy).",
+   "Without the mode he is the same as before. The blasts are blocked like any blow, and nothing starts when you have too little energy.",
+   "Fixed on the way: a shot never touched an enemy who was in the air (his height is a fraction of a row and no row of his body was found). Sukuna's flying slashes hit enemies in the air now."
+  ]
+ },
+ {
   "v": "1.169",
   "t": "SCAN THE GAME",
   "n": [

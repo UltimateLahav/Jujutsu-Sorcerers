@@ -317,10 +317,117 @@ ROWS_V1163 = [('uc', a_upper, [('armA', HAND_A)], False, None, .5), ('el', a_elb
 
 ROWS_V1164 = [('hb', a_hurt_body, [], False, (-5, 0), .5), ('hs', a_hurt_stagger, [], False, (-6, 0), .5), ('hf', a_hurt_fall, [], False, (-8, 0), .4), ('hl', a_hurt_low, [], False, (-3, 0), .5)]
 
+
+# ---------------------------------------------------------------- v1.170 GRANITE BLAST MODE (see ryu.js): the blasts come out of his HAIR. He lowers his head like a bull and the hair stands out forward; the game draws the beam from the hair's front tip (GB_TIP,
+# worked out for every picture and written to ryu_gb.json), here only the body, the hair and a little cyan light round the hair are drawn. Each animation is 15 pictures; FIRE = the picture the game fires on.
+GB_TIP = (121, 6)      # (the front tuft of the hair, master coordinates)
+CY, CYL, CYW = (24, 230, 255), (150, 245, 255), (255, 255, 255)      # (the cyan of the beam, a light cyan, white)
+def a_gb1(i):      # BLAST 1: he sinks and the head tips back as the energy gathers in the hair (0-4), the head snaps forward and down (5-6: FIRE on 6), the hair stands out in front of him (6-9), the body is braced against the kick and comes back up (10-14)
+    T = dict(pel={0: (0, 0, 0), 2: (-4, 3, -4), 4: (-6, 4, -7), 5: (2, 5, 4), 6: (8, 6, 8), 8: (9, 6, 9), 11: (5, 3, 4), 14: (0, 1, 0)},
+             chs={0: (0, 0, 0), 2: (-1, 0, -6), 4: (-2, 0, -12), 5: (1, 0, 6), 6: (3, 0, 14), 8: (4, 0, 15), 11: (2, 0, 7), 14: (0, 0, 0)},
+             hd={0: (0, 0, 0), 3: (-2, 0, -10), 4: (-3, 0, -16), 5: (2, 1, 8), 6: (5, 3, 24), 8: (6, 4, 28), 10: (5, 3, 20), 12: (2, 1, 8), 14: (0, 0, 0)},
+             A={0: (0, 0, 0, 1, 1), 3: (-6, 6, 18, .9, 1), 4: (-8, 8, 26, .85, 1), 6: (-4, 6, 10, .95, 1), 9: (-4, 5, 8, .95, 1), 14: (0, 0, 0, 1, 1)},
+             B={0: (0, 0, 0, 1, 1), 3: (-8, 10, 28, .85, 1), 4: (-10, 12, 36, .8, 1), 6: (-6, 8, 22, .9, 1), 9: (-6, 7, 20, .9, 1), 14: (0, 0, 0, 1, 1)},
+             F={0: F0, 5: (F0[0] + 2, F0[1]), 6: (F0[0] + 8, F0[1]), 8: (F0[0] + 10, F0[1]), 12: (F0[0] + 4, F0[1]), 14: F0}, K={0: B0, 4: (B0[0] - 3, B0[1]), 6: (B0[0] + 2, B0[1] - 3), 8: (B0[0] + 4, B0[1]), 12: (B0[0] + 1, B0[1]), 14: B0},
+             ft={0: 0, 6: -6, 12: 0}, bt={0: 0, 6: -12, 12: 0})
+    return K(T, i)
+def a_gb2(i):      # BLAST 2: a step in and a lower, harder thrust: the head goes up and back for a moment (0-3), then he lunges forward and the head drives down and forward (4-5: FIRE on 5), the arms are thrown back for balance (5-8), recovery (9-14)
+    T = dict(pel={0: (0, 0, 0), 2: (-5, 2, -5), 3: (-7, 3, -8), 4: (4, 6, 6), 5: (12, 8, 12), 7: (14, 8, 13), 10: (7, 4, 6), 14: (0, 1, 0)},
+             chs={0: (0, 0, 0), 3: (-2, 0, -14), 4: (0, 0, 4), 5: (4, 0, 18), 7: (5, 0, 20), 10: (3, 0, 9), 14: (0, 0, 0)},
+             hd={0: (0, 0, 0), 3: (-3, 0, -20), 4: (1, 1, 12), 5: (6, 4, 36), 7: (7, 5, 40), 10: (4, 3, 22), 13: (1, 1, 6), 14: (0, 0, 0)},
+             A={0: (0, 0, 0, 1, 1), 3: (-8, 4, -8, .9, 1), 5: (-6, 8, 30, .9, 1), 7: (-6, 8, 34, .9, 1), 11: (-2, 3, 12, 1, 1), 14: (0, 0, 0, 1, 1)},
+             B={0: (0, 0, 0, 1, 1), 3: (-10, 6, 10, .85, 1), 5: (-8, 10, 40, .8, 1), 7: (-8, 10, 44, .8, 1), 11: (-3, 4, 16, .95, 1), 14: (0, 0, 0, 1, 1)},
+             F={0: F0, 4: (F0[0] + 4, F0[1] - 2), 5: (F0[0] + 16, F0[1]), 8: (F0[0] + 18, F0[1]), 12: (F0[0] + 8, F0[1]), 14: F0}, K={0: B0, 3: (B0[0] - 4, B0[1]), 5: (B0[0] + 6, B0[1] - 4), 8: (B0[0] + 10, B0[1]), 12: (B0[0] + 3, B0[1]), 14: B0},
+             ft={0: 0, 5: -8, 12: 0}, bt={0: 0, 5: -18, 8: -22, 12: 0})
+    return K(T, i)
+def a_gbs(i):      # GRANITE BLAST (the strong one): he drops low with his fists at his hips and the hair draws in and gathers (0-7), then the head drives forward (8: FIRE) with the whole body behind it, he slides back on his heels from the force (8-11) and straightens up (12-14)
+    T = dict(pel={0: (0, 0, 0), 2: (-3, 6, -3), 5: (-6, 12, -6), 7: (-8, 14, -8), 8: (6, 12, 6), 9: (10, 10, 9), 11: (8, 7, 7), 14: (0, 1, 0)},
+             chs={0: (0, 0, 0), 3: (-1, 0, -6), 6: (-2, 0, -12), 7: (-2, 0, -15), 8: (2, 0, 12), 9: (4, 0, 18), 11: (3, 0, 12), 14: (0, 0, 0)},
+             hd={0: (0, 0, 0), 4: (-2, 1, -12), 7: (-3, 2, -22), 8: (3, 3, 26), 9: (6, 5, 38), 11: (5, 4, 28), 13: (1, 1, 8), 14: (0, 0, 0)},
+             A={0: (0, 0, 0, 1, 1), 3: (-6, 8, 22, .88, 1), 6: (-10, 14, 34, .8, 1), 8: (-6, 10, 14, .9, 1), 11: (-4, 6, 14, .92, 1), 14: (0, 0, 0, 1, 1)},
+             B={0: (0, 0, 0, 1, 1), 3: (-8, 12, 30, .84, 1), 6: (-12, 18, 46, .76, 1), 8: (-8, 12, 26, .85, 1), 11: (-6, 8, 24, .88, 1), 14: (0, 0, 0, 1, 1)},
+             F={0: F0, 5: (F0[0] - 2, F0[1]), 9: (F0[0] + 4, F0[1]), 12: (F0[0] + 3, F0[1]), 14: F0}, K={0: B0, 6: (B0[0] - 8, B0[1]), 8: (B0[0] - 6, B0[1] - 1), 10: (B0[0] - 2, B0[1]), 14: B0},
+             ft={0: 0, 9: -8, 13: 0}, bt={0: 0, 7: 6, 9: -12, 13: 0}, kb={0: None})
+    return K(T, i)
+def a_gbd(i):      # DOUBLE BLAST: two thrusts of the head one after the other: gather (0-2), the first blast (3: FIRE), the head comes back and gathers again (4-6), the second thrust, harder (7: FIRE), and the recovery (8-14)
+    T = dict(pel={0: (0, 0, 0), 2: (-4, 3, -4), 3: (6, 5, 6), 4: (4, 5, 3), 6: (-3, 6, -5), 7: (10, 7, 10), 9: (9, 7, 9), 12: (3, 2, 3), 14: (0, 1, 0)},
+             chs={0: (0, 0, 0), 2: (-1, 0, -8), 3: (3, 0, 12), 4: (1, 0, 6), 6: (-1, 0, -10), 7: (4, 0, 17), 9: (4, 0, 14), 12: (1, 0, 5), 14: (0, 0, 0)},
+             hd={0: (0, 0, 0), 2: (-2, 0, -14), 3: (5, 3, 30), 4: (1, 1, 6), 6: (-3, 0, -16), 7: (6, 4, 36), 9: (6, 4, 32), 12: (2, 1, 10), 14: (0, 0, 0)},
+             A={0: (0, 0, 0, 1, 1), 2: (-6, 6, 18, .9, 1), 3: (-4, 6, 10, .95, 1), 6: (-6, 7, 20, .9, 1), 7: (-4, 6, 10, .95, 1), 14: (0, 0, 0, 1, 1)},
+             B={0: (0, 0, 0, 1, 1), 2: (-8, 10, 28, .85, 1), 3: (-6, 8, 22, .9, 1), 6: (-8, 10, 30, .85, 1), 7: (-6, 8, 22, .9, 1), 14: (0, 0, 0, 1, 1)},
+             F={0: F0, 3: (F0[0] + 6, F0[1]), 6: (F0[0] + 2, F0[1]), 7: (F0[0] + 12, F0[1]), 10: (F0[0] + 12, F0[1]), 14: F0}, K={0: B0, 2: (B0[0] - 3, B0[1]), 7: (B0[0] + 4, B0[1] - 2), 10: (B0[0] + 5, B0[1]), 14: B0},
+             ft={0: 0, 7: -6, 12: 0}, bt={0: 0, 7: -14, 12: 0})
+    return K(T, i)
+def a_gbj(i):      # the AIR TRIPLE: in the air with his knees tucked he drives his head down at the enemy twice (3 and 6: FIRE), then he tips his head back and looks up (8-9) and the third blast goes up (10: FIRE), and he falls back (11-14)
+    T = dict(pel={0: (0, -1, -2), 2: (0, -2, 2), 3: (4, -2, 6), 5: (3, -2, 3), 6: (6, -2, 8), 8: (-2, -3, -6), 10: (-6, -2, -12), 12: (-2, 2, -4), 14: (0, 6, 0)},
+             chs={0: (0, 0, -4), 3: (2, 0, 12), 5: (1, 0, 6), 6: (3, 0, 14), 8: (-2, 0, -12), 10: (-3, 0, -20), 12: (0, 0, -4), 14: (0, 0, 4)},
+             hd={0: (0, 0, -4), 3: (4, 3, 32), 5: (1, 1, 14), 6: (5, 4, 36), 8: (-3, 0, -24), 10: (-5, -1, -42), 12: (-2, 0, -14), 14: (0, 0, 0)},
+             A={0: (0, -6, -22, 1, 1), 3: (-4, 2, 10, .95, 1), 6: (-4, 2, 12, .95, 1), 9: (-6, 0, -14, .9, 1), 10: (-8, 2, -4, .9, 1), 13: (-2, 4, 8, .95, 1), 14: (0, 0, 0, 1, 1)},
+             B={0: (0, -4, -26, .9, 1), 3: (-6, 4, 16, .9, 1), 6: (-6, 4, 18, .9, 1), 9: (-8, 0, -22, .85, 1), 10: (-10, 4, -6, .85, 1), 13: (-3, 6, 12, .9, 1), 14: (0, 0, 0, 1, 1)},
+             F={0: (152, 130), 3: (156, 122), 6: (156, 124), 10: (150, 126), 12: (152, 138), 14: F0}, K={0: (66, 128), 3: (70, 122), 6: (70, 124), 10: (66, 126), 12: (56, 142), 14: B0},
+             ft={0: 14, 6: 18, 10: 10, 13: 0}, bt={0: 12, 6: 14, 10: 8, 13: 0}, kb={0: 1, 12: 1, 14: None})
+    return K(T, i)
+def a_gbc(i):      # the LOW BLAST: from one knee he drops his head down and forward and the blast runs along the floor (0-3 gather, 4: FIRE, 5-8 hold, 9-14 back to the kneel)
+    T = dict(pel={0: KNEEL['pel'], 2: (-8, 34, -2), 4: (-3, 36, 5), 6: (-1, 37, 8), 9: (-3, 35, 4), 14: KNEEL['pel']}, chs={0: KNEEL['chs'], 2: (0, 0, 7), 4: (1, 0, 18), 6: (2, 0, 22), 9: (1, 0, 14), 14: KNEEL['chs']},
+             hd={0: KNEEL['hd'], 2: (-1, 1, -12), 4: (3, 4, 34), 6: (4, 5, 40), 9: (2, 3, 22), 14: KNEEL['hd']}, A={0: KNEEL['A'], 4: (-4, 8, 4, .9, 1), 6: (-4, 8, 6, .9, 1), 14: KNEEL['A']}, B={0: KNEEL['B'], 4: (-4, 14, 44, .88, 1), 6: (-4, 14, 44, .88, 1), 14: KNEEL['B']},
+             F={0: KNEEL['F'], 4: (KNEEL['F'][0] + 6, F0[1]), 8: (KNEEL['F'][0] + 6, F0[1]), 14: KNEEL['F']}, K={0: KNEEL['K'], 14: KNEEL['K']}, ft={0: 0}, bt={0: KNEEL['bt']}, kb={0: 1})
+    return K(T, i)
+def a_gba(i):      # the AIR BLAST: a quick one with his knees tucked: the head goes back (0-2), then drives down and forward (3-4: FIRE on 4), he hangs there (5-8) and drops his legs for the landing (9-14)
+    T = dict(pel={0: (0, -1, -2), 2: (-2, -2, -5), 3: (2, -2, 3), 4: (5, -2, 7), 7: (5, -2, 7), 10: (1, 0, 1), 12: (0, 4, 0), 14: (0, 6, 0)}, chs={0: (0, 0, -4), 2: (-1, 0, -10), 4: (3, 0, 14), 7: (3, 0, 14), 10: (1, 0, 4), 14: (0, 0, 2)},
+             hd={0: (0, 0, -4), 2: (-2, 0, -16), 4: (5, 4, 34), 7: (5, 4, 34), 10: (2, 1, 12), 14: (0, 0, 0)}, A={0: (0, -6, -22, 1, 1), 4: (-4, 2, 12, .95, 1), 8: (-4, 2, 12, .95, 1), 12: (-2, 4, 8, .95, 1), 14: (0, 0, 0, 1, 1)},
+             B={0: (0, -4, -26, .9, 1), 4: (-6, 4, 18, .9, 1), 8: (-6, 4, 18, .9, 1), 12: (-3, 6, 12, .9, 1), 14: (0, 0, 0, 1, 1)}, F={0: (152, 130), 4: (156, 124), 8: (156, 124), 11: (152, 140), 12: F0, 14: F0},
+             K={0: (66, 128), 4: (70, 124), 8: (70, 124), 11: (56, 142), 12: B0, 14: B0}, ft={0: 14, 4: 18, 11: 6, 12: 0}, bt={0: 12, 4: 14, 11: 6, 12: 0}, kb={0: 1, 11: 1, 12: None})
+    return K(T, i)
+GB_ROWS = [('g1', a_gb1, [], False, None, .6), ('g2', a_gb2, [], False, (4, 0), .6), ('gs', a_gbs, [], False, None, .5), ('gd', a_gbd, [], False, None, .6), ('gj', a_gbj, [], False, None, .5), ('gc', a_gbc, [], False, None, .8), ('ga', a_gba, [], False, None, .5)]
+# the hair is pushed to stand out in front when he drives his head forward (the extra turn in degrees and the stretch, picture by picture) and drawn in with the energy gathering (a negative turn)
+GB_HAIR = {'g1': {0: (0, 1), 3: (-8, .95), 4: (-14, .9), 5: (14, 1.2), 6: (30, 1.55), 8: (34, 1.6), 10: (24, 1.3), 12: (10, 1.05), 14: (0, 1)},
+           'g2': {0: (0, 1), 3: (-14, .9), 4: (14, 1.2), 5: (34, 1.6), 7: (38, 1.62), 10: (22, 1.25), 13: (8, 1), 14: (0, 1)},
+           'gs': {0: (0, 1), 4: (-10, .9), 7: (-22, .82), 8: (16, 1.3), 9: (36, 1.7), 11: (30, 1.5), 13: (10, 1.05), 14: (0, 1)},
+           'gd': {0: (0, 1), 2: (-14, .9), 3: (32, 1.55), 4: (6, 1), 6: (-16, .9), 7: (36, 1.65), 9: (32, 1.5), 12: (12, 1.05), 14: (0, 1)},
+           'gj': {0: (0, 1), 3: (30, 1.5), 5: (10, 1.1), 6: (34, 1.55), 8: (14, 1.1), 9: (54, 1.35), 10: (78, 1.6), 11: (60, 1.4), 12: (20, 1.05), 14: (0, 1)},
+           'gc': {0: (0, 1), 2: (-8, .95), 4: (30, 1.55), 6: (36, 1.6), 9: (20, 1.2), 14: (0, 1)},
+           'ga': {0: (0, 1), 2: (-10, .95), 4: (32, 1.55), 7: (32, 1.55), 10: (12, 1.05), 14: (0, 1)}}
+GB_FIRE = {'g1': (6, 7, 8), 'g2': (5, 6, 7), 'gs': (8, 9, 10, 11), 'gd': (3, 7, 8), 'gj': (3, 6, 10), 'gc': (4, 5, 6), 'ga': (4, 5, 6)}      # (the pictures with the flash at the hair)
+GB_CHARGE = {'g1': (2, 5), 'g2': (1, 4), 'gs': (1, 8), 'gd': (0, 3, 4, 7), 'gj': (0, 3, 4, 6), 'gc': (0, 4), 'ga': (0, 4)}      # (pictures on which the energy gathers in the hair: from, to ...)
+def hair_only(pose):      # the hair alone, drawn at the pose (the loose part with its turn and stretch)
+    return rp.render(pose, skip=[k for k in rp.ORDER if k != 'hair'])
+def hair_front(pose, gs):      # where the hair really ends in front of him (game px): the frontmost pixels of the hair as drawn
+    cv = hair_only(pose); ys, xs = np.nonzero(cv[..., 3] > 0)
+    if not len(xs): return gxy(locate(pose, 'hair', GB_TIP), gs)
+    xm = xs.max(); sel = xs >= xm - 2; return gxy((xm - 50, float(ys[sel].mean()) - 36), gs)
+def gb_fx(a, name, i, tip, hm=None):      # cyan light round the hair: sparks that gather while he charges, a white and cyan flash at the tip when he fires
+    x, y = tip; ch = GB_CHARGE[name]; fire = i in GB_FIRE[name]; strong = name == 'gs'
+    on0 = any(ch[k] <= i <= ch[k + 1] for k in range(0, len(ch), 2))
+    if hm is not None and (fire or on0):      # (the hair itself turns to energy: white at the tip, cyan towards the root, grey for the strong blast; while he gathers only some of its pixels)
+        k = 1.0 if fire else min(1.0, .25 + .75 * (i - ch[0]) / max(1, ch[1] - ch[0]))
+        for yy, xx in zip(*np.nonzero(hm & (a[..., 3] > 0))):
+            if math.hypot(xx - x, yy - y) > (11 if fire else 8): continue      # (only the front of the hair burns)
+            if tuple(a[yy, xx, :3]) == rp.OUTLINE and not fire: continue
+            if not fire and ((xx * 3 + yy * 5 + i) % 4) / 3.0 > k: continue
+            u = max(0.0, min(1.0, (xx - (x - 11)) / 11.0)); c = np.array(CYW if u > .62 else (CYL if u > .3 else CY), float)
+            if strong: c = c * .45 + np.array((196, 210, 214)) * .55
+            if (xx + yy) % 2 == 0 and u < .85: c = np.minimum(255, c * 1.12 + 10)
+            a[yy, xx, :3] = c.astype(np.uint8)
+    on = any(ch[k] <= i <= ch[k + 1] for k in range(0, len(ch), 2)); gray = (200, 214, 218) if strong else CYL
+    if on and not fire:
+        u = (i - ch[0]) / max(1, ch[1] - ch[0]); n = 3 + int(5 * u)
+        for j in range(n):      # (sparks fall in towards the hair)
+            ang = (j * 2.4 + i * 1.3); r = (7 - 5 * u) * (.6 + .4 * ((j * 5 + i) % 3) / 2); put(a, x - 2 + math.cos(ang) * r, y + math.sin(ang) * r * .8, CYW if j % 3 == 0 else gray, over=False)
+    if fire:
+        k = (GB_FIRE[name].index(i) + 1) / len(GB_FIRE[name]); R = (5.5 if strong else 6.5) - 2.2 * k
+        for yy in range(int(y - R) - 1, int(y + R) + 2):
+            for xx in range(int(x - R) - 1, int(x + R) + 2):
+                d = math.hypot(xx - x, yy - y)
+                if d <= R and a[yy, xx, 3] == 0 if 0 <= xx < 64 and 0 <= yy < 64 else False: put(a, xx, yy, CYW if d < R * .4 else (gray if strong else CYL) if d < R * .75 else (CY if not strong else (143, 177, 185)))
+        for j in range(8):      # (short rays)
+            th = j * math.pi / 4 + i * .4; L = R + 2 + (j % 2) * 2
+            for t in range(int(R), int(L) + 1): put(a, x + math.cos(th) * t, y + math.sin(th) * t, CYW if t < R + 1 else gray, over=False)
+
+GB_OUT = {}      # (the front tip of the hair in every picture of the blast rows, game px in the 64 x 64 cell: written to ryu_gb.json)
 ROWS = [('frames', a_idle, [], True, None, 2.4), ('walk', a_walk, [], True, (11.8, 0), 1.3), ('wback', lambda i: a_walk(i, True), [], True, (-8.8, 0), 1.3), ('jump', a_jump, [], False, w_jump, .35), ('cr', a_cdown, [], False, None, 1.2), ('ci', a_cidle, [], True, None, 2.4),
         ('cwk', a_cwalk, [], True, (4, 0), 1.6), ('bl', a_block, [], False, None, 1.5), ('dg', a_dash, ['body'], False, w_dash, .35), ('db', a_dashb, ['body'], False, w_dashb, .4), ('a0', a_hookL, [('armB', HAND_B)], False, None, .5), ('a1', a_hookR, [('armA', HAND_A)], False, None, .5),
         ('a2', a_kickup, ['foot'], False, None, .6), ('a3', a_jpunch, [('armB', HAND_B)], False, (3, 0), .45), ('cp', a_cleg, ['foot'], False, None, .8), ('as', a_slam, [('armA', HAND_A), ('armB', HAND_B)], False, None, .45), ('hp', a_hard, [('armB', HAND_B)], False, (2, 0), .5),
-        ('fk', a_front, ['foot'], False, None, .6), ('hu', a_hurt, [], False, (-6, 0), .5), ('ko', a_ko, [], False, (-9, 0), .4)] + ROWS_V1163 + ROWS_V1164
+        ('fk', a_front, ['foot'], False, None, .6), ('hu', a_hurt, [], False, (-6, 0), .5), ('ko', a_ko, [], False, (-9, 0), .4)] + ROWS_V1163 + ROWS_V1164 + GB_ROWS
 ROWN = [r[0] for r in ROWS]
 
 def build_row(name, fn, eff, loop, wvel, mult=1.0):
@@ -328,6 +435,8 @@ def build_row(name, fn, eff, loop, wvel, mult=1.0):
     wv = [(wvel(i) if callable(wvel) else wvel) if wvel else (0, 0) for i in range(15)]
     sec = swing(poses, wv, loop, mult)
     for p, s in zip(poses, sec): p.update(s)
+    if name in GB_HAIR:      # (v1.170 the hair stands out in front when he drives his head forward)
+        for i, p in enumerate(poses): rot, sy = kv(GB_HAIR[name], i); h = p['hair']; p['hair'] = (h[0], h[1], h[2] * .25 + rot, h[3], sy, h[5] * .25)
     ext = []; canv = []      # how far each picture's figure reaches in the cell (game px) when it is not shifted
     for pose in poses:
         cv = rp.render(pose); canv.append(cv); al = cv[..., 3] > 0; xs = np.where(al.any(axis=0))[0]; ys = np.where(al.any(axis=1))[0]
@@ -369,6 +478,8 @@ def build_row(name, fn, eff, loop, wvel, mult=1.0):
                 prev = pos[i - 1] if i else pos[i]; vel = [(p[0] - q[0], p[1] - q[1]) for p, q in zip(pos[i], prev)]
                 lines(a, [(p[0], p[1], v[0], v[1]) for p, v in zip(pos[i], vel)], i, n=3, spread=2.6, over=True)
             if name == 'bp' and 6 <= i <= 11: glow(a, fist[0], fist[1], {6: 3.6, 7: 4.6, 8: 6.2, 9: 6.0, 10: 5.2, 11: 4.0}[i])      # (v1.163 blue light round the fist while it flies and at the impact)
+        if name in GB_HAIR:
+            tip = hair_front(pose, gs[i]); GB_OUT.setdefault(name, [None] * 15)[i] = [round(tip[0], 1), round(tip[1], 1)]; gb_fx(a, name, i, tip, rp.downscale(hair_only(pose), dx=int(round(gs[i][0])), dy=int(round(gs[i][1])))[..., 3] > 0)
         frames.append(a)
     return frames
 
@@ -382,6 +493,8 @@ if __name__ == '__main__':
         fr = build_row(name, fn, eff, loop, wv, mult)
         for i, a in enumerate(fr): sheet.paste(Image.fromarray(a, 'RGBA'), (i * 64, r * 64))
     sheet.save(path)
+    if GB_OUT:      # (the tips of the hair: merged into the file so that a partial rebuild keeps the other rows)
+        gp = os.path.join(HERE, 'ryu_gb.json'); old = json.load(open(gp)) if os.path.exists(gp) else {}; old.update(GB_OUT); json.dump(old, open(gp, 'w'), separators=(',', ':'))
     if '--preview' in sys.argv:
         d = sys.argv[sys.argv.index('--preview') + 1]; os.makedirs(d, exist_ok=True)
         for r, (name, fn, eff, loop, wv, mult) in enumerate(ROWS):
