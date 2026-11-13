@@ -187,7 +187,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.174</small>
+    <small id="ver">V1.175</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -1426,7 +1426,7 @@ const lanBack = () => { if (lanRole) lanStop(); else show('modes'); };
 // ---------------------------------------------------------------- screens
 function show(s) {
   if (s !== 'play') c4xOff();      // (v1.156 any other screen ends chapter 4's part 3)
-  state = s; if (s !== 'story') { snd('mhumoff'); snd('tmusicoff'); snd('rsmuroff'); snd('bluepulloff'); c9Stop(); c15Stop(); } if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; track = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
+  state = s; if (twpEl) twPanelSync(0); if (s !== 'story') { snd('mhumoff'); snd('tmusicoff'); snd('rsmuroff'); snd('bluepulloff'); c9Stop(); c15Stop(); } if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; track = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
   $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); $('chal').classList.toggle('on', s === 'chal'); $('skills').classList.toggle('on', s === 'skills'); $('sns').style.display = 'none'; if (s !== 'lan' && s !== 'lansel' && !(s === 'play' && vs && vs.net) && lanTimer) lanStop();
   $('versus').classList.toggle('on', s === 'versus');
   $('title').classList.toggle('on', s === 'title'); $('ulog').classList.toggle('on', s === 'ulog'); $('mset').classList.toggle('on', s === 'mset'); $('codes').classList.toggle('on', s === 'codes');
@@ -6692,7 +6692,7 @@ $('setClose').addEventListener('click', closeSettings);
 function setPause(on) {
   if (on === paused) return true;
   if (on && (state !== 'play' || (vs && vs.net) || $('vsres').classList.contains('on'))) return false;      // (a Wi-Fi fight cannot wait for you, and the result screen needs no pause)
-  paused = on; $('pause').classList.toggle('on', on);
+  paused = on; $('pause').classList.toggle('on', on); if (twpEl) twPanelSync(0);
   if (on) { pauseAt = performance.now(); releaseAll(); if (sfx) sfx.ac.suspend(); }
   else { const n = performance.now(); vOff += n - pauseAt; tLast = n; if (sfx) audio(); }
   return true;

@@ -275,15 +275,21 @@ async function scStory() {
 let SC_ONLY = {};      // (for the tests: { sec: ['STORY'], scenes: ['CH 4'] })
 // ---------------------------------------------------------------- SKYSCRAPER (v1.173): three fighters fight in the 50-floor building and the scan makes its things happen: a slam through the floors, a fall, a blast, a ceiling broken, glass broken and a fall to the street
 async function scTower() {
-  SC.sec = 'SKYSCRAPER'; scCov('TOWER', 0, 3); SC.plan = 3 * 300; SC.done = 0; const keep = twPick; twPick = 1;
+  SC.sec = 'SKYSCRAPER'; scCov('TOWER', 0, 3); SC.plan = 3 * 440; SC.done = 0; const keep = twPick; twPick = 1;
   try {
     for (const [w, seed] of [['cu4', 11], ['gojo', 12], ['yuji', 13]]) {
       const label = SC_NAME[w] + ' IN THE SKYSCRAPER'; SC.say = label;
       try { Object.assign(TR, { beh: 1, ehp: 0, php: 0, pce: 0 }); startPractice(w, 'cat'); } catch (e) { scErr(e, label + ' START'); continue; }
       if (state !== 'play' || !twOn()) { scNote('fail', 'THE SKYSCRAPER DID NOT START: ' + label, 'STATE ' + state); show('title'); continue; }
       if (!(await scIntro())) { show('title'); return; }
-      const p = scPlayer(seed), ev = [[30, () => twSlam('foe', 2, pnow(), dummy.x)], [90, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [110, () => twMeFall(1, pnow(), wx)], [150, () => { const F = twFloorData(vs.tw.fMe); const o = { k: 'gas', x: Math.round(wx + 40), hp: 18, mx: 18, wob: 0, hitAt: -9999 }; F.objs.push(o); twDamageObj(F, o, 99, pnow()); }], [190, () => twCeiling('foe', 1, pnow(), dummy.x)], [235, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [250, () => twFallOut('foe', pnow(), 1)]];
-      const ok = await scFrames(320, i => {
+      const p = scPlayer(seed), ev = [[30, () => twSlam('foe', 2, pnow(), dummy.x)], [90, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [110, () => twMeFall(1, pnow(), wx)], [150, () => { const F = twFloorData(vs.tw.fMe); const o = { k: 'gas', x: Math.round(wx + 40), hp: 18, mx: 18, wob: 0, hitAt: -9999 }; F.objs.push(o); twDamageObj(F, o, 99, pnow()); }], [190, () => twCeiling('foe', 1, pnow(), dummy.x)], [235, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [250, () => twFallOut('foe', pnow(), 1)],
+        [60, () => { const F = twFloorData(vs.tw.fMe), d = F.doors.find(q => q.k === 'elev'); if (d) twDoorHit(F, d, 45, pnow()); }],      // (v1.175 the elevator: a hard hit jams a door (OUT OF ORDER) ...)
+        [270, () => { const T = vs.tw; if (T.cab) return; const F = twFloorData(T.fMe), d = F.doors.find(q => q.k === 'elev'); if (!d) return; d.st = 0; d.hp = 70; wx = d.x; T.px = wx; twCabEnter(F, d, pnow()); }],      // (... you step into one: the cab, the panel, a ride, an emergency stop, another ride)
+        [300, () => { const T = vs.tw; if (T.cab) twCabPick(T.fMe > 20 ? T.fMe - 9 : T.fMe + 11, pnow()); }],
+        [335, () => { const T = vs.tw; if (T.cab && T.cab.ph === 'ride') twCabStop(pnow()); }],
+        [350, () => { const T = vs.tw; if (T.cab) twCabPick(T.fMe > 30 ? T.fMe - 4 : T.fMe + 6, pnow()); }],
+        [420, () => { const T = vs.tw; if (T.cab) { if (T.cab.ph === 'in') twCabLeave(pnow()); } else { const F = twFloorData(T.fMe), d = F.doors.find(q => q.k === 'elev'); if (d) twDoorHit(F, d, 200, pnow()); } }]];      // (and a blast tears a door out: the shaft is open)
+      const ok = await scFrames(440, i => {
         p.step(); if (i % 6 === 0) scCheck();
         for (const [at, fn] of ev) if (i === at) { try { if (twOn() && vs.ph === 'fight') fn(); } catch (e) { scErr(e, label + ' EVENT ' + at); } }
         if (state !== 'play') { scNote('warn', 'THE FIGHT LEFT THE FIGHT SCREEN BY ITSELF: ' + label, 'STATE ' + state); }

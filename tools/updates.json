@@ -1,5 +1,16 @@
 [
  {
+  "v": "1.175",
+  "t": "RIDE THE ELEVATOR: A PANEL WITH ALL THE FLOORS",
+  "n": [
+   "Stand at an elevator door in the skyscraper and press JUMP or CROUCH: the doors shut behind you and you are INSIDE the elevator, a steel cab with a mirror, a handrail and a window onto the city. A panel with a button for each of the 50 floors opens at the side (scroll it with your finger or the mouse wheel). The old quick ride (up or down 5 floors) is gone: the panel replaces it. Stairs work as before.",
+   "Tap a floor and the ride starts at once: the display counts the floors, the cab shakes, and a ding and the doors opening tell you that you are there. A ride takes 0.1 second a floor (1 second at least, 4 seconds at most). Through the window the city and the sky change with the height (sunset, night, clouds, rain, a storm). Above the grid are TOP, LOBBY, ENEMY'S FLOOR and LAST FLOOR. The buttons show the kind of floor, floors you have visited are lit, a red dot marks the floor of the enemy and a mark shows floors with damage.",
+   "OPEN steps you back out, CLOSE shuts the doors faster and the red STOP button halts the cab between floors until you press a floor again. Time never stops: inside the cab you can walk, jump, block and attack.",
+   "The enemy is left outside the doors. If he was on your floor he runs to them and BANGS on them, and after about 8 seconds he BREAKS IN: the fight goes on inside the cab (also during the ride, and he steps out with you). If he was on another floor he follows later, as before, and when he comes out of a door of your floor that door swings open.",
+   "Elevators can break. A couple of hard hits jam a door (OUT OF ORDER: its button on the panel is dead, and a floor with no working elevator cannot be picked). A lot of damage or a blast tears the doors out and the SHAFT is open: whoever walks into it falls all the way down to the lobby (3% of health a floor, at most 30%, never a K.O.)."
+  ]
+ },
+ {
   "v": "1.174",
   "t": "THE SKYSCRAPER, REBUILT TO LOOK TOP NOTCH",
   "n": [
