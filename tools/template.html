@@ -55,6 +55,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #dom{grid-area:1/1;position:relative;overflow:hidden;border-color:#8c8cff;color:#9fb0ff}#dom span{color:#b8c4ff}#dom::after{content:'';position:absolute;left:0;right:0;bottom:0;height:var(--cd,0%);background:rgba(140,140,255,.38);pointer-events:none}      /* DOMAIN EXPANSION: the fill counts the 30 s cooldown down */
 #dom.on{background:#1a1a4a;border-color:#dfe6ff;color:#fff;opacity:1;box-shadow:0 0 1.8vh #8c8cff,4px 4px 0 #000}#dom.cd{opacity:.6}
 #dom.su{border-color:#ff3a4a;color:#ff7a8a}#dom.su span{color:#ffc0c8}#dom.su::after{background:rgba(255,58,74,.38)}#dom.su.on{background:#4a0a14;border-color:#ffd0d6;color:#fff;box-shadow:0 0 1.8vh #ff3a4a,4px 4px 0 #000}      /* v1.124 Sukuna's ULTIMATE: the same button in crimson */
+#dom.ju{border-color:#17e3ff;color:#8ff0ff}#dom.ju span{color:#c8f8ff}#dom.ju::after{background:rgba(23,227,255,.38)}#dom.ju.on{background:#06384a;border-color:#e4f7ff;color:#fff;box-shadow:0 0 1.8vh #17e3ff,4px 4px 0 #000}      /* v1.172 Ryu's ULTIMATE, JUST THIS ONCE: the same button in cyan */
 #lap.red{border-color:#ff5a4a;color:#ff7a6a}
 #lap.red span{color:#ffb4a8}
 #lap.fl{background:#3a1a00;border-color:#ff9a2a;color:#ffb24a;opacity:1;box-shadow:0 0 1.8vh #ff7a00,0 0 .5vh #ff7a00 inset,4px 4px 0 #000}      /* Sukuna's FLAME mode: BLUE is OPEN, in orange */
@@ -72,7 +73,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #fat.rdy{opacity:1;background:#3a0d12;border-color:#ff8a7a;color:#fff;box-shadow:0 0 1.8vh #ff4a3a,0 0 .5vh #ff4a3a inset,4px 4px 0 #000;animation:fatglow .5s steps(2) infinite}
 @keyframes fatglow{50%{box-shadow:0 0 3.2vh #ff2a2a,0 0 .9vh #ff2a2a inset,4px 4px 0 #000}}
 #pad.cine,#hud.cine{visibility:hidden}
-body.ry #dom,body.ry #fat,body.c4 #dom,body.c4 #ce,body.c4 #fat,body.c4 #lap,body.c4 #sns{visibility:hidden}      /* (v1.143 Ryu has no DOMAIN or FATAL: those buttons are hidden while he fights; v1.163 he has BLUE, v1.170 the MODE button is his GRANITE BLAST mode) */      /* the controls hide while a cutscene plays (the FATALITY, the red ending) */
+body.ry #fat,body.c4 #dom,body.c4 #ce,body.c4 #fat,body.c4 #lap,body.c4 #sns{visibility:hidden}      /* (v1.143 Ryu has no DOMAIN or FATAL: those buttons are hidden while he fights; v1.163 he has BLUE, v1.170 the MODE button is his GRANITE BLAST mode) */      /* the controls hide while a cutscene plays (the FATALITY, the red ending) */
 #qte{position:fixed;inset:0;z-index:4;display:none;pointer-events:none}#qte.show{display:block}      /* the quick-time event of the red ending: the red button, and the ring that closes on it */
 #qBtn,#qRing{position:absolute;border-radius:50%}
 #qBtn{display:none;pointer-events:auto;touch-action:none;padding:0;font-size:var(--fs-q,12px);white-space:nowrap;align-items:center;justify-content:center;background:#d8281c;border:.9vh solid #ffd0b0;color:#fff;text-shadow:2px 2px 0 #000;box-shadow:0 0 2.4vh #ff3a2a,0 0 .8vh #ffd0b0 inset,.5vh .5vh 0 #000}#qBtn.show{display:flex}#qBtn.on{background:#ff5a42;box-shadow:0 0 3.6vh #ff6a4a,0 0 1.2vh #fff inset,.2vh .2vh 0 #000}
@@ -186,7 +187,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.171</small>
+    <small id="ver">V1.172</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -1820,7 +1821,7 @@ function hitFoe(k, now) {                     // called on the impact frame: a h
 function gojoHit(k, now) {                    // the attacking dummy's swing connects with Gojo
   if (catGlove(now)) { nres('m'); return; }      // (the Cat in the giant's glove, lifted or flying: nothing touches him)
   if (dom) { nres('m'); return; }      // (the DOMAIN freezes everyone, whatever they were doing: nothing of the enemy's touches you until it is over)
-  if (cuMe() && suHit(now)) { nres('m'); return; }      // (v1.109 SUKUNA's COUNTER: while he waits the swing is dodged, and until his slash has landed nothing reaches him, see sukuna.js)
+  if (cuMe() && (suHit(now) || ryUlHit())) { nres('m'); return; }      // (v1.109 SUKUNA's COUNTER: while he waits the swing is dodged, and until his slash has landed nothing reaches him, see sukuna.js)
   if (lagRun && lagHit(k, now)) { nres('m'); return; }      // (v1.117 Verity's LAG COUNTER: the blow does nothing to him and starts his counter)
   if (isD2(k)) { gojoDiv2(now); return; }      // (DIVERGENT FIST's second impact, normal or RUSH: see gojoDiv2)
   if (dgAt >= 0 && now - dgAt < 11 * 1000 / DASH_FPS) { if (now - dgAt < 7 * 1000 / DASH_FPS && now - dodgeAt > 400 && (!vs || vs.ph === 'fight')) { dodgeAt = now; ceGain(E_DODGE); flowAdd(10, now); say('DODGE!', wx, '#9fd8ff', 8, now); } nres('m'); return; }       // he is dashing: the swing misses (v1.30: a dash started just before the blow gives energy)
@@ -2151,7 +2152,7 @@ const HOME_D = 'M3 0h2v1H3zM2 1h4v1H2zM1 2h6v1H1zM0 3h8v1H0zM1 4h6v1H1zM1 5h2v3H
 const YULT_D = 'M5 0h2v1H5zM4 1h2v1H4zM3 2h2v1H3zM2 3h5v1H2zM4 4h2v1H4zM3 5h2v1H3zM2 6h2v1H2zM1 7h2v1H1z';      // (YUJI'S ULTIMATE icon: a bolt of black lightning)
 const CHOKE_D = 'M0 0h2v1H0zM6 0h2v1H6zM0 1h8v1H0zM0 2h8v1H0zM0 3h1v1H0zM2 3h4v1H2zM7 3h1v1H7zM0 4h8v1H0zM0 5h3v1H0zM5 5h3v1H5zM1 6h6v1H1zM2 7h4v1H2z';      // (the ULTIMATE icon: a cat's face)
 function setModeUI() {                        // the MODE button (OFF / CURSED / RED) and the BLUE button, which becomes RED in red mode
-  gSdLab = 0; $('ce').classList.remove('fl'); $('lap').classList.remove('fl'); $('dom').classList.remove('su');      // (v1.120 Sukuna's FLAME mode paints both orange: his scene does it again on every frame, everybody else is back to normal)
+  gSdLab = 0; $('ce').classList.remove('fl'); $('lap').classList.remove('fl'); $('dom').classList.remove('su', 'ju');      // (v1.120 Sukuna's FLAME mode paints both orange: his scene does it again on every frame, everybody else is back to normal)
   $('ce').classList.toggle('lit', cm === 1); $('ce').classList.toggle('red', cm >= 2); $('ce').setAttribute('aria-pressed', cm ? 'true' : 'false');
   $('cel').innerHTML = 'MODE<br>' + ['OFF', 'CURSED', vs && vs.me === 'yuji' ? 'ZONE' : 'RED', 'INHERIT'][cm]; $('lap').classList.toggle('red', cm === 2); $('lapl').textContent = cm === 2 ? 'RED' : 'BLUE'; $('lap').setAttribute('aria-label', cm === 2 ? 'Red' : 'Lapse Blue');
   const vy = !!vs && vs.me === 'verity', ball = vy && !!vp && vp.form !== 'verity';      // playing Verity: MODE switches between OFF and the BALL, BLUE is the BITE and DASH is the TELEPORT
@@ -2505,7 +2506,7 @@ function comboEscape(now) {      // every frame, before the controls are gated
 function stateDraw(now) {      // the tracker, over the picture: green FREE or red (it blinks), a yellow DASH! when a dash can get you out, the seconds of the cooldown while the dash is locked; and the same seconds on the DASH button
   const b = $('dash'), cd = now < dgLock ? Math.ceil((dgLock - now) / (1000 * paceBase())) : 0;
   if (b && (+b.dataset.cd || 0) !== cd) { b.dataset.cd = cd || ''; b.classList.toggle('cd', cd > 0); }
-  if (state !== 'play' || c4x || yf || (typeof suFgOn === 'function' && suFgOn()) || (vs && vs.ph !== 'fight')) return;
+  if (state !== 'play' || c4x || yf || (typeof suFgOn === 'function' && suFgOn()) || ryUlNoHud() || (vs && vs.ph !== 'fight')) return;
   const why = redWhy(now), red = !!why, x = vs ? Math.max(60, Math.min(96, (VW - 52) >> 1)) + 10 : 6, h = vs && vs.rush ? 9 : 10, y = vs ? (vs.rush ? 30 : 21) : 20, pulse = red && ((now / 140) | 0) % 2 === 0;
   ctx.save(); ctx.globalAlpha = 1; ctx.fillStyle = '#000'; ctx.fillRect(x - 1, y - 1, 42, h + 2); ctx.fillStyle = red ? (pulse ? '#ff3a3a' : '#b01c1c') : '#2fb868'; ctx.fillRect(x, y, 40, h);
   pxt(red ? (why === 'hit' ? 'HIT' : why === 'down' ? 'DOWN' : why === 'held' ? 'HELD' : 'STUN') : 'FREE', x + 20, y + h - 1, '#ffffff', 8, 'center');
@@ -6417,7 +6418,7 @@ function tick(t) {
   if (still) { stopMs = Math.max(0, stopMs - rdt); vOff += now - last; now = last; } else if (state !== 'play') stopMs = 0;
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
   if (freePlay()) trainStep(now, dt);
-  { const ry = state === 'play' && !!vs && vs.me === RYU_WHO; if (ry !== ryUI) { ryUI = ry; document.body.classList.toggle('ry', ry); } }      // (v1.143 Ryu has no BLUE, MODE, DOMAIN or FATAL: while he fights those buttons are hidden, see the CSS of body.ry)
+  { const ry = state === 'play' && !!vs && vs.me === RYU_WHO; if (ry !== ryUI) { ryUI = ry; document.body.classList.toggle('ry', ry); } if (!ry && ryUl) ryUlEnd(now, true); }      // (v1.143 Ryu has no BLUE, MODE, DOMAIN or FATAL: while he fights those buttons are hidden, see the CSS of body.ry)
   ragTick(now);
   trainDraw(now);
   if (stance === 'down' && stPrev === 'stand' && vs && state === 'play') ceSpend(CE_COST.crouch, now); stPrev = stance;      // (the crouch of every fighter, the Cat smashing himself flat: 3% of the energy)

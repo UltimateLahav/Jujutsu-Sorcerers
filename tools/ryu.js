@@ -1,12 +1,12 @@
 // ---------------------------------------------------------------- v1.144 RYU ISHIGORI (this file is spliced into template.html by build_html.py, right after sukuna.js)
 // A fighter of FREE PLAY of the custom kind (customScene in custom.js): his pictures are made by tools/ryu_art.py out of the LOOK the user chose (tools/ryu_src/master.png: face, hair, fur, jacket, belt, jeans, boots; the picture is only his look, every pose
-// is new: tools/ryu_parts.py cuts it into a body that bends at the waist and the knees, with hair, fur, jacket tail and cuffs that swing on their own). build_html.py fills RYU_PNG with the picture strip: 36 rows of 15 pictures, the rows named in RYU_ROWS.
+// is new: tools/ryu_parts.py cuts it into a body that bends at the waist and the knees, with hair, fur, jacket tail and cuffs that swing on their own). build_html.py fills RYU_PNG with the picture strip: 40 rows of 15 pictures, the rows named in RYU_ROWS.
 // He is slot 4 of CU_GAME (the three slots of the drawings and Sukuna come first) and moves like Yuji (g.ry: the jump, the walk and the push of the legs are Yuji's, see customScene) but is a big, heavy man: he walks at 46 px/s forward and 34 back with
 // STOMPING steps (dust, a step sound and a hair of screen shake on every one), his DASH is a 0.2 s shoulder charge and his BLOCK is a high guard with both hands; he has HURT and K.O. pictures.
 // v1.163 BLUE (the button is back for him): standing a hard POWER PUNCH, in the air a DIVE PUNCH, holding forward a 5-HIT COMBO, and DASH right after the punch or the combo is a DASH KICK; see 'his BLUE moves' below.
 // His blows (ATTACK): standing still, a CHAIN within 0.7 s: LEFT HOOK (boxing), RIGHT HOOK, KICK UP (capoeira: the enemy is thrown up) and JUMP PUNCH (an anime flying punch: it hits the enemy who was kicked up and sends him flying forward); CROUCHED (one knee down) a
 // Muay Thai kick at the enemy's LEGS; in the AIR a pro-wrestling DOWNSLAM (both fists drive down onto the enemy); holding FORWARD a karate HARD PUNCH (a lunge: the enemy is sent back); holding BACK a Muay Thai FRONT KICK. ATTACK pressed during a blow is kept for 0.45 s.
-const RYU_WHO = 'cu4', RYU_PNG = '__RYUPNG__', RYU_ROWS = ['frames', 'walk', 'wback', 'jump', 'cr', 'ci', 'cwk', 'bl', 'dg', 'db', 'a0', 'a1', 'a2', 'a3', 'cp', 'as', 'hp', 'fk', 'hu', 'ko', 'uc', 'el', 'bp', 'dv', 'dk', 'hb', 'hs', 'hf', 'hl', 'g1', 'g2', 'gs', 'gd', 'gj', 'gc', 'ga'];      // (idle, walk, walk back, jump, crouch down, crouched idle, crouch walk, block, dash, dash back, the four chain blows, the leg kick, the downslam, the hard punch, the front kick, hurt, K.O.; v1.163: the uppercut, the elbow, the blue punch, the dive punch, the dash kick; v1.164: four more hurt pictures: doubled over, a stagger, a fall, the legs buckling; v1.170: the GRANITE BLAST rows: blast 1, blast 2, the strong blast, the double blast, the air blast with the look up, the low blast, the blast in the air)
+const RYU_WHO = 'cu4', RYU_PNG = '__RYUPNG__', RYU_ROWS = ['frames', 'walk', 'wback', 'jump', 'cr', 'ci', 'cwk', 'bl', 'dg', 'db', 'a0', 'a1', 'a2', 'a3', 'cp', 'as', 'hp', 'fk', 'hu', 'ko', 'uc', 'el', 'bp', 'dv', 'dk', 'hb', 'hs', 'hf', 'hl', 'g1', 'g2', 'gs', 'gd', 'gj', 'gc', 'ga', 'u1', 'u2', 'u3', 'u4'];      // (idle, walk, walk back, jump, crouch down, crouched idle, crouch walk, block, dash, dash back, the four chain blows, the leg kick, the downslam, the hard punch, the front kick, hurt, K.O.; v1.163: the uppercut, the elbow, the blue punch, the dive punch, the dash kick; v1.164: four more hurt pictures: doubled over, a stagger, a fall, the legs buckling; v1.170: the GRANITE BLAST rows: blast 1, blast 2, the strong blast, the double blast, the air blast with the look up, the low blast, the blast in the air; v1.172: JUST THIS ONCE, his ultimate: he plants his feet and raises the hand, the charge, the beam, the hand comes down)
 const RY_MV = [      // the blows: name, row, damage, the picture (1 - 15) it lands on, pictures a second, how far he steps forward (px), knock-back (x 6 = the enemy's speed in px/s: 100 sends him ~85 px, 140 ~130 px), launch (px high at the top), stun (s), shake, hit stop (ms), dn = he is put on the floor (a sweep / a slam)
   { n: 'L.HOOK', r: 'a0', d: 8, f: 8, v: 38, m: 4, kn: 10, l: 0, st: 0, w: 2, h: 40, rx: 5, sy: 38 },
   { n: 'R.HOOK', r: 'a1', d: 9, f: 8, v: 38, m: 4, kn: 14, l: 0, st: 0, w: 2, h: 45, rx: 6, sy: 38 },
@@ -57,7 +57,7 @@ NAMES[RYU_WHO] = 'RYU'; CEC[RYU_WHO] = ['#10142a', '#3a58c8', '#a8c0f0', '#7aa0f
     const burst = ryBurst(), vfx = RY_MV.map(m => m.x || m.combo ? burst : []);
     CU_GAME[4] = { name: 'RYU', frames: set.frames, walk: set.walk, wbk: set.wback, jump: set.jump, hu: set.hu, hus: ryHus(set), ko: set.ko, huMs: RY_HU_MS, bl: set.bl, df: set.dg, db: set.db, cr: set.cr, ci: set.ci, cwk: set.cwk, st: { ...cuStats(null), fw: 46, bk: 34, cw: 55, jh: 22, jt: 713, dfw: 62, dbk: 40, dtm: 200, hp: 340 }, vfx, atk: RY_MV.map(m => m.combo ? comboPics : set[m.r]),
       an: RY_MV.map(m => m.n), rdy: [0, 1, 2, 3], cl: [], ev, set: RY_MV.map(m => ({ v: m.v, m: m.m, c: m.c || 0, d: m.cd || 0, e: m.e, lt: m.lt, nm: m.nm })), body, push: Math.max(6, hs.length ? hs[hs.length >> 1] : 6), tipAll: ev.map(l => cuMaxRows(l.map(e => e.tip))), vxs: vfx.map(() => []),
-      al: RY_MV.map((m, k) => k === 3 ? RY_HOP : null), cs: null, ry: true, wf: RY_WF, crMs: 1000 / CR_FPS };      // (ry: he moves like Yuji and picks his blow by what is held, see ryPick; wbk: the pictures of walking back; wf: his walking pictures a second; crMs: how long a picture of the crouch lasts; al: the height of each picture of a blow that hops)
+      al: RY_MV.map((m, k) => k === 3 ? RY_HOP : null), ulr: { u1: set.u1, u2: set.u2, u3: set.u3, u4: set.u4 }, cs: null, ry: true, wf: RY_WF, crMs: 1000 / CR_FPS };      // (ry: he moves like Yuji and picks his blow by what is held, see ryPick; wbk: the pictures of walking back; wf: his walking pictures a second; crMs: how long a picture of the crouch lasts; al: the height of each picture of a blow that hops)
   };
   im.src = RYU_PNG;
 })();
@@ -194,7 +194,7 @@ function ryGbEv(k, cb) {      // the events of a blast's timeline: one callback 
   if (k === 18) ev.push(cb(15, now => { snd('land', 1); ryLand(now); }));
   return ev;
 }
-function ryReset() { ryGb = false; ryBeams = []; ryAura = []; ryAuraAt = 0; }
+function ryReset() { ryGb = false; ryBeams = []; ryAura = []; ryAuraAt = 0; ryUlEnd(pnow(), true); }
 function ryToggle(now) {      // the MODE button: the mode on / off, with a ring of sparks round the hair
   ryGb = !ryGb; snd(ryGb ? 'ceon' : 'ceoff'); if (ryGb) flash(now, 140, .25);
   const t = ryHairTop(ryCur); if (t) for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; ryAura.push({ x: wx + t[0] - 32 + Math.cos(a) * 3, y: ryCurY + t[1] + Math.sin(a) * 3, vx: Math.cos(a) * (ryGb ? 38 : 22), vy: Math.sin(a) * (ryGb ? 30 : 18) - 6, born: now, life: 420 + (i % 3) * 120, c: i % 3 === 0 ? '#ffffff' : i % 3 === 1 ? '#9ff3ff' : '#17e3ff' }); }
@@ -263,6 +263,157 @@ function ryDraw(now, cx, x, y, src) {      // the beams and the sparks of the mo
   ryBeams = ryBeams.filter(b => now - b.born < b.dur); for (const b of ryBeams) ryDrawBeam(now, cx, x, y, b, g);
   const dt = Math.min(.05, Math.max(0, (now - ryAuraT) / 1000)); ryAuraT = now;
   if (ryGb && vs && vs.ph === 'fight' && now - ryAuraAt > 70) { ryAuraAt = now; const t = ryHairTop(src); if (t) for (let i = 0; i < 3; i++) ryAura.push({ x: wx + t[0] - 32 + Math.random() * 8 - 4, y: y + t[1] + Math.random() * 3, vx: Math.random() * 8 - 4, vy: -(8 + Math.random() * 12), born: now, life: 420 + Math.random() * 300, c: Math.random() < .4 ? '#ffffff' : Math.random() < .5 ? '#9ff3ff' : '#17e3ff' }); }
-  ryAura = ryAura.filter(p => now - p.born < p.life); for (const p of ryAura) { p.x += p.vx * dt; p.y += p.vy * dt; ctx.globalAlpha = Math.min(1, 1.6 * (1 - (now - p.born) / p.life)); ctx.fillStyle = p.c; ctx.fillRect(Math.round(cx + p.x - wx), Math.round(p.y), 1, 1); } ctx.globalAlpha = 1;
+  ryAura = ryAura.filter(p => now - p.born < p.life); for (const p of ryAura) { p.x += p.vx * dt; p.y += p.vy * dt; ctx.globalAlpha = Math.min(1, 1.6 * (1 - (now - p.born) / p.life)); ctx.fillStyle = p.c; ctx.fillRect(Math.round(cx + p.x - wx), Math.round(p.y), 1, 1); } ctx.globalAlpha = 1;  if (ryUl) ryUlFront(now, cx, x, y);
 }
 window.__ryGb = () => ({ on: ryGb, beams: ryBeams.map(b => ({ k: b.k, f: b.f, ang: +b.ang.toFixed(1), ox: Math.round(b.ox - wx), oh: Math.round(b.oh), hit: b.hit, th: b.th, gray: b.gray })), aura: ryAura.length });      // test hook
+
+// ---------------------------------------------------------------- v1.172 JUST THIS ONCE: Ryu's ULTIMATE (the DOMAIN button, key V). He stands still with his feet planted, the right hand held out like a gun, and drives his head forward so that his HAIR stands out in front like a cannon barrel and fills with energy
+// (rows u1 - u4 of tools/ryu_art.py). The camera pushes in on him while a ball of energy gathers at the hair's tip and he says "JUST THIS ONCE" (a typed line and a low voice); then the screen goes black and says 今回だけ ("just this once") in Japanese; then it cuts back to the wide shot and
+// a huge beam leaves the hair and crosses the whole screen. NOTHING can stop the beam: not the guard, a dash, a jump or lying on the floor; it cuts the enemy for 45 percent of his health in ten bursts and throws him back. It only misses an enemy who has gone BEHIND him (checked at every burst).
+// Nothing touches Ryu while it lasts (gojoHit asks ryUlHit), the buttons do nothing (a press only skips to the beam), the enemy keeps moving until the screen goes black, then he is held. It costs 67% of his energy and the button needs 30 s to come back. The beam is drawn BEHIND him (ryUlBack), so that his hand stays in front of it.
+const RY_U = { cost: 67, cd: 30000, raise: 700, say: 1100, per: 85, tCut: 2700, tFire: 4300, fire: 1500, rel: 650, ticks: 10, gap: 120, pct: 4.5, th: 54 };      // (ms from the press: the hand goes up, the first letter is typed, ms a letter, the cut to black, the beam fires, how long it lasts, the hand comes down; its ten bursts, ms between them, percent of the enemy's health each, how thick the beam is (px))
+RY_U.tRel = RY_U.tFire + RY_U.fire; RY_U.end = RY_U.tRel + RY_U.rel;
+const RY_USAY = 'JUST THIS ONCE', RY_UWORDS = [[0, 1], [5, 6], [10, 7]], RY_JU = RY_GB.ju_dx || {};      // (the line; at which letter each word of the voice starts and its sound; how far each picture of the rows is shifted left in its cell: the game draws it that much to the right)
+const RY_ULD = 'M2 1h1v1H2zM1 2h3v1H1zM0 3h8v2H0zM1 5h3v1H1zM2 6h1v1H2z';      // (the icon of the button: a flash and a beam)
+const RY_JPH = [
+  '0000000000000000000000000003c0000007c0000007e000000e7000001e3800003c3c0000781e0000f00f0001e003c003c001e00ffffef81f7ffe3c3c00001c300000000000000003ffffc003ffffc0000001c000000380000003800000070000000e0000001e0000003c00000078000000f0000001e0000001c00000000000',
+  '00000000000000000000000000000000000000001ffffff81ffffff81c0000381c0000381c0000381c0000381c7ffe381c7ffe381c700e381c700e381c700e381c700e381c700e381c700e381c700e381c700e381c7ffe381c7ffe381c0000381c0000381c0000381c0000381c0000381ffffff81ffffff81c00003800000000',
+  '00000000000000000000000000080000001c0060001c0070001c0738001c03980019c1c01fffc1c01fffc0800078000000700000007003e000707fe00061ffe000e0e00000e0000001c0000001c0000001c00000038000000383000007038000070380000701c0000e01e0380e00fff81c003ff8040000000000000000000000',
+  '0000000000000000000000000000000000000000030007000380070003800700030007000300070007000700070007f8070ffff8060fffe00600070006000300060003000e0003000e0007000660070006e0070006c0070007c0070007800e0007800e0007801c0007803c00030078000201f0000001e0000000000000000000'];      // (the four letters of 今回だけ, 32 x 32 pixels each, a row of 8 hex digits: made from a Japanese font by tools/ryu_jp.py)
+let ryUl = null, ryJpC = null;      // (the ultimate in progress: { t0, row, fi (the picture), dx, cut, fired, fireAt, nextTick, tickN, hit (null = not yet, true / false), w, typed }; the pictures of the letters)
+const ryEase = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
+const ryUlBusy = () => !!(js || vf || cf || ke || dom || ult || fat || yf || se || de || c4x);      // (another cutscene has the game)
+const ryUlHit = () => !!ryUl;      // (gojoHit: nothing of the enemy's touches him)
+const ryUlNoHud = () => !!ryUl && !ryUl.fired;      // (the health bars stay away until the beam has fired)
+function ryUlTry(now) {      // the DOMAIN button: it starts if he stands or crouches with nothing else going on, the wait is over, a living enemy is there and the energy is there (67%)
+  const g = CU_GAME[4], d = dummy; if (!g || !g.ulr || !g.ulr.u1 || ryUl || g.cs || cuAtkAt >= 0 || cuDash || blkAt >= 0 || cuJumpAt >= 0 || (stance !== 'stand' && stance !== 'crouch') || ryUlBusy()) return;
+  if (now < domReadyAt) { say('WAIT', wx, '#9a9aa8', 8, now); return; }
+  if (!d || d.ko >= 0 || d.cap || !vs || vs.ph !== 'fight') { say('NO TARGET', wx, '#9a9aa8', 8, now); return; }
+  if (!ceSpend(RY_U.cost * 100 / cuS.em, now)) return;
+  ryUlStart(now);
+}
+function ryUlStart(now) {      // the stance: he stands up (from a crouch too), the controls go away, the buttons and bars are hidden and the long wait of the button is set (ryUlEnd sets the real one)
+  stance = 'stand'; stickCr = false; closeSettings(); stickDown = false; cuAtkQ = cuLpQ = 0; wxv = 0; wvx = 0;
+  ryUl = { t0: now, row: 'u1', fi: 0, dx: 0, cut: false, fired: false, fireAt: 0, nextTick: 0, tickN: 0, landed: 0, hit: null, w: {}, typed: 0, rel: 0 };
+  domReadyAt = now + RY_U.end + RY_U.cd; $('pad').classList.add('cine'); $('hud').classList.add('cine');
+  snd('ryult', 0); gritAt(wx, 14, 90, 0); puff(wx - 6, 5); puff(wx + 8, 5); shockAt(wx, 140, 70, 0.5); ryShake(now, 160);
+}
+function ryUlSkip(now) { const U = ryUl; if (!U || U.fired || now - U.t0 < 500) return; U.t0 = now - RY_U.tFire; U.cut = true; for (const [i] of RY_UWORDS) U.w[i] = 1; }      // (a button pressed before the beam goes straight to it; not in the first half second: the press that started it may repeat)
+function ryUlEnd(now, reset) {      // it is over (or broken off: the round ended, he was hurt, another cutscene took the game): the buttons and bars come back; the button waits 30 s from now (a new round starts with it ready)
+  const U = ryUl; if (!U) return; ryUl = null;
+  if (!ryUlBusy()) { $('pad').classList.remove('cine'); $('hud').classList.remove('cine'); }      // (not when another cutscene has the game and hid them itself)
+  if (!reset) domReadyAt = now + RY_U.cd;
+}
+function ryUlHold(now, ms) { if (!dummy || dummy.ko >= 0) return; cuStun(ms / 1000, now, true); dummy.vx = 0; }      // (the enemy stands still while the screen is black)
+function ryUlStep(g, now, dt, hurting, kod) {      // every frame he fights (customScene, before the controls are read): the line and the voice, the cut to black, the beam and its bursts, the end
+  const U = ryUl; if (!U) return; const S = RY_U, t = now - U.t0;
+  if (!U.fired && (!vs || vs.ph !== 'fight' || hurting || kod || now < pStun || ryUlBusy() || !dummy || dummy.ko >= 0)) { ryUlEnd(now); return; }
+  if (t >= S.end) { ryUlEnd(now); return; }
+  for (const [i, k] of RY_UWORDS) if (!U.w[i] && t >= S.say + i * S.per) { U.w[i] = 1; snd('ryult', k); }
+  U.typed = t < S.say ? 0 : Math.min(RY_USAY.length, Math.floor((t - S.say) / S.per) + 1);
+  if (!U.cut && t >= S.tCut) { U.cut = true; snd('ryult', 2); flash(now, 150, 0.8); ryUlHold(now, S.tFire - S.tCut + 250); }
+  if (!U.fired && t >= S.tFire) ryUlFire(now);
+  if (U.fired) {
+    while (U.tickN < S.ticks && now >= U.nextTick) { U.tickN++; U.nextTick += S.gap; ryUlTick(now, U.tickN); }
+    if (t < S.tRel) { shakeUntil = Math.max(shakeUntil, now + 90); shakeAmp = Math.max(shakeAmp, 1.5 + 3.5 * (1 - (t - S.tFire) / S.fire)); }      // (the screen shakes all the time the beam is on, less and less)
+    if (t >= S.tRel && !U.rel) { U.rel = 1; snd('ryult', 4); }
+  }
+}
+function ryUlFire(now) {      // the beam leaves the hair: the flash, the shake, dust at his feet (the first burst comes 70 ms later)
+  const U = ryUl; U.fired = true; U.fireAt = now; U.nextTick = now + 70; U.tickN = 0;
+  snd('ryult', 3); flash(now, 220, 0.75); shakeUntil = Math.max(shakeUntil, now + 1300); shakeAmp = Math.max(shakeAmp, 5); hitStop(100);
+  gritAt(wx - 4, 14, 120, -1); gritAt(wx + 6, 10, 90, 1); puff(wx - 10, 6); puff(wx + 4, 4); shockAt(wx, 320, 170, 0.9);
+}
+function ryUlTick(now, n) {      // one burst of the beam on whatever is in front of him: the guard, a dash, a jump, lying on the floor, nothing stops it (the one thing it cannot reach is an enemy BEHIND him); the ten of them take 45% of his full health, push him back and lift him; the last one stuns him
+  const d = dummy, U = ryUl, S = RY_U; if (!d || d.ko >= 0 || !vs) return;
+  if (d.x - wx < -4) { if (n === 1 && U.hit === null) { U.hit = false; say('MISSED', d.x, '#9fd8ff', 8, now); } return; }
+  if (d.vform && d.vform !== 'verity') { if (n === 1) say('IMMUNE', d.x, '#ffe9a0', 8, now); return; }      // (a smoke ball takes nothing, as with the other ULTIMATEs)
+  U.hit = true; const first = !U.landed; U.landed++;
+  const tot = (d.max || DUMMY_HP) * S.pct * S.ticks / 100 * cuS.dm / 100, dm = Math.max(1, Math.round(tot * n / S.ticks) - Math.round(tot * (n - 1) / S.ticks)), ey = gy - 30 - Math.round(d.airH || 0);      // (the ten bursts add up to 45% exactly: each one is what is still missing)
+  if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; } if (first) { hits.n++; vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n); } hits.dmg += dm; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = 0;
+  d.hp = Math.max(0, d.hp - dm); d.hitAt = now; d.dodgeUntil = 0; d.vx = Math.max(d.vx || 0, 150); cuStun(n === S.ticks ? 1.0 : 0.35, now, true);
+  if (first) ryThrowUp(now, 34);
+  say('' + dm, d.x + Math.random() * 10 - 5, popCol(), 8, now); spark(d.x + Math.random() * 6 - 3, ey + Math.random() * 20 - 10, first || n === S.ticks ? 16 : 9, ['#ffffff', '#9ff3ff', '#17e3ff'], first || n === S.ticks, 1); snd('ryult', 5); shockAt(d.x, 140, 70, 0.5);
+  if (first) snd('concboom');
+  if (d.hp <= 0) koDummy(now);
+}
+function ryUlPic(now) {      // the picture of the stance: which row and picture by the time, and how far the cell is moved so that his body stays where it is (the arm is long: the cell is shifted left, see RY_JU)
+  const U = ryUl, S = RY_U, g = CU_GAME[4], t = now - U.t0; let row, i;
+  if (t < S.raise) { row = 'u1'; i = Math.min(14, Math.floor(t / S.raise * 15)); }
+  else if (t < S.tFire) { row = 'u2'; i = Math.floor((t - S.raise) / 83) % 15; }
+  else if (t < S.tRel) { row = 'u3'; i = Math.min(14, Math.floor((t - S.tFire) / (S.fire / 15))); }
+  else { row = 'u4'; i = Math.min(14, Math.floor((t - S.tRel) / (S.rel / 15))); }
+  U.row = row; U.fi = i; U.dx = -((RY_JU[row] || [])[i] || 0); return g.ulr[row][i];
+}
+function ryUlTip(x, y) { const U = ryUl, T = RY_GB[U.row] && RY_GB[U.row][U.fi]; return T ? [x + T[0], y + T[1]] : [x + 50, y + 14]; }      // (the front tip of the hair on the screen: x, y = the cell's corner)
+function ryUlCam(now) {      // the camera: it pushes in on him while he charges (to 1.9 times), and when the beam fires it starts close (1.55) and pulls back to the wide shot
+  const U = ryUl; if (!U) return null; const S = RY_U, t = now - U.t0, cx = Math.round(VW / 2);
+  const z = t < S.tFire ? 1 + 0.9 * ryEase(Math.min(1, t / S.tCut)) : 1 + 0.55 * (1 - ryEase((t - S.tFire) / 700)), hw = VW / (2 * z), hh = VH / (2 * z);
+  return { z, fx: Math.max(hw, Math.min(VW - hw, cx + 10)), fy: Math.max(hh, Math.min(VH - hh, gy - 34)) };
+}
+function ryUlCamBegin(c) { ctx.save(); ctx.translate(Math.round(VW / 2), Math.round(VH / 2)); ctx.scale(c.z, c.z); ctx.translate(-Math.round(c.fx), -Math.round(c.fy)); }
+function ryUlCamEnd() { ctx.restore(); }
+function ryUlDisc(x, y, r, col) { ctx.fillStyle = col; for (let dy = -r; dy <= r; dy++) { const w = Math.round(Math.sqrt(r * r - dy * dy)); ctx.fillRect(Math.round(x) - w, Math.round(y) + dy, 2 * w + 1, 1); } }      // (a round blob made of pixel rows)
+function ryUlBack(now, cx, x, y) {      // before he is drawn: the beam (his hand and arm stay in front of it)
+  const U = ryUl, S = RY_U; if (!U || !U.fired) return; const a = now - U.fireAt; if (a < 0 || a > S.fire) return;
+  const [sx, sy] = ryUlTip(x, y), ramp = a < 220 ? 0.18 + 0.82 * ryEase(a / 220) : 1, fade = a > S.fire - 360 ? ryEase((S.fire - a) / 360) : 1, TH = S.th * ramp * fade, lead = Math.round((VW + 40) * ryEase(a / 150));
+  if (TH < 1) return;
+  for (let l = 0; l < lead; l += 2) {      // (four layers, column by column: the very light blue outline, the cyan beam itself, a light cyan and the white middle; it swells and shrinks as it runs, thin at the hair and fat further out)
+    const cone = Math.min(1, 0.28 + l / 46), h = Math.max(2, TH * cone * (1 + 0.07 * Math.sin(l * 0.11 - a * 0.05) + 0.04 * Math.sin(l * 0.27 + a * 0.09))), xx = Math.round(sx + l), c1 = Math.max(1, Math.round(h * 0.7)), c2 = Math.max(1, Math.round(h * 0.42));
+    ctx.fillStyle = '#e4f7ff'; ctx.fillRect(xx, Math.round(sy - h / 2 - 3), 2, Math.round(h + 6)); ctx.fillStyle = '#17e3ff'; ctx.fillRect(xx, Math.round(sy - h / 2), 2, Math.round(h));
+    ctx.fillStyle = '#8ff6ff'; ctx.fillRect(xx, Math.round(sy - c1 / 2), 2, c1); ctx.fillStyle = '#ffffff'; ctx.fillRect(xx, Math.round(sy - c2 / 2), 2, c2);
+  }
+  ctx.fillStyle = 'rgba(255,255,255,.75)';
+  for (let j = 0; j < 7; j++) { const yy = Math.round(sy + (((j * 37 + 11) % 100) / 100 - 0.5) * TH * 0.8), sp = j % 2 ? 1.1 : 1.5; for (let x0 = -((a * sp + j * 41) % 70); x0 < lead; x0 += 70) { const xs = Math.max(0, x0), xe = Math.min(lead, x0 + 22); if (xe > xs) ctx.fillRect(Math.round(sx + xs), yy, Math.round(xe - xs), 1); } }      // (light streaks run along it)
+  for (let j = 0; j < 22; j++) { const l = Math.random() * lead, h = TH * Math.min(1, 0.28 + l / 46), side = Math.random() < 0.5 ? -1 : 1; ctx.fillStyle = Math.random() < 0.5 ? '#ffffff' : '#9ff3ff'; ctx.fillRect(Math.round(sx + l), Math.round(sy + side * (h / 2 + 4 + Math.random() * 9)), 2, 1); }      // (sparks fly off its edges)
+  if (a < 320) { const R = Math.round(15 * (1 - a / 320)) + 2; ryUlDisc(sx, sy, R, '#17e3ff'); ryUlDisc(sx, sy, Math.max(1, R - 3), '#ffffff'); }      // (the flash at the hair)
+  const d = dummy; if (U.hit && d && a < S.fire - 200) { const ex = cx + d.x - wx, ey = gy - 30 - Math.round(d.airH || 0), R = 7 + Math.round(Math.abs(Math.sin(a * 0.04)) * 5); ryUlDisc(ex, ey, R, '#17e3ff'); ryUlDisc(ex, ey, R - 3, '#ffffff'); }      // (where it hits him)
+}
+function ryUlFront(now, cx, x, y) {      // after he is drawn, while he charges: a ball of light grows at the tip of his hair, rings and specks of light are drawn into it
+  const U = ryUl, S = RY_U; if (!U || U.fired) return; const t = now - U.t0; if (t < 250 || t >= S.tCut) return;
+  const [sx, sy] = ryUlTip(x, y), c = ryEase((t - 250) / (S.tCut - 250)), Ro = 1 + Math.round(8 * Math.pow(c, 1.2) + Math.abs(Math.sin(now * 0.03)) * 1.5), ox = sx + 2 + Ro * 0.4;
+  for (let i = 0, n = 6 + Math.floor(34 * c); i < n; i++) {      // (specks of light fly in from every side: the closer to the ball, the quicker)
+    const per = 520 + (i * 53) % 260, ph = ((t + i * 131) % per) / per, seed = Math.floor((t + i * 131) / per) * 7 + i, ang = seed * 2.399, r = (44 + (seed * 37) % 40) * Math.pow(1 - ph, 1.6) + Ro;
+    ctx.globalAlpha = Math.min(1, ph * 1.6); ctx.fillStyle = i % 3 === 0 ? '#ffffff' : i % 3 === 1 ? '#9ff3ff' : '#17e3ff'; ctx.fillRect(Math.round(ox + Math.cos(ang) * r), Math.round(sy + Math.sin(ang) * r * 0.8), i % 4 ? 1 : 2, i % 4 ? 1 : 2);
+  }
+  for (let k = 0; k < 2; k++) {      // (two rings shrink towards it)
+    const u = (((t - k * 350) % 700) + 700) % 700 / 700, R = 46 * (1 - u) + 6; ctx.globalAlpha = Math.min(1, u * 1.2) * (0.35 + 0.65 * c); ctx.fillStyle = '#9ff3ff';
+    for (let q = 0; q < 56; q++) { const th = q / 56 * Math.PI * 2; ctx.fillRect(Math.round(ox + Math.cos(th) * R), Math.round(sy + Math.sin(th) * R * 0.8), 1, 1); }
+  }
+  ctx.globalAlpha = 1; ryUlDisc(ox, sy, Ro + 2, 'rgba(23,227,255,.45)'); ryUlDisc(ox, sy, Ro, '#17e3ff'); ryUlDisc(ox, sy, Math.max(1, Math.round(Ro * 0.55)), '#ffffff'); ctx.globalAlpha = 1;
+}
+function ryJpMake() {      // the four letters of 今回だけ as pictures: the white letters, and behind them the same letters one pixel fatter in cyan and two pixels fatter in dark teal (a glow); one 36 x 36 cell for each letter
+  const W = 144, H = 36, mk = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; return c; }, w = mk(), g1 = mk(), g2 = mk(), a = w.getContext('2d'), b = g1.getContext('2d'), c = g2.getContext('2d');
+  a.fillStyle = '#ffffff'; b.fillStyle = '#17e3ff'; c.fillStyle = '#0b6f88';
+  RY_JPH.forEach((hx, i) => { for (let y = 0; y < 32; y++) { const v = parseInt(hx.substr(y * 8, 8), 16); for (let x = 0; x < 32; x++) if ((v >>> (31 - x)) & 1) { a.fillRect(i * 36 + 2 + x, 2 + y, 1, 1); b.fillRect(i * 36 + 1 + x, 1 + y, 3, 3); c.fillRect(i * 36 + x, y, 5, 5); } } });
+  return { w, g1, g2 };
+}
+function ryUlCard(now, t) {      // the black screen: 今回だけ in big pixel letters, one after the other, each popping in a little too big; a line grows under them; they fade just before the cut back (the letters are 32 pixels apart, the glow round each one is 2 more on every side)
+  const S = RY_U, J = ryJpC || (ryJpC = ryJpMake()), k = Math.max(1, Math.min(Math.floor((VW - 16) / 128), Math.floor(VH * 0.6 / 36))), gx0 = Math.round((VW - 128 * k) / 2), gy0 = Math.round(VH / 2 - 16 * k), tOut = S.tFire - 170;
+  const out = t >= tOut ? Math.max(0, 1 - (t - tOut) / 170) : 1;
+  for (let i = 0; i < 4; i++) {
+    const u = (t - (S.tCut + 440 + i * 170)) / 220; if (u <= 0 || out <= 0) continue;
+    const s = 1 + 0.45 * (1 - Math.min(1, u)), dw = 36 * k * s, dx = gx0 + i * 32 * k - 2 * k - (dw - 36 * k) / 2, dy = gy0 - 2 * k - (dw - 36 * k) / 2, al = Math.min(1, u * 1.8) * out * (u < 1 && Math.floor(now / 40) % 3 === 0 ? 0.6 : 1);
+    for (const [cv, o] of [[J.g2, 0.55], [J.g1, 1], [J.w, 1]]) { ctx.globalAlpha = al * o; ctx.drawImage(cv, i * 36, 0, 36, 36, Math.round(dx), Math.round(dy), Math.round(dw), Math.round(dw)); }
+  }
+  const lu = ryEase((t - (S.tCut + 300)) / 450), lw = Math.round(124 * k * lu), ly = gy0 + 32 * k + 4 * k, lx = Math.round(VW / 2 - lw / 2);      // (the line under the letters grows from the middle)
+  if (lw > 0 && out > 0) { ctx.globalAlpha = out; ctx.fillStyle = '#17e3ff'; ctx.fillRect(lx, ly, lw, Math.max(1, k)); ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(VW / 2 - lw / 4), ly, Math.round(lw / 2), Math.max(1, k)); }
+  ctx.globalAlpha = 1;
+}
+function ryUlOverlay(now) {      // on top of everything, without the camera: the black bars of a film, the typed line, and the black screen with the Japanese words
+  const U = ryUl, S = RY_U; if (!U) return; const t = now - U.t0;
+  const bk = t < S.tFire ? ryEase(t / 400) : ryEase(1 - (t - S.tFire) / 500), bh = Math.round(VH * 0.1 * bk);
+  if (t >= S.tCut && t < S.tFire) { const al = Math.min(1, (t - S.tCut) / 220); ctx.fillStyle = 'rgba(0,0,0,' + al.toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  if (bh > 0) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, bh); ctx.fillRect(0, VH - bh, VW, bh); }
+  if (U.typed > 0 && t < S.tCut + 160) {      // (the line he says, typed letter by letter at the bottom, and gone as the screen goes black)
+    const sz = Math.max(8, Math.min(16, Math.floor((VW - 8) / RY_USAY.length / 8) * 8)), X = Math.round((VW - RY_USAY.length * sz) / 2); ctx.globalAlpha = t > S.tCut - 120 ? Math.max(0, 1 - (t - (S.tCut - 120)) / 280) : 1;
+    pxt(RY_USAY.slice(0, U.typed), X, VH - bh - 8, '#eafcff', 16, 'left'); ctx.globalAlpha = 1;
+  }
+  if (t >= S.tCut + 200 && t < S.tFire) ryUlCard(now, t);
+}
+function ryUlUI(now) {      // every frame: the DOMAIN button is his ULTIMATE (a flash and a beam on a cyan button; it is lit while it lasts and its fill counts the 30 s down); setModeUI and setDomUI write it too, so it is checked every time
+  const b = $('dom'), l = $('doml'), p = b.querySelector('path'), act = !!ryUl, cd = act ? 0 : Math.max(0, (domReadyAt - now) / DOM_CD), aria = 'Ultimate: Just This Once. He stands still and says it, the screen goes black, then he fires a huge beam out of his hair that nothing can block or dodge: it only misses an enemy who is behind him (67 energy)';
+  if (l.innerHTML !== 'ULTI<br>MATE') l.innerHTML = 'ULTI<br>MATE'; if (p.getAttribute('d') !== RY_ULD) p.setAttribute('d', RY_ULD); if (b.getAttribute('aria-label') !== aria) b.setAttribute('aria-label', aria);
+  if (!b.classList.contains('ju')) b.classList.add('ju'); b.style.setProperty('--cd', Math.round(cd * 100) + '%'); b.classList.toggle('on', act); b.classList.toggle('cd', !act && cd > 0);
+}
+window.__ryUl = () => { const U = ryUl; return { on: !!U, t: U ? Math.round(pnow() - U.t0) : -1, row: U ? U.row : '', fi: U ? U.fi : -1, dx: U ? U.dx : 0, cut: U ? U.cut : false, fired: U ? U.fired : false, hit: U ? U.hit : null, ticks: U ? U.tickN : 0, landed: U ? U.landed : 0, typed: U ? U.typed : 0, ready: Math.round(domReadyAt - pnow()), bars: ryUlNoHud() }; };      // test hook

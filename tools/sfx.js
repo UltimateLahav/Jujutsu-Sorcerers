@@ -873,6 +873,36 @@ function makeSfx(ac) {
       burst(B.soft, t + 0.02, { type: 'highpass', f: 1800, f2: 5200, q: 0.8, dur: 0.3, gain: 0.8, atk: 0.01 });
       tone(B.soft, t + 0.06, { type: 'sine', f: 1100, f2: 520, dur: 0.6, cur: 1, gain: 0.14, atk: 0.005 });
     },
+    ryult(k, at) {                                       // v1.172 Ryu's ULTIMATE, JUST THIS ONCE: k 0 = the charge (a deep drone that climbs for four seconds with a thin shimmer and dry crackles over it), 1 / 6 / 7 = the three spoken words JUST / THIS / ONCE (a low, calm voice; the last one falls), 2 = the cut to black (a hard thump, then a thin cold ring in the silence), 3 = the beam fires (a huge boom, a roar of air, a bright sizzle and its own long hum), 4 = the beam dies away, 5 = one burst of the beam on the enemy (a short sizzle and a thud)
+      const t = T(at), B = C.atk, D = C.ce;
+      if (k === 0) {
+        tone(B.deep, t, { type: 'sawtooth', f: 48, f2: 150, dur: 4.2, cur: 1, gain: 0.18, atk: 1.8 });
+        tone(B.deep, t + 0.2, { type: 'triangle', f: 96, f2: 300, dur: 4.0, cur: 1, gain: 0.16, atk: 1.8 });
+        tone(D.soft, t + 0.6, { type: 'sine', f: 500, f2: 2400, dur: 3.6, cur: 1, gain: 0.06, atk: 2.2 });
+        burst(B.soft, t, { type: 'highpass', f: 1400, f2: 6000, q: 0.8, dur: 4.0, gain: 0.3, atk: 2.6 });
+        for (let i = 0; i < 26; i++) burst(B.soft, t + 1 + i * 0.12 + R(0, 0.06), { f: R(2000, 5200), q: 2.4, dur: R(0.012, 0.03), gain: R(0.2, 0.4), atk: 0.001 });
+      } else if (k === 1) shout(t, { f0: 100, pk: 150, fe: 128, dur: 0.3, gain: 0.34, cut: true, rough: 58, form: [[560, 720, 5, 1], [1250, 1500, 6, 0.7]], vib: 5 });
+      else if (k === 6) shout(t, { f0: 108, pk: 165, fe: 140, dur: 0.3, gain: 0.34, cut: true, rough: 58, form: [[360, 420, 5, 1], [2000, 2250, 6, 0.7]], vib: 5 });
+      else if (k === 7) shout(t, { f0: 104, pk: 152, fe: 84, dur: 0.78, gain: 0.36, rough: 52, form: [[620, 470, 5, 1], [1000, 880, 6, 0.6]], vib: 4.5 });
+      else if (k === 2) {
+        burst(B.soft, t, { f: 5200, f2: 300, q: 0.8, dur: 0.1, gain: 3, atk: 0.001 });
+        tone(B.deep, t, { type: 'triangle', f: 130, f2: 34, dur: 0.9, gain: 0.6, atk: 0.003 });
+        tone(D.soft, t + 0.05, { f: 2100, f2: 2060, dur: 1.2, gain: 0.05, atk: 0.01 });
+      } else if (k === 3) {
+        tone(B.deep, t, { type: 'triangle', f: 110, f2: 26, dur: 1.5, gain: 0.8, atk: 0.003 });
+        burst(B.soft, t, { f: 700, f2: 90, q: 0.6, dur: 0.5, gain: 4.2, atk: 0.001 });
+        burst(B.soft, t, { type: 'lowpass', f: 900, f2: 200, q: 0.8, dur: 1.6, gain: 2.6, atk: 0.02 });
+        burst(B.soft, t + 0.02, { type: 'highpass', f: 2600, f2: 7200, q: 0.8, dur: 1.4, gain: 0.9, atk: 0.01 });
+        tone(D.soft, t + 0.03, { type: 'sawtooth', f: 220, f2: 150, dur: 1.5, gain: 0.1, atk: 0.05 });
+        tone(D.soft, t + 0.03, { type: 'sine', f: 880, f2: 600, dur: 1.4, gain: 0.05, atk: 0.05 });
+      } else if (k === 4) {
+        burst(B.soft, t, { type: 'lowpass', f: 500, f2: 60, q: 0.8, dur: 0.9, gain: 1.6, atk: 0.03 });
+        tone(B.deep, t, { type: 'triangle', f: 64, f2: 22, dur: 0.9, gain: 0.3, atk: 0.02 });
+      } else {
+        burst(B.soft, t, { type: 'bandpass', f: 3400, f2: 9000, q: 3, dur: 0.08, gain: 1.2, atk: 0.003 });
+        tone(B.deep, t, { type: 'triangle', f: 120, f2: 60, dur: 0.12, gain: 0.22, atk: 0.002 });
+      }
+    },
     quake(at) {                                          // the roof is hit: a huge low boom, a long shaking rumble and stones and splinters falling
       const t = T(at), B = C.ce;
       tone(B.deep, t, { type: 'triangle', f: 80, f2: 22, dur: 1.6, gain: 0.6, atk: 0.004 });

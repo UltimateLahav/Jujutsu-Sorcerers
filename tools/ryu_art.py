@@ -423,11 +423,85 @@ def gb_fx(a, name, i, tip, hm=None):      # cyan light round the hair: sparks th
             th = j * math.pi / 4 + i * .4; L = R + 2 + (j % 2) * 2
             for t in range(int(R), int(L) + 1): put(a, x + math.cos(th) * t, y + math.sin(th) * t, CYW if t < R + 1 else gray, over=False)
 
+# ---------------------------------------------------------------- v1.172 JUST THIS ONCE (his ULTIMATE, see ryu.js): he stands still with his feet planted, the right hand held out in front of him like a gun with the index finger pointing at the enemy, and drives his head forward so that the HAIR
+# stands out in front like a cannon barrel and fills with energy (the game draws the beam from its front tip, see ryu_gb.json). Four rows of 15 pictures: u1 = he plants his feet and raises the hand (the hair starts to glow), u2 = he holds it and the hair burns brighter (a loop), u3 = the beam fires:
+# the recoil and the hold, u4 = the hand comes down and the hair settles. The finger is painted pixel by pixel (ju_hand) because the design's arm has no pointing hand; the hair is lit by ju_fx.
+I0 = a_idle(0)      # (the boxer's stance the rows start from and end in)
+JS = dict(pel=(0, -5, 1), chs=(2, 0, 6), hd=(8, 5, 34), A=(-12, 16, 56, .75, 1), B=(2, -3, -16, 1.35, 1), F=(F0[0] + 2, F0[1]), K=(B0[0] + 36, B0[1]), ft=0, bt=0)      # (the planted stance with the hand out, in the poses' numbers)
+def ju_mix(prog):      # a pose between the boxer's stance (0) and the planted one (1): prog = {channel: how far (0 - 1)}
+    return {c: mix(I0[c], JS[c], max(0.0, min(1.0, sm(prog.get(c, 0.0))))) for c in JS}
+JU_FIN = {'u1': {0: 0, 5: 0, 9: 1, 14: 1}, 'u2': {0: 1}, 'u3': {0: 1}, 'u4': {0: 1, 3: 1, 8: 0, 14: 0}}      # (how far the finger is out, picture by picture: 0 = a fist, 1 = the index finger points)
+def a_ju1(i):      # RAISE: he straightens out of the bounce and plants his feet wide (0-6), the right arm lifts and reaches out (3-9), the finger comes out (6-9), the head drives forward and the hair starts to stand (5-13)
+    g = lambda a, b: kv({a: 0, b: 1}, i, lin)
+    return ju_mix(dict(pel=g(0, 6), chs=g(1, 7), F=g(0, 6), K=g(0, 6), ft=g(0, 6), bt=g(0, 6), A=g(2, 8), B=g(3, 10), hd=g(5, 12)))
+def a_ju2(i):      # CHARGE (a loop): he stands as still as a rock, the chest swells with every breath, the head and the arm tremble a little as the energy builds
+    f = 2 * pi * i / 15; d = ju_mix({c: 1 for c in JS})
+    d['pel'] = (d['pel'][0] + .5 * sin(f), d['pel'][1] + .5 * sin(2 * f + 1), d['pel'][2]); d['chs'] = (d['chs'][0], d['chs'][1] - .8 * sin(f + .6), d['chs'][2] + .8 * sin(f)); d['hd'] = (d['hd'][0], d['hd'][1], d['hd'][2] + 1.4 * sin(2 * f)); d['B'] = (d['B'][0], d['B'][1] + .5 * sin(3 * f), d['B'][2] + .8 * sin(2 * f + 1), d['B'][3], 1)
+    return d
+def a_ju3(i):      # FIRE: the beam leaves the hair and the force throws him back: the chest and the head jerk back and the feet slide (0-3), then he leans into it and holds against the push, shaking (4-12), and eases (13-14)
+    d = ju_mix({c: 1 for c in JS}); r = kv({0: 0, 1: .6, 3: 1, 5: .8, 10: .6, 14: .35}, i); sh = sin(i * 2.6) * kv({0: 0, 3: 1, 11: 1, 14: .3}, i)
+    d['pel'] = (d['pel'][0] - 7 * r + .6 * sh, d['pel'][1] + 1 * r, d['pel'][2] - 5 * r); d['chs'] = (d['chs'][0] - 1 * r, d['chs'][1], d['chs'][2] - 7 * r); d['hd'] = (d['hd'][0], d['hd'][1], d['hd'][2] - 5 * r + .8 * sh)
+    d['F'] = (F0[0] + 2 - 4 * r, F0[1]); d['K'] = (B0[0] + 36 - 9 * r, B0[1]); d['B'] = (d['B'][0] - 3 * r, d['B'][1] + .5 * sh, d['B'][2] + 5 * r, d['B'][3], 1); d['bt'] = -12 * r; d['ft'] = -4 * r
+    return d
+def a_ju4(i):      # RELEASE: the arm comes down and the finger folds (0-8), the head comes up and the hair settles (3-11), he rocks back into his boxer's bounce (6-14)
+    g = lambda a, b: 1 - kv({a: 0, b: 1}, i, lin)
+    return ju_mix(dict(pel=g(5, 13), chs=g(4, 12), F=g(5, 13), K=g(5, 13), ft=g(5, 13), bt=g(5, 13), A=g(3, 11), B=g(0, 9), hd=g(2, 11)))
+def w_ju3(i): return (0, 0)
+JU_ROWS = [('u1', a_ju1, [], False, None, .5), ('u2', a_ju2, [], True, None, 1.0), ('u3', a_ju3, [], False, None, .6), ('u4', a_ju4, [], False, None, .5)]
+JU_HAIR = {'u1': {0: (0, 1), 5: (-4, .96), 8: (16, 1.25), 11: (40, 1.9), 14: (48, 2.3)}, 'u2': {0: (48, 2.3), 4: (50, 2.4), 8: (48, 2.3), 12: (51, 2.45), 14: (48, 2.3)},
+           'u3': {0: (54, 2.55), 3: (56, 2.65), 8: (54, 2.55), 12: (50, 2.4), 14: (48, 2.3)}, 'u4': {0: (48, 2.3), 3: (38, 1.9), 6: (22, 1.4), 9: (6, 1.06), 11: (0, 1), 14: (0, 1)}}      # (the hair's extra turn (degrees) and stretch, picture by picture)
+JU_GLOW = {'u1': {0: 0, 5: 0, 7: .22, 10: .5, 14: .8}, 'u2': {0: .85, 5: 1, 10: .9, 14: .85}, 'u3': {0: 1.5, 1: 1.35, 3: 1.25, 8: 1.2, 12: 1.05, 14: .9}, 'u4': {0: .8, 3: .55, 6: .3, 9: .1, 11: 0}}      # (how much of the hair is lit, picture by picture: 0 = none, 1 = all of it, over 1 = the flash at the tip as well)
+JU_ROW_NAMES = [r[0] for r in JU_ROWS]
+def ju_hand(a, tip, ang, fin):
+    """the hand at the end of the arm: a fist (3 pixels long, 4 high) with the thumb standing up and, when fin is more than 0, the index finger out straight along the top of the fist, like a gun; tip = the end of the arm in game px, ang = which way the arm points (degrees, down is +)"""
+    th = math.radians(ang); ux, uy = cos(th), sin(th); nx, ny = -uy, ux; px = {}
+    def dot(t, s_, c): px[(int(round(tip[0] + ux * t + nx * s_)), int(round(tip[1] + uy * t + ny * s_)))] = c
+    L, M, D, W = (250, 222, 198), (222, 176, 148), (168, 118, 100), (255, 244, 232)
+    for t in range(0, 3):      # (the fist: the upper rows light, the lower ones in shade)
+        for s_, c in ((-1, L), (0, L), (1, M), (2, D)): dot(t, s_, c)
+    n = int(round(5 * fin))
+    for t in range(3, 3 + n): dot(t, -1, W if t == 2 + n else L)      # (the index finger, one pixel thick, a lighter tip)
+    if n: dot(3, 0, M)      # (the base of the finger is two pixels thick)
+    dot(0, -2, L); dot(1, -2, L); dot(0, -3, L)      # (the thumb stands up from the top of the fist)
+    for (x, y), c in px.items():
+        if 0 <= x < 64 and 0 <= y < 64: a[y, x] = (*c, 255)
+    for (x, y) in list(px):      # (a dark outline round the hand)
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                xx, yy = x + dx, y + dy
+                if (xx, yy) not in px and 0 <= xx < 64 and 0 <= yy < 64 and a[yy, xx, 3] == 0: a[yy, xx] = (*rp.OUTLINE, 255)
+def ju_fx(a, name, i, tip, hm):
+    """the hair turns to energy from its front tip backwards: white at the tip, light cyan, then cyan towards the root; JU_GLOW says how much of it is lit; over 1 the muzzle flash at the tip as well; sparks fall in towards the tip"""
+    lv = kv(JU_GLOW[name], i, lin); x, y = tip
+    if lv > 0:
+        for yy, xx in zip(*np.nonzero(hm & (a[..., 3] > 0))):
+            d = math.hypot(xx - x, yy - y); reach = 5 + 17 * min(1.0, lv)
+            if d > reach: continue
+            if tuple(a[yy, xx, :3]) == rp.OUTLINE and lv < .95: continue
+            if lv < 1 and ((xx * 3 + yy * 5 + i * 2) % 4) / 3.0 > lv * 1.25 + .1 - d / reach * .5: continue
+            u = d / reach; c = np.array(CYW if u < .34 else (CYL if u < .66 else CY), float)
+            if (xx + yy) % 2 == 0 and u > .3: c = np.minimum(255, c * 1.1 + 8)
+            a[yy, xx, :3] = c.astype(np.uint8)
+    if 0 < lv <= 1.2:      # (sparks fall in towards the tip while he gathers)
+        n = int(2 + 7 * min(1.0, lv))
+        for j in range(n):
+            ang = j * 2.4 + i * 1.7; r = (3 + 9 * ((j * 7 + i * 3) % 5) / 4.0); put(a, x - 1 + math.cos(ang) * r, y + math.sin(ang) * r * .8, CYW if j % 3 == 0 else CYL if j % 3 == 1 else CY, over=False)
+    if lv > 1.0:
+        R = 4.2 + 3.4 * min(1.0, lv - 1.0)
+        for yy in range(int(y - R) - 1, int(y + R) + 2):
+            for xx in range(int(x - R) - 1, int(x + R) + 2):
+                d = math.hypot(xx - x, yy - y)
+                if d <= R and 0 <= xx < 64 and 0 <= yy < 64 and a[yy, xx, 3] == 0: put(a, xx, yy, CYW if d < R * .45 else CYL if d < R * .78 else CY)
+        for j in range(8):
+            th = j * math.pi / 4 + i * .5; L = R + 2 + (j % 2) * 3
+            for t in range(int(R), int(L) + 1): put(a, x + math.cos(th) * t, y + math.sin(th) * t, CYW if t < R + 1 else CYL, over=False)
+
+SH_OUT = {}      # (v1.172 the shift of the JUST THIS ONCE pictures, written to ryu_gb.json as ju_dx)
 GB_OUT = {}      # (the front tip of the hair in every picture of the blast rows, game px in the 64 x 64 cell: written to ryu_gb.json)
 ROWS = [('frames', a_idle, [], True, None, 2.4), ('walk', a_walk, [], True, (11.8, 0), 1.3), ('wback', lambda i: a_walk(i, True), [], True, (-8.8, 0), 1.3), ('jump', a_jump, [], False, w_jump, .35), ('cr', a_cdown, [], False, None, 1.2), ('ci', a_cidle, [], True, None, 2.4),
         ('cwk', a_cwalk, [], True, (4, 0), 1.6), ('bl', a_block, [], False, None, 1.5), ('dg', a_dash, ['body'], False, w_dash, .35), ('db', a_dashb, ['body'], False, w_dashb, .4), ('a0', a_hookL, [('armB', HAND_B)], False, None, .5), ('a1', a_hookR, [('armA', HAND_A)], False, None, .5),
         ('a2', a_kickup, ['foot'], False, None, .6), ('a3', a_jpunch, [('armB', HAND_B)], False, (3, 0), .45), ('cp', a_cleg, ['foot'], False, None, .8), ('as', a_slam, [('armA', HAND_A), ('armB', HAND_B)], False, None, .45), ('hp', a_hard, [('armB', HAND_B)], False, (2, 0), .5),
-        ('fk', a_front, ['foot'], False, None, .6), ('hu', a_hurt, [], False, (-6, 0), .5), ('ko', a_ko, [], False, (-9, 0), .4)] + ROWS_V1163 + ROWS_V1164 + GB_ROWS
+        ('fk', a_front, ['foot'], False, None, .6), ('hu', a_hurt, [], False, (-6, 0), .5), ('ko', a_ko, [], False, (-9, 0), .4)] + ROWS_V1163 + ROWS_V1164 + GB_ROWS + JU_ROWS
 ROWN = [r[0] for r in ROWS]
 
 def build_row(name, fn, eff, loop, wvel, mult=1.0):
@@ -435,20 +509,25 @@ def build_row(name, fn, eff, loop, wvel, mult=1.0):
     wv = [(wvel(i) if callable(wvel) else wvel) if wvel else (0, 0) for i in range(15)]
     sec = swing(poses, wv, loop, mult)
     for p, s in zip(poses, sec): p.update(s)
-    if name in GB_HAIR:      # (v1.170 the hair stands out in front when he drives his head forward)
-        for i, p in enumerate(poses): rot, sy = kv(GB_HAIR[name], i); h = p['hair']; p['hair'] = (h[0], h[1], h[2] * .25 + rot, h[3], sy, h[5] * .25)
+    if name in JU_HAIR:      # (v1.172 the fur cuff at the end of the long arm keeps its own size: the arm's stretch is taken out of it again)
+        for i, p in enumerate(poses): c = p['cuffB']; p['cuffB'] = (c[0], c[1], c[2], 1.0 / max(.5, T[i]['B'][3]), 1)
+    HR = GB_HAIR.get(name) or JU_HAIR.get(name)
+    if HR:      # (v1.170 the hair stands out in front when he drives his head forward)
+        for i, p in enumerate(poses): rot, sy = kv(HR, i); h = p['hair']; p['hair'] = (h[0], h[1], h[2] * .25 + rot, h[3], sy, h[5] * .25)
     ext = []; canv = []      # how far each picture's figure reaches in the cell (game px) when it is not shifted
     for pose in poses:
         cv = rp.render(pose); canv.append(cv); al = cv[..., 3] > 0; xs = np.where(al.any(axis=0))[0]; ys = np.where(al.any(axis=1))[0]
         if not len(xs): ext.append((32, 32, 0, 0)); continue
         gx = lambda x: rp.CX + (x - 50 - rp.HX) * rp.SCALE; gyy = lambda y: rp.GROUND + 1 - (rp.SOLE + 1 - (y - 36)) * rp.SCALE      # (the figure's own edges in game px, before the cell cuts them off)
         ext.append((int(math.floor(gx(xs.min()))), int(math.ceil(gx(xs.max() + 1))) - 1, int(math.floor(gyy(ys.min()))), int(math.ceil(gyy(ys.max() + 1))) - 1))
+    if name in JU_HAIR: ext = [(e[0], e[1] + int(round(9 * kv(JU_FIN[name], i, lin))) + 2, e[2], e[3]) for i, e in enumerate(ext)]      # (the painted hand reaches beyond the arm)
     need = [min(0, 61 - e[1]) + max(0, 3 - e[0]) + int(round(gs[i][0])) for i, e in enumerate(ext)]      # (a negative number moves him left, a positive one right)
     near = [min(need[max(0, i - 2):i + 3]) if min(need) < 0 else max(need[max(0, i - 2):i + 3]) for i in range(15)]
     sh = [int(round(sum(near[max(0, i - 1):i + 2]) / len(near[max(0, i - 1):i + 2]))) for i in range(15)]
     sh = [min(sh[i], need[i]) if min(need) < 0 else max(sh[i], need[i]) for i in range(15)]
     gy = [int(round(gs[i][1])) + max(0, 1 - (ext[i][2] + int(round(gs[i][1])))) - max(0, ext[i][3] + int(round(gs[i][1])) - 62) for i in range(15)]      # (and down when the head would go through the top, up when he would sink into the floor)
     gs = [(sh[i], gy[i]) for i in range(15)]
+    if name in JU_HAIR: SH_OUT[name] = [int(v) for v in sh]      # (how far each picture is shifted left (-) in its cell: the game draws it that much to the right again, see ryu.js)
     pos = []      # the effectors' positions picture by picture (game px)
     for i, pose in enumerate(poses):
         pts = []
@@ -478,7 +557,10 @@ def build_row(name, fn, eff, loop, wvel, mult=1.0):
                 prev = pos[i - 1] if i else pos[i]; vel = [(p[0] - q[0], p[1] - q[1]) for p, q in zip(pos[i], prev)]
                 lines(a, [(p[0], p[1], v[0], v[1]) for p, v in zip(pos[i], vel)], i, n=3, spread=2.6, over=True)
             if name == 'bp' and 6 <= i <= 11: glow(a, fist[0], fist[1], {6: 3.6, 7: 4.6, 8: 6.2, 9: 6.0, 10: 5.2, 11: 4.0}[i])      # (v1.163 blue light round the fist while it flies and at the impact)
-        if name in GB_HAIR:
+        if name in JU_HAIR:      # (v1.172 JUST THIS ONCE: the hand held out like a gun, and the hair lit)
+            T_ = T[i]; ang = 7.6 + T_['B'][2] + T_['pel'][2] + T_['chs'][2]; ju_hand(a, gxy(locate(pose, 'armB', HAND_B), gs[i]), ang, kv(JU_FIN[name], i, lin))
+            tip = hair_front(pose, gs[i]); GB_OUT.setdefault(name, [None] * 15)[i] = [round(tip[0], 1), round(tip[1], 1)]; ju_fx(a, name, i, tip, rp.downscale(hair_only(pose), dx=int(round(gs[i][0])), dy=int(round(gs[i][1])))[..., 3] > 0)
+        elif name in GB_HAIR:
             tip = hair_front(pose, gs[i]); GB_OUT.setdefault(name, [None] * 15)[i] = [round(tip[0], 1), round(tip[1], 1)]; gb_fx(a, name, i, tip, rp.downscale(hair_only(pose), dx=int(round(gs[i][0])), dy=int(round(gs[i][1])))[..., 3] > 0)
         frames.append(a)
     return frames
@@ -494,7 +576,7 @@ if __name__ == '__main__':
         for i, a in enumerate(fr): sheet.paste(Image.fromarray(a, 'RGBA'), (i * 64, r * 64))
     sheet.save(path)
     if GB_OUT:      # (the tips of the hair: merged into the file so that a partial rebuild keeps the other rows)
-        gp = os.path.join(HERE, 'ryu_gb.json'); old = json.load(open(gp)) if os.path.exists(gp) else {}; old.update(GB_OUT); json.dump(old, open(gp, 'w'), separators=(',', ':'))
+        gp = os.path.join(HERE, 'ryu_gb.json'); old = json.load(open(gp)) if os.path.exists(gp) else {}; old.update(GB_OUT); old.setdefault('ju_dx', {}).update(SH_OUT); json.dump(old, open(gp, 'w'), separators=(',', ':'))
     if '--preview' in sys.argv:
         d = sys.argv[sys.argv.index('--preview') + 1]; os.makedirs(d, exist_ok=True)
         for r, (name, fn, eff, loop, wv, mult) in enumerate(ROWS):
