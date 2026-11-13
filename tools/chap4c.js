@@ -75,7 +75,7 @@ window.__c4x = () => c4x ? { ph: c4x.ph, T: c4x.T, yx: c4x.y.x, mx: c4x.m.x, hp:
 window.__c4xSkip = () => { if (c4x) c4xSkip(); };
 function c4xSkip() {      // the SKIP button: the cutscene -> the fight; Ranos -> New York; New York -> the black and the card; the card -> the chapter menu (the events that are over are not played, see c4xEv)
   const c = c4x; if (!c) return; const now = pnow();
-  if (c.ph === 'cut') c.t0 = now - C4X.end * 1000; else if (c.ph === 'ranos') c.t0 = now - (C4RS.lw + C4RS.end) * 1000; else if (c.ph === 'ny') c.t0 = now - (c.T < C4NS.cut ? C4NS.cut + 0.05 : C4NS.end + 0.05) * 1000;
+  if (c.ph === 'cut') c.t0 = now - C4X.end * 1000; else if (c.ph === 'ranos') c.t0 = now - (C4RS.lw + C4RS.end) * 1000; else if (c.ph === 'ny') c.t0 = now - (c.T < C4NS.cut ? C4NS.cut + 0.05 : C4NS.end + 0.05) * 1000; else if (c.ph === 'k5') k5Skip(c, now);
 }
 addEventListener('pointerdown', e => { if (c4x && (c4x.ph === 'cut' || c4x.ph === 'ranos' || c4x.ph === 'ny') && c4x.T > 0.2 && c13InSkip(e)) c4xSkip(); });
 
@@ -83,12 +83,12 @@ addEventListener('pointerdown', e => { if (c4x && (c4x.ph === 'cut' || c4x.ph ==
 function c4xEv(c, T, name, t, fn) { if (T >= t && !c.ev[name]) { c.ev[name] = 1; if (T - t < 0.4) fn(); } }      // (a step of the cutscene fires once; one that a skip jumped over by more than 0.4 s is not played late)
 function c4xFrame(now, dt) {
   const c = c4x; if (!c) return; const T = c.T = (now - c.t0) / 1000;
-  if (c.ph === 'cut') c4xCutStep(c, now, dt, T); else if (c.ph === 'fight') c4xFightStep(c, now, dt); else if (c.ph === 'ranos') c4xRanosStep(c, now, dt, T); else if (c.ph === 'ny') c4xNyStep(c, now, dt, T);
+  if (c.ph === 'cut') c4xCutStep(c, now, dt, T); else if (c.ph === 'fight') c4xFightStep(c, now, dt); else if (c.ph === 'ranos') c4xRanosStep(c, now, dt, T); else if (c.ph === 'ny') c4xNyStep(c, now, dt, T); else if (c.ph === 'k5') k5Step(c, now, dt, T);
   if (c4x !== c) return;      // (a step may have ended the part)
-  if (c.ph !== 'ny') { c4xCam(c, dt, !c.camOk); c.camOk = true; wx = Math.round(c.cam); } else wx = 0; shkX = shkY = 0;
+  if (c.ph !== 'ny' && c.ph !== 'k5') { c4xCam(c, dt, !c.camOk); c.camOk = true; wx = Math.round(c.cam); } else wx = 0; shkX = shkY = 0;
   ctx.save(); ctx.imageSmoothingEnabled = false;
   if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100); ctx.translate(shkX, shkY); }
-  if (c.ph === 'ny') c4xNyDraw(c, now, dt, T);
+  if (c.ph === 'ny') c4xNyDraw(c, now, dt, T); else if (c.ph === 'k5') k5Draw(c, now, dt, T);
   else { c4xWorld(now); if (c.pool) for (const p of c.pool) { if (p.violet) c4xPortal(p.x, p.rx, now, p.a); else c4xPool(p.x, p.rx, now, p.a); } drawSmoke(now, dt); c4xDrawActors(c, now); c4xFx(c, now); drawSparks(now, dt); drawPopups(now); }
   ctx.restore(); c4xOverlay(c, now, T); c4xMusic(c, now);
 }
@@ -104,9 +104,10 @@ function c4xOverlay(c, now, T) {
   if (c.ph === 'cut') { c4xTalk(c, T, C4_TALK); if (T >= C4S.shock && T < C4X.end - 0.1) c4xCloseUp(c, T); skip(C4X.end); }
   else if (c.ph === 'ranos') { c4xTalk(c, T, C4_TALK_R, VH - 38); skip(C4RS.lw + C4RS.end, 0.8); if (c.whiteA > 0) { ctx.fillStyle = 'rgba(236,222,255,' + c.whiteA.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); } }
   else if (c.ph === 'ny') { if (T < C4NS.cut) { c4xTalk(c, T, C4_TALK_N); skip(C4NS.cut, 0.8); } }
-  else if (c.ph === 'fight') c4xHud(c, now);
+  else if (c.ph === 'fight') c4xHud(c, now); else if (c.ph === 'k5') k5Overlay(c, now, T);
   const a = c.ph === 'cut' ? 1 - c4xEase(T / C4X.fadeIn) : c.black ? c.black(now) : 0; if (a > 0.004) { ctx.fillStyle = 'rgba(0,0,0,' + Math.min(1, a).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
   if (c.ph === 'fight' || c.ph === 'ranos') c4xBanner(c, now);
+  if (c.ph === 'k5') k5After(c, now, T);      // (v1.177 chapter 5: the words after a death are over the black)
 }
 const c4xEase = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); }, c4xOut = u => { u = Math.max(0, Math.min(1, u)); return 1 - (1 - u) * (1 - u); };
 function c4xTalk(c, T, L, oy) {      // the few lines: the speech box in the corner (oy = how far down it is moved), the letters come out with the blips of the speaker's voice

@@ -91,7 +91,7 @@ body.ry #fat,body.c4 #dom,body.c4 #ce,body.c4 #fat,body.c4 #lap,body.c4 #sns{vis
 .mini .card{width:13vh;height:18vh;padding:.7vh}.mini .card b{font-size:.78em;line-height:1.3}.mini .card canvas{height:9vh;width:auto}
 .fgs{display:flex;gap:3.4vh;align-items:flex-end}.fg{display:flex;flex-direction:column;align-items:center;gap:.5vh}.gl{font-size:var(--fs-pb,clamp(5px,1.7vh,9px));color:var(--dim);white-space:nowrap}      /* the fighter pickers: SORCERERS and CURSED SPIRITS side by side */.mini .lock span{font-size:5vh;margin-top:3vh}
 .card.sel{border-color:var(--acc);background:#2a1f4a}
-#modes .cards{gap:4vh}#modes .card{width:32vh}#modes .card,#modes h2,#saves .card,#saves h2{font-size:var(--fs-btn,clamp(8px,2.4vh,13px))}#saves .cards{gap:3vh}#saves .card{width:26vh}button:disabled{opacity:.4;cursor:default}.mode span{font-size:8vh;margin-top:6vh;color:#ff8a7a}.mode.lock span{color:var(--ink)}
+#modes .cards{gap:4vh}#modes .card{width:32vh}#modes .card,#modes h2,#saves .card,#saves h2{font-size:var(--fs-btn,clamp(8px,2.4vh,13px))}#saves .cards{gap:3vh}#saves .card{width:26vh}#svChaps{--cw:min(26vh,calc((100vw - 20vh) / 5))}#svChaps .card{width:var(--cw)}button:disabled{opacity:.4;cursor:default}.mode span{font-size:8vh;margin-top:6vh;color:#ff8a7a}.mode.lock span{color:var(--ink)}
 #lanMode span{font-size:5.4vh;margin-top:7vh;color:#59b8ff}#lan{gap:2vh}#lan input{font:inherit;font-size:var(--fs-btn,clamp(9px,3vh,16px));color:var(--ink);background:#120d22;border:3px solid var(--line);padding:1.6vh 2vh;width:34vh;text-transform:uppercase;user-select:text;-webkit-user-select:text;outline:none}#lan input:focus{border-color:var(--acc)}
 #lanList{display:flex;flex-direction:column;gap:1.2vh;width:min(86vw,64vh);max-height:36vh;overflow-y:auto}.lanRoom{display:flex;justify-content:space-between;align-items:center;gap:2vh;text-align:left}.lanRoom small{flex:none}#lanInfo{min-height:8vh;font-size:clamp(7px,2.3vh,12px);line-height:1.8;white-space:pre-line;color:var(--dim)}#lanInfo.bad{color:#ff8a7a}      /* WI-FI ROOMS: rooms on the same Wi-Fi */
 #lanSel{gap:1.6vh}#lsPick{gap:1.6vh}#lsMain{display:flex;align-items:center;gap:3vh}.lsCol{display:flex;flex-direction:column;align-items:center;gap:.8vh}#lsMain .card{width:19vh;height:27vh;padding:1vh;pointer-events:none}#lsMain .card canvas{height:14vh;width:auto}#lsMain .card b{text-align:center;font-size:.8em;line-height:1.3;min-height:2.6em}#lsFoePv{transform:scaleX(-1)}
@@ -187,7 +187,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.176</small>
+    <small id="ver">V1.177</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -277,6 +277,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <button id="svc1" class="card mode"><span>2</span><b>CH. 2</b><i>THE PORTAL</i></button>
     <button id="svc2" class="card mode"><span>3</span><b>CH. 3</b><i>THE DIVINE GENERAL</i></button>
     <button id="svc3" class="card mode"><span>4</span><b>CH. 4</b><i>THE VESSEL</i></button>
+    <button id="svc4" class="card mode"><span>5</span><b>CH. 5</b><i>THE IRON MAN</i></button>
   </div>
   <div class="row"><button id="svStart" disabled>START</button><button id="svChap" disabled>CHOOSE CHAPTER</button><button id="svBack">BACK</button></div>
 </section>
@@ -4421,6 +4422,7 @@ __CHAP4B__
 __CHAP4C__
 __CHAP4D__
 __CHAP4E__
+__CHAP5__
 function drawScene(now, dt) {
   if (c4x) { c4xFrame(now, dt); return; }      // (v1.156 chapter 4, part 3: Yuji against Meguna, see tools/chap4c.js)
   fatUI(now);
@@ -4740,15 +4742,16 @@ function playVoice() {      // "HEY, IT'S ME, IT'S VERITY" (3.9 s), played throu
 const SAVE_KEY = 'jsv_saves'; let svSel = -1;
 function loadSaves() { try { const a = JSON.parse(localStorage.getItem(SAVE_KEY)); if (Array.isArray(a) && a.length === 3) return a; } catch (e) { } return [null, null, null]; }
 function storeSaves(a) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(a)); } catch (e) { } }
-function renderSaves0() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].c15 ? 'CHAPTER 4 COMPLETE' : a[i].c7 ? 'CHAPTER 3: THE DIVINE GENERAL' : a[i].c3 ? 'CHAPTER 2: THE PORTAL' : a[i].c2 ? 'CHAPTER 1 COMPLETE' : a[i].tn ? 'THE MYSTERY: TRAINING DONE' : a[i].ch2 ? 'THE MYSTERY COMPLETE' : a[i].ch1 ? 'THE MYSTERY: THE CAT' : a[i].beat ? 'THE MYSTERY: VERITY BEATEN' : 'CHAPTER 1: THE MYSTERY') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
+function renderSaves0() { const a = loadSaves(); for (let i = 0; i < 3; i++) { const b = $('sv' + i); b.querySelector('i').textContent = a[i] ? (a[i].c16 ? 'CHAPTER 5 COMPLETE' : a[i].c15 ? 'CHAPTER 4 COMPLETE' : a[i].c7 ? 'CHAPTER 3: THE DIVINE GENERAL' : a[i].c3 ? 'CHAPTER 2: THE PORTAL' : a[i].c2 ? 'CHAPTER 1 COMPLETE' : a[i].tn ? 'THE MYSTERY: TRAINING DONE' : a[i].ch2 ? 'THE MYSTERY COMPLETE' : a[i].ch1 ? 'THE MYSTERY: THE CAT' : a[i].beat ? 'THE MYSTERY: VERITY BEATEN' : 'CHAPTER 1: THE MYSTERY') : 'EMPTY'; b.classList.toggle('sel', i === svSel); } $('svStart').disabled = svSel < 0; }
 let svView = 0;      // v1.142: 0 = the three saves, 1 = the chapters of the chosen save (only the ones it has reached; replaying one never takes progress away: the flags are only ever set)
-const SV_CH = ['THE MYSTERY', 'THE PORTAL', 'THE DIVINE GENERAL', 'THE VESSEL'], svReached = s => s ? 1 + (s.c2 || s.c3 || s.c7 ? 1 : 0) + (s.c3 || s.c7 ? 1 : 0) + (s.c7 || s.c15 ? 1 : 0) : 0;
+const SV_CH = ['THE MYSTERY', 'THE PORTAL', 'THE DIVINE GENERAL', 'THE VESSEL', 'THE IRON MAN'], svReached = s => s ? 1 + (s.c2 || s.c3 || s.c7 ? 1 : 0) + (s.c3 || s.c7 ? 1 : 0) + (s.c7 || s.c15 ? 1 : 0) + (s.c15 || s.c16 ? 1 : 0) : 0;      // (chapter 5 opens when chapter 4 is finished)
 function renderSaves() {
   renderSaves0(); const sel = svSel >= 0 ? loadSaves()[svSel] : null, n = svReached(sel); $('svSlots').style.display = svView ? 'none' : ''; $('svChaps').style.display = svView ? '' : 'none'; $('svTitle').textContent = svView ? 'CHOOSE A CHAPTER' : 'CHOOSE A SAVE';
-  for (let i = 0; i < 4; i++) { const b = $('svc' + i); b.disabled = i >= n; b.style.opacity = i >= n ? '0.4' : ''; b.querySelector('i').textContent = SV_CH[i] + (i >= n ? ' (LOCKED)' : ''); }
+  for (let i = 0; i < 5; i++) { const b = $('svc' + i); b.disabled = i >= n; b.style.opacity = i >= n ? '0.4' : ''; b.querySelector('i').textContent = SV_CH[i] + (i >= n ? ' (LOCKED)' : ''); }
   $('svStart').style.display = $('svChap').style.display = svView ? 'none' : ''; $('svStart').textContent = sel ? 'CONTINUE' : 'START'; $('svChap').disabled = !sel;
 }
-function startStory(slot, ch) { const a = loadSaves(); if (ch === 4 || (!ch && a[slot] && (a[slot].c7 || a[slot].c15))) { startC15(slot); return; }      // (a save that has finished chapter 3 goes on with chapter 4, the vessel, v1.145)
+function startStory(slot, ch) { const a = loadSaves(); if (ch === 5 || (!ch && a[slot] && (a[slot].c15 || a[slot].c16))) { startC16(slot); return; }      // (v1.177 a save that has finished chapter 4 goes on with chapter 5, the Iron Man)
+  if (ch === 4 || (!ch && a[slot] && a[slot].c7)) { startC15(slot); return; }      // (a save that has finished chapter 3 goes on with chapter 4, the vessel, v1.145)
   if (ch === 3 || (!ch && a[slot] && a[slot].c3)) { startC7(slot); return; }      // (a save that has finished chapter 2 goes on with chapter 3, v1.106)
   if (ch === 2 || (!ch && a[slot] && a[slot].c2)) { startC3(slot); return; }      // (a save that has finished chapter 1 goes on with chapter 2, v1.95)
   if (!ch && a[slot] && a[slot].ch2) { startTraining(slot); return; } if (!ch && a[slot] && a[slot].ch1) { startChapter2(slot); return; }      // (ch = 1: chapter 1 from its first scene)      // (a save that has finished chapter 1 goes on with part 2, the training)
@@ -6645,7 +6648,7 @@ $('story').addEventListener('click', () => { audio(); svSel = -1; svView = 0; re
 ['sv0', 'sv1', 'sv2'].forEach((id, i) => $(id).addEventListener('click', () => { svSel = i; renderSaves(); }));
 $('svStart').addEventListener('click', () => { if (svSel >= 0) startStory(svSel); });
 $('svChap').addEventListener('click', () => { if (svSel >= 0) { audio(); svView = 1; renderSaves(); } });
-[0, 1, 2, 3].forEach(i => $('svc' + i).addEventListener('click', () => { if (svSel >= 0 && i < svReached(loadSaves()[svSel])) startStory(svSel, i + 1); }));
+[0, 1, 2, 3, 4].forEach(i => $('svc' + i).addEventListener('click', () => { if (svSel >= 0 && i < svReached(loadSaves()[svSel])) startStory(svSel, i + 1); }));
 $('svBack').addEventListener('click', () => { if (svView) { svView = 0; renderSaves(); } else show('modes'); });
 $('lanMode').addEventListener('click', () => { audio(); show('lan'); lanStop(); $('lanCreate').disabled = $('lanBrowse').disabled = !LAN; });
 $('lanCreate').addEventListener('click', lanCreate);

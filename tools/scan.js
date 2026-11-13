@@ -245,7 +245,7 @@ function scSkipTap() {      // a tap on the SKIP button in the top right corner
   window.dispatchEvent(new PointerEvent('pointerdown', o)); window.dispatchEvent(new PointerEvent('pointerup', o));
 }
 async function scStory() {
-  SC.sec = 'STORY'; const SCENES = [['CH 1 THE ALLEY', () => startStory(0, 1)], ['CH 1 PART 2 THE HALL', () => startChapter2(0)], ['THE TRAINING', () => startTraining(0)], ['THE MASTER', () => { startStory(0, 1); startMaster(pnow()); }], ['THE REPORT', () => { startStory(0, 1); startOutro(pnow()); }], ['CH 2 THE PORTAL', () => startStory(0, 2)], ['CH 3 THE GENERAL', () => startStory(0, 3)], ['CH 4 THE VESSEL', () => startStory(0, 4)]];
+  SC.sec = 'STORY'; const SCENES = [['CH 1 THE ALLEY', () => startStory(0, 1)], ['CH 1 PART 2 THE HALL', () => startChapter2(0)], ['THE TRAINING', () => startTraining(0)], ['THE MASTER', () => { startStory(0, 1); startMaster(pnow()); }], ['THE REPORT', () => { startStory(0, 1); startOutro(pnow()); }], ['CH 2 THE PORTAL', () => startStory(0, 2)], ['CH 3 THE GENERAL', () => startStory(0, 3)], ['CH 4 THE VESSEL', () => startStory(0, 4)], ['CH 5 THE IRON MAN', () => startStory(0, 5)]];
   scCov('SCENES', 0, SCENES.length); SC.plan = SCENES.length * 200; SC.done = 0; const T = () => (typeof c4x !== 'undefined' && c4x ? c4x.T : story ? story.T : -1), inScene = () => state === 'story' || (typeof c4x !== 'undefined' && !!c4x);
   for (const [name, start] of SCENES) {
     if (SC_ONLY.scenes && !SC_ONLY.scenes.some(x => name.includes(x))) continue;
@@ -258,7 +258,7 @@ async function scStory() {
         if (!p) p = scPlayer(77); const a = await scFrames(90, () => p.step()); p.end(); if (!a) { show('title'); return; } try { c4xWin(pnow()); } catch (e) { scErr(e, name + ' THE FIGHT'); } await scFrames(10); continue;
       }
       if (!(await scFrames(pre))) { show('title'); return; }
-      if (C && !['cut', 'ranos', 'ny'].includes(C.ph)) continue;      // (a part with no SKIP: it goes on by itself)
+      if (C && !['cut', 'ranos', 'ny', 'k5'].includes(C.ph)) continue;      // (a part with no SKIP: it goes on by itself)
       if (story && state === 'story' && !storySkipOn()) { scSkipTap(); if (!(await scFrames(40))) { show('title'); return; } continue; }      // (a card that uses the taps itself, e.g. the how-to-play card of chapter 3: a tap after its first 1.8 s closes it)
       const t0 = T(), s0 = C ? C.ph : ''; scSkipTap(); if (!(await scFrames(2))) { show('title'); return; }
       const C2 = typeof c4x !== 'undefined' ? c4x : null; pre = T() - t0 < 1.2 ? 2 : 4;
@@ -267,6 +267,9 @@ async function scStory() {
     }
     if (state === 'play' && story && story.battle) { const q = scPlayer(5), ok = await scFrames(100, () => q.step()); q.end(); scCheck(); if (!ok) { show('title'); return; } }
     scCov('SCENES', 1, 0); scPass();
+  }
+  if (!SC_ONLY.scenes || SC_ONLY.scenes.some(x => 'CH 5 THE STAB'.includes(x))) {      // (v1.177 chapter 5's lost tap: the stab, the black, the words YUJI DIED, and the scene starts again by itself)
+    SC.say = 'CH 5 THE STAB'; show('title'); try { SET.gore = 0; startStory(0, 5); await scFrames(20); window.__k5At(7.7, 'miss'); let q = null; for (let k = 0; k < 14; k++) { if (!(await scFrames(60))) { show('title'); return; } q = window.__k5(); if (q && q.res === null && q.T < 6) break; } if (!q || q.res !== null || q.T > 6) scNote('fail', 'CHAPTER 5 DID NOT START AGAIN AFTER THE STAB', q ? 'T ' + q.T : 'NO SCENE'); scCheck(); } catch (e) { scErr(e, 'CH 5 THE STAB'); }
   }
   show('title');
 }
