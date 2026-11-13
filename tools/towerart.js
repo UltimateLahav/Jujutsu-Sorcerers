@@ -269,14 +269,15 @@ function twFront(now, dt) {      // over the fighters: a vignette, dust floating
   if (twVigK !== W + 'x' + H) { twVigK = W + 'x' + H; twVig = twCv(W, H); const g = twVig.getContext('2d'), im = g.createImageData(W, H), d = im.data; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const u = Math.hypot((x - W / 2) / (W * 0.62), (y - H / 2) / (H * 0.62)), t = Math.max(0, (u - 0.62) / 0.5) * 0.46, v = t * 4, bb = Math.floor(v), lv = bb + (v - bb > (TW_BAY[y & 3][x & 3] + 0.5) / 16 ? 1 : 0); if (lv > 0) { const i = (y * W + x) * 4; d[i] = 4; d[i + 1] = 5; d[i + 2] = 14; d[i + 3] = Math.round(255 * lv / 4 * 0.5); } } g.putImageData(im, 0, 0); }
   ctx.drawImage(twVig, -8, -8);
   if (T.haze) { const k = T.haze.k * Math.max(0, 1 - (now - T.haze.at) / 3600); if (k > 0.02) { ctx.globalAlpha = k * 0.3; ctx.fillStyle = '#b8b0a0'; ctx.fillRect(-8, -8, W, H); ctx.globalAlpha = 1; } else T.haze = null; }
-  if (Q >= 2 && !T.cab) { const F = twFloorData(T.fMe), x0 = Math.round(VW / 2) - Math.round(wx), yc = gy - TW_CEIL, n = Q >= 3 ? 6 : 3; ctx.fillStyle = '#fff4d0';
+  if (Q >= 2 && !T.cab && !T.slide) { const F = twFloorData(T.fMe), x0 = Math.round(VW / 2) - Math.round(wx), yc = gy - TW_CEIL, n = Q >= 3 ? 6 : 3; ctx.fillStyle = '#fff4d0';
     for (const l of F.lights) { const sx = x0 + l.x; if (!l.ok || sx < -40 || sx > VW + 40) continue; for (let i = 0; i < n; i++) { const t = now * 0.00045 * (1 + (i % 3) * 0.5) + l.x * 0.37 + i * 2.1, y = (now * 0.006 * (1 + (i % 3) * 0.4) + i * 29 + l.x) % 84, px = sx + Math.sin(t) * (7 + y * 0.42) + Math.sin(t * 1.9 + i) * 2; ctx.globalAlpha = 0.25 + 0.4 * (0.5 + 0.5 * Math.sin(t * 2.3)); ctx.fillRect(Math.round(px), Math.round(yc + 4 + y), 1, 1); } } ctx.globalAlpha = 1; }
 }
 
 // ---------------------------------------------------------------- what is drawn every frame on a floor: the doors, the inner walls (whole, cracked, broken), the glass at the ends
 const twR = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
 function twDoor(F, d, sx, now) {      // the stairs (a fire door with a window and a push bar that swings open on the steps) and the elevator (steel doors that slide apart on a lit cab, a call panel)
-  const T = vs.tw, x = Math.round(sx), yf = gy - 7, top = yf - 58, near = (T.fMe === F.f && Math.abs(wx - d.x) < 26) || (d.force || 0) > now, dt = Math.min(80, Math.max(0, now - (d.ot || now))); d.ot = now; d.open = (d.open || 0) + ((near ? 1 : 0) - (d.open || 0)) * (1 - Math.exp(-dt / 110)); const o = d.open, r = twR;
+  // (v1.176 the elevator door is open while the cab stands behind it with its doors open, or swings open for the enemy who steps out; the stairs open when you are near)
+  const T = vs.tw, L = T.lift, x = Math.round(sx), yf = gy - 7, top = yf - 58, here = d.k === 'elev' && L.f === F.f && L.ph === 'park' && L.door > 0.15, near = d.k === 'elev' ? here || (d.force || 0) > now : (T.fMe === F.f && Math.abs(wx - d.x) < 26) || (d.force || 0) > now, dt = Math.min(80, Math.max(0, now - (d.ot || now))); d.ot = now; d.open = (d.open || 0) + ((near ? 1 : 0) - (d.open || 0)) * (1 - Math.exp(-dt / 110)); const o = d.open, r = twR;
   r(x - 18, yf, 36, 2, 'rgba(0,0,0,.32)');
   if (d.k === 'stairs') {
     r(x - 15, top - 4, 30, 62, '#171a26'); r(x - 15, top - 4, 30, 1, '#5a6280'); r(x - 15, top - 4, 1, 62, '#3a4058'); r(x + 14, top - 4, 1, 62, '#0b0c12'); r(x - 12, top, 24, 58, '#0b0e17');
@@ -299,16 +300,17 @@ function twDoor(F, d, sx, now) {      // the stairs (a fire door with a window a
     for (const sd of [-1, 1]) { const dy = jam && sd < 0 ? 3 : 0, tp = top + dy, hh = 58 - dy, xa = (sd < 0 ? x - 14 : x + gap + 1) + shk, wa = 13 - gap; if (wa <= 0) continue; r(xa, tp, wa, hh, '#a5aec2'); for (let c = 0; c < wa; c += 2) r(xa + c, tp, 1, hh, '#b6bece'); r(sd < 0 ? xa : xa + wa - 1, tp, 1, hh, sd < 0 ? '#d7deea' : '#6d7488'); r(sd < 0 ? xa + wa - 1 : xa, tp, 1, hh, '#5a6174'); r(xa, tp + 30, wa, 1, '#8a93a8'); r(xa, yf - 10, wa, 10, '#8a93a8'); r(xa, yf - 10, wa, 1, '#6d7488'); }
     for (let i = 0, n = Math.floor(dm * 10); i < n; i++) { const hx = x - 12 + ((twHash(i, d.x) * 22) | 0), hy = top + 8 + ((twHash(d.x, i + 7) * 42) | 0); r(hx, hy, 3, 4, 'rgba(24,26,36,.5)'); r(hx, hy, 3, 1, 'rgba(255,255,255,.4)'); r(hx + 1, hy + 2, 1, 2, 'rgba(0,0,0,.35)'); }
     if (jam) for (let i = 0; i < 13; i++) { r(x - 13 + i * 2, top + 10 + i * 3, 4, 3, i % 2 ? '#e8281c' : '#f4f4f4'); r(x + 10 - i * 2, top + 10 + i * 3, 4, 3, i % 2 ? '#f4f4f4' : '#e8281c'); }
-    r(x + 19, yf - 34, 6, 14, '#2a2f3d'); r(x + 19, yf - 34, 6, 1, '#6d7488'); r(x + 20, yf - 31, 3, 2, near && (now / 260 | 0) % 2 ? '#ffd27a' : '#7a6a3c'); r(x + 20, yf - 26, 3, 2, near && (now / 260 | 0) % 2 ? '#7ad0ff' : '#3c5a7a');
+    r(x + 19, yf - 34, 6, 14, '#2a2f3d'); r(x + 19, yf - 34, 6, 1, '#6d7488'); r(x + 20, yf - 31, 3, 2, (here || (L.ph === 'ride' && L.dest === F.f)) && (now / 260 | 0) % 2 ? '#ffd27a' : '#7a6a3c'); r(x + 20, yf - 26, 3, 2, L.inFoe || L.job ? ((now / 200 | 0) % 2 ? '#ff4a3a' : '#7a1f18') : '#3c5a7a');      // (the call lamp blinks while the cab is coming or here; the other is red while the enemy has the cab)
   }
 }
 function twDoorEmit(F, d, sx, now) {      // the lit signs of a door (over the darkness): EXIT over the stairs, the floor display over the elevator; and its name and how to use it when you stand at it
   const T = vs.tw, x = Math.round(sx), yf = gy - 7, top = yf - 58, near = T.fMe === F.f && Math.abs(wx - d.x) < 24; if (d.k === 'elev' && d.st === 2) return;
   if (d.k === 'stairs') { twR(x - 11, top - 12, 22, 8, '#06150d'); twR(x - 10, top - 11, 20, 6, '#0f4a2c'); twR(x - 10, top - 11, 20, 1, '#2ca865'); twText(ctx, 'EXIT', x - 7, top - 10, 1, '#c9ffe0'); twR(x + 7, top - 9, 2, 2, '#c9ffe0'); }
   else if (d.st === 1) { twR(x - 10, top - 15, 20, 10, '#06070c'); twR(x - 10, top - 15, 20, 1, '#3a4052'); twText(ctx, 'XX', x - 4, top - 12, 1, (now / 400 | 0) % 2 ? '#ff3a2a' : '#5a1510'); }
-  else { twR(x - 10, top - 15, 20, 10, '#06070c'); twR(x - 10, top - 15, 20, 1, '#3a4052'); const s = String(F.f), wd = twTextW(s, 1); twText(ctx, s, x - 3 - (wd >> 1), top - 12, 1, '#ff9a3a'); const up = (now / 500 | 0) % 2; ctx.fillStyle = '#ff9a3a'; if (near || up) { ctx.fillRect(x + 6, top - 12, 1, 1); ctx.fillRect(x + 5, top - 11, 3, 1); ctx.fillRect(x + 4, top - 10, 5, 1); } }
+  else { const L = T.lift, s = String(Math.max(1, Math.min(TW_N, Math.round(L.curF)))), wd = twTextW(s, 1), col = L.inFoe || L.job ? '#ff5a3a' : '#ff9a3a', mv = L.ph === 'ride' && now >= L.at; twR(x - 10, top - 15, 20, 10, '#06070c'); twR(x - 10, top - 15, 20, 1, '#3a4052'); twText(ctx, s, x - 3 - (wd >> 1), top - 12, 1, col); ctx.fillStyle = col;      // (the number is where the CAB is, red while the enemy rides it; an arrow blinks while it moves)
+    if (mv && (now / 250 | 0) % 2) { if (L.dest > L.from) { ctx.fillRect(x + 6, top - 12, 1, 1); ctx.fillRect(x + 5, top - 11, 3, 1); ctx.fillRect(x + 4, top - 10, 5, 1); } else { ctx.fillRect(x + 4, top - 12, 5, 1); ctx.fillRect(x + 5, top - 11, 3, 1); ctx.fillRect(x + 6, top - 10, 1, 1); } } }
   if (twLightFrac(F) < 0.5) { const on = Math.sin(now / 240 + d.x) > -0.2; twR(x + 14, top - 10, 3, 3, '#1a0a0a'); if (on) { twR(x + 14, top - 10, 3, 3, '#ff4a3a'); twR(x + 15, top - 10, 1, 1, '#ffd0c0'); } }
-  if (near) { pxt(d.k === 'stairs' ? 'STAIRS' : 'ELEVATOR', x, top - (d.k === 'stairs' ? 15 : 17), '#ffffff', 8, 'center'); T.prompt = d.k === 'elev' ? { at: now, up: d.st === 1 ? 'OUT OF ORDER' : 'JUMP = ELEVATOR', dn: d.st === 1 ? '' : 'CROUCH = ELEVATOR' } : { at: now, up: F.f < TW_N ? 'JUMP = UP 1' : '', dn: F.f > 1 ? 'CROUCH = DOWN 1' : '' }; }      // (how to use it is written by twOverlay, under the floor)
+  if (near) { pxt(d.k === 'stairs' ? 'STAIRS' : 'ELEVATOR', x, top - (d.k === 'stairs' ? 15 : 17), '#ffffff', 8, 'center'); T.prompt = d.k === 'elev' ? Object.assign({ at: now }, twLiftPrompt(F, d)) : { at: now, up: F.f < TW_N ? 'JUMP = UP 1' : '', dn: F.f > 1 ? 'CROUCH = DOWN 1' : '' }; }      // (how to use it is written by twOverlay, under the floor)
 }
 const twPartSprs = new Map();
 function twPartSpr(F) {      // an inner wall, whole: a slab from the ceiling to the floor, shaded by its side, with seams, a skirting board and the shadow where it meets the ceiling
@@ -439,28 +441,28 @@ function twLightsShock(F, x, rad, p, now) {      // a blast or a heavy blow shak
   const T = vs.tw; for (const l of F.lights) { if (!l.ok) continue; const dd = Math.abs(l.x - x); if (dd > rad) continue; l.hp -= p * (1 - dd / rad); if (l.hp > 0) continue; l.ok = false;
     if (T.fMe === F.f) { spark(l.x, gy - 82, 9, ['#ffffff', '#ffd34d', '#7fd0ff'], false, 0); debBurst(l.x, 80, 8, ['#fffbe8', '#d9d9e2', '#9aa2b8'], 80); snd('twbreak', 1); } }
 }
-// ---------------------------------------------------------------- v1.175 inside the ELEVATOR CAB: a steel room with a mirror, a window onto the city (the sky of the floor you are passing), doors, a floor display, and the shaft outside its walls with the floors running past
+// ---------------------------------------------------------------- v1.175 inside the ELEVATOR CAB (v1.176: a tight 100 px): a steel box with a mirror, a small window onto the city (the sky of the floor you are passing), the doors in the middle of the back wall, a floor display, and the shaft outside its walls with the floors running past
 let twCabC = null, twCabQ = -1;
-function twCabShell(Q) {      // the cab, one picture like a floor's shell (same rows): ceiling with its light, the back wall (brushed steel, a mirror, a handrail, a window as a hole, the frame of the doors, the housing of the display, a plate), the plate of the floor, the base
+function twCabShell(Q) {      // the cab, one picture like a floor's shell (same rows): ceiling with its light, the back wall (brushed steel: a mirror on the left, a small window on the right, the frame of the doors in the middle with the display above), the diamond plate of the floor, the base
   if (twCabC && twCabQ === Q) return twCabC; const W = TW_CABW, c = twCv(W, SH_H), g = c.getContext('2d'), R = twRng(0x51ab); g.imageSmoothingEnabled = false; const rr = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
   const endc = ['#2c313f', '#454c60', '#6d7690', '#8e98b4', '#6d7690', '#454c60', '#2c313f', '#1b1e28']; for (let i = 0; i < 8; i++) { rr(i, 0, 1, SH_H, endc[i]); rr(W - 1 - i, 0, 1, SH_H, endc[i]); }
-  rr(8, 0, W - 16, 10, '#a9b0bf'); for (const y of [0, 3, 6, 9]) rr(8, y, W - 16, 1, 'rgba(0,0,0,.28)'); rr(8, 9, W - 16, 1, 'rgba(255,255,255,.3)'); for (let x = 24; x < W - 16; x += 44) rr(x, 1, 1, 8, 'rgba(0,0,0,.25)');
-  rr(66, 1, 88, 8, '#3a4052'); rr(67, 2, 86, 6, '#fff8e0'); rr(67, 2, 86, 1, '#ffffff'); rr(67, 7, 86, 1, '#e8dcb0'); for (let x = 78; x < 150; x += 12) rr(x, 2, 1, 6, '#d8cca0');
+  rr(8, 0, W - 16, 10, '#a9b0bf'); for (const y of [0, 3, 6, 9]) rr(8, y, W - 16, 1, 'rgba(0,0,0,.28)'); rr(8, 9, W - 16, 1, 'rgba(255,255,255,.3)'); for (let x = 24; x < W - 16; x += 22) rr(x, 1, 1, 8, 'rgba(0,0,0,.25)');
+  rr(26, 1, 48, 8, '#3a4052'); rr(27, 2, 46, 6, '#fff8e0'); rr(27, 2, 46, 1, '#ffffff'); rr(27, 7, 46, 1, '#e8dcb0'); for (let x = 36; x < 70; x += 10) rr(x, 2, 1, 6, '#d8cca0');
   for (let x = 8; x < W - 8; x++) rr(x, SH_Y, 1, 81, x % 3 === 0 ? '#98a0b2' : x % 3 === 1 ? '#a5adbe' : '#b0b8c8');
-  if (Q >= 2) for (let i = 0; i < 380; i++) rr(8 + ((R() * (W - 16)) | 0), SH_Y + ((R() * 81) | 0), 1, 1, R() < 0.5 ? 'rgba(0,0,0,.07)' : 'rgba(255,255,255,.1)');
-  for (const x of [62, 148, 196]) { rr(x, SH_Y, 1, 81, 'rgba(0,0,0,.35)'); rr(x + 1, SH_Y, 1, 81, 'rgba(255,255,255,.25)'); for (const y of [SH_Y + 6, SH_Y + 70]) { rr(x - 2, y, 2, 2, '#6d7488'); rr(x + 3, y, 2, 2, '#6d7488'); } }
+  if (Q >= 2) for (let i = 0; i < 230; i++) rr(8 + ((R() * (W - 16)) | 0), SH_Y + ((R() * 81) | 0), 1, 1, R() < 0.5 ? 'rgba(0,0,0,.07)' : 'rgba(255,255,255,.1)');
+  for (const x of [24, 75]) { rr(x, SH_Y, 1, 81, 'rgba(0,0,0,.35)'); rr(x + 1, SH_Y, 1, 81, 'rgba(255,255,255,.25)'); for (const y of [SH_Y + 6, SH_Y + 70]) { rr(x - 2, y, 2, 2, '#6d7488'); rr(x + 3, y, 2, 2, '#6d7488'); } }
   rr(8, 62, W - 16, 29, '#7d869a'); rr(8, 62, W - 16, 1, '#c9d0de'); rr(8, 63, W - 16, 1, '#4a5064'); for (let x = 8; x < W - 8; x += 3) rr(x, 64, 1, 27, x % 6 ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.1)');
-  rr(8, 54, W - 16, 3, '#d4dbe8'); rr(8, 54, W - 16, 1, '#ffffff'); rr(8, 56, W - 16, 1, '#6d7488'); for (const x of [16, 76, 140, 202]) { rr(x, 57, 3, 4, '#6d7488'); rr(x, 57, 1, 4, '#9aa2b4'); }
-  rr(13, 21, 50, 30, '#2a2f3d'); for (let y = 0; y < 28; y++) rr(14, 22 + y, 48, 1, twMix('#8fb6dc', '#c4dcf2', y / 27));
-  if (Q >= 1) for (let i = 0; i < 6; i++) for (let k = 0; k < 28; k++) rr(14 + ((i * 9 + k) % 48), 22 + k, i % 2 ? 2 : 1, 1, 'rgba(255,255,255,.38)');
-  rr(14, 22, 48, 1, '#e8f4ff'); rr(14, 22, 1, 28, '#e8f4ff'); rr(61, 22, 1, 28, '#5a7a9a'); rr(14, 49, 48, 1, '#5a7a9a');
-  rr(147, 19, 66, 54, 'rgba(0,0,0,.3)'); rr(148, 20, 64, 52, '#232838'); rr(148, 20, 64, 1, '#5a6280'); rr(148, 20, 1, 52, '#5a6280'); g.clearRect(150, 22, 60, 48); rr(179, 22, 2, 48, '#2a2f46'); rr(179, 22, 1, 48, '#4a5070'); rr(146, 73, 68, 3, '#c9d0de'); rr(146, 76, 68, 1, 'rgba(0,0,0,.35)');
-  if (Q >= 1) { for (let r2 = 0; r2 < 48; r2++) { rr(152 + Math.round(r2 * 0.45) % 40, 22 + r2, 4, 1, 'rgba(255,255,255,.1)'); rr(184 + Math.round(r2 * 0.45) % 22, 22 + r2, 2, 1, 'rgba(255,255,255,.07)'); } rr(150, 22, 60, 1, 'rgba(255,255,255,.22)'); }
-  rr(152, 78, 56, 13, '#d9dfe9'); rr(152, 78, 56, 1, '#ffffff'); rr(152, 90, 56, 1, '#6d7488'); twText(g, 'MAX 20 PERSONS', 153, 79, 1, '#2a2f3d'); twText(g, '1600 KG', 167, 85, 1, '#2a2f3d');
-  rr(85, 28, 50, 63, '#4a5064'); rr(86, 29, 48, 62, '#6d7488'); rr(85, 28, 50, 1, '#c9d0de'); rr(88, 31, 44, 60, '#10121a');
-  rr(91, 11, 38, 17, '#2a2f3d'); rr(92, 12, 36, 15, '#06070c'); rr(92, 12, 36, 1, '#4a5064');
+  for (const [x, w] of [[8, 16], [76, 16]]) { rr(x, 54, w, 3, '#d4dbe8'); rr(x, 54, w, 1, '#ffffff'); rr(x, 56, w, 1, '#6d7488'); for (const bx of [x + 2, x + w - 5]) { rr(bx, 57, 3, 4, '#6d7488'); rr(bx, 57, 1, 4, '#9aa2b4'); } }
+  rr(10, 19, 13, 33, '#2a2f3d'); for (let y = 0; y < 31; y++) rr(11, 20 + y, 11, 1, twMix('#8fb6dc', '#c4dcf2', y / 30));      // (the mirror)
+  if (Q >= 1) for (let i = 0; i < 5; i++) for (let k = 0; k < 31; k++) rr(11 + ((i * 4 + k) % 11), 20 + k, i % 2 ? 2 : 1, 1, 'rgba(255,255,255,.38)');
+  rr(11, 20, 11, 1, '#e8f4ff'); rr(11, 20, 1, 31, '#e8f4ff'); rr(21, 20, 1, 31, '#5a7a9a'); rr(11, 50, 11, 1, '#5a7a9a');
+  rr(77, 18, 15, 36, 'rgba(0,0,0,.3)'); rr(77, 18, 14, 35, '#232838'); rr(77, 18, 14, 1, '#5a6280'); rr(77, 18, 1, 35, '#5a6280'); g.clearRect(79, 20, 10, 31); rr(83, 20, 1, 31, '#2a2f46'); rr(83, 20, 1, 31, 'rgba(255,255,255,.12)'); rr(76, 51, 16, 3, '#c9d0de'); rr(76, 53, 16, 1, 'rgba(0,0,0,.35)');      // (the window: a hole in the picture, the sky is drawn behind it)
+  if (Q >= 1) for (let r2 = 0; r2 < 31; r2++) { rr(80 + Math.round(r2 * 0.45) % 7, 20 + r2, 2, 1, 'rgba(255,255,255,.1)'); }
+  rr(77, 63, 14, 12, '#d9dfe9'); rr(77, 63, 14, 1, '#ffffff'); rr(77, 74, 14, 1, '#6d7488'); twText(g, '300', 78, 64, 1, '#2a2f3d'); twText(g, 'KG', 81, 69, 1, '#2a2f3d');
+  rr(26, 28, 48, 63, '#4a5064'); rr(27, 29, 46, 62, '#6d7488'); rr(26, 28, 48, 1, '#c9d0de'); rr(29, 31, 42, 60, '#10121a');
+  rr(33, 11, 34, 17, '#2a2f3d'); rr(34, 12, 32, 15, '#06070c'); rr(34, 12, 32, 1, '#4a5064');
   rr(8, SH_F, W - 16, 16, '#3b404d'); for (let y = 0; y < 16; y++) for (let x = 8; x < W - 8; x++) { if ((x + (y & 1) * 4) % 8 < 2 && y % 4 < 2) rr(x, SH_F + y, 1, 1, '#5a6172'); }
-  rr(8, SH_F, W - 16, 1, '#6d7488'); rr(8, SH_F + 1, W - 16, 1, 'rgba(0,0,0,.4)'); rr(8, SH_N - 2, W - 16, 2, '#232733'); rr(88, SH_F, 44, 2, '#aab2c4'); rr(88, SH_F + 2, 44, 1, '#3a4052');
+  rr(8, SH_F, W - 16, 1, '#6d7488'); rr(8, SH_F + 1, W - 16, 1, 'rgba(0,0,0,.4)'); rr(8, SH_N - 2, W - 16, 2, '#232733'); rr(28, SH_F, 44, 2, '#aab2c4'); rr(28, SH_F + 2, 44, 1, '#3a4052');
   rr(8, SH_N, W - 16, SH_H - SH_N, '#1d2029'); rr(8, SH_N, W - 16, 1, '#5a6280'); rr(8, SH_N + 1, W - 16, 2, '#3a4052'); for (let x = 14; x < W - 8; x += 16) { rr(x, SH_N + 5, 2, 2, '#6d7488'); rr(x, SH_N + 5, 1, 1, '#aab2c4'); } rr(8, SH_N + 11, W - 16, 1, '#2a2f3d'); for (let y = 0; y < 4; y++) rr(8, SH_H - 4 + y, W - 16, 1, 'rgba(0,0,0,' + [0.3, 0.5, 0.7, 0.88][y] + ')');
   twCabC = c; twCabQ = Q; return c;
 }
@@ -479,54 +481,73 @@ function twShaftDraw(c, now, x0, x1, yc, Q) {      // the shaft round the cab (s
   for (let k = Math.floor(cur) - 4; k <= Math.ceil(cur) + 5; k++) { if (k < 1 || k > TW_N) continue; const y = Math.round(gy - 6 + (cur - k) * sp); if (y < -50 || y > VH + 10) continue;
     ctx.fillStyle = '#141824'; ctx.fillRect(0, y, VW, 5); ctx.fillStyle = '#2c3448'; ctx.fillRect(0, y, VW, 1); ctx.fillStyle = '#0a0c13'; ctx.fillRect(x0 - 64, y - 44, 30, 44); ctx.fillRect(x1 + 34, y - 44, 30, 44); ctx.fillStyle = '#1f2638'; ctx.fillRect(x0 - 50, y - 44, 1, 44); ctx.fillRect(x1 + 49, y - 44, 1, 44);
     twText(ctx, String(k), x0 - 60, y - 54, 1, '#7d88ad'); twText(ctx, String(k), x1 + 40, y - 54, 1, '#7d88ad'); }
-  ctx.fillStyle = '#303749'; for (const cxx of [x0 + 70, x0 + 148]) { ctx.fillRect(cxx, -8, 2, top + 8); ctx.fillStyle = '#5a6280'; ctx.fillRect(cxx, -8, 1, top + 8); ctx.fillStyle = '#303749'; }
+  ctx.fillStyle = '#303749'; for (const cxx of [x0 + 38, x0 + 62]) { ctx.fillRect(cxx, -8, 2, top + 8); ctx.fillStyle = '#5a6280'; ctx.fillRect(cxx, -8, 1, top + 8); ctx.fillStyle = '#303749'; }
   twCabStreaks(c, now, 0, 0, VW, VH, Q, 0.35);
 }
-function twCabDoors(c, now, x0, yc, Q) {      // the two leaves (they slide), the lit corridor behind them when they are open, dents from the banging, and the wreck of them after he broke in
-  const ox = x0 + 88, oy = yc + 21, W = 44, H = 60, o = c.door, beyond = twFloorData(c.ph === 'out' ? c.dest : c.f0), P = beyond.pal, r = twR, shk = now - c.hit < 140 ? ((now / 40 | 0) % 2 ? 1 : -1) : 0;
-  if (o > 0.02 || c.broke) { const g = ctx.createLinearGradient(0, oy, 0, oy + H); g.addColorStop(0, twMix(P.w, '#ffffff', 0.4)); g.addColorStop(0.8, P.w); g.addColorStop(1, P.car2); ctx.fillStyle = g; ctx.fillRect(ox, oy, W, H); r(ox, oy + H - 11, W, 1, P.base); r(ox, oy + H - 10, W, 10, P.car); r(ox, oy + H - 11, W, 1, twMix(P.base, '#ffffff', 0.3)); r(ox + 4, oy + 12, 9, 30, twMix(P.w, '#000000', 0.12)); r(ox + 31, oy + 12, 9, 30, twMix(P.w, '#000000', 0.12)); }
-  const leaf = (xa, wa, sk) => { if (wa <= 0) return; r(xa, oy, wa, H, '#aab2c4'); for (let q = 0; q < wa; q += 2) r(xa + q, oy, 1, H, '#b8c0d0'); r(xa, oy, 1, H, '#d7deea'); r(xa + wa - 1, oy, 1, H, '#5a6174'); r(xa, oy + 29, wa, 1, '#8a93a8'); r(xa, oy + H - 11, wa, 11, '#8a93a8'); r(xa, oy + H - 11, wa, 1, '#6d7488'); if (sk) r(xa, oy, wa, 2, '#6d7488'); };
-  if (!c.broke) { const gap = Math.round(o * 21); leaf(ox + shk, 22 - gap, 0); leaf(ox + 22 + gap + shk, 22 - gap, 0);
-    if (gap < 8) for (let i = 0, n = Math.min(9, c.bangs); i < n; i++) { const hx = ox + 4 + ((twHash(i, 31) * 36) | 0), hy = oy + 6 + ((twHash(i, 37) * 40) | 0); r(hx, hy, 4, 5, 'rgba(24,26,36,.5)'); r(hx, hy, 4, 1, 'rgba(255,255,255,.4)'); r(hx + 1, hy + 3, 2, 2, 'rgba(0,0,0,.35)'); } }
-  else { for (let y = 0; y < H; y++) { const sl = Math.round(y * 0.1); r(ox + sl, oy + y, 11, 1, y % 2 ? '#aab2c4' : '#b8c0d0'); r(ox + sl, oy + y, 1, 1, '#d7deea'); r(ox + sl + 10, oy + y, 1, 1, '#5a6174'); }
-    for (let y = 0; y < H; y += 4) { const jg = 4 + ((twHash(y, 41) * 7) | 0); r(ox + W - jg, oy + y, jg, 4, y % 8 ? '#9aa2b4' : '#8a93a8'); r(ox + W - jg, oy + y, 1, 4, '#d7deea'); }
-    for (let i = 0; i < 12; i++) r(ox - 8 + ((twHash(i, 43) * 60) | 0), oy + H - 3 - ((twHash(i, 47) * 3) | 0), 2 + ((twHash(i, 49) * 3) | 0), 2, i % 2 ? '#6d7488' : '#9aa4b8'); }
+function twCabDoors(c, now, x0, yc, Q) {      // the two leaves (they slide), the lit corridor behind them when they are open, dents from the banging, and the wreck of them once he has broken them in (for good)
+  const ox = x0 + 29, oy = yc + 21, W = 42, H = 60, o = c.door, beyond = twFloorData(c.f), P = beyond.pal, r = twR, shk = now - c.hit < 140 ? ((now / 40 | 0) % 2 ? 1 : -1) : 0;
+  if (o > 0.02 || c.broken) { const g = ctx.createLinearGradient(0, oy, 0, oy + H); g.addColorStop(0, twMix(P.w, '#ffffff', 0.4)); g.addColorStop(0.8, P.w); g.addColorStop(1, P.car2); ctx.fillStyle = g; ctx.fillRect(ox, oy, W, H); r(ox, oy + H - 11, W, 1, P.base); r(ox, oy + H - 10, W, 10, P.car); r(ox, oy + H - 11, W, 1, twMix(P.base, '#ffffff', 0.3)); r(ox + 4, oy + 12, 8, 30, twMix(P.w, '#000000', 0.12)); r(ox + 30, oy + 12, 8, 30, twMix(P.w, '#000000', 0.12)); }
+  const leaf = (xa, wa) => { if (wa <= 0) return; r(xa, oy, wa, H, '#aab2c4'); for (let q = 0; q < wa; q += 2) r(xa + q, oy, 1, H, '#b8c0d0'); r(xa, oy, 1, H, '#d7deea'); r(xa + wa - 1, oy, 1, H, '#5a6174'); r(xa, oy + 29, wa, 1, '#8a93a8'); r(xa, oy + H - 11, wa, 11, '#8a93a8'); r(xa, oy + H - 11, wa, 1, '#6d7488'); };
+  if (!c.broken) { const gap = Math.round(o * 20); leaf(ox + shk, 21 - gap); leaf(ox + 21 + gap + shk, 21 - gap);
+    if (gap < 8) for (let i = 0, n = Math.min(9, c.bangs); i < n; i++) { const hx = ox + 4 + ((twHash(i, 31) * 34) | 0), hy = oy + 6 + ((twHash(i, 37) * 40) | 0); r(hx, hy, 4, 5, 'rgba(24,26,36,.5)'); r(hx, hy, 4, 1, 'rgba(255,255,255,.4)'); r(hx + 1, hy + 3, 2, 2, 'rgba(0,0,0,.35)'); } }
+  else { for (let y = 0; y < H; y++) { const sl = Math.round(y * 0.1); r(ox + sl, oy + y, 10, 1, y % 2 ? '#aab2c4' : '#b8c0d0'); r(ox + sl, oy + y, 1, 1, '#d7deea'); r(ox + sl + 9, oy + y, 1, 1, '#5a6174'); }
+    for (let y = 0; y < H; y += 4) { const jg = 4 + ((twHash(y, 41) * 6) | 0); r(ox + W - jg, oy + y, jg, 4, y % 8 ? '#9aa2b4' : '#8a93a8'); r(ox + W - jg, oy + y, 1, 4, '#d7deea'); }
+    for (let i = 0; i < 10; i++) r(ox - 6 + ((twHash(i, 43) * 52) | 0), oy + H - 3 - ((twHash(i, 47) * 3) | 0), 2 + ((twHash(i, 49) * 3) | 0), 2, i % 2 ? '#6d7488' : '#9aa4b8'); }
 }
 function twCabDisplay(c, now, x0, yc) {      // the floor display over the doors: the floor you are passing in orange, an arrow that blinks while you move, STOP in red when the cab hangs
-  const dx = x0 + 92, dy = yc + 2, fl = Math.max(1, Math.min(TW_N, Math.round(c.curF))), moving = c.ph === 'ride' && now >= c.at;
-  if (c.broke && (now / 90 | 0) % 5 === 0) return;
-  if (c.ph === 'stop') { if ((now / 350 | 0) % 2) twText(ctx, 'STOP', dx + 11, dy + 5, 2, '#ff3a2a'); return; }
-  twText(ctx, String(fl), dx + 4, dy + 2, 2, '#ff9a3a'); const dir = c.dest > c.from ? 1 : -1; if (moving ? (now / 250 | 0) % 2 : c.ph === 'out') { ctx.fillStyle = '#ff9a3a'; const ax = dx + 26, ay = dy + 4; if (dir > 0) { ctx.fillRect(ax + 3, ay, 1, 1); ctx.fillRect(ax + 2, ay + 1, 3, 1); ctx.fillRect(ax + 1, ay + 2, 5, 1); ctx.fillRect(ax, ay + 3, 7, 1); } else { ctx.fillRect(ax, ay, 7, 1); ctx.fillRect(ax + 1, ay + 1, 5, 1); ctx.fillRect(ax + 2, ay + 2, 3, 1); ctx.fillRect(ax + 3, ay + 3, 1, 1); } }
+  const dx = x0 + 36, dy = yc + 2, fl = Math.max(1, Math.min(TW_N, Math.round(c.curF))), moving = c.ph === 'ride' && now >= c.at;
+  if (c.broken && (now / 90 | 0) % 5 === 0) return;
+  if (c.ph === 'stop') { if ((now / 350 | 0) % 2) twText(ctx, 'STOP', dx + 1, dy + 5, 2, '#ff3a2a'); return; }
+  twText(ctx, String(fl), dx + 2, dy + 2, 2, '#ff9a3a'); const dir = c.dest > c.from ? 1 : -1; if (moving && (now / 250 | 0) % 2) { ctx.fillStyle = '#ff9a3a'; const ax = dx + 21, ay = dy + 4; if (dir > 0) { ctx.fillRect(ax + 3, ay, 1, 1); ctx.fillRect(ax + 2, ay + 1, 3, 1); ctx.fillRect(ax + 1, ay + 2, 5, 1); ctx.fillRect(ax, ay + 3, 7, 1); } else { ctx.fillRect(ax, ay, 7, 1); ctx.fillRect(ax + 1, ay + 1, 5, 1); ctx.fillRect(ax + 2, ay + 2, 3, 1); ctx.fillRect(ax + 3, ay + 3, 1, 1); } }
 }
 function twCabLights(c, now, x0, a, b, yc, Q) {      // the light of the cab: a bright panel and its warm cone, flickering on a long ride, red and dim when it hangs (emergency stop)
   const top = yc - SH_Y; if (Q < 1) return; const long = c.long && c.ph === 'ride' && now >= c.at, flick = long && twHash((now / 70) | 0, 17) > 0.86, stop = c.ph === 'stop';
-  let A = 0.1 + (flick ? 0.5 : 0) + (stop ? 0.28 : 0) + (c.broke ? 0.06 : 0);
-  ctx.save(); ctx.beginPath(); ctx.rect(a, top, b - a, SH_H); ctx.rect(x0 + 150, yc + 12, 60, 48); ctx.clip('evenodd'); ctx.fillStyle = 'rgba(8,10,22,' + A.toFixed(2) + ')'; ctx.fillRect(a, top, b - a, SH_H); if (stop) { ctx.fillStyle = 'rgba(255,40,30,' + (0.1 + 0.08 * Math.sin(now / 160)).toFixed(2) + ')'; ctx.fillRect(a, top, b - a, SH_H); } ctx.restore();
-  if (Q >= 2 && !flick) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = stop ? 0.08 : 0.16; const m = twCone(stop ? [255, 120, 100] : [255, 238, 190]); ctx.drawImage(m, Math.round(x0 + 110 - 75), yc - 4); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+  let A = 0.1 + (flick ? 0.5 : 0) + (stop ? 0.28 : 0) + (c.broken ? 0.06 : 0);
+  ctx.save(); ctx.beginPath(); ctx.rect(a, top, b - a, SH_H); ctx.rect(x0 + 79, yc + 10, 10, 31); ctx.clip('evenodd'); ctx.fillStyle = 'rgba(8,10,22,' + A.toFixed(2) + ')'; ctx.fillRect(a, top, b - a, SH_H); if (stop) { ctx.fillStyle = 'rgba(255,40,30,' + (0.1 + 0.08 * Math.sin(now / 160)).toFixed(2) + ')'; ctx.fillRect(a, top, b - a, SH_H); } ctx.restore();
+  if (Q >= 2 && !flick) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = stop ? 0.08 : 0.16; const m = twCone(stop ? [255, 120, 100] : [255, 238, 190]); ctx.drawImage(m, Math.round(x0 + 50 - 75), yc - 4); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
 }
-function twCabBackdrop(now) {      // the whole picture while you are in the cab (instead of twBackdrop's floor)
+function twCabBackdrop(now) {      // the whole picture while you are in the cab (instead of the floor)
   const T = vs.tw, c = T.cab, Q = twQ(), cx = Math.round(VW / 2), yc = gy - TW_CEIL, x0 = cx - Math.round(wx), x1 = x0 + TW_CABW, top = yc - SH_Y, a = Math.max(0, x0), b = Math.min(VW, x1), cur = c.curF, fR = Math.max(1, Math.min(TW_N, Math.round(cur)));
   twShaftDraw(c, now, x0, x1, yc, Q);
-  if (b > x0 + 150 && x0 + 210 > a) { ctx.save(); ctx.beginPath(); ctx.rect(x0 + 150, yc + 12, 60, 48); ctx.clip(); twSkyDraw({ f: fR, wt: twWeather(T.seed, fR) }, now, x0, x1, yc, Q, Math.max(-14, Math.min(14, (cur - c.f0) * 0.5))); twCabSlabs(c, now, x0 + 150, yc + 12, 60, 48, Q); twCabStreaks(c, now, x0 + 150, yc + 12, 60, 48, Q, 1); ctx.restore(); }
+  if (b > x0 + 79 && x0 + 89 > a) { ctx.save(); ctx.beginPath(); ctx.rect(x0 + 79, yc + 10, 10, 31); ctx.clip(); twSkyDraw({ f: fR, wt: twWeather(T.seed, fR) }, now, x0, x1, yc, Q, Math.max(-14, Math.min(14, (cur - c.f) * 0.5))); twCabSlabs(c, now, x0 + 79, yc + 10, 10, 31, Q); twCabStreaks(c, now, x0 + 79, yc + 10, 10, 31, Q, 1); ctx.restore(); }
   if (b > a) ctx.drawImage(twCabShell(Q), a - x0, 0, b - a, SH_H, a, top, b - a, SH_H);
   twCabDoors(c, now, x0, yc, Q); twCabLights(c, now, x0, a, b, yc, Q); twCabDisplay(c, now, x0, yc);
 }
-function twBackdrop(now) {      // everything behind the fighters: the sky, the shell of the floor (ceiling, wall with its windows and what hangs on it, floor, slab), the doors, the marks, the inner walls, the wrecks, the furniture, the craters, the darkness with its lights, what shines and the glass at the ends
-  if (vs.tw.cab) { twCabBackdrop(now); return; }
-  const T = vs.tw, F = twFloorData(T.fMe), Q = twQ(), cx = Math.round(VW / 2), yc = gy - TW_CEIL, x0 = cx - Math.round(wx), x1 = x0 + F.W, a = Math.max(0, x0), b = Math.min(VW, x1);
-  twLayout(F); ctx.fillStyle = '#0a0a10'; ctx.fillRect(-8, -8, VW + 16, VH + 16); twSkyDraw(F, now, x0, x1, yc, Q);
-  if (b > a) {
-    const sh = twShell(F, Q), sx = a - x0, sw = b - a, top = yc - SH_Y;
-    ctx.fillStyle = '#0a0a10'; ctx.fillRect(a, -8, sw, top - 1); ctx.drawImage(sh, sx, SH_N + 2, sw, 9, a, top - 9, sw, 9); ctx.drawImage(sh, sx, 0, sw, SH_H, a, top, sw, SH_H);
-    for (const d of F.doors) { const px = x0 + d.x; if (px > a - 40 && px < b + 40) twDoor(F, d, px, now); }
-    twDecals(F, x0, a, b);
-    for (const w of F.walls) { const px = x0 + w.x; if (px > a - 30 && px < b + 30) twPart(F, w, px, yc, now, Q); }
-    for (const w of F.wrecks) { const px = x0 + w.x, s = twWreckSpr(w); if (px > a - 50 && px < b + 50) ctx.drawImage(s, Math.round(px) - (s.width >> 1), gy - 13); }
-    for (const o of F.objs) { const px = x0 + o.x; if (px > a - 40 && px < b + 40) twObj(F, o, px, now, Q); }
-    if (Q >= 2 && F.sty.gloss) twReflect(F, x0, a, b, now);
-    for (const h of F.holes) { const px = x0 + h.x; if (px + h.r + 20 > a && px - h.r - 20 < b) twFloorHole(F, h, px, now); }
-    const up = T.fl[F.f + 1]; if (up) for (const h of up.holes) { const px = x0 + h.x; if (px + h.r + 14 > a && px - h.r - 14 < b) twCeilHole(F, h, px, yc, now, Q); }
-    twBrokenLights(F, x0, a, b, yc, now, Q); twLights(F, x0, a, b, yc, now, Q);
+const twSlideY = (s, now) => { const k = Math.max(0, Math.min(1, (now - s.at) / s.ms)), e = s.kind === 'fall' ? k * k : s.kind === 'ceil' ? 1 - (1 - k) * (1 - k) : k * k * (3 - 2 * k); return e * s.n * SH_H; };      // (how far the camera has travelled: a fall speeds up, a launch slows down, the stairs glide)
+const twSlideOff = (s, f, now) => s.dir * (Math.abs(f - s.f0) * SH_H - twSlideY(s, now));      // (how far down the screen floor f is pushed while the camera slides: 0 = where it is when you stand on it)
+function twFloorDraw(f, camX, off, now) {      // one floor's whole picture as if you stood on it at camX, pushed `off` px down the screen (the slide; it is clipped to its own band): the sky, the shell (ceiling, wall with its windows and what hangs on it, floor, slab), the doors, the marks, the inner walls, the wrecks, the furniture, the craters, the darkness with its lights, what shines and the glass at the ends
+  const T = vs.tw, kf = T.fMe, kw = wx; T.fMe = f; wx = camX; if (off) { ctx.save(); ctx.beginPath(); ctx.rect(-8, gy - TW_CEIL - SH_Y - 9 + off, VW + 16, SH_H + 9); ctx.clip(); ctx.translate(0, off); }
+  try {
+    const F = twFloorData(f), Q = twQ(), cx = Math.round(VW / 2), yc = gy - TW_CEIL, x0 = cx - Math.round(camX), x1 = x0 + F.W, a = Math.max(0, x0), b = Math.min(VW, x1);
+    twLayout(F); ctx.fillStyle = '#0a0a10'; ctx.fillRect(-8, -8, VW + 16, VH + 16); twSkyDraw(F, now, x0, x1, yc, Q);
+    if (b > a) {
+      const sh = twShell(F, Q), sx = a - x0, sw = b - a, top = yc - SH_Y;
+      ctx.fillStyle = '#0a0a10'; ctx.fillRect(a, -8, sw, top - 1); ctx.drawImage(sh, sx, SH_N + 2, sw, 9, a, top - 9, sw, 9); ctx.drawImage(sh, sx, 0, sw, SH_H, a, top, sw, SH_H);
+      for (const d of F.doors) { const px = x0 + d.x; if (px > a - 40 && px < b + 40) twDoor(F, d, px, now); }
+      twDecals(F, x0, a, b);
+      for (const w of F.walls) { const px = x0 + w.x; if (px > a - 30 && px < b + 30) twPart(F, w, px, yc, now, Q); }
+      for (const w of F.wrecks) { const px = x0 + w.x, s = twWreckSpr(w); if (px > a - 50 && px < b + 50) ctx.drawImage(s, Math.round(px) - (s.width >> 1), gy - 13); }
+      for (const o of F.objs) { const px = x0 + o.x; if (px > a - 40 && px < b + 40) twObj(F, o, px, now, Q); }
+      if (Q >= 2 && F.sty.gloss) twReflect(F, x0, a, b, now);
+      for (const h of F.holes) { const px = x0 + h.x; if (px + h.r + 20 > a && px - h.r - 20 < b) twFloorHole(F, h, px, now); }
+      const up = T.fl[F.f + 1]; if (up) for (const h of up.holes) { const px = x0 + h.x; if (px + h.r + 14 > a && px - h.r - 14 < b) twCeilHole(F, h, px, yc, now, Q); }
+      twBrokenLights(F, x0, a, b, yc, now, Q); twLights(F, x0, a, b, yc, now, Q);
+    }
+    twEmit(F, x0, a, b, now, Q); twOuter(F, x0, 0, yc, now, Q); twOuter(F, x1, 1, yc, now, Q);
+  } finally { if (off) ctx.restore(); T.fMe = kf; wx = kw; }
+}
+function twFloorFast(f, off) {      // a floor that only flashes past in a long fall: bands of its colours (ceiling, wall, carpet, slab)
+  const P = twFloorData(f).pal, top = gy - TW_CEIL - SH_Y + off, r = twR; r(0, top, VW, SH_Y, P.ceil); r(0, top + SH_Y, VW, SH_F - SH_Y, P.w); r(0, top + SH_Y + 4, VW, 4, twMix(P.w, '#000000', 0.25)); r(0, top + SH_F, VW, SH_N - SH_F, P.car); r(0, top + SH_N, VW, SH_H - SH_N, '#12121a'); r(0, top + SH_N, VW, 3, '#7c7c88');
+}
+function twSlideDraw(now, s) {      // the camera travels from floor f0 to floor f1: every floor in between is in its own band (the two ends in full, a few between them in full, the rest as colour bands), the upper ones first; no fade
+  const y = twSlideY(s, now), lo = Math.min(s.f0, s.f1), hi = Math.max(s.f0, s.f1); ctx.fillStyle = '#0a0a10'; ctx.fillRect(-8, -8, VW + 16, VH + 16);
+  for (let f = hi; f >= lo; f--) {
+    const off = s.dir * (Math.abs(f - s.f0) * SH_H - y); if (off > VH + 12 || off < -(SH_H + 12)) continue;
+    if (f === s.f0) twFloorDraw(f, s.x0, off, now); else if (f === s.f1) twFloorDraw(f, wx, off, now); else if (s.n <= 3) twFloorDraw(f, Math.round(s.x0 + (wx - s.x0) * Math.abs(f - s.f0) / s.n), off, now); else twFloorFast(f, off);
   }
-  twEmit(F, x0, a, b, now, Q); twOuter(F, x0, 0, yc, now, Q); twOuter(F, x1, 1, yc, now, Q);
+}
+function twBackdrop(now) {      // everything behind the fighters: the cab when you are in it, the slide when the camera travels between floors, else the floor you are on
+  const T = vs.tw; if (T.cab) { twCabBackdrop(now); return; }
+  const s = T.slide; if (s && now < s.at + s.ms) { twSlideDraw(now, s); T.prompt = null; return; }
+  twFloorDraw(T.fMe, wx, 0, now);
 }

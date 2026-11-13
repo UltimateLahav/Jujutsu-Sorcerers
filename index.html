@@ -187,7 +187,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.175</small>
+    <small id="ver">V1.176</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -2237,7 +2237,7 @@ function drawCaughtCurse(now) {               // Max Blue has the curse: stun fl
 function drawFoes(now, dt) {                  // the enemy (or enemies: a RUSH wave has two) and what they throw, once a frame
   if (vs && vs.hunt) huntDraw(now);
   if (vs && vs.foes && vs.foes.length > 1) { rushStep(now); for (const x of vs.foes.filter(f => f !== dummy).sort((a, b) => b.x - a.x)) foeSwap(x, () => drawDummy(now, dt)); }      // (the one behind first, so the one in front is painted over it)
-  drawDummy(now, dt);
+  if (!(twOn() && twFoeFx(now, () => drawDummy(now, dt)))) drawDummy(now, dt);      // (v1.176 the skyscraper: the enemy is SEEN falling through a hole, or standing on the floor you slide away from)
   if (vs && vs.cv) { curseProj(now, dt); drawProj(now); }
 }
 function rushStep(now) {                      // every frame of a RUSH wave: the two keep apart, and when the one that was "the enemy" is down, the other becomes "the enemy" (so BLUE, RED and the rest go for him)
@@ -9496,7 +9496,7 @@ window.__ryUl = () => { const U = ryUl; return { on: !!U, t: U ? Math.round(pnow
 // he falls through the crater, 3% of his health a floor (at most 30%, never a K.O.). A launch that is high enough breaks the CEILING and sends the victim up a floor. The crater stays: anybody who walks into it falls too. Stairs (1 floor) and elevators (5 floors) are in the rooms: stand at the door and press JUMP (up) or CROUCH (down).
 // The fighters are on ONE floor at a time (the camera follows you): a fighter who is on another floor is AWAY (twAway: his place is far off, he is held still); he comes after you: through the crater if you fell, by the stairs or the elevator if not (twFoeArrive). The enemy also stays away from the edge of a crater.
 // The module is hooked in at: drawBackdrop (twBackdrop), the pedestrians (off), tick (twTick, twOverlay), startMatch / beginRound (twInit, twRound), the MAP buttons, and Ryu's ULTIMATE (twSlam, twSweep).
-const TW_N = 50, TW_CEIL = 88, TW_BODY = 12, TW_CABW = 220;      // (floors, the height of a room (px), half the width of a body, for the walls, and the width of the elevator cab)
+const TW_N = 50, TW_CEIL = 88, TW_BODY = 12, TW_CABW = 100, TW_PEND = 600;      // (floors, the height of a room (px), half the width of a body, for the walls, the width of the elevator cab (a tight 100 px) and how long after a floor button the cab waits for you to step out)
 let twPick = 0, twWant = false;      // (the map chosen on the screens: 0 street, 1 skyscraper; startMatch reads twWant)
 try { twPick = +localStorage.getItem('js_map') ? 1 : 0; } catch { twPick = 0; }
 function twOn() { return !!vs && vs.map === 'tower' && !!vs.tw; }
@@ -9550,7 +9550,7 @@ function twFloorData(f) {
   const pi = th.pal[(R() * th.pal.length) | 0];
   F = { f, xs, W: xs[nr], nr, th: th.n, pal: TW_PAL[T.forcePal !== undefined ? T.forcePal : pi], wt: twWeather(T.seed, f), decals: [], walls: [], objs: [], wrecks: [], holes: [], lights: [], doors: [], pick: [], outer: [{ hp: 30, broken: false, at: 0 }, { hp: 30, broken: false, at: 0 }], seed: (T.seed ^ (f * 2654435761)) >>> 0 };
   for (let i = 1; i < nr; i++) F.walls.push({ x: xs[i], hp: 80, mx: 80, broken: false, at: 0 });
-  for (let i = 0; i < nr; i++) F.doors.push({ x: Math.round(xs[i] + 70 + R() * (xs[i + 1] - xs[i] - 140)), k: i % 2 ? 'elev' : 'stairs', room: i, hp: 70, st: 0 });      // (every room has a way up and down: stairs in the even rooms, an elevator in the odd ones)
+  for (let i = 0; i < nr; i++) F.doors.push({ x: Math.round(xs[i] + 70 + R() * (xs[i + 1] - xs[i] - 140)), k: i === 1 ? 'elev' : 'stairs', room: i, hp: 70, st: 0 });      // (every floor has stairs in its first room and every other room but one, and ONE elevator door, in the second room: the cab is one machine for the whole building)
   for (let x = 44; x < F.W - 30; x += 84) F.lights.push({ x, ok: true, hp: 30 });
   const near = (x, w) => F.doors.some(d => Math.abs(d.x - x) < 34 + w / 2) || F.objs.some(o => Math.abs(o.x - x) < (TW_K[o.k].w + w) / 2 + 3 && !o.on);
   const pick = () => { let tot = 0; for (const o of th.objs) tot += o[1]; let r = R() * tot; for (const o of th.objs) { r -= o[1]; if (r <= 0) return o[0]; } return th.objs[0][0]; };
@@ -9567,10 +9567,10 @@ function twFloorData(f) {
 
 // ---- the match: a new building (twInit, from startMatch), a new round (twRound, from beginRound: floor 50 again, the damage stays)
 function twInit() {
-  vs.map = 'tower'; vs.tw = { seed: (Math.random() * 1e9) | 0, fl: {}, fMe: TW_N, fFoe: TW_N, q: [], px: 0, dx: 0, pHp: 0, dHp: 0, dHit: -9999, dDown: 0, pDown: 0, swingAt: 0, fade: null, banner: null, away: false, awayX: 0, arrX: 0, via: 'stairs', lastDoor: 0, hint: 0, on: false, expl: [], doorAt: -1, flashes: [], haze: null, cab: null, seen: {}, cf: TW_N, prevF: 0, oorAt: -9999, cabF: { f: 0, xs: [0, TW_CABW], W: TW_CABW, nr: 1, th: 'CAB', walls: [], objs: [], wrecks: [], holes: [], lights: [], doors: [], pick: [], decals: [], outer: [{ hp: 1e9, mx: 1e9, broken: false, at: 0 }, { hp: 1e9, mx: 1e9, broken: false, at: 0 }] } };
+  vs.map = 'tower'; vs.tw = { seed: (Math.random() * 1e9) | 0, fl: {}, fMe: TW_N, fFoe: TW_N, q: [], px: 0, dx: 0, pHp: 0, dHp: 0, dHit: -9999, dDown: 0, pDown: 0, swingAt: 0, slide: null, ff: null, banner: null, away: false, awayX: 0, arrX: 0, via: 'stairs', lastDoor: 0, hint: 0, on: false, expl: [], doorAt: -1, flashes: [], haze: null, cab: null, lift: twLiftNew(false), viaLift: false, jobAt: 0, cabAt: -1, seen: {}, cf: TW_N, prevF: 0, oorAt: -9999, cabF: { f: 0, xs: [0, TW_CABW], W: TW_CABW, nr: 1, th: 'CAB', walls: [], objs: [], wrecks: [], holes: [], lights: [], doors: [], pick: [], decals: [], outer: [{ hp: 1e9, mx: 1e9, broken: false, at: 0 }, { hp: 1e9, mx: 1e9, broken: false, at: 0 }] } };
 }
 function twRound(now) {
-  const T = vs.tw, d = dummy; T.fMe = T.fFoe = TW_N; T.q.length = 0; T.away = false; T.fade = null; T.haze = null; T.flashes = []; T.cab = null; T.seen[TW_N] = 1; T.cf = TW_N; T.prevF = 0; T.expl.length = 0; const F = twFloorData(TW_N), gap = d ? d.x - wx : 60; wx = twFreeX(F, Math.round((F.xs[1] + F.xs[2]) / 2) - 30, gap); wxv = 0; wvx = 0;
+  const T = vs.tw, d = dummy; T.fMe = T.fFoe = TW_N; T.q.length = 0; T.away = false; T.slide = null; T.ff = null; T.haze = null; T.flashes = []; T.cab = null; T.lift = twLiftNew(T.lift && T.lift.broken); T.viaLift = false; vs.nHold = 0; T.seen[TW_N] = 1; T.cf = TW_N; T.prevF = 0; T.expl.length = 0; const F = twFloorData(TW_N), gap = d ? d.x - wx : 60; wx = twFreeX(F, Math.round((F.xs[1] + F.xs[2]) / 2) - 30, gap); wxv = 0; wvx = 0;
   if (d) { d.x = wx + gap; d.twAway = false; }
   T.px = wx; T.dx = d ? d.x : 0; T.pHp = vs.hp; T.dHp = d ? d.hp : 0; T.dHit = d ? d.hitAt : -9999; T.dDown = d ? d.down || 0 : 0; T.pDown = gDownUntil; T.on = true; T.banner = { txt: 'FLOOR ' + TW_N, at: now };
 }
@@ -9655,34 +9655,42 @@ function twExplode(F, x, pw, rad, now) {      // a gas tank or an extinguisher g
 // ---------------------------------------------------------------- the floors: falling, climbing, being away
 const twHoleAt = (F, x) => { for (const h of F.holes) if (Math.abs(x - h.x) < h.r - 4) return h; for (const d of F.doors) if (d.st === 2 && Math.abs(x - d.x) < 14) return { x: d.x, r: 18, shaft: true, door: d }; return null; };      // (a crater, or the open shaft of a torn-out elevator door)
 function twDepthAt(f, x) { let n = 0, g = f; while (g > 1) { const h = twHoleAt(twFloorData(g), x); if (!h) break; if (h.shaft) { n += g - 1; break; } n++; g--; } return n; }      // (how many floors a body at x falls from floor f: a crater 1 floor each, a shaft all the way down)
-function twRoomOf(F, x) { let r = 0; for (let i = 1; i < F.xs.length - 1; i++) if (x >= F.xs[i]) r = i; return r; }
 function twPlace(F, x) { x = Math.max(24, Math.min(F.W - 24, x)); for (const w of F.walls) if (!w.broken && Math.abs(x - w.x) < 20) x = w.x + (x >= w.x ? 20 : -20); return x; }
-function twFloorSwitch(now, x) {      // you are on another floor now: its place, a fade in from black and the new floor's number
-  const T = vs.tw, F = twFloorData(T.fMe); if (T.cf !== T.fMe) { T.prevF = T.cf; T.cf = T.fMe; } T.seen[T.fMe] = 1; twClearWorld(); wx = twPlace(F, x); wxv = 0; wvx = 0; T.px = wx; T.fade = { at: now, ms: 520 }; T.banner = { txt: 'FLOOR ' + T.fMe, at: now }; popups = [];
+function twFloorSwitch(now, x, kind) {      // you are on another floor now: its place and its number; unless it is a straight cut (the elevator) the CAMERA SLIDES there (kind 'fall', 'stairs' or 'ceil': twSlideStart), never a fade
+  const T = vs.tw, F = twFloorData(T.fMe), f0 = T.cf, x0 = wx, d = dummy, foeX = d && d.ko < 0 && !T.away && T.fFoe === f0 ? d.x : null; if (T.cf !== T.fMe) { T.prevF = T.cf; T.cf = T.fMe; } T.seen[T.fMe] = 1; twClearWorld(); wx = twPlace(F, x); wxv = 0; wvx = 0; T.px = wx; T.banner = { txt: 'FLOOR ' + T.fMe, at: now }; popups = []; T.slide = null;
+  if (kind && kind !== 'cut' && f0 !== T.fMe && vs.ph === 'fight') twSlideStart(now, f0, T.fMe, x0, kind, foeX);
 }
-function twPlanArrival(now) {      // the enemy is on another floor: when and how he comes: through the crater when you fell and it reaches your floor, otherwise by the stairs or the elevator (the farther, the longer)
-  const T = vs.tw; if (!T.away) return; const dl = Math.abs(T.fFoe - T.fMe);
+function twSlideStart(now, f0, f1, x0, kind, foeX) {      // the camera follows you from floor f0 to floor f1: the floors run past (a fall speeds up, the stairs glide, a launch slows down), you cannot move for as long as it takes; foeX = where the enemy stands on the floor you leave (he stays there, in sight)
+  const T = vs.tw, n = Math.abs(f1 - f0), ms = kind === 'stairs' ? 520 : kind === 'ceil' ? Math.min(900, 380 + 80 * n) : Math.min(1000, 360 + 90 * n);
+  T.slide = { at: now, ms, f0, f1, n, dir: f1 < f0 ? 1 : -1, x0, kind, foeX, land: null }; vs.nHold = Math.max(vs.nHold || 0, now + ms);
+}
+function twLand(now, tag, nn, dm) { say((tag || 'FALL') + ' ' + nn + (nn > 1 ? ' FLOORS' : ' FLOOR') + ' -' + dm, wx, '#ff9a5a', 8, now); snd('twbreak', 7); puff(wx, 8); shakeUntil = now + 300; shakeAmp = 4; }      // (the thud when a fall ends)
+function twPlanArrival(now) {      // the enemy is on another floor: when and how he comes: through the crater when you fell and it reaches your floor, in the cab if it is free (twLiftJob, after a moment), otherwise by the stairs (the farther, the longer)
+  const T = vs.tw, L = T.lift; if (!T.away) return; const dl = Math.abs(T.fFoe - T.fMe); T.jobAt = now + 1100;
+  if (L.job || L.inFoe) { T.viaLift = true; T.arriveAt = 1e12; return; }      // (he is already on his way in the cab: it takes him to wherever you are now)
+  T.viaLift = false;
   if (T.fFoe > T.fMe && T.lastFallX !== null && twDepthAt(T.fFoe, T.lastFallX) >= T.fFoe - T.fMe) { T.via = 'hole'; T.arrX = T.lastFallX; T.arriveAt = now + 1200; }
   else { T.via = 'stairs'; T.arriveAt = now + Math.min(9000, 2600 + 700 * dl); }
 }
-function twFoeFall(n, now, x, tag) {      // the enemy falls n floors (a slam, a crater): 3% of his health a floor, at most 30%, never a K.O.; he is away on the floor he lands on
+function twFoeFall(n, now, x, tag, out) {      // the enemy falls n floors (a slam, a crater, the shaft, the glass): 3% of his health a floor, at most 30%, never a K.O.; you SEE him drop through the hole (T.ff, drawn by twFoeFx); he is away on the floor he lands on
   const T = vs.tw, d = dummy; if (!d || d.ko >= 0 || T.away) return; const to = Math.max(1, T.fFoe - n), nn = T.fFoe - to; if (nn < 1) return;
-  const dm = Math.round((d.max || DUMMY_HP) * Math.min(0.30, 0.03 * nn)); say((tag || 'FALL') + ' ' + nn + (nn > 1 ? ' FLOORS' : ' FLOOR') + ' -' + dm, d.x, '#ffd34d', 8, now); twHurtFoe(dm, now, true);
+  const dm = Math.round((d.max || DUMMY_HP) * Math.min(0.30, 0.03 * nn)), h = twHoleAt(twFloorData(T.fFoe), d.x); say((tag || 'FALL') + ' ' + nn + (nn > 1 ? ' FLOORS' : ' FLOOR') + ' -' + dm, d.x, '#ffd34d', 8, now); twHurtFoe(dm, now, true);
+  T.ff = { k: 'down', at: now, ms: 560, x: d.x, f: T.fFoe, r: h ? Math.max(14, h.r) : 22, out: !!out };
   T.fFoe = to; T.away = true; d.twAway = true; T.awayX = x; T.lastFallX = x; d.air = null; d.airH = 0; d.down = 0; d.x = wx + 1e5; d.vx = 0; d.stunUntil = now + 900; twPlanArrival(now);
 }
-function twMeFall(n, now, x, tag) {      // you fall n floors
+function twMeFall(n, now, x, tag) {      // you fall n floors: the camera follows you down (a slide, no fade) and the thud comes when it ends; the enemy, if he was here, stays up there in sight
   const T = vs.tw, d = dummy, to = Math.max(1, T.fMe - n), nn = T.fMe - to; if (nn < 1) return;
   const dm = Math.max(1, Math.round(PHP * Math.min(0.30, 0.03 * nn))), foeHere = !!d && d.ko < 0 && !T.away;
-  T.fMe = to; T.lastFallX = x; twFloorSwitch(now, x); twHurtMe(dm, now, true); say((tag || 'FALL') + ' ' + nn + (nn > 1 ? ' FLOORS' : ' FLOOR') + ' -' + dm, wx, '#ff9a5a', 8, now); snd('twbreak', 7); puff(wx, 8); shakeUntil = now + 300; shakeAmp = 4;
+  T.fMe = to; T.lastFallX = x; twFloorSwitch(now, x, 'fall'); twHurtMe(dm, now, true); if (T.slide) T.slide.land = [tag, nn, dm]; else twLand(now, tag, nn, dm);
   if (foeHere) { T.away = true; d.twAway = true; T.awayX = d.x; } twPlanArrival(now);
 }
-function twCeiling(who, n, now, x) {      // a launch breaks the ceiling: the victim goes up n floors and the crater stays in the floor above
+function twCeiling(who, n, now, x) {      // a launch breaks the ceiling: the victim goes up n floors and the crater stays in the floor above (you see him fly up through it; for you the camera slides up)
   const T = vs.tw, f = who === 'foe' ? T.fFoe : T.fMe; if (f >= TW_N) return; n = Math.min(n, TW_N - f); if (n < 1) return;
   for (let i = 1; i <= n; i++) twAddHole(f + i, x, 22, now);
   debBurst(x, 70, 16, ['#8a8a92', '#6d6d75', '#b8b0a0', '#c9b27a'], 140); puff(x, 8); shakeUntil = now + 300; shakeAmp = 5; snd('twbreak', 4); say('CEILING!', x, '#ffd34d', 8, now); hitStop(50);
   twLightsShock(twFloorData(f), x, 100, 60, now); if (T.fMe === f) { twHaze(now, 0.6); twFlash(x, now, [255, 240, 210], 36); }
-  if (who === 'foe') { const d = dummy; T.fFoe = f + n; T.away = true; d.twAway = true; T.awayX = x + 38; T.lastFallX = x; twPlanArrival(now); }
-  else { const d = dummy, foeHere = !!d && d.ko < 0 && !T.away; T.fMe = f + n; T.lastFallX = x; twFloorSwitch(now, x + 38); snd('twbreak', 7); if (foeHere) { T.away = true; d.twAway = true; T.awayX = d.x; } T.lastFallX = null; twPlanArrival(now); }
+  if (who === 'foe') { const d = dummy; T.ff = { k: 'up', at: now, ms: 520, x: d.x, f, r: 22, h0: d.airH || 0 }; T.fFoe = f + n; T.away = true; d.twAway = true; T.awayX = x + 38; T.lastFallX = x; twPlanArrival(now); }
+  else { const d = dummy, foeHere = !!d && d.ko < 0 && !T.away; T.fMe = f + n; T.lastFallX = x; twFloorSwitch(now, x + 38, 'ceil'); snd('twbreak', 7); if (foeHere) { T.away = true; d.twAway = true; T.awayX = d.x; } T.lastFallX = null; twPlanArrival(now); }
 }
 function twSlamN(P, heavy) { return Math.min(12, heavy ? 1 + Math.floor(Math.max(0, P - 40) / 25) : 1 + Math.floor(Math.max(0, P - 12) / 12)); }      // (how many floors a hit of P damage breaks)
 function twSlam(who, n, now, x) {      // a slam: the floor under the victim breaks n floors deep and he goes down through it
@@ -9694,35 +9702,50 @@ function twSlam(who, n, now, x) {      // a slam: the floor under the victim bre
   twLightsShock(twFloorData(f), x, 90 + 20 * n, 30 + 20 * n, now); if (T.fMe === f) { twHaze(now, 0.8); twFlash(x, now, [255, 240, 210], 36); }
   if (who === 'foe') twFoeFall(n, now, x, 'SLAM!'); else twMeFall(n, now, x, 'SLAM!'); return true;
 }
-function twTravel(dir, door, now) {      // the stairs (1 floor) or the elevator (5): you are on another floor, at the same kind of door
-  const T = vs.tw, f = T.fMe, n = door.k === 'elev' ? 5 : 1, to = Math.max(1, Math.min(TW_N, f + dir * n)); if (to === f) { say(dir > 0 ? 'TOP FLOOR' : 'GROUND FLOOR', wx, '#9a9aa8', 8, now); return; }
-  const d = dummy, foeHere = !!d && d.ko < 0 && !T.away; T.fMe = to; const F = twFloorData(to); let best = F.doors[0]; for (const dr of F.doors) if (dr.k === door.k && Math.abs(dr.room - door.room) < Math.abs(best.room - door.room) || (best.k !== door.k && dr.k === door.k)) best = dr;
-  twFloorSwitch(now, best.x); snd('twbreak', 6); T.lastFallX = null; if (foeHere) { T.away = true; d.twAway = true; T.awayX = d.x; } twPlanArrival(now);
+function twTravel(dir, door, now) {      // the stairs (1 floor): you are on another floor, at its stairs; the camera slides up or down
+  const T = vs.tw, f = T.fMe, to = Math.max(1, Math.min(TW_N, f + dir)); if (to === f) { say(dir > 0 ? 'TOP FLOOR' : 'GROUND FLOOR', wx, '#9a9aa8', 8, now); return; }
+  const d = dummy, foeHere = !!d && d.ko < 0 && !T.away; T.fMe = to; const F = twFloorData(to); let best = null; for (const dr of F.doors) if (dr.k === 'stairs' && (!best || Math.abs(dr.room - door.room) < Math.abs(best.room - door.room))) best = dr;
+  twFloorSwitch(now, best.x, 'stairs'); snd('twbreak', 6); T.lastFallX = null; if (foeHere) { T.away = true; d.twAway = true; T.awayX = d.x; } twPlanArrival(now);
 }
 function twFoeHere(now) {      // (PUT ENEMY and RESET of free play): the enemy is where you are (in the cab too)
-  if (!twOn()) return; const T = vs.tw, d = dummy; T.away = false; T.fFoe = T.fMe; if (d) d.twAway = false; T.q.length = 0; if (T.cab && d && d.ko < 0) T.cab.foe = 'in';
+  if (!twOn()) return; const T = vs.tw, d = dummy, L = T.lift; T.away = false; T.fFoe = T.fMe; if (d) d.twAway = false; T.q.length = 0; T.viaLift = false; T.ff = null; L.job = null; L.out = false; L.foeInAt = 0; L.inFoe = false;
+  if (L.me && d && d.ko < 0) twCabFoeIn(now, false);
 }
-function twFoeArrive(now) {      // the enemy comes: out of the crater above you, or out of the door of your room
+function twFoeArrive(now) {      // the enemy comes: out of the crater above you, the door of the cab, or the stairs nearest to you
   const T = vs.tw, d = dummy, F = twFloorData(T.fMe); if (!d || d.ko >= 0) { T.away = false; return; }
-  let x, hole = T.via === 'hole'; if (hole) x = T.arrX; else { const dr = F.doors[Math.min(F.doors.length - 1, twRoomOf(F, wx))]; x = dr.x; if (dr.st !== 2) dr.force = now + 1000; }      // (the door he comes out of swings open)
+  let x, hole = T.via === 'hole', dr = null; if (hole) x = T.arrX; else { if (T.via === 'lift') dr = twElevOf(F); else for (const q of F.doors) if (q.k === 'stairs' && (!dr || Math.abs(q.x - wx) < Math.abs(dr.x - wx))) dr = q; x = dr.x; if (dr.st !== 2) dr.force = now + 1000; }      // (the door he comes out of swings open)
   x = twPlace(F, x); if (Math.abs(x - wx) < 26) x = twPlace(F, wx + (x >= wx ? 38 : -38));
   T.away = false; T.fFoe = T.fMe; d.twAway = false; d.x = x; d.vx = 0; d.down = 0; d.stunUntil = now + 350; d.ai = 'rest'; d.aiAt = now; d.restFor = 350;
   if (hole) { d.air = airMake(now, 90, 0, 520, 'bounce'); puff(x, 8); debBurst(x, 40, 10, ['#8a8a92', '#b8b0a0'], 110); snd('twbreak', 7); } else { puff(x, 5); snd('twbreak', 6); }
   say('ENEMY!', x, '#ffd34d', 8, now); T.dHp = d.hp; T.dx = d.x;
 }
-function twAwayStep(now) {      // every frame the enemy is on another floor: he is held far off, still, until he comes (or until you are on his floor: then he is where he fell)
+function twFoeHold(now) { const d = dummy; d.x = wx + 1e5; d.vx = 0; d.stunUntil = now + 900; d.ai = 'rest'; d.aiAt = now; d.restFor = 900; d.air = null; d.airH = 0; }      // (the enemy is not on this floor: held far off, still)
+function twAwayStep(now) {      // every frame the enemy is on another floor: he is held far off, still, until he comes (or until you are on his floor: then he is where he fell); in the cab it is the cab that brings him
   const T = vs.tw, d = dummy; if (!d || d.ko >= 0) { T.away = false; return; }
-  d.x = wx + 1e5; d.vx = 0; d.stunUntil = now + 900; d.ai = 'rest'; d.aiAt = now; d.restFor = 900; d.air = null; d.airH = 0;
+  twFoeHold(now); if (T.lift.inFoe) { twLiftJob(now); return; }      // (he is riding the cab: its job goes on)
   if (T.fFoe === T.fMe) { const F = twFloorData(T.fMe); T.away = false; d.twAway = false; d.x = twPlace(F, T.awayX); d.stunUntil = now + 300; T.dx = d.x; return; }
-  if (now >= T.arriveAt) twFoeArrive(now);
+  twLiftJob(now); if (now >= T.arriveAt) twFoeArrive(now);
+}
+function twFoeFx(now, draw) {      // (drawFoes asks) the enemy SEEN dropping through a crater or the glass (T.ff 'down'), flying up through a broken ceiling (T.ff 'up'), or standing on the floor you are leaving while the camera slides: draws him there (clipped to the hole) and returns true; false = draw him as usual
+  const T = vs.tw, d = dummy; if (!T || !d || d.ko >= 0) return false;
+  const ff = T.ff && now < T.ff.at + T.ff.ms ? T.ff : null, sl = T.slide && now < T.slide.at + T.slide.ms ? T.slide : null; if (!ff && !sl) return false;
+  const gx = d.x, ga = d.airH, cx = Math.round(VW / 2), yc = gy - TW_CEIL; let did = false;
+  if (ff) {
+    const t = (now - ff.at) / 1000, sx = Math.round(cx + ff.x - wx); ctx.save(); ctx.beginPath();
+    if (ff.k === 'down') { ctx.rect(-8, -8, VW + 16, gy + 10); if (ff.out) ctx.rect(-8, gy, VW + 16, VH + 8 - gy); else ctx.rect(sx - ff.r, gy + 2, ff.r * 2, VH + 8 - gy); ctx.clip(); ctx.translate(0, Math.round(520 * t * t)); d.airH = 0; }
+    else { ctx.rect(-8, yc + 4, VW + 16, VH + 8 - yc); ctx.rect(sx - ff.r + 4, -8, ff.r * 2 - 8, yc + 12); ctx.clip(); d.airH = ff.h0 + Math.round(300 * t + 380 * t * t); }
+    d.x = ff.x; draw(); ctx.restore(); did = true;
+  } else if (!T.away) { ctx.save(); ctx.translate(0, Math.round(twSlideOff(sl, sl.f1, now))); draw(); ctx.restore(); did = true; }      // (he is on the floor you land on: he rides in with its band)
+  else if (sl.foeX !== null) { ctx.save(); ctx.translate(0, Math.round(twSlideOff(sl, sl.f0, now))); d.x = wx + (sl.foeX - sl.x0); draw(); ctx.restore(); did = true; }      // (he is up there where you left him)
+  d.x = gx; d.airH = ga; return did;
 }
 function twFallOut(who, now, side) {      // a fighter went through the broken glass: down to the street (the lobby); the other follows him a moment later
   const T = vs.tw, f = who === 'foe' ? T.fFoe : T.fMe; if (f <= 1) return; const lobby = twFloorData(1), x = side ? lobby.W - 20 : 20;
-  if (who === 'foe') { twFoeFall(f - 1, now, x); T.q.push({ at: now + 1300, k: 'followMe', x }); }
+  if (who === 'foe') { twFoeFall(f - 1, now, x, undefined, true); T.q.push({ at: now + 1300, k: 'followMe', x }); }
   else { twMeFall(f - 1, now, x); const d = dummy; if (d && d.ko < 0 && T.away) { T.fFoe = f; T.arrX = x; T.via = 'hole'; T.arriveAt = now + 1500; } }
 }
 function twRunQ(e, now) {
-  const T = vs.tw; if (e.k === 'followMe' && T.fMe > 1 && vs.ph === 'fight') { twFloorData(1); T.fMe = 1; twFloorSwitch(now, e.x); snd('twbreak', 7); puff(wx, 6); say('DOWN TO THE STREET', wx, '#9fd8ff', 8, now); T.lastFallX = null; twPlanArrival(now); }
+  const T = vs.tw; if (e.k === 'followMe' && T.fMe > 1 && vs.ph === 'fight' && !T.cab) { twFloorData(1); T.fMe = 1; twFloorSwitch(now, e.x, 'fall'); snd('twbreak', 7); puff(wx, 6); say('DOWN TO THE STREET', wx, '#9fd8ff', 8, now); T.lastFallX = null; twPlanArrival(now); }
 }
 
 // ---------------------------------------------------------------- every frame (tick: twTick before the training step, twBase right after it, twOverlay after the picture)
@@ -9773,17 +9796,20 @@ function twBodies(now) {      // both bodies stay between the walls of the room 
 function twTick(now, dt) {
   if (!twOn() || state !== 'play') return; const T = vs.tw, d = dummy; if (!T.on || !d) return;
   for (let i = T.q.length - 1; i >= 0; i--) if (now >= T.q[i].at) twRunQ(T.q.splice(i, 1)[0], now);
-  if (T.cab) twCabTick(now, dt); else if (T.away) twAwayStep(now);
+  twLiftTick(now, dt);
+  if (T.slide && now >= T.slide.at + T.slide.ms) { const s = T.slide; T.slide = null; if (s.land) twLand(now, s.land[0], s.land[1], s.land[2]); }      // (the slide is over: the thud of a fall)
+  if (T.ff && now >= T.ff.at + T.ff.ms) T.ff = null;
+  if (T.cab) { if (T.away && !T.lift.inFoe) twFoeHold(now); } else if (T.away) twAwayStep(now);
   if (vs.ph !== 'fight') { T.px = wx; T.dx = d.x; return; }
   if (Math.abs(wx - T.px) > 60) T.px = wx; if (Math.abs(d.x - T.dx) > 60) T.dx = d.x;      // (a body that was put somewhere (PUT ENEMY, a floor change, the enemy coming back) is where it is: no wall between)
-  if (T.cab) { twBodies(now); T.px = wx; T.dx = d.x; return; }      // (in the cab there is only the cab: its walls, you and him)
+  if (T.cab) { twCabKeys(now); twBodies(now); T.px = wx; T.dx = d.x; return; }      // (in the cab there is only the cab: its walls, you and him)
   twWatch(now);
   let F = twFloorData(T.fMe); const grounded = gojoLift < 5 && !(gAir && gAirH > 5);
-  const near = grounded ? F.doors.find(dr => Math.abs(dr.x - wx) < 22 && dr.st !== 2) : null, dn = crReq || (stickDown && !T.sdPrev); T.sdPrev = stickDown;      // (the stairs and the elevator: JUMP goes up, CROUCH goes down; at an elevator both open the panel of the cab)
+  const near = grounded && !T.slide ? F.doors.find(dr => Math.abs(dr.x - wx) < 22 && dr.st !== 2) : null, dn = crReq || (stickDown && !T.sdPrev); T.sdPrev = stickDown;      // (the stairs and the elevator: JUMP goes up, CROUCH goes down; at the elevator both get you in, or call it down)
   if (near) { if (T.doorAt < 0) T.doorAt = now; } else T.doorAt = -1;
   const door = near && now - T.doorAt >= 350 ? near : null;      // (only after standing at the door for a third of a second: a jump on the way past is a jump)
-  if (door) { if (door.k === 'elev') { if (jumpReq || dn) { jumpReq = false; crReq = false; twCabEnter(F, door, now); } } else if (jumpReq) { jumpReq = false; twTravel(1, door, now); } else if (dn) { crReq = false; twTravel(-1, door, now); } if (T.cab) { T.px = wx; T.dx = d.x; return; } F = twFloorData(T.fMe); }
-  if (grounded && vs.ph === 'fight') { const h = twHoleAt(F, wx); if (h && h.shaft) { twShaftFall('me', now); F = twFloorData(T.fMe); } else { const n = twDepthAt(T.fMe, wx); if (n > 0) { twMeFall(n, now, wx); F = twFloorData(T.fMe); } } }      // (you walked into a crater or an open shaft)
+  if (door) { if (door.k === 'elev') { if (jumpReq || dn) { jumpReq = false; crReq = false; twLiftUse(F, door, now); } } else if (jumpReq) { jumpReq = false; twTravel(1, door, now); } else if (dn) { crReq = false; twTravel(-1, door, now); } if (T.cab) { T.px = wx; T.dx = d.x; return; } F = twFloorData(T.fMe); }
+  if (grounded && vs.ph === 'fight' && !T.slide) { const h = twHoleAt(F, wx); if (h && h.shaft) { twShaftFall('me', now); F = twFloorData(T.fMe); } else { const n = twDepthAt(T.fMe, wx); if (n > 0) { twMeFall(n, now, wx); F = twFloorData(T.fMe); } } }      // (you walked into a crater or an open shaft)
   if (!T.away && d.ko < 0 && T.fFoe === T.fMe) {
     const h = twHoleAt(F, d.x);
     if (h && !d.air && (d.airH || 0) < 5) { const sp = Math.abs(d.vx * mScale(massOf(d))); if (sp <= 100 && now - d.hitAt > 500 && now >= (d.down || 0)) { const side = T.dx < h.x ? -1 : T.dx > h.x ? 1 : (wx < h.x ? -1 : 1); d.x = h.x + side * (h.r + 3); d.vx = 0; } else if (h.shaft) twShaftFall('foe', now); else twFoeFall(twDepthAt(T.fFoe, d.x), now, d.x); }      // (the enemy stays away from the edge of a crater or a shaft unless he is thrown in)
@@ -9798,21 +9824,23 @@ function twTick(now, dt) {
 function twBase(now) {      // right after the training step (which gives an infinite-health enemy his health back): this is what the next frame's hits are measured against
   if (!twOn() || !vs.tw.on || !dummy) return; const T = vs.tw, d = dummy; T.dHp = d.hp; T.dHit = d.hitAt; T.dDown = d.down || 0; T.pHp = vs.hp; T.pDown = gDownUntil;
 }
-function twOverlay(now) {      // over the picture: the fade after a fall or a climb, the floor you are on (and where the enemy is when he is not here), and the big number when you arrive
+function twOverlay(now) {      // over the picture: what the elevator door tells you, the floor you are on (and where the enemy is when he is not here), and the big number when you arrive
   if (!twOn() || state !== 'play') { twPanelSync(now); return; } const T = vs.tw;
-  if (T.fade) { const a = 1 - (now - T.fade.at) / T.fade.ms; if (a <= 0) T.fade = null; else { ctx.fillStyle = 'rgba(0,0,0,' + a.toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); } }
   if (ryUlNoHud()) { twPanelSync(now); return; }
   if (T.prompt && now - T.prompt.at < 80) { const mx = Math.round(VW / 2); if (T.prompt.up) pxt(T.prompt.up, mx, gy + 18, '#9fffd0', 8, 'center'); if (T.prompt.dn) pxt(T.prompt.dn, mx, gy + 27, '#9fd8ff', 8, 'center'); }
-  const c = T.cab, fl = c ? Math.round(c.curF) : T.fMe, hx = Math.round(VW / 2) + (c ? 20 : 0), ha = c ? 'left' : 'center'; pxt('FLOOR ' + fl, hx, 44, '#cfe8ff', 8, ha); if (T.away) pxt(c && c.foe === 'out' ? 'FOE AT DOORS' : 'FOE ' + T.fFoe + (T.fFoe > fl ? ' UP' : ' DOWN'), hx, c ? 62 : 53, '#ffb27a', 8, ha);      // (in the cab the lines start right of the middle of the screen, clear of the panel and of your head, and the enemy's line sits lower, clear of his grade label)
+  const c = T.cab, fl = c ? Math.round(c.curF) : T.fMe, hx = Math.round(VW / 2) + (c ? 20 : 0), ha = c ? 'left' : 'center'; pxt('FLOOR ' + fl, hx, 44, '#cfe8ff', 8, ha); if (T.away) pxt(c && c.out ? 'FOE AT DOORS' : T.lift.inFoe ? 'FOE ' + T.fFoe + ' IN CAB' : 'FOE ' + T.fFoe + (T.fFoe > fl ? ' UP' : ' DOWN'), hx, c ? 62 : 53, '#ffb27a', 8, ha);      // (in the cab the lines start right of the middle of the screen, clear of the panel and of your head, and the enemy's line sits lower, clear of his grade label)
   twPanelSync(now);
   if (T.banner && now - T.banner.at < 1300) { const u = (now - T.banner.at) / 1300; ctx.globalAlpha = u > 0.6 ? Math.max(0, (1 - u) / 0.4) : 1; pxt(T.banner.txt, Math.round(VW / 2), Math.round(VH * 0.46), '#ffffff', 16, 'center'); ctx.globalAlpha = 1; }
 }
-// ---------------------------------------------------------------- v1.175 THE ELEVATOR: doors that break, the cab you ride in, its panel
-// Stand at an elevator door (350 ms) and press JUMP or CROUCH: the doors shut behind you and the view goes INSIDE THE CAB (T.cab: a small room, TW_CABW px wide, with a wall at each end; you walk, jump, block and attack in it as anywhere). The PANEL (twPanelBuild: a scrolling
-// grid of the 50 floors + TOP / LOBBY / ENEMY'S FLOOR / LAST FLOOR + OPEN / CLOSE / STOP) is over the picture; tapping a floor starts the ride at once: it takes 0.1 s a floor (1 s at least, 4 s at most), the display counts, the cab shakes, the city and the sky outside the window change with the height.
-// The enemy is left outside the doors: if he was on your floor he runs to the doors and BANGS, and about 8 s after the doors shut he BREAKS IN (the fight goes on inside the cab, also during the ride); if he was on another floor he comes later as before (and if he arrives while you are choosing he bangs too). Time never stops.
-// DOORS BREAK (twDoorHit; d.hp 70, d.st 0 whole / 1 OUT OF ORDER (hp 40: its button is dead) / 2 torn out: the shaft is open and whoever walks into it falls to the lobby, 3% a floor, at most 30%).
-const twElevOk = f => { const F = vs.tw.fl[f]; return !F || F.doors.some(dr => dr.k === 'elev' && dr.st === 0); };      // (an elevator works on a floor while one of its doors is whole; a floor nobody has seen is whole)
+// ---------------------------------------------------------------- v1.176 ONE ELEVATOR for the whole building (v1.175 made its doors, the cab and its panel; v1.176 made the cab ONE shared machine, T.lift)
+// There is one cab for the whole building. It is parked at a floor (doors shut or open) or it rides to another one. At an elevator door (stand still there for 350 ms): JUMP or CROUCH: if the cab is HERE you step in (a straight cut to the inside: T.cab is the cab while you are in it); if it is somewhere else
+// you CALL it (it comes, the number over the door counts, its doors open and wait about 6 s for you); if the ENEMY is riding it (or is coming for it) it is IN USE: you can neither call it nor get in. The cab is a tight 100 px (TW_CABW) with a wall at each end, the doors in the middle of the back wall.
+// The PANEL (twPanelBuild: a scrolling grid of the 50 floors + TOP / LOBBY / ENEMY'S FLOOR / LAST FLOOR + OPEN / CLOSE / STOP) is over the picture: a floor button starts a countdown of 0.6 s (TW_PEND); then the doors shut and the cab goes. If you STEP OUT in that time (stand on the doors, JUMP) it goes WITHOUT you,
+// with whoever is still in it: the enemy, carried to the floor you chose, alone. When it arrives the doors open and wait: you get out by standing on the doors and pressing JUMP (a straight cut). Falls and stairs have no fade: the camera slides (twSlideStart, towerart.js), the enemy is SEEN dropping through a hole (twFoeFx).
+// The doors of the cab shut behind you; an enemy who was on the floor is left outside: he BANGS and after about 8 s BREAKS THEM IN (lift.broken: for good, for the whole match: they never shut again and he walks in whenever he reaches the cab). Open doors do not keep him out either (he walks in after 1.2 s).
+// The enemy rides the cab himself to chase you (twLiftJob: he calls it to his floor, gets in, rides to yours, steps out of its door; the stairs when the cab is busy or a door on the way is broken). The floor doors break for good too (twDoorHit: d.st 1 OUT OF ORDER (its button is dead), 2 torn out: the shaft is open and whoever walks in falls to the lobby).
+const twElevOf = F => F.doors.find(d => d.k === 'elev');      // (every floor has exactly one elevator door)
+const twElevOk = f => { const F = vs.tw.fl[f]; return !F || twElevOf(F).st === 0; };      // (the cab can stop at a floor while its door is whole; a floor nobody has seen is whole)
 function twDoorHit(F, d, p, now) {      // an elevator door takes a blow: it dents, a second hard one jams it (OUT OF ORDER), a lot of damage or a blast tears it out (the SHAFT is open)
   if (d.k !== 'elev' || d.st === 2 || p < 6) return; const T = vs.tw, vis = T.fMe === F.f && !T.cab; d.hp -= p; d.hit = now;
   if (vis) { debBurst(d.x, 30, 3 + ((p / 10) | 0), ['#c9d0de', '#9aa4b8', '#6d7488'], 80 + p); snd('twbreak', 2); }
@@ -9826,64 +9854,131 @@ function twShaftFall(who, now) {      // into an open shaft: down to the lobby (
   if (who === 'foe') twFoeFall(f - 1, now, best.x, 'SHAFT'); else twMeFall(f - 1, now, best.x, 'SHAFT');
   T.lastFallX = null; best.force = now + 900; if (T.fMe === 1) { debBurst(best.x, 30, 12, ['#c9d0de', '#9aa4b8', '#6d7488'], 130); puff(best.x, 6); }
 }
-function twCabEnter(F, door, now) {      // you step into an elevator: the doors close behind you, the view is inside the cab, the panel opens, the enemy (if he is here) is left outside
-  const T = vs.tw, d = dummy; if (T.cab || vs.ph !== 'fight') return;
-  if (door.st === 1) { if (now - T.oorAt > 1200) { T.oorAt = now; say('OUT OF ORDER', door.x, '#ff6a5a', 8, now); snd('twlift', 6); } return; }
-  const foeHere = !!d && d.ko < 0 && !T.away && T.fFoe === T.fMe, foeAway = !!d && d.ko < 0 && T.away;
-  const c = T.cab = { f0: T.fMe, dk: door, ph: 'in', at: now, from: T.fMe, curF: T.fMe, dest: T.fMe, dur: 1000, door: 1, closeAt: now + 1100, closed: false, foe: foeHere ? 'out' : foeAway ? 'away' : 'none', foeX: foeHere ? d.x : T.awayX, bangs: 0, nextBang: 0, bangAt: 0, breakAt: 0, hit: -9999, broke: false, brokeAt: 0, sStart: false, rumAt: 0, popped: false, outAt: 0, stopAt: 0, vel: 0, long: false };
-  if (foeHere) { T.away = true; d.twAway = true; T.awayX = d.x; T.lastFallX = null; d.air = null; d.airH = 0; d.down = 0; d.vx = 0; c.bangAt = c.closeAt + 450 + Math.min(2500, Math.abs(d.x - door.x) * 9); c.breakAt = Math.max(c.closeAt + 8000, c.bangAt + 2500); }
-  T.swingAt = 0; T.doorAt = -1; twClearWorld(); wx = TW_CABW / 2; wxv = 0; wvx = 0; T.px = wx; T.dx = d ? d.x : 0; T.fade = { at: now, ms: 320 }; T.banner = null; popups = [];
+function twLiftNew(broken) {      // the one cab of the building: where it is (f, curF), what it does (ph: 'park' / 'ride' / 'stop' = an emergency stop between floors), its doors, who is in it, and the enemy's part (outside the doors, inside, riding it on a job)
+  return { f: TW_N, curF: TW_N, ph: 'park', from: TW_N, dest: TW_N, at: 0, dur: 1000, vel: 0, long: false, sStart: false, rumAt: 0, popped: false, why: '', door: 0, open: false, closeAt: 0, me: false, inFoe: false, out: false, foeX: 0, foeInAt: 0, broken: !!broken, brokeAt: 0, bangs: 0, nextBang: 0, bangAt: 0, breakAt: 0, hit: -9999, pend: null, job: null, hold: 0, stopAt: 0 };
 }
-function twCabLeave(now, quiet) {      // OPEN: back out onto the floor you came from, at the door you came in by (the enemy, if he was outside or came in, is right there)
-  const T = vs.tw, c = T.cab, d = dummy; if (!c) return; T.cab = null; T.fMe = c.f0; const F = twFloorData(c.f0); twFloorSwitch(now, c.dk.x); T.banner = null; c.dk.force = now + 900; T.doorAt = now; T.sdPrev = !!stickDown;      // (no second entry at once) if (!quiet) snd('twlift', 1);
-  if (d && d.ko < 0 && (c.foe === 'out' || c.foe === 'in' || c.foe === 'left')) { T.away = false; T.fFoe = c.f0; d.twAway = false; d.x = twPlace(F, c.dk.x + (c.foeX >= c.dk.x ? 46 : -46)); if (Math.abs(d.x - wx) < 26) d.x = twPlace(F, wx + 40); d.vx = 0; d.air = null; d.down = 0; d.stunUntil = now + 300; d.ai = 'rest'; d.aiAt = now; d.restFor = 300; T.dHp = d.hp; T.dx = d.x; if (!quiet && c.foe === 'out') say('ENEMY!', d.x, '#ffd34d', 8, now); }
+function twLiftRefuse(now, txt, x) { const T = vs.tw; if (now - T.oorAt > 1200) { T.oorAt = now; say(txt, x, '#ff6a5a', 8, now); snd('twlift', 6); } }
+function twLiftUse(F, door, now) {      // JUMP or CROUCH at the elevator door: the cab is here: you get in; it is somewhere else: you call it down (it comes, its doors open and wait about 6 s); the enemy is riding it or coming for it: IN USE
+  const T = vs.tw, L = T.lift; if (L.me || vs.ph !== 'fight') return;
+  if (door.st === 1) { twLiftRefuse(now, 'OUT OF ORDER', door.x); return; }
+  if (L.inFoe || L.job || L.pend) { twLiftRefuse(now, 'IN USE', door.x); return; }
+  if (L.f === F.f && L.ph === 'park') { twCabEnter(F, door, now); return; }
+  if (L.ph === 'ride' && L.dest === F.f && L.why === 'call') return;      // (it is already coming)
+  twLiftGo(F.f, now, 'call', 0); L.hold = now + L.dur + 6500; say('ELEVATOR COMING', door.x, '#9fd8ff', 8, now); snd('twlift', 9);
 }
-function twCabPick(f, now) {      // a floor button: the ride starts at once (the doors shut first if they are still open)
-  const T = vs.tw, c = T && T.cab, d = dummy; if (!c || (c.ph !== 'in' && c.ph !== 'stop')) return false; f = Math.round(f);
-  if (!(f >= 1 && f <= TW_N) || f === Math.round(c.curF)) return false;
-  if (!twElevOk(f)) { say('OUT OF ORDER', wx, '#ff6a5a', 8, now); snd('twlift', 6); return false; }
-  twFloorData(f); const dist = Math.abs(f - c.curF); c.from = c.curF; c.dest = f; c.dur = Math.max(1000, Math.min(4000, Math.round(dist * 100))); c.at = c.ph === 'in' && c.door > 0.05 ? now + 380 : now; c.ph = 'ride'; c.sStart = false; c.popped = false; c.long = c.dur >= 2800; c.rumAt = 0;
-  if (c.foe === 'out') { c.foe = 'left'; T.fFoe = c.f0; T.away = true; if (d) d.twAway = true; T.awayX = c.foeX; }      // (the cab goes: he is left behind on the floor)
-  T.fMe = f; T.lastFallX = null;
-  if (c.foe === 'in') { T.fFoe = f; T.away = false; } else if (T.away) { twPlanArrival(now); T.arriveAt = Math.max(T.arriveAt, c.at + c.dur + 700); }      // (he follows later, never before the cab stops)
-  snd('twlift', 9); return true;
+function twLiftGo(to, now, why, delay) {      // the cab sets off for floor `to` from wherever it is (why: 'me' your panel, 'pend' it goes without you, 'call' you called it, 'foe' the enemy rides it); delay = the doors shutting first
+  const T = vs.tw, L = T.lift, d = dummy; twFloorData(to); const dist = Math.abs(to - L.curF);
+  L.from = L.curF; L.dest = to; L.dur = Math.max(1000, Math.min(4000, Math.round(dist * 100))); L.at = now + (delay || 0); L.ph = 'ride'; L.sStart = false; L.popped = false; L.long = L.dur >= 2800; L.rumAt = 0; L.why = why; L.pend = null; L.vel = 0; L.closeAt = 0; L.foeInAt = 0;
+  if (!L.broken) { if (L.open && (L.me || L.f === T.fMe)) snd('twlift', 0); L.open = false; }
+  if (L.me) {
+    T.fMe = to; T.lastFallX = null;
+    if (L.out) { L.out = false; T.fFoe = L.f; T.awayX = L.foeX; }      // (the cab goes: he is left behind on the floor)
+    if (L.inFoe) T.fFoe = to; else if (T.away) { twPlanArrival(now); T.arriveAt = Math.max(T.arriveAt, L.at + L.dur + 700); }      // (the enemy who was not in it follows later, never before the cab stops)
+  } else if (L.inFoe) { T.fFoe = to; T.away = true; if (d) d.twAway = true; }      // (he rides alone)
 }
-function twCabStop(now) { const T = vs.tw, c = T && T.cab; if (!c || c.ph !== 'ride' || now < c.at) return; c.ph = 'stop'; c.stopAt = now; c.vel = 0; snd('twlift', 10); shakeUntil = Math.max(shakeUntil, now + 350); shakeAmp = Math.max(shakeAmp, 4); say('EMERGENCY STOP', wx, '#ff6a5a', 8, now); }      // (the cab hangs between floors until you press a floor again)
-function twCabClose(now) { const T = vs.tw, c = T && T.cab; if (c && c.ph === 'in' && !c.closed) c.closeAt = Math.min(c.closeAt, now); }
-function twCabBang(now) { const c = vs.tw.cab; c.bangs++; c.hit = now; snd('twlift', 7); shakeUntil = Math.max(shakeUntil, now + 100); shakeAmp = Math.max(shakeAmp, 1.5); debBurst(TW_CABW / 2, 30, 3, ['#9aa4b8', '#6d7488'], 60); if (c.bangs === 1) say('HE IS AT THE DOORS!', TW_CABW / 2, '#ff8a3a', 8, now); }
-function twCabBreakIn(now) {      // about 8 s of banging: the doors give way and he is in the cab
-  const T = vs.tw, c = T.cab, d = dummy; if (!d || d.ko >= 0) return; c.foe = 'in'; c.broke = true; c.brokeAt = now; T.away = false; T.fFoe = T.fMe; d.twAway = false;
-  d.x = TW_CABW / 2 + (wx < TW_CABW / 2 ? 26 : -26); d.vx = 0; d.air = null; d.down = 0; d.stunUntil = now + 450; d.ai = 'rest'; d.aiAt = now; d.restFor = 450; T.dHp = d.hp; T.dx = d.x;
-  debBurst(TW_CABW / 2, 34, 22, ['#c9d0de', '#9aa4b8', '#6d7488', '#2a2f3d'], 170); spark(TW_CABW / 2, gy - 34, 16, ['#ffffff', '#ffd34d', '#7fd0ff'], true, 0); puff(TW_CABW / 2, 8); shockAt(TW_CABW / 2, 220, 90, 0.7); flash(now, 120, 0.2);
-  shakeUntil = Math.max(shakeUntil, now + 380); shakeAmp = Math.max(shakeAmp, 5); say('HE BREAKS IN!', TW_CABW / 2, '#ff8a3a', 8, now); snd('twlift', 8); hitStop(60);
+function twLiftOpen(now) { const L = vs.tw.lift; if (L.ph !== 'park') return; if (!L.open) { L.open = true; if (L.me || L.f === vs.tw.fMe) snd('twlift', 1); } }
+function twLiftShut(now) {      // the doors shut: an enemy who is outside has to bang them in (8 s), unless they are broken
+  const L = vs.tw.lift; if (L.broken || L.ph !== 'park') return; if (L.open) { L.open = false; if (L.me || L.f === vs.tw.fMe) snd('twlift', 0); } L.foeInAt = 0; if (L.out) { L.bangAt = now + 600; L.breakAt = now + 8000; L.nextBang = 0; }
 }
-function twCabArrive(now) { const T = vs.tw, c = T.cab; c.ph = 'out'; c.curF = c.dest; c.vel = 0; c.outAt = now + 650; snd('twbreak', 6); snd('twlift', 3); shakeUntil = Math.max(shakeUntil, now + 200); shakeAmp = Math.max(shakeAmp, 2); }      // (a ding, the doors open on the new floor)
-function twCabExit(now) {      // you step out at an elevator of the new floor (the nearest room to the one you left); the enemy who rode with you steps out too, and one who has been waiting is there
-  const T = vs.tw, c = T.cab, d = dummy, to = c.dest; T.cab = null; T.fMe = to; const F = twFloorData(to), ds = F.doors.filter(dr => dr.k === 'elev' && dr.st === 0);
-  let best = ds[0] || F.doors.find(dr => dr.k === 'elev') || F.doors[0]; for (const dr of ds) if (Math.abs(dr.room - c.dk.room) < Math.abs(best.room - c.dk.room)) best = dr;
-  twFloorSwitch(now, best.x); T.lastFallX = null; best.force = now + 1000; T.doorAt = now; T.sdPrev = !!stickDown;
-  if (c.foe === 'in' && d && d.ko < 0) { T.away = false; d.twAway = false; T.fFoe = to; d.x = twPlace(F, best.x + 46); if (Math.abs(d.x - wx) < 26) d.x = twPlace(F, wx - 40); d.vx = 0; d.stunUntil = now + 450; d.ai = 'rest'; d.aiAt = now; d.restFor = 450; T.dHp = d.hp; T.dx = d.x; }
-  else if (T.away && d && d.ko < 0 && now >= T.arriveAt) twFoeArrive(now);      // (he was faster than the ride: he is waiting)
+function twLiftOut(now, fx, grace) {      // the enemy is outside the doors of the cab you are in (grace: they are about to shut): later he bangs on them and breaks them in, or walks in through open ones
+  const T = vs.tw, L = T.lift, dk = twElevOf(twFloorData(L.f)), t0 = grace ? L.closeAt || now : now;
+  L.out = true; L.foeX = fx; T.fFoe = L.f; L.bangs = 0; L.nextBang = 0; L.foeInAt = 0; L.bangAt = t0 + 450 + Math.min(2500, Math.abs(fx - dk.x) * 9); L.breakAt = Math.max(t0 + 8000, L.bangAt + 2500);
 }
-function twCabTick(now, dt) {      // every frame in the cab: the doors, the enemy outside (he bangs, then breaks in), the ride
-  const T = vs.tw, c = T.cab, d = dummy; if (vs.ph !== 'fight') { twCabLeave(now, true); return; }
-  if (!d || d.ko >= 0) c.foe = 'none';
-  const open = (c.ph === 'in' && now < c.closeAt) || c.ph === 'out' ? 1 : 0; c.door += Math.max(-dt / 0.45, Math.min(dt / 0.45, open - c.door));
-  if (c.ph === 'in' && !c.closed && now >= c.closeAt) { c.closed = true; snd('twlift', 0); }
-  if (c.foe === 'out' || c.foe === 'away' || c.foe === 'left') { d.x = wx + 1e5; d.vx = 0; d.stunUntil = now + 900; d.ai = 'rest'; d.aiAt = now; d.restFor = 900; d.air = null; d.airH = 0; }      // (outside: held far off, still)
-  if (c.foe === 'away' && c.ph === 'in' && now >= T.arriveAt) { c.foe = 'out'; T.fFoe = c.f0; c.foeX = c.dk.x + 40; c.bangAt = now + 500; c.breakAt = now + 7000; }      // (he arrived while you were choosing: he is at the doors)
-  if (c.foe === 'out' && c.ph === 'in' && c.closed) { if (now >= c.bangAt && now >= c.nextBang) { twCabBang(now); c.nextBang = now + 700; } if (now >= c.breakAt) twCabBreakIn(now); }
-  if (c.ph === 'ride' && now >= c.at) {
-    const u = Math.min(1, (now - c.at) / c.dur), e = u < 0.5 ? 2 * u * u : 1 - Math.pow(2 - 2 * u, 2) / 2, prev = c.curF; c.curF = c.from + (c.dest - c.from) * e; c.vel = Math.abs(c.curF - prev) / Math.max(0.001, dt);
-    if (!c.sStart) { c.sStart = true; snd('twlift', 2); c.rumAt = now + 700; } else if (now >= c.rumAt) { snd('twlift', 4); c.rumAt = now + 850; }
-    if (c.long && !c.popped && u > 0.15) { c.popped = true; snd('twlift', 5); }
-    shakeUntil = Math.max(shakeUntil, now + 80); shakeAmp = Math.max(shakeAmp, c.vel > 6 ? 1.6 : 1);
-    if (u >= 1) twCabArrive(now);
+function twCabEnter(F, door, now) {      // you step into the cab (it is here and free): a straight cut to the inside; the enemy, if he is on the floor, is left outside the doors
+  const T = vs.tw, L = T.lift, d = dummy; if (L.me || vs.ph !== 'fight') return;
+  const foeHere = !!d && d.ko < 0 && !T.away && T.fFoe === T.fMe;
+  L.me = true; T.cab = L; L.pend = null; L.hold = 0; L.open = true; L.closeAt = L.broken ? 0 : now + 1100; L.out = false; L.foeInAt = 0;
+  if (foeHere) { T.away = true; d.twAway = true; T.awayX = d.x; T.lastFallX = null; d.air = null; d.airH = 0; d.down = 0; d.vx = 0; twLiftOut(now, d.x, true); }
+  T.swingAt = 0; T.doorAt = -1; T.cabAt = now; twClearWorld(); wx = TW_CABW / 2; wxv = 0; wvx = 0; T.px = wx; T.banner = null; popups = []; if (foeHere) twFoeHold(now); T.dx = d ? d.x : 0;
+}
+function twCabLeave(now, quiet) {      // you step out at the floor the cab is at (a straight cut, in front of its door); the enemy who was outside or inside is right there, unless the cab is about to go with him in it
+  const T = vs.tw, L = T.lift, d = dummy; if (!L.me) return; L.me = false; T.cab = null; T.fMe = L.f; const F = twFloorData(L.f), dk = twElevOf(F);
+  T.doorAt = now; T.sdPrev = !!stickDown; twFloorSwitch(now, dk.x, 'cut'); T.banner = null; dk.force = now + 900; L.hold = Math.max(L.hold, now + 1500); if (!L.pend) L.closeAt = L.broken ? 0 : now + 1500;      // (the enemy waits a moment before he uses the cab you just left)
+  if (d && d.ko < 0) {
+    if (L.inFoe && L.pend) { T.away = true; d.twAway = true; T.fFoe = L.f; T.awayX = dk.x; }      // (the trick: he stays in the cab and goes with it)
+    else if (L.inFoe || L.out) { const was = L.out; L.inFoe = false; L.out = false; L.foeInAt = 0; T.away = false; T.fFoe = L.f; d.twAway = false; d.x = twPlace(F, dk.x + ((L.foeX || dk.x) >= dk.x ? 46 : -46)); if (Math.abs(d.x - wx) < 26) d.x = twPlace(F, wx + 40); d.vx = 0; d.air = null; d.down = 0; d.stunUntil = now + 300; d.ai = 'rest'; d.aiAt = now; d.restFor = 300; T.dHp = d.hp; T.dx = d.x; if (!quiet && was) say('ENEMY!', d.x, '#ffd34d', 8, now); }
   }
-  if (c.ph === 'out' && now >= c.outAt) twCabExit(now);
+}
+function twCabKeys(now) {      // in the cab: stand on the doors (the middle of the back wall) for a moment and press JUMP: you step out
+  const T = vs.tw, L = T.lift, on = L.ph === 'park' && Math.abs(wx - TW_CABW / 2) < 18 && gojoLift < 5 && !(gAir && gAirH > 5);
+  if (on) { if (T.cabAt < 0) T.cabAt = now; T.prompt = { at: now, up: 'JUMP = GET OUT', dn: '' }; } else T.cabAt = -1;
+  if (on && now - T.cabAt >= 220 && jumpReq) { jumpReq = false; twCabLeave(now); }
+}
+function twCabPick(f, now) {      // a floor button: 0.6 s later the doors shut and the cab goes (with you, or without you if you stepped out in time, with the enemy if he is in it); while it hangs after an emergency stop it goes at once
+  const T = vs.tw, L = T && T.lift; if (!L || !L.me || L.ph === 'ride') return false; f = Math.round(f); const here = L.ph === 'stop' ? Math.round(L.curF) : L.f;
+  if (!(f >= 1 && f <= TW_N) || f === here) return false;
+  if (!twElevOk(f)) { say('OUT OF ORDER', wx, '#ff6a5a', 8, now); snd('twlift', 6); return false; }
+  twFloorData(f); snd('twlift', 9);
+  if (L.ph === 'stop') { twLiftGo(f, now, 'me', 0); return true; }
+  L.pend = { f, at: now + TW_PEND }; L.closeAt = 0; return true;
+}
+function twCabStop(now) { const T = vs.tw, L = T && T.lift; if (!L || !L.me || L.ph !== 'ride' || now < L.at) return; L.ph = 'stop'; L.stopAt = now; L.vel = 0; snd('twlift', 10); shakeUntil = Math.max(shakeUntil, now + 350); shakeAmp = Math.max(shakeAmp, 4); say('EMERGENCY STOP', wx, '#ff6a5a', 8, now); }      // (the cab hangs between floors until you press a floor again)
+function twCabBang(now) { const L = vs.tw.lift; L.bangs++; L.hit = now; snd('twlift', 7); shakeUntil = Math.max(shakeUntil, now + 100); shakeAmp = Math.max(shakeAmp, 1.5); debBurst(TW_CABW / 2, 30, 3, ['#9aa4b8', '#6d7488'], 60); if (L.bangs === 1) say('HE IS AT THE DOORS!', TW_CABW / 2, '#ff8a3a', 8, now); }
+function twCabFoeIn(now, brk) {      // the enemy gets into the cab: he BREAKS THE DOORS IN (they stay broken for good, the whole match) or walks in through open or broken ones
+  const T = vs.tw, L = T.lift, d = dummy; if (!d || d.ko >= 0 || !L.me) return; const mid = TW_CABW / 2;
+  L.inFoe = true; L.out = false; L.foeInAt = 0; T.away = false; T.fFoe = L.f; d.twAway = false; d.x = Math.max(16, Math.min(TW_CABW - 16, wx <= mid ? wx + 30 : wx - 30)); d.vx = 0; d.air = null; d.airH = 0; d.down = 0; d.stunUntil = now + 450; d.ai = 'rest'; d.aiAt = now; d.restFor = 450; T.dHp = d.hp; T.dx = d.x;
+  if (brk) {
+    L.broken = true; L.brokeAt = now; L.open = true; L.closeAt = 0;
+    debBurst(mid, 34, 22, ['#c9d0de', '#9aa4b8', '#6d7488', '#2a2f3d'], 170); spark(mid, gy - 34, 16, ['#ffffff', '#ffd34d', '#7fd0ff'], true, 0); puff(mid, 8); shockAt(mid, 220, 90, 0.7); flash(now, 120, 0.2);
+    shakeUntil = Math.max(shakeUntil, now + 380); shakeAmp = Math.max(shakeAmp, 5); say('DOORS BROKEN FOR GOOD!', mid, '#ff8a3a', 8, now); snd('twlift', 8); hitStop(60);
+  } else { puff(mid, 4); say('HE STEPS IN!', mid, '#ff8a3a', 8, now); snd('twlift', 1); }
+}
+function twLiftArrive(now) {      // the cab stops at a floor: a ding, the doors open and wait (for you: until you press a floor or CLOSE)
+  const T = vs.tw, L = T.lift, d = dummy; L.ph = 'park'; L.f = L.dest; L.curF = L.dest; L.vel = 0; L.at = 0; T.seen[L.f] = 1;
+  if (L.me || L.f === T.fMe) { snd('twbreak', 6); snd('twlift', 3); } if (L.me) { shakeUntil = Math.max(shakeUntil, now + 200); shakeAmp = Math.max(shakeAmp, 2); }
+  L.open = true; L.closeAt = L.me || L.job ? 0 : now + (L.why === 'call' ? 6500 : 1800); if (L.why === 'call') L.hold = now + 6500;
+  let J = L.job;
+  if (J) { if (L.inFoe) { if (L.f === T.fMe) { J.st = 'out'; J.at = now + 500; } else { J.st = 'go'; J.at = now + 600; } } else if (J.st === 'call') { if (L.f === T.fFoe) { J.st = 'board'; J.at = now + 700; } else twLiftGo(T.fFoe, now, 'foe', 0); } }
+  else if (L.inFoe && !L.me && d && d.ko < 0) {      // (he was carried here without a job: the trick; he rides on to you)
+    if (L.f === T.fMe) L.job = { st: 'out', at: now + 500 }; else if (twElevOk(T.fMe) && twElevOk(L.f)) { L.job = { st: 'go', at: now + 800 }; T.viaLift = true; T.arriveAt = 1e12; }
+    else { L.inFoe = false; T.away = true; d.twAway = true; T.fFoe = L.f; T.awayX = twElevOf(twFloorData(L.f)).x + 40; twPlanArrival(now); }
+  }
+}
+function twLiftJobEnd(now) {      // the cab cannot do it (a door on the way broke): he gets out where it is and takes the stairs
+  const T = vs.tw, L = T.lift, d = dummy; L.job = null; T.viaLift = false; if (L.inFoe) { L.inFoe = false; T.away = true; if (d) d.twAway = true; T.fFoe = L.f; T.awayX = twElevOf(twFloorData(L.f)).x + 40; } twPlanArrival(now);
+}
+function twLiftJob(now) {      // the enemy is away: if the cab is free and both doors work, he calls it to his floor, gets in, rides to yours and steps out of its door; otherwise he takes the stairs
+  const T = vs.tw, L = T.lift; let J = L.job;
+  if (!J) {
+    if (L.me || L.inFoe || L.pend || L.ph !== 'park' || now < L.hold || now < T.jobAt || T.via === 'hole' || T.fFoe === T.fMe || T.arriveAt - now < 1800 || vs.ph !== 'fight' || !twElevOk(T.fFoe) || !twElevOk(T.fMe)) return;
+    J = L.job = { st: 'call', at: now }; T.viaLift = true; T.arriveAt = 1e12;
+    if (L.f === T.fFoe) { J.st = 'board'; J.at = now + 700; L.open = true; } else twLiftGo(T.fFoe, now, 'foe', 300);
+    return;
+  }
+  if (L.ph === 'park' && (!twElevOk(T.fMe) || (!L.inFoe && !twElevOk(T.fFoe)))) { twLiftJobEnd(now); return; }
+  if (J.st === 'board' && now >= J.at) { L.inFoe = true; if (!L.broken) L.open = false; J.st = 'go'; J.at = now + 450; }
+  else if (J.st === 'go' && now >= J.at && L.ph === 'park') { if (L.f === T.fMe) { J.st = 'out'; J.at = now; } else { twLiftGo(T.fMe, now, 'foe', 350); J.st = 'ride'; } }
+  else if (J.st === 'out' && now >= J.at) { L.job = null; L.inFoe = false; T.viaLift = false; T.via = 'lift'; L.closeAt = now + 2500; twFoeArrive(now); }
+}
+function twLiftTick(now, dt) {      // every frame, wherever you are: the doors, the trip, the enemy outside the doors (he bangs, breaks in or walks in), the enemy using the cab
+  const T = vs.tw, L = T.lift, d = dummy; if (!L) return;
+  if (!d || d.ko >= 0) { if (L.inFoe || L.out || L.job) { L.inFoe = false; L.out = false; L.job = null; L.foeInAt = 0; T.viaLift = false; } }
+  if (vs.ph !== 'fight') { if (L.me) twCabLeave(now, true); return; }
+  L.door += Math.max(-dt / 0.45, Math.min(dt / 0.45, (L.broken || (L.ph === 'park' && L.open) ? 1 : 0) - L.door)); if (L.broken) L.open = true;
+  if (L.ph === 'park') {
+    if (L.pend && now >= L.pend.at) { const f = L.pend.f; L.pend = null; if (twElevOk(f)) twLiftGo(f, now, L.me ? 'me' : 'pend', L.broken ? 0 : 380); else if (L.me) { say('OUT OF ORDER', wx, '#ff6a5a', 8, now); snd('twlift', 6); } }
+    else if (L.open && L.closeAt && now >= L.closeAt) { L.closeAt = 0; twLiftShut(now); }
+    if (L.me && L.ph === 'park') {
+      if (T.away && !L.out && !L.inFoe && !T.viaLift && (T.fFoe === L.f || now >= T.arriveAt)) twLiftOut(now, T.fFoe === L.f ? T.awayX : twElevOf(twFloorData(L.f)).x + 40, false);      // (he arrived: outside the doors)
+      if (L.out) {
+        const open = L.broken || (L.open && !L.closeAt);      // (doors that stand open for good, or are broken: he just walks in)
+        if (open) { if (!L.foeInAt) L.foeInAt = now + (L.broken ? 700 : 1200); } else L.foeInAt = 0;
+        if (L.foeInAt && now >= L.foeInAt) twCabFoeIn(now, false);
+        else if (!open && L.door < 0.05) { if (now >= L.bangAt && now >= L.nextBang) { twCabBang(now); L.nextBang = now + 700; } if (now >= L.breakAt) twCabFoeIn(now, true); }
+      }
+    }
+  } else if (L.ph === 'ride' && now >= L.at) {
+    const u = Math.min(1, (now - L.at) / L.dur), e = u < 0.5 ? 2 * u * u : 1 - Math.pow(2 - 2 * u, 2) / 2, prev = L.curF; L.curF = L.from + (L.dest - L.from) * e; L.vel = Math.abs(L.curF - prev) / Math.max(0.001, dt);
+    if (L.me) { if (!L.sStart) { L.sStart = true; snd('twlift', 2); L.rumAt = now + 700; } else if (now >= L.rumAt) { snd('twlift', 4); L.rumAt = now + 850; } if (L.long && !L.popped && u > 0.15) { L.popped = true; snd('twlift', 5); } shakeUntil = Math.max(shakeUntil, now + 80); shakeAmp = Math.max(shakeAmp, L.vel > 6 ? 1.6 : 1); }
+    if (u >= 1) twLiftArrive(now);
+  }
+}
+function twLiftPrompt(F, d) {      // what an elevator door tells you when you stand at it (twDoorEmit)
+  const L = vs.tw.lift; if (d.st === 1) return { up: 'OUT OF ORDER', dn: '' }; if (L.inFoe || L.job || L.pend) return { up: 'IN USE', dn: '' };
+  return L.f === F.f && L.ph === 'park' ? { up: 'JUMP = GET IN', dn: 'CROUCH = GET IN' } : { up: 'JUMP = CALL IT', dn: 'CROUCH = CALL IT' };
 }
 
-// ---- the panel (DOM, over the picture; made the first time a cab opens)
+// ---- the panel (DOM, over the picture; made the first time you step into the cab)
 const TW_ABBR = { 'OFFICE': 'OFFICE', 'OPEN PLAN': 'OPEN', 'CONFERENCE': 'CONF', 'LOUNGE': 'LOUNGE', 'PANTRY': 'PANTRY', 'SERVER ROOM': 'SERVER', 'STORAGE': 'STORE', 'LOBBY': 'LOBBY', 'PENTHOUSE': 'PENT' };
 const TW_CSS = '#twp{position:fixed;z-index:3;display:none;flex-direction:column;gap:.9vh;box-sizing:border-box;padding:1vh;left:calc(env(safe-area-inset-left) + 3vh + 40vh*var(--pbs,1) + 1.5vh);top:calc(env(safe-area-inset-top) + 12vh);bottom:calc(env(safe-area-inset-bottom) + 3vh);width:max(150px,min(52vh,calc(50vw - 48.5vh),260px));border:2px solid #20242e;border-radius:5px;background:linear-gradient(90deg,#8d94a1,#b6bcc8 16%,#9aa1ae 50%,#b2b8c4 84%,#838a97);box-shadow:inset 0 0 0 2px #dfe4ec,inset 0 0 14px #0007,0 0 0 3px #0008;touch-action:pan-y}#twp.on{display:flex}#twp.r{left:auto;right:calc(env(safe-area-inset-right) + 3vh + 40vh*var(--pbs,1) + 1.5vh)}'
   + '#twp button{font:inherit;color:#1c2029;cursor:pointer;margin:0;padding:0;border:2px solid #444a59;background:radial-gradient(circle at 35% 28%,#f4f6fa,#bcc2ce 58%,#8c93a2);position:relative;touch-action:manipulation;-webkit-tap-highlight-color:transparent}#twp button:active{filter:brightness(.82)}#twp button:disabled{cursor:default}'
@@ -9897,35 +9992,36 @@ function twPanelBuild() {
   if (twpEl) return twpEl; const st = document.createElement('style'); st.id = 'twpCss'; st.textContent = TW_CSS; document.head.appendChild(st);
   const p = twpEl = document.createElement('div'); p.id = 'twp'; p.setAttribute('role', 'dialog'); p.setAttribute('aria-label', 'Elevator panel');
   let g = ''; for (let f = TW_N; f >= 1; f--) g += '<button class="twf" data-f="' + f + '" aria-label="Floor ' + f + '"><b>' + f + '</b><i></i><u></u><s>!</s></button>';
-  p.innerHTML = '<div id="twpq"><button data-q="top" aria-label="Top floor"><span>TOP</span><b>50</b></button><button data-q="lobby" aria-label="Lobby"><span>LOBBY</span><b>1</b></button><button data-q="foe" aria-label="The enemy\'s floor"><span>ENEMY</span><b>-</b></button><button data-q="last" aria-label="The floor you came from"><span>LAST</span><b>-</b></button></div><div id="twpg">' + g + '</div><div id="twpf"><button data-a="open" aria-label="Open the doors and step out">OPEN</button><button data-a="close" aria-label="Close the doors">CLOSE</button><button data-a="stop" class="stop" aria-label="Emergency stop">STOP</button></div>';
+  p.innerHTML = '<div id="twpq"><button data-q="top" aria-label="Top floor"><span>TOP</span><b>50</b></button><button data-q="lobby" aria-label="Lobby"><span>LOBBY</span><b>1</b></button><button data-q="foe" aria-label="The enemy\'s floor"><span>ENEMY</span><b>-</b></button><button data-q="last" aria-label="The floor you came from"><span>LAST</span><b>-</b></button></div><div id="twpg">' + g + '</div><div id="twpf"><button data-a="open" aria-label="Open the doors">OPEN</button><button data-a="close" aria-label="Close the doors">CLOSE</button><button data-a="stop" class="stop" aria-label="Emergency stop">STOP</button></div>';
   p.addEventListener('pointerdown', e => e.stopPropagation());
   p.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b || b.disabled || !twOn()) return; e.stopPropagation(); const T = vs.tw, c = T.cab, now = pnow(); if (!c) return;
     if (b.dataset.f) twCabPick(+b.dataset.f, now); else if (b.dataset.q === 'top') twCabPick(TW_N, now); else if (b.dataset.q === 'lobby') twCabPick(1, now); else if (b.dataset.q === 'foe') twCabPick(T.fFoe, now); else if (b.dataset.q === 'last') twCabPick(T.prevF, now);
-    else if (b.dataset.a === 'open') { if (c.ph === 'in') twCabLeave(now); } else if (b.dataset.a === 'close') twCabClose(now); else if (b.dataset.a === 'stop') twCabStop(now);
+    else if (b.dataset.a === 'open') { if (c.ph === 'park') { c.closeAt = 0; twLiftOpen(now); } } else if (b.dataset.a === 'close') { if (c.ph === 'park') { c.closeAt = 0; twLiftShut(now); } } else if (b.dataset.a === 'stop') twCabStop(now);
     twpAt = -1e9;
   });
   document.body.appendChild(p); return p;
 }
-function twPanelSync(now) {      // shows / hides the panel and keeps its buttons true (the floor you are on, the one you ride to, floors you have seen, the enemy's floor, damage, dead buttons)
+function twPanelSync(now) {      // shows / hides the panel and keeps its buttons true (the floor you are on, the one you ride to or have pressed, floors you have seen, the enemy's floor, damage, dead buttons)
   const T = typeof vs !== 'undefined' && vs && vs.tw, c = T && T.cab, show = !!c && twOn() && state === 'play' && !paused && !ryUlNoHud();
   if (!show) { if (twpEl && twpShown) { twpEl.classList.remove('on'); twpShown = false; } return; }
   const p = twPanelBuild(); if (!twpShown) { twpShown = true; for (let f = 1; f <= TW_N; f++) twFloorData(f); p.classList.add('on'); p.classList.toggle('r', !!$('pad') && $('pad').classList.contains('lh')); twpSig = ''; const g = p.querySelector('#twpg'), cur = Math.round(c.curF); g.scrollTop = Math.max(0, ((TW_N - cur) / 5 - 2) * (g.scrollHeight / 10)); }
-  if (now - twpAt < 120) return; twpAt = now; const cur = Math.round(c.curF), moving = c.ph === 'ride', foeUp = T.away && c.foe !== 'out' && c.foe !== 'in' && T.fFoe !== cur;
-  const sig = [c.ph, cur, c.dest, T.fFoe, T.away ? 1 : 0, c.foe, T.prevF, Object.keys(T.seen).length, TW_N].join(',') + '|' + Object.keys(T.fl).map(f => { const F = T.fl[f]; return (F.holes.length ? 1 : 0) + (F.lights.some(l => !l.ok) ? 2 : 0) + (F.walls.some(w => w.broken) ? 4 : 0) + (F.outer.some(o => o.broken) ? 8 : 0) + F.doors.reduce((n, dr) => n + dr.st * 16, 0); }).join('.');
+  if (now - twpAt < 120) return; twpAt = now; const cur = Math.round(c.curF), moving = c.ph === 'ride', pf = c.pend ? c.pend.f : 0, foeUp = T.away && !c.out && !c.inFoe && T.fFoe !== cur;
+  const sig = [c.ph, cur, c.dest, pf, c.open ? 1 : 0, c.broken ? 1 : 0, T.fFoe, T.away ? 1 : 0, c.out ? 1 : 0, c.inFoe ? 1 : 0, T.prevF, Object.keys(T.seen).length, TW_N].join(',') + '|' + Object.keys(T.fl).map(f => { const F = T.fl[f]; return (F.holes.length ? 1 : 0) + (F.lights.some(l => !l.ok) ? 2 : 0) + (F.walls.some(w => w.broken) ? 4 : 0) + (F.outer.some(o => o.broken) ? 8 : 0) + F.doors.reduce((n, dr) => n + dr.st * 16, 0); }).join('.');
   if (sig === twpSig) return; twpSig = sig;
   for (const b of p.querySelectorAll('.twf')) {
     const f = +b.dataset.f, F = T.fl[f]; b.querySelector('i').textContent = TW_ABBR[F.th] || F.th; const oor = !twElevOk(f), dmg = F.holes.length > 0 || F.lights.some(l => !l.ok) || F.walls.some(w => w.broken) || F.outer.some(o => o.broken) || F.doors.some(dr => dr.st > 0);
-    b.className = 'twf' + (T.seen[f] ? ' vis' : '') + (f === cur ? ' cur' : '') + (moving && f === c.dest ? ' dest' : '') + (oor ? ' oor' : '') + (T.away && f === T.fFoe && c.foe !== 'in' ? ' foe' : '') + (dmg ? ' dmg' : ''); b.disabled = moving || f === cur || oor;
+    b.className = 'twf' + (T.seen[f] ? ' vis' : '') + (f === cur ? ' cur' : '') + ((moving && f === c.dest) || (pf && f === pf) ? ' dest' : '') + (oor ? ' oor' : '') + (T.away && f === T.fFoe && !c.inFoe && !c.out ? ' foe' : '') + (dmg ? ' dmg' : ''); b.disabled = moving || f === cur || oor;
   }
   const q = n => p.querySelector('[data-q="' + n + '"]'), setQ = (n, f, ok) => { const b = q(n); b.querySelector('b').textContent = f > 0 ? f : '-'; b.disabled = moving || !(f > 0) || f === cur || !twElevOk(f) || !ok; };
   setQ('top', TW_N, true); setQ('lobby', 1, true); setQ('foe', foeUp ? T.fFoe : 0, foeUp); setQ('last', T.prevF > 0 && T.prevF !== cur ? T.prevF : 0, true);
-  p.querySelector('[data-a="open"]').disabled = c.ph !== 'in'; p.querySelector('[data-a="close"]').disabled = c.ph !== 'in' || c.closed; p.querySelector('[data-a="stop"]').disabled = !(c.ph === 'ride' && now >= c.at);
+  p.querySelector('[data-a="open"]').disabled = c.ph !== 'park' || c.open || c.broken; p.querySelector('[data-a="close"]').disabled = c.ph !== 'park' || !c.open || c.broken; p.querySelector('[data-a="stop"]').disabled = !(c.ph === 'ride' && now >= c.at);
 }
 
-window.__tw = () => twOn() ? (() => { const T = vs.tw, F = twFloorData(T.fMe); return { fMe: T.fMe, fFoe: T.fFoe, away: T.away, W: F.W, nr: F.nr, th: F.th, walls: F.walls.map(w => [w.x, Math.round(w.hp), w.broken]), holes: F.holes.map(h => [h.x, h.r]), objs: F.objs.length, wrecks: F.wrecks.length, wx: Math.round(wx), dx: dummy ? Math.round(dummy.x - wx) : null, via: T.via, arrive: Math.round(T.arriveAt - pnow()), doors: F.doors.map(d => [d.x, d.k]), pick: F.pick.length, fade: !!T.fade }; })() : null;      // test hook
+window.__tw = () => twOn() ? (() => { const T = vs.tw, F = twFloorData(T.fMe); return { fMe: T.fMe, fFoe: T.fFoe, away: T.away, W: F.W, nr: F.nr, th: F.th, walls: F.walls.map(w => [w.x, Math.round(w.hp), w.broken]), holes: F.holes.map(h => [h.x, h.r]), objs: F.objs.length, wrecks: F.wrecks.length, wx: Math.round(wx), dx: dummy ? Math.round(dummy.x - wx) : null, via: T.via, arrive: Math.round(T.arriveAt - pnow()), doors: F.doors.map(d => [d.x, d.k]), pick: F.pick.length, slide: !!T.slide, ff: !!T.ff }; })() : null;      // test hook
 window.__twF = f => twOn() ? twFloorData(f) : null;
-window.__twCab = () => twOn() && vs.tw.cab ? (() => { const c = vs.tw.cab; return { ph: c.ph, f0: c.f0, dest: c.dest, cur: +c.curF.toFixed(2), foe: c.foe, door: +c.door.toFixed(2), dur: c.dur, bangs: c.bangs, broke: c.broke, closed: c.closed }; })() : null;      // test hook
+window.__twCab = () => twOn() && vs.tw.cab ? (() => { const T = vs.tw, c = T.cab; return { ph: c.ph, f0: c.f, dest: c.dest, cur: +c.curF.toFixed(2), foe: c.inFoe ? 'in' : c.out ? 'out' : T.away ? 'away' : 'none', door: +c.door.toFixed(2), dur: c.dur, bangs: c.bangs, broke: c.broken, closed: c.door < 0.05, open: c.open, pend: c.pend ? c.pend.f : 0 }; })() : null;      // test hook
+window.__twLift = () => twOn() ? (() => { const L = vs.tw.lift; return { f: L.f, cur: +L.curF.toFixed(2), ph: L.ph, dest: L.dest, me: L.me, inFoe: L.inFoe, out: L.out, broken: L.broken, open: L.open, door: +L.door.toFixed(2), pend: L.pend ? L.pend.f : 0, job: L.job ? L.job.st : '', why: L.why || '' }; })() : null;      // test hook
 
 // ---------------------------------------------------------------- v1.174 THE SKYSCRAPER, THE LOOK (this file is spliced into template.html by build_html.py, right after tower.js; tower.js is the map's rules, this is what you see)
 // Everything is pixel art made from the same few tools: SPRITES and PICTURES are drawn once and kept (a whole floor's shell, every piece of furniture, the light masks, the sky tiles), so a frame only copies them: the walls, the ceiling, the carpet and the slab you cut through are one
@@ -10198,14 +10294,15 @@ function twFront(now, dt) {      // over the fighters: a vignette, dust floating
   if (twVigK !== W + 'x' + H) { twVigK = W + 'x' + H; twVig = twCv(W, H); const g = twVig.getContext('2d'), im = g.createImageData(W, H), d = im.data; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const u = Math.hypot((x - W / 2) / (W * 0.62), (y - H / 2) / (H * 0.62)), t = Math.max(0, (u - 0.62) / 0.5) * 0.46, v = t * 4, bb = Math.floor(v), lv = bb + (v - bb > (TW_BAY[y & 3][x & 3] + 0.5) / 16 ? 1 : 0); if (lv > 0) { const i = (y * W + x) * 4; d[i] = 4; d[i + 1] = 5; d[i + 2] = 14; d[i + 3] = Math.round(255 * lv / 4 * 0.5); } } g.putImageData(im, 0, 0); }
   ctx.drawImage(twVig, -8, -8);
   if (T.haze) { const k = T.haze.k * Math.max(0, 1 - (now - T.haze.at) / 3600); if (k > 0.02) { ctx.globalAlpha = k * 0.3; ctx.fillStyle = '#b8b0a0'; ctx.fillRect(-8, -8, W, H); ctx.globalAlpha = 1; } else T.haze = null; }
-  if (Q >= 2 && !T.cab) { const F = twFloorData(T.fMe), x0 = Math.round(VW / 2) - Math.round(wx), yc = gy - TW_CEIL, n = Q >= 3 ? 6 : 3; ctx.fillStyle = '#fff4d0';
+  if (Q >= 2 && !T.cab && !T.slide) { const F = twFloorData(T.fMe), x0 = Math.round(VW / 2) - Math.round(wx), yc = gy - TW_CEIL, n = Q >= 3 ? 6 : 3; ctx.fillStyle = '#fff4d0';
     for (const l of F.lights) { const sx = x0 + l.x; if (!l.ok || sx < -40 || sx > VW + 40) continue; for (let i = 0; i < n; i++) { const t = now * 0.00045 * (1 + (i % 3) * 0.5) + l.x * 0.37 + i * 2.1, y = (now * 0.006 * (1 + (i % 3) * 0.4) + i * 29 + l.x) % 84, px = sx + Math.sin(t) * (7 + y * 0.42) + Math.sin(t * 1.9 + i) * 2; ctx.globalAlpha = 0.25 + 0.4 * (0.5 + 0.5 * Math.sin(t * 2.3)); ctx.fillRect(Math.round(px), Math.round(yc + 4 + y), 1, 1); } } ctx.globalAlpha = 1; }
 }
 
 // ---------------------------------------------------------------- what is drawn every frame on a floor: the doors, the inner walls (whole, cracked, broken), the glass at the ends
 const twR = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
 function twDoor(F, d, sx, now) {      // the stairs (a fire door with a window and a push bar that swings open on the steps) and the elevator (steel doors that slide apart on a lit cab, a call panel)
-  const T = vs.tw, x = Math.round(sx), yf = gy - 7, top = yf - 58, near = (T.fMe === F.f && Math.abs(wx - d.x) < 26) || (d.force || 0) > now, dt = Math.min(80, Math.max(0, now - (d.ot || now))); d.ot = now; d.open = (d.open || 0) + ((near ? 1 : 0) - (d.open || 0)) * (1 - Math.exp(-dt / 110)); const o = d.open, r = twR;
+  // (v1.176 the elevator door is open while the cab stands behind it with its doors open, or swings open for the enemy who steps out; the stairs open when you are near)
+  const T = vs.tw, L = T.lift, x = Math.round(sx), yf = gy - 7, top = yf - 58, here = d.k === 'elev' && L.f === F.f && L.ph === 'park' && L.door > 0.15, near = d.k === 'elev' ? here || (d.force || 0) > now : (T.fMe === F.f && Math.abs(wx - d.x) < 26) || (d.force || 0) > now, dt = Math.min(80, Math.max(0, now - (d.ot || now))); d.ot = now; d.open = (d.open || 0) + ((near ? 1 : 0) - (d.open || 0)) * (1 - Math.exp(-dt / 110)); const o = d.open, r = twR;
   r(x - 18, yf, 36, 2, 'rgba(0,0,0,.32)');
   if (d.k === 'stairs') {
     r(x - 15, top - 4, 30, 62, '#171a26'); r(x - 15, top - 4, 30, 1, '#5a6280'); r(x - 15, top - 4, 1, 62, '#3a4058'); r(x + 14, top - 4, 1, 62, '#0b0c12'); r(x - 12, top, 24, 58, '#0b0e17');
@@ -10228,16 +10325,17 @@ function twDoor(F, d, sx, now) {      // the stairs (a fire door with a window a
     for (const sd of [-1, 1]) { const dy = jam && sd < 0 ? 3 : 0, tp = top + dy, hh = 58 - dy, xa = (sd < 0 ? x - 14 : x + gap + 1) + shk, wa = 13 - gap; if (wa <= 0) continue; r(xa, tp, wa, hh, '#a5aec2'); for (let c = 0; c < wa; c += 2) r(xa + c, tp, 1, hh, '#b6bece'); r(sd < 0 ? xa : xa + wa - 1, tp, 1, hh, sd < 0 ? '#d7deea' : '#6d7488'); r(sd < 0 ? xa + wa - 1 : xa, tp, 1, hh, '#5a6174'); r(xa, tp + 30, wa, 1, '#8a93a8'); r(xa, yf - 10, wa, 10, '#8a93a8'); r(xa, yf - 10, wa, 1, '#6d7488'); }
     for (let i = 0, n = Math.floor(dm * 10); i < n; i++) { const hx = x - 12 + ((twHash(i, d.x) * 22) | 0), hy = top + 8 + ((twHash(d.x, i + 7) * 42) | 0); r(hx, hy, 3, 4, 'rgba(24,26,36,.5)'); r(hx, hy, 3, 1, 'rgba(255,255,255,.4)'); r(hx + 1, hy + 2, 1, 2, 'rgba(0,0,0,.35)'); }
     if (jam) for (let i = 0; i < 13; i++) { r(x - 13 + i * 2, top + 10 + i * 3, 4, 3, i % 2 ? '#e8281c' : '#f4f4f4'); r(x + 10 - i * 2, top + 10 + i * 3, 4, 3, i % 2 ? '#f4f4f4' : '#e8281c'); }
-    r(x + 19, yf - 34, 6, 14, '#2a2f3d'); r(x + 19, yf - 34, 6, 1, '#6d7488'); r(x + 20, yf - 31, 3, 2, near && (now / 260 | 0) % 2 ? '#ffd27a' : '#7a6a3c'); r(x + 20, yf - 26, 3, 2, near && (now / 260 | 0) % 2 ? '#7ad0ff' : '#3c5a7a');
+    r(x + 19, yf - 34, 6, 14, '#2a2f3d'); r(x + 19, yf - 34, 6, 1, '#6d7488'); r(x + 20, yf - 31, 3, 2, (here || (L.ph === 'ride' && L.dest === F.f)) && (now / 260 | 0) % 2 ? '#ffd27a' : '#7a6a3c'); r(x + 20, yf - 26, 3, 2, L.inFoe || L.job ? ((now / 200 | 0) % 2 ? '#ff4a3a' : '#7a1f18') : '#3c5a7a');      // (the call lamp blinks while the cab is coming or here; the other is red while the enemy has the cab)
   }
 }
 function twDoorEmit(F, d, sx, now) {      // the lit signs of a door (over the darkness): EXIT over the stairs, the floor display over the elevator; and its name and how to use it when you stand at it
   const T = vs.tw, x = Math.round(sx), yf = gy - 7, top = yf - 58, near = T.fMe === F.f && Math.abs(wx - d.x) < 24; if (d.k === 'elev' && d.st === 2) return;
   if (d.k === 'stairs') { twR(x - 11, top - 12, 22, 8, '#06150d'); twR(x - 10, top - 11, 20, 6, '#0f4a2c'); twR(x - 10, top - 11, 20, 1, '#2ca865'); twText(ctx, 'EXIT', x - 7, top - 10, 1, '#c9ffe0'); twR(x + 7, top - 9, 2, 2, '#c9ffe0'); }
   else if (d.st === 1) { twR(x - 10, top - 15, 20, 10, '#06070c'); twR(x - 10, top - 15, 20, 1, '#3a4052'); twText(ctx, 'XX', x - 4, top - 12, 1, (now / 400 | 0) % 2 ? '#ff3a2a' : '#5a1510'); }
-  else { twR(x - 10, top - 15, 20, 10, '#06070c'); twR(x - 10, top - 15, 20, 1, '#3a4052'); const s = String(F.f), wd = twTextW(s, 1); twText(ctx, s, x - 3 - (wd >> 1), top - 12, 1, '#ff9a3a'); const up = (now / 500 | 0) % 2; ctx.fillStyle = '#ff9a3a'; if (near || up) { ctx.fillRect(x + 6, top - 12, 1, 1); ctx.fillRect(x + 5, top - 11, 3, 1); ctx.fillRect(x + 4, top - 10, 5, 1); } }
+  else { const L = T.lift, s = String(Math.max(1, Math.min(TW_N, Math.round(L.curF)))), wd = twTextW(s, 1), col = L.inFoe || L.job ? '#ff5a3a' : '#ff9a3a', mv = L.ph === 'ride' && now >= L.at; twR(x - 10, top - 15, 20, 10, '#06070c'); twR(x - 10, top - 15, 20, 1, '#3a4052'); twText(ctx, s, x - 3 - (wd >> 1), top - 12, 1, col); ctx.fillStyle = col;      // (the number is where the CAB is, red while the enemy rides it; an arrow blinks while it moves)
+    if (mv && (now / 250 | 0) % 2) { if (L.dest > L.from) { ctx.fillRect(x + 6, top - 12, 1, 1); ctx.fillRect(x + 5, top - 11, 3, 1); ctx.fillRect(x + 4, top - 10, 5, 1); } else { ctx.fillRect(x + 4, top - 12, 5, 1); ctx.fillRect(x + 5, top - 11, 3, 1); ctx.fillRect(x + 6, top - 10, 1, 1); } } }
   if (twLightFrac(F) < 0.5) { const on = Math.sin(now / 240 + d.x) > -0.2; twR(x + 14, top - 10, 3, 3, '#1a0a0a'); if (on) { twR(x + 14, top - 10, 3, 3, '#ff4a3a'); twR(x + 15, top - 10, 1, 1, '#ffd0c0'); } }
-  if (near) { pxt(d.k === 'stairs' ? 'STAIRS' : 'ELEVATOR', x, top - (d.k === 'stairs' ? 15 : 17), '#ffffff', 8, 'center'); T.prompt = d.k === 'elev' ? { at: now, up: d.st === 1 ? 'OUT OF ORDER' : 'JUMP = ELEVATOR', dn: d.st === 1 ? '' : 'CROUCH = ELEVATOR' } : { at: now, up: F.f < TW_N ? 'JUMP = UP 1' : '', dn: F.f > 1 ? 'CROUCH = DOWN 1' : '' }; }      // (how to use it is written by twOverlay, under the floor)
+  if (near) { pxt(d.k === 'stairs' ? 'STAIRS' : 'ELEVATOR', x, top - (d.k === 'stairs' ? 15 : 17), '#ffffff', 8, 'center'); T.prompt = d.k === 'elev' ? Object.assign({ at: now }, twLiftPrompt(F, d)) : { at: now, up: F.f < TW_N ? 'JUMP = UP 1' : '', dn: F.f > 1 ? 'CROUCH = DOWN 1' : '' }; }      // (how to use it is written by twOverlay, under the floor)
 }
 const twPartSprs = new Map();
 function twPartSpr(F) {      // an inner wall, whole: a slab from the ceiling to the floor, shaded by its side, with seams, a skirting board and the shadow where it meets the ceiling
@@ -10368,28 +10466,28 @@ function twLightsShock(F, x, rad, p, now) {      // a blast or a heavy blow shak
   const T = vs.tw; for (const l of F.lights) { if (!l.ok) continue; const dd = Math.abs(l.x - x); if (dd > rad) continue; l.hp -= p * (1 - dd / rad); if (l.hp > 0) continue; l.ok = false;
     if (T.fMe === F.f) { spark(l.x, gy - 82, 9, ['#ffffff', '#ffd34d', '#7fd0ff'], false, 0); debBurst(l.x, 80, 8, ['#fffbe8', '#d9d9e2', '#9aa2b8'], 80); snd('twbreak', 1); } }
 }
-// ---------------------------------------------------------------- v1.175 inside the ELEVATOR CAB: a steel room with a mirror, a window onto the city (the sky of the floor you are passing), doors, a floor display, and the shaft outside its walls with the floors running past
+// ---------------------------------------------------------------- v1.175 inside the ELEVATOR CAB (v1.176: a tight 100 px): a steel box with a mirror, a small window onto the city (the sky of the floor you are passing), the doors in the middle of the back wall, a floor display, and the shaft outside its walls with the floors running past
 let twCabC = null, twCabQ = -1;
-function twCabShell(Q) {      // the cab, one picture like a floor's shell (same rows): ceiling with its light, the back wall (brushed steel, a mirror, a handrail, a window as a hole, the frame of the doors, the housing of the display, a plate), the plate of the floor, the base
+function twCabShell(Q) {      // the cab, one picture like a floor's shell (same rows): ceiling with its light, the back wall (brushed steel: a mirror on the left, a small window on the right, the frame of the doors in the middle with the display above), the diamond plate of the floor, the base
   if (twCabC && twCabQ === Q) return twCabC; const W = TW_CABW, c = twCv(W, SH_H), g = c.getContext('2d'), R = twRng(0x51ab); g.imageSmoothingEnabled = false; const rr = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
   const endc = ['#2c313f', '#454c60', '#6d7690', '#8e98b4', '#6d7690', '#454c60', '#2c313f', '#1b1e28']; for (let i = 0; i < 8; i++) { rr(i, 0, 1, SH_H, endc[i]); rr(W - 1 - i, 0, 1, SH_H, endc[i]); }
-  rr(8, 0, W - 16, 10, '#a9b0bf'); for (const y of [0, 3, 6, 9]) rr(8, y, W - 16, 1, 'rgba(0,0,0,.28)'); rr(8, 9, W - 16, 1, 'rgba(255,255,255,.3)'); for (let x = 24; x < W - 16; x += 44) rr(x, 1, 1, 8, 'rgba(0,0,0,.25)');
-  rr(66, 1, 88, 8, '#3a4052'); rr(67, 2, 86, 6, '#fff8e0'); rr(67, 2, 86, 1, '#ffffff'); rr(67, 7, 86, 1, '#e8dcb0'); for (let x = 78; x < 150; x += 12) rr(x, 2, 1, 6, '#d8cca0');
+  rr(8, 0, W - 16, 10, '#a9b0bf'); for (const y of [0, 3, 6, 9]) rr(8, y, W - 16, 1, 'rgba(0,0,0,.28)'); rr(8, 9, W - 16, 1, 'rgba(255,255,255,.3)'); for (let x = 24; x < W - 16; x += 22) rr(x, 1, 1, 8, 'rgba(0,0,0,.25)');
+  rr(26, 1, 48, 8, '#3a4052'); rr(27, 2, 46, 6, '#fff8e0'); rr(27, 2, 46, 1, '#ffffff'); rr(27, 7, 46, 1, '#e8dcb0'); for (let x = 36; x < 70; x += 10) rr(x, 2, 1, 6, '#d8cca0');
   for (let x = 8; x < W - 8; x++) rr(x, SH_Y, 1, 81, x % 3 === 0 ? '#98a0b2' : x % 3 === 1 ? '#a5adbe' : '#b0b8c8');
-  if (Q >= 2) for (let i = 0; i < 380; i++) rr(8 + ((R() * (W - 16)) | 0), SH_Y + ((R() * 81) | 0), 1, 1, R() < 0.5 ? 'rgba(0,0,0,.07)' : 'rgba(255,255,255,.1)');
-  for (const x of [62, 148, 196]) { rr(x, SH_Y, 1, 81, 'rgba(0,0,0,.35)'); rr(x + 1, SH_Y, 1, 81, 'rgba(255,255,255,.25)'); for (const y of [SH_Y + 6, SH_Y + 70]) { rr(x - 2, y, 2, 2, '#6d7488'); rr(x + 3, y, 2, 2, '#6d7488'); } }
+  if (Q >= 2) for (let i = 0; i < 230; i++) rr(8 + ((R() * (W - 16)) | 0), SH_Y + ((R() * 81) | 0), 1, 1, R() < 0.5 ? 'rgba(0,0,0,.07)' : 'rgba(255,255,255,.1)');
+  for (const x of [24, 75]) { rr(x, SH_Y, 1, 81, 'rgba(0,0,0,.35)'); rr(x + 1, SH_Y, 1, 81, 'rgba(255,255,255,.25)'); for (const y of [SH_Y + 6, SH_Y + 70]) { rr(x - 2, y, 2, 2, '#6d7488'); rr(x + 3, y, 2, 2, '#6d7488'); } }
   rr(8, 62, W - 16, 29, '#7d869a'); rr(8, 62, W - 16, 1, '#c9d0de'); rr(8, 63, W - 16, 1, '#4a5064'); for (let x = 8; x < W - 8; x += 3) rr(x, 64, 1, 27, x % 6 ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.1)');
-  rr(8, 54, W - 16, 3, '#d4dbe8'); rr(8, 54, W - 16, 1, '#ffffff'); rr(8, 56, W - 16, 1, '#6d7488'); for (const x of [16, 76, 140, 202]) { rr(x, 57, 3, 4, '#6d7488'); rr(x, 57, 1, 4, '#9aa2b4'); }
-  rr(13, 21, 50, 30, '#2a2f3d'); for (let y = 0; y < 28; y++) rr(14, 22 + y, 48, 1, twMix('#8fb6dc', '#c4dcf2', y / 27));
-  if (Q >= 1) for (let i = 0; i < 6; i++) for (let k = 0; k < 28; k++) rr(14 + ((i * 9 + k) % 48), 22 + k, i % 2 ? 2 : 1, 1, 'rgba(255,255,255,.38)');
-  rr(14, 22, 48, 1, '#e8f4ff'); rr(14, 22, 1, 28, '#e8f4ff'); rr(61, 22, 1, 28, '#5a7a9a'); rr(14, 49, 48, 1, '#5a7a9a');
-  rr(147, 19, 66, 54, 'rgba(0,0,0,.3)'); rr(148, 20, 64, 52, '#232838'); rr(148, 20, 64, 1, '#5a6280'); rr(148, 20, 1, 52, '#5a6280'); g.clearRect(150, 22, 60, 48); rr(179, 22, 2, 48, '#2a2f46'); rr(179, 22, 1, 48, '#4a5070'); rr(146, 73, 68, 3, '#c9d0de'); rr(146, 76, 68, 1, 'rgba(0,0,0,.35)');
-  if (Q >= 1) { for (let r2 = 0; r2 < 48; r2++) { rr(152 + Math.round(r2 * 0.45) % 40, 22 + r2, 4, 1, 'rgba(255,255,255,.1)'); rr(184 + Math.round(r2 * 0.45) % 22, 22 + r2, 2, 1, 'rgba(255,255,255,.07)'); } rr(150, 22, 60, 1, 'rgba(255,255,255,.22)'); }
-  rr(152, 78, 56, 13, '#d9dfe9'); rr(152, 78, 56, 1, '#ffffff'); rr(152, 90, 56, 1, '#6d7488'); twText(g, 'MAX 20 PERSONS', 153, 79, 1, '#2a2f3d'); twText(g, '1600 KG', 167, 85, 1, '#2a2f3d');
-  rr(85, 28, 50, 63, '#4a5064'); rr(86, 29, 48, 62, '#6d7488'); rr(85, 28, 50, 1, '#c9d0de'); rr(88, 31, 44, 60, '#10121a');
-  rr(91, 11, 38, 17, '#2a2f3d'); rr(92, 12, 36, 15, '#06070c'); rr(92, 12, 36, 1, '#4a5064');
+  for (const [x, w] of [[8, 16], [76, 16]]) { rr(x, 54, w, 3, '#d4dbe8'); rr(x, 54, w, 1, '#ffffff'); rr(x, 56, w, 1, '#6d7488'); for (const bx of [x + 2, x + w - 5]) { rr(bx, 57, 3, 4, '#6d7488'); rr(bx, 57, 1, 4, '#9aa2b4'); } }
+  rr(10, 19, 13, 33, '#2a2f3d'); for (let y = 0; y < 31; y++) rr(11, 20 + y, 11, 1, twMix('#8fb6dc', '#c4dcf2', y / 30));      // (the mirror)
+  if (Q >= 1) for (let i = 0; i < 5; i++) for (let k = 0; k < 31; k++) rr(11 + ((i * 4 + k) % 11), 20 + k, i % 2 ? 2 : 1, 1, 'rgba(255,255,255,.38)');
+  rr(11, 20, 11, 1, '#e8f4ff'); rr(11, 20, 1, 31, '#e8f4ff'); rr(21, 20, 1, 31, '#5a7a9a'); rr(11, 50, 11, 1, '#5a7a9a');
+  rr(77, 18, 15, 36, 'rgba(0,0,0,.3)'); rr(77, 18, 14, 35, '#232838'); rr(77, 18, 14, 1, '#5a6280'); rr(77, 18, 1, 35, '#5a6280'); g.clearRect(79, 20, 10, 31); rr(83, 20, 1, 31, '#2a2f46'); rr(83, 20, 1, 31, 'rgba(255,255,255,.12)'); rr(76, 51, 16, 3, '#c9d0de'); rr(76, 53, 16, 1, 'rgba(0,0,0,.35)');      // (the window: a hole in the picture, the sky is drawn behind it)
+  if (Q >= 1) for (let r2 = 0; r2 < 31; r2++) { rr(80 + Math.round(r2 * 0.45) % 7, 20 + r2, 2, 1, 'rgba(255,255,255,.1)'); }
+  rr(77, 63, 14, 12, '#d9dfe9'); rr(77, 63, 14, 1, '#ffffff'); rr(77, 74, 14, 1, '#6d7488'); twText(g, '300', 78, 64, 1, '#2a2f3d'); twText(g, 'KG', 81, 69, 1, '#2a2f3d');
+  rr(26, 28, 48, 63, '#4a5064'); rr(27, 29, 46, 62, '#6d7488'); rr(26, 28, 48, 1, '#c9d0de'); rr(29, 31, 42, 60, '#10121a');
+  rr(33, 11, 34, 17, '#2a2f3d'); rr(34, 12, 32, 15, '#06070c'); rr(34, 12, 32, 1, '#4a5064');
   rr(8, SH_F, W - 16, 16, '#3b404d'); for (let y = 0; y < 16; y++) for (let x = 8; x < W - 8; x++) { if ((x + (y & 1) * 4) % 8 < 2 && y % 4 < 2) rr(x, SH_F + y, 1, 1, '#5a6172'); }
-  rr(8, SH_F, W - 16, 1, '#6d7488'); rr(8, SH_F + 1, W - 16, 1, 'rgba(0,0,0,.4)'); rr(8, SH_N - 2, W - 16, 2, '#232733'); rr(88, SH_F, 44, 2, '#aab2c4'); rr(88, SH_F + 2, 44, 1, '#3a4052');
+  rr(8, SH_F, W - 16, 1, '#6d7488'); rr(8, SH_F + 1, W - 16, 1, 'rgba(0,0,0,.4)'); rr(8, SH_N - 2, W - 16, 2, '#232733'); rr(28, SH_F, 44, 2, '#aab2c4'); rr(28, SH_F + 2, 44, 1, '#3a4052');
   rr(8, SH_N, W - 16, SH_H - SH_N, '#1d2029'); rr(8, SH_N, W - 16, 1, '#5a6280'); rr(8, SH_N + 1, W - 16, 2, '#3a4052'); for (let x = 14; x < W - 8; x += 16) { rr(x, SH_N + 5, 2, 2, '#6d7488'); rr(x, SH_N + 5, 1, 1, '#aab2c4'); } rr(8, SH_N + 11, W - 16, 1, '#2a2f3d'); for (let y = 0; y < 4; y++) rr(8, SH_H - 4 + y, W - 16, 1, 'rgba(0,0,0,' + [0.3, 0.5, 0.7, 0.88][y] + ')');
   twCabC = c; twCabQ = Q; return c;
 }
@@ -10408,56 +10506,75 @@ function twShaftDraw(c, now, x0, x1, yc, Q) {      // the shaft round the cab (s
   for (let k = Math.floor(cur) - 4; k <= Math.ceil(cur) + 5; k++) { if (k < 1 || k > TW_N) continue; const y = Math.round(gy - 6 + (cur - k) * sp); if (y < -50 || y > VH + 10) continue;
     ctx.fillStyle = '#141824'; ctx.fillRect(0, y, VW, 5); ctx.fillStyle = '#2c3448'; ctx.fillRect(0, y, VW, 1); ctx.fillStyle = '#0a0c13'; ctx.fillRect(x0 - 64, y - 44, 30, 44); ctx.fillRect(x1 + 34, y - 44, 30, 44); ctx.fillStyle = '#1f2638'; ctx.fillRect(x0 - 50, y - 44, 1, 44); ctx.fillRect(x1 + 49, y - 44, 1, 44);
     twText(ctx, String(k), x0 - 60, y - 54, 1, '#7d88ad'); twText(ctx, String(k), x1 + 40, y - 54, 1, '#7d88ad'); }
-  ctx.fillStyle = '#303749'; for (const cxx of [x0 + 70, x0 + 148]) { ctx.fillRect(cxx, -8, 2, top + 8); ctx.fillStyle = '#5a6280'; ctx.fillRect(cxx, -8, 1, top + 8); ctx.fillStyle = '#303749'; }
+  ctx.fillStyle = '#303749'; for (const cxx of [x0 + 38, x0 + 62]) { ctx.fillRect(cxx, -8, 2, top + 8); ctx.fillStyle = '#5a6280'; ctx.fillRect(cxx, -8, 1, top + 8); ctx.fillStyle = '#303749'; }
   twCabStreaks(c, now, 0, 0, VW, VH, Q, 0.35);
 }
-function twCabDoors(c, now, x0, yc, Q) {      // the two leaves (they slide), the lit corridor behind them when they are open, dents from the banging, and the wreck of them after he broke in
-  const ox = x0 + 88, oy = yc + 21, W = 44, H = 60, o = c.door, beyond = twFloorData(c.ph === 'out' ? c.dest : c.f0), P = beyond.pal, r = twR, shk = now - c.hit < 140 ? ((now / 40 | 0) % 2 ? 1 : -1) : 0;
-  if (o > 0.02 || c.broke) { const g = ctx.createLinearGradient(0, oy, 0, oy + H); g.addColorStop(0, twMix(P.w, '#ffffff', 0.4)); g.addColorStop(0.8, P.w); g.addColorStop(1, P.car2); ctx.fillStyle = g; ctx.fillRect(ox, oy, W, H); r(ox, oy + H - 11, W, 1, P.base); r(ox, oy + H - 10, W, 10, P.car); r(ox, oy + H - 11, W, 1, twMix(P.base, '#ffffff', 0.3)); r(ox + 4, oy + 12, 9, 30, twMix(P.w, '#000000', 0.12)); r(ox + 31, oy + 12, 9, 30, twMix(P.w, '#000000', 0.12)); }
-  const leaf = (xa, wa, sk) => { if (wa <= 0) return; r(xa, oy, wa, H, '#aab2c4'); for (let q = 0; q < wa; q += 2) r(xa + q, oy, 1, H, '#b8c0d0'); r(xa, oy, 1, H, '#d7deea'); r(xa + wa - 1, oy, 1, H, '#5a6174'); r(xa, oy + 29, wa, 1, '#8a93a8'); r(xa, oy + H - 11, wa, 11, '#8a93a8'); r(xa, oy + H - 11, wa, 1, '#6d7488'); if (sk) r(xa, oy, wa, 2, '#6d7488'); };
-  if (!c.broke) { const gap = Math.round(o * 21); leaf(ox + shk, 22 - gap, 0); leaf(ox + 22 + gap + shk, 22 - gap, 0);
-    if (gap < 8) for (let i = 0, n = Math.min(9, c.bangs); i < n; i++) { const hx = ox + 4 + ((twHash(i, 31) * 36) | 0), hy = oy + 6 + ((twHash(i, 37) * 40) | 0); r(hx, hy, 4, 5, 'rgba(24,26,36,.5)'); r(hx, hy, 4, 1, 'rgba(255,255,255,.4)'); r(hx + 1, hy + 3, 2, 2, 'rgba(0,0,0,.35)'); } }
-  else { for (let y = 0; y < H; y++) { const sl = Math.round(y * 0.1); r(ox + sl, oy + y, 11, 1, y % 2 ? '#aab2c4' : '#b8c0d0'); r(ox + sl, oy + y, 1, 1, '#d7deea'); r(ox + sl + 10, oy + y, 1, 1, '#5a6174'); }
-    for (let y = 0; y < H; y += 4) { const jg = 4 + ((twHash(y, 41) * 7) | 0); r(ox + W - jg, oy + y, jg, 4, y % 8 ? '#9aa2b4' : '#8a93a8'); r(ox + W - jg, oy + y, 1, 4, '#d7deea'); }
-    for (let i = 0; i < 12; i++) r(ox - 8 + ((twHash(i, 43) * 60) | 0), oy + H - 3 - ((twHash(i, 47) * 3) | 0), 2 + ((twHash(i, 49) * 3) | 0), 2, i % 2 ? '#6d7488' : '#9aa4b8'); }
+function twCabDoors(c, now, x0, yc, Q) {      // the two leaves (they slide), the lit corridor behind them when they are open, dents from the banging, and the wreck of them once he has broken them in (for good)
+  const ox = x0 + 29, oy = yc + 21, W = 42, H = 60, o = c.door, beyond = twFloorData(c.f), P = beyond.pal, r = twR, shk = now - c.hit < 140 ? ((now / 40 | 0) % 2 ? 1 : -1) : 0;
+  if (o > 0.02 || c.broken) { const g = ctx.createLinearGradient(0, oy, 0, oy + H); g.addColorStop(0, twMix(P.w, '#ffffff', 0.4)); g.addColorStop(0.8, P.w); g.addColorStop(1, P.car2); ctx.fillStyle = g; ctx.fillRect(ox, oy, W, H); r(ox, oy + H - 11, W, 1, P.base); r(ox, oy + H - 10, W, 10, P.car); r(ox, oy + H - 11, W, 1, twMix(P.base, '#ffffff', 0.3)); r(ox + 4, oy + 12, 8, 30, twMix(P.w, '#000000', 0.12)); r(ox + 30, oy + 12, 8, 30, twMix(P.w, '#000000', 0.12)); }
+  const leaf = (xa, wa) => { if (wa <= 0) return; r(xa, oy, wa, H, '#aab2c4'); for (let q = 0; q < wa; q += 2) r(xa + q, oy, 1, H, '#b8c0d0'); r(xa, oy, 1, H, '#d7deea'); r(xa + wa - 1, oy, 1, H, '#5a6174'); r(xa, oy + 29, wa, 1, '#8a93a8'); r(xa, oy + H - 11, wa, 11, '#8a93a8'); r(xa, oy + H - 11, wa, 1, '#6d7488'); };
+  if (!c.broken) { const gap = Math.round(o * 20); leaf(ox + shk, 21 - gap); leaf(ox + 21 + gap + shk, 21 - gap);
+    if (gap < 8) for (let i = 0, n = Math.min(9, c.bangs); i < n; i++) { const hx = ox + 4 + ((twHash(i, 31) * 34) | 0), hy = oy + 6 + ((twHash(i, 37) * 40) | 0); r(hx, hy, 4, 5, 'rgba(24,26,36,.5)'); r(hx, hy, 4, 1, 'rgba(255,255,255,.4)'); r(hx + 1, hy + 3, 2, 2, 'rgba(0,0,0,.35)'); } }
+  else { for (let y = 0; y < H; y++) { const sl = Math.round(y * 0.1); r(ox + sl, oy + y, 10, 1, y % 2 ? '#aab2c4' : '#b8c0d0'); r(ox + sl, oy + y, 1, 1, '#d7deea'); r(ox + sl + 9, oy + y, 1, 1, '#5a6174'); }
+    for (let y = 0; y < H; y += 4) { const jg = 4 + ((twHash(y, 41) * 6) | 0); r(ox + W - jg, oy + y, jg, 4, y % 8 ? '#9aa2b4' : '#8a93a8'); r(ox + W - jg, oy + y, 1, 4, '#d7deea'); }
+    for (let i = 0; i < 10; i++) r(ox - 6 + ((twHash(i, 43) * 52) | 0), oy + H - 3 - ((twHash(i, 47) * 3) | 0), 2 + ((twHash(i, 49) * 3) | 0), 2, i % 2 ? '#6d7488' : '#9aa4b8'); }
 }
 function twCabDisplay(c, now, x0, yc) {      // the floor display over the doors: the floor you are passing in orange, an arrow that blinks while you move, STOP in red when the cab hangs
-  const dx = x0 + 92, dy = yc + 2, fl = Math.max(1, Math.min(TW_N, Math.round(c.curF))), moving = c.ph === 'ride' && now >= c.at;
-  if (c.broke && (now / 90 | 0) % 5 === 0) return;
-  if (c.ph === 'stop') { if ((now / 350 | 0) % 2) twText(ctx, 'STOP', dx + 11, dy + 5, 2, '#ff3a2a'); return; }
-  twText(ctx, String(fl), dx + 4, dy + 2, 2, '#ff9a3a'); const dir = c.dest > c.from ? 1 : -1; if (moving ? (now / 250 | 0) % 2 : c.ph === 'out') { ctx.fillStyle = '#ff9a3a'; const ax = dx + 26, ay = dy + 4; if (dir > 0) { ctx.fillRect(ax + 3, ay, 1, 1); ctx.fillRect(ax + 2, ay + 1, 3, 1); ctx.fillRect(ax + 1, ay + 2, 5, 1); ctx.fillRect(ax, ay + 3, 7, 1); } else { ctx.fillRect(ax, ay, 7, 1); ctx.fillRect(ax + 1, ay + 1, 5, 1); ctx.fillRect(ax + 2, ay + 2, 3, 1); ctx.fillRect(ax + 3, ay + 3, 1, 1); } }
+  const dx = x0 + 36, dy = yc + 2, fl = Math.max(1, Math.min(TW_N, Math.round(c.curF))), moving = c.ph === 'ride' && now >= c.at;
+  if (c.broken && (now / 90 | 0) % 5 === 0) return;
+  if (c.ph === 'stop') { if ((now / 350 | 0) % 2) twText(ctx, 'STOP', dx + 1, dy + 5, 2, '#ff3a2a'); return; }
+  twText(ctx, String(fl), dx + 2, dy + 2, 2, '#ff9a3a'); const dir = c.dest > c.from ? 1 : -1; if (moving && (now / 250 | 0) % 2) { ctx.fillStyle = '#ff9a3a'; const ax = dx + 21, ay = dy + 4; if (dir > 0) { ctx.fillRect(ax + 3, ay, 1, 1); ctx.fillRect(ax + 2, ay + 1, 3, 1); ctx.fillRect(ax + 1, ay + 2, 5, 1); ctx.fillRect(ax, ay + 3, 7, 1); } else { ctx.fillRect(ax, ay, 7, 1); ctx.fillRect(ax + 1, ay + 1, 5, 1); ctx.fillRect(ax + 2, ay + 2, 3, 1); ctx.fillRect(ax + 3, ay + 3, 1, 1); } }
 }
 function twCabLights(c, now, x0, a, b, yc, Q) {      // the light of the cab: a bright panel and its warm cone, flickering on a long ride, red and dim when it hangs (emergency stop)
   const top = yc - SH_Y; if (Q < 1) return; const long = c.long && c.ph === 'ride' && now >= c.at, flick = long && twHash((now / 70) | 0, 17) > 0.86, stop = c.ph === 'stop';
-  let A = 0.1 + (flick ? 0.5 : 0) + (stop ? 0.28 : 0) + (c.broke ? 0.06 : 0);
-  ctx.save(); ctx.beginPath(); ctx.rect(a, top, b - a, SH_H); ctx.rect(x0 + 150, yc + 12, 60, 48); ctx.clip('evenodd'); ctx.fillStyle = 'rgba(8,10,22,' + A.toFixed(2) + ')'; ctx.fillRect(a, top, b - a, SH_H); if (stop) { ctx.fillStyle = 'rgba(255,40,30,' + (0.1 + 0.08 * Math.sin(now / 160)).toFixed(2) + ')'; ctx.fillRect(a, top, b - a, SH_H); } ctx.restore();
-  if (Q >= 2 && !flick) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = stop ? 0.08 : 0.16; const m = twCone(stop ? [255, 120, 100] : [255, 238, 190]); ctx.drawImage(m, Math.round(x0 + 110 - 75), yc - 4); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+  let A = 0.1 + (flick ? 0.5 : 0) + (stop ? 0.28 : 0) + (c.broken ? 0.06 : 0);
+  ctx.save(); ctx.beginPath(); ctx.rect(a, top, b - a, SH_H); ctx.rect(x0 + 79, yc + 10, 10, 31); ctx.clip('evenodd'); ctx.fillStyle = 'rgba(8,10,22,' + A.toFixed(2) + ')'; ctx.fillRect(a, top, b - a, SH_H); if (stop) { ctx.fillStyle = 'rgba(255,40,30,' + (0.1 + 0.08 * Math.sin(now / 160)).toFixed(2) + ')'; ctx.fillRect(a, top, b - a, SH_H); } ctx.restore();
+  if (Q >= 2 && !flick) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = stop ? 0.08 : 0.16; const m = twCone(stop ? [255, 120, 100] : [255, 238, 190]); ctx.drawImage(m, Math.round(x0 + 50 - 75), yc - 4); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
 }
-function twCabBackdrop(now) {      // the whole picture while you are in the cab (instead of twBackdrop's floor)
+function twCabBackdrop(now) {      // the whole picture while you are in the cab (instead of the floor)
   const T = vs.tw, c = T.cab, Q = twQ(), cx = Math.round(VW / 2), yc = gy - TW_CEIL, x0 = cx - Math.round(wx), x1 = x0 + TW_CABW, top = yc - SH_Y, a = Math.max(0, x0), b = Math.min(VW, x1), cur = c.curF, fR = Math.max(1, Math.min(TW_N, Math.round(cur)));
   twShaftDraw(c, now, x0, x1, yc, Q);
-  if (b > x0 + 150 && x0 + 210 > a) { ctx.save(); ctx.beginPath(); ctx.rect(x0 + 150, yc + 12, 60, 48); ctx.clip(); twSkyDraw({ f: fR, wt: twWeather(T.seed, fR) }, now, x0, x1, yc, Q, Math.max(-14, Math.min(14, (cur - c.f0) * 0.5))); twCabSlabs(c, now, x0 + 150, yc + 12, 60, 48, Q); twCabStreaks(c, now, x0 + 150, yc + 12, 60, 48, Q, 1); ctx.restore(); }
+  if (b > x0 + 79 && x0 + 89 > a) { ctx.save(); ctx.beginPath(); ctx.rect(x0 + 79, yc + 10, 10, 31); ctx.clip(); twSkyDraw({ f: fR, wt: twWeather(T.seed, fR) }, now, x0, x1, yc, Q, Math.max(-14, Math.min(14, (cur - c.f) * 0.5))); twCabSlabs(c, now, x0 + 79, yc + 10, 10, 31, Q); twCabStreaks(c, now, x0 + 79, yc + 10, 10, 31, Q, 1); ctx.restore(); }
   if (b > a) ctx.drawImage(twCabShell(Q), a - x0, 0, b - a, SH_H, a, top, b - a, SH_H);
   twCabDoors(c, now, x0, yc, Q); twCabLights(c, now, x0, a, b, yc, Q); twCabDisplay(c, now, x0, yc);
 }
-function twBackdrop(now) {      // everything behind the fighters: the sky, the shell of the floor (ceiling, wall with its windows and what hangs on it, floor, slab), the doors, the marks, the inner walls, the wrecks, the furniture, the craters, the darkness with its lights, what shines and the glass at the ends
-  if (vs.tw.cab) { twCabBackdrop(now); return; }
-  const T = vs.tw, F = twFloorData(T.fMe), Q = twQ(), cx = Math.round(VW / 2), yc = gy - TW_CEIL, x0 = cx - Math.round(wx), x1 = x0 + F.W, a = Math.max(0, x0), b = Math.min(VW, x1);
-  twLayout(F); ctx.fillStyle = '#0a0a10'; ctx.fillRect(-8, -8, VW + 16, VH + 16); twSkyDraw(F, now, x0, x1, yc, Q);
-  if (b > a) {
-    const sh = twShell(F, Q), sx = a - x0, sw = b - a, top = yc - SH_Y;
-    ctx.fillStyle = '#0a0a10'; ctx.fillRect(a, -8, sw, top - 1); ctx.drawImage(sh, sx, SH_N + 2, sw, 9, a, top - 9, sw, 9); ctx.drawImage(sh, sx, 0, sw, SH_H, a, top, sw, SH_H);
-    for (const d of F.doors) { const px = x0 + d.x; if (px > a - 40 && px < b + 40) twDoor(F, d, px, now); }
-    twDecals(F, x0, a, b);
-    for (const w of F.walls) { const px = x0 + w.x; if (px > a - 30 && px < b + 30) twPart(F, w, px, yc, now, Q); }
-    for (const w of F.wrecks) { const px = x0 + w.x, s = twWreckSpr(w); if (px > a - 50 && px < b + 50) ctx.drawImage(s, Math.round(px) - (s.width >> 1), gy - 13); }
-    for (const o of F.objs) { const px = x0 + o.x; if (px > a - 40 && px < b + 40) twObj(F, o, px, now, Q); }
-    if (Q >= 2 && F.sty.gloss) twReflect(F, x0, a, b, now);
-    for (const h of F.holes) { const px = x0 + h.x; if (px + h.r + 20 > a && px - h.r - 20 < b) twFloorHole(F, h, px, now); }
-    const up = T.fl[F.f + 1]; if (up) for (const h of up.holes) { const px = x0 + h.x; if (px + h.r + 14 > a && px - h.r - 14 < b) twCeilHole(F, h, px, yc, now, Q); }
-    twBrokenLights(F, x0, a, b, yc, now, Q); twLights(F, x0, a, b, yc, now, Q);
+const twSlideY = (s, now) => { const k = Math.max(0, Math.min(1, (now - s.at) / s.ms)), e = s.kind === 'fall' ? k * k : s.kind === 'ceil' ? 1 - (1 - k) * (1 - k) : k * k * (3 - 2 * k); return e * s.n * SH_H; };      // (how far the camera has travelled: a fall speeds up, a launch slows down, the stairs glide)
+const twSlideOff = (s, f, now) => s.dir * (Math.abs(f - s.f0) * SH_H - twSlideY(s, now));      // (how far down the screen floor f is pushed while the camera slides: 0 = where it is when you stand on it)
+function twFloorDraw(f, camX, off, now) {      // one floor's whole picture as if you stood on it at camX, pushed `off` px down the screen (the slide; it is clipped to its own band): the sky, the shell (ceiling, wall with its windows and what hangs on it, floor, slab), the doors, the marks, the inner walls, the wrecks, the furniture, the craters, the darkness with its lights, what shines and the glass at the ends
+  const T = vs.tw, kf = T.fMe, kw = wx; T.fMe = f; wx = camX; if (off) { ctx.save(); ctx.beginPath(); ctx.rect(-8, gy - TW_CEIL - SH_Y - 9 + off, VW + 16, SH_H + 9); ctx.clip(); ctx.translate(0, off); }
+  try {
+    const F = twFloorData(f), Q = twQ(), cx = Math.round(VW / 2), yc = gy - TW_CEIL, x0 = cx - Math.round(camX), x1 = x0 + F.W, a = Math.max(0, x0), b = Math.min(VW, x1);
+    twLayout(F); ctx.fillStyle = '#0a0a10'; ctx.fillRect(-8, -8, VW + 16, VH + 16); twSkyDraw(F, now, x0, x1, yc, Q);
+    if (b > a) {
+      const sh = twShell(F, Q), sx = a - x0, sw = b - a, top = yc - SH_Y;
+      ctx.fillStyle = '#0a0a10'; ctx.fillRect(a, -8, sw, top - 1); ctx.drawImage(sh, sx, SH_N + 2, sw, 9, a, top - 9, sw, 9); ctx.drawImage(sh, sx, 0, sw, SH_H, a, top, sw, SH_H);
+      for (const d of F.doors) { const px = x0 + d.x; if (px > a - 40 && px < b + 40) twDoor(F, d, px, now); }
+      twDecals(F, x0, a, b);
+      for (const w of F.walls) { const px = x0 + w.x; if (px > a - 30 && px < b + 30) twPart(F, w, px, yc, now, Q); }
+      for (const w of F.wrecks) { const px = x0 + w.x, s = twWreckSpr(w); if (px > a - 50 && px < b + 50) ctx.drawImage(s, Math.round(px) - (s.width >> 1), gy - 13); }
+      for (const o of F.objs) { const px = x0 + o.x; if (px > a - 40 && px < b + 40) twObj(F, o, px, now, Q); }
+      if (Q >= 2 && F.sty.gloss) twReflect(F, x0, a, b, now);
+      for (const h of F.holes) { const px = x0 + h.x; if (px + h.r + 20 > a && px - h.r - 20 < b) twFloorHole(F, h, px, now); }
+      const up = T.fl[F.f + 1]; if (up) for (const h of up.holes) { const px = x0 + h.x; if (px + h.r + 14 > a && px - h.r - 14 < b) twCeilHole(F, h, px, yc, now, Q); }
+      twBrokenLights(F, x0, a, b, yc, now, Q); twLights(F, x0, a, b, yc, now, Q);
+    }
+    twEmit(F, x0, a, b, now, Q); twOuter(F, x0, 0, yc, now, Q); twOuter(F, x1, 1, yc, now, Q);
+  } finally { if (off) ctx.restore(); T.fMe = kf; wx = kw; }
+}
+function twFloorFast(f, off) {      // a floor that only flashes past in a long fall: bands of its colours (ceiling, wall, carpet, slab)
+  const P = twFloorData(f).pal, top = gy - TW_CEIL - SH_Y + off, r = twR; r(0, top, VW, SH_Y, P.ceil); r(0, top + SH_Y, VW, SH_F - SH_Y, P.w); r(0, top + SH_Y + 4, VW, 4, twMix(P.w, '#000000', 0.25)); r(0, top + SH_F, VW, SH_N - SH_F, P.car); r(0, top + SH_N, VW, SH_H - SH_N, '#12121a'); r(0, top + SH_N, VW, 3, '#7c7c88');
+}
+function twSlideDraw(now, s) {      // the camera travels from floor f0 to floor f1: every floor in between is in its own band (the two ends in full, a few between them in full, the rest as colour bands), the upper ones first; no fade
+  const y = twSlideY(s, now), lo = Math.min(s.f0, s.f1), hi = Math.max(s.f0, s.f1); ctx.fillStyle = '#0a0a10'; ctx.fillRect(-8, -8, VW + 16, VH + 16);
+  for (let f = hi; f >= lo; f--) {
+    const off = s.dir * (Math.abs(f - s.f0) * SH_H - y); if (off > VH + 12 || off < -(SH_H + 12)) continue;
+    if (f === s.f0) twFloorDraw(f, s.x0, off, now); else if (f === s.f1) twFloorDraw(f, wx, off, now); else if (s.n <= 3) twFloorDraw(f, Math.round(s.x0 + (wx - s.x0) * Math.abs(f - s.f0) / s.n), off, now); else twFloorFast(f, off);
   }
-  twEmit(F, x0, a, b, now, Q); twOuter(F, x0, 0, yc, now, Q); twOuter(F, x1, 1, yc, now, Q);
+}
+function twBackdrop(now) {      // everything behind the fighters: the cab when you are in it, the slide when the camera travels between floors, else the floor you are on
+  const T = vs.tw; if (T.cab) { twCabBackdrop(now); return; }
+  const s = T.slide; if (s && now < s.at + s.ms) { twSlideDraw(now, s); T.prompt = null; return; }
+  twFloorDraw(T.fMe, wx, 0, now);
 }
 
 // ---------------------------------------------------------------- v1.95 CHAPTER 2: THE PORTAL, the opening (this file is spliced into template.html by build_html.py, in place of the marker line after the custom mode's)
@@ -18661,6 +18778,18 @@ $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
  {
+  "v": "1.176",
+  "t": "ONE ELEVATOR, A TIGHT CAB AND NO MORE FADES",
+  "n": [
+   "No more fade to black in the skyscraper. When you fall through a hole the camera FOLLOWS YOU DOWN through the floors (it speeds up like a real fall) and you land with a thud; the stairs and a launch through a broken ceiling slide up or down the same way, and the enemy stays in sight on the floor you leave. When you slam the enemy through the floor you SEE him drop through the hole, and when he flies up through a broken ceiling you see that too. Stepping into or out of the elevator is a straight cut.",
+   "The elevator cab is much more cramped: 100 pixels wide, a steel box with a mirror, a small window onto the city, a handrail and the doors in the middle of the back wall.",
+   "There is ONE elevator for the whole building. If the cab is at your floor, JUMP or CROUCH at its door gets you in. If it is somewhere else, the same press CALLS it: the number over the door counts, the doors open and wait for you about 6 seconds. If the enemy is riding it, it is IN USE: you can neither call it nor get in (the number over the door turns red).",
+   "A floor button now makes the cab wait 0.6 seconds, then the doors shut and it goes. When it arrives the doors open and wait: stand on the doors and press JUMP to get out (nothing happens by itself any more). THE TRICK: press a floor and step out in less than 0.6 seconds: the cab leaves WITHOUT you. If the enemy is inside it, he is carried to the floor you picked, alone, and has to ride back.",
+   "The enemy uses the elevator too: when he is on another floor and nobody is using the cab, he calls it to his floor, rides to yours and steps out of its door. If a door on the way is broken he takes the stairs.",
+   "Broken doors stay broken for good. When the enemy breaks into the cab (after about 8 seconds of banging) its doors are broken for the rest of the match: they never shut again and he just walks in whenever he gets there. OUT OF ORDER and torn-out floor doors stay as they are too."
+  ]
+ },
+ {
   "v": "1.175",
   "t": "RIDE THE ELEVATOR: A PANEL WITH ALL THE FLOORS",
   "n": [
@@ -21458,7 +21587,7 @@ async function scStory() {
 let SC_ONLY = {};      // (for the tests: { sec: ['STORY'], scenes: ['CH 4'] })
 // ---------------------------------------------------------------- SKYSCRAPER (v1.173): three fighters fight in the 50-floor building and the scan makes its things happen: a slam through the floors, a fall, a blast, a ceiling broken, glass broken and a fall to the street
 async function scTower() {
-  SC.sec = 'SKYSCRAPER'; scCov('TOWER', 0, 3); SC.plan = 3 * 440; SC.done = 0; const keep = twPick; twPick = 1;
+  SC.sec = 'SKYSCRAPER'; scCov('TOWER', 0, 3); SC.plan = 3 * 470; SC.done = 0; const keep = twPick; twPick = 1;
   try {
     for (const [w, seed] of [['cu4', 11], ['gojo', 12], ['yuji', 13]]) {
       const label = SC_NAME[w] + ' IN THE SKYSCRAPER'; SC.say = label;
@@ -21467,12 +21596,14 @@ async function scTower() {
       if (!(await scIntro())) { show('title'); return; }
       const p = scPlayer(seed), ev = [[30, () => twSlam('foe', 2, pnow(), dummy.x)], [90, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [110, () => twMeFall(1, pnow(), wx)], [150, () => { const F = twFloorData(vs.tw.fMe); const o = { k: 'gas', x: Math.round(wx + 40), hp: 18, mx: 18, wob: 0, hitAt: -9999 }; F.objs.push(o); twDamageObj(F, o, 99, pnow()); }], [190, () => twCeiling('foe', 1, pnow(), dummy.x)], [235, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [250, () => twFallOut('foe', pnow(), 1)],
         [60, () => { const F = twFloorData(vs.tw.fMe), d = F.doors.find(q => q.k === 'elev'); if (d) twDoorHit(F, d, 45, pnow()); }],      // (v1.175 the elevator: a hard hit jams a door (OUT OF ORDER) ...)
-        [270, () => { const T = vs.tw; if (T.cab) return; const F = twFloorData(T.fMe), d = F.doors.find(q => q.k === 'elev'); if (!d) return; d.st = 0; d.hp = 70; wx = d.x; T.px = wx; twCabEnter(F, d, pnow()); }],      // (... you step into one: the cab, the panel, a ride, an emergency stop, another ride)
-        [300, () => { const T = vs.tw; if (T.cab) twCabPick(T.fMe > 20 ? T.fMe - 9 : T.fMe + 11, pnow()); }],
-        [335, () => { const T = vs.tw; if (T.cab && T.cab.ph === 'ride') twCabStop(pnow()); }],
-        [350, () => { const T = vs.tw; if (T.cab) twCabPick(T.fMe > 30 ? T.fMe - 4 : T.fMe + 6, pnow()); }],
-        [420, () => { const T = vs.tw; if (T.cab) { if (T.cab.ph === 'in') twCabLeave(pnow()); } else { const F = twFloorData(T.fMe), d = F.doors.find(q => q.k === 'elev'); if (d) twDoorHit(F, d, 200, pnow()); } }]];      // (and a blast tears a door out: the shaft is open)
-      const ok = await scFrames(440, i => {
+        [270, () => { const T = vs.tw; if (T.cab) return; const F = twFloorData(T.fMe), d = twElevOf(F), L = T.lift; if (!d) return; d.st = 0; d.hp = 70; L.f = L.curF = L.dest = T.fMe; L.ph = 'park'; L.inFoe = false; L.job = null; L.pend = null; wx = d.x; T.px = wx; twCabEnter(F, d, pnow()); }],      // (v1.176 ... you step into the one cab of the building: the cut inside, the panel, a floor button (0.6 s, then it goes), an emergency stop, another floor,
+        [276, () => { const T = vs.tw; if (T.cab) twCabPick(T.fMe > 20 ? T.fMe - 9 : T.fMe + 11, pnow()); }],
+        [352, () => { const T = vs.tw; if (T.cab && T.lift.ph === 'ride') twCabStop(pnow()); }],
+        [368, () => { const T = vs.tw; if (T.cab) twCabPick(T.fMe > 30 ? T.fMe - 4 : T.fMe + 6, pnow()); }],
+        [440, () => { const T = vs.tw; if (T.cab) { if (T.lift.ph === 'park') twCabLeave(pnow()); } }],      // (... you step out (JUMP on the doors), call the cab down from the door, and a blast tears the door out: the shaft is open)
+        [448, () => { const T = vs.tw; if (T.cab) return; const F = twFloorData(T.fMe), d = twElevOf(F); if (d) { d.st = 0; d.hp = 70; twLiftUse(F, d, pnow()); } }],
+        [462, () => { const T = vs.tw; if (!T.cab) { const F = twFloorData(T.fMe), d = twElevOf(F); if (d) twDoorHit(F, d, 200, pnow()); } }]];
+      const ok = await scFrames(470, i => {
         p.step(); if (i % 6 === 0) scCheck();
         for (const [at, fn] of ev) if (i === at) { try { if (twOn() && vs.ph === 'fight') fn(); } catch (e) { scErr(e, label + ' EVENT ' + at); } }
         if (state !== 'play') { scNote('warn', 'THE FIGHT LEFT THE FIGHT SCREEN BY ITSELF: ' + label, 'STATE ' + state); }

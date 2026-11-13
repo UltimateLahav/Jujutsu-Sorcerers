@@ -1,5 +1,17 @@
 [
  {
+  "v": "1.176",
+  "t": "ONE ELEVATOR, A TIGHT CAB AND NO MORE FADES",
+  "n": [
+   "No more fade to black in the skyscraper. When you fall through a hole the camera FOLLOWS YOU DOWN through the floors (it speeds up like a real fall) and you land with a thud; the stairs and a launch through a broken ceiling slide up or down the same way, and the enemy stays in sight on the floor you leave. When you slam the enemy through the floor you SEE him drop through the hole, and when he flies up through a broken ceiling you see that too. Stepping into or out of the elevator is a straight cut.",
+   "The elevator cab is much more cramped: 100 pixels wide, a steel box with a mirror, a small window onto the city, a handrail and the doors in the middle of the back wall.",
+   "There is ONE elevator for the whole building. If the cab is at your floor, JUMP or CROUCH at its door gets you in. If it is somewhere else, the same press CALLS it: the number over the door counts, the doors open and wait for you about 6 seconds. If the enemy is riding it, it is IN USE: you can neither call it nor get in (the number over the door turns red).",
+   "A floor button now makes the cab wait 0.6 seconds, then the doors shut and it goes. When it arrives the doors open and wait: stand on the doors and press JUMP to get out (nothing happens by itself any more). THE TRICK: press a floor and step out in less than 0.6 seconds: the cab leaves WITHOUT you. If the enemy is inside it, he is carried to the floor you picked, alone, and has to ride back.",
+   "The enemy uses the elevator too: when he is on another floor and nobody is using the cab, he calls it to his floor, rides to yours and steps out of its door. If a door on the way is broken he takes the stairs.",
+   "Broken doors stay broken for good. When the enemy breaks into the cab (after about 8 seconds of banging) its doors are broken for the rest of the match: they never shut again and he just walks in whenever he gets there. OUT OF ORDER and torn-out floor doors stay as they are too."
+  ]
+ },
+ {
   "v": "1.175",
   "t": "RIDE THE ELEVATOR: A PANEL WITH ALL THE FLOORS",
   "n": [
