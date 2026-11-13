@@ -1,4 +1,4 @@
-// ---------------------------------------------------------------- v1.173 THE SKYSCRAPER (this file is spliced into template.html by build_html.py, right after ryu.js)
+// ---------------------------------------------------------------- v1.173 THE SKYSCRAPER (this file is spliced into template.html by build_html.py, right after ryu.js; how it LOOKS is in towerart.js, v1.174)
 // A second MAP for FREE PLAY and VERSUS (the MAP button of the fighter and versus screens): the inside of a 50-floor skyscraper, ONE FLOOR AT A TIME. The match starts on floor 50 (the penthouse). Every floor is a long corridor of 2 to 4 rooms that is made at random the first time you see it
 // (twFloorData: its size, its colours, its furniture, its lights, its windows with the city outside: the higher the floor the higher the view) and it STAYS as the fights leave it (broken walls, wrecks, holes: they are kept for the whole match, `vs.tw`; a new match starts a fresh building).
 // WHAT BREAKS: furniture (desks, chairs, tables, computers, lamps, glass, vending machines, safes, pillars, server racks, crates, plants) breaks when a blow lands near it, when a body is thrown into it (the heavy ones hurt) or when you attack it; the INNER WALLS between the rooms are solid until they break;
@@ -22,13 +22,13 @@ const TW_PAL = [
   { w: '#6e4a3a', w2: '#5d3d2f', base: '#2e1d16', car: '#7a1f2b', car2: '#641923', ceil: '#2b2220', acc: '#d4a017' },
   { w: '#8a8a8f', w2: '#77777c', base: '#44444a', car: '#3b3b42', car2: '#323238', ceil: '#5a5a60', acc: '#e07b00' }];
 const TW_THEMES = [      // what a floor is: name, how often, which colours, the furniture [kind, weight] and how many pieces a room gets
-  { n: 'OFFICE', w: 6, pal: [0, 1, 2, 3], objs: [['desk', 6], ['chair', 3], ['plant', 1], ['lamp', 1], ['glass', 1], ['extinguisher', 1]], cnt: [5, 8] },
-  { n: 'OPEN PLAN', w: 3, pal: [1, 3, 5], objs: [['desk', 7], ['chair', 2], ['pillar', 2], ['plant', 1]], cnt: [6, 9] },
-  { n: 'CONFERENCE', w: 2, pal: [3, 4, 1], objs: [['table', 4], ['chair', 5], ['glass', 2], ['lamp', 1], ['plant', 1]], cnt: [5, 8] },
-  { n: 'LOUNGE', w: 2, pal: [4, 0], objs: [['table', 3], ['lamp', 3], ['plant', 2], ['glass', 1], ['chair', 2]], cnt: [5, 7] },
-  { n: 'PANTRY', w: 2, pal: [2, 3, 0], objs: [['vending', 3], ['table', 2], ['chair', 3], ['plant', 1], ['extinguisher', 1]], cnt: [4, 7] },
-  { n: 'SERVER ROOM', w: 1, pal: [5, 1], objs: [['rack', 6], ['extinguisher', 1], ['safe', 1]], cnt: [5, 8] },
-  { n: 'STORAGE', w: 1, pal: [5], objs: [['crate', 5], ['gas', 3], ['extinguisher', 2], ['safe', 1]], cnt: [5, 8] }];
+  { n: 'OFFICE', w: 6, pal: [0, 1, 2, 3], objs: [['desk', 6], ['chair', 3], ['plant', 1], ['lamp', 1], ['glass', 1], ['extinguisher', 1], ['cabinet', 1], ['cooler', 1]], cnt: [5, 8] },
+  { n: 'OPEN PLAN', w: 3, pal: [1, 3, 5], objs: [['desk', 7], ['chair', 2], ['pillar', 2], ['plant', 1], ['cooler', 1], ['cabinet', 1]], cnt: [6, 9] },
+  { n: 'CONFERENCE', w: 2, pal: [3, 4, 1], objs: [['table', 4], ['chair', 5], ['glass', 2], ['lamp', 1], ['plant', 1], ['shelf', 1], ['sofa', 1]], cnt: [5, 8] },
+  { n: 'LOUNGE', w: 2, pal: [4, 0], objs: [['table', 3], ['lamp', 3], ['plant', 2], ['glass', 1], ['chair', 2], ['sofa', 4], ['shelf', 2]], cnt: [5, 7] },
+  { n: 'PANTRY', w: 2, pal: [2, 3, 0], objs: [['vending', 3], ['table', 2], ['chair', 3], ['plant', 1], ['extinguisher', 1], ['cooler', 2], ['cabinet', 2]], cnt: [4, 7] },
+  { n: 'SERVER ROOM', w: 1, pal: [5, 1], objs: [['rack', 6], ['extinguisher', 1], ['safe', 1], ['cabinet', 1]], cnt: [5, 8] },
+  { n: 'STORAGE', w: 1, pal: [5], objs: [['crate', 5], ['gas', 3], ['extinguisher', 2], ['safe', 1], ['cabinet', 2]], cnt: [5, 8] }];
 const TW_K = {      // the furniture: width, height (px), strength, damage to a body that is thrown into it, the colours of its pieces, the sound it makes (0 wood, 1 glass, 2 metal, 3 stone), what it does
   desk: { w: 34, h: 16, hp: 26, dmg: 4, cols: ['#b07a3a', '#8a5a2b', '#5a3a1a'], s: 0 },
   chair: { w: 12, h: 15, hp: 9, dmg: 2, cols: ['#3a3f55', '#2a2d3d', '#9aa2b8'], s: 0 },
@@ -38,27 +38,33 @@ const TW_K = {      // the furniture: width, height (px), strength, damage to a 
   glass: { w: 6, h: 50, hp: 12, dmg: 3, cols: ['#e8f6ff', '#9fd8ff', '#2c63c9'], s: 1 },
   vending: { w: 20, h: 42, hp: 60, dmg: 10, cols: ['#c0392b', '#e8f6ff', '#9aa2b8'], s: 2, drop: 1 },
   safe: { w: 18, h: 24, hp: 110, dmg: 14, cols: ['#4a5064', '#6d7488', '#9aa2b8'], s: 2 },
-  pillar: { w: 14, h: TW_CEIL - 4, hp: 140, dmg: 12, cols: ['#9a8fb0', '#6d5f86', '#b8b0a0'], s: 3 },
+  pillar: { w: 18, h: TW_CEIL - 4, hp: 140, dmg: 12, cols: ['#9a8fb0', '#6d5f86', '#b8b0a0'], s: 3 },
   gas: { w: 12, h: 26, hp: 18, dmg: 3, cols: ['#c0392b', '#9aa2b8', '#2a2a30'], s: 2, boom: [62, 76] },
   extinguisher: { w: 7, h: 16, hp: 8, dmg: 2, cols: ['#c0392b', '#ffffff', '#9aa2b8'], s: 2, boom: [34, 54] },
   rack: { w: 16, h: 40, hp: 80, dmg: 10, cols: ['#2b2f3a', '#7fd0ff', '#9aa2b8'], s: 2, sp: 1 },
   crate: { w: 16, h: 16, hp: 16, dmg: 3, cols: ['#b07a3a', '#8a5a2b', '#5a3a1a'], s: 0 },
-  plant: { w: 10, h: 22, hp: 8, dmg: 1, cols: ['#2f7d4f', '#5a3a1a', '#7bc67e'], s: 0 }};
+  plant: { w: 10, h: 22, hp: 8, dmg: 1, cols: ['#2f7d4f', '#5a3a1a', '#7bc67e'], s: 0 },
+  sofa: { w: 40, h: 20, hp: 30, dmg: 5, cols: ['#7a4f33', '#583622', '#9a6a4a'], s: 0 },
+  shelf: { w: 22, h: 40, hp: 30, dmg: 5, cols: ['#774a33', '#59331f', '#c0392b'], s: 0 },
+  cabinet: { w: 14, h: 26, hp: 40, dmg: 5, cols: ['#8d95a8', '#7d859a', '#c3cad9'], s: 2 },
+  cooler: { w: 10, h: 28, hp: 14, dmg: 2, cols: ['#e4e8f0', '#7fb6e0', '#aab2c4'], s: 1, splash: 1 }};
 
 // ---- one floor, made the first time it is needed from the match's seed and its number (so it is always the same floor), and then kept
 function twFloorData(f) {
   const T = vs.tw; let F = T.fl[f]; if (F) return F;
   const R = twRng(T.seed * 131 + f * 7919 + 17), lobby = f === 1, pent = f === TW_N, nr = lobby || pent ? 3 : 2 + ((R() * 3) | 0);
   const xs = [0]; for (let i = 0; i < nr; i++) xs.push(xs[i] + 340 + ((R() * 180) | 0));
-  let th; if (lobby) th = { n: 'LOBBY', pal: [3, 0], objs: [['pillar', 3], ['plant', 2], ['glass', 1], ['table', 1], ['lamp', 1]], cnt: [3, 5] }; else if (pent) th = { n: 'PENTHOUSE', pal: [4], objs: [['table', 2], ['lamp', 3], ['plant', 3], ['glass', 2], ['pillar', 1], ['safe', 1]], cnt: [3, 5] };
+  let th; if (lobby) th = { n: 'LOBBY', pal: [3, 0], objs: [['pillar', 3], ['plant', 2], ['glass', 1], ['table', 1], ['lamp', 1], ['sofa', 2]], cnt: [3, 5] }; else if (pent) th = { n: 'PENTHOUSE', pal: [4], objs: [['table', 2], ['lamp', 3], ['plant', 3], ['glass', 2], ['pillar', 1], ['safe', 1], ['sofa', 3], ['shelf', 1]], cnt: [3, 5] };
   else { let tot = 0; for (const t of TW_THEMES) tot += t.w; let r = R() * tot; th = TW_THEMES[0]; for (const t of TW_THEMES) { r -= t.w; if (r <= 0) { th = t; break; } } }
-  F = { f, xs, W: xs[nr], nr, th: th.n, pal: TW_PAL[th.pal[(R() * th.pal.length) | 0]], walls: [], objs: [], wrecks: [], holes: [], lights: [], doors: [], pick: [], outer: [{ hp: 30, broken: false, at: 0 }, { hp: 30, broken: false, at: 0 }], seed: (T.seed ^ (f * 2654435761)) >>> 0 };
+  if (T.forceTh) { const ft = TW_THEMES.find(t => t.n === T.forceTh); if (ft) th = ft; }      // (a test hook: every floor of this theme)
+  const pi = th.pal[(R() * th.pal.length) | 0];
+  F = { f, xs, W: xs[nr], nr, th: th.n, pal: TW_PAL[T.forcePal !== undefined ? T.forcePal : pi], wt: twWeather(T.seed, f), decals: [], walls: [], objs: [], wrecks: [], holes: [], lights: [], doors: [], pick: [], outer: [{ hp: 30, broken: false, at: 0 }, { hp: 30, broken: false, at: 0 }], seed: (T.seed ^ (f * 2654435761)) >>> 0 };
   for (let i = 1; i < nr; i++) F.walls.push({ x: xs[i], hp: 80, mx: 80, broken: false, at: 0 });
   for (let i = 0; i < nr; i++) F.doors.push({ x: Math.round(xs[i] + 70 + R() * (xs[i + 1] - xs[i] - 140)), k: i % 2 ? 'elev' : 'stairs', room: i });      // (every room has a way up and down: stairs in the even rooms, an elevator in the odd ones)
-  for (let x = 44; x < F.W - 30; x += 84) F.lights.push({ x, ok: true });
+  for (let x = 44; x < F.W - 30; x += 84) F.lights.push({ x, ok: true, hp: 30 });
   const near = (x, w) => F.doors.some(d => Math.abs(d.x - x) < 34 + w / 2) || F.objs.some(o => Math.abs(o.x - x) < (TW_K[o.k].w + w) / 2 + 3 && !o.on);
   const pick = () => { let tot = 0; for (const o of th.objs) tot += o[1]; let r = R() * tot; for (const o of th.objs) { r -= o[1]; if (r <= 0) return o[0]; } return th.objs[0][0]; };
-  const add = (k, x) => { const K = TW_K[k], o = { k, x: Math.round(x), hp: K.hp, mx: K.hp, wob: 0, hitAt: -9999 }; F.objs.push(o); return o; };
+  const add = (k, x) => { const K = TW_K[k], o = { k, x: Math.round(x), hp: K.hp, mx: K.hp, wob: 0, hitAt: -9999, v: (twHash(Math.round(x), f * 13 + k.length) * 4) | 0 }; F.objs.push(o); return o; };
   for (let i = 0; i < nr; i++) {
     const a = xs[i] + 26, b = xs[i + 1] - 26, n = th.cnt[0] + ((R() * (th.cnt[1] - th.cnt[0] + 1)) | 0);
     for (let q = 0; q < n; q++) {
@@ -71,10 +77,10 @@ function twFloorData(f) {
 
 // ---- the match: a new building (twInit, from startMatch), a new round (twRound, from beginRound: floor 50 again, the damage stays)
 function twInit() {
-  vs.map = 'tower'; vs.tw = { seed: (Math.random() * 1e9) | 0, fl: {}, fMe: TW_N, fFoe: TW_N, q: [], px: 0, dx: 0, pHp: 0, dHp: 0, dHit: -9999, dDown: 0, pDown: 0, swingAt: 0, fade: null, banner: null, away: false, awayX: 0, arrX: 0, via: 'stairs', lastDoor: 0, hint: 0, on: false, expl: [], doorAt: -1 };
+  vs.map = 'tower'; vs.tw = { seed: (Math.random() * 1e9) | 0, fl: {}, fMe: TW_N, fFoe: TW_N, q: [], px: 0, dx: 0, pHp: 0, dHp: 0, dHit: -9999, dDown: 0, pDown: 0, swingAt: 0, fade: null, banner: null, away: false, awayX: 0, arrX: 0, via: 'stairs', lastDoor: 0, hint: 0, on: false, expl: [], doorAt: -1, flashes: [], haze: null };
 }
 function twRound(now) {
-  const T = vs.tw, d = dummy; T.fMe = T.fFoe = TW_N; T.q.length = 0; T.away = false; T.fade = null; T.expl.length = 0; const F = twFloorData(TW_N), gap = d ? d.x - wx : 60; wx = twFreeX(F, Math.round((F.xs[1] + F.xs[2]) / 2) - 30, gap); wxv = 0; wvx = 0;
+  const T = vs.tw, d = dummy; T.fMe = T.fFoe = TW_N; T.q.length = 0; T.away = false; T.fade = null; T.haze = null; T.flashes = []; T.expl.length = 0; const F = twFloorData(TW_N), gap = d ? d.x - wx : 60; wx = twFreeX(F, Math.round((F.xs[1] + F.xs[2]) / 2) - 30, gap); wxv = 0; wvx = 0;
   if (d) { d.x = wx + gap; d.twAway = false; }
   T.px = wx; T.dx = d ? d.x : 0; T.pHp = vs.hp; T.dHp = d ? d.hp : 0; T.dHit = d ? d.hitAt : -9999; T.dDown = d ? d.down || 0 : 0; T.pDown = gDownUntil; T.on = true; T.banner = { txt: 'FLOOR ' + TW_N, at: now };
 }
@@ -85,110 +91,8 @@ function twFreeX(F, x, gap) {      // a place for you (and the enemy gap px in f
 }
 function twClearWorld() { deb = []; lit = []; smoke = []; decals = []; drops = []; pools = []; gibs = []; sparks = []; }      // (what lay about the floor you left is gone)
 
-// ---------------------------------------------------------------- what is seen
-const twR = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
-function twSky(F, now, X, Y, W, H) {      // the city outside, in the rectangle X, Y, W, H: a night sky that gets darker (and then starry) the higher the floor, a skyline that sinks away as you climb, clouds in the middle floors, a moon
-  const f = F.f, a = (f - 1) / (TW_N - 1), top = twMix('#16204f', '#04061a', a), bot = twMix('#4a5f9a', '#16204a', a);
-  for (let i = 0; i < 8; i++) twR(X, Y + Math.floor(H * i / 8), W, Math.ceil(H / 8) + 1, twMix(top, bot, i / 7));
-  const cx = Math.round(VW / 2);
-  if (a > 0.45) for (let i = 0; i < 46; i++) { const sx = (i * 977 + 131) % 1021 / 1021 * (VW + 40) - 20 - (wx * 0.03) % (VW + 40), yy = Y + ((i * 523) % 97) / 97 * H * 0.8; ctx.globalAlpha = 0.35 + 0.6 * (((i * 31 + (now / 700 | 0)) % 5) / 5); twR(sx < 0 ? sx + VW + 40 : sx, yy, 1, 1, '#eef3ff'); } ctx.globalAlpha = 1;
-  if (a > 0.3) { const mx = ((VW * 0.78 - wx * 0.05) % (VW + 60) + VW + 60) % (VW + 60) - 20, my = Y + 14; twR(mx - 6, my - 2, 12, 8, '#f1efe0'); twR(mx - 4, my - 4, 8, 12, '#f1efe0'); twR(mx - 2, my, 2, 2, '#d9d6c2'); twR(mx + 2, my + 3, 2, 2, '#d9d6c2'); }
-  const cd = Math.max(0, 1 - Math.abs(f - 26) / 15);
-  if (cd > 0) for (let i = 0; i < 6; i++) { const wc = 38 + (i * 13) % 30, px = (((i * 97 + now * 0.005 * (1 + i % 3) - wx * 0.08) % (VW + 120)) + VW + 120) % (VW + 120) - 60, py = Y + 6 + (i * 23) % Math.max(8, H - 26); ctx.globalAlpha = 0.18 + 0.3 * cd; twR(px, py, wc, 6, '#dfe8ff'); twR(px + 6, py - 4, wc - 14, 5, '#dfe8ff'); twR(px + 12, py + 6, wc - 24, 3, '#b9c6ee'); ctx.globalAlpha = 1; }
-  if (f < 36) {      // (the neighbouring buildings: tall near the street, below you higher up)
-    const k = 0.12, i0 = Math.floor((wx * k - cx) / 22) - 1, base = Math.max(4, (36 - f) * 2.1), bt = Y + H;
-    for (let i = i0; i < i0 + Math.ceil(VW / 22) + 3; i++) {
-      const bw = 15 + ((i * 7) % 9 + 9) % 9, bh = Math.min(H - 2, base + (((i * 53) % 31) + 31) % 31), bx = cx + i * 22 - wx * k; twR(bx, bt - bh, bw, bh, '#0d1124');
-      for (let q = 0; q < bh - 4; q += 5) for (let p = 2; p < bw - 2; p += 4) if ((((i * 31 + q * 7 + p * 13) % 11) + 11) % 11 < 4) twR(bx + p, bt - bh + 3 + q, 2, 2, '#ffd27a');
-    }
-  }
-}
+// ---------------------------------------------------------------- what is seen: see towerart.js (twBackdrop, twFront)
 function twLightFrac(F) { let n = 0; for (const l of F.lights) if (l.ok) n++; let m = n, t = F.lights.length; for (const o of F.objs) if (TW_K[o.k].lt) { t++; if (o.hp > 0) m++; } return t ? m / t : 1; }
-function twDrawObj(o, sx, now) {      // one piece of furniture, standing with its feet at the floor line (gy); a hurt piece shakes, then shows cracks
-  const K = TW_K[o.k], wo = now < o.wob ? ((now / 40 | 0) % 2 ? 1 : -1) : 0, x = Math.round(sx + wo), by = o.on ? gy - TW_K[o.on.k].h : gy;
-  switch (o.k) {
-    case 'desk': twR(x - 17, by - 16, 34, 3, '#c28a46'); twR(x - 16, by - 13, 32, 13, '#8a5a2b'); twR(x + 5, by - 12, 10, 11, '#6d4421'); twR(x + 9, by - 8, 2, 2, '#d9c07a'); twR(x - 16, by - 13, 32, 1, '#a0693a'); break;
-    case 'chair': twR(x - 5, by - 15, 3, 9, '#2a2d3d'); twR(x - 5, by - 7, 10, 3, '#3a3f55'); twR(x - 1, by - 4, 2, 3, '#9aa2b8'); twR(x - 5, by - 1, 10, 1, '#6d7488'); break;
-    case 'table': twR(x - 20, by - 14, 40, 3, '#c9a36a'); twR(x - 18, by - 11, 3, 11, '#8a5a2b'); twR(x + 15, by - 11, 3, 11, '#8a5a2b'); twR(x - 20, by - 14, 40, 1, '#e0bd83'); break;
-    case 'computer': twR(x - 6, by - 12, 12, 8, '#2b2f3a'); twR(x - 5, by - 11, 10, 6, (now / 900 | 0) % 7 ? '#7fd0ff' : '#4a9ad0'); twR(x - 1, by - 4, 2, 3, '#9aa2b8'); twR(x - 5, by - 1, 10, 1, '#9aa2b8'); break;
-    case 'lamp': twR(x - 1, by - 38, 2, 38, '#3a3f55'); twR(x - 4, by - 42, 8, 5, o.hp > 0 ? '#ffd27a' : '#6d6a5a'); twR(x - 3, by - 1, 6, 1, '#3a3f55'); break;
-    case 'glass': twR(x - 3, by - 50, 6, 50, 'rgba(159,216,255,.30)'); twR(x - 3, by - 50, 1, 50, '#9fd8ff'); twR(x + 2, by - 50, 1, 50, '#9fd8ff'); twR(x - 3, by - 50, 6, 1, '#9fd8ff'); twR(x - 1, by - 40, 1, 12, 'rgba(255,255,255,.5)'); break;
-    case 'vending': twR(x - 10, by - 42, 20, 42, '#c0392b'); twR(x - 8, by - 39, 12, 22, '#1b2a3a'); for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) twR(x - 7 + c * 4, by - 37 + r * 7, 3, 4, ['#f1c40f', '#e8f6ff', '#2ecc71'][(r + c) % 3]); twR(x + 5, by - 39, 4, 22, '#2a2d3d'); twR(x + 6, by - 35, 2, 2, '#e8f6ff'); twR(x + 6, by - 30, 2, 2, '#f1c40f'); twR(x - 7, by - 12, 12, 6, '#111'); twR(x - 10, by - 42, 20, 2, '#e8f6ff'); break;
-    case 'safe': twR(x - 9, by - 24, 18, 24, '#4a5064'); twR(x - 7, by - 22, 14, 20, '#6d7488'); twR(x - 2, by - 14, 5, 5, '#9aa2b8'); twR(x - 1, by - 13, 3, 3, '#2a2d3d'); twR(x + 3, by - 19, 2, 8, '#c9b27a'); break;
-    case 'pillar': twR(x - 7, by - K.h, 14, K.h, '#8f8aa0'); twR(x - 7, by - K.h, 3, K.h, '#aaa5bc'); twR(x + 4, by - K.h, 3, K.h, '#6d6882'); twR(x - 9, by - K.h, 18, 4, '#7a7590'); twR(x - 9, by - 4, 18, 4, '#7a7590'); break;
-    case 'gas': twR(x - 6, by - 22, 12, 20, '#c0392b'); twR(x - 5, by - 24, 10, 2, '#a8321f'); twR(x - 2, by - 27, 4, 3, '#9aa2b8'); twR(x - 5, by - 2, 10, 2, '#2a2a30'); twR(x - 4, by - 15, 8, 6, '#f3e9c6'); twR(x - 1, by - 14, 2, 4, '#e07b00'); twR(x - 5, by - 21, 2, 18, '#e0594a'); break;
-    case 'extinguisher': twR(x - 3, by - 12, 6, 12, '#c0392b'); twR(x - 2, by - 15, 4, 3, '#2a2a30'); twR(x + 2, by - 13, 3, 1, '#2a2a30'); twR(x - 2, by - 8, 4, 3, '#ffffff'); break;
-    case 'rack': twR(x - 8, by - 40, 16, 40, '#2b2f3a'); for (let i = 0; i < 6; i++) { twR(x - 6, by - 37 + i * 6, 12, 3, '#1b1f28'); twR(x + 3, by - 36 + i * 6, 2, 1, ((now / 300 | 0) + i + (o.x | 0)) % 4 ? '#2ecc71' : '#e74c3c'); } break;
-    case 'crate': twR(x - 8, by - 16, 16, 16, '#b07a3a'); twR(x - 8, by - 16, 16, 2, '#8a5a2b'); twR(x - 8, by - 2, 16, 2, '#8a5a2b'); twR(x - 8, by - 16, 2, 16, '#8a5a2b'); twR(x + 6, by - 16, 2, 16, '#8a5a2b'); twR(x - 6, by - 14, 12, 1, '#5a3a1a'); break;
-    default: twR(x - 4, by - 7, 8, 7, '#8a4a2b'); twR(x - 1, by - 20, 2, 13, '#2f7d4f'); twR(x - 5, by - 17, 5, 4, '#3f9d63'); twR(x + 1, by - 22, 5, 4, '#5bb97a'); twR(x - 4, by - 13, 4, 3, '#2f7d4f');
-  }
-  if (o.hp < o.mx * 0.62 && K.h > 10) { const hh = K.h; ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(x - 2, by - hh * 0.7, 1, hh * 0.35); ctx.fillRect(x - 1, by - hh * 0.4, 2, 1); ctx.fillRect(x + 1, by - hh * 0.6, 1, hh * 0.3); }
-}
-function twDrawWreck(w, sx) { const R = twRng(w.x * 7 + 3); for (let i = 0; i < w.n; i++) twR(sx + (R() - 0.5) * w.w, gy - 1 - ((R() * 3) | 0), 1 + ((R() * 3) | 0), 1 + ((R() * 2) | 0), w.c[i % w.c.length]); }
-function twBackdrop(now) {      // everything behind the fighters: the slabs, the city in the windows, the wall, the lights, the doors, the inner walls, the glass, the furniture and the wrecks, the ceiling, the carpet with its craters; the floor of the fight is vs.tw.fMe
-  const T = vs.tw, F = twFloorData(T.fMe), cx = Math.round(VW / 2), yc = gy - TW_CEIL, yf = gy - 7, x0 = cx - Math.round(wx), x1 = x0 + F.W, P = F.pal;
-  ctx.fillStyle = '#15151b'; ctx.fillRect(-8, -8, VW + 16, VH + 16);
-  twSky(F, now, 0, Math.max(0, yc - 4), VW, yf - Math.max(0, yc - 4));      // (outside the building: the sky itself, right to the edges)
-  const a = Math.max(0, x0), b = Math.min(VW, x1);
-  if (b > a) {
-    twR(a, yc, b - a, yf - yc, P.w); for (let x = Math.floor((a - x0) / 32) * 32; x < b - x0; x += 32) if (x + x0 >= a) twR(x + x0, yc, 1, yf - yc, P.w2);
-    ctx.save(); ctx.beginPath(); const win = [];
-    for (let i = Math.floor((a - x0 - 20) / 64) - 1; i <= Math.ceil((b - x0 - 20) / 64) + 1; i++) { const wxw = 20 + 64 * i; if (wxw < 26 || wxw > F.W - 26 || F.doors.some(d => Math.abs(d.x - wxw) < 36)) continue; win.push(wxw); ctx.rect(x0 + wxw - 19, yc + 12, 38, TW_CEIL - 40); }
-    ctx.clip(); twSky(F, now, a, yc + 12, b - a, TW_CEIL - 40); ctx.restore();
-    for (const w of win) { const sx = x0 + w; twR(sx - 21, yc + 10, 42, 3, '#2a2d3d'); twR(sx - 21, yc + 10, 2, TW_CEIL - 36, '#2a2d3d'); twR(sx + 19, yc + 10, 2, TW_CEIL - 36, '#2a2d3d'); twR(sx - 21, yc + TW_CEIL - 28, 42, 3, '#2a2d3d'); twR(sx - 1, yc + 12, 2, TW_CEIL - 40, '#2a2d3d'); twR(sx - 12, yc + 18, 2, 8, 'rgba(255,255,255,.22)'); twR(sx - 9, yc + 26, 2, 8, 'rgba(255,255,255,.16)'); }
-    twR(a, yf - 4, b - a, 4, P.base);
-    for (const l of F.lights) { const sx = x0 + l.x; if (sx < a - 40 || sx > b + 40) continue; if (l.ok) { ctx.globalAlpha = 0.11; twR(sx - 4, yc, 8, 12, '#fff3c8'); twR(sx - 10, yc + 12, 20, 14, '#fff3c8'); twR(sx - 18, yc + 26, 36, 30, '#fff3c8'); ctx.globalAlpha = 1; } }
-    for (const o of F.objs) if (TW_K[o.k].lt && o.hp > 0) { const sx = x0 + o.x; ctx.globalAlpha = 0.1; twR(sx - 14, gy - 52, 28, 46, '#ffe9a8'); ctx.globalAlpha = 1; }
-    const fr = twLightFrac(F); if (fr < 0.95) { ctx.globalAlpha = 0.5 * (1 - fr); twR(a, yc, b - a, yf - yc, '#03050f'); ctx.globalAlpha = 1; }
-  }
-  for (const d of F.doors) { const sx = x0 + d.x; if (sx < -30 || sx > VW + 30) continue; twDrawDoor(F, d, sx, now); }
-  for (let i = 0; i < F.walls.length; i++) { const w = F.walls[i], sx = x0 + w.x; if (sx < -20 || sx > VW + 20) continue; twDrawWall(w, sx, yc, now); }
-  twDrawOuter(F, x0, 0, yc, now); twDrawOuter(F, x1, 1, yc, now);
-  for (const w of F.wrecks) { const sx = x0 + w.x; if (sx > -20 && sx < VW + 20) twDrawWreck(w, sx); }
-  for (const o of F.objs) { const sx = x0 + o.x; if (sx > -30 && sx < VW + 30) twDrawObj(o, sx, now); }
-  for (const p of F.pick) { const sx = x0 + p.x; if (sx > -10 && sx < VW + 10) { const bob = Math.round(Math.sin(now / 200 + p.x) * 1.2); twR(sx - 2, gy - 8 + bob, 4, 6, '#e74c3c'); twR(sx - 2, gy - 8 + bob, 4, 1, '#ecf0f1'); twR(sx - 1, gy - 6 + bob, 2, 2, '#ecf0f1'); } }
-  twDrawCeilFloor(F, x0, yc, now);
-}
-function twDrawDoor(F, d, sx, now) {      // the stairs (a green door with the steps) and the elevator (two steel doors with its floor display); near one, how to use it
-  const T = vs.tw, x = Math.round(sx), top = gy - 52, near = Math.abs(wx - d.x) < 24 && T.fMe === F.f;
-  if (d.k === 'stairs') {
-    twR(x - 14, top - 8, 28, 60, '#2a2f3a'); twR(x - 12, top - 6, 24, 58, '#1f3a2c'); for (let i = 0; i < 6; i++) twR(x - 9 + i * 3, gy - 6 - i * 6, 18 - i * 3, 2, '#9fd8b0'); twR(x - 10, top - 12, 20, 6, '#2ecc71'); twR(x - 6, top - 10, 12, 2, '#ffffff');
-  } else {
-    twR(x - 15, top - 8, 30, 60, '#8a93a8'); twR(x - 12, top - 5, 11, 57, near ? '#b9c3d6' : '#a5aec2'); twR(x + 1, top - 5, 11, 57, near ? '#b9c3d6' : '#a5aec2'); twR(x - 1, top - 5, 2, 57, '#4a5064'); twR(x - 8, top - 16, 16, 8, '#111'); const s = String(F.f).padStart(2, ' '); pxt(s, x, top - 9, '#ff8a3a', 8, 'center'); twR(x + 16, gy - 28, 2, 6, ((now / 400 | 0) % 2) ? '#ffd27a' : '#6d5f3a');
-  }
-  if (near) { pxt(d.k === 'stairs' ? 'STAIRS' : 'ELEVATOR', x, top - 14, '#ffffff', 8, 'center'); T.prompt = { at: now, up: F.f < TW_N ? 'JUMP = UP ' + (d.k === 'stairs' ? 1 : 5) : '', dn: F.f > 1 ? 'CROUCH = DOWN ' + (d.k === 'stairs' ? 1 : 5) : '' }; }      // (the name over the door; how to use it is written by twOverlay, under the floor)
-}
-function twDrawWall(w, sx, yc, now) {      // an inner wall: a slab from the ceiling to the floor that is solid until it breaks; hurt, it cracks; broken, two ragged stumps and a heap of rubble
-  const x = Math.round(sx), hw = 5, yf = gy - 7;
-  if (!w.broken) {
-    twR(x - hw, yc, 2 * hw, yf - yc + 8, '#8a8a92'); twR(x - hw, yc, 2, yf - yc + 8, '#a5a5ad'); twR(x + hw - 2, yc, 2, yf - yc + 8, '#6d6d75'); const d = 1 - w.hp / w.mx;
-    if (d > 0.2) { ctx.fillStyle = 'rgba(0,0,0,.55)'; for (let i = 0; i < 2 + Math.floor(d * 6); i++) { const yy = yc + 6 + ((i * 37 + w.x) % (yf - yc - 14)); ctx.fillRect(x - hw + (i % 2) * 4, yy, 3 + i % 3, 1); ctx.fillRect(x - hw + 2 + (i % 3), yy + 1, 1, 4); } }
-    if (now - w.at < 220) twR(x - hw - 1, yc, 2 * hw + 2, yf - yc + 8, 'rgba(255,255,255,.25)');
-  } else {
-    for (let i = 0; i < 9; i++) { const k = ((w.x * 7 + i * 13) % 9) / 9; twR(x - hw + (i % 2) * 4, yc, 3 + (i % 3), 6 + k * 22, '#8a8a92'); twR(x - hw + (i % 2) * 5, yf + 8 - 6 - k * 14, 3 + (i % 3), 6 + k * 14, '#8a8a92'); }
-    twR(x - 2, yc + 2, 1, 30, '#b0764a'); twR(x + 3, yf - 18, 1, 26, '#b0764a');
-  }
-}
-function twDrawOuter(F, sx, side, yc, now) {      // the glass wall at an end of the floor
-  const O = F.outer[side], x = Math.round(sx), yf = gy - 7;
-  twR(x + (side ? -2 : -10), yc - 4, 12, 4, '#2a2d3d'); twR(x + (side ? -2 : -10), yf, 12, 14, '#2a2d3d');
-  if (!O.broken) { twR(x - 3, yc, 6, yf - yc, 'rgba(150,210,255,.38)'); twR(x - 3, yc, 1, yf - yc, '#cfeaff'); twR(x + 2, yc, 1, yf - yc, '#7fb6e0'); for (let y = yc + 8; y < yf; y += 22) twR(x - 3, y, 6, 1, '#7fb6e0'); twR(x - 1, yc + 10, 1, 14, 'rgba(255,255,255,.6)'); const d = 1 - O.hp / 30; if (d > 0.1) { ctx.fillStyle = 'rgba(255,255,255,.8)'; for (let i = 0; i < 3 + Math.floor(d * 8); i++) ctx.fillRect(x - 3 + (i % 2) * 4, yc + 10 + ((i * 29) % (yf - yc - 20)), 2, 1); } }
-  else { for (let i = 0; i < 8; i++) { twR(x - 3 + (i % 2) * 3, yc + (i % 3) * 4, 2, 4 + (i * 5) % 9, 'rgba(150,210,255,.6)'); twR(x - 3 + (i % 2) * 3, yf - 4 - (i * 7) % 9, 2, 4 + (i * 3) % 7, 'rgba(150,210,255,.6)'); } }
-}
-function twDrawCeilFloor(F, x0, yc, now) {
-  const P = F.pal, cl = Math.max(0, x0), cr = Math.min(VW, x0 + F.W), fy = gy - 7, T = vs.tw;
-  if (cr <= cl) return;
-  twR(cl, yc - 6, cr - cl, 6, P.ceil); twR(cl, yc, cr - cl, 1, 'rgba(0,0,0,.35)');
-  for (const l of F.lights) { const sx = x0 + l.x; if (sx > cl - 8 && sx < cr + 8) twR(sx - 7, yc - 1, 14, 3, l.ok ? '#fffbe6' : '#55525a'); }
-  const up = T.fl[F.f + 1]; if (up) for (const h of up.holes) { const sx = x0 + h.x; twR(sx - h.r, yc - 6, 2 * h.r, 7, '#08080c'); for (let i = 0; i < 7; i++) twR(sx - h.r + 2 + i * (h.r * 2 - 6) / 6, yc + 1, 2, 2 + (i * 5) % 3, P.ceil); }      // (a hole in the ceiling: the crater of the floor above)
-  twR(cl, fy, cr - cl, 16, P.car); for (let x = Math.floor((cl - x0) / 16) * 16; x < cr - x0; x += 16) if (x + x0 >= cl - 1) twR(x + x0, fy + 5, 8, 2, P.car2); twR(cl, fy, cr - cl, 1, 'rgba(255,255,255,.12)'); twR(cl, fy + 15, cr - cl, 1, '#0b0b10'); twR(cl, fy + 16, cr - cl, 4, '#2a2a32');
-  for (const h of F.holes) {
-    const sx = x0 + h.x; if (sx + h.r < cl || sx - h.r > cr) continue; const k = Math.min(1, (now - h.at) / 280);
-    twR(sx - h.r * k, fy, 2 * h.r * k, 20, '#08080c'); twR(sx - h.r * k + 2, fy + 3, 2 * h.r * k - 4, 6, 'rgba(255,200,110,.10)');
-    for (let i = 0; i < 9; i++) { const q = (i / 8 - 0.5) * 2 * h.r * k; twR(sx + q, fy - 1 - (i * 7) % 3, 3, 2 + (i * 5) % 3, i % 2 ? P.car : P.car2); }
-    ctx.fillStyle = 'rgba(0,0,0,.5)'; for (let i = 0; i < 5; i++) { ctx.fillRect(sx + h.r + 2 + i * 5, fy + 2 + (i % 2) * 5, 4, 1); ctx.fillRect(sx - h.r - 6 - i * 5, fy + 3 + (i % 2) * 4, 4, 1); }
-  }
-}
 
 // ---------------------------------------------------------------- what breaks
 function twHurtMe(dm, now, safe) {      // damage to you from the building (a fall never kills: safe)
@@ -217,14 +121,15 @@ function twBreakObj(F, o, now) {
   F.wrecks.push({ x: o.x, w: K.w, n: Math.max(3, K.w >> 2), c: K.cols }); if (F.wrecks.length > 70) F.wrecks.shift();
   if (vis) { debBurst(o.x, by + K.h * 0.5, 10 + (K.w >> 2), K.cols, 110 + K.h); debBurst(o.x, by + 3, 4, K.cols, 60, 2); snd('twbreak', K.s); if (K.sp) spark(o.x, gy - by - K.h * 0.5, 8, ['#7fd0ff', '#ffffff', '#ffd34d'], false, 1); shakeUntil = Math.max(shakeUntil, now + 90); shakeAmp = Math.max(shakeAmp, o.k === 'pillar' ? 4 : 1); }
   if (K.drop) F.pick.push({ x: o.x + 9 });
-  if (o.k === 'pillar' && vis) { puff(o.x - 6, 5); puff(o.x + 6, 5); debBurst(o.x, 40, 12, ['#b8b0a0', '#8a8478'], 120); shockAt(o.x, 160, 70, 0.6); }
+  if (K.splash) { twDecal(F, 'puddle', o.x, 0); if (vis) debBurst(o.x, 16, 10, ['#9fd8ff', '#cfeaff', '#ffffff'], 100); }
+  if (o.k === 'pillar' && vis) { puff(o.x - 6, 5); puff(o.x + 6, 5); debBurst(o.x, 40, 12, ['#b8b0a0', '#8a8478'], 120); shockAt(o.x, 160, 70, 0.6); twHaze(now, 0.4); }
   for (const c of F.objs.slice()) if (c.on === o) twBreakObj(F, c, now);
   if (K.boom) twExplode(F, o.x, K.boom[0], K.boom[1], now);
 }
 function twWallHit(F, w, p, now) {      // an inner wall takes p; at 0 it breaks (true)
   if (w.broken || p <= 0) return false; w.hp -= p; w.at = now; const T = vs.tw;
   if (T.fMe === F.f) { debBurst(w.x, 24, 3 + ((p / 8) | 0), ['#8a8a92', '#6d6d75', '#b8b0a0'], 70); snd('twbreak', 3); }
-  if (w.hp <= 0) { w.broken = true; if (T.fMe === F.f) { debBurst(w.x, 30, 22, ['#8a8a92', '#6d6d75', '#b8b0a0'], 150); puff(w.x - 6, 6); puff(w.x + 6, 6); shockAt(w.x, 220, 90, 0.7); shakeUntil = Math.max(shakeUntil, now + 260); shakeAmp = Math.max(shakeAmp, 4); say('WALL DOWN', w.x, '#ffd34d', 8, now); } return true; }
+  if (w.hp <= 0) { w.broken = true; if (T.fMe === F.f) { debBurst(w.x, 30, 22, ['#8a8a92', '#6d6d75', '#b8b0a0'], 150); puff(w.x - 6, 6); puff(w.x + 6, 6); shockAt(w.x, 220, 90, 0.7); shakeUntil = Math.max(shakeUntil, now + 260); shakeAmp = Math.max(shakeAmp, 4); say('WALL DOWN', w.x, '#ffd34d', 8, now); twHaze(now, 0.5); twFlash(w.x, now, [255, 240, 210], 36); } twLightsShock(F, w.x, 110, 30, now); return true; }
   return false;
 }
 function twOuterHit(F, side, p, now) {      // the glass at an end of the floor takes p; at 0 it shatters (true)
@@ -232,8 +137,9 @@ function twOuterHit(F, side, p, now) {      // the glass at an end of the floor 
   if (O.hp <= 0) { O.broken = true; if (T.fMe === F.f) { debBurst(x, 28, 26, ['#e8f6ff', '#9fd8ff', '#2c63c9'], 170); spark(x, gy - 30, 12, ['#ffffff', '#9fd8ff'], true, side ? 1 : -1); snd('twbreak', 1); shakeUntil = Math.max(shakeUntil, now + 200); shakeAmp = Math.max(shakeAmp, 3); say('GLASS!', x, '#9fd8ff', 8, now); } return true; }
   return false;
 }
-function twImpactNear(F, x, p, now, reach) {      // a blow lands at x: what stands close takes part of it
+function twImpactNear(F, x, p, now, reach) {      // a blow lands at x: what stands close takes part of it (a hard one shakes the lights above and chips the wall behind)
   for (const o of F.objs.slice()) if (Math.abs(o.x - x) < reach + TW_K[o.k].w / 2) twDamageObj(F, o, p, now);
+  if (p >= 12) twLightsShock(F, x, 54, p * 0.45, now); if (p >= 14) twDecal(F, 'chip', x + Math.random() * 20 - 10, 14 + Math.random() * 40);
 }
 function twSweep(x0, x1, p, now) {      // a beam or a wave crosses the floor between x0 and x1: everything in its way takes p (Ryu's ULTIMATE)
   if (!twOn()) return; const F = twFloorData(vs.tw.fMe), lo = Math.min(x0, x1), hi = Math.max(x0, x1);
@@ -242,7 +148,8 @@ function twSweep(x0, x1, p, now) {      // a beam or a wave crosses the floor be
 }
 function twExplode(F, x, pw, rad, now) {      // a gas tank or an extinguisher goes off: an area blast that hurts both fighters, breaks what is near, sets off the next one and, from 50 up, opens the floor
   const T = vs.tw; if (T.expl.length > 5) return; T.expl.push(1); const vis = T.fMe === F.f, d = dummy;
-  if (vis) { divFx.push({ wx: x, y: gy - 22, born: now, big: true }); if (divFx.length > 8) divFx.shift(); spark(x, gy - 18, 20, ['#ffffff', '#ffd34d', '#ff7a2a'], true, 1); puff(x, 8); gritAt(x, 14, 130, 0); shockAt(x, pw * 5, rad + 30, 0.9); flash(now, 150, 0.3); shakeUntil = Math.max(shakeUntil, now + 380); shakeAmp = Math.max(shakeAmp, 5); snd('twbreak', 5); hitStop(60); }
+  if (vis) { divFx.push({ wx: x, y: gy - 22, born: now, big: true }); if (divFx.length > 8) divFx.shift(); spark(x, gy - 18, 20, ['#ffffff', '#ffd34d', '#ff7a2a'], true, 1); puff(x, 8); gritAt(x, 14, 130, 0); shockAt(x, pw * 5, rad + 30, 0.9); flash(now, 150, 0.3); shakeUntil = Math.max(shakeUntil, now + 380); shakeAmp = Math.max(shakeAmp, 5); snd('twbreak', 5); hitStop(60); twHaze(now, 0.7); }
+  twDecal(F, 'scorch', x, 30); twDecal(F, 'scorch', x, 6); twLightsShock(F, x, rad + 50, pw * 1.2, now); if (vis) twFlash(x, now, [255, 160, 70], 52);
   if (vis && vs.ph === 'fight') { const dd = Math.abs(wx - x); if (dd < rad) { const k = 1 - dd / rad; twHurtMe(Math.max(1, Math.round(pw * 0.4 * k)), now, false); wxv += (wx >= x ? 1 : -1) * 260 * k; say('BLAST', wx, '#ff8a3a', 8, now); } }
   if (d && d.ko < 0 && !T.away && T.fFoe === F.f) { const dd = Math.abs(d.x - x); if (dd < rad) { const k = 1 - dd / rad; d.vx += (d.x >= x ? 1 : -1) * 300 * k; twHurtFoe(Math.max(1, Math.round(pw * 0.4 * k)), now, false); d.hitAt = now; say('BLAST', d.x, '#ff8a3a', 8, now); } }
   for (const o of F.objs.slice()) { const dd = Math.abs(o.x - x); if (dd < rad) twDamageObj(F, o, pw * (1 - dd / rad) * 2.4, now); }
@@ -280,6 +187,7 @@ function twCeiling(who, n, now, x) {      // a launch breaks the ceiling: the vi
   const T = vs.tw, f = who === 'foe' ? T.fFoe : T.fMe; if (f >= TW_N) return; n = Math.min(n, TW_N - f); if (n < 1) return;
   for (let i = 1; i <= n; i++) twAddHole(f + i, x, 22, now);
   debBurst(x, 70, 16, ['#8a8a92', '#6d6d75', '#b8b0a0', '#c9b27a'], 140); puff(x, 8); shakeUntil = now + 300; shakeAmp = 5; snd('twbreak', 4); say('CEILING!', x, '#ffd34d', 8, now); hitStop(50);
+  twLightsShock(twFloorData(f), x, 100, 60, now); if (T.fMe === f) { twHaze(now, 0.6); twFlash(x, now, [255, 240, 210], 36); }
   if (who === 'foe') { const d = dummy; T.fFoe = f + n; T.away = true; d.twAway = true; T.awayX = x + 38; T.lastFallX = x; twPlanArrival(now); }
   else { const d = dummy, foeHere = !!d && d.ko < 0 && !T.away; T.fMe = f + n; T.lastFallX = x; twFloorSwitch(now, x + 38); snd('twbreak', 7); if (foeHere) { T.away = true; d.twAway = true; T.awayX = d.x; } T.lastFallX = null; twPlanArrival(now); }
 }
@@ -289,6 +197,7 @@ function twSlam(who, n, now, x) {      // a slam: the floor under the victim bre
   n = Math.min(n, f - 1); const r = Math.min(46, 20 + 4 * n), side = who === 'foe' ? (x >= wx ? 1 : -1) : (dummy && x >= dummy.x ? 1 : -1), hx = Math.round(x + side * r * 0.6);      // (the crater is centred a little AWAY from the attacker, who stands next to the victim: he does not fall unless he walks in)
   for (let i = 0; i < n; i++) twAddHole(f - i, hx, r, now);
   debBurst(x, 6, 18 + 2 * n, ['#8a8a92', '#6d6d75', '#b8b0a0', '#6d3b2c'], 150 + 10 * n); puff(x - 8, 6); puff(x + 8, 6); gritAt(x, 14, 130, 0); shockAt(x, 280, 120, 0.9); snd('twbreak', 4); flash(now, 120, 0.25); shakeUntil = Math.max(shakeUntil, now + 520); shakeAmp = Math.max(shakeAmp, 6); hitStop(70);
+  twLightsShock(twFloorData(f), x, 90 + 20 * n, 30 + 20 * n, now); if (T.fMe === f) { twHaze(now, 0.8); twFlash(x, now, [255, 240, 210], 36); }
   if (who === 'foe') twFoeFall(n, now, x, 'SLAM!'); else twMeFall(n, now, x, 'SLAM!'); return true;
 }
 function twTravel(dir, door, now) {      // the stairs (1 floor) or the elevator (5): you are on another floor, at the same kind of door
@@ -319,7 +228,7 @@ function twFallOut(who, now, side) {      // a fighter went through the broken g
   else { twMeFall(f - 1, now, x); const d = dummy; if (d && d.ko < 0 && T.away) { T.fFoe = f; T.arrX = x; T.via = 'hole'; T.arriveAt = now + 1500; } }
 }
 function twRunQ(e, now) {
-  const T = vs.tw; if (e.k === 'followMe' && T.fMe > 1 && vs.ph === 'fight') { const F1 = twFloorData(1); T.fMe = 1; twFloorSwitch(now, e.x); snd('twbreak', 7); puff(wx, 6); say('DOWN TO THE STREET', wx, '#9fd8ff', 8, now); T.lastFallX = null; twPlanArrival(now); }
+  const T = vs.tw; if (e.k === 'followMe' && T.fMe > 1 && vs.ph === 'fight') { twFloorData(1); T.fMe = 1; twFloorSwitch(now, e.x); snd('twbreak', 7); puff(wx, 6); say('DOWN TO THE STREET', wx, '#9fd8ff', 8, now); T.lastFallX = null; twPlanArrival(now); }
 }
 
 // ---------------------------------------------------------------- every frame (tick: twTick before the training step, twBase right after it, twOverlay after the picture)

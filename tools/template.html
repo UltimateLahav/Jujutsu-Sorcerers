@@ -187,7 +187,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.173</small>
+    <small id="ver">V1.174</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -1546,6 +1546,7 @@ function drawGibs(now) {                      // the flying pieces, the blood in
   for (let i = flashes.length - 1; i >= 0; i--) { const f = flashes[i], a = now - f.born; if (a > 140) { flashes.splice(i, 1); continue; } const r = 4 + a / 140 * 9, sx = Math.round(cx + f.x), sy = Math.round(gy + f.y); ctx.fillStyle = a < 50 ? '#ff9a88' : a < 100 ? '#e8242c' : '#8e0c18'; for (let yy = -Math.round(r); yy <= r; yy++) { const w = Math.floor(Math.sqrt(r * r - yy * yy)); ctx.fillRect(sx - w, sy + yy, 2 * w + 1, 1); } }
 }
 function drawPeds(now, dt, ly) {
+  if (ly === 1 && twOn()) twFront(now, dt);      // (v1.174 the front layer of the skyscraper: vignette, dust in the light, the haze after a blast; no pedestrians in a fight)
   if (!pedsOn()) return; const cx = Math.round(VW / 2);
   for (const p of peds.filter(q => q.layer === ly).sort((a, b) => a.lane - b.lane)) {
     const sx = Math.round(cx + p.x - wx), fy = gy + p.lane, T = HUM[p.t], f = p.mode === 'shock' ? T.shock : (p.mode === 'run' ? T.run : T.walk)[Math.floor(p.ph * 8) % 8];
@@ -4402,6 +4403,7 @@ __GORE__
 __SUKUNA__
 __RYU__
 __TOWER__
+__TOWERART__
 __CHAP2__
 __CHAP2B__
 __CHAP2C__

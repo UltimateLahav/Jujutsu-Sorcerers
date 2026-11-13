@@ -1,5 +1,17 @@
 [
  {
+  "v": "1.174",
+  "t": "THE SKYSCRAPER, REBUILT TO LOOK TOP NOTCH",
+  "n": [
+   "The whole look of the skyscraper map is new: every floor is a hand-shaded pixel-art room with real lighting. Wood-panelled lounges with sofas and paintings, a marble lobby with a gold TOWER sign, white-tiled pantries, cold steel server rooms with blinking racks and hazard stripes, brick storage rooms with shelves and pipes, conference rooms with screens and curtains, and a penthouse with panorama windows.",
+   "The city outside changes with the height: a sunset over the rooftops on the low floors, a starry night with the moon on the high ones and a sea of clouds above everything. Every 6 floors has its own weather: clear, cloudy, rain running on the glass, fog, or a storm with lightning that lights the room.",
+   "LIGHTING: the ceiling lights, lamps, screens and vending machines light the room and the rest is darker. A blast, a slam, a wall coming down or a very hard blow shakes the lights out (glass and sparks); a floor with broken lights stays dark and its doors flash red emergency lights. A blast lights the room for a moment and leaves dust in the air.",
+   "Doors move: the stairs door swings open on the steps and the elevator doors slide apart on a lit cab, with EXIT signs and a floor display. Damage looks real: cracks grow across a wall before it goes, a broken wall leaves stumps with bent rebar and rubble, craters show broken concrete with the glow of the room below, a hole in the ceiling has a sparking cable, glass leaves shards in the frame, and blasts leave scorch marks.",
+   "4 new pieces of furniture: sofa, bookshelf, filing cabinet and water cooler (it spills a puddle). Screens, server lights, vending machines and the elevator display are animated, and glossy floors show reflections.",
+   "SETTINGS > GRAPHICS decides how much of it is on: BACKGROUND DETAIL (FLAT = no lights or weather, FULL = everything), GLOW (a warmer light) and the low-quality switch. At FULL the whole picture costs well under a millisecond a frame."
+  ]
+ },
+ {
   "v": "1.173",
   "t": "NEW MAP: THE SKYSCRAPER",
   "n": [
