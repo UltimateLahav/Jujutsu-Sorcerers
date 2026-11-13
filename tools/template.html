@@ -86,7 +86,7 @@ body.ry #fat,body.c4 #dom,body.c4 #ce,body.c4 #fat,body.c4 #lap,body.c4 #sns{vis
 #vols input{grid-column:1/3;width:100%;height:3.4vh;accent-color:var(--acc)}
 #vols b{font-weight:normal;color:var(--acc)}
 .row{display:flex;gap:2.4vh;flex-wrap:wrap;justify-content:center}
-#vsBtn{border-color:#ff8a7a;color:#ffd0c8}      /* VERSUS: pick the fighters and a grade */
+.mapb{border-color:#7fd0ff;color:#cfe8ff}#vsBtn{border-color:#ff8a7a;color:#ffd0c8}      /* VERSUS: pick the fighters and a grade */
 .vsrow{display:flex;align-items:center;gap:2vh}.vsrow small{width:16vh;text-align:right}
 .mini .card{width:13vh;height:18vh;padding:.7vh}.mini .card b{font-size:.78em;line-height:1.3}.mini .card canvas{height:9vh;width:auto}
 .fgs{display:flex;gap:3.4vh;align-items:flex-end}.fg{display:flex;flex-direction:column;align-items:center;gap:.5vh}.gl{font-size:var(--fs-pb,clamp(5px,1.7vh,9px));color:var(--dim);white-space:nowrap}      /* the fighter pickers: SORCERERS and CURSED SPIRITS side by side */.mini .lock span{font-size:5vh;margin-top:3vh}
@@ -187,7 +187,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.172</small>
+    <small id="ver">V1.173</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -293,7 +293,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <button class="card pp" data-who="cu4"><canvas></canvas><b>RYU</b><i>FREE PLAY</i></button>
   </div>
   <small>FREE PLAY: EVERY MOVE OF EVERY FIGHTER IS FREE HERE, THE ENERGY NEVER RUNS OUT AND YOU CANNOT LOSE (SET > GAME: THE ENEMY CAN FIGHT BACK)</small>
-  <div class="row"><button id="vsBtn">VERSUS MODE</button><button id="selBack">BACK</button></div>
+  <div class="row"><button id="mapBtn1" class="mapb">MAP: STREET</button><button id="vsBtn">VERSUS MODE</button><button id="selBack">BACK</button></div>
 </section>
 
 <section id="versus" class="screen">
@@ -302,7 +302,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
   <div class="vsrow"><small>ENEMY FIGHTER</small><div class="fgs" id="vsFoeRow"></div></div>
   <small>DIFFICULTY: BEAT A GRADE TO UNLOCK THE NEXT</small>
   <div id="grades"></div>
-  <div class="row"><button id="vsGo">FIGHT!</button><button id="vsBack">BACK</button></div>
+  <div class="row"><button id="mapBtn2" class="mapb">MAP: STREET</button><button id="vsGo">FIGHT!</button><button id="vsBack">BACK</button></div>
 </section>
 
 <section id="vsres" class="screen">
@@ -801,6 +801,7 @@ const lacks = key => { if (fredMe() || (vs && vs.me === 'cu4')) return false; if
 let lockSayAt = -1e9;
 function lockPop(now) { if (now - lockSayAt > 1200) { lockSayAt = now; say('LOCKED: BUY IT IN SKILLS', wx, '#ff8a7a', 8, now); } }
 function gateSkills(now) {                    // every frame, before the controls are read: a move you do not own is simply not there (any fighter)
+  if (twOn() && vs.tw.away) { if (domReq) { domReq = false; say('NO TARGET', wx, '#9a9aa8', 8, now); } fatReq = 0; }      // (v1.173 the enemy is on another floor of the skyscraper: nothing that needs him close can start)
   if (crReq && lacks('cr')) { crReq = false; lockPop(now); }
   if (stickDown && lacks('cr')) stickDown = false;
   if ((crReq || stickDown) && stance === 'stand' && !hg && vs && !fredMe() && ce < CE_COST.crouch) { if (crReq) ceDeny(now); crReq = false; stickDown = false; }      // (a crouch costs 3% of the energy)
@@ -1430,7 +1431,7 @@ function show(s) {
   $('versus').classList.toggle('on', s === 'versus');
   $('title').classList.toggle('on', s === 'title'); $('ulog').classList.toggle('on', s === 'ulog'); $('mset').classList.toggle('on', s === 'mset'); $('codes').classList.toggle('on', s === 'codes');
   $('select').classList.toggle('on', s === 'select');
-  $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves'); if (s === 'select') cuSelRefresh();
+  $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves'); if (s === 'select') cuSelRefresh(); if (s === 'select' || s === 'versus') mapBtns();
   cv.style.display = s === 'play' || s === 'story' ? 'block' : 'none';
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
@@ -2454,7 +2455,7 @@ function buildGrades() {                       // the six grade buttons: locked 
   GRADES.forEach((g, i) => { const b = document.createElement('button'); b.className = 'gr' + (i === vsSel ? ' sel' : '') + (i > sv.un ? ' lk' : ''); b.disabled = i > sv.un; b.dataset.g = i; b.innerHTML = g.name + '<small>' + (i > sv.un ? 'LOCKED' : [0, 1, 2].map(k => '<span class="star' + (k < sv.st[i] ? '' : ' off') + '"></span>').join('')) + '</small>'; b.addEventListener('click', () => { vsSel = i; buildGrades(); }); box.appendChild(b); });
 }
 function startMatch(gi, story, retry, foe) { vs = { story: story === 'c3' ? 'c3' : !!story, gi, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: story ? 1e9 : ROUND_MS, hp: PHP, sh: PHP, hist: [], res: null, retry: retry | 0, me: story ? (foe === 'gojo' || story === 'c3' ? 'yuji' : 'gojo') : vsPick.me, foe: story ? (foe || 'verity') : vsPick.foe, tn: !!story && (foe === 'gojo' || story === 'c3'), c3: story === 'c3' };      // (a story fight against Gojo is the training of part 2: you are Yuji, tn = the training's limits; 'c3' = chapter 2's fight against Verity: you are Yuji with the same limits; vs.story keeps the word, so REMATCH starts the same fight)
-  vs.inv = !story && vs.me === vs.foe; beginRound(pnow()); }      // (retry: the story fight again after a failed red)
+  vs.inv = !story && vs.me === vs.foe; if (twWant && !story) twInit(); twWant = false; beginRound(pnow()); }      // (retry: the story fight again after a failed red)
 function beginRound(now) {                     // a fresh round: the scene is reset, the enemy steps in, "ROUND n" and "FIGHT!"
   const keep = vs, gore = keep.story && keep.foe === 'cat' ? [gibs, drops, decals, pools] : null; show('play'); vs = keep; if (gore) [gibs, drops, decals, pools] = gore; ceReset(); const t = pnow(), G = GRADES[vs.gi]; if (vs.c3) c3Begin(t);      // (chapter 2's fight: the street and Verity's STOP are set up, see chap2.js)
   Object.assign(vs, { ph: 'intro', t0: t, tl: vs.story ? 1e9 : ROUND_MS, hp: PHP, sh: PHP, hist: [], seenAtk: -1, seenAt: 0, seenK: 0, rolled: true, whiffAt: -1, prevAtk: -1, hitAt: -9999, why: '', who: '', koAt: 0, crater: null }); blindOff = false; bfo = null; bfp = false;
@@ -2463,6 +2464,7 @@ function beginRound(now) {                     // a fresh round: the scene is re
   $('vsres').classList.remove('on');      // (REMATCH and NEXT start a new fight: the result screen goes away. Since v7.12 this line had slipped into a comment, so the result screen stayed on top of the new fight)
   netPull = null; ripRun = null; lagRun = null; vp = vpNew(); cp = cpNew(); hg = null; pwFx.length = 0; tz = null; lk = 0; js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; wvx = 0; deb = []; lit = []; vs.rag = null; vh = null; ac = null; acWin = 0; acGo = false; acPend = -1; redAt = -1; redLast = -1e9; escQ = -1; flow = 0; flowOn = false; flowLast = -1; flowSw = -1; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
   if (vs.retry) { vs.round = 1 + vs.retry; vs.hp = vs.sh = PHP / 2; dummy.hp = dummy.shown = dummy.lock = 1; vs.morphed = true; blackUntil = t + 700; } else blackUntil = 0;      // after a failed red: Gojo at half health, Verity as he was (1 health left, so no smoke change); the picture comes up from black
+  if (twOn()) twRound(t);      // (v1.173 the skyscraper: every round starts on floor 50, the damage of the earlier rounds stays)
 }
 // ---------------------------------------------------------------- v1.29 THE STATE TRACKER and the COMBO ESCAPE. A small box by your health bar says what state you are in: green FREE (you can move) or red (HIT: reeling from a blow, DOWN: on the floor, STUN: the JUMPSCARE, the Cat's glove or dizzy, HELD: the enemy Cat's ULTIMATE has you). While you are red, DASH gets you out of it: the stun is gone, you dash (with the dash's own invulnerable start), and when the dash ends you strike back with the LAST M1 of your combo; the dash is then on a cooldown of 4 seconds (the DASH button counts it down). Not possible when you are in the air from a launch, held by the ULTIMATE, in a cutscene or while the DOMAIN lasts.
 let dgLock = 0, esc = null, escSay = -1e9;      // dgLock: no dash before this time; esc = { at } from the escape dash until the counter blow
@@ -3289,6 +3291,7 @@ function pickAtk0() {                          // crouched: the low jab and the 
 }
 function drawBackdrop(now) {                  // everything behind the fighters (also used by the FATALITY cutscene)
   if (domBgOff(now)) { ctx.fillStyle = '#000'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }
+  else if (twOn()) twBackdrop(now);      // (v1.173 the SKYSCRAPER map, see tools/tower.js)
   else if (alley) { drawAlley(now); if (vs && vs.c3 && state === 'play') c3World(now); }      // (chapter 2: the portal stands at the end of the street)
   else { ctx.save(); ctx.translate(0, -FAR); ctx.drawImage(bg, 0, 0);
   if (SET.bgd >= 1) layer(far, 0.25); if (SET.bgd >= 2) { layer(near, 0.55); drawProps(now); }      // (v1.153 BACKGROUND DETAIL: FLAT = the sky and the road, LOW + the far towers, MEDIUM + the shops and the lamps, FULL + the wind)
@@ -4398,6 +4401,7 @@ __CUSTOM__
 __GORE__
 __SUKUNA__
 __RYU__
+__TOWER__
 __CHAP2__
 __CHAP2B__
 __CHAP2C__
@@ -5876,7 +5880,8 @@ function propFx(o, now) {      // a toppled prop hits the ground
 const LIT_TYPES = [['#8a8478', 1, 650, 0], ['#a8a090', 2, 650, 0], ['#5a5448', 1, 650, 0], ['#cfc7b0', 2, 240, 1.3], ['#6a7a3a', 2, 220, 1.5]];      // colour, width, gravity (px/s^2), air drag: pebbles fall fast, paper and leaves float down
 let lit = [];
 function litNew(x) { const t = LIT_TYPES[(Math.random() * LIT_TYPES.length) | 0]; return { x, h: 0, vx: 0, vy: 0, dz: 1 + Math.random() * 4, c: t[0], s: t[1], g: t[2], ad: t[3], rest: true }; }
-function litStep(dt) {      // every frame: the litter that lies about moves if it was pushed, and the street is always strewn all round you (what you leave behind turns up again ahead)
+function litStep(dt) {
+  if (twOn()) { lit.length = 0; return; }      // (v1.173 no street litter inside the skyscraper)      // every frame: the litter that lies about moves if it was pushed, and the street is always strewn all round you (what you leave behind turns up again ahead)
   if (!lit.length) { for (let i = 0; i < 30; i++) lit.push(litNew(wx + (Math.random() * 2 - 1) * VW * 0.75)); }
   const w = VW * 0.8, cx = Math.round(VW / 2), side = Math.sign(wvx);
   for (const p of lit) {
@@ -6417,7 +6422,7 @@ function tick(t) {
   const still = state === 'play' && stopMs > 0;      // HIT-STOP: the game's clock stands still for a moment (everything in the game runs on it, so the fight freezes and goes on from the same picture)
   if (still) { stopMs = Math.max(0, stopMs - rdt); vOff += now - last; now = last; } else if (state !== 'play') stopMs = 0;
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
-  if (freePlay()) trainStep(now, dt);
+  twTick(now, dt); if (freePlay()) trainStep(now, dt); twBase(now);      // (v1.173 the skyscraper: what happened last frame is read before the training step gives the enemy his health back, and the new baseline is taken right after it)
   { const ry = state === 'play' && !!vs && vs.me === RYU_WHO; if (ry !== ryUI) { ryUI = ry; document.body.classList.toggle('ry', ry); } if (!ry && ryUl) ryUlEnd(now, true); }      // (v1.143 Ryu has no BLUE, MODE, DOMAIN or FATAL: while he fights those buttons are hidden, see the CSS of body.ry)
   ragTick(now);
   trainDraw(now);
@@ -6427,7 +6432,7 @@ function tick(t) {
   if (story && story.toC3End) { story.toC3End = false; startC3End(now); }      // (chapter 2's fight is won: its ending starts)
   if (story && story.toEnd) { story.toEnd = false; startTrainEnd(now); }      // (the training fight is won: the happy ending starts)
   if (story && story.toMaster) { story.toMaster = false; startMaster(now); }      // (the fight against the Cat is won: the Master's scene starts)      // (the fight against Verity is won: the ending of the chapter starts)
-  if (state === 'play') { if (still || now < holdUntil) { last = now; if (impf) impfFrame(); else if (suTs) suTsFrame(); } else drawScene(now, dt); stateDraw(now); msRecord(now); }      // hit-stop: the picture freezes for a split second when the red orb explodes
+  if (state === 'play') { if (still || now < holdUntil) { last = now; if (impf) impfFrame(); else if (suTs) suTsFrame(); } else drawScene(now, dt); stateDraw(now); twOverlay(now); msRecord(now); }      // hit-stop: the picture freezes for a split second when the red orb explodes
   else if (state === 'versus') { const fr = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length; for (const q of vsPv) { q.g.clearRect(0, 0, 64, 64); q.g.drawImage(q.who === 'gojo' ? (q.inv ? dumF : idleF)[fr] : q.who === 'yuji' ? (q.inv ? YUF.inv : YUF.norm).idle[fr % 15] : q.who === 'cat' ? cfr('idle', now / 100, true, q.inv) : q.who === 'freddy' ? fredF(now / (1000 / IDLE_FPS)) : vfr('idle', now / 100, true, q.inv), 0, 0); } }
   else if (state === 'lansel') lanSelDraw(now);
   else if (state === 'chal') chalDraw(now);
@@ -6528,9 +6533,10 @@ $('start').addEventListener('click', () => { audio(); if (!inApp && matchMedia('
 $('gojo').addEventListener('click', () => { show('play'); skillUI(); });      // (free play as Gojo: all his moves are free there, see freePlay)
 const selPv = [];
 function startPractice(who, foe) {      // FREE PLAY as Yuji, Verity or the Cat: a Versus match against a punching bag that never ends: every move is free (freePlay), you cannot lose, the energy is always full, there is no timer, an enemy who is K.O.'d comes back with the next round (see trainStep). v1.24: SETTINGS > TRAIN controls the enemy (who he is, what he does, his health and level), your health and energy, the speed of the game and two overlays
-  const sv = { ...vsPick }; audio(); vsPick.me = who; vsPick.foe = foe || TRF[TR.foe] || 'gojo'; startMatch(TR.grade); Object.assign(vsPick, sv);
+  const sv = { ...vsPick }; audio(); vsPick.me = who; vsPick.foe = foe || TRF[TR.foe] || 'gojo'; twFightStart(); startMatch(TR.grade); Object.assign(vsPick, sv);
   vs.practice = true; vs.tl = 1e9; setModeUI();
 }
+function twFightStart() { twWant = twPick === 1; }      // (v1.173 the MAP chosen on the screens is read by startMatch)
 // ---------------------------------------------------------------- v1.24 THE TRAIN PAGE of SETTINGS (free play only: the rooms of Yuji, Verity and the Cat, and Gojo's free play): options to control the match and the enemy. The "ENEMY: DUMMY / FIGHTS BACK" button of v1.14 is the first option now. ENEMY (what he does: DUMMY, FIGHTS BACK, BLOCKS, DODGES, WALKS TO YOU, BACKS AWAY), ENEMY HEALTH (NORMAL, INFINITE, LOW 10%), YOUR HEALTH and YOUR ENERGY (INFINITE or NORMAL), ENEMY LEVEL (the six grades: how well he fights back), ENEMY IS (Gojo, Yuji, Verity or the Cat: the room starts again), ENEMY ARMOR (no flinch / no push), GAME SPEED (100%, 50%, 25%), DAMAGE METER and MOVE INFO (two overlays), and three buttons: PUT ENEMY (close, mid, far), RESET ENEMY and RESET METER. Everything is off or as before by default.
 const TRF = ['gojo', 'yuji', 'verity', 'cat'], TRS = [1, 0.5, 0.25];
 const TRV = { beh: ['DUMMY', 'FIGHTS BACK', 'BLOCKS', 'DODGES', 'WALKS TO YOU', 'BACKS AWAY'], ehp: ['NORMAL', 'INFINITE', 'LOW (10%)'], php: ['INFINITE', 'NORMAL'], pce: ['INFINITE', 'NORMAL'], grade: GRADES.map(g => g.name), foe: ['GOJO', 'YUJI', 'VERITY', 'CAT'], arm: ['OFF', 'NO FLINCH', 'NO FLINCH, NO PUSH'], spd: ['100%', '50%', '25%'], meter: ['OFF', 'ON'], info: ['OFF', 'ON'], put: ['CLOSE', 'MID', 'FAR'] };
@@ -6558,11 +6564,11 @@ function trainStep(now, dt) {      // every frame of free play, before the pictu
   TR.hpPrev = d.hp; TR.xHold = d.x; TR.hitSeen = d.hitAt;
 }
 function trainPut() {      // PUT ENEMY: in front of you, close (28 px), mid (70 px) or far (130 px); every press is the next distance
-  const d = dummy; TR.put = (TR.put + 1) % 3; if (!d) return; d.x = wx + [28, 70, 130][TR.put]; d.vx = 0; d.air = null; d.down = 0; d.pull = null; TR.xHold = d.x;
+  const d = dummy; TR.put = (TR.put + 1) % 3; if (!d) return; twFoeHere(pnow()); d.x = wx + [28, 70, 130][TR.put]; d.vx = 0; d.air = null; d.down = 0; d.pull = null; TR.xHold = d.x;
 }
 function trainReset() {      // RESET ENEMY: full health, standing, 70 px in front of you; a K.O.'d enemy comes back with a new round
   const d = dummy; if (!d) return; if (d.ko >= 0 || d.hp <= 0) { if (vs) beginRound(pnow()); else spawnDummy(pnow(), 'fighter'); return; }
-  d.hp = d.shown = d.max || DUMMY_HP; d.bleed = null; d.air = null; d.down = 0; d.vx = 0; d.stunUntil = 0; d.rxAt = -9999; d.pull = null; d.x = wx + 70; TR.xHold = d.x; TR.hpPrev = d.hp;
+  d.hp = d.shown = d.max || DUMMY_HP; d.bleed = null; d.air = null; d.down = 0; d.vx = 0; d.stunUntil = 0; d.rxAt = -9999; d.pull = null; twFoeHere(pnow()); d.x = wx + 70; TR.xHold = d.x; TR.hpPrev = d.hp;
 }
 function trainMeterReset() { TR.log = []; TR.total = TR.last = TR.best = 0; hits.n = 0; }
 const TRO = [      // [key, label, needs a room of Yuji / Verity / the Cat, what happens when it changes]
@@ -6598,6 +6604,9 @@ function trainDraw(now) {      // the two overlays of the TRAIN page, as a small
 for (const b of document.querySelectorAll('#select .pp')) { const who = b.dataset.who, c = b.querySelector('canvas'); c.width = who === 'yuji' ? YU.idle.w : 64; c.height = 64; selPv.push({ g: c.getContext('2d'), who }); b.addEventListener('click', () => { if (who === 'cu3' && !suHas()) return; startPractice(who); }); }      // (v1.131: Sukuna's card is locked until he is bought, see cuSelRefresh)
 $('vsBtn').addEventListener('click', () => { buildGrades(); buildFighters(); show('versus'); });
 $('vsBack').addEventListener('click', () => show('select'));
+function mapBtns() { for (const id of ['mapBtn1', 'mapBtn2']) { const b = $(id); if (b) b.textContent = twPick ? 'MAP: SKYSCRAPER' : 'MAP: STREET'; } }      // (v1.173 the MAP button of the fighter and versus screens: STREET or the 50-floor SKYSCRAPER, kept in js_map)
+for (const id of ['mapBtn1', 'mapBtn2']) $(id).addEventListener('click', () => { twPick = twPick ? 0 : 1; try { localStorage.setItem('js_map', String(twPick)); } catch { /* the choice just is not kept */ } mapBtns(); });
+mapBtns();
 $('battles').addEventListener('click', () => { audio(); show('select'); });
 $('selBack').addEventListener('click', () => show('modes'));
 $('modesBack').addEventListener('click', () => show('title'));
@@ -6655,9 +6664,9 @@ addEventListener('pointerdown', e => { if (state === 'story') storySkip(e); }); 
 addEventListener('pointerup', e => { if (state === 'story') { if (story && story.c15) c15Up(e); else if (typeof c13Up === 'function') c13Up(e); } }); addEventListener('pointercancel', e => { if (state === 'story') { if (story && story.c15) c15Up(e); else if (typeof c13Up === 'function') c13Up(e); } });      // a tap skips to the next part of the cutscene
 addEventListener('pointerdown', () => { if (yf && !paused) yfTap(pnow()); });      // (v1.49 Yuji's FATALITY: two taps skip it)
 addEventListener('pointerdown', () => { if (typeof suFgOn === 'function' && suFgOn() && !paused) suFgTap(pnow()); });      // (v1.127 Sukuna's FUGA cutscene: two taps skip it)
-$('vsGo').addEventListener('click', () => startMatch(vsSel));
-$('vsNext').addEventListener('click', () => { if (vs && vs.cv) { startCurse(vs.ci + 1, 0); return; } const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
-$('vsAgain').addEventListener('click', () => vs && vs.hunt ? startHunt(vs.hunt.i) : vs && vs.rush ? (vs.run === ROUL ? startRoulette() : startRush()) : vs && vs.cv ? startCurse(vs.ci, vs.hard, vs.daily) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe));
+$('vsGo').addEventListener('click', () => { twFightStart(); startMatch(vsSel); });
+$('vsNext').addEventListener('click', () => { twWant = !!vs && vs.map === 'tower' && !vs.story && !vs.hunt && !vs.rush && !vs.cv; if (vs && vs.cv) { startCurse(vs.ci + 1, 0); return; } const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
+$('vsAgain').addEventListener('click', () => { twWant = !!vs && vs.map === 'tower' && !vs.story && !vs.hunt && !vs.rush && !vs.cv; return vs && vs.hunt ? startHunt(vs.hunt.i) : vs && vs.rush ? (vs.run === ROUL ? startRoulette() : startRush()) : vs && vs.cv ? startCurse(vs.ci, vs.hard, vs.daily) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe); });
 $('vsMenu').addEventListener('click', () => { if (vs && vs.net) { lanLeave(); return; } if (vs && vs.hunt) { show('chal'); buildHunts(); return; } if (vs && vs.cv) { show('chal'); buildChal(); return; } if (vs && vs.story) { svView = 0; show('saves'); renderSaves(); } else { buildGrades(); buildFighters(); show('versus'); } });
 $('back').addEventListener('click', () => { leavePlay(); });
 VOLS.forEach(([k, name]) => {

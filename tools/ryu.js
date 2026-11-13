@@ -288,7 +288,7 @@ const ryUlNoHud = () => !!ryUl && !ryUl.fired;      // (the health bars stay awa
 function ryUlTry(now) {      // the DOMAIN button: it starts if he stands or crouches with nothing else going on, the wait is over, a living enemy is there and the energy is there (67%)
   const g = CU_GAME[4], d = dummy; if (!g || !g.ulr || !g.ulr.u1 || ryUl || g.cs || cuAtkAt >= 0 || cuDash || blkAt >= 0 || cuJumpAt >= 0 || (stance !== 'stand' && stance !== 'crouch') || ryUlBusy()) return;
   if (now < domReadyAt) { say('WAIT', wx, '#9a9aa8', 8, now); return; }
-  if (!d || d.ko >= 0 || d.cap || !vs || vs.ph !== 'fight') { say('NO TARGET', wx, '#9a9aa8', 8, now); return; }
+  if (!d || d.ko >= 0 || d.cap || d.twAway || !vs || vs.ph !== 'fight') { say('NO TARGET', wx, '#9a9aa8', 8, now); return; }      // (d.twAway: the enemy is on another floor of the skyscraper)
   if (!ceSpend(RY_U.cost * 100 / cuS.em, now)) return;
   ryUlStart(now);
 }
@@ -323,9 +323,10 @@ function ryUlFire(now) {      // the beam leaves the hair: the flash, the shake,
   const U = ryUl; U.fired = true; U.fireAt = now; U.nextTick = now + 70; U.tickN = 0;
   snd('ryult', 3); flash(now, 220, 0.75); shakeUntil = Math.max(shakeUntil, now + 1300); shakeAmp = Math.max(shakeAmp, 5); hitStop(100);
   gritAt(wx - 4, 14, 120, -1); gritAt(wx + 6, 10, 90, 1); puff(wx - 10, 6); puff(wx + 4, 4); shockAt(wx, 320, 170, 0.9);
+  if (twOn()) twSweep(wx + 6, wx + 520, 90, now);      // (v1.173 in the skyscraper the beam breaks the furniture and the walls in its way)
 }
 function ryUlTick(now, n) {      // one burst of the beam on whatever is in front of him: the guard, a dash, a jump, lying on the floor, nothing stops it (the one thing it cannot reach is an enemy BEHIND him); the ten of them take 45% of his full health, push him back and lift him; the last one stuns him
-  const d = dummy, U = ryUl, S = RY_U; if (!d || d.ko >= 0 || !vs) return;
+  const d = dummy, U = ryUl, S = RY_U; if (!d || d.ko >= 0 || d.twAway || !vs) return;
   if (d.x - wx < -4) { if (n === 1 && U.hit === null) { U.hit = false; say('MISSED', d.x, '#9fd8ff', 8, now); } return; }
   if (d.vform && d.vform !== 'verity') { if (n === 1) say('IMMUNE', d.x, '#ffe9a0', 8, now); return; }      // (a smoke ball takes nothing, as with the other ULTIMATEs)
   U.hit = true; const first = !U.landed; U.landed++;
@@ -335,7 +336,7 @@ function ryUlTick(now, n) {      // one burst of the beam on whatever is in fron
   if (first) ryThrowUp(now, 34);
   say('' + dm, d.x + Math.random() * 10 - 5, popCol(), 8, now); spark(d.x + Math.random() * 6 - 3, ey + Math.random() * 20 - 10, first || n === S.ticks ? 16 : 9, ['#ffffff', '#9ff3ff', '#17e3ff'], first || n === S.ticks, 1); snd('ryult', 5); shockAt(d.x, 140, 70, 0.5);
   if (first) snd('concboom');
-  if (d.hp <= 0) koDummy(now);
+  if (d.hp <= 0) koDummy(now); else if (n === S.ticks && twOn()) twSlam('foe', 3, now, d.x);      // (v1.173 in the skyscraper the last burst breaks 3 floors under him)
 }
 function ryUlPic(now) {      // the picture of the stance: which row and picture by the time, and how far the cell is moved so that his body stays where it is (the arm is long: the cell is shifted left, see RY_JU)
   const U = ryUl, S = RY_U, g = CU_GAME[4], t = now - U.t0; let row, i;

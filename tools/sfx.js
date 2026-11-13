@@ -903,6 +903,17 @@ function makeSfx(ac) {
         tone(B.deep, t, { type: 'triangle', f: 120, f2: 60, dur: 0.12, gain: 0.22, atk: 0.002 });
       }
     },
+    twbreak(k, at) {                                     // v1.173 the SKYSCRAPER: k 0 = wood breaks (a crack and splinters), 1 = glass shatters (a bright burst and tinkling), 2 = metal (a clang and a crash), 3 = stone / a wall (a low boom and gravel), 4 = a floor breaks (a huge crack, a long rumble and falling rubble), 5 = an explosion, 6 = a ding (the elevator, a soda picked up), 7 = a light hit on furniture or a landing (a short crack and a thud)
+      const t = T(at), B = C.atk, D = C.tele, rattle = (n, t0, span, gain) => { for (let i = 0; i < n; i++) burst(B.soft, t0 + R(0, span), { type: 'bandpass', f: R(900, 3200), q: 3, dur: R(0.012, 0.03), gain, atk: 0.001 }); };
+      if (k === 0) { burst(B.soft, t, { f: 900, f2: 200, q: 1.2, dur: 0.18, gain: 2.2, atk: 0.001 }); tone(B.deep, t, { type: 'triangle', f: 140, f2: 60, dur: 0.2, gain: 0.35, atk: 0.002 }); rattle(6, t + 0.03, 0.2, 0.5); }
+      else if (k === 1) { burst(B.soft, t, { type: 'highpass', f: 3000, f2: 9000, q: 0.8, dur: 0.35, gain: 1.6, atk: 0.001 }); for (let i = 0; i < 14; i++) tone(D.soft, t + R(0, 0.35), { f: R(2500, 6500), f2: R(1800, 4000), dur: 0.05, gain: 0.05, atk: 0.001 }); }
+      else if (k === 2) { tone(B.deep, t, { type: 'triangle', f: 300, f2: 120, dur: 0.4, gain: 0.3, atk: 0.002 }); tone(D.soft, t, { f: 820, f2: 790, dur: 0.5, gain: 0.07, atk: 0.002 }); burst(B.soft, t, { f: 2200, f2: 500, q: 1.5, dur: 0.15, gain: 1.4, atk: 0.001 }); rattle(8, t + 0.05, 0.3, 0.4); }
+      else if (k === 3) { tone(B.deep, t, { type: 'triangle', f: 90, f2: 36, dur: 0.6, gain: 0.6, atk: 0.003 }); burst(B.soft, t, { type: 'lowpass', f: 600, f2: 120, q: 0.8, dur: 0.5, gain: 2.4, atk: 0.002 }); rattle(14, t + 0.05, 0.5, 0.5); }
+      else if (k === 4) { burst(B.soft, t, { f: 3000, f2: 200, q: 0.8, dur: 0.12, gain: 3.2, atk: 0.001 }); tone(B.deep, t, { type: 'triangle', f: 120, f2: 24, dur: 1.2, gain: 0.8, atk: 0.003 }); burst(B.soft, t + 0.05, { type: 'lowpass', f: 500, f2: 60, q: 0.8, dur: 1.4, gain: 2.6, atk: 0.03 }); rattle(24, t + 0.1, 1.0, 0.5); }
+      else if (k === 5) { tone(B.deep, t, { type: 'triangle', f: 140, f2: 26, dur: 1.0, gain: 0.9, atk: 0.003 }); burst(B.soft, t, { f: 900, f2: 90, q: 0.6, dur: 0.5, gain: 4, atk: 0.001 }); burst(B.soft, t + 0.02, { type: 'highpass', f: 2200, f2: 6000, q: 0.8, dur: 0.4, gain: 0.9, atk: 0.01 }); rattle(10, t + 0.15, 0.6, 0.4); }
+      else if (k === 6) { tone(D.soft, t, { f: 1320, f2: 1318, dur: 0.5, gain: 0.1, atk: 0.002 }); tone(D.soft, t + 0.18, { f: 990, f2: 988, dur: 0.6, gain: 0.08, atk: 0.002 }); }
+      else { burst(B.soft, t, { f: 1200, f2: 300, q: 1.4, dur: 0.08, gain: 1.4, atk: 0.001 }); tone(B.deep, t, { type: 'triangle', f: 110, f2: 60, dur: 0.14, gain: 0.25, atk: 0.002 }); }
+    },
     quake(at) {                                          // the roof is hit: a huge low boom, a long shaking rumble and stones and splinters falling
       const t = T(at), B = C.ce;
       tone(B.deep, t, { type: 'triangle', f: 80, f2: 22, dur: 1.6, gain: 0.6, atk: 0.004 });

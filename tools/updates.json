@@ -1,5 +1,17 @@
 [
  {
+  "v": "1.173",
+  "t": "NEW MAP: THE SKYSCRAPER",
+  "n": [
+   "A new map: the inside of a 50-floor skyscraper. Press the MAP button on the fighter screen (free play) or the versus screen to switch between STREET and SKYSCRAPER; the choice is kept. You start on floor 50, the penthouse. The screen shows one floor at a time and its number at the top.",
+   "Every floor is made at random the first time you see it: 2 to 4 rooms in a long corridor, its own colours, furniture, lights and windows. The view outside changes with the height: a night sky with stars and the moon high up, clouds in the middle, the skyline of the neighbouring buildings low down.",
+   "SLAMS BREAK THE FLOOR. A slam (a hit that puts a fighter on the floor from above, like Ryu's DOWNSLAM or DIVE PUNCH) or a very heavy hit breaks the floor under him: 1 floor, or more the harder the hit was. He falls through the crater. A fall costs 3% of health per floor, at most 30%, and never knocks anybody out. The crater stays and anybody who walks into it falls too (or you can leave it alone). A high launch (a kick that throws him up) breaks the CEILING and sends him up a floor.",
+   "Stairs (1 floor) and elevators (5 floors) are in the rooms: stand at the door and press JUMP to go up or CROUCH to go down. The fighter who is on another floor is away and comes after you: out of the crater if you fell, by the stairs or the elevator if not. The enemy keeps away from the edge of a crater unless he is thrown in.",
+   "EVERYTHING BREAKS. Desks, chairs, tables, computers, lamps, glass, vending machines (they drop a soda that heals 6%), safes, pillars, server racks, crates and plants break when a blow lands near them, when a body is thrown into them (the heavy ones hurt) or when you attack them. Gas tanks and fire extinguishers EXPLODE: a blast that hurts both fighters, breaks what is near, can open the floor and sets off the next one. The walls between the rooms are solid until a hard throw breaks them; the glass at the ends of the floor breaks too and a fighter thrown out falls to the street (the other one drops down after him).",
+   "Everything that is broken stays broken for the whole match, even in the next round. Ryu's ULTIMATE breaks the furniture and walls in its way and its last burst breaks 3 floors under the enemy."
+  ]
+ },
+ {
   "v": "1.172",
   "t": "RYU: JUST THIS ONCE",
   "n": [
