@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.186</small>
+    <small id="ver">V1.187</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -2908,7 +2908,7 @@ function layer(c, k) {                        // parallax: far layers move less 
 function newFoe(now, mode) { return { mode: mode || 'dummy', x: wx + (mode === 'fighter' ? 78 : 32), born: now, vx: 0, hitAt: -9999, hp: DUMMY_HP, shown: DUMMY_HP, ko: -1, rx: 0, rxAt: -9999, stunUntil: 0, pull: null, smokeUntil: 0, ai: 'rest', aiAt: now, restFor: 1200, k: 0, hitDone: true, swung: true }; }
 function spawnDummy(now, mode) { dummy = newFoe(now, mode); }
 function guardUp(now) { return blkAt >= 0 && blkEnd < 0 && now - blkAt >= 2000 / BLK_FPS; }       // hands are up (from the 3rd frame): attacks from the front bounce off
-function say(txt, x, col, size, now) { if (!SET.dn && /^[+-]?\d+$/.test(String(txt))) return; popups.push({ born: now, x, txt, col, size: size || 8 }); }
+function say(txt, x, col, size, now) { if (/^[+-]?\d+$/.test(String(txt)) && (!SET.dn || hudNumsOff())) return; popups.push({ born: now, x, txt, col, size: size || 8 }); }
 // ---------------------------------------------------------------- DIVERGENT FIST. Yuji's own move (the BLUE button while you play Yuji, 15% of the energy; the enemy Yuji throws it too): a straight punch with a fist full of cursed energy. 1. The fist reaches the enemy (hit 36: a short shove; he can block it), 2. it stays pressed in, 3. as Yuji pulls it back, 0.17 s later, a SECOND impact lands in the enemy's stomach (hit 37: a long push, a shock ring, a flash, a shake and a moment of slow motion). The second one only needs the first to have reached him (divP: yours on the enemy, dummy.divOk: the enemy's on you): blocking the fist, or stepping away after it, does not stop it.
 let divP = null;      // you: { at } once the first impact has reached the enemy
 const divFx = [];      // the shock rings: { wx (where in the world), y (on the screen), born }
@@ -3234,16 +3234,19 @@ function pxt(t, x, y, col, size, al) {        // crisp text with the baseline st
 }
 function drawPopups(now, dy) {                    // damage numbers float up from the dummy and fade
   hbDraw(now);      // (SET > SHOW HITBOXES: drawn here because every scene ends with this, inside its shake)
-  popups = popups.filter(p => now - p.born < 800);
+  popups = popups.filter(p => now - p.born < 800); const noNum = hudNumsOff();
   for (const p of popups) {
+    if (noNum && /^[+-]?\d+$/.test(String(p.txt))) continue;
     const k = Math.max(0, now - p.born) / 800, x = Math.round(Math.round(VW / 2) + p.x - wx), y = Math.round(gy - 76 + (dy || 0) - 16 * Math.sqrt(k));
     ctx.globalAlpha = Math.min(1, 2.2 * (1 - k)); pxt(p.txt, x, y, p.col, p.size, 'center');
   }
   ctx.globalAlpha = 1;
 }
+let hitsHide = -1;      // v1.187 the end of the combo window that was running during a cutscene: what was counted there stays hidden after it too (a hit after it starts the counter again)
 function drawHits(now) {                      // the combo: in a match at the left under your name (the hit counter grows from 3 hits on and changes colour, with the bonus damage), the damage total and the 4-pip combo meter (right hook, left hook, elbow blue; kick red); KO count below
+  if (hudNumsOff()) { hitsHide = hits.until; return; }
   const left = hits.until - now, rx = vs ? 6 + safeC : VW - 8 - safeC; let y = vs ? 57 : 16;       // (in a match it sits clear of the enemy's bar and name, and without the K.O. count)
-  if (left > 0) {
+  if (left > 0 && hits.until !== hitsHide) {
     ctx.globalAlpha = Math.min(1, left / 400);
     const big = hits.n >= 3, pop = now - hits.last < 120, sz = big ? 16 : 8, line = (str, col, size) => { pxt(str, rx, y, col, size || 8, vs ? 'left' : 'right'); y += (size || 8) + 2; };
     if (vs && big) y = 49 + 16;
@@ -3511,6 +3514,7 @@ const DOM_ORDER = ['blind', 'pose', 'face', 'wide', 'burst', 'void', 'collapse',
 let dom = null, domHold = false, domReq = false, domReadyAt = 0, voidCv = null, voidG = null, fd = null;      // (fd = Freddy's nightmare in progress, see freddyDream)
 // v1.181 A CUTSCENE OF A FIGHT: every bar, name, button and number that is not part of it stays away. The moments: a FATALITY (every fighter's, yours or the enemy's), an ULTIMATE (the Cat's choke, Yuji's four Black Flashes, Ryu's JUST THIS ONCE, Freddy's DREAM), Verity's JUMPSCARE, Sukuna's FUGA and his DOMAIN SIGN, the OPENING and the closing of a DOMAIN (not the fight inside it), the blindfold close-ups. cutsceneOn() is asked by drawVs (the bars and names), stateDraw, twOverlay and the elevator panel (canvas), and once a frame by cutUI, which puts the class `cut` on the page: the CSS then hides the top-left buttons, the touch controls, the SENSE button, the training numbers and the elevator panel (the tap prompts of a cutscene are other elements and stay).
 function cutsceneOn() { return state === 'play' && !!vs && !!(fat || yf || vf || cf || ff || ke || js || se || de || ult || yu || fd || bfo || (dom && domLock()) || (typeof suFatOn === 'function' && suFatOn()) || (typeof suFgOn === 'function' && suFgOn()) || (typeof suSignOn === 'function' && suSignOn()) || ryUlNoHud()); }
+function hudNumsOff() { return cutsceneOn() || !!ryUl; }      // v1.187 the hit counter and the damage numbers stay away in a cutscene (and for the whole of Ryu's beam, when the bars are back): drawHits and drawPopups ask it, say() does not even queue a number
 let cutOn = false;
 function cutUI() { const c = cutsceneOn(); if (c !== cutOn) { cutOn = c; document.body.classList.toggle('cut', c); } }
 function domFrozen() { return !!dom; }      // (the people stand still for the whole domain, the collapse too)
@@ -19866,6 +19870,16 @@ function ffFrame(now, dt) {
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+ {
+  "v": "1.187",
+  "t": "NO HIT COUNTER OR DAMAGE NUMBERS IN CUTSCENES",
+  "n": [
+   "You said: hide the hit counter and damage numbers (I had offered it for the cutscenes, so that is where it applies). In every cutscene the hit counter (the HITS and DMG lines, the BONUS line and the four combo squares) and the floating damage numbers are gone: Freddy's nightmare, Yuji's ultimate and fatality, every fatality, the Cat's choke, Verity's jumpscare, the opening and closing of a domain, Sukuna's FUGA, the blindfold close-ups, and Ryu's JUST THIS ONCE (the whole beam too, although the health bars are back for it).",
+   "What a cutscene counted stays hidden after it ends too: the counter does not pop up for the last second of its window. The next hit you land starts it again, as before.",
+   "Ordinary fights are unchanged: the counter and the numbers show there as always. The hits of a cutscene still count in the combo and in the damage exactly as before; only the drawing is gone.",
+   "A check that lists every text drawn in every cutscene found no HITS, DMG, BONUS or damage number left, and the same check still sees them in normal fights. Game scan: 23,846 checks, no errors."
+  ]
+ },
  {
   "v": "1.186",
   "t": "CUTSCENES WITHOUT CAPTIONS",

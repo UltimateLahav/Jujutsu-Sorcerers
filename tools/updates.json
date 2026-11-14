@@ -1,5 +1,15 @@
 [
  {
+  "v": "1.187",
+  "t": "NO HIT COUNTER OR DAMAGE NUMBERS IN CUTSCENES",
+  "n": [
+   "You said: hide the hit counter and damage numbers (I had offered it for the cutscenes, so that is where it applies). In every cutscene the hit counter (the HITS and DMG lines, the BONUS line and the four combo squares) and the floating damage numbers are gone: Freddy's nightmare, Yuji's ultimate and fatality, every fatality, the Cat's choke, Verity's jumpscare, the opening and closing of a domain, Sukuna's FUGA, the blindfold close-ups, and Ryu's JUST THIS ONCE (the whole beam too, although the health bars are back for it).",
+   "What a cutscene counted stays hidden after it ends too: the counter does not pop up for the last second of its window. The next hit you land starts it again, as before.",
+   "Ordinary fights are unchanged: the counter and the numbers show there as always. The hits of a cutscene still count in the combo and in the damage exactly as before; only the drawing is gone.",
+   "A check that lists every text drawn in every cutscene found no HITS, DMG, BONUS or damage number left, and the same check still sees them in normal fights. Game scan: 23,846 checks, no errors."
+  ]
+ },
+ {
   "v": "1.186",
   "t": "CUTSCENES WITHOUT CAPTIONS",
   "n": [
