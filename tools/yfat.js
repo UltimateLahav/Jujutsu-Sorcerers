@@ -143,7 +143,6 @@ function yfBFDraw(e, s, now, mx, cx) {      // one BLACK FLASH (n = 1 to 8): the
   if (ra < 0.14) { ctx.globalAlpha = 1; const r = Math.round(5 + n * 0.7 - ra * 20); ctx.fillStyle = '#ffffff'; ctx.fillRect(X - r, Y - 1, 2 * r + 1, 3); ctx.fillRect(X - 1, Y - r, 3, 2 * r + 1); ctx.fillStyle = YF_PK; ctx.fillRect(X - 2, Y - 2, 5, 5); }
   ctx.globalAlpha = 1; return true;
 }
-function yfSay(txt, col, now, big) { for (const o of yf.lines) if (!o.cut) o.cut = now; yf.lines.push({ txt, col, born: now, big: !!big }); }      // (a new line takes the place of the old one, which is gone at once: two texts one over the other cannot be read)
 // ---- the camera: key = [time, zoom, weight towards the enemy (0 = Yuji, 1 = the enemy), shift up]; between two keys it eases; the focus looks a little ahead of the action and behind it (so it never lags)
 function yfCamAt(K, t) { let i = 0; while (i < K.length - 1 && K[i + 1][0] <= t) i++; const a = K[i], b = K[Math.min(K.length - 1, i + 1)], u = b[0] > a[0] ? Math.max(0, Math.min(1, (t - a[0]) / (b[0] - a[0]))) : 1, e = u * u * (3 - 2 * u); return { z: a[1] + (b[1] - a[1]) * e, w: a[2] + (b[2] - a[2]) * e, dy: (a[3] || 0) + ((b[3] || 0) - (a[3] || 0)) * e, nf: (a[4] || 0) + ((b[4] || 0) - (a[4] || 0)) * e }; }
 function yfFocus(P, t, w) { const V = yfEvalV(P.V, t), Y = yfEvalY(P.Y, t); const gone = V.gone && t > P.linger; return { x: gone ? Y.x : Y.x + (V.x - Y.x) * w, h: gone ? Y.l : Y.l + (V.l - Y.l) * w, top: Math.max(Y.l + 64, gone ? 0 : V.l + (V.lying ? 26 : V.tilt > 0.7 ? 40 : 64)) }; }
@@ -158,7 +157,7 @@ function yfCamKeys(P, S) {      // the camera of the whole cutscene: wide at fir
 function yfStart(now) {
   yfDepth = 0; const d = dummy, foe = vs.foe, S = YFS[foe] || YFS.gojo; cineClear(); closeSettings(); stickDown = false; d.ai = 'rest'; d.pull = null; d.vx = 0; d.vact = null; d.cact = null; d.cheld = null; d.held = null; vs.catHold = 0; slowMs = 0; $('pad').classList.add('cine'); $('hud').classList.add('cine');
   const g0 = Math.max(20, Math.min(FAT_RANGE, Math.abs(d.x - wx))), P = yfBuild(S, g0);
-  yf = { S, P, words: [], roll: 0, dust: 0, finX: P.beats[P.beats.length - 1].vx, end: P.end, T8: P.beats.length === 8 ? P.beats[7].at : null, title: S.title == null ? P.end - 2.6 : S.title, flash: 0, deb: Array.from({ length: 30 }, (_, i) => ({ x: -60 + i * 9 + (i * 37) % 11, d: (i * 0.13) % 1.1, v: 22 + (i * 29) % 30, s: 1 + (i % 3 === 0 ? 1 : 0), c: ['#8c8898', '#c8c4d0', '#5e5a6c', '#ff2a3a'][i % 4] })), K: yfKit(foe), t: 0, real: 0, rate: 1, slow: false, freeze: 0, ev: {}, fx: [], parts: [], lines: [], cracks: [], cam: yfCamKeys(P, S), wx0: wx, n: 0, nAt: -9, shake: 0, zk: 0, white: 0, imp: null, skip: false, born: now, tapAt: -9 };
+  yf = { S, P, roll: 0, dust: 0, finX: P.beats[P.beats.length - 1].vx, end: P.end, T8: P.beats.length === 8 ? P.beats[7].at : null, title: S.title == null ? P.end - 2.6 : S.title, flash: 0, deb: Array.from({ length: 30 }, (_, i) => ({ x: -60 + i * 9 + (i * 37) % 11, d: (i * 0.13) % 1.1, v: 22 + (i * 29) % 30, s: 1 + (i % 3 === 0 ? 1 : 0), c: ['#8c8898', '#c8c4d0', '#5e5a6c', '#ff2a3a'][i % 4] })), K: yfKit(foe), t: 0, real: 0, rate: 1, slow: false, freeze: 0, ev: {}, fx: [], parts: [], cracks: [], cam: yfCamKeys(P, S), wx0: wx, n: 0, shake: 0, zk: 0, white: 0, imp: null, skip: false, born: now, tapAt: -9 };
   { const lb = P.beats[P.beats.length - 1]; snd('yfscore', Math.max(4, yfReal(P, lb.at) - lb.fz - 0.5)); }
 }
 function yfReset() { if (yf && yf.slow) yfSfx('slowout'); yf = null; $('pad').classList.remove('cine'); $('hud').classList.remove('cine'); yfSfx('yfstop'); }
@@ -169,11 +168,11 @@ function yfEnd(now) {      // the enemy is gone and Yuji wins the round (like th
 function yfTap(now) {      // a tap on the screen: the first one says how to skip, a second one within a second and a half skips (it is 30 seconds long; a stray tap must not end it)
   if (!yf || yf.skip || yf.t < 1) return; if (now - yf.tapAt < 1500) yfSkip(now); else yf.tapAt = now;
 }
-function yfSkip(now) { if (!yf || yf.skip || yf.t > yf.end - 0.5) return; yf.skip = true; yfSfx('yfstop'); yf.t = Math.max(yf.t, yf.end - 0.5); yf.n = yf.P.beats.length; yf.nAt = now - 1000; yf.imp = null; yf.freeze = 0; }      // (the rest of it is skipped: the counter shows all eight, no impact frame or freeze is left over)
+function yfSkip(now) { if (!yf || yf.skip || yf.t > yf.end - 0.5) return; yf.skip = true; yfSfx('yfstop'); yf.t = Math.max(yf.t, yf.end - 0.5); yf.n = yf.P.beats.length; yf.imp = null; yf.freeze = 0; }      // (the rest of it is skipped: the counter shows all eight, no impact frame or freeze is left over)
 function yfHit(i, now) {      // blow i + 1 lands: the freeze, the white flash of the enemy, the BLACK FLASH, sparks, dust, the shake and the zoom
   const s = yf, S0 = s.S, b = s.P.beats[i], n = i + 1, f = b.f, X = s.wx0 + b.vx - f * 5, lying = b.vLying, y = lying ? gy - 9 : gy - 36 - Math.max(0, b.vl), W = x => s.wx0 + x;
   s.roll = (i % 2 ? 1 : -1) * (n === 8 ? 0.09 : 0.012 + 0.006 * n);
-  s.n = n; s.nAt = now; s.freeze = now + b.fz * 1000; if (n >= 2) s.blur = { x: b.vx - f * 5, y, until: now + (n === 8 ? 420 : 150) }; s.white = now + 90 + (n === 8 ? 260 : 0); s.shake = Math.max(s.shake, 2.5 + 0.6 * n); s.zk = 0.1 + 0.02 * n;
+  s.n = n; s.freeze = now + b.fz * 1000; if (n >= 2) s.blur = { x: b.vx - f * 5, y, until: now + (n === 8 ? 420 : 150) }; s.white = now + 90 + (n === 8 ? 260 : 0); s.shake = Math.max(s.shake, 2.5 + 0.6 * n); s.zk = 0.1 + 0.02 * n;
   s.fx.push({ k: n === 8 ? 'big' : 'bf', x: b.vx - f * 5, y, n, born: now, t0: s.t }); if (n >= 4) s.imp = { at: now, n, snap: null, x: b.vx - f * 5, y };
   if (n >= 3) s.cracks.push({ x: b.vx - f * 5, t0: s.t, len: n === 8 ? 230 : 30 + 8 * n, spd: n === 8 ? 260 : 120 });
   if (n === 8) { s.flash = now + 700; s.shake = 10; s.zk = 0.5; for (let i = 0; i < 70; i++) { const an = Math.random() * 6.2832, v = 60 + Math.random() * 200; yfPart(s, b.vx, y, Math.cos(an) * v, Math.sin(an) * v - 80, 380, 1.2 + Math.random() * 1.2, i % 3 === 0 ? '#383444' : i % 3 === 1 ? YF_RED : '#8c8898', 1 + (i % 4 === 0 ? 1 : 0)); } }
@@ -181,8 +180,6 @@ function yfHit(i, now) {      // blow i + 1 lands: the freeze, the white flash o
   spark(X, y, 14 + 3 * n, [YF_RED, YF_DK, '#ffffff', '#ff7a5a'], true, f); spark(X, y, 8 + n, [YF_RED, YF_DK], true, -f);
   if (b.vl < 12) { puff(W(b.vx), 3 + n); gritAt(W(b.vx), 4 + n, 70 + 10 * n, f); }
   if (S0.spk) spark(X, y, 8 + n, S0.spk, false, -f);
-  if (b.word) yfWord(s, now, b.word, b.vx - f * 5, y - 14, b.wcol);
-  if (b.line) yfSay(b.line, b.lcol || '#ffffff', now, false);
   if (b.fx) b.fx(s, now, b, n);
   if (S0.glass) { s.cr = s.cr || []; s.cr.push({ x: b.vx - f * 5, y, born: now, n: 5 + (n >> 1), len: 22 + 6 * n, a: Math.random() * 6.2832 }); }
 }
@@ -194,10 +191,9 @@ function yfEvents(now, t) {
     at('sw' + i, b.Ts + b.M.sw / b.M.fps, () => snd('swing', i % 4));
     at('hit' + i, b.at, () => yfHit(i, now));
   });
-  if (s.T8 != null) { at('zone', s.T8 - 3.6, () => { yfSay('THE ZONE', YF_RED, now, true); s.cracks.push({ x: s.finX - 96, t0: s.t, len: 70, spd: 60 }); }); at('rise', s.T8 - 3.2, () => snd('yfrise', 2.7)); at('line8', s.T8 + 0.15, () => yfSay('ELITE FINISHER', '#ffffff', now, true)); }
+  if (s.T8 != null) { at('zone', s.T8 - 3.6, () => { s.cracks.push({ x: s.finX - 96, t0: s.t, len: 70, spd: 60 }); }); at('rise', s.T8 - 3.2, () => snd('yfrise', 2.7)); }
   if (s.T8 != null) at('vanish', s.T8 + P.beats[P.beats.length - 1].out.T, () => { const [x, y] = yfGone(s); if (S.vanish) S.vanish(s, now, x, y); else yfVanish(s, now, x, y, S.vcols || ['#ffffff', '#ff7a5a', '#ffb0a0']); });
   at('title', s.title, () => snd('fataltitle'));
-  for (const e of (S.ev || [])) at(e[0], e[1], () => e[2](s, now, t));
   if (!s.ev.end && t >= s.end && (s.skip || s.real >= YF_LEN - 0.005)) { s.ev.end = 1; yfEnd(now); }
 }
 function yfFrame(now, dt) {
@@ -211,12 +207,6 @@ function yfTitle(k, a, yc) {      // the word FATALITY like the other cutscenes'
 function yfToon(P, t) {      // CARTOON PHYSICS: the enemy is squashed flat by every blow and springs back stretched, then wobbles (a damped swing, 0.5 s)
   let sx = 1, sy = 1; for (const b of P.beats) { const u = t - b.at; if (u < 0 || u > 0.6) continue; const e = Math.exp(-u * 7), w = Math.cos(u * 26); sy *= 1 - 0.5 * e * w; sx *= 1 + 0.4 * e * w; }
   return [Math.max(0.3, sx), Math.max(0.3, sy)];
-}
-function yfWord(s, now, txt, x, y, col) { s.words.push({ txt, x, y, col: col || '#ffe34d', born: now, a: (Math.random() - 0.5) * 0.5 }); }
-function yfWordsDraw(s, now, mx, cx) {      // comic words that pop up at the place of a blow, turned a little, big first and then their size, for 0.8 s
-  s.words = s.words.filter(w => now - w.born < 800);
-  for (const w of s.words) { const a = (now - w.born) / 1000, k = a < 0.1 ? 2 - a * 10 : 1, X = Math.round(mx + w.x - cx), Y = Math.round(Math.max(w.y - 12 * Math.min(1, a * 3), (s.vtop || -999) + 16 * k + 10)); yfSave(); ctx.translate(X, Y); ctx.rotate(w.a); ctx.globalAlpha = Math.min(1, (0.8 - a) * 4); ctx.scale(k, k); pxt(w.txt, 0, 0, w.col, 16, 'center'); yfRestore(); }
-  ctx.globalAlpha = 1;
 }
 function yfIris(Ys, t, end, mx, cx, zy, z, my) {      // the old cartoon ending: a black circle closes on Yuji (the last 1.3 seconds)
   const k = Math.max(0, Math.min(1, (t - (end - 1.3)) / 1.15)); if (k <= 0) return; const R = Math.hypot(VW, VH) * (1 - k * k), X = Math.round(mx + (Ys.x - cx) * z), Y = Math.round(my + (gy - 34 - Ys.l - zy) * z);
@@ -321,7 +311,6 @@ function yfFrame0(now, dt) {
   if (Ys.blink != null) { const a = Math.abs(Ys.blink - 0.5) * 2; ctx.globalAlpha = 1 - a; for (let i = 0; i < 24; i++) { const u = i / 23, X = Math.round(mx + Ys.bx0 + (Ys.bx1 - Ys.bx0) * u - cx), Y = gy - 30 - Math.round(Ys.bl0 + (Ys.bl1 - Ys.bl0) * u) + ((i * 7) % 5) - 2; ctx.fillStyle = i % 3 ? YF_RED : YF_DK; ctx.fillRect(X, Y, 3, 1); } ctx.globalAlpha = 1; }
   if (s.T8 != null) yfFinFront(s, now, t, mx, cx, Ys, sdt);
   if (S.front) S.front(s, now, t, mx, cx, Vs, Ys, sdt);
-  yfWordsDraw(s, now, mx, cx);
   // the effects of the blows, the sparks, the dust
   yfPartsDraw(s, sdt, mx, cx);
   s.fx = s.fx.filter(e => e.k === 'big' ? yfBigDraw(e, s, now, mx, cx) : e.k === 'van' ? yfVanDraw(e, s, now, mx, cx) : yfBFDraw(e, s, now, mx, cx));
@@ -330,9 +319,6 @@ function yfFrame0(now, dt) {
   // ---- on the screen itself: the dark edges, the counter, the lines, the cinema bars, the flashes, the title, the fade
   const beat = s.T8 != null && t > s.T8 - 3.8 && t < s.T8 ? 0.1 * Math.max(0, Math.sin(now / 150)) : 0, vg = Math.min(0.92, 0.25 + 0.08 * s.n + beat) * (1 - 0.55 * post8); ctx.globalAlpha = vg; ctx.drawImage(yfVignette(), 0, 0); ctx.globalAlpha = 1;
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, bh); ctx.fillRect(0, VH - bh, VW, bh);
-  const cA = s.T8 != null && t > s.T8 + 0.9 ? Math.max(0, 1 - (t - s.T8 - 0.9) / 0.3) : 1;      // (the counter fades out as the enemy is blasted away, so it does not sit on his vanishing)
-  if (s.n > 0 && cA > 0.02 && !(s.title != null && t >= s.title)) { const a = (now - s.nAt) / 1000, sz = a < 0.12 ? 24 : 16; ctx.globalAlpha = cA; pxt('BLACK FLASH', VW - 8 - safeC, bh + 12, YF_RED, 8, 'right'); pxt('x' + s.n, VW - 8 - safeC, bh + 12 + sz + 4, a < 0.12 ? '#ffffff' : '#ffd0c8', sz, 'right'); ctx.globalAlpha = 1; }
-  s.lines = s.lines.filter(l => now - l.born < 2400 && !(l.cut && now >= l.cut)); for (const l of s.lines) { const a = (now - l.born) / 1000, left = Math.min(2.4 - a, l.cut ? (l.cut - now) / 1000 : 9); ctx.globalAlpha = Math.max(0, Math.min(1, a * 6, left * 3)); const fitN = Math.floor((VW - 8) / 8), by = VH - bh - 8; if (!l.big && l.txt.length > fitN) { let k = l.txt.indexOf(' ', l.txt.length >> 1); if (k < 0) k = l.txt.lastIndexOf(' '); if (k > 0) { pxt(l.txt.slice(0, k), mx, by - 10, l.col, 8, 'center'); pxt(l.txt.slice(k + 1), mx, by, l.col, 8, 'center'); continue; } } pxt(l.txt, mx, by, l.col, l.big ? 16 : 8, 'center'); } ctx.globalAlpha = 1;
   if (s.T8 != null && t > s.T8 - 0.5 && t < s.T8) actionLines(mx, my + 8, now, 36);
   if (s.blur && now < s.blur.until) { const k = (s.blur.until - now) / 150, X = Math.round(mx + (s.blur.x - cx) * z), Y = Math.round(my + (s.blur.y - zy) * z); yfSave(); ctx.imageSmoothingEnabled = false; for (const sc of [1.04, 1.09]) { ctx.globalAlpha = 0.3 * k * (sc < 1.06 ? 1 : 0.7); ctx.drawImage(cv, Math.round(X * (1 - sc)), Math.round(Y * (1 - sc)), Math.round(VW * sc), Math.round(VH * sc)); } yfRestore(); }
   yfImpFrames(s, now, mx, my, z, zy, cx);
@@ -391,65 +377,61 @@ function yfShards(s, now) {      // the glass falls out of the picture: the fram
 YFS.gojo = {
   zb: 1.55, rim: '#9fd8ff', spk: ['#9fd8ff', '#ffffff'], vcols: ['#9fd8ff', '#ffffff', '#4aa8ff'],
   beats: [
-    { at: 2.6, mv: 'hook', ap: 'dash', apT: 0.5, out: { k: 'slide', dx: 75, T: 0.9, rx: 3 }, z: 2.1, line: 'THE INFINITY BREAKS', lcol: '#ffffff', fx: (s, now, b) => yfShatter(s, now, b.vx - 12, gy - 34, ['#9fd8ff', '#ffffff', '#4aa8ff']) },
+    { at: 2.6, mv: 'hook', ap: 'dash', apT: 0.5, out: { k: 'slide', dx: 75, T: 0.9, rx: 3 }, z: 2.1, fx: (s, now, b) => yfShatter(s, now, b.vx - 12, gy - 34, ['#9fd8ff', '#ffffff', '#4aa8ff']) },
     { at: 4.6, mv: 'upper', ap: 'run', apT: 1.3, out: { k: 'launch', T: 0.55, dx: 14, l1: 78 }, z: 1.7 },
-    { at: 6.6, mv: 'knee', ap: 'leap', apT: 1.3, aph: 26, yl: 'match', out: { k: 'fly', T: 0.95, dx: 70, h: 24 }, z: 1.8, line: 'SIX EYES CANNOT FOLLOW', lcol: '#9fd8ff' },
+    { at: 6.6, mv: 'knee', ap: 'leap', apT: 1.3, aph: 26, yl: 'match', out: { k: 'fly', T: 0.95, dx: 70, h: 24 }, z: 1.8 },
     { at: 8.9, mv: 'slam', ap: 'run', apT: 1.15, out: { k: 'fly', T: 0.5, dx: 20, h: 26 }, z: 2.2 },
     { at: 10.8, mv: 'sweep', ap: 'run', apT: 1.2, out: { k: 'fly', T: 0.95, dx: 130, h: 8, turns: 1 }, z: 1.6 },
-    { at: 12.9, mv: 'spin', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 20, h: 8, l1: 95, rot: 0.6 }, z: 1.8, line: 'THE STRONGEST FALLS', lcol: '#ffffff' },
+    { at: 12.9, mv: 'spin', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 20, h: 8, l1: 95, rot: 0.6 }, z: 1.8 },
     { at: 14.7, mv: 'dive', ap: 'leap', apT: 1.2, aph: 28, yl: 'match', out: { k: 'fly', T: 0.9, dx: 34, h: 24, land: 'stand', rest: 'kneel' }, z: 1.8 },
     { at: 19.4, mv: 'cbf', ap: 'dash', apT: 0.5, pre: { t: 3.0, d: 96 }, out: { k: 'fly', T: 1.3, dx: 190, h: 30, l1: 84, rot: 2.8, gone: true }, nocam: true, fz: 0.52 }],
   slow: [[17.4, 19.3, 0.45], [19.42, 20.62, 0.3]],
   cam: [[16.6, 1.4, 0.5, 0, 0], [17.6, 1.7, 0.3, 0, 0], [18.7, 2.0, 0.1, 0, 1], [19.15, 3.0, 0.1, 4, 1], [19.5, 2.4, 0.1, 0, 1], [19.95, 1.9, 0.1, -6, 1], [20.3, 1.6, 0.5, 0, 0], [21.2, 1.3, 0.55, 0, 0], [21.65, 1.9, 0.0, 0, 1], [23.5, 2.0, 0.0, 0, 1]], title: 21.45,
-  back: (s, now, t, mx, cx, Vs) => yfBarrier(s, now, t, mx, cx, Vs),
-  ev: [['l0', 0.9, (s, now) => yfSay('THE INFINITY: UNTOUCHABLE', '#9fd8ff', now)]] };
+  back: (s, now, t, mx, cx, Vs) => yfBarrier(s, now, t, mx, cx, Vs) };
 
 YFS.verity = {
   zb: 1.55, rim: '#ffe060', spk: ['#ffe060', '#ffffff'], vcols: ['#ffe060', '#ffffff', '#c8a028'],
   beats: [
     { at: 2.8, mv: 'elbow', ap: 'dash', apT: 0.5, out: { k: 'slide', dx: 60, T: 0.8, rx: 0 }, z: 2.2 },
-    { at: 4.7, mv: 'push', ap: 'run', apT: 1.2, out: { k: 'fly', T: 1.0, dx: 140, h: 6 }, z: 1.7, line: 'STOP SMILING', lcol: '#ffe060' },
+    { at: 4.7, mv: 'push', ap: 'run', apT: 1.2, out: { k: 'fly', T: 1.0, dx: 140, h: 6 }, z: 1.7 },
     { at: 6.75, mv: 'slam', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.55, dx: 14, h: 38 }, z: 2.2 },
     { at: 8.6, mv: 'sweep', ap: 'run', apT: 1.1, out: { k: 'fly', T: 1.0, dx: 100, h: 40, l1: 85, rot: 1.2 }, z: 1.6 },
     { at: 10.65, mv: 'dive', ap: 'leap', apT: 1.3, aph: 26, yl: 'match', out: { k: 'fly', T: 0.9, dx: 80, h: 18 }, z: 1.8 },
-    { at: 13.15, mv: 'spin', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 40, h: 6, l1: 90, rot: 0.8 }, z: 1.8, line: 'DELETE', lcol: '#ff3ad8' },
+    { at: 13.15, mv: 'spin', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 40, h: 6, l1: 90, rot: 0.8 }, z: 1.8 },
     { at: 14.9, mv: 'face', ap: 'leap', apT: 1.2, aph: 28, yl: 'match', out: { k: 'fly', T: 0.9, dx: 40, h: 20, land: 'stand', rest: 'kneel' }, z: 1.8 },
     { at: 19.4, mv: 'bfk', ap: 'dash', apT: 0.5, pre: { t: 3.0, d: 96 }, out: { k: 'fly', T: 1.4, dx: 230, h: 0, l1: 38, rot: 0.9, gone: true }, nocam: true, fz: 0.52 }],
   slow: [[17.4, 19.3, 0.45], [19.42, 20.62, 0.3]],
   cam: [[16.6, 1.4, 0.5, 0, 0], [17.6, 1.7, 0.3, 0, 0], [18.7, 2.0, 0.1, 0, 1], [19.15, 3.0, 0.1, 4, 1], [19.5, 2.4, 0.1, 0, 1], [19.95, 1.8, 0.2, -4, 1], [20.4, 1.3, 0.5, 0, 0], [21.3, 1.2, 0.5, 0, 0], [21.7, 1.9, 0.0, 0, 1], [23.5, 2.0, 0.0, 0, 1]], title: 21.45,
   vdraw: (s, now, t, vp, Vs, vx) => { const P = s.P; let g = 0; for (const b of P.beats) { const u = t - b.at; if (u >= 0 && u < 0.4) g = Math.max(g, 1 - u / 0.4); } const T8 = s.T8, o = P.beats[7].out; let keep = 1; if (T8 != null && t > T8 - 0.5) { g = Math.max(g, 0.7); if (t > T8 + 0.2) keep = Math.max(0, 1 - (t - T8 - 0.2) / (o.T - 0.2)); } if (g < 0.05 && keep >= 1) return false; yfGlitch(s, now, t, vp, Vs, vx, g, keep); return true; },
-  screen: (s, now, t) => { const T8 = s.T8; if (T8 == null || t < T8 || t > T8 + 2.0) return; const k = 1 - (t - T8) / 2.0; for (let i = 0; i < 9; i++) { const h = Math.imul(i * 7919 + ((now / 70) | 0) * 104729, 2246822519) >>> 0; ctx.globalAlpha = 0.35 * k; ctx.fillStyle = i % 3 ? '#ffe060' : '#ffffff'; ctx.fillRect(h % VW, (h >> 9) % VH, 20 + (h >> 4) % 120, 1 + (h >> 13) % 2); } ctx.globalAlpha = 1; },
-  ev: [['l0', 0.9, (s, now) => yfSay("HEY... IT'S ME... IT'S VERITY", '#ffe060', now)]] };
+  screen: (s, now, t) => { const T8 = s.T8; if (T8 == null || t < T8 || t > T8 + 2.0) return; const k = 1 - (t - T8) / 2.0; for (let i = 0; i < 9; i++) { const h = Math.imul(i * 7919 + ((now / 70) | 0) * 104729, 2246822519) >>> 0; ctx.globalAlpha = 0.35 * k; ctx.fillStyle = i % 3 ? '#ffe060' : '#ffffff'; ctx.fillRect(h % VW, (h >> 9) % VH, 20 + (h >> 4) % 120, 1 + (h >> 13) % 2); } ctx.globalAlpha = 1; } };
 YFS.cat = {
   zb: 1.55, rim: '#ffffff', spk: ['#ffe34d', '#ffffff'], vcols: ['#ffe34d', '#ffffff', '#ff7a5a'], toon: true, iris: true,
   beats: [
-    { at: 2.6, mv: 'conc', ap: 'dash', apT: 0.5, out: { k: 'fly', T: 1.0, dx: 130, h: 22, bh: 24 }, z: 2.0, word: 'POW!' },
-    { at: 4.7, mv: 'slam', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.6, dx: 30, h: 44, bh: 20, flat: true }, z: 2.2, word: 'BAM!' },
-    { at: 6.6, mv: 'sweep', ap: 'run', apT: 1.2, out: { k: 'fly', T: 1.1, dx: 150, h: 8, turns: 2 }, z: 1.6, word: 'WHAP!' },
-    { at: 8.8, mv: 'spin', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 20, h: 6, l1: 100, rot: 0.7 }, z: 1.8, word: 'ZONK!' },
-    { at: 10.7, mv: 'knee', ap: 'leap', apT: 1.3, aph: 28, yl: 'match', out: { k: 'fly', T: 0.9, dx: 60, h: 30, land: 'stand', rest: 'dazed' }, z: 1.8, word: 'BOING!' },
-    { at: 13.1, mv: 'elbow', ap: 'run', apT: 1.3, out: { k: 'slide', dx: 70, T: 0.8, rx: 2 }, z: 2.0, word: 'KRAK!' },
-    { at: 15.1, mv: 'dive', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 40, h: 24, land: 'stand', rest: 'kneel' }, z: 1.8, word: 'WHAM!' },
-    { at: 19.4, mv: 'cbf', ap: 'dash', apT: 0.5, pre: { t: 3.0, d: 96 }, out: { k: 'fly', T: 1.3, dx: 170, h: 30, l1: 84, rot: 3.2, gone: true }, nocam: true, fz: 0.52, word: 'BLACK FLASH!!', wcol: '#ffffff' }],
+    { at: 2.6, mv: 'conc', ap: 'dash', apT: 0.5, out: { k: 'fly', T: 1.0, dx: 130, h: 22, bh: 24 }, z: 2.0 },
+    { at: 4.7, mv: 'slam', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.6, dx: 30, h: 44, bh: 20, flat: true }, z: 2.2 },
+    { at: 6.6, mv: 'sweep', ap: 'run', apT: 1.2, out: { k: 'fly', T: 1.1, dx: 150, h: 8, turns: 2 }, z: 1.6 },
+    { at: 8.8, mv: 'spin', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 20, h: 6, l1: 100, rot: 0.7 }, z: 1.8 },
+    { at: 10.7, mv: 'knee', ap: 'leap', apT: 1.3, aph: 28, yl: 'match', out: { k: 'fly', T: 0.9, dx: 60, h: 30, land: 'stand', rest: 'dazed' }, z: 1.8 },
+    { at: 13.1, mv: 'elbow', ap: 'run', apT: 1.3, out: { k: 'slide', dx: 70, T: 0.8, rx: 2 }, z: 2.0 },
+    { at: 15.1, mv: 'dive', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 40, h: 24, land: 'stand', rest: 'kneel' }, z: 1.8 },
+    { at: 19.4, mv: 'cbf', ap: 'dash', apT: 0.5, pre: { t: 3.0, d: 96 }, out: { k: 'fly', T: 1.3, dx: 170, h: 30, l1: 84, rot: 3.2, gone: true }, nocam: true, fz: 0.52 }],
   slow: [[17.4, 19.3, 0.45], [19.42, 20.62, 0.3]],
   cam: [[16.6, 1.4, 0.5, 0, 0], [17.6, 1.7, 0.3, 0, 0], [18.7, 2.0, 0.1, 0, 1], [19.15, 3.0, 0.1, 4, 1], [19.5, 2.4, 0.1, 0, 1], [19.95, 1.9, 0.1, -6, 1], [20.3, 1.6, 0.5, 0, 0], [21.2, 1.3, 0.55, 0, 0], [21.65, 1.9, 0.0, 0, 1], [23.0, 2.0, 0.0, 0, 1]], title: 21.2,
   back: (s, now, t, mx, cx) => { const h = s.hole; if (!h) return; const a = (now - h.born) / 1000, q = yfVPic(s.K, ['rx', 7, 0.4], now, false), X = Math.round(mx + h.x - cx), Y = Math.round(h.y); yfSave(); ctx.globalAlpha = Math.min(1, a * 5) * Math.max(0.25, 1 - a * 0.25); ctx.translate(X, Y + 30); ctx.scale(-1.7, 1.7); const hx = q.info.cx - q.info.x0; ctx.drawImage(tintOf(q.src, '#ffffff'), -hx + 1, -62 - (q.info.top || 0)); ctx.drawImage(tintOf(q.src, '#ffffff'), -hx - 1, -62 - (q.info.top || 0)); ctx.drawImage(tintOf(q.src, '#000000'), -hx, -62 - (q.info.top || 0)); yfRestore(); },
   front: (s, now, t, mx, cx, Vs) => { if (!Vs.gone && Vs.pose[0] === 'blue') yfStars(s, now, mx + Vs.x - cx, Vs.l, 3); if (s.hole) { const a = (now - s.hole.born) / 1000; if (a < 2.2) yfStars(s, now, mx + s.hole.x - cx, 150 - (gy - s.hole.y) + 4, 4); } },
-  vanish: (s, now, x, y) => { s.hole = { x, y, born: now }; yfVanish(s, now, x, y, ['#ffe34d', '#ffffff', '#ff7a5a']); },
-  ev: [['l0', 0.9, (s, now) => yfSay('A CARTOON CANNOT GET HURT... RIGHT?', '#ffe34d', now)]] };
+  vanish: (s, now, x, y) => { s.hole = { x, y, born: now }; yfVanish(s, now, x, y, ['#ffe34d', '#ffffff', '#ff7a5a']); } };
 YFS.yuji = {
   zb: 1.55, rim: '#7df4ff', spk: ['#7df4ff', '#ffffff'], vcols: ['#ffffff', '#7df4ff', '#2fc3e6'], glass: true,
   beats: [
-    { at: 2.5, mv: 'rkick', ap: 'dash', apT: 0.5, out: { k: 'slide', dx: 70, T: 0.9, rx: 3 }, z: 2.1, line: 'YOUR OWN REFLECTION', lcol: '#7df4ff' },
+    { at: 2.5, mv: 'rkick', ap: 'dash', apT: 0.5, out: { k: 'slide', dx: 70, T: 0.9, rx: 3 }, z: 2.1 },
     { at: 4.4, mv: 'upper', ap: 'run', apT: 1.2, out: { k: 'launch', T: 0.55, dx: 14, l1: 80 }, z: 1.7 },
     { at: 6.45, mv: 'face', ap: 'leap', apT: 1.3, aph: 28, yl: 'match', out: { k: 'fly', T: 1.0, dx: 80, h: 20 }, z: 1.8 },
-    { at: 8.8, mv: 'slam', ap: 'run', apT: 1.2, out: { k: 'fly', T: 0.5, dx: 15, h: 28 }, z: 2.2, line: 'ONLY ONE OF YOU', lcol: '#ffffff' },
+    { at: 8.8, mv: 'slam', ap: 'run', apT: 1.2, out: { k: 'fly', T: 0.5, dx: 15, h: 28 }, z: 2.2 },
     { at: 10.7, mv: 'sweep', ap: 'run', apT: 1.2, out: { k: 'fly', T: 1.0, dx: 120, h: 8, turns: 1 }, z: 1.6 },
     { at: 12.9, mv: 'spin', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 30, h: 8, l1: 90, rot: 0.6 }, z: 1.8 },
-    { at: 14.7, mv: 'dive', ap: 'leap', apT: 1.2, aph: 28, yl: 'match', out: { k: 'fly', T: 0.9, dx: 34, h: 24, land: 'stand', rest: 'kneel' }, z: 1.8, line: 'BREAK THE MIRROR', lcol: '#7df4ff' },
+    { at: 14.7, mv: 'dive', ap: 'leap', apT: 1.2, aph: 28, yl: 'match', out: { k: 'fly', T: 0.9, dx: 34, h: 24, land: 'stand', rest: 'kneel' }, z: 1.8 },
     { at: 19.4, mv: 'cbf', ap: 'dash', apT: 0.5, pre: { t: 3.0, d: 96 }, out: { k: 'fly', T: 1.1, dx: 120, h: 20, l1: 44, rot: 1.4, gone: true }, nocam: true, fz: 0.52 }],
   slow: [[17.4, 19.3, 0.45], [19.42, 20.62, 0.3]],
   cam: [[16.6, 1.4, 0.5, 0, 0], [17.6, 1.7, 0.3, 0, 0], [18.7, 2.0, 0.1, 0, 1], [19.15, 3.0, 0.1, 4, 1], [19.5, 2.4, 0.1, 0, 1], [19.95, 1.9, 0.1, -6, 1], [20.3, 1.6, 0.5, 0, 0], [21.2, 1.3, 0.55, 0, 0], [21.65, 1.9, 0.0, 0, 1], [23.5, 2.0, 0.0, 0, 1]], title: 21.45,
   screen: (s, now, t, mx, my, z, zy, cx) => { yfGlass(s, now, mx, cx, z, zy, my); yfShards(s, now); },
-  fx: null,
-  ev: [] };
+  fx: null };

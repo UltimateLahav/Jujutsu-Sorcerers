@@ -1,5 +1,18 @@
 [
  {
+  "v": "1.186",
+  "t": "CUTSCENES WITHOUT CAPTIONS",
+  "n": [
+   "You said: remove any text from any cutscene that says what is happening, or that you did not ask for (for example THE DAMAGE IS REAL in Freddy's dream). Every word I had added to a cutscene is gone.",
+   "FREDDY'S NIGHTMARE: NIGHTMARE, THE DREAM, THE DAMAGE IS REAL, WAKE UP!, the Z letters over the sleeping enemy and the PIERCED! word at the pierce.",
+   "YUJI'S FATALITY: the BLACK FLASH x1 ... x8 counter, the caption lines (THE INFINITY: UNTOUCHABLE, THE INFINITY BREAKS, SIX EYES CANNOT FOLLOW, THE STRONGEST FALLS, HEY... IT'S ME... IT'S VERITY, STOP SMILING, DELETE, A CARTOON CANNOT GET HURT... RIGHT?, YOUR OWN REFLECTION, ONLY ONE OF YOU, BREAK THE MIRROR), THE ZONE, ELITE FINISHER and the comic words of the Cartoon Cat's version (POW! BAM! WHAP! ZONK! BOING! KRAK! WHAM! BLACK FLASH!!).",
+   "YUJI'S ULTIMATE: ULTIMATE!, BLACK FLASH! and BLACK FLASH!! (in a normal fight BLACK FLASH! still shows when the punch lands).",
+   "STORY: JUJUTSU HIGH over the corridor, THE WHEEL ADAPTS in chapter 3, HONK! over the cars in New York, HA HA HA over Iron Man, STARK TOWER over the window of the lab.",
+   "STAYS: what the characters say, their names, the chapter and end cards, FATALITY, the names of the domains and moves, DOUBLE TAP TO SKIP, the signs that are part of the world (NEW YORK, LIVE), the hit counter, and every line you asked for yourself.",
+   "A check that lists every text drawn during every cutscene confirmed that none of the removed words is drawn any more; the game scan found no errors."
+  ]
+ },
+ {
   "v": "1.185",
   "t": "FREDDY: STRETCHED PUNCHES, GROUND SLAM AND A FATALITY",
   "n": [

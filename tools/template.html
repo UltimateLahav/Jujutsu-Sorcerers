@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.185</small>
+    <small id="ver">V1.186</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -2983,7 +2983,7 @@ function bfSparks(now, x, y, info, fi) {      // BLACK FLASH: black-and-red ligh
 }
 let bfList = [];
 function bfFx(now, x, k) { if (k === 23) { bfBig(now, x); return; }      // BLACK FLASH lands (k = 20 punch, 21 kick to the head, 22 blow to the stomach): BLACK FLASH! on the screen, the world goes dark for a moment with black-and-red lightning and a shock ring, sparks, a long hit-stop and a heavy buzz
-  say('BLACK FLASH!', x, '#ff3a4a', 16, now + 60); hitStop(110); buzz(90); const y = gy - [30, 46, 24][k - 20]; bfList.push({ x: x - 4, y, born: now }); if (bfList.length > 4) bfList.shift();
+  if (!yu) say('BLACK FLASH!', x, '#ff3a4a', 16, now + 60); hitStop(110); buzz(90); const y = gy - [30, 46, 24][k - 20]; bfList.push({ x: x - 4, y, born: now }); if (bfList.length > 4) bfList.shift();
   spark(x - 6, y, 22, ['#ff2a3a', '#12030a', '#ffffff', '#ff7a5a'], true, 1); spark(x - 6, y, 12, ['#ff2a3a', '#12030a'], true, -1);
 }
 function drawBolts(now) {      // the lightning, the shock ring and the darkness of every BLACK FLASH that is still going (0.35 s)
@@ -4325,7 +4325,7 @@ function yuStart(now) {
   const d = dummy, T = 3.2; yu = {      // (T: the seconds the enemy is held, much more than it lasts)
     at: now, beat: -1, hit: [false, false, false, false], ti: [-1, -1, -1, -1], eh: 0, h2: 0, lift: 0, dmg: 0, rel: false, landed: false, f: inhOn() ? INH_DMG : 1, raw: 0 };      // (f: half the damage when it is cast in INHERITENCE, v1.53; raw: the damage so far at full strength)
   domReadyAt = now + YUT.cd; atkQ = false; combo = 0; d.stunUntil = now + (T + 0.5) * 1000; d.ai = 'rest'; d.aiAt = now; d.restFor = (T + 0.6) * 1000; d.vx = 0; d.pull = null; d.vact = null; d.cact = null; d.held = null; d.cheld = null;
-  snd('swing', 3); say('ULTIMATE!', wx, '#ff3a4a', 12, now);
+  snd('swing', 3);
 }
 function yuBeat(i, now) { yu.beat = i; atkK = YUT.k[i]; atkAt = now; atkQ = false; evA = -1; if (i === 1 || i === 3) snd('charge'); if (i === 3) { shakeUntil = now + 450; shakeAmp = 2; } }
 function yuEnd(now) {      // over (or cut short: the enemy was beaten, the round ended)
@@ -4367,7 +4367,6 @@ function yuTick(now, dt) {      // every frame, before the controls: the beats, 
 function yuBig(now, x) {      // the last punch: the longest freeze of the game (0.52 s) with the anime's four impact frames on it, the biggest shake, slow motion afterwards and the show of drawYuBig (the first three blows have the normal BLACK FLASH)
   const I = YU.atk[23], h = I.hn[9], hxp = wx + h[0] - (I.cx - I.x0), hyp = gy - 60 - (I.top || 0) + h[1];
   stopMs = Math.max(stopMs, 520); impfStart(hxp - wx, hyp); buzz(400); shakeUntil = now + 1000; shakeAmp = 8; flash(now, 260, 0.9);
-  say('BLACK FLASH!!', x, '#ff3a4a', 16, now + 30);
   yuFx.push({ x: x - 4, y: gy - 34, real: performance.now() + 520 });
   spark(x - 6, gy - 34, 90, ['#ff2a3a', '#12030a', '#ffffff', '#ff7a5a'], true, 1); spark(x - 6, gy - 34, 50, ['#ff2a3a', '#12030a'], true, -1);
   gritAt(x, 24, 160, 0); shockAt(x, 260, 120, 0.9); puff(x, 12); snd('concboom'); snd('finisher'); snd('smack', 3); snd('land', 2);
@@ -5015,7 +5014,6 @@ function outroHall(now, dt, T) {      // scene 2: the corridor with the BIG door
   if (walk && T >= OUT.walk) { const n = Math.floor((now - story.t0) / 280); if (story.stepN !== n) { story.stepN = n; snd('step', n % 2, false); } }
   if (T >= ta - 0.3 && T < ta + 0.2) { ctx.fillStyle = 'rgba(255,255,255,' + (0.5 * (1 - Math.abs(T - ta) / 0.3)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }
   if (op > 0) { ctx.fillStyle = 'rgba(255,190,110,' + (0.2 * op).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
-  const cap = T - (OUT.hall + 1.2); if (cap > 0 && cap < 3.4) { ctx.globalAlpha = Math.min(1, cap / 0.5, (3.4 - cap) / 0.5); pxt('JUJUTSU HIGH', Math.round(VW / 2), 22, '#ffd34d', 16, 'center'); ctx.globalAlpha = 1; }      // (where he is)
   const wa = clamp01((T - OUT.white) / 1.4); if (wa > 0) { ctx.fillStyle = 'rgba(255,244,214,' + wa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
   const fa = 1 - (T - OUT.hall) / 0.7; if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
 }
@@ -6220,7 +6218,7 @@ function freddyDream(now, dt) {      // every frame of the nightmare: it updates
   if (t >= FD.A && !fd.sank) { fd.sank = true; snd('nightmare'); }
   if (t >= FD.B && !fd.dreamed) { fd.dreamed = true; d.x = wx + 40; d.rx = 0; d.rxAt = -1e9; shakeUntil = now + 120; shakeAmp = 1; }
   FD.hits.forEach((h, k) => { if (t >= h && !fd.hit[k]) { fd.hit[k] = true; techDmg(d, FD.dmg[k], now, 0, false); tqBlood(d.x - 4, gy - 34, 16 + k * 4, 1); fd.fx.push({ at: now, k }); fd.glitch = now; shakeUntil = now + 110; shakeAmp = 2; snd('clawscrape'); } });
-  if (t >= FD.pierceAt && !fd.pierced && d.ko < 0) { fd.pierced = true; techDmg(d, FD.pierce, now, 0, true); tqBlood(d.x - 4, gy - 34, 40, 1); tqBlood(d.x - 4, gy - 34, 16, -1); fd.fx.push({ at: now, k: 4 }); fd.glitch = now; shakeUntil = now + 220; shakeAmp = 4; hitStop(80); snd('clawscrape'); snd('hit', 3); say('PIERCED!', d.x, '#ff4a5a', 8, now + 150); }
+  if (t >= FD.pierceAt && !fd.pierced && d.ko < 0) { fd.pierced = true; techDmg(d, FD.pierce, now, 0, true); tqBlood(d.x - 4, gy - 34, 40, 1); tqBlood(d.x - 4, gy - 34, 16, -1); fd.fx.push({ at: now, k: 4 }); fd.glitch = now; shakeUntil = now + 220; shakeAmp = 4; hitStop(80); snd('clawscrape'); snd('hit', 3); }
   if (d.ko >= 0) return stop();      // (killed in the dream: he dies where he sleeps)
   if (t >= FD.wake && !fd.woke) { fd.woke = true; d.x = fd.x0; d.rx = 4; d.rxAt = now - 340; d.bleed = { until: now + FD.bleed, next: now + FD.gap, gap: FD.gap }; snd('wakeup'); }
   if (fd.woke) vpBleed(now);      // (the wounds bleed while he gets up: 1 damage every 0.2 s for 4 s)
@@ -6242,9 +6240,8 @@ function freddyDream(now, dt) {      // every frame of the nightmare: it updates
     else if (t >= FD.charge[1] && t < FD.charge[1] + 10 / FRED_PIERCE.fps) { pic = fredP(5 + Math.min(9, (t - FD.charge[1]) * FRED_PIERCE.fps)); ox = FRED_PIERCE.x; }
   }
   if (ap > 0) { const jit = ap < 1 && Math.random() < 0.4 ? (Math.random() < 0.5 ? -2 : 2) : 0; ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(cx - 9, gy + 3, 18, 2); ctx.fillRect(cx - 6, gy + 2, 12, 1); ctx.fillRect(cx - 6, gy + 5, 12, 1); ctx.globalAlpha = ap; ctx.drawImage(pic, cx - 31 + ox + jit, gy - 61); ctx.globalAlpha = 1; }
-  // the lullaby: notes drift from the claw to the enemy; Zzz over his head while he sleeps
+  // the lullaby: notes drift from the claw to the enemy
   if (t < FD.B) { for (let i = 0; i < 6; i++) { const u = (t * 0.45 + i / 6) % 1, nx = cx + 12 + u * (ex() - cx - 12), ny = gy - 40 - Math.sin(u * 9) * 7 - u * 10; R('#cdb8ff', nx, ny, 3, 2); R('#cdb8ff', nx + 2, ny - 5, 1, 5); R('#cdb8ff', nx + 3, ny - 5, 2, 1); } }
-  if (t >= FD.sleep && t < FD.B) for (let i = 0; i < 3; i++) pxt('Z', ex() + 4 + i * 6, gy - 20 - i * 7 - ((now / 500) % 1) * 6, '#cfe6ff', 8);
   for (const f of fd.fx) {      // the marks of the claws: four lines slash across him; the pierce is a bright streak straight through
     const a = (now - f.at) / 260; if (a >= 1) continue; const sx = ex(), q = Math.min(1, a * 5), al = (1 - a).toFixed(2);
     if (f.k === 4) { const x0 = cx + 14, len = Math.round((sx - x0 + 22) * q); R('rgba(255,70,90,' + al + ')', x0, gy - 34, len, 1); R('rgba(255,255,255,' + al + ')', x0, gy - 33, len, 2); R('rgba(255,70,90,' + al + ')', x0, gy - 31, len, 1); }
@@ -6256,11 +6253,6 @@ function freddyDream(now, dt) {      // every frame of the nightmare: it updates
   if (t >= FD.A && t < FD.B) { const p = (t - FD.A) / (FD.B - FD.A), amp = 5 * p; if (!(now < shakeUntil) && !SET.lite) for (let y = 0; y < VH; y++) ctx.drawImage(cv, 0, y, VW, 1, Math.round(Math.sin(y / 5 + now / 60) * amp), y, VW, 1); const hx = ex(), hy = gy - 12; ctx.fillStyle = 'rgba(190,170,255,' + (0.8 * p).toFixed(2) + ')'; for (let i = 0; i < 5; i++) { const r = ((p * 60 + i * 14) % 70) + 2; for (let a = 0; a < 28; a++) { const th = a / 28 * 6.2832 + p * 4; ctx.fillRect(Math.round(hx + Math.cos(th) * r), Math.round(hy + Math.sin(th) * r * 0.7), 1, 1); } } R('rgba(10,10,50,' + (p * p).toFixed(2) + ')', 0, 0, VW, VH); }
   if (t >= FD.B && t < FD.B + 0.5) R('rgba(10,10,50,' + (1 - (t - FD.B) / 0.5).toFixed(2) + ')', 0, 0, VW, VH);
   if (now - fd.glitch < 150) for (let k = 0; k < 7; k++) { const y = (Math.random() * (VH - 8)) | 0; ctx.drawImage(cv, 0, y, VW, 4 + ((Math.random() * 5) | 0), Math.round((Math.random() * 2 - 1) * 8), y, VW, 4); }
-  const cap = (txt, col, a) => { if (a > 0) { ctx.globalAlpha = Math.min(1, a); pxt(txt, VW / 2, gy - 55, col, 10, 'center'); ctx.globalAlpha = 1; } };      // (the captions sit between the health bars and the heads)
-  if (t < 1.9) cap('NIGHTMARE', '#cdb8ff', Math.min(t / 0.3, (1.9 - t) / 0.4));
-  if (dream && t < FD.B + 1.9) cap('THE DREAM', '#ffffff', 1 - (t - FD.B - 0.5) / 1.4);
-  if (t >= FD.wake && t < FD.wake + 1.2) cap('WAKE UP!', '#ffffff', (FD.wake + 1.2 - t) / 0.5);
-  if (dream && fd.hit[0]) pxt('THE DAMAGE IS REAL', VW / 2, VH - 14, ((now / 200) | 0) % 2 ? '#ff4a5a' : '#ffb0a0', 8, 'center');
   const bar = Math.round(9 * Math.min(1, t / 0.5) * Math.min(1, (FD.end - t) / 0.5)); if (bar > 0) { R('#000', 0, 0, VW, bar); R('#000', 0, VH - bar, VW, bar); }
   if (t >= FD.dream - 0.3 && t < FD.wake + 0.5) { const f = t < FD.wake ? (t - FD.dream + 0.3) / (FD.wake - FD.dream + 0.3) : 1 - (t - FD.wake) / 0.5; R('rgba(255,255,255,' + Math.max(0, Math.min(1, f)).toFixed(2) + ')', 0, 0, VW, VH); }
   drawVs(now, -shkX, -shkY);

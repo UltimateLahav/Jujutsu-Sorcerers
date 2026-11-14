@@ -304,14 +304,14 @@ function c4xNyStart(now) {
   Object.assign(Y, { x: 0, face: 1, lift: 0, rot: 0, white: 0, sink: 0, tint: 0, gone: false, alpha: undefined, pose: null });
   const cars = [['taxi', -76, 1, 0], ['sedan', -136, 1, 2], ['van', -202, 1, 4], ['dark', 104, -1, 1], ['white', 164, -1, 3], ['truck', 246, -1, 5]].map(([k, x, dir, hk]) => ({ k, x, dir, hk, next: 0.7 + Math.random() * 0.8 }));
   const far = [['bus', 40, 66], ['taxi', 190, 84], ['white', 330, 74], ['truck', 450, 62], ['sedan', 580, 96]].map(([k, x, v]) => ({ k, x: x - 150, v: -v, w: 0 }));
-  c.ny = { cars, far, hn: [], t: 0 }; popups = []; sparks = []; smoke = []; snd('windOff');
+  c.ny = { cars, far, t: 0 }; popups = []; sparks = []; smoke = []; snd('windOff');
 }
 function c4xNyStep(c, now, dt, T) {
   const N = C4NS, Y = c.y, ny = c.ny, ev = (n, t, f) => c4xEv(c, T, n, t, f), idle = now / (1000 / IDLE_FPS), ease = c4xEase, out = c4xOut, IMx = 58;
   // ---- the cars: the far lane rolls on (and slows to look); the near ones stand with their brake lights on and honk
   const slow = T < N.land ? 1 : Math.max(0.12, 1 - (T - N.land) * 0.8); for (const f of ny.far) { f.x += f.v * slow * dt; if (f.x < -330) f.x += 900; }
   const env = T < 0.5 ? 0 : T < N.land - 0.2 ? 1 : T < N.land + 0.8 ? 0.1 : T < N.blade - 0.2 ? 0.45 : 0;
-  for (const k of ny.cars) if (T >= k.next) { k.next = T + 0.32 + Math.random() * 0.55; if (Math.random() < env) { snd('honk', k.hk + ((Math.random() * 2) | 0)); ny.hn.push({ x: k.x + (k.dir > 0 ? 8 : -8), t0: now, base: k.k }); if (ny.hn.length > 8) ny.hn.shift(); } }
+  for (const k of ny.cars) if (T >= k.next) { k.next = T + 0.32 + Math.random() * 0.55; if (Math.random() < env) { snd('honk', k.hk + ((Math.random() * 2) | 0)); } }
   // ---- Yuji
   Y.rot = 0; Y.lift = 0; Y.white = 0; Y.face = 1; let yp = { set: 'idle', fi: idle };
   if (T < N.fall) { const u = T / N.fall; Y.lift = 112 * (1 - u * u); Y.rot = 0.9 + 3 * u; Y.x = 0; yp = { set: 'rx', k: 1, fi: 8 }; }
@@ -353,7 +353,6 @@ function c4xNyDraw(c, now, dt, T) {
     }
     if (T >= N.land && T < N.land + 0.6) { const a = (T - N.land) / 0.6; ctx.globalAlpha = 1 - a; c4xRing(c4xSX(im.x), gy + 2, Math.round(6 + 34 * a), '#ffd27a'); ctx.globalAlpha = 1; }
   }
-  for (const h of ny.hn) { const a = (now - h.t0) / 480; if (a < 1) { ctx.globalAlpha = 1 - a; pxt('HONK!', c4xSX(h.x), gy - 36 - Math.round(a * 8), a < 0.3 ? '#fff6a0' : '#ffd34d', 8, 'center'); ctx.globalAlpha = 1; } }
   if ((T >= N.look[0] && T < N.look[0] + 0.7) || (T >= N.look[1] && T < N.look[1] + 0.7) || (T >= N.look[2] && T < N.look[2] + 0.7) || (T >= N.up && T < N.up + 0.5)) pxt('?', c4xSX(Y.x) + 2, gy - 60, '#ffffff', 16, 'center');
   drawSmoke(now, dt); drawSparks(now, dt); drawPopups(now);
   if (T >= N.eye) c4xFear(c, T);

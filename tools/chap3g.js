@@ -125,9 +125,6 @@ function c14Front(m) {
   }
   ctx.restore();
 }
-function c14Over(m) {      // on the screen (not moved by the camera): the wheel learns the slash
-  const t = m - c9B(54, 3); if (t < 0 || t > 1.3) return; const a = t < 0.15 ? t / 0.15 : Math.max(0, 1 - (t - 0.5) / 0.8); ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = 'rgba(255,225,140,0.16)'; ctx.fillRect(0, VH * 0.38, VW, VH * 0.2); pxt('THE WHEEL ADAPTS', VW / 2, VH * 0.52, '#ffe08a', 16, 'center'); ctx.restore();
-}
 function c14Events(T, ev) {      // the sounds of the city: glass at every wall, the cut, the roof, each floor that breaks
   const R = c9Start(), L = C14L;
   C14H.forEach(([, , t], i) => ev('c14g' + i, R + t - 0.02, () => snd('c7shatter'), 0.5));

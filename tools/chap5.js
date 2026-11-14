@@ -126,7 +126,7 @@ function startC16(slot) {      // the chapter list or CONTINUE: chapter 5 (it ne
 function k5Start() {      // chapter 5 begins, or begins again after a death: the freeway of New York, Yuji and Iron Man where chapter 4 left them
   show('play'); const now = pnow(); c4xUi(true); c4xCine(true);
   const cars = [['taxi', -76, 1], ['sedan', -136, 1], ['van', -202, 1], ['dark', 104, -1], ['white', 164, -1], ['truck', 246, -1]].map(([k, x, dir]) => ({ k, x, dir, hk: 0, next: 1e9 })), far = [['bus', 40, 66], ['taxi', 190, 84], ['white', 330, 74], ['truck', 450, 62], ['sedan', 580, 96]].map(([k, x, v]) => ({ k, x: x - 150, v: -v, w: 0 }));
-  c4x = { ph: 'k5', t0: now, T: 0, ev: {}, cam: 0, camOk: true, vi: -1, vc: 0, mus: 'off', musAt: now, musGo: false, y: { x: -16, face: 1, lift: 0, pose: null }, m: { x: 0, face: -1, lift: 0, pose: null }, pool: null, fx: [], ny: { cars, far, hn: [] }, q: { res: null, why: '', at: 0 }, q2: { res: null, why: '', at: 0 }, k: null, kc: undefined, black: null, whiteA: 0 };
+  c4x = { ph: 'k5', t0: now, T: 0, ev: {}, cam: 0, camOk: true, vi: -1, vc: 0, mus: 'off', musAt: now, musGo: false, y: { x: -16, face: 1, lift: 0, pose: null }, m: { x: 0, face: -1, lift: 0, pose: null }, pool: null, fx: [], ny: { cars, far }, q: { res: null, why: '', at: 0 }, q2: { res: null, why: '', at: 0 }, k: null, kc: undefined, black: null, whiteA: 0 };
   const c = c4x; c.black = () => k5Black(c); popups = []; sparks = []; smoke = []; bfList = []; stopMs = 0; shakeUntil = 0; flashUntil = 0; blackUntil = 0; wx = 0; snd('windOff');
 }
 function k5Skip(c, now) {      // the SKIP button: a lost try starts again at once; otherwise the tap counts as made and the scene goes on to the next part: the road -> the black (Yuji wakes up), the lab -> the huge room, the huge room -> the cards, the cards -> the chapters
@@ -195,7 +195,6 @@ function k5Fx(c, now, T, S, miss) {
   if (T > 33.7 && T < 34.7) { const rig = c4xRig(C4I, S.im.pose), h = rig.arms[0].h, px = SX(ix) - (h[0] - C4I.cx), py = gy - (C4I.GY - h[1]) - S.im.lift;      // (the palm: it gathers light, then the beam to Yuji's chest)
     if (T < 34.5) c4xGlow(Math.round(px), Math.round(py), 2 + Math.round(5 * (T - 33.8) / 0.7), ['rgba(120,220,255,0.3)', 'rgba(190,245,255,0.6)', 'rgba(255,255,255,0.95)']);
     else { const k = Math.max(0, 1 - (T - 34.5) / 0.16), tx = SX(-52 + 4), ty = gy - 34; ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round'; for (const [w, al, col] of [[9, 0.25, '120,220,255'], [4, 0.7, '200,248,255'], [2, 1, '255,255,255']]) { ctx.strokeStyle = 'rgba(' + col + ',' + (al * k).toFixed(2) + ')'; ctx.lineWidth = w * (0.6 + 0.4 * k); ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(tx, ty); ctx.stroke(); } ctx.restore(); if (k > 0) c4xGlow(Math.round(tx), Math.round(ty), Math.round(9 * k), ['rgba(120,220,255,0.3)', 'rgba(200,248,255,0.65)', 'rgba(255,255,255,0.95)']); } }
-  if (T >= 18.5 && T < 20.6) { const w = Math.round(Math.sin(T * 38) * 1); pxt('HA HA HA', SX(ix) + w, gy - 64 - Math.round((T - 18.5) * 4), '#ffd34d', 8, 'center'); }
 }
 function k5Draw(c, now, dt, T) {
   const N = K5T, miss = c.q.res === 'miss', ny = c.ny; if (T >= N.cut && !miss) { k5Draw2(c, now, dt, T); return; }

@@ -330,7 +330,6 @@ function c10Shot(now, dt, T, st, t1) {
   c10Impact(m, K.cut, cam, cpt[0], cpt[1], 0.55); c10Impact(m, K.throwAt, cam, R.S ? R.S.x : E.SF.x, R.S ? R.S.y : E.SF.y, 0.4); c10Impact(m, K.fling, cam, E.CS.x, E.CS.y, 0.5);
   { const r = m - K.launch; if (r >= 0 && r < 0.07) c6White(0.8 * (1 - r / 0.07)); }
   if (m >= C11K.air2) c11Impacts(m, cam);
-  c14Over(m);
   c13Draw(m, cam, R.S);      // (v1.140 the ring of the quick time event, the counter, the verdict)
   { const k = c8NotchK(s); if (k > 0.02) c6White(0.26 * k * k); }
   ctx.fillStyle = 'rgba(30,10,60,0.12)'; ctx.fillRect(0, 0, VW, VH); msFinish(1);

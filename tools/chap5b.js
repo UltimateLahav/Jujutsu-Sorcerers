@@ -119,7 +119,6 @@ function k5LabBack(now, T, S) {
   k5F('rgba(255,220,170,0.16)', wx0, wy1 - 22, ww, 22); k5F('rgba(255,235,200,0.10)', wx0, wy0, ww, wh); ctx.restore();
   k5F('#0b1017', wx0 - 3, wy0 - 3, ww + 6, 3); k5F('#0b1017', wx0 - 3, wy1, ww + 6, 4); k5F('#0b1017', wx0 - 3, wy0, 3, wh); k5F('#0b1017', wx1, wy0, 3, wh); k5F('#0b1017', wx0 + (ww / 3 | 0), wy0, 2, wh); k5F('#0b1017', wx0 + (ww * 2 / 3 | 0), wy0, 2, wh); k5F('#2a3649', wx0 - 3, wy1 + 4, ww + 6, 1);
   ctx.save(); ctx.beginPath(); ctx.rect(wx0, wy0, ww, wh); ctx.clip(); ctx.fillStyle = 'rgba(255,255,255,0.07)'; for (const o of [0.12, 0.52]) { const x = wx0 + ww * o; ctx.beginPath(); ctx.moveTo(x, wy0); ctx.lineTo(x + 14, wy0); ctx.lineTo(x - 10, wy1); ctx.lineTo(x - 24, wy1); ctx.fill(); } ctx.restore();      // (reflections on the glass)
-  pxt('STARK TOWER', Math.round((wx0 + wx1) / 2), 20, '#7fd8ff', 8, 'center');      // (the name above the window)
   // the desk with screens and a hologram
   const dx = X(122); k5F('#1b2230', dx, gy - 20, 110, 20); k5F('#46546c', dx, gy - 21, 110, 1); k5F('#10151e', dx, gy - 4, 110, 4);
   for (let i = 0; i < 2; i++) { const sx = dx + 8 + i * 34; k5F('#0b1017', sx, gy - 41, 26, 18); k5F('#0f2c3c', sx + 2, gy - 39, 22, 14); ctx.fillStyle = i ? '#7cf0b0' : '#7fe0ff'; for (let k = 0; k < 22; k += 2) ctx.fillRect(sx + 2 + k, gy - 30 - Math.round(Math.sin(t * 2 + k * 0.5 + i * 2) * 3 + 2), 2, 1); k5F('#1c3a4a', sx + 11, gy - 23, 4, 2); }
