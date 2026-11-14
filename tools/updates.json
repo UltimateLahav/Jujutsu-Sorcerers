@@ -1,5 +1,14 @@
 [
  {
+  "v": "1.179",
+  "t": "M1 PUNCHES OVER 15 NOW DEAL 8",
+  "n": [
+   "Every M1 punch or kick that would deal MORE THAN 15 damage now deals exactly 8, for every fighter, yours and the enemy's: Gojo (the elbow, the kick, the walking combo and the red mode's blows), Yuji (the downslam, the spin punch, the hooks when cursed energy is on), Verity (the last M1 punch used to hit for 35, plus 25 more as a combo finisher), Freddy Krueger (his slashes when the extras add up), the Cartoon Cat, Sukuna (his face kick, 16 before) and Ryu (his jump punch 18, downslam 17 and hard punch 16 before).",
+   "The rule looks at the final hit, after every bonus: the random extra, the combo finisher, cursed energy, the counter, the heavy swing, OPEN, FLOW and the enemy's grade. A hit of 15 or less is left as it is. The specials are not touched: BLUE and MODE moves, the Black Flash, DIVERGENT FIST, the pierce, the bite, the counters, the FATALITY, the DOMAINS and the ULTIMATES, and the curses' own blows.",
+   "Side effect to know about: with cursed energy on (x1.3 damage) most M1 hits go over 15 and become 8, so they are weaker than without it. Tell me if you want the cap to work another way."
+  ]
+ },
+ {
   "v": "1.178",
   "t": "CHAPTER 5 GOES ON: STARK TOWER",
   "n": [
