@@ -9789,14 +9789,15 @@ function twWatch(now) {      // what hit whom (watched from the health, the knoc
   if (d.hitAt > T.dHit) {
     const lost = Math.max(0, T.dHp - d.hp), P = Math.max(lost, 3), a = d.air; if (lost >= 3) twImpactNear(F, d.x, P * 0.9, now, 18);      // (a hit of 3 or more: bleeding and the like is no blow)
     const downNew = (d.down || 0) > now && d.down !== T.dDown; let n = 0;
-    if (downNew && lost >= 10 && (gojoLift >= 6 || lost >= 20)) n = twSlamN(lost, false); else if (lost >= 40 && (d.airH || 0) < 4) n = twSlamN(lost, true);
+    if (downNew && lost >= M1_TO && (gojoLift >= 6 || lost >= 20)) n = twSlamN(lost, false);      // (v1.179 a SLAM needs a hit that puts him down from above and takes at least M1_TO (8, was 10): the M1 DOWNSLAMS of Yuji and Ryu, 17 - 18 before, deal 8 now and must still break the floor, one floor as before)
+    else if (lost >= 40 && (d.airH || 0) < 4) n = twSlamN(lost, true);
     if (n > 0) { twSlam('foe', n, now, d.x); return; }
     if (a && a.kind === 'up' && now - a.at < 150 && lost >= 12 && a.h0 + a.v0 * a.v0 / (2 * a.g) >= 40) twCeiling('foe', a.h0 + a.v0 * a.v0 / (2 * a.g) >= 70 ? 2 : 1, now, d.x);
   }
   if (vs.hp < T.pHp) {
     const lost = T.pHp - vs.hp, P = Math.max(lost, 3), a = gAir; if (lost >= 3) twImpactNear(F, wx, P * 0.9, now, 18);
     const downNew = gDownUntil > now && gDownUntil !== T.pDown; let n = 0;
-    if (downNew && lost >= 10 && ((d.airH || 0) >= 6 || lost >= 20)) n = twSlamN(lost, false); else if (lost >= 40 && gojoLift < 4) n = twSlamN(lost, true);
+    if (downNew && lost >= M1_TO && ((d.airH || 0) >= 6 || lost >= 20)) n = twSlamN(lost, false); else if (lost >= 40 && gojoLift < 4) n = twSlamN(lost, true);
     if (n > 0) { twSlam('me', n, now, wx); return; }
     if (a && a.kind === 'up' && now - a.at < 150 && lost >= 12 && a.h0 + a.v0 * a.v0 / (2 * a.g) >= 40) twCeiling('me', a.h0 + a.v0 * a.v0 / (2 * a.g) >= 70 ? 2 : 1, now, wx);
   }
