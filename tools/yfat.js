@@ -22,6 +22,7 @@ function yfKit(foe) {
   if (foe === 'verity') return veVictim();
   if (foe === 'cat') return catVictim();
   if (foe === 'freddy') return freddyVictim();
+  if (foe === 'cu3' || foe === 'cu4') return cuVictim(+foe.slice(2));
   if (foe === 'yuji') return YFK || (YFK = victimKit(YUF.inv.idle, YUF.inv.rx, k => k < 0 ? YU.idle : YU.rx[k]));
   const inv = !!(vs && vs.inv);
   return { vF: inv ? dumF : idleF, vRx: inv ? rxI : rxN, vRxW: rxW, vW: dumW, vB: dumB, vi: k => k < 0 ? D.idle : D['rx' + k], fs: 1 };
@@ -435,6 +436,7 @@ YFS.freddy = {      // v1.188 FREDDY: his own version (the user: "make freddy an
   slow: [[17.4, 19.3, 0.45], [19.42, 20.62, 0.3]],
   cam: [[16.6, 1.4, 0.5, 0, 0], [17.6, 1.7, 0.3, 0, 0], [18.7, 2.0, 0.1, 0, 1], [19.15, 3.0, 0.1, 4, 1], [19.5, 2.4, 0.1, 0, 1], [19.95, 1.9, 0.1, -6, 1], [20.3, 1.6, 0.5, 0, 0], [21.2, 1.3, 0.55, 0, 0], [21.65, 1.9, 0.0, 0, 1], [23.5, 2.0, 0.0, 0, 1]], title: 21.45,
   screen: (s, now) => { ctx.globalAlpha = 0.6; for (let i = 0; i < 30; i++) { const h = Math.imul(i * 7919 + 13, 2246822519) >>> 0, x = Math.round(h % VW + Math.sin(now / 900 + i) * 6), y = VH - ((now / (22 + h % 20) + (h >> 8) % VH) % VH); ctx.fillStyle = i % 3 ? '#ff8a2a' : '#ffd34d'; ctx.fillRect(x, Math.round(y), i % 4 ? 1 : 2, 1); } ctx.globalAlpha = 1; } };
+YFS.cu3 = YFS.cu4 = { ...YFS.freddy, rim: '#ff2a3a', spk: ['#ff2a3a', '#ffb0b8', '#ffffff'], vcols: ['#ffffff', '#ff7a86', '#d02a3a'], screen: undefined };      // v1.189 Sukuna and Ryu as the enemy: the script made for Freddy (the order of the blows and the timing), in their own colours, without his embers
 YFS.yuji = {
   zb: 1.55, rim: '#7df4ff', spk: ['#7df4ff', '#ffffff'], vcols: ['#ffffff', '#7df4ff', '#2fc3e6'], glass: true,
   beats: [

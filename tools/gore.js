@@ -30,7 +30,7 @@ const GSTAT = { builds: 0, fly: 0, hits: 0, rips: 0 };      // (counters for the
 const GB = { p: goreBody(), f: goreBody() };
 function goreBody() { return { dm: { an: 0, af: 0, lf: 0, lb: 0, sn: 0, sf: 0, ch: 0, bl: 0, hd: 0 }, st: { an: 0, af: 0, lf: 0, lb: 0 }, hurt: { ch: 0, bl: 0, hd: 0 }, last: null, bleedAt: 0, coughAt: 0, pend: [], flash: 0, dripAt: 0, kind: '', rc: {}, rcOn: false, rcp: [], rcAt: -1e9, rcMt: 0, rcRun: 0, late: [], glowUntil: 0 }; }
 function goreReset() { GB.p = goreBody(); GB.f = goreBody(); goreAft = null; }
-const gdKind = side => !vs ? null : side === 'p' ? (cuMe() ? (vs.me === 'cu3' ? 'sukuna' : null) : vs.me) : (dummy && dummy.mode === 'fighter' && !dummy.curse && !dummy.net ? vs.foe : null);
+const gdKind = side => !vs ? null : side === 'p' ? (cuMe() ? (vs.me === 'cu3' ? 'sukuna' : null) : vs.me) : (dummy && dummy.mode === 'fighter' && !dummy.curse && !dummy.net ? (vs.foe === 'cu3' ? 'sukuna' : vs.foe === 'cu4' ? null : vs.foe) : null);
 function gdActive(side) { return !!vs && !vs.story && !vs.net && gdSet() < 2 && !!GD[gdKind(side)]; }
 const gdBall = side => side === 'p' && gdKind('p') === 'verity' && !!vp && vp.form !== 'verity';      // (Verity as the smoke ball: no limbs to lose, none of the rules applies; ATTACK is his TALK)
 const gdLive = () => !!vs && !vs.story && gdSet() < 2 && (gibs.length > 0 || decals.length > 0 || drops.length > 0);      // (the street's blood and pieces are drawn and moved in a match too)

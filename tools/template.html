@@ -912,7 +912,7 @@ const CDEF = [
     { name: 'FIRE BOLT', anim: 'a2', fps: 11, imp: 5, kind: 'proj', dmg: 22, knock: 120, cd: 1500, range: [44, 200], speed: 200, r: 4, h: 29, mx: 42, look: 'flame', col: ['#ff7a1a', '#ffe14a'], w: 3, warn: 1 },
     { name: 'WING GUST', anim: 'a3', fps: 10, imp: 5, kind: 'gust', dmg: 10, knock: 380, cd: 2400, range: [20, 90], speed: 160, r: 10, h: 30, mx: 22, w: 2, warn: 1 }] }].filter(c => CU[c.id]);      // (a curse whose pictures are missing is left out)
 const CID = {}; CDEF.forEach((c, i) => { c.hw = CU[c.id].hw; CID[c.id] = i; });
-const CMOVE = [], cmv = k => k >= 49 && k < 49 + CMOVE.length ? CMOVE[k - 49] : null;      // (cmv: the curse move a hit number stands for, or null: v1.188 Freddy's numbers 90 - 95 come after the curses' 49 - 82)
+const CMOVE = [], CU_EXTRA = {}, cmv = k => k >= 49 && k < 49 + CMOVE.length ? CMOVE[k - 49] : CU_EXTRA[k] || null;      // (cmv: the curse move a hit number stands for, or null: v1.188 Freddy's numbers 90 - 95 come after the curses' 49 - 82)
 //     // every curse move gets a hit number from 49 on, so gojoHit (damage, knock-back, guard, dash, jump, crouch rules) deals with them like with any other swing
 CDEF.forEach((c, ci) => c.moves.forEach(m => { m.k = 49 + CMOVE.length; m.c = ci; m.tp = m.tp || 3; m.vis = m.vis || [2, 3]; const sh = HB_SH[c.id] || 0; if (m.mx !== undefined) m.mx -= sh; if (m.shots) m.shots = m.shots.map(q => q.mx === undefined ? q : { ...q, mx: q.mx - sh }); if (['melee', 'melee2', 'lunge', 'dash', 'tele'].includes(m.kind)) { const rr = reachFor('c:' + c.id, m.k, 'gojo'); if (rr === rr) m.reach = rr; }      // (v1.85: the muzzles move back with the picture; how far a blow reaches is what its picture does to Gojo's body)
   if (m.kind === 'melee' || m.kind === 'melee2') m.range = [m.range[0], Math.min(m.range[1], m.reach)]; CMOVE.push(m); REACH.push(m.reach || 20); KNOCK.push(0); KNOCK_G.push(m.knock); DMG.push(m.dmg); }));
@@ -1060,6 +1060,7 @@ function drawFoes(now, dt) {                  // the enemy (or enemies: a RUSH w
   if (!(twOn() && twFoeFx(now, () => drawDummy(now, dt)))) drawDummy(now, dt);      // (v1.176 the skyscraper: the enemy is SEEN falling through a hole, or standing on the floor you slide away from)
   if (vs && vs.cv) { curseProj(now, dt); drawProj(now); }
   if (freOn()) freWorld(now, dt);      // (v1.188 what the enemy Freddy threw: tools/fred4.js)
+  if (cuFoeOn()) cuenWorld(now, dt);      // (v1.189 what the enemy Sukuna or Ryu threw: tools/cuen.js)
 }
 function rushStep(now) {                      // every frame of a RUSH wave: the two keep apart, and when the one that was "the enemy" is down, the other becomes "the enemy" (so BLUE, RED and the rest go for him)
   const alive = vs.foes.filter(f => f.ko < 0).sort((a, b) => a.x - b.x);
@@ -1930,6 +1931,7 @@ function drawDummy(now, dt) {
     if (((reacting || kneel) && hitT < 70) || (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0)) src = whiteOf(src); }
   if (vs && vs.foe === 'cat') { const L = catLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox; oy = L.oy; }      // the enemy is the Cartoon Cat
   if (freOn()) { const L = freFoeLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox; oy = L.oy; }      // the enemy is Freddy (tools/fred4.js)
+  if (cuFoeOn() && cuFoeG()) { const L = cuenLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox; oy = L.oy; }      // the enemy is Sukuna or Ryu (tools/cuen.js)
   if (vs && vs.foe === 'cat' && dummy.cact && dummy.cact.type === 'toon' && kt < 0) pendingGiants.push({ who: 'foe', sx, ff: dummy.cact.fi, dir: mirror ? -1 : 1, inv: !!vs.inv });      // (his CARTOON ATTACK: his giant is drawn after you, then he himself on top of it: see drawGiantNow)
   if (ult && ult.who === 'player' && ult.held && !ult.rel && kt < 0) { const o = ultVictimOff(now); lift += o.lift; ox += o.ox; if (o.flash) src = whiteOf(src); }      // (held up by the Cat's glove and kneed: lifted, shaking, flashing white)
   if (dummy.del && now - dummy.del > 1700) return;      // deleted: nothing of him is left
@@ -1941,6 +1943,8 @@ function drawDummy(now, dt) {
   ctx.save();
   if (dummy.drag && kt < 0) {                 // v1.28 BLOOD DRAG: he lies flat on the floor, feet towards Verity, and is dragged by the feet
     ctx.translate(sx + 4, gy + 1 - Math.round(hx * 0.62) + ((now / 60) & 1)); ctx.rotate(1.5 + Math.sin(now / 70) * 0.02); ctx.scale(-1, 1); ctx.globalAlpha = 1; ctx.drawImage(src, -hx, -62);
+  } else if (kt >= 0 && cuFoeOn() && cuFoeG() && cuFoeG().ko.length) {            // v1.189 Ryu knocked out: his K.O. pictures (Sukuna has none: he topples)
+    const G_ = cuFoeG(); ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.globalAlpha = fade; let kp = G_.ko[Math.min(G_.ko.length - 1, Math.floor(kt * CU_KO_FPS / 1000))]; if (vs.inv && kp && kp.width) kp = invOf(kp); ctx.drawImage(kp, -32, gy + 2 - 62);
   } else if (kt >= 0 && freOn()) {            // v1.188 Freddy knocked out: his own K.O. pictures, the fall is in them (he does not topple like the others)
     ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.globalAlpha = fade; let kp = fredK(kt / 38); if (vs.inv && kp !== EMPTY && kp.width) kp = invOf(kp); ctx.drawImage(kp, -FRED_INFO.cx, gy + 2 - 62);
   } else if (kt >= 0) {                       // knocked out: he topples backwards about his feet, flickers, then fades away
@@ -2573,6 +2577,7 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
     const ox = orb ? orb.x1 : purple ? purple.x : null; if (ox !== null && Math.abs(d.x - ox) < 70) { d.x += (d.x >= ox ? 1 : -1) * 70 * dt; d.ai = 'walk'; return; }
   }
   if (vs.foe === 'freddy') { freFoe(now, dt, gap, ag, toward, G); return; }      // (v1.188 the enemy Freddy has his own brain: tools/fred4.js)
+  if (cuFoeOn()) { cuFoe(now, dt, gap, ag, toward, G); return; }      // (v1.189 so have the enemy Sukuna and Ryu: tools/cuen.js)
   // 3. a swing in progress (chained into a combo of up to G.combo hits)
   if (d.ai === 'attack') {
     const TB = vs.foe === 'yuji' ? YU_ATK : vs.foe === 'cat' ? CAT_ATK : null, Y = !!TB, cat = vs.foe === 'cat', f = Math.floor((now - d.aiAt) * (Y ? TB.fps : ATK_FPS)[d.k] * G.spd / 1000);
@@ -2702,12 +2707,14 @@ function fatSets(rev) {                                // the pictures of the at
   if (vk === 'verity') return { ...S, ...veVictim() };
   if (vk === 'cat') return { ...S, ...catVictim() };
   if (vk === 'freddy') return { ...S, ...freddyVictim() };
+  if (vk === 'cu3' || vk === 'cu4') return { ...S, ...cuVictim(+vk.slice(2)) };
   return rev ? { ...S, vF: idleF, vRx: rxN } : { ...S, vF: dumF, vRx: rxI };
 }
 let fat = null, fatReq = 0;                            // fat = the running cutscene (null when there is none); fatReq = until when a press of the FATALITY button is remembered
 const orbAt = (set, n, sx, sy, s) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));      // an orb frame centred on (sx, sy)
 function fatState(now) {                               // Gojo's FATALITY (and Verity's). 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far away; 3 = not possible right now
   if (vs && vs.me === 'cu4') return 3;      // (v1.166 Ryu has no FATALITY; before, his button played Gojo's)
+  if (cuFoeOn() && (vs.me === 'verity' || fredMe())) return 3;      // (v1.189 Verity's and Freddy's FATALITY have no version for the enemy Sukuna or Ryu yet; the others do)
   if (fredMe()) return ffState(now);      // (v1.185 Freddy's FATALITY: he eats the enemy, see fred3.js)
   if (!vs || vs.story || vs.cv || fredMe() || lacks('fat') || vs.ph !== 'fight' || js || vf || fat || yf || yu || (dom && domLock()) || ult || cf || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (v1.181 a DOMAIN no longer stops it: only its opening, while the controls are locked; fatGo ends the domain)      // (Verity and the Cat have their own FATALITY: the same rules; so has Yuji since v1.49, the 30-second one; Freddy has none yet, v1.52: his button used to play Gojo's FATALITY with Gojo in it)      // (no FATALITY in the story fight: his ending is a Reversal Red)
   if (!(dummy.hp <= dummy.max * FAT_LOW)) return 1;      // Gojo's FATALITY: only when the enemy is at 20% health or less
@@ -2715,7 +2722,7 @@ function fatState(now) {                               // Gojo's FATALITY (and V
   return hurtAt >= 0 || gojoGone ? 3 : 0;
 }
 function fatAiState(now) {                             // the enemy's own FATALITY on Gojo: from SEMI-GRADE 1 up, the moment Gojo is at 20% health or less and the enemy is close (no warning; being in the air, dashing or out of reach saves him)
-  if (!vs || vs.story || vs.foe === 'yuji' || vs.ph !== 'fight' || js || vf || fat || yf || dom || ult || cf || fd || ff || (dummy && dummy.fa) || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.cact || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
+  if (!vs || vs.story || vs.foe === 'yuji' || cuFoeOn() || (cuMe() && (vs.foe === 'verity' || vs.foe === 'freddy')) || vs.ph !== 'fight' || js || vf || fat || yf || dom || ult || cf || fd || ff || (dummy && dummy.fa) || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.cact || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
   return vs.hp <= PHP * FAT_LOW && Math.abs(dummy.x - wx) <= FAT_RANGE && !gojoGone && gojoLift <= 12 && dgAt < 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
 }
 function fatGo(now, dt, rev) { if (dom) domReset(); if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else if (rev ? vs.foe === 'cat' : vs.me === 'cat') { cfStart(now, rev); cfFrame(now, dt); } else if (!rev && vs.me === 'yuji') { yfStart(now); yfFrame(now, dt); } else if (rev ? vs.foe === 'freddy' : fredMe()) { ffStart(now, rev); ffFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's and the Cat's FATALITY are their own cutscenes)
@@ -3910,6 +3917,7 @@ function cfVictim(s, now) {      // the victim's picture while he stands there: 
   if (vk === 'gojo') return { img: idleF[ph % idleF.length], hx: D.idle.cx - D.idle.x0, top: D.idle.top || 0 };
   if (vk === 'yuji') return { img: YUF.norm.idle[ph % 15], hx: YU.idle.cx - YU.idle.x0, top: YU.idle.top || 0 };
   if (vk === 'verity') return { img: vfr('idle', now / 100, true, false), hx: 32, top: 0 };
+  if (vk === 'cu3' || vk === 'cu4') { const g = CU_GAME[+vk.slice(2)]; return { img: g.frames[ph % g.frames.length], hx: 32, top: 1 }; }      // (v1.189 Sukuna or Ryu as the victim)
   if (vk === 'freddy') { const im = fredF(ph); return { img: s.inv && im !== EMPTY && im.width ? invOf(im) : im, hx: FRED_INFO.cx - FRED_INFO.x0, top: FRED_INFO.top }; }      // (v1.52: Freddy, not a Cat; v1.188 inverted when he is the enemy of a Freddy)
   return { img: cfr('idle', now / 83, true, s.inv), hx: 32, top: 0 };
 }
@@ -6612,6 +6620,7 @@ __SELECT__
 __FRED2__
 __FRED3__
 __FRED4__
+__CUEN__
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = __UPDATES__;
