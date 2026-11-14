@@ -912,7 +912,8 @@ const CDEF = [
     { name: 'FIRE BOLT', anim: 'a2', fps: 11, imp: 5, kind: 'proj', dmg: 22, knock: 120, cd: 1500, range: [44, 200], speed: 200, r: 4, h: 29, mx: 42, look: 'flame', col: ['#ff7a1a', '#ffe14a'], w: 3, warn: 1 },
     { name: 'WING GUST', anim: 'a3', fps: 10, imp: 5, kind: 'gust', dmg: 10, knock: 380, cd: 2400, range: [20, 90], speed: 160, r: 10, h: 30, mx: 22, w: 2, warn: 1 }] }].filter(c => CU[c.id]);      // (a curse whose pictures are missing is left out)
 const CID = {}; CDEF.forEach((c, i) => { c.hw = CU[c.id].hw; CID[c.id] = i; });
-const CMOVE = [];     // every curse move gets a hit number from 49 on, so gojoHit (damage, knock-back, guard, dash, jump, crouch rules) deals with them like with any other swing
+const CMOVE = [], cmv = k => k >= 49 && k < 49 + CMOVE.length ? CMOVE[k - 49] : null;      // (cmv: the curse move a hit number stands for, or null: v1.188 Freddy's numbers 90 - 95 come after the curses' 49 - 82)
+//     // every curse move gets a hit number from 49 on, so gojoHit (damage, knock-back, guard, dash, jump, crouch rules) deals with them like with any other swing
 CDEF.forEach((c, ci) => c.moves.forEach(m => { m.k = 49 + CMOVE.length; m.c = ci; m.tp = m.tp || 3; m.vis = m.vis || [2, 3]; const sh = HB_SH[c.id] || 0; if (m.mx !== undefined) m.mx -= sh; if (m.shots) m.shots = m.shots.map(q => q.mx === undefined ? q : { ...q, mx: q.mx - sh }); if (['melee', 'melee2', 'lunge', 'dash', 'tele'].includes(m.kind)) { const rr = reachFor('c:' + c.id, m.k, 'gojo'); if (rr === rr) m.reach = rr; }      // (v1.85: the muzzles move back with the picture; how far a blow reaches is what its picture does to Gojo's body)
   if (m.kind === 'melee' || m.kind === 'melee2') m.range = [m.range[0], Math.min(m.range[1], m.reach)]; CMOVE.push(m); REACH.push(m.reach || 20); KNOCK.push(0); KNOCK_G.push(m.knock); DMG.push(m.dmg); }));
 KICKS.curse = CMOVE.filter(m => m.low).map(m => m.k);      // (a LOW move hits a ducking Gojo too; the others pass over him)
@@ -1058,6 +1059,7 @@ function drawFoes(now, dt) {                  // the enemy (or enemies: a RUSH w
   if (vs && vs.foes && vs.foes.length > 1) { rushStep(now); for (const x of vs.foes.filter(f => f !== dummy).sort((a, b) => b.x - a.x)) foeSwap(x, () => drawDummy(now, dt)); }      // (the one behind first, so the one in front is painted over it)
   if (!(twOn() && twFoeFx(now, () => drawDummy(now, dt)))) drawDummy(now, dt);      // (v1.176 the skyscraper: the enemy is SEEN falling through a hole, or standing on the floor you slide away from)
   if (vs && vs.cv) { curseProj(now, dt); drawProj(now); }
+  if (freOn()) freWorld(now, dt);      // (v1.188 what the enemy Freddy threw: tools/fred4.js)
 }
 function rushStep(now) {                      // every frame of a RUSH wave: the two keep apart, and when the one that was "the enemy" is down, the other becomes "the enemy" (so BLUE, RED and the rest go for him)
   const alive = vs.foes.filter(f => f.ko < 0).sort((a, b) => a.x - b.x);
@@ -1839,9 +1841,9 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   const airMe = !!gAir && gAir.kind === 'up';      // you are launched: everything can hit you up there, the hit-stun and the height do not protect you
   if (airMe ? gojoGone : downed ? (!isKick(foeWho, k) || gojoLift > 12 || gojoGone) : ((!held && (hurtAt >= 0 || now - hurtEnd < 250)) || gojoLift > 12 || gojoGone)) { nres('m'); return; }
   const guardWas = (guardUp(now) || autoGuard()) && !!dummy && dummy.x > wx;
-  const gbk = k === 42 || k === 46 || (k >= 49 && CMOVE[k - 49].nb);      // (a blow nothing blocks: the CONCENTRATED FIST, the UPPERCUT and the curses' blows that go through a guard)
+  const gbk = k === 42 || k === 46 || (cmv(k) ? cmv(k).nb : k === FRE_K.pierce);      // (a blow nothing blocks: the CONCENTRATED FIST, the UPPERCUT and the curses' blows that go through a guard)
   if (guardWas && fredMe() && !gbk) { if (stance !== 'stand' && !(netK >= 0 && (k === 6 || k === 7)) && !isKick(foeWho, k) && k !== 46) { nres('m'); return; } fredGrab(k, now); nres('b'); return; }      // (Freddy does not bounce a blow off: his hand catches it, see fredGrab; crouched, what passes over him passes over him, and only a kick or an uppercut is caught: the same blows that hit a crouched fighter)
-  if (guardWas && k !== 42 && k !== 46 && !(k >= 49 && CMOVE[k - 49].nb)) {  // his guard is up and the attacker is in front of him: the swing is blocked (a hit from behind still lands; CONCENTRATED FIST breaks the guard)
+  if (guardWas && k !== 42 && k !== 46 && !(cmv(k) ? cmv(k).nb : k === FRE_K.pierce)) {  // his guard is up and the attacker is in front of him: the swing is blocked (a hit from behind still lands; CONCENTRATED FIST breaks the guard)
     if (!isD1(k) && blkAt >= 0 && now - blkAt <= (cuMe() ? cuS.pt : PARRY_MS) * paceBase() * (assistLvl() >= 1 ? 2 : 1)) { parryHit(now); nres('b'); return; }      // (PARRY: the guard went up just before the blow, see parryHit)
     wxv -= KNOCK_G[k] * 0.3 * pScale(); shakeUntil = now + 80; shakeAmp = 1; buzz(8); say('BLOCKED', wx + 14, '#9fd8ff', 8, now); snd('block'); if (isD1(k)) { dummy.divOk = now; dummy.divK = k; }      // (the fist was blocked: the second impact still comes)
     if (vs && vs.c3) c3Chip(k, now);      // (chapter 2: a blocked blow of Verity's STOP still hurts a little, see chap2.js)
@@ -1850,10 +1852,10 @@ function gojoHit(k, now) {                    // the attacking dummy's swing con
   if (stance !== 'stand' && !(netK >= 0 && (k === 6 || k === 7)) && (!!vs && vs.me === 'cat' || (!isKick(foeWho, k) && k !== 46))) { nres('m'); return; }      // crouched (or going down / getting up): only a kick can hit him (punches pass over); the Cat smashed flat is two pixels thin, nothing hits him (already reeling, just recovered, or jumped / teleported out of the way: see above)
   if (k === 30 || k === 32) { catGrab(k, now); return; }      // the Cat's grab: no reaction, Gojo is held and pulled in
   if (isD1(k)) { dummy.divOk = now; dummy.divK = k; }      // (DIVERGENT FIST: the fist reached you, the second impact follows)
-  if (!(airMe && k !== 47)) { hurtK = isD1(k) ? 0 : k === 29 || k === 33 || k === 35 || (k >= 40 && (k < 49 || CMOVE[k - 49].heavy)) ? 4 : (Math.random() * 10) | 0; hurtAt = now; if (k === 46) { hurtK = AIR_RX; gAir = airMake(now, 0, AIR_V, AIR_G, 'up'); } else if (k === 47) gAir = airMe ? airMake(now, gAirH, -80, 900, 'drop') : null; }      // (a hit on you while you are in the air keeps your flight and your pose; the UPPERCUT launches you, the FACE KICK knocks you out of the air)
+  if (!(airMe && k !== 47)) { hurtK = isD1(k) ? 0 : k === 29 || k === 33 || k === 35 || (k >= 40 && (k < 49 || (cmv(k) ? cmv(k).heavy : k === FRE_K.pierce))) ? 4 : (Math.random() * 10) | 0; hurtAt = now; if (k === 46) { hurtK = AIR_RX; gAir = airMake(now, 0, AIR_V, AIR_G, 'up'); } else if (k === 47) gAir = airMe ? airMake(now, gAirH, -80, 900, 'drop') : null; }      // (a hit on you while you are in the air keeps your flight and your pose; the UPPERCUT launches you, the FACE KICK knocks you out of the air)
   if (guardWas && fredMe()) fredGBAt = hurtAt;      // (v1.91 Freddy's guard is broken: he has his own reaction, see fredG)
   if ((k === 33 || k === 35) && vs) vs.catHold = 0;                                    // one of ten reactions, picked at random
-  atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; wxv -= KNOCK_G[k] * 0.9 * pScale(); shockAt(wx, 90, 45, 0.5); shakeUntil = now + 120; shakeAmp = k === 35 || k === 42 ? 4 : k === 3 || k === 29 || k === 33 || k === 40 || k === 41 ? 3 : 2; if (k === 40 || k === 43 || k === 48 || (k >= 49 && CMOVE[k - 49].heavy)) gDownUntil = now + RX_DUR[4];
+  atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; wxv -= KNOCK_G[k] * 0.9 * pScale(); shockAt(wx, 90, 45, 0.5); shakeUntil = now + 120; shakeAmp = k === 35 || k === 42 ? 4 : k === 3 || k === 29 || k === 33 || k === 40 || k === 41 ? 3 : 2; if (k === 40 || k === 43 || k === 48 || (cmv(k) && cmv(k).heavy)) gDownUntil = now + RX_DUR[4];
   const dm = m1Cap(foeWho, k, Math.round((DMG[k] + (k >= 27 ? 0 : (Math.random() * 5) | 0) + (netK >= 0 ? netBonus : 0)) * (vs ? (vs.net ? 1 : vs.cv ? (vs.dmgMul || 1) : GRADES[vs.gi].dmg) : 1) * (assistLvl() >= 2 ? 0.7 : 1))); say('' + dm, wx, '#ff9a5a', 8, now);      // (v1.179: an M1 blow of the enemy that would deal more than 15 deals 8)
   if (vs && vs.ph === 'fight') vsHurt(dm, now);
   snd('hurt', hurtK); nres('h', dm, hurtK); onHurt(k, dm, now);
@@ -1927,6 +1929,7 @@ function drawDummy(now, dt) {
     else { fi = Math.floor(wk ? now * WALK_FPS / 1000 : now / (1000 / IDLE_FPS)) % 15; src = (wk ? ys.fwd : ys.idle)[fi]; info = wk ? YU.fwd : YU.idle; }
     if (((reacting || kneel) && hitT < 70) || (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0)) src = whiteOf(src); }
   if (vs && vs.foe === 'cat') { const L = catLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox; oy = L.oy; }      // the enemy is the Cartoon Cat
+  if (freOn()) { const L = freFoeLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox; oy = L.oy; }      // the enemy is Freddy (tools/fred4.js)
   if (vs && vs.foe === 'cat' && dummy.cact && dummy.cact.type === 'toon' && kt < 0) pendingGiants.push({ who: 'foe', sx, ff: dummy.cact.fi, dir: mirror ? -1 : 1, inv: !!vs.inv });      // (his CARTOON ATTACK: his giant is drawn after you, then he himself on top of it: see drawGiantNow)
   if (ult && ult.who === 'player' && ult.held && !ult.rel && kt < 0) { const o = ultVictimOff(now); lift += o.lift; ox += o.ox; if (o.flash) src = whiteOf(src); }      // (held up by the Cat's glove and kneed: lifted, shaking, flashing white)
   if (dummy.del && now - dummy.del > 1700) return;      // deleted: nothing of him is left
@@ -1938,6 +1941,8 @@ function drawDummy(now, dt) {
   ctx.save();
   if (dummy.drag && kt < 0) {                 // v1.28 BLOOD DRAG: he lies flat on the floor, feet towards Verity, and is dragged by the feet
     ctx.translate(sx + 4, gy + 1 - Math.round(hx * 0.62) + ((now / 60) & 1)); ctx.rotate(1.5 + Math.sin(now / 70) * 0.02); ctx.scale(-1, 1); ctx.globalAlpha = 1; ctx.drawImage(src, -hx, -62);
+  } else if (kt >= 0 && freOn()) {            // v1.188 Freddy knocked out: his own K.O. pictures, the fall is in them (he does not topple like the others)
+    ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.globalAlpha = fade; let kp = fredK(kt / 38); if (vs.inv && kp !== EMPTY && kp.width) kp = invOf(kp); ctx.drawImage(kp, -FRED_INFO.cx, gy + 2 - 62);
   } else if (kt >= 0) {                       // knocked out: he topples backwards about his feet, flickers, then fades away
     const rgh = ragXf(dummy.rag, kt, sx, gy + 2, 1); if (!rgh) { ctx.translate(sx, gy + 2); ctx.rotate(1.4 * Math.pow(Math.min(1, kt / 520), 2)); } ctx.scale(-1, 1);
     ctx.globalAlpha = fade; ctx.drawImage(src, -hx, -62 + rgh);
@@ -2548,7 +2553,7 @@ function finishMatch(now) {
 function updateFighterVs(now, dt) {            // the grade AI (see GRADES): reaction time, block, dodge, combos, and from Grade 2 up it reads and punishes
   const d = dummy, G = GRADES[vs.gi], gap = d.x - wx, ag = Math.abs(gap), toward = gap > 0 ? -1 : 1;
   if (d.ko >= 0 || vs.ph !== 'fight' || now < d.stunUntil) return;
-  if (now - d.rxAt < RX_DUR[d.rx]) { d.ai = 'hurt'; return; }
+  if (now - d.rxAt < RX_DUR[d.rx]) { d.ai = 'hurt'; if (d.fa) freActEnd(now, true); return; }
   if (d.ai === 'hurt') { d.ai = 'think'; d.aiAt = now; d.chain = 0; d.held = null; }
   if (d.cact) return;      // (the Cat's own move runs: see catTick)
   if (atkAt >= 0 && vs.seenAtk !== atkAt) { vs.seenAtk = atkAt; vs.seenAt = now; vs.seenK = atkK; vs.hist.push(atkK); if (vs.hist.length > 8) vs.hist.shift(); vs.rolled = false; vs.defended = false; }       // Gojo started a swing
@@ -2567,6 +2572,7 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
     if (rdOrb && Math.abs(rdOrb.x - d.x) < 60 && now > (d.nextDodge || 0)) { d.nextDodge = now + 900; dodge(350); return; }
     const ox = orb ? orb.x1 : purple ? purple.x : null; if (ox !== null && Math.abs(d.x - ox) < 70) { d.x += (d.x >= ox ? 1 : -1) * 70 * dt; d.ai = 'walk'; return; }
   }
+  if (vs.foe === 'freddy') { freFoe(now, dt, gap, ag, toward, G); return; }      // (v1.188 the enemy Freddy has his own brain: tools/fred4.js)
   // 3. a swing in progress (chained into a combo of up to G.combo hits)
   if (d.ai === 'attack') {
     const TB = vs.foe === 'yuji' ? YU_ATK : vs.foe === 'cat' ? CAT_ATK : null, Y = !!TB, cat = vs.foe === 'cat', f = Math.floor((now - d.aiAt) * (Y ? TB.fps : ATK_FPS)[d.k] * G.spd / 1000);
@@ -6537,8 +6543,8 @@ function startPractice(who, foe) {      // FREE PLAY as Yuji, Verity or the Cat:
 }
 function twFightStart() { twWant = twPick === 1; }      // (v1.173 the MAP chosen on the screens is read by startMatch)
 // ---------------------------------------------------------------- v1.24 THE TRAIN PAGE of SETTINGS (free play only: the rooms of Yuji, Verity and the Cat, and Gojo's free play): options to control the match and the enemy. The "ENEMY: DUMMY / FIGHTS BACK" button of v1.14 is the first option now. ENEMY (what he does: DUMMY, FIGHTS BACK, BLOCKS, DODGES, WALKS TO YOU, BACKS AWAY), ENEMY HEALTH (NORMAL, INFINITE, LOW 10%), YOUR HEALTH and YOUR ENERGY (INFINITE or NORMAL), ENEMY LEVEL (the six grades: how well he fights back), ENEMY IS (Gojo, Yuji, Verity or the Cat: the room starts again), ENEMY ARMOR (no flinch / no push), GAME SPEED (100%, 50%, 25%), DAMAGE METER and MOVE INFO (two overlays), and three buttons: PUT ENEMY (close, mid, far), RESET ENEMY and RESET METER. Everything is off or as before by default.
-const TRF = ['gojo', 'yuji', 'verity', 'cat'], TRS = [1, 0.5, 0.25];
-const TRV = { beh: ['DUMMY', 'FIGHTS BACK', 'BLOCKS', 'DODGES', 'WALKS TO YOU', 'BACKS AWAY'], ehp: ['NORMAL', 'INFINITE', 'LOW (10%)'], php: ['INFINITE', 'NORMAL'], pce: ['INFINITE', 'NORMAL'], grade: GRADES.map(g => g.name), foe: ['GOJO', 'YUJI', 'VERITY', 'CAT'], arm: ['OFF', 'NO FLINCH', 'NO FLINCH, NO PUSH'], spd: ['100%', '50%', '25%'], meter: ['OFF', 'ON'], info: ['OFF', 'ON'], put: ['CLOSE', 'MID', 'FAR'] };
+const TRF = ['gojo', 'yuji', 'verity', 'cat', 'freddy'], TRS = [1, 0.5, 0.25];
+const TRV = { beh: ['DUMMY', 'FIGHTS BACK', 'BLOCKS', 'DODGES', 'WALKS TO YOU', 'BACKS AWAY'], ehp: ['NORMAL', 'INFINITE', 'LOW (10%)'], php: ['INFINITE', 'NORMAL'], pce: ['INFINITE', 'NORMAL'], grade: GRADES.map(g => g.name), foe: ['GOJO', 'YUJI', 'VERITY', 'CAT', 'FREDDY'], arm: ['OFF', 'NO FLINCH', 'NO FLINCH, NO PUSH'], spd: ['100%', '50%', '25%'], meter: ['OFF', 'ON'], info: ['OFF', 'ON'], put: ['CLOSE', 'MID', 'FAR'] };
 const TR = { beh: 0, ehp: 0, php: 0, pce: 0, grade: 0, foe: 0, arm: 0, spd: 0, meter: 0, info: 0, put: 0, born: -1, hpPrev: 0, xHold: 0, hitSeen: -1e9, log: [], total: 0, last: 0, best: 0 };
 function trLog(n, now) { TR.log.push([now, n]); if (TR.log.length > 80) TR.log.shift(); TR.last = n; TR.total += n; }
 function trainStep(now, dt) {      // every frame of free play, before the picture is drawn
@@ -6603,6 +6609,7 @@ function trainDraw(now) {      // the two overlays of the TRAIN page, as a small
 __SELECT__
 __FRED2__
 __FRED3__
+__FRED4__
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = __UPDATES__;

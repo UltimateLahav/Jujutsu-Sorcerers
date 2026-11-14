@@ -21,7 +21,6 @@ function fsWhy(mode, side, who) {
   if (mode === 'wifi') return LAN_FIGHTERS.includes(who) ? '' : 'NOT ONLINE';
   if (mode === 'train') return side === 0 ? (who === 'cu3' && !suHas() ? 'LOCKED' : '') : TRF.includes(who) ? '' : 'NOT AS ENEMY';      // (Sukuna is bought for $3000; the training enemy is Gojo, Yuji, Verity or the Cat, see TRF)
   if (cu) return 'TRAINING ONLY';      // (Sukuna and Ryu have no rounds, K.O. or enemy brain yet)
-  if (side === 1 && who === 'freddy') return 'NOT AS ENEMY';      // (Freddy cannot fight as the enemy yet)
   return who !== 'gojo' && !owns(who) ? 'LOCKED' : '';      // (bought on the SKILLS page, like before)
 }
 const FS_BADGE = { 'LOCKED': 'LOCKED', 'TRAINING ONLY': 'TRAIN<br>ONLY', 'NOT AS ENEMY': 'NOT AS<br>ENEMY', 'NOT ONLINE': 'NOT<br>ONLINE' };
