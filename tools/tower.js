@@ -82,7 +82,7 @@ function twInit() {
 function twRound(now) {
   const T = vs.tw, d = dummy; T.fMe = T.fFoe = TW_N; T.q.length = 0; T.away = false; T.slide = null; T.ff = null; T.haze = null; T.flashes = []; T.cab = null; T.lift = twLiftNew(T.lift && T.lift.broken); T.viaLift = false; vs.nHold = 0; T.seen[TW_N] = 1; T.cf = TW_N; T.prevF = 0; T.expl.length = 0; const F = twFloorData(TW_N), gap = d ? d.x - wx : 60; wx = twFreeX(F, Math.round((F.xs[1] + F.xs[2]) / 2) - 30, gap); wxv = 0; wvx = 0;
   if (d) { d.x = wx + gap; d.twAway = false; }
-  T.px = wx; T.dx = d ? d.x : 0; T.pHp = vs.hp; T.dHp = d ? d.hp : 0; T.dHit = d ? d.hitAt : -9999; T.dDown = d ? d.down || 0 : 0; T.pDown = gDownUntil; T.on = true; T.banner = { txt: 'FLOOR ' + TW_N, at: now };
+  T.px = wx; T.dx = d ? d.x : 0; T.pHp = vs.hp; T.dHp = d ? d.hp : 0; T.dHit = d ? d.hitAt : -9999; T.dDown = d ? d.down || 0 : 0; T.pDown = gDownUntil; T.on = true; T.banner = { f: TW_N, at: now };      // (v1.182 'banner' is only the moment you arrived on floor f: the floor sign on the wall flashes for a moment, there is no text on the screen any more)
 }
 function twFreeX(F, x, gap) {      // a place for you (and the enemy gap px in front of you) that is not in a crater: the middle of the room if it is free, else the nearest free place in steps of 40 px
   const bad = (q, m) => F.holes.some(h => Math.abs(q - h.x) < h.r + m);
@@ -167,12 +167,12 @@ const twHoleAt = (F, x) => { for (const h of F.holes) if (Math.abs(x - h.x) < h.
 function twDepthAt(f, x) { let n = 0, g = f; while (g > 1) { const h = twHoleAt(twFloorData(g), x); if (!h) break; if (h.shaft) { n += g - 1; break; } n++; g--; } return n; }      // (how many floors a body at x falls from floor f: a crater 1 floor each, a shaft all the way down)
 function twPlace(F, x) { x = Math.max(24, Math.min(F.W - 24, x)); for (const w of F.walls) if (!w.broken && Math.abs(x - w.x) < 20) x = w.x + (x >= w.x ? 20 : -20); return x; }
 function twFloorSwitch(now, x, kind) {      // you are on another floor now: its place and its number; unless it is a straight cut (the elevator) the CAMERA SLIDES there (kind 'fall', 'stairs' or 'ceil': twSlideStart), never a fade
-  const T = vs.tw, F = twFloorData(T.fMe), f0 = T.cf, x0 = wx, d = dummy, foeX = d && d.ko < 0 && !T.away && T.fFoe === f0 ? d.x : null; if (T.cf !== T.fMe) { T.prevF = T.cf; T.cf = T.fMe; } T.seen[T.fMe] = 1; twClearWorld(); wx = twPlace(F, x); wxv = 0; wvx = 0; T.px = wx; T.banner = { txt: 'FLOOR ' + T.fMe, at: now }; popups = []; T.slide = null;
+  const T = vs.tw, F = twFloorData(T.fMe), f0 = T.cf, x0 = wx, d = dummy, foeX = d && d.ko < 0 && !T.away && T.fFoe === f0 ? d.x : null; if (T.cf !== T.fMe) { T.prevF = T.cf; T.cf = T.fMe; } T.seen[T.fMe] = 1; twClearWorld(); wx = twPlace(F, x); wxv = 0; wvx = 0; T.px = wx; T.banner = { f: T.fMe, at: now }; popups = []; T.slide = null;
   if (kind && kind !== 'cut' && f0 !== T.fMe && vs.ph === 'fight') twSlideStart(now, f0, T.fMe, x0, kind, foeX);
 }
 function twSlideStart(now, f0, f1, x0, kind, foeX) {      // the camera follows you from floor f0 to floor f1: the floors run past (a fall speeds up, the stairs glide, a launch slows down), you cannot move for as long as it takes; foeX = where the enemy stands on the floor you leave (he stays there, in sight)
   const T = vs.tw, n = Math.abs(f1 - f0), ms = kind === 'stairs' ? 520 : kind === 'ceil' ? Math.min(900, 380 + 80 * n) : Math.min(1000, 360 + 90 * n);
-  T.slide = { at: now, ms, f0, f1, n, dir: f1 < f0 ? 1 : -1, x0, kind, foeX, land: null }; vs.nHold = Math.max(vs.nHold || 0, now + ms);
+  T.slide = { at: now, ms, f0, f1, n, dir: f1 < f0 ? 1 : -1, x0, kind, foeX, land: null }; vs.nHold = Math.max(vs.nHold || 0, now + ms); if (T.banner) T.banner.at = now + ms;      // (the sign of the new floor flashes when the camera gets there)
 }
 function twLand(now, tag, nn, dm) { say((tag || 'FALL') + ' ' + nn + (nn > 1 ? ' FLOORS' : ' FLOOR') + ' -' + dm, wx, '#ff9a5a', 8, now); snd('twbreak', 7); puff(wx, 8); shakeUntil = now + 300; shakeAmp = 4; }      // (the thud when a fall ends)
 function twPlanArrival(now) {      // the enemy is on another floor: when and how he comes: through the crater when you fell and it reaches your floor, in the cab if it is free (twLiftJob, after a moment), otherwise by the stairs (the farther, the longer)
@@ -335,13 +335,12 @@ function twTick(now, dt) {
 function twBase(now) {      // right after the training step (which gives an infinite-health enemy his health back): this is what the next frame's hits are measured against
   if (!twOn() || !vs.tw.on || !dummy) return; const T = vs.tw, d = dummy; T.dHp = d.hp; T.dHit = d.hitAt; T.dDown = d.down || 0; T.pHp = vs.hp; T.pDown = gDownUntil;
 }
-function twOverlay(now) {      // over the picture: what the elevator door tells you, the floor you are on (and where the enemy is when he is not here), and the big number when you arrive
+function twOverlay(now) {      // over the picture: what the elevator door tells you and where the enemy is when he is not here (v1.182 the floor you are on is NOT written on the screen any more: it is a sign on the wall of every room, twSignEmit; the cab has its own display over its doors)
   if (!twOn() || state !== 'play') { twPanelSync(now); return; } const T = vs.tw;
   if (ryUlNoHud() || cutsceneOn()) { twPanelSync(now); return; }
   if (T.prompt && now - T.prompt.at < 80) { const mx = Math.round(VW / 2); if (T.prompt.up) pxt(T.prompt.up, mx, gy + 18, '#9fffd0', 8, 'center'); if (T.prompt.dn) pxt(T.prompt.dn, mx, gy + 27, '#9fd8ff', 8, 'center'); }
-  const c = T.cab, fl = c ? Math.round(c.curF) : T.fMe, hx = Math.round(VW / 2) + (c ? 20 : 0), ha = c ? 'left' : 'center'; pxt('FLOOR ' + fl, hx, 44, '#cfe8ff', 8, ha); if (T.away) pxt(c && c.out ? 'FOE AT DOORS' : T.lift.inFoe ? 'FOE ' + T.fFoe + ' IN CAB' : 'FOE ' + T.fFoe + (T.fFoe > fl ? ' UP' : ' DOWN'), hx, c ? 62 : 53, '#ffb27a', 8, ha);      // (in the cab the lines start right of the middle of the screen, clear of the panel and of your head, and the enemy's line sits lower, clear of his grade label)
+  const c = T.cab, fl = c ? Math.round(c.curF) : T.fMe, hx = Math.round(VW / 2) + (c ? 20 : 0), ha = c ? 'left' : 'center'; if (T.away) pxt(c && c.out ? 'FOE AT DOORS' : T.lift.inFoe ? 'FOE ' + T.fFoe + ' IN CAB' : 'FOE ' + T.fFoe + (T.fFoe > fl ? ' UP' : ' DOWN'), hx, c ? 62 : 53, '#ffb27a', 8, ha);      // (v1.182 the only line left: where the enemy is, where it always was: under the names of the health bars; in the cab it starts right of the middle of the screen, clear of the panel and of your head, and sits lower, clear of his grade label)
   twPanelSync(now);
-  if (T.banner && now - T.banner.at < 1300) { const u = (now - T.banner.at) / 1300; ctx.globalAlpha = u > 0.6 ? Math.max(0, (1 - u) / 0.4) : 1; pxt(T.banner.txt, Math.round(VW / 2), Math.round(VH * 0.46), '#ffffff', 16, 'center'); ctx.globalAlpha = 1; }
 }
 // ---------------------------------------------------------------- v1.176 ONE ELEVATOR for the whole building (v1.175 made its doors, the cab and its panel; v1.176 made the cab ONE shared machine, T.lift)
 // There is one cab for the whole building. It is parked at a floor (doors shut or open) or it rides to another one. At an elevator door (stand still there for 350 ms): JUMP or CROUCH: if the cab is HERE you step in (a straight cut to the inside: T.cab is the cab while you are in it); if it is somewhere else

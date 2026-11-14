@@ -1,5 +1,14 @@
 [
  {
+  "v": "1.182",
+  "t": "THE FLOOR IS A SIGN ON THE WALL",
+  "n": [
+   "SKYSCRAPER: the floor you are on is not written on the screen any more (the 'FLOOR 30' at the top and the big 'FLOOR 30' that popped up when you arrived are gone). It is a SIGN ON THE WALL of the building now: a steel plate with a blue band that says FLOOR over a black panel with the number in warm light. There is one about every 200 px along every floor (a few more on a narrow screen, fewer on a very wide one), so one is nearly always on the screen; they hang below the health bars, on the free spots of the wall, never on a door, an inner wall, a window or behind a tall piece of furniture (a lamp, a shelf, a vending machine, a rack, a glass pane or a pillar). A fighter who stands in front of one hides it, like anything else on the wall.",
+   "The number shines through the darkness like the EXIT signs, so you can read it even when every light of the floor is out (the sign also lights the wall round it). When you arrive on a floor (you start the round, take the stairs, fall, are thrown through a ceiling) the signs flash for a moment (a white frame and white digits, and a glow that fades); after a slide of the camera (stairs, falls) they flash when the camera gets there. Leaving the cab does not flash.",
+   "The cab keeps the floor display over its doors. The enemy's line ('FOE 23 UP', 'FOE 23 DOWN', 'FOE AT DOORS', 'FOE 23 IN CAB') stays where it was on the screen, it is not about this floor."
+  ]
+ },
+ {
   "v": "1.181",
   "t": "BATTLE UI CLEAN-UP: CUTSCENES, ENERGY BAR, ELEVATOR WORDS, FATALITY IN A DOMAIN",
   "n": [

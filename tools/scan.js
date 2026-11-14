@@ -299,6 +299,11 @@ async function scStory() {
 // ---------------------------------------------------------------- the run
 let SC_ONLY = {};      // (for the tests: { sec: ['STORY'], scenes: ['CH 4'] })
 // ---------------------------------------------------------------- SKYSCRAPER (v1.173): three fighters fight in the 50-floor building and the scan makes its things happen: a slam through the floors, a fall, a blast, a ceiling broken, glass broken and a fall to the street
+function scSigns() {      // v1.182 the floor signs: a few floors (the lobby, the penthouse, others) have at least 3 each, none hangs on a door or on an inner wall, and none is behind a piece of furniture tall enough to stand in front of it
+  const bad = []; for (const f of [1, 2, 9, 17, 30, 44, 50]) { const F = twFloorData(f), s = twLayout(F).sign; if (s.length < 3) bad.push('FLOOR ' + f + ' HAS ONLY ' + s.length + ' SIGNS');
+    for (const x of s) { if (F.doors.some(d => x - d.x > -33 && x - d.x < 40)) bad.push('FLOOR ' + f + ': A SIGN HANGS ON A DOOR AT ' + x); if (F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36)) bad.push('FLOOR ' + f + ': A SIGN HANGS ON AN INNER WALL AT ' + x); if (F.objs.some(o => { const K = TW_K[o.k]; return Math.abs(o.x - x) < K.w / 2 + 15 && 98 - K.h - (o.on ? TW_K[o.on.k].h : 0) < 68; })) bad.push('FLOOR ' + f + ': A SIGN IS BEHIND TALL FURNITURE AT ' + x); } }
+  if (bad.length) scNote('fail', 'FLOOR SIGNS: ' + bad[0], bad.length + ' PROBLEMS');
+}
 async function scTower() {
   SC.sec = 'SKYSCRAPER'; scCov('TOWER', 0, 3); SC.plan = 3 * 470; SC.done = 0; const keep = twPick; twPick = 1;
   try {
@@ -307,7 +312,7 @@ async function scTower() {
       try { Object.assign(TR, { beh: 1, ehp: 0, php: 0, pce: 0 }); startPractice(w, 'cat'); } catch (e) { scErr(e, label + ' START'); continue; }
       if (state !== 'play' || !twOn()) { scNote('fail', 'THE SKYSCRAPER DID NOT START: ' + label, 'STATE ' + state); show('title'); continue; }
       if (!(await scIntro())) { show('title'); return; }
-      const p = scPlayer(seed), ev = [[30, () => twSlam('foe', 2, pnow(), dummy.x)], [90, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [110, () => twMeFall(1, pnow(), wx)], [150, () => { const F = twFloorData(vs.tw.fMe); const o = { k: 'gas', x: Math.round(wx + 40), hp: 18, mx: 18, wob: 0, hitAt: -9999 }; F.objs.push(o); twDamageObj(F, o, 99, pnow()); }], [190, () => twCeiling('foe', 1, pnow(), dummy.x)], [235, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [250, () => twFallOut('foe', pnow(), 1)],
+      const p = scPlayer(seed), ev = [[20, scSigns], [30, () => twSlam('foe', 2, pnow(), dummy.x)], [90, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [110, () => twMeFall(1, pnow(), wx)], [150, () => { const F = twFloorData(vs.tw.fMe); const o = { k: 'gas', x: Math.round(wx + 40), hp: 18, mx: 18, wob: 0, hitAt: -9999 }; F.objs.push(o); twDamageObj(F, o, 99, pnow()); }], [190, () => twCeiling('foe', 1, pnow(), dummy.x)], [235, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [250, () => twFallOut('foe', pnow(), 1)],
         [60, () => { const F = twFloorData(vs.tw.fMe), d = F.doors.find(q => q.k === 'elev'); if (d) twDoorHit(F, d, 45, pnow()); }],      // (v1.175 the elevator: a hard hit jams a door (OUT OF ORDER) ...)
         [270, () => { const T = vs.tw; if (T.cab) return; const F = twFloorData(T.fMe), d = twElevOf(F), L = T.lift; if (!d) return; d.st = 0; d.hp = 70; L.f = L.curF = L.dest = T.fMe; L.ph = 'park'; L.inFoe = false; L.job = null; L.pend = null; wx = d.x; T.px = wx; twCabEnter(F, d, pnow()); }],      // (v1.176 ... you step into the one cab of the building: the cut inside, the panel, a floor button (0.6 s, then it goes), an emergency stop, another floor,
         [276, () => { const T = vs.tw; if (T.cab) twCabPick(T.fMe > 20 ? T.fMe - 9 : T.fMe + 11, pnow()); }],

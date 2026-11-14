@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.181</small>
+    <small id="ver">V1.182</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -9591,7 +9591,7 @@ function twInit() {
 function twRound(now) {
   const T = vs.tw, d = dummy; T.fMe = T.fFoe = TW_N; T.q.length = 0; T.away = false; T.slide = null; T.ff = null; T.haze = null; T.flashes = []; T.cab = null; T.lift = twLiftNew(T.lift && T.lift.broken); T.viaLift = false; vs.nHold = 0; T.seen[TW_N] = 1; T.cf = TW_N; T.prevF = 0; T.expl.length = 0; const F = twFloorData(TW_N), gap = d ? d.x - wx : 60; wx = twFreeX(F, Math.round((F.xs[1] + F.xs[2]) / 2) - 30, gap); wxv = 0; wvx = 0;
   if (d) { d.x = wx + gap; d.twAway = false; }
-  T.px = wx; T.dx = d ? d.x : 0; T.pHp = vs.hp; T.dHp = d ? d.hp : 0; T.dHit = d ? d.hitAt : -9999; T.dDown = d ? d.down || 0 : 0; T.pDown = gDownUntil; T.on = true; T.banner = { txt: 'FLOOR ' + TW_N, at: now };
+  T.px = wx; T.dx = d ? d.x : 0; T.pHp = vs.hp; T.dHp = d ? d.hp : 0; T.dHit = d ? d.hitAt : -9999; T.dDown = d ? d.down || 0 : 0; T.pDown = gDownUntil; T.on = true; T.banner = { f: TW_N, at: now };      // (v1.182 'banner' is only the moment you arrived on floor f: the floor sign on the wall flashes for a moment, there is no text on the screen any more)
 }
 function twFreeX(F, x, gap) {      // a place for you (and the enemy gap px in front of you) that is not in a crater: the middle of the room if it is free, else the nearest free place in steps of 40 px
   const bad = (q, m) => F.holes.some(h => Math.abs(q - h.x) < h.r + m);
@@ -9676,12 +9676,12 @@ const twHoleAt = (F, x) => { for (const h of F.holes) if (Math.abs(x - h.x) < h.
 function twDepthAt(f, x) { let n = 0, g = f; while (g > 1) { const h = twHoleAt(twFloorData(g), x); if (!h) break; if (h.shaft) { n += g - 1; break; } n++; g--; } return n; }      // (how many floors a body at x falls from floor f: a crater 1 floor each, a shaft all the way down)
 function twPlace(F, x) { x = Math.max(24, Math.min(F.W - 24, x)); for (const w of F.walls) if (!w.broken && Math.abs(x - w.x) < 20) x = w.x + (x >= w.x ? 20 : -20); return x; }
 function twFloorSwitch(now, x, kind) {      // you are on another floor now: its place and its number; unless it is a straight cut (the elevator) the CAMERA SLIDES there (kind 'fall', 'stairs' or 'ceil': twSlideStart), never a fade
-  const T = vs.tw, F = twFloorData(T.fMe), f0 = T.cf, x0 = wx, d = dummy, foeX = d && d.ko < 0 && !T.away && T.fFoe === f0 ? d.x : null; if (T.cf !== T.fMe) { T.prevF = T.cf; T.cf = T.fMe; } T.seen[T.fMe] = 1; twClearWorld(); wx = twPlace(F, x); wxv = 0; wvx = 0; T.px = wx; T.banner = { txt: 'FLOOR ' + T.fMe, at: now }; popups = []; T.slide = null;
+  const T = vs.tw, F = twFloorData(T.fMe), f0 = T.cf, x0 = wx, d = dummy, foeX = d && d.ko < 0 && !T.away && T.fFoe === f0 ? d.x : null; if (T.cf !== T.fMe) { T.prevF = T.cf; T.cf = T.fMe; } T.seen[T.fMe] = 1; twClearWorld(); wx = twPlace(F, x); wxv = 0; wvx = 0; T.px = wx; T.banner = { f: T.fMe, at: now }; popups = []; T.slide = null;
   if (kind && kind !== 'cut' && f0 !== T.fMe && vs.ph === 'fight') twSlideStart(now, f0, T.fMe, x0, kind, foeX);
 }
 function twSlideStart(now, f0, f1, x0, kind, foeX) {      // the camera follows you from floor f0 to floor f1: the floors run past (a fall speeds up, the stairs glide, a launch slows down), you cannot move for as long as it takes; foeX = where the enemy stands on the floor you leave (he stays there, in sight)
   const T = vs.tw, n = Math.abs(f1 - f0), ms = kind === 'stairs' ? 520 : kind === 'ceil' ? Math.min(900, 380 + 80 * n) : Math.min(1000, 360 + 90 * n);
-  T.slide = { at: now, ms, f0, f1, n, dir: f1 < f0 ? 1 : -1, x0, kind, foeX, land: null }; vs.nHold = Math.max(vs.nHold || 0, now + ms);
+  T.slide = { at: now, ms, f0, f1, n, dir: f1 < f0 ? 1 : -1, x0, kind, foeX, land: null }; vs.nHold = Math.max(vs.nHold || 0, now + ms); if (T.banner) T.banner.at = now + ms;      // (the sign of the new floor flashes when the camera gets there)
 }
 function twLand(now, tag, nn, dm) { say((tag || 'FALL') + ' ' + nn + (nn > 1 ? ' FLOORS' : ' FLOOR') + ' -' + dm, wx, '#ff9a5a', 8, now); snd('twbreak', 7); puff(wx, 8); shakeUntil = now + 300; shakeAmp = 4; }      // (the thud when a fall ends)
 function twPlanArrival(now) {      // the enemy is on another floor: when and how he comes: through the crater when you fell and it reaches your floor, in the cab if it is free (twLiftJob, after a moment), otherwise by the stairs (the farther, the longer)
@@ -9844,13 +9844,12 @@ function twTick(now, dt) {
 function twBase(now) {      // right after the training step (which gives an infinite-health enemy his health back): this is what the next frame's hits are measured against
   if (!twOn() || !vs.tw.on || !dummy) return; const T = vs.tw, d = dummy; T.dHp = d.hp; T.dHit = d.hitAt; T.dDown = d.down || 0; T.pHp = vs.hp; T.pDown = gDownUntil;
 }
-function twOverlay(now) {      // over the picture: what the elevator door tells you, the floor you are on (and where the enemy is when he is not here), and the big number when you arrive
+function twOverlay(now) {      // over the picture: what the elevator door tells you and where the enemy is when he is not here (v1.182 the floor you are on is NOT written on the screen any more: it is a sign on the wall of every room, twSignEmit; the cab has its own display over its doors)
   if (!twOn() || state !== 'play') { twPanelSync(now); return; } const T = vs.tw;
   if (ryUlNoHud() || cutsceneOn()) { twPanelSync(now); return; }
   if (T.prompt && now - T.prompt.at < 80) { const mx = Math.round(VW / 2); if (T.prompt.up) pxt(T.prompt.up, mx, gy + 18, '#9fffd0', 8, 'center'); if (T.prompt.dn) pxt(T.prompt.dn, mx, gy + 27, '#9fd8ff', 8, 'center'); }
-  const c = T.cab, fl = c ? Math.round(c.curF) : T.fMe, hx = Math.round(VW / 2) + (c ? 20 : 0), ha = c ? 'left' : 'center'; pxt('FLOOR ' + fl, hx, 44, '#cfe8ff', 8, ha); if (T.away) pxt(c && c.out ? 'FOE AT DOORS' : T.lift.inFoe ? 'FOE ' + T.fFoe + ' IN CAB' : 'FOE ' + T.fFoe + (T.fFoe > fl ? ' UP' : ' DOWN'), hx, c ? 62 : 53, '#ffb27a', 8, ha);      // (in the cab the lines start right of the middle of the screen, clear of the panel and of your head, and the enemy's line sits lower, clear of his grade label)
+  const c = T.cab, fl = c ? Math.round(c.curF) : T.fMe, hx = Math.round(VW / 2) + (c ? 20 : 0), ha = c ? 'left' : 'center'; if (T.away) pxt(c && c.out ? 'FOE AT DOORS' : T.lift.inFoe ? 'FOE ' + T.fFoe + ' IN CAB' : 'FOE ' + T.fFoe + (T.fFoe > fl ? ' UP' : ' DOWN'), hx, c ? 62 : 53, '#ffb27a', 8, ha);      // (v1.182 the only line left: where the enemy is, where it always was: under the names of the health bars; in the cab it starts right of the middle of the screen, clear of the panel and of your head, and sits lower, clear of his grade label)
   twPanelSync(now);
-  if (T.banner && now - T.banner.at < 1300) { const u = (now - T.banner.at) / 1300; ctx.globalAlpha = u > 0.6 ? Math.max(0, (1 - u) / 0.4) : 1; pxt(T.banner.txt, Math.round(VW / 2), Math.round(VH * 0.46), '#ffffff', 16, 'center'); ctx.globalAlpha = 1; }
 }
 // ---------------------------------------------------------------- v1.176 ONE ELEVATOR for the whole building (v1.175 made its doors, the cab and its panel; v1.176 made the cab ONE shared machine, T.lift)
 // There is one cab for the whole building. It is parked at a floor (doors shut or open) or it rides to another one. At an elevator door (stand still there for 350 ms): JUMP or CROUCH: if the cab is HERE you step in (a straight cut to the inside: T.cab is the cab while you are in it); if it is somewhere else
@@ -10175,9 +10174,15 @@ const TW_STY = {      // wall, lower wall, floor, how dark the rooms are, window
   'STORAGE': { wall: 'block', low: 'block', fl: 'concrete', amb: 0.4, win: 0.22, feat: ['hazard', 'pipes', 'shelfm', 'pipes'] },
   'LOBBY': { wall: 'marble', low: 'marble', fl: 'marble', amb: 0.14, win: 0.6, feat: ['art', 'sconce', 'art'], gloss: 1 },
   'PENTHOUSE': { wall: 'wood', low: 'wood', fl: 'wood', amb: 0.32, win: 1, pano: 1, feat: ['art', 'sconce'], gloss: 1 }};
-function twLayout(F) {      // where the windows and the features of the wall are (made with the floor, kept in F.lay)
-  if (F.lay) return F.lay; const sty = TW_STY[F.th] || TW_STY.OFFICE, R = twRng(F.seed ^ 0x2545f491), lay = { win: [], feat: [], sty, pano: !!sty.pano };
-  for (let i = 0; ; i++) { const x = 20 + 64 * i; if (x > F.W - 26) break; if (x < 26 || F.doors.some(d => Math.abs(d.x - x) < 38) || F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36)) continue; if (R() < sty.win) lay.win.push(x); else lay.feat.push({ x, k: sty.feat[(R() * sty.feat.length) | 0], n: (R() * 1e6) | 0 }); }
+const TW_SG = { w: 27, h: 23, y: 50 };      // (v1.182 the FLOOR SIGN on the wall: a plate 27 x 23 whose top row is row y of the shell (rows 50 - 72: under the health bars of the screen, above the little furniture); the middle column of the plate is the x of the sign)
+function twLayout(F) {      // where the windows, the features and the floor signs of the wall are (made with the floor, kept in F.lay)
+  if (F.lay) return F.lay; const sty = TW_STY[F.th] || TW_STY.OFFICE, R = twRng(F.seed ^ 0x2545f491), lay = { win: [], feat: [], sign: [], sty, pano: !!sty.pano }, mx = Math.round(F.W / 2);
+  const ok = x => x >= 26 && !F.doors.some(d => x - d.x > -33 && x - d.x < 40) && !F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36) && !(F.th === 'LOBBY' && Math.abs(x - mx) < 72) && !F.objs.some(o => { const K = TW_K[o.k]; return Math.abs(o.x - x) < K.w / 2 + 15 && 98 - K.h - (o.on ? TW_K[o.on.k].h : 0) < 68; }), cand = [];      // (v1.182 the floor signs go on the free spots of the wall (the spots of the windows, every 64 px): clear of the doors (the call panel is on their right), of the inner walls, of the logo of the lobby and of any furniture tall enough to stand in front of the plate)
+  for (let x = 20; x <= F.W - 26; x += 64) if (ok(x)) cand.push(x);
+  const G = Math.max(150, Math.min(260, VW - 60));      // (the widest gap allowed between two signs: a bit less than the width of the screen, so that one is on it nearly always: 171 px on the narrowest screens, 260 on the widest)
+  let last = -100; for (let i = 0; i < cand.length; i++) if ((i + 1 < cand.length ? cand[i + 1] : 1e9) - last > G) { lay.sign.push(cand[i]); last = cand[i]; }      // (as few as it takes: the farthest free spot that still reaches the next one)
+  for (let n = 0; n < 9; n++) { const sg = [-100, ...lay.sign, F.W + 100]; let add = -1; for (let i = 1; i < sg.length && add < 0; i++) if (sg[i] - sg[i - 1] > G + 4) { const mid = (sg[i] + sg[i - 1]) / 2; for (let x = 20; x <= F.W - 26; x += 16) if (x > sg[i - 1] + 80 && x < sg[i] - 80 && ok(x) && (add < 0 || Math.abs(x - mid) < Math.abs(add - mid))) add = x; } if (add < 0) break; lay.sign.push(add); lay.sign.sort((p, q) => p - q); }      // (a stretch where doors, walls and furniture left no spot gets one more, anywhere on a 16 px grid, so that one sign is on the screen nearly always)
+  for (let i = 0; ; i++) { const x = 20 + 64 * i; if (x > F.W - 26) break; if (x < 26 || lay.sign.some(s => Math.abs(s - x) < 48) || F.doors.some(d => Math.abs(d.x - x) < 38) || F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36)) continue; if (R() < sty.win) lay.win.push(x); else lay.feat.push({ x, k: sty.feat[(R() * sty.feat.length) | 0], n: (R() * 1e6) | 0 }); }
   if (F.th === 'LOBBY') { const mx = Math.round(F.W / 2); lay.feat = lay.feat.filter(q => Math.abs(q.x - mx) > 50); lay.win = lay.win.filter(q => Math.abs(q - mx) > 50); lay.feat.push({ x: mx, k: 'logo', n: 1 }); }
   F.lay = lay; F.sty = sty; return lay;
 }
@@ -10250,7 +10255,14 @@ function twShWall(g, W, F, R, Q) {
   g.fillStyle = twMix(P.w, '#ffffff', 0.35); g.fillRect(0, top, W, 2); g.fillStyle = twMix(P.w, '#000000', 0.2); g.fillRect(0, top + 2, W, 2); for (let y = 0; y < 9; y++) { g.fillStyle = 'rgba(0,0,0,' + (0.3 * (1 - y / 9)).toFixed(3) + ')'; g.fillRect(0, top + 4 + y, W, 1); } for (let y = 0; y < 8; y++) { g.fillStyle = 'rgba(0,0,0,' + (0.22 * (y / 8)).toFixed(3) + ')'; g.fillRect(0, bot - 12 + y, W, 1); }
   if (Q >= 3) { for (let x = 38 + ((R() * 30) | 0); x < W - 20; x += 120 + ((R() * 100) | 0)) { if (F.doors.some(d => Math.abs(d.x - x) < 24)) continue; g.fillStyle = '#e8e8ee'; g.fillRect(x, bot - 22, 4, 5); g.fillStyle = '#9aa2b8'; g.fillRect(x, bot - 22, 4, 1); g.fillStyle = '#16192a'; g.fillRect(x + 1, bot - 20, 2, 1); g.fillRect(x + 1, bot - 18, 2, 1); }
     for (let x = 20 + ((R() * 50) | 0); x < W - 20; x += 160 + ((R() * 90) | 0)) { if (F.doors.some(d => Math.abs(d.x - x) < 24)) continue; g.fillStyle = '#e8e8ee'; g.fillRect(x, bot - 10, 4, 4); g.fillStyle = '#16192a'; g.fillRect(x + 1, bot - 9, 1, 1); g.fillRect(x + 2, bot - 9, 1, 1); } }
+  for (const x of lay.sign) twShSign(g, x);      // (v1.182 the floor signs, at every quality, over the wall outlets)
   for (const d of F.doors) { const px = d.x + 22; g.fillStyle = '#16192a'; g.fillRect(px - 5, top + 28, 11, 8); g.fillStyle = '#e8e8ee'; g.fillRect(px - 4, top + 29, 9, 6); twText(g, String(F.f), px - ((String(F.f).length * 4 - 1) >> 1), top + 29, 1, '#16192a'); }
+}
+function twShSign(g, x) {      // v1.182 the FLOOR SIGN on the wall, the plate (it is part of the picture of the floor): a steel frame with a shadow on the wall, a blue band for the word FLOOR above a black panel for the number, two rivets; the word and the number are drawn LIT by twSignEmit, over the darkness
+  const x0 = x - 13, y0 = TW_SG.y, w = TW_SG.w, h = TW_SG.h, r = (a, b, c, d, col) => { g.fillStyle = col; g.fillRect(x0 + a, y0 + b, c, d); };
+  r(-1, 2, w + 3, h + 1, 'rgba(0,0,0,.3)'); r(0, 0, w, h, '#10132a'); r(1, 1, w - 2, h - 2, '#838dac'); r(w - 2, 1, 1, h - 2, '#464d6c'); r(1, h - 2, w - 2, 1, '#464d6c');
+  r(2, 2, w - 4, h - 4, '#070a14'); r(2, 2, w - 4, 7, '#2b5f9f'); r(2, 2, w - 4, 1, '#5b92d4'); r(2, 8, w - 4, 1, '#17375f'); r(2, 9, w - 4, 1, 'rgba(0,0,0,.55)');
+  for (const dx of [3, w - 4]) r(dx, h - 5, 1, 1, '#8f98b8');
 }
 function twShFloor(g, W, F, R, Q) {
   const P = F.pal, sty = F.sty || TW_STY.OFFICE, fk = sty.fl, y0 = SH_F, h = SH_N - SH_F;
@@ -10285,6 +10297,7 @@ function twLightList(F, x0, a, b, now) {      // what is lit on the floor you se
   for (const o of F.objs) { const K = TW_K[o.k], sx = x0 + o.x; if (sx < a - 40 || sx > b + 40 || o.hp <= 0) continue; const by = o.on ? TW_K[o.on.k].h : 0;
     if (K.lt) L.push(['g30', sx, gy - 40, 0.92, [255, 214, 140]]); else if (o.k === 'computer') L.push(['g13', sx, gy - by - 8, 0.6, [120, 190, 255]]); else if (o.k === 'rack') L.push(['g18', sx, gy - 24, 0.5, [110, 190, 255]]); else if (o.k === 'vending') L.push(['g22', sx, gy - 24, 0.65, [255, 150, 120]]); else if (o.k === 'cooler') L.push(['g12', sx, gy - 18, 0.35, [150, 210, 255]]); }
   for (const d of F.doors) { const sx = x0 + d.x; if (sx > a - 40 && sx < b + 40) L.push([d.k === 'stairs' ? 'g18' : 'g20', sx, gy - 7 - 52, 0.75, d.k === 'stairs' ? [110, 255, 170] : [255, 200, 120]]); }
+  for (const s of twLayout(F).sign) { const sx = x0 + s; if (sx > a - 40 && sx < b + 40) L.push(['g22', sx, gy - TW_CEIL + TW_SG.y - SH_Y + 11, 0.6, [255, 226, 160]]); }      // (v1.182 the floor signs shine: the darkness has a soft hole round each)
   const T = vs.tw; if (T.flashes && T.fMe === F.f) for (let i = T.flashes.length - 1; i >= 0; i--) { const q = T.flashes[i], u = (now - q.at) / 420; if (u >= 1) { T.flashes.splice(i, 1); continue; } if (u >= 0) L.push(['g' + q.r, x0 + q.x, gy - 26, 1 - u, q.rgb, 1]); }
   if (twLightFrac(F) < 0.5) for (const d of F.doors) { const sx = x0 + d.x; if (sx > a - 40 && sx < b + 40) L.push(['g18', sx + 15, gy - 7 - 66, 0.45 + 0.4 * Math.sin(now / 240 + d.x), [255, 70, 50]]); }      // (the emergency lights of a dark floor pulse red over its doors)
   return L;
@@ -10463,7 +10476,14 @@ function twDecals(F, x0, a, b) {
     else if (d.k === 'chip') { const R = twRng(d.n); for (let i = 0; i < 6; i++) twR(sx - 4 + ((R() * 9) | 0), gy - d.y - 3 + ((R() * 7) | 0), 1, 1, R() < 0.5 ? '#ece8dc' : 'rgba(10,8,16,.65)'); twR(sx - 1, gy - d.y - 1, 2, 2, 'rgba(10,8,16,.5)'); }
   }
 }
-function twEmit(F, x0, a, b, now, Q) {      // everything that shines, drawn over the darkness: the signs of the doors, the screens, the lights of the racks, the glass of the vending machines, the bubbles in the water cooler, the cans on the floor
+function twSignEmit(F, sx, now, Q) {      // v1.182 the lit part of the FLOOR SIGN: the word FLOOR on its blue band and the number in warm light, over the darkness (like the EXIT signs, so the floor can always be read, even when the lights are out); for a moment after you arrive on a floor the sign flashes (a white frame and white digits blink, a glow fades): this is what the big FLOOR n of the screen used to be
+  const T = vs.tw, x = Math.round(sx), y = gy - TW_CEIL - SH_Y + TW_SG.y, s = String(F.f), bn = T && T.banner && T.banner.f === F.f ? now - T.banner.at : -1, fl = bn >= 0 && bn < 1300, on = fl && ((bn / 160) | 0) % 2 === 0, tx = x - (twTextW(s, 2) >> 1);
+  if (fl && Q >= 2) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.75 * (1 - bn / 1300) * (SET.glow ? 1 : 0.6); ctx.drawImage(twGlow(24, [255, 226, 150]), x - 24, y + 11 - 24); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+  if (on) { ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 15, y - 2, 31, 2); ctx.fillRect(x - 15, y + TW_SG.h, 31, 2); ctx.fillRect(x - 15, y, 2, TW_SG.h); ctx.fillRect(x + 14, y, 2, TW_SG.h); }
+  twText(ctx, 'FLOOR', x - 9, y + 3, 1, '#ffffff'); twText(ctx, s, tx + 1, y + 11, 2, '#7a4c10'); twText(ctx, s, tx, y + 10, 2, on ? '#ffffff' : '#ffe9b0');
+}
+function twEmit(F, x0, a, b, now, Q) {      // everything that shines, drawn over the darkness: the floor signs, the signs of the doors, the screens, the lights of the racks, the glass of the vending machines, the bubbles in the water cooler, the cans on the floor
+  for (const s of twLayout(F).sign) { const sx = x0 + s; if (sx > a - 30 && sx < b + 30) twSignEmit(F, sx, now, Q); }
   for (const d of F.doors) { const sx = x0 + d.x; if (sx > a - 30 && sx < b + 30) twDoorEmit(F, d, sx, now); }
   for (const o of F.objs) { const sx = Math.round(x0 + o.x); if (sx < a - 30 || sx > b + 30 || o.hp <= 0) continue; const by = o.on ? TW_K[o.on.k].h : 0, K = TW_K[o.k], bad = o.hp < o.mx * 0.5;
     if (o.k === 'computer') { const t0 = gy - by - 12, st = ((now / 700) | 0) + (o.x | 0), pat = Math.abs(o.x | 0) % 3; ctx.fillStyle = bad ? '#0a2a9a' : pat === 0 ? '#0a1a10' : pat === 1 ? '#1a3a6e' : '#201a3a'; ctx.fillRect(sx - 6, t0, 12, 8);
@@ -19532,6 +19552,15 @@ $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
  {
+  "v": "1.182",
+  "t": "THE FLOOR IS A SIGN ON THE WALL",
+  "n": [
+   "SKYSCRAPER: the floor you are on is not written on the screen any more (the 'FLOOR 30' at the top and the big 'FLOOR 30' that popped up when you arrived are gone). It is a SIGN ON THE WALL of the building now: a steel plate with a blue band that says FLOOR over a black panel with the number in warm light. There is one about every 200 px along every floor (a few more on a narrow screen, fewer on a very wide one), so one is nearly always on the screen; they hang below the health bars, on the free spots of the wall, never on a door, an inner wall, a window or behind a tall piece of furniture (a lamp, a shelf, a vending machine, a rack, a glass pane or a pillar). A fighter who stands in front of one hides it, like anything else on the wall.",
+   "The number shines through the darkness like the EXIT signs, so you can read it even when every light of the floor is out (the sign also lights the wall round it). When you arrive on a floor (you start the round, take the stairs, fall, are thrown through a ceiling) the signs flash for a moment (a white frame and white digits, and a glow that fades); after a slide of the camera (stairs, falls) they flash when the camera gets there. Leaving the cab does not flash.",
+   "The cab keeps the floor display over its doors. The enemy's line ('FOE 23 UP', 'FOE 23 DOWN', 'FOE AT DOORS', 'FOE 23 IN CAB') stays where it was on the screen, it is not about this floor."
+  ]
+ },
+ {
   "v": "1.181",
   "t": "BATTLE UI CLEAN-UP: CUTSCENES, ENERGY BAR, ELEVATOR WORDS, FATALITY IN A DOMAIN",
   "n": [
@@ -22412,6 +22441,11 @@ async function scStory() {
 // ---------------------------------------------------------------- the run
 let SC_ONLY = {};      // (for the tests: { sec: ['STORY'], scenes: ['CH 4'] })
 // ---------------------------------------------------------------- SKYSCRAPER (v1.173): three fighters fight in the 50-floor building and the scan makes its things happen: a slam through the floors, a fall, a blast, a ceiling broken, glass broken and a fall to the street
+function scSigns() {      // v1.182 the floor signs: a few floors (the lobby, the penthouse, others) have at least 3 each, none hangs on a door or on an inner wall, and none is behind a piece of furniture tall enough to stand in front of it
+  const bad = []; for (const f of [1, 2, 9, 17, 30, 44, 50]) { const F = twFloorData(f), s = twLayout(F).sign; if (s.length < 3) bad.push('FLOOR ' + f + ' HAS ONLY ' + s.length + ' SIGNS');
+    for (const x of s) { if (F.doors.some(d => x - d.x > -33 && x - d.x < 40)) bad.push('FLOOR ' + f + ': A SIGN HANGS ON A DOOR AT ' + x); if (F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36)) bad.push('FLOOR ' + f + ': A SIGN HANGS ON AN INNER WALL AT ' + x); if (F.objs.some(o => { const K = TW_K[o.k]; return Math.abs(o.x - x) < K.w / 2 + 15 && 98 - K.h - (o.on ? TW_K[o.on.k].h : 0) < 68; })) bad.push('FLOOR ' + f + ': A SIGN IS BEHIND TALL FURNITURE AT ' + x); } }
+  if (bad.length) scNote('fail', 'FLOOR SIGNS: ' + bad[0], bad.length + ' PROBLEMS');
+}
 async function scTower() {
   SC.sec = 'SKYSCRAPER'; scCov('TOWER', 0, 3); SC.plan = 3 * 470; SC.done = 0; const keep = twPick; twPick = 1;
   try {
@@ -22420,7 +22454,7 @@ async function scTower() {
       try { Object.assign(TR, { beh: 1, ehp: 0, php: 0, pce: 0 }); startPractice(w, 'cat'); } catch (e) { scErr(e, label + ' START'); continue; }
       if (state !== 'play' || !twOn()) { scNote('fail', 'THE SKYSCRAPER DID NOT START: ' + label, 'STATE ' + state); show('title'); continue; }
       if (!(await scIntro())) { show('title'); return; }
-      const p = scPlayer(seed), ev = [[30, () => twSlam('foe', 2, pnow(), dummy.x)], [90, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [110, () => twMeFall(1, pnow(), wx)], [150, () => { const F = twFloorData(vs.tw.fMe); const o = { k: 'gas', x: Math.round(wx + 40), hp: 18, mx: 18, wob: 0, hitAt: -9999 }; F.objs.push(o); twDamageObj(F, o, 99, pnow()); }], [190, () => twCeiling('foe', 1, pnow(), dummy.x)], [235, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [250, () => twFallOut('foe', pnow(), 1)],
+      const p = scPlayer(seed), ev = [[20, scSigns], [30, () => twSlam('foe', 2, pnow(), dummy.x)], [90, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [110, () => twMeFall(1, pnow(), wx)], [150, () => { const F = twFloorData(vs.tw.fMe); const o = { k: 'gas', x: Math.round(wx + 40), hp: 18, mx: 18, wob: 0, hitAt: -9999 }; F.objs.push(o); twDamageObj(F, o, 99, pnow()); }], [190, () => twCeiling('foe', 1, pnow(), dummy.x)], [235, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [250, () => twFallOut('foe', pnow(), 1)],
         [60, () => { const F = twFloorData(vs.tw.fMe), d = F.doors.find(q => q.k === 'elev'); if (d) twDoorHit(F, d, 45, pnow()); }],      // (v1.175 the elevator: a hard hit jams a door (OUT OF ORDER) ...)
         [270, () => { const T = vs.tw; if (T.cab) return; const F = twFloorData(T.fMe), d = twElevOf(F), L = T.lift; if (!d) return; d.st = 0; d.hp = 70; L.f = L.curF = L.dest = T.fMe; L.ph = 'park'; L.inFoe = false; L.job = null; L.pend = null; wx = d.x; T.px = wx; twCabEnter(F, d, pnow()); }],      // (v1.176 ... you step into the one cab of the building: the cut inside, the panel, a floor button (0.6 s, then it goes), an emergency stop, another floor,
         [276, () => { const T = vs.tw; if (T.cab) twCabPick(T.fMe > 20 ? T.fMe - 9 : T.fMe + 11, pnow()); }],

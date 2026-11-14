@@ -130,9 +130,15 @@ const TW_STY = {      // wall, lower wall, floor, how dark the rooms are, window
   'STORAGE': { wall: 'block', low: 'block', fl: 'concrete', amb: 0.4, win: 0.22, feat: ['hazard', 'pipes', 'shelfm', 'pipes'] },
   'LOBBY': { wall: 'marble', low: 'marble', fl: 'marble', amb: 0.14, win: 0.6, feat: ['art', 'sconce', 'art'], gloss: 1 },
   'PENTHOUSE': { wall: 'wood', low: 'wood', fl: 'wood', amb: 0.32, win: 1, pano: 1, feat: ['art', 'sconce'], gloss: 1 }};
-function twLayout(F) {      // where the windows and the features of the wall are (made with the floor, kept in F.lay)
-  if (F.lay) return F.lay; const sty = TW_STY[F.th] || TW_STY.OFFICE, R = twRng(F.seed ^ 0x2545f491), lay = { win: [], feat: [], sty, pano: !!sty.pano };
-  for (let i = 0; ; i++) { const x = 20 + 64 * i; if (x > F.W - 26) break; if (x < 26 || F.doors.some(d => Math.abs(d.x - x) < 38) || F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36)) continue; if (R() < sty.win) lay.win.push(x); else lay.feat.push({ x, k: sty.feat[(R() * sty.feat.length) | 0], n: (R() * 1e6) | 0 }); }
+const TW_SG = { w: 27, h: 23, y: 50 };      // (v1.182 the FLOOR SIGN on the wall: a plate 27 x 23 whose top row is row y of the shell (rows 50 - 72: under the health bars of the screen, above the little furniture); the middle column of the plate is the x of the sign)
+function twLayout(F) {      // where the windows, the features and the floor signs of the wall are (made with the floor, kept in F.lay)
+  if (F.lay) return F.lay; const sty = TW_STY[F.th] || TW_STY.OFFICE, R = twRng(F.seed ^ 0x2545f491), lay = { win: [], feat: [], sign: [], sty, pano: !!sty.pano }, mx = Math.round(F.W / 2);
+  const ok = x => x >= 26 && !F.doors.some(d => x - d.x > -33 && x - d.x < 40) && !F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36) && !(F.th === 'LOBBY' && Math.abs(x - mx) < 72) && !F.objs.some(o => { const K = TW_K[o.k]; return Math.abs(o.x - x) < K.w / 2 + 15 && 98 - K.h - (o.on ? TW_K[o.on.k].h : 0) < 68; }), cand = [];      // (v1.182 the floor signs go on the free spots of the wall (the spots of the windows, every 64 px): clear of the doors (the call panel is on their right), of the inner walls, of the logo of the lobby and of any furniture tall enough to stand in front of the plate)
+  for (let x = 20; x <= F.W - 26; x += 64) if (ok(x)) cand.push(x);
+  const G = Math.max(150, Math.min(260, VW - 60));      // (the widest gap allowed between two signs: a bit less than the width of the screen, so that one is on it nearly always: 171 px on the narrowest screens, 260 on the widest)
+  let last = -100; for (let i = 0; i < cand.length; i++) if ((i + 1 < cand.length ? cand[i + 1] : 1e9) - last > G) { lay.sign.push(cand[i]); last = cand[i]; }      // (as few as it takes: the farthest free spot that still reaches the next one)
+  for (let n = 0; n < 9; n++) { const sg = [-100, ...lay.sign, F.W + 100]; let add = -1; for (let i = 1; i < sg.length && add < 0; i++) if (sg[i] - sg[i - 1] > G + 4) { const mid = (sg[i] + sg[i - 1]) / 2; for (let x = 20; x <= F.W - 26; x += 16) if (x > sg[i - 1] + 80 && x < sg[i] - 80 && ok(x) && (add < 0 || Math.abs(x - mid) < Math.abs(add - mid))) add = x; } if (add < 0) break; lay.sign.push(add); lay.sign.sort((p, q) => p - q); }      // (a stretch where doors, walls and furniture left no spot gets one more, anywhere on a 16 px grid, so that one sign is on the screen nearly always)
+  for (let i = 0; ; i++) { const x = 20 + 64 * i; if (x > F.W - 26) break; if (x < 26 || lay.sign.some(s => Math.abs(s - x) < 48) || F.doors.some(d => Math.abs(d.x - x) < 38) || F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36)) continue; if (R() < sty.win) lay.win.push(x); else lay.feat.push({ x, k: sty.feat[(R() * sty.feat.length) | 0], n: (R() * 1e6) | 0 }); }
   if (F.th === 'LOBBY') { const mx = Math.round(F.W / 2); lay.feat = lay.feat.filter(q => Math.abs(q.x - mx) > 50); lay.win = lay.win.filter(q => Math.abs(q - mx) > 50); lay.feat.push({ x: mx, k: 'logo', n: 1 }); }
   F.lay = lay; F.sty = sty; return lay;
 }
@@ -205,7 +211,14 @@ function twShWall(g, W, F, R, Q) {
   g.fillStyle = twMix(P.w, '#ffffff', 0.35); g.fillRect(0, top, W, 2); g.fillStyle = twMix(P.w, '#000000', 0.2); g.fillRect(0, top + 2, W, 2); for (let y = 0; y < 9; y++) { g.fillStyle = 'rgba(0,0,0,' + (0.3 * (1 - y / 9)).toFixed(3) + ')'; g.fillRect(0, top + 4 + y, W, 1); } for (let y = 0; y < 8; y++) { g.fillStyle = 'rgba(0,0,0,' + (0.22 * (y / 8)).toFixed(3) + ')'; g.fillRect(0, bot - 12 + y, W, 1); }
   if (Q >= 3) { for (let x = 38 + ((R() * 30) | 0); x < W - 20; x += 120 + ((R() * 100) | 0)) { if (F.doors.some(d => Math.abs(d.x - x) < 24)) continue; g.fillStyle = '#e8e8ee'; g.fillRect(x, bot - 22, 4, 5); g.fillStyle = '#9aa2b8'; g.fillRect(x, bot - 22, 4, 1); g.fillStyle = '#16192a'; g.fillRect(x + 1, bot - 20, 2, 1); g.fillRect(x + 1, bot - 18, 2, 1); }
     for (let x = 20 + ((R() * 50) | 0); x < W - 20; x += 160 + ((R() * 90) | 0)) { if (F.doors.some(d => Math.abs(d.x - x) < 24)) continue; g.fillStyle = '#e8e8ee'; g.fillRect(x, bot - 10, 4, 4); g.fillStyle = '#16192a'; g.fillRect(x + 1, bot - 9, 1, 1); g.fillRect(x + 2, bot - 9, 1, 1); } }
+  for (const x of lay.sign) twShSign(g, x);      // (v1.182 the floor signs, at every quality, over the wall outlets)
   for (const d of F.doors) { const px = d.x + 22; g.fillStyle = '#16192a'; g.fillRect(px - 5, top + 28, 11, 8); g.fillStyle = '#e8e8ee'; g.fillRect(px - 4, top + 29, 9, 6); twText(g, String(F.f), px - ((String(F.f).length * 4 - 1) >> 1), top + 29, 1, '#16192a'); }
+}
+function twShSign(g, x) {      // v1.182 the FLOOR SIGN on the wall, the plate (it is part of the picture of the floor): a steel frame with a shadow on the wall, a blue band for the word FLOOR above a black panel for the number, two rivets; the word and the number are drawn LIT by twSignEmit, over the darkness
+  const x0 = x - 13, y0 = TW_SG.y, w = TW_SG.w, h = TW_SG.h, r = (a, b, c, d, col) => { g.fillStyle = col; g.fillRect(x0 + a, y0 + b, c, d); };
+  r(-1, 2, w + 3, h + 1, 'rgba(0,0,0,.3)'); r(0, 0, w, h, '#10132a'); r(1, 1, w - 2, h - 2, '#838dac'); r(w - 2, 1, 1, h - 2, '#464d6c'); r(1, h - 2, w - 2, 1, '#464d6c');
+  r(2, 2, w - 4, h - 4, '#070a14'); r(2, 2, w - 4, 7, '#2b5f9f'); r(2, 2, w - 4, 1, '#5b92d4'); r(2, 8, w - 4, 1, '#17375f'); r(2, 9, w - 4, 1, 'rgba(0,0,0,.55)');
+  for (const dx of [3, w - 4]) r(dx, h - 5, 1, 1, '#8f98b8');
 }
 function twShFloor(g, W, F, R, Q) {
   const P = F.pal, sty = F.sty || TW_STY.OFFICE, fk = sty.fl, y0 = SH_F, h = SH_N - SH_F;
@@ -240,6 +253,7 @@ function twLightList(F, x0, a, b, now) {      // what is lit on the floor you se
   for (const o of F.objs) { const K = TW_K[o.k], sx = x0 + o.x; if (sx < a - 40 || sx > b + 40 || o.hp <= 0) continue; const by = o.on ? TW_K[o.on.k].h : 0;
     if (K.lt) L.push(['g30', sx, gy - 40, 0.92, [255, 214, 140]]); else if (o.k === 'computer') L.push(['g13', sx, gy - by - 8, 0.6, [120, 190, 255]]); else if (o.k === 'rack') L.push(['g18', sx, gy - 24, 0.5, [110, 190, 255]]); else if (o.k === 'vending') L.push(['g22', sx, gy - 24, 0.65, [255, 150, 120]]); else if (o.k === 'cooler') L.push(['g12', sx, gy - 18, 0.35, [150, 210, 255]]); }
   for (const d of F.doors) { const sx = x0 + d.x; if (sx > a - 40 && sx < b + 40) L.push([d.k === 'stairs' ? 'g18' : 'g20', sx, gy - 7 - 52, 0.75, d.k === 'stairs' ? [110, 255, 170] : [255, 200, 120]]); }
+  for (const s of twLayout(F).sign) { const sx = x0 + s; if (sx > a - 40 && sx < b + 40) L.push(['g22', sx, gy - TW_CEIL + TW_SG.y - SH_Y + 11, 0.6, [255, 226, 160]]); }      // (v1.182 the floor signs shine: the darkness has a soft hole round each)
   const T = vs.tw; if (T.flashes && T.fMe === F.f) for (let i = T.flashes.length - 1; i >= 0; i--) { const q = T.flashes[i], u = (now - q.at) / 420; if (u >= 1) { T.flashes.splice(i, 1); continue; } if (u >= 0) L.push(['g' + q.r, x0 + q.x, gy - 26, 1 - u, q.rgb, 1]); }
   if (twLightFrac(F) < 0.5) for (const d of F.doors) { const sx = x0 + d.x; if (sx > a - 40 && sx < b + 40) L.push(['g18', sx + 15, gy - 7 - 66, 0.45 + 0.4 * Math.sin(now / 240 + d.x), [255, 70, 50]]); }      // (the emergency lights of a dark floor pulse red over its doors)
   return L;
@@ -418,7 +432,14 @@ function twDecals(F, x0, a, b) {
     else if (d.k === 'chip') { const R = twRng(d.n); for (let i = 0; i < 6; i++) twR(sx - 4 + ((R() * 9) | 0), gy - d.y - 3 + ((R() * 7) | 0), 1, 1, R() < 0.5 ? '#ece8dc' : 'rgba(10,8,16,.65)'); twR(sx - 1, gy - d.y - 1, 2, 2, 'rgba(10,8,16,.5)'); }
   }
 }
-function twEmit(F, x0, a, b, now, Q) {      // everything that shines, drawn over the darkness: the signs of the doors, the screens, the lights of the racks, the glass of the vending machines, the bubbles in the water cooler, the cans on the floor
+function twSignEmit(F, sx, now, Q) {      // v1.182 the lit part of the FLOOR SIGN: the word FLOOR on its blue band and the number in warm light, over the darkness (like the EXIT signs, so the floor can always be read, even when the lights are out); for a moment after you arrive on a floor the sign flashes (a white frame and white digits blink, a glow fades): this is what the big FLOOR n of the screen used to be
+  const T = vs.tw, x = Math.round(sx), y = gy - TW_CEIL - SH_Y + TW_SG.y, s = String(F.f), bn = T && T.banner && T.banner.f === F.f ? now - T.banner.at : -1, fl = bn >= 0 && bn < 1300, on = fl && ((bn / 160) | 0) % 2 === 0, tx = x - (twTextW(s, 2) >> 1);
+  if (fl && Q >= 2) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.75 * (1 - bn / 1300) * (SET.glow ? 1 : 0.6); ctx.drawImage(twGlow(24, [255, 226, 150]), x - 24, y + 11 - 24); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+  if (on) { ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 15, y - 2, 31, 2); ctx.fillRect(x - 15, y + TW_SG.h, 31, 2); ctx.fillRect(x - 15, y, 2, TW_SG.h); ctx.fillRect(x + 14, y, 2, TW_SG.h); }
+  twText(ctx, 'FLOOR', x - 9, y + 3, 1, '#ffffff'); twText(ctx, s, tx + 1, y + 11, 2, '#7a4c10'); twText(ctx, s, tx, y + 10, 2, on ? '#ffffff' : '#ffe9b0');
+}
+function twEmit(F, x0, a, b, now, Q) {      // everything that shines, drawn over the darkness: the floor signs, the signs of the doors, the screens, the lights of the racks, the glass of the vending machines, the bubbles in the water cooler, the cans on the floor
+  for (const s of twLayout(F).sign) { const sx = x0 + s; if (sx > a - 30 && sx < b + 30) twSignEmit(F, sx, now, Q); }
   for (const d of F.doors) { const sx = x0 + d.x; if (sx > a - 30 && sx < b + 30) twDoorEmit(F, d, sx, now); }
   for (const o of F.objs) { const sx = Math.round(x0 + o.x); if (sx < a - 30 || sx > b + 30 || o.hp <= 0) continue; const by = o.on ? TW_K[o.on.k].h : 0, K = TW_K[o.k], bad = o.hp < o.mx * 0.5;
     if (o.k === 'computer') { const t0 = gy - by - 12, st = ((now / 700) | 0) + (o.x | 0), pat = Math.abs(o.x | 0) % 3; ctx.fillStyle = bad ? '#0a2a9a' : pat === 0 ? '#0a1a10' : pat === 1 ? '#1a3a6e' : '#201a3a'; ctx.fillRect(sx - 6, t0, 12, 8);
