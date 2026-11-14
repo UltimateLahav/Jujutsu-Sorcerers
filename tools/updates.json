@@ -1,5 +1,17 @@
 [
  {
+  "v": "1.188",
+  "t": "FREDDY AS AN ENEMY, AND HIS DAMAGE BALANCED",
+  "n": [
+   "You said: make Freddy an enemy in versus and make his damage balanced. You chose everything: he can fight you with all his moves, put YOU to sleep with his Nightmare and eat you with his Fatality, and Yuji's Fatality gets its own Freddy version. The enemy picker no longer says NOT AS ENEMY for him (in Battle, Training and Wi-Fi), and you need to own him on the SKILLS page like the other fighters.",
+   "HOW HE FIGHTS: he walks in, slashes (claw, then bare hand), and from far away stretches his arm like when you play him (left, right, left). He also throws his boiling water (it burns you for 6 seconds), from GRADE 3 up the pierce (nothing blocks it, you bleed) and the ground slam (in the street the road cracks and he throws stones, in the skyscraper the floor breaks under both of you and he throws the furniture), and from SEMI-GRADE 1 up the Nightmare (once in 30 seconds, when you stand within 150 px: you fall asleep, he comes out of the dark in the dream, four slashes, the pierce, and you wake up bleeding) and, at your 20% health, the Fatality: the same leg-eating scene, on whoever you play (it follows GRAPHIC DAMAGE: FULL, CLEAN or OFF). Your guard, crouch, jump and dash decide what reaches you, as with every enemy. He blocks and dodges like the others of his grade.",
+   "THE FATALITIES ON HIM: Gojo's, Verity's, the Cat's and his own (a mirror match: the enemy Freddy has the inverted colours) work on him; Verity's showed a Verity as the victim before. Yuji's Fatality has its own Freddy version: another order of blows (elbow, hook, knee, slam, sweep, spin, dive, then the huge one), sparks and pieces in the red and green of his sweater, and the embers of his boiler room rising over the screen. His hurt pictures are used for the reactions of the victim now.",
+   "BALANCE: bot duels (a simple bot plays each fighter against each enemy at three grades, 3 to 4 times each). Played by the bot, Freddy finished a fight in about 21 seconds, between Verity (20) and Gojo (26 to 36); his M1 blows are now 85% of what the shared tables say (the stretched punches did 10 and 12), the water is 22 (was 25), the pierce 26 (was 30), and the stones of the slam are 8 (were 6, the move was the weakest per energy). As an enemy he hurts a standing bot for about 15, 170 and 290 of its 300 health at GRADE 3, SEMI-GRADE 1 and SPECIAL GRADE: in the middle of the other four enemies (Gojo 92 / 233 / 45, Yuji 14 / 134 / 296, Verity 79 / 215 / 216, the Cat 166 / 291 / 279).",
+   "A BUG FOUND AND FIXED: Freddy's stretched punches were numbers 60 and 61 of the game's tables, and two curse moves had those numbers too: since V1.185 they had Freddy's damage and push instead of their own. His new numbers are 90 and 91, the curses are as they were.",
+   "The game scan now plays the Fatality of every fighter on the enemy Freddy, his Nightmare and Fatality on five different fighters, and his three specials: 24,923 checks, no errors."
+  ]
+ },
+ {
   "v": "1.187",
   "t": "NO HIT COUNTER OR DAMAGE NUMBERS IN CUTSCENES",
   "n": [

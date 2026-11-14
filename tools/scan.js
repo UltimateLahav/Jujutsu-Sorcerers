@@ -223,7 +223,7 @@ async function scMoves() {
 // ---------------------------------------------------------------- CUTSCENES: the FATALITY and the DOMAIN of every fighter, played to the end
 async function scCuts() {
   SC.sec = 'CUTSCENES'; const FATAL = { gojo: 1, yuji: 1, verity: 1, cat: 1, freddy: 1, cu3: 1, cu4: 0 };
-  scCov('CUTSCENES', 0, SC_WHO.length * 2 + 3); SC.plan = (SC_WHO.length * 2 + 3) * 220; SC.done = 0;
+  scCov('CUTSCENES', 0, SC_WHO.length * 2 + 3 + 13); SC.plan = (SC_WHO.length * 2 + 3 + 13) * 220; SC.done = 0;
   for (let i = 0; i < SC_WHO.length; i++) {
     const w = SC_WHO[i];
     for (const [key, nm, low, max] of [['KeyH', 'FATALITY', 2, 700], ['KeyV', 'DOMAIN', 1, 520]]) {
@@ -252,6 +252,34 @@ async function scCuts() {
     await scFrames(2, null, 600); try { trainPut(); } catch (e) { scErr(e, label); }
     scKey('KeyH', true); await scFrames(2); scKey('KeyH', false);
     if (await scUntil(() => !!ff, 40, 250)) { if (await scUntil(() => !ff, 700, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 35 SECONDS', ''); } else scNote('fail', label + ' DID NOT START', 'THE ENEMY WAS AT ' + (dummy ? Math.round(dummy.hp / (dummy.max || 1) * 100) : '?') + '% HEALTH');
+    show('title');
+  }
+  // v1.188 FREDDY AS AN ENEMY: the FATALITY of every fighter on him, his nightmare and his fatality on you, and his three specials (in the street)
+  for (const w of ['gojo', 'yuji', 'verity', 'cat', 'freddy']) {
+    const label = SC_NAME[w] + ' FATALITY ON THE ENEMY FREDDY'; SC.say = label; SET.gore = SC_WHO.indexOf(w) % 3;
+    try { Object.assign(TR, { beh: 2, ehp: 2, php: 0, pce: 0, put: 2 }); startPractice(w, 'freddy'); } catch (e) { scErr(e, label); continue; }
+    if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
+    await scFrames(2, null, 600); try { trainPut(); } catch (e) { scErr(e, label); }
+    scKey('KeyH', true); await scFrames(2); scKey('KeyH', false);
+    if (await scUntil(() => scBusy(), 40, 250)) { if (await scUntil(() => !scBusy(), 800, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 40 SECONDS', ''); } else scNote('fail', label + ' DID NOT START', 'THE ENEMY WAS AT ' + (dummy ? Math.round(dummy.hp / (dummy.max || 1) * 100) : '?') + '% HEALTH');
+    show('title');
+  }
+  for (const [w, what] of [['gojo', 'NIGHTMARE'], ['verity', 'NIGHTMARE'], ['cat', 'FATALITY'], ['yuji', 'FATALITY'], ['freddy', 'FATALITY']]) {      // (his ULTIMATE and his FATALITY on you, on different fighters and in different GRAPHIC DAMAGE settings)
+    const label = 'THE ENEMY FREDDY: HIS ' + what + ' ON ' + SC_NAME[w]; SC.say = label; SET.gore = SC_WHO.indexOf(w) % 3;
+    try { Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0, put: 2, grade: 4 }); startPractice(w, 'freddy'); } catch (e) { scErr(e, label); continue; }
+    if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
+    await scFrames(2, null, 600); try { trainPut(); } catch (e) { scErr(e, label); }
+    try { if (what === 'NIGHTMARE') { dummy.x = wx + 90; fdStartRev(pnow()); } else { vs.hp = vs.sh = 40; dummy.x = wx + 30; } } catch (e) { scErr(e, label); }
+    const sw = what === 'NIGHTMARE' ? () => !!fd : () => !!ff;
+    if (await scUntil(sw, 80, 250)) { if (await scUntil(() => !sw(), 800, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 40 SECONDS', ''); } else scNote('fail', label + ' DID NOT START', 'YOUR HEALTH ' + (vs ? Math.round(vs.hp) : '?') + ', THE ENEMY ' + (dummy ? Math.round(Math.abs(dummy.x - wx)) : '?') + ' PX AWAY');
+    show('title');
+  }
+  for (const sp of ['water', 'pierce', 'slam']) {
+    const label = 'THE ENEMY FREDDY: HIS ' + sp.toUpperCase() + ' MOVE'; SC.say = label; SET.gore = 0;
+    try { Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0, put: 2, grade: 4 }); startPractice('gojo', 'freddy'); } catch (e) { scErr(e, label); continue; }
+    if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
+    await scFrames(2, null, 600); try { trainPut(); dummy.x = wx + (sp === 'pierce' ? 40 : 110); freStart(sp, pnow()); } catch (e) { scErr(e, label); }
+    if (await scUntil(() => !dummy || !dummy.fa, 100, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 25 SECONDS', '');
     show('title');
   }
   {      // v1.181 the FATALITY inside a DOMAIN: Gojo opens the void (10 seconds), the enemy is at 10 percent and close, FATAL must start the cutscene
@@ -314,7 +342,8 @@ function scSigns() {      // v1.182 the floor signs: a few floors (the lobby, th
   if (bad.length) scNote('fail', 'FLOOR SIGNS: ' + bad[0], bad.length + ' PROBLEMS');
 }
 function scPanel() {      // v1.184 the elevator panel in the cab: no text of a button may stick out of its button (the floor numbers were 16 px in circles of 24 - 37 px, cut at the edge; checked here at the real size of the screen)
-  const p = twpEl, bad = []; if (!p || !p.classList.contains('on')) { scNote('fail', 'THE ELEVATOR PANEL IS NOT ON THE SCREEN IN THE CAB', ''); return; }
+  if (typeof cutsceneOn === 'function' && cutsceneOn()) return;      // (the panel is hidden on purpose while a cutscene is on, e.g. a nightmare or an ultimate the random player started in the cab: v1.188)
+  const p = twpEl, bad = []; if (!p || !p.classList.contains('on')) { scNote('fail', 'THE ELEVATOR PANEL IS NOT ON THE SCREEN IN THE CAB', 'FIGHTER ' + (vs ? vs.me : '?') + ', STATE ' + state + ', CUTSCENE ' + (typeof cutsceneOn === 'function' && cutsceneOn()) + ', PAUSED ' + !!paused + ', CAB ' + !!(vs && vs.tw && vs.tw.cab) + ', CLASS ' + (p ? p.className : 'NONE')); return; }
   const rg = document.createRange(), tr = el => { rg.selectNodeContents(el); return rg.getBoundingClientRect(); }, gr = p.querySelector('#twpg').getBoundingClientRect();
   for (const b of p.querySelectorAll('.twf')) { const r = b.getBoundingClientRect(); if (!r.width || r.bottom < gr.top || r.top > gr.bottom) continue; const cx = r.left + r.width / 2, cy = r.top + r.height / 2, rad = Math.min(r.width, r.height) / 2 - (parseFloat(getComputedStyle(b).borderTopWidth) || 0);
     for (const el of b.querySelectorAll('b,i')) { if (!el.textContent) continue; const t = tr(el); for (const [x, y] of [[t.left, t.top], [t.right, t.top], [t.left, t.bottom], [t.right, t.bottom]]) if (Math.hypot(x - cx, y - cy) - rad > 0.3) { bad.push('FLOOR ' + b.dataset.f + ' (' + el.textContent + ')'); break; } } }

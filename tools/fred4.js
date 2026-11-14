@@ -56,14 +56,14 @@ function freFoe(now, dt, gap, ag, toward, G) {
   if (move) { d.x += move * FOE_WALK * G.spd * dt; d.ai = 'walk'; } else d.ai = 'think';
 }
 // 4. HIS SPECIALS. Each one is a small timeline in dummy.fa = { type, t0, ... } (the swing code is not used while one runs); a blow of yours ends it (updateFighterVs calls freActEnd). What they do to you goes through gojoHit with the numbers of part 1, so your guard, your crouch, your jump and your dash decide what reaches you. What he throws lives in the enemy's own lists (fb: water, ff: stones and furniture, fc: cracks in the road).
-const FRE_SP = { water: { cd: 6500, from: 1 }, pierce: { cd: 9000, from: 2 }, slam: { cd: 13000, from: 2 } };      // cooldown, first grade (index) that uses it
+const FRE_SP = { water: { cd: 6500, from: 0 }, pierce: { cd: 9000, from: 1 }, slam: { cd: 13000, from: 1 } };      // cooldown, first grade (index) that uses it
 function freSpecialTry(now, gap, ag, G) {      // thinking: now and then, instead of a swing, one of the specials (never while you are down or he is not facing you)
   const d = dummy; if (now < (d.spNext || 0) || gap < -4 || vs.ph !== 'fight' || now - d.born < 1200) return false; d.spNext = now + 350 + Math.random() * 450;
   const r = Math.random(), gi = vs.gi;
   if (gi >= 3 && ag <= FD.reach && now >= (d.dreamAt === undefined ? d.born + 8000 : d.dreamAt) && !fd && !dom && !ult && stance === 'stand' && !gAir && hurtAt < 0 && jumpAt < 0 && !gojoGone && gojoLift <= 12 && dgAt < 0 && !(twOn() && vs.tw.away) && r < 0.2 + (gi - 3) * 0.06) { fdStartRev(now); return true; }      // (his ULTIMATE, once in 30 s: you fall asleep and he comes for you in the dream; from Semi-Grade 1 up, when you stand within 150 px)
-  if (gi >= FRE_SP.pierce.from && ag <= 54 && now >= (d.pierceAt || 0) && r < 0.12 + gi * 0.03) return freStart('pierce', now);      // (close: the claw drawn back for a moment, then through you: nothing blocks it)
-  if (gi >= FRE_SP.water.from && ag >= 70 && ag <= 210 && now >= (d.waterAt || 0) && r < 0.22 + gi * 0.03) return freStart('water', now);      // (far: he touches the floor, the water boils, and he throws it)
-  if (gi >= FRE_SP.slam.from && ag >= 24 && ag <= 150 && now >= (d.slamAt || 0) && (!twOn() || fgTower() || !vs.tw.cab) && r < 0.1 + gi * 0.03) return freStart('slam', now);      // (he crouches, springs up and drives his claw into the floor)
+  if (gi >= FRE_SP.pierce.from && ag <= 54 && now >= (d.pierceAt || 0) && r < 0.16 + gi * 0.03) return freStart('pierce', now);      // (close: the claw drawn back for a moment, then through you: nothing blocks it)
+  if (gi >= FRE_SP.water.from && ag >= 70 && ag <= 210 && now >= (d.waterAt || 0) && r < 0.3 + gi * 0.03) return freStart('water', now);      // (far: he touches the floor, the water boils, and he throws it)
+  if (gi >= FRE_SP.slam.from && ag >= 24 && ag <= 150 && now >= (d.slamAt || 0) && (!twOn() || fgTower() || !vs.tw.cab) && r < 0.12 + gi * 0.03) return freStart('slam', now);      // (he crouches, springs up and drives his claw into the floor)
   return false;
 }
 function freStart(type, now) {
@@ -182,7 +182,7 @@ function freDreamRev(now, dt) {      // every frame of the nightmare he gives yo
   const d = dummy, t = (now - fd.at) / 1000, cx = Math.round(VW / 2), G = GRADES[vs.gi], v = fd.v, stop = () => { fd = null; return false; };
   if (!d || d.ko >= 0 || !vs || vs.ph !== 'fight') return stop();
   d.stunUntil = Math.max(d.stunUntil, now + 400); d.ai = 'rest'; d.aiAt = now; d.restFor = 800; d.vx = 0; d.chain = 0; d.hitDone = true;
-  const dream = t >= FD.B && t < FD.dream, FX = () => dream ? cx + 40 : cx + Math.max(24, Math.round(d.x - wx)), VX = wx + 40;      // (FX: where he stands on the screen, you are in the middle; VX: the world place of him, for the blood)
+  const dream = t >= FD.B && t < FD.dream, FX = () => dream ? cx + 40 : cx + Math.max(24, Math.round(d.x - wx));      // (FX: where he stands on the screen, you are in the middle)
   if (t >= FD.sleep && !fd.slept) { fd.slept = true; v.rx = 4; v.rxAt = now; }
   if (t >= FD.A && !fd.sank) { fd.sank = true; snd('nightmare'); }
   if (t >= FD.B && !fd.dreamed) { fd.dreamed = true; v.rx = -1; shakeUntil = now + 120; shakeAmp = 1; }
