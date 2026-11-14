@@ -337,7 +337,7 @@ function twBase(now) {      // right after the training step (which gives an inf
 }
 function twOverlay(now) {      // over the picture: what the elevator door tells you, the floor you are on (and where the enemy is when he is not here), and the big number when you arrive
   if (!twOn() || state !== 'play') { twPanelSync(now); return; } const T = vs.tw;
-  if (ryUlNoHud()) { twPanelSync(now); return; }
+  if (ryUlNoHud() || cutsceneOn()) { twPanelSync(now); return; }
   if (T.prompt && now - T.prompt.at < 80) { const mx = Math.round(VW / 2); if (T.prompt.up) pxt(T.prompt.up, mx, gy + 18, '#9fffd0', 8, 'center'); if (T.prompt.dn) pxt(T.prompt.dn, mx, gy + 27, '#9fd8ff', 8, 'center'); }
   const c = T.cab, fl = c ? Math.round(c.curF) : T.fMe, hx = Math.round(VW / 2) + (c ? 20 : 0), ha = c ? 'left' : 'center'; pxt('FLOOR ' + fl, hx, 44, '#cfe8ff', 8, ha); if (T.away) pxt(c && c.out ? 'FOE AT DOORS' : T.lift.inFoe ? 'FOE ' + T.fFoe + ' IN CAB' : 'FOE ' + T.fFoe + (T.fFoe > fl ? ' UP' : ' DOWN'), hx, c ? 62 : 53, '#ffb27a', 8, ha);      // (in the cab the lines start right of the middle of the screen, clear of the panel and of your head, and the enemy's line sits lower, clear of his grade label)
   twPanelSync(now);
@@ -412,7 +412,7 @@ function twCabLeave(now, quiet) {      // you step out at the floor the cab is a
 }
 function twCabKeys(now) {      // in the cab: stand on the doors (the middle of the back wall) for a moment and press JUMP: you step out
   const T = vs.tw, L = T.lift, on = L.ph === 'park' && Math.abs(wx - TW_CABW / 2) < 18 && gojoLift < 5 && !(gAir && gAirH > 5);
-  if (on) { if (T.cabAt < 0) T.cabAt = now; T.prompt = { at: now, up: 'JUMP = GET OUT', dn: '' }; } else T.cabAt = -1;
+  if (on) { if (T.cabAt < 0) T.cabAt = now; } else T.cabAt = -1;      // (v1.181 the 'JUMP = GET OUT' line is gone, JUMP on the doors still gets you out)
   if (on && now - T.cabAt >= 220 && jumpReq) { jumpReq = false; twCabLeave(now); }
 }
 function twCabPick(f, now) {      // a floor button: 0.6 s later the doors shut and the cab goes (with you, or without you if you stepped out in time, with the enemy if he is in it); while it hangs after an emergency stop it goes at once
@@ -484,9 +484,9 @@ function twLiftTick(now, dt) {      // every frame, wherever you are: the doors,
     if (u >= 1) twLiftArrive(now);
   }
 }
-function twLiftPrompt(F, d) {      // what an elevator door tells you when you stand at it (twDoorEmit)
+function twLiftPrompt(F, d) {      // what an elevator door tells you when you stand at it (twDoorEmit): only when it cannot be used (v1.181 no more 'JUMP = GET IN / CROUCH = GET IN / ... CALL IT': the keys still work, the door just does not write them on the screen)
   const L = vs.tw.lift; if (d.st === 1) return { up: 'OUT OF ORDER', dn: '' }; if (L.inFoe || L.job || L.pend) return { up: 'IN USE', dn: '' };
-  return L.f === F.f && L.ph === 'park' ? { up: 'JUMP = GET IN', dn: 'CROUCH = GET IN' } : { up: 'JUMP = CALL IT', dn: 'CROUCH = CALL IT' };
+  return { up: '', dn: '' };
 }
 
 // ---- the panel (DOM, over the picture; made the first time you step into the cab)
@@ -514,7 +514,7 @@ function twPanelBuild() {
   document.body.appendChild(p); return p;
 }
 function twPanelSync(now) {      // shows / hides the panel and keeps its buttons true (the floor you are on, the one you ride to or have pressed, floors you have seen, the enemy's floor, damage, dead buttons)
-  const T = typeof vs !== 'undefined' && vs && vs.tw, c = T && T.cab, show = !!c && twOn() && state === 'play' && !paused && !ryUlNoHud();
+  const T = typeof vs !== 'undefined' && vs && vs.tw, c = T && T.cab, show = !!c && twOn() && state === 'play' && !paused && !ryUlNoHud() && !cutsceneOn();
   if (!show) { if (twpEl && twpShown) { twpEl.classList.remove('on'); twpShown = false; } return; }
   const p = twPanelBuild(); if (!twpShown) { twpShown = true; for (let f = 1; f <= TW_N; f++) twFloorData(f); p.classList.add('on'); p.classList.toggle('r', !!$('pad') && $('pad').classList.contains('lh')); twpSig = ''; const g = p.querySelector('#twpg'), cur = Math.round(c.curF); g.scrollTop = Math.max(0, ((TW_N - cur) / 5 - 2) * (g.scrollHeight / 10)); }
   if (now - twpAt < 120) return; twpAt = now; const cur = Math.round(c.curF), moving = c.ph === 'ride', pf = c.pend ? c.pend.f : 0, foeUp = T.away && !c.out && !c.inFoe && T.fFoe !== cur;

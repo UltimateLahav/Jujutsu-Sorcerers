@@ -69,7 +69,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 .col.vs #dom{grid-area:1/2}.col.vs #ce{grid-area:1/3}.col.vs #blk{grid-area:2/2}.col.vs #lap{grid-area:2/3}.col.vs #dash{grid-area:3/2}.col.vs #atk{grid-area:3/3}
 #fat.rdy{opacity:1;background:#3a0d12;border-color:#ff8a7a;color:#fff;box-shadow:0 0 1.8vh #ff4a3a,0 0 .5vh #ff4a3a inset,4px 4px 0 #000;animation:fatglow .5s steps(2) infinite}
 @keyframes fatglow{50%{box-shadow:0 0 3.2vh #ff2a2a,0 0 .9vh #ff2a2a inset,4px 4px 0 #000}}
-#pad.cine,#hud.cine{visibility:hidden}
+#pad.cine,#hud.cine{visibility:hidden}body.cut #hud,body.cut #pad,body.cut #sns,body.cut #trHud,body.cut #twp{visibility:hidden}      /* (v1.181 a cutscene of a fight: only what belongs to it stays, see cutsceneOn) */
 body.ry #fat,body.c4 #dom,body.c4 #ce,body.c4 #fat,body.c4 #lap,body.c4 #sns{visibility:hidden}      /* (v1.143 Ryu has no DOMAIN or FATAL: those buttons are hidden while he fights; v1.163 he has BLUE, v1.170 the MODE button is his GRANITE BLAST mode) */      /* the controls hide while a cutscene plays (the FATALITY, the red ending) */
 #qte{position:fixed;inset:0;z-index:4;display:none;pointer-events:none}#qte.show{display:block}      /* the quick-time event of the red ending: the red button, and the ring that closes on it */
 #qBtn,#qRing{position:absolute;border-radius:50%}
@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.180</small>
+    <small id="ver">V1.181</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -2259,6 +2259,10 @@ const VOID_IMG = '__VOIDIMG__', VF_N = 12, VF_W = 160, VF_H = 64, VF_FPS = 6;   
 const voidImg = new Image(); voidImg.src = VOID_IMG; let domBox = null;
 const DOM_ORDER = ['blind', 'pose', 'face', 'wide', 'burst', 'void', 'collapse', 'reblind'], DOM_MS = { blind: 2200, pose: 900, face: DF_N * 1000 / DF_FPS, wide: 1500, burst: 1900, void: 10000, collapse: 1400, reblind: 1000 };      // (blind: the blindfold comes down, reblind: it goes back on; both are close-ups of his face)
 let dom = null, domHold = false, domReq = false, domReadyAt = 0, voidCv = null, voidG = null, fd = null;      // (fd = Freddy's nightmare in progress, see freddyDream)
+// v1.181 A CUTSCENE OF A FIGHT: every bar, name, button and number that is not part of it stays away. The moments: a FATALITY (every fighter's, yours or the enemy's), an ULTIMATE (the Cat's choke, Yuji's four Black Flashes, Ryu's JUST THIS ONCE, Freddy's DREAM), Verity's JUMPSCARE, Sukuna's FUGA and his DOMAIN SIGN, the OPENING and the closing of a DOMAIN (not the fight inside it), the blindfold close-ups. cutsceneOn() is asked by drawVs (the bars and names), stateDraw, twOverlay and the elevator panel (canvas), and once a frame by cutUI, which puts the class `cut` on the page: the CSS then hides the top-left buttons, the touch controls, the SENSE button, the training numbers and the elevator panel (the tap prompts of a cutscene are other elements and stay).
+function cutsceneOn() { return state === 'play' && !!vs && !!(fat || yf || vf || cf || ke || js || se || de || ult || yu || fd || bfo || (dom && domLock()) || (typeof suFatOn === 'function' && suFatOn()) || (typeof suFgOn === 'function' && suFgOn()) || (typeof suSignOn === 'function' && suSignOn()) || ryUlNoHud()); }
+let cutOn = false;
+function cutUI() { const c = cutsceneOn(); if (c !== cutOn) { cutOn = c; document.body.classList.toggle('cut', c); } }
 function domFrozen() { return !!dom; }      // (the people stand still for the whole domain, the collapse too)
 function domLock() { return !!fd || !!dom && (dom.kind === 'home' ? dom.ph === 'pose' || dom.ph === 'face' || dom.ph === 'burst' : dom.ph !== 'void' && dom.ph !== 'collapse'); }      // (v1.50 dom.kind 'home' = Yuji's HOMETOWN, see hdom.js: its town lasts as long as the void and is a domain in every other way too)
 function voidOn() { return !!dom && (dom.ph === 'void' || (dom.kind === 'home' && dom.ph === 'town')); }
@@ -2494,16 +2498,11 @@ function comboEscape(now) {      // every frame, before the controls are gated
     }
   }
 }
-function stateDraw(now) {      // the tracker, over the picture: green FREE or red (it blinks), a yellow DASH! when a dash can get you out, the seconds of the cooldown while the dash is locked; and the same seconds on the DASH button
+function stateDraw(now) {      // v1.181 the tracker box (a green FREE or a red HIT / DOWN / STUN / HELD, with a DASH! or the seconds of the cooldown next to it) is gone: the cursed energy bar shows it now (drawVs0: its normal colour when you are free, the inverted one when you are not, and a yellow pulse round it while a DASH can break the combo). What is left here: the seconds of the cooldown on the DASH button, and the PRESSURE and SPEED lines under the enemy's name
   const b = $('dash'), cd = now < dgLock ? Math.ceil((dgLock - now) / (1000 * paceBase())) : 0;
   if (b && (+b.dataset.cd || 0) !== cd) { b.dataset.cd = cd || ''; b.classList.toggle('cd', cd > 0); }
-  if (state !== 'play' || c4x || yf || (typeof suFgOn === 'function' && suFgOn()) || ryUlNoHud() || (vs && vs.ph !== 'fight')) return;
-  const why = redWhy(now), red = !!why, x = vs ? Math.max(60, Math.min(96, (VW - 52) >> 1)) + 10 : 6, h = vs && vs.rush ? 9 : 10, y = vs ? (vs.rush ? 30 : 21) : 20, pulse = red && ((now / 140) | 0) % 2 === 0;
-  ctx.save(); ctx.globalAlpha = 1; ctx.fillStyle = '#000'; ctx.fillRect(x - 1, y - 1, 42, h + 2); ctx.fillStyle = red ? (pulse ? '#ff3a3a' : '#b01c1c') : '#2fb868'; ctx.fillRect(x, y, 40, h);
-  pxt(red ? (why === 'hit' ? 'HIT' : why === 'down' ? 'DOWN' : why === 'held' ? 'HELD' : 'STUN') : 'FREE', x + 20, y + h - 1, '#ffffff', 8, 'center');
-  if (red && cd === 0 && escOK(now) && !lacks('dash')) pxt('DASH!', x + 66, y + h - 1, pulse ? '#ffd34d' : '#fff3b0', 8, 'center'); else if (cd > 0) pxt('DASH ' + cd, x + 64, y + h - 1, '#9fd8ff', 8, 'center'); else if (red && escBase(now) && !lacks('dash')) pxt('ESC ' + (escWait(now) / (1000 * paceBase())).toFixed(1), x + 66, y + h - 1, '#8a8aa0', 8, 'center');
-  if (vs) { if (aggr(now) < 0.92) pxt('PRESSURE', VW - 6, 55, ((now / 200) | 0) % 2 ? '#ffb05a' : '#ff6a3a', 8, 'right'); if (vs.rush) pxt('SPEED $' + speedBonus(), VW - 6, 64, '#7ae8ff', 8, 'right'); }      // (right under the enemy's name: the enemy is getting angry; the extra money a quick clear of this wave pays now)
-  ctx.restore();
+  if (state !== 'play' || c4x || yf || (typeof suFgOn === 'function' && suFgOn()) || ryUlNoHud() || cutsceneOn() || (vs && vs.ph !== 'fight')) return;
+  if (vs) { ctx.save(); ctx.globalAlpha = 1; if (aggr(now) < 0.92) pxt('PRESSURE', VW - 6, 55, ((now / 200) | 0) % 2 ? '#ffb05a' : '#ff6a3a', 8, 'right'); if (vs.rush) pxt('SPEED $' + speedBonus(), VW - 6, 64, '#7ae8ff', 8, 'right'); ctx.restore(); }      // (right under the enemy's name: the enemy is getting angry; the extra money a quick clear of this wave pays now)
 }
 function vsTick(now, dt) {
   if (!vs) return; const a = now - vs.t0;
@@ -2627,7 +2626,14 @@ function ceTick(now, dt) {
 }
 window.__ce = () => ({ ce, last: ceLast, flash: ceFlash, now: pnow() }); window.__ceSet = o => { if (o.ce !== undefined) ce = o.ce; if (o.last !== undefined) ceLast = o.last; }; window.__ceCost = () => CE_COST;      // test hooks
 const CEC = { gojo: ['#0b2a3a', '#2fe3ff', '#b8f8ff', '#7df0ff'], verity: ['#2a2208', '#ffd34d', '#fff3b0', '#ffe37d'], cat: ['#2a0b1a', '#ff5a8a', '#ffc0d4', '#ff8fb0'], freddy: ['#2a0a0a', '#e0383a', '#ffb4a8', '#ff8a7a'] };      // the cursed energy bar's colours per fighter: [empty part, bar, shine, text] (cyan for Gojo and Yuji, yellow for Verity, pink for the Cat, blood red for Freddy)
-function drawVs(now, ux = 0, uy = 0) {      // (the bars and names keep clear of a camera notch: they are drawn inside the safe part of the screen)
+const CEI = new Map();      // v1.181 the energy bar's colours when you are NOT free (hit, down, stunned, held): the INVERTED colour of the bar (cyan becomes red-orange, yellow becomes blue, pink green, red cyan), its shine and its text lighter shades of that, the empty part a dark shade
+function ceInv(cc) {
+  let r = CEI.get(cc); if (r) return r;
+  const rgb = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }, hex = c => '#' + c.map(v => ('0' + Math.max(0, Math.min(255, Math.round(v))).toString(16)).slice(-2)).join(''), mix = (c, d, k) => c.map((v, i) => v + (d[i] - v) * k), bar = rgb(cc[1]).map(v => 255 - v);
+  r = [hex(mix(bar, [0, 0, 0], 0.82)), hex(bar), hex(mix(bar, [255, 255, 255], 0.55)), hex(mix(bar, [255, 255, 255], 0.4))]; CEI.set(cc, r); return r;
+}
+function drawVs(now, ux = 0, uy = 0, force) {      // (the bars and names keep clear of a camera notch: they are drawn inside the safe part of the screen; v1.181 not during a cutscene, unless force)
+  if (!force && cutsceneOn()) return;
   if (!safeC) { drawVs0(now, ux, uy, VW); return; }
   ctx.save(); ctx.translate(safeC, 0); drawVs0(now, ux, uy, VW - 2 * safeC); ctx.restore();
 }
@@ -2637,8 +2643,9 @@ function drawVs0(now, ux, uy, VW) {         // health bars, names, the grade, th
   ctx.save(); ctx.translate(ux, uy);
   bar(6, 20, pf, ps, false); bar(VW - 6 - W, 20, ef, es, true);
   if (vs.net) pxt(lanPing < 0 ? 'PING ...' : 'PING ' + lanPing, VW >> 1, VH - 4, lanLane === 'udp' && lanPing < 120 ? '#8a8a9a' : '#ff8a7a', 8, 'center');      // (the Wi-Fi fight: the ping, red when it is high or the fast road is down)
-  const cw = Math.round(W * Math.max(0, Math.min(100, ce)) / 100), bad = now - ceFlash < 500, cc = CEC[vs.me] || CEC.gojo, nx = 6 + (NAMES[vs.me].length + (vs.meInv ? 7 : 0)) * 8 + 8, foeName = vs.hunt ? (vs.cv ? vs.cv.name + (FO.filter(f => f.ko < 0).length > 1 ? ' +1' : '') : 'HUNT') : vs.cv ? vs.cv.name + (vs.rush && FO.filter(f => f.ko < 0).length > 1 ? ' +1' : '') : NAMES[vs.foe] + (vs.inv ? ' (INV.)' : '');      // the cursed energy bar right under the health bar (cyan for Gojo, yellow for Verity; it flashes red when a move is refused)
-  ctx.fillStyle = '#000'; ctx.fillRect(5, 28, W + 2, 6); ctx.fillStyle = cc[0]; ctx.fillRect(6, 29, W, 4); ctx.fillStyle = bad ? '#ff4a4a' : cc[1]; ctx.fillRect(6, 29, cw, 4); ctx.fillStyle = bad ? '#ffb0b0' : cc[2]; ctx.fillRect(6, 29, cw, 1);
+  const cw = Math.round(W * Math.max(0, Math.min(100, ce)) / 100), bad = now - ceFlash < 500, free = !redWhy(now), cc = free ? CEC[vs.me] || CEC.gojo : ceInv(CEC[vs.me] || CEC.gojo), brk = !free && now >= dgLock && escOK(now) && !lacks('dash'), nx = 6 + (NAMES[vs.me].length + (vs.meInv ? 7 : 0)) * 8 + 8, foeName = vs.hunt ? (vs.cv ? vs.cv.name + (FO.filter(f => f.ko < 0).length > 1 ? ' +1' : '') : 'HUNT') : vs.cv ? vs.cv.name + (vs.rush && FO.filter(f => f.ko < 0).length > 1 ? ' +1' : '') : NAMES[vs.foe] + (vs.inv ? ' (INV.)' : '');      // the cursed energy bar right under the health bar (cyan for Gojo, yellow for Verity; it flashes red when a move is refused)
+  ctx.fillStyle = brk && ((now / 140) | 0) % 2 === 0 ? '#ffd34d' : '#000'; ctx.fillRect(5, 28, W + 2, 6); ctx.fillStyle = cc[0]; ctx.fillRect(6, 29, W, 4);      // (the outline of the bar pulses yellow while a DASH can break the combo)
+  ctx.fillStyle = bad ? '#ff4a4a' : cc[1]; ctx.fillRect(6, 29, cw, 4); ctx.fillStyle = bad ? '#ffb0b0' : cc[2]; ctx.fillRect(6, 29, cw, 1);
   if (!vs.story && !vs.net) {      // (v1.32) FLOW: a thin purple bar under your energy (gold and flashing while FLOW is on); STAGGER: an orange bar under his health (white and gold while he is OPEN)
     const fw = Math.round(W * Math.max(0, Math.min(100, flow)) / 100); ctx.fillStyle = '#000'; ctx.fillRect(5, 34, W + 2, 4); ctx.fillStyle = '#241033'; ctx.fillRect(6, 35, W, 2); ctx.fillStyle = flowOn ? (((now / 90) | 0) % 2 ? '#fff3b0' : '#ffd34d') : '#c77dff'; ctx.fillRect(6, 35, fw, 2);
     const d0 = dummy; if (d0 && d0.ko < 0) { const open = now < (d0.openUntil || 0), sw = Math.round(W * (open ? 1 : Math.max(0, Math.min(1, (d0.stg || 0) / STG_MAX)))); ctx.fillStyle = '#000'; ctx.fillRect(VW - 7 - W, 28, W + 2, 6); ctx.fillStyle = '#2a2208'; ctx.fillRect(VW - 6 - W, 29, W, 4); ctx.fillStyle = open ? (((now / 90) | 0) % 2 ? '#ffffff' : '#ffd34d') : '#ffb84a'; ctx.fillRect(VW - 6 - sw, 29, sw, 4); }
@@ -2690,7 +2697,7 @@ let fat = null, fatReq = 0;                            // fat = the running cuts
 const orbAt = (set, n, sx, sy, s) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));      // an orb frame centred on (sx, sy)
 function fatState(now) {                               // Gojo's FATALITY (and Verity's). 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far away; 3 = not possible right now
   if (vs && vs.me === 'cu4') return 3;      // (v1.166 Ryu has no FATALITY; before, his button played Gojo's)
-  if (!vs || vs.story || vs.cv || fredMe() || lacks('fat') || vs.ph !== 'fight' || js || vf || fat || yf || yu || dom || ult || cf || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (Verity and the Cat have their own FATALITY: the same rules; so has Yuji since v1.49, the 30-second one; Freddy has none yet, v1.52: his button used to play Gojo's FATALITY with Gojo in it)      // (no FATALITY in the story fight: his ending is a Reversal Red)
+  if (!vs || vs.story || vs.cv || fredMe() || lacks('fat') || vs.ph !== 'fight' || js || vf || fat || yf || yu || (dom && domLock()) || ult || cf || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (v1.181 a DOMAIN no longer stops it: only its opening, while the controls are locked; fatGo ends the domain)      // (Verity and the Cat have their own FATALITY: the same rules; so has Yuji since v1.49, the 30-second one; Freddy has none yet, v1.52: his button used to play Gojo's FATALITY with Gojo in it)      // (no FATALITY in the story fight: his ending is a Reversal Red)
   if (!(dummy.hp <= dummy.max * FAT_LOW)) return 1;      // Gojo's FATALITY: only when the enemy is at 20% health or less
   if (Math.abs(dummy.x - wx) > FAT_RANGE) return 2;
   return hurtAt >= 0 || gojoGone ? 3 : 0;
@@ -2699,7 +2706,7 @@ function fatAiState(now) {                             // the enemy's own FATALI
   if (!vs || vs.story || vs.foe === 'yuji' || vs.ph !== 'fight' || js || vf || fat || yf || dom || ult || cf || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.cact || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
   return vs.hp <= PHP * FAT_LOW && Math.abs(dummy.x - wx) <= FAT_RANGE && !gojoGone && gojoLift <= 12 && dgAt < 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
 }
-function fatGo(now, dt, rev) { if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else if (rev ? vs.foe === 'cat' : vs.me === 'cat') { cfStart(now, rev); cfFrame(now, dt); } else if (!rev && vs.me === 'yuji') { yfStart(now); yfFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's and the Cat's FATALITY are their own cutscenes)
+function fatGo(now, dt, rev) { if (dom) domReset(); if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else if (rev ? vs.foe === 'cat' : vs.me === 'cat') { cfStart(now, rev); cfFrame(now, dt); } else if (!rev && vs.me === 'yuji') { yfStart(now); yfFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's and the Cat's FATALITY are their own cutscenes)
 function fatUI(now) {                                  // the button: only in a match, dark until it can be used, then it glows
   const col = $('fat').parentNode; col.classList.toggle('vs', !!vs); col.classList.toggle('vy', !!vs && vs.me === 'verity'); col.classList.toggle('yj', !!vs && vs.me === 'yuji'); col.classList.toggle('kt', !!vs && vs.me === 'cat'); col.classList.toggle('nt', !!vs && !!vs.net); col.classList.toggle('nb', !!vs && !!vs.net && vs.me !== 'gojo'); $('hud').classList.toggle('vs', !!vs); $('pauseBtn').style.display = vs && vs.net ? 'none' : ''; if (vs) $('fat').classList.toggle('rdy', fatState(now) === 0);
 }
@@ -2870,7 +2877,7 @@ function fatFrame(now, dt) {                           // one frame of the cutsc
     ctx.globalAlpha = fade; ctx.fillStyle = '#fff'; if (k < 1) fatDisc(bx, by, Math.round(k * Math.hypot(VW, VH))); else ctx.fillRect(0, 0, VW, VH); ctx.globalAlpha = 1;
     if (t >= P.TT) fatTitle(t - P.TT, t >= P.TE ? Math.max(0, 1 - (t - P.TE) / 0.6) : 1);
   }
-  if (t >= P.TE) { ctx.globalAlpha = Math.min(1, (t - P.TE) / 0.6); drawVs(now); ctx.globalAlpha = 1; }      // the match display comes back
+  if (t >= P.TE) { ctx.globalAlpha = Math.min(1, (t - P.TE) / 0.6); drawVs(now, 0, 0, true); ctx.globalAlpha = 1; }      // the match display comes back
   const bh = Math.round(VH * 0.11), bk = Math.min(1, t / 0.3), bo = Math.max(0, Math.min(1, (t - (P.TX - 0.45)) / 0.45)), b = bh * (bk * bk * (3 - 2 * bk)) * (1 - bo * bo * (3 - 2 * bo));
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, Math.round(b)); ctx.fillRect(0, VH - Math.round(b), VW, Math.round(b));
   if (t >= P.TX) fatReset();
@@ -6418,7 +6425,7 @@ function tick(t) {
   twTick(now, dt); if (freePlay()) trainStep(now, dt); twBase(now);      // (v1.173 the skyscraper: what happened last frame is read before the training step gives the enemy his health back, and the new baseline is taken right after it)
   { const ry = state === 'play' && !!vs && vs.me === RYU_WHO; if (ry !== ryUI) { ryUI = ry; document.body.classList.toggle('ry', ry); } if (!ry && ryUl) ryUlEnd(now, true); }      // (v1.143 Ryu has no BLUE, MODE, DOMAIN or FATAL: while he fights those buttons are hidden, see the CSS of body.ry)
   ragTick(now);
-  trainDraw(now);
+  cutUI(); trainDraw(now);
   if (stance === 'down' && stPrev === 'stand' && vs && state === 'play') ceSpend(CE_COST.crouch, now); stPrev = stance;      // (the crouch of every fighter, the Cat smashing himself flat: 3% of the energy)
   if (lanRole === 'in' && state === 'play') lanTick();      // (the Wi-Fi fight: his pictures are picked up every frame, not every 0.15 s)
   if (story && story.toOutro) { story.toOutro = false; startOutro(now); }

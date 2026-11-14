@@ -861,6 +861,7 @@ const SU_FG_SHOTS = [      // the camera, shot by shot: [from, to (ms of the cut
 ];
 let suFg = null, suFgDk = new Map();      // the cutscene that is running ({ t0, jump (ms skipped), hl, p (particles), fl (flashes), em, hit, hitAt, hx, cam, shot, ... } or null), the dark shapes of his pictures
 function suFgOn() { return !!suFg || !!suFat; }
+function suSignOn() { const g = CU_GAME[3]; return !!g && !!g.cs && !!g.cs.dom; }      // (v1.181 his DOMAIN SIGN (the hand sign, the face and the words, until the cast is over) is a cutscene: see cutsceneOn in the template)
 function suFgU(now) { return suFg ? Math.max(0, now - suFg.t0 + suFg.jump) : 0; }      // (ms into the cutscene)
 function suFgCastT(u) {      // the time of the cast of OPEN that is shown u ms into the cutscene (SU_FG.W: straight lines between its points)
   const W = SU_FG.W; if (u >= W[W.length - 1][0]) return W[W.length - 1][1];
@@ -1046,10 +1047,10 @@ function suFatU(now) { return suFat ? Math.max(0, now - suFat.t0 + suFat.jump) :
 function suFatDx() { return suFat ? suFat.dx || 0 : 0; }      // (where his picture is drawn: how far from where he stands (wx); the camera and the world stay where they were)
 function suFatOk(now) {      // can the finisher start: nothing else of his is going on, a living enemy in front of him at 20% health or less (fatState: the button's own rules, the skill included)
   const g = CU_GAME[3], d = dummy;
-  return !!g && !!vs && vs.me === SUK_WHO && !suFat && !suFg && !suDom && !g.cs && cuAtkAt < 0 && !cuDash && blkAt < 0 && cuJumpAt < 0 && stance === 'stand' && !!d && d.ko < 0 && !d.cap && fatState(now) === 0;
+  return !!g && !!vs && vs.me === SUK_WHO && !suFat && !suFg && !g.cs && cuAtkAt < 0 && !cuDash && blkAt < 0 && cuJumpAt < 0 && stance === 'stand' && !!d && d.ko < 0 && !d.cap && fatState(now) === 0;
 }
-function suFatBegin(now) {      // the finisher starts: the enemy is held for all of it, he slides to a place in front of him and kneels, the controls hide
-  const g = CU_GAME[3], d = dummy, S = SU_FAT; stance = 'stand'; stickCr = false; wxv = wvx = 0;
+function suFatBegin(now) {      // the finisher starts: the enemy is held for all of it, he slides to a place in front of him and kneels, the controls hide (v1.181 it also works inside his DOMAIN: the shrine goes away at once, its cuts stop, the button starts its 30 s)
+  const g = CU_GAME[3], d = dummy, S = SU_FAT; stance = 'stand'; stickCr = false; wxv = wvx = 0; if (suDom) { suDom = null; suDomSl.length = 0; domReadyAt = now + SU_DOM.cd; } suDomPt = null;
   suFat = { t0: now, jump: 0, u: 0, wx0: wx, dx: 0, e: -1, p: [], fl: [], did: {}, cam: null, skipped: false, tapAt: -1e9 };
   g.cs = { fat: true, t0: now }; cuAtkK = 3; cuAtkAt = now; cuLunged = 0; cuCmb = 0; cuCmbBy = now + 1e9; cuFired = []; cuRes = []; cuAtkQ = cuLpQ = 0;
   cuStun(60, now, true); d.dodgeUntil = 0; d.vx = 0; d.pull = { from: d.x, to: wx + S.gap, at: now, ms: S.setMs }; d.kneel = now + 1e9; d.ai = 'rest'; d.suCut = null;

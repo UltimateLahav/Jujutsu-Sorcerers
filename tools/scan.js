@@ -232,17 +232,29 @@ async function scCuts() {
       if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
       await scFrames(2, null, 600); try { trainPut(); } catch (e) { scErr(e, label); }
       scKey(key, true); await scFrames(2); scKey(key, false);
-      let started = false, calm = 0, ended = false, n = 0;
+      let started = false, calm = 0, ended = false, n = 0, uiLeft = 0;
       while (n < max) {
         if (!(await scFrames(1))) { show('title'); return; } n++;
-        if (n % 8 === 0) scCheck();
+        if (n % 8 === 0) { scCheck(); if (typeof cutsceneOn === 'function' && cutsceneOn() && (getComputedStyle($('pad')).visibility !== 'hidden' || getComputedStyle($('hud')).visibility !== 'hidden')) uiLeft++; }      // (v1.181 the buttons are gone while a cutscene is on)
         if (scBusy()) { started = true; calm = 0; } else if (started && ++calm > 20) { ended = true; break; }
         if (!started && n > 90) break;
       }
+      if (uiLeft > 1) scNote('warn', label + ': THE BUTTONS STAYED ON THE SCREEN DURING THE CUTSCENE', uiLeft + ' CHECKS');      // (one check can fall on the very first frame of the cutscene, before the page class is set)
       scCov('CUTSCENES', 1, 0); if (started) scPass(); else if ((key === 'KeyH' ? FATAL[w] : 1)) scNote('warn', label + ' DID NOT START', 'THE ENEMY WAS AT ' + (dummy ? Math.round(dummy.hp / (dummy.max || 1) * 100) : '?') + '% HEALTH, ' + (dummy ? Math.round(Math.abs(dummy.x - wx)) : '?') + ' PX AWAY');
       if (started && !ended) scNote('warn', label + ' DID NOT END IN ' + Math.round(max * SC_STEP / 1000) + ' SECONDS', '');
       show('title');
     }
+  }
+  {      // v1.181 the FATALITY inside a DOMAIN: Gojo opens the void (10 seconds), the enemy is at 10 percent and close, FATAL must start the cutscene
+    const label = 'GOJO FATALITY IN HIS DOMAIN'; SC.say = label;
+    try { Object.assign(TR, { beh: 2, ehp: 2, php: 0, pce: 0, put: 2 }); startPractice('gojo', 'yuji'); } catch (e) { scErr(e, label); return; }
+    if (await scUntil(() => !!vs && vs.ph === 'fight', 40, 250)) {
+      await scFrames(2, null, 600); try { trainPut(); } catch (e) { scErr(e, label); }
+      scKey('KeyV', true); await scFrames(2); scKey('KeyV', false);
+      if (await scUntil(() => !!dom && dom.ph === 'void', 900, 250)) { scKey('KeyH', true); await scFrames(2); scKey('KeyH', false); if (await scUntil(() => !!fat, 40, 250)) scPass(); else scNote('fail', label + ' DID NOT START', 'THE VOID WAS OPEN'); }
+      else if (!SC.cancel) scNote('warn', label + ': THE VOID NEVER OPENED', '');
+    }
+    show('title');
   }
 }
 

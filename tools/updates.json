@@ -1,5 +1,15 @@
 [
  {
+  "v": "1.181",
+  "t": "BATTLE UI CLEAN-UP: CUTSCENES, ENERGY BAR, ELEVATOR WORDS, FATALITY IN A DOMAIN",
+  "n": [
+   "CUTSCENES: while a cutscene of a fight plays, everything that is not part of it disappears: the health bars and names, the buttons at the top left, the touch buttons, the SENSE button, the training numbers and the elevator panel. This covers every FATALITY (yours or the enemy's), every ULTIMATE (the Cat's, Yuji's, Ryu's JUST THIS ONCE, Freddy's DREAM), the JUMPSCARE, FUGA, Sukuna's domain sign, the opening and the end of a DOMAIN (the fight inside the domain keeps its normal screen) and Gojo's blindfold close-ups. Before, Gojo's FATALITY kept the top-left buttons, and the DOMAIN openings, the Cat's ULTIMATE, Freddy's DREAM and Sukuna's domain sign kept everything on the screen. The tap prompts of a cutscene stay.",
+   "THE FREE BOX IS GONE, the cursed energy bar shows it instead: when you are free the bar has its normal colour; when you are not (hit, down, stunned or held) it turns to the inverted colour: Gojo's and Yuji's cyan turns red-orange, Verity's yellow blue, the Cat's pink green, Freddy's red cyan, Sukuna's crimson teal, Ryu's blue gold. The numbers next to the box ('DASH 3' and 'ESC 0.5') are gone with it, and the outline of the bar pulses yellow while a DASH can break the combo. The round timer and the seconds on the DASH button stay.",
+   "ELEVATOR: the door no longer writes 'JUMP = GET IN', 'CROUCH = GET IN' or 'JUMP = CALL IT' on the screen, and the cab no longer writes 'JUMP = GET OUT'. The stairs do not write 'JUMP = UP 1' and 'CROUCH = DOWN 1' any more either. The keys work exactly as before; 'OUT OF ORDER' and 'IN USE' are still shown.",
+   "FATALITY INSIDE A DOMAIN: while your domain is open FATALITY works (the enemy at 20% health or less and close): Gojo in the Infinite Void, Yuji in the Hometown, Sukuna in the Malevolent Shrine. The domain ends when the cutscene starts and its button starts the cooldown. During the opening of the domain, while your controls are locked, the press still has to wait."
+  ]
+ },
+ {
   "v": "1.180",
   "t": "NEW FIGHTER SCREEN: TRAINING, BATTLE, WIFI AND A MAP SCREEN",
   "n": [
