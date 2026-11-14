@@ -64,12 +64,13 @@ function ffState(now) {      // Freddy's FATALITY. 0 = ready; 1 = the enemy is a
   return hurtAt >= 0 || gojoGone || jumpAt >= 0 || (twOn() && vs.tw.slide) ? 3 : 0;
 }
 function ffReset() { ff = null; $('pad').classList.remove('cine'); $('hud').classList.remove('cine'); }
-function ffStart(now) {
+function ffStart(now, rev) {
   const d = dummy; d.vact = null; d.cact = null; d.cheld = null; d.held = null; vs.catHold = 0; cineClear(); closeSettings(); stickDown = false; d.ai = 'rest'; d.pull = null; d.vx = 0; fgReset(); fwPh = ''; fwBalls.length = 0; atkAt = -1; atkQ = false; dgAt = -1; blkAt = blkEnd = -1; stance = 'stand'; $('pad').classList.add('cine'); $('hud').classList.add('cine'); snd('fatalstart');
-  ff = { t: 0, ev: {}, parts: [], splats: [], freeze: 0, shake: 0, wx0: wx, vx0: d.x, vk: vs.foe, gm: gdSet(), V: null, pc: [null, null], bleed: 0, poolK: 0 };
+  ff = { t: 0, ev: {}, parts: [], splats: [], freeze: 0, shake: 0, rev: !!rev, wx0: wx, vx0: rev ? wx : d.x, vk: rev ? vs.me : vs.foe, gm: gdSet(), V: null, pc: [null, null], bleed: 0, poolK: 0 };
 }
 function ffEnd(now) {      // the enemy is gone (eaten) and Freddy wins the round
-  const s = ff, d = dummy; wx = s.wx0; const gm = s.gm, vx = s.vx0; ffReset(); blackUntil = now + 500; if (!vs || vs.ph !== 'fight') return;
+  const s = ff, d = dummy; wx = s.wx0; const gm = s.gm, vx = s.vx0, rev = s.rev; ffReset(); blackUntil = now + 500; if (!vs || vs.ph !== 'fight') return;
+  if (rev) { vs.hp = 0; vs.sh = 0; vs.hitAt = now; if (gm === 0 && !twOn()) { for (let i = 0; i < 4; i++) pools.push({ x: vx + 4 + i * 9, y: 1 + (i & 1), rx: 18 - i * 2, ry: 3 + (i & 1), born: now - 2000, g: 1 }); } endRound('enemy', 'fatal', now); return; }      // (v1.188 the enemy Freddy ate you: he wins the round, you are gone until the next one)
   d.hp = 0; d.shown = 0; d.ko = now - 3000; d.koAt = d.ko; d.gone = true; kos++;
   if (gm === 0 && !twOn()) { for (let i = 0; i < 4; i++) pools.push({ x: vx + 4 + i * 9, y: 1 + (i & 1), rx: 18 - i * 2, ry: 3 + (i & 1), born: now - 2000, g: 1 }); for (let i = 0; i < 40; i++) addDecal(vx - 8 + ((Math.random() * 70) | 0), 2 + ((Math.random() * 6) | 0), 1 + ((Math.random() * 2) | 0), BLD[(Math.random() * 4) | 0]); }      // (the road keeps its blood)
   endRound('player', 'fatal', now);
@@ -79,7 +80,7 @@ function ffLegless(img, mask) { if (!mask) return img; const v = goreVar(img, ma
 function ffFrame(now, dt) {
   const s = ff, T = FFT, off = s.gm === 2, full = s.gm === 0; keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; fatReq = 0;
   const live = now >= s.freeze; if (live) s.t += dt * (off && s.t >= T.down && s.t < T.back ? 1.6 : 1); const t = s.t, sdt = live ? dt : 0, at = (k, tt, f) => { if (!s.ev[k] && t >= tt) { s.ev[k] = 1; f(); } };
-  const mx = Math.round(VW / 2), FX0 = mx - 40, GX = mx + 24, FX1 = GX - 26, V = s.V || (s.V = cfVictim({ vk: s.vk, inv: s.vk === 'freddy' && !!vs.inv }, 0)), bb = ffBox(V.img), fr = bb.y1 + 1, hx = V.hx, back = hx - bb.x0, vy0 = gy + 2 - 62 - V.top + fr;      // (the victim's feet: where the bottom of his picture is when he stands; back: how far his back reaches behind the middle of the picture)
+  const mx = Math.round(VW / 2), FX0 = mx - 40, GX = mx + 24, FX1 = GX - 26, V = s.V || (s.V = cfVictim({ vk: s.vk, inv: !s.rev && s.vk === 'freddy' && !!vs.inv }, 0)), bb = ffBox(V.img), fr = bb.y1 + 1, hx = V.hx, back = hx - bb.x0, vy0 = gy + 2 - 62 - V.top + fr;      // (the victim's feet: where the bottom of his picture is when he stands; back: how far his back reaches behind the middle of the picture)
   const LX = FX1 + 38, LY = gy + 3 - back, D2R = Math.PI / 180;      // (where he lies: his feet, and the height of the middle of his feet so that his back is on the floor)
   const S3 = ease3;
   // ---- the victim's place: the point of his picture that Freddy holds (his feet), and the angle (0 = standing, 90 = lying on his back with his head to the right)

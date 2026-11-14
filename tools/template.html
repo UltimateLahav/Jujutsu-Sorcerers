@@ -2715,10 +2715,10 @@ function fatState(now) {                               // Gojo's FATALITY (and V
   return hurtAt >= 0 || gojoGone ? 3 : 0;
 }
 function fatAiState(now) {                             // the enemy's own FATALITY on Gojo: from SEMI-GRADE 1 up, the moment Gojo is at 20% health or less and the enemy is close (no warning; being in the air, dashing or out of reach saves him)
-  if (!vs || vs.story || vs.foe === 'yuji' || vs.ph !== 'fight' || js || vf || fat || yf || dom || ult || cf || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.cact || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
+  if (!vs || vs.story || vs.foe === 'yuji' || vs.ph !== 'fight' || js || vf || fat || yf || dom || ult || cf || fd || ff || (dummy && dummy.fa) || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.cact || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
   return vs.hp <= PHP * FAT_LOW && Math.abs(dummy.x - wx) <= FAT_RANGE && !gojoGone && gojoLift <= 12 && dgAt < 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
 }
-function fatGo(now, dt, rev) { if (dom) domReset(); if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else if (rev ? vs.foe === 'cat' : vs.me === 'cat') { cfStart(now, rev); cfFrame(now, dt); } else if (!rev && vs.me === 'yuji') { yfStart(now); yfFrame(now, dt); } else if (!rev && fredMe()) { ffStart(now); ffFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's and the Cat's FATALITY are their own cutscenes)
+function fatGo(now, dt, rev) { if (dom) domReset(); if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else if (rev ? vs.foe === 'cat' : vs.me === 'cat') { cfStart(now, rev); cfFrame(now, dt); } else if (!rev && vs.me === 'yuji') { yfStart(now); yfFrame(now, dt); } else if (rev ? vs.foe === 'freddy' : fredMe()) { ffStart(now, rev); ffFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's and the Cat's FATALITY are their own cutscenes)
 function fatUI(now) {                                  // the button: only in a match, dark until it can be used, then it glows
   const col = $('fat').parentNode; col.classList.toggle('vs', !!vs); col.classList.toggle('vy', !!vs && vs.me === 'verity'); col.classList.toggle('yj', !!vs && vs.me === 'yuji'); col.classList.toggle('kt', !!vs && vs.me === 'cat'); col.classList.toggle('nt', !!vs && !!vs.net); col.classList.toggle('nb', !!vs && !!vs.net && vs.me !== 'gojo'); $('hud').classList.toggle('vs', !!vs); $('pauseBtn').style.display = vs && vs.net ? 'none' : ''; if (vs) $('fat').classList.toggle('rdy', fatState(now) === 0);
 }
@@ -4449,6 +4449,7 @@ function drawScene(now, dt) {
     if (now > fatReq) { fatReq = 0; if (fs === 1 || fs === 2) say(fs === 1 ? 'ENEMY BELOW 20%' : 'GET CLOSER', wx, '#ff8a7a', 8, now); }
   }
   if (fatAiState(now)) { fatGo(now, dt, true); return; }      // the top grades do it to the player
+  if (fd && fd.rev) { if (freDreamRev(now, dt)) return; }      // (v1.188 the enemy Freddy's nightmare on you: tools/fred4.js)
   airStepMe(now);      // (you are launched by the enemy's UPPERCUT: your height and the frame of your reaction)
   gateSkills(now);      // (v1.00: a move you do not own is not there; v1.11: for Yuji, Verity and the Cat as well)
   if (vs && vs.me === 'verity') { verityScene(now, dt); return; }      // YOUR FIGHTER is Verity: his own controls and pictures (below)

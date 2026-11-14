@@ -60,6 +60,7 @@ const FRE_SP = { water: { cd: 6500, from: 1 }, pierce: { cd: 9000, from: 2 }, sl
 function freSpecialTry(now, gap, ag, G) {      // thinking: now and then, instead of a swing, one of the specials (never while you are down or he is not facing you)
   const d = dummy; if (now < (d.spNext || 0) || gap < -4 || vs.ph !== 'fight' || now - d.born < 1200) return false; d.spNext = now + 350 + Math.random() * 450;
   const r = Math.random(), gi = vs.gi;
+  if (gi >= 3 && ag <= FD.reach && now >= (d.dreamAt === undefined ? d.born + 8000 : d.dreamAt) && !fd && !dom && !ult && stance === 'stand' && !gAir && hurtAt < 0 && jumpAt < 0 && !gojoGone && gojoLift <= 12 && dgAt < 0 && !(twOn() && vs.tw.away) && r < 0.2 + (gi - 3) * 0.06) { fdStartRev(now); return true; }      // (his ULTIMATE, once in 30 s: you fall asleep and he comes for you in the dream; from Semi-Grade 1 up, when you stand within 150 px)
   if (gi >= FRE_SP.pierce.from && ag <= 54 && now >= (d.pierceAt || 0) && r < 0.12 + gi * 0.03) return freStart('pierce', now);      // (close: the claw drawn back for a moment, then through you: nothing blocks it)
   if (gi >= FRE_SP.water.from && ag >= 70 && ag <= 210 && now >= (d.waterAt || 0) && r < 0.22 + gi * 0.03) return freStart('water', now);      // (far: he touches the floor, the water boils, and he throws it)
   if (gi >= FRE_SP.slam.from && ag >= 24 && ag <= 150 && now >= (d.slamAt || 0) && (!twOn() || fgTower() || !vs.tw.cab) && r < 0.1 + gi * 0.03) return freStart('slam', now);      // (he crouches, springs up and drives his claw into the floor)
@@ -164,4 +165,67 @@ function freWorld(now, dt) {      // every frame while the enemy Freddy fights: 
     d.ff = d.ff.filter(p => !p.done);
   }
   if (vs.fscald) { const b = vs.fscald; if (vs.ph !== 'fight') vs.fscald = null; else { while (vs.fscald && b.next <= now && b.next <= b.until) { vsHurt(1, b.next); b.next += 450; } if (now >= b.until) vs.fscald = null; } }      // (the boiling water burns you: 1 damage every 0.45 s for 6 s)
+}
+function freBleed(now) { if (vs.bleed) { const b = vs.bleed; if (vs.ph !== 'fight') vs.bleed = null; else { while (vs.bleed && b.next <= now && b.next <= b.until) { vsHurt(1, b.next); b.next += 100; } if (now >= b.until) vs.bleed = null; } } }      // (the bleeding of his claw: 1 damage every 0.1 s; only Verity's story fight ticked it until now, storyBattleTick)
+// 5. HIS NIGHTMARE ON YOU: the same sequence as when you play him (freddyDream in template.html, the numbers FD), with you as the sleeper. The picture is the same too, only the other way round: he stands on the right and sings, you fall asleep in the middle, in the dream you stand there and he comes out of the dark, four slashes, the pierce, and you wake up bleeding. The damage is FD.dmg and FD.pierce times the damage of the grade.
+function fdStartRev(now) {
+  const d = dummy; fd = { at: now, rev: true, slept: false, sank: false, dreamed: false, hit: [false, false, false, false], pierced: false, woke: false, fx: [], glitch: -1e9, v: { rx: -1, rxAt: -1e9 } };
+  d.dreamAt = now + FD.cd; d.fa = null; d.ai = 'rest'; d.aiAt = now; d.restFor = 800; d.vx = 0; d.chain = 0; d.hitDone = true; d.held = null;
+  atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; cineClear(); snd('lullaby');
+}
+function freVicPic(now) {      // the picture of the sleeper (you): standing, reeling from a blow, or on the floor
+  const S = fatSets(true), v = fd.v, rx = v.rx, R = rx >= 0 ? S.vRx[rx] : null;
+  if (R) { const fps = R.length > 10 ? RXF15[rx] : RX_FPS[rx], fi = Math.max(0, Math.min(R.length - 1, Math.floor((now - v.rxAt) * fps / 1000))), info = S.vi ? S.vi(rx) : D['rx' + rx]; return { src: now - v.rxAt < 70 ? whiteOf(R[fi]) : R[fi], info, lift: info.lift ? info.lift[fi] : 0 }; }
+  const fi = Math.floor(now / (1000 / IDLE_FPS)) % S.vF.length; return { src: S.vF[fi], info: S.vi ? S.vi(-1) : D.idle, lift: 0 };
+}
+function freDreamRev(now, dt) {      // every frame of the nightmare he gives you; false = it is over (the normal scene goes on)
+  const d = dummy, t = (now - fd.at) / 1000, cx = Math.round(VW / 2), G = GRADES[vs.gi], v = fd.v, stop = () => { fd = null; return false; };
+  if (!d || d.ko >= 0 || !vs || vs.ph !== 'fight') return stop();
+  d.stunUntil = Math.max(d.stunUntil, now + 400); d.ai = 'rest'; d.aiAt = now; d.restFor = 800; d.vx = 0; d.chain = 0; d.hitDone = true;
+  const dream = t >= FD.B && t < FD.dream, FX = () => dream ? cx + 40 : cx + Math.max(24, Math.round(d.x - wx)), VX = wx + 40;      // (FX: where he stands on the screen, you are in the middle; VX: the world place of him, for the blood)
+  if (t >= FD.sleep && !fd.slept) { fd.slept = true; v.rx = 4; v.rxAt = now; }
+  if (t >= FD.A && !fd.sank) { fd.sank = true; snd('nightmare'); }
+  if (t >= FD.B && !fd.dreamed) { fd.dreamed = true; v.rx = -1; shakeUntil = now + 120; shakeAmp = 1; }
+  FD.hits.forEach((h, k) => { if (t >= h && !fd.hit[k]) { fd.hit[k] = true; vsHurt(Math.max(1, Math.round(FD.dmg[k] * G.dmg)), now); if (vs.ph !== 'fight') return; v.rx = (Math.random() * 10) | 0; v.rxAt = now; tqBlood(wx - 4, gy - 34, 16 + k * 4, 1); fd.fx.push({ at: now, k }); fd.glitch = now; shakeUntil = now + 110; shakeAmp = 2; snd('clawscrape'); } });
+  if (t >= FD.pierceAt && !fd.pierced && vs.ph === 'fight') { fd.pierced = true; vsHurt(Math.max(1, Math.round(FD.pierce * G.dmg)), now); v.rx = 4; v.rxAt = now; tqBlood(wx - 4, gy - 34, 40, 1); tqBlood(wx - 4, gy - 34, 16, -1); fd.fx.push({ at: now, k: 4 }); fd.glitch = now; shakeUntil = now + 220; shakeAmp = 4; hitStop(80); snd('clawscrape'); snd('hit', 3); }
+  if (vs.ph !== 'fight') return stop();      // (you died in the dream: the round is over)
+  if (t >= FD.wake && !fd.woke) { fd.woke = true; v.rx = 4; v.rxAt = now - 340; vs.bleed = { until: now + 2000, next: now + 100 }; snd('wakeup'); }
+  freBleed(now);
+  if (!dream && fd.slept && !(fd.woke && t >= FD.wake + FD.rise) && now - v.rxAt > 340) v.rxAt = now - 340;      // (asleep you lie flat: the picture of the fall is held on its last lying frame; it goes on when you wake)
+  if (t >= FD.end) { fd = null; return false; }
+  ctx.save(); shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100); ctx.translate(shkX, shkY); }
+  ctx.imageSmoothingEnabled = false;
+  const R = (c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), w, h); };
+  if (dream) fdBg(now);
+  else { drawBackdrop(now); ctx.fillStyle = 'rgba(220,210,255,0.35)'; for (const p of parts) { p.x -= p.v * dt; if (p.x < -p.l) p.x = VW; ctx.fillRect(p.x | 0, p.y | 0, p.l, 1); } drawSmoke(now, dt); drawBloodFloor(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0); }
+  // you: in the middle, facing right
+  { const P = freVicPic(now), I = P.info, hx = I.cx - I.x0, y = gy - 60 - (I.top || 0) - P.lift; ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(cx - 9, gy + 3, 18, 2); ctx.fillRect(cx - 6, gy + 2, 12, 1); ctx.fillRect(cx - 6, gy + 5, 12, 1); ctx.drawImage(P.src, cx - hx, y); }
+  // Freddy: coiled while he sings, out of the dark in the dream, his own slashes and the pierce, then standing; facing left
+  let pic = null, ox = 0, ap = 1;
+  if (!dream) { if (t < FD.dream) { pic = fredP(Math.min(4, t * 5 / 0.9)); ox = FRED_PIERCE.x; } else pic = fredF(Math.max(0, now - d.born) / (1000 / IDLE_FPS)); }
+  else {
+    ap = Math.max(0, Math.min(1, (t - FD.appear[0]) / (FD.appear[1] - FD.appear[0]))); pic = fredF(Math.max(0, now - d.born) / (1000 / IDLE_FPS));
+    FD.hits.forEach((h, k) => { const st = h - 7 / FD.swing; if (t >= st && t < st + 15 / FD.swing) pic = fredA(k % 2, Math.min(14, (t - st) * FD.swing)); });
+    if (t >= FD.charge[0] && t < FD.charge[1]) { pic = fredP(Math.min(4, (t - FD.charge[0]) / (FD.charge[1] - FD.charge[0]) * 5)); ox = FRED_PIERCE.x; if (((now / 90) | 0) % 2 === 0) spark(wx + 26, gy - 24, 2, ['#ff3a4a', '#7a0a14', '#ffb0a0'], false, -1); }
+    else if (t >= FD.charge[1] && t < FD.charge[1] + 10 / FRED_PIERCE.fps) { pic = fredP(5 + Math.min(9, (t - FD.charge[1]) * FRED_PIERCE.fps)); ox = FRED_PIERCE.x; }
+  }
+  if (vs.inv && pic !== EMPTY && pic.width) pic = invOf(pic);
+  if (ap > 0) { const fx = FX(), jit = ap < 1 && Math.random() < 0.4 ? (Math.random() < 0.5 ? -2 : 2) : 0; ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(fx - 9, gy + 3, 18, 2); ctx.fillRect(fx - 6, gy + 2, 12, 1); ctx.fillRect(fx - 6, gy + 5, 12, 1); ctx.save(); ctx.translate(fx, 0); ctx.scale(-1, 1); ctx.globalAlpha = ap; ctx.drawImage(pic, -31 + ox + jit, gy - 61); ctx.restore(); }
+  // the lullaby: notes drift from his claw to you
+  if (t < FD.B) { const fx = FX(); for (let i = 0; i < 6; i++) { const u = (t * 0.45 + i / 6) % 1, nx = fx - 12 - u * (fx - 12 - cx), ny = gy - 40 - Math.sin(u * 9) * 7 - u * 10; R('#cdb8ff', nx, ny, 3, 2); R('#cdb8ff', nx + 2, ny - 5, 1, 5); R('#cdb8ff', nx + 3, ny - 5, 2, 1); } }
+  for (const f of fd.fx) {      // the marks of the claws: four lines slash across you; the pierce is a bright streak straight through
+    const a = (now - f.at) / 260; if (a >= 1) continue; const fx = FX(), q = Math.min(1, a * 5), al = (1 - a).toFixed(2);
+    if (f.k === 4) { const x1 = fx - 14, len = Math.round((x1 - cx + 22) * q); R('rgba(255,70,90,' + al + ')', x1 - len, gy - 34, len, 1); R('rgba(255,255,255,' + al + ')', x1 - len, gy - 33, len, 2); R('rgba(255,70,90,' + al + ')', x1 - len, gy - 31, len, 1); }
+    else for (let l = 0; l < 4; l++) for (let i = 0, n = Math.round(30 * q); i < n; i++) { const u = i / 30; R(l < 2 ? 'rgba(255,255,255,' + al + ')' : 'rgba(255,90,110,' + al + ')', (f.k % 2 ? cx + 14 - u * 28 : cx - 14 + u * 28) + l * 3, gy - 52 + u * 30, 1, 1); } }
+  fd.fx = fd.fx.filter(f => now - f.at < 260);
+  drawDivFx(now); drawSparks(now, dt); if (!dream) drawPeds(now, dt, 1); drawGibs(now); drawPopups(now);
+  // the transitions: the blue dusk of the lullaby, the waves and rings of the fall, the dark that lifts, the white of the waking
+  if (t < FD.B) { R('rgba(30,50,140,' + Math.min(0.4, t * 0.4).toFixed(2) + ')', 0, 0, VW, VH); }
+  if (t >= FD.A && t < FD.B) { const p = (t - FD.A) / (FD.B - FD.A), amp = 5 * p; if (!(now < shakeUntil) && !SET.lite) for (let y = 0; y < VH; y++) ctx.drawImage(cv, 0, y, VW, 1, Math.round(Math.sin(y / 5 + now / 60) * amp), y, VW, 1); const hx = cx, hy = gy - 12; ctx.fillStyle = 'rgba(190,170,255,' + (0.8 * p).toFixed(2) + ')'; for (let i = 0; i < 5; i++) { const r = ((p * 60 + i * 14) % 70) + 2; for (let a = 0; a < 28; a++) { const th = a / 28 * 6.2832 + p * 4; ctx.fillRect(Math.round(hx + Math.cos(th) * r), Math.round(hy + Math.sin(th) * r * 0.7), 1, 1); } } R('rgba(10,10,50,' + (p * p).toFixed(2) + ')', 0, 0, VW, VH); }
+  if (t >= FD.B && t < FD.B + 0.5) R('rgba(10,10,50,' + (1 - (t - FD.B) / 0.5).toFixed(2) + ')', 0, 0, VW, VH);
+  if (now - fd.glitch < 150) for (let k = 0; k < 7; k++) { const y = (Math.random() * (VH - 8)) | 0; ctx.drawImage(cv, 0, y, VW, 4 + ((Math.random() * 5) | 0), Math.round((Math.random() * 2 - 1) * 8), y, VW, 4); }
+  const bar = Math.round(9 * Math.min(1, t / 0.5) * Math.min(1, (FD.end - t) / 0.5)); if (bar > 0) { R('#000', 0, 0, VW, bar); R('#000', 0, VH - bar, VW, bar); }
+  if (t >= FD.dream - 0.3 && t < FD.wake + 0.5) { const f = t < FD.wake ? (t - FD.dream + 0.3) / (FD.wake - FD.dream + 0.3) : 1 - (t - FD.wake) / 0.5; R('rgba(255,255,255,' + Math.max(0, Math.min(1, f)).toFixed(2) + ')', 0, 0, VW, VH); }
+  ctx.restore();
+  return true;
 }
