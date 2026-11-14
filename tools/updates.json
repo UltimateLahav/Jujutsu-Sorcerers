@@ -1,5 +1,14 @@
 [
  {
+  "v": "1.184",
+  "t": "ELEVATOR PANEL: THE TEXT FITS INSIDE ITS BUTTONS",
+  "n": [
+   "The floor numbers of the elevator panel were drawn at 16 px in round buttons that are only 24 to 37 px wide, so a number like 50 or 49 stuck out of its button and was cut at the edge, and the small room name under it (OFFICE, LOUNGE, SERVER ...) touched the rim. The size that was meant for them was never used (another rule of the panel overruled it). The numbers and the names now follow the size of their button: the number is a bit less than a third of the button (10 px in a 34 px button) and the name a tenth, so both are completely inside it, on every screen size from 568 x 320 up.",
+   "The words of the buttons TOP / LOBBY / ENEMY / LAST are a little smaller too, and OPEN / CLOSE / STOP and these four can no longer push a button out of a very narrow panel (a 4:3 screen). The marks on the floor buttons (the red X of a broken elevator, the ! of damage) follow the size of their button as well.",
+   "The game scan now measures the elevator panel in the cab and reports it when the text of a button sticks out of its button."
+  ]
+ },
+ {
   "v": "1.183",
   "t": "BATTLE SCREEN: NO GRADE LABEL, NO CURSED ENERGY NUMBER",
   "n": [

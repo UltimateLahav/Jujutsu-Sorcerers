@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.183</small>
+    <small id="ver">V1.184</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -10000,13 +10000,13 @@ function twLiftPrompt(F, d) {      // what an elevator door tells you when you s
 
 // ---- the panel (DOM, over the picture; made the first time you step into the cab)
 const TW_ABBR = { 'OFFICE': 'OFFICE', 'OPEN PLAN': 'OPEN', 'CONFERENCE': 'CONF', 'LOUNGE': 'LOUNGE', 'PANTRY': 'PANTRY', 'SERVER ROOM': 'SERVER', 'STORAGE': 'STORE', 'LOBBY': 'LOBBY', 'PENTHOUSE': 'PENT' };
-const TW_CSS = '#twp{position:fixed;z-index:3;display:none;flex-direction:column;gap:.9vh;box-sizing:border-box;padding:1vh;left:calc(env(safe-area-inset-left) + 3vh + 40vh*var(--pbs,1) + 1.5vh);top:calc(env(safe-area-inset-top) + 12vh);bottom:calc(env(safe-area-inset-bottom) + 3vh);width:max(150px,min(52vh,calc(50vw - 48.5vh),260px));border:2px solid #20242e;border-radius:5px;background:linear-gradient(90deg,#8d94a1,#b6bcc8 16%,#9aa1ae 50%,#b2b8c4 84%,#838a97);box-shadow:inset 0 0 0 2px #dfe4ec,inset 0 0 14px #0007,0 0 0 3px #0008;touch-action:pan-y}#twp.on{display:flex}#twp.r{left:auto;right:calc(env(safe-area-inset-right) + 3vh + 40vh*var(--pbs,1) + 1.5vh)}'
+const TW_CSS = '#twp{position:fixed;z-index:3;display:none;flex-direction:column;gap:.9vh;box-sizing:border-box;padding:1vh;left:calc(env(safe-area-inset-left) + 3vh + 40vh*var(--pbs,1) + 1.5vh);top:calc(env(safe-area-inset-top) + 12vh);bottom:calc(env(safe-area-inset-bottom) + 3vh);--pw:max(150px,min(52vh,calc(50vw - 48.5vh),260px));--cd:calc((var(--pw) - 7.8vh - 4px) / 5);width:var(--pw);border:2px solid #20242e;border-radius:5px;background:linear-gradient(90deg,#8d94a1,#b6bcc8 16%,#9aa1ae 50%,#b2b8c4 84%,#838a97);box-shadow:inset 0 0 0 2px #dfe4ec,inset 0 0 14px #0007,0 0 0 3px #0008;touch-action:pan-y}#twp.on{display:flex}#twp.r{left:auto;right:calc(env(safe-area-inset-right) + 3vh + 40vh*var(--pbs,1) + 1.5vh)}'
   + '#twp button{font:inherit;color:#1c2029;cursor:pointer;margin:0;padding:0;border:2px solid #444a59;background:radial-gradient(circle at 35% 28%,#f4f6fa,#bcc2ce 58%,#8c93a2);position:relative;touch-action:manipulation;-webkit-tap-highlight-color:transparent}#twp button:active{filter:brightness(.82)}#twp button:disabled{cursor:default}'
-  + '#twpq{display:grid;grid-template-columns:repeat(4,1fr);gap:.7vh}#twpq button{border-radius:5px;height:6.4vh;min-height:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5vh;font-size:clamp(5px,1.35vh,8px);line-height:1}#twpq b{font-size:clamp(8px,2.3vh,13px)}#twpq button:disabled{opacity:.35}'
+  + '#twpq{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.7vh}#twpq button{border-radius:5px;height:6.4vh;min-height:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5vh;font-size:min(clamp(4.5px,1.2vh,7px),calc(var(--pw)*.028));line-height:1}#twpq b{font-size:min(clamp(7px,2.05vh,12px),calc(var(--pw)*.05))}#twpq button:disabled{opacity:.35}'
   + '#twpg{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-auto-rows:min-content;gap:1vh;padding:.9vh;background:#262a34;border-radius:4px;box-shadow:inset 0 0 9px #000;touch-action:pan-y;scrollbar-width:thin;scrollbar-color:#8a91a0 #262a34}'
-  + '.twf{aspect-ratio:1;min-width:0;overflow:hidden;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4vh;font-size:clamp(8px,2.5vh,14px);line-height:1}.twf i{font-style:normal;font-size:clamp(4px,1.05vh,6px);letter-spacing:0;opacity:.85;max-width:100%;overflow:hidden;white-space:nowrap}.twf u,.twf s{display:none;position:absolute;text-decoration:none}.twf u{right:5%;top:5%;width:24%;height:24%;border-radius:50%;background:#e8281c;box-shadow:0 0 5px #f33}.twf s{left:10%;bottom:6%;font-size:clamp(5px,1.5vh,9px);color:#d86a00}'
-  + '.twf.vis{background:radial-gradient(circle at 35% 28%,#fff6e4,#ffc27e 56%,#d98b3c);border-color:#8a4a14;box-shadow:0 0 6px #ff9a3a}.twf.cur{border-color:#fff;outline:2px solid #5cd0ff;background:radial-gradient(circle at 35% 28%,#fff,#dff4ff 56%,#7fc4e8)}.twf.dest{animation:twblink .45s steps(2) infinite}.twf.oor{background:radial-gradient(circle at 35% 28%,#6a6f7c,#464a56 60%,#2c2f38);color:#8a8f9c;border-color:#2a2d36}.twf.oor::after{content:"X";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.8vh;color:#ff2a1a;text-shadow:0 0 4px #000}.twf.foe u{display:block}.twf.dmg s{display:block}@keyframes twblink{50%{box-shadow:0 0 12px #ffb04a;filter:brightness(1.25)}}'
-  + '#twpf{display:grid;grid-template-columns:repeat(3,1fr);gap:.8vh}#twpf button{border-radius:5px;height:6.4vh;min-height:26px;font-size:clamp(6px,1.7vh,10px)}#twpf button.stop{background:radial-gradient(circle at 35% 28%,#ff9d8d,#d12a1a 60%,#880f06);color:#fff;border-color:#4a0a05}#twpf button:disabled{opacity:.35}';
+  + '.twf{aspect-ratio:1;min-width:0;overflow:hidden;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--cd)*.045);line-height:1}#twp .twf{font-size:calc(var(--cd)*.3)}.twf i{font-style:normal;font-size:calc(var(--cd)*.105);letter-spacing:0;opacity:.85;max-width:100%;overflow:hidden;white-space:nowrap}.twf u,.twf s{display:none;position:absolute;text-decoration:none}.twf u{right:5%;top:5%;width:24%;height:24%;border-radius:50%;background:#e8281c;box-shadow:0 0 5px #f33}.twf s{left:10%;bottom:6%;font-size:calc(var(--cd)*.17);color:#d86a00}'
+  + '.twf.vis{background:radial-gradient(circle at 35% 28%,#fff6e4,#ffc27e 56%,#d98b3c);border-color:#8a4a14;box-shadow:0 0 6px #ff9a3a}.twf.cur{border-color:#fff;outline:2px solid #5cd0ff;background:radial-gradient(circle at 35% 28%,#fff,#dff4ff 56%,#7fc4e8)}.twf.dest{animation:twblink .45s steps(2) infinite}.twf.oor{background:radial-gradient(circle at 35% 28%,#6a6f7c,#464a56 60%,#2c2f38);color:#8a8f9c;border-color:#2a2d36}.twf.oor::after{content:"X";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:calc(var(--cd)*.34);color:#ff2a1a;text-shadow:0 0 4px #000}.twf.foe u{display:block}.twf.dmg s{display:block}@keyframes twblink{50%{box-shadow:0 0 12px #ffb04a;filter:brightness(1.25)}}'
+  + '#twpf{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8vh}#twpf button{border-radius:5px;height:6.4vh;min-height:26px;font-size:min(clamp(6px,1.7vh,10px),calc(var(--pw)*.04))}#twpf button.stop{background:radial-gradient(circle at 35% 28%,#ff9d8d,#d12a1a 60%,#880f06);color:#fff;border-color:#4a0a05}#twpf button:disabled{opacity:.35}';
 var twpEl = null, twpAt = -1e9, twpSig = '', twpShown = false;      // (var: show() and setPause() look at twpEl before this line has run)
 function twPanelBuild() {
   if (twpEl) return twpEl; const st = document.createElement('style'); st.id = 'twpCss'; st.textContent = TW_CSS; document.head.appendChild(st);
@@ -19553,6 +19553,15 @@ $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
  {
+  "v": "1.184",
+  "t": "ELEVATOR PANEL: THE TEXT FITS INSIDE ITS BUTTONS",
+  "n": [
+   "The floor numbers of the elevator panel were drawn at 16 px in round buttons that are only 24 to 37 px wide, so a number like 50 or 49 stuck out of its button and was cut at the edge, and the small room name under it (OFFICE, LOUNGE, SERVER ...) touched the rim. The size that was meant for them was never used (another rule of the panel overruled it). The numbers and the names now follow the size of their button: the number is a bit less than a third of the button (10 px in a 34 px button) and the name a tenth, so both are completely inside it, on every screen size from 568 x 320 up.",
+   "The words of the buttons TOP / LOBBY / ENEMY / LAST are a little smaller too, and OPEN / CLOSE / STOP and these four can no longer push a button out of a very narrow panel (a 4:3 screen). The marks on the floor buttons (the red X of a broken elevator, the ! of damage) follow the size of their button as well.",
+   "The game scan now measures the elevator panel in the cab and reports it when the text of a button sticks out of its button."
+  ]
+ },
+ {
   "v": "1.183",
   "t": "BATTLE SCREEN: NO GRADE LABEL, NO CURSED ENERGY NUMBER",
   "n": [
@@ -22456,6 +22465,14 @@ function scSigns() {      // v1.182 the floor signs: a few floors (the lobby, th
     for (const x of s) { if (F.doors.some(d => x - d.x > -33 && x - d.x < 40)) bad.push('FLOOR ' + f + ': A SIGN HANGS ON A DOOR AT ' + x); if (F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36)) bad.push('FLOOR ' + f + ': A SIGN HANGS ON AN INNER WALL AT ' + x); if (F.objs.some(o => { const K = TW_K[o.k]; return Math.abs(o.x - x) < K.w / 2 + 15 && 98 - K.h - (o.on ? TW_K[o.on.k].h : 0) < 68; })) bad.push('FLOOR ' + f + ': A SIGN IS BEHIND TALL FURNITURE AT ' + x); } }
   if (bad.length) scNote('fail', 'FLOOR SIGNS: ' + bad[0], bad.length + ' PROBLEMS');
 }
+function scPanel() {      // v1.184 the elevator panel in the cab: no text of a button may stick out of its button (the floor numbers were 16 px in circles of 24 - 37 px, cut at the edge; checked here at the real size of the screen)
+  const p = twpEl, bad = []; if (!p || !p.classList.contains('on')) { scNote('fail', 'THE ELEVATOR PANEL IS NOT ON THE SCREEN IN THE CAB', ''); return; }
+  const rg = document.createRange(), tr = el => { rg.selectNodeContents(el); return rg.getBoundingClientRect(); }, gr = p.querySelector('#twpg').getBoundingClientRect();
+  for (const b of p.querySelectorAll('.twf')) { const r = b.getBoundingClientRect(); if (!r.width || r.bottom < gr.top || r.top > gr.bottom) continue; const cx = r.left + r.width / 2, cy = r.top + r.height / 2, rad = Math.min(r.width, r.height) / 2 - (parseFloat(getComputedStyle(b).borderTopWidth) || 0);
+    for (const el of b.querySelectorAll('b,i')) { if (!el.textContent) continue; const t = tr(el); for (const [x, y] of [[t.left, t.top], [t.right, t.top], [t.left, t.bottom], [t.right, t.bottom]]) if (Math.hypot(x - cx, y - cy) - rad > 0.3) { bad.push('FLOOR ' + b.dataset.f + ' (' + el.textContent + ')'); break; } } }
+  for (const b of p.querySelectorAll('#twpq button,#twpf button')) { const r = b.getBoundingClientRect(); if (!r.width) continue; for (const el of b.querySelectorAll('span,b')) { const t = tr(el); if (t.left < r.left - 0.3 || t.right > r.right + 0.3) { bad.push((b.dataset.q || b.dataset.a || '?').toUpperCase() + ' BUTTON'); break; } } if (!b.querySelector('span,b')) { const t = tr(b); if (t.left < r.left - 0.3 || t.right > r.right + 0.3) bad.push((b.dataset.a || '?').toUpperCase() + ' BUTTON'); } }
+  if (bad.length) scNote('fail', 'ELEVATOR PANEL: THE TEXT OF A BUTTON STICKS OUT OF IT: ' + bad[0], bad.length + ' BUTTONS');
+}
 async function scTower() {
   SC.sec = 'SKYSCRAPER'; scCov('TOWER', 0, 3); SC.plan = 3 * 470; SC.done = 0; const keep = twPick; twPick = 1;
   try {
@@ -22467,6 +22484,7 @@ async function scTower() {
       const p = scPlayer(seed), ev = [[20, scSigns], [30, () => twSlam('foe', 2, pnow(), dummy.x)], [90, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [110, () => twMeFall(1, pnow(), wx)], [150, () => { const F = twFloorData(vs.tw.fMe); const o = { k: 'gas', x: Math.round(wx + 40), hp: 18, mx: 18, wob: 0, hitAt: -9999 }; F.objs.push(o); twDamageObj(F, o, 99, pnow()); }], [190, () => twCeiling('foe', 1, pnow(), dummy.x)], [235, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [250, () => twFallOut('foe', pnow(), 1)],
         [60, () => { const F = twFloorData(vs.tw.fMe), d = F.doors.find(q => q.k === 'elev'); if (d) twDoorHit(F, d, 45, pnow()); }],      // (v1.175 the elevator: a hard hit jams a door (OUT OF ORDER) ...)
         [270, () => { const T = vs.tw; if (T.cab) return; const F = twFloorData(T.fMe), d = twElevOf(F), L = T.lift; if (!d) return; d.st = 0; d.hp = 70; L.f = L.curF = L.dest = T.fMe; L.ph = 'park'; L.inFoe = false; L.job = null; L.pend = null; wx = d.x; T.px = wx; twCabEnter(F, d, pnow()); }],      // (v1.176 ... you step into the one cab of the building: the cut inside, the panel, a floor button (0.6 s, then it goes), an emergency stop, another floor,
+        [274, () => { if (vs.tw.cab) scPanel(); }],
         [276, () => { const T = vs.tw; if (T.cab) twCabPick(T.fMe > 20 ? T.fMe - 9 : T.fMe + 11, pnow()); }],
         [352, () => { const T = vs.tw; if (T.cab && T.lift.ph === 'ride') twCabStop(pnow()); }],
         [368, () => { const T = vs.tw; if (T.cab) twCabPick(T.fMe > 30 ? T.fMe - 4 : T.fMe + 6, pnow()); }],
