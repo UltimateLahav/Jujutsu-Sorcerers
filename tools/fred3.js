@@ -55,7 +55,7 @@ function ffCrawl(u, bob, jaw, blood) {      // u: 0 = standing (leaning), 1 = on
 // SETTINGS > GAME > GRAPHIC DAMAGE: FULL = everything; CLEAN = the same without blood and organs (the stumps are pale); OFF = the middle is cut away: from the slam the screen goes dark and only the sounds play (they are played a little closer together), then it fades in on Freddy standing and wiping his mouth.
 const FFT = { lunge: 0.5, grab: 1.1, lift: 1.3, top: 2.05, slam: 2.6, down: 3.1, roar: 3.5, bite1: 4.3, rip1: 5.7, eat1: 5.8, bite2: 7.4, rip2: 8.8, eat2: 8.9, crawl: 10.2, belly: 11.0, organs: 11.7, die: 12.8, back: 13.2, wipe: 13.9, laugh: 15.3, title: 15.8, end: 17.4 };
 let ff = null;
-const FF_VICS = ['gojo', 'yuji', 'verity', 'cat'], FF_BB = new WeakMap();
+const FF_VICS = ['gojo', 'yuji', 'verity', 'cat', 'freddy'], FF_BB = new WeakMap();
 function ffBox(img) { let b = FF_BB.get(img); if (b) return b; const w = img.width, h = img.height, d = img.getContext('2d').getImageData(0, 0, w, h).data; let x0 = w, x1 = -1, y0 = h, y1 = -1; for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 8) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } b = { x0, x1, y0, y1 }; FF_BB.set(img, b); return b; }      // (the box the picture really covers)
 function ffState(now) {      // Freddy's FATALITY. 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far (or behind him); 3 = not possible right now
   if (!vs || vs.story || vs.cv || vs.net || vs.ph !== 'fight' || js || vf || fat || yf || yu || (dom && domLock()) || ult || cf || ke || fd || fg || fwPh || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.curse || !FF_VICS.includes(vs.foe) || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;
@@ -79,7 +79,7 @@ function ffLegless(img, mask) { if (!mask) return img; const v = goreVar(img, ma
 function ffFrame(now, dt) {
   const s = ff, T = FFT, off = s.gm === 2, full = s.gm === 0; keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; fatReq = 0;
   const live = now >= s.freeze; if (live) s.t += dt * (off && s.t >= T.down && s.t < T.back ? 1.6 : 1); const t = s.t, sdt = live ? dt : 0, at = (k, tt, f) => { if (!s.ev[k] && t >= tt) { s.ev[k] = 1; f(); } };
-  const mx = Math.round(VW / 2), FX0 = mx - 40, GX = mx + 24, FX1 = GX - 26, V = s.V || (s.V = cfVictim({ vk: s.vk, inv: false }, 0)), bb = ffBox(V.img), fr = bb.y1 + 1, hx = V.hx, back = hx - bb.x0, vy0 = gy + 2 - 62 - V.top + fr;      // (the victim's feet: where the bottom of his picture is when he stands; back: how far his back reaches behind the middle of the picture)
+  const mx = Math.round(VW / 2), FX0 = mx - 40, GX = mx + 24, FX1 = GX - 26, V = s.V || (s.V = cfVictim({ vk: s.vk, inv: s.vk === 'freddy' && !!vs.inv }, 0)), bb = ffBox(V.img), fr = bb.y1 + 1, hx = V.hx, back = hx - bb.x0, vy0 = gy + 2 - 62 - V.top + fr;      // (the victim's feet: where the bottom of his picture is when he stands; back: how far his back reaches behind the middle of the picture)
   const LX = FX1 + 38, LY = gy + 3 - back, D2R = Math.PI / 180;      // (where he lies: his feet, and the height of the middle of his feet so that his back is on the floor)
   const S3 = ease3;
   // ---- the victim's place: the point of his picture that Freddy holds (his feet), and the angle (0 = standing, 90 = lying on his back with his head to the right)

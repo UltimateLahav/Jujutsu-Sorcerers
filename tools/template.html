@@ -592,7 +592,7 @@ function catVictim() {      // the Cat as a victim of Gojo's FATALITY: his idle 
 }
 let FREV = null;
 function freddyVictim() {      // (v1.52) Freddy as the victim of an enemy's FATALITY: his idle (with a white flash copy and a blue stun copy); he has no hit pictures, so all ten reactions show his idle frames (kept only once his sheet has loaded)
-  if (FREV) return FREV; const idle = Array.from({ length: 15 }, (_, i) => fredF(i)), kit = victimKit(idle, Array.from({ length: 10 }, () => idle), () => FRED_INFO);
+  if (FREV) return FREV; const idle = Array.from({ length: 15 }, (_, i) => fredF(i)), kit = victimKit(idle, Array.from({ length: 10 }, (_, k) => Array.from({ length: 15 }, (_, i) => fredH(FRED_HF[k], Math.min(9, Math.floor(i * 10 / 15))))), () => FRED_INFO);      // (v1.188 his ten reactions are his own hurt pictures now, the ten of each kind spread over the 15 frames)
   if (FRED_IMG.complete && FRED_IMG.naturalWidth) FREV = kit; return kit;
 }
 function yujiPick(a) {      // YUJI's picture for the player: the frame set, its info, the frame and how high he is lifted (an attack, being launched, a dash, a jump, crouching down / up, crouched, walking, standing)
@@ -3468,7 +3468,7 @@ function headlessF(c) {      // (v1.52) Freddy's picture without the head, for V
 }
 function vfStart(now, rev) {      // rev = the enemy does it to the player
   const d = dummy; cineClear(); closeSettings(); stickDown = false; d.ai = 'rest'; d.pull = null; d.vx = 0; d.vact = null; $('pad').classList.add('cine'); $('hud').classList.add('cine'); snd('fatalstart');
-  vf = { rev: !!rev, t: 0, ev: {}, g0: Math.max(20, Math.min(FAT_RANGE, Math.abs(d.x - wx))), cam: 0, z: 1, fx: 0, fy: 0, shake: 0, freeze: 0, flash: 0, parts: [], splats: [], wx0: wx, gv: rev ? vs.me === 'gojo' : vs.foe === 'gojo', yv: rev ? vs.me === 'yuji' : vs.foe === 'yuji', cv: rev ? vs.me === 'cat' : vs.foe === 'cat', fv: !!rev && vs.me === 'freddy', inv: !rev && vs.inv, ainv: !!rev && vs.inv };      // gv: the victim is Gojo (else a Verity); the colours are inverted only for the inverted Verity (the enemy): the victim when the player does it, the attacker when the enemy does it
+  vf = { rev: !!rev, t: 0, ev: {}, g0: Math.max(20, Math.min(FAT_RANGE, Math.abs(d.x - wx))), cam: 0, z: 1, fx: 0, fy: 0, shake: 0, freeze: 0, flash: 0, parts: [], splats: [], wx0: wx, gv: rev ? vs.me === 'gojo' : vs.foe === 'gojo', yv: rev ? vs.me === 'yuji' : vs.foe === 'yuji', cv: rev ? vs.me === 'cat' : vs.foe === 'cat', fv: rev ? vs.me === 'freddy' : vs.foe === 'freddy', inv: !rev && vs.inv, ainv: !!rev && vs.inv };      // gv: the victim is Gojo (else a Verity); the colours are inverted only for the inverted Verity (the enemy): the victim when the player does it, the attacker when the enemy does it
 }
 function vfReset() { vf = null; $('pad').classList.remove('cine'); $('hud').classList.remove('cine'); }
 function vfEnd(now) {      // the victim is gone and the attacker wins the round (like Gojo's FATALITY)
@@ -3910,7 +3910,7 @@ function cfVictim(s, now) {      // the victim's picture while he stands there: 
   if (vk === 'gojo') return { img: idleF[ph % idleF.length], hx: D.idle.cx - D.idle.x0, top: D.idle.top || 0 };
   if (vk === 'yuji') return { img: YUF.norm.idle[ph % 15], hx: YU.idle.cx - YU.idle.x0, top: YU.idle.top || 0 };
   if (vk === 'verity') return { img: vfr('idle', now / 100, true, false), hx: 32, top: 0 };
-  if (vk === 'freddy') return { img: fredF(ph), hx: FRED_INFO.cx - FRED_INFO.x0, top: FRED_INFO.top };      // (v1.52: Freddy, not a Cat)
+  if (vk === 'freddy') { const im = fredF(ph); return { img: s.inv && im !== EMPTY && im.width ? invOf(im) : im, hx: FRED_INFO.cx - FRED_INFO.x0, top: FRED_INFO.top }; }      // (v1.52: Freddy, not a Cat; v1.188 inverted when he is the enemy of a Freddy)
   return { img: cfr('idle', now / 83, true, s.inv), hx: 32, top: 0 };
 }
 function cfFrame(now, dt) {

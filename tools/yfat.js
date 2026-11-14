@@ -21,6 +21,7 @@ let YFK = null;
 function yfKit(foe) {
   if (foe === 'verity') return veVictim();
   if (foe === 'cat') return catVictim();
+  if (foe === 'freddy') return freddyVictim();
   if (foe === 'yuji') return YFK || (YFK = victimKit(YUF.inv.idle, YUF.inv.rx, k => k < 0 ? YU.idle : YU.rx[k]));
   const inv = !!(vs && vs.inv);
   return { vF: inv ? dumF : idleF, vRx: inv ? rxI : rxN, vRxW: rxW, vW: dumW, vB: dumB, vi: k => k < 0 ? D.idle : D['rx' + k], fs: 1 };
@@ -420,6 +421,20 @@ YFS.cat = {
   back: (s, now, t, mx, cx) => { const h = s.hole; if (!h) return; const a = (now - h.born) / 1000, q = yfVPic(s.K, ['rx', 7, 0.4], now, false), X = Math.round(mx + h.x - cx), Y = Math.round(h.y); yfSave(); ctx.globalAlpha = Math.min(1, a * 5) * Math.max(0.25, 1 - a * 0.25); ctx.translate(X, Y + 30); ctx.scale(-1.7, 1.7); const hx = q.info.cx - q.info.x0; ctx.drawImage(tintOf(q.src, '#ffffff'), -hx + 1, -62 - (q.info.top || 0)); ctx.drawImage(tintOf(q.src, '#ffffff'), -hx - 1, -62 - (q.info.top || 0)); ctx.drawImage(tintOf(q.src, '#000000'), -hx, -62 - (q.info.top || 0)); yfRestore(); },
   front: (s, now, t, mx, cx, Vs) => { if (!Vs.gone && Vs.pose[0] === 'blue') yfStars(s, now, mx + Vs.x - cx, Vs.l, 3); if (s.hole) { const a = (now - s.hole.born) / 1000; if (a < 2.2) yfStars(s, now, mx + s.hole.x - cx, 150 - (gy - s.hole.y) + 4, 4); } },
   vanish: (s, now, x, y) => { s.hole = { x, y, born: now }; yfVanish(s, now, x, y, ['#ffe34d', '#ffffff', '#ff7a5a']); } };
+YFS.freddy = {      // v1.188 FREDDY: his own version (the user: "make freddy an enemy in versus": Yuji's FATALITY has its own script for every enemy). The blows come in another order (elbow, hook, knee, slam, sweep, spin, dive, then the huge one), the sparks and the pieces are the red and green of his sweater, and the embers of his boiler room rise over the whole screen.
+  zb: 1.55, rim: '#e0584a', spk: ['#e0584a', '#55a868', '#ffffff'], vcols: ['#b3303d', '#2f7a43', '#ffffff'],
+  beats: [
+    { at: 2.6, mv: 'elbow', ap: 'dash', apT: 0.5, out: { k: 'slide', dx: 60, T: 0.8, rx: 0 }, z: 2.2 },
+    { at: 4.6, mv: 'hook', ap: 'run', apT: 1.2, out: { k: 'fly', T: 0.9, dx: 90, h: 10 }, z: 1.7 },
+    { at: 6.7, mv: 'knee', ap: 'leap', apT: 1.3, aph: 26, yl: 'match', out: { k: 'fly', T: 0.95, dx: 70, h: 24 }, z: 1.8 },
+    { at: 8.7, mv: 'slam', ap: 'run', apT: 1.2, out: { k: 'fly', T: 0.5, dx: 14, h: 34 }, z: 2.2 },
+    { at: 10.7, mv: 'sweep', ap: 'run', apT: 1.2, out: { k: 'fly', T: 1.0, dx: 130, h: 8, turns: 1 }, z: 1.6 },
+    { at: 12.9, mv: 'spin', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 30, h: 8, l1: 92, rot: 0.7 }, z: 1.8 },
+    { at: 14.8, mv: 'dive', ap: 'leap', apT: 1.2, aph: 28, yl: 'match', out: { k: 'fly', T: 0.9, dx: 40, h: 24, land: 'stand', rest: 'kneel' }, z: 1.8 },
+    { at: 19.4, mv: 'cbf', ap: 'dash', apT: 0.5, pre: { t: 3.0, d: 96 }, out: { k: 'fly', T: 1.2, dx: 150, h: 26, l1: 60, rot: 2.4, gone: true }, nocam: true, fz: 0.52 }],
+  slow: [[17.4, 19.3, 0.45], [19.42, 20.62, 0.3]],
+  cam: [[16.6, 1.4, 0.5, 0, 0], [17.6, 1.7, 0.3, 0, 0], [18.7, 2.0, 0.1, 0, 1], [19.15, 3.0, 0.1, 4, 1], [19.5, 2.4, 0.1, 0, 1], [19.95, 1.9, 0.1, -6, 1], [20.3, 1.6, 0.5, 0, 0], [21.2, 1.3, 0.55, 0, 0], [21.65, 1.9, 0.0, 0, 1], [23.5, 2.0, 0.0, 0, 1]], title: 21.45,
+  screen: (s, now) => { ctx.globalAlpha = 0.6; for (let i = 0; i < 30; i++) { const h = Math.imul(i * 7919 + 13, 2246822519) >>> 0, x = Math.round(h % VW + Math.sin(now / 900 + i) * 6), y = VH - ((now / (22 + h % 20) + (h >> 8) % VH) % VH); ctx.fillStyle = i % 3 ? '#ff8a2a' : '#ffd34d'; ctx.fillRect(x, Math.round(y), i % 4 ? 1 : 2, 1); } ctx.globalAlpha = 1; } };
 YFS.yuji = {
   zb: 1.55, rim: '#7df4ff', spk: ['#7df4ff', '#ffffff'], vcols: ['#ffffff', '#7df4ff', '#2fc3e6'], glass: true,
   beats: [
