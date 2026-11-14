@@ -1091,6 +1091,18 @@ function makeSfx(ac) {
       for (let i = 0; i < 6; i++) { burst(B, t + 0.08 + i * 0.13, { type: 'bandpass', f: 2600 + i * 400, q: 2, dur: 0.05, gain: 0.2, atk: 0.001 }); tone(C.atk.deep, t + 0.08 + i * 0.13, { type: 'triangle', f: 200, f2: 120, dur: 0.06, gain: 0.08, atk: 0.002 }); }
       tone(B, t + 0.95, { f: 3100, f2: 3000, dur: 0.5, gain: 0.05, atk: 0.003 });
     },
+    fsmove(at) {                                         // v1.180 the cursor of the fighter screen moves: a short, soft blip
+      const t = T(at), B = C.atk.soft; tone(B, t, { type: 'square', f: 1040, f2: 1240, dur: 0.045, gain: 0.025, atk: 0.002 });
+    },
+    fsok(at) {                                           // v1.180 a fighter is chosen: a bright two-note rise over a short low thump
+      const t = T(at), B = C.atk.soft; tone(B, t, { type: 'square', f: 660, dur: 0.07, gain: 0.04, atk: 0.003 }); tone(B, t + 0.07, { type: 'square', f: 990, dur: 0.12, gain: 0.04, atk: 0.003 }); tone(C.atk.deep, t, { type: 'triangle', f: 150, f2: 70, dur: 0.12, gain: 0.12, atk: 0.003 });
+    },
+    fsno(at) {                                           // v1.180 a greyed face: a low, short buzz
+      const t = T(at), B = C.atk.soft; tone(B, t, { type: 'sawtooth', f: 150, f2: 110, dur: 0.14, gain: 0.05, atk: 0.004 });
+    },
+    fsvs(at) {                                           // v1.180 the VS splash: a rising whoosh, a heavy boom and a metal ring as the two names meet
+      const t = T(at), B = C.atk.soft; burst(B, t, { type: 'highpass', f: 800, f2: 6000, q: 0.7, dur: 0.4, gain: 0.14, atk: 0.12 }); tone(C.atk.deep, t + 0.38, { type: 'triangle', f: 120, f2: 38, dur: 0.5, gain: 0.34, atk: 0.004 }); tone(B, t + 0.38, { f: 1320, f2: 1280, dur: 0.6, gain: 0.05, atk: 0.002 });
+    },
     setVol(name, v) {                                    // per-sound volume, 0 = silent, 1 = designed level, 2 = twice as loud
       vol[name] = v;
       if (name === 'master') applyMaster();

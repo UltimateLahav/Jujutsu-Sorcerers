@@ -1,5 +1,18 @@
 [
  {
+  "v": "1.180",
+  "t": "NEW FIGHTER SCREEN: TRAINING, BATTLE, WIFI AND A MAP SCREEN",
+  "n": [
+   "BATTLES now opens three big cards: TRAINING, BATTLE and WIFI. WIFI is the old WI-FI ROOMS card, so the mode screen now has CHALLENGES, BATTLES and STORY MODE.",
+   "The fighter screen is new and works like Mortal Kombat and Dragon Ball FighterZ: 3 faces on top (GOJO, YUJI, RYU) and 4 below (VERITY, CAT, FREDDY, SUKUNA). Tap a face to put the cursor on it: that face comes alive and the fighter shows big on the side in his idle animation, on a stage in his own colour, with his name, a tag and three of his moves. Tap the same face again or press SELECT to choose him. RANDOM runs the cursor over the fighters you may pick and lands on one (SELECT then chooses him). You choose on the left (red frame), then the enemy on the right (blue frame).",
+   "TRAINING: you, then the enemy (Gojo, Yuji, Verity or the Cat), then the map. Every fighter, Gojo too, now starts in a normal training room against the enemy you chose (SETTINGS > TRAIN > ENEMY IS follows your choice). The old free play in the street with the bystanders (Gojo, no enemy) is the yellow FREE PLAY IN THE CITY button, shown when Gojo is your fighter.",
+   "BATTLE: the old Versus mode on the same screen: you, then the enemy, with the six grades in a row under the faces (a grade you have not unlocked stays greyed), then the map, START and a VS splash before the fight (a tap skips it). Sukuna and Ryu are greyed (TRAIN ONLY) and Freddy cannot be the enemy yet; fighters you have not bought stay locked.",
+   "MAP SCREEN: two big pictures, the street and the skyscraper (taken from the game's own art), with your two fighters standing in them. A tap picks the map, START begins. The old MAP buttons are gone.",
+   "The Wi-Fi room's fighter screen has the same look (faces, your fighter on the left, the opponent on the right once you both chose, RANDOM). Only Gojo, Yuji, Verity, the Cat and Freddy can be chosen online. The network code is the old one.",
+   "The back button (and Esc) steps back: VS splash, map screen, enemy, your fighter, the three cards, the mode screen. Your last picks are remembered."
+  ]
+ },
+ {
   "v": "1.179",
   "t": "M1 PUNCHES OVER 15 NOW DEAL 8",
   "n": [

@@ -32,10 +32,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 .cards{display:flex;gap:2.5vh}
 .card{width:24vh;height:40vh;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:1.5vh;font-size:clamp(8px,2.4vh,13px)}
 .card canvas{height:24vh;width:auto}
-#select>.cards:not(.mini){--cw:min(24vh,calc((100vw - 21vh) / 7))}#select>.cards:not(.mini) .card{width:var(--cw)}#select>.cards:not(.mini) .card canvas{height:var(--cw)}
 .card i{color:var(--dim);font-style:normal;font-size:.8em}
-#gojo{border-color:var(--acc)}
-#gojo:hover,#gojo:focus-visible{background:#2a1f4a;outline:none}
 .lock{opacity:.45;border:3px dashed var(--line);background:#120d22}
 .lock span{font-size:8vh;margin-top:6vh}
 #hud{position:fixed;left:calc(env(safe-area-inset-left) + 10px);top:calc(env(safe-area-inset-top) + 10px);display:none;align-items:center;gap:12px;font-size:var(--fs-hud,clamp(8px,2.6vh,13px));text-shadow:2px 2px 0 #000}#hud.vs span{display:none}      /* (in a match the name is on the canvas HUD, so the top-left label is left out) */
@@ -86,24 +83,17 @@ body.ry #fat,body.c4 #dom,body.c4 #ce,body.c4 #fat,body.c4 #lap,body.c4 #sns{vis
 #vols input{grid-column:1/3;width:100%;height:3.4vh;accent-color:var(--acc)}
 #vols b{font-weight:normal;color:var(--acc)}
 .row{display:flex;gap:2.4vh;flex-wrap:wrap;justify-content:center}
-.mapb{border-color:#7fd0ff;color:#cfe8ff}#vsBtn{border-color:#ff8a7a;color:#ffd0c8}      /* VERSUS: pick the fighters and a grade */
-.vsrow{display:flex;align-items:center;gap:2vh}.vsrow small{width:16vh;text-align:right}
-.mini .card{width:13vh;height:18vh;padding:.7vh}.mini .card b{font-size:.78em;line-height:1.3}.mini .card canvas{height:9vh;width:auto}
-.fgs{display:flex;gap:3.4vh;align-items:flex-end}.fg{display:flex;flex-direction:column;align-items:center;gap:.5vh}.gl{font-size:var(--fs-pb,clamp(5px,1.7vh,9px));color:var(--dim);white-space:nowrap}      /* the fighter pickers: SORCERERS and CURSED SPIRITS side by side */.mini .lock span{font-size:5vh;margin-top:3vh}
 .card.sel{border-color:var(--acc);background:#2a1f4a}
 #modes .cards{gap:4vh}#modes .card{width:32vh}#modes .card,#modes h2,#saves .card,#saves h2{font-size:var(--fs-btn,clamp(8px,2.4vh,13px))}#saves .cards{gap:3vh}#saves .card{width:26vh}#svChaps{--cw:min(26vh,calc((100vw - 20vh) / 5))}#svChaps .card{width:var(--cw)}button:disabled{opacity:.4;cursor:default}.mode span{font-size:8vh;margin-top:6vh;color:#ff8a7a}.mode.lock span{color:var(--ink)}
-#lanMode span{font-size:5.4vh;margin-top:7vh;color:#59b8ff}#lan{gap:2vh}#lan input{font:inherit;font-size:var(--fs-btn,clamp(9px,3vh,16px));color:var(--ink);background:#120d22;border:3px solid var(--line);padding:1.6vh 2vh;width:34vh;text-transform:uppercase;user-select:text;-webkit-user-select:text;outline:none}#lan input:focus{border-color:var(--acc)}
+#lan{gap:2vh}#lan input{font:inherit;font-size:var(--fs-btn,clamp(9px,3vh,16px));color:var(--ink);background:#120d22;border:3px solid var(--line);padding:1.6vh 2vh;width:34vh;text-transform:uppercase;user-select:text;-webkit-user-select:text;outline:none}#lan input:focus{border-color:var(--acc)}
 #lanList{display:flex;flex-direction:column;gap:1.2vh;width:min(86vw,64vh);max-height:36vh;overflow-y:auto}.lanRoom{display:flex;justify-content:space-between;align-items:center;gap:2vh;text-align:left}.lanRoom small{flex:none}#lanInfo{min-height:8vh;font-size:clamp(7px,2.3vh,12px);line-height:1.8;white-space:pre-line;color:var(--dim)}#lanInfo.bad{color:#ff8a7a}      /* WI-FI ROOMS: rooms on the same Wi-Fi */
-#lanSel{gap:1.6vh}#lsPick{gap:1.6vh}#lsMain{display:flex;align-items:center;gap:3vh}.lsCol{display:flex;flex-direction:column;align-items:center;gap:.8vh}#lsMain .card{width:19vh;height:27vh;padding:1vh;pointer-events:none}#lsMain .card canvas{height:14vh;width:auto}#lsMain .card b{text-align:center;font-size:.8em;line-height:1.3;min-height:2.6em}#lsFoePv{transform:scaleX(-1)}
-#lsMoves{padding:1.4vh 2vh;border:3px solid var(--line);background:#120d22;text-align:left;font-size:clamp(6px,1.85vh,10px);line-height:1.4;min-width:34vh}#lsMoves h3{margin:0 0 .8vh;font-size:clamp(7px,2.2vh,12px);font-weight:normal;color:var(--acc)}#lsMovesB{display:grid;grid-template-columns:max-content 1fr;gap:.8vh 2vh;align-content:start}#lsMovesB b{font-weight:normal;color:#59b8ff}#lsMovesB .more{grid-column:1/3;color:var(--dim);margin-top:.4vh}
-#lsInfo{min-height:9vh;font-size:clamp(7px,2.3vh,12px);line-height:1.8;white-space:pre-line;color:var(--dim)}      /* the character select of a Wi-Fi room: you, Gojo's moves, the opponent */
+#lsInfo{min-height:9vh;font-size:clamp(7px,2.1vh,11px);line-height:1.7;white-space:pre-line;color:var(--dim)}      /* the fighter screen of a Wi-Fi room: the ping and who is ready */
 .col.nt #ce,.col.nt #dom,.col.nt #fat,.col.nt.nb #lap{opacity:.25}      /* the Wi-Fi fight: MODE, DOMAIN and FATAL are off for now, and BLUE for everybody but Gojo (his teleport in the air) */
 #ver{position:fixed;right:2vh;bottom:1.6vh;font-size:clamp(7px,2vh,11px)}#modes .card{width:25vh;font-size:clamp(7px,2vh,12px)}#modes .cards{gap:3vh}.row button.sel{border-color:var(--acc);background:#2a1f4a}#vsInfo{white-space:pre-line;line-height:1.8}
 .pb.lk{opacity:.22;filter:grayscale(1);position:relative}.pb.lk::before{content:'LOCK';position:absolute;top:.3vh;left:0;right:0;text-align:center;font-size:1.5vh;color:#ff6a5a;text-shadow:1px 1px 0 #000}      /* a move you do not own */
 #modesMoney,#chalMoney,#skMoney{color:#ffd34d;font-size:clamp(8px,2.6vh,14px)}#chalCards{display:flex;gap:2vh;overflow-x:auto;max-width:96vw;padding:.6vh .6vh 1.6vh;scrollbar-color:var(--acc) #120d22}#chalCards::-webkit-scrollbar{height:1.6vh}#chalCards::-webkit-scrollbar-thumb{background:var(--acc);border:2px solid var(--bg)}#chalCards::-webkit-scrollbar-track{background:#120d22}.cc{flex:0 0 27vh;width:27vh;height:auto;min-height:60vh;gap:.8vh;justify-content:flex-start}.cc.rush{border-color:#ffd34d}.cc.rush .cv{gap:0}.rb{color:var(--dim);font-size:.7em;line-height:1.5}.cv{height:26vh;display:flex;align-items:flex-end;justify-content:center}.cv canvas{width:auto;transform:scaleX(-1)}.cv canvas.dk{filter:brightness(0) opacity(.45)}.cc b{font-size:.9em;line-height:1.3}.ct{width:100%;padding:.9vh .6vh;font-size:.85em;line-height:1.5}.ct small{display:block;color:var(--dim);font-size:.8em}
 #skills{gap:1.2vh;justify-content:flex-start;padding-top:calc(env(safe-area-inset-top) + 1.4vh);padding-bottom:calc(env(safe-area-inset-bottom) + 1.4vh)}#skTop{display:flex;align-items:center;gap:1.6vh;width:min(100%,220vh)}#skTop button{padding:.8vh 1.6vh;font-size:clamp(7px,2.3vh,12px);box-shadow:3px 3px 0 #000}#skTop .row{flex:1;gap:1vh;flex-wrap:nowrap}#skSum{display:flex;flex-direction:column;align-items:flex-end;gap:.5vh}#skCnt{color:var(--dim);font-size:clamp(6px,1.8vh,10px)}#skMain{display:flex;gap:1.6vh;width:min(100%,220vh);flex:1;min-height:0}#skTree{flex:1;min-width:0;display:flex;overflow:auto;border:3px solid var(--line);background:#0f0a1d;scrollbar-color:var(--acc) #120d22}#skTree::-webkit-scrollbar{width:1.6vh;height:1.6vh}#skTree::-webkit-scrollbar-thumb{background:var(--acc);border:2px solid var(--bg)}#skTree::-webkit-scrollbar-track{background:#120d22}#skCv{position:relative;flex:none;margin:auto}.skl{position:absolute;left:0;top:0;fill:none;stroke-width:.9;shape-rendering:crispEdges}.skl .off path{stroke:#54457f}.skl .open path{stroke:#c9a227;stroke-dasharray:1.6 1.2}.skl .lit path{stroke:#4fd18a}.skl .fresh{stroke-dasharray:1;animation:skdraw .5s steps(8) both}.skl .web path{stroke-width:.35;shape-rendering:geometricPrecision}.skl .web .off{stroke:#54457f;opacity:.6}.skl .web .have{stroke:#4fd18a;opacity:.5}.skl .web .open{stroke:#c9a227;opacity:.95;stroke-dasharray:1.2 1}.skl .web .lit{stroke:#4fd18a;opacity:.9}@keyframes skdraw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}.nd{position:absolute;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3vh;padding:.3vh .5vh;border:3px solid #54457f;background:#1b1432;color:#bdb5de;font-size:clamp(7px,1.9vh,11px);line-height:1.15;box-shadow:3px 3px 0 #000;overflow:hidden}.nd b{font-weight:normal;overflow-wrap:anywhere}.nd i{font-style:normal;font-size:.92em;color:#a79fca}.nd.open{border-color:#c9a227;background:#241c0c;color:var(--ink)}.nd.open i{color:#e8c24a}.nd.can{animation:skcan 1s steps(2) infinite}@keyframes skcan{50%{border-color:#fff1a8}}.nd.own{border-color:#4fd18a;background:#0f2a1c;color:#d8ffe8}.nd.own i{color:#4fd18a}.nd.rt{border-width:4px}.nd.sel{outline:.6vh solid #9fd8ff;outline-offset:.2vh;z-index:2}.nd.pop{animation:skpop .5s steps(6)}@keyframes skpop{0%{transform:scale(1.3);box-shadow:0 0 0 1vh #4fd18a}100%{transform:none}}.nd.new{animation:sknew .5s steps(2) 4}@keyframes sknew{50%{background:#4a3a10;border-color:#fff1a8}}#skInfo{flex:0 0 48vh;display:flex;flex-direction:column;gap:1.2vh;padding:1.4vh;border:3px solid var(--line);background:var(--card);text-align:left;overflow-y:auto;font-size:clamp(7px,1.9vh,11px)}#skInfo h3{margin:0;font-size:clamp(8px,2.5vh,14px);font-weight:normal}#skInfo .st{font-style:normal}.st.own{color:#4fd18a}.st.open{color:#ffd34d}.st.lock{color:#ff8a7a}#skInfo small{color:var(--dim);line-height:1.55;font-size:.95em;flex:1}#skInfo .rq{color:var(--dim);line-height:1.5}.rq .hv{color:#4fd18a}.rq .ms{color:#ff8a7a}#skInfo button{padding:1vh;font-size:inherit}      /* the CHALLENGES and SKILLS pages */
 @keyframes shk{0%{transform:translateX(0)}25%{transform:translateX(-.8vh)}50%{transform:translateX(.8vh)}75%{transform:translateX(-.5vh)}100%{transform:translateX(0)}}.shake{animation:shk .35s steps(6)}.shake i{color:#ff8a7a}      /* STORY MODE: not made yet, the card shakes */
-#grades{display:grid;grid-template-columns:repeat(3,auto);gap:1.2vh 1.6vh}
 .gr{padding:1vh 1.6vh;font-size:clamp(7px,2.1vh,12px);min-width:22vh}.gr small{display:block;margin-top:.7vh}
 .gr.sel{border-color:var(--acc);background:#2a1f4a}.gr.lk{opacity:.4;border-style:dashed}
 .star{display:inline-block;width:1.6em;height:1.6em;margin:0 .15em;background:#ffd34d;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}.star.off{background:#3a3050}
@@ -141,7 +131,7 @@ button,.card{background:linear-gradient(180deg,#14121a,#0b0a0f);border:3px solid
 button:hover:not(:disabled),.card:hover{border-color:var(--blue);color:#fff;border-bottom-color:var(--blue)}
 button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
 .card.sel,.row button.sel{border-color:#e0242f;border-bottom-color:var(--blue);background:linear-gradient(180deg,#2a0b10,#0b0a0f);color:#fff}
-.card i{color:#e0242f}.mode span{color:#f1ecdf;text-shadow:3px 3px 0 #b3121f}#lanMode span{color:#f1ecdf}
+.card i{color:#e0242f}.mode span{color:#f1ecdf;text-shadow:3px 3px 0 #b3121f}
 #pad button,#hud button,.pb{clip-path:none}
 #title{background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.05) 0 1px,transparent 1.5px) 0 0/9px 9px,linear-gradient(105deg,#07060a 0 48%,#150508 48% 49.5%,#07060a 49.5% 100%),var(--bg)}
 #title h1{display:flex;flex-direction:column;align-items:center;gap:.4vh;transform:skewX(-8deg);text-shadow:none}
@@ -176,6 +166,27 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
 .ule ul{margin:0;padding-left:2.6vh;display:flex;flex-direction:column;gap:.9vh}
 .ule li{font-size:clamp(8px,2.3vh,12px);line-height:1.7;color:#d9d4e8}
 .ulsep{flex:none;text-align:center;color:var(--acc);font-size:clamp(8px,2.4vh,12px);line-height:1.5;border-top:3px dashed var(--line);padding:2.2vh 0 .6vh;margin-top:.8vh}
+/* ---- v1.180 SELECT REMASTER: the three BATTLES cards, the fighter screen (3 + 4 faces, a big fighter on each side), the map screen, the VS splash; the Wi-Fi room's fighter screen uses the same pieces (tools/select.js) */
+#bsel .cards{gap:3.4vh}.bsc{width:min(34vh,27vw);height:56vh;justify-content:flex-start;gap:1.6vh;font-size:var(--fs-btn,clamp(8px,2.4vh,13px))}.bsc canvas{height:min(28vh,22vw);width:auto;margin-top:1.6vh}.bsc b{font-size:1em}.bsc i{font-size:.72em;line-height:1.5}
+#fsel,#lanSel{gap:1.4vh}.fsmain{display:flex;align-items:stretch;justify-content:center;gap:1.6vh}.fscen{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.8vh;min-width:0}.fsg{display:flex;flex-direction:column;align-items:center;gap:1.4vh}.fsr{display:flex;gap:1.2vh;justify-content:center}
+.fsp{position:relative;flex:none;width:min(44vh,24vw);height:64vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:.5vh;padding:1vh .8vh;overflow:hidden;border:3px solid var(--line);border-bottom:.9vh solid #b3121f;background:#0b0a0f;clip-path:polygon(1.4vh 0,100% 0,100% calc(100% - 1.4vh),calc(100% - 1.4vh) 100%,0 100%,0 1.4vh);--fc:#6d6a7a;--fg:rgba(109,106,122,.45);--fl:rgba(109,106,122,.17)}
+.fsp.p1{border-color:#e0242f}.fsp.p2{border-color:#39a2ff;border-bottom-color:#1d5fa8}.fsp.act{animation:fsact .6s steps(2) infinite}@keyframes fsact{50%{border-color:#fff}}
+.fsbg{position:absolute;inset:0;overflow:hidden;pointer-events:none}.fsbg::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 62%,var(--fg),transparent 68%)}.fsbg::after{content:'';position:absolute;left:-30%;top:-30%;width:160%;height:160%;background:linear-gradient(90deg,transparent 0 62%,var(--fl) 62% 100%) 0 0/3.8vh 100% repeat-x;transform:rotate(18deg);animation:fsmv 2.6s linear infinite}@keyframes fsmv{to{background-position:3.8vh 0}}.fsp.empty .fsbg::after{opacity:.35}
+.fssd,.fsrd{position:absolute;top:.8vh;z-index:2;font-size:clamp(7px,1.7vh,10px);padding:.3vh .8vh;line-height:1.2}.fssd{left:.8vh;background:#e0242f;color:#fff}.fsp.r .fssd{left:auto;right:.8vh;background:#39a2ff;color:#07060a}.fsrd{right:.8vh;display:none;background:#ffd34d;color:#07060a}.fsp.r .fsrd{right:auto;left:.8vh}.fsp.ready .fsrd{display:block}
+.fsq{position:absolute;left:0;right:0;top:18%;z-index:1;font-size:16vh;line-height:1;color:rgba(255,255,255,.14);display:none}.fsp.empty .fsq{display:block}
+.fsbig{position:relative;z-index:1;height:min(36vh,calc(24vw - 2vh));width:auto;margin-top:3.2vh;image-rendering:pixelated;filter:drop-shadow(0 .8vh 0 rgba(0,0,0,.55))}.fsp.r .fsbig{transform:scaleX(-1)}.fsp.empty .fsbig{visibility:hidden}
+.fsnm{position:relative;z-index:1;font-size:clamp(10px,3.1vh,20px);line-height:1.15;min-height:6.2vh;display:flex;align-items:center;justify-content:center;text-shadow:.35vh .35vh 0 #000;text-transform:uppercase}
+.fsiv{font-size:.55em;color:var(--ft,var(--fc))}.fstg{position:relative;z-index:1;font-style:normal;font-size:clamp(7px,2vh,11px);color:var(--ft,var(--fc));min-height:2.6vh;text-shadow:.25vh .25vh 0 #000}
+.fsmv{position:relative;z-index:1;list-style:none;margin:.4vh 0 0;padding:0;font-size:clamp(7px,1.95vh,11px);line-height:1.6;color:var(--ink);text-shadow:.25vh .25vh 0 #000;overflow-wrap:anywhere}
+.fst{position:relative;width:min(19vh,8.6vw);padding:.5vh .5vh 0;display:flex;flex-direction:column;align-items:center;gap:.4vh;font-size:clamp(7px,1.7vh,10px);letter-spacing:0;border-bottom-width:.6vh;min-width:0}.fst canvas{width:100%;height:auto;aspect-ratio:1/1;display:block;background:#14121a}.fst b{font-weight:normal;line-height:1.2;padding-bottom:.4vh}
+.fst em{position:absolute;left:.5vh;right:.5vh;top:.5vh;aspect-ratio:1/1;display:none;align-items:center;justify-content:center;text-align:center;font-style:normal;font-size:clamp(7px,1.45vh,9px);line-height:1.4;color:#ff8a7a;background:rgba(7,6,10,.5)}.fst.no em{display:flex}.fst.no canvas{filter:grayscale(1) brightness(.5)}.fst.no b{color:var(--dim)}.fst.lk canvas{filter:brightness(0) opacity(.45)}
+.fst.hot{border-color:#e0242f;border-bottom-color:#e0242f;background:linear-gradient(180deg,#2a0b10,#0b0a0f);color:#fff;animation:fshot .5s steps(2) infinite}.fst.hot.s2{border-color:#39a2ff;border-bottom-color:#39a2ff;background:linear-gradient(180deg,#0b1d33,#0b0a0f)}@keyframes fshot{50%{border-color:#fff}}
+.fst::before{content:attr(data-mark);position:absolute;left:.4vh;top:.4vh;z-index:1;display:none;font-size:clamp(7px,1.5vh,9px);padding:.2vh .5vh;background:#e0242f;color:#fff}.fst[data-mark="P1"]::before,.fst[data-mark="P2"]::before{display:block}.fst[data-mark="P2"]::before{background:#39a2ff;color:#07060a}
+#fsMsg,#lsMsg{min-height:2.8vh;max-width:66vh;font-size:clamp(7px,1.8vh,10px);line-height:1.5}#fsMsg[data-on="1"],#lsMsg[data-on="1"]{color:#ff8a7a}#fsNote{max-width:90vw;font-size:clamp(7px,1.8vh,10px);line-height:1.5}.fscen .row{gap:1.4vh}.fscen .row button{padding:1.1vh 1.8vh;font-size:var(--fs-btn,clamp(9px,2.6vh,15px))}
+#fsGrades{display:flex;gap:1vh;justify-content:center}#fsGrades .gr{min-width:0;width:min(27vh,13.6vw);min-height:8.6vh;padding:.8vh .3vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:clamp(7px,1.7vh,10px);line-height:1.3}#fsGrades .gr small{margin-top:.5vh;font-size:inherit}#fsCity{padding:1vh 2vh;font-size:clamp(7px,1.9vh,11px);border-color:#ffd34d;color:#ffd34d}
+.mps{display:flex;gap:3vh;justify-content:center;align-items:flex-start}.mp{position:relative;width:min(92vh,45vw);height:auto;padding:1vh 1vh 1.2vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:.8vh;font-size:clamp(9px,2.6vh,15px)}.mp canvas{width:100%;height:auto;aspect-ratio:288/128;border:3px solid #000;filter:brightness(.55) saturate(.75)}.mp.sel canvas{filter:none}.mp.sel{border-color:#e0242f;border-bottom-color:#39a2ff}.mp b{font-weight:normal}.mp i{font-size:.7em}.mp.sel::after{content:'SELECTED';position:absolute;top:2vh;left:2vh;background:#e0242f;color:#fff;font-size:clamp(7px,1.8vh,10px);padding:.4vh 1vh}
+#vsplash{flex-direction:row;gap:2vh;justify-content:center;background:radial-gradient(ellipse at 50% 50%,#2a0b10,#07060a 70%)}#vsplash .fsp{width:min(46vh,30vw);height:72vh}#vsplash .fsbig{height:min(46vh,calc(30vw - 2vh))}#vsplash .fsnm{font-size:clamp(12px,4vh,24px)}.vsv{font-size:clamp(24px,14vh,80px);color:#f1ecdf;text-shadow:.9vh .9vh 0 #b3121f;font-style:italic;transform:skewX(-8deg)}
+#vsplash.go #vsxL{animation:vsl .45s cubic-bezier(.2,.9,.3,1) both}#vsplash.go #vsxR{animation:vsr .45s cubic-bezier(.2,.9,.3,1) both}#vsplash.go .vsv{animation:vsv .5s steps(5) .35s both}@keyframes vsl{from{transform:translateX(-120vw)}to{transform:none}}@keyframes vsr{from{transform:translateX(120vw)}to{transform:none}}@keyframes vsv{0%{transform:skewX(-8deg) scale(3);opacity:0}100%{transform:skewX(-8deg) scale(1);opacity:1}}
 </style>
 </head>
 <body>
@@ -187,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.179</small>
+    <small id="ver">V1.180</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -219,10 +230,19 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <button id="chalMode" class="card mode"><span>$</span><b>CHALLENGES</b><i>EARN MONEY</i></button>
     <button id="battles" class="card mode"><span>VS</span><b>BATTLES</b><i>FIGHT THE ENEMY</i></button>
     <button id="story" class="card mode"><span>?</span><b>STORY MODE</b><i>CHAPTERS 1 AND 2</i></button>
-    <button id="lanMode" class="card mode"><span>WIFI</span><b>WI-FI ROOMS</b><i>SAME WI-FI ONLY</i></button>
   </div>
   <small>YOU START WITH PUNCHES ONLY: BEAT CURSES IN CHALLENGES, EARN MONEY, BUY SKILLS</small>
   <div class="row"><button id="skillsMode">SKILLS</button><button id="msModes">SETTINGS</button><button id="modesBack">BACK</button></div>
+</section>
+
+<section id="bsel" class="screen">
+  <h2>BATTLES</h2>
+  <div class="cards">
+    <button id="bsTrain" class="card mode bsc"><canvas width="64" height="64"></canvas><b>TRAINING</b><i>FREE PLAY, NO RISK</i></button>
+    <button id="bsBattle" class="card mode bsc"><canvas width="64" height="64"></canvas><b>BATTLE</b><i>VERSUS, 6 GRADES</i></button>
+    <button id="bsWifi" class="card mode bsc"><canvas width="64" height="64"></canvas><b>WIFI</b><i>SAME WI-FI ONLY</i></button>
+  </div>
+  <div class="row"><button id="bsBack">BACK</button></div>
 </section>
 
 <section id="lan" class="screen">
@@ -239,14 +259,16 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
 
 <section id="lanSel" class="screen">
   <h2>CHOOSE YOUR FIGHTER</h2>
-  <div id="lsPick" class="cards mini"></div>
-  <div id="lsMain">
-    <div class="lsCol"><small>YOU</small><div id="lsMe" class="card"><canvas id="lsPv"></canvas><b id="lsName">?</b><i id="lsTag">TAP A FIGHTER</i></div></div>
-    <div id="lsMoves"><h3 id="lsMovesH">ONLINE MOVES</h3><div id="lsMovesB"></div></div>
-    <div class="lsCol"><small>OPPONENT</small><div id="lsFoe" class="card"><canvas id="lsFoePv"></canvas><b id="lsFoeName">?</b><i id="lsFoeTag">CHOOSING</i></div></div>
+  <div class="fsmain">
+    <div id="lsMe"></div>
+    <div class="fscen">
+      <div id="lsPick" class="fsg"></div>
+      <small id="lsMsg" data-def="MORE ONLINE MOVES COME IN THE NEXT UPDATES">MORE ONLINE MOVES COME IN THE NEXT UPDATES</small>
+      <div id="lsInfo"></div>
+    </div>
+    <div id="lsFoe"></div>
   </div>
-  <div id="lsInfo"></div>
-  <div class="row"><button id="lsFight">FIGHT</button><button id="lsAgain">PICK AGAIN</button><button id="lsBack">LEAVE</button></div>
+  <div class="row"><button id="lsFight">FIGHT</button><button id="lsAgain">PICK AGAIN</button><button id="lsRand">RANDOM</button><button id="lsBack">LEAVE</button></div>
 </section>
 
 <section id="chal" class="screen">
@@ -282,28 +304,35 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
   <div class="row"><button id="svStart" disabled>START</button><button id="svChap" disabled>CHOOSE CHAPTER</button><button id="svBack">BACK</button></div>
 </section>
 
-<section id="select" class="screen">
-  <h2>CHOOSE YOUR FIGHTER</h2>
-  <div class="cards">
-    <button id="gojo" class="card"><canvas id="pv"></canvas><b>GOJO</b><i>STRONGEST</i></button>
-    <button class="card pp" data-who="yuji"><canvas></canvas><b>YUJI</b><i>FREE PLAY</i></button>
-    <button class="card pp" data-who="verity"><canvas></canvas><b>VERITY</b><i>FREE PLAY</i></button>
-    <button class="card pp" data-who="cat"><canvas></canvas><b>CARTOON CAT</b><i>FREE PLAY</i></button>
-    <button class="card pp" data-who="freddy"><canvas></canvas><b>FREDDY<br>KRUEGER</b><i>FREE PLAY</i></button>
-    <button class="card pp" data-who="cu3"><canvas></canvas><b>SUKUNA</b><i>FREE PLAY</i></button>
-    <button class="card pp" data-who="cu4"><canvas></canvas><b>RYU</b><i>FREE PLAY</i></button>
+<section id="fsel" class="screen">
+  <h2 id="fsTitle">CHOOSE YOUR FIGHTER</h2>
+  <div class="fsmain">
+    <div id="fsL"></div>
+    <div class="fscen">
+      <div id="fsGrid" class="fsg"></div>
+      <small id="fsMsg">&nbsp;</small>
+      <div class="row"><button id="fsBack">BACK</button><button id="fsRand">RANDOM</button><button id="fsOk">SELECT</button></div>
+    </div>
+    <div id="fsR"></div>
   </div>
-  <small>FREE PLAY: EVERY MOVE OF EVERY FIGHTER IS FREE HERE, THE ENERGY NEVER RUNS OUT AND YOU CANNOT LOSE (SET > GAME: THE ENEMY CAN FIGHT BACK)</small>
-  <div class="row"><button id="mapBtn1" class="mapb">MAP: STREET</button><button id="vsBtn">VERSUS MODE</button><button id="selBack">BACK</button></div>
+  <small id="fsNote"></small>
+  <div id="fsGrades"></div>
+  <button id="fsCity">FREE PLAY IN THE CITY (NO ENEMY)</button>
 </section>
 
-<section id="versus" class="screen">
-  <h2>VERSUS</h2>
-  <div class="vsrow"><small>YOUR FIGHTER</small><div class="fgs" id="vsMeRow"></div></div>
-  <div class="vsrow"><small>ENEMY FIGHTER</small><div class="fgs" id="vsFoeRow"></div></div>
-  <small>DIFFICULTY: BEAT A GRADE TO UNLOCK THE NEXT</small>
-  <div id="grades"></div>
-  <div class="row"><button id="mapBtn2" class="mapb">MAP: STREET</button><button id="vsGo">FIGHT!</button><button id="vsBack">BACK</button></div>
+<section id="msel" class="screen">
+  <h2>CHOOSE A MAP</h2>
+  <div class="mps">
+    <button id="mpStreet" class="card mp"><canvas width="288" height="128"></canvas><b>STREET</b><i>THE NIGHT CROSSING</i></button>
+    <button id="mpTower" class="card mp"><canvas width="288" height="128"></canvas><b>SKYSCRAPER</b><i>50 FLOORS: SLAM THEM DOWN</i></button>
+  </div>
+  <div class="row"><button id="mpBack">BACK</button><button id="mpGo">START</button></div>
+</section>
+
+<section id="vsplash" class="screen">
+  <div id="vsxL"></div>
+  <div class="vsv">VS</div>
+  <div id="vsxR"></div>
 </section>
 
 <section id="vsres" class="screen">
@@ -485,7 +514,6 @@ let vOff = 0, slowAt = -1e9, slowMs = 0, slowRate = 1, slowFin = false, tLast = 
 const pnow = () => performance.now() - vOff;
 function slowMo(ms, rate) { slowAt = performance.now(); slowMs = ms; slowRate = rate; slowFin = true; snd('slowin'); }      // slow motion for ms milliseconds of real time: the clock runs at `rate` for the first third, then speeds back up to normal
 const cv = $('game'), ctx = cv.getContext('2d');
-const pv = $('pv'), pctx = pv.getContext('2d');
 const hero = $('hero'), hctx = hero.getContext('2d');
 
 // turn a sprite set's text rows into tiny offscreen canvases
@@ -591,7 +619,6 @@ function yujiPick(a) {      // YUJI's picture for the player: the frame set, its
   if (!a.idle && a.mode === 'back') return { set: N.back, info: YB.back, fi: FW, lift: 0 };
   return { set: N.idle, info: YY.idle, fi: FI, lift: 0 };
 }
-pv.width = D.idle.w; pv.height = D.idle.h;
 const heroImgs = HEROES.map(src => { const im = new Image(); im.src = src; return im; });
 
 let seed = 7;
@@ -831,7 +858,7 @@ function skillUI() {                          // the buttons of a move you do no
   const L = (id, key) => $(id).classList.toggle('lk', lacks(key));
   L('blk', 'blk'); L('dash', 'dash'); L('ce', 'ce'); L('dom', 'dom'); L('fat', 'fat'); $('lap').classList.toggle('lk', !fredMe() && !(vs && vs.me === 'cu4') && !(vs && vs.me === 'cu3' ? Object.values(SU_BLUE_ID).some(suOwn) : BLUES[meK()].some(owns)));
 }
-function leavePlay() { if (c4x) c4xLeave(); else if (vs && vs.net) lanLeave(); else if (vs && vs.hunt) { show('chal'); buildHunts(); } else if (vs && vs.cv) { show('chal'); buildChal(); } else show('select'); }
+function leavePlay() { if (c4x) c4xLeave(); else if (vs && vs.net) lanLeave(); else if (vs && vs.hunt) { show('chal'); buildHunts(); } else if (vs && vs.cv) { show('chal'); buildChal(); } else fsOpen(vs && !vs.practice && !vs.story ? 'battle' : 'train'); }
 
 // ---- the ten curses: sprites (tools/curse_art.py) and what each of them can do
 const CU = __CURSES__;                        // idle, walk, a1 a2 a3 (the three attacks: the blow lands on frame imp) and hurt for every curse; they face right and the game mirrors them
@@ -1185,12 +1212,7 @@ const lanHello = () => LAN_PROTO + '.' + NETSET.length + '.' + NETSET.reduce((n,
 const LAN_FIGHTERS = ['gojo', 'yuji', 'verity', 'cat', 'freddy'];      // the five fighters of Versus (Yuji without INHERITENCE)
 let lanRole = '', lanHost = false, lanName = '', lanSig = null, lanTimer = 0, lanPing = -1, lanLane = '', lanLoss = 0, lanStatAt = 0, lanNoteUntil = 0, lanHelloAt = 0, lanHelloOk = false, lanVerBad = false;      // lanRole: '' (start) | host (waiting for a player) | browse | join | in (connected: the character select)
 let lanPhase = 'pick', lanMe = '', lanFoe = '', lanMeInv = false, lanRollAt = 0, lanFightMe = false, lanFightFoe = false;      // the character select: pick (each player chooses a fighter) -> roll (both chose the same one: the host decides who gets the inverted one) -> done
-const LAN_ROLL_MS = 1800, lsPvC = $('lsPv'), lsFoeC = $('lsFoePv'), lsCards = [];
-lsPvC.height = lsFoeC.height = 64;
-for (const [who, nm] of [['gojo', 'GOJO'], ['yuji', 'YUJI'], ['verity', 'VERITY'], ['cat', 'CARTOON<br>CAT'], ['freddy', 'FREDDY<br>KRUEGER']]) {      // the five cards to choose from
-  const b = document.createElement('button'); b.className = 'card'; b.dataset.who = who; b.innerHTML = '<canvas height="64"></canvas><b>' + nm + '</b>';
-  b.addEventListener('click', () => lanChoose(who)); $('lsPick').appendChild(b); lsCards.push(b);
-}
+const LAN_ROLL_MS = 1800;
 const LAN_MOVES = {      // what the Wi-Fi fight has of each fighter so far (the rest of their moves come in the next updates)
   gojo: [['COMBO', 'ATTACK, 4 HITS'], ['CROUCH PUNCHES', 'CROUCH + ATTACK'], ['BLOCK + PARRY', 'HOLD BLOCK'], ['DASH', 'DASH'], ['TELEPORT UP', 'BLUE IN THE AIR']],
   yuji: [['COMBO', 'ATTACK, 4 HITS'], ['CROUCH PUNCHES', 'CROUCH + ATTACK'], ['BLOCK + PARRY', 'HOLD BLOCK'], ['DASH', 'DASH']],
@@ -1274,26 +1296,6 @@ function lanChoose(who) {                     // a tap on one of the five cards 
   lanMe = lanMe === who ? '' : who; lanSend('C|' + lanMe); lanCheck(); lsRender();
 }
 function lanAgain(tell) { if (tell) lanSend('N|'); lanPhase = 'pick'; lanMe = lanFoe = ''; lanMeInv = lanFightMe = lanFightFoe = false; lsRender(); }      // (a choice that is still standing stays: both start from nothing)
-function lsRender() {                         // the texts of the character select
-  const pick = lanPhase === 'pick', roll = lanPhase === 'roll', done = lanPhase === 'done', same = !!lanMe && lanMe === lanFoe, show2 = !pick;      // (the opponent's fighter is shown once both have chosen)
-  for (const b of lsCards) { b.classList.toggle('sel', b.dataset.who === lanMe); b.disabled = !pick || lanVerBad; }
-  $('lsName').innerHTML = lanMe ? NAMES[lanMe] + (done && lanMeInv ? '<br>(INV.)' : '') : '?'; $('lsFoeName').innerHTML = show2 && lanFoe ? NAMES[lanFoe] + (done && same && !lanMeInv ? '<br>(INV.)' : '') : '?';
-  $('lsTag').textContent = pick ? (lanMe ? 'READY' : 'TAP A FIGHTER') : done ? (same ? (lanMeInv ? 'INVERTED' : 'NORMAL') : 'READY') : '...';
-  $('lsFoeTag').textContent = pick ? (lanFoe ? 'READY' : 'CHOOSING') : done ? (same ? (lanMeInv ? 'NORMAL' : 'INVERTED') : 'READY') : '...';
-  $('lsMe').classList.toggle('sel', !!lanMe); $('lsFoe').classList.toggle('sel', !!lanFoe);
-  const mv = lanMe ? LAN_MOVES[lanMe] : null; $('lsMovesH').textContent = lanMe ? NAMES[lanMe] + ': ONLINE MOVES' : 'ONLINE MOVES'; $('lsMovesB').innerHTML = mv ? mv.map(r => '<b>' + r[0] + '</b><span>' + r[1] + '</span>').join('') + '<span class="more">MORE MOVES COME IN THE NEXT UPDATES</span>' : '<span class="more">TAP A FIGHTER TO SEE HIS MOVES</span>';
-  const road = lanPing < 0 ? 'PING ...' : 'PING ' + lanPing + ' MS' + (lanLane === 'udp' ? '' : ' (SLOW ROAD)') + (lanLoss >= 3 ? '  LOST ' + lanLoss + '%' : '');
-  $('lsInfo').textContent = (lanVerBad ? 'THE OTHER PHONE HAS ANOTHER VERSION OF THE GAME\nUPDATE THE APP ON BOTH PHONES' : pick ? (lanMe ? 'WAITING FOR THE OTHER PLAYER...' : 'TAP A FIGHTER TO CHOOSE HIM') : roll ? 'BOTH CHOSE ' + NAMES[lanMe] + '\nWHO GETS THE INVERTED ONE?' : (same ? (lanMeInv ? 'YOU GOT THE INVERTED ' : 'THE OTHER PLAYER GOT THE INVERTED ') + NAMES[lanMe] : NAMES[lanMe] + ' AGAINST ' + NAMES[lanFoe]) + '\n' + (lanFightMe ? 'WAITING FOR THE OTHER PLAYER...' : lanFightFoe ? 'THE OTHER PLAYER IS READY: TAP FIGHT' : 'TAP FIGHT WHEN YOU ARE READY')) + '\n' + road;
-  $('lsAgain').style.display = $('lsFight').style.display = done ? '' : 'none'; $('lsFight').textContent = lanFightMe ? 'READY...' : 'FIGHT';
-}
-function lanSelDraw(now) {                    // the five cards, and the two fighters (the opponent faces you); while the dice roll they flip between normal and inverted, slower and slower
-  const a = performance.now() - lanRollAt;
-  if (lanPhase === 'roll' && a >= LAN_ROLL_MS) { lanPhase = 'done'; lsRender(); snd('ceon'); }
-  const meInv = lanPhase === 'roll' ? Math.floor(Math.pow(a / LAN_ROLL_MS, 0.6) * 11) % 2 === 0 : lanPhase === 'done' && lanMeInv, flip = lanMe !== '' && lanMe === lanFoe && lanPhase !== 'pick';
-  const put = (c, who, inv) => { const g = c.getContext('2d'), pic = who ? lanIdlePic(who, now, inv) : null, w = who === 'gojo' ? D.idle.w : who === 'yuji' ? YU.idle.w : 64; if (c.width !== w) c.width = w; g.clearRect(0, 0, c.width, c.height); if (pic && pic.width) g.drawImage(pic, 0, 0); };
-  put(lsPvC, lanMe, flip && meInv); put(lsFoeC, lanPhase === 'pick' ? '' : lanFoe, flip && !meInv);
-  for (const b of lsCards) put(b.firstChild, b.dataset.who, false);
-}
 function lanShow(rooms) {
   if (lanNoteUntil && performance.now() > lanNoteUntil) { lanNoteUntil = 0; lanSig = null; }      // (the error line has been up long enough: the hint comes back)
   rooms.sort((a, b) => (a.name + a.ip + a.port).localeCompare(b.name + b.ip + b.port));
@@ -1427,17 +1429,16 @@ function drawRemote(now, dt) {                // the other player: the picture h
   } else { const y = gy + ry; ctx.drawImage(inv(pic), rx, y); if (now - d.hitAt < 70 && pic !== FRED_PC) ctx.drawImage(whiteOf(pic), rx, y); }
   ctx.restore();
 }
-const lanBack = () => { if (lanRole) lanStop(); else show('modes'); };
+const lanBack = () => { if (lanRole) lanStop(); else show('bsel'); };
 
 // ---------------------------------------------------------------- screens
 function show(s) {
   if (s !== 'play') c4xOff();      // (v1.156 any other screen ends chapter 4's part 3)
   state = s; if (twpEl) twPanelSync(0); if (s !== 'story') { snd('mhumoff'); snd('tmusicoff'); snd('rsmuroff'); snd('bluepulloff'); c9Stop(); c15Stop(); } if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; track = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
   $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); $('chal').classList.toggle('on', s === 'chal'); $('skills').classList.toggle('on', s === 'skills'); $('sns').style.display = 'none'; if (s !== 'lan' && s !== 'lansel' && !(s === 'play' && vs && vs.net) && lanTimer) lanStop();
-  $('versus').classList.toggle('on', s === 'versus');
+  $('bsel').classList.toggle('on', s === 'bsel'); $('fsel').classList.toggle('on', s === 'fsel'); $('msel').classList.toggle('on', s === 'msel'); $('vsplash').classList.toggle('on', s === 'vsplash');
   $('title').classList.toggle('on', s === 'title'); $('ulog').classList.toggle('on', s === 'ulog'); $('mset').classList.toggle('on', s === 'mset'); $('codes').classList.toggle('on', s === 'codes');
-  $('select').classList.toggle('on', s === 'select');
-  $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves'); if (s === 'select') cuSelRefresh(); if (s === 'select' || s === 'versus') mapBtns();
+  $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves');
   cv.style.display = s === 'play' || s === 'story' ? 'block' : 'none';
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
@@ -2434,31 +2435,12 @@ const GRADES = [
 const PHP = 300;                              // Gojo's health in a match
 const KO_HOLD = 450, KO_MS = 1800, ROUND_MS = 45000, INTRO_MS = 1500, INTRO_ROUND = 800;            // a K.O.: the picture freezes for 0.45 s, then the loser topples; 1.8 s after it the next round starts (or the result shows); a round lasts 45 s; the intro (ROUND n, then FIGHT!) takes 1.5 s
 let vs = null, vsSel = 0;
-const vsPick = { me: 'gojo', foe: 'gojo' }, FIGHTERS = [['SORCERERS', [['gojo', 'GOJO'], ['yuji', 'YUJI']]], ['CURSED SPIRITS', [['verity', 'VERITY'], ['cat', 'CARTOON<br>CAT'], ['freddy', 'FREDDY<br>KRUEGER']]]], NAMES = { gojo: 'GOJO', verity: 'VERITY', yuji: 'YUJI', cat: 'CARTOON CAT', freddy: 'FREDDY KRUEGER' }; let vsPv = [];      // who you and the enemy have picked, the two sections, and the little pictures on the cards
-function buildFighters() {      // YOUR FIGHTER / ENEMY FIGHTER, each with a SORCERERS section (Gojo) and a CURSED SPIRITS section (Verity); the enemy is drawn inverted only when he is the same fighter as you
-  vsPv = [];
-  for (const [row, id] of [['me', 'vsMeRow'], ['foe', 'vsFoeRow']]) {
-    const box = $(id); box.innerHTML = '';
-    for (const [sec, list] of FIGHTERS) {
-      const g = document.createElement('div'), cards = document.createElement('div'); g.className = 'fg'; g.innerHTML = '<span class="gl">' + sec + '</span>'; cards.className = 'cards mini';
-      for (const [who, nm] of list) {
-        if (row === 'foe' && who === 'freddy') continue;      // (he is not offered as the enemy: he cannot fight yet)
-        if (who !== 'gojo' && !owns(who)) { const lk = document.createElement('div'); lk.className = 'card lock'; lk.innerHTML = '<span>?</span><b>LOCKED</b>'; cards.appendChild(lk); continue; }      // (bought on the SKILLS page)
-        const inv = row === 'foe' && vsPick.me === who, b = document.createElement('button');
-        b.className = 'card' + (vsPick[row] === who ? ' sel' : ''); b.dataset.row = row; b.dataset.who = who; b.innerHTML = '<canvas></canvas><b>' + nm + (inv ? '<br>(INV.)' : '') + '</b>';
-        const c = b.querySelector('canvas'); c.width = who === 'gojo' ? D.idle.w : who === 'yuji' ? YU.idle.w : 64; c.height = 64; vsPv.push({ c, g: c.getContext('2d'), who, inv });
-        b.addEventListener('click', () => { vsPick[row] = who; buildFighters(); }); cards.appendChild(b);
-      }
-      if (list.length < 2) { const lk = document.createElement('div'); lk.className = 'card lock'; lk.innerHTML = '<span>?</span><b>LOCKED</b>'; cards.appendChild(lk); }
-      g.appendChild(cards); box.appendChild(g);
-    }
-  }
-}
+const vsPick = { me: 'gojo', foe: 'gojo' }, NAMES = { gojo: 'GOJO', verity: 'VERITY', yuji: 'YUJI', cat: 'CARTOON CAT', freddy: 'FREDDY KRUEGER' };      // who you and the enemy have picked (v1.180: the fighter screen itself is in tools/select.js)
 const vsLoad = () => { try { const st = JSON.parse(localStorage.getItem('jsv_stars') || '[]'); return { un: Math.max(0, Math.min(5, +localStorage.getItem('jsv_unlock') || 0)), st: [0, 1, 2, 3, 4, 5].map(i => +st[i] || 0) }; } catch (e) { return { un: 0, st: [0, 0, 0, 0, 0, 0] }; } };
 const vsStore = (un, st) => { try { localStorage.setItem('jsv_unlock', String(un)); localStorage.setItem('jsv_stars', JSON.stringify(st)); } catch (e) { } };
 const dBlocks = () => !!dummy && (dummy.mode === 'blocker' || dummy.ai === 'block');
 function buildGrades() {                       // the six grade buttons: locked until the grade before has been beaten, with the stars earned
-  const sv = vsLoad(), box = $('grades'); box.innerHTML = ''; if (vsSel > sv.un) vsSel = sv.un;
+  const sv = vsLoad(), box = $('fsGrades'); box.innerHTML = ''; if (vsSel > sv.un) vsSel = sv.un;
   GRADES.forEach((g, i) => { const b = document.createElement('button'); b.className = 'gr' + (i === vsSel ? ' sel' : '') + (i > sv.un ? ' lk' : ''); b.disabled = i > sv.un; b.dataset.g = i; b.innerHTML = g.name + '<small>' + (i > sv.un ? 'LOCKED' : [0, 1, 2].map(k => '<span class="star' + (k < sv.st[i] ? '' : ' off') + '"></span>').join('')) + '</small>'; b.addEventListener('click', () => { vsSel = i; buildGrades(); }); box.appendChild(b); });
 }
 function startMatch(gi, story, retry, foe) { vs = { story: story === 'c3' ? 'c3' : !!story, gi, round: 1, pw: 0, ew: 0, ph: 'intro', t0: 0, tl: story ? 1e9 : ROUND_MS, hp: PHP, sh: PHP, hist: [], res: null, retry: retry | 0, me: story ? (foe === 'gojo' || story === 'c3' ? 'yuji' : 'gojo') : vsPick.me, foe: story ? (foe || 'verity') : vsPick.foe, tn: !!story && (foe === 'gojo' || story === 'c3'), c3: story === 'c3' };      // (a story fight against Gojo is the training of part 2: you are Yuji, tn = the training's limits; 'c3' = chapter 2's fight against Verity: you are Yuji with the same limits; vs.story keeps the word, so REMATCH starts the same fight)
@@ -6444,15 +6426,14 @@ function tick(t) {
   if (story && story.toEnd) { story.toEnd = false; startTrainEnd(now); }      // (the training fight is won: the happy ending starts)
   if (story && story.toMaster) { story.toMaster = false; startMaster(now); }      // (the fight against the Cat is won: the Master's scene starts)      // (the fight against Verity is won: the ending of the chapter starts)
   if (state === 'play') { if (still || now < holdUntil) { last = now; if (impf) impfFrame(); else if (suTs) suTsFrame(); } else drawScene(now, dt); stateDraw(now); twOverlay(now); msRecord(now); }      // hit-stop: the picture freezes for a split second when the red orb explodes
-  else if (state === 'versus') { const fr = Math.floor(now / (1000 / IDLE_FPS)) % idleF.length; for (const q of vsPv) { q.g.clearRect(0, 0, 64, 64); q.g.drawImage(q.who === 'gojo' ? (q.inv ? dumF : idleF)[fr] : q.who === 'yuji' ? (q.inv ? YUF.inv : YUF.norm).idle[fr % 15] : q.who === 'cat' ? cfr('idle', now / 100, true, q.inv) : q.who === 'freddy' ? fredF(now / (1000 / IDLE_FPS)) : vfr('idle', now / 100, true, q.inv), 0, 0); } }
+  else if (state === 'fsel') fsDraw(now);
   else if (state === 'lansel') lanSelDraw(now);
   else if (state === 'chal') chalDraw(now);
   else if (state === 'story') storyFrame(now, dt);
-  else if (state === 'select') {
-    pctx.clearRect(0, 0, pv.width, pv.height);
-    pctx.drawImage(idleF[Math.floor(now / (1000 / IDLE_FPS)) % idleF.length], 0, 0);
-    for (const q of selPv) { const cu = q.who.slice(0, 2) === 'cu' ? cuIdleCv(q.who, now) : null; if (q.who.slice(0, 2) === 'cu' && !cu) continue; q.g.clearRect(0, 0, q.g.canvas.width, 64); q.g.drawImage(cu || (q.who === 'yuji' ? YUF.norm.idle[Math.floor(now / (1000 / IDLE_FPS)) % 15] : q.who === 'cat' ? cfr('idle', now / 100, true, false) : q.who === 'freddy' ? fredF(now / (1000 / IDLE_FPS)) : vfr('idle', now / 100, true, false)), 0, 0); }
-  } else if (state === 'title') drawHero(updateBlink(now));
+  else if (state === 'bsel') bsDraw(now);
+  else if (state === 'msel') mpDraw(now);
+  else if (state === 'vsplash') vsxDraw(now);
+  else if (state === 'title') drawHero(updateBlink(now));
   gfxPost(still || now < holdUntil); gfxEnd();      // (v1.153 the glow over the finished picture, and the numbers of the stats overlay)
 }
 
@@ -6519,7 +6500,7 @@ addEventListener('keydown', e => {
     return;
   }
   if (e.key !== 'Escape') return;
-  if (state === 'play') { if (!setPause(true)) leavePlay(); } else if (state === 'select' || state === 'ulog' || state === 'codes') show('title'); else if (state === 'mset') msBack(); else if (state === 'story') window.__back();      // (a story scene: Esc steps back like the Android back button)
+  if (state === 'play') { if (!setPause(true)) leavePlay(); } else if (state === 'bsel' || state === 'fsel' || state === 'msel' || state === 'vsplash') window.__back(); else if (state === 'ulog' || state === 'codes') show('title'); else if (state === 'mset') msBack(); else if (state === 'story') window.__back();      // (a story scene: Esc steps back like the Android back button)
 });
 addEventListener('keyup', e => {
   if (e.target.id === 'lanName' || e.target.id === 'cuName' || e.target.id === 'codeIn') return;
@@ -6541,8 +6522,6 @@ function goFullscreen() {                     // best effort; ignored where unsu
 }
 const inApp = /; wv\)/.test(navigator.userAgent);   // inside the Android app the activity already handles fullscreen + landscape
 $('start').addEventListener('click', () => { audio(); if (!inApp && matchMedia('(pointer:coarse)').matches) goFullscreen(); show('modes'); });
-$('gojo').addEventListener('click', () => { show('play'); skillUI(); });      // (free play as Gojo: all his moves are free there, see freePlay)
-const selPv = [];
 function startPractice(who, foe) {      // FREE PLAY as Yuji, Verity or the Cat: a Versus match against a punching bag that never ends: every move is free (freePlay), you cannot lose, the energy is always full, there is no timer, an enemy who is K.O.'d comes back with the next round (see trainStep). v1.24: SETTINGS > TRAIN controls the enemy (who he is, what he does, his health and level), your health and energy, the speed of the game and two overlays
   const sv = { ...vsPick }; audio(); vsPick.me = who; vsPick.foe = foe || TRF[TR.foe] || 'gojo'; twFightStart(); startMatch(TR.grade); Object.assign(vsPick, sv);
   vs.practice = true; vs.tl = 1e9; setModeUI();
@@ -6612,14 +6591,7 @@ function trainDraw(now) {      // the two overlays of the TRAIN page, as a small
   if ($('trI').textContent !== a) $('trI').textContent = a; if ($('trM').textContent !== m) $('trM').textContent = m;
   if (!trShown) { $('trHud').classList.add('on'); trShown = true; }
 }
-for (const b of document.querySelectorAll('#select .pp')) { const who = b.dataset.who, c = b.querySelector('canvas'); c.width = who === 'yuji' ? YU.idle.w : 64; c.height = 64; selPv.push({ g: c.getContext('2d'), who }); b.addEventListener('click', () => { if (who === 'cu3' && !suHas()) return; startPractice(who); }); }      // (v1.131: Sukuna's card is locked until he is bought, see cuSelRefresh)
-$('vsBtn').addEventListener('click', () => { buildGrades(); buildFighters(); show('versus'); });
-$('vsBack').addEventListener('click', () => show('select'));
-function mapBtns() { for (const id of ['mapBtn1', 'mapBtn2']) { const b = $(id); if (b) b.textContent = twPick ? 'MAP: SKYSCRAPER' : 'MAP: STREET'; } }      // (v1.173 the MAP button of the fighter and versus screens: STREET or the 50-floor SKYSCRAPER, kept in js_map)
-for (const id of ['mapBtn1', 'mapBtn2']) $(id).addEventListener('click', () => { twPick = twPick ? 0 : 1; try { localStorage.setItem('js_map', String(twPick)); } catch { /* the choice just is not kept */ } mapBtns(); });
-mapBtns();
-$('battles').addEventListener('click', () => { audio(); show('select'); });
-$('selBack').addEventListener('click', () => show('modes'));
+__SELECT__
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = __UPDATES__;
@@ -6656,7 +6628,6 @@ $('svStart').addEventListener('click', () => { if (svSel >= 0) startStory(svSel)
 $('svChap').addEventListener('click', () => { if (svSel >= 0) { audio(); svView = 1; renderSaves(); } });
 [0, 1, 2, 3, 4].forEach(i => $('svc' + i).addEventListener('click', () => { if (svSel >= 0 && i < svReached(loadSaves()[svSel])) startStory(svSel, i + 1); }));
 $('svBack').addEventListener('click', () => { if (svView) { svView = 0; renderSaves(); } else show('modes'); });
-$('lanMode').addEventListener('click', () => { audio(); show('lan'); lanStop(); $('lanCreate').disabled = $('lanBrowse').disabled = !LAN; });
 $('lanCreate').addEventListener('click', lanCreate);
 $('lanBrowse').addEventListener('click', lanBrowse);
 $('lanBack').addEventListener('click', lanBack);
@@ -6668,17 +6639,13 @@ bindPad('sns', v => { if (v) senseReq = true; });
 $('chalBack').addEventListener('click', () => show('modes'));
 $('skBack').addEventListener('click', () => show('modes'));
 for (const [k, id] of SK_TABS) $(id).addEventListener('click', () => { skTab = k; skSel = null; buildSkills(); });
-$('lsFight').addEventListener('click', lanFight);
-$('lsAgain').addEventListener('click', () => lanAgain(true));
-$('lsBack').addEventListener('click', lanLeave);
 addEventListener('pointerdown', e => { if (state === 'story') storySkip(e); });      // a tap skips to the next part of the cutscene (in the fight of chapter 3 it answers the prompts: c13Tap)
 addEventListener('pointerup', e => { if (state === 'story') { if (story && story.c15) c15Up(e); else if (typeof c13Up === 'function') c13Up(e); } }); addEventListener('pointercancel', e => { if (state === 'story') { if (story && story.c15) c15Up(e); else if (typeof c13Up === 'function') c13Up(e); } });      // a tap skips to the next part of the cutscene
 addEventListener('pointerdown', () => { if (yf && !paused) yfTap(pnow()); });      // (v1.49 Yuji's FATALITY: two taps skip it)
 addEventListener('pointerdown', () => { if (typeof suFgOn === 'function' && suFgOn() && !paused) suFgTap(pnow()); });      // (v1.127 Sukuna's FUGA cutscene: two taps skip it)
-$('vsGo').addEventListener('click', () => { twFightStart(); startMatch(vsSel); });
 $('vsNext').addEventListener('click', () => { twWant = !!vs && vs.map === 'tower' && !vs.story && !vs.hunt && !vs.rush && !vs.cv; if (vs && vs.cv) { startCurse(vs.ci + 1, 0); return; } const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
 $('vsAgain').addEventListener('click', () => { twWant = !!vs && vs.map === 'tower' && !vs.story && !vs.hunt && !vs.rush && !vs.cv; return vs && vs.hunt ? startHunt(vs.hunt.i) : vs && vs.rush ? (vs.run === ROUL ? startRoulette() : startRush()) : vs && vs.cv ? startCurse(vs.ci, vs.hard, vs.daily) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe); });
-$('vsMenu').addEventListener('click', () => { if (vs && vs.net) { lanLeave(); return; } if (vs && vs.hunt) { show('chal'); buildHunts(); return; } if (vs && vs.cv) { show('chal'); buildChal(); return; } if (vs && vs.story) { svView = 0; show('saves'); renderSaves(); } else { buildGrades(); buildFighters(); show('versus'); } });
+$('vsMenu').addEventListener('click', () => { if (vs && vs.net) { lanLeave(); return; } if (vs && vs.hunt) { show('chal'); buildHunts(); return; } if (vs && vs.cv) { show('chal'); buildChal(); return; } if (vs && vs.story) { svView = 0; show('saves'); renderSaves(); } else fsOpen('battle'); });
 $('back').addEventListener('click', () => { leavePlay(); });
 VOLS.forEach(([k, name]) => {
   const row = document.createElement('label');
@@ -6813,10 +6780,12 @@ window.__back = () => {                       // Android back button: step back 
   if (state === 'story') { svView = 0; show('saves'); renderSaves(); return true; }
   if (state === 'saves') { if (svView) { svView = 0; renderSaves(); } else show('modes'); return true; }
   if (state === 'chal' || state === 'skills') { show('modes'); return true; }
-  if (state === 'versus') { show('select'); return true; }      // (the Versus setup: the back button goes back to the character select instead of closing the app)
+  if (state === 'vsplash') { VSX.t0 = 0; mpOpen(); return true; }      // (v1.180 the VS splash: back to the map screen)
+  if (state === 'msel') { mpBack(); return true; }
+  if (state === 'fsel') { fsBack(); return true; }
   if (state === 'lansel') { lanLeave(); return true; }
   if (state === 'lan') { lanBack(); return true; }
-  if (state === 'select') { show('modes'); return true; }
+  if (state === 'bsel') { show('modes'); return true; }
   if (state === 'modes') { show('title'); return true; }
   if (state === 'ulog' || state === 'codes') { show('title'); return true; }
   if (state === 'mset') { msBack(); return true; }

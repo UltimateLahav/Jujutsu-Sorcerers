@@ -97,7 +97,7 @@ function scData() {
   SC.say = 'THE SAVES';
   try { const c = bkMake(); scT(!!bkRead(c), 'THE SAVE CODE DOES NOT READ BACK', ''); } catch (e) { scErr(e, 'SAVE CODE'); }
   const sv = loadSaves(); scT(Array.isArray(sv) && sv.length === 3, 'SAVE SLOTS', ''); scT(Number.isFinite(PROG.m) && PROG.m >= 0, 'MONEY IS NOT A NUMBER', String(PROG.m));
-  for (const w of SC_WHO) scT(!!document.querySelector('#select .pp[data-who="' + w + '"]') || (w === 'gojo' && !!$('gojo')), 'NO FIGHTER CARD FOR ' + w, '');
+  for (const w of SC_WHO) scT(!!document.querySelector('#fsGrid .fst[data-who="' + w + '"]'), 'NO FIGHTER FACE FOR ' + w, '');      // (v1.180 the faces of the fighter screen)
   SC.say = 'THE CODE AGAINST THE PAGE';      // the page's own text: every call that names a page element by its id is for a thing that is in the page, every call that plays a sound names one that exists
   try {
     const src = [...document.scripts].reduce((a, b) => b.textContent.length > a.textContent.length ? b : a).textContent, miss = new Set(), re = /\$\('([A-Za-z][\w-]*)'\)/g; let m, n = 0;
@@ -131,9 +131,10 @@ function scAudit(root) {
 }
 async function scMenus() {
   const click = (root, text) => { const b = [...document.querySelectorAll(root + ' button')].find(x => x.textContent.trim().toUpperCase().startsWith(text)); if (!b) throw new Error('NO BUTTON ' + text + ' IN ' + root); b.click(); };
-  const look = async (name, root, open) => {
+  const look = async (name, root, open, wait) => {
     SC.say = name; scCov('SCREENS', 0, 1); try { open(); } catch (e) { scErr(e, name); return; }
-    await scFrames(4); const el = document.querySelector(root); if (!el || !vis0(el)) { scNote('fail', 'THE SCREEN DID NOT OPEN: ' + name, root); return; }
+    await scFrames(4); if (wait) await new Promise(r => setTimeout(r, wait));      // (wait: a screen with a slide-in is looked at once it has come to rest)
+    const el = document.querySelector(root); if (!el || !vis0(el)) { scNote('fail', 'THE SCREEN DID NOT OPEN: ' + name, root); return; }
     const o = scAudit(el); for (const s of o.slice(0, 4)) scNote('warn', name + ': ' + s, innerWidth + 'X' + innerHeight); scPass(); scCov('SCREENS', 1, 0);
   };
   const vis0 = e => { const r = e.getBoundingClientRect(); return r.width > 1 && r.height > 1 && getComputedStyle(e).display !== 'none'; };
@@ -141,8 +142,14 @@ async function scMenus() {
   await look('TITLE', '#title', () => show('title'));
   await look('MODES', '#modes', () => { show('title'); click('#title', 'TAP TO START'); });
   await look('STORY SAVES', '#saves', () => { show('modes'); $('story').click(); });
-  await look('FIGHTER SELECT', '#select', () => { show('modes'); $('battles').click(); });
-  await look('VERSUS SETUP', '#versus', () => click('#select', 'VERSUS'));
+  await look('BATTLES', '#bsel', () => { show('modes'); $('battles').click(); });
+  await look('TRAINING FIGHTERS', '#fsel', () => $('bsTrain').click());
+  await look('TRAINING ENEMY', '#fsel', () => $('fsOk').click());
+  await look('TRAINING MAP', '#msel', () => $('fsOk').click());
+  await look('BATTLE FIGHTERS', '#fsel', () => { show('bsel'); $('bsBattle').click(); });
+  await look('BATTLE ENEMY', '#fsel', () => $('fsOk').click());
+  await look('BATTLE MAP', '#msel', () => $('fsOk').click());
+  await look('VS SPLASH', '#vsplash', () => $('mpGo').click(), 800);
   await look('CHALLENGES', '#chal', () => { show('modes'); $('chalMode').click(); });
   await look('SKILLS', '#skills', () => { show('modes'); $('skillsMode').click(); });
   for (const [t, bt] of SK_TABS) await look('SKILLS ' + t.toUpperCase(), '#skills', () => $(bt).click());

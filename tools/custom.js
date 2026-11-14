@@ -11,9 +11,8 @@ let cuS = cuStats(null);      // the stats of the fighter in the match
 let cuSn = 0, cuCp = 0, cuAtkQ = 0, cuLpQ = 0, cuPh = 0, cuJumpAt = -1, cuJumpC = false, cuAtkAt = -1, cuAtkK = 0, cuCmb = 0, cuCmbBy = 0, cuFired = [], cuRes = [], cuShots = [], cuMs = 50, cuLunged = 0, cuCd = [0, 0, 0, 0], cuBleed = null, cuVfx = [], cuDash = null, cuDashReady = 0;      // (the jump, the punch being thrown (which of the 4, since when), the next punch of the combo and until when it goes on)
 const cuMe = () => !!vs && typeof vs.me === 'string' && vs.me.slice(0, 2) === 'cu';
 const CU_GAME = [];      // the fighters of the match: 3 = Sukuna, 4 = Ryu (sukuna.js and ryu.js fill them when their pictures are cut): { name, frames: 64 x 64 canvases, ... }
-function cuSelRefresh() {      // the select screen opens: the hitbox pictures are measured again, and Sukuna's card is open once he is bought
+function cuSelRefresh() {      // a fighter screen opens: the hitbox pictures are measured again (v1.180 Sukuna's lock is fsWhy in tools/select.js)
   HB_C.clear();
-  { const sk = document.querySelector('#select [data-who="cu3"]'); if (sk) { const has = suHas(); sk.disabled = !has; sk.querySelector('i').textContent = has ? 'FREE PLAY' : 'LOCKED: $3000 IN SKILLS'; } }      // (v1.131 Sukuna's card is open once he is bought in SKILLS > CHARACTERS)
 }
 // ---- v1.85 HITBOXES: a custom fighter is measured on its own drawings, like everyone (see HB_TIP in the engine): its body is its idle pictures (the widest every row gets), the limb of an IMPACT is the picture it lands on and the next one, a shot is its drawing; a row of a drawing sits on the row (picture row - 1) of the tables because a custom picture is drawn 61 px above the floor line
 function cuSpan(art, key) {      // the rows of a drawing: { row: [farthest pixel behind its middle column, farthest in front of it] }
