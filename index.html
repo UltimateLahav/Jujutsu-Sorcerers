@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.182</small>
+    <small id="ver">V1.183</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -3852,7 +3852,7 @@ CE_COST.vPounce = 25; CE_COST.yUlt = 67;      // (v1.45: Verity's AIR BITE)
 CE_COST.fPierce = 20; CE_COST.fWater = 15; CE_COST.fDream = 67;      // (v1.94 FREDDY: the PIERCE is paid when the claw is driven in, the boiling water when his hand touches the floor (the throw is free), the DREAM like every other ULTIMATE; his slashes, heavy strike, block and dashes stay free, like Gojo's punches)
 let ce = 100, ceLast = -1e9, ceFlash = -1e9;      // the energy in %, when a move last cost some, when a move was last refused (the bar flashes red)
 function ceReset() { ce = 100; ceLast = ceFlash = -1e9; }
-function ceDeny(now) { if (now - ceFlash < 150) return; ceFlash = now; snd('noce'); }      // a refused move: the bar flashes red and says NO CE for a moment (one refusal per press, even if the press falls through to another move that is refused too)
+function ceDeny(now) { if (now - ceFlash < 150) return; ceFlash = now; snd('noce'); }      // a refused move: the bar flashes red for a moment (v1.183 it does not write NO CE any more) (one refusal per press, even if the press falls through to another move that is refused too)
 function ceSpend(cost, now) { if (!vs || vs.end || (vs.practice && TR.pce === 0) || (SET.ien && !vs.net)) return true; if (ce + 1e-6 < cost) { ceDeny(now); return false; } ce = Math.max(0, ce - cost); ceLast = now; return true; }      // pays for a move (free outside Versus mode); false = not enough energy, the move does not start
 function ceHas(cost) { return !vs || vs.end || (vs.practice && TR.pce === 0) || (SET.ien && !vs.net) || ce + 1e-6 >= cost; }      // can the energy pay for a move? (looks only, pays nothing)
 function ceTick(now, dt) {
@@ -3874,7 +3874,7 @@ function drawVs(now, ux = 0, uy = 0, force) {      // (the bars and names keep c
   if (!safeC) { drawVs0(now, ux, uy, VW); return; }
   ctx.save(); ctx.translate(safeC, 0); drawVs0(now, ux, uy, VW - 2 * safeC); ctx.restore();
 }
-function drawVs0(now, ux, uy, VW) {         // health bars, names, the grade, the timer, the round points and the big banners (ux, uy: undoes this frame's screen shake for everything except the banners)
+function drawVs0(now, ux, uy, VW) {         // health bars, names, the timer, the round points and the big banners (v1.183: no grade label, no cursed energy number) (ux, uy: undoes this frame's screen shake for everything except the banners)
   if (!vs) return; const W = Math.max(60, Math.min(96, (VW - 52) >> 1)), a = now - vs.t0, FO = foesOf(), ef = FO.length ? FO.reduce((t, f) => t + Math.max(0, f.hp), 0) / FO.reduce((t, f) => t + f.max, 0) : 0, es = FO.length ? FO.reduce((t, f) => t + Math.max(0, f.shown), 0) / FO.reduce((t, f) => t + f.max, 0) : 0, pf = Math.max(0, vs.hp) / PHP, ps = Math.max(0, vs.sh) / PHP;
   const bar = (x, y, f, g, right) => { ctx.fillStyle = '#000'; ctx.fillRect(x - 1, y - 1, W + 2, 8); ctx.fillStyle = '#3a1a2a'; ctx.fillRect(x, y, W, 6); const w1 = Math.round(W * g), w2 = Math.round(W * f); ctx.fillStyle = '#ffd27a'; ctx.fillRect(right ? x + W - w1 : x, y, w1, 6); ctx.fillStyle = f > 0.3 ? '#52e08a' : '#ff4a4a'; ctx.fillRect(right ? x + W - w2 : x, y, w2, 6); };
   ctx.save(); ctx.translate(ux, uy);
@@ -3887,7 +3887,8 @@ function drawVs0(now, ux, uy, VW) {         // health bars, names, the grade, th
     const fw = Math.round(W * Math.max(0, Math.min(100, flow)) / 100); ctx.fillStyle = '#000'; ctx.fillRect(5, 34, W + 2, 4); ctx.fillStyle = '#241033'; ctx.fillRect(6, 35, W, 2); ctx.fillStyle = flowOn ? (((now / 90) | 0) % 2 ? '#fff3b0' : '#ffd34d') : '#c77dff'; ctx.fillRect(6, 35, fw, 2);
     const d0 = dummy; if (d0 && d0.ko < 0) { const open = now < (d0.openUntil || 0), sw = Math.round(W * (open ? 1 : Math.max(0, Math.min(1, (d0.stg || 0) / STG_MAX)))); ctx.fillStyle = '#000'; ctx.fillRect(VW - 7 - W, 28, W + 2, 6); ctx.fillStyle = '#2a2208'; ctx.fillRect(VW - 6 - W, 29, W, 4); ctx.fillStyle = open ? (((now / 90) | 0) % 2 ? '#ffffff' : '#ffd34d') : '#ffb84a'; ctx.fillRect(VW - 6 - sw, 29, sw, 4); }
   }
-  pxt(NAMES[vs.me] + (vs.meInv ? ' (INV.)' : ''), 6, 45, '#ffffff', 8); pxt(bad ? 'NO CE' : 'CE ' + Math.round(ce) + '%', nx, 45, bad ? '#ff6a5a' : cc[3], 8); let lx = nx + 62; if (vs.bleed) { pxt('BLEED', lx, 45, '#ff4a4a', 8); lx += 48; } if (vs.fear) pxt('FEAR', lx, 45, '#c77dff', 8); pxt(vs.story ? (vs.foe === 'cat' ? 'CARTOON CAT' : vs.tn && !vs.c3 ? 'GOJO' : 'VERITY') : foeName, VW - 6, 45, '#ffffff', 8, 'right'); let rx2 = VW - 6; if (dummy && dummy.bleed) { pxt('BLEED', rx2, 37, '#ff4a4a', 8, 'right'); rx2 -= 48; } if (dummy && dummy.fear) pxt('FEAR', rx2, 37, '#c77dff', 8, 'right'); pxt(vs.story ? (vs.c3 ? 'CHAPTER 2' : vs.tn ? 'TRAINING' : 'SPECIAL GRADE') : vs.net ? 'WI-FI' : vs.hunt ? HUNT_SIZE[vs.hunt.h.s] + ' HUNT' : vs.cv ? (vs.rush ? 'WAVE ' + Math.min(vs.round, vs.run.waves.length) + '/' + vs.run.waves.length : (vs.hard ? 'HARD ' : '') + vs.cv.grade) : GRADES[vs.gi].name, VW - 6, 55, '#ffd34d', 8, 'right');
+  pxt(NAMES[vs.me] + (vs.meInv ? ' (INV.)' : ''), 6, 45, '#ffffff', 8); let lx = nx;      // (v1.183 no 'CE 100%' / 'NO CE' text any more: the bar says it, and flashes red when a move is refused; BLEED and FEAR start where it started)
+   if (vs.bleed) { pxt('BLEED', lx, 45, '#ff4a4a', 8); lx += 48; } if (vs.fear) pxt('FEAR', lx, 45, '#c77dff', 8); pxt(vs.story ? (vs.foe === 'cat' ? 'CARTOON CAT' : vs.tn && !vs.c3 ? 'GOJO' : 'VERITY') : foeName, VW - 6, 45, '#ffffff', 8, 'right'); let rx2 = VW - 6; if (dummy && dummy.bleed) { pxt('BLEED', rx2, 37, '#ff4a4a', 8, 'right'); rx2 -= 48; } if (dummy && dummy.fear) pxt('FEAR', rx2, 37, '#c77dff', 8, 'right'); const tag = vs.story ? (vs.c3 ? 'CHAPTER 2' : vs.tn ? 'TRAINING' : '') : vs.net ? 'WI-FI' : vs.hunt ? HUNT_SIZE[vs.hunt.h.s] + ' HUNT' : vs.cv ? (vs.rush ? 'WAVE ' + Math.min(vs.round, vs.run.waves.length) + '/' + vs.run.waves.length : vs.hard ? 'HARD' : '') : ''; if (tag) pxt(tag, VW - 6, 55, '#ffd34d', 8, 'right');      // (v1.183 the GRADE under the enemy's name is gone (GRADE 4 ... SEMI-GRADE 1, SPECIAL GRADE, a curse's grade); what is not a grade stays: CHAPTER 2, TRAINING, WI-FI, a hunt, WAVE n / N, HARD)
   if (!vs.story && !vs.practice) pxt(String(Math.max(0, Math.ceil(vs.tl / 1000))), VW / 2, 18, vs.tl < 10000 ? '#ff6a5a' : '#ffffff', 16, 'center');
   if (vs.hunt && !vs.hunt.over) huntHud(now, VW);
   const kob = vs.ph === 'ko';
@@ -19551,6 +19552,15 @@ $('lsBack').addEventListener('click', lanLeave);
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+ {
+  "v": "1.183",
+  "t": "BATTLE SCREEN: NO GRADE LABEL, NO CURSED ENERGY NUMBER",
+  "n": [
+   "The GRADE under the enemy's name (GRADE 4, GRADE 3, GRADE 2, SEMI-GRADE 1, GRADE 1, SPECIAL GRADE, and the grade of a curse) is gone from the battle screen. The labels that are not grades stay: TRAINING and CHAPTER 2 in the story fights, WI-FI, the size of a hunt (SMALL HUNT ...), WAVE 2/5 in RUSH, and HARD.",
+   "The cursed energy number ('CE 100%') next to your name is gone, so the cursed energy bar shows it alone. The bar still flashes red when a move is refused, but it no longer writes NO CE. BLEED and FEAR (when you have them) now start right after your name.",
+   "Nothing else on the screen changed: the health, cursed energy, FLOW (purple) and STAGGER (orange) bars, the names, the round points, the timer, the buttons of the moves and the enemy info. The optional MOVE INFO panel of Settings > TRAIN still lists your ENERGY, and the grade is still picked on the fighter screen and shown on the result screen."
+  ]
+ },
  {
   "v": "1.182",
   "t": "THE FLOOR IS A SIGN ON THE WALL",

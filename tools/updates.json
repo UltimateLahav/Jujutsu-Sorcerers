@@ -1,5 +1,14 @@
 [
  {
+  "v": "1.183",
+  "t": "BATTLE SCREEN: NO GRADE LABEL, NO CURSED ENERGY NUMBER",
+  "n": [
+   "The GRADE under the enemy's name (GRADE 4, GRADE 3, GRADE 2, SEMI-GRADE 1, GRADE 1, SPECIAL GRADE, and the grade of a curse) is gone from the battle screen. The labels that are not grades stay: TRAINING and CHAPTER 2 in the story fights, WI-FI, the size of a hunt (SMALL HUNT ...), WAVE 2/5 in RUSH, and HARD.",
+   "The cursed energy number ('CE 100%') next to your name is gone, so the cursed energy bar shows it alone. The bar still flashes red when a move is refused, but it no longer writes NO CE. BLEED and FEAR (when you have them) now start right after your name.",
+   "Nothing else on the screen changed: the health, cursed energy, FLOW (purple) and STAGGER (orange) bars, the names, the round points, the timer, the buttons of the moves and the enemy info. The optional MOVE INFO panel of Settings > TRAIN still lists your ENERGY, and the grade is still picked on the fighter screen and shown on the result screen."
+  ]
+ },
+ {
   "v": "1.182",
   "t": "THE FLOOR IS A SIGN ON THE WALL",
   "n": [
