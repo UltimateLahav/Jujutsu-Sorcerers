@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.184</small>
+    <small id="ver">V1.185</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -485,7 +485,7 @@ function hbMark(att, k, ax, am, tgt, tx, tm, tipRows, own) {      // a blow reac
 }
 const hbE = k => hbMark(vs ? vs.foe : 'gojo', k, dummy.x, dummy.x - wx > -4, hbMe(), wx, false);      // (the enemy's blow reaches its impact picture)
 function hbDraw(now) {
-  if (!SET.hb || state !== 'play' || c4x || js || vf || fat || yf || dom || ult || cf) return;      // (not in the cutscenes of the finishers and domains: the camera is somewhere else)
+  if (!SET.hb || state !== 'play' || c4x || js || vf || fat || yf || dom || ult || cf || ff) return;      // (not in the cutscenes of the finishers and domains: the camera is somewhere else)
   const cx = Math.round(VW / 2), top = gy - 60, row = (r, a, b, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(a), top + r, Math.max(1, Math.round(b - a)), 1); };
   const body = (key, x, mir, lift) => { const B = hbBody(key); if (!B) return; for (const r in B) { const b = B[r]; row(+r - lift, mir ? x - b[1] - 1 : x + b[0], mir ? x - b[0] : x + b[1] + 1, 'rgba(70,160,255,0.42)'); } ctx.fillStyle = '#ffe14a'; ctx.fillRect(Math.round(x), top + 28 - lift, 1, 9); };
   ctx.save(); body(hbMe(), cx, false, Math.max(gojoLift || 0, gAir ? gAirH || 0 : 0));
@@ -1378,7 +1378,7 @@ function netSwing(k, bonus, now) {            // W|: his swing k reaches me: the
   if (!vs || !vs.net || vs.ph !== 'fight' || !dummy || !(k >= 0 && DMG[k] !== undefined)) { lanSend('R|' + k + '|m|0|0'); return; }
   netK = k; netBonus = bonus | 0; const held = vs.foe === 'cat' && k === 31 && now < (vs.catHold || 0); gojoHit(k, now); if (held && vs.catHold) vs.catHold = Math.max(vs.catHold, now + 1000); if (netK >= 0) nres('m'); netK = -1;
 }
-const smackOf = k => k >= 36 ? YU_ATK.snd[k - 24] : k >= 30 ? (k === 33 || k === 35 ? 3 : 0) : k >= 24 ? YU_ATK.snd[k - 24] : k === 22 ? 3 : k;      // (which blow sound a swing number makes)
+const smackOf = k => k >= 60 ? 0 : k >= 36 ? YU_ATK.snd[k - 24] : k >= 30 ? (k === 33 || k === 35 ? 3 : 0) : k >= 24 ? YU_ATK.snd[k - 24] : k === 22 ? 3 : k;      // (which blow sound a swing number makes)
 function netResult(k, r, dm, now) {           // R|: what my swing did on his phone: popups, sound, shake, the combo meter
   if (!vs || !vs.net || !dummy || vs.ph !== 'fight') return;
   if (r === 'h') {
@@ -1443,7 +1443,7 @@ function show(s) {
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll(); $('settings').classList.remove('on');
-  js = null; vf = null; if (yf) yfReset(); if (cf) cfReset(); if (ke) keReset(); blindOff = false; bfo = null; bfp = false; ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; inhAt = -1; inhLock = false; inhArm = -1; smd = null; gsd = -1; gsdOn = false; impf = null; tqBlock = null; tqGrab = null; tqBeam = []; tqFx = []; ceOn = false; ceAmt = 0; ceFlameAt = 0; gDownUntil = 0; gAir = null; gAirH = 0; kickBuf = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
+  js = null; vf = null; if (yf) yfReset(); if (cf) cfReset(); if (ff) ffReset(); if (ke) keReset(); blindOff = false; bfo = null; bfp = false; ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; inhAt = -1; inhLock = false; inhArm = -1; smd = null; gsd = -1; gsdOn = false; impf = null; tqBlock = null; tqGrab = null; tqBeam = []; tqFx = []; ceOn = false; ceAmt = 0; ceFlameAt = 0; gDownUntil = 0; gAir = null; gAirH = 0; kickBuf = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
   if (s === 'play') { spawnAt = pnow(); wx = 0; wvx = 0; deb = []; lit = []; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; sparks = []; stopMs = 0; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(pnow(), 1200);
@@ -1750,7 +1750,7 @@ function drawSparks(now, dt) {
   ctx.globalAlpha = 1; drawDeb(now, dt);
 }
 function onLand(k, dmg, now) {      // a blow of yours landed: the sparks, the hit-stop, a flash on the heavy ones, and the energy
-  const heavy = dmg >= 20 || k === 3 || k >= 40;
+  const heavy = dmg >= 20 || k === 3 || (k >= 40 && k < 60);
   const S = dummy.curse ? CSP[dummy.curse.id] : null, bh = S ? S.g - S.top : 52;      // (the sparks fly where the blow lands: in the middle of his body, at his front)
   hitStop(heavy ? 70 : 38); buzz(heavy ? 22 : 10); if (heavy) shockAt(dummy.x, 110, 50, 0.6); spark(dummy.x - (S ? Math.round(dummy.curse.hw * 0.7) : 7), gy - Math.round(bh * (0.3 + Math.random() * 0.35)), heavy ? 12 : 7, heavy ? ['#ffffff', '#ffe9a0', '#ffb060'] : ['#ffffff', '#ffe9a0', '#9fd8ff'], heavy, 1);
   if (heavy) flash(now, 70, 0.14);
@@ -1819,7 +1819,7 @@ function hitFoe(k, now) {                     // called on the impact frame: a h
   if (grab) { dummy.cheld = { until: now + CT.hold }; dummy.stunUntil = Math.max(dummy.stunUntil, dummy.cheld.until); dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = CT.hold + 100; dummy.vx = 0; dummy.cact = null; dummy.vact = null; }      // GRAB: no reaction, he is held and cannot act (the glove pulls him in on frame 8: see catScene)
   else { const juggle = airUp(dummy) && k !== 47;      // (a hit on an enemy who is in the air: he keeps his flight and his pose, only the FACE KICK ends it)
     if (k === 46 && (!dummy.air || dummy.air.kind === 'bounce')) { dummy.air = airMake(now, 0, AIR_V, AIR_G, 'up'); dummy.rx = AIR_RX; dummy.rxAt = now; }      // (the UPPERCUT launches him: see airStepDummy)
-    else if (!juggle) { dummy.rx = isD1(k) ? 0 : k === 29 || k >= 40 || (k === 21 && !!vs && vs.me === 'yuji') || (!!vs && vs.me === 'cat' && (k === 33 || k === 35)) || (!!vs && vs.foe === 'cat' && (k === 3 || k === 17 || k === 21)) ? 4 : (Math.random() * 10) | 0; dummy.rxAt = now; if (k === 47) dummy.air = airUp(dummy) ? airMake(now, dummy.airH, -80, 900, 'drop') : null; }      // (the FACE KICK knocks him out of the air: he drops fast, far away)
+    else if (!juggle) { dummy.rx = isD1(k) ? 0 : k === 29 || (k >= 40 && k < 60) || (k === 21 && !!vs && vs.me === 'yuji') || (!!vs && vs.me === 'cat' && (k === 33 || k === 35)) || (!!vs && vs.foe === 'cat' && (k === 3 || k === 17 || k === 21)) ? 4 : (Math.random() * 10) | 0; dummy.rxAt = now; if (k === 47) dummy.air = airUp(dummy) ? airMake(now, dummy.airH, -80, 900, 'drop') : null; }      // (the FACE KICK knocks him out of the air: he drops fast, far away)
     if (held && k !== 33) { dummy.cheld.until = now + CT.hold; dummy.stunUntil = Math.max(dummy.stunUntil, dummy.cheld.until); } else catRelease(now); }      // (the big fall: Yuji's last kick, the Cat's kick and the giant's kick, and the big kicks on the Cat; otherwise one of ten reactions, picked at random)
   if (window.__sfxlog) window.__sfxlog.push(['rx', Math.round(now), dummy.rx]);
   say('' + dmg, dummy.x, popCol(), 8, now); if (broke) say('GUARD BREAK', dummy.x, '#ffd34d', 8, now + 90); onLand(k, dmg, now); foeGain(k, hv, rp, now); if (hv) { dummy.vx += (dummy.x >= wx ? 1 : -1) * 150; shakeUntil = now + 170; shakeAmp = 4; }
@@ -2260,7 +2260,7 @@ const voidImg = new Image(); voidImg.src = VOID_IMG; let domBox = null;
 const DOM_ORDER = ['blind', 'pose', 'face', 'wide', 'burst', 'void', 'collapse', 'reblind'], DOM_MS = { blind: 2200, pose: 900, face: DF_N * 1000 / DF_FPS, wide: 1500, burst: 1900, void: 10000, collapse: 1400, reblind: 1000 };      // (blind: the blindfold comes down, reblind: it goes back on; both are close-ups of his face)
 let dom = null, domHold = false, domReq = false, domReadyAt = 0, voidCv = null, voidG = null, fd = null;      // (fd = Freddy's nightmare in progress, see freddyDream)
 // v1.181 A CUTSCENE OF A FIGHT: every bar, name, button and number that is not part of it stays away. The moments: a FATALITY (every fighter's, yours or the enemy's), an ULTIMATE (the Cat's choke, Yuji's four Black Flashes, Ryu's JUST THIS ONCE, Freddy's DREAM), Verity's JUMPSCARE, Sukuna's FUGA and his DOMAIN SIGN, the OPENING and the closing of a DOMAIN (not the fight inside it), the blindfold close-ups. cutsceneOn() is asked by drawVs (the bars and names), stateDraw, twOverlay and the elevator panel (canvas), and once a frame by cutUI, which puts the class `cut` on the page: the CSS then hides the top-left buttons, the touch controls, the SENSE button, the training numbers and the elevator panel (the tap prompts of a cutscene are other elements and stay).
-function cutsceneOn() { return state === 'play' && !!vs && !!(fat || yf || vf || cf || ke || js || se || de || ult || yu || fd || bfo || (dom && domLock()) || (typeof suFatOn === 'function' && suFatOn()) || (typeof suFgOn === 'function' && suFgOn()) || (typeof suSignOn === 'function' && suSignOn()) || ryUlNoHud()); }
+function cutsceneOn() { return state === 'play' && !!vs && !!(fat || yf || vf || cf || ff || ke || js || se || de || ult || yu || fd || bfo || (dom && domLock()) || (typeof suFatOn === 'function' && suFatOn()) || (typeof suFgOn === 'function' && suFgOn()) || (typeof suSignOn === 'function' && suSignOn()) || ryUlNoHud()); }
 let cutOn = false;
 function cutUI() { const c = cutsceneOn(); if (c !== cutOn) { cutOn = c; document.body.classList.toggle('cut', c); } }
 function domFrozen() { return !!dom; }      // (the people stand still for the whole domain, the collapse too)
@@ -2698,6 +2698,7 @@ let fat = null, fatReq = 0;                            // fat = the running cuts
 const orbAt = (set, n, sx, sy, s) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));      // an orb frame centred on (sx, sy)
 function fatState(now) {                               // Gojo's FATALITY (and Verity's). 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far away; 3 = not possible right now
   if (vs && vs.me === 'cu4') return 3;      // (v1.166 Ryu has no FATALITY; before, his button played Gojo's)
+  if (fredMe()) return ffState(now);      // (v1.185 Freddy's FATALITY: he eats the enemy, see fred3.js)
   if (!vs || vs.story || vs.cv || fredMe() || lacks('fat') || vs.ph !== 'fight' || js || vf || fat || yf || yu || (dom && domLock()) || ult || cf || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (v1.181 a DOMAIN no longer stops it: only its opening, while the controls are locked; fatGo ends the domain)      // (Verity and the Cat have their own FATALITY: the same rules; so has Yuji since v1.49, the 30-second one; Freddy has none yet, v1.52: his button used to play Gojo's FATALITY with Gojo in it)      // (no FATALITY in the story fight: his ending is a Reversal Red)
   if (!(dummy.hp <= dummy.max * FAT_LOW)) return 1;      // Gojo's FATALITY: only when the enemy is at 20% health or less
   if (Math.abs(dummy.x - wx) > FAT_RANGE) return 2;
@@ -2707,7 +2708,7 @@ function fatAiState(now) {                             // the enemy's own FATALI
   if (!vs || vs.story || vs.foe === 'yuji' || vs.ph !== 'fight' || js || vf || fat || yf || dom || ult || cf || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.cact || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
   return vs.hp <= PHP * FAT_LOW && Math.abs(dummy.x - wx) <= FAT_RANGE && !gojoGone && gojoLift <= 12 && dgAt < 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
 }
-function fatGo(now, dt, rev) { if (dom) domReset(); if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else if (rev ? vs.foe === 'cat' : vs.me === 'cat') { cfStart(now, rev); cfFrame(now, dt); } else if (!rev && vs.me === 'yuji') { yfStart(now); yfFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's and the Cat's FATALITY are their own cutscenes)
+function fatGo(now, dt, rev) { if (dom) domReset(); if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else if (rev ? vs.foe === 'cat' : vs.me === 'cat') { cfStart(now, rev); cfFrame(now, dt); } else if (!rev && vs.me === 'yuji') { yfStart(now); yfFrame(now, dt); } else if (!rev && fredMe()) { ffStart(now); ffFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's and the Cat's FATALITY are their own cutscenes)
 function fatUI(now) {                                  // the button: only in a match, dark until it can be used, then it glows
   const col = $('fat').parentNode; col.classList.toggle('vs', !!vs); col.classList.toggle('vy', !!vs && vs.me === 'verity'); col.classList.toggle('yj', !!vs && vs.me === 'yuji'); col.classList.toggle('kt', !!vs && vs.me === 'cat'); col.classList.toggle('nt', !!vs && !!vs.net); col.classList.toggle('nb', !!vs && !!vs.net && vs.me !== 'gojo'); $('hud').classList.toggle('vs', !!vs); $('pauseBtn').style.display = vs && vs.net ? 'none' : ''; if (vs) $('fat').classList.toggle('rdy', fatState(now) === 0);
 }
@@ -4429,6 +4430,7 @@ function drawScene(now, dt) {
   if (js) { jsFrame(now, dt); return; }         // ...and the JUMPSCARE
   if (vf) { vfFrame(now, dt); return; }         // ...and Verity's FATALITY
   if (cf) { cfFrame(now, dt); return; }         // ...and the Cat's FATALITY
+  if (ff) { ffFrame(now, dt); return; }         // ...and Freddy's
   if (ke) { keFrame(now, dt); return; }         // ...and the end of the Cat in the story
   comboEscape(now); flowTick(now); yuTick(now, dt); counterTick(now); domTick(now); bfTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); netLeash(now); if (!dom && !(vs && vs.net)) { if (vs && vs.foe === 'verity') storyBattleTick(now, dt); else if (vs && vs.foe === 'cat') catTick(now, dt); ultTick(now, dt); }      // (the DOMAIN freezes everyone: none of the enemy's own clocks run while it lasts)
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
@@ -6014,7 +6016,8 @@ function fredC(kind, i) {      // picture i (0-14) of the crouch family as a can
   c = document.createElement('canvas'); c.width = c.height = 64; goreFredCut(c, i * 64, (5 + kind) * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'C:' + kind + ',' + i; FRC.set(key, c); return c;
 }
 function fredA(kind, i) {      // picture i (0-14) of his M1 as a canvas of 64 x 64: kind 0 = the claw slash, 1 = the slash with his bare hand: the sheet has them in rows 9 and 10; kind 6 = the CROUCH RAKE (v1.86, row 13 of the sheet, drawn 8 px to the left: see FRED_RAKE_X)
-  i = Math.max(0, Math.min(14, Math.floor(i))); const key = fredLast = kind === 6 ? 500 + i : 300 + kind * 15 + i; let c = FRC.get(key); if (c) return c;
+  i = Math.max(0, Math.min(14, Math.floor(i))); if (kind >= FRED_FAR.k0) { fredLast = 1100 + (kind - FRED_FAR.k0) * 15 + i; return fredFarPic(kind, i); }      // (v1.185 the stretched punches, 60 and 61: made fresh, see fred2.js)
+  const key = fredLast = kind === 6 ? 500 + i : 300 + kind * 15 + i; let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
   c = document.createElement('canvas'); c.width = c.height = 64; goreFredCut(c, i * 64, (kind === 6 ? 12 : 8 + kind) * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'A:' + kind + ',' + i; FRC.set(key, c); return c;
 }
@@ -6102,7 +6105,7 @@ const FRED_DASH = { lead: 25, ms: 275, gap: 14, room: 8 };
 let fredJC = false, fredLC = false, fredTD = -1, fredLandC = false, fredCrQ = -1, fredUpQ = -1, fredSf = -1, fredEv = -1;      // the jump began from a crouch; CROUCH was pressed in the air; the moment of touch-down; the landing is a crouch landing; a crouch was asked for (when) and waits for the step to finish; the picture of going down / standing up (0-14)
 // THE WALK (v1.40): an elegant glide. The cycle (15 frames = two steps) is driven by the GROUND he covers, one step per 15 px, so a foot on the ground never slides (the picture's foot moves back exactly as fast as he moves forward); he walks forward at 44 px/s and back at 32 (the cycle plays the other way round); when he stops, the step in progress is finished slowly up to the passing pose (the feet together) and he stands again; a blow, the Cat's hold or the enemy's body stops him.
 const FRED_FWD = 44, FRED_BACK = 32, FRED_STEP = 15, FRED_PASS = 4.65, FRED_CWALK = 0.6, FRED_CSTEP = 8.06, FRED_RAKE_X = 8, FRED_BSTEP = 5.65, FRED_BOP = [1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0];      // px/s forward, px/s back, px of one step, the frame of the passing pose (the other one is 7.5 frames on), v1.87 the block walk: px of one step (7 px strokes of the foot, never sliding) and how many px the body is lifted in each of its 15 pictures (the same numbers as BOP in tools/freddy_art.py)
-const fredPick = () => { if (stance === 'crouch') return 6; const k = combo % 2; combo = (k + 1) % 2; return k; };      // (the swing that comes next: crouched the CROUCH RAKE, standing the two slashes in turn)
+const fredPick = now => { if (stance === 'crouch') return 6; const fk = fredFarK(now); if (fk) return fk; const k = combo % 2; combo = (k + 1) % 2; return k; };      // (v1.185 with the enemy far away (more than 60 px) the swing is a stretched punch: 60 the left hand, 61 the right, see fred2.js)      // (the swing that comes next: crouched the CROUCH RAKE, standing the two slashes in turn)
 let fredPh = 0, fredWalk = false, fredDir = 1, fredStep = -1, fredTg = 0;      // where he is in the cycle (0-15), whether the walk is showing, the way he went last, which footfall was the last
 let fredGrabAt = -1e9, fredGrabY = 24, fredBlkExt = 0, fredTx = 55, fredTy = 21; const fredNC = new Map();
 function fredNoClaw(c) { let o = fredNC.get(c); if (!o) { o = document.createElement('canvas'); o.width = c.width; o.height = c.height; const g = o.getContext('2d'); g.drawImage(c, 0, 0); g.clearRect(39, 8, 12, 13); fredNC.set(c, o); } return o; }      // (his idle picture without the claw he holds at the chest: the arm that goes out is drawn on top)
@@ -6272,11 +6275,11 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   if (hf >= 0) { stance = 'stand'; stickCr = false; fredCrQ = fredUpQ = -1; atkAt = -1; atkQ = false; dgAt = -1; }      // (a blow stands him up and stops his swing and his dash, whatever he was doing)
   const can = hf < 0 && t >= 1 && now >= pStun && (!vs || vs.ph === 'fight');      // he may act: not while he flinches, is held, appears or between the rounds
   let af = -1;      // the picture of his swing (0-14, 15 swings a second...: the game's M1 speed), -1 = no swing
-  if (atkAt >= 0) { af = Math.floor(Math.max(0, now - atkAt) * (atkK === 7 ? FRED_PIERCE.fps : ATK_FPS[atkK] * (heavyAt && atkAt === heavyAt ? FRED_HEAVY_SLOW : 1)) / 1000); if (af >= (atkK === 7 ? FRED_PIERCE.len : 15)) { if (atkQ) { atkQ = false; atkK = fredPick(); atkAt = now; af = 0; } else { atkAt = -1; af = -1; comboUntil = now + COMBO_MS; } } }      // (a press during a swing chains the next one)
+  if (atkAt >= 0) { af = Math.floor(Math.max(0, now - atkAt) * (atkK === 7 ? FRED_PIERCE.fps : ATK_FPS[atkK] * (heavyAt && atkAt === heavyAt ? FRED_HEAVY_SLOW : 1)) / 1000); if (af >= (atkK === 7 ? FRED_PIERCE.len : 15)) { if (atkQ) { atkQ = false; atkK = fredPick(now); atkAt = now; af = 0; } else { atkAt = -1; af = -1; comboUntil = now + COMBO_MS; } } }      // (a press during a swing chains the next one)
   let df = -1;      // the picture of his dash (0-14, 40 a second), -1 = no dash
   if (dgAt >= 0) { df = Math.floor(Math.max(0, now - dgAt) * DASH_FPS / 1000); if (df >= 15) { dgAt = -1; df = -1; dgReady = now + 150; } }
   if (jumpAt < 0) { fredJC = fredLC = fredLandC = false; fredTD = -1; }      // (no jump is going on: nothing is left of the last one)
-  if (t < 1 || !can) { if (fwPh && (t < 1 || hf >= 0 || !(!vs || vs.ph === 'fight'))) { fwPh = ''; fwPoolAt = now; fwCd = now + FRED_WATER.cd; } if (t < 1) { fwBalls.length = 0; fwDrops.length = 0; fwPool = 0; fwCd = 0; } }      // (a blow, the end of the round or a new match dries the puddle)
+  if (t < 1 || !can) { if (fwPh && (t < 1 || hf >= 0 || !(!vs || vs.ph === 'fight'))) { fwPh = ''; fwPoolAt = now; fwCd = now + FRED_WATER.cd; } if (t < 1) { fwBalls.length = 0; fwDrops.length = 0; fwPool = 0; fwCd = 0; fgReset(); } }      // (a blow, the end of the round or a new match dries the puddle)
   if (jumpReq) { jumpReq = false; if (jumpAt < 0 && can && !fwPh && af < 0 && df < 0 && blkAt < 0 && (stance === 'stand' || stance === 'crouch')) { fredJC = stance === 'crouch'; stance = 'stand'; stickCr = false; fredCrQ = -1; jumpAt = now; fredWalk = false; } }      // (a jump from the ground, not in the middle of going down or standing up; from a crouch it is a spring)
   let jk = -1, lift = 0, jpic = null;      // the picture of the jump as a number from 0 to 39 (the picture of a standing jump at this moment: it tells every part of the game where in the jump he is), how high the jump has raised him, and the picture itself
   if (jumpAt >= 0) {
@@ -6289,12 +6292,13 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
     else { const l = je - pre - fl; jk = 34 + Math.min(5, Math.floor(l / ld * 6)); jpic = fredLandC ? fredC(2, l / ld * 15) : fredJ(jk); }
   }
   if (hf >= 0) { jumpAt = -1; jk = -1; lift = 0; jpic = null; }      // (a blow knocks him out of the jump)
+  if (fg) { fgScene(now, dt, hf); if (fg && fg.jp) { jpic = fg.jp; lift = fg.lift; } }      // (v1.185 the ground slam: his leap is a picture of the jump, lifted)
   gojoLift = lift; const air = jk >= 6 && jk <= 33;      // (the enemy's blows miss him up there, and he passes over a body)
   if (jk !== fredJf) { if (fredJf < 6 && jk >= 6) { snd('jump'); gritAt(wx, 5, 45, 0); shockAt(wx, 50, 30, 0.5); } if (fredJf < 34 && jk >= 34) { snd('land', 1); gritAt(wx, 7, 60, 0); shockAt(wx, 90, 45, 0.7); } fredJf = jk; }
-  if (crReq) { crReq = false; if (jumpAt >= 0) { if (air) fredLC = !fredLC; else if (fredTD >= 0 && !fredLandC) fredCrQ = now; } else if (can && !fwPh && stance === 'stand') fredCrQ = now; else if (can && df < 0 && stance === 'crouch') { if (fredWalk) fredUpQ = now; else { stance = 'up'; stAt = now; stickCr = false; } } }      // (CROUCH: tap to go down (v1.87: also with BLOCK held: the guard drops while he goes down and goes up again crouched), tap again to stand up (a crouch walk finishes its step first); in the air it makes him land crouched, and again undoes it; during a standing landing it is kept and he goes down when he has landed)
+  if (crReq) { crReq = false; if (jumpAt >= 0) { if (air) fredLC = !fredLC; else if (fredTD >= 0 && !fredLandC) fredCrQ = now; } else if (can && !fwPh && stance === 'stand') fredCrQ = now; else if (can && !fwPh && df < 0 && stance === 'crouch') { if (fredWalk) fredUpQ = now; else { stance = 'up'; stAt = now; stickCr = false; } } }      // (CROUCH: tap to go down (v1.87: also with BLOCK held: the guard drops while he goes down and goes up again crouched), tap again to stand up (a crouch walk finishes its step first); in the air it makes him land crouched, and again undoes it; during a standing landing it is kept and he goes down when he has landed)
   if (stance === 'down' || stance === 'up') { fredSf = Math.floor(Math.max(0, now - stAt) * CR_FPS / 1000); if (fredSf >= 15) { stance = stance === 'down' ? 'crouch' : 'stand'; fredSf = -1; } } else fredSf = -1;      // (15 pictures going down; standing up plays them backwards)
-  if (atkReq) { atkReq = false; if (can && !fwPh && jumpAt < 0 && df < 0 && blkAt < 0 && (stance === 'stand' || stance === 'crouch') && fredSf < 0) { if (af >= 0) atkQ = true; else { if (now > comboUntil) combo = 0; atkK = fredPick(); atkAt = now; af = 0; atkQ = false; fredWalk = false; fredCrQ = fredUpQ = -1; } } }      // (M1: the first press slashes, a press during the swing chains the second; crouched it is the CROUCH RAKE, again and again; not going down or standing up, in the air, hurt or held)
-  if (af < 0 && combo !== 0 && now > comboUntil) combo = 0;
+  if (atkReq) { atkReq = false; if (can && !fwPh && jumpAt < 0 && df < 0 && blkAt < 0 && (stance === 'stand' || stance === 'crouch') && fredSf < 0) { if (af >= 0) atkQ = true; else { if (now > comboUntil) { combo = 0; fredFarC = 0; } atkK = fredPick(now); atkAt = now; af = 0; atkQ = false; fredWalk = false; fredCrQ = fredUpQ = -1; } } }      // (M1: the first press slashes, a press during the swing chains the second; crouched it is the CROUCH RAKE, again and again; not going down or standing up, in the air, hurt or held)
+  if (af < 0 && now > comboUntil) { combo = 0; fredFarC = 0; }
   if (atkHold >= 0 && atkHold !== fredHoldSeen) { fredHoldSeen = atkHold; fredHoldCold = !(hits.n > 0 && atkHold <= hits.until); }      // (a new press: does it begin with no combo going on?)
   if (hf >= 0) atkHold = -1;      // (a blow on him ends the hold)
   let fredCh = -1;      // the charge of the pierce (0-1) while he holds ATTACK, -1 = not charging
@@ -6309,7 +6313,7 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
       }
     }
   }
-  { const lab = stance === 'crouch' ? FRED_CR : FRED_M1[combo % 2]; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; } }
+  { const lab = stance === 'crouch' ? FRED_CR : fredFarGap(now) ? FRED_FAR.names[fredFarC & 1] : FRED_M1[combo % 2]; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; } }
   if (dashReq) {      // DASH: forward when he is held forward or stands still, a back-step when back is held; on the ground, standing, not swinging; no room in front of the enemy, no dash
     dashReq = false;
     if (can && !fwPh && jumpAt < 0 && af < 0 && df < 0 && blkAt < 0 && (stance === 'stand' || stance === 'crouch') && fredSf < 0 && now > dgReady) {
@@ -6322,6 +6326,7 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
     if (!fwPh && now >= fwCd && ceSpend(CE_COST.fWater, now)) { fwPh = 'touch'; fwAt = now; fredWalk = false; fredTg = wvx = 0; atkQ = false; fwPool = 0; fwPoolAt = -1; snd('ripple'); }
     else if (fwPh === 'ready') { fwPh = 'throw'; fwAt = now; fwFired = false; snd('swing', 3); }
   }
+  if (blueReq && can && jumpAt < 0 && af < 0 && df < 0 && blkAt < 0 && stance === 'crouch' && fredSf < 0 && fredCrQ < 0 && fredUpQ < 0 && !fwPh && !fg) fgTry(now);      // (v1.185 BLUE while crouched: the GROUND SLAM, see fred2.js)
   if (fwPh === 'touch' && now - fwAt >= 15000 / FRED_WATER.touchFps) { fwPh = 'ready'; fwAt = now; }
   else if (fwPh === 'ready' && now - fwAt > FRED_WATER.hold) { fwPh = ''; fwPoolAt = now; fwCd = now + FRED_WATER.cd; }
   else if (fwPh === 'throw') {
@@ -6332,7 +6337,7 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   fwPool += ((fwPh === 'touch' ? Math.min(1, (now - fwAt) * FRED_WATER.touchFps / 1000 / 9) : fwPh === 'ready' ? 1 : fwPh === 'throw' ? Math.max(0, 1 - (now - fwAt) / 260) : 0) - fwPool) * Math.min(1, dt * 12);      // (how big the puddle is)
   if (domPress && can && !fwPh && jumpAt < 0 && af < 0 && df < 0 && blkAt < 0 && stance === 'stand' && fredSf < 0 && now >= domReadyAt) { if (fdTarget(now)) { if (ceSpend(CE_COST.fDream, now)) fdStart(now); } else { const gp = dummy ? dummy.x - wx : 999; say(gp <= FD.reach && gp >= -4 ? 'CANT' : 'TOO FAR', wx, '#ff8a7a', 8, now); } }      // (the DREAM button: the ULTIMATE)
   { const dl = $('doml'); if (dl.textContent !== 'DREAM') { dl.textContent = 'DREAM'; $('dom').setAttribute('aria-label', 'Dream: Freddy puts the enemy to sleep and attacks him in his dream; the damage is real'); } const pth = $('dom').querySelector('path'); if (pth && pth.getAttribute('d') !== MOON_D) pth.setAttribute('d', MOON_D); }
-  fwStep(now, dt); vpBleed(now); { const bl = fwPh === 'ready' ? 'THROW' : 'WATER', el = $('lapl'); if (el.textContent !== bl) { el.textContent = bl; $('lap').setAttribute('aria-label', 'Boiling water: press once to touch the floor, again to throw it at the enemy'); } }
+  fwStep(now, dt); fgStep(now, dt); vpBleed(now); { const bl = fwPh === 'ready' ? 'THROW' : stance === 'crouch' ? (fgTower() ? 'BREAK' : 'STONES') : 'WATER', el = $('lapl'); if (el.textContent !== bl) { el.textContent = bl; $('lap').setAttribute('aria-label', bl === 'STONES' ? 'Ground slam: Freddy punches the ground and throws the stones at the enemy' : bl === 'BREAK' ? 'Ground slam: Freddy breaks the floor, both fall, and he throws whatever is around him at the enemy' : 'Boiling water: press once to touch the floor, again to throw it at the enemy'); } }
   const free = can && jumpAt < 0 && af < 0 && df < 0 && !fwPh;
   if (blockHeld && free && (stance === 'stand' || stance === 'crouch') && fredSf < 0 && fredCrQ < 0 && fredUpQ < 0) { if (blkAt < 0) { blkAt = now; blkEnd = -1; fredWalk = false; if (stance === 'crouch') fredTg = wvx = 0; } } else { blkAt = blkEnd = -1; }      // (BLOCK: hold the button on the ground, standing or crouched; the claw hand goes out in front of him, 0.08 s later the guard is up: a blow that would hit him is caught; nothing else starts meanwhile. v1.87: standing he walks with it up (the BLOCK WALK, a third of the speed, only his legs move and the body bops), crouched he does not move at all (the CROUCH BLOCK))
   fredBlkExt += ((blkAt >= 0 ? 1 : 0) - fredBlkExt) * Math.min(1, dt * 14);      // (how far the hand is out, 0-1)
@@ -6366,8 +6371,8 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
     if (af < fredEv) fredEv = -1;
     if (af >= 0) {
       const sw = atkK === 7 ? FRED_PIERCE.whoosh : ATK_SWING[atkK], im = atkK === 7 ? FRED_PIERCE.hit : ATK_IMPACT[atkK];
-      if (fredEv < sw && af >= sw) snd('swing', atkK === 7 ? 3 : atkK);
-      if (fredEv < im && af >= im) { snd('hit', atkK === 7 ? 3 : atkK); shakeUntil = now + (atkK === 7 ? 140 : 90); shakeAmp = atkK === 7 ? 2 : 1; if (atkK === 7) fredPierce(now); else hitDummy(atkK, now); }
+      if (fredEv < sw && af >= sw) snd('swing', atkK === 7 || atkK >= FRED_FAR.k0 ? 3 : atkK);
+      if (fredEv < im && af >= im) { snd('hit', atkK === 7 ? 3 : atkK >= FRED_FAR.k0 ? 0 : atkK); shakeUntil = now + (atkK === 7 ? 140 : 90); shakeAmp = atkK === 7 ? 2 : 1; if (atkK === 7) fredPierce(now); else hitDummy(atkK, now); }
     }
     fredEv = af;
   }
@@ -6380,9 +6385,9 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   for (const p of parts) { p.x -= (p.v + dir * 45) * dt; if (p.x < -p.l) p.x = VW; else if (p.x > VW) p.x = -p.l; ctx.fillRect(p.x | 0, p.y | 0, p.l, 1); }
   if (sfx) sfx.windPush(mode === 'fwd' ? 1.3 : 1);
   drawSmoke(now, dt);
-  drawBloodFloor(now, dt); drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
+  drawBloodFloor(now, dt); fgDrawGround(now, cx); drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
   const handOut = (fredBlkExt > 0.03 || now - fredGrabAt < 700) && hf < 0 && jumpAt < 0 && af < 0 && df < 0, armOn = handOut && stance === 'stand', cbOn = handOut && stance === 'crouch' && fredSf < 0;      // (the hand is out or holding a caught blow: standing the arm is made fresh every frame (fredPose), crouched it is one of the three pictures of the CROUCH BLOCK)
-  const info = FRED_INFO, py = gAir ? gAirH : lift, src = jpic || (af >= 0 && atkK === 7 && hf < 0 ? fredP(5 + af) : fredCh >= 0 && hf < 0 ? fredP(Math.min(4, fredCh * 5)) : fwPh && hf < 0 ? (fwPh === 'throw' ? fredR((now - fwAt) * FRED_WATER.throwFps / 1000) : fredT(fwPh === 'touch' ? (now - fwAt) * FRED_WATER.touchFps / 1000 : 14)) : hf >= 0 || gAir ? (gAir ? fredH(3, 2) : fredGBAt === hurtAt ? fredG(hf) : fredH(FRED_HF[hurtK % 10], hf)) : df >= 0 ? (fredDashCr ? fredY(dgK === 1 ? 14 - df : df) : fredD(dgK === 1 ? 14 - df : df)) : af >= 0 ? fredA(atkK, af) : fredSf >= 0 ? fredC(0, stance === 'down' ? fredSf : 14 - fredSf) : stance === 'crouch' ? (cbOn ? fredCB(now - fredGrabAt < 700 ? 2 : fredBlkExt > 0.5 ? 1 : 0) : fredWalk && hf < 0 ? fredW(Math.floor(fredPh)) : fredC(0, 14)) : armOn ? fredPose(now, fredWalk && hf < 0 ? Math.floor(fredPh) : -1, blkAt >= 0) : fredWalk && hf < 0 ? fredF(Math.floor(fredPh), true) : fredF(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS))); let ox = 0, oy = 0;      // (v1.89: hurt has its own pictures, no shiver)
+  const info = FRED_INFO, py = gAir ? gAirH : lift, src = jpic || (fg && fg.pic && hf < 0 ? fg.pic : af >= 0 && atkK === 7 && hf < 0 ? fredP(5 + af) : fredCh >= 0 && hf < 0 ? fredP(Math.min(4, fredCh * 5)) : fwPh && hf < 0 ? (fwPh === 'throw' ? fredR((now - fwAt) * FRED_WATER.throwFps / 1000) : fredT(fwPh === 'touch' ? (now - fwAt) * FRED_WATER.touchFps / 1000 : 14)) : hf >= 0 || gAir ? (gAir ? fredH(3, 2) : fredGBAt === hurtAt ? fredG(hf) : fredH(FRED_HF[hurtK % 10], hf)) : df >= 0 ? (fredDashCr ? fredY(dgK === 1 ? 14 - df : df) : fredD(dgK === 1 ? 14 - df : df)) : af >= 0 ? fredA(atkK, af) : fredSf >= 0 ? fredC(0, stance === 'down' ? fredSf : 14 - fredSf) : stance === 'crouch' ? (cbOn ? fredCB(now - fredGrabAt < 700 ? 2 : fredBlkExt > 0.5 ? 1 : 0) : fredWalk && hf < 0 ? fredW(Math.floor(fredPh)) : fredC(0, 14)) : armOn ? fredPose(now, fredWalk && hf < 0 ? Math.floor(fredPh) : -1, blkAt >= 0) : fredWalk && hf < 0 ? fredF(Math.floor(fredPh), true) : fredF(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS))); let ox = 0, oy = 0;      // (v1.89: hurt has its own pictures, no shiver)
   { const uo = ultHeldOff(now); ox += uo[0]; oy += uo[1]; }      // (the enemy Cat's ULTIMATE holds him up by the neck: lifted and shaking)
   if (((af >= 0 && atkK === 6) || cbOn || (fwPh && hf < 0)) && df < 0 && !jpic) ox += FRED_RAKE_X;
   if (df >= 0 && fredDashCr && !jpic) ox += FRED_RAKE_X;
@@ -6395,8 +6400,8 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   const ry = Math.round(info.h * (1 - e)), gko = vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // (spawn: he materialises from the feet up; beaten: he tumbles and stays down until the next round)
   ctx.save();
   if (vap) { /* gone */ } else if (gko >= 0) { const r = vs.rag, c = r ? ragAt(r, gko) : null, air = c ? Math.max(0, c.h - (r.hh * Math.abs(Math.cos(c.a)) + r.hw * Math.abs(Math.sin(c.a)))) : 0, sx = Math.round(cx - (c ? c.x : 0)), w = Math.max(5, Math.round(9 * (1 - Math.min(1, air / 48)))); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(sx - w, gy + 3, w * 2, 2); ctx.fillRect(sx - Math.round(w * 0.66), gy + 2, Math.round(w * 1.32), 1); ctx.fillRect(sx - Math.round(w * 0.66), gy + 5, Math.round(w * 1.32), 1); ctx.drawImage(vs.meInv ? invOf(fredK(gko / 38)) : fredK(gko / 38), sx - info.cx, gy + 2 - 62 - Math.round(air)); }      // (v1.89: his K.O. pictures, carried by the game's tumble: how far he is thrown and how high he is is the physics', the falling and the lying are drawn)
-  else { ctx.beginPath(); ctx.rect(x, y + ry, armOn ? 96 : info.w, info.h - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); { const gs = src !== FRED_PC && gdActive('p') ? goreSrc('p', src, (px, py) => ({ x: wx + (x + px - cx), y: y + py - gy })) : src; ctx.drawImage(vs.meInv ? (src === FRED_PC ? invNow(src) : invOf(gs)) : gs, x, y); } if (hf >= 0 && now - hurtAt < 70 && src !== FRED_PC) ctx.drawImage(whiteOf(src), x, y); }
-  ctx.restore(); drawGiantNow('foe'); fwDraw(now, cx);
+  else { ctx.beginPath(); ctx.rect(x, y + ry, armOn ? 96 : af >= 0 && atkK >= FRED_FAR.k0 ? 128 : info.w, info.h - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); { const gs = src !== FRED_PC && gdActive('p') ? goreSrc('p', src, (px, py) => ({ x: wx + (x + px - cx), y: y + py - gy })) : src; ctx.drawImage(vs.meInv ? (src === FRED_PC ? invNow(src) : invOf(gs)) : gs, x, y); } if (hf >= 0 && now - hurtAt < 70 && src !== FRED_PC) ctx.drawImage(whiteOf(src), x, y); }
+  ctx.restore(); drawGiantNow('foe'); fwDraw(now, cx); fgDrawAir(now, cx);
   if (t < 1) {      // spawn ring + flash
     const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,225,110,' + (1 - t) + ')';
     for (let a = 0; a < 64; a++) { const th = a / 64 * 6.2832; ctx.fillRect(Math.round(cx + Math.cos(th) * R), Math.round(y + 34 + Math.sin(th) * R * 0.45), 1, 1); }
@@ -6600,6 +6605,8 @@ function trainDraw(now) {      // the two overlays of the TRAIN page, as a small
   if (!trShown) { $('trHud').classList.add('on'); trShown = true; }
 }
 __SELECT__
+__FRED2__
+__FRED3__
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = __UPDATES__;

@@ -239,6 +239,7 @@ function twAwayStep(now) {      // every frame the enemy is on another floor: he
 function twFoeFx(now, draw) {      // (drawFoes asks) the enemy SEEN dropping through a crater or the glass (T.ff 'down'), flying up through a broken ceiling (T.ff 'up'), or standing on the floor you are leaving while the camera slides: draws him there (clipped to the hole) and returns true; false = draw him as usual
   const T = vs.tw, d = dummy; if (!T || !d || d.ko >= 0) return false;
   const ff = T.ff && now < T.ff.at + T.ff.ms ? T.ff : null, sl = T.slide && now < T.slide.at + T.slide.ms ? T.slide : null; if (!ff && !sl) return false;
+  if (!ff && sl.pair) return false;      // (v1.185 the GROUND SLAM: he and the enemy fall together, the enemy is drawn where he is, hanging in the air next to him)
   const gx = d.x, ga = d.airH, cx = Math.round(VW / 2), yc = gy - TW_CEIL; let did = false;
   if (ff) {
     const t = (now - ff.at) / 1000, sx = Math.round(cx + ff.x - wx); ctx.save(); ctx.beginPath();

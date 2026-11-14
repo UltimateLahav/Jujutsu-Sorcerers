@@ -565,6 +565,19 @@ function makeSfx(ac) {
     c6clamp() {                                          // v1.102 the claw shuts on his eyes: a low wet crunch (noise falling, a bone-like crack) and a metallic scrape
       const t = T(), B = C.atk; burst(B.soft, t, { type: 'lowpass', f: 1400, f2: 300, q: 1.2, dur: 0.25, gain: 0.6, atk: 0.003 }); burst(B.soft, t + 0.02, { type: 'highpass', f: 2000, f2: 4200, q: 1, dur: 0.04, gain: 0.7, atk: 0.001 }); tone(B.deep, t, { f: 150, f2: 50, dur: 0.22, gain: 0.7, atk: 0.002 }); burst(B.soft, t + 0.05, { type: 'bandpass', f: 2600, f2: 1500, q: 5, dur: 0.18, gain: 0.2, atk: 0.01 });
     },
+    ffvoice(k) {                                         // v1.185 FREDDY'S voice in his FATALITY: 0 = a low hungry growl, 1 = the roar (he screams as he feeds), 2 = a short snarl, 3 = his cackle (five low pulses)
+      const t = T();
+      if (k === 1) shout(t, { f0: 85, pk: 230, fe: 120, dur: 1.7, gain: 0.5, crack: true, rough: 48, form: [[420, 620, 5, 1], [1100, 1500, 6, 0.8]], vib: 7.5 });
+      else if (k === 2) shout(t, { f0: 70, pk: 170, fe: 95, dur: 0.5, gain: 0.45, rough: 55, form: [[380, 520, 5, 1], [900, 1200, 6, 0.7]], vib: 9 });
+      else if (k === 3) { for (let i = 0; i < 5; i++) shout(t + i * 0.19, { f0: 90, pk: 150 - i * 6, fe: 85, dur: 0.15, gain: 0.34, rough: 60, form: [[500, 650, 5, 1], [1000, 1300, 6, 0.6]], vib: 12 }); }
+      else shout(t, { f0: 60, pk: 110, fe: 70, dur: 1.0, gain: 0.42, rough: 40, form: [[300, 450, 5, 1], [800, 1000, 6, 0.6]], vib: 6 });
+    },
+    ffchew(k) {                                          // v1.185 he eats: 0 = a wet chew (three smacking clicks of the jaw and a low squelch), 1 = a gulp
+      const t = T(), B = C.atk;
+      if (k === 1) { tone(B.deep, t, { type: 'triangle', f: 150, f2: 60, dur: 0.22, gain: 0.4, atk: 0.01 }); burst(B.soft, t + 0.02, { type: 'bandpass', f: 500, f2: 220, q: 1.5, dur: 0.2, gain: 0.8, atk: 0.01 }); return; }
+      for (let i = 0; i < 3; i++) { const d = i * 0.09; burst(B.soft, t + d, { type: 'bandpass', f: R(900, 1500), f2: R(300, 600), q: 2.4, dur: 0.05, gain: R(1.0, 1.6), atk: 0.002 }); tone(B.deep, t + d, { type: 'triangle', f: R(110, 160), f2: 60, dur: 0.07, gain: 0.22, atk: 0.003 }); }
+      burst(B.soft, t + 0.1, { type: 'lowpass', f: 700, f2: 250, q: 0.8, dur: 0.22, gain: 0.7, atk: 0.02 });
+    },
     c6scream(k) {                                        // v1.102 GOJO screams (a man's voice, lower than Yuji's, ripped raw): 0 = the long scream when the claw closes, 1 = the second one while his eyes are pulled, 2 = the scream that is cut off dead when the eye is torn out, 3 = the hoarse howl of the yank
       const t = T(); if (k === 1) shout(t, { f0: 120, pk: 300, fe: 210, dur: 1.7, gain: 0.42, crack: true, rough: 70, form: [[600, 820, 5, 1], [1300, 1600, 6, 0.7]], vib: 6.6 }); else if (k === 2) shout(t, { f0: 140, pk: 380, fe: 330, dur: 1.0, gain: 0.46, cut: true, rough: 64, form: [[720, 980, 5, 1], [1500, 1900, 6, 0.7]], vib: 6.8 }); else if (k === 3) shout(t, { f0: 110, pk: 280, fe: 190, dur: 1.3, gain: 0.42, crack: true, rough: 76, form: [[560, 760, 5, 1], [1200, 1500, 6, 0.6]], vib: 6 }); else shout(t, { f0: 130, pk: 340, fe: 250, dur: 2.2, gain: 0.46, crack: true, rough: 62, form: [[650, 900, 5, 1], [1400, 1750, 6, 0.7]], vib: 6.2 });
     },

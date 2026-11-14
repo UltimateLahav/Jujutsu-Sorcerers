@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.184</small>
+    <small id="ver">V1.185</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -992,6 +992,19 @@ function makeSfx(ac) {
     c6clamp() {                                          // v1.102 the claw shuts on his eyes: a low wet crunch (noise falling, a bone-like crack) and a metallic scrape
       const t = T(), B = C.atk; burst(B.soft, t, { type: 'lowpass', f: 1400, f2: 300, q: 1.2, dur: 0.25, gain: 0.6, atk: 0.003 }); burst(B.soft, t + 0.02, { type: 'highpass', f: 2000, f2: 4200, q: 1, dur: 0.04, gain: 0.7, atk: 0.001 }); tone(B.deep, t, { f: 150, f2: 50, dur: 0.22, gain: 0.7, atk: 0.002 }); burst(B.soft, t + 0.05, { type: 'bandpass', f: 2600, f2: 1500, q: 5, dur: 0.18, gain: 0.2, atk: 0.01 });
     },
+    ffvoice(k) {                                         // v1.185 FREDDY'S voice in his FATALITY: 0 = a low hungry growl, 1 = the roar (he screams as he feeds), 2 = a short snarl, 3 = his cackle (five low pulses)
+      const t = T();
+      if (k === 1) shout(t, { f0: 85, pk: 230, fe: 120, dur: 1.7, gain: 0.5, crack: true, rough: 48, form: [[420, 620, 5, 1], [1100, 1500, 6, 0.8]], vib: 7.5 });
+      else if (k === 2) shout(t, { f0: 70, pk: 170, fe: 95, dur: 0.5, gain: 0.45, rough: 55, form: [[380, 520, 5, 1], [900, 1200, 6, 0.7]], vib: 9 });
+      else if (k === 3) { for (let i = 0; i < 5; i++) shout(t + i * 0.19, { f0: 90, pk: 150 - i * 6, fe: 85, dur: 0.15, gain: 0.34, rough: 60, form: [[500, 650, 5, 1], [1000, 1300, 6, 0.6]], vib: 12 }); }
+      else shout(t, { f0: 60, pk: 110, fe: 70, dur: 1.0, gain: 0.42, rough: 40, form: [[300, 450, 5, 1], [800, 1000, 6, 0.6]], vib: 6 });
+    },
+    ffchew(k) {                                          // v1.185 he eats: 0 = a wet chew (three smacking clicks of the jaw and a low squelch), 1 = a gulp
+      const t = T(), B = C.atk;
+      if (k === 1) { tone(B.deep, t, { type: 'triangle', f: 150, f2: 60, dur: 0.22, gain: 0.4, atk: 0.01 }); burst(B.soft, t + 0.02, { type: 'bandpass', f: 500, f2: 220, q: 1.5, dur: 0.2, gain: 0.8, atk: 0.01 }); return; }
+      for (let i = 0; i < 3; i++) { const d = i * 0.09; burst(B.soft, t + d, { type: 'bandpass', f: R(900, 1500), f2: R(300, 600), q: 2.4, dur: 0.05, gain: R(1.0, 1.6), atk: 0.002 }); tone(B.deep, t + d, { type: 'triangle', f: R(110, 160), f2: 60, dur: 0.07, gain: 0.22, atk: 0.003 }); }
+      burst(B.soft, t + 0.1, { type: 'lowpass', f: 700, f2: 250, q: 0.8, dur: 0.22, gain: 0.7, atk: 0.02 });
+    },
     c6scream(k) {                                        // v1.102 GOJO screams (a man's voice, lower than Yuji's, ripped raw): 0 = the long scream when the claw closes, 1 = the second one while his eyes are pulled, 2 = the scream that is cut off dead when the eye is torn out, 3 = the hoarse howl of the yank
       const t = T(); if (k === 1) shout(t, { f0: 120, pk: 300, fe: 210, dur: 1.7, gain: 0.42, crack: true, rough: 70, form: [[600, 820, 5, 1], [1300, 1600, 6, 0.7]], vib: 6.6 }); else if (k === 2) shout(t, { f0: 140, pk: 380, fe: 330, dur: 1.0, gain: 0.46, cut: true, rough: 64, form: [[720, 980, 5, 1], [1500, 1900, 6, 0.7]], vib: 6.8 }); else if (k === 3) shout(t, { f0: 110, pk: 280, fe: 190, dur: 1.3, gain: 0.42, crack: true, rough: 76, form: [[560, 760, 5, 1], [1200, 1500, 6, 0.6]], vib: 6 }); else shout(t, { f0: 130, pk: 340, fe: 250, dur: 2.2, gain: 0.46, crack: true, rough: 62, form: [[650, 900, 5, 1], [1400, 1750, 6, 0.7]], vib: 6.2 });
     },
@@ -1722,7 +1735,7 @@ function hbMark(att, k, ax, am, tgt, tx, tm, tipRows, own) {      // a blow reac
 }
 const hbE = k => hbMark(vs ? vs.foe : 'gojo', k, dummy.x, dummy.x - wx > -4, hbMe(), wx, false);      // (the enemy's blow reaches its impact picture)
 function hbDraw(now) {
-  if (!SET.hb || state !== 'play' || c4x || js || vf || fat || yf || dom || ult || cf) return;      // (not in the cutscenes of the finishers and domains: the camera is somewhere else)
+  if (!SET.hb || state !== 'play' || c4x || js || vf || fat || yf || dom || ult || cf || ff) return;      // (not in the cutscenes of the finishers and domains: the camera is somewhere else)
   const cx = Math.round(VW / 2), top = gy - 60, row = (r, a, b, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(a), top + r, Math.max(1, Math.round(b - a)), 1); };
   const body = (key, x, mir, lift) => { const B = hbBody(key); if (!B) return; for (const r in B) { const b = B[r]; row(+r - lift, mir ? x - b[1] - 1 : x + b[0], mir ? x - b[0] : x + b[1] + 1, 'rgba(70,160,255,0.42)'); } ctx.fillStyle = '#ffe14a'; ctx.fillRect(Math.round(x), top + 28 - lift, 1, 9); };
   ctx.save(); body(hbMe(), cx, false, Math.max(gojoLift || 0, gAir ? gAirH || 0 : 0));
@@ -2615,7 +2628,7 @@ function netSwing(k, bonus, now) {            // W|: his swing k reaches me: the
   if (!vs || !vs.net || vs.ph !== 'fight' || !dummy || !(k >= 0 && DMG[k] !== undefined)) { lanSend('R|' + k + '|m|0|0'); return; }
   netK = k; netBonus = bonus | 0; const held = vs.foe === 'cat' && k === 31 && now < (vs.catHold || 0); gojoHit(k, now); if (held && vs.catHold) vs.catHold = Math.max(vs.catHold, now + 1000); if (netK >= 0) nres('m'); netK = -1;
 }
-const smackOf = k => k >= 36 ? YU_ATK.snd[k - 24] : k >= 30 ? (k === 33 || k === 35 ? 3 : 0) : k >= 24 ? YU_ATK.snd[k - 24] : k === 22 ? 3 : k;      // (which blow sound a swing number makes)
+const smackOf = k => k >= 60 ? 0 : k >= 36 ? YU_ATK.snd[k - 24] : k >= 30 ? (k === 33 || k === 35 ? 3 : 0) : k >= 24 ? YU_ATK.snd[k - 24] : k === 22 ? 3 : k;      // (which blow sound a swing number makes)
 function netResult(k, r, dm, now) {           // R|: what my swing did on his phone: popups, sound, shake, the combo meter
   if (!vs || !vs.net || !dummy || vs.ph !== 'fight') return;
   if (r === 'h') {
@@ -2680,7 +2693,7 @@ function show(s) {
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll(); $('settings').classList.remove('on');
-  js = null; vf = null; if (yf) yfReset(); if (cf) cfReset(); if (ke) keReset(); blindOff = false; bfo = null; bfp = false; ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; inhAt = -1; inhLock = false; inhArm = -1; smd = null; gsd = -1; gsdOn = false; impf = null; tqBlock = null; tqGrab = null; tqBeam = []; tqFx = []; ceOn = false; ceAmt = 0; ceFlameAt = 0; gDownUntil = 0; gAir = null; gAirH = 0; kickBuf = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
+  js = null; vf = null; if (yf) yfReset(); if (cf) cfReset(); if (ff) ffReset(); if (ke) keReset(); blindOff = false; bfo = null; bfp = false; ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; inhAt = -1; inhLock = false; inhArm = -1; smd = null; gsd = -1; gsdOn = false; impf = null; tqBlock = null; tqGrab = null; tqBeam = []; tqFx = []; ceOn = false; ceAmt = 0; ceFlameAt = 0; gDownUntil = 0; gAir = null; gAirH = 0; kickBuf = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
   if (s === 'play') { spawnAt = pnow(); wx = 0; wvx = 0; deb = []; lit = []; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; sparks = []; stopMs = 0; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(pnow(), 1200);
@@ -2987,7 +3000,7 @@ function drawSparks(now, dt) {
   ctx.globalAlpha = 1; drawDeb(now, dt);
 }
 function onLand(k, dmg, now) {      // a blow of yours landed: the sparks, the hit-stop, a flash on the heavy ones, and the energy
-  const heavy = dmg >= 20 || k === 3 || k >= 40;
+  const heavy = dmg >= 20 || k === 3 || (k >= 40 && k < 60);
   const S = dummy.curse ? CSP[dummy.curse.id] : null, bh = S ? S.g - S.top : 52;      // (the sparks fly where the blow lands: in the middle of his body, at his front)
   hitStop(heavy ? 70 : 38); buzz(heavy ? 22 : 10); if (heavy) shockAt(dummy.x, 110, 50, 0.6); spark(dummy.x - (S ? Math.round(dummy.curse.hw * 0.7) : 7), gy - Math.round(bh * (0.3 + Math.random() * 0.35)), heavy ? 12 : 7, heavy ? ['#ffffff', '#ffe9a0', '#ffb060'] : ['#ffffff', '#ffe9a0', '#9fd8ff'], heavy, 1);
   if (heavy) flash(now, 70, 0.14);
@@ -3056,7 +3069,7 @@ function hitFoe(k, now) {                     // called on the impact frame: a h
   if (grab) { dummy.cheld = { until: now + CT.hold }; dummy.stunUntil = Math.max(dummy.stunUntil, dummy.cheld.until); dummy.ai = 'rest'; dummy.aiAt = now; dummy.restFor = CT.hold + 100; dummy.vx = 0; dummy.cact = null; dummy.vact = null; }      // GRAB: no reaction, he is held and cannot act (the glove pulls him in on frame 8: see catScene)
   else { const juggle = airUp(dummy) && k !== 47;      // (a hit on an enemy who is in the air: he keeps his flight and his pose, only the FACE KICK ends it)
     if (k === 46 && (!dummy.air || dummy.air.kind === 'bounce')) { dummy.air = airMake(now, 0, AIR_V, AIR_G, 'up'); dummy.rx = AIR_RX; dummy.rxAt = now; }      // (the UPPERCUT launches him: see airStepDummy)
-    else if (!juggle) { dummy.rx = isD1(k) ? 0 : k === 29 || k >= 40 || (k === 21 && !!vs && vs.me === 'yuji') || (!!vs && vs.me === 'cat' && (k === 33 || k === 35)) || (!!vs && vs.foe === 'cat' && (k === 3 || k === 17 || k === 21)) ? 4 : (Math.random() * 10) | 0; dummy.rxAt = now; if (k === 47) dummy.air = airUp(dummy) ? airMake(now, dummy.airH, -80, 900, 'drop') : null; }      // (the FACE KICK knocks him out of the air: he drops fast, far away)
+    else if (!juggle) { dummy.rx = isD1(k) ? 0 : k === 29 || (k >= 40 && k < 60) || (k === 21 && !!vs && vs.me === 'yuji') || (!!vs && vs.me === 'cat' && (k === 33 || k === 35)) || (!!vs && vs.foe === 'cat' && (k === 3 || k === 17 || k === 21)) ? 4 : (Math.random() * 10) | 0; dummy.rxAt = now; if (k === 47) dummy.air = airUp(dummy) ? airMake(now, dummy.airH, -80, 900, 'drop') : null; }      // (the FACE KICK knocks him out of the air: he drops fast, far away)
     if (held && k !== 33) { dummy.cheld.until = now + CT.hold; dummy.stunUntil = Math.max(dummy.stunUntil, dummy.cheld.until); } else catRelease(now); }      // (the big fall: Yuji's last kick, the Cat's kick and the giant's kick, and the big kicks on the Cat; otherwise one of ten reactions, picked at random)
   if (window.__sfxlog) window.__sfxlog.push(['rx', Math.round(now), dummy.rx]);
   say('' + dmg, dummy.x, popCol(), 8, now); if (broke) say('GUARD BREAK', dummy.x, '#ffd34d', 8, now + 90); onLand(k, dmg, now); foeGain(k, hv, rp, now); if (hv) { dummy.vx += (dummy.x >= wx ? 1 : -1) * 150; shakeUntil = now + 170; shakeAmp = 4; }
@@ -3497,7 +3510,7 @@ const voidImg = new Image(); voidImg.src = VOID_IMG; let domBox = null;
 const DOM_ORDER = ['blind', 'pose', 'face', 'wide', 'burst', 'void', 'collapse', 'reblind'], DOM_MS = { blind: 2200, pose: 900, face: DF_N * 1000 / DF_FPS, wide: 1500, burst: 1900, void: 10000, collapse: 1400, reblind: 1000 };      // (blind: the blindfold comes down, reblind: it goes back on; both are close-ups of his face)
 let dom = null, domHold = false, domReq = false, domReadyAt = 0, voidCv = null, voidG = null, fd = null;      // (fd = Freddy's nightmare in progress, see freddyDream)
 // v1.181 A CUTSCENE OF A FIGHT: every bar, name, button and number that is not part of it stays away. The moments: a FATALITY (every fighter's, yours or the enemy's), an ULTIMATE (the Cat's choke, Yuji's four Black Flashes, Ryu's JUST THIS ONCE, Freddy's DREAM), Verity's JUMPSCARE, Sukuna's FUGA and his DOMAIN SIGN, the OPENING and the closing of a DOMAIN (not the fight inside it), the blindfold close-ups. cutsceneOn() is asked by drawVs (the bars and names), stateDraw, twOverlay and the elevator panel (canvas), and once a frame by cutUI, which puts the class `cut` on the page: the CSS then hides the top-left buttons, the touch controls, the SENSE button, the training numbers and the elevator panel (the tap prompts of a cutscene are other elements and stay).
-function cutsceneOn() { return state === 'play' && !!vs && !!(fat || yf || vf || cf || ke || js || se || de || ult || yu || fd || bfo || (dom && domLock()) || (typeof suFatOn === 'function' && suFatOn()) || (typeof suFgOn === 'function' && suFgOn()) || (typeof suSignOn === 'function' && suSignOn()) || ryUlNoHud()); }
+function cutsceneOn() { return state === 'play' && !!vs && !!(fat || yf || vf || cf || ff || ke || js || se || de || ult || yu || fd || bfo || (dom && domLock()) || (typeof suFatOn === 'function' && suFatOn()) || (typeof suFgOn === 'function' && suFgOn()) || (typeof suSignOn === 'function' && suSignOn()) || ryUlNoHud()); }
 let cutOn = false;
 function cutUI() { const c = cutsceneOn(); if (c !== cutOn) { cutOn = c; document.body.classList.toggle('cut', c); } }
 function domFrozen() { return !!dom; }      // (the people stand still for the whole domain, the collapse too)
@@ -3935,6 +3948,7 @@ let fat = null, fatReq = 0;                            // fat = the running cuts
 const orbAt = (set, n, sx, sy, s) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));      // an orb frame centred on (sx, sy)
 function fatState(now) {                               // Gojo's FATALITY (and Verity's). 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far away; 3 = not possible right now
   if (vs && vs.me === 'cu4') return 3;      // (v1.166 Ryu has no FATALITY; before, his button played Gojo's)
+  if (fredMe()) return ffState(now);      // (v1.185 Freddy's FATALITY: he eats the enemy, see fred3.js)
   if (!vs || vs.story || vs.cv || fredMe() || lacks('fat') || vs.ph !== 'fight' || js || vf || fat || yf || yu || (dom && domLock()) || ult || cf || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (v1.181 a DOMAIN no longer stops it: only its opening, while the controls are locked; fatGo ends the domain)      // (Verity and the Cat have their own FATALITY: the same rules; so has Yuji since v1.49, the 30-second one; Freddy has none yet, v1.52: his button used to play Gojo's FATALITY with Gojo in it)      // (no FATALITY in the story fight: his ending is a Reversal Red)
   if (!(dummy.hp <= dummy.max * FAT_LOW)) return 1;      // Gojo's FATALITY: only when the enemy is at 20% health or less
   if (Math.abs(dummy.x - wx) > FAT_RANGE) return 2;
@@ -3944,7 +3958,7 @@ function fatAiState(now) {                             // the enemy's own FATALI
   if (!vs || vs.story || vs.foe === 'yuji' || vs.ph !== 'fight' || js || vf || fat || yf || dom || ult || cf || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.cact || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
   return vs.hp <= PHP * FAT_LOW && Math.abs(dummy.x - wx) <= FAT_RANGE && !gojoGone && gojoLift <= 12 && dgAt < 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
 }
-function fatGo(now, dt, rev) { if (dom) domReset(); if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else if (rev ? vs.foe === 'cat' : vs.me === 'cat') { cfStart(now, rev); cfFrame(now, dt); } else if (!rev && vs.me === 'yuji') { yfStart(now); yfFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's and the Cat's FATALITY are their own cutscenes)
+function fatGo(now, dt, rev) { if (dom) domReset(); if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else if (rev ? vs.foe === 'cat' : vs.me === 'cat') { cfStart(now, rev); cfFrame(now, dt); } else if (!rev && vs.me === 'yuji') { yfStart(now); yfFrame(now, dt); } else if (!rev && fredMe()) { ffStart(now); ffFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's and the Cat's FATALITY are their own cutscenes)
 function fatUI(now) {                                  // the button: only in a match, dark until it can be used, then it glows
   const col = $('fat').parentNode; col.classList.toggle('vs', !!vs); col.classList.toggle('vy', !!vs && vs.me === 'verity'); col.classList.toggle('yj', !!vs && vs.me === 'yuji'); col.classList.toggle('kt', !!vs && vs.me === 'cat'); col.classList.toggle('nt', !!vs && !!vs.net); col.classList.toggle('nb', !!vs && !!vs.net && vs.me !== 'gojo'); $('hud').classList.toggle('vs', !!vs); $('pauseBtn').style.display = vs && vs.net ? 'none' : ''; if (vs) $('fat').classList.toggle('rdy', fatState(now) === 0);
 }
@@ -7897,7 +7911,7 @@ function goreSplit(pic, kind) {      // the picture cut at the neck: {body (with
   return { body, head, ny, y0, W };
 }
 function goreFatal(who, now) {      // endRound(who, 'fatal'): the loser's head comes off
-  if (!vs || vs.story || vs.net || gdSet() >= 2 || (who !== 'player' && who !== 'enemy')) return; const side = who === 'player' ? 'f' : 'p', kind = side === 'p' ? (cuMe() ? (vs.me === 'cu3' ? 'sukuna' : null) : vs.me) : (dummy && dummy.mode === 'fighter' && !dummy.curse ? vs.foe : null);
+  if (!vs || vs.story || vs.net || gdSet() >= 2 || (who !== 'player' && who !== 'enemy') || (who === 'player' && vs.me === 'freddy')) return; const side = who === 'player' ? 'f' : 'p', kind = side === 'p' ? (cuMe() ? (vs.me === 'cu3' ? 'sukuna' : null) : vs.me) : (dummy && dummy.mode === 'fighter' && !dummy.curse ? vs.foe : null);
   if (!kind || !GNECK[kind]) return; const sp = goreSplit(goreIdleOf(kind), kind); if (!sp) return; const x = side === 'f' ? dummy.x : wx, dir = side === 'f' ? (dummy.x >= wx ? 1 : -1) : -1, clean = gdSet() === 1, mirror = side === 'f' && dummy.x >= wx;
   goreAft = { at: now, x, dir, body: sp.body, mirror, ny: sp.ny, W: sp.W }; GSTAT.fatal = (GSTAT.fatal | 0) + 1;
   const hp = 62 - sp.ny + 1; gibs.push({ x: x + dir * 2, y: -hp, vx: dir * (50 + Math.random() * 40), vy: -(150 + Math.random() * 60), cv: sp.head, hw: sp.head.width / 2, hh: sp.head.height / 2, fl: 2, rest: false, l: 0, lay: 0, gore: clean ? 2 : 1 });
@@ -9749,6 +9763,7 @@ function twAwayStep(now) {      // every frame the enemy is on another floor: he
 function twFoeFx(now, draw) {      // (drawFoes asks) the enemy SEEN dropping through a crater or the glass (T.ff 'down'), flying up through a broken ceiling (T.ff 'up'), or standing on the floor you are leaving while the camera slides: draws him there (clipped to the hole) and returns true; false = draw him as usual
   const T = vs.tw, d = dummy; if (!T || !d || d.ko >= 0) return false;
   const ff = T.ff && now < T.ff.at + T.ff.ms ? T.ff : null, sl = T.slide && now < T.slide.at + T.slide.ms ? T.slide : null; if (!ff && !sl) return false;
+  if (!ff && sl.pair) return false;      // (v1.185 the GROUND SLAM: he and the enemy fall together, the enemy is drawn where he is, hanging in the air next to him)
   const gx = d.x, ga = d.airH, cx = Math.round(VW / 2), yc = gy - TW_CEIL; let did = false;
   if (ff) {
     const t = (now - ff.at) / 1000, sx = Math.round(cx + ff.x - wx); ctx.save(); ctx.beginPath();
@@ -17166,6 +17181,7 @@ function drawScene(now, dt) {
   if (js) { jsFrame(now, dt); return; }         // ...and the JUMPSCARE
   if (vf) { vfFrame(now, dt); return; }         // ...and Verity's FATALITY
   if (cf) { cfFrame(now, dt); return; }         // ...and the Cat's FATALITY
+  if (ff) { ffFrame(now, dt); return; }         // ...and Freddy's
   if (ke) { keFrame(now, dt); return; }         // ...and the end of the Cat in the story
   comboEscape(now); flowTick(now); yuTick(now, dt); counterTick(now); domTick(now); bfTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); netLeash(now); if (!dom && !(vs && vs.net)) { if (vs && vs.foe === 'verity') storyBattleTick(now, dt); else if (vs && vs.foe === 'cat') catTick(now, dt); ultTick(now, dt); }      // (the DOMAIN freezes everyone: none of the enemy's own clocks run while it lasts)
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
@@ -18751,7 +18767,8 @@ function fredC(kind, i) {      // picture i (0-14) of the crouch family as a can
   c = document.createElement('canvas'); c.width = c.height = 64; goreFredCut(c, i * 64, (5 + kind) * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'C:' + kind + ',' + i; FRC.set(key, c); return c;
 }
 function fredA(kind, i) {      // picture i (0-14) of his M1 as a canvas of 64 x 64: kind 0 = the claw slash, 1 = the slash with his bare hand: the sheet has them in rows 9 and 10; kind 6 = the CROUCH RAKE (v1.86, row 13 of the sheet, drawn 8 px to the left: see FRED_RAKE_X)
-  i = Math.max(0, Math.min(14, Math.floor(i))); const key = fredLast = kind === 6 ? 500 + i : 300 + kind * 15 + i; let c = FRC.get(key); if (c) return c;
+  i = Math.max(0, Math.min(14, Math.floor(i))); if (kind >= FRED_FAR.k0) { fredLast = 1100 + (kind - FRED_FAR.k0) * 15 + i; return fredFarPic(kind, i); }      // (v1.185 the stretched punches, 60 and 61: made fresh, see fred2.js)
+  const key = fredLast = kind === 6 ? 500 + i : 300 + kind * 15 + i; let c = FRC.get(key); if (c) return c;
   if (!FRED_IMG.complete || !FRED_IMG.naturalWidth) return EMPTY;
   c = document.createElement('canvas'); c.width = c.height = 64; goreFredCut(c, i * 64, (kind === 6 ? 12 : 8 + kind) * 64, 64, 64, 0, 0, 64, 64); c.__nd = 'A:' + kind + ',' + i; FRC.set(key, c); return c;
 }
@@ -18839,7 +18856,7 @@ const FRED_DASH = { lead: 25, ms: 275, gap: 14, room: 8 };
 let fredJC = false, fredLC = false, fredTD = -1, fredLandC = false, fredCrQ = -1, fredUpQ = -1, fredSf = -1, fredEv = -1;      // the jump began from a crouch; CROUCH was pressed in the air; the moment of touch-down; the landing is a crouch landing; a crouch was asked for (when) and waits for the step to finish; the picture of going down / standing up (0-14)
 // THE WALK (v1.40): an elegant glide. The cycle (15 frames = two steps) is driven by the GROUND he covers, one step per 15 px, so a foot on the ground never slides (the picture's foot moves back exactly as fast as he moves forward); he walks forward at 44 px/s and back at 32 (the cycle plays the other way round); when he stops, the step in progress is finished slowly up to the passing pose (the feet together) and he stands again; a blow, the Cat's hold or the enemy's body stops him.
 const FRED_FWD = 44, FRED_BACK = 32, FRED_STEP = 15, FRED_PASS = 4.65, FRED_CWALK = 0.6, FRED_CSTEP = 8.06, FRED_RAKE_X = 8, FRED_BSTEP = 5.65, FRED_BOP = [1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0];      // px/s forward, px/s back, px of one step, the frame of the passing pose (the other one is 7.5 frames on), v1.87 the block walk: px of one step (7 px strokes of the foot, never sliding) and how many px the body is lifted in each of its 15 pictures (the same numbers as BOP in tools/freddy_art.py)
-const fredPick = () => { if (stance === 'crouch') return 6; const k = combo % 2; combo = (k + 1) % 2; return k; };      // (the swing that comes next: crouched the CROUCH RAKE, standing the two slashes in turn)
+const fredPick = now => { if (stance === 'crouch') return 6; const fk = fredFarK(now); if (fk) return fk; const k = combo % 2; combo = (k + 1) % 2; return k; };      // (v1.185 with the enemy far away (more than 60 px) the swing is a stretched punch: 60 the left hand, 61 the right, see fred2.js)      // (the swing that comes next: crouched the CROUCH RAKE, standing the two slashes in turn)
 let fredPh = 0, fredWalk = false, fredDir = 1, fredStep = -1, fredTg = 0;      // where he is in the cycle (0-15), whether the walk is showing, the way he went last, which footfall was the last
 let fredGrabAt = -1e9, fredGrabY = 24, fredBlkExt = 0, fredTx = 55, fredTy = 21; const fredNC = new Map();
 function fredNoClaw(c) { let o = fredNC.get(c); if (!o) { o = document.createElement('canvas'); o.width = c.width; o.height = c.height; const g = o.getContext('2d'); g.drawImage(c, 0, 0); g.clearRect(39, 8, 12, 13); fredNC.set(c, o); } return o; }      // (his idle picture without the claw he holds at the chest: the arm that goes out is drawn on top)
@@ -19009,11 +19026,11 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   if (hf >= 0) { stance = 'stand'; stickCr = false; fredCrQ = fredUpQ = -1; atkAt = -1; atkQ = false; dgAt = -1; }      // (a blow stands him up and stops his swing and his dash, whatever he was doing)
   const can = hf < 0 && t >= 1 && now >= pStun && (!vs || vs.ph === 'fight');      // he may act: not while he flinches, is held, appears or between the rounds
   let af = -1;      // the picture of his swing (0-14, 15 swings a second...: the game's M1 speed), -1 = no swing
-  if (atkAt >= 0) { af = Math.floor(Math.max(0, now - atkAt) * (atkK === 7 ? FRED_PIERCE.fps : ATK_FPS[atkK] * (heavyAt && atkAt === heavyAt ? FRED_HEAVY_SLOW : 1)) / 1000); if (af >= (atkK === 7 ? FRED_PIERCE.len : 15)) { if (atkQ) { atkQ = false; atkK = fredPick(); atkAt = now; af = 0; } else { atkAt = -1; af = -1; comboUntil = now + COMBO_MS; } } }      // (a press during a swing chains the next one)
+  if (atkAt >= 0) { af = Math.floor(Math.max(0, now - atkAt) * (atkK === 7 ? FRED_PIERCE.fps : ATK_FPS[atkK] * (heavyAt && atkAt === heavyAt ? FRED_HEAVY_SLOW : 1)) / 1000); if (af >= (atkK === 7 ? FRED_PIERCE.len : 15)) { if (atkQ) { atkQ = false; atkK = fredPick(now); atkAt = now; af = 0; } else { atkAt = -1; af = -1; comboUntil = now + COMBO_MS; } } }      // (a press during a swing chains the next one)
   let df = -1;      // the picture of his dash (0-14, 40 a second), -1 = no dash
   if (dgAt >= 0) { df = Math.floor(Math.max(0, now - dgAt) * DASH_FPS / 1000); if (df >= 15) { dgAt = -1; df = -1; dgReady = now + 150; } }
   if (jumpAt < 0) { fredJC = fredLC = fredLandC = false; fredTD = -1; }      // (no jump is going on: nothing is left of the last one)
-  if (t < 1 || !can) { if (fwPh && (t < 1 || hf >= 0 || !(!vs || vs.ph === 'fight'))) { fwPh = ''; fwPoolAt = now; fwCd = now + FRED_WATER.cd; } if (t < 1) { fwBalls.length = 0; fwDrops.length = 0; fwPool = 0; fwCd = 0; } }      // (a blow, the end of the round or a new match dries the puddle)
+  if (t < 1 || !can) { if (fwPh && (t < 1 || hf >= 0 || !(!vs || vs.ph === 'fight'))) { fwPh = ''; fwPoolAt = now; fwCd = now + FRED_WATER.cd; } if (t < 1) { fwBalls.length = 0; fwDrops.length = 0; fwPool = 0; fwCd = 0; fgReset(); } }      // (a blow, the end of the round or a new match dries the puddle)
   if (jumpReq) { jumpReq = false; if (jumpAt < 0 && can && !fwPh && af < 0 && df < 0 && blkAt < 0 && (stance === 'stand' || stance === 'crouch')) { fredJC = stance === 'crouch'; stance = 'stand'; stickCr = false; fredCrQ = -1; jumpAt = now; fredWalk = false; } }      // (a jump from the ground, not in the middle of going down or standing up; from a crouch it is a spring)
   let jk = -1, lift = 0, jpic = null;      // the picture of the jump as a number from 0 to 39 (the picture of a standing jump at this moment: it tells every part of the game where in the jump he is), how high the jump has raised him, and the picture itself
   if (jumpAt >= 0) {
@@ -19026,12 +19043,13 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
     else { const l = je - pre - fl; jk = 34 + Math.min(5, Math.floor(l / ld * 6)); jpic = fredLandC ? fredC(2, l / ld * 15) : fredJ(jk); }
   }
   if (hf >= 0) { jumpAt = -1; jk = -1; lift = 0; jpic = null; }      // (a blow knocks him out of the jump)
+  if (fg) { fgScene(now, dt, hf); if (fg && fg.jp) { jpic = fg.jp; lift = fg.lift; } }      // (v1.185 the ground slam: his leap is a picture of the jump, lifted)
   gojoLift = lift; const air = jk >= 6 && jk <= 33;      // (the enemy's blows miss him up there, and he passes over a body)
   if (jk !== fredJf) { if (fredJf < 6 && jk >= 6) { snd('jump'); gritAt(wx, 5, 45, 0); shockAt(wx, 50, 30, 0.5); } if (fredJf < 34 && jk >= 34) { snd('land', 1); gritAt(wx, 7, 60, 0); shockAt(wx, 90, 45, 0.7); } fredJf = jk; }
-  if (crReq) { crReq = false; if (jumpAt >= 0) { if (air) fredLC = !fredLC; else if (fredTD >= 0 && !fredLandC) fredCrQ = now; } else if (can && !fwPh && stance === 'stand') fredCrQ = now; else if (can && df < 0 && stance === 'crouch') { if (fredWalk) fredUpQ = now; else { stance = 'up'; stAt = now; stickCr = false; } } }      // (CROUCH: tap to go down (v1.87: also with BLOCK held: the guard drops while he goes down and goes up again crouched), tap again to stand up (a crouch walk finishes its step first); in the air it makes him land crouched, and again undoes it; during a standing landing it is kept and he goes down when he has landed)
+  if (crReq) { crReq = false; if (jumpAt >= 0) { if (air) fredLC = !fredLC; else if (fredTD >= 0 && !fredLandC) fredCrQ = now; } else if (can && !fwPh && stance === 'stand') fredCrQ = now; else if (can && !fwPh && df < 0 && stance === 'crouch') { if (fredWalk) fredUpQ = now; else { stance = 'up'; stAt = now; stickCr = false; } } }      // (CROUCH: tap to go down (v1.87: also with BLOCK held: the guard drops while he goes down and goes up again crouched), tap again to stand up (a crouch walk finishes its step first); in the air it makes him land crouched, and again undoes it; during a standing landing it is kept and he goes down when he has landed)
   if (stance === 'down' || stance === 'up') { fredSf = Math.floor(Math.max(0, now - stAt) * CR_FPS / 1000); if (fredSf >= 15) { stance = stance === 'down' ? 'crouch' : 'stand'; fredSf = -1; } } else fredSf = -1;      // (15 pictures going down; standing up plays them backwards)
-  if (atkReq) { atkReq = false; if (can && !fwPh && jumpAt < 0 && df < 0 && blkAt < 0 && (stance === 'stand' || stance === 'crouch') && fredSf < 0) { if (af >= 0) atkQ = true; else { if (now > comboUntil) combo = 0; atkK = fredPick(); atkAt = now; af = 0; atkQ = false; fredWalk = false; fredCrQ = fredUpQ = -1; } } }      // (M1: the first press slashes, a press during the swing chains the second; crouched it is the CROUCH RAKE, again and again; not going down or standing up, in the air, hurt or held)
-  if (af < 0 && combo !== 0 && now > comboUntil) combo = 0;
+  if (atkReq) { atkReq = false; if (can && !fwPh && jumpAt < 0 && df < 0 && blkAt < 0 && (stance === 'stand' || stance === 'crouch') && fredSf < 0) { if (af >= 0) atkQ = true; else { if (now > comboUntil) { combo = 0; fredFarC = 0; } atkK = fredPick(now); atkAt = now; af = 0; atkQ = false; fredWalk = false; fredCrQ = fredUpQ = -1; } } }      // (M1: the first press slashes, a press during the swing chains the second; crouched it is the CROUCH RAKE, again and again; not going down or standing up, in the air, hurt or held)
+  if (af < 0 && now > comboUntil) { combo = 0; fredFarC = 0; }
   if (atkHold >= 0 && atkHold !== fredHoldSeen) { fredHoldSeen = atkHold; fredHoldCold = !(hits.n > 0 && atkHold <= hits.until); }      // (a new press: does it begin with no combo going on?)
   if (hf >= 0) atkHold = -1;      // (a blow on him ends the hold)
   let fredCh = -1;      // the charge of the pierce (0-1) while he holds ATTACK, -1 = not charging
@@ -19046,7 +19064,7 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
       }
     }
   }
-  { const lab = stance === 'crouch' ? FRED_CR : FRED_M1[combo % 2]; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; } }
+  { const lab = stance === 'crouch' ? FRED_CR : fredFarGap(now) ? FRED_FAR.names[fredFarC & 1] : FRED_M1[combo % 2]; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; } }
   if (dashReq) {      // DASH: forward when he is held forward or stands still, a back-step when back is held; on the ground, standing, not swinging; no room in front of the enemy, no dash
     dashReq = false;
     if (can && !fwPh && jumpAt < 0 && af < 0 && df < 0 && blkAt < 0 && (stance === 'stand' || stance === 'crouch') && fredSf < 0 && now > dgReady) {
@@ -19059,6 +19077,7 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
     if (!fwPh && now >= fwCd && ceSpend(CE_COST.fWater, now)) { fwPh = 'touch'; fwAt = now; fredWalk = false; fredTg = wvx = 0; atkQ = false; fwPool = 0; fwPoolAt = -1; snd('ripple'); }
     else if (fwPh === 'ready') { fwPh = 'throw'; fwAt = now; fwFired = false; snd('swing', 3); }
   }
+  if (blueReq && can && jumpAt < 0 && af < 0 && df < 0 && blkAt < 0 && stance === 'crouch' && fredSf < 0 && fredCrQ < 0 && fredUpQ < 0 && !fwPh && !fg) fgTry(now);      // (v1.185 BLUE while crouched: the GROUND SLAM, see fred2.js)
   if (fwPh === 'touch' && now - fwAt >= 15000 / FRED_WATER.touchFps) { fwPh = 'ready'; fwAt = now; }
   else if (fwPh === 'ready' && now - fwAt > FRED_WATER.hold) { fwPh = ''; fwPoolAt = now; fwCd = now + FRED_WATER.cd; }
   else if (fwPh === 'throw') {
@@ -19069,7 +19088,7 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   fwPool += ((fwPh === 'touch' ? Math.min(1, (now - fwAt) * FRED_WATER.touchFps / 1000 / 9) : fwPh === 'ready' ? 1 : fwPh === 'throw' ? Math.max(0, 1 - (now - fwAt) / 260) : 0) - fwPool) * Math.min(1, dt * 12);      // (how big the puddle is)
   if (domPress && can && !fwPh && jumpAt < 0 && af < 0 && df < 0 && blkAt < 0 && stance === 'stand' && fredSf < 0 && now >= domReadyAt) { if (fdTarget(now)) { if (ceSpend(CE_COST.fDream, now)) fdStart(now); } else { const gp = dummy ? dummy.x - wx : 999; say(gp <= FD.reach && gp >= -4 ? 'CANT' : 'TOO FAR', wx, '#ff8a7a', 8, now); } }      // (the DREAM button: the ULTIMATE)
   { const dl = $('doml'); if (dl.textContent !== 'DREAM') { dl.textContent = 'DREAM'; $('dom').setAttribute('aria-label', 'Dream: Freddy puts the enemy to sleep and attacks him in his dream; the damage is real'); } const pth = $('dom').querySelector('path'); if (pth && pth.getAttribute('d') !== MOON_D) pth.setAttribute('d', MOON_D); }
-  fwStep(now, dt); vpBleed(now); { const bl = fwPh === 'ready' ? 'THROW' : 'WATER', el = $('lapl'); if (el.textContent !== bl) { el.textContent = bl; $('lap').setAttribute('aria-label', 'Boiling water: press once to touch the floor, again to throw it at the enemy'); } }
+  fwStep(now, dt); fgStep(now, dt); vpBleed(now); { const bl = fwPh === 'ready' ? 'THROW' : stance === 'crouch' ? (fgTower() ? 'BREAK' : 'STONES') : 'WATER', el = $('lapl'); if (el.textContent !== bl) { el.textContent = bl; $('lap').setAttribute('aria-label', bl === 'STONES' ? 'Ground slam: Freddy punches the ground and throws the stones at the enemy' : bl === 'BREAK' ? 'Ground slam: Freddy breaks the floor, both fall, and he throws whatever is around him at the enemy' : 'Boiling water: press once to touch the floor, again to throw it at the enemy'); } }
   const free = can && jumpAt < 0 && af < 0 && df < 0 && !fwPh;
   if (blockHeld && free && (stance === 'stand' || stance === 'crouch') && fredSf < 0 && fredCrQ < 0 && fredUpQ < 0) { if (blkAt < 0) { blkAt = now; blkEnd = -1; fredWalk = false; if (stance === 'crouch') fredTg = wvx = 0; } } else { blkAt = blkEnd = -1; }      // (BLOCK: hold the button on the ground, standing or crouched; the claw hand goes out in front of him, 0.08 s later the guard is up: a blow that would hit him is caught; nothing else starts meanwhile. v1.87: standing he walks with it up (the BLOCK WALK, a third of the speed, only his legs move and the body bops), crouched he does not move at all (the CROUCH BLOCK))
   fredBlkExt += ((blkAt >= 0 ? 1 : 0) - fredBlkExt) * Math.min(1, dt * 14);      // (how far the hand is out, 0-1)
@@ -19103,8 +19122,8 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
     if (af < fredEv) fredEv = -1;
     if (af >= 0) {
       const sw = atkK === 7 ? FRED_PIERCE.whoosh : ATK_SWING[atkK], im = atkK === 7 ? FRED_PIERCE.hit : ATK_IMPACT[atkK];
-      if (fredEv < sw && af >= sw) snd('swing', atkK === 7 ? 3 : atkK);
-      if (fredEv < im && af >= im) { snd('hit', atkK === 7 ? 3 : atkK); shakeUntil = now + (atkK === 7 ? 140 : 90); shakeAmp = atkK === 7 ? 2 : 1; if (atkK === 7) fredPierce(now); else hitDummy(atkK, now); }
+      if (fredEv < sw && af >= sw) snd('swing', atkK === 7 || atkK >= FRED_FAR.k0 ? 3 : atkK);
+      if (fredEv < im && af >= im) { snd('hit', atkK === 7 ? 3 : atkK >= FRED_FAR.k0 ? 0 : atkK); shakeUntil = now + (atkK === 7 ? 140 : 90); shakeAmp = atkK === 7 ? 2 : 1; if (atkK === 7) fredPierce(now); else hitDummy(atkK, now); }
     }
     fredEv = af;
   }
@@ -19117,9 +19136,9 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   for (const p of parts) { p.x -= (p.v + dir * 45) * dt; if (p.x < -p.l) p.x = VW; else if (p.x > VW) p.x = -p.l; ctx.fillRect(p.x | 0, p.y | 0, p.l, 1); }
   if (sfx) sfx.windPush(mode === 'fwd' ? 1.3 : 1);
   drawSmoke(now, dt);
-  drawBloodFloor(now, dt); drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
+  drawBloodFloor(now, dt); fgDrawGround(now, cx); drawFoes(now, dt); updatePeds(now, dt); drawPeds(now, dt, 0);
   const handOut = (fredBlkExt > 0.03 || now - fredGrabAt < 700) && hf < 0 && jumpAt < 0 && af < 0 && df < 0, armOn = handOut && stance === 'stand', cbOn = handOut && stance === 'crouch' && fredSf < 0;      // (the hand is out or holding a caught blow: standing the arm is made fresh every frame (fredPose), crouched it is one of the three pictures of the CROUCH BLOCK)
-  const info = FRED_INFO, py = gAir ? gAirH : lift, src = jpic || (af >= 0 && atkK === 7 && hf < 0 ? fredP(5 + af) : fredCh >= 0 && hf < 0 ? fredP(Math.min(4, fredCh * 5)) : fwPh && hf < 0 ? (fwPh === 'throw' ? fredR((now - fwAt) * FRED_WATER.throwFps / 1000) : fredT(fwPh === 'touch' ? (now - fwAt) * FRED_WATER.touchFps / 1000 : 14)) : hf >= 0 || gAir ? (gAir ? fredH(3, 2) : fredGBAt === hurtAt ? fredG(hf) : fredH(FRED_HF[hurtK % 10], hf)) : df >= 0 ? (fredDashCr ? fredY(dgK === 1 ? 14 - df : df) : fredD(dgK === 1 ? 14 - df : df)) : af >= 0 ? fredA(atkK, af) : fredSf >= 0 ? fredC(0, stance === 'down' ? fredSf : 14 - fredSf) : stance === 'crouch' ? (cbOn ? fredCB(now - fredGrabAt < 700 ? 2 : fredBlkExt > 0.5 ? 1 : 0) : fredWalk && hf < 0 ? fredW(Math.floor(fredPh)) : fredC(0, 14)) : armOn ? fredPose(now, fredWalk && hf < 0 ? Math.floor(fredPh) : -1, blkAt >= 0) : fredWalk && hf < 0 ? fredF(Math.floor(fredPh), true) : fredF(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS))); let ox = 0, oy = 0;      // (v1.89: hurt has its own pictures, no shiver)
+  const info = FRED_INFO, py = gAir ? gAirH : lift, src = jpic || (fg && fg.pic && hf < 0 ? fg.pic : af >= 0 && atkK === 7 && hf < 0 ? fredP(5 + af) : fredCh >= 0 && hf < 0 ? fredP(Math.min(4, fredCh * 5)) : fwPh && hf < 0 ? (fwPh === 'throw' ? fredR((now - fwAt) * FRED_WATER.throwFps / 1000) : fredT(fwPh === 'touch' ? (now - fwAt) * FRED_WATER.touchFps / 1000 : 14)) : hf >= 0 || gAir ? (gAir ? fredH(3, 2) : fredGBAt === hurtAt ? fredG(hf) : fredH(FRED_HF[hurtK % 10], hf)) : df >= 0 ? (fredDashCr ? fredY(dgK === 1 ? 14 - df : df) : fredD(dgK === 1 ? 14 - df : df)) : af >= 0 ? fredA(atkK, af) : fredSf >= 0 ? fredC(0, stance === 'down' ? fredSf : 14 - fredSf) : stance === 'crouch' ? (cbOn ? fredCB(now - fredGrabAt < 700 ? 2 : fredBlkExt > 0.5 ? 1 : 0) : fredWalk && hf < 0 ? fredW(Math.floor(fredPh)) : fredC(0, 14)) : armOn ? fredPose(now, fredWalk && hf < 0 ? Math.floor(fredPh) : -1, blkAt >= 0) : fredWalk && hf < 0 ? fredF(Math.floor(fredPh), true) : fredF(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS))); let ox = 0, oy = 0;      // (v1.89: hurt has its own pictures, no shiver)
   { const uo = ultHeldOff(now); ox += uo[0]; oy += uo[1]; }      // (the enemy Cat's ULTIMATE holds him up by the neck: lifted and shaking)
   if (((af >= 0 && atkK === 6) || cbOn || (fwPh && hf < 0)) && df < 0 && !jpic) ox += FRED_RAKE_X;
   if (df >= 0 && fredDashCr && !jpic) ox += FRED_RAKE_X;
@@ -19132,8 +19151,8 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   const ry = Math.round(info.h * (1 - e)), gko = vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // (spawn: he materialises from the feet up; beaten: he tumbles and stays down until the next round)
   ctx.save();
   if (vap) { /* gone */ } else if (gko >= 0) { const r = vs.rag, c = r ? ragAt(r, gko) : null, air = c ? Math.max(0, c.h - (r.hh * Math.abs(Math.cos(c.a)) + r.hw * Math.abs(Math.sin(c.a)))) : 0, sx = Math.round(cx - (c ? c.x : 0)), w = Math.max(5, Math.round(9 * (1 - Math.min(1, air / 48)))); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(sx - w, gy + 3, w * 2, 2); ctx.fillRect(sx - Math.round(w * 0.66), gy + 2, Math.round(w * 1.32), 1); ctx.fillRect(sx - Math.round(w * 0.66), gy + 5, Math.round(w * 1.32), 1); ctx.drawImage(vs.meInv ? invOf(fredK(gko / 38)) : fredK(gko / 38), sx - info.cx, gy + 2 - 62 - Math.round(air)); }      // (v1.89: his K.O. pictures, carried by the game's tumble: how far he is thrown and how high he is is the physics', the falling and the lying are drawn)
-  else { ctx.beginPath(); ctx.rect(x, y + ry, armOn ? 96 : info.w, info.h - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); { const gs = src !== FRED_PC && gdActive('p') ? goreSrc('p', src, (px, py) => ({ x: wx + (x + px - cx), y: y + py - gy })) : src; ctx.drawImage(vs.meInv ? (src === FRED_PC ? invNow(src) : invOf(gs)) : gs, x, y); } if (hf >= 0 && now - hurtAt < 70 && src !== FRED_PC) ctx.drawImage(whiteOf(src), x, y); }
-  ctx.restore(); drawGiantNow('foe'); fwDraw(now, cx);
+  else { ctx.beginPath(); ctx.rect(x, y + ry, armOn ? 96 : af >= 0 && atkK >= FRED_FAR.k0 ? 128 : info.w, info.h - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); { const gs = src !== FRED_PC && gdActive('p') ? goreSrc('p', src, (px, py) => ({ x: wx + (x + px - cx), y: y + py - gy })) : src; ctx.drawImage(vs.meInv ? (src === FRED_PC ? invNow(src) : invOf(gs)) : gs, x, y); } if (hf >= 0 && now - hurtAt < 70 && src !== FRED_PC) ctx.drawImage(whiteOf(src), x, y); }
+  ctx.restore(); drawGiantNow('foe'); fwDraw(now, cx); fgDrawAir(now, cx);
   if (t < 1) {      // spawn ring + flash
     const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,225,110,' + (1 - t) + ')';
     for (let a = 0; a < 64; a++) { const th = a / 64 * 6.2832; ctx.fillRect(Math.round(cx + Math.cos(th) * R), Math.round(y + 34 + Math.sin(th) * R * 0.45), 1, 1); }
@@ -19549,9 +19568,347 @@ $('lsFight').addEventListener('click', lanFight);
 $('lsAgain').addEventListener('click', () => lanAgain(true));
 $('lsBack').addEventListener('click', lanLeave);
 
+// ---------------------------------------------------------------- v1.185 FREDDY'S NEW MOVES (this file is spliced into template.html by build_html.py, after the select screens; freddyScene and fredA in template.html call it). The user: "add to freddy kruger if he is far away from the enemy, same range as sukuna, and uses his M1 he will extend his arm out and punch with his left hand forward, same range as the cartoon cat, and if i use it again i will punch with the right arm; add that freddy, if crouching and using his special, will punch the ground in the street map and then throw stones at the enemy, if it is the skyscraper map he will break the ground and as he and the enemy are falling he will grab anything around him and chuck it quickly at the enemy; add a fatality ..."
+// 1. THE STRETCHED PUNCH (M1 with the enemy FAR). Sukuna's M1 turns into a ranged attack when the enemy is more than SU_NEAR = 60 px away, so that is where Freddy's turns into the stretched punch too: his arm shoots out like the Cartoon Cat's (the Cat's M1 grab touches an enemy up to 82 - 90 px away, HIT.cat[30]; Freddy's blows 60 and 61 use the very same numbers). The first press punches with his LEFT hand (a bare fist, from behind the chest: his glove stays up as a guard), the next with the RIGHT (the clawed glove goes out), then the left again ... (the sequence starts again with the left hand after 1.4 s without a press). Closer than 60 px his two slashes are what they were. The blows are numbers 60 (left) and 61 (right) of the game's tables (ATK_FPS, ATK_SWING, ATK_IMPACT, DMG, KNOCK, REACH, HIT: 15 pictures at 38 a second, the whoosh on picture 3, the blow on picture 6, 10 and 12 damage, both M1 blows of the M1 cap): every rule of a normal blow applies (guard, dodge, a crouching enemy ducks it, combo meter, FLOW, stagger, whiff). The pictures are made fresh from his idle picture (the body leans, the sleeve with its red and green stripes stretches out to the fist or the claw), see fredFarPic.
+const FRED_FAR = { near: 60, fps: Math.round(30 * PACE), whoosh: 3, hit: 6, dmg: [10, 12], k0: 60, names: ['L.PUNCH', 'R.PUNCH'], tip: 76 };      // (near: the gap beyond which his M1 is the stretched punch; tip: how far in front of his hips the farthest pixel of the fist (or of the claw's blades) is on the blow's pictures: the same 76 px as the Cat's glove, which the reach numbers below come from)
+for (let i = 0; i < 2; i++) { const k = FRED_FAR.k0 + i; ATK_FPS[k] = FRED_FAR.fps; ATK_SWING[k] = FRED_FAR.whoosh; ATK_IMPACT[k] = FRED_FAR.hit; DMG[k] = FRED_FAR.dmg[i]; KNOCK[k] = 16; KNOCK_G[k] = 0; REACH[k] = 82; HIT.freddy[k] = HIT.cat[30]; M1_HITS.freddy.push(k); HB_TIP.freddy[k] = { 18: FRED_FAR.tip, 19: FRED_FAR.tip, 20: FRED_FAR.tip, 21: FRED_FAR.tip, 22: FRED_FAR.tip, 23: FRED_FAR.tip, 24: FRED_FAR.tip, 25: FRED_FAR.tip }; }      // (HB_TIP: the rows the limb covers, for SET > SHOW HITBOXES and for a curse, whose body is measured from these)
+let fredFarC = 0;      // how many stretched punches of this sequence have been thrown (even: the next is the left hand)
+function fredFarGap(now) {      // the gap to the nearest enemy in front of him when a stretched punch is on (he stands, an enemy that can be hit is in front of him and farther than FRED_FAR.near); 0 = it is not on
+  if (!vs || vs.net || vs.ph !== 'fight' || stance !== 'stand' || (twOn() && vs.tw.away)) return 0; let g = 1e9;
+  for (const e of vs.foes && vs.foes.length > 1 ? vs.foes : [dummy]) if (e && e.ko < 0 && !e.cap && e.x - wx >= -3 && now - e.born >= 600) g = Math.min(g, e.x - wx);
+  return g > FRED_FAR.near && g < 1e9 ? g : 0;
+}
+function fredFarK(now) { if (!fredFarGap(now)) return 0; return FRED_FAR.k0 + (fredFarC++ & 1); }      // the blow of the next press of ATTACK when the enemy is far: 60 = the left hand, 61 = the right, then the left again; 0 = not far: the normal slash
+const FRED_FAR_EXT = [      // how far the arm is out in each of the 15 pictures (0 = in at the chest, 1 = all the way out, below 0 = drawn back to throw it); the blow lands on picture 6
+  [0, -0.12, -0.25, 0.45, 0.95, 1, 1, 1, 0.96, 0.78, 0.52, 0.32, 0.16, 0.05, 0],         // the jab (left)
+  [0, -0.2, -0.45, -0.35, 0.55, 1, 1, 1, 0.98, 0.82, 0.56, 0.35, 0.18, 0.06, 0]];        // the cross (right): a bigger wind-up
+const FRED_FAR_LEAN = [[0, -1, -2, 1, 3, 3, 3, 3, 3, 2, 2, 1, 1, 0, 0], [0, -1, -3, -3, 2, 4, 4, 4, 4, 3, 2, 2, 1, 0, 0]];      // how far the upper body leans forward in each picture (px at the head; less lower down, nothing at the hips)
+const FRED_FC = new Map();
+function fredFarPic(k, af) {      // picture af (0-14) of a stretched punch (k 60 = the left hand: a bare fist, 61 = the right hand: the clawed glove) as a canvas of 128 x 64: his body is in the first 64 columns like every picture of his (his hips at column 31), the arm reaches out to the right
+  af = Math.max(0, Math.min(14, Math.floor(af))); const key = k * 20 + af; let c = FRED_FC.get(key); if (c) return c; const idle = fredF(0); if (idle === EMPTY) return EMPTY;
+  const R = k - FRED_FAR.k0, ext = FRED_FAR_EXT[R][af], lean = FRED_FAR_LEAN[R][af], claw = R === 1;
+  c = document.createElement('canvas'); c.width = 128; c.height = 64; const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+  const P = (col, x, y, w, h) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), w, h); };
+  const show = claw ? af >= 4 && af <= 11 : af >= 3 && af <= 12;      // (the first and the last pictures are his idle picture, leaning: the arm is in)
+  const body = () => {      // the body: the legs stay, the rows above the hips lean (each row a little further than the one below it: a smooth bend, no tear)
+    const src = !show ? idle : claw ? fredNoClaw(idle) : fredFarNoArm(idle); g.drawImage(src, 0, 36, 64, 28, 0, 36, 64, 28);
+    for (let y = 0; y < 36; y++) g.drawImage(src, 0, y, 64, 1, Math.round(lean * (36 - y) / 36), y, 64, 1);
+  };
+  const S = claw ? [37 + Math.round(lean * 0.45), 21] : [25 + Math.round(lean * 0.45), 21];      // the shoulder the arm leaves from (the right one in front of the chest; the left one at his back)
+  const rest = claw ? 44 : 47, far = FRED_FAR.tip - (claw ? 12 : 3) + 31;      // where the hand is at rest (a column of the picture) and at full stretch (the middle of the fist, or of the glove when the blades reach the tip)
+  const hx = Math.round(ext >= 0 ? rest + (far - rest) * ext : rest + ext * 22), hy = 22 + (ext < 0 ? Math.round(-ext * 4) : 0) + (claw ? 0 : 1) - Math.round(Math.min(1, Math.max(0, ext)) * 1);
+  const per = 3 + Math.round(Math.max(0, ext) * 2), sleeve = (x0, y0, x1, y1, w, off) => {      // a striped sleeve (as the block's): the dark outline first, then red and green stripes with light on top and shade below; the stripes stretch with the arm
+    const n = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0))), at = i => [x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n], o = w >> 1;
+    for (let i = 0; i <= n; i++) { const [px, py] = at(i); P('#14101a', px - o - 1, py - o - 1, w + 2, w + 2); }
+    for (let i = 0; i <= n; i++) { const [px, py] = at(i), st = Math.floor((i + off) / per) % 2; P(st ? '#2f7a43' : '#b3303d', px - o, py - o, w, w); P(st ? '#55a868' : '#d6505c', px - o, py - o, w, 1); P(st ? '#1f5430' : '#7a1f2b', px - o, py + o - 1 + (w & 1), w, 1); } };
+  const arm = () => {
+    const dd = Math.hypot(hx - S[0], hy - S[1]);
+    if (dd > 21.5) sleeve(S[0], S[1], hx, hy, 4, 0);      // (out far enough: a straight arm)
+    else { const ux = (hx - S[0]) / Math.max(1, dd), uy = (hy - S[1]) / Math.max(1, dd), a = dd / 2, h = Math.sqrt(Math.max(0, 11 * 11 - a * a)), E = [S[0] + ux * a - uy * h, S[1] + uy * a + ux * h]; sleeve(S[0], S[1], E[0], E[1], 5, 0); sleeve(E[0], E[1], hx, hy, 4, 4); }      // (in at the chest: a bent arm with an elbow that points down and back)
+    if (claw) { P('#b3303d', S[0] - 2, S[1] - 2, 5, 4); P('#d6505c', S[0] - 2, S[1] - 2, 5, 1); }      // (the shoulder of the right arm; the left one is hidden behind his body)
+    if (ext > 0.3) for (const dy of [-4, 4]) P('rgba(255,255,255,0.3)', S[0] + 14 + dy, hy + dy, Math.max(3, (hx - S[0]) * 0.5), 1);      // (the air streaks past the arm)
+    if (!claw) { P('#14101a', hx - 3, hy - 3, 7, 7); P('#b87c58', hx - 2, hy - 2, 5, 5); P('#dca878', hx - 2, hy - 2, 5, 1); P('#dca878', hx - 2, hy - 1, 1, 2); P('#7a4234', hx - 2, hy + 2, 5, 1); P('#7a4234', hx, hy - 1, 1, 3); P('#7a4234', hx + 1, hy - 1, 1, 3); }      // (a bare fist: outline, skin, light on top, shade below, the lines of the fingers)
+    else { P('#14101a', hx - 3, hy - 3, 7, 7); P('#7a4e2c', hx - 2, hy - 2, 5, 5); P('#a8703f', hx - 2, hy - 2, 5, 1); P('#4a2f1a', hx - 2, hy + 2, 5, 1); P('#c58a52', hx - 1, hy - 1, 1, 1); P('#c58a52', hx + 1, hy - 1, 1, 1);
+      const open = af >= 4 && af <= 9, sp = open ? 4 : 2.5, len = open ? 8 : 6; for (let j = 0; j < 4; j++) { const o = (j - 1.5) * sp / 1.5; for (let i = 3; i < 3 + len; i++) { const f = 1 + (i - 3) * 0.12; P(j === 3 ? '#9aa3b8' : '#e9edf6', hx + i, hy + o * f, 1, 1); } P('#ffffff', hx + 2 + len, hy + o * (1 + (len - 1) * 0.12), 1, 1); } }      // (the clawed glove: outline, brown, light top, dark bottom, two knuckles, four blades along the arm that spread wide at the blow)
+    if (af === 6 || af === 7) { const tx = hx + (claw ? 11 : 4); P('#ffffff', tx, hy - 3, 1, 7); P('#ffffff', tx - 2, hy, 5, 1); P('#ffe9a0', tx - 1, hy - 1, 3, 3); }      // (a flash at the tip on the blow)
+  };
+  if (!show) body(); else if (claw) { body(); arm(); } else { arm(); body(); }      // (the right arm is in front of the body, the left one behind it)
+  FRED_FC.set(key, c); return c;
+}
+const FRED_NA = new Map();
+function fredFarNoArm(idle) {      // his idle picture without the left arm that hangs at his back: it is the one that punches, from behind the body (the first and the last pictures keep it)
+  let o = FRED_NA.get(idle); if (o) return o;
+  o = document.createElement('canvas'); o.width = o.height = 64; const g = o.getContext('2d'); g.drawImage(idle, 0, 0); g.clearRect(10, 17, 17, 21); FRED_NA.set(idle, o); return o;
+}
+
+// 2. THE GROUND SLAM (BLUE while CROUCHED; the BLUE button reads STONES, or BREAK in the skyscraper). The user: "if crouching and using his special then he will punch the ground in the street map and then he will throw stones at the enemy, if it is the skyscraper map he will break the ground and as he and the enemy are falling freddy will grab anything around him and chuck it quickly at the enemy".
+// He springs up out of the crouch (the jump's own pictures), comes down on his claw hand and drives it into the ground (0.41 s: nothing of the enemy's reaches him in the air), and the ground gives way where it lands.
+// STREET: the road cracks towards the enemy (a crack runs along the floor), chunks of it fly up and lie in front of him (4), and he picks them up and throws them one after the other (the pictures of his water throw, 0.18 s each, they leave his hand on the 6th picture): 340 px/s, a little arc, 6 damage and a flinch each (24 in all), a crouching enemy ducks them, a dodge misses, nothing else stops them (they fly over a guard). Anyone within 30 px of the fist takes 6 more from the burst.
+// SKYSCRAPER (floor 2 or higher, not in the elevator): the floor breaks under BOTH of them, two floors deep (one if he is on the 2nd floor): both fall (the camera falls 1.3 s with them, the enemy hangs in the air next to him, 3% of health a floor for each of them, never a K.O.: the rule of every fall) and the whole time he grabs what is around him (the 5 pieces of furniture of the room nearest to him; what the room does not have is broken floor) and chucks them at the enemy, one every 0.18 s, 5 damage plus the piece's own (a desk 9, a chair 7, a computer 6, a safe 19) and a flinch each; the enemy lands next to him when the fall ends. In the lobby, in the elevator or with the enemy on another floor it is the street move.
+// It costs 25 energy (nothing if he is out of it: the bar flashes), 0.9 s before the next one, not while the enemy is not there (NO TARGET), a blow on him ends it (the stones already in the air keep flying), not in the Wi-Fi fight. While it lasts he cannot do anything else.
+const FG = { cost: 25, cd: 900, spring: 110, air: 300, apex: 26, stoop: 60, hold: 200, fps: 45, N: [4, 5], rel: 7, speed: 340, dmg: 6, objDmg: 5, knock: 40, fallMs: 1300, floors: 2, reach: 26, hang: 18, burst: 30 };
+CE_COST.fGround = FG.cost;
+let fg = null, fgCd = 0, fgFly = [], fgCracks = [];      // the move going on { at, tw (the skyscraper kind), N (how many throws), n (thrown so far), pile (chunks lying in front of him), items (the pieces he grabbed), jp / pic (the picture of this frame, jp = one of the jump's: not drawn 8 px to the right), lift, hit (the ground was hit), fell (the fall began) }, when the next may begin, what is flying (stones and furniture), the cracks in the road
+const fgTower = () => twOn() && !vs.tw.cab && vs.tw.fMe >= 2 && !vs.tw.away;      // (the floor can be broken: not in the lobby, not in the elevator, and the enemy is here)
+function fgReset() { fg = null; fgFly.length = 0; fgCracks.length = 0; fgCd = 0; }
+function fgTarget() { const d = dummy; return d && vs && !vs.net && vs.ph === 'fight' && d.ko < 0 && !d.cap && !(twOn() && vs.tw.away) && !(d.vform && d.vform !== 'verity') ? d : null; }
+function fgTry(now) {      // BLUE pressed while crouched
+  if (now < fgCd || vs.net) return; if (!fgTarget()) { say('NO TARGET', wx, '#ff8a7a', 8, now); return; } if (!ceSpend(FG.cost, now)) return;
+  const tw = fgTower(); fg = { at: now, tw, N: FG.N[tw ? 1 : 0], n: 0, pile: 0, items: [], jp: null, pic: null, lift: 0, hit: false, fell: false };
+  fwPh = 'ground'; fredWalk = false; fredTg = wvx = 0; atkQ = false; fredCrQ = fredUpQ = -1; snd('jump');
+}
+function fgEnd(now, hurt) {      // the move is over (or a blow ended it): the enemy hanging in the air lands, he stands up
+  const d = dummy; if (fg && fg.fell && d && d.air && d.air.hover) { d.air = null; d.airH = 0; if (d.ko < 0) { d.rx = (Math.random() * 10) | 0; d.rxAt = now; d.stunUntil = Math.max(d.stunUntil || 0, now + 450); puff(d.x, 8); snd('land', 1.4); } }
+  const was = fg; fg = null; fwPh = ''; fgCd = now + FG.cd; if (was && !hurt) { stance = 'stand'; stickCr = false; fredSf = -1; }
+}
+function fgImpact(now) {      // the claw hits the ground
+  const d = dummy, x = wx + FG.reach, dir = d && d.x >= wx ? 1 : -1;
+  gritAt(x, 12, 130, 0); shockAt(x, 220, 90, 0.9); puff(x - 6, 8); puff(x + 6, 8); snd('land', 1.6); snd('twbreak', 4); flash(now, 90, 0.18); hitStop(60); shakeUntil = Math.max(shakeUntil, now + 360); shakeAmp = Math.max(shakeAmp, 5);
+  if (fg.tw) { fgTowerBreak(now); return; }
+  fgCracks.push({ x, at: now, dir, len: Math.min(170, Math.max(60, Math.abs(d.x - wx) + 24)), seed: (now | 0) & 255 }); if (fgCracks.length > 4) fgCracks.shift(); fg.pile = fg.N; fg.ix = x;
+  debBurst(x, 6, 18, ['#8a8a92', '#6d6d75', '#b8b0a0', '#4c4a40'], 160);
+  if (d && d.ko < 0 && !d.cap && Math.abs(d.x - x) <= FG.burst) { techDmg(d, 6, now, 50 * dir, false); say('BURST', d.x, '#ffd34d', 8, now + 100); }
+}
+function fgTowerBreak(now) {      // the floor breaks under both of them and both fall
+  const T = vs.tw, d = dummy, f = T.fMe, F = twFloorData(f), n = Math.min(FG.floors, f - 1), gap = d.x - wx, x = wx;
+  const top = F.objs.filter(o => !o.on && o.k !== 'pillar' && Math.abs(o.x - wx) < 190).sort((a, b) => Math.abs(a.x - wx) - Math.abs(b.x - wx)).slice(0, FG.N[1]);      // (what he grabs: the nearest pieces, not the pillars)
+  fg.items = top.map((o, i) => ({ k: o.k, v: o.v | 0, hx: [26, 40, 20, 48, 33][i % 5] + Math.max(0, (TW_K[o.k].w >> 1) - 10), hy: [34, 46, 22, 30, 54][i % 5] + (TW_K[o.k].h >> 2), ph: i * 1.7 }));      // (a wide piece hangs further out, so it does not cover him)
+  while (fg.items.length < FG.N[1]) { const i = fg.items.length; fg.items.push({ k: 'rock', v: i, hx: [26, 40, 20, 48, 33][i % 5], hy: [34, 46, 22, 30, 54][i % 5], ph: i * 1.7 }); }
+  for (const o of top) { const i = F.objs.indexOf(o); if (i >= 0) F.objs.splice(i, 1); } for (const c of F.objs.slice()) if (top.includes(c.on)) twBreakObj(F, c, now);      // (they leave the room; a computer that stood on a desk he took breaks)
+  for (let i = 0; i < n; i++) { twAddHole(f - i, wx, 28, now); if (Math.abs(gap) > 24) twAddHole(f - i, d.x, 28, now); }
+  debBurst(x, 6, 18 + 2 * n, ['#8a8a92', '#6d6d75', '#b8b0a0', '#6d3b2c'], 150 + 10 * n); puff(x - 8, 6); puff(x + 8, 6); shockAt(x, 280, 120, 0.9); shakeUntil = Math.max(shakeUntil, now + 520); shakeAmp = Math.max(shakeAmp, 6); hitStop(70);
+  for (const dr of F.doors) if (dr.k === 'elev' && Math.abs(dr.x - x) < 50) twDoorHit(F, dr, 25 + 15 * n, now);
+  twLightsShock(F, x, 90 + 20 * n, 30 + 20 * n, now); twHaze(now, 0.8); twFlash(x, now, [255, 240, 210], 36);
+  const to = f - n, dmMe = Math.max(1, Math.round(PHP * Math.min(0.30, 0.03 * n))), dmFoe = Math.round((d.max || DUMMY_HP) * Math.min(0.30, 0.03 * n));
+  T.fMe = to; T.fFoe = to; T.lastFallX = x; T.away = false; d.twAway = false; twFloorSwitch(now, x, 'fall'); d.x = twPlace(twFloorData(to), wx + gap); d.vx = 0; d.down = 0;
+  twHurtMe(dmMe, now, true); twHurtFoe(dmFoe, now, true); T.dx = d.x; T.dHp = d.hp; T.pHp = vs.hp; T.dHit = d.hitAt;
+  if (T.slide) { T.slide.pair = true; T.slide.ms = FG.fallMs; T.slide.land = ['BREAK!', n, dmMe]; vs.nHold = Math.max(vs.nHold || 0, now + FG.fallMs); if (T.banner) T.banner.at = now + FG.fallMs; } else twLand(now, 'BREAK!', n, dmMe);
+  say('BREAK!', x, '#ffd34d', 8, now); fg.fell = true; fgFoeKeep(now);
+}
+function fgFoeKeep(now) {      // the enemy falls next to him: he hangs in the air and cannot act
+  const d = dummy; if (!d || d.ko >= 0) return; d.stunUntil = Math.max(d.stunUntil || 0, now + 200); d.ai = 'rest'; d.aiAt = now; d.restFor = 200; d.hitDone = true; d.vx = 0;
+  if (!d.air || !d.air.hover) { d.air = { at: now, h0: FG.hang, v0: 0, g: 0, kind: 'up', T: 1e9, hover: true }; d.airH = FG.hang; }
+}
+function fgThrow(now) {      // a stone (or a piece of furniture) leaves his hand
+  const d = dummy, it = fg.tw ? fg.items.shift() : null, k = it ? it.k : 'rock', v = it ? it.v : (Math.random() * 4) | 0, X = wx + (it ? it.hx : 26), Y = it ? it.hy : 40, tx = d && d.ko < 0 ? d.x : wx + 120, T = Math.max(0.12, Math.abs(tx - X) / FG.speed);
+  fgFly.push({ k, v, x0: X, y0: Y, yT: 30, T, at: now, x: X, y: Y, dir: tx >= X ? 1 : -1, rot: 0, spin: (Math.random() < 0.5 ? -1 : 1) * (5 + Math.random() * 5), dmg: k === 'rock' ? FG.dmg : FG.objDmg + TW_K[k].dmg });
+  if (!fg.tw) fg.pile = Math.max(0, fg.pile - 1); snd('swing', 3);
+}
+function fgScene(now, dt, hf) {      // one frame of the move: which picture he shows (jp: one of the jump's, lifted by lift; pic: one of the touch / throw), the impact, the throws, the end
+  const e = now - fg.at, tI = FG.spring + FG.air, tH = tI + FG.stoop + FG.hold, CY = Math.round(8000 / FG.fps), tT = tH + fg.N * CY, tR = Math.round(5000 / FG.fps);
+  if (hf >= 0 || !vs || vs.ph !== 'fight' || !dummy) { fgEnd(now, hf >= 0); return; }
+  fg.jp = fg.pic = null; fg.lift = 0;
+  if (e < FG.spring) fg.jp = fredC(1, 14.99 * e / FG.spring);
+  else if (e < tI) { const p = (e - FG.spring) / FG.air, u = p < 0.55 ? 1 - Math.pow(1 - p / 0.55, 2) : 1 - Math.pow((p - 0.55) / 0.45, 2); fg.lift = FG.apex * u; fg.jp = fredJ(p < 0.55 ? 6 + 8 * p / 0.55 : 14 + 19 * (p - 0.55) / 0.45); }      // (up, a hang at the top, a quick fall)
+  else {
+    if (!fg.hit) { fg.hit = true; fgImpact(now); if (!fg) return; }
+    if (e < tI + FG.stoop) fg.jp = fredJ(36); else if (e < tH) fg.pic = fredT(12 + 2.99 * (e - tI - FG.stoop) / FG.hold);
+    else if (e < tT) { const i = Math.floor((e - tH) / CY), q = (e - tH - i * CY) / CY, fi = 2 + Math.min(7, Math.floor(q * 8)); fg.pic = fredR(fi); if (fg.n <= i && fi >= FG.rel) { fg.n = i + 1; fgThrow(now); } }      // (scoop, rise, fling: the pictures 2 - 9 of the water throw, the chunk leaves on the 7th)
+    else if (e < tT + tR) fg.pic = fredR(10 + 4.99 * (e - tT) / tR);
+    else if (fg.fell && vs.tw && vs.tw.slide) fg.pic = fredR(14);      // (the fall is still going: he holds the last picture)
+    else { fgEnd(now, false); return; }
+  }
+  if (fg.fell) fgFoeKeep(now);
+}
+function fgStep(now, dt) {      // every frame of Freddy: what he threw flies, hits the enemy or lands
+  if (!fgFly.length) return; const d = dummy, on = !!d && d.ko < 0 && !d.cap && !!vs && vs.ph === 'fight' && !(twOn() && vs.tw.away);
+  for (const p of fgFly) {
+    const t = (now - p.at) / 1000, q = t / p.T; p.x = p.x0 + p.dir * FG.speed * t; p.y = p.y0 + (p.yT - p.y0) * q + 9 * Math.sin(Math.min(1, q) * Math.PI); p.rot += p.spin * dt;
+    if (on && p.dir * (d.x - p.x) < 14 && p.dir * (d.x - p.x) > -14 && p.y > -2 && p.y < 62 + (d.airH || 0) && !(d.vact && d.vact.type === 'crouch' && p.y > 32)) { p.done = 1; fgHit(p, now); }
+    else if (p.y < -6 || Math.abs(p.x - wx) > 360 || t > 2) { p.done = 1; if (p.y < -6) { gritAt(p.x, 4, 60, 0); snd('land', 1.2); } }
+  }
+  fgFly = fgFly.filter(p => !p.done);
+}
+function fgHit(p, now) {      // a stone or a piece of furniture lands on the enemy
+  const d = dummy; if (now < (d.dodgeUntil || 0)) { say('MISS', d.x, '#9fd8ff', 8, now); return; }
+  techDmg(d, p.dmg, now, FG.knock * p.dir, false); const K = p.k === 'rock' ? null : TW_K[p.k];
+  if (K) { debBurst(p.x, p.y, 8 + (K.w >> 3), K.cols, 120); snd('twbreak', K.s); if (K.sp) spark(p.x, gy - p.y, 6, ['#7fd0ff', '#ffffff', '#ffd34d'], false, p.dir); } else { debBurst(p.x, p.y, 7, ['#8a8a92', '#6d6d75', '#b8b0a0'], 100); snd('twbreak', 3); }
+  shakeUntil = Math.max(shakeUntil, now + 100); shakeAmp = Math.max(shakeAmp, 2);
+}
+const FG_ROCK = [[5, 4], [4, 4], [6, 5], [3, 3]];
+function fgRock(x, y, v) {      // a chunk of road: dark outline, grey, a light edge on top and left, a dark one underneath
+  const [w, h] = FG_ROCK[v & 3], x0 = Math.round(x - w / 2), y0 = Math.round(y - h / 2); ctx.fillStyle = '#1d1b18'; ctx.fillRect(x0 - 1, y0 - 1, w + 2, h + 2); ctx.fillStyle = '#7a7668'; ctx.fillRect(x0, y0, w, h); ctx.fillStyle = '#b4b09a'; ctx.fillRect(x0, y0, w - 1, 1); ctx.fillRect(x0, y0, 1, h - 1); ctx.fillStyle = '#4c4a40'; ctx.fillRect(x0 + 1, y0 + h - 1, w - 1, 1); ctx.fillRect(x0 + w - 1, y0 + 1, 1, h - 1);
+}
+function fgDrawGround(now, cx) {      // on the floor, under everybody: the cracks in the road and the chunks that lie in front of him
+  for (const c of fgCracks) {
+    const a = now - c.at; if (a > 6000) continue; const al = a > 4500 ? (6000 - a) / 1500 : 1, n = Math.floor(c.len * Math.min(1, a / 260)); let y = 0, s = c.seed * 977 + 13; ctx.fillStyle = 'rgba(8,6,12,' + al.toFixed(2) + ')';
+    for (let i = 0; i < n; i++) { if (i % 3 === 0) { s = (s * 1103515245 + 12345) >>> 0; y = Math.max(0, Math.min(5, y + ((s >> 8) & 1 ? 1 : -1))); } ctx.fillRect(cx + Math.round(c.x + c.dir * i - wx), gy + 1 + y, 1, 1 + (i % 7 === 0 ? 1 : 0)); if (i % 11 === 5) ctx.fillRect(cx + Math.round(c.x + c.dir * i - wx), gy + 2 + y, 1, 2); }
+  }
+  if (fg && fg.pile > 0 && fg.hit) { const age = now - fg.at - FG.spring - FG.air, X = [0, 7, 3, 11, 6]; for (let i = 0; i < fg.pile; i++) { const j = FG.N[0] - 1 - i, up = age < 260 ? Math.sin(Math.PI * age / 260) * (14 + j * 5) : 0; fgRock(cx + Math.round(fg.ix - wx) + X[j % 5] - 5, gy - 2 - (j % 2 ? 4 : 0) - up, j); } }
+}
+function fgDrawAir(now, cx) {      // over the fighters: what he grabbed hangs next to him, and what he threw flies
+  if (fg && fg.items.length) for (const it of fg.items) { const x = Math.round(cx + it.hx + Math.sin(now / 260 + it.ph) * 2), y = Math.round(gy - it.hy - Math.sin(now / 310 + it.ph) * 2); if (it.k === 'rock') fgRock(x, y, it.v); else { const s = twSprite(it.k, it.v), K = TW_K[it.k]; ctx.save(); ctx.translate(x, y); ctx.rotate(Math.sin(now / 400 + it.ph) * 0.25); ctx.drawImage(s.c, -s.ox, -s.by + (K.h >> 1)); ctx.restore(); } }
+  for (const p of fgFly) { const x = Math.round(cx + p.x - wx), y = Math.round(gy - p.y); if (p.k === 'rock') { fgRock(x, y, p.v); ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(x - p.dir * 8, y, 5, 1); } else { const s = twSprite(p.k, p.v), K = TW_K[p.k]; ctx.save(); ctx.translate(x, y); ctx.rotate(p.rot); ctx.drawImage(s.c, -s.ox, -s.by + (K.h >> 1)); ctx.restore(); ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(x - p.dir * 12, y, 6, 1); } }
+}
+
+// ---------------------------------------------------------------- v1.185 FREDDY'S FATALITY (this file is spliced into template.html by build_html.py, after fred2.js). The user: "add a fatality to freddy kruger where he grabs the enemy by the legs slamming them to the ground as he gets on all 4 and starts eating the enemy's legs as he screams freddy bites his legs ripping them off as he keeps eating the enemy alive the enemy's organs spill out onto freddy as he eats them too while the enemy screams and when freddy is done he wipes his mouth".
+// The pictures of Freddy for it are made fresh from his idle picture (the body leans or turns on all fours, the striped sleeves reach out to the glove and the bare hand), see ffPose and ffCrawl.
+const ffCv = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; return [c, g]; };
+const FF_PX = (g, col, x, y, w, h) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), w, h); };
+function ffSleeve(g, x0, y0, x1, y1, w, off, per) {      // a striped sleeve (as the block's): the dark outline first, then red and green stripes with light on top and shade below
+  const n = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0))), o = w >> 1;
+  for (let i = 0; i <= n; i++) FF_PX(g, '#14101a', x0 + (x1 - x0) * i / n - o - 1, y0 + (y1 - y0) * i / n - o - 1, w + 2, w + 2);
+  for (let i = 0; i <= n; i++) { const px = x0 + (x1 - x0) * i / n, py = y0 + (y1 - y0) * i / n, st = Math.floor((i + off) / per) % 2; FF_PX(g, st ? '#2f7a43' : '#b3303d', px - o, py - o, w, w); FF_PX(g, st ? '#55a868' : '#d6505c', px - o, py - o, w, 1); FF_PX(g, st ? '#1f5430' : '#7a1f2b', px - o, py + o - 1 + (w & 1), w, 1); }
+}
+function ffArm(g, S, T, o) {      // a whole arm from the shoulder S to the hand T: straight when it is out, bent (the elbow points down) when it is short; the hand: o.claw = the glove with four blades (o.open spreads them, o.dir = the way they point: 1 right, 0 down), else a bare fist
+  const dd = Math.hypot(T[0] - S[0], T[1] - S[1]), per = o.per || 3;
+  if (dd > 21.5) ffSleeve(g, S[0], S[1], T[0], T[1], 4, 0, per);
+  else { const ux = (T[0] - S[0]) / Math.max(1, dd), uy = (T[1] - S[1]) / Math.max(1, dd), a = dd / 2, h = Math.sqrt(Math.max(0, 11 * 11 - a * a)), sg = o.bend || 1, E = [S[0] + ux * a - sg * uy * h, S[1] + uy * a + sg * ux * h]; ffSleeve(g, S[0], S[1], E[0], E[1], 5, 0, per); ffSleeve(g, E[0], E[1], T[0], T[1], 4, 4, per); }
+  const hx = Math.round(T[0]), hy = Math.round(T[1]);
+  if (!o.claw) { FF_PX(g, '#14101a', hx - 3, hy - 3, 7, 7); FF_PX(g, '#b87c58', hx - 2, hy - 2, 5, 5); FF_PX(g, '#dca878', hx - 2, hy - 2, 5, 1); FF_PX(g, '#dca878', hx - 2, hy - 1, 1, 2); FF_PX(g, '#7a4234', hx - 2, hy + 2, 5, 1); FF_PX(g, '#7a4234', hx, hy - 1, 1, 3); FF_PX(g, '#7a4234', hx + 1, hy - 1, 1, 3); }
+  else { FF_PX(g, '#14101a', hx - 3, hy - 3, 7, 7); FF_PX(g, '#7a4e2c', hx - 2, hy - 2, 5, 5); FF_PX(g, '#a8703f', hx - 2, hy - 2, 5, 1); FF_PX(g, '#4a2f1a', hx - 2, hy + 2, 5, 1); FF_PX(g, '#c58a52', hx - 1, hy - 1, 1, 1); FF_PX(g, '#c58a52', hx + 1, hy - 1, 1, 1);
+    const sp = o.open ? 4 : 2.5, len = o.open ? 8 : 6, dx = o.dir === 0 ? 0 : 1, dy = o.dir === 0 ? 1 : 0; for (let j = 0; j < 4; j++) { const q = (j - 1.5) * sp / 1.5; for (let i = 3; i < 3 + len; i++) { const f = 1 + (i - 3) * 0.12; FF_PX(g, j === 3 ? '#9aa3b8' : '#e9edf6', hx + dx * i + dy * q * f, hy + dy * i + dx * q * f, 1, 1); } FF_PX(g, '#ffffff', hx + dx * (2 + len) + dy * q * (1 + (len - 1) * 0.12), hy + dy * (2 + len) + dx * q * (1 + (len - 1) * 0.12), 1, 1); } }
+}
+const FF_POSE = new Map();
+function ffPose(o) {      // Freddy standing, leaning (o.lean px at the head), with his near arm (the glove) out to o.na and his far arm (a bare fist) out to o.fa (null = that arm stays as in his idle picture): a 128 x 64 canvas, his hips at column 31 like every picture of his
+  const key = JSON.stringify(o); let c = FF_POSE.get(key); if (c) return c; const idle = fredF(0); if (idle === EMPTY) return EMPTY;
+  const [cv, g] = ffCv(128, 64); let src = o.na ? fredNoClaw(idle) : idle; if (o.fa) { const [c2, g2] = ffCv(64, 64); g2.drawImage(src, 0, 0); g2.clearRect(10, 17, 17, 21); src = c2; }
+  const lean = o.lean || 0; g.drawImage(src, 0, 36, 64, 28, 0, 36, 64, 28);
+  if (o.fa) ffArm(g, [25 + Math.round(lean * 0.45), 21 + (o.dy || 0)], o.fa, { claw: false, per: o.per || 3, bend: o.bend || 1 });      // (the far arm is behind the body: drawn first)
+  for (let y = 0; y < 36; y++) g.drawImage(src, 0, y, 64, 1, Math.round(lean * (36 - y) / 36), y + (y < 20 ? (o.dy || 0) : 0), 64, 1);
+  if (o.na) ffArm(g, [37 + Math.round(lean * 0.45), 21 + (o.dy || 0)], o.na, { claw: true, open: o.open, per: o.per || 3, dir: o.dir === undefined ? 1 : o.dir, bend: o.bend || 1 });
+  if (o.blood) { const sh = Math.round(lean * 0.72), y0 = o.dy || 0; FF_PX(g, '#b3121f', 36 + sh, 14 + y0, 6, 1); FF_PX(g, '#7a0c16', 37 + sh, 15 + y0, 4, 1); FF_PX(g, '#b3121f', 39 + sh, 16 + y0, 1, 3); FF_PX(g, '#d4141f', 37 + sh, 13 + y0, 3, 1); }      // (blood on his mouth and chin)
+  FF_POSE.set(key, cv); return cv;
+}
+// ---- on all fours: the upper body turned (the torso 90 degrees, the head a little more), two thighs, two shins on the ground, two arms down to the floor
+const FF_CR = new Map();
+function ffLeg(g, hip, knee, foot, col, hl) {      // one leg on the ground: the thigh from the hip down to the knee, the shin back along the floor to the foot, a brown shoe
+  FF_PX(g, '#120e18', knee[0] - 4, hip[1] - 1, 10, knee[1] - hip[1] + 4); FF_PX(g, col, knee[0] - 3, hip[1], 8, knee[1] - hip[1] + 2); FF_PX(g, hl, knee[0] - 3, hip[1], 1, knee[1] - hip[1] + 2);      // (the thigh)
+  FF_PX(g, '#120e18', foot[0] - 1, knee[1] - 3, knee[0] - foot[0] + 6, 7); FF_PX(g, col, foot[0], knee[1] - 2, knee[0] - foot[0] + 4, 5); FF_PX(g, hl, foot[0], knee[1] - 2, knee[0] - foot[0] + 4, 1);      // (the shin on the floor)
+  FF_PX(g, '#120e18', foot[0] - 6, knee[1] - 3, 7, 7); FF_PX(g, '#5a3a28', foot[0] - 5, knee[1] - 2, 6, 5); FF_PX(g, '#8a6a3c', foot[0] - 5, knee[1] - 2, 6, 1);      // (the shoe)
+}
+function ffCrawl(u, bob, jaw, blood) {      // u: 0 = standing (leaning), 1 = on all fours; bob: 0 - 1, the head bobbing; jaw: 0 - 1, how wide the mouth is; blood: the mouth and chin are red; a 128 x 64 canvas, hips at column cv.__hx, the mouth at cv.__mouth, ground at row 62
+  u = Math.round(Math.max(0, Math.min(1, u)) * 12) / 12; bob = Math.round(bob * 6) / 6; jaw = Math.round(jaw * 4) / 4; const key = u + ',' + bob + ',' + jaw + ',' + blood; let c = FF_CR.get(key); if (c) return c; const idle = fredF(0); if (idle === EMPTY) return EMPTY;
+  const [cv, g] = ffCv(128, 64), [c1, g1] = ffCv(64, 64); g1.drawImage(fredNoClaw(idle), 0, 0); g1.clearRect(10, 17, 17, 21);      // (the body without the glove at the chest and without the arm at his back: both arms are drawn new)
+  const D = Math.PI / 180, H0 = [31, 36], N0 = [36, 20], ph = 90 * u * D, ox = 40 - 2 * u, oy = 36 + 4 * u, by = Math.round(2 * Math.sin(bob * Math.PI * 2) * u);
+  const R = (p, a, o) => [(p[0] - o[0][0]) * Math.cos(a) - (p[1] - o[0][1]) * Math.sin(a) + o[1][0], (p[0] - o[0][0]) * Math.sin(a) + (p[1] - o[0][1]) * Math.cos(a) + o[1][1]], T = p => R(p, ph, [H0, [ox, oy]]);
+  if (u < 0.34) g.drawImage(idle, 0, 36, 64, 28, ox - 31, 36, 64, 28);      // (standing legs, then two legs kneeling on the floor)
+  else { ffLeg(g, [ox + 1, oy + 3], [ox + 5, 60], [ox - 14, 60], '#1c1a26', '#34324a'); ffLeg(g, [ox - 2, oy + 3], [ox + 1, 60], [ox - 18, 60], '#2a2634', '#4a4660'); }
+  const S2 = T([25, 21]), S1 = T([37, 21]), kn = u > 0.5 ? 1 : 0, T2 = [S2[0] + 1, 61], T1 = [S1[0] + 3 * kn + 2, 61];
+  if (u > 0.2) ffArm(g, S2, T2, { claw: false, bend: 1 });      // (the far arm, behind the body)
+  g.save(); g.translate(ox, oy); g.rotate(ph); g.drawImage(c1, 0, 20, 64, 17, -H0[0], 20 - H0[1], 64, 17); g.restore();      // (the torso)
+  const Nn = T(N0); g.save(); g.translate(Nn[0], Nn[1] + by); g.rotate(ph); g.drawImage(c1, 0, 0, 64, 21, -N0[0], -N0[1], 64, 21); g.restore();      // (the head, turned the same way: his face looks at the floor)
+  const mouth = [(40 - N0[0]) * Math.cos(ph) - (13 - N0[1]) * Math.sin(ph) + Nn[0], (40 - N0[0]) * Math.sin(ph) + (13 - N0[1]) * Math.cos(ph) + Nn[1] + by];
+  if (u > 0.5) { const m = mouth, w = 2 + Math.round(jaw * 3), h = 1 + Math.round(jaw * 3); if (jaw > 0.2) { FF_PX(g, '#14101a', m[0] - 1, m[1] - 1, w + 2, h + 2); FF_PX(g, blood ? '#8a0e1a' : '#5a1020', m[0], m[1], w, h); for (let i = 0; i < w; i += 2) FF_PX(g, '#f4efe2', m[0] + i, m[1], 1, 1); for (let i = 1; i < w; i += 2) FF_PX(g, '#f4efe2', m[0] + i, m[1] + h - 1, 1, 1); } if (blood) { FF_PX(g, '#b3121f', m[0] - 1, m[1] + 1, w + 2, 1); FF_PX(g, '#7a0c16', m[0] + 1, m[1] + h + 1, 1, 3); FF_PX(g, '#b3121f', m[0] + w - 1, m[1] + h + 1, 1, 2); } }
+  if (u > 0.2) ffArm(g, S1, T1, { claw: true, open: false, dir: 1, bend: 1 });      // (the near arm, in front of the body)
+  FF_CR.set(key, cv); cv.__mouth = mouth; cv.__hx = ox; return cv;
+}
+// ---- the scene. The attacker is Freddy on the left, the victim stands on the right, facing him. Times in seconds of the cutscene's own clock.
+// 0.5 he runs at the enemy and stoops, 1.1 he GRABS HIS ANKLES (the bones crunch), 1.3 he yanks the legs up (the enemy flips over backwards and hangs upside down from his hands), 2.05 the hang, 2.6 the SLAM: the enemy lands on his back, 3.1 Freddy drops on ALL FOURS at his feet, 3.5 he ROARS, 4.3 he BITES the front leg and shakes it, 5.7 he RIPS IT OFF and eats it (3 chews), 7.4 the second leg, 8.8 off, 10.2 he crawls up the body, 11.0 bites the belly, 11.7 the ORGANS spill out onto him and he eats them (the enemy is still alive and screams), 12.8 the enemy goes quiet, 13.2 Freddy gets up, 13.9 WIPES HIS MOUTH twice with the back of his hand, 15.3 his laugh, 15.8 the title, 17.4 the round ends. The enemy is gone (eaten): the road keeps a pool of blood.
+// SETTINGS > GAME > GRAPHIC DAMAGE: FULL = everything; CLEAN = the same without blood and organs (the stumps are pale); OFF = the middle is cut away: from the slam the screen goes dark and only the sounds play (they are played a little closer together), then it fades in on Freddy standing and wiping his mouth.
+const FFT = { lunge: 0.5, grab: 1.1, lift: 1.3, top: 2.05, slam: 2.6, down: 3.1, roar: 3.5, bite1: 4.3, rip1: 5.7, eat1: 5.8, bite2: 7.4, rip2: 8.8, eat2: 8.9, crawl: 10.2, belly: 11.0, organs: 11.7, die: 12.8, back: 13.2, wipe: 13.9, laugh: 15.3, title: 15.8, end: 17.4 };
+let ff = null;
+const FF_VICS = ['gojo', 'yuji', 'verity', 'cat'], FF_BB = new WeakMap();
+function ffBox(img) { let b = FF_BB.get(img); if (b) return b; const w = img.width, h = img.height, d = img.getContext('2d').getImageData(0, 0, w, h).data; let x0 = w, x1 = -1, y0 = h, y1 = -1; for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 8) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } b = { x0, x1, y0, y1 }; FF_BB.set(img, b); return b; }      // (the box the picture really covers)
+function ffState(now) {      // Freddy's FATALITY. 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far (or behind him); 3 = not possible right now
+  if (!vs || vs.story || vs.cv || vs.net || vs.ph !== 'fight' || js || vf || fat || yf || yu || (dom && domLock()) || ult || cf || ke || fd || fg || fwPh || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.curse || !FF_VICS.includes(vs.foe) || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;
+  if (!(dummy.hp <= dummy.max * FAT_LOW)) return 1;
+  if (dummy.x - wx > FAT_RANGE || dummy.x - wx < -4) return 2;
+  return hurtAt >= 0 || gojoGone || jumpAt >= 0 || (twOn() && vs.tw.slide) ? 3 : 0;
+}
+function ffReset() { ff = null; $('pad').classList.remove('cine'); $('hud').classList.remove('cine'); }
+function ffStart(now) {
+  const d = dummy; d.vact = null; d.cact = null; d.cheld = null; d.held = null; vs.catHold = 0; cineClear(); closeSettings(); stickDown = false; d.ai = 'rest'; d.pull = null; d.vx = 0; fgReset(); fwPh = ''; fwBalls.length = 0; atkAt = -1; atkQ = false; dgAt = -1; blkAt = blkEnd = -1; stance = 'stand'; $('pad').classList.add('cine'); $('hud').classList.add('cine'); snd('fatalstart');
+  ff = { t: 0, ev: {}, parts: [], splats: [], freeze: 0, shake: 0, wx0: wx, vx0: d.x, vk: vs.foe, gm: gdSet(), V: null, pc: [null, null], bleed: 0, poolK: 0 };
+}
+function ffEnd(now) {      // the enemy is gone (eaten) and Freddy wins the round
+  const s = ff, d = dummy; wx = s.wx0; const gm = s.gm, vx = s.vx0; ffReset(); blackUntil = now + 500; if (!vs || vs.ph !== 'fight') return;
+  d.hp = 0; d.shown = 0; d.ko = now - 3000; d.koAt = d.ko; d.gone = true; kos++;
+  if (gm === 0 && !twOn()) { for (let i = 0; i < 4; i++) pools.push({ x: vx + 4 + i * 9, y: 1 + (i & 1), rx: 18 - i * 2, ry: 3 + (i & 1), born: now - 2000, g: 1 }); for (let i = 0; i < 40; i++) addDecal(vx - 8 + ((Math.random() * 70) | 0), 2 + ((Math.random() * 6) | 0), 1 + ((Math.random() * 2) | 0), BLD[(Math.random() * 4) | 0]); }      // (the road keeps its blood)
+  endRound('player', 'fatal', now);
+}
+const ffVic = (vk, k) => { if (vk === 'verity') snd('scream', 2, k === 2 ? 2 : 0); else if (vk === 'cat') snd('scream', 4, k === 2 ? 2 : 0); else snd('c6scream', k); };      // (the victim's voice: 0 = the long scream, 1 = the second, 2 = cut off dead, 3 = the howl)
+function ffLegless(img, mask) { if (!mask) return img; const v = goreVar(img, mask, 0); if (v !== img) return v; const [c, g] = ffCv(img.width, img.height); g.drawImage(img, 0, 0); const bb = ffBox(img); g.clearRect(0, bb.y0 + Math.round((bb.y1 - bb.y0) * 0.55), img.width, img.height); return c; }      // (the picture without the legs it has lost; a picture with no patches loses everything below the belly)
+function ffFrame(now, dt) {
+  const s = ff, T = FFT, off = s.gm === 2, full = s.gm === 0; keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; fatReq = 0;
+  const live = now >= s.freeze; if (live) s.t += dt * (off && s.t >= T.down && s.t < T.back ? 1.6 : 1); const t = s.t, sdt = live ? dt : 0, at = (k, tt, f) => { if (!s.ev[k] && t >= tt) { s.ev[k] = 1; f(); } };
+  const mx = Math.round(VW / 2), FX0 = mx - 40, GX = mx + 24, FX1 = GX - 26, V = s.V || (s.V = cfVictim({ vk: s.vk, inv: false }, 0)), bb = ffBox(V.img), fr = bb.y1 + 1, hx = V.hx, back = hx - bb.x0, vy0 = gy + 2 - 62 - V.top + fr;      // (the victim's feet: where the bottom of his picture is when he stands; back: how far his back reaches behind the middle of the picture)
+  const LX = FX1 + 38, LY = gy + 3 - back, D2R = Math.PI / 180;      // (where he lies: his feet, and the height of the middle of his feet so that his back is on the floor)
+  const S3 = ease3;
+  // ---- the victim's place: the point of his picture that Freddy holds (his feet), and the angle (0 = standing, 90 = lying on his back with his head to the right)
+  let vp = [GX, vy0], th = 0, lying = t >= T.slam;
+  if (t < T.grab) { const f = fearOff(now); vp = [GX + f[0], vy0 + f[1]]; }
+  else if (t < T.lift) { const k = S3((t - T.grab) / (T.lift - T.grab)); vp = [lerp(GX, FX1 + 27, k), vy0 - 8 * k]; th = 20 * k * D2R; }
+  else if (t < T.top) { const k = S3((t - T.lift) / (T.top - T.lift)); vp = [lerp(FX1 + 27, FX1 + 32, k), lerp(vy0 - 8, gy - 54, k)]; th = lerp(20, 180, k) * D2R; }
+  else if (t < T.slam - 0.15) { vp = [FX1 + 32 + Math.sin(t * 30), gy - 54 + Math.sin(t * 23)]; th = (180 + 4 * Math.sin(t * 17)) * D2R; }
+  else if (t < T.slam) { const k = ((t - (T.slam - 0.15)) / 0.15); vp = [lerp(FX1 + 32, LX, k), lerp(gy - 54, LY, k * k)]; th = lerp(180, 90, k * k) * D2R; }
+  else { const st = t < T.die ? 1 : 0, j = st * 1.1; vp = [LX + (live ? Math.round(Math.sin(t * 41) * j) : 0), LY + (live ? Math.round(Math.sin(t * 53) * j * 0.6) : 0)]; th = 90 * D2R; }
+  const mask = t >= T.rip2 ? 12 : t >= T.rip1 ? 4 : 0, gone = off && t >= T.down;      // (which of his legs are gone)
+  // ---- Freddy's mouth on the victim: where the head is while he eats (a screen x), and his place
+  const H = bb.y1 - bb.y0, xf = LX + 2, xh = LX + (fr - (bb.y0 + 0.56 * H)), xb = LX + (fr - (bb.y0 + 0.46 * H)), front = bb.x1 - hx;      // (the places on his body: the ankles, the hips, the belly; how far his front reaches above the middle of his picture)
+  const mouthX = t < T.bite1 ? xf - 6 : t < T.rip1 ? lerp(xf + 2, xh - 3, S3((t - T.bite1) / (T.rip1 - T.bite1))) : t < T.bite2 - 0.5 ? xh - 3 : t < T.bite2 ? lerp(xh - 3, xf + 2, S3((t - (T.bite2 - 0.5)) / 0.5)) : t < T.rip2 ? lerp(xf + 2, xh - 4, S3((t - T.bite2) / (T.rip2 - T.bite2))) : t < T.crawl ? xh - 4 : t < T.belly ? lerp(xh - 4, xb - 4, S3((t - T.crawl) / (T.belly - T.crawl))) : xb - 3;
+  const eating = (t >= T.bite1 && t < T.back), jaw = eating ? Math.abs(Math.sin(t * (t < T.rip1 || (t >= T.bite2 && t < T.rip2) || (t >= T.belly && t < T.organs) ? 7 : 5))) : 0, bob = eating ? (t * 2.2) % 1 : 0;
+  // ---- the events: sounds, shakes, blood
+  const spray = (x, y, n, pw, dir) => { if (!full) return; for (let i = 0; i < n; i++) { const a = (Math.random() - 0.5) * 2.2, sp = pw * (0.4 + Math.random() * 0.7); s.parts.push({ x: x + (Math.random() - 0.5) * 6, y, vx: Math.sin(a) * sp * 0.8 + dir * pw * 0.3, vy: -Math.cos(a) * sp - 15, c: BLD[(Math.random() * 4) | 0], z: Math.random() < 0.3 ? 2 : 1 }); } };
+  const slamX = LX + 10, biteY = gy - 7;
+  at('growl', T.lunge, () => snd('ffvoice', 2));
+  at('whoosh', T.lunge + 0.05, () => snd('swing', 3));
+  at('grab', T.grab, () => { snd('c4crunch'); snd('hit', 3); s.shake = now + 250; ffVic(s.vk, 3); });
+  at('lift', T.lift + 0.1, () => snd('swing', 3));
+  at('slam', T.slam, () => { snd('land', 1.9); snd('smack', 3); snd('twbreak', 4); s.freeze = now + 130; s.shake = now + 130 + 500; puff(wx + (slamX - mx), 12); gritAt(wx + (slamX - mx), 10, 120, 0); spray(slamX, gy - 4, 10, 90, 1); });
+  at('slamyell', T.slam + 0.12, () => ffVic(s.vk, 1));
+  at('roar', T.roar, () => snd('ffvoice', 1));
+  for (const [k, tt] of [['b1a', T.bite1], ['b1b', T.bite1 + 0.55], ['b1c', T.bite1 + 1.05]]) at(k, tt, () => { snd('c4crunch'); snd('c4stab'); s.shake = now + 160; spray(mouthX + 4, biteY, 8, 80, 1); });
+  at('v1', T.bite1 + 0.1, () => ffVic(s.vk, 0));
+  at('rip1', T.rip1, () => { snd('rip'); snd('c7tear'); ffVic(s.vk, 3); s.freeze = now + 110; s.shake = now + 110 + 450; spray(mouthX + 2, biteY, 22, 130, 1); s.pc[0] = { at: now }; });
+  for (const [k, tt] of [['c1a', T.eat1 + 0.25], ['c1b', T.eat1 + 0.65], ['c1c', T.eat1 + 1.05], ['c1d', T.eat1 + 1.45]]) at(k, tt, () => { snd('ffchew', 0); if (full) snd('c6wet', 1); });
+  at('g1', T.eat1 + 1.65, () => snd('ffchew', 1));
+  for (const [k, tt] of [['b2a', T.bite2], ['b2b', T.bite2 + 0.55], ['b2c', T.bite2 + 1.05]]) at(k, tt, () => { snd('c4crunch'); snd('c4stab'); s.shake = now + 160; spray(mouthX + 4, biteY, 8, 80, 1); });
+  at('v2', T.bite2 + 0.1, () => ffVic(s.vk, 1));
+  at('rip2', T.rip2, () => { snd('rip'); snd('c7tear'); ffVic(s.vk, 3); s.freeze = now + 110; s.shake = now + 110 + 450; spray(mouthX + 2, biteY, 22, 130, 1); s.pc[1] = { at: now }; });
+  for (const [k, tt] of [['c2a', T.eat2 + 0.25], ['c2b', T.eat2 + 0.65], ['c2c', T.eat2 + 1.05], ['c2d', T.eat2 + 1.45]]) at(k, tt, () => { snd('ffchew', 0); if (full) snd('c6wet', 1); });
+  at('g2', T.eat2 + 1.65, () => snd('ffchew', 1));
+  at('v3', T.crawl + 0.2, () => snd('scream', s.vk === 'cat' ? 4 : 2, 0));
+  at('belly', T.belly, () => { snd('c4stab'); snd('c4crunch'); s.shake = now + 200; spray(mouthX, biteY - 4, 16, 110, 1); });
+  at('v4', T.belly + 0.1, () => ffVic(s.vk, 1));
+  at('guts', T.organs, () => { if (full) { snd('c4guts'); snd('splat'); } s.shake = now + 260; spray(mouthX + 6, biteY - 6, 14, 90, 1); });
+  for (const [k, tt] of [['c3a', T.organs + 0.4], ['c3b', T.organs + 0.85], ['c3c', T.organs + 1.3], ['c3d', T.organs + 1.75]]) at(k, tt, () => { snd('ffchew', 0); if (full) { snd('c6wet', 0); snd('c4guts'); } });
+  at('die', T.die, () => { ffVic(s.vk, 2); });
+  at('gulp', T.die + 0.4, () => snd('ffchew', 1));
+  at('sigh', T.back, () => snd('ffvoice', 0));
+  at('swipe1', T.wipe, () => snd('swing', 0)); at('swipe2', T.wipe + 0.6, () => snd('swing', 0));
+  at('laugh', T.laugh, () => snd('ffvoice', 3));
+  at('title', T.title, () => snd('finisher'));
+  for (const q of s.parts) { q.x += q.vx * sdt; q.y += q.vy * sdt; q.vy += 420 * sdt; if (q.y >= gy + 3 && !q.dead) { q.dead = 1; if (s.splats.length < 320) s.splats.push({ x: Math.round(q.x), y: gy + 3 + ((Math.random() * 3) | 0), w: 1 + ((Math.random() * 2) | 0), c: q.c }); } } s.parts = s.parts.filter(q => !q.dead);
+  if (full && lying && t < T.back) s.poolK = Math.min(1, s.poolK + sdt * (t >= T.rip1 ? 0.22 : 0.05));
+  // ---- draw
+  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
+  const dark = off && t >= T.down && t < T.back - 0.25;      // (OFF: the middle is cut away)
+  if (!dark) {
+    const jx = () => now < s.shake ? Math.round((Math.random() * 2 - 1) * 2) : 0; ctx.translate(jx(), jx()); wx = s.wx0;
+    drawBackdrop(now); ctx.fillStyle = 'rgba(20,0,10,0.28)'; ctx.fillRect(-8, 0, VW + 16, VH); drawSmoke(now, sdt);
+    if (full && s.poolK > 0) { const px = LX + 28, rx = 8 + 34 * s.poolK, ry = 2 + 3.2 * s.poolK; for (let yy = -Math.floor(ry); yy <= Math.floor(ry); yy++) { const w = Math.floor(rx * Math.sqrt(Math.max(0, 1 - yy * yy / ((ry + 0.5) * (ry + 0.5))))); ctx.fillStyle = '#4a0810'; ctx.fillRect(Math.round(px - w), gy + 4 + yy, 2 * w + 1, 1); if (Math.abs(yy) < ry - 1) { ctx.fillStyle = '#7a0c16'; ctx.fillRect(Math.round(px - w + 2), gy + 4 + yy, Math.max(0, 2 * w - 3), 1); } } }
+    for (const b of s.splats) { ctx.fillStyle = b.c; ctx.fillRect(b.x, b.y, b.w, 1); }
+    // the victim
+    const vict = () => { if (gone) return; const img = ffLegless(V.img, mask); ctx.save(); ctx.translate(Math.round(vp[0]), Math.round(vp[1])); if (th) ctx.rotate(th); ctx.scale(-1, 1); ctx.drawImage(img, -hx, -fr); ctx.restore(); };
+    shadow(lying ? LX + 28 : vp[0], lying ? 30 : 9);
+    // the leg that was torn off: it goes into his mouth and is eaten
+    const piece = (i, key) => { const p = s.pc[i]; if (!p) return; const eatT = i ? T.eat2 : T.eat1, e = clamp01((t - eatT - 0.2) / 1.5); if (e >= 1) return; if (p.cv === undefined) p.cv = gorePiece(V.img, key, false) || false; if (!p.cv) return;      // (made once; a picture that has no patch for that leg shows no piece)
+     const pc = p.cv, k = S3((t - (i ? T.rip2 : T.rip1)) / 0.3), M = [mouthX + 2, biteY - 2], hl = pc.h, c0 = [vp[0] + (pc.cy - fr) * -1, vp[1] + (hx - pc.cx)]; const cX = lerp(c0[0], M[0] + 1 - hl / 2 + hl * (1 - e), k), cY = lerp(c0[1], M[1], k); ctx.save(); ctx.translate(Math.round(cX), Math.round(cY)); ctx.rotate(th); ctx.scale(-1, 1); ctx.drawImage(pc.cv, 0, 0, pc.w, Math.max(1, pc.h * (1 - e)), -pc.w / 2, -pc.h / 2, pc.w, Math.max(1, pc.h * (1 - e))); ctx.restore(); };
+    vict();
+    if (full && t >= T.organs && !gone) { const wx0 = Math.round(xb), wy0 = Math.round(LY - front + 1); FF_PX(ctx, '#3a0c1c', wx0 - 5, wy0 - 1, 11, 5); FF_PX(ctx, '#8e0c18', wx0 - 4, wy0, 9, 3); FF_PX(ctx, '#d4141f', wx0 - 3, wy0, 5, 1); FF_PX(ctx, '#6e0a12', wx0 - 2, wy0 + 1, 7, 1); }      // (the opened belly)
+    // Freddy
+    let pic, px, py = gy + 2 - 62;
+    if (t < T.lunge) { pic = fredF(now / (1000 / IDLE_FPS)); px = FX0 - 31; }
+    else if (t < T.grab) { const k = S3((t - T.lunge) / (T.grab - T.lunge)), fx = lerp(FX0, FX1, k), A = [GX - 1, gy - 2]; px = fx - 31; pic = ffPose({ lean: Math.round(9 * k), dy: Math.round(2 * k), na: [Math.round(lerp(44, A[0] - px, k)), Math.round(lerp(24, A[1] - py, k))], fa: [Math.round(lerp(42, A[0] - px - 3, k)), Math.round(lerp(26, A[1] - py + 1, k))] }); }
+    else if (t < T.slam) { px = FX1 - 31; const rx = vp[0] - px, ry = vp[1] - py, lean = t < T.lift ? 9 : t < T.top ? Math.round(lerp(9, -3, S3((t - T.lift) / (T.top - T.lift)))) : t < T.slam - 0.15 ? -3 : Math.round(lerp(-3, 8, (t - (T.slam - 0.15)) / 0.15)); pic = ffPose({ lean, dy: lean > 5 ? 2 : 0, na: [Math.round(rx + 1), Math.round(ry)], fa: [Math.round(rx - 2), Math.round(ry + 1)], open: false }); }
+    else if (t < (off ? T.back - 0.3 : T.back)) {
+      const u = t < T.down ? lerp(0.25, 1, S3((t - T.slam) / (T.down - T.slam))) : 1, cv = ffCrawl(u, bob, jaw, full && t >= T.rip1 - 0.4), m = cv.__mouth || [62, 50], hip = cv.__hx || 38;
+      const hipsX = t < T.down ? lerp(FX1, LX - 5 - (m[0] - hip), S3((t - T.slam) / (T.down - T.slam))) : mouthX - (m[0] - hip);
+      pic = cv; px = hipsX - hip; if (u < 1) py = gy + 2 - 62;
+    }
+    else { const k = S3((t - T.back) / 0.7), w = t < T.wipe ? 0 : Math.floor((t - T.wipe) / 0.3) % 2, fx = lerp(LX + 8, LX + 12, k), wiping = t >= T.wipe && t < T.laugh - 0.3, o = { lean: Math.round(lerp(8, 1, k)), blood: full && t < T.wipe + 1.1 }; px = fx - 31; if (wiping) { o.fa = [w ? 45 : 40, w ? 14 : 12]; o.bend = -1; } pic = ffPose(o); }      // (he stands, and wipes his mouth twice with the back of his bare hand: the blood goes)
+    if (pic) ctx.drawImage(pic, Math.round(px), Math.round(py));
+    if (!gone && lying) for (const [i, key] of [[0, 'lf'], [1, 'lb']]) piece(i, key);      // (the torn-off leg is drawn over his face: it sticks out of his teeth)
+    if (full && t >= T.organs && t < T.back + 0.6) {      // the organs: a rope of intestine from the opened belly to his mouth that he pulls in and eats, and the pieces that spilled onto him and onto the floor
+      const W = [xb, LY - front + 2], M = [mouthX + 1, biteY + 2], k = clamp01((t - T.organs) / 0.5) * (1 - clamp01((t - (T.organs + 0.4)) / (T.back - T.organs - 0.4)) * 0.92), n = Math.max(2, Math.round(Math.hypot(M[0] - W[0], M[1] - W[1]) * k / 3));
+      for (let pass = 0; pass < 2; pass++) for (let i = 0; i <= n; i++) { const q = i / n * k, x = lerp(W[0], M[0], q), y = lerp(W[1], M[1], q) + Math.sin(q * Math.PI) * 7 + Math.sin(now / 110 + i * 0.9) * 0.9; if (pass === 0) FF_PX(ctx, '#3a0c1c', x - 2, y - 2, 5, 5); else { FF_PX(ctx, i % 2 ? '#c8586e' : '#e0788a', x - 1, y - 1, 3, 3); FF_PX(ctx, '#f0a8b4', x - 1, y - 1, 1, 1); } }
+      for (let i = 0; i < 7; i++) { const a = (i * 53) % 37, x = xb - 14 + a, ph = clamp01((t - T.organs - 0.15 * i) / 0.45), y = lerp(LY - front, gy + 2, ph * ph), hold = i < 3 && t > T.organs + 1.5 && t < T.die + 0.6 ? 0 : 1; if (ph <= 0 || !hold) continue; FF_PX(ctx, '#3a0c1c', x - 1, y - 3, 6, 5); FF_PX(ctx, ['#c8586e', '#8a1f33', '#7a3a5e', '#e8c6bb'][i % 4], x, y - 2, 4, 3); FF_PX(ctx, '#f0a8b4', x, y - 2, 1, 1); }
+    }
+    for (const q of s.parts) { ctx.fillStyle = q.c; ctx.fillRect(Math.round(q.x), Math.round(q.y), q.z, q.z); }
+  }
+  ctx.restore();
+  // ---- on the screen itself: the title, the bars, the fade
+  if (t >= T.title) { ctx.fillStyle = 'rgba(0,0,0,' + (0.55 * clamp01((t - T.title) / 0.3)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); fatTitle(t - T.title, 1); }
+  const bh = Math.round(VH * 0.11), bk = clamp01(t / 0.3), b = bh * ease3(bk) * (1 - ease3((t - (T.end - 0.5)) / 0.4)); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, Math.round(b)); ctx.fillRect(0, VH - Math.round(b), VW, Math.round(b));
+  const fa = clamp01((t - (T.end - 0.5)) / 0.5); if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fa.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  if (off && t >= T.back - 0.25 && t < T.back + 0.35) { ctx.fillStyle = 'rgba(0,0,0,' + (1 - clamp01((t - (T.back - 0.25)) / 0.6)).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  if (t >= T.end) ffEnd(now);
+}
+
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+ {
+  "v": "1.185",
+  "t": "FREDDY: STRETCHED PUNCHES, GROUND SLAM AND A FATALITY",
+  "n": [
+   "STRETCHED PUNCH: when the enemy is farther than 60 px (the distance where Sukuna's M1 turns into a ranged attack) Freddy's M1 is no longer a slash: his striped sleeve shoots out as far as the Cartoon Cat's glove reaches (the same reach numbers: an enemy 82 to 90 px away is hit, depending on who he is). The first press is the LEFT hand (a bare fist that comes out from behind his body while the glove stays up as a guard, 10 damage), the next press is the RIGHT hand (the clawed glove goes out, 12 damage), then the left again; after 1.4 s without a press it starts with the left hand again. The button says L.PUNCH or R.PUNCH. Closer than 60 px the two slashes are what they were (between about 37 and 60 px neither of them reaches yet). The punches follow every rule of a normal blow: a guard stops them, a dodge misses, a crouching enemy ducks them, they count for the combo meter and FLOW. Not in the Wi-Fi fight.",
+   "GROUND SLAM: crouch and press BLUE (the button now says STONES, or BREAK in the skyscraper; 25 cursed energy, 0.9 s before the next one). Freddy springs up out of the crouch (nothing of the enemy's reaches him in the air), comes down on his claw hand and drives it into the ground. ON THE STREET the road cracks towards the enemy, four chunks fly up, and he picks them up and throws them at the enemy one after the other (6 damage and a flinch each; a crouching enemy ducks them, a dodge makes them miss, a guard does not stop them; anyone within 30 px of the fist takes 6 more). IN THE SKYSCRAPER the floor breaks under BOTH of them, two floors deep: both fall (the camera falls for 1.3 s with them, the enemy hangs in the air next to him, a fall costs 3% of health a floor for each of them and never kills) and the whole time Freddy grabs what is around him, the five nearest pieces of furniture of the room (broken floor if the room has fewer), and chucks them quickly at the enemy: 5 damage plus the piece's own (a desk 9, a chair 7, a computer 6, a safe 19) and a flinch each. In the lobby, in the elevator and with the enemy on another floor it is the street move. Standing BLUE is still the boiling water.",
+   "FATALITY: when the enemy is at 20% health or less and close, press FATAL (key H, 50% cursed energy, the same rules as everybody's). Freddy runs up and grabs the enemy by the ankles (the bones crunch), yanks his legs up so he flips over and hangs upside down, and SLAMS him on the ground. Then he gets down on ALL FOURS at the enemy's feet, roars, bites the front leg and rips it off, eats it, does the same with the other leg and keeps eating the enemy alive while he screams. He bites his belly, the organs spill out onto him and he eats them too, the enemy's screaming stops, and Freddy gets up and WIPES HIS MOUTH twice with the back of his hand and laughs. It works against Gojo, Yuji, Verity and the Cat (about 17 s); the enemy is gone afterwards and the road keeps a pool of blood. It follows SETTINGS > GAME > GRAPHIC DAMAGE: FULL shows everything, CLEAN is the same without any blood or organs (pale stumps), OFF cuts the middle away: after the slam the screen goes dark and only the sounds play, then it fades in on Freddy standing and wiping his mouth. New sounds: Freddy's growl, roar and cackle, and the wet chewing.",
+   "The game scan now plays Freddy's fatality in all three GRAPHIC DAMAGE settings (on three different enemies) and makes him use the ground slam in the skyscraper."
+  ]
+ },
  {
   "v": "1.184",
   "t": "ELEVATOR PANEL: THE TEXT FITS INSIDE ITS BUTTONS",
@@ -21592,8 +21949,7 @@ const LOG = [
    "Sound made by the game itself and a settings screen."
   ]
  }
-]
-;
+];
 let logBuilt = false;
 const logSeen = () => { try { return localStorage.getItem('js_logseen'); } catch (e) { return null; } };
 const logMark = () => $('logBtn').classList.toggle('new', logSeen() !== LOG[0].v);
@@ -22220,7 +22576,7 @@ function scCheck() {      // numbers that are not numbers, effect lists that onl
     for (const k in SC_LISTS) { let n = 0; try { n = SC_LISTS[k](); } catch { continue; } if (n > (SC.peak[k] || 0)) SC.peak[k] = n; if (n > (k === 'sparks' ? 800 : 400)) scNote('warn', 'THE LIST ' + k + ' HAS ' + n + ' ENTRIES', SC.say); }
   } catch (e) { scErr(e, 'CHECK'); }
 }
-const scBusy = () => !!(fat || yf || vf || cf || ke || dom || ult || js || yu || fd || (typeof suFatOn === 'function' && suFatOn()) || (typeof suDom !== 'undefined' && !!suDom) || (typeof ryUl !== 'undefined' && !!ryUl) || (typeof CU_GAME !== 'undefined' && !!((CU_GAME[3] && CU_GAME[3].cs) || (CU_GAME[4] && CU_GAME[4].cs))));      // a cutscene of a fight is running
+const scBusy = () => !!(fat || yf || vf || cf || ff || ke || dom || ult || js || yu || fd || (typeof suFatOn === 'function' && suFatOn()) || (typeof suDom !== 'undefined' && !!suDom) || (typeof ryUl !== 'undefined' && !!ryUl) || (typeof CU_GAME !== 'undefined' && !!((CU_GAME[3] && CU_GAME[3].cs) || (CU_GAME[4] && CU_GAME[4].cs))));      // a cutscene of a fight is running
 
 // ---------------------------------------------------------------- DATA: the game's own tables
 function scData() {
@@ -22383,8 +22739,8 @@ async function scMoves() {
 
 // ---------------------------------------------------------------- CUTSCENES: the FATALITY and the DOMAIN of every fighter, played to the end
 async function scCuts() {
-  SC.sec = 'CUTSCENES'; const FATAL = { gojo: 1, yuji: 1, verity: 1, cat: 1, freddy: 0, cu3: 1, cu4: 0 };
-  scCov('CUTSCENES', 0, SC_WHO.length * 2); SC.plan = SC_WHO.length * 2 * 220; SC.done = 0;
+  SC.sec = 'CUTSCENES'; const FATAL = { gojo: 1, yuji: 1, verity: 1, cat: 1, freddy: 1, cu3: 1, cu4: 0 };
+  scCov('CUTSCENES', 0, SC_WHO.length * 2 + 3); SC.plan = (SC_WHO.length * 2 + 3) * 220; SC.done = 0;
   for (let i = 0; i < SC_WHO.length; i++) {
     const w = SC_WHO[i];
     for (const [key, nm, low, max] of [['KeyH', 'FATALITY', 2, 700], ['KeyV', 'DOMAIN', 1, 520]]) {
@@ -22405,6 +22761,15 @@ async function scCuts() {
       if (started && !ended) scNote('warn', label + ' DID NOT END IN ' + Math.round(max * SC_STEP / 1000) + ' SECONDS', '');
       show('title');
     }
+  }
+  for (const gm of [0, 1, 2]) {      // v1.185 Freddy's FATALITY in all three GRAPHIC DAMAGE settings, each on another victim (the main loop above plays it in one of them)
+    const vic = ['gojo', 'yuji', 'cat'][gm], label = 'FREDDY FATALITY ON ' + SC_NAME[vic] + ' (GRAPHIC DAMAGE ' + ['FULL', 'CLEAN', 'OFF'][gm] + ')'; SC.say = label; SET.gore = gm;
+    try { Object.assign(TR, { beh: 2, ehp: 2, php: 0, pce: 0, put: 2 }); startPractice('freddy', vic); } catch (e) { scErr(e, label); continue; }
+    if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
+    await scFrames(2, null, 600); try { trainPut(); } catch (e) { scErr(e, label); }
+    scKey('KeyH', true); await scFrames(2); scKey('KeyH', false);
+    if (await scUntil(() => !!ff, 40, 250)) { if (await scUntil(() => !ff, 700, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 35 SECONDS', ''); } else scNote('fail', label + ' DID NOT START', 'THE ENEMY WAS AT ' + (dummy ? Math.round(dummy.hp / (dummy.max || 1) * 100) : '?') + '% HEALTH');
+    show('title');
   }
   {      // v1.181 the FATALITY inside a DOMAIN: Gojo opens the void (10 seconds), the enemy is at 10 percent and close, FATAL must start the cutscene
     const label = 'GOJO FATALITY IN HIS DOMAIN'; SC.say = label;
@@ -22473,15 +22838,18 @@ function scPanel() {      // v1.184 the elevator panel in the cab: no text of a 
   for (const b of p.querySelectorAll('#twpq button,#twpf button')) { const r = b.getBoundingClientRect(); if (!r.width) continue; for (const el of b.querySelectorAll('span,b')) { const t = tr(el); if (t.left < r.left - 0.3 || t.right > r.right + 0.3) { bad.push((b.dataset.q || b.dataset.a || '?').toUpperCase() + ' BUTTON'); break; } } if (!b.querySelector('span,b')) { const t = tr(b); if (t.left < r.left - 0.3 || t.right > r.right + 0.3) bad.push((b.dataset.a || '?').toUpperCase() + ' BUTTON'); } }
   if (bad.length) scNote('fail', 'ELEVATOR PANEL: THE TEXT OF A BUTTON STICKS OUT OF IT: ' + bad[0], bad.length + ' BUTTONS');
 }
+function scFredSlam() {      // v1.185 Freddy in the skyscraper: whatever the random player was doing, he crouches and presses BLUE (the ground slam: the floor breaks under both, both fall, he throws what is around him); tried three times
+  if (!fredMe() || !dummy || fg || fgCd) return; twFoeHere(pnow()); dummy.x = wx + 70; atkAt = -1; atkQ = false; jumpAt = -1; dgAt = -1; blkAt = blkEnd = -1; blockHeld = false; fredCrQ = fredUpQ = -1; stickCr = false; fwPh = ''; stance = 'crouch'; lpReq = true;
+}
 async function scTower() {
-  SC.sec = 'SKYSCRAPER'; scCov('TOWER', 0, 3); SC.plan = 3 * 470; SC.done = 0; const keep = twPick; twPick = 1;
+  SC.sec = 'SKYSCRAPER'; scCov('TOWER', 0, 4); SC.plan = 4 * 470; SC.done = 0; const keep = twPick; twPick = 1;
   try {
-    for (const [w, seed] of [['cu4', 11], ['gojo', 12], ['yuji', 13]]) {
+    for (const [w, seed] of [['cu4', 11], ['gojo', 12], ['yuji', 13], ['freddy', 14]]) {
       const label = SC_NAME[w] + ' IN THE SKYSCRAPER'; SC.say = label;
       try { Object.assign(TR, { beh: 1, ehp: 0, php: 0, pce: 0 }); startPractice(w, 'cat'); } catch (e) { scErr(e, label + ' START'); continue; }
       if (state !== 'play' || !twOn()) { scNote('fail', 'THE SKYSCRAPER DID NOT START: ' + label, 'STATE ' + state); show('title'); continue; }
       if (!(await scIntro())) { show('title'); return; }
-      const p = scPlayer(seed), ev = [[20, scSigns], [30, () => twSlam('foe', 2, pnow(), dummy.x)], [90, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [110, () => twMeFall(1, pnow(), wx)], [150, () => { const F = twFloorData(vs.tw.fMe); const o = { k: 'gas', x: Math.round(wx + 40), hp: 18, mx: 18, wob: 0, hitAt: -9999 }; F.objs.push(o); twDamageObj(F, o, 99, pnow()); }], [190, () => twCeiling('foe', 1, pnow(), dummy.x)], [235, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [250, () => twFallOut('foe', pnow(), 1)],
+      const p = scPlayer(seed), ev = [[8, scFredSlam], [10, scFredSlam], [12, scFredSlam], [16, () => { if (fredMe() && !fg && !fgCd) scNote('warn', 'FREDDY: THE GROUND SLAM DID NOT START IN THE SKYSCRAPER', 'STANCE ' + stance + ', PHASE ' + vs.ph + ', SPAWN ' + Math.round(pnow() - spawnAt) + ' MS, HURT ' + hurtAt + ', STUN ' + Math.round(pStun - pnow()) + ', FLOOR ' + vs.tw.fMe + ', AWAY ' + vs.tw.away + ', CAB ' + !!vs.tw.cab + ', WATER ' + fwPh); }], [20, scSigns], [30, () => twSlam('foe', 2, pnow(), dummy.x)], [90, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [110, () => twMeFall(1, pnow(), wx)], [150, () => { const F = twFloorData(vs.tw.fMe); const o = { k: 'gas', x: Math.round(wx + 40), hp: 18, mx: 18, wob: 0, hitAt: -9999 }; F.objs.push(o); twDamageObj(F, o, 99, pnow()); }], [190, () => twCeiling('foe', 1, pnow(), dummy.x)], [235, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [250, () => twFallOut('foe', pnow(), 1)],
         [60, () => { const F = twFloorData(vs.tw.fMe), d = F.doors.find(q => q.k === 'elev'); if (d) twDoorHit(F, d, 45, pnow()); }],      // (v1.175 the elevator: a hard hit jams a door (OUT OF ORDER) ...)
         [270, () => { const T = vs.tw; if (T.cab) return; const F = twFloorData(T.fMe), d = twElevOf(F), L = T.lift; if (!d) return; d.st = 0; d.hp = 70; L.f = L.curF = L.dest = T.fMe; L.ph = 'park'; L.inFoe = false; L.job = null; L.pend = null; wx = d.x; T.px = wx; twCabEnter(F, d, pnow()); }],      // (v1.176 ... you step into the one cab of the building: the cut inside, the panel, a floor button (0.6 s, then it goes), an emergency stop, another floor,
         [274, () => { if (vs.tw.cab) scPanel(); }],

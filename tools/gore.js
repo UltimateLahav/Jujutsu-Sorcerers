@@ -292,7 +292,7 @@ function goreSplit(pic, kind) {      // the picture cut at the neck: {body (with
   return { body, head, ny, y0, W };
 }
 function goreFatal(who, now) {      // endRound(who, 'fatal'): the loser's head comes off
-  if (!vs || vs.story || vs.net || gdSet() >= 2 || (who !== 'player' && who !== 'enemy')) return; const side = who === 'player' ? 'f' : 'p', kind = side === 'p' ? (cuMe() ? (vs.me === 'cu3' ? 'sukuna' : null) : vs.me) : (dummy && dummy.mode === 'fighter' && !dummy.curse ? vs.foe : null);
+  if (!vs || vs.story || vs.net || gdSet() >= 2 || (who !== 'player' && who !== 'enemy') || (who === 'player' && vs.me === 'freddy')) return; const side = who === 'player' ? 'f' : 'p', kind = side === 'p' ? (cuMe() ? (vs.me === 'cu3' ? 'sukuna' : null) : vs.me) : (dummy && dummy.mode === 'fighter' && !dummy.curse ? vs.foe : null);
   if (!kind || !GNECK[kind]) return; const sp = goreSplit(goreIdleOf(kind), kind); if (!sp) return; const x = side === 'f' ? dummy.x : wx, dir = side === 'f' ? (dummy.x >= wx ? 1 : -1) : -1, clean = gdSet() === 1, mirror = side === 'f' && dummy.x >= wx;
   goreAft = { at: now, x, dir, body: sp.body, mirror, ny: sp.ny, W: sp.W }; GSTAT.fatal = (GSTAT.fatal | 0) + 1;
   const hp = 62 - sp.ny + 1; gibs.push({ x: x + dir * 2, y: -hp, vx: dir * (50 + Math.random() * 40), vy: -(150 + Math.random() * 60), cv: sp.head, hw: sp.head.width / 2, hh: sp.head.height / 2, fl: 2, rest: false, l: 0, lay: 0, gore: clean ? 2 : 1 });
