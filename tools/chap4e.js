@@ -114,11 +114,11 @@ function c4xDrawIron(o) {
     if (o.fl > 0) { const fl = o.fl, len = 10 + 14 * fl + 3 * Math.sin(k * 3 + (o.ph || 0) * 9), fx = l.ax + 1, fy = l.ay + 3; p.put(c4cap(fx, fy, fx - 0.5, fy + len, 2.6, 0.3), c4M('#ff8a1e'), 3); p.put(c4cap(fx, fy, fx - 0.3, fy + len * 0.65, 1.7, 0.3), c4M('#ffd24a'), 3); p.put(c4cap(fx, fy, fx, fy + len * 0.35, 0.9, 0.3), c4M('#ffffff'), 3); } };
   drawArm(0); drawLeg(0);
   p.put(c4uni(c4cap(P[0], P[1], at(0.3, 0)[0], at(0.3, 0)[1], 5.6, 6.4), c4cap(at(0.3, 0)[0], at(0.3, 0)[1], at(0.72, 0)[0], at(0.72, 0)[1], 6.4, 8.4), c4cap(at(0.72, 0)[0], at(0.72, 0)[1], Nk[0], Nk[1], 8.4, 5.6)), red);
-  const ab = at(0.16, 2.6); p.put(c4cap(ab[0], ab[1], at(0.3, 2.6)[0], at(0.3, 2.6)[1], 3.2, 3.6), gold, 1); const ar = at(0.62, 5.6); for (const [dx, dy, c] of [[0, 0, C.white], [1, 0, C.glow], [-1, 0, C.glow], [0, 1, C.glow], [0, -1, C.glow]]) p.px(ar[0] + dx, ar[1] + dy, K(c));      // (the abdomen in gold; the arc reactor)
+  const ab = at(0.16, 2.6); p.put(c4cap(ab[0], ab[1], at(0.3, 2.6)[0], at(0.3, 2.6)[1], 3.2, 3.6), gold, 1); const ar = at(0.62, 5.6); for (const [dx, dy, c] of [[0, 0, C.white], [1, 0, C.glow], [-1, 0, C.glow], [0, 1, C.glow], [0, -1, C.glow]]) p.px(ar[0] + dx, ar[1] + dy, K(o.off ? '#4a5a68' : c));      // (the abdomen in gold; the arc reactor)
   p.put(c4ell(Sh[0] + 0.4, Sh[1] - 0.6, 4.6, 4.0), red); p.put(c4cap(hd[0] - 1, hd[1] + 3, Nk[0] + 0.3, Nk[1] - 0.4, 2.2, 2.6), c4M(C.dark));
   const [hx, hy] = hd; p.put(c4ell(hx - 0.2, hy - 0.2, 5.3, 5.6), red);      // (the helmet)
   p.put(c4clip(c4uni(c4ell(hx + 0.8, hy + 0.9, 4.4, 4.6), c4cap(hx + 1.6, hy + 2.6, hx + 2.4, hy + 4.4, 2.4, 1.8)), (x, y) => x > hx + 0.2), gold);      // (the golden faceplate)
-  const X = Math.round(hx + 2.5), Y = Math.round(hy - 0.4); p.rect(X, Y, 3, 1, K(C.white)); if (o.vis) p.px(X - 1, Y, K(C.glow)); p.rect(X + 1, Y + 3, 2, 1, K('#6a4e0c'));      // (the eye slit, the mouth line)
+  const X = Math.round(hx + 2.5), Y = Math.round(hy - 0.4); p.rect(X, Y, 3, 1, K(o.off ? '#3d4452' : C.white)); if (o.vis && !o.off) p.px(X - 1, Y, K(C.glow)); p.rect(X + 1, Y + 3, 2, 1, K('#6a4e0c'));      // (the eye slit, the mouth line)
   drawLeg(1); const sk = at(0.03, 0); p.put(c4cap(sk[0] - 0.2, sk[1] - 0.6, sk[0] + 0.3, sk[1] + 2.6, 4.6, 5.0), c4M(C.gold), 1);
   drawArm(1); return p;
 }

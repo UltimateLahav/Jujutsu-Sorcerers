@@ -271,6 +271,9 @@ async function scStory() {
   if (!SC_ONLY.scenes || SC_ONLY.scenes.some(x => 'CH 5 THE STAB'.includes(x))) {      // (v1.177 chapter 5's lost tap: the stab, the black, the words YUJI DIED, and the scene starts again by itself)
     SC.say = 'CH 5 THE STAB'; show('title'); try { SET.gore = 0; startStory(0, 5); await scFrames(20); window.__k5At(7.7, 'miss'); let q = null; for (let k = 0; k < 14; k++) { if (!(await scFrames(60))) { show('title'); return; } q = window.__k5(); if (q && q.res === null && q.T < 6) break; } if (!q || q.res !== null || q.T > 6) scNote('fail', 'CHAPTER 5 DID NOT START AGAIN AFTER THE STAB', q ? 'T ' + q.T : 'NO SCENE'); scCheck(); } catch (e) { scErr(e, 'CH 5 THE STAB'); }
   }
+  if (!SC_ONLY.scenes || SC_ONLY.scenes.some(x => 'CH 5 THE WALL'.includes(x))) {      // (v1.178 chapter 5, part 2: a lost second tap: the punch, the flight into the wall, the black, the cards and the end)
+    SC.say = 'CH 5 THE WALL'; show('title'); try { SET.gore = 0; startStory(0, 5); await scFrames(20); window.__k5At(80.6, 'hit', undefined, 'miss'); let q = null; for (let k = 0; k < 24; k++) { if (!(await scFrames(60))) { show('title'); return; } q = window.__k5(); if (!q) break; } if (q) scNote('fail', 'CHAPTER 5 DID NOT END AFTER THE WALL', 'T ' + q.T); scCheck(); } catch (e) { scErr(e, 'CH 5 THE WALL'); }
+  }
   show('title');
 }
 

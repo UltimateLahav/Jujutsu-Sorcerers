@@ -1080,6 +1080,17 @@ function makeSfx(ac) {
       burst(B, t, { type: 'highpass', f: 2800, f2: 7000, q: 0.8, dur: 0.22, gain: 0.3, atk: 0.01 }); tone(B, t + 0.1, { f: 3150, f2: 3000, dur: 0.7, gain: 0.07, atk: 0.002 }); tone(B, t + 0.1, { f: 4720, f2: 4600, dur: 0.5, gain: 0.04, atk: 0.002 });
       tone(C.atk.deep, t, { type: 'triangle', f: 220, f2: 140, dur: 0.1, gain: 0.12, atk: 0.003 });
     },
+    k5beep(at) {                                         // v1.178 a touch panel: two short high beeps
+      const t = T(at), B = C.atk.soft; tone(B, t, { type: 'square', f: 1760, dur: 0.07, gain: 0.04, atk: 0.003 }); tone(B, t + 0.1, { type: 'square', f: 2349, dur: 0.09, gain: 0.04, atk: 0.003 });
+    },
+    k5door(at) {                                         // v1.178 a glass door slides up: a pneumatic hiss, a soft whine and a muffled clunk at the end
+      const t = T(at), B = C.atk.soft; burst(B, t, { type: 'highpass', f: 2200, f2: 5200, q: 0.7, dur: 0.5, gain: 0.16, atk: 0.04 }); tone(B, t, { type: 'sawtooth', f: 180, f2: 320, dur: 0.8, gain: 0.025, atk: 0.1 }); tone(C.atk.deep, t + 0.85, { type: 'triangle', f: 110, f2: 55, dur: 0.18, gain: 0.2, atk: 0.004 });
+    },
+    k5suit(at) {                                         // v1.178 an armour closes round a man: servo whines that climb, six metal clacks, a last ring
+      const t = T(at), B = C.atk.soft; tone(B, t, { type: 'sawtooth', f: 240, f2: 1500, dur: 0.9, gain: 0.05, atk: 0.2 });
+      for (let i = 0; i < 6; i++) { burst(B, t + 0.08 + i * 0.13, { type: 'bandpass', f: 2600 + i * 400, q: 2, dur: 0.05, gain: 0.2, atk: 0.001 }); tone(C.atk.deep, t + 0.08 + i * 0.13, { type: 'triangle', f: 200, f2: 120, dur: 0.06, gain: 0.08, atk: 0.002 }); }
+      tone(B, t + 0.95, { f: 3100, f2: 3000, dur: 0.5, gain: 0.05, atk: 0.003 });
+    },
     setVol(name, v) {                                    // per-sound volume, 0 = silent, 1 = designed level, 2 = twice as loud
       vol[name] = v;
       if (name === 'master') applyMaster();

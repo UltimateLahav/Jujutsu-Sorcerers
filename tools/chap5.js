@@ -7,7 +7,7 @@
 // ---- the times (seconds of the scene)
 const K5T = {
   fade: 1.0, stance: 6.3, wind0: 6.5, lunge: 7.55, q: 7.65, hit: 8.05,      // (the stance, the wind-up, the lunge starts, the ring closes on Yuji, the blade arrives: 0.4 s after the ring closes, like every blow of chapter 3)
-  cut: 36.9, card: 37.7, card1: 40.2, card2: 40.5, end: 43.0,      // (the black after the last punch, the card END OF CHAPTER 5, TO BE CONTINUED, back to the chapters)
+  cut: 36.9,      // (the black after the last punch: Yuji wakes up in Stark Tower, see tools/chap5b.js, which also has the times of the cards END OF CHAPTER 5 and TO BE CONTINUED)
   d0: 0.0, d1: 0.5, d2: 1.1, d3: 1.45, d4: 1.9, restart: 12.4      // (the death: seconds after the blade arrives: the blade is pulled out, he falls, the black comes, the words; the scene starts again at `restart`)
 };
 const k5L = (t, w, vk, a, b) => ({ t, d: (a + (b || '')).length / TN_RATE + 1.1, w, vk, a, b: b || '' });      // (a line of the speech box: it stays as long as it takes to type it and a second to read)
@@ -108,7 +108,8 @@ function k5Resolve(c, res, why, T) {      // the tap is judged: the scene goes o
   if (c.q.res === 'miss') snd('c7thud', 1); else snd('dash', 1);
 }
 function k5Tap(ev) {      // a finger or a key: true when the scene used it
-  const c = c4x; if (!c || c.ph !== 'k5' || paused || c.q.res || c13Off()) return false; if (ev && c13InSkip(ev)) return false;
+  const c = c4x; if (!c || c.ph !== 'k5' || paused) return false; if ((pnow() - c.t0) / 1000 >= K5T.cut) return k5Tap2(ev);      // (after the black: the tap of the huge room)
+  if (c.q.res || c13Off()) return false; if (ev && c13InSkip(ev)) return false;
   const T = (pnow() - c.t0) / 1000, u = T - K5T.q, W = C13.win;
   if (u >= W[0] && u <= W[1]) { k5Resolve(c, 'hit', Math.abs(u) <= C13.perfect ? 'PERFECT' : 'GOOD', T); return true; }
   if (u >= -C13.early && u < W[0]) { k5Resolve(c, 'miss', 'TOO EARLY', T); return true; }
@@ -125,15 +126,18 @@ function startC16(slot) {      // the chapter list or CONTINUE: chapter 5 (it ne
 function k5Start() {      // chapter 5 begins, or begins again after a death: the freeway of New York, Yuji and Iron Man where chapter 4 left them
   show('play'); const now = pnow(); c4xUi(true); c4xCine(true);
   const cars = [['taxi', -76, 1], ['sedan', -136, 1], ['van', -202, 1], ['dark', 104, -1], ['white', 164, -1], ['truck', 246, -1]].map(([k, x, dir]) => ({ k, x, dir, hk: 0, next: 1e9 })), far = [['bus', 40, 66], ['taxi', 190, 84], ['white', 330, 74], ['truck', 450, 62], ['sedan', 580, 96]].map(([k, x, v]) => ({ k, x: x - 150, v: -v, w: 0 }));
-  c4x = { ph: 'k5', t0: now, T: 0, ev: {}, cam: 0, camOk: true, vi: -1, vc: 0, mus: 'off', musAt: now, musGo: false, y: { x: -16, face: 1, lift: 0, pose: null }, m: { x: 0, face: -1, lift: 0, pose: null }, pool: null, fx: [], ny: { cars, far, hn: [] }, q: { res: null, why: '', at: 0 }, k: null, kc: undefined, black: null, whiteA: 0 };
+  c4x = { ph: 'k5', t0: now, T: 0, ev: {}, cam: 0, camOk: true, vi: -1, vc: 0, mus: 'off', musAt: now, musGo: false, y: { x: -16, face: 1, lift: 0, pose: null }, m: { x: 0, face: -1, lift: 0, pose: null }, pool: null, fx: [], ny: { cars, far, hn: [] }, q: { res: null, why: '', at: 0 }, q2: { res: null, why: '', at: 0 }, k: null, kc: undefined, black: null, whiteA: 0 };
   const c = c4x; c.black = () => k5Black(c); popups = []; sparks = []; smoke = []; bfList = []; stopMs = 0; shakeUntil = 0; flashUntil = 0; blackUntil = 0; wx = 0; snd('windOff');
 }
-function k5Skip(c, now) {      // the SKIP button: a lost try starts again at once; otherwise the tap counts as made and the scene goes to the black and the card
+function k5Skip(c, now) {      // the SKIP button: a lost try starts again at once; otherwise the tap counts as made and the scene goes on to the next part: the road -> the black (Yuji wakes up), the lab -> the huge room, the huge room -> the cards, the cards -> the chapters
   const T = (now - c.t0) / 1000; if (c.q.res === 'miss') { c.t0 = now - (k5Re() - 0.05) * 1000; return; }
-  if (!c.q.res) k5Resolve(c, 'hit', '', T); c.t0 = now - (T < K5T.cut ? K5T.cut + 0.05 : K5T.end + 0.05) * 1000;
+  if (!c.q.res) k5Resolve(c, 'hit', '', T);
+  if (T < K5T.cut) c.t0 = now - (K5T.cut + 0.05) * 1000;
+  else if (T < K5B.room) c.t0 = now - K5B.room * 1000;
+  else { if (!c.q2.res) k5Resolve2(c, 'hit', '', T); const cd = k5Cards(c); c.t0 = now - (T < cd.card ? cd.card + 0.05 : cd.end + 0.05) * 1000; }
 }
-window.__k5At = (t, res, gore) => { if (!c4x || c4x.ph !== 'k5') { if (!story) story = { slot: -1, t0: pnow(), battle: false, T: 0, ev: {}, c16: true }; k5Start(); } const c = c4x; c.t0 = pnow() - t * 1000; c.ev = {}; c.q = { res: null, why: '', at: 0 }; c.k = null; c.kc = undefined; if (res) k5Resolve(c, res, '', Math.min(t, K5T.q + C13.win[1])); if (gore !== undefined) window.__k5Gore = gore; };      // test hook: start the chapter (or jump in it) at scene time t, with the outcome res
-window.__k5 = () => c4x && c4x.ph === 'k5' ? { T: +c4x.T.toFixed(2), res: c4x.q.res, why: c4x.q.why, at: +c4x.q.at.toFixed(2) } : null;
+window.__k5At = (t, res, gore, res2) => { if (!c4x || c4x.ph !== 'k5') { if (!story) story = { slot: -1, t0: pnow(), battle: false, T: 0, ev: {}, c16: true }; k5Start(); } const c = c4x; if (c.slow) { snd('slowout'); c.slow = 0; } c.t0 = pnow() - t * 1000; c.ev = {}; c.q = { res: null, why: '', at: 0 }; c.q2 = { res: null, why: '', at: 0 }; c.k = null; c.kc = undefined; c.vi = -1; if (!res && t >= K5T.cut) res = 'hit'; if (res) k5Resolve(c, res, '', Math.min(t, K5T.q + C13.win[1])); if (res2) k5Resolve2(c, res2, '', Math.min(Math.max(t, K5B.q2 - 0.05), K5B.q2 + C13.win[1])); if (gore !== undefined) window.__k5Gore = gore; };      // test hook: start the chapter (or jump in it) at scene time t, with the outcome res of the first tap and res2 of the second
+window.__k5 = () => c4x && c4x.ph === 'k5' ? { T: +c4x.T.toFixed(2), res: c4x.q.res, why: c4x.q.why, at: +c4x.q.at.toFixed(2), res2: c4x.q2.res, why2: c4x.q2.why, at2: +c4x.q2.at.toFixed(2) } : null;
 window.__k5Tap = () => k5Tap(null);
 window.__k5Eval = t => { const c = c4x; if (!c || c.ph !== 'k5') return null; const S = k5Eval(c, t === undefined ? c.T : t); return { ix: +S.im.x.toFixed(1), yx: +S.y.x.toFixed(1), yp: S.y.pose }; };
 
@@ -158,11 +162,11 @@ function k5Step(c, now, dt, T) {
   ev('shing', 31.4, () => snd('shing')); ev('s1', 31.98, () => snd('swing', 0)); ev('s2', 32.64, () => snd('swing', 0)); ev('s3', 33.3, () => snd('swing', 0));
   ev('chg', 33.8, () => snd('redcharge')); ev('fire', 34.5, () => { snd('redfire'); flash(now, 120, 0.4); shakeUntil = now + 300; shakeAmp = 3; }); ev('y2', 34.55, () => { snd('concboom'); hitStop(90); shakeUntil = now + 420; shakeAmp = 6; puff(-52, 8); spark(-52, gy - 34, 16, ['#ffffff', '#aef6ff', '#ffd27a'], true, -1); });
   ev('fly', 35.0, () => snd('thrust', 0.9)); ev('lnd', 36.05, () => { snd('land', 2); puff(-66, 8); shakeUntil = now + 260; shakeAmp = 3; });
-  ev('y3', 36.55, () => { blow(-90, 3); snd('smack', 3); }); ev('cut', N.cut, () => { snd('ko'); snd('windOff'); }); ev('card', N.card, () => snd('c7drone'));
-  if (T >= N.end) { const slot = story ? story.slot : -1; storyDone16(); c4xOff(); svSel = slot; svView = 1; $('vsres').classList.remove('on'); show('saves'); renderSaves(); }
+  ev('y3', 36.55, () => { blow(-90, 3); snd('smack', 3); }); ev('cut', N.cut, () => { snd('ko'); snd('windOff'); });
+  if (T >= N.cut) k5Step2(c, now, dt, T);      // (v1.178 the lab and the huge room, tools/chap5b.js)
 }
-function k5Black(c) {      // the black over the picture: the fade in; and after the stab (or at once with GRAPHIC DAMAGE OFF) the fall to black
-  const T = c.T, N = K5T; let a = T < N.fade ? 1 - c4xEase(T / N.fade) : 0;
+function k5Black(c) {      // the black over the picture: the fade in; and after the stab (or at once with GRAPHIC DAMAGE OFF) the fall to black; in part 2 (tools/chap5b.js) the fall to black before the cards
+  const T = c.T, N = K5T; if (c.q.res !== 'miss' && T >= N.cut) return k5Black2(c, T); let a = T < N.fade ? 1 - c4xEase(T / N.fade) : 0;
   if (c.q.res === 'miss') { const d = T - N.hit; a = k5Gore() === 2 ? (d >= 0 ? 1 : a) : Math.max(a, c4xEase((d - N.d2) / 0.45)); }
   return a;
 }
@@ -194,7 +198,7 @@ function k5Fx(c, now, T, S, miss) {
   if (T >= 18.5 && T < 20.6) { const w = Math.round(Math.sin(T * 38) * 1); pxt('HA HA HA', SX(ix) + w, gy - 64 - Math.round((T - 18.5) * 4), '#ffd34d', 8, 'center'); }
 }
 function k5Draw(c, now, dt, T) {
-  const N = K5T, miss = c.q.res === 'miss', ny = c.ny; if (T >= N.cut && !miss) { k5Tbc(T); return; }
+  const N = K5T, miss = c.q.res === 'miss', ny = c.ny; if (T >= N.cut && !miss) { k5Draw2(c, now, dt, T); return; }
   c4xNyWorld(now); c4xNySign(-70); for (const f of ny.far) c4xDrawCar(f.x, gy - 5, f.k, f.v < 0 ? -1 : 1, false); for (const k of ny.cars) c4xDrawCar(k.x, gy + 5, k.k, k.dir, true); c4xCrater(58, 1);
   const S = k5Eval(c, T), Y = Object.assign(c.y, S.y), imp = S.im, front = !miss && ((T >= 8.12 && T < 8.5) || (T >= 29.35 && T < 29.75) || (T >= 30.0 && T < 30.65));
   Y.white = 0; for (const [t, who] of K5I) if (who === 'y' && T - t >= 0 && T - t < 0.08) Y.white = 1; if (miss && T >= N.hit && T < N.hit + 0.1) Y.white = 1;
@@ -204,18 +208,19 @@ function k5Draw(c, now, dt, T) {
   k5Fx(c, now, T, S, miss); drawSmoke(now, dt); drawSparks(now, dt); drawPopups(now);
 }
 function k5Tbc(T) {      // black, then the words: END OF CHAPTER 5 (with the name of the chapter), then TO BE CONTINUED
-  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); const N = K5T, cx = Math.round(VW / 2), y = Math.round(VH * 0.44), wide = VW >= 272, fade = (t0, t1, t2, t3) => T < t0 ? 0 : T < t1 ? c4xEase((T - t0) / (t1 - t0)) : T < t2 ? 1 : T < t3 ? 1 - c4xEase((T - t2) / (t3 - t2)) : 0, a = fade(N.card, N.card + 0.8, N.card1 - 0.6, N.card1), b = fade(N.card2, N.card2 + 0.8, N.end - 0.7, N.end);
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); const N = k5Cards(c4x), cx = Math.round(VW / 2), y = Math.round(VH * 0.44), wide = VW >= 272, fade = (t0, t1, t2, t3) => T < t0 ? 0 : T < t1 ? c4xEase((T - t0) / (t1 - t0)) : T < t2 ? 1 : T < t3 ? 1 - c4xEase((T - t2) / (t3 - t2)) : 0, a = fade(N.card, N.card + 0.8, N.card1 - 0.6, N.card1), b = fade(N.card2, N.card2 + 0.8, N.end - 0.7, N.end);
   if (a > 0) { ctx.globalAlpha = a; if (wide) pxt('END OF CHAPTER 5', cx, y, '#ffffff', 16, 'center'); else { pxt('END OF', cx, y - 10, '#ffffff', 16, 'center'); pxt('CHAPTER 5', cx, y + 10, '#ffffff', 16, 'center'); } ctx.fillStyle = '#ff2a3a'; ctx.fillRect(cx - 40, y + (wide ? 8 : 20), 80, 1); pxt('THE IRON MAN', cx, y + (wide ? 24 : 36), '#ff5a6a', 8, 'center'); ctx.globalAlpha = 1; }
   if (b > 0) { ctx.globalAlpha = b; pxt('TO BE CONTINUED', cx, Math.round(VH * 0.5), '#ffffff', 16, 'center'); ctx.globalAlpha = 1; }
 }
 function k5Overlay(c, now, T) {      // over the picture: the speech box, the ring of the tap and what was made of it, Yuji's shock, the SKIP button, and after a death the words
   const N = K5T, miss = c.q.res === 'miss', d = T - N.hit;
   if (!miss && T >= 21.9 && T < 22.65) c4xFear(c, C4NS.eye + Math.min(0.45, T - 21.9));      // (Yuji's eye, close and full screen: the blade's glint comes late in that picture, so it is held back)
-  else if (T < N.cut && !(miss && d >= N.d2)) c4xTalk(c, T, miss ? K5_TALK.slice(0, 2) : K5_TALK);
+  else if (!(miss && d >= N.d2)) c4xTalk(c, T, miss ? K5_TALK.slice(0, 2) : K5_TALK);      // (the lines of part 2 are in the same list: they come after the black)
   const u = T - N.q, px = c4xSX(c.y.x), py = gy - 34;
   if (!c.q.res && u > -C13P.tap.vis && u < C13.win[1] + 0.25 && !c13Off()) { const rad = 11 + 26 * Math.pow(clamp01(-u / C13P.tap.vis), 1.2), gold = Math.abs(u) <= C13.perfect + 0.02; ctx.save(); ctx.imageSmoothingEnabled = false; c13Ring(px, py, rad, '#ffffff', gold, '#c4121c', 'TAP', 'DODGE'); if (u < -0.2) pxt('TAP OR PRESS ANY KEY', Math.round(VW / 2), VH - 6, '#ffffff', 8, 'center'); ctx.restore(); }
   else if (c.q.res && c.q.why) { const t = T - c.q.at; if (t >= 0 && t < 0.8) { const r = c.q.res; ctx.save(); ctx.globalAlpha = 1 - t / 0.8; pxt(c.q.why, px, py - 22 - t * 12, r === 'miss' ? '#ff3347' : c.q.why === 'PERFECT' ? '#ffe08a' : '#ffffff', 10, 'center'); ctx.restore(); if (r === 'miss' && t < 0.4) { ctx.fillStyle = 'rgba(255,0,20,' + (0.3 * (1 - t / 0.4)).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); } } }
-  if (T > 0.8 && T < (miss ? N.hit : N.cut) - 0.4) { ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1; ctx.strokeRect(VW - 39.5, 2.5, 36, 10); pxt('SKIP', VW - 21, 11, '#ffffff', 8, 'center'); }
+  if (T >= N.cut && !miss) k5Overlay2(c, now, T);
+  if (T > 0.8 && T < (miss ? N.hit : k5Cards(c).black) - 0.4) { ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1; ctx.strokeRect(VW - 39.5, 2.5, 36, 10); pxt('SKIP', VW - 21, 11, '#ffffff', 8, 'center'); }
 }
 
 function k5After(c, now, T) {      // over the black too: after a death the words YUJI DIED (they come as the picture goes black, and go before the scene starts again)
