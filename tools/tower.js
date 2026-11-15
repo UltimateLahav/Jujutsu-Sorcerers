@@ -79,7 +79,7 @@ function twFloorData(f) {
 
 // ---- the match: a new building (twInit, from startMatch), a new round (twRound, from beginRound: floor 50 again, the damage stays)
 function twNew() {      // the building of this match (v1.198: made by twInit when the match starts in it, or by ctGoIn the first time you walk in through the front door of the street)
-  vs.tw = { out: false, outAt: 0, outVia: 'door', outX: 0, foeSt: false, foeX: 0, doorT: 0, doorArm: true, seed: (Math.random() * 1e9) | 0, fl: {}, fMe: TW_N, fFoe: TW_N, q: [], px: 0, dx: 0, pHp: 0, dHp: 0, dHit: -9999, dDown: 0, pDown: 0, swingAt: 0, slide: null, ff: null, banner: null, away: false, awayX: 0, arrX: 0, via: 'stairs', lastDoor: 0, hint: 0, on: false, expl: [], doorAt: -1, flashes: [], haze: null, cab: null, lift: twLiftNew(false), viaLift: false, jobAt: 0, cabAt: -1, seen: {}, cf: TW_N, prevF: 0, oorAt: -9999, cabF: { f: 0, xs: [0, TW_CABW], W: TW_CABW, nr: 1, th: 'CAB', walls: [], objs: [], wrecks: [], holes: [], lights: [], doors: [], pick: [], decals: [], outer: [{ hp: 1e9, mx: 1e9, broken: false, at: 0 }, { hp: 1e9, mx: 1e9, broken: false, at: 0 }] } };
+  vs.tw = { out: false, outAt: 0, outVia: 'door', outX: 0, foeSt: false, foeX: 0, doorT: 0, doorArm: true, cabOut: false, cabOutAt: 0, seed: (Math.random() * 1e9) | 0, fl: {}, fMe: TW_N, fFoe: TW_N, q: [], px: 0, dx: 0, pHp: 0, dHp: 0, dHit: -9999, dDown: 0, pDown: 0, swingAt: 0, slide: null, ff: null, banner: null, away: false, awayX: 0, arrX: 0, via: 'stairs', lastDoor: 0, hint: 0, on: false, expl: [], doorAt: -1, flashes: [], haze: null, cab: null, lift: twLiftNew(false), viaLift: false, jobAt: 0, cabAt: -1, seen: {}, cf: TW_N, prevF: 0, oorAt: -9999, cabF: { f: 0, xs: [0, TW_CABW], W: TW_CABW, nr: 1, th: 'CAB', walls: [], objs: [], wrecks: [], holes: [], lights: [], doors: [], pick: [], decals: [], outer: [{ hp: 1e9, mx: 1e9, broken: false, at: 0 }, { hp: 1e9, mx: 1e9, broken: false, at: 0 }] } };
 }
 function twInit() { vs.map = 'tower'; vs.twStart = true; twNew(); }      // (v1.198 vs.twStart: this match began in the skyscraper, so a rematch and every round begin there; a match that began in the street makes the building when you first walk in)
 function twRound(now) {
@@ -230,7 +230,7 @@ function twFoeArrive(now) {      // the enemy comes: out of the crater above you
   x = twPlace(F, x); if (Math.abs(x - wx) < 26) x = twPlace(F, wx + (x >= wx ? 38 : -38));
   T.away = false; T.fFoe = T.fMe; d.twAway = false; d.x = x; d.vx = 0; d.down = 0; d.stunUntil = now + 350; d.ai = 'rest'; d.aiAt = now; d.restFor = 350;
   if (hole) { d.air = airMake(now, 90, 0, 520, 'bounce'); puff(x, 8); debBurst(x, 40, 10, ['#8a8a92', '#b8b0a0'], 110); snd('twbreak', 7); } else { puff(x, 5); snd('twbreak', 6); }
-  say('ENEMY!', x, '#ffd34d', 8, now); T.dHp = d.hp; T.dx = d.x; if (T.via === 'front') T.via = 'stairs'; T.foeSt = false;
+  say('ENEMY!', x, '#ffd34d', 8, now); T.dHp = d.hp; T.dx = d.x; if (T.via === 'front') { T.via = 'stairs'; snd('citydoor', 0); } T.foeSt = false;
 }
 function twFoeHold(now) { const d = dummy; d.x = wx + 1e5; d.vx = 0; d.stunUntil = now + 900; d.ai = 'rest'; d.aiAt = now; d.restFor = 900; d.air = null; d.airH = 0; }      // (the enemy is not on this floor: held far off, still)
 function twAwayStep(now) {      // every frame the enemy is on another floor: he is held far off, still, until he comes (or until you are on his floor: then he is where he fell); in the cab it is the cab that brings him
@@ -321,7 +321,7 @@ function twTick(now, dt) {
   if (T.cab) { if (T.away && !T.lift.inFoe) twFoeHold(now); } else if (T.away) twAwayStep(now);
   if (vs.ph !== 'fight') { T.px = wx; T.dx = d.x; return; }
   if (Math.abs(wx - T.px) > 60) T.px = wx; if (Math.abs(d.x - T.dx) > 60) T.dx = d.x;      // (a body that was put somewhere (PUT ENEMY, a floor change, the enemy coming back) is where it is: no wall between)
-  if (T.cab) { twCabKeys(now); twBodies(now); T.px = wx; T.dx = d.x; return; }      // (in the cab there is only the cab: its walls, you and him)
+  if (T.cab) { if (T.cabOut && T.cabOutAt && now >= T.cabOutAt && T.lift.ph === 'park' && T.lift.f === 1) { T.cabOut = false; T.cabOutAt = 0; twCabLeave(now, true); ctGoOut(now, 'door', 0); return; } twCabKeys(now); twBodies(now); T.px = wx; T.dx = d.x; return; }      // (v1.199 the STREET button: out of the cab at the lobby and out of its front door)      // (in the cab there is only the cab: its walls, you and him)
   twWatch(now);
   let F = twFloorData(T.fMe); const grounded = gojoLift < 5 && !(gAir && gAirH > 5);
   const near = grounded && !T.slide ? F.doors.find(dr => Math.abs(dr.x - wx) < 22 && dr.st !== 2) : null, dn = crReq || (stickDown && !T.sdPrev); T.sdPrev = stickDown;      // (the stairs and the elevator: JUMP goes up, CROUCH goes down; at the elevator both get you in, or call it down)
@@ -403,14 +403,14 @@ function twLiftOut(now, fx, grace) {      // the enemy is outside the doors of t
   L.out = true; L.foeX = fx; T.fFoe = L.f; L.bangs = 0; L.nextBang = 0; L.foeInAt = 0; L.bangAt = t0 + 450 + Math.min(2500, Math.abs(fx - dk.x) * 9); L.breakAt = Math.max(t0 + 8000, L.bangAt + 2500);
 }
 function twCabEnter(F, door, now) {      // you step into the cab (it is here and free): a straight cut to the inside; the enemy, if he is on the floor, is left outside the doors
-  const T = vs.tw, L = T.lift, d = dummy; if (L.me || vs.ph !== 'fight') return;
+  const T = vs.tw, L = T.lift, d = dummy; if (L.me || vs.ph !== 'fight') return; T.cabOut = false; T.cabOutAt = 0;
   const foeHere = !!d && d.ko < 0 && !T.away && T.fFoe === T.fMe;
   L.me = true; T.cab = L; L.pend = null; L.hold = 0; L.open = true; L.closeAt = L.broken ? 0 : now + 1100; L.out = false; L.foeInAt = 0;
   if (foeHere) { T.away = true; d.twAway = true; T.awayX = d.x; T.lastFallX = null; d.air = null; d.airH = 0; d.down = 0; d.vx = 0; twLiftOut(now, d.x, true); }
   T.swingAt = 0; T.doorAt = -1; T.cabAt = now; twClearWorld(); wx = TW_CABW / 2; wxv = 0; wvx = 0; T.px = wx; T.banner = null; popups = []; if (foeHere) twFoeHold(now); T.dx = d ? d.x : 0;
 }
 function twCabLeave(now, quiet) {      // you step out at the floor the cab is at (a straight cut, in front of its door); the enemy who was outside or inside is right there, unless the cab is about to go with him in it
-  const T = vs.tw, L = T.lift, d = dummy; if (!L.me) return; L.me = false; T.cab = null; T.fMe = L.f; const F = twFloorData(L.f), dk = twElevOf(F);
+  const T = vs.tw, L = T.lift, d = dummy; if (!L.me) return; T.cabOut = false; T.cabOutAt = 0; L.me = false; T.cab = null; T.fMe = L.f; const F = twFloorData(L.f), dk = twElevOf(F);
   T.doorAt = now; T.sdPrev = !!stickDown; twFloorSwitch(now, dk.x, 'cut'); T.banner = null; dk.force = now + 900; L.hold = Math.max(L.hold, now + 1500); if (!L.pend) L.closeAt = L.broken ? 0 : now + 1500;      // (the enemy waits a moment before he uses the cab you just left)
   if (d && d.ko < 0) {
     if (L.inFoe && L.pend) { T.away = true; d.twAway = true; T.fFoe = L.f; T.awayX = dk.x; }      // (the trick: he stays in the cab and goes with it)
@@ -430,6 +430,11 @@ function twCabPick(f, now) {      // a floor button: 0.6 s later the doors shut 
   if (L.ph === 'stop') { twLiftGo(f, now, 'me', 0); return true; }
   L.pend = { f, at: now + TW_PEND }; L.closeAt = 0; return true;
 }
+function twCabStreet(now) {      // (v1.199) the STREET button of the panel: the cab rides to the lobby (floor 1) and when its doors have opened you step out and go out of the front door to the street; in the lobby already: straight out
+  const T = vs.tw, L = T && T.lift; if (!L || !L.me || L.ph === 'ride' || L.pend) return; const here = L.ph === 'stop' ? Math.round(L.curF) : L.f;
+  if (here === 1 && L.ph === 'park') { T.cabOut = true; T.cabOutAt = now + 400; snd('twlift', 9); return; }
+  if (twCabPick(1, now)) { T.cabOut = true; T.cabOutAt = 0; }
+}
 function twCabStop(now) { const T = vs.tw, L = T && T.lift; if (!L || !L.me || L.ph !== 'ride' || now < L.at) return; L.ph = 'stop'; L.stopAt = now; L.vel = 0; snd('twlift', 10); shakeUntil = Math.max(shakeUntil, now + 350); shakeAmp = Math.max(shakeAmp, 4); say('EMERGENCY STOP', wx, '#ff6a5a', 8, now); }      // (the cab hangs between floors until you press a floor again)
 function twCabBang(now) { const L = vs.tw.lift; L.bangs++; L.hit = now; snd('twlift', 7); shakeUntil = Math.max(shakeUntil, now + 100); shakeAmp = Math.max(shakeAmp, 1.5); debBurst(TW_CABW / 2, 30, 3, ['#9aa4b8', '#6d7488'], 60); if (L.bangs === 1) say('HE IS AT THE DOORS!', TW_CABW / 2, '#ff8a3a', 8, now); }
 function twCabFoeIn(now, brk) {      // the enemy gets into the cab: he BREAKS THE DOORS IN (they stay broken for good, the whole match) or walks in through open or broken ones
@@ -445,6 +450,7 @@ function twLiftArrive(now) {      // the cab stops at a floor: a ding, the doors
   const T = vs.tw, L = T.lift, d = dummy; L.ph = 'park'; L.f = L.dest; L.curF = L.dest; L.vel = 0; L.at = 0; T.seen[L.f] = 1;
   if (L.me || L.f === T.fMe) { snd('twbreak', 6); snd('twlift', 3); } if (L.me) { shakeUntil = Math.max(shakeUntil, now + 200); shakeAmp = Math.max(shakeAmp, 2); }
   L.open = true; L.closeAt = L.me || L.job ? 0 : now + (L.why === 'call' ? 6500 : 1800); if (L.why === 'call') L.hold = now + 6500;
+  if (T.cabOut && L.me) { if (L.f === 1) T.cabOutAt = now + 900; else { T.cabOut = false; T.cabOutAt = 0; } }      // (v1.199 the STREET button: the doors open on the lobby, a moment later you are out of its front door)
   let J = L.job;
   if (J) { if (L.inFoe) { if (L.f === T.fMe) { J.st = 'out'; J.at = now + 500; } else { J.st = 'go'; J.at = now + 600; } } else if (J.st === 'call') { if (L.f === T.fFoe) { J.st = 'board'; J.at = now + 700; } else twLiftGo(T.fFoe, now, 'foe', 0); } }
   else if (L.inFoe && !L.me && d && d.ko < 0) {      // (he was carried here without a job: the trick; he rides on to you)
@@ -500,7 +506,7 @@ function twLiftPrompt(F, d) {      // what an elevator door tells you when you s
 const TW_ABBR = { 'OFFICE': 'OFFICE', 'OPEN PLAN': 'OPEN', 'CONFERENCE': 'CONF', 'LOUNGE': 'LOUNGE', 'PANTRY': 'PANTRY', 'SERVER ROOM': 'SERVER', 'STORAGE': 'STORE', 'LOBBY': 'LOBBY', 'PENTHOUSE': 'PENT' };
 const TW_CSS = '#twp{position:fixed;z-index:3;display:none;flex-direction:column;gap:.9vh;box-sizing:border-box;padding:1vh;left:calc(env(safe-area-inset-left) + 3vh + 40vh*var(--pbs,1) + 1.5vh);top:calc(env(safe-area-inset-top) + 12vh);bottom:calc(env(safe-area-inset-bottom) + 3vh);--pw:max(150px,min(52vh,calc(50vw - 48.5vh),260px));--cd:calc((var(--pw) - 7.8vh - 4px) / 5);width:var(--pw);border:2px solid #20242e;border-radius:5px;background:linear-gradient(90deg,#8d94a1,#b6bcc8 16%,#9aa1ae 50%,#b2b8c4 84%,#838a97);box-shadow:inset 0 0 0 2px #dfe4ec,inset 0 0 14px #0007,0 0 0 3px #0008;touch-action:pan-y}#twp.on{display:flex}#twp.r{left:auto;right:calc(env(safe-area-inset-right) + 3vh + 40vh*var(--pbs,1) + 1.5vh)}'
   + '#twp button{font:inherit;color:#1c2029;cursor:pointer;margin:0;padding:0;border:2px solid #444a59;background:radial-gradient(circle at 35% 28%,#f4f6fa,#bcc2ce 58%,#8c93a2);position:relative;touch-action:manipulation;-webkit-tap-highlight-color:transparent}#twp button:active{filter:brightness(.82)}#twp button:disabled{cursor:default}'
-  + '#twpq{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.7vh}#twpq button{border-radius:5px;height:6.4vh;min-height:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5vh;font-size:min(clamp(4.5px,1.2vh,7px),calc(var(--pw)*.028));line-height:1}#twpq b{font-size:min(clamp(7px,2.05vh,12px),calc(var(--pw)*.05))}#twpq button:disabled{opacity:.35}'
+  + '#twpq{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.7vh}#twpq button{border-radius:5px;height:6.4vh;min-height:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5vh;font-size:min(clamp(4.5px,1.2vh,7px),calc(var(--pw)*.028));line-height:1}#twpq b{font-size:min(clamp(7px,2.05vh,12px),calc(var(--pw)*.05))}#twpq button:disabled{opacity:.35}#twpq button[data-q="street"]{grid-column:1/-1;height:4.8vh;min-height:21px;flex-direction:row;gap:1.4vh}'
   + '#twpg{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-auto-rows:min-content;gap:1vh;padding:.9vh;background:#262a34;border-radius:4px;box-shadow:inset 0 0 9px #000;touch-action:pan-y;scrollbar-width:thin;scrollbar-color:#8a91a0 #262a34}'
   + '.twf{aspect-ratio:1;min-width:0;overflow:hidden;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--cd)*.045);line-height:1}#twp .twf{font-size:calc(var(--cd)*.3)}.twf i{font-style:normal;font-size:calc(var(--cd)*.105);letter-spacing:0;opacity:.85;max-width:100%;overflow:hidden;white-space:nowrap}.twf u,.twf s{display:none;position:absolute;text-decoration:none}.twf u{right:5%;top:5%;width:24%;height:24%;border-radius:50%;background:#e8281c;box-shadow:0 0 5px #f33}.twf s{left:10%;bottom:6%;font-size:calc(var(--cd)*.17);color:#d86a00}'
   + '.twf.vis{background:radial-gradient(circle at 35% 28%,#fff6e4,#ffc27e 56%,#d98b3c);border-color:#8a4a14;box-shadow:0 0 6px #ff9a3a}.twf.cur{border-color:#fff;outline:2px solid #5cd0ff;background:radial-gradient(circle at 35% 28%,#fff,#dff4ff 56%,#7fc4e8)}.twf.dest{animation:twblink .45s steps(2) infinite}.twf.oor{background:radial-gradient(circle at 35% 28%,#6a6f7c,#464a56 60%,#2c2f38);color:#8a8f9c;border-color:#2a2d36}.twf.oor::after{content:"X";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:calc(var(--cd)*.34);color:#ff2a1a;text-shadow:0 0 4px #000}.twf.foe u{display:block}.twf.dmg s{display:block}@keyframes twblink{50%{box-shadow:0 0 12px #ffb04a;filter:brightness(1.25)}}'
@@ -510,11 +516,11 @@ function twPanelBuild() {
   if (twpEl) return twpEl; const st = document.createElement('style'); st.id = 'twpCss'; st.textContent = TW_CSS; document.head.appendChild(st);
   const p = twpEl = document.createElement('div'); p.id = 'twp'; p.setAttribute('role', 'dialog'); p.setAttribute('aria-label', 'Elevator panel');
   let g = ''; for (let f = TW_N; f >= 1; f--) g += '<button class="twf" data-f="' + f + '" aria-label="Floor ' + f + '"><b>' + f + '</b><i></i><u></u><s>!</s></button>';
-  p.innerHTML = '<div id="twpq"><button data-q="top" aria-label="Top floor"><span>TOP</span><b>50</b></button><button data-q="lobby" aria-label="Lobby"><span>LOBBY</span><b>1</b></button><button data-q="foe" aria-label="The enemy\'s floor"><span>ENEMY</span><b>-</b></button><button data-q="last" aria-label="The floor you came from"><span>LAST</span><b>-</b></button></div><div id="twpg">' + g + '</div><div id="twpf"><button data-a="open" aria-label="Open the doors">OPEN</button><button data-a="close" aria-label="Close the doors">CLOSE</button><button data-a="stop" class="stop" aria-label="Emergency stop">STOP</button></div>';
+  p.innerHTML = '<div id="twpq"><button data-q="top" aria-label="Top floor"><span>TOP</span><b>50</b></button><button data-q="lobby" aria-label="Lobby"><span>LOBBY</span><b>1</b></button><button data-q="foe" aria-label="The enemy\'s floor"><span>ENEMY</span><b>-</b></button><button data-q="last" aria-label="The floor you came from"><span>LAST</span><b>-</b></button><button data-q="street" aria-label="Out to the street: the cab goes to the lobby and you leave through its front door"><span>STREET</span><b>1</b></button></div><div id="twpg">' + g + '</div><div id="twpf"><button data-a="open" aria-label="Open the doors">OPEN</button><button data-a="close" aria-label="Close the doors">CLOSE</button><button data-a="stop" class="stop" aria-label="Emergency stop">STOP</button></div>';
   p.addEventListener('pointerdown', e => e.stopPropagation());
   p.addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b || b.disabled || !twOn()) return; e.stopPropagation(); const T = vs.tw, c = T.cab, now = pnow(); if (!c) return;
-    if (b.dataset.f) twCabPick(+b.dataset.f, now); else if (b.dataset.q === 'top') twCabPick(TW_N, now); else if (b.dataset.q === 'lobby') twCabPick(1, now); else if (b.dataset.q === 'foe') twCabPick(T.fFoe, now); else if (b.dataset.q === 'last') twCabPick(T.prevF, now);
+    const b = e.target.closest('button'); if (!b || b.disabled || !twOn()) return; e.stopPropagation(); const T = vs.tw, c = T.cab, now = pnow(); if (!c) return; T.cabOut = false; T.cabOutAt = 0;      // (a button of the panel cancels the trip to the street, unless it is the STREET button)
+    if (b.dataset.q === 'street') twCabStreet(now); else if (b.dataset.f) twCabPick(+b.dataset.f, now); else if (b.dataset.q === 'top') twCabPick(TW_N, now); else if (b.dataset.q === 'lobby') twCabPick(1, now); else if (b.dataset.q === 'foe') twCabPick(T.fFoe, now); else if (b.dataset.q === 'last') twCabPick(T.prevF, now);
     else if (b.dataset.a === 'open') { if (c.ph === 'park') { c.closeAt = 0; twLiftOpen(now); } } else if (b.dataset.a === 'close') { if (c.ph === 'park') { c.closeAt = 0; twLiftShut(now); } } else if (b.dataset.a === 'stop') twCabStop(now);
     twpAt = -1e9;
   });
@@ -532,6 +538,7 @@ function twPanelSync(now) {      // shows / hides the panel and keeps its button
     b.className = 'twf' + (T.seen[f] ? ' vis' : '') + (f === cur ? ' cur' : '') + ((moving && f === c.dest) || (pf && f === pf) ? ' dest' : '') + (oor ? ' oor' : '') + (T.away && f === T.fFoe && !c.inFoe && !c.out ? ' foe' : '') + (dmg ? ' dmg' : ''); b.disabled = moving || f === cur || oor;
   }
   const q = n => p.querySelector('[data-q="' + n + '"]'), setQ = (n, f, ok) => { const b = q(n); b.querySelector('b').textContent = f > 0 ? f : '-'; b.disabled = moving || !(f > 0) || f === cur || !twElevOk(f) || !ok; };
+  { const sb = p.querySelector('[data-q="street"]'); if (sb) sb.disabled = moving || !twElevOk(1) || !!c.pend; }      // (v1.199 STREET: the cab can go to the lobby, or is there)
   setQ('top', TW_N, true); setQ('lobby', 1, true); setQ('foe', foeUp ? T.fFoe : 0, foeUp); setQ('last', T.prevF > 0 && T.prevF !== cur ? T.prevF : 0, true);
   p.querySelector('[data-a="open"]').disabled = c.ph !== 'park' || c.open || c.broken; p.querySelector('[data-a="close"]').disabled = c.ph !== 'park' || !c.open || c.broken; p.querySelector('[data-a="stop"]').disabled = !(c.ph === 'ride' && now >= c.at);
 }

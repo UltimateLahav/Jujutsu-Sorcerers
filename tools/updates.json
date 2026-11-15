@@ -1,5 +1,15 @@
 [
  {
+  "v": "1.199",
+  "t": "THE CITY, PART 2: A STREET BUTTON IN THE ELEVATOR, DOOR SOUNDS, THE BUILDING IN CUTSCENES",
+  "n": [
+   "You said \"continue\" after I offered three things for the connected maps, so all three are in.",
+   "A STREET BUTTON in the elevator panel (the fifth quick button, next to TOP, LOBBY, ENEMY and LAST): press it in the cab and the cab rides down to the lobby, its doors open, and a moment later you step out and go straight out through the front door into the street. It saves the long walk from the elevator to the front door. If the cab is already at the lobby you go out at once. Pressing any other button cancels the trip, and a jammed lobby door says OUT OF ORDER as always. The enemy follows out of the front door a moment later as usual.",
+   "DOOR SOUNDS: the glass doors of the front door make a soft sliding whoosh and a two-note chime when they take you and when the enemy comes through; when you step out into the street you hear a wash of traffic (a rumble, a car going past, a far horn) and when you step into the lobby the street goes quiet behind you.",
+   "THE BUILDING IN CUTSCENES: the front of the skyscraper in the street no longer vanishes when a fatality or another cutscene of a fight starts: it is drawn over the same street, so the picture does not change."
+  ]
+ },
+ {
   "v": "1.198",
   "t": "THE MAPS ARE CONNECTED: LEAVE THE SKYSCRAPER BY ITS FRONT DOOR AND YOU ARE IN THE STREET",
   "n": [

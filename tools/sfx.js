@@ -941,6 +941,12 @@ function makeSfx(ac) {
       else if (k === 9) { tone(D.soft, t, { f: 1760, f2: 1760, dur: 0.06, gain: 0.06, atk: 0.002 }); }
       else { burst(B.soft, t, { type: 'bandpass', f: 3200, f2: 800, q: 4, dur: 0.55, gain: 1.4, atk: 0.01 }); tone(B.deep, t + 0.5, { type: 'triangle', f: 120, f2: 50, dur: 0.2, gain: 0.5, atk: 0.002 }); for (let i = 0; i < 2; i++) { tone(D.soft, t + 0.55 + i * 0.28, { f: 1760, f2: 1740, dur: 0.24, gain: 0.07, atk: 0.002 }); tone(D.soft, t + 0.55 + i * 0.28, { f: 2349, f2: 2330, dur: 0.22, gain: 0.04, atk: 0.002 }); } }
     },
+    citydoor(k, at) {                                    // v1.199 the FRONT DOORS of the building: k 0 = the glass doors slide apart (a soft rising whoosh and a two-note chime), 1 = you are out in the street (a wash of traffic: a low rumble, a car going past, a far horn), 2 = you are in the lobby (the street goes quiet behind you: a soft hush and a low hum of the hall)
+      const t = T(at), B = C.atk, D = C.tele;
+      if (k === 0) { burst(B.soft, t, { type: 'bandpass', f: 600, f2: 2400, q: 0.9, dur: 0.38, gain: 0.55, atk: 0.04 }); tone(D.soft, t + 0.12, { type: 'sine', f: 1568, f2: 1560, dur: 0.22, gain: 0.07, atk: 0.004 }); tone(D.soft, t + 0.3, { type: 'sine', f: 1175, f2: 1170, dur: 0.38, gain: 0.07, atk: 0.004 }); }
+      else if (k === 1) { burst(B.soft, t, { type: 'lowpass', f: 380, f2: 300, q: 0.7, dur: 1.5, gain: 0.8, atk: 0.35 }); burst(B.soft, t + 0.15, { type: 'bandpass', f: 500, f2: 1700, q: 2.2, dur: 0.9, gain: 0.4, atk: 0.3 }); tone(D.soft, t + 0.5, { type: 'square', f: 392, f2: 392, dur: 0.18, gain: 0.025, atk: 0.01 }); tone(D.soft, t + 0.72, { type: 'square', f: 330, f2: 330, dur: 0.3, gain: 0.025, atk: 0.01 }); }
+      else { burst(B.soft, t, { type: 'highpass', f: 1800, f2: 600, q: 0.7, dur: 0.3, gain: 0.35, atk: 0.02 }); tone(B.deep, t + 0.05, { type: 'sine', f: 90, f2: 70, dur: 0.5, gain: 0.12, atk: 0.1 }); }
+    },
     quake(at) {                                          // the roof is hit: a huge low boom, a long shaking rumble and stones and splinters falling
       const t = T(at), B = C.ce;
       tone(B.deep, t, { type: 'triangle', f: 80, f2: 22, dur: 1.6, gain: 0.6, atk: 0.004 });

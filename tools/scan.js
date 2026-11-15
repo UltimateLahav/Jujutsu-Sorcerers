@@ -514,13 +514,33 @@ async function scCityWindow(who, side) {      // a match that begins in the skys
   scT((await scUntil(() => !T.away && dummy.ko < 0, 220)) && Number.isFinite(dummy.x) && Math.abs(dummy.x - wx) < 600, label + ': THE ENEMY IS NOT IN THE STREET WITH HIM', 'AWAY ' + T.away + ', VIA ' + T.via + ', FOE FLOOR ' + T.fFoe);
   scCheck(); show('title'); return true;
 }
+async function scCityCab(who) {      // v1.199 the STREET button of the elevator panel (the real button, clicked): a floor pressed after it cancels the trip; pressed again the cab rides to the lobby and he goes out of its front door
+  const label = SC_NAME[who] + ' IN THE LIFT TO THE STREET'; SC.say = label; twPick = 1; Object.assign(TR, { beh: 0, ehp: 0, php: 0, pce: 0 });
+  try { startPractice(who, 'cat'); } catch (e) { scErr(e, label + ' START'); return true; }
+  if (state !== 'play' || !twOn()) { scNote('fail', 'THE SKYSCRAPER DID NOT START: ' + label, 'STATE ' + state); show('title'); return true; }
+  if (!(await scIntro())) { show('title'); return false; }
+  const T = vs.tw, F = twFloorData(T.fMe), d = twElevOf(F), L = T.lift; d.st = 0; d.hp = 70; L.f = L.curF = L.dest = T.fMe; L.ph = 'park'; L.inFoe = false; L.job = null; L.pend = null; wx = d.x; T.px = wx; twCabEnter(F, d, pnow()); await scFrames(6);
+  const bt = q => twpEl && twpEl.querySelector(q);
+  scT(!!T.cab && !!bt('[data-q="street"]'), label + ': THE CAB OR ITS STREET BUTTON IS NOT THERE', 'CAB ' + !!T.cab);
+  if (!T.cab || !bt('[data-q="street"]')) { show('title'); return true; }
+  bt('[data-q="street"]').click(); scT(T.cabOut && !!L.pend && L.pend.f === 1, label + ': THE STREET BUTTON DID NOT SEND THE CAB TO THE LOBBY', 'OUT FLAG ' + T.cabOut + ', PEND ' + (L.pend ? L.pend.f : 'NONE') + ', DISABLED ' + bt('[data-q="street"]').disabled);
+  await scFrames(2); const fb = bt('[data-f="40"]'); if (fb) fb.click(); scT(!T.cabOut && !!L.pend && L.pend.f === 40, label + ': A FLOOR PRESSED AFTER THE STREET BUTTON DID NOT CANCEL THE TRIP TO THE STREET', 'OUT FLAG ' + T.cabOut + ', PEND ' + (L.pend ? L.pend.f : 'NONE'));
+  scT(await scUntil(() => !L.pend && L.ph === 'park' && L.f === 40, 200) && twOn(), label + ': THE CAB DID NOT GO TO THE FLOOR HE PRESSED', 'PH ' + L.ph + ', AT ' + L.f);
+  await scFrames(40); scT(twOn() && !!T.cab, label + ': HE WENT OUT TO THE STREET ALTHOUGH THE TRIP WAS CANCELLED', 'MAP ' + vs.map);
+  if (!bt('[data-q="street"]') || bt('[data-q="street"]').disabled) await scFrames(10); if (bt('[data-q="street"]')) bt('[data-q="street"]').click();
+  scT(await scUntil(() => !twOn(), 400), label + ': THE STREET BUTTON DID NOT TAKE HIM OUT TO THE STREET', 'FLOOR ' + T.fMe + ', CAB ' + !!T.cab + ', LIFT ' + L.ph + ' AT ' + L.f + ' TO ' + L.dest + ', OUT FLAG ' + T.cabOut);
+  if (twOn()) { show('title'); return true; }
+  scT(vs.map === 'street' && T.out && !T.cab && !L.me, label + ': HE IS NOT IN THE STREET WITH THE LIFT LET GO', 'MAP ' + vs.map + ', CAB ' + !!T.cab + ', ME ' + L.me);
+  scCheck(); show('title'); return true;
+}
 async function scCity() {
-  SC.sec = 'CITY'; scCov('CITY', 0, 6); SC.plan = 6 * 220; SC.done = 0; const keep = twPick;
+  SC.sec = 'CITY'; scCov('CITY', 0, 8); SC.plan = 8 * 220; SC.done = 0; const keep = twPick;
   try {
     for (const who of ['gojo', 'cu5']) {
       if (!(await scCityDoors(who))) return; scCov('CITY', 1, 0);
       if (!(await scCityWindow(who, 'me'))) return; scCov('CITY', 1, 0);
       if (!(await scCityWindow(who, 'foe'))) return; scCov('CITY', 1, 0);
+      if (!(await scCityCab(who))) return; scCov('CITY', 1, 0);
     }
   } finally { twPick = keep; scKey('ArrowLeft', false); scKey('ArrowRight', false); }
 }

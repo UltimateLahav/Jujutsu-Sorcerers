@@ -46,7 +46,7 @@ function ctGoOut(now, how, side) {      // you leave the building: how 'door' = 
 function ctArrive(now, s) { const q = s.street; ctSwitchOut(now, q.x, q.how, q.side, q.foeHere); if (q.land) twLand(now, q.land[0], q.land[1], q.land[2]); }      // (the camera has fallen to the street: you are in it)
 function ctSwitchOut(now, lx, how, side, foeHere) {      // the street: you stand at lx, the building stays as it is (the enemy: out here already, or following, or still coming down from his floor)
   const T = vs.tw, d = dummy, f0 = T.fMe, live = !!d && d.ko < 0, outside = live && !foeHere && T.away && (T.foeSt || T.via === 'front'), fx0 = T.foeSt ? T.foeX : CITY.door + 70;
-  vs.map = 'street'; T.out = true; T.cab = null; T.slide = null; T.q.length = 0; T.cf = 1; twClearWorld(); wx = lx; wxv = 0; wvx = 0; popups = []; ctS.arm = false; ctS.lock = now + CITY.lock; ctS.t = 0; ctS.px = wx;
+  vs.map = 'street'; T.out = true; T.cab = null; T.slide = null; T.q.length = 0; T.cf = 1; T.cabOut = false; T.cabOutAt = 0; if (how === 'door') snd('citydoor', 0); snd('citydoor', 1); twClearWorld(); wx = lx; wxv = 0; wvx = 0; popups = []; ctS.arm = false; ctS.lock = now + CITY.lock; ctS.t = 0; ctS.px = wx;
   T.fMe = 0; T.via = 'stairs';
   if (!live) { T.away = false; if (d) d.twAway = false; return; }
   if (outside) {      // (he is out here already: he was flung out through the glass, or was still on his way in)
@@ -59,7 +59,7 @@ function ctSwitchOut(now, lx, how, side, foeHere) {      // the street: you stan
 function ctFoeOut(now) {      // the enemy comes out into the street: through the front door, or down through the window after you
   const T = vs.tw, d = dummy, hole = T.outVia === 'hole'; let x = hole ? T.outX : CITY.door + (wx >= CITY.door ? 1 : -1) * 30; if (Math.abs(x - wx) < 50) x = wx + 44;      // (if you stand next to where he comes out, he is in front of you)
   ctHoldLift(); T.away = false; T.fFoe = 0; T.foeSt = false; d.twAway = false; d.x = x; d.vx = 0; d.down = 0; d.stunUntil = now + 350; d.ai = 'rest'; d.aiAt = now; d.restFor = 350; T.dx = d.x;
-  if (hole) { d.air = airMake(now, 90, 0, 520, 'bounce'); puff(x, 8); debBurst(x, 40, 10, ['#8a8a92', '#b8b0a0'], 110); snd('twbreak', 7); } else { puff(x, 5); snd('twbreak', 6); snd('twlift', 1); ctDoorS.force = now + 1200; }      // (he comes out of the door: its leaves slide apart for him)
+  if (hole) { d.air = airMake(now, 90, 0, 520, 'bounce'); puff(x, 8); debBurst(x, 40, 10, ['#8a8a92', '#b8b0a0'], 110); snd('twbreak', 7); } else { puff(x, 5); snd('twbreak', 6); snd('citydoor', 0); ctDoorS.force = now + 1200; }      // (he comes out of the door: its leaves slide apart for him)
   say('ENEMY!', x, '#ffd34d', 8, now);
 }
 function ctFoeGlass(now, side, x) {      // the enemy goes out through the glass of the lobby: he is in the street (T.foeSt, set by twFallOut), away from you until you come out or he comes in
@@ -74,7 +74,7 @@ function ctFoeHere(now) {      // (PUT ENEMY and RESET of free play, in the stre
 function ctBuild() { if (!vs.tw) { twNew(); const T = vs.tw; T.cf = 1; T.prevF = 0; T.seen[1] = 1; } return vs.tw; }      // (a match that began in the street has no building until you first walk in: it starts as the lobby)
 function ctGoIn(now) {      // you walk into the front door of the building: you are in its lobby (floor 1), in front of its door
   const T = ctBuild(), d = dummy; T.on = true; const F = twFloorData(1), together = !!d && d.ko < 0 && !T.away, foeIn = !!d && d.ko < 0 && T.away;
-  vs.map = 'tower'; T.out = false; T.cab = null; T.slide = null; T.q.length = 0; T.fMe = 1; T.lastFallX = null; twFloorSwitch(now, F.front.x + CITY.inn, 'cut'); snd('twlift', 1); snd('twbreak', 6);
+  vs.map = 'tower'; T.out = false; T.cab = null; T.slide = null; T.q.length = 0; T.fMe = 1; T.lastFallX = null; twFloorSwitch(now, F.front.x + CITY.inn, 'cut'); snd('citydoor', 0); snd('citydoor', 2); T.cabOut = false; T.cabOutAt = 0;
   ctS.arm = false; ctS.lock = now + CITY.lock; ctS.t = 0; ctS.px = wx;
   if (together) { T.away = true; d.twAway = true; T.fFoe = 1; T.via = 'front'; T.arriveAt = now + CITY.follow; T.awayX = F.front.x + 30; T.foeSt = false; twFoeHold(now); ctHoldLift(); }      // (he was with you in the street: he follows through the door)
   else if (foeIn) { if (T.fFoe < 1) T.fFoe = 1; twPlanArrival(now); }      // (he was still inside, on his way out: now he comes to you as he does from any floor)
@@ -83,7 +83,7 @@ function ctGoIn(now) {      // you walk into the front door of the building: you
 
 // ---- a round (beginRound): where the match began
 function ctRound(now) {
-  ctS = { t: 0, arm: true, lock: 0, px: wx }; const T = vs.tw; if (!T) return; ctHoldLift(); T.q.length = 0; T.slide = null; T.cab = null; T.away = false; T.foeSt = false; T.outAt = 0; T.via = 'stairs'; if (dummy) dummy.twAway = false;
+  ctS = { t: 0, arm: true, lock: 0, px: wx }; const T = vs.tw; if (!T) return; ctHoldLift(); T.cabOut = false; T.cabOutAt = 0; T.q.length = 0; T.slide = null; T.cab = null; T.away = false; T.foeSt = false; T.outAt = 0; T.via = 'stairs'; if (dummy) dummy.twAway = false;
   if (vs.twStart) { vs.map = 'tower'; T.out = false; } else { vs.map = 'street'; T.out = true; T.fMe = 0; T.fFoe = 0; }
 }
 

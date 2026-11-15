@@ -201,7 +201,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.198</small>
+    <small id="ver">V1.199</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -3313,7 +3313,7 @@ function drawBackdrop(now) {                  // everything behind the fighters 
   else if (alley) { drawAlley(now); if (vs && vs.c3 && state === 'play') c3World(now); }      // (chapter 2: the portal stands at the end of the street)
   else { ctx.save(); ctx.translate(0, -FAR); ctx.drawImage(bg, 0, 0);
   if (SET.bgd >= 1) layer(far, 0.25); if (SET.bgd >= 2) { layer(near, 0.55); drawProps(now); }      // (v1.153 BACKGROUND DETAIL: FLAT = the sky and the road, LOW + the far towers, MEDIUM + the shops and the lamps, FULL + the wind)
-  const city = ctOn() && !cutsceneOn(); if (city) ctEntrance(now);      // (v1.198 the front of the skyscraper stands in the street: its door leads in; not in a cutscene of a fight (a FATALITY has its own picture of the street))
+  const city = ctOn(); if (city) ctEntrance(now);      // (v1.198 the front of the skyscraper stands in the street: its door leads in; v1.199 in the cutscenes of a fight too, they are drawn over the same street)
   ctx.restore(); drawGround(); if (city) ctEntranceGlow(now); drawBlood(now); drawCrater(now); }
   domVoidLayer(now);
 }
