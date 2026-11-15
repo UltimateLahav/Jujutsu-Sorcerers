@@ -201,7 +201,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.200</small>
+    <small id="ver">V1.201</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -2066,7 +2066,7 @@ const SK_SUKUNA = [      // (v1.131 SUKUNA IN THE SHOP: he is bought in CHARACTE
   ['s_cpunch', 'CROUCH PUNCHES', 'ATTACK WHILE CROUCHED: LOW PUNCHES THAT HIT DUCKING ENEMIES', 120, ['s_crouch']],
   ['s_slash', 'FLYING SLASHES', 'ATTACK WITH NO ENEMY NEAR: A FLYING SLASH THAT NO GUARD STOPS (RIGHT HAND, LEFT HAND, THEN BOTH HANDS EVERY 5 SECONDS). WITHOUT IT ATTACK IS ALWAYS THE JAB COMBO', 150, []],
   ['s_air', 'AIR CUT', 'BLUE: AN INVISIBLE SLASH CUTS THE ENEMY AT ONCE, WHEREVER HE STANDS ON THE SCREEN, AND HE BLEEDS (5% ENERGY)', 250, []],
-  ['s_storm', 'CUT STORM', 'BACK + BLUE: EIGHT INVISIBLE SLASHES. THE ENEMY IS STUNNED FOR 3 SECONDS AND BLEEDS MORE WITH EVERY ONE (25% ENERGY)', 400, ['s_air']],
+  ['s_storm', 'CUT STORM', 'BACK + BLUE: EIGHT INVISIBLE SLASHES. THE ENEMY IS STUNNED FOR 3 SECONDS AND BLEEDS (25% ENERGY)', 400, ['s_air']],
   ['s_leg', 'LEG CUT', 'CROUCH + BLUE: AN INVISIBLE SLASH CUTS THE ENEMY\'S LEGS, HE DROPS TO HIS KNEES FOR 0.8 SECONDS AND EVERY HIT LANDS (10% ENERGY)', 300, ['s_air', 's_crouch']],
   ['s_dismantle', 'DISMANTLE', 'JUMP + BLUE: HE DASHES BACK IN THE AIR AND POINTS. TIME STOPS AND THREE CUTS HIT THE ENEMY\'S CHEST, HE BLEEDS FOR 8 SECONDS (20% ENERGY)', 600, ['s_air']],
   ['s_dashslash', 'DASH SLASH', 'FORWARD + BLUE WITH AN ENEMY NEAR: HE DASHES BEHIND THE ENEMY, TIME STOPS AND THE CUT LANDS ON HIS BACK', 500, ['s_air']],
@@ -3086,7 +3086,7 @@ function hitFoe(k, now) {                     // called on the impact frame: a h
   if (window.__sfxlog) window.__sfxlog.push(['rx', Math.round(now), dummy.rx]);
   say('' + dmg, dummy.x, popCol(), 8, now); if (broke) say('GUARD BREAK', dummy.x, '#ffd34d', 8, now + 90); onLand(k, dmg, now); foeGain(k, hv, rp, now); if (hv) { dummy.vx += (dummy.x >= wx ? 1 : -1) * 150; shakeUntil = now + 170; shakeAmp = 4; }
   snd('smack', smackOf(k));      // (the Cat's kick and the giant's kick are the heavy blows)
-  if (k === 22) dummy.bleed = { until: now + 4000, next: now + 100 };      // the bite: he bleeds 1 damage every 0.1 s for 4 s (a second bite starts the four seconds again)
+  if (k === 22) dotStart('f', 'bleed', { until: now + 4000, next: now + 100 }, now);      // the bite: he bleeds 1 damage every 0.1 s for 4 s (v1.201: a second bite while he bleeds or burns adds nothing: the next one after it has faded starts it again)
   if (dummy.hp <= 0) koDummy(now);            // (a normal punch or kick that finishes him ends the round in a match too)
 }
 function gojoHit(k, now) {                    // the attacking dummy's swing connects with Gojo
@@ -4400,7 +4400,7 @@ function techPierce(now) {      // PIERCING BLOOD fires: the jet passes through 
   if (d.vform && d.vform !== 'verity') { say('IMMUNE', d.x, '#ffe9a0', 8, now); return; }
   if (tqDuck(d, now)) { say('MISS', d.x, '#9fd8ff', 8, now); return; }
   if (dBlocks() && gap > 0) say('GUARD PIERCED', d.x, '#ffd34d', 8, now + 90);      // (nothing stops it)
-  techDmg(d, TQ.pierce, now, 150, false); d.bleed = { until: now + TQ.bleed, next: now + 100, gap: inhOn() ? 100 / INH_DMG : 100 }; tqBlood(d.x - 4, gy - 34, 34, 1); tqBlood(d.x - 4, gy - 34, 14, -1); say('PIERCED', d.x, '#ff3a4a', 8, now + 60);
+  techDmg(d, TQ.pierce, now, 150, false); dotStart('f', 'bleed', { until: now + TQ.bleed, next: now + 100, gap: inhOn() ? 100 / INH_DMG : 100 }, now); tqBlood(d.x - 4, gy - 34, 34, 1); tqBlood(d.x - 4, gy - 34, 14, -1); say('PIERCED', d.x, '#ff3a4a', 8, now + 60);
 }
 function techThrow(now, hx) {      // SHRINE, frame 9: the block leaves his hands in an arc (it rises a little and falls): it hits the first enemy it meets or breaks on the floor
   tqBlock = { x: hx, h: 34, vx: 330, vy: 70, born: now };
@@ -4423,7 +4423,7 @@ function techGrab(now) {      // GRAB + CLEAVE, frame 3: the hand closes on the 
 }
 function techCleave(now) {      // frame 7: the cleave across the held enemy
   const d = dummy; if (!tqGrab || !tqOk(d)) return;
-  techHold(d, now, 700); techDmg(d, TQ.grab, now, 0, false); d.bleed = { until: now + TQ.bleed, next: now + 100, gap: inhOn() ? 100 / INH_DMG : 100 }; tqFx.push({ k: 'slash', x: d.x, real: performance.now() });
+  techHold(d, now, 700); techDmg(d, TQ.grab, now, 0, false); dotStart('f', 'bleed', { until: now + TQ.bleed, next: now + 100, gap: inhOn() ? 100 / INH_DMG : 100 }, now); tqFx.push({ k: 'slash', x: d.x, real: performance.now() });
   tqBlood(d.x - 2, gy - 30, 40, 1); tqBlood(d.x - 2, gy - 30, 16, -1); say('CLEAVE!', d.x, '#ff3a4a', 12, now + 40); shakeUntil = now + 140; shakeAmp = 3; buzz(60);
 }
 function techRelease(now, shove) {      // the hand lets go (frame 9: a shove)
@@ -4675,7 +4675,7 @@ function lagStep(now, cancel) {      // every frame of Verity while the lag runs
   const d = r.tg, el = now - r.t0; if (!d || d !== dummy) { lagEnd(now); return; }
   if (el < LAG.t5) { d.stunUntil = Math.max(d.stunUntil, now + 150); d.vx = 0; d.ai = 'rest'; d.aiAt = now; d.restFor = 150; }      // (held: he does not move until the punch)
   if (!(r.ev & 1) && el >= LAG.t2) { r.ev |= 1; snd('swing', 3); say('SNAP!', wx, '#ff8a7a', 8, now); }
-  if (!(r.ev & 2) && el >= LAG.t3) { r.ev |= 2; techDmg(d, DMG[22], now, KNOCK[22], false); d.bleed = { until: now + 4000, next: now + 100 }; snd('hit', 3); shakeUntil = now + 100; shakeAmp = 2; spark(d.x - 4, gy - 32, 8, ['#c4121c', '#ff2a3a'], false, -1); }      // (the bite: its damage and its bleeding, as in hitDummy)
+  if (!(r.ev & 2) && el >= LAG.t3) { r.ev |= 2; techDmg(d, DMG[22], now, KNOCK[22], false); dotStart('f', 'bleed', { until: now + 4000, next: now + 100 }, now); snd('hit', 3); shakeUntil = now + 100; shakeAmp = 2; spark(d.x - 4, gy - 32, 8, ['#c4121c', '#ff2a3a'], false, -1); }      // (the bite: its damage and its bleeding, as in hitDummy)
   if (!(r.ev & 4) && el >= LAG.t4) { r.ev |= 4; snd('swing', 3); }
   if (!(r.ev & 8) && el >= LAG.t5) { r.ev |= 8; techDmg(d, DMG[3], now, LAG.knock, true); d.down = now + RX_DUR[4]; d.stunUntil = now + 100; puff(d.x, 8); shakeUntil = now + 160; shakeAmp = 4; snd('hit', 3); }      // (the punch: its damage, the big fall and a hard push)
   if (el >= LAG.end) lagEnd(now);
@@ -4863,11 +4863,17 @@ function pounceStep(v, now, dt, af) {      // Verity's AIR BITE, every frame of 
   if (fa >= 8.5 && !p.landed) { p.landed = true; snd('land', 1); gritAt(wx, 6, 50, 0); shockAt(wx, 80, 40, 0.6); }
   return fa >= 8.5 ? 0 : p.l0 * (1 - u * u);
 }
-function vpBleed(now) {      // the bite's bleeding on the enemy: 1 damage every 0.1 s for 4 s (a ball takes none: nothing hurts it); Yuji's PIERCING BLOOD and CLEAVE in INHERITENCE bleed every 0.2 s (half, v1.53); v1.111 st = bleeds stacked on him (the time each one ends): a tick takes dm for every one still on (Sukuna's slashes)
+function vpBleed(now) {      // the bleeding of the enemy: 1 damage every 0.1 s for 4 s for the bite (a ball takes none: nothing hurts it); Yuji's PIERCING BLOOD and CLEAVE in INHERITENCE bleed every 0.2 s (half, v1.53); every bleed has its own damage (b.dm, 1 if it has none) and gap (b.gap, 0.1 s if it has none); v1.201 there is only ever one bleed on him (dotStart): the list of stacked bleeds of v1.111 (Sukuna's slashes) is gone
   const d = dummy; if (!d || !d.bleed) return; const b = d.bleed;
   if (vs.ph !== 'fight' || d.ko >= 0) { d.bleed = null; return; }
-  while (d.bleed && b.next <= now && b.next <= b.until) { const t = b.next; b.next += b.gap || 100; if (d.vform && d.vform !== 'verity') continue; d.hp = Math.max(0, d.hp - (b.st ? b.dm * b.st.filter(e => e >= t).length : (b.dm || 1))); if (!b.quiet) d.hitAt = now; if (d.hp <= 0) { d.bleed = null; koDummy(now); } }
+  while (d.bleed && b.next <= now && b.next <= b.until) { b.next += b.gap || 100; if (d.vform && d.vform !== 'verity') continue; d.hp = Math.max(0, d.hp - (b.dm || 1)); if (!b.quiet) d.hitAt = now; if (d.hp <= 0) { d.bleed = null; koDummy(now); } }
   if (d.bleed && now >= b.until) d.bleed = null;
+}
+// ---------------------------------------------------------------- v1.201 ONE TICK EFFECT AT A TIME. A bleed, a burn, a scald (everything that takes a little health again and again after a blow) does not add up: it deals the same amount at every tick until it is over, and while one is running on a fighter every other one that would start is ignored (the blow that brought it still lands, only the effect is not added: no more time, no more damage, no other kind); when it has faded, the next blow that brings one starts it again. The enemy carries dummy.bleed (the bleeds and the boiling water's burn), dummy.sburn (Sukuna's fire arrows) and cuBleed (a custom punch's bleed); you carry vs.bleed, vs.fburn and vs.fscald. What the ultimates do over time (the shrine's cuts, the fear of the jumpscare, the beam of the blast) is the move itself, not an effect that is left on him, and is not in this.
+function dotOnF(now) { const d = dummy; return !!d && !!((d.bleed && now < d.bleed.until) || (d.sburn && now < d.sburn.until) || (cuBleed && cuBleed.who === d && now < cuBleed.until)); }      // (a tick effect is running on the enemy)
+function dotOnP(now) { return !!vs && !!((vs.bleed && now < vs.bleed.until) || (vs.fburn && now < vs.fburn.until) || (vs.fscald && now < vs.fscald.until)); }      // (a tick effect is running on you)
+function dotStart(side, field, spec, now) {      // a tick effect starts on the enemy (side 'f': dummy[field], 'bleed' or 'sburn') or on you ('p': vs[field], 'bleed', 'fburn' or 'fscald'); false (nothing is started) when one is already running on him
+  const o = side === 'f' ? dummy : vs; if (!o || (side === 'f' ? dotOnF(now) : dotOnP(now))) return false; o[field] = spec; return true;
 }
 // ---------------------------------------------------------------- v1.28 TWO NEW VARIANTS (bought in SKILLS like every other variant). BLOOD DRAG (Verity, crouched + BLUE; the bite needs him standing): a low lunge at the enemy's feet, the bite, then he backs away with the enemy by the feet, flat on the floor, and the blood is dragged along the ground. GIANT SMASH (the Cat, flat on the floor + BLUE): the giant's huge leg smashes down on the enemy.
 let vdg = null, cst = null; const smear = [], drip = [];      // vdg = { at, ph (0 lunge, 1 drag, 2 lying), tick }; cst = { at, tx (where the leg comes down, world x), lock, hit }; smear = the blood on the floor ({ x, born, r }); drip = the drops thrown up ({ x, h, vx, vy })
@@ -7501,7 +7507,7 @@ function cuHit(dmg, now, o, ax, rc, lo) {      // an IMPACT (or a shot) of a cus
   if (blk) say('GUARD BREAK', dummy.x, '#ffd34d', 8, now + 90);
   if (o.stun) cuStun(o.stun, now);
   if (o.launch && (!dummy.air || dummy.air.kind === 'bounce')) { dummy.air = vs.me === RYU_WHO ? ryArc(now, 0, o.launch) : airMake(now, 0, Math.sqrt(2 * AIR_G * o.launch), AIR_G, 'up'); dummy.rx = AIR_RX; dummy.rxAt = now; }      // (thrown up like the UPPERCUT: o.launch px high at the top)
-  if (o.bleed) cuBleed = { who: dummy, until: now + o.bleed[1] * 1000, next: now + 1000, d: o.bleed[0] };
+  if (o.bleed && !dotOnF(now)) cuBleed = { who: dummy, until: now + o.bleed[1] * 1000, next: now + 1000, d: o.bleed[0] };      // (v1.201 one at a time)
   if (dummy.hp <= 0) koDummy(now);
   return true;
 }
@@ -7865,9 +7871,9 @@ function goreTick(now, dt) {      // every frame of a fight (vsTick): looks for 
     }
     B.last = hp;
     const lost = (B.st.an === 2) + (B.st.af === 2) + (B.st.lf === 2) + (B.st.lb === 2);
-    if (lost && B.bleedAt && now >= B.bleedAt) {      // bleeding: a little health every half second until the round ends
-      B.bleedAt = now + 500; const d = Math.max(0.1, (side === 'p' ? PHP : dummy.max) * GT.bleed * Math.min(3, lost));
-      if (side === 'p') { vs.hp = Math.max(0, vs.hp - d); vs.hitAt = now; if (vs.hp <= 0) endRound('enemy', 'ko', now); B.last = vs.hp; } else if (dummy.ko < 0) { dummy.hp = Math.max(0, dummy.hp - d); dummy.hitAt = now; if (dummy.hp <= 0) koDummy(now); B.last = dummy.hp; }
+    if (lost && B.bleedAt && now >= B.bleedAt) {      // bleeding: a little health every half second until the round ends (v1.201: always the same amount, however many limbs are gone, and none while a bleed or a burn is running on him: tick damage does not add up)
+      B.bleedAt = now + 500; const d = Math.max(0.1, (side === 'p' ? PHP : dummy.max) * GT.bleed);
+      if (side === 'p' ? dotOnP(now) : dotOnF(now)) { /* the effect that is running takes the ticks */ } else if (side === 'p') { vs.hp = Math.max(0, vs.hp - d); vs.hitAt = now; if (vs.hp <= 0) endRound('enemy', 'ko', now); B.last = vs.hp; } else if (dummy.ko < 0) { dummy.hp = Math.max(0, dummy.hp - d); dummy.hitAt = now; if (dummy.hp <= 0) koDummy(now); B.last = dummy.hp; }
     }
     if (lost && gdSet() === 0 && now >= B.dripAt) { B.dripAt = now + 140; const x = side === 'f' ? dummy.x : wx; spawnDrop(x + Math.random() * 6 - 3, -(10 + Math.random() * 20), (Math.random() - 0.5) * 30, -20 - Math.random() * 20, 1 + ((Math.random() * 3) | 0)); }
     if (gdHurtN(B)) { if (!B.coughAt) B.coughAt = now + 3000 + Math.random() * 2000; else if (now >= B.coughAt) { B.coughAt = now + 4000 + Math.random() * 2500; goreCough(side, now); } }      // a hurt body coughs blood and doubles over now and then
@@ -7970,7 +7976,7 @@ const SU_NEAR = 60, SU_CP = [['R.JAB', 10, 7], ['L.UPPR', 13, 8]], SU_CP_FPS = 3
 const SU_BLUE = { cut: { fps: 50, hit: 7, cost: 5 }, storm: { fps: 24, first: 7, n: 8, stun: 3, cost: 25 }, knock: 2, reach: 10 };      // v1.111 BLUE: the AIR CUT (pictures a second, the picture the cut lands on, the cost in % of the energy) and the CUT STORM (the same, the picture of the first of its slashes and how many there are, the stun in s); the flinch of the AIR CUT (the knock-back of a hit that takes no health); how far past the edge of the screen's half an enemy can still be cut (px)
 const SU_LEG = { fps: 45, hit: 7, cost: 10, kneel: 800, mark: [-14, -22, 14, -12] };      // v1.112 the LEG CUT (BLUE crouched): pictures a second, the picture the cut lands on, the cost (% of the energy), how long he kneels (stunned, ms) and the line of the cut across his legs
 const SU_DIS = { cost: 20, dash: 40, dashMs: 250, pointMs: 150, freeze: 1500, hold: 120, gap: 110, cuts: 3, endMs: 140, after: 600, bleed: 8000, tip: [22, -27], marks: [[-12, -48, 12, -26], [12, -48, -12, -26], [-14, -37, 14, -37]] };      // v1.112 DISMANTLE (BLUE in the air): the cost; how far he dashes back (px) in how long (ms) and how long he then takes to point (ms); how long the game stops (ms); how long the finger holds after the stop before the first cut, the time between two cuts (ms), how many cuts; how long he holds the last one (ms); how long the enemy stays stunned after the last cut (ms); how long each bleed lasts (ms); where the tip of his finger is from his middle on the floor line (x, y, plus his height); and the line of each cut across the enemy's chest
-const SU_DASH = { cost: 20, reach: 100, behind: 26, dashMs: 210, standMs: 480, freeze: 1230, imp: 260, endMs: 420, dmg: 20, bleed: 6000, nb: 2, mark: [-30, -52, 30, -22] };      // v1.118 DASH SLASH (BLUE with FORWARD held): the cost; how far away the enemy can be (px); how far behind him he stops (px); the dash (ms); how long he stands there before the stop (ms); how long the game stops (ms); how much of that is the impact frame (ms); how long he stands after the cut (ms); the cut's damage; how long each of its bleeds lasts (ms) and how many there are; the line of the cut across the enemy
+const SU_DASH = { cost: 20, reach: 100, behind: 26, dashMs: 210, standMs: 480, freeze: 1230, imp: 260, endMs: 420, dmg: 20, bleed: 6000, mark: [-30, -52, 30, -22] };      // v1.118 DASH SLASH (BLUE with FORWARD held): the cost; how far away the enemy can be (px); how far behind him he stops (px); the dash (ms); how long he stands there before the stop (ms); how long the game stops (ms); how much of that is the impact frame (ms); how long he stands after the cut (ms); the cut's damage; how long its bleed lasts (ms); the line of the cut across the enemy
 const SU_ELB = ['ELBOW', 12, 3, 8, 14, 32];      // v1.119 the CLEAVE mode's third blow (Yuji's ELBOW): name, damage, knock-back, the picture (1 - 15) it lands on, how far he steps forward (px: the elbow is 5 px shorter than a jab, so it steps further), pictures a second (the two hooks before it are the jabs' own: SU_ATK)
 const SU_CL = { reach: 44, touchHold: 450, m1: 1, blue: 5, cost: { stand: 5, lift: 10, dive: 10, dash: 10 }, mark: [-16, -50, 18, -18], lift: { reach: 46, stop: 30, step: 18, h: 9, end: 800, mark: [-14, -66, 14, -46], T: [0, 36, 72, 108, 144, 180, 240, 300, 360, 480, 520, 560, 600, 680, 740] }, dive: { range: 150, stop: 25, ms: 190, end: 560, mark: [-2, -62, 4, -6], T: [0, 60, 120, 165, 210, 255, 295, 335, 375, 415, 455, 495] }, dash: { range: 120, stop: 27, ms: 150, end: 420, knock: 60, launch: 12, mark: [-24, -28, 26, -56] } };      // v1.119 CLEAVE (MODE): how far a melee cleave reaches (px); how long the touch holds the enemy still (ms); the % of the enemy's full health the TOUCH CUT (the 4th blow of ATTACK) and every BLUE move take; the energy costs (%); the line of the cut across the enemy; the LIFT (reach, how close his hand needs the enemy and the longest step he takes to get there in px, how high he lifts the enemy in px, how long it all takes in ms, the line of the cut across his head, and when each of the 15 pictures starts in ms); the DIVE (how far away the enemy can be, how far from him he lands, the fall in ms, the whole move in ms, the line of the cut, when each picture of the grab and cut starts after the landing); the DASH CLEAVE (how far away, how far from him he stops, the dash in ms, the whole move, the knock-back, the hop in px, the line of the cut)
 const SU_MARKS = [[-10, -52, 12, -12], [12, -54, -10, -14], [-12, -36, 14, -30], [-8, -58, 8, -8], [10, -44, -12, -22], [-12, -26, 12, -42], [-6, -58, 10, -10], [12, -30, -12, -48]];      // where the cut of each slash shows across the enemy (x0, y0, x1, y1 from his middle on the floor line), every one another line
@@ -8035,8 +8041,8 @@ function suCut(g, c, now) {      // the cut lands: a white and red slash across 
   c.hit = true; const d = dummy; snd('c6scrape'); snd('smack', 3); tqFx.push({ k: 'slash', x: d ? d.x : wx + 24, real: performance.now() });
   const e = g.ev[3][0], B = d && hbBody(hbKey(d));
   if (cuHit(0, now, { free: true, knock: 6 }, undefined, e.tip && B ? hbGap(e.tip, B, 0) : undefined)) {
-    const nb = suBleed(d, now);      // (it ticks in vpBleed: 133 times 0.1 of health in 4 s for every bleed; v1.111: they stack)
-    say(nb > 1 ? 'BLEED x' + nb : 'BLEEDING', d.x, '#ff3a4a', 8, now + 90); tqBlood(d.x - 4, gy - 34, 26, 1); shakeUntil = now + 140; shakeAmp = 3; hitStop(60);
+    const nb = suBleed(d, now);      // (it ticks in vpBleed: 133 times 0.1 of health in 4 s; v1.201: one at a time, a cut while he bleeds or burns adds nothing)
+    if (nb) say('BLEEDING', d.x, '#ff3a4a', 8, now + 90); tqBlood(d.x - 4, gy - 34, 26, 1); shakeUntil = now + 140; shakeAmp = 3; hitStop(60);
   }
 }
 function suStep(g, now) {      // every frame of the counter: the state moves on, he moves, and the picture to show (null: his idle pictures)
@@ -8063,7 +8069,7 @@ function suStep(g, now) {      // every frame of the counter: the state moves on
 let suDrop = 0;
 function suBleedFx(now) {      // every frame: the bleeding of the enemy goes on (vpBleed ticks dummy.bleed; the scenes of the others call it, the custom scene did not need it before) and drops fly off him (about 7 a second)
   vpBleed(now); suBurnStep(now); suDomStep(now); const d = dummy; if (!d || !d.bleed || !d.bleed.quiet || d.ko >= 0 || now < suDrop) return;
-  suDrop = now + 140 / Math.min(4, d.bleed.st ? d.bleed.st.length : 1); spark(d.x + Math.random() * 6 - 3, gy - 20 - Math.random() * 24, 1, ['#c4121c', '#ff2a3a'], false, Math.random() < 0.5 ? 1 : -1);
+  suDrop = now + 140; spark(d.x + Math.random() * 6 - 3, gy - 20 - Math.random() * 24, 1, ['#c4121c', '#ff2a3a'], false, Math.random() < 0.5 ? 1 : -1);
 }
 
 // ---- v1.110 which blow ATTACK plays, and the pictures of the flying slashes
@@ -8103,7 +8109,7 @@ function suLabel(g, now) {      // what the ATTACK button says: the blow that co
   const sn = fresh ? 0 : cuSn; return sn >= 2 && now >= (cuCd[8] || 0) ? g.an[8] : g.an[6 + (sn % 2)];
 }
 
-// ---- v1.111 BLUE: the AIR CUT and the CUT STORM (the invisible slashes) and the bleeds that stack
+// ---- v1.111 BLUE: the AIR CUT and the CUT STORM (the invisible slashes) and their bleed (v1.201: one bleed at a time, they no longer stack)
 let suCast = null, suMk = 0;
 function suBlue0(now) {      // the BLUE move this moment asks for (-1: none): in the flight of a jump (its pictures 3 to 11) DISMANTLE (12), crouched the LEG CUT (11), standing the CUT STORM (10) with the back direction held and otherwise the AIR CUT (9)
   if (suFl) return cuJumpAt < 0 && (stance === 'stand' || stance === 'crouch') ? 22 : -1;      // (v1.123 the FLAME mode has no variants: BLUE is OPEN, standing or crouched (he stands up for it), whichever way he holds, and nothing in the air)
@@ -8128,7 +8134,7 @@ function suBlueStart(k, now) {      // a new BLUE move has started: nothing has 
   suCast = { hits: 0 }; if (k >= 19 && k <= 21) suClStart(k, now); if (k === 22) suFlStart(now); if (k === 12) CU_GAME[3].cs = { air: true, ph: 'air', t0: now, last: now, done: 0, cuts: 0, frozen: false };
   if (k === 13) { const d = dummy; CU_GAME[3].cs = { dash: true, ph: 'dash', t0: now, done: 0, dx: d.x - wx + SU_DASH.behind, gh: [], cut: false }; cuStun((SU_DASH.dashMs + SU_DASH.standMs + SU_DASH.endMs + 300) / 1000, now, true); d.dodgeUntil = 0; snd('dash', 1); say('DASH SLASH', wx, '#ffe9a0', 8, now); }      // (the enemy stands still from now until after the cut)
 }
-const SU_BLUE_NAMES = { 9: ['AIR<br>CUT', 'Air Cut: an invisible slash cuts the enemy at once wherever he stands on the screen and he bleeds (5 energy). Hold back for the Cut Storm, crouch for the Leg Cut, jump for Dismantle'], 10: ['CUT<br>STORM', 'Cut Storm: eight invisible slashes cut the enemy, he is stunned for 3 seconds and bleeds more with every slash (25 energy)'], 11: ['LEG<br>CUT', 'Leg Cut: an invisible slash cuts the enemy\'s legs, he drops to his knees and is stunned for 0.8 seconds, and every hit lands on him (10 energy)'], 13: ['DASH<br>SLASH', 'Dash Slash: he dashes through the enemy and stops behind him, the game stops for 1.23 seconds with an impact frame, then the enemy is cut and bleeds (20 energy; hold forward with the enemy within 100 pixels)'], 12: ['<span style="font-size:.78em">DISMAN-<br>TLE</span>', 'Dismantle: he dashes back in the air and points, time stops while he says it, then the enemy is cut three times in the chest and bleeds out (20 energy)'] };
+const SU_BLUE_NAMES = { 9: ['AIR<br>CUT', 'Air Cut: an invisible slash cuts the enemy at once wherever he stands on the screen and he bleeds (5 energy). Hold back for the Cut Storm, crouch for the Leg Cut, jump for Dismantle'], 10: ['CUT<br>STORM', 'Cut Storm: eight invisible slashes cut the enemy, he is stunned for 3 seconds and bleeds (25 energy)'], 11: ['LEG<br>CUT', 'Leg Cut: an invisible slash cuts the enemy\'s legs, he drops to his knees and is stunned for 0.8 seconds, and every hit lands on him (10 energy)'], 13: ['DASH<br>SLASH', 'Dash Slash: he dashes through the enemy and stops behind him, the game stops for 1.23 seconds with an impact frame, then the enemy is cut and bleeds (20 energy; hold forward with the enemy within 100 pixels)'], 12: ['<span style="font-size:.78em">DISMAN-<br>TLE</span>', 'Dismantle: he dashes back in the air and points, time stops while he says it, then the enemy is cut three times in the chest and bleeds out (20 energy)'] };
 SU_BLUE_NAMES[18] = ['CLEAVE', 'Cleave (Cleave mode): he steps in, touches the enemy and slashes him for 5 percent of his health, a guard does not stop it (5 energy). Crouch for the Lift, jump for the Dive, hold forward for the Dash'];
 SU_BLUE_NAMES[19] = ['LIFT<br>CLEAVE', 'Lift Cleave (Cleave mode): he lifts the enemy up with one hand and slashes his head for 5 percent of his health (10 energy)'];
 SU_BLUE_NAMES[20] = ['DIVE<br>CLEAVE', 'Dive Cleave (Cleave mode): he drops down on the enemy, grabs him and cleaves him to the ground for 5 percent of his health (10 energy)'];
@@ -8138,29 +8144,26 @@ function suBlueLabel(now) {      // the BLUE button's name (and what a screen re
   const k = suBlue(now), ix = k < 0 ? (suFl ? 22 : suCl ? 18 : 9) : k, n = ix === 22 && suDom && suDom.sink < 0 && dummy && dummy.ko < 0 && !suFg && suOwn('s_fuga') ? SU_FG_NAME : SU_BLUE_NAMES[ix], el = $('lapl');      // (v1.127 with the domain open OPEN is called FUGA)
   if (el.innerHTML !== n[0]) { el.innerHTML = n[0]; $('lap').setAttribute('aria-label', n[1]); }
 }
-function suBleed(d, now, ms) {      // one more bleed on the enemy (every slash that lands adds one, the counter's too): it lasts ms (SU_BLEED.ms: 4 s, DISMANTLE's 8 s) and takes SU_BLEED.dm every SU_BLEED.gap ms; they stack: d.bleed.st lists when each one ends and vpBleed takes dm for every one that is still on; returns how many are on
-  const b = d.bleed, end = now + (ms || SU_BLEED.ms);
-  if (b && b.st) { b.st = b.st.filter(e => e >= b.next); b.st.push(end); b.until = Math.max(b.until, end); }
-  else d.bleed = { until: end, next: now + SU_BLEED.gap, gap: SU_BLEED.gap, dm: SU_BLEED.dm, quiet: true, st: [end] };
-  return d.bleed.st.length;
+function suBleed(d, now, ms) {      // a cut makes the enemy bleed (v1.201: ONE bleed at a time, they no longer stack): it lasts ms (SU_BLEED.ms: 4 s, DISMANTLE's and the DASH SLASH's longer one) and takes SU_BLEED.dm every SU_BLEED.gap ms, always the same; a cut while a bleed or a burn is running on him adds nothing (the next one after it has faded starts it again); returns true when it started
+  return dotStart('f', 'bleed', { until: now + (ms || SU_BLEED.ms), next: now + SU_BLEED.gap, gap: SU_BLEED.gap, dm: SU_BLEED.dm, quiet: true }, now);
 }
-function suCutAt(now, i, n) {      // one invisible slash (the i-th of n; the AIR CUT is 1 of 1, the CUT STORM 8 of 8) lands on the enemy wherever he stands on the screen in front of him: nothing flies and nothing is seen but the cut across him; he flinches (in a storm he is held still instead: the stun does the rest), a guard blocks it, and every slash that lands adds a bleed
+function suCutAt(now, i, n) {      // one invisible slash (the i-th of n; the AIR CUT is 1 of 1, the CUT STORM 8 of 8) lands on the enemy wherever he stands on the screen in front of him: nothing flies and nothing is seen but the cut across him; he flinches (in a storm he is held still instead: the stun does the rest), a guard blocks it, and a bleed starts if none is running on him (v1.201: one at a time)
   const d = dummy, c = suCast; if (!d || !c) return;
   if (!cuHit(0, now, { free: true, knock: n > 1 ? 0.01 : SU_BLUE.knock }, undefined, VW / 2 + SU_BLUE.reach, -4)) return;
-  const nb = suBleed(d, now); c.hits++; if (n > 1) cuStun(SU_BLUE.storm.stun, now, c.hits > 1);
+  if (i === 0) c.bled = false; if (suBleed(d, now)) c.bled = true; c.hits++; if (n > 1) cuStun(SU_BLUE.storm.stun, now, c.hits > 1);
   tqFx.push({ k: 'slash', x: d.x, real: performance.now(), p: SU_MARKS[suMk++ % SU_MARKS.length] }); snd('sukcut', i);
   spark(d.x, gy - 20 - Math.random() * 16, 4, ['#ffffff', '#ff2a3a', '#ffb0b8'], false, 1); tqBlood(d.x - 4 + Math.random() * 8, gy - 14 - Math.random() * 30, n > 1 ? 8 : 20, 1); hitStop(n > 1 ? 25 : 45);
-  if (i === n - 1) say(nb > 1 ? 'BLEED x' + nb : 'BLEEDING', d.x, '#ff3a4a', 8, now + 90);
+  if (i === n - 1 && c.bled) say('BLEEDING', d.x, '#ff3a4a', 8, now + 90);
 }
 
 // ---- v1.112 the LEG CUT (BLUE crouched) and DISMANTLE (BLUE in the air)
 function suLegAt(now) {      // the LEG CUT lands (like the AIR CUT: at once, wherever he stands on the screen in front of him, a guard blocks it; it is low, so a crouching enemy is cut too): a cut across his legs, he drops to his knees and is stunned for SU_LEG.kneel ms, every hit lands on him meanwhile (nothing of his ducks: dummy.kneel is only drawn), and he bleeds
   const d = dummy; if (!d) return;
   if (!cuHit(0, now, { free: true, low: true, knock: 0.01 }, undefined, VW / 2 + SU_BLUE.reach, -4)) return;
-  const nb = suBleed(d, now); cuStun(SU_LEG.kneel / 1000, now); d.kneel = now + SU_LEG.kneel;
+  suBleed(d, now); cuStun(SU_LEG.kneel / 1000, now); d.kneel = now + SU_LEG.kneel;
   tqFx.push({ k: 'slash', x: d.x, real: performance.now(), p: SU_LEG.mark }); snd('sukcut', 1);
   spark(d.x, gy - 12 - Math.random() * 6, 5, ['#ffffff', '#ff2a3a', '#ffb0b8'], false, 1); tqBlood(d.x - 4 + Math.random() * 8, gy - 8, 22, 1); hitStop(55);
-  say(nb > 1 ? 'BLEED x' + nb : 'LEGS CUT', d.x, '#ff3a4a', 8, now + 90);
+  say('LEGS CUT', d.x, '#ff3a4a', 8, now + 90);
 }
 function suDisStep(g, c, now) {      // DISMANTLE, every frame: he dashes back in the air (the jump he was in is held: cuJumpAt moves on with the clock until it is over), points, time stops while the word is said (suFreeze), then three cuts land on the enemy's chest; returns the picture to show
   const D = SU_DIS, t = now - c.t0, P = g.atk[12]; cuJumpAt += now - c.last; c.last = now;
@@ -8179,14 +8182,15 @@ function suFreeze(now) {      // time stops: the game's clock stands still for S
   if (d) { d.dodgeUntil = 0; cuStun((SU_DIS.hold + (SU_DIS.cuts - 1) * SU_DIS.gap + SU_DIS.after) / 1000, now, true); }
   snd('sukdis');
 }
-function suDisCut(i, now) {      // the i-th of the three cuts of DISMANTLE lands on the enemy's chest: nothing can block or dodge it (a guard is broken), a bleed of SU_DIS.bleed ms is added, and the last one throws him back a little
+let suDisBled = false;      // (v1.201 did one of the three cuts of DISMANTLE start the bleed: the words BLEEDING OUT come with the last cut)
+function suDisCut(i, now) {      // the i-th of the three cuts of DISMANTLE lands on the enemy's chest: nothing can block or dodge it (a guard is broken), a bleed of SU_DIS.bleed ms starts (v1.201: one at a time: the second and the third cut add nothing), and the last one throws him back a little
   const d = dummy; if (!d || d.ko >= 0) return;
   const last = i === SU_DIS.cuts - 1; d.dodgeUntil = 0;
   if (!cuHit(0, now, { free: true, low: true, gb: true, knock: last ? 4 : 0.01 }, undefined, VW / 2 + SU_BLUE.reach, -4)) return;
-  const nb = suBleed(d, now, SU_DIS.bleed);
+  if (i === 0) suDisBled = false; if (suBleed(d, now, SU_DIS.bleed)) suDisBled = true;
   tqFx.push({ k: 'slash', x: d.x, real: performance.now(), p: SU_DIS.marks[i % SU_DIS.marks.length] }); snd('sukcut', i); if (last) snd('smack', 3);
   spark(d.x, gy - 30 - Math.random() * 12, last ? 9 : 5, ['#ffffff', '#ff2a3a', '#ffb0b8'], last, 1); tqBlood(d.x - 4 + Math.random() * 8, gy - 30 - Math.random() * 10, last ? 40 : 22, 1); hitStop(last ? 90 : 45);
-  if (last) { shakeUntil = now + 220; shakeAmp = 4; say(nb > 1 ? 'BLEED x' + nb : 'BLEEDING OUT', d.x, '#ff3a4a', 8, now + 90); }
+  if (last) { shakeUntil = now + 220; shakeAmp = 4; if (suDisBled) say('BLEEDING OUT', d.x, '#ff3a4a', 8, now + 90); }
 }
 function suTsFrame() {      // the game is stopped (DISMANTLE): the frame it stopped on, grey and dark, with red bars, a line from his finger to the enemy, the three cuts drawn thin on the enemy's chest in the last moments, and the word; painted by the main loop on every frame of the stop (the time of it is how much of stopMs has run out, so a pause holds it too)
   const T = suTs; if (!T || T.vs !== vs || performance.now() - T.real > T.total + 1500) { suTs = null; return; }
@@ -8241,13 +8245,13 @@ function suFreezeDash(now) {      // time stops for SU_DASH.freeze ms (stopMs: t
   if (d) { d.dodgeUntil = 0; cuStun((SU_DASH.endMs + 300) / 1000, now, true); }
   snd('sukimp');
 }
-function suDashCut(now) {      // the cut lands on the enemy's back (he is in front of the cut, behind him): a little damage and two bleeds; a guard cannot be in the way (it comes from behind)
+function suDashCut(now) {      // the cut lands on the enemy's back (he is in front of the cut, behind him): a little damage and a bleed (v1.201: it was two, one at a time now); a guard cannot be in the way (it comes from behind)
   const d = dummy; if (!d || d.ko >= 0) return; d.dodgeUntil = 0;
   if (!cuHit(SU_DASH.dmg, now, { gb: true, low: true, knock: -2 }, undefined, 500, -500)) return;
-  let nb = 0; for (let i = 0; i < SU_DASH.nb; i++) nb = suBleed(d, now, SU_DASH.bleed);
+  const nb = suBleed(d, now, SU_DASH.bleed);
   tqFx.push({ k: 'slash', x: d.x, real: performance.now(), p: SU_DASH.mark }); snd('sukcut', 2); snd('smack', 3);
   spark(d.x, gy - 34, 14, ['#ffffff', '#ff2a3a', '#ffb0b8'], true, -1); tqBlood(d.x + 2, gy - 36, 44, -1); hitStop(90); shakeUntil = now + 240; shakeAmp = 4;
-  say(nb > 1 ? 'BLEED x' + nb : 'BLEEDING', d.x, '#ff3a4a', 8, now + 90);
+  if (nb) say('BLEEDING', d.x, '#ff3a4a', 8, now + 90);
 }
 function suGhostDraw(now, x, y) {      // the afterimages of the dash (his slash picture where he was, fading out in 0.24 s) and its speed lines, drawn under his own picture's place
   const g = CU_GAME[3], c = g && g.cs; if (!c || !(c.dash || c.cl === 'dash')) return;      // (v1.119 the DASH CLEAVE leaves the same afterimages)
@@ -8454,10 +8458,10 @@ function suFlFire(now) {      // the back hand lets go: the arrow leaves from th
   const h = SU_FL_HANDS[12]; suArrows.push({ x: wx + h[2] - 32 - 2, s: SU_FL.arrow.grow, born: now, tried: false }); suFlFlashAt = now; snd('sukfire', 3);
   shakeUntil = Math.max(shakeUntil, now + 240); shakeAmp = Math.max(shakeAmp, 3); spark(wx + h[2] - 32, gy - 61 + h[3], 18, SU_FL.cols, true, -1);
 }
-function suFlHit(now, a) {      // the arrow reaches the enemy: a hit that takes no health (cuHit, free: the flinch and the combo counter; no guard is asked: the arrow is already past his middle) and the BURN: exactly 1 health every 0.5 s for 8 s; a second arrow restarts the 8 s, nothing adds up
+function suFlHit(now, a) {      // the arrow reaches the enemy: a hit that takes no health (cuHit, free: the flinch and the combo counter; no guard is asked: the arrow is already past his middle) and the BURN: exactly 1 health every 0.5 s for 8 s; v1.201 a second arrow while he burns or bleeds adds nothing (the next one after it has faded starts it again)
   const d = dummy; if (!cuHit(0, now, { free: true, gb: true, low: true, knock: 2 }, d.x + 1, 1e9, -1e9)) return false;
-  d.sburn = { until: now + SU_FL.burn.ms, next: now + SU_FL.burn.gap }; snd('sukfire', 4); spark(d.x, gy - 34, 30, SU_FL.cols, true, 1); hitStop(70); shakeUntil = Math.max(shakeUntil, now + 260); shakeAmp = Math.max(shakeAmp, 4);
-  say('BURNING', d.x, '#ff9a2a', 10, now + 60); suFlBursts.push({ x: d.x, born: now }); return true;
+  const burns = dotStart('f', 'sburn', { until: now + SU_FL.burn.ms, next: now + SU_FL.burn.gap }, now); snd('sukfire', 4); spark(d.x, gy - 34, 30, SU_FL.cols, true, 1); hitStop(70); shakeUntil = Math.max(shakeUntil, now + 260); shakeAmp = Math.max(shakeAmp, 4);
+  if (burns) say('BURNING', d.x, '#ff9a2a', 10, now + 60); suFlBursts.push({ x: d.x, born: now }); return true;
 }
 function suFlStepArrows(now, dt) {      // every frame: the arrows fly on; the first time one touches the enemy it hits him (once, hit or miss)
   const d = dummy, A = SU_FL.arrow;
@@ -8854,7 +8858,7 @@ function suFgHit(now, quiet) {      // the arrow lands: a flinch and a knock bac
   if (d && d.ko < 0) {
     cuHit(0, now, { free: true, gb: true, low: true, knock: 4 }, d.x + 1, 1e9, -1e9);      // (the flinch and the combo counter: it cannot miss, so whether it counted does not matter)
     if (!(d.vform && d.vform !== 'verity')) { const dm = (d.max || DUMMY_HP) * SU_FG.dmg / 100; d.hp = Math.max(0, d.hp - dm); hits.dmg += dm; }
-    d.hitAt = now; d.sburn = { until: now + SU_FL.burn.ms, next: now + SU_FL.burn.gap }; spark(d.x, gy - 34, 40, SU_FL.cols, true, 1); spark(d.x, gy - 34, 24, SU_FL.cols, true, -1);
+    d.hitAt = now; dotStart('f', 'sburn', { until: now + SU_FL.burn.ms, next: now + SU_FL.burn.gap }, now); spark(d.x, gy - 34, 40, SU_FL.cols, true, 1); spark(d.x, gy - 34, 24, SU_FL.cols, true, -1);
     if (d.hp <= 0) koDummy(now);
   }
   for (let i = 0, n = SET.lite ? 24 : 64; i < n; i++) { const a = -Math.random() * Math.PI, v = 40 + Math.random() * 170; suFgP(F, X, gy - 30, Math.cos(a) * v, Math.sin(a) * v, 0.8 + Math.random() * 0.9, i % 5 === 0 ? '#2a1008' : SU_FL.cols[i % 4], i % 7 === 0 ? 3 : i % 3 ? 1 : 2, 240); }
@@ -18087,7 +18091,7 @@ function irlStart(g, now) {      // BLUE pressed walking back in the repulsor mo
 function irlEnd(g, b, now) {      // the beam is gone (it ran out, he was hit, or the enemy was knocked out): an enemy it went through starts to bleed and stays stunned
   if (b.off >= 0) return; b.off = now; const d = dummy, H = irlHole;
   if (b.hit && d && d.ko < 0 && H && H.who === d && !H.off) {
-    H.off = now; d.bleed = { next: now + 300, until: now + IRL.bleedMs, gap: IRL.bleedGap, dm: IRL.bleedDm, quiet: true }; cuStun(IRL.stun / 1000, now, true); say('BLEEDING', d.x, '#ff3a4a', 8, now); snd('hit', 1);
+    H.off = now; const bl = dotStart('f', 'bleed', { next: now + 300, until: now + IRL.bleedMs, gap: IRL.bleedGap, dm: IRL.bleedDm, quiet: true }, now); cuStun(IRL.stun / 1000, now, true); if (bl) say('BLEEDING', d.x, '#ff3a4a', 8, now); snd('hit', 1);      // (v1.201 one bleed or burn at a time: with another one already running on him he is only stunned)
     if (gdSet() === 0) spark(d.x, gy - H.hgt - (d.airH || 0), 8, ['#8a0a14', '#c4121c', '#ff2a3a'], false, 1);
   } else if (H && !H.off) H.off = now;
 }
@@ -18912,7 +18916,7 @@ function vActTick(d, now, dt) {
   if (a.type === 'stop') { c3StopTick(d, a, t, now, dt); return; }      // (chapter 2's STOP, see chap2.js)
   if (a.type === 'bite') {
     a.anim = 'bite'; a.fi = t * 18 / 1000; if (a.fi >= 5 && a.fi < 9 && ag > 14) d.x += toward * 80 * dt;
-    if (!a.hit && a.fi >= 8) { a.hit = 1; snd('f:hit', 3); if (ag <= eHit(22)) { const h = hurtAt; gojoHit(0, now); if (hurtAt !== h) vs.bleed = { until: now + 4000, next: now + 100 }; } }
+    if (!a.hit && a.fi >= 8) { a.hit = 1; snd('f:hit', 3); if (ag <= eHit(22)) { const h = hurtAt; gojoHit(0, now); if (hurtAt !== h) dotStart('p', 'bleed', { until: now + 4000, next: now + 100 }, now); } }
     if (a.fi >= 15) vEnd(d, now);
   } else if (a.type === 'scare') {      // JUMPSCARE: the wind-up, the lunge (frames 4-7), the grip (12): if the victim is still within reach the cutscene starts; a jump or a teleport during the wind-up saves him
     a.anim = 'scare_grab'; a.fi = t * 24 / 1000; if (a.fi >= 4 && a.fi < 8 && ag > 28) d.x += toward * 130 * dt;
@@ -19846,7 +19850,7 @@ function fredPierceOk(now) {      // v1.94: once per press, when the coil would 
 function fredPierce(now) {      // the claw goes through the enemy: damage, a big flinch, blood, and he bleeds for 4 s
   const d = dummy; if (!d || d.ko >= 0 || d.cap) return; const g = d.x - wx; if (g > FRED_PIERCE.reach || g < -4) return;
   connectAt = atkAt; cancelFor = atkAt; cancelUntil = now + CANCEL_MS * (flowOn ? 2 : 1);
-  techDmg(d, FRED_PIERCE.dmg, now, FRED_PIERCE.knock, true); d.bleed = { until: now + FRED_PIERCE.bleed, next: now + 100 };
+  techDmg(d, FRED_PIERCE.dmg, now, FRED_PIERCE.knock, true); dotStart('f', 'bleed', { until: now + FRED_PIERCE.bleed, next: now + 100 }, now);
   tqBlood(d.x - 4, gy - 34, 34, 1); tqBlood(d.x - 4, gy - 34, 14, -1); say('PIERCED!', d.x, '#ff4a5a', 8, now + 120); snd('smack', 3); flowAdd(12, now);
 }
 let fredGBAt = -1e9, fredDashCr = false;      // when his guard was last broken (the same moment as the hurt reaction it starts), and whether the dash that is going on is the crouch dash
@@ -19904,7 +19908,7 @@ function fwSplash(x, y, n, hot, now) {      // drops of water fly up and fall, a
 }
 function fwHit(d, now) {      // the water splashes on the enemy: damage, a flinch, and he burns (the bleeding tick, with flames)
   techDmg(d, FRED_WATER.dmg, now, FRED_WATER.knock, false);
-  d.bleed = { until: now + FRED_WATER.burn, next: now + FRED_WATER.gap, gap: FRED_WATER.gap, fire: 1 };
+  dotStart('f', 'bleed', { until: now + FRED_WATER.burn, next: now + FRED_WATER.gap, gap: FRED_WATER.gap, fire: 1 }, now);
   fwSplash(d.x - 6, gy - 28, 16, 1, now); snd('splash'); shakeUntil = now + 90; shakeAmp = 1; say('SCALDED!', d.x, '#ff9a3a', 8, now + 120);
 }
 function fwStep(now, dt) {      // every frame of Freddy: the balls of water in flight (they hit the first enemy they reach), the drops and the steam
@@ -19983,7 +19987,7 @@ function freddyDream(now, dt) {      // every frame of the nightmare: it updates
   FD.hits.forEach((h, k) => { if (t >= h && !fd.hit[k]) { fd.hit[k] = true; techDmg(d, FD.dmg[k], now, 0, false); tqBlood(d.x - 4, gy - 34, 16 + k * 4, 1); fd.fx.push({ at: now, k }); fd.glitch = now; shakeUntil = now + 110; shakeAmp = 2; snd('clawscrape'); } });
   if (t >= FD.pierceAt && !fd.pierced && d.ko < 0) { fd.pierced = true; techDmg(d, FD.pierce, now, 0, true); tqBlood(d.x - 4, gy - 34, 40, 1); tqBlood(d.x - 4, gy - 34, 16, -1); fd.fx.push({ at: now, k: 4 }); fd.glitch = now; shakeUntil = now + 220; shakeAmp = 4; hitStop(80); snd('clawscrape'); snd('hit', 3); }
   if (d.ko >= 0) return stop();      // (killed in the dream: he dies where he sleeps)
-  if (t >= FD.wake && !fd.woke) { fd.woke = true; d.x = fd.x0; d.rx = 4; d.rxAt = now - 340; d.bleed = { until: now + FD.bleed, next: now + FD.gap, gap: FD.gap }; snd('wakeup'); }
+  if (t >= FD.wake && !fd.woke) { fd.woke = true; d.x = fd.x0; d.rx = 4; d.rxAt = now - 340; dotStart('f', 'bleed', { until: now + FD.bleed, next: now + FD.gap, gap: FD.gap }, now); snd('wakeup'); }
   if (fd.woke) vpBleed(now);      // (the wounds bleed while he gets up: 1 damage every 0.2 s for 4 s)
   if (!dream && fd.slept && !(fd.woke && t >= FD.wake + FD.rise) && now - d.rxAt > 340) d.rxAt = now - 340;      // (asleep he lies flat: the picture of the fall is held on its last lying frame; it goes on when he wakes)
   if (t >= FD.end) { fd = null; d.stunUntil = Math.max(d.stunUntil, now + 500); d.restFor = 500; return false; }
@@ -20998,7 +21002,7 @@ function freAct(now, dt, gap, ag, toward, G) {
     if (t >= tm + rm) freActEnd(now, false);
   } else if (a.type === 'pierce') {
     const hitAt = a.coil + FRED_PIERCE.hit * 1000 / FRED_PIERCE.fps, endAt = a.coil + FRED_PIERCE.len * 1000 / FRED_PIERCE.fps + 120;
-    if (!a.hit && t >= hitAt) { a.hit = true; snd('clawscrape'); if (ag <= FRED_PIERCE.reach + 14 && gap > -4) { const h = hurtAt; gojoHit(FRE_K.pierce, now); if (hurtAt !== h) { vs.bleed = { until: now + 2000, next: now + 100 }; tqBlood(wx, gy - 34, 22, -1); say('PIERCED!', wx, '#ff4a5a', 8, now + 120); } } }
+    if (!a.hit && t >= hitAt) { a.hit = true; snd('clawscrape'); if (ag <= FRED_PIERCE.reach + 14 && gap > -4) { const h = hurtAt; gojoHit(FRE_K.pierce, now); if (hurtAt !== h) { dotStart('p', 'bleed', { until: now + 2000, next: now + 100 }, now); tqBlood(wx, gy - 34, 22, -1); say('PIERCED!', wx, '#ff4a5a', 8, now + 120); } } }
     if (t >= endAt) freActEnd(now, false);
   } else freSlam(now, dt, a, t);
 }
@@ -21054,7 +21058,7 @@ function freWorld(now, dt) {      // every frame while the enemy Freddy fights: 
       b.x += b.dir * FRED_WATER.speed * dt; const sx = cx + Math.round(b.x - wx), y = gy - 27;
       ctx.fillStyle = '#2f7fd0'; ctx.fillRect(sx - 3, y - 3, 7, 7); ctx.fillStyle = '#9fdcff'; ctx.fillRect(sx - 2, y - 2, 5, 5); ctx.fillStyle = '#ffffff'; ctx.fillRect(sx - 1, y - 2, 2, 2); ctx.fillStyle = 'rgba(159,220,255,0.5)'; ctx.fillRect(sx - b.dir * 9, y, 6, 1); ctx.fillRect(sx - b.dir * 14, y + 1, 4, 1);
       if (!on) { b.done = 1; continue; }
-      if (b.dir * (wx - b.x) < 8) { b.done = 1; const h = hurtAt; gojoHit(FRE_K.water, now); if (hurtAt !== h) { vs.fscald = { until: now + 6000, next: now + 450 }; spark(wx, gy - 28, 14, ['#9fdcff', '#ffffff', '#2f7fd0'], false, -b.dir); snd('splash'); say('SCALDED!', wx, '#ff9a3a', 8, now + 120); } else spark(b.x, gy - 28, 6, ['#9fdcff', '#ffffff'], false, b.dir); }
+      if (b.dir * (wx - b.x) < 8) { b.done = 1; const h = hurtAt; gojoHit(FRE_K.water, now); if (hurtAt !== h) { dotStart('p', 'fscald', { until: now + 6000, next: now + 450 }, now); spark(wx, gy - 28, 14, ['#9fdcff', '#ffffff', '#2f7fd0'], false, -b.dir); snd('splash'); say('SCALDED!', wx, '#ff9a3a', 8, now + 120); } else spark(b.x, gy - 28, 6, ['#9fdcff', '#ffffff'], false, b.dir); }
       else if (Math.abs(b.x - b.x0) > FRED_WATER.reach) { b.done = 1; spark(b.x, gy - 4, 8, ['#9fdcff', '#ffffff', '#2f7fd0'], false, 0); snd('splash'); }
     }
     d.fb = d.fb.filter(b => !b.done);
@@ -21094,7 +21098,7 @@ function freDreamRev(now, dt) {      // every frame of the nightmare he gives yo
   FD.hits.forEach((h, k) => { if (t >= h && !fd.hit[k]) { fd.hit[k] = true; vsHurt(Math.max(1, Math.round(FD.dmg[k] * G.dmg)), now); if (vs.ph !== 'fight') return; v.rx = (Math.random() * 10) | 0; v.rxAt = now; tqBlood(wx - 4, gy - 34, 16 + k * 4, 1); fd.fx.push({ at: now, k }); fd.glitch = now; shakeUntil = now + 110; shakeAmp = 2; snd('clawscrape'); } });
   if (t >= FD.pierceAt && !fd.pierced && vs.ph === 'fight') { fd.pierced = true; vsHurt(Math.max(1, Math.round(FD.pierce * G.dmg)), now); v.rx = 4; v.rxAt = now; tqBlood(wx - 4, gy - 34, 40, 1); tqBlood(wx - 4, gy - 34, 16, -1); fd.fx.push({ at: now, k: 4 }); fd.glitch = now; shakeUntil = now + 220; shakeAmp = 4; hitStop(80); snd('clawscrape'); snd('hit', 3); }
   if (vs.ph !== 'fight') return stop();      // (you died in the dream: the round is over)
-  if (t >= FD.wake && !fd.woke) { fd.woke = true; v.rx = 4; v.rxAt = now - 340; vs.bleed = { until: now + 2000, next: now + 100 }; snd('wakeup'); }
+  if (t >= FD.wake && !fd.woke) { fd.woke = true; v.rx = 4; v.rxAt = now - 340; dotStart('p', 'bleed', { until: now + 2000, next: now + 100 }, now); snd('wakeup'); }
   freBleed(now);
   if (!dream && fd.slept && !(fd.woke && t >= FD.wake + FD.rise) && now - v.rxAt > 340) v.rxAt = now - 340;      // (asleep you lie flat: the picture of the fall is held on its last lying frame; it goes on when you wake)
   if (t >= FD.end) { fd = null; return false; }
@@ -21230,7 +21234,7 @@ function cuenEv(e, now, gap, ag, toward, g, k) {      // one event of the blow c
     snd('f:hit', e.d >= 20 ? 3 : 0); const h = hurtAt; gojoHit(e.gk, now); if (hurtAt === h) return;
     if (o.launch && !gAir) { gAir = airMake(now, 0, Math.sqrt(2 * AIR_G * o.launch), AIR_G, 'up'); hurtK = AIR_RX; }
     if (o.stun) pStun = Math.max(pStun, now + o.stun * 1000);
-    if (o.bleed) vs.bleed = { until: now + o.bleed[1] * 1000, next: now + 100 };
+    if (o.bleed) dotStart('p', 'bleed', { until: now + o.bleed[1] * 1000, next: now + 100 }, now);
   } else if (e.k === 'o') {      // a SHOT (Sukuna's slashes): it leaves his hand at the height of the fist and flies at you
     const vk = e.vk === undefined ? k : e.vk, vf = g.vfx[vk]; if (!vf || !vf.length) return; (d.cs = d.cs || []).push({ x: d.x - toward * -10, x0: d.x, dir: toward, v: typeof e.sp === 'function' ? e.sp() : (e.sp || 300), gk: e.gk, vf, at: now });
   }
@@ -21262,7 +21266,7 @@ function cuenActLook(now, g) {
 function cuenSpecialAct(now, dt, gap, ag, toward, G, g, n, a) {
   const d = dummy, t = now - a.at;
   if (a.type === 'aircut') {
-    a.ms = 1000 / (30 * G.spd) * g.atk[9].length; if (!a.hit && t >= a.ms * SU_BLUE.cut.hit / g.atk[9].length) { a.hit = true; snd('swing', 9); const h = hurtAt; if (ag <= 230) gojoHit(CUEN_X.aircut, now); if (hurtAt !== h) { vs.bleed = { until: now + 2000, next: now + 100 }; spark(wx, gy - 30, 10, ['#ffffff', '#ff2a3a', '#ffb0b8'], false, -toward); } }
+    a.ms = 1000 / (30 * G.spd) * g.atk[9].length; if (!a.hit && t >= a.ms * SU_BLUE.cut.hit / g.atk[9].length) { a.hit = true; snd('swing', 9); const h = hurtAt; if (ag <= 230) gojoHit(CUEN_X.aircut, now); if (hurtAt !== h) { dotStart('p', 'bleed', { until: now + 2000, next: now + 100 }, now); spark(wx, gy - 30, 10, ['#ffffff', '#ff2a3a', '#ffb0b8'], false, -toward); } }
     if (t >= a.ms) cuenEnd(now);
   } else if (a.type === 'arrow') {
     if (!a.shot && t >= SU_FL.T[13]) { a.shot = true; snd('swing', 3); (d.ca = d.ca || []).push({ x: d.x - toward * -14, x0: d.x, dir: toward, at: now }); }
@@ -21279,7 +21283,7 @@ function cuenSpecialAct(now, dt, gap, ag, toward, G, g, n, a) {
   }
 }
 function cuenEnd(now) { const d = dummy; d.fa = null; d.ai = 'rest'; d.aiAt = now; d.restFor = 500 / (0.45 + GRADES[vs.gi].aggr * 0.9); }
-// 5. WHAT HE THREW, once a frame (drawFoes calls it): the slashes, the fire arrows (they burn you: 1 health every 0.5 s for 8 s), the ki blasts, and the picture of the domain and the beam
+// 5. WHAT HE THREW, once a frame (drawFoes calls it): the slashes, the fire arrows (they burn you: 1 health every 0.5 s for 8 s; v1.201 one bleed or burn at a time), the ki blasts, and the picture of the domain and the beam
 function cuenWorld(now, dt) {
   const d = dummy, g = cuFoeG(), cx = Math.round(VW / 2); if (!g) return; const on = vs.ph === 'fight' && d.ko < 0;
   const hitP = (list, kk, spark_) => { for (const s of list) { if (!on) { s.done = 1; continue; } if (s.dir * (wx - s.x) < 10) { s.done = 1; const h = hurtAt; gojoHit(kk(s), now); spark_(s, hurtAt !== h); } else if (Math.abs(s.x - s.x0) > 460) s.done = 1; } };
@@ -21289,7 +21293,7 @@ function cuenWorld(now, dt) {
   }
   if (d.ca) {
     for (const s of d.ca) { s.x += s.dir * SU_FL.arrow.speed * dt; const sx = cx + Math.round(s.x - wx), y = gy - 39; ctx.fillStyle = 'rgba(255,150,34,0.35)'; ctx.fillRect(sx - s.dir * 30 - 6, y - 5, 30, 10); ctx.fillStyle = '#ff9622'; ctx.fillRect(sx - 6, y - 4, 12, 8); ctx.fillStyle = '#fff0c0'; ctx.fillRect(sx - 3, y - 2, 6, 4); for (let i = 0; i < 4; i++) { ctx.fillStyle = i % 2 ? '#ff7408' : '#ffd27a'; ctx.fillRect(sx - s.dir * (10 + i * 7), y - 3 + (((now / 60 + i) | 0) % 3), 6, 2); } }
-    hitP(d.ca, () => CUEN_X.arrow, (s, hit) => { spark(wx, gy - 38, 12, SU_FL.cols, false, -s.dir); if (hit) { vs.fburn = { until: now + SU_FL.burn.ms, next: now + SU_FL.burn.gap }; say('BURNING', wx, '#ff9a3a', 8, now + 120); } }); d.ca = d.ca.filter(s => !s.done);
+    hitP(d.ca, () => CUEN_X.arrow, (s, hit) => { spark(wx, gy - 38, 12, SU_FL.cols, false, -s.dir); if (hit && dotStart('p', 'fburn', { until: now + SU_FL.burn.ms, next: now + SU_FL.burn.gap }, now)) say('BURNING', wx, '#ff9a3a', 8, now + 120); }); d.ca = d.ca.filter(s => !s.done);
   }
   if (d.cb) {
     for (const s of d.cb) { s.x += s.dir * 420 * dt; const sx = cx + Math.round(s.x - wx), y = gy - 30; ctx.fillStyle = 'rgba(120,200,255,0.4)'; ctx.fillRect(sx - 7, y - 7, 14, 14); ctx.fillStyle = '#7aa0ff'; ctx.fillRect(sx - 5, y - 5, 10, 10); ctx.fillStyle = '#e8f4ff'; ctx.fillRect(sx - 3, y - 3, 6, 6); ctx.fillStyle = 'rgba(160,210,255,0.5)'; ctx.fillRect(sx - s.dir * 18, y - 1, 12, 2); }
@@ -21312,6 +21316,17 @@ function cuVictim(n) {
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+ {
+  "v": "1.201",
+  "t": "BLEEDS, BURNS AND OTHER TICK DAMAGE NO LONGER STACK",
+  "n": [
+   "You asked that anything that deals tick damage (a bleed, a poison or whatever) cannot stack: it deals a consistent amount until it is over, and it starts again if the enemy is hit after it has faded. You answered two questions about it: a second hit while it is still running does nothing (it keeps its old timer and its damage), and only ONE tick effect can run on a fighter at a time, so a bleed also blocks a burn and the other way round. There is no poison in the game, so this covers every bleed, burn and scald.",
+   "IT IS THE SAME FOR EVERYTHING AND FOR BOTH SIDES: Verity's bites, Yuji's Piercing Blood and Cleave, Freddy's claw, boiling water and Nightmare, Sukuna's cuts and fire arrows, Iron Man's laser, and what the enemies do to you. The blow itself still lands with all its damage, only the extra bleed or burn is ignored while one is running. A bleed or burn that has faded starts again with the next blow that brings one.",
+   "SUKUNA: the Cut Storm, the Dash Slash and Dismantle used to add one more bleed for every cut that landed, so the bleeds piled up and took a lot of health in a few seconds. Now they start ONE bleed (4 seconds, 8 seconds for Dismantle and 6 for the Dash Slash) and the other cuts of the same move add nothing. The BLEED x3 words are gone.",
+   "LOST LIMBS (GRAPHIC DAMAGE FULL): the bleeding of a limb that was ripped off takes the same amount whether one limb is gone or three, and it waits while a bleed or a burn is running.",
+   "NOT IN THIS: what the big moves do over time is the move itself, not something left on the enemy: the shrine's cuts, the jumpscare's fear and the beam of the blast. Say so if they should follow the same rule."
+  ]
+ },
  {
   "v": "1.200",
   "t": "NO STREET BUTTON: THE WAY OUT IS THE FRONT DOOR, AND IT IS EASY TO FIND",
@@ -24621,7 +24636,45 @@ async function scCity() {
   } finally { twPick = keep; scKey('ArrowLeft', false); scKey('ArrowRight', false); }
 }
 
-const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
+async function scTicks() {      // v1.201 ONE TICK EFFECT AT A TIME (a bleed, a burn, a scald): while one runs on a fighter every other one that would start is ignored, it deals the same amount at every tick until it is over and when it has faded the next blow starts it again; on the enemy and on you, with Sukuna's slashes (they used to add up), his fire arrow and the bleeding of lost limbs
+  SC.sec = 'TICKS'; scCov('TICKS', 0, 2); SC.plan = 2 * 220; SC.done = 0; const keep = twPick; twPick = 0;
+  try {
+    for (const who of ['cu3', 'gojo']) {
+      const label = SC_NAME[who] + ' TICK EFFECTS'; SC.say = label; SET.gore = 0; Object.assign(TR, { beh: 0, ehp: 0, php: 0, pce: 0 });
+      try { startPractice(who, 'gojo'); } catch (e) { scErr(e, label + ' START'); continue; }
+      if (state !== 'play' || !dummy) { scNote('fail', 'THE FIGHT DID NOT START: ' + label, 'STATE ' + state); show('title'); continue; }
+      if (!(await scIntro())) { show('title'); return; }
+      const n = pnow(), d = dummy; d.bleed = d.sburn = null; vs.bleed = vs.fburn = vs.fscald = null; d.ko = -1; d.hp = d.max = 1000; d.x = wx + 60;
+      const A = { until: n + 4000, next: n + 100 }, a = dotStart('f', 'bleed', A, n), b = dotStart('f', 'bleed', { until: n + 8000, next: n + 100 }, n + 10), c = dotStart('f', 'sburn', { until: n + 8000, next: n + 500 }, n + 20);
+      scT(a && !b && !c && d.bleed === A && !d.sburn, label + ': A SECOND BLEED OR A BURN STARTED ON THE ENEMY WHILE A BLEED WAS RUNNING', 'STARTED ' + a + ' ' + b + ' ' + c + ', SAME ' + (d.bleed === A) + ', BURN ' + !!d.sburn);
+      const gone = !dotOnF(n + 4001), again = dotStart('f', 'sburn', { until: n + 12000, next: n + 4500 }, n + 4100);
+      scT(gone && again && !!d.sburn, label + ': NOTHING STARTED ON THE ENEMY AFTER THE BLEED HAD FADED', 'GONE ' + gone + ', STARTED ' + again); d.bleed = d.sburn = null;
+      const f1 = dotStart('p', 'fburn', { until: n + 8000, next: n + 500 }, n), f2 = dotStart('p', 'fburn', { until: n + 8000, next: n + 500 }, n + 5), f3 = dotStart('p', 'bleed', { until: n + 2000, next: n + 100 }, n + 6), f4 = dotStart('p', 'fscald', { until: n + 6000, next: n + 450 }, n + 7), f5 = dotStart('p', 'fscald', { until: n + 14000, next: n + 8500 }, n + 8001);
+      scT(f1 && !f2 && !f3 && !f4 && f5, label + ': A SECOND TICK EFFECT STARTED ON HIM WHILE ONE WAS RUNNING, OR NONE AFTER IT HAD FADED', 'STARTED ' + [f1, f2, f3, f4, f5].join(' ')); vs.bleed = vs.fburn = vs.fscald = null;
+      if (who === 'cu3') {      // the CUT STORM and what comes after it: one plain bleed, 13.3 of health in all; the later cuts add nothing; a cut after it has faded starts the longer one
+        suCast = { hits: 0 }; const hp0 = d.hp; let all = true; for (let i = 0; i < 8; i++) { suCutAt(n + i * 40, i, 8); all = all && !!d.bleed; }
+        const b1 = d.bleed, plain = !!b1 && b1.st === undefined && b1.dm === SU_BLEED.dm && b1.gap === SU_BLEED.gap; suBleed(d, n + 500, SU_DIS.bleed); suBleed(d, n + 600, SU_DASH.bleed); const same = d.bleed === b1;
+        vpBleed(n + 4500); const lost = hp0 - d.hp, ended = !d.bleed, long = suBleed(d, n + 5000, SU_DIS.bleed); vpBleed(n + 14000);
+        scT(all && plain && same, label + ': THE CUT STORM, DISMANTLE AND THE DASH SLASH DID NOT LEAVE ONE PLAIN BLEED', 'ALL ' + all + ', PLAIN ' + plain + ', SAME ' + same);
+        scT(Math.abs(lost - SU_BLEED.dm * SU_BLEED.ms / SU_BLEED.gap) < 0.6 && ended, label + ': THE BLEED DID NOT TAKE THE SAME AMOUNT OF HEALTH AS ONE BLEED', 'LOST ' + lost.toFixed(2) + ', ONE BLEED ' + (SU_BLEED.dm * SU_BLEED.ms / SU_BLEED.gap).toFixed(2));
+        scT(long && !d.bleed, label + ': A CUT AFTER THE BLEED HAD FADED DID NOT START ANOTHER ONE', 'STARTED ' + long); suCast = null; d.bleed = null;
+        d.hp = d.max; dotStart('f', 'bleed', { until: n + 4000, next: n + 30, gap: 30, dm: 0.1, quiet: true }, n); const burned = suFlHit(n + 100, {}) && !!d.sburn; d.bleed = null; suFlHit(n + 200, {}); const s1 = d.sburn; suFlHit(n + 3000, {}); const until = s1 ? s1.until - (n + 200) : 0;
+        scT(!burned && !!s1 && d.sburn === s1 && until === SU_FL.burn.ms, label + ': A FIRE ARROW BURNED HIM WHILE HE BLED, OR A SECOND ARROW STARTED THE BURN AGAIN', 'BURNED ' + burned + ', SAME ' + (d.sburn === s1) + ', UNTIL ' + until); d.sburn = null;
+        const nog = window.__noGore, B = GB.p; window.__noGore = false; SET.gore = 0;
+        if (gdActive('p')) {      // the bleeding of lost limbs: the same amount for one limb and for three, none while a bleed runs on him
+          B.st.an = 2; B.st.af = 2; B.st.lf = 2; B.last = vs.hp = PHP; B.bleedAt = n - 1; goreTick(n, 16); const three = PHP - vs.hp;
+          B.st.af = 0; B.st.lf = 0; vs.hp = B.last = PHP; B.bleedAt = n + 100; goreTick(n + 101, 16); const one = PHP - vs.hp;
+          vs.hp = B.last = PHP; B.bleedAt = n + 700; vs.bleed = { until: n + 5000, next: n + 5000 }; goreTick(n + 701, 16); const during = PHP - vs.hp; vs.bleed = null;
+          scT(three > 0 && Math.abs(three - one) < 1e-9 && during === 0, label + ': THE BLEEDING OF LOST LIMBS ADDS UP WITH THE NUMBER OF LIMBS, OR WENT ON WHILE A BLEED RAN', 'THREE ' + three.toFixed(2) + ', ONE ' + one.toFixed(2) + ', DURING ' + during.toFixed(2));
+        } else scNote('warn', label + ': THE BLEEDING OF LOST LIMBS WAS NOT TESTED', 'GORE IS NOT ACTIVE FOR HIM');
+        Object.assign(GB.p, goreBody()); window.__noGore = nog; vs.hp = PHP;
+      }
+      scCheck(); show('title'); scCov('TICKS', 1, 0);
+    }
+  } finally { twPick = keep; }
+}
+
+const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['TICKS', 6, scTicks], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
 const scEl = document.createElement('section'); scEl.id = 'scan'; scEl.className = 'screen';
 scEl.innerHTML = '<h2>SCANNING THE GAME</h2><div id="scBar"><i id="scFill"></i></div><small id="scTxt"></small><small id="scLive"></small><small>YOUR SAVES ARE SAFE: THEY WERE COPIED FIRST AND ARE PUT BACK WHEN THE SCAN IS OVER.</small><button id="scCancel">CANCEL</button>';
 document.body.appendChild(scEl);
@@ -24668,7 +24721,7 @@ async function scRun(opts) {      // opts.noReload = for the tests: no reload at
 window.__scanRun = scRun;
 
 // ---------------------------------------------------------------- what the ERRORS page shows
-const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', CITY: 'CITY DOORS AND FALLS', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
+const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', CITY: 'CITY DOORS AND FALLS', TICKS: 'TICK EFFECTS, ONE AT A TIME', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
 const scCovText = () => Object.keys(SC.got).concat(Object.keys(SC.of)).filter((k, i, a) => a.indexOf(k) === i).map(k => k === 'ROUNDS' ? 'EXTRA ROUNDS OF 14 FIGHTS ' + SC.got[k] : (SC_COVN[k] || k) + ' ' + (SC.got[k] || 0) + '/' + SC.of[k]);      // (what was covered, of what there is)
 const scLast = () => { try { const r = JSON.parse(localStorage.getItem('jsscanres') || 'null'); return r && Array.isArray(r.res) ? r : null; } catch { return null; } };
 function scReport(r) {      // the text of COPY SCAN REPORT
