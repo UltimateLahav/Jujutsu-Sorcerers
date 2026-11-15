@@ -224,8 +224,8 @@ async function scMoves() {
   }
   await scIronMoves();
 }
-// v1.191 IRON MAN's moves: the chain (R.HOOK, L.HOOK, R.KICK, PUNCH), the ROCKET UPPERCUT (JUMP and ATTACK together, either one first), the DOWNSLAM (ATTACK 0.2 s after the jump, and an earlier one waits for it), crouch, block and dash; each is a check that the move that should come out did (cuAtkK: 0 - 3 the chain, 4 the uppercut, 5 the downslam), played against a standing enemy in front of him; v1.192 the LOW JABS (6: crouched, ATTACK), the CHARGE (7: ATTACK during a dash or just after it; a late one is a plain hook) and the BACKFLIP (8: DASH BACK twice, never two dashes forward); v1.193 the REPULSOR MODE (the MODE button: ATTACK is R.BLAST (9) and then L.BLAST (10), both hurt the enemy, the other moves stay, off again it is the chain)
-const SC_IR_N = 21;
+// v1.191 IRON MAN's moves: the chain (R.HOOK, L.HOOK, R.KICK, PUNCH), the ROCKET UPPERCUT (JUMP and ATTACK together, either one first), the DOWNSLAM (ATTACK 0.2 s after the jump, and an earlier one waits for it), crouch, block and dash; each is a check that the move that should come out did (cuAtkK: 0 - 3 the chain, 4 the uppercut, 5 the downslam), played against a standing enemy in front of him; v1.192 the LOW JABS (6: crouched, ATTACK), the CHARGE (7: ATTACK during a dash or just after it; a late one is a plain hook) and the BACKFLIP (8: DASH BACK twice, never two dashes forward); v1.193 the REPULSOR MODE (the MODE button: ATTACK is R.BLAST (9) and then L.BLAST (10), both hurt the enemy, the other moves stay, off again it is the chain); v1.194 the BEAR HUG (BLUE: he charges, grabs, hugs, flies up with the enemy hanging in his arms, turns over, dives and slams: 4 hits, it ends by itself, and it has a cooldown); in the skyscraper he is also one of the fighters of scTower
+const SC_IR_N = 25;
 async function scIronMoves() {
   const place = () => { TR.put = 2; trainPut(); };
   try { Object.assign(TR, { beh: 0, ehp: 1, php: 0, pce: 0, put: 2 }); startPractice('cu5', 'gojo'); } catch (e) { scErr(e, 'IRON MAN START'); return; }
@@ -250,6 +250,10 @@ async function scIronMoves() {
   await press('KeyJ'); await scFrames(1); ok(cuAtkAt >= 0 && cuAtkK === 9, 'IN THE REPULSOR MODE THE FIRST ATTACK WAS BLOW ' + cuAtkK + ' AND NOT THE R.BLAST'); await scFrames(12); await press('KeyJ'); await scFrames(1); ok(cuAtkAt >= 0 && cuAtkK === 10, 'THE SECOND ATTACK WAS BLOW ' + cuAtkK + ' AND NOT THE L.BLAST'); await scFrames(8); ok(hits.n >= 2, 'THE BLASTS HURT NOBODY: THE COMBO COUNTER SAYS ' + hits.n);      // (the enemy's health is not looked at: the Training setting of the scan refills it; the combo counter counts every hit)
   await press('KeyS'); await scFrames(10); await press('KeyJ'); await scFrames(1); ok(cuAtkAt >= 0 && cuAtkK === 6, 'CROUCHED IN THE MODE, ATTACK WAS BLOW ' + cuAtkK + ' AND NOT THE LOW JABS'); await scFrames(16); await press('KeyS'); await scFrames(10);
   await press('KeyE'); await scFrames(2); await press('KeyJ'); await scFrames(1); ok(!CU_GAME[5].rp && cuAtkAt >= 0 && cuAtkK === 0, 'WITH THE MODE OFF AGAIN ATTACK WAS BLOW ' + cuAtkK + ' AND NOT THE R.HOOK'); await scFrames(14); CU_GAME[5].rp = false;
+  SC.say = 'IRON MAN: BEAR HUG'; await reset(); CU_GAME[5].bhCd = 0; dummy.x = wx + 70; await press('KeyL'); await scFrames(1); ok(!!CU_GAME[5].bh, 'BLUE DID NOT START THE BEAR HUG');
+  let topH = 0, held = false, mh = 0; for (let f = 0; f < 70 && CU_GAME[5].bh; f++) { await scFrames(1); if (CU_GAME[5].bh) { topH = Math.max(topH, gojoLift); mh = Math.max(mh, hits.n); if (CU_GAME[5].bh.ph === 'up' && (dummy.airH || 0) > 10) held = true; } }
+  ok(!CU_GAME[5].bh, 'THE BEAR HUG WAS STILL GOING 3.5 S AFTER IT BEGAN: ' + (CU_GAME[5].bh && CU_GAME[5].bh.ph)); ok(held && topH > 20 && mh >= 4, 'THE BEAR HUG DID NOT GRAB, RAISE AND SLAM: HELD ' + held + ', HEIGHT ' + Math.round(topH) + ', HITS ' + mh);
+  await press('KeyL'); await scFrames(2); ok(!CU_GAME[5].bh, 'THE BEAR HUG STARTED AGAIN DURING ITS COOLDOWN'); CU_GAME[5].bhCd = 0;
   show('title');
 }
 
@@ -414,15 +418,21 @@ function scPanel() {      // v1.184 the elevator panel in the cab: no text of a 
 function scFredSlam() {      // v1.185 Freddy in the skyscraper: whatever the random player was doing, he crouches and presses BLUE (the ground slam: the floor breaks under both, both fall, he throws what is around him); tried three times
   if (!fredMe() || !dummy || fg || fgCd) return; twFoeHere(pnow()); dummy.x = wx + 70; atkAt = -1; atkQ = false; jumpAt = -1; dgAt = -1; blkAt = blkEnd = -1; blockHeld = false; fredCrQ = fredUpQ = -1; stickCr = false; fwPh = ''; stance = 'crouch'; lpReq = true;
 }
+function scIronHug() {      // v1.194 Iron Man in the skyscraper: whatever the random player was doing, he presses BLUE with the enemy 60 px in front of him (the bear hug: up through the ceilings, over, down through the floors); scIronHugEnd looks at it 5 s later
+  const g = CU_GAME[5]; if (!vs || vs.me !== 'cu5' || !g || !dummy || g.bh || !irhOk(pnow())) return; g.bhCd = 0; twFoeHere(pnow()); dummy.x = twPlace(twFloorData(vs.tw.fMe), wx + 60); cuAtkAt = -1; cuDash = null; blkAt = blkEnd = -1; blockHeld = false; stance = 'stand'; stickCr = false; lpReq = true; SC.ih = { f: vs.tw.fMe, at: pnow() };
+}
+function scIronHugEnd() {
+  const g = CU_GAME[5]; if (!SC.ih || !vs || vs.me !== 'cu5') { SC.ih = null; return; } if (g && g.bh) scNote('fail', 'IRON MAN: THE BEAR HUG IN THE SKYSCRAPER WAS STILL GOING 5 S AFTER IT BEGAN', 'PHASE ' + g.bh.ph + ', FLOOR ' + vs.tw.fMe + ' FROM ' + SC.ih.f); SC.ih = null;
+}
 async function scTower() {
-  SC.sec = 'SKYSCRAPER'; scCov('TOWER', 0, 4); SC.plan = 4 * 470; SC.done = 0; const keep = twPick; twPick = 1;
+  SC.sec = 'SKYSCRAPER'; scCov('TOWER', 0, 5); SC.plan = 5 * 470; SC.done = 0; const keep = twPick; twPick = 1;
   try {
-    for (const [w, seed] of [['cu4', 11], ['gojo', 12], ['yuji', 13], ['freddy', 14]]) {
+    for (const [w, seed] of [['cu4', 11], ['gojo', 12], ['yuji', 13], ['freddy', 14], ['cu5', 15]]) {
       const label = SC_NAME[w] + ' IN THE SKYSCRAPER'; SC.say = label;
       try { Object.assign(TR, { beh: 1, ehp: 0, php: 0, pce: 0 }); startPractice(w, 'cat'); } catch (e) { scErr(e, label + ' START'); continue; }
       if (state !== 'play' || !twOn()) { scNote('fail', 'THE SKYSCRAPER DID NOT START: ' + label, 'STATE ' + state); show('title'); continue; }
       if (!(await scIntro())) { show('title'); return; }
-      const p = scPlayer(seed), ev = [[8, scFredSlam], [10, scFredSlam], [12, scFredSlam], [16, () => { if (fredMe() && !fg && !fgCd) scNote('warn', 'FREDDY: THE GROUND SLAM DID NOT START IN THE SKYSCRAPER', 'STANCE ' + stance + ', PHASE ' + vs.ph + ', SPAWN ' + Math.round(pnow() - spawnAt) + ' MS, HURT ' + hurtAt + ', STUN ' + Math.round(pStun - pnow()) + ', FLOOR ' + vs.tw.fMe + ', AWAY ' + vs.tw.away + ', CAB ' + !!vs.tw.cab + ', WATER ' + fwPh); }], [20, scSigns], [30, () => twSlam('foe', 2, pnow(), dummy.x)], [90, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [110, () => twMeFall(1, pnow(), wx)], [150, () => { const F = twFloorData(vs.tw.fMe); const o = { k: 'gas', x: Math.round(wx + 40), hp: 18, mx: 18, wob: 0, hitAt: -9999 }; F.objs.push(o); twDamageObj(F, o, 99, pnow()); }], [190, () => twCeiling('foe', 1, pnow(), dummy.x)], [235, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [250, () => twFallOut('foe', pnow(), 1)],
+      const p = scPlayer(seed), ev = [[6, scIronHug], [100, scIronHugEnd], [8, scFredSlam], [10, scFredSlam], [12, scFredSlam], [16, () => { if (fredMe() && !fg && !fgCd) scNote('warn', 'FREDDY: THE GROUND SLAM DID NOT START IN THE SKYSCRAPER', 'STANCE ' + stance + ', PHASE ' + vs.ph + ', SPAWN ' + Math.round(pnow() - spawnAt) + ' MS, HURT ' + hurtAt + ', STUN ' + Math.round(pStun - pnow()) + ', FLOOR ' + vs.tw.fMe + ', AWAY ' + vs.tw.away + ', CAB ' + !!vs.tw.cab + ', WATER ' + fwPh); }], [20, scSigns], [30, () => twSlam('foe', 2, pnow(), dummy.x)], [90, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [110, () => twMeFall(1, pnow(), wx)], [150, () => { const F = twFloorData(vs.tw.fMe); const o = { k: 'gas', x: Math.round(wx + 40), hp: 18, mx: 18, wob: 0, hitAt: -9999 }; F.objs.push(o); twDamageObj(F, o, 99, pnow()); }], [190, () => twCeiling('foe', 1, pnow(), dummy.x)], [235, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [250, () => twFallOut('foe', pnow(), 1)],
         [60, () => { const F = twFloorData(vs.tw.fMe), d = F.doors.find(q => q.k === 'elev'); if (d) twDoorHit(F, d, 45, pnow()); }],      // (v1.175 the elevator: a hard hit jams a door (OUT OF ORDER) ...)
         [270, () => { const T = vs.tw; if (T.cab) return; const F = twFloorData(T.fMe), d = twElevOf(F), L = T.lift; if (!d) return; d.st = 0; d.hp = 70; L.f = L.curF = L.dest = T.fMe; L.ph = 'park'; L.inFoe = false; L.job = null; L.pend = null; wx = d.x; T.px = wx; twCabEnter(F, d, pnow()); }],      // (v1.176 ... you step into the one cab of the building: the cut inside, the panel, a floor button (0.6 s, then it goes), an emergency stop, another floor,
         [274, () => { if (vs.tw.cab) scPanel(); }],

@@ -1,5 +1,16 @@
 [
  {
+  "v": "1.194",
+  "t": "IRON MAN: BEAR HUG (CHARGE GRAB, FLY UP THROUGH THE FLOORS, TURN, DIVE DOWN)",
+  "n": [
+   "You said: add a charge grab move to his base through his special, and when he grabs the enemy he bear hugs them, then flies up breaking the floors above, then goes 180 and flies down much faster breaking the floors below.",
+   "His special is the BLUE button (key L), and it says BEAR HUG now. Press it and he opens his arms and charges at the enemy: fast, 150 px at the most. If his arms touch the enemy he grabs him and pulls him in, and the bear hug squeezes three times, 3 damage each, that cannot be blocked. A charge that touches nothing skids to a stop (you can try again after 3 seconds); a grab has a 12 second cooldown. It works in the base form and in the REPULSOR mode.",
+   "Then he flies up with the enemy in his arms. In the SKYSCRAPER the ceilings above them break, 3 floors (fewer near the top: there is nothing above floor 50), and the camera rises with the two of them. On the street they fly up to the top of the screen.",
+   "At the top the two of them turn over 180 degrees and he dives head first, about twice as fast as he climbed. In the skyscraper the floor he took off from and the 2 below it break, and they fall through every hole, the new ones and the ones of the climb, up to 6 floors, and he slams the enemy into the floor: 22 damage plus 5 for every floor they fell. On the street the slam is 30 damage. The enemy is knocked down.",
+   "The enemy has to be on his floor, and not in the air, crouching, dodging or already down, for the grab to work. He is still in TRAINING only."
+  ]
+ },
+ {
   "v": "1.193",
   "t": "IRON MAN: REPULSOR MODE (BLASTS FROM HIS RIGHT AND LEFT HAND)",
   "n": [
