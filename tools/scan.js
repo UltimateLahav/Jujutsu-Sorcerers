@@ -179,9 +179,9 @@ async function scSeg(label, start, frames, seed, hud) {      // one fight: start
   p.end(); scCheck(); show('title'); return ok;
 }
 async function scRound(r) {      // one round of random fights: every fighter in free play and in a versus match; round 0 is the pass every scan makes, the later rounds use the time that is left (other enemies, behaviours, GRAPHIC DAMAGE settings, grades)
-  const FOE = ['yuji', 'verity', 'cat', 'freddy', 'gojo'];
+  const FOE = ['yuji', 'verity', 'cat', 'freddy', 'gojo', 'cu3', 'cu4'];      // (v1.189 Sukuna and Ryu fight on both sides)
   for (let i = 0; i < SC_WHO.length; i++) {
-    const w = SC_WHO[i], f1 = w === 'yuji' && !r ? 'cat' : FOE[(i + r) % 5], f2 = FOE[(i + 2 * r + 1) % 5], n = (i + r) % 3;
+    const w = SC_WHO[i], f1 = w === 'yuji' && !r ? 'cat' : FOE[(i + r) % FOE.length], f2 = FOE[(i + 2 * r + 1) % FOE.length], n = (i + r) % 3;
     if (!(await scSeg(SC_NAME[w] + ' IN FREE PLAY' + (r ? ' (ROUND ' + (r + 1) + ')' : ''), () => { SET.gore = n; Object.assign(TR, { beh: [1, 2, 4, 5, 3][(i + r) % 5], ehp: n, php: 0, pce: 0 }); startPractice(w, f1); }, r ? 220 : 100, i + 1 + r * 17, !r))) return false;
     if (!(await scSeg(SC_NAME[w] + ' AGAINST ' + (SC_NAME[f2] || f2.toUpperCase()) + (r ? ' (ROUND ' + (r + 1) + ')' : ''), () => { SET.gore = (n + 1) % 3; vsPick.me = w; vsPick.foe = f2; startMatch(r ? (i + r) % 4 : 2); }, r ? 300 : 160, i + 31 + r * 17))) return false;
     if (!r) scCov('FIGHTERS', 1, 0);
@@ -223,7 +223,7 @@ async function scMoves() {
 // ---------------------------------------------------------------- CUTSCENES: the FATALITY and the DOMAIN of every fighter, played to the end
 async function scCuts() {
   SC.sec = 'CUTSCENES'; const FATAL = { gojo: 1, yuji: 1, verity: 1, cat: 1, freddy: 1, cu3: 1, cu4: 0 };
-  scCov('CUTSCENES', 0, SC_WHO.length * 2 + 3 + 13); SC.plan = (SC_WHO.length * 2 + 3 + 13) * 220; SC.done = 0;
+  scCov('CUTSCENES', 0, SC_WHO.length * 2 + 3 + 13 + 16); SC.plan = (SC_WHO.length * 2 + 3 + 13 + 16) * 220; SC.done = 0;
   for (let i = 0; i < SC_WHO.length; i++) {
     const w = SC_WHO[i];
     for (const [key, nm, low, max] of [['KeyH', 'FATALITY', 2, 700], ['KeyV', 'DOMAIN', 1, 520]]) {
@@ -279,6 +279,34 @@ async function scCuts() {
     try { Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0, put: 2, grade: 4 }); startPractice('gojo', 'freddy'); } catch (e) { scErr(e, label); continue; }
     if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
     await scFrames(2, null, 600); try { trainPut(); dummy.x = wx + (sp === 'pierce' ? 40 : 110); freStart(sp, pnow()); } catch (e) { scErr(e, label); }
+    if (await scUntil(() => !dummy || !dummy.fa, 100, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 25 SECONDS', '');
+    show('title');
+  }
+  // v1.189 SUKUNA AND RYU AS ENEMIES: the fatality of three fighters on them, the enemy fatalities and nightmare on them as the player, and every special move of theirs (in the street)
+  for (const [w, foe] of [['gojo', 'cu3'], ['yuji', 'cu4'], ['cat', 'cu3'], ['gojo', 'cu4']]) {
+    const label = SC_NAME[w] + ' FATALITY ON THE ENEMY ' + SC_NAME[foe]; SC.say = label; SET.gore = SC_WHO.indexOf(w) % 3; window.__suAll = true;
+    try { Object.assign(TR, { beh: 2, ehp: 2, php: 0, pce: 0, put: 2 }); startPractice(w, foe); } catch (e) { scErr(e, label); continue; }
+    if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
+    await scFrames(2, null, 600); try { trainPut(); } catch (e) { scErr(e, label); }
+    scKey('KeyH', true); await scFrames(2); scKey('KeyH', false);
+    if (await scUntil(() => scBusy(), 40, 250)) { if (await scUntil(() => !scBusy(), 800, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 40 SECONDS', ''); } else scNote('fail', label + ' DID NOT START', 'THE ENEMY WAS AT ' + (dummy ? Math.round(dummy.hp / (dummy.max || 1) * 100) : '?') + '% HEALTH');
+    show('title');
+  }
+  for (const [w, foe, what] of [['cu3', 'gojo', 'FATALITY'], ['cu4', 'cat', 'FATALITY'], ['cu3', 'freddy', 'NIGHTMARE'], ['cu4', 'freddy', 'NIGHTMARE']]) {      // (the enemy's own fatality or nightmare on Sukuna or Ryu)
+    const label = 'THE ENEMY ' + SC_NAME[foe] + ': HIS ' + what + ' ON ' + SC_NAME[w]; SC.say = label; SET.gore = 0; window.__suAll = true;
+    try { Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0, put: 2, grade: 4 }); startPractice(w, foe); } catch (e) { scErr(e, label); continue; }
+    if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
+    await scFrames(2, null, 600); try { trainPut(); } catch (e) { scErr(e, label); }
+    try { if (what === 'NIGHTMARE') { dummy.x = wx + 90; fdStartRev(pnow()); } else { vs.hp = vs.sh = 40; dummy.x = wx + 30; } } catch (e) { scErr(e, label); }
+    const sw = what === 'NIGHTMARE' ? () => !!fd : () => scBusy();
+    if (await scUntil(sw, 80, 250)) { if (await scUntil(() => !sw(), 800, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 40 SECONDS', ''); } else scNote('fail', label + ' DID NOT START', 'YOUR HEALTH ' + (vs ? Math.round(vs.hp) : '?') + ', THE ENEMY ' + (dummy ? Math.round(Math.abs(dummy.x - wx)) : '?') + ' PX AWAY');
+    show('title');
+  }
+  for (const [foe, sp, k] of [['cu3', 'cu', 6], ['cu3', 'aircut', 9], ['cu3', 'arrow', 22], ['cu3', 'dom', 0], ['cu4', 'cu', 10], ['cu4', 'cu', 11], ['cu4', 'blast', 12], ['cu4', 'beam', 16]]) {
+    const label = 'THE ENEMY ' + SC_NAME[foe] + ': ' + sp.toUpperCase() + ' ' + k; SC.say = label; SET.gore = 0; window.__suAll = true;
+    try { Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0, put: 2, grade: 4 }); startPractice('gojo', foe); } catch (e) { scErr(e, label); continue; }
+    if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
+    await scFrames(2, null, 600); try { trainPut(); dummy.x = wx + (k === 10 ? 30 : 120); cuenStart(k, pnow(), sp); } catch (e) { scErr(e, label); }
     if (await scUntil(() => !dummy || !dummy.fa, 100, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 25 SECONDS', '');
     show('title');
   }

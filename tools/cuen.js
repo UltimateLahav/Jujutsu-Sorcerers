@@ -99,14 +99,14 @@ function cuenEv(e, now, gap, ag, toward, g, k) {      // one event of the blow c
   }
 }
 // 4. THE SPECIAL MOVES (code in the player's version, so each has a small enemy version here). Sukuna: AIR CUT (a slash that cuts you and makes you bleed), the fire arrow (the long cast, then an arrow that burns you), MALEVOLENT SHRINE (his domain: 6 seconds of cuts). Ryu: the ki blast and the beam of JUST THIS ONCE. A blow of yours ends the move he is making.
-const CUEN_SP = { 3: { aircut: [7000, 1], arrow: [14000, 3], dom: [40000, 4] }, 4: { blast: [4500, 0], beam: [35000, 4] } };      // [cooldown ms, first grade index]
+const CUEN_SP = { 3: { aircut: [5000, 0], arrow: [12000, 2], dom: [35000, 3] }, 4: { blast: [4000, 0], beam: [32000, 3] } };      // [cooldown ms, first grade index]
 function cuenSpecialTry(now, gap, ag, G, g, n) {
   const d = dummy; if (now < (d.spNext || 0) || gap < -4 || vs.ph !== 'fight' || now - d.born < 1500) return false; d.spNext = now + 350 + Math.random() * 450; const r = Math.random(), gi = vs.gi, S = CUEN_SP[n]; d.sp = d.sp || {};
   const ok = k => gi >= S[k][1] && now >= (d.sp[k] === undefined ? d.born + (k === 'dom' || k === 'beam' ? 15000 : 0) : d.sp[k]);
   if (n === 3) {
     if (ok('dom') && ag <= 200 && r < 0.25 && !dom && !fd && !ult) { d.sp.dom = now + S.dom[0]; cuenStart(0, now, 'dom'); return true; }
     if (ok('arrow') && ag >= 80 && ag <= 280 && r < 0.2) { d.sp.arrow = now + S.arrow[0]; cuenStart(22, now, 'arrow'); return true; }
-    if (ok('aircut') && ag >= 30 && ag <= 220 && r < 0.3) { d.sp.aircut = now + S.aircut[0]; cuenStart(9, now, 'aircut'); return true; }
+    if (ok('aircut') && ag >= 30 && ag <= 220 && r < 0.4) { d.sp.aircut = now + S.aircut[0]; cuenStart(9, now, 'aircut'); return true; }
   } else {
     if (ok('beam') && ag <= 300 && r < 0.2 && !dom && !fd && !ult) { d.sp.beam = now + S.beam[0]; cuenStart(16, now, 'beam'); return true; }
     if (ok('blast') && ag >= 90 && ag <= 320 && r < 0.3) { d.sp.blast = now + S.blast[0]; cuenStart(12, now, 'blast'); return true; }
