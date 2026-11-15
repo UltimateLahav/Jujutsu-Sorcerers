@@ -224,8 +224,8 @@ async function scMoves() {
   }
   await scIronMoves();
 }
-// v1.191 IRON MAN's moves: the chain (R.HOOK, L.HOOK, R.KICK, PUNCH), the ROCKET UPPERCUT (JUMP and ATTACK together, either one first), the DOWNSLAM (ATTACK 0.2 s after the jump, and an earlier one waits for it), crouch, block and dash; each is a check that the move that should come out did (cuAtkK: 0 - 3 the chain, 4 the uppercut, 5 the downslam), played against a standing enemy in front of him; v1.192 the LOW JABS (6: crouched, ATTACK), the CHARGE (7: ATTACK during a dash or just after it; a late one is a plain hook) and the BACKFLIP (8: DASH BACK twice, never two dashes forward)
-const SC_IR_N = 15;
+// v1.191 IRON MAN's moves: the chain (R.HOOK, L.HOOK, R.KICK, PUNCH), the ROCKET UPPERCUT (JUMP and ATTACK together, either one first), the DOWNSLAM (ATTACK 0.2 s after the jump, and an earlier one waits for it), crouch, block and dash; each is a check that the move that should come out did (cuAtkK: 0 - 3 the chain, 4 the uppercut, 5 the downslam), played against a standing enemy in front of him; v1.192 the LOW JABS (6: crouched, ATTACK), the CHARGE (7: ATTACK during a dash or just after it; a late one is a plain hook) and the BACKFLIP (8: DASH BACK twice, never two dashes forward); v1.193 the REPULSOR MODE (the MODE button: ATTACK is R.BLAST (9) and then L.BLAST (10), both hurt the enemy, the other moves stay, off again it is the chain)
+const SC_IR_N = 21;
 async function scIronMoves() {
   const place = () => { TR.put = 2; trainPut(); };
   try { Object.assign(TR, { beh: 0, ehp: 1, php: 0, pce: 0, put: 2 }); startPractice('cu5', 'gojo'); } catch (e) { scErr(e, 'IRON MAN START'); return; }
@@ -246,6 +246,10 @@ async function scIronMoves() {
   SC.say = 'IRON MAN: A LATE ATTACK IS NO CHARGE'; await reset(); scKey('KeyD', true); await press('KeyK'); scKey('KeyD', false); await scFrames(16); await press('KeyJ'); await scFrames(1); ok(cuAtkAt >= 0 && cuAtkK === 0, 'ATTACK 0.8 S AFTER THE DASH WAS BLOW ' + cuAtkK + ' AND NOT THE R.HOOK'); await scFrames(14);
   SC.say = 'IRON MAN: BACKFLIP'; await reset(); wx = 150; dummy.x = wx + 120; await scFrames(2); const wb = wx; await press('KeyK'); await scFrames(2); await press('KeyK'); await scFrames(1); const bf = cuAtkAt >= 0 && cuAtkK === 8; let top = 0; for (let f = 0; f < 16; f++) { await scFrames(1); top = Math.max(top, gojoLift); } ok(bf && top > 12 && wb - wx > 60, 'DASH BACK TWICE: BLOW ' + (bf ? 8 : 'NONE') + ', HEIGHT ' + Math.round(top) + ', WENT BACK ' + Math.round(wb - wx));
   SC.say = 'IRON MAN: TWO DASHES FORWARD'; await reset(); scKey('KeyD', true); await press('KeyK'); await scFrames(2); await press('KeyK'); await scFrames(1); scKey('KeyD', false); ok(!(cuAtkAt >= 0 && cuAtkK === 8), 'TWO DASHES FORWARD MADE A BACKFLIP'); await scFrames(8);
+  SC.say = 'IRON MAN: REPULSOR MODE'; await reset(); CU_GAME[5].rp = false; await press('KeyE'); await scFrames(2); ok(!!CU_GAME[5].rp && $('cel').innerHTML.indexOf('REPULSOR') >= 0, 'THE MODE BUTTON DID NOT SWITCH THE REPULSOR MODE ON: ' + $('cel').innerHTML);
+  await press('KeyJ'); await scFrames(1); ok(cuAtkAt >= 0 && cuAtkK === 9, 'IN THE REPULSOR MODE THE FIRST ATTACK WAS BLOW ' + cuAtkK + ' AND NOT THE R.BLAST'); await scFrames(12); await press('KeyJ'); await scFrames(1); ok(cuAtkAt >= 0 && cuAtkK === 10, 'THE SECOND ATTACK WAS BLOW ' + cuAtkK + ' AND NOT THE L.BLAST'); await scFrames(8); ok(hits.n >= 2, 'THE BLASTS HURT NOBODY: THE COMBO COUNTER SAYS ' + hits.n);      // (the enemy's health is not looked at: the Training setting of the scan refills it; the combo counter counts every hit)
+  await press('KeyS'); await scFrames(10); await press('KeyJ'); await scFrames(1); ok(cuAtkAt >= 0 && cuAtkK === 6, 'CROUCHED IN THE MODE, ATTACK WAS BLOW ' + cuAtkK + ' AND NOT THE LOW JABS'); await scFrames(16); await press('KeyS'); await scFrames(10);
+  await press('KeyE'); await scFrames(2); await press('KeyJ'); await scFrames(1); ok(!CU_GAME[5].rp && cuAtkAt >= 0 && cuAtkK === 0, 'WITH THE MODE OFF AGAIN ATTACK WAS BLOW ' + cuAtkK + ' AND NOT THE R.HOOK'); await scFrames(14); CU_GAME[5].rp = false;
   show('title');
 }
 

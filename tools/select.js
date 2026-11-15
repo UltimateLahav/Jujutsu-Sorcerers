@@ -8,7 +8,7 @@ const SEL = {      // the seven fighters: short name, panel name, a tag, three s
   cat: { nm: 'CAT', full: 'CARTOON<br>CAT', tag: 'CURSED SPIRIT', mv: ['CARTOON ATTACK', 'GIANT KICK', 'ARM HANG'], col: [200, 204, 216], face: [19, 0] },
   freddy: { nm: 'FREDDY', full: 'FREDDY<br>KRUEGER', tag: 'CURSED SPIRIT', mv: ['PIERCE', 'BOILING WATER', 'DREAM'], col: [70, 196, 106], face: [21, 1] },
   cu3: { nm: 'SUKUNA', full: 'SUKUNA', tag: 'KING OF CURSES', mv: ['DISMANTLE', 'CLEAVE MODE', 'MALEVOLENT SHRINE'], col: [255, 58, 74], face: [21, 1] },
-  cu5: { nm: 'IRON MAN', full: 'IRON<br>MAN', tag: 'TONY STARK', mv: ['4-HIT COMBO', 'ROCKET UPPERCUT', 'DOWNSLAM', 'LOW JABS', 'CHARGE PUNCH', 'BACKFLIP'], col: [196, 32, 44], face: [20, 0] } };      // (v1.190 Iron Man: TRAINING only for now; v1.191 his moves; v1.192 crouch + ATTACK, dash + ATTACK and a double dash back)
+  cu5: { nm: 'IRON MAN', full: 'IRON<br>MAN', tag: 'TONY STARK', mv: ['4-HIT COMBO', 'ROCKET UPPERCUT', 'DOWNSLAM', 'LOW JABS', 'CHARGE PUNCH', 'BACKFLIP', 'REPULSOR MODE'], col: [196, 32, 44], face: [20, 0] } };      // (v1.190 Iron Man: TRAINING only for now; v1.191 his moves; v1.192 crouch + ATTACK, dash + ATTACK and a double dash back; v1.193 the MODE button: REPULSOR)
 const SEL_ROWS = [['gojo', 'yuji', 'cu4', 'cu5'], ['verity', 'cat', 'freddy', 'cu3']], FS_ORDER = [].concat(...SEL_ROWS), FACE = 28;      // 4 on top, 4 below (the humans first; v1.190 Iron Man is the fourth on top)
 const selRgb = (c, a) => 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')';
 const fsPic = (who, now, inv) => {      // the idle picture of any of the seven (a canvas), or null while a fighter's pictures are not cut yet
@@ -63,7 +63,7 @@ function fsPanelSet(p, who, o) {      // o: { tag (instead of his own), moves (i
   const s = who ? SEL[who] : null; p.who = who || ''; const c = s ? s.col : [109, 106, 122], st = p.el.style;
   st.setProperty('--fc', 'rgb(' + c + ')'); st.setProperty('--ft', 'rgb(' + c.map(v => Math.round(v + (255 - v) * 0.5)) + ')'); st.setProperty('--fg', selRgb(c, 0.45)); st.setProperty('--fl', selRgb(c, 0.17));
   const nm = s ? s.full + (o.inv ? '<br><span class="fsiv">(INV.)</span>' : '') : '?', tg = o.tag !== undefined ? o.tag : s ? s.tag : '', mv = (o.moves || (s ? s.mv : [])).map(m => '<li>' + m + '</li>').join('');
-  if (p.nm.innerHTML !== nm) p.nm.innerHTML = nm; if (p.tg.textContent !== tg) p.tg.textContent = tg; if (p.mv.innerHTML !== mv) p.mv.innerHTML = mv;
+  if (p.nm.innerHTML !== nm) p.nm.innerHTML = nm; if (p.tg.textContent !== tg) p.tg.textContent = tg; if (p.mv.innerHTML !== mv) p.mv.innerHTML = mv; p.mv.classList.toggle('tight', (o.moves || (s ? s.mv : [])).length > 6);      // (v1.193 a card with more than 6 moves, Iron Man's 7, has its lines closer together)
   p.el.classList.toggle('empty', !s); p.el.classList.toggle('act', !!o.act); p.el.classList.toggle('ready', !!o.ready);
 }
 function fsPanelDraw(p, now, inv) {      // his idle animation, as big as the panel allows (the picture is as wide as the fighter's own pictures)

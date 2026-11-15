@@ -1,5 +1,16 @@
 [
  {
+  "v": "1.193",
+  "t": "IRON MAN: REPULSOR MODE (BLASTS FROM HIS RIGHT AND LEFT HAND)",
+  "n": [
+   "You said: add a repulsor mode to Iron Man that makes his M1s blasts from his right hand, and the second one from his left hand, that's it for now.",
+   "The MODE button (key E) is back for Iron Man and switches the REPULSOR mode on and off: it lights up and says MODE REPULSOR while the mode is on. In the mode, pressing ATTACK on the ground fires a blast from his right hand (R.BLAST, 6 damage), the next press a blast from his left hand (L.BLAST, 7 damage), then the right hand again, and so on. The ATTACK button says which hand is next.",
+   "A blast: his arm comes up and points at the enemy with the palm flashing, and a bolt of light leaves the palm and flies at the enemy fast (about 420 px a second, 1.2 seconds at the most) until it touches him. A blocking enemy blocks it, and an enemy who is crouching is flown over.",
+   "Everything else is as it was, in the mode too: crouch + ATTACK is still the low jabs, dash + ATTACK the charge, JUMP + ATTACK the rocket uppercut, ATTACK in the air the downslam, and DASH back twice the backflip. Switch the mode off and the 4-hit combo is back. The mode switches itself off when a new fight starts.",
+   "Both blasts stay at 15 damage or less, the M1 rule. He is still in TRAINING only."
+  ]
+ },
+ {
   "v": "1.192",
   "t": "IRON MAN: LOW JABS, CHARGE PUNCH AND THRUSTER BACKFLIP",
   "n": [

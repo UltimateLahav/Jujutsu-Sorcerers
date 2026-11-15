@@ -106,6 +106,46 @@ const IR_CHD = [0, 0, 0, 0, 0, 0, 26, 62, 90, 90, 90, 90, 90, 90, 90, 90, 72, 46
 IR_BLOWS.push({ n: 'CHARGE', d: 14, v: 36, m: 0, kn: 150, w: 5, h: 90, sy: 44, rx: 3, dn: true, chg: true, mk: () => irChargePics(), lift: [0, 0, 0, 0, 0, 0, 3, 7, 9, 9, 9, 9, 9, 9, 9, 9, 9, 7, 4, 2, 0, 0, 0, 0, 0, 0], keys: [] });
 const IR_BFD = [0, 0, 20, 58, 108, 162, 216, 270, 318, 348, 360, 360, 360, 360, 360, 360];      // (the BACKFLIP: how far he is turned backward on each of its 16 pictures, degrees)
 IR_BLOWS.push({ n: 'BACKFLIP', d: 0, v: 24, m: -70, e: 1, lt: 0.9, kn: 0, w: 0, h: 0, sy: 0, flip: true, mk: () => irFlipPics(), lift: [0, 6, 16, 24, 30, 33, 34, 33, 30, 24, 16, 8, 2, 0, 0, 0], keys: [] });
+// ---- v1.193 THE REPULSOR MODE. The user, after v1.192: "add to iron man a repulsor mode which makes his M1's be blasts from his right hand and the second is left hand, that's it for now, no questions needed".
+// The MODE button (key E; it was hidden for him until now) switches the mode on and off (g.rp). In the mode the M1 of the ground, the chain of ATTACK presses, is R.BLAST (blow 9: a bolt from his right hand) and then L.BLAST (blow 10: from his left hand), and then again; everything else (the rocket uppercut, the downslam, the low jabs, the charge, the backflip) is as it was. A blast is a SHOT of the engine (an 'o' event, like Sukuna's slashes): the arm comes up and points at the enemy with the palm lit (pose number `rr` for the right hand, `rep` for the left, see c4xDrawIron), on the 4th picture a bolt leaves the palm (`x0`: where) and flies at IR_BSP px a second until it touches the enemy (the bolt's picture against his body: the rows they share), a blocker blocks it, or it is 1.2 s old.
+const IR_BR = irG({ x: 46, lean: -2, hdx: 1.2, hdt: -2, rr: 1, arms: [IR_GA[0], { al: 84, el: 2 }] }), IR_BLF = irG({ x: 46, lean: -2, hdx: 1.2, hdt: -2, rep: 1, arms: [{ al: 90, el: 2 }, IR_GA[1]] });      // (the poses a blast is fired from: the arm straight out at the enemy, the palm lit)
+const IR_RP = [9, 10], irM1 = k => k < 4 || k === 9 || k === 10, irRdy = g => g.rp ? IR_RP : g.rdy;      // (the blows of the chain in the repulsor mode; the blows of ATTACK on the ground; the chain that is on now)
+function irBlastKeys(right) {      // the key poses of a blast from one hand: the arm comes up, it points at the enemy with the palm lit (picture 4: the bolt leaves), the body kicks back a little and the arm comes down
+  const fire = right ? IR_BR : IR_BLF, ai = right ? 1 : 0, gl = right ? 'rr' : 'rep', arm = o => right ? [IR_GA[0], o] : [o, IR_GA[1]];
+  return [[0, IR_GD],
+    [1, irG({ x: 47, lean: 6, hdx: 1.5, hdt: 3, [gl]: 0.5, arms: arm({ al: 62, el: 52 }) }), 'out'],
+    [3, fire, 'in'],
+    [4, { ...fire, x: 44, lean: -8, hdx: 0.8, hdt: -6, legs: [{ ax: 36, ay: C4IG, a: 0 }, { ax: 58, ay: C4IG, a: 0 }], arms: arm({ al: fire.arms[ai].al + 3, el: 0 }) }, 'out'],
+    [6, irG({ x: 45, lean: -4, hdx: 1, hdt: -3, [gl]: 0.5, arms: arm({ al: 78, el: 10 }) }), 'io'],
+    [9, IR_GD, 'io']];
+}
+const IR_BSP = 420;      // (the speed of a bolt, px a second)
+IR_BLOWS.push({ n: 'R.BLAST', d: 6, f: 4, v: 26, m: 0, kn: 2, w: 1, h: 30, rx: 6, shot: true, fire: IR_BR, arm: 1, spd: IR_BSP, ms: 1200, np: 10, keys: irBlastKeys(true) });
+IR_BLOWS.push({ n: 'L.BLAST', d: 7, f: 4, v: 26, m: 0, kn: 2, w: 1, h: 35, rx: 5, shot: true, fire: IR_BLF, arm: 0, spd: IR_BSP, ms: 1200, np: 10, keys: irBlastKeys(false) });
+function irBolts(b) {      // the pictures of a blast's bolt (3, a shot is drawn 62 px above the floor line) and where it leaves: the glow of the palm of the pose he fires from, found from the rig of that pose (c4xRig); { pics, x0: the column of the palm from his middle column, sy: how high above the floor it is }
+  const J = c4xRig(C4I, b.fire), a = J.arms[b.arm], gx = a.h[0] + Math.sin(a.a2) * 2.4, gy = a.h[1] + Math.cos(a.a2) * 2.4, row = Math.round(gy - IRON_OY);
+  return { pics: [0, 1, 2].map(ph => irBoltCv(ph, row + 1)), x0: Math.round(gx - IRON_OX - 32) + 1, sy: 61 - row, px: Math.round(gx - IRON_OX), py: row };
+}
+function irFlashAt(cv, px, py, k) {      // the flash of a repulsor at the palm, drawn on a picture of the blast: a white core in two pale blue rings (k: how strong, 0 - 1)
+  const g = cv.getContext('2d'); for (const [r, col, a] of [[5, '#6fe0ff', 0.3 * k], [3, '#aef6ff', 0.55 * k], [2, '#ffffff', 0.95 * k]]) { g.globalAlpha = a; g.fillStyle = col; for (let y = -r; y <= r; y++) { const w = Math.floor(Math.sqrt(r * r - y * y)); g.fillRect(px + 1 - w, py + y, w * 2 + 1, 1); } } g.globalAlpha = 1;
+}
+function irBoltCv(ph, row) {      // a bolt of the repulsor on a 64 x 64 canvas: its middle on column 32 and `row`; a white core, a pale blue body, a blue glow at the edge, and streaks of light behind it (ph 0 - 2: it pulses)
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), R = [4.6, 4.1, 4.9][ph % 3];
+  const dot = (x, y, col, a) => { g.globalAlpha = a; g.fillStyle = col; g.fillRect(x, y, 1, 1); };
+  for (let i = -2; i <= 2; i++) { const len = 6 + ((i + 3) * 3 + ph * 2) % 7; for (let k = 0; k < len; k++) dot(32 - 4 - k, row + i, i === 0 ? '#ffffff' : '#aef6ff', (i === 0 ? 0.8 : 0.45) * (1 - k / len)); }      // (the streaks behind it)
+  for (let y = -6; y <= 6; y++) for (let x = -6; x <= 6; x++) { const d = Math.hypot(x, y); if (d <= R) dot(32 + x, row + y, d <= 1.6 ? '#ffffff' : d <= R * 0.62 ? '#d8faff' : '#7fe6ff', d > R - 0.9 ? 0.55 : 1); }
+  g.globalAlpha = 1; return c;
+}
+function irToggle(g, now) {      // the MODE button: the repulsor mode on / off (the next ATTACK begins the chain of the mode with the right hand); a burst of light round him
+  g.rp = !g.rp; cuCmb = 0; cuCmbBy = 0; snd(g.rp ? 'ceon' : 'ceoff'); if (g.rp) flash(now, 140, 0.2);
+  const cols = g.rp ? ['#ffffff', '#aef6ff', '#6fe0ff'] : ['#aef6ff', '#5aa8c0']; spark(wx, gy - 34, g.rp ? 9 : 6, cols, false, 1); spark(wx, gy - 34, g.rp ? 9 : 6, cols, false, -1);
+}
+function irModeUI(g) {      // every frame: the MODE button's name and light follow the mode (setModeUI of the others writes the button now and then, so it is checked every time, like Ryu's)
+  const el = $('cel'), b = $('ce'), on = !!g.rp, want = 'MODE<br>' + (on ? 'REPULSOR' : 'OFF'), p = on ? 'true' : 'false', aria = on ? 'Mode: Repulsor is on, tap to switch it off. His attacks are blasts from his right hand and then his left hand' : 'Mode: tap to switch Repulsor on. His attacks become blasts from his right hand and then his left hand';
+  if (el.innerHTML !== want) el.innerHTML = want;
+  if (b.classList.contains('lit') !== on) b.classList.toggle('lit', on);
+  b.classList.remove('red', 'fl'); if (b.getAttribute('aria-pressed') !== p) b.setAttribute('aria-pressed', p); if (b.getAttribute('aria-label') !== aria) b.setAttribute('aria-label', aria);
+}
 function irSpin(pose, deg) {      // a pose of the BACKFLIP as a usual 64 x 64 picture, turned deg degrees BACKWARD (counter-clockwise) about his hips, which stay where they are in the usual window
   const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
   const r = deg * Math.PI / 180, cs = Math.abs(Math.cos(r)) < 1e-9 ? 0 : Math.cos(r), sn = Math.abs(Math.sin(r)) < 1e-9 ? 0 : Math.sin(r);
@@ -173,18 +213,20 @@ function ironMoves(g) {
   if (g.moves) return; g.moves = true;
   const seq = (keys, n) => irTrack(keys, n).map(ironCut), cb = (f, fn) => ({ f, k: 'cb', cb: fn, c: 0, src: -1, id: 0 });
   const atk = IR_BLOWS.map(b => b.mk ? b.mk() : seq(b.keys, b.np || (b.lift ? b.lift.length : 15))), allTips = atk.map(fr => fr.map(irTipOf));      // (the pictures of every blow, and the limb as drawn on each)
-  const ev = IR_BLOWS.map((b, k) => {
+  const bolts = IR_BLOWS.map(b => b.shot ? irBolts(b) : null), ev = IR_BLOWS.map((b, k) => {
     const tips = allTips[k]; if (b.chg) return irChargeEv(g, k, b, tips, cb);
+    if (b.shot) { const bo = bolts[k]; return [{ f: b.f, k: 'o', d: b.d, sp: b.spd, ms: b.ms, x0: bo.x0, fx: [['k', b.kn, 0, 0, -1], ['h', b.h, 0, 1, 0], ['w', b.w, 0, 1, 0], ['r', b.rx, 0, 0, -1], ['y', bo.sy, 0, 0, -1]], c: 0, src: -1, id: 0 }, cb(b.f, () => snd('thrust', 0.2))]; }      // (a blast: one SHOT leaves the palm on its picture, with its damage, knock-back, hit stop, shake, reaction and the height of the sparks, and a thrust of the boots' sound)
     const l = (b.imp || [b]).map((im, j) => irImpact(b, im, j, tips));
     if (k === 4) l.push(cb(14, () => snd('land', 1)));      // (the uppercut: he is back on the floor)
     if (k === 5) l.push(cb(11, now => { snd('land', 2); puff(wx + 4, 8); shakeUntil = Math.max(shakeUntil, now + 160); shakeAmp = Math.max(shakeAmp, 2); }));      // (the downslam: he lands in a cloud of dust)
     return l;
   });
+  bolts.forEach((bo, k) => { if (bo) [3, 4, 5].forEach((i, q) => irFlashAt(atk[k][i], bo.px, bo.py, [1, 0.8, 0.45][q])); });      // (the flash at the palm on the picture the bolt leaves and the two after it)
   const ci = irTrack([[0, IR_CRO], [3, { ...IR_CRO, y: 76.6, lean: 27.5 }, 'io'], [7, IR_CRO, 'io']], 8).map(ironCut);
   const cwk = Array.from({ length: 8 }, (_, k) => { const u = k / 8 * 2 * Math.PI, leg = (ph, x0) => { const s = Math.sin(ph), lf = Math.max(0, Math.cos(ph)); return { ax: x0 + 5 * s, ay: C4IG - 2.5 * lf, a: 3 * lf }; }; return ironCut({ ...IR_CRO, y: 76 + 0.5 * Math.abs(Math.sin(u)), legs: [leg(u, 38), leg(u + Math.PI, 56)] }); });
   const hu = seq(IR_HU, 8), hb = seq(IR_HB, 8), hf = seq(IR_HF, 10), rows = [hu, hb, hf, hf, hf, hu, hu, hf, hb, hb];      // (the ten reactions the game picks from: 0, 5, 6 the head snaps back, 1, 8, 9 doubled over, 2, 3, 4, 7 a stagger back; each lasts as long as the enemy's own reaction does)
   Object.assign(g, {
-    atk, ev, set: IR_BLOWS.map(b => ({ v: b.v, m: b.m, c: 0, d: 0, e: b.e, lt: b.lt })), rdy: [0, 1, 2, 3], an: IR_BLOWS.map(b => b.n), al: IR_BLOWS.map(() => null), vfx: IR_BLOWS.map(() => []), vxs: IR_BLOWS.map(() => []), tipAll: ev.map((l, k) => cuMaxRows(IR_BLOWS[k].chg ? allTips[k] : l.map(e => e.tip))),
+    atk, ev, set: IR_BLOWS.map(b => ({ v: b.v, m: b.m, c: 0, d: 0, e: b.e, lt: b.lt })), rdy: [0, 1, 2, 3], an: IR_BLOWS.map(b => b.n), al: IR_BLOWS.map(() => null), vfx: bolts.map(o => o ? o.pics : []), vxs: bolts.map(o => o ? o.pics.map(c => cuSpan(suAlpha(c), r => r - 2)) : []), tipAll: ev.map((l, k) => cuMaxRows(IR_BLOWS[k].chg ? allTips[k] : l.map(e => e.tip))),
     cr: seq([[0, IR_GD], [3, IR_CRO, 'io']], 4), ci, cwk, bl: seq(IR_BLOCK, 6), df: seq(IR_DASH, 8), db: seq(IR_DASHB, 8), hu, hus: rows.map((f, k) => ({ f, ms: RX_DUR[k] / f.length })), ko: irKo()
   });
   g.st = { ...g.st, dfw: 60, dbk: 44, dtm: 240 };      // (his dash: a burst of 60 px forward, 44 back, 0.24 s)
@@ -200,11 +242,11 @@ function irDive(h0) {      // the rise of the downslam's 15 pictures: he hangs a
 }
 function irStart(g, k, now, h0) {      // blow k begins: the state customScene plays it from (cuAtkK, cuAtkAt, the chain, the lift of its pictures)
   const b = IR_BLOWS[k], st = g.set[k];
-  cuAtkK = k; cuAtkAt = now; cuFired = []; cuRes = []; cuLunged = 0; cuMs = 1000 / st.v; cuCmbBy = now + 1e9; cuAtkQ = 0; irDiveAt = 0; irChain = k === 0; irChDone = false; irJabQ = 0; cuCmb = k < 3 ? k + 1 : 0;
+  cuAtkK = k; cuAtkAt = now; cuFired = []; cuRes = []; cuLunged = 0; cuMs = 1000 / st.v; cuCmbBy = now + 1e9; cuAtkQ = 0; irDiveAt = 0; irChain = k === 0 || k === 9; irChDone = false; irJabQ = 0; cuCmb = k < 3 ? k + 1 : k === 9 ? 1 : 0;
   if (b.dive) g.al[k] = irDive(h0); else if (b.lift) g.al[k] = b.lift.map((v, i) => Math.max(v, Math.round(h0 * Math.max(0, 1 - i / 4))));      // (the uppercut that begins in the air goes on from where he is)
-  if (!b.flip && !b.chg) snd('swing', b.kick ? 3 : 0); if (k === 4) snd('thrust', 0.5); if (b.flip) snd('thrust', 0.9);      // (the backflip and the charge roar with their boots, not with a swing)
+  if (!b.flip && !b.chg && !b.shot) snd('swing', b.kick ? 3 : 0); if (k === 4) snd('thrust', 0.5); if (b.flip) snd('thrust', 0.9);      // (the backflip, the charge and the blasts do not swing: the backflip roars with his boots at once, the charge at its 7th picture, a blast at the 4th)
 }
-function irCombo(g, now) { if (now > cuCmbBy) cuCmb = 0; irStart(g, g.rdy[cuCmb % g.rdy.length], now, 0); }      // (the next blow of the chain, the first one when the 0.7 s are over)
+function irCombo(g, now) { const rd = irRdy(g); if (now > cuCmbBy) cuCmb = 0; irStart(g, rd[cuCmb % rd.length], now, 0); }      // (the next blow of the chain, the first one when the 0.7 s are over)
 function irChMove(g, now) {      // the CHARGE's flight: where he is on his way (IR_CHP: between two pictures a straight line), held back by the enemy: the fist never goes into him; once it has touched him, landed or been blocked, he stops where he is
   const n = g.atk[7].length, u = Math.min(n, Math.max(0, (now - cuAtkAt) / cuMs)), j = Math.min(n - 1, Math.floor(u));
   let to = irChDone ? cuLunged : IR_CHP[j] + (IR_CHP[j + 1] - IR_CHP[j]) * (u - j);
@@ -227,7 +269,7 @@ function irTick(g, now, ctl, jmp, atk, dsh) {      // true when it used this fra
   let J = jmp && idle, A = atk && idle;      // (the presses that count: only while he can act)
   if (J && A && cuAtkAt < 0 && !air) { irStart(g, 4, now, 0); J = A = false; }      // 1. the ROCKET UPPERCUT: JUMP and ATTACK together ...
   else if (A && air && cuAtkAt < 0 && el <= sim) { cuJumpAt = -1; irStart(g, 4, now, h0); J = A = false; }      // ... or ATTACK just after the jump began ...
-  else if (J && cuAtkAt >= 0 && irChain && cuAtkK === 0 && now - cuAtkAt <= sim) { cuCmb = 0; irStart(g, 4, now, 0); J = A = false; }      // ... or JUMP just after the first blow began (it is dropped)
+  else if (J && cuAtkAt >= 0 && irChain && now - cuAtkAt <= sim) { cuCmb = 0; irStart(g, 4, now, 0); J = A = false; }      // ... or JUMP just after the first blow began (it is dropped)
   if (J && cuAtkAt < 0 && !air) { cuJumpAt = now; cuJumpC = false; snd('jump'); snd('thrust', g.jet); }      // 2. JUMP
   if (A) {      // 3. ATTACK
     if (cuAtkAt >= 0) cuAtkQ = now + 450;      // (a press during a blow is kept for 0.45 s: the next blow of the chain follows at once)
@@ -237,7 +279,7 @@ function irTick(g, now, ctl, jmp, atk, dsh) {      // true when it used this fra
     if (air && irDiveAt > 0 && now >= irDiveAt) { cuJumpAt = -1; irStart(g, 5, now, h0); }
     else if (!air && cuAtkQ > now) irCombo(g, now);
   }
-  if (cuAtkAt >= 0 && cuAtkK < 4 && cuAtkQ > now && idle && now - cuAtkAt >= g.atk[cuAtkK].length * cuMs) { cuCmbBy = now + 700; irCombo(g, now); }      // (a press that was kept while a blow of the chain went on: the next blow begins in the very frame the one before it is over, so that no picture of his idle comes between two blows)
+  if (cuAtkAt >= 0 && irM1(cuAtkK) && cuAtkQ > now && idle && now - cuAtkAt >= g.atk[cuAtkK].length * cuMs) { cuCmbBy = now + 700; irCombo(g, now); }      // (a press that was kept while a blow of the chain went on: the next blow begins in the very frame the one before it is over, so that no picture of his idle comes between two blows)
   return used;
 }
-const irLabel = (g, now) => cuJumpAt >= 0 && cuAtkAt < 0 ? 'DOWNSLAM' : stance === 'crouch' ? 'LOW JABS' : cuDash || now - irDshAt <= IR_DP * irRate() ? 'CHARGE' : g.an[g.rdy[(now > cuCmbBy ? 0 : cuCmb) % g.rdy.length]];      // (what the ATTACK button says: in the air the downslam, crouched the low jabs, during a dash and just after it the charge, on the ground the blow that comes next)
+const irLabel = (g, now) => cuJumpAt >= 0 && cuAtkAt < 0 ? 'DOWNSLAM' : stance === 'crouch' ? 'LOW JABS' : cuDash || now - irDshAt <= IR_DP * irRate() ? 'CHARGE' : g.an[irRdy(g)[(now > cuCmbBy ? 0 : cuCmb) % irRdy(g).length]];      // (what the ATTACK button says: in the air the downslam, crouched the low jabs, during a dash and just after it the charge, on the ground the blow that comes next: in the repulsor mode R.BLAST and L.BLAST)

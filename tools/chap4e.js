@@ -1,7 +1,7 @@
 // ================================================================ v1.157 CHAPTER 4, PART 4 (tools/chap4e.js): the figures of RANOS (the one at the end of chapter 2, who blew up the planet; rebuilt in v1.159 with a hand-drawn head and an arm that reaches) and IRON MAN, the cars and the sky of NEW YORK
 // Both are drawn at run time with the shaded capsules of chapter 4 (c15MegKit: the same look as the people of the street), pose by pose, facing right, and cached by the numbers of the pose: c4xIron(pose) -> a 128 x 100 canvas (soles on row 92, middle column 48; the room on the right is for the blade); c4xRanos(pose) -> a 112 x 104 canvas (see below).
 // A POSE of Iron Man: x, y = the hip, lean (degrees, forward), hdx, hdy, hdt = the head, arms [{ al: the upper arm's angle from straight down, forward positive, el: the bend of the elbow }, ...] (the first is the far arm),
-// legs [{ ax, ay: where the ankle is, a: the foot's angle }, ...], fl (the flames under the boots), bl (the length of the blade in pixels, 0 - 26: a whole number, so that every length has its own picture), rep (the palm repulsors, 0 - 1), vis (the faceplate is shut and lit).
+// legs [{ ax, ay: where the ankle is, a: the foot's angle }, ...], fl (the flames under the boots), bl (the length of the blade in pixels, 0 - 26: a whole number, so that every length has its own picture), rep (the repulsor in the palm of the far hand, 0 - 1; v1.193 rr: the same for the near hand, used by the fighter Iron Man in tools/ironm.js), vis (the faceplate is shut and lit).
 const { Pix: C4Pix, cap: c4cap, ell: c4ell, uni: c4uni, clip: c4clip, M: c4M, K: c4K, ik: c4ik } = c15MegKit;
 const C4I = { W: 128, H: 100, GY: 92, cx: 48, L1: 14, L2: 14, LT: 20, UA: 11, FA: 10.5, AH: 3.5 };
 const C4IC = { red: '#c4202c', gold: '#e4b636', dark: '#34343f', glow: '#aef6ff', white: '#f4fdff', blade: '#ff2a3a' };
@@ -97,10 +97,10 @@ const c4xRanosPose = {
 // ---------------------------------------------------------------- IRON MAN
 function c4xDrawIron(o) {
   const R = C4I, p = new C4Pix(R.W, R.H), J = c4xRig(R, o), { P, at, Nk, Sh, hd, arms, legs } = J, C = C4IC, K = c4K, red = c4M(C.red), gold = c4M(C.gold);
-  const drawArm = k => { const a = arms[k], far = k ? 0 : 0.1, rd = c4M(C.red, far), gd = c4M(C.gold, far), rep = o.rep || 0;
+  const drawArm = k => { const a = arms[k], far = k ? 0 : 0.1, rd = c4M(C.red, far), gd = c4M(C.gold, far), rep = (k ? o.rr : o.rep) || 0;
     p.put(c4uni(c4ell(Sh[0], Sh[1], 4.2, 4.2), c4cap(Sh[0], Sh[1], a.E[0], a.E[1], 3.5, 3.0)), rd); p.put(c4cap(a.E[0], a.E[1], a.W[0], a.W[1], 3.1, 2.7), c4M(C.red, far)); p.put(c4cap(a.E[0] + (a.W[0] - a.E[0]) * 0.4, a.E[1] + (a.W[1] - a.E[1]) * 0.4, a.W[0], a.W[1], 3.2, 2.9), gd, 1);
     p.put(c4ell(a.h[0], a.h[1], 3.0, 3.2), rd);
-    if (rep > 0 && k === 0) { const gx = a.h[0] + Math.sin(a.a2) * 2.4, gy2 = a.h[1] + Math.cos(a.a2) * 2.4; for (const [dx, dy, c] of [[0, 0, C.white], [1, 0, C.glow], [-1, 0, C.glow], [0, 1, C.glow], [0, -1, C.glow], [2, 0, C.glow], [-2, 0, C.glow], [0, 2, C.glow], [0, -2, C.glow]]) if (rep > 0.5 || (dx === 0 && dy === 0)) p.px(gx + dx, gy2 + dy, K(c)); }
+    if (rep > 0) { const gx = a.h[0] + Math.sin(a.a2) * 2.4, gy2 = a.h[1] + Math.cos(a.a2) * 2.4; for (const [dx, dy, c] of [[0, 0, C.white], [1, 0, C.glow], [-1, 0, C.glow], [0, 1, C.glow], [0, -1, C.glow], [2, 0, C.glow], [-2, 0, C.glow], [0, 2, C.glow], [0, -2, C.glow]]) if (rep > 0.5 || (dx === 0 && dy === 0)) p.px(gx + dx, gy2 + dy, K(c)); }
     if (k === 1 && o.bl > 0) {      // the blade: red, it comes out of the front of the fist along the forearm (its base is inside the fist), with a golden guard where they meet and a golden housing on the wrist
       const ux = Math.sin(a.a2), uy = Math.cos(a.a2), vx = uy, vy = -ux, L = o.bl, bx = a.h[0] + ux * 0.5, by = a.h[1] + uy * 0.5, tx = a.h[0] + ux * (L + 4), ty = a.h[1] + uy * (L + 4);
       p.put(c4cap(a.W[0], a.W[1], a.W[0] + ux * 3, a.W[1] + uy * 3, 3.6, 3.6), gd, 1);      // (the housing on the wrist)
