@@ -1,5 +1,18 @@
 [
  {
+  "v": "1.189",
+  "t": "SUKUNA AND RYU FIGHT IN BATTLE, ON BOTH SIDES",
+  "n": [
+   "You said: make Sukuna in the fighting mode and not just the training mode. You chose: play him AND fight him, and Ryu too. The picker no longer says TRAINING ONLY: Sukuna (still bought for $3000 on the SKILLS page, on both sides) and Ryu can be YOUR fighter in Battle (best of 3 rounds, K.O., results, rematch) and the ENEMY in Battle and in Training. Not in the Wi-Fi fight.",
+   "THE ENEMY SUKUNA: R.JAB, L.JAB and FACE KICK up close; from beyond 60 px his M1 throws slashes (R.SLASH, L.SLASH, X SLASH) as when you play him; the AIR CUT (a slash that cuts you and makes you bleed for 2 seconds); from GRADE 2 up the fire arrow (a long cast you can interrupt, then an arrow that burns you for 8 seconds); from SEMI-GRADE 1 up his domain, MALEVOLENT SHRINE (the sign, then 6 seconds of cuts across you, about 3 health every half second, nothing blocks them, a blow of yours ends it).",
+   "THE ENEMY RYU: hooks, hard punch, front kick, leg kick, kick up, now and then the POWER PUNCH, the 5-HIT COMBO and the DASH KICK, a ki blast from afar, and from SEMI-GRADE 1 up JUST THIS ONCE: the stance, then a beam that hits you ten times (your guard, jump and dash decide what reaches you). He has his own K.O. pictures.",
+   "Their blows are the same data the game plays when you are Sukuna or Ryu (pictures, speed, step and every IMPACT with its damage), so your guard, crouch, jump, dash and the grade damage work on them as on every enemy.",
+   "FATALITIES: Gojo's and the Cat's fatality on you as Sukuna or Ryu now show YOU (they showed a Gojo or a Cat), and Gojo's, the Cat's and Yuji's on them as enemies work (Yuji's uses the script made for Freddy, in their colours). Verity's and Freddy's fatality have no version for them yet: the button stays dark against them, and the enemy Verity and Freddy do not do theirs on you as Sukuna or Ryu (Freddy's Nightmare does work).",
+   "NOT DONE: the enemy versions of Sukuna's DISMANTLE (time stop), LEG CUT, CUT STORM, DASH SLASH, CLEAVE moves and flame mode, and Ryu's other blasts; they have no fatality of their own as enemies. Bot duels (a bot plays Gojo against them at three grades): the enemy Sukuna hurts it for about 50, 60 and 280 of its 300 health at GRADE 3, SEMI-GRADE 1 and SPECIAL GRADE, the enemy Ryu for about 10, 130 and 275 (Yuji 14 / 134 / 296, the Cat 166 / 291 / 279): they are on the soft side in the middle, tell me if you want them harder.",
+   "The game scan now plays matches with Sukuna and Ryu on both sides, three fighters' fatality on them, the enemy fatalities and nightmare on them, and every special move of theirs: 23,254 checks, no errors."
+  ]
+ },
+ {
   "v": "1.188",
   "t": "FREDDY AS AN ENEMY, AND HIS DAMAGE BALANCED",
   "n": [

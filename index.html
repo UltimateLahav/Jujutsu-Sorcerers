@@ -198,7 +198,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.188</small>
+    <small id="ver">V1.189</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -2162,7 +2162,7 @@ const CDEF = [
     { name: 'FIRE BOLT', anim: 'a2', fps: 11, imp: 5, kind: 'proj', dmg: 22, knock: 120, cd: 1500, range: [44, 200], speed: 200, r: 4, h: 29, mx: 42, look: 'flame', col: ['#ff7a1a', '#ffe14a'], w: 3, warn: 1 },
     { name: 'WING GUST', anim: 'a3', fps: 10, imp: 5, kind: 'gust', dmg: 10, knock: 380, cd: 2400, range: [20, 90], speed: 160, r: 10, h: 30, mx: 22, w: 2, warn: 1 }] }].filter(c => CU[c.id]);      // (a curse whose pictures are missing is left out)
 const CID = {}; CDEF.forEach((c, i) => { c.hw = CU[c.id].hw; CID[c.id] = i; });
-const CMOVE = [], cmv = k => k >= 49 && k < 49 + CMOVE.length ? CMOVE[k - 49] : null;      // (cmv: the curse move a hit number stands for, or null: v1.188 Freddy's numbers 90 - 95 come after the curses' 49 - 82)
+const CMOVE = [], CU_EXTRA = {}, cmv = k => k >= 49 && k < 49 + CMOVE.length ? CMOVE[k - 49] : CU_EXTRA[k] || null;      // (cmv: the curse move a hit number stands for, or null: v1.188 Freddy's numbers 90 - 95 come after the curses' 49 - 82)
 //     // every curse move gets a hit number from 49 on, so gojoHit (damage, knock-back, guard, dash, jump, crouch rules) deals with them like with any other swing
 CDEF.forEach((c, ci) => c.moves.forEach(m => { m.k = 49 + CMOVE.length; m.c = ci; m.tp = m.tp || 3; m.vis = m.vis || [2, 3]; const sh = HB_SH[c.id] || 0; if (m.mx !== undefined) m.mx -= sh; if (m.shots) m.shots = m.shots.map(q => q.mx === undefined ? q : { ...q, mx: q.mx - sh }); if (['melee', 'melee2', 'lunge', 'dash', 'tele'].includes(m.kind)) { const rr = reachFor('c:' + c.id, m.k, 'gojo'); if (rr === rr) m.reach = rr; }      // (v1.85: the muzzles move back with the picture; how far a blow reaches is what its picture does to Gojo's body)
   if (m.kind === 'melee' || m.kind === 'melee2') m.range = [m.range[0], Math.min(m.range[1], m.reach)]; CMOVE.push(m); REACH.push(m.reach || 20); KNOCK.push(0); KNOCK_G.push(m.knock); DMG.push(m.dmg); }));
@@ -2310,6 +2310,7 @@ function drawFoes(now, dt) {                  // the enemy (or enemies: a RUSH w
   if (!(twOn() && twFoeFx(now, () => drawDummy(now, dt)))) drawDummy(now, dt);      // (v1.176 the skyscraper: the enemy is SEEN falling through a hole, or standing on the floor you slide away from)
   if (vs && vs.cv) { curseProj(now, dt); drawProj(now); }
   if (freOn()) freWorld(now, dt);      // (v1.188 what the enemy Freddy threw: tools/fred4.js)
+  if (cuFoeOn()) cuenWorld(now, dt);      // (v1.189 what the enemy Sukuna or Ryu threw: tools/cuen.js)
 }
 function rushStep(now) {                      // every frame of a RUSH wave: the two keep apart, and when the one that was "the enemy" is down, the other becomes "the enemy" (so BLUE, RED and the rest go for him)
   const alive = vs.foes.filter(f => f.ko < 0).sort((a, b) => a.x - b.x);
@@ -3180,6 +3181,7 @@ function drawDummy(now, dt) {
     if (((reacting || kneel) && hitT < 70) || (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0)) src = whiteOf(src); }
   if (vs && vs.foe === 'cat') { const L = catLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox; oy = L.oy; }      // the enemy is the Cartoon Cat
   if (freOn()) { const L = freFoeLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox; oy = L.oy; }      // the enemy is Freddy (tools/fred4.js)
+  if (cuFoeOn() && cuFoeG()) { const L = cuenLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox; oy = L.oy; }      // the enemy is Sukuna or Ryu (tools/cuen.js)
   if (vs && vs.foe === 'cat' && dummy.cact && dummy.cact.type === 'toon' && kt < 0) pendingGiants.push({ who: 'foe', sx, ff: dummy.cact.fi, dir: mirror ? -1 : 1, inv: !!vs.inv });      // (his CARTOON ATTACK: his giant is drawn after you, then he himself on top of it: see drawGiantNow)
   if (ult && ult.who === 'player' && ult.held && !ult.rel && kt < 0) { const o = ultVictimOff(now); lift += o.lift; ox += o.ox; if (o.flash) src = whiteOf(src); }      // (held up by the Cat's glove and kneed: lifted, shaking, flashing white)
   if (dummy.del && now - dummy.del > 1700) return;      // deleted: nothing of him is left
@@ -3191,6 +3193,8 @@ function drawDummy(now, dt) {
   ctx.save();
   if (dummy.drag && kt < 0) {                 // v1.28 BLOOD DRAG: he lies flat on the floor, feet towards Verity, and is dragged by the feet
     ctx.translate(sx + 4, gy + 1 - Math.round(hx * 0.62) + ((now / 60) & 1)); ctx.rotate(1.5 + Math.sin(now / 70) * 0.02); ctx.scale(-1, 1); ctx.globalAlpha = 1; ctx.drawImage(src, -hx, -62);
+  } else if (kt >= 0 && cuFoeOn() && cuFoeG() && cuFoeG().ko.length) {            // v1.189 Ryu knocked out: his K.O. pictures (Sukuna has none: he topples)
+    const G_ = cuFoeG(); ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.globalAlpha = fade; let kp = G_.ko[Math.min(G_.ko.length - 1, Math.floor(kt * CU_KO_FPS / 1000))]; if (vs.inv && kp && kp.width) kp = invOf(kp); ctx.drawImage(kp, -32, gy + 2 - 62);
   } else if (kt >= 0 && freOn()) {            // v1.188 Freddy knocked out: his own K.O. pictures, the fall is in them (he does not topple like the others)
     ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.globalAlpha = fade; let kp = fredK(kt / 38); if (vs.inv && kp !== EMPTY && kp.width) kp = invOf(kp); ctx.drawImage(kp, -FRED_INFO.cx, gy + 2 - 62);
   } else if (kt >= 0) {                       // knocked out: he topples backwards about his feet, flickers, then fades away
@@ -3823,6 +3827,7 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
     const ox = orb ? orb.x1 : purple ? purple.x : null; if (ox !== null && Math.abs(d.x - ox) < 70) { d.x += (d.x >= ox ? 1 : -1) * 70 * dt; d.ai = 'walk'; return; }
   }
   if (vs.foe === 'freddy') { freFoe(now, dt, gap, ag, toward, G); return; }      // (v1.188 the enemy Freddy has his own brain: tools/fred4.js)
+  if (cuFoeOn()) { cuFoe(now, dt, gap, ag, toward, G); return; }      // (v1.189 so have the enemy Sukuna and Ryu: tools/cuen.js)
   // 3. a swing in progress (chained into a combo of up to G.combo hits)
   if (d.ai === 'attack') {
     const TB = vs.foe === 'yuji' ? YU_ATK : vs.foe === 'cat' ? CAT_ATK : null, Y = !!TB, cat = vs.foe === 'cat', f = Math.floor((now - d.aiAt) * (Y ? TB.fps : ATK_FPS)[d.k] * G.spd / 1000);
@@ -3952,12 +3957,14 @@ function fatSets(rev) {                                // the pictures of the at
   if (vk === 'verity') return { ...S, ...veVictim() };
   if (vk === 'cat') return { ...S, ...catVictim() };
   if (vk === 'freddy') return { ...S, ...freddyVictim() };
+  if (vk === 'cu3' || vk === 'cu4') return { ...S, ...cuVictim(+vk.slice(2)) };
   return rev ? { ...S, vF: idleF, vRx: rxN } : { ...S, vF: dumF, vRx: rxI };
 }
 let fat = null, fatReq = 0;                            // fat = the running cutscene (null when there is none); fatReq = until when a press of the FATALITY button is remembered
 const orbAt = (set, n, sx, sy, s) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));      // an orb frame centred on (sx, sy)
 function fatState(now) {                               // Gojo's FATALITY (and Verity's). 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far away; 3 = not possible right now
   if (vs && vs.me === 'cu4') return 3;      // (v1.166 Ryu has no FATALITY; before, his button played Gojo's)
+  if (cuFoeOn() && (vs.me === 'verity' || fredMe())) return 3;      // (v1.189 Verity's and Freddy's FATALITY have no version for the enemy Sukuna or Ryu yet; the others do)
   if (fredMe()) return ffState(now);      // (v1.185 Freddy's FATALITY: he eats the enemy, see fred3.js)
   if (!vs || vs.story || vs.cv || fredMe() || lacks('fat') || vs.ph !== 'fight' || js || vf || fat || yf || yu || (dom && domLock()) || ult || cf || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (v1.181 a DOMAIN no longer stops it: only its opening, while the controls are locked; fatGo ends the domain)      // (Verity and the Cat have their own FATALITY: the same rules; so has Yuji since v1.49, the 30-second one; Freddy has none yet, v1.52: his button used to play Gojo's FATALITY with Gojo in it)      // (no FATALITY in the story fight: his ending is a Reversal Red)
   if (!(dummy.hp <= dummy.max * FAT_LOW)) return 1;      // Gojo's FATALITY: only when the enemy is at 20% health or less
@@ -3965,7 +3972,7 @@ function fatState(now) {                               // Gojo's FATALITY (and V
   return hurtAt >= 0 || gojoGone ? 3 : 0;
 }
 function fatAiState(now) {                             // the enemy's own FATALITY on Gojo: from SEMI-GRADE 1 up, the moment Gojo is at 20% health or less and the enemy is close (no warning; being in the air, dashing or out of reach saves him)
-  if (!vs || vs.story || vs.foe === 'yuji' || vs.ph !== 'fight' || js || vf || fat || yf || dom || ult || cf || fd || ff || (dummy && dummy.fa) || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.cact || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
+  if (!vs || vs.story || vs.foe === 'yuji' || cuFoeOn() || (cuMe() && (vs.foe === 'verity' || vs.foe === 'freddy')) || vs.ph !== 'fight' || js || vf || fat || yf || dom || ult || cf || fd || ff || (dummy && dummy.fa) || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.cact || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
   return vs.hp <= PHP * FAT_LOW && Math.abs(dummy.x - wx) <= FAT_RANGE && !gojoGone && gojoLift <= 12 && dgAt < 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
 }
 function fatGo(now, dt, rev) { if (dom) domReset(); if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else if (rev ? vs.foe === 'cat' : vs.me === 'cat') { cfStart(now, rev); cfFrame(now, dt); } else if (!rev && vs.me === 'yuji') { yfStart(now); yfFrame(now, dt); } else if (rev ? vs.foe === 'freddy' : fredMe()) { ffStart(now, rev); ffFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's and the Cat's FATALITY are their own cutscenes)
@@ -5160,6 +5167,7 @@ function cfVictim(s, now) {      // the victim's picture while he stands there: 
   if (vk === 'gojo') return { img: idleF[ph % idleF.length], hx: D.idle.cx - D.idle.x0, top: D.idle.top || 0 };
   if (vk === 'yuji') return { img: YUF.norm.idle[ph % 15], hx: YU.idle.cx - YU.idle.x0, top: YU.idle.top || 0 };
   if (vk === 'verity') return { img: vfr('idle', now / 100, true, false), hx: 32, top: 0 };
+  if (vk === 'cu3' || vk === 'cu4') { const g = CU_GAME[+vk.slice(2)]; return { img: g.frames[ph % g.frames.length], hx: 32, top: 1 }; }      // (v1.189 Sukuna or Ryu as the victim)
   if (vk === 'freddy') { const im = fredF(ph); return { img: s.inv && im !== EMPTY && im.width ? invOf(im) : im, hx: FRED_INFO.cx - FRED_INFO.x0, top: FRED_INFO.top }; }      // (v1.52: Freddy, not a Cat; v1.188 inverted when he is the enemy of a Freddy)
   return { img: cfr('idle', now / 83, true, s.inv), hx: 32, top: 0 };
 }
@@ -5672,6 +5680,7 @@ function yfKit(foe) {
   if (foe === 'verity') return veVictim();
   if (foe === 'cat') return catVictim();
   if (foe === 'freddy') return freddyVictim();
+  if (foe === 'cu3' || foe === 'cu4') return cuVictim(+foe.slice(2));
   if (foe === 'yuji') return YFK || (YFK = victimKit(YUF.inv.idle, YUF.inv.rx, k => k < 0 ? YU.idle : YU.rx[k]));
   const inv = !!(vs && vs.inv);
   return { vF: inv ? dumF : idleF, vRx: inv ? rxI : rxN, vRxW: rxW, vW: dumW, vB: dumB, vi: k => k < 0 ? D.idle : D['rx' + k], fs: 1 };
@@ -6085,6 +6094,7 @@ YFS.freddy = {      // v1.188 FREDDY: his own version (the user: "make freddy an
   slow: [[17.4, 19.3, 0.45], [19.42, 20.62, 0.3]],
   cam: [[16.6, 1.4, 0.5, 0, 0], [17.6, 1.7, 0.3, 0, 0], [18.7, 2.0, 0.1, 0, 1], [19.15, 3.0, 0.1, 4, 1], [19.5, 2.4, 0.1, 0, 1], [19.95, 1.9, 0.1, -6, 1], [20.3, 1.6, 0.5, 0, 0], [21.2, 1.3, 0.55, 0, 0], [21.65, 1.9, 0.0, 0, 1], [23.5, 2.0, 0.0, 0, 1]], title: 21.45,
   screen: (s, now) => { ctx.globalAlpha = 0.6; for (let i = 0; i < 30; i++) { const h = Math.imul(i * 7919 + 13, 2246822519) >>> 0, x = Math.round(h % VW + Math.sin(now / 900 + i) * 6), y = VH - ((now / (22 + h % 20) + (h >> 8) % VH) % VH); ctx.fillStyle = i % 3 ? '#ff8a2a' : '#ffd34d'; ctx.fillRect(x, Math.round(y), i % 4 ? 1 : 2, 1); } ctx.globalAlpha = 1; } };
+YFS.cu3 = YFS.cu4 = { ...YFS.freddy, rim: '#ff2a3a', spk: ['#ff2a3a', '#ffb0b8', '#ffffff'], vcols: ['#ffffff', '#ff7a86', '#d02a3a'], screen: undefined };      // v1.189 Sukuna and Ryu as the enemy: the script made for Freddy (the order of the blows and the timing), in their own colours, without his embers
 YFS.yuji = {
   zb: 1.55, rim: '#7df4ff', spk: ['#7df4ff', '#ffffff'], vcols: ['#ffffff', '#7df4ff', '#2fc3e6'], glass: true,
   beats: [
@@ -7655,7 +7665,7 @@ const GSTAT = { builds: 0, fly: 0, hits: 0, rips: 0 };      // (counters for the
 const GB = { p: goreBody(), f: goreBody() };
 function goreBody() { return { dm: { an: 0, af: 0, lf: 0, lb: 0, sn: 0, sf: 0, ch: 0, bl: 0, hd: 0 }, st: { an: 0, af: 0, lf: 0, lb: 0 }, hurt: { ch: 0, bl: 0, hd: 0 }, last: null, bleedAt: 0, coughAt: 0, pend: [], flash: 0, dripAt: 0, kind: '', rc: {}, rcOn: false, rcp: [], rcAt: -1e9, rcMt: 0, rcRun: 0, late: [], glowUntil: 0 }; }
 function goreReset() { GB.p = goreBody(); GB.f = goreBody(); goreAft = null; }
-const gdKind = side => !vs ? null : side === 'p' ? (cuMe() ? (vs.me === 'cu3' ? 'sukuna' : null) : vs.me) : (dummy && dummy.mode === 'fighter' && !dummy.curse && !dummy.net ? vs.foe : null);
+const gdKind = side => !vs ? null : side === 'p' ? (cuMe() ? (vs.me === 'cu3' ? 'sukuna' : null) : vs.me) : (dummy && dummy.mode === 'fighter' && !dummy.curse && !dummy.net ? (vs.foe === 'cu3' ? 'sukuna' : vs.foe === 'cu4' ? null : vs.foe) : null);
 function gdActive(side) { return !!vs && !vs.story && !vs.net && gdSet() < 2 && !!GD[gdKind(side)]; }
 const gdBall = side => side === 'p' && gdKind('p') === 'verity' && !!vp && vp.form !== 'verity';      // (Verity as the smoke ball: no limbs to lose, none of the rules applies; ATTACK is his TALK)
 const gdLive = () => !!vs && !vs.story && gdSet() < 2 && (gibs.length > 0 || decals.length > 0 || drops.length > 0);      // (the street's blood and pieces are drawn and moved in a match too)
@@ -19286,8 +19296,8 @@ function startPractice(who, foe) {      // FREE PLAY as Yuji, Verity or the Cat:
 }
 function twFightStart() { twWant = twPick === 1; }      // (v1.173 the MAP chosen on the screens is read by startMatch)
 // ---------------------------------------------------------------- v1.24 THE TRAIN PAGE of SETTINGS (free play only: the rooms of Yuji, Verity and the Cat, and Gojo's free play): options to control the match and the enemy. The "ENEMY: DUMMY / FIGHTS BACK" button of v1.14 is the first option now. ENEMY (what he does: DUMMY, FIGHTS BACK, BLOCKS, DODGES, WALKS TO YOU, BACKS AWAY), ENEMY HEALTH (NORMAL, INFINITE, LOW 10%), YOUR HEALTH and YOUR ENERGY (INFINITE or NORMAL), ENEMY LEVEL (the six grades: how well he fights back), ENEMY IS (Gojo, Yuji, Verity or the Cat: the room starts again), ENEMY ARMOR (no flinch / no push), GAME SPEED (100%, 50%, 25%), DAMAGE METER and MOVE INFO (two overlays), and three buttons: PUT ENEMY (close, mid, far), RESET ENEMY and RESET METER. Everything is off or as before by default.
-const TRF = ['gojo', 'yuji', 'verity', 'cat', 'freddy'], TRS = [1, 0.5, 0.25];
-const TRV = { beh: ['DUMMY', 'FIGHTS BACK', 'BLOCKS', 'DODGES', 'WALKS TO YOU', 'BACKS AWAY'], ehp: ['NORMAL', 'INFINITE', 'LOW (10%)'], php: ['INFINITE', 'NORMAL'], pce: ['INFINITE', 'NORMAL'], grade: GRADES.map(g => g.name), foe: ['GOJO', 'YUJI', 'VERITY', 'CAT', 'FREDDY'], arm: ['OFF', 'NO FLINCH', 'NO FLINCH, NO PUSH'], spd: ['100%', '50%', '25%'], meter: ['OFF', 'ON'], info: ['OFF', 'ON'], put: ['CLOSE', 'MID', 'FAR'] };
+const TRF = ['gojo', 'yuji', 'verity', 'cat', 'freddy', 'cu3', 'cu4'], TRS = [1, 0.5, 0.25];
+const TRV = { beh: ['DUMMY', 'FIGHTS BACK', 'BLOCKS', 'DODGES', 'WALKS TO YOU', 'BACKS AWAY'], ehp: ['NORMAL', 'INFINITE', 'LOW (10%)'], php: ['INFINITE', 'NORMAL'], pce: ['INFINITE', 'NORMAL'], grade: GRADES.map(g => g.name), foe: ['GOJO', 'YUJI', 'VERITY', 'CAT', 'FREDDY', 'SUKUNA', 'RYU'], arm: ['OFF', 'NO FLINCH', 'NO FLINCH, NO PUSH'], spd: ['100%', '50%', '25%'], meter: ['OFF', 'ON'], info: ['OFF', 'ON'], put: ['CLOSE', 'MID', 'FAR'] };
 const TR = { beh: 0, ehp: 0, php: 0, pce: 0, grade: 0, foe: 0, arm: 0, spd: 0, meter: 0, info: 0, put: 0, born: -1, hpPrev: 0, xHold: 0, hitSeen: -1e9, log: [], total: 0, last: 0, best: 0 };
 function trLog(n, now) { TR.log.push([now, n]); if (TR.log.length > 80) TR.log.shift(); TR.last = n; TR.total += n; }
 function trainStep(now, dt) {      // every frame of free play, before the picture is drawn
@@ -19371,7 +19381,7 @@ function fsWhy(mode, side, who) {
   const cu = who === 'cu3' || who === 'cu4';
   if (mode === 'wifi') return LAN_FIGHTERS.includes(who) ? '' : 'NOT ONLINE';
   if (mode === 'train') return side === 0 ? (who === 'cu3' && !suHas() ? 'LOCKED' : '') : TRF.includes(who) ? '' : 'NOT AS ENEMY';      // (Sukuna is bought for $3000; the training enemy is Gojo, Yuji, Verity or the Cat, see TRF)
-  if (cu) return 'TRAINING ONLY';      // (Sukuna and Ryu have no rounds, K.O. or enemy brain yet)
+  if (cu) return who === 'cu3' && !suHas() ? 'LOCKED' : '';      // (v1.189 Sukuna and Ryu fight in Battle too, on both sides; Sukuna is still bought for $3000)
   return who !== 'gojo' && !owns(who) ? 'LOCKED' : '';      // (bought on the SKILLS page, like before)
 }
 const FS_BADGE = { 'LOCKED': 'LOCKED', 'TRAINING ONLY': 'TRAIN<br>ONLY', 'NOT AS ENEMY': 'NOT AS<br>ENEMY', 'NOT ONLINE': 'NOT<br>ONLINE' };
@@ -20122,9 +20132,196 @@ function freDreamRev(now, dt) {      // every frame of the nightmare he gives yo
   return true;
 }
 
+// ---------------------------------------------------------------- v1.189 SUKUNA AND RYU AS ENEMIES (this file is spliced into template.html by build_html.py, after fred4.js; updateFighterVs, drawDummy and drawFoes in template.html call it). The user: "make sukuna in the fighting mode and not just the training mode" and, asked, "play him and fight him" and "Sukuna and Ryu". Both were fighters of the custom engine (tools/custom.js) that only a player could be; here they are enemies too. Their blows are DATA (CU_GAME[n].atk: the pictures of each blow, .ev: its events, .set: its speed and step), so the enemy plays them from the same data: the pictures at the speed of the blow, and every IMPACT event of a blow hurts you through gojoHit with the damage of the event (each impact gets an attack number from 100 on, see cuenReg), so your guard, crouch, jump, dash, the grade damage and the energy rules work on them as on every enemy. The moves that are code and not data (Sukuna's AIR CUT, fire arrow and Malevolent Shrine, Ryu's ki blast and beam) have enemy versions of their own below.
+const cuFoeOn = () => !!vs && typeof vs.foe === 'string' && vs.foe.slice(0, 2) === 'cu' && !vs.net && !vs.story && !!dummy && dummy.mode === 'fighter';      // is Sukuna or Ryu the enemy of this fight?
+const cuFoeG = () => CU_GAME[+vs.foe.slice(2)];
+// 1. THE NUMBERS: every IMPACT (and every SHOT) event of the 25 blows of Sukuna and the 19 of Ryu gets an attack number from 100 on (the tables ATK_FPS, DMG, KNOCK, KNOCK_G, REACH, KICKS and CU_EXTRA, which gojoHit reads), and the special moves of part 4 get theirs (CUEN_X). Made the first time an enemy of this kind is there, because the fighters' pictures are cut when their sheets have loaded.
+let cuenOk = false, cuenK = 100; const CUEN_X = {};
+function cuenMods(e) { const o = {}; for (const [t, a, b, c] of (e.fx || [])) { if ('ktlqbry'.indexOf(t) < 0 || c) continue; if (t === 'k') o.knock = a; else if (t === 't') o.stun = a; else if (t === 'l') o.launch = a; else if (t === 'q') o.gb = true; else if (t === 'b') o.bleed = [a, b]; } return o; }
+function cuenReg() {
+  if (cuenOk) return true; const gs = [CU_GAME[3], CU_GAME[4]]; if (!gs[0] || !gs[1] || !gs[0].ev || !gs[1].ev) return false;
+  const reg = (kk, dm, kn, ex) => { ATK_FPS[kk] = 30; ATK_SWING[kk] = 1; ATK_IMPACT[kk] = 1; DMG[kk] = dm; KNOCK[kk] = 20; KNOCK_G[kk] = kn; REACH[kk] = 40; CU_EXTRA[kk] = ex || {}; };
+  gs.forEach((g, gi) => {
+    const nm = 'cu' + (gi + 3); KICKS[nm] = [];
+    g.ev.forEach((ev, k) => ev.forEach(e => { if (e.k !== 'i' && e.k !== 'o') return; const o = cuenMods(e); e.gk = cuenK++; reg(e.gk, e.d, o.knock ? o.knock * 6 : Math.min(120, 9 + e.d * 2), { nb: !!o.gb, heavy: !!o.launch }); if (/KICK/.test(g.an[k]) || e.low) KICKS[nm].push(e.gk); }));
+  });
+  CUEN_X.aircut = cuenK++; reg(CUEN_X.aircut, 10, 40); CUEN_X.arrow = cuenK++; reg(CUEN_X.arrow, 4, 50); CUEN_X.blast = cuenK++; reg(CUEN_X.blast, 12, 70); CUEN_X.beam = cuenK++; reg(CUEN_X.beam, 6, 30);
+  cuenOk = true; return true;
+}
+// 2. HIS LOOK: the picture and its place for what the enemy Sukuna or Ryu is doing, for drawDummy (the pictures are 64 x 64, his middle at column 32, the same ones you see when you play him)
+const CUEN_INFO = { w: 64, h: 64, cx: 32, x0: 0, top: 1 };
+function cuenMove(g, k) { return { fr: g.atk[k], st: g.set[k], ms: 1000 / (g.set[k].v * GRADES[vs.gi].spd) }; }
+function cuenLook(now, reacting, hitT, kt) {
+  const d = dummy, g = cuFoeG(); let src, lift = 0, ox = 0, oy = 0; const idle = () => g.frames[Math.floor(Math.max(0, now - d.born) / (1000 / IDLE_FPS)) % g.frames.length];
+  if (kt >= 0) src = idle();      // (beaten: drawDummy draws his K.O. pictures when he has some, else he topples like the others)
+  else if (d.fa) { const L = cuenActLook(now, g); src = L.src; lift = L.lift || 0; }
+  else if (d.airH > 0) { const hs = g.hus[4], fr = hs ? hs.f : g.hu; src = fr[Math.min(fr.length - 1, 6)] || idle(); }      // (thrown up by the UPPERCUT: the picture of the big fall)
+  else if (reacting) { const hs = g.hus[d.rx], fr = hs ? hs.f : g.hu; src = fr.length ? fr[Math.min(fr.length - 1, Math.floor((now - d.rxAt) * fr.length / RX_DUR[d.rx]))] : idle(); }
+  else if (d.ai === 'block') { const t = now - d.aiAt; src = g.bl.length ? g.bl[Math.min(g.bl.length - 1, Math.floor(t * BLK_FPS / 1000))] : idle(); }
+  else if (d.ai === 'dodge') { const t = now - d.aiAt, fr = g.db.length ? g.db : g.df; src = fr.length ? fr[Math.min(fr.length - 1, Math.floor(t * fr.length / 300))] : idle(); }
+  else if (d.ai === 'walk') { const fr = (d.walkDir > 0 && g.wbk && g.wbk.length) ? g.wbk : g.walk; src = fr.length ? fr[Math.floor(now * (g.wf || 12) / 1000) % fr.length] : idle(); }
+  else src = idle();
+  if (vs.inv && src && src.width) src = invOf(src);      // (a mirror match: the enemy has the inverted colours)
+  if ((reacting || d.air) && hitT < 70 && src && src.width) src = whiteOf(src);
+  return { src, info: CUEN_INFO, lift, ox, oy };
+}
+// 3. HIS BRAIN, called by updateFighterVs after the part every enemy shares (stun, hurt, your swing read, dodge and block)
+const CUEN = {
+  3: { chain: [0, 1, 2], far: [6, 7, 6, 8], farCd: 1100 },      // Sukuna: R.JAB, L.JAB, FACE KICK; from afar (beyond SU_NEAR) his M1 throws slashes, as when you play him
+  4: { chain: [0, 1, 0, 1, 6, 7, 4, 2], far: [], farCd: 0, power: 8, combo: 10, dash: 11 }      // Ryu: hooks, hard punch, front kick, leg kick, kick up; and POWER PUNCH, the 5-HIT COMBO and the DASH KICK now and then
+};
+function cuenReach(g, k) {      // how far blow k reaches (the shortest of its impacts), against your body
+  const B = hbBody(hbMe()); let r = 1e9; for (const e of g.ev[k]) if (e.k === 'i' && e.tip && B) r = Math.min(r, hbGap(e.tip, B, e.dy)); return r < 1e8 ? r : 36;
+}
+function cuFoe(now, dt, gap, ag, toward, G) {
+  const d = dummy, g = cuFoeG(), n = +vs.foe.slice(2); if (!g || !cuenReg()) { d.ai = 'think'; return; }
+  if (d.fa) { cuenAct(now, dt, gap, ag, toward, G, g, n); return; }
+  if (d.ai === 'rest') { if (now - d.aiAt > d.restFor && now - d.born > 900) d.ai = 'think'; else return; }
+  if (cuenSpecialTry(now, gap, ag, G, g, n)) return;
+  const P = CUEN[n], near = cuenReach(g, P.chain[0]) - 2; d.walkDir = toward;
+  const want = G.smart >= 3 ? Math.max(near - 4, Math.max(...[0, 1, 2, 3].map(pMove)) + 8) : near - 5; let move = 0;
+  if (ag > want + 4) move = toward; else if (G.smart >= 3 && ag < want - 6 && ag > 20) move = -toward;
+  const hold = G.smart >= 1 && atkAt >= 0 && gap > 0 && ag <= pMove(vs.seenK) + 4 && now < atkAt + pImpMs(vs.seenK) && !(vs.rolled && !vs.defended);
+  const punish = G.smart >= 2 && vs.whiffAt > 0 && now - vs.whiffAt < 450 && gap > 0 && ag < near + 8 && Math.random() < [0, 0, 0.25, 0.5, 0.8, 1][vs.gi] * dt * 14;
+  const counter = G.smart >= 2 && d.counter && now - d.counter < 500 && gap > 0 && ag < near + 8;
+  let go = punish || counter, k = -1;
+  if (!go && !hold && now >= (d.nextDecide || 0) && gap > -4) {
+    d.nextDecide = now + 250;
+    if (ag <= near) { if (Math.random() < G.aggr) { go = true; k = cuenPickNear(now, g, n, G, ag); } }
+    else if (n === 3 && ag > 60 && ag <= 210 && now >= (d.farAt || 0) && Math.random() < G.aggr * 0.7) { go = true; k = P.far[(Math.random() * P.far.length) | 0]; d.farAt = now + P.farCd + Math.random() * 700; }
+    else if (n === 4 && P.dash && ag > near + 10 && ag <= 130 && now >= (d.dashAt || 0) && Math.random() < G.aggr * 0.5) { go = true; k = P.dash; d.dashAt = now + 3500 + Math.random() * 2000; }
+  }
+  if (go) { if (k < 0) k = P.chain[(d.cuC = (d.cuC | 0) + 1) % P.chain.length]; d.chain = 0; cuenStart(k, now, 'cu'); return; }
+  if (move) { d.x += move * FOE_WALK * G.spd * dt * (n === 4 ? 1.2 : 1); d.ai = 'walk'; } else d.ai = 'think';
+}
+function cuenPickNear(now, g, n, G, ag) {      // which blow at arm's length: the next of the chain, now and then one of Ryu's big ones (each has its own wait)
+  const P = CUEN[n], r = Math.random(), d_ = dummy;
+  if (n === 4) {
+    if (G.smart >= 1 && r < 0.12 && now >= (d_.pwAt || 0)) { d_.pwAt = now + g.set[P.power].d * 1000 * 3 + 2500; return P.power; }
+    if (vs.gi >= 2 && r < 0.2 && now >= (d_.cbAt || 0)) { d_.cbAt = now + 6000; return P.combo; }
+  }
+  return P.chain[(d_.cuC = (d_.cuC | 0) + 1) % P.chain.length];
+}
+function cuenStart(k, now, type, extra) {
+  const d = dummy, g = cuFoeG(); d.held = null; d.counter = 0; d.ai = 'think'; d.aiAt = now; d.vx = 0; d.fa = { type, k, at: now, fired: [], lg: 0, ...extra };      // (d.chain, how many blows of the chain he has thrown, is kept)
+  if (type === 'cu') { const m = cuenMove(g, k); d.fa.dur = m.fr.length * m.ms; snd('swing', k); }
+  else if (type === 'aircut') d.fa.ms = 1000 / (30 * GRADES[vs.gi].spd) * g.atk[k].length;
+  else if (type === 'blast') d.fa.ms = 1000 / (26 * GRADES[vs.gi].spd) * g.atk[k].length;      // (the length of the two moves that play the pictures of a blow: set at once, the picture is asked for in the same frame)
+}
+// the blows: the pictures at the speed of the blow, the step of the blow, and every event when its picture comes up
+function cuenAct(now, dt, gap, ag, toward, G, g, n) {
+  const d = dummy, a = d.fa;
+  if (a.type !== 'cu') { cuenSpecialAct(now, dt, gap, ag, toward, G, g, n, a); return; }
+  const m = cuenMove(g, a.k), nF = m.fr.length, ap = (now - a.at) / (nF * m.ms), fi = ap >= 1 ? nF : Math.floor(ap * nF) + 1, st = m.st;
+  if (st.m) { const u = Math.min(1, ap / (st.lt || 1)), tg = st.m * (st.e ? 1 - (1 - u) * (1 - u) : u), dx = tg - a.lg; a.lg = tg; if (ag > 16) d.x += toward * dx; }      // (the step of the blow, not through you)
+  g.ev[a.k].forEach((e, j) => { if (!a.fired[j] && e.f <= fi) { a.fired[j] = 1; cuenEv(e, now, gap, ag, toward, g, a.k); } });
+  if (ap >= 1) { d.fa = null; const P = CUEN[n]; d.chain = (d.chain || 0) + 1;
+    const nk = P.chain[(d.cuC = (d.cuC | 0) + 1) % P.chain.length];
+    if (P.chain.includes(a.k) && d.chain < G.combo && Math.random() < 0.8 && ag <= cuenReach(g, nk) - 2 && !(G.smart >= 2 && atkAt >= 0 && gap > 0 && ag <= pMove(atkK) + 4)) cuenStart(nk, now, 'cu');
+    else { d.ai = 'rest'; d.aiAt = now; d.restFor = (430 + Math.random() * 600) / (0.45 + G.aggr * 0.9); d.chain = 0; } }
+}
+function cuenEv(e, now, gap, ag, toward, g, k) {      // one event of the blow comes up
+  const d = dummy, o = cuenMods(e);
+  if (e.k === 'i') {
+    const B = hbBody(hbMe()), reach = e.tip && B ? hbGap(e.tip, B, e.dy) : 36; if (!(ag <= reach && gap > -4)) return;
+    snd('f:hit', e.d >= 20 ? 3 : 0); const h = hurtAt; gojoHit(e.gk, now); if (hurtAt === h) return;
+    if (o.launch && !gAir) { gAir = airMake(now, 0, Math.sqrt(2 * AIR_G * o.launch), AIR_G, 'up'); hurtK = AIR_RX; }
+    if (o.stun) pStun = Math.max(pStun, now + o.stun * 1000);
+    if (o.bleed) vs.bleed = { until: now + o.bleed[1] * 1000, next: now + 100 };
+  } else if (e.k === 'o') {      // a SHOT (Sukuna's slashes): it leaves his hand at the height of the fist and flies at you
+    const vk = e.vk === undefined ? k : e.vk, vf = g.vfx[vk]; if (!vf || !vf.length) return; (d.cs = d.cs || []).push({ x: d.x - toward * -10, x0: d.x, dir: toward, v: typeof e.sp === 'function' ? e.sp() : (e.sp || 300), gk: e.gk, vf, at: now });
+  }
+}
+// 4. THE SPECIAL MOVES (code in the player's version, so each has a small enemy version here). Sukuna: AIR CUT (a slash that cuts you and makes you bleed), the fire arrow (the long cast, then an arrow that burns you), MALEVOLENT SHRINE (his domain: 6 seconds of cuts). Ryu: the ki blast and the beam of JUST THIS ONCE. A blow of yours ends the move he is making.
+const CUEN_SP = { 3: { aircut: [5000, 0], arrow: [12000, 2], dom: [35000, 3] }, 4: { blast: [4000, 0], beam: [32000, 3] } };      // [cooldown ms, first grade index]
+function cuenSpecialTry(now, gap, ag, G, g, n) {
+  const d = dummy; if (now < (d.spNext || 0) || gap < -4 || vs.ph !== 'fight' || now - d.born < 1500) return false; d.spNext = now + 350 + Math.random() * 450; const r = Math.random(), gi = vs.gi, S = CUEN_SP[n]; d.sp = d.sp || {};
+  const ok = k => gi >= S[k][1] && now >= (d.sp[k] === undefined ? d.born + (k === 'dom' || k === 'beam' ? 15000 : 0) : d.sp[k]);
+  if (n === 3) {
+    if (ok('dom') && ag <= 200 && r < 0.25 && !dom && !fd && !ult) { d.sp.dom = now + S.dom[0]; cuenStart(0, now, 'dom'); return true; }
+    if (ok('arrow') && ag >= 80 && ag <= 280 && r < 0.2) { d.sp.arrow = now + S.arrow[0]; cuenStart(22, now, 'arrow'); return true; }
+    if (ok('aircut') && ag >= 30 && ag <= 220 && r < 0.4) { d.sp.aircut = now + S.aircut[0]; cuenStart(9, now, 'aircut'); return true; }
+  } else {
+    if (ok('beam') && ag <= 300 && r < 0.2 && !dom && !fd && !ult) { d.sp.beam = now + S.beam[0]; cuenStart(16, now, 'beam'); return true; }
+    if (ok('blast') && ag >= 90 && ag <= 320 && r < 0.3) { d.sp.blast = now + S.blast[0]; cuenStart(12, now, 'blast'); return true; }
+  }
+  return false;
+}
+function cuenActLook(now, g) {
+  const a = dummy.fa, t = now - a.at;
+  if (a.type === 'cu') { const m = cuenMove(g, a.k), ap = Math.min(0.999, t / (m.fr.length * m.ms)), fi = Math.min(m.fr.length - 1, Math.floor(ap * m.fr.length)); return { src: m.fr[fi], lift: g.al && g.al[a.k] ? g.al[a.k][Math.min(g.al[a.k].length - 1, Math.floor(ap * g.al[a.k].length))] : 0 }; }
+  const fr = g.atk[a.k], N = fr.length;
+  if (a.type === 'arrow') return { src: fr[suPicAt(SU_FL.T, Math.min(t, SU_FL.end - 1))] };
+  if (a.type === 'dom') return { src: fr[Math.min(N - 1, Math.floor(Math.min(1, t / 1900) * N))] };
+  if (a.type === 'beam') return { src: fr[Math.min(N - 1, Math.floor(Math.min(1, t / 1500) * N))] };
+  return { src: fr[Math.min(N - 1, Math.floor(t / a.ms * N))] };      // aircut, blast: the blow's own pictures
+}
+function cuenSpecialAct(now, dt, gap, ag, toward, G, g, n, a) {
+  const d = dummy, t = now - a.at;
+  if (a.type === 'aircut') {
+    a.ms = 1000 / (30 * G.spd) * g.atk[9].length; if (!a.hit && t >= a.ms * SU_BLUE.cut.hit / g.atk[9].length) { a.hit = true; snd('swing', 9); const h = hurtAt; if (ag <= 230) gojoHit(CUEN_X.aircut, now); if (hurtAt !== h) { vs.bleed = { until: now + 2000, next: now + 100 }; spark(wx, gy - 30, 10, ['#ffffff', '#ff2a3a', '#ffb0b8'], false, -toward); } }
+    if (t >= a.ms) cuenEnd(now);
+  } else if (a.type === 'arrow') {
+    if (!a.shot && t >= SU_FL.T[13]) { a.shot = true; snd('swing', 3); (d.ca = d.ca || []).push({ x: d.x - toward * -14, x0: d.x, dir: toward, at: now }); }
+    if (t >= SU_FL.end) cuenEnd(now);
+  } else if (a.type === 'dom') {      // the sign for 1.9 s, then the shrine opens: a cut across you every 0.5 s for 6 s (about 3 health, times the damage of the grade), no guard stops it
+    if (t >= 1900 && t - (a.tick || 1900) >= 500 && t < 7900) { a.tick = t; vsHurt(Math.max(1, Math.round(3 * G.dmg)), now); spark(wx, gy - 28 - ((Math.random() * 20) | 0), 8, ['#ffffff', '#ff2a3a', '#ffb0b8'], false, Math.random() < 0.5 ? 1 : -1); snd('hit', 1); shakeUntil = now + 90; shakeAmp = 1; }
+    if (t >= 7900 || vs.ph !== 'fight') cuenEnd(now);
+  } else if (a.type === 'blast') {
+    a.ms = 1000 / (26 * G.spd) * g.atk[12].length; if (!a.shot && t >= a.ms * 7 / g.atk[12].length) { a.shot = true; snd('swing', 3); (d.cb = d.cb || []).push({ x: d.x - toward * -16, x0: d.x, dir: toward, at: now }); }
+    if (t >= a.ms) cuenEnd(now);
+  } else if (a.type === 'beam') {      // JUST THIS ONCE: the stance for 1.5 s (the screen darkens), then the beam for 1.3 s that hits you every 0.13 s, as long as you stand in front of him
+    if (t >= 1500 && t < 2800 && t - (a.tick || 1500) >= 130) { a.tick = t; if (ag <= 330 && gap > -4) gojoHit(CUEN_X.beam, now); }
+    if (t >= 2800 || vs.ph !== 'fight') cuenEnd(now);
+  }
+}
+function cuenEnd(now) { const d = dummy; d.fa = null; d.ai = 'rest'; d.aiAt = now; d.restFor = 500 / (0.45 + GRADES[vs.gi].aggr * 0.9); }
+// 5. WHAT HE THREW, once a frame (drawFoes calls it): the slashes, the fire arrows (they burn you: 1 health every 0.5 s for 8 s), the ki blasts, and the picture of the domain and the beam
+function cuenWorld(now, dt) {
+  const d = dummy, g = cuFoeG(), cx = Math.round(VW / 2); if (!g) return; const on = vs.ph === 'fight' && d.ko < 0;
+  const hitP = (list, kk, spark_) => { for (const s of list) { if (!on) { s.done = 1; continue; } if (s.dir * (wx - s.x) < 10) { s.done = 1; const h = hurtAt; gojoHit(kk(s), now); spark_(s, hurtAt !== h); } else if (Math.abs(s.x - s.x0) > 460) s.done = 1; } };
+  if (d.cs) {
+    for (const s of d.cs) { s.x += s.dir * s.v * dt; const sx = cx + Math.round(s.x - wx); ctx.save(); ctx.translate(sx, 0); ctx.scale(-s.dir, 1); ctx.drawImage(s.vf[Math.floor(now / 80) % s.vf.length], -32, gy - 62, 64, 64); ctx.restore(); }
+    hitP(d.cs, s => s.gk, (s, hit) => { if (hit) spark(wx, gy - 30, 6, ['#ffffff', '#ff2a3a'], false, -s.dir); }); d.cs = d.cs.filter(s => !s.done);
+  }
+  if (d.ca) {
+    for (const s of d.ca) { s.x += s.dir * SU_FL.arrow.speed * dt; const sx = cx + Math.round(s.x - wx), y = gy - 39; ctx.fillStyle = 'rgba(255,150,34,0.35)'; ctx.fillRect(sx - s.dir * 30 - 6, y - 5, 30, 10); ctx.fillStyle = '#ff9622'; ctx.fillRect(sx - 6, y - 4, 12, 8); ctx.fillStyle = '#fff0c0'; ctx.fillRect(sx - 3, y - 2, 6, 4); for (let i = 0; i < 4; i++) { ctx.fillStyle = i % 2 ? '#ff7408' : '#ffd27a'; ctx.fillRect(sx - s.dir * (10 + i * 7), y - 3 + (((now / 60 + i) | 0) % 3), 6, 2); } }
+    hitP(d.ca, () => CUEN_X.arrow, (s, hit) => { spark(wx, gy - 38, 12, SU_FL.cols, false, -s.dir); if (hit) { vs.fburn = { until: now + SU_FL.burn.ms, next: now + SU_FL.burn.gap }; say('BURNING', wx, '#ff9a3a', 8, now + 120); } }); d.ca = d.ca.filter(s => !s.done);
+  }
+  if (d.cb) {
+    for (const s of d.cb) { s.x += s.dir * 420 * dt; const sx = cx + Math.round(s.x - wx), y = gy - 30; ctx.fillStyle = 'rgba(120,200,255,0.4)'; ctx.fillRect(sx - 7, y - 7, 14, 14); ctx.fillStyle = '#7aa0ff'; ctx.fillRect(sx - 5, y - 5, 10, 10); ctx.fillStyle = '#e8f4ff'; ctx.fillRect(sx - 3, y - 3, 6, 6); ctx.fillStyle = 'rgba(160,210,255,0.5)'; ctx.fillRect(sx - s.dir * 18, y - 1, 12, 2); }
+    hitP(d.cb, () => CUEN_X.blast, (s, hit) => { spark(wx, gy - 30, 10, ['#e8f4ff', '#7aa0ff', '#ffffff'], false, -s.dir); }); d.cb = d.cb.filter(s => !s.done);
+  }
+  const a = d.fa;
+  if (a && a.type === 'dom') { const t = now - a.at; if (t >= 1900) { ctx.fillStyle = 'rgba(150,6,24,' + (Math.min(0.38, (t - 1900) / 1000)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); ctx.fillStyle = 'rgba(255,255,255,0.55)'; for (let i = 0; i < 5; i++) { const h = Math.imul(i * 7919 + ((now / 90) | 0) * 104729, 2246822519) >>> 0; ctx.fillRect(h % VW, (h >> 9) % VH, 30 + (h >> 4) % 90, 1); } } }
+  if (a && a.type === 'beam') { const t = now - a.at; if (t < 1500) { ctx.fillStyle = 'rgba(0,0,0,' + (0.35 * Math.min(1, t / 700)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); } else if (t < 2800) { const sx = cx + Math.round(d.x - wx), th = 22 + Math.round(Math.sin(now / 35) * 3); ctx.fillStyle = 'rgba(120,180,255,0.5)'; ctx.fillRect(0, gy - 31 - th / 2 - 3, sx - 8, th + 6); ctx.fillStyle = '#cfe6ff'; ctx.fillRect(0, gy - 31 - th / 2, sx - 8, th); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, gy - 31 - 4, sx - 8, 8); } }
+  if (vs.fburn) { const b = vs.fburn; if (vs.ph !== 'fight') vs.fburn = null; else { while (vs.fburn && b.next <= now && b.next <= b.until) { vsHurt(SU_FL.burn.dmg, b.next); b.next += SU_FL.burn.gap; } if (now >= b.until) vs.fburn = null; } }
+  freBleed(now);
+}
+// 6. AS A VICTIM: the picture kit the fatalities use (his idle with a white and a blue copy, and the ten reactions of 15 pictures: his own hurt pictures, spread over the 15)
+const CUV = {};
+function cuVictim(n) {
+  if (CUV[n]) return CUV[n]; const g = CU_GAME[n]; if (!g || !g.frames.length) return victimKit(Array.from({ length: 15 }, () => EMPTY), Array.from({ length: 10 }, () => Array.from({ length: 15 }, () => EMPTY)), () => CUEN_INFO);
+  const rx = Array.from({ length: 10 }, (_, k) => { const f = g.hus && g.hus[k] ? g.hus[k].f : g.hu; return Array.from({ length: 15 }, (_, i) => f.length ? f[Math.min(f.length - 1, Math.floor(i * f.length / 15))] : g.frames[i % g.frames.length]); });
+  return CUV[n] = victimKit(g.frames.slice(0, 15), rx, () => CUEN_INFO);
+}
+
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+ {
+  "v": "1.189",
+  "t": "SUKUNA AND RYU FIGHT IN BATTLE, ON BOTH SIDES",
+  "n": [
+   "You said: make Sukuna in the fighting mode and not just the training mode. You chose: play him AND fight him, and Ryu too. The picker no longer says TRAINING ONLY: Sukuna (still bought for $3000 on the SKILLS page, on both sides) and Ryu can be YOUR fighter in Battle (best of 3 rounds, K.O., results, rematch) and the ENEMY in Battle and in Training. Not in the Wi-Fi fight.",
+   "THE ENEMY SUKUNA: R.JAB, L.JAB and FACE KICK up close; from beyond 60 px his M1 throws slashes (R.SLASH, L.SLASH, X SLASH) as when you play him; the AIR CUT (a slash that cuts you and makes you bleed for 2 seconds); from GRADE 2 up the fire arrow (a long cast you can interrupt, then an arrow that burns you for 8 seconds); from SEMI-GRADE 1 up his domain, MALEVOLENT SHRINE (the sign, then 6 seconds of cuts across you, about 3 health every half second, nothing blocks them, a blow of yours ends it).",
+   "THE ENEMY RYU: hooks, hard punch, front kick, leg kick, kick up, now and then the POWER PUNCH, the 5-HIT COMBO and the DASH KICK, a ki blast from afar, and from SEMI-GRADE 1 up JUST THIS ONCE: the stance, then a beam that hits you ten times (your guard, jump and dash decide what reaches you). He has his own K.O. pictures.",
+   "Their blows are the same data the game plays when you are Sukuna or Ryu (pictures, speed, step and every IMPACT with its damage), so your guard, crouch, jump, dash and the grade damage work on them as on every enemy.",
+   "FATALITIES: Gojo's and the Cat's fatality on you as Sukuna or Ryu now show YOU (they showed a Gojo or a Cat), and Gojo's, the Cat's and Yuji's on them as enemies work (Yuji's uses the script made for Freddy, in their colours). Verity's and Freddy's fatality have no version for them yet: the button stays dark against them, and the enemy Verity and Freddy do not do theirs on you as Sukuna or Ryu (Freddy's Nightmare does work).",
+   "NOT DONE: the enemy versions of Sukuna's DISMANTLE (time stop), LEG CUT, CUT STORM, DASH SLASH, CLEAVE moves and flame mode, and Ryu's other blasts; they have no fatality of their own as enemies. Bot duels (a bot plays Gojo against them at three grades): the enemy Sukuna hurts it for about 50, 60 and 280 of its 300 health at GRADE 3, SEMI-GRADE 1 and SPECIAL GRADE, the enemy Ryu for about 10, 130 and 275 (Yuji 14 / 134 / 296, the Cat 166 / 291 / 279): they are on the soft side in the middle, tell me if you want them harder.",
+   "The game scan now plays matches with Sukuna and Ryu on both sides, three fighters' fatality on them, the enemy fatalities and nightmare on them, and every special move of theirs: 23,254 checks, no errors."
+  ]
+ },
  {
   "v": "1.188",
   "t": "FREDDY AS AN ENEMY, AND HIS DAMAGE BALANCED",
@@ -22957,9 +23154,9 @@ async function scSeg(label, start, frames, seed, hud) {      // one fight: start
   p.end(); scCheck(); show('title'); return ok;
 }
 async function scRound(r) {      // one round of random fights: every fighter in free play and in a versus match; round 0 is the pass every scan makes, the later rounds use the time that is left (other enemies, behaviours, GRAPHIC DAMAGE settings, grades)
-  const FOE = ['yuji', 'verity', 'cat', 'freddy', 'gojo'];
+  const FOE = ['yuji', 'verity', 'cat', 'freddy', 'gojo', 'cu3', 'cu4'];      // (v1.189 Sukuna and Ryu fight on both sides)
   for (let i = 0; i < SC_WHO.length; i++) {
-    const w = SC_WHO[i], f1 = w === 'yuji' && !r ? 'cat' : FOE[(i + r) % 5], f2 = FOE[(i + 2 * r + 1) % 5], n = (i + r) % 3;
+    const w = SC_WHO[i], f1 = w === 'yuji' && !r ? 'cat' : FOE[(i + r) % FOE.length], f2 = FOE[(i + 2 * r + 1) % FOE.length], n = (i + r) % 3;
     if (!(await scSeg(SC_NAME[w] + ' IN FREE PLAY' + (r ? ' (ROUND ' + (r + 1) + ')' : ''), () => { SET.gore = n; Object.assign(TR, { beh: [1, 2, 4, 5, 3][(i + r) % 5], ehp: n, php: 0, pce: 0 }); startPractice(w, f1); }, r ? 220 : 100, i + 1 + r * 17, !r))) return false;
     if (!(await scSeg(SC_NAME[w] + ' AGAINST ' + (SC_NAME[f2] || f2.toUpperCase()) + (r ? ' (ROUND ' + (r + 1) + ')' : ''), () => { SET.gore = (n + 1) % 3; vsPick.me = w; vsPick.foe = f2; startMatch(r ? (i + r) % 4 : 2); }, r ? 300 : 160, i + 31 + r * 17))) return false;
     if (!r) scCov('FIGHTERS', 1, 0);
@@ -23001,7 +23198,7 @@ async function scMoves() {
 // ---------------------------------------------------------------- CUTSCENES: the FATALITY and the DOMAIN of every fighter, played to the end
 async function scCuts() {
   SC.sec = 'CUTSCENES'; const FATAL = { gojo: 1, yuji: 1, verity: 1, cat: 1, freddy: 1, cu3: 1, cu4: 0 };
-  scCov('CUTSCENES', 0, SC_WHO.length * 2 + 3 + 13); SC.plan = (SC_WHO.length * 2 + 3 + 13) * 220; SC.done = 0;
+  scCov('CUTSCENES', 0, SC_WHO.length * 2 + 3 + 13 + 16); SC.plan = (SC_WHO.length * 2 + 3 + 13 + 16) * 220; SC.done = 0;
   for (let i = 0; i < SC_WHO.length; i++) {
     const w = SC_WHO[i];
     for (const [key, nm, low, max] of [['KeyH', 'FATALITY', 2, 700], ['KeyV', 'DOMAIN', 1, 520]]) {
@@ -23057,6 +23254,34 @@ async function scCuts() {
     try { Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0, put: 2, grade: 4 }); startPractice('gojo', 'freddy'); } catch (e) { scErr(e, label); continue; }
     if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
     await scFrames(2, null, 600); try { trainPut(); dummy.x = wx + (sp === 'pierce' ? 40 : 110); freStart(sp, pnow()); } catch (e) { scErr(e, label); }
+    if (await scUntil(() => !dummy || !dummy.fa, 100, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 25 SECONDS', '');
+    show('title');
+  }
+  // v1.189 SUKUNA AND RYU AS ENEMIES: the fatality of three fighters on them, the enemy fatalities and nightmare on them as the player, and every special move of theirs (in the street)
+  for (const [w, foe] of [['gojo', 'cu3'], ['yuji', 'cu4'], ['cat', 'cu3'], ['gojo', 'cu4']]) {
+    const label = SC_NAME[w] + ' FATALITY ON THE ENEMY ' + SC_NAME[foe]; SC.say = label; SET.gore = SC_WHO.indexOf(w) % 3; window.__suAll = true;
+    try { Object.assign(TR, { beh: 2, ehp: 2, php: 0, pce: 0, put: 2 }); startPractice(w, foe); } catch (e) { scErr(e, label); continue; }
+    if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
+    await scFrames(2, null, 600); try { trainPut(); } catch (e) { scErr(e, label); }
+    scKey('KeyH', true); await scFrames(2); scKey('KeyH', false);
+    if (await scUntil(() => scBusy(), 40, 250)) { if (await scUntil(() => !scBusy(), 800, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 40 SECONDS', ''); } else scNote('fail', label + ' DID NOT START', 'THE ENEMY WAS AT ' + (dummy ? Math.round(dummy.hp / (dummy.max || 1) * 100) : '?') + '% HEALTH');
+    show('title');
+  }
+  for (const [w, foe, what] of [['cu3', 'gojo', 'FATALITY'], ['cu4', 'cat', 'FATALITY'], ['cu3', 'freddy', 'NIGHTMARE'], ['cu4', 'freddy', 'NIGHTMARE']]) {      // (the enemy's own fatality or nightmare on Sukuna or Ryu)
+    const label = 'THE ENEMY ' + SC_NAME[foe] + ': HIS ' + what + ' ON ' + SC_NAME[w]; SC.say = label; SET.gore = 0; window.__suAll = true;
+    try { Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0, put: 2, grade: 4 }); startPractice(w, foe); } catch (e) { scErr(e, label); continue; }
+    if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
+    await scFrames(2, null, 600); try { trainPut(); } catch (e) { scErr(e, label); }
+    try { if (what === 'NIGHTMARE') { dummy.x = wx + 90; fdStartRev(pnow()); } else { vs.hp = vs.sh = 40; dummy.x = wx + 30; } } catch (e) { scErr(e, label); }
+    const sw = what === 'NIGHTMARE' ? () => !!fd : () => scBusy();
+    if (await scUntil(sw, 80, 250)) { if (await scUntil(() => !sw(), 800, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 40 SECONDS', ''); } else scNote('fail', label + ' DID NOT START', 'YOUR HEALTH ' + (vs ? Math.round(vs.hp) : '?') + ', THE ENEMY ' + (dummy ? Math.round(Math.abs(dummy.x - wx)) : '?') + ' PX AWAY');
+    show('title');
+  }
+  for (const [foe, sp, k] of [['cu3', 'cu', 6], ['cu3', 'aircut', 9], ['cu3', 'arrow', 22], ['cu3', 'dom', 0], ['cu4', 'cu', 10], ['cu4', 'cu', 11], ['cu4', 'blast', 12], ['cu4', 'beam', 16]]) {
+    const label = 'THE ENEMY ' + SC_NAME[foe] + ': ' + sp.toUpperCase() + ' ' + k; SC.say = label; SET.gore = 0; window.__suAll = true;
+    try { Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0, put: 2, grade: 4 }); startPractice('gojo', foe); } catch (e) { scErr(e, label); continue; }
+    if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
+    await scFrames(2, null, 600); try { trainPut(); dummy.x = wx + (k === 10 ? 30 : 120); cuenStart(k, pnow(), sp); } catch (e) { scErr(e, label); }
     if (await scUntil(() => !dummy || !dummy.fa, 100, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 25 SECONDS', '');
     show('title');
   }
