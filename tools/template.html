@@ -201,7 +201,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.197</small>
+    <small id="ver">V1.198</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -837,7 +837,7 @@ const lacks = key => { if (fredMe() || (vs && (vs.me === 'cu4' || vs.me === 'cu5
 let lockSayAt = -1e9;
 function lockPop(now) { if (now - lockSayAt > 1200) { lockSayAt = now; say('LOCKED: BUY IT IN SKILLS', wx, '#ff8a7a', 8, now); } }
 function gateSkills(now) {                    // every frame, before the controls are read: a move you do not own is simply not there (any fighter)
-  if (twOn() && vs.tw.away) { if (domReq) { domReq = false; say('NO TARGET', wx, '#9a9aa8', 8, now); } fatReq = 0; }      // (v1.173 the enemy is on another floor of the skyscraper: nothing that needs him close can start)
+  if (vs && vs.tw && vs.tw.away) { if (domReq) { domReq = false; say('NO TARGET', wx, '#9a9aa8', 8, now); } fatReq = 0; }      // (v1.173 the enemy is on another floor of the skyscraper: nothing that needs him close can start)
   if (crReq && lacks('cr')) { crReq = false; lockPop(now); }
   if (stickDown && lacks('cr')) stickDown = false;
   if ((crReq || stickDown) && stance === 'stand' && !hg && vs && !fredMe() && ce < CE_COST.crouch) { if (crReq) ceDeny(now); crReq = false; stickDown = false; }      // (a crouch costs 3% of the energy)
@@ -2473,7 +2473,7 @@ function beginRound(now) {                     // a fresh round: the scene is re
   $('vsres').classList.remove('on');      // (REMATCH and NEXT start a new fight: the result screen goes away. Since v7.12 this line had slipped into a comment, so the result screen stayed on top of the new fight)
   netPull = null; ripRun = null; lagRun = null; vp = vpNew(); cp = cpNew(); hg = null; pwFx.length = 0; tz = null; lk = 0; js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; wvx = 0; deb = []; lit = []; vs.rag = null; vh = null; ac = null; acWin = 0; acGo = false; acPend = -1; redAt = -1; redLast = -1e9; escQ = -1; flow = 0; flowOn = false; flowLast = -1; flowSw = -1; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
   if (vs.retry) { vs.round = 1 + vs.retry; vs.hp = vs.sh = PHP / 2; dummy.hp = dummy.shown = dummy.lock = 1; vs.morphed = true; blackUntil = t + 700; } else blackUntil = 0;      // after a failed red: Gojo at half health, Verity as he was (1 health left, so no smoke change); the picture comes up from black
-  if (twOn()) twRound(t);      // (v1.173 the skyscraper: every round starts on floor 50, the damage of the earlier rounds stays)
+  ctRound(t); if (twOn()) twRound(t);      // (v1.173 the skyscraper: every round starts on floor 50, the damage of the earlier rounds stays; v1.198 every round starts where the match began: the street or the skyscraper, ctRound)
 }
 // ---------------------------------------------------------------- v1.29 THE STATE TRACKER and the COMBO ESCAPE. A small box by your health bar says what state you are in: green FREE (you can move) or red (HIT: reeling from a blow, DOWN: on the floor, STUN: the JUMPSCARE, the Cat's glove or dizzy, HELD: the enemy Cat's ULTIMATE has you). While you are red, DASH gets you out of it: the stun is gone, you dash (with the dash's own invulnerable start), and when the dash ends you strike back with the LAST M1 of your combo; the dash is then on a cooldown of 4 seconds (the DASH button counts it down). Not possible when you are in the air from a launch, held by the ULTIMATE, in a cutscene or while the DOMAIN lasts.
 let dgLock = 0, esc = null, escSay = -1e9;      // dgLock: no dash before this time; esc = { at } from the escape dash until the counter blow
@@ -3313,7 +3313,8 @@ function drawBackdrop(now) {                  // everything behind the fighters 
   else if (alley) { drawAlley(now); if (vs && vs.c3 && state === 'play') c3World(now); }      // (chapter 2: the portal stands at the end of the street)
   else { ctx.save(); ctx.translate(0, -FAR); ctx.drawImage(bg, 0, 0);
   if (SET.bgd >= 1) layer(far, 0.25); if (SET.bgd >= 2) { layer(near, 0.55); drawProps(now); }      // (v1.153 BACKGROUND DETAIL: FLAT = the sky and the road, LOW + the far towers, MEDIUM + the shops and the lamps, FULL + the wind)
-  ctx.restore(); drawGround(); drawBlood(now); drawCrater(now); }
+  const city = ctOn() && !cutsceneOn(); if (city) ctEntrance(now);      // (v1.198 the front of the skyscraper stands in the street: its door leads in; not in a cutscene of a fight (a FATALITY has its own picture of the street))
+  ctx.restore(); drawGround(); if (city) ctEntranceGlow(now); drawBlood(now); drawCrater(now); }
   domVoidLayer(now);
 }
 // ---------------------------------------------------------------- JUMPSCARE (Verity's DOMAIN button; the enemy Verity uses it too from GRADE 2 up). Verity lunges and grabs the other fighter by the throat (15 frames, swing number 23), the screen cuts to the screaming Verity (a 64x64 close-up in 15 frames that shakes and zooms, 2.3 s), and then the victim is STUNNED for 5 s (he cowers and shakes, can not act, but can still be hit) and takes 3 FEAR damage every 0.1 s (150 in all). It costs 67% of the energy and can be used again after 30 s. The victim of the player's JUMPSCARE is frozen from the first moment (nothing dodges it); the player who sees the enemy's coming (0.5 s of wind-up) can jump, teleport, dash or crouch out of it.
@@ -4421,6 +4422,7 @@ __SUKUNA__
 __RYU__
 __TOWER__
 __TOWERART__
+__CITY__
 __CHAP2__
 __CHAP2B__
 __CHAP2C__
@@ -6448,7 +6450,7 @@ function tick(t) {
   const still = state === 'play' && stopMs > 0;      // HIT-STOP: the game's clock stands still for a moment (everything in the game runs on it, so the fight freezes and goes on from the same picture)
   if (still) { stopMs = Math.max(0, stopMs - rdt); vOff += now - last; now = last; } else if (state !== 'play') stopMs = 0;
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
-  twTick(now, dt); if (freePlay()) trainStep(now, dt); twBase(now);      // (v1.173 the skyscraper: what happened last frame is read before the training step gives the enemy his health back, and the new baseline is taken right after it)
+  ctTick(now, dt); twTick(now, dt); if (freePlay()) trainStep(now, dt); twBase(now);      // (v1.173 the skyscraper: what happened last frame is read before the training step gives the enemy his health back, and the new baseline is taken right after it)
   { const ir = state === 'play' && !!vs && vs.me === IRON_WHO; if (ir !== ironUI) { ironUI = ir; document.body.classList.toggle('ir', ir); } }      // (v1.190 Iron Man has no powers: while he is the fighter the DOMAIN, FATAL and SENSE buttons are hidden, see the CSS of body.ir; v1.193 MODE is his repulsor mode and v1.194 BLUE his bear hug: both are shown)
   { const ry = state === 'play' && !!vs && vs.me === RYU_WHO; if (ry !== ryUI) { ryUI = ry; document.body.classList.toggle('ry', ry); } if (!ry && ryUl) ryUlEnd(now, true); }      // (v1.143 Ryu has no BLUE, MODE, DOMAIN or FATAL: while he fights those buttons are hidden, see the CSS of body.ry)
   ragTick(now);
@@ -6681,8 +6683,8 @@ addEventListener('pointerdown', e => { if (state === 'story') storySkip(e); }); 
 addEventListener('pointerup', e => { if (state === 'story') { if (story && story.c15) c15Up(e); else if (typeof c13Up === 'function') c13Up(e); } }); addEventListener('pointercancel', e => { if (state === 'story') { if (story && story.c15) c15Up(e); else if (typeof c13Up === 'function') c13Up(e); } });      // a tap skips to the next part of the cutscene
 addEventListener('pointerdown', () => { if (yf && !paused) yfTap(pnow()); });      // (v1.49 Yuji's FATALITY: two taps skip it)
 addEventListener('pointerdown', () => { if (typeof suFgOn === 'function' && suFgOn() && !paused) suFgTap(pnow()); });      // (v1.127 Sukuna's FUGA cutscene: two taps skip it)
-$('vsNext').addEventListener('click', () => { twWant = !!vs && vs.map === 'tower' && !vs.story && !vs.hunt && !vs.rush && !vs.cv; if (vs && vs.cv) { startCurse(vs.ci + 1, 0); return; } const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
-$('vsAgain').addEventListener('click', () => { twWant = !!vs && vs.map === 'tower' && !vs.story && !vs.hunt && !vs.rush && !vs.cv; return vs && vs.hunt ? startHunt(vs.hunt.i) : vs && vs.rush ? (vs.run === ROUL ? startRoulette() : startRush()) : vs && vs.cv ? startCurse(vs.ci, vs.hard, vs.daily) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe); });
+$('vsNext').addEventListener('click', () => { twWant = !!vs && !!vs.twStart && !vs.story && !vs.hunt && !vs.rush && !vs.cv; if (vs && vs.cv) { startCurse(vs.ci + 1, 0); return; } const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
+$('vsAgain').addEventListener('click', () => { twWant = !!vs && !!vs.twStart && !vs.story && !vs.hunt && !vs.rush && !vs.cv; return vs && vs.hunt ? startHunt(vs.hunt.i) : vs && vs.rush ? (vs.run === ROUL ? startRoulette() : startRush()) : vs && vs.cv ? startCurse(vs.ci, vs.hard, vs.daily) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe); });
 $('vsMenu').addEventListener('click', () => { if (vs && vs.net) { lanLeave(); return; } if (vs && vs.hunt) { show('chal'); buildHunts(); return; } if (vs && vs.cv) { show('chal'); buildChal(); return; } if (vs && vs.story) { svView = 0; show('saves'); renderSaves(); } else fsOpen('battle'); });
 $('back').addEventListener('click', () => { leavePlay(); });
 VOLS.forEach(([k, name]) => {

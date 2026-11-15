@@ -201,7 +201,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.197</small>
+    <small id="ver">V1.198</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -2087,7 +2087,7 @@ const lacks = key => { if (fredMe() || (vs && (vs.me === 'cu4' || vs.me === 'cu5
 let lockSayAt = -1e9;
 function lockPop(now) { if (now - lockSayAt > 1200) { lockSayAt = now; say('LOCKED: BUY IT IN SKILLS', wx, '#ff8a7a', 8, now); } }
 function gateSkills(now) {                    // every frame, before the controls are read: a move you do not own is simply not there (any fighter)
-  if (twOn() && vs.tw.away) { if (domReq) { domReq = false; say('NO TARGET', wx, '#9a9aa8', 8, now); } fatReq = 0; }      // (v1.173 the enemy is on another floor of the skyscraper: nothing that needs him close can start)
+  if (vs && vs.tw && vs.tw.away) { if (domReq) { domReq = false; say('NO TARGET', wx, '#9a9aa8', 8, now); } fatReq = 0; }      // (v1.173 the enemy is on another floor of the skyscraper: nothing that needs him close can start)
   if (crReq && lacks('cr')) { crReq = false; lockPop(now); }
   if (stickDown && lacks('cr')) stickDown = false;
   if ((crReq || stickDown) && stance === 'stand' && !hg && vs && !fredMe() && ce < CE_COST.crouch) { if (crReq) ceDeny(now); crReq = false; stickDown = false; }      // (a crouch costs 3% of the energy)
@@ -3723,7 +3723,7 @@ function beginRound(now) {                     // a fresh round: the scene is re
   $('vsres').classList.remove('on');      // (REMATCH and NEXT start a new fight: the result screen goes away. Since v7.12 this line had slipped into a comment, so the result screen stayed on top of the new fight)
   netPull = null; ripRun = null; lagRun = null; vp = vpNew(); cp = cpNew(); hg = null; pwFx.length = 0; tz = null; lk = 0; js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; wvx = 0; deb = []; lit = []; vs.rag = null; vh = null; ac = null; acWin = 0; acGo = false; acPend = -1; redAt = -1; redLast = -1e9; escQ = -1; flow = 0; flowOn = false; flowLast = -1; flowSw = -1; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
   if (vs.retry) { vs.round = 1 + vs.retry; vs.hp = vs.sh = PHP / 2; dummy.hp = dummy.shown = dummy.lock = 1; vs.morphed = true; blackUntil = t + 700; } else blackUntil = 0;      // after a failed red: Gojo at half health, Verity as he was (1 health left, so no smoke change); the picture comes up from black
-  if (twOn()) twRound(t);      // (v1.173 the skyscraper: every round starts on floor 50, the damage of the earlier rounds stays)
+  ctRound(t); if (twOn()) twRound(t);      // (v1.173 the skyscraper: every round starts on floor 50, the damage of the earlier rounds stays; v1.198 every round starts where the match began: the street or the skyscraper, ctRound)
 }
 // ---------------------------------------------------------------- v1.29 THE STATE TRACKER and the COMBO ESCAPE. A small box by your health bar says what state you are in: green FREE (you can move) or red (HIT: reeling from a blow, DOWN: on the floor, STUN: the JUMPSCARE, the Cat's glove or dizzy, HELD: the enemy Cat's ULTIMATE has you). While you are red, DASH gets you out of it: the stun is gone, you dash (with the dash's own invulnerable start), and when the dash ends you strike back with the LAST M1 of your combo; the dash is then on a cooldown of 4 seconds (the DASH button counts it down). Not possible when you are in the air from a launch, held by the ULTIMATE, in a cutscene or while the DOMAIN lasts.
 let dgLock = 0, esc = null, escSay = -1e9;      // dgLock: no dash before this time; esc = { at } from the escape dash until the counter blow
@@ -4563,7 +4563,8 @@ function drawBackdrop(now) {                  // everything behind the fighters 
   else if (alley) { drawAlley(now); if (vs && vs.c3 && state === 'play') c3World(now); }      // (chapter 2: the portal stands at the end of the street)
   else { ctx.save(); ctx.translate(0, -FAR); ctx.drawImage(bg, 0, 0);
   if (SET.bgd >= 1) layer(far, 0.25); if (SET.bgd >= 2) { layer(near, 0.55); drawProps(now); }      // (v1.153 BACKGROUND DETAIL: FLAT = the sky and the road, LOW + the far towers, MEDIUM + the shops and the lamps, FULL + the wind)
-  ctx.restore(); drawGround(); drawBlood(now); drawCrater(now); }
+  const city = ctOn() && !cutsceneOn(); if (city) ctEntrance(now);      // (v1.198 the front of the skyscraper stands in the street: its door leads in; not in a cutscene of a fight (a FATALITY has its own picture of the street))
+  ctx.restore(); drawGround(); if (city) ctEntranceGlow(now); drawBlood(now); drawCrater(now); }
   domVoidLayer(now);
 }
 // ---------------------------------------------------------------- JUMPSCARE (Verity's DOMAIN button; the enemy Verity uses it too from GRADE 2 up). Verity lunges and grabs the other fighter by the throat (15 frames, swing number 23), the screen cuts to the screaming Verity (a 64x64 close-up in 15 frames that shakes and zooms, 2.3 s), and then the victim is STUNNED for 5 s (he cowers and shakes, can not act, but can still be hit) and takes 3 FEAR damage every 0.1 s (150 in all). It costs 67% of the energy and can be used again after 30 s. The victim of the player's JUMPSCARE is frozen from the first moment (nothing dodges it); the player who sees the enemy's coming (0.5 s of wind-up) can jump, teleport, dash or crouch out of it.
@@ -9598,6 +9599,7 @@ const TW_K = {      // the furniture: width, height (px), strength, damage to a 
 
 // ---- one floor, made the first time it is needed from the match's seed and its number (so it is always the same floor), and then kept
 function twFloorData(f) {
+  if (!(f >= 1)) f = 1;      // (v1.198 the street is not a floor of the building: whoever asks for floor 0 gets the lobby)
   const T = vs.tw; let F = T.fl[f]; if (F) return F;
   const R = twRng(T.seed * 131 + f * 7919 + 17), lobby = f === 1, pent = f === TW_N, nr = lobby || pent ? 3 : 2 + ((R() * 3) | 0);
   const xs = [0]; for (let i = 0; i < nr; i++) xs.push(xs[i] + 340 + ((R() * 180) | 0));
@@ -9607,9 +9609,10 @@ function twFloorData(f) {
   const pi = th.pal[(R() * th.pal.length) | 0];
   F = { f, xs, W: xs[nr], nr, th: th.n, pal: TW_PAL[T.forcePal !== undefined ? T.forcePal : pi], wt: twWeather(T.seed, f), decals: [], walls: [], objs: [], wrecks: [], holes: [], lights: [], doors: [], pick: [], outer: [{ hp: 30, broken: false, at: 0 }, { hp: 30, broken: false, at: 0 }], seed: (T.seed ^ (f * 2654435761)) >>> 0 };
   for (let i = 1; i < nr; i++) F.walls.push({ x: xs[i], hp: 80, mx: 80, broken: false, at: 0 });
-  for (let i = 0; i < nr; i++) F.doors.push({ x: Math.round(xs[i] + 70 + R() * (xs[i + 1] - xs[i] - 140)), k: i === 1 ? 'elev' : 'stairs', room: i, hp: 70, st: 0 });      // (every floor has stairs in its first room and every other room but one, and ONE elevator door, in the second room: the cab is one machine for the whole building)
+  for (let i = 0; i < nr; i++) { const a0 = lobby && i === 0 ? 130 : 70; F.doors.push({ x: Math.round(xs[i] + a0 + R() * (xs[i + 1] - xs[i] - a0 - 70)), k: i === 1 ? 'elev' : 'stairs', room: i, hp: 70, st: 0 }); }      // (every floor has stairs in its first room and every other room but one, and ONE elevator door, in the second room: the cab is one machine for the whole building; v1.198 the stairs of the lobby are clear of the front door)
+  if (lobby) F.front = { x: CITY.fx, open: 0, ot: 0, force: 0 };      // (v1.198 the FRONT DOOR of the building, at the left end of the lobby: walk into it and you are in the street, see tools/city.js)
   for (let x = 44; x < F.W - 30; x += 84) F.lights.push({ x, ok: true, hp: 30 });
-  const near = (x, w) => F.doors.some(d => Math.abs(d.x - x) < 34 + w / 2) || F.objs.some(o => Math.abs(o.x - x) < (TW_K[o.k].w + w) / 2 + 3 && !o.on);
+  const near = (x, w) => F.doors.some(d => Math.abs(d.x - x) < 34 + w / 2) || (lobby && Math.abs(x - CITY.fx) < 54 + w / 2) || F.objs.some(o => Math.abs(o.x - x) < (TW_K[o.k].w + w) / 2 + 3 && !o.on);
   const pick = () => { let tot = 0; for (const o of th.objs) tot += o[1]; let r = R() * tot; for (const o of th.objs) { r -= o[1]; if (r <= 0) return o[0]; } return th.objs[0][0]; };
   const add = (k, x) => { const K = TW_K[k], o = { k, x: Math.round(x), hp: K.hp, mx: K.hp, wob: 0, hitAt: -9999, v: (twHash(Math.round(x), f * 13 + k.length) * 4) | 0 }; F.objs.push(o); return o; };
   for (let i = 0; i < nr; i++) {
@@ -9623,9 +9626,10 @@ function twFloorData(f) {
 }
 
 // ---- the match: a new building (twInit, from startMatch), a new round (twRound, from beginRound: floor 50 again, the damage stays)
-function twInit() {
-  vs.map = 'tower'; vs.tw = { seed: (Math.random() * 1e9) | 0, fl: {}, fMe: TW_N, fFoe: TW_N, q: [], px: 0, dx: 0, pHp: 0, dHp: 0, dHit: -9999, dDown: 0, pDown: 0, swingAt: 0, slide: null, ff: null, banner: null, away: false, awayX: 0, arrX: 0, via: 'stairs', lastDoor: 0, hint: 0, on: false, expl: [], doorAt: -1, flashes: [], haze: null, cab: null, lift: twLiftNew(false), viaLift: false, jobAt: 0, cabAt: -1, seen: {}, cf: TW_N, prevF: 0, oorAt: -9999, cabF: { f: 0, xs: [0, TW_CABW], W: TW_CABW, nr: 1, th: 'CAB', walls: [], objs: [], wrecks: [], holes: [], lights: [], doors: [], pick: [], decals: [], outer: [{ hp: 1e9, mx: 1e9, broken: false, at: 0 }, { hp: 1e9, mx: 1e9, broken: false, at: 0 }] } };
+function twNew() {      // the building of this match (v1.198: made by twInit when the match starts in it, or by ctGoIn the first time you walk in through the front door of the street)
+  vs.tw = { out: false, outAt: 0, outVia: 'door', outX: 0, foeSt: false, foeX: 0, doorT: 0, doorArm: true, seed: (Math.random() * 1e9) | 0, fl: {}, fMe: TW_N, fFoe: TW_N, q: [], px: 0, dx: 0, pHp: 0, dHp: 0, dHit: -9999, dDown: 0, pDown: 0, swingAt: 0, slide: null, ff: null, banner: null, away: false, awayX: 0, arrX: 0, via: 'stairs', lastDoor: 0, hint: 0, on: false, expl: [], doorAt: -1, flashes: [], haze: null, cab: null, lift: twLiftNew(false), viaLift: false, jobAt: 0, cabAt: -1, seen: {}, cf: TW_N, prevF: 0, oorAt: -9999, cabF: { f: 0, xs: [0, TW_CABW], W: TW_CABW, nr: 1, th: 'CAB', walls: [], objs: [], wrecks: [], holes: [], lights: [], doors: [], pick: [], decals: [], outer: [{ hp: 1e9, mx: 1e9, broken: false, at: 0 }, { hp: 1e9, mx: 1e9, broken: false, at: 0 }] } };
 }
+function twInit() { vs.map = 'tower'; vs.twStart = true; twNew(); }      // (v1.198 vs.twStart: this match began in the skyscraper, so a rematch and every round begin there; a match that began in the street makes the building when you first walk in)
 function twRound(now) {
   const T = vs.tw, d = dummy; T.fMe = T.fFoe = TW_N; T.q.length = 0; T.away = false; T.slide = null; T.ff = null; T.haze = null; T.flashes = []; T.cab = null; T.lift = twLiftNew(T.lift && T.lift.broken); T.viaLift = false; vs.nHold = 0; T.seen[TW_N] = 1; T.cf = TW_N; T.prevF = 0; T.expl.length = 0; const F = twFloorData(TW_N), gap = d ? d.x - wx : 60; wx = twFreeX(F, Math.round((F.xs[1] + F.xs[2]) / 2) - 30, gap); wxv = 0; wvx = 0;
   if (d) { d.x = wx + gap; d.twAway = false; }
@@ -9633,7 +9637,7 @@ function twRound(now) {
 }
 function twFreeX(F, x, gap) {      // a place for you (and the enemy gap px in front of you) that is not in a crater: the middle of the room if it is free, else the nearest free place in steps of 40 px
   const bad = (q, m) => F.holes.some(h => Math.abs(q - h.x) < h.r + m);
-  for (let k = 0; k < 40; k++) { const q = x + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 40; if (q > 30 && q < F.W - 30 && !bad(q, 14) && !bad(q + gap, 14) && !F.doors.some(d => Math.abs(d.x - q) < 36 || Math.abs(d.x - q - gap) < 36) && twPlace(F, q) === q) return q; }
+  for (let k = 0; k < 40; k++) { const q = x + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 40; if (q > 30 && q < F.W - 30 && !bad(q, 14) && !bad(q + gap, 14) && !F.doors.some(d => Math.abs(d.x - q) < 36 || Math.abs(d.x - q - gap) < 36) && !(F.front && (Math.abs(F.front.x - q) < 40 || Math.abs(F.front.x - q - gap) < 40)) && twPlace(F, q) === q) return q; }
   return x;
 }
 function twClearWorld() { deb = []; lit = []; smoke = []; decals = []; drops = []; pools = []; gibs = []; sparks = []; }      // (what lay about the floor you left is gone)
@@ -9723,7 +9727,7 @@ function twSlideStart(now, f0, f1, x0, kind, foeX) {      // the camera follows 
 }
 function twLand(now, tag, nn, dm) { say((tag || 'FALL') + ' ' + nn + (nn > 1 ? ' FLOORS' : ' FLOOR') + ' -' + dm, wx, '#ff9a5a', 8, now); snd('twbreak', 7); puff(wx, 8); shakeUntil = now + 300; shakeAmp = 4; }      // (the thud when a fall ends)
 function twPlanArrival(now) {      // the enemy is on another floor: when and how he comes: through the crater when you fell and it reaches your floor, in the cab if it is free (twLiftJob, after a moment), otherwise by the stairs (the farther, the longer)
-  const T = vs.tw, L = T.lift; if (!T.away) return; const dl = Math.abs(T.fFoe - T.fMe); T.jobAt = now + 1100;
+  const T = vs.tw, L = T.lift; if (!T.away) return; const dl = Math.abs(T.fFoe - T.fMe); T.jobAt = now + 1100; if (T.via === 'front') T.via = 'stairs';      // (v1.198 he was on his way in through the front door: from here on he comes as he does from any floor)
   if (L.job || L.inFoe) { T.viaLift = true; T.arriveAt = 1e12; return; }      // (he is already on his way in the cab: it takes him to wherever you are now)
   T.viaLift = false;
   if (T.fFoe > T.fMe && T.lastFallX !== null && twDepthAt(T.fFoe, T.lastFallX) >= T.fFoe - T.fMe) { T.via = 'hole'; T.arrX = T.lastFallX; T.arriveAt = now + 1200; }
@@ -9764,22 +9768,24 @@ function twTravel(dir, door, now) {      // the stairs (1 floor): you are on ano
   const d = dummy, foeHere = !!d && d.ko < 0 && !T.away; T.fMe = to; const F = twFloorData(to); let best = null; for (const dr of F.doors) if (dr.k === 'stairs' && (!best || Math.abs(dr.room - door.room) < Math.abs(best.room - door.room))) best = dr;
   twFloorSwitch(now, best.x, 'stairs'); snd('twbreak', 6); T.lastFallX = null; if (foeHere) { T.away = true; d.twAway = true; T.awayX = d.x; } twPlanArrival(now);
 }
-function twFoeHere(now) {      // (PUT ENEMY and RESET of free play): the enemy is where you are (in the cab too)
-  if (!twOn()) return; const T = vs.tw, d = dummy, L = T.lift; T.away = false; T.fFoe = T.fMe; if (d) d.twAway = false; T.q.length = 0; T.viaLift = false; T.ff = null; L.job = null; L.out = false; L.foeInAt = 0; L.inFoe = false;
+function twFoeHere(now) {      // (PUT ENEMY and RESET of free play): the enemy is where you are (in the cab too; v1.198 in the street too: ctFoeHere)
+  if (!twOn()) { ctFoeHere(now); return; } const T = vs.tw, d = dummy, L = T.lift; T.away = false; T.fFoe = T.fMe; if (d) d.twAway = false; T.q.length = 0; T.viaLift = false; T.ff = null; T.foeSt = false; if (T.via === 'front' || T.via === 'street') T.via = 'stairs'; L.job = null; L.out = false; L.foeInAt = 0; L.inFoe = false;
   if (L.me && d && d.ko < 0) twCabFoeIn(now, false);
 }
 function twFoeArrive(now) {      // the enemy comes: out of the crater above you, the door of the cab, or the stairs nearest to you
   const T = vs.tw, d = dummy, F = twFloorData(T.fMe); if (!d || d.ko >= 0) { T.away = false; return; }
-  let x, hole = T.via === 'hole', dr = null; if (hole) x = T.arrX; else { if (T.via === 'lift') dr = twElevOf(F); else for (const q of F.doors) if (q.k === 'stairs' && (!dr || Math.abs(q.x - wx) < Math.abs(dr.x - wx))) dr = q; x = dr.x; if (dr.st !== 2) dr.force = now + 1000; }      // (the door he comes out of swings open)
+  let x, hole = T.via === 'hole', dr = null; if (hole) x = T.arrX; else if (T.via === 'front' && F.front) { x = F.front.x + 30; F.front.force = now + 1200; if (Math.abs(x - wx) < 50) x = twPlace(F, wx + 44); } else { if (T.via === 'lift') dr = twElevOf(F); else for (const q of F.doors) if (q.k === 'stairs' && (!dr || Math.abs(q.x - wx) < Math.abs(dr.x - wx))) dr = q; x = dr.x; if (dr.st !== 2) dr.force = now + 1000; }      // (the door he comes out of swings open; v1.198 through the front door of the lobby he comes in at the door, or in front of you if you stand next to it)
   x = twPlace(F, x); if (Math.abs(x - wx) < 26) x = twPlace(F, wx + (x >= wx ? 38 : -38));
   T.away = false; T.fFoe = T.fMe; d.twAway = false; d.x = x; d.vx = 0; d.down = 0; d.stunUntil = now + 350; d.ai = 'rest'; d.aiAt = now; d.restFor = 350;
   if (hole) { d.air = airMake(now, 90, 0, 520, 'bounce'); puff(x, 8); debBurst(x, 40, 10, ['#8a8a92', '#b8b0a0'], 110); snd('twbreak', 7); } else { puff(x, 5); snd('twbreak', 6); }
-  say('ENEMY!', x, '#ffd34d', 8, now); T.dHp = d.hp; T.dx = d.x;
+  say('ENEMY!', x, '#ffd34d', 8, now); T.dHp = d.hp; T.dx = d.x; if (T.via === 'front') T.via = 'stairs'; T.foeSt = false;
 }
 function twFoeHold(now) { const d = dummy; d.x = wx + 1e5; d.vx = 0; d.stunUntil = now + 900; d.ai = 'rest'; d.aiAt = now; d.restFor = 900; d.air = null; d.airH = 0; }      // (the enemy is not on this floor: held far off, still)
 function twAwayStep(now) {      // every frame the enemy is on another floor: he is held far off, still, until he comes (or until you are on his floor: then he is where he fell); in the cab it is the cab that brings him
   const T = vs.tw, d = dummy; if (!d || d.ko >= 0) { T.away = false; return; }
   twFoeHold(now); if (T.lift.inFoe) { twLiftJob(now); return; }      // (he is riding the cab: its job goes on)
+  if (T.via === 'street') return;      // (v1.198 you are falling out of a window: he waits where he is until the camera has reached the street)
+  if (T.via === 'front') { if (now >= T.arriveAt) { if (T.fMe === 1) twFoeArrive(now); else { T.via = 'stairs'; T.fFoe = 1; twPlanArrival(now); } } return; }      // (v1.198 he is coming in through the front door of the lobby: when he is in, he steps out of it, or goes on to your floor)
   if (T.fFoe === T.fMe) { const F = twFloorData(T.fMe); T.away = false; d.twAway = false; d.x = twPlace(F, T.awayX); d.stunUntil = now + 300; T.dx = d.x; return; }
   twLiftJob(now); if (now >= T.arriveAt) twFoeArrive(now);
 }
@@ -9797,13 +9803,13 @@ function twFoeFx(now, draw) {      // (drawFoes asks) the enemy SEEN dropping th
   else if (sl.foeX !== null) { ctx.save(); ctx.translate(0, Math.round(twSlideOff(sl, sl.f0, now))); d.x = wx + (sl.foeX - sl.x0); draw(); ctx.restore(); did = true; }      // (he is up there where you left him)
   d.x = gx; d.airH = ga; return did;
 }
-function twFallOut(who, now, side) {      // a fighter went through the broken glass: down to the street (the lobby); the other follows him a moment later
-  const T = vs.tw, f = who === 'foe' ? T.fFoe : T.fMe; if (f <= 1) return; const lobby = twFloorData(1), x = side ? lobby.W - 20 : 20;
-  if (who === 'foe') { twFoeFall(f - 1, now, x, undefined, true); T.q.push({ at: now + 1300, k: 'followMe', x }); }
-  else { twMeFall(f - 1, now, x); const d = dummy; if (d && d.ko < 0 && T.away) { T.fFoe = f; T.arrX = x; T.via = 'hole'; T.arriveAt = now + 1500; } }
+function twFallOut(who, now, side) {      // a fighter went through the broken glass at an end of a floor (any floor, the lobby too): down to the STREET (v1.198 the real street map, see tools/city.js: you land in it, and he is not away, he is outside); the other follows him a moment later
+  const T = vs.tw, f = who === 'foe' ? T.fFoe : T.fMe; if (!(f >= 1)) return; const lobby = twFloorData(1), x = side ? lobby.W - 20 : 20;
+  if (who === 'foe') { if (f > 1) twFoeFall(f - 1, now, x, undefined, true); else ctFoeGlass(now, side, x); if (T.away) { T.foeSt = true; T.foeX = ctLand(side); T.via = 'front'; T.arriveAt = now + 4000; T.q.push({ at: now + 1300, k: 'followMe', side }); } }      // (he is in the street: you jump out after him in a moment, or he comes in at the front door after 4 s)
+  else ctGoOut(now, 'glass', side);
 }
 function twRunQ(e, now) {
-  const T = vs.tw; if (e.k === 'followMe' && T.fMe > 1 && vs.ph === 'fight' && !T.cab) { twFloorData(1); T.fMe = 1; twFloorSwitch(now, e.x, 'fall'); snd('twbreak', 7); puff(wx, 6); say('DOWN TO THE STREET', wx, '#9fd8ff', 8, now); T.lastFallX = null; twPlanArrival(now); }
+  const T = vs.tw; if (e.k === 'followMe' && T.fMe >= 1 && vs.ph === 'fight' && !T.cab && !T.slide) { snd('twbreak', 7); puff(wx, 6); say('DOWN TO THE STREET', wx, '#9fd8ff', 8, now); ctGoOut(now, 'glass', e.side); }      // (v1.198 you jump out after him: into the street)
 }
 
 // ---------------------------------------------------------------- every frame (tick: twTick before the training step, twBase right after it, twOverlay after the picture)
@@ -9845,18 +9851,20 @@ function twWatch(now) {      // what hit whom (watched from the health, the knoc
 function twBodies(now) {      // both bodies stay between the walls of the room (or the cab); a hard hit breaks a wall or the glass (and they go on), the furniture on the way is smashed
   const T = vs.tw, d = dummy, getF = () => (T.cab ? T.cabF : twFloorData(T.fMe)); let F = getF();
   { const r = twRoomClamp(F, wx, T.px, Math.abs(wxv), 'me', now); if (r.x !== wx) { wx = r.x; if (r.bump > 0) { const dm = Math.round((r.bump - 150) * 0.1); if (dm > 0) { twHurtMe(dm, now, false); say('WALL! -' + dm, wx, '#ff9a5a', 8, now); } wxv = -wxv * 0.3; wvx = 0; snd('hit', 1); } } else if (r.bump < 0) wxv *= 0.6;
-    if (wx < -8 || wx > F.W + 8) { if (F.f > 1) twFallOut('me', now, wx < 0 ? 0 : 1); } else wxv *= twBodyObjs(F, wx, Math.abs(wxv), 'me', now) < 1 ? 0.7 : 1; }
+    if (wx < -8 || wx > F.W + 8) { if (!T.cab) twFallOut('me', now, wx < 0 ? 0 : 1); } else wxv *= twBodyObjs(F, wx, Math.abs(wxv), 'me', now) < 1 ? 0.7 : 1; }
+  if (!twOn()) return;      // (v1.198 you went out through the glass: you are in the street)
   if (!T.away && d.ko < 0 && T.fFoe === T.fMe) {
     F = getF(); const v = Math.abs(d.vx * mScale(massOf(d))), r = twRoomClamp(F, d.x, T.dx, v, 'foe', now);
     if (r.x !== d.x) { d.x = r.x; if (r.bump > 0) { const dm = Math.round((r.bump - 160) * 0.12); if (dm > 0) { twHurtFoe(dm, now, false); d.hitAt = now; say('WALL! ' + dm, d.x, '#ffd34d', 8, now); } d.vx = -d.vx * 0.3; snd('smack', 1); } } else if (r.bump < 0) d.vx *= 0.6;
-    if (d.x < -8 || d.x > F.W + 8) { if (F.f > 1) twFallOut('foe', now, d.x < 0 ? 0 : 1); } else d.vx *= twBodyObjs(F, d.x, v, 'foe', now) < 1 ? 0.7 : 1;
+    if (d.x < -8 || d.x > F.W + 8) { if (!T.cab) twFallOut('foe', now, d.x < 0 ? 0 : 1); } else d.vx *= twBodyObjs(F, d.x, v, 'foe', now) < 1 ? 0.7 : 1;
   }
 }
 function twTick(now, dt) {
   if (!twOn() || state !== 'play') return; const T = vs.tw, d = dummy; if (!T.on || !d) return;
   for (let i = T.q.length - 1; i >= 0; i--) if (now >= T.q[i].at) twRunQ(T.q.splice(i, 1)[0], now);
+  if (!twOn()) return;      // (v1.198 a queued jump out of the window can put you in the street: the street is not this function's)
   twLiftTick(now, dt);
-  if (T.slide && now >= T.slide.at + T.slide.ms) { const s = T.slide; T.slide = null; if (s.land) twLand(now, s.land[0], s.land[1], s.land[2]); }      // (the slide is over: the thud of a fall)
+  if (T.slide && now >= T.slide.at + T.slide.ms) { const s = T.slide; T.slide = null; if (s.street) { ctArrive(now, s); return; } if (s.land) twLand(now, s.land[0], s.land[1], s.land[2]); }      // (the slide is over: the thud of a fall; v1.198 a fall out of a window ends in the street)
   if (T.ff && now >= T.ff.at + T.ff.ms) T.ff = null;
   if (T.cab) { if (T.away && !T.lift.inFoe) twFoeHold(now); } else if (T.away) twAwayStep(now);
   if (vs.ph !== 'fight') { T.px = wx; T.dx = d.x; return; }
@@ -9873,7 +9881,7 @@ function twTick(now, dt) {
     const h = twHoleAt(F, d.x);
     if (h && !d.air && (d.airH || 0) < 5) { const sp = Math.abs(d.vx * mScale(massOf(d))); if (sp <= 100 && now - d.hitAt > 500 && now >= (d.down || 0)) { const side = T.dx < h.x ? -1 : T.dx > h.x ? 1 : (wx < h.x ? -1 : 1); d.x = h.x + side * (h.r + 3); d.vx = 0; } else if (h.shaft) twShaftFall('foe', now); else twFoeFall(twDepthAt(T.fFoe, d.x), now, d.x); }      // (the enemy stays away from the edge of a crater or a shaft unless he is thrown in)
   }
-  twBodies(now);
+  twBodies(now); if (!twOn()) return;      // (v1.198 through the glass: the street)
   F = twFloorData(T.fMe);
   if ((atkReq || lpReq) && now > T.swingAt + 200) { T.swingAt = now + 120; T.swingP = lpReq ? 11 : 6; }      // (a press of ATTACK or BLUE: 0.12 s later the blow lands on what stands in front of you)
   if (T.swingAt && now >= T.swingAt) { T.swingAt = 0; for (const o of F.objs.slice()) if (o.x > wx - 6 && o.x < wx + 38) twDamageObj(F, o, T.swingP, now); for (const w of F.walls) if (!w.broken && w.x > wx - 6 && w.x < wx + 30) twWallHit(F, w, T.swingP * 0.6, now); for (const dr of F.doors) if (dr.k === 'elev' && dr.x > wx - 6 && dr.x < wx + 30) twDoorHit(F, dr, T.swingP * 0.9, now); }
@@ -9884,10 +9892,10 @@ function twBase(now) {      // right after the training step (which gives an inf
   if (!twOn() || !vs.tw.on || !dummy) return; const T = vs.tw, d = dummy; T.dHp = d.hp; T.dHit = d.hitAt; T.dDown = d.down || 0; T.pHp = vs.hp; T.pDown = gDownUntil;
 }
 function twOverlay(now) {      // over the picture: what the elevator door tells you and where the enemy is when he is not here (v1.182 the floor you are on is NOT written on the screen any more: it is a sign on the wall of every room, twSignEmit; the cab has its own display over its doors)
-  if (!twOn() || state !== 'play') { twPanelSync(now); return; } const T = vs.tw;
+  if (!twOn() || state !== 'play') { twPanelSync(now); if (state === 'play') ctOverlay(now); return; } const T = vs.tw;
   if (ryUlNoHud() || cutsceneOn()) { twPanelSync(now); return; }
   if (T.prompt && now - T.prompt.at < 80) { const mx = Math.round(VW / 2); if (T.prompt.up) pxt(T.prompt.up, mx, gy + 18, '#9fffd0', 8, 'center'); if (T.prompt.dn) pxt(T.prompt.dn, mx, gy + 27, '#9fd8ff', 8, 'center'); }
-  const c = T.cab, fl = c ? Math.round(c.curF) : T.fMe, hx = Math.round(VW / 2) + (c ? 20 : 0), ha = c ? 'left' : 'center'; if (T.away) pxt(c && c.out ? 'FOE AT DOORS' : T.lift.inFoe ? 'FOE ' + T.fFoe + ' IN CAB' : 'FOE ' + T.fFoe + (T.fFoe > fl ? ' UP' : ' DOWN'), hx, c ? 62 : 53, '#ffb27a', 8, ha);      // (v1.182 the only line left: where the enemy is, where it always was: under the names of the health bars; in the cab it starts right of the middle of the screen, clear of the panel and of your head, and sits lower, clear of his grade label)
+  const c = T.cab, fl = c ? Math.round(c.curF) : T.fMe, hx = Math.round(VW / 2) + (c ? 20 : 0), ha = c ? 'left' : 'center'; if (T.away) pxt(c && c.out ? 'FOE AT DOORS' : T.foeSt || T.via === 'front' ? 'FOE OUTSIDE' : T.lift.inFoe ? 'FOE ' + T.fFoe + ' IN CAB' : 'FOE ' + T.fFoe + (T.fFoe > fl ? ' UP' : ' DOWN'), hx, c ? 62 : 53, '#ffb27a', 8, ha);      // (v1.182 the only line left: where the enemy is, where it always was: under the names of the health bars; in the cab it starts right of the middle of the screen, clear of the panel and of your head, and sits lower, clear of his grade label)
   twPanelSync(now);
 }
 // ---------------------------------------------------------------- v1.176 ONE ELEVATOR for the whole building (v1.175 made its doors, the cab and its panel; v1.176 made the cab ONE shared machine, T.lift)
@@ -10216,12 +10224,12 @@ const TW_STY = {      // wall, lower wall, floor, how dark the rooms are, window
 const TW_SG = { w: 27, h: 23, y: 50 };      // (v1.182 the FLOOR SIGN on the wall: a plate 27 x 23 whose top row is row y of the shell (rows 50 - 72: under the health bars of the screen, above the little furniture); the middle column of the plate is the x of the sign)
 function twLayout(F) {      // where the windows, the features and the floor signs of the wall are (made with the floor, kept in F.lay)
   if (F.lay) return F.lay; const sty = TW_STY[F.th] || TW_STY.OFFICE, R = twRng(F.seed ^ 0x2545f491), lay = { win: [], feat: [], sign: [], sty, pano: !!sty.pano }, mx = Math.round(F.W / 2);
-  const ok = x => x >= 26 && !F.doors.some(d => x - d.x > -33 && x - d.x < 40) && !F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36) && !(F.th === 'LOBBY' && Math.abs(x - mx) < 72) && !F.objs.some(o => { const K = TW_K[o.k]; return Math.abs(o.x - x) < K.w / 2 + 15 && 98 - K.h - (o.on ? TW_K[o.on.k].h : 0) < 68; }), cand = [];      // (v1.182 the floor signs go on the free spots of the wall (the spots of the windows, every 64 px): clear of the doors (the call panel is on their right), of the inner walls, of the logo of the lobby and of any furniture tall enough to stand in front of the plate)
+  const ok = x => x >= 26 && !F.doors.some(d => x - d.x > -33 && x - d.x < 40) && !(F.front && Math.abs(x - F.front.x) < 46) && !F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36) && !(F.th === 'LOBBY' && Math.abs(x - mx) < 72) && !F.objs.some(o => { const K = TW_K[o.k]; return Math.abs(o.x - x) < K.w / 2 + 15 && 98 - K.h - (o.on ? TW_K[o.on.k].h : 0) < 68; }), cand = [];      // (v1.182 the floor signs go on the free spots of the wall (the spots of the windows, every 64 px): clear of the doors (the call panel is on their right), of the inner walls, of the logo of the lobby and of any furniture tall enough to stand in front of the plate)
   for (let x = 20; x <= F.W - 26; x += 64) if (ok(x)) cand.push(x);
   const G = Math.max(150, Math.min(260, VW - 60));      // (the widest gap allowed between two signs: a bit less than the width of the screen, so that one is on it nearly always: 171 px on the narrowest screens, 260 on the widest)
   let last = -100; for (let i = 0; i < cand.length; i++) if ((i + 1 < cand.length ? cand[i + 1] : 1e9) - last > G) { lay.sign.push(cand[i]); last = cand[i]; }      // (as few as it takes: the farthest free spot that still reaches the next one)
   for (let n = 0; n < 9; n++) { const sg = [-100, ...lay.sign, F.W + 100]; let add = -1; for (let i = 1; i < sg.length && add < 0; i++) if (sg[i] - sg[i - 1] > G + 4) { const mid = (sg[i] + sg[i - 1]) / 2; for (let x = 20; x <= F.W - 26; x += 16) if (x > sg[i - 1] + 80 && x < sg[i] - 80 && ok(x) && (add < 0 || Math.abs(x - mid) < Math.abs(add - mid))) add = x; } if (add < 0) break; lay.sign.push(add); lay.sign.sort((p, q) => p - q); }      // (a stretch where doors, walls and furniture left no spot gets one more, anywhere on a 16 px grid, so that one sign is on the screen nearly always)
-  for (let i = 0; ; i++) { const x = 20 + 64 * i; if (x > F.W - 26) break; if (x < 26 || lay.sign.some(s => Math.abs(s - x) < 48) || F.doors.some(d => Math.abs(d.x - x) < 38) || F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36)) continue; if (R() < sty.win) lay.win.push(x); else lay.feat.push({ x, k: sty.feat[(R() * sty.feat.length) | 0], n: (R() * 1e6) | 0 }); }
+  for (let i = 0; ; i++) { const x = 20 + 64 * i; if (x > F.W - 26) break; if (x < 26 || lay.sign.some(s => Math.abs(s - x) < 48) || F.doors.some(d => Math.abs(d.x - x) < 38) || (F.front && Math.abs(F.front.x - x) < 56) || F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36)) continue; if (R() < sty.win) lay.win.push(x); else lay.feat.push({ x, k: sty.feat[(R() * sty.feat.length) | 0], n: (R() * 1e6) | 0 }); }
   if (F.th === 'LOBBY') { const mx = Math.round(F.W / 2); lay.feat = lay.feat.filter(q => Math.abs(q.x - mx) > 50); lay.win = lay.win.filter(q => Math.abs(q - mx) > 50); lay.feat.push({ x: mx, k: 'logo', n: 1 }); }
   F.lay = lay; F.sty = sty; return lay;
 }
@@ -10524,6 +10532,7 @@ function twSignEmit(F, sx, now, Q) {      // v1.182 the lit part of the FLOOR SI
 function twEmit(F, x0, a, b, now, Q) {      // everything that shines, drawn over the darkness: the floor signs, the signs of the doors, the screens, the lights of the racks, the glass of the vending machines, the bubbles in the water cooler, the cans on the floor
   for (const s of twLayout(F).sign) { const sx = x0 + s; if (sx > a - 30 && sx < b + 30) twSignEmit(F, sx, now, Q); }
   for (const d of F.doors) { const sx = x0 + d.x; if (sx > a - 30 && sx < b + 30) twDoorEmit(F, d, sx, now); }
+  if (F.front) { const sx = x0 + F.front.x; if (sx > a - 30 && sx < b + 30) ctFrontEmit(F, sx, now); }
   for (const o of F.objs) { const sx = Math.round(x0 + o.x); if (sx < a - 30 || sx > b + 30 || o.hp <= 0) continue; const by = o.on ? TW_K[o.on.k].h : 0, K = TW_K[o.k], bad = o.hp < o.mx * 0.5;
     if (o.k === 'computer') { const t0 = gy - by - 12, st = ((now / 700) | 0) + (o.x | 0), pat = Math.abs(o.x | 0) % 3; ctx.fillStyle = bad ? '#0a2a9a' : pat === 0 ? '#0a1a10' : pat === 1 ? '#1a3a6e' : '#201a3a'; ctx.fillRect(sx - 6, t0, 12, 8);
       if (Q >= 1) { if (bad) { ctx.fillStyle = '#ffffff'; ctx.fillRect(sx - 5, t0 + 1, 6, 1); ctx.fillRect(sx - 5, t0 + 3, 9, 1); ctx.fillRect(sx - 5, t0 + 5, 4, 1); } else if (pat === 0) { ctx.fillStyle = '#4cff8a'; for (let i = 0; i < 4; i++) ctx.fillRect(sx - 5, t0 + 1 + i * 2, 2 + ((st * 7 + i * 5) % 7), 1); if (st % 2) ctx.fillRect(sx - 5, t0 + 7, 2, 1); } else if (pat === 1) { ctx.fillStyle = '#7fb0ff'; ctx.fillRect(sx - 6, t0, 12, 1); ctx.fillStyle = '#e8f0ff'; ctx.fillRect(sx - 5, t0 + 2, 5 + (st % 3), 1); ctx.fillRect(sx - 5, t0 + 4, 7, 1); ctx.fillStyle = '#ffd34d'; ctx.fillRect(sx + 2, t0 + 5, 3, 2); } else { for (let i = 0; i < 5; i++) { const hh = 1 + ((st * 3 + i * 5) % 6); ctx.fillStyle = ['#ff6a5a', '#ffd34d', '#4cff8a', '#6ab0ff', '#c07aff'][i]; ctx.fillRect(sx - 5 + i * 2, t0 + 7 - hh, 1, hh); } } } }
@@ -10623,11 +10632,12 @@ function twFloorDraw(f, camX, off, now) {      // one floor's whole picture as i
   const T = vs.tw, kf = T.fMe, kw = wx; T.fMe = f; wx = camX; if (off) { ctx.save(); ctx.beginPath(); ctx.rect(-8, gy - TW_CEIL - SH_Y - 9 + off, VW + 16, SH_H + 9); ctx.clip(); ctx.translate(0, off); }
   try {
     const F = twFloorData(f), Q = twQ(), cx = Math.round(VW / 2), yc = gy - TW_CEIL, x0 = cx - Math.round(camX), x1 = x0 + F.W, a = Math.max(0, x0), b = Math.min(VW, x1);
-    twLayout(F); ctx.fillStyle = '#0a0a10'; ctx.fillRect(-8, -8, VW + 16, VH + 16); twSkyDraw(F, now, x0, x1, yc, Q);
+    twLayout(F); ctx.fillStyle = '#0a0a10'; ctx.fillRect(-8, -8, VW + 16, VH + 16); if (F.front) ctStreetSeen(F, now, x0, x1, yc, Q); else twSkyDraw(F, now, x0, x1, yc, Q);      // (v1.198 the lobby's windows show the street)
     if (b > a) {
       const sh = twShell(F, Q), sx = a - x0, sw = b - a, top = yc - SH_Y;
       ctx.fillStyle = '#0a0a10'; ctx.fillRect(a, -8, sw, top - 1); ctx.drawImage(sh, sx, SH_N + 2, sw, 9, a, top - 9, sw, 9); ctx.drawImage(sh, sx, 0, sw, SH_H, a, top, sw, SH_H);
       for (const d of F.doors) { const px = x0 + d.x; if (px > a - 40 && px < b + 40) twDoor(F, d, px, now); }
+      if (F.front) { const px = x0 + F.front.x; if (px > a - 40 && px < b + 40) ctFrontDoor(F, px, now); }      // (v1.198 the front door of the building)
       twDecals(F, x0, a, b);
       for (const w of F.walls) { const px = x0 + w.x; if (px > a - 30 && px < b + 30) twPart(F, w, px, yc, now, Q); }
       for (const w of F.wrecks) { const px = x0 + w.x, s = twWreckSpr(w); if (px > a - 50 && px < b + 50) ctx.drawImage(s, Math.round(px) - (s.width >> 1), gy - 13); }
@@ -10647,6 +10657,7 @@ function twSlideDraw(now, s) {      // the camera travels from floor f0 to floor
   const y = twSlideY(s, now), lo = Math.min(s.f0, s.f1), hi = Math.max(s.f0, s.f1); ctx.fillStyle = '#0a0a10'; ctx.fillRect(-8, -8, VW + 16, VH + 16);
   for (let f = hi; f >= lo; f--) {
     const off = s.dir * (Math.abs(f - s.f0) * SH_H - y); if (off > VH + 12 || off < -(SH_H + 12)) continue;
+    if (f === 0) { ctStreetBand(s.street ? s.street.x : wx, off, now); continue; }      // (v1.198 the street under the lobby: a fall out of a window ends in it)
     if (f === s.f0) twFloorDraw(f, s.x0, off, now); else if (f === s.f1) twFloorDraw(f, wx, off, now); else if (s.n <= 3) twFloorDraw(f, Math.round(s.x0 + (wx - s.x0) * Math.abs(f - s.f0) / s.n), off, now); else twFloorFast(f, off);
   }
 }
@@ -10654,6 +10665,173 @@ function twBackdrop(now) {      // everything behind the fighters: the cab when 
   const T = vs.tw; if (T.cab) { twCabBackdrop(now); return; }
   const s = T.slide; if (s && now < s.at + s.ms) { twSlideDraw(now, s); T.prompt = null; return; }
   twFloorDraw(T.fMe, wx, 0, now);
+}
+
+// ================================================================ v1.198 THE CITY: THE STREET AND THE SKYSCRAPER ARE ONE PLACE (this file is spliced into template.html by build_html.py, right after towerart.js)
+// The user, after v1.197: "I want you to connect the maps together, the street will be on floor one of you leave the building through the front door you will go right into the street map". He answered one round of questions: the door is walked into (no button), the enemy follows a moment later, the maps are joined both ways and the map screen keeps both buttons (it only says where the match STARTS), a fighter thrown through the glass of any floor falls into the street, and the lobby's windows show the street.
+// THE STREET is floor 0 of the building: a match that starts in the street (twPick 0) has the building too, in the lobby of which you walk in through the FRONT DOOR of the building, which stands in the street at CITY.door; a match that starts in the skyscraper (twPick 1, the penthouse as always) has the street too, at the front door of the LOBBY (floor 1), at CITY.fx, the left end of its first room. You use a door by WALKING INTO IT (ctWalk): stand in its place for a moment (CITY.dwell ms) walking towards it, free to move, on the ground. The building is made by twNew (tools/tower.js): by twInit when the match starts in it, or by ctGoIn the first time you walk in. vs.map is 'tower' while you are in it and 'street' while you are out: twOn() is false in the street, so everything that is the street's (the street's drawing, the street's rules, every fighter's street move) is simply the street. vs.tw stays: the building is kept (its damage, its elevator, its floors) while you are out.
+// THE ENEMY follows a moment later (the state is T.away: he is held far off, still, until he comes): out of the front door after CITY.follow ms when he was with you, after more when he is on a higher floor (CITY.base + CITY.step a floor), down through the window after you when you were thrown out of it (CITY.hole); and into the lobby through its front door when you go in. A fighter thrown out through the glass of a floor lands in the street (the camera falls with the thrower: the slide of tools/tower.js ends in a band that is the street, ctStreetBand), and the other follows: the enemy flung out is in the street (T.foeSt), and you jump out after him a moment later (twRunQ).
+// THE ROUNDS: every round of a match begins where the match began (ctRound), the damage of the building stays.
+const CITY = { door: -150, hw: 62, fx: 42, zone: 15, dwell: 110, follow: 1100, hole: 1500, base: 1400, step: 420, max: 8000, lock: 700, land: 100, out: 46, inn: 44 };      // (door: where the front door of the building stands in the street; hw: half the width of its front; fx: where the front door stands in the lobby; zone: how close you must be (px) to walk into a door; dwell: for how long (ms); follow, hole, base, step, max: when the enemy comes out (ms); lock: the doors do not take you for this long after one has; land: how far from the door a fighter who fell out of a window lands; out, inn: where you stand when you come out / come in)
+let ctS = { t: 0, arm: true, lock: 0, px: 0 };      // (the door you are walking into: for how long, whether it is armed (you have let go since the last one), when it may take you again, where you were a frame ago)
+
+const ctOn = () => !!vs && state === 'play' && !vs.story && !vs.hunt && !vs.rush && !vs.cv && !vs.net && !alley;      // (is the city joined up in this fight? free play and Versus: not the story fights, the hunts, the rush, the curses, the Wi-Fi fight)
+const ctLand = side => CITY.door + (side ? CITY.land : -CITY.land);      // (where a fighter lands who came out of a window at the left (0) or the right (1) end of a floor)
+function ctFree(now) { return !!vs && vs.ph === 'fight' && !dom && !cutsceneOn() && !paused && gojoLift < 5 && !(gAir && gAirH > 5) && !redWhy(now) && !(vs.nHold > now) && !(twOn() && vs.tw.slide); }      // (he can walk: on the ground, not hit, down, held or in a cutscene, the camera not travelling)
+function ctWalk(now, dt, dx) {      // he is walking INTO a door that is dx px to his right (negative: to his left): true on the frame it takes him
+  const dir = ((keyR || padR) ? 1 : 0) - ((keyL || padL) ? 1 : 0), mv = wx - ctS.px; ctS.px = wx;
+  if (dir === 0 || Math.abs(dx) > CITY.zone * 4) ctS.arm = true;      // (he has let go, or is far away: the door is armed again after the last one)
+  const into = Math.abs(dx) < 3 || Math.sign(dx) === dir;
+  if (ctS.arm && now >= ctS.lock && Math.abs(dx) < CITY.zone && dir !== 0 && into && mv * dir > 0.02) ctS.t += dt * 1000; else ctS.t = 0;
+  return ctS.t >= CITY.dwell;
+}
+function ctHoldLift() { const T = vs.tw, L = T.lift; L.job = null; L.inFoe = false; L.out = false; L.foeInAt = 0; T.viaLift = false; }      // (the enemy is not in the cab any more, nor on his way to it)
+
+// ---- the frame: the door you are walking into, the enemy coming out
+function ctTick(now, dt) {
+  if (!ctOn() || !dummy || state !== 'play') return;
+  const T = vs.tw;
+  if (twOn()) {      // (in the building: the front door of the lobby)
+    const F = T.fl[1]; if (!F || !F.front || T.fMe !== 1 || T.cab || T.slide) { ctS.t = 0; return; }
+    if (ctFree(now) && ctWalk(now, dt, F.front.x - wx)) ctGoOut(now, 'door', 0); else if (!ctFree(now)) ctS.t = 0;
+    return;
+  }
+  if (T && T.out && T.away) { const d = dummy; if (d.ko >= 0) { T.away = false; d.twAway = false; } else { twFoeHold(now); if (now >= T.outAt) ctFoeOut(now); } }      // (in the street, the enemy is still in the building: he comes out when it is time)
+  if (ctFree(now) && ctWalk(now, dt, CITY.door - wx)) ctGoIn(now); else if (!ctFree(now)) ctS.t = 0;
+}
+
+// ---- out of the building
+function ctGoOut(now, how, side) {      // you leave the building: how 'door' = through the front door of the lobby, 'glass' = through the glass of any floor (from above the camera falls with you, floor after floor, and ends in the street)
+  const T = vs.tw, d = dummy, f = T.fMe; if (T.cab || T.slide || !(f >= 1) || !d) return;
+  const lx = how === 'door' ? CITY.door + CITY.out : ctLand(side), foeHere = d.ko < 0 && !T.away && T.fFoe === f; T.q.length = 0;
+  if (how === 'glass' && f > 1) {
+    const nn = f - 1, dm = Math.max(1, Math.round(PHP * Math.min(0.30, 0.03 * nn))); twHurtMe(dm, now, true); T.lastFallX = null;
+    twSlideStart(now, f, 0, wx, 'fall', foeHere ? d.x : null); T.slide.street = { x: lx, how, side, foeHere, land: ['FALL', nn, dm] };
+    if (foeHere) { T.away = true; d.twAway = true; T.awayX = d.x; T.via = 'street'; }      // (he stays up there, in sight while the camera falls: twAwayStep waits; ctSwitchOut says when he comes)
+    return;
+  }
+  ctSwitchOut(now, lx, how, side, foeHere);
+}
+function ctArrive(now, s) { const q = s.street; ctSwitchOut(now, q.x, q.how, q.side, q.foeHere); if (q.land) twLand(now, q.land[0], q.land[1], q.land[2]); }      // (the camera has fallen to the street: you are in it)
+function ctSwitchOut(now, lx, how, side, foeHere) {      // the street: you stand at lx, the building stays as it is (the enemy: out here already, or following, or still coming down from his floor)
+  const T = vs.tw, d = dummy, f0 = T.fMe, live = !!d && d.ko < 0, outside = live && !foeHere && T.away && (T.foeSt || T.via === 'front'), fx0 = T.foeSt ? T.foeX : CITY.door + 70;
+  vs.map = 'street'; T.out = true; T.cab = null; T.slide = null; T.q.length = 0; T.cf = 1; twClearWorld(); wx = lx; wxv = 0; wvx = 0; popups = []; ctS.arm = false; ctS.lock = now + CITY.lock; ctS.t = 0; ctS.px = wx;
+  T.fMe = 0; T.via = 'stairs';
+  if (!live) { T.away = false; if (d) d.twAway = false; return; }
+  if (outside) {      // (he is out here already: he was flung out through the glass, or was still on his way in)
+    T.away = false; d.twAway = false; T.fFoe = 0; T.foeSt = false; d.x = Math.abs(fx0 - wx) < 30 ? wx + 44 : fx0; d.vx = 0; d.down = 0; d.air = null; d.airH = 0; d.stunUntil = now + 600; d.ai = 'rest'; d.aiAt = now; d.restFor = 600; T.dx = d.x; ctHoldLift(); return;
+  }
+  if (foeHere) { const dr = how === 'door' || f0 === 1; T.fFoe = f0; T.awayX = d.x; T.outAt = now + (dr ? CITY.follow : CITY.hole); T.outVia = dr ? 'door' : 'hole'; T.outX = lx + (side ? 36 : -36); }      // (he was with you: he follows, out of the door, or down through the window after you from a floor above the lobby)
+  else { T.outAt = now + Math.min(CITY.max, CITY.base + CITY.step * Math.max(0, T.fFoe - 1)); T.outVia = 'door'; ctHoldLift(); }      // (he is on another floor: down the stairs, and out of the front door)
+  T.away = true; d.twAway = true; twFoeHold(now);
+}
+function ctFoeOut(now) {      // the enemy comes out into the street: through the front door, or down through the window after you
+  const T = vs.tw, d = dummy, hole = T.outVia === 'hole'; let x = hole ? T.outX : CITY.door + (wx >= CITY.door ? 1 : -1) * 30; if (Math.abs(x - wx) < 50) x = wx + 44;      // (if you stand next to where he comes out, he is in front of you)
+  ctHoldLift(); T.away = false; T.fFoe = 0; T.foeSt = false; d.twAway = false; d.x = x; d.vx = 0; d.down = 0; d.stunUntil = now + 350; d.ai = 'rest'; d.aiAt = now; d.restFor = 350; T.dx = d.x;
+  if (hole) { d.air = airMake(now, 90, 0, 520, 'bounce'); puff(x, 8); debBurst(x, 40, 10, ['#8a8a92', '#b8b0a0'], 110); snd('twbreak', 7); } else { puff(x, 5); snd('twbreak', 6); snd('twlift', 1); ctDoorS.force = now + 1200; }      // (he comes out of the door: its leaves slide apart for him)
+  say('ENEMY!', x, '#ffd34d', 8, now);
+}
+function ctFoeGlass(now, side, x) {      // the enemy goes out through the glass of the lobby: he is in the street (T.foeSt, set by twFallOut), away from you until you come out or he comes in
+  const T = vs.tw, d = dummy; if (!d || d.ko >= 0 || T.away) return;
+  T.fFoe = 1; T.away = true; d.twAway = true; T.awayX = x; T.lastFallX = null; d.air = null; d.airH = 0; d.down = 0; d.x = wx + 1e5; d.vx = 0; d.stunUntil = now + 900; twPlanArrival(now);
+}
+function ctFoeHere(now) {      // (PUT ENEMY and RESET of free play, in the street): the enemy is where you are, not in the building
+  const T = vs && vs.tw; if (!T || !T.out) return; const d = dummy; T.away = false; T.foeSt = false; T.fFoe = 0; T.outAt = 0; T.q.length = 0; if (d) d.twAway = false; ctHoldLift();
+}
+
+// ---- into the building
+function ctBuild() { if (!vs.tw) { twNew(); const T = vs.tw; T.cf = 1; T.prevF = 0; T.seen[1] = 1; } return vs.tw; }      // (a match that began in the street has no building until you first walk in: it starts as the lobby)
+function ctGoIn(now) {      // you walk into the front door of the building: you are in its lobby (floor 1), in front of its door
+  const T = ctBuild(), d = dummy; T.on = true; const F = twFloorData(1), together = !!d && d.ko < 0 && !T.away, foeIn = !!d && d.ko < 0 && T.away;
+  vs.map = 'tower'; T.out = false; T.cab = null; T.slide = null; T.q.length = 0; T.fMe = 1; T.lastFallX = null; twFloorSwitch(now, F.front.x + CITY.inn, 'cut'); snd('twlift', 1); snd('twbreak', 6);
+  ctS.arm = false; ctS.lock = now + CITY.lock; ctS.t = 0; ctS.px = wx;
+  if (together) { T.away = true; d.twAway = true; T.fFoe = 1; T.via = 'front'; T.arriveAt = now + CITY.follow; T.awayX = F.front.x + 30; T.foeSt = false; twFoeHold(now); ctHoldLift(); }      // (he was with you in the street: he follows through the door)
+  else if (foeIn) { if (T.fFoe < 1) T.fFoe = 1; twPlanArrival(now); }      // (he was still inside, on his way out: now he comes to you as he does from any floor)
+  T.px = wx; T.dx = d ? d.x : 0; T.pHp = vs.hp; T.dHp = d ? d.hp : 0; T.dHit = d ? d.hitAt : -9999; T.dDown = d ? d.down || 0 : 0; T.pDown = gDownUntil;      // (what the blows of the next frame are measured against: not what happened out in the street)
+}
+
+// ---- a round (beginRound): where the match began
+function ctRound(now) {
+  ctS = { t: 0, arm: true, lock: 0, px: wx }; const T = vs.tw; if (!T) return; ctHoldLift(); T.q.length = 0; T.slide = null; T.cab = null; T.away = false; T.foeSt = false; T.outAt = 0; T.via = 'stairs'; if (dummy) dummy.twAway = false;
+  if (vs.twStart) { vs.map = 'tower'; T.out = false; } else { vs.map = 'street'; T.out = true; T.fMe = 0; T.fFoe = 0; }
+}
+
+// ---- what the screen says: where the enemy is while you are out and he is not
+function ctOverlay(now) {
+  const T = vs && vs.tw; if (!T || !T.out || twOn() || !ctOn() || !T.away) return; if (ryUlNoHud() || cutsceneOn()) return;
+  pxt(T.fFoe > 1 ? 'FOE ' + T.fFoe + ' DOWN' : 'FOE COMING', Math.round(VW / 2), 53, '#ffb27a', 8, 'center');
+}
+window.__ct = () => ({ on: ctOn(), map: vs ? vs.map || 'street' : '', built: !!(vs && vs.tw), out: !!(vs && vs.tw && vs.tw.out), away: !!(vs && vs.tw && vs.tw.away), fMe: vs && vs.tw ? vs.tw.fMe : -1, fFoe: vs && vs.tw ? vs.tw.fFoe : -1, outAt: vs && vs.tw ? Math.round(vs.tw.outAt - pnow()) : 0, via: vs && vs.tw ? vs.tw.via : '', foeSt: !!(vs && vs.tw && vs.tw.foeSt), wx: Math.round(wx), dx: dummy ? Math.round(dummy.x - wx) : null, door: CITY.door, fx: CITY.fx, t: Math.round(ctS.t), arm: ctS.arm });      // test hook
+
+// ================================================================ THE LOOK: the front of the building in the street, the front door of the lobby, the street seen through the lobby's windows, the street as the last band of a fall
+let ctDoorS = { open: 0, ot: 0, force: 0 };      // the front of the building in the street: how far its doors are open (they slide apart for you, and for the enemy who comes out)
+function ctOpenStep(a, near, now) { const dt = Math.min(80, Math.max(0, now - (a.ot || now))); a.ot = now; a.open = (a.open || 0) + ((near || (a.force || 0) > now ? 1 : 0) - (a.open || 0)) * (1 - Math.exp(-dt / 110)); return a.open; }
+function ctEntrance(now) {      // (inside the street's picture, which is shifted up FAR px: the base line is gy - 2) the front of the building: the tower rising off the top of the screen, the lit lobby behind its glass, the canopy and the sign, the doors
+  const sx = Math.round(VW / 2 + CITY.door - wx), hw = CITY.hw; if (sx + hw + 6 < 0 || sx - hw - 6 > VW) return;
+  const B = gy - 2, r = twR, q = twQ(), W = hw * 2, x0 = sx - hw, o = ctOpenStep(ctDoorS, Math.abs(wx - CITY.door) < 30, now);
+  const tw = 104, tx = sx - (tw >> 1), top = B - 58;      // (the shaft above the lobby is a little narrower than the lobby)
+  r(tx, -24, tw, top + 24, '#0e1426'); r(tx, -24, 2, top + 24, '#050812'); r(tx + tw - 2, -24, 2, top + 24, '#1d2848');
+  if (q >= 1) for (let c = 1; c < 6; c++) r(tx + c * 17, -24, 1, top + 24, '#0a0f1f');
+  if (q >= 2) for (let ro = 0; ro < 10; ro++) for (let c = 0; c < 5; c++) { const px = tx + 8 + c * 17, py = top - 12 - ro * 12, lit = twHash(c * 7 + ro, 11) < 0.4; r(px, py, 9, 7, lit ? (twHash(c + 3, ro) < 0.2 ? '#bfe6ff' : '#ffd98a') : '#162040'); if (lit) r(px, py, 9, 1, '#fff2c4'); r(px, py + 7, 9, 1, '#080c1a'); }      // (a window every 17 px, 12 px up, some lit)
+  r(x0, top - 4, W, 4, '#2c3556'); r(x0, top - 4, W, 1, '#58648e'); r(x0, top, W, 1, '#0a0e1c');      // (the cornice)
+  r(x0, top, W, 58, '#171d34'); r(x0, top, 5, 58, '#7d84a0'); r(x0 + 5, top, 1, 58, '#4a5070'); r(x0 + W - 5, top, 5, 58, '#59607c'); r(x0 + W - 6, top, 1, 58, '#3a4058');      // (the lobby: stone, a pilaster at each end)
+  const gx = x0 + 9, gw = W - 18, gt = B - 38;      // (the glass front, lit from inside)
+  for (let i = 0; i < 5; i++) r(gx, gt + i * 7, gw, 7, ['#fff2c4', '#ffe9a8', '#fbd884', '#f0c470', '#dca85a'][i]);
+  if (q >= 2) { r(gx + 8, B - 22, 6, 18, '#3a2a1c'); r(gx + 6, B - 26, 10, 5, '#2f7d4f'); r(gx + gw - 18, B - 22, 6, 18, '#3a2a1c'); r(gx + gw - 20, B - 26, 10, 5, '#2f7d4f'); r(gx + 22, B - 14, 20, 10, '#7a1f2b'); r(gx + 22, B - 14, 20, 2, '#a63a48'); r(gx + gw - 44, B - 14, 20, 10, '#7a1f2b'); r(gx + gw - 44, B - 14, 20, 2, '#a63a48'); }      // (plants and sofas inside: dark shapes against the light)
+  for (let k = 0; k <= 6; k++) r(gx + Math.round(k * (gw - 2) / 6), gt, 2, 34, '#2a2418'); r(gx, B - 22, gw, 2, '#2a2418'); r(gx, B - 4, gw, 4, '#3a3f58'); r(gx, B - 4, gw, 1, '#6d7488');
+  const dx0 = sx - 17, dw = 34, dh = 34, dt = B - dh;      // (the doors)
+  r(dx0 - 2, dt - 3, dw + 4, dh + 3, '#cfd6e6'); r(dx0 - 2, dt - 3, dw + 4, 1, '#ffffff'); r(dx0, dt, dw, dh, '#0b1024');
+  const gap = Math.round(o * 15); if (gap > 0) { r(sx - gap, dt, gap * 2, dh, '#fff6d0'); r(sx - gap, dt, gap * 2, 2, '#ffffff'); }
+  for (const sd of [-1, 1]) { const lw = (dw >> 1) - gap; if (lw <= 0) continue; const lx = sd < 0 ? dx0 : sx + gap; r(lx, dt, lw, dh, '#5f93b4'); r(lx, dt, lw, 1, '#dff2fb'); for (let i = 0; i < 6; i++) r(lx + 2 + ((i * 5) % Math.max(1, lw - 4)), dt + 3 + i * 5, 2, 3, 'rgba(255,255,255,.35)'); r(lx, dt, 1, dh, sd < 0 ? '#dff2fb' : '#3a5a72'); r(lx + lw - 1, dt, 1, dh, sd < 0 ? '#3a5a72' : '#dff2fb'); r(lx, dt + 18, lw, 1, '#3a5a72'); r(sd < 0 ? lx + lw - 3 : lx + 1, dt + 16, 2, 5, '#cfd6e6'); }
+  r(sx - 24, B - 43, 48, 4, '#0a0d18'); r(sx - 24, B - 43, 48, 1, '#58648e'); r(sx - 24, B - 40, 48, 1, '#000000');      // (the canopy)
+  r(sx - 24, top + 3, 48, 14, '#06070c'); r(sx - 24, top + 3, 48, 1, '#8a6a22'); r(sx - 24, top + 16, 48, 1, '#8a6a22'); r(sx - 24, top + 3, 1, 14, '#8a6a22'); r(sx + 23, top + 3, 1, 14, '#8a6a22');
+  const sw = twTextW('TOWER', 2); twText(ctx, 'TOWER', sx - (sw >> 1) + 1, top + 7, 2, '#6a4a10'); twText(ctx, 'TOWER', sx - (sw >> 1), top + 6, 2, '#f1d68a');      // (the sign, in the colours of the logo of the lobby)
+  r(x0 - 3, B, W + 6, 2, '#8a90ac'); r(x0 - 3, B, W + 6, 1, '#c9cee2');      // (the step)
+}
+function ctEntranceGlow(now) {      // (after the road is drawn) the light of the lobby on the road in front of the doors
+  const sx = Math.round(VW / 2 + CITY.door - wx); if (sx + 80 < 0 || sx - 80 > VW) return; const y0 = gy - FAR, n = VH - y0; ctx.save(); ctx.fillStyle = '#ffd98a';
+  for (let i = 0; i < Math.min(n, 18); i++) { ctx.globalAlpha = 0.2 * (1 - i / 18) * (0.85 + 0.15 * ctDoorS.open); const hw = 30 + i * 2; ctx.fillRect(sx - hw, y0 + i, hw * 2, 1); }
+  ctx.restore();
+}
+function ctFrontDoor(F, sx, now) {      // the front door of the lobby: two glass leaves that slide apart as you come up to it, the night street behind them
+  const fr = F.front, x = Math.round(sx), yf = gy - 7, top = yf - 62, r = twR, o = ctOpenStep(fr, vs.tw.fMe === F.f && Math.abs(wx - fr.x) < 30, now);
+  r(x - 24, yf, 48, 2, 'rgba(0,0,0,.32)');
+  r(x - 26, top - 5, 52, 67, '#6d7488'); r(x - 26, top - 5, 52, 1, '#c9d0de'); r(x - 26, top - 5, 1, 67, '#aab2c4'); r(x + 25, top - 5, 1, 67, '#3a4052'); r(x - 23, top - 1, 46, 59, '#080d20');
+  r(x - 23, top - 1, 46, 20, '#0d1638'); r(x - 23, top + 19, 46, 20, '#101a42');      // (the night, the street outside: blocks of buildings with lit windows, a lamp)
+  r(x - 23, top + 32, 14, 26, '#0b1230'); r(x - 6, top + 26, 16, 32, '#0a102a'); r(x + 12, top + 34, 11, 24, '#0b1230');
+  for (let i = 0; i < 9; i++) r(x - 21 + (i % 3) * 5, top + 35 + ((i / 3) | 0) * 7, 2, 3, i % 4 === 1 ? '#262e58' : '#ffd98a'); for (let i = 0; i < 6; i++) r(x - 4 + (i % 3) * 5, top + 30 + ((i / 3) | 0) * 8, 2, 3, i % 2 ? '#bfe6ff' : '#262e58'); for (let i = 0; i < 4; i++) r(x + 14 + (i % 2) * 5, top + 38 + ((i / 2) | 0) * 8, 2, 3, i % 3 === 2 ? '#262e58' : '#ffd98a');
+  r(x + 3, top + 16, 1, 42, '#06070e'); r(x - 1, top + 14, 9, 2, '#06070e'); r(x - 2, top + 16, 4, 3, '#ffd98a'); r(x - 2, top + 19, 4, 1, 'rgba(255,217,138,.4)');
+  const gap = Math.round(o * 14), lw0 = 23;
+  if (gap > 0) { r(x - gap, top - 1, gap * 2, 59, 'rgba(255,246,208,.18)'); }
+  for (const sd of [-1, 1]) { const lw = lw0 - gap; if (lw <= 0) continue; const lx = sd < 0 ? x - 23 : x + gap; ctx.fillStyle = 'rgba(150,205,235,.30)'; ctx.fillRect(lx, top - 1, lw, 59); for (let i = 0; i < 7; i++) r(lx + 2 + ((i * 5) % Math.max(1, lw - 4)), top + 3 + i * 7, 2, 4, 'rgba(255,255,255,.30)'); r(lx, top - 1, lw, 2, '#cfd6e6'); r(lx, top + 55, lw, 3, '#8a93a8'); r(lx, top - 1, 1, 59, '#cfd6e6'); r(lx + lw - 1, top - 1, 1, 59, '#cfd6e6'); r(lx, top + 29, lw, 1, '#cfd6e6'); r(sd < 0 ? lx + lw - 4 : lx + 2, top + 26, 2, 7, '#e8ecf4'); }
+  r(x - 23, yf - 3, 46, 3, '#59607a'); r(x - 23, yf - 3, 46, 1, '#8a93a8'); r(x - 18, yf - 1, 36, 2, '#2a211c');
+}
+function ctFrontEmit(F, sx, now) {      // (over the darkness) the lit sign over the front door of the lobby
+  const x = Math.round(sx), top = gy - 7 - 62, r = twR, y = top + 1; r(x - 14, y, 28, 12, '#05101c'); r(x - 14, y, 28, 1, '#2c63c9'); r(x - 14, y + 11, 28, 1, '#12306a'); r(x - 14, y, 1, 12, '#12306a'); r(x + 13, y, 1, 12, '#12306a');
+  twText(ctx, 'STREET', x - 12, y + 4, 1, '#d8f0ff'); r(x + 11, y + 3, 1, 5, '#d8f0ff'); r(x + 10, y + 5, 1, 1, '#d8f0ff');      // (the sign is in the top of the doorway: the bars of the health stand over the top of the wall)
+}
+function ctStreetPic(now) {      // the street map's own picture, without the fighters: the night sky over the city, the shops, the lamps and the road, and the front of the building
+  if (!bg) return; ctx.save(); ctx.translate(0, -FAR); ctx.drawImage(bg, 0, 0); if (SET.bgd >= 1) layer(far, 0.25); if (SET.bgd >= 2) { layer(near, 0.55); drawProps(now); } ctEntrance(now); ctx.restore(); drawGround(); ctEntranceGlow(now);
+}
+function ctStreetBand(camX, off, now) {      // the street as the last band of a fall out of a window (twSlideDraw): its picture in its own band of the screen
+  const kw = wx; wx = camX; ctx.save(); ctx.beginPath(); ctx.rect(-8, gy - TW_CEIL - SH_Y - 9 + off, VW + 16, SH_H + 9); ctx.clip(); ctx.translate(0, off);
+  try { ctStreetPic(now); } finally { ctx.restore(); wx = kw; }
+}
+function ctCar(x, y, dir, col, now, i) {      // a car seen from the side (22 x 9) with its lights on: the cabin, the wheels, the lights at the front (white) and the back (red)
+  const r = twR, dk = twMix(col, '#000000', 0.45), lt = twMix(col, '#ffffff', 0.35);
+  r(x + 1, y + 4, 20, 4, col); r(x + 1, y + 4, 20, 1, lt); r(x + 5, y, 11, 5, dk); r(x + 5, y, 11, 1, col); r(x + 6, y + 1, 4, 3, '#9fd0ee'); r(x + 11, y + 1, 4, 3, '#9fd0ee'); r(x + 3, y + 7, 4, 2, '#06070c'); r(x + 15, y + 7, 4, 2, '#06070c');
+  const fx = dir > 0 ? x + 21 : x, bx = dir > 0 ? x : x + 21; r(fx, y + 5, 1, 2, '#fff6c0'); r(bx, y + 5, 1, 2, '#ff3a3a');
+  ctx.save(); ctx.globalAlpha = 0.28; ctx.fillStyle = '#fff3b0'; for (let k = 1; k <= 7; k++) ctx.fillRect(dir > 0 ? fx + k : fx - k, y + 4 + (k >> 2), 1, 3 - (k >> 2)); ctx.restore();
+}
+const CT_CARS = [['#c0392b', 31], ['#2d6fa8', 44], ['#d4a017', 27], ['#3a8a6a', 38], ['#e8e8ee', 50], ['#7a3f9d', 34]];
+function ctStreetSeen(F, now, x0, x1, yc, Q) {      // the lobby (floor 1): its windows, and what lies beyond the ends of the building, show the STREET: the sky and shops of the street map, the lamps, and cars with their lights on
+  const T = vs.tw; T.lightning = 0; ctx.fillStyle = '#06081a'; ctx.fillRect(0, 0, VW, VH); if (!bg) return;
+  const sh = -34 - FAR; ctx.save(); ctx.translate(0, sh); ctx.drawImage(bg, 0, 0); if (Q >= 1) layer(far, 0.25); if (Q >= 2) { layer(near, 0.55); drawProps(now); } ctx.restore();
+  ctx.fillStyle = '#12132a'; ctx.fillRect(0, VH + sh, VW, -sh);      // (the road goes on below the picture)
+  if (Q < 1) return;
+  const P = 380, par = 0.75; for (let i = 0; i < CT_CARS.length; i++) {
+    const dir = i % 2 ? 1 : -1, u = (((i * 71 + dir * now * 0.001 * CT_CARS[i][1]) % P) + P) % P, sx = Math.round((((u - wx * par) % P) + P) % P) - 40, y = 55 + (i % 3) * 2; if (sx > VW + 10) continue; ctCar(sx, y, dir, CT_CARS[i][0], now, i);
+  }
 }
 
 // ---------------------------------------------------------------- v1.95 CHAPTER 2: THE PORTAL, the opening (this file is spliced into template.html by build_html.py, in place of the marker line after the custom mode's)
@@ -19990,7 +20168,7 @@ function tick(t) {
   const still = state === 'play' && stopMs > 0;      // HIT-STOP: the game's clock stands still for a moment (everything in the game runs on it, so the fight freezes and goes on from the same picture)
   if (still) { stopMs = Math.max(0, stopMs - rdt); vOff += now - last; now = last; } else if (state !== 'play') stopMs = 0;
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
-  twTick(now, dt); if (freePlay()) trainStep(now, dt); twBase(now);      // (v1.173 the skyscraper: what happened last frame is read before the training step gives the enemy his health back, and the new baseline is taken right after it)
+  ctTick(now, dt); twTick(now, dt); if (freePlay()) trainStep(now, dt); twBase(now);      // (v1.173 the skyscraper: what happened last frame is read before the training step gives the enemy his health back, and the new baseline is taken right after it)
   { const ir = state === 'play' && !!vs && vs.me === IRON_WHO; if (ir !== ironUI) { ironUI = ir; document.body.classList.toggle('ir', ir); } }      // (v1.190 Iron Man has no powers: while he is the fighter the DOMAIN, FATAL and SENSE buttons are hidden, see the CSS of body.ir; v1.193 MODE is his repulsor mode and v1.194 BLUE his bear hug: both are shown)
   { const ry = state === 'play' && !!vs && vs.me === RYU_WHO; if (ry !== ryUI) { ryUI = ry; document.body.classList.toggle('ry', ry); } if (!ry && ryUl) ryUlEnd(now, true); }      // (v1.143 Ryu has no BLUE, MODE, DOMAIN or FATAL: while he fights those buttons are hidden, see the CSS of body.ry)
   ragTick(now);
@@ -21119,6 +21297,19 @@ function cuVictim(n) {
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+ {
+  "v": "1.198",
+  "t": "THE MAPS ARE CONNECTED: LEAVE THE SKYSCRAPER BY ITS FRONT DOOR AND YOU ARE IN THE STREET",
+  "n": [
+   "You said: connect the maps together, the street is on floor one: if you leave the building through the front door you go right into the street map. You answered one round of questions: you walk into the door (no button), the enemy follows a moment later, the maps are joined both ways and the map screen keeps both buttons, and you wanted two extras: windows that lead to the street, and the street seen in the lobby's windows.",
+   "THE FRONT DOOR: the lobby (floor 1) of the skyscraper has a glass front door at its left end, with a lit STREET sign. Walk into it (hold the direction towards it for a moment) and you are in the street, standing in front of the building. In the street the building stands a little to the left of where a fight begins: a tower with a lit lobby, a TOWER sign over glass doors that slide apart when you come near. Walk into those doors and you are in the lobby again. A door only takes you if you walk INTO it: stand in it and walk away and nothing happens, and after you have used a door you must let go of the key (or walk 60 pixels away) before it takes you again.",
+   "THE ENEMY FOLLOWS A MOMENT LATER: when you go out he comes out of the front door about a second after you; if he was on a higher floor he has to come down (about 1.4 seconds plus 0.4 seconds a floor, at most 8 seconds) and the screen says FOE 12 DOWN. When you go in he follows through the lobby's front door (the screen says FOE OUTSIDE until he is in). PUT ENEMY and RESET of free play bring him to where you are, in the street too.",
+   "THE MAP SCREEN stays as it is: it says where the match STARTS, the street or the penthouse (floor 50). Every round of a match begins where the match began. The building keeps everything while you are out in the street: broken walls, craters, wrecks, the elevator.",
+   "WINDOWS LEAD TO THE STREET: a fighter thrown through the glass at the end of any floor falls all the way down into the street map. If you are thrown out the camera falls with you, floor after floor, to the street (3% of your health a floor, at most 30%, never a K.O., as before), you land in front of the building and the enemy comes down after you a moment later. If the enemy is thrown out you jump out after him (DOWN TO THE STREET). The glass of the lobby lets you out into the street too.",
+   "THE LOBBY'S WINDOWS SHOW THE STREET: the shops and the lamps of the street map, and cars driving past with their lights on, instead of the sky.",
+   "It is there in Free Play and Battle, on both maps. Not in the story fights, the hunts, the rush, the curses and Wi-Fi."
+  ]
+ },
  {
   "v": "1.197",
   "t": "IRON MAN: THE ATTACK IS CALLED LASER, AND IT IS 2 PIXELS THICK",
@@ -23352,8 +23543,8 @@ addEventListener('pointerdown', e => { if (state === 'story') storySkip(e); }); 
 addEventListener('pointerup', e => { if (state === 'story') { if (story && story.c15) c15Up(e); else if (typeof c13Up === 'function') c13Up(e); } }); addEventListener('pointercancel', e => { if (state === 'story') { if (story && story.c15) c15Up(e); else if (typeof c13Up === 'function') c13Up(e); } });      // a tap skips to the next part of the cutscene
 addEventListener('pointerdown', () => { if (yf && !paused) yfTap(pnow()); });      // (v1.49 Yuji's FATALITY: two taps skip it)
 addEventListener('pointerdown', () => { if (typeof suFgOn === 'function' && suFgOn() && !paused) suFgTap(pnow()); });      // (v1.127 Sukuna's FUGA cutscene: two taps skip it)
-$('vsNext').addEventListener('click', () => { twWant = !!vs && vs.map === 'tower' && !vs.story && !vs.hunt && !vs.rush && !vs.cv; if (vs && vs.cv) { startCurse(vs.ci + 1, 0); return; } const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
-$('vsAgain').addEventListener('click', () => { twWant = !!vs && vs.map === 'tower' && !vs.story && !vs.hunt && !vs.rush && !vs.cv; return vs && vs.hunt ? startHunt(vs.hunt.i) : vs && vs.rush ? (vs.run === ROUL ? startRoulette() : startRush()) : vs && vs.cv ? startCurse(vs.ci, vs.hard, vs.daily) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe); });
+$('vsNext').addEventListener('click', () => { twWant = !!vs && !!vs.twStart && !vs.story && !vs.hunt && !vs.rush && !vs.cv; if (vs && vs.cv) { startCurse(vs.ci + 1, 0); return; } const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
+$('vsAgain').addEventListener('click', () => { twWant = !!vs && !!vs.twStart && !vs.story && !vs.hunt && !vs.rush && !vs.cv; return vs && vs.hunt ? startHunt(vs.hunt.i) : vs && vs.rush ? (vs.run === ROUL ? startRoulette() : startRush()) : vs && vs.cv ? startCurse(vs.ci, vs.hard, vs.daily) : vs && vs.net ? netRematch() : startMatch(vs ? vs.gi : vsSel, vs && vs.story, 0, vs && vs.foe); });
 $('vsMenu').addEventListener('click', () => { if (vs && vs.net) { lanLeave(); return; } if (vs && vs.hunt) { show('chal'); buildHunts(); return; } if (vs && vs.cv) { show('chal'); buildChal(); return; } if (vs && vs.story) { svView = 0; show('saves'); renderSaves(); } else fsOpen('battle'); });
 $('back').addEventListener('click', () => { leavePlay(); });
 VOLS.forEach(([k, name]) => {
@@ -23927,6 +24118,7 @@ function scCheck() {      // numbers that are not numbers, effect lists that onl
     const bad = []; if (!Number.isFinite(wx)) bad.push('wx'); if (!Number.isFinite(wvx)) bad.push('wvx'); if (!Number.isFinite(ce)) bad.push('energy');
     if (vs && !Number.isFinite(vs.hp)) bad.push('his health'); if (dummy && !(Number.isFinite(dummy.x) && Number.isFinite(dummy.hp))) bad.push('the enemy');
     if (bad.length) scNote('fail', 'NOT A NUMBER: ' + bad.join(', '), SC.say); else scPass();
+    if (vs && vs.tw) { if (vs.tw.fl && vs.tw.fl[0]) scNote('fail', 'THE STREET WAS MADE INTO A FLOOR OF THE BUILDING (FLOOR 0)', SC.say); if (vs.tw.on && (vs.map === 'tower') === !!vs.tw.out) scNote('fail', 'THE BUILDING AND THE MAP DISAGREE ABOUT WHERE HE IS', SC.say + ': MAP ' + vs.map + ', OUT ' + vs.tw.out); }      // (v1.198 the city: the street is never a floor, and the map says tower exactly when he is not out)
     for (const k in SC_LISTS) { let n = 0; try { n = SC_LISTS[k](); } catch { continue; } if (n > (SC.peak[k] || 0)) SC.peak[k] = n; if (n > (k === 'sparks' ? 800 : 400)) scNote('warn', 'THE LIST ' + k + ' HAS ' + n + ' ENTRIES', SC.say); }
   } catch (e) { scErr(e, 'CHECK'); }
 }
@@ -24286,7 +24478,7 @@ let SC_ONLY = {};      // (for the tests: { sec: ['STORY'], scenes: ['CH 4'] })
 // ---------------------------------------------------------------- SKYSCRAPER (v1.173): three fighters fight in the 50-floor building and the scan makes its things happen: a slam through the floors, a fall, a blast, a ceiling broken, glass broken and a fall to the street
 function scSigns() {      // v1.182 the floor signs: a few floors (the lobby, the penthouse, others) have at least 3 each, none hangs on a door or on an inner wall, and none is behind a piece of furniture tall enough to stand in front of it
   const bad = []; for (const f of [1, 2, 9, 17, 30, 44, 50]) { const F = twFloorData(f), s = twLayout(F).sign; if (s.length < 3) bad.push('FLOOR ' + f + ' HAS ONLY ' + s.length + ' SIGNS');
-    for (const x of s) { if (F.doors.some(d => x - d.x > -33 && x - d.x < 40)) bad.push('FLOOR ' + f + ': A SIGN HANGS ON A DOOR AT ' + x); if (F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36)) bad.push('FLOOR ' + f + ': A SIGN HANGS ON AN INNER WALL AT ' + x); if (F.objs.some(o => { const K = TW_K[o.k]; return Math.abs(o.x - x) < K.w / 2 + 15 && 98 - K.h - (o.on ? TW_K[o.on.k].h : 0) < 68; })) bad.push('FLOOR ' + f + ': A SIGN IS BEHIND TALL FURNITURE AT ' + x); } }
+    for (const x of s) { if (F.doors.some(d => x - d.x > -33 && x - d.x < 40) || (F.front && Math.abs(x - F.front.x) < 46)) bad.push('FLOOR ' + f + ': A SIGN HANGS ON A DOOR AT ' + x); if (F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36)) bad.push('FLOOR ' + f + ': A SIGN HANGS ON AN INNER WALL AT ' + x); if (F.objs.some(o => { const K = TW_K[o.k]; return Math.abs(o.x - x) < K.w / 2 + 15 && 98 - K.h - (o.on ? TW_K[o.on.k].h : 0) < 68; })) bad.push('FLOOR ' + f + ': A SIGN IS BEHIND TALL FURNITURE AT ' + x); } }
   if (bad.length) scNote('fail', 'FLOOR SIGNS: ' + bad[0], bad.length + ' PROBLEMS');
 }
 function scPanel() {      // v1.184 the elevator panel in the cab: no text of a button may stick out of its button (the floor numbers were 16 px in circles of 24 - 37 px, cut at the edge; checked here at the real size of the screen)
@@ -24340,7 +24532,7 @@ async function scTower() {
         [448, () => { const T = vs.tw; if (T.cab) return; const F = twFloorData(T.fMe), d = twElevOf(F); if (d) { d.st = 0; d.hp = 70; twLiftUse(F, d, pnow()); } }],
         [462, () => { const T = vs.tw; if (!T.cab) { const F = twFloorData(T.fMe), d = twElevOf(F); if (d) twDoorHit(F, d, 200, pnow()); } }]];
       const ok = await scFrames(470, i => {
-        p.step(); if (i % 6 === 0) scCheck();
+        p.step(); if (i % 6 === 0) scCheck(); if (i % 40 === 39 && !twOn() && vs && vs.tw && vs.ph === 'fight' && state === 'play') ctGoIn(pnow());      // (v1.198 he walked out of the front door or through the glass: back in, so that the building is fought in)
         for (const [at, fn] of ev) if (i === at) { try { if (twOn() && vs.ph === 'fight') fn(); } catch (e) { scErr(e, label + ' EVENT ' + at); } }
         if (state !== 'play') { scNote('warn', 'THE FIGHT LEFT THE FIGHT SCREEN BY ITSELF: ' + label, 'STATE ' + state); }
       });
@@ -24349,7 +24541,53 @@ async function scTower() {
   } finally { twPick = keep; }
 }
 
-const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
+// ---------------------------------------------------------------- CITY (v1.198): the street and the skyscraper are one place: you walk into the front door of the building in the street and into the front door of its lobby, the enemy follows a moment later, a fall out of a window ends in the street (him or you), every round begins where the match began
+async function scCityDoors(who) {      // a match that begins in the street: in through the front door of the building, the enemy follows, out through the front door of the lobby, the enemy follows; a door is walked into, not away from; a new round is in the street again
+  const label = SC_NAME[who] + ' IN THE CITY'; SC.say = label; twPick = 0; Object.assign(TR, { beh: 0, ehp: 0, php: 0, pce: 0 });
+  try { startPractice(who, 'cat'); } catch (e) { scErr(e, label + ' START'); return true; }
+  if (state !== 'play' || twOn() || vs.tw) { scNote('fail', 'A STREET FIGHT DID NOT BEGIN IN THE STREET WITHOUT A BUILDING: ' + label, 'STATE ' + state + ', MAP ' + (vs && vs.map)); show('title'); return true; }
+  if (!(await scIntro())) { show('title'); return false; }
+  const walk = async (k, cond, n) => { scKey(k, true); const r = await scUntil(cond, n); scKey(k, false); return r; };
+  wx = CITY.door + 90; dummy.x = wx + 90; ctS.px = wx; ctS.arm = true; ctS.lock = 0;
+  scT(await walk('ArrowLeft', () => twOn(), 160), label + ': WALKING INTO THE FRONT DOOR OF THE BUILDING DID NOT TAKE HIM IN', 'WX ' + Math.round(wx) + ', DOOR ' + CITY.door);
+  if (!twOn()) { show('title'); return true; }
+  const T = vs.tw; scT(T.fMe === 1 && !T.out && vs.map === 'tower', label + ': HE IS NOT IN THE LOBBY AFTER THE FRONT DOOR', 'FLOOR ' + T.fMe);
+  scT(await scUntil(() => !T.away, 120), label + ': THE ENEMY DID NOT FOLLOW HIM IN THROUGH THE FRONT DOOR', 'AWAY ' + T.away + ', VIA ' + T.via);
+  const F = twFloorData(1); wx = twPlace(F, F.front.x + 90); dummy.x = twPlace(F, wx + 90); T.px = wx; T.dx = dummy.x; ctS.px = wx; ctS.arm = true; ctS.lock = 0;
+  scT(await walk('ArrowLeft', () => !twOn(), 160), label + ': WALKING INTO THE FRONT DOOR OF THE LOBBY DID NOT TAKE HIM OUT', 'WX ' + Math.round(wx) + ', FRONT ' + F.front.x);
+  if (twOn()) { show('title'); return true; }
+  scT(vs.map === 'street' && T.out && T.fMe === 0, label + ': HE IS NOT IN THE STREET AFTER THE FRONT DOOR OF THE LOBBY', 'MAP ' + vs.map);
+  scT((await scUntil(() => !T.away && dummy.ko < 0, 150)) && Number.isFinite(dummy.x) && Math.abs(dummy.x - wx) < 600, label + ': THE ENEMY DID NOT FOLLOW HIM OUT INTO THE STREET', 'AWAY ' + T.away + ', FOE FLOOR ' + T.fFoe);
+  wx = CITY.door + 8; ctS.px = wx; ctS.arm = true; ctS.lock = 0; await scFrames(2);
+  scKey('ArrowRight', true); await scFrames(40); scKey('ArrowRight', false); scT(!twOn(), label + ': WALKING AWAY FROM THE FRONT DOOR TOOK HIM IN', 'MAP ' + vs.map);
+  beginRound(pnow()); await scFrames(4); scT(!twOn() && vs.map === 'street' && !!vs.tw && vs.tw.out && wx === 0, label + ': A NEW ROUND DID NOT BEGIN IN THE STREET', 'MAP ' + vs.map + ', WX ' + wx);
+  scCheck(); show('title'); return true;
+}
+async function scCityWindow(who, side) {      // a match that begins in the skyscraper: side 'me' = he is thrown out of the glass at the end of the floor, the camera falls and he lands in the street, the enemy comes after him; side 'foe' = the enemy is thrown out and he jumps out after him
+  const label = SC_NAME[who] + (side === 'me' ? ' OUT OF A WINDOW' : ' AFTER THE ENEMY OUT OF A WINDOW'); SC.say = label; twPick = 1; Object.assign(TR, { beh: 0, ehp: 0, php: 0, pce: 0 });
+  try { startPractice(who, 'cat'); } catch (e) { scErr(e, label + ' START'); return true; }
+  if (state !== 'play' || !twOn()) { scNote('fail', 'THE SKYSCRAPER DID NOT START: ' + label, 'STATE ' + state); show('title'); return true; }
+  if (!(await scIntro())) { show('title'); return false; }
+  const T = vs.tw, F = twFloorData(T.fMe), s = side === 'me' ? 1 : 0; F.outer[s].broken = true;
+  if (side === 'me') wx = s ? F.W + 12 : -12; else { dummy.x = s ? F.W + 12 : -12; T.dx = wx; }
+  scT(await scUntil(() => !twOn(), 160), label + ': THE FALL DID NOT END IN THE STREET', 'FLOOR ' + T.fMe + ', SLIDE ' + !!T.slide + ', AWAY ' + T.away);
+  if (twOn()) { show('title'); return true; }
+  scT(vs.map === 'street' && Math.abs(wx - ctLand(s)) < 6, label + ': HE LANDED IN THE WRONG PLACE', 'WX ' + Math.round(wx) + ', WANTED ' + ctLand(s));
+  scT((await scUntil(() => !T.away && dummy.ko < 0, 220)) && Number.isFinite(dummy.x) && Math.abs(dummy.x - wx) < 600, label + ': THE ENEMY IS NOT IN THE STREET WITH HIM', 'AWAY ' + T.away + ', VIA ' + T.via + ', FOE FLOOR ' + T.fFoe);
+  scCheck(); show('title'); return true;
+}
+async function scCity() {
+  SC.sec = 'CITY'; scCov('CITY', 0, 6); SC.plan = 6 * 220; SC.done = 0; const keep = twPick;
+  try {
+    for (const who of ['gojo', 'cu5']) {
+      if (!(await scCityDoors(who))) return; scCov('CITY', 1, 0);
+      if (!(await scCityWindow(who, 'me'))) return; scCov('CITY', 1, 0);
+      if (!(await scCityWindow(who, 'foe'))) return; scCov('CITY', 1, 0);
+    }
+  } finally { twPick = keep; scKey('ArrowLeft', false); scKey('ArrowRight', false); }
+}
+
+const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
 const scEl = document.createElement('section'); scEl.id = 'scan'; scEl.className = 'screen';
 scEl.innerHTML = '<h2>SCANNING THE GAME</h2><div id="scBar"><i id="scFill"></i></div><small id="scTxt"></small><small id="scLive"></small><small>YOUR SAVES ARE SAFE: THEY WERE COPIED FIRST AND ARE PUT BACK WHEN THE SCAN IS OVER.</small><button id="scCancel">CANCEL</button>';
 document.body.appendChild(scEl);
@@ -24396,7 +24634,7 @@ async function scRun(opts) {      // opts.noReload = for the tests: no reload at
 window.__scanRun = scRun;
 
 // ---------------------------------------------------------------- what the ERRORS page shows
-const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
+const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', CITY: 'CITY DOORS AND FALLS', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
 const scCovText = () => Object.keys(SC.got).concat(Object.keys(SC.of)).filter((k, i, a) => a.indexOf(k) === i).map(k => k === 'ROUNDS' ? 'EXTRA ROUNDS OF 14 FIGHTS ' + SC.got[k] : (SC_COVN[k] || k) + ' ' + (SC.got[k] || 0) + '/' + SC.of[k]);      // (what was covered, of what there is)
 const scLast = () => { try { const r = JSON.parse(localStorage.getItem('jsscanres') || 'null'); return r && Array.isArray(r.res) ? r : null; } catch { return null; } };
 function scReport(r) {      // the text of COPY SCAN REPORT

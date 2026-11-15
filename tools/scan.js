@@ -56,6 +56,7 @@ function scCheck() {      // numbers that are not numbers, effect lists that onl
     const bad = []; if (!Number.isFinite(wx)) bad.push('wx'); if (!Number.isFinite(wvx)) bad.push('wvx'); if (!Number.isFinite(ce)) bad.push('energy');
     if (vs && !Number.isFinite(vs.hp)) bad.push('his health'); if (dummy && !(Number.isFinite(dummy.x) && Number.isFinite(dummy.hp))) bad.push('the enemy');
     if (bad.length) scNote('fail', 'NOT A NUMBER: ' + bad.join(', '), SC.say); else scPass();
+    if (vs && vs.tw) { if (vs.tw.fl && vs.tw.fl[0]) scNote('fail', 'THE STREET WAS MADE INTO A FLOOR OF THE BUILDING (FLOOR 0)', SC.say); if (vs.tw.on && (vs.map === 'tower') === !!vs.tw.out) scNote('fail', 'THE BUILDING AND THE MAP DISAGREE ABOUT WHERE HE IS', SC.say + ': MAP ' + vs.map + ', OUT ' + vs.tw.out); }      // (v1.198 the city: the street is never a floor, and the map says tower exactly when he is not out)
     for (const k in SC_LISTS) { let n = 0; try { n = SC_LISTS[k](); } catch { continue; } if (n > (SC.peak[k] || 0)) SC.peak[k] = n; if (n > (k === 'sparks' ? 800 : 400)) scNote('warn', 'THE LIST ' + k + ' HAS ' + n + ' ENTRIES', SC.say); }
   } catch (e) { scErr(e, 'CHECK'); }
 }
@@ -415,7 +416,7 @@ let SC_ONLY = {};      // (for the tests: { sec: ['STORY'], scenes: ['CH 4'] })
 // ---------------------------------------------------------------- SKYSCRAPER (v1.173): three fighters fight in the 50-floor building and the scan makes its things happen: a slam through the floors, a fall, a blast, a ceiling broken, glass broken and a fall to the street
 function scSigns() {      // v1.182 the floor signs: a few floors (the lobby, the penthouse, others) have at least 3 each, none hangs on a door or on an inner wall, and none is behind a piece of furniture tall enough to stand in front of it
   const bad = []; for (const f of [1, 2, 9, 17, 30, 44, 50]) { const F = twFloorData(f), s = twLayout(F).sign; if (s.length < 3) bad.push('FLOOR ' + f + ' HAS ONLY ' + s.length + ' SIGNS');
-    for (const x of s) { if (F.doors.some(d => x - d.x > -33 && x - d.x < 40)) bad.push('FLOOR ' + f + ': A SIGN HANGS ON A DOOR AT ' + x); if (F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36)) bad.push('FLOOR ' + f + ': A SIGN HANGS ON AN INNER WALL AT ' + x); if (F.objs.some(o => { const K = TW_K[o.k]; return Math.abs(o.x - x) < K.w / 2 + 15 && 98 - K.h - (o.on ? TW_K[o.on.k].h : 0) < 68; })) bad.push('FLOOR ' + f + ': A SIGN IS BEHIND TALL FURNITURE AT ' + x); } }
+    for (const x of s) { if (F.doors.some(d => x - d.x > -33 && x - d.x < 40) || (F.front && Math.abs(x - F.front.x) < 46)) bad.push('FLOOR ' + f + ': A SIGN HANGS ON A DOOR AT ' + x); if (F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36)) bad.push('FLOOR ' + f + ': A SIGN HANGS ON AN INNER WALL AT ' + x); if (F.objs.some(o => { const K = TW_K[o.k]; return Math.abs(o.x - x) < K.w / 2 + 15 && 98 - K.h - (o.on ? TW_K[o.on.k].h : 0) < 68; })) bad.push('FLOOR ' + f + ': A SIGN IS BEHIND TALL FURNITURE AT ' + x); } }
   if (bad.length) scNote('fail', 'FLOOR SIGNS: ' + bad[0], bad.length + ' PROBLEMS');
 }
 function scPanel() {      // v1.184 the elevator panel in the cab: no text of a button may stick out of its button (the floor numbers were 16 px in circles of 24 - 37 px, cut at the edge; checked here at the real size of the screen)
@@ -469,7 +470,7 @@ async function scTower() {
         [448, () => { const T = vs.tw; if (T.cab) return; const F = twFloorData(T.fMe), d = twElevOf(F); if (d) { d.st = 0; d.hp = 70; twLiftUse(F, d, pnow()); } }],
         [462, () => { const T = vs.tw; if (!T.cab) { const F = twFloorData(T.fMe), d = twElevOf(F); if (d) twDoorHit(F, d, 200, pnow()); } }]];
       const ok = await scFrames(470, i => {
-        p.step(); if (i % 6 === 0) scCheck();
+        p.step(); if (i % 6 === 0) scCheck(); if (i % 40 === 39 && !twOn() && vs && vs.tw && vs.ph === 'fight' && state === 'play') ctGoIn(pnow());      // (v1.198 he walked out of the front door or through the glass: back in, so that the building is fought in)
         for (const [at, fn] of ev) if (i === at) { try { if (twOn() && vs.ph === 'fight') fn(); } catch (e) { scErr(e, label + ' EVENT ' + at); } }
         if (state !== 'play') { scNote('warn', 'THE FIGHT LEFT THE FIGHT SCREEN BY ITSELF: ' + label, 'STATE ' + state); }
       });
@@ -478,7 +479,53 @@ async function scTower() {
   } finally { twPick = keep; }
 }
 
-const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
+// ---------------------------------------------------------------- CITY (v1.198): the street and the skyscraper are one place: you walk into the front door of the building in the street and into the front door of its lobby, the enemy follows a moment later, a fall out of a window ends in the street (him or you), every round begins where the match began
+async function scCityDoors(who) {      // a match that begins in the street: in through the front door of the building, the enemy follows, out through the front door of the lobby, the enemy follows; a door is walked into, not away from; a new round is in the street again
+  const label = SC_NAME[who] + ' IN THE CITY'; SC.say = label; twPick = 0; Object.assign(TR, { beh: 0, ehp: 0, php: 0, pce: 0 });
+  try { startPractice(who, 'cat'); } catch (e) { scErr(e, label + ' START'); return true; }
+  if (state !== 'play' || twOn() || vs.tw) { scNote('fail', 'A STREET FIGHT DID NOT BEGIN IN THE STREET WITHOUT A BUILDING: ' + label, 'STATE ' + state + ', MAP ' + (vs && vs.map)); show('title'); return true; }
+  if (!(await scIntro())) { show('title'); return false; }
+  const walk = async (k, cond, n) => { scKey(k, true); const r = await scUntil(cond, n); scKey(k, false); return r; };
+  wx = CITY.door + 90; dummy.x = wx + 90; ctS.px = wx; ctS.arm = true; ctS.lock = 0;
+  scT(await walk('ArrowLeft', () => twOn(), 160), label + ': WALKING INTO THE FRONT DOOR OF THE BUILDING DID NOT TAKE HIM IN', 'WX ' + Math.round(wx) + ', DOOR ' + CITY.door);
+  if (!twOn()) { show('title'); return true; }
+  const T = vs.tw; scT(T.fMe === 1 && !T.out && vs.map === 'tower', label + ': HE IS NOT IN THE LOBBY AFTER THE FRONT DOOR', 'FLOOR ' + T.fMe);
+  scT(await scUntil(() => !T.away, 120), label + ': THE ENEMY DID NOT FOLLOW HIM IN THROUGH THE FRONT DOOR', 'AWAY ' + T.away + ', VIA ' + T.via);
+  const F = twFloorData(1); wx = twPlace(F, F.front.x + 90); dummy.x = twPlace(F, wx + 90); T.px = wx; T.dx = dummy.x; ctS.px = wx; ctS.arm = true; ctS.lock = 0;
+  scT(await walk('ArrowLeft', () => !twOn(), 160), label + ': WALKING INTO THE FRONT DOOR OF THE LOBBY DID NOT TAKE HIM OUT', 'WX ' + Math.round(wx) + ', FRONT ' + F.front.x);
+  if (twOn()) { show('title'); return true; }
+  scT(vs.map === 'street' && T.out && T.fMe === 0, label + ': HE IS NOT IN THE STREET AFTER THE FRONT DOOR OF THE LOBBY', 'MAP ' + vs.map);
+  scT((await scUntil(() => !T.away && dummy.ko < 0, 150)) && Number.isFinite(dummy.x) && Math.abs(dummy.x - wx) < 600, label + ': THE ENEMY DID NOT FOLLOW HIM OUT INTO THE STREET', 'AWAY ' + T.away + ', FOE FLOOR ' + T.fFoe);
+  wx = CITY.door + 8; ctS.px = wx; ctS.arm = true; ctS.lock = 0; await scFrames(2);
+  scKey('ArrowRight', true); await scFrames(40); scKey('ArrowRight', false); scT(!twOn(), label + ': WALKING AWAY FROM THE FRONT DOOR TOOK HIM IN', 'MAP ' + vs.map);
+  beginRound(pnow()); await scFrames(4); scT(!twOn() && vs.map === 'street' && !!vs.tw && vs.tw.out && wx === 0, label + ': A NEW ROUND DID NOT BEGIN IN THE STREET', 'MAP ' + vs.map + ', WX ' + wx);
+  scCheck(); show('title'); return true;
+}
+async function scCityWindow(who, side) {      // a match that begins in the skyscraper: side 'me' = he is thrown out of the glass at the end of the floor, the camera falls and he lands in the street, the enemy comes after him; side 'foe' = the enemy is thrown out and he jumps out after him
+  const label = SC_NAME[who] + (side === 'me' ? ' OUT OF A WINDOW' : ' AFTER THE ENEMY OUT OF A WINDOW'); SC.say = label; twPick = 1; Object.assign(TR, { beh: 0, ehp: 0, php: 0, pce: 0 });
+  try { startPractice(who, 'cat'); } catch (e) { scErr(e, label + ' START'); return true; }
+  if (state !== 'play' || !twOn()) { scNote('fail', 'THE SKYSCRAPER DID NOT START: ' + label, 'STATE ' + state); show('title'); return true; }
+  if (!(await scIntro())) { show('title'); return false; }
+  const T = vs.tw, F = twFloorData(T.fMe), s = side === 'me' ? 1 : 0; F.outer[s].broken = true;
+  if (side === 'me') wx = s ? F.W + 12 : -12; else { dummy.x = s ? F.W + 12 : -12; T.dx = wx; }
+  scT(await scUntil(() => !twOn(), 160), label + ': THE FALL DID NOT END IN THE STREET', 'FLOOR ' + T.fMe + ', SLIDE ' + !!T.slide + ', AWAY ' + T.away);
+  if (twOn()) { show('title'); return true; }
+  scT(vs.map === 'street' && Math.abs(wx - ctLand(s)) < 6, label + ': HE LANDED IN THE WRONG PLACE', 'WX ' + Math.round(wx) + ', WANTED ' + ctLand(s));
+  scT((await scUntil(() => !T.away && dummy.ko < 0, 220)) && Number.isFinite(dummy.x) && Math.abs(dummy.x - wx) < 600, label + ': THE ENEMY IS NOT IN THE STREET WITH HIM', 'AWAY ' + T.away + ', VIA ' + T.via + ', FOE FLOOR ' + T.fFoe);
+  scCheck(); show('title'); return true;
+}
+async function scCity() {
+  SC.sec = 'CITY'; scCov('CITY', 0, 6); SC.plan = 6 * 220; SC.done = 0; const keep = twPick;
+  try {
+    for (const who of ['gojo', 'cu5']) {
+      if (!(await scCityDoors(who))) return; scCov('CITY', 1, 0);
+      if (!(await scCityWindow(who, 'me'))) return; scCov('CITY', 1, 0);
+      if (!(await scCityWindow(who, 'foe'))) return; scCov('CITY', 1, 0);
+    }
+  } finally { twPick = keep; scKey('ArrowLeft', false); scKey('ArrowRight', false); }
+}
+
+const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
 const scEl = document.createElement('section'); scEl.id = 'scan'; scEl.className = 'screen';
 scEl.innerHTML = '<h2>SCANNING THE GAME</h2><div id="scBar"><i id="scFill"></i></div><small id="scTxt"></small><small id="scLive"></small><small>YOUR SAVES ARE SAFE: THEY WERE COPIED FIRST AND ARE PUT BACK WHEN THE SCAN IS OVER.</small><button id="scCancel">CANCEL</button>';
 document.body.appendChild(scEl);
@@ -525,7 +572,7 @@ async function scRun(opts) {      // opts.noReload = for the tests: no reload at
 window.__scanRun = scRun;
 
 // ---------------------------------------------------------------- what the ERRORS page shows
-const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
+const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', CITY: 'CITY DOORS AND FALLS', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
 const scCovText = () => Object.keys(SC.got).concat(Object.keys(SC.of)).filter((k, i, a) => a.indexOf(k) === i).map(k => k === 'ROUNDS' ? 'EXTRA ROUNDS OF 14 FIGHTS ' + SC.got[k] : (SC_COVN[k] || k) + ' ' + (SC.got[k] || 0) + '/' + SC.of[k]);      // (what was covered, of what there is)
 const scLast = () => { try { const r = JSON.parse(localStorage.getItem('jsscanres') || 'null'); return r && Array.isArray(r.res) ? r : null; } catch { return null; } };
 function scReport(r) {      // the text of COPY SCAN REPORT

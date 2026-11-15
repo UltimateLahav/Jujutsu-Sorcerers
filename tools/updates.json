@@ -1,5 +1,18 @@
 [
  {
+  "v": "1.198",
+  "t": "THE MAPS ARE CONNECTED: LEAVE THE SKYSCRAPER BY ITS FRONT DOOR AND YOU ARE IN THE STREET",
+  "n": [
+   "You said: connect the maps together, the street is on floor one: if you leave the building through the front door you go right into the street map. You answered one round of questions: you walk into the door (no button), the enemy follows a moment later, the maps are joined both ways and the map screen keeps both buttons, and you wanted two extras: windows that lead to the street, and the street seen in the lobby's windows.",
+   "THE FRONT DOOR: the lobby (floor 1) of the skyscraper has a glass front door at its left end, with a lit STREET sign. Walk into it (hold the direction towards it for a moment) and you are in the street, standing in front of the building. In the street the building stands a little to the left of where a fight begins: a tower with a lit lobby, a TOWER sign over glass doors that slide apart when you come near. Walk into those doors and you are in the lobby again. A door only takes you if you walk INTO it: stand in it and walk away and nothing happens, and after you have used a door you must let go of the key (or walk 60 pixels away) before it takes you again.",
+   "THE ENEMY FOLLOWS A MOMENT LATER: when you go out he comes out of the front door about a second after you; if he was on a higher floor he has to come down (about 1.4 seconds plus 0.4 seconds a floor, at most 8 seconds) and the screen says FOE 12 DOWN. When you go in he follows through the lobby's front door (the screen says FOE OUTSIDE until he is in). PUT ENEMY and RESET of free play bring him to where you are, in the street too.",
+   "THE MAP SCREEN stays as it is: it says where the match STARTS, the street or the penthouse (floor 50). Every round of a match begins where the match began. The building keeps everything while you are out in the street: broken walls, craters, wrecks, the elevator.",
+   "WINDOWS LEAD TO THE STREET: a fighter thrown through the glass at the end of any floor falls all the way down into the street map. If you are thrown out the camera falls with you, floor after floor, to the street (3% of your health a floor, at most 30%, never a K.O., as before), you land in front of the building and the enemy comes down after you a moment later. If the enemy is thrown out you jump out after him (DOWN TO THE STREET). The glass of the lobby lets you out into the street too.",
+   "THE LOBBY'S WINDOWS SHOW THE STREET: the shops and the lamps of the street map, and cars driving past with their lights on, instead of the sky.",
+   "It is there in Free Play and Battle, on both maps. Not in the story fights, the hunts, the rush, the curses and Wi-Fi."
+  ]
+ },
+ {
   "v": "1.197",
   "t": "IRON MAN: THE ATTACK IS CALLED LASER, AND IT IS 2 PIXELS THICK",
   "n": [

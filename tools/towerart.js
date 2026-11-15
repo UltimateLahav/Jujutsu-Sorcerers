@@ -133,12 +133,12 @@ const TW_STY = {      // wall, lower wall, floor, how dark the rooms are, window
 const TW_SG = { w: 27, h: 23, y: 50 };      // (v1.182 the FLOOR SIGN on the wall: a plate 27 x 23 whose top row is row y of the shell (rows 50 - 72: under the health bars of the screen, above the little furniture); the middle column of the plate is the x of the sign)
 function twLayout(F) {      // where the windows, the features and the floor signs of the wall are (made with the floor, kept in F.lay)
   if (F.lay) return F.lay; const sty = TW_STY[F.th] || TW_STY.OFFICE, R = twRng(F.seed ^ 0x2545f491), lay = { win: [], feat: [], sign: [], sty, pano: !!sty.pano }, mx = Math.round(F.W / 2);
-  const ok = x => x >= 26 && !F.doors.some(d => x - d.x > -33 && x - d.x < 40) && !F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36) && !(F.th === 'LOBBY' && Math.abs(x - mx) < 72) && !F.objs.some(o => { const K = TW_K[o.k]; return Math.abs(o.x - x) < K.w / 2 + 15 && 98 - K.h - (o.on ? TW_K[o.on.k].h : 0) < 68; }), cand = [];      // (v1.182 the floor signs go on the free spots of the wall (the spots of the windows, every 64 px): clear of the doors (the call panel is on their right), of the inner walls, of the logo of the lobby and of any furniture tall enough to stand in front of the plate)
+  const ok = x => x >= 26 && !F.doors.some(d => x - d.x > -33 && x - d.x < 40) && !(F.front && Math.abs(x - F.front.x) < 46) && !F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36) && !(F.th === 'LOBBY' && Math.abs(x - mx) < 72) && !F.objs.some(o => { const K = TW_K[o.k]; return Math.abs(o.x - x) < K.w / 2 + 15 && 98 - K.h - (o.on ? TW_K[o.on.k].h : 0) < 68; }), cand = [];      // (v1.182 the floor signs go on the free spots of the wall (the spots of the windows, every 64 px): clear of the doors (the call panel is on their right), of the inner walls, of the logo of the lobby and of any furniture tall enough to stand in front of the plate)
   for (let x = 20; x <= F.W - 26; x += 64) if (ok(x)) cand.push(x);
   const G = Math.max(150, Math.min(260, VW - 60));      // (the widest gap allowed between two signs: a bit less than the width of the screen, so that one is on it nearly always: 171 px on the narrowest screens, 260 on the widest)
   let last = -100; for (let i = 0; i < cand.length; i++) if ((i + 1 < cand.length ? cand[i + 1] : 1e9) - last > G) { lay.sign.push(cand[i]); last = cand[i]; }      // (as few as it takes: the farthest free spot that still reaches the next one)
   for (let n = 0; n < 9; n++) { const sg = [-100, ...lay.sign, F.W + 100]; let add = -1; for (let i = 1; i < sg.length && add < 0; i++) if (sg[i] - sg[i - 1] > G + 4) { const mid = (sg[i] + sg[i - 1]) / 2; for (let x = 20; x <= F.W - 26; x += 16) if (x > sg[i - 1] + 80 && x < sg[i] - 80 && ok(x) && (add < 0 || Math.abs(x - mid) < Math.abs(add - mid))) add = x; } if (add < 0) break; lay.sign.push(add); lay.sign.sort((p, q) => p - q); }      // (a stretch where doors, walls and furniture left no spot gets one more, anywhere on a 16 px grid, so that one sign is on the screen nearly always)
-  for (let i = 0; ; i++) { const x = 20 + 64 * i; if (x > F.W - 26) break; if (x < 26 || lay.sign.some(s => Math.abs(s - x) < 48) || F.doors.some(d => Math.abs(d.x - x) < 38) || F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36)) continue; if (R() < sty.win) lay.win.push(x); else lay.feat.push({ x, k: sty.feat[(R() * sty.feat.length) | 0], n: (R() * 1e6) | 0 }); }
+  for (let i = 0; ; i++) { const x = 20 + 64 * i; if (x > F.W - 26) break; if (x < 26 || lay.sign.some(s => Math.abs(s - x) < 48) || F.doors.some(d => Math.abs(d.x - x) < 38) || (F.front && Math.abs(F.front.x - x) < 56) || F.xs.some((q, i) => i > 0 && i < F.nr && Math.abs(q - x) < 36)) continue; if (R() < sty.win) lay.win.push(x); else lay.feat.push({ x, k: sty.feat[(R() * sty.feat.length) | 0], n: (R() * 1e6) | 0 }); }
   if (F.th === 'LOBBY') { const mx = Math.round(F.W / 2); lay.feat = lay.feat.filter(q => Math.abs(q.x - mx) > 50); lay.win = lay.win.filter(q => Math.abs(q - mx) > 50); lay.feat.push({ x: mx, k: 'logo', n: 1 }); }
   F.lay = lay; F.sty = sty; return lay;
 }
@@ -441,6 +441,7 @@ function twSignEmit(F, sx, now, Q) {      // v1.182 the lit part of the FLOOR SI
 function twEmit(F, x0, a, b, now, Q) {      // everything that shines, drawn over the darkness: the floor signs, the signs of the doors, the screens, the lights of the racks, the glass of the vending machines, the bubbles in the water cooler, the cans on the floor
   for (const s of twLayout(F).sign) { const sx = x0 + s; if (sx > a - 30 && sx < b + 30) twSignEmit(F, sx, now, Q); }
   for (const d of F.doors) { const sx = x0 + d.x; if (sx > a - 30 && sx < b + 30) twDoorEmit(F, d, sx, now); }
+  if (F.front) { const sx = x0 + F.front.x; if (sx > a - 30 && sx < b + 30) ctFrontEmit(F, sx, now); }
   for (const o of F.objs) { const sx = Math.round(x0 + o.x); if (sx < a - 30 || sx > b + 30 || o.hp <= 0) continue; const by = o.on ? TW_K[o.on.k].h : 0, K = TW_K[o.k], bad = o.hp < o.mx * 0.5;
     if (o.k === 'computer') { const t0 = gy - by - 12, st = ((now / 700) | 0) + (o.x | 0), pat = Math.abs(o.x | 0) % 3; ctx.fillStyle = bad ? '#0a2a9a' : pat === 0 ? '#0a1a10' : pat === 1 ? '#1a3a6e' : '#201a3a'; ctx.fillRect(sx - 6, t0, 12, 8);
       if (Q >= 1) { if (bad) { ctx.fillStyle = '#ffffff'; ctx.fillRect(sx - 5, t0 + 1, 6, 1); ctx.fillRect(sx - 5, t0 + 3, 9, 1); ctx.fillRect(sx - 5, t0 + 5, 4, 1); } else if (pat === 0) { ctx.fillStyle = '#4cff8a'; for (let i = 0; i < 4; i++) ctx.fillRect(sx - 5, t0 + 1 + i * 2, 2 + ((st * 7 + i * 5) % 7), 1); if (st % 2) ctx.fillRect(sx - 5, t0 + 7, 2, 1); } else if (pat === 1) { ctx.fillStyle = '#7fb0ff'; ctx.fillRect(sx - 6, t0, 12, 1); ctx.fillStyle = '#e8f0ff'; ctx.fillRect(sx - 5, t0 + 2, 5 + (st % 3), 1); ctx.fillRect(sx - 5, t0 + 4, 7, 1); ctx.fillStyle = '#ffd34d'; ctx.fillRect(sx + 2, t0 + 5, 3, 2); } else { for (let i = 0; i < 5; i++) { const hh = 1 + ((st * 3 + i * 5) % 6); ctx.fillStyle = ['#ff6a5a', '#ffd34d', '#4cff8a', '#6ab0ff', '#c07aff'][i]; ctx.fillRect(sx - 5 + i * 2, t0 + 7 - hh, 1, hh); } } } }
@@ -540,11 +541,12 @@ function twFloorDraw(f, camX, off, now) {      // one floor's whole picture as i
   const T = vs.tw, kf = T.fMe, kw = wx; T.fMe = f; wx = camX; if (off) { ctx.save(); ctx.beginPath(); ctx.rect(-8, gy - TW_CEIL - SH_Y - 9 + off, VW + 16, SH_H + 9); ctx.clip(); ctx.translate(0, off); }
   try {
     const F = twFloorData(f), Q = twQ(), cx = Math.round(VW / 2), yc = gy - TW_CEIL, x0 = cx - Math.round(camX), x1 = x0 + F.W, a = Math.max(0, x0), b = Math.min(VW, x1);
-    twLayout(F); ctx.fillStyle = '#0a0a10'; ctx.fillRect(-8, -8, VW + 16, VH + 16); twSkyDraw(F, now, x0, x1, yc, Q);
+    twLayout(F); ctx.fillStyle = '#0a0a10'; ctx.fillRect(-8, -8, VW + 16, VH + 16); if (F.front) ctStreetSeen(F, now, x0, x1, yc, Q); else twSkyDraw(F, now, x0, x1, yc, Q);      // (v1.198 the lobby's windows show the street)
     if (b > a) {
       const sh = twShell(F, Q), sx = a - x0, sw = b - a, top = yc - SH_Y;
       ctx.fillStyle = '#0a0a10'; ctx.fillRect(a, -8, sw, top - 1); ctx.drawImage(sh, sx, SH_N + 2, sw, 9, a, top - 9, sw, 9); ctx.drawImage(sh, sx, 0, sw, SH_H, a, top, sw, SH_H);
       for (const d of F.doors) { const px = x0 + d.x; if (px > a - 40 && px < b + 40) twDoor(F, d, px, now); }
+      if (F.front) { const px = x0 + F.front.x; if (px > a - 40 && px < b + 40) ctFrontDoor(F, px, now); }      // (v1.198 the front door of the building)
       twDecals(F, x0, a, b);
       for (const w of F.walls) { const px = x0 + w.x; if (px > a - 30 && px < b + 30) twPart(F, w, px, yc, now, Q); }
       for (const w of F.wrecks) { const px = x0 + w.x, s = twWreckSpr(w); if (px > a - 50 && px < b + 50) ctx.drawImage(s, Math.round(px) - (s.width >> 1), gy - 13); }
@@ -564,6 +566,7 @@ function twSlideDraw(now, s) {      // the camera travels from floor f0 to floor
   const y = twSlideY(s, now), lo = Math.min(s.f0, s.f1), hi = Math.max(s.f0, s.f1); ctx.fillStyle = '#0a0a10'; ctx.fillRect(-8, -8, VW + 16, VH + 16);
   for (let f = hi; f >= lo; f--) {
     const off = s.dir * (Math.abs(f - s.f0) * SH_H - y); if (off > VH + 12 || off < -(SH_H + 12)) continue;
+    if (f === 0) { ctStreetBand(s.street ? s.street.x : wx, off, now); continue; }      // (v1.198 the street under the lobby: a fall out of a window ends in it)
     if (f === s.f0) twFloorDraw(f, s.x0, off, now); else if (f === s.f1) twFloorDraw(f, wx, off, now); else if (s.n <= 3) twFloorDraw(f, Math.round(s.x0 + (wx - s.x0) * Math.abs(f - s.f0) / s.n), off, now); else twFloorFast(f, off);
   }
 }
