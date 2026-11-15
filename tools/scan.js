@@ -201,7 +201,7 @@ async function scMore() {      // the time that is left of the minute: more rand
 async function scMoves() {
   SC.sec = 'MOVES'; const DIRS = [['', 'STANDING'], ['KeyD', 'FORWARD'], ['KeyA', 'BACK'], ['KeyS', 'CROUCHING'], ['Space', 'JUMPING']], BTN = [['KeyJ', 'ATTACK'], ['KeyL', 'BLUE'], ['KeyK', 'DASH']];
   const V = []; for (const [d, dn] of DIRS) for (const [k, kn] of BTN) V.push([d, k, 0, dn + ' ' + kn]); V.push(['', 'KeyJ', 1, 'HOLD ATTACK'], ['KeyD', 'KeyJ', 1, 'FORWARD HOLD ATTACK'], ['', 'KeyE', 0, 'CURSED ENERGY'], ['', 'KeyQ', 0, 'SENSE'], ['', 'KeyB', 1, 'BLOCK']);
-  scCov('MOVES', 0, SC_WHO.length * V.length + V.length - 1); SC.plan = SC_WHO.length * (V.length * 20 + 30); SC.done = 0;
+  scCov('MOVES', 0, SC_WHO.length * V.length + V.length - 1 + SC_IR_N); SC.plan = SC_WHO.length * (V.length * 20 + 30) + SC_IR_N * 40; SC.done = 0;
   for (let i = 0; i < SC_WHO.length; i++) {
     const w = SC_WHO[i]; SC.say = SC_NAME[w] + ' START'; SET.gore = 0;
     try { Object.assign(TR, { beh: 0, ehp: 1, php: 0, pce: 0, put: 2 }); startPractice(w, 'gojo'); } catch (e) { scErr(e, SC_NAME[w] + ' START'); continue; }
@@ -222,6 +222,26 @@ async function scMoves() {
     }
     show('title');
   }
+  await scIronMoves();
+}
+// v1.191 IRON MAN's moves: the chain (R.HOOK, L.HOOK, R.KICK, PUNCH), the ROCKET UPPERCUT (JUMP and ATTACK together, either one first), the DOWNSLAM (ATTACK 0.2 s after the jump, and an earlier one waits for it), crouch, block and dash; each is a check that the move that should come out did (cuAtkK: 0 - 3 the chain, 4 the uppercut, 5 the downslam), played against a standing enemy in front of him
+const SC_IR_N = 8;
+async function scIronMoves() {
+  const place = () => { TR.put = 2; trainPut(); };
+  try { Object.assign(TR, { beh: 0, ehp: 1, php: 0, pce: 0, put: 2 }); startPractice('cu5', 'gojo'); } catch (e) { scErr(e, 'IRON MAN START'); return; }
+  if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) return; await scFrames(2, null, 600);
+  const press = async (k, hold) => { scKey(k, true); const a = await scFrames(hold || 1); scKey(k, false); return a; }, ok = (c, what) => { scT(c, 'IRON MAN: ' + what, 'BLOW ' + cuAtkK + ' JUMP ' + (cuJumpAt >= 0) + ' STANCE ' + stance); scCov('MOVES', 1, 0); }, reset = async () => { trainReset(); place(); await scFrames(14); };
+  SC.say = 'IRON MAN: THE CHAIN'; const seq = [];      // (a frame is 50 ms, a blow takes 6 to 8 of them)
+  const tr = []; await reset(); for (let f = 0; f < 50; f++) { if (f % 9 === 0 && f < 28) scKey('KeyJ', true); else scKey('KeyJ', false); await scFrames(1); tr.push(cuAtkAt >= 0 ? cuAtkK : '-'); if (cuAtkAt >= 0 && seq[seq.length - 1] !== cuAtkK) seq.push(cuAtkK); } scKey('KeyJ', false);      // (four presses, 0.45 s apart: each comes within the 0.7 s after the blow before, or while it is going and is kept)
+  ok(seq.join() === '0,1,2,3', 'THE CHAIN WAS ' + seq.join() + ' AND NOT R.HOOK, L.HOOK, R.KICK, PUNCH ' + tr.join(''));
+  SC.say = 'IRON MAN: UPPERCUT'; await reset(); scKey('Space', true); scKey('KeyJ', true); await scFrames(1); scKey('Space', false); scKey('KeyJ', false); await scFrames(1); ok(cuAtkAt >= 0 && cuAtkK === 4, 'JUMP AND ATTACK TOGETHER DID NOT THROW THE UPPERCUT'); await scFrames(14);
+  SC.say = 'IRON MAN: UPPERCUT, ATTACK FIRST'; await reset(); await press('KeyJ'); await press('Space'); await scFrames(1); ok(cuAtkAt >= 0 && cuAtkK === 4, 'ATTACK AND THEN JUMP A FRAME LATER DID NOT THROW THE UPPERCUT'); await scFrames(14);
+  SC.say = 'IRON MAN: UPPERCUT, JUMP FIRST'; await reset(); await press('Space'); await press('KeyJ'); await scFrames(1); ok(cuAtkAt >= 0 && cuAtkK === 4, 'JUMP AND THEN ATTACK A FRAME LATER DID NOT THROW THE UPPERCUT'); await scFrames(14);
+  SC.say = 'IRON MAN: DOWNSLAM'; await reset(); await press('Space'); await scFrames(6); await press('KeyJ'); await scFrames(1); ok(cuAtkAt >= 0 && cuAtkK === 5, 'ATTACK 0.3 S AFTER THE JUMP DID NOT THROW THE DOWNSLAM'); await scFrames(14);
+  SC.say = 'IRON MAN: CROUCH'; await reset(); await press('KeyS'); await scFrames(10); const cr1 = stance; await press('KeyS'); await scFrames(10); ok(cr1 === 'crouch' && stance === 'stand', 'CROUCH DOWN AND UP: ' + cr1 + ' THEN ' + stance);
+  SC.say = 'IRON MAN: BLOCK'; await reset(); scKey('KeyB', true); await scFrames(8); const bl = blkAt >= 0; scKey('KeyB', false); await scFrames(4); ok(bl && blkAt < 0, 'BLOCK DID NOT GO UP AND DOWN');
+  SC.say = 'IRON MAN: DASH'; await reset(); scKey('KeyD', true); await press('KeyK'); await scFrames(1); const dh = !!cuDash; scKey('KeyD', false); await scFrames(8); ok(dh, 'DASH DID NOT START');
+  show('title');
 }
 
 // ---------------------------------------------------------------- CUTSCENES: the FATALITY and the DOMAIN of every fighter, played to the end

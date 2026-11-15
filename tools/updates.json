@@ -1,5 +1,16 @@
 [
  {
+  "v": "1.191",
+  "t": "IRON MAN FIGHTS: COMBO, ROCKET UPPERCUT, DOWNSLAM, BLOCK, DASH, CROUCH",
+  "n": [
+   "You said: add attacks for Iron Man: a right hook, then a left hook, then a roundhouse kick, then a punch forward; jump and punch at the same time is an uppercut; jump, wait 0.2 seconds and punch is a downslam. You chose: the uppercut throws the enemy up and the downslam knocks him down, a ROCKET uppercut, and also block + dash, crouch, and hurt + K.O. pictures.",
+   "ATTACK: R.HOOK (8 damage), L.HOOK (9), R.KICK (12, the roundhouse kick, at chest height) and PUNCH (8, a lunging straight punch that sends the enemy flying back), one after the other: press ATTACK again within 0.7 seconds, or during a blow (the press is kept), for the next one. All of them stay at 15 damage or less, the M1 rule.",
+   "ROCKET UPPERCUT: press JUMP and ATTACK together (within about 0.1 seconds, either one first). He blasts up with his boots lit, the fist rises through the enemy's chin (14 damage) and throws him up in the air.",
+   "DOWNSLAM: jump, and from 0.2 seconds after the jump began press ATTACK in the air. He hangs for a moment with both fists overhead, dives onto the enemy (8 damage) and drives him onto the floor. An ATTACK pressed a little before the 0.2 seconds waits until then. The button says DOWNSLAM while you are in the air.",
+   "The rest: CROUCH (stick down or S, he kneels), BLOCK (hold the button: a high guard with the palm lit), DASH (a burst of the boots: forward he flies at the enemy with the flames behind him and goes through him, back he hovers away), HURT pictures (he flinches, doubles over or staggers when he is hit) and a K.O. in which he falls on his back. The BLUE, MODE, DOMAIN, FATAL and SENSE buttons stay hidden: he has no powers yet. He is still in TRAINING only."
+  ]
+ },
+ {
   "v": "1.190",
   "t": "IRON MAN IN TRAINING, AND THE INV. FIGHTER IN INVERTED COLOURS",
   "n": [

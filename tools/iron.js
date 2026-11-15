@@ -19,11 +19,14 @@ function ironJump(k, n) {      // one picture of the jump: his boots light up at
   const up = [9, 11, 12, 12, 12, 12, 12, 11, 10, 8, 6, 4][k], fl = [1, 1, 0.9, 0.8, 0.6, 0.5, 0.5, 0.5, 0.45, 0.4, 0.3, 0][k], rise = k < n / 2;
   return ironPose({ y: 62.3, lean: rise ? 9 : 3, hdx: 1.4, hdt: rise ? 3 : 0, fl, ph: k / n, rep: 0.2, arms: rise ? [{ al: -22, el: 18 }, { al: -28, el: 14 }] : [{ al: 36, el: 30 }, { al: 44, el: 26 }], legs: [{ ax: 44 + (rise ? 0 : -2), ay: C4IG - up, a: -30 }, { ax: 52 + (rise ? 0 : 2), ay: C4IG - up + 1, a: -34 }] });
 }
+function ironCut(o) {      // a pose of c4xIron as a 64 x 64 picture: the window on the 128 x 100 picture
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(c4xIron(o), IRON_OX, IRON_OY, 64, 64, 0, 0, 64, 64); return c;
+}
 function ironEnsure() {      // makes CU_GAME[5] the first time he is needed (the fighter screen or a Training room); true when he is there
   if (CU_GAME[5]) return true; if (typeof c4xIron !== 'function') return false;
-  const cut = o => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(c4xIron(o), IRON_OX, IRON_OY, 64, 64, 0, 0, 64, 64); return c; };
+  const cut = ironCut;
   const frames = Array.from({ length: 12 }, (_, k) => cut(ironIdle(k, 12))), walk = Array.from({ length: 8 }, (_, k) => cut(ironWalk(k, 8, 8, false))), wbk = Array.from({ length: 8 }, (_, k) => cut(ironWalk(k, 8, 5.7, true))), jump = Array.from({ length: 12 }, (_, k) => cut(ironJump(k, 12)));
   const body = cuWiden(frames.map(c => cuSpan(suAlpha(c), r => r - 1))), hs = Object.values(body).map(v => v[1]).sort((a, b) => a - b);      // (the widest every row of his idle pictures gets: his body in the hitboxes of the enemy's blows, and half as wide as his torso for the push, like Ryu's)
-  CU_GAME[5] = { name: 'IRON MAN', frames, walk, wbk, jump, hu: [], ko: [], bl: [], df: [], db: [], cr: [], ci: [], cwk: [], atk: [], an: [], rdy: [], cl: [], ev: [], set: [], vfx: [], vxs: [], tipAll: [], body, push: Math.max(6, hs.length ? hs[hs.length >> 1] : 6), cs: null, wf: IRON_WF, jet: 0.6, st: { ...cuStats(null), fw: 56, bk: 40, jh: 40, jt: 760 } };      // (everything he cannot do yet is an empty list, which customScene reads as "not there")
+  CU_GAME[5] = { name: 'IRON MAN', frames, walk, wbk, jump, hu: [], ko: [], bl: [], df: [], db: [], cr: [], ci: [], cwk: [], atk: [], an: [], rdy: [], cl: [], ev: [], set: [], vfx: [], vxs: [], tipAll: [], body, push: Math.max(6, hs.length ? hs[hs.length >> 1] : 6), cs: null, wf: IRON_WF, jet: 0.6, ir: true, st: { ...cuStats(null), fw: 56, bk: 40, jh: 40, jt: 760 } };      // (everything he cannot do yet is an empty list, which customScene reads as "not there")
   return true;
 }
