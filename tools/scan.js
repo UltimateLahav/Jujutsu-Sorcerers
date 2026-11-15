@@ -224,8 +224,8 @@ async function scMoves() {
   }
   await scIronMoves();
 }
-// v1.191 IRON MAN's moves: the chain (R.HOOK, L.HOOK, R.KICK, PUNCH), the ROCKET UPPERCUT (JUMP and ATTACK together, either one first), the DOWNSLAM (ATTACK 0.2 s after the jump, and an earlier one waits for it), crouch, block and dash; each is a check that the move that should come out did (cuAtkK: 0 - 3 the chain, 4 the uppercut, 5 the downslam), played against a standing enemy in front of him
-const SC_IR_N = 8;
+// v1.191 IRON MAN's moves: the chain (R.HOOK, L.HOOK, R.KICK, PUNCH), the ROCKET UPPERCUT (JUMP and ATTACK together, either one first), the DOWNSLAM (ATTACK 0.2 s after the jump, and an earlier one waits for it), crouch, block and dash; each is a check that the move that should come out did (cuAtkK: 0 - 3 the chain, 4 the uppercut, 5 the downslam), played against a standing enemy in front of him; v1.192 the LOW JABS (6: crouched, ATTACK), the CHARGE (7: ATTACK during a dash or just after it; a late one is a plain hook) and the BACKFLIP (8: DASH BACK twice, never two dashes forward)
+const SC_IR_N = 15;
 async function scIronMoves() {
   const place = () => { TR.put = 2; trainPut(); };
   try { Object.assign(TR, { beh: 0, ehp: 1, php: 0, pce: 0, put: 2 }); startPractice('cu5', 'gojo'); } catch (e) { scErr(e, 'IRON MAN START'); return; }
@@ -241,6 +241,11 @@ async function scIronMoves() {
   SC.say = 'IRON MAN: CROUCH'; await reset(); await press('KeyS'); await scFrames(10); const cr1 = stance; await press('KeyS'); await scFrames(10); ok(cr1 === 'crouch' && stance === 'stand', 'CROUCH DOWN AND UP: ' + cr1 + ' THEN ' + stance);
   SC.say = 'IRON MAN: BLOCK'; await reset(); scKey('KeyB', true); await scFrames(8); const bl = blkAt >= 0; scKey('KeyB', false); await scFrames(4); ok(bl && blkAt < 0, 'BLOCK DID NOT GO UP AND DOWN');
   SC.say = 'IRON MAN: DASH'; await reset(); scKey('KeyD', true); await press('KeyK'); await scFrames(1); const dh = !!cuDash; scKey('KeyD', false); await scFrames(8); ok(dh, 'DASH DID NOT START');
+  SC.say = 'IRON MAN: LOW JABS'; await reset(); await press('KeyS'); await scFrames(10); await press('KeyJ'); await scFrames(1); ok(cuAtkAt >= 0 && cuAtkK === 6 && stance === 'crouch', 'CROUCHED, ATTACK DID NOT THROW THE LOW JABS'); await scFrames(16); ok(cuAtkAt < 0 && stance === 'crouch', 'THE LOW JABS DID NOT END, STANCE ' + stance); await press('KeyS'); await scFrames(10);
+  SC.say = 'IRON MAN: CHARGE'; await reset(); const hc = dummy.hp, wc = wx; scKey('KeyD', true); await press('KeyK'); await scFrames(2); await press('KeyJ'); await scFrames(1); scKey('KeyD', false); ok(cuAtkAt >= 0 && cuAtkK === 7 && !cuDash, 'ATTACK JUST AFTER A DASH DID NOT THROW THE CHARGE'); await scFrames(20); ok(cuAtkAt < 0 && (dummy.hp < hc || wx - wc > 90), 'THE CHARGE NEITHER HIT NOR FLEW: HP ' + hc + ' TO ' + dummy.hp + ', MOVED ' + Math.round(wx - wc));
+  SC.say = 'IRON MAN: A LATE ATTACK IS NO CHARGE'; await reset(); scKey('KeyD', true); await press('KeyK'); scKey('KeyD', false); await scFrames(16); await press('KeyJ'); await scFrames(1); ok(cuAtkAt >= 0 && cuAtkK === 0, 'ATTACK 0.8 S AFTER THE DASH WAS BLOW ' + cuAtkK + ' AND NOT THE R.HOOK'); await scFrames(14);
+  SC.say = 'IRON MAN: BACKFLIP'; await reset(); wx = 150; dummy.x = wx + 120; await scFrames(2); const wb = wx; await press('KeyK'); await scFrames(2); await press('KeyK'); await scFrames(1); const bf = cuAtkAt >= 0 && cuAtkK === 8; let top = 0; for (let f = 0; f < 16; f++) { await scFrames(1); top = Math.max(top, gojoLift); } ok(bf && top > 12 && wb - wx > 60, 'DASH BACK TWICE: BLOW ' + (bf ? 8 : 'NONE') + ', HEIGHT ' + Math.round(top) + ', WENT BACK ' + Math.round(wb - wx));
+  SC.say = 'IRON MAN: TWO DASHES FORWARD'; await reset(); scKey('KeyD', true); await press('KeyK'); await scFrames(2); await press('KeyK'); await scFrames(1); scKey('KeyD', false); ok(!(cuAtkAt >= 0 && cuAtkK === 8), 'TWO DASHES FORWARD MADE A BACKFLIP'); await scFrames(8);
   show('title');
 }
 

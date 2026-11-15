@@ -87,6 +87,61 @@ function irRot(src, deg, px, py, dx, dy) {      // a picture turned counter-cloc
   const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
   g.translate(dx, dy); g.rotate(-deg * Math.PI / 180); g.drawImage(src, -px, -py); return c;
 }
+// ---- v1.192 THREE MORE MOVES. The user, after v1.191: "if I crouch and punch I will do 2 lower punches, and if I dash and I punch I will do the same punch that Iron Man almost did on Yuji at the end of chapter 5, and if I double dash back I will do a backflip using the thrusters in the legs to help Iron Man backflip back (no questions asked)".
+// CROUCHED, ATTACK throws the LOW JABS (blow 6): two quick low punches, right and left, one press (a press kept during them throws two more); they reach a crouching enemy too (low). DASH and then ATTACK (or both together) is the CHARGE (blow 7), the punch of chapter 5: he crouches back with his fist drawn, lights the boots and flies at the enemy lying flat, the fist straight out, one leg trailing and the other bent, the flames behind him; the fist is tried on every picture of the flight, the first time it touches him it lands (or is blocked) and he stops; one that touches nothing carries him as far as 150 px and he lands. A second DASH BACK within 0.5 s of the first is the BACKFLIP (blow 8): the boots burst, he rises curled up and turns over backwards with the flames lit, opens and lands 70 px behind where he was, out of reach while he is high. All the times are real seconds (see irRate).
+const IR_CA = [{ al: 48, el: 76 }, { al: 36, el: 84 }], IR_CL = [{ ax: 34, ay: C4IG, a: 0 }, { ax: 58, ay: C4IG, a: 0 }];      // (the crouch's arms and feet, see IR_CRO)
+const crG = o => irG({ x: 45, y: 76, lean: 26, hdx: 1.8, hdy: 1, hdt: 8, arms: IR_CA, legs: IR_CL, ...o });
+const IR_JA = { al: 66, el: 6 }, IR_JB = { al: -24, el: 96 }, IR_JL = [{ ax: 33, ay: C4IG - 1, a: -14 }, { ax: 60, ay: C4IG, a: 0 }];      // (a low jab: the arm out, a little downwards; the arm drawn back to the hip; the back foot pushes)
+IR_BLOWS.push({
+  n: 'LOW JABS', d: 5, f: 4, v: 36, m: 9, e: 1, lt: 0.45, kn: 3, w: 1, h: 40, sy: 22, rx: 1, low: true, np: 12, imp: [
+    { f: 4, d: 5, kn: 3, w: 1, h: 36, sy: 22, rx: 1 }, { f: 8, d: 6, kn: 5, w: 2, h: 46, sy: 22, rx: 8 }], keys: [
+    [0, IR_CRO], [1, crG({ x: 43, lean: 22, hdx: 1.5, hdt: 4, arms: [IR_CA[0], IR_JB] }), 'io'],
+    [3, crG({ x: 43, lean: 32, hdx: 2.2, hdt: 10, arms: [IR_CA[0], IR_JA], legs: IR_JL }), 'in'], [4, crG({ x: 43, lean: 33, hdx: 2.3, hdt: 11, arms: [IR_CA[0], { al: 68, el: 2 }], legs: IR_JL }), 'out'],
+    [5, crG({ x: 44, lean: 28, hdx: 1.8, hdt: 8, arms: [IR_JB, IR_CA[1]] }), 'io'],
+    [7, crG({ x: 43, lean: 32, hdx: 2.2, hdt: 10, arms: [IR_JA, IR_CA[1]], legs: IR_JL }), 'in'], [8, crG({ x: 43, lean: 33, hdx: 2.3, hdt: 11, arms: [{ al: 68, el: 2 }, IR_CA[1]], legs: IR_JL }), 'out'],
+    [10, IR_CRO, 'io'], [11, IR_CRO]]
+});
+const IR_CHP = [0, 0, 0, 0, 0, 0, 0, 8, 24, 46, 70, 92, 110, 124, 135, 143, 148, 151, 152, 152, 152, 152, 152, 152, 152, 152, 152];      // (the CHARGE: how far he has flown at the start of each of its 26 pictures, px; the flight is pictures 7 - 17)
+const IR_CHD = [0, 0, 0, 0, 0, 0, 26, 62, 90, 90, 90, 90, 90, 90, 90, 90, 72, 46, 20, 0, 0, 0, 0, 0, 0, 0];      // (how far he is turned forward on each picture, degrees)
+IR_BLOWS.push({ n: 'CHARGE', d: 14, v: 36, m: 0, kn: 150, w: 5, h: 90, sy: 44, rx: 3, dn: true, chg: true, mk: () => irChargePics(), lift: [0, 0, 0, 0, 0, 0, 3, 7, 9, 9, 9, 9, 9, 9, 9, 9, 9, 7, 4, 2, 0, 0, 0, 0, 0, 0], keys: [] });
+const IR_BFD = [0, 0, 20, 58, 108, 162, 216, 270, 318, 348, 360, 360, 360, 360, 360, 360];      // (the BACKFLIP: how far he is turned backward on each of its 16 pictures, degrees)
+IR_BLOWS.push({ n: 'BACKFLIP', d: 0, v: 24, m: -70, e: 1, lt: 0.9, kn: 0, w: 0, h: 0, sy: 0, flip: true, mk: () => irFlipPics(), lift: [0, 6, 16, 24, 30, 33, 34, 33, 30, 24, 16, 8, 2, 0, 0, 0], keys: [] });
+function irSpin(pose, deg) {      // a pose of the BACKFLIP as a usual 64 x 64 picture, turned deg degrees BACKWARD (counter-clockwise) about his hips, which stay where they are in the usual window
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+  const r = deg * Math.PI / 180, cs = Math.abs(Math.cos(r)) < 1e-9 ? 0 : Math.cos(r), sn = Math.abs(Math.sin(r)) < 1e-9 ? 0 : Math.sin(r);
+  g.setTransform(cs, -sn, sn, cs, pose.x - IRON_OX, pose.y - IRON_OY); g.drawImage(c4xIron(pose), -pose.x, -pose.y); return c;
+}
+function irWide(pose, deg, i) {      // a pose of the CHARGE as a picture 128 x 64: 28 columns more on the left of the usual window (c.ox, which customScene draws it from), because lying flat he is 75 px long; turned deg degrees FORWARD (clockwise) about his hips, which go from where they stand (deg 0) to column 60 (= the usual middle column 32 + 28) and row 28 when he flies flat (deg 90); i = the picture (the speed lines move)
+  const c = document.createElement('canvas'); c.width = 128; c.height = 64; c.ox = 28; const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+  const f = deg / 90, hx = (pose.x + 12) * (1 - f) + 60 * f, hy = (pose.y - IRON_OY) * (1 - f) + 28 * f;
+  if (deg > 50) { g.fillStyle = 'rgba(255,243,200,' + (0.3 + 0.35 * f).toFixed(2) + ')'; for (let s = 0; s < 6; s++) g.fillRect(2 + ((i * 9 + s * 11) % 13), Math.round(hy) - 15 + s * 6, 12 + (s * 5) % 9, 1); }      // (the air streaming past)
+  const r = deg * Math.PI / 180, cs = Math.abs(Math.cos(r)) < 1e-9 ? 0 : Math.cos(r), sn = Math.sin(r);
+  g.setTransform(cs, sn, -sn, cs, hx, hy); g.drawImage(c4xIron(pose), -pose.x, -pose.y); return c;
+}
+function irChargePics() {      // the 26 pictures of the CHARGE: the poses of chapter 5 (K5P.wu the wind-up, K5P.sm the flight, K5P.land the landing) mixed with eases and turned on his side (irWide)
+  const ez = IR_EZ.io, wu = irG({ x: 47, y: 64, lean: 20, hdx: 1.6, hdy: 0.6, hdt: 6, rep: 0.8, fl: 0.45, arms: [{ al: 38, el: 40 }, { al: -46, el: 74 }], legs: [{ ax: 34, ay: C4IG, a: 0 }, { ax: 62, ay: C4IG, a: 0 }] }), sm = { ...K5P.sm, fl: 0.95 }, ld = { ...K5P.land, fl: 0.3 }, out = [];
+  for (let i = 0; i < 26; i++) {
+    const p = i <= 4 ? c4xMixPose(IR_GD, wu, ez(i / 4)) : i <= 5 ? wu : i <= 8 ? c4xMixPose(wu, sm, ez((i - 5) / 3)) : i <= 15 ? { ...sm, fl: i % 2 ? 0.85 : 1 } : i <= 19 ? c4xMixPose(sm, ld, ez((i - 15) / 4)) : c4xMixPose(ld, IR_GD, ez((i - 19) / 6));
+    out.push(irWide(p, IR_CHD[i], i));
+  }
+  return out;
+}
+function irFlipPics() {      // the 16 pictures of the BACKFLIP: he crouches with the boots lit (0 - 1), springs up and back curled up (2 - 3), turns over backwards with the flames of the boots lit (4 - 9), opens out and lands crouched (10 - 12) and stands (13 - 15)
+  const ez = IR_EZ.io, crouch = irG({ x: 46, y: 70, lean: 18, hdx: 1.6, hdy: 1, hdt: 6, fl: 0.8, fa: -25, arms: [{ al: 20, el: 70 }, { al: 12, el: 76 }], legs: [{ ax: 36, ay: C4IG, a: 0 }, { ax: 56, ay: C4IG, a: 0 }] });
+  const tuck = irG({ x: 47, y: 63, lean: 22, hdx: 1.8, hdy: 1, hdt: 14, fl: 0.4, fa: -30, arms: [{ al: 52, el: 116 }, { al: 44, el: 124 }], legs: [{ ax: 43, ay: 76, a: -56 }, { ax: 51, ay: 77, a: -60 }] });
+  const open = irG({ x: 47, y: 63, lean: 8, hdx: 1.4, hdy: 1.5, hdt: 4, fl: 0.5, fa: -20, arms: [{ al: 40, el: 40 }, { al: 30, el: 46 }], legs: [{ ax: 40, ay: C4IG - 6, a: -20 }, { ax: 54, ay: C4IG - 8, a: -24 }] });
+  const land = irG({ x: 46, y: 70, lean: 20, hdx: 1.6, hdy: 1, hdt: 8, fl: 0.3, fa: -10, arms: [{ al: 30, el: 60 }, { al: 20, el: 66 }], legs: [{ ax: 36, ay: C4IG, a: 0 }, { ax: 58, ay: C4IG, a: 0 }] }), out = [];
+  for (let i = 0; i < 16; i++) {
+    const p = i === 0 ? IR_GD : i === 1 ? crouch : i <= 3 ? c4xMixPose(crouch, tuck, ez((i - 1) / 2)) : i <= 7 ? tuck : i <= 9 ? c4xMixPose(tuck, open, ez((i - 7) / 2)) : i === 10 ? open : i <= 12 ? c4xMixPose(open, land, ez((i - 10) / 2)) : c4xMixPose(land, IR_GD, ez((i - 12) / 3));
+    out.push(irSpin(p, IR_BFD[i]));
+  }
+  return out;
+}
+function irTipOf(cv) {      // the limb as drawn: { row of the tables (picture row - 1): the farthest pixel in front of his hips (the middle column of the usual window, 32, or 32 + c.ox of a wide picture) }
+  const w = cv.width, o = cv.ox || 0, d = cv.getContext('2d').getImageData(0, 0, w, 64).data, t = {};
+  for (let r = 0; r < 64; r++) for (let c = w - 1; c >= 0; c--) if (d[(r * w + c) * 4 + 3] > 127) { t[r - 1] = c - 32 - o; break; }
+  return t;
+}
 function irKo() {      // the K.O. (12 pictures): he staggers back, his feet leave the floor and he falls on his back (the picture of the fall, turned about his hips and let down onto the floor), bounces once and lies there
   const A = irG({ x: 44, lean: -16, hdx: 0.4, hdt: -20, arms: [{ al: -30, el: 30 }, { al: 20, el: 40 }] }), B = irG({ x: 42, y: 64, lean: -28, hdx: 0.2, hdt: -28, arms: [{ al: -50, el: 20 }, { al: -30, el: 30 }], legs: [{ ax: 36, ay: C4IG, a: 0 }, { ax: 48, ay: C4IG - 8, a: 10 }] });
   const F = ironCut(irG({ x: 44, y: 64, lean: -26, hdx: 0.4, hdt: -26, arms: [{ al: -56, el: 30 }, { al: -40, el: 24 }], legs: [{ ax: 36, ay: 80, a: 20 }, { ax: 48, ay: 84, a: 10 }] }));
@@ -94,15 +149,33 @@ function irKo() {      // the K.O. (12 pictures): he staggers back, his feet lea
   [[18, 0], [34, 0.15], [52, 0.35], [70, 0.6], [84, 0.85], [90, 1], [86, 0.9], [90, 1]].forEach(([deg, t]) => out.push(irRot(F, deg, 28, 33, 28 + 8 * t, 33 + 17 * t)));
   return out;
 }
+function irImpact(b, im, j, tips) {      // the IMPACT j of blow b (on the picture im.f): its damage, knock-back, launch, hit stop, shake, down, reaction and the height of the sparks (an effect with `1, j` happens only when this impact landed), and the limb as drawn on its picture and the next, measured against the enemy's body when it comes
+  const fx = [['k', im.kn, 0, 0, -1]].concat(im.l ? [['l', im.l, 0, 0, -1]] : [], [['h', im.h, 0, 1, j], ['w', im.w, 0, 1, j]], im.dn ? [['d', 0, 0, 1, j]] : [], im.rx !== undefined ? [['r', im.rx, 0, 0, -1]] : [], [['y', im.sy, 0, 0, -1]]);
+  const e = { f: im.f, k: 'i', d: im.d, sp: im.d, fx, c: 0, src: -1, id: j, low: !!b.low }; Object.defineProperty(e, 'dy', { get: () => Math.round(((dummy && dummy.airH) || 0) - (gojoLift || 0)), enumerable: true });      // (dy: how many rows higher the enemy's body is than his limb: an enemy thrown up, or he himself in the air, is met where they are NOW; low: it reaches a crouching enemy)
+  e.tip = im.f ? cuMaxRows([tips[im.f - 1], tips[im.f]]) : {}; return e;
+}
+function irReach(tip) {      // how far in front of his hips a limb (tip) touches the enemy's body now (the rows they share, at the heights they are at); CU_REACH + 10 when the enemy's body is not known
+  const B = dummy && hbBody(hbKey(dummy)); return B && tip ? hbGap(tip, B, Math.round(((dummy && dummy.airH) || 0) - (gojoLift || 0))) : CU_REACH + 10;
+}
+function irChargeEv(g, k, b, tips, cb) {      // the events of the CHARGE: its fist is tried on every picture of the flight (7 - 17) and the first time it touches the enemy the one IMPACT (damage, knock-back, down) is played, a hit or a block, and he stops (irChDone); the thrusters roar at the start, he lands in dust
+  const imp = irImpact(b, { f: 0, d: b.d, kn: b.kn, w: b.w, h: b.h, sy: b.sy, rx: b.rx, dn: b.dn }, 0, tips), l = [];
+  g.chTip = tips.map((t, j) => cuMaxRows([t, tips[j + 1]]));      // (the limb on picture j and the next, like every blow's)
+  for (let f = 7; f <= 17; f++) l.push(cb(f, now => {
+    if (irChDone || !dummy) return; const tip = g.chTip[f - 1], gap = dummy.x - wx;
+    if (gap <= irReach(tip) && gap >= -3) { irChDone = true; imp.tip = tip; cuEv(imp, now, g, k); }
+  }));
+  l.push(cb(7, () => { snd('thrust', 1); puff(wx - 6, 9); }));
+  l.push(cb(19, now => { snd('land', 2); puff(wx + 4, 8); shakeUntil = Math.max(shakeUntil, now + 140); shakeAmp = Math.max(shakeAmp, 2); }));
+  return l;
+}
 // ---- THE DATA: everything he cannot do in iron.js is made here the first time a Training room starts (or the first frame customScene plays him): the pictures of every move, the events of every blow (the same form as Ryu's: an IMPACT with its damage, knock-back, launch, hit stop, shake and the height of the sparks, and the limb as drawn on its picture, measured against the enemy's body), the speed, step and lift of each blow
 function ironMoves(g) {
   if (g.moves) return; g.moves = true;
-  const seq = (keys, n) => irTrack(keys, n).map(ironCut), tipOf = a => { const sp = cuSpan(a, r => r - 1), o = {}; for (const r in sp) o[r] = sp[r][1]; return o; };
-  const atk = IR_BLOWS.map(b => seq(b.keys, b.lift ? b.lift.length : 15)), arts = atk.map(fr => fr.map(suAlpha)), cb = (f, fn) => ({ f, k: 'cb', cb: fn, c: 0, src: -1, id: 0 });
+  const seq = (keys, n) => irTrack(keys, n).map(ironCut), cb = (f, fn) => ({ f, k: 'cb', cb: fn, c: 0, src: -1, id: 0 });
+  const atk = IR_BLOWS.map(b => b.mk ? b.mk() : seq(b.keys, b.np || (b.lift ? b.lift.length : 15))), allTips = atk.map(fr => fr.map(irTipOf));      // (the pictures of every blow, and the limb as drawn on each)
   const ev = IR_BLOWS.map((b, k) => {
-    const tips = arts[k].map(tipOf), fx = [['k', b.kn, 0, 0, -1]].concat(b.l ? [['l', b.l, 0, 0, -1]] : [], [['h', b.h, 0, 1, 0], ['w', b.w, 0, 1, 0]], b.dn ? [['d', 0, 0, 1, 0]] : [], b.rx !== undefined ? [['r', b.rx, 0, 0, -1]] : [], [['y', b.sy, 0, 0, -1]]);
-    const e = { f: b.f, k: 'i', d: b.d, sp: b.d, fx, c: 0, src: -1, id: 0 }; Object.defineProperty(e, 'dy', { get: () => Math.round(((dummy && dummy.airH) || 0) - (gojoLift || 0)), enumerable: true });      // (dy: how many rows higher the enemy's body is than his limb: an enemy thrown up, or he himself in the air, is met where they are NOW)
-    e.tip = cuMaxRows([tips[b.f - 1], tips[b.f]]); const l = [e];
+    const tips = allTips[k]; if (b.chg) return irChargeEv(g, k, b, tips, cb);
+    const l = (b.imp || [b]).map((im, j) => irImpact(b, im, j, tips));
     if (k === 4) l.push(cb(14, () => snd('land', 1)));      // (the uppercut: he is back on the floor)
     if (k === 5) l.push(cb(11, now => { snd('land', 2); puff(wx + 4, 8); shakeUntil = Math.max(shakeUntil, now + 160); shakeAmp = Math.max(shakeAmp, 2); }));      // (the downslam: he lands in a cloud of dust)
     return l;
@@ -111,15 +184,15 @@ function ironMoves(g) {
   const cwk = Array.from({ length: 8 }, (_, k) => { const u = k / 8 * 2 * Math.PI, leg = (ph, x0) => { const s = Math.sin(ph), lf = Math.max(0, Math.cos(ph)); return { ax: x0 + 5 * s, ay: C4IG - 2.5 * lf, a: 3 * lf }; }; return ironCut({ ...IR_CRO, y: 76 + 0.5 * Math.abs(Math.sin(u)), legs: [leg(u, 38), leg(u + Math.PI, 56)] }); });
   const hu = seq(IR_HU, 8), hb = seq(IR_HB, 8), hf = seq(IR_HF, 10), rows = [hu, hb, hf, hf, hf, hu, hu, hf, hb, hb];      // (the ten reactions the game picks from: 0, 5, 6 the head snaps back, 1, 8, 9 doubled over, 2, 3, 4, 7 a stagger back; each lasts as long as the enemy's own reaction does)
   Object.assign(g, {
-    atk, ev, set: IR_BLOWS.map(b => ({ v: b.v, m: b.m, c: 0, d: 0, e: b.e, lt: b.lt })), rdy: [0, 1, 2, 3], an: IR_BLOWS.map(b => b.n), al: IR_BLOWS.map(() => null), vfx: IR_BLOWS.map(() => []), vxs: IR_BLOWS.map(() => []), tipAll: ev.map(l => cuMaxRows(l.map(e => e.tip))),
+    atk, ev, set: IR_BLOWS.map(b => ({ v: b.v, m: b.m, c: 0, d: 0, e: b.e, lt: b.lt })), rdy: [0, 1, 2, 3], an: IR_BLOWS.map(b => b.n), al: IR_BLOWS.map(() => null), vfx: IR_BLOWS.map(() => []), vxs: IR_BLOWS.map(() => []), tipAll: ev.map((l, k) => cuMaxRows(IR_BLOWS[k].chg ? allTips[k] : l.map(e => e.tip))),
     cr: seq([[0, IR_GD], [3, IR_CRO, 'io']], 4), ci, cwk, bl: seq(IR_BLOCK, 6), df: seq(IR_DASH, 8), db: seq(IR_DASHB, 8), hu, hus: rows.map((f, k) => ({ f, ms: RX_DUR[k] / f.length })), ko: irKo()
   });
   g.st = { ...g.st, dfw: 60, dbk: 44, dtm: 240 };      // (his dash: a burst of 60 px forward, 44 back, 0.24 s)
 }
 // ---- WHAT customScene CALLS: irTick decides, every frame, what the JUMP and ATTACK presses do (the generic jump and attack of the engine are off for him, see custom.js)
-const IR_SIM = 120, IR_AIR = 200;      // (real ms: JUMP and ATTACK this close together are the UPPERCUT; in the air, ATTACK from IR_AIR ms after the jump began is the DOWNSLAM, an ATTACK before that waits until then)
+const IR_SIM = 120, IR_AIR = 200, IR_DD = 520, IR_DP = 380;      // (real ms: JUMP and ATTACK this close together are the UPPERCUT; in the air, ATTACK from IR_AIR ms after the jump began is the DOWNSLAM, an ATTACK before that waits until then; a second DASH BACK within IR_DD of the first is the BACKFLIP; ATTACK within IR_DP of a DASH press, or while it goes on, is the CHARGE)
 const irRate = () => (TR.spd && freePlay() ? TRS[TR.spd] : 1) * paceNow();      // (how many game ms pass in one real ms: the pace of the fight (1.25 or 1.5) and the GAME SPEED of SETTINGS > TRAIN)
-let irChain = false, irDiveAt = 0;      // (the blow in progress is the first of a chain; when an ATTACK pressed in the air too early turns into the downslam, 0 = none)
+let irChain = false, irDiveAt = 0, irChDone = false, irDshAt = -1e9, irBackAt = -1e9, irJabQ = 0;      // (the blow in progress is the first of a chain; when an ATTACK pressed in the air too early turns into the downslam, 0 = none; the CHARGE's fist has touched him (or been blocked); when the last DASH press was and when the last one that was a DASH BACK; until when an ATTACK pressed during the low jabs is kept)
 function irDive(h0) {      // the rise of the downslam's 15 pictures: he hangs at h0 while he winds up, dives to where his fists meet the enemy (16 px, or h0 when he is lower than that) on the 8th picture and has landed by the 11th
   const top = Math.max(0, h0), imp = Math.min(16, top), t = [];
   for (let i = 0; i < 15; i++) t.push(Math.round(i <= 3 ? top : i <= 7 ? top + (imp - top) * IR_EZ.io((i - 3) / 4) : i <= 10 ? imp * (1 - (i - 7) / 3) : 0));
@@ -127,15 +200,30 @@ function irDive(h0) {      // the rise of the downslam's 15 pictures: he hangs a
 }
 function irStart(g, k, now, h0) {      // blow k begins: the state customScene plays it from (cuAtkK, cuAtkAt, the chain, the lift of its pictures)
   const b = IR_BLOWS[k], st = g.set[k];
-  cuAtkK = k; cuAtkAt = now; cuFired = []; cuRes = []; cuLunged = 0; cuMs = 1000 / st.v; cuCmbBy = now + 1e9; cuAtkQ = 0; irDiveAt = 0; irChain = k === 0; cuCmb = k < 3 ? k + 1 : 0;
+  cuAtkK = k; cuAtkAt = now; cuFired = []; cuRes = []; cuLunged = 0; cuMs = 1000 / st.v; cuCmbBy = now + 1e9; cuAtkQ = 0; irDiveAt = 0; irChain = k === 0; irChDone = false; irJabQ = 0; cuCmb = k < 3 ? k + 1 : 0;
   if (b.dive) g.al[k] = irDive(h0); else if (b.lift) g.al[k] = b.lift.map((v, i) => Math.max(v, Math.round(h0 * Math.max(0, 1 - i / 4))));      // (the uppercut that begins in the air goes on from where he is)
-  snd('swing', b.kick ? 3 : 0); if (k === 4) snd('thrust', 0.5);
+  if (!b.flip && !b.chg) snd('swing', b.kick ? 3 : 0); if (k === 4) snd('thrust', 0.5); if (b.flip) snd('thrust', 0.9);      // (the backflip and the charge roar with their boots, not with a swing)
 }
 function irCombo(g, now) { if (now > cuCmbBy) cuCmb = 0; irStart(g, g.rdy[cuCmb % g.rdy.length], now, 0); }      // (the next blow of the chain, the first one when the 0.7 s are over)
-function irTick(g, now, ctl, jmp, atk) {
+function irChMove(g, now) {      // the CHARGE's flight: where he is on his way (IR_CHP: between two pictures a straight line), held back by the enemy: the fist never goes into him; once it has touched him, landed or been blocked, he stops where he is
+  const n = g.atk[7].length, u = Math.min(n, Math.max(0, (now - cuAtkAt) / cuMs)), j = Math.min(n - 1, Math.floor(u));
+  let to = irChDone ? cuLunged : IR_CHP[j] + (IR_CHP[j + 1] - IR_CHP[j]) * (u - j);
+  if (!irChDone && dummy && dummy.ko < 0 && dummy.x > wx - 8) to = Math.min(to, cuLunged + Math.max(0, dummy.x - irReach(g.chTip[j]) + 6 - wx));
+  if (to > cuLunged) { wx += to - cuLunged; cuLunged = to; }
+}
+function irTick(g, now, ctl, jmp, atk, dsh) {      // true when it used this frame's DASH press (the generic dash of customScene must not start then)
   if (!g.moves) ironMoves(g);
   const R = irRate(), sim = IR_SIM * R, wait = IR_AIR * R, idle = ctl && stance === 'stand' && !cuDash && blkAt < 0, h0 = Math.max(0, Math.round(gojoLift || 0)), air = cuJumpAt >= 0, el = air ? now - cuJumpAt : 0;
   if (!air) irDiveAt = 0;
+  // ---- v1.192 the three new moves: the DASH presses and the crouch
+  const fwd = keyR || padR, gnd = ctl && stance === 'stand' && cuJumpAt < 0 && cuAtkAt < 0 && blkAt < 0, crh = ctl && stance === 'crouch' && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0; let used = false;
+  if (dsh && gnd && !fwd && now - irBackAt <= IR_DD * R) { cuDash = null; irStart(g, 8, now, 0); irBackAt = irDshAt = -1e9; used = true; }      // 1. the BACKFLIP: DASH BACK again soon after the first one (the dash that is still going on is dropped)
+  else if (atk && !jmp && gnd && (dsh || cuDash || now - irDshAt <= IR_DP * R)) { cuDash = null; irStart(g, 7, now, 0); irBackAt = irDshAt = -1e9; used = !!dsh; atk = false; }      // 2. the CHARGE: ATTACK during a dash, soon after it or together with it (JUMP pressed with it is the uppercut)
+  else if (dsh && ctl) { irDshAt = now; irBackAt = fwd ? -1e9 : now; }      // (the first DASH press: the time it is counted from)
+  if (atk && crh) { irStart(g, 6, now, 0); atk = false; }      // 3. crouched, ATTACK: the LOW JABS ...
+  else if (atk && ctl && cuAtkAt >= 0 && cuAtkK === 6) { irJabQ = now + 450; atk = false; }      // ... a press during them is kept for 0.45 s: two more follow
+  else if (crh && irJabQ > now) { irJabQ = 0; irStart(g, 6, now, 0); }
+  if (cuAtkAt >= 0 && cuAtkK === 7) irChMove(g, now);      // (the CHARGE flies on)
   let J = jmp && idle, A = atk && idle;      // (the presses that count: only while he can act)
   if (J && A && cuAtkAt < 0 && !air) { irStart(g, 4, now, 0); J = A = false; }      // 1. the ROCKET UPPERCUT: JUMP and ATTACK together ...
   else if (A && air && cuAtkAt < 0 && el <= sim) { cuJumpAt = -1; irStart(g, 4, now, h0); J = A = false; }      // ... or ATTACK just after the jump began ...
@@ -150,5 +238,6 @@ function irTick(g, now, ctl, jmp, atk) {
     else if (!air && cuAtkQ > now) irCombo(g, now);
   }
   if (cuAtkAt >= 0 && cuAtkK < 4 && cuAtkQ > now && idle && now - cuAtkAt >= g.atk[cuAtkK].length * cuMs) { cuCmbBy = now + 700; irCombo(g, now); }      // (a press that was kept while a blow of the chain went on: the next blow begins in the very frame the one before it is over, so that no picture of his idle comes between two blows)
+  return used;
 }
-const irLabel = (g, now) => cuJumpAt >= 0 && cuAtkAt < 0 ? 'DOWNSLAM' : g.an[g.rdy[(now > cuCmbBy ? 0 : cuCmb) % g.rdy.length]];      // (what the ATTACK button says: in the air the downslam, on the ground the blow that comes next)
+const irLabel = (g, now) => cuJumpAt >= 0 && cuAtkAt < 0 ? 'DOWNSLAM' : stance === 'crouch' ? 'LOW JABS' : cuDash || now - irDshAt <= IR_DP * irRate() ? 'CHARGE' : g.an[g.rdy[(now > cuCmbBy ? 0 : cuCmb) % g.rdy.length]];      // (what the ATTACK button says: in the air the downslam, crouched the low jabs, during a dash and just after it the charge, on the ground the blow that comes next)
