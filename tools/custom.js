@@ -25,7 +25,7 @@ window.__cuShots = () => cuShots.map(s => ({ x: s.x - wx, born: s.born }));     
 function cuShotShape(s, now) {      // the pixels of a shot in the world, row by row (its picture changes every 80 ms, as drawn)
   const sp = s.sp[Math.floor(now / 80) % s.sp.length], o = {}; if (sp) for (const r in sp) o[r] = [s.x + sp[r][0], s.x + sp[r][1] + 1]; return o;
 }
-const cuIdleCv = (who, now) => { const g = CU_GAME[+who.slice(2)]; return g ? g.frames[Math.floor(now / (1000 / IDLE_FPS)) % g.frames.length] : null; };
+const cuIdleCv = (who, now) => { const g = CU_GAME[+who.slice(2)] || (who === 'cu5' && ironEnsure() ? CU_GAME[5] : null); return g ? g.frames[Math.floor(now / (1000 / IDLE_FPS)) % g.frames.length] : null; };
 const CU_HU_MS = 60, CU_KO_FPS = 12;      // one picture of the HURT lasts 60 ms; the KO plays at 12 a second and its last picture stays
 const CU_CR_MS = 70;      // one picture of the CROUCH lasts 70 ms (4 pictures = 0.28 s down, the same back up)
 const CU_REACH = 36;      // how far in front of its hips an IMPACT reaches when the enemy's body is not known (v1.85: otherwise the limb as drawn on the IMPACT's picture against his body as drawn, see cuMeasure)
@@ -117,7 +117,7 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
   if (ceReq && ctl && g && g.blue) suToggle(); else if (ceReq && ctl && g && g.ry) ryToggle(now);      // (v1.119 MODE of a built-in fighter: Sukuna's CLEAVE on / off, in silence, see sukuna.js; the press is dropped at the end of this scene like the other buttons)
   if (domReq && ctl && g && g.blue) suDomTry(now); else if (domReq && ctl && g && g.ry) ryUlTry(now);      // (v1.124 the DOMAIN button of a built-in fighter is his ULTIMATE: Sukuna's Malevolent Shrine, see sukuna.js; read here, the press is dropped at the end of this scene)
   if (hurting && (cuAtkAt >= 0 || cuDash || blkAt >= 0)) { cuAtkAt = -1; cuDash = null; blkAt = blkEnd = -1; cuLunged = 0; if (g) g.cs = null; }
-  if (jmp && ctl && g && g.jump.length && stance === 'stand' && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0) { cuJumpAt = now; cuJumpC = false; snd('jump'); }
+  if (jmp && ctl && g && g.jump.length && stance === 'stand' && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0) { cuJumpAt = now; cuJumpC = false; snd('jump'); if (g.jet) snd('thrust', g.jet); }      // (v1.190 g.jet: the boots of Iron Man roar for that many seconds)
   else if (jmp && ctl && g && g.cj && g.jump.length && stance === 'crouch' && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0 && !g.cs) { cuJumpAt = now; cuJumpC = true; stance = 'stand'; stickCr = false; snd('jump'); }      // (v1.154 CROUCH JUMP of a built-in fighter: from a crouch he springs up (the spring pictures g.cj, 250 ms), then the jump goes on a little higher than a standing one: Yuji's own crouch jump)
   if (atk && g && g.ry && cuJumpAt >= 0 && cuAtkAt < 0 && ryJumpFrame(Math.max(0, now - cuJumpAt)) < 4) cuAtkQ = now + 300;      // (v1.143 Ryu: JUMP and ATTACK pressed together: the press is kept through the push-off and the DOWNSLAM starts as soon as he is in the air)
   if (atk && g && (g.yu || g.ry) && cuAtkAt >= 0 && !g.cs) cuAtkQ = now + 450;      // (v1.109: a press while a blow is being thrown is kept for 0.45 s and starts the next blow as soon as this one is over)

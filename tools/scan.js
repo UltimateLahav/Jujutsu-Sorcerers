@@ -7,7 +7,7 @@
 const SC = { peak: {}, budget: 62000, cancel: false, t: 0, frames: 0, res: [], seen: new Map(), ok: 0, sec: '', say: '', cap: 0, hard: 0, part: false, yAt: 0, t0: 0, secT0: 0, done: 0, plan: 1, got: {}, of: {} };
 const scReal = performance.now.bind(performance), SC_STEP = 50, SC_MINUTE = 62000;      // (SC_MINUTE: how long a scan takes, the last part of it fills what is left)
 const scYield = () => new Promise(r => setTimeout(r, 0));
-const SC_WHO = ['gojo', 'yuji', 'verity', 'cat', 'freddy', 'cu3', 'cu4'], SC_NAME = { gojo: 'GOJO', yuji: 'YUJI', verity: 'VERITY', cat: 'CAT', freddy: 'FREDDY', cu3: 'SUKUNA', cu4: 'RYU' };
+const SC_WHO = ['gojo', 'yuji', 'verity', 'cat', 'freddy', 'cu3', 'cu4'], SC_NAME = { gojo: 'GOJO', yuji: 'YUJI', verity: 'VERITY', cat: 'CAT', freddy: 'FREDDY', cu3: 'SUKUNA', cu4: 'RYU', cu5: 'IRON MAN' };
 
 // ---------------------------------------------------------------- the findings
 function scNote(st, name, detail) {      // st = 'fail' (an error) or 'warn' (a note); the same finding again is counted, not listed
@@ -97,7 +97,7 @@ function scData() {
   SC.say = 'THE SAVES';
   try { const c = bkMake(); scT(!!bkRead(c), 'THE SAVE CODE DOES NOT READ BACK', ''); } catch (e) { scErr(e, 'SAVE CODE'); }
   const sv = loadSaves(); scT(Array.isArray(sv) && sv.length === 3, 'SAVE SLOTS', ''); scT(Number.isFinite(PROG.m) && PROG.m >= 0, 'MONEY IS NOT A NUMBER', String(PROG.m));
-  for (const w of SC_WHO) scT(!!document.querySelector('#fsGrid .fst[data-who="' + w + '"]'), 'NO FIGHTER FACE FOR ' + w, '');      // (v1.180 the faces of the fighter screen)
+  for (const w of SC_WHO.concat('cu5')) scT(!!document.querySelector('#fsGrid .fst[data-who="' + w + '"]'), 'NO FIGHTER FACE FOR ' + w, '');      // (v1.180 the faces of the fighter screen)
   SC.say = 'THE CODE AGAINST THE PAGE';      // the page's own text: every call that names a page element by its id is for a thing that is in the page, every call that plays a sound names one that exists
   try {
     const src = [...document.scripts].reduce((a, b) => b.textContent.length > a.textContent.length ? b : a).textContent, miss = new Set(), re = /\$\('([A-Za-z][\w-]*)'\)/g; let m, n = 0;
@@ -188,7 +188,11 @@ async function scRound(r) {      // one round of random fights: every fighter in
   }
   return true;
 }
-async function scFighters() { SC.sec = 'FIGHTERS'; scCov('FIGHTERS', 0, SC_WHO.length); SC.plan = SC_WHO.length * 280; SC.done = 0; await scRound(0); }
+async function scFighters() {
+  SC.sec = 'FIGHTERS'; scCov('FIGHTERS', 0, SC_WHO.length + 1); SC.plan = (SC_WHO.length + 1) * 280; SC.done = 0; if (!(await scRound(0))) return;
+  if (!(await scSeg('IRON MAN IN FREE PLAY', () => { SET.gore = 0; Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0 }); startPractice('cu5', 'gojo'); }, 100, 77))) return;      // (v1.190 Iron Man: walks and jumps in Training, nothing else; the enemy fights back and his health is normal, so he is hit and knocked out too)
+  scCov('FIGHTERS', 1, 0);
+}
 async function scMore() {      // the time that is left of the minute: more random fights
   SC.sec = 'MORE FIGHTS'; SC.plan = 1e9; let r = 1; while (await scRound(r)) { r++; scCov('ROUNDS', 1, 0); }
 }
@@ -223,7 +227,7 @@ async function scMoves() {
 // ---------------------------------------------------------------- CUTSCENES: the FATALITY and the DOMAIN of every fighter, played to the end
 async function scCuts() {
   SC.sec = 'CUTSCENES'; const FATAL = { gojo: 1, yuji: 1, verity: 1, cat: 1, freddy: 1, cu3: 1, cu4: 0 };
-  scCov('CUTSCENES', 0, SC_WHO.length * 2 + 3 + 13 + 16); SC.plan = (SC_WHO.length * 2 + 3 + 13 + 16) * 220; SC.done = 0;
+  scCov('CUTSCENES', 0, SC_WHO.length * 2 + 3 + 13 + 19); SC.plan = (SC_WHO.length * 2 + 3 + 13 + 19) * 220; SC.done = 0;
   for (let i = 0; i < SC_WHO.length; i++) {
     const w = SC_WHO[i];
     for (const [key, nm, low, max] of [['KeyH', 'FATALITY', 2, 700], ['KeyV', 'DOMAIN', 1, 520]]) {
@@ -292,7 +296,7 @@ async function scCuts() {
     if (await scUntil(() => scBusy(), 40, 250)) { if (await scUntil(() => !scBusy(), 800, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 40 SECONDS', ''); } else scNote('fail', label + ' DID NOT START', 'THE ENEMY WAS AT ' + (dummy ? Math.round(dummy.hp / (dummy.max || 1) * 100) : '?') + '% HEALTH');
     show('title');
   }
-  for (const [w, foe, what] of [['cu3', 'gojo', 'FATALITY'], ['cu4', 'cat', 'FATALITY'], ['cu3', 'freddy', 'NIGHTMARE'], ['cu4', 'freddy', 'NIGHTMARE']]) {      // (the enemy's own fatality or nightmare on Sukuna or Ryu)
+  for (const [w, foe, what] of [['cu3', 'gojo', 'FATALITY'], ['cu4', 'cat', 'FATALITY'], ['cu3', 'freddy', 'NIGHTMARE'], ['cu4', 'freddy', 'NIGHTMARE'], ['cu5', 'gojo', 'FATALITY'], ['cu5', 'cat', 'FATALITY'], ['cu5', 'freddy', 'NIGHTMARE']]) {      // (the enemy's own fatality or nightmare on Sukuna, Ryu or Iron Man)
     const label = 'THE ENEMY ' + SC_NAME[foe] + ': HIS ' + what + ' ON ' + SC_NAME[w]; SC.say = label; SET.gore = 0; window.__suAll = true;
     try { Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0, put: 2, grade: 4 }); startPractice(w, foe); } catch (e) { scErr(e, label); continue; }
     if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }

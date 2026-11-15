@@ -70,6 +70,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #fat.rdy{opacity:1;background:#3a0d12;border-color:#ff8a7a;color:#fff;box-shadow:0 0 1.8vh #ff4a3a,0 0 .5vh #ff4a3a inset,4px 4px 0 #000;animation:fatglow .5s steps(2) infinite}
 @keyframes fatglow{50%{box-shadow:0 0 3.2vh #ff2a2a,0 0 .9vh #ff2a2a inset,4px 4px 0 #000}}
 #pad.cine,#hud.cine{visibility:hidden}body.cut #hud,body.cut #pad,body.cut #sns,body.cut #trHud,body.cut #twp{visibility:hidden}      /* (v1.181 a cutscene of a fight: only what belongs to it stays, see cutsceneOn) */
+body.ir #dom,body.ir #ce,body.ir #blk,body.ir #fat,body.ir #lap,body.ir #sns,body.ir #dash,body.ir #atk{visibility:hidden}      /* (v1.190 Iron Man walks and jumps, nothing else yet: only the stick is left) */
 body.ry #fat,body.c4 #dom,body.c4 #ce,body.c4 #fat,body.c4 #lap,body.c4 #sns{visibility:hidden}      /* (v1.143 Ryu has no DOMAIN or FATAL: those buttons are hidden while he fights; v1.163 he has BLUE, v1.170 the MODE button is his GRANITE BLAST mode) */      /* the controls hide while a cutscene plays (the FATALITY, the red ending) */
 #qte{position:fixed;inset:0;z-index:4;display:none;pointer-events:none}#qte.show{display:block}      /* the quick-time event of the red ending: the red button, and the ring that closes on it */
 #qBtn,#qRing{position:absolute;border-radius:50%}
@@ -198,7 +199,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.189</small>
+    <small id="ver">V1.190</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -830,7 +831,7 @@ const GATE = {      // for each fighter the skill each button needs (a button th
   v: { cr: 'v_crouch', dash: 'v_tele', blk: 'v_block', ce: 'v_ball', dom: 'v_scare', fat: 'v_fatal', bl: 'v_bite', hv: 'v_heavy', cn: 'v_cancel', ac: 'v_air', sn: 'v_sense' },
   k: { cr: 'k_crouch', dash: 'k_dash', blk: 'k_block', dom: 'k_ult', fat: 'k_fatal', bl: 'k_toon', hv: 'k_heavy', cn: 'k_cancel', sn: 'k_sense' } };
 const BLUES = { g: ['blue', 'tele', 'mblue'], y: ['y_div', 'y_sweep', 'y_rush', 'y_conc', 'y_elbow', 'y_upper', 'y_flash'], v: ['v_bite'], k: ['k_toon', 'k_kick', 'k_lift'] };
-const lacks = key => { if (fredMe() || (vs && vs.me === 'cu4')) return false; if (vs && vs.me === 'cu3') { const need = SUK_GATE[key]; return !!need && !suOwn(need); } const need = GATE[meK()][key]; return !!need && !owns(need); };      // (v1.131 Sukuna: his own skills, bought for real even in free play, see tools/sukuna.js)      // true when the fighter you play has not bought what this button needs
+const lacks = key => { if (fredMe() || (vs && (vs.me === 'cu4' || vs.me === 'cu5'))) return false; if (vs && vs.me === 'cu3') { const need = SUK_GATE[key]; return !!need && !suOwn(need); } const need = GATE[meK()][key]; return !!need && !owns(need); };      // (v1.131 Sukuna: his own skills, bought for real even in free play, see tools/sukuna.js)      // true when the fighter you play has not bought what this button needs
 let lockSayAt = -1e9;
 function lockPop(now) { if (now - lockSayAt > 1200) { lockSayAt = now; say('LOCKED: BUY IT IN SKILLS', wx, '#ff8a7a', 8, now); } }
 function gateSkills(now) {                    // every frame, before the controls are read: a move you do not own is simply not there (any fighter)
@@ -856,7 +857,7 @@ function gateBlue(now, jf, tf) {              // BLUE of Gojo: teleport up in th
 }
 function skillUI() {                          // the buttons of a move you do not own are dimmed and marked
   const L = (id, key) => $(id).classList.toggle('lk', lacks(key));
-  L('blk', 'blk'); L('dash', 'dash'); L('ce', 'ce'); L('dom', 'dom'); L('fat', 'fat'); $('lap').classList.toggle('lk', !fredMe() && !(vs && vs.me === 'cu4') && !(vs && vs.me === 'cu3' ? Object.values(SU_BLUE_ID).some(suOwn) : BLUES[meK()].some(owns)));
+  L('blk', 'blk'); L('dash', 'dash'); L('ce', 'ce'); L('dom', 'dom'); L('fat', 'fat'); $('lap').classList.toggle('lk', !fredMe() && !(vs && (vs.me === 'cu4' || vs.me === 'cu5')) && !(vs && vs.me === 'cu3' ? Object.values(SU_BLUE_ID).some(suOwn) : BLUES[meK()].some(owns)));
 }
 function leavePlay() { if (c4x) c4xLeave(); else if (vs && vs.net) lanLeave(); else if (vs && vs.hunt) { show('chal'); buildHunts(); } else if (vs && vs.cv) { show('chal'); buildChal(); } else fsOpen(vs && !vs.practice && !vs.story ? 'battle' : 'train'); }
 
@@ -2707,13 +2708,13 @@ function fatSets(rev) {                                // the pictures of the at
   if (vk === 'verity') return { ...S, ...veVictim() };
   if (vk === 'cat') return { ...S, ...catVictim() };
   if (vk === 'freddy') return { ...S, ...freddyVictim() };
-  if (vk === 'cu3' || vk === 'cu4') return { ...S, ...cuVictim(+vk.slice(2)) };
+  if (vk === 'cu3' || vk === 'cu4' || vk === 'cu5') return { ...S, ...cuVictim(+vk.slice(2)) };      // (v1.190 Iron Man, in Training, is a victim too: his idle in every reaction)
   return rev ? { ...S, vF: idleF, vRx: rxN } : { ...S, vF: dumF, vRx: rxI };
 }
 let fat = null, fatReq = 0;                            // fat = the running cutscene (null when there is none); fatReq = until when a press of the FATALITY button is remembered
 const orbAt = (set, n, sx, sy, s) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));      // an orb frame centred on (sx, sy)
 function fatState(now) {                               // Gojo's FATALITY (and Verity's). 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far away; 3 = not possible right now
-  if (vs && vs.me === 'cu4') return 3;      // (v1.166 Ryu has no FATALITY; before, his button played Gojo's)
+  if (vs && (vs.me === 'cu4' || vs.me === 'cu5')) return 3;      // (v1.166 Ryu has no FATALITY; before, his button played Gojo's; v1.190 nor has Iron Man)
   if (cuFoeOn() && (vs.me === 'verity' || fredMe())) return 3;      // (v1.189 Verity's and Freddy's FATALITY have no version for the enemy Sukuna or Ryu yet; the others do)
   if (fredMe()) return ffState(now);      // (v1.185 Freddy's FATALITY: he eats the enemy, see fred3.js)
   if (!vs || vs.story || vs.cv || fredMe() || lacks('fat') || vs.ph !== 'fight' || js || vf || fat || yf || yu || (dom && domLock()) || ult || cf || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (v1.181 a DOMAIN no longer stops it: only its opening, while the controls are locked; fatGo ends the domain)      // (Verity and the Cat have their own FATALITY: the same rules; so has Yuji since v1.49, the 30-second one; Freddy has none yet, v1.52: his button used to play Gojo's FATALITY with Gojo in it)      // (no FATALITY in the story fight: his ending is a Reversal Red)
@@ -3917,7 +3918,7 @@ function cfVictim(s, now) {      // the victim's picture while he stands there: 
   if (vk === 'gojo') return { img: idleF[ph % idleF.length], hx: D.idle.cx - D.idle.x0, top: D.idle.top || 0 };
   if (vk === 'yuji') return { img: YUF.norm.idle[ph % 15], hx: YU.idle.cx - YU.idle.x0, top: YU.idle.top || 0 };
   if (vk === 'verity') return { img: vfr('idle', now / 100, true, false), hx: 32, top: 0 };
-  if (vk === 'cu3' || vk === 'cu4') { const g = CU_GAME[+vk.slice(2)]; return { img: g.frames[ph % g.frames.length], hx: 32, top: 1 }; }      // (v1.189 Sukuna or Ryu as the victim)
+  if (vk === 'cu3' || vk === 'cu4' || vk === 'cu5') { const g = CU_GAME[+vk.slice(2)]; return { img: g.frames[ph % g.frames.length], hx: 32, top: 1 }; }      // (v1.189 Sukuna or Ryu as the victim; v1.190 Iron Man too)
   if (vk === 'freddy') { const im = fredF(ph); return { img: s.inv && im !== EMPTY && im.width ? invOf(im) : im, hx: FRED_INFO.cx - FRED_INFO.x0, top: FRED_INFO.top }; }      // (v1.52: Freddy, not a Cat; v1.188 inverted when he is the enemy of a Freddy)
   return { img: cfr('idle', now / 83, true, s.inv), hx: 32, top: 0 };
 }
@@ -4437,6 +4438,7 @@ __CHAP4D__
 __CHAP4E__
 __CHAP5__
 __CHAP5B__
+__IRON__
 function drawScene(now, dt) {
   if (c4x) { c4xFrame(now, dt); return; }      // (v1.156 chapter 4, part 3: Yuji against Meguna, see tools/chap4c.js)
   fatUI(now);
@@ -6441,6 +6443,7 @@ function tick(t) {
   if (still) { stopMs = Math.max(0, stopMs - rdt); vOff += now - last; now = last; } else if (state !== 'play') stopMs = 0;
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
   twTick(now, dt); if (freePlay()) trainStep(now, dt); twBase(now);      // (v1.173 the skyscraper: what happened last frame is read before the training step gives the enemy his health back, and the new baseline is taken right after it)
+  { const ir = state === 'play' && !!vs && vs.me === IRON_WHO; if (ir !== ironUI) { ironUI = ir; document.body.classList.toggle('ir', ir); } }      // (v1.190 Iron Man cannot attack, block, dash or use any power yet: while he is the fighter every button but the stick is hidden, see the CSS of body.ir)
   { const ry = state === 'play' && !!vs && vs.me === RYU_WHO; if (ry !== ryUI) { ryUI = ry; document.body.classList.toggle('ry', ry); } if (!ry && ryUl) ryUlEnd(now, true); }      // (v1.143 Ryu has no BLUE, MODE, DOMAIN or FATAL: while he fights those buttons are hidden, see the CSS of body.ry)
   ragTick(now);
   cutUI(); trainDraw(now);
@@ -6548,7 +6551,7 @@ function goFullscreen() {                     // best effort; ignored where unsu
 const inApp = /; wv\)/.test(navigator.userAgent);   // inside the Android app the activity already handles fullscreen + landscape
 $('start').addEventListener('click', () => { audio(); if (!inApp && matchMedia('(pointer:coarse)').matches) goFullscreen(); show('modes'); });
 function startPractice(who, foe) {      // FREE PLAY as Yuji, Verity or the Cat: a Versus match against a punching bag that never ends: every move is free (freePlay), you cannot lose, the energy is always full, there is no timer, an enemy who is K.O.'d comes back with the next round (see trainStep). v1.24: SETTINGS > TRAIN controls the enemy (who he is, what he does, his health and level), your health and energy, the speed of the game and two overlays
-  const sv = { ...vsPick }; audio(); vsPick.me = who; vsPick.foe = foe || TRF[TR.foe] || 'gojo'; twFightStart(); startMatch(TR.grade); Object.assign(vsPick, sv);
+  const sv = { ...vsPick }; audio(); if (who === 'cu5') ironEnsure(); vsPick.me = who; vsPick.foe = foe || TRF[TR.foe] || 'gojo'; twFightStart(); startMatch(TR.grade); Object.assign(vsPick, sv);
   vs.practice = true; vs.tl = 1e9; setModeUI();
 }
 function twFightStart() { twWant = twPick === 1; }      // (v1.173 the MAP chosen on the screens is read by startMatch)

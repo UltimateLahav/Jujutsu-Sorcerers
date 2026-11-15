@@ -7,11 +7,12 @@ const SEL = {      // the seven fighters: short name, panel name, a tag, three s
   verity: { nm: 'VERITY', full: 'VERITY', tag: 'CURSED SPIRIT', mv: ['BITE', 'SMOKE BALL', 'JUMPSCARE'], col: [232, 201, 74], face: [18, 0] },
   cat: { nm: 'CAT', full: 'CARTOON<br>CAT', tag: 'CURSED SPIRIT', mv: ['CARTOON ATTACK', 'GIANT KICK', 'ARM HANG'], col: [200, 204, 216], face: [19, 0] },
   freddy: { nm: 'FREDDY', full: 'FREDDY<br>KRUEGER', tag: 'CURSED SPIRIT', mv: ['PIERCE', 'BOILING WATER', 'DREAM'], col: [70, 196, 106], face: [21, 1] },
-  cu3: { nm: 'SUKUNA', full: 'SUKUNA', tag: 'KING OF CURSES', mv: ['DISMANTLE', 'CLEAVE MODE', 'MALEVOLENT SHRINE'], col: [255, 58, 74], face: [21, 1] } };
-const SEL_ROWS = [['gojo', 'yuji', 'cu4'], ['verity', 'cat', 'freddy', 'cu3']], FS_ORDER = [].concat(...SEL_ROWS), FACE = 28;      // 3 on top, 4 below (the humans first)
+  cu3: { nm: 'SUKUNA', full: 'SUKUNA', tag: 'KING OF CURSES', mv: ['DISMANTLE', 'CLEAVE MODE', 'MALEVOLENT SHRINE'], col: [255, 58, 74], face: [21, 1] },
+  cu5: { nm: 'IRON MAN', full: 'IRON<br>MAN', tag: 'TONY STARK', mv: ['WALK', 'JUMP', 'ATTACKS COME LATER'], col: [196, 32, 44], face: [20, 0] } };      // (v1.190 Iron Man: TRAINING only for now, he walks and jumps)
+const SEL_ROWS = [['gojo', 'yuji', 'cu4', 'cu5'], ['verity', 'cat', 'freddy', 'cu3']], FS_ORDER = [].concat(...SEL_ROWS), FACE = 28;      // 4 on top, 4 below (the humans first; v1.190 Iron Man is the fourth on top)
 const selRgb = (c, a) => 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')';
 const fsPic = (who, now, inv) => {      // the idle picture of any of the seven (a canvas), or null while a fighter's pictures are not cut yet
-  if (who.slice(0, 2) === 'cu') return cuIdleCv(who, now) || null;
+  if (who.slice(0, 2) === 'cu') { const c = cuIdleCv(who, now); return c ? (inv ? invOf(c) : c) : null; }      // (v1.190 Sukuna and Ryu: the "(INV.)" one is a copy in the inverted colours, like the other five; it was the normal picture before)
   const f = lanIdlePic(who, now, inv); return f && f.width ? f : null;
 };
 const fsHot = who => who === 'gojo' ? D.idle.cx - D.idle.x0 : who === 'yuji' ? YU.idle.cx - YU.idle.x0 : 32, fsTop = who => who === 'gojo' ? D.idle.top || 0 : who === 'yuji' ? YU.idle.top || 0 : 0;      // (where his middle is in his picture, and how many rows of head room it has: the same numbers the fight uses)
@@ -20,6 +21,7 @@ function fsWhy(mode, side, who) {
   const cu = who === 'cu3' || who === 'cu4';
   if (mode === 'wifi') return LAN_FIGHTERS.includes(who) ? '' : 'NOT ONLINE';
   if (mode === 'train') return side === 0 ? (who === 'cu3' && !suHas() ? 'LOCKED' : '') : TRF.includes(who) ? '' : 'NOT AS ENEMY';      // (Sukuna is bought for $3000; the training enemy is Gojo, Yuji, Verity or the Cat, see TRF)
+  if (who === 'cu5') return 'TRAINING ONLY';      // (v1.190 Iron Man walks and jumps and nothing else: he is in TRAINING as your fighter, in no fight against anyone)
   if (cu) return who === 'cu3' && !suHas() ? 'LOCKED' : '';      // (v1.189 Sukuna and Ryu fight in Battle too, on both sides; Sukuna is still bought for $3000)
   return who !== 'gojo' && !owns(who) ? 'LOCKED' : '';      // (bought on the SKILLS page, like before)
 }

@@ -70,6 +70,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #fat.rdy{opacity:1;background:#3a0d12;border-color:#ff8a7a;color:#fff;box-shadow:0 0 1.8vh #ff4a3a,0 0 .5vh #ff4a3a inset,4px 4px 0 #000;animation:fatglow .5s steps(2) infinite}
 @keyframes fatglow{50%{box-shadow:0 0 3.2vh #ff2a2a,0 0 .9vh #ff2a2a inset,4px 4px 0 #000}}
 #pad.cine,#hud.cine{visibility:hidden}body.cut #hud,body.cut #pad,body.cut #sns,body.cut #trHud,body.cut #twp{visibility:hidden}      /* (v1.181 a cutscene of a fight: only what belongs to it stays, see cutsceneOn) */
+body.ir #dom,body.ir #ce,body.ir #blk,body.ir #fat,body.ir #lap,body.ir #sns,body.ir #dash,body.ir #atk{visibility:hidden}      /* (v1.190 Iron Man walks and jumps, nothing else yet: only the stick is left) */
 body.ry #fat,body.c4 #dom,body.c4 #ce,body.c4 #fat,body.c4 #lap,body.c4 #sns{visibility:hidden}      /* (v1.143 Ryu has no DOMAIN or FATAL: those buttons are hidden while he fights; v1.163 he has BLUE, v1.170 the MODE button is his GRANITE BLAST mode) */      /* the controls hide while a cutscene plays (the FATALITY, the red ending) */
 #qte{position:fixed;inset:0;z-index:4;display:none;pointer-events:none}#qte.show{display:block}      /* the quick-time event of the red ending: the red button, and the ring that closes on it */
 #qBtn,#qRing{position:absolute;border-radius:50%}
@@ -198,7 +199,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.189</small>
+    <small id="ver">V1.190</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -2080,7 +2081,7 @@ const GATE = {      // for each fighter the skill each button needs (a button th
   v: { cr: 'v_crouch', dash: 'v_tele', blk: 'v_block', ce: 'v_ball', dom: 'v_scare', fat: 'v_fatal', bl: 'v_bite', hv: 'v_heavy', cn: 'v_cancel', ac: 'v_air', sn: 'v_sense' },
   k: { cr: 'k_crouch', dash: 'k_dash', blk: 'k_block', dom: 'k_ult', fat: 'k_fatal', bl: 'k_toon', hv: 'k_heavy', cn: 'k_cancel', sn: 'k_sense' } };
 const BLUES = { g: ['blue', 'tele', 'mblue'], y: ['y_div', 'y_sweep', 'y_rush', 'y_conc', 'y_elbow', 'y_upper', 'y_flash'], v: ['v_bite'], k: ['k_toon', 'k_kick', 'k_lift'] };
-const lacks = key => { if (fredMe() || (vs && vs.me === 'cu4')) return false; if (vs && vs.me === 'cu3') { const need = SUK_GATE[key]; return !!need && !suOwn(need); } const need = GATE[meK()][key]; return !!need && !owns(need); };      // (v1.131 Sukuna: his own skills, bought for real even in free play, see tools/sukuna.js)      // true when the fighter you play has not bought what this button needs
+const lacks = key => { if (fredMe() || (vs && (vs.me === 'cu4' || vs.me === 'cu5'))) return false; if (vs && vs.me === 'cu3') { const need = SUK_GATE[key]; return !!need && !suOwn(need); } const need = GATE[meK()][key]; return !!need && !owns(need); };      // (v1.131 Sukuna: his own skills, bought for real even in free play, see tools/sukuna.js)      // true when the fighter you play has not bought what this button needs
 let lockSayAt = -1e9;
 function lockPop(now) { if (now - lockSayAt > 1200) { lockSayAt = now; say('LOCKED: BUY IT IN SKILLS', wx, '#ff8a7a', 8, now); } }
 function gateSkills(now) {                    // every frame, before the controls are read: a move you do not own is simply not there (any fighter)
@@ -2106,7 +2107,7 @@ function gateBlue(now, jf, tf) {              // BLUE of Gojo: teleport up in th
 }
 function skillUI() {                          // the buttons of a move you do not own are dimmed and marked
   const L = (id, key) => $(id).classList.toggle('lk', lacks(key));
-  L('blk', 'blk'); L('dash', 'dash'); L('ce', 'ce'); L('dom', 'dom'); L('fat', 'fat'); $('lap').classList.toggle('lk', !fredMe() && !(vs && vs.me === 'cu4') && !(vs && vs.me === 'cu3' ? Object.values(SU_BLUE_ID).some(suOwn) : BLUES[meK()].some(owns)));
+  L('blk', 'blk'); L('dash', 'dash'); L('ce', 'ce'); L('dom', 'dom'); L('fat', 'fat'); $('lap').classList.toggle('lk', !fredMe() && !(vs && (vs.me === 'cu4' || vs.me === 'cu5')) && !(vs && vs.me === 'cu3' ? Object.values(SU_BLUE_ID).some(suOwn) : BLUES[meK()].some(owns)));
 }
 function leavePlay() { if (c4x) c4xLeave(); else if (vs && vs.net) lanLeave(); else if (vs && vs.hunt) { show('chal'); buildHunts(); } else if (vs && vs.cv) { show('chal'); buildChal(); } else fsOpen(vs && !vs.practice && !vs.story ? 'battle' : 'train'); }
 
@@ -3957,13 +3958,13 @@ function fatSets(rev) {                                // the pictures of the at
   if (vk === 'verity') return { ...S, ...veVictim() };
   if (vk === 'cat') return { ...S, ...catVictim() };
   if (vk === 'freddy') return { ...S, ...freddyVictim() };
-  if (vk === 'cu3' || vk === 'cu4') return { ...S, ...cuVictim(+vk.slice(2)) };
+  if (vk === 'cu3' || vk === 'cu4' || vk === 'cu5') return { ...S, ...cuVictim(+vk.slice(2)) };      // (v1.190 Iron Man, in Training, is a victim too: his idle in every reaction)
   return rev ? { ...S, vF: idleF, vRx: rxN } : { ...S, vF: dumF, vRx: rxI };
 }
 let fat = null, fatReq = 0;                            // fat = the running cutscene (null when there is none); fatReq = until when a press of the FATALITY button is remembered
 const orbAt = (set, n, sx, sy, s) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));      // an orb frame centred on (sx, sy)
 function fatState(now) {                               // Gojo's FATALITY (and Verity's). 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far away; 3 = not possible right now
-  if (vs && vs.me === 'cu4') return 3;      // (v1.166 Ryu has no FATALITY; before, his button played Gojo's)
+  if (vs && (vs.me === 'cu4' || vs.me === 'cu5')) return 3;      // (v1.166 Ryu has no FATALITY; before, his button played Gojo's; v1.190 nor has Iron Man)
   if (cuFoeOn() && (vs.me === 'verity' || fredMe())) return 3;      // (v1.189 Verity's and Freddy's FATALITY have no version for the enemy Sukuna or Ryu yet; the others do)
   if (fredMe()) return ffState(now);      // (v1.185 Freddy's FATALITY: he eats the enemy, see fred3.js)
   if (!vs || vs.story || vs.cv || fredMe() || lacks('fat') || vs.ph !== 'fight' || js || vf || fat || yf || yu || (dom && domLock()) || ult || cf || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (v1.181 a DOMAIN no longer stops it: only its opening, while the controls are locked; fatGo ends the domain)      // (Verity and the Cat have their own FATALITY: the same rules; so has Yuji since v1.49, the 30-second one; Freddy has none yet, v1.52: his button used to play Gojo's FATALITY with Gojo in it)      // (no FATALITY in the story fight: his ending is a Reversal Red)
@@ -5167,7 +5168,7 @@ function cfVictim(s, now) {      // the victim's picture while he stands there: 
   if (vk === 'gojo') return { img: idleF[ph % idleF.length], hx: D.idle.cx - D.idle.x0, top: D.idle.top || 0 };
   if (vk === 'yuji') return { img: YUF.norm.idle[ph % 15], hx: YU.idle.cx - YU.idle.x0, top: YU.idle.top || 0 };
   if (vk === 'verity') return { img: vfr('idle', now / 100, true, false), hx: 32, top: 0 };
-  if (vk === 'cu3' || vk === 'cu4') { const g = CU_GAME[+vk.slice(2)]; return { img: g.frames[ph % g.frames.length], hx: 32, top: 1 }; }      // (v1.189 Sukuna or Ryu as the victim)
+  if (vk === 'cu3' || vk === 'cu4' || vk === 'cu5') { const g = CU_GAME[+vk.slice(2)]; return { img: g.frames[ph % g.frames.length], hx: 32, top: 1 }; }      // (v1.189 Sukuna or Ryu as the victim; v1.190 Iron Man too)
   if (vk === 'freddy') { const im = fredF(ph); return { img: s.inv && im !== EMPTY && im.width ? invOf(im) : im, hx: FRED_INFO.cx - FRED_INFO.x0, top: FRED_INFO.top }; }      // (v1.52: Freddy, not a Cat; v1.188 inverted when he is the enemy of a Freddy)
   return { img: cfr('idle', now / 83, true, s.inv), hx: 32, top: 0 };
 }
@@ -7473,7 +7474,7 @@ window.__cuShots = () => cuShots.map(s => ({ x: s.x - wx, born: s.born }));     
 function cuShotShape(s, now) {      // the pixels of a shot in the world, row by row (its picture changes every 80 ms, as drawn)
   const sp = s.sp[Math.floor(now / 80) % s.sp.length], o = {}; if (sp) for (const r in sp) o[r] = [s.x + sp[r][0], s.x + sp[r][1] + 1]; return o;
 }
-const cuIdleCv = (who, now) => { const g = CU_GAME[+who.slice(2)]; return g ? g.frames[Math.floor(now / (1000 / IDLE_FPS)) % g.frames.length] : null; };
+const cuIdleCv = (who, now) => { const g = CU_GAME[+who.slice(2)] || (who === 'cu5' && ironEnsure() ? CU_GAME[5] : null); return g ? g.frames[Math.floor(now / (1000 / IDLE_FPS)) % g.frames.length] : null; };
 const CU_HU_MS = 60, CU_KO_FPS = 12;      // one picture of the HURT lasts 60 ms; the KO plays at 12 a second and its last picture stays
 const CU_CR_MS = 70;      // one picture of the CROUCH lasts 70 ms (4 pictures = 0.28 s down, the same back up)
 const CU_REACH = 36;      // how far in front of its hips an IMPACT reaches when the enemy's body is not known (v1.85: otherwise the limb as drawn on the IMPACT's picture against his body as drawn, see cuMeasure)
@@ -7565,7 +7566,7 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
   if (ceReq && ctl && g && g.blue) suToggle(); else if (ceReq && ctl && g && g.ry) ryToggle(now);      // (v1.119 MODE of a built-in fighter: Sukuna's CLEAVE on / off, in silence, see sukuna.js; the press is dropped at the end of this scene like the other buttons)
   if (domReq && ctl && g && g.blue) suDomTry(now); else if (domReq && ctl && g && g.ry) ryUlTry(now);      // (v1.124 the DOMAIN button of a built-in fighter is his ULTIMATE: Sukuna's Malevolent Shrine, see sukuna.js; read here, the press is dropped at the end of this scene)
   if (hurting && (cuAtkAt >= 0 || cuDash || blkAt >= 0)) { cuAtkAt = -1; cuDash = null; blkAt = blkEnd = -1; cuLunged = 0; if (g) g.cs = null; }
-  if (jmp && ctl && g && g.jump.length && stance === 'stand' && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0) { cuJumpAt = now; cuJumpC = false; snd('jump'); }
+  if (jmp && ctl && g && g.jump.length && stance === 'stand' && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0) { cuJumpAt = now; cuJumpC = false; snd('jump'); if (g.jet) snd('thrust', g.jet); }      // (v1.190 g.jet: the boots of Iron Man roar for that many seconds)
   else if (jmp && ctl && g && g.cj && g.jump.length && stance === 'crouch' && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0 && !g.cs) { cuJumpAt = now; cuJumpC = true; stance = 'stand'; stickCr = false; snd('jump'); }      // (v1.154 CROUCH JUMP of a built-in fighter: from a crouch he springs up (the spring pictures g.cj, 250 ms), then the jump goes on a little higher than a standing one: Yuji's own crouch jump)
   if (atk && g && g.ry && cuJumpAt >= 0 && cuAtkAt < 0 && ryJumpFrame(Math.max(0, now - cuJumpAt)) < 4) cuAtkQ = now + 300;      // (v1.143 Ryu: JUMP and ATTACK pressed together: the press is kept through the push-off and the DOWNSLAM starts as soon as he is in the air)
   if (atk && g && (g.yu || g.ry) && cuAtkAt >= 0 && !g.cs) cuAtkQ = now + 450;      // (v1.109: a press while a blow is being thrown is kept for 0.45 s and starts the next blow as soon as this one is over)
@@ -17180,6 +17181,36 @@ function k5Step2(c, now, dt, T) {      // the sounds and shakes of part 2 (each 
 window.__k5Z = t => { const c = c4x; return c && c.ph === 'k5' ? { cam: k5Cam(c, t === undefined ? c.T : t), cards: k5Cards(c), warp: [K5W.t1, K5W.t4, k5Warp(K5W.t1), k5Warp(K5W.t4)] } : null; };      // test hook: the camera of the huge room, the times of the cards, the slow motion
 window.__k5B = t => { const c = c4x; if (!c || c.ph !== 'k5') return null; const T = t === undefined ? c.T : t; return T < K5B.room ? k5LabEval(T) : k5HallEval(c, T); };      // test hook: everybody's place and picture in part 2 at the scene time t
 
+// ================================================================ v1.190 IRON MAN, A FIGHTER OF TRAINING (this file is spliced into template.html by build_html.py, after the chapters: his pictures are the suit of chapter 5)
+// The user: "make the iron man sprite from chapter 5 to appear as a playable character in the training button, well you can only see his idle, you can move him, you can't do nothing rn", and, asked what he should do for now, "walk + jump" and "nothing else". He is the fighter slot cu5 of the custom engine (tools/custom.js): customScene walks him, jumps him and draws him, the enemy, the HUD and the effects are the shared ones.
+// His pictures are the red and gold suit of chapter 5 (c4xIron, tools/chap4e.js, the same rig and the same shaded capsules), cut into 64 x 64 canvases the first time they are needed (ironEnsure): the IDLE (12 pictures: a breath, and the palm of the repulser glowing now and then), the WALK forwards and backwards (8 each) and the JUMP (12: knees tucked, the flames of the boots lit, and the roar of the boots, the `thrust` sound of chapter 4, through `g.jet` in customScene). His middle column is 32 and his soles are on row 62 like everyone's. He has no blows, no block, no dash, no crouch and no HURT or K.O. pictures yet, so while he fights all the buttons are hidden (the CSS of body.ir, toggled in tick), and the fighter screen lets him fight in TRAINING only, as your fighter (fsWhy in tools/select.js).
+const IRON_WHO = 'cu5', IRON_WF = 14, IRON_OX = 16, IRON_OY = 31;      // (IRON_WF: his walking pictures a second: 8 pictures a stride at 56 px a second keeps his feet on the floor; IRON_OX / IRON_OY: the 64 x 64 window on the 128 x 100 picture of c4xIron, his soles are on row 92 there and his hips on column 48)
+NAMES[IRON_WHO] = 'IRON MAN'; CEC[IRON_WHO] = ['#2a0a0c', '#d8262f', '#ffe08a', '#ff9a5a'];      // (his name on the HUD and his energy bar: red and gold)
+let ironUI = false;      // (is his HUD on: every button is hidden, see tick)
+const ironPose = o => Object.assign({ x: 48, y: 62.3, lean: 3, hdx: 1.2, hdy: 1.5, hdt: 0, fl: 0, bl: 0, rep: 0, vis: 1, ph: 0, arms: [{ al: 14, el: 26 }, { al: 10, el: 22 }], legs: [{ ax: 41, ay: C4IG, a: 0 }, { ax: 55, ay: C4IG, a: 0 }] }, o);      // (a pose of c4xIron with his hips and head low enough for the whole suit to fit in 63 rows: the legs are straight at 61.8, so his knees are bent a little, like a fighter's)
+function ironIdle(k, n) {      // the ready stance of chapter 4 (the far arm raised, the palm out) breathing: the hips and the head move a little, the arms too, and the palm's light comes and goes
+  const u = k / n * 2 * Math.PI, s = Math.sin(u), c = Math.sin(u - 1.1);
+  return ironPose({ y: 62.3 + 0.6 * (0.5 + 0.5 * s), lean: 3 + 0.6 * c, hdt: 1 + 1.4 * c, rep: s > 0.35 ? 0.6 : 0.2, arms: [{ al: 30 + 1.5 * s, el: 62 + 2.5 * c }, { al: 18 + 1.5 * c, el: 26 - 1.5 * s }] });
+}
+function ironWalk(k, n, amp, back) {      // one picture of the walk: the feet swing amp px each way (the leg that is under him is the one that is down, the other lifts as it comes through), the arms swing against the legs, the hips drop a little when both feet are down; back = the same stride the other way round, upright
+  const u = (back ? -1 : 1) * k / n * 2 * Math.PI, sw = Math.sin(u), bob = Math.abs(sw);
+  const leg = ph => { const s = Math.sin(ph), lf = Math.max(0, Math.cos(ph)), pu = Math.max(0, -s - 0.25) / 0.75; return { ax: 48 + amp * s, ay: C4IG - 4 * lf, a: 5 * lf - 20 * pu }; };
+  const arm = (ph, a0, e0) => ({ al: a0 + (back ? 9 : 15) * Math.sin(ph), el: e0 + 8 * Math.max(0, Math.sin(ph)) });
+  return ironPose({ y: 62.3 + 0.8 * bob, lean: back ? 1 : 6, hdx: 1.2, hdt: back ? 0 : 2, arms: [arm(u + Math.PI, 12, 22), arm(u, 10, 20)], legs: [leg(u), leg(u + Math.PI)] });
+}
+function ironJump(k, n) {      // one picture of the jump: his boots light up at once and he rises with his arms back and his knees tucked (the picture is only 64 rows high, so the flames are cut off at its bottom: a short jet), at the top the flames shorten, falling his arms come forward and his legs reach down
+  const up = [9, 11, 12, 12, 12, 12, 12, 11, 10, 8, 6, 4][k], fl = [1, 1, 0.9, 0.8, 0.6, 0.5, 0.5, 0.5, 0.45, 0.4, 0.3, 0][k], rise = k < n / 2;
+  return ironPose({ y: 62.3, lean: rise ? 9 : 3, hdx: 1.4, hdt: rise ? 3 : 0, fl, ph: k / n, rep: 0.2, arms: rise ? [{ al: -22, el: 18 }, { al: -28, el: 14 }] : [{ al: 36, el: 30 }, { al: 44, el: 26 }], legs: [{ ax: 44 + (rise ? 0 : -2), ay: C4IG - up, a: -30 }, { ax: 52 + (rise ? 0 : 2), ay: C4IG - up + 1, a: -34 }] });
+}
+function ironEnsure() {      // makes CU_GAME[5] the first time he is needed (the fighter screen or a Training room); true when he is there
+  if (CU_GAME[5]) return true; if (typeof c4xIron !== 'function') return false;
+  const cut = o => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(c4xIron(o), IRON_OX, IRON_OY, 64, 64, 0, 0, 64, 64); return c; };
+  const frames = Array.from({ length: 12 }, (_, k) => cut(ironIdle(k, 12))), walk = Array.from({ length: 8 }, (_, k) => cut(ironWalk(k, 8, 8, false))), wbk = Array.from({ length: 8 }, (_, k) => cut(ironWalk(k, 8, 5.7, true))), jump = Array.from({ length: 12 }, (_, k) => cut(ironJump(k, 12)));
+  const body = cuWiden(frames.map(c => cuSpan(suAlpha(c), r => r - 1))), hs = Object.values(body).map(v => v[1]).sort((a, b) => a - b);      // (the widest every row of his idle pictures gets: his body in the hitboxes of the enemy's blows, and half as wide as his torso for the push, like Ryu's)
+  CU_GAME[5] = { name: 'IRON MAN', frames, walk, wbk, jump, hu: [], ko: [], bl: [], df: [], db: [], cr: [], ci: [], cwk: [], atk: [], an: [], rdy: [], cl: [], ev: [], set: [], vfx: [], vxs: [], tipAll: [], body, push: Math.max(6, hs.length ? hs[hs.length >> 1] : 6), cs: null, wf: IRON_WF, jet: 0.6, st: { ...cuStats(null), fw: 56, bk: 40, jh: 40, jt: 760 } };      // (everything he cannot do yet is an empty list, which customScene reads as "not there")
+  return true;
+}
+
 function drawScene(now, dt) {
   if (c4x) { c4xFrame(now, dt); return; }      // (v1.156 chapter 4, part 3: Yuji against Meguna, see tools/chap4c.js)
   fatUI(now);
@@ -19184,6 +19215,7 @@ function tick(t) {
   if (still) { stopMs = Math.max(0, stopMs - rdt); vOff += now - last; now = last; } else if (state !== 'play') stopMs = 0;
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
   twTick(now, dt); if (freePlay()) trainStep(now, dt); twBase(now);      // (v1.173 the skyscraper: what happened last frame is read before the training step gives the enemy his health back, and the new baseline is taken right after it)
+  { const ir = state === 'play' && !!vs && vs.me === IRON_WHO; if (ir !== ironUI) { ironUI = ir; document.body.classList.toggle('ir', ir); } }      // (v1.190 Iron Man cannot attack, block, dash or use any power yet: while he is the fighter every button but the stick is hidden, see the CSS of body.ir)
   { const ry = state === 'play' && !!vs && vs.me === RYU_WHO; if (ry !== ryUI) { ryUI = ry; document.body.classList.toggle('ry', ry); } if (!ry && ryUl) ryUlEnd(now, true); }      // (v1.143 Ryu has no BLUE, MODE, DOMAIN or FATAL: while he fights those buttons are hidden, see the CSS of body.ry)
   ragTick(now);
   cutUI(); trainDraw(now);
@@ -19291,7 +19323,7 @@ function goFullscreen() {                     // best effort; ignored where unsu
 const inApp = /; wv\)/.test(navigator.userAgent);   // inside the Android app the activity already handles fullscreen + landscape
 $('start').addEventListener('click', () => { audio(); if (!inApp && matchMedia('(pointer:coarse)').matches) goFullscreen(); show('modes'); });
 function startPractice(who, foe) {      // FREE PLAY as Yuji, Verity or the Cat: a Versus match against a punching bag that never ends: every move is free (freePlay), you cannot lose, the energy is always full, there is no timer, an enemy who is K.O.'d comes back with the next round (see trainStep). v1.24: SETTINGS > TRAIN controls the enemy (who he is, what he does, his health and level), your health and energy, the speed of the game and two overlays
-  const sv = { ...vsPick }; audio(); vsPick.me = who; vsPick.foe = foe || TRF[TR.foe] || 'gojo'; twFightStart(); startMatch(TR.grade); Object.assign(vsPick, sv);
+  const sv = { ...vsPick }; audio(); if (who === 'cu5') ironEnsure(); vsPick.me = who; vsPick.foe = foe || TRF[TR.foe] || 'gojo'; twFightStart(); startMatch(TR.grade); Object.assign(vsPick, sv);
   vs.practice = true; vs.tl = 1e9; setModeUI();
 }
 function twFightStart() { twWant = twPick === 1; }      // (v1.173 the MAP chosen on the screens is read by startMatch)
@@ -19368,11 +19400,12 @@ const SEL = {      // the seven fighters: short name, panel name, a tag, three s
   verity: { nm: 'VERITY', full: 'VERITY', tag: 'CURSED SPIRIT', mv: ['BITE', 'SMOKE BALL', 'JUMPSCARE'], col: [232, 201, 74], face: [18, 0] },
   cat: { nm: 'CAT', full: 'CARTOON<br>CAT', tag: 'CURSED SPIRIT', mv: ['CARTOON ATTACK', 'GIANT KICK', 'ARM HANG'], col: [200, 204, 216], face: [19, 0] },
   freddy: { nm: 'FREDDY', full: 'FREDDY<br>KRUEGER', tag: 'CURSED SPIRIT', mv: ['PIERCE', 'BOILING WATER', 'DREAM'], col: [70, 196, 106], face: [21, 1] },
-  cu3: { nm: 'SUKUNA', full: 'SUKUNA', tag: 'KING OF CURSES', mv: ['DISMANTLE', 'CLEAVE MODE', 'MALEVOLENT SHRINE'], col: [255, 58, 74], face: [21, 1] } };
-const SEL_ROWS = [['gojo', 'yuji', 'cu4'], ['verity', 'cat', 'freddy', 'cu3']], FS_ORDER = [].concat(...SEL_ROWS), FACE = 28;      // 3 on top, 4 below (the humans first)
+  cu3: { nm: 'SUKUNA', full: 'SUKUNA', tag: 'KING OF CURSES', mv: ['DISMANTLE', 'CLEAVE MODE', 'MALEVOLENT SHRINE'], col: [255, 58, 74], face: [21, 1] },
+  cu5: { nm: 'IRON MAN', full: 'IRON<br>MAN', tag: 'TONY STARK', mv: ['WALK', 'JUMP', 'ATTACKS COME LATER'], col: [196, 32, 44], face: [20, 0] } };      // (v1.190 Iron Man: TRAINING only for now, he walks and jumps)
+const SEL_ROWS = [['gojo', 'yuji', 'cu4', 'cu5'], ['verity', 'cat', 'freddy', 'cu3']], FS_ORDER = [].concat(...SEL_ROWS), FACE = 28;      // 4 on top, 4 below (the humans first; v1.190 Iron Man is the fourth on top)
 const selRgb = (c, a) => 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')';
 const fsPic = (who, now, inv) => {      // the idle picture of any of the seven (a canvas), or null while a fighter's pictures are not cut yet
-  if (who.slice(0, 2) === 'cu') return cuIdleCv(who, now) || null;
+  if (who.slice(0, 2) === 'cu') { const c = cuIdleCv(who, now); return c ? (inv ? invOf(c) : c) : null; }      // (v1.190 Sukuna and Ryu: the "(INV.)" one is a copy in the inverted colours, like the other five; it was the normal picture before)
   const f = lanIdlePic(who, now, inv); return f && f.width ? f : null;
 };
 const fsHot = who => who === 'gojo' ? D.idle.cx - D.idle.x0 : who === 'yuji' ? YU.idle.cx - YU.idle.x0 : 32, fsTop = who => who === 'gojo' ? D.idle.top || 0 : who === 'yuji' ? YU.idle.top || 0 : 0;      // (where his middle is in his picture, and how many rows of head room it has: the same numbers the fight uses)
@@ -19381,6 +19414,7 @@ function fsWhy(mode, side, who) {
   const cu = who === 'cu3' || who === 'cu4';
   if (mode === 'wifi') return LAN_FIGHTERS.includes(who) ? '' : 'NOT ONLINE';
   if (mode === 'train') return side === 0 ? (who === 'cu3' && !suHas() ? 'LOCKED' : '') : TRF.includes(who) ? '' : 'NOT AS ENEMY';      // (Sukuna is bought for $3000; the training enemy is Gojo, Yuji, Verity or the Cat, see TRF)
+  if (who === 'cu5') return 'TRAINING ONLY';      // (v1.190 Iron Man walks and jumps and nothing else: he is in TRAINING as your fighter, in no fight against anyone)
   if (cu) return who === 'cu3' && !suHas() ? 'LOCKED' : '';      // (v1.189 Sukuna and Ryu fight in Battle too, on both sides; Sukuna is still bought for $3000)
   return who !== 'gojo' && !owns(who) ? 'LOCKED' : '';      // (bought on the SKILLS page, like before)
 }
@@ -20309,6 +20343,16 @@ function cuVictim(n) {
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+ {
+  "v": "1.190",
+  "t": "IRON MAN IN TRAINING, AND THE INV. FIGHTER IN INVERTED COLOURS",
+  "n": [
+   "You said: make the INV. fighter have inverted colours, and make the Iron Man sprite from chapter 5 a playable character in TRAINING: you can only see his idle, you can move him, you can't do anything yet. You chose: only the colours for the INV. fighter, walk + jump for Iron Man, nothing else.",
+   "THE INV. FIGHTER: pick the same fighter on both sides and the one on the right is the INV. (inverted) one. Gojo, Yuji, Verity, the Cat and Freddy already had inverted colours, but the INV. Sukuna and the INV. Ryu were still drawn in their normal colours on the fighter screen, the map screen and the VS screen. Now they are inverted too. Nothing else about them changed (in the fight their bodies already were inverted).",
+   "IRON MAN (TRAINING): the red and gold suit of chapter 5 is the fourth fighter of the top row of the fighter screen (the faces are 4 + 4 now). Pick him as YOUR fighter in TRAINING, on the street or the skyscraper, against any enemy: he stands in his ready stance with the glowing palm, WALKS forwards and backwards and JUMPS with the flames of his boots lit. Keyboard: arrows or A / D to walk, W, Up or Space to jump; on a phone the stick.",
+   "He cannot do anything else yet: no attacks, block, dash or crouch, so those buttons are hidden while he fights. The enemy's blows hurt him and a knock-out ends the round as for everyone (he has no hurt or K.O. pictures yet, so he just stands there). In BATTLE his face says TRAIN ONLY, in WI-FI NOT ONLINE, and he cannot be the enemy yet."
+  ]
+ },
  {
   "v": "1.189",
   "t": "SUKUNA AND RYU FIGHT IN BATTLE, ON BOTH SIDES",
@@ -22982,7 +23026,7 @@ window.__msReady = 1; msApply();
 const SC = { peak: {}, budget: 62000, cancel: false, t: 0, frames: 0, res: [], seen: new Map(), ok: 0, sec: '', say: '', cap: 0, hard: 0, part: false, yAt: 0, t0: 0, secT0: 0, done: 0, plan: 1, got: {}, of: {} };
 const scReal = performance.now.bind(performance), SC_STEP = 50, SC_MINUTE = 62000;      // (SC_MINUTE: how long a scan takes, the last part of it fills what is left)
 const scYield = () => new Promise(r => setTimeout(r, 0));
-const SC_WHO = ['gojo', 'yuji', 'verity', 'cat', 'freddy', 'cu3', 'cu4'], SC_NAME = { gojo: 'GOJO', yuji: 'YUJI', verity: 'VERITY', cat: 'CAT', freddy: 'FREDDY', cu3: 'SUKUNA', cu4: 'RYU' };
+const SC_WHO = ['gojo', 'yuji', 'verity', 'cat', 'freddy', 'cu3', 'cu4'], SC_NAME = { gojo: 'GOJO', yuji: 'YUJI', verity: 'VERITY', cat: 'CAT', freddy: 'FREDDY', cu3: 'SUKUNA', cu4: 'RYU', cu5: 'IRON MAN' };
 
 // ---------------------------------------------------------------- the findings
 function scNote(st, name, detail) {      // st = 'fail' (an error) or 'warn' (a note); the same finding again is counted, not listed
@@ -23072,7 +23116,7 @@ function scData() {
   SC.say = 'THE SAVES';
   try { const c = bkMake(); scT(!!bkRead(c), 'THE SAVE CODE DOES NOT READ BACK', ''); } catch (e) { scErr(e, 'SAVE CODE'); }
   const sv = loadSaves(); scT(Array.isArray(sv) && sv.length === 3, 'SAVE SLOTS', ''); scT(Number.isFinite(PROG.m) && PROG.m >= 0, 'MONEY IS NOT A NUMBER', String(PROG.m));
-  for (const w of SC_WHO) scT(!!document.querySelector('#fsGrid .fst[data-who="' + w + '"]'), 'NO FIGHTER FACE FOR ' + w, '');      // (v1.180 the faces of the fighter screen)
+  for (const w of SC_WHO.concat('cu5')) scT(!!document.querySelector('#fsGrid .fst[data-who="' + w + '"]'), 'NO FIGHTER FACE FOR ' + w, '');      // (v1.180 the faces of the fighter screen)
   SC.say = 'THE CODE AGAINST THE PAGE';      // the page's own text: every call that names a page element by its id is for a thing that is in the page, every call that plays a sound names one that exists
   try {
     const src = [...document.scripts].reduce((a, b) => b.textContent.length > a.textContent.length ? b : a).textContent, miss = new Set(), re = /\$\('([A-Za-z][\w-]*)'\)/g; let m, n = 0;
@@ -23163,7 +23207,11 @@ async function scRound(r) {      // one round of random fights: every fighter in
   }
   return true;
 }
-async function scFighters() { SC.sec = 'FIGHTERS'; scCov('FIGHTERS', 0, SC_WHO.length); SC.plan = SC_WHO.length * 280; SC.done = 0; await scRound(0); }
+async function scFighters() {
+  SC.sec = 'FIGHTERS'; scCov('FIGHTERS', 0, SC_WHO.length + 1); SC.plan = (SC_WHO.length + 1) * 280; SC.done = 0; if (!(await scRound(0))) return;
+  if (!(await scSeg('IRON MAN IN FREE PLAY', () => { SET.gore = 0; Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0 }); startPractice('cu5', 'gojo'); }, 100, 77))) return;      // (v1.190 Iron Man: walks and jumps in Training, nothing else; the enemy fights back and his health is normal, so he is hit and knocked out too)
+  scCov('FIGHTERS', 1, 0);
+}
 async function scMore() {      // the time that is left of the minute: more random fights
   SC.sec = 'MORE FIGHTS'; SC.plan = 1e9; let r = 1; while (await scRound(r)) { r++; scCov('ROUNDS', 1, 0); }
 }
@@ -23198,7 +23246,7 @@ async function scMoves() {
 // ---------------------------------------------------------------- CUTSCENES: the FATALITY and the DOMAIN of every fighter, played to the end
 async function scCuts() {
   SC.sec = 'CUTSCENES'; const FATAL = { gojo: 1, yuji: 1, verity: 1, cat: 1, freddy: 1, cu3: 1, cu4: 0 };
-  scCov('CUTSCENES', 0, SC_WHO.length * 2 + 3 + 13 + 16); SC.plan = (SC_WHO.length * 2 + 3 + 13 + 16) * 220; SC.done = 0;
+  scCov('CUTSCENES', 0, SC_WHO.length * 2 + 3 + 13 + 19); SC.plan = (SC_WHO.length * 2 + 3 + 13 + 19) * 220; SC.done = 0;
   for (let i = 0; i < SC_WHO.length; i++) {
     const w = SC_WHO[i];
     for (const [key, nm, low, max] of [['KeyH', 'FATALITY', 2, 700], ['KeyV', 'DOMAIN', 1, 520]]) {
@@ -23267,7 +23315,7 @@ async function scCuts() {
     if (await scUntil(() => scBusy(), 40, 250)) { if (await scUntil(() => !scBusy(), 800, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 40 SECONDS', ''); } else scNote('fail', label + ' DID NOT START', 'THE ENEMY WAS AT ' + (dummy ? Math.round(dummy.hp / (dummy.max || 1) * 100) : '?') + '% HEALTH');
     show('title');
   }
-  for (const [w, foe, what] of [['cu3', 'gojo', 'FATALITY'], ['cu4', 'cat', 'FATALITY'], ['cu3', 'freddy', 'NIGHTMARE'], ['cu4', 'freddy', 'NIGHTMARE']]) {      // (the enemy's own fatality or nightmare on Sukuna or Ryu)
+  for (const [w, foe, what] of [['cu3', 'gojo', 'FATALITY'], ['cu4', 'cat', 'FATALITY'], ['cu3', 'freddy', 'NIGHTMARE'], ['cu4', 'freddy', 'NIGHTMARE'], ['cu5', 'gojo', 'FATALITY'], ['cu5', 'cat', 'FATALITY'], ['cu5', 'freddy', 'NIGHTMARE']]) {      // (the enemy's own fatality or nightmare on Sukuna, Ryu or Iron Man)
     const label = 'THE ENEMY ' + SC_NAME[foe] + ': HIS ' + what + ' ON ' + SC_NAME[w]; SC.say = label; SET.gore = 0; window.__suAll = true;
     try { Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0, put: 2, grade: 4 }); startPractice(w, foe); } catch (e) { scErr(e, label); continue; }
     if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
