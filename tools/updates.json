@@ -1,5 +1,15 @@
 [
  {
+  "v": "1.202",
+  "t": "IRON MAN: SPIN BLAST, A SPINNING T POSE WITH A BEAM FROM EACH HAND",
+  "n": [
+   "You asked for a new move for Iron Man: when you jump and use the blast special, he spins in a T pose and fires a beam from each hand. No questions this time, so here it is: turn the REPULSOR mode on (MODE), jump, and press the BLUE button in the air (it says SPIN BLAST there). He hangs just above the floor with his arms straight out and his boots blazing, turns on the spot and both palms fire at once, one beam to each side, for 1.7 seconds.",
+   "HOW THE BEAMS BEHAVE: they are the arms of the T, so seen from the side an arm that points across the screen is long and one that points at you or away from you is short. The beams breathe in and out, twice every turn, left and right together. An enemy close to him is hit most of the time, one far away only while the beams are at their longest. 16 hits of 3 damage at most (a crouching enemy is flown over, a blocker only sparks, one hit for the combo counter), and in the skyscraper both beams cut the furniture, walls and doors in their way.",
+   "HE HOVERS LOW ON PURPOSE: a T pose at the height of a jump would fire over the head of a standing enemy, so he sinks to 0.6 m above the floor and the beams pass at the head and neck of the enemy. A blow that lands on him stops the move and he falls; it shares the 10 second wait of the BLAST (3 seconds if he is hit before the beams are out). Pressed on the ground, BLUE is still the BLAST.",
+   "1 METRE = 10 PIXELS: you said a meter in real life is 10 pixels, so every number of the new move is in metres (the hover is 0.6 m, the reach 25 m) and every new number from now on will be. The moves and pictures that already exist were not resized (Iron Man himself is about 6 m tall on this scale)."
+  ]
+ },
+ {
   "v": "1.201",
   "t": "BLEEDS, BURNS AND OTHER TICK DAMAGE NO LONGER STACK",
   "n": [

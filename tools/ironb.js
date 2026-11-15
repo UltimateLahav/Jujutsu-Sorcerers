@@ -107,3 +107,112 @@ function irbFront(g, b, now, x, y, src) {      // the light at his palm: the bal
   }
   ctx.restore(); ctx.globalAlpha = 1;
 }
+// ================================================================ v1.202 IRON MAN'S SPIN BLAST (this section is part of tools/ironb.js: it is the BLAST in the air)
+// The user, after v1.201: "Now add to iron man (btw let's do that a meter in real life is 10 pixels ok? Nice) so when I jump and I use the blast special then iron man will spin while using both his hands to fire blasts beam from his hand he will be in a T pose while doing it and no questions asked NOW GO". No question round.
+// BLUE in the air (a JUMP going on) while the REPULSOR mode is on is the SPIN BLAST; on the ground it is the BLAST above. It is the same special (they share the cooldown of 10 s) and is played by the same state as the others, g.bh, with kind 'spin' (irTick starts it, customScene asks irBhStep, which hands over to irsStep):
+//   RAISE (0.22 s: he sinks or rises to his hover height and his arms swing out) -> SPIN (1.7 s: he hangs 0.6 m above the floor in a T pose, the boots blazing, and turns on the spot 2.7 times a second; both palms fire, one beam to each side) -> 0.1 s while the beams go out -> DROP (he falls; a blow that lands on him stops it and he falls with the hurt picture) -> LAND (0.16 s).
+// The beams are the arms of the T. Seen from the side, an arm that points across the screen is as long as it is and one that points at you or away from you is short, so the reach of the beams is IRS.len (25 m) times |cos| of the turn: they breathe in and out, one to the left and one to the right at the same time, twice a turn. An enemy close to him is touched most of the time, one far away only while they are at their longest. The pictures are the suit of chapter 5 (the same rig, tools/chap4e.js) in a T pose with its arms shortened to |cos| (C4I.UA and C4I.FA times it) and turned over for the half of the turn in which he looks the other way (irsPics). Every 0.1 s (16 times) the beam on the enemy's side hurts what it touches for 3: the rules of the BLAST (a crouching enemy is flown over, a blocker only sparks, a smoke ball is immune, one hit of the combo counter), and in the skyscraper both beams cut what is in their way (twSweep).
+// 1 m = 10 px (the user's scale for every number of this move): the hover is 0.6 m and the reach 25 m. A T pose at the height of a jump would fire over the head of a standing enemy (his shoulders are 47 rows above his soles, the enemy's body is 62 rows high), so he hovers low: the beams pass at the rows 3 - 11 of the hit tables, the head and neck of a standing enemy; a crouching one is flown over.
+const IR_M = 10;
+const IRS = { hover: Math.round(0.6 * IR_M), len: 25 * IR_M, raise: 220, spin: 1700, wind: 100, rev: 370, t0: 60, tick: 100, ticks: 16, tickD: 3, th: 4, g: 620, land: 160, A: 8 };      // (times in game ms; rev: ms for one turn; A: the pictures of a quarter turn, the arms from full length to none)
+function irsDraw(pose, a) {      // the pose as a 64 x 64 picture with both arms a (0 - 1) times as long: the suit with the shoulders turned, an arm that points at you or away from you is short; .hands = [far hand, near hand] palms on the picture
+  const ua = C4I.UA, fa = C4I.FA; C4I.UA = ua * a; C4I.FA = fa * a;
+  try {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 64; const q = cv.getContext('2d'); q.imageSmoothingEnabled = false; q.drawImage(c4xDrawIron(pose).canvas(), IRON_OX, IRON_OY, 64, 64, 0, 0, 64, 64);
+    const J = c4xRig(C4I, pose), hand = k => { const m = J.arms[k]; return { px: Math.round(m.h[0] + Math.sin(m.a2) * 2.4 - IRON_OX), py: Math.round(m.h[1] + Math.cos(m.a2) * 2.4 - IRON_OY) }; };
+    cv.pl = { L: hand(0), R: hand(1) }; return cv;      // (the far arm points back = the left of the picture, the near arm forward = the right)
+  } finally { C4I.UA = ua; C4I.FA = fa; }      // (the rig sizes belong to everybody: they are put back whatever happens)
+}
+function irsFlip(cv) {      // the same picture turned over (the middle column stays the middle column: 32 -> 32); the left hand becomes the right one
+  const c = document.createElement('canvas'); c.width = c.height = 64; const q = c.getContext('2d'); q.imageSmoothingEnabled = false; q.translate(65, 0); q.scale(-1, 1); q.drawImage(cv, 0, 0);
+  c.pl = { L: { px: 64 - cv.pl.R.px, py: cv.pl.R.py }, R: { px: 64 - cv.pl.L.px, py: cv.pl.L.py } }; return c;
+}
+function irsPics(g) {      // the pictures of the spin blast (made the first time it is needed): the arms swinging out (rz 4), and the T pose turning: sp[0] = looking right, sp[1] = turned over, A pictures from the arms at full length to none
+  const T = ironPose({ x: 48, y: 62.4, lean: 0, hdx: 1.2, hdy: 1.5, hdt: 0, rep: 1, rr: 1, arms: [{ al: -90, el: 0 }, { al: 90, el: 0 }], legs: [{ ax: 45, ay: C4IG, a: 0 }, { ax: 51, ay: C4IG, a: 0 }] });
+  const sp = [[], []]; for (let k = 0; k < IRS.A; k++) { const c = irsDraw(T, Math.max(0.02, Math.cos(k / (IRS.A - 1) * Math.PI / 2))); sp[0].push(c); sp[1].push(irsFlip(c)); }
+  const from = ironJump(5, 12), rz = [1, 2, 3, 4].map(k => { const c = k === 4 ? irsDraw(T, 1) : ironCut(c4xMixPose(from, T, k / 4)); if (!c.pl) c.pl = sp[0][0].pl; return c; });
+  g.smp = { sp, rz, py: sp[0][0].pl.R.py, tip: sp[0][0].pl.R.px - 32 };
+}
+// ---- the start, and what stops it
+function irsStart(g, now) {      // BLUE in the air while the repulsor mode is on (irTick hands over to this): the spin blast begins (false when it cannot)
+  if (!g.smp) irsPics(g);
+  if (now < (g.bmCd || 0)) { say('WAIT', wx, '#9a9aa8', 8, now); return false; }
+  const l0 = Math.max(0, Math.round(gojoLift || 0));
+  g.bh = { kind: 'spin', lab: 'spin', ph: 'raise', at: now, last: now, lift: l0, l0, rot: 0, tk: 0, hit: false, imm: false, miss: false, rxAt: -1e9, fl: -1e9, acc: 0, on: -1, off: -1, imp: -1e9, blk: -1e9, ix: 0, iy: 0, side: 1, a: 1, vy: 0, sn: 0, py: g.smp.py, tip: g.smp.tip, pl: null, ko: false };
+  g.bmCd = now + IRB.cd; cuJumpAt = -1; stance = 'stand'; stickCr = false; snd('thrust', 0.9); return true;      // (the jump is over: the state has his height from now on, and the landing is its own)
+}
+function irsHurt(g, now) {      // a blow lands on him: the beams go out and he falls (the hurt picture is drawn meanwhile; the cooldown is cut to 3 s when they had not fired yet); called every frame the hurt lasts
+  const b = g.bh; if (b.ph === 'drop' || b.ph === 'land') return;
+  if (b.ph === 'raise') g.bmCd = Math.min(g.bmCd || 0, now + IRH.cdMiss); if (b.on >= 0 && b.off < 0) b.off = now; b.ph = 'drop'; b.at = now; b.vy = 0;
+}
+// ---- the beams: where they are, what they touch
+function irsTick(g, b, now, a) {      // one tick of the two beams, a (0 - 1) times their full reach: 3 damage on the enemy's side unless he is not there, ducking, dodging, down or blocking; the furniture, walls and doors of the skyscraper in the way of either take a little too
+  const len = Math.round(IRS.len * a), tip = Math.round(b.tip * a), mr = wx + tip + 2, ml = wx - tip - 2;
+  if (twOn() && !vs.tw.cab) { twSweep(mr, mr + len, IRB.objD, now); twSweep(ml - len, ml, IRB.objD, now); }
+  const d = dummy; if (!d || d.ko >= 0 || d.cap || !vs || vs.ph !== 'fight' || now - d.born < 600) return;
+  if (twOn()) { const T = vs.tw; if (T.away || T.cab || T.fFoe !== T.fMe || d.twAway) return; }
+  const side = d.x >= wx ? 1 : -1, m = side > 0 ? mr : ml, r0 = b.py - 1 - Math.round(b.lift), sh = {}; for (let r = r0 - IRS.th; r <= r0 + IRS.th; r++) sh[r] = side > 0 ? [m, m + len] : [m - len, m];
+  if (!hbTouchFoe(sh, d)) return;
+  if (d.vform && d.vform !== 'verity') { if (!b.imm) { b.imm = true; say('IMMUNE', d.x, '#ffe9a0', 8, now); } return; }
+  if ((d.vact && d.vact.type === 'crouch') || now < (d.down || 0) || (d.cact && d.cact.flat) || now < (d.dodgeUntil || 0)) { if (!b.miss) { b.miss = true; say('MISS', d.x, '#9fd8ff', 8, now); } return; }
+  const ey = gy - (61 - b.py) - Math.round(b.lift); b.ix = d.x; b.iy = ey; b.side = side;
+  if (dBlocks() && side * (d.x - m) > 0 && now - d.rxAt >= RX_DUR[d.rx]) { b.blk = now; spark(d.x - 8 * side, ey, 3, ['#ffffff', '#9fd8ff'], false, -side); if (b.tk % 3 === 0) snd('block'); return; }
+  const dm = Math.max(1, Math.round(IRS.tickD * cuS.dm / 100));
+  if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; } if (!b.hit) { b.hit = true; hits.n++; vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n); } hits.dmg += dm; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = 0;
+  d.hp = Math.max(0, d.hp - dm); if (now - b.fl >= 250) { d.hitAt = now; b.fl = now; } b.imp = now; b.acc += dm;
+  if (!airUp(d) && now - b.rxAt >= 250) { d.rx = 6; d.rxAt = now; b.rxAt = now; }
+  cuStun(0.28, now, true); d.vx = 0;
+  spark(d.x - 8 * side, ey, 4, ['#ffffff', '#9ff3ff', '#17e3ff'], false, side); shakeUntil = Math.max(shakeUntil, now + 100); shakeAmp = Math.max(shakeAmp, 1.5);
+  if (b.tk % 3 === 0) { say('' + b.acc, d.x + (Math.random() * 10 - 5), popCol(), 8, now); b.acc = 0; snd('smack', 0); }
+  if (twOn()) { const T = vs.tw; T.dHp = d.hp; T.dHit = d.hitAt; T.dDown = d.down || 0; }
+  if (d.hp <= 0) { koDummy(now); b.ko = true; }
+}
+// ---- the state: irBhStep hands over to this every frame while the spin blast runs; it returns his picture
+function irsStep(g, b, now, dt) {
+  const P = g.smp, u = now - b.at; dt = Math.max(0, Math.min(0.05, dt)); b.last = now; b.rot = 0;
+  if (vs.ph !== 'fight') { b.lift = 0; irBhEnd(g, now); return null; }
+  let pic;
+  if (b.ph === 'raise') {
+    const k = Math.min(1, u / IRS.raise), e = k * k * (3 - 2 * k); b.lift = b.l0 + (IRS.hover - b.l0) * e; pic = P.rz[Math.min(P.rz.length - 1, Math.floor(k * P.rz.length))];
+    if (u >= IRS.raise) { b.ph = 'spin'; b.at = now; b.on = now; b.tk = 0; b.sn = 0; b.lift = IRS.hover; snd('redfire'); snd('thrust', 1.5); flash(now, 120, 0.22); shakeUntil = Math.max(shakeUntil, now + 200); shakeAmp = Math.max(shakeAmp, 3); gritAt(wx - 8, 10, 100, -1); gritAt(wx + 8, 10, 100, 1); if (twOn()) twLightsShock(twFloorData(vs.tw.fMe), wx, 140, 60, now); }
+  } else if (b.ph === 'spin') {
+    const c = Math.cos(2 * Math.PI * u / IRS.rev), a = Math.abs(c), last = P.sp[0].length - 1; b.a = a; b.lift = IRS.hover + 0.4 * Math.sin(u / 70);
+    pic = P.sp[c < 0 ? 1 : 0][Math.round(Math.acos(Math.min(1, a)) / (Math.PI / 2) * last)];
+    if (b.off < 0) {
+      while (b.tk < IRS.ticks && u >= IRS.t0 + b.tk * IRS.tick && !b.ko) { irsTick(g, b, now, Math.abs(Math.cos(2 * Math.PI * (IRS.t0 + b.tk * IRS.tick) / IRS.rev))); b.tk++; }
+      shakeUntil = Math.max(shakeUntil, now + 80); shakeAmp = Math.max(shakeAmp, 1);
+      if (u >= b.sn) { snd('cecrackle'); b.sn = u + 230; }
+      if (Math.random() < 0.15) puff(wx + Math.random() * 12 - 6, 2);
+      if (u >= IRS.spin || b.ko) { b.off = now; snd('ceoff'); }
+    } else if (now - b.off >= IRS.wind) { b.ph = 'drop'; b.at = now; b.vy = 0; }
+  } else if (b.ph === 'drop') {
+    b.vy += IRS.g * dt; b.lift = Math.max(0, b.lift - b.vy * dt); pic = g.jump[Math.min(g.jump.length - 1, 8 + Math.floor(u / 60))];
+    if (b.lift <= 0) { b.ph = 'land'; b.at = now; b.lift = 0; snd('land', 1); puff(wx - 6, 5); puff(wx + 6, 5); gritAt(wx, 8, 90, 0); }
+  } else if (b.ph === 'land') { b.lift = 0; pic = g.jump[g.jump.length - 1]; if (u >= IRS.land) { irBhEnd(g, now); return null; } }
+  else { irBhEnd(g, now); return null; }
+  if (pic && pic.pl) b.pl = pic.pl;
+  return pic;
+}
+// ---- what customScene draws: the beams (before him, so that his arms stay in front of them) and the light at his palms and the flames of his boots (after him)
+function irsBack(g, b, now, x, y, src) {      // one beam to each side from the palms: layers of light that grow in 70 ms and go out in 0.1 s; the one on the enemy's side ends on his body while it touches him
+  if (b.on < 0 || !b.pl) return;
+  const k = Math.min(1, (now - b.on) / 70) * (b.off < 0 ? 1 : Math.max(0, 1 - (now - b.off) / IRS.wind)); if (k <= 0) return;
+  const yc = Math.round(y + b.pl.R.py) + 1, th = Math.max(1, Math.round(IRB.th * k)), pulse = Math.floor(now / 45) % 3, touch = now - b.imp < 160 || now - b.blk < 160, scr = Math.round(VW / 2) + b.ix - wx;
+  ctx.save();
+  for (const dir of [-1, 1]) {
+    const x0 = dir > 0 ? Math.round(x + b.pl.R.px) + 2 : Math.round(x + b.pl.L.px) - 1, hit = touch && b.side === dir, ex = scr - 8 * dir;
+    const len = Math.max(3, Math.min(Math.round(IRS.len * b.a * k), hit ? dir * (ex - x0) + 4 : 1e9)), xa = dir > 0 ? x0 : x0 - len;
+    for (const [h, col] of [[th + 4, 'rgba(111,224,255,0.14)'], [th + 2, 'rgba(111,224,255,0.3)'], [th + (pulse === 1 ? 2 : 1), 'rgba(150,238,255,0.7)'], [Math.max(1, th - 1), 'rgba(222,252,255,0.96)'], [Math.max(1, th - 3), '#ffffff']]) { ctx.fillStyle = col; ctx.fillRect(xa, yc - h, len, h * 2 + 1); }
+    ctx.fillStyle = 'rgba(255,255,255,0.85)'; for (let i = 0; i < 8; i++) { const o = Math.round((i * 61 + now * 1.3) % len); ctx.fillRect(dir > 0 ? x0 + o : x0 - o - 6, yc + ((i * 5) % 7) - 3, 6 + (i % 3) * 4, 1); }
+    if (!SET.lite) { ctx.fillStyle = 'rgba(190,245,255,0.8)'; for (let i = 0; i < 9; i++) ctx.fillRect(xa + Math.floor(Math.random() * len), yc + (Math.random() < 0.5 ? -1 : 1) * (th + 2 + Math.floor(Math.random() * 4)), 1 + Math.floor(Math.random() * 3), 1); }
+    if (hit) { const bl = now - b.blk < 160, r = bl ? 4 : 7; irbDisc(ex, yc, r + 3, '#6fe0ff', 0.25 * k); irbDisc(ex, yc, r, '#aef6ff', 0.55 * k); irbDisc(ex, yc, Math.max(2, r - 3), '#ffffff', 0.95 * k); }
+  }
+  ctx.restore();
+}
+function irsFront(g, b, now, x, y, src) {      // the light at both palms while the beams are on, and the flames of his boots until he falls
+  if (b.ph === 'drop' || b.ph === 'land') return; ctx.save();
+  const k = b.on < 0 ? 0 : b.off < 0 ? 1 : Math.max(0, 1 - (now - b.off) / IRS.wind);
+  if (k > 0 && b.pl) for (const p of [b.pl.L, b.pl.R]) { const px = Math.round(x + p.px) + 1, py = Math.round(y + p.py) + 1, r = Math.round((5 + (Math.floor(now / 50) % 3)) * k); if (r > 0) { irbDisc(px, py, r + 3, '#6fe0ff', 0.2 * k); irbDisc(px, py, r, '#d8faff', 0.8 * k); irbDisc(px, py, Math.max(1, r - 3), '#ffffff', k); } }
+  const fy = Math.round(y) + 62; for (const dx of [-3, 3]) { const fx = Math.round(x) + 32 + dx, len = Math.round(11 + 5 * Math.sin(now / 41 + dx)); ctx.globalAlpha = 0.9; ctx.fillStyle = '#ff8a1e'; ctx.fillRect(fx - 2, fy, 5, len); ctx.fillStyle = '#ffd24a'; ctx.fillRect(fx - 1, fy, 3, Math.round(len * 0.7)); ctx.fillStyle = '#ffffff'; ctx.fillRect(fx, fy, 1, Math.round(len * 0.4)); }
+  ctx.restore(); ctx.globalAlpha = 1;
+}

@@ -260,6 +260,7 @@ function irTick(g, now, ctl, jmp, atk, dsh, lpr) {      // true when it used thi
   if (!g.moves) ironMoves(g);
   if (g.bh) return false;      // (v1.194 the bear hug has him: customScene asks irBhStep for everything while it lasts)
   if (lpr && ctl && (stance === 'stand' || (!g.rp && (stance === 'crouch' || stance === 'down'))) && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0 && irBhStart(g, now)) return true;      // (BLUE: the bear hug, see tools/ironh.js; true: a DASH pressed with it is not a dash)
+  if (lpr && ctl && g.rp && cuJumpAt >= 0 && cuAtkAt < 0 && !cuDash && blkAt < 0 && irsStart(g, now)) return true;      // (v1.202 BLUE in the air in the repulsor mode: the SPIN BLAST, see tools/ironb.js)
   const R = irRate(), sim = IR_SIM * R, wait = IR_AIR * R, idle = ctl && stance === 'stand' && !cuDash && blkAt < 0, h0 = Math.max(0, Math.round(gojoLift || 0)), air = cuJumpAt >= 0, el = air ? now - cuJumpAt : 0;
   if (!air) irDiveAt = 0;
   // ---- v1.192 the three new moves: the DASH presses and the crouch
