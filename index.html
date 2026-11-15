@@ -200,7 +200,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.194</small>
+    <small id="ver">V1.195</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -7563,7 +7563,7 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
   const hs = g && g.hus ? g.hus[hurtK] : null, hu = hs ? hs.f : g ? g.hu : [], hn = hu.length, hf = hn && hurtAt >= 0 ? Math.floor((now - hurtAt) / (hs ? hs.ms : (g && g.huMs) || CU_HU_MS)) : -1, hurting = hf >= 0 && hf < hn && !(g && g.yu && g.cs), kod = vs.ph === 'ko' && vs.who === 'enemy' && !!g && g.ko.length > 0;      // (HURT: when the enemy's blow lands its pictures play and it cannot act meanwhile, a punch, dash or block in progress is dropped; KO: when its health runs out the KO pictures play once, the last stays)
   if (g && g.ry) ryUlStep(g, now, dt, hurting, kod);      // (v1.172 Ryu's ULTIMATE, JUST THIS ONCE: the line, the black screen, the beam, see ryu.js)
   const ctl = t >= 1 && now >= pStun && vs.ph === 'fight' && !hurting && !(g && g.ry && ryUl) && !(g && g.ir && g.bh), jmp = jumpReq, atk = atkReq, crq = crReq, dsh = dashReq, lpr = lpReq; jumpReq = atkReq = crReq = dashReq = false; if (suFgOn() && (jmp || atk || crq || dsh || lpr || ceReq || domReq)) suFgSkip(now); if (g && g.ry && ryUl && (jmp || atk || crq || dsh || lpr || ceReq || domReq)) ryUlSkip(now);      // (v1.127 a button pressed during the FUGA cutscene skips it) (it answers the buttons only when it is there, not stunned and in the FIGHT)
-  if (t < 1) { stance = 'stand'; stickCr = false; cuJumpAt = cuAtkAt = -1; cuCmb = 0; cuCmbBy = 0; cuFired = []; cuRes = []; cuShots = []; cuVfx = []; cuBleed = null; cuCd = [0, 0, 0, 0]; cuDash = null; cuDashReady = 0; blkAt = blkEnd = -1; cuAtkQ = cuLpQ = 0; if (g) g.cs = null; suReset(); if (g && g.ry) ryReset(); if (g && g.ir) { g.rp = false; g.bh = null; g.bhCd = 0; } }
+  if (t < 1) { stance = 'stand'; stickCr = false; cuJumpAt = cuAtkAt = -1; cuCmb = 0; cuCmbBy = 0; cuFired = []; cuRes = []; cuShots = []; cuVfx = []; cuBleed = null; cuCd = [0, 0, 0, 0]; cuDash = null; cuDashReady = 0; blkAt = blkEnd = -1; cuAtkQ = cuLpQ = 0; if (g) g.cs = null; suReset(); if (g && g.ry) ryReset(); if (g && g.ir) { g.rp = false; g.bh = null; g.bhCd = 0; g.bmCd = 0; } }
   if (ceReq && ctl && g && g.blue) suToggle(); else if (ceReq && ctl && g && g.ry) ryToggle(now); else if (ceReq && ctl && g && g.ir) irToggle(g, now);      // (v1.193 Iron Man's MODE is the REPULSOR mode, see tools/ironm.js)      // (v1.119 MODE of a built-in fighter: Sukuna's CLEAVE on / off, in silence, see sukuna.js; the press is dropped at the end of this scene like the other buttons)
   if (domReq && ctl && g && g.blue) suDomTry(now); else if (domReq && ctl && g && g.ry) ryUlTry(now);      // (v1.124 the DOMAIN button of a built-in fighter is his ULTIMATE: Sukuna's Malevolent Shrine, see sukuna.js; read here, the press is dropped at the end of this scene)
   if (hurting && (cuAtkAt >= 0 || cuDash || blkAt >= 0)) { cuAtkAt = -1; cuDash = null; blkAt = blkEnd = -1; cuLunged = 0; if (g) g.cs = null; }
@@ -7627,8 +7627,9 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
   { const sw = Math.max(5, Math.round(9 * (1 - lift / 70))), sv = Math.round(sw * 2 / 3); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(cx + sdx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx + sdx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx + sdx - sv, gy + 5, sv * 2, 1); }
   if (g && g.cs && (g.cs.dash || g.cs.cl === 'dash')) suGhostDraw(now, x, y);      // (the afterimages and speed lines of the DASH SLASH and the DASH CLEAVE, behind him)
   if (g && g.ry && ryUl) ryUlBack(now, cx, x, y);      // (v1.172 the beam of his ULTIMATE is behind him)
+  if (g && g.ir && g.bh && g.bh.kind === 'beam') irbBack(g, g.bh, now, x, y, src);      // (v1.195 the beam of his BLAST is behind him too: his hand and arm stay in front of it)
   if (src) { const gsrc = gdActive('p') ? goreSrc('p', src, (px, py) => ({ x: wx + (x + px - cx), y: y + py - gy })) : src; const ox = src.ox || 0; ctx.save(); if (grp) irGrpTf(grp); ctx.beginPath(); ctx.rect(x - ox, y + ry, src.width, 64 - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(gsrc, x - ox, y); if (hurtAt >= 0 && now - hurtAt < 70) ctx.drawImage(whiteOf(gsrc), x - ox, y); ctx.restore(); }      // (v1.192 a WIDE picture, Iron Man's charge lying flat: c.ox = how many columns more it has on the left of the usual window)      // (v1.128 GRAPHIC DAMAGE: without the limbs he has lost)
-  drawGiantNow('foe'); cuDrawVfx(now, cx); cuDrawShots(now, cx); if (g && g.ir && g.bh) irBhFx(g, now, cx); if (g && g.ry) ryDraw(now, cx, x, y, src); if (g && g.blue) { suFlDraw(now, cx, x, y); suDomFront(now, cx, x, y, dt); suFgDraw(now, dt, cx, x, y, src); }      // (v1.120 the flames, the slime, the bow, the fire arrows and the burning enemy of the FLAME mode; v1.124 the slashes, flashes and words of the ULTIMATE)
+  drawGiantNow('foe'); cuDrawVfx(now, cx); cuDrawShots(now, cx); if (g && g.ir && g.bh) irBhFx(g, now, cx, x, y, src); if (g && g.ry) ryDraw(now, cx, x, y, src); if (g && g.blue) { suFlDraw(now, cx, x, y); suDomFront(now, cx, x, y, dt); suFgDraw(now, dt, cx, x, y, src); }      // (v1.120 the flames, the slime, the bow, the fire arrows and the burning enemy of the FLAME mode; v1.124 the slashes, flashes and words of the ULTIMATE)
   if (t < 1) { const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,225,110,' + (1 - t) + ')'; for (let a = 0; a < 64; a++) { const th = a / 64 * 6.2832; ctx.fillRect(Math.round(cx + Math.cos(th) * R), Math.round(y + 34 + Math.sin(th) * R * 0.45), 1, 1); } ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (it appears with a ring and a flash, like the others)
   drawDivFx(now); drawSparks(now, dt); if (!dk) drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); if (fgc) suFgCamEnd(now, shkX, shkY); else { if (rcm) ryUlCamEnd(); if (!ryUlNoHud()) drawVs(now, -shkX, -shkY); }      // (v1.127 the FUGA cutscene: everything above was seen through its camera; the health bars give way to the black bars)
   ctx.restore();
@@ -17451,6 +17452,7 @@ function ironMoves(g) {
   });
   g.st = { ...g.st, dfw: 60, dbk: 44, dtm: 240 };      // (his dash: a burst of 60 px forward, 44 back, 0.24 s)
   irhPics(g);      // (v1.194 the pictures of the bear hug are made now too, not when BLUE is pressed)
+  irbPics(g);      // (v1.195 and those of the blast)
 }
 // ---- WHAT customScene CALLS: irTick decides, every frame, what the JUMP and ATTACK presses do (the generic jump and attack of the engine are off for him, see custom.js)
 const IR_SIM = 120, IR_AIR = 200, IR_DD = 520, IR_DP = 380;      // (real ms: JUMP and ATTACK this close together are the UPPERCUT; in the air, ATTACK from IR_AIR ms after the jump began is the DOWNSLAM, an ATTACK before that waits until then; a second DASH BACK within IR_DD of the first is the BACKFLIP; ATTACK within IR_DP of a DASH press, or while it goes on, is the CHARGE)
@@ -17528,8 +17530,8 @@ function irhPics(g) {      // the pictures of the bear hug (built the first time
     land: [0, 1, 2, 3, 4, 5].map(i => ironCut(i < 2 ? c4xMixPose(IR_GD, ld, i === 0 ? 0.7 : 1) : c4xMixPose(ld, IR_GD, ez((i - 1) / 5)))), skid: [0, 1, 2, 3].map(i => ironCut(c4xMixPose(ld, IR_GD, ez(i / 3))))
   };
 }
-function irBlueLabel(g, now) {      // the BLUE button says BEAR HUG
-  const el = $('lapl'), n = 'BEAR<br>HUG'; if (el.innerHTML !== n) { el.innerHTML = n; $('lap').setAttribute('aria-label', 'Bear hug: he charges at the enemy, grabs him and hugs him, flies up through the floors above, turns over and dives down through the floors below'); }
+function irBlueLabel(g, now) {      // the BLUE button says BEAR HUG, and BLAST while the repulsor mode is on (v1.195, see tools/ironb.js)
+  const el = $('lapl'), n = g.rp ? 'BLAST' : 'BEAR<br>HUG'; if (el.innerHTML !== n) { el.innerHTML = n; $('lap').setAttribute('aria-label', g.rp ? 'Blast: he lifts his arm, charges a beam in his palm and fires it forward; it hurts the enemy for as long as it touches him' : 'Bear hug: he charges at the enemy, grabs him and hugs him, flies up through the floors above, turns over and dives down through the floors below'); }
 }
 // ---- the checks
 function irhOk(now) {      // an enemy that can be charged at: here (in the skyscraper: on this floor, not in the cab) and alive
@@ -17542,6 +17544,7 @@ function irhCan(now) {      // an enemy that can be grabbed now: not just born, 
 }
 function irBhStart(g, now) {      // BLUE: the move begins (false when it cannot)
   if (!g.bhp) irhPics(g);
+  if (g.rp) return irbStart(g, now);      // (v1.195 in the repulsor mode BLUE is the BLAST, see tools/ironb.js)
   if (now < (g.bhCd || 0)) { say('WAIT', wx, '#9a9aa8', 8, now); return false; }
   if (!irhOk(now)) { say('NO ENEMY HERE', wx, '#9a9aa8', 8, now); return false; }
   g.bh = { ph: 'wind', at: now, last: now, lift: 0, rot: 0, x0: wx, f0: twOn() ? vs.tw.fMe : 0, n: 0, D: 0, tk: [], gap: 0, hx: wx };
@@ -17550,8 +17553,8 @@ function irBhStart(g, now) {      // BLUE: the move begins (false when it cannot
 function irBhEnd(g, now) {      // the move is over (or cut short): the enemy is let go, he is where he is
   const d = dummy; g.bh = null; if (d && d.air && d.air.hover) { d.air = null; d.airH = 0; } cuDashReady = now + 150;
 }
-function irBhHeld(g) { const b = g.bh; return !!b && b.ph !== 'wind' && b.ph !== 'fly' && b.ph !== 'miss'; }      // (he has the enemy: grab, hug, climb, turn, dive and landing)
-function irBhHurt(g, now) { if (g.bh && !irBhHeld(g)) { g.bhCd = Math.min(g.bhCd || 0, now + IRH.cdMiss); irBhEnd(g, now); } }      // (a blow that lands while he is still charging stops it; once he holds the enemy nothing can reach him)
+function irBhHeld(g) { const b = g.bh; return !!b && b.kind !== 'beam' && b.ph !== 'wind' && b.ph !== 'fly' && b.ph !== 'miss'; }      // (he has the enemy: grab, hug, climb, turn, dive and landing)
+function irBhHurt(g, now) { if (g.bh && g.bh.kind === 'beam') irbHurt(g, now); else if (g.bh && !irBhHeld(g)) { g.bhCd = Math.min(g.bhCd || 0, now + IRH.cdMiss); irBhEnd(g, now); } }      // (a blow that lands while he is still charging stops it; once he holds the enemy nothing can reach him)
 function irhHold(now, h) {      // the enemy is held: IRH.hx in front of his hips, h above the floor, still, and he cannot act
   const d = dummy; if (!d || d.ko >= 0) return;
   d.x = wx + IRH.hx; d.vx = 0; d.stunUntil = Math.max(d.stunUntil || 0, now + 250); d.ai = 'rest'; d.aiAt = now; d.restFor = 250; d.hitDone = true;
@@ -17581,6 +17584,7 @@ function irhDive(g, b, now) {      // the floors below the one he started on bre
 // ---- the state: irBhStep is called by customScene every frame while g.bh is there; it moves him, the enemy and the camera and returns the picture
 function irBhStep(g, now, dt) {
   const b = g.bh; if (!b) return null; if (!g.bhp) irhPics(g);
+  if (b.kind === 'beam') return irbStep(g, b, now, dt);      // (v1.195 the BLAST has its own phases, see tools/ironb.js)
   const d = dummy, P = g.bhp, tw = twOn(), u = now - b.at; dt = Math.max(0, Math.min(0.05, dt)); b.last = now;
   if (vs.ph !== 'fight' || !d || (d.ko >= 0 && b.ph !== 'land')) { b.lift = 0; b.rot = 0; irBhEnd(g, now); return null; }
   const apex = tw ? 22 : Math.max(36, gy - 76);
@@ -17638,11 +17642,121 @@ function irGrpTf(grp) { ctx.translate(grp.px, grp.py); ctx.rotate(grp.a); ctx.tr
 function irGrpBegin(grp, foe) {      // the enemy is drawn in the turned frame, cut to the place the two of them take up (his shadow, on the floor, would turn with him and hang in the air)
   ctx.save(); irGrpTf(grp); if (foe && grp.hi) { ctx.beginPath(); ctx.rect(grp.px - 70, grp.py - 37, 140, 72); ctx.clip(); }
 }
-function irBhFx(g, now, cx) {      // streaks of wind: the climb and the turn (they run down the screen), the dive (up the screen, much faster)
-  const b = g.bh; if (!b || (b.ph !== 'up' && b.ph !== 'turn' && b.ph !== 'dive')) return; const dir = b.ph === 'dive' ? -1 : 1, v = b.ph === 'dive' ? 1100 : 420;
+function irBhFx(g, now, cx, x, y, src) {      // streaks of wind: the climb and the turn (they run down the screen), the dive (up the screen, much faster); v1.195 the light at the palm in the BLAST
+  const b = g.bh; if (b && b.kind === 'beam') { irbFront(g, b, now, x, y, src); return; } if (!b || (b.ph !== 'up' && b.ph !== 'turn' && b.ph !== 'dive')) return; const dir = b.ph === 'dive' ? -1 : 1, v = b.ph === 'dive' ? 1100 : 420;
   ctx.save(); ctx.fillStyle = 'rgba(235,245,255,0.34)';
   for (let i = 0; i < 14; i++) { const x = (i * 47 + 13) % VW, len = 12 + (i * 7) % 16, y = (((now * v / 1000 * dir * (0.8 + (i % 3) * 0.3) + i * 37) % VH) + VH) % VH; if (Math.abs(x - cx) > 14) ctx.fillRect(x, Math.round(y), 1, len); }
   ctx.restore();
+}
+
+// ================================================================ v1.195 IRON MAN'S REPULSOR BLAST (this file is spliced into template.html by build_html.py, right after ironh.js)
+// The user, after v1.194: "make the bear hug change in the repoulser mode change into 'Blast' which will make iron lift his arm forward and charge a beam from his palm and then he fires a beam forward it deals continuous damage".
+// The BLUE button is ONE special in two forms: BEAR HUG (tools/ironh.js) and, while the REPULSOR mode is on (g.rp, the MODE button), BLAST (here). One press (every 10 s) starts it; it is played by the same state as the bear hug, g.bh, with kind 'beam' (customScene asks irBhStep, which hands over to irbStep, for his picture every frame while it runs and he cannot do anything else):
+//   RAISE (0.24 s: the right arm comes up, straight out in front of him, his feet braced) -> CHARGE (0.9 s: a ball of light grows in the palm, sparks are drawn into it, the palm flickers) -> FIRE (1.5 s: a beam leaves the palm and runs straight forward across the screen; 15 times, every 0.1 s, it hurts what it touches for 3) -> LOWER (0.32 s: the arm comes down).
+// "Continuous damage" = a tick of 3 every 0.1 s for as long as the beam touches the enemy (45 in all): the beam is a band of 9 pixel rows at the height of his palm that runs to the edge of the screen, and hbTouchFoe asks whether it touches the enemy's BODY as he is drawn (a crouching enemy is flown over, one in the air only when his body reaches the band). A blocking enemy is not hurt: the beam only sparks on his guard. While it touches him he is held (cuStun, a hit reaction every 0.25 s) and the combo counter counts one hit and the damage grows. In the skyscraper the beam also hurts the furniture, walls and doors in its way (twSweep, as Ryu's ULTIMATE does).
+// A blow that lands on him before the beam is out (raise, charge, fire) stops it. The cooldown is 10 s of the game's clock (3 s when it is stopped before it fires).
+const IRB = { raise: 240, charge: 900, fire: 1500, lower: 320, t0: 40, tick: 100, ticks: 15, tickD: 3, th: 4, cd: 10000, objD: 4 };      // (times in game ms; th: half the beam's thickness: 9 rows; objD: what a tick does to a piece of furniture)
+function irbPalm(pose) {      // where the near hand's palm is on the 64 x 64 picture of a pose (the same rig as irBolts): { px, py }
+  const J = c4xRig(C4I, pose), a = J.arms[1];
+  return { px: Math.round(a.h[0] + Math.sin(a.a2) * 2.4 - IRON_OX), py: Math.round(a.h[1] + Math.cos(a.a2) * 2.4 - IRON_OY) };
+}
+function irbPics(g) {      // the pictures of the blast (made with the others by ironMoves): the arm comes up (rz 4), the charge (ch 2: the palm flickers), the beam (fi 2: he leans back against it, shaking), the arm comes down (lo 4); every picture knows where its palm is (.palm)
+  const feet = [{ ax: 35, ay: C4IG, a: 0 }, { ax: 59, ay: C4IG, a: 0 }], brace = o => irG({ y: 63, hdy: 1.5, legs: feet, ...o });
+  const hold = (rr, x, lean) => brace({ x, lean, hdx: 1.1, hdt: -2, rr, arms: [{ al: 14, el: 80 }, { al: 84, el: 2 }] });      // (the right arm out in front, the left fist at his belt)
+  const fire = lean => brace({ x: 44, lean, hdx: 0.8, hdt: -6, rr: 1, arms: [{ al: 10, el: 84 }, { al: 86, el: 0 }] });
+  const lift = [0.25, 0.5, 0.75, 1].map(k => c4xMixPose(IR_GD, hold(0, 45, -3), k)), chP = [hold(0.5, 45, -3), hold(1, 45, -4)], fiP = [fire(-7), fire(-9)];
+  const loP = [0.25, 0.5, 0.75, 1].map(k => c4xMixPose(fire(-8), IR_GD, k));
+  const cut = p => { const c = ironCut(p); c.palm = irbPalm(p); return c; };
+  g.bmp = { rz: lift.map(cut), ch: chP.map(cut), fi: fiP.map(cut), lo: loP.map(cut) };
+}
+// ---- the start, and what stops it
+function irbStart(g, now) {      // BLUE while the repulsor mode is on (irBhStart hands over to this): the blast begins (false when it cannot)
+  if (!g.bmp) irbPics(g);
+  if (now < (g.bmCd || 0)) { say('WAIT', wx, '#9a9aa8', 8, now); return false; }
+  if (!irhOk(now)) { say('NO ENEMY HERE', wx, '#9a9aa8', 8, now); return false; }
+  g.bh = { kind: 'beam', ph: 'raise', at: now, last: now, lift: 0, rot: 0, tk: 0, hit: false, imm: false, miss: false, rxAt: -1e9, fl: -1e9, acc: 0, on: -1, off: -1, imp: -1e9, blk: -1e9, ix: 0, iy: 0 };
+  g.bmCd = now + IRB.cd; stance = 'stand'; stickCr = false; snd('thrust', 0.5); return true;
+}
+function irbHurt(g, now) {      // a blow lands on him: the blast stops (the cooldown is cut to 3 s when it had not fired yet)
+  const b = g.bh; if (b.ph === 'raise' || b.ph === 'charge') g.bmCd = Math.min(g.bmCd || 0, now + IRH.cdMiss); irBhEnd(g, now);
+}
+// ---- the beam: where it is, what it touches
+const irbMx = b => wx + (b.px - 32) + 2;      // (the world column where the beam starts: just in front of the palm of the picture he is drawn with)
+const irbLen = b => VW - (Math.round(VW / 2) + (b.px - 32) + 2) + 6;      // (the beam runs to the edge of the screen: what is not on the screen is not hit)
+function irbShape(b) {      // the place the beam takes up in the world, row by row (the rows of the hit tables: 60 minus the height above the floor; the beam is drawn on the palm's row + 1 like a bolt, so its middle row is the palm's row - 1)
+  const s = {}, m = irbMx(b); for (let r = b.py - 1 - IRB.th; r <= b.py - 1 + IRB.th; r++) s[r] = [m, m + irbLen(b)]; return s;
+}
+function irbTick(g, b, now) {      // one tick of the beam on what is in front of him: 3 damage unless the enemy is not there, ducking, dodging, down or blocking; the skyscraper's furniture, walls and doors in the way take a little too
+  if (twOn() && !vs.tw.cab) twSweep(irbMx(b), irbMx(b) + irbLen(b), IRB.objD, now);
+  const d = dummy; if (!d || d.ko >= 0 || d.cap || !vs || vs.ph !== 'fight' || now - d.born < 600) return;
+  if (twOn()) { const T = vs.tw; if (T.away || T.cab || T.fFoe !== T.fMe || d.twAway) return; }
+  if (!hbTouchFoe(irbShape(b), d)) return;
+  if (d.vform && d.vform !== 'verity') { if (!b.imm) { b.imm = true; say('IMMUNE', d.x, '#ffe9a0', 8, now); } return; }
+  if ((d.vact && d.vact.type === 'crouch') || now < (d.down || 0) || (d.cact && d.cact.flat) || now < (d.dodgeUntil || 0)) { if (!b.miss) { b.miss = true; say('MISS', d.x, '#9fd8ff', 8, now); } return; }      // (the same enemies the other blows cannot touch: a crouching one is flown over)
+  const hgt = 61 - b.py, ey = gy - hgt;
+  b.ix = d.x; b.iy = ey;
+  if (dBlocks() && d.x - irbMx(b) > 0 && now - d.rxAt >= RX_DUR[d.rx]) {      // a blocker: nothing hurts him, the beam sparks on his guard
+    b.blk = now; spark(d.x - 8, ey, 3, ['#ffffff', '#9fd8ff'], false, -1); if (b.tk % 3 === 0) snd('block'); return;
+  }
+  const dm = Math.max(1, Math.round(IRB.tickD * cuS.dm / 100));
+  if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; } if (!b.hit) { b.hit = true; hits.n++; vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n); } hits.dmg += dm; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = 0;      // (one hit of the combo counter, the damage grows)
+  d.hp = Math.max(0, d.hp - dm); if (now - b.fl >= 250) { d.hitAt = now; b.fl = now; } b.imp = now; b.acc += dm;      // (the white flash of a hit comes every quarter of a second, not every tick)
+  if (!airUp(d) && now - b.rxAt >= 250) { d.rx = 6; d.rxAt = now; b.rxAt = now; }      // (he flinches again every quarter of a second while it burns him)
+  cuStun(0.28, now, true); d.vx = Math.min(d.vx || 0, 0);
+  spark(d.x - 8, ey, 4, ['#ffffff', '#9ff3ff', '#17e3ff'], false, 1); shakeUntil = Math.max(shakeUntil, now + 100); shakeAmp = Math.max(shakeAmp, 1.5);
+  if (b.tk % 3 === 0) { say('' + b.acc, d.x + (Math.random() * 10 - 5), popCol(), 8, now); b.acc = 0; snd('smack', 0); }      // (the numbers come every 0.3 s: the sum of three ticks)
+  if (twOn()) { const T = vs.tw; T.dHp = d.hp; T.dHit = d.hitAt; T.dDown = d.down || 0; }      // (the skyscraper's watcher must not take it for a blow that puts him down; his own health is left alone: the enemy can hit him while it runs)
+  if (d.hp <= 0) { koDummy(now); b.ko = true; }
+}
+// ---- the state: irBhStep hands over to this every frame while the blast runs; it returns his picture
+function irbStep(g, b, now, dt) {
+  const P = g.bmp, u = now - b.at; b.last = now; b.lift = 0; b.rot = 0;
+  if (vs.ph !== 'fight') { irBhEnd(g, now); return null; }
+  let pic;
+  if (b.ph === 'raise') { pic = P.rz[Math.min(3, Math.floor(u / IRB.raise * 4))]; if (u >= IRB.raise) { b.ph = 'charge'; b.at = now; snd('redcharge'); snd('thrust', 0.9); } }
+  else if (b.ph === 'charge') {
+    pic = P.ch[Math.floor(u / 90) % 2];
+    if (Math.random() < 0.04) puff(wx - 6, 2);
+    if (u >= IRB.charge) { b.ph = 'fire'; b.at = now; b.on = now; b.tk = 0; b.sn = 0; snd('redfire'); snd('thrust', 1.5); flash(now, 120, 0.22); shakeUntil = Math.max(shakeUntil, now + 200); shakeAmp = Math.max(shakeAmp, 3); gritAt(wx - 8, 10, 100, -1); if (twOn()) twLightsShock(twFloorData(vs.tw.fMe), wx + 40, 120, 60, now); }
+  }
+  else if (b.ph === 'fire') {
+    pic = P.fi[Math.floor(u / 60) % 2]; b.px = pic.palm.px; b.py = pic.palm.py;
+    while (b.tk < IRB.ticks && u >= IRB.t0 + b.tk * IRB.tick && !b.ko) { irbTick(g, b, now); b.tk++; }
+    shakeUntil = Math.max(shakeUntil, now + 80); shakeAmp = Math.max(shakeAmp, 1);
+    if (u >= b.sn) { snd('cecrackle'); b.sn = u + 230; }
+    if (u >= IRB.fire || b.ko) { b.ph = 'lower'; b.at = now; b.off = now; snd('ceoff'); }
+  }
+  else if (b.ph === 'lower') { pic = P.lo[Math.min(3, Math.floor(u / IRB.lower * 4))]; if (u >= IRB.lower) { irBhEnd(g, now); return null; } }
+  else { irBhEnd(g, now); return null; }
+  if (pic.palm) { b.px = pic.palm.px; b.py = pic.palm.py; }
+  return pic;
+}
+// ---- what customScene draws: the beam (before him, so that his hand and arm stay in front of it) and the light at his palm (after him)
+const irbDisc = (px, py, r, col, a) => { ctx.globalAlpha = a; ctx.fillStyle = col; for (let y = -r; y <= r; y++) { const w = Math.floor(Math.sqrt(r * r - y * y)); ctx.fillRect(px - w, py + y, w * 2 + 1, 1); } ctx.globalAlpha = 1; };      // (a round spot of light, row by row like the flash of a bolt)
+function irbBack(g, b, now, x, y, src) {      // the beam: layers of light from the palm to the enemy (it ends on his body while it touches him) or across the screen; it grows in 70 ms and fades in 200
+  if (b.on < 0 || !src || !src.palm) return;
+  const k = Math.min(1, (now - b.on) / 70) * (b.off < 0 ? 1 : Math.max(0, 1 - (now - b.off) / 200)); if (k <= 0) return;
+  const x0 = Math.round(x + src.palm.px) + 2, yc = Math.round(y + src.palm.py) + 1, touch = now - b.imp < 160 || now - b.blk < 160, ex = Math.round(Math.round(VW / 2) + b.ix - wx) - 8;
+  const len = Math.max(4, Math.min(Math.round(irbLen(b) * k), touch ? ex - x0 + 4 : 1e9)), th = Math.max(1, Math.round(IRB.th * k)), pulse = Math.floor(now / 45) % 3;
+  ctx.save();
+  for (const [h, col] of [[th + 4, 'rgba(111,224,255,0.14)'], [th + 2, 'rgba(111,224,255,0.3)'], [th + (pulse === 1 ? 2 : 1), 'rgba(150,238,255,0.7)'], [Math.max(1, th - 1), 'rgba(222,252,255,0.96)'], [Math.max(1, th - 3), '#ffffff']]) { ctx.fillStyle = col; ctx.fillRect(x0, yc - h, len, h * 2 + 1); }
+  ctx.fillStyle = 'rgba(255,255,255,0.85)'; for (let i = 0; i < 12; i++) ctx.fillRect(x0 + Math.round((i * 61 + now * 1.3) % len), yc + ((i * 5) % 7) - 3, 6 + (i % 3) * 4, 1);      // (streaks of light run along it)
+  if (!SET.lite) { ctx.fillStyle = 'rgba(190,245,255,0.8)'; for (let i = 0; i < 14; i++) ctx.fillRect(x0 + Math.floor(Math.random() * len), yc + (Math.random() < 0.5 ? -1 : 1) * (th + 2 + Math.floor(Math.random() * 4)), 1 + Math.floor(Math.random() * 3), 1); }      // (and it crackles at its edges)
+  if (touch) { const bl = now - b.blk < 160, r = bl ? 4 : 7; irbDisc(ex, yc, r + 3, '#6fe0ff', 0.25 * k); irbDisc(ex, yc, r, '#aef6ff', 0.55 * k); irbDisc(ex, yc, Math.max(2, r - 3), '#ffffff', 0.95 * k); }      // (where it meets him: a flare, a small one on his guard)
+  ctx.restore();
+}
+function irbFront(g, b, now, x, y, src) {      // the light at his palm: the ball that grows in the charge with sparks drawn into it, the flare of the beam while it is on
+  if (!src || !src.palm || b.ph === 'raise') return;
+  const px = Math.round(x + src.palm.px) + 1, py = Math.round(y + src.palm.py) + 1; ctx.save();
+  if (b.ph === 'charge') {
+    const k = Math.min(1, (now - b.at) / IRB.charge), e = k * k * (3 - 2 * k), r = Math.round(1 + 7 * e);
+    irbDisc(px, py, r + 4, '#6fe0ff', 0.14 + 0.1 * e); irbDisc(px, py, r + 2, '#8fe9ff', 0.3 + 0.2 * e); irbDisc(px, py, r, '#d8faff', 0.85); irbDisc(px, py, Math.max(1, r - 3), '#ffffff', 1);
+    ctx.fillStyle = '#aef6ff'; for (let i = 0; i < 12; i++) { const ph = (now * 0.0042 + i * 0.173) % 1, rad = (1 - ph) * 34 * (1.1 - 0.6 * e), an = i * 2.4 + now * 0.002; ctx.globalAlpha = 0.9 * ph; ctx.fillRect(Math.round(px + Math.cos(an) * rad), Math.round(py + Math.sin(an) * rad * 0.8), 2, 1); }      // (twelve sparks fall into the palm, faster and closer as the ball grows)
+  } else if (b.on >= 0) {
+    const k = b.off < 0 ? 1 : Math.max(0, 1 - (now - b.off) / 200), r = Math.round((6 + (Math.floor(now / 50) % 3)) * k);
+    if (r > 0) { irbDisc(px + 1, py, r + 3, '#6fe0ff', 0.2 * k); irbDisc(px + 1, py, r, '#d8faff', 0.8 * k); irbDisc(px + 1, py, Math.max(1, r - 3), '#ffffff', k); ctx.globalAlpha = 0.7 * k; ctx.fillStyle = '#ffffff'; ctx.fillRect(px - 10, py, 24, 1); ctx.fillRect(px + 1, py - 8, 1, 17); }      // (a bright flare with a cross of light)
+  }
+  ctx.restore(); ctx.globalAlpha = 1;
 }
 
 function drawScene(now, dt) {
@@ -19835,7 +19949,7 @@ const SEL = {      // the seven fighters: short name, panel name, a tag, three s
   cat: { nm: 'CAT', full: 'CARTOON<br>CAT', tag: 'CURSED SPIRIT', mv: ['CARTOON ATTACK', 'GIANT KICK', 'ARM HANG'], col: [200, 204, 216], face: [19, 0] },
   freddy: { nm: 'FREDDY', full: 'FREDDY<br>KRUEGER', tag: 'CURSED SPIRIT', mv: ['PIERCE', 'BOILING WATER', 'DREAM'], col: [70, 196, 106], face: [21, 1] },
   cu3: { nm: 'SUKUNA', full: 'SUKUNA', tag: 'KING OF CURSES', mv: ['DISMANTLE', 'CLEAVE MODE', 'MALEVOLENT SHRINE'], col: [255, 58, 74], face: [21, 1] },
-  cu5: { nm: 'IRON MAN', full: 'IRON<br>MAN', tag: 'TONY STARK', mv: ['4-HIT COMBO', 'ROCKET UPPERCUT', 'DOWNSLAM', 'LOW JABS', 'CHARGE PUNCH', 'BACKFLIP', 'REPULSOR MODE', 'BEAR HUG'], col: [196, 32, 44], face: [20, 0] } };      // (v1.190 Iron Man: TRAINING only for now; v1.191 his moves; v1.192 crouch + ATTACK, dash + ATTACK and a double dash back; v1.193 the MODE button: REPULSOR)
+  cu5: { nm: 'IRON MAN', full: 'IRON<br>MAN', tag: 'TONY STARK', mv: ['4-HIT COMBO', 'ROCKET UPPERCUT', 'DOWNSLAM', 'LOW JABS', 'CHARGE PUNCH', 'BACKFLIP', 'REPULSOR MODE', 'BEAR HUG / BLAST'], col: [196, 32, 44], face: [20, 0] } };      // (v1.190 Iron Man: TRAINING only for now; v1.191 his moves; v1.192 crouch + ATTACK, dash + ATTACK and a double dash back; v1.193 the MODE button: REPULSOR)
 const SEL_ROWS = [['gojo', 'yuji', 'cu4', 'cu5'], ['verity', 'cat', 'freddy', 'cu3']], FS_ORDER = [].concat(...SEL_ROWS), FACE = 28;      // 4 on top, 4 below (the humans first; v1.190 Iron Man is the fourth on top)
 const selRgb = (c, a) => 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')';
 const fsPic = (who, now, inv) => {      // the idle picture of any of the seven (a canvas), or null while a fighter's pictures are not cut yet
@@ -20777,6 +20891,17 @@ function cuVictim(n) {
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+ {
+  "v": "1.195",
+  "t": "IRON MAN: BLAST (A CHARGED BEAM FROM HIS PALM, CONTINUOUS DAMAGE)",
+  "n": [
+   "You said: in the repulsor mode make the bear hug change into Blast: Iron Man lifts his arm forward, charges a beam in his palm and then fires a beam forward that deals continuous damage.",
+   "The BLUE button is the same special in two forms: BEAR HUG as usual, and BLAST while the REPULSOR mode (the MODE button) is on. The button changes its name by itself when you switch the mode, and the bear hug is exactly as it was.",
+   "Press BLAST: he lifts his right arm straight out in front of him with his feet braced, a ball of light grows in his palm while sparks are drawn into it (about 0.7 seconds), and then a beam fires forward to the edge of the screen for about 1.2 seconds. While the beam touches the enemy it burns him every 0.1 seconds for 3 damage (45 in all) and holds him in place. The combo counter counts it as one hit whose damage keeps growing.",
+   "The beam is at the height of his palm: an enemy who crouches is flown over, and one beyond the edge of the screen is out of reach. A blocking enemy takes nothing, the beam only sparks on his guard. In the SKYSCRAPER the beam also breaks the furniture, walls and doors in its way.",
+   "A blow that lands on him before or while the beam is out stops it. It has a 10 second cooldown (3 seconds if it was stopped before it fired). He is still in TRAINING only."
+  ]
+ },
  {
   "v": "1.194",
   "t": "IRON MAN: BEAR HUG (CHARGE GRAB, FLY UP THROUGH THE FLOORS, TURN, DIVE DOWN)",
@@ -23722,7 +23847,7 @@ async function scMoves() {
   await scIronMoves();
 }
 // v1.191 IRON MAN's moves: the chain (R.HOOK, L.HOOK, R.KICK, PUNCH), the ROCKET UPPERCUT (JUMP and ATTACK together, either one first), the DOWNSLAM (ATTACK 0.2 s after the jump, and an earlier one waits for it), crouch, block and dash; each is a check that the move that should come out did (cuAtkK: 0 - 3 the chain, 4 the uppercut, 5 the downslam), played against a standing enemy in front of him; v1.192 the LOW JABS (6: crouched, ATTACK), the CHARGE (7: ATTACK during a dash or just after it; a late one is a plain hook) and the BACKFLIP (8: DASH BACK twice, never two dashes forward); v1.193 the REPULSOR MODE (the MODE button: ATTACK is R.BLAST (9) and then L.BLAST (10), both hurt the enemy, the other moves stay, off again it is the chain); v1.194 the BEAR HUG (BLUE: he charges, grabs, hugs, flies up with the enemy hanging in his arms, turns over, dives and slams: 4 hits, it ends by itself, and it has a cooldown); in the skyscraper he is also one of the fighters of scTower
-const SC_IR_N = 25;
+const SC_IR_N = 29;
 async function scIronMoves() {
   const place = () => { TR.put = 2; trainPut(); };
   try { Object.assign(TR, { beh: 0, ehp: 1, php: 0, pce: 0, put: 2 }); startPractice('cu5', 'gojo'); } catch (e) { scErr(e, 'IRON MAN START'); return; }
@@ -23751,6 +23876,10 @@ async function scIronMoves() {
   let topH = 0, held = false, mh = 0; for (let f = 0; f < 70 && CU_GAME[5].bh; f++) { await scFrames(1); if (CU_GAME[5].bh) { topH = Math.max(topH, gojoLift); mh = Math.max(mh, hits.n); if (CU_GAME[5].bh.ph === 'up' && (dummy.airH || 0) > 10) held = true; } }
   ok(!CU_GAME[5].bh, 'THE BEAR HUG WAS STILL GOING 3.5 S AFTER IT BEGAN: ' + (CU_GAME[5].bh && CU_GAME[5].bh.ph)); ok(held && topH > 20 && mh >= 4, 'THE BEAR HUG DID NOT GRAB, RAISE AND SLAM: HELD ' + held + ', HEIGHT ' + Math.round(topH) + ', HITS ' + mh);
   await press('KeyL'); await scFrames(2); ok(!CU_GAME[5].bh, 'THE BEAR HUG STARTED AGAIN DURING ITS COOLDOWN'); CU_GAME[5].bhCd = 0;
+  SC.say = 'IRON MAN: BLAST'; await reset(); CU_GAME[5].rp = true; CU_GAME[5].bmCd = 0; dummy.x = wx + 70; await press('KeyL'); await scFrames(1); ok(!!CU_GAME[5].bh && CU_GAME[5].bh.kind === 'beam', 'BLUE IN THE REPULSOR MODE DID NOT START THE BLAST');
+  let fired = false, burn = 0; for (let f = 0; f < 70 && CU_GAME[5].bh; f++) { await scFrames(1); if (CU_GAME[5].bh) { if (CU_GAME[5].bh.ph === 'fire') fired = true; burn = Math.max(burn, hits.dmg); } }
+  ok(!CU_GAME[5].bh, 'THE BLAST WAS STILL GOING 3.5 S AFTER IT BEGAN: ' + (CU_GAME[5].bh && CU_GAME[5].bh.ph)); ok(fired && burn >= 30, 'THE BLAST DID NOT BURN THE ENEMY: FIRED ' + fired + ', DAMAGE ' + burn);
+  await press('KeyL'); await scFrames(2); ok(!CU_GAME[5].bh, 'THE BLAST STARTED AGAIN DURING ITS COOLDOWN'); CU_GAME[5].bmCd = 0; CU_GAME[5].rp = false;
   show('title');
 }
 
@@ -23918,6 +24047,13 @@ function scFredSlam() {      // v1.185 Freddy in the skyscraper: whatever the ra
 function scIronHug() {      // v1.194 Iron Man in the skyscraper: whatever the random player was doing, he presses BLUE with the enemy 60 px in front of him (the bear hug: up through the ceilings, over, down through the floors); scIronHugEnd looks at it 5 s later
   const g = CU_GAME[5]; if (!vs || vs.me !== 'cu5' || !g || !dummy || g.bh || !irhOk(pnow())) return; g.bhCd = 0; twFoeHere(pnow()); dummy.x = twPlace(twFloorData(vs.tw.fMe), wx + 60); cuAtkAt = -1; cuDash = null; blkAt = blkEnd = -1; blockHeld = false; stance = 'stand'; stickCr = false; lpReq = true; SC.ih = { f: vs.tw.fMe, at: pnow() };
 }
+function scIronBeam() {      // v1.195 Iron Man in the skyscraper: whatever the random player was doing, the move he is in is cut, the repulsor mode goes on and the BLAST begins with the enemy 60 px in front of him (the beam breaks what is in its way); scIronBeamEnd looks at it 6 s later
+  const g = CU_GAME[5]; if (!vs || vs.me !== 'cu5' || !g || !dummy || vs.ph !== 'fight') return; const n = pnow(); if (g.bh) irBhEnd(g, n); g.rp = true; g.bmCd = 0; twFoeHere(n); if (!irhOk(n)) return; dummy.x = twPlace(twFloorData(vs.tw.fMe), wx + 60); cuAtkAt = -1; cuJumpAt = -1; cuDash = null; blkAt = blkEnd = -1; blockHeld = false; stance = 'stand'; stickCr = false;
+  if (irBhStart(g, n)) SC.ib = { f: vs.tw.fMe, at: n };
+}
+function scIronBeamEnd() {
+  const g = CU_GAME[5]; if (!SC.ib || !vs || vs.me !== 'cu5') { SC.ib = null; return; } if (g && g.bh && g.bh.kind === 'beam') scNote('fail', 'IRON MAN: THE BLAST IN THE SKYSCRAPER WAS STILL GOING 6 S AFTER IT BEGAN', 'PHASE ' + g.bh.ph + ', FLOOR ' + vs.tw.fMe); SC.ib = null;
+}
 function scIronHugEnd() {
   const g = CU_GAME[5]; if (!SC.ih || !vs || vs.me !== 'cu5') { SC.ih = null; return; } if (g && g.bh) scNote('fail', 'IRON MAN: THE BEAR HUG IN THE SKYSCRAPER WAS STILL GOING 5 S AFTER IT BEGAN', 'PHASE ' + g.bh.ph + ', FLOOR ' + vs.tw.fMe + ' FROM ' + SC.ih.f); SC.ih = null;
 }
@@ -23929,7 +24065,7 @@ async function scTower() {
       try { Object.assign(TR, { beh: 1, ehp: 0, php: 0, pce: 0 }); startPractice(w, 'cat'); } catch (e) { scErr(e, label + ' START'); continue; }
       if (state !== 'play' || !twOn()) { scNote('fail', 'THE SKYSCRAPER DID NOT START: ' + label, 'STATE ' + state); show('title'); continue; }
       if (!(await scIntro())) { show('title'); return; }
-      const p = scPlayer(seed), ev = [[6, scIronHug], [100, scIronHugEnd], [8, scFredSlam], [10, scFredSlam], [12, scFredSlam], [16, () => { if (fredMe() && !fg && !fgCd) scNote('warn', 'FREDDY: THE GROUND SLAM DID NOT START IN THE SKYSCRAPER', 'STANCE ' + stance + ', PHASE ' + vs.ph + ', SPAWN ' + Math.round(pnow() - spawnAt) + ' MS, HURT ' + hurtAt + ', STUN ' + Math.round(pStun - pnow()) + ', FLOOR ' + vs.tw.fMe + ', AWAY ' + vs.tw.away + ', CAB ' + !!vs.tw.cab + ', WATER ' + fwPh); }], [20, scSigns], [30, () => twSlam('foe', 2, pnow(), dummy.x)], [90, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [110, () => twMeFall(1, pnow(), wx)], [150, () => { const F = twFloorData(vs.tw.fMe); const o = { k: 'gas', x: Math.round(wx + 40), hp: 18, mx: 18, wob: 0, hitAt: -9999 }; F.objs.push(o); twDamageObj(F, o, 99, pnow()); }], [190, () => twCeiling('foe', 1, pnow(), dummy.x)], [235, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [250, () => twFallOut('foe', pnow(), 1)],
+      const p = scPlayer(seed), ev = [[6, scIronHug], [100, scIronHugEnd], [112, scIronBeam], [232, scIronBeamEnd], [8, scFredSlam], [10, scFredSlam], [12, scFredSlam], [16, () => { if (fredMe() && !fg && !fgCd) scNote('warn', 'FREDDY: THE GROUND SLAM DID NOT START IN THE SKYSCRAPER', 'STANCE ' + stance + ', PHASE ' + vs.ph + ', SPAWN ' + Math.round(pnow() - spawnAt) + ' MS, HURT ' + hurtAt + ', STUN ' + Math.round(pStun - pnow()) + ', FLOOR ' + vs.tw.fMe + ', AWAY ' + vs.tw.away + ', CAB ' + !!vs.tw.cab + ', WATER ' + fwPh); }], [20, scSigns], [30, () => twSlam('foe', 2, pnow(), dummy.x)], [90, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [110, () => twMeFall(1, pnow(), wx)], [150, () => { const F = twFloorData(vs.tw.fMe); const o = { k: 'gas', x: Math.round(wx + 40), hp: 18, mx: 18, wob: 0, hitAt: -9999 }; F.objs.push(o); twDamageObj(F, o, 99, pnow()); }], [190, () => twCeiling('foe', 1, pnow(), dummy.x)], [235, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [250, () => twFallOut('foe', pnow(), 1)],
         [60, () => { const F = twFloorData(vs.tw.fMe), d = F.doors.find(q => q.k === 'elev'); if (d) twDoorHit(F, d, 45, pnow()); }],      // (v1.175 the elevator: a hard hit jams a door (OUT OF ORDER) ...)
         [270, () => { const T = vs.tw; if (T.cab) return; const F = twFloorData(T.fMe), d = twElevOf(F), L = T.lift; if (!d) return; d.st = 0; d.hp = 70; L.f = L.curF = L.dest = T.fMe; L.ph = 'park'; L.inFoe = false; L.job = null; L.pend = null; wx = d.x; T.px = wx; twCabEnter(F, d, pnow()); }],      // (v1.176 ... you step into the one cab of the building: the cut inside, the panel, a floor button (0.6 s, then it goes), an emergency stop, another floor,
         [274, () => { if (vs.tw.cab) scPanel(); }],

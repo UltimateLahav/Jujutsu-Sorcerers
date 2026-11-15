@@ -1,5 +1,16 @@
 [
  {
+  "v": "1.195",
+  "t": "IRON MAN: BLAST (A CHARGED BEAM FROM HIS PALM, CONTINUOUS DAMAGE)",
+  "n": [
+   "You said: in the repulsor mode make the bear hug change into Blast: Iron Man lifts his arm forward, charges a beam in his palm and then fires a beam forward that deals continuous damage.",
+   "The BLUE button is the same special in two forms: BEAR HUG as usual, and BLAST while the REPULSOR mode (the MODE button) is on. The button changes its name by itself when you switch the mode, and the bear hug is exactly as it was.",
+   "Press BLAST: he lifts his right arm straight out in front of him with his feet braced, a ball of light grows in his palm while sparks are drawn into it (about 0.7 seconds), and then a beam fires forward to the edge of the screen for about 1.2 seconds. While the beam touches the enemy it burns him every 0.1 seconds for 3 damage (45 in all) and holds him in place. The combo counter counts it as one hit whose damage keeps growing.",
+   "The beam is at the height of his palm: an enemy who crouches is flown over, and one beyond the edge of the screen is out of reach. A blocking enemy takes nothing, the beam only sparks on his guard. In the SKYSCRAPER the beam also breaks the furniture, walls and doors in its way.",
+   "A blow that lands on him before or while the beam is out stops it. It has a 10 second cooldown (3 seconds if it was stopped before it fired). He is still in TRAINING only."
+  ]
+ },
+ {
   "v": "1.194",
   "t": "IRON MAN: BEAR HUG (CHARGE GRAB, FLY UP THROUGH THE FLOORS, TURN, DIVE DOWN)",
   "n": [

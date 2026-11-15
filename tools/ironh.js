@@ -19,8 +19,8 @@ function irhPics(g) {      // the pictures of the bear hug (built the first time
     land: [0, 1, 2, 3, 4, 5].map(i => ironCut(i < 2 ? c4xMixPose(IR_GD, ld, i === 0 ? 0.7 : 1) : c4xMixPose(ld, IR_GD, ez((i - 1) / 5)))), skid: [0, 1, 2, 3].map(i => ironCut(c4xMixPose(ld, IR_GD, ez(i / 3))))
   };
 }
-function irBlueLabel(g, now) {      // the BLUE button says BEAR HUG
-  const el = $('lapl'), n = 'BEAR<br>HUG'; if (el.innerHTML !== n) { el.innerHTML = n; $('lap').setAttribute('aria-label', 'Bear hug: he charges at the enemy, grabs him and hugs him, flies up through the floors above, turns over and dives down through the floors below'); }
+function irBlueLabel(g, now) {      // the BLUE button says BEAR HUG, and BLAST while the repulsor mode is on (v1.195, see tools/ironb.js)
+  const el = $('lapl'), n = g.rp ? 'BLAST' : 'BEAR<br>HUG'; if (el.innerHTML !== n) { el.innerHTML = n; $('lap').setAttribute('aria-label', g.rp ? 'Blast: he lifts his arm, charges a beam in his palm and fires it forward; it hurts the enemy for as long as it touches him' : 'Bear hug: he charges at the enemy, grabs him and hugs him, flies up through the floors above, turns over and dives down through the floors below'); }
 }
 // ---- the checks
 function irhOk(now) {      // an enemy that can be charged at: here (in the skyscraper: on this floor, not in the cab) and alive
@@ -33,6 +33,7 @@ function irhCan(now) {      // an enemy that can be grabbed now: not just born, 
 }
 function irBhStart(g, now) {      // BLUE: the move begins (false when it cannot)
   if (!g.bhp) irhPics(g);
+  if (g.rp) return irbStart(g, now);      // (v1.195 in the repulsor mode BLUE is the BLAST, see tools/ironb.js)
   if (now < (g.bhCd || 0)) { say('WAIT', wx, '#9a9aa8', 8, now); return false; }
   if (!irhOk(now)) { say('NO ENEMY HERE', wx, '#9a9aa8', 8, now); return false; }
   g.bh = { ph: 'wind', at: now, last: now, lift: 0, rot: 0, x0: wx, f0: twOn() ? vs.tw.fMe : 0, n: 0, D: 0, tk: [], gap: 0, hx: wx };
@@ -41,8 +42,8 @@ function irBhStart(g, now) {      // BLUE: the move begins (false when it cannot
 function irBhEnd(g, now) {      // the move is over (or cut short): the enemy is let go, he is where he is
   const d = dummy; g.bh = null; if (d && d.air && d.air.hover) { d.air = null; d.airH = 0; } cuDashReady = now + 150;
 }
-function irBhHeld(g) { const b = g.bh; return !!b && b.ph !== 'wind' && b.ph !== 'fly' && b.ph !== 'miss'; }      // (he has the enemy: grab, hug, climb, turn, dive and landing)
-function irBhHurt(g, now) { if (g.bh && !irBhHeld(g)) { g.bhCd = Math.min(g.bhCd || 0, now + IRH.cdMiss); irBhEnd(g, now); } }      // (a blow that lands while he is still charging stops it; once he holds the enemy nothing can reach him)
+function irBhHeld(g) { const b = g.bh; return !!b && b.kind !== 'beam' && b.ph !== 'wind' && b.ph !== 'fly' && b.ph !== 'miss'; }      // (he has the enemy: grab, hug, climb, turn, dive and landing)
+function irBhHurt(g, now) { if (g.bh && g.bh.kind === 'beam') irbHurt(g, now); else if (g.bh && !irBhHeld(g)) { g.bhCd = Math.min(g.bhCd || 0, now + IRH.cdMiss); irBhEnd(g, now); } }      // (a blow that lands while he is still charging stops it; once he holds the enemy nothing can reach him)
 function irhHold(now, h) {      // the enemy is held: IRH.hx in front of his hips, h above the floor, still, and he cannot act
   const d = dummy; if (!d || d.ko >= 0) return;
   d.x = wx + IRH.hx; d.vx = 0; d.stunUntil = Math.max(d.stunUntil || 0, now + 250); d.ai = 'rest'; d.aiAt = now; d.restFor = 250; d.hitDone = true;
@@ -72,6 +73,7 @@ function irhDive(g, b, now) {      // the floors below the one he started on bre
 // ---- the state: irBhStep is called by customScene every frame while g.bh is there; it moves him, the enemy and the camera and returns the picture
 function irBhStep(g, now, dt) {
   const b = g.bh; if (!b) return null; if (!g.bhp) irhPics(g);
+  if (b.kind === 'beam') return irbStep(g, b, now, dt);      // (v1.195 the BLAST has its own phases, see tools/ironb.js)
   const d = dummy, P = g.bhp, tw = twOn(), u = now - b.at; dt = Math.max(0, Math.min(0.05, dt)); b.last = now;
   if (vs.ph !== 'fight' || !d || (d.ko >= 0 && b.ph !== 'land')) { b.lift = 0; b.rot = 0; irBhEnd(g, now); return null; }
   const apex = tw ? 22 : Math.max(36, gy - 76);
@@ -129,8 +131,8 @@ function irGrpTf(grp) { ctx.translate(grp.px, grp.py); ctx.rotate(grp.a); ctx.tr
 function irGrpBegin(grp, foe) {      // the enemy is drawn in the turned frame, cut to the place the two of them take up (his shadow, on the floor, would turn with him and hang in the air)
   ctx.save(); irGrpTf(grp); if (foe && grp.hi) { ctx.beginPath(); ctx.rect(grp.px - 70, grp.py - 37, 140, 72); ctx.clip(); }
 }
-function irBhFx(g, now, cx) {      // streaks of wind: the climb and the turn (they run down the screen), the dive (up the screen, much faster)
-  const b = g.bh; if (!b || (b.ph !== 'up' && b.ph !== 'turn' && b.ph !== 'dive')) return; const dir = b.ph === 'dive' ? -1 : 1, v = b.ph === 'dive' ? 1100 : 420;
+function irBhFx(g, now, cx, x, y, src) {      // streaks of wind: the climb and the turn (they run down the screen), the dive (up the screen, much faster); v1.195 the light at the palm in the BLAST
+  const b = g.bh; if (b && b.kind === 'beam') { irbFront(g, b, now, x, y, src); return; } if (!b || (b.ph !== 'up' && b.ph !== 'turn' && b.ph !== 'dive')) return; const dir = b.ph === 'dive' ? -1 : 1, v = b.ph === 'dive' ? 1100 : 420;
   ctx.save(); ctx.fillStyle = 'rgba(235,245,255,0.34)';
   for (let i = 0; i < 14; i++) { const x = (i * 47 + 13) % VW, len = 12 + (i * 7) % 16, y = (((now * v / 1000 * dir * (0.8 + (i % 3) * 0.3) + i * 37) % VH) + VH) % VH; if (Math.abs(x - cx) > 14) ctx.fillRect(x, Math.round(y), 1, len); }
   ctx.restore();
