@@ -1,5 +1,15 @@
 [
  {
+  "v": "1.197",
+  "t": "IRON MAN: THE ATTACK IS CALLED LASER, AND IT IS 2 PIXELS THICK",
+  "n": [
+   "You said: the attack is called laser, not red laser, and it is 2 pixels thick.",
+   "It is called LASER now: on the BLUE button (when the REPULSOR mode is on and you are walking back), in the button's spoken description and in the move's notes. The beam itself is still red.",
+   "The beam is exactly 2 pixels thick now: two rows of light, a bright almost white row on top of a red one, with streaks of light running along it, from his palm to the edge of the screen. The part that hurts is the same 2 rows (it was 3 rows, and with the glow around it it was drawn 5 to 11 pixels thick). The flares at his palm and where the laser goes into the enemy and comes out of him are smaller to match, so nothing on screen is thicker than the line.",
+   "Everything else is as in 1.196: it cuts through anything, a guard does not stop it, it pierces the enemy for 20 damage, he is stunned and does not bleed while the laser is through him, then he bleeds and stays stunned. 12 second cooldown (shared with the blast)."
+  ]
+ },
+ {
   "v": "1.196",
   "t": "IRON MAN: GROUND PUNCH (CROUCH) AND RED LASER (WALK BACK IN THE REPULSOR MODE)",
   "n": [

@@ -262,10 +262,10 @@ async function scIronMoves() {
   let gdm = 0; for (let f = 0; f < 70 && CU_GAME[5].bh; f++) { await scFrames(1); gdm = Math.max(gdm, hits.dmg); }
   ok(!CU_GAME[5].bh, 'THE GROUND PUNCH WAS STILL GOING 3.5 S AFTER IT BEGAN: ' + (CU_GAME[5].bh && CU_GAME[5].bh.ph)); ok(gdm >= 8, 'THE SHOCK OF THE GROUND PUNCH DID NOT REACH THE ENEMY: DAMAGE ' + gdm);
   stance = 'crouch'; await press('KeyL'); await scFrames(2); ok(!CU_GAME[5].bh, 'THE GROUND PUNCH STARTED AGAIN DURING ITS COOLDOWN'); CU_GAME[5].bhCd = 0; stance = 'stand';
-  SC.say = 'IRON MAN: RED LASER'; await reset(); CU_GAME[5].rp = true; CU_GAME[5].bmCd = 0; dummy.x = wx + 70; scKey('ArrowLeft', true); await scFrames(2); await press('KeyL'); scKey('ArrowLeft', false); await scFrames(1); ok(!!CU_GAME[5].bh && CU_GAME[5].bh.kind === 'laser', 'BLUE WALKING BACK IN THE REPULSOR MODE DID NOT START THE RED LASER');
+  SC.say = 'IRON MAN: LASER'; await reset(); CU_GAME[5].rp = true; CU_GAME[5].bmCd = 0; dummy.x = wx + 70; scKey('ArrowLeft', true); await scFrames(2); await press('KeyL'); scKey('ArrowLeft', false); await scFrames(1); ok(!!CU_GAME[5].bh && CU_GAME[5].bh.kind === 'laser', 'BLUE WALKING BACK IN THE REPULSOR MODE DID NOT START THE LASER');
   let prc = 0, bled = false; for (let f = 0; f < 70 && CU_GAME[5].bh; f++) { await scFrames(1); prc = Math.max(prc, hits.dmg); if (dummy.bleed) bled = true; } for (let f = 0; f < 6; f++) { await scFrames(1); if (dummy.bleed) bled = true; }
-  ok(!CU_GAME[5].bh, 'THE RED LASER WAS STILL GOING 3.5 S AFTER IT BEGAN: ' + (CU_GAME[5].bh && CU_GAME[5].bh.ph)); ok(prc >= 20, 'THE RED LASER DID NOT PIERCE THE ENEMY: DAMAGE ' + prc); ok(bled, 'THE ENEMY DID NOT BLEED AFTER THE RED LASER');
-  await press('KeyL'); await scFrames(2); ok(!CU_GAME[5].bh, 'THE RED LASER STARTED AGAIN DURING ITS COOLDOWN'); CU_GAME[5].bmCd = 0; CU_GAME[5].rp = false;
+  ok(!CU_GAME[5].bh, 'THE LASER WAS STILL GOING 3.5 S AFTER IT BEGAN: ' + (CU_GAME[5].bh && CU_GAME[5].bh.ph)); ok(prc >= 20, 'THE LASER DID NOT PIERCE THE ENEMY: DAMAGE ' + prc); ok(bled, 'THE ENEMY DID NOT BLEED AFTER THE LASER');
+  await press('KeyL'); await scFrames(2); ok(!CU_GAME[5].bh, 'THE LASER STARTED AGAIN DURING ITS COOLDOWN'); CU_GAME[5].bmCd = 0; CU_GAME[5].rp = false;
   show('title');
 }
 
@@ -442,7 +442,7 @@ function scIronForm(kind) {      // v1.196 Iron Man in the skyscraper: whatever 
   const kl = keyL, kr = keyR; g.rp = kind === 'laser'; g.bhCd = g.bmCd = 0; stance = kind === 'punch' ? 'crouch' : 'stand'; if (kind === 'laser') { keyL = true; keyR = false; } const started = irBhStart(g, n); keyL = kl; keyR = kr; if (started) SC.ix = { kind, f: vs.tw.fMe, at: n };
 }
 function scIronFormEnd() {
-  const g = CU_GAME[5]; if (!SC.ix || !vs || vs.me !== 'cu5') { SC.ix = null; return; } const k = g && g.bh && g.bh.kind; if (k && (SC.ix.kind === 'laser' ? k === 'laser' : k === 'gp' || k === 'gt')) scNote('fail', 'IRON MAN: THE ' + (SC.ix.kind === 'laser' ? 'RED LASER' : 'GROUND PUNCH') + ' IN THE SKYSCRAPER WAS STILL GOING 4 S AFTER IT BEGAN', 'PHASE ' + g.bh.ph + ', FLOOR ' + vs.tw.fMe + ' FROM ' + SC.ix.f); SC.ix = null;
+  const g = CU_GAME[5]; if (!SC.ix || !vs || vs.me !== 'cu5') { SC.ix = null; return; } const k = g && g.bh && g.bh.kind; if (k && (SC.ix.kind === 'laser' ? k === 'laser' : k === 'gp' || k === 'gt')) scNote('fail', 'IRON MAN: THE ' + (SC.ix.kind === 'laser' ? 'LASER' : 'GROUND PUNCH') + ' IN THE SKYSCRAPER WAS STILL GOING 4 S AFTER IT BEGAN', 'PHASE ' + g.bh.ph + ', FLOOR ' + vs.tw.fMe + ' FROM ' + SC.ix.f); SC.ix = null;
 }
 function scIronBeamEnd() {
   const g = CU_GAME[5]; if (!SC.ib || !vs || vs.me !== 'cu5') { SC.ib = null; return; } if (g && g.bh && g.bh.kind === 'beam') scNote('fail', 'IRON MAN: THE BLAST IN THE SKYSCRAPER WAS STILL GOING 6 S AFTER IT BEGAN', 'PHASE ' + g.bh.ph + ', FLOOR ' + vs.tw.fMe); SC.ib = null;

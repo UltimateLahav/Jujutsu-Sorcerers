@@ -19,11 +19,11 @@ function irhPics(g) {      // the pictures of the bear hug (built the first time
     land: [0, 1, 2, 3, 4, 5].map(i => ironCut(i < 2 ? c4xMixPose(IR_GD, ld, i === 0 ? 0.7 : 1) : c4xMixPose(ld, IR_GD, ez((i - 1) / 5)))), skid: [0, 1, 2, 3].map(i => ironCut(c4xMixPose(ld, IR_GD, ez(i / 3))))
   };
 }
-const IR_BL = {      // the BLUE button: what it says and tells (a screen reader) in each of its four forms (v1.196: crouched = the ground punch, the repulsor mode + walking back = the red laser)
+const IR_BL = {      // the BLUE button: what it says and tells (a screen reader) in each of its four forms (v1.196: crouched = the ground punch, the repulsor mode + walking back = the laser)
   hug: ['BEAR<br>HUG', 'Bear hug: he charges at the enemy, grabs him and hugs him, flies up through the floors above, turns over and dives down through the floors below'],
   punch: ['GROUND<br>PUNCH', 'Ground punch: he punches the ground; on the street it cracks and throws the enemy off balance, in the skyscraper the floor breaks under both of them and he punches the enemy in the face while they fall'],
   blast: ['BLAST', 'Blast: he lifts his arm, charges a beam in his palm and fires it forward; it hurts the enemy for as long as it touches him'],
-  laser: ['RED<br>LASER', 'Red laser: walking back in the repulsor mode, he fires a concentrated red laser for one second that cuts through anything and pierces the enemy: stunned, then bleeding']
+  laser: ['LASER', 'Laser: walking back in the repulsor mode, he fires a concentrated red laser, 2 pixels thick, for one second that cuts through anything and pierces the enemy: stunned, then bleeding']
 };
 function irBlueLabel(g, now) {      // the BLUE button names the form it would be now (a move that is going on keeps its name)
   const b = g.bh, k = b ? b.lab || (b.kind === 'beam' ? 'blast' : 'hug') : g.rp ? ((keyL || padL) && !(keyR || padR) ? 'laser' : 'blast') : stance === 'crouch' || stance === 'down' ? 'punch' : 'hug', el = $('lapl'), L = IR_BL[k];
@@ -40,7 +40,7 @@ function irhCan(now) {      // an enemy that can be grabbed now: not just born, 
 }
 function irBhStart(g, now) {      // BLUE: the move begins (false when it cannot)
   if (!g.bhp) irhPics(g);
-  if (g.rp) return (keyL || padL) && !(keyR || padR) ? irlStart(g, now) : irbStart(g, now);      // (v1.195 in the repulsor mode BLUE is the BLAST, see tools/ironb.js; v1.196 walking back it is the RED LASER, see tools/ironp.js)
+  if (g.rp) return (keyL || padL) && !(keyR || padR) ? irlStart(g, now) : irbStart(g, now);      // (v1.195 in the repulsor mode BLUE is the BLAST, see tools/ironb.js; v1.196 walking back it is the LASER, see tools/ironp.js)
   if (stance === 'crouch' || stance === 'down') return irpStart(g, now);      // (v1.196 crouched it is the GROUND PUNCH)
   if (now < (g.bhCd || 0)) { say('WAIT', wx, '#9a9aa8', 8, now); return false; }
   if (!irhOk(now)) { say('NO ENEMY HERE', wx, '#9a9aa8', 8, now); return false; }
@@ -81,7 +81,7 @@ function irhDive(g, b, now) {      // the floors below the one he started on bre
 // ---- the state: irBhStep is called by customScene every frame while g.bh is there; it moves him, the enemy and the camera and returns the picture
 function irBhStep(g, now, dt) {
   const b = g.bh; if (!b) return null; if (!g.bhp) irhPics(g);
-  if (b.kind) return b.kind === 'beam' ? irbStep(g, b, now, dt) : b.kind === 'laser' ? irlStep(g, b, now, dt) : irpStep(g, b, now, dt);      // (v1.195 the BLAST, v1.196 the RED LASER and the GROUND PUNCH have their own phases, see tools/ironb.js and tools/ironp.js)
+  if (b.kind) return b.kind === 'beam' ? irbStep(g, b, now, dt) : b.kind === 'laser' ? irlStep(g, b, now, dt) : irpStep(g, b, now, dt);      // (v1.195 the BLAST, v1.196 the LASER and the GROUND PUNCH have their own phases, see tools/ironb.js and tools/ironp.js)
   const d = dummy, P = g.bhp, tw = twOn(), u = now - b.at; dt = Math.max(0, Math.min(0.05, dt)); b.last = now;
   if (vs.ph !== 'fight' || !d || (d.ko >= 0 && b.ph !== 'land')) { b.lift = 0; b.rot = 0; irBhEnd(g, now); return null; }
   const apex = tw ? 22 : Math.max(36, gy - 76);
