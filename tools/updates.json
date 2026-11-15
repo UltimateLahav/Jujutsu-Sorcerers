@@ -1,5 +1,16 @@
 [
  {
+  "v": "1.196",
+  "t": "IRON MAN: GROUND PUNCH (CROUCH) AND RED LASER (WALK BACK IN THE REPULSOR MODE)",
+  "n": [
+   "You said: if I crouch and use the move (the bear hug) I punch the ground, and in the skyscraper, while the enemy and I are falling, I punch his face and send him back; on the street I punch the ground, crack it and make the enemy unstable. And if I walk back and use blast I fire a concentrated red laser that cuts through anything for 1 second: it pierces the enemy, who is stunned but does not bleed while the laser is through him because all his blood is vaporized, and after that he starts to bleed and stays stunned for a few seconds.",
+   "The BLUE button has four forms now and its name tells you which one you get: BEAR HUG when you stand, GROUND PUNCH while you are crouched, BLAST when the REPULSOR mode is on, and RED LASER when the REPULSOR mode is on and you are walking back (holding the back direction).",
+   "GROUND PUNCH: from the crouch he raises his right fist high over his head and slams it into the ground. On the STREET the road cracks towards the enemy and the shock runs along the ground; when it reaches him (up to 200 px away) he is thrown off balance: 8 damage, flung up and stunned for 1.2 seconds. A guard does not stop it and a crouching enemy is not spared, but an enemy who jumps over it is not touched. In the SKYSCRAPER the floor breaks under both of you and you fall two floors together (one from the 2nd floor); while you fall Iron Man punches the enemy in the face, 14 damage, and sends him flying back. You land, the enemy on his back. Each of you loses 3% of health a floor from the fall, never enough to K.O. In the lobby it is the street version, and it does nothing when the enemy is on another floor. 10 second cooldown (shared with the bear hug).",
+   "RED LASER: he braces his raised arm with both hands, a ring of red light closes on his palm (about 0.6 seconds) and a thin, concentrated red laser fires across the screen for exactly 1 second. It cuts through anything: a guard does not stop it, and in the SKYSCRAPER the furniture, walls and doors in its way are cut at once. An enemy it touches is pierced: 20 damage and a hole through him. For as long as the laser is through him he is stunned, steams and does NOT bleed, because all his blood is vaporized, and it does 1 more damage every 0.1 seconds. When the laser is gone the hole opens: he starts to BLEED (2 damage every half second for 4 seconds, with blood when GRAPHIC DAMAGE is on FULL) and stays stunned for 3 more seconds. A crouching or dodging enemy is not touched. 12 second cooldown (shared with the blast).",
+   "A blow that lands on him before the fist hits the ground, or while the laser is charging or firing, stops the move (a laser that had already pierced the enemy still starts him bleeding). He is still in TRAINING only."
+  ]
+ },
+ {
   "v": "1.195",
   "t": "IRON MAN: BLAST (A CHARGED BEAM FROM HIS PALM, CONTINUOUS DAMAGE)",
   "n": [

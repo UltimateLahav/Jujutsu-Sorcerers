@@ -71,6 +71,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 @keyframes fatglow{50%{box-shadow:0 0 3.2vh #ff2a2a,0 0 .9vh #ff2a2a inset,4px 4px 0 #000}}
 #pad.cine,#hud.cine{visibility:hidden}body.cut #hud,body.cut #pad,body.cut #sns,body.cut #trHud,body.cut #twp{visibility:hidden}      /* (v1.181 a cutscene of a fight: only what belongs to it stays, see cutsceneOn) */
 body.ir #cel{font-size:calc(var(--fs-pb,clamp(5px,1.7vh,9px))*.88)}      /* (v1.193 REPULSOR is 8 letters: a little smaller so that it fits the MODE button) */
+body.ir #lap.lg #lapl{font-size:calc(var(--fs-pb,clamp(5px,1.7vh,9px))*.88)}      /* (v1.196 GROUND is 6 letters: the BLUE button's name is a little smaller while it says GROUND PUNCH) */
 body.ir #dom,body.ir #fat,body.ir #sns{visibility:hidden}      /* (v1.190 Iron Man has no powers: v1.191 he has ATTACK, BLOCK and DASH, and crouches with the stick; v1.193 MODE is his REPULSOR mode; v1.194 BLUE is his BEAR HUG; DOMAIN, FATAL and SENSE stay hidden) */
 body.ry #fat,body.c4 #dom,body.c4 #ce,body.c4 #fat,body.c4 #lap,body.c4 #sns{visibility:hidden}      /* (v1.143 Ryu has no DOMAIN or FATAL: those buttons are hidden while he fights; v1.163 he has BLUE, v1.170 the MODE button is his GRANITE BLAST mode) */      /* the controls hide while a cutscene plays (the FATALITY, the red ending) */
 #qte{position:fixed;inset:0;z-index:4;display:none;pointer-events:none}#qte.show{display:block}      /* the quick-time event of the red ending: the red button, and the ring that closes on it */
@@ -200,7 +201,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.195</small>
+    <small id="ver">V1.196</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -4443,6 +4444,7 @@ __IRON__
 __IRONM__
 __IRONH__
 __IRONB__
+__IRONP__
 function drawScene(now, dt) {
   if (c4x) { c4xFrame(now, dt); return; }      // (v1.156 chapter 4, part 3: Yuji against Meguna, see tools/chap4c.js)
   fatUI(now);

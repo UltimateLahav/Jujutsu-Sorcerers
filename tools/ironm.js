@@ -232,6 +232,7 @@ function ironMoves(g) {
   g.st = { ...g.st, dfw: 60, dbk: 44, dtm: 240 };      // (his dash: a burst of 60 px forward, 44 back, 0.24 s)
   irhPics(g);      // (v1.194 the pictures of the bear hug are made now too, not when BLUE is pressed)
   irbPics(g);      // (v1.195 and those of the blast)
+  irpPics(g); irlPics(g);      // (v1.196 and those of the ground punch and the red laser)
 }
 // ---- WHAT customScene CALLS: irTick decides, every frame, what the JUMP and ATTACK presses do (the generic jump and attack of the engine are off for him, see custom.js)
 const IR_SIM = 120, IR_AIR = 200, IR_DD = 520, IR_DP = 380;      // (real ms: JUMP and ATTACK this close together are the UPPERCUT; in the air, ATTACK from IR_AIR ms after the jump began is the DOWNSLAM, an ATTACK before that waits until then; a second DASH BACK within IR_DD of the first is the BACKFLIP; ATTACK within IR_DP of a DASH press, or while it goes on, is the CHARGE)
@@ -258,7 +259,7 @@ function irChMove(g, now) {      // the CHARGE's flight: where he is on his way 
 function irTick(g, now, ctl, jmp, atk, dsh, lpr) {      // true when it used this frame's DASH press (the generic dash of customScene must not start then)
   if (!g.moves) ironMoves(g);
   if (g.bh) return false;      // (v1.194 the bear hug has him: customScene asks irBhStep for everything while it lasts)
-  if (lpr && ctl && stance === 'stand' && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0 && irBhStart(g, now)) return true;      // (BLUE: the bear hug, see tools/ironh.js; true: a DASH pressed with it is not a dash)
+  if (lpr && ctl && (stance === 'stand' || (!g.rp && (stance === 'crouch' || stance === 'down'))) && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0 && irBhStart(g, now)) return true;      // (BLUE: the bear hug, see tools/ironh.js; true: a DASH pressed with it is not a dash)
   const R = irRate(), sim = IR_SIM * R, wait = IR_AIR * R, idle = ctl && stance === 'stand' && !cuDash && blkAt < 0, h0 = Math.max(0, Math.round(gojoLift || 0)), air = cuJumpAt >= 0, el = air ? now - cuJumpAt : 0;
   if (!air) irDiveAt = 0;
   // ---- v1.192 the three new moves: the DASH presses and the crouch

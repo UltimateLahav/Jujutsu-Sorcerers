@@ -71,6 +71,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 @keyframes fatglow{50%{box-shadow:0 0 3.2vh #ff2a2a,0 0 .9vh #ff2a2a inset,4px 4px 0 #000}}
 #pad.cine,#hud.cine{visibility:hidden}body.cut #hud,body.cut #pad,body.cut #sns,body.cut #trHud,body.cut #twp{visibility:hidden}      /* (v1.181 a cutscene of a fight: only what belongs to it stays, see cutsceneOn) */
 body.ir #cel{font-size:calc(var(--fs-pb,clamp(5px,1.7vh,9px))*.88)}      /* (v1.193 REPULSOR is 8 letters: a little smaller so that it fits the MODE button) */
+body.ir #lap.lg #lapl{font-size:calc(var(--fs-pb,clamp(5px,1.7vh,9px))*.88)}      /* (v1.196 GROUND is 6 letters: the BLUE button's name is a little smaller while it says GROUND PUNCH) */
 body.ir #dom,body.ir #fat,body.ir #sns{visibility:hidden}      /* (v1.190 Iron Man has no powers: v1.191 he has ATTACK, BLOCK and DASH, and crouches with the stick; v1.193 MODE is his REPULSOR mode; v1.194 BLUE is his BEAR HUG; DOMAIN, FATAL and SENSE stay hidden) */
 body.ry #fat,body.c4 #dom,body.c4 #ce,body.c4 #fat,body.c4 #lap,body.c4 #sns{visibility:hidden}      /* (v1.143 Ryu has no DOMAIN or FATAL: those buttons are hidden while he fights; v1.163 he has BLUE, v1.170 the MODE button is his GRANITE BLAST mode) */      /* the controls hide while a cutscene plays (the FATALITY, the red ending) */
 #qte{position:fixed;inset:0;z-index:4;display:none;pointer-events:none}#qte.show{display:block}      /* the quick-time event of the red ending: the red button, and the ring that closes on it */
@@ -200,7 +201,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.195</small>
+    <small id="ver">V1.196</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -7563,7 +7564,7 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
   const hs = g && g.hus ? g.hus[hurtK] : null, hu = hs ? hs.f : g ? g.hu : [], hn = hu.length, hf = hn && hurtAt >= 0 ? Math.floor((now - hurtAt) / (hs ? hs.ms : (g && g.huMs) || CU_HU_MS)) : -1, hurting = hf >= 0 && hf < hn && !(g && g.yu && g.cs), kod = vs.ph === 'ko' && vs.who === 'enemy' && !!g && g.ko.length > 0;      // (HURT: when the enemy's blow lands its pictures play and it cannot act meanwhile, a punch, dash or block in progress is dropped; KO: when its health runs out the KO pictures play once, the last stays)
   if (g && g.ry) ryUlStep(g, now, dt, hurting, kod);      // (v1.172 Ryu's ULTIMATE, JUST THIS ONCE: the line, the black screen, the beam, see ryu.js)
   const ctl = t >= 1 && now >= pStun && vs.ph === 'fight' && !hurting && !(g && g.ry && ryUl) && !(g && g.ir && g.bh), jmp = jumpReq, atk = atkReq, crq = crReq, dsh = dashReq, lpr = lpReq; jumpReq = atkReq = crReq = dashReq = false; if (suFgOn() && (jmp || atk || crq || dsh || lpr || ceReq || domReq)) suFgSkip(now); if (g && g.ry && ryUl && (jmp || atk || crq || dsh || lpr || ceReq || domReq)) ryUlSkip(now);      // (v1.127 a button pressed during the FUGA cutscene skips it) (it answers the buttons only when it is there, not stunned and in the FIGHT)
-  if (t < 1) { stance = 'stand'; stickCr = false; cuJumpAt = cuAtkAt = -1; cuCmb = 0; cuCmbBy = 0; cuFired = []; cuRes = []; cuShots = []; cuVfx = []; cuBleed = null; cuCd = [0, 0, 0, 0]; cuDash = null; cuDashReady = 0; blkAt = blkEnd = -1; cuAtkQ = cuLpQ = 0; if (g) g.cs = null; suReset(); if (g && g.ry) ryReset(); if (g && g.ir) { g.rp = false; g.bh = null; g.bhCd = 0; g.bmCd = 0; } }
+  if (t < 1) { stance = 'stand'; stickCr = false; cuJumpAt = cuAtkAt = -1; cuCmb = 0; cuCmbBy = 0; cuFired = []; cuRes = []; cuShots = []; cuVfx = []; cuBleed = null; cuCd = [0, 0, 0, 0]; cuDash = null; cuDashReady = 0; blkAt = blkEnd = -1; cuAtkQ = cuLpQ = 0; if (g) g.cs = null; suReset(); if (g && g.ry) ryReset(); if (g && g.ir) { g.rp = false; g.bh = null; g.bhCd = 0; g.bmCd = 0; irlHole = null; fgCracks.length = 0; } }
   if (ceReq && ctl && g && g.blue) suToggle(); else if (ceReq && ctl && g && g.ry) ryToggle(now); else if (ceReq && ctl && g && g.ir) irToggle(g, now);      // (v1.193 Iron Man's MODE is the REPULSOR mode, see tools/ironm.js)      // (v1.119 MODE of a built-in fighter: Sukuna's CLEAVE on / off, in silence, see sukuna.js; the press is dropped at the end of this scene like the other buttons)
   if (domReq && ctl && g && g.blue) suDomTry(now); else if (domReq && ctl && g && g.ry) ryUlTry(now);      // (v1.124 the DOMAIN button of a built-in fighter is his ULTIMATE: Sukuna's Malevolent Shrine, see sukuna.js; read here, the press is dropped at the end of this scene)
   if (hurting && (cuAtkAt >= 0 || cuDash || blkAt >= 0)) { cuAtkAt = -1; cuDash = null; blkAt = blkEnd = -1; cuLunged = 0; if (g) g.cs = null; }
@@ -7605,7 +7606,7 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
     if (stance === 'down' || stance === 'up') { const k = Math.floor((now - stAt) / (g.crMs || CU_CR_MS)); if (k >= g.cr.length) stance = stance === 'down' ? 'crouch' : 'stand'; else cf = stance === 'down' ? k : g.cr.length - 1 - k; }
     if (stance === 'stand') stickCr = false;
   }
-  const ap = cuPunch(g, now, dt); cuShotStep(now, dt); if (g && g.blue) suFlStepArrows(now, dt); cuBleedStep(now); ceTick(now, dt); const sp = g && g.yu ? suStep(g, now) : g && g.ir && g.bh ? irBhStep(g, now, dt) : null; if (g && g.yu) suBleedFx(now);      // (v1.109 sp: the picture of the counter's dodge and slash, or nothing)
+  const ap = cuPunch(g, now, dt); cuShotStep(now, dt); if (g && g.blue) suFlStepArrows(now, dt); cuBleedStep(now); ceTick(now, dt); const sp = g && g.yu ? suStep(g, now) : g && g.ir && g.bh ? irBhStep(g, now, dt) : null; if (g && g.yu) suBleedFx(now); else if (g && g.ir) irBleedFx(now);      // (v1.109 sp: the picture of the counter's dodge and slash, or nothing; v1.196 the red laser's bleeding on the enemy)
   if (g && g.blue) { suBlueLabel(now); suModeUI(); suUltUI(now); } else if (g && g.ry) { ryBlueLabel(now); ryUlUI(now); } else if (g && g.ir) { irModeUI(g); irBlueLabel(g, now); }
   { const lab = g && g.ir ? irLabel(g, now) : g && g.cs && !g.cs.air && !g.cs.dash && !g.cs.cl && !g.cs.fl && !g.cs.dom ? 'COUNTER' : g && g.yu ? suLabel(g, now) : g && g.ry ? ryLabel(g, now) : g && g.rdy.length ? g.an[g.rdy[(now > cuCmbBy ? 0 : cuCmb) % g.rdy.length]] : 'ATTACK'; if (lab !== lastLabel) { lastLabel = lab; $('atkl').textContent = lab; } }      // (the ATTACK button shows the name of the punch that comes next)
   let jp = -1, lift = 0, jfr = -1; if (cuJumpAt >= 0) {      // (JUMP: the jump frames play once over JUMP TIME while it rises JUMP HEIGHT pixels and comes down; v1.108: a fighter with `yu` jumps as Yuji does, with his timing and his height for every picture, and the dust of his push-off and landing)
@@ -7622,12 +7623,12 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
   if (hurtAt >= 0 && now - hurtAt > 700) { hurtAt = -1; hurtEnd = now; }
   { const v = dir * (dir > 0 ? cuS.fw : cuS.bk) * (stance === 'crouch' ? cuS.cw / 100 : 1) * (blkAt >= 0 ? 0.3 : 1); wx += (g && (g.yu || g.ry) ? walkVel(v, dt, jfr >= 0 && jfr <= 11) : v * goreSpd()) * dt; } cuPh = dir ? cuPh + dir * dt * ((g && g.wf) || 12) : 0; if (g && g.ry) ryStep(now, dir); playerSlide(dt); if (!(g && g.cs && (g.cs.dash || g.cs.cl || g.cs.fat)) && !(g && g.ry && ryUl) && !(g && g.ir && irBhHeld(g))) physCollide(now, dt);      // (the DASH SLASH passes through the enemy and the CLEAVE moves put him exactly where they need him: the bodies are not solid for them; v1.194 nor are the two of them in the bear hug: it would push him back while he holds the enemy)
   ctx.save(); shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }
-  ctx.imageSmoothingEnabled = false; const fgc = g && g.blue ? suFgCam(now) : null; if (fgc) suFgCamBegin(fgc); const rcm = g && g.ry ? ryUlCam(now) : null; if (rcm) ryUlCamBegin(rcm); const dk = g && g.blue ? suDomCover(now) : 0; if (dk < 1) drawBackdrop(now); if (g && g.blue) suDomBack(now, cx, dt); drawSmoke(now, dt); drawBloodFloor(now, dt); if (grp) irGrpBegin(grp, true); drawFoes(now, dt); if (grp) ctx.restore(); updatePeds(now, dt); if (!dk) drawPeds(now, dt, 0); if (fgc) suFgBack(now, cx);      // (v1.125 / v1.126 THE ORDER, back to front: the ground (the map, drawn by drawBackdrop), then Sukuna's picture (the face of the sign, then the domain: suDomBack), then everything else: the smoke and the blood on the floor, the enemy and what he throws, Sukuna, his effects, the slashes and sparks, the health bars. While the face or the domain covers the whole screen the map is not drawn at all (it would be hidden), and the passers-by are not drawn while the picture shows: only the two fighters and their effects)
+  ctx.imageSmoothingEnabled = false; const fgc = g && g.blue ? suFgCam(now) : null; if (fgc) suFgCamBegin(fgc); const rcm = g && g.ry ? ryUlCam(now) : null; if (rcm) ryUlCamBegin(rcm); const dk = g && g.blue ? suDomCover(now) : 0; if (dk < 1) drawBackdrop(now); if (g && g.blue) suDomBack(now, cx, dt); drawSmoke(now, dt); drawBloodFloor(now, dt); if (g && g.ir) irGround(now, cx); if (grp) irGrpBegin(grp, true); drawFoes(now, dt); if (grp) ctx.restore(); updatePeds(now, dt); if (!dk) drawPeds(now, dt, 0); if (fgc) suFgBack(now, cx);      // (v1.125 / v1.126 THE ORDER, back to front: the ground (the map, drawn by drawBackdrop), then Sukuna's picture (the face of the sign, then the domain: suDomBack), then everything else: the smoke and the blood on the floor, the enemy and what he throws, Sukuna, his effects, the slashes and sparks, the health bars. While the face or the domain covers the whole screen the map is not drawn at all (it would be hidden), and the passers-by are not drawn while the picture shows: only the two fighters and their effects)
   const sdx = g && g.blue ? suFatDx() : 0, af = ap >= 0 ? g.atk[cuAtkK] : null, src = !g ? null : kod && now >= vs.koAt ? g.ko[Math.min(g.ko.length - 1, Math.floor((now - vs.koAt) * CU_KO_FPS / 1000))] : g.ry && ryUl ? ryUlPic(now) : hurting ? hu[hf] : sp ? sp : af ? af[Math.min(af.length - 1, Math.floor(ap * af.length))] : dp >= 0 ? cuDash.fr[Math.min(cuDash.fr.length - 1, Math.floor(dp * cuDash.fr.length))] : blkAt >= 0 && g.bl.length ? g.bl[Math.min(g.bl.length - 1, Math.floor((now - blkAt) * BLK_FPS / 1000))] : cf >= 0 ? g.cr[cf] : stance === 'crouch' ? (dir && g.cwk ? g.cwk[((Math.floor(cuPh) % g.cwk.length) + g.cwk.length) % g.cwk.length] : g.ci.length ? g.ci[Math.floor(el / (1000 / IDLE_FPS)) % g.ci.length] : g.cr[g.cr.length - 1]) : jp >= 0 ? (cuJumpC && g.cj && now - cuJumpAt < YJ_T.spring ? g.cj[Math.min(g.cj.length - 1, Math.floor((now - cuJumpAt) * g.cj.length / YJ_T.spring))] : g.jump[Math.min(g.jump.length - 1, Math.floor(jp * g.jump.length))]) : dir ? (g.wbk && dir < 0 ? g.wbk[((Math.floor(-cuPh) % g.wbk.length) + g.wbk.length) % g.wbk.length] : g.walk[((Math.floor(cuPh) % g.walk.length) + g.walk.length) % g.walk.length]) : g.frames[Math.floor(el / (1000 / IDLE_FPS)) % g.frames.length], x = cx - 32 + sdx + (g && g.ry && ryUl ? ryUl.dx : 0), y = gy - 61 - lift + goreBob('p', now), ry = Math.round(64 * (1 - e));
   { const sw = Math.max(5, Math.round(9 * (1 - lift / 70))), sv = Math.round(sw * 2 / 3); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(cx + sdx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx + sdx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx + sdx - sv, gy + 5, sv * 2, 1); }
   if (g && g.cs && (g.cs.dash || g.cs.cl === 'dash')) suGhostDraw(now, x, y);      // (the afterimages and speed lines of the DASH SLASH and the DASH CLEAVE, behind him)
   if (g && g.ry && ryUl) ryUlBack(now, cx, x, y);      // (v1.172 the beam of his ULTIMATE is behind him)
-  if (g && g.ir && g.bh && g.bh.kind === 'beam') irbBack(g, g.bh, now, x, y, src);      // (v1.195 the beam of his BLAST is behind him too: his hand and arm stay in front of it)
+  if (g && g.ir) irWorld(g, now, cx, x, y, src);      // (v1.195 the beam of his BLAST is behind him too: his hand and arm stay in front of it; v1.196 the RED LASER the same, and the hole it made in the enemy)
   if (src) { const gsrc = gdActive('p') ? goreSrc('p', src, (px, py) => ({ x: wx + (x + px - cx), y: y + py - gy })) : src; const ox = src.ox || 0; ctx.save(); if (grp) irGrpTf(grp); ctx.beginPath(); ctx.rect(x - ox, y + ry, src.width, 64 - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(gsrc, x - ox, y); if (hurtAt >= 0 && now - hurtAt < 70) ctx.drawImage(whiteOf(gsrc), x - ox, y); ctx.restore(); }      // (v1.192 a WIDE picture, Iron Man's charge lying flat: c.ox = how many columns more it has on the left of the usual window)      // (v1.128 GRAPHIC DAMAGE: without the limbs he has lost)
   drawGiantNow('foe'); cuDrawVfx(now, cx); cuDrawShots(now, cx); if (g && g.ir && g.bh) irBhFx(g, now, cx, x, y, src); if (g && g.ry) ryDraw(now, cx, x, y, src); if (g && g.blue) { suFlDraw(now, cx, x, y); suDomFront(now, cx, x, y, dt); suFgDraw(now, dt, cx, x, y, src); }      // (v1.120 the flames, the slime, the bow, the fire arrows and the burning enemy of the FLAME mode; v1.124 the slashes, flashes and words of the ULTIMATE)
   if (t < 1) { const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,225,110,' + (1 - t) + ')'; for (let a = 0; a < 64; a++) { const th = a / 64 * 6.2832; ctx.fillRect(Math.round(cx + Math.cos(th) * R), Math.round(y + 34 + Math.sin(th) * R * 0.45), 1, 1); } ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (it appears with a ring and a flash, like the others)
@@ -17453,6 +17454,7 @@ function ironMoves(g) {
   g.st = { ...g.st, dfw: 60, dbk: 44, dtm: 240 };      // (his dash: a burst of 60 px forward, 44 back, 0.24 s)
   irhPics(g);      // (v1.194 the pictures of the bear hug are made now too, not when BLUE is pressed)
   irbPics(g);      // (v1.195 and those of the blast)
+  irpPics(g); irlPics(g);      // (v1.196 and those of the ground punch and the red laser)
 }
 // ---- WHAT customScene CALLS: irTick decides, every frame, what the JUMP and ATTACK presses do (the generic jump and attack of the engine are off for him, see custom.js)
 const IR_SIM = 120, IR_AIR = 200, IR_DD = 520, IR_DP = 380;      // (real ms: JUMP and ATTACK this close together are the UPPERCUT; in the air, ATTACK from IR_AIR ms after the jump began is the DOWNSLAM, an ATTACK before that waits until then; a second DASH BACK within IR_DD of the first is the BACKFLIP; ATTACK within IR_DP of a DASH press, or while it goes on, is the CHARGE)
@@ -17479,7 +17481,7 @@ function irChMove(g, now) {      // the CHARGE's flight: where he is on his way 
 function irTick(g, now, ctl, jmp, atk, dsh, lpr) {      // true when it used this frame's DASH press (the generic dash of customScene must not start then)
   if (!g.moves) ironMoves(g);
   if (g.bh) return false;      // (v1.194 the bear hug has him: customScene asks irBhStep for everything while it lasts)
-  if (lpr && ctl && stance === 'stand' && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0 && irBhStart(g, now)) return true;      // (BLUE: the bear hug, see tools/ironh.js; true: a DASH pressed with it is not a dash)
+  if (lpr && ctl && (stance === 'stand' || (!g.rp && (stance === 'crouch' || stance === 'down'))) && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0 && irBhStart(g, now)) return true;      // (BLUE: the bear hug, see tools/ironh.js; true: a DASH pressed with it is not a dash)
   const R = irRate(), sim = IR_SIM * R, wait = IR_AIR * R, idle = ctl && stance === 'stand' && !cuDash && blkAt < 0, h0 = Math.max(0, Math.round(gojoLift || 0)), air = cuJumpAt >= 0, el = air ? now - cuJumpAt : 0;
   if (!air) irDiveAt = 0;
   // ---- v1.192 the three new moves: the DASH presses and the crouch
@@ -17530,8 +17532,15 @@ function irhPics(g) {      // the pictures of the bear hug (built the first time
     land: [0, 1, 2, 3, 4, 5].map(i => ironCut(i < 2 ? c4xMixPose(IR_GD, ld, i === 0 ? 0.7 : 1) : c4xMixPose(ld, IR_GD, ez((i - 1) / 5)))), skid: [0, 1, 2, 3].map(i => ironCut(c4xMixPose(ld, IR_GD, ez(i / 3))))
   };
 }
-function irBlueLabel(g, now) {      // the BLUE button says BEAR HUG, and BLAST while the repulsor mode is on (v1.195, see tools/ironb.js)
-  const el = $('lapl'), n = g.rp ? 'BLAST' : 'BEAR<br>HUG'; if (el.innerHTML !== n) { el.innerHTML = n; $('lap').setAttribute('aria-label', g.rp ? 'Blast: he lifts his arm, charges a beam in his palm and fires it forward; it hurts the enemy for as long as it touches him' : 'Bear hug: he charges at the enemy, grabs him and hugs him, flies up through the floors above, turns over and dives down through the floors below'); }
+const IR_BL = {      // the BLUE button: what it says and tells (a screen reader) in each of its four forms (v1.196: crouched = the ground punch, the repulsor mode + walking back = the red laser)
+  hug: ['BEAR<br>HUG', 'Bear hug: he charges at the enemy, grabs him and hugs him, flies up through the floors above, turns over and dives down through the floors below'],
+  punch: ['GROUND<br>PUNCH', 'Ground punch: he punches the ground; on the street it cracks and throws the enemy off balance, in the skyscraper the floor breaks under both of them and he punches the enemy in the face while they fall'],
+  blast: ['BLAST', 'Blast: he lifts his arm, charges a beam in his palm and fires it forward; it hurts the enemy for as long as it touches him'],
+  laser: ['RED<br>LASER', 'Red laser: walking back in the repulsor mode, he fires a concentrated red laser for one second that cuts through anything and pierces the enemy: stunned, then bleeding']
+};
+function irBlueLabel(g, now) {      // the BLUE button names the form it would be now (a move that is going on keeps its name)
+  const b = g.bh, k = b ? b.lab || (b.kind === 'beam' ? 'blast' : 'hug') : g.rp ? ((keyL || padL) && !(keyR || padR) ? 'laser' : 'blast') : stance === 'crouch' || stance === 'down' ? 'punch' : 'hug', el = $('lapl'), L = IR_BL[k];
+  if (el.innerHTML !== L[0]) { el.innerHTML = L[0]; $('lap').setAttribute('aria-label', L[1]); $('lap').classList.toggle('lg', k === 'punch'); }
 }
 // ---- the checks
 function irhOk(now) {      // an enemy that can be charged at: here (in the skyscraper: on this floor, not in the cab) and alive
@@ -17544,20 +17553,21 @@ function irhCan(now) {      // an enemy that can be grabbed now: not just born, 
 }
 function irBhStart(g, now) {      // BLUE: the move begins (false when it cannot)
   if (!g.bhp) irhPics(g);
-  if (g.rp) return irbStart(g, now);      // (v1.195 in the repulsor mode BLUE is the BLAST, see tools/ironb.js)
+  if (g.rp) return (keyL || padL) && !(keyR || padR) ? irlStart(g, now) : irbStart(g, now);      // (v1.195 in the repulsor mode BLUE is the BLAST, see tools/ironb.js; v1.196 walking back it is the RED LASER, see tools/ironp.js)
+  if (stance === 'crouch' || stance === 'down') return irpStart(g, now);      // (v1.196 crouched it is the GROUND PUNCH)
   if (now < (g.bhCd || 0)) { say('WAIT', wx, '#9a9aa8', 8, now); return false; }
   if (!irhOk(now)) { say('NO ENEMY HERE', wx, '#9a9aa8', 8, now); return false; }
-  g.bh = { ph: 'wind', at: now, last: now, lift: 0, rot: 0, x0: wx, f0: twOn() ? vs.tw.fMe : 0, n: 0, D: 0, tk: [], gap: 0, hx: wx };
+  g.bh = { lab: 'hug', ph: 'wind', at: now, last: now, lift: 0, rot: 0, x0: wx, f0: twOn() ? vs.tw.fMe : 0, n: 0, D: 0, tk: [], gap: 0, hx: wx };
   g.bhCd = now + IRH.cd; stance = 'stand'; stickCr = false; snd('thrust', 0.6); return true;
 }
 function irBhEnd(g, now) {      // the move is over (or cut short): the enemy is let go, he is where he is
   const d = dummy; g.bh = null; if (d && d.air && d.air.hover) { d.air = null; d.airH = 0; } cuDashReady = now + 150;
 }
-function irBhHeld(g) { const b = g.bh; return !!b && b.kind !== 'beam' && b.ph !== 'wind' && b.ph !== 'fly' && b.ph !== 'miss'; }      // (he has the enemy: grab, hug, climb, turn, dive and landing)
-function irBhHurt(g, now) { if (g.bh && g.bh.kind === 'beam') irbHurt(g, now); else if (g.bh && !irBhHeld(g)) { g.bhCd = Math.min(g.bhCd || 0, now + IRH.cdMiss); irBhEnd(g, now); } }      // (a blow that lands while he is still charging stops it; once he holds the enemy nothing can reach him)
-function irhHold(now, h) {      // the enemy is held: IRH.hx in front of his hips, h above the floor, still, and he cannot act
+function irBhHeld(g) { const b = g.bh; return !!b && !b.kind && b.ph !== 'wind' && b.ph !== 'fly' && b.ph !== 'miss'; }      // (he has the enemy: grab, hug, climb, turn, dive and landing)
+function irBhHurt(g, now) { const k = g.bh && g.bh.kind; if (k === 'beam') irbHurt(g, now); else if (k === 'laser') irlHurt(g, now); else if (k === 'gp' || k === 'gt') irpHurt(g, now); else if (g.bh && !irBhHeld(g)) { g.bhCd = Math.min(g.bhCd || 0, now + IRH.cdMiss); irBhEnd(g, now); } }      // (a blow that lands while he is still charging stops it; once he holds the enemy nothing can reach him)
+function irhHold(now, h, keep) {      // the enemy is held: IRH.hx in front of his hips (unless keep: where he is), h above the floor, still, and he cannot act
   const d = dummy; if (!d || d.ko >= 0) return;
-  d.x = wx + IRH.hx; d.vx = 0; d.stunUntil = Math.max(d.stunUntil || 0, now + 250); d.ai = 'rest'; d.aiAt = now; d.restFor = 250; d.hitDone = true;
+  if (!keep) d.x = wx + IRH.hx; d.vx = 0; d.stunUntil = Math.max(d.stunUntil || 0, now + 250); d.ai = 'rest'; d.aiAt = now; d.restFor = 250; d.hitDone = true;
   if (hits.n > 0 && now <= hits.until) hits.until = now + COMBO_WIN;      // (the squeezes and the slam are one combo: the counter does not lapse while he holds him, the climb and the dive take longer than the 1.2 s window)
   if (!d.air || !d.air.hover) d.air = { at: now, h0: h, v0: 0, g: 0, kind: 'up', T: 1e9, hover: true }; d.air.h0 = h; d.airH = h;
 }
@@ -17584,7 +17594,7 @@ function irhDive(g, b, now) {      // the floors below the one he started on bre
 // ---- the state: irBhStep is called by customScene every frame while g.bh is there; it moves him, the enemy and the camera and returns the picture
 function irBhStep(g, now, dt) {
   const b = g.bh; if (!b) return null; if (!g.bhp) irhPics(g);
-  if (b.kind === 'beam') return irbStep(g, b, now, dt);      // (v1.195 the BLAST has its own phases, see tools/ironb.js)
+  if (b.kind) return b.kind === 'beam' ? irbStep(g, b, now, dt) : b.kind === 'laser' ? irlStep(g, b, now, dt) : irpStep(g, b, now, dt);      // (v1.195 the BLAST, v1.196 the RED LASER and the GROUND PUNCH have their own phases, see tools/ironb.js and tools/ironp.js)
   const d = dummy, P = g.bhp, tw = twOn(), u = now - b.at; dt = Math.max(0, Math.min(0.05, dt)); b.last = now;
   if (vs.ph !== 'fight' || !d || (d.ko >= 0 && b.ph !== 'land')) { b.lift = 0; b.rot = 0; irBhEnd(g, now); return null; }
   const apex = tw ? 22 : Math.max(36, gy - 76);
@@ -17643,10 +17653,14 @@ function irGrpBegin(grp, foe) {      // the enemy is drawn in the turned frame, 
   ctx.save(); irGrpTf(grp); if (foe && grp.hi) { ctx.beginPath(); ctx.rect(grp.px - 70, grp.py - 37, 140, 72); ctx.clip(); }
 }
 function irBhFx(g, now, cx, x, y, src) {      // streaks of wind: the climb and the turn (they run down the screen), the dive (up the screen, much faster); v1.195 the light at the palm in the BLAST
-  const b = g.bh; if (b && b.kind === 'beam') { irbFront(g, b, now, x, y, src); return; } if (!b || (b.ph !== 'up' && b.ph !== 'turn' && b.ph !== 'dive')) return; const dir = b.ph === 'dive' ? -1 : 1, v = b.ph === 'dive' ? 1100 : 420;
+  const b = g.bh; if (b && b.kind) { if (b.kind === 'beam') irbFront(g, b, now, x, y, src); else if (b.kind === 'laser') irlFront(g, b, now, x, y, src); return; } if (!b || (b.ph !== 'up' && b.ph !== 'turn' && b.ph !== 'dive')) return; const dir = b.ph === 'dive' ? -1 : 1, v = b.ph === 'dive' ? 1100 : 420;
   ctx.save(); ctx.fillStyle = 'rgba(235,245,255,0.34)';
   for (let i = 0; i < 14; i++) { const x = (i * 47 + 13) % VW, len = 12 + (i * 7) % 16, y = (((now * v / 1000 * dir * (0.8 + (i % 3) * 0.3) + i * 37) % VH) + VH) % VH; if (Math.abs(x - cx) > 14) ctx.fillRect(x, Math.round(y), 1, len); }
   ctx.restore();
+}
+function irWorld(g, now, cx, x, y, src) {      // customScene, after the enemy and before him: the beam of the BLAST or the laser, and (every frame, also when the move is over) the hole the laser made in the enemy
+  const b = g.bh; if (b && b.kind === 'beam') irbBack(g, b, now, x, y, src); else if (b && b.kind === 'laser') irlBack(g, b, now, x, y, src);
+  irlWorld(now, cx);
 }
 
 // ================================================================ v1.195 IRON MAN'S REPULSOR BLAST (this file is spliced into template.html by build_html.py, right after ironh.js)
@@ -17674,7 +17688,7 @@ function irbStart(g, now) {      // BLUE while the repulsor mode is on (irBhStar
   if (!g.bmp) irbPics(g);
   if (now < (g.bmCd || 0)) { say('WAIT', wx, '#9a9aa8', 8, now); return false; }
   if (!irhOk(now)) { say('NO ENEMY HERE', wx, '#9a9aa8', 8, now); return false; }
-  g.bh = { kind: 'beam', ph: 'raise', at: now, last: now, lift: 0, rot: 0, tk: 0, hit: false, imm: false, miss: false, rxAt: -1e9, fl: -1e9, acc: 0, on: -1, off: -1, imp: -1e9, blk: -1e9, ix: 0, iy: 0 };
+  g.bh = { kind: 'beam', lab: 'blast', ph: 'raise', at: now, last: now, lift: 0, rot: 0, tk: 0, hit: false, imm: false, miss: false, rxAt: -1e9, fl: -1e9, acc: 0, on: -1, off: -1, imp: -1e9, blk: -1e9, ix: 0, iy: 0 };
   g.bmCd = now + IRB.cd; stance = 'stand'; stickCr = false; snd('thrust', 0.5); return true;
 }
 function irbHurt(g, now) {      // a blow lands on him: the blast stops (the cooldown is cut to 3 s when it had not fired yet)
@@ -17757,6 +17771,221 @@ function irbFront(g, b, now, x, y, src) {      // the light at his palm: the bal
     if (r > 0) { irbDisc(px + 1, py, r + 3, '#6fe0ff', 0.2 * k); irbDisc(px + 1, py, r, '#d8faff', 0.8 * k); irbDisc(px + 1, py, Math.max(1, r - 3), '#ffffff', k); ctx.globalAlpha = 0.7 * k; ctx.fillStyle = '#ffffff'; ctx.fillRect(px - 10, py, 24, 1); ctx.fillRect(px + 1, py - 8, 1, 17); }      // (a bright flare with a cross of light)
   }
   ctx.restore(); ctx.globalAlpha = 1;
+}
+
+// ================================================================ v1.196 IRON MAN'S GROUND PUNCH AND RED LASER (this file is spliced into template.html by build_html.py, right after ironb.js)
+// The user, after v1.195: "now add to bearhug if i crouch and i use the move i will punch the ground and then while me and the enemy are falling i will punch their face sending them back but if its the street map then i will punch the ground cracking it and unstabling the enemy, if i walk back and use blast then i will fire a concentrated red laser that cuts through anything for 1 second if it hits the enemy it will pierce them and for a moment while the laser is through them they are stunned but not bleed as all blood is vaporized and after that they start to bleed as they are stunned for a few seconds".
+// The BLUE button now has FOUR forms, chosen by what he does when he presses it (irBhStart in tools/ironh.js; the label follows): standing = BEAR HUG, crouched = GROUND PUNCH (here), the REPULSOR mode on = BLAST (tools/ironb.js) and, walking back (holding the back key) in that mode = RED LASER (here). All of them are played by the state g.bh with a `kind` of its own, and customScene asks irBhStep for his picture while one runs.
+// GROUND PUNCH (kind 'gp' on the street and in the lobby, 'gt' in the skyscraper): from the crouch he raises his right fist high over his head (0.26 s) and slams it into the ground.
+//   STREET: the road cracks towards the enemy (the cracks of Freddy's ground slam, fgCracks, drawn by fgDrawGround), chunks fly up, the shock runs along the ground at 520 px a second and when it reaches the enemy (up to 200 px away) it throws him off balance: 8 damage, he is flung 16 px up and comes down stunned for 1.2 s. An enemy in the air (a jump) is not reached, a guard does not stop it, a crouching one is not spared.
+//   SKYSCRAPER (floor 2 or higher, the enemy on his floor, not in the elevator): the floor breaks under BOTH of them, two floors deep (one on the 2nd), and the two fall (the camera falls 1.1 s with them, the fall costs each 3% of health a floor, never a K.O.: the rule of every fall, as in Freddy's floor break); the enemy hangs in the air next to him, and 0.4 s into the fall Iron Man punches him in the face: 14 damage and the enemy is sent flying back 84 px; when the fall ends both land (the enemy on his back, down).
+// The cooldown is 10 s of the game's clock (the hug's: g.bhCd; 3 s when a blow stops it during the wind-up). It is the street move in the lobby, in the elevator's neighbourhood and with the enemy on another floor.
+// RED LASER (kind 'laser', the BLAST's relatives: raise 0.24 s, charge 0.56 s, FIRE 1 s, lower): a thin, concentrated red beam, 3 pixel rows at the height of his palm, to the edge of the screen. It cuts through anything: the skyscraper's furniture, walls and doors in its way are cut at once (twSweep) and a guard does not stop it. An enemy it touches is PIERCED: 20 damage, a hole through him (a glowing spot, steam: all his blood is vaporized), he is stunned for as long as the beam is through him and he does not bleed; the beam does 1 more damage every 0.1 s on its way through him. When the beam is gone the hole opens and he starts to BLEED (2 damage every 0.5 s for 4 s, the engine's d.bleed, with drops of blood when SETTINGS > GRAPHIC DAMAGE is FULL) and stays stunned for 3 s. A crouching, flat, dodging or lying enemy is not touched. Cooldown 12 s (the blast's: g.bmCd).
+const IRP = { wind: 260, hold: 150, rise: 360, fall: 1100, kb: 260, knockPx: 84, land: 480, cd: 10000, dmgS: 8, dmgF: 14, floors: 2, wave: 520, range: 200, gap: 34 };      // (times in game ms; wave: how fast the shock runs, px a second; range: how far it reaches; gap: how far in front of him the enemy hangs in the fall)
+const IRL = { raise: 240, charge: 560, fire: 1000, lower: 300, t0: 30, tick: 100, pierce: 20, thru: 1, bleedDm: 2, bleedGap: 500, bleedMs: 4000, stun: 3000, cd: 12000, sweep0: 90, sweepD: 36 };      // (charge and fire are REAL ms, irRate() turns them into game ms: the beam is on for exactly one second; pierce: the first touch; thru: every tick after it)
+// ---- the pictures
+function irpPics(g) {      // the ground punch: gw = the fist goes up (4), gs = the fist in the ground (2), gr = he stands up again (4), gf = falling (3), gx = the punch in the face (3: the fist drawn back, the arm out, held)
+  const feet = [{ ax: 33, ay: C4IG, a: 0 }, { ax: 59, ay: C4IG, a: 0 }], wide = [{ ax: 31, ay: C4IG, a: 0 }, { ax: 58, ay: C4IG, a: 0 }];
+  const up0 = crG({ x: 43, lean: 10, hdx: 1.4, hdt: 0, arms: [IR_CA[0], { al: 146, el: 12 }] }), up1 = crG({ x: 43, lean: 8, hdx: 1.2, hdt: -2, arms: [{ al: 30, el: 70 }, { al: 156, el: 8 }], legs: feet });
+  const hit = crG({ x: 41, y: 81, lean: 44, hdx: 3, hdy: 2.2, hdt: 20, arms: [{ al: 10, el: 60 }, { al: 24, el: -6 }], legs: wide }), held = crG({ x: 41, y: 81, lean: 43, hdx: 3, hdy: 2.2, hdt: 19, arms: [{ al: 12, el: 56 }, { al: 24, el: -6 }], legs: wide });
+  const rise = crG({ x: 43, y: 70, lean: 30, hdx: 2.2, hdy: 1.4, hdt: 10, arms: [{ al: 30, el: 70 }, { al: 40, el: 40 }], legs: feet });
+  const fl = (lean, hdt, a0, a1, l0, l1) => irG({ x: 46, y: 64, lean, hdx: 1.3, hdt, arms: [a0, a1], legs: [{ ax: 40, ay: C4IG - l0[0], a: l0[1] }, { ax: 54, ay: C4IG - l1[0], a: l1[1] }] });
+  const fp = (lean, hdt, hdx, a, l0, l1) => irG({ x: 44, y: 64, lean, hdx, hdt, arms: [{ al: 30, el: 80 }, a], legs: [{ ax: 38, ay: C4IG - l0[0], a: l0[1] }, { ax: 54, ay: C4IG - l1[0], a: l1[1] }] });
+  g.bpp = {
+    gw: [c4xMixPose(IR_CRO, up0, 0.5), up0, c4xMixPose(up0, up1, 0.5), up1].map(ironCut), gs: [hit, held].map(ironCut), gr: [c4xMixPose(held, rise, 0.5), rise, c4xMixPose(rise, IR_GD, 0.5), IR_GD].map(ironCut),
+    gf: [fl(4, -4, { al: 74, el: 44 }, { al: 90, el: 30 }, [6, 14], [4, -10]), fl(8, 0, { al: 96, el: 20 }, { al: 60, el: 50 }, [8, 18], [5, -8]), fl(2, -6, { al: 56, el: 60 }, { al: 84, el: 24 }, [5, 8], [9, -16])].map(ironCut),
+    gx: [fp(6, 2, 1.5, { al: -30, el: 100 }, [8, 14], [6, -10]), fp(16, 8, 1.8, { al: 90, el: 0 }, [8, 18], [7, -14]), fp(18, 9, 2, { al: 92, el: -2 }, [9, 20], [7, -16])].map(ironCut)
+  };
+}
+function irlPics(g) {      // the laser: the same four sets as the blast (raise 4, charge 2, fire 2, lower 4) but braced with both hands (the left forearm under the right arm), without the blue palm glow (the red light is drawn), every picture knows its palm
+  const feet = [{ ax: 35, ay: C4IG, a: 0 }, { ax: 59, ay: C4IG, a: 0 }], brace = o => irG({ y: 63, hdy: 1.5, legs: feet, rr: 0, ...o });
+  const hold = (x, lean) => brace({ x, lean, hdx: 1.1, hdt: -2, arms: [{ al: 62, el: 34 }, { al: 84, el: 2 }] }), fire = lean => brace({ x: 44, lean, hdx: 0.8, hdt: -6, arms: [{ al: 66, el: 28 }, { al: 86, el: 0 }] });
+  const cut = p => { const c = ironCut(p); c.palm = irbPalm(p); return c; };
+  g.blp = { rz: [0.25, 0.5, 0.75, 1].map(k => c4xMixPose(IR_GD, hold(45, -3), k)).map(cut), ch: [hold(45, -3), hold(45, -5)].map(cut), fi: [fire(-7), fire(-9)].map(cut), lo: [0.25, 0.5, 0.75, 1].map(k => c4xMixPose(fire(-8), IR_GD, k)).map(cut) };
+}
+// ---- GROUND PUNCH
+const irpTower = () => twOn() && !vs.tw.cab && vs.tw.fMe >= 2 && !vs.tw.away && vs.tw.fFoe === vs.tw.fMe;      // (the floor can be broken: the skyscraper, not the lobby, not in the cab, and the enemy is on this floor)
+function irpStart(g, now) {      // BLUE pressed crouched, the repulsor mode off: the ground punch begins (false when it cannot)
+  if (!g.bpp) irpPics(g);
+  if (now < (g.bhCd || 0)) { say('WAIT', wx, '#9a9aa8', 8, now); return false; }
+  if (!irhOk(now)) { say('NO ENEMY HERE', wx, '#9a9aa8', 8, now); return false; }
+  g.bh = { kind: irpTower() ? 'gt' : 'gp', lab: 'punch', ph: 'wind', at: now, last: now, lift: 0, rot: 0, wave: null, kb: null, fp: false, ms: 0, tf: 0, n: 0 };
+  g.bhCd = now + IRP.cd; stance = 'stand'; stickCr = false; snd('swing', 3); return true;
+}
+function irpHurt(g, now) { const b = g.bh; if (b.ph === 'wind') { g.bhCd = Math.min(g.bhCd || 0, now + IRH.cdMiss); irBhEnd(g, now); } }      // (a blow that lands while he is still winding up stops it; after the punch nothing can reach him)
+function irpImpact(g, b, now) {      // the fist hits the ground: the shock, the dust, and then the street's cracks or the skyscraper's broken floor
+  const d = dummy, ix = wx + 24, dir = d && d.x >= wx ? 1 : -1, tw = b.kind === 'gt';
+  gritAt(ix, 12, 130, 0); shockAt(ix, 240, 100, 0.9); puff(ix - 6, 8); puff(ix + 6, 8); snd('land', 1.8); snd(tw ? 'concboom' : 'twbreak', tw ? undefined : 3); flash(now, 90, 0.2); hitStop(60); shakeUntil = Math.max(shakeUntil, now + 380); shakeAmp = Math.max(shakeAmp, 5);
+  debBurst(ix, 6, 18, ['#8a8a92', '#6d6d75', '#b8b0a0', '#4c4a40'], 160);
+  if (tw) { irpBreak(g, b, now); return; }
+  fgCracks.push({ x: ix, at: now, dir, len: Math.min(170, Math.max(70, Math.abs(d.x - wx) + 30)), seed: (now | 0) & 255, ir: true }); if (fgCracks.length > 4) fgCracks.shift();      // (a crack runs along the road towards the enemy)
+  b.wave = { x0: ix, dir, at: now, hit: false };
+}
+function irGround(now, cx) {      // customScene, on the floor under everybody: Freddy's cracks (fgDrawGround), and over his the deeper cracks of the ground punch: wider, with a light lip and branches
+  fgDrawGround(now, cx);
+  for (const c of fgCracks) {
+    if (!c.ir) continue; const a = now - c.at; if (a > 6000) continue; const al = a > 4500 ? (6000 - a) / 1500 : 1, n = Math.floor(c.len * Math.min(1, a / 200)); let y = 0, s = c.seed * 977 + 13;
+    for (let i = 0; i < n; i++) {
+      if (i % 3 === 0) { s = (s * 1103515245 + 12345) >>> 0; y = Math.max(0, Math.min(5, y + ((s >> 8) & 1 ? 1 : -1))); }
+      const X = cx + Math.round(c.x + c.dir * i - wx); ctx.fillStyle = 'rgba(188,180,158,' + (0.55 * al).toFixed(2) + ')'; ctx.fillRect(X, gy + y, 1, 1); ctx.fillStyle = 'rgba(6,4,10,' + al.toFixed(2) + ')'; ctx.fillRect(X, gy + 1 + y, 1, 2);      // (the lip of the crack, the dark crack)
+      if (i % 13 === 6) { ctx.fillRect(X, gy + 3 + y, 1, 3); ctx.fillRect(X + c.dir, gy + 5 + y, 1, 2); }      // (a branch)
+    }
+    if (a < 500) { ctx.fillStyle = 'rgba(255,200,120,' + (0.6 * (1 - a / 500)).toFixed(2) + ')'; ctx.fillRect(cx + Math.round(c.x - wx) - 2, gy - 1, 5, 3); }      // (the glow of the fist where it hit)
+  }
+}
+function irpWave(g, b, now) {      // the shock on the ground reaches the enemy: he is thrown off balance (once)
+  const w = b.wave, d = dummy; if (!w || w.hit) return; if (!d || d.ko >= 0 || d.cap || (twOn() && vs.tw.away)) { b.wave = null; return; }
+  const dist = (d.x - w.x0) * w.dir; if (dist < -30) { b.wave = null; return; } if (dist > IRP.range) { b.wave = null; return; }
+  if (now - w.at < Math.max(0, dist) / IRP.wave * 1000) return; w.hit = true;
+  if ((d.airH || 0) > 8) { say('MISS', d.x, '#9fd8ff', 8, now); return; }      // (a jump over the shock)
+  if (irhHit(now, IRP.dmgS, { launch: 16, sy: 6, low: true, rx: 7 })) { if (d.ko < 0) { cuStun(1.2, now, true); say('UNSTABLE', d.x, '#ffd34d', 8, now + 60); } spark(d.x, gy - 4, 8, ['#b8b0a0', '#8a8a92', '#ffffff'], false, 1); }
+}
+function irpBreak(g, b, now) {      // the floor breaks under both of them and both fall (the way Freddy's does it, fgTowerBreak): holes, the camera falls with them, the fall damage, the enemy hangs next to him
+  const T = vs.tw, d = dummy, f = T.fMe, F = twFloorData(f), n = Math.min(IRP.floors, f - 1), x = wx, gap = d.x - wx;
+  for (let i = 0; i < n; i++) { twAddHole(f - i, x, 28, now); if (Math.abs(gap) > 24) twAddHole(f - i, d.x, 28, now); }
+  debBurst(x, 6, 18 + 2 * n, ['#8a8a92', '#6d6d75', '#b8b0a0', '#6d3b2c'], 150 + 10 * n); puff(x - 8, 6); puff(x + 8, 6); shockAt(x, 280, 120, 0.9); shakeUntil = Math.max(shakeUntil, now + 520); shakeAmp = Math.max(shakeAmp, 6); hitStop(70);
+  for (const dr of F.doors) if (dr.k === 'elev' && Math.abs(dr.x - x) < 50) twDoorHit(F, dr, 25 + 15 * n, now);
+  twLightsShock(F, x, 90 + 20 * n, 30 + 20 * n, now); twHaze(now, 0.8); twFlash(x, now, [255, 240, 210], 36);
+  const to = f - n, dmMe = Math.max(1, Math.round(PHP * Math.min(0.30, 0.03 * n))), dmFoe = Math.round((d.max || DUMMY_HP) * Math.min(0.30, 0.03 * n));
+  T.fMe = to; T.fFoe = to; T.lastFallX = x; T.away = false; d.twAway = false; twFloorSwitch(now, x, 'fall'); d.x = twPlace(twFloorData(to), wx + IRP.gap); d.vx = 0; d.down = 0;
+  twHurtMe(dmMe, now, true); twHurtFoe(dmFoe, now, true); T.dx = d.x; T.dHp = d.hp; T.pHp = vs.hp; T.dHit = d.hitAt;
+  let ms = IRP.fall; if (T.slide) { T.slide.pair = true; T.slide.ms = ms; vs.nHold = Math.max(vs.nHold || 0, now + ms); if (T.banner) T.banner.at = now + ms; } else ms = 600;
+  b.ms = ms; b.tf = Math.round(ms * 0.36); b.n = n; say('BREAK!', x, '#ffd34d', 8, now); irhHold(now, 4, true);
+}
+function irpFace(g, b, now) {      // the punch in the face, in the middle of the fall: 14 damage, he is sent back
+  const d = dummy; if (!d || d.ko >= 0) return;
+  if (irhHit(now, IRP.dmgF, { sy: 50, rx: 5 })) { b.kb = { at: now, x0: d.x }; hitStop(60); shakeUntil = Math.max(shakeUntil, now + 200); shakeAmp = Math.max(shakeAmp, 4); spark(d.x - 6, gy - 50, 10, ['#ffffff', '#ffe9a0', '#ff8a7a'], true, 1); snd('smack', 3); }
+}
+function irpLand(g, b, now) {      // the fall ends: both land, the enemy on his back
+  const d = dummy; b.ph = 'land'; b.at = now; b.lift = 0; b.kb = null;
+  if (d && d.air && d.air.hover) { d.air = null; d.airH = 0; }
+  if (d && d.ko < 0) { d.rx = 4; d.rxAt = now; d.down = now + RX_DUR[4]; d.stunUntil = Math.max(d.stunUntil || 0, now + RX_DUR[4] + 200); d.hitDone = false; d.vx = 0; if (twOn()) { const T = vs.tw; T.dDown = d.down; T.dHit = d.hitAt; } }
+  puff(d ? d.x : wx, 8); puff(wx, 6); gritAt(wx, 10, 100, 0); snd('land', 2.2); shakeUntil = Math.max(shakeUntil, now + 300); shakeAmp = Math.max(shakeAmp, 4);
+}
+function irpStep(g, b, now, dt) {      // every frame of the ground punch: the picture
+  const P = g.bpp, d = dummy, u = now - b.at; b.last = now; b.rot = 0;
+  if (vs.ph !== 'fight' || !d) { irBhEnd(g, now); return null; }
+  if (b.wave) irpWave(g, b, now);
+  if (b.ph === 'wind') { b.lift = 0; if (u >= IRP.wind) { b.ph = b.kind === 'gt' ? 'fall' : 'hold'; b.at = now; irpImpact(g, b, now); if (!g.bh) return null; return P.gs[0]; } return P.gw[Math.min(3, Math.floor(u / IRP.wind * 4))]; }
+  if (b.ph === 'hold') { b.lift = 0; if (u >= IRP.hold) { b.ph = 'rise'; b.at = now; } return P.gs[u < 60 ? 0 : 1]; }
+  if (b.ph === 'rise') { b.lift = 0; if (u >= IRP.rise) { irBhEnd(g, now); return null; } return P.gr[Math.min(3, Math.floor(u / IRP.rise * 4))]; }
+  if (b.ph === 'fall') {      // the two of them fall together: he floats at the height the enemy hangs at, the face punch comes at b.tf
+    b.lift = 14 * Math.min(1, u / 120); irhHold(now, b.lift + 4, true);
+    if (u >= b.tf && !b.fp) { b.fp = true; irpFace(g, b, now); }
+    if (b.kb) { const q = Math.min(1, (now - b.kb.at) / IRP.kb); d.x = twPlace(twFloorData(vs.tw.fMe), b.kb.x0 + IRP.knockPx * (1 - (1 - q) * (1 - q))); vs.tw.dx = d.x; }
+    if (u >= b.ms) { irpLand(g, b, now); return g.bhp.land[0]; }
+    if (u < 90) return P.gs[1];
+    if (u >= b.tf - 140 && u < b.tf + 200) return P.gx[u < b.tf - 50 ? 0 : u < b.tf + 90 ? 1 : 2];
+    return P.gf[Math.floor(u / 100) % 3];
+  }
+  if (b.ph === 'land') { b.lift = 0; if (u >= IRP.land) { irBhEnd(g, now); return null; } return g.bhp.land[Math.min(5, Math.floor(u / IRP.land * 6))]; }
+  irBhEnd(g, now); return null;
+}
+// ---- RED LASER
+let irlHole = null, irDrop = 0;      // the hole the laser made in the enemy { who, at, off (when the beam left him: 0 while it is through him), hgt (height above the floor), ox }; when the next drop of blood may fly
+function irlStart(g, now) {      // BLUE pressed walking back in the repulsor mode: the laser begins (false when it cannot)
+  if (!g.blp) irlPics(g);
+  if (now < (g.bmCd || 0)) { say('WAIT', wx, '#9a9aa8', 8, now); return false; }
+  if (!irhOk(now)) { say('NO ENEMY HERE', wx, '#9a9aa8', 8, now); return false; }
+  const R = irRate();
+  g.bh = { kind: 'laser', lab: 'laser', ph: 'raise', at: now, last: now, lift: 0, rot: 0, tk: 0, nt: Math.floor(IRL.fire * R / IRL.tick), cm: IRL.charge * R, fm: IRL.fire * R, hit: false, imm: false, miss: false, on: -1, off: -1, imp: -1e9, ix: 0, sn: 0, ko: false };
+  g.bmCd = now + IRL.cd; stance = 'stand'; stickCr = false; snd('thrust', 0.5); return true;
+}
+function irlEnd(g, b, now) {      // the beam is gone (it ran out, he was hit, or the enemy was knocked out): an enemy it went through starts to bleed and stays stunned
+  if (b.off >= 0) return; b.off = now; const d = dummy, H = irlHole;
+  if (b.hit && d && d.ko < 0 && H && H.who === d && !H.off) {
+    H.off = now; d.bleed = { next: now + 300, until: now + IRL.bleedMs, gap: IRL.bleedGap, dm: IRL.bleedDm, quiet: true }; cuStun(IRL.stun / 1000, now, true); say('BLEEDING', d.x, '#ff3a4a', 8, now); snd('hit', 1);
+    if (gdSet() === 0) spark(d.x, gy - H.hgt - (d.airH || 0), 8, ['#8a0a14', '#c4121c', '#ff2a3a'], false, 1);
+  } else if (H && !H.off) H.off = now;
+}
+function irlHurt(g, now) {      // a blow lands on him: the laser stops (before it fires the cooldown is cut to 3 s; an enemy it went through starts to bleed)
+  const b = g.bh; if (b.ph === 'raise' || b.ph === 'charge') g.bmCd = Math.min(g.bmCd || 0, now + IRH.cdMiss); else if (b.ph === 'fire') irlEnd(g, b, now); irBhEnd(g, now);
+}
+function irlShape(b) { const s = {}, m = irbMx(b); for (let r = b.py - 2; r <= b.py; r++) s[r] = [m, m + irbLen(b)]; return s; }      // (3 rows: the palm's row - 1, and one more above and below)
+function irlTick(g, b, now) {      // one tick of the laser: it cuts what is in its way, and an enemy it touches is pierced (the first time) or burnt on its way through him
+  if (twOn() && !vs.tw.cab) twSweep(irbMx(b), irbMx(b) + irbLen(b), b.tk === 0 ? IRL.sweep0 : IRL.sweepD, now);      // (it cuts through anything: furniture, walls and doors)
+  const d = dummy; if (!d || d.ko >= 0 || d.cap || !vs || vs.ph !== 'fight' || now - d.born < 600) return;
+  if (twOn()) { const T = vs.tw; if (T.away || T.cab || T.fFoe !== T.fMe || d.twAway) return; }
+  if (!hbTouchFoe(irlShape(b), d)) return;
+  if (d.vform && d.vform !== 'verity') { if (!b.imm) { b.imm = true; say('IMMUNE', d.x, '#ffe9a0', 8, now); } return; }
+  if ((d.vact && d.vact.type === 'crouch') || now < (d.down || 0) || (d.cact && d.cact.flat) || now < (d.dodgeUntil || 0)) { if (!b.miss) { b.miss = true; say('MISS', d.x, '#9fd8ff', 8, now); } return; }      // (the same enemies the other blows cannot touch; a guard is not one of them)
+  const hgt = 61 - b.py, ey = gy - hgt - (d.airH || 0), first = !b.hit; b.ix = d.x; b.imp = now;
+  const dm = Math.max(1, Math.round((first ? IRL.pierce : IRL.thru) * cuS.dm / 100));
+  if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; } if (first) { b.hit = true; hits.n++; vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n); } hits.dmg += dm; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = 0;
+  d.hp = Math.max(0, d.hp - dm); d.hitAt = now; cuStun(0.3, now, true); d.vx = 0;      // (stunned for as long as the beam is through him)
+  if (first) {      // the pierce: a hole through him, steam where his blood boiled away, a bright flash
+    irlHole = { who: d, at: now, off: 0, hgt, ox: 0 }; say('PIERCED', d.x, '#ff6a5a', 8, now); say('' + dm, d.x + 8, popCol(), 8, now); hitStop(70); flash(now, 100, 0.25); shakeUntil = Math.max(shakeUntil, now + 260); shakeAmp = Math.max(shakeAmp, 4);
+    spark(d.x, ey, 12, ['#ffffff', '#ffd9a0', '#ff6a3a'], true, 1); spark(d.x, ey, 8, ['#ffffff', '#ffb070'], false, -1); snd('hit', 3);
+  } else { puff(d.x + (Math.random() * 6 - 3), 1); if (b.tk % 3 === 0) spark(d.x + 4, ey, 3, ['#ffffff', '#ffb070', '#ff6a3a'], false, 1); }
+  if (twOn()) { const T = vs.tw; T.dHp = d.hp; T.dHit = d.hitAt; T.dDown = d.down || 0; }      // (the skyscraper's watcher must not take it for a blow that puts him down)
+  if (d.hp <= 0) { koDummy(now); b.ko = true; }
+}
+function irlStep(g, b, now, dt) {      // every frame of the laser: the picture
+  const P = g.blp, u = now - b.at; b.last = now; b.lift = 0; b.rot = 0;
+  if (vs.ph !== 'fight') { irBhEnd(g, now); return null; }
+  let pic;
+  if (b.ph === 'raise') { pic = P.rz[Math.min(3, Math.floor(u / IRL.raise * 4))]; if (u >= IRL.raise) { b.ph = 'charge'; b.at = now; snd('redcharge'); snd('thrust', 0.6); } }
+  else if (b.ph === 'charge') {
+    pic = P.ch[Math.floor(u / 80) % 2]; if (Math.random() < 0.05) puff(wx - 6, 2);
+    if (u >= b.cm) { b.ph = 'fire'; b.at = now; b.on = now; b.tk = 0; b.sn = 0; snd('redfire'); snd('concboom'); flash(now, 140, 0.3); shakeUntil = Math.max(shakeUntil, now + 260); shakeAmp = Math.max(shakeAmp, 4); gritAt(wx - 8, 10, 100, -1); if (twOn()) twLightsShock(twFloorData(vs.tw.fMe), wx + 40, 140, 70, now); }
+  }
+  else if (b.ph === 'fire') {
+    pic = P.fi[Math.floor(u / 60) % 2]; b.px = pic.palm.px; b.py = pic.palm.py;
+    while (b.tk < b.nt && u >= IRL.t0 + b.tk * IRL.tick && !b.ko) { irlTick(g, b, now); b.tk++; }
+    shakeUntil = Math.max(shakeUntil, now + 80); shakeAmp = Math.max(shakeAmp, 1.5);
+    if (u >= b.sn) { snd('cecrackle'); b.sn = u + 150; }
+    if (u >= b.fm || b.ko) { b.ph = 'lower'; b.at = now; irlEnd(g, b, now); snd('ceoff'); }
+  }
+  else if (b.ph === 'lower') { pic = P.lo[Math.min(3, Math.floor(u / IRL.lower * 4))]; if (u >= IRL.lower) { irBhEnd(g, now); return null; } }
+  else { irBhEnd(g, now); return null; }
+  if (pic.palm) { b.px = pic.palm.px; b.py = pic.palm.py; }
+  return pic;
+}
+// ---- what customScene draws for the laser: the beam (before him), the light at his palm (after him), and the hole in the enemy with the steam and the blood (every frame, also after the move is over)
+function irlBack(g, b, now, x, y, src) {      // the beam: a hot white core, a pink and a red layer and a faint glow, straight through the enemy to the edge of the screen; where it enters and leaves him it flares
+  if (b.on < 0 || !src || !src.palm) return;
+  const k = Math.min(1, (now - b.on) / 50) * (b.off < 0 ? 1 : Math.max(0, 1 - (now - b.off) / 160)); if (k <= 0) return;
+  const x0 = Math.round(x + src.palm.px) + 2, yc = Math.round(y + src.palm.py) + 1, len = Math.max(4, Math.round(irbLen(b) * k)), flick = Math.floor(now / 40) % 3;
+  ctx.save();
+  for (const [h, col] of [[5, 'rgba(255,50,60,0.10)'], [4, 'rgba(255,60,70,0.22)'], [flick === 1 ? 3 : 2, 'rgba(255,110,110,0.6)'], [2, 'rgba(255,205,195,0.92)'], [1, '#ffffff']]) { ctx.fillStyle = col; ctx.fillRect(x0, yc - h, len, h * 2 + 1); }
+  ctx.fillStyle = 'rgba(255,240,235,0.9)'; for (let i = 0; i < 10; i++) ctx.fillRect(x0 + Math.round((i * 67 + now * 1.6) % len), yc + ((i * 3) % 3) - 1, 5 + (i % 3) * 3, 1);
+  if (!SET.lite) { ctx.fillStyle = 'rgba(255,150,140,0.8)'; for (let i = 0; i < 10; i++) ctx.fillRect(x0 + Math.floor(Math.random() * len), yc + (Math.random() < 0.5 ? -1 : 1) * (4 + Math.floor(Math.random() * 4)), 1 + Math.floor(Math.random() * 2), 1); }
+  if (b.hit && now - b.imp < 200) { const ex = Math.round(Math.round(VW / 2) + b.ix - wx); for (const [px, r] of [[ex - 8, 6], [ex + 8, 4]]) { irbDisc(px, yc, r + 3, '#ff5a4a', 0.25 * k); irbDisc(px, yc, r, '#ffc0a8', 0.6 * k); irbDisc(px, yc, Math.max(1, r - 3), '#ffffff', 0.95 * k); } }      // (the flare where it goes in and where it comes out)
+  ctx.restore();
+}
+function irlFront(g, b, now, x, y, src) {      // the light at his palm: in the charge a ring of red light closes on the palm while sparks fall into it, a hard point of light when it fires
+  if (!src || !src.palm || b.ph === 'raise') return;
+  const px = Math.round(x + src.palm.px) + 1, py = Math.round(y + src.palm.py) + 1; ctx.save();
+  if (b.ph === 'charge') {
+    const k = Math.min(1, (now - b.at) / b.cm), e = k * k * (3 - 2 * k), r = Math.round(16 - 13 * e);
+    ctx.strokeStyle = 'rgba(255,80,90,' + (0.35 + 0.4 * e).toFixed(2) + ')'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(px + 0.5, py + 0.5, r, 0, 6.2832); ctx.stroke();      // (the ring closes: the energy is concentrated)
+    irbDisc(px, py, 2 + Math.round(2 * e), '#ff4a5a', 0.5); irbDisc(px, py, 1 + Math.round(e * 2), '#ffffff', 1);
+    ctx.fillStyle = '#ff8a8a'; for (let i = 0; i < 14; i++) { const ph = (now * 0.006 + i * 0.151) % 1, rad = (1 - ph) * 30 * (1.1 - 0.7 * e), an = i * 2.4 + now * 0.003; ctx.globalAlpha = 0.9 * ph; ctx.fillRect(Math.round(px + Math.cos(an) * rad), Math.round(py + Math.sin(an) * rad * 0.8), 2, 1); }
+  } else if (b.on >= 0) {
+    const k = b.off < 0 ? 1 : Math.max(0, 1 - (now - b.off) / 160), r = Math.round((4 + (Math.floor(now / 50) % 2)) * k);
+    if (r > 0) { irbDisc(px + 1, py, r + 3, '#ff4a5a', 0.22 * k); irbDisc(px + 1, py, r, '#ffc8b8', 0.85 * k); irbDisc(px + 1, py, Math.max(1, r - 2), '#ffffff', k); ctx.globalAlpha = 0.8 * k; ctx.fillStyle = '#ffffff'; ctx.fillRect(px - 8, py, 18, 1); ctx.fillRect(px + 1, py - 6, 1, 13); }
+  }
+  ctx.restore(); ctx.globalAlpha = 1;
+}
+function irlWorld(now, cx) {      // the hole in the enemy: while the beam is through him a glowing spot with steam (his blood has boiled away), when it is gone the hole opens: a dark centre, a rim that cools, and (with GRAPHIC DAMAGE on FULL) blood that runs down him
+  const H = irlHole; if (!H) return; const d = H.who;
+  if (d !== dummy || d.ko >= 0 || !vs || vs.ph !== 'fight' || now - (H.off || H.at) > 7000) { irlHole = null; return; }
+  const hx = Math.round(cx + d.x - wx + H.ox), hy = Math.round(gy - H.hgt - (d.airH || 0)), blood = gdSet() === 0; ctx.save();
+  if (!H.off) {      // (the beam is through him)
+    irbDisc(hx, hy, 5, '#ff7a3a', 0.3); irbDisc(hx, hy, 3, '#ffd9a0', 0.8); irbDisc(hx, hy, 1, '#ffffff', 1);
+    ctx.fillStyle = '#eef0f4'; for (let i = 0; i < 4; i++) { const t = ((now * 0.05 + i * 7) % 16), a = 1 - t / 16; ctx.globalAlpha = 0.7 * a; ctx.fillRect(hx - 3 + i * 2 + Math.round(Math.sin(now * 0.01 + i) * 2), hy - 3 - Math.round(t), 1, 2); }      // (steam)
+  } else {
+    const age = now - H.off, cool = Math.max(0, 1 - age / 1600);
+    if (cool > 0) irbDisc(hx, hy, 3, '#ff8a3a', 0.55 * cool);
+    ctx.globalAlpha = 1; ctx.fillStyle = '#12050a'; ctx.fillRect(hx, hy, 2, 2); ctx.fillStyle = cool > 0 ? 'rgba(255,140,60,' + cool.toFixed(2) + ')' : '#5a0a12'; ctx.fillRect(hx - 1, hy, 1, 2); ctx.fillRect(hx + 2, hy, 1, 2); ctx.fillRect(hx, hy - 1, 2, 1); ctx.fillRect(hx, hy + 2, 2, 1);      // (a hole of 2 x 2 with a rim that cools from orange to dark red)
+    if (blood) { for (let i = -1; i <= 1; i++) { const len = Math.min(12 + i * i * 2, Math.round(age / 90) + 1 + (i === 0 ? 3 : 0)), bx = hx + i * 2; ctx.fillStyle = '#7a0812'; ctx.fillRect(bx, hy + 2, 1, len); ctx.fillStyle = '#d4141f'; ctx.fillRect(bx, hy + 2 + len - 1, 1, 1); } }      // (blood runs down from the hole)
+    else if (age < 1200) { ctx.fillStyle = '#ffb070'; ctx.globalAlpha = 1 - age / 1200; ctx.fillRect(hx - 2 + (Math.floor(now / 60) % 3), hy - 2 - (Math.floor(now / 90) % 3), 1, 1); }      // (a few embers when there is no blood)
+  }
+  ctx.restore(); ctx.globalAlpha = 1;
+}
+function irBleedFx(now) {      // every frame he fights: the enemy's bleeding goes on (the engine's d.bleed: vpBleed takes its damage) and drops of blood fly off him (GRAPHIC DAMAGE on FULL)
+  vpBleed(now); const d = dummy, H = irlHole; if (!d || !d.bleed || d.ko >= 0 || now < irDrop || gdSet() !== 0 || !H || H.who !== d) return;
+  irDrop = now + 150; spark(d.x + Math.random() * 4 - 2, gy - H.hgt - (d.airH || 0) + 2, 1, ['#c4121c', '#ff2a3a'], false, Math.random() < 0.5 ? 1 : -1);
 }
 
 function drawScene(now, dt) {
@@ -20892,6 +21121,17 @@ $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
  {
+  "v": "1.196",
+  "t": "IRON MAN: GROUND PUNCH (CROUCH) AND RED LASER (WALK BACK IN THE REPULSOR MODE)",
+  "n": [
+   "You said: if I crouch and use the move (the bear hug) I punch the ground, and in the skyscraper, while the enemy and I are falling, I punch his face and send him back; on the street I punch the ground, crack it and make the enemy unstable. And if I walk back and use blast I fire a concentrated red laser that cuts through anything for 1 second: it pierces the enemy, who is stunned but does not bleed while the laser is through him because all his blood is vaporized, and after that he starts to bleed and stays stunned for a few seconds.",
+   "The BLUE button has four forms now and its name tells you which one you get: BEAR HUG when you stand, GROUND PUNCH while you are crouched, BLAST when the REPULSOR mode is on, and RED LASER when the REPULSOR mode is on and you are walking back (holding the back direction).",
+   "GROUND PUNCH: from the crouch he raises his right fist high over his head and slams it into the ground. On the STREET the road cracks towards the enemy and the shock runs along the ground; when it reaches him (up to 200 px away) he is thrown off balance: 8 damage, flung up and stunned for 1.2 seconds. A guard does not stop it and a crouching enemy is not spared, but an enemy who jumps over it is not touched. In the SKYSCRAPER the floor breaks under both of you and you fall two floors together (one from the 2nd floor); while you fall Iron Man punches the enemy in the face, 14 damage, and sends him flying back. You land, the enemy on his back. Each of you loses 3% of health a floor from the fall, never enough to K.O. In the lobby it is the street version, and it does nothing when the enemy is on another floor. 10 second cooldown (shared with the bear hug).",
+   "RED LASER: he braces his raised arm with both hands, a ring of red light closes on his palm (about 0.6 seconds) and a thin, concentrated red laser fires across the screen for exactly 1 second. It cuts through anything: a guard does not stop it, and in the SKYSCRAPER the furniture, walls and doors in its way are cut at once. An enemy it touches is pierced: 20 damage and a hole through him. For as long as the laser is through him he is stunned, steams and does NOT bleed, because all his blood is vaporized, and it does 1 more damage every 0.1 seconds. When the laser is gone the hole opens: he starts to BLEED (2 damage every half second for 4 seconds, with blood when GRAPHIC DAMAGE is on FULL) and stays stunned for 3 more seconds. A crouching or dodging enemy is not touched. 12 second cooldown (shared with the blast).",
+   "A blow that lands on him before the fist hits the ground, or while the laser is charging or firing, stops the move (a laser that had already pierced the enemy still starts him bleeding). He is still in TRAINING only."
+  ]
+ },
+ {
   "v": "1.195",
   "t": "IRON MAN: BLAST (A CHARGED BEAM FROM HIS PALM, CONTINUOUS DAMAGE)",
   "n": [
@@ -23847,7 +24087,7 @@ async function scMoves() {
   await scIronMoves();
 }
 // v1.191 IRON MAN's moves: the chain (R.HOOK, L.HOOK, R.KICK, PUNCH), the ROCKET UPPERCUT (JUMP and ATTACK together, either one first), the DOWNSLAM (ATTACK 0.2 s after the jump, and an earlier one waits for it), crouch, block and dash; each is a check that the move that should come out did (cuAtkK: 0 - 3 the chain, 4 the uppercut, 5 the downslam), played against a standing enemy in front of him; v1.192 the LOW JABS (6: crouched, ATTACK), the CHARGE (7: ATTACK during a dash or just after it; a late one is a plain hook) and the BACKFLIP (8: DASH BACK twice, never two dashes forward); v1.193 the REPULSOR MODE (the MODE button: ATTACK is R.BLAST (9) and then L.BLAST (10), both hurt the enemy, the other moves stay, off again it is the chain); v1.194 the BEAR HUG (BLUE: he charges, grabs, hugs, flies up with the enemy hanging in his arms, turns over, dives and slams: 4 hits, it ends by itself, and it has a cooldown); in the skyscraper he is also one of the fighters of scTower
-const SC_IR_N = 29;
+const SC_IR_N = 38;
 async function scIronMoves() {
   const place = () => { TR.put = 2; trainPut(); };
   try { Object.assign(TR, { beh: 0, ehp: 1, php: 0, pce: 0, put: 2 }); startPractice('cu5', 'gojo'); } catch (e) { scErr(e, 'IRON MAN START'); return; }
@@ -23880,6 +24120,14 @@ async function scIronMoves() {
   let fired = false, burn = 0; for (let f = 0; f < 70 && CU_GAME[5].bh; f++) { await scFrames(1); if (CU_GAME[5].bh) { if (CU_GAME[5].bh.ph === 'fire') fired = true; burn = Math.max(burn, hits.dmg); } }
   ok(!CU_GAME[5].bh, 'THE BLAST WAS STILL GOING 3.5 S AFTER IT BEGAN: ' + (CU_GAME[5].bh && CU_GAME[5].bh.ph)); ok(fired && burn >= 30, 'THE BLAST DID NOT BURN THE ENEMY: FIRED ' + fired + ', DAMAGE ' + burn);
   await press('KeyL'); await scFrames(2); ok(!CU_GAME[5].bh, 'THE BLAST STARTED AGAIN DURING ITS COOLDOWN'); CU_GAME[5].bmCd = 0; CU_GAME[5].rp = false;
+  SC.say = 'IRON MAN: GROUND PUNCH'; await reset(); CU_GAME[5].rp = false; CU_GAME[5].bhCd = 0; dummy.x = wx + 70; stance = 'crouch'; await press('KeyL'); await scFrames(1); ok(!!CU_GAME[5].bh && CU_GAME[5].bh.kind === 'gp', 'BLUE WHILE CROUCHED DID NOT START THE GROUND PUNCH');
+  let gdm = 0; for (let f = 0; f < 70 && CU_GAME[5].bh; f++) { await scFrames(1); gdm = Math.max(gdm, hits.dmg); }
+  ok(!CU_GAME[5].bh, 'THE GROUND PUNCH WAS STILL GOING 3.5 S AFTER IT BEGAN: ' + (CU_GAME[5].bh && CU_GAME[5].bh.ph)); ok(gdm >= 8, 'THE SHOCK OF THE GROUND PUNCH DID NOT REACH THE ENEMY: DAMAGE ' + gdm);
+  stance = 'crouch'; await press('KeyL'); await scFrames(2); ok(!CU_GAME[5].bh, 'THE GROUND PUNCH STARTED AGAIN DURING ITS COOLDOWN'); CU_GAME[5].bhCd = 0; stance = 'stand';
+  SC.say = 'IRON MAN: RED LASER'; await reset(); CU_GAME[5].rp = true; CU_GAME[5].bmCd = 0; dummy.x = wx + 70; scKey('ArrowLeft', true); await scFrames(2); await press('KeyL'); scKey('ArrowLeft', false); await scFrames(1); ok(!!CU_GAME[5].bh && CU_GAME[5].bh.kind === 'laser', 'BLUE WALKING BACK IN THE REPULSOR MODE DID NOT START THE RED LASER');
+  let prc = 0, bled = false; for (let f = 0; f < 70 && CU_GAME[5].bh; f++) { await scFrames(1); prc = Math.max(prc, hits.dmg); if (dummy.bleed) bled = true; } for (let f = 0; f < 6; f++) { await scFrames(1); if (dummy.bleed) bled = true; }
+  ok(!CU_GAME[5].bh, 'THE RED LASER WAS STILL GOING 3.5 S AFTER IT BEGAN: ' + (CU_GAME[5].bh && CU_GAME[5].bh.ph)); ok(prc >= 20, 'THE RED LASER DID NOT PIERCE THE ENEMY: DAMAGE ' + prc); ok(bled, 'THE ENEMY DID NOT BLEED AFTER THE RED LASER');
+  await press('KeyL'); await scFrames(2); ok(!CU_GAME[5].bh, 'THE RED LASER STARTED AGAIN DURING ITS COOLDOWN'); CU_GAME[5].bmCd = 0; CU_GAME[5].rp = false;
   show('title');
 }
 
@@ -24051,11 +24299,18 @@ function scIronBeam() {      // v1.195 Iron Man in the skyscraper: whatever the 
   const g = CU_GAME[5]; if (!vs || vs.me !== 'cu5' || !g || !dummy || vs.ph !== 'fight') return; const n = pnow(); if (g.bh) irBhEnd(g, n); g.rp = true; g.bmCd = 0; twFoeHere(n); if (!irhOk(n)) return; dummy.x = twPlace(twFloorData(vs.tw.fMe), wx + 60); cuAtkAt = -1; cuJumpAt = -1; cuDash = null; blkAt = blkEnd = -1; blockHeld = false; stance = 'stand'; stickCr = false;
   if (irBhStart(g, n)) SC.ib = { f: vs.tw.fMe, at: n };
 }
+function scIronForm(kind) {      // v1.196 Iron Man in the skyscraper: whatever the random player was doing, the move he is in is cut and one of the new forms of BLUE begins with the enemy 60 px in front of him: 'punch' (crouched, the repulsor mode off: the floor breaks under both, the face punch) or 'laser' (the mode on, walking back); scIronFormEnd looks at it 4 - 6 s later
+  const g = CU_GAME[5]; if (!vs || vs.me !== 'cu5' || !g || !dummy || vs.ph !== 'fight') return; const n = pnow(); if (g.bh) irBhEnd(g, n); twFoeHere(n); if (!irhOk(n)) return; dummy.x = twPlace(twFloorData(vs.tw.fMe), wx + 60); cuAtkAt = -1; cuJumpAt = -1; cuDash = null; blkAt = blkEnd = -1; blockHeld = false; stickCr = false;
+  const kl = keyL, kr = keyR; g.rp = kind === 'laser'; g.bhCd = g.bmCd = 0; stance = kind === 'punch' ? 'crouch' : 'stand'; if (kind === 'laser') { keyL = true; keyR = false; } const started = irBhStart(g, n); keyL = kl; keyR = kr; if (started) SC.ix = { kind, f: vs.tw.fMe, at: n };
+}
+function scIronFormEnd() {
+  const g = CU_GAME[5]; if (!SC.ix || !vs || vs.me !== 'cu5') { SC.ix = null; return; } const k = g && g.bh && g.bh.kind; if (k && (SC.ix.kind === 'laser' ? k === 'laser' : k === 'gp' || k === 'gt')) scNote('fail', 'IRON MAN: THE ' + (SC.ix.kind === 'laser' ? 'RED LASER' : 'GROUND PUNCH') + ' IN THE SKYSCRAPER WAS STILL GOING 4 S AFTER IT BEGAN', 'PHASE ' + g.bh.ph + ', FLOOR ' + vs.tw.fMe + ' FROM ' + SC.ix.f); SC.ix = null;
+}
 function scIronBeamEnd() {
   const g = CU_GAME[5]; if (!SC.ib || !vs || vs.me !== 'cu5') { SC.ib = null; return; } if (g && g.bh && g.bh.kind === 'beam') scNote('fail', 'IRON MAN: THE BLAST IN THE SKYSCRAPER WAS STILL GOING 6 S AFTER IT BEGAN', 'PHASE ' + g.bh.ph + ', FLOOR ' + vs.tw.fMe); SC.ib = null;
 }
 function scIronHugEnd() {
-  const g = CU_GAME[5]; if (!SC.ih || !vs || vs.me !== 'cu5') { SC.ih = null; return; } if (g && g.bh) scNote('fail', 'IRON MAN: THE BEAR HUG IN THE SKYSCRAPER WAS STILL GOING 5 S AFTER IT BEGAN', 'PHASE ' + g.bh.ph + ', FLOOR ' + vs.tw.fMe + ' FROM ' + SC.ih.f); SC.ih = null;
+  const g = CU_GAME[5]; if (!SC.ih || !vs || vs.me !== 'cu5') { SC.ih = null; return; } if (g && g.bh && !g.bh.kind) scNote('fail', 'IRON MAN: THE BEAR HUG IN THE SKYSCRAPER WAS STILL GOING 5 S AFTER IT BEGAN', 'PHASE ' + g.bh.ph + ', FLOOR ' + vs.tw.fMe + ' FROM ' + SC.ih.f); SC.ih = null;
 }
 async function scTower() {
   SC.sec = 'SKYSCRAPER'; scCov('TOWER', 0, 5); SC.plan = 5 * 470; SC.done = 0; const keep = twPick; twPick = 1;
@@ -24065,7 +24320,7 @@ async function scTower() {
       try { Object.assign(TR, { beh: 1, ehp: 0, php: 0, pce: 0 }); startPractice(w, 'cat'); } catch (e) { scErr(e, label + ' START'); continue; }
       if (state !== 'play' || !twOn()) { scNote('fail', 'THE SKYSCRAPER DID NOT START: ' + label, 'STATE ' + state); show('title'); continue; }
       if (!(await scIntro())) { show('title'); return; }
-      const p = scPlayer(seed), ev = [[6, scIronHug], [100, scIronHugEnd], [112, scIronBeam], [232, scIronBeamEnd], [8, scFredSlam], [10, scFredSlam], [12, scFredSlam], [16, () => { if (fredMe() && !fg && !fgCd) scNote('warn', 'FREDDY: THE GROUND SLAM DID NOT START IN THE SKYSCRAPER', 'STANCE ' + stance + ', PHASE ' + vs.ph + ', SPAWN ' + Math.round(pnow() - spawnAt) + ' MS, HURT ' + hurtAt + ', STUN ' + Math.round(pStun - pnow()) + ', FLOOR ' + vs.tw.fMe + ', AWAY ' + vs.tw.away + ', CAB ' + !!vs.tw.cab + ', WATER ' + fwPh); }], [20, scSigns], [30, () => twSlam('foe', 2, pnow(), dummy.x)], [90, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [110, () => twMeFall(1, pnow(), wx)], [150, () => { const F = twFloorData(vs.tw.fMe); const o = { k: 'gas', x: Math.round(wx + 40), hp: 18, mx: 18, wob: 0, hitAt: -9999 }; F.objs.push(o); twDamageObj(F, o, 99, pnow()); }], [190, () => twCeiling('foe', 1, pnow(), dummy.x)], [235, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [250, () => twFallOut('foe', pnow(), 1)],
+      const p = scPlayer(seed), ev = [[6, scIronHug], [100, scIronHugEnd], [64, () => scIronForm('punch')], [148, scIronFormEnd], [112, scIronBeam], [166, () => scIronForm('laser')], [232, scIronBeamEnd], [240, scIronFormEnd], [8, scFredSlam], [10, scFredSlam], [12, scFredSlam], [16, () => { if (fredMe() && !fg && !fgCd) scNote('warn', 'FREDDY: THE GROUND SLAM DID NOT START IN THE SKYSCRAPER', 'STANCE ' + stance + ', PHASE ' + vs.ph + ', SPAWN ' + Math.round(pnow() - spawnAt) + ' MS, HURT ' + hurtAt + ', STUN ' + Math.round(pStun - pnow()) + ', FLOOR ' + vs.tw.fMe + ', AWAY ' + vs.tw.away + ', CAB ' + !!vs.tw.cab + ', WATER ' + fwPh); }], [20, scSigns], [30, () => twSlam('foe', 2, pnow(), dummy.x)], [90, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [110, () => twMeFall(1, pnow(), wx)], [150, () => { const F = twFloorData(vs.tw.fMe); const o = { k: 'gas', x: Math.round(wx + 40), hp: 18, mx: 18, wob: 0, hitAt: -9999 }; F.objs.push(o); twDamageObj(F, o, 99, pnow()); }], [190, () => twCeiling('foe', 1, pnow(), dummy.x)], [235, () => { if (twOn() && dummy) twFoeHere(pnow()); }], [250, () => twFallOut('foe', pnow(), 1)],
         [60, () => { const F = twFloorData(vs.tw.fMe), d = F.doors.find(q => q.k === 'elev'); if (d) twDoorHit(F, d, 45, pnow()); }],      // (v1.175 the elevator: a hard hit jams a door (OUT OF ORDER) ...)
         [270, () => { const T = vs.tw; if (T.cab) return; const F = twFloorData(T.fMe), d = twElevOf(F), L = T.lift; if (!d) return; d.st = 0; d.hp = 70; L.f = L.curF = L.dest = T.fMe; L.ph = 'park'; L.inFoe = false; L.job = null; L.pend = null; wx = d.x; T.px = wx; twCabEnter(F, d, pnow()); }],      // (v1.176 ... you step into the one cab of the building: the cut inside, the panel, a floor button (0.6 s, then it goes), an emergency stop, another floor,
         [274, () => { if (vs.tw.cab) scPanel(); }],
