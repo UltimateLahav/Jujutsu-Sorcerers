@@ -93,7 +93,7 @@ function cuenEv(e, now, gap, ag, toward, g, k) {      // one event of the blow c
     snd('f:hit', e.d >= 20 ? 3 : 0); const h = hurtAt; gojoHit(e.gk, now); if (hurtAt === h) return;
     if (o.launch && !gAir) { gAir = airMake(now, 0, Math.sqrt(2 * AIR_G * o.launch), AIR_G, 'up'); hurtK = AIR_RX; }
     if (o.stun) pStun = Math.max(pStun, now + o.stun * 1000);
-    if (o.bleed) vs.bleed = { until: now + o.bleed[1] * 1000, next: now + 100 };
+    if (o.bleed) dotStart('p', 'bleed', { until: now + o.bleed[1] * 1000, next: now + 100 }, now);
   } else if (e.k === 'o') {      // a SHOT (Sukuna's slashes): it leaves his hand at the height of the fist and flies at you
     const vk = e.vk === undefined ? k : e.vk, vf = g.vfx[vk]; if (!vf || !vf.length) return; (d.cs = d.cs || []).push({ x: d.x - toward * -10, x0: d.x, dir: toward, v: typeof e.sp === 'function' ? e.sp() : (e.sp || 300), gk: e.gk, vf, at: now });
   }
@@ -125,7 +125,7 @@ function cuenActLook(now, g) {
 function cuenSpecialAct(now, dt, gap, ag, toward, G, g, n, a) {
   const d = dummy, t = now - a.at;
   if (a.type === 'aircut') {
-    a.ms = 1000 / (30 * G.spd) * g.atk[9].length; if (!a.hit && t >= a.ms * SU_BLUE.cut.hit / g.atk[9].length) { a.hit = true; snd('swing', 9); const h = hurtAt; if (ag <= 230) gojoHit(CUEN_X.aircut, now); if (hurtAt !== h) { vs.bleed = { until: now + 2000, next: now + 100 }; spark(wx, gy - 30, 10, ['#ffffff', '#ff2a3a', '#ffb0b8'], false, -toward); } }
+    a.ms = 1000 / (30 * G.spd) * g.atk[9].length; if (!a.hit && t >= a.ms * SU_BLUE.cut.hit / g.atk[9].length) { a.hit = true; snd('swing', 9); const h = hurtAt; if (ag <= 230) gojoHit(CUEN_X.aircut, now); if (hurtAt !== h) { dotStart('p', 'bleed', { until: now + 2000, next: now + 100 }, now); spark(wx, gy - 30, 10, ['#ffffff', '#ff2a3a', '#ffb0b8'], false, -toward); } }
     if (t >= a.ms) cuenEnd(now);
   } else if (a.type === 'arrow') {
     if (!a.shot && t >= SU_FL.T[13]) { a.shot = true; snd('swing', 3); (d.ca = d.ca || []).push({ x: d.x - toward * -14, x0: d.x, dir: toward, at: now }); }
@@ -142,7 +142,7 @@ function cuenSpecialAct(now, dt, gap, ag, toward, G, g, n, a) {
   }
 }
 function cuenEnd(now) { const d = dummy; d.fa = null; d.ai = 'rest'; d.aiAt = now; d.restFor = 500 / (0.45 + GRADES[vs.gi].aggr * 0.9); }
-// 5. WHAT HE THREW, once a frame (drawFoes calls it): the slashes, the fire arrows (they burn you: 1 health every 0.5 s for 8 s), the ki blasts, and the picture of the domain and the beam
+// 5. WHAT HE THREW, once a frame (drawFoes calls it): the slashes, the fire arrows (they burn you: 1 health every 0.5 s for 8 s; v1.201 one bleed or burn at a time), the ki blasts, and the picture of the domain and the beam
 function cuenWorld(now, dt) {
   const d = dummy, g = cuFoeG(), cx = Math.round(VW / 2); if (!g) return; const on = vs.ph === 'fight' && d.ko < 0;
   const hitP = (list, kk, spark_) => { for (const s of list) { if (!on) { s.done = 1; continue; } if (s.dir * (wx - s.x) < 10) { s.done = 1; const h = hurtAt; gojoHit(kk(s), now); spark_(s, hurtAt !== h); } else if (Math.abs(s.x - s.x0) > 460) s.done = 1; } };
@@ -152,7 +152,7 @@ function cuenWorld(now, dt) {
   }
   if (d.ca) {
     for (const s of d.ca) { s.x += s.dir * SU_FL.arrow.speed * dt; const sx = cx + Math.round(s.x - wx), y = gy - 39; ctx.fillStyle = 'rgba(255,150,34,0.35)'; ctx.fillRect(sx - s.dir * 30 - 6, y - 5, 30, 10); ctx.fillStyle = '#ff9622'; ctx.fillRect(sx - 6, y - 4, 12, 8); ctx.fillStyle = '#fff0c0'; ctx.fillRect(sx - 3, y - 2, 6, 4); for (let i = 0; i < 4; i++) { ctx.fillStyle = i % 2 ? '#ff7408' : '#ffd27a'; ctx.fillRect(sx - s.dir * (10 + i * 7), y - 3 + (((now / 60 + i) | 0) % 3), 6, 2); } }
-    hitP(d.ca, () => CUEN_X.arrow, (s, hit) => { spark(wx, gy - 38, 12, SU_FL.cols, false, -s.dir); if (hit) { vs.fburn = { until: now + SU_FL.burn.ms, next: now + SU_FL.burn.gap }; say('BURNING', wx, '#ff9a3a', 8, now + 120); } }); d.ca = d.ca.filter(s => !s.done);
+    hitP(d.ca, () => CUEN_X.arrow, (s, hit) => { spark(wx, gy - 38, 12, SU_FL.cols, false, -s.dir); if (hit && dotStart('p', 'fburn', { until: now + SU_FL.burn.ms, next: now + SU_FL.burn.gap }, now)) say('BURNING', wx, '#ff9a3a', 8, now + 120); }); d.ca = d.ca.filter(s => !s.done);
   }
   if (d.cb) {
     for (const s of d.cb) { s.x += s.dir * 420 * dt; const sx = cx + Math.round(s.x - wx), y = gy - 30; ctx.fillStyle = 'rgba(120,200,255,0.4)'; ctx.fillRect(sx - 7, y - 7, 14, 14); ctx.fillStyle = '#7aa0ff'; ctx.fillRect(sx - 5, y - 5, 10, 10); ctx.fillStyle = '#e8f4ff'; ctx.fillRect(sx - 3, y - 3, 6, 6); ctx.fillStyle = 'rgba(160,210,255,0.5)'; ctx.fillRect(sx - s.dir * 18, y - 1, 12, 2); }

@@ -43,7 +43,7 @@ function cuHit(dmg, now, o, ax, rc, lo) {      // an IMPACT (or a shot) of a cus
   if (blk) say('GUARD BREAK', dummy.x, '#ffd34d', 8, now + 90);
   if (o.stun) cuStun(o.stun, now);
   if (o.launch && (!dummy.air || dummy.air.kind === 'bounce')) { dummy.air = vs.me === RYU_WHO ? ryArc(now, 0, o.launch) : airMake(now, 0, Math.sqrt(2 * AIR_G * o.launch), AIR_G, 'up'); dummy.rx = AIR_RX; dummy.rxAt = now; }      // (thrown up like the UPPERCUT: o.launch px high at the top)
-  if (o.bleed) cuBleed = { who: dummy, until: now + o.bleed[1] * 1000, next: now + 1000, d: o.bleed[0] };
+  if (o.bleed && !dotOnF(now)) cuBleed = { who: dummy, until: now + o.bleed[1] * 1000, next: now + 1000, d: o.bleed[0] };      // (v1.201 one at a time)
   if (dummy.hp <= 0) koDummy(now);
   return true;
 }

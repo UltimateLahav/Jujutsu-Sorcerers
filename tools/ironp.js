@@ -119,7 +119,7 @@ function irlStart(g, now) {      // BLUE pressed walking back in the repulsor mo
 function irlEnd(g, b, now) {      // the beam is gone (it ran out, he was hit, or the enemy was knocked out): an enemy it went through starts to bleed and stays stunned
   if (b.off >= 0) return; b.off = now; const d = dummy, H = irlHole;
   if (b.hit && d && d.ko < 0 && H && H.who === d && !H.off) {
-    H.off = now; d.bleed = { next: now + 300, until: now + IRL.bleedMs, gap: IRL.bleedGap, dm: IRL.bleedDm, quiet: true }; cuStun(IRL.stun / 1000, now, true); say('BLEEDING', d.x, '#ff3a4a', 8, now); snd('hit', 1);
+    H.off = now; const bl = dotStart('f', 'bleed', { next: now + 300, until: now + IRL.bleedMs, gap: IRL.bleedGap, dm: IRL.bleedDm, quiet: true }, now); cuStun(IRL.stun / 1000, now, true); if (bl) say('BLEEDING', d.x, '#ff3a4a', 8, now); snd('hit', 1);      // (v1.201 one bleed or burn at a time: with another one already running on him he is only stunned)
     if (gdSet() === 0) spark(d.x, gy - H.hgt - (d.airH || 0), 8, ['#8a0a14', '#c4121c', '#ff2a3a'], false, 1);
   } else if (H && !H.off) H.off = now;
 }

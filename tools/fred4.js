@@ -93,7 +93,7 @@ function freAct(now, dt, gap, ag, toward, G) {
     if (t >= tm + rm) freActEnd(now, false);
   } else if (a.type === 'pierce') {
     const hitAt = a.coil + FRED_PIERCE.hit * 1000 / FRED_PIERCE.fps, endAt = a.coil + FRED_PIERCE.len * 1000 / FRED_PIERCE.fps + 120;
-    if (!a.hit && t >= hitAt) { a.hit = true; snd('clawscrape'); if (ag <= FRED_PIERCE.reach + 14 && gap > -4) { const h = hurtAt; gojoHit(FRE_K.pierce, now); if (hurtAt !== h) { vs.bleed = { until: now + 2000, next: now + 100 }; tqBlood(wx, gy - 34, 22, -1); say('PIERCED!', wx, '#ff4a5a', 8, now + 120); } } }
+    if (!a.hit && t >= hitAt) { a.hit = true; snd('clawscrape'); if (ag <= FRED_PIERCE.reach + 14 && gap > -4) { const h = hurtAt; gojoHit(FRE_K.pierce, now); if (hurtAt !== h) { dotStart('p', 'bleed', { until: now + 2000, next: now + 100 }, now); tqBlood(wx, gy - 34, 22, -1); say('PIERCED!', wx, '#ff4a5a', 8, now + 120); } } }
     if (t >= endAt) freActEnd(now, false);
   } else freSlam(now, dt, a, t);
 }
@@ -149,7 +149,7 @@ function freWorld(now, dt) {      // every frame while the enemy Freddy fights: 
       b.x += b.dir * FRED_WATER.speed * dt; const sx = cx + Math.round(b.x - wx), y = gy - 27;
       ctx.fillStyle = '#2f7fd0'; ctx.fillRect(sx - 3, y - 3, 7, 7); ctx.fillStyle = '#9fdcff'; ctx.fillRect(sx - 2, y - 2, 5, 5); ctx.fillStyle = '#ffffff'; ctx.fillRect(sx - 1, y - 2, 2, 2); ctx.fillStyle = 'rgba(159,220,255,0.5)'; ctx.fillRect(sx - b.dir * 9, y, 6, 1); ctx.fillRect(sx - b.dir * 14, y + 1, 4, 1);
       if (!on) { b.done = 1; continue; }
-      if (b.dir * (wx - b.x) < 8) { b.done = 1; const h = hurtAt; gojoHit(FRE_K.water, now); if (hurtAt !== h) { vs.fscald = { until: now + 6000, next: now + 450 }; spark(wx, gy - 28, 14, ['#9fdcff', '#ffffff', '#2f7fd0'], false, -b.dir); snd('splash'); say('SCALDED!', wx, '#ff9a3a', 8, now + 120); } else spark(b.x, gy - 28, 6, ['#9fdcff', '#ffffff'], false, b.dir); }
+      if (b.dir * (wx - b.x) < 8) { b.done = 1; const h = hurtAt; gojoHit(FRE_K.water, now); if (hurtAt !== h) { dotStart('p', 'fscald', { until: now + 6000, next: now + 450 }, now); spark(wx, gy - 28, 14, ['#9fdcff', '#ffffff', '#2f7fd0'], false, -b.dir); snd('splash'); say('SCALDED!', wx, '#ff9a3a', 8, now + 120); } else spark(b.x, gy - 28, 6, ['#9fdcff', '#ffffff'], false, b.dir); }
       else if (Math.abs(b.x - b.x0) > FRED_WATER.reach) { b.done = 1; spark(b.x, gy - 4, 8, ['#9fdcff', '#ffffff', '#2f7fd0'], false, 0); snd('splash'); }
     }
     d.fb = d.fb.filter(b => !b.done);
@@ -189,7 +189,7 @@ function freDreamRev(now, dt) {      // every frame of the nightmare he gives yo
   FD.hits.forEach((h, k) => { if (t >= h && !fd.hit[k]) { fd.hit[k] = true; vsHurt(Math.max(1, Math.round(FD.dmg[k] * G.dmg)), now); if (vs.ph !== 'fight') return; v.rx = (Math.random() * 10) | 0; v.rxAt = now; tqBlood(wx - 4, gy - 34, 16 + k * 4, 1); fd.fx.push({ at: now, k }); fd.glitch = now; shakeUntil = now + 110; shakeAmp = 2; snd('clawscrape'); } });
   if (t >= FD.pierceAt && !fd.pierced && vs.ph === 'fight') { fd.pierced = true; vsHurt(Math.max(1, Math.round(FD.pierce * G.dmg)), now); v.rx = 4; v.rxAt = now; tqBlood(wx - 4, gy - 34, 40, 1); tqBlood(wx - 4, gy - 34, 16, -1); fd.fx.push({ at: now, k: 4 }); fd.glitch = now; shakeUntil = now + 220; shakeAmp = 4; hitStop(80); snd('clawscrape'); snd('hit', 3); }
   if (vs.ph !== 'fight') return stop();      // (you died in the dream: the round is over)
-  if (t >= FD.wake && !fd.woke) { fd.woke = true; v.rx = 4; v.rxAt = now - 340; vs.bleed = { until: now + 2000, next: now + 100 }; snd('wakeup'); }
+  if (t >= FD.wake && !fd.woke) { fd.woke = true; v.rx = 4; v.rxAt = now - 340; dotStart('p', 'bleed', { until: now + 2000, next: now + 100 }, now); snd('wakeup'); }
   freBleed(now);
   if (!dream && fd.slept && !(fd.woke && t >= FD.wake + FD.rise) && now - v.rxAt > 340) v.rxAt = now - 340;      // (asleep you lie flat: the picture of the fall is held on its last lying frame; it goes on when you wake)
   if (t >= FD.end) { fd = null; return false; }

@@ -1,5 +1,16 @@
 [
  {
+  "v": "1.201",
+  "t": "BLEEDS, BURNS AND OTHER TICK DAMAGE NO LONGER STACK",
+  "n": [
+   "You asked that anything that deals tick damage (a bleed, a poison or whatever) cannot stack: it deals a consistent amount until it is over, and it starts again if the enemy is hit after it has faded. You answered two questions about it: a second hit while it is still running does nothing (it keeps its old timer and its damage), and only ONE tick effect can run on a fighter at a time, so a bleed also blocks a burn and the other way round. There is no poison in the game, so this covers every bleed, burn and scald.",
+   "IT IS THE SAME FOR EVERYTHING AND FOR BOTH SIDES: Verity's bites, Yuji's Piercing Blood and Cleave, Freddy's claw, boiling water and Nightmare, Sukuna's cuts and fire arrows, Iron Man's laser, and what the enemies do to you. The blow itself still lands with all its damage, only the extra bleed or burn is ignored while one is running. A bleed or burn that has faded starts again with the next blow that brings one.",
+   "SUKUNA: the Cut Storm, the Dash Slash and Dismantle used to add one more bleed for every cut that landed, so the bleeds piled up and took a lot of health in a few seconds. Now they start ONE bleed (4 seconds, 8 seconds for Dismantle and 6 for the Dash Slash) and the other cuts of the same move add nothing. The BLEED x3 words are gone.",
+   "LOST LIMBS (GRAPHIC DAMAGE FULL): the bleeding of a limb that was ripped off takes the same amount whether one limb is gone or three, and it waits while a bleed or a burn is running.",
+   "NOT IN THIS: what the big moves do over time is the move itself, not something left on the enemy: the shrine's cuts, the jumpscare's fear and the beam of the blast. Say so if they should follow the same rule."
+  ]
+ },
+ {
   "v": "1.200",
   "t": "NO STREET BUTTON: THE WAY OUT IS THE FRONT DOOR, AND IT IS EASY TO FIND",
   "n": [

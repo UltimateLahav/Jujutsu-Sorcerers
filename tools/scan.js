@@ -525,7 +525,45 @@ async function scCity() {
   } finally { twPick = keep; scKey('ArrowLeft', false); scKey('ArrowRight', false); }
 }
 
-const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
+async function scTicks() {      // v1.201 ONE TICK EFFECT AT A TIME (a bleed, a burn, a scald): while one runs on a fighter every other one that would start is ignored, it deals the same amount at every tick until it is over and when it has faded the next blow starts it again; on the enemy and on you, with Sukuna's slashes (they used to add up), his fire arrow and the bleeding of lost limbs
+  SC.sec = 'TICKS'; scCov('TICKS', 0, 2); SC.plan = 2 * 220; SC.done = 0; const keep = twPick; twPick = 0;
+  try {
+    for (const who of ['cu3', 'gojo']) {
+      const label = SC_NAME[who] + ' TICK EFFECTS'; SC.say = label; SET.gore = 0; Object.assign(TR, { beh: 0, ehp: 0, php: 0, pce: 0 });
+      try { startPractice(who, 'gojo'); } catch (e) { scErr(e, label + ' START'); continue; }
+      if (state !== 'play' || !dummy) { scNote('fail', 'THE FIGHT DID NOT START: ' + label, 'STATE ' + state); show('title'); continue; }
+      if (!(await scIntro())) { show('title'); return; }
+      const n = pnow(), d = dummy; d.bleed = d.sburn = null; vs.bleed = vs.fburn = vs.fscald = null; d.ko = -1; d.hp = d.max = 1000; d.x = wx + 60;
+      const A = { until: n + 4000, next: n + 100 }, a = dotStart('f', 'bleed', A, n), b = dotStart('f', 'bleed', { until: n + 8000, next: n + 100 }, n + 10), c = dotStart('f', 'sburn', { until: n + 8000, next: n + 500 }, n + 20);
+      scT(a && !b && !c && d.bleed === A && !d.sburn, label + ': A SECOND BLEED OR A BURN STARTED ON THE ENEMY WHILE A BLEED WAS RUNNING', 'STARTED ' + a + ' ' + b + ' ' + c + ', SAME ' + (d.bleed === A) + ', BURN ' + !!d.sburn);
+      const gone = !dotOnF(n + 4001), again = dotStart('f', 'sburn', { until: n + 12000, next: n + 4500 }, n + 4100);
+      scT(gone && again && !!d.sburn, label + ': NOTHING STARTED ON THE ENEMY AFTER THE BLEED HAD FADED', 'GONE ' + gone + ', STARTED ' + again); d.bleed = d.sburn = null;
+      const f1 = dotStart('p', 'fburn', { until: n + 8000, next: n + 500 }, n), f2 = dotStart('p', 'fburn', { until: n + 8000, next: n + 500 }, n + 5), f3 = dotStart('p', 'bleed', { until: n + 2000, next: n + 100 }, n + 6), f4 = dotStart('p', 'fscald', { until: n + 6000, next: n + 450 }, n + 7), f5 = dotStart('p', 'fscald', { until: n + 14000, next: n + 8500 }, n + 8001);
+      scT(f1 && !f2 && !f3 && !f4 && f5, label + ': A SECOND TICK EFFECT STARTED ON HIM WHILE ONE WAS RUNNING, OR NONE AFTER IT HAD FADED', 'STARTED ' + [f1, f2, f3, f4, f5].join(' ')); vs.bleed = vs.fburn = vs.fscald = null;
+      if (who === 'cu3') {      // the CUT STORM and what comes after it: one plain bleed, 13.3 of health in all; the later cuts add nothing; a cut after it has faded starts the longer one
+        suCast = { hits: 0 }; const hp0 = d.hp; let all = true; for (let i = 0; i < 8; i++) { suCutAt(n + i * 40, i, 8); all = all && !!d.bleed; }
+        const b1 = d.bleed, plain = !!b1 && b1.st === undefined && b1.dm === SU_BLEED.dm && b1.gap === SU_BLEED.gap; suBleed(d, n + 500, SU_DIS.bleed); suBleed(d, n + 600, SU_DASH.bleed); const same = d.bleed === b1;
+        vpBleed(n + 4500); const lost = hp0 - d.hp, ended = !d.bleed, long = suBleed(d, n + 5000, SU_DIS.bleed); vpBleed(n + 14000);
+        scT(all && plain && same, label + ': THE CUT STORM, DISMANTLE AND THE DASH SLASH DID NOT LEAVE ONE PLAIN BLEED', 'ALL ' + all + ', PLAIN ' + plain + ', SAME ' + same);
+        scT(Math.abs(lost - SU_BLEED.dm * SU_BLEED.ms / SU_BLEED.gap) < 0.6 && ended, label + ': THE BLEED DID NOT TAKE THE SAME AMOUNT OF HEALTH AS ONE BLEED', 'LOST ' + lost.toFixed(2) + ', ONE BLEED ' + (SU_BLEED.dm * SU_BLEED.ms / SU_BLEED.gap).toFixed(2));
+        scT(long && !d.bleed, label + ': A CUT AFTER THE BLEED HAD FADED DID NOT START ANOTHER ONE', 'STARTED ' + long); suCast = null; d.bleed = null;
+        d.hp = d.max; dotStart('f', 'bleed', { until: n + 4000, next: n + 30, gap: 30, dm: 0.1, quiet: true }, n); const burned = suFlHit(n + 100, {}) && !!d.sburn; d.bleed = null; suFlHit(n + 200, {}); const s1 = d.sburn; suFlHit(n + 3000, {}); const until = s1 ? s1.until - (n + 200) : 0;
+        scT(!burned && !!s1 && d.sburn === s1 && until === SU_FL.burn.ms, label + ': A FIRE ARROW BURNED HIM WHILE HE BLED, OR A SECOND ARROW STARTED THE BURN AGAIN', 'BURNED ' + burned + ', SAME ' + (d.sburn === s1) + ', UNTIL ' + until); d.sburn = null;
+        const nog = window.__noGore, B = GB.p; window.__noGore = false; SET.gore = 0;
+        if (gdActive('p')) {      // the bleeding of lost limbs: the same amount for one limb and for three, none while a bleed runs on him
+          B.st.an = 2; B.st.af = 2; B.st.lf = 2; B.last = vs.hp = PHP; B.bleedAt = n - 1; goreTick(n, 16); const three = PHP - vs.hp;
+          B.st.af = 0; B.st.lf = 0; vs.hp = B.last = PHP; B.bleedAt = n + 100; goreTick(n + 101, 16); const one = PHP - vs.hp;
+          vs.hp = B.last = PHP; B.bleedAt = n + 700; vs.bleed = { until: n + 5000, next: n + 5000 }; goreTick(n + 701, 16); const during = PHP - vs.hp; vs.bleed = null;
+          scT(three > 0 && Math.abs(three - one) < 1e-9 && during === 0, label + ': THE BLEEDING OF LOST LIMBS ADDS UP WITH THE NUMBER OF LIMBS, OR WENT ON WHILE A BLEED RAN', 'THREE ' + three.toFixed(2) + ', ONE ' + one.toFixed(2) + ', DURING ' + during.toFixed(2));
+        } else scNote('warn', label + ': THE BLEEDING OF LOST LIMBS WAS NOT TESTED', 'GORE IS NOT ACTIVE FOR HIM');
+        Object.assign(GB.p, goreBody()); window.__noGore = nog; vs.hp = PHP;
+      }
+      scCheck(); show('title'); scCov('TICKS', 1, 0);
+    }
+  } finally { twPick = keep; }
+}
+
+const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['TICKS', 6, scTicks], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
 const scEl = document.createElement('section'); scEl.id = 'scan'; scEl.className = 'screen';
 scEl.innerHTML = '<h2>SCANNING THE GAME</h2><div id="scBar"><i id="scFill"></i></div><small id="scTxt"></small><small id="scLive"></small><small>YOUR SAVES ARE SAFE: THEY WERE COPIED FIRST AND ARE PUT BACK WHEN THE SCAN IS OVER.</small><button id="scCancel">CANCEL</button>';
 document.body.appendChild(scEl);
@@ -572,7 +610,7 @@ async function scRun(opts) {      // opts.noReload = for the tests: no reload at
 window.__scanRun = scRun;
 
 // ---------------------------------------------------------------- what the ERRORS page shows
-const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', CITY: 'CITY DOORS AND FALLS', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
+const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', CITY: 'CITY DOORS AND FALLS', TICKS: 'TICK EFFECTS, ONE AT A TIME', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
 const scCovText = () => Object.keys(SC.got).concat(Object.keys(SC.of)).filter((k, i, a) => a.indexOf(k) === i).map(k => k === 'ROUNDS' ? 'EXTRA ROUNDS OF 14 FIGHTS ' + SC.got[k] : (SC_COVN[k] || k) + ' ' + (SC.got[k] || 0) + '/' + SC.of[k]);      // (what was covered, of what there is)
 const scLast = () => { try { const r = JSON.parse(localStorage.getItem('jsscanres') || 'null'); return r && Array.isArray(r.res) ? r : null; } catch { return null; } };
 function scReport(r) {      // the text of COPY SCAN REPORT

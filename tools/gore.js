@@ -216,9 +216,9 @@ function goreTick(now, dt) {      // every frame of a fight (vsTick): looks for 
     }
     B.last = hp;
     const lost = (B.st.an === 2) + (B.st.af === 2) + (B.st.lf === 2) + (B.st.lb === 2);
-    if (lost && B.bleedAt && now >= B.bleedAt) {      // bleeding: a little health every half second until the round ends
-      B.bleedAt = now + 500; const d = Math.max(0.1, (side === 'p' ? PHP : dummy.max) * GT.bleed * Math.min(3, lost));
-      if (side === 'p') { vs.hp = Math.max(0, vs.hp - d); vs.hitAt = now; if (vs.hp <= 0) endRound('enemy', 'ko', now); B.last = vs.hp; } else if (dummy.ko < 0) { dummy.hp = Math.max(0, dummy.hp - d); dummy.hitAt = now; if (dummy.hp <= 0) koDummy(now); B.last = dummy.hp; }
+    if (lost && B.bleedAt && now >= B.bleedAt) {      // bleeding: a little health every half second until the round ends (v1.201: always the same amount, however many limbs are gone, and none while a bleed or a burn is running on him: tick damage does not add up)
+      B.bleedAt = now + 500; const d = Math.max(0.1, (side === 'p' ? PHP : dummy.max) * GT.bleed);
+      if (side === 'p' ? dotOnP(now) : dotOnF(now)) { /* the effect that is running takes the ticks */ } else if (side === 'p') { vs.hp = Math.max(0, vs.hp - d); vs.hitAt = now; if (vs.hp <= 0) endRound('enemy', 'ko', now); B.last = vs.hp; } else if (dummy.ko < 0) { dummy.hp = Math.max(0, dummy.hp - d); dummy.hitAt = now; if (dummy.hp <= 0) koDummy(now); B.last = dummy.hp; }
     }
     if (lost && gdSet() === 0 && now >= B.dripAt) { B.dripAt = now + 140; const x = side === 'f' ? dummy.x : wx; spawnDrop(x + Math.random() * 6 - 3, -(10 + Math.random() * 20), (Math.random() - 0.5) * 30, -20 - Math.random() * 20, 1 + ((Math.random() * 3) | 0)); }
     if (gdHurtN(B)) { if (!B.coughAt) B.coughAt = now + 3000 + Math.random() * 2000; else if (now >= B.coughAt) { B.coughAt = now + 4000 + Math.random() * 2500; goreCough(side, now); } }      // a hurt body coughs blood and doubles over now and then

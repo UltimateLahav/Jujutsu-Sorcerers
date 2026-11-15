@@ -201,7 +201,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.200</small>
+    <small id="ver">V1.201</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -810,7 +810,7 @@ const SK_SUKUNA = [      // (v1.131 SUKUNA IN THE SHOP: he is bought in CHARACTE
   ['s_cpunch', 'CROUCH PUNCHES', 'ATTACK WHILE CROUCHED: LOW PUNCHES THAT HIT DUCKING ENEMIES', 120, ['s_crouch']],
   ['s_slash', 'FLYING SLASHES', 'ATTACK WITH NO ENEMY NEAR: A FLYING SLASH THAT NO GUARD STOPS (RIGHT HAND, LEFT HAND, THEN BOTH HANDS EVERY 5 SECONDS). WITHOUT IT ATTACK IS ALWAYS THE JAB COMBO', 150, []],
   ['s_air', 'AIR CUT', 'BLUE: AN INVISIBLE SLASH CUTS THE ENEMY AT ONCE, WHEREVER HE STANDS ON THE SCREEN, AND HE BLEEDS (5% ENERGY)', 250, []],
-  ['s_storm', 'CUT STORM', 'BACK + BLUE: EIGHT INVISIBLE SLASHES. THE ENEMY IS STUNNED FOR 3 SECONDS AND BLEEDS MORE WITH EVERY ONE (25% ENERGY)', 400, ['s_air']],
+  ['s_storm', 'CUT STORM', 'BACK + BLUE: EIGHT INVISIBLE SLASHES. THE ENEMY IS STUNNED FOR 3 SECONDS AND BLEEDS (25% ENERGY)', 400, ['s_air']],
   ['s_leg', 'LEG CUT', 'CROUCH + BLUE: AN INVISIBLE SLASH CUTS THE ENEMY\'S LEGS, HE DROPS TO HIS KNEES FOR 0.8 SECONDS AND EVERY HIT LANDS (10% ENERGY)', 300, ['s_air', 's_crouch']],
   ['s_dismantle', 'DISMANTLE', 'JUMP + BLUE: HE DASHES BACK IN THE AIR AND POINTS. TIME STOPS AND THREE CUTS HIT THE ENEMY\'S CHEST, HE BLEEDS FOR 8 SECONDS (20% ENERGY)', 600, ['s_air']],
   ['s_dashslash', 'DASH SLASH', 'FORWARD + BLUE WITH AN ENEMY NEAR: HE DASHES BEHIND THE ENEMY, TIME STOPS AND THE CUT LANDS ON HIS BACK', 500, ['s_air']],
@@ -1830,7 +1830,7 @@ function hitFoe(k, now) {                     // called on the impact frame: a h
   if (window.__sfxlog) window.__sfxlog.push(['rx', Math.round(now), dummy.rx]);
   say('' + dmg, dummy.x, popCol(), 8, now); if (broke) say('GUARD BREAK', dummy.x, '#ffd34d', 8, now + 90); onLand(k, dmg, now); foeGain(k, hv, rp, now); if (hv) { dummy.vx += (dummy.x >= wx ? 1 : -1) * 150; shakeUntil = now + 170; shakeAmp = 4; }
   snd('smack', smackOf(k));      // (the Cat's kick and the giant's kick are the heavy blows)
-  if (k === 22) dummy.bleed = { until: now + 4000, next: now + 100 };      // the bite: he bleeds 1 damage every 0.1 s for 4 s (a second bite starts the four seconds again)
+  if (k === 22) dotStart('f', 'bleed', { until: now + 4000, next: now + 100 }, now);      // the bite: he bleeds 1 damage every 0.1 s for 4 s (v1.201: a second bite while he bleeds or burns adds nothing: the next one after it has faded starts it again)
   if (dummy.hp <= 0) koDummy(now);            // (a normal punch or kick that finishes him ends the round in a match too)
 }
 function gojoHit(k, now) {                    // the attacking dummy's swing connects with Gojo
@@ -3144,7 +3144,7 @@ function techPierce(now) {      // PIERCING BLOOD fires: the jet passes through 
   if (d.vform && d.vform !== 'verity') { say('IMMUNE', d.x, '#ffe9a0', 8, now); return; }
   if (tqDuck(d, now)) { say('MISS', d.x, '#9fd8ff', 8, now); return; }
   if (dBlocks() && gap > 0) say('GUARD PIERCED', d.x, '#ffd34d', 8, now + 90);      // (nothing stops it)
-  techDmg(d, TQ.pierce, now, 150, false); d.bleed = { until: now + TQ.bleed, next: now + 100, gap: inhOn() ? 100 / INH_DMG : 100 }; tqBlood(d.x - 4, gy - 34, 34, 1); tqBlood(d.x - 4, gy - 34, 14, -1); say('PIERCED', d.x, '#ff3a4a', 8, now + 60);
+  techDmg(d, TQ.pierce, now, 150, false); dotStart('f', 'bleed', { until: now + TQ.bleed, next: now + 100, gap: inhOn() ? 100 / INH_DMG : 100 }, now); tqBlood(d.x - 4, gy - 34, 34, 1); tqBlood(d.x - 4, gy - 34, 14, -1); say('PIERCED', d.x, '#ff3a4a', 8, now + 60);
 }
 function techThrow(now, hx) {      // SHRINE, frame 9: the block leaves his hands in an arc (it rises a little and falls): it hits the first enemy it meets or breaks on the floor
   tqBlock = { x: hx, h: 34, vx: 330, vy: 70, born: now };
@@ -3167,7 +3167,7 @@ function techGrab(now) {      // GRAB + CLEAVE, frame 3: the hand closes on the 
 }
 function techCleave(now) {      // frame 7: the cleave across the held enemy
   const d = dummy; if (!tqGrab || !tqOk(d)) return;
-  techHold(d, now, 700); techDmg(d, TQ.grab, now, 0, false); d.bleed = { until: now + TQ.bleed, next: now + 100, gap: inhOn() ? 100 / INH_DMG : 100 }; tqFx.push({ k: 'slash', x: d.x, real: performance.now() });
+  techHold(d, now, 700); techDmg(d, TQ.grab, now, 0, false); dotStart('f', 'bleed', { until: now + TQ.bleed, next: now + 100, gap: inhOn() ? 100 / INH_DMG : 100 }, now); tqFx.push({ k: 'slash', x: d.x, real: performance.now() });
   tqBlood(d.x - 2, gy - 30, 40, 1); tqBlood(d.x - 2, gy - 30, 16, -1); say('CLEAVE!', d.x, '#ff3a4a', 12, now + 40); shakeUntil = now + 140; shakeAmp = 3; buzz(60);
 }
 function techRelease(now, shove) {      // the hand lets go (frame 9: a shove)
@@ -3419,7 +3419,7 @@ function lagStep(now, cancel) {      // every frame of Verity while the lag runs
   const d = r.tg, el = now - r.t0; if (!d || d !== dummy) { lagEnd(now); return; }
   if (el < LAG.t5) { d.stunUntil = Math.max(d.stunUntil, now + 150); d.vx = 0; d.ai = 'rest'; d.aiAt = now; d.restFor = 150; }      // (held: he does not move until the punch)
   if (!(r.ev & 1) && el >= LAG.t2) { r.ev |= 1; snd('swing', 3); say('SNAP!', wx, '#ff8a7a', 8, now); }
-  if (!(r.ev & 2) && el >= LAG.t3) { r.ev |= 2; techDmg(d, DMG[22], now, KNOCK[22], false); d.bleed = { until: now + 4000, next: now + 100 }; snd('hit', 3); shakeUntil = now + 100; shakeAmp = 2; spark(d.x - 4, gy - 32, 8, ['#c4121c', '#ff2a3a'], false, -1); }      // (the bite: its damage and its bleeding, as in hitDummy)
+  if (!(r.ev & 2) && el >= LAG.t3) { r.ev |= 2; techDmg(d, DMG[22], now, KNOCK[22], false); dotStart('f', 'bleed', { until: now + 4000, next: now + 100 }, now); snd('hit', 3); shakeUntil = now + 100; shakeAmp = 2; spark(d.x - 4, gy - 32, 8, ['#c4121c', '#ff2a3a'], false, -1); }      // (the bite: its damage and its bleeding, as in hitDummy)
   if (!(r.ev & 4) && el >= LAG.t4) { r.ev |= 4; snd('swing', 3); }
   if (!(r.ev & 8) && el >= LAG.t5) { r.ev |= 8; techDmg(d, DMG[3], now, LAG.knock, true); d.down = now + RX_DUR[4]; d.stunUntil = now + 100; puff(d.x, 8); shakeUntil = now + 160; shakeAmp = 4; snd('hit', 3); }      // (the punch: its damage, the big fall and a hard push)
   if (el >= LAG.end) lagEnd(now);
@@ -3607,11 +3607,17 @@ function pounceStep(v, now, dt, af) {      // Verity's AIR BITE, every frame of 
   if (fa >= 8.5 && !p.landed) { p.landed = true; snd('land', 1); gritAt(wx, 6, 50, 0); shockAt(wx, 80, 40, 0.6); }
   return fa >= 8.5 ? 0 : p.l0 * (1 - u * u);
 }
-function vpBleed(now) {      // the bite's bleeding on the enemy: 1 damage every 0.1 s for 4 s (a ball takes none: nothing hurts it); Yuji's PIERCING BLOOD and CLEAVE in INHERITENCE bleed every 0.2 s (half, v1.53); v1.111 st = bleeds stacked on him (the time each one ends): a tick takes dm for every one still on (Sukuna's slashes)
+function vpBleed(now) {      // the bleeding of the enemy: 1 damage every 0.1 s for 4 s for the bite (a ball takes none: nothing hurts it); Yuji's PIERCING BLOOD and CLEAVE in INHERITENCE bleed every 0.2 s (half, v1.53); every bleed has its own damage (b.dm, 1 if it has none) and gap (b.gap, 0.1 s if it has none); v1.201 there is only ever one bleed on him (dotStart): the list of stacked bleeds of v1.111 (Sukuna's slashes) is gone
   const d = dummy; if (!d || !d.bleed) return; const b = d.bleed;
   if (vs.ph !== 'fight' || d.ko >= 0) { d.bleed = null; return; }
-  while (d.bleed && b.next <= now && b.next <= b.until) { const t = b.next; b.next += b.gap || 100; if (d.vform && d.vform !== 'verity') continue; d.hp = Math.max(0, d.hp - (b.st ? b.dm * b.st.filter(e => e >= t).length : (b.dm || 1))); if (!b.quiet) d.hitAt = now; if (d.hp <= 0) { d.bleed = null; koDummy(now); } }
+  while (d.bleed && b.next <= now && b.next <= b.until) { b.next += b.gap || 100; if (d.vform && d.vform !== 'verity') continue; d.hp = Math.max(0, d.hp - (b.dm || 1)); if (!b.quiet) d.hitAt = now; if (d.hp <= 0) { d.bleed = null; koDummy(now); } }
   if (d.bleed && now >= b.until) d.bleed = null;
+}
+// ---------------------------------------------------------------- v1.201 ONE TICK EFFECT AT A TIME. A bleed, a burn, a scald (everything that takes a little health again and again after a blow) does not add up: it deals the same amount at every tick until it is over, and while one is running on a fighter every other one that would start is ignored (the blow that brought it still lands, only the effect is not added: no more time, no more damage, no other kind); when it has faded, the next blow that brings one starts it again. The enemy carries dummy.bleed (the bleeds and the boiling water's burn), dummy.sburn (Sukuna's fire arrows) and cuBleed (a custom punch's bleed); you carry vs.bleed, vs.fburn and vs.fscald. What the ultimates do over time (the shrine's cuts, the fear of the jumpscare, the beam of the blast) is the move itself, not an effect that is left on him, and is not in this.
+function dotOnF(now) { const d = dummy; return !!d && !!((d.bleed && now < d.bleed.until) || (d.sburn && now < d.sburn.until) || (cuBleed && cuBleed.who === d && now < cuBleed.until)); }      // (a tick effect is running on the enemy)
+function dotOnP(now) { return !!vs && !!((vs.bleed && now < vs.bleed.until) || (vs.fburn && now < vs.fburn.until) || (vs.fscald && now < vs.fscald.until)); }      // (a tick effect is running on you)
+function dotStart(side, field, spec, now) {      // a tick effect starts on the enemy (side 'f': dummy[field], 'bleed' or 'sburn') or on you ('p': vs[field], 'bleed', 'fburn' or 'fscald'); false (nothing is started) when one is already running on him
+  const o = side === 'f' ? dummy : vs; if (!o || (side === 'f' ? dotOnF(now) : dotOnP(now))) return false; o[field] = spec; return true;
 }
 // ---------------------------------------------------------------- v1.28 TWO NEW VARIANTS (bought in SKILLS like every other variant). BLOOD DRAG (Verity, crouched + BLUE; the bite needs him standing): a low lunge at the enemy's feet, the bite, then he backs away with the enemy by the feet, flat on the floor, and the blood is dragged along the ground. GIANT SMASH (the Cat, flat on the floor + BLUE): the giant's huge leg smashes down on the enemy.
 let vdg = null, cst = null; const smear = [], drip = [];      // vdg = { at, ph (0 lunge, 1 drag, 2 lying), tick }; cst = { at, tx (where the leg comes down, world x), lock, hit }; smear = the blood on the floor ({ x, born, r }); drip = the drops thrown up ({ x, h, vx, vy })
@@ -5179,7 +5185,7 @@ function vActTick(d, now, dt) {
   if (a.type === 'stop') { c3StopTick(d, a, t, now, dt); return; }      // (chapter 2's STOP, see chap2.js)
   if (a.type === 'bite') {
     a.anim = 'bite'; a.fi = t * 18 / 1000; if (a.fi >= 5 && a.fi < 9 && ag > 14) d.x += toward * 80 * dt;
-    if (!a.hit && a.fi >= 8) { a.hit = 1; snd('f:hit', 3); if (ag <= eHit(22)) { const h = hurtAt; gojoHit(0, now); if (hurtAt !== h) vs.bleed = { until: now + 4000, next: now + 100 }; } }
+    if (!a.hit && a.fi >= 8) { a.hit = 1; snd('f:hit', 3); if (ag <= eHit(22)) { const h = hurtAt; gojoHit(0, now); if (hurtAt !== h) dotStart('p', 'bleed', { until: now + 4000, next: now + 100 }, now); } }
     if (a.fi >= 15) vEnd(d, now);
   } else if (a.type === 'scare') {      // JUMPSCARE: the wind-up, the lunge (frames 4-7), the grip (12): if the victim is still within reach the cutscene starts; a jump or a teleport during the wind-up saves him
     a.anim = 'scare_grab'; a.fi = t * 24 / 1000; if (a.fi >= 4 && a.fi < 8 && ag > 28) d.x += toward * 130 * dt;
@@ -6113,7 +6119,7 @@ function fredPierceOk(now) {      // v1.94: once per press, when the coil would 
 function fredPierce(now) {      // the claw goes through the enemy: damage, a big flinch, blood, and he bleeds for 4 s
   const d = dummy; if (!d || d.ko >= 0 || d.cap) return; const g = d.x - wx; if (g > FRED_PIERCE.reach || g < -4) return;
   connectAt = atkAt; cancelFor = atkAt; cancelUntil = now + CANCEL_MS * (flowOn ? 2 : 1);
-  techDmg(d, FRED_PIERCE.dmg, now, FRED_PIERCE.knock, true); d.bleed = { until: now + FRED_PIERCE.bleed, next: now + 100 };
+  techDmg(d, FRED_PIERCE.dmg, now, FRED_PIERCE.knock, true); dotStart('f', 'bleed', { until: now + FRED_PIERCE.bleed, next: now + 100 }, now);
   tqBlood(d.x - 4, gy - 34, 34, 1); tqBlood(d.x - 4, gy - 34, 14, -1); say('PIERCED!', d.x, '#ff4a5a', 8, now + 120); snd('smack', 3); flowAdd(12, now);
 }
 let fredGBAt = -1e9, fredDashCr = false;      // when his guard was last broken (the same moment as the hurt reaction it starts), and whether the dash that is going on is the crouch dash
@@ -6171,7 +6177,7 @@ function fwSplash(x, y, n, hot, now) {      // drops of water fly up and fall, a
 }
 function fwHit(d, now) {      // the water splashes on the enemy: damage, a flinch, and he burns (the bleeding tick, with flames)
   techDmg(d, FRED_WATER.dmg, now, FRED_WATER.knock, false);
-  d.bleed = { until: now + FRED_WATER.burn, next: now + FRED_WATER.gap, gap: FRED_WATER.gap, fire: 1 };
+  dotStart('f', 'bleed', { until: now + FRED_WATER.burn, next: now + FRED_WATER.gap, gap: FRED_WATER.gap, fire: 1 }, now);
   fwSplash(d.x - 6, gy - 28, 16, 1, now); snd('splash'); shakeUntil = now + 90; shakeAmp = 1; say('SCALDED!', d.x, '#ff9a3a', 8, now + 120);
 }
 function fwStep(now, dt) {      // every frame of Freddy: the balls of water in flight (they hit the first enemy they reach), the drops and the steam
@@ -6250,7 +6256,7 @@ function freddyDream(now, dt) {      // every frame of the nightmare: it updates
   FD.hits.forEach((h, k) => { if (t >= h && !fd.hit[k]) { fd.hit[k] = true; techDmg(d, FD.dmg[k], now, 0, false); tqBlood(d.x - 4, gy - 34, 16 + k * 4, 1); fd.fx.push({ at: now, k }); fd.glitch = now; shakeUntil = now + 110; shakeAmp = 2; snd('clawscrape'); } });
   if (t >= FD.pierceAt && !fd.pierced && d.ko < 0) { fd.pierced = true; techDmg(d, FD.pierce, now, 0, true); tqBlood(d.x - 4, gy - 34, 40, 1); tqBlood(d.x - 4, gy - 34, 16, -1); fd.fx.push({ at: now, k: 4 }); fd.glitch = now; shakeUntil = now + 220; shakeAmp = 4; hitStop(80); snd('clawscrape'); snd('hit', 3); }
   if (d.ko >= 0) return stop();      // (killed in the dream: he dies where he sleeps)
-  if (t >= FD.wake && !fd.woke) { fd.woke = true; d.x = fd.x0; d.rx = 4; d.rxAt = now - 340; d.bleed = { until: now + FD.bleed, next: now + FD.gap, gap: FD.gap }; snd('wakeup'); }
+  if (t >= FD.wake && !fd.woke) { fd.woke = true; d.x = fd.x0; d.rx = 4; d.rxAt = now - 340; dotStart('f', 'bleed', { until: now + FD.bleed, next: now + FD.gap, gap: FD.gap }, now); snd('wakeup'); }
   if (fd.woke) vpBleed(now);      // (the wounds bleed while he gets up: 1 damage every 0.2 s for 4 s)
   if (!dream && fd.slept && !(fd.woke && t >= FD.wake + FD.rise) && now - d.rxAt > 340) d.rxAt = now - 340;      // (asleep he lies flat: the picture of the fall is held on its last lying frame; it goes on when he wakes)
   if (t >= FD.end) { fd = null; d.stunUntil = Math.max(d.stunUntil, now + 500); d.restFor = 500; return false; }
