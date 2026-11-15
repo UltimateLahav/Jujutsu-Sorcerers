@@ -253,7 +253,8 @@ function twLightList(F, x0, a, b, now) {      // what is lit on the floor you se
   for (const o of F.objs) { const K = TW_K[o.k], sx = x0 + o.x; if (sx < a - 40 || sx > b + 40 || o.hp <= 0) continue; const by = o.on ? TW_K[o.on.k].h : 0;
     if (K.lt) L.push(['g30', sx, gy - 40, 0.92, [255, 214, 140]]); else if (o.k === 'computer') L.push(['g13', sx, gy - by - 8, 0.6, [120, 190, 255]]); else if (o.k === 'rack') L.push(['g18', sx, gy - 24, 0.5, [110, 190, 255]]); else if (o.k === 'vending') L.push(['g22', sx, gy - 24, 0.65, [255, 150, 120]]); else if (o.k === 'cooler') L.push(['g12', sx, gy - 18, 0.35, [150, 210, 255]]); }
   for (const d of F.doors) { const sx = x0 + d.x; if (sx > a - 40 && sx < b + 40) L.push([d.k === 'stairs' ? 'g18' : 'g20', sx, gy - 7 - 52, 0.75, d.k === 'stairs' ? [110, 255, 170] : [255, 200, 120]]); }
-  for (const s of twLayout(F).sign) { const sx = x0 + s; if (sx > a - 40 && sx < b + 40) L.push(['g22', sx, gy - TW_CEIL + TW_SG.y - SH_Y + 11, 0.6, [255, 226, 160]]); }      // (v1.182 the floor signs shine: the darkness has a soft hole round each)
+  for (const s of twLayout(F).sign) { const sx = x0 + s; if (sx > a - 40 && sx < b + 40) L.push(['g22', sx, gy - TW_CEIL + TW_SG.y - SH_Y + 11, 0.6, F.front ? [190, 222, 255] : [255, 226, 160]]); }      // (v1.182 the floor signs shine: the darkness has a soft hole round each; v1.200 cold in the lobby, where they say EXIT)
+  if (F.front) { const sx = x0 + F.front.x; if (sx > a - 60 && sx < b + 60) L.push(['g36', sx + 12, gy - 7 - 30, 0.95, [150, 205, 255]]); }      // (v1.200 the cold light of the street comes in through the front door)
   const T = vs.tw; if (T.flashes && T.fMe === F.f) for (let i = T.flashes.length - 1; i >= 0; i--) { const q = T.flashes[i], u = (now - q.at) / 420; if (u >= 1) { T.flashes.splice(i, 1); continue; } if (u >= 0) L.push(['g' + q.r, x0 + q.x, gy - 26, 1 - u, q.rgb, 1]); }
   if (twLightFrac(F) < 0.5) for (const d of F.doors) { const sx = x0 + d.x; if (sx > a - 40 && sx < b + 40) L.push(['g18', sx + 15, gy - 7 - 66, 0.45 + 0.4 * Math.sin(now / 240 + d.x), [255, 70, 50]]); }      // (the emergency lights of a dark floor pulse red over its doors)
   return L;
@@ -319,7 +320,8 @@ function twDoor(F, d, sx, now) {      // the stairs (a fire door with a window a
 }
 function twDoorEmit(F, d, sx, now) {      // the lit signs of a door (over the darkness): EXIT over the stairs, the floor display over the elevator; and its name and how to use it when you stand at it
   const T = vs.tw, x = Math.round(sx), yf = gy - 7, top = yf - 58, near = T.fMe === F.f && Math.abs(wx - d.x) < 24; if (d.k === 'elev' && d.st === 2) return;
-  if (d.k === 'stairs') { twR(x - 11, top - 12, 22, 8, '#06150d'); twR(x - 10, top - 11, 20, 6, '#0f4a2c'); twR(x - 10, top - 11, 20, 1, '#2ca865'); twText(ctx, 'EXIT', x - 7, top - 10, 1, '#c9ffe0'); twR(x + 7, top - 9, 2, 2, '#c9ffe0'); }
+  if (d.k === 'stairs') { const w = F.front ? 28 : 22, x0 = x - (w >> 1); twR(x0, top - 12, w, 8, '#06150d'); twR(x0 + 1, top - 11, w - 2, 6, '#0f4a2c'); twR(x0 + 1, top - 11, w - 2, 1, '#2ca865');      // (v1.200 in the lobby, the one floor with a way out to the street, the stairs say STAIRS: EXIT is the word of the street door and of the signs that point to it)
+    if (F.front) twText(ctx, 'STAIRS', x - 11, top - 10, 1, '#c9ffe0'); else { twText(ctx, 'EXIT', x - 7, top - 10, 1, '#c9ffe0'); twR(x + 7, top - 9, 2, 2, '#c9ffe0'); } }
   else if (d.st === 1) { twR(x - 10, top - 15, 20, 10, '#06070c'); twR(x - 10, top - 15, 20, 1, '#3a4052'); twText(ctx, 'XX', x - 4, top - 12, 1, (now / 400 | 0) % 2 ? '#ff3a2a' : '#5a1510'); }
   else { const L = T.lift, s = String(Math.max(1, Math.min(TW_N, Math.round(L.curF)))), wd = twTextW(s, 1), col = L.inFoe || L.job ? '#ff5a3a' : '#ff9a3a', mv = L.ph === 'ride' && now >= L.at; twR(x - 10, top - 15, 20, 10, '#06070c'); twR(x - 10, top - 15, 20, 1, '#3a4052'); twText(ctx, s, x - 3 - (wd >> 1), top - 12, 1, col); ctx.fillStyle = col;      // (the number is where the CAB is, red while the enemy rides it; an arrow blinks while it moves)
     if (mv && (now / 250 | 0) % 2) { if (L.dest > L.from) { ctx.fillRect(x + 6, top - 12, 1, 1); ctx.fillRect(x + 5, top - 11, 3, 1); ctx.fillRect(x + 4, top - 10, 5, 1); } else { ctx.fillRect(x + 4, top - 12, 5, 1); ctx.fillRect(x + 5, top - 11, 3, 1); ctx.fillRect(x + 6, top - 10, 1, 1); } } }
@@ -432,14 +434,20 @@ function twDecals(F, x0, a, b) {
     else if (d.k === 'chip') { const R = twRng(d.n); for (let i = 0; i < 6; i++) twR(sx - 4 + ((R() * 9) | 0), gy - d.y - 3 + ((R() * 7) | 0), 1, 1, R() < 0.5 ? '#ece8dc' : 'rgba(10,8,16,.65)'); twR(sx - 1, gy - d.y - 1, 2, 2, 'rgba(10,8,16,.5)'); }
   }
 }
-function twSignEmit(F, sx, now, Q) {      // v1.182 the lit part of the FLOOR SIGN: the word FLOOR on its blue band and the number in warm light, over the darkness (like the EXIT signs, so the floor can always be read, even when the lights are out); for a moment after you arrive on a floor the sign flashes (a white frame and white digits blink, a glow fades): this is what the big FLOOR n of the screen used to be
+function twExitLabel(x, y, now, wxp) {      // v1.200 the word on the blue band of the floor signs of the LOBBY: an arrow that points to the left, where the front door is, and EXIT; the arrow is a running light: its blink runs along the signs towards the door (wxp: the x of the sign in the room, so that the blink does not move with the camera)
+  const hot = Math.sin(now / 300 + wxp / 45) > 0.2, c = hot ? '#ffffff' : '#8fc4f4', r = twR, ax = x - 9;
+  r(ax + 2, y + 3, 1, 1, c); r(ax + 1, y + 4, 2, 1, c); r(ax, y + 5, 3, 1, c); r(ax + 1, y + 6, 2, 1, c); r(ax + 2, y + 7, 1, 1, c);
+  twText(ctx, 'EXIT', x - 4, y + 3, 1, '#ffffff');
+}
+function twSignEmit(F, sx, now, Q, wxp) {      // v1.182 the lit part of the FLOOR SIGN: the word FLOOR on its blue band and the number in warm light, over the darkness (like the EXIT signs, so the floor can always be read, even when the lights are out); for a moment after you arrive on a floor the sign flashes (a white frame and white digits blink, a glow fades): this is what the big FLOOR n of the screen used to be
   const T = vs.tw, x = Math.round(sx), y = gy - TW_CEIL - SH_Y + TW_SG.y, s = String(F.f), bn = T && T.banner && T.banner.f === F.f ? now - T.banner.at : -1, fl = bn >= 0 && bn < 1300, on = fl && ((bn / 160) | 0) % 2 === 0, tx = x - (twTextW(s, 2) >> 1);
   if (fl && Q >= 2) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.75 * (1 - bn / 1300) * (SET.glow ? 1 : 0.6); ctx.drawImage(twGlow(24, [255, 226, 150]), x - 24, y + 11 - 24); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
   if (on) { ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 15, y - 2, 31, 2); ctx.fillRect(x - 15, y + TW_SG.h, 31, 2); ctx.fillRect(x - 15, y, 2, TW_SG.h); ctx.fillRect(x + 14, y, 2, TW_SG.h); }
-  twText(ctx, 'FLOOR', x - 9, y + 3, 1, '#ffffff'); twText(ctx, s, tx + 1, y + 11, 2, '#7a4c10'); twText(ctx, s, tx, y + 10, 2, on ? '#ffffff' : '#ffe9b0');
+  if (F.front) twExitLabel(x, y, now, wxp); else twText(ctx, 'FLOOR', x - 9, y + 3, 1, '#ffffff');      // (v1.200 in the lobby the word on the blue band is an arrow and EXIT: the way to the front door)
+  twText(ctx, s, tx + 1, y + 11, 2, '#7a4c10'); twText(ctx, s, tx, y + 10, 2, on ? '#ffffff' : '#ffe9b0');
 }
 function twEmit(F, x0, a, b, now, Q) {      // everything that shines, drawn over the darkness: the floor signs, the signs of the doors, the screens, the lights of the racks, the glass of the vending machines, the bubbles in the water cooler, the cans on the floor
-  for (const s of twLayout(F).sign) { const sx = x0 + s; if (sx > a - 30 && sx < b + 30) twSignEmit(F, sx, now, Q); }
+  for (const s of twLayout(F).sign) { const sx = x0 + s; if (sx > a - 30 && sx < b + 30) twSignEmit(F, sx, now, Q, s); }
   for (const d of F.doors) { const sx = x0 + d.x; if (sx > a - 30 && sx < b + 30) twDoorEmit(F, d, sx, now); }
   if (F.front) { const sx = x0 + F.front.x; if (sx > a - 30 && sx < b + 30) ctFrontEmit(F, sx, now); }
   for (const o of F.objs) { const sx = Math.round(x0 + o.x); if (sx < a - 30 || sx > b + 30 || o.hp <= 0) continue; const by = o.on ? TW_K[o.on.k].h : 0, K = TW_K[o.k], bad = o.hp < o.mx * 0.5;

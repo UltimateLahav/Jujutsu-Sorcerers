@@ -46,7 +46,7 @@ function ctGoOut(now, how, side) {      // you leave the building: how 'door' = 
 function ctArrive(now, s) { const q = s.street; ctSwitchOut(now, q.x, q.how, q.side, q.foeHere); if (q.land) twLand(now, q.land[0], q.land[1], q.land[2]); }      // (the camera has fallen to the street: you are in it)
 function ctSwitchOut(now, lx, how, side, foeHere) {      // the street: you stand at lx, the building stays as it is (the enemy: out here already, or following, or still coming down from his floor)
   const T = vs.tw, d = dummy, f0 = T.fMe, live = !!d && d.ko < 0, outside = live && !foeHere && T.away && (T.foeSt || T.via === 'front'), fx0 = T.foeSt ? T.foeX : CITY.door + 70;
-  vs.map = 'street'; T.out = true; T.cab = null; T.slide = null; T.q.length = 0; T.cf = 1; T.cabOut = false; T.cabOutAt = 0; if (how === 'door') snd('citydoor', 0); snd('citydoor', 1); twClearWorld(); wx = lx; wxv = 0; wvx = 0; popups = []; ctS.arm = false; ctS.lock = now + CITY.lock; ctS.t = 0; ctS.px = wx;
+  vs.map = 'street'; T.out = true; T.cab = null; T.slide = null; T.q.length = 0; T.cf = 1; if (how === 'door') snd('citydoor', 0); snd('citydoor', 1); twClearWorld(); wx = lx; wxv = 0; wvx = 0; popups = []; ctS.arm = false; ctS.lock = now + CITY.lock; ctS.t = 0; ctS.px = wx;
   T.fMe = 0; T.via = 'stairs';
   if (!live) { T.away = false; if (d) d.twAway = false; return; }
   if (outside) {      // (he is out here already: he was flung out through the glass, or was still on his way in)
@@ -74,7 +74,7 @@ function ctFoeHere(now) {      // (PUT ENEMY and RESET of free play, in the stre
 function ctBuild() { if (!vs.tw) { twNew(); const T = vs.tw; T.cf = 1; T.prevF = 0; T.seen[1] = 1; } return vs.tw; }      // (a match that began in the street has no building until you first walk in: it starts as the lobby)
 function ctGoIn(now) {      // you walk into the front door of the building: you are in its lobby (floor 1), in front of its door
   const T = ctBuild(), d = dummy; T.on = true; const F = twFloorData(1), together = !!d && d.ko < 0 && !T.away, foeIn = !!d && d.ko < 0 && T.away;
-  vs.map = 'tower'; T.out = false; T.cab = null; T.slide = null; T.q.length = 0; T.fMe = 1; T.lastFallX = null; twFloorSwitch(now, F.front.x + CITY.inn, 'cut'); snd('citydoor', 0); snd('citydoor', 2); T.cabOut = false; T.cabOutAt = 0;
+  vs.map = 'tower'; T.out = false; T.cab = null; T.slide = null; T.q.length = 0; T.fMe = 1; T.lastFallX = null; twFloorSwitch(now, F.front.x + CITY.inn, 'cut'); snd('citydoor', 0); snd('citydoor', 2);
   ctS.arm = false; ctS.lock = now + CITY.lock; ctS.t = 0; ctS.px = wx;
   if (together) { T.away = true; d.twAway = true; T.fFoe = 1; T.via = 'front'; T.arriveAt = now + CITY.follow; T.awayX = F.front.x + 30; T.foeSt = false; twFoeHold(now); ctHoldLift(); }      // (he was with you in the street: he follows through the door)
   else if (foeIn) { if (T.fFoe < 1) T.fFoe = 1; twPlanArrival(now); }      // (he was still inside, on his way out: now he comes to you as he does from any floor)
@@ -83,7 +83,7 @@ function ctGoIn(now) {      // you walk into the front door of the building: you
 
 // ---- a round (beginRound): where the match began
 function ctRound(now) {
-  ctS = { t: 0, arm: true, lock: 0, px: wx }; const T = vs.tw; if (!T) return; ctHoldLift(); T.cabOut = false; T.cabOutAt = 0; T.q.length = 0; T.slide = null; T.cab = null; T.away = false; T.foeSt = false; T.outAt = 0; T.via = 'stairs'; if (dummy) dummy.twAway = false;
+  ctS = { t: 0, arm: true, lock: 0, px: wx }; const T = vs.tw; if (!T) return; ctHoldLift(); T.q.length = 0; T.slide = null; T.cab = null; T.away = false; T.foeSt = false; T.outAt = 0; T.via = 'stairs'; if (dummy) dummy.twAway = false;
   if (vs.twStart) { vs.map = 'tower'; T.out = false; } else { vs.map = 'street'; T.out = true; T.fMe = 0; T.fFoe = 0; }
 }
 
@@ -137,9 +137,10 @@ function ctFrontDoor(F, sx, now) {      // the front door of the lobby: two glas
   for (const sd of [-1, 1]) { const lw = lw0 - gap; if (lw <= 0) continue; const lx = sd < 0 ? x - 23 : x + gap; ctx.fillStyle = 'rgba(150,205,235,.30)'; ctx.fillRect(lx, top - 1, lw, 59); for (let i = 0; i < 7; i++) r(lx + 2 + ((i * 5) % Math.max(1, lw - 4)), top + 3 + i * 7, 2, 4, 'rgba(255,255,255,.30)'); r(lx, top - 1, lw, 2, '#cfd6e6'); r(lx, top + 55, lw, 3, '#8a93a8'); r(lx, top - 1, 1, 59, '#cfd6e6'); r(lx + lw - 1, top - 1, 1, 59, '#cfd6e6'); r(lx, top + 29, lw, 1, '#cfd6e6'); r(sd < 0 ? lx + lw - 4 : lx + 2, top + 26, 2, 7, '#e8ecf4'); }
   r(x - 23, yf - 3, 46, 3, '#59607a'); r(x - 23, yf - 3, 46, 1, '#8a93a8'); r(x - 18, yf - 1, 36, 2, '#2a211c');
 }
-function ctFrontEmit(F, sx, now) {      // (over the darkness) the lit sign over the front door of the lobby
-  const x = Math.round(sx), top = gy - 7 - 62, r = twR, y = top + 1; r(x - 14, y, 28, 12, '#05101c'); r(x - 14, y, 28, 1, '#2c63c9'); r(x - 14, y + 11, 28, 1, '#12306a'); r(x - 14, y, 1, 12, '#12306a'); r(x + 13, y, 1, 12, '#12306a');
-  twText(ctx, 'STREET', x - 12, y + 4, 1, '#d8f0ff'); r(x + 11, y + 3, 1, 5, '#d8f0ff'); r(x + 10, y + 5, 1, 1, '#d8f0ff');      // (the sign is in the top of the doorway: the bars of the health stand over the top of the wall)
+function ctFrontEmit(F, sx, now) {      // (over the darkness) the lit sign in the top of the doorway: the word EXIT, big, over the word STREET (v1.200: it was a small STREET sign); EXIT blinks, so the door can be found from afar (the plaques on the wall of the lobby point at it, see twExitEmit)
+  const x = Math.round(sx), top = gy - 7 - 62, r = twR, y = top + 16, hot = ((now / 520) | 0) % 2 === 0;
+  r(x - 22, y, 44, 21, '#05101c'); r(x - 22, y, 44, 1, '#2c63c9'); r(x - 22, y + 20, 44, 1, '#12306a'); r(x - 22, y, 1, 21, '#12306a'); r(x + 21, y, 1, 21, '#12306a');
+  twText(ctx, 'EXIT', x - 15, y + 3, 2, hot ? '#ffffff' : '#9fd2ff'); twText(ctx, 'STREET', x - 11, y + 14, 1, '#bfe6ff');      // (the sign is across the glass of the door, a good way down from its top: the name of the fighter on the screen stands over the top of the wall)
 }
 function ctStreetPic(now) {      // the street map's own picture, without the fighters: the night sky over the city, the shops, the lamps and the road, and the front of the building
   if (!bg) return; ctx.save(); ctx.translate(0, -FAR); ctx.drawImage(bg, 0, 0); if (SET.bgd >= 1) layer(far, 0.25); if (SET.bgd >= 2) { layer(near, 0.55); drawProps(now); } ctEntrance(now); ctx.restore(); drawGround(); ctEntranceGlow(now);

@@ -1,5 +1,14 @@
 [
  {
+  "v": "1.200",
+  "t": "NO STREET BUTTON: THE WAY OUT IS THE FRONT DOOR, AND IT IS EASY TO FIND",
+  "n": [
+   "You asked for a door to leave the building instead of the STREET button, so the button is gone from the elevator panel (TOP, LOBBY, ENEMY and LAST are all that is left). The way out is the front door at the far left end of the lobby: walk into it and you are in the street, with the skyscraper standing behind you. You chose to keep only that one door and to make it easy to find.",
+   "THE FRONT DOOR IS HARD TO MISS NOW: a big sign across its glass says EXIT, with STREET under it, and EXIT blinks. The cold light of the street spills into the lobby around the door.",
+   "THE SIGNS ALL OVER THE LOBBY POINT TO IT: the wall signs of the lobby used to say FLOOR 1, now they say an arrow and EXIT, with the 1 still under it. The arrow points left, to the door, and it blinks one sign after the other in that direction, so you can follow them from the elevator. The stairs door of the lobby says STAIRS now, so EXIT only means the street."
+  ]
+ },
+ {
   "v": "1.199",
   "t": "THE CITY, PART 2: A STREET BUTTON IN THE ELEVATOR, DOOR SOUNDS, THE BUILDING IN CUTSCENES",
   "n": [
