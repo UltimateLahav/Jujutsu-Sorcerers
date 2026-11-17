@@ -226,7 +226,7 @@ async function scMoves() {
   await scIronMoves();
 }
 // v1.191 IRON MAN's moves: the chain (R.HOOK, L.HOOK, R.KICK, PUNCH), the ROCKET UPPERCUT (JUMP and ATTACK together, either one first), the DOWNSLAM (ATTACK 0.2 s after the jump, and an earlier one waits for it), crouch, block and dash; each is a check that the move that should come out did (cuAtkK: 0 - 3 the chain, 4 the uppercut, 5 the downslam), played against a standing enemy in front of him; v1.192 the LOW JABS (6: crouched, ATTACK), the CHARGE (7: ATTACK during a dash or just after it; a late one is a plain hook) and the BACKFLIP (8: DASH BACK twice, never two dashes forward); v1.193 the REPULSOR MODE (the MODE button: ATTACK is R.BLAST (9) and then L.BLAST (10), both hurt the enemy, the other moves stay, off again it is the chain); v1.194 the BEAR HUG (BLUE: he charges, grabs, hugs, flies up with the enemy hanging in his arms, turns over, dives and slams: 4 hits, it ends by itself, and it has a cooldown); in the skyscraper he is also one of the fighters of scTower
-const SC_IR_N = 43;
+const SC_IR_N = 50;
 async function scIronMoves() {
   const place = () => { TR.put = 2; trainPut(); };
   try { Object.assign(TR, { beh: 0, ehp: 1, php: 0, pce: 0, put: 2 }); startPractice('cu5', 'gojo'); } catch (e) { scErr(e, 'IRON MAN START'); return; }
@@ -273,6 +273,11 @@ async function scIronMoves() {
   await reset(); hits.n = 0; hits.dmg = 0; hits.seq = 0; hits.until = 0; CU_GAME[5].rp = true; CU_GAME[5].bmCd = 0; dummy.x = wx - 70; await press('Space'); await scFrames(5); await press('KeyL'); await scFrames(1); let ldm = 0; for (let f = 0; f < 70 && CU_GAME[5].bh; f++) { await scFrames(1); ldm = Math.max(ldm, hits.dmg); }
   ok(ldm >= 15, 'THE SPIN BLAST DID NOT BURN THE ENEMY ON HIS LEFT: DAMAGE ' + ldm);
   await press('Space'); await scFrames(5); await press('KeyL'); await scFrames(2); ok(!CU_GAME[5].bh, 'THE SPIN BLAST STARTED AGAIN DURING ITS COOLDOWN'); CU_GAME[5].bmCd = 0; CU_GAME[5].rp = false; await scFrames(20);
+  SC.say = 'IRON MAN: ULTIMATE'; await reset(); hits.n = 0; hits.dmg = 0; hits.seq = 0; hits.until = 0; domReadyAt = 0; dummy.x = wx + 70; await press('KeyV'); await scFrames(1); ok(!!CU_GAME[5].bh && CU_GAME[5].bh.kind === 'uni', 'DOMAIN DID NOT START THE ULTIMATE');      // (v1.203 DOMAIN: he charges from his chest, braces and fires a beam of orange, yellow and white; nothing touches him meanwhile, the 12 bursts take 45% of the enemy's health)
+  const ulPh = []; let ulDm = 0, ulTk = 0, ulInv = true; for (let f = 0; f < 140 && CU_GAME[5].bh; f++) { await scFrames(1); const b = CU_GAME[5].bh; if (b) { if (ulPh[ulPh.length - 1] !== b.ph) ulPh.push(b.ph); ulDm = Math.max(ulDm, hits.dmg); ulTk = Math.max(ulTk, b.tk); if (!irUlHit()) ulInv = false; } }
+  ok(!CU_GAME[5].bh, 'THE ULTIMATE WAS STILL GOING 7 S AFTER IT BEGAN: ' + (CU_GAME[5].bh && CU_GAME[5].bh.ph)); ok(ulPh.join('>') === 'charge>brace>fire>rel', 'THE ULTIMATE WENT THROUGH ' + ulPh.join('>') + ' AND NOT CHARGE, BRACE, FIRE, RELEASE'); ok(ulTk === 12 && Math.abs(ulDm - Math.round(dummy.max * 0.45)) <= 1, 'THE ULTIMATE DID NOT TAKE 45% OF THE ENEMY HEALTH IN 12 BURSTS: BURSTS ' + ulTk + ', DAMAGE ' + ulDm + ' OF ' + dummy.max); ok(ulInv, 'HE WAS TOUCHABLE DURING THE ULTIMATE');
+  await press('KeyV'); await scFrames(2); ok(!CU_GAME[5].bh, 'THE ULTIMATE STARTED AGAIN DURING ITS WAIT'); domReadyAt = 0;
+  await reset(); hits.n = 0; hits.dmg = 0; hits.seq = 0; hits.until = 0; dummy.x = wx - 70; await press('KeyV'); await scFrames(1); let ulBd = 0; for (let f = 0; f < 140 && CU_GAME[5].bh; f++) { await scFrames(1); ulBd = Math.max(ulBd, hits.dmg); } ok(ulBd === 0, 'THE ULTIMATE HURT AN ENEMY WHO WAS BEHIND HIM: DAMAGE ' + ulBd); domReadyAt = 0;
   show('title');
 }
 
@@ -458,6 +463,13 @@ function scIronSpin() {      // v1.202 Iron Man in the skyscraper: whatever the 
 function scIronSpinEnd() {
   const g = CU_GAME[5]; if (!SC.is || !vs || vs.me !== 'cu5') { SC.is = null; return; } if (g && g.bh && g.bh.kind === 'spin') scNote('fail', 'IRON MAN: THE SPIN BLAST IN THE SKYSCRAPER WAS STILL GOING 3 S AFTER IT BEGAN', 'PHASE ' + g.bh.ph + ', FLOOR ' + vs.tw.fMe + ', CAB ' + !!vs.tw.cab); SC.is = null;
 }
+function scIronUlt() {      // v1.203 Iron Man in the skyscraper: whatever the random player was doing, the move he is in is cut and his ULTIMATE begins with the enemy 60 px in front of him (the beam cuts what is in its way, the last burst breaks 3 floors under the enemy); scIronUltEnd looks at it 6 s later
+  const g = CU_GAME[5]; if (!vs || vs.me !== 'cu5' || !g || !dummy || vs.ph !== 'fight') return; const n = pnow(); if (g.bh) irBhEnd(g, n); domReadyAt = 0; twFoeHere(n); dummy.x = twPlace(twFloorData(vs.tw.fMe), wx + 60); cuAtkAt = -1; cuJumpAt = -1; cuDash = null; blkAt = blkEnd = -1; blockHeld = false; stance = 'stand'; stickCr = false;
+  if (irhOk(n)) { iruStart(g, n); SC.iu = { f: vs.tw.fMe, at: n }; }      // (iruStart, not the button: the energy and the wait are not what is looked at here)
+}
+function scIronUltEnd() {
+  const g = CU_GAME[5]; if (!SC.iu || !vs || vs.me !== 'cu5') { SC.iu = null; return; } if (g && g.bh && g.bh.kind === 'uni') scNote('fail', 'IRON MAN: THE ULTIMATE IN THE SKYSCRAPER WAS STILL GOING 6 S AFTER IT BEGAN', 'PHASE ' + g.bh.ph + ', FLOOR ' + vs.tw.fMe + ', CAB ' + !!vs.tw.cab); SC.iu = null;
+}
 function scIronBeamEnd() {
   const g = CU_GAME[5]; if (!SC.ib || !vs || vs.me !== 'cu5') { SC.ib = null; return; } if (g && g.bh && g.bh.kind === 'beam') scNote('fail', 'IRON MAN: THE BLAST IN THE SKYSCRAPER WAS STILL GOING 6 S AFTER IT BEGAN', 'PHASE ' + g.bh.ph + ', FLOOR ' + vs.tw.fMe); SC.ib = null;
 }
@@ -465,7 +477,7 @@ function scIronHugEnd() {
   const g = CU_GAME[5]; if (!SC.ih || !vs || vs.me !== 'cu5') { SC.ih = null; return; } if (g && g.bh && !g.bh.kind) scNote('fail', 'IRON MAN: THE BEAR HUG IN THE SKYSCRAPER WAS STILL GOING 5 S AFTER IT BEGAN', 'PHASE ' + g.bh.ph + ', FLOOR ' + vs.tw.fMe + ' FROM ' + SC.ih.f); SC.ih = null;
 }
 async function scTower() {
-  SC.sec = 'SKYSCRAPER'; scCov('TOWER', 0, 5); SC.plan = 5 * 470; SC.done = 0; const keep = twPick; twPick = 1;
+  SC.sec = 'SKYSCRAPER'; scCov('TOWER', 0, 5); SC.plan = 4 * 470 + 600; SC.done = 0; const keep = twPick; twPick = 1;
   try {
     for (const [w, seed] of [['cu4', 11], ['gojo', 12], ['yuji', 13], ['freddy', 14], ['cu5', 15]]) {
       const label = SC_NAME[w] + ' IN THE SKYSCRAPER'; SC.say = label;
@@ -481,8 +493,9 @@ async function scTower() {
         [368, () => { const T = vs.tw; if (T.cab) twCabPick(T.fMe > 30 ? T.fMe - 4 : T.fMe + 6, pnow()); }],
         [440, () => { const T = vs.tw; if (T.cab) { if (T.lift.ph === 'park') twCabLeave(pnow()); } }],      // (... you step out (JUMP on the doors), call the cab down from the door, and a blast tears the door out: the shaft is open)
         [448, () => { const T = vs.tw; if (T.cab) return; const F = twFloorData(T.fMe), d = twElevOf(F); if (d) { d.st = 0; d.hp = 70; twLiftUse(F, d, pnow()); } }],
-        [462, () => { const T = vs.tw; if (!T.cab) { const F = twFloorData(T.fMe), d = twElevOf(F); if (d) twDoorHit(F, d, 200, pnow()); } }]];
-      const ok = await scFrames(470, i => {
+        [462, () => { const T = vs.tw; if (!T.cab) { const F = twFloorData(T.fMe), d = twElevOf(F); if (d) twDoorHit(F, d, 200, pnow()); } }],
+        [476, scIronUlt], [590, scIronUltEnd]];      // (v1.203 Iron Man's scene is 130 frames longer than the others': after the cab, his ULTIMATE, and a look at it 6 s later)
+      const ok = await scFrames(w === 'cu5' ? 600 : 470, i => {
         p.step(); if (i % 6 === 0) scCheck(); if (i % 40 === 39 && !twOn() && vs && vs.tw && vs.ph === 'fight' && state === 'play') ctGoIn(pnow());      // (v1.198 he walked out of the front door or through the glass: back in, so that the building is fought in)
         for (const [at, fn] of ev) if (i === at) { try { if (twOn() && vs.ph === 'fight') fn(); } catch (e) { scErr(e, label + ' EVENT ' + at); } }
         if (state !== 'play') { scNote('warn', 'THE FIGHT LEFT THE FIGHT SCREEN BY ITSELF: ' + label, 'STATE ' + state); }

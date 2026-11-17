@@ -916,6 +916,35 @@ function makeSfx(ac) {
         tone(B.deep, t, { type: 'triangle', f: 120, f2: 60, dur: 0.12, gain: 0.22, atk: 0.002 });
       }
     },
+    irult(k, at) {                                       // v1.203 Iron Man's ULTIMATE, the UNIBEAM: k 0 = the charge from his chest (a whine that climbs for two seconds under a heartbeat that quickens, with dry crackles over it), 1 = the brace (the suit locks: a metal clank and a low thump), 2 = the beam fires (a huge boom, a roar of air, a bright sizzle and its own hum), 3 = one burst of the beam on the enemy (a short sizzle and a thud), 4 = the beam dies away
+      const t = T(at), B = C.atk, D = C.ce;
+      if (k === 0) {
+        tone(B.deep, t, { type: 'sawtooth', f: 55, f2: 210, dur: 2.6, cur: 1, gain: 0.14, atk: 1.3 });
+        tone(B.deep, t + 0.15, { type: 'triangle', f: 110, f2: 430, dur: 2.4, cur: 1, gain: 0.14, atk: 1.3 });
+        tone(D.soft, t + 0.4, { type: 'sine', f: 600, f2: 3200, dur: 2.1, cur: 1, gain: 0.05, atk: 1.5 });
+        burst(B.soft, t, { type: 'highpass', f: 1200, f2: 6500, q: 0.8, dur: 2.5, gain: 0.25, atk: 1.7 });
+        for (let i = 0; i < 12; i++) tone(B.deep, t + 0.3 + i * (0.2 - i * 0.008), { type: 'triangle', f: 120 + 6 * i, f2: 70, dur: 0.09, gain: 0.08 + 0.012 * i, atk: 0.004 });
+        for (let i = 0; i < 18; i++) burst(B.soft, t + 0.7 + i * 0.09 + R(0, 0.05), { f: R(2000, 5200), q: 2.4, dur: R(0.012, 0.03), gain: R(0.15, 0.3), atk: 0.001 });
+      } else if (k === 1) {
+        burst(B.soft, t, { f: 3200, f2: 500, q: 1.5, dur: 0.09, gain: 1.6, atk: 0.001 });
+        tone(B.deep, t, { type: 'triangle', f: 300, f2: 120, dur: 0.25, gain: 0.3, atk: 0.002 });
+        tone(D.soft, t, { f: 820, f2: 790, dur: 0.35, gain: 0.06, atk: 0.002 });
+        tone(B.deep, t + 0.06, { type: 'triangle', f: 90, f2: 32, dur: 0.5, gain: 0.5, atk: 0.003 });
+      } else if (k === 2) {
+        tone(B.deep, t, { type: 'triangle', f: 120, f2: 28, dur: 1.6, gain: 0.8, atk: 0.003 });
+        burst(B.soft, t, { f: 800, f2: 100, q: 0.6, dur: 0.5, gain: 4, atk: 0.001 });
+        burst(B.soft, t, { type: 'lowpass', f: 1000, f2: 220, q: 0.8, dur: 1.8, gain: 2.4, atk: 0.02 });
+        burst(B.soft, t + 0.02, { type: 'highpass', f: 2800, f2: 7600, q: 0.8, dur: 1.5, gain: 0.9, atk: 0.01 });
+        tone(D.soft, t + 0.03, { type: 'sawtooth', f: 180, f2: 130, dur: 1.9, gain: 0.1, atk: 0.05 });
+        tone(D.soft, t + 0.03, { type: 'sine', f: 960, f2: 640, dur: 1.6, gain: 0.05, atk: 0.05 });
+      } else if (k === 3) {
+        burst(B.soft, t, { type: 'bandpass', f: 3000, f2: 8000, q: 3, dur: 0.08, gain: 1.0, atk: 0.003 });
+        tone(B.deep, t, { type: 'triangle', f: 110, f2: 55, dur: 0.12, gain: 0.2, atk: 0.002 });
+      } else {
+        burst(B.soft, t, { type: 'lowpass', f: 600, f2: 70, q: 0.8, dur: 0.8, gain: 1.4, atk: 0.03 });
+        tone(B.deep, t, { type: 'triangle', f: 70, f2: 24, dur: 0.8, gain: 0.3, atk: 0.02 });
+      }
+    },
     twbreak(k, at) {                                     // v1.173 the SKYSCRAPER: k 0 = wood breaks (a crack and splinters), 1 = glass shatters (a bright burst and tinkling), 2 = metal (a clang and a crash), 3 = stone / a wall (a low boom and gravel), 4 = a floor breaks (a huge crack, a long rumble and falling rubble), 5 = an explosion, 6 = a ding (the elevator, a soda picked up), 7 = a light hit on furniture or a landing (a short crack and a thud)
       const t = T(at), B = C.atk, D = C.tele, rattle = (n, t0, span, gain) => { for (let i = 0; i < n; i++) burst(B.soft, t0 + R(0, span), { type: 'bandpass', f: R(900, 3200), q: 3, dur: R(0.012, 0.03), gain, atk: 0.001 }); };
       if (k === 0) { burst(B.soft, t, { f: 900, f2: 200, q: 1.2, dur: 0.18, gain: 2.2, atk: 0.001 }); tone(B.deep, t, { type: 'triangle', f: 140, f2: 60, dur: 0.2, gain: 0.35, atk: 0.002 }); rattle(6, t + 0.03, 0.2, 0.5); }

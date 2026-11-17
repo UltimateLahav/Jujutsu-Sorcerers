@@ -52,7 +52,7 @@ function irBhEnd(g, now) {      // the move is over (or cut short): the enemy is
   const d = dummy; g.bh = null; if (d && d.air && d.air.hover) { d.air = null; d.airH = 0; } cuDashReady = now + 150;
 }
 function irBhHeld(g) { const b = g.bh; return !!b && !b.kind && b.ph !== 'wind' && b.ph !== 'fly' && b.ph !== 'miss'; }      // (he has the enemy: grab, hug, climb, turn, dive and landing)
-function irBhHurt(g, now) { const k = g.bh && g.bh.kind; if (k === 'spin') irsHurt(g, now); else if (k === 'beam') irbHurt(g, now); else if (k === 'laser') irlHurt(g, now); else if (k === 'gp' || k === 'gt') irpHurt(g, now); else if (g.bh && !irBhHeld(g)) { g.bhCd = Math.min(g.bhCd || 0, now + IRH.cdMiss); irBhEnd(g, now); } }      // (a blow that lands while he is still charging stops it; once he holds the enemy nothing can reach him)
+function irBhHurt(g, now) { const k = g.bh && g.bh.kind; if (k === 'uni') return; else if (k === 'spin') irsHurt(g, now); else if (k === 'beam') irbHurt(g, now); else if (k === 'laser') irlHurt(g, now); else if (k === 'gp' || k === 'gt') irpHurt(g, now); else if (g.bh && !irBhHeld(g)) { g.bhCd = Math.min(g.bhCd || 0, now + IRH.cdMiss); irBhEnd(g, now); } }      // (a blow that lands while he is still charging stops it; once he holds the enemy nothing can reach him)
 function irhHold(now, h, keep) {      // the enemy is held: IRH.hx in front of his hips (unless keep: where he is), h above the floor, still, and he cannot act
   const d = dummy; if (!d || d.ko >= 0) return;
   if (!keep) d.x = wx + IRH.hx; d.vx = 0; d.stunUntil = Math.max(d.stunUntil || 0, now + 250); d.ai = 'rest'; d.aiAt = now; d.restFor = 250; d.hitDone = true;
@@ -82,7 +82,7 @@ function irhDive(g, b, now) {      // the floors below the one he started on bre
 // ---- the state: irBhStep is called by customScene every frame while g.bh is there; it moves him, the enemy and the camera and returns the picture
 function irBhStep(g, now, dt) {
   const b = g.bh; if (!b) return null; if (!g.bhp) irhPics(g);
-  if (b.kind) return b.kind === 'spin' ? irsStep(g, b, now, dt) : b.kind === 'beam' ? irbStep(g, b, now, dt) : b.kind === 'laser' ? irlStep(g, b, now, dt) : irpStep(g, b, now, dt);      // (v1.195 the BLAST, v1.196 the LASER and the GROUND PUNCH have their own phases, see tools/ironb.js and tools/ironp.js)
+  if (b.kind) return b.kind === 'spin' ? irsStep(g, b, now, dt) : b.kind === 'uni' ? iruStep(g, b, now, dt) : b.kind === 'beam' ? irbStep(g, b, now, dt) : b.kind === 'laser' ? irlStep(g, b, now, dt) : irpStep(g, b, now, dt);      // (v1.195 the BLAST, v1.196 the LASER and the GROUND PUNCH have their own phases, see tools/ironb.js and tools/ironp.js)
   const d = dummy, P = g.bhp, tw = twOn(), u = now - b.at; dt = Math.max(0, Math.min(0.05, dt)); b.last = now;
   if (vs.ph !== 'fight' || !d || (d.ko >= 0 && b.ph !== 'land')) { b.lift = 0; b.rot = 0; irBhEnd(g, now); return null; }
   const apex = tw ? 22 : Math.max(36, gy - 76);
@@ -141,12 +141,12 @@ function irGrpBegin(grp, foe) {      // the enemy is drawn in the turned frame, 
   ctx.save(); irGrpTf(grp); if (foe && grp.hi) { ctx.beginPath(); ctx.rect(grp.px - 70, grp.py - 37, 140, 72); ctx.clip(); }
 }
 function irBhFx(g, now, cx, x, y, src) {      // streaks of wind: the climb and the turn (they run down the screen), the dive (up the screen, much faster); v1.195 the light at the palm in the BLAST
-  const b = g.bh; if (b && b.kind) { if (b.kind === 'spin') irsFront(g, b, now, x, y, src); else if (b.kind === 'beam') irbFront(g, b, now, x, y, src); else if (b.kind === 'laser') irlFront(g, b, now, x, y, src); return; } if (!b || (b.ph !== 'up' && b.ph !== 'turn' && b.ph !== 'dive')) return; const dir = b.ph === 'dive' ? -1 : 1, v = b.ph === 'dive' ? 1100 : 420;
+  const b = g.bh; if (b && b.kind) { if (b.kind === 'spin') irsFront(g, b, now, x, y, src); else if (b.kind === 'uni') iruFront(g, b, now, x, y, src); else if (b.kind === 'beam') irbFront(g, b, now, x, y, src); else if (b.kind === 'laser') irlFront(g, b, now, x, y, src); return; } if (!b || (b.ph !== 'up' && b.ph !== 'turn' && b.ph !== 'dive')) return; const dir = b.ph === 'dive' ? -1 : 1, v = b.ph === 'dive' ? 1100 : 420;
   ctx.save(); ctx.fillStyle = 'rgba(235,245,255,0.34)';
   for (let i = 0; i < 14; i++) { const x = (i * 47 + 13) % VW, len = 12 + (i * 7) % 16, y = (((now * v / 1000 * dir * (0.8 + (i % 3) * 0.3) + i * 37) % VH) + VH) % VH; if (Math.abs(x - cx) > 14) ctx.fillRect(x, Math.round(y), 1, len); }
   ctx.restore();
 }
 function irWorld(g, now, cx, x, y, src) {      // customScene, after the enemy and before him: the beam of the BLAST or the laser, and (every frame, also when the move is over) the hole the laser made in the enemy
-  const b = g.bh; if (b && b.kind === 'spin') irsBack(g, b, now, x, y, src); else if (b && b.kind === 'beam') irbBack(g, b, now, x, y, src); else if (b && b.kind === 'laser') irlBack(g, b, now, x, y, src);
+  const b = g.bh; if (b && b.kind === 'spin') irsBack(g, b, now, x, y, src); else if (b && b.kind === 'uni') iruBack(g, b, now, x, y, src); else if (b && b.kind === 'beam') irbBack(g, b, now, x, y, src); else if (b && b.kind === 'laser') irlBack(g, b, now, x, y, src);
   irlWorld(now, cx);
 }

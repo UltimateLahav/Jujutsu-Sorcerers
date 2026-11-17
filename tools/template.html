@@ -53,6 +53,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #dom.on{background:#1a1a4a;border-color:#dfe6ff;color:#fff;opacity:1;box-shadow:0 0 1.8vh #8c8cff,4px 4px 0 #000}#dom.cd{opacity:.6}
 #dom.su{border-color:#ff3a4a;color:#ff7a8a}#dom.su span{color:#ffc0c8}#dom.su::after{background:rgba(255,58,74,.38)}#dom.su.on{background:#4a0a14;border-color:#ffd0d6;color:#fff;box-shadow:0 0 1.8vh #ff3a4a,4px 4px 0 #000}      /* v1.124 Sukuna's ULTIMATE: the same button in crimson */
 #dom.ju{border-color:#17e3ff;color:#8ff0ff}#dom.ju span{color:#c8f8ff}#dom.ju::after{background:rgba(23,227,255,.38)}#dom.ju.on{background:#06384a;border-color:#e4f7ff;color:#fff;box-shadow:0 0 1.8vh #17e3ff,4px 4px 0 #000}      /* v1.172 Ryu's ULTIMATE, JUST THIS ONCE: the same button in cyan */
+#dom.iu{border-color:#ffb02e;color:#ffd77a}#dom.iu span{color:#fff0c4}#dom.iu::after{background:rgba(255,150,30,.4)}#dom.iu.on{background:#4a2606;border-color:#fff4d0;color:#fff;box-shadow:0 0 1.8vh #ff9a1e,4px 4px 0 #000}      /* v1.203 Iron Man's ULTIMATE, the UNIBEAM: the same button in orange and gold */
 #lap.red{border-color:#ff5a4a;color:#ff7a6a}
 #lap.red span{color:#ffb4a8}
 #lap.fl{background:#3a1a00;border-color:#ff9a2a;color:#ffb24a;opacity:1;box-shadow:0 0 1.8vh #ff7a00,0 0 .5vh #ff7a00 inset,4px 4px 0 #000}      /* Sukuna's FLAME mode: BLUE is OPEN, in orange */
@@ -72,7 +73,7 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 #pad.cine,#hud.cine{visibility:hidden}body.cut #hud,body.cut #pad,body.cut #sns,body.cut #trHud,body.cut #twp{visibility:hidden}      /* (v1.181 a cutscene of a fight: only what belongs to it stays, see cutsceneOn) */
 body.ir #cel{font-size:calc(var(--fs-pb,clamp(5px,1.7vh,9px))*.88)}      /* (v1.193 REPULSOR is 8 letters: a little smaller so that it fits the MODE button) */
 body.ir #lap.lg #lapl{font-size:calc(var(--fs-pb,clamp(5px,1.7vh,9px))*.88)}      /* (v1.196 GROUND is 6 letters: the BLUE button's name is a little smaller while it says GROUND PUNCH) */
-body.ir #dom,body.ir #fat,body.ir #sns{visibility:hidden}      /* (v1.190 Iron Man has no powers: v1.191 he has ATTACK, BLOCK and DASH, and crouches with the stick; v1.193 MODE is his REPULSOR mode; v1.194 BLUE is his BEAR HUG; DOMAIN, FATAL and SENSE stay hidden) */
+body.ir #fat,body.ir #sns{visibility:hidden}      /* (v1.190 Iron Man has no powers: v1.191 he has ATTACK, BLOCK and DASH, and crouches with the stick; v1.193 MODE is his REPULSOR mode; v1.194 BLUE is his BEAR HUG; v1.203 DOMAIN is his ULTIMATE; FATAL and SENSE stay hidden) */
 body.ry #fat,body.c4 #dom,body.c4 #ce,body.c4 #fat,body.c4 #lap,body.c4 #sns{visibility:hidden}      /* (v1.143 Ryu has no DOMAIN or FATAL: those buttons are hidden while he fights; v1.163 he has BLUE, v1.170 the MODE button is his GRANITE BLAST mode) */      /* the controls hide while a cutscene plays (the FATALITY, the red ending) */
 #qte{position:fixed;inset:0;z-index:4;display:none;pointer-events:none}#qte.show{display:block}      /* the quick-time event of the red ending: the red button, and the ring that closes on it */
 #qBtn,#qRing{position:absolute;border-radius:50%}
@@ -201,7 +202,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.202</small>
+    <small id="ver">V1.203</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -1836,7 +1837,7 @@ function hitFoe(k, now) {                     // called on the impact frame: a h
 function gojoHit(k, now) {                    // the attacking dummy's swing connects with Gojo
   if (catGlove(now)) { nres('m'); return; }      // (the Cat in the giant's glove, lifted or flying: nothing touches him)
   if (dom) { nres('m'); return; }      // (the DOMAIN freezes everyone, whatever they were doing: nothing of the enemy's touches you until it is over)
-  if (cuMe() && (suHit(now) || ryUlHit())) { nres('m'); return; }      // (v1.109 SUKUNA's COUNTER: while he waits the swing is dodged, and until his slash has landed nothing reaches him, see sukuna.js)
+  if (cuMe() && (suHit(now) || ryUlHit() || irUlHit())) { nres('m'); return; }      // (v1.109 SUKUNA's COUNTER: while he waits the swing is dodged, and until his slash has landed nothing reaches him, see sukuna.js)
   if (lagRun && lagHit(k, now)) { nres('m'); return; }      // (v1.117 Verity's LAG COUNTER: the blow does nothing to him and starts his counter)
   if (isD2(k)) { gojoDiv2(now); return; }      // (DIVERGENT FIST's second impact, normal or RUSH: see gojoDiv2)
   if (dgAt >= 0 && now - dgAt < 11 * 1000 / DASH_FPS) { if (now - dgAt < 7 * 1000 / DASH_FPS && now - dodgeAt > 400 && (!vs || vs.ph === 'fight')) { dodgeAt = now; ceGain(E_DODGE); flowAdd(10, now); say('DODGE!', wx, '#9fd8ff', 8, now); } nres('m'); return; }       // he is dashing: the swing misses (v1.30: a dash started just before the blow gives energy)
@@ -2176,7 +2177,7 @@ const HOME_D = 'M3 0h2v1H3zM2 1h4v1H2zM1 2h6v1H1zM0 3h8v1H0zM1 4h6v1H1zM1 5h2v3H
 const YULT_D = 'M5 0h2v1H5zM4 1h2v1H4zM3 2h2v1H3zM2 3h5v1H2zM4 4h2v1H4zM3 5h2v1H3zM2 6h2v1H2zM1 7h2v1H1z';      // (YUJI'S ULTIMATE icon: a bolt of black lightning)
 const CHOKE_D = 'M0 0h2v1H0zM6 0h2v1H6zM0 1h8v1H0zM0 2h8v1H0zM0 3h1v1H0zM2 3h4v1H2zM7 3h1v1H7zM0 4h8v1H0zM0 5h3v1H0zM5 5h3v1H5zM1 6h6v1H1zM2 7h4v1H2z';      // (the ULTIMATE icon: a cat's face)
 function setModeUI() {                        // the MODE button (OFF / CURSED / RED) and the BLUE button, which becomes RED in red mode
-  gSdLab = 0; $('ce').classList.remove('fl'); $('lap').classList.remove('fl'); $('dom').classList.remove('su', 'ju');      // (v1.120 Sukuna's FLAME mode paints both orange: his scene does it again on every frame, everybody else is back to normal)
+  gSdLab = 0; $('ce').classList.remove('fl'); $('lap').classList.remove('fl'); $('dom').classList.remove('su', 'ju', 'iu');      // (v1.120 Sukuna's FLAME mode paints both orange: his scene does it again on every frame, everybody else is back to normal)
   $('ce').classList.toggle('lit', cm === 1); $('ce').classList.toggle('red', cm >= 2); $('ce').setAttribute('aria-pressed', cm ? 'true' : 'false');
   $('cel').innerHTML = 'MODE<br>' + ['OFF', 'CURSED', vs && vs.me === 'yuji' ? 'ZONE' : 'RED', 'INHERIT'][cm]; $('lap').classList.toggle('red', cm === 2); $('lapl').textContent = cm === 2 ? 'RED' : 'BLUE'; $('lap').setAttribute('aria-label', cm === 2 ? 'Red' : 'Lapse Blue');
   const vy = !!vs && vs.me === 'verity', ball = vy && !!vp && vp.form !== 'verity';      // playing Verity: MODE switches between OFF and the BALL, BLUE is the BITE and DASH is the TELEPORT

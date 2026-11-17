@@ -216,3 +216,150 @@ function irsFront(g, b, now, x, y, src) {      // the light at both palms while 
   const fy = Math.round(y) + 62; for (const dx of [-3, 3]) { const fx = Math.round(x) + 32 + dx, len = Math.round(11 + 5 * Math.sin(now / 41 + dx)); ctx.globalAlpha = 0.9; ctx.fillStyle = '#ff8a1e'; ctx.fillRect(fx - 2, fy, 5, len); ctx.fillStyle = '#ffd24a'; ctx.fillRect(fx - 1, fy, 3, Math.round(len * 0.7)); ctx.fillStyle = '#ffffff'; ctx.fillRect(fx, fy, 1, Math.round(len * 0.4)); }
   ctx.restore(); ctx.globalAlpha = 1;
 }
+
+// ================================================================ v1.203 IRON MAN'S ULTIMATE, THE UNIBEAM (this section is part of tools/ironb.js: it is the beam of his CHEST)
+// The user, after v1.202: "Make his ultimate be that he charges up from his chest core and then he braces and fires from his chest a mix of orange and yellow and white beam from his chest, no questions now do it". No question round.
+// The DOMAIN button (key V) is his ULTIMATE, like Ryu's JUST THIS ONCE and Sukuna's shrine (it was hidden for him until now): ULTIMATE, 67% of the energy, and 30 s to come back. It is played by the same state as his other specials, g.bh, with kind 'uni' (customScene reads the press, irUlTry starts it, irBhStep hands over to iruStep every frame; the other buttons do nothing meanwhile; no black screen and no camera: the fight goes on round him):
+//   CHARGE (2.4 s: he lets his guard go, his chest goes forward and the ARC REACTOR in it swells from a spark into a sun of orange, yellow and white light; sparks and rings are drawn into it from every side, he trembles faster and faster, dust and grit lift round his boots and the ground shakes more and more) -> BRACE (0.5 s: the feet go wide apart, the hips down, he leans back against what is coming, his fists clenched at his belt, the sun held at its biggest) -> FIRE (1.8 s: a beam of orange, yellow and white light, 4 m thick, leaves the middle of his chest and runs to the edge of the screen; he shakes in it and the screen with him; 12 bursts, one every 0.15 s) -> RELEASE (0.55 s: the beam thins and goes out, he straightens up).
+// Nothing touches him from the press to the end (gojoHit asks irUlHit, as it asks ryUlHit) and nothing can stop the beam (not the guard, a dash, a jump or lying on the floor): the one enemy it misses is one who has gone BEHIND him (asked at every burst). The 12 bursts take 45% of the enemy's whole health in all (3.75% each: as much as the other ULTIMATEs), push him back along the beam and stun him; the last one stuns him for a second and, in the skyscraper, breaks 3 floors under him; a smoke ball is immune, as with the others. In the skyscraper the beam breaks the furniture, the walls and the doors in its way (twSweep: everything at once when it fires, a little more at every burst) and the lights shake.
+// 1 m = 10 px (the user's scale for every number of this move): the beam is 4 m thick (IRU.th is the half of it, 2 m).
+const IRU = { cost: 67, cd: 30000, charge: 2400, brace: 500, fire: 1800, rel: 550, ticks: 12, gap: 150, t0: 70, pct: 3.75, th: 2 * IR_M, len: 700 };      // (times in game ms; cost: percent of the energy; cd: the button's wait after it; ticks: the bursts of the beam, gap: ms between them, t0: ms after the beam starts; pct: percent of the enemy's whole health in each burst; th: half the beam's thickness in px; len: how far the furniture's sweep reaches)
+IRU.tF = IRU.charge + IRU.brace; IRU.tRel = IRU.tF + IRU.fire; IRU.end = IRU.tRel + IRU.rel;      // (ms from the press: the beam fires, the release begins, it is over)
+const IR_ULD = 'M1 1h2v1H1zM0 2h1v1H0zM3 2h1v1H3zM5 2h3v1H5zM0 3h1v2H0zM1 3h2v2H1zM3 3h5v2H3zM0 5h1v1H0zM3 5h1v1H3zM5 5h3v1H5zM1 6h2v1H1z';      // (the icon of the button: a reactor ring with its core and a beam that widens)
+const irUlHit = () => { const g = CU_GAME[5]; return !!g && !!g.bh && g.bh.kind === 'uni' && !!vs && vs.me === IRON_WHO; };      // (his ULTIMATE is going on: nothing of the enemy's touches him, gojoHit asks; not when somebody else is the fighter and a stale state is left)
+function iruCore(p) { const q = c4xRig(C4I, p).at(0.62, 5.6); return { px: Math.round(q[0] - IRON_OX), py: Math.round(q[1] - IRON_OY) }; }      // (where the arc reactor is on the 64 x 64 picture of a pose: the middle of his chest, where the beam begins)
+function iruPics(g) {      // the pictures of the ultimate (made the first time it is needed): ch = he lets his guard go (3), pu = the two he trembles between while he charges, br = the feet go wide and the hips down (3 and the brace itself), fi = the two of the brace that shake in the beam, rl = he straightens up (4); every picture knows where his reactor is (.core)
+  const feet = [{ ax: 33, ay: C4IG, a: 0 }, { ax: 61, ay: C4IG, a: 0 }], mid = [{ ax: 36, ay: C4IG, a: 0 }, { ax: 58, ay: C4IG, a: 0 }], ez = IR_EZ.io;
+  const gat = o => irG({ x: 47, y: 63.5, lean: -3, hdx: 1.1, hdy: 1.3, hdt: -5, arms: [{ al: 10, el: 18 }, { al: 16, el: 22 }], legs: mid, ...o });      // (the guard let go: the arms hang a little forward, the chest comes forward and the head goes back)
+  const brc = o => irG({ x: 47, y: 66.5, lean: -9, hdx: 0.9, hdy: 1.4, hdt: -9, arms: [{ al: -12, el: 62 }, { al: -8, el: 66 }], legs: feet, ...o });      // (the brace: feet wide apart, hips down, leaning back against the beam, the fists clenched at his belt)
+  const cut = p => { const c = ironCut(p); c.core = iruCore(p); return c; }, G0 = gat(), B0 = brc();
+  g.ump = {
+    ch: [1, 2, 3].map(k => cut(c4xMixPose(IR_GD, G0, k / 3))), pu: [gat({ y: 64, lean: -4.5, hdt: -7 }), gat({ y: 62.8, lean: -1.5, hdt: -3 })].map(cut),
+    br: [1, 2, 3].map(k => cut(c4xMixPose(G0, B0, ez(k / 3)))).concat([cut(B0)]), fi: [brc({ y: 66, lean: -10.5, hdt: -10.5 }), brc({ y: 67, lean: -7.5, hdt: -7.5 })].map(cut),
+    rl: [0.25, 0.5, 0.75, 1].map(k => cut(c4xMixPose(B0, IR_GD, ez(k))))
+  };
+}
+// ---- the start, and the end
+function irUlTry(now) {      // the DOMAIN button: it starts if he stands or crouches with nothing else going on, the wait is over, a living enemy is there (in the skyscraper: on this floor) and the energy is there (67%)
+  const g = CU_GAME[5]; if (!g || !g.ir || g.bh || cuAtkAt >= 0 || cuDash || blkAt >= 0 || cuJumpAt >= 0 || (stance !== 'stand' && stance !== 'crouch') || ryUlBusy()) return;
+  if (now < domReadyAt) { say('WAIT', wx, '#9a9aa8', 8, now); return; }
+  if (!irhOk(now)) { say('NO TARGET', wx, '#9a9aa8', 8, now); return; }
+  if (!ceSpend(IRU.cost * 100 / cuS.em, now)) return;
+  iruStart(g, now);
+}
+function iruStart(g, now) {      // the charge begins: he stands up (from a crouch too), the buttons stop answering and the long wait of the button is set (iruEnd sets the real one)
+  if (!g.ump) iruPics(g);
+  stance = 'stand'; stickCr = false; stickDown = false; cuAtkQ = cuLpQ = 0; cuJumpAt = -1;
+  g.bh = { kind: 'uni', lab: g.rp ? 'blast' : 'hug', ph: 'charge', at: now, t0: now, last: now, lift: 0, rot: 0, tk: 0, hit: null, landed: 0, fired: false, fireAt: 0, sn: 0, pp: 0, rxAt: -1e9, imp: -1e9, ix: 0, iy: 0, core: null, ko: false };
+  domReadyAt = now + IRU.end + IRU.cd; snd('irult', 0); gritAt(wx - 6, 8, 80, -1); gritAt(wx + 6, 8, 80, 1); puff(wx - 8, 4); puff(wx + 8, 4);
+}
+function iruEnd(g, now) {      // it is over (or cut short: the round ended, the enemy was gone before it fired): the move ends and the button waits 30 s from now (a new round starts with it ready)
+  irBhEnd(g, now); domReadyAt = now + IRU.cd;
+}
+// ---- the beam: its bursts
+function iruFire(g, b, now) {      // the beam leaves his chest: the sound, the shake, a blast of dust behind him and, in the skyscraper, the furniture in its way breaks and the lights shake
+  b.fired = true; b.fireAt = now; b.ph = 'fire'; b.sn = 0;
+  snd('irult', 2); flash(now, 120, 0.12); shakeUntil = Math.max(shakeUntil, now + 300); shakeAmp = 5; hitStop(100);
+  gritAt(wx - 8, 14, 130, -1); gritAt(wx - 2, 10, 90, -1); puff(wx - 12, 6); puff(wx - 2, 4); shockAt(wx, 330, 180, 0.9);
+  if (twOn() && !vs.tw.cab) { twSweep(wx + 8, wx + IRU.len, 90, now); twLightsShock(twFloorData(vs.tw.fMe), wx + 60, 160, 70, now); }
+}
+function iruTick(g, b, now, n) {      // burst n of 12 on whatever is in front of him: the guard, a dash, a jump, lying on the floor, nothing stops it (the one thing it cannot reach is an enemy BEHIND him); the twelve add up to 45% of his full health, push him back and stun him; the last one stuns him for a second
+  const S = IRU; if (twOn() && !vs.tw.cab) twSweep(wx + 8, wx + S.len, 14, now);
+  const d = dummy; if (!d || d.ko >= 0 || d.cap || !vs || vs.ph !== 'fight') return;
+  if (twOn()) { const T = vs.tw; if (T.away || T.cab || T.fFoe !== T.fMe || d.twAway) return; }
+  if (d.x - wx < -4) { if (n === 1 && b.hit === null) { b.hit = false; say('MISSED', d.x, '#9fd8ff', 8, now); } return; }      // (behind him: the beam goes the other way)
+  if (d.vform && d.vform !== 'verity') { if (n === 1) say('IMMUNE', d.x, '#ffe9a0', 8, now); return; }      // (a smoke ball takes nothing, as with the other ULTIMATEs)
+  b.hit = true; const first = !b.landed; b.landed++;
+  const tot = (d.max || DUMMY_HP) * S.pct * S.ticks / 100 * cuS.dm / 100, dm = Math.max(1, Math.round(tot * n / S.ticks) - Math.round(tot * (n - 1) / S.ticks));      // (the twelve bursts add up to 45% exactly: each one is what is still missing)
+  const top = gy - 60 - Math.round(d.airH || 0), bot = gy - 4 - Math.round(d.airH || 0), ey = Math.max(top, Math.min(bot, gy - 61 + (b.core ? b.core.py : 22) + 1));      // (the place on his body nearest to the beam's middle)
+  if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; } if (first) { hits.n++; vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n); } hits.dmg += dm; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = 0;      // (one hit of the combo counter, the damage grows)
+  d.hp = Math.max(0, d.hp - dm); d.hitAt = now; d.dodgeUntil = 0; d.vx = n === S.ticks ? 220 : 30; cuStun(n === S.ticks ? 1.0 : 0.35, now, true); b.imp = now; b.ix = d.x; b.iy = ey;      // (he is pushed back slowly while the beam is on him, so that he stays on the screen, and thrown away by the last burst)
+  if (!airUp(d) && now - b.rxAt >= 250) { d.rx = 6; d.rxAt = now; b.rxAt = now; }      // (he flinches again every quarter of a second)
+  say('' + dm, d.x + Math.random() * 10 - 5, popCol(), 8, now); spark(d.x - 4 + Math.random() * 6 - 3, ey + Math.random() * 16 - 8, first || n === S.ticks ? 16 : 9, ['#ffffff', '#ffd34d', '#ff7a2a'], first || n === S.ticks, 1); snd('irult', 3); shockAt(d.x, 140, 70, 0.5);
+  if (first) snd('concboom');
+  if (twOn()) { const T = vs.tw; T.dHp = d.hp; T.dHit = d.hitAt; T.dDown = d.down || 0; }      // (the skyscraper's watcher must not take a burst for a blow that puts him down: the last one breaks the floors itself)
+  if (d.hp <= 0) { koDummy(now); b.ko = true; } else if (n === S.ticks && twOn()) twSlam('foe', 3, now, d.x);
+}
+// ---- the state: irBhStep hands over to this every frame while the ultimate runs; it returns his picture
+function iruStep(g, b, now, dt) {
+  const P = g.ump, S = IRU; let u = now - b.t0; dt = Math.max(0, Math.min(0.05, dt)); b.last = now; b.lift = 0; b.rot = 0;
+  if ((vs.ph !== 'fight' && !b.ko) || (!b.fired && (!dummy || dummy.ko >= 0))) { iruEnd(g, now); return null; }
+  if (b.ko && u < S.tRel) { b.t0 = now - S.tRel; u = S.tRel; }      // (the enemy is down: the beam dies away at once)
+  let pic;
+  if (u < S.charge) {      // CHARGE
+    const k = u / S.charge; b.pp += dt * (5 + 13 * k); pic = u < 330 ? P.ch[Math.floor(u / 110)] : P.pu[Math.floor(b.pp) % 2]; b.core = pic.core;
+    shakeUntil = Math.max(shakeUntil, now + 90); shakeAmp = 3 * k;      // (the ground shakes more and more: the amplitude is set, not raised, so that the one a blow left behind does not shake the whole charge)
+    if (Math.random() < 0.05 + 0.2 * k) puff(wx + Math.random() * 20 - 10, 1); if (Math.random() < 0.04 + 0.12 * k) gritAt(wx + (Math.random() < 0.5 ? -8 : 8), 2, 70, 0);
+  } else if (u < S.tF) {      // BRACE
+    if (b.ph !== 'brace') { b.ph = 'brace'; snd('irult', 1); gritAt(wx - 10, 8, 110, -1); gritAt(wx + 10, 8, 110, 1); puff(wx - 10, 3); puff(wx + 10, 3); }
+    pic = P.br[Math.min(3, Math.floor((u - S.charge) / 60))]; b.core = pic.core; shakeUntil = Math.max(shakeUntil, now + 90); shakeAmp = 3;
+  } else if (u < S.tRel) {      // FIRE
+    const f = u - S.tF; pic = P.fi[Math.floor(f / 45) % 2]; b.core = pic.core; if (!b.fired) iruFire(g, b, now);
+    while (b.tk < S.ticks && f >= S.t0 + b.tk * S.gap && !b.ko) { b.tk++; iruTick(g, b, now, b.tk); }
+    shakeUntil = Math.max(shakeUntil, now + 90); shakeAmp = 1.5 + 3.5 * (1 - f / S.fire);      // (less and less while the beam is on)
+    if (f >= b.sn) { snd('cecrackle'); b.sn = f + 230; }
+    if (Math.random() < 0.3) puff(wx - 8 - Math.random() * 6, 1); if (Math.random() < 0.25) gritAt(wx - 8, 2, 120, -1);
+  } else if (u < S.end) {      // RELEASE
+    if (b.ph !== 'rel') { b.ph = 'rel'; snd('irult', 4); }
+    pic = P.rl[Math.min(3, Math.floor((u - S.tRel) / S.rel * 4))]; b.core = pic.core;
+  } else { iruEnd(g, now); return null; }
+  return pic;
+}
+// ---- what customScene draws: the beam (before him, so that his arms stay in front of it) and the light of his reactor (after him)
+function iruBack(g, b, now, x, y, src) {      // the beam: columns of orange light with yellow, pale yellow and a white heart inside, each layer swelling and shrinking on its own so that the three colours run through each other, streaks and sparks along it; it is thin where it leaves his chest and fat further out, grows in 140 ms and thins away in the release; a fireball where it meets the enemy
+  if (!b.fired || !b.core) return; const S = IRU, a = now - b.fireAt, rel = now - (b.t0 + S.tRel); if (a < 0) return;
+  const ramp = a < 200 ? 0.18 + 0.82 * IR_EZ.io(a / 200) : 1, fade = rel > 0 ? Math.max(0, 1 - rel / 380) : 1, TH = S.th * ramp * fade; if (TH < 1) return;
+  const sx = Math.round(x + b.core.px) + 2, sy = Math.round(y + b.core.py) + 1, lead = Math.round((VW - sx + 24) * Math.min(1, a / 140)); if (lead < 2) return;
+  ctx.save();
+  for (let l = 0; l < lead; l += 2) {
+    const cone = Math.min(1, 0.34 + l / 36), ph = l * 0.13 - a * 0.045, h = Math.max(2, TH * cone * (1 + 0.06 * Math.sin(ph) + 0.04 * Math.sin(l * 0.27 + a * 0.09))), xx = sx + l;
+    const hy = h * (0.72 + 0.1 * Math.sin(ph * 1.3 + 1)), hp = h * (0.46 + 0.1 * Math.sin(ph * 1.7 + 2.1)), hw = h * (0.24 + 0.08 * Math.sin(ph * 2.1 + 4));
+    ctx.fillStyle = 'rgba(255,92,20,0.3)'; ctx.fillRect(xx, Math.round(sy - h - 5), 2, Math.round(2 * h + 10));
+    ctx.fillStyle = '#ff7a1a'; ctx.fillRect(xx, Math.round(sy - h), 2, Math.round(2 * h));
+    ctx.fillStyle = '#ffc21f'; ctx.fillRect(xx, Math.round(sy - hy), 2, Math.round(2 * hy));
+    ctx.fillStyle = '#fff59a'; ctx.fillRect(xx, Math.round(sy - hp), 2, Math.round(2 * hp));
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(xx, Math.round(sy - hw), 2, Math.round(2 * hw));
+  }
+  for (let j = 0; j < 9; j++) {      // (streaks of light run along it, white, yellow and orange)
+    const yy = Math.round(sy + (((j * 37 + 11) % 100) / 100 - 0.5) * TH * 1.5), sp = j % 2 ? 1.2 : 1.7; ctx.fillStyle = j % 3 === 0 ? 'rgba(255,255,255,0.85)' : j % 3 === 1 ? 'rgba(255,240,150,0.8)' : 'rgba(255,190,80,0.8)';
+    for (let x0 = -((a * sp + j * 41) % 80); x0 < lead; x0 += 80) { const xs = Math.max(0, x0), xe = Math.min(lead, x0 + 26); if (xe > xs) ctx.fillRect(sx + Math.round(xs), yy, Math.round(xe - xs), 1 + (j % 2)); }
+  }
+  if (!SET.lite) for (let j = 0; j < 26; j++) {      // (and flames and sparks fly off its edges)
+    const l = Math.random() * lead, h = TH * Math.min(1, 0.34 + l / 36), side = Math.random() < 0.5 ? -1 : 1; ctx.fillStyle = Math.random() < 0.34 ? '#ffffff' : Math.random() < 0.5 ? '#ffd24a' : '#ff8a1e';
+    ctx.fillRect(Math.round(sx + l), Math.round(sy + side * (h + 1 + Math.random() * 10)), 1 + Math.floor(Math.random() * 3), 1 + Math.floor(Math.random() * 2));
+  }
+  const d = dummy; if (b.hit && d && d.ko < 0 && now - b.imp < 260 && rel < 0) {      // (where it meets him: a fireball on the side of his body that faces it)
+    const ex = Math.round(VW / 2) + Math.round(d.x - wx) - 4, ey = Math.round(b.iy), R = 8 + Math.round(Math.abs(Math.sin(a * 0.04)) * 6);
+    irbDisc(ex, ey, R + 5, '#ff5a14', 0.28); irbDisc(ex, ey, R + 2, '#ff9a22', 0.6); irbDisc(ex, ey, R, '#ffd24a', 0.92); irbDisc(ex, ey, Math.max(2, R - 4), '#ffffff', 1);
+  }
+  ctx.restore(); ctx.globalAlpha = 1;
+}
+function iruFront(g, b, now, x, y, src) {      // the light of his reactor: in the charge it swells from a spark into a sun (orange, yellow, white), sparks fly into it and two rings shrink towards it; held at its biggest in the brace; in the beam a blazing flare with a cross of light, and a warm flash over the whole screen when it fires
+  if (!b.core) return; const S = IRU, u = now - b.t0, px = Math.round(x + b.core.px) + 1, py = Math.round(y + b.core.py) + 1; ctx.save();
+  if (u < S.tF) {
+    const k = Math.min(1, u / S.charge), e = k * k * (3 - 2 * k), hold = u >= S.charge, R = hold ? 10 + Math.round(Math.abs(Math.sin(now * 0.05)) * 2) : Math.round(2 + 8 * Math.pow(k, 1.3) + Math.abs(Math.sin(now * 0.03)) * (0.5 + 1.5 * k));
+    for (let i = 0, n = hold ? 26 : 6 + Math.floor(30 * k); i < n; i++) {      // (sparks fly in from every side: the closer to the sun, the quicker)
+      const per = 480 + (i * 53) % 260, ph = ((u + i * 131) % per) / per, seed = Math.floor((u + i * 131) / per) * 7 + i, ang = seed * 2.399, r = (40 + (seed * 37) % 36) * Math.pow(1 - ph, 1.5) + R;
+      ctx.globalAlpha = Math.min(1, ph * 1.6); ctx.fillStyle = i % 3 === 0 ? '#ffffff' : i % 3 === 1 ? '#ffd24a' : '#ff8a1e'; ctx.fillRect(Math.round(px + Math.cos(ang) * r), Math.round(py + Math.sin(ang) * r * 0.8), i % 4 ? 1 : 2, i % 4 ? 1 : 2);
+    }
+    if (!hold) for (let q = 0; q < 2; q++) {      // (two rings shrink towards it)
+      const w = (((u - q * 330) % 660) + 660) % 660 / 660, Rr = 34 * (1 - w) + R + 2; ctx.globalAlpha = Math.min(1, w * 1.3) * (0.3 + 0.7 * k); ctx.fillStyle = q ? '#ffd24a' : '#ff9a2e';
+      for (let z = 0; z < 44; z++) { const th = z / 44 * 6.2832; ctx.fillRect(Math.round(px + Math.cos(th) * Rr), Math.round(py + Math.sin(th) * Rr * 0.8), 1, 1); }
+    }
+    irbDisc(px, py, R + 6, '#ff5a14', 0.16 + 0.12 * e); irbDisc(px, py, R + 3, '#ff8a1e', 0.35 + 0.2 * e); irbDisc(px, py, R, '#ffc21f', 0.92); irbDisc(px, py, Math.max(2, Math.round(R * 0.66)), '#fff59a', 1); irbDisc(px, py, Math.max(1, Math.round(R * 0.36)), '#ffffff', 1);
+    if (k > 0.5) { ctx.globalAlpha = Math.min(0.55, (k - 0.5) * 1.1); ctx.fillStyle = '#fff2b0'; ctx.fillRect(px - R * 2, py, R * 4 + 1, 1); ctx.fillRect(px, py - R * 2, 1, R * 4 + 1); }
+  } else if (b.fired) {
+    const a = now - b.fireAt, rel = now - (b.t0 + S.tRel), kk = rel > 0 ? Math.max(0, 1 - rel / 380) : 1, R = Math.round((a < 320 ? 17 - 7 * a / 320 : 10 + (Math.floor(now / 45) % 3)) * kk);
+    if (R > 0) {
+      irbDisc(px, py, R + 5, '#ff5a14', 0.2 * kk); irbDisc(px, py, R + 2, '#ff9a22', 0.55 * kk); irbDisc(px, py, R, '#ffd24a', 0.95 * kk); irbDisc(px, py, Math.max(2, Math.round(R * 0.62)), '#fff59a', kk); irbDisc(px, py, Math.max(1, Math.round(R * 0.34)), '#ffffff', kk);
+      ctx.globalAlpha = 0.6 * kk; ctx.fillStyle = '#fff2b0'; ctx.fillRect(px - R * 2, py, R * 4 + 1, 1); ctx.fillRect(px, py - R * 2, 1, R * 4 + 1);
+    }
+    const wf = (a < 200 ? 0.5 * (1 - a / 200) : 0) * (SET.nf ? 0.2 : SET.fl / 100); if (wf > 0.004) { ctx.globalAlpha = wf; ctx.fillStyle = '#ffe3a0'; ctx.fillRect(-10, -10, VW + 20, VH + 20); }      // (the flash of the beam is warm, not blue: it follows the FLASHES setting like the others)
+  }
+  ctx.restore(); ctx.globalAlpha = 1;
+}
+function irUlUI(now) {      // every frame: the DOMAIN button is his ULTIMATE (a reactor and its beam on an orange button; it is lit while it lasts and its fill counts the 30 s down); setModeUI and setDomUI write it too, so it is checked every time
+  const b = $('dom'), l = $('doml'), p = b.querySelector('path'), act = irUlHit(), cd = act ? 0 : Math.max(0, (domReadyAt - now) / DOM_CD), aria = 'Ultimate: Unibeam. He charges the arc reactor in his chest, braces himself and fires a huge beam of orange, yellow and white light out of his chest that nothing can block or dodge: it only misses an enemy who is behind him (67 energy)';
+  if (l.innerHTML !== 'ULTI<br>MATE') l.innerHTML = 'ULTI<br>MATE'; if (p.getAttribute('d') !== IR_ULD) p.setAttribute('d', IR_ULD); if (b.getAttribute('aria-label') !== aria) b.setAttribute('aria-label', aria);
+  if (!b.classList.contains('iu')) b.classList.add('iu'); b.style.setProperty('--cd', Math.round(cd * 100) + '%'); b.classList.toggle('on', act); b.classList.toggle('cd', !act && cd > 0);
+}
