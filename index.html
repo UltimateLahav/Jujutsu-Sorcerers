@@ -202,7 +202,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.203</small>
+    <small id="ver">V1.204</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -3200,7 +3200,7 @@ function drawDummy(now, dt) {
   const t = Math.min(1, (now - dummy.born) / 650), e = 1 - Math.pow(1 - t, 3), hitT = now - dummy.hitAt, kt = dummy.ko >= 0 ? Math.max(0, now - (dummy.koAt || dummy.ko)) : -1;
   const reacting = kt < 0 && now - dummy.rxAt < RX_DUR[dummy.rx], mirror = !(dummy.mode === 'fighter' && gap < -4) || (typeof suKeepFace === 'function' && suKeepFace()), FS = foeSet();   // he faces Gojo (left), or right if Gojo got behind the attacker
   const kneel = kt < 0 && now < (dummy.kneel || 0);      // (v1.112 Sukuna's LEG CUT: his legs are cut and he drops to his knees, the crouch of his set, for as long as dummy.kneel says; every hit still lands on him)
-  let src, info, fi, lift = 0, ox = 0, oy = 0;                // what he is doing: reeling from a hit, swinging, stepping, or standing about
+  let src, info, fi, lift = 0, ox = 0, oy = 0, mxe = 0;                // what he is doing: reeling from a hit, swinging, stepping, or standing about (mxe: v1.204 how far to the right of his own picture an enemy Ryu is drawn, see ryMir)
   if (kneel) { fi = Math.floor(now / (1000 / IDLE_FPS)) % 15; info = D.cidle; src = hitT < 70 ? whiteOf(FS.fear[fi]) : FS.fear[fi]; }
   else if (reacting) { fi = Math.min(9, Math.floor((now - dummy.rxAt) * RX_FPS[dummy.rx] / 1000)); info = D['rx' + dummy.rx]; src = (hitT < 70 ? rxW : FS.rx)[dummy.rx][fi]; lift = info.lift ? info.lift[fi] : 0; }
   else if (kt < 0 && dummy.mode === 'fighter' && dummy.ai === 'attack') { fi = Math.min(14, Math.floor((now - dummy.aiAt) * ATK_FPS[dummy.k] * (dummy.spd || 1) / 1000)); info = D['atk' + dummy.k]; src = (FS.atk[dummy.k] || FS.atk[0])[fi]; }      // (k = 4, Yuji's DIVERGENT FIST, has no picture here: the Yuji line below draws it)
@@ -3220,7 +3220,7 @@ function drawDummy(now, dt) {
     if (((reacting || kneel) && hitT < 70) || (kt >= 0 && kt < 700 && ((kt / 70) | 0) % 2 === 0)) src = whiteOf(src); }
   if (vs && vs.foe === 'cat') { const L = catLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox; oy = L.oy; }      // the enemy is the Cartoon Cat
   if (freOn()) { const L = freFoeLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox; oy = L.oy; }      // the enemy is Freddy (tools/fred4.js)
-  if (cuFoeOn() && cuFoeG()) { const L = cuenLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox; oy = L.oy; }      // the enemy is Sukuna or Ryu (tools/cuen.js)
+  if (cuFoeOn() && cuFoeG()) { const L = cuenLook(now, reacting, hitT, kt); src = L.src; info = L.info; lift = L.lift; ox = L.ox; oy = L.oy; mxe = L.mx || 0; }      // the enemy is Sukuna or Ryu (tools/cuen.js)
   if (vs && vs.foe === 'cat' && dummy.cact && dummy.cact.type === 'toon' && kt < 0) pendingGiants.push({ who: 'foe', sx, ff: dummy.cact.fi, dir: mirror ? -1 : 1, inv: !!vs.inv });      // (his CARTOON ATTACK: his giant is drawn after you, then he himself on top of it: see drawGiantNow)
   if (ult && ult.who === 'player' && ult.held && !ult.rel && kt < 0) { const o = ultVictimOff(now); lift += o.lift; ox += o.ox; if (o.flash) src = whiteOf(src); }      // (held up by the Cat's glove and kneed: lifted, shaking, flashing white)
   if (dummy.del && now - dummy.del > 1700) return;      // deleted: nothing of him is left
@@ -3233,7 +3233,7 @@ function drawDummy(now, dt) {
   if (dummy.drag && kt < 0) {                 // v1.28 BLOOD DRAG: he lies flat on the floor, feet towards Verity, and is dragged by the feet
     ctx.translate(sx + 4, gy + 1 - Math.round(hx * 0.62) + ((now / 60) & 1)); ctx.rotate(1.5 + Math.sin(now / 70) * 0.02); ctx.scale(-1, 1); ctx.globalAlpha = 1; ctx.drawImage(src, -hx, -62);
   } else if (kt >= 0 && cuFoeOn() && cuFoeG() && cuFoeG().ko.length) {            // v1.189 Ryu knocked out: his K.O. pictures (Sukuna has none: he topples)
-    const G_ = cuFoeG(); ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.globalAlpha = fade; let kp = G_.ko[Math.min(G_.ko.length - 1, Math.floor(kt * CU_KO_FPS / 1000))]; if (vs.inv && kp && kp.width) kp = invOf(kp); ctx.drawImage(kp, -32, gy + 2 - 62);
+    const G_ = cuFoeG(); ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.globalAlpha = fade; let kp = G_.ko[Math.min(G_.ko.length - 1, Math.floor(kt * CU_KO_FPS / 1000))]; const kmx = (kp && kp.__mx) || 0; if (vs.inv && kp && kp.width) kp = invOf(kp); ctx.drawImage(kp, -32 + kmx, gy + 2 - 62);      // (kmx: v1.204 Ryu's turned-over picture, drawn that much to its right so that his torso stays where it was)
   } else if (kt >= 0 && freOn()) {            // v1.188 Freddy knocked out: his own K.O. pictures, the fall is in them (he does not topple like the others)
     ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.globalAlpha = fade; let kp = fredK(kt / 38); if (vs.inv && kp !== EMPTY && kp.width) kp = invOf(kp); ctx.drawImage(kp, -FRED_INFO.cx, gy + 2 - 62);
   } else if (kt >= 0) {                       // knocked out: he topples backwards about his feet, flickers, then fades away
@@ -3241,7 +3241,7 @@ function drawDummy(now, dt) {
     ctx.globalAlpha = fade; ctx.drawImage(src, -hx, -62 + rgh);
   } else {
     const rk = dummy.rip ? ripK(now, dummy.rip.at) : null, paint = () => {
-      ctx.save(); ctx.translate(sx, 0); ctx.scale(mirror ? -1 : 1, 1);
+      ctx.save(); ctx.translate(sx + (mirror ? -mxe : mxe), 0); ctx.scale(mirror ? -1 : 1, 1);      // (mxe: an enemy Ryu is drawn that far to the right of his own picture, which is to the left of the screen when he is turned round)
       if (rk) { ctx.translate(mirror ? -rk.jx : rk.jx, gy + 2); ctx.scale(rk.w, rk.s); ctx.translate(0, -(gy + 2)); }      // (v1.116 RIP AND THROW: he is pulled long and thin, and trembles)
       if (dummy.squash && now - dummy.squash < 420) { const q = Math.sin(Math.min(1, (now - dummy.squash) / 420) * Math.PI); ctx.translate(0, gy + 2); ctx.scale(1 + 0.35 * q, 1 - 0.45 * q); ctx.translate(0, -(gy + 2)); }      // (v1.28 GIANT SMASH: squashed flat for a moment)
       ctx.beginPath(); ctx.rect(-hx - 2, y + Math.round(h * (1 - e)), w + 4, h); ctx.clip();   // materialises from the feet up
@@ -7667,7 +7667,7 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
   { const v = dir * (dir > 0 ? cuS.fw : cuS.bk) * (stance === 'crouch' ? cuS.cw / 100 : 1) * (blkAt >= 0 ? 0.3 : 1); wx += (g && (g.yu || g.ry) ? walkVel(v, dt, jfr >= 0 && jfr <= 11) : v * goreSpd()) * dt; } cuPh = dir ? cuPh + dir * dt * ((g && g.wf) || 12) : 0; if (g && g.ry) ryStep(now, dir); playerSlide(dt); if (!(g && g.cs && (g.cs.dash || g.cs.cl || g.cs.fat)) && !(g && g.ry && ryUl) && !(g && g.ir && irBhHeld(g))) physCollide(now, dt);      // (the DASH SLASH passes through the enemy and the CLEAVE moves put him exactly where they need him: the bodies are not solid for them; v1.194 nor are the two of them in the bear hug: it would push him back while he holds the enemy)
   ctx.save(); shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp); ctx.translate(shkX, shkY); }
   ctx.imageSmoothingEnabled = false; const fgc = g && g.blue ? suFgCam(now) : null; if (fgc) suFgCamBegin(fgc); const rcm = g && g.ry ? ryUlCam(now) : null; if (rcm) ryUlCamBegin(rcm); const dk = g && g.blue ? suDomCover(now) : 0; if (dk < 1) drawBackdrop(now); if (g && g.blue) suDomBack(now, cx, dt); drawSmoke(now, dt); drawBloodFloor(now, dt); if (g && g.ir) irGround(now, cx); if (grp) irGrpBegin(grp, true); drawFoes(now, dt); if (grp) ctx.restore(); updatePeds(now, dt); if (!dk) drawPeds(now, dt, 0); if (fgc) suFgBack(now, cx);      // (v1.125 / v1.126 THE ORDER, back to front: the ground (the map, drawn by drawBackdrop), then Sukuna's picture (the face of the sign, then the domain: suDomBack), then everything else: the smoke and the blood on the floor, the enemy and what he throws, Sukuna, his effects, the slashes and sparks, the health bars. While the face or the domain covers the whole screen the map is not drawn at all (it would be hidden), and the passers-by are not drawn while the picture shows: only the two fighters and their effects)
-  const sdx = g && g.blue ? suFatDx() : 0, af = ap >= 0 ? g.atk[cuAtkK] : null, src = !g ? null : kod && now >= vs.koAt ? g.ko[Math.min(g.ko.length - 1, Math.floor((now - vs.koAt) * CU_KO_FPS / 1000))] : g.ry && ryUl ? ryUlPic(now) : hurting ? hu[hf] : sp ? sp : af ? af[Math.min(af.length - 1, Math.floor(ap * af.length))] : dp >= 0 ? cuDash.fr[Math.min(cuDash.fr.length - 1, Math.floor(dp * cuDash.fr.length))] : blkAt >= 0 && g.bl.length ? g.bl[Math.min(g.bl.length - 1, Math.floor((now - blkAt) * BLK_FPS / 1000))] : cf >= 0 ? g.cr[cf] : stance === 'crouch' ? (dir && g.cwk ? g.cwk[((Math.floor(cuPh) % g.cwk.length) + g.cwk.length) % g.cwk.length] : g.ci.length ? g.ci[Math.floor(el / (1000 / IDLE_FPS)) % g.ci.length] : g.cr[g.cr.length - 1]) : jp >= 0 ? (cuJumpC && g.cj && now - cuJumpAt < YJ_T.spring ? g.cj[Math.min(g.cj.length - 1, Math.floor((now - cuJumpAt) * g.cj.length / YJ_T.spring))] : g.jump[Math.min(g.jump.length - 1, Math.floor(jp * g.jump.length))]) : dir ? (g.wbk && dir < 0 ? g.wbk[((Math.floor(-cuPh) % g.wbk.length) + g.wbk.length) % g.wbk.length] : g.walk[((Math.floor(cuPh) % g.walk.length) + g.walk.length) % g.walk.length]) : g.frames[Math.floor(el / (1000 / IDLE_FPS)) % g.frames.length], x = cx - 32 + sdx + (g && g.ry && ryUl ? ryUl.dx : 0), y = gy - 61 - lift + goreBob('p', now), ry = Math.round(64 * (1 - e));
+  const sdx = g && g.blue ? suFatDx() : 0, af = ap >= 0 ? g.atk[cuAtkK] : null, src = !g ? null : kod && now >= vs.koAt ? g.ko[Math.min(g.ko.length - 1, Math.floor((now - vs.koAt) * CU_KO_FPS / 1000))] : g.ry && ryUl ? ryUlPic(now) : hurting ? hu[hf] : sp ? sp : af ? af[Math.min(af.length - 1, Math.floor(ap * af.length))] : dp >= 0 ? cuDash.fr[Math.min(cuDash.fr.length - 1, Math.floor(dp * cuDash.fr.length))] : blkAt >= 0 && g.bl.length ? g.bl[Math.min(g.bl.length - 1, Math.floor((now - blkAt) * BLK_FPS / 1000))] : cf >= 0 ? g.cr[cf] : stance === 'crouch' ? (dir && g.cwk ? g.cwk[((Math.floor(cuPh) % g.cwk.length) + g.cwk.length) % g.cwk.length] : g.ci.length ? g.ci[Math.floor(el / (1000 / IDLE_FPS)) % g.ci.length] : g.cr[g.cr.length - 1]) : jp >= 0 ? (cuJumpC && g.cj && now - cuJumpAt < YJ_T.spring ? g.cj[Math.min(g.cj.length - 1, Math.floor((now - cuJumpAt) * g.cj.length / YJ_T.spring))] : g.jump[Math.min(g.jump.length - 1, Math.floor(jp * g.jump.length))]) : dir ? (g.wbk && dir < 0 ? g.wbk[((Math.floor(-cuPh) % g.wbk.length) + g.wbk.length) % g.wbk.length] : g.walk[((Math.floor(cuPh) % g.walk.length) + g.walk.length) % g.walk.length]) : g.frames[Math.floor(el / (1000 / IDLE_FPS)) % g.frames.length], x = cx - 32 + sdx + (g && g.ry && ryUl ? ryUl.dx : 0) + ((src && src.__mx) || 0), y = gy - 61 - lift + goreBob('p', now), ry = Math.round(64 * (1 - e));
   { const sw = Math.max(5, Math.round(9 * (1 - lift / 70))), sv = Math.round(sw * 2 / 3); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(cx + sdx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx + sdx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx + sdx - sv, gy + 5, sv * 2, 1); }
   if (g && g.cs && (g.cs.dash || g.cs.cl === 'dash')) suGhostDraw(now, x, y);      // (the afterimages and speed lines of the DASH SLASH and the DASH CLEAVE, behind him)
   if (g && g.ry && ryUl) ryUlBack(now, cx, x, y);      // (v1.172 the beam of his ULTIMATE is behind him)
@@ -9198,12 +9198,24 @@ let ryUI = false;      // (is Ryu's HUD on: the buttons he does not use are hidd
 const RY_WF = 16, RY_STEP = { fw: [0, 7], bk: [14, 7] };      // (RY_STEP: the pictures of the walk (and of the walk back) on which a foot comes down, see ryu_art.py)
 const RY_HU_MS = 24;      // (a picture of his HURT lasts 24 ms: 15 pictures = 0.36 s)      // his walking pictures a second (a slow, heavy stride)
 NAMES[RYU_WHO] = 'RYU'; CEC[RYU_WHO] = ['#10142a', '#3a58c8', '#a8c0f0', '#7aa0ff'];      // (his name on the HUD and his energy bar: steel blue)
+// v1.204 HIS PICTURES ARE MIRRORED (the user, again, after the V1.162 mirror that V1.164 took out: "mirror ryu's sprite because he is turning to the wrong side"; shown the picture as it was and flipped, A and B, he said B faces the enemy, "just the image was not flipped so it looked wrong", and "I want just his image to face right with the hitboxes to be flipped to right so they hit accurately to where he is facing"). Every picture of the sheet is flipped left to right when it is cut (ryMir: the way the game draws an enemy that turns round), so the fight, the enemy, his card, the faces, the map and the VS screens all show him flipped.
+// The NUMBERS are not flipped: his body, his reach and the places where his blows land are measured on the pictures as they were drawn (arts below), so the hitboxes stay on his right, where the enemy is, and every blow still hits what is in front of him. His TORSO does not move either: a picture turned over about its middle would put his body 14 - 20 px to the left of his hitbox, so every flipped picture says in __mx how far to the right the game draws it (the fight, customScene, and the enemy, cuenLook / drawDummy) and the torso stays exactly where it was. The rows of the hair cannon (the GRANITE BLAST mode's seven blasts and JUST THIS ONCE) keep their drawing: the beam comes out of the tip of the hair, whose place (RY_GB) is measured on them. RY_MIRROR = false puts everything back.
+const RY_MIRROR = true, RY_KEEP = new Set(['g1', 'g2', 'gs', 'gd', 'gj', 'gc', 'ga', 'u1', 'u2', 'u3', 'u4']);
+const ryTorso = c => {      // the middle column of his torso in a picture: the middle of what is there in rows 24 - 43, or of the whole picture when little is there (he lies on the floor); -1 for an empty picture
+  const d = c.getContext('2d').getImageData(0, 0, 64, 64).data, all = [], torso = [];
+  for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (d[(y * 64 + x) * 4 + 3] > 127) { all.push(x); if (y >= 24 && y < 44) torso.push(x); }
+  const s = torso.length >= 40 ? torso : all; return s.length ? s.sort((p, q) => p - q)[s.length >> 1] : -1;
+};
+const ryMir = c => {      // a picture turned over (its column x goes to 63 - x); m.__t = where his torso was, m.__mx = 2 t - 63: the torso goes to 63 - t, and drawing the picture 2 t - 63 to the right puts it back on t
+  const m = document.createElement('canvas'); m.width = m.height = 64; const g = m.getContext('2d'); g.imageSmoothingEnabled = false; g.translate(64, 0); g.scale(-1, 1); g.drawImage(c, 0, 0);
+  const t = ryTorso(c); m.__t = t; m.__mx = t < 0 ? 0 : 2 * t - 63; return m;
+};
 (() => {
   const im = new Image();
   im.onload = () => {      // the strip is cut into 64 x 64 pictures, a row for each animation (until then he is not there: his card shows nothing)
     const n = Math.floor(im.width / 64), set = {}, arts = {}, tipOf = a => { const sp = cuSpan(a, r => r - 1), o = {}; for (const r in sp) o[r] = sp[r][1]; return o; };      // (tipOf: how far each row of a picture reaches in front of his middle column)
     RYU_ROWS.forEach((k, r) => {
-      set[k] = []; arts[k] = []; for (let i = 0; i < n; i++) { const c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(im, i * 64, r * 64, 64, 64, 0, 0, 64, 64); set[k].push(c); arts[k].push(suAlpha(c)); }
+      set[k] = []; arts[k] = []; for (let i = 0; i < n; i++) { const c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(im, i * 64, r * 64, 64, 64, 0, 0, 64, 64); set[k].push(RY_MIRROR && !RY_KEEP.has(k) ? ryMir(c) : c); arts[k].push(suAlpha(c)); }      // (v1.204 the pictures are MIRRORED, but the numbers (arts: his body, his reach, the places of his blows) are taken from the pictures as they were drawn, so his blows still hit to the right, where he faces)
     });
     const body = cuWiden(arts.frames.map(a => cuSpan(a, r => r - 1))), hs = Object.values(body).map(v => v[1]).sort((a, b) => a - b);      // (the widest every row gets over his idle pictures, and half as wide as his torso for the push)
     const hit = (r, fr, f, id, o) => {      // one impact: f = the picture of the blow it comes on, fr = the picture of the row it lands on (the limb on that picture and the next gives the reach), id = its place in cuRes; { f: its picture, k: 'i', d: damage, fx: knock-back, launch, stun and, if it hit, a hit stop, a shake and the blue burst, tip: the limb on the impact's pictures, dy: how high the body is then }
@@ -9364,7 +9376,7 @@ function ryGbEv(k, cb) {      // the events of a blast's timeline: one callback 
 function ryReset() { ryGb = false; ryBeams = []; ryAura = []; ryAuraAt = 0; ryUlEnd(pnow(), true); }
 function ryToggle(now) {      // the MODE button: the mode on / off, with a ring of sparks round the hair
   ryGb = !ryGb; snd(ryGb ? 'ceon' : 'ceoff'); if (ryGb) flash(now, 140, .25);
-  const t = ryHairTop(ryCur); if (t) for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; ryAura.push({ x: wx + t[0] - 32 + Math.cos(a) * 3, y: ryCurY + t[1] + Math.sin(a) * 3, vx: Math.cos(a) * (ryGb ? 38 : 22), vy: Math.sin(a) * (ryGb ? 30 : 18) - 6, born: now, life: 420 + (i % 3) * 120, c: i % 3 === 0 ? '#ffffff' : i % 3 === 1 ? '#9ff3ff' : '#17e3ff' }); }
+  const t = ryHairTop(ryCur); if (t) for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; ryAura.push({ x: wx + t[0] - 32 + ((ryCur && ryCur.__mx) || 0) + Math.cos(a) * 3, y: ryCurY + t[1] + Math.sin(a) * 3, vx: Math.cos(a) * (ryGb ? 38 : 22), vy: Math.sin(a) * (ryGb ? 30 : 18) - 6, born: now, life: 420 + (i % 3) * 120, c: i % 3 === 0 ? '#ffffff' : i % 3 === 1 ? '#9ff3ff' : '#17e3ff' }); }
 }
 function ryModeUI() {      // every frame: the MODE button's name and light follow the mode
   const el = $('cel'), b = $('ce'), want = 'MODE<br>' + (ryGb ? 'GRANITE' : 'OFF'), aria = ryGb ? 'Mode: Granite blast is on, tap to switch it off. His attacks are blasts out of his hair' : 'Mode: tap to switch Granite blast on. His attacks become blasts out of his hair';
@@ -9429,7 +9441,7 @@ function ryDraw(now, cx, x, y, src) {      // the beams and the sparks of the mo
   const g = CU_GAME[4]; ryCur = src; ryCurY = y;
   ryBeams = ryBeams.filter(b => now - b.born < b.dur); for (const b of ryBeams) ryDrawBeam(now, cx, x, y, b, g);
   const dt = Math.min(.05, Math.max(0, (now - ryAuraT) / 1000)); ryAuraT = now;
-  if (ryGb && vs && vs.ph === 'fight' && now - ryAuraAt > 70) { ryAuraAt = now; const t = ryHairTop(src); if (t) for (let i = 0; i < 3; i++) ryAura.push({ x: wx + t[0] - 32 + Math.random() * 8 - 4, y: y + t[1] + Math.random() * 3, vx: Math.random() * 8 - 4, vy: -(8 + Math.random() * 12), born: now, life: 420 + Math.random() * 300, c: Math.random() < .4 ? '#ffffff' : Math.random() < .5 ? '#9ff3ff' : '#17e3ff' }); }
+  if (ryGb && vs && vs.ph === 'fight' && now - ryAuraAt > 70) { ryAuraAt = now; const t = ryHairTop(src); if (t) for (let i = 0; i < 3; i++) ryAura.push({ x: wx + t[0] - 32 + ((src && src.__mx) || 0) + Math.random() * 8 - 4, y: y + t[1] + Math.random() * 3, vx: Math.random() * 8 - 4, vy: -(8 + Math.random() * 12), born: now, life: 420 + Math.random() * 300, c: Math.random() < .4 ? '#ffffff' : Math.random() < .5 ? '#9ff3ff' : '#17e3ff' }); }
   ryAura = ryAura.filter(p => now - p.born < p.life); for (const p of ryAura) { p.x += p.vx * dt; p.y += p.vy * dt; ctx.globalAlpha = Math.min(1, 1.6 * (1 - (now - p.born) / p.life)); ctx.fillStyle = p.c; ctx.fillRect(Math.round(cx + p.x - wx), Math.round(p.y), 1, 1); } ctx.globalAlpha = 1;  if (ryUl) ryUlFront(now, cx, x, y);
 }
 window.__ryGb = () => ({ on: ryGb, beams: ryBeams.map(b => ({ k: b.k, f: b.f, ang: +b.ang.toFixed(1), ox: Math.round(b.ox - wx), oh: Math.round(b.oh), hit: b.hit, th: b.th, gray: b.gray })), aura: ryAura.length });      // test hook
@@ -20657,7 +20669,7 @@ function trainDraw(now) {      // the two overlays of the TRAIN page, as a small
 const SEL = {      // the seven fighters: short name, panel name, a tag, three signature moves, a colour, and the top left corner of his 28 x 28 face in his idle picture
   gojo: { nm: 'GOJO', full: 'GOJO', tag: 'THE STRONGEST', mv: ['LAPSE BLUE', 'REVERSAL RED', 'HOLLOW PURPLE'], col: [59, 107, 255], face: [3, 0] },
   yuji: { nm: 'YUJI', full: 'YUJI', tag: 'THE VESSEL', mv: ['DIVERGENT FIST', 'BLACK FLASH', 'THE ZONE'], col: [255, 111, 165], face: [7, 1] },
-  cu4: { nm: 'RYU', full: 'RYU', tag: 'THE BRAWLER', mv: ['5-HIT COMBO', 'GRANITE BLAST', 'JUST THIS ONCE'], col: [23, 227, 255], face: [22, 3] },
+  cu4: { nm: 'RYU', full: 'RYU', tag: 'THE BRAWLER', mv: ['5-HIT COMBO', 'GRANITE BLAST', 'JUST THIS ONCE'], col: [23, 227, 255], face: [14, 3] },      // (v1.204 his pictures are mirrored, so the 28 px window on his head moved from column 22 to 14)
   verity: { nm: 'VERITY', full: 'VERITY', tag: 'CURSED SPIRIT', mv: ['BITE', 'SMOKE BALL', 'JUMPSCARE'], col: [232, 201, 74], face: [18, 0] },
   cat: { nm: 'CAT', full: 'CARTOON<br>CAT', tag: 'CURSED SPIRIT', mv: ['CARTOON ATTACK', 'GIANT KICK', 'ARM HANG'], col: [200, 204, 216], face: [19, 0] },
   freddy: { nm: 'FREDDY', full: 'FREDDY<br>KRUEGER', tag: 'CURSED SPIRIT', mv: ['PIERCE', 'BOILING WATER', 'DREAM'], col: [70, 196, 106], face: [21, 1] },
@@ -21456,9 +21468,10 @@ function cuenLook(now, reacting, hitT, kt) {
   else if (d.ai === 'dodge') { const t = now - d.aiAt, fr = g.db.length ? g.db : g.df; src = fr.length ? fr[Math.min(fr.length - 1, Math.floor(t * fr.length / 300))] : idle(); }
   else if (d.ai === 'walk') { const fr = (d.walkDir > 0 && g.wbk && g.wbk.length) ? g.wbk : g.walk; src = fr.length ? fr[Math.floor(now * (g.wf || 12) / 1000) % fr.length] : idle(); }
   else src = idle();
+  const mx = (src && src.__mx) || 0;      // (v1.204 Ryu's pictures are turned over, and say how far to the right they are drawn so that his torso stays where his hitbox is: drawDummy shifts him that much, to his own side; the picture changes below lose the number)
   if (vs.inv && src && src.width) src = invOf(src);      // (a mirror match: the enemy has the inverted colours)
   if ((reacting || d.air) && hitT < 70 && src && src.width) src = whiteOf(src);
-  return { src, info: CUEN_INFO, lift, ox, oy };
+  return { src, info: CUEN_INFO, lift, ox, oy, mx };
 }
 // 3. HIS BRAIN, called by updateFighterVs after the part every enemy shares (stun, hurt, your swing read, dodge and block)
 const CUEN = {
@@ -21604,6 +21617,16 @@ function cuVictim(n) {
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+ {
+  "v": "1.204",
+  "t": "RYU: HIS PICTURE IS TURNED OVER SO HE FACES THE ENEMY",
+  "n": [
+   "You asked me to mirror Ryu's sprite because he was turning to the wrong side. You answered my questions: you wanted only his picture turned over, so that he faces right, with the hits still landing on his right, where he is facing, and of the two test pictures the turned-over one was the one that faces the enemy. Here it is.",
+   "WHAT CHANGED: every picture of Ryu is turned over: standing, walking, jumping, crouching, blocking, dashing, every punch and kick, getting hurt and getting knocked out. It is the same on his character card, his face picture, the map screen and the VS screen. When Ryu is your enemy he faces you the right way round as well, and when you stand behind him he turns to the other side, like every fighter.",
+   "NOTHING ELSE MOVED: his body, his reach and the place where each of his blows lands are measured on the old pictures, so they are exactly what they were (the same 27 test blows at three distances do the same damage as in V1.202). His body stays exactly where it was on the screen too, so that an enemy's blow touches him where you see him and does not hit the air in front of his chest.",
+   "WHAT YOU WILL SEE: his arms and legs now swing to the other side in the picture, because turning a picture over turns the swing too, while the hit still lands on his right, where the enemy is. The GRANITE BLAST mode and JUST THIS ONCE keep their old drawing, because the beam has to come out of the tip of his hair: when he fires them he turns to the old side for a moment. If that looks wrong, or if you would rather have his punches and kicks swing towards the enemy, tell me and I will redraw them."
+  ]
+ },
  {
   "v": "1.203",
   "t": "IRON MAN: ULTIMATE, THE UNIBEAM FIRED FROM HIS CHEST",
@@ -24621,7 +24644,7 @@ async function scMore() {      // the time that is left of the minute: more rand
 async function scMoves() {
   SC.sec = 'MOVES'; const DIRS = [['', 'STANDING'], ['KeyD', 'FORWARD'], ['KeyA', 'BACK'], ['KeyS', 'CROUCHING'], ['Space', 'JUMPING']], BTN = [['KeyJ', 'ATTACK'], ['KeyL', 'BLUE'], ['KeyK', 'DASH']];
   const V = []; for (const [d, dn] of DIRS) for (const [k, kn] of BTN) V.push([d, k, 0, dn + ' ' + kn]); V.push(['', 'KeyJ', 1, 'HOLD ATTACK'], ['KeyD', 'KeyJ', 1, 'FORWARD HOLD ATTACK'], ['', 'KeyE', 0, 'CURSED ENERGY'], ['', 'KeyQ', 0, 'SENSE'], ['', 'KeyB', 1, 'BLOCK']);
-  scCov('MOVES', 0, SC_WHO.length * V.length + V.length - 1 + SC_IR_N); SC.plan = SC_WHO.length * (V.length * 20 + 30) + SC_IR_N * 40; SC.done = 0;
+  scCov('MOVES', 0, SC_WHO.length * V.length + V.length - 1 + SC_IR_N + SC_RY_N); SC.plan = SC_WHO.length * (V.length * 20 + 30) + (SC_IR_N + SC_RY_N) * 40; SC.done = 0;
   for (let i = 0; i < SC_WHO.length; i++) {
     const w = SC_WHO[i]; SC.say = SC_NAME[w] + ' START'; SET.gore = 0;
     try { Object.assign(TR, { beh: 0, ehp: 1, php: 0, pce: 0, put: 2 }); startPractice(w, 'gojo'); } catch (e) { scErr(e, SC_NAME[w] + ' START'); continue; }
@@ -24642,7 +24665,35 @@ async function scMoves() {
     }
     show('title');
   }
-  await scIronMoves();
+  await scIronMoves(); await scRyuMirror();
+}
+// v1.204 RYU IS TURNED OVER (tools/ryu.js, ryMir): every picture of his sheet is a mirror except the rows of the hair cannon (the seven blast rows, RY_MV[k].gb) and of the ULTIMATE (g.ulr), which keep their drawing so that the beam leaves the hair; a turned picture says in __t where his torso was and in __mx how far to the right it is drawn (customScene for you, cuenLook + drawDummy for the enemy) so that the torso, and with it the hitbox the numbers describe, stays where it was. Six checks: the rows are the right ones; his body hitbox is on his right; the torso of every turned picture is back on __t after the shift; the game draws YOUR pictures with it; a blow of his still hits an enemy standing on his right; and the game draws the ENEMY's pictures with the shift.
+const SC_RY_N = 6;
+async function scRyuMirror() {
+  const ok = (c, what, d) => { scT(c, 'RYU: ' + what, d || ''); scCov('MOVES', 1, 0); };
+  const set = (me, foe) => { try { Object.assign(TR, { beh: 0, ehp: 1, php: 0, pce: 0, put: 2 }); startPractice(me, foe); return true; } catch (e) { scErr(e, 'RYU MIRROR START'); return false; } };
+  const record = async (n, rel, prep) => {      // (n frames at most: the screen column of his torso for every picture of his that is drawn, K = column - a * t - how far he is from you: the same for every picture when the shift is right, a = 1 for a picture drawn as it is, -1 for one drawn turned round; prep(i) runs before frame i)
+    const P = window.CanvasRenderingContext2D.prototype, o = P.drawImage, pics = new Set(), rec = [];
+    for (const k of ['frames', 'walk', 'wbk', 'jump', 'hu', 'ko', 'bl', 'df', 'db', 'cr', 'ci', 'cwk']) (CU_GAME[4][k] || []).forEach(c => pics.add(c)); Object.values(CU_GAME[4].hus || {}).forEach(h => h && h.f.forEach(c => pics.add(c))); CU_GAME[4].atk.forEach(a => a.forEach(c => pics.add(c)));
+    P.drawImage = function (img, dx) { if (pics.has(img) && img.__t !== undefined) { const m = this.getTransform(); rec.push({ K: m.e - shkX + m.a * (dx + ryTorso(img)) - m.a * img.__t - (rel ? rel() : 0), mx: img.__mx }); } return o.apply(this, arguments); };
+    try { for (let i = 0; i < n && !(rec.length >= 6 && new Set(rec.map(q => q.mx)).size >= 2); i++) { if (prep) prep(i); await scFrames(1); } } finally { P.drawImage = o; }      // (until it has seen enough of his pictures)
+    return rec;
+  };
+  const same = r => r.length >= 4 && new Set(r.map(q => q.mx)).size >= 2 && r.every(q => Math.abs(q.K - r[0].K) <= 1.01), why = r => r.length + ' DRAWS, SHIFTS ' + [...new Set(r.map(q => q.mx))].join('/') + ', COLUMNS ' + (r.length ? Math.min(...r.map(q => q.K)).toFixed(1) + ' - ' + Math.max(...r.map(q => q.K)).toFixed(1) : '-');
+  if (!set('cu4', 'gojo') || !(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) return; await scFrames(2, null, 600);
+  SC.say = 'RYU: TURNED OVER'; const g = CU_GAME[4], all = [], keep = [];
+  for (const k of ['frames', 'walk', 'wbk', 'jump', 'hu', 'ko', 'bl', 'df', 'db', 'cr', 'ci', 'cwk']) all.push(...(g[k] || []));
+  Object.values(g.hus || {}).forEach(h => h && all.push(...h.f)); g.atk.forEach((a, k) => (RY_MV[k].gb ? keep : all).push(...a)); Object.values(g.ulr).forEach(a => keep.push(...a));
+  ok(!RY_MIRROR || (all.length > 300 && all.every(c => Number.isInteger(c.__mx) && Math.abs(c.__mx) < 40) && keep.length > 100 && keep.every(c => c.__mx === undefined)), 'THE ROWS THAT SHOULD BE TURNED OVER OR KEPT WERE NOT: ' + all.length + ' TURNED, ' + keep.length + ' KEPT');
+  { const rows = [20, 24, 28].map(k => g.body[k]).filter(Boolean); ok(!RY_MIRROR || (rows.length === 3 && rows.every(b => b[1] > -b[0] + 10)), 'HIS BODY HITBOX IS NOT ON HIS RIGHT (CHEST ROWS 20 / 24 / 28: ' + JSON.stringify(rows) + ')'); }      // (the numbers of a turned picture are those of the picture as it was drawn: at the height of his chest his body reaches 20 px or more further to his right than to his left)
+  let worst = 0; if (RY_MIRROR) for (const c of all) worst = Math.max(worst, Math.abs(ryTorso(c) + c.__mx - c.__t)); ok(worst <= 1, 'THE TORSO OF A TURNED PICTURE IS NOT WHERE IT WAS: UP TO ' + worst + ' PX OFF');
+  if (RY_MIRROR) { const r = await record(30); scKey('KeyS', true); const r2 = await record(30); scKey('KeyS', false); await scFrames(8); const rr = r.concat(r2); ok(same(rr), 'THE GAME DID NOT DRAW HIS PICTURES WITH THEIR SHIFT (YOU)', why(rr)); } else ok(true, 'NOT TURNED OVER');      // (standing, then crouching: pictures with different shifts)
+  trainReset(); TR.put = 2; trainPut(); await scFrames(10); dummy.x = wx + 50; hits.n = 0; hits.dmg = 0; hits.seq = 0; hits.until = 0; scKey('KeyJ', true); await scFrames(2); scKey('KeyJ', false); await scFrames(16);
+  ok(hits.n > 0, 'HIS BLOW DID NOT HIT THE ENEMY STANDING IN FRONT OF HIM (HIS HITBOXES ARE NOT ON HIS RIGHT): HITS ' + hits.n + ', DAMAGE ' + hits.dmg);      // (the numbers of a turned picture are those of the picture as it was drawn: his reach is still on his right)
+  if (!set('gojo', 'cu4') || !(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) return; await scFrames(2, null, 600); trainReset(); TR.put = 2; trainPut(); await scFrames(10);
+  const calm = i => { dummy.fa = null; dummy.ai = 'rest'; dummy.restFor = 1e9; dummy.aiAt = pnow(); dummy.airH = 0; dummy.air = null; dummy.rxAt = -1e9; dummy.born = pnow() - 700 - i * 130; };      // (he does nothing of his own, and his stance picture changes every frame: a time of its own that moves on faster than the game's)
+  if (RY_MIRROR) { const r = await record(40, () => dummy.x - wx, calm); ok(same(r), 'THE GAME DID NOT DRAW HIS PICTURES WITH THEIR SHIFT (THE ENEMY)', why(r)); } else ok(true, 'NOT TURNED OVER');
+  show('title');
 }
 // v1.191 IRON MAN's moves: the chain (R.HOOK, L.HOOK, R.KICK, PUNCH), the ROCKET UPPERCUT (JUMP and ATTACK together, either one first), the DOWNSLAM (ATTACK 0.2 s after the jump, and an earlier one waits for it), crouch, block and dash; each is a check that the move that should come out did (cuAtkK: 0 - 3 the chain, 4 the uppercut, 5 the downslam), played against a standing enemy in front of him; v1.192 the LOW JABS (6: crouched, ATTACK), the CHARGE (7: ATTACK during a dash or just after it; a late one is a plain hook) and the BACKFLIP (8: DASH BACK twice, never two dashes forward); v1.193 the REPULSOR MODE (the MODE button: ATTACK is R.BLAST (9) and then L.BLAST (10), both hurt the enemy, the other moves stay, off again it is the chain); v1.194 the BEAR HUG (BLUE: he charges, grabs, hugs, flies up with the enemy hanging in his arms, turns over, dives and slams: 4 hits, it ends by itself, and it has a cooldown); in the skyscraper he is also one of the fighters of scTower
 const SC_IR_N = 50;
