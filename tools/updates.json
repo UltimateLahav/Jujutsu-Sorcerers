@@ -1,12 +1,23 @@
 [
  {
+  "v": "1.205",
+  "t": "RYU: ALL HIS PICTURES REDRAWN TURNED OVER, HIS BLOWS SWING AT THE ENEMY",
+  "n": [
+   "You said his hand was punching the air, and told me to change the WHAT YOU WILL SEE part and to turn all of his pictures to the side of the updated image. You were right: in version 1.204 I only flipped the old pictures, so his face looked at the enemy but his arms and legs swung to the other side. This time I rebuilt his whole picture set from his drawing turned over, so he looks like the updated image and every blow swings at the enemy. I also changed the WHAT YOU WILL SEE part of the 1.204 entry, which was wrong.",
+   "WHAT CHANGED: all 40 sets of pictures are redrawn: standing, walking, walking back, jumping, crouching, blocking, dashing, getting hurt, getting knocked out, the 5-hit combo and every punch and kick. The GRANITE BLAST mode and JUST THIS ONCE kept the old side in 1.204; they are turned too now, so his hair cannon points at the enemy, the beam leaves the tip of his hair, and he no longer turns to the other side when he fires them. His character card, his face picture, the map and VS screens and an enemy Ryu are the same, and an enemy Ryu turns round when you stand behind him, like every fighter.",
+   "WHAT YOU WILL SEE: his face, his chest and his long front leg point at the enemy, and his guard (the arm held in front of his face) is on his back side, as in the updated image. His fists and his elbow cross his body and come out at the enemy, and his kicks go out with his front leg: nothing punches the air behind him any more.",
+   "THE FIST TOUCHES THE ENEMY: turned over, his long front leg reaches further than his fists, and the game counted that foot as part of every punch. He stopped when his foot touched the enemy and his fist stayed 1 to 2.5 metres (10 to 25 pixels) short of him, which is a punch at the air again. A punch is now counted by its arm only, so the fist is what touches the enemy where the hit lands, and a kick is counted by the kicking leg only. His hooks, hard punch, uppercut and elbow reach a little less far from his body than before, so he steps in a little further for them, and the farthest enemy each blow still reaches is the same as in 1.204.",
+   "THE NUMBERS: his body, his reach and the place where each of his blows lands are measured again on the new pictures, so what you see is what hits. The same 27 test blows as before, the 7 blasts and the dive punch (at 3 to 5 distances each) still hit and do exactly the same damage as in 1.204. One difference: his guard is now behind him, so his chest is about 1.5 metres (15 pixels) less far forward than it was. An enemy has to come that much closer to touch him, and he can stand that much closer to an enemy (the distance at which two fighters push each other apart is smaller)."
+  ]
+ },
+ {
   "v": "1.204",
   "t": "RYU: HIS PICTURE IS TURNED OVER SO HE FACES THE ENEMY",
   "n": [
    "You asked me to mirror Ryu's sprite because he was turning to the wrong side. You answered my questions: you wanted only his picture turned over, so that he faces right, with the hits still landing on his right, where he is facing, and of the two test pictures the turned-over one was the one that faces the enemy. Here it is.",
    "WHAT CHANGED: every picture of Ryu is turned over: standing, walking, jumping, crouching, blocking, dashing, every punch and kick, getting hurt and getting knocked out. It is the same on his character card, his face picture, the map screen and the VS screen. When Ryu is your enemy he faces you the right way round as well, and when you stand behind him he turns to the other side, like every fighter.",
    "NOTHING ELSE MOVED: his body, his reach and the place where each of his blows lands are measured on the old pictures, so they are exactly what they were (the same 27 test blows at three distances do the same damage as in V1.202). His body stays exactly where it was on the screen too, so that an enemy's blow touches him where you see him and does not hit the air in front of his chest.",
-   "WHAT YOU WILL SEE: his arms and legs now swing to the other side in the picture, because turning a picture over turns the swing too, while the hit still lands on his right, where the enemy is. The GRANITE BLAST mode and JUST THIS ONCE keep their old drawing, because the beam has to come out of the tip of his hair: when he fires them he turns to the old side for a moment. If that looks wrong, or if you would rather have his punches and kicks swing towards the enemy, tell me and I will redraw them."
+   "WHAT YOU WILL SEE: his face now looked at the enemy, but the picture was only flipped, so his arms and legs swung to the other side and his punches went at the air behind him, while the hit still landed on his right. That was wrong, and version 1.205 fixes it: all of his pictures are redrawn turned over, so every blow swings towards the enemy (see 1.205)."
   ]
  },
  {

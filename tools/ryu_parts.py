@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """RYU's design cut into parts and put together again in other poses (the sprite sheet of tools/ryu_art.py is made with this).
-ryu_src/master.png is the pixel picture of Ryu the user chose (182 x 172, facing right like every fighter of the game). It is only the LOOK of Ryu (his face, hair, jacket, fur, belt, jeans and boots); his poses are new.
+ryu_src/master.png is the pixel picture of Ryu the user chose (182 x 172), the way it was first put into the game: the picture the user chose turned the other way round (his guard on the right, his face looking left). It is only the LOOK of Ryu (his face, hair, jacket, fur, belt, jeans and boots); his poses are new.
+v1.205 THE FIGURE IS TURNED OVER: every part is cut from the master and then turned over about the column of his torso (TURN / 2 = 118), so that he looks like the user's picture: his face and his long front leg look at the enemy on the right, his jacket sleeve (the lead arm) is on his right and the two fur-cuffed arms of the rig, which are his REAR arms, are the guard on his back side.
+The numbers of a pose (ryu_art.py) are written for the figure as it was drawn before and are still on the screen: a part moves and turns the way the numbers say, only its drawing is the other way round; the legs swap sides (the long leg of the stance is the front one now) and ryu_art.py moves the foot targets with them, and an arm (ryu_art.py, turn_arm) is either the mirror of the arm as written (the guard on his back side) or turned about its shoulder so that it points at the enemy like the arm as written (a punch crosses his body).
 BODY parts: the PELVIS (belt and jeans), the CHEST (the open jacket's body, the belly), the head, two arms (each one piece: a sleeve, a fur cuff, a hand) and two legs (a thigh, a shin and a boot each).
 LOOSE parts (they swing on their own, see ryu_art.py): the HAIR, the white fur of the COLLAR, the outer JACKET with its spiky tail, the fur CUFF at the belly and the fur cuffs at the ends of both arms.
 A pose says how far each part is moved, turned, stretched and sheared about its joint; render() puts the parts together on a bigger canvas (made at the master's size so that the turned parts stay clean)
@@ -104,6 +106,15 @@ def _build():
     return own, layers
 OWN, LAYERS = _build()
 
+TURN = 236      # (the column of his torso, 118, times two: a column x of the master goes to TURN - x when a part is turned over)
+def _flipx(arr, two_a=TURN):      # a layer turned over: new column x is old column two_a - x (the layers are made wide enough for it by _pad)
+    out = np.zeros_like(arr); W = arr.shape[1]; xs = np.arange(W); src = two_a - xs; ok = (src >= 0) & (src < W); out[:, xs[ok]] = arr[:, src[ok]]; return out
+def _pad(L, W2=240): out = np.zeros((L.shape[0], W2, 4), np.uint8); out[:, :L.shape[1]] = L; return out
+SWAP = {'legL': 'legR', 'legR': 'legL', 'footL': 'footR', 'footR': 'footL', 'thighL': 'thighR', 'thighR': 'thighL', 'shinL': 'shinR', 'shinR': 'shinL'}      # (a leg turned over is the other leg)
+_new = {SWAP.get(_k, _k): _flipx(_pad(_L)) for _k, _L in LAYERS.items()}; LAYERS.clear(); LAYERS.update(_new)
+_P = dict(PIV); PIV.clear(); PIV.update({SWAP.get(_k, _k): (TURN - _x, _y) for _k, (_x, _y) in _P.items()})
+ORDER[:] = ['footL', 'legL', 'footR', 'legR', 'pelvis', 'jacketO', 'chest', 'collarL', 'cuffN', 'armB', 'cuffB', 'armA', 'cuffA', 'head', 'hair']      # (back to front: the head and the hair are in front of the arms, so that a punch that crosses his body passes behind his face)
+
 def _xform(arr, org, piv, dx, dy, rot, sx=1.0, sy=1.0, shx=0.0):
     """the part `arr` (RGBA, its top left corner at org on the canvas) sheared sideways by shx (columns per row below the joint, negative above it), stretched by (sx, sy) and turned by rot degrees (clockwise, nearest neighbour)
     about piv, then moved by (dx, dy). Returns the new array and its corner (only as big as the moved part)"""
@@ -137,7 +148,7 @@ def _weights(side):
     d1 /= np.linalg.norm(d1); d2 /= np.linalg.norm(d2); n = d1 + d2; n /= np.linalg.norm(n); L = LAYERS['leg' + side]; ys, xs = np.nonzero(L[..., 3] > 0)
     t = ((xs - k[0]) * n[0] + (ys - k[1]) * n[1]) / 16.0; w = np.clip(t * .5 + .5, 0, 1); w = w * w * (3 - 2 * w)
     _SK[side] = (xs, ys, w, L[ys, xs]); return _SK[side]
-def render(pose, size=(280, 240), off=(50, 36), skip=()):
+def render(pose, size=(340, 240), off=(50, 36), skip=()):
     """pose: {part: (dx, dy, rot[, sx, sy[, shx]])}: how far a part is moved and turned (degrees, clockwise) about its joint (and stretched, sheared); it also follows what its parent does (a shin its thigh, an arm / the head the chest, the chest the pelvis).
     Returns an RGBA array of `size` (master pixels) with the master's picture at `off`."""
     canvas = np.zeros((size[1], size[0], 4), np.uint8)
@@ -166,6 +177,9 @@ def render(pose, size=(280, 240), off=(50, 36), skip=()):
 
 # ---------------------------------------------------------------- legs: where is the foot -> the angles
 LEGS = {'R': dict(hip=(152, 96), knee=(172, 124), ank=(156, 153), t='thighR', s='shinR', f='footR', out=1), 'L': dict(hip=(64, 92), knee=(47, 126), ank=(38, 152), t='thighL', s='shinL', f='footL', out=-1)}
+_A = {k: dict(v) for k, v in LEGS.items()}; _m = lambda p: (TURN - p[0], p[1])      # (turned over, the legs swap sides: the right leg is the old left one turned over, with its own bones)
+LEGS['R'] = dict(hip=_m(_A['L']['hip']), knee=_m(_A['L']['knee']), ank=_m(_A['L']['ank']), t='thighR', s='shinR', f='footR', out=1)
+LEGS['L'] = dict(hip=_m(_A['R']['hip']), knee=_m(_A['R']['knee']), ank=_m(_A['R']['ank']), t='thighL', s='shinL', f='footL', out=-1)
 FOOT0 = {'R': LEGS['R']['ank'], 'L': LEGS['L']['ank']}      # (where the ankles are in the design)
 def _ang(p, q): return math.degrees(math.atan2(q[1] - p[1], q[0] - p[0]))
 def _rot(p, c, deg):

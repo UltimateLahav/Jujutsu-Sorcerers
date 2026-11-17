@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """python3 ryu_art.py [row names] [--preview DIR] -> ryu_sheet.png: RYU ISHIGORI's sprite sheet for the game: 64 x 64 pictures, 15 to an animation, one animation to a row (ROWS), facing right.
+v1.205: he is TURNED OVER (see ryu_parts.py): he looks like the user's picture, with his face and his long front leg towards the enemy on the right, and every blow still goes to the right. The poses below are written for the figure as it was drawn before (his two fur-cuffed arms on the right of the picture): the numbers of the body and of the head are screen numbers and stay; the foot targets move with the feet (DF, DK); an arm is the mirror of the arm as written (the guard on his back) or is turned about its shoulder so that it points at the enemy as the arm as written does (turn_arm, ext_u, ARM_U): a punch crosses his body.
 Every picture is the LOOK the user chose (tools/ryu_src/master.png: face, hair, fur, jacket, belt, jeans, boots) put together again in a NEW pose by tools/ryu_parts.py. A pose (see mkpose) says where the pelvis is, how the chest, head and arms are turned
 and where the two ankles are (the legs are solved from them); the hair, the collar fur, the jacket with its tail and the fur cuffs then SWING ON THEIR OWN (swing(): a spring that is pushed by how the part they hang on moves), and fast limbs leave ACTION LINES.
 He is a heavy brawler who mixes styles: boxer's bounce, stomping walk, one knee down to crouch, high guard, a shoulder-charge dash, boxing hooks, a capoeira rising kick, an anime flying punch, a Muay Thai low kick and push kick,
@@ -10,8 +11,11 @@ from PIL import Image
 import ryu_parts as rp
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-F0, B0 = rp.FOOT0['R'], rp.FOOT0['L']      # the ankles of the design: the front foot and the back one (master coordinates)
-HAND_A, HAND_B = (172, 14), (173, 50)      # the tips of the two cuffs in the design (where the fists are)
+A_F0, A_B0 = (156, 153), (38, 152)      # the ankles of the design as the poses below are written: the front foot and the back one (master coordinates, the figure as it was drawn before it was turned over)
+F0, B0 = A_F0, A_B0
+DF = (rp.FOOT0['R'][0] - A_F0[0], rp.FOOT0['R'][1] - A_F0[1]); DK = (rp.FOOT0['L'][0] - A_B0[0], rp.FOOT0['L'][1] - A_B0[1])      # (turned over, the feet rest elsewhere: every foot target is moved with them, see mkpose)
+def _sh(p, d): return (p[0] + d[0], p[1] + d[1])
+HAND_A, HAND_B = (rp.TURN - 172, 14), (rp.TURN - 173, 50)      # the tips of the two cuffs in the design (where the fists are when the arm hangs on his back side; turned over, they are at the left end of the arms)
 LINE, LINE2 = (244, 244, 248), (150, 178, 236)      # the white and the light blue of the action lines
 sin, cos, pi = math.sin, math.cos, math.pi
 
@@ -34,12 +38,22 @@ def K(T, i):      # one picture of an animation given as {channel: {picture: val
     return {c: (kv(v, i) if isinstance(v, dict) else v) for c, v in T.items()}
 
 # ---------------------------------------------------------------- a pose and where things are
+def ext_u(p):      # how far an arm is thrown out at the enemy (0 - 1), from its numbers as the poses below write them: an arm that is stretched (1.0 is as long as it hangs) points at him
+    return sm((p[3] - .98) / .32)
+def turn_arm(p, u):      # the numbers of an arm whose drawing is turned over: u = 0 it is the mirror of the arm as written (his guard on his back side), u = 1 it is turned the other way about its shoulder so that it points at the enemy as the arm as written does; in between it passes the edge of his body (the arm gets thin for a picture)
+    dx, dy, rot, sx, sy = p[:5]; q = (-dx, dy, -rot, sx, sy); r = (dx, dy, rot, -sx, sy); o = [q[k] * (1 - u) + r[k] * u for k in range(5)]
+    if abs(o[3]) < .14: o[3] = .14 if o[3] >= 0 else -.14
+    return tuple(o)
+ARM_U = {      # the arms that must point at the enemy where their numbers do not say so (row: {channel: {picture: u}}), see ext_u
+    'el': {'uB': {0: 0, 4: 0, 6: 1, 9: 1, 11: 0, 14: 0}},      # (the elbow: the arm is folded, its point goes at the enemy)
+    'u1': {'uB': {0: 0, 2: 0, 5: 1, 14: 1}}, 'u2': {'uB': {0: 1}}, 'u3': {'uB': {0: 1}}, 'u4': {'uB': {0: 1, 3: 1, 8: 0, 14: 0}}}      # (JUST THIS ONCE: the arm crosses his body as it rises, points at the enemy while the hair charges and comes down on his back side)
 def mkpose(T):
     """T: the picture's numbers {channel: value}; channels: pel pelvis (dx, dy, rot), chs chest (dx, dy, rot) about the waist, hd head, A / B arms (dx, dy, rot, sx, sy) about the shoulder, F / K front and back ankle (x, y),
     ft / bt the boots' angles, fb / kb which way the knees point (+1 out, -1 in), g the shift in the cell (px). Returns the pose."""
     g = lambda c, d: T.get(c, d)
     pose = {'chest': g('chs', (0, 0, 0)), 'head': g('hd', (0, 0, 0)), 'armA': g('A', (0, 0, 0, 1, 1)), 'armB': g('B', (0, 0, 0, 1, 1))}
-    rp.feet(pose, g('F', F0), g('K', B0), g('pel', (0, 0, 0)), g('ft', 0), g('bt', 0), g('fb', None), g('kb', None)); return pose
+    for part, uc in (('armA', 'uA'), ('armB', 'uB')): pose[part] = turn_arm(pose[part], T[uc] if uc in T else ext_u(pose[part]))
+    rp.feet(pose, _sh(g('F', F0), DF), _sh(g('K', B0), DK), g('pel', (0, 0, 0)), g('ft', 0), g('bt', 0), g('fb', None), g('kb', None)); return pose
 def locate(pose, part, p):
     """the world position (master coordinates) of the design's point p of `part` in the pose"""
     q = part; x, y = p
@@ -61,6 +75,8 @@ SW = {      # name: (the part it hangs on, its joint (design point), the way it 
  'cuffN': ('chest', (116, 50), (0, 1), 1.05, 0.30, 1.3, 0.40, 22, 1.0),
  'cuffA': ('armA', (138, 24), (1, 0), 1.05, 0.28, 1.3, 0.50, 26, 1.0),
  'cuffB': ('armB', (150, 48), (1, 0), 1.05, 0.28, 1.3, 0.50, 26, 1.0)}
+for _n in list(SW): SW[_n] = (SW[_n][0], rp.PIV[_n], *SW[_n][2:])      # (the joint of a loose part is where its own joint is, turned over)
+SW['collarL'] = (SW['collarL'][0], SW['collarL'][1], (1, 0), *SW['collarL'][3:])      # (the collar fur hangs the other way)
 def swing(poses, wv, loop, mult=1.0, sub=4):
     """works out the swing of every loose part picture by picture: the joint's own movement (and `wv`, how fast the whole body is moving through the world, master px a picture: pictures have no walking in them but the game moves him)
     pushes it; a part hangs in the direction d and turns clockwise (positive) about its joint. Returns one dict of pose entries per picture."""
@@ -69,13 +85,16 @@ def swing(poses, wv, loop, mult=1.0, sub=4):
         pts = [locate(p, par, joint) for p in poses]
         vel = [((pts[k][0] - pts[k - 1][0]) + wv[k][0], (pts[k][1] - pts[k - 1][1]) + wv[k][1]) if (k or loop) else (wv[0][0], wv[0][1]) for k in range(n)]      # (how fast the joint moves: its own move plus the whole body's)
         acc = [(vel[k][0] - vel[k - 1][0], vel[k][1] - vel[k - 1][1]) if (k or loop) else (0, 0) for k in range(n)]
-        tx, ty = -d[1], d[0]; th = 0.0; om = 0.0; res = [0.0] * n; passes = 4 if loop else 1
+        horiz = abs(d[0]) == 1      # (a part that hangs sideways: its angle is worked out as 'the tip goes down' and turned into a clockwise one by the side it hangs on; the cuff of an arm hangs on the side the arm points to, which changes when the arm crosses his body)
+        tx, ty = (0.0, 1.0) if horiz else (-d[1], d[0]); sg = [d[0]] * n
+        if name in ('cuffA', 'cuffB'): sg = [(-1 if poses[k][par][3] > 0 else 1) for k in range(n)]
+        th = 0.0; om = 0.0; res = [0.0] * n; passes = 4 if loop else 1
         for ps in range(passes):
             for k in range(n):
                 drive = -ka * (acc[k][0] * tx + acc[k][1] * ty) * st * mult; eq = -kvv * (vel[k][0] * tx + vel[k][1] * ty) * st * mult; eq = mx * math.tanh(eq / mx)
                 for _ in range(sub):
                     h = 1.0 / sub; alpha = drive - w * w * (th - eq) - 2 * z * w * om; om += alpha * h; th += om * h
-                res[k] = mx * math.tanh(th / mx)      # (soft limit: a part never turns further than mx, and does not stick there)
+                res[k] = mx * math.tanh(th / mx) * (sg[k] if horiz else 1)      # (soft limit: a part never turns further than mx, and does not stick there)
         for k in range(n):
             if name == 'hair': out[k][name] = (0, 0, res[k] * .55, 1, 1, math.tan(math.radians(res[k])) * .5)
             else: out[k][name] = (0, 0, res[k])
@@ -320,7 +339,7 @@ ROWS_V1164 = [('hb', a_hurt_body, [], False, (-5, 0), .5), ('hs', a_hurt_stagger
 
 # ---------------------------------------------------------------- v1.170 GRANITE BLAST MODE (see ryu.js): the blasts come out of his HAIR. He lowers his head like a bull and the hair stands out forward; the game draws the beam from the hair's front tip (GB_TIP,
 # worked out for every picture and written to ryu_gb.json), here only the body, the hair and a little cyan light round the hair are drawn. Each animation is 15 pictures; FIRE = the picture the game fires on.
-GB_TIP = (121, 6)      # (the front tuft of the hair, master coordinates)
+GB_TIP = (rp.TURN - 121, 6)      # (the front tuft of the hair, master coordinates, turned over)
 CY, CYL, CYW = (24, 230, 255), (150, 245, 255), (255, 255, 255)      # (the cyan of the beam, a light cyan, white)
 def a_gb1(i):      # BLAST 1: he sinks and the head tips back as the energy gathers in the hair (0-4), the head snaps forward and down (5-6: FIRE on 6), the hair stands out in front of him (6-9), the body is braced against the kick and comes back up (10-14)
     T = dict(pel={0: (0, 0, 0), 2: (-4, 3, -4), 4: (-6, 4, -7), 5: (2, 5, 4), 6: (8, 6, 8), 8: (9, 6, 9), 11: (5, 3, 4), 14: (0, 1, 0)},
@@ -497,6 +516,14 @@ def ju_fx(a, name, i, tip, hm):
             for t in range(int(R), int(L) + 1): put(a, x + math.cos(th) * t, y + math.sin(th) * t, CYW if t < R + 1 else CYL, over=False)
 
 SH_OUT = {}      # (v1.172 the shift of the JUST THIS ONCE pictures, written to ryu_gb.json as ju_dx)
+_IS = []      # (the answer of idle_shift, worked out once)
+def idle_shift():      # how far his STANCE is shifted left (-) in its cell, the median over its 15 pictures: the figure is turned over, so the long front leg that reaches out is on the right and every picture is moved left to fit the cell (see build_row, need); the pictures of JUST THIS ONCE are moved the same way, so the game draws them that much LESS to the right again (ju_dx is what each has more than the stance), and his body stays where the stance had it
+    if _IS: return _IS[0]
+    ns = []
+    for i in range(15):
+        xs = np.where((rp.render(mkpose(a_idle(i)))[..., 3] > 0).any(axis=0))[0]; gx = lambda x: rp.CX + (x - 50 - rp.HX) * rp.SCALE
+        ns.append(min(0, 61 - (int(math.ceil(gx(xs.max() + 1))) - 1)) + max(0, 3 - int(math.floor(gx(xs.min())))))
+    _IS.append(int(round(float(np.median(ns))))); return _IS[0]
 GB_OUT = {}      # (the front tip of the hair in every picture of the blast rows, game px in the 64 x 64 cell: written to ryu_gb.json)
 ROWS = [('frames', a_idle, [], True, None, 2.4), ('walk', a_walk, [], True, (11.8, 0), 1.3), ('wback', lambda i: a_walk(i, True), [], True, (-8.8, 0), 1.3), ('jump', a_jump, [], False, w_jump, .35), ('cr', a_cdown, [], False, None, 1.2), ('ci', a_cidle, [], True, None, 2.4),
         ('cwk', a_cwalk, [], True, (4, 0), 1.6), ('bl', a_block, [], False, None, 1.5), ('dg', a_dash, ['body'], False, w_dash, .35), ('db', a_dashb, ['body'], False, w_dashb, .4), ('a0', a_hookL, [('armB', HAND_B)], False, None, .5), ('a1', a_hookR, [('armA', HAND_A)], False, None, .5),
@@ -505,7 +532,10 @@ ROWS = [('frames', a_idle, [], True, None, 2.4), ('walk', a_walk, [], True, (11.
 ROWN = [r[0] for r in ROWS]
 
 def build_row(name, fn, eff, loop, wvel, mult=1.0):
-    T = [fn(i) for i in range(15)]; poses = [mkpose(t) for t in T]; gs = [t.get('g', (0, 0)) for t in T]
+    T = [fn(i) for i in range(15)]
+    for ch, tbl in ARM_U.get(name, {}).items():
+        for i, q in enumerate(T): q[ch] = kv(tbl, i, lin)      # (an arm that must point at the enemy: how far, picture by picture)
+    poses = [mkpose(t) for t in T]; gs = [t.get('g', (0, 0)) for t in T]
     wv = [(wvel(i) if callable(wvel) else wvel) if wvel else (0, 0) for i in range(15)]
     sec = swing(poses, wv, loop, mult)
     for p, s in zip(poses, sec): p.update(s)
@@ -527,12 +557,12 @@ def build_row(name, fn, eff, loop, wvel, mult=1.0):
     sh = [min(sh[i], need[i]) if min(need) < 0 else max(sh[i], need[i]) for i in range(15)]
     gy = [int(round(gs[i][1])) + max(0, 1 - (ext[i][2] + int(round(gs[i][1])))) - max(0, ext[i][3] + int(round(gs[i][1])) - 62) for i in range(15)]      # (and down when the head would go through the top, up when he would sink into the floor)
     gs = [(sh[i], gy[i]) for i in range(15)]
-    if name in JU_HAIR: SH_OUT[name] = [int(v) for v in sh]      # (how far each picture is shifted left (-) in its cell: the game draws it that much to the right again, see ryu.js)
+    if name in JU_HAIR: IS = idle_shift(); SH_OUT[name] = [int(v) - IS for v in sh]      # (how far each picture is shifted left (-) in its cell, more than the stance (IS): the game draws it that much to the right again, see ryu.js)
     pos = []      # the effectors' positions picture by picture (game px)
     for i, pose in enumerate(poses):
         pts = []
         for e in eff:
-            if e == 'foot': pts.append(gxy(T[i].get('F', F0), gs[i]))
+            if e == 'foot': pts.append(gxy(_sh(T[i].get('F', F0), DF), gs[i]))
             elif e == 'body': pts.append(gxy((rp.HX, 100), gs[i]))
             else: pts.append(gxy(locate(pose, *e), gs[i]))
         pos.append(pts)

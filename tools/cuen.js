@@ -27,10 +27,9 @@ function cuenLook(now, reacting, hitT, kt) {
   else if (d.ai === 'dodge') { const t = now - d.aiAt, fr = g.db.length ? g.db : g.df; src = fr.length ? fr[Math.min(fr.length - 1, Math.floor(t * fr.length / 300))] : idle(); }
   else if (d.ai === 'walk') { const fr = (d.walkDir > 0 && g.wbk && g.wbk.length) ? g.wbk : g.walk; src = fr.length ? fr[Math.floor(now * (g.wf || 12) / 1000) % fr.length] : idle(); }
   else src = idle();
-  const mx = (src && src.__mx) || 0;      // (v1.204 Ryu's pictures are turned over, and say how far to the right they are drawn so that his torso stays where his hitbox is: drawDummy shifts him that much, to his own side; the picture changes below lose the number)
   if (vs.inv && src && src.width) src = invOf(src);      // (a mirror match: the enemy has the inverted colours)
   if ((reacting || d.air) && hitT < 70 && src && src.width) src = whiteOf(src);
-  return { src, info: CUEN_INFO, lift, ox, oy, mx };
+  return { src, info: CUEN_INFO, lift, ox, oy };
 }
 // 3. HIS BRAIN, called by updateFighterVs after the part every enemy shares (stun, hurt, your swing read, dodge and block)
 const CUEN = {
