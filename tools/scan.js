@@ -202,7 +202,7 @@ async function scMore() {      // the time that is left of the minute: more rand
 async function scMoves() {
   SC.sec = 'MOVES'; const DIRS = [['', 'STANDING'], ['KeyD', 'FORWARD'], ['KeyA', 'BACK'], ['KeyS', 'CROUCHING'], ['Space', 'JUMPING']], BTN = [['KeyJ', 'ATTACK'], ['KeyL', 'BLUE'], ['KeyK', 'DASH']];
   const V = []; for (const [d, dn] of DIRS) for (const [k, kn] of BTN) V.push([d, k, 0, dn + ' ' + kn]); V.push(['', 'KeyJ', 1, 'HOLD ATTACK'], ['KeyD', 'KeyJ', 1, 'FORWARD HOLD ATTACK'], ['', 'KeyE', 0, 'CURSED ENERGY'], ['', 'KeyQ', 0, 'SENSE'], ['', 'KeyB', 1, 'BLOCK']);
-  scCov('MOVES', 0, SC_WHO.length * V.length + V.length - 1 + SC_IR_N); SC.plan = SC_WHO.length * (V.length * 20 + 30) + SC_IR_N * 40; SC.done = 0;
+  scCov('MOVES', 0, SC_WHO.length * V.length + V.length - 1 + SC_IR_N + SC_RY_N); SC.plan = SC_WHO.length * (V.length * 20 + 30) + (SC_IR_N + SC_RY_N) * 40; SC.done = 0;
   for (let i = 0; i < SC_WHO.length; i++) {
     const w = SC_WHO[i]; SC.say = SC_NAME[w] + ' START'; SET.gore = 0;
     try { Object.assign(TR, { beh: 0, ehp: 1, php: 0, pce: 0, put: 2 }); startPractice(w, 'gojo'); } catch (e) { scErr(e, SC_NAME[w] + ' START'); continue; }
@@ -223,7 +223,35 @@ async function scMoves() {
     }
     show('title');
   }
-  await scIronMoves();
+  await scIronMoves(); await scRyuMirror();
+}
+// v1.204 RYU IS TURNED OVER (tools/ryu.js, ryMir): every picture of his sheet is a mirror except the rows of the hair cannon (the seven blast rows, RY_MV[k].gb) and of the ULTIMATE (g.ulr), which keep their drawing so that the beam leaves the hair; a turned picture says in __t where his torso was and in __mx how far to the right it is drawn (customScene for you, cuenLook + drawDummy for the enemy) so that the torso, and with it the hitbox the numbers describe, stays where it was. Six checks: the rows are the right ones; his body hitbox is on his right; the torso of every turned picture is back on __t after the shift; the game draws YOUR pictures with it; a blow of his still hits an enemy standing on his right; and the game draws the ENEMY's pictures with the shift.
+const SC_RY_N = 6;
+async function scRyuMirror() {
+  const ok = (c, what, d) => { scT(c, 'RYU: ' + what, d || ''); scCov('MOVES', 1, 0); };
+  const set = (me, foe) => { try { Object.assign(TR, { beh: 0, ehp: 1, php: 0, pce: 0, put: 2 }); startPractice(me, foe); return true; } catch (e) { scErr(e, 'RYU MIRROR START'); return false; } };
+  const record = async (n, rel, prep) => {      // (n frames at most: the screen column of his torso for every picture of his that is drawn, K = column - a * t - how far he is from you: the same for every picture when the shift is right, a = 1 for a picture drawn as it is, -1 for one drawn turned round; prep(i) runs before frame i)
+    const P = window.CanvasRenderingContext2D.prototype, o = P.drawImage, pics = new Set(), rec = [];
+    for (const k of ['frames', 'walk', 'wbk', 'jump', 'hu', 'ko', 'bl', 'df', 'db', 'cr', 'ci', 'cwk']) (CU_GAME[4][k] || []).forEach(c => pics.add(c)); Object.values(CU_GAME[4].hus || {}).forEach(h => h && h.f.forEach(c => pics.add(c))); CU_GAME[4].atk.forEach(a => a.forEach(c => pics.add(c)));
+    P.drawImage = function (img, dx) { if (pics.has(img) && img.__t !== undefined) { const m = this.getTransform(); rec.push({ K: m.e - shkX + m.a * (dx + ryTorso(img)) - m.a * img.__t - (rel ? rel() : 0), mx: img.__mx }); } return o.apply(this, arguments); };
+    try { for (let i = 0; i < n && !(rec.length >= 6 && new Set(rec.map(q => q.mx)).size >= 2); i++) { if (prep) prep(i); await scFrames(1); } } finally { P.drawImage = o; }      // (until it has seen enough of his pictures)
+    return rec;
+  };
+  const same = r => r.length >= 4 && new Set(r.map(q => q.mx)).size >= 2 && r.every(q => Math.abs(q.K - r[0].K) <= 1.01), why = r => r.length + ' DRAWS, SHIFTS ' + [...new Set(r.map(q => q.mx))].join('/') + ', COLUMNS ' + (r.length ? Math.min(...r.map(q => q.K)).toFixed(1) + ' - ' + Math.max(...r.map(q => q.K)).toFixed(1) : '-');
+  if (!set('cu4', 'gojo') || !(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) return; await scFrames(2, null, 600);
+  SC.say = 'RYU: TURNED OVER'; const g = CU_GAME[4], all = [], keep = [];
+  for (const k of ['frames', 'walk', 'wbk', 'jump', 'hu', 'ko', 'bl', 'df', 'db', 'cr', 'ci', 'cwk']) all.push(...(g[k] || []));
+  Object.values(g.hus || {}).forEach(h => h && all.push(...h.f)); g.atk.forEach((a, k) => (RY_MV[k].gb ? keep : all).push(...a)); Object.values(g.ulr).forEach(a => keep.push(...a));
+  ok(!RY_MIRROR || (all.length > 300 && all.every(c => Number.isInteger(c.__mx) && Math.abs(c.__mx) < 40) && keep.length > 100 && keep.every(c => c.__mx === undefined)), 'THE ROWS THAT SHOULD BE TURNED OVER OR KEPT WERE NOT: ' + all.length + ' TURNED, ' + keep.length + ' KEPT');
+  { const rows = [20, 24, 28].map(k => g.body[k]).filter(Boolean); ok(!RY_MIRROR || (rows.length === 3 && rows.every(b => b[1] > -b[0] + 10)), 'HIS BODY HITBOX IS NOT ON HIS RIGHT (CHEST ROWS 20 / 24 / 28: ' + JSON.stringify(rows) + ')'); }      // (the numbers of a turned picture are those of the picture as it was drawn: at the height of his chest his body reaches 20 px or more further to his right than to his left)
+  let worst = 0; if (RY_MIRROR) for (const c of all) worst = Math.max(worst, Math.abs(ryTorso(c) + c.__mx - c.__t)); ok(worst <= 1, 'THE TORSO OF A TURNED PICTURE IS NOT WHERE IT WAS: UP TO ' + worst + ' PX OFF');
+  if (RY_MIRROR) { const r = await record(30); scKey('KeyS', true); const r2 = await record(30); scKey('KeyS', false); await scFrames(8); const rr = r.concat(r2); ok(same(rr), 'THE GAME DID NOT DRAW HIS PICTURES WITH THEIR SHIFT (YOU)', why(rr)); } else ok(true, 'NOT TURNED OVER');      // (standing, then crouching: pictures with different shifts)
+  trainReset(); TR.put = 2; trainPut(); await scFrames(10); dummy.x = wx + 50; hits.n = 0; hits.dmg = 0; hits.seq = 0; hits.until = 0; scKey('KeyJ', true); await scFrames(2); scKey('KeyJ', false); await scFrames(16);
+  ok(hits.n > 0, 'HIS BLOW DID NOT HIT THE ENEMY STANDING IN FRONT OF HIM (HIS HITBOXES ARE NOT ON HIS RIGHT): HITS ' + hits.n + ', DAMAGE ' + hits.dmg);      // (the numbers of a turned picture are those of the picture as it was drawn: his reach is still on his right)
+  if (!set('gojo', 'cu4') || !(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) return; await scFrames(2, null, 600); trainReset(); TR.put = 2; trainPut(); await scFrames(10);
+  const calm = i => { dummy.fa = null; dummy.ai = 'rest'; dummy.restFor = 1e9; dummy.aiAt = pnow(); dummy.airH = 0; dummy.air = null; dummy.rxAt = -1e9; dummy.born = pnow() - 700 - i * 130; };      // (he does nothing of his own, and his stance picture changes every frame: a time of its own that moves on faster than the game's)
+  if (RY_MIRROR) { const r = await record(40, () => dummy.x - wx, calm); ok(same(r), 'THE GAME DID NOT DRAW HIS PICTURES WITH THEIR SHIFT (THE ENEMY)', why(r)); } else ok(true, 'NOT TURNED OVER');
+  show('title');
 }
 // v1.191 IRON MAN's moves: the chain (R.HOOK, L.HOOK, R.KICK, PUNCH), the ROCKET UPPERCUT (JUMP and ATTACK together, either one first), the DOWNSLAM (ATTACK 0.2 s after the jump, and an earlier one waits for it), crouch, block and dash; each is a check that the move that should come out did (cuAtkK: 0 - 3 the chain, 4 the uppercut, 5 the downslam), played against a standing enemy in front of him; v1.192 the LOW JABS (6: crouched, ATTACK), the CHARGE (7: ATTACK during a dash or just after it; a late one is a plain hook) and the BACKFLIP (8: DASH BACK twice, never two dashes forward); v1.193 the REPULSOR MODE (the MODE button: ATTACK is R.BLAST (9) and then L.BLAST (10), both hurt the enemy, the other moves stay, off again it is the chain); v1.194 the BEAR HUG (BLUE: he charges, grabs, hugs, flies up with the enemy hanging in his arms, turns over, dives and slams: 4 hits, it ends by itself, and it has a cooldown); in the skyscraper he is also one of the fighters of scTower
 const SC_IR_N = 50;

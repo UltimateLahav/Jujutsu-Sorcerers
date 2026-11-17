@@ -31,12 +31,24 @@ let ryUI = false;      // (is Ryu's HUD on: the buttons he does not use are hidd
 const RY_WF = 16, RY_STEP = { fw: [0, 7], bk: [14, 7] };      // (RY_STEP: the pictures of the walk (and of the walk back) on which a foot comes down, see ryu_art.py)
 const RY_HU_MS = 24;      // (a picture of his HURT lasts 24 ms: 15 pictures = 0.36 s)      // his walking pictures a second (a slow, heavy stride)
 NAMES[RYU_WHO] = 'RYU'; CEC[RYU_WHO] = ['#10142a', '#3a58c8', '#a8c0f0', '#7aa0ff'];      // (his name on the HUD and his energy bar: steel blue)
+// v1.204 HIS PICTURES ARE MIRRORED (the user, again, after the V1.162 mirror that V1.164 took out: "mirror ryu's sprite because he is turning to the wrong side"; shown the picture as it was and flipped, A and B, he said B faces the enemy, "just the image was not flipped so it looked wrong", and "I want just his image to face right with the hitboxes to be flipped to right so they hit accurately to where he is facing"). Every picture of the sheet is flipped left to right when it is cut (ryMir: the way the game draws an enemy that turns round), so the fight, the enemy, his card, the faces, the map and the VS screens all show him flipped.
+// The NUMBERS are not flipped: his body, his reach and the places where his blows land are measured on the pictures as they were drawn (arts below), so the hitboxes stay on his right, where the enemy is, and every blow still hits what is in front of him. His TORSO does not move either: a picture turned over about its middle would put his body 14 - 20 px to the left of his hitbox, so every flipped picture says in __mx how far to the right the game draws it (the fight, customScene, and the enemy, cuenLook / drawDummy) and the torso stays exactly where it was. The rows of the hair cannon (the GRANITE BLAST mode's seven blasts and JUST THIS ONCE) keep their drawing: the beam comes out of the tip of the hair, whose place (RY_GB) is measured on them. RY_MIRROR = false puts everything back.
+const RY_MIRROR = true, RY_KEEP = new Set(['g1', 'g2', 'gs', 'gd', 'gj', 'gc', 'ga', 'u1', 'u2', 'u3', 'u4']);
+const ryTorso = c => {      // the middle column of his torso in a picture: the middle of what is there in rows 24 - 43, or of the whole picture when little is there (he lies on the floor); -1 for an empty picture
+  const d = c.getContext('2d').getImageData(0, 0, 64, 64).data, all = [], torso = [];
+  for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (d[(y * 64 + x) * 4 + 3] > 127) { all.push(x); if (y >= 24 && y < 44) torso.push(x); }
+  const s = torso.length >= 40 ? torso : all; return s.length ? s.sort((p, q) => p - q)[s.length >> 1] : -1;
+};
+const ryMir = c => {      // a picture turned over (its column x goes to 63 - x); m.__t = where his torso was, m.__mx = 2 t - 63: the torso goes to 63 - t, and drawing the picture 2 t - 63 to the right puts it back on t
+  const m = document.createElement('canvas'); m.width = m.height = 64; const g = m.getContext('2d'); g.imageSmoothingEnabled = false; g.translate(64, 0); g.scale(-1, 1); g.drawImage(c, 0, 0);
+  const t = ryTorso(c); m.__t = t; m.__mx = t < 0 ? 0 : 2 * t - 63; return m;
+};
 (() => {
   const im = new Image();
   im.onload = () => {      // the strip is cut into 64 x 64 pictures, a row for each animation (until then he is not there: his card shows nothing)
     const n = Math.floor(im.width / 64), set = {}, arts = {}, tipOf = a => { const sp = cuSpan(a, r => r - 1), o = {}; for (const r in sp) o[r] = sp[r][1]; return o; };      // (tipOf: how far each row of a picture reaches in front of his middle column)
     RYU_ROWS.forEach((k, r) => {
-      set[k] = []; arts[k] = []; for (let i = 0; i < n; i++) { const c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(im, i * 64, r * 64, 64, 64, 0, 0, 64, 64); set[k].push(c); arts[k].push(suAlpha(c)); }
+      set[k] = []; arts[k] = []; for (let i = 0; i < n; i++) { const c = document.createElement('canvas'); c.width = c.height = 64; c.getContext('2d').drawImage(im, i * 64, r * 64, 64, 64, 0, 0, 64, 64); set[k].push(RY_MIRROR && !RY_KEEP.has(k) ? ryMir(c) : c); arts[k].push(suAlpha(c)); }      // (v1.204 the pictures are MIRRORED, but the numbers (arts: his body, his reach, the places of his blows) are taken from the pictures as they were drawn, so his blows still hit to the right, where he faces)
     });
     const body = cuWiden(arts.frames.map(a => cuSpan(a, r => r - 1))), hs = Object.values(body).map(v => v[1]).sort((a, b) => a - b);      // (the widest every row gets over his idle pictures, and half as wide as his torso for the push)
     const hit = (r, fr, f, id, o) => {      // one impact: f = the picture of the blow it comes on, fr = the picture of the row it lands on (the limb on that picture and the next gives the reach), id = its place in cuRes; { f: its picture, k: 'i', d: damage, fx: knock-back, launch, stun and, if it hit, a hit stop, a shake and the blue burst, tip: the limb on the impact's pictures, dy: how high the body is then }
@@ -197,7 +209,7 @@ function ryGbEv(k, cb) {      // the events of a blast's timeline: one callback 
 function ryReset() { ryGb = false; ryBeams = []; ryAura = []; ryAuraAt = 0; ryUlEnd(pnow(), true); }
 function ryToggle(now) {      // the MODE button: the mode on / off, with a ring of sparks round the hair
   ryGb = !ryGb; snd(ryGb ? 'ceon' : 'ceoff'); if (ryGb) flash(now, 140, .25);
-  const t = ryHairTop(ryCur); if (t) for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; ryAura.push({ x: wx + t[0] - 32 + Math.cos(a) * 3, y: ryCurY + t[1] + Math.sin(a) * 3, vx: Math.cos(a) * (ryGb ? 38 : 22), vy: Math.sin(a) * (ryGb ? 30 : 18) - 6, born: now, life: 420 + (i % 3) * 120, c: i % 3 === 0 ? '#ffffff' : i % 3 === 1 ? '#9ff3ff' : '#17e3ff' }); }
+  const t = ryHairTop(ryCur); if (t) for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; ryAura.push({ x: wx + t[0] - 32 + ((ryCur && ryCur.__mx) || 0) + Math.cos(a) * 3, y: ryCurY + t[1] + Math.sin(a) * 3, vx: Math.cos(a) * (ryGb ? 38 : 22), vy: Math.sin(a) * (ryGb ? 30 : 18) - 6, born: now, life: 420 + (i % 3) * 120, c: i % 3 === 0 ? '#ffffff' : i % 3 === 1 ? '#9ff3ff' : '#17e3ff' }); }
 }
 function ryModeUI() {      // every frame: the MODE button's name and light follow the mode
   const el = $('cel'), b = $('ce'), want = 'MODE<br>' + (ryGb ? 'GRANITE' : 'OFF'), aria = ryGb ? 'Mode: Granite blast is on, tap to switch it off. His attacks are blasts out of his hair' : 'Mode: tap to switch Granite blast on. His attacks become blasts out of his hair';
@@ -262,7 +274,7 @@ function ryDraw(now, cx, x, y, src) {      // the beams and the sparks of the mo
   const g = CU_GAME[4]; ryCur = src; ryCurY = y;
   ryBeams = ryBeams.filter(b => now - b.born < b.dur); for (const b of ryBeams) ryDrawBeam(now, cx, x, y, b, g);
   const dt = Math.min(.05, Math.max(0, (now - ryAuraT) / 1000)); ryAuraT = now;
-  if (ryGb && vs && vs.ph === 'fight' && now - ryAuraAt > 70) { ryAuraAt = now; const t = ryHairTop(src); if (t) for (let i = 0; i < 3; i++) ryAura.push({ x: wx + t[0] - 32 + Math.random() * 8 - 4, y: y + t[1] + Math.random() * 3, vx: Math.random() * 8 - 4, vy: -(8 + Math.random() * 12), born: now, life: 420 + Math.random() * 300, c: Math.random() < .4 ? '#ffffff' : Math.random() < .5 ? '#9ff3ff' : '#17e3ff' }); }
+  if (ryGb && vs && vs.ph === 'fight' && now - ryAuraAt > 70) { ryAuraAt = now; const t = ryHairTop(src); if (t) for (let i = 0; i < 3; i++) ryAura.push({ x: wx + t[0] - 32 + ((src && src.__mx) || 0) + Math.random() * 8 - 4, y: y + t[1] + Math.random() * 3, vx: Math.random() * 8 - 4, vy: -(8 + Math.random() * 12), born: now, life: 420 + Math.random() * 300, c: Math.random() < .4 ? '#ffffff' : Math.random() < .5 ? '#9ff3ff' : '#17e3ff' }); }
   ryAura = ryAura.filter(p => now - p.born < p.life); for (const p of ryAura) { p.x += p.vx * dt; p.y += p.vy * dt; ctx.globalAlpha = Math.min(1, 1.6 * (1 - (now - p.born) / p.life)); ctx.fillStyle = p.c; ctx.fillRect(Math.round(cx + p.x - wx), Math.round(p.y), 1, 1); } ctx.globalAlpha = 1;  if (ryUl) ryUlFront(now, cx, x, y);
 }
 window.__ryGb = () => ({ on: ryGb, beams: ryBeams.map(b => ({ k: b.k, f: b.f, ang: +b.ang.toFixed(1), ox: Math.round(b.ox - wx), oh: Math.round(b.oh), hit: b.hit, th: b.th, gray: b.gray })), aura: ryAura.length });      // test hook

@@ -3,7 +3,7 @@
 const SEL = {      // the seven fighters: short name, panel name, a tag, three signature moves, a colour, and the top left corner of his 28 x 28 face in his idle picture
   gojo: { nm: 'GOJO', full: 'GOJO', tag: 'THE STRONGEST', mv: ['LAPSE BLUE', 'REVERSAL RED', 'HOLLOW PURPLE'], col: [59, 107, 255], face: [3, 0] },
   yuji: { nm: 'YUJI', full: 'YUJI', tag: 'THE VESSEL', mv: ['DIVERGENT FIST', 'BLACK FLASH', 'THE ZONE'], col: [255, 111, 165], face: [7, 1] },
-  cu4: { nm: 'RYU', full: 'RYU', tag: 'THE BRAWLER', mv: ['5-HIT COMBO', 'GRANITE BLAST', 'JUST THIS ONCE'], col: [23, 227, 255], face: [22, 3] },
+  cu4: { nm: 'RYU', full: 'RYU', tag: 'THE BRAWLER', mv: ['5-HIT COMBO', 'GRANITE BLAST', 'JUST THIS ONCE'], col: [23, 227, 255], face: [14, 3] },      // (v1.204 his pictures are mirrored, so the 28 px window on his head moved from column 22 to 14)
   verity: { nm: 'VERITY', full: 'VERITY', tag: 'CURSED SPIRIT', mv: ['BITE', 'SMOKE BALL', 'JUMPSCARE'], col: [232, 201, 74], face: [18, 0] },
   cat: { nm: 'CAT', full: 'CARTOON<br>CAT', tag: 'CURSED SPIRIT', mv: ['CARTOON ATTACK', 'GIANT KICK', 'ARM HANG'], col: [200, 204, 216], face: [19, 0] },
   freddy: { nm: 'FREDDY', full: 'FREDDY<br>KRUEGER', tag: 'CURSED SPIRIT', mv: ['PIERCE', 'BOILING WATER', 'DREAM'], col: [70, 196, 106], face: [21, 1] },

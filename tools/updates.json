@@ -1,5 +1,15 @@
 [
  {
+  "v": "1.204",
+  "t": "RYU: HIS PICTURE IS TURNED OVER SO HE FACES THE ENEMY",
+  "n": [
+   "You asked me to mirror Ryu's sprite because he was turning to the wrong side. You answered my questions: you wanted only his picture turned over, so that he faces right, with the hits still landing on his right, where he is facing, and of the two test pictures the turned-over one was the one that faces the enemy. Here it is.",
+   "WHAT CHANGED: every picture of Ryu is turned over: standing, walking, jumping, crouching, blocking, dashing, every punch and kick, getting hurt and getting knocked out. It is the same on his character card, his face picture, the map screen and the VS screen. When Ryu is your enemy he faces you the right way round as well, and when you stand behind him he turns to the other side, like every fighter.",
+   "NOTHING ELSE MOVED: his body, his reach and the place where each of his blows lands are measured on the old pictures, so they are exactly what they were (the same 27 test blows at three distances do the same damage as in V1.202). His body stays exactly where it was on the screen too, so that an enemy's blow touches him where you see him and does not hit the air in front of his chest.",
+   "WHAT YOU WILL SEE: his arms and legs now swing to the other side in the picture, because turning a picture over turns the swing too, while the hit still lands on his right, where the enemy is. The GRANITE BLAST mode and JUST THIS ONCE keep their old drawing, because the beam has to come out of the tip of his hair: when he fires them he turns to the old side for a moment. If that looks wrong, or if you would rather have his punches and kicks swing towards the enemy, tell me and I will redraw them."
+  ]
+ },
+ {
   "v": "1.203",
   "t": "IRON MAN: ULTIMATE, THE UNIBEAM FIRED FROM HIS CHEST",
   "n": [
