@@ -21,12 +21,12 @@ function fsWhy(mode, side, who) {
   const cu = who === 'cu3' || who === 'cu4';
   if (mode === 'wifi') return LAN_FIGHTERS.includes(who) ? '' : 'NOT ONLINE';
   if (mode === 'train') return side === 0 ? (who === 'cu3' && !suHas() ? 'LOCKED' : '') : TRF.includes(who) ? '' : 'NOT AS ENEMY';      // (Sukuna is bought for $3000; the training enemy is Gojo, Yuji, Verity or the Cat, see TRF)
-  if (who === 'cu5') return 'TRAINING ONLY';      // (v1.190 Iron Man is in TRAINING as your fighter, in no fight against anyone)
+  if (who === 'cu5') return side === 1 ? '' : 'TRAINING ONLY';      // (v1.190 Iron Man is in TRAINING as your fighter; v1.208 he is an enemy in Battle too)
   if (cu) return who === 'cu3' && !suHas() ? 'LOCKED' : '';      // (v1.189 Sukuna and Ryu fight in Battle too, on both sides; Sukuna is still bought for $3000)
   return who !== 'gojo' && !owns(who) ? 'LOCKED' : '';      // (bought on the SKILLS page, like before)
 }
 const FS_BADGE = { 'LOCKED': 'LOCKED', 'TRAINING ONLY': 'TRAIN<br>ONLY', 'NOT AS ENEMY': 'NOT AS<br>ENEMY', 'NOT ONLINE': 'NOT<br>ONLINE' };
-const fsHintText = (who, why) => why === 'LOCKED' ? (who === 'cu3' ? 'SUKUNA IS LOCKED: BUY HIM FOR $3000 IN SKILLS > CHARACTERS' : SEL[who].nm + ' IS LOCKED: BUY HIM IN SKILLS > CHARACTERS') : why === 'TRAINING ONLY' ? SEL[who].nm + ' CAN ONLY FIGHT IN TRAINING FOR NOW' : why === 'NOT AS ENEMY' ? SEL[who].nm + ' CANNOT BE THE ENEMY YET' : SEL[who].nm + ' IS NOT IN WI-FI FIGHTS YET';
+const fsHintText = (who, why) => why === 'LOCKED' ? (who === 'cu3' ? 'SUKUNA IS LOCKED: BUY HIM FOR $3000 IN SKILLS > CHARACTERS' : SEL[who].nm + ' IS LOCKED: BUY HIM IN SKILLS > CHARACTERS') : why === 'TRAINING ONLY' ? SEL[who].nm + ' IS ONLY YOUR FIGHTER IN TRAINING FOR NOW (AS THE ENEMY HE FIGHTS EVERYWHERE)' : why === 'NOT AS ENEMY' ? SEL[who].nm + ' CANNOT BE THE ENEMY YET' : SEL[who].nm + ' IS NOT IN WI-FI FIGHTS YET';
 let fsMsgAt = 0;
 function fsSay(el, text) { el.textContent = text; fsMsgAt = performance.now() + 2800; el.dataset.on = '1'; }      // a short line under the faces (why a face is greyed), gone after a moment
 function fsSayTick(el) { if (el.dataset.on && performance.now() > fsMsgAt) { el.dataset.on = ''; if (el.dataset.def) el.textContent = el.dataset.def; else el.innerHTML = '&nbsp;'; } }      // (back to its own line: the Wi-Fi screen keeps "more online moves come ..." there)

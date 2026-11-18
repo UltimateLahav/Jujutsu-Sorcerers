@@ -22,7 +22,7 @@ function yfKit(foe) {
   if (foe === 'verity') return veVictim();
   if (foe === 'cat') return catVictim();
   if (foe === 'freddy') return freddyVictim();
-  if (foe === 'cu3' || foe === 'cu4') return cuVictim(+foe.slice(2));
+  if (foe === 'cu3' || foe === 'cu4' || foe === 'cu5') return cuVictim(+foe.slice(2));      // (v1.208 Iron Man too)
   if (foe === 'yuji') return YFK || (YFK = victimKit(YUF.inv.idle, YUF.inv.rx, k => k < 0 ? YU.idle : YU.rx[k]));
   const inv = !!(vs && vs.inv);
   return { vF: inv ? dumF : idleF, vRx: inv ? rxI : rxN, vRxW: rxW, vW: dumW, vB: dumB, vi: k => k < 0 ? D.idle : D['rx' + k], fs: 1 };

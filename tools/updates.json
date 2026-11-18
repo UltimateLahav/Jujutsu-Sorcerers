@@ -1,5 +1,16 @@
 [
  {
+  "v": "1.208",
+  "t": "IRON MAN CAN BE THE ENEMY NOW",
+  "n": [
+   "You asked for a beam clash between Iron Man and Ryu. For that both of them have to be able to fight each other, and until now Iron Man could only be YOUR fighter in Training. So this update comes first: Iron Man is an ENEMY now. The beam clash itself comes next.",
+   "WHERE: on the fighter screen pick him on the enemy side, in Training and in Battle (as your own fighter he is still Training only). SETTINGS > TRAIN > ENEMY IS has him too, and the ADMIN box of the Training lists his moves, so you can make him do any of them at once.",
+   "WHAT HE DOES: his chain of four blows (R.HOOK, L.HOOK, R.KICK, PUNCH), the ROCKET UPPERCUT that throws you up, LOW JABS when you are crouched, and repulsor bolts from far away (R.BLAST and L.BLAST). His ULTIMATE is the UNIBEAM: a long charge (2.4 seconds: the ground shakes and light is drawn into his chest), a short brace, then a beam of orange, yellow and white light out of his chest, 12 bursts, one every 0.15 seconds. Nothing stops it, not a guard, a dash, a jump or a crouch: the only way out is to get BEHIND him. Each burst takes 3% of your health (more on the higher grades) and the last one throws you back. A blow on him before it fires ends it. He may start it from Grade 2 up, never in the first 15 seconds of a fight, and then at most every 32 seconds.",
+   "WHAT HE CANNOT DO YET: his downslam, charge, backflip, bear hug, laser, spin blast and repulsor beam stay your moves for now. Gojo's and Yuji's FATALITY work on him, he is knocked out like the others, and in a mirror match he has the inverted colours.",
+   "THE TESTS: the scan of the game now plays him as an enemy in free play and in a Battle against Ryu, checks his list in the ADMIN box, plays every move of that list, his UNIBEAM from start to end and the fatalities of Gojo and Yuji on him."
+  ]
+ },
+ {
   "v": "1.207",
   "t": "THE CAMERA CAN NO LONGER FREEZE AFTER A MISSING PICTURE",
   "n": [

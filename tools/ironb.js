@@ -306,13 +306,12 @@ function iruStep(g, b, now, dt) {
   return pic;
 }
 // ---- what customScene draws: the beam (before him, so that his arms stay in front of it) and the light of his reactor (after him)
-function iruBack(g, b, now, x, y, src) {      // the beam: columns of orange light with yellow, pale yellow and a white heart inside, each layer swelling and shrinking on its own so that the three colours run through each other, streaks and sparks along it; it is thin where it leaves his chest and fat further out, grows in 140 ms and thins away in the release; a fireball where it meets the enemy
-  if (!b.fired || !b.core) return; const S = IRU, a = now - b.fireAt, rel = now - (b.t0 + S.tRel); if (a < 0) return;
-  const ramp = a < 200 ? 0.18 + 0.82 * IR_EZ.io(a / 200) : 1, fade = rel > 0 ? Math.max(0, 1 - rel / 380) : 1, TH = S.th * ramp * fade; if (TH < 1) return;
-  const sx = Math.round(x + b.core.px) + 2, sy = Math.round(y + b.core.py) + 1, lead = Math.round((VW - sx + 24) * Math.min(1, a / 140)); if (lead < 2) return;
+function iruBeamPaint(a, rel, sx, sy, dir, span, thick) {      // v1.208 the beam itself, from (sx, sy) for span px to the right (dir 1) or to the left (dir -1): a = ms since it fired, rel = ms since the release began (negative before it); thick = a factor on its thickness (the clash of two beams); the enemy Iron Man fires it to the left, see cuen.js
+  const S = IRU, ramp = a < 200 ? 0.18 + 0.82 * IR_EZ.io(a / 200) : 1, fade = rel > 0 ? Math.max(0, 1 - rel / 380) : 1, TH = S.th * ramp * fade * (thick || 1); if (TH < 1) return;
+  const lead = Math.round(span * Math.min(1, a / 140)); if (lead < 2) return; const X = (l, w) => dir > 0 ? sx + l : sx - l - w;
   ctx.save();
   for (let l = 0; l < lead; l += 2) {
-    const cone = Math.min(1, 0.34 + l / 36), ph = l * 0.13 - a * 0.045, h = Math.max(2, TH * cone * (1 + 0.06 * Math.sin(ph) + 0.04 * Math.sin(l * 0.27 + a * 0.09))), xx = sx + l;
+    const cone = Math.min(1, 0.34 + l / 36), ph = l * 0.13 - a * 0.045, h = Math.max(2, TH * cone * (1 + 0.06 * Math.sin(ph) + 0.04 * Math.sin(l * 0.27 + a * 0.09))), xx = X(l, 2);
     const hy = h * (0.72 + 0.1 * Math.sin(ph * 1.3 + 1)), hp = h * (0.46 + 0.1 * Math.sin(ph * 1.7 + 2.1)), hw = h * (0.24 + 0.08 * Math.sin(ph * 2.1 + 4));
     ctx.fillStyle = 'rgba(255,92,20,0.3)'; ctx.fillRect(xx, Math.round(sy - h - 5), 2, Math.round(2 * h + 10));
     ctx.fillStyle = '#ff7a1a'; ctx.fillRect(xx, Math.round(sy - h), 2, Math.round(2 * h));
@@ -322,17 +321,22 @@ function iruBack(g, b, now, x, y, src) {      // the beam: columns of orange lig
   }
   for (let j = 0; j < 9; j++) {      // (streaks of light run along it, white, yellow and orange)
     const yy = Math.round(sy + (((j * 37 + 11) % 100) / 100 - 0.5) * TH * 1.5), sp = j % 2 ? 1.2 : 1.7; ctx.fillStyle = j % 3 === 0 ? 'rgba(255,255,255,0.85)' : j % 3 === 1 ? 'rgba(255,240,150,0.8)' : 'rgba(255,190,80,0.8)';
-    for (let x0 = -((a * sp + j * 41) % 80); x0 < lead; x0 += 80) { const xs = Math.max(0, x0), xe = Math.min(lead, x0 + 26); if (xe > xs) ctx.fillRect(sx + Math.round(xs), yy, Math.round(xe - xs), 1 + (j % 2)); }
+    for (let x0 = -((a * sp + j * 41) % 80); x0 < lead; x0 += 80) { const xs = Math.max(0, x0), xe = Math.min(lead, x0 + 26); if (xe > xs) { const w = Math.round(xe - xs); ctx.fillRect(X(Math.round(xs), w), yy, w, 1 + (j % 2)); } }
   }
   if (!SET.lite) for (let j = 0; j < 26; j++) {      // (and flames and sparks fly off its edges)
     const l = Math.random() * lead, h = TH * Math.min(1, 0.34 + l / 36), side = Math.random() < 0.5 ? -1 : 1; ctx.fillStyle = Math.random() < 0.34 ? '#ffffff' : Math.random() < 0.5 ? '#ffd24a' : '#ff8a1e';
-    ctx.fillRect(Math.round(sx + l), Math.round(sy + side * (h + 1 + Math.random() * 10)), 1 + Math.floor(Math.random() * 3), 1 + Math.floor(Math.random() * 2));
+    const w = 1 + Math.floor(Math.random() * 3); ctx.fillRect(Math.round(X(l, w)), Math.round(sy + side * (h + 1 + Math.random() * 10)), w, 1 + Math.floor(Math.random() * 2));
   }
+  ctx.restore(); ctx.globalAlpha = 1;
+}
+function iruBack(g, b, now, x, y, src) {      // the beam: columns of orange light with yellow, pale yellow and a white heart inside, each layer swelling and shrinking on its own so that the three colours run through each other, streaks and sparks along it; it is thin where it leaves his chest and fat further out, grows in 140 ms and thins away in the release; a fireball where it meets the enemy
+  if (!b.fired || !b.core) return; const S = IRU, a = now - b.fireAt, rel = now - (b.t0 + S.tRel); if (a < 0) return;
+  const sx = Math.round(x + b.core.px) + 2, sy = Math.round(y + b.core.py) + 1; iruBeamPaint(a, rel, sx, sy, 1, VW - sx + 24);
   const d = dummy; if (b.hit && d && d.ko < 0 && now - b.imp < 260 && rel < 0) {      // (where it meets him: a fireball on the side of his body that faces it)
     const ex = Math.round(VW / 2) + Math.round(d.x - wx) - 4, ey = Math.round(b.iy), R = 8 + Math.round(Math.abs(Math.sin(a * 0.04)) * 6);
     irbDisc(ex, ey, R + 5, '#ff5a14', 0.28); irbDisc(ex, ey, R + 2, '#ff9a22', 0.6); irbDisc(ex, ey, R, '#ffd24a', 0.92); irbDisc(ex, ey, Math.max(2, R - 4), '#ffffff', 1);
   }
-  ctx.restore(); ctx.globalAlpha = 1;
+  ctx.globalAlpha = 1;
 }
 function iruFront(g, b, now, x, y, src) {      // the light of his reactor: in the charge it swells from a spark into a sun (orange, yellow, white), sparks fly into it and two rings shrink towards it; held at its biggest in the brace; in the beam a blazing flare with a cross of light, and a warm flash over the whole screen when it fires
   if (!b.core) return; const S = IRU, u = now - b.t0, px = Math.round(x + b.core.px) + 1, py = Math.round(y + b.core.py) + 1; ctx.save();

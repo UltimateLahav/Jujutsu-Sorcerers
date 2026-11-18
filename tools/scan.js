@@ -180,7 +180,7 @@ async function scSeg(label, start, frames, seed, hud) {      // one fight: start
   p.end(); scCheck(); show('title'); return ok;
 }
 async function scRound(r) {      // one round of random fights: every fighter in free play and in a versus match; round 0 is the pass every scan makes, the later rounds use the time that is left (other enemies, behaviours, GRAPHIC DAMAGE settings, grades)
-  const FOE = ['yuji', 'verity', 'cat', 'freddy', 'gojo', 'cu3', 'cu4'];      // (v1.189 Sukuna and Ryu fight on both sides)
+  const FOE = ['yuji', 'verity', 'cat', 'freddy', 'gojo', 'cu3', 'cu4', 'cu5'];      // (v1.189 Sukuna and Ryu fight on both sides; v1.208 Iron Man is an enemy too)
   for (let i = 0; i < SC_WHO.length; i++) {
     const w = SC_WHO[i], f1 = w === 'yuji' && !r ? 'cat' : FOE[(i + r) % FOE.length], f2 = FOE[(i + 2 * r + 1) % FOE.length], n = (i + r) % 3;
     if (!(await scSeg(SC_NAME[w] + ' IN FREE PLAY' + (r ? ' (ROUND ' + (r + 1) + ')' : ''), () => { SET.gore = n; Object.assign(TR, { beh: [1, 2, 4, 5, 3][(i + r) % 5], ehp: n, php: 0, pce: 0 }); startPractice(w, f1); }, r ? 220 : 100, i + 1 + r * 17, !r))) return false;
@@ -190,8 +190,12 @@ async function scRound(r) {      // one round of random fights: every fighter in
   return true;
 }
 async function scFighters() {
-  SC.sec = 'FIGHTERS'; scCov('FIGHTERS', 0, SC_WHO.length + 1); SC.plan = (SC_WHO.length + 1) * 280; SC.done = 0; if (!(await scRound(0))) return;
+  SC.sec = 'FIGHTERS'; scCov('FIGHTERS', 0, SC_WHO.length + 3); SC.plan = (SC_WHO.length + 3) * 280; SC.done = 0; if (!(await scRound(0))) return;
   if (!(await scSeg('IRON MAN IN FREE PLAY', () => { SET.gore = 0; Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0 }); startPractice('cu5', 'gojo'); }, 100, 77))) return;      // (v1.190 Iron Man: walks and jumps in Training, nothing else; the enemy fights back and his health is normal, so he is hit and knocked out too)
+  scCov('FIGHTERS', 1, 0);
+  if (!(await scSeg('IRON MAN AS THE ENEMY IN FREE PLAY', () => { SET.gore = 1; Object.assign(TR, { beh: 1, ehp: 0, php: 0, pce: 0 }); startPractice('gojo', 'cu5'); }, 100, 78))) return;      // (v1.208 the enemy Iron Man fights back: his chain, his bolts, his uppercut, his UNIBEAM)
+  scCov('FIGHTERS', 1, 0);
+  if (!(await scSeg('RYU AGAINST IRON MAN', () => { SET.gore = 2; vsPick.me = 'cu4'; vsPick.foe = 'cu5'; startMatch(2); }, 160, 79))) return;
   scCov('FIGHTERS', 1, 0);
 }
 async function scMore() {      // the time that is left of the minute: more random fights
@@ -251,7 +255,7 @@ async function scRyuTurned() {
   show('title');
 }
 // ---------------------------------------------------------------- ADMIN: the box of the training (v1.206, tools/admin.js)
-// The ADMIN button of the top bar opens a small box with the moves of the enemy who is there. Checks: the button shows and the box opens; each of the 7 enemies has the list he should have (AD_EXP); a click on a move that is no cutscene starts it, it ends by itself, and nothing else starts after it while FREEZE is on (the first version let the Cat go on from SMASH into his whole chain: the frame in which the clicked move ends was open to his own brain); the big ones (FINISHER, ULTIMATE, JUMPSCARE, NIGHTMARE, SHRINE, JUST THIS ONCE) start, end, and the training goes on with the box open; FREEZE holds his own brain still and lets it go; the TOOLS (HEAL, INF HP, CLOSE / MID / FAR, ENEMY) do what they say; the X closes the box; and a Battle has neither the button nor the box. The enemy is a Special Grade one, so that a stray move after the clicked one is as likely as it gets.
+// The ADMIN button of the top bar opens a small box with the moves of the enemy who is there. Checks: the button shows and the box opens; each of the 8 enemies has the list he should have (AD_EXP); a click on a move that is no cutscene starts it, it ends by itself, and nothing else starts after it while FREEZE is on (the first version let the Cat go on from SMASH into his whole chain: the frame in which the clicked move ends was open to his own brain); the big ones (FINISHER, ULTIMATE, JUMPSCARE, NIGHTMARE, SHRINE, JUST THIS ONCE, UNIBEAM) start, end, and the training goes on with the box open; FREEZE holds his own brain still and lets it go; the TOOLS (HEAL, INF HP, CLOSE / MID / FAR, ENEMY) do what they say; the X closes the box; and a Battle has neither the button nor the box. The enemy is a Special Grade one, so that a stray move after the clicked one is as likely as it gets.
 const AD_EXP = {
   gojo: 'R.HOOK,L.HOOK,ELBOW,KICK,BLOCK,DODGE,FINISHER',
   yuji: 'R.HOOK,L.HOOK,KNEE,3 KICKS,DIVERGENT,R.KICK,ELBOW,DOWNSLAM,PUSH KICK,CONC.FIST,SWEEP,RUSH FIST,UPPERCUT,FACE KICK,SPIN ELBOW,POWER UP,POWER OFF,BLOCK,DODGE',
@@ -259,9 +263,10 @@ const AD_EXP = {
   cat: 'GRAB,PUNCH,GRAB 2,KICK,SMASH,PUSH DASH,CARTOON,ULTIMATE,BLOCK,DODGE,FINISHER',
   freddy: 'R.SLASH,L.SLASH,FAR L.PUNCH,FAR R.PUNCH,BOILING WATER,PIERCE,GROUND SLAM,NIGHTMARE,BLOCK,DODGE,FINISHER',
   cu3: 'R.JAB,L.JAB,FACE KICK,COUNTER,R.JAB 2,L.UPPR,R.SLASH,L.SLASH,X SLASH,R.HOOK,L.HOOK,ELBOW,AIR CUT,FIRE ARROW,SHRINE,BLOCK,DODGE',
-  cu4: 'L.HOOK,R.HOOK,KICK UP,JUMP PUNCH,LEG KICK,DOWNSLAM,HARD PUNCH,FRONT KICK,POWER PUNCH,DIVE PUNCH,5-HIT COMBO,DASH KICK,KI BLAST,JUST ONCE,BLOCK,DODGE'
+  cu4: 'L.HOOK,R.HOOK,KICK UP,JUMP PUNCH,LEG KICK,DOWNSLAM,HARD PUNCH,FRONT KICK,POWER PUNCH,DIVE PUNCH,5-HIT COMBO,DASH KICK,KI BLAST,JUST ONCE,BLOCK,DODGE',
+  cu5: 'R.HOOK,L.HOOK,R.KICK,PUNCH,UPPERCUT,LOW JABS,R.BLAST,L.BLAST,UNIBEAM,BLOCK,DODGE'
 };
-const AD_BIG = ['FINISHER', 'ULTIMATE', 'JUMPSCARE', 'NIGHTMARE', 'SHRINE', 'JUST ONCE'], SC_AD_N = 40;      // (1 button + 7 x 3 lists and moves + 9 big moves + 2 FREEZE + 4 tools + 1 X + 1 closed box + 1 Battle)
+const AD_BIG = ['FINISHER', 'ULTIMATE', 'JUMPSCARE', 'NIGHTMARE', 'SHRINE', 'JUST ONCE', 'UNIBEAM'], SC_AD_N = 44, AD_WHO = SC_WHO.concat('cu5');      // (1 button + 8 x 3 lists and moves + 10 big moves + 2 FREEZE + 4 tools + 1 X + 1 closed box + 1 Battle; v1.208 Iron Man is the eighth enemy)
 async function scAdmin() {      // (every enemy decides at once when he can: GRADES.aggr is 1 for the length of the checks, so that a stray move after a clicked one is certain, not a matter of luck)
   const aggr0 = GRADES.map(g => g.aggr), tr0 = {}, gore0 = SET.gore; for (const k of ['beh', 'ehp', 'php', 'pce', 'grade', 'foe', 'arm', 'spd', 'meter', 'info', 'put']) tr0[k] = TR[k]; GRADES.forEach(g => { g.aggr = 1; });
   try { await scAdmin1(); } finally { GRADES.forEach((g, i) => { g.aggr = aggr0[i]; }); Object.assign(TR, tr0); SET.gore = gore0; ADM.open = false; ADM.freeze = true; ADM.ceBack = 0; }      // (everything the checks changed is put back: the Special Grade and the enemy of the TRAIN page, the graphic damage, the aggression of the grades, and the box is closed again: in a game the frames of the menus close it, here the next section starts a room at once, and an open box would hold its enemy still)
@@ -276,8 +281,8 @@ async function scAdmin1() {
     if (!A().open) click('admBtn'); if (!A().freeze) click('admF');
     return scUntil(() => A().key === f && A().moves.length > 0 && A().open && A().freeze, 40, 250);
   };
-  for (let w = 0; w < SC_WHO.length; w++) {
-    const f = SC_WHO[w], nm = SC_NAME[f]; SC.say = nm + ': THE LIST';
+  for (let w = 0; w < AD_WHO.length; w++) {
+    const f = AD_WHO[w], nm = SC_NAME[f]; SC.say = nm + ': THE LIST';
     if (!(await room(f, w))) { if (stop()) return; scNote('fail', 'ADMIN: THE BOX DID NOT OPEN IN THE TRAINING AGAINST ' + nm, 'KEY ' + A().key + ', MOVES ' + A().moves.length + ', ON ' + A().on); continue; }
     if (w === 0) ok($('admBtn').style.display !== 'none' && A().open && getComputedStyle($('adm')).display !== 'none', 'THE ADMIN BUTTON DID NOT SHOW OR THE BOX DID NOT OPEN IN THE TRAINING');
     const L = A().moves, lost = [], stray = []; ok(L.join(',') === AD_EXP[f], nm + ': HIS LIST OF MOVES IS NOT THE ONE IT SHOULD BE', L.join(','));
@@ -400,7 +405,7 @@ async function scIronMoves() {
 // ---------------------------------------------------------------- CUTSCENES: the FATALITY and the DOMAIN of every fighter, played to the end
 async function scCuts() {
   SC.sec = 'CUTSCENES'; const FATAL = { gojo: 1, yuji: 1, verity: 1, cat: 1, freddy: 1, cu3: 1, cu4: 0 };
-  scCov('CUTSCENES', 0, SC_WHO.length * 2 + 3 + 13 + 19); SC.plan = (SC_WHO.length * 2 + 3 + 13 + 19) * 220; SC.done = 0;
+  scCov('CUTSCENES', 0, SC_WHO.length * 2 + 3 + 13 + 19 + 5); SC.plan = (SC_WHO.length * 2 + 3 + 13 + 19 + 5) * 220; SC.done = 0;      // (v1.208 + 5: two fatalities and three moves of the enemy Iron Man)
   for (let i = 0; i < SC_WHO.length; i++) {
     const w = SC_WHO[i];
     for (const [key, nm, low, max] of [['KeyH', 'FATALITY', 2, 700], ['KeyV', 'DOMAIN', 1, 520]]) {
@@ -460,7 +465,7 @@ async function scCuts() {
     show('title');
   }
   // v1.189 SUKUNA AND RYU AS ENEMIES: the fatality of three fighters on them, the enemy fatalities and nightmare on them as the player, and every special move of theirs (in the street)
-  for (const [w, foe] of [['gojo', 'cu3'], ['yuji', 'cu4'], ['cat', 'cu3'], ['gojo', 'cu4']]) {
+  for (const [w, foe] of [['gojo', 'cu3'], ['yuji', 'cu4'], ['cat', 'cu3'], ['gojo', 'cu4'], ['gojo', 'cu5'], ['yuji', 'cu5']]) {
     const label = SC_NAME[w] + ' FATALITY ON THE ENEMY ' + SC_NAME[foe]; SC.say = label; SET.gore = SC_WHO.indexOf(w) % 3; window.__suAll = true;
     try { Object.assign(TR, { beh: 2, ehp: 2, php: 0, pce: 0, put: 2 }); startPractice(w, foe); } catch (e) { scErr(e, label); continue; }
     if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
@@ -479,11 +484,11 @@ async function scCuts() {
     if (await scUntil(sw, 80, 250)) { if (await scUntil(() => !sw(), 800, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 40 SECONDS', ''); } else scNote('fail', label + ' DID NOT START', 'YOUR HEALTH ' + (vs ? Math.round(vs.hp) : '?') + ', THE ENEMY ' + (dummy ? Math.round(Math.abs(dummy.x - wx)) : '?') + ' PX AWAY');
     show('title');
   }
-  for (const [foe, sp, k] of [['cu3', 'cu', 6], ['cu3', 'aircut', 9], ['cu3', 'arrow', 22], ['cu3', 'dom', 0], ['cu4', 'cu', 10], ['cu4', 'cu', 11], ['cu4', 'blast', 12], ['cu4', 'beam', 16]]) {
+  for (const [foe, sp, k] of [['cu3', 'cu', 6], ['cu3', 'aircut', 9], ['cu3', 'arrow', 22], ['cu3', 'dom', 0], ['cu4', 'cu', 10], ['cu4', 'cu', 11], ['cu4', 'blast', 12], ['cu4', 'beam', 16], ['cu5', 'uni', 0], ['cu5', 'cu', 4], ['cu5', 'cu', 9]]) {
     const label = 'THE ENEMY ' + SC_NAME[foe] + ': ' + sp.toUpperCase() + ' ' + k; SC.say = label; SET.gore = 0; window.__suAll = true;
     try { Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0, put: 2, grade: 4 }); startPractice('gojo', foe); } catch (e) { scErr(e, label); continue; }
     if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
-    await scFrames(2, null, 600); try { trainPut(); dummy.x = wx + (k === 10 ? 30 : 120); cuenStart(k, pnow(), sp); } catch (e) { scErr(e, label); }
+    await scFrames(2, null, 600); try { trainPut(); dummy.x = wx + (foe === 'cu4' && k === 10 || foe === 'cu5' && k === 4 ? 30 : 120); cuenStart(k, pnow(), sp); } catch (e) { scErr(e, label); }
     if (await scUntil(() => !dummy || !dummy.fa, 100, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 25 SECONDS', '');
     show('title');
   }

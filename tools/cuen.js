@@ -2,11 +2,22 @@
 const cuFoeOn = () => !!vs && typeof vs.foe === 'string' && vs.foe.slice(0, 2) === 'cu' && !vs.net && !vs.story && !!dummy && dummy.mode === 'fighter';      // is Sukuna or Ryu the enemy of this fight?
 const cuFoeG = () => CU_GAME[+vs.foe.slice(2)];
 // 1. THE NUMBERS: every IMPACT (and every SHOT) event of the 25 blows of Sukuna and the 19 of Ryu gets an attack number from 100 on (the tables ATK_FPS, DMG, KNOCK, KNOCK_G, REACH, KICKS and CU_EXTRA, which gojoHit reads), and the special moves of part 4 get theirs (CUEN_X). Made the first time an enemy of this kind is there, because the fighters' pictures are cut when their sheets have loaded.
-let cuenOk = false, cuenK = 100; const CUEN_X = {};
+let cuenOk = false, cuenIrOk = false, cuenK = 100; const CUEN_X = {};
 function cuenMods(e) { const o = {}; for (const [t, a, b, c] of (e.fx || [])) { if ('ktlqbry'.indexOf(t) < 0 || c) continue; if (t === 'k') o.knock = a; else if (t === 't') o.stun = a; else if (t === 'l') o.launch = a; else if (t === 'q') o.gb = true; else if (t === 'b') o.bleed = [a, b]; } return o; }
+const cuenNum = (kk, dm, kn, ex) => { ATK_FPS[kk] = 30; ATK_SWING[kk] = 1; ATK_IMPACT[kk] = 1; DMG[kk] = dm; KNOCK[kk] = 20; KNOCK_G[kk] = kn; REACH[kk] = 40; CU_EXTRA[kk] = ex || {}; };
+function cuenRegIr() {      // v1.208 IRON MAN as the enemy: the same numbers for the blows and the bolts of his data (made by ironMoves when the first fight with him begins), and for his UNIBEAM
+  if (cuenIrOk) return true; if (!ironEnsure()) return false; const g = CU_GAME[5]; if (!g.moves) ironMoves(g); if (!g.ev || !g.ev.length) return false;
+  KICKS.cu5 = [];
+  g.ev.forEach((ev, k) => ev.forEach(e => { if (e.k !== 'i' && e.k !== 'o') return; const o = cuenMods(e); e.gk = cuenK++; cuenNum(e.gk, e.d, o.knock ? o.knock * 6 : Math.min(120, 9 + e.d * 2), { nb: !!o.gb, heavy: !!o.launch }); if (/KICK/.test(g.an[k]) || e.low) KICKS.cu5.push(e.gk); }));
+  CUEN_X.uni = cuenK++; cuenNum(CUEN_X.uni, 4, 60, { nb: true, heavy: true }); cuenIrOk = true; return true;
+}
 function cuenReg() {
+  if (!cuenOk && !cuenReg34()) return false;
+  return !(vs && vs.foe === 'cu5') || cuenIrOk || cuenRegIr();
+}
+function cuenReg34() {
   if (cuenOk) return true; const gs = [CU_GAME[3], CU_GAME[4]]; if (!gs[0] || !gs[1] || !gs[0].ev || !gs[1].ev) return false;
-  const reg = (kk, dm, kn, ex) => { ATK_FPS[kk] = 30; ATK_SWING[kk] = 1; ATK_IMPACT[kk] = 1; DMG[kk] = dm; KNOCK[kk] = 20; KNOCK_G[kk] = kn; REACH[kk] = 40; CU_EXTRA[kk] = ex || {}; };
+  const reg = cuenNum;
   gs.forEach((g, gi) => {
     const nm = 'cu' + (gi + 3); KICKS[nm] = [];
     g.ev.forEach((ev, k) => ev.forEach(e => { if (e.k !== 'i' && e.k !== 'o') return; const o = cuenMods(e); e.gk = cuenK++; reg(e.gk, e.d, o.knock ? o.knock * 6 : Math.min(120, 9 + e.d * 2), { nb: !!o.gb, heavy: !!o.launch }); if (/KICK/.test(g.an[k]) || e.low) KICKS[nm].push(e.gk); }));
@@ -34,7 +45,8 @@ function cuenLook(now, reacting, hitT, kt) {
 // 3. HIS BRAIN, called by updateFighterVs after the part every enemy shares (stun, hurt, your swing read, dodge and block)
 const CUEN = {
   3: { chain: [0, 1, 2], far: [6, 7, 6, 8], farCd: 1100 },      // Sukuna: R.JAB, L.JAB, FACE KICK; from afar (beyond SU_NEAR) his M1 throws slashes, as when you play him
-  4: { chain: [0, 1, 0, 1, 6, 7, 4, 2], far: [], farCd: 0, power: 8, combo: 10, dash: 11 }      // Ryu: hooks, hard punch, front kick, leg kick, kick up; and POWER PUNCH, the 5-HIT COMBO and the DASH KICK now and then
+  4: { chain: [0, 1, 0, 1, 6, 7, 4, 2], far: [], farCd: 0, power: 8, combo: 10, dash: 11 },      // Ryu: hooks, hard punch, front kick, leg kick, kick up; and POWER PUNCH, the 5-HIT COMBO and the DASH KICK now and then
+  5: { chain: [0, 1, 2, 3], far: [9, 10], farCd: 1500, up: 4, jab: 6 }      // v1.208 Iron Man: R.HOOK, L.HOOK, R.KICK, PUNCH; from afar his M1 is a repulsor bolt (R.BLAST, L.BLAST, as when you play him in the repulsor mode); now and then the ROCKET UPPERCUT, LOW JABS on a crouching enemy
 };
 function cuenReach(g, k) {      // how far blow k reaches (the shortest of its impacts), against your body
   const B = hbBody(hbMe()); let r = 1e9; for (const e of g.ev[k]) if (e.k === 'i' && e.tip && B) r = Math.min(r, hbGap(e.tip, B, e.dy)); return r < 1e8 ? r : 36;
@@ -54,7 +66,7 @@ function cuFoe(now, dt, gap, ag, toward, G) {
   if (!go && !hold && now >= (d.nextDecide || 0) && gap > -4) {
     d.nextDecide = now + 250;
     if (ag <= near) { if (Math.random() < G.aggr) { go = true; k = cuenPickNear(now, g, n, G, ag); } }
-    else if (n === 3 && ag > 60 && ag <= 210 && now >= (d.farAt || 0) && Math.random() < G.aggr * 0.7) { go = true; k = P.far[(Math.random() * P.far.length) | 0]; d.farAt = now + P.farCd + Math.random() * 700; }
+    else if ((n === 3 || n === 5) && ag > 60 && ag <= 210 && now >= (d.farAt || 0) && Math.random() < G.aggr * 0.7) { go = true; k = P.far[(Math.random() * P.far.length) | 0]; d.farAt = now + P.farCd + Math.random() * 700; }
     else if (n === 4 && P.dash && ag > near + 10 && ag <= 130 && now >= (d.dashAt || 0) && Math.random() < G.aggr * 0.5) { go = true; k = P.dash; d.dashAt = now + 3500 + Math.random() * 2000; }
   }
   if (go) { if (k < 0) k = P.chain[(d.cuC = (d.cuC | 0) + 1) % P.chain.length]; d.chain = 0; cuenStart(k, now, 'cu'); return; }
@@ -65,6 +77,9 @@ function cuenPickNear(now, g, n, G, ag) {      // which blow at arm's length: th
   if (n === 4) {
     if (G.smart >= 1 && r < 0.12 && now >= (d_.pwAt || 0)) { d_.pwAt = now + g.set[P.power].d * 1000 * 3 + 2500; return P.power; }
     if (vs.gi >= 2 && r < 0.2 && now >= (d_.cbAt || 0)) { d_.cbAt = now + 6000; return P.combo; }
+  } else if (n === 5) {
+    if (stance === 'down' && r < 0.5) return P.jab;      // (you are crouched: his LOW JABS reach you, a punch would pass over)
+    if (G.smart >= 1 && r < 0.14 && now >= (d_.upAt || 0)) { d_.upAt = now + 4500; return P.up; }      // (the ROCKET UPPERCUT: you are thrown up)
   }
   return P.chain[(d_.cuC = (d_.cuC | 0) + 1) % P.chain.length];
 }
@@ -73,6 +88,7 @@ function cuenStart(k, now, type, extra) {
   if (type === 'cu') { const m = cuenMove(g, k); d.fa.dur = m.fr.length * m.ms; snd('swing', k); }
   else if (type === 'aircut') d.fa.ms = 1000 / (30 * GRADES[vs.gi].spd) * g.atk[k].length;
   else if (type === 'blast') d.fa.ms = 1000 / (26 * GRADES[vs.gi].spd) * g.atk[k].length;      // (the length of the two moves that play the pictures of a blow: set at once, the picture is asked for in the same frame)
+  else if (type === 'uni') { if (!g.ump) iruPics(g); d.fa.on = false; d.fa.tk = 0; d.fa.fireAt = 0; d.fa.braced = false; snd('irult', 0); gritAt(d.x - 6, 8, 80, -1); gritAt(d.x + 6, 8, 80, 1); puff(d.x - 8, 4); puff(d.x + 8, 4); }      // (v1.208 his UNIBEAM: the charge begins)
 }
 // the blows: the pictures at the speed of the blow, the step of the blow, and every event when its picture comes up
 function cuenAct(now, dt, gap, ag, toward, G, g, n) {
@@ -99,23 +115,26 @@ function cuenEv(e, now, gap, ag, toward, g, k) {      // one event of the blow c
   }
 }
 // 4. THE SPECIAL MOVES (code in the player's version, so each has a small enemy version here). Sukuna: AIR CUT (a slash that cuts you and makes you bleed), the fire arrow (the long cast, then an arrow that burns you), MALEVOLENT SHRINE (his domain: 6 seconds of cuts). Ryu: the ki blast and the beam of JUST THIS ONCE. A blow of yours ends the move he is making.
-const CUEN_SP = { 3: { aircut: [5000, 0], arrow: [12000, 2], dom: [35000, 3] }, 4: { blast: [4000, 0], beam: [32000, 3] } };      // [cooldown ms, first grade index]
+const CUEN_SP = { 3: { aircut: [5000, 0], arrow: [12000, 2], dom: [35000, 3] }, 4: { blast: [4000, 0], beam: [32000, 3] }, 5: { uni: [32000, 2] } };      // [cooldown ms, first grade index]
 function cuenSpecialTry(now, gap, ag, G, g, n) {
   const d = dummy; if (now < (d.spNext || 0) || gap < -4 || vs.ph !== 'fight' || now - d.born < 1500) return false; d.spNext = now + 350 + Math.random() * 450; const r = Math.random(), gi = vs.gi, S = CUEN_SP[n]; d.sp = d.sp || {};
-  const ok = k => gi >= S[k][1] && now >= (d.sp[k] === undefined ? d.born + (k === 'dom' || k === 'beam' ? 15000 : 0) : d.sp[k]);
+  const ok = k => gi >= S[k][1] && now >= (d.sp[k] === undefined ? d.born + (k === 'dom' || k === 'beam' || k === 'uni' ? 15000 : 0) : d.sp[k]);
   if (n === 3) {
     if (ok('dom') && ag <= 200 && r < 0.25 && !dom && !fd && !ult) { d.sp.dom = now + S.dom[0]; cuenStart(0, now, 'dom'); return true; }
     if (ok('arrow') && ag >= 80 && ag <= 280 && r < 0.2) { d.sp.arrow = now + S.arrow[0]; cuenStart(22, now, 'arrow'); return true; }
     if (ok('aircut') && ag >= 30 && ag <= 220 && r < 0.4) { d.sp.aircut = now + S.aircut[0]; cuenStart(9, now, 'aircut'); return true; }
-  } else {
+  } else if (n === 4) {
     if (ok('beam') && ag <= 300 && r < 0.2 && !dom && !fd && !ult) { d.sp.beam = now + S.beam[0]; cuenStart(16, now, 'beam'); return true; }
     if (ok('blast') && ag >= 90 && ag <= 320 && r < 0.3) { d.sp.blast = now + S.blast[0]; cuenStart(12, now, 'blast'); return true; }
+  } else {
+    if (ok('uni') && ag <= 320 && r < 0.2 && !dom && !fd && !ult) { d.sp.uni = now + S.uni[0]; cuenStart(0, now, 'uni'); return true; }      // (v1.208 Iron Man: the UNIBEAM, the long charge first)
   }
   return false;
 }
 function cuenActLook(now, g) {
   const a = dummy.fa, t = now - a.at;
-  if (a.type === 'cu') { const m = cuenMove(g, a.k), ap = Math.min(0.999, t / (m.fr.length * m.ms)), fi = Math.min(m.fr.length - 1, Math.floor(ap * m.fr.length)); return { src: m.fr[fi], lift: g.al && g.al[a.k] ? g.al[a.k][Math.min(g.al[a.k].length - 1, Math.floor(ap * g.al[a.k].length))] : 0 }; }
+  if (a.type === 'cu') { const m = cuenMove(g, a.k), ap = Math.min(0.999, t / (m.fr.length * m.ms)), fi = Math.min(m.fr.length - 1, Math.floor(ap * m.fr.length)), al = g.al && g.al[a.k] ? g.al[a.k] : g.ir && IR_BLOWS[a.k] ? IR_BLOWS[a.k].lift : null; return { src: m.fr[fi], lift: al ? al[Math.min(al.length - 1, Math.floor(ap * al.length))] : 0 }; }      // (v1.208 Iron Man's uppercut rises: his lifts are in IR_BLOWS)
+  if (a.type === 'uni') return { src: cuenUniPic(g, t) };
   const fr = g.atk[a.k], N = fr.length;
   if (a.type === 'arrow') return { src: fr[suPicAt(SU_FL.T, Math.min(t, SU_FL.end - 1))] };
   if (a.type === 'dom') return { src: fr[Math.min(N - 1, Math.floor(Math.min(1, t / 1900) * N))] };
@@ -136,12 +155,41 @@ function cuenSpecialAct(now, dt, gap, ag, toward, G, g, n, a) {
   } else if (a.type === 'blast') {
     a.ms = 1000 / (26 * G.spd) * g.atk[12].length; if (!a.shot && t >= a.ms * 7 / g.atk[12].length) { a.shot = true; snd('swing', 3); (d.cb = d.cb || []).push({ x: d.x - toward * -16, x0: d.x, dir: toward, at: now }); }
     if (t >= a.ms) cuenEnd(now);
+  } else if (a.type === 'uni') {      // v1.208 UNIBEAM: the charge (2.4 s: the ground shakes more and more, light is drawn into his chest), the brace (0.5 s), then 12 bursts of the beam out of his chest, one every 0.15 s, and the release; nothing stops it (not the guard, a dash or a jump): it only misses you when you have gone BEHIND him; a blow of yours before it fires ends it
+    const S = IRU, f = t - S.tF;
+    if (t < S.charge) { shakeUntil = Math.max(shakeUntil, now + 90); shakeAmp = Math.max(shakeAmp, 3 * t / S.charge); if (Math.random() < 0.05 + 0.2 * t / S.charge) puff(d.x + Math.random() * 20 - 10, 1); }
+    else if (t < S.tF && !a.braced) { a.braced = true; snd('irult', 1); gritAt(d.x - 10, 8, 110, -1); gritAt(d.x + 10, 8, 110, 1); }
+    if (!a.on && t >= S.tF) { a.on = true; a.fireAt = now; snd('irult', 2); flash(now, 120, 0.12); shakeUntil = Math.max(shakeUntil, now + 300); shakeAmp = 5; hitStop(100); gritAt(d.x + 8, 14, 130, 1); puff(d.x + 12, 6); shockAt(d.x, 330, 180, 0.9); }
+    while (a.on && a.tk < S.ticks && f >= S.t0 + a.tk * S.gap) { a.tk++; cuenUniHit(now, a.tk, gap, G); }
+    if (a.on && t < S.tRel) { shakeUntil = Math.max(shakeUntil, now + 90); shakeAmp = Math.max(shakeAmp, 1.5 + 3.5 * (1 - f / S.fire)); }
+    if (t >= S.end || vs.ph !== 'fight') cuenEnd(now);
   } else if (a.type === 'beam') {      // JUST THIS ONCE: the stance for 1.5 s (the screen darkens), then the beam for 1.3 s that hits you every 0.13 s, as long as you stand in front of him
     if (t >= 1500 && t < 2800 && t - (a.tick || 1500) >= 130) { a.tick = t; if (ag <= 330 && gap > -4) gojoHit(CUEN_X.beam, now); }
     if (t >= 2800 || vs.ph !== 'fight') cuenEnd(now);
   }
 }
 function cuenEnd(now) { const d = dummy; d.fa = null; d.ai = 'rest'; d.aiAt = now; d.restFor = 500 / (0.45 + GRADES[vs.gi].aggr * 0.9); }
+// v1.208 IRON MAN'S UNIBEAM AS THE ENEMY'S MOVE: the picture by the time (the same ones as when you play him, g.ump of tools/ironb.js), one burst on you, and the drawing (the sun at his reactor and the beam to the left)
+function cuenUniPic(g, t) {
+  const P = g.ump, S = IRU; if (!P) return g.frames[0]; const k = Math.min(1, t / S.charge);
+  if (t < S.charge) return t < 330 ? P.ch[Math.min(2, Math.floor(t / 110))] : P.pu[Math.floor((5 * t + 6.5 * t * k) / 1000) % 2];
+  if (t < S.tF) return P.br[Math.min(3, Math.floor((t - S.charge) / 60))];
+  if (t < S.tRel) return P.fi[Math.floor((t - S.tF) / 45) % 2];
+  return P.rl[Math.min(3, Math.floor((t - S.tRel) / S.rel * 4))];
+}
+function cuenUniHit(now, n, gap, G) {      // burst n of 12 on you: 3% of your health each (times the grade's damage); no guard, dash, jump or crouch stops it, only being BEHIND him; the last one throws you back
+  if (gap < -4 || vs.ph !== 'fight' || (cuMe() && (suHit(now) || ryUlHit() || irUlHit()))) return;
+  const S = IRU, dm = Math.max(1, Math.round(9 * G.dmg)), last = n === S.ticks; vsHurt(dm, now); say('' + dm, wx, '#ff9a5a', 8, now);
+  if (n === 1 || last || hurtAt < 0) { hurtK = last ? 4 : (Math.random() * 10) | 0; hurtAt = now; atkAt = -1; atkQ = false; jumpAt = teleAt = -1; stance = 'stand'; lpAt = -1; dash = null; mbAt = -1; mbPending = false; ride = null; dgAt = -1; blkAt = -1; blkEnd = -1; }
+  wxv -= (last ? 200 : 25) * pScale(); if (last) pStun = Math.max(pStun, now + 600);
+  spark(wx, gy - 24 - ((Math.random() * 20) | 0), n === 1 || last ? 16 : 9, ['#ffffff', '#ffd34d', '#ff7a2a'], n === 1 || last, -1); snd('irult', 3); shockAt(wx, 140, 70, 0.5); if (n === 1) snd('concboom');
+}
+function cuenUniDraw(now, d, a, cx, g) {      // the sun that grows at his reactor while he charges, and the beam of the 12 bursts to the left (the picture of the enemy is turned over about its middle column: the reactor is mirrored too)
+  const S = IRU, t = now - a.at, pic = cuenUniPic(g, t), core = pic && pic.core; if (!core) return;
+  const sx = cx + Math.round(d.x - wx), rx = sx + 32 - core.px, ry = gy - 61 + core.py;
+  if (a.on) iruBeamPaint(now - a.fireAt, now - (a.at + S.tRel), rx - 2, ry + 1, -1, rx + 24);
+  iruFront(g, { core: { px: 0, py: 0 }, t0: a.at, fired: a.on, fireAt: a.fireAt }, now, rx - 1, ry - 1);
+}
 // 5. WHAT HE THREW, once a frame (drawFoes calls it): the slashes, the fire arrows (they burn you: 1 health every 0.5 s for 8 s; v1.201 one bleed or burn at a time), the ki blasts, and the picture of the domain and the beam
 function cuenWorld(now, dt) {
   const d = dummy, g = cuFoeG(), cx = Math.round(VW / 2); if (!g) return; const on = vs.ph === 'fight' && d.ko < 0;
@@ -160,6 +208,7 @@ function cuenWorld(now, dt) {
   }
   const a = d.fa;
   if (a && a.type === 'dom') { const t = now - a.at; if (t >= 1900) { ctx.fillStyle = 'rgba(150,6,24,' + (Math.min(0.38, (t - 1900) / 1000)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); ctx.fillStyle = 'rgba(255,255,255,0.55)'; for (let i = 0; i < 5; i++) { const h = Math.imul(i * 7919 + ((now / 90) | 0) * 104729, 2246822519) >>> 0; ctx.fillRect(h % VW, (h >> 9) % VH, 30 + (h >> 4) % 90, 1); } } }
+  if (a && a.type === 'uni') cuenUniDraw(now, d, a, cx, g);
   if (a && a.type === 'beam') { const t = now - a.at; if (t < 1500) { ctx.fillStyle = 'rgba(0,0,0,' + (0.35 * Math.min(1, t / 700)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); } else if (t < 2800) { const sx = cx + Math.round(d.x - wx), th = 22 + Math.round(Math.sin(now / 35) * 3); ctx.fillStyle = 'rgba(120,180,255,0.5)'; ctx.fillRect(0, gy - 31 - th / 2 - 3, sx - 8, th + 6); ctx.fillStyle = '#cfe6ff'; ctx.fillRect(0, gy - 31 - th / 2, sx - 8, th); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, gy - 31 - 4, sx - 8, 8); } }
   if (vs.fburn) { const b = vs.fburn; if (vs.ph !== 'fight') vs.fburn = null; else { while (vs.fburn && b.next <= now && b.next <= b.until) { vsHurt(SU_FL.burn.dmg, b.next); b.next += SU_FL.burn.gap; } if (now >= b.until) vs.fburn = null; } }
   freBleed(now);
