@@ -264,10 +264,10 @@ const AD_EXP = {
   cat: 'GRAB,PUNCH,GRAB 2,KICK,SMASH,PUSH DASH,CARTOON,ULTIMATE,BLOCK,DODGE,FINISHER',
   freddy: 'R.SLASH,L.SLASH,FAR L.PUNCH,FAR R.PUNCH,BOILING WATER,PIERCE,GROUND SLAM,NIGHTMARE,BLOCK,DODGE,FINISHER',
   cu3: 'R.JAB,L.JAB,FACE KICK,COUNTER,R.JAB 2,L.UPPR,R.SLASH,L.SLASH,X SLASH,R.HOOK,L.HOOK,ELBOW,AIR CUT,FIRE ARROW,SHRINE,BLOCK,DODGE',
-  cu4: 'L.HOOK,R.HOOK,KICK UP,JUMP PUNCH,LEG KICK,DOWNSLAM,HARD PUNCH,FRONT KICK,POWER PUNCH,DIVE PUNCH,5-HIT COMBO,DASH KICK,KI BLAST,JUST ONCE,BLOCK,DODGE',
+  cu4: 'L.HOOK,R.HOOK,KICK UP,JUMP PUNCH,LEG KICK,DOWNSLAM,HARD PUNCH,FRONT KICK,POWER PUNCH,DIVE PUNCH,5-HIT COMBO,DASH KICK,KI BLAST,JUST ONCE,FINISHER,BLOCK,DODGE',
   cu5: 'R.HOOK,L.HOOK,R.KICK,PUNCH,UPPERCUT,DOWNSLAM,LOW JABS,BACKFLIP,R.BLAST,L.BLAST,CHARGE,BLAST,LASER,SPIN BLAST,GROUND PUNCH,BEAR HUG,UNIBEAM,BLOCK,DODGE'
 };
-const AD_BIG = ['FINISHER', 'ULTIMATE', 'JUMPSCARE', 'NIGHTMARE', 'SHRINE', 'JUST ONCE', 'UNIBEAM'], SC_AD_N = 44, AD_WHO = SC_WHO.concat('cu5');      // (1 button + 8 x 3 lists and moves + 10 big moves + 2 FREEZE + 4 tools + 1 X + 1 closed box + 1 Battle; v1.208 Iron Man is the eighth enemy)
+const AD_BIG = ['FINISHER', 'ULTIMATE', 'JUMPSCARE', 'NIGHTMARE', 'SHRINE', 'JUST ONCE', 'UNIBEAM'], SC_AD_N = 45, AD_WHO = SC_WHO.concat('cu5');      // (1 button + 8 x 3 lists and moves + 11 big moves (v1.212: the enemy Ryu's FINISHER is one) + 2 FREEZE + 4 tools + 1 X + 1 closed box + 1 Battle; v1.208 Iron Man is the eighth enemy)
 async function scAdmin() {      // (every enemy decides at once when he can: GRADES.aggr is 1 for the length of the checks, so that a stray move after a clicked one is certain, not a matter of luck)
   const aggr0 = GRADES.map(g => g.aggr), tr0 = {}, gore0 = SET.gore; for (const k of ['beh', 'ehp', 'php', 'pce', 'grade', 'foe', 'arm', 'spd', 'meter', 'info', 'put']) tr0[k] = TR[k]; GRADES.forEach(g => { g.aggr = 1; });
   try { await scAdmin1(); } finally { GRADES.forEach((g, i) => { g.aggr = aggr0[i]; }); Object.assign(TR, tr0); SET.gore = gore0; ADM.open = false; ADM.freeze = true; ADM.ceBack = 0; }      // (everything the checks changed is put back: the Special Grade and the enemy of the TRAIN page, the graphic damage, the aggression of the grades, and the box is closed again: in a game the frames of the menus close it, here the next section starts a room at once, and an open box would hold its enemy still)
@@ -709,7 +709,7 @@ async function scCuts() {
     try { Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0, put: 2, grade: 4 }); startPractice(w, foe); } catch (e) { scErr(e, label); continue; }
     if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
     await scFrames(2, null, 600); try { trainPut(); } catch (e) { scErr(e, label); }
-    try { if (what === 'NIGHTMARE') { dummy.x = wx + 90; fdStartRev(pnow()); } else { vs.hp = vs.sh = 40; dummy.x = wx + 30; } } catch (e) { scErr(e, label); }
+    try { if (what === 'NIGHTMARE') { dummy.x = wx + 90; fdStartRev(pnow()); } else { dummy.fa = null; dummy.cact = null; dummy.vact = null; dummy.stunUntil = 0; dummy.rxAt = -1e9; dummy.ai = 'rest'; dummy.aiAt = pnow(); dummy.restFor = 1e9; vs.hp = vs.sh = 40; dummy.x = wx + 30; } } catch (e) { scErr(e, label); }      // (v1.212 he stands still while you are at 40: the finisher must not depend on what his brain does in that moment, and the training gives you your health back soon)
     const sw = what === 'NIGHTMARE' ? () => !!fd : () => scBusy();
     if (await scUntil(sw, 80, 250)) { if (await scUntil(() => !sw(), 800, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 40 SECONDS', ''); } else scNote('fail', label + ' DID NOT START', 'YOUR HEALTH ' + (vs ? Math.round(vs.hp) : '?') + ', THE ENEMY ' + (dummy ? Math.round(Math.abs(dummy.x - wx)) : '?') + ' PX AWAY');
     show('title');
