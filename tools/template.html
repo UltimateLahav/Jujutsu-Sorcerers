@@ -37,6 +37,15 @@ button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 .lock span{font-size:8vh;margin-top:6vh}
 #hud{position:fixed;left:calc(env(safe-area-inset-left) + 10px);top:calc(env(safe-area-inset-top) + 10px);display:none;align-items:center;gap:12px;font-size:var(--fs-hud,clamp(8px,2.6vh,13px));text-shadow:2px 2px 0 #000}#hud.vs span{display:none}      /* (in a match the name is on the canvas HUD, so the top-left label is left out) */
 #hud button{padding:1vh 1.6vh;font-size:inherit}
+/* ---- v1.206 THE ADMIN PANEL of the training (tools/admin.js): a small box at the top, in the middle when there is room and always after the last button of the top bar (admUI sets --admL, the left edge it must keep clear of: the ADMIN button and the elevator panel); its two lists scroll up and down */
+#admBtn.on{background:var(--acc);color:#000;text-shadow:none}
+#adm{position:fixed;left:min(max(calc(50vw - min(15vw,138px)),var(--admL,0px)),calc(100vw - min(30vw,276px) - 4px));top:calc(env(safe-area-inset-top) + 5px);width:min(30vw,276px);max-height:34vh;display:none;flex-direction:column;z-index:3;background:rgba(14,10,28,.94);border:2px solid var(--line);box-shadow:3px 3px 0 #000;font-size:clamp(6px,2vh,10px);text-shadow:1px 1px 0 #000}#adm.on{display:flex}
+#adm button{padding:.45vh .8vh;font-size:inherit;border-width:2px;box-shadow:2px 2px 0 #000}#adm button.on{background:var(--acc);color:#000;text-shadow:none}
+#admH{display:flex;align-items:center;gap:.8vh;padding:.5vh .8vh;border-bottom:2px solid var(--line)}#admH b{flex:1;min-width:0;color:var(--acc);letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#admTabs{display:flex;gap:.6vh;padding:.6vh .8vh 0}#admTabs button{flex:1}
+.admBox{display:grid;grid-template-columns:1fr 1fr;gap:.7vh;padding:.7vh .8vh;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;min-height:0;flex:1 1 auto;align-content:start;grid-auto-rows:max-content;scrollbar-width:thin;scrollbar-color:var(--acc) #120d22}.admBox::-webkit-scrollbar{width:5px}.admBox::-webkit-scrollbar-thumb{background:var(--acc)}.admBox::-webkit-scrollbar-track{background:#120d22}
+.admBox button{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.admBox button.big{color:#ffb347;border-color:#a0642a}.admBox small{grid-column:1/3;color:var(--dim)}
+body.cut #adm,body.cut #admBtn{visibility:hidden}
 #pad{position:fixed;left:0;right:0;bottom:0;display:none;justify-content:space-between;align-items:flex-end;padding:0 calc(env(safe-area-inset-right) + 3vh) calc(env(safe-area-inset-bottom) + 3vh) calc(env(safe-area-inset-left) + 3vh);pointer-events:none}
 .pb{pointer-events:auto;touch-action:none;width:15vh;height:15vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6vh;padding:0;font-size:clamp(10px,5vh,24px);opacity:.78}
 .pb span{font-size:var(--fs-pb,clamp(5px,1.7vh,9px));color:var(--dim);letter-spacing:0}      /* (the spacing of the big icon would be inherited as pixels: DOMAIN did not fit its button on a 360 high window) */
@@ -202,7 +211,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.205</small>
+    <small id="ver">V1.206</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -384,7 +393,13 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
 
 <div id="safe" aria-hidden="true"></div>
 <div id="trHud" aria-hidden="true"><span id="trI"></span><span id="trM"></span></div>
-<div id="hud"><button id="back">&lt; MENU</button><span>GOJO SATORU</span><button id="snd">SND ON</button><button id="pauseBtn" aria-label="Pause">II</button><button id="setBtn">SET</button></div>
+<div id="hud"><button id="back">&lt; MENU</button><span>GOJO SATORU</span><button id="snd">SND ON</button><button id="pauseBtn" aria-label="Pause">II</button><button id="setBtn">SET</button><button id="admBtn" style="display:none">ADMIN</button></div>
+<div id="adm" aria-hidden="true">
+  <div id="admH"><b id="admTt">ADMIN</b><button id="admF">FREEZE: ON</button><button id="admX" aria-label="Close the admin panel">X</button></div>
+  <div id="admTabs"><button id="admT0" class="on">MOVES</button><button id="admT1">TOOLS</button></div>
+  <div id="admL" class="admBox"></div>
+  <div id="admK" class="admBox"><button id="admHeal">HEAL</button><button id="admInf">INF HP: OFF</button><button id="admP0">CLOSE</button><button id="admP1">MID</button><button id="admP2">FAR</button><button id="admFoe">ENEMY: GOJO</button></div>
+</div>
 <div id="pad">
   <div id="joy" role="application" aria-label="Joystick: push left or right to walk, up to jump, down to crouch">
     <svg class="jb" viewBox="0 0 84 84" shape-rendering="crispEdges" aria-hidden="true">
@@ -2560,7 +2575,7 @@ function finishMatch(now) {
 }
 function updateFighterVs(now, dt) {            // the grade AI (see GRADES): reaction time, block, dodge, combos, and from Grade 2 up it reads and punishes
   const d = dummy, G = GRADES[vs.gi], gap = d.x - wx, ag = Math.abs(gap), toward = gap > 0 ? -1 : 1;
-  if (d.ko >= 0 || vs.ph !== 'fight' || now < d.stunUntil) return;
+  if (d.ko >= 0 || vs.ph !== 'fight' || now < d.stunUntil || (admFrozen() && !admBusy(d, now))) return;      // (v1.206 the admin panel: with FREEZE on his brain decides nothing, and a move that was clicked in it is the only thing that runs; the frame in which that move ends is closed here too, see admin.js)
   if (now - d.rxAt < RX_DUR[d.rx]) { d.ai = 'hurt'; if (d.fa) freActEnd(now, true); return; }
   if (d.ai === 'hurt') { d.ai = 'think'; d.aiAt = now; d.chain = 0; d.held = null; }
   if (d.cact) return;      // (the Cat's own move runs: see catTick)
@@ -2598,7 +2613,7 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
       if (d.k === 10 && now < gDownUntil) { d.k = 3; d.aiAt = now; d.hitDone = false; d.swung = false; d.hitN = 0; d.chain = 0; d.vx -= 100; return; }      // (the sweep dropped you: he follows at once with the jump kicks, which still hit you on the floor)
       d.ai = 'rest'; d.aiAt = now; d.restFor = (430 + Math.random() * 600) / (0.45 + G.aggr * 0.9); return;
     }
-    if (f >= 15) { d.chain = (d.chain || 0) + 1; if (cat ? (d.held && d.chain < 4) : (d.chain < G.combo && Math.random() < 0.8 && !(G.smart >= 2 && atkAt >= 0 && gap > 0 && ag <= pMove(atkK) + 4))) {      // (from Grade 2 up he does not keep chaining into a swing of yours: he drops the combo and defends)
+    if (f >= 15) { d.chain = (d.chain || 0) + 1; if (cat ? (d.held && d.chain < 4) : (d.chain < G.combo && !admFrozen() && Math.random() < 0.8 && !(G.smart >= 2 && atkAt >= 0 && gap > 0 && ag <= pMove(atkK) + 4))) {      // (v1.206 no chain while the admin box holds him: the SWEEP and the UPPERCUT start their follow-up with a chain of 0) (from Grade 2 up he does not keep chaining into a swing of yours: he drops the combo and defends)
        d.k = vs.foe === 'yuji' && d.k >= 5 && d.k <= 8 ? 5 + (d.k - 4) % 4 : (d.k + 1) % 4; d.aiAt = now; d.hitDone = false; d.swung = false; d.hitN = 0; if (vs.foe === 'yuji' && d.k === 3) d.vx -= 100; } else { d.held = null; if (cat) vs.catHold = 0; d.ai = 'rest'; d.aiAt = now; d.restFor = (430 + Math.random() * 600) / (0.45 + G.aggr * 0.9); } }
     return;
   }
@@ -2610,6 +2625,7 @@ function updateFighterVs(now, dt) {            // the grade AI (see GRADES): rea
     else if (!d.ce && now >= d.ceNext && (ag > 40 || now >= d.ceNext + 2500)) { d.ce = true; d.ceFlame = d.ceAt = now + POW_FLAME; d.ceUntil = now + 8000 + Math.random() * 6000; d.ceNext = d.ceUntil + 5000 + Math.random() * 5000; d.ai = 'power'; d.aiAt = now; d.held = null; d.k = 5; snd('ceon'); return; }
   }
   // 4. thinking: walk in (the smartest one stays just outside Gojo's reach and baits), and decide when to strike
+  if (admFrozen()) return;      // (v1.206 the power-up that was clicked in the admin panel has just ended: no new move after it)
   const want = G.smart >= 3 ? Math.max(...(vs.me === 'yuji' && cm === 1 ? [5, 6, 7, 8] : [0, 1, 2, 3]).map(pMove)) + 8 : eMove(vs.foe === 'yuji' && d.ce ? 5 : 0) - 6; let move = 0;      // (the smartest one stays just outside the longest move you have; the others come as close as their first move reaches)
   if (ag > want + 4) move = toward; else if (G.smart >= 3 && ag < want - 6 && ag > 20) move = -toward;
   const punish = G.smart >= 2 && vs.whiffAt > 0 && now - vs.whiffAt < 450 && gap > 0 && ag < eMove(3) + 6 && Math.random() < [0, 0, 0.25, 0.5, 0.8, 1][vs.gi] * dt * 14;      // Gojo just missed: strike while he is open
@@ -6461,7 +6477,7 @@ function tick(t) {
   { const ir = state === 'play' && !!vs && vs.me === IRON_WHO; if (ir !== ironUI) { ironUI = ir; document.body.classList.toggle('ir', ir); } }      // (v1.190 Iron Man has no powers: while he is the fighter the DOMAIN, FATAL and SENSE buttons are hidden, see the CSS of body.ir; v1.193 MODE is his repulsor mode and v1.194 BLUE his bear hug: both are shown)
   { const ry = state === 'play' && !!vs && vs.me === RYU_WHO; if (ry !== ryUI) { ryUI = ry; document.body.classList.toggle('ry', ry); } if (!ry && ryUl) ryUlEnd(now, true); }      // (v1.143 Ryu has no BLUE, MODE, DOMAIN or FATAL: while he fights those buttons are hidden, see the CSS of body.ry)
   ragTick(now);
-  cutUI(); trainDraw(now);
+  cutUI(); trainDraw(now); admUI(now);
   if (stance === 'down' && stPrev === 'stand' && vs && state === 'play') ceSpend(CE_COST.crouch, now); stPrev = stance;      // (the crouch of every fighter, the Cat smashing himself flat: 3% of the energy)
   if (lanRole === 'in' && state === 'play') lanTick();      // (the Wi-Fi fight: his pictures are picked up every frame, not every 0.15 s)
   if (story && story.toOutro) { story.toOutro = false; startOutro(now); }
@@ -6585,8 +6601,9 @@ function trainStep(now, dt) {      // every frame of free play, before the pictu
   if (d.ko >= 0 || d.cap || !fight) { TR.hpPrev = d.hp; TR.xHold = d.x; TR.hitSeen = d.hitAt; return; }
   if (typeof suFatOn === 'function' && suFatOn()) { TR.hpPrev = d.hp; TR.xHold = d.x; TR.hitSeen = d.hitAt; return; }      // (v1.166 Sukuna's finisher moves the enemy by itself)
   if (TR.arm === 2) { if (d.hitAt !== TR.hitSeen) d.x = TR.xHold; d.vx = 0; }      // (NO PUSH: the frame after a hit he is put back where he stood, and his speed is zero; his own walking is not touched)
-  const gap = d.x - wx, b = TR.beh;
-  if (b === 0 || b === 3) { d.stunUntil = now + 500; d.ai = 'rest'; d.aiAt = now; d.restFor = 500; if (b === 3) d.dodgeUntil = now + 150; }      // DUMMY: he stands still, a punching bag (v1.14). DODGES: the same, and everything you throw misses him
+  const gap = d.x - wx, b = admFrozen() ? 0 : TR.beh;      // (v1.206 the admin panel: FREEZE, with the box open, stands his own brain still like DUMMY; a move that was clicked in it still runs: the behaviour of the room waits until it is over)
+  if (admRun(d, now)) { /* a move that was clicked in the admin box runs to its end, whatever the behaviour of the room is */ }
+  else if (b === 0 || b === 3) { d.stunUntil = now + 500; d.ai = 'rest'; d.aiAt = now; d.restFor = 500; if (b === 3) d.dodgeUntil = now + 150; }      // DUMMY: he stands still, a punching bag (v1.14). DODGES: the same, and everything you throw misses him
   else if (b === 2) { d.ai = 'block'; d.aiAt = now; d.until = now + 700; }      // BLOCKS: his guard is always up
   else if (b >= 4) {      // WALKS TO YOU (he stops 24 px in front of you) / BACKS AWAY (he keeps 150 px between you)
     d.stunUntil = now + 300; const go = b === 4 ? gap > 24 : gap < 150;
@@ -6639,6 +6656,7 @@ __FRED2__
 __FRED3__
 __FRED4__
 __CUEN__
+__ADMIN__
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = __UPDATES__;

@@ -250,6 +250,74 @@ async function scRyuTurned() {
   delete window.__ryLog; ok(ox !== null && hx !== null && ox >= 8 && hx >= 8, 'A LIVE BLAST DID NOT LEAVE THE HAIR ON HIS RIGHT (BEAM ORIGIN MINUS HIS MIDDLE, PX): DRAWN ' + ox + ', WHERE IT HITS ' + hx); ryReset(); await scFrames(30);      // (the beam is drawn from the hair as it moves, and hits from where it started: both are on his right)
   show('title');
 }
+// ---------------------------------------------------------------- ADMIN: the box of the training (v1.206, tools/admin.js)
+// The ADMIN button of the top bar opens a small box with the moves of the enemy who is there. Checks: the button shows and the box opens; each of the 7 enemies has the list he should have (AD_EXP); a click on a move that is no cutscene starts it, it ends by itself, and nothing else starts after it while FREEZE is on (the first version let the Cat go on from SMASH into his whole chain: the frame in which the clicked move ends was open to his own brain); the big ones (FINISHER, ULTIMATE, JUMPSCARE, NIGHTMARE, SHRINE, JUST THIS ONCE) start, end, and the training goes on with the box open; FREEZE holds his own brain still and lets it go; the TOOLS (HEAL, INF HP, CLOSE / MID / FAR, ENEMY) do what they say; the X closes the box; and a Battle has neither the button nor the box. The enemy is a Special Grade one, so that a stray move after the clicked one is as likely as it gets.
+const AD_EXP = {
+  gojo: 'R.HOOK,L.HOOK,ELBOW,KICK,BLOCK,DODGE,FINISHER',
+  yuji: 'R.HOOK,L.HOOK,KNEE,3 KICKS,DIVERGENT,R.KICK,ELBOW,DOWNSLAM,PUSH KICK,CONC.FIST,SWEEP,RUSH FIST,UPPERCUT,FACE KICK,SPIN ELBOW,POWER UP,POWER OFF,BLOCK,DODGE',
+  verity: 'R.HOOK,L.HOOK,ELBOW,KICK,BITE,LOW CLAW,JUMPSCARE,BLOCK,DODGE,FINISHER',
+  cat: 'GRAB,PUNCH,GRAB 2,KICK,SMASH,PUSH DASH,CARTOON,ULTIMATE,BLOCK,DODGE,FINISHER',
+  freddy: 'R.SLASH,L.SLASH,FAR L.PUNCH,FAR R.PUNCH,BOILING WATER,PIERCE,GROUND SLAM,NIGHTMARE,BLOCK,DODGE,FINISHER',
+  cu3: 'R.JAB,L.JAB,FACE KICK,COUNTER,R.JAB 2,L.UPPR,R.SLASH,L.SLASH,X SLASH,R.HOOK,L.HOOK,ELBOW,AIR CUT,FIRE ARROW,SHRINE,BLOCK,DODGE',
+  cu4: 'L.HOOK,R.HOOK,KICK UP,JUMP PUNCH,LEG KICK,DOWNSLAM,HARD PUNCH,FRONT KICK,POWER PUNCH,DIVE PUNCH,5-HIT COMBO,DASH KICK,KI BLAST,JUST ONCE,BLOCK,DODGE'
+};
+const AD_BIG = ['FINISHER', 'ULTIMATE', 'JUMPSCARE', 'NIGHTMARE', 'SHRINE', 'JUST ONCE'], SC_AD_N = 40;      // (1 button + 7 x 3 lists and moves + 9 big moves + 2 FREEZE + 4 tools + 1 X + 1 closed box + 1 Battle)
+async function scAdmin() {      // (every enemy decides at once when he can: GRADES.aggr is 1 for the length of the checks, so that a stray move after a clicked one is certain, not a matter of luck)
+  const aggr0 = GRADES.map(g => g.aggr), tr0 = {}, gore0 = SET.gore; for (const k of ['beh', 'ehp', 'php', 'pce', 'grade', 'foe', 'arm', 'spd', 'meter', 'info', 'put']) tr0[k] = TR[k]; GRADES.forEach(g => { g.aggr = 1; });
+  try { await scAdmin1(); } finally { GRADES.forEach((g, i) => { g.aggr = aggr0[i]; }); Object.assign(TR, tr0); SET.gore = gore0; ADM.open = false; ADM.freeze = true; ADM.ceBack = 0; }      // (everything the checks changed is put back: the Special Grade and the enemy of the TRAIN page, the graphic damage, the aggression of the grades, and the box is closed again: in a game the frames of the menus close it, here the next section starts a room at once, and an open box would hold its enemy still)
+}
+async function scAdmin1() {
+  SC.sec = 'ADMIN'; scCov('ADMIN', 0, SC_AD_N); SC.plan = 2600; SC.done = 0; SET.gore = 2;
+  const ok = (c, what, d) => { scT(c, 'ADMIN: ' + what, d || ''); scCov('ADMIN', 1, 0); }, A = () => window.__adm(), busy = () => admBusy(dummy, pnow()) || scBusy(), stop = () => SC.cancel || scReal() > SC.cap;
+  const act = () => !!dummy && (['attack', 'walk', 'block', 'dodge', 'power'].includes(dummy.ai) || !!dummy.fa || !!dummy.cact || !!dummy.vact), click = id => { try { $(id).click(); } catch (e) { scErr(e, 'ADMIN ' + id); } };
+  const room = async (f, w) => {      // a fresh training room against enemy f, the box open, FREEZE on, his list built
+    try { Object.assign(TR, { beh: 0, ehp: 1, php: 0, pce: 0, put: 2, grade: 5, foe: w }); startPractice('gojo', f); } catch (e) { scErr(e, 'ADMIN START ' + f); return false; }
+    if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) return false; await scFrames(2, null, 600);
+    if (!A().open) click('admBtn'); if (!A().freeze) click('admF');
+    return scUntil(() => A().key === f && A().moves.length > 0 && A().open && A().freeze, 40, 250);
+  };
+  for (let w = 0; w < SC_WHO.length; w++) {
+    const f = SC_WHO[w], nm = SC_NAME[f]; SC.say = nm + ': THE LIST';
+    if (!(await room(f, w))) { if (stop()) return; scNote('fail', 'ADMIN: THE BOX DID NOT OPEN IN THE TRAINING AGAINST ' + nm, 'KEY ' + A().key + ', MOVES ' + A().moves.length + ', ON ' + A().on); continue; }
+    if (w === 0) ok($('admBtn').style.display !== 'none' && A().open && getComputedStyle($('adm')).display !== 'none', 'THE ADMIN BUTTON DID NOT SHOW OR THE BOX DID NOT OPEN IN THE TRAINING');
+    const L = A().moves, lost = [], stray = []; ok(L.join(',') === AD_EXP[f], nm + ': HIS LIST OF MOVES IS NOT THE ONE IT SHOULD BE', L.join(','));
+    for (let i = 0; i < L.length; i++) {
+      const n = L[i]; if (AD_BIG.includes(n)) continue; SC.say = nm + ': ' + n;
+      try { trainReset(); dummy.x = wx + 20; if (f === 'yuji') { dummy.ceNext = 0; if (n !== 'POWER OFF') dummy.ce = false; } } catch (e) { scErr(e, SC.say); }      // (Yuji's own wish to power up is due: it shows if his brain runs for a frame after the clicked move)
+      if (!(await scFrames(1, null, 100))) return;
+      try { $('admL').children[i].click(); } catch (e) { scErr(e, SC.say); }
+      const res = A().res; if (res !== 'OK' || !(n === 'POWER OFF' ? !dummy.ce : busy())) { lost.push(n + (res !== 'OK' ? ' (' + res + ')' : ' NOT STARTED')); continue; }
+      const seen = new Set(), look = () => { const d = dummy; for (const o of [d.fa, d.cact, d.vact]) if (o) seen.add(o); if (['attack', 'power', 'block', 'dodge'].includes(d.ai)) seen.add(d.ai + d.aiAt); }; look();      // (every move he starts leaves its own mark: a swing its start time, a special its own object; a move that is clicked leaves one, and a second one is a move that nobody asked for. His UPPERCUT goes on into the FACE KICK and his SWEEP into the 3 KICKS, as they do in a fight: two)
+      let k = 0; while (busy() && k++ < 40) { if (!(await scFrames(1, null, 100))) return; look(); } if (busy()) { lost.push(n + ' NEVER ENDS'); continue; }
+      if (!(await scFrames(6, null, 100))) return; look(); if (busy() || seen.size > (n === 'UPPERCUT' || n === 'SWEEP' ? 2 : 1)) stray.push(n + ' x' + seen.size);
+    }
+    ok(!lost.length, nm + ': A MOVE OF THE BOX DID NOT START OR DID NOT END', lost.join(', ')); ok(!stray.length, nm + ': ANOTHER MOVE STARTED AFTER THE ONE THAT WAS CLICKED (FREEZE IS ON)', stray.join(', ')); scCheck();
+    for (const n of L.filter(q => AD_BIG.includes(q))) {
+      SC.say = nm + ': ' + n; if (!(await room(f, w))) { if (stop()) return; continue; }
+      try { dummy.x = wx + 20; $('admL').children[A().moves.indexOf(n)].click(); } catch (e) { scErr(e, SC.say); }
+      const started = A().res === 'OK' && (busy() || await scUntil(busy, 12, 100)), ended = started && await scUntil(() => !busy(), 700, 250);      // (the longest is Gojo's finisher: 15 s, 60 frames of 250 ms)
+      if (started && !ended && stop()) return; const goes = ended && await scUntil(() => !!vs && vs.ph === 'fight' && dummy.ko < 0 && state === 'play', 80, 250);
+      ok(started && ended && goes && A().open, nm + ' ' + n + ': ' + (!started ? 'THE BIG MOVE DID NOT START (' + A().res + ')' : !ended ? 'IT DID NOT END IN 175 SECONDS' : 'THE TRAINING DID NOT GO ON AFTER IT, OR THE BOX CLOSED'), 'PHASE ' + (vs && vs.ph)); scCheck();
+    }
+    show('title');
+  }
+  SC.say = 'FREEZE AND THE TOOLS'; if (await room('yuji', 1)) {      // FIGHTS BACK, so that only FREEZE keeps him still
+    TR.beh = 1; trainUI(); dummy.x = wx + 20; let n = 0; for (let i = 0; i < 40; i++) { if (!(await scFrames(1, null, 100))) return; if (act()) n++; }
+    ok(n === 0, 'YUJI MOVED OR STRUCK WITH THE BOX OPEN AND FREEZE ON (HIS BEHAVIOUR IS FIGHTS BACK)', n + ' OF 40 FRAMES'); click('admF'); n = 0;
+    for (let i = 0; i < 100 && !n; i++) { if (!(await scFrames(1, null, 100))) return; if (act()) n++; } ok(n > 0, 'YUJI DID NOT FIGHT BACK IN 10 SECONDS WITH FREEZE OFF', ''); click('admF'); TR.beh = 0; trainUI();
+    click('admT1'); await scFrames(2, null, 100); const gaps = []; for (const id of ['admP2', 'admP0', 'admP1']) { click(id); gaps.push(Math.round(dummy.x - wx)); }      // (read at once: after a frame you may have moved yourself, he may have slid)
+    ok(gaps.join() === '130,28,70', 'THE DISTANCE BUTTONS DID NOT PUT HIM 130, 28 AND 70 PX AWAY', gaps.join());
+    TR.ehp = 0; trainUI(); dummy.hp = dummy.shown = 40; click('admHeal'); await scFrames(1, null, 100); ok(dummy.hp === (dummy.max || DUMMY_HP), 'HEAL DID NOT GIVE HIM HIS FULL HEALTH', 'HEALTH ' + dummy.hp);
+    TR.ehp = 0; trainUI(); dummy.hp = dummy.shown = 40; click('admInf'); const full = dummy.hp === (dummy.max || DUMMY_HP); dummy.hp = dummy.shown = 40; await scFrames(2, null, 100); const inf = full && TR.ehp === 1 && dummy.hp === (dummy.max || DUMMY_HP); click('admInf'); ok(inf && TR.ehp === 0, 'INF HP DID NOT FILL HIM AT ONCE, KEEP HIM AT FULL HEALTH, OR SWITCH OFF AGAIN', 'EHP ' + TR.ehp);      // (turned on he is full at once, and a hit that follows is healed again)
+    click('admFoe'); ok(await scUntil(() => A().key === 'verity' && A().moves.length > 0, 60, 250) && $('admTt').textContent === 'ADMIN: VERITY', 'THE ENEMY BUTTON DID NOT SWITCH THE BOX TO VERITY', 'KEY ' + A().key + ', TITLE ' + $('admTt').textContent);
+    click('admX'); await scFrames(2, null, 100); ok(!A().open && getComputedStyle($('adm')).display === 'none', 'THE X DID NOT CLOSE THE BOX', '');
+    await scUntil(() => !!vs && vs.ph === 'fight', 40, 250); dummy.x = wx + 20; dummy.ai = 'attack'; dummy.k = 0; dummy.aiAt = pnow(); await scFrames(2, null, 100); ok(dummy.ai === 'rest', 'WITH THE BOX CLOSED A DUMMY ENEMY IN THE MIDDLE OF A SWING WAS NOT STOOD STILL (THE BEHAVIOUR OF THE ROOM MUST RULE AS BEFORE THE BOX WAS THERE)', 'STATE ' + dummy.ai);
+  } else if (stop()) return;
+  show('title'); SC.say = 'A BATTLE';
+  try { const sv = { ...vsPick }; vsPick.me = 'gojo'; vsPick.foe = 'yuji'; startMatch(1); Object.assign(vsPick, sv); } catch (e) { scErr(e, 'ADMIN BATTLE'); }
+  if (await scUntil(() => !!vs && vs.ph === 'fight', 40, 250)) { await scFrames(2, null, 100); ok(!vs.practice && !A().on && $('admBtn').style.display === 'none' && !$('adm').classList.contains('on'), 'A BATTLE HAS THE ADMIN BUTTON OR THE BOX', 'ON ' + A().on); } else if (stop()) return;
+  show('title');
+}
 // v1.191 IRON MAN's moves: the chain (R.HOOK, L.HOOK, R.KICK, PUNCH), the ROCKET UPPERCUT (JUMP and ATTACK together, either one first), the DOWNSLAM (ATTACK 0.2 s after the jump, and an earlier one waits for it), crouch, block and dash; each is a check that the move that should come out did (cuAtkK: 0 - 3 the chain, 4 the uppercut, 5 the downslam), played against a standing enemy in front of him; v1.192 the LOW JABS (6: crouched, ATTACK), the CHARGE (7: ATTACK during a dash or just after it; a late one is a plain hook) and the BACKFLIP (8: DASH BACK twice, never two dashes forward); v1.193 the REPULSOR MODE (the MODE button: ATTACK is R.BLAST (9) and then L.BLAST (10), both hurt the enemy, the other moves stay, off again it is the chain); v1.194 the BEAR HUG (BLUE: he charges, grabs, hugs, flies up with the enemy hanging in his arms, turns over, dives and slams: 4 hits, it ends by itself, and it has a cooldown); in the skyscraper he is also one of the fighters of scTower
 const SC_IR_N = 50;
 async function scIronMoves() {
@@ -614,7 +682,7 @@ async function scTicks() {      // v1.201 ONE TICK EFFECT AT A TIME (a bleed, a 
   } finally { twPick = keep; }
 }
 
-const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['TICKS', 6, scTicks], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
+const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['ADMIN', 16, scAdmin], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['TICKS', 6, scTicks], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
 const scEl = document.createElement('section'); scEl.id = 'scan'; scEl.className = 'screen';
 scEl.innerHTML = '<h2>SCANNING THE GAME</h2><div id="scBar"><i id="scFill"></i></div><small id="scTxt"></small><small id="scLive"></small><small>YOUR SAVES ARE SAFE: THEY WERE COPIED FIRST AND ARE PUT BACK WHEN THE SCAN IS OVER.</small><button id="scCancel">CANCEL</button>';
 document.body.appendChild(scEl);
@@ -661,7 +729,7 @@ async function scRun(opts) {      // opts.noReload = for the tests: no reload at
 window.__scanRun = scRun;
 
 // ---------------------------------------------------------------- what the ERRORS page shows
-const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', CITY: 'CITY DOORS AND FALLS', TICKS: 'TICK EFFECTS, ONE AT A TIME', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
+const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', ADMIN: 'ADMIN BOX OF THE TRAINING', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', CITY: 'CITY DOORS AND FALLS', TICKS: 'TICK EFFECTS, ONE AT A TIME', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
 const scCovText = () => Object.keys(SC.got).concat(Object.keys(SC.of)).filter((k, i, a) => a.indexOf(k) === i).map(k => k === 'ROUNDS' ? 'EXTRA ROUNDS OF 14 FIGHTS ' + SC.got[k] : (SC_COVN[k] || k) + ' ' + (SC.got[k] || 0) + '/' + SC.of[k]);      // (what was covered, of what there is)
 const scLast = () => { try { const r = JSON.parse(localStorage.getItem('jsscanres') || 'null'); return r && Array.isArray(r.res) ? r : null; } catch { return null; } };
 function scReport(r) {      // the text of COPY SCAN REPORT
