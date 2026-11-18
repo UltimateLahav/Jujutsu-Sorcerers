@@ -346,6 +346,48 @@ async function scCanvas() {
   await scFrames(2, null, 100); const pr2 = probe(); ok(thrown >= 1 && pr2 === '255,0,255|255,0,255', 'A FRAME THAT THREW IN A FIGHT LEFT THE CANVAS BROKEN (A CLIP OR AN OFFSET STAYED)', 'FRAMES THAT THREW ' + thrown + ', CORNERS ' + pr2);
   show('title');
 }
+// ---------------------------------------------------------------- CLASH: the beam clash of Iron Man's UNIBEAM and Ryu's JUST THIS ONCE (v1.209, tools/clash.js)
+// Checks: only Iron Man against Ryu clashes (not Gojo against Ryu, not Ryu against Ryu); the eight scenes (Iron Man or Ryu yours; who fires first; who wins; a finisher or not) start from the real ultimates, with the right one firing first, end by themselves, take exactly 45% of the loser's whole health, or kill him when that is more than he has (the enemy: K.O. and nothing left of him; you: your health is 0, nothing of you is drawn, the round is over), leave the winner's health alone, put the buttons and the tap area away, and let the fight go on (a finisher ends the round); and the same in the skyscraper. The outcome is forced (bcl.force) so that it does not depend on the taps; the taps themselves are counted from the keyboard.
+const SC_BC_N = 30;
+async function scClash() {
+  SC.sec = 'CLASH'; scCov('CLASH', 0, SC_BC_N); SC.plan = 3600; SC.done = 0;
+  const ok = (c, what, d) => { scT(c, 'CLASH: ' + what, d || ''); scCov('CLASH', 1, 0); }, stop = () => SC.cancel || scReal() > SC.cap, tr0 = {}, tw0 = twPick, gore0 = SET.gore; for (const k of ['beh', 'ehp', 'php', 'pce', 'grade', 'foe', 'put']) tr0[k] = TR[k];
+  const room = async (me, foe, label) => { try { Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0, put: 2 }); startPractice(me, foe); } catch (e) { scErr(e, label + ' START'); return false; } if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) return false; await scFrames(2, null, 600); try { trainPut(); dummy.x = wx + 70; dummy.stunUntil = 0; } catch (e) { scErr(e, label); } return true; };
+  const scenes = [['cu5', 'me', 'me', 0], ['cu5', 'foe', 'me', 1], ['cu5', 'me', 'foe', 0], ['cu5', 'foe', 'foe', 1], ['cu4', 'me', 'me', 0], ['cu4', 'foe', 'me', 1], ['cu4', 'me', 'foe', 0], ['cu4', 'foe', 'foe', 1]];
+  try {
+    SET.gore = 0; twPick = 0;
+    if (!(await room('gojo', 'cu4', 'GOJO AGAINST RYU'))) { if (stop()) return; } else { ok(!bclPair(), 'GOJO AGAINST RYU WOULD CLASH: ONLY IRON MAN AGAINST RYU DOES', ''); show('title'); }
+    if (!(await room('cu4', 'cu4', 'RYU AGAINST RYU'))) { if (stop()) return; } else { ok(!bclPair(), 'RYU AGAINST RYU WOULD CLASH', ''); show('title'); }
+    for (let i = 0; i < scenes.length; i++) {
+      const [me, first, win, kill] = scenes[i], foe = me === 'cu5' ? 'cu4' : 'cu5', label = (me === 'cu5' ? 'IRON MAN YOURS' : 'RYU YOURS') + ', ' + (first === 'me' ? 'YOU' : 'THE ENEMY') + ' FIRE FIRST, ' + (win === 'me' ? 'YOU' : 'THE ENEMY') + ' WIN' + (kill ? ', A FINISHER' : '');
+      SC.say = label; if (!(await room(me, foe, label))) { if (stop()) return; continue; }
+      if (i === 0) ok(bclPair(), 'IRON MAN AGAINST RYU WOULD NOT CLASH', '');
+      try { if (kill) { if (win === 'me') dummy.hp = dummy.shown = 40; else vs.hp = vs.sh = 40; } } catch (e) { scErr(e, label); }
+      const foeUlt = () => { dummy.chain = 99; if (me === 'cu5') cuenStart(16, pnow(), 'beam'); else cuenStart(0, pnow(), 'uni'); }, meUlt = () => { if (me === 'cu5') irUlTry(pnow()); else ryUlTry(pnow()); };
+      try { (first === 'me' ? meUlt : foeUlt)(); } catch (e) { scErr(e, label); } if (!(await scFrames(14, null, 50))) return;
+      const before = bcl; try { (first === 'me' ? foeUlt : meUlt)(); } catch (e) { scErr(e, label); }
+      const started = !!bcl && !before && bcl.first === first && bcl.ir === (me === 'cu5' ? 'me' : 'foe');
+      ok(started, label + ': THE SECOND ULTIMATE DID NOT START THE CLASH, OR THE WRONG ONE FIRED FIRST', bcl ? 'FIRST ' + bcl.first : 'NO CLASH');
+      if (!bcl) { show('title'); continue; }
+      const hp0 = [vs.hp, dummy.hp], mx = dummy.max || DUMMY_HP, dmgE = Math.round(mx * 0.45 * SET.pdm / 100), dmgP = Math.round(PHP * 0.45 * SET.edm / 100); bcl.force = { win };      // (only the winner is forced: whether it kills the loser is the rule of the game, his health against the 45%)
+      let tapped = false, shown = false, hid = false; const ended = await scUntil(() => { if (bcl && bcl.ph === 'mash') { shown = shown || getComputedStyle(bclTapEl).display !== 'none'; if (!tapped) { tapped = true; const t0 = bcl.taps[0]; scKey('KeyJ', true); scKey('KeyJ', false); if (bcl.taps[0] !== t0 + 1) scNote('fail', label + ': A KEY DID NOT COUNT AS A TAP', 'TAPS ' + t0 + ' -> ' + bcl.taps[0]); } } if (bcl && bcl.ph === 'end') hid = hid || getComputedStyle(bclTapEl).display === 'none'; return !bcl; }, 700, 50);
+      if (!ended && stop()) return;
+      ok(ended && shown && hid && getComputedStyle(bclTapEl).display === 'none' && !$('hud').classList.contains('cine') && !$('pad').classList.contains('cine'), label + ': THE CLASH DID NOT END BY ITSELF, THE TAP AREA WAS NOT THERE DURING THE MASH OR WAS NOT AWAY WHEN IT WAS OVER, OR THE HIDDEN BUTTONS STAYED', 'ENDED ' + ended + ', SHOWN ' + shown + ', AWAY ' + hid);
+      const loser = win === 'me' ? 'foe' : 'me', hpNow = [vs.hp, dummy.hp];
+      if (!kill) {
+        const lost = loser === 'foe' ? hp0[1] - hpNow[1] : hp0[0] - hpNow[0], want = loser === 'foe' ? dmgE : dmgP;
+        ok(Math.abs(lost - want) <= 2 && vs.ph === 'fight' && (loser === 'foe' ? hpNow[0] >= hp0[0] - 1 : hpNow[1] >= hp0[1] - 1), label + ': THE LOSER DID NOT LOSE 45% OF HIS WHOLE HEALTH, THE WINNER LOST SOME, OR THE FIGHT DID NOT GO ON', 'LOST ' + lost + ' OF ' + want + ', PHASE ' + (vs && vs.ph));
+      } else if (loser === 'foe') ok(dummy.ko >= 0 && !!dummy.del && dummy.hp === 0 && vs.ph !== 'fight' && !bclGone, label + ': THE FINISHER DID NOT KILL THE ENEMY AND LEAVE NOTHING OF HIM, OR THE ROUND DID NOT END', 'KO ' + dummy.ko + ', PHASE ' + (vs && vs.ph));
+      else ok(vs.hp === 0 && bclGone && vs.ph !== 'fight', label + ': THE FINISHER DID NOT KILL YOU AND LEAVE NOTHING OF YOU, OR THE ROUND DID NOT END', 'HEALTH ' + Math.round(vs.hp) + ', PHASE ' + (vs && vs.ph));
+      scCheck(); show('title'); if (stop()) return;
+    }
+    twPick = 1; if (await room('cu5', 'cu4', 'IN THE SKYSCRAPER')) {
+      try { dummy.chain = 99; irUlTry(pnow()); } catch (e) { scErr(e, 'SKYSCRAPER'); } await scFrames(14, null, 50); try { dummy.chain = 99; cuenStart(16, pnow(), 'beam'); } catch (e) { scErr(e, 'SKYSCRAPER'); }
+      ok(!!bcl, 'THE CLASH DID NOT START IN THE SKYSCRAPER', ''); if (bcl) bcl.force = { win: 'foe', kill: false };
+      const ended = bcl ? await scUntil(() => !bcl, 700, 50) : false; ok(ended, 'THE CLASH IN THE SKYSCRAPER DID NOT END', ''); ok(state === 'play' && vs.ph === 'fight', 'THE FIGHT DID NOT GO ON AFTER THE CLASH IN THE SKYSCRAPER', 'PHASE ' + (vs && vs.ph)); scCheck(); show('title');
+    } else if (stop()) return;
+  } finally { Object.assign(TR, tr0); twPick = tw0; SET.gore = gore0; bcl = null; bclGone = false; bclTapOff(); }
+}
 // v1.191 IRON MAN's moves: the chain (R.HOOK, L.HOOK, R.KICK, PUNCH), the ROCKET UPPERCUT (JUMP and ATTACK together, either one first), the DOWNSLAM (ATTACK 0.2 s after the jump, and an earlier one waits for it), crouch, block and dash; each is a check that the move that should come out did (cuAtkK: 0 - 3 the chain, 4 the uppercut, 5 the downslam), played against a standing enemy in front of him; v1.192 the LOW JABS (6: crouched, ATTACK), the CHARGE (7: ATTACK during a dash or just after it; a late one is a plain hook) and the BACKFLIP (8: DASH BACK twice, never two dashes forward); v1.193 the REPULSOR MODE (the MODE button: ATTACK is R.BLAST (9) and then L.BLAST (10), both hurt the enemy, the other moves stay, off again it is the chain); v1.194 the BEAR HUG (BLUE: he charges, grabs, hugs, flies up with the enemy hanging in his arms, turns over, dives and slams: 4 hits, it ends by itself, and it has a cooldown); in the skyscraper he is also one of the fighters of scTower
 const SC_IR_N = 50;
 async function scIronMoves() {
@@ -710,7 +752,7 @@ async function scTicks() {      // v1.201 ONE TICK EFFECT AT A TIME (a bleed, a 
   } finally { twPick = keep; }
 }
 
-const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['ADMIN', 16, scAdmin], ['CANVAS', 6, scCanvas], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['TICKS', 6, scTicks], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
+const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['ADMIN', 16, scAdmin], ['CANVAS', 6, scCanvas], ['CLASH', 4, scClash], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['TICKS', 6, scTicks], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
 const scEl = document.createElement('section'); scEl.id = 'scan'; scEl.className = 'screen';
 scEl.innerHTML = '<h2>SCANNING THE GAME</h2><div id="scBar"><i id="scFill"></i></div><small id="scTxt"></small><small id="scLive"></small><small>YOUR SAVES ARE SAFE: THEY WERE COPIED FIRST AND ARE PUT BACK WHEN THE SCAN IS OVER.</small><button id="scCancel">CANCEL</button>';
 document.body.appendChild(scEl);
@@ -757,7 +799,7 @@ async function scRun(opts) {      // opts.noReload = for the tests: no reload at
 window.__scanRun = scRun;
 
 // ---------------------------------------------------------------- what the ERRORS page shows
-const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', ADMIN: 'ADMIN BOX OF THE TRAINING', CANVAS: 'CANVAS AFTER AN ERROR', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', CITY: 'CITY DOORS AND FALLS', TICKS: 'TICK EFFECTS, ONE AT A TIME', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
+const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', ADMIN: 'ADMIN BOX OF THE TRAINING', CANVAS: 'CANVAS AFTER AN ERROR', CLASH: 'BEAM CLASH', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', CITY: 'CITY DOORS AND FALLS', TICKS: 'TICK EFFECTS, ONE AT A TIME', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
 const scCovText = () => Object.keys(SC.got).concat(Object.keys(SC.of)).filter((k, i, a) => a.indexOf(k) === i).map(k => k === 'ROUNDS' ? 'EXTRA ROUNDS OF 14 FIGHTS ' + SC.got[k] : (SC_COVN[k] || k) + ' ' + (SC.got[k] || 0) + '/' + SC.of[k]);      // (what was covered, of what there is)
 const scLast = () => { try { const r = JSON.parse(localStorage.getItem('jsscanres') || 'null'); return r && Array.isArray(r.res) ? r : null; } catch { return null; } };
 function scReport(r) {      // the text of COPY SCAN REPORT

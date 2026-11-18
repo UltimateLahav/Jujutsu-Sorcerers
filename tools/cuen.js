@@ -89,6 +89,7 @@ function cuenStart(k, now, type, extra) {
   else if (type === 'aircut') d.fa.ms = 1000 / (30 * GRADES[vs.gi].spd) * g.atk[k].length;
   else if (type === 'blast') d.fa.ms = 1000 / (26 * GRADES[vs.gi].spd) * g.atk[k].length;      // (the length of the two moves that play the pictures of a blow: set at once, the picture is asked for in the same frame)
   else if (type === 'uni') { if (!g.ump) iruPics(g); d.fa.on = false; d.fa.tk = 0; d.fa.fireAt = 0; d.fa.braced = false; snd('irult', 0); gritAt(d.x - 6, 8, 80, -1); gritAt(d.x + 6, 8, 80, 1); puff(d.x - 8, 4); puff(d.x + 8, 4); }      // (v1.208 his UNIBEAM: the charge begins)
+  if (type === 'uni' || type === 'beam') bclTry(now, 'foe');      // (v1.209 your ULTIMATE is going on: the two beams clash, see tools/clash.js)
 }
 // the blows: the pictures at the speed of the blow, the step of the blow, and every event when its picture comes up
 function cuenAct(now, dt, gap, ag, toward, G, g, n) {

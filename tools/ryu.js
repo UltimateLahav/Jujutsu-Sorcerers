@@ -298,6 +298,7 @@ function ryUlStart(now) {      // the stance: he stands up (from a crouch too), 
   ryUl = { t0: now, row: 'u1', fi: 0, dx: 0, cut: false, fired: false, fireAt: 0, nextTick: 0, tickN: 0, landed: 0, hit: null, w: {}, typed: 0, rel: 0 };
   domReadyAt = now + RY_U.end + RY_U.cd; $('pad').classList.add('cine'); $('hud').classList.add('cine');
   snd('ryult', 0); gritAt(wx, 14, 90, 0); puff(wx - 6, 5); puff(wx + 8, 5); shockAt(wx, 140, 70, 0.5); ryShake(now, 160);
+  bclTry(now, 'me');      // (v1.209 the enemy's ULTIMATE is going on: the two beams clash, see tools/clash.js)
 }
 function ryUlSkip(now) { const U = ryUl; if (!U || U.fired || now - U.t0 < 500) return; U.t0 = now - RY_U.tFire; U.cut = true; for (const [i] of RY_UWORDS) U.w[i] = 1; }      // (a button pressed before the beam goes straight to it; not in the first half second: the press that started it may repeat)
 function ryUlEnd(now, reset) {      // it is over (or broken off: the round ended, he was hurt, another cutscene took the game): the buttons and bars come back; the button waits 30 s from now (a new round starts with it ready)

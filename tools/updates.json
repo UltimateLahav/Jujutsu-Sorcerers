@@ -1,5 +1,18 @@
 [
  {
+  "v": "1.209",
+  "t": "BEAM CLASH: IRON MAN'S UNIBEAM AGAINST RYU'S JUST THIS ONCE",
+  "n": [
+   "You asked for a beam clash: when a beam fires and another beam is fired, the two meet, a scene plays, you mash buttons for 7 seconds, and the winner overpowers the other one. It works between Iron Man and Ryu, with either of them as your fighter (Iron Man is an enemy since the last update), and only between their two ULTIMATES: Iron Man's UNIBEAM and Ryu's JUST THIS ONCE.",
+   "WHEN: the second of the two ultimates starts while the first one is still going on (from its start until its beam is over). Press your ultimate while the enemy's is charging or firing, or the enemy starts his while yours is. Both ultimates are over then (their buttons wait 30 seconds as always) and the clash takes the whole screen. It does not happen in the Wi-Fi fight, in a mirror match (Iron Man against Iron Man, Ryu against Ryu), or when the enemy is on another floor of the skyscraper.",
+   "IF IRON MAN FIRED FIRST: he is charging, the sun in his chest swells and the ground shakes, Ryu points at him, the four letters of 今回だけ (JUST THIS ONCE in Japanese) pop up one after the other, and both fire at the same moment. IF RYU FIRED FIRST: Ryu points and fires, his beam hits Iron Man, who braces; then the camera goes to Iron Man, the sun swells, he fires his own beam, and it pushes Ryu's back from his chest to the middle.",
+   "THE MASH: the two beams meet in a ball of light and push slowly against each other for 7 seconds. TAP THE SCREEN (or press any key) as fast as you can: the ball moves with the taps and a bar at the top shows who leads. The enemy taps too, about 5 to 8 times a second depending on his grade. The one with more taps wins; a tie is the enemy's.",
+   "IRON MAN WINS: his beam overpowers Ryu's, which shrinks to his hair; Ryu steps back and fires a GRANITE BLAST, Iron Man's beam destroys it almost at once and engulfs him. RYU WINS: his beam overpowers Iron Man's; Iron Man flies up on his boots and fires two repulsor beams, the ball gives a little, but in an instant Ryu leaps and DOWNSLAMS him down into the beam.",
+   "A FINISHER is a win that would kill the loser: the winning beam takes 45% of the loser's whole health, so if the loser has that much or less left, he is DISINTEGRATED (nothing is left of him and the round is over). Otherwise he takes the 45%, is launched back (Ryu) or sent back (Iron Man) and is stunned for a moment. The winner loses nothing. A health that never runs out (the TRAIN page, or SETTINGS) is never finished.",
+   "THE TESTS: the scan of the game has a new part, BEAM CLASH: it starts the clash from the real ultimates in all eight ways (Iron Man or Ryu yours, who fires first, who wins, finisher or not), counts a key as a tap, checks that the loser loses exactly 45% or dies, that the buttons come back, and that it works in the skyscraper too. Eleven deliberate breakages of the code were all caught."
+  ]
+ },
+ {
   "v": "1.208",
   "t": "IRON MAN CAN BE THE ENEMY NOW",
   "n": [
