@@ -58,7 +58,7 @@ let ff = null;
 const FF_VICS = ['gojo', 'yuji', 'verity', 'cat', 'freddy'], FF_BB = new WeakMap();
 function ffBox(img) { let b = FF_BB.get(img); if (b) return b; const w = img.width, h = img.height, d = img.getContext('2d').getImageData(0, 0, w, h).data; let x0 = w, x1 = -1, y0 = h, y1 = -1; for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 8) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } b = { x0, x1, y0, y1 }; FF_BB.set(img, b); return b; }      // (the box the picture really covers)
 function ffState(now) {      // Freddy's FATALITY. 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far (or behind him); 3 = not possible right now
-  if (!vs || vs.story || vs.cv || vs.net || vs.ph !== 'fight' || js || vf || fat || yf || yu || (dom && domLock()) || ult || cf || ke || fd || fg || fwPh || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.curse || !FF_VICS.includes(vs.foe) || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;
+  if (!vs || vs.story || vs.cv || vs.net || vs.ph !== 'fight' || js || vf || fat || yf || yu || (dom && domLock()) || ult || cf || ryf || ke || fd || fg || fwPh || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.curse || !FF_VICS.includes(vs.foe) || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;
   if (!(dummy.hp <= dummy.max * FAT_LOW)) return 1;
   if (dummy.x - wx > FAT_RANGE || dummy.x - wx < -4) return 2;
   return hurtAt >= 0 || gojoGone || jumpAt >= 0 || (twOn() && vs.tw.slide) ? 3 : 0;

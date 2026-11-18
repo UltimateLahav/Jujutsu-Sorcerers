@@ -18,7 +18,7 @@ function bclFoeUlt(now) {      // is the ENEMY's going on?
 }
 function bclTry(now, starter) {      // a fighter has just started his ultimate ('me' or 'foe'): when the other one's is going on, the beams clash
   if (bcl || !vs || state !== 'play' || vs.ph !== 'fight' || !bclPair() || !dummy || dummy.ko >= 0 || dummy.cap || dummy.twAway || dummy.mode !== 'fighter') return false;
-  if (dom || fat || yf || fd || ult || js || vf || cf || ff || ke || se || de || c4x) return false;
+  if (dom || fat || yf || fd || ult || js || vf || cf || ff || ryf || ke || se || de || c4x) return false;
   if (twOn()) { const T = vs.tw; if (T.away || T.cab || T.fFoe !== T.fMe) return false; }
   if (starter === 'me' ? !bclFoeUlt(now) : !bclMeUlt(now)) return false;
   return bclBegin(now, starter === 'me' ? 'foe' : 'me');
