@@ -270,7 +270,7 @@ function iruTick(g, b, now, n) {      // burst n of 12 on whatever is in front o
   if (twOn()) { const T = vs.tw; if (T.away || T.cab || T.fFoe !== T.fMe || d.twAway) return; }
   if (d.x - wx < -4) { if (n === 1 && b.hit === null) { b.hit = false; say('MISSED', d.x, '#9fd8ff', 8, now); } return; }      // (behind him: the beam goes the other way)
   if (d.vform && d.vform !== 'verity') { if (n === 1) say('IMMUNE', d.x, '#ffe9a0', 8, now); return; }      // (a smoke ball takes nothing, as with the other ULTIMATEs)
-  b.hit = true; const first = !b.landed; b.landed++;
+  b.hit = true; achU = now; const first = !b.landed; b.landed++;      // (v1.210 achU: the achievement CLIP THIS JARVIS counts a burst of YOUR beam on him, see tools/ach.js)
   const tot = (d.max || DUMMY_HP) * S.pct * S.ticks / 100 * cuS.dm / 100, dm = Math.max(1, Math.round(tot * n / S.ticks) - Math.round(tot * (n - 1) / S.ticks));      // (the twelve bursts add up to 45% exactly: each one is what is still missing)
   const top = gy - 60 - Math.round(d.airH || 0), bot = gy - 4 - Math.round(d.airH || 0), ey = Math.max(top, Math.min(bot, gy - 61 + (b.core ? b.core.py : 22) + 1));      // (the place on his body nearest to the beam's middle)
   if (now > hits.until) { hits.n = 0; hits.dmg = 0; hits.seq = 0; } if (first) { hits.n++; vs.bestCmb = Math.max(vs.bestCmb | 0, hits.n); } hits.dmg += dm; hits.until = now + COMBO_WIN; hits.last = now; hits.bonus = 0;      // (one hit of the combo counter, the damage grows)
@@ -279,7 +279,12 @@ function iruTick(g, b, now, n) {      // burst n of 12 on whatever is in front o
   say('' + dm, d.x + Math.random() * 10 - 5, popCol(), 8, now); spark(d.x - 4 + Math.random() * 6 - 3, ey + Math.random() * 16 - 8, first || n === S.ticks ? 16 : 9, ['#ffffff', '#ffd34d', '#ff7a2a'], first || n === S.ticks, 1); snd('irult', 3); shockAt(d.x, 140, 70, 0.5);
   if (first) snd('concboom');
   if (twOn()) { const T = vs.tw; T.dHp = d.hp; T.dHit = d.hitAt; T.dDown = d.down || 0; }      // (the skyscraper's watcher must not take a burst for a blow that puts him down: the last one breaks the floors itself)
-  if (d.hp <= 0) { koDummy(now); b.ko = true; } else if (n === S.ticks && twOn()) twSlam('foe', 3, now, d.x);
+  if (d.hp <= 0) { koDummy(now); b.ko = true; } else if (n === S.ticks && twOn() && !iruOut(d, now)) twSlam('foe', 3, now, d.x);
+}
+const IRU_OUT = 150;      // (v1.210 15 m)
+function iruOut(d, now) {      // v1.210 the last burst in the skyscraper: an enemy within 15 m of the right end of the floor (the beam always goes to the right) goes out through that window (it shatters, if it was not broken already), down to the street, and does not fall through the floor (the achievement CLIP THIS JARVIS, tools/ach.js)
+  const F = twFloorData(vs.tw.fMe); if (!F || F.W - d.x > IRU_OUT) return false;
+  if (!F.outer[1].broken) twOuterHit(F, 1, Math.max(1, F.outer[1].hp), now); twFallOut('foe', now, 1); return true;
 }
 // ---- the state: irBhStep hands over to this every frame while the ultimate runs; it returns his picture
 function iruStep(g, b, now, dt) {

@@ -66,6 +66,7 @@ function bclDecide(now, B) {      // the 7 seconds are over: who won, and would 
 }
 function bclFinish(now, B) {      // the scene is over: what it did to the loser goes into the fight, and the fight goes on (or the round is over)
   bcl = null; bclTapOff(); if (!ryUl) { $('pad').classList.remove('cine'); $('hud').classList.remove('cine'); }
+  if (vs.me === 'cu5') { vs.jto = (vs.jto || 0) + 1; if (vs.jto >= 2) achGive('jto'); }      // (v1.210 the achievement JUST THIS ONCE: the second clash against the enemy Ryu in this fight, see tools/ach.js)
   wx = B.mx; dummy.x = B.fx; wxv = 0; wvx = 0; dummy.vx = 0; const d = dummy, loseFoe = B.win === 'me';
   if (loseFoe) {
     d.hp = Math.max(0, d.hp - B.dmg); d.hitAt = now; d.dodgeUntil = 0; d.ai = 'rest'; d.aiAt = now; d.restFor = 900;

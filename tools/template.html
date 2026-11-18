@@ -200,6 +200,16 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
 .mps{display:flex;gap:3vh;justify-content:center;align-items:flex-start}.mp{position:relative;width:min(92vh,45vw);height:auto;padding:1vh 1vh 1.2vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:.8vh;font-size:clamp(9px,2.6vh,15px)}.mp canvas{width:100%;height:auto;aspect-ratio:288/128;border:3px solid #000;filter:brightness(.55) saturate(.75)}.mp.sel canvas{filter:none}.mp.sel{border-color:#e0242f;border-bottom-color:#39a2ff}.mp b{font-weight:normal}.mp i{font-size:.7em}.mp.sel::after{content:'SELECTED';position:absolute;top:2vh;left:2vh;background:#e0242f;color:#fff;font-size:clamp(7px,1.8vh,10px);padding:.4vh 1vh}
 #vsplash{flex-direction:row;gap:2vh;justify-content:center;background:radial-gradient(ellipse at 50% 50%,#2a0b10,#07060a 70%)}#vsplash .fsp{width:min(46vh,30vw);height:72vh}#vsplash .fsbig{height:min(46vh,calc(30vw - 2vh))}#vsplash .fsnm{font-size:clamp(12px,4vh,24px)}.vsv{font-size:clamp(24px,14vh,80px);color:#f1ecdf;text-shadow:.9vh .9vh 0 #b3121f;font-style:italic;transform:skewX(-8deg)}
 #vsplash.go #vsxL{animation:vsl .45s cubic-bezier(.2,.9,.3,1) both}#vsplash.go #vsxR{animation:vsr .45s cubic-bezier(.2,.9,.3,1) both}#vsplash.go .vsv{animation:vsv .5s steps(5) .35s both}@keyframes vsl{from{transform:translateX(-120vw)}to{transform:none}}@keyframes vsr{from{transform:translateX(120vw)}to{transform:none}}@keyframes vsv{0%{transform:skewX(-8deg) scale(3);opacity:0}100%{transform:skewX(-8deg) scale(1);opacity:1}}
+/* v1.210 ACHIEVEMENTS: the card next to STORY MODE, the screen with one card for each, and the rectangle that slides in over the top of the screen (tools/ach.js) */
+#modes #achIc{width:8vh;height:8vh;margin-top:6vh;image-rendering:pixelated}#modes #achMode b{font-size:.86em;letter-spacing:0}
+#ach{gap:2.2vh}#achCnt{color:#ffd34d;font-size:clamp(8px,2.4vh,13px)}#achList{display:flex;gap:2.4vh;align-items:stretch;justify-content:center;max-width:98vw}
+.achC{width:min(56vh,29vw);height:auto;justify-content:flex-start;gap:1.2vh;padding:1.3vh;font-size:clamp(7px,2vh,11px);text-align:center}
+.achC img{display:block;width:100%;height:auto;aspect-ratio:174/98;image-rendering:pixelated;border:2px solid #000;background:#000}
+.achC b{font-size:1.1em;line-height:1.45;min-height:2.9em;display:flex;align-items:center;justify-content:center}.achC i{font-style:normal;color:var(--dim);font-size:.85em;line-height:1.6;flex:1}.achC em{font-style:normal;font-size:.85em;letter-spacing:.08em}
+.achC.off img{filter:grayscale(1) brightness(.42)}.achC.off b{color:var(--dim)}.achC.off em{color:var(--line)}.achC.on{border-color:#ffd34d}.achC.on em{color:#ffd34d}
+#achT{display:none;position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 1.2vh);z-index:20;transform:translate(-50%,-170%);align-items:center;gap:1.6vh;padding:1vh 2.2vh 1vh 1vh;max-width:94vw;text-align:left;background:linear-gradient(180deg,#1b1630,#0b0a0f);border:3px solid #ffd34d;border-bottom-width:.9vh;box-shadow:0 0 2.4vh rgba(255,211,77,.4);pointer-events:none;transition:transform .5s cubic-bezier(.2,.85,.3,1)}
+#achT.on{display:flex}#achT.show{transform:translate(-50%,0)}#achT img{height:10vh;width:auto;aspect-ratio:174/98;image-rendering:pixelated;border:2px solid #000;flex:none}
+#achT small{display:block;color:#ffd34d;font-size:clamp(6px,1.6vh,9px);letter-spacing:.08em}#achT b{display:block;margin-top:.9vh;font-size:clamp(8px,2.5vh,14px);line-height:1.35}
 </style>
 </head>
 <body>
@@ -211,7 +221,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.209</small>
+    <small id="ver">V1.210</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -243,10 +253,20 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <button id="chalMode" class="card mode"><span>$</span><b>CHALLENGES</b><i>EARN MONEY</i></button>
     <button id="battles" class="card mode"><span>VS</span><b>BATTLES</b><i>FIGHT THE ENEMY</i></button>
     <button id="story" class="card mode"><span>?</span><b>STORY MODE</b><i>CHAPTERS 1 AND 2</i></button>
+    <button id="achMode" class="card mode"><canvas id="achIc" width="16" height="16"></canvas><b>ACHIEVEMENTS</b><i id="achSub"></i></button>
   </div>
   <small>YOU START WITH PUNCHES ONLY: BEAT CURSES IN CHALLENGES, EARN MONEY, BUY SKILLS</small>
   <div class="row"><button id="skillsMode">SKILLS</button><button id="msModes">SETTINGS</button><button id="modesBack">BACK</button></div>
 </section>
+
+<section id="ach" class="screen">
+  <h2>ACHIEVEMENTS</h2>
+  <small id="achCnt"></small>
+  <div id="achList"></div>
+  <div class="row"><button id="achBack">BACK</button></div>
+</section>
+
+<div id="achT" aria-live="polite"><img id="achTi" alt=""><div><small>ACHIEVEMENT EARNED</small><b id="achTn"></b></div></div>
 
 <section id="bsel" class="screen">
   <h2>BATTLES</h2>
@@ -716,7 +736,7 @@ function drawHero(i) {
 
 // ---------------------------------------------------------------- v1.00: PROGRESS (money, skills, characters), the SKILLS page, and the five CURSES of the CHALLENGES ladder
 // You start as Gojo with walking, jumping and punches only. Everything else is a SKILL you buy with the money from beating curses (and Versus / Story wins); the other characters are bought too.
-const PROG = (() => { const OLD = ['grub', 'stalker', 'wisp', 'ogre', 'imp']; try { const p = JSON.parse(localStorage.getItem('js_prog') || '{}'), r = p.rush || {}, P = { m: Math.max(0, +p.m || 0), own: p.own || {}, beat: p.beat || {}, once: p.once || {}, rush: { best: +r.best || 0, clears: +r.clears || 0, rb: +r.rb || 0, rc: +r.rc || 0 }, hunt: Object.fromEntries(Object.entries(p.hunt && typeof p.hunt === 'object' ? p.hunt : {}).filter(([k, v]) => typeof v === 'string' && v.length === 1 && 'CBAS'.includes(v))) }; for (const k of Object.keys(P.beat)) { const m = /^c(\d)(h?)$/.exec(k); if (m && OLD[+m[1]]) { P.beat['c:' + OLD[+m[1]] + m[2]] = 1; delete P.beat[k]; } } return P; } catch (e) { return { m: 0, own: {}, beat: {}, once: {}, rush: { best: 0, clears: 0, rb: 0, rc: 0 }, hunt: {} }; } })();      // (v1.00 saved the curses you beat as c0..c4; they are called by name now so the ladder can grow)      // saved on the device: money, what you own (skills and characters), which challenges you beat
+const PROG = (() => { const OLD = ['grub', 'stalker', 'wisp', 'ogre', 'imp']; try { const p = JSON.parse(localStorage.getItem('js_prog') || '{}'), r = p.rush || {}, P = { m: Math.max(0, +p.m || 0), own: p.own || {}, beat: p.beat || {}, once: p.once || {}, ach: Object.fromEntries(Object.entries(p.ach && typeof p.ach === 'object' && !Array.isArray(p.ach) ? p.ach : {}).filter(([k, v]) => v === 1 && k.length < 24)), rush: { best: +r.best || 0, clears: +r.clears || 0, rb: +r.rb || 0, rc: +r.rc || 0 }, hunt: Object.fromEntries(Object.entries(p.hunt && typeof p.hunt === 'object' ? p.hunt : {}).filter(([k, v]) => typeof v === 'string' && v.length === 1 && 'CBAS'.includes(v))) }; for (const k of Object.keys(P.beat)) { const m = /^c(\d)(h?)$/.exec(k); if (m && OLD[+m[1]]) { P.beat['c:' + OLD[+m[1]] + m[2]] = 1; delete P.beat[k]; } } return P; } catch (e) { return { m: 0, own: {}, beat: {}, once: {}, ach: {}, rush: { best: 0, clears: 0, rb: 0, rc: 0 }, hunt: {} }; } })();      // (v1.00 saved the curses you beat as c0..c4; they are called by name now so the ladder can grow)      // saved on the device: money, what you own (skills and characters), which challenges you beat
 const saveProg = () => { try { localStorage.setItem('js_prog', JSON.stringify(PROG)); } catch (e) { /* storage blocked */ } };
 // ---- v1.11 MOBILE: the options (kept in js_set), vibration, the assist levels, the pause flag and the margin a camera notch needs
 const SET = (() => { const D = { hap: 1, sz: 100, op: 78, up: 0, lh: 0, fps: 0, lite: 0, ap: 1, assist: 0, pace: 1, hb: 0, gore: 0, shk: 100, fl: 100, dn: 1, hs: 100, br: 100, ct: 100, sat: 100, scan: 0, cb: 0, fpsc: 0, edm: 100, pdm: 100, reg: 0, ien: 0, ihp: 0, ohk: 0, sub: 1, nf: 0, hc: 0, th: 0, pt: 3, bgd: 3, au: 2, ov: 2, glow: 0, trl: 0, shd: 0, zoom: 100, smooth: 0, retro: 0 }, R = { hap: [0, 2], sz: [70, 120], op: [30, 100], up: [0, 20], lh: [0, 1], fps: [0, 999], lite: [0, 1], ap: [0, 1], assist: [0, 3], pace: [0, 3], hb: [0, 1], gore: [0, 2], shk: [0, 150], fl: [0, 100], dn: [0, 1], hs: [0, 150], br: [70, 130], ct: [80, 140], sat: [0, 150], scan: [0, 2], cb: [0, 3], fpsc: [0, 2], edm: [25, 200], pdm: [50, 300], reg: [0, 5], ien: [0, 1], ihp: [0, 1], ohk: [0, 1], sub: [0, 1], nf: [0, 1], hc: [0, 1], th: [0, 5], pt: [0, 4], bgd: [0, 3], au: [0, 2], ov: [0, 2], glow: [0, 3], trl: [0, 3], shd: [0, 3], zoom: [75, 125], smooth: [0, 1], retro: [0, 1] }; try { const p = JSON.parse(localStorage.getItem('js_set') || '{}'); for (const k in D) if (typeof p[k] === 'number' && isFinite(p[k])) D[k] = Math.max(R[k][0], Math.min(R[k][1], Math.round(p[k]))); } catch (e) { /* storage blocked: the defaults */ } if (![0, 30, 45, 60, 72, 90, 120, 144, 999].includes(D.fps)) D.fps = 0; if (![75, 90, 100, 110, 125].includes(D.zoom)) D.zoom = 100; return D; })();
@@ -1465,7 +1485,7 @@ function show(s) {
   $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); $('chal').classList.toggle('on', s === 'chal'); $('skills').classList.toggle('on', s === 'skills'); $('sns').style.display = 'none'; if (s !== 'lan' && s !== 'lansel' && !(s === 'play' && vs && vs.net) && lanTimer) lanStop();
   $('bsel').classList.toggle('on', s === 'bsel'); $('fsel').classList.toggle('on', s === 'fsel'); $('msel').classList.toggle('on', s === 'msel'); $('vsplash').classList.toggle('on', s === 'vsplash');
   $('title').classList.toggle('on', s === 'title'); $('ulog').classList.toggle('on', s === 'ulog'); $('mset').classList.toggle('on', s === 'mset'); $('codes').classList.toggle('on', s === 'codes');
-  $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves');
+  $('modes').classList.toggle('on', s === 'modes'); $('saves').classList.toggle('on', s === 'saves'); $('ach').classList.toggle('on', s === 'ach');
   cv.style.display = s === 'play' || s === 'story' ? 'block' : 'none';
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
@@ -6668,6 +6688,7 @@ __FRED4__
 __CUEN__
 __ADMIN__
 __CLASH__
+__ACH__
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = __UPDATES__;
@@ -6855,7 +6876,7 @@ window.__back = () => {                       // Android back button: step back 
   if (state === 'play') { if (paused) setPause(false); else if (!setPause(true)) leavePlay(); return true; }      // (back pauses a fight, back again goes on; the MENU button of the pause screen leaves)
   if (state === 'story') { svView = 0; show('saves'); renderSaves(); return true; }
   if (state === 'saves') { if (svView) { svView = 0; renderSaves(); } else show('modes'); return true; }
-  if (state === 'chal' || state === 'skills') { show('modes'); return true; }
+  if (state === 'chal' || state === 'skills' || state === 'ach') { show('modes'); return true; }
   if (state === 'vsplash') { VSX.t0 = 0; mpOpen(); return true; }      // (v1.180 the VS splash: back to the map screen)
   if (state === 'msel') { mpBack(); return true; }
   if (state === 'fsel') { fsBack(); return true; }

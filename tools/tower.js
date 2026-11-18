@@ -257,6 +257,7 @@ function twFoeFx(now, draw) {      // (drawFoes asks) the enemy SEEN dropping th
 }
 function twFallOut(who, now, side) {      // a fighter went through the broken glass at an end of a floor (any floor, the lobby too): down to the STREET (v1.198 the real street map, see tools/city.js: you land in it, and he is not away, he is outside); the other follows him a moment later
   const T = vs.tw, f = who === 'foe' ? T.fFoe : T.fMe; if (!(f >= 1)) return; const lobby = twFloorData(1), x = side ? lobby.W - 20 : 20;
+  if (who === 'foe' && vs.me === 'cu5' && now - achU < ACH_JV) achGive('jarvis');      // (v1.210 the achievement CLIP THIS JARVIS: he went out through the glass within 4 s of your UNIBEAM, see tools/ach.js)
   if (who === 'foe') { if (f > 1) twFoeFall(f - 1, now, x, undefined, true); else ctFoeGlass(now, side, x); if (T.away) { T.foeSt = true; T.foeX = ctLand(side); T.via = 'front'; T.arriveAt = now + 4000; T.q.push({ at: now + 1300, k: 'followMe', side }); } }      // (he is in the street: you jump out after him in a moment, or he comes in at the front door after 4 s)
   else ctGoOut(now, 'glass', side);
 }

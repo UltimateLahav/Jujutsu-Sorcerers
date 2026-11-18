@@ -1,5 +1,17 @@
 [
  {
+  "v": "1.210",
+  "t": "ACHIEVEMENTS: THREE TO EARN, AND A RECTANGLE THAT SLIDES IN WHEN YOU DO",
+  "n": [
+   "You asked for an ACHIEVEMENTS button next to the story button. The mode screen (CHOOSE A MODE) has a fourth card now, ACHIEVEMENTS, with a little trophy and how many you have earned (0 OF 3). It opens a screen with one card for each achievement: its picture, its name and what to do. Until you earn it the picture is dark and the card says LOCKED; once you have it the card is gold and says EARNED. BACK (or the Android back button) goes back to the mode screen.",
+   "WHEN YOU EARN ONE a rectangle with its picture and its name slides in over the top of the screen, stays for three and a half seconds and slides out again. If two are earned at once the second one waits for the first. Achievements are saved on your device with your money and skills, so they stay earned after you close the game.",
+   "JUST THIS ONCE (the picture is Ryu firing a GRANITE BLAST): clash against Ryu at least twice in the same game. A game is one fight: from pressing START until you leave it (a whole Training session, or a whole Battle with all its rounds; REMATCH starts a new one). Only clashes where YOU are Iron Man and the enemy is Ryu count, and a clash counts when its scene is over, whether you won the mash or lost it; leaving the fight in the middle of a clash does not count.",
+   "WANNA SEE SOMETHING COOL? (the picture is Sukuna's FUGA): finish an enemy off with Sukuna's FUGA while his domain is active. The arrow itself has to take the last of his health (FUGA takes 40% of the enemy's full health, so he has to be at 40% or less when it lands); a K.O. from the burning after the arrow does not count. FUGA only exists with the domain open and with the FUGA skill, and it cannot kill an enemy with infinite health.",
+   "CLIP THIS JARVIS (the picture is the UNIBEAM across a floor of the skyscraper): activate UNIBEAM and throw the enemy off the skyscraper map. To make that possible the UNIBEAM changed a little in the skyscraper: its last burst used to break the floor under the enemy, so he dropped three floors and never went toward a window, even when the window was almost broken. Now, if the enemy stands within 15 m (150 px) of the end of the floor that the beam is going toward, that window shatters and the last burst throws him out of the building, down to the street, instead (you jump out after him). Anywhere else the last burst is exactly as before. The achievement is given when the enemy goes out through a window within 4 seconds of one of your UNIBEAM bursts hitting him.",
+   "The three pictures were taken from the game itself. The in-game scan has a new section (ACHIEVEMENTS) and the MENUS part of it looks at the new screen."
+  ]
+ },
+ {
   "v": "1.209",
   "t": "BEAM CLASH: IRON MAN'S UNIBEAM AGAINST RYU'S JUST THIS ONCE",
   "n": [

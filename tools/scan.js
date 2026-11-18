@@ -154,6 +154,7 @@ async function scMenus() {
   await look('CHALLENGES', '#chal', () => { show('modes'); $('chalMode').click(); });
   await look('SKILLS', '#skills', () => { show('modes'); $('skillsMode').click(); });
   for (const [t, bt] of SK_TABS) await look('SKILLS ' + t.toUpperCase(), '#skills', () => $(bt).click());
+  { const a0 = PROG.ach; PROG.ach = {}; await look('ACHIEVEMENTS', '#ach', () => { show('modes'); $('achMode').click(); }); PROG.ach = { jto: 1, cool: 1, jarvis: 1 }; await look('ACHIEVEMENTS, ALL EARNED', '#ach', () => { show('modes'); $('achMode').click(); }); PROG.ach = a0; }      // (v1.210)
   await look('WI-FI SETUP', '#lan', () => show('lan')); await look('WI-FI FIGHTER', '#lanSel', () => show('lansel'));
   await look('UPDATE LOG', '#ulog', () => { show('title'); $('logBtn').click(); }); await look('CODES', '#codes', () => { show('title'); $('codeBtn').click(); });
   await look('SETTINGS', '#mset', () => { show('title'); $('msBtn').click(); });
@@ -387,6 +388,90 @@ async function scClash() {
       const ended = bcl ? await scUntil(() => !bcl, 700, 50) : false; ok(ended, 'THE CLASH IN THE SKYSCRAPER DID NOT END', ''); ok(state === 'play' && vs.ph === 'fight', 'THE FIGHT DID NOT GO ON AFTER THE CLASH IN THE SKYSCRAPER', 'PHASE ' + (vs && vs.ph)); scCheck(); show('title');
     } else if (stop()) return;
   } finally { Object.assign(TR, tr0); twPick = tw0; SET.gore = gore0; bcl = null; bclGone = false; bclTapOff(); }
+}
+
+// ---------------------------------------------------------------- ACHIEVEMENTS (v1.210): the card and the screen, the save, the rectangle that slides in, and the three ways to earn one (tools/ach.js)
+const SC_AC_N = 33;
+async function scAch() {
+  SC.sec = 'ACHIEVEMENTS'; scCov('ACHIEVEMENTS', 0, SC_AC_N); SC.plan = 3000; SC.done = 0;
+  const ok = (c, what, d) => { scT(c, 'ACHIEVEMENTS: ' + what, d || ''); scCov('ACHIEVEMENTS', 1, 0); }, stop = () => SC.cancel || scReal() > SC.cap, tr0 = {}, tw0 = twPick, gore0 = SET.gore, ach0 = PROG.ach, t0 = { ...ACHT }; for (const k of ['beh', 'ehp', 'php', 'pce', 'grade', 'foe', 'put']) tr0[k] = TR[k];
+  const wait = ms => new Promise(r => setTimeout(r, ms)), idle = async () => { for (let i = 0; i < 200 && (achBusy || achQ.length); i++) await wait(10); }, fresh = () => { PROG.ach = {}; achQ.length = 0; achSub(); };
+  const room = async (me, foe, label, tower, beh) => { try { twPick = tower ? 1 : 0; Object.assign(TR, { beh: beh || 0, ehp: 0, php: beh ? 1 : 0, pce: 0, put: 2 }); startPractice(me, foe); } catch (e) { scErr(e, label + ' START'); return false; } if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) return false; await scFrames(2, null, 600); try { trainPut(); dummy.x = wx + 70; dummy.stunUntil = 0; } catch (e) { scErr(e, label); } return true; };
+  const clash = async (me, win, label) => {      // one clash (the enemy fires first, you answer), the winner forced: true when it started and ended
+    const foeUlt = () => { dummy.chain = 99; if (me === 'cu5') cuenStart(16, pnow(), 'beam'); else cuenStart(0, pnow(), 'uni'); };
+    try { domReadyAt = 0; foeUlt(); } catch (e) { scErr(e, label); } if (!(await scFrames(14, null, 50))) return false;
+    try { if (me === 'cu5') irUlTry(pnow()); else ryUlTry(pnow()); } catch (e) { scErr(e, label); } if (!bcl) return false; bcl.force = { win };
+    const ended = await scUntil(() => !bcl, 700, 50); await scFrames(30, null, 50); return ended;
+  };
+  try {
+    SET.gore = 0; twPick = 0; fresh(); Object.assign(ACHT, { hold: 40, out: 25 });
+    // the table and the save
+    ok(ACH.length === 3 && ACH_IMG.length === 3 && ACH.every((a, i) => a.id && a.nm && a.tx && /^data:image\/png;base64,/.test(ACH_IMG[i])), 'THE TABLE HAS NOT THREE ACHIEVEMENTS WITH A NAME, A TEXT AND A PICTURE', ACH.length + ' / ' + ACH_IMG.length);
+    ok(ACH[0].nm === 'JUST THIS ONCE' && ACH[1].nm === 'WANNA SEE SOMETHING COOL?' && ACH[2].nm === 'CLIP THIS JARVIS' && ACH[0].tx === 'CLASH AGAINST RYU AT LEAST TWICE IN THE SAME GAME' && ACH[1].tx === "FINISH AN ENEMY OFF WITH SUKUNA'S FUGA WHILE HIS DOMAIN IS ACTIVE" && ACH[2].tx === 'ACTIVATE UNIBEAM AND THROW THE ENEMY OFF THE SKYSCRAPER MAP', 'A NAME OR A TEXT IS NOT WHAT WAS ASKED FOR', '');
+    ok(achGive('nope') === false && achQ.length === 0 && !achBusy, 'AN UNKNOWN ACHIEVEMENT WAS GIVEN', '');
+    ACHT.hold = 900; ACHT.out = 25; const first = achGive('jto'), again = achGive('jto');
+    ok(first === true && again === false && PROG.ach.jto === 1 && achQ.length === 0, 'THE FIRST GIVE DID NOT SAY NEW, OR THE SECOND ONE DID', first + ' / ' + again);
+    let sv = null; try { sv = JSON.parse(localStorage.getItem('js_prog')).ach; } catch { /* storage blocked */ } ok(!!sv && sv.jto === 1 && !sv.cool, 'THE ACHIEVEMENT WAS NOT SAVED WITH THE REST OF THE PROGRESS', JSON.stringify(sv));
+    ok($('achSub').textContent === '1 OF 3', 'THE CARD DOES NOT SAY 1 OF 3', $('achSub').textContent);
+    await wait(750); { const t = $('achT'), r = t.getBoundingClientRect();
+      ok(t.classList.contains('on') && t.classList.contains('show') && $('achTn').textContent === 'JUST THIS ONCE' && $('achTi').getAttribute('src') === ACH_IMG[0], 'THE RECTANGLE IS NOT ON THE SCREEN WITH THE NAME AND THE PICTURE', t.className + ' / ' + $('achTn').textContent);
+      ok(r.top >= -1 && r.top < innerHeight * 0.12 && r.bottom < innerHeight * 0.4 && r.left >= 0 && r.right <= innerWidth + 1 && Math.abs((r.left + r.right) / 2 - innerWidth / 2) < 3, 'THE RECTANGLE IS NOT AT THE TOP OF THE SCREEN, IN THE MIDDLE', Math.round(r.left) + ',' + Math.round(r.top) + ' - ' + Math.round(r.right) + ',' + Math.round(r.bottom) + ' IN ' + innerWidth + 'X' + innerHeight); }
+    await idle(); ok(!$('achT').classList.contains('on') && !$('achT').classList.contains('show') && !achBusy, 'THE RECTANGLE DID NOT SLIDE OUT AGAIN', $('achT').className);
+    // two at once wait for each other
+    Object.assign(ACHT, { hold: 45, out: 25 }); const seen = [], pt = setInterval(() => { if ($('achT').classList.contains('on')) { const n = $('achTn').textContent; if (seen[seen.length - 1] !== n) seen.push(n); } }, 6);
+    achGive('cool'); achGive('jarvis'); const waiting = achQ.length; await idle(); clearInterval(pt);
+    ok(waiting === 1 && seen.join('|') === 'WANNA SEE SOMETHING COOL?|CLIP THIS JARVIS' && !achBusy && !achQ.length, 'TWO ACHIEVEMENTS AT ONCE DID NOT SLIDE IN ONE AFTER THE OTHER', waiting + ' WAITING, SAW ' + seen.join(' | '));
+    // the card, the screen
+    PROG.ach = { jto: 1 }; achQ.length = 0; achSub(); show('modes'); const st = $('story').getBoundingClientRect(), am = $('achMode').getBoundingClientRect();
+    ok(am.left >= st.right - 1 && Math.abs(am.top - st.top) < 3 && $('achMode').previousElementSibling === $('story'), 'THE ACHIEVEMENTS CARD IS NOT NEXT TO THE STORY CARD', Math.round(st.right) + ' / ' + Math.round(am.left));
+    $('achMode').click(); await scFrames(3); const cs = [...document.querySelectorAll('#achList .achC')];
+    ok(state === 'ach' && getComputedStyle($('ach')).display !== 'none' && cs.length === 3 && $('achCnt').textContent === '1 OF 3 EARNED', 'THE CARD DID NOT OPEN THE ACHIEVEMENTS SCREEN WITH THREE CARDS', state + ' / ' + cs.length + ' / ' + $('achCnt').textContent);
+    ok(cs.every((c, i) => c.dataset.id === ACH[i].id && c.querySelector('b').textContent === ACH[i].nm && c.querySelector('i').textContent === ACH[i].tx && c.querySelector('img').getAttribute('src') === ACH_IMG[i]), 'A CARD HAS NOT ITS NAME, ITS TEXT AND ITS PICTURE', '');
+    ok(cs[0].classList.contains('on') && cs[0].querySelector('em').textContent === 'EARNED' && cs[1].classList.contains('off') && cs[1].querySelector('em').textContent === 'LOCKED' && cs[2].classList.contains('off'), 'THE CARDS DO NOT SAY WHICH ONE IS EARNED AND WHICH IS LOCKED', cs.map(c => c.className).join(' | '));
+    ok(getComputedStyle(cs[1].querySelector('img')).filter.includes('grayscale') && !getComputedStyle(cs[0].querySelector('img')).filter.includes('grayscale'), 'THE PICTURE OF A LOCKED ONE IS NOT DARK, OR THE EARNED ONE IS', '');
+    const bad = scAudit($('ach')); ok(bad.length === 0, 'THE SCREEN HAS A TEXT THAT DOES NOT FIT: ' + bad.slice(0, 2).join(' / '), '');
+    achGive('cool'); await scFrames(2); ok(cs.length === 3 && document.querySelectorAll('#achList .achC.on').length === 2 && $('achCnt').textContent === '2 OF 3 EARNED', 'EARNING ONE ON THE SCREEN DID NOT UPDATE ITS CARDS', $('achCnt').textContent); await idle();
+    $('achBack').click(); await scFrames(2); ok(state === 'modes', 'BACK DID NOT GO BACK TO THE MODE SCREEN', state); show('title');
+    // JUST THIS ONCE: the second clash against the enemy Ryu in one fight
+    fresh(); Object.assign(ACHT, { hold: 40, out: 25 });
+    if (await room('cu5', 'cu4', 'JUST THIS ONCE', false, 1)) {
+      const e1 = await clash('cu5', 'me', 'JUST THIS ONCE 1'); if (!e1 && stop()) return;
+      ok(e1 && vs.jto === 1 && !PROG.ach.jto, 'THE FIRST CLASH AGAINST RYU ALREADY GAVE THE ACHIEVEMENT, OR WAS NOT COUNTED', 'ENDED ' + e1 + ' COUNT ' + (vs && vs.jto));
+      const e2 = await clash('cu5', 'foe', 'JUST THIS ONCE 2'); if (!e2 && stop()) return;
+      ok(e2 && vs.jto === 2 && PROG.ach.jto === 1, 'THE SECOND CLASH AGAINST RYU DID NOT GIVE THE ACHIEVEMENT (WON OR LOST)', 'ENDED ' + e2 + ' COUNT ' + (vs && vs.jto)); await idle(); show('title');
+    } else if (stop()) return;
+    fresh(); if (await room('cu5', 'cu4', 'JUST THIS ONCE, A NEW FIGHT', false, 1)) { ok(!(vs.jto > 0), 'A NEW FIGHT STARTED WITH THE CLASHES OF THE LAST ONE', 'COUNT ' + vs.jto); const e1 = await clash('cu5', 'me', 'NEW FIGHT 1'); ok(e1 && vs.jto === 1 && !PROG.ach.jto, 'THE FIRST CLASH OF A NEW FIGHT GAVE THE ACHIEVEMENT', 'COUNT ' + vs.jto); show('title'); } else if (stop()) return;
+    fresh(); if (await room('cu4', 'cu5', 'RYU YOURS', false, 1)) { const a = await clash('cu4', 'me', 'RYU YOURS 1'), b = a ? await clash('cu4', 'me', 'RYU YOURS 2') : false; ok(a && b && !(vs.jto > 0) && !PROG.ach.jto, 'CLASHES AS RYU, AGAINST IRON MAN, GAVE THE ACHIEVEMENT: ONLY IRON MAN AGAINST THE ENEMY RYU COUNTS', 'COUNT ' + vs.jto + ' ' + a + ' ' + b); show('title'); } else if (stop()) return;
+    // WANNA SEE SOMETHING COOL?: FUGA, the arrow itself takes the last of his health
+    window.__suAll = true;
+    const fuga = async (hp, label) => {
+      if (!(await room('cu3', 'gojo', label))) return null;
+      try { scKey('KeyV', true); await scFrames(2); scKey('KeyV', false); } catch (e) { scErr(e, label); } if (!(await scUntil(() => !!(suDom && suDom.sink < 0), 90, 100))) return null;
+      for (let i = 0; i < 2; i++) { scKey('KeyE', true); await scFrames(2); scKey('KeyE', false); await scFrames(3); }
+      if (!suFl) return null; try { dummy.hp = dummy.shown = hp === 'low' ? 10 : dummy.max; } catch (e) { scErr(e, label); }
+      scKey('KeyL', true); await scFrames(2); scKey('KeyL', false); if (!(await scUntil(() => !!suFg, 40, 100))) return null;
+      await scUntil(() => !suFg, 400, 100); return { ko: dummy.ko >= 0 };
+    };
+    fresh(); const f1 = await fuga('low', 'FUGA ON A WEAK ENEMY'); if (f1 === null && stop()) return;
+    ok(!!f1 && f1.ko && PROG.ach.cool === 1, 'FUGA THAT KILLED THE ENEMY IN THE DOMAIN DID NOT GIVE THE ACHIEVEMENT', JSON.stringify(f1) + ' ' + JSON.stringify(PROG.ach)); await idle(); show('title');
+    fresh(); const f2 = await fuga('full', 'FUGA ON A STRONG ENEMY'); if (f2 === null && stop()) return;
+    ok(!!f2 && !f2.ko && !PROG.ach.cool, 'FUGA THAT DID NOT KILL THE ENEMY GAVE THE ACHIEVEMENT', JSON.stringify(f2) + ' ' + JSON.stringify(PROG.ach)); show('title');
+    // CLIP THIS JARVIS: the enemy goes out through the glass of the skyscraper within 4 s of a burst of YOUR UNIBEAM
+    fresh(); achU = -1e9; if (await room('cu5', 'cu4', 'UNIBEAM BURSTS')) { try { domReadyAt = 0; irUlTry(pnow()); } catch (e) { scErr(e, 'UNIBEAM'); } const got = await scUntil(() => achU > 0, 200, 50); ok(got && Math.abs(achU - pnow()) < 4000, 'A BURST OF THE UNIBEAM ON THE ENEMY DID NOT SET THE TIME THE ACHIEVEMENT LOOKS AT', 'ACHU ' + achU); await scUntil(() => !CU_GAME[5].bh, 200, 50); show('title'); } else if (stop()) return;
+    const out = async (me, foe, ago, label, who) => { fresh(); if (!(await room(me, foe, label, true))) return null; try { achU = ago === null ? -1e9 : pnow() - ago; twFallOut(who || 'foe', pnow(), 1); } catch (e) { scErr(e, label); } await scFrames(2); const r = !!PROG.ach.jarvis; show('title'); return r; };
+    const j1 = await out('cu5', 'cu4', 500, 'OUT 0.5 S AFTER A BURST'); if (j1 === null && stop()) return; ok(j1 === true, 'THE ENEMY WENT OUT THROUGH THE GLASS 0.5 S AFTER A BURST AND THERE WAS NO ACHIEVEMENT', '' + j1);
+    const j2 = await out('cu5', 'cu4', 5000, 'OUT 5 S AFTER A BURST'); if (j2 === null && stop()) return; ok(j2 === false, 'THE ENEMY WENT OUT 5 S AFTER THE LAST BURST AND IT WAS GIVEN', '' + j2);
+    const j3 = await out('cu5', 'cu4', null, 'OUT WITH NO BURST'); if (j3 === null && stop()) return; ok(j3 === false, 'THE ENEMY WENT OUT WITHOUT ANY UNIBEAM AND IT WAS GIVEN', '' + j3);
+    const beam = async (where, label) => {      // the real thing: the UNIBEAM in the skyscraper with the enemy 6.5 m (near) or in the middle of the floor (far) from the right end
+      fresh(); achU = -1e9; if (!(await room('cu5', 'cu4', label, true))) return null; let F = null;
+      try { F = twFloorData(vs.tw.fMe); wx = where === 'near' ? F.W - 140 : F.W / 2; dummy.x = wx + 75; dummy.vx = 0; const x0 = wx - 80, x1 = where === 'near' ? F.W + 60 : wx + 420; F.doors = F.doors.filter(d => d.x < x0 || d.x > x1); F.walls = F.walls.filter(w => w.x < x0 || w.x > x1); domReadyAt = 0; irUlTry(pnow()); } catch (e) { scErr(e, label); }      // (no door and no wall where the two of them stand and the beam goes: an elevator shaft that the beam opens in front of him would drop him down the shaft, not out of the window)
+      await scFrames(3); await scUntil(() => !CU_GAME[5].bh, 240, 50); const r = { ach: !!PROG.ach.jarvis, glass: !!(F && F.outer[1].broken), lower: vs.tw.fFoe < vs.tw.fMe || !!vs.tw.away, holes: F ? F.holes.length : -1, ko: dummy.ko >= 0, hp: Math.round(dummy.hp), ff: vs.tw.fFoe, fm: vs.tw.fMe }; show('title'); return r;
+    };
+    const b1 = await beam('near', 'UNIBEAM NEAR THE END'); if (b1 === null && stop()) return; ok(!!b1 && b1.ach && b1.glass && b1.holes === 0, 'THE LAST BURST OF THE UNIBEAM DID NOT THROW AN ENEMY NEAR THE END OF THE FLOOR OUT OF THE WINDOW, OR IT BROKE THE FLOOR UNDER HIM TOO', JSON.stringify(b1));
+    const b2 = await beam('far', 'UNIBEAM IN THE MIDDLE'); if (b2 === null && stop()) return; ok(!!b2 && !b2.ach && !b2.glass && b2.lower && b2.holes > 0, 'THE LAST BURST OF THE UNIBEAM IN THE MIDDLE OF THE FLOOR BROKE A WINDOW, GAVE THE ACHIEVEMENT, OR DID NOT BREAK THE FLOOR UNDER HIM AS BEFORE', JSON.stringify(b2));
+    const j4 = await out('cu4', 'cu5', 500, 'OUT, RYU YOURS'); if (j4 === null && stop()) return; ok(j4 === false, 'IT WAS GIVEN TO A PLAYER THAT IS NOT IRON MAN', '' + j4);
+    const j5 = await out('cu5', 'cu4', 500, 'YOU GO OUT', 'me'); if (j5 === null && stop()) return; ok(j5 === false, 'YOU WENT OUT THROUGH THE GLASS AND THE ACHIEVEMENT WAS GIVEN: ONLY THE ENEMY GOING OUT COUNTS', '' + j5);
+  } finally { PROG.ach = ach0; Object.assign(ACHT, t0); achQ.length = 0; achSub(); achU = -1e9; Object.assign(TR, tr0); twPick = tw0; SET.gore = gore0; bcl = null; bclGone = false; bclTapOff(); $('achT').className = ''; achBusy = false; }
 }
 // v1.191 IRON MAN's moves: the chain (R.HOOK, L.HOOK, R.KICK, PUNCH), the ROCKET UPPERCUT (JUMP and ATTACK together, either one first), the DOWNSLAM (ATTACK 0.2 s after the jump, and an earlier one waits for it), crouch, block and dash; each is a check that the move that should come out did (cuAtkK: 0 - 3 the chain, 4 the uppercut, 5 the downslam), played against a standing enemy in front of him; v1.192 the LOW JABS (6: crouched, ATTACK), the CHARGE (7: ATTACK during a dash or just after it; a late one is a plain hook) and the BACKFLIP (8: DASH BACK twice, never two dashes forward); v1.193 the REPULSOR MODE (the MODE button: ATTACK is R.BLAST (9) and then L.BLAST (10), both hurt the enemy, the other moves stay, off again it is the chain); v1.194 the BEAR HUG (BLUE: he charges, grabs, hugs, flies up with the enemy hanging in his arms, turns over, dives and slams: 4 hits, it ends by itself, and it has a cooldown); in the skyscraper he is also one of the fighters of scTower
 const SC_IR_N = 50;
@@ -752,7 +837,7 @@ async function scTicks() {      // v1.201 ONE TICK EFFECT AT A TIME (a bleed, a 
   } finally { twPick = keep; }
 }
 
-const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['ADMIN', 16, scAdmin], ['CANVAS', 6, scCanvas], ['CLASH', 4, scClash], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['TICKS', 6, scTicks], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
+const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['ADMIN', 16, scAdmin], ['CANVAS', 6, scCanvas], ['CLASH', 4, scClash], ['ACHIEVEMENTS', 12, scAch], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['TICKS', 6, scTicks], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
 const scEl = document.createElement('section'); scEl.id = 'scan'; scEl.className = 'screen';
 scEl.innerHTML = '<h2>SCANNING THE GAME</h2><div id="scBar"><i id="scFill"></i></div><small id="scTxt"></small><small id="scLive"></small><small>YOUR SAVES ARE SAFE: THEY WERE COPIED FIRST AND ARE PUT BACK WHEN THE SCAN IS OVER.</small><button id="scCancel">CANCEL</button>';
 document.body.appendChild(scEl);
@@ -799,7 +884,7 @@ async function scRun(opts) {      // opts.noReload = for the tests: no reload at
 window.__scanRun = scRun;
 
 // ---------------------------------------------------------------- what the ERRORS page shows
-const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', ADMIN: 'ADMIN BOX OF THE TRAINING', CANVAS: 'CANVAS AFTER AN ERROR', CLASH: 'BEAM CLASH', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', CITY: 'CITY DOORS AND FALLS', TICKS: 'TICK EFFECTS, ONE AT A TIME', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
+const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', ADMIN: 'ADMIN BOX OF THE TRAINING', CANVAS: 'CANVAS AFTER AN ERROR', CLASH: 'BEAM CLASH', ACHIEVEMENTS: 'ACHIEVEMENTS', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', CITY: 'CITY DOORS AND FALLS', TICKS: 'TICK EFFECTS, ONE AT A TIME', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
 const scCovText = () => Object.keys(SC.got).concat(Object.keys(SC.of)).filter((k, i, a) => a.indexOf(k) === i).map(k => k === 'ROUNDS' ? 'EXTRA ROUNDS OF 14 FIGHTS ' + SC.got[k] : (SC_COVN[k] || k) + ' ' + (SC.got[k] || 0) + '/' + SC.of[k]);      // (what was covered, of what there is)
 const scLast = () => { try { const r = JSON.parse(localStorage.getItem('jsscanres') || 'null'); return r && Array.isArray(r.res) ? r : null; } catch { return null; } };
 function scReport(r) {      // the text of COPY SCAN REPORT

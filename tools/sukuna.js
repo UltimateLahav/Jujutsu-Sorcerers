@@ -897,7 +897,7 @@ function suFgHit(now, quiet) {      // the arrow lands: a flinch and a knock bac
     cuHit(0, now, { free: true, gb: true, low: true, knock: 4 }, d.x + 1, 1e9, -1e9);      // (the flinch and the combo counter: it cannot miss, so whether it counted does not matter)
     if (!(d.vform && d.vform !== 'verity')) { const dm = (d.max || DUMMY_HP) * SU_FG.dmg / 100; d.hp = Math.max(0, d.hp - dm); hits.dmg += dm; }
     d.hitAt = now; dotStart('f', 'sburn', { until: now + SU_FL.burn.ms, next: now + SU_FL.burn.gap }, now); spark(d.x, gy - 34, 40, SU_FL.cols, true, 1); spark(d.x, gy - 34, 24, SU_FL.cols, true, -1);
-    if (d.hp <= 0) koDummy(now);
+    if (d.hp <= 0) { koDummy(now); achGive('cool'); }      // (v1.210 the achievement WANNA SEE SOMETHING COOL?: the arrow itself finished him, with the domain open, see tools/ach.js)
   }
   for (let i = 0, n = SET.lite ? 24 : 64; i < n; i++) { const a = -Math.random() * Math.PI, v = 40 + Math.random() * 170; suFgP(F, X, gy - 30, Math.cos(a) * v, Math.sin(a) * v, 0.8 + Math.random() * 0.9, i % 5 === 0 ? '#2a1008' : SU_FL.cols[i % 4], i % 7 === 0 ? 3 : i % 3 ? 1 : 2, 240); }
   F.fl.push({ at: now + 1, dur: 380, a: 0.75, col: '255,255,255' }); snd('sukfire', 4); snd('sukfuga', 2); shakeUntil = Math.max(shakeUntil, now + 900); shakeAmp = Math.max(shakeAmp, 5);
