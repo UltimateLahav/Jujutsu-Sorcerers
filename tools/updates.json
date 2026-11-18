@@ -1,5 +1,16 @@
 [
  {
+  "v": "1.207",
+  "t": "THE CAMERA CAN NO LONGER FREEZE AFTER A MISSING PICTURE",
+  "n": [
+   "You sent an error report: Uncaught TypeError, cannot read properties of undefined (reading 'width'), and said you were using the menu and your camera glitched and got messed up. I looked at it. The error came from the part of the game that draws the pictures of the fighters (the part that adds the trails and the shadows when those graphics options are on): it was asked to draw a picture that did not exist, in the middle of drawing a fighter.",
+   "WHY THE CAMERA BROKE: to draw a fighter the game cuts a window the size of his picture out of the screen, draws him inside it and takes the window away again. The error stopped the drawing in the middle, so the window was never taken away: from then on only that small window was redrawn, and the rest of the picture froze or sat in the wrong place. I made it happen on purpose in a test: one missing picture left the screen broken for good, until the fight was started again.",
+   "WHAT I CHANGED: a picture that does not exist is now skipped for that one moment, and written down in SETTINGS > ERRORS as A PICTURE WAS MISSING AND WAS SKIPPED, with the place in the game where it was asked for. Your own fighter shows the last picture of his move instead of a missing one. And if a picture goes wrong in some other way, the game now puts the screen back exactly as it was before it goes on, so one error can no longer leave the camera broken. The error is still written down.",
+   "THE ERROR REPORT is better: every error now also says what the game was doing when it came: the screen, who was fighting whom, training or battle, street or skyscraper, whether your fighter was swinging, hurt or in cursed energy mode, and the speed setting. With that I can find out which picture it was.",
+   "WHAT I COULD NOT FIND: I played about 160 random fights with your exact settings (trails, shadows, glow, TURBO, unlimited frame rate, the fixed retro size) with every fighter on both maps, with the admin box, and with the options changed in the middle of a fight, and the missing picture never came up. So I know why the camera broke and I made sure it cannot break again, but I do not know yet which move it was. If it happens again, send me the report: it will name the place now. If you remember which fighter and which move you were using, tell me."
+  ]
+ },
+ {
   "v": "1.206",
   "t": "TRAINING: AN ADMIN BOX WITH EVERY MOVE OF THE ENEMY, ONE TAP AND HE DOES IT",
   "n": [

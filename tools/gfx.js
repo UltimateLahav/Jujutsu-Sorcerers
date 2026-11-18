@@ -38,8 +38,20 @@ const gfxPost = still => { if (SET.glow && state === 'play' && !still) gfxBloom(
 // ---------------------------------------------------------------- the pictures of the fighters: a trail behind the fast ones and a shadow under them. These two are put on ctx.drawImage only while one of the options is on.
 const gTr = [], gHasTf = typeof gCP.getTransform === 'function', gS = { n: 0, t: 0, ms: 0, worst: 0, at: 0, hz: 0, hzAt: -9999, f: 0 };
 let gGhost = false;
+let gMissAt = -1e9;
+function gfxMissing() {      // v1.207 a picture that does not exist (a frame of a move beyond its last one, a cache that is not built yet) is skipped and written down in SETTINGS > ERRORS, with where it was asked for. The call of the browser would throw, the frame would stop in the middle of the fighter's picture, and the clip and the shake offset it had set would stay on the canvas for good: the camera froze or moved away. At most twice a second, so a picture that stays missing does not fill the list.
+  const t = performance.now(); if (t - gMissAt < 500) return; gMissAt = t;
+  let w = ''; try { w = String(new Error().stack || '').split('\n').slice(3, 5).map(l => ((/([\w$]+) \(/.exec(l) || [])[1] || '') + ' ' + ((/([\w.]+:\d+:\d+)\)?\s*$/.exec(l) || [])[1] || '')).join(' < '); } catch { /* no stack here */ }
+  errLog('A PICTURE WAS MISSING AND WAS SKIPPED', w);
+}
+function gfxDI0(img) { if (img == null) { gfxMissing(); return; } return gDI.apply(ctx, arguments); }      // (with no trail and no shadow: the call of the browser, but a picture that is missing is skipped)
+function gfxRecover() {      // v1.207 a frame that threw: every save() it left open is undone (a clip or a shake offset that stayed would freeze or shift the picture for good), the pen is put back and the trail hook is let go. restore() with nothing saved does nothing, so too many is harmless
+  try { for (let i = 0; i < 80; i++) ctx.restore(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; if (gBloomOk) ctx.filter = 'none'; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; } catch { /* the canvas is gone: nothing to put back */ }
+  gGhost = false;
+}
 function gfxDI(img) {
   const A = arguments, n = A.length;
+  if (img == null) { gfxMissing(); return; }
   if (gGhost || state !== 'play' || img === cv || (n !== 3 && n !== 5 && n !== 9)) return gDI.apply(ctx, A);
   const dw = n === 3 ? img.width : n === 5 ? A[3] : A[7], dh = n === 3 ? img.height : n === 5 ? A[4] : A[8];
   if (!(dw >= 40 && dw <= 140 && dh >= 48 && dh <= 100)) return gDI.apply(ctx, A);      // (only the pictures of fighters: a spark or a tile is not 40 x 48 or bigger)
@@ -83,7 +95,7 @@ function gfxRefresh() {      // 72 FPS and more and UNLIMITED ask Android for a 
   try { if (window.AndroidApp && window.AndroidApp.setRefresh) window.AndroidApp.setRefresh(want); } catch { /* an older app: nothing to ask for */ }
 }
 function gfxApply() {
-  if ((SET.trl || SET.shd) && gHasTf) ctx.drawImage = gfxDI; else { delete ctx.drawImage; gTr.length = 0; }      // (the trail and the shadow need ctx.getTransform: an old WebView goes without them)
+  if ((SET.trl || SET.shd) && gHasTf) ctx.drawImage = gfxDI; else { ctx.drawImage = gfxDI0; gTr.length = 0; }      // (the trail and the shadow need ctx.getTransform: an old WebView goes without them)
   if (SET.ov < 2) ctx.fillRect = gfxFR; else delete ctx.fillRect;
   cv.style.imageRendering = SET.smooth ? 'auto' : '';
   gSt.style.display = SET.fpsc ? 'block' : 'none';
@@ -174,4 +186,4 @@ function gfxPreview(c) {
   };
   requestAnimationFrame(loop);
 }
-window.__gfxReady = 1; gfxAuto();
+ctx.drawImage = gfxDI0; window.__gfxReady = 1; gfxAuto();

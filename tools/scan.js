@@ -4,7 +4,7 @@
 // DATA = the tables, MENUS = every screen, FIGHTERS = all 7 played at random (free play and versus), MOVES = every button x direction of every fighter, CUTSCENES = every FATALITY and DOMAIN, STORY = every chapter shot by shot (the SKIP button).
 // Your saves are copied first (storage key jsscanbak) and put back when it is over, whatever happens (the top of the page also does it, if the scan was cut short); the page reloads at the end. The result is kept in jsscanres.
 // How it takes the game over: tick() (tools/template.html) ignores the real animation frames while SCAN_ON is set, the scan calls tick() itself with its own time, performance.now() is its clock, and requestAnimationFrame does nothing.
-const SC = { peak: {}, budget: 62000, cancel: false, t: 0, frames: 0, res: [], seen: new Map(), ok: 0, sec: '', say: '', cap: 0, hard: 0, part: false, yAt: 0, t0: 0, secT0: 0, done: 0, plan: 1, got: {}, of: {} };
+const SC = { expect: null, peak: {}, budget: 62000, cancel: false, t: 0, frames: 0, res: [], seen: new Map(), ok: 0, sec: '', say: '', cap: 0, hard: 0, part: false, yAt: 0, t0: 0, secT0: 0, done: 0, plan: 1, got: {}, of: {} };
 const scReal = performance.now.bind(performance), SC_STEP = 50, SC_MINUTE = 62000;      // (SC_MINUTE: how long a scan takes, the last part of it fills what is left)
 const scYield = () => new Promise(r => setTimeout(r, 0));
 const SC_WHO = ['gojo', 'yuji', 'verity', 'cat', 'freddy', 'cu3', 'cu4'], SC_NAME = { gojo: 'GOJO', yuji: 'YUJI', verity: 'VERITY', cat: 'CAT', freddy: 'FREDDY', cu3: 'SUKUNA', cu4: 'RYU', cu5: 'IRON MAN' };
@@ -25,7 +25,7 @@ function scErr(e, what) {      // an exception: what it said and where the page 
 // ---------------------------------------------------------------- the clock, the frames, the keys
 function scTick(ms) {
   SC.t += ms || SC_STEP; if (paused) setPause(false);
-  SCAN_STEP = true; try { tick(SC.t); } catch (e) { scErr(e, 'FRAME'); } SCAN_STEP = false; SC.frames++;
+  SCAN_STEP = true; try { tick(SC.t); } catch (e) { if (SC.expect === null) scErr(e, 'FRAME'); else SC.expect++; } SCAN_STEP = false; SC.frames++;      // (SC.expect: a number while a check makes frames throw on purpose, they are counted and not listed)
 }
 async function scFrames(n, per, ms) {      // n frames of the game; per(i) runs before each frame; false = the scan must stop (cancelled, or the time of this part is up)
   for (let i = 0; i < n; i++) {
@@ -316,6 +316,29 @@ async function scAdmin1() {
   show('title'); SC.say = 'A BATTLE';
   try { const sv = { ...vsPick }; vsPick.me = 'gojo'; vsPick.foe = 'yuji'; startMatch(1); Object.assign(vsPick, sv); } catch (e) { scErr(e, 'ADMIN BATTLE'); }
   if (await scUntil(() => !!vs && vs.ph === 'fight', 40, 250)) { await scFrames(2, null, 100); ok(!vs.practice && !A().on && $('admBtn').style.display === 'none' && !$('adm').classList.contains('on'), 'A BATTLE HAS THE ADMIN BUTTON OR THE BOX', 'ON ' + A().on); } else if (stop()) return;
+  show('title');
+}
+// ---------------------------------------------------------------- CANVAS: what a frame that throws leaves behind (v1.207)
+// A picture that was missing threw in the middle of the fighter's clipped picture (tools/template.html, paintMe): the clip and the shake offset it had set stayed on the canvas, so the picture froze outside a small rectangle and the camera looked broken for good. Now a missing picture (undefined or null) is skipped and written down (gfxMissing), and a frame that throws anyway puts the canvas back (gfxRecover, called by tick). Checks: gfxRecover puts back the transform, the alpha and every clip; a missing picture does not throw and is written down once; and a frame that really throws in a fight (every frame of his standing animation is a canvas of no size, which the browser refuses) leaves a canvas that can be painted all over again.
+const SC_CV_N = 5;
+async function scCanvas() {
+  SC.sec = 'CANVAS'; scCov('CANVAS', 0, SC_CV_N); SC.plan = 80; SC.done = 0;
+  const ok = (c, what, d) => { scT(c, 'CANVAS: ' + what, d || ''); scCov('CANVAS', 1, 0); };
+  const probe = () => { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.fillStyle = '#ff00ff'; ctx.fillRect(0, 0, VW, VH); const a = ctx.getImageData(2, 2, 1, 1).data, b = ctx.getImageData(VW - 3, VH - 3, 1, 1).data; ctx.restore(); return a[0] + ',' + a[1] + ',' + a[2] + '|' + b[0] + ',' + b[1] + ',' + b[2]; };      // (paints the whole canvas and reads two corners: a clip that stays would leave them as they were)
+  try {
+    ctx.save(); ctx.beginPath(); ctx.rect(20, 20, 4, 4); ctx.clip(); ctx.translate(7, 9); ctx.globalAlpha = 0.3; ctx.save(); ctx.scale(2, 2); gfxRecover();      // (a frame that threw in the middle of two pictures)
+    const m = ctx.getTransform(); ok(m.a === 1 && m.b === 0 && m.c === 0 && m.d === 1 && m.e === 0 && m.f === 0 && ctx.globalAlpha === 1, 'A FRAME THAT THREW LEFT THE TRANSFORM OR THE ALPHA OF THE CANVAS AS IT WAS', [m.a, m.d, m.e, m.f, ctx.globalAlpha].join());
+    const pr = probe(); ok(pr === '255,0,255|255,0,255', 'A FRAME THAT THREW LEFT A CLIP ON THE CANVAS: THE PICTURE WOULD FREEZE OUTSIDE IT', pr);
+    const hook = SCAN_HOOK, n = ERRS.length; SCAN_HOOK = null; gMissAt = -1e9; let threw = ''; try { ctx.drawImage(undefined, 0, 0); ctx.drawImage(null, 1, 1, 8, 8); } catch (e) { threw = String(e && e.message || e).slice(0, 80); } SCAN_HOOK = hook;
+    ok(!threw, 'A PICTURE THAT IS MISSING MADE THE FRAME THROW INSTEAD OF BEING SKIPPED', threw);
+    ok(ERRS.length === n + 1 && /MISSING/.test(ERRS[ERRS.length - 1].m), 'A MISSING PICTURE WAS NOT WRITTEN DOWN ONCE IN THE ERROR LIST', 'LIST ' + n + ' -> ' + ERRS.length); while (ERRS.length > n) ERRS.pop(); gMissAt = -1e9;      // (the note of the test is taken out again)
+  } catch (e) { scErr(e, 'CANVAS'); }
+  Object.assign(TR, { beh: 0, ehp: 1, php: 0, pce: 0, put: 2 });
+  try { startPractice('gojo', 'yuji'); } catch (e) { scErr(e, 'CANVAS START'); return; }
+  if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (!SC.cancel && scReal() <= SC.cap) scNote('fail', 'CANVAS: THE FIGHT NEVER BEGAN', ''); show('title'); return; } await scFrames(2, null, 600);
+  const bad = document.createElement('canvas'); bad.width = 0; bad.height = 0; const keep = idleF.slice(); let thrown = 0; SC.expect = 0;      // (a real exception, in the middle of the clipped picture of the fighter: the browser refuses a canvas of no size, and every frame of his standing animation is one)
+  try { idleF.fill(bad); await scFrames(12, null, 100); } finally { keep.forEach((c, i) => { idleF[i] = c; }); thrown = SC.expect; SC.expect = null; }
+  await scFrames(2, null, 100); const pr2 = probe(); ok(thrown >= 1 && pr2 === '255,0,255|255,0,255', 'A FRAME THAT THREW IN A FIGHT LEFT THE CANVAS BROKEN (A CLIP OR AN OFFSET STAYED)', 'FRAMES THAT THREW ' + thrown + ', CORNERS ' + pr2);
   show('title');
 }
 // v1.191 IRON MAN's moves: the chain (R.HOOK, L.HOOK, R.KICK, PUNCH), the ROCKET UPPERCUT (JUMP and ATTACK together, either one first), the DOWNSLAM (ATTACK 0.2 s after the jump, and an earlier one waits for it), crouch, block and dash; each is a check that the move that should come out did (cuAtkK: 0 - 3 the chain, 4 the uppercut, 5 the downslam), played against a standing enemy in front of him; v1.192 the LOW JABS (6: crouched, ATTACK), the CHARGE (7: ATTACK during a dash or just after it; a late one is a plain hook) and the BACKFLIP (8: DASH BACK twice, never two dashes forward); v1.193 the REPULSOR MODE (the MODE button: ATTACK is R.BLAST (9) and then L.BLAST (10), both hurt the enemy, the other moves stay, off again it is the chain); v1.194 the BEAR HUG (BLUE: he charges, grabs, hugs, flies up with the enemy hanging in his arms, turns over, dives and slams: 4 hits, it ends by itself, and it has a cooldown); in the skyscraper he is also one of the fighters of scTower
@@ -682,7 +705,7 @@ async function scTicks() {      // v1.201 ONE TICK EFFECT AT A TIME (a bleed, a 
   } finally { twPick = keep; }
 }
 
-const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['ADMIN', 16, scAdmin], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['TICKS', 6, scTicks], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
+const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['ADMIN', 16, scAdmin], ['CANVAS', 6, scCanvas], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['TICKS', 6, scTicks], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
 const scEl = document.createElement('section'); scEl.id = 'scan'; scEl.className = 'screen';
 scEl.innerHTML = '<h2>SCANNING THE GAME</h2><div id="scBar"><i id="scFill"></i></div><small id="scTxt"></small><small id="scLive"></small><small>YOUR SAVES ARE SAFE: THEY WERE COPIED FIRST AND ARE PUT BACK WHEN THE SCAN IS OVER.</small><button id="scCancel">CANCEL</button>';
 document.body.appendChild(scEl);
@@ -729,7 +752,7 @@ async function scRun(opts) {      // opts.noReload = for the tests: no reload at
 window.__scanRun = scRun;
 
 // ---------------------------------------------------------------- what the ERRORS page shows
-const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', ADMIN: 'ADMIN BOX OF THE TRAINING', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', CITY: 'CITY DOORS AND FALLS', TICKS: 'TICK EFFECTS, ONE AT A TIME', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
+const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', ADMIN: 'ADMIN BOX OF THE TRAINING', CANVAS: 'CANVAS AFTER AN ERROR', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', CITY: 'CITY DOORS AND FALLS', TICKS: 'TICK EFFECTS, ONE AT A TIME', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
 const scCovText = () => Object.keys(SC.got).concat(Object.keys(SC.of)).filter((k, i, a) => a.indexOf(k) === i).map(k => k === 'ROUNDS' ? 'EXTRA ROUNDS OF 14 FIGHTS ' + SC.got[k] : (SC_COVN[k] || k) + ' ' + (SC.got[k] || 0) + '/' + SC.of[k]);      // (what was covered, of what there is)
 const scLast = () => { try { const r = JSON.parse(localStorage.getItem('jsscanres') || 'null'); return r && Array.isArray(r.res) ? r : null; } catch { return null; } };
 function scReport(r) {      // the text of COPY SCAN REPORT

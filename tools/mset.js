@@ -168,7 +168,7 @@ function msGtools(box) {      // TEST MY PHONE, what the screen can do, and what
 function msCopyText(t) { try { if (window.AndroidApp) { window.AndroidApp.copy(t); return true; } const ta = document.createElement('textarea'); ta.value = t; ta.style.cssText = 'position:fixed;left:-9999px;top:0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok; } catch { return false; } }
 function errReport() {      // the text of COPY REPORT: what to send when something looked wrong
   const L = ['JUJUTSU SORCERERS ERROR REPORT', 'VERSION: ' + (($('ver') || {}).textContent || ''), 'WINDOW: ' + innerWidth + 'X' + innerHeight + '  SCREEN: ' + state, 'SETTINGS: ' + JSON.stringify(SET), 'ERRORS: ' + ERRS.length];
-  ERRS.forEach(e => L.push('[' + e.d + ' UTC] ' + e.m + (e.w ? ' (' + e.w + ')' : '') + (e.n > 1 ? ' X' + e.n : ''))); return L.join('\n');
+  ERRS.forEach(e => L.push('[' + e.d + ' UTC] ' + e.m + (e.w ? ' (' + e.w + ')' : '') + (e.g ? ' [' + e.g + ']' : '') + (e.n > 1 ? ' X' + e.n : ''))); return L.join('\n');
 }
 function msErrs(box) {      // v1.168 the errors the game ran into (ERRS in tools/template.html): the newest first, COPY REPORT and CLEAR
   scPage(box); box.appendChild(msEl('div', 'mhd', 'ERRORS THE GAME RAN INTO'));
@@ -178,7 +178,7 @@ function msErrs(box) {      // v1.168 the errors the game ran into (ERRS in tool
   row.appendChild(mk('COPY REPORT', () => { say.textContent = msCopyText(errReport()) ? 'COPIED' : 'COULD NOT COPY: THE LIST IS BELOW, COPY IT BY HAND'; }));
   row.appendChild(mk('CLEAR', () => { ERRS.length = 0; errSave(); msBuild(); })); box.appendChild(row); box.appendChild(say);
   if (!ERRS.length) box.appendChild(msEl('small', 'mh', 'NO ERRORS SO FAR.'));
-  for (let i = ERRS.length - 1; i >= 0; i--) { const e = ERRS[i], r = msEl('div', 'mr'); r.appendChild(msEl('span', 'mn', e.m.toUpperCase())); r.appendChild(msEl('small', 'mh', e.d + ' UTC' + (e.w ? '  ' + e.w.toUpperCase() : '') + (e.n > 1 ? '  X' + e.n : ''))); box.appendChild(r); }
+  for (let i = ERRS.length - 1; i >= 0; i--) { const e = ERRS[i], r = msEl('div', 'mr'); r.appendChild(msEl('span', 'mn', e.m.toUpperCase())); r.appendChild(msEl('small', 'mh', e.d + ' UTC' + (e.w ? '  ' + e.w.toUpperCase() : '') + (e.g ? '  ' + e.g : '') + (e.n > 1 ? '  X' + e.n : ''))); box.appendChild(r); }
 }
 function msBuild() {
   const root = $('mset'), keep = root.querySelector('.mbody'), top = keep ? keep.scrollTop : 0; root.textContent = '';

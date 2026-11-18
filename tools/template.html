@@ -211,7 +211,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.206</small>
+    <small id="ver">V1.207</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -431,13 +431,16 @@ function scRestoreSaves() {      // a scan copies the saves first (jsscanbak) an
   try { const b = localStorage.getItem('jsscanbak'); if (!b) return false; const o = JSON.parse(b); for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k !== 'jsscanbak' && k !== 'jsscanres') localStorage.removeItem(k); } for (const k in o) localStorage.setItem(k, o[k]); localStorage.removeItem('jsscanbak'); return true; } catch { return false; }
 }
 scRestoreSaves();
-const ERRS = [];      // v1.168 the errors the game ran into (SETTINGS > ERRORS): { d: when (UTC), m: the message, w: where, n: how many times in a row }; the last 30 stay in the storage (jserrlog: not part of the save code)
-try { const o = JSON.parse(localStorage.getItem('jserrlog') || '[]'); if (Array.isArray(o)) for (const e of o.slice(-30)) if (e && typeof e.m === 'string') ERRS.push({ d: String(e.d || '').slice(0, 16), m: e.m.slice(0, 300), w: String(e.w || '').slice(0, 80), n: Math.max(1, +e.n || 1) }); } catch { /* storage blocked */ }
+const ERRS = [];      // v1.168 the errors the game ran into (SETTINGS > ERRORS): { d: when (UTC), m: the message, w: where, g: what the game was doing (v1.207), n: how many times in a row }; the last 30 stay in the storage (jserrlog: not part of the save code)
+try { const o = JSON.parse(localStorage.getItem('jserrlog') || '[]'); if (Array.isArray(o)) for (const e of o.slice(-30)) if (e && typeof e.m === 'string') ERRS.push({ d: String(e.d || '').slice(0, 16), m: e.m.slice(0, 300), w: String(e.w || '').slice(0, 80), g: String(e.g || '').slice(0, 80), n: Math.max(1, +e.n || 1) }); } catch { /* storage blocked */ }
 let errTimer = 0; const errSave = () => { errTimer = 0; try { localStorage.setItem('jserrlog', JSON.stringify(ERRS)); } catch { /* storage blocked: the list in memory is still right */ } };
+function errCtx() {      // v1.207 what the game was doing when an error came: the screen, the fight (who against whom, training or battle, street or skyscraper, the phase) and what the player's fighter was doing (a swing, hurt, cursed energy, his stance). A report that says only "TypeError ... width" cannot be traced; this can. (An error before the game has started finds nothing here: the empty text.)
+  try { return (state + (vs ? ' ' + vs.me + ' VS ' + vs.foe + (vs.practice ? ' TRAINING' : vs.story ? ' STORY' : vs.net ? ' WIFI' : ' BATTLE') + (vs.tw ? ' TOWER' : ' STREET') + ' ' + vs.ph : '') + (paused ? ' PAUSED' : '') + (atkAt >= 0 ? ' ATK' + atkK : '') + (hurtAt >= 0 ? ' HURT' : '') + (ceOn ? ' CE' : '') + ' ' + stance + ' PACE' + SET.pace).slice(0, 80); } catch { return ''; }
+}
 function errLog(m, w) {      // one more error (the same one again and again is counted, not listed); the storage is written at most once in 0.8 s
   try {
     m = String(m || 'ERROR').slice(0, 300); w = String(w || '').slice(0, 80); const last = ERRS[ERRS.length - 1], d = new Date().toISOString().slice(0, 16).replace('T', ' ');
-    if (last && last.m === m && last.w === w) { last.n++; last.d = d; } else { ERRS.push({ d, m, w, n: 1 }); if (ERRS.length > 30) ERRS.shift(); }
+    if (last && last.m === m && last.w === w) { last.n++; last.d = d; } else { ERRS.push({ d, m, w, g: errCtx(), n: 1 }); if (ERRS.length > 30) ERRS.shift(); }
     if (!errTimer) errTimer = setTimeout(errSave, 800);
     if (SCAN_HOOK) SCAN_HOOK(m, w);
   } catch { /* the list is only a help: it must never make an error of its own */ }
@@ -4721,7 +4724,8 @@ function drawScene(now, dt) {
   }
   const fearing = now < pStun && !hurting, riding = !!ride, yj = vs && vs.me === 'yuji' ? yujiPick({ spiky: cm === 3, now, atkOn, atkK, af, hurting, hurtK, hurtAt, hf, dodging, dgK, dgCr, df, jumping, jumpC, jf, jumpAt, tdC: yjLandC, land: yjLand, mode, idle, sf, stance, spawnAt, modeAt, blocking, bf, dir }) : null, set = rmvK ? atkF[11] : yj ? yj.set : riding ? ride.set : hurting ? (now - hurtAt < 70 ? rxW : rxN)[hurtK] : fearing ? crF.idle : dodging ? atkF[9 + dgK + (dgCr ? 3 : 0)] : blocking ? bset : tele ? teleF : jumping ? (jumpC ? crF.jump : jumpF) : mbing ? (mbK ? redF : mbF) : lapsing ? lapseF[lpK] : atkOn ? atkF[atkK] : mode === 'cdn' ? crF.dn : mode === 'cidle' ? crF.idle : mode === 'cfwd' ? crF.fwd : mode === 'cback' ? crF.back : idle ? idleF : mode === 'fwd' ? fwdF : backF;
   const info = rmvK ? D.atk11 : yj ? yj.info : riding ? ride.info : hurting ? D['rx' + hurtK] : fearing ? D.cidle : dodging ? D['atk' + (9 + dgK + (dgCr ? 3 : 0))] : blocking ? binfo : tele ? D.tele : jumping ? (jumpC ? D.cjump : D.jump) : mbing ? (mbK ? D.atk22 : D.atk8) : lapsing ? D['atk' + (4 + lpK)] : atkOn ? D['atk' + atkK] : mode === 'cdn' ? D.cdn : mode === 'cidle' ? D.cidle : mode === 'cfwd' ? D.cfwd : mode === 'cback' ? D.cback : idle ? D.idle : mode === 'fwd' ? D.fwd : D.back;
-  const fi = rmvK ? rmvF : yj ? yj.fi : riding ? ride.fi : hurting ? hf : fearing ? Math.floor(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)) % 15 : dodging ? df : blocking ? bfi : tele ? tf : jumping ? jf : mbing ? mf : lapsing ? lf : atkOn ? af : mode === 'cdn' ? (stance === 'down' ? sf : 14 - sf) : Math.floor(Math.max(0, now - (idle || mode === 'cidle' ? spawnAt : modeAt)) / (1000 / (idle || mode === 'cidle' ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail pnow() by a hair
+  const fiRaw = rmvK ? rmvF : yj ? yj.fi : riding ? ride.fi : hurting ? hf : fearing ? Math.floor(Math.max(0, now - spawnAt) / (1000 / IDLE_FPS)) % 15 : dodging ? df : blocking ? bfi : tele ? tf : jumping ? jf : mbing ? mf : lapsing ? lf : atkOn ? af : mode === 'cdn' ? (stance === 'down' ? sf : 14 - sf) : Math.floor(Math.max(0, now - (idle || mode === 'cidle' ? spawnAt : modeAt)) / (1000 / (idle || mode === 'cidle' ? IDLE_FPS : WALK_FPS))) % set.length;   // clamp: rAF time can trail pnow() by a hair
+  const fi = set && set.length ? (fiRaw >= 0 && fiRaw < set.length ? fiRaw : Math.max(0, Math.min(set.length - 1, fiRaw | 0))) : fiRaw;      // (v1.207 a frame that a move asks for beyond the last one of its set, or before the first, is the last or the first one: it was a picture that did not exist, which broke the frame in the middle of his picture)
   const lk = tele && info.lift_k ? info.lift_k[tf] : 0;      // teleport: stays where he vanished (null), then the fixed height he reappears at, falling back to the ground (v1.52: no lift_k while another picture has priority, e.g. the blindfold going back on at the end of his own void: that crashed the frame)
   const lift = gAir ? gAirH : yj ? (yu ? yu.lift : yj.lift) : riding ? ride.lift : tele ? (lk === null ? teleL0 : Math.round(Math.min(34, gy - 66) * lk)) : jumping ? (jumpC ? D.cjump : D.jump).lift[jf] : hurting && info.lift ? info.lift[hf] : 0;   // how far the sprite is raised off the ground
   gojoLift = lift; gojoGone = tele && tf < 6;   // the attacking dummy misses him while he is up in the air or vanished
@@ -6484,15 +6488,17 @@ function tick(t) {
   if (story && story.toC3End) { story.toC3End = false; startC3End(now); }      // (chapter 2's fight is won: its ending starts)
   if (story && story.toEnd) { story.toEnd = false; startTrainEnd(now); }      // (the training fight is won: the happy ending starts)
   if (story && story.toMaster) { story.toMaster = false; startMaster(now); }      // (the fight against the Cat is won: the Master's scene starts)      // (the fight against Verity is won: the ending of the chapter starts)
-  if (state === 'play') { if (still || now < holdUntil) { last = now; if (impf) impfFrame(); else if (suTs) suTsFrame(); } else drawScene(now, dt); stateDraw(now); twOverlay(now); msRecord(now); }      // hit-stop: the picture freezes for a split second when the red orb explodes
-  else if (state === 'fsel') fsDraw(now);
-  else if (state === 'lansel') lanSelDraw(now);
-  else if (state === 'chal') chalDraw(now);
-  else if (state === 'story') storyFrame(now, dt);
-  else if (state === 'bsel') bsDraw(now);
-  else if (state === 'msel') mpDraw(now);
-  else if (state === 'vsplash') vsxDraw(now);
-  else if (state === 'title') drawHero(updateBlink(now));
+  try {      // (v1.207 a picture that throws in the middle of a frame no longer leaves its clip or its shake offset on the canvas: gfxRecover puts the canvas back, and the error still goes to the list)
+    if (state === 'play') { if (still || now < holdUntil) { last = now; if (impf) impfFrame(); else if (suTs) suTsFrame(); } else drawScene(now, dt); stateDraw(now); twOverlay(now); msRecord(now); }      // hit-stop: the picture freezes for a split second when the red orb explodes
+    else if (state === 'fsel') fsDraw(now);
+    else if (state === 'lansel') lanSelDraw(now);
+    else if (state === 'chal') chalDraw(now);
+    else if (state === 'story') storyFrame(now, dt);
+    else if (state === 'bsel') bsDraw(now);
+    else if (state === 'msel') mpDraw(now);
+    else if (state === 'vsplash') vsxDraw(now);
+    else if (state === 'title') drawHero(updateBlink(now));
+  } catch (e) { gfxRecover(); throw e; }
   gfxPost(still || now < holdUntil); gfxEnd();      // (v1.153 the glow over the finished picture, and the numbers of the stats overlay)
 }
 
