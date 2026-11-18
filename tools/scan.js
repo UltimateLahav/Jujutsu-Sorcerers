@@ -265,7 +265,7 @@ const AD_EXP = {
   freddy: 'R.SLASH,L.SLASH,FAR L.PUNCH,FAR R.PUNCH,BOILING WATER,PIERCE,GROUND SLAM,NIGHTMARE,BLOCK,DODGE,FINISHER',
   cu3: 'R.JAB,L.JAB,FACE KICK,COUNTER,R.JAB 2,L.UPPR,R.SLASH,L.SLASH,X SLASH,R.HOOK,L.HOOK,ELBOW,AIR CUT,FIRE ARROW,SHRINE,BLOCK,DODGE',
   cu4: 'L.HOOK,R.HOOK,KICK UP,JUMP PUNCH,LEG KICK,DOWNSLAM,HARD PUNCH,FRONT KICK,POWER PUNCH,DIVE PUNCH,5-HIT COMBO,DASH KICK,KI BLAST,JUST ONCE,BLOCK,DODGE',
-  cu5: 'R.HOOK,L.HOOK,R.KICK,PUNCH,UPPERCUT,LOW JABS,R.BLAST,L.BLAST,UNIBEAM,BLOCK,DODGE'
+  cu5: 'R.HOOK,L.HOOK,R.KICK,PUNCH,UPPERCUT,DOWNSLAM,LOW JABS,BACKFLIP,R.BLAST,L.BLAST,CHARGE,BLAST,LASER,SPIN BLAST,GROUND PUNCH,BEAR HUG,UNIBEAM,BLOCK,DODGE'
 };
 const AD_BIG = ['FINISHER', 'ULTIMATE', 'JUMPSCARE', 'NIGHTMARE', 'SHRINE', 'JUST ONCE', 'UNIBEAM'], SC_AD_N = 44, AD_WHO = SC_WHO.concat('cu5');      // (1 button + 8 x 3 lists and moves + 10 big moves + 2 FREEZE + 4 tools + 1 X + 1 closed box + 1 Battle; v1.208 Iron Man is the eighth enemy)
 async function scAdmin() {      // (every enemy decides at once when he can: GRADES.aggr is 1 for the length of the checks, so that a stray move after a clicked one is certain, not a matter of luck)
@@ -391,6 +391,91 @@ async function scClash() {
 }
 
 // ---------------------------------------------------------------- ACHIEVEMENTS (v1.210): the card and the screen, the save, the rectangle that slides in, and the three ways to earn one (tools/ach.js)
+const SC_K5_N = 59;
+async function scK5() {      // v1.211 the chapter 5 fight: Yuji against Iron Man in the huge room (the picture turned over, Black Flash mode, no ending) and Iron Man's other moves as the enemy
+  SC.sec = 'CH 5 FIGHT'; scCov('CH 5 FIGHT', 0, SC_K5_N); SC.plan = 3000; SC.done = 0;
+  const ok = (c, what, d) => { scT(c, 'CH 5 FIGHT: ' + what, d || ''); scCov('CH 5 FIGHT', 1, 0); }, stop = () => SC.cancel || scReal() > SC.cap, gore0 = SET.gore, sv0 = localStorage.getItem(SAVE_KEY), GG = GRADES[3], gg0 = { dodge: GG.dodge, blk: GG.blk }, tr0 = {}; for (const k of ['beh', 'ehp', 'php', 'pce', 'grade', 'foe', 'put']) tr0[k] = TR[k];
+  const start = async label => { try { show('title'); story = { slot: -1, t0: pnow(), battle: false, T: 0, ev: {}, c16: true }; k5FightGo(); } catch (e) { scErr(e, label + ' START'); return false; } return scUntil(() => !!vs && !!vs.k5 && vs.ph === 'fight', 120, 50); };
+  const calm = () => { dummy.ai = 'rest'; dummy.aiAt = pnow(); dummy.restFor = 1e9; dummy.fa = null; dummy.stunUntil = 0; dummy.spNext = pnow() + 1e9; dummy.cs = dummy.cb = dummy.ca = null; vs.fburn = null; };      // (what he threw before is gone too: a bolt in the air would hurt Yuji in the middle of a blow)
+  try {
+    SET.gore = 0; if (!(await start('THE FIGHT'))) { if (!stop()) scNote('fail', 'CH 5 FIGHT: THE FIGHT DID NOT START', state + ' ' + (vs ? vs.ph : 'NO VS')); return; }
+    GG.dodge = 0; GG.blk = 0;      // (the grade of this fight: its dodges and blocks would make a blow miss in the checks that count damage; put back at the end)
+    calm(); await scUntil(() => hurtAt < 0 && pnow() - hurtEnd > 300, 80, 50);      // (the enemy may have struck once before the scan got hold of him: Yuji has to be on his feet)
+    // the start
+    ok(vs.me === 'yuji' && vs.foe === 'cu5' && !!vs.story && vs.k5 && state === 'play' && !vs.tn && !vs.c3 && vs.tl > 1e8, 'THE FIGHT IS NOT YUJI AGAINST IRON MAN WITH NO TIMER', vs.me + ' / ' + vs.foe + ' / ' + vs.tl);
+    ok(document.body.classList.contains('c4') && $('atkl').textContent === 'FLASH' && $('hud').classList.contains('vs'), 'THE BUTTONS ARE NOT THE FIGHT\'S (THE BODY CLASS c4 AND ATTACK SAYING FLASH)', document.body.className + ' / ' + $('atkl').textContent);
+    ok(owns('y_crouch') && owns('y_dash') && owns('y_block') && !owns('y_ce') && !owns('y_ult') && !owns('y_fatal') && !owns('y_heavy') && !owns('y_div'), 'THE SKILLS OF THE FIGHT ARE NOT CROUCH, DASH AND BLOCK ONLY', ['y_crouch', 'y_dash', 'y_block', 'y_ce', 'y_ult', 'y_fatal', 'y_heavy', 'y_div'].map(k => k + '=' + owns(k)).join(' '));
+    ok(dummy.x - wx > 20 && dummy.x - wx < 120 && Math.round(wx) === 0, 'THE TWO OF THEM DO NOT STAND IN THE MIDDLE OF THE HALL', 'GAP ' + Math.round(dummy.x - wx));
+    // turned over: left and right swap, for the keys and for the stick
+    ok(k5In('L') === 'R' && k5In('R') === 'L' && k5In('A') === 'A' && k5In('U') === 'U', 'LEFT AND RIGHT DO NOT SWAP (OR SOMETHING ELSE DOES)', k5In('L') + k5In('R') + k5In('A'));
+    { setStick(-1, 0); const a = padR && !padL; setStick(1, 0); const b = padL && !padR; setStick(0, 0); ok(a && b && !padL && !padR, 'THE STICK DOES NOT SWAP LEFT AND RIGHT', a + ' / ' + b); }
+    scKey('ArrowLeft', true); await scFrames(2, null, 50); const kr = keyR && !keyL; scKey('ArrowLeft', false); await scFrames(1, null, 50); scKey('ArrowRight', true); await scFrames(2, null, 50); const kl = keyL && !keyR; scKey('ArrowRight', false); await scFrames(2, null, 50);
+    ok(kr && kl && !keyL && !keyR, 'THE LEFT KEY DOES NOT WALK TOWARDS IRON MAN (ON THE LEFT OF THE SCREEN) AND THE RIGHT KEY AWAY FROM HIM', kr + ' / ' + kl);
+    { const p0 = popups.length; say('X', dummy.x, '#fff', 8, pnow()); const p = popups[popups.length - 1], cxx = popSx(p); ok(popups.length === p0 + 1 && cxx < Math.round(VW / 2) && cxx > 0, 'A NUMBER OVER IRON MAN IS NOT ON HIS SIDE OF THE PICTURE (THE LEFT)', '' + cxx); }
+    { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#ff00ff'; ctx.fillRect(0, 0, 10, cv.height); ctx.fillStyle = '#00ffff'; ctx.fillRect(cv.width - 10, 0, 10, cv.height); k5Flip(); const l = ctx.getImageData(1, 5, 1, 1).data, r = ctx.getImageData(cv.width - 2, 5, 1, 1).data; ctx.restore(); ok(l[0] === 0 && l[1] === 255 && r[0] === 255 && r[1] === 0, 'k5Flip DID NOT TURN THE PICTURE OVER', Array.from(l).join() + ' / ' + Array.from(r).join()); }
+    // the one blow: the Black Flash
+    ok(atkAt < 0, 'A BLOW IS GOING ON AT THE START', '' + atkAt); { stance = 'crouch'; const a = pickAtk0(); stance = 'stand'; const b = pickAtk0(), c = pickAtk0(); ok(a === 22 && b === 20 && c === 20 && lastM1() === 20, 'ATTACK IS NOT THE BLACK FLASH (20 STANDING, 22 CROUCHED)', a + ' ' + b + ' ' + c + ' ' + lastM1()); }
+    calm(); wx = 0; wxv = 0; dummy.x = 38; dummy.vx = 0; await scUntil(() => hurtAt < 0, 40, 50); await scFrames(2, null, 50);
+    const bf0 = vs.k5.bf, wk0 = vs.k5.weak, eh0 = dummy.hp; scKey('KeyJ', true); await scFrames(2, null, 50); scKey('KeyJ', false);
+    ok(await scUntil(() => !!vs.k5.ring, 30, 50), 'THE BLACK FLASH GOT NO RING', ''); vs.rolled = true;      // (the enemy's brain dodges or blocks a swing it has read now and then: not in this check)
+    ok(atkK === 20 && !!vs.k5.ring && vs.k5.ring.k === 20 && Math.abs(vs.k5.ring.x - dummy.x) <= 14, 'THE RING IS NOT ON THE ENEMY', JSON.stringify(vs.k5.ring));
+    await scUntil(() => atkAt < 0, 40, 50); await scFrames(2, null, 50); calm();
+    ok(vs.k5.bf === bf0 + 1 && vs.k5.weak === wk0 && eh0 - dummy.hp === Math.round(BF_DMG[0] * INH_DMG), 'A BLACK FLASH ON THE RING WAS NOT PERFECT, OR IT DID NOT DO HALF OF 60', (eh0 - dummy.hp) + ' / ' + vs.k5.bf + ' ' + vs.k5.weak);
+    ok(dummy.ko < 0 && !vs.k5.ring, 'THE RING STAYED AFTER THE BLOW, OR THE ENEMY FELL', '');
+    // a weak one: the enemy is not where the ring was when the fist lands
+    await scUntil(() => pnow() - dummy.rxAt > 900 && hurtAt < 0, 60, 50); calm(); wx = 0; wxv = 0; dummy.x = 38; dummy.vx = 0; dummy.airH = 0; dummy.air = null; await scFrames(3, null, 50);
+    { const wk1 = vs.k5.weak, bf1 = vs.k5.bf, h1 = dummy.hp; scKey('KeyJ', true); await scFrames(2, null, 50); scKey('KeyJ', false); await scUntil(() => !!vs.k5.ring, 20, 50); vs.rolled = true; vs.k5.ring.x += 30; 
+      await scUntil(() => atkAt < 0, 40, 50); await scFrames(2, null, 50);
+      ok(vs.k5.weak === wk1 + 1 && vs.k5.bf === bf1 && h1 - dummy.hp === Math.max(1, Math.round(Math.round(BF_DMG[0] * INH_DMG) * 0.25)), 'A BLACK FLASH OFF THE RING WAS NOT WEAK (A QUARTER OF THE DAMAGE)', (h1 - dummy.hp) + ' / ' + vs.k5.weak + ' ' + vs.k5.bf); calm(); }
+    // the threat rule
+    dummy.hp = dummy.max; vs.k5.dm = []; vs.k5.pf = []; ok(!k5Threat(pnow()), 'HE FEELS THREATENED AT FULL HEALTH', '');
+    dummy.hp = Math.round(dummy.max * 0.59); ok(k5Threat(pnow()), 'HE DOES NOT FEEL THREATENED AT 59% HEALTH', '');
+    dummy.hp = dummy.max; k5Hurt(Math.round(dummy.max * 0.23), pnow()); ok(k5Threat(pnow()), 'HE DOES NOT FEEL THREATENED AFTER LOSING 23% IN 7 S', ''); vs.k5.dm = []; ok(!k5Threat(pnow()), 'HE STILL FEELS THREATENED AFTER NOTHING WAS LOST', '');
+    vs.k5.pf = [pnow() - 3000, pnow() - 500]; ok(k5Threat(pnow()), 'HE DOES NOT FEEL THREATENED AFTER TWO PERFECT BLACK FLASHES IN 10 S', ''); vs.k5.pf = [pnow() - 11000, pnow() - 500]; ok(!k5Threat(pnow()), 'AN OLD PERFECT BLACK FLASH (11 S) STILL COUNTS', ''); vs.k5.pf = [];
+    // the UNIBEAM only when he feels threatened
+    { const g = CU_GAME[5], G = GRADES[vs.gi], tryN = n => { let u = 0; for (let i = 0; i < n; i++) { dummy.fa = null; dummy.born = pnow() - 20000; dummy.spNext = 0; dummy.sp = {}; if (cuenSpecialTry(pnow(), 100, 100, G, g, 5) && dummy.fa && dummy.fa.type === 'uni') u++; } dummy.fa = null; return u; };
+      const u0 = tryN(400); dummy.hp = Math.round(dummy.max * 0.4); const u1 = tryN(400); dummy.hp = dummy.max; ok(u0 === 0 && u1 > 20, 'THE UNIBEAM IS NOT USED ONLY WHEN HE FEELS THREATENED', u0 + ' / ' + u1); }
+    // the end: nothing happens
+    calm(); { const hp0 = vs.hp; vsHurt(1e6, pnow()); ok(vs.hp === 1 && vs.ph === 'fight' && !$('vsres').classList.contains('on') && state === 'play', 'YUJI CAN LOSE OR THE FIGHT ENDS WHEN HIS HEALTH RUNS OUT', hp0 + ' -> ' + vs.hp + ' ' + vs.ph); }
+    dummy.hp = 1; dummy.ko = -1; koDummy(pnow()); ok(dummy.ko < 0 && dummy.hp >= 1 && vs.ph === 'fight', 'THE ENEMY CAN BE KNOCKED OUT (KODUMMY)', dummy.ko + ' ' + dummy.hp);
+    { await scUntil(() => pnow() - dummy.rxAt > 900 && hurtAt < 0, 60, 50); calm(); wx = 0; wxv = 0; dummy.x = 38; dummy.hp = 2; dummy.vx = 0; dummy.hitAt = 0; await scFrames(2, null, 50); scKey('KeyJ', true); await scFrames(2, null, 50); scKey('KeyJ', false); await scUntil(() => !!vs.k5.ring, 20, 50); vs.rolled = true; await scUntil(() => atkAt < 0, 40, 50); await scFrames(2, null, 50); ok(dummy.hp === 1 && dummy.ko < 0 && vs.ph === 'fight' && !$('vsres').classList.contains('on'), 'A BLACK FLASH ON AN ENEMY AT 2 HEALTH ENDED THE FIGHT', dummy.hp + ' ' + dummy.ko + ' ' + vs.ph); dummy.hp = dummy.max; }
+    // the walls of the hall
+    wx = 900; dummy.x = 950; await scFrames(3, null, 50); ok(Math.round(wx) === 300 && dummy.x <= 312, 'THE RIGHT WALL OF THE HALL DID NOT STOP THE TWO OF THEM', Math.round(wx) + ' ' + Math.round(dummy.x));
+    wx = -900; dummy.x = -950; await scFrames(3, null, 50); ok(Math.round(wx) === -300 && dummy.x >= -312, 'THE LEFT WALL OF THE HALL DID NOT STOP THE TWO OF THEM', Math.round(wx) + ' ' + Math.round(dummy.x));
+    wx = 0; dummy.x = 70; dummy.vx = 0; calm();
+    // the picture is drawn without an error and in the hall (a frame of it, the middle column of the floor row is the hall's)
+    await scFrames(4, null, 50);      // (a frame that throws is a finding of the scan by itself)
+    { calm(); wx = 0; dummy.x = 70; dummy.vx = 0; await scFrames(5, null, 50); const W2 = cv.width, H2 = cv.height, px = ctx.getImageData(0, Math.round(H2 * 0.25), W2, Math.round(H2 * 0.6)).data; let rl = 0, rr = 0; for (let i = 0; i < px.length; i += 4) { if (px[i] > 140 && px[i + 1] < 90 && px[i + 2] < 90) { if (((i / 4) % W2) < W2 / 2) rl++; else rr++; } } ok(rl > rr * 3 + 50, 'IRON MAN (THE RED SUIT) IS NOT ON THE LEFT OF THE PICTURE', 'LEFT ' + rl + ' / RIGHT ' + rr); }
+    // Iron Man's other moves, each one started and played to its end
+    const moves = ['slam', 'flip', 'icharge', 'iblast', 'ilaser', 'ispin', 'igp', 'ihug'], dmgd = { icharge: 1, iblast: 1, ilaser: 1, igp: 1, ihug: 1 }; let hugLift = 0;
+    for (const m of moves) {
+      if (stop()) return; calm(); vs.hp = 300; wx = 0; wxv = 0; dummy.x = m === 'slam' ? 34 : m === 'flip' ? 40 : m === 'ihug' ? 60 : m === 'igp' ? 90 : m === 'ispin' ? 110 : 150; dummy.vx = 0; gAir = null; hurtAt = -1; hurtEnd = pnow() - 500; stance = 'stand'; pStun = 0; await scFrames(3, null, 50);
+      let started = false; try { started = window.__cuir(m); } catch (e) { scErr(e, 'THE MOVE ' + m); } const t0 = pnow(); let maxLift = 0; const ended = await scUntil(() => { maxLift = Math.max(maxLift, gojoLift || 0); return !dummy.fa; }, 500, 30); if (m === 'ihug') hugLift = maxLift;
+      ok(started && ended && pnow() - t0 < 6000 && vs.ph === 'fight' && vs.hp >= 1, 'THE MOVE ' + m.toUpperCase() + ' DID NOT START, OR DID NOT END BY ITSELF', started + ' ' + ended + ' ' + Math.round(pnow() - t0));
+      if (dmgd[m]) ok(vs.hp < 300, 'THE MOVE ' + m.toUpperCase() + ' DID NOT HURT YUJI WHO STOOD IN FRONT OF IT', '' + vs.hp);
+      await scFrames(4, null, 50); ok(!(gAir && gAir.hover) && (!dummy.fa), 'AFTER THE MOVE ' + m.toUpperCase() + ' YUJI IS STILL HELD, OR HE IS STILL AT IT', '');
+    }
+    ok(hugLift > 30, 'THE BEAR HUG DID NOT CARRY YUJI UP', '' + hugLift);
+    // the brain uses every one of them
+    { calm(); const g = CU_GAME[5], G = GRADES[vs.gi], seen = {}; for (let i = 0; i < 3000; i++) { dummy.fa = null; dummy.born = pnow() - 20000; dummy.sp = {}; dummy.spNext = 0; dummy.hitAt = pnow() - 300; const ag = 14 + Math.random() * 316; dummy.x = wx + ag; if (cuenSpecialTry(pnow(), ag, ag, G, g, 5)) { const t = dummy.fa.type + (dummy.fa.type === 'cu' ? dummy.fa.k : ''); seen[t] = 1; } } dummy.fa = null;
+      ok(['cu5', 'cu8', 'icharge', 'iblast', 'ilaser', 'ispin', 'igp', 'ihug'].every(k => seen[k]), 'THE BRAIN DOES NOT USE EVERY MOVE (DOWNSLAM, BACKFLIP, CHARGE, BLAST, LASER, SPIN BLAST, GROUND PUNCH, BEAR HUG)', Object.keys(seen).join(',')); }
+    // the ADMIN box lists them (training): the names
+    { const hold = vs; const names = []; try { show('title'); Object.assign(TR, { beh: 0, ehp: 0, php: 0, pce: 0, put: 2 }); startPractice('yuji', 'cu5'); await scUntil(() => !!vs && vs.ph === 'fight', 40, 250); const L = admMoves().map(m => m.n); names.push(...L); } catch (e) { scErr(e, 'ADMIN LIST'); } ok(['DOWNSLAM', 'BACKFLIP', 'CHARGE', 'BLAST', 'LASER', 'SPIN BLAST', 'GROUND PUNCH', 'BEAR HUG', 'UNIBEAM'].every(n => names.includes(n)), 'THE ADMIN BOX DOES NOT LIST THE NEW MOVES OF THE ENEMY IRON MAN', names.join('|') + (hold ? '' : '')); }
+    // a normal fight against Iron Man has none of the story fight's rules, and can use his moves too
+    ok(!!vs && !vs.k5 && !vs.story && !document.body.classList.contains('c4') && $('atkl').textContent !== 'FLASH' && owns('y_ce') === !!PROG.own.y_ce, 'A TRAINING FIGHT AFTER THE STORY FIGHT STILL HAS ITS RULES (BUTTONS, SKILLS)', document.body.className);
+    { calm(); const ok2 = window.__cuir('iblast'); await scFrames(30, null, 50); ok(ok2 && !!dummy.fa && dummy.fa.type === 'iblast', 'IRON MAN DOES NOT USE HIS BLAST IN A TRAINING FIGHT', '' + ok2); dummy.fa = null; }
+    // leaving: the pause screen's MENU
+    ok(await start('LEAVING'), 'THE FIGHT DID NOT START AGAIN', ''); await scFrames(3, null, 50); leavePlay(); await scFrames(3, null, 50);
+    ok(state === 'saves' && !vs && !document.body.classList.contains('c4'), 'MENU DID NOT LEAVE THE FIGHT TO THE CHAPTER LIST WITH THE BUTTONS BACK', state + ' / ' + document.body.className);
+    // the story: after the second tap Tony lands, the black, and the fight (the dodge and the punch)
+    for (const res2 of ['hit', 'miss']) {
+      if (stop()) return; show('title'); try { story = null; startStory(0, 5); await scFrames(20); window.__k5At(80.6, 'hit', undefined, res2); } catch (e) { scErr(e, 'CH 5 HAND-OFF'); }
+      const began = await scUntil(() => !!vs && !!vs.k5, 700, 50); ok(began && !c4x && state === 'play' && vs.foe === 'cu5', 'AFTER THE LANDING (' + res2.toUpperCase() + ') THE FIGHT DID NOT BEGIN', 'C4X ' + !!c4x + ' ' + state); await scFrames(4, null, 50);
+    }
+    show('title');
+  } catch (e) { scErr(e, 'CH 5 FIGHT'); }
+  finally { SET.gore = gore0; Object.assign(TR, tr0); GG.dodge = gg0.dodge; GG.blk = gg0.blk; if (sv0 !== null) { try { localStorage.setItem(SAVE_KEY, sv0); } catch { /* storage blocked */ } } try { show('title'); } catch { /* nothing to leave */ } }
+}
 const SC_AC_N = 33;
 async function scAch() {
   SC.sec = 'ACHIEVEMENTS'; scCov('ACHIEVEMENTS', 0, SC_AC_N); SC.plan = 3000; SC.done = 0;
@@ -837,7 +922,7 @@ async function scTicks() {      // v1.201 ONE TICK EFFECT AT A TIME (a bleed, a 
   } finally { twPick = keep; }
 }
 
-const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['ADMIN', 16, scAdmin], ['CANVAS', 6, scCanvas], ['CLASH', 4, scClash], ['ACHIEVEMENTS', 12, scAch], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['TICKS', 6, scTicks], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
+const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['ADMIN', 16, scAdmin], ['CANVAS', 6, scCanvas], ['CLASH', 4, scClash], ['ACHIEVEMENTS', 12, scAch], ['CH 5 FIGHT', 14, scK5], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['TICKS', 6, scTicks], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
 const scEl = document.createElement('section'); scEl.id = 'scan'; scEl.className = 'screen';
 scEl.innerHTML = '<h2>SCANNING THE GAME</h2><div id="scBar"><i id="scFill"></i></div><small id="scTxt"></small><small id="scLive"></small><small>YOUR SAVES ARE SAFE: THEY WERE COPIED FIRST AND ARE PUT BACK WHEN THE SCAN IS OVER.</small><button id="scCancel">CANCEL</button>';
 document.body.appendChild(scEl);
@@ -884,7 +969,7 @@ async function scRun(opts) {      // opts.noReload = for the tests: no reload at
 window.__scanRun = scRun;
 
 // ---------------------------------------------------------------- what the ERRORS page shows
-const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', ADMIN: 'ADMIN BOX OF THE TRAINING', CANVAS: 'CANVAS AFTER AN ERROR', CLASH: 'BEAM CLASH', ACHIEVEMENTS: 'ACHIEVEMENTS', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', CITY: 'CITY DOORS AND FALLS', TICKS: 'TICK EFFECTS, ONE AT A TIME', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
+const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', ADMIN: 'ADMIN BOX OF THE TRAINING', CANVAS: 'CANVAS AFTER AN ERROR', CLASH: 'BEAM CLASH', ACHIEVEMENTS: 'ACHIEVEMENTS', 'CH 5 FIGHT': 'CHAPTER 5 FIGHT AND IRON MAN\'S MOVES', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', CITY: 'CITY DOORS AND FALLS', TICKS: 'TICK EFFECTS, ONE AT A TIME', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
 const scCovText = () => Object.keys(SC.got).concat(Object.keys(SC.of)).filter((k, i, a) => a.indexOf(k) === i).map(k => k === 'ROUNDS' ? 'EXTRA ROUNDS OF 14 FIGHTS ' + SC.got[k] : (SC_COVN[k] || k) + ' ' + (SC.got[k] || 0) + '/' + SC.of[k]);      // (what was covered, of what there is)
 const scLast = () => { try { const r = JSON.parse(localStorage.getItem('jsscanres') || 'null'); return r && Array.isArray(r.res) ? r : null; } catch { return null; } };
 function scReport(r) {      // the text of COPY SCAN REPORT

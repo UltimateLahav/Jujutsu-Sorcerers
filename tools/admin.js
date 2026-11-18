@@ -47,7 +47,7 @@ function admMoves() {
     const g = cuFoeG(), n = +f.slice(2), cu = (k, type) => now => { dummy.chain = 99; cuenStart(k, now, type); return true; };
     if (n === 3) { for (const k of [0, 1, 2, 3, 4, 5, 6, 7, 8, 14, 15, 16]) M(g.an[k], cu(k, 'cu')); M('AIR CUT', cu(9, 'aircut')); M('FIRE ARROW', cu(22, 'arrow')); M('SHRINE', cu(0, 'dom'), true); }
     else if (n === 4) { for (const k of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]) M(g.an[k], cu(k, 'cu')); M('KI BLAST', cu(12, 'blast')); M('JUST ONCE', cu(16, 'beam'), true); }
-    else { for (const k of [0, 1, 2, 3, 4, 6, 9, 10]) M(g.an[k], cu(k, 'cu')); M('UNIBEAM', cu(0, 'uni'), true); }      // (v1.208 Iron Man: the chain, the rocket uppercut, the low jabs, the two bolts, and the UNIBEAM)
+    else { for (const k of [0, 1, 2, 3, 4, 5, 6, 8, 9, 10]) M(g.an[k], cu(k, 'cu')); M('CHARGE', cu(7, 'icharge')); M('BLAST', cu(0, 'iblast')); M('LASER', cu(0, 'ilaser')); M('SPIN BLAST', cu(0, 'ispin')); M('GROUND PUNCH', cu(0, 'igp')); M('BEAR HUG', cu(0, 'ihug')); M('UNIBEAM', cu(0, 'uni'), true); }      // (v1.208 Iron Man: the chain, the rocket uppercut, the low jabs, the two bolts, and the UNIBEAM)
     defence();
   }
   return L;

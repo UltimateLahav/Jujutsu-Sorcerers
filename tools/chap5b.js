@@ -86,7 +86,7 @@ K5_TALK.push(
   k5L(69.8, 'TONY STARK', 0, 'FOLLOW ME.'),
   k5L(74.7, 'TONY STARK', 0, 'DO YOU HAVE A PHOBIA', 'OF LARGE PLACES?'), k5L(78.0, 'YUJI', 1, 'NO.')
 );
-const k5Cards = c => { const m = c.q2 && c.q2.res === 'miss', b = m ? (k5Gore() === 2 ? K5B.q2 + 0.7 : K5B.missEnd) : K5B.hitEnd; return { black: b, card: b + 0.8, card1: b + 3.3, card2: b + 3.6, end: b + 6.1 }; };      // (when the black comes after the last beat, and the two cards, and the end: they depend on the way the tap went)
+const k5Cards = c => { const m = c.q2 && c.q2.res === 'miss', b = m ? (k5Gore() === 2 ? K5B.q2 + 0.7 : K5B.missEnd) : K5B.hitEnd; return { black: b, fight: b + 0.75 }; };      // (when the black comes after the last beat, and when the fight begins out of it: they depend on the way the tap went; v1.211 the two cards that used to follow are gone, the battle of tools/chap5c.js comes instead)
 
 // ================================================================ THE SECOND TAP (the dodge in the huge room): the same ring, window and feel as the first one (k5Tap in tools/chap5.js)
 function k5Resolve2(c, res, why, T) {
@@ -259,7 +259,7 @@ function k5HallDraw(c, now, dt, T) {
   if (S.hit) { const W = K5W, k = c4xEase((T - (W.t1 - 0.05)) / 0.3) * (1 - c4xEase((T - (W.t4 - 0.3)) / 0.6)); if (k > 0.01) { const g = ctx.createRadialGradient(VW / 2, VH * 0.55, VH * 0.25, VW / 2, VH * 0.55, VW * 0.62); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,' + (0.72 * k).toFixed(3) + ')'); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH); ctx.fillStyle = 'rgba(110,150,255,' + (0.07 * k).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); ctx.fillStyle = 'rgba(220,235,255,' + (0.22 * k).toFixed(3) + ')'; for (let i = 0; i < 7; i++) { const y = Math.round(VH * (0.12 + 0.76 * c4xR(i, 31))), x = Math.round(((c4xR(i, 32) * VW * 2 - T * 18 * (1 + i % 3)) % (VW * 1.4) + VW * 1.4) % (VW * 1.4) - VW * 0.2); ctx.fillRect(x, y, 30 + (i % 3) * 20, 1); } } }
 }
 function k5Draw2(c, now, dt, T) {      // after the black of the road: the lab, then the huge room, then the cards
-  const cd = k5Cards(c); if (T >= cd.black + 0.7) { k5Tbc(T); return; }
+  const cd = k5Cards(c); if (T >= cd.black + 0.7) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); return; }      // (black, until the fight begins)
   if (T < K5B.room) { k5LabDraw(c, now, dt, T); drawSmoke(now, dt); drawSparks(now, dt); drawPopups(now); } else k5HallDraw(c, now, dt, T);
 }
 function k5Black2(c, T) { const cd = k5Cards(c); if (T >= cd.black + 0.7) return 0; if (c.q2.res === 'miss' && k5Gore() === 2) return T >= K5B.q2 + 0.4 ? 1 : 0; return T >= cd.black ? c4xEase((T - cd.black) / 0.7) : 0; }      // (the fall to black before the cards, which draw their own black; with GRAPHIC DAMAGE OFF the blow is cut away: black at the moment of the punch)
@@ -291,8 +291,7 @@ function k5Step2(c, now, dt, T) {      // the sounds and shakes of part 2 (each 
     ev('wall', Ac + B.gap, () => { snd('concboom'); snd('land', 3); hitStop(130); shakeUntil = now + 520; shakeAmp = 9; flash(now, 160, 0.45); spark(K5H.wall + 4, gy - 46, 22, ['#ffffff', '#aab4cc', '#ffd27a'], true, 1); puff(K5H.wall + 24, 10); });
     ev('slump', Ac + B.gap + 0.42, () => { snd('land', 1.4); puff(K5H.wall + 30, 6); }); ev('groan', Ac + B.gap + 0.8, () => snd('gasp', 1));
   }
-  ev('card', cd.card, () => snd('c7drone'));
-  if (T >= cd.end) { const slot = story ? story.slot : -1; storyDone16(); c4xOff(); svSel = slot; svView = 1; $('vsres').classList.remove('on'); show('saves'); renderSaves(); }
+  if (T >= cd.fight) k5FightGo();      // (v1.211 out of the black the battle begins: Yuji against Iron Man, tools/chap5c.js)
 }
 window.__k5Z = t => { const c = c4x; return c && c.ph === 'k5' ? { cam: k5Cam(c, t === undefined ? c.T : t), cards: k5Cards(c), warp: [K5W.t1, K5W.t4, k5Warp(K5W.t1), k5Warp(K5W.t4)] } : null; };      // test hook: the camera of the huge room, the times of the cards, the slow motion
 window.__k5B = t => { const c = c4x; if (!c || c.ph !== 'k5') return null; const T = t === undefined ? c.T : t; return T < K5B.room ? k5LabEval(T) : k5HallEval(c, T); };      // test hook: everybody's place and picture in part 2 at the scene time t

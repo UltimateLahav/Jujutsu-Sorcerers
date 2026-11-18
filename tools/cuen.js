@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------- v1.189 SUKUNA AND RYU AS ENEMIES (this file is spliced into template.html by build_html.py, after fred4.js; updateFighterVs, drawDummy and drawFoes in template.html call it). The user: "make sukuna in the fighting mode and not just the training mode" and, asked, "play him and fight him" and "Sukuna and Ryu". Both were fighters of the custom engine (tools/custom.js) that only a player could be; here they are enemies too. Their blows are DATA (CU_GAME[n].atk: the pictures of each blow, .ev: its events, .set: its speed and step), so the enemy plays them from the same data: the pictures at the speed of the blow, and every IMPACT event of a blow hurts you through gojoHit with the damage of the event (each impact gets an attack number from 100 on, see cuenReg), so your guard, crouch, jump, dash, the grade damage and the energy rules work on them as on every enemy. The moves that are code and not data (Sukuna's AIR CUT, fire arrow and Malevolent Shrine, Ryu's ki blast and beam) have enemy versions of their own below.
-const cuFoeOn = () => !!vs && typeof vs.foe === 'string' && vs.foe.slice(0, 2) === 'cu' && !vs.net && !vs.story && !!dummy && dummy.mode === 'fighter';      // is Sukuna or Ryu the enemy of this fight?
+const cuFoeOn = () => !!vs && typeof vs.foe === 'string' && vs.foe.slice(0, 2) === 'cu' && !vs.net && (!vs.story || !!vs.k5) && !!dummy && dummy.mode === 'fighter';      // is Sukuna, Ryu or Iron Man the enemy of this fight? (v1.211 the chapter 5 story fight is the one story fight that has one)
 const cuFoeG = () => CU_GAME[+vs.foe.slice(2)];
 // 1. THE NUMBERS: every IMPACT (and every SHOT) event of the 25 blows of Sukuna and the 19 of Ryu gets an attack number from 100 on (the tables ATK_FPS, DMG, KNOCK, KNOCK_G, REACH, KICKS and CU_EXTRA, which gojoHit reads), and the special moves of part 4 get theirs (CUEN_X). Made the first time an enemy of this kind is there, because the fighters' pictures are cut when their sheets have loaded.
 let cuenOk = false, cuenIrOk = false, cuenK = 100; const CUEN_X = {};
@@ -9,7 +9,7 @@ function cuenRegIr() {      // v1.208 IRON MAN as the enemy: the same numbers fo
   if (cuenIrOk) return true; if (!ironEnsure()) return false; const g = CU_GAME[5]; if (!g.moves) ironMoves(g); if (!g.ev || !g.ev.length) return false;
   KICKS.cu5 = [];
   g.ev.forEach((ev, k) => ev.forEach(e => { if (e.k !== 'i' && e.k !== 'o') return; const o = cuenMods(e); e.gk = cuenK++; cuenNum(e.gk, e.d, o.knock ? o.knock * 6 : Math.min(120, 9 + e.d * 2), { nb: !!o.gb, heavy: !!o.launch }); if (/KICK/.test(g.an[k]) || e.low) KICKS.cu5.push(e.gk); }));
-  CUEN_X.uni = cuenK++; cuenNum(CUEN_X.uni, 4, 60, { nb: true, heavy: true }); cuenIrOk = true; return true;
+  CUEN_X.uni = cuenK++; cuenNum(CUEN_X.uni, 4, 60, { nb: true, heavy: true }); cuirReg(); cuenIrOk = true; return true;
 }
 function cuenReg() {
   if (!cuenOk && !cuenReg34()) return false;
@@ -38,9 +38,10 @@ function cuenLook(now, reacting, hitT, kt) {
   else if (d.ai === 'dodge') { const t = now - d.aiAt, fr = g.db.length ? g.db : g.df; src = fr.length ? fr[Math.min(fr.length - 1, Math.floor(t * fr.length / 300))] : idle(); }
   else if (d.ai === 'walk') { const fr = (d.walkDir > 0 && g.wbk && g.wbk.length) ? g.wbk : g.walk; src = fr.length ? fr[Math.floor(now * (g.wf || 12) / 1000) % fr.length] : idle(); }
   else src = idle();
+  const wide = src && src.ox ? src.ox : 0;      // (v1.211 the wide pictures of Iron Man's charge and bear hug: 128 columns, his middle one is 32 + ox)
   if (vs.inv && src && src.width) src = invOf(src);      // (a mirror match: the enemy has the inverted colours)
   if ((reacting || d.air) && hitT < 70 && src && src.width) src = whiteOf(src);
-  return { src, info: CUEN_INFO, lift, ox, oy };
+  return { src, info: wide ? { ...CUEN_INFO, w: 128, cx: 32 + wide } : CUEN_INFO, lift, ox, oy };
 }
 // 3. HIS BRAIN, called by updateFighterVs after the part every enemy shares (stun, hurt, your swing read, dodge and block)
 const CUEN = {
@@ -85,7 +86,8 @@ function cuenPickNear(now, g, n, G, ag) {      // which blow at arm's length: th
 }
 function cuenStart(k, now, type, extra) {
   const d = dummy, g = cuFoeG(); d.held = null; d.counter = 0; d.ai = 'think'; d.aiAt = now; d.vx = 0; d.fa = { type, k, at: now, fired: [], lg: 0, ...extra };      // (d.chain, how many blows of the chain he has thrown, is kept)
-  if (type === 'cu') { const m = cuenMove(g, k); d.fa.dur = m.fr.length * m.ms; snd('swing', k); }
+  if (type === 'cu') { const m = cuenMove(g, k); d.fa.dur = m.fr.length * m.ms; snd('swing', k); if (g.ir && k === 5) cuirDive(g); }      // (v1.211 the DOWNSLAM hangs in the air: its lift is made when it starts)
+  else if (CUIR[type]) CUIR[type].start(d.fa, now, g);      // (v1.211 Iron Man's other moves, tools/cuenir.js)
   else if (type === 'aircut') d.fa.ms = 1000 / (30 * GRADES[vs.gi].spd) * g.atk[k].length;
   else if (type === 'blast') d.fa.ms = 1000 / (26 * GRADES[vs.gi].spd) * g.atk[k].length;      // (the length of the two moves that play the pictures of a blow: set at once, the picture is asked for in the same frame)
   else if (type === 'uni') { if (!g.ump) iruPics(g); d.fa.on = false; d.fa.tk = 0; d.fa.fireAt = 0; d.fa.braced = false; snd('irult', 0); gritAt(d.x - 6, 8, 80, -1); gritAt(d.x + 6, 8, 80, 1); puff(d.x - 8, 4); puff(d.x + 8, 4); }      // (v1.208 his UNIBEAM: the charge begins)
@@ -128,7 +130,8 @@ function cuenSpecialTry(now, gap, ag, G, g, n) {
     if (ok('beam') && ag <= 300 && r < 0.2 && !dom && !fd && !ult) { d.sp.beam = now + S.beam[0]; cuenStart(16, now, 'beam'); return true; }
     if (ok('blast') && ag >= 90 && ag <= 320 && r < 0.3) { d.sp.blast = now + S.blast[0]; cuenStart(12, now, 'blast'); return true; }
   } else {
-    if (ok('uni') && ag <= 320 && r < 0.2 && !dom && !fd && !ult) { d.sp.uni = now + S.uni[0]; cuenStart(0, now, 'uni'); return true; }      // (v1.208 Iron Man: the UNIBEAM, the long charge first)
+    if (ok('uni') && ag <= 320 && (vs.k5 ? k5Threat(now) && r < 0.5 : r < 0.2) && !dom && !fd && !ult) { d.sp.uni = now + S.uni[0]; cuenStart(0, now, 'uni'); return true; }      // (v1.208 Iron Man: the UNIBEAM, the long charge first; v1.211 in the chapter 5 fight only when he FEELS THREATENED, see k5Threat in tools/chap5c.js)
+    if (cuirTry(now, gap, ag, G, g)) return true;      // (v1.211 and his other moves, tools/cuenir.js)
   }
   return false;
 }
@@ -136,6 +139,7 @@ function cuenActLook(now, g) {
   const a = dummy.fa, t = now - a.at;
   if (a.type === 'cu') { const m = cuenMove(g, a.k), ap = Math.min(0.999, t / (m.fr.length * m.ms)), fi = Math.min(m.fr.length - 1, Math.floor(ap * m.fr.length)), al = g.al && g.al[a.k] ? g.al[a.k] : g.ir && IR_BLOWS[a.k] ? IR_BLOWS[a.k].lift : null; return { src: m.fr[fi], lift: al ? al[Math.min(al.length - 1, Math.floor(ap * al.length))] : 0 }; }      // (v1.208 Iron Man's uppercut rises: his lifts are in IR_BLOWS)
   if (a.type === 'uni') return { src: cuenUniPic(g, t) };
+  if (CUIR[a.type]) return CUIR[a.type].look(a, t, g, now);
   const fr = g.atk[a.k], N = fr.length;
   if (a.type === 'arrow') return { src: fr[suPicAt(SU_FL.T, Math.min(t, SU_FL.end - 1))] };
   if (a.type === 'dom') return { src: fr[Math.min(N - 1, Math.floor(Math.min(1, t / 1900) * N))] };
@@ -144,6 +148,7 @@ function cuenActLook(now, g) {
 }
 function cuenSpecialAct(now, dt, gap, ag, toward, G, g, n, a) {
   const d = dummy, t = now - a.at;
+  if (CUIR[a.type]) { CUIR[a.type].act(a, t, now, dt, gap, ag, toward, G, g); return; }      // (v1.211 Iron Man's other moves, tools/cuenir.js)
   if (a.type === 'aircut') {
     a.ms = 1000 / (30 * G.spd) * g.atk[9].length; if (!a.hit && t >= a.ms * SU_BLUE.cut.hit / g.atk[9].length) { a.hit = true; snd('swing', 9); const h = hurtAt; if (ag <= 230) gojoHit(CUEN_X.aircut, now); if (hurtAt !== h) { dotStart('p', 'bleed', { until: now + 2000, next: now + 100 }, now); spark(wx, gy - 30, 10, ['#ffffff', '#ff2a3a', '#ffb0b8'], false, -toward); } }
     if (t >= a.ms) cuenEnd(now);
@@ -210,6 +215,7 @@ function cuenWorld(now, dt) {
   const a = d.fa;
   if (a && a.type === 'dom') { const t = now - a.at; if (t >= 1900) { ctx.fillStyle = 'rgba(150,6,24,' + (Math.min(0.38, (t - 1900) / 1000)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); ctx.fillStyle = 'rgba(255,255,255,0.55)'; for (let i = 0; i < 5; i++) { const h = Math.imul(i * 7919 + ((now / 90) | 0) * 104729, 2246822519) >>> 0; ctx.fillRect(h % VW, (h >> 9) % VH, 30 + (h >> 4) % 90, 1); } } }
   if (a && a.type === 'uni') cuenUniDraw(now, d, a, cx, g);
+  if (a && CUIR[a.type] && CUIR[a.type].draw) CUIR[a.type].draw(a, now, d, cx, g); cuirWorld(now, d, cx);      // (v1.211 the light and the beams of his other moves, and the cracks of the ground punch)
   if (a && a.type === 'beam') { const t = now - a.at; if (t < 1500) { ctx.fillStyle = 'rgba(0,0,0,' + (0.35 * Math.min(1, t / 700)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); } else if (t < 2800) { const sx = cx + Math.round(d.x - wx), th = 22 + Math.round(Math.sin(now / 35) * 3); ctx.fillStyle = 'rgba(120,180,255,0.5)'; ctx.fillRect(0, gy - 31 - th / 2 - 3, sx - 8, th + 6); ctx.fillStyle = '#cfe6ff'; ctx.fillRect(0, gy - 31 - th / 2, sx - 8, th); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, gy - 31 - 4, sx - 8, 8); } }
   if (vs.fburn) { const b = vs.fburn; if (vs.ph !== 'fight') vs.fburn = null; else { while (vs.fburn && b.next <= now && b.next <= b.until) { vsHurt(SU_FL.burn.dmg, b.next); b.next += SU_FL.burn.gap; } if (now >= b.until) vs.fburn = null; } }
   freBleed(now);
