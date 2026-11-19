@@ -4,7 +4,7 @@ const FRED_FAR = { near: 60, fps: Math.round(30 * PACE), whoosh: 3, hit: 6, dmg:
 for (let i = 0; i < 2; i++) { const k = FRED_FAR.k0 + i; ATK_FPS[k] = FRED_FAR.fps; ATK_SWING[k] = FRED_FAR.whoosh; ATK_IMPACT[k] = FRED_FAR.hit; DMG[k] = FRED_FAR.dmg[i]; KNOCK[k] = 16; KNOCK_G[k] = 0; REACH[k] = 82; HIT.freddy[k] = HIT.cat[30]; M1_HITS.freddy.push(k); HB_TIP.freddy[k] = { 18: FRED_FAR.tip, 19: FRED_FAR.tip, 20: FRED_FAR.tip, 21: FRED_FAR.tip, 22: FRED_FAR.tip, 23: FRED_FAR.tip, 24: FRED_FAR.tip, 25: FRED_FAR.tip }; }      // (HB_TIP: the rows the limb covers, for SET > SHOW HITBOXES and for a curse, whose body is measured from these)
 let fredFarC = 0;      // how many stretched punches of this sequence have been thrown (even: the next is the left hand)
 function fredFarGap(now) {      // the gap to the nearest enemy in front of him when a stretched punch is on (he stands, an enemy that can be hit is in front of him and farther than FRED_FAR.near); 0 = it is not on
-  if (!vs || vs.net || vs.ph !== 'fight' || stance !== 'stand' || (twOn() && vs.tw.away)) return 0; let g = 1e9;
+  if (!vs || vs.net || vs.ph !== 'fight' || stance !== 'stand' || (twOn() && vs.tw.away) || !owns('f_far')) return 0; let g = 1e9;      // (v1.215 the far punches are bought)
   for (const e of vs.foes && vs.foes.length > 1 ? vs.foes : [dummy]) if (e && e.ko < 0 && !e.cap && e.x - wx >= -3 && now - e.born >= 600) g = Math.min(g, e.x - wx);
   return g > FRED_FAR.near && g < 1e9 ? g : 0;
 }

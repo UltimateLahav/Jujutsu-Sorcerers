@@ -79,16 +79,14 @@ function ryArc(now, h0, hTop) {      // the arc of an enemy he launches: from th
   return airMake(now, h0, Math.sqrt(2 * g * Math.max(0, hTop - h0)), g, 'up');
 }
 const ryAir = now => { const jf = ryJumpFrame(Math.max(0, now - cuJumpAt)); return cuJumpAt >= 0 && jf >= 4 && jf <= 11; };      // (he is in the air: after the push-off and before the landing)
+const RY_OWN = { 4: 'r_leg', 5: 'r_down', 6: 'r_hard', 7: 'r_front' };      // (v1.215 the blows ATTACK plays by stance that are bought in the shop: crouched the LEG KICK, in the air the DOWNSLAM, holding forward the HARD PUNCH, holding back the FRONT KICK; the four blows of the chain are free)
 function ryPick(g, now, cmb) {
   if (ryGb) return cuJumpAt >= 0 ? 15 : stance === 'crouch' ? 14 : 12 + ((cmb === undefined ? cuCmb : cmb) % 2);      // (v1.170 GRANITE BLAST mode: every ATTACK is a blast: in the air the AIR BLAST, crouched the LOW BLAST, otherwise BLAST 1 and BLAST 2 one after the other)
-  if (cuJumpAt >= 0) return 5;
-  if (stance === 'crouch') return 4;
-  if (keyL || padL) return 7;
-  if (keyR || padR) return 6;
-  return g.rdy[(cmb === undefined ? cuCmb : cmb) % g.rdy.length];
+  const k = cuJumpAt >= 0 ? 5 : stance === 'crouch' ? 4 : (keyL || padL) ? 7 : (keyR || padR) ? 6 : -1, ch = g.rdy[(cmb === undefined ? cuCmb : cmb) % g.rdy.length];
+  return k < 0 || owns(RY_OWN[k]) ? (k < 0 ? ch : k) : k === 6 || k === 7 ? ch : -1;      // (a forward or back blow that is not bought is the chain; crouched or in the air it is -1: LOCKED)
 }
 function ryNext(k) { return k === 12 ? 1 : k === 13 ? 0 : k < 4 ? (k + 1) % 4 : cuCmb; }      // (blow k has started: the chain goes on with the next one; the other blows leave its place alone)
-function ryLabel(g, now) { return g.an[ryPick(g, now, now > cuCmbBy ? 0 : cuCmb)]; }      // (what the ATTACK button says: the blow that comes next)
+function ryLabel(g, now) { const k = ryPick(g, now, now > cuCmbBy ? 0 : cuCmb); return k < 0 ? 'LOCKED' : g.an[k]; }      // (what the ATTACK button says: the blow that comes next)
 
 // ---- v1.164 CONTACT: a blow touches the enemy, and both of them feel it
 const RY_CLOSE = 30, RY_CLOSE_V = 450;      // (the most he steps in for a blow, px, and how fast, px/s)
@@ -124,9 +122,11 @@ function ryBlueLabel(now) {      // the BLUE button's name; the DASH button says
   if (el.innerHTML !== n[0]) { el.innerHTML = n[0]; $('lap').setAttribute('aria-label', n[1]); }
   if (d.innerHTML !== dk) { d.innerHTML = dk; $('dash').setAttribute('aria-label', dk === 'DASH' ? 'Dash' : 'Dash kick: a flying kick that sends the enemy back'); }
 }
-const ryDkOk = now => ryBlImp > 0 && now - ryBlImp < 600 && now >= (cuCd[11] || 0);      // (the last blow of a blue punch or combo landed less than 0.6 s ago)
-function ryBlueGo(g, k, now) {      // BLUE move k (8 - 10, 16 - 18), or the DASH KICK (11), starts; false when its cooldown is not over (or, for the blasts, the energy is not there)
+const ryDkOk = now => ryBlImp > 0 && now - ryBlImp < 600 && now >= (cuCd[11] || 0) && owns('r_dkick');      // (the last blow of a blue punch or combo landed less than 0.6 s ago)
+const RY_BL_OWN = { 8: 'r_power', 9: 'r_dive', 10: 'r_combo', 16: 'r_blast', 17: 'r_double', 18: 'r_triple' };      // (v1.215 the BLUE moves of the shop)
+function ryBlueGo(g, k, now) {      // BLUE move k (8 - 10, 16 - 18), or the DASH KICK (11), starts; false when its cooldown is not over (or, for the blasts, the energy is not there), or he has not bought it
   const st = g.set[k];
+  if (RY_BL_OWN[k] && !owns(RY_BL_OWN[k])) { lockPop(now); return false; }
   if (now < (cuCd[k] || 0)) { say('WAIT', wx, '#9a9aa8', 8, now); return false; }
   if (st.c && !ceSpend(st.c * 100 / cuS.em, now)) return false;
   if (stance === 'crouch') { stance = 'stand'; stickCr = false; }      // (he gets up and throws it)

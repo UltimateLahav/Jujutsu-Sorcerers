@@ -124,8 +124,9 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
   if (atk && g && g.ry && cuJumpAt >= 0 && cuAtkAt < 0 && ryJumpFrame(Math.max(0, now - cuJumpAt)) < 4) cuAtkQ = now + 300;      // (v1.143 Ryu: JUMP and ATTACK pressed together: the press is kept through the push-off and the DOWNSLAM starts as soon as he is in the air)
   if (atk && g && (g.yu || g.ry) && cuAtkAt >= 0 && !g.cs) cuAtkQ = now + 450;      // (v1.109: a press while a blow is being thrown is kept for 0.45 s and starts the next blow as soon as this one is over)
   if ((atk || (cuAtkQ > now && cuAtkAt < 0)) && ctl && g && !g.ir && g.rdy.length && (stance === 'stand' || ((g.yu || g.ry) && stance === 'crouch')) && (cuJumpAt < 0 || (g.ry && ryAir(now))) && cuAtkAt < 0 && !cuDash && blkAt < 0) {      // (ATTACK: the next of its ready punches plays once, if its COOLDOWN is over and its COST can be paid; 20 pictures a second unless SPEED says otherwise; the combo goes on for 0.7 s after a punch)
-    cuAtkQ = 0; if (now > cuCmbBy) { cuCmb = 0; cuSn = 0; cuCp = 0; } const k = g.yu ? suPick(g, now) : g.ry ? ryPick(g, now) : g.rdy[cuCmb % g.rdy.length], st = g.set[k];      // (a built-in fighter picks by where he stands and where the enemy is: suPick)
-    if (now < cuCd[k]) say('WAIT', wx, '#9a9aa8', 8, now);
+    cuAtkQ = 0; if (now > cuCmbBy) { cuCmb = 0; cuSn = 0; cuCp = 0; } const k = g.yu ? suPick(g, now) : g.ry ? ryPick(g, now) : g.rdy[cuCmb % g.rdy.length], st = k >= 0 ? g.set[k] : null;      // (a built-in fighter picks by where he stands and where the enemy is: suPick; v1.215 -1: a blow he has not bought, ryPick)
+    if (k < 0) lockPop(now);
+    else if (now < cuCd[k]) say('WAIT', wx, '#9a9aa8', 8, now);
     else if (g.yu && k === 3) suStart(g, now);      // (the 4th blow of a built-in fighter is his COUNTER: see suStart in sukuna.js)
     else if (!st.c || ceSpend(st.c * 100 / cuS.em, now)) { cuAtkK = k; cuAtkAt = now; cuFired = []; cuRes = []; cuLunged = 0; cuMs = 1000 / st.v; cuCd[k] = st.d ? now + st.d * 1000 : 0; cuCmbBy = now + 1e9; cuCmb = g.yu ? suNext(k) : g.ry ? ryNext(k) : (cuCmb + 1) % g.rdy.length; snd('swing', k); }
   }

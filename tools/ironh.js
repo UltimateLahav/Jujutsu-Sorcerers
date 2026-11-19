@@ -39,8 +39,9 @@ function irhOk(now) {      // an enemy that can be charged at: here (in the skys
 function irhCan(now) {      // an enemy that can be grabbed now: not just born, not another form (Verity's ball), not crouching, flat, dodging, down, in the air or in the middle of an action of his own
   const d = dummy; return irhOk(now) && now - d.born >= 600 && !(d.vform && d.vform !== 'verity') && !(d.vact || d.cact) && now >= (d.down || 0) && now >= (d.dodgeUntil || 0) && (d.airH || 0) < 14 && !d.held && !d.cheld && !d.pull;
 }
-function irBhStart(g, now) {      // BLUE: the move begins (false when it cannot)
+function irBhStart(g, now) {      // BLUE: the move begins (false when it cannot, or when he has not bought it: v1.215)
   if (!g.bhp) irhPics(g);
+  if (!owns(g.rp ? ((keyL || padL) && !(keyR || padR) ? 'i_laser' : 'i_blast') : stance === 'crouch' || stance === 'down' ? 'i_gpunch' : 'i_hug')) { lockPop(now); return false; }
   if (g.rp) return (keyL || padL) && !(keyR || padR) ? irlStart(g, now) : irbStart(g, now);      // (v1.195 in the repulsor mode BLUE is the BLAST, see tools/ironb.js; v1.196 walking back it is the LASER, see tools/ironp.js)
   if (stance === 'crouch' || stance === 'down') return irpStart(g, now);      // (v1.196 crouched it is the GROUND PUNCH)
   if (now < (g.bhCd || 0)) { say('WAIT', wx, '#9a9aa8', 8, now); return false; }

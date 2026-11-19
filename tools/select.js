@@ -17,13 +17,12 @@ const fsPic = (who, now, inv) => {      // the idle picture of any of the seven 
 };
 const fsHot = who => who === 'gojo' ? D.idle.cx - D.idle.x0 : who === 'yuji' ? YU.idle.cx - YU.idle.x0 : 32, fsTop = who => who === 'gojo' ? D.idle.top || 0 : who === 'yuji' ? YU.idle.top || 0 : 0;      // (where his middle is in his picture, and how many rows of head room it has: the same numbers the fight uses)
 // ---- who may be picked where. mode: 'train' | 'battle' | 'wifi'; side 0 = you, 1 = the enemy. '' = free, else the reason the face is greyed
+const FS_KEY = { cu4: 'ryu', cu5: 'iron' };      // (v1.215 the name of Ryu and of Iron Man in the shop)
 function fsWhy(mode, side, who) {
-  const cu = who === 'cu3' || who === 'cu4';
   if (mode === 'wifi') return LAN_FIGHTERS.includes(who) ? '' : 'NOT ONLINE';
   if (mode === 'train') return side === 0 ? (who === 'cu3' && !suHas() ? 'LOCKED' : '') : TRF.includes(who) ? '' : 'NOT AS ENEMY';      // (Sukuna is bought for $3000; the training enemy is Gojo, Yuji, Verity or the Cat, see TRF)
-  if (who === 'cu5') return '';      // (v1.190 Iron Man was your fighter in TRAINING only; v1.208 he is an enemy in Battle too; v1.213 your fighter in Battle too)
-  if (cu) return who === 'cu3' && !suHas() ? 'LOCKED' : '';      // (v1.189 Sukuna and Ryu fight in Battle too, on both sides; Sukuna is still bought for $3000)
-  return who !== 'gojo' && !owns(who) ? 'LOCKED' : '';      // (bought on the SKILLS page, like before)
+  if (who === 'cu3') return !suHas() ? 'LOCKED' : '';      // (v1.189 Sukuna and Ryu fight in Battle too, on both sides; Sukuna is bought for $3000)
+  return who !== 'gojo' && !owns(FS_KEY[who] || who) ? 'LOCKED' : '';      // (bought on the SKILLS page, like before; v1.215 Freddy, Ryu and Iron Man are bought there too, on both sides, and free in TRAINING)
 }
 const FS_BADGE = { 'LOCKED': 'LOCKED', 'NOT AS ENEMY': 'NOT AS<br>ENEMY', 'NOT ONLINE': 'NOT<br>ONLINE' };
 const fsHintText = (who, why) => why === 'LOCKED' ? (who === 'cu3' ? 'SUKUNA IS LOCKED: BUY HIM FOR $3000 IN SKILLS > CHARACTERS' : SEL[who].nm + ' IS LOCKED: BUY HIM IN SKILLS > CHARACTERS') : why === 'NOT AS ENEMY' ? SEL[who].nm + ' CANNOT BE THE ENEMY YET' : SEL[who].nm + ' IS NOT IN WI-FI FIGHTS YET';

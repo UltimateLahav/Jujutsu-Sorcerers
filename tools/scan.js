@@ -806,7 +806,7 @@ function scPanel() {      // v1.184 the elevator panel in the cab: no text of a 
   if (bad.length) scNote('fail', 'ELEVATOR PANEL: THE TEXT OF A BUTTON STICKS OUT OF IT: ' + bad[0], bad.length + ' BUTTONS');
 }
 function scFredSlam() {      // v1.185 Freddy in the skyscraper: whatever the random player was doing, he crouches and presses BLUE (the ground slam: the floor breaks under both, both fall, he throws what is around him); tried three times
-  if (!fredMe() || !dummy || fg || fgCd) return; twFoeHere(pnow()); dummy.x = wx + 70; atkAt = -1; atkQ = false; jumpAt = -1; dgAt = -1; blkAt = blkEnd = -1; blockHeld = false; fredCrQ = fredUpQ = -1; stickCr = false; fwPh = ''; stance = 'crouch'; lpReq = true;
+  if (!fredMe() || !dummy || fg || fgCd) return; twFoeHere(pnow()); dummy.x = wx + 70; atkAt = -1; atkQ = false; jumpAt = -1; dgAt = -1; blkAt = blkEnd = -1; blockHeld = false; hurtAt = -1; pStun = 0; fredCrQ = fredUpQ = -1; stickCr = false; fwPh = ''; stance = 'crouch'; lpReq = true;      // (v1.215 a blow of the enemy that landed in these frames is not what is looked at: he flinches for 10 frames and the three tries were gone)
 }
 function scIronHug() {      // v1.194 Iron Man in the skyscraper: whatever the random player was doing, he presses BLUE with the enemy 60 px in front of him (the bear hug: up through the ceilings, over, down through the floors); scIronHugEnd looks at it 5 s later
   const g = CU_GAME[5]; if (!vs || vs.me !== 'cu5' || !g || !dummy || g.bh || !irhOk(pnow())) return; g.bhCd = 0; twFoeHere(pnow()); dummy.x = twPlace(twFloorData(vs.tw.fMe), wx + 60); cuAtkAt = -1; cuDash = null; blkAt = blkEnd = -1; blockHeld = false; stance = 'stand'; stickCr = false; lpReq = true; SC.ih = { f: vs.tw.fMe, at: pnow() };

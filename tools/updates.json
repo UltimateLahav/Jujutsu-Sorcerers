@@ -1,5 +1,14 @@
 [
  {
+  "v": "1.215",
+  "t": "FREDDY, RYU AND IRON MAN ARE BOUGHT IN THE SHOP, WITH THEIR MOVES",
+  "n": [
+   "You asked for every character that was not in the shop to be buyable with his moves. Freddy, Ryu and Iron Man were free for everybody; now they are in SKILLS > CHARACTERS: FREDDY KRUEGER $2500, RYU $2800 and IRON MAN $3500. Every save starts with them locked: on the fighter screen of the BATTLE their faces say LOCKED (as your fighter and as the enemy) until you buy them. TRAINING stays free for all three, with every move, like it is for Yuji, Verity and the Cat.",
+   "Each of them has a page of his own in the shop now, with a tab of his own (FREDDY, RYU, IRON MAN), like Sukuna's: walking, jumping and the blows of the ATTACK chain stay free, and every other move is a node that you buy with money after the character. FREDDY (9 nodes): CROUCH, DASH, BLOCK, FAR PUNCHES, BOILING WATER, PIERCE, GROUND SLAM, NIGHTMARE, FATALITY. RYU (17): CROUCH, LEG KICK, DASH, BLOCK, DOWNSLAM, HARD PUNCH, FRONT KICK, POWER PUNCH, DIVE PUNCH, 5-HIT COMBO, DASH KICK, GRANITE MODE, GRANITE BLAST, DOUBLE BLAST, TRIPLE BLAST, JUST THIS ONCE, FATALITY. IRON MAN (16): CROUCH, LOW JABS, DASH, CHARGE PUNCH, BACKFLIP, BLOCK, ROCKET UPPERCUT, DOWNSLAM, BEAR HUG, GROUND PUNCH, REPULSOR MODE, BLAST, LASER, SPIN BLAST, UNIBEAM, FATALITY.",
+   "A move you have not bought is simply not there: its button is dimmed and pressing it says LOCKED: BUY IT IN SKILLS. The enemy Freddy, Ryu and Iron Man always have every move. The shop's top bar now holds nine tabs and goes onto a second line on a small screen."
+  ]
+ },
+ {
   "v": "1.214",
   "t": "YUJI'S ONE FATALITY FOR EVERYONE, THE ENEMY SUKUNA'S HEAD-CUT ON YOU, AND VERITY AND FREDDY ON SUKUNA, RYU AND IRON MAN",
   "n": [

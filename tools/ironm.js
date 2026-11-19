@@ -265,21 +265,22 @@ function irTick(g, now, ctl, jmp, atk, dsh, lpr) {      // true when it used thi
   if (!air) irDiveAt = 0;
   // ---- v1.192 the three new moves: the DASH presses and the crouch
   const fwd = keyR || padR, gnd = ctl && stance === 'stand' && cuJumpAt < 0 && cuAtkAt < 0 && blkAt < 0, crh = ctl && stance === 'crouch' && cuJumpAt < 0 && cuAtkAt < 0 && !cuDash && blkAt < 0; let used = false;
-  if (dsh && gnd && !fwd && now - irBackAt <= IR_DD * R) { cuDash = null; irStart(g, 8, now, 0); irBackAt = irDshAt = -1e9; used = true; }      // 1. the BACKFLIP: DASH BACK again soon after the first one (the dash that is still going on is dropped)
-  else if (atk && !jmp && gnd && (dsh || cuDash || now - irDshAt <= IR_DP * R)) { cuDash = null; irStart(g, 7, now, 0); irBackAt = irDshAt = -1e9; used = !!dsh; atk = false; }      // 2. the CHARGE: ATTACK during a dash, soon after it or together with it (JUMP pressed with it is the uppercut)
+  if (dsh && gnd && !fwd && now - irBackAt <= IR_DD * R && owns('i_flip')) { cuDash = null; irStart(g, 8, now, 0); irBackAt = irDshAt = -1e9; used = true; }      // 1. the BACKFLIP: DASH BACK again soon after the first one (the dash that is still going on is dropped)
+  else if (atk && !jmp && gnd && owns('i_charge') && (dsh || cuDash || now - irDshAt <= IR_DP * R)) { cuDash = null; irStart(g, 7, now, 0); irBackAt = irDshAt = -1e9; used = !!dsh; atk = false; }      // 2. the CHARGE: ATTACK during a dash, soon after it or together with it (JUMP pressed with it is the uppercut)
   else if (dsh && ctl) { irDshAt = now; irBackAt = fwd ? -1e9 : now; }      // (the first DASH press: the time it is counted from)
   if (atk && crh) { irStart(g, 6, now, 0); atk = false; }      // 3. crouched, ATTACK: the LOW JABS ...
   else if (atk && ctl && cuAtkAt >= 0 && cuAtkK === 6) { irJabQ = now + 450; atk = false; }      // ... a press during them is kept for 0.45 s: two more follow
   else if (crh && irJabQ > now) { irJabQ = 0; irStart(g, 6, now, 0); }
   if (cuAtkAt >= 0 && cuAtkK === 7) irChMove(g, now);      // (the CHARGE flies on)
   let J = jmp && idle, A = atk && idle;      // (the presses that count: only while he can act)
-  if (J && A && cuAtkAt < 0 && !air) { irStart(g, 4, now, 0); J = A = false; }      // 1. the ROCKET UPPERCUT: JUMP and ATTACK together ...
-  else if (A && air && cuAtkAt < 0 && el <= sim) { cuJumpAt = -1; irStart(g, 4, now, h0); J = A = false; }      // ... or ATTACK just after the jump began ...
-  else if (J && cuAtkAt >= 0 && irChain && now - cuAtkAt <= sim) { cuCmb = 0; irStart(g, 4, now, 0); J = A = false; }      // ... or JUMP just after the first blow began (it is dropped)
+  if (J && A && cuAtkAt < 0 && !air && owns('i_upper')) { irStart(g, 4, now, 0); J = A = false; }      // 1. the ROCKET UPPERCUT: JUMP and ATTACK together ...
+  else if (A && air && cuAtkAt < 0 && el <= sim && owns('i_upper')) { cuJumpAt = -1; irStart(g, 4, now, h0); J = A = false; }      // ... or ATTACK just after the jump began ...
+  else if (J && cuAtkAt >= 0 && irChain && now - cuAtkAt <= sim && owns('i_upper')) { cuCmb = 0; irStart(g, 4, now, 0); J = A = false; }      // ... or JUMP just after the first blow began (it is dropped)
+  else if (J && A && !air && !owns('i_upper')) A = false;      // (v1.215 the uppercut is not bought: JUMP and ATTACK together is only the jump)
   if (J && cuAtkAt < 0 && !air) { cuJumpAt = now; cuJumpC = false; snd('jump'); snd('thrust', g.jet); }      // 2. JUMP
   if (A) {      // 3. ATTACK
     if (cuAtkAt >= 0) cuAtkQ = now + 450;      // (a press during a blow is kept for 0.45 s: the next blow of the chain follows at once)
-    else if (air) { if (el >= wait) { cuJumpAt = -1; irStart(g, 5, now, h0); } else irDiveAt = cuJumpAt + wait; }      // (in the air: the DOWNSLAM, from 0.2 s after the jump began; a press before that is kept until then)
+    else if (air) { if (!owns('i_down')) lockPop(now); else if (el >= wait) { cuJumpAt = -1; irStart(g, 5, now, h0); } else irDiveAt = cuJumpAt + wait; }      // (in the air: the DOWNSLAM, from 0.2 s after the jump began; a press before that is kept until then; v1.215 it is bought)
     else irCombo(g, now);
   } else if (cuAtkAt < 0 && idle) {
     if (air && irDiveAt > 0 && now >= irDiveAt) { cuJumpAt = -1; irStart(g, 5, now, h0); }

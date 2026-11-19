@@ -134,7 +134,8 @@ function irsPics(g) {      // the pictures of the spin blast (made the first tim
   g.smp = { sp, rz, py: sp[0][0].pl.R.py, tip: sp[0][0].pl.R.px - 32 };
 }
 // ---- the start, and what stops it
-function irsStart(g, now) {      // BLUE in the air while the repulsor mode is on (irTick hands over to this): the spin blast begins (false when it cannot)
+function irsStart(g, now) {      // BLUE in the air while the repulsor mode is on (irTick hands over to this): the spin blast begins (false when it cannot, or when he has not bought it: v1.215)
+  if (!owns('i_spin')) { lockPop(now); return false; }
   if (!g.smp) irsPics(g);
   if (now < (g.bmCd || 0)) { say('WAIT', wx, '#9a9aa8', 8, now); return false; }
   const l0 = Math.max(0, Math.round(gojoLift || 0));
