@@ -1094,8 +1094,11 @@ function suFatStep(g, c, now) {      // the finisher, every frame: the enemy's p
   if (e >= S.cutE) once(P + 'cut', () => suFatCut(now, e));
   F.dx = e >= S.holdE ? S.dxT : 0;
   // his picture
-  const idle = g.frames[Math.floor(now / (1000 / IDLE_FPS)) % g.frames.length];
-  if (e >= S.holdE && e < S.tpE) return suFatBlank || (suFatBlank = (() => { const b = document.createElement('canvas'); b.width = b.height = 64; return b; })());
+  return suFatPic(g, u, e, now) || suFatBlank || (suFatBlank = (() => { const b = document.createElement('canvas'); b.width = b.height = 64; return b; })());
+}
+function suFatPic(g, u, e, now) {      // his picture u ms into the finisher and e ms into the track (null while he is gone): the hand in the hair, the slash, the touch (v1.214 the enemy Sukuna's finisher on you uses it too)
+  const S = SU_FAT, idle = g.frames[Math.floor(now / (1000 / IDLE_FPS)) % g.frames.length];
+  if (e >= S.holdE && e < S.tpE) return null;
   if (e >= S.tpE) return idle;
   if (e >= 0) return g.atk[17][Math.min(4, Math.floor(e * 30 / 1000))];      // (the touch: Sukuna's TOUCH CUT pictures, the hand reaches out and stays on the face)
   if (u < S.hair) return idle;
@@ -1107,7 +1110,9 @@ function suFatStep(g, c, now) {      // the finisher, every frame: the enemy's p
 function suFatCam(now) {      // the camera of this frame: { z, fx, fy, roll, sx, sy } as suFgCam
   const F = suFat; if (!F) return null;
   const S = SU_FAT, u = Math.min(S.rep + S.track, F.u === undefined ? suFatU(now) : F.u), cx = Math.round(VW / 2), d = dummy;
-  const A = { cx, sx: cx + (F.dx || 0), ex: cx + (d ? d.x - wx : S.gap), hy: d && d.suTop !== undefined ? d.suTop : gy - 40 };
+  return suFatShot(F, u, { cx, sx: cx + (F.dx || 0), ex: cx + (d ? d.x - wx : S.gap), hy: d && d.suTop !== undefined ? d.suTop : gy - 40 });
+}
+function suFatShot(F, u, A) {      // the shot at u ms (v1.214 shared with the enemy Sukuna's finisher on you, see srFrame)
   let s = 0; while (s + 1 < SU_FAT_SHOTS.length && u >= SU_FAT_SHOTS[s + 1][0]) s++;
   const [u0, u1, fn] = SU_FAT_SHOTS[s], k2 = Math.max(0, Math.min(1, (u - u0) / (u1 - u0))), k = k2 * k2 * (3 - 2 * k2), v = fn(k, A, k2), z = v[0], hw = VW / (2 * z), hh = VH / (2 * z), cl = (a, lo, hi) => lo > hi ? (lo + hi) / 2 : Math.max(lo, Math.min(hi, a)), sh = SET.lite ? 0 : v[4];
   F.cam = { z, fx: cl(v[1], hw + 4, VW - hw - 4), fy: cl(v[2], hh + 4, VH - hh - 4), roll: SET.lite ? 0 : v[3], sx: sh * (Math.sin(u * 0.093) + Math.sin(u * 0.211 + 1.7)) / 2, sy: sh * (Math.sin(u * 0.117 + 0.6) + Math.sin(u * 0.183 + 2.9)) / 2 };
@@ -1159,8 +1164,8 @@ function suFatDraw(now, dt, cx, x, y, src) {      // every frame of his scene wh
   if (d.suCut && d.suCut.gs === 0 && now - d.suCut.at < 900 && Math.random() < 0.5 * (1 - (now - d.suCut.at) / 900)) suFgP(F, X + (Math.random() - 0.5) * 10, hy + 6 + Math.random() * 10, (Math.random() - 0.5) * 12, 10 + Math.random() * 20, 0.5 + Math.random() * 0.4, '#c4121c', 1, 240);
   suFgParts(F, dt); ctx.restore();
 }
-function suFatOverlay(now) {      // over the whole picture, not moved by the camera: the dark edges, the flashes, the black bars, the line he says, the hint to skip
-  const F = suFat, S = SU_FAT, u = Math.min(S.rep + S.track, F.u || 0), end = S.rep + S.track;
+function suFatOverlay(now, F, end) {      // over the whole picture, not moved by the camera: the dark edges, the flashes, the black bars, the line he says, the hint to skip (v1.214 F and end: the enemy Sukuna's finisher on you is drawn with it too)
+  F = F || suFat; end = end || SU_FAT.rep + SU_FAT.track; const S = SU_FAT, u = Math.min(end, F.u || 0);
   const kin = Math.min(1, u / 500), kout = Math.max(0, Math.min(1, (end - u) / 450)), bk = Math.min(kin * kin * (3 - 2 * kin), kout * kout * (3 - 2 * kout)), bh = Math.round(VH * S.bar * bk);
   ctx.save(); ctx.imageSmoothingEnabled = false;
   if (u >= S.rep) { ctx.fillStyle = 'rgba(40,60,110,0.16)'; ctx.fillRect(0, 0, VW, VH); }      // (the replay is a memory: a cold tint)
@@ -1172,3 +1177,73 @@ function suFatOverlay(now) {      // over the whole picture, not moved by the ca
   ctx.restore();
 }
 window.__suDom = () => ({ last: suDomLast, cover: suDomCover(pnow()) });      // (test hook: where the shrine was drawn last and how much of the screen the domain covers)
+
+// ---------------------------------------------------------------- v1.214 THE ENEMY SUKUNA'S FINISHER ON YOU (the user: "his head-cut, turned round"): he does to you what you do to the enemy: you are held and kneel, he puts a hand in your hair and says the line, a huge slash passes over your head, you stare up at him and charge, he touches your face and is gone, behind you, your head falls apart in three slices, the slow motion replay shows that he touched you first, and you fall. Your own fighter is drawn by its own code, so this cannot be your fighter's scene turned round: it is a cutscene on its own clock that uses his camera shots, slash, slices and overlay (SU_FAT, SU_FAT_SHOTS, suFatShot, suFatPic, suFatSlashDraw, suFatSlice, suFatOverlay) and your pictures from the kit of the other fatalities (yfKit); the whole picture is turned round, like the other cutscenes of the enemy.
+const SR_FALL = 600;      // how long you take to fall at the end (ms)
+function srStart(now) {
+  const d = dummy, g = CU_GAME[3]; if (!g || !g.frames.length || !g.atk[6] || !g.atk[17] || !g.atk[24]) return false;
+  cineClear(); closeSettings(); stickDown = false; d.ai = 'rest'; d.pull = null; d.vx = 0; d.vact = null; d.cact = null; d.cheld = null; d.held = null; d.fa = null; vs.catHold = 0;
+  slowAt = -1e9; slowFin = false; stopMs = 0; cuAtkAt = cuJumpAt = -1; cuDash = null; cuShots = []; cuAtkQ = cuLpQ = 0; blkAt = blkEnd = -1; stance = 'stand'; $('pad').classList.add('cine'); $('hud').classList.add('cine'); puff(wx + SU_FAT.gap, 6);
+  sr = { u: 0, slow: -1, wx0: wx, g0: Math.max(20, Math.min(FAT_RANGE, Math.abs(d.x - wx))), did: {}, p: [], fl: [], cam: null, e: -1, cutU: -1, shake: 0, dust: 0, skipped: false, tapAt: -1e9, K: yfKit(vs.me, true), gs: gdSet(), inv: !!vs.inv };
+  return true;
+}
+function srReset() { sr = null; $('pad').classList.remove('cine'); $('hud').classList.remove('cine'); }
+function srEnd(now) {      // you are gone and the enemy Sukuna wins the round
+  const s = sr; wx = s.wx0; if (vs) vs.noHead = true; srReset(); blackUntil = now + 500; if (!vs || vs.ph !== 'fight') return;
+  vs.hp = 0; vs.sh = 0; vs.hitAt = now; endRound('enemy', 'fatal', now);
+}
+function srSkip(now) { const s = sr; if (!s || s.skipped || s.u < SU_FAT.skipAt) return; s.skipped = true; srEnd(now); }
+function srTap(now) { const s = sr; if (!s || s.skipped) return; if (now - s.tapAt < 1500) srSkip(now); else s.tapAt = now; }      // (a tap on the screen: the first says how to skip, a second one within a second and a half skips)
+function srCut(s, now, u, X, hy) {      // your head is cut (the first time at full speed, and again in the replay): a flash and a crack, then the three slices slide apart
+  s.fl.push({ at: now, dur: 220, a: s.gs === 2 ? 0.8 : 0.6, col: '255,255,255' }); s.shake = Math.max(s.shake, 4); snd('slice'); snd('sukcut', 2);
+  if (s.gs < 2) { s.cutU = u; if (s.gs === 0) { snd('splat'); for (let i = 0, n = SET.lite ? 10 : 26; i < n; i++) suFgP(s, X + (Math.random() - 0.5) * 12, hy + 4 + Math.random() * 12, (Math.random() - 0.3) * 70, -20 - Math.random() * 60, 0.6 + Math.random() * 0.8, ['#c4121c', '#ff2a3a', '#7a0f1e'][i % 3], i % 5 === 0 ? 2 : 1, 260); } }
+}
+function srFrame(now, dt) {
+  const s = sr, S = SU_FAT, g = CU_GAME[3], K = s.K, cx = Math.round(VW / 2), F0 = S.rep + S.track, END = F0 + SR_FALL, once = (k, fn) => { if (!s.did[k]) { s.did[k] = 1; fn(); } };
+  keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; fatReq = 0; cuAtkQ = cuLpQ = 0;
+  if (s.tapAt > now) s.tapAt = -1e9;      // (a tap made while the game was paused: the clock has gone back since)
+  dt = Math.min(0.05, dt || 0.016); let rate = 1;
+  if (s.u >= S.rep) { if (s.slow < 0) s.slow = S.repMs; if (s.slow > 0) { rate = S.repRate; s.slow -= dt * 1000; if (s.slow <= 0) snd('slowout'); } }      // (the replay: its first 4.2 real seconds run at a fifth of the speed)
+  s.u += dt * 1000 * rate; const u = s.u, sdt = dt * rate, e = u >= S.rep ? u - S.rep : u >= S.act ? (u - S.act) * S.actK : -1, P = u >= S.rep ? 'B' : 'A'; s.e = e;
+  // where you are (kneeling in front of him, charging at him, on the track of the touch) and where he is
+  const D = u < S.setMs ? s.g0 + (S.gap - s.g0) * (1 - Math.pow(1 - u / S.setMs, 3)) : e >= 0 ? suFatD(e) : u >= S.charge ? S.gap - (S.gap - S.d0) * Math.pow(Math.min(1, (u - S.charge) / S.chargeMs), 1.6) : S.gap, dx = e >= S.holdE ? S.dxT : 0, WV = s.wx0 + D;
+  const vp = e < 0 && u < S.charge ? yfVPic(K, ['rx', 9, 0.4], now, false) : { src: K.vF[Math.floor(now / (1000 / IDLE_FPS)) % K.vF.length], info: K.vi(-1) }, hy = gy + 2 - 62 - (vp.info.top || 0) + suFatTopRow(vp.src);      // (hy: the top of your head)
+  // what happens when it is due
+  if (u >= S.hair) once('hair', () => snd('cloth'));
+  if (u >= S.charge) once('ch', () => puff(s.wx0 + S.gap, 4));
+  if (u >= S.charge && e < 0 && now >= s.dust) { s.dust = now + 90; puff(WV + 6, 2); }
+  if (u >= S.slash) once('sw', () => snd('swing', 3));
+  if (u >= S.slash + S.shit) once('slash', () => { snd('sukcut', 2); snd('swing', 1); s.fl.push({ at: now, dur: 260, a: 0.45, col: '255,230,230' }); s.shake = Math.max(s.shake, 3); });
+  if (u >= S.slash + S.shit + 50) once('pass', () => { for (let i = 0, n = SET.lite ? 6 : 14; i < n; i++) suFgP(s, cx + D + (Math.random() - 0.5) * 18, hy - 4 + Math.random() * 3, (Math.random() - 0.2) * 120, -10 - Math.random() * 40, 0.4 + Math.random() * 0.5, i % 2 ? '#ffffff' : '#ffc0c8', 1, 120); });
+  if (u >= S.rep) once('rep', () => { s.cutU = -1; s.fl.push({ at: now, dur: 300, a: 0.9, col: '255,255,255' }); snd('slowin'); });      // (the replay: your head is whole again)
+  if (e >= S.touchE) once(P + 'touch', () => { if (P === 'B') { s.fl.push({ at: now, dur: 130, a: 0.7, col: '255,255,255' }); s.shake = Math.max(s.shake, 2); snd('sukimp'); spark(WV - 6, gy - 36, 8, ['#ffffff', '#ffc0c8', '#ff2a3a'], false, -1); } });
+  if (e >= S.holdE) once(P + 'tp', () => { snd('vanish'); puff(s.wx0 + 2, 5); });
+  if (e >= S.tpE) once(P + 'arr', () => { snd('arrive'); puff(s.wx0 + S.dxT, 5); });
+  if (e >= S.cutE) once(P + 'cut', () => srCut(s, now, u, cx + D, hy));
+  if (u >= F0 + SR_FALL * 0.7) once('thud', () => { snd('ko'); snd('land', 1.4); s.shake = Math.max(s.shake, 3); });
+  // your picture: your head in its three slices after the cut, and the fall at the end
+  const ck = s.cutU >= 0 ? Math.max(0, Math.min(1, (u - s.cutU) / 700)) : 0, vsrc = s.gs < 2 && ck > 0 ? suFatSlice(vp.src, ck, s.gs) : vp.src, fe = Math.pow(Math.max(0, Math.min(1, (u - F0) / SR_FALL)), 2), sp = suFatPic(g, u, e, now);
+  // the camera
+  const c = suFatShot(s, Math.min(F0, u), { cx, sx: cx + dx, ex: cx + D, hy }); s.shake *= Math.exp(-dt * 9); if (s.shake > 0.25 && !SET.lite) { c.sx += (Math.random() * 2 - 1) * s.shake; c.sy += (Math.random() * 2 - 1) * s.shake; }
+  // the picture (the whole of it is turned round: he is on the right, facing you)
+  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); ctx.translate(VW, 0); ctx.scale(-1, 1); suFgCamBegin(c); wx = s.wx0;
+  drawBackdrop(now); ctx.fillStyle = 'rgba(30,0,8,0.22)'; ctx.fillRect(-VW, 0, VW * 3, VH); drawSmoke(now, sdt);
+  shadow(cx + D, 9); if (sp) shadow(cx + dx, 9);
+  yfSpr(vsrc, vp.info, cx + D - 5 * fe, 9 * fe, -1, { r: -1.5 * fe });
+  if (sp) yfSpr(s.inv ? invOf(sp) : sp, CUEN_INFO, cx + dx, 0, 1);
+  suFatSlashDraw(now, cx, hy, u);
+  ctx.save();
+  if (e >= S.holdE && e < S.holdE + 260) {      // (the trail of his vanishing: his hand-out picture where he was and on the way, fading, and speed lines to where he is now)
+    const q = (e - S.holdE) / 260, pic = s.inv ? invOf(g.atk[17][4]) : g.atk[17][4];
+    for (let i = 0; i < 3; i++) { ctx.globalAlpha = 0.4 * (1 - q); ctx.drawImage(pic, Math.round(cx - 32 + S.dxT * (i / 2) * Math.min(1, q * 3)), gy - 61); }
+    ctx.globalAlpha = 0.8 * (1 - q); for (let i = 0; i < 5; i++) { ctx.fillStyle = i % 2 ? '#ffffff' : '#bcd4ff'; ctx.fillRect(Math.round(cx + 6), gy - 49 + i * 8, Math.round(S.dxT * Math.min(1, q * 3)), 1); }
+    ctx.globalAlpha = 1;
+  }
+  const ce = s.cutU >= 0 ? u - s.cutU : -1;
+  if (ce >= 0 && ce < 90) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 1 - ce / 90; ctx.fillStyle = '#ffffff'; for (const r of [5, 10]) ctx.fillRect(Math.round(cx + D - 16), Math.round(hy + r), 32, 1); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }      // (the two lines of the cut)
+  if (s.gs === 0 && ce >= 0 && ce < 900 && Math.random() < 0.5 * (1 - ce / 900)) suFgP(s, cx + D + (Math.random() - 0.5) * 10, hy + 6 + Math.random() * 10, (Math.random() - 0.5) * 12, 10 + Math.random() * 20, 0.5 + Math.random() * 0.4, '#c4121c', 1, 240);
+  suFgParts(s, dt); ctx.restore(); drawSparks(now, sdt);
+  ctx.restore(); ctx.restore();
+  suFatOverlay(now, s, END);
+  if (u >= END) srEnd(now);
+}

@@ -283,7 +283,7 @@ const RY_JPH = [
   '0000000000000000000000000000000000000000030007000380070003800700030007000300070007000700070007f8070ffff8060fffe00600070006000300060003000e0003000e0007000660070006e0070006c0070007c0070007800e0007800e0007801c0007803c00030078000201f0000001e0000000000000000000'];      // (the four letters of 今回だけ, 32 x 32 pixels each, a row of 8 hex digits: made from a Japanese font by tools/ryu_jp.py)
 let ryUl = null, ryJpC = null;      // (the ultimate in progress: { t0, row, fi (the picture), dx, cut, fired, fireAt, nextTick, tickN, hit (null = not yet, true / false), w, typed }; the pictures of the letters)
 const ryEase = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
-const ryUlBusy = () => !!(js || vf || cf || ryf || irf || ke || dom || ult || fat || yf || se || de || c4x);      // (another cutscene has the game)
+const ryUlBusy = () => !!(js || vf || cf || ryf || irf || sr || ke || dom || ult || fat || yf || se || de || c4x);      // (another cutscene has the game)
 const ryUlHit = () => !!ryUl;      // (gojoHit: nothing of the enemy's touches him)
 const ryUlNoHud = () => !!ryUl && !ryUl.fired;      // (the health bars stay away until the beam has fired)
 function ryUlTry(now) {      // the DOMAIN button: it starts if he stands or crouches with nothing else going on, the wait is over, a living enemy is there and the energy is there (67%)

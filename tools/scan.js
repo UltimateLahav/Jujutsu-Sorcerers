@@ -60,7 +60,7 @@ function scCheck() {      // numbers that are not numbers, effect lists that onl
     for (const k in SC_LISTS) { let n = 0; try { n = SC_LISTS[k](); } catch { continue; } if (n > (SC.peak[k] || 0)) SC.peak[k] = n; if (n > (k === 'sparks' ? 800 : 400)) scNote('warn', 'THE LIST ' + k + ' HAS ' + n + ' ENTRIES', SC.say); }
   } catch (e) { scErr(e, 'CHECK'); }
 }
-const scBusy = () => !!(fat || yf || vf || cf || ff || ryf || irf || ke || dom || ult || js || yu || fd || (typeof suFatOn === 'function' && suFatOn()) || (typeof suDom !== 'undefined' && !!suDom) || (typeof ryUl !== 'undefined' && !!ryUl) || (typeof CU_GAME !== 'undefined' && !!((CU_GAME[3] && CU_GAME[3].cs) || (CU_GAME[4] && CU_GAME[4].cs))));      // a cutscene of a fight is running
+const scBusy = () => !!(fat || yf || vf || cf || ff || ryf || irf || sr || ke || dom || ult || js || yu || fd || (typeof suFatOn === 'function' && suFatOn()) || (typeof suDom !== 'undefined' && !!suDom) || (typeof ryUl !== 'undefined' && !!ryUl) || (typeof CU_GAME !== 'undefined' && !!((CU_GAME[3] && CU_GAME[3].cs) || (CU_GAME[4] && CU_GAME[4].cs))));      // a cutscene of a fight is running
 
 // ---------------------------------------------------------------- DATA: the game's own tables
 function scData() {
@@ -259,15 +259,15 @@ async function scRyuTurned() {
 // The ADMIN button of the top bar opens a small box with the moves of the enemy who is there. Checks: the button shows and the box opens; each of the 8 enemies has the list he should have (AD_EXP); a click on a move that is no cutscene starts it, it ends by itself, and nothing else starts after it while FREEZE is on (the first version let the Cat go on from SMASH into his whole chain: the frame in which the clicked move ends was open to his own brain); the big ones (FINISHER, ULTIMATE, JUMPSCARE, NIGHTMARE, SHRINE, JUST THIS ONCE, UNIBEAM) start, end, and the training goes on with the box open; FREEZE holds his own brain still and lets it go; the TOOLS (HEAL, INF HP, CLOSE / MID / FAR, ENEMY) do what they say; the X closes the box; and a Battle has neither the button nor the box. The enemy is a Special Grade one, so that a stray move after the clicked one is as likely as it gets.
 const AD_EXP = {
   gojo: 'R.HOOK,L.HOOK,ELBOW,KICK,BLOCK,DODGE,FINISHER',
-  yuji: 'R.HOOK,L.HOOK,KNEE,3 KICKS,DIVERGENT,R.KICK,ELBOW,DOWNSLAM,PUSH KICK,CONC.FIST,SWEEP,RUSH FIST,UPPERCUT,FACE KICK,SPIN ELBOW,POWER UP,POWER OFF,BLOCK,DODGE',
+  yuji: 'R.HOOK,L.HOOK,KNEE,3 KICKS,DIVERGENT,R.KICK,ELBOW,DOWNSLAM,PUSH KICK,CONC.FIST,SWEEP,RUSH FIST,UPPERCUT,FACE KICK,SPIN ELBOW,POWER UP,POWER OFF,BLOCK,DODGE,FINISHER',
   verity: 'R.HOOK,L.HOOK,ELBOW,KICK,BITE,LOW CLAW,JUMPSCARE,BLOCK,DODGE,FINISHER',
   cat: 'GRAB,PUNCH,GRAB 2,KICK,SMASH,PUSH DASH,CARTOON,ULTIMATE,BLOCK,DODGE,FINISHER',
   freddy: 'R.SLASH,L.SLASH,FAR L.PUNCH,FAR R.PUNCH,BOILING WATER,PIERCE,GROUND SLAM,NIGHTMARE,BLOCK,DODGE,FINISHER',
-  cu3: 'R.JAB,L.JAB,FACE KICK,COUNTER,R.JAB 2,L.UPPR,R.SLASH,L.SLASH,X SLASH,R.HOOK,L.HOOK,ELBOW,AIR CUT,FIRE ARROW,SHRINE,BLOCK,DODGE',
+  cu3: 'R.JAB,L.JAB,FACE KICK,COUNTER,R.JAB 2,L.UPPR,R.SLASH,L.SLASH,X SLASH,R.HOOK,L.HOOK,ELBOW,AIR CUT,FIRE ARROW,SHRINE,FINISHER,BLOCK,DODGE',
   cu4: 'L.HOOK,R.HOOK,KICK UP,JUMP PUNCH,LEG KICK,DOWNSLAM,HARD PUNCH,FRONT KICK,POWER PUNCH,DIVE PUNCH,5-HIT COMBO,DASH KICK,KI BLAST,JUST ONCE,FINISHER,BLOCK,DODGE',
   cu5: 'R.HOOK,L.HOOK,R.KICK,PUNCH,UPPERCUT,DOWNSLAM,LOW JABS,BACKFLIP,R.BLAST,L.BLAST,CHARGE,BLAST,LASER,SPIN BLAST,GROUND PUNCH,BEAR HUG,UNIBEAM,FINISHER,BLOCK,DODGE'
 };
-const AD_BIG = ['FINISHER', 'ULTIMATE', 'JUMPSCARE', 'NIGHTMARE', 'SHRINE', 'JUST ONCE', 'UNIBEAM'], SC_AD_N = 46, AD_WHO = SC_WHO.concat('cu5');      // (1 button + 8 x 3 lists and moves + 12 big moves (v1.212: the enemy Ryu's FINISHER is one; v1.213 the enemy Iron Man's too) + 2 FREEZE + 4 tools + 1 X + 1 closed box + 1 Battle; v1.208 Iron Man is the eighth enemy)
+const AD_BIG = ['FINISHER', 'ULTIMATE', 'JUMPSCARE', 'NIGHTMARE', 'SHRINE', 'JUST ONCE', 'UNIBEAM'], SC_AD_N = 48, AD_WHO = SC_WHO.concat('cu5');      // (1 button + 8 x 3 lists and moves + 14 big moves (v1.212: the enemy Ryu's FINISHER is one; v1.213 the enemy Iron Man's too; v1.214 the enemy Yuji's and Sukuna's) + 2 FREEZE + 4 tools + 1 X + 1 closed box + 1 Battle; v1.208 Iron Man is the eighth enemy)
 async function scAdmin() {      // (every enemy decides at once when he can: GRADES.aggr is 1 for the length of the checks, so that a stray move after a clicked one is certain, not a matter of luck)
   const aggr0 = GRADES.map(g => g.aggr), tr0 = {}, gore0 = SET.gore; for (const k of ['beh', 'ehp', 'php', 'pce', 'grade', 'foe', 'arm', 'spd', 'meter', 'info', 'put']) tr0[k] = TR[k]; GRADES.forEach(g => { g.aggr = 1; });
   try { await scAdmin1(); } finally { GRADES.forEach((g, i) => { g.aggr = aggr0[i]; }); Object.assign(TR, tr0); SET.gore = gore0; ADM.open = false; ADM.freeze = true; ADM.ceBack = 0; }      // (everything the checks changed is put back: the Special Grade and the enemy of the TRAIN page, the graphic damage, the aggression of the grades, and the box is closed again: in a game the frames of the menus close it, here the next section starts a room at once, and an open box would hold its enemy still)
@@ -617,7 +617,7 @@ async function scIronMoves() {
 // ---------------------------------------------------------------- CUTSCENES: the FATALITY and the DOMAIN of every fighter, played to the end
 async function scCuts() {
   SC.sec = 'CUTSCENES'; const FATAL = { gojo: 1, yuji: 1, verity: 1, cat: 1, freddy: 1, cu3: 1, cu4: 1 };
-  scCov('CUTSCENES', 0, SC_WHO.length * 2 + 3 + 13 + 19 + 5 + 7 + 7); SC.plan = (SC_WHO.length * 2 + 3 + 13 + 19 + 5 + 7 + 7) * 220; SC.done = 0;      // (v1.208 + 5: two fatalities and three moves of the enemy Iron Man; v1.212 + 7: Ryu's fatality in the three GRAPHIC DAMAGE settings and the enemy Ryu's on four fighters; v1.213 + 7: Iron Man's fatality in the three GRAPHIC DAMAGE settings and the enemy Iron Man's on four fighters)
+  scCov('CUTSCENES', 0, SC_WHO.length * 2 + 3 + 13 + 19 + 5 + 7 + 7 + 22); SC.plan = (SC_WHO.length * 2 + 3 + 13 + 19 + 5 + 7 + 7 + 22) * 220; SC.done = 0;      // (v1.208 + 5: two fatalities and three moves of the enemy Iron Man; v1.212 + 7: Ryu's fatality in the three GRAPHIC DAMAGE settings and the enemy Ryu's on four fighters; v1.213 + 7: Iron Man's fatality in the three GRAPHIC DAMAGE settings and the enemy Iron Man's on four fighters; v1.214 + 22: Verity's and Freddy's fatality on the enemy Sukuna, Ryu and Iron Man (6), the enemy Verity's and Freddy's on you as the three (6), the enemy Yuji's on five fighters, the enemy Sukuna's on five)
   for (let i = 0; i < SC_WHO.length; i++) {
     const w = SC_WHO[i];
     for (const [key, nm, low, max] of [['KeyH', 'FATALITY', 2, 700], ['KeyV', 'DOMAIN', 1, 520]]) {
@@ -710,7 +710,7 @@ async function scCuts() {
     show('title');
   }
   // v1.189 SUKUNA AND RYU AS ENEMIES: the fatality of three fighters on them, the enemy fatalities and nightmare on them as the player, and every special move of theirs (in the street)
-  for (const [w, foe] of [['gojo', 'cu3'], ['yuji', 'cu4'], ['cat', 'cu3'], ['gojo', 'cu4'], ['gojo', 'cu5'], ['yuji', 'cu5']]) {
+  for (const [w, foe] of [['gojo', 'cu3'], ['yuji', 'cu4'], ['cat', 'cu3'], ['gojo', 'cu4'], ['gojo', 'cu5'], ['yuji', 'cu5'], ['verity', 'cu3'], ['verity', 'cu4'], ['verity', 'cu5'], ['freddy', 'cu3'], ['freddy', 'cu4'], ['freddy', 'cu5']]) {
     const label = SC_NAME[w] + ' FATALITY ON THE ENEMY ' + SC_NAME[foe]; SC.say = label; SET.gore = SC_WHO.indexOf(w) % 3; window.__suAll = true;
     try { Object.assign(TR, { beh: 2, ehp: 2, php: 0, pce: 0, put: 2 }); startPractice(w, foe); } catch (e) { scErr(e, label); continue; }
     if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
@@ -719,7 +719,7 @@ async function scCuts() {
     if (await scUntil(() => scBusy(), 40, 250)) { if (await scUntil(() => !scBusy(), 800, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 40 SECONDS', ''); } else scNote('fail', label + ' DID NOT START', 'THE ENEMY WAS AT ' + (dummy ? Math.round(dummy.hp / (dummy.max || 1) * 100) : '?') + '% HEALTH');
     show('title');
   }
-  for (const [w, foe, what] of [['cu3', 'gojo', 'FATALITY'], ['cu4', 'cat', 'FATALITY'], ['cu3', 'freddy', 'NIGHTMARE'], ['cu4', 'freddy', 'NIGHTMARE'], ['cu5', 'gojo', 'FATALITY'], ['cu5', 'cat', 'FATALITY'], ['cu5', 'freddy', 'NIGHTMARE'], ['gojo', 'cu4', 'FATALITY'], ['cat', 'cu4', 'FATALITY'], ['cu3', 'cu4', 'FATALITY'], ['cu5', 'cu4', 'FATALITY'], ['gojo', 'cu5', 'FATALITY'], ['cat', 'cu5', 'FATALITY'], ['cu4', 'cu5', 'FATALITY'], ['yuji', 'cu5', 'FATALITY']]) {      // (the enemy's own fatality or nightmare on Sukuna, Ryu or Iron Man; v1.212 the enemy Ryu's fatality on four fighters; v1.213 the enemy Iron Man's on four)
+  for (const [w, foe, what] of [['cu3', 'gojo', 'FATALITY'], ['cu4', 'cat', 'FATALITY'], ['cu3', 'freddy', 'NIGHTMARE'], ['cu4', 'freddy', 'NIGHTMARE'], ['cu5', 'gojo', 'FATALITY'], ['cu5', 'cat', 'FATALITY'], ['cu5', 'freddy', 'NIGHTMARE'], ['gojo', 'cu4', 'FATALITY'], ['cat', 'cu4', 'FATALITY'], ['cu3', 'cu4', 'FATALITY'], ['cu5', 'cu4', 'FATALITY'], ['gojo', 'cu5', 'FATALITY'], ['cat', 'cu5', 'FATALITY'], ['cu4', 'cu5', 'FATALITY'], ['yuji', 'cu5', 'FATALITY'], ['cu3', 'verity', 'FATALITY'], ['cu4', 'verity', 'FATALITY'], ['cu5', 'verity', 'FATALITY'], ['cu3', 'freddy', 'FATALITY'], ['cu4', 'freddy', 'FATALITY'], ['cu5', 'freddy', 'FATALITY'], ['gojo', 'yuji', 'FATALITY'], ['cat', 'yuji', 'FATALITY'], ['cu3', 'yuji', 'FATALITY'], ['cu5', 'yuji', 'FATALITY'], ['yuji', 'yuji', 'FATALITY'], ['gojo', 'cu3', 'FATALITY'], ['verity', 'cu3', 'FATALITY'], ['cu4', 'cu3', 'FATALITY'], ['cu5', 'cu3', 'FATALITY'], ['cu3', 'cu3', 'FATALITY']]) {      // (the enemy's own fatality or nightmare on Sukuna, Ryu or Iron Man; v1.212 the enemy Ryu's fatality on four fighters; v1.213 the enemy Iron Man's on four)
     const label = 'THE ENEMY ' + SC_NAME[foe] + ': HIS ' + what + ' ON ' + SC_NAME[w]; SC.say = label; SET.gore = 0; window.__suAll = true;
     try { Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0, put: 2, grade: 4 }); startPractice(w, foe); } catch (e) { scErr(e, label); continue; }
     if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }

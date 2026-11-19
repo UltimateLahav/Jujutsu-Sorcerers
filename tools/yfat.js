@@ -15,16 +15,16 @@ const YFM = {
   push: { k: 8, imp: 7, fps: 30, gap: 27, lunge: 5, sw: 5 }, conc: { k: 9, imp: 7, fps: 24, gap: 26, lunge: 6, sw: 6 }, sweep: { k: 10, imp: 6, fps: 30, gap: 27, lunge: 4, sw: 3 },
   upper: { k: 13, imp: 6, fps: 30, gap: 21, lunge: 4, sw: 4 }, face: { k: 14, imp: 7, fps: 30, gap: 27, lunge: 4, sw: 4 }, spin: { k: 15, imp: 11, fps: 30, gap: 24, lunge: 4, sw: 3 },
   dive: { fx: 'fx_dive', k: 3, hk: 3, imp: 7, fps: 30, gap: 30, lunge: 22, ex: 'io', sw: 4 }, bfp: { k: 20, imp: 7, fps: 26, gap: 24, lunge: 6, sw: 6 }, bfk: { k: 21, imp: 7, fps: 30, gap: 28, lunge: 4, sw: 5 }, bfg: { k: 22, imp: 7, fps: 28, gap: 24, lunge: 6, sw: 6 }, cbf: { k: 23, imp: 9, fps: 20, gap: 30, lunge: 8, sw: 7, cut: 12 } };
-const YFS = {};      // the scripts, one for each enemy (below)
+const YFS = {};      // the script (below): the same for every enemy (v1.214; before it every enemy had his own)
 // ---- the enemy's pictures: the same ones the Versus fight shows (Gojo's real ones unless you are Gojo too, Verity's, the Cat's, Yuji's inverted ones), as a kit: vF idle, vRx[k] the ten reactions, vRxW / vW white copies for the flash of a blow, vB blue copy (stunned), vi(k) = the picture info of reaction k (-1: of the idle)
 let YFK = null;
-function yfKit(foe) {
+function yfKit(foe, rev) {      // (rev: the enemy Yuji does it to you, so the victim is you: your own pictures, never the inverted ones)
   if (foe === 'verity') return veVictim();
   if (foe === 'cat') return catVictim();
   if (foe === 'freddy') return freddyVictim();
   if (foe === 'cu3' || foe === 'cu4' || foe === 'cu5') return cuVictim(+foe.slice(2));      // (v1.208 Iron Man too)
-  if (foe === 'yuji') return YFK || (YFK = victimKit(YUF.inv.idle, YUF.inv.rx, k => k < 0 ? YU.idle : YU.rx[k]));
-  const inv = !!(vs && vs.inv);
+  if (foe === 'yuji') return rev ? yuVictim() : YFK || (YFK = victimKit(YUF.inv.idle, YUF.inv.rx, k => k < 0 ? YU.idle : YU.rx[k]));
+  const inv = !rev && !!(vs && vs.inv);
   return { vF: inv ? dumF : idleF, vRx: inv ? rxI : rxN, vRxW: rxW, vW: dumW, vB: dumB, vi: k => k < 0 ? D.idle : D['rx' + k], fs: 1 };
 }
 // ---- tracks. A segment is a piece of curve: from (x0, l0, r0) to (x1, l1, r1) between t0 and t1 (x = along the floor, l = height above it, r = turn in radians), each with its own easing, plus an arc of height h in the middle; pose(u) says which picture he shows
@@ -102,7 +102,8 @@ function yfSpr(src, info, x, l, f, o) {      // a picture standing on the floor 
   if (o.a != null) ctx.globalAlpha = o.a; ctx.drawImage(src, -hx, -62 - (info.top || 0) + pv); yfRestore();
 }
 let YFSP = null;
-function yfSets() {      // Yuji's pictures for the cutscene: the normal ones, or in INHERITENCE the ones with the spiky hair (every strip the cutscene can show, built the first time: about a tenth of a second)
+function yfSets() {      // Yuji's pictures for the cutscene: the normal ones, or in INHERITENCE the ones with the spiky hair (every strip the cutscene can show, built the first time: about a tenth of a second); v1.214 the enemy Yuji's: the inverted ones when you are Yuji too, as in the fight
+  if (yf && yf.rev) return { N: vs.inv ? YUF.inv : YUF.norm, I: YU };
   if (!(vs && vs.me === 'yuji' && cm === 3)) return { N: YUF.norm, I: YU };
   if (YFSP) return YFSP; const sp = spikyY(), pal = YU.pal, atk = YU.atk.map((st, k) => sp.I.atk[k] === st ? spikify(st) : sp.I.atk[k]), fx = {}, fxi = {};
   for (const n in YU.fx) { fxi[n] = spikify(YU.fx[n]); fx[n] = mk(fxi[n], pal); }
@@ -156,15 +157,16 @@ function yfCamKeys(P, S) {      // the camera of the whole cutscene: wide at fir
   for (const k of (S.cam || [])) K.push(k);
   return K.sort((a, b) => a[0] - b[0] || 0);
 }
-function yfStart(now) {
-  yfDepth = 0; const d = dummy, foe = vs.foe, S = YFS[foe] || YFS.gojo; cineClear(); closeSettings(); stickDown = false; d.ai = 'rest'; d.pull = null; d.vx = 0; d.vact = null; d.cact = null; d.cheld = null; d.held = null; vs.catHold = 0; slowMs = 0; $('pad').classList.add('cine'); $('hud').classList.add('cine');
+function yfStart(now, rev) {      // rev = the enemy Yuji does it to you
+  yfDepth = 0; const d = dummy, S = YFS.gen; cineClear(); closeSettings(); stickDown = false; d.ai = 'rest'; d.pull = null; d.vx = 0; d.vact = null; d.cact = null; d.cheld = null; d.held = null; vs.catHold = 0; slowMs = 0; $('pad').classList.add('cine'); $('hud').classList.add('cine');
   const g0 = Math.max(20, Math.min(FAT_RANGE, Math.abs(d.x - wx))), P = yfBuild(S, g0);
-  yf = { S, P, roll: 0, dust: 0, finX: P.beats[P.beats.length - 1].vx, end: P.end, T8: P.beats.length === 8 ? P.beats[7].at : null, title: S.title == null ? P.end - 2.6 : S.title, flash: 0, deb: Array.from({ length: 30 }, (_, i) => ({ x: -60 + i * 9 + (i * 37) % 11, d: (i * 0.13) % 1.1, v: 22 + (i * 29) % 30, s: 1 + (i % 3 === 0 ? 1 : 0), c: ['#8c8898', '#c8c4d0', '#5e5a6c', '#ff2a3a'][i % 4] })), K: yfKit(foe), t: 0, real: 0, rate: 1, slow: false, freeze: 0, ev: {}, fx: [], parts: [], cracks: [], cam: yfCamKeys(P, S), wx0: wx, n: 0, shake: 0, zk: 0, white: 0, imp: null, skip: false, born: now, tapAt: -9 };
+  yf = { rev: !!rev, S, P, roll: 0, dust: 0, finX: P.beats[P.beats.length - 1].vx, end: P.end, T8: P.beats.length === 8 ? P.beats[7].at : null, title: S.title == null ? P.end - 2.6 : S.title, flash: 0, deb: Array.from({ length: 30 }, (_, i) => ({ x: -60 + i * 9 + (i * 37) % 11, d: (i * 0.13) % 1.1, v: 22 + (i * 29) % 30, s: 1 + (i % 3 === 0 ? 1 : 0), c: ['#8c8898', '#c8c4d0', '#5e5a6c', '#ff2a3a'][i % 4] })), K: yfKit(rev ? vs.me : vs.foe, rev), t: 0, real: 0, rate: 1, slow: false, freeze: 0, ev: {}, fx: [], parts: [], cracks: [], cam: yfCamKeys(P, S), wx0: wx, n: 0, shake: 0, zk: 0, white: 0, imp: null, skip: false, born: now, tapAt: -9 };
   { const lb = P.beats[P.beats.length - 1]; snd('yfscore', Math.max(4, yfReal(P, lb.at) - lb.fz - 0.5)); }
 }
 function yfReset() { if (yf && yf.slow) yfSfx('slowout'); yf = null; $('pad').classList.remove('cine'); $('hud').classList.remove('cine'); yfSfx('yfstop'); }
-function yfEnd(now) {      // the enemy is gone and Yuji wins the round (like the other FATALITIES)
-  const s = yf; wx = s.wx0; yfReset(); blackUntil = now + 500; if (!vs || vs.ph !== 'fight') return;
+function yfEnd(now) {      // the enemy is gone and Yuji wins the round (like the other FATALITIES); v1.214 or you are gone and the enemy Yuji wins it
+  const s = yf, rev = s.rev; wx = s.wx0; yfReset(); blackUntil = now + 500; if (!vs || vs.ph !== 'fight') return;
+  if (rev) { vs.hp = 0; vs.sh = 0; vs.hitAt = now; endRound('enemy', 'fatal', now); return; }
   dummy.air = null; dummy.airH = 0; dummy.rag = null; dummy.hp = 0; dummy.shown = 0; dummy.ko = now - 3000; dummy.koAt = dummy.ko; kos++; endRound('player', 'fatal', now);
 }
 function yfTap(now) {      // a tap on the screen: the first one says how to skip, a second one within a second and a half skips (it is 30 seconds long; a stray tap must not end it)
@@ -172,7 +174,7 @@ function yfTap(now) {      // a tap on the screen: the first one says how to ski
 }
 function yfSkip(now) { if (!yf || yf.skip || yf.t > yf.end - 0.5) return; yf.skip = true; yfSfx('yfstop'); yf.t = Math.max(yf.t, yf.end - 0.5); yf.n = yf.P.beats.length; yf.imp = null; yf.freeze = 0; }      // (the rest of it is skipped: the counter shows all eight, no impact frame or freeze is left over)
 function yfHit(i, now) {      // blow i + 1 lands: the freeze, the white flash of the enemy, the BLACK FLASH, sparks, dust, the shake and the zoom
-  const s = yf, S0 = s.S, b = s.P.beats[i], n = i + 1, f = b.f, X = s.wx0 + b.vx - f * 5, lying = b.vLying, y = lying ? gy - 9 : gy - 36 - Math.max(0, b.vl), W = x => s.wx0 + x;
+  const s = yf, b = s.P.beats[i], n = i + 1, f = b.f, X = s.wx0 + b.vx - f * 5, lying = b.vLying, y = lying ? gy - 9 : gy - 36 - Math.max(0, b.vl), W = x => s.wx0 + x;
   s.roll = (i % 2 ? 1 : -1) * (n === 8 ? 0.09 : 0.012 + 0.006 * n);
   s.n = n; s.freeze = now + b.fz * 1000; if (n >= 2) s.blur = { x: b.vx - f * 5, y, until: now + (n === 8 ? 420 : 150) }; s.white = now + 90 + (n === 8 ? 260 : 0); s.shake = Math.max(s.shake, 2.5 + 0.6 * n); s.zk = 0.1 + 0.02 * n;
   s.fx.push({ k: n === 8 ? 'big' : 'bf', x: b.vx - f * 5, y, n, born: now, t0: s.t }); if (n >= 4) s.imp = { at: now, n, snap: null, x: b.vx - f * 5, y };
@@ -181,12 +183,9 @@ function yfHit(i, now) {      // blow i + 1 lands: the freeze, the white flash o
   if (n === 8) snd('yfbig'); else snd('yfbf', n); snd('hit', b.M.hk != null ? b.M.hk : b.M.k); snd('smack', 3); buzz(50 + 20 * n);
   spark(X, y, 14 + 3 * n, [YF_RED, YF_DK, '#ffffff', '#ff7a5a'], true, f); spark(X, y, 8 + n, [YF_RED, YF_DK], true, -f);
   if (b.vl < 12) { puff(W(b.vx), 3 + n); gritAt(W(b.vx), 4 + n, 70 + 10 * n, f); }
-  if (S0.spk) spark(X, y, 8 + n, S0.spk, false, -f);
-  if (b.fx) b.fx(s, now, b, n);
-  if (S0.glass) { s.cr = s.cr || []; s.cr.push({ x: b.vx - f * 5, y, born: now, n: 5 + (n >> 1), len: 22 + 6 * n, a: Math.random() * 6.2832 }); }
 }
 function yfEvents(now, t) {
-  const s = yf, P = s.P, S = s.S, at = (k, T, fn) => { if (!s.ev[k] && t >= T) { s.ev[k] = 1; if (!s.skip) fn(); } };
+  const s = yf, P = s.P, at = (k, T, fn) => { if (!s.ev[k] && t >= T) { s.ev[k] = 1; if (!s.skip) fn(); } };
   at('go', 0, () => { snd('fatalstart'); s.shake = 2; });
   P.beats.forEach((b, i) => {
     at('ap' + i, b.Ts - (b.ap === 'none' ? 0 : (b.apT || 0.5)), () => { if (b.ap === 'blink') snd('vanish'); else if (b.ap === 'leap') snd('jump'); else if (b.ap !== 'none' && b.ap !== 'run') snd('dash', 0); });
@@ -194,7 +193,7 @@ function yfEvents(now, t) {
     at('hit' + i, b.at, () => yfHit(i, now));
   });
   if (s.T8 != null) { at('zone', s.T8 - 3.6, () => { s.cracks.push({ x: s.finX - 96, t0: s.t, len: 70, spd: 60 }); }); at('rise', s.T8 - 3.2, () => snd('yfrise', 2.7)); }
-  if (s.T8 != null) at('vanish', s.T8 + P.beats[P.beats.length - 1].out.T, () => { const [x, y] = yfGone(s); if (S.vanish) S.vanish(s, now, x, y); else yfVanish(s, now, x, y, S.vcols || ['#ffffff', '#ff7a5a', '#ffb0a0']); });
+  if (s.T8 != null) at('vanish', s.T8 + P.beats[P.beats.length - 1].out.T, () => { const [x, y] = yfGone(s); yfVanish(s, now, x, y, ['#ffffff', '#ff7a5a', '#ffb0a0']); });
   at('title', s.title, () => snd('fataltitle'));
   if (!s.ev.end && t >= s.end && (s.skip || s.real >= YF_LEN - 0.005)) { s.ev.end = 1; yfEnd(now); }
 }
@@ -205,14 +204,6 @@ function yfTitle(k, a, yc) {      // the word FATALITY like the other cutscenes'
   const base = Math.max(8, Math.min(32, Math.floor((VW - 12) / 64) * 8)), sz = k < 0.06 ? base * 2 : k < 0.12 ? base * 1.5 : base, j = k < 0.9 ? Math.round((Math.random() - 0.5) * 2) : 0, x = Math.round(VW / 2) + j, y = yc + Math.round(sz / 2) + j;
   ctx.globalAlpha = a; ctx.textAlign = 'center'; ctx.font = sz + 'px "Press Start 2P"'; ctx.fillStyle = '#2a0408'; for (const [dx, dy] of [[-2, 0], [2, 0], [0, -2], [0, 2], [3, 3]]) ctx.fillText('FATALITY', x + dx, y + dy);
   ctx.fillStyle = '#d8101c'; ctx.fillText('FATALITY', x, y); ctx.globalAlpha = 1;
-}
-function yfToon(P, t) {      // CARTOON PHYSICS: the enemy is squashed flat by every blow and springs back stretched, then wobbles (a damped swing, 0.5 s)
-  let sx = 1, sy = 1; for (const b of P.beats) { const u = t - b.at; if (u < 0 || u > 0.6) continue; const e = Math.exp(-u * 7), w = Math.cos(u * 26); sy *= 1 - 0.5 * e * w; sx *= 1 + 0.4 * e * w; }
-  return [Math.max(0.3, sx), Math.max(0.3, sy)];
-}
-function yfIris(Ys, t, end, mx, cx, zy, z, my) {      // the old cartoon ending: a black circle closes on Yuji (the last 1.3 seconds)
-  const k = Math.max(0, Math.min(1, (t - (end - 1.3)) / 1.15)); if (k <= 0) return; const R = Math.hypot(VW, VH) * (1 - k * k), X = Math.round(mx + (Ys.x - cx) * z), Y = Math.round(my + (gy - 34 - Ys.l - zy) * z);
-  yfSave(); ctx.beginPath(); ctx.rect(0, 0, VW, VH); ctx.arc(X, Y, Math.max(0.1, R), 0, 6.2832, true); ctx.clip('evenodd'); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); yfRestore();
 }
 function yfReal(P, t) { let r = t; for (const w of P.slow) if (t > w[0]) r += (Math.min(t, w[1]) - w[0]) * (1 / w[2] - 1); for (const b of P.beats) if (t >= b.at) r += b.fz; return r; }      // the real second at which the clock of the cutscene shows t
 function yfPart(s, x, y, vx, vy, g, life, col, sz) { if (s.parts.length < (yfEco() ? 200 : 400)) s.parts.push({ x, y, vx, vy, g, life, age: 0, col, sz: sz || 1 }); }
@@ -262,7 +253,7 @@ function yfFinFront(s, now, t, mx, cx, Ys, sdt) {      // the charge: a black ba
   if (Math.random() < 0.5 + 0.5 * u) spark(s.wx0 + Ys.x + (Math.random() * 16 - 8), gy - 6 - Math.random() * 46, 1, ['#ff2a3a', '#1a0508', '#ff7a5a'], false, Math.random() < 0.5 ? 1 : -1);
 }
 function yfFrame0(now, dt) {
-  const s = yf, P = s.P, S = s.S, mx = Math.round(VW / 2), my = Math.round(VH / 2), w0 = performance.now();
+  const s = yf, P = s.P, mx = Math.round(VW / 2), my = Math.round(VH / 2), w0 = performance.now();
   keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; fatReq = 0; slowMs = 0;
   if (s.tapAt > now) s.tapAt = -9;      // (a tap made while the game was paused: the clock has gone back since)
   s.real += dt; const live = now >= s.freeze; if (live) s.t = Math.min(s.end, s.t + dt * s.rate);      // (the clock stops at the end and waits there until the thirtieth second is full)
@@ -284,20 +275,21 @@ function yfFrame0(now, dt) {
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
   yfSave(); ctx.imageSmoothingEnabled = false;
   if (s.shake > 0.25 && !SET.lite) ctx.translate(Math.round((Math.random() * 2 - 1) * s.shake), Math.round((Math.random() * 2 - 1) * s.shake));
+  if (s.rev) { ctx.translate(VW, 0); ctx.scale(-1, 1); }      // (the enemy Yuji does it to you: the whole picture is turned round, like the other cutscenes of the enemy)
   ctx.translate(mx, my); if (Math.abs(s.roll) > 0.002 && !SET.lite) ctx.rotate(s.roll); if (z !== 1) ctx.scale(z, z); ctx.translate(-mx, -zy);
   ctx.fillStyle = '#070b1e'; ctx.fillRect(-VW * 2, -VH * 3, VW * 5, VH * 3 + gy);
   drawBackdrop(now);
-  const post8 = s.T8 != null && t > s.T8 ? Math.max(0, Math.min(1, (t - s.T8) / 0.9)) : 0, dark = Math.min(0.62, 0.16 + 0.045 * s.n + (S.dark || 0)) * (1 - 0.7 * post8); ctx.fillStyle = 'rgba(14,2,10,' + dark.toFixed(3) + ')'; ctx.fillRect(-VW * 2, -VH * 3, VW * 5, VH * 6);
+  const post8 = s.T8 != null && t > s.T8 ? Math.max(0, Math.min(1, (t - s.T8) / 0.9)) : 0, dark = Math.min(0.62, 0.16 + 0.045 * s.n) * (1 - 0.7 * post8); ctx.fillStyle = 'rgba(14,2,10,' + dark.toFixed(3) + ')'; ctx.fillRect(-VW * 2, -VH * 3, VW * 5, VH * 6);
   if (s.T8 != null) yfFinWorld(s, now, t, mx, cx, Vs, Ys, sdt);
-  yfCracks(s, mx, cx); drawSmoke(now, sdt); if (S.back) S.back(s, now, t, mx, cx, Vs, Ys, sdt);
+  yfCracks(s, mx, cx); drawSmoke(now, sdt);
   // the enemy (his trail of black copies while he is blasted away)
   const K = s.K, vx = mx + Vs.x - cx;
   if (!Vs.gone) {
     if (s.T8 != null && t > s.T8 && t < s.T8 + 2.2) for (let j = 4; j >= 1; j--) { const g = yfEvalV(P.V, t - 0.05 * j); if (g.gone) continue; const gp = yfVPic(K, g.pose, now, false); yfSpr(tintOf(gp.src, YF_DK), gp.info, mx + g.x - cx, g.l, g.f, { r: g.r, pv: 30, a: 0.5 - 0.1 * j }); yfSpr(tintOf(gp.src, YF_RED), gp.info, mx + g.x - cx + 1, g.l, g.f, { r: g.r, pv: 30, a: 0.25 - 0.05 * j }); }
     if (Vs.tag === 'fly' || Vs.tag === 'slide') { const g1 = yfEvalV(P.V, t - 0.05); if (Math.abs(g1.x - Vs.x) > 3.5) for (let j = 1; j <= 2; j++) { const g = yfEvalV(P.V, t - 0.05 * j), gp = yfVPic(K, g.pose, now, false); yfSpr(tintOf(gp.src, '#2a0a14'), gp.info, mx + g.x - cx, g.l, g.f, { r: g.r, pv: 30, a: 0.34 - 0.1 * j }); } }
     const vp = yfVPic(K, Vs.pose, now, now < s.white); fatShadow(vx, Vs.l, Vs.lying || Vs.tilt > 0.7);
-    const rc = tintOf(vp.src, S.rim || '#9fb8ff'); for (const [dx, dy] of Z1) yfSpr(rc, vp.info, vx + dx, Vs.l - dy, Vs.f, { r: Vs.r, pv: 30, sx: Vs.sx, sy: Vs.sy, a: 0.5 });      // (a thin rim of light in his own colour, so a dark enemy does not vanish into the dark picture)
-    const tq = S.toon ? yfToon(P, t) : [1, 1]; if (!(S.vdraw && S.vdraw(s, now, t, vp, Vs, vx))) yfSpr(vp.src, vp.info, vx, Vs.l, Vs.f, { r: Vs.r, pv: 30, sx: Vs.sx * tq[0], sy: Vs.sy * tq[1] });
+    const rc = tintOf(vp.src, '#9fb8ff'); for (const [dx, dy] of Z1) yfSpr(rc, vp.info, vx + dx, Vs.l - dy, Vs.f, { r: Vs.r, pv: 30, sx: Vs.sx, sy: Vs.sy, a: 0.5 });      // (a thin rim of light in his own colour, so a dark enemy does not vanish into the dark picture)
+    yfSpr(vp.src, vp.info, vx, Vs.l, Vs.f, { r: Vs.r, pv: 30, sx: Vs.sx, sy: Vs.sy });
   }
   // Yuji: his shadow, his afterimages while he dashes, the red-and-black aura that grows with every blow, himself
   if (Ys.vis > 0.02) {
@@ -306,13 +298,12 @@ function yfFrame0(now, dt) {
     if (Ys.pic[0] === 'run' && now - s.dust > 80 && live) { s.dust = now; puff(s.wx0 + Ys.x - 8 * Ys.f, 1); }
     if (post8 > 0 && t < s.T8 + 3.2) { const g = Math.min(1, (3.2 - (t - s.T8)) / 1.2) * 0.07; for (let r = 46; r > 8; r -= 7) { ctx.globalAlpha = g; yfDisc(yx, gy - 30 - lift, r, '#ff2a3a'); } ctx.globalAlpha = 1; }
     if (Ys.ghost) for (let j = 1; j <= 3; j++) { const g = yfEvalY(P.Y, t - 0.04 * j), gp = yfYPic(g.pic, now); yfSpr(tintOf(gp.src, YF_RED), gp.info, mx + g.x - cx, g.l, g.f, { a: 0.36 - 0.09 * j }); }
-    const fin = s.T8 != null ? Math.max(0, Math.min(1, (t - (s.T8 - 3.8)) / 3.0)) : 0, ak = Math.min(1, 0.2 + 0.1 * s.n + 0.3 * fin + (S.aura ? S.aura(t) : 0));
+    const fin = s.T8 != null ? Math.max(0, Math.min(1, (t - (s.T8 - 3.8)) / 3.0)) : 0, ak = Math.min(1, 0.2 + 0.1 * s.n + 0.3 * fin);
     if (ak > 0.05) { const j = Math.floor(now / 70) % 3; for (const [dx, dy] of (s.n >= 6 ? ZN3 : ZN)) yfSpr(tintOf(yp.src, '#e8182c'), yp.info, yx + dx + j - 1, lift - dy, Ys.f, { a: 0.5 * ak * Ys.vis }); for (const [dx, dy] of Z1) yfSpr(tintOf(yp.src, '#1a0508'), yp.info, yx + dx, lift - dy, Ys.f, { a: 0.85 * Math.min(1, ak * 1.3) * Ys.vis }); }      // (they fade with him when he blinks, or a dark silhouette stays behind)
     yfSpr(yp.src, yp.info, yx, lift, Ys.f, { a: Ys.vis });
   }
   if (Ys.blink != null) { const a = Math.abs(Ys.blink - 0.5) * 2; ctx.globalAlpha = 1 - a; for (let i = 0; i < 24; i++) { const u = i / 23, X = Math.round(mx + Ys.bx0 + (Ys.bx1 - Ys.bx0) * u - cx), Y = gy - 30 - Math.round(Ys.bl0 + (Ys.bl1 - Ys.bl0) * u) + ((i * 7) % 5) - 2; ctx.fillStyle = i % 3 ? YF_RED : YF_DK; ctx.fillRect(X, Y, 3, 1); } ctx.globalAlpha = 1; }
   if (s.T8 != null) yfFinFront(s, now, t, mx, cx, Ys, sdt);
-  if (S.front) S.front(s, now, t, mx, cx, Vs, Ys, sdt);
   // the effects of the blows, the sparks, the dust
   yfPartsDraw(s, sdt, mx, cx);
   s.fx = s.fx.filter(e => e.k === 'big' ? yfBigDraw(e, s, now, mx, cx) : e.k === 'van' ? yfVanDraw(e, s, now, mx, cx) : yfBFDraw(e, s, now, mx, cx));
@@ -322,20 +313,19 @@ function yfFrame0(now, dt) {
   const beat = s.T8 != null && t > s.T8 - 3.8 && t < s.T8 ? 0.1 * Math.max(0, Math.sin(now / 150)) : 0, vg = Math.min(0.92, 0.25 + 0.08 * s.n + beat) * (1 - 0.55 * post8); ctx.globalAlpha = vg; ctx.drawImage(yfVignette(), 0, 0); ctx.globalAlpha = 1;
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, bh); ctx.fillRect(0, VH - bh, VW, bh);
   if (s.T8 != null && t > s.T8 - 0.5 && t < s.T8) actionLines(mx, my + 8, now, 36);
-  if (s.blur && now < s.blur.until) { const k = (s.blur.until - now) / 150, X = Math.round(mx + (s.blur.x - cx) * z), Y = Math.round(my + (s.blur.y - zy) * z); yfSave(); ctx.imageSmoothingEnabled = false; for (const sc of [1.04, 1.09]) { ctx.globalAlpha = 0.3 * k * (sc < 1.06 ? 1 : 0.7); ctx.drawImage(cv, Math.round(X * (1 - sc)), Math.round(Y * (1 - sc)), Math.round(VW * sc), Math.round(VH * sc)); } yfRestore(); }
+  if (s.blur && now < s.blur.until) { const k = (s.blur.until - now) / 150, X = Math.round(s.rev ? VW - mx - (s.blur.x - cx) * z : mx + (s.blur.x - cx) * z), Y = Math.round(my + (s.blur.y - zy) * z); yfSave(); ctx.imageSmoothingEnabled = false; for (const sc of [1.04, 1.09]) { ctx.globalAlpha = 0.3 * k * (sc < 1.06 ? 1 : 0.7); ctx.drawImage(cv, Math.round(X * (1 - sc)), Math.round(Y * (1 - sc)), Math.round(VW * sc), Math.round(VH * sc)); } yfRestore(); }
   yfImpFrames(s, now, mx, my, z, zy, cx);
-  if (S.screen) S.screen(s, now, t, mx, my, z, zy, cx, Vs, Ys);
   if (!s.skip && t > 1 && (now - s.tapAt < 1500 || t < 4.5)) { ctx.globalAlpha = now - s.tapAt < 1500 ? 1 : Math.min(0.55, (4.5 - t) * 0.5, (t - 1) * 2); pxt(now - s.tapAt < 1500 ? 'TAP AGAIN TO SKIP' : 'DOUBLE TAP TO SKIP', mx, VH - 4, '#ffffff', 8, 'center'); ctx.globalAlpha = 1; }
   if (s.flash > now && !s.imp) { ctx.globalAlpha = Math.min(1, (s.flash - now) / 180); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, VW, VH); ctx.globalAlpha = 1; }
   if (s.title != null && t >= s.title) { const k = t - s.title; ctx.fillStyle = 'rgba(0,0,0,' + (0.3 * Math.min(1, k / 0.3)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); yfTitle(k, 1, Math.round(VH * 0.3)); }
-  const fade = Math.max(0, Math.min(1, (t - (s.end - 0.55)) / 0.5)); if (S.iris) yfIris(Ys, t, s.end, mx, cx, zy, z, my); else if (fade > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fade.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  const fade = Math.max(0, Math.min(1, (t - (s.end - 0.55)) / 0.5)); if (fade > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fade.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
   const w = performance.now() - w0; s.work = s.work == null ? w : s.work * 0.9 + w * 0.1; s.dtAvg = s.dtAvg == null ? dt : s.dtAvg * 0.9 + dt * 0.1;
   if (!s.eco && s.t > 1.5 && (s.work > 11 || (!fpsCap() && s.dtAvg > 0.034))) s.eco = true;      // (frames that take too long to make, or come too slowly: from now on the effects are drawn lighter, for the rest of the cutscene)
 }
 function yfImpFrames(s, now, mx, my, z, zy, cx) {      // the impact frames of the heavy blows, painted over the frozen picture: a hard black-and-white copy with black rays, then the same in negative with red rays
-  const im = s.imp; if (!im) return; const a = now - im.at, per = im.n === 8 ? 130 : 55, N = im.n === 8 ? 4 : 2; if (a >= per * N) { if (im.n === 8 && im.snap) { s.snap8 = im.snap; s.snap8At = now; s.cr = []; } s.imp = null; return; }
+  const im = s.imp; if (!im) return; const a = now - im.at, per = im.n === 8 ? 130 : 55, N = im.n === 8 ? 4 : 2; if (a >= per * N) { s.imp = null; return; }
   if (!im.snap) { const c = document.createElement('canvas'); c.width = cv.width; c.height = cv.height; c.getContext('2d').drawImage(cv, 0, 0); im.snap = c; }
-  const k = Math.floor(a / per), X = Math.round(mx + (mx + im.x - cx - mx) * z), Y = Math.round(my + (im.y - zy) * z);
+  const k = Math.floor(a / per), X = Math.round(s.rev ? VW - mx - (im.x - cx) * z : mx + (im.x - cx) * z), Y = Math.round(my + (im.y - zy) * z);
   const rays = (n, r0, r1, col, seed) => { ctx.fillStyle = col; for (let i = 0; i < n; i++) { const an = i / n * 6.2832 + Math.sin(i * 12.9 + seed) * 0.07, ra = r0 + (i * 37 + seed * 11) % 14, rb = r1 + (i * 53 + seed * 7) % 90; for (let r = ra; r < rb; r += 1) ctx.fillRect(Math.round(X + Math.cos(an) * r), Math.round(Y + Math.sin(an) * r * 0.85), 1, 1); } };
   yfSave(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 1;
   if (k === 0) { ctx.filter = 'grayscale(1) brightness(3) contrast(6)'; ctx.drawImage(im.snap, 0, 0); ctx.filter = 'none'; rays(30, 10, 60, '#000000', 1); }
@@ -346,84 +336,8 @@ function yfImpFrames(s, now, mx, my, z, zy, cx) {      // the impact frames of t
 }
 // ---------------------------------------------------------------- the scripts. beats: at = when the blow lands (seconds of the cutscene's own clock), mv = Yuji's move (YFM), ap = how he gets there (dash | run | leap | blink | walk | none) taking apT seconds, aph = the height of the leap, yl = how high he is ('match' = as high as the enemy), pre = { t, d }: t seconds before the approach he blinks to d px from the enemy, out = what happens to the enemy (yfOut), z = the camera's zoom at the blow, fz = the freeze, word / line = a comic word or a line of text at the blow; slow = the slow-motion windows [from, to, speed]; cam = more camera keys [time, zoom, weight towards the enemy, shift up, 1 = a close-up that does not fit both in]
 // The rules of the enemy's state: after a slide he stands (dazed), after a launch or a fly that ends in the air he hangs, after a fly that lands he lies flat; so a blow on a lying enemy is a low one (slam, sweep, spin), on a hanging one an air blow (yl: 'match'), on a standing one anything.
-function yfHex(x, y, r) { for (let i = 0; i < 6; i++) { const a0 = i / 6 * 6.2832 + 0.5236, a1 = (i + 1) / 6 * 6.2832 + 0.5236, x0 = x + Math.cos(a0) * r, y0 = y + Math.sin(a0) * r, x1 = x + Math.cos(a1) * r, y1 = y + Math.sin(a1) * r, n = Math.max(2, Math.round(Math.hypot(x1 - x0, y1 - y0))); for (let q = 0; q <= n; q++) ctx.fillRect(Math.round(x0 + (x1 - x0) * q / n), Math.round(y0 + (y1 - y0) * q / n), 1, 1); } }
-function yfBarrier(s, now, t, mx, cx, Vs) {      // GOJO'S INFINITY: a thin shell of hexagons in front of him; it flickers, brightens as Yuji's fist comes close and is broken by the first BLACK FLASH
-  const b1 = s.P.beats[0]; if (t > b1.at + 0.02 || Vs.gone) return;
-  const near = Math.max(0, Math.min(1, 1 - (b1.at - t) / 0.8)), X = Math.round(mx + Vs.x - cx + 7), Y = Math.round(gy - 34 - Vs.l);
-  ctx.globalAlpha = 0.22 + 0.55 * near + 0.1 * Math.sin(now / 90);
-  for (const [R, col] of [[27, near > 0.7 ? '#ffffff' : '#9fd8ff'], [21, '#4aa8ff']]) { ctx.fillStyle = col; for (let k = 0; k < 9; k++) { const th = Math.PI + (k - 4) * 0.27 + (R < 25 ? 0.13 : 0); yfHex(X + Math.cos(th) * R, Y + Math.sin(th) * R * 1.3, 3.6); } }
-  if (near > 0.2) { ctx.globalAlpha = near; yfRing(X, Y, 28 + 6 * (1 - near), '#9fd8ff', 1, 1.3, 4); }
-  ctx.globalAlpha = 1;
-}
-function yfShatter(s, now, x, y, cols) { for (let i = 0; i < 44; i++) { const an = Math.PI + (Math.random() - 0.5) * 2.4, v = 40 + Math.random() * 170; yfPart(s, x, y, Math.cos(an) * v, Math.sin(an) * v - 30, 200, 0.7 + Math.random() * 0.9, cols[i % cols.length], 1 + (i % 4 === 0 ? 1 : 0)); } snd('arrive'); }
-function yfStars(s, now, vx, l, n) { ctx.fillStyle = '#ffe34d'; for (let i = 0; i < n; i++) { const a = now / 260 + i * 6.2832 / n, X = Math.round(vx + Math.cos(a) * 12), Y = Math.round(gy - 66 - l + Math.sin(a) * 3.5); ctx.fillRect(X - 2, Y, 5, 1); ctx.fillRect(X, Y - 2, 1, 5); ctx.fillRect(X - 1, Y - 1, 3, 3); } }
-function yfGlitch(s, now, t, vp, Vs, vx, amt, keep) {      // VERITY'S way of being hit: her picture slides apart in strips of four rows, with a magenta and a cyan copy beside it; keep < 1 = strips that are gone for good (she is being deleted)
-  const I = vp.info, hx = I.cx - I.x0, seed = (now / 55) | 0, rows = 64;
-  yfSave(); ctx.translate(Math.round(vx), gy + 2 - Math.round(Vs.l) - 30); if (Vs.r) ctx.rotate(Vs.r); if (Vs.f < 0) ctx.scale(-1, 1);
-  for (const [col, dx0, al] of [['#ff3ad8', -3, 0.4], ['#3ad8ff', 3, 0.4], [null, 0, 1]]) if (amt > 0.05 || !col) { const img = col ? tintOf(vp.src, col) : vp.src; for (let r = 0; r < rows; r += 4) { const h = Math.imul(r * 7919 + seed * 104729 + (col ? col.length : 0), 2246822519) >>> 0; if ((h % 100) / 100 > keep) continue; const dx = Math.round(((h >> 8) % 9 - 4) * amt * 1.4) + dx0 * amt; ctx.globalAlpha = al; ctx.drawImage(img, 0, r, img.width, 4, -hx + dx, -62 - (I.top || 0) + 30 + r, img.width, 4); } }
-  yfRestore(); ctx.globalAlpha = 1;
-}
-function yfGlass(s, now, mx, cx, z, zy, my) {      // the MIRROR: every blow leaves a crack in the glass of the screen (they grow out of the place of the blow and stay); the last one shatters it
-  s.cr = s.cr || []; for (const c of s.cr) { const X = Math.round(mx + (c.x - cx) * z), Y = Math.round(my + (c.y - zy) * z), g = Math.min(1, (now - c.born) / 160); ctx.fillStyle = 'rgba(220,250,255,0.75)'; for (let r = 0; r < c.n; r++) { let px = X, py = Y, an = c.a + r * 6.2832 / c.n; const L = c.len * g; for (let q = 0; q < L; q++) { if (q % 7 === 0) an += (((r * 31 + q * 17) % 5) - 2) * 0.22; px += Math.cos(an); py += Math.sin(an); ctx.fillRect(Math.round(px), Math.round(py), 1, 1); } } ctx.fillStyle = 'rgba(20,60,80,0.35)'; for (let r = 0; r < c.n; r += 2) { let px = X + 1, py = Y + 1, an = c.a + r * 6.2832 / c.n; for (let q = 0; q < c.len * g * 0.6; q++) { if (q % 7 === 0) an += (((r * 31 + q * 17) % 5) - 2) * 0.22; px += Math.cos(an); py += Math.sin(an); ctx.fillRect(Math.round(px), Math.round(py), 1, 1); } } }
-}
-function yfShards(s, now) {      // the glass falls out of the picture: the frame of the last blow in 80 triangles that tilt and drop away, one after the other
-  if (!s.snap8) return; const a = (now - s.snap8At) / 1000; if (a > 1.8) return; const cols = 8, rows = 5, cw = VW / cols, ch = VH / rows;
-  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) for (let h = 0; h < 2; h++) {
-    const id = (j * cols + i) * 2 + h, d = ((id * 37) % 11) / 11 * 0.25, u = Math.max(0, a - d - 0.12); if (u * 700 > VH * 1.5) continue;
-    const x0 = i * cw, y0 = j * ch, tri = h ? [[x0 + cw, y0], [x0 + cw, y0 + ch], [x0, y0 + ch]] : [[x0, y0], [x0 + cw, y0], [x0, y0 + ch]], gx = x0 + cw * (h ? 0.66 : 0.33), gyy = y0 + ch * (h ? 0.66 : 0.33), rot = u * (((id * 13) % 7) - 3) * 0.5, dy = u * u * 520, dx = u * (((id * 29) % 9) - 4) * 14;
-    yfSave(); ctx.translate(gx + dx, gyy + dy); ctx.rotate(rot); ctx.translate(-gx, -gyy); ctx.beginPath(); ctx.moveTo(tri[0][0], tri[0][1]); ctx.lineTo(tri[1][0], tri[1][1]); ctx.lineTo(tri[2][0], tri[2][1]); ctx.closePath(); ctx.clip(); ctx.globalAlpha = Math.max(0, 1 - u * 0.9); ctx.drawImage(s.snap8, 0, 0); yfRestore();
-    ctx.strokeStyle = 'rgba(230,255,255,0.8)'; ctx.lineWidth = 1; yfSave(); ctx.translate(gx + dx, gyy + dy); ctx.rotate(rot); ctx.translate(-gx, -gyy); ctx.beginPath(); ctx.moveTo(tri[0][0], tri[0][1]); ctx.lineTo(tri[1][0], tri[1][1]); ctx.lineTo(tri[2][0], tri[2][1]); ctx.closePath(); ctx.stroke(); yfRestore();
-  }
-  ctx.globalAlpha = 1;
-}
-YFS.gojo = {
-  zb: 1.55, rim: '#9fd8ff', spk: ['#9fd8ff', '#ffffff'], vcols: ['#9fd8ff', '#ffffff', '#4aa8ff'],
-  beats: [
-    { at: 2.6, mv: 'hook', ap: 'dash', apT: 0.5, out: { k: 'slide', dx: 75, T: 0.9, rx: 3 }, z: 2.1, fx: (s, now, b) => yfShatter(s, now, b.vx - 12, gy - 34, ['#9fd8ff', '#ffffff', '#4aa8ff']) },
-    { at: 4.6, mv: 'upper', ap: 'run', apT: 1.3, out: { k: 'launch', T: 0.55, dx: 14, l1: 78 }, z: 1.7 },
-    { at: 6.6, mv: 'knee', ap: 'leap', apT: 1.3, aph: 26, yl: 'match', out: { k: 'fly', T: 0.95, dx: 70, h: 24 }, z: 1.8 },
-    { at: 8.9, mv: 'slam', ap: 'run', apT: 1.15, out: { k: 'fly', T: 0.5, dx: 20, h: 26 }, z: 2.2 },
-    { at: 10.8, mv: 'sweep', ap: 'run', apT: 1.2, out: { k: 'fly', T: 0.95, dx: 130, h: 8, turns: 1 }, z: 1.6 },
-    { at: 12.9, mv: 'spin', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 20, h: 8, l1: 95, rot: 0.6 }, z: 1.8 },
-    { at: 14.7, mv: 'dive', ap: 'leap', apT: 1.2, aph: 28, yl: 'match', out: { k: 'fly', T: 0.9, dx: 34, h: 24, land: 'stand', rest: 'kneel' }, z: 1.8 },
-    { at: 19.4, mv: 'cbf', ap: 'dash', apT: 0.5, pre: { t: 3.0, d: 96 }, out: { k: 'fly', T: 1.3, dx: 190, h: 30, l1: 84, rot: 2.8, gone: true }, nocam: true, fz: 0.52 }],
-  slow: [[17.4, 19.3, 0.45], [19.42, 20.62, 0.3]],
-  cam: [[16.6, 1.4, 0.5, 0, 0], [17.6, 1.7, 0.3, 0, 0], [18.7, 2.0, 0.1, 0, 1], [19.15, 3.0, 0.1, 4, 1], [19.5, 2.4, 0.1, 0, 1], [19.95, 1.9, 0.1, -6, 1], [20.3, 1.6, 0.5, 0, 0], [21.2, 1.3, 0.55, 0, 0], [21.65, 1.9, 0.0, 0, 1], [23.5, 2.0, 0.0, 0, 1]], title: 21.45,
-  back: (s, now, t, mx, cx, Vs) => yfBarrier(s, now, t, mx, cx, Vs) };
-
-YFS.verity = {
-  zb: 1.55, rim: '#ffe060', spk: ['#ffe060', '#ffffff'], vcols: ['#ffe060', '#ffffff', '#c8a028'],
-  beats: [
-    { at: 2.8, mv: 'elbow', ap: 'dash', apT: 0.5, out: { k: 'slide', dx: 60, T: 0.8, rx: 0 }, z: 2.2 },
-    { at: 4.7, mv: 'push', ap: 'run', apT: 1.2, out: { k: 'fly', T: 1.0, dx: 140, h: 6 }, z: 1.7 },
-    { at: 6.75, mv: 'slam', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.55, dx: 14, h: 38 }, z: 2.2 },
-    { at: 8.6, mv: 'sweep', ap: 'run', apT: 1.1, out: { k: 'fly', T: 1.0, dx: 100, h: 40, l1: 85, rot: 1.2 }, z: 1.6 },
-    { at: 10.65, mv: 'dive', ap: 'leap', apT: 1.3, aph: 26, yl: 'match', out: { k: 'fly', T: 0.9, dx: 80, h: 18 }, z: 1.8 },
-    { at: 13.15, mv: 'spin', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 40, h: 6, l1: 90, rot: 0.8 }, z: 1.8 },
-    { at: 14.9, mv: 'face', ap: 'leap', apT: 1.2, aph: 28, yl: 'match', out: { k: 'fly', T: 0.9, dx: 40, h: 20, land: 'stand', rest: 'kneel' }, z: 1.8 },
-    { at: 19.4, mv: 'bfk', ap: 'dash', apT: 0.5, pre: { t: 3.0, d: 96 }, out: { k: 'fly', T: 1.4, dx: 230, h: 0, l1: 38, rot: 0.9, gone: true }, nocam: true, fz: 0.52 }],
-  slow: [[17.4, 19.3, 0.45], [19.42, 20.62, 0.3]],
-  cam: [[16.6, 1.4, 0.5, 0, 0], [17.6, 1.7, 0.3, 0, 0], [18.7, 2.0, 0.1, 0, 1], [19.15, 3.0, 0.1, 4, 1], [19.5, 2.4, 0.1, 0, 1], [19.95, 1.8, 0.2, -4, 1], [20.4, 1.3, 0.5, 0, 0], [21.3, 1.2, 0.5, 0, 0], [21.7, 1.9, 0.0, 0, 1], [23.5, 2.0, 0.0, 0, 1]], title: 21.45,
-  vdraw: (s, now, t, vp, Vs, vx) => { const P = s.P; let g = 0; for (const b of P.beats) { const u = t - b.at; if (u >= 0 && u < 0.4) g = Math.max(g, 1 - u / 0.4); } const T8 = s.T8, o = P.beats[7].out; let keep = 1; if (T8 != null && t > T8 - 0.5) { g = Math.max(g, 0.7); if (t > T8 + 0.2) keep = Math.max(0, 1 - (t - T8 - 0.2) / (o.T - 0.2)); } if (g < 0.05 && keep >= 1) return false; yfGlitch(s, now, t, vp, Vs, vx, g, keep); return true; },
-  screen: (s, now, t) => { const T8 = s.T8; if (T8 == null || t < T8 || t > T8 + 2.0) return; const k = 1 - (t - T8) / 2.0; for (let i = 0; i < 9; i++) { const h = Math.imul(i * 7919 + ((now / 70) | 0) * 104729, 2246822519) >>> 0; ctx.globalAlpha = 0.35 * k; ctx.fillStyle = i % 3 ? '#ffe060' : '#ffffff'; ctx.fillRect(h % VW, (h >> 9) % VH, 20 + (h >> 4) % 120, 1 + (h >> 13) % 2); } ctx.globalAlpha = 1; } };
-YFS.cat = {
-  zb: 1.55, rim: '#ffffff', spk: ['#ffe34d', '#ffffff'], vcols: ['#ffe34d', '#ffffff', '#ff7a5a'], toon: true, iris: true,
-  beats: [
-    { at: 2.6, mv: 'conc', ap: 'dash', apT: 0.5, out: { k: 'fly', T: 1.0, dx: 130, h: 22, bh: 24 }, z: 2.0 },
-    { at: 4.7, mv: 'slam', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.6, dx: 30, h: 44, bh: 20, flat: true }, z: 2.2 },
-    { at: 6.6, mv: 'sweep', ap: 'run', apT: 1.2, out: { k: 'fly', T: 1.1, dx: 150, h: 8, turns: 2 }, z: 1.6 },
-    { at: 8.8, mv: 'spin', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 20, h: 6, l1: 100, rot: 0.7 }, z: 1.8 },
-    { at: 10.7, mv: 'knee', ap: 'leap', apT: 1.3, aph: 28, yl: 'match', out: { k: 'fly', T: 0.9, dx: 60, h: 30, land: 'stand', rest: 'dazed' }, z: 1.8 },
-    { at: 13.1, mv: 'elbow', ap: 'run', apT: 1.3, out: { k: 'slide', dx: 70, T: 0.8, rx: 2 }, z: 2.0 },
-    { at: 15.1, mv: 'dive', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 40, h: 24, land: 'stand', rest: 'kneel' }, z: 1.8 },
-    { at: 19.4, mv: 'cbf', ap: 'dash', apT: 0.5, pre: { t: 3.0, d: 96 }, out: { k: 'fly', T: 1.3, dx: 170, h: 30, l1: 84, rot: 3.2, gone: true }, nocam: true, fz: 0.52 }],
-  slow: [[17.4, 19.3, 0.45], [19.42, 20.62, 0.3]],
-  cam: [[16.6, 1.4, 0.5, 0, 0], [17.6, 1.7, 0.3, 0, 0], [18.7, 2.0, 0.1, 0, 1], [19.15, 3.0, 0.1, 4, 1], [19.5, 2.4, 0.1, 0, 1], [19.95, 1.9, 0.1, -6, 1], [20.3, 1.6, 0.5, 0, 0], [21.2, 1.3, 0.55, 0, 0], [21.65, 1.9, 0.0, 0, 1], [23.0, 2.0, 0.0, 0, 1]], title: 21.2,
-  back: (s, now, t, mx, cx) => { const h = s.hole; if (!h) return; const a = (now - h.born) / 1000, q = yfVPic(s.K, ['rx', 7, 0.4], now, false), X = Math.round(mx + h.x - cx), Y = Math.round(h.y); yfSave(); ctx.globalAlpha = Math.min(1, a * 5) * Math.max(0.25, 1 - a * 0.25); ctx.translate(X, Y + 30); ctx.scale(-1.7, 1.7); const hx = q.info.cx - q.info.x0; ctx.drawImage(tintOf(q.src, '#ffffff'), -hx + 1, -62 - (q.info.top || 0)); ctx.drawImage(tintOf(q.src, '#ffffff'), -hx - 1, -62 - (q.info.top || 0)); ctx.drawImage(tintOf(q.src, '#000000'), -hx, -62 - (q.info.top || 0)); yfRestore(); },
-  front: (s, now, t, mx, cx, Vs) => { if (!Vs.gone && Vs.pose[0] === 'blue') yfStars(s, now, mx + Vs.x - cx, Vs.l, 3); if (s.hole) { const a = (now - s.hole.born) / 1000; if (a < 2.2) yfStars(s, now, mx + s.hole.x - cx, 150 - (gy - s.hole.y) + 4, 4); } },
-  vanish: (s, now, x, y) => { s.hole = { x, y, born: now }; yfVanish(s, now, x, y, ['#ffe34d', '#ffffff', '#ff7a5a']); } };
-YFS.freddy = {      // v1.188 FREDDY: his own version (the user: "make freddy an enemy in versus": Yuji's FATALITY has its own script for every enemy). The blows come in another order (elbow, hook, knee, slam, sweep, spin, dive, then the huge one), the sparks and the pieces are the red and green of his sweater, and the embers of his boiler room rise over the whole screen.
-  zb: 1.55, rim: '#e0584a', spk: ['#e0584a', '#55a868', '#ffffff'], vcols: ['#b3303d', '#2f7a43', '#ffffff'],
+YFS.gen = {      // v1.214 THE SCRIPT (the user: "remove all of yuji's fatalities and make like everyone else a generic fatality"): the same eight blows on every enemy: elbow, hook, knee, slam, sweep, spin, dive, then the huge one that blasts him away
+  zb: 1.55,
   beats: [
     { at: 2.6, mv: 'elbow', ap: 'dash', apT: 0.5, out: { k: 'slide', dx: 60, T: 0.8, rx: 0 }, z: 2.2 },
     { at: 4.6, mv: 'hook', ap: 'run', apT: 1.2, out: { k: 'fly', T: 0.9, dx: 90, h: 10 }, z: 1.7 },
@@ -434,21 +348,4 @@ YFS.freddy = {      // v1.188 FREDDY: his own version (the user: "make freddy an
     { at: 14.8, mv: 'dive', ap: 'leap', apT: 1.2, aph: 28, yl: 'match', out: { k: 'fly', T: 0.9, dx: 40, h: 24, land: 'stand', rest: 'kneel' }, z: 1.8 },
     { at: 19.4, mv: 'cbf', ap: 'dash', apT: 0.5, pre: { t: 3.0, d: 96 }, out: { k: 'fly', T: 1.2, dx: 150, h: 26, l1: 60, rot: 2.4, gone: true }, nocam: true, fz: 0.52 }],
   slow: [[17.4, 19.3, 0.45], [19.42, 20.62, 0.3]],
-  cam: [[16.6, 1.4, 0.5, 0, 0], [17.6, 1.7, 0.3, 0, 0], [18.7, 2.0, 0.1, 0, 1], [19.15, 3.0, 0.1, 4, 1], [19.5, 2.4, 0.1, 0, 1], [19.95, 1.9, 0.1, -6, 1], [20.3, 1.6, 0.5, 0, 0], [21.2, 1.3, 0.55, 0, 0], [21.65, 1.9, 0.0, 0, 1], [23.5, 2.0, 0.0, 0, 1]], title: 21.45,
-  screen: (s, now) => { ctx.globalAlpha = 0.6; for (let i = 0; i < 30; i++) { const h = Math.imul(i * 7919 + 13, 2246822519) >>> 0, x = Math.round(h % VW + Math.sin(now / 900 + i) * 6), y = VH - ((now / (22 + h % 20) + (h >> 8) % VH) % VH); ctx.fillStyle = i % 3 ? '#ff8a2a' : '#ffd34d'; ctx.fillRect(x, Math.round(y), i % 4 ? 1 : 2, 1); } ctx.globalAlpha = 1; } };
-YFS.cu3 = YFS.cu4 = { ...YFS.freddy, rim: '#ff2a3a', spk: ['#ff2a3a', '#ffb0b8', '#ffffff'], vcols: ['#ffffff', '#ff7a86', '#d02a3a'], screen: undefined };      // v1.189 Sukuna and Ryu as the enemy: the script made for Freddy (the order of the blows and the timing), in their own colours, without his embers
-YFS.yuji = {
-  zb: 1.55, rim: '#7df4ff', spk: ['#7df4ff', '#ffffff'], vcols: ['#ffffff', '#7df4ff', '#2fc3e6'], glass: true,
-  beats: [
-    { at: 2.5, mv: 'rkick', ap: 'dash', apT: 0.5, out: { k: 'slide', dx: 70, T: 0.9, rx: 3 }, z: 2.1 },
-    { at: 4.4, mv: 'upper', ap: 'run', apT: 1.2, out: { k: 'launch', T: 0.55, dx: 14, l1: 80 }, z: 1.7 },
-    { at: 6.45, mv: 'face', ap: 'leap', apT: 1.3, aph: 28, yl: 'match', out: { k: 'fly', T: 1.0, dx: 80, h: 20 }, z: 1.8 },
-    { at: 8.8, mv: 'slam', ap: 'run', apT: 1.2, out: { k: 'fly', T: 0.5, dx: 15, h: 28 }, z: 2.2 },
-    { at: 10.7, mv: 'sweep', ap: 'run', apT: 1.2, out: { k: 'fly', T: 1.0, dx: 120, h: 8, turns: 1 }, z: 1.6 },
-    { at: 12.9, mv: 'spin', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 30, h: 8, l1: 90, rot: 0.6 }, z: 1.8 },
-    { at: 14.7, mv: 'dive', ap: 'leap', apT: 1.2, aph: 28, yl: 'match', out: { k: 'fly', T: 0.9, dx: 34, h: 24, land: 'stand', rest: 'kneel' }, z: 1.8 },
-    { at: 19.4, mv: 'cbf', ap: 'dash', apT: 0.5, pre: { t: 3.0, d: 96 }, out: { k: 'fly', T: 1.1, dx: 120, h: 20, l1: 44, rot: 1.4, gone: true }, nocam: true, fz: 0.52 }],
-  slow: [[17.4, 19.3, 0.45], [19.42, 20.62, 0.3]],
-  cam: [[16.6, 1.4, 0.5, 0, 0], [17.6, 1.7, 0.3, 0, 0], [18.7, 2.0, 0.1, 0, 1], [19.15, 3.0, 0.1, 4, 1], [19.5, 2.4, 0.1, 0, 1], [19.95, 1.9, 0.1, -6, 1], [20.3, 1.6, 0.5, 0, 0], [21.2, 1.3, 0.55, 0, 0], [21.65, 1.9, 0.0, 0, 1], [23.5, 2.0, 0.0, 0, 1]], title: 21.45,
-  screen: (s, now, t, mx, my, z, zy, cx) => { yfGlass(s, now, mx, cx, z, zy, my); yfShards(s, now); },
-  fx: null };
+  cam: [[16.6, 1.4, 0.5, 0, 0], [17.6, 1.7, 0.3, 0, 0], [18.7, 2.0, 0.1, 0, 1], [19.15, 3.0, 0.1, 4, 1], [19.5, 2.4, 0.1, 0, 1], [19.95, 1.9, 0.1, -6, 1], [20.3, 1.6, 0.5, 0, 0], [21.2, 1.3, 0.55, 0, 0], [21.65, 1.9, 0.0, 0, 1], [23.5, 2.0, 0.0, 0, 1]], title: 21.45 };
