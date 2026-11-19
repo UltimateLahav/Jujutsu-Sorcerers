@@ -221,7 +221,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.215</small>
+    <small id="ver">V1.216</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -3659,7 +3659,7 @@ const voidImg = new Image(); voidImg.src = VOID_IMG; let domBox = null;
 const DOM_ORDER = ['blind', 'pose', 'face', 'wide', 'burst', 'void', 'collapse', 'reblind'], DOM_MS = { blind: 2200, pose: 900, face: DF_N * 1000 / DF_FPS, wide: 1500, burst: 1900, void: 10000, collapse: 1400, reblind: 1000 };      // (blind: the blindfold comes down, reblind: it goes back on; both are close-ups of his face)
 let dom = null, domHold = false, domReq = false, domReadyAt = 0, voidCv = null, voidG = null, fd = null;      // (fd = Freddy's nightmare in progress, see freddyDream)
 // v1.181 A CUTSCENE OF A FIGHT: every bar, name, button and number that is not part of it stays away. The moments: a FATALITY (every fighter's, yours or the enemy's), an ULTIMATE (the Cat's choke, Yuji's four Black Flashes, Ryu's JUST THIS ONCE, Freddy's DREAM), Verity's JUMPSCARE, Sukuna's FUGA and his DOMAIN SIGN, the OPENING and the closing of a DOMAIN (not the fight inside it), the blindfold close-ups. cutsceneOn() is asked by drawVs (the bars and names), stateDraw, twOverlay and the elevator panel (canvas), and once a frame by cutUI, which puts the class `cut` on the page: the CSS then hides the top-left buttons, the touch controls, the SENSE button, the training numbers and the elevator panel (the tap prompts of a cutscene are other elements and stay).
-function cutsceneOn() { return state === 'play' && !!vs && !!(bcl || fat || yf || vf || cf || ff || ryf || irf || sr || ke || js || se || de || ult || yu || fd || bfo || (dom && domLock()) || (typeof suFatOn === 'function' && suFatOn()) || (typeof suFgOn === 'function' && suFgOn()) || (typeof suSignOn === 'function' && suSignOn()) || ryUlNoHud()); }
+function cutsceneOn() { return state === 'play' && !!vs && !!(bcl || fat || yf || vf || cf || ff || ryf || irf || sr || ke || js || se || de || ult || yu || fd || bfo || (dom && domLock()) || (typeof suFatOn === 'function' && suFatOn()) || (typeof suFgOn === 'function' && suFgOn()) || (typeof suSignOn === 'function' && suSignOn()) || ryUlNoHud() || (vs.k5 && !!vs.k5.end)); }
 function hudNumsOff() { return cutsceneOn() || !!ryUl; }      // v1.187 the hit counter and the damage numbers stay away in a cutscene (and for the whole of Ryu's beam, when the bars are back): drawHits and drawPopups ask it, say() does not even queue a number
 let cutOn = false;
 function cutUI() { const c = cutsceneOn(); if (c !== cutOn) { cutOn = c; document.body.classList.toggle('cut', c); } }
@@ -4696,7 +4696,7 @@ function pickAtk0() {                          // crouched: the low jab and the 
 }
 function drawBackdrop(now) {                  // everything behind the fighters (also used by the FATALITY cutscene)
   if (domBgOff(now)) { ctx.fillStyle = '#000'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }
-  else if (vs && vs.k5) k5Back(now);      // (v1.211 the huge hall of the chapter 5 fight, see tools/chap5c.js)
+  else if (vs && vs.k5) { if (vs.k5.end && vs.k5.end.wc) wctWorld(now); else k5Back(now); }      // (v1.211 the huge hall of the chapter 5 fight, see tools/chap5c.js; v1.216 West City after the end scene's cut, tools/westcity.js)
   else if (twOn()) twBackdrop(now);      // (v1.173 the SKYSCRAPER map, see tools/tower.js)
   else if (alley) { drawAlley(now); if (vs && vs.c3 && state === 'play') c3World(now); }      // (chapter 2: the portal stands at the end of the street)
   else { ctx.save(); ctx.translate(0, -FAR); ctx.drawImage(bg, 0, 0);
@@ -16801,8 +16801,9 @@ function c4xCrater(x, a) {      // the crater of Iron Man's landing: a dark dent
   ctx.fillStyle = '#1b1c22'; for (let i = 0; i < 9; i++) { const ang = i * 0.7 + 0.3, len = (10 + 16 * c4xR(i, 9)) * a; let px = sx, py = cy; for (let k = 0; k < len; k++) { px += Math.cos(ang) * 1.2 + (c4xR(k + i, 3) - 0.5) * 0.8; py += Math.sin(ang) * 0.35 + (c4xR(k, i) - 0.5) * 0.3; ctx.fillRect(Math.round(px), Math.round(py), 1, 1); } }
   ctx.fillStyle = '#9a9ca6'; for (let i = 0; i < 7; i++) ctx.fillRect(sx + Math.round((c4xR(i, 4) - 0.5) * 44 * a), cy + Math.round((c4xR(i, 5) - 0.5) * 5), 2, 2);
 }
-function c4xPortal(x, rx, now, a, deep) {      // a violet circle on the floor (the purple stone's): a bright rim, a dark middle, sparks that turn round it and motes that rise
-  const sx = c4xSX(x), cy = gy + 3, ry = Math.max(2, Math.round(rx * 0.26)); if (rx < 1) return; ctx.save(); ctx.globalAlpha = a === undefined ? 1 : a;
+function c4xPortal(x, rx, now, a, deep) { c4xPortalAt(c4xSX(x), rx, now, a, deep); }
+function c4xPortalAt(sx, rx, now, a, deep) {      // a violet circle on the floor (the purple stone's), at the screen column sx (v1.216: the chapter 5 fight's end uses it too): a bright rim, a dark middle, sparks that turn round it and motes that rise
+  const cy = gy + 3, ry = Math.max(2, Math.round(rx * 0.26)); if (rx < 1) return; ctx.save(); ctx.globalAlpha = a === undefined ? 1 : a;
   for (let dy = -ry - 1; dy <= ry + 1; dy++) { const w = Math.round((rx + 1) * Math.sqrt(Math.max(0, 1 - dy * dy / ((ry + 1) * (ry + 1) + 0.01)))); ctx.fillStyle = Math.abs(dy) >= ry ? '#d09cff' : Math.abs(dy) >= ry - 1 ? '#8a4de0' : deep ? '#12052c' : '#2a0f58'; ctx.fillRect(sx - w, cy + dy, 2 * w, 1); }
   for (let i = 0; i < 12; i++) { const th = now / 260 + i * 0.5236, px = sx + Math.round(Math.cos(th) * rx * 0.9), py = cy + Math.round(Math.sin(th) * ry * 0.9); ctx.fillStyle = i % 3 ? '#f1dcff' : '#c98bff'; ctx.fillRect(px, py, 1, 1); }
   for (let i = 0; i < 6; i++) { const k = ((now / 700) + i / 6) % 1; ctx.fillStyle = 'rgba(214,170,255,' + (0.8 * (1 - k)).toFixed(2) + ')'; ctx.fillRect(sx + Math.round((c4xR(i, 7) - 0.5) * rx * 1.4), Math.round(cy - 4 - k * 34), 1, 2); } ctx.restore();
@@ -17508,7 +17509,7 @@ window.__k5B = t => { const c = c4x; if (!c || c.ph !== 'k5') return null; const
 // WHAT IS DIFFERENT FROM A VERSUS FIGHT: (1) the picture is turned over: Iron Man is on the LEFT and Yuji on the RIGHT (the engine still has you on the left and him on the right: everything is drawn, the canvas is flipped just before the bars and the numbers, so the text is not, and the left and right controls are swapped
 // (k5In, setStick): you walk to the left to reach him; the bars and names are swapped (drawVs0, drawHits, drawPopups). (2) YUJI IN BLACK FLASH MODE, as in chapter 4's fight against Meguna: walking, jumping, dashing, blocking and crouching, and ONE attack: the BLACK FLASH on the ATTACK button (it says FLASH): standing the punch (strip 20), in the air the kick
 // to the head (21), crouched the blow to the stomach (22); a RING is put on the enemy where he is going the moment you press (k5BfStart), and when the fist lands (hitFoe) it is a full BLACK FLASH if he is still inside the ring (and not already reeling from a blow), else a WEAK one (a quarter of the damage); all of Yuji's damage is halved (INH_DMG) as in chapter 4. No BLUE, MODE, DOMAIN or FATAL.
-// (3) IRON MAN has every ability he has as an enemy and the ULTIMATE (the UNIBEAM) only when he FEELS THREATENED (k5Threat: his health is below 60%, or he has lost 22% of it in 7 s, or two perfect Black Flashes hit him in 10 s). (4) THE ARENA is the huge hall (k5Back), 60 m wide with a wall at each end. (5) NOTHING HAPPENS AT THE END (for now): nobody's health goes below 1, there is no round, no result screen; the pause menu's MENU leaves to the chapter list.
+// (3) IRON MAN has every ability he has as an enemy and the ULTIMATE (the UNIBEAM) only when he FEELS THREATENED (k5Threat: his health is below 60%, or he has lost 22% of it in 7 s, or two perfect Black Flashes hit him in 10 s). (4) THE ARENA is the huge hall (k5Back), 60 m wide with a wall at each end. (5) NOBODY CAN DIE: nobody's health goes below 1, there is no round, no result screen; the pause menu's MENU leaves to the chapter list. v1.216: when HIS health is at its floor the story goes on (tools/westcity.js: the building shakes, he raises his palm, Yuji is sent to West City, black, the chapter list).
 // It begins when chapter 5's part 2 is over (k5FightGo, called by k5Step2 in chap5b.js); chapter 5 counts as finished from that moment (storyDone16).
 const K5A = { lo: -300, hi: 300, gap: 70 };      // (the arena in the engine's coordinates: the left and right wall, how far apart they start)
 const K5_KIT = new Set(['y_crouch', 'y_dash', 'y_block', 'y_cpunch']);      // (the skills Yuji has in this fight: owns() answers from this list while vs.k5)
@@ -17532,8 +17533,9 @@ function k5Threat(now) {      // does Iron Man FEEL threatened? (his health belo
 function k5Tick(now, dt) {      // every frame of the fight: the walls of the hall, nobody's health runs out (the other safeguards are in vsHurt, hitFoe and koDummy), how fast the enemy moves, and the ring of a Black Flash that has just begun
   const K = vs.k5, d = dummy; wx = Math.max(K5A.lo, Math.min(K5A.hi, wx));
   if (vs.hp < 1) vs.hp = 1; if (vs.sh < 1) vs.sh = 1;
-  if (d && d.ko < 0) { d.x = Math.max(K5A.lo - 6, Math.min(K5A.hi + 6, d.x)); if (d.hp < 1) d.hp = 1; if (d.shown < 1) d.shown = 1; K.v = dt > 0 ? (d.x - K.px) / dt : 0; K.px = d.x; }
-  if (atkAt >= 0 && atkK >= 20 && atkK <= 22 && K.at !== atkAt) { K.at = atkAt; k5BfStart(now); }
+  if (d && d.ko < 0 && !(K.end && K.end.wc)) { d.x = Math.max(K5A.lo - 6, Math.min(K5A.hi + 6, d.x)); if (d.hp < 1) d.hp = 1; if (d.shown < 1) d.shown = 1; K.v = dt > 0 ? (d.x - K.px) / dt : 0; K.px = d.x; }
+  if (d && d.ko < 0 && d.hp <= 1 && !K.end && !K.noEnd) k5EndGo(now);      // (v1.216 his health is at its floor: the end of the fight, tools/westcity.js; K.noEnd is for the scan, which takes him to 1 health many times)
+  if (K.end) k5EndTick(now, dt); else if (atkAt >= 0 && atkK >= 20 && atkK <= 22 && K.at !== atkAt) { K.at = atkAt; k5BfStart(now); }
 }
 
 // ---- YUJI'S BLACK FLASH: the ring
@@ -17586,7 +17588,153 @@ function k5Back(now) {
   for (let i = 0; i < 3; i++) f('rgba(130,160,200,0.07)', x0, gy - 20 - i * 24, ww, 24);
   ctx.fillStyle = 'rgba(255,244,214,0.5)'; for (let i = 0; i < 14; i++) { const px = lo + ((i * 97 + t * 4 * (1 + i % 3 * 0.4)) % (hi - lo)), py = gy - 30 - ((i * 53 + t * 5) % 200); ctx.fillRect(Math.round(X(px)), Math.round(py), 1, 1); }
 }
-window.__k5f = () => vs && vs.k5 ? { me: vs.me, foe: vs.foe, hp: Math.round(vs.hp), ehp: dummy ? Math.round(dummy.hp) : -1, emax: dummy ? dummy.max : -1, wx: Math.round(wx), ex: dummy ? Math.round(dummy.x) : 0, ph: vs.ph, bf: vs.k5.bf, weak: vs.k5.weak, ring: !!vs.k5.ring, threat: k5Threat(pnow()), fa: dummy && dummy.fa ? dummy.fa.type : '' } : null;      // test hook
+window.__k5f = () => vs && vs.k5 ? { me: vs.me, foe: vs.foe, hp: Math.round(vs.hp), ehp: dummy ? Math.round(dummy.hp) : -1, emax: dummy ? dummy.max : -1, wx: Math.round(wx), ex: dummy ? Math.round(dummy.x) : 0, ph: vs.ph, bf: vs.k5.bf, weak: vs.k5.weak, ring: !!vs.k5.ring, threat: k5Threat(pnow()), fa: dummy && dummy.fa ? dummy.fa.type : '', end: vs.k5.end ? { ts: vs.k5.end.ts, wc: vs.k5.end.wc, T: vs.k5.end.ts < 0 ? -1 : +((pnow() - vs.k5.end.ts) / 1000).toFixed(2) } : null } : null;      // test hook
+
+// ================================================================ v1.216 WEST CITY AND THE END OF THE CHAPTER 5 FIGHT (this file is spliced into template.html by build_html.py, after chap5c.js; k5Tick, drawScene and the k5 background call it)
+// The user: "lets work on the story so after yuji beats iron man, the building starts to shake as iron man looks at yuji and is about hte blast him but then yuji is sent to another universe where the city is now 'West City' thats it for now". Answers: he is sent "the same way he was teleported to the MCU" (the violet circle of chapter 4), the name only on a sign (no title card), then black and back to the chapter list; and four pictures of how West City looks ("make the map look similar to the pictures but of course it should be in pixel style"): a bright city of silver domes, white towers with coloured tops, balls on stilts, a red monorail tube, a blimp, palm trees, green road signs.
+// THE SCENE (it plays inside the live fight, nothing is replaced): when Iron Man's health is at its floor (k5Tick asks) the controls are locked and the screen shows no bars; once the last blow has played out (he is on his feet and still, at most 1.8 s) the scene's own clock T (seconds) starts and his brain is off for good: the hall rumbles and shakes more and more, dust falls, the lights flicker; Iron Man steps back until he is about 100 px from Yuji (his walk, no blow: his backflip kicks), raises his palm at Yuji and the charge swells (his BLAST move, held in its charge by this code: the beam never fires); a violet circle opens under Yuji (tools/chap4e.js c4xPortalAt), a column of violet light closes round him, the picture goes white; West City (wctWorld) comes up out of the white with Yuji coming in feet first as at the start of a round and the column fading; a few seconds of the city, black, and the chapter list (k5Leave). No words anywhere but the name on the road sign.
+const K5E = { rumble: 0, blast: 0.4, portal: 3.2, beam: 3.65, white: 4.2, cut: 4.7, clear: 5.7, fade: 9.5, end: 10.8 };      // (seconds after the scene's clock starts: the first rumble, the earliest the palm goes up (he steps back first when he is close), the violet circle opens, the column of light, the white begins to rise, the cut to the city (full white), the white is gone, the black begins, the chapter list)
+function k5EndGo(now) {      // Iron Man's health is at its floor: the scene begins (the picture of the city is made at once, the cut must not stutter)
+  vs.k5.end = { t0: now, ts: -1, wc: false, bt: -1, ev: {}, dust: [], last: now, left: false }; wctBuild();
+}
+function k5EndTick(now, dt) {      // every frame of the scene (k5Tick): no controls, the wait for the last blow, the rumble, his palm, the cut to the city, the end
+  const K = vs.k5, E = K.end, d = dummy;
+  keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; stickDown = false; fatReq = 0; atkQ = false;
+  if (E.ts < 0) {      // (the last blow plays out: he is up and still, or a second and a half has gone; he starts nothing meanwhile)
+    if (d && d.ko < 0 && !d.fa) { d.ai = 'rest'; d.aiAt = now; d.restFor = 1e9; }
+    const free = !d || d.ko >= 0 || (!d.fa && now - d.rxAt >= (RX_DUR[d.rx] || 0) && now >= (d.stunUntil || 0) && !airUp(d) && !(d.airH > 0) && !d.held && !d.cap && Math.abs(d.vx || 0) < 25);
+    if (!free && now - E.t0 < 1800) return; E.ts = now; if (d) { d.fa = null; d.stunUntil = 1e15; d.vx = 0; d.ai = 'rest'; d.aiAt = now; d.restFor = 1e9; }      // (from now on his brain is off: all he does here is done by this code)
+  }
+  const T = (now - E.ts) / 1000, ev = (n, t, f) => { if (T >= t && !E.ev[n]) { E.ev[n] = 1; f(); } };
+  if (!E.wc) {
+    ev('rumble', K5E.rumble, () => snd('rumble', 1.6));
+    shakeUntil = Math.max(shakeUntil, now + 90); shakeAmp = Math.max(shakeAmp, 0.8 + 3.4 * Math.min(1, T / 3.6));      // (the building shakes more and more)
+    if (d && d.ko < 0) {
+      if (E.bt < 0) {      // (he is close: he steps back (his walk) until his palm can point at Yuji from a distance, then it goes up)
+        const away = d.x >= wx ? 1 : -1, gap = Math.abs(d.x - wx), wall = away > 0 ? d.x >= K5A.hi - 8 : d.x <= K5A.lo + 8;
+        if (T >= K5E.blast && (gap >= 95 || wall || T >= 1.9)) { E.bt = now; cuenStart(0, now, 'iblast'); d.stunUntil = 1e15; snd('redcharge'); snd('thrust', 0.9); }
+        else if (T >= 0.15 && gap < 95 && !wall) { d.x += away * FOE_WALK * 1.4 * dt; d.ai = 'walk'; d.walkDir = away; }
+      } else {
+        const a = d.fa; if (a && a.type === 'iblast') { const u = now - E.bt; a.at = u < IRB.raise ? E.bt : now - (IRB.raise + Math.min(IRB.charge * 0.97, (u - IRB.raise) * 0.45)); }      // (his palm goes up at the speed of the move and then the charge swells slowly: the move's own beam never comes, its clock is held here and his brain is off)
+        if (now - (E.cr || 0) > 450) { E.cr = now; snd('cecrackle'); }
+      }
+    }
+    ev('portal', K5E.portal, () => { snd('charge'); shakeUntil = now + 300; shakeAmp = Math.max(shakeAmp, 5); });
+    ev('white', K5E.white, () => { snd('vanish'); snd('portalclose'); });
+    ev('cut', K5E.cut, () => {      // (full white: the hall is gone, Iron Man is gone, Yuji comes in again in the city; he stands for good)
+      E.wc = true; if (d) { d.fa = null; d.stunUntil = 1e15; d.vx = 0; d.x = wx + 5000; }
+      spawnAt = now; popups = []; sparks = []; smoke = []; deb = []; shakeUntil = 0; shakeAmp = 0; snd('concboom'); snd('land', 1.4);
+    });
+  }
+  if (T >= K5E.end && !E.left) { E.left = true; k5Leave(); }
+}
+function k5EndDraw(now) {      // the effects of the scene over the picture (the hall's or the city's): flicker, dust, the violet circle and its column, the white, the black
+  const E = vs.k5.end; if (!E || E.ts < 0) return; const T = (now - E.ts) / 1000, dt = Math.min(0.1, Math.max(0, (now - E.last) / 1000)), cx = Math.round(VW / 2), cl = (a, b, c) => Math.max(b, Math.min(c, a)), wh = SET.nf ? '0,0,0' : '246,236,255'; E.last = now;      // (wh: the colour of the change from the hall to the city: white; with SETTINGS > no flashes it goes through black instead)
+  if (!E.wc) {
+    const w = Math.floor(now / 450), st = w * 450 + wctR(w, 3) * 280, fl = !SET.nf && now >= st && now < st + 70 + 70 * wctR(w, 5) ? Math.min(1, T / 2.2) * SET.fl / 100 : 0; if (fl > 0.02) { ctx.fillStyle = 'rgba(0,0,10,' + (0.55 * fl).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (the lights fail and come back: one short dip at most every 0.45 s, none with SETTINGS > no flashes)
+    const n = (4 + 38 * Math.min(1, T / 3)) * dt + Math.random(); for (let i = 0; i < n && E.dust.length < 90; i++) E.dust.push({ x: Math.random() * VW, y: -2, vy: 22 + Math.random() * 60, w: Math.random() < 0.12 ? 3 : Math.random() < 0.4 ? 2 : 1, c: ['#5d6272', '#7b8090', '#9a9fae', '#aab3c6', '#3a3f4e'][(Math.random() * 5) | 0], die: gy + Math.random() * 18 });
+    ctx.save(); for (const p of E.dust) { p.y += p.vy * dt; ctx.fillStyle = p.c; ctx.fillRect(Math.round(p.x), Math.round(p.y), p.w, p.w > 2 ? 2 : p.w); } E.dust = E.dust.filter(p => p.y < p.die); ctx.restore();
+    if (T >= K5E.portal) { const k = cl((T - K5E.portal) / 0.6, 0, 1); c4xPortalAt(cx, Math.round(30 * (1 - Math.pow(1 - k, 3))), now, 1, false); }
+    if (T >= K5E.beam) c4xBeam(cx, 1.8 * cl((T - K5E.beam) / 0.55, 0, 1), now);
+    if (T >= K5E.white) { ctx.fillStyle = 'rgba(' + wh + ',' + cl((T - K5E.white) / (K5E.cut - K5E.white), 0, 1).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  } else {
+    const u = cl((T - K5E.cut) / 1.2, 0, 1); if (u < 1) { c4xBeam(cx, 1.8 * (1 - u), now); c4xPortalAt(cx, Math.round(30 * (1 - u)), now, 1 - u, false); }
+    if (T < K5E.clear) { ctx.fillStyle = 'rgba(' + wh + ',' + (1 - cl((T - K5E.cut) / (K5E.clear - K5E.cut), 0, 1)).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+    if (T >= K5E.fade) { ctx.fillStyle = 'rgba(0,0,0,' + cl((T - K5E.fade) / (K5E.end - K5E.fade - 0.3), 0, 1).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  }
+}
+// ---------------------------------------------------------------- WEST CITY (the picture: made once as two layers, the sky and everything on the ground; clouds, the blimp, the train, the palms and the sign are drawn each frame)
+const WCT = { w: 0, h: 0, sky: null, fg: null, cl: null };
+const wctR = (i, s) => c4xR(i, s);
+const wctCv = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+function wctDome(g, cx, base, rx, ry, P, seed) {      // a half ball on the floor: three tones from the light (left) to the shade (right), rows of windows, a band and a door, an aerial. P = [light, mid, dark, edge, window, lit window, band]
+  for (let dy = 0; dy < ry; dy++) {
+    const w = Math.round(rx * Math.sqrt(Math.max(0, 1 - Math.pow((dy + 0.5) / ry, 2)))); if (w < 1) continue; const y = base - 1 - dy, x0 = cx - w, W = 2 * w, a = Math.round(W * 0.3), b = Math.round(W * 0.68);
+    g.fillStyle = P[0]; g.fillRect(x0, y, a, 1); g.fillStyle = P[1]; g.fillRect(x0 + a, y, b - a, 1); g.fillStyle = P[2]; g.fillRect(x0 + b, y, W - b, 1); g.fillStyle = P[3]; g.fillRect(x0 + W - 1, y, 1, 1);
+  }
+  for (let r = 6; r < ry - 3; r += 6) { const w = Math.round(rx * Math.sqrt(Math.max(0, 1 - Math.pow((r + 0.5) / ry, 2)))), y = base - 1 - r; for (let x = -w + 3; x < w - 4; x += 5) { g.fillStyle = wctR(x + r * 7 + seed, 5) < 0.28 ? P[5] : P[4]; g.fillRect(cx + x, y, 3, 2); } }
+  g.fillStyle = P[6]; g.fillRect(cx - rx, base - 3, rx * 2, 3); g.fillStyle = P[3]; g.fillRect(cx - rx, base - 1, rx * 2, 1);
+  g.fillStyle = '#2a3550'; g.fillRect(cx - 3, base - 8, 6, 8); g.fillStyle = '#cfd6e4'; g.fillRect(cx - 4, base - 9, 8, 1); g.fillRect(cx - 4, base - 8, 1, 8); g.fillRect(cx + 3, base - 8, 1, 8);
+  if (wctR(seed, 9) < 0.5) { g.fillStyle = '#5b6478'; g.fillRect(cx - (rx >> 2), base - ry - 5, 1, 6); g.fillStyle = '#e04a3a'; g.fillRect(cx - (rx >> 2), base - ry - 6, 1, 1); }
+}
+function wctCyl(g, cx, base, w, h, seed) {      // a tall round tower with balcony rings (the one on the left of the street picture), a small dome on top
+  const x0 = cx - (w >> 1), P = ['#bcc4d3', '#a0aabd', '#7d889f', '#5d677c', '#33456b', '#8fd3ff', '#6a748b']; g.fillStyle = P[0]; g.fillRect(x0, base - h, w, h); g.fillStyle = P[1]; g.fillRect(x0 + Math.round(w * 0.32), base - h, Math.round(w * 0.42), h); g.fillStyle = P[2]; g.fillRect(x0 + Math.round(w * 0.74), base - h, w - Math.round(w * 0.74), h);
+  for (let y = base - h + 7; y < base - 5; y += 9) { g.fillStyle = '#f2f5fa'; g.fillRect(x0 - 2, y, w + 4, 2); g.fillStyle = '#6f7a90'; g.fillRect(x0 - 2, y + 2, w + 4, 1); for (let x = x0 + 2; x < x0 + w - 2; x += 4) { g.fillStyle = wctR(x + y, seed) < 0.25 ? P[5] : P[4]; g.fillRect(x, y + 4, 2, 3); } }
+  wctDome(g, cx, base - h, (w >> 1) + 2, 6, P, seed); g.fillStyle = P[6]; g.fillRect(x0 - 1, base - 3, w + 2, 3);
+}
+function wctBall(g, cx, base, h, r, band, seed) {      // a ball on a stilt (the water towers of West City): a slim shaft with a platform ring, the ball with a band of windows and a mast
+  const top = base - h; g.fillStyle = '#c9d0de'; g.fillRect(cx - 2, top, 4, h); g.fillStyle = '#8a94a8'; g.fillRect(cx + 1, top, 2, h); g.fillStyle = '#e4e9f2'; g.fillRect(cx - 2, top, 1, h);
+  g.fillStyle = '#c4cad8'; g.fillRect(cx - 6, base - (h >> 1), 12, 2); g.fillStyle = '#7d8699'; g.fillRect(cx - 6, base - (h >> 1) + 2, 12, 1); g.fillStyle = '#9aa3b5'; g.fillRect(cx - 9, base - 3, 18, 3);
+  const cy = top - r + 2; for (let dy = -r; dy <= r; dy++) { const w = Math.round(Math.sqrt(Math.max(0, r * r - dy * dy))), x0 = cx - w, W = 2 * w, a = Math.round(W * 0.3), b = Math.round(W * 0.7); g.fillStyle = '#e4e9f2'; g.fillRect(x0, cy + dy, a, 1); g.fillStyle = '#bcc6d9'; g.fillRect(x0 + a, cy + dy, b - a, 1); g.fillStyle = '#8c98b2'; g.fillRect(x0 + b, cy + dy, W - b, 1); }
+  g.fillStyle = band; g.fillRect(cx - r, cy - 3, 2 * r, 2); const w2 = Math.round(Math.sqrt(Math.max(0, r * r - 1))); for (let x = -w2 + 2; x < w2 - 2; x += 3) { g.fillStyle = wctR(x + seed, 4) < 0.3 ? '#bfe6ff' : '#3b4d78'; g.fillRect(cx + x, cy, 2, 2); }
+  g.fillStyle = '#7d8699'; g.fillRect(cx, cy - r - 6, 1, 6); g.fillStyle = '#e04a3a'; g.fillRect(cx, cy - r - 7, 1, 1);
+}
+function wctTower(g, x, base, w, h, cap, seed) {      // a white tower with a coloured top (the tall ones of the aerial picture), lit windows, sometimes a step and a mast
+  const bodies = ['#f3f1ec', '#e8eef6', '#f6ece4', '#ecf2e9'], B = bodies[(wctR(seed, 3) * bodies.length) | 0];
+  g.fillStyle = B; g.fillRect(x, base - h, w, h); g.fillStyle = '#ffffff'; g.fillRect(x, base - h, 1, h); g.fillStyle = '#c9cfdb'; g.fillRect(x + w - 2, base - h, 2, h);
+  for (let y = base - h + 6; y < base - 3; y += 4) for (let xx = x + 3; xx < x + w - 4; xx += 4) { const r = wctR(xx * 3 + y, seed); g.fillStyle = r < 0.1 ? '#ffe9a3' : r < 0.35 ? '#6fa7d6' : '#a9d5f2'; g.fillRect(xx, y, 2, 2); }
+  const step = wctR(seed, 6) < 0.4 && w > 14; let top = base - h; if (step) { const sw = w - 8; g.fillStyle = B; g.fillRect(x + 4, top - 9, sw, 9); g.fillStyle = '#ffffff'; g.fillRect(x + 4, top - 9, 1, 9); g.fillStyle = '#c9cfdb'; g.fillRect(x + 4 + sw - 2, top - 9, 2, 9); for (let xx = x + 7; xx < x + 4 + sw - 3; xx += 4) { g.fillStyle = '#a9d5f2'; g.fillRect(xx, top - 6, 2, 2); } g.fillStyle = cap; g.fillRect(x + 3, top - 13, sw + 2, 4); g.fillStyle = 'rgba(255,255,255,0.45)'; g.fillRect(x + 3, top - 13, sw + 2, 1); top -= 9; }
+  else { g.fillStyle = cap; g.fillRect(x - 1, top - 4, w + 2, 4); g.fillStyle = 'rgba(255,255,255,0.45)'; g.fillRect(x - 1, top - 4, w + 2, 1); g.fillStyle = 'rgba(0,0,0,0.18)'; g.fillRect(x - 1, top - 1, w + 2, 1); }
+  if (wctR(seed, 7) < 0.45) { g.fillStyle = '#8a93a8'; g.fillRect(x + (w >> 1), top - (step ? 13 : 4) - 8, 1, 8); }
+}
+function wctCloud(w, h, seed) {      // a puffy cloud: ellipses with a flat bottom, white on top and pale blue underneath
+  const c = wctCv(w, h), g = c.getContext('2d'), n = 5 + Math.floor(w / 16), E = [];
+  for (let i = 0; i < n; i++) { const ry = h * (0.26 + 0.28 * wctR(i, seed + 1)), rx = h * (0.55 + 0.55 * wctR(i, seed)); E.push([w * 0.14 + w * 0.72 * (i / (n - 1)), h - 1 - ry - (h * 0.3) * wctR(i, seed + 2) * (i === 0 || i === n - 1 ? 0 : 1), rx, ry]); }
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (E.some(e => Math.pow((x - e[0]) / e[2], 2) + Math.pow((y - e[1]) / e[3], 2) <= 1)) { g.fillStyle = y > h - 3 ? '#c4d8ee' : y > h - 6 ? '#e2edf9' : '#ffffff'; g.fillRect(x, y, 1, 1); }
+  return c;
+}
+function wctBuild() {      // the two layers (and the clouds) for this picture size; made once
+  if (WCT.w === VW && WCT.h === VH && WCT.fg) return; WCT.w = VW; WCT.h = VH; const W = VW, H = VH, cx = Math.round(W / 2), X = f => Math.round(W * f), mid = gy - 12, far = gy - 16;
+  // the sky: blue at the top, nearly white at the horizon, the sun low on the right with its glow
+  { const c = WCT.sky = wctCv(W, H), g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, gy - 10); gr.addColorStop(0, '#3a86dc'); gr.addColorStop(0.45, '#66b0ec'); gr.addColorStop(0.8, '#b4def6'); gr.addColorStop(1, '#f1f9ff'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    const sx = X(0.74), sy = gy - 44, gl = g.createRadialGradient(sx, sy, 3, sx, sy, 78); gl.addColorStop(0, 'rgba(255,250,222,0.95)'); gl.addColorStop(0.35, 'rgba(255,244,210,0.5)'); gl.addColorStop(1, 'rgba(255,244,210,0)'); g.fillStyle = gl; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#fffbe6'; g.beginPath(); g.arc(sx, sy, 7, 0, 7); g.fill(); g.fillStyle = '#ffffff'; g.beginPath(); g.arc(sx, sy, 4, 0, 7); g.fill(); }
+  WCT.cl = [wctCloud(58, 17, 11), wctCloud(40, 13, 23), wctCloud(72, 19, 37)];
+  const c = WCT.fg = wctCv(W, H), g = c.getContext('2d'), hz = (a) => { g.save(); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(206,230,250,' + a + ')'; g.fillRect(0, 0, W, H); g.restore(); };
+  // mountains: two ridges
+  for (const [base, amp, seed, col, hi] of [[gy - 20, 30, 1.3, '#8fb0d8', '#bdd3ee'], [gy - 17, 20, 4.1, '#7396c6', '#a3c0e4']]) for (let x = 0; x < W; x++) { const n = 0.55 * (1 - Math.abs(Math.sin(x * 0.019 + seed))) + 0.3 * (1 - Math.abs(Math.sin(x * 0.047 + seed * 1.7))) + 0.15 * Math.sin(x * 0.11 + seed), y = Math.round(base - amp * n); g.fillStyle = col; g.fillRect(x, y, 1, base - y); g.fillStyle = hi; g.fillRect(x, y, 1, 1); if (n > 0.8) { g.fillStyle = '#f2f7fd'; g.fillRect(x, y, 1, 2); } }
+  hz(0.3);
+  // the far city: white towers with coloured tops and balls on stilts, hazy
+  { const caps = ['#ff78ad', '#ffd13b', '#4d86e8', '#3fc9b7', '#ff9a3d', '#9a6be0', '#e8604a']; let x = -4, i = 0; while (x < W + 10) { const w = 10 + Math.round(wctR(i, 1) * 13), h = 26 + Math.round(wctR(i, 2) * 36); if (i % 7 === 4) { wctBall(g, x + 6, far, 40 + Math.round(wctR(i, 3) * 14), 8, caps[i % caps.length], i); x += 18; } else { wctTower(g, x, far, w, h, caps[(i * 3 + 1) % caps.length], i + 40); x += w + 1 + Math.round(wctR(i, 4) * 4); } i++; } }
+  hz(0.22);
+  // the monorail: a red tube from the top left down to the right on thin pylons (behind the nearer buildings)
+  { const ty = x => 12 + 0.09 * x + 0.00012 * x * x; for (let x = 70; x < W; x += 88) { const y = Math.round(ty(x)) + 4; g.fillStyle = '#8b93a4'; g.fillRect(x, y, 3, mid - y); g.fillStyle = '#69717f'; g.fillRect(x + 2, y, 1, mid - y); g.fillStyle = '#a9b0be'; g.fillRect(x - 3, y - 1, 9, 2); g.fillRect(x - 2, y + 1, 1, 3); g.fillRect(x + 4, y + 1, 1, 3); }
+    for (let x = -4; x < W + 4; x++) { const y = Math.round(ty(x)); for (const [dy, col] of [[-3, '#e0735f'], [-2, '#cf5444'], [-1, '#bd4034'], [0, '#ac332a'], [1, '#98291f'], [2, '#7f2118'], [3, '#4a120d']]) { g.fillStyle = col; g.fillRect(x, y + dy, 1, 1); } if (x % 24 === 0) { g.fillStyle = '#e8c1b8'; g.fillRect(x, y - 3, 1, 1); } } }
+  // the middle city: filler domes, then the ones that make the picture
+  { const P1 = ['#c4ccd9', '#a3adbf', '#7e899f', '#5c667b', '#2f3f5e', '#8fd3ff', '#6a748b'], P2 = ['#f6f8fb', '#dfe4ee', '#b6bfd0', '#8c96ab', '#3c4f78', '#a6dcff', '#98a2b8'], P3 = ['#f7d44a', '#e5b92b', '#c18f19', '#8f650f', '#5a3d0e', '#fff2b0', '#a87a14'];
+    for (let x = 6, i = 0; x < W + 20; x += 30 + Math.round(wctR(i, 8) * 26), i++) { const r = 13 + Math.round(wctR(i, 9) * 10); wctDome(g, x, mid - 2, r, Math.round(r * 0.62), i % 3 === 0 ? P2 : P1, i + 70); }
+    wctCyl(g, X(0.06), mid, 28, 62, 3); wctDome(g, X(0.2), mid, 44, 28, P1, 1); wctDome(g, X(0.4), mid, 24, 15, P2, 2);
+    wctBall(g, X(0.4), mid, 40, 10, '#ff78ad', 5); wctDome(g, X(0.84), mid, 36, 22, P3, 6); wctDome(g, X(1.0) - 6, mid, 34, 21, P2, 7); }
+  // the hedge and the pavement in front of the buildings, the road
+  for (let x = -4, i = 0; x < W + 8; x += 9, i++) { const r = 5 + Math.round(wctR(i, 12) * 2), y = gy - 12 + Math.round(wctR(i, 13) * 2); g.fillStyle = '#245f33'; g.beginPath(); g.arc(x, y, r + 1, 0, 7); g.fill(); g.fillStyle = '#2f8a43'; g.beginPath(); g.arc(x, y - 1, r, 0, 7); g.fill(); g.fillStyle = '#58b25a'; g.fillRect(x - 2, y - r + 1, 3, 1); if (wctR(i, 14) < 0.3) { g.fillStyle = '#ff9fc4'; g.fillRect(x + 1, y - 1, 1, 1); g.fillRect(x - 2, y + 1, 1, 1); } }
+  g.fillStyle = '#d2d6df'; g.fillRect(0, gy - 8, W, 5); g.fillStyle = '#e8ebf1'; g.fillRect(0, gy - 8, W, 1); g.fillStyle = '#b6bbc7'; for (let x = 4; x < W; x += 17) g.fillRect(x, gy - 7, 1, 4); g.fillStyle = '#9aa0ae'; g.fillRect(0, gy - 3, W, 1); g.fillStyle = '#767c8b'; g.fillRect(0, gy - 2, W, 1);
+  g.fillStyle = '#3d414d'; g.fillRect(0, gy - 1, W, H - gy + 1); g.fillStyle = '#464a57'; g.fillRect(0, gy - 1, W, 2); g.fillStyle = '#343843'; g.fillRect(0, gy + 18, W, H - gy - 18);
+  g.fillStyle = '#ecece4'; for (let x = 5; x < W; x += 26) g.fillRect(x, gy + 17, 13, 1);
+  for (let i = -4; i < 5; i++) { const bx = cx - 4 + i * 13; for (let y = gy + 1; y < H; y++) { const sk = Math.round((y - gy) * 0.22); g.fillStyle = wctR(i * 31 + y, 3) < 0.9 ? '#eeeee6' : '#c9c9c2'; g.fillRect(bx - sk, y, 6, 1); } }      // (the crossing: slanting white bars across the road, a few worn)
+  // the street lamps at both edges
+  for (const lx of [X(0.03), X(0.965)]) { g.fillStyle = '#7c8493'; g.fillRect(lx, gy - 84, 2, 82); g.fillStyle = '#9aa2b0'; g.fillRect(lx, gy - 84, 1, 82); g.fillRect(lx - 9, gy - 86, 11, 2); g.fillStyle = '#fff6c8'; g.fillRect(lx - 11, gy - 85, 4, 2); g.fillStyle = '#5e6572'; g.fillRect(lx - 2, gy - 5, 6, 3); }
+}
+function wctPalm(x, base, h, lean, now, seed) {      // a palm tree: a curved ringed trunk and a crown of drooping fronds that sway
+  const t = now / 1000, sw = Math.sin(t * 1.15 + seed) * 1.6; let tx = x, ty = base;
+  for (let i = 0; i <= h; i++) { const k = i / h; tx = x + lean * k * k * h * 0.4 + sw * k * k; ty = base - i; const wd = i > h * 0.8 ? 2 : 3; ctx.fillStyle = '#9b7a4c'; ctx.fillRect(Math.round(tx) - 1, ty, wd, 1); ctx.fillStyle = '#6f5231'; ctx.fillRect(Math.round(tx) + wd - 2, ty, 1, 1); if (i % 4 === 0) { ctx.fillStyle = '#54401f'; ctx.fillRect(Math.round(tx) - 1, ty, wd, 1); } }
+  const cxp = Math.round(tx), cyp = ty; ctx.fillStyle = '#5a3d1c'; ctx.fillRect(cxp - 2, cyp + 1, 2, 2); ctx.fillRect(cxp + 1, cyp + 2, 2, 2);
+  for (let f = 0; f < 8; f++) { const a = -Math.PI * (0.05 + 0.9 * f / 7), L = 13 + (f % 3) * 3 + (f === 3 || f === 4 ? 3 : 0), wob = Math.sin(t * 1.3 + f + seed) * 0.6;
+    for (let s = 0; s <= L; s += 1) { const px = cxp + Math.cos(a) * s * 1.1, py = cyp + Math.sin(a) * s * 0.7 + (s * s) / (L * 2.2) + wob * s * 0.05; ctx.fillStyle = s < 3 ? '#245f33' : f % 2 ? '#2f9e44' : '#3fae4f'; ctx.fillRect(Math.round(px), Math.round(py), 1, 2); if (s > 2 && s % 2 === 0) { ctx.fillStyle = '#1d5a2e'; ctx.fillRect(Math.round(px), Math.round(py) + 2, 1, 1); } if (s > 4 && f % 2 === 0) { ctx.fillStyle = '#7bd36a'; ctx.fillRect(Math.round(px), Math.round(py) - 1, 1, 1); } } }
+}
+function wctSign(sx) {      // the green road sign over the street: the name of the city and an arrow, on two poles
+  const top = Math.round(gy - 80); ctx.fillStyle = '#4b505b'; ctx.fillRect(sx - 48, top + 18, 2, 76); ctx.fillRect(sx + 46, top + 18, 2, 76); ctx.fillStyle = '#6b7280'; ctx.fillRect(sx - 48, top + 18, 1, 76); ctx.fillRect(sx + 46, top + 18, 1, 76);
+  ctx.fillStyle = '#10161a'; ctx.fillRect(sx - 55, top - 1, 110, 23); ctx.fillStyle = '#1a8a55'; ctx.fillRect(sx - 54, top, 108, 21); ctx.fillStyle = '#f4f4f0'; ctx.fillRect(sx - 54, top, 108, 1); ctx.fillRect(sx - 54, top + 20, 108, 1); ctx.fillRect(sx - 54, top, 1, 21); ctx.fillRect(sx + 53, top, 1, 21);
+  pxt('WEST CITY', sx - 10, top + 15, '#ffffff', 8, 'center'); ctx.fillStyle = '#ffffff'; ctx.fillRect(sx + 32, top + 10, 13, 2); ctx.fillRect(sx + 41, top + 7, 2, 8); ctx.fillRect(sx + 43, top + 8, 2, 6); ctx.fillRect(sx + 45, top + 9, 1, 4);
+}
+function wctWorld(now) {      // the whole picture of West City, with the camera standing still: sky, clouds, blimp, the two layers, the train on the tube, the palms and the sign
+  wctBuild(); const t = now / 1000, cx = Math.round(VW / 2); ctx.drawImage(WCT.sky, 0, 0);
+  [[0.12, 0.2, 0, 3.2], [0.55, 0.33, 1, 2.2], [0.84, 0.14, 2, 2.8], [0.33, 0.1, 1, 1.8]].forEach(([fx, fy, k, sp], i) => { const c = WCT.cl[k], x = Math.round(((fx * (VW + 140) + t * sp) % (VW + 140)) - 70); ctx.drawImage(c, x, Math.round(fy * (gy - 40))); });
+  const bx = Math.round(VW * 0.57 + 26 * Math.sin(t * 0.11)), by = Math.round(11 + 2 * Math.sin(t * 0.7)); ctx.fillStyle = '#9aab26'; for (let dy = -5; dy <= 5; dy++) { const w = Math.round(17 * Math.sqrt(Math.max(0, 1 - dy * dy / 31))); ctx.fillRect(bx - w, by + dy, 2 * w, 1); } ctx.fillStyle = '#dbe84f'; for (let dy = -5; dy <= 1; dy++) { const w = Math.round(17 * Math.sqrt(Math.max(0, 1 - dy * dy / 31))); ctx.fillRect(bx - w + 1, by + dy, 2 * w - 3, 1); } ctx.fillStyle = '#e8584a'; ctx.fillRect(bx - 12, by - 1, 24, 1); ctx.fillStyle = '#5a6272'; ctx.fillRect(bx - 4, by + 6, 8, 3); ctx.fillStyle = '#9aab26'; ctx.fillRect(bx - 21, by - 3, 4, 6); ctx.fillRect(bx - 20, by - 5, 2, 10);
+  ctx.drawImage(WCT.fg, 0, 0);
+  const tx = Math.round(((t * 36) % (VW + 120)) - 60), ty = x => 12 + 0.09 * x + 0.00012 * x * x, y = Math.round(ty(tx)); ctx.fillStyle = '#f4f6fa'; ctx.fillRect(tx - 14, y - 9, 28, 6); ctx.fillStyle = '#c9ced9'; ctx.fillRect(tx - 14, y - 4, 28, 1); ctx.fillStyle = '#d6453a'; ctx.fillRect(tx - 14, y - 6, 28, 1); ctx.fillStyle = '#5a9ee0'; for (let k = -12; k < 12; k += 5) ctx.fillRect(tx + k, y - 8, 3, 2); ctx.fillStyle = '#f4f6fa'; ctx.fillRect(tx + 14, y - 8, 2, 4);
+  wctPalm(cx - 64, gy - 3, 62, -0.6, now, 1); wctPalm(cx + 56, gy - 3, 46, 0.5, now, 2.4); wctPalm(cx - 126, gy - 3, 40, 0.4, now, 4.1); wctSign(Math.min(cx + 84, VW - 58));
+  const sx = Math.round(VW * 0.74), sy = gy - 44, gl = ctx.createRadialGradient(sx, sy, 2, sx, sy, 60); gl.addColorStop(0, 'rgba(255,248,214,0.28)'); gl.addColorStop(1, 'rgba(255,248,214,0)'); ctx.fillStyle = gl; ctx.fillRect(0, 0, VW, gy);      // (the sun's light over everything on the ground)
+}
 
 // ================================================================ v1.190 IRON MAN, A FIGHTER OF TRAINING (this file is spliced into template.html by build_html.py, after the chapters: his pictures are the suit of chapter 5)
 // The user: "make the iron man sprite from chapter 5 to appear as a playable character in the training button, well you can only see his idle, you can move him, you can't do nothing rn", and, asked what he should do for now, "walk + jump" and "nothing else". He is the fighter slot cu5 of the custom engine (tools/custom.js): customScene walks him, jumps him and draws him, the enemy, the HUD and the effects are the shared ones.
@@ -18849,7 +18997,7 @@ function drawScene(now, dt) {
   const op = orb ? orbPose(now) : null;       // Max Blue: the sky dims and the wind is sucked into the orb
   if (op) { ctx.fillStyle = 'rgba(6,8,36,' + (0.3 * Math.min(1, op.age / 500, (ORB_MS - op.age) / 500)) + ')'; ctx.fillRect(0, 0, VW, VH); }
   ctx.fillStyle = 'rgba(220,210,255,0.35)';   // wind streaks
-  for (const p of parts) {                    // headwind: blows right-to-left, faster when he walks into it
+  for (const p of (vs && vs.k5 && vs.k5.end && vs.k5.end.wc ? [] : parts)) {                    // headwind: blows right-to-left, faster when he walks into it (v1.216: none in West City)
     if (op && op.s > 0.5) {
       const dx = op.ox - p.x, dy = op.oy - p.y, d = Math.max(6, Math.hypot(dx, dy)), v = 60 + 2400 / d;      // faster the closer they get
       p.x += dx / d * v * dt; p.y += dy / d * v * dt;
@@ -18956,7 +19104,7 @@ function drawScene(now, dt) {
     ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')';
     ctx.fillRect(0, 0, VW, VH);
   }
-  drawDivFx(now); drawSparks(now, dt); drawPeds(now, dt, 1); drawGibs(now); if (vs && vs.k5) { k5RingDraw(now); k5Flip(); } drawPopups(now); drawVs(now, -shkX, -shkY); domOverlay(now, set[fi], info, fi); bfOverlay(now); if ((dom && !(homeOn() && dom.ph === 'face')) || bfo) paintMe(true);      // (everything the DOMAIN shows, even its pop-up and the blindfold close-up, is a layer UNDER Gojo: he is painted again on top of it)
+  drawDivFx(now); drawSparks(now, dt); drawPeds(now, dt, 1); drawGibs(now); if (vs && vs.k5) { k5RingDraw(now); if (vs.k5.end) k5EndDraw(now); if (!(vs.k5.end && vs.k5.end.wc)) k5Flip(); } drawPopups(now); drawVs(now, -shkX, -shkY); domOverlay(now, set[fi], info, fi); bfOverlay(now); if ((dom && !(homeOn() && dom.ph === 'face')) || bfo) paintMe(true);      // (everything the DOMAIN shows, even its pop-up and the blindfold close-up, is a layer UNDER Gojo: he is painted again on top of it)
   ctx.restore();
   if (now < flashUntil) { ctx.fillStyle = 'rgba(190,225,255,' + (flashA * (flashUntil - now) / flashMs) + ')'; ctx.fillRect(0, 0, VW, VH); }
   if (now < blackUntil) { ctx.fillStyle = 'rgba(0,0,0,' + ((blackUntil - now) / 600).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (coming out of the red ending: from black)
@@ -23130,6 +23278,14 @@ $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
  {
+  "v": "1.216",
+  "t": "THE END OF THE CHAPTER 5 FIGHT: YUJI IS SENT TO WEST CITY",
+  "n": [
+   "You asked for the story to go on after Yuji beats Iron Man. Now, when Iron Man's health runs out in the chapter 5 fight, the fight is over: your controls and the bars go away, the building starts to shake, dust falls and the lights flicker. Iron Man looks at Yuji, backs off a little and raises his palm: the charge in it grows and grows, but he never gets to fire.",
+   "Then a violet circle opens under Yuji, the same way he was sent to the MCU, and a column of violet light closes round him. The screen goes white and Yuji arrives in another universe, where the city is WEST CITY. It is drawn in pixel art from your pictures: silver domes, white towers with coloured tops, balls on stilts, a red monorail with a train on it, a blimp, palm trees, a crossing and a green road sign with the name of the city. After a few seconds the screen goes black and you are back in the chapter list. There are no words in the scene except the name on the sign. With SETTINGS > no flashes the change goes through black instead of white and the lights do not flicker."
+  ]
+ },
+ {
   "v": "1.215",
   "t": "FREDDY, RYU AND IRON MAN ARE BOUGHT IN THE SHOP, WITH THEIR MOVES",
   "n": [
@@ -26485,14 +26641,15 @@ async function scClash() {
 }
 
 // ---------------------------------------------------------------- ACHIEVEMENTS (v1.210): the card and the screen, the save, the rectangle that slides in, and the three ways to earn one (tools/ach.js)
-const SC_K5_N = 59;
+const SC_K5_N = 66;
 async function scK5() {      // v1.211 the chapter 5 fight: Yuji against Iron Man in the huge room (the picture turned over, Black Flash mode, no ending) and Iron Man's other moves as the enemy
-  SC.sec = 'CH 5 FIGHT'; scCov('CH 5 FIGHT', 0, SC_K5_N); SC.plan = 3000; SC.done = 0;
+  SC.sec = 'CH 5 FIGHT'; scCov('CH 5 FIGHT', 0, SC_K5_N); SC.plan = 3900; SC.done = 0;
   const ok = (c, what, d) => { scT(c, 'CH 5 FIGHT: ' + what, d || ''); scCov('CH 5 FIGHT', 1, 0); }, stop = () => SC.cancel || scReal() > SC.cap, gore0 = SET.gore, sv0 = localStorage.getItem(SAVE_KEY), GG = GRADES[3], gg0 = { dodge: GG.dodge, blk: GG.blk }, tr0 = {}; for (const k of ['beh', 'ehp', 'php', 'pce', 'grade', 'foe', 'put']) tr0[k] = TR[k];
   const start = async label => { try { show('title'); story = { slot: -1, t0: pnow(), battle: false, T: 0, ev: {}, c16: true }; k5FightGo(); } catch (e) { scErr(e, label + ' START'); return false; } return scUntil(() => !!vs && !!vs.k5 && vs.ph === 'fight', 120, 50); };
   const calm = () => { dummy.ai = 'rest'; dummy.aiAt = pnow(); dummy.restFor = 1e9; dummy.fa = null; dummy.stunUntil = 0; dummy.spNext = pnow() + 1e9; dummy.cs = dummy.cb = dummy.ca = null; vs.fburn = null; };      // (what he threw before is gone too: a bolt in the air would hurt Yuji in the middle of a blow)
   try {
     SET.gore = 0; if (!(await start('THE FIGHT'))) { if (!stop()) scNote('fail', 'CH 5 FIGHT: THE FIGHT DID NOT START', state + ' ' + (vs ? vs.ph : 'NO VS')); return; }
+    vs.k5.noEnd = true;      // (v1.216 his health at its floor starts the end scene: this fight takes him to 1 health many times, the scene is looked at in a fight of its own below)
     GG.dodge = 0; GG.blk = 0;      // (the grade of this fight: its dodges and blocks would make a blow miss in the checks that count damage; put back at the end)
     calm(); await scUntil(() => hurtAt < 0 && pnow() - hurtEnd > 300, 80, 50);      // (the enemy may have struck once before the scan got hold of him: Yuji has to be on his feet)
     // the start
@@ -26561,6 +26718,20 @@ async function scK5() {      // v1.211 the chapter 5 fight: Yuji against Iron Ma
     // leaving: the pause screen's MENU
     ok(await start('LEAVING'), 'THE FIGHT DID NOT START AGAIN', ''); await scFrames(3, null, 50); leavePlay(); await scFrames(3, null, 50);
     ok(state === 'saves' && !vs && !document.body.classList.contains('c4'), 'MENU DID NOT LEAVE THE FIGHT TO THE CHAPTER LIST WITH THE BUTTONS BACK', state + ' / ' + document.body.className);
+    // the end (v1.216, tools/westcity.js): his health at its floor starts the scene: no controls, no bars, his palm goes up and stays in its charge (the beam never fires), the violet circle, West City, the black, the chapter list
+    if (stop()) return;
+    if (await start('THE END')) {
+      calm(); await scUntil(() => hurtAt < 0 && pnow() - hurtEnd > 300, 80, 50); dummy.hp = 1; await scFrames(3, null, 33);
+      ok(!!vs.k5.end && !!dummy && dummy.hp === 1, 'HIS HEALTH AT ITS FLOOR DID NOT START THE END OF THE FIGHT', JSON.stringify(vs.k5.end ? 1 : 0));
+      ok(cutsceneOn(), 'THE BARS AND BUTTONS ARE STILL THERE IN THE END SCENE', '');
+      { const w0 = wx; scKey('KeyA', true); scKey('KeyJ', true); await scFrames(12, null, 33); scKey('KeyA', false); scKey('KeyJ', false); ok(Math.abs(wx - w0) < 1 && atkAt < 0 && vs.hp >= 1, 'YUJI COULD MOVE OR STRIKE IN THE END SCENE', Math.round(wx - w0) + ' ' + atkAt); }
+      const up = await scUntil(() => !!dummy.fa && dummy.fa.type === 'iblast', 200, 33); let viol = 0; const hp0 = vs.hp;
+      for (let i = 0; i < 70 && up; i++) { await scFrames(1, null, 33); if (vs.k5.end.wc) break; const a = dummy.fa; if (!a || a.type !== 'iblast' || pnow() - a.at >= IRB.raise + IRB.charge || vs.hp < hp0) viol++; }
+      ok(up && viol === 0, 'HIS PALM DID NOT GO UP, OR IT FIRED, OR HE LET IT GO, OR YUJI WAS HURT', up + ' ' + viol);
+      ok(await scUntil(() => vs.k5.end.wc, 300, 33) && dummy.x > wx + 1000, 'THE CUT TO WEST CITY DID NOT COME, OR IRON MAN IS STILL THERE', '' + Math.round(dummy.x - wx));
+      await scFrames(45, null, 33); { const W2 = cv.width, H2 = cv.height, a = ctx.getImageData(Math.round(W2 * 0.9), Math.round(H2 * 0.05), 1, 1).data, b = ctx.getImageData(Math.round(W2 * 0.12), Math.round(H2 * 0.96), 1, 1).data; ok(a[2] > a[0] + 40 && a[2] > 150 && b[0] < 110 && b[2] < 120, 'WEST CITY IS NOT ON THE SCREEN (A BLUE SKY ABOVE AND A DARK ROAD BELOW)', a[0] + ',' + a[1] + ',' + a[2] + ' / ' + b[0] + ',' + b[1] + ',' + b[2]); }
+      ok(await scUntil(() => state === 'saves', 500, 33) && !vs && !document.body.classList.contains('c4'), 'THE END SCENE DID NOT GO BACK TO THE CHAPTER LIST', state);
+    } else if (!stop()) scNote('fail', 'CH 5 FIGHT: THE FIGHT OF THE END SCENE DID NOT START', state);
     // the story: after the second tap Tony lands, the black, and the fight (the dodge and the punch)
     for (const res2 of ['hit', 'miss']) {
       if (stop()) return; show('title'); try { story = null; startStory(0, 5); await scFrames(20); window.__k5At(80.6, 'hit', undefined, res2); } catch (e) { scErr(e, 'CH 5 HAND-OFF'); }
