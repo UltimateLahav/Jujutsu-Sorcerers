@@ -10,7 +10,7 @@ function admClear(d, now) {      // a click cancels what he was doing (not a K.O
 }
 function admWhy(now) {      // why a click cannot start a move now ('' = it can)
   const d = dummy; if (!admOn()) return 'NOT HERE'; if (vs.ph !== 'fight') return 'WAIT'; if (d.ko >= 0) return 'K.O.';
-  if (cutsceneOn() || fat || fd || ult || js || vf || cf || ff || ryf || yf || dom || ke || d.cap) return 'BUSY'; if (d.air || d.airH > 0) return 'WAIT'; return '';
+  if (cutsceneOn() || fat || fd || ult || js || vf || cf || ff || ryf || irf || yf || dom || ke || d.cap) return 'BUSY'; if (d.air || d.airH > 0) return 'WAIT'; return '';
 }
 // the moves of each enemy: [{ n: name on the button, go: now => starts it (false = not possible just now), big: a cutscene or a domain }]. The brains: the grade AI of updateFighterVs (Gojo, Yuji, Verity and the Cat swing with d.ai = 'attack' and d.k), freFoe (Freddy), cuFoe (Sukuna and Ryu: d.fa)
 function admMoves() {
@@ -20,7 +20,7 @@ function admMoves() {
     M('BLOCK', now => { const d = dummy; d.ai = 'block'; d.aiAt = now; d.until = ADM.hold = now + 1000; return true; });
     M('DODGE', now => { const d = dummy, gap = d.x - wx; d.ai = 'dodge'; d.aiAt = now; d.until = d.dodgeUntil = ADM.hold = now + 300; d.vx += (gap > 0 ? 1 : -1) * 250; puff(d.x, 4); return true; });
   };
-  const fatal = () => { if (cuMe() && (f === 'verity' || f === 'freddy')) return; M('FINISHER', now => { if (fat || fd || ult || js || vf || cf || ff || ryf || yf) return false; fatGo(now, 0, true); return true; }, true); };      // (his FATALITY on you: Gojo's, Verity's, the Cat's, Freddy's and (v1.212) Ryu's have a version for the enemy; Yuji and Sukuna have none, and a custom fighter of yours has none for Verity's or Freddy's, as in fatAiState; it ends the round for you)
+  const fatal = () => { if (cuMe() && (f === 'verity' || f === 'freddy')) return; M('FINISHER', now => { if (fat || fd || ult || js || vf || cf || ff || ryf || irf || yf) return false; fatGo(now, 0, true); return true; }, true); };      // (his FATALITY on you: Gojo's, Verity's, the Cat's, Freddy's and (v1.212) Ryu's have a version for the enemy; Yuji and Sukuna have none, and a custom fighter of yours has none for Verity's or Freddy's, as in fatAiState; it ends the round for you)
   if (f === 'gojo') { ATK_NAMES.forEach((n, k) => M(n, atk(k))); defence(); fatal(); }
   else if (f === 'yuji') {
     const T = YU_ATK.names, ce = (d, now) => { if (!d.ce) ADM.ceBack = 1; d.ce = true; d.ceFlame = d.ceAt = now; d.ceUntil = now + 6000; }, conc = () => snd('f:concgather');      // (R.KICK, ELBOW, DOWNSLAM and PUSH KICK are the blows of his cursed energy mode: the flames come on with them)
@@ -47,7 +47,7 @@ function admMoves() {
     const g = cuFoeG(), n = +f.slice(2), cu = (k, type) => now => { dummy.chain = 99; cuenStart(k, now, type); return true; };
     if (n === 3) { for (const k of [0, 1, 2, 3, 4, 5, 6, 7, 8, 14, 15, 16]) M(g.an[k], cu(k, 'cu')); M('AIR CUT', cu(9, 'aircut')); M('FIRE ARROW', cu(22, 'arrow')); M('SHRINE', cu(0, 'dom'), true); }
     else if (n === 4) { for (const k of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]) M(g.an[k], cu(k, 'cu')); M('KI BLAST', cu(12, 'blast')); M('JUST ONCE', cu(16, 'beam'), true); fatal(); }
-    else { for (const k of [0, 1, 2, 3, 4, 5, 6, 8, 9, 10]) M(g.an[k], cu(k, 'cu')); M('CHARGE', cu(7, 'icharge')); M('BLAST', cu(0, 'iblast')); M('LASER', cu(0, 'ilaser')); M('SPIN BLAST', cu(0, 'ispin')); M('GROUND PUNCH', cu(0, 'igp')); M('BEAR HUG', cu(0, 'ihug')); M('UNIBEAM', cu(0, 'uni'), true); }      // (v1.208 Iron Man: the chain, the rocket uppercut, the low jabs, the two bolts, and the UNIBEAM)
+    else { for (const k of [0, 1, 2, 3, 4, 5, 6, 8, 9, 10]) M(g.an[k], cu(k, 'cu')); M('CHARGE', cu(7, 'icharge')); M('BLAST', cu(0, 'iblast')); M('LASER', cu(0, 'ilaser')); M('SPIN BLAST', cu(0, 'ispin')); M('GROUND PUNCH', cu(0, 'igp')); M('BEAR HUG', cu(0, 'ihug')); M('UNIBEAM', cu(0, 'uni'), true); fatal(); }      // (v1.213 and his FINISHER; v1.208 Iron Man: the chain, the rocket uppercut, the low jabs, the two bolts, and the UNIBEAM)
     defence();
   }
   return L;

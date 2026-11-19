@@ -60,7 +60,7 @@ function scCheck() {      // numbers that are not numbers, effect lists that onl
     for (const k in SC_LISTS) { let n = 0; try { n = SC_LISTS[k](); } catch { continue; } if (n > (SC.peak[k] || 0)) SC.peak[k] = n; if (n > (k === 'sparks' ? 800 : 400)) scNote('warn', 'THE LIST ' + k + ' HAS ' + n + ' ENTRIES', SC.say); }
   } catch (e) { scErr(e, 'CHECK'); }
 }
-const scBusy = () => !!(fat || yf || vf || cf || ff || ryf || ke || dom || ult || js || yu || fd || (typeof suFatOn === 'function' && suFatOn()) || (typeof suDom !== 'undefined' && !!suDom) || (typeof ryUl !== 'undefined' && !!ryUl) || (typeof CU_GAME !== 'undefined' && !!((CU_GAME[3] && CU_GAME[3].cs) || (CU_GAME[4] && CU_GAME[4].cs))));      // a cutscene of a fight is running
+const scBusy = () => !!(fat || yf || vf || cf || ff || ryf || irf || ke || dom || ult || js || yu || fd || (typeof suFatOn === 'function' && suFatOn()) || (typeof suDom !== 'undefined' && !!suDom) || (typeof ryUl !== 'undefined' && !!ryUl) || (typeof CU_GAME !== 'undefined' && !!((CU_GAME[3] && CU_GAME[3].cs) || (CU_GAME[4] && CU_GAME[4].cs))));      // a cutscene of a fight is running
 
 // ---------------------------------------------------------------- DATA: the game's own tables
 function scData() {
@@ -265,9 +265,9 @@ const AD_EXP = {
   freddy: 'R.SLASH,L.SLASH,FAR L.PUNCH,FAR R.PUNCH,BOILING WATER,PIERCE,GROUND SLAM,NIGHTMARE,BLOCK,DODGE,FINISHER',
   cu3: 'R.JAB,L.JAB,FACE KICK,COUNTER,R.JAB 2,L.UPPR,R.SLASH,L.SLASH,X SLASH,R.HOOK,L.HOOK,ELBOW,AIR CUT,FIRE ARROW,SHRINE,BLOCK,DODGE',
   cu4: 'L.HOOK,R.HOOK,KICK UP,JUMP PUNCH,LEG KICK,DOWNSLAM,HARD PUNCH,FRONT KICK,POWER PUNCH,DIVE PUNCH,5-HIT COMBO,DASH KICK,KI BLAST,JUST ONCE,FINISHER,BLOCK,DODGE',
-  cu5: 'R.HOOK,L.HOOK,R.KICK,PUNCH,UPPERCUT,DOWNSLAM,LOW JABS,BACKFLIP,R.BLAST,L.BLAST,CHARGE,BLAST,LASER,SPIN BLAST,GROUND PUNCH,BEAR HUG,UNIBEAM,BLOCK,DODGE'
+  cu5: 'R.HOOK,L.HOOK,R.KICK,PUNCH,UPPERCUT,DOWNSLAM,LOW JABS,BACKFLIP,R.BLAST,L.BLAST,CHARGE,BLAST,LASER,SPIN BLAST,GROUND PUNCH,BEAR HUG,UNIBEAM,FINISHER,BLOCK,DODGE'
 };
-const AD_BIG = ['FINISHER', 'ULTIMATE', 'JUMPSCARE', 'NIGHTMARE', 'SHRINE', 'JUST ONCE', 'UNIBEAM'], SC_AD_N = 45, AD_WHO = SC_WHO.concat('cu5');      // (1 button + 8 x 3 lists and moves + 11 big moves (v1.212: the enemy Ryu's FINISHER is one) + 2 FREEZE + 4 tools + 1 X + 1 closed box + 1 Battle; v1.208 Iron Man is the eighth enemy)
+const AD_BIG = ['FINISHER', 'ULTIMATE', 'JUMPSCARE', 'NIGHTMARE', 'SHRINE', 'JUST ONCE', 'UNIBEAM'], SC_AD_N = 46, AD_WHO = SC_WHO.concat('cu5');      // (1 button + 8 x 3 lists and moves + 12 big moves (v1.212: the enemy Ryu's FINISHER is one; v1.213 the enemy Iron Man's too) + 2 FREEZE + 4 tools + 1 X + 1 closed box + 1 Battle; v1.208 Iron Man is the eighth enemy)
 async function scAdmin() {      // (every enemy decides at once when he can: GRADES.aggr is 1 for the length of the checks, so that a stray move after a clicked one is certain, not a matter of luck)
   const aggr0 = GRADES.map(g => g.aggr), tr0 = {}, gore0 = SET.gore; for (const k of ['beh', 'ehp', 'php', 'pce', 'grade', 'foe', 'arm', 'spd', 'meter', 'info', 'put']) tr0[k] = TR[k]; GRADES.forEach(g => { g.aggr = 1; });
   try { await scAdmin1(); } finally { GRADES.forEach((g, i) => { g.aggr = aggr0[i]; }); Object.assign(TR, tr0); SET.gore = gore0; ADM.open = false; ADM.freeze = true; ADM.ceBack = 0; }      // (everything the checks changed is put back: the Special Grade and the enemy of the TRAIN page, the graphic damage, the aggression of the grades, and the box is closed again: in a game the frames of the menus close it, here the next section starts a room at once, and an open box would hold its enemy still)
@@ -617,7 +617,7 @@ async function scIronMoves() {
 // ---------------------------------------------------------------- CUTSCENES: the FATALITY and the DOMAIN of every fighter, played to the end
 async function scCuts() {
   SC.sec = 'CUTSCENES'; const FATAL = { gojo: 1, yuji: 1, verity: 1, cat: 1, freddy: 1, cu3: 1, cu4: 1 };
-  scCov('CUTSCENES', 0, SC_WHO.length * 2 + 3 + 13 + 19 + 5 + 7); SC.plan = (SC_WHO.length * 2 + 3 + 13 + 19 + 5 + 7) * 220; SC.done = 0;      // (v1.208 + 5: two fatalities and three moves of the enemy Iron Man; v1.212 + 7: Ryu's fatality in the three GRAPHIC DAMAGE settings and the enemy Ryu's on four fighters)
+  scCov('CUTSCENES', 0, SC_WHO.length * 2 + 3 + 13 + 19 + 5 + 7 + 7); SC.plan = (SC_WHO.length * 2 + 3 + 13 + 19 + 5 + 7 + 7) * 220; SC.done = 0;      // (v1.208 + 5: two fatalities and three moves of the enemy Iron Man; v1.212 + 7: Ryu's fatality in the three GRAPHIC DAMAGE settings and the enemy Ryu's on four fighters; v1.213 + 7: Iron Man's fatality in the three GRAPHIC DAMAGE settings and the enemy Iron Man's on four fighters)
   for (let i = 0; i < SC_WHO.length; i++) {
     const w = SC_WHO[i];
     for (const [key, nm, low, max] of [['KeyH', 'FATALITY', 2, 700], ['KeyV', 'DOMAIN', 1, 520]]) {
@@ -666,6 +666,21 @@ async function scCuts() {
     } else scNote('fail', label + ' DID NOT START', 'THE ENEMY WAS AT ' + (dummy ? Math.round(dummy.hp / (dummy.max || 1) * 100) : '?') + '% HEALTH');
     show('title');
   }
+  for (const gm of [0, 1, 2]) {      // v1.213 Iron Man's FATALITY in all three GRAPHIC DAMAGE settings, each on another victim: it has no words at all (only the title and the sounds) and the head does not come off after it (he is ash)
+    const vic = ['gojo', 'cat', 'cu4'][gm], label = 'IRON MAN FATALITY ON ' + SC_NAME[vic] + ' (GRAPHIC DAMAGE ' + ['FULL', 'CLEAN', 'OFF'][gm] + ')'; SC.say = label; SET.gore = gm;
+    try { Object.assign(TR, { beh: 2, ehp: 2, php: 0, pce: 0, put: 2 }); startPractice('cu5', vic); } catch (e) { scErr(e, label); continue; }
+    if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
+    await scFrames(2, null, 600); try { trainPut(); } catch (e) { scErr(e, label); }
+    scKey('KeyH', true); await scFrames(2); scKey('KeyH', false);
+    if (await scUntil(() => !!irf, 40, 250)) {
+      let said = 1; const ended = await scUntil(() => { if (irf) said = irf.said.length; return !irf; }, 700, 250);
+      if (!ended) scNote('warn', label + ' DID NOT END IN 35 SECONDS', '');
+      else if (said) scNote('fail', label + ': IT SAID SOMETHING (NO WORDS WERE ASKED FOR)', '' + said);
+      else if (typeof goreAft !== 'undefined' && goreAft) scNote('fail', label + ': HIS HEAD CAME OFF AFTER IT (HE WAS ASH ALREADY)', '');
+      else { scPass(); scCov('CUTSCENES', 1, 0); }
+    } else scNote('fail', label + ' DID NOT START', 'THE ENEMY WAS AT ' + (dummy ? Math.round(dummy.hp / (dummy.max || 1) * 100) : '?') + '% HEALTH');
+    show('title');
+  }
   // v1.188 FREDDY AS AN ENEMY: the FATALITY of every fighter on him, his nightmare and his fatality on you, and his three specials (in the street)
   for (const w of ['gojo', 'yuji', 'verity', 'cat', 'freddy']) {
     const label = SC_NAME[w] + ' FATALITY ON THE ENEMY FREDDY'; SC.say = label; SET.gore = SC_WHO.indexOf(w) % 3;
@@ -704,7 +719,7 @@ async function scCuts() {
     if (await scUntil(() => scBusy(), 40, 250)) { if (await scUntil(() => !scBusy(), 800, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 40 SECONDS', ''); } else scNote('fail', label + ' DID NOT START', 'THE ENEMY WAS AT ' + (dummy ? Math.round(dummy.hp / (dummy.max || 1) * 100) : '?') + '% HEALTH');
     show('title');
   }
-  for (const [w, foe, what] of [['cu3', 'gojo', 'FATALITY'], ['cu4', 'cat', 'FATALITY'], ['cu3', 'freddy', 'NIGHTMARE'], ['cu4', 'freddy', 'NIGHTMARE'], ['cu5', 'gojo', 'FATALITY'], ['cu5', 'cat', 'FATALITY'], ['cu5', 'freddy', 'NIGHTMARE'], ['gojo', 'cu4', 'FATALITY'], ['cat', 'cu4', 'FATALITY'], ['cu3', 'cu4', 'FATALITY'], ['cu5', 'cu4', 'FATALITY']]) {      // (the enemy's own fatality or nightmare on Sukuna, Ryu or Iron Man; v1.212 the enemy Ryu's fatality on four fighters)
+  for (const [w, foe, what] of [['cu3', 'gojo', 'FATALITY'], ['cu4', 'cat', 'FATALITY'], ['cu3', 'freddy', 'NIGHTMARE'], ['cu4', 'freddy', 'NIGHTMARE'], ['cu5', 'gojo', 'FATALITY'], ['cu5', 'cat', 'FATALITY'], ['cu5', 'freddy', 'NIGHTMARE'], ['gojo', 'cu4', 'FATALITY'], ['cat', 'cu4', 'FATALITY'], ['cu3', 'cu4', 'FATALITY'], ['cu5', 'cu4', 'FATALITY'], ['gojo', 'cu5', 'FATALITY'], ['cat', 'cu5', 'FATALITY'], ['cu4', 'cu5', 'FATALITY'], ['yuji', 'cu5', 'FATALITY']]) {      // (the enemy's own fatality or nightmare on Sukuna, Ryu or Iron Man; v1.212 the enemy Ryu's fatality on four fighters; v1.213 the enemy Iron Man's on four)
     const label = 'THE ENEMY ' + SC_NAME[foe] + ': HIS ' + what + ' ON ' + SC_NAME[w]; SC.say = label; SET.gore = 0; window.__suAll = true;
     try { Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0, put: 2, grade: 4 }); startPractice(w, foe); } catch (e) { scErr(e, label); continue; }
     if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }

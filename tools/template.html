@@ -82,7 +82,7 @@ body.cut #adm,body.cut #admBtn{visibility:hidden}
 #pad.cine,#hud.cine{visibility:hidden}body.cut #hud,body.cut #pad,body.cut #sns,body.cut #trHud,body.cut #twp{visibility:hidden}      /* (v1.181 a cutscene of a fight: only what belongs to it stays, see cutsceneOn) */
 body.ir #cel{font-size:calc(var(--fs-pb,clamp(5px,1.7vh,9px))*.88)}      /* (v1.193 REPULSOR is 8 letters: a little smaller so that it fits the MODE button) */
 body.ir #lap.lg #lapl{font-size:calc(var(--fs-pb,clamp(5px,1.7vh,9px))*.88)}      /* (v1.196 GROUND is 6 letters: the BLUE button's name is a little smaller while it says GROUND PUNCH) */
-body.ir #fat,body.ir #sns{visibility:hidden}      /* (v1.190 Iron Man has no powers: v1.191 he has ATTACK, BLOCK and DASH, and crouches with the stick; v1.193 MODE is his REPULSOR mode; v1.194 BLUE is his BEAR HUG; v1.203 DOMAIN is his ULTIMATE; FATAL and SENSE stay hidden) */
+body.ir #sns{visibility:hidden}      /* (v1.190 Iron Man has no powers: v1.191 he has ATTACK, BLOCK and DASH, and crouches with the stick; v1.193 MODE is his REPULSOR mode; v1.194 BLUE is his BEAR HUG; v1.203 DOMAIN is his ULTIMATE; SENSE stays hidden; v1.213 FATAL is his FATALITY) */
 body.c4 #dom,body.c4 #ce,body.c4 #fat,body.c4 #lap,body.c4 #sns{visibility:hidden}      /* (v1.143 Ryu has no DOMAIN: that button is hidden while he fights; v1.163 he has BLUE, v1.170 the MODE button is his GRANITE BLAST mode, v1.212 FATAL is his FATALITY) */      /* the controls hide while a cutscene plays (the FATALITY, the red ending) */
 #qte{position:fixed;inset:0;z-index:4;display:none;pointer-events:none}#qte.show{display:block}      /* the quick-time event of the red ending: the red button, and the ring that closes on it */
 #qBtn,#qRing{position:absolute;border-radius:50%}
@@ -221,7 +221,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.212</small>
+    <small id="ver">V1.213</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -527,7 +527,7 @@ function hbMark(att, k, ax, am, tgt, tx, tm, tipRows, own) {      // a blow reac
 }
 const hbE = k => hbMark(vs ? vs.foe : 'gojo', k, dummy.x, dummy.x - wx > -4, hbMe(), wx, false);      // (the enemy's blow reaches its impact picture)
 function hbDraw(now) {
-  if (!SET.hb || state !== 'play' || c4x || js || vf || fat || yf || dom || ult || cf || ff || ryf) return;      // (not in the cutscenes of the finishers and domains: the camera is somewhere else)
+  if (!SET.hb || state !== 'play' || c4x || js || vf || fat || yf || dom || ult || cf || ff || ryf || irf) return;      // (not in the cutscenes of the finishers and domains: the camera is somewhere else)
   const cx = Math.round(VW / 2), top = gy - 60, row = (r, a, b, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(a), top + r, Math.max(1, Math.round(b - a)), 1); };
   const body = (key, x, mir, lift) => { const B = hbBody(key); if (!B) return; for (const r in B) { const b = B[r]; row(+r - lift, mir ? x - b[1] - 1 : x + b[0], mir ? x - b[0] : x + b[1] + 1, 'rgba(70,160,255,0.42)'); } ctx.fillStyle = '#ffe14a'; ctx.fillRect(Math.round(x), top + 28 - lift, 1, 9); };
   ctx.save(); body(hbMe(), cx, false, Math.max(gojoLift || 0, gAir ? gAirH || 0 : 0));
@@ -1490,7 +1490,7 @@ function show(s) {
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll(); $('settings').classList.remove('on');
-  js = null; vf = null; if (yf) yfReset(); if (cf) cfReset(); if (ff) ffReset(); if (ryf) ryfReset(); if (ke) keReset(); blindOff = false; bfo = null; bfp = false; ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; inhAt = -1; inhLock = false; inhArm = -1; smd = null; gsd = -1; gsdOn = false; impf = null; tqBlock = null; tqGrab = null; tqBeam = []; tqFx = []; ceOn = false; ceAmt = 0; ceFlameAt = 0; gDownUntil = 0; gAir = null; gAirH = 0; kickBuf = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
+  js = null; vf = null; if (yf) yfReset(); if (cf) cfReset(); if (ff) ffReset(); if (ryf) ryfReset(); if (irf) irfReset(); if (ke) keReset(); blindOff = false; bfo = null; bfp = false; ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; inhAt = -1; inhLock = false; inhArm = -1; smd = null; gsd = -1; gsdOn = false; impf = null; tqBlock = null; tqGrab = null; tqBeam = []; tqFx = []; ceOn = false; ceAmt = 0; ceFlameAt = 0; gDownUntil = 0; gAir = null; gAirH = 0; kickBuf = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
   if (s === 'play') { spawnAt = pnow(); wx = 0; wvx = 0; deb = []; lit = []; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; sparks = []; stopMs = 0; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(pnow(), 1200);
@@ -2319,7 +2319,7 @@ const voidImg = new Image(); voidImg.src = VOID_IMG; let domBox = null;
 const DOM_ORDER = ['blind', 'pose', 'face', 'wide', 'burst', 'void', 'collapse', 'reblind'], DOM_MS = { blind: 2200, pose: 900, face: DF_N * 1000 / DF_FPS, wide: 1500, burst: 1900, void: 10000, collapse: 1400, reblind: 1000 };      // (blind: the blindfold comes down, reblind: it goes back on; both are close-ups of his face)
 let dom = null, domHold = false, domReq = false, domReadyAt = 0, voidCv = null, voidG = null, fd = null;      // (fd = Freddy's nightmare in progress, see freddyDream)
 // v1.181 A CUTSCENE OF A FIGHT: every bar, name, button and number that is not part of it stays away. The moments: a FATALITY (every fighter's, yours or the enemy's), an ULTIMATE (the Cat's choke, Yuji's four Black Flashes, Ryu's JUST THIS ONCE, Freddy's DREAM), Verity's JUMPSCARE, Sukuna's FUGA and his DOMAIN SIGN, the OPENING and the closing of a DOMAIN (not the fight inside it), the blindfold close-ups. cutsceneOn() is asked by drawVs (the bars and names), stateDraw, twOverlay and the elevator panel (canvas), and once a frame by cutUI, which puts the class `cut` on the page: the CSS then hides the top-left buttons, the touch controls, the SENSE button, the training numbers and the elevator panel (the tap prompts of a cutscene are other elements and stay).
-function cutsceneOn() { return state === 'play' && !!vs && !!(bcl || fat || yf || vf || cf || ff || ryf || ke || js || se || de || ult || yu || fd || bfo || (dom && domLock()) || (typeof suFatOn === 'function' && suFatOn()) || (typeof suFgOn === 'function' && suFgOn()) || (typeof suSignOn === 'function' && suSignOn()) || ryUlNoHud()); }
+function cutsceneOn() { return state === 'play' && !!vs && !!(bcl || fat || yf || vf || cf || ff || ryf || irf || ke || js || se || de || ult || yu || fd || bfo || (dom && domLock()) || (typeof suFatOn === 'function' && suFatOn()) || (typeof suFgOn === 'function' && suFgOn()) || (typeof suSignOn === 'function' && suSignOn()) || ryUlNoHud()); }
 function hudNumsOff() { return cutsceneOn() || !!ryUl; }      // v1.187 the hit counter and the damage numbers stay away in a cutscene (and for the whole of Ryu's beam, when the bars are back): drawHits and drawPopups ask it, say() does not even queue a number
 let cutOn = false;
 function cutUI() { const c = cutsceneOn(); if (c !== cutOn) { cutOn = c; document.body.classList.toggle('cut', c); } }
@@ -2760,11 +2760,10 @@ function fatSets(rev) {                                // the pictures of the at
   if (vk === 'cu3' || vk === 'cu4' || vk === 'cu5') return { ...S, ...cuVictim(+vk.slice(2)) };      // (v1.190 Iron Man, in Training, is a victim too: his idle in every reaction)
   return rev ? { ...S, vF: idleF, vRx: rxN } : { ...S, vF: dumF, vRx: rxI };
 }
-let fat = null, fatReq = 0, ryf = null;                            // fat = the running cutscene (null when there is none); fatReq = until when a press of the FATALITY button is remembered
+let fat = null, fatReq = 0, ryf = null, irf = null;                            // fat = the running cutscene (null when there is none); fatReq = until when a press of the FATALITY button is remembered
 const orbAt = (set, n, sx, sy, s) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));      // an orb frame centred on (sx, sy)
 function fatState(now) {                               // Gojo's FATALITY (and Verity's). 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far away; 3 = not possible right now
-  if (vs && vs.me === 'cu5') return 3;      // (v1.190 Iron Man has no FATALITY)
-  if (vs && vs.me === 'cu4') return ryfState(now);      // (v1.212 Ryu's FATALITY: tools/ryufat.js; v1.166 to v1.211 he had none)
+  if (vs && (vs.me === 'cu4' || vs.me === 'cu5')) return ryfState(now);      // (v1.212 Ryu's FATALITY: tools/ryufat.js; v1.213 Iron Man's: tools/ironfat.js, the same rules; v1.166 to v1.211 they had none)
   if (cuFoeOn() && (vs.me === 'verity' || fredMe())) return 3;      // (v1.189 Verity's and Freddy's FATALITY have no version for the enemy Sukuna or Ryu yet; the others do)
   if (fredMe()) return ffState(now);      // (v1.185 Freddy's FATALITY: he eats the enemy, see fred3.js)
   if (!vs || vs.story || vs.cv || fredMe() || lacks('fat') || vs.ph !== 'fight' || js || vf || fat || yf || yu || (dom && domLock()) || ult || cf || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (v1.181 a DOMAIN no longer stops it: only its opening, while the controls are locked; fatGo ends the domain)      // (Verity and the Cat have their own FATALITY: the same rules; so has Yuji since v1.49, the 30-second one; Freddy has none yet, v1.52: his button used to play Gojo's FATALITY with Gojo in it)      // (no FATALITY in the story fight: his ending is a Reversal Red)
@@ -2773,10 +2772,10 @@ function fatState(now) {                               // Gojo's FATALITY (and V
   return hurtAt >= 0 || gojoGone ? 3 : 0;
 }
 function fatAiState(now) {                             // the enemy's own FATALITY on Gojo: from SEMI-GRADE 1 up, the moment Gojo is at 20% health or less and the enemy is close (no warning; being in the air, dashing or out of reach saves him)
-  if (!vs || vs.story || vs.foe === 'yuji' || (vs.foe === 'cu4' ? !cuFoeOn() : cuFoeOn()) || (cuMe() && (vs.foe === 'verity' || vs.foe === 'freddy')) || vs.ph !== 'fight' || js || vf || fat || yf || dom || ult || cf || fd || ff || ryf || ryUl || (dummy && dummy.fa) || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.cact || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
+  if (!vs || vs.story || vs.foe === 'yuji' || (vs.foe === 'cu4' || vs.foe === 'cu5' ? !cuFoeOn() : cuFoeOn()) || (cuMe() && (vs.foe === 'verity' || vs.foe === 'freddy')) || vs.ph !== 'fight' || js || vf || fat || yf || dom || ult || cf || fd || ff || ryf || irf || ryUl || (dummy && dummy.fa) || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.cact || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
   return vs.hp <= PHP * FAT_LOW && Math.abs(dummy.x - wx) <= FAT_RANGE && !gojoGone && gojoLift <= 12 && dgAt < 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
 }
-function fatGo(now, dt, rev) { if (dom) domReset(); if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else if (rev ? vs.foe === 'cat' : vs.me === 'cat') { cfStart(now, rev); cfFrame(now, dt); } else if (!rev && vs.me === 'yuji') { yfStart(now); yfFrame(now, dt); } else if (rev ? vs.foe === 'freddy' : fredMe()) { ffStart(now, rev); ffFrame(now, dt); } else if (rev ? vs.foe === 'cu4' : vs.me === 'cu4') { if (ryfStart(now, rev)) ryfFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's and the Cat's FATALITY are their own cutscenes)
+function fatGo(now, dt, rev) { if (dom) domReset(); if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else if (rev ? vs.foe === 'cat' : vs.me === 'cat') { cfStart(now, rev); cfFrame(now, dt); } else if (!rev && vs.me === 'yuji') { yfStart(now); yfFrame(now, dt); } else if (rev ? vs.foe === 'freddy' : fredMe()) { ffStart(now, rev); ffFrame(now, dt); } else if (rev ? vs.foe === 'cu4' : vs.me === 'cu4') { if (ryfStart(now, rev)) ryfFrame(now, dt); } else if (rev ? vs.foe === 'cu5' : vs.me === 'cu5') { if (irfStart(now, rev)) irfFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's and the Cat's FATALITY are their own cutscenes)
 function fatUI(now) {                                  // the button: only in a match, dark until it can be used, then it glows
   const col = $('fat').parentNode; col.classList.toggle('vs', !!vs); col.classList.toggle('vy', !!vs && vs.me === 'verity'); col.classList.toggle('yj', !!vs && vs.me === 'yuji'); col.classList.toggle('kt', !!vs && vs.me === 'cat'); col.classList.toggle('nt', !!vs && !!vs.net); col.classList.toggle('nb', !!vs && !!vs.net && vs.me !== 'gojo'); $('hud').classList.toggle('vs', !!vs); $('pauseBtn').style.display = vs && vs.net ? 'none' : ''; if (vs) $('fat').classList.toggle('rdy', fatState(now) === 0);
 }
@@ -4517,6 +4516,7 @@ function drawScene(now, dt) {
   if (cf) { cfFrame(now, dt); return; }         // ...and the Cat's FATALITY
   if (ff) { ffFrame(now, dt); return; }         // ...and Freddy's
   if (ryf) { ryfFrame(now, dt); return; }       // ...and Ryu's (v1.212, tools/ryufat.js)
+  if (irf) { irfFrame(now, dt); return; }       // ...and Iron Man's (v1.213, tools/ironfat.js)
   if (ke) { keFrame(now, dt); return; }         // ...and the end of the Cat in the story
   comboEscape(now); flowTick(now); yuTick(now, dt); counterTick(now); domTick(now); bfTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); netLeash(now); if (!dom && !(vs && vs.net)) { if (vs && vs.foe === 'verity') storyBattleTick(now, dt); else if (vs && vs.foe === 'cat') catTick(now, dt); ultTick(now, dt); }      // (the DOMAIN freezes everyone: none of the enemy's own clocks run while it lasts)
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
@@ -5535,7 +5535,7 @@ window.__story = () => story ? ({ T: +(story.T || 0).toFixed(2), battle: !!story
 // ---------------------------------------------------------------- v1.30 A FASTER GAME. GAME PACE (SETTINGS > GAME: NORMAL / FAST 1.25x / TURBO 1.5x, FAST is the default): in a fight everything runs faster than the real clock (walking, swings, the enemy, the cooldowns, the combo window), but the round timer and the 10 seconds of the Inheritence still count real seconds; not in the Wi-Fi fight, the story, cutscenes (FATALITY, JUMPSCARE, DOMAIN, the ULTIMATE) or the menus. PARRY: slow motion and a free counter. DODGE: a dash just before a blow gives energy. PRESSURE: the longer you do not hurt the enemy, the shorter his rests. SPEED BONUS: a RUSH or ROULETTE wave cleared under its par time pays extra.
 const PACE_X = [1, 1.25, 1.5, 0.8], E_DODGE = 8;
 const paceBase = () => state === 'play' && SET.pace && !(vs && (vs.net || vs.story)) ? PACE_X[SET.pace] : 1;      // (the pace of this kind of fight: not the Wi-Fi fight, not the story)
-const paceNow = () => !c4x && (!vs || vs.ph === 'fight') && !fat && !yf && !se && !de && !js && !vf && !cf && !ryf && !ke && !dom && !ult ? paceBase() : 1;      // (how many times faster than the real clock the game runs right now: 1 in a cutscene and between the rounds)
+const paceNow = () => !c4x && (!vs || vs.ph === 'fight') && !fat && !yf && !se && !de && !js && !vf && !cf && !irf && !ryf && !ke && !dom && !ult ? paceBase() : 1;      // (how many times faster than the real clock the game runs right now: 1 in a cutscene and between the rounds)
 let ctr = null, ctrBoost = 0, dodgeAt = -1e9;      // ctr = { at, until }: the free counter that follows a PARRY; ctrBoost: the time stamp (atkAt) of that counter's swing, the hits of that swing do 1.5 times the damage; dodgeAt: the last DODGE reward
 function strikeBack(now) {      // the LAST M1 of your combo, lunging at the enemy so that it reaches (the combo escape and the free counter of a parry)
   if (!dummy || dummy.ko >= 0) return false;
@@ -6699,6 +6699,7 @@ __FRED4__
 __CUEN__
 __CUENIR__
 __RYUFAT__
+__IRONFAT__
 __ADMIN__
 __CLASH__
 __ACH__
