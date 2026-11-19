@@ -141,6 +141,41 @@ function makeSfx(ac) {
       burst(B.soft, t, { type: 'lowpass', f: 1200, f2: 250, q: 0.7, dur: 0.14, gain: 0.55, atk: 0.002 });
       tone(B.soft, t + 0.03, { f: 523, dur: 0.55, gain: 0.08, atk: 0.02 }); tone(B.soft, t + 0.05, { f: 784, dur: 0.5, gain: 0.05, atk: 0.02 });
     },
+    itsense() {                                          // v1.217 Goku feels a strange power far away: two glassy tones that swell and climb together, a breath of high air
+      const t = T(), B = C.ce;
+      tone(B.soft, t, { f: 740, f2: 1110, dur: 1.2, gain: 0.07, atk: 0.5 }); tone(B.soft, t + 0.1, { f: 1110, f2: 1665, dur: 1.0, gain: 0.04, atk: 0.4 });
+      burst(B.soft, t, { type: 'highpass', f: 2200, f2: 7000, q: 0.7, dur: 1.1, gain: 0.05, atk: 0.5 });
+    },
+    itcharge() {                                         // v1.217 the two fingers on his forehead: a quiet hum that climbs for a second, with a glassy shimmer and tiny ticks on top
+      const t = T(), B = C.tele;
+      tone(B.deep, t, { type: 'triangle', f: 110, f2: 220, dur: 1.1, gain: 0.18, atk: 0.35 });
+      tone(B.soft, t, { f: 1318, f2: 2637, dur: 1.1, gain: 0.05, atk: 0.5 }); tone(B.soft, t + 0.15, { f: 1760, f2: 3520, dur: 0.9, gain: 0.03, atk: 0.4 });
+      for (let i = 0; i < 6; i++) tone(B.soft, t + 0.3 + i * 0.13, { f: 3000 + i * 400, f2: 3300 + i * 400, dur: 0.09, gain: 0.018, atk: 0.004 });
+    },
+    itvanish(at) {                                       // v1.217 INSTANT TRANSMISSION, leaving: a rising zip that ends in a thin snap, then the low thump of the air closing and a high ping
+      const t = T(at), B = C.tele;
+      tone(B.soft, t, { f: 300, f2: 4200, dur: 0.16, gain: 0.3, atk: 0.003, cur: 0.8 }); burst(B.soft, t, { type: 'bandpass', f: 600, f2: 6000, q: 1.2, dur: 0.14, gain: 0.5, atk: 0.003 });
+      tone(B.deep, t + 0.14, { f: 150, f2: 40, dur: 0.22, gain: 0.5, atk: 0.002 }); tone(B.soft, t + 0.14, { f: 3136, f2: 3000, dur: 0.5, gain: 0.05, atk: 0.002 }); burst(B.soft, t + 0.14, { type: 'highpass', f: 3500, f2: 8000, q: 0.8, dur: 0.06, gain: 0.5, atk: 0.001 });
+    },
+    itarrive(at) {                                       // v1.217 INSTANT TRANSMISSION, arriving: the zip backwards (it falls) and a soft thump where he lands
+      const t = T(at), B = C.tele;
+      tone(B.soft, t, { f: 4200, f2: 300, dur: 0.14, gain: 0.3, atk: 0.003, cur: 0.8 }); burst(B.soft, t, { type: 'bandpass', f: 6000, f2: 600, q: 1.2, dur: 0.12, gain: 0.45, atk: 0.003 });
+      tone(B.deep, t + 0.1, { f: 130, f2: 45, dur: 0.3, gain: 0.55, atk: 0.002 }); burst(B.deep, t + 0.1, { type: 'lowpass', f: 900, f2: 120, q: 0.7, dur: 0.25, gain: 0.5, atk: 0.002 });
+    },
+    gkdud() {                                            // v1.217 Yuji's punch that does nothing: a dull little thump, like a fist on a wall of rock, and one tiny dry tick
+      const t = T(), B = C.atk;
+      tone(B.deep, t, { f: 90, f2: 55, dur: 0.14, gain: 0.35, atk: 0.002 }); burst(B.soft, t, { type: 'bandpass', f: 500, f2: 250, q: 1.0, dur: 0.07, gain: 0.5, atk: 0.001 }); burst(B.soft, t, { type: 'highpass', f: 3000, f2: 5000, q: 1, dur: 0.012, gain: 0.25, atk: 0.001 });
+    },
+    gkwind() {                                           // v1.217 Goku draws his fist back: the air gathers, a low rumble that swells and a rising rush (half a second)
+      const t = T(), B = C.atk;
+      tone(B.deep, t, { type: 'triangle', f: 60, f2: 130, dur: 0.5, gain: 0.3, atk: 0.2 }); burst(B.soft, t, { type: 'bandpass', f: 300, f2: 2400, q: 0.9, dur: 0.5, gain: 0.55, atk: 0.3 });
+    },
+    gkpunch() {                                          // v1.217 Goku's blow lands: a hard crack, the boom of the hit and a long shock that falls away
+      const t = T(), B = C.atk;
+      tone(B.deep, t, { type: 'triangle', f: 130, f2: 26, dur: 1.0, gain: 0.8, atk: 0.002 }); tone(B.deep, t, { f: 260, f2: 60, dur: 0.14, gain: 0.5, atk: 0.001 });
+      burst(B.soft, t, { f: 600, f2: 90, q: 0.7, dur: 0.4, gain: 3.4, atk: 0.001 }); burst(B.soft, t, { type: 'highpass', f: 2500, f2: 7000, q: 1, dur: 0.1, gain: 1.4, atk: 0.001 });
+      tone(B.soft, t + 0.01, { f: 2093, f2: 1900, dur: 0.9, gain: 0.05, atk: 0.003 });
+    },
     fall(at) {                                           // teleport 4: soft falling whoosh
       const t = T(at), B = C.tele;
       burst(B.soft, t, { type: 'lowpass', f: 1000, f2: 160, q: 0.8, dur: 0.36, gain: 0.7, atk: 0.08 });

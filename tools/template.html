@@ -221,7 +221,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.216</small>
+    <small id="ver">V1.217</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -4570,6 +4570,8 @@ __CHAP5__
 __CHAP5B__
 __CHAP5C__
 __WESTCITY__
+__GOKU__
+__GOKUSCENE__
 __IRON__
 __IRONM__
 __IRONH__
@@ -4590,6 +4592,7 @@ function drawScene(now, dt) {
   if (ryf) { ryfFrame(now, dt); return; }       // ...and Ryu's (v1.212, tools/ryufat.js)
   if (irf) { irfFrame(now, dt); return; }       // ...and Iron Man's (v1.213, tools/ironfat.js)
   if (sr) { srFrame(now, dt); return; }       // ...and the enemy Sukuna's on you (v1.214, tools/sukuna.js)
+  if (vs && vs.k5 && vs.k5.end && vs.k5.end.gk && vs.k5.end.gk.live) { gkFrame(now, dt); return; }      // ...and Goku on the hill, then in West City (v1.217, tools/gokuscene.js: it ends the chapter 5 fight's end scene)
   if (ke) { keFrame(now, dt); return; }         // ...and the end of the Cat in the story
   comboEscape(now); flowTick(now); yuTick(now, dt); counterTick(now); domTick(now); bfTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); netLeash(now); if (!dom && !(vs && vs.net)) { if (vs && vs.foe === 'verity') storyBattleTick(now, dt); else if (vs && vs.foe === 'cat') catTick(now, dt); ultTick(now, dt); }      // (the DOMAIN freezes everyone: none of the enemy's own clocks run while it lasts)
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)

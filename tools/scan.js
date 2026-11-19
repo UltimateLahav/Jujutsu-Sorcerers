@@ -391,9 +391,9 @@ async function scClash() {
 }
 
 // ---------------------------------------------------------------- ACHIEVEMENTS (v1.210): the card and the screen, the save, the rectangle that slides in, and the three ways to earn one (tools/ach.js)
-const SC_K5_N = 66;
+const SC_K5_N = 72;
 async function scK5() {      // v1.211 the chapter 5 fight: Yuji against Iron Man in the huge room (the picture turned over, Black Flash mode, no ending) and Iron Man's other moves as the enemy
-  SC.sec = 'CH 5 FIGHT'; scCov('CH 5 FIGHT', 0, SC_K5_N); SC.plan = 3900; SC.done = 0;
+  SC.sec = 'CH 5 FIGHT'; scCov('CH 5 FIGHT', 0, SC_K5_N); SC.plan = 4500; SC.done = 0;
   const ok = (c, what, d) => { scT(c, 'CH 5 FIGHT: ' + what, d || ''); scCov('CH 5 FIGHT', 1, 0); }, stop = () => SC.cancel || scReal() > SC.cap, gore0 = SET.gore, sv0 = localStorage.getItem(SAVE_KEY), GG = GRADES[3], gg0 = { dodge: GG.dodge, blk: GG.blk }, tr0 = {}; for (const k of ['beh', 'ehp', 'php', 'pce', 'grade', 'foe', 'put']) tr0[k] = TR[k];
   const start = async label => { try { show('title'); story = { slot: -1, t0: pnow(), battle: false, T: 0, ev: {}, c16: true }; k5FightGo(); } catch (e) { scErr(e, label + ' START'); return false; } return scUntil(() => !!vs && !!vs.k5 && vs.ph === 'fight', 120, 50); };
   const calm = () => { dummy.ai = 'rest'; dummy.aiAt = pnow(); dummy.restFor = 1e9; dummy.fa = null; dummy.stunUntil = 0; dummy.spNext = pnow() + 1e9; dummy.cs = dummy.cb = dummy.ca = null; vs.fburn = null; };      // (what he threw before is gone too: a bolt in the air would hurt Yuji in the middle of a blow)
@@ -468,7 +468,7 @@ async function scK5() {      // v1.211 the chapter 5 fight: Yuji against Iron Ma
     // leaving: the pause screen's MENU
     ok(await start('LEAVING'), 'THE FIGHT DID NOT START AGAIN', ''); await scFrames(3, null, 50); leavePlay(); await scFrames(3, null, 50);
     ok(state === 'saves' && !vs && !document.body.classList.contains('c4'), 'MENU DID NOT LEAVE THE FIGHT TO THE CHAPTER LIST WITH THE BUTTONS BACK', state + ' / ' + document.body.className);
-    // the end (v1.216, tools/westcity.js): his health at its floor starts the scene: no controls, no bars, his palm goes up and stays in its charge (the beam never fires), the violet circle, West City, the black, the chapter list
+    // the end (v1.216, tools/westcity.js; v1.217 tools/gokuscene.js): his health at its floor starts the scene: no controls, no bars, his palm goes up and stays in its charge (the beam never fires), the violet circle, West City, Goku on his hill, instant transmission, WHO ARE YOU?, Yuji's blow into the building, TO BE CONTINUED, the chapter list
     if (stop()) return;
     if (await start('THE END')) {
       calm(); await scUntil(() => hurtAt < 0 && pnow() - hurtEnd > 300, 80, 50); dummy.hp = 1; await scFrames(3, null, 33);
@@ -480,6 +480,13 @@ async function scK5() {      // v1.211 the chapter 5 fight: Yuji against Iron Ma
       ok(up && viol === 0, 'HIS PALM DID NOT GO UP, OR IT FIRED, OR HE LET IT GO, OR YUJI WAS HURT', up + ' ' + viol);
       ok(await scUntil(() => vs.k5.end.wc, 300, 33) && dummy.x > wx + 1000, 'THE CUT TO WEST CITY DID NOT COME, OR IRON MAN IS STILL THERE', '' + Math.round(dummy.x - wx));
       await scFrames(45, null, 33); { const W2 = cv.width, H2 = cv.height, a = ctx.getImageData(Math.round(W2 * 0.9), Math.round(H2 * 0.05), 1, 1).data, b = ctx.getImageData(Math.round(W2 * 0.12), Math.round(H2 * 0.96), 1, 1).data; ok(a[2] > a[0] + 40 && a[2] > 150 && b[0] < 110 && b[2] < 120, 'WEST CITY IS NOT ON THE SCREEN (A BLUE SKY ABOVE AND A DARK ROAD BELOW)', a[0] + ',' + a[1] + ',' + a[2] + ' / ' + b[0] + ',' + b[1] + ',' + b[2]); }
+      { const g = () => window.__gk(), orange = (x0, y0, w, h) => { const d = ctx.getImageData(x0, y0, w, h).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] > 150 && d[i] > d[i + 1] * 1.4 && d[i + 1] > d[i + 2] * 1.6) n++; return n; }, xg = Math.round(VW * 0.58), gsx = Math.round(VW / 2 + GKP.gx);
+        ok(await scUntil(() => { const k = g(); return !!k && k.live && k.T >= 1.0; }, 400, 33) && orange(xg - 14, gy - 52, 28, 44) >= 25, 'THE GOKU SCENE DID NOT START AFTER WEST CITY, OR HE IS NOT STANDING ON THE HILL', JSON.stringify(g()));
+        ok(await scUntil(() => g().T >= 4.9, 400, 33) && orange(xg - 14, gy - 52, 28, 44) < 5, 'GOKU IS STILL ON THE HILL AFTER HIS INSTANT TRANSMISSION', '');
+        ok(await scUntil(() => g().T >= 7.5, 400, 33) && orange(gsx - 14, gy - 52, 28, 44) >= 25 && g().said === 12, 'GOKU IS NOT NEXT TO YUJI, OR WHO ARE YOU? IS NOT TYPED OUT', JSON.stringify(g()));
+        ok(await scUntil(() => g().T >= 10.7, 700, 33) && g().cam < -150 && g().wallU > 10, 'YUJI WAS NOT THROWN INTO THE BUILDING (THE CAMERA DID NOT FOLLOW HIM)', JSON.stringify(g()));
+        ok(await scUntil(() => g().T >= 13.4, 500, 33), 'THE SCENE DID NOT REACH THE CARD', JSON.stringify(g()));
+        { const d = ctx.getImageData(0, 0, VW, VH).data; let b = 0, w = 0; for (let i = 0; i < d.length; i += 4) { if (d[i] + d[i + 1] + d[i + 2] < 60) b++; else if (d[i] > 150 && d[i + 1] > 150 && d[i + 2] > 150) w++; } ok(b / (VW * VH) > 0.9 && w > 100, 'THE TO BE CONTINUED CARD IS NOT ON THE SCREEN (BLACK WITH WHITE LETTERS)', Math.round(100 * b / (VW * VH)) + '% ' + w); } }
       ok(await scUntil(() => state === 'saves', 500, 33) && !vs && !document.body.classList.contains('c4'), 'THE END SCENE DID NOT GO BACK TO THE CHAPTER LIST', state);
     } else if (!stop()) scNote('fail', 'CH 5 FIGHT: THE FIGHT OF THE END SCENE DID NOT START', state);
     // the story: after the second tap Tony lands, the black, and the fight (the dodge and the punch)
