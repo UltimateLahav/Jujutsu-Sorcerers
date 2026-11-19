@@ -3,7 +3,7 @@
 // WHAT IS DIFFERENT FROM A VERSUS FIGHT: (1) the picture is turned over: Iron Man is on the LEFT and Yuji on the RIGHT (the engine still has you on the left and him on the right: everything is drawn, the canvas is flipped just before the bars and the numbers, so the text is not, and the left and right controls are swapped
 // (k5In, setStick): you walk to the left to reach him; the bars and names are swapped (drawVs0, drawHits, drawPopups). (2) YUJI IN BLACK FLASH MODE, as in chapter 4's fight against Meguna: walking, jumping, dashing, blocking and crouching, and ONE attack: the BLACK FLASH on the ATTACK button (it says FLASH): standing the punch (strip 20), in the air the kick
 // to the head (21), crouched the blow to the stomach (22); a RING is put on the enemy where he is going the moment you press (k5BfStart), and when the fist lands (hitFoe) it is a full BLACK FLASH if he is still inside the ring (and not already reeling from a blow), else a WEAK one (a quarter of the damage); all of Yuji's damage is halved (INH_DMG) as in chapter 4. No BLUE, MODE, DOMAIN or FATAL.
-// (3) IRON MAN has every ability he has as an enemy and the ULTIMATE (the UNIBEAM) only when he FEELS THREATENED (k5Threat: his health is below 60%, or he has lost 22% of it in 7 s, or two perfect Black Flashes hit him in 10 s). (4) THE ARENA is the huge hall (k5Back), 60 m wide with a wall at each end. (5) NOTHING HAPPENS AT THE END (for now): nobody's health goes below 1, there is no round, no result screen; the pause menu's MENU leaves to the chapter list.
+// (3) IRON MAN has every ability he has as an enemy and the ULTIMATE (the UNIBEAM) only when he FEELS THREATENED (k5Threat: his health is below 60%, or he has lost 22% of it in 7 s, or two perfect Black Flashes hit him in 10 s). (4) THE ARENA is the huge hall (k5Back), 60 m wide with a wall at each end. (5) NOBODY CAN DIE: nobody's health goes below 1, there is no round, no result screen; the pause menu's MENU leaves to the chapter list. v1.216: when HIS health is at its floor the story goes on (tools/westcity.js: the building shakes, he raises his palm, Yuji is sent to West City, black, the chapter list).
 // It begins when chapter 5's part 2 is over (k5FightGo, called by k5Step2 in chap5b.js); chapter 5 counts as finished from that moment (storyDone16).
 const K5A = { lo: -300, hi: 300, gap: 70 };      // (the arena in the engine's coordinates: the left and right wall, how far apart they start)
 const K5_KIT = new Set(['y_crouch', 'y_dash', 'y_block', 'y_cpunch']);      // (the skills Yuji has in this fight: owns() answers from this list while vs.k5)
@@ -27,8 +27,9 @@ function k5Threat(now) {      // does Iron Man FEEL threatened? (his health belo
 function k5Tick(now, dt) {      // every frame of the fight: the walls of the hall, nobody's health runs out (the other safeguards are in vsHurt, hitFoe and koDummy), how fast the enemy moves, and the ring of a Black Flash that has just begun
   const K = vs.k5, d = dummy; wx = Math.max(K5A.lo, Math.min(K5A.hi, wx));
   if (vs.hp < 1) vs.hp = 1; if (vs.sh < 1) vs.sh = 1;
-  if (d && d.ko < 0) { d.x = Math.max(K5A.lo - 6, Math.min(K5A.hi + 6, d.x)); if (d.hp < 1) d.hp = 1; if (d.shown < 1) d.shown = 1; K.v = dt > 0 ? (d.x - K.px) / dt : 0; K.px = d.x; }
-  if (atkAt >= 0 && atkK >= 20 && atkK <= 22 && K.at !== atkAt) { K.at = atkAt; k5BfStart(now); }
+  if (d && d.ko < 0 && !(K.end && K.end.wc)) { d.x = Math.max(K5A.lo - 6, Math.min(K5A.hi + 6, d.x)); if (d.hp < 1) d.hp = 1; if (d.shown < 1) d.shown = 1; K.v = dt > 0 ? (d.x - K.px) / dt : 0; K.px = d.x; }
+  if (d && d.ko < 0 && d.hp <= 1 && !K.end && !K.noEnd) k5EndGo(now);      // (v1.216 his health is at its floor: the end of the fight, tools/westcity.js; K.noEnd is for the scan, which takes him to 1 health many times)
+  if (K.end) k5EndTick(now, dt); else if (atkAt >= 0 && atkK >= 20 && atkK <= 22 && K.at !== atkAt) { K.at = atkAt; k5BfStart(now); }
 }
 
 // ---- YUJI'S BLACK FLASH: the ring
@@ -81,4 +82,4 @@ function k5Back(now) {
   for (let i = 0; i < 3; i++) f('rgba(130,160,200,0.07)', x0, gy - 20 - i * 24, ww, 24);
   ctx.fillStyle = 'rgba(255,244,214,0.5)'; for (let i = 0; i < 14; i++) { const px = lo + ((i * 97 + t * 4 * (1 + i % 3 * 0.4)) % (hi - lo)), py = gy - 30 - ((i * 53 + t * 5) % 200); ctx.fillRect(Math.round(X(px)), Math.round(py), 1, 1); }
 }
-window.__k5f = () => vs && vs.k5 ? { me: vs.me, foe: vs.foe, hp: Math.round(vs.hp), ehp: dummy ? Math.round(dummy.hp) : -1, emax: dummy ? dummy.max : -1, wx: Math.round(wx), ex: dummy ? Math.round(dummy.x) : 0, ph: vs.ph, bf: vs.k5.bf, weak: vs.k5.weak, ring: !!vs.k5.ring, threat: k5Threat(pnow()), fa: dummy && dummy.fa ? dummy.fa.type : '' } : null;      // test hook
+window.__k5f = () => vs && vs.k5 ? { me: vs.me, foe: vs.foe, hp: Math.round(vs.hp), ehp: dummy ? Math.round(dummy.hp) : -1, emax: dummy ? dummy.max : -1, wx: Math.round(wx), ex: dummy ? Math.round(dummy.x) : 0, ph: vs.ph, bf: vs.k5.bf, weak: vs.k5.weak, ring: !!vs.k5.ring, threat: k5Threat(pnow()), fa: dummy && dummy.fa ? dummy.fa.type : '', end: vs.k5.end ? { ts: vs.k5.end.ts, wc: vs.k5.end.wc, T: vs.k5.end.ts < 0 ? -1 : +((pnow() - vs.k5.end.ts) / 1000).toFixed(2) } : null } : null;      // test hook

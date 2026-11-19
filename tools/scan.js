@@ -391,14 +391,15 @@ async function scClash() {
 }
 
 // ---------------------------------------------------------------- ACHIEVEMENTS (v1.210): the card and the screen, the save, the rectangle that slides in, and the three ways to earn one (tools/ach.js)
-const SC_K5_N = 59;
+const SC_K5_N = 66;
 async function scK5() {      // v1.211 the chapter 5 fight: Yuji against Iron Man in the huge room (the picture turned over, Black Flash mode, no ending) and Iron Man's other moves as the enemy
-  SC.sec = 'CH 5 FIGHT'; scCov('CH 5 FIGHT', 0, SC_K5_N); SC.plan = 3000; SC.done = 0;
+  SC.sec = 'CH 5 FIGHT'; scCov('CH 5 FIGHT', 0, SC_K5_N); SC.plan = 3900; SC.done = 0;
   const ok = (c, what, d) => { scT(c, 'CH 5 FIGHT: ' + what, d || ''); scCov('CH 5 FIGHT', 1, 0); }, stop = () => SC.cancel || scReal() > SC.cap, gore0 = SET.gore, sv0 = localStorage.getItem(SAVE_KEY), GG = GRADES[3], gg0 = { dodge: GG.dodge, blk: GG.blk }, tr0 = {}; for (const k of ['beh', 'ehp', 'php', 'pce', 'grade', 'foe', 'put']) tr0[k] = TR[k];
   const start = async label => { try { show('title'); story = { slot: -1, t0: pnow(), battle: false, T: 0, ev: {}, c16: true }; k5FightGo(); } catch (e) { scErr(e, label + ' START'); return false; } return scUntil(() => !!vs && !!vs.k5 && vs.ph === 'fight', 120, 50); };
   const calm = () => { dummy.ai = 'rest'; dummy.aiAt = pnow(); dummy.restFor = 1e9; dummy.fa = null; dummy.stunUntil = 0; dummy.spNext = pnow() + 1e9; dummy.cs = dummy.cb = dummy.ca = null; vs.fburn = null; };      // (what he threw before is gone too: a bolt in the air would hurt Yuji in the middle of a blow)
   try {
     SET.gore = 0; if (!(await start('THE FIGHT'))) { if (!stop()) scNote('fail', 'CH 5 FIGHT: THE FIGHT DID NOT START', state + ' ' + (vs ? vs.ph : 'NO VS')); return; }
+    vs.k5.noEnd = true;      // (v1.216 his health at its floor starts the end scene: this fight takes him to 1 health many times, the scene is looked at in a fight of its own below)
     GG.dodge = 0; GG.blk = 0;      // (the grade of this fight: its dodges and blocks would make a blow miss in the checks that count damage; put back at the end)
     calm(); await scUntil(() => hurtAt < 0 && pnow() - hurtEnd > 300, 80, 50);      // (the enemy may have struck once before the scan got hold of him: Yuji has to be on his feet)
     // the start
@@ -467,6 +468,20 @@ async function scK5() {      // v1.211 the chapter 5 fight: Yuji against Iron Ma
     // leaving: the pause screen's MENU
     ok(await start('LEAVING'), 'THE FIGHT DID NOT START AGAIN', ''); await scFrames(3, null, 50); leavePlay(); await scFrames(3, null, 50);
     ok(state === 'saves' && !vs && !document.body.classList.contains('c4'), 'MENU DID NOT LEAVE THE FIGHT TO THE CHAPTER LIST WITH THE BUTTONS BACK', state + ' / ' + document.body.className);
+    // the end (v1.216, tools/westcity.js): his health at its floor starts the scene: no controls, no bars, his palm goes up and stays in its charge (the beam never fires), the violet circle, West City, the black, the chapter list
+    if (stop()) return;
+    if (await start('THE END')) {
+      calm(); await scUntil(() => hurtAt < 0 && pnow() - hurtEnd > 300, 80, 50); dummy.hp = 1; await scFrames(3, null, 33);
+      ok(!!vs.k5.end && !!dummy && dummy.hp === 1, 'HIS HEALTH AT ITS FLOOR DID NOT START THE END OF THE FIGHT', JSON.stringify(vs.k5.end ? 1 : 0));
+      ok(cutsceneOn(), 'THE BARS AND BUTTONS ARE STILL THERE IN THE END SCENE', '');
+      { const w0 = wx; scKey('KeyA', true); scKey('KeyJ', true); await scFrames(12, null, 33); scKey('KeyA', false); scKey('KeyJ', false); ok(Math.abs(wx - w0) < 1 && atkAt < 0 && vs.hp >= 1, 'YUJI COULD MOVE OR STRIKE IN THE END SCENE', Math.round(wx - w0) + ' ' + atkAt); }
+      const up = await scUntil(() => !!dummy.fa && dummy.fa.type === 'iblast', 200, 33); let viol = 0; const hp0 = vs.hp;
+      for (let i = 0; i < 70 && up; i++) { await scFrames(1, null, 33); if (vs.k5.end.wc) break; const a = dummy.fa; if (!a || a.type !== 'iblast' || pnow() - a.at >= IRB.raise + IRB.charge || vs.hp < hp0) viol++; }
+      ok(up && viol === 0, 'HIS PALM DID NOT GO UP, OR IT FIRED, OR HE LET IT GO, OR YUJI WAS HURT', up + ' ' + viol);
+      ok(await scUntil(() => vs.k5.end.wc, 300, 33) && dummy.x > wx + 1000, 'THE CUT TO WEST CITY DID NOT COME, OR IRON MAN IS STILL THERE', '' + Math.round(dummy.x - wx));
+      await scFrames(45, null, 33); { const W2 = cv.width, H2 = cv.height, a = ctx.getImageData(Math.round(W2 * 0.9), Math.round(H2 * 0.05), 1, 1).data, b = ctx.getImageData(Math.round(W2 * 0.12), Math.round(H2 * 0.96), 1, 1).data; ok(a[2] > a[0] + 40 && a[2] > 150 && b[0] < 110 && b[2] < 120, 'WEST CITY IS NOT ON THE SCREEN (A BLUE SKY ABOVE AND A DARK ROAD BELOW)', a[0] + ',' + a[1] + ',' + a[2] + ' / ' + b[0] + ',' + b[1] + ',' + b[2]); }
+      ok(await scUntil(() => state === 'saves', 500, 33) && !vs && !document.body.classList.contains('c4'), 'THE END SCENE DID NOT GO BACK TO THE CHAPTER LIST', state);
+    } else if (!stop()) scNote('fail', 'CH 5 FIGHT: THE FIGHT OF THE END SCENE DID NOT START', state);
     // the story: after the second tap Tony lands, the black, and the fight (the dodge and the punch)
     for (const res2 of ['hit', 'miss']) {
       if (stop()) return; show('title'); try { story = null; startStory(0, 5); await scFrames(20); window.__k5At(80.6, 'hit', undefined, res2); } catch (e) { scErr(e, 'CH 5 HAND-OFF'); }

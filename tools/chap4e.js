@@ -196,8 +196,9 @@ function c4xCrater(x, a) {      // the crater of Iron Man's landing: a dark dent
   ctx.fillStyle = '#1b1c22'; for (let i = 0; i < 9; i++) { const ang = i * 0.7 + 0.3, len = (10 + 16 * c4xR(i, 9)) * a; let px = sx, py = cy; for (let k = 0; k < len; k++) { px += Math.cos(ang) * 1.2 + (c4xR(k + i, 3) - 0.5) * 0.8; py += Math.sin(ang) * 0.35 + (c4xR(k, i) - 0.5) * 0.3; ctx.fillRect(Math.round(px), Math.round(py), 1, 1); } }
   ctx.fillStyle = '#9a9ca6'; for (let i = 0; i < 7; i++) ctx.fillRect(sx + Math.round((c4xR(i, 4) - 0.5) * 44 * a), cy + Math.round((c4xR(i, 5) - 0.5) * 5), 2, 2);
 }
-function c4xPortal(x, rx, now, a, deep) {      // a violet circle on the floor (the purple stone's): a bright rim, a dark middle, sparks that turn round it and motes that rise
-  const sx = c4xSX(x), cy = gy + 3, ry = Math.max(2, Math.round(rx * 0.26)); if (rx < 1) return; ctx.save(); ctx.globalAlpha = a === undefined ? 1 : a;
+function c4xPortal(x, rx, now, a, deep) { c4xPortalAt(c4xSX(x), rx, now, a, deep); }
+function c4xPortalAt(sx, rx, now, a, deep) {      // a violet circle on the floor (the purple stone's), at the screen column sx (v1.216: the chapter 5 fight's end uses it too): a bright rim, a dark middle, sparks that turn round it and motes that rise
+  const cy = gy + 3, ry = Math.max(2, Math.round(rx * 0.26)); if (rx < 1) return; ctx.save(); ctx.globalAlpha = a === undefined ? 1 : a;
   for (let dy = -ry - 1; dy <= ry + 1; dy++) { const w = Math.round((rx + 1) * Math.sqrt(Math.max(0, 1 - dy * dy / ((ry + 1) * (ry + 1) + 0.01)))); ctx.fillStyle = Math.abs(dy) >= ry ? '#d09cff' : Math.abs(dy) >= ry - 1 ? '#8a4de0' : deep ? '#12052c' : '#2a0f58'; ctx.fillRect(sx - w, cy + dy, 2 * w, 1); }
   for (let i = 0; i < 12; i++) { const th = now / 260 + i * 0.5236, px = sx + Math.round(Math.cos(th) * rx * 0.9), py = cy + Math.round(Math.sin(th) * ry * 0.9); ctx.fillStyle = i % 3 ? '#f1dcff' : '#c98bff'; ctx.fillRect(px, py, 1, 1); }
   for (let i = 0; i < 6; i++) { const k = ((now / 700) + i / 6) % 1; ctx.fillStyle = 'rgba(214,170,255,' + (0.8 * (1 - k)).toFixed(2) + ')'; ctx.fillRect(sx + Math.round((c4xR(i, 7) - 0.5) * rx * 1.4), Math.round(cy - 4 - k * 34), 1, 2); } ctx.restore();
