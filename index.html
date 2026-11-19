@@ -221,7 +221,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.213</small>
+    <small id="ver">V1.214</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -1812,7 +1812,7 @@ function hbMark(att, k, ax, am, tgt, tx, tm, tipRows, own) {      // a blow reac
 }
 const hbE = k => hbMark(vs ? vs.foe : 'gojo', k, dummy.x, dummy.x - wx > -4, hbMe(), wx, false);      // (the enemy's blow reaches its impact picture)
 function hbDraw(now) {
-  if (!SET.hb || state !== 'play' || c4x || js || vf || fat || yf || dom || ult || cf || ff || ryf || irf) return;      // (not in the cutscenes of the finishers and domains: the camera is somewhere else)
+  if (!SET.hb || state !== 'play' || c4x || js || vf || fat || yf || dom || ult || cf || ff || ryf || irf || sr) return;      // (not in the cutscenes of the finishers and domains: the camera is somewhere else)
   const cx = Math.round(VW / 2), top = gy - 60, row = (r, a, b, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(a), top + r, Math.max(1, Math.round(b - a)), 1); };
   const body = (key, x, mir, lift) => { const B = hbBody(key); if (!B) return; for (const r in B) { const b = B[r]; row(+r - lift, mir ? x - b[1] - 1 : x + b[0], mir ? x - b[0] : x + b[1] + 1, 'rgba(70,160,255,0.42)'); } ctx.fillStyle = '#ffe14a'; ctx.fillRect(Math.round(x), top + 28 - lift, 1, 9); };
   ctx.save(); body(hbMe(), cx, false, Math.max(gojoLift || 0, gAir ? gAirH || 0 : 0));
@@ -2084,7 +2084,7 @@ const SK_YUJI = [      // (v1.11) the moves of Yuji, bought like Gojo's; only wa
   ['y_cleave', 'GRAB CLEAVE', 'INHERITENCE, WALKING FORWARD + BLUE: GRAB THE ENEMY AND CLEAVE HIM, HE BLEEDS (25% ENERGY)', 500, ['y_inherit']],
   ['y_simple', 'SIMPLE DOMAIN', 'INHERITENCE, IN THE AIR + BLUE: A CYAN CIRCLE ROUND HIM: DOMAIN EXPANSIONS DO NOTHING UNTIL HE IS HIT (30% ENERGY)', 600, ['y_inherit']],
   ['y_ult', 'BLACK FLASH ULTIMATE', 'THE DOMAIN BUTTON: JUMP AT THE ENEMY WITH FOUR BLACK FLASHES IN A ROW: A LEAP WITH A BLOW TO THE STOMACH, A CHARGED KICK IN THE AIR, A HAND SLASH AND A HUGE CHARGED PUNCH. ABOUT 150 DAMAGE, HALF OF THAT IN INHERITENCE (67% ENERGY, 30 SECOND COOLDOWN). IN INHERITENCE, WITH THE HOMETOWN DOMAIN BOUGHT, THE BUTTON CASTS THAT INSTEAD', 1500, ['y_flash']],
-  ['y_fatal', 'FATALITY', 'THE FATAL BUTTON: FINISH A WEAK ENEMY (20% HEALTH OR LESS, CLOSE) IN A 30 SECOND CUTSCENE OF EIGHT BLACK FLASHES, THE LAST ONE HUGE. EVERY ENEMY GETS ITS OWN (50% ENERGY)', 1000, ['y_flash']],
+  ['y_fatal', 'FATALITY', 'THE FATAL BUTTON: FINISH A WEAK ENEMY (20% HEALTH OR LESS, CLOSE) IN A 30 SECOND CUTSCENE OF EIGHT BLACK FLASHES, THE LAST ONE HUGE. THE SAME FOR EVERY ENEMY (50% ENERGY)', 1000, ['y_flash']],
   ['y_heavy', 'HEAVY STRIKE', 'KEEP ATTACK HELD AFTER A HIT: THE LAST M1 WITH 1.6 TIMES THE DAMAGE THAT BREAKS A GUARD AND FILLS THE STAGGER BAR', 120, []],
   ['y_cancel', 'DASH CANCEL', 'DASH DURING A SWING THAT HIT: IT STOPS, +4% ENERGY AND +20 FLOW', 100, ['y_dash']],
   ['y_sense', 'CURSE SENSE', 'IN HUNTS: THE SENSE BUTTON SHOWS EVERY HIDDEN ITEM, CLUE AND CURSE NEAR YOU FOR 3 SECONDS (8 SECOND COOLDOWN)', 300, []]];
@@ -2775,7 +2775,7 @@ function show(s) {
   $('hud').style.display = s === 'play' ? 'flex' : 'none';
   $('pad').style.display = s === 'play' ? 'flex' : 'none';
   releaseAll(); $('settings').classList.remove('on');
-  js = null; vf = null; if (yf) yfReset(); if (cf) cfReset(); if (ff) ffReset(); if (ryf) ryfReset(); if (irf) irfReset(); if (ke) keReset(); blindOff = false; bfo = null; bfp = false; ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; inhAt = -1; inhLock = false; inhArm = -1; smd = null; gsd = -1; gsdOn = false; impf = null; tqBlock = null; tqGrab = null; tqBeam = []; tqFx = []; ceOn = false; ceAmt = 0; ceFlameAt = 0; gDownUntil = 0; gAir = null; gAirH = 0; kickBuf = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
+  js = null; vf = null; if (yf) yfReset(); if (cf) cfReset(); if (ff) ffReset(); if (ryf) ryfReset(); if (irf) irfReset(); if (sr) srReset(); if (ke) keReset(); blindOff = false; bfo = null; bfp = false; ult = null; pStun = 0; resetPeds(s === 'play'); cm = 0; inhAt = -1; inhLock = false; inhArm = -1; smd = null; gsd = -1; gsdOn = false; impf = null; tqBlock = null; tqGrab = null; tqBeam = []; tqFx = []; ceOn = false; ceAmt = 0; ceFlameAt = 0; gDownUntil = 0; gAir = null; gAirH = 0; kickBuf = 0; mbK = 0; rdOrb = null; boom = null; purple = null; pboom = null; domReset(); fatReset(); seReset(); rdIdx = 0; ride = null; setModeUI();
   if (sfx) { if (s === 'play') sfx.windOn(); else sfx.windOff(); }
   if (s === 'play') { spawnAt = pnow(); wx = 0; wvx = 0; deb = []; lit = []; mode = 'idle'; modeAt = spawnAt; jumpAt = teleAt = atkAt = -1; atkQ = false; combo = 0; wcIdx = 0; comboUntil = 0; dummy = null; popups = []; sparks = []; stopMs = 0; hits.n = hits.dmg = hits.until = hits.seq = 0; kos = 0; hurtAt = -1; wxv = 0; stance = 'stand'; stickCr = false; dgAt = -1; dgUsed = false; dashReq = false; blkAt = -1; blkEnd = -1; blockHeld = false; lpAt = -1; dash = null; smoke = []; mbAt = -1; mbPending = false; orb = null; debris = []; }
   if (s === 'title') planBlink(pnow(), 1200);
@@ -3604,7 +3604,7 @@ const voidImg = new Image(); voidImg.src = VOID_IMG; let domBox = null;
 const DOM_ORDER = ['blind', 'pose', 'face', 'wide', 'burst', 'void', 'collapse', 'reblind'], DOM_MS = { blind: 2200, pose: 900, face: DF_N * 1000 / DF_FPS, wide: 1500, burst: 1900, void: 10000, collapse: 1400, reblind: 1000 };      // (blind: the blindfold comes down, reblind: it goes back on; both are close-ups of his face)
 let dom = null, domHold = false, domReq = false, domReadyAt = 0, voidCv = null, voidG = null, fd = null;      // (fd = Freddy's nightmare in progress, see freddyDream)
 // v1.181 A CUTSCENE OF A FIGHT: every bar, name, button and number that is not part of it stays away. The moments: a FATALITY (every fighter's, yours or the enemy's), an ULTIMATE (the Cat's choke, Yuji's four Black Flashes, Ryu's JUST THIS ONCE, Freddy's DREAM), Verity's JUMPSCARE, Sukuna's FUGA and his DOMAIN SIGN, the OPENING and the closing of a DOMAIN (not the fight inside it), the blindfold close-ups. cutsceneOn() is asked by drawVs (the bars and names), stateDraw, twOverlay and the elevator panel (canvas), and once a frame by cutUI, which puts the class `cut` on the page: the CSS then hides the top-left buttons, the touch controls, the SENSE button, the training numbers and the elevator panel (the tap prompts of a cutscene are other elements and stay).
-function cutsceneOn() { return state === 'play' && !!vs && !!(bcl || fat || yf || vf || cf || ff || ryf || irf || ke || js || se || de || ult || yu || fd || bfo || (dom && domLock()) || (typeof suFatOn === 'function' && suFatOn()) || (typeof suFgOn === 'function' && suFgOn()) || (typeof suSignOn === 'function' && suSignOn()) || ryUlNoHud()); }
+function cutsceneOn() { return state === 'play' && !!vs && !!(bcl || fat || yf || vf || cf || ff || ryf || irf || sr || ke || js || se || de || ult || yu || fd || bfo || (dom && domLock()) || (typeof suFatOn === 'function' && suFatOn()) || (typeof suFgOn === 'function' && suFgOn()) || (typeof suSignOn === 'function' && suSignOn()) || ryUlNoHud()); }
 function hudNumsOff() { return cutsceneOn() || !!ryUl; }      // v1.187 the hit counter and the damage numbers stay away in a cutscene (and for the whole of Ryu's beam, when the bars are back): drawHits and drawPopups ask it, say() does not even queue a number
 let cutOn = false;
 function cutUI() { const c = cutsceneOn(); if (c !== cutOn) { cutOn = c; document.body.classList.toggle('cut', c); } }
@@ -4045,11 +4045,10 @@ function fatSets(rev) {                                // the pictures of the at
   if (vk === 'cu3' || vk === 'cu4' || vk === 'cu5') return { ...S, ...cuVictim(+vk.slice(2)) };      // (v1.190 Iron Man, in Training, is a victim too: his idle in every reaction)
   return rev ? { ...S, vF: idleF, vRx: rxN } : { ...S, vF: dumF, vRx: rxI };
 }
-let fat = null, fatReq = 0, ryf = null, irf = null;                            // fat = the running cutscene (null when there is none); fatReq = until when a press of the FATALITY button is remembered
+let fat = null, fatReq = 0, ryf = null, irf = null, sr = null;                            // fat = the running cutscene (null when there is none); fatReq = until when a press of the FATALITY button is remembered
 const orbAt = (set, n, sx, sy, s) => ctx.drawImage(set[n % 15], Math.round(sx - OHX * s), Math.round(sy - 36 * s), Math.round(set[0].width * s), Math.round(set[0].height * s));      // an orb frame centred on (sx, sy)
 function fatState(now) {                               // Gojo's FATALITY (and Verity's). 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far away; 3 = not possible right now
   if (vs && (vs.me === 'cu4' || vs.me === 'cu5')) return ryfState(now);      // (v1.212 Ryu's FATALITY: tools/ryufat.js; v1.213 Iron Man's: tools/ironfat.js, the same rules; v1.166 to v1.211 they had none)
-  if (cuFoeOn() && (vs.me === 'verity' || fredMe())) return 3;      // (v1.189 Verity's and Freddy's FATALITY have no version for the enemy Sukuna or Ryu yet; the others do)
   if (fredMe()) return ffState(now);      // (v1.185 Freddy's FATALITY: he eats the enemy, see fred3.js)
   if (!vs || vs.story || vs.cv || fredMe() || lacks('fat') || vs.ph !== 'fight' || js || vf || fat || yf || yu || (dom && domLock()) || ult || cf || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;      // (v1.181 a DOMAIN no longer stops it: only its opening, while the controls are locked; fatGo ends the domain)      // (Verity and the Cat have their own FATALITY: the same rules; so has Yuji since v1.49, the 30-second one; Freddy has none yet, v1.52: his button used to play Gojo's FATALITY with Gojo in it)      // (no FATALITY in the story fight: his ending is a Reversal Red)
   if (!(dummy.hp <= dummy.max * FAT_LOW)) return 1;      // Gojo's FATALITY: only when the enemy is at 20% health or less
@@ -4057,10 +4056,10 @@ function fatState(now) {                               // Gojo's FATALITY (and V
   return hurtAt >= 0 || gojoGone ? 3 : 0;
 }
 function fatAiState(now) {                             // the enemy's own FATALITY on Gojo: from SEMI-GRADE 1 up, the moment Gojo is at 20% health or less and the enemy is close (no warning; being in the air, dashing or out of reach saves him)
-  if (!vs || vs.story || vs.foe === 'yuji' || (vs.foe === 'cu4' || vs.foe === 'cu5' ? !cuFoeOn() : cuFoeOn()) || (cuMe() && (vs.foe === 'verity' || vs.foe === 'freddy')) || vs.ph !== 'fight' || js || vf || fat || yf || dom || ult || cf || fd || ff || ryf || irf || ryUl || (dummy && dummy.fa) || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.cact || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
+  if (!vs || vs.story || (/^cu\d$/.test(vs.foe) ? !cuFoeOn() : cuFoeOn()) || vs.ph !== 'fight' || js || vf || fat || yf || dom || ult || cf || fd || ff || ryf || irf || sr || ryUl || (dummy && dummy.fa) || vs.gi < FAT_AI_GRADE || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.cact || (dummy.vform && dummy.vform !== 'verity') || now < dummy.stunUntil || now - spawnAt < 900) return false;
   return vs.hp <= PHP * FAT_LOW && Math.abs(dummy.x - wx) <= FAT_RANGE && !gojoGone && gojoLift <= 12 && dgAt < 0 && now - dummy.rxAt >= RX_DUR[dummy.rx];
 }
-function fatGo(now, dt, rev) { if (dom) domReset(); if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else if (rev ? vs.foe === 'cat' : vs.me === 'cat') { cfStart(now, rev); cfFrame(now, dt); } else if (!rev && vs.me === 'yuji') { yfStart(now); yfFrame(now, dt); } else if (rev ? vs.foe === 'freddy' : fredMe()) { ffStart(now, rev); ffFrame(now, dt); } else if (rev ? vs.foe === 'cu4' : vs.me === 'cu4') { if (ryfStart(now, rev)) ryfFrame(now, dt); } else if (rev ? vs.foe === 'cu5' : vs.me === 'cu5') { if (irfStart(now, rev)) irfFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's and the Cat's FATALITY are their own cutscenes)
+function fatGo(now, dt, rev) { if (dom) domReset(); if (rev ? vs.foe === 'verity' : vs.me === 'verity') { vfStart(now, rev); vfFrame(now, dt); } else if (rev ? vs.foe === 'cat' : vs.me === 'cat') { cfStart(now, rev); cfFrame(now, dt); } else if (rev ? vs.foe === 'yuji' : vs.me === 'yuji') { yfStart(now, rev); yfFrame(now, dt); } else if (rev ? vs.foe === 'freddy' : fredMe()) { ffStart(now, rev); ffFrame(now, dt); } else if (rev && vs.foe === 'cu3') { if (srStart(now)) srFrame(now, dt); } else if (rev ? vs.foe === 'cu4' : vs.me === 'cu4') { if (ryfStart(now, rev)) ryfFrame(now, dt); } else if (rev ? vs.foe === 'cu5' : vs.me === 'cu5') { if (irfStart(now, rev)) irfFrame(now, dt); } else { fatStart(now, rev); fatFrame(now, dt); } }      // (Verity's and the Cat's FATALITY are their own cutscenes)
 function fatUI(now) {                                  // the button: only in a match, dark until it can be used, then it glows
   const col = $('fat').parentNode; col.classList.toggle('vs', !!vs); col.classList.toggle('vy', !!vs && vs.me === 'verity'); col.classList.toggle('yj', !!vs && vs.me === 'yuji'); col.classList.toggle('kt', !!vs && vs.me === 'cat'); col.classList.toggle('nt', !!vs && !!vs.net); col.classList.toggle('nb', !!vs && !!vs.net && vs.me !== 'gojo'); $('hud').classList.toggle('vs', !!vs); $('pauseBtn').style.display = vs && vs.net ? 'none' : ''; if (vs) $('fat').classList.toggle('rdy', fatState(now) === 0);
 }
@@ -4811,9 +4810,16 @@ function headlessF(c) {      // (v1.52) Freddy's picture without the head, for V
   g.globalCompositeOperation = 'source-atop'; for (const [x, n, i] of [[28, 8, 1], [30, 13, 0], [32, 7, 2], [34, 11, 1]]) { g.fillStyle = BLD[i]; g.fillRect(x, 19, 1, n); }
   FHL.set(c, r); return r;
 }
+const CUHL = new Map(), CU_NECK = { 3: [34, 23], 4: [31, 21], 5: [34, 12] };      // (v1.214 where the neck is in the pictures of Sukuna, Ryu and Iron Man: the column of its middle, and the row the head is cut off at)
+function cuHeadless(n, c) {      // (v1.214) the picture of Sukuna, Ryu or Iron Man without the head, for Verity's bite: the columns of the head above the cut are gone, a red stump stands on the neck and blood runs down his chest
+  let r = CUHL.get(c); if (r) return r; const [nx, ny] = CU_NECK[n]; r = document.createElement('canvas'); r.width = c.width; r.height = c.height; const g = r.getContext('2d'); g.drawImage(c, 0, 0); g.clearRect(nx - 9, 0, 20, ny);
+  g.fillStyle = BLD[0]; g.fillRect(nx - 3, ny - 1, 6, 2); g.fillStyle = BLD[1]; g.fillRect(nx - 4, ny, 8, 2); g.fillStyle = BLD[2]; g.fillRect(nx - 4, ny + 2, 8, 1);
+  g.globalCompositeOperation = 'source-atop'; for (const [x, n2, i] of [[nx - 4, 8, 1], [nx - 2, 13, 0], [nx, 7, 2], [nx + 2, 11, 1]]) { g.fillStyle = BLD[i]; g.fillRect(x, ny + 2, 1, n2); }
+  CUHL.set(c, r); return r;
+}
 function vfStart(now, rev) {      // rev = the enemy does it to the player
   const d = dummy; cineClear(); closeSettings(); stickDown = false; d.ai = 'rest'; d.pull = null; d.vx = 0; d.vact = null; $('pad').classList.add('cine'); $('hud').classList.add('cine'); snd('fatalstart');
-  vf = { rev: !!rev, t: 0, ev: {}, g0: Math.max(20, Math.min(FAT_RANGE, Math.abs(d.x - wx))), cam: 0, z: 1, fx: 0, fy: 0, shake: 0, freeze: 0, flash: 0, parts: [], splats: [], wx0: wx, gv: rev ? vs.me === 'gojo' : vs.foe === 'gojo', yv: rev ? vs.me === 'yuji' : vs.foe === 'yuji', cv: rev ? vs.me === 'cat' : vs.foe === 'cat', fv: rev ? vs.me === 'freddy' : vs.foe === 'freddy', inv: !rev && vs.inv, ainv: !!rev && vs.inv };      // gv: the victim is Gojo (else a Verity); the colours are inverted only for the inverted Verity (the enemy): the victim when the player does it, the attacker when the enemy does it
+  vf = { rev: !!rev, t: 0, ev: {}, g0: Math.max(20, Math.min(FAT_RANGE, Math.abs(d.x - wx))), cam: 0, z: 1, fx: 0, fy: 0, shake: 0, freeze: 0, flash: 0, parts: [], splats: [], wx0: wx, gv: rev ? vs.me === 'gojo' : vs.foe === 'gojo', yv: rev ? vs.me === 'yuji' : vs.foe === 'yuji', cv: rev ? vs.me === 'cat' : vs.foe === 'cat', fv: rev ? vs.me === 'freddy' : vs.foe === 'freddy', cu: /^cu\d$/.test(rev ? vs.me : vs.foe) ? +(rev ? vs.me : vs.foe)[2] : 0, inv: !rev && vs.inv, ainv: !!rev && vs.inv };      // gv: the victim is Gojo (else a Verity); the colours are inverted only for the inverted Verity (the enemy): the victim when the player does it, the attacker when the enemy does it
 }
 function vfReset() { vf = null; $('pad').classList.remove('cine'); $('hud').classList.remove('cine'); }
 function vfEnd(now) {      // the victim is gone and the attacker wins the round (like Gojo's FATALITY)
@@ -4824,7 +4830,7 @@ function vfEnd(now) {      // the victim is gone and the attacker wins the round
 function vfFrame(now, dt) {
   const s = vf, T = VFT; keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; fatReq = 0;
   const live = now >= s.freeze; if (live) s.t += dt; const t = s.t, sdt = live ? dt : 0, at = (k, tt, f) => { if (!s.ev[k] && t >= tt) { s.ev[k] = 1; f(); } }, f15 = (t0, d) => Math.max(0, Math.min(14, Math.floor((t - t0) / d * 15))), tb = t - T.bite, bitten = tb >= T.bt;
-  const P = vfPos(t, s.g0), mx = VW / 2, GX = Math.round(mx + P.vx - s.cam), VX = Math.round(mx + P.ax - s.cam), gojo = s.gv, yuji = s.yv, cat = s.cv, fred = s.fv;      // (screen places of the victim and of Verity, the camera is s.cam; fred = the victim is Freddy, v1.52)
+  const P = vfPos(t, s.g0), mx = VW / 2, GX = Math.round(mx + P.vx - s.cam), VX = Math.round(mx + P.ax - s.cam), gojo = s.gv, yuji = s.yv, cat = s.cv, fred = s.fv, cu = s.cu;      // (screen places of the victim and of Verity, the camera is s.cam; fred = the victim is Freddy, v1.52)
   // ---- the events: sounds, shakes, flashes, the spray of blood
   at('swing', T.grab + 0.30, () => snd('swing', 3)); at('grip', T.grab + 0.52, () => { snd('hit', 0); snd('smack', 0); s.shake = now + 100; });
   at('punch', 1.70, () => { snd('hit', 3); snd('smack', 3); s.freeze = now + 90; s.flash = now + 90 + 60; s.shake = now + 90 + 200; });
@@ -4875,6 +4881,16 @@ function vfFrame(now, dt) {
     else if (t >= VFL + 0.25 && t < T.catch + 0.05) { vimg = fredD(6); vflip = false; }
     else if (t >= T.catch + 0.05 && t < T.shoulders) { vimg = fredA(0, Math.min(8, (t - T.catch - 0.05) / 0.3 * 9)); vflip = false; }
     else if (t >= T.shoulders) { vimg = fredF(0); vflip = false; vox = trem[0]; vlift = 0; }
+  } else if (cu) {      // SUKUNA, RYU or IRON MAN (v1.214): his own pictures: held by the neck (his first hurt picture), the punch (a white flash), the stagger (his second), his walk for the run, his first blow for the swing the arm is caught on, held by the shoulders
+    const K = cuVictim(cu), G = CU_GAME[cu], ys = (a, i) => a[Math.max(0, Math.min(a.length - 1, i))], wk = G && G.walk && G.walk.length ? G.walk : K.vF, A0 = G && G.atk && G.atk[0] && G.atk[0].length === 15 && G.atk[0][0].width === 64 ? G.atk[0] : null;
+    vinfo = CUEN_INFO; vimg = K.vF[Math.floor(now / (1000 / IDLE_FPS)) % K.vF.length]; vflip = true;
+    if (t >= T.grab + 0.52 && t < 1.70) { vimg = K.vRx[0][4]; vlift = 5; vox = trem[0]; }
+    else if (t >= 1.70 && t < 2.15) { vimg = ys(K.vRx[0], Math.floor((t - 1.70) / 0.45 * 15)); if (t - 1.70 < 0.07) vimg = whiteOf(vimg); vlift = 5 * (1 - clamp01((t - 1.70) / 0.2)); vox = Math.round(3 * Math.exp(-(t - 1.70) * 9)); }
+    else if (t >= 2.15 && t < T.run) { vimg = ys(K.vRx[1], Math.floor((t - 2.15) / 0.55 * 15)); }
+    else if (t >= T.run && t < VFL + 0.25) { vimg = wk[Math.floor(t * 30) % wk.length]; vflip = false; }
+    else if (t >= VFL + 0.25 && t < T.catch + 0.05) { vimg = wk[6 % wk.length]; vflip = false; }
+    else if (t >= T.catch + 0.05 && t < T.shoulders) { vimg = A0 ? ys(A0, Math.min(8, Math.floor((t - T.catch - 0.05) / 0.3 * 9))) : K.vF[0]; vflip = false; }
+    else if (t >= T.shoulders) { vimg = K.vF[0]; vflip = false; vox = trem[0]; vlift = 0; }
   } else {
     const iv = s.inv; vimg = vfr('idle', now / 100, true, iv); vflip = true;
     if (t >= T.grab + 0.52 && t < 1.70) { vimg = vfr('hurt', 3, false, iv); vlift = 5; vox = trem[0]; }
@@ -4889,8 +4905,8 @@ function vfFrame(now, dt) {
   // ---- the bite: the head is gone (a red stump, the spray of blood), later he lets go and the body falls backwards
   const tLet = T.bite + T.bt + 0.9, fell = clamp01((t - tLet) / 0.55), th = -1.5 * fell * fell;
   let body = vimg;
-  if (gojo && bitten) { const base = rxN[0][3]; body = headless(base); } else if (yuji && bitten) body = headlessY(vimg); else if (cat && bitten) body = headlessC(vimg); else if (fred && bitten) body = headlessF(vimg);
-  const sp = gojo || yuji || cat || fred, hxs = sp ? vinfo.cx - vinfo.x0 : 32, topY = sp ? gy - 60 - (vinfo.top || 0) : gy - 60, vy0 = topY - vlift, m = gojo ? (mouthOf(rxN[0][3]) || { x: 20, y: 16 }) : yuji ? { x: 22, y: 19 } : cat ? { x: 35, y: 17 } : fred ? { x: 35, y: 14 } : null;
+  if (gojo && bitten) { const base = rxN[0][3]; body = headless(base); } else if (yuji && bitten) body = headlessY(vimg); else if (cat && bitten) body = headlessC(vimg); else if (fred && bitten) body = headlessF(vimg); else if (cu && bitten) body = cuHeadless(cu, vimg);
+  const sp = gojo || yuji || cat || fred || cu, hxs = sp ? vinfo.cx - vinfo.x0 : 32, topY = sp ? gy - 60 - (vinfo.top || 0) : gy - 60, vy0 = topY - vlift, m = gojo ? (mouthOf(rxN[0][3]) || { x: 20, y: 16 }) : yuji ? { x: 22, y: 19 } : cat ? { x: 35, y: 17 } : fred ? { x: 35, y: 14 } : cu ? { x: CU_NECK[cu][0] + 3, y: CU_NECK[cu][1] - 3 } : null;
   const stump = sp ? [GX - hxs + m.x - 3, vy0 + m.y + 3] : [GX + 1, vy0 + 16], PV = [GX, gy + 2], R = (x, y) => [PV[0] + Math.cos(th) * (x - PV[0]) - Math.sin(th) * (y - PV[1]), PV[1] + Math.sin(th) * (x - PV[0]) + Math.cos(th) * (y - PV[1])], st = R(stump[0], stump[1]);
   at('bite', T.bite + T.bt, () => { s.freeze = now + 170; s.flash = now + 170 + 100; s.shake = now + 170 + 420; snd('hit', 3); snd('smack', 3); snd('splat'); snd('purpleboom'); spurt(90, 190, st[0], st[1]); });
   if (bitten) for (const [k, tt, n, pw] of [[1, 0.12, 40, 150], [2, 0.3, 30, 150], [3, 0.5, 24, 130], [4, 0.75, 18, 120], [5, 1.05, 12, 100], [6, 1.4, 8, 90]]) at('sp' + k, T.bite + T.bt + tt, () => spurt(n, pw, st[0], st[1]));
@@ -5663,7 +5679,7 @@ function yuJumpStep(now, jf, hf) {      // Yuji, every frame, once the jump's fr
 }
 // ---------------------------------------------------------------- v1.46 YUJI'S ULTIMATE (skill y_ult, 1500 coins, needs BLACK FLASH; the DOMAIN button, which did nothing for Yuji before: 67% of the energy, 30 s between two, the enemy in front within 44 px, standing in the open, not in a RUSH). FOUR BLACK FLASHES while the enemy is held (frozen, so none can miss): 1 (20 damage) a LEAP with a blow to the stomach: the enemy is thrown up with him (strip 28); 2 (25) in the air he charges his leg and KICKS (the BLACK FLASH KICK, strip 21); 3 (30) he leaps again with one hand up and CHOPS down with it (strip 29): the enemy is slammed back to the floor; 4 (75) he lands and charges a punch, the CHARGED BLACK FLASH (strip 23), that hits very hard: 150 in all. Most of the effects are on the last one (yuBig, drawYuBig). The controller (yuTick) drives the swing the game already knows (atkK / atkAt), so the pictures, whooshes and sparks are the normal ones; it applies the blows itself (the normal impact handler is skipped while it runs), lifts Yuji and the enemy, and gives no control back until it is over.
 for (const j of [28, 29, 30, 31, 32]) { YU.atk[j] = YU['atk' + j]; YUF.norm.atk[j] = mk(YU['atk' + j], YU.pal); YUF.inv.atk[j] = mk(YU['atk' + j], yuInv(YU.pal)); }      // (strips 28 = the LEAP, 29 = the HAND SLASH, tools/yuji_art.py)
-YU.fx = {}; YUF.norm.fx = {}; for (const n of ['fx_charge', 'fx_pose', 'fx_dive']) { YU.fx[n] = YU[n]; YUF.norm.fx[n] = mk(YU[n], YU.pal); }      // v1.49 the three pictures only Yuji's FATALITY shows (tools/yuji_art.py: the charge, the pose after the last blow, the dive kick)
+YU.fx = {}; YUF.norm.fx = {}; YUF.inv.fx = {}; for (const n of ['fx_charge', 'fx_pose', 'fx_dive']) { YU.fx[n] = YU[n]; YUF.norm.fx[n] = mk(YU[n], YU.pal); YUF.inv.fx[n] = mk(YU[n], yuInv(YU.pal)); }      // v1.49 the three pictures only Yuji's FATALITY shows (tools/yuji_art.py: the charge, the pose after the last blow, the dive kick)
 YU_ATK.names.push('U.LEAP', 'U.SLASH'); YU_ATK.fps.push(34, 32); YU_ATK.swing.push([4], [5]); YU_ATK.imp.push([], []); YU_ATK.hit.push([], []); YU_ATK.reach.push(0, 0);      // (no impact frames and hits of their own: the ultimate lands its blows by itself)
 YU_ATK.names.push('C.JAB', 'C.UPPR'); YU_ATK.fps.push(38, 38); YU_ATK.swing.push([3], [3]); YU_ATK.imp.push([6], [7]); YU_ATK.hit.push([6], [7]); YU_ATK.reach.push(16, 16);      // v1.48 YUJI'S CROUCH PUNCHES: swings 30 (R.JAB, strip 30) and 31 (L.UPPR, strip 31), the same hits as Gojo's crouch punches (6 and 7: 10 and 13 damage, they reach a crouching enemy); 38 pictures a second like the other M1 moves
 YU_ATK.names.push('DOMAIN'); YU_ATK.fps.push(15); YU_ATK.swing.push([]); YU_ATK.imp.push([]); YU_ATK.hit.push([]); YU_ATK.reach.push(0);      // v1.50 swing 32 = the HOMETOWN's hand sign (strip atk32 of tools/yuji_art.py, no blows of its own; drawScene holds its pictures 5-10 for as long as the cast lasts, and 11-14 bring the hands down when the town opens)
@@ -5767,16 +5783,16 @@ const YFM = {
   push: { k: 8, imp: 7, fps: 30, gap: 27, lunge: 5, sw: 5 }, conc: { k: 9, imp: 7, fps: 24, gap: 26, lunge: 6, sw: 6 }, sweep: { k: 10, imp: 6, fps: 30, gap: 27, lunge: 4, sw: 3 },
   upper: { k: 13, imp: 6, fps: 30, gap: 21, lunge: 4, sw: 4 }, face: { k: 14, imp: 7, fps: 30, gap: 27, lunge: 4, sw: 4 }, spin: { k: 15, imp: 11, fps: 30, gap: 24, lunge: 4, sw: 3 },
   dive: { fx: 'fx_dive', k: 3, hk: 3, imp: 7, fps: 30, gap: 30, lunge: 22, ex: 'io', sw: 4 }, bfp: { k: 20, imp: 7, fps: 26, gap: 24, lunge: 6, sw: 6 }, bfk: { k: 21, imp: 7, fps: 30, gap: 28, lunge: 4, sw: 5 }, bfg: { k: 22, imp: 7, fps: 28, gap: 24, lunge: 6, sw: 6 }, cbf: { k: 23, imp: 9, fps: 20, gap: 30, lunge: 8, sw: 7, cut: 12 } };
-const YFS = {};      // the scripts, one for each enemy (below)
+const YFS = {};      // the script (below): the same for every enemy (v1.214; before it every enemy had his own)
 // ---- the enemy's pictures: the same ones the Versus fight shows (Gojo's real ones unless you are Gojo too, Verity's, the Cat's, Yuji's inverted ones), as a kit: vF idle, vRx[k] the ten reactions, vRxW / vW white copies for the flash of a blow, vB blue copy (stunned), vi(k) = the picture info of reaction k (-1: of the idle)
 let YFK = null;
-function yfKit(foe) {
+function yfKit(foe, rev) {      // (rev: the enemy Yuji does it to you, so the victim is you: your own pictures, never the inverted ones)
   if (foe === 'verity') return veVictim();
   if (foe === 'cat') return catVictim();
   if (foe === 'freddy') return freddyVictim();
   if (foe === 'cu3' || foe === 'cu4' || foe === 'cu5') return cuVictim(+foe.slice(2));      // (v1.208 Iron Man too)
-  if (foe === 'yuji') return YFK || (YFK = victimKit(YUF.inv.idle, YUF.inv.rx, k => k < 0 ? YU.idle : YU.rx[k]));
-  const inv = !!(vs && vs.inv);
+  if (foe === 'yuji') return rev ? yuVictim() : YFK || (YFK = victimKit(YUF.inv.idle, YUF.inv.rx, k => k < 0 ? YU.idle : YU.rx[k]));
+  const inv = !rev && !!(vs && vs.inv);
   return { vF: inv ? dumF : idleF, vRx: inv ? rxI : rxN, vRxW: rxW, vW: dumW, vB: dumB, vi: k => k < 0 ? D.idle : D['rx' + k], fs: 1 };
 }
 // ---- tracks. A segment is a piece of curve: from (x0, l0, r0) to (x1, l1, r1) between t0 and t1 (x = along the floor, l = height above it, r = turn in radians), each with its own easing, plus an arc of height h in the middle; pose(u) says which picture he shows
@@ -5854,7 +5870,8 @@ function yfSpr(src, info, x, l, f, o) {      // a picture standing on the floor 
   if (o.a != null) ctx.globalAlpha = o.a; ctx.drawImage(src, -hx, -62 - (info.top || 0) + pv); yfRestore();
 }
 let YFSP = null;
-function yfSets() {      // Yuji's pictures for the cutscene: the normal ones, or in INHERITENCE the ones with the spiky hair (every strip the cutscene can show, built the first time: about a tenth of a second)
+function yfSets() {      // Yuji's pictures for the cutscene: the normal ones, or in INHERITENCE the ones with the spiky hair (every strip the cutscene can show, built the first time: about a tenth of a second); v1.214 the enemy Yuji's: the inverted ones when you are Yuji too, as in the fight
+  if (yf && yf.rev) return { N: vs.inv ? YUF.inv : YUF.norm, I: YU };
   if (!(vs && vs.me === 'yuji' && cm === 3)) return { N: YUF.norm, I: YU };
   if (YFSP) return YFSP; const sp = spikyY(), pal = YU.pal, atk = YU.atk.map((st, k) => sp.I.atk[k] === st ? spikify(st) : sp.I.atk[k]), fx = {}, fxi = {};
   for (const n in YU.fx) { fxi[n] = spikify(YU.fx[n]); fx[n] = mk(fxi[n], pal); }
@@ -5908,15 +5925,16 @@ function yfCamKeys(P, S) {      // the camera of the whole cutscene: wide at fir
   for (const k of (S.cam || [])) K.push(k);
   return K.sort((a, b) => a[0] - b[0] || 0);
 }
-function yfStart(now) {
-  yfDepth = 0; const d = dummy, foe = vs.foe, S = YFS[foe] || YFS.gojo; cineClear(); closeSettings(); stickDown = false; d.ai = 'rest'; d.pull = null; d.vx = 0; d.vact = null; d.cact = null; d.cheld = null; d.held = null; vs.catHold = 0; slowMs = 0; $('pad').classList.add('cine'); $('hud').classList.add('cine');
+function yfStart(now, rev) {      // rev = the enemy Yuji does it to you
+  yfDepth = 0; const d = dummy, S = YFS.gen; cineClear(); closeSettings(); stickDown = false; d.ai = 'rest'; d.pull = null; d.vx = 0; d.vact = null; d.cact = null; d.cheld = null; d.held = null; vs.catHold = 0; slowMs = 0; $('pad').classList.add('cine'); $('hud').classList.add('cine');
   const g0 = Math.max(20, Math.min(FAT_RANGE, Math.abs(d.x - wx))), P = yfBuild(S, g0);
-  yf = { S, P, roll: 0, dust: 0, finX: P.beats[P.beats.length - 1].vx, end: P.end, T8: P.beats.length === 8 ? P.beats[7].at : null, title: S.title == null ? P.end - 2.6 : S.title, flash: 0, deb: Array.from({ length: 30 }, (_, i) => ({ x: -60 + i * 9 + (i * 37) % 11, d: (i * 0.13) % 1.1, v: 22 + (i * 29) % 30, s: 1 + (i % 3 === 0 ? 1 : 0), c: ['#8c8898', '#c8c4d0', '#5e5a6c', '#ff2a3a'][i % 4] })), K: yfKit(foe), t: 0, real: 0, rate: 1, slow: false, freeze: 0, ev: {}, fx: [], parts: [], cracks: [], cam: yfCamKeys(P, S), wx0: wx, n: 0, shake: 0, zk: 0, white: 0, imp: null, skip: false, born: now, tapAt: -9 };
+  yf = { rev: !!rev, S, P, roll: 0, dust: 0, finX: P.beats[P.beats.length - 1].vx, end: P.end, T8: P.beats.length === 8 ? P.beats[7].at : null, title: S.title == null ? P.end - 2.6 : S.title, flash: 0, deb: Array.from({ length: 30 }, (_, i) => ({ x: -60 + i * 9 + (i * 37) % 11, d: (i * 0.13) % 1.1, v: 22 + (i * 29) % 30, s: 1 + (i % 3 === 0 ? 1 : 0), c: ['#8c8898', '#c8c4d0', '#5e5a6c', '#ff2a3a'][i % 4] })), K: yfKit(rev ? vs.me : vs.foe, rev), t: 0, real: 0, rate: 1, slow: false, freeze: 0, ev: {}, fx: [], parts: [], cracks: [], cam: yfCamKeys(P, S), wx0: wx, n: 0, shake: 0, zk: 0, white: 0, imp: null, skip: false, born: now, tapAt: -9 };
   { const lb = P.beats[P.beats.length - 1]; snd('yfscore', Math.max(4, yfReal(P, lb.at) - lb.fz - 0.5)); }
 }
 function yfReset() { if (yf && yf.slow) yfSfx('slowout'); yf = null; $('pad').classList.remove('cine'); $('hud').classList.remove('cine'); yfSfx('yfstop'); }
-function yfEnd(now) {      // the enemy is gone and Yuji wins the round (like the other FATALITIES)
-  const s = yf; wx = s.wx0; yfReset(); blackUntil = now + 500; if (!vs || vs.ph !== 'fight') return;
+function yfEnd(now) {      // the enemy is gone and Yuji wins the round (like the other FATALITIES); v1.214 or you are gone and the enemy Yuji wins it
+  const s = yf, rev = s.rev; wx = s.wx0; yfReset(); blackUntil = now + 500; if (!vs || vs.ph !== 'fight') return;
+  if (rev) { vs.hp = 0; vs.sh = 0; vs.hitAt = now; endRound('enemy', 'fatal', now); return; }
   dummy.air = null; dummy.airH = 0; dummy.rag = null; dummy.hp = 0; dummy.shown = 0; dummy.ko = now - 3000; dummy.koAt = dummy.ko; kos++; endRound('player', 'fatal', now);
 }
 function yfTap(now) {      // a tap on the screen: the first one says how to skip, a second one within a second and a half skips (it is 30 seconds long; a stray tap must not end it)
@@ -5924,7 +5942,7 @@ function yfTap(now) {      // a tap on the screen: the first one says how to ski
 }
 function yfSkip(now) { if (!yf || yf.skip || yf.t > yf.end - 0.5) return; yf.skip = true; yfSfx('yfstop'); yf.t = Math.max(yf.t, yf.end - 0.5); yf.n = yf.P.beats.length; yf.imp = null; yf.freeze = 0; }      // (the rest of it is skipped: the counter shows all eight, no impact frame or freeze is left over)
 function yfHit(i, now) {      // blow i + 1 lands: the freeze, the white flash of the enemy, the BLACK FLASH, sparks, dust, the shake and the zoom
-  const s = yf, S0 = s.S, b = s.P.beats[i], n = i + 1, f = b.f, X = s.wx0 + b.vx - f * 5, lying = b.vLying, y = lying ? gy - 9 : gy - 36 - Math.max(0, b.vl), W = x => s.wx0 + x;
+  const s = yf, b = s.P.beats[i], n = i + 1, f = b.f, X = s.wx0 + b.vx - f * 5, lying = b.vLying, y = lying ? gy - 9 : gy - 36 - Math.max(0, b.vl), W = x => s.wx0 + x;
   s.roll = (i % 2 ? 1 : -1) * (n === 8 ? 0.09 : 0.012 + 0.006 * n);
   s.n = n; s.freeze = now + b.fz * 1000; if (n >= 2) s.blur = { x: b.vx - f * 5, y, until: now + (n === 8 ? 420 : 150) }; s.white = now + 90 + (n === 8 ? 260 : 0); s.shake = Math.max(s.shake, 2.5 + 0.6 * n); s.zk = 0.1 + 0.02 * n;
   s.fx.push({ k: n === 8 ? 'big' : 'bf', x: b.vx - f * 5, y, n, born: now, t0: s.t }); if (n >= 4) s.imp = { at: now, n, snap: null, x: b.vx - f * 5, y };
@@ -5933,12 +5951,9 @@ function yfHit(i, now) {      // blow i + 1 lands: the freeze, the white flash o
   if (n === 8) snd('yfbig'); else snd('yfbf', n); snd('hit', b.M.hk != null ? b.M.hk : b.M.k); snd('smack', 3); buzz(50 + 20 * n);
   spark(X, y, 14 + 3 * n, [YF_RED, YF_DK, '#ffffff', '#ff7a5a'], true, f); spark(X, y, 8 + n, [YF_RED, YF_DK], true, -f);
   if (b.vl < 12) { puff(W(b.vx), 3 + n); gritAt(W(b.vx), 4 + n, 70 + 10 * n, f); }
-  if (S0.spk) spark(X, y, 8 + n, S0.spk, false, -f);
-  if (b.fx) b.fx(s, now, b, n);
-  if (S0.glass) { s.cr = s.cr || []; s.cr.push({ x: b.vx - f * 5, y, born: now, n: 5 + (n >> 1), len: 22 + 6 * n, a: Math.random() * 6.2832 }); }
 }
 function yfEvents(now, t) {
-  const s = yf, P = s.P, S = s.S, at = (k, T, fn) => { if (!s.ev[k] && t >= T) { s.ev[k] = 1; if (!s.skip) fn(); } };
+  const s = yf, P = s.P, at = (k, T, fn) => { if (!s.ev[k] && t >= T) { s.ev[k] = 1; if (!s.skip) fn(); } };
   at('go', 0, () => { snd('fatalstart'); s.shake = 2; });
   P.beats.forEach((b, i) => {
     at('ap' + i, b.Ts - (b.ap === 'none' ? 0 : (b.apT || 0.5)), () => { if (b.ap === 'blink') snd('vanish'); else if (b.ap === 'leap') snd('jump'); else if (b.ap !== 'none' && b.ap !== 'run') snd('dash', 0); });
@@ -5946,7 +5961,7 @@ function yfEvents(now, t) {
     at('hit' + i, b.at, () => yfHit(i, now));
   });
   if (s.T8 != null) { at('zone', s.T8 - 3.6, () => { s.cracks.push({ x: s.finX - 96, t0: s.t, len: 70, spd: 60 }); }); at('rise', s.T8 - 3.2, () => snd('yfrise', 2.7)); }
-  if (s.T8 != null) at('vanish', s.T8 + P.beats[P.beats.length - 1].out.T, () => { const [x, y] = yfGone(s); if (S.vanish) S.vanish(s, now, x, y); else yfVanish(s, now, x, y, S.vcols || ['#ffffff', '#ff7a5a', '#ffb0a0']); });
+  if (s.T8 != null) at('vanish', s.T8 + P.beats[P.beats.length - 1].out.T, () => { const [x, y] = yfGone(s); yfVanish(s, now, x, y, ['#ffffff', '#ff7a5a', '#ffb0a0']); });
   at('title', s.title, () => snd('fataltitle'));
   if (!s.ev.end && t >= s.end && (s.skip || s.real >= YF_LEN - 0.005)) { s.ev.end = 1; yfEnd(now); }
 }
@@ -5957,14 +5972,6 @@ function yfTitle(k, a, yc) {      // the word FATALITY like the other cutscenes'
   const base = Math.max(8, Math.min(32, Math.floor((VW - 12) / 64) * 8)), sz = k < 0.06 ? base * 2 : k < 0.12 ? base * 1.5 : base, j = k < 0.9 ? Math.round((Math.random() - 0.5) * 2) : 0, x = Math.round(VW / 2) + j, y = yc + Math.round(sz / 2) + j;
   ctx.globalAlpha = a; ctx.textAlign = 'center'; ctx.font = sz + 'px "Press Start 2P"'; ctx.fillStyle = '#2a0408'; for (const [dx, dy] of [[-2, 0], [2, 0], [0, -2], [0, 2], [3, 3]]) ctx.fillText('FATALITY', x + dx, y + dy);
   ctx.fillStyle = '#d8101c'; ctx.fillText('FATALITY', x, y); ctx.globalAlpha = 1;
-}
-function yfToon(P, t) {      // CARTOON PHYSICS: the enemy is squashed flat by every blow and springs back stretched, then wobbles (a damped swing, 0.5 s)
-  let sx = 1, sy = 1; for (const b of P.beats) { const u = t - b.at; if (u < 0 || u > 0.6) continue; const e = Math.exp(-u * 7), w = Math.cos(u * 26); sy *= 1 - 0.5 * e * w; sx *= 1 + 0.4 * e * w; }
-  return [Math.max(0.3, sx), Math.max(0.3, sy)];
-}
-function yfIris(Ys, t, end, mx, cx, zy, z, my) {      // the old cartoon ending: a black circle closes on Yuji (the last 1.3 seconds)
-  const k = Math.max(0, Math.min(1, (t - (end - 1.3)) / 1.15)); if (k <= 0) return; const R = Math.hypot(VW, VH) * (1 - k * k), X = Math.round(mx + (Ys.x - cx) * z), Y = Math.round(my + (gy - 34 - Ys.l - zy) * z);
-  yfSave(); ctx.beginPath(); ctx.rect(0, 0, VW, VH); ctx.arc(X, Y, Math.max(0.1, R), 0, 6.2832, true); ctx.clip('evenodd'); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); yfRestore();
 }
 function yfReal(P, t) { let r = t; for (const w of P.slow) if (t > w[0]) r += (Math.min(t, w[1]) - w[0]) * (1 / w[2] - 1); for (const b of P.beats) if (t >= b.at) r += b.fz; return r; }      // the real second at which the clock of the cutscene shows t
 function yfPart(s, x, y, vx, vy, g, life, col, sz) { if (s.parts.length < (yfEco() ? 200 : 400)) s.parts.push({ x, y, vx, vy, g, life, age: 0, col, sz: sz || 1 }); }
@@ -6014,7 +6021,7 @@ function yfFinFront(s, now, t, mx, cx, Ys, sdt) {      // the charge: a black ba
   if (Math.random() < 0.5 + 0.5 * u) spark(s.wx0 + Ys.x + (Math.random() * 16 - 8), gy - 6 - Math.random() * 46, 1, ['#ff2a3a', '#1a0508', '#ff7a5a'], false, Math.random() < 0.5 ? 1 : -1);
 }
 function yfFrame0(now, dt) {
-  const s = yf, P = s.P, S = s.S, mx = Math.round(VW / 2), my = Math.round(VH / 2), w0 = performance.now();
+  const s = yf, P = s.P, mx = Math.round(VW / 2), my = Math.round(VH / 2), w0 = performance.now();
   keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; fatReq = 0; slowMs = 0;
   if (s.tapAt > now) s.tapAt = -9;      // (a tap made while the game was paused: the clock has gone back since)
   s.real += dt; const live = now >= s.freeze; if (live) s.t = Math.min(s.end, s.t + dt * s.rate);      // (the clock stops at the end and waits there until the thirtieth second is full)
@@ -6036,20 +6043,21 @@ function yfFrame0(now, dt) {
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
   yfSave(); ctx.imageSmoothingEnabled = false;
   if (s.shake > 0.25 && !SET.lite) ctx.translate(Math.round((Math.random() * 2 - 1) * s.shake), Math.round((Math.random() * 2 - 1) * s.shake));
+  if (s.rev) { ctx.translate(VW, 0); ctx.scale(-1, 1); }      // (the enemy Yuji does it to you: the whole picture is turned round, like the other cutscenes of the enemy)
   ctx.translate(mx, my); if (Math.abs(s.roll) > 0.002 && !SET.lite) ctx.rotate(s.roll); if (z !== 1) ctx.scale(z, z); ctx.translate(-mx, -zy);
   ctx.fillStyle = '#070b1e'; ctx.fillRect(-VW * 2, -VH * 3, VW * 5, VH * 3 + gy);
   drawBackdrop(now);
-  const post8 = s.T8 != null && t > s.T8 ? Math.max(0, Math.min(1, (t - s.T8) / 0.9)) : 0, dark = Math.min(0.62, 0.16 + 0.045 * s.n + (S.dark || 0)) * (1 - 0.7 * post8); ctx.fillStyle = 'rgba(14,2,10,' + dark.toFixed(3) + ')'; ctx.fillRect(-VW * 2, -VH * 3, VW * 5, VH * 6);
+  const post8 = s.T8 != null && t > s.T8 ? Math.max(0, Math.min(1, (t - s.T8) / 0.9)) : 0, dark = Math.min(0.62, 0.16 + 0.045 * s.n) * (1 - 0.7 * post8); ctx.fillStyle = 'rgba(14,2,10,' + dark.toFixed(3) + ')'; ctx.fillRect(-VW * 2, -VH * 3, VW * 5, VH * 6);
   if (s.T8 != null) yfFinWorld(s, now, t, mx, cx, Vs, Ys, sdt);
-  yfCracks(s, mx, cx); drawSmoke(now, sdt); if (S.back) S.back(s, now, t, mx, cx, Vs, Ys, sdt);
+  yfCracks(s, mx, cx); drawSmoke(now, sdt);
   // the enemy (his trail of black copies while he is blasted away)
   const K = s.K, vx = mx + Vs.x - cx;
   if (!Vs.gone) {
     if (s.T8 != null && t > s.T8 && t < s.T8 + 2.2) for (let j = 4; j >= 1; j--) { const g = yfEvalV(P.V, t - 0.05 * j); if (g.gone) continue; const gp = yfVPic(K, g.pose, now, false); yfSpr(tintOf(gp.src, YF_DK), gp.info, mx + g.x - cx, g.l, g.f, { r: g.r, pv: 30, a: 0.5 - 0.1 * j }); yfSpr(tintOf(gp.src, YF_RED), gp.info, mx + g.x - cx + 1, g.l, g.f, { r: g.r, pv: 30, a: 0.25 - 0.05 * j }); }
     if (Vs.tag === 'fly' || Vs.tag === 'slide') { const g1 = yfEvalV(P.V, t - 0.05); if (Math.abs(g1.x - Vs.x) > 3.5) for (let j = 1; j <= 2; j++) { const g = yfEvalV(P.V, t - 0.05 * j), gp = yfVPic(K, g.pose, now, false); yfSpr(tintOf(gp.src, '#2a0a14'), gp.info, mx + g.x - cx, g.l, g.f, { r: g.r, pv: 30, a: 0.34 - 0.1 * j }); } }
     const vp = yfVPic(K, Vs.pose, now, now < s.white); fatShadow(vx, Vs.l, Vs.lying || Vs.tilt > 0.7);
-    const rc = tintOf(vp.src, S.rim || '#9fb8ff'); for (const [dx, dy] of Z1) yfSpr(rc, vp.info, vx + dx, Vs.l - dy, Vs.f, { r: Vs.r, pv: 30, sx: Vs.sx, sy: Vs.sy, a: 0.5 });      // (a thin rim of light in his own colour, so a dark enemy does not vanish into the dark picture)
-    const tq = S.toon ? yfToon(P, t) : [1, 1]; if (!(S.vdraw && S.vdraw(s, now, t, vp, Vs, vx))) yfSpr(vp.src, vp.info, vx, Vs.l, Vs.f, { r: Vs.r, pv: 30, sx: Vs.sx * tq[0], sy: Vs.sy * tq[1] });
+    const rc = tintOf(vp.src, '#9fb8ff'); for (const [dx, dy] of Z1) yfSpr(rc, vp.info, vx + dx, Vs.l - dy, Vs.f, { r: Vs.r, pv: 30, sx: Vs.sx, sy: Vs.sy, a: 0.5 });      // (a thin rim of light in his own colour, so a dark enemy does not vanish into the dark picture)
+    yfSpr(vp.src, vp.info, vx, Vs.l, Vs.f, { r: Vs.r, pv: 30, sx: Vs.sx, sy: Vs.sy });
   }
   // Yuji: his shadow, his afterimages while he dashes, the red-and-black aura that grows with every blow, himself
   if (Ys.vis > 0.02) {
@@ -6058,13 +6066,12 @@ function yfFrame0(now, dt) {
     if (Ys.pic[0] === 'run' && now - s.dust > 80 && live) { s.dust = now; puff(s.wx0 + Ys.x - 8 * Ys.f, 1); }
     if (post8 > 0 && t < s.T8 + 3.2) { const g = Math.min(1, (3.2 - (t - s.T8)) / 1.2) * 0.07; for (let r = 46; r > 8; r -= 7) { ctx.globalAlpha = g; yfDisc(yx, gy - 30 - lift, r, '#ff2a3a'); } ctx.globalAlpha = 1; }
     if (Ys.ghost) for (let j = 1; j <= 3; j++) { const g = yfEvalY(P.Y, t - 0.04 * j), gp = yfYPic(g.pic, now); yfSpr(tintOf(gp.src, YF_RED), gp.info, mx + g.x - cx, g.l, g.f, { a: 0.36 - 0.09 * j }); }
-    const fin = s.T8 != null ? Math.max(0, Math.min(1, (t - (s.T8 - 3.8)) / 3.0)) : 0, ak = Math.min(1, 0.2 + 0.1 * s.n + 0.3 * fin + (S.aura ? S.aura(t) : 0));
+    const fin = s.T8 != null ? Math.max(0, Math.min(1, (t - (s.T8 - 3.8)) / 3.0)) : 0, ak = Math.min(1, 0.2 + 0.1 * s.n + 0.3 * fin);
     if (ak > 0.05) { const j = Math.floor(now / 70) % 3; for (const [dx, dy] of (s.n >= 6 ? ZN3 : ZN)) yfSpr(tintOf(yp.src, '#e8182c'), yp.info, yx + dx + j - 1, lift - dy, Ys.f, { a: 0.5 * ak * Ys.vis }); for (const [dx, dy] of Z1) yfSpr(tintOf(yp.src, '#1a0508'), yp.info, yx + dx, lift - dy, Ys.f, { a: 0.85 * Math.min(1, ak * 1.3) * Ys.vis }); }      // (they fade with him when he blinks, or a dark silhouette stays behind)
     yfSpr(yp.src, yp.info, yx, lift, Ys.f, { a: Ys.vis });
   }
   if (Ys.blink != null) { const a = Math.abs(Ys.blink - 0.5) * 2; ctx.globalAlpha = 1 - a; for (let i = 0; i < 24; i++) { const u = i / 23, X = Math.round(mx + Ys.bx0 + (Ys.bx1 - Ys.bx0) * u - cx), Y = gy - 30 - Math.round(Ys.bl0 + (Ys.bl1 - Ys.bl0) * u) + ((i * 7) % 5) - 2; ctx.fillStyle = i % 3 ? YF_RED : YF_DK; ctx.fillRect(X, Y, 3, 1); } ctx.globalAlpha = 1; }
   if (s.T8 != null) yfFinFront(s, now, t, mx, cx, Ys, sdt);
-  if (S.front) S.front(s, now, t, mx, cx, Vs, Ys, sdt);
   // the effects of the blows, the sparks, the dust
   yfPartsDraw(s, sdt, mx, cx);
   s.fx = s.fx.filter(e => e.k === 'big' ? yfBigDraw(e, s, now, mx, cx) : e.k === 'van' ? yfVanDraw(e, s, now, mx, cx) : yfBFDraw(e, s, now, mx, cx));
@@ -6074,20 +6081,19 @@ function yfFrame0(now, dt) {
   const beat = s.T8 != null && t > s.T8 - 3.8 && t < s.T8 ? 0.1 * Math.max(0, Math.sin(now / 150)) : 0, vg = Math.min(0.92, 0.25 + 0.08 * s.n + beat) * (1 - 0.55 * post8); ctx.globalAlpha = vg; ctx.drawImage(yfVignette(), 0, 0); ctx.globalAlpha = 1;
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, bh); ctx.fillRect(0, VH - bh, VW, bh);
   if (s.T8 != null && t > s.T8 - 0.5 && t < s.T8) actionLines(mx, my + 8, now, 36);
-  if (s.blur && now < s.blur.until) { const k = (s.blur.until - now) / 150, X = Math.round(mx + (s.blur.x - cx) * z), Y = Math.round(my + (s.blur.y - zy) * z); yfSave(); ctx.imageSmoothingEnabled = false; for (const sc of [1.04, 1.09]) { ctx.globalAlpha = 0.3 * k * (sc < 1.06 ? 1 : 0.7); ctx.drawImage(cv, Math.round(X * (1 - sc)), Math.round(Y * (1 - sc)), Math.round(VW * sc), Math.round(VH * sc)); } yfRestore(); }
+  if (s.blur && now < s.blur.until) { const k = (s.blur.until - now) / 150, X = Math.round(s.rev ? VW - mx - (s.blur.x - cx) * z : mx + (s.blur.x - cx) * z), Y = Math.round(my + (s.blur.y - zy) * z); yfSave(); ctx.imageSmoothingEnabled = false; for (const sc of [1.04, 1.09]) { ctx.globalAlpha = 0.3 * k * (sc < 1.06 ? 1 : 0.7); ctx.drawImage(cv, Math.round(X * (1 - sc)), Math.round(Y * (1 - sc)), Math.round(VW * sc), Math.round(VH * sc)); } yfRestore(); }
   yfImpFrames(s, now, mx, my, z, zy, cx);
-  if (S.screen) S.screen(s, now, t, mx, my, z, zy, cx, Vs, Ys);
   if (!s.skip && t > 1 && (now - s.tapAt < 1500 || t < 4.5)) { ctx.globalAlpha = now - s.tapAt < 1500 ? 1 : Math.min(0.55, (4.5 - t) * 0.5, (t - 1) * 2); pxt(now - s.tapAt < 1500 ? 'TAP AGAIN TO SKIP' : 'DOUBLE TAP TO SKIP', mx, VH - 4, '#ffffff', 8, 'center'); ctx.globalAlpha = 1; }
   if (s.flash > now && !s.imp) { ctx.globalAlpha = Math.min(1, (s.flash - now) / 180); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, VW, VH); ctx.globalAlpha = 1; }
   if (s.title != null && t >= s.title) { const k = t - s.title; ctx.fillStyle = 'rgba(0,0,0,' + (0.3 * Math.min(1, k / 0.3)).toFixed(2) + ')'; ctx.fillRect(0, 0, VW, VH); yfTitle(k, 1, Math.round(VH * 0.3)); }
-  const fade = Math.max(0, Math.min(1, (t - (s.end - 0.55)) / 0.5)); if (S.iris) yfIris(Ys, t, s.end, mx, cx, zy, z, my); else if (fade > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fade.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
+  const fade = Math.max(0, Math.min(1, (t - (s.end - 0.55)) / 0.5)); if (fade > 0) { ctx.fillStyle = 'rgba(0,0,0,' + fade.toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
   const w = performance.now() - w0; s.work = s.work == null ? w : s.work * 0.9 + w * 0.1; s.dtAvg = s.dtAvg == null ? dt : s.dtAvg * 0.9 + dt * 0.1;
   if (!s.eco && s.t > 1.5 && (s.work > 11 || (!fpsCap() && s.dtAvg > 0.034))) s.eco = true;      // (frames that take too long to make, or come too slowly: from now on the effects are drawn lighter, for the rest of the cutscene)
 }
 function yfImpFrames(s, now, mx, my, z, zy, cx) {      // the impact frames of the heavy blows, painted over the frozen picture: a hard black-and-white copy with black rays, then the same in negative with red rays
-  const im = s.imp; if (!im) return; const a = now - im.at, per = im.n === 8 ? 130 : 55, N = im.n === 8 ? 4 : 2; if (a >= per * N) { if (im.n === 8 && im.snap) { s.snap8 = im.snap; s.snap8At = now; s.cr = []; } s.imp = null; return; }
+  const im = s.imp; if (!im) return; const a = now - im.at, per = im.n === 8 ? 130 : 55, N = im.n === 8 ? 4 : 2; if (a >= per * N) { s.imp = null; return; }
   if (!im.snap) { const c = document.createElement('canvas'); c.width = cv.width; c.height = cv.height; c.getContext('2d').drawImage(cv, 0, 0); im.snap = c; }
-  const k = Math.floor(a / per), X = Math.round(mx + (mx + im.x - cx - mx) * z), Y = Math.round(my + (im.y - zy) * z);
+  const k = Math.floor(a / per), X = Math.round(s.rev ? VW - mx - (im.x - cx) * z : mx + (im.x - cx) * z), Y = Math.round(my + (im.y - zy) * z);
   const rays = (n, r0, r1, col, seed) => { ctx.fillStyle = col; for (let i = 0; i < n; i++) { const an = i / n * 6.2832 + Math.sin(i * 12.9 + seed) * 0.07, ra = r0 + (i * 37 + seed * 11) % 14, rb = r1 + (i * 53 + seed * 7) % 90; for (let r = ra; r < rb; r += 1) ctx.fillRect(Math.round(X + Math.cos(an) * r), Math.round(Y + Math.sin(an) * r * 0.85), 1, 1); } };
   yfSave(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 1;
   if (k === 0) { ctx.filter = 'grayscale(1) brightness(3) contrast(6)'; ctx.drawImage(im.snap, 0, 0); ctx.filter = 'none'; rays(30, 10, 60, '#000000', 1); }
@@ -6098,84 +6104,8 @@ function yfImpFrames(s, now, mx, my, z, zy, cx) {      // the impact frames of t
 }
 // ---------------------------------------------------------------- the scripts. beats: at = when the blow lands (seconds of the cutscene's own clock), mv = Yuji's move (YFM), ap = how he gets there (dash | run | leap | blink | walk | none) taking apT seconds, aph = the height of the leap, yl = how high he is ('match' = as high as the enemy), pre = { t, d }: t seconds before the approach he blinks to d px from the enemy, out = what happens to the enemy (yfOut), z = the camera's zoom at the blow, fz = the freeze, word / line = a comic word or a line of text at the blow; slow = the slow-motion windows [from, to, speed]; cam = more camera keys [time, zoom, weight towards the enemy, shift up, 1 = a close-up that does not fit both in]
 // The rules of the enemy's state: after a slide he stands (dazed), after a launch or a fly that ends in the air he hangs, after a fly that lands he lies flat; so a blow on a lying enemy is a low one (slam, sweep, spin), on a hanging one an air blow (yl: 'match'), on a standing one anything.
-function yfHex(x, y, r) { for (let i = 0; i < 6; i++) { const a0 = i / 6 * 6.2832 + 0.5236, a1 = (i + 1) / 6 * 6.2832 + 0.5236, x0 = x + Math.cos(a0) * r, y0 = y + Math.sin(a0) * r, x1 = x + Math.cos(a1) * r, y1 = y + Math.sin(a1) * r, n = Math.max(2, Math.round(Math.hypot(x1 - x0, y1 - y0))); for (let q = 0; q <= n; q++) ctx.fillRect(Math.round(x0 + (x1 - x0) * q / n), Math.round(y0 + (y1 - y0) * q / n), 1, 1); } }
-function yfBarrier(s, now, t, mx, cx, Vs) {      // GOJO'S INFINITY: a thin shell of hexagons in front of him; it flickers, brightens as Yuji's fist comes close and is broken by the first BLACK FLASH
-  const b1 = s.P.beats[0]; if (t > b1.at + 0.02 || Vs.gone) return;
-  const near = Math.max(0, Math.min(1, 1 - (b1.at - t) / 0.8)), X = Math.round(mx + Vs.x - cx + 7), Y = Math.round(gy - 34 - Vs.l);
-  ctx.globalAlpha = 0.22 + 0.55 * near + 0.1 * Math.sin(now / 90);
-  for (const [R, col] of [[27, near > 0.7 ? '#ffffff' : '#9fd8ff'], [21, '#4aa8ff']]) { ctx.fillStyle = col; for (let k = 0; k < 9; k++) { const th = Math.PI + (k - 4) * 0.27 + (R < 25 ? 0.13 : 0); yfHex(X + Math.cos(th) * R, Y + Math.sin(th) * R * 1.3, 3.6); } }
-  if (near > 0.2) { ctx.globalAlpha = near; yfRing(X, Y, 28 + 6 * (1 - near), '#9fd8ff', 1, 1.3, 4); }
-  ctx.globalAlpha = 1;
-}
-function yfShatter(s, now, x, y, cols) { for (let i = 0; i < 44; i++) { const an = Math.PI + (Math.random() - 0.5) * 2.4, v = 40 + Math.random() * 170; yfPart(s, x, y, Math.cos(an) * v, Math.sin(an) * v - 30, 200, 0.7 + Math.random() * 0.9, cols[i % cols.length], 1 + (i % 4 === 0 ? 1 : 0)); } snd('arrive'); }
-function yfStars(s, now, vx, l, n) { ctx.fillStyle = '#ffe34d'; for (let i = 0; i < n; i++) { const a = now / 260 + i * 6.2832 / n, X = Math.round(vx + Math.cos(a) * 12), Y = Math.round(gy - 66 - l + Math.sin(a) * 3.5); ctx.fillRect(X - 2, Y, 5, 1); ctx.fillRect(X, Y - 2, 1, 5); ctx.fillRect(X - 1, Y - 1, 3, 3); } }
-function yfGlitch(s, now, t, vp, Vs, vx, amt, keep) {      // VERITY'S way of being hit: her picture slides apart in strips of four rows, with a magenta and a cyan copy beside it; keep < 1 = strips that are gone for good (she is being deleted)
-  const I = vp.info, hx = I.cx - I.x0, seed = (now / 55) | 0, rows = 64;
-  yfSave(); ctx.translate(Math.round(vx), gy + 2 - Math.round(Vs.l) - 30); if (Vs.r) ctx.rotate(Vs.r); if (Vs.f < 0) ctx.scale(-1, 1);
-  for (const [col, dx0, al] of [['#ff3ad8', -3, 0.4], ['#3ad8ff', 3, 0.4], [null, 0, 1]]) if (amt > 0.05 || !col) { const img = col ? tintOf(vp.src, col) : vp.src; for (let r = 0; r < rows; r += 4) { const h = Math.imul(r * 7919 + seed * 104729 + (col ? col.length : 0), 2246822519) >>> 0; if ((h % 100) / 100 > keep) continue; const dx = Math.round(((h >> 8) % 9 - 4) * amt * 1.4) + dx0 * amt; ctx.globalAlpha = al; ctx.drawImage(img, 0, r, img.width, 4, -hx + dx, -62 - (I.top || 0) + 30 + r, img.width, 4); } }
-  yfRestore(); ctx.globalAlpha = 1;
-}
-function yfGlass(s, now, mx, cx, z, zy, my) {      // the MIRROR: every blow leaves a crack in the glass of the screen (they grow out of the place of the blow and stay); the last one shatters it
-  s.cr = s.cr || []; for (const c of s.cr) { const X = Math.round(mx + (c.x - cx) * z), Y = Math.round(my + (c.y - zy) * z), g = Math.min(1, (now - c.born) / 160); ctx.fillStyle = 'rgba(220,250,255,0.75)'; for (let r = 0; r < c.n; r++) { let px = X, py = Y, an = c.a + r * 6.2832 / c.n; const L = c.len * g; for (let q = 0; q < L; q++) { if (q % 7 === 0) an += (((r * 31 + q * 17) % 5) - 2) * 0.22; px += Math.cos(an); py += Math.sin(an); ctx.fillRect(Math.round(px), Math.round(py), 1, 1); } } ctx.fillStyle = 'rgba(20,60,80,0.35)'; for (let r = 0; r < c.n; r += 2) { let px = X + 1, py = Y + 1, an = c.a + r * 6.2832 / c.n; for (let q = 0; q < c.len * g * 0.6; q++) { if (q % 7 === 0) an += (((r * 31 + q * 17) % 5) - 2) * 0.22; px += Math.cos(an); py += Math.sin(an); ctx.fillRect(Math.round(px), Math.round(py), 1, 1); } } }
-}
-function yfShards(s, now) {      // the glass falls out of the picture: the frame of the last blow in 80 triangles that tilt and drop away, one after the other
-  if (!s.snap8) return; const a = (now - s.snap8At) / 1000; if (a > 1.8) return; const cols = 8, rows = 5, cw = VW / cols, ch = VH / rows;
-  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) for (let h = 0; h < 2; h++) {
-    const id = (j * cols + i) * 2 + h, d = ((id * 37) % 11) / 11 * 0.25, u = Math.max(0, a - d - 0.12); if (u * 700 > VH * 1.5) continue;
-    const x0 = i * cw, y0 = j * ch, tri = h ? [[x0 + cw, y0], [x0 + cw, y0 + ch], [x0, y0 + ch]] : [[x0, y0], [x0 + cw, y0], [x0, y0 + ch]], gx = x0 + cw * (h ? 0.66 : 0.33), gyy = y0 + ch * (h ? 0.66 : 0.33), rot = u * (((id * 13) % 7) - 3) * 0.5, dy = u * u * 520, dx = u * (((id * 29) % 9) - 4) * 14;
-    yfSave(); ctx.translate(gx + dx, gyy + dy); ctx.rotate(rot); ctx.translate(-gx, -gyy); ctx.beginPath(); ctx.moveTo(tri[0][0], tri[0][1]); ctx.lineTo(tri[1][0], tri[1][1]); ctx.lineTo(tri[2][0], tri[2][1]); ctx.closePath(); ctx.clip(); ctx.globalAlpha = Math.max(0, 1 - u * 0.9); ctx.drawImage(s.snap8, 0, 0); yfRestore();
-    ctx.strokeStyle = 'rgba(230,255,255,0.8)'; ctx.lineWidth = 1; yfSave(); ctx.translate(gx + dx, gyy + dy); ctx.rotate(rot); ctx.translate(-gx, -gyy); ctx.beginPath(); ctx.moveTo(tri[0][0], tri[0][1]); ctx.lineTo(tri[1][0], tri[1][1]); ctx.lineTo(tri[2][0], tri[2][1]); ctx.closePath(); ctx.stroke(); yfRestore();
-  }
-  ctx.globalAlpha = 1;
-}
-YFS.gojo = {
-  zb: 1.55, rim: '#9fd8ff', spk: ['#9fd8ff', '#ffffff'], vcols: ['#9fd8ff', '#ffffff', '#4aa8ff'],
-  beats: [
-    { at: 2.6, mv: 'hook', ap: 'dash', apT: 0.5, out: { k: 'slide', dx: 75, T: 0.9, rx: 3 }, z: 2.1, fx: (s, now, b) => yfShatter(s, now, b.vx - 12, gy - 34, ['#9fd8ff', '#ffffff', '#4aa8ff']) },
-    { at: 4.6, mv: 'upper', ap: 'run', apT: 1.3, out: { k: 'launch', T: 0.55, dx: 14, l1: 78 }, z: 1.7 },
-    { at: 6.6, mv: 'knee', ap: 'leap', apT: 1.3, aph: 26, yl: 'match', out: { k: 'fly', T: 0.95, dx: 70, h: 24 }, z: 1.8 },
-    { at: 8.9, mv: 'slam', ap: 'run', apT: 1.15, out: { k: 'fly', T: 0.5, dx: 20, h: 26 }, z: 2.2 },
-    { at: 10.8, mv: 'sweep', ap: 'run', apT: 1.2, out: { k: 'fly', T: 0.95, dx: 130, h: 8, turns: 1 }, z: 1.6 },
-    { at: 12.9, mv: 'spin', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 20, h: 8, l1: 95, rot: 0.6 }, z: 1.8 },
-    { at: 14.7, mv: 'dive', ap: 'leap', apT: 1.2, aph: 28, yl: 'match', out: { k: 'fly', T: 0.9, dx: 34, h: 24, land: 'stand', rest: 'kneel' }, z: 1.8 },
-    { at: 19.4, mv: 'cbf', ap: 'dash', apT: 0.5, pre: { t: 3.0, d: 96 }, out: { k: 'fly', T: 1.3, dx: 190, h: 30, l1: 84, rot: 2.8, gone: true }, nocam: true, fz: 0.52 }],
-  slow: [[17.4, 19.3, 0.45], [19.42, 20.62, 0.3]],
-  cam: [[16.6, 1.4, 0.5, 0, 0], [17.6, 1.7, 0.3, 0, 0], [18.7, 2.0, 0.1, 0, 1], [19.15, 3.0, 0.1, 4, 1], [19.5, 2.4, 0.1, 0, 1], [19.95, 1.9, 0.1, -6, 1], [20.3, 1.6, 0.5, 0, 0], [21.2, 1.3, 0.55, 0, 0], [21.65, 1.9, 0.0, 0, 1], [23.5, 2.0, 0.0, 0, 1]], title: 21.45,
-  back: (s, now, t, mx, cx, Vs) => yfBarrier(s, now, t, mx, cx, Vs) };
-
-YFS.verity = {
-  zb: 1.55, rim: '#ffe060', spk: ['#ffe060', '#ffffff'], vcols: ['#ffe060', '#ffffff', '#c8a028'],
-  beats: [
-    { at: 2.8, mv: 'elbow', ap: 'dash', apT: 0.5, out: { k: 'slide', dx: 60, T: 0.8, rx: 0 }, z: 2.2 },
-    { at: 4.7, mv: 'push', ap: 'run', apT: 1.2, out: { k: 'fly', T: 1.0, dx: 140, h: 6 }, z: 1.7 },
-    { at: 6.75, mv: 'slam', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.55, dx: 14, h: 38 }, z: 2.2 },
-    { at: 8.6, mv: 'sweep', ap: 'run', apT: 1.1, out: { k: 'fly', T: 1.0, dx: 100, h: 40, l1: 85, rot: 1.2 }, z: 1.6 },
-    { at: 10.65, mv: 'dive', ap: 'leap', apT: 1.3, aph: 26, yl: 'match', out: { k: 'fly', T: 0.9, dx: 80, h: 18 }, z: 1.8 },
-    { at: 13.15, mv: 'spin', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 40, h: 6, l1: 90, rot: 0.8 }, z: 1.8 },
-    { at: 14.9, mv: 'face', ap: 'leap', apT: 1.2, aph: 28, yl: 'match', out: { k: 'fly', T: 0.9, dx: 40, h: 20, land: 'stand', rest: 'kneel' }, z: 1.8 },
-    { at: 19.4, mv: 'bfk', ap: 'dash', apT: 0.5, pre: { t: 3.0, d: 96 }, out: { k: 'fly', T: 1.4, dx: 230, h: 0, l1: 38, rot: 0.9, gone: true }, nocam: true, fz: 0.52 }],
-  slow: [[17.4, 19.3, 0.45], [19.42, 20.62, 0.3]],
-  cam: [[16.6, 1.4, 0.5, 0, 0], [17.6, 1.7, 0.3, 0, 0], [18.7, 2.0, 0.1, 0, 1], [19.15, 3.0, 0.1, 4, 1], [19.5, 2.4, 0.1, 0, 1], [19.95, 1.8, 0.2, -4, 1], [20.4, 1.3, 0.5, 0, 0], [21.3, 1.2, 0.5, 0, 0], [21.7, 1.9, 0.0, 0, 1], [23.5, 2.0, 0.0, 0, 1]], title: 21.45,
-  vdraw: (s, now, t, vp, Vs, vx) => { const P = s.P; let g = 0; for (const b of P.beats) { const u = t - b.at; if (u >= 0 && u < 0.4) g = Math.max(g, 1 - u / 0.4); } const T8 = s.T8, o = P.beats[7].out; let keep = 1; if (T8 != null && t > T8 - 0.5) { g = Math.max(g, 0.7); if (t > T8 + 0.2) keep = Math.max(0, 1 - (t - T8 - 0.2) / (o.T - 0.2)); } if (g < 0.05 && keep >= 1) return false; yfGlitch(s, now, t, vp, Vs, vx, g, keep); return true; },
-  screen: (s, now, t) => { const T8 = s.T8; if (T8 == null || t < T8 || t > T8 + 2.0) return; const k = 1 - (t - T8) / 2.0; for (let i = 0; i < 9; i++) { const h = Math.imul(i * 7919 + ((now / 70) | 0) * 104729, 2246822519) >>> 0; ctx.globalAlpha = 0.35 * k; ctx.fillStyle = i % 3 ? '#ffe060' : '#ffffff'; ctx.fillRect(h % VW, (h >> 9) % VH, 20 + (h >> 4) % 120, 1 + (h >> 13) % 2); } ctx.globalAlpha = 1; } };
-YFS.cat = {
-  zb: 1.55, rim: '#ffffff', spk: ['#ffe34d', '#ffffff'], vcols: ['#ffe34d', '#ffffff', '#ff7a5a'], toon: true, iris: true,
-  beats: [
-    { at: 2.6, mv: 'conc', ap: 'dash', apT: 0.5, out: { k: 'fly', T: 1.0, dx: 130, h: 22, bh: 24 }, z: 2.0 },
-    { at: 4.7, mv: 'slam', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.6, dx: 30, h: 44, bh: 20, flat: true }, z: 2.2 },
-    { at: 6.6, mv: 'sweep', ap: 'run', apT: 1.2, out: { k: 'fly', T: 1.1, dx: 150, h: 8, turns: 2 }, z: 1.6 },
-    { at: 8.8, mv: 'spin', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 20, h: 6, l1: 100, rot: 0.7 }, z: 1.8 },
-    { at: 10.7, mv: 'knee', ap: 'leap', apT: 1.3, aph: 28, yl: 'match', out: { k: 'fly', T: 0.9, dx: 60, h: 30, land: 'stand', rest: 'dazed' }, z: 1.8 },
-    { at: 13.1, mv: 'elbow', ap: 'run', apT: 1.3, out: { k: 'slide', dx: 70, T: 0.8, rx: 2 }, z: 2.0 },
-    { at: 15.1, mv: 'dive', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 40, h: 24, land: 'stand', rest: 'kneel' }, z: 1.8 },
-    { at: 19.4, mv: 'cbf', ap: 'dash', apT: 0.5, pre: { t: 3.0, d: 96 }, out: { k: 'fly', T: 1.3, dx: 170, h: 30, l1: 84, rot: 3.2, gone: true }, nocam: true, fz: 0.52 }],
-  slow: [[17.4, 19.3, 0.45], [19.42, 20.62, 0.3]],
-  cam: [[16.6, 1.4, 0.5, 0, 0], [17.6, 1.7, 0.3, 0, 0], [18.7, 2.0, 0.1, 0, 1], [19.15, 3.0, 0.1, 4, 1], [19.5, 2.4, 0.1, 0, 1], [19.95, 1.9, 0.1, -6, 1], [20.3, 1.6, 0.5, 0, 0], [21.2, 1.3, 0.55, 0, 0], [21.65, 1.9, 0.0, 0, 1], [23.0, 2.0, 0.0, 0, 1]], title: 21.2,
-  back: (s, now, t, mx, cx) => { const h = s.hole; if (!h) return; const a = (now - h.born) / 1000, q = yfVPic(s.K, ['rx', 7, 0.4], now, false), X = Math.round(mx + h.x - cx), Y = Math.round(h.y); yfSave(); ctx.globalAlpha = Math.min(1, a * 5) * Math.max(0.25, 1 - a * 0.25); ctx.translate(X, Y + 30); ctx.scale(-1.7, 1.7); const hx = q.info.cx - q.info.x0; ctx.drawImage(tintOf(q.src, '#ffffff'), -hx + 1, -62 - (q.info.top || 0)); ctx.drawImage(tintOf(q.src, '#ffffff'), -hx - 1, -62 - (q.info.top || 0)); ctx.drawImage(tintOf(q.src, '#000000'), -hx, -62 - (q.info.top || 0)); yfRestore(); },
-  front: (s, now, t, mx, cx, Vs) => { if (!Vs.gone && Vs.pose[0] === 'blue') yfStars(s, now, mx + Vs.x - cx, Vs.l, 3); if (s.hole) { const a = (now - s.hole.born) / 1000; if (a < 2.2) yfStars(s, now, mx + s.hole.x - cx, 150 - (gy - s.hole.y) + 4, 4); } },
-  vanish: (s, now, x, y) => { s.hole = { x, y, born: now }; yfVanish(s, now, x, y, ['#ffe34d', '#ffffff', '#ff7a5a']); } };
-YFS.freddy = {      // v1.188 FREDDY: his own version (the user: "make freddy an enemy in versus": Yuji's FATALITY has its own script for every enemy). The blows come in another order (elbow, hook, knee, slam, sweep, spin, dive, then the huge one), the sparks and the pieces are the red and green of his sweater, and the embers of his boiler room rise over the whole screen.
-  zb: 1.55, rim: '#e0584a', spk: ['#e0584a', '#55a868', '#ffffff'], vcols: ['#b3303d', '#2f7a43', '#ffffff'],
+YFS.gen = {      // v1.214 THE SCRIPT (the user: "remove all of yuji's fatalities and make like everyone else a generic fatality"): the same eight blows on every enemy: elbow, hook, knee, slam, sweep, spin, dive, then the huge one that blasts him away
+  zb: 1.55,
   beats: [
     { at: 2.6, mv: 'elbow', ap: 'dash', apT: 0.5, out: { k: 'slide', dx: 60, T: 0.8, rx: 0 }, z: 2.2 },
     { at: 4.6, mv: 'hook', ap: 'run', apT: 1.2, out: { k: 'fly', T: 0.9, dx: 90, h: 10 }, z: 1.7 },
@@ -6186,24 +6116,7 @@ YFS.freddy = {      // v1.188 FREDDY: his own version (the user: "make freddy an
     { at: 14.8, mv: 'dive', ap: 'leap', apT: 1.2, aph: 28, yl: 'match', out: { k: 'fly', T: 0.9, dx: 40, h: 24, land: 'stand', rest: 'kneel' }, z: 1.8 },
     { at: 19.4, mv: 'cbf', ap: 'dash', apT: 0.5, pre: { t: 3.0, d: 96 }, out: { k: 'fly', T: 1.2, dx: 150, h: 26, l1: 60, rot: 2.4, gone: true }, nocam: true, fz: 0.52 }],
   slow: [[17.4, 19.3, 0.45], [19.42, 20.62, 0.3]],
-  cam: [[16.6, 1.4, 0.5, 0, 0], [17.6, 1.7, 0.3, 0, 0], [18.7, 2.0, 0.1, 0, 1], [19.15, 3.0, 0.1, 4, 1], [19.5, 2.4, 0.1, 0, 1], [19.95, 1.9, 0.1, -6, 1], [20.3, 1.6, 0.5, 0, 0], [21.2, 1.3, 0.55, 0, 0], [21.65, 1.9, 0.0, 0, 1], [23.5, 2.0, 0.0, 0, 1]], title: 21.45,
-  screen: (s, now) => { ctx.globalAlpha = 0.6; for (let i = 0; i < 30; i++) { const h = Math.imul(i * 7919 + 13, 2246822519) >>> 0, x = Math.round(h % VW + Math.sin(now / 900 + i) * 6), y = VH - ((now / (22 + h % 20) + (h >> 8) % VH) % VH); ctx.fillStyle = i % 3 ? '#ff8a2a' : '#ffd34d'; ctx.fillRect(x, Math.round(y), i % 4 ? 1 : 2, 1); } ctx.globalAlpha = 1; } };
-YFS.cu3 = YFS.cu4 = { ...YFS.freddy, rim: '#ff2a3a', spk: ['#ff2a3a', '#ffb0b8', '#ffffff'], vcols: ['#ffffff', '#ff7a86', '#d02a3a'], screen: undefined };      // v1.189 Sukuna and Ryu as the enemy: the script made for Freddy (the order of the blows and the timing), in their own colours, without his embers
-YFS.yuji = {
-  zb: 1.55, rim: '#7df4ff', spk: ['#7df4ff', '#ffffff'], vcols: ['#ffffff', '#7df4ff', '#2fc3e6'], glass: true,
-  beats: [
-    { at: 2.5, mv: 'rkick', ap: 'dash', apT: 0.5, out: { k: 'slide', dx: 70, T: 0.9, rx: 3 }, z: 2.1 },
-    { at: 4.4, mv: 'upper', ap: 'run', apT: 1.2, out: { k: 'launch', T: 0.55, dx: 14, l1: 80 }, z: 1.7 },
-    { at: 6.45, mv: 'face', ap: 'leap', apT: 1.3, aph: 28, yl: 'match', out: { k: 'fly', T: 1.0, dx: 80, h: 20 }, z: 1.8 },
-    { at: 8.8, mv: 'slam', ap: 'run', apT: 1.2, out: { k: 'fly', T: 0.5, dx: 15, h: 28 }, z: 2.2 },
-    { at: 10.7, mv: 'sweep', ap: 'run', apT: 1.2, out: { k: 'fly', T: 1.0, dx: 120, h: 8, turns: 1 }, z: 1.6 },
-    { at: 12.9, mv: 'spin', ap: 'run', apT: 1.3, out: { k: 'fly', T: 0.9, dx: 30, h: 8, l1: 90, rot: 0.6 }, z: 1.8 },
-    { at: 14.7, mv: 'dive', ap: 'leap', apT: 1.2, aph: 28, yl: 'match', out: { k: 'fly', T: 0.9, dx: 34, h: 24, land: 'stand', rest: 'kneel' }, z: 1.8 },
-    { at: 19.4, mv: 'cbf', ap: 'dash', apT: 0.5, pre: { t: 3.0, d: 96 }, out: { k: 'fly', T: 1.1, dx: 120, h: 20, l1: 44, rot: 1.4, gone: true }, nocam: true, fz: 0.52 }],
-  slow: [[17.4, 19.3, 0.45], [19.42, 20.62, 0.3]],
-  cam: [[16.6, 1.4, 0.5, 0, 0], [17.6, 1.7, 0.3, 0, 0], [18.7, 2.0, 0.1, 0, 1], [19.15, 3.0, 0.1, 4, 1], [19.5, 2.4, 0.1, 0, 1], [19.95, 1.9, 0.1, -6, 1], [20.3, 1.6, 0.5, 0, 0], [21.2, 1.3, 0.55, 0, 0], [21.65, 1.9, 0.0, 0, 1], [23.5, 2.0, 0.0, 0, 1]], title: 21.45,
-  screen: (s, now, t, mx, my, z, zy, cx) => { yfGlass(s, now, mx, cx, z, zy, my); yfShards(s, now); },
-  fx: null };
+  cam: [[16.6, 1.4, 0.5, 0, 0], [17.6, 1.7, 0.3, 0, 0], [18.7, 2.0, 0.1, 0, 1], [19.15, 3.0, 0.1, 4, 1], [19.5, 2.4, 0.1, 0, 1], [19.95, 1.9, 0.1, -6, 1], [20.3, 1.6, 0.5, 0, 0], [21.2, 1.3, 0.55, 0, 0], [21.65, 1.9, 0.0, 0, 1], [23.5, 2.0, 0.0, 0, 1]], title: 21.45 };
 
 // ---------------------------------------------------------------- v1.50 YUJI'S HOMETOWN DOMAIN (this file is spliced into template.html by build_html.py, in place of the marker line before drawScene)
 // Skill y_hometown ($5000, it needs EVERY other skill of Yuji). In INHERITENCE the DOMAIN button casts it: 67% of the energy, the shared 30 s wait, and the INHERITENCE clock stands still for as long as it lasts.
@@ -9134,8 +9047,11 @@ function suFatStep(g, c, now) {      // the finisher, every frame: the enemy's p
   if (e >= S.cutE) once(P + 'cut', () => suFatCut(now, e));
   F.dx = e >= S.holdE ? S.dxT : 0;
   // his picture
-  const idle = g.frames[Math.floor(now / (1000 / IDLE_FPS)) % g.frames.length];
-  if (e >= S.holdE && e < S.tpE) return suFatBlank || (suFatBlank = (() => { const b = document.createElement('canvas'); b.width = b.height = 64; return b; })());
+  return suFatPic(g, u, e, now) || suFatBlank || (suFatBlank = (() => { const b = document.createElement('canvas'); b.width = b.height = 64; return b; })());
+}
+function suFatPic(g, u, e, now) {      // his picture u ms into the finisher and e ms into the track (null while he is gone): the hand in the hair, the slash, the touch (v1.214 the enemy Sukuna's finisher on you uses it too)
+  const S = SU_FAT, idle = g.frames[Math.floor(now / (1000 / IDLE_FPS)) % g.frames.length];
+  if (e >= S.holdE && e < S.tpE) return null;
   if (e >= S.tpE) return idle;
   if (e >= 0) return g.atk[17][Math.min(4, Math.floor(e * 30 / 1000))];      // (the touch: Sukuna's TOUCH CUT pictures, the hand reaches out and stays on the face)
   if (u < S.hair) return idle;
@@ -9147,7 +9063,9 @@ function suFatStep(g, c, now) {      // the finisher, every frame: the enemy's p
 function suFatCam(now) {      // the camera of this frame: { z, fx, fy, roll, sx, sy } as suFgCam
   const F = suFat; if (!F) return null;
   const S = SU_FAT, u = Math.min(S.rep + S.track, F.u === undefined ? suFatU(now) : F.u), cx = Math.round(VW / 2), d = dummy;
-  const A = { cx, sx: cx + (F.dx || 0), ex: cx + (d ? d.x - wx : S.gap), hy: d && d.suTop !== undefined ? d.suTop : gy - 40 };
+  return suFatShot(F, u, { cx, sx: cx + (F.dx || 0), ex: cx + (d ? d.x - wx : S.gap), hy: d && d.suTop !== undefined ? d.suTop : gy - 40 });
+}
+function suFatShot(F, u, A) {      // the shot at u ms (v1.214 shared with the enemy Sukuna's finisher on you, see srFrame)
   let s = 0; while (s + 1 < SU_FAT_SHOTS.length && u >= SU_FAT_SHOTS[s + 1][0]) s++;
   const [u0, u1, fn] = SU_FAT_SHOTS[s], k2 = Math.max(0, Math.min(1, (u - u0) / (u1 - u0))), k = k2 * k2 * (3 - 2 * k2), v = fn(k, A, k2), z = v[0], hw = VW / (2 * z), hh = VH / (2 * z), cl = (a, lo, hi) => lo > hi ? (lo + hi) / 2 : Math.max(lo, Math.min(hi, a)), sh = SET.lite ? 0 : v[4];
   F.cam = { z, fx: cl(v[1], hw + 4, VW - hw - 4), fy: cl(v[2], hh + 4, VH - hh - 4), roll: SET.lite ? 0 : v[3], sx: sh * (Math.sin(u * 0.093) + Math.sin(u * 0.211 + 1.7)) / 2, sy: sh * (Math.sin(u * 0.117 + 0.6) + Math.sin(u * 0.183 + 2.9)) / 2 };
@@ -9199,8 +9117,8 @@ function suFatDraw(now, dt, cx, x, y, src) {      // every frame of his scene wh
   if (d.suCut && d.suCut.gs === 0 && now - d.suCut.at < 900 && Math.random() < 0.5 * (1 - (now - d.suCut.at) / 900)) suFgP(F, X + (Math.random() - 0.5) * 10, hy + 6 + Math.random() * 10, (Math.random() - 0.5) * 12, 10 + Math.random() * 20, 0.5 + Math.random() * 0.4, '#c4121c', 1, 240);
   suFgParts(F, dt); ctx.restore();
 }
-function suFatOverlay(now) {      // over the whole picture, not moved by the camera: the dark edges, the flashes, the black bars, the line he says, the hint to skip
-  const F = suFat, S = SU_FAT, u = Math.min(S.rep + S.track, F.u || 0), end = S.rep + S.track;
+function suFatOverlay(now, F, end) {      // over the whole picture, not moved by the camera: the dark edges, the flashes, the black bars, the line he says, the hint to skip (v1.214 F and end: the enemy Sukuna's finisher on you is drawn with it too)
+  F = F || suFat; end = end || SU_FAT.rep + SU_FAT.track; const S = SU_FAT, u = Math.min(end, F.u || 0);
   const kin = Math.min(1, u / 500), kout = Math.max(0, Math.min(1, (end - u) / 450)), bk = Math.min(kin * kin * (3 - 2 * kin), kout * kout * (3 - 2 * kout)), bh = Math.round(VH * S.bar * bk);
   ctx.save(); ctx.imageSmoothingEnabled = false;
   if (u >= S.rep) { ctx.fillStyle = 'rgba(40,60,110,0.16)'; ctx.fillRect(0, 0, VW, VH); }      // (the replay is a memory: a cold tint)
@@ -9212,6 +9130,76 @@ function suFatOverlay(now) {      // over the whole picture, not moved by the ca
   ctx.restore();
 }
 window.__suDom = () => ({ last: suDomLast, cover: suDomCover(pnow()) });      // (test hook: where the shrine was drawn last and how much of the screen the domain covers)
+
+// ---------------------------------------------------------------- v1.214 THE ENEMY SUKUNA'S FINISHER ON YOU (the user: "his head-cut, turned round"): he does to you what you do to the enemy: you are held and kneel, he puts a hand in your hair and says the line, a huge slash passes over your head, you stare up at him and charge, he touches your face and is gone, behind you, your head falls apart in three slices, the slow motion replay shows that he touched you first, and you fall. Your own fighter is drawn by its own code, so this cannot be your fighter's scene turned round: it is a cutscene on its own clock that uses his camera shots, slash, slices and overlay (SU_FAT, SU_FAT_SHOTS, suFatShot, suFatPic, suFatSlashDraw, suFatSlice, suFatOverlay) and your pictures from the kit of the other fatalities (yfKit); the whole picture is turned round, like the other cutscenes of the enemy.
+const SR_FALL = 600;      // how long you take to fall at the end (ms)
+function srStart(now) {
+  const d = dummy, g = CU_GAME[3]; if (!g || !g.frames.length || !g.atk[6] || !g.atk[17] || !g.atk[24]) return false;
+  cineClear(); closeSettings(); stickDown = false; d.ai = 'rest'; d.pull = null; d.vx = 0; d.vact = null; d.cact = null; d.cheld = null; d.held = null; d.fa = null; vs.catHold = 0;
+  slowAt = -1e9; slowFin = false; stopMs = 0; cuAtkAt = cuJumpAt = -1; cuDash = null; cuShots = []; cuAtkQ = cuLpQ = 0; blkAt = blkEnd = -1; stance = 'stand'; $('pad').classList.add('cine'); $('hud').classList.add('cine'); puff(wx + SU_FAT.gap, 6);
+  sr = { u: 0, slow: -1, wx0: wx, g0: Math.max(20, Math.min(FAT_RANGE, Math.abs(d.x - wx))), did: {}, p: [], fl: [], cam: null, e: -1, cutU: -1, shake: 0, dust: 0, skipped: false, tapAt: -1e9, K: yfKit(vs.me, true), gs: gdSet(), inv: !!vs.inv };
+  return true;
+}
+function srReset() { sr = null; $('pad').classList.remove('cine'); $('hud').classList.remove('cine'); }
+function srEnd(now) {      // you are gone and the enemy Sukuna wins the round
+  const s = sr; wx = s.wx0; if (vs) vs.noHead = true; srReset(); blackUntil = now + 500; if (!vs || vs.ph !== 'fight') return;
+  vs.hp = 0; vs.sh = 0; vs.hitAt = now; endRound('enemy', 'fatal', now);
+}
+function srSkip(now) { const s = sr; if (!s || s.skipped || s.u < SU_FAT.skipAt) return; s.skipped = true; srEnd(now); }
+function srTap(now) { const s = sr; if (!s || s.skipped) return; if (now - s.tapAt < 1500) srSkip(now); else s.tapAt = now; }      // (a tap on the screen: the first says how to skip, a second one within a second and a half skips)
+function srCut(s, now, u, X, hy) {      // your head is cut (the first time at full speed, and again in the replay): a flash and a crack, then the three slices slide apart
+  s.fl.push({ at: now, dur: 220, a: s.gs === 2 ? 0.8 : 0.6, col: '255,255,255' }); s.shake = Math.max(s.shake, 4); snd('slice'); snd('sukcut', 2);
+  if (s.gs < 2) { s.cutU = u; if (s.gs === 0) { snd('splat'); for (let i = 0, n = SET.lite ? 10 : 26; i < n; i++) suFgP(s, X + (Math.random() - 0.5) * 12, hy + 4 + Math.random() * 12, (Math.random() - 0.3) * 70, -20 - Math.random() * 60, 0.6 + Math.random() * 0.8, ['#c4121c', '#ff2a3a', '#7a0f1e'][i % 3], i % 5 === 0 ? 2 : 1, 260); } }
+}
+function srFrame(now, dt) {
+  const s = sr, S = SU_FAT, g = CU_GAME[3], K = s.K, cx = Math.round(VW / 2), F0 = S.rep + S.track, END = F0 + SR_FALL, once = (k, fn) => { if (!s.did[k]) { s.did[k] = 1; fn(); } };
+  keyL = keyR = padL = padR = jumpReq = atkReq = crReq = lpReq = dashReq = ceReq = domReq = blockHeld = false; fatReq = 0; cuAtkQ = cuLpQ = 0;
+  if (s.tapAt > now) s.tapAt = -1e9;      // (a tap made while the game was paused: the clock has gone back since)
+  dt = Math.min(0.05, dt || 0.016); let rate = 1;
+  if (s.u >= S.rep) { if (s.slow < 0) s.slow = S.repMs; if (s.slow > 0) { rate = S.repRate; s.slow -= dt * 1000; if (s.slow <= 0) snd('slowout'); } }      // (the replay: its first 4.2 real seconds run at a fifth of the speed)
+  s.u += dt * 1000 * rate; const u = s.u, sdt = dt * rate, e = u >= S.rep ? u - S.rep : u >= S.act ? (u - S.act) * S.actK : -1, P = u >= S.rep ? 'B' : 'A'; s.e = e;
+  // where you are (kneeling in front of him, charging at him, on the track of the touch) and where he is
+  const D = u < S.setMs ? s.g0 + (S.gap - s.g0) * (1 - Math.pow(1 - u / S.setMs, 3)) : e >= 0 ? suFatD(e) : u >= S.charge ? S.gap - (S.gap - S.d0) * Math.pow(Math.min(1, (u - S.charge) / S.chargeMs), 1.6) : S.gap, dx = e >= S.holdE ? S.dxT : 0, WV = s.wx0 + D;
+  const vp = e < 0 && u < S.charge ? yfVPic(K, ['rx', 9, 0.4], now, false) : { src: K.vF[Math.floor(now / (1000 / IDLE_FPS)) % K.vF.length], info: K.vi(-1) }, hy = gy + 2 - 62 - (vp.info.top || 0) + suFatTopRow(vp.src);      // (hy: the top of your head)
+  // what happens when it is due
+  if (u >= S.hair) once('hair', () => snd('cloth'));
+  if (u >= S.charge) once('ch', () => puff(s.wx0 + S.gap, 4));
+  if (u >= S.charge && e < 0 && now >= s.dust) { s.dust = now + 90; puff(WV + 6, 2); }
+  if (u >= S.slash) once('sw', () => snd('swing', 3));
+  if (u >= S.slash + S.shit) once('slash', () => { snd('sukcut', 2); snd('swing', 1); s.fl.push({ at: now, dur: 260, a: 0.45, col: '255,230,230' }); s.shake = Math.max(s.shake, 3); });
+  if (u >= S.slash + S.shit + 50) once('pass', () => { for (let i = 0, n = SET.lite ? 6 : 14; i < n; i++) suFgP(s, cx + D + (Math.random() - 0.5) * 18, hy - 4 + Math.random() * 3, (Math.random() - 0.2) * 120, -10 - Math.random() * 40, 0.4 + Math.random() * 0.5, i % 2 ? '#ffffff' : '#ffc0c8', 1, 120); });
+  if (u >= S.rep) once('rep', () => { s.cutU = -1; s.fl.push({ at: now, dur: 300, a: 0.9, col: '255,255,255' }); snd('slowin'); });      // (the replay: your head is whole again)
+  if (e >= S.touchE) once(P + 'touch', () => { if (P === 'B') { s.fl.push({ at: now, dur: 130, a: 0.7, col: '255,255,255' }); s.shake = Math.max(s.shake, 2); snd('sukimp'); spark(WV - 6, gy - 36, 8, ['#ffffff', '#ffc0c8', '#ff2a3a'], false, -1); } });
+  if (e >= S.holdE) once(P + 'tp', () => { snd('vanish'); puff(s.wx0 + 2, 5); });
+  if (e >= S.tpE) once(P + 'arr', () => { snd('arrive'); puff(s.wx0 + S.dxT, 5); });
+  if (e >= S.cutE) once(P + 'cut', () => srCut(s, now, u, cx + D, hy));
+  if (u >= F0 + SR_FALL * 0.7) once('thud', () => { snd('ko'); snd('land', 1.4); s.shake = Math.max(s.shake, 3); });
+  // your picture: your head in its three slices after the cut, and the fall at the end
+  const ck = s.cutU >= 0 ? Math.max(0, Math.min(1, (u - s.cutU) / 700)) : 0, vsrc = s.gs < 2 && ck > 0 ? suFatSlice(vp.src, ck, s.gs) : vp.src, fe = Math.pow(Math.max(0, Math.min(1, (u - F0) / SR_FALL)), 2), sp = suFatPic(g, u, e, now);
+  // the camera
+  const c = suFatShot(s, Math.min(F0, u), { cx, sx: cx + dx, ex: cx + D, hy }); s.shake *= Math.exp(-dt * 9); if (s.shake > 0.25 && !SET.lite) { c.sx += (Math.random() * 2 - 1) * s.shake; c.sy += (Math.random() * 2 - 1) * s.shake; }
+  // the picture (the whole of it is turned round: he is on the right, facing you)
+  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); ctx.translate(VW, 0); ctx.scale(-1, 1); suFgCamBegin(c); wx = s.wx0;
+  drawBackdrop(now); ctx.fillStyle = 'rgba(30,0,8,0.22)'; ctx.fillRect(-VW, 0, VW * 3, VH); drawSmoke(now, sdt);
+  shadow(cx + D, 9); if (sp) shadow(cx + dx, 9);
+  yfSpr(vsrc, vp.info, cx + D - 5 * fe, 9 * fe, -1, { r: -1.5 * fe });
+  if (sp) yfSpr(s.inv ? invOf(sp) : sp, CUEN_INFO, cx + dx, 0, 1);
+  suFatSlashDraw(now, cx, hy, u);
+  ctx.save();
+  if (e >= S.holdE && e < S.holdE + 260) {      // (the trail of his vanishing: his hand-out picture where he was and on the way, fading, and speed lines to where he is now)
+    const q = (e - S.holdE) / 260, pic = s.inv ? invOf(g.atk[17][4]) : g.atk[17][4];
+    for (let i = 0; i < 3; i++) { ctx.globalAlpha = 0.4 * (1 - q); ctx.drawImage(pic, Math.round(cx - 32 + S.dxT * (i / 2) * Math.min(1, q * 3)), gy - 61); }
+    ctx.globalAlpha = 0.8 * (1 - q); for (let i = 0; i < 5; i++) { ctx.fillStyle = i % 2 ? '#ffffff' : '#bcd4ff'; ctx.fillRect(Math.round(cx + 6), gy - 49 + i * 8, Math.round(S.dxT * Math.min(1, q * 3)), 1); }
+    ctx.globalAlpha = 1;
+  }
+  const ce = s.cutU >= 0 ? u - s.cutU : -1;
+  if (ce >= 0 && ce < 90) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 1 - ce / 90; ctx.fillStyle = '#ffffff'; for (const r of [5, 10]) ctx.fillRect(Math.round(cx + D - 16), Math.round(hy + r), 32, 1); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }      // (the two lines of the cut)
+  if (s.gs === 0 && ce >= 0 && ce < 900 && Math.random() < 0.5 * (1 - ce / 900)) suFgP(s, cx + D + (Math.random() - 0.5) * 10, hy + 6 + Math.random() * 10, (Math.random() - 0.5) * 12, 10 + Math.random() * 20, 0.5 + Math.random() * 0.4, '#c4121c', 1, 240);
+  suFgParts(s, dt); ctx.restore(); drawSparks(now, sdt);
+  ctx.restore(); ctx.restore();
+  suFatOverlay(now, s, END);
+  if (u >= END) srEnd(now);
+}
 
 // ---------------------------------------------------------------- v1.144 RYU ISHIGORI (this file is spliced into template.html by build_html.py, right after sukuna.js)
 // A fighter of FREE PLAY of the custom kind (customScene in custom.js): his pictures are made by tools/ryu_art.py out of the LOOK the user chose (tools/ryu_src/master.png: face, hair, fur, jacket, belt, jeans, boots; the picture is only his look, every pose
@@ -9498,7 +9486,7 @@ const RY_JPH = [
   '0000000000000000000000000000000000000000030007000380070003800700030007000300070007000700070007f8070ffff8060fffe00600070006000300060003000e0003000e0007000660070006e0070006c0070007c0070007800e0007800e0007801c0007803c00030078000201f0000001e0000000000000000000'];      // (the four letters of 今回だけ, 32 x 32 pixels each, a row of 8 hex digits: made from a Japanese font by tools/ryu_jp.py)
 let ryUl = null, ryJpC = null;      // (the ultimate in progress: { t0, row, fi (the picture), dx, cut, fired, fireAt, nextTick, tickN, hit (null = not yet, true / false), w, typed }; the pictures of the letters)
 const ryEase = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
-const ryUlBusy = () => !!(js || vf || cf || ryf || irf || ke || dom || ult || fat || yf || se || de || c4x);      // (another cutscene has the game)
+const ryUlBusy = () => !!(js || vf || cf || ryf || irf || sr || ke || dom || ult || fat || yf || se || de || c4x);      // (another cutscene has the game)
 const ryUlHit = () => !!ryUl;      // (gojoHit: nothing of the enemy's touches him)
 const ryUlNoHud = () => !!ryUl && !ryUl.fired;      // (the health bars stay away until the beam has fired)
 function ryUlTry(now) {      // the DOMAIN button: it starts if he stands or crouches with nothing else going on, the wait is over, a living enemy is there and the energy is there (67%)
@@ -18626,6 +18614,7 @@ function drawScene(now, dt) {
   if (ff) { ffFrame(now, dt); return; }         // ...and Freddy's
   if (ryf) { ryfFrame(now, dt); return; }       // ...and Ryu's (v1.212, tools/ryufat.js)
   if (irf) { irfFrame(now, dt); return; }       // ...and Iron Man's (v1.213, tools/ironfat.js)
+  if (sr) { srFrame(now, dt); return; }       // ...and the enemy Sukuna's on you (v1.214, tools/sukuna.js)
   if (ke) { keFrame(now, dt); return; }         // ...and the end of the Cat in the story
   comboEscape(now); flowTick(now); yuTick(now, dt); counterTick(now); domTick(now); bfTick(now); vsTick(now, dt); fearTick(now); ceTick(now, dt); netLeash(now); if (!dom && !(vs && vs.net)) { if (vs && vs.foe === 'verity') storyBattleTick(now, dt); else if (vs && vs.foe === 'cat') catTick(now, dt); ultTick(now, dt); }      // (the DOMAIN freezes everyone: none of the enemy's own clocks run while it lasts)
   if (fatReq) {                                 // the FATALITY button: it starts the cutscene as soon as it is allowed (a press is remembered for half a second)
@@ -19644,7 +19633,7 @@ window.__story = () => story ? ({ T: +(story.T || 0).toFixed(2), battle: !!story
 // ---------------------------------------------------------------- v1.30 A FASTER GAME. GAME PACE (SETTINGS > GAME: NORMAL / FAST 1.25x / TURBO 1.5x, FAST is the default): in a fight everything runs faster than the real clock (walking, swings, the enemy, the cooldowns, the combo window), but the round timer and the 10 seconds of the Inheritence still count real seconds; not in the Wi-Fi fight, the story, cutscenes (FATALITY, JUMPSCARE, DOMAIN, the ULTIMATE) or the menus. PARRY: slow motion and a free counter. DODGE: a dash just before a blow gives energy. PRESSURE: the longer you do not hurt the enemy, the shorter his rests. SPEED BONUS: a RUSH or ROULETTE wave cleared under its par time pays extra.
 const PACE_X = [1, 1.25, 1.5, 0.8], E_DODGE = 8;
 const paceBase = () => state === 'play' && SET.pace && !(vs && (vs.net || vs.story)) ? PACE_X[SET.pace] : 1;      // (the pace of this kind of fight: not the Wi-Fi fight, not the story)
-const paceNow = () => !c4x && (!vs || vs.ph === 'fight') && !fat && !yf && !se && !de && !js && !vf && !cf && !irf && !ryf && !ke && !dom && !ult ? paceBase() : 1;      // (how many times faster than the real clock the game runs right now: 1 in a cutscene and between the rounds)
+const paceNow = () => !c4x && (!vs || vs.ph === 'fight') && !fat && !yf && !se && !de && !js && !vf && !cf && !irf && !sr && !ryf && !ke && !dom && !ult ? paceBase() : 1;      // (how many times faster than the real clock the game runs right now: 1 in a cutscene and between the rounds)
 let ctr = null, ctrBoost = 0, dodgeAt = -1e9;      // ctr = { at, until }: the free counter that follows a PARRY; ctrBoost: the time stamp (atkAt) of that counter's swing, the hits of that swing do 1.5 times the damage; dodgeAt: the last DODGE reward
 function strikeBack(now) {      // the LAST M1 of your combo, lunging at the enemy so that it reaches (the combo escape and the free counter of a parry)
   if (!dummy || dummy.ko >= 0) return false;
@@ -20811,7 +20800,7 @@ const SEL = {      // the seven fighters: short name, panel name, a tag, three s
   cat: { nm: 'CAT', full: 'CARTOON<br>CAT', tag: 'CURSED SPIRIT', mv: ['CARTOON ATTACK', 'GIANT KICK', 'ARM HANG'], col: [200, 204, 216], face: [19, 0] },
   freddy: { nm: 'FREDDY', full: 'FREDDY<br>KRUEGER', tag: 'CURSED SPIRIT', mv: ['PIERCE', 'BOILING WATER', 'DREAM'], col: [70, 196, 106], face: [21, 1] },
   cu3: { nm: 'SUKUNA', full: 'SUKUNA', tag: 'KING OF CURSES', mv: ['DISMANTLE', 'CLEAVE MODE', 'MALEVOLENT SHRINE'], col: [255, 58, 74], face: [21, 1] },
-  cu5: { nm: 'IRON MAN', full: 'IRON<br>MAN', tag: 'TONY STARK', mv: ['4-HIT COMBO', 'ROCKET UPPERCUT', 'DOWNSLAM', 'LOW JABS', 'CHARGE PUNCH', 'BACKFLIP', 'REPULSOR MODE', 'BEAR HUG / BLAST', 'UNIBEAM'], col: [196, 32, 44], face: [20, 0] } };      // (v1.190 Iron Man: TRAINING only for now; v1.191 his moves; v1.192 crouch + ATTACK, dash + ATTACK and a double dash back; v1.193 the MODE button: REPULSOR; v1.203 the ULTIMATE: UNIBEAM)
+  cu5: { nm: 'IRON MAN', full: 'IRON<br>MAN', tag: 'TONY STARK', mv: ['4-HIT COMBO', 'ROCKET UPPERCUT', 'DOWNSLAM', 'LOW JABS', 'CHARGE PUNCH', 'BACKFLIP', 'REPULSOR MODE', 'BEAR HUG / BLAST', 'UNIBEAM', 'FATALITY'], col: [196, 32, 44], face: [20, 0] } };      // (v1.190 Iron Man: TRAINING only for now; v1.191 his moves; v1.192 crouch + ATTACK, dash + ATTACK and a double dash back; v1.193 the MODE button: REPULSOR; v1.203 the ULTIMATE: UNIBEAM)
 const SEL_ROWS = [['gojo', 'yuji', 'cu4', 'cu5'], ['verity', 'cat', 'freddy', 'cu3']], FS_ORDER = [].concat(...SEL_ROWS), FACE = 28;      // 4 on top, 4 below (the humans first; v1.190 Iron Man is the fourth on top)
 const selRgb = (c, a) => 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')';
 const fsPic = (who, now, inv) => {      // the idle picture of any of the seven (a canvas), or null while a fighter's pictures are not cut yet
@@ -21225,10 +21214,10 @@ function ffCrawl(u, bob, jaw, blood) {      // u: 0 = standing (leaning), 1 = on
 // SETTINGS > GAME > GRAPHIC DAMAGE: FULL = everything; CLEAN = the same without blood and organs (the stumps are pale); OFF = the middle is cut away: from the slam the screen goes dark and only the sounds play (they are played a little closer together), then it fades in on Freddy standing and wiping his mouth.
 const FFT = { lunge: 0.5, grab: 1.1, lift: 1.3, top: 2.05, slam: 2.6, down: 3.1, roar: 3.5, bite1: 4.3, rip1: 5.7, eat1: 5.8, bite2: 7.4, rip2: 8.8, eat2: 8.9, crawl: 10.2, belly: 11.0, organs: 11.7, die: 12.8, back: 13.2, wipe: 13.9, laugh: 15.3, title: 15.8, end: 17.4 };
 let ff = null;
-const FF_VICS = ['gojo', 'yuji', 'verity', 'cat', 'freddy'], FF_BB = new WeakMap();
+const FF_VICS = ['gojo', 'yuji', 'verity', 'cat', 'freddy', 'cu3', 'cu4', 'cu5'], FF_BB = new WeakMap();
 function ffBox(img) { let b = FF_BB.get(img); if (b) return b; const w = img.width, h = img.height, d = img.getContext('2d').getImageData(0, 0, w, h).data; let x0 = w, x1 = -1, y0 = h, y1 = -1; for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 8) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } b = { x0, x1, y0, y1 }; FF_BB.set(img, b); return b; }      // (the box the picture really covers)
 function ffState(now) {      // Freddy's FATALITY. 0 = ready; 1 = the enemy is above 20% health; 2 = the enemy is too far (or behind him); 3 = not possible right now
-  if (!vs || vs.story || vs.cv || vs.net || vs.ph !== 'fight' || js || vf || fat || yf || yu || (dom && domLock()) || ult || cf || ryf || irf || ke || fd || fg || fwPh || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.curse || !FF_VICS.includes(vs.foe) || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;
+  if (!vs || vs.story || vs.cv || vs.net || vs.ph !== 'fight' || js || vf || fat || yf || yu || (dom && domLock()) || ult || cf || ryf || irf || sr || ke || fd || fg || fwPh || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || dummy.curse || !FF_VICS.includes(vs.foe) || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;
   if (!(dummy.hp <= dummy.max * FAT_LOW)) return 1;
   if (dummy.x - wx > FAT_RANGE || dummy.x - wx < -4) return 2;
   return hurtAt >= 0 || gojoGone || jumpAt >= 0 || (twOn() && vs.tw.slide) ? 3 : 0;
@@ -22022,7 +22011,7 @@ const rfH = (x, y, s) => { let h = Math.imul(x | 0, 73856093) ^ Math.imul(y | 0,
 const rfFl = a => { a = a * SET.fl / 100; return SET.nf ? Math.min(a, 0.1) : a; };      // (a flash as bright as SETTINGS > FLASHES allows)
 function ryfState(now) {      // the FATAL button while you play Ryu (the same rules as the others': the enemy at 20% health or less and close, half of the energy; v1.213 Iron Man's too, tools/ironfat.js): 0 = ready; 1 = the enemy is above 20% health; 2 = too far away; 3 = not possible right now
   const g = CU_GAME[vs && vs.me === 'cu5' ? 5 : 4];
-  if (!vs || vs.story || vs.cv || vs.net || lacks('fat') || vs.ph !== 'fight' || js || vf || fat || yf || yu || (dom && domLock()) || ult || cf || ff || ryf || irf || ke || fd || bcl || ryUl || !g || g.bh || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;
+  if (!vs || vs.story || vs.cv || vs.net || lacks('fat') || vs.ph !== 'fight' || js || vf || fat || yf || yu || (dom && domLock()) || ult || cf || ff || ryf || irf || sr || ke || fd || bcl || ryUl || !g || g.bh || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;
   if (!(dummy.hp <= dummy.max * FAT_LOW)) return 1;
   if (Math.abs(dummy.x - wx) > FAT_RANGE) return 2;
   return hurtAt >= 0 || gojoGone || cuJumpAt >= 0 || cuAtkAt >= 0 || cuDash || blkAt >= 0 || stance !== 'stand' || (twOn() && vs.tw && vs.tw.slide) ? 3 : 0;
@@ -22664,7 +22653,7 @@ function admClear(d, now) {      // a click cancels what he was doing (not a K.O
 }
 function admWhy(now) {      // why a click cannot start a move now ('' = it can)
   const d = dummy; if (!admOn()) return 'NOT HERE'; if (vs.ph !== 'fight') return 'WAIT'; if (d.ko >= 0) return 'K.O.';
-  if (cutsceneOn() || fat || fd || ult || js || vf || cf || ff || ryf || irf || yf || dom || ke || d.cap) return 'BUSY'; if (d.air || d.airH > 0) return 'WAIT'; return '';
+  if (cutsceneOn() || fat || fd || ult || js || vf || cf || ff || ryf || irf || sr || yf || dom || ke || d.cap) return 'BUSY'; if (d.air || d.airH > 0) return 'WAIT'; return '';
 }
 // the moves of each enemy: [{ n: name on the button, go: now => starts it (false = not possible just now), big: a cutscene or a domain }]. The brains: the grade AI of updateFighterVs (Gojo, Yuji, Verity and the Cat swing with d.ai = 'attack' and d.k), freFoe (Freddy), cuFoe (Sukuna and Ryu: d.fa)
 function admMoves() {
@@ -22674,14 +22663,14 @@ function admMoves() {
     M('BLOCK', now => { const d = dummy; d.ai = 'block'; d.aiAt = now; d.until = ADM.hold = now + 1000; return true; });
     M('DODGE', now => { const d = dummy, gap = d.x - wx; d.ai = 'dodge'; d.aiAt = now; d.until = d.dodgeUntil = ADM.hold = now + 300; d.vx += (gap > 0 ? 1 : -1) * 250; puff(d.x, 4); return true; });
   };
-  const fatal = () => { if (cuMe() && (f === 'verity' || f === 'freddy')) return; M('FINISHER', now => { if (fat || fd || ult || js || vf || cf || ff || ryf || irf || yf) return false; fatGo(now, 0, true); return true; }, true); };      // (his FATALITY on you: Gojo's, Verity's, the Cat's, Freddy's and (v1.212) Ryu's have a version for the enemy; Yuji and Sukuna have none, and a custom fighter of yours has none for Verity's or Freddy's, as in fatAiState; it ends the round for you)
+  const fatal = () => { M('FINISHER', now => { if (fat || fd || ult || js || vf || cf || ff || ryf || irf || sr || yf) return false; fatGo(now, 0, true); return true; }, true); };      // (his FATALITY on you: Gojo's, Verity's, the Cat's, Freddy's and (v1.212) Ryu's have a version for the enemy; Yuji and Sukuna have none, and a custom fighter of yours has none for Verity's or Freddy's, as in fatAiState; it ends the round for you)
   if (f === 'gojo') { ATK_NAMES.forEach((n, k) => M(n, atk(k))); defence(); fatal(); }
   else if (f === 'yuji') {
     const T = YU_ATK.names, ce = (d, now) => { if (!d.ce) ADM.ceBack = 1; d.ce = true; d.ceFlame = d.ceAt = now; d.ceUntil = now + 6000; }, conc = () => snd('f:concgather');      // (R.KICK, ELBOW, DOWNSLAM and PUSH KICK are the blows of his cursed energy mode: the flames come on with them)
     for (const k of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15]) M(T[k], atk(k, (d, now) => { if (k === 3) d.vx -= 100; if (k === 4 || k === 12) d.divOk = 0; if (k >= 5 && k <= 8) ce(d, now); if (k === 9 || k === 13 || k === 15) conc(); }));
     M('POWER UP', now => { const d = dummy; d.ce = true; d.ceFlame = d.ceAt = now + POW_FLAME; d.ceUntil = now + 8000; d.ceNext = d.ceUntil + 5000; ADM.ceBack = 0; d.ai = 'power'; d.aiAt = now; d.k = 5; snd('ceon'); return true; });
     M('POWER OFF', () => { const d = dummy; d.ce = false; d.ceFlame = 0; d.k = 0; ADM.ceBack = 0; snd('ceoff'); return true; });
-    defence();
+    defence(); fatal();
   } else if (f === 'verity') {
     ATK_NAMES.forEach((n, k) => M(n, atk(k)));
     M('BITE', now => { vStart(dummy, 'bite', now); return true; }); M('LOW CLAW', now => { vStart(dummy, 'crouch', now); return true; });
@@ -22699,7 +22688,7 @@ function admMoves() {
     defence(); fatal();
   } else if (cuFoeOn() && cuenReg()) {      // Sukuna and Ryu: the blows of the custom engine, one after the other (d.fa), and each one's special moves
     const g = cuFoeG(), n = +f.slice(2), cu = (k, type) => now => { dummy.chain = 99; cuenStart(k, now, type); return true; };
-    if (n === 3) { for (const k of [0, 1, 2, 3, 4, 5, 6, 7, 8, 14, 15, 16]) M(g.an[k], cu(k, 'cu')); M('AIR CUT', cu(9, 'aircut')); M('FIRE ARROW', cu(22, 'arrow')); M('SHRINE', cu(0, 'dom'), true); }
+    if (n === 3) { for (const k of [0, 1, 2, 3, 4, 5, 6, 7, 8, 14, 15, 16]) M(g.an[k], cu(k, 'cu')); M('AIR CUT', cu(9, 'aircut')); M('FIRE ARROW', cu(22, 'arrow')); M('SHRINE', cu(0, 'dom'), true); fatal(); }
     else if (n === 4) { for (const k of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]) M(g.an[k], cu(k, 'cu')); M('KI BLAST', cu(12, 'blast')); M('JUST ONCE', cu(16, 'beam'), true); fatal(); }
     else { for (const k of [0, 1, 2, 3, 4, 5, 6, 8, 9, 10]) M(g.an[k], cu(k, 'cu')); M('CHARGE', cu(7, 'icharge')); M('BLAST', cu(0, 'iblast')); M('LASER', cu(0, 'ilaser')); M('SPIN BLAST', cu(0, 'ispin')); M('GROUND PUNCH', cu(0, 'igp')); M('BEAR HUG', cu(0, 'ihug')); M('UNIBEAM', cu(0, 'uni'), true); fatal(); }      // (v1.213 and his FINISHER; v1.208 Iron Man: the chain, the rocket uppercut, the low jabs, the two bolts, and the UNIBEAM)
     defence();
@@ -22768,7 +22757,7 @@ function bclFoeUlt(now) {      // is the ENEMY's going on?
 }
 function bclTry(now, starter) {      // a fighter has just started his ultimate ('me' or 'foe'): when the other one's is going on, the beams clash
   if (bcl || !vs || state !== 'play' || vs.ph !== 'fight' || !bclPair() || !dummy || dummy.ko >= 0 || dummy.cap || dummy.twAway || dummy.mode !== 'fighter') return false;
-  if (dom || fat || yf || fd || ult || js || vf || cf || ff || ryf || irf || ke || se || de || c4x) return false;
+  if (dom || fat || yf || fd || ult || js || vf || cf || ff || ryf || irf || sr || ke || se || de || c4x) return false;
   if (twOn()) { const T = vs.tw; if (T.away || T.cab || T.fFoe !== T.fMe) return false; }
   if (starter === 'me' ? !bclFoeUlt(now) : !bclMeUlt(now)) return false;
   return bclBegin(now, starter === 'me' ? 'foe' : 'me');
@@ -23082,6 +23071,16 @@ window.__ach = () => ({ got: { ...PROG.ach }, q: achQ.length, busy: achBusy, u: 
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+ {
+  "v": "1.214",
+  "t": "YUJI'S ONE FATALITY FOR EVERYONE, THE ENEMY SUKUNA'S HEAD-CUT ON YOU, AND VERITY AND FREDDY ON SUKUNA, RYU AND IRON MAN",
+  "n": [
+   "You asked for the missing fatalities and here they are. YUJI: all his separate versions for each enemy are gone, and he now has ONE fatality, the same on every enemy (the 30-second scene of eight BLACK FLASHES, the last one huge), like everybody else. And now the ENEMY YUJI does it to YOU too, from SEMI-GRADE 1 up, the moment you are at 20% or less and he is close: the whole picture is turned round and you are the one who takes the eight Black Flashes. In the training ADMIN box the enemy Yuji has a FINISHER button now.",
+   "SUKUNA: the enemy Sukuna now does his head-cut finisher to YOU, the same one you do to the enemy. You are held and kneel, he puts a hand in your hair and says \"You hold your head quite high\", a huge slash passes over your head, you stare up at him and charge, he touches your face and is gone, behind you, your head falls apart in three slices, a slow-motion replay shows that he touched you first, and then you fall. It works against every fighter, and it follows GRAPHIC DAMAGE: FULL shows the slices and the blood, CLEAN the slices without blood, OFF nothing is cut. Two taps skip it. He has a FINISHER button in the ADMIN box too.",
+   "VERITY AND FREDDY: their fatalities work on the enemy SUKUNA, RYU and IRON MAN now, and the enemy Verity and the enemy Freddy do theirs to you when you play Sukuna, Ryu or Iron Man: all four ways.",
+   "IRON MAN'S CARD on the fighter screen lists his FATALITY now, and it still fits inside the card."
+  ]
+ },
  {
   "v": "1.213",
   "t": "IRON MAN'S FATALITY (FOR YOU AND FOR THE ENEMY IRON MAN) AND IRON MAN IN BATTLE",
@@ -25494,6 +25493,7 @@ $('skBack').addEventListener('click', () => show('modes'));
 for (const [k, id] of SK_TABS) $(id).addEventListener('click', () => { skTab = k; skSel = null; buildSkills(); });
 addEventListener('pointerdown', e => { if (state === 'story') storySkip(e); });      // a tap skips to the next part of the cutscene (in the fight of chapter 3 it answers the prompts: c13Tap)
 addEventListener('pointerup', e => { if (state === 'story') { if (story && story.c15) c15Up(e); else if (typeof c13Up === 'function') c13Up(e); } }); addEventListener('pointercancel', e => { if (state === 'story') { if (story && story.c15) c15Up(e); else if (typeof c13Up === 'function') c13Up(e); } });      // a tap skips to the next part of the cutscene
+addEventListener('pointerdown', () => { if (sr && !paused) srTap(pnow()); });      // (v1.214 the enemy Sukuna's finisher on you: two taps skip it)
 addEventListener('pointerdown', () => { if (yf && !paused) yfTap(pnow()); });      // (v1.49 Yuji's FATALITY: two taps skip it)
 addEventListener('pointerdown', () => { if (typeof suFgOn === 'function' && suFgOn() && !paused) suFgTap(pnow()); });      // (v1.127 Sukuna's FUGA cutscene: two taps skip it)
 $('vsNext').addEventListener('click', () => { twWant = !!vs && !!vs.twStart && !vs.story && !vs.hunt && !vs.rush && !vs.cv; if (vs && vs.cv) { startCurse(vs.ci + 1, 0); return; } const g = Math.min(5, (vs ? vs.gi : vsSel) + 1); vsSel = g; startMatch(g); });
@@ -26087,7 +26087,7 @@ function scCheck() {      // numbers that are not numbers, effect lists that onl
     for (const k in SC_LISTS) { let n = 0; try { n = SC_LISTS[k](); } catch { continue; } if (n > (SC.peak[k] || 0)) SC.peak[k] = n; if (n > (k === 'sparks' ? 800 : 400)) scNote('warn', 'THE LIST ' + k + ' HAS ' + n + ' ENTRIES', SC.say); }
   } catch (e) { scErr(e, 'CHECK'); }
 }
-const scBusy = () => !!(fat || yf || vf || cf || ff || ryf || irf || ke || dom || ult || js || yu || fd || (typeof suFatOn === 'function' && suFatOn()) || (typeof suDom !== 'undefined' && !!suDom) || (typeof ryUl !== 'undefined' && !!ryUl) || (typeof CU_GAME !== 'undefined' && !!((CU_GAME[3] && CU_GAME[3].cs) || (CU_GAME[4] && CU_GAME[4].cs))));      // a cutscene of a fight is running
+const scBusy = () => !!(fat || yf || vf || cf || ff || ryf || irf || sr || ke || dom || ult || js || yu || fd || (typeof suFatOn === 'function' && suFatOn()) || (typeof suDom !== 'undefined' && !!suDom) || (typeof ryUl !== 'undefined' && !!ryUl) || (typeof CU_GAME !== 'undefined' && !!((CU_GAME[3] && CU_GAME[3].cs) || (CU_GAME[4] && CU_GAME[4].cs))));      // a cutscene of a fight is running
 
 // ---------------------------------------------------------------- DATA: the game's own tables
 function scData() {
@@ -26286,15 +26286,15 @@ async function scRyuTurned() {
 // The ADMIN button of the top bar opens a small box with the moves of the enemy who is there. Checks: the button shows and the box opens; each of the 8 enemies has the list he should have (AD_EXP); a click on a move that is no cutscene starts it, it ends by itself, and nothing else starts after it while FREEZE is on (the first version let the Cat go on from SMASH into his whole chain: the frame in which the clicked move ends was open to his own brain); the big ones (FINISHER, ULTIMATE, JUMPSCARE, NIGHTMARE, SHRINE, JUST THIS ONCE, UNIBEAM) start, end, and the training goes on with the box open; FREEZE holds his own brain still and lets it go; the TOOLS (HEAL, INF HP, CLOSE / MID / FAR, ENEMY) do what they say; the X closes the box; and a Battle has neither the button nor the box. The enemy is a Special Grade one, so that a stray move after the clicked one is as likely as it gets.
 const AD_EXP = {
   gojo: 'R.HOOK,L.HOOK,ELBOW,KICK,BLOCK,DODGE,FINISHER',
-  yuji: 'R.HOOK,L.HOOK,KNEE,3 KICKS,DIVERGENT,R.KICK,ELBOW,DOWNSLAM,PUSH KICK,CONC.FIST,SWEEP,RUSH FIST,UPPERCUT,FACE KICK,SPIN ELBOW,POWER UP,POWER OFF,BLOCK,DODGE',
+  yuji: 'R.HOOK,L.HOOK,KNEE,3 KICKS,DIVERGENT,R.KICK,ELBOW,DOWNSLAM,PUSH KICK,CONC.FIST,SWEEP,RUSH FIST,UPPERCUT,FACE KICK,SPIN ELBOW,POWER UP,POWER OFF,BLOCK,DODGE,FINISHER',
   verity: 'R.HOOK,L.HOOK,ELBOW,KICK,BITE,LOW CLAW,JUMPSCARE,BLOCK,DODGE,FINISHER',
   cat: 'GRAB,PUNCH,GRAB 2,KICK,SMASH,PUSH DASH,CARTOON,ULTIMATE,BLOCK,DODGE,FINISHER',
   freddy: 'R.SLASH,L.SLASH,FAR L.PUNCH,FAR R.PUNCH,BOILING WATER,PIERCE,GROUND SLAM,NIGHTMARE,BLOCK,DODGE,FINISHER',
-  cu3: 'R.JAB,L.JAB,FACE KICK,COUNTER,R.JAB 2,L.UPPR,R.SLASH,L.SLASH,X SLASH,R.HOOK,L.HOOK,ELBOW,AIR CUT,FIRE ARROW,SHRINE,BLOCK,DODGE',
+  cu3: 'R.JAB,L.JAB,FACE KICK,COUNTER,R.JAB 2,L.UPPR,R.SLASH,L.SLASH,X SLASH,R.HOOK,L.HOOK,ELBOW,AIR CUT,FIRE ARROW,SHRINE,FINISHER,BLOCK,DODGE',
   cu4: 'L.HOOK,R.HOOK,KICK UP,JUMP PUNCH,LEG KICK,DOWNSLAM,HARD PUNCH,FRONT KICK,POWER PUNCH,DIVE PUNCH,5-HIT COMBO,DASH KICK,KI BLAST,JUST ONCE,FINISHER,BLOCK,DODGE',
   cu5: 'R.HOOK,L.HOOK,R.KICK,PUNCH,UPPERCUT,DOWNSLAM,LOW JABS,BACKFLIP,R.BLAST,L.BLAST,CHARGE,BLAST,LASER,SPIN BLAST,GROUND PUNCH,BEAR HUG,UNIBEAM,FINISHER,BLOCK,DODGE'
 };
-const AD_BIG = ['FINISHER', 'ULTIMATE', 'JUMPSCARE', 'NIGHTMARE', 'SHRINE', 'JUST ONCE', 'UNIBEAM'], SC_AD_N = 46, AD_WHO = SC_WHO.concat('cu5');      // (1 button + 8 x 3 lists and moves + 12 big moves (v1.212: the enemy Ryu's FINISHER is one; v1.213 the enemy Iron Man's too) + 2 FREEZE + 4 tools + 1 X + 1 closed box + 1 Battle; v1.208 Iron Man is the eighth enemy)
+const AD_BIG = ['FINISHER', 'ULTIMATE', 'JUMPSCARE', 'NIGHTMARE', 'SHRINE', 'JUST ONCE', 'UNIBEAM'], SC_AD_N = 48, AD_WHO = SC_WHO.concat('cu5');      // (1 button + 8 x 3 lists and moves + 14 big moves (v1.212: the enemy Ryu's FINISHER is one; v1.213 the enemy Iron Man's too; v1.214 the enemy Yuji's and Sukuna's) + 2 FREEZE + 4 tools + 1 X + 1 closed box + 1 Battle; v1.208 Iron Man is the eighth enemy)
 async function scAdmin() {      // (every enemy decides at once when he can: GRADES.aggr is 1 for the length of the checks, so that a stray move after a clicked one is certain, not a matter of luck)
   const aggr0 = GRADES.map(g => g.aggr), tr0 = {}, gore0 = SET.gore; for (const k of ['beh', 'ehp', 'php', 'pce', 'grade', 'foe', 'arm', 'spd', 'meter', 'info', 'put']) tr0[k] = TR[k]; GRADES.forEach(g => { g.aggr = 1; });
   try { await scAdmin1(); } finally { GRADES.forEach((g, i) => { g.aggr = aggr0[i]; }); Object.assign(TR, tr0); SET.gore = gore0; ADM.open = false; ADM.freeze = true; ADM.ceBack = 0; }      // (everything the checks changed is put back: the Special Grade and the enemy of the TRAIN page, the graphic damage, the aggression of the grades, and the box is closed again: in a game the frames of the menus close it, here the next section starts a room at once, and an open box would hold its enemy still)
@@ -26644,7 +26644,7 @@ async function scIronMoves() {
 // ---------------------------------------------------------------- CUTSCENES: the FATALITY and the DOMAIN of every fighter, played to the end
 async function scCuts() {
   SC.sec = 'CUTSCENES'; const FATAL = { gojo: 1, yuji: 1, verity: 1, cat: 1, freddy: 1, cu3: 1, cu4: 1 };
-  scCov('CUTSCENES', 0, SC_WHO.length * 2 + 3 + 13 + 19 + 5 + 7 + 7); SC.plan = (SC_WHO.length * 2 + 3 + 13 + 19 + 5 + 7 + 7) * 220; SC.done = 0;      // (v1.208 + 5: two fatalities and three moves of the enemy Iron Man; v1.212 + 7: Ryu's fatality in the three GRAPHIC DAMAGE settings and the enemy Ryu's on four fighters; v1.213 + 7: Iron Man's fatality in the three GRAPHIC DAMAGE settings and the enemy Iron Man's on four fighters)
+  scCov('CUTSCENES', 0, SC_WHO.length * 2 + 3 + 13 + 19 + 5 + 7 + 7 + 22); SC.plan = (SC_WHO.length * 2 + 3 + 13 + 19 + 5 + 7 + 7 + 22) * 220; SC.done = 0;      // (v1.208 + 5: two fatalities and three moves of the enemy Iron Man; v1.212 + 7: Ryu's fatality in the three GRAPHIC DAMAGE settings and the enemy Ryu's on four fighters; v1.213 + 7: Iron Man's fatality in the three GRAPHIC DAMAGE settings and the enemy Iron Man's on four fighters; v1.214 + 22: Verity's and Freddy's fatality on the enemy Sukuna, Ryu and Iron Man (6), the enemy Verity's and Freddy's on you as the three (6), the enemy Yuji's on five fighters, the enemy Sukuna's on five)
   for (let i = 0; i < SC_WHO.length; i++) {
     const w = SC_WHO[i];
     for (const [key, nm, low, max] of [['KeyH', 'FATALITY', 2, 700], ['KeyV', 'DOMAIN', 1, 520]]) {
@@ -26737,7 +26737,7 @@ async function scCuts() {
     show('title');
   }
   // v1.189 SUKUNA AND RYU AS ENEMIES: the fatality of three fighters on them, the enemy fatalities and nightmare on them as the player, and every special move of theirs (in the street)
-  for (const [w, foe] of [['gojo', 'cu3'], ['yuji', 'cu4'], ['cat', 'cu3'], ['gojo', 'cu4'], ['gojo', 'cu5'], ['yuji', 'cu5']]) {
+  for (const [w, foe] of [['gojo', 'cu3'], ['yuji', 'cu4'], ['cat', 'cu3'], ['gojo', 'cu4'], ['gojo', 'cu5'], ['yuji', 'cu5'], ['verity', 'cu3'], ['verity', 'cu4'], ['verity', 'cu5'], ['freddy', 'cu3'], ['freddy', 'cu4'], ['freddy', 'cu5']]) {
     const label = SC_NAME[w] + ' FATALITY ON THE ENEMY ' + SC_NAME[foe]; SC.say = label; SET.gore = SC_WHO.indexOf(w) % 3; window.__suAll = true;
     try { Object.assign(TR, { beh: 2, ehp: 2, php: 0, pce: 0, put: 2 }); startPractice(w, foe); } catch (e) { scErr(e, label); continue; }
     if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
@@ -26746,7 +26746,7 @@ async function scCuts() {
     if (await scUntil(() => scBusy(), 40, 250)) { if (await scUntil(() => !scBusy(), 800, 250)) { scPass(); scCov('CUTSCENES', 1, 0); } else scNote('warn', label + ' DID NOT END IN 40 SECONDS', ''); } else scNote('fail', label + ' DID NOT START', 'THE ENEMY WAS AT ' + (dummy ? Math.round(dummy.hp / (dummy.max || 1) * 100) : '?') + '% HEALTH');
     show('title');
   }
-  for (const [w, foe, what] of [['cu3', 'gojo', 'FATALITY'], ['cu4', 'cat', 'FATALITY'], ['cu3', 'freddy', 'NIGHTMARE'], ['cu4', 'freddy', 'NIGHTMARE'], ['cu5', 'gojo', 'FATALITY'], ['cu5', 'cat', 'FATALITY'], ['cu5', 'freddy', 'NIGHTMARE'], ['gojo', 'cu4', 'FATALITY'], ['cat', 'cu4', 'FATALITY'], ['cu3', 'cu4', 'FATALITY'], ['cu5', 'cu4', 'FATALITY'], ['gojo', 'cu5', 'FATALITY'], ['cat', 'cu5', 'FATALITY'], ['cu4', 'cu5', 'FATALITY'], ['yuji', 'cu5', 'FATALITY']]) {      // (the enemy's own fatality or nightmare on Sukuna, Ryu or Iron Man; v1.212 the enemy Ryu's fatality on four fighters; v1.213 the enemy Iron Man's on four)
+  for (const [w, foe, what] of [['cu3', 'gojo', 'FATALITY'], ['cu4', 'cat', 'FATALITY'], ['cu3', 'freddy', 'NIGHTMARE'], ['cu4', 'freddy', 'NIGHTMARE'], ['cu5', 'gojo', 'FATALITY'], ['cu5', 'cat', 'FATALITY'], ['cu5', 'freddy', 'NIGHTMARE'], ['gojo', 'cu4', 'FATALITY'], ['cat', 'cu4', 'FATALITY'], ['cu3', 'cu4', 'FATALITY'], ['cu5', 'cu4', 'FATALITY'], ['gojo', 'cu5', 'FATALITY'], ['cat', 'cu5', 'FATALITY'], ['cu4', 'cu5', 'FATALITY'], ['yuji', 'cu5', 'FATALITY'], ['cu3', 'verity', 'FATALITY'], ['cu4', 'verity', 'FATALITY'], ['cu5', 'verity', 'FATALITY'], ['cu3', 'freddy', 'FATALITY'], ['cu4', 'freddy', 'FATALITY'], ['cu5', 'freddy', 'FATALITY'], ['gojo', 'yuji', 'FATALITY'], ['cat', 'yuji', 'FATALITY'], ['cu3', 'yuji', 'FATALITY'], ['cu5', 'yuji', 'FATALITY'], ['yuji', 'yuji', 'FATALITY'], ['gojo', 'cu3', 'FATALITY'], ['verity', 'cu3', 'FATALITY'], ['cu4', 'cu3', 'FATALITY'], ['cu5', 'cu3', 'FATALITY'], ['cu3', 'cu3', 'FATALITY']]) {      // (the enemy's own fatality or nightmare on Sukuna, Ryu or Iron Man; v1.212 the enemy Ryu's fatality on four fighters; v1.213 the enemy Iron Man's on four)
     const label = 'THE ENEMY ' + SC_NAME[foe] + ': HIS ' + what + ' ON ' + SC_NAME[w]; SC.say = label; SET.gore = 0; window.__suAll = true;
     try { Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0, put: 2, grade: 4 }); startPractice(w, foe); } catch (e) { scErr(e, label); continue; }
     if (!(await scUntil(() => !!vs && vs.ph === 'fight', 40, 250))) { if (SC.cancel || scReal() > SC.cap) return; continue; }
