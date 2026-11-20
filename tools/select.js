@@ -189,7 +189,7 @@ function lsTap(who) {      // a face: choosing him is the old tap (he is chosen 
   if (lanRole === 'in' && lanPhase === 'pick' && !lanVerBad) snd('fsmove'); lanChoose(who);
 }
 $('lsRand').addEventListener('click', () => { const ok = LAN_FIGHTERS.filter(w => w !== lanMe); lanChoose(ok[Math.floor(Math.random() * ok.length)]); });
-const lsMoveNames = who => LAN_MOVES[who].map(r => r[0]).slice(0, 5);
+const lsMoveNames = who => SEL[who].mv.slice(0, 5);      // (v1.219 every move of every fighter works online: the same list as the offline fighter screen)
 function lsRender() {      // the texts of the Wi-Fi fighter screen
   const pick = lanPhase === 'pick', roll = lanPhase === 'roll', done = lanPhase === 'done', same = !!lanMe && lanMe === lanFoe, show2 = !pick;      // (the opponent's fighter is shown once both have chosen)
   for (const who of FS_ORDER) { const t = lsT[who]; fsTileSet(t, fsWhy('wifi', 0, who), who === lanMe, show2 && lanFoe && who === lanFoe && who !== lanMe ? 'P2' : '', false, who); t.el.disabled = !pick || lanVerBad; }
@@ -199,6 +199,7 @@ function lsRender() {      // the texts of the Wi-Fi fighter screen
   const road = lanPing < 0 ? 'PING ...' : 'PING ' + lanPing + ' MS' + (lanLane === 'udp' ? '' : ' (SLOW ROAD)') + (lanLoss >= 3 ? '  LOST ' + lanLoss + '%' : '');
   $('lsInfo').textContent = (lanVerBad ? 'THE OTHER PHONE HAS ANOTHER VERSION OF THE GAME\nUPDATE THE APP ON BOTH PHONES' : pick ? (lanMe ? 'WAITING FOR THE OTHER PLAYER...' : 'TAP A FIGHTER TO CHOOSE HIM') : roll ? 'BOTH CHOSE ' + NAMES[lanMe] + '\nWHO GETS THE INVERTED ONE?' : (same ? (lanMeInv ? 'YOU GOT THE INVERTED ' : 'THE OTHER PLAYER GOT THE INVERTED ') + NAMES[lanMe] : NAMES[lanMe] + ' AGAINST ' + NAMES[lanFoe]) + '\n' + (lanFightMe ? 'WAITING FOR THE OTHER PLAYER...' : lanFightFoe ? 'THE OTHER PLAYER IS READY: TAP FIGHT' : 'TAP FIGHT WHEN YOU ARE READY')) + '\n' + road;
   $('lsAgain').style.display = $('lsFight').style.display = done ? '' : 'none'; $('lsFight').textContent = lanFightMe ? 'READY...' : 'FIGHT'; $('lsRand').style.display = pick ? '' : 'none'; $('lsRand').disabled = lanVerBad;
+  $('lsMap').textContent = 'MAP: ' + (lanMap ? 'SKYSCRAPER' : 'STREET'); $('lsMap').disabled = !lanHost || lanVerBad; $('lsMap').title = lanHost ? '' : 'THE HOST PICKS THE MAP';      // (v1.219 the host picks the map for both)
 }
 function lanSelDraw(now) {      // the two big fighters (the opponent faces you) and the faces; while the dice roll they flip between normal and inverted, slower and slower
   const a = performance.now() - lanRollAt;
@@ -208,5 +209,6 @@ function lanSelDraw(now) {      // the two big fighters (the opponent faces you)
 }
 lsRender();
 $('lsFight').addEventListener('click', lanFight);
+$('lsMap').addEventListener('click', () => { if (!lanHost || lanVerBad) return; lanMap = lanMap ? 0 : 1; lanSend('M|' + lanMap); snd('fsmove'); lsRender(); });
 $('lsAgain').addEventListener('click', () => lanAgain(true));
 $('lsBack').addEventListener('click', lanLeave);

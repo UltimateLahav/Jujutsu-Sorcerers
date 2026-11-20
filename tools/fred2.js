@@ -4,7 +4,7 @@ const FRED_FAR = { near: 60, fps: Math.round(30 * PACE), whoosh: 3, hit: 6, dmg:
 for (let i = 0; i < 2; i++) { const k = FRED_FAR.k0 + i; ATK_FPS[k] = FRED_FAR.fps; ATK_SWING[k] = FRED_FAR.whoosh; ATK_IMPACT[k] = FRED_FAR.hit; DMG[k] = FRED_FAR.dmg[i]; KNOCK[k] = 16; KNOCK_G[k] = 0; REACH[k] = 82; HIT.freddy[k] = HIT.cat[30]; M1_HITS.freddy.push(k); HB_TIP.freddy[k] = { 18: FRED_FAR.tip, 19: FRED_FAR.tip, 20: FRED_FAR.tip, 21: FRED_FAR.tip, 22: FRED_FAR.tip, 23: FRED_FAR.tip, 24: FRED_FAR.tip, 25: FRED_FAR.tip }; }      // (HB_TIP: the rows the limb covers, for SET > SHOW HITBOXES and for a curse, whose body is measured from these)
 let fredFarC = 0;      // how many stretched punches of this sequence have been thrown (even: the next is the left hand)
 function fredFarGap(now) {      // the gap to the nearest enemy in front of him when a stretched punch is on (he stands, an enemy that can be hit is in front of him and farther than FRED_FAR.near); 0 = it is not on
-  if (!vs || vs.net || vs.ph !== 'fight' || stance !== 'stand' || (twOn() && vs.tw.away) || !owns('f_far')) return 0; let g = 1e9;      // (v1.215 the far punches are bought)
+  if (!vs || vs.ph !== 'fight' || stance !== 'stand' || (twOn() && vs.tw.away) || !owns('f_far')) return 0; let g = 1e9;      // (v1.215 the far punches are bought)
   for (const e of vs.foes && vs.foes.length > 1 ? vs.foes : [dummy]) if (e && e.ko < 0 && !e.cap && e.x - wx >= -3 && now - e.born >= 600) g = Math.min(g, e.x - wx);
   return g > FRED_FAR.near && g < 1e9 ? g : 0;
 }
@@ -61,9 +61,9 @@ CE_COST.fGround = FG.cost;
 let fg = null, fgCd = 0, fgFly = [], fgCracks = [];      // the move going on { at, tw (the skyscraper kind), N (how many throws), n (thrown so far), pile (chunks lying in front of him), items (the pieces he grabbed), jp / pic (the picture of this frame, jp = one of the jump's: not drawn 8 px to the right), lift, hit (the ground was hit), fell (the fall began) }, when the next may begin, what is flying (stones and furniture), the cracks in the road
 const fgTower = () => twOn() && !vs.tw.cab && vs.tw.fMe >= 2 && !vs.tw.away;      // (the floor can be broken: not in the lobby, not in the elevator, and the enemy is here)
 function fgReset() { fg = null; fgFly.length = 0; fgCracks.length = 0; fgCd = 0; }
-function fgTarget() { const d = dummy; return d && vs && !vs.net && vs.ph === 'fight' && d.ko < 0 && !d.cap && !(twOn() && vs.tw.away) && !(d.vform && d.vform !== 'verity') ? d : null; }
+function fgTarget() { const d = dummy; return d && vs && vs.ph === 'fight' && d.ko < 0 && !d.cap && !(twOn() && vs.tw.away) && !(d.vform && d.vform !== 'verity') ? d : null; }
 function fgTry(now) {      // BLUE pressed while crouched
-  if (now < fgCd || vs.net) return; if (!fgTarget()) { say('NO TARGET', wx, '#ff8a7a', 8, now); return; } if (!ceSpend(FG.cost, now)) return;
+  if (now < fgCd) return; if (!fgTarget()) { say('NO TARGET', wx, '#ff8a7a', 8, now); return; } if (!ceSpend(FG.cost, now)) return;
   const tw = fgTower(); fg = { at: now, tw, N: FG.N[tw ? 1 : 0], n: 0, pile: 0, items: [], jp: null, pic: null, lift: 0, hit: false, fell: false };
   fwPh = 'ground'; fredWalk = false; fredTg = wvx = 0; atkQ = false; fredCrQ = fredUpQ = -1; snd('jump');
 }

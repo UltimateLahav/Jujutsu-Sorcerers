@@ -21,7 +21,7 @@ const SU_MARKS = [[-10, -52, 12, -12], [12, -54, -10, -14], [-12, -36, 14, -30],
 const SU_WAIT = 2000, SU_DODGE = { ms: 233, px: 30, from: 2, n: 7 }, SU_SLASH = { fps: 30, hit: 7, stand: 24, max: 80 }, SU_BLEED = { ms: 4000, gap: 30, dm: 0.1 };      // the counter: how long he waits (ms); the dodge (ms, how far back, the first picture of Yuji's back dash and how many are used); the slash (pictures a second, the picture the cut lands on, how far from the enemy he stops, the longest step) and the bleeding (ms, ms between two ticks, health a tick)
 NAMES[SUK_WHO] = 'SUKUNA'; CEC[SUK_WHO] = ['#2a0a12', '#d02a3a', '#ffb0b8', '#ff7a86'];      // (his name on the HUD and his energy bar: crimson)
 // ---- v1.131 SUKUNA IN THE SHOP: he is bought ($3000, SKILLS > CHARACTERS) and so is every move but walking, jumping and the first blows (jab, jab, kick, counter), even in free play (window.__suAll: the automatic tests of the older versions play him with everything)
-const suOwn = id => !!window.__suAll || !!PROG.own[id], suHas = () => !!window.__suAll || !!PROG.own.sukuna;
+const suOwn = id => !!window.__suAll || !!PROG.own[id] || !!(vs && vs.net), suHas = () => !!window.__suAll || !!PROG.own.sukuna || !!(vs && vs.net);      // (v1.219 everything is unlocked in a Wi-Fi fight)
 const SU_HUR = ['h0', 'h1', 'h2', 'h5', 'h4', 'h5', 'h6', 'h8', 'h8', 'h9'], SU_HUR_RX = { h0: 0, h1: 1, h2: 2, h5: 5, h6: 6, h8: 8, h9: 9, h4: 9 };      // v1.154 his hit reactions: the picture row for each of the ten the game picks from (Yuji's own: the spin (3), the fall (4) and the hop (7) need more room than a 64 x 64 picture has, so 3 is the doubled-over 5, 4 (a heavy blow) the kneeling 9 and 7 the sway 8) and which of Yuji's ten each row is, for how fast it plays (15 pictures at 1.5 times the game's reaction speed, like Yuji's)
 const suHus = set => SU_HUR.map(k => { const r = k === 'h4' ? 'h9' : k; return { f: set[r], ms: 1000 / RXF15[SU_HUR_RX[k]] }; });
 const SUK_GATE = { cr: 's_crouch', cp: 's_cpunch', ce: 's_cleave', dom: 's_domain', fat: 's_fatal' };      // (the buttons lacks() asks about for him, see template.html)
@@ -672,6 +672,7 @@ function suDomCast(g, c, now) {      // the sign, every frame: the events of the
   return g.atk[23][c.pic];
 }
 function suDomOpen(now) {      // the domain opens: it spreads over the screen and the shrine starts to rise (suDomWorld), a flood of slashes, and the 20 s begin
+  netUSent(SU_DOM.dur);
   const S = SU_DOM; suDom = { open: now, until: now + S.dur, next: now + S.gap, n: 0, hits: 0, sink: -1, sl: 0, dust: 0, snd: 0, ck: suDomCracks() };
   suDomSl.length = 0; for (let i = 0; i < 14; i++) suDomSpawn(now - Math.random() * 60, i % 3 === 0);
   snd('sukdom', 3); snd('sukdom', 4); shakeUntil = Math.max(shakeUntil, now + S.rise); shakeAmp = Math.max(shakeAmp, 2); hitStop(70);
@@ -1062,7 +1063,7 @@ function suFatFinish(now, quick) {      // the last moment (or a skip): he stand
   const F = suFat, d = dummy, g = CU_GAME[3]; if (!F) return;
   if (d && d.ko < 0) { const gs = gdSet(); if (gs < 2) { if (!d.suCut) d.suCut = { at: now - (quick ? 800 : 0), gs }; else if (quick) d.suCut.at = Math.min(d.suCut.at, now - 800); } d.x = F.wx0 + suFatD(1e9); d.kneel = 0; d.ai = 'rest'; }
   wx = F.wx0 + SU_FAT.dxT; suFatEnd(now); suEnd(g, now);
-  if (d && d.ko < 0) { d.hp = 0; koDummy(now); }
+  if (d && d.ko < 0) { d.hp = 0; const w = vs && vs.net && vs.ph === 'fight' && !vs.kEarly; koDummy(now, true); if (w) vs.kWait = now + 20000; if (vs) vs.kEarly = false; }      // (v1.219 Wi-Fi: his phone plays the longer scene of this finisher on him, the next round waits for its K|)
 }
 function suFatSkip(now) { const F = suFat; if (!F || F.skipped || F.u < SU_FAT.skipAt) return; F.skipped = true; suFatFinish(now, true); }
 function suFatCut(now, e) {      // the head is cut (the first time at full speed, and again in the replay): two thin white lines across it, a flash and a crack, then the three slices slide apart
@@ -1190,7 +1191,7 @@ function srStart(now) {
 function srReset() { sr = null; $('pad').classList.remove('cine'); $('hud').classList.remove('cine'); }
 function srEnd(now) {      // you are gone and the enemy Sukuna wins the round
   const s = sr; wx = s.wx0; if (vs) vs.noHead = true; srReset(); blackUntil = now + 500; if (!vs || vs.ph !== 'fight') return;
-  vs.hp = 0; vs.sh = 0; vs.hitAt = now; endRound('enemy', 'fatal', now);
+  vs.hp = 0; vs.sh = 0; vs.hitAt = now; endRound('enemy', 'fatal', now); if (vs.net) lanSend('K|');      // (v1.219 Wi-Fi: his phone waits for this to start the next round)
 }
 function srSkip(now) { const s = sr; if (!s || s.skipped || s.u < SU_FAT.skipAt) return; s.skipped = true; srEnd(now); }
 function srTap(now) { const s = sr; if (!s || s.skipped) return; if (now - s.tapAt < 1500) srSkip(now); else s.tapAt = now; }      // (a tap on the screen: the first says how to skip, a second one within a second and a half skips)

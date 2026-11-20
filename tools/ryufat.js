@@ -14,7 +14,7 @@ const rfH = (x, y, s) => { let h = Math.imul(x | 0, 73856093) ^ Math.imul(y | 0,
 const rfFl = a => { a = a * SET.fl / 100; return SET.nf ? Math.min(a, 0.1) : a; };      // (a flash as bright as SETTINGS > FLASHES allows)
 function ryfState(now) {      // the FATAL button while you play Ryu (the same rules as the others': the enemy at 20% health or less and close, half of the energy; v1.213 Iron Man's too, tools/ironfat.js): 0 = ready; 1 = the enemy is above 20% health; 2 = too far away; 3 = not possible right now
   const g = CU_GAME[vs && vs.me === 'cu5' ? 5 : 4];
-  if (!vs || vs.story || vs.cv || vs.net || lacks('fat') || vs.ph !== 'fight' || js || vf || fat || yf || yu || (dom && domLock()) || ult || cf || ff || ryf || irf || sr || ke || fd || bcl || ryUl || !g || g.bh || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;
+  if (!vs || vs.story || vs.cv || lacks('fat') || vs.ph !== 'fight' || js || vf || fat || yf || yu || (dom && domLock()) || ult || cf || ff || ryf || irf || sr || ke || fd || bcl || ryUl || !g || g.bh || !dummy || dummy.ko >= 0 || dummy.cap || dummy.mode !== 'fighter' || (dummy.vform && dummy.vform !== 'verity') || now - spawnAt < 900) return 3;
   if (!(dummy.hp <= dummy.max * FAT_LOW)) return 1;
   if (Math.abs(dummy.x - wx) > FAT_RANGE) return 2;
   return hurtAt >= 0 || gojoGone || cuJumpAt >= 0 || cuAtkAt >= 0 || cuDash || blkAt >= 0 || stance !== 'stand' || (twOn() && vs.tw && vs.tw.slide) ? 3 : 0;

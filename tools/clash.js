@@ -7,7 +7,7 @@ const BCL = { G: 130, mash: 7000, pct: 0.45, tA: [1700, 1950], tB: [650, 1800, 2
 // (bcl, the clash that is running, and bclGone, true when the player was disintegrated so that nothing of him is drawn until the next round, are declared at the top of tools/template.html: show() resets them)
 const bclE = u => u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u), bclMix = (a, b, u) => a + (b - a) * u, bclClamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 // ---- WHEN
-const bclPair = () => !!vs && !vs.net && !vs.story && !vs.hunt && !vs.rush && ((vs.me === 'cu4' && vs.foe === 'cu5') || (vs.me === 'cu5' && vs.foe === 'cu4'));      // (only Iron Man against Ryu, either way round)
+const bclPair = () => !!vs && !vs.story && !vs.hunt && !vs.rush && ((vs.me === 'cu4' && vs.foe === 'cu5') || (vs.me === 'cu5' && vs.foe === 'cu4'));      // (only Iron Man against Ryu, either way round)
 function bclMeUlt(now) {      // is MY ultimate going on, before its beam is over?
   if (vs.me === 'cu5') { const g = CU_GAME[5], b = g && g.bh; return !!b && b.kind === 'uni' && now - b.t0 < IRU.tRel; }
   return !!ryUl && now - ryUl.t0 < RY_U.tRel;
@@ -50,9 +50,9 @@ function bclStep(now, dt, B) {
   if (B.ph === 'intro' && u >= B.tM) { B.ph = 'mash'; B.posT = 0.5; bclTapEl.style.display = 'block'; }
   if (B.ph === 'mash') {
     const t = u - B.tM, g = vs.gi, base = [4.6, 5.2, 5.8, 6.4, 7.0, 7.8][g] * (t < 1500 ? 1.15 : 1) * (0.85 + 0.3 * (0.5 + 0.5 * Math.sin(t * 0.0021 + B.seed)));      // (the enemy mashes 5 - 8 times a second by his grade, a little faster at the start, rising and falling)
-    B.aiAcc += base * dt; while (B.aiAcc >= 1) { B.aiAcc -= 1; B.taps[1]++; }
+    if (vs.net) netBeamTaps(now, B, t); else { B.aiAcc += base * dt; while (B.aiAcc >= 1) { B.aiAcc -= 1; B.taps[1]++; } }      // (v1.219 Wi-Fi: the other player taps for himself, see tools/wifi.js)
     B.posT = bclClamp(0.5 + (B.taps[0] - B.taps[1]) / 36, 0.14, 0.86); B.pos += (B.posT - B.pos) * Math.min(1, dt * 7); B.pulse = Math.max(0, B.pulse - dt * 6);
-    if (t >= S.mash) bclDecide(now, B);
+    if (t >= S.mash && (!vs.net || netBeamDecide(now, B, t))) { bclDecide(now, B); if (vs.net && lanHost) lanSend('B|w|' + (B.win === 'me' ? 'h' : 'g') + '|' + (B.kill ? 1 : 0)); }
   } else B.pulse = Math.max(0, B.pulse - dt * 6);
   if (B.ph === 'end' && u >= B.uE + (B.win === B.ir ? S.endI : S.endR)) { bclFinish(now, B); return; }
   B.fl = Math.max(0, B.fl - dt * 3.2); B.shk = Math.max(0, B.shk - dt * 9);
@@ -60,7 +60,7 @@ function bclStep(now, dt, B) {
 }
 function bclDecide(now, B) {      // the 7 seconds are over: who won, and would it kill him
   const f = B.force, a = B.taps[0], b = B.taps[1]; B.win = f && f.win ? f.win : a > b ? 'me' : 'foe'; const lose = B.win === 'me' ? 'foe' : 'me';
-  B.dmg = lose === 'foe' ? Math.round((dummy.max || DUMMY_HP) * BCL.pct * SET.pdm / 100) : Math.round(PHP * BCL.pct); const eff = lose === 'foe' ? B.dmg : Math.round(B.dmg * SET.edm / 100);      // (what the beam takes: your own damage setting on the enemy; the enemy damage setting is applied by vsHurt)
+  const pdm = vs.net ? 100 : SET.pdm, edm = vs.net ? 100 : SET.edm; B.dmg = lose === 'foe' ? Math.round((dummy.max || DUMMY_HP) * BCL.pct * pdm / 100) : Math.round(PHP * BCL.pct); const eff = lose === 'foe' ? B.dmg : Math.round(B.dmg * edm / 100);      // (what the beam takes: your own damage setting on the enemy; the enemy damage setting is applied by vsHurt)
   B.kill = f && f.kill !== undefined ? !!f.kill : !B.inf[lose === 'foe' ? 1 : 0] && (lose === 'foe' ? dummy.hp : vs.hp) <= eff;
   B.ph = 'end'; B.uE = B.u; B.posT = B.pos; B.pos0 = B.pos; B.did = {}; bclTapOff(); B.shk = 4; B.fl = 0.3;
 }
@@ -69,8 +69,8 @@ function bclFinish(now, B) {      // the scene is over: what it did to the loser
   if (vs.me === 'cu5') { vs.jto = (vs.jto || 0) + 1; if (vs.jto >= 2) achGive('jto'); }      // (v1.210 the achievement JUST THIS ONCE: the second clash against the enemy Ryu in this fight, see tools/ach.js)
   wx = B.mx; dummy.x = B.fx; wxv = 0; wvx = 0; dummy.vx = 0; const d = dummy, loseFoe = B.win === 'me';
   if (loseFoe) {
-    d.hp = Math.max(0, d.hp - B.dmg); d.hitAt = now; d.dodgeUntil = 0; d.ai = 'rest'; d.aiAt = now; d.restFor = 900;
-    if (B.kill) { d.hp = 0; koDummy(now); d.del = now - 1800; } else { d.rx = 6; d.rxAt = now; cuStun(1.4, now, true); }
+    if (!vs.net) d.hp = Math.max(0, d.hp - B.dmg); d.hitAt = now; d.dodgeUntil = 0; d.ai = 'rest'; d.aiAt = now; d.restFor = 900;      // (v1.219 Wi-Fi: his phone takes the health off him itself)
+    if (B.kill) { d.hp = d.netHp = 0; koDummy(now, true); d.del = now - 1800; } else { d.rx = 6; d.rxAt = now; cuStun(1.4, now, true); }
   } else {
     if (B.kill) { bclGone = true; vs.hp = 0; vs.hitAt = now; if (vs.ph === 'fight') endRound('enemy', 'ko', now); }
     else { vsHurt(Math.max(1, Math.round(B.dmg * cuS.hp / PHP)), now); hurtK = 4; hurtAt = now; pStun = Math.max(pStun, now + 1200); }

@@ -8,10 +8,10 @@
 const HOME_IMG = '__HOMEIMG__', HF_N = 32, HF_W = 160, HF_H = 80, HF_FPS = 10;
 const homeImg = new Image(); homeImg.src = HOME_IMG;
 const HD = { pose: 900, face: HF_N * 1000 / HF_FPS, burst: 1900, town: 10000, collapse: 1300, total: 0.7, small: 16, first: 500, gap: 540, finale: 9300 }, HD_ORDER = ['pose', 'face', 'burst', 'town', 'collapse'];      // (the phases and their lengths in ms; total = the share of an enemy's health the slices take, small = the number of small slices, then the big X at `finale`)
-const HD_W = HD.small + 8, HD_COL = { ink: '#12030a', white: '#ffffff', glow: '#ffe9c8' };      // (the slices' weights: every small one counts 1, the two halves of the X count 4 each)
+const hdTotal = () => vs && vs.net ? 0.12 : HD.total, HD_W = HD.small + 8, HD_COL = { ink: '#12030a', white: '#ffffff', glow: '#ffe9c8' };      // (the slices' weights: every small one counts 1, the two halves of the X count 4 each)
 const homeOn = () => !!dom && dom.kind === 'home';
 function hdTry(now, t, hf) {      // the DOMAIN button as Yuji in INHERITENCE (the caller checked the skill): he stands still in the open and there is an enemy to slice
-  if (dom || yu || ult || !vs || vs.me !== 'yuji' || vs.net || vs.ph !== 'fight' || now < domReadyAt || !(freeNow() && stance === 'stand' && t >= 1 && hf < 0 && hurtAt < 0 && now >= pStun && blkAt < 0)) return;
+  if (dom || yu || ult || !vs || vs.me !== 'yuji' || vs.ph !== 'fight' || now < domReadyAt || !(freeNow() && stance === 'stand' && t >= 1 && hf < 0 && hurtAt < 0 && now >= pStun && blkAt < 0)) return;
   const d = dummy; if (!d || d.ko >= 0) return; if (d.cap) { say('CANT', wx, '#ff8a7a', 8, now); return; }      // (Yuji only fights one enemy at a time: challenges and RUSH are Gojo's)
   if (d.vform && d.vform !== 'verity') { say('IMMUNE', d.x, '#ffe9a0', 8, now); return; }      // (Verity as the smiley ball cannot be hurt, so the slices must not reach him)
   if (ceSpend(CE_COST.yHome, now)) hdStart(now);
@@ -36,7 +36,7 @@ function hdEnd(now) {
   if (atkK === 32) { atkAt = -1; atkQ = false; } dom = null; domReadyAt = now + DOM_CD; setDomUI(now); snd('homeoff'); domWake(now);
 }
 function hdCut(now, w, big, n) {      // a slice lands on the enemy: w x (70% / 24) of his health (counted from the running total, so the sum is exactly 70%), white marks on him, a flinch, a number
-  const d = dummy; if (!d || d.ko >= 0) return; const mx = d.max || DUMMY_HP, cum = dom.cum + w, dm = Math.max(1, Math.round(mx * HD.total * cum / HD_W) - Math.round(mx * HD.total * dom.cum / HD_W)); dom.cum = cum; d.hp = Math.max(0, d.hp - dm); d.hitAt = now; d.rx = (Math.random() * 10) | 0; d.rxAt = now;
+  const d = dummy; if (!d || d.ko >= 0) return; const mx = d.max || DUMMY_HP, cum = dom.cum + w, dm = Math.max(1, Math.round(mx * hdTotal() * cum / HD_W) - Math.round(mx * hdTotal() * dom.cum / HD_W)); dom.cum = cum; d.hp = Math.max(0, d.hp - dm); d.hitAt = now; d.rx = (Math.random() * 10) | 0; d.rxAt = now;
   say('' + dm, d.x, '#ffffff', big ? 12 : 8, now + 40);
   const sg = n % 2 ? -1 : 1, ang = big ? sg * 0.78 : sg * (0.5 + Math.random() * 0.75), ox = big ? 0 : (Math.random() - 0.5) * 10, oy = big ? 0 : (Math.random() - 0.5) * 22, len = big ? 54 : 24 + Math.random() * 10;
   dom.marks.push({ born: now, f: d, ang, len, big, ox, oy });

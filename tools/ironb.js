@@ -249,11 +249,12 @@ function irUlTry(now) {      // the DOMAIN button: it starts if he stands or cro
   iruStart(g, now);
 }
 function iruStart(g, now) {      // the charge begins: he stands up (from a crouch too), the buttons stop answering and the long wait of the button is set (iruEnd sets the real one)
+  netUSent(IRU.charge + IRU.brace + IRU.fire);
   if (!g.ump) iruPics(g);
   stance = 'stand'; stickCr = false; stickDown = false; cuAtkQ = cuLpQ = 0; cuJumpAt = -1;
   g.bh = { kind: 'uni', lab: g.rp ? 'blast' : 'hug', ph: 'charge', at: now, t0: now, last: now, lift: 0, rot: 0, tk: 0, hit: null, landed: 0, fired: false, fireAt: 0, sn: 0, pp: 0, rxAt: -1e9, imp: -1e9, ix: 0, iy: 0, core: null, ko: false };
   domReadyAt = now + IRU.end + IRU.cd; snd('irult', 0); gritAt(wx - 6, 8, 80, -1); gritAt(wx + 6, 8, 80, 1); puff(wx - 8, 4); puff(wx + 8, 4);
-  bclTry(now, 'me');      // (v1.209 the enemy's ULTIMATE is going on: the two beams clash, see tools/clash.js)
+  netBeamSent(); bclTry(now, 'me');      // (v1.209 the enemy's ULTIMATE is going on: the two beams clash, see tools/clash.js)
 }
 function iruEnd(g, now) {      // it is over (or cut short: the round ended, the enemy was gone before it fired): the move ends and the button waits 30 s from now (a new round starts with it ready)
   irBhEnd(g, now); domReadyAt = now + IRU.cd;

@@ -1,5 +1,19 @@
 [
  {
+  "v": "1.219",
+  "t": "WI-FI: EVERY FIGHTER, EVERY MOVE, DOMAINS, FATALITIES, THE BEAM CLASH AND THE SKYSCRAPER",
+  "n": [
+   "You asked for everything in the Wi-Fi fight, all in one update, and here it is. All eight fighters now work online: Gojo, Yuji, Verity, the Cat, Freddy, Sukuna, Ryu and Iron Man. Every move of every one of them works against the other player: the BLUE moves, the heavy hit, the modes, the dash and the block, the beams, the orbs, the cuts and the slams.",
+   "Domains and ultimates work too: Gojo's Infinite Void, Yuji's four Black Flashes, the Cat's ULTIMATE, Freddy's dream, Verity's jumpscare, Sukuna's Malevolent Shrine, Ryu's JUST THIS ONCE and Iron Man's UNIBEAM. On your own phone you see the real thing. On the other phone the player is held in place for as long as it lasts, the screen goes dark in the colour of your fighter, and the health they lose is taken from them on their own phone. Yuji's SIMPLE DOMAIN cancels a long hold like that.",
+   "FATALITIES work: press FATAL when the other player is at 20% health or less and close. Both phones play the scene (yours the one you do, theirs the one done to them) and the round ends for both; if the scene on one phone is longer, the next round waits until that phone has finished.",
+   "The BEAM CLASH works: when Iron Man's UNIBEAM and Ryu's JUST THIS ONCE go off within a moment of each other, both phones play the clash. Both players tap for 7 seconds, the host decides who won from the two tap counts, and the winning beam takes 45% of the loser's health (a K.O. if that is all they had left).",
+   "INHERITENCE is online, but nerfed to the ground: in a Wi-Fi fight everything Yuji deals in it is 20% (offline 50%), it lasts 5 seconds (offline 10), his HOMETOWN takes 12% of the other player's health (offline 70%), and the price at the end (half of his own health) stays. His piercing blood, shrine, grab cleave and simple domain work in it too.",
+   "MAP CHOICE: the host picks STREET or SKYSCRAPER with the new MAP button on the Wi-Fi fighter screen, and the other player sees the choice. In the skyscraper both phones build the same building (the guest's is the mirror image of the host's, because on every phone you stand on the left). Each of you is on your own floor: take the stairs or the elevator, or fall through a crater, and the other player is away while you are on different floors and is there when you meet. A move that breaks the floor under both of you drops both. Not shared: furniture and walls that break (each phone breaks its own), the elevator (each phone has its own cab), the glass at the ends holds and the front door to the street is shut (online the street and the skyscraper are two separate maps).",
+   "The Wi-Fi fighter screen now lists every move of every fighter (it used to say more online moves come in the next updates).",
+   "I could only test with two simulated phones in one computer (every special move on its own, every pair of fighters with random button mashing for 40 seconds on both maps), not with two real phones on a real Wi-Fi, so please tell me what feels wrong. Simplified on purpose: the grab moves hold the other player and hurt them but do not move their body the way the offline scene does, and the pictures of the ultimates on the other phone are the dark tint, not the full scene."
+  ]
+ },
+ {
   "v": "1.218",
   "t": "GOKU CHARGES: TAP TO DODGE, OR YUJI'S HEAD BURSTS - OR THE WALL BEHIND HIM BREAKS",
   "n": [
