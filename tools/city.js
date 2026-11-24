@@ -20,7 +20,7 @@ function ctHoldLift() { const T = vs.tw, L = T.lift; L.job = null; L.inFoe = fal
 
 // ---- the frame: the door you are walking into, the enemy coming out
 function ctTick(now, dt) {
-  if (!ctOn() || !dummy || state !== 'play') return;
+  if (!ctOn() || !dummy || state !== 'play' || rof) return;
   const T = vs.tw;
   if (twOn()) {      // (in the building: the front door of the lobby)
     const F = T.fl[1]; if (!F || !F.front || T.fMe !== 1 || T.cab || T.slide) { ctS.t = 0; return; }

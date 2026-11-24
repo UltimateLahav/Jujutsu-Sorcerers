@@ -220,7 +220,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.219</small>
+    <small id="ver">V1.220</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -665,6 +665,7 @@ const heroImgs = HEROES.map(src => { const im = new Image(); im.src = src; retur
 let seed = 7;
 const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
+let rof = null;      // (v1.220 the roof, the long fall and the balcony of the skyscraper, tools/roof.js)
 let bcl = null, bclGone = false;      // (v1.209 the beam clash that is running, tools/clash.js; true when the player was disintegrated by it)
 let story = null, alley = false, state = 'title', S = 1, VW = 320, VH = 128, gy = 100, bg = null, far = null, near = null;
 let spawnAt = 0, last = 0, parts = [], wx = 0, mode = 'idle', modeAt = 0, stepN = -1, evJ = -1, evT = -1, vp = null, js = null, pStun = 0, vf = null, ult = null, cf = null, ke = null;
@@ -1151,7 +1152,7 @@ function drawCaughtCurse(now) {               // Max Blue has the curse: stun fl
 function drawFoes(now, dt) {                  // the enemy (or enemies: a RUSH wave has two) and what they throw, once a frame
   if (vs && vs.hunt) huntDraw(now);
   if (vs && vs.foes && vs.foes.length > 1) { rushStep(now); for (const x of vs.foes.filter(f => f !== dummy).sort((a, b) => b.x - a.x)) foeSwap(x, () => drawDummy(now, dt)); }      // (the one behind first, so the one in front is painted over it)
-  if (!(twOn() && twFoeFx(now, () => drawDummy(now, dt)))) drawDummy(now, dt);      // (v1.176 the skyscraper: the enemy is SEEN falling through a hole, or standing on the floor you slide away from)
+  if (!(rof && rofFoeFx(now, () => drawDummy(now, dt))) && !(twOn() && twFoeFx(now, () => drawDummy(now, dt)))) drawDummy(now, dt);      // (v1.176 the skyscraper: the enemy is SEEN falling through a hole, or standing on the floor you slide away from)
   if (vs && vs.cv) { curseProj(now, dt); drawProj(now); }
   if (freOn()) freWorld(now, dt);      // (v1.188 what the enemy Freddy threw: tools/fred4.js)
   if (cuFoeOn()) cuenWorld(now, dt);      // (v1.189 what the enemy Sukuna or Ryu threw: tools/cuen.js)
@@ -1541,7 +1542,7 @@ const lanBack = () => { if (lanRole) lanStop(); else show('bsel'); };
 
 // ---------------------------------------------------------------- screens
 function show(s) {
-  k5Off(); bcl = null; bclGone = false; bclTapOff();      // (v1.209 a fight that is left in the middle of a beam clash)
+  k5Off(); rof = null; bcl = null; bclGone = false; bclTapOff();      // (v1.209 a fight that is left in the middle of a beam clash)
   if (s !== 'play') c4xOff();      // (v1.156 any other screen ends chapter 4's part 3)
   state = s; if (twpEl) twPanelSync(0); if (s !== 'story') { snd('mhumoff'); snd('tmusicoff'); snd('rsmuroff'); snd('bluepulloff'); c9Stop(); c15Stop(); } if (s !== 'play' && s !== 'story') { alley = false; story = null; court = false; track = false; msBuf.length = 0; msBurstAt = -1; } if (s !== 'play') { vs = null; $('vsres').classList.remove('on'); }
   $('lan').classList.toggle('on', s === 'lan'); $('lanSel').classList.toggle('on', s === 'lansel'); $('chal').classList.toggle('on', s === 'chal'); $('skills').classList.toggle('on', s === 'skills'); $('sns').style.display = 'none'; if (s !== 'lan' && s !== 'lansel' && !(s === 'play' && vs && vs.net) && lanTimer) lanStop();
@@ -2046,7 +2047,7 @@ function drawDummy(now, dt) {
   const w = info.w, h = info.h, hx = info.cx - info.x0, y = gy - 60 - (info.top || 0) - lift, fade = kt > 1200 ? Math.max(0, 1 - (kt - 1200) / 700) : 1;
   if (gdActive('f')) src = goreSrc('f', src, (px, py) => ({ x: dummy.x + (mirror ? -1 : 1) * (px - hx + ox), y: y + oy + py - gy })), oy += goreBob('f', now);      // (v1.128 GRAPHIC DAMAGE: without the limbs he has lost)
   if (typeof suFatOn === 'function' && (suFatOn() || dummy.suCut)) { dummy.suTop = y + oy + suFatTopRow(src); src = suFatLook(dummy, src, now); }      // (v1.166 Sukuna's FINISHER: where the top of his head is, and his head in three slices once it is cut)
-  if (!(kt >= 0 && dummy.rag && dummy.rag.ko === dummy.ko)) { ctx.fillStyle = 'rgba(0,0,0,' + 0.4 * fade + ')'; ctx.fillRect(sx - 9, gy + 3, 18, 2); ctx.fillRect(sx - 6, gy + 2, 12, 1); ctx.fillRect(sx - 6, gy + 5, 12, 1); }
+  if (!rofAir() && !(kt >= 0 && dummy.rag && dummy.rag.ko === dummy.ko)) { ctx.fillStyle = 'rgba(0,0,0,' + 0.4 * fade + ')'; ctx.fillRect(sx - 9, gy + 3, 18, 2); ctx.fillRect(sx - 6, gy + 2, 12, 1); ctx.fillRect(sx - 6, gy + 5, 12, 1); }
   ctx.save();
   if (dummy.drag && kt < 0) {                 // v1.28 BLOOD DRAG: he lies flat on the floor, feet towards Verity, and is dragged by the feet
     ctx.translate(sx + 4, gy + 1 - Math.round(hx * 0.62) + ((now / 60) & 1)); ctx.rotate(1.5 + Math.sin(now / 70) * 0.02); ctx.scale(-1, 1); ctx.globalAlpha = 1; ctx.drawImage(src, -hx, -62);
@@ -2581,7 +2582,7 @@ function beginRound(now) {                     // a fresh round: the scene is re
   $('vsres').classList.remove('on');      // (REMATCH and NEXT start a new fight: the result screen goes away. Since v7.12 this line had slipped into a comment, so the result screen stayed on top of the new fight)
   netPull = null; ripRun = null; lagRun = null; vp = vpNew(); cp = cpNew(); hg = null; pwFx.length = 0; tz = null; lk = 0; js = null; vf = null; pStun = 0; cpIdx = 0; dgReady = 0; dgLock = 0; esc = null; ctr = null; ctrBoost = 0; wvx = 0; deb = []; lit = []; vs.rag = null; vh = null; ac = null; acWin = 0; acGo = false; acPend = -1; redAt = -1; redLast = -1e9; escQ = -1; flow = 0; flowOn = false; flowLast = -1; flowSw = -1; heavyAt = 0; whiffUntil = 0; cancelFor = -1; connectAt = -1; swPrev = -1; repSw = {}; repN = {}; lastLabel = ''; vs.cStun = 0; setModeUI(); if (vs.me === 'yuji' && owns('y_inherit')) setTimeout(spikyY, 400);      // (playing Verity: back in his own form, the button labels set)
   if (vs.retry) { vs.round = 1 + vs.retry; vs.hp = vs.sh = PHP / 2; dummy.hp = dummy.shown = dummy.lock = 1; vs.morphed = true; blackUntil = t + 700; } else blackUntil = 0;      // after a failed red: Gojo at half health, Verity as he was (1 health left, so no smoke change); the picture comes up from black
-  ctRound(t); if (twOn()) twRound(t); if (vs.k5) k5Begin(t);      // (v1.173 the skyscraper: every round starts on floor 50, the damage of the earlier rounds stays; v1.198 every round starts where the match began: the street or the skyscraper, ctRound)
+  rof = null; ctRound(t); if (twOn()) twRound(t); if (vs.k5) k5Begin(t);      // (v1.173 the skyscraper: every round starts on floor 50, the damage of the earlier rounds stays; v1.198 every round starts where the match began: the street or the skyscraper, ctRound)
 }
 // ---------------------------------------------------------------- v1.29 THE STATE TRACKER and the COMBO ESCAPE. A small box by your health bar says what state you are in: green FREE (you can move) or red (HIT: reeling from a blow, DOWN: on the floor, STUN: the JUMPSCARE, the Cat's glove or dizzy, HELD: the enemy Cat's ULTIMATE has you). While you are red, DASH gets you out of it: the stun is gone, you dash (with the dash's own invulnerable start), and when the dash ends you strike back with the LAST M1 of your combo; the dash is then on a cooldown of 4 seconds (the DASH button counts it down). Not possible when you are in the air from a launch, held by the ULTIMATE, in a cutscene or while the DOMAIN lasts.
 let dgLock = 0, esc = null, escSay = -1e9;      // dgLock: no dash before this time; esc = { at } from the escape dash until the counter blow
@@ -3420,6 +3421,7 @@ function pickAtk0() {                          // crouched: the low jab and the 
 function drawBackdrop(now) {                  // everything behind the fighters (also used by the FATALITY cutscene)
   if (domBgOff(now)) { ctx.fillStyle = '#000'; ctx.fillRect(-8, -8, VW + 16, VH + 16); }
   else if (vs && vs.k5) { if (vs.k5.end && vs.k5.end.wc) wctWorld(now); else k5Back(now); }      // (v1.211 the huge hall of the chapter 5 fight, see tools/chap5c.js; v1.216 West City after the end scene's cut, tools/westcity.js)
+  else if (rof) rofBack(now);      // (v1.220 the roof and the long fall, see tools/roof.js)
   else if (twOn()) twBackdrop(now);      // (v1.173 the SKYSCRAPER map, see tools/tower.js)
   else if (alley) { drawAlley(now); if (vs && vs.c3 && state === 'play') c3World(now); }      // (chapter 2: the portal stands at the end of the street)
   else { ctx.save(); ctx.translate(0, -FAR); ctx.drawImage(bg, 0, 0);
@@ -3927,7 +3929,7 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   if (vs.net && !ballOn) netPic(src, cx, x, y, py);
   const sw = Math.max(ballOn ? 3 : 5, Math.round((ballOn ? 6 : 9) * (1 - py / (ballOn ? 60 : 48)))), sv = Math.round(sw * 2 / 3);      // the ground shadow stays put and shrinks while he is in the air
   const vap = vs.who === 'enemy' && vs.why === 'fatal' && (vs.ph === 'ko' || vs.ph === 'over');      // (the enemy's FATALITY: he is gone until the next round)
-  ctx.fillStyle = 'rgba(0,0,0,0.4)'; if (!vap && !rgOn()) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
+  ctx.fillStyle = 'rgba(0,0,0,0.4)'; if (!vap && !rgOn() && !rofAir()) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
   const ry = Math.round(info.h * (1 - e)), gko = vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // (spawn: he materialises from the feet up; beaten: he topples backwards and stays down until the next round)
   ctx.save();
   if (vap) { /* gone */ } else if (gko >= 0) { const rgh = ragXf(vs.rag, gko, cx, gy + 2, -1); if (!rgh) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); } ctx.drawImage(vs.meInv ? invOf(vfr('idle', 0, false)) : vfr('idle', 0, false), -32, -62 + rgh); }
@@ -4417,7 +4419,7 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   if (lf >= 0) pendingGiants.push({ who: 'me', sx: tz ? cx - (wx - tz.w0) : cx, ff: tz && tz.lift ? liftVF(Math.max(0, now - lpAt)) : Math.max(0, now - lpAt) * (lk === 1 ? CT.toonFps : CT.tossFps) / 1000, fa: tz && tz.lift ? Math.min(1, Math.max(0, (LIFT.total - (now - lpAt)) / LIFT.fadeMs)) : 1, dir: 1, inv: false, strip: tz ? 'hugegrab' : 'huge' });      // (the giant appears behind him)
   const sw = Math.max(5, Math.round(9 * (1 - py / 48))), sv = Math.round(sw * 2 / 3);      // the ground shadow stays put and shrinks while he is in the air
   const vap = vs.who === 'enemy' && vs.why === 'fatal' && (vs.ph === 'ko' || vs.ph === 'over');      // (a FATALITY of the enemy: he is gone until the next round)
-  ctx.fillStyle = 'rgba(0,0,0,0.4)'; if (!vap && !rgOn()) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
+  ctx.fillStyle = 'rgba(0,0,0,0.4)'; if (!vap && !rgOn() && !rofAir()) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
   const ry = Math.round(I[1] * (1 - e)), gko = vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // (spawn: he materialises from the feet up; beaten: he topples backwards and stays down until the next round)
   drawGiantNow('me');      // (his giant stands behind him: it is in front of the enemy and behind his own picture)
   if (hg && y > 0 && !vap && gko < 0) ctx.drawImage(src, 0, 0, I[0], 1, x, 0, I[0], y);      // (v1.114 the arms run up out of the top of his picture: its top row, stretched up to the top of the screen, so they reach it on every screen)
@@ -4765,7 +4767,7 @@ function drawScene(now, dt) {
   wx += walkVel(dir * (dir > 0 ? FWD_SPEED : BACK_SPEED) * (crch ? 0.6 : 1) * (bf >= 0 ? 0.3 : 1), dt, (jf >= 0 && jf <= 11) || tf >= 0) * dt;      // crouch-walking is slower, and walking while blocking is much slower still
   if (dash) { const k = Math.min(1, (now - dash.at) / dash.ms); wx = dash.from + (dash.to - dash.from) * (1 - Math.pow(1 - k, 3)); if (k >= 1) dash = null; }   // Lapse Blue blink: a very fast dash
   if (df >= 0) { const k = Math.min(1, Math.max(0, (now - dgAt - 2000 / DASH_FPS) / DASH_MS)); wx = dgFrom + (dgTo - dgFrom) * (1 - Math.pow(1 - k, 3)); }      // the dash itself: fast at first, over frames 3-12
-  playerSlide(dt); if (ride) updateRide(now); physCollide(now, dt); if (vs && vs.k5) wx = Math.max(K5A.lo, Math.min(K5A.hi, wx)); if (vs && vs.net && dummy) { if (!dummy.twAway) wx = Math.max(dummy.x - NET_LEASH, Math.min(dummy.x - 14, wx)); } else if (vs && vs.cv) { const lf = leadFoe(); if (lf) wx = Math.min(wx, lf.x - Math.max(12, lf.curse.hw)); } else if (vs && vs.c3) c3Block(now, dt);                    // knocked back by the attacking dummy: the world slides past, then friction stops it
+  playerSlide(dt); if (ride) updateRide(now); physCollide(now, dt); if (rof) rofClamp(); if (vs && vs.k5) wx = Math.max(K5A.lo, Math.min(K5A.hi, wx)); if (vs && vs.net && dummy) { if (!dummy.twAway) wx = Math.max(dummy.x - NET_LEASH, Math.min(dummy.x - 14, wx)); } else if (vs && vs.cv) { const lf = leadFoe(); if (lf) wx = Math.min(wx, lf.x - Math.max(12, lf.curse.hw)); } else if (vs && vs.c3) c3Block(now, dt);                    // knocked back by the attacking dummy: the world slides past, then friction stops it
 
   ctx.save();
   shkX = shkY = 0; if (now < shakeUntil && !SET.lite) { shkX = Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100); shkY = Math.round((Math.random() * 2 - 1) * shakeAmp * SET.shk / 100); ctx.translate(shkX, shkY); }   // tiny shake on impact (the bars, names and timer are drawn back where they belong, so they stay still)
@@ -4852,7 +4854,7 @@ function drawScene(now, dt) {
   const vap = vs && vs.who === 'enemy' && vs.why === 'fatal' && (vs.ph === 'ko' || vs.ph === 'over');      // the enemy's FATALITY: Gojo is gone until the next round
   const sw = Math.max(5, Math.round(9 * (1 - lift / 48))), sv = Math.round(sw * 2 / 3);   // ground shadow stays put and shrinks while he is in the air
   ctx.fillStyle = 'rgba(0,0,0,0.4)';
-  if (!vap && !rgOn()) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
+  if (!vap && !rgOn() && !rofAir()) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
 
   const ry = Math.round(info.h * (1 - e));    // spawn: materialise from the feet up
   const gko = vs && vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // the enemy finished him in a match: after the hit-stop he topples backwards (like the enemy does) and stays down until the next round
@@ -6563,7 +6565,7 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   if (vs.net) netPic(armOn ? { __nd: 'Z:' + [fredWalk && hf < 0 ? Math.floor(fredPh) : -1, blkAt >= 0 ? 1 : 0, +fredBlkExt.toFixed(2), now - fredGrabAt < 700 ? 1 : 0, Math.round(fredTx), Math.round(fredTy)].join(',') } : src, cx, x, y, py);      // (his standing block, with the arm out, is made fresh every frame by fredPose: the other phone gets the numbers it is made from, Z)
   const sw = Math.max(5, Math.round(9 * (1 - py / 48))), sv = Math.round(sw * 2 / 3);      // the ground shadow stays put and shrinks while he is in the air
   const vap = vs.who === 'enemy' && vs.why === 'fatal' && (vs.ph === 'ko' || vs.ph === 'over');      // (the enemy's FATALITY: he is gone until the next round)
-  ctx.fillStyle = 'rgba(0,0,0,0.4)'; if (!vap && !rgOn()) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
+  ctx.fillStyle = 'rgba(0,0,0,0.4)'; if (!vap && !rgOn() && !rofAir()) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
   const ry = Math.round(info.h * (1 - e)), gko = vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // (spawn: he materialises from the feet up; beaten: he tumbles and stays down until the next round)
   ctx.save();
   if (vap) { /* gone */ } else if (gko >= 0) { const r = vs.rag, c = r ? ragAt(r, gko) : null, air = c ? Math.max(0, c.h - (r.hh * Math.abs(Math.cos(c.a)) + r.hw * Math.abs(Math.sin(c.a)))) : 0, sx = Math.round(cx - (c ? c.x : 0)), w = Math.max(5, Math.round(9 * (1 - Math.min(1, air / 48)))); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(sx - w, gy + 3, w * 2, 2); ctx.fillRect(sx - Math.round(w * 0.66), gy + 2, Math.round(w * 1.32), 1); ctx.fillRect(sx - Math.round(w * 0.66), gy + 5, Math.round(w * 1.32), 1); ctx.drawImage(vs.meInv ? invOf(fredK(gko / 38)) : fredK(gko / 38), sx - info.cx, gy + 2 - 62 - Math.round(air)); }      // (v1.89: his K.O. pictures, carried by the game's tumble: how far he is thrown and how high he is is the physics', the falling and the lying are drawn)
@@ -6595,7 +6597,7 @@ function tick(t) {
   const still = state === 'play' && stopMs > 0;      // HIT-STOP: the game's clock stands still for a moment (everything in the game runs on it, so the fight freezes and goes on from the same picture)
   if (still) { stopMs = Math.max(0, stopMs - rdt); vOff += now - last; now = last; } else if (state !== 'play') stopMs = 0;
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
-  ctTick(now, dt); twTick(now, dt); if (freePlay()) trainStep(now, dt); twBase(now);      // (v1.173 the skyscraper: what happened last frame is read before the training step gives the enemy his health back, and the new baseline is taken right after it)
+  ctTick(now, dt); rofTick(now, dt); twTick(now, dt); if (freePlay()) trainStep(now, dt); twBase(now);      // (v1.173 the skyscraper: what happened last frame is read before the training step gives the enemy his health back, and the new baseline is taken right after it)
   { const ir = state === 'play' && !!vs && vs.me === IRON_WHO; if (ir !== ironUI) { ironUI = ir; document.body.classList.toggle('ir', ir); } }      // (v1.190 Iron Man has no powers: while he is the fighter the DOMAIN, FATAL and SENSE buttons are hidden, see the CSS of body.ir; v1.193 MODE is his repulsor mode and v1.194 BLUE his bear hug: both are shown)
   { const ry = state === 'play' && !!vs && vs.me === RYU_WHO; if (ry !== ryUI) { ryUI = ry; document.body.classList.toggle('ry', ry); } if (!ry && ryUl) ryUlEnd(now, true); }      // (v1.143 Ryu has no BLUE, MODE, DOMAIN or FATAL: while he fights those buttons are hidden, see the CSS of body.ry)
   ragTick(now);
@@ -6607,7 +6609,7 @@ function tick(t) {
   if (story && story.toEnd) { story.toEnd = false; startTrainEnd(now); }      // (the training fight is won: the happy ending starts)
   if (story && story.toMaster) { story.toMaster = false; startMaster(now); }      // (the fight against the Cat is won: the Master's scene starts)      // (the fight against Verity is won: the ending of the chapter starts)
   try {      // (v1.207 a picture that throws in the middle of a frame no longer leaves its clip or its shake offset on the canvas: gfxRecover puts the canvas back, and the error still goes to the list)
-    if (state === 'play') { if (still || now < holdUntil) { last = now; if (impf) impfFrame(); else if (suTs) suTsFrame(); } else drawScene(now, dt); stateDraw(now); netUDraw(now); twOverlay(now); msRecord(now); }      // hit-stop: the picture freezes for a split second when the red orb explodes
+    if (state === 'play') { if (still || now < holdUntil) { last = now; if (impf) impfFrame(); else if (suTs) suTsFrame(); } else drawScene(now, dt); stateDraw(now); netUDraw(now); rofFront(now); twOverlay(now); msRecord(now); }      // hit-stop: the picture freezes for a split second when the red orb explodes
     else if (state === 'fsel') fsDraw(now);
     else if (state === 'lansel') lanSelDraw(now);
     else if (state === 'chal') chalDraw(now);
@@ -6788,6 +6790,7 @@ __ADMIN__
 __CLASH__
 __ACH__
 __WIFI__
+__ROOF__
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = __UPDATES__;

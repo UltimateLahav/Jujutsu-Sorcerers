@@ -1,5 +1,18 @@
 [
  {
+  "v": "1.220",
+  "t": "THE ROOF, A 10-SECOND FALL, HANGING ON THE BUILDING AND THE CRATER",
+  "n": [
+   "You asked for a roof on the skyscraper, and here it is (Training and Battle against the computer; the Wi-Fi fight does not have it yet). On the top floor, stand at the stairs and press JUMP: they now lead up to the roof. It is flat, with the stairs hatch at its left end and a low wall at its right end. CROUCH at the hatch takes you back down to floor 50. The enemy comes up the stairs after you.",
+   "JUMP at the low wall and you go over: you fall all 50 floors, and it takes about 10 seconds. The background is the night sky with ACTION LINES streaking up the screen, faster and longer the faster you fall, and the skyscraper rushes past on the left, drawn over the lines, with a balcony and lit windows on every floor. The wind gets louder as you speed up. The fight does not stop: if the enemy jumps after you within 2 seconds he appears next to you and you fight each other while you fall (the fall has two invisible walls, so you both stay on the screen beside the building).",
+   "JUMP close to the building and you grab the next floor that passes, a random one: you brake in a fraction of a second and hang by your hands from the edge of its balcony. If the enemy was falling next to you, the timing decides: he catches the same slab too, or he falls on past you (3% of his health for every floor, at most 30%, he never dies from it, and he has to walk back up).",
+   "JUMP again and you climb onto the balcony. If the window of that floor is whole you have to break it first: hit it with ATTACK or BLUE, a few blows. The glass stays broken for good. Walk into the opening and you are on that floor of the tower again.",
+   "The enemy can be in the room by then. He throws a piece of furniture or shoots at you through the glass (breaking it) and a hit knocks you off the slab or the balcony: you fall again and can catch another floor if you get back to the building in time. On the balcony you can crouch under it, jump over it or hold BLOCK (the guard takes most of it); when you hang you cannot. Or he steps to the broken window and fights you there; the balcony is only 24 pixels wide, and a normal blow does not knock anyone off it.",
+   "At the bottom: a CRATER opens in the street and you lose 30% of your health, but a fall can never knock you out. A shorter fall (when you were knocked off a lower floor) costs 3% a floor. The enemy who fell with you is beside you in the crater and loses the same; an enemy who stayed up comes out of the front door a few seconds later.",
+   "The characters are the same ones as everywhere else, with their own pictures, nothing new was drawn for them. Not in this update: the Wi-Fi fight (it has no roof), and a button to let go of the building on purpose. It was tested with automatic runs (the roof, the fall, the grab, the climb, the glass, the throw, the crater, the pause and K.O.s), not on a real phone."
+  ]
+ },
+ {
   "v": "1.219",
   "t": "WI-FI: EVERY FIGHTER, EVERY MOVE, DOMAINS, FATALITIES, THE BEAM CLASH AND THE SKYSCRAPER",
   "n": [

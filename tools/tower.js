@@ -9,7 +9,7 @@
 const TW_N = 50, TW_CEIL = 88, TW_BODY = 12, TW_CABW = 100, TW_PEND = 600;      // (floors, the height of a room (px), half the width of a body, for the walls, the width of the elevator cab (a tight 100 px) and how long after a floor button the cab waits for you to step out)
 let twPick = 0, twWant = false;      // (the map chosen on the screens: 0 street, 1 skyscraper; startMatch reads twWant)
 try { twPick = +localStorage.getItem('js_map') ? 1 : 0; } catch { twPick = 0; }
-function twOn() { return !!vs && vs.map === 'tower' && !!vs.tw; }
+function twOn() { return !!vs && vs.map === 'tower' && !!vs.tw && !rof; }      // (v1.220 while you are on the roof or falling past the building the tower's own rules sleep, see tools/roof.js)
 function twRng(s) { let a = s >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 const twMix = (a, b, k) => { const p = s => [1, 3, 5].map(i => parseInt(s.substr(i, 2), 16)); const x = p(a), y = p(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * k).toString(16).padStart(2, '0')).join(''); };
 
@@ -217,12 +217,13 @@ function twSlam(who, n, now, x) {      // a slam: the floor under the victim bre
   if (who === 'foe') { if (vs.net) { lanSend('Y|s|' + n + '|' + Math.round(x)); T.foeLock = now + 700; } twFoeFall(n, now, x, 'SLAM!'); } else twMeFall(n, now, x, 'SLAM!'); return true;
 }
 function twTravel(dir, door, now) {      // the stairs (1 floor): you are on another floor, at its stairs; the camera slides up or down
-  const T = vs.tw, f = T.fMe, to = Math.max(1, Math.min(TW_N, f + dir)); if (to === f) { say(dir > 0 ? 'TOP FLOOR' : 'GROUND FLOOR', wx, '#9a9aa8', 8, now); return; }
+  const T = vs.tw, f = T.fMe, to = Math.max(1, Math.min(TW_N, f + dir)); if (dir > 0 && f === TW_N && ctOn()) { rofEnter(now); return; }      // (v1.220 the stairs up from the top floor lead to the roof)
+  if (to === f) { say(dir > 0 ? 'TOP FLOOR' : 'GROUND FLOOR', wx, '#9a9aa8', 8, now); return; }
   const d = dummy, foeHere = !!d && d.ko < 0 && !T.away; T.fMe = to; const F = twFloorData(to); let best = null; for (const dr of F.doors) if (dr.k === 'stairs' && (!best || Math.abs(dr.room - door.room) < Math.abs(best.room - door.room))) best = dr;
   twFloorSwitch(now, best.x, 'stairs'); snd('twbreak', 6); T.lastFallX = null; if (foeHere) { T.away = true; d.twAway = true; T.awayX = d.x; } twPlanArrival(now);
 }
 function twFoeHere(now) {      // (PUT ENEMY and RESET of free play): the enemy is where you are (in the cab too; v1.198 in the street too: ctFoeHere)
-  if (!twOn()) { ctFoeHere(now); return; } const T = vs.tw, d = dummy, L = T.lift; T.away = false; T.fFoe = T.fMe; if (d) d.twAway = false; T.q.length = 0; T.viaLift = false; T.ff = null; T.foeSt = false; if (T.via === 'front' || T.via === 'street') T.via = 'stairs'; L.job = null; L.out = false; L.foeInAt = 0; L.inFoe = false;
+  if (rof) { rofHere(now); return; } if (!twOn()) { ctFoeHere(now); return; } const T = vs.tw, d = dummy, L = T.lift; T.away = false; T.fFoe = T.fMe; if (d) d.twAway = false; T.q.length = 0; T.viaLift = false; T.ff = null; T.foeSt = false; if (T.via === 'front' || T.via === 'street') T.via = 'stairs'; L.job = null; L.out = false; L.foeInAt = 0; L.inFoe = false;
   if (L.me && d && d.ko < 0) twCabFoeIn(now, false);
 }
 function twFoeArrive(now) {      // the enemy comes: out of the crater above you, the door of the cab, or the stairs nearest to you

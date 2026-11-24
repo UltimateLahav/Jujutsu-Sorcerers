@@ -946,6 +946,53 @@ async function scCity() {
   } finally { twPick = keep; scKey('ArrowLeft', false); scKey('ArrowRight', false); }
 }
 
+// ---------------------------------------------------------------- THE ROOF (v1.220, tools/roof.js): the stairs up from the top floor, the jump over the wall at the end of the roof, 50 floors in about 10 s with the enemy next to him, a slab that is caught, the climb, the glass that must be broken, the way back in; and a throw that knocks him off: the fall ends in the street with a crater and a health that is never gone
+async function scRoof() {
+  SC.sec = 'ROOF'; scCov('ROOF', 0, 3); SC.plan = 3 * 500; SC.done = 0; const keep = twPick, rnd0 = Math.random; twPick = 1;
+  try {
+    for (const mode of ['FALL', 'CLING', 'AMBUSH']) {
+      const label = 'THE ROOF, ' + mode; SC.say = label; Object.assign(TR, { beh: 0, ehp: 0, php: 1, pce: 0 }); Math.random = () => mode === 'FALL' ? 0.1 : 0.99;
+      try { startPractice('gojo', 'cat'); } catch (e) { scErr(e, label + ' START'); continue; }
+      if (state !== 'play' || !twOn()) { scNote('fail', 'THE SKYSCRAPER DID NOT START: ' + label, 'STATE ' + state); show('title'); continue; }
+      if (!(await scIntro())) { show('title'); return; }
+      const T = vs.tw, st = twFloorData(TW_N).doors.find(q => q.k === 'stairs'); wx = st.x; dummy.x = wx + 90; T.px = wx; T.dx = dummy.x; twTravel(1, st, pnow());
+      scT(!!rof && rof.ph === 'roof' && !twOn(), label + ': THE STAIRS UP FROM THE TOP FLOOR DID NOT LEAD TO THE ROOF', 'ROOF ' + (rof ? rof.ph : 'NONE'));
+      if (!rof) { show('title'); continue; }
+      await scFrames(26); wx = ROF.RW - 8; wxv = 0; jumpReq = true; await scFrames(3); const hp0 = vs.hp;
+      scT(!!rof && rof.ph === 'fall', label + ': A JUMP AT THE END OF THE ROOF DID NOT BEGIN THE FALL', 'ROOF ' + (rof ? rof.ph : 'NONE'));
+      if (!rof || rof.ph !== 'fall') { show('title'); continue; }
+      if (mode === 'FALL') {
+        await scFrames(16); scT(!!rof && rof.fs === 'with' && Math.abs(dummy.x - wx) < 120, label + ': THE ENEMY DID NOT JUMP AFTER HIM AND LAND NEXT TO HIM WITHIN 2 SECONDS', 'FS ' + (rof ? rof.fs : 'NONE'));
+        const hf0 = dummy.hp; let ft = 0; await scUntil(() => { if (rof) ft = rof.ft; return !rof; }, 260);
+        scT(ft > 9.3 && ft < 10.7, label + ': THE FALL DID NOT TAKE ABOUT 10 SECONDS', ft.toFixed(2) + ' S');
+        scT(vs.map === 'street' && !!vs.crater && !rof, label + ': THE FALL DID NOT END IN THE STREET WITH A CRATER', 'MAP ' + vs.map);
+        scT(vs.hp >= 1 && Math.abs(hp0 - vs.hp - Math.round(PHP * 0.3)) <= 1 && dummy.hp >= 1 && dummy.hp < hf0, label + ': THE LANDING DID NOT TAKE 30% OF THE HEALTH OF BOTH, OR KNOCKED ONE OUT', 'ME ' + hp0 + ' -> ' + vs.hp + ', HE ' + hf0 + ' -> ' + dummy.hp);
+        await scFrames(6); scT(!vs.tw.away && Math.abs(dummy.x - wx) < 120, label + ': THE ENEMY IS NOT IN THE STREET NEXT TO HIM', 'AWAY ' + vs.tw.away + ', DX ' + Math.round(dummy.x - wx));
+      } else {
+        await scUntil(() => !rof || rof.s < 40, 200); wx = ROF.RW + 20; jumpReq = true; await scFrames(3);
+        scT(!!rof && rof.ph === 'cling' && rof.slab >= 3, label + ': A JUMP AT THE BUILDING DID NOT CATCH A SLAB', 'ROOF ' + (rof ? rof.ph : 'NONE'));
+        if (!rof || rof.ph !== 'cling') { show('title'); continue; }
+        const slab = rof.slab; await scFrames(24); scT(rof.ph === 'cling' && Math.abs(rof.s - (rof.L - ROF_HL)) < 0.02 && rof.v === 0, label + ': HE DOES NOT HANG STILL UNDER THE SLAB', 'S ' + rof.s.toFixed(2) + ', L ' + rof.L);
+        scKey('ArrowRight', true); await scFrames(6); scKey('ArrowRight', false); scT(rof.ph === 'cling' && wvx === 0, label + ': HE CAN WALK WHILE HE HANGS', 'WVX ' + wvx);
+        if (mode === 'CLING') {
+          jumpReq = true; await scFrames(14); scT(rof.ph === 'balcony' && Math.abs(rof.s - rof.L) < 0.02, label + ': A SECOND JUMP DID NOT CLIMB ONTO THE BALCONY', 'PH ' + rof.ph);
+          scKey('ArrowLeft', true); await scFrames(10); scKey('ArrowLeft', false); scT(rof.ph === 'balcony', label + ': AN UNBROKEN WINDOW LET HIM IN', 'PH ' + rof.ph);
+          for (let i = 0; i < 14 && !twFloorData(slab).outer[1].broken; i++) { atkReq = true; await scFrames(8); }
+          scT(twFloorData(slab).outer[1].broken, label + ': BLOWS DID NOT BREAK THE GLASS', 'HP ' + twFloorData(slab).outer[1].hp);
+          scKey('ArrowLeft', true); await scUntil(() => !rof, 80); scKey('ArrowLeft', false);
+          scT(!rof && twOn() && vs.tw.fMe === slab, label + ': WALKING INTO THE OPENING DID NOT PUT HIM ON THAT FLOOR', 'FLOOR ' + vs.tw.fMe + ', WANTED ' + slab);
+        } else {
+          Math.random = () => 0.5; rof.inAt = pnow() + 50; await scUntil(() => !rof || rof.ph === 'fall', 140);
+          scT(!!rof && rof.ph === 'fall' && twFloorData(slab).outer[1].broken && vs.hp < hp0, label + ': THE THROW DID NOT KNOCK HIM OFF AND BREAK THE GLASS', 'PH ' + (rof ? rof.ph : 'NONE') + ', HP ' + hp0 + ' -> ' + vs.hp);
+          vs.hp = 10; await scUntil(() => !rof, 300);
+          scT(!rof && vs.ph === 'fight' && vs.hp >= 1 && vs.map === 'street' && !!vs.crater, label + ': A FALL THAT BEGAN ON A BALCONY DID NOT END IN THE STREET WITH A CRATER AND HIM STILL ALIVE', 'PH ' + vs.ph + ', HP ' + vs.hp + ', MAP ' + vs.map);
+        }
+      }
+      scCheck(); scCov('ROOF', 1, 0); show('title');
+    }
+  } finally { Math.random = rnd0; twPick = keep; scKey('ArrowLeft', false); scKey('ArrowRight', false); rof = null; }
+}
+
 async function scTicks() {      // v1.201 ONE TICK EFFECT AT A TIME (a bleed, a burn, a scald): while one runs on a fighter every other one that would start is ignored, it deals the same amount at every tick until it is over and when it has faded the next blow starts it again; on the enemy and on you, with Sukuna's slashes (they used to add up), his fire arrow and the bleeding of lost limbs
   SC.sec = 'TICKS'; scCov('TICKS', 0, 2); SC.plan = 2 * 220; SC.done = 0; const keep = twPick; twPick = 0;
   try {
@@ -984,7 +1031,7 @@ async function scTicks() {      // v1.201 ONE TICK EFFECT AT A TIME (a bleed, a 
   } finally { twPick = keep; }
 }
 
-const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['ADMIN', 16, scAdmin], ['CANVAS', 6, scCanvas], ['CLASH', 4, scClash], ['ACHIEVEMENTS', 12, scAch], ['CH 5 FIGHT', 14, scK5], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['TICKS', 6, scTicks], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
+const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['ADMIN', 16, scAdmin], ['CANVAS', 6, scCanvas], ['CLASH', 4, scClash], ['ACHIEVEMENTS', 12, scAch], ['CH 5 FIGHT', 14, scK5], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['ROOF', 8, scRoof], ['TICKS', 6, scTicks], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
 const scEl = document.createElement('section'); scEl.id = 'scan'; scEl.className = 'screen';
 scEl.innerHTML = '<h2>SCANNING THE GAME</h2><div id="scBar"><i id="scFill"></i></div><small id="scTxt"></small><small id="scLive"></small><small>YOUR SAVES ARE SAFE: THEY WERE COPIED FIRST AND ARE PUT BACK WHEN THE SCAN IS OVER.</small><button id="scCancel">CANCEL</button>';
 document.body.appendChild(scEl);
@@ -1031,7 +1078,7 @@ async function scRun(opts) {      // opts.noReload = for the tests: no reload at
 window.__scanRun = scRun;
 
 // ---------------------------------------------------------------- what the ERRORS page shows
-const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', ADMIN: 'ADMIN BOX OF THE TRAINING', CANVAS: 'CANVAS AFTER AN ERROR', CLASH: 'BEAM CLASH', ACHIEVEMENTS: 'ACHIEVEMENTS', 'CH 5 FIGHT': 'CHAPTER 5 FIGHT AND IRON MAN\'S MOVES', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', CITY: 'CITY DOORS AND FALLS', TICKS: 'TICK EFFECTS, ONE AT A TIME', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
+const SC_COVN = { TABLES: 'THE TABLES', SCREENS: 'SCREENS', FIGHTERS: 'FIGHTERS', MOVES: 'MOVES', ADMIN: 'ADMIN BOX OF THE TRAINING', CANVAS: 'CANVAS AFTER AN ERROR', CLASH: 'BEAM CLASH', ACHIEVEMENTS: 'ACHIEVEMENTS', 'CH 5 FIGHT': 'CHAPTER 5 FIGHT AND IRON MAN\'S MOVES', CUTSCENES: 'FATALITIES AND DOMAINS', TOWER: 'SKYSCRAPER FIGHTS', CITY: 'CITY DOORS AND FALLS', ROOF: 'THE ROOF AND THE LONG FALL', TICKS: 'TICK EFFECTS, ONE AT A TIME', SCENES: 'STORY SCENES', ROUNDS: 'EXTRA ROUNDS OF 14 FIGHTS' };
 const scCovText = () => Object.keys(SC.got).concat(Object.keys(SC.of)).filter((k, i, a) => a.indexOf(k) === i).map(k => k === 'ROUNDS' ? 'EXTRA ROUNDS OF 14 FIGHTS ' + SC.got[k] : (SC_COVN[k] || k) + ' ' + (SC.got[k] || 0) + '/' + SC.of[k]);      // (what was covered, of what there is)
 const scLast = () => { try { const r = JSON.parse(localStorage.getItem('jsscanres') || 'null'); return r && Array.isArray(r.res) ? r : null; } catch { return null; } };
 function scReport(r) {      // the text of COPY SCAN REPORT
