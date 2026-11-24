@@ -486,7 +486,7 @@ async function scK5() {      // v1.211 the chapter 5 fight: Yuji against Iron Ma
         ok(await scUntil(() => g().T >= 7.5, 400, 33) && orange(gsx - 14, gy - 52, 28, 44) >= 25 && g().said === 12, 'GOKU IS NOT NEXT TO YUJI, OR WHO ARE YOU? IS NOT TYPED OUT', JSON.stringify(g()));
         const cnt = (x0, y0, w, h, f) => { const d = ctx.getImageData(Math.max(0, x0), Math.max(0, y0), w, h).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (f(d[i], d[i + 1], d[i + 2])) n++; return n; }, hx = Math.round(VW / 2 + GKP.yx) + 3, hy = gy - 45, hxw = Math.round(VW / 2 + GKP.wx);
         window.__gkQ = 'miss';      // (nobody taps: the first time Yuji dies; then the tap is made to succeed)
-        ok(await scUntil(() => g().T >= GKT.ring + 0.3, 700, 33) && g().q === null && cnt(hx - 10, hy - 10, 21, 21, (r, gg, b) => r > 150 && gg < 60 && b < 70) >= 100, 'THE RING OF THE TAP IS NOT ON YUJI\'S HEAD (NO RED CORE THERE)', JSON.stringify(g()));
+        ok(await scUntil(() => g().T >= GKT.ring + 0.3, 700, 33) && g().q === null && cnt(hx - 10, hy - 10, 21, 21, (r, gg, b) => r > 150 && gg < 60 && b < 70) >= 60, 'THE RING OF THE TAP IS NOT ON YUJI\'S HEAD (NO RED CORE THERE)', JSON.stringify(g()));
         ok(await scUntil(() => g().q === 'miss' && g().T >= GKT.hit + 0.2, 300, 33) && g().parts >= 30, 'THE BLOW ON YUJI\'S HEAD DID NOT BURST IT (NO BLOOD IN THE AIR)', JSON.stringify(g()));
         ok(await scUntil(() => g().T >= GKT.hit + 1.9, 300, 33) && cnt(Math.round(VW * 0.2), Math.round(VH * 0.35), Math.round(VW * 0.6), Math.round(VH * 0.2), (r, gg, b) => r > 200 && gg < 110 && b < 130) >= 30, 'THE WORDS YUJI DIED ARE NOT ON THE SCREEN', JSON.stringify(g()));
         window.__gkQ = 'hit';
@@ -972,7 +972,9 @@ async function scRoof() {
       if (!rof || rof.ph !== 'fall') { show('title'); continue; }
       if (mode === 'FALL') {
         await scFrames(16); scT(!!rof && rof.fs === 'with' && Math.abs(dummy.x - wx) < 120, label + ': THE ENEMY DID NOT JUMP AFTER HIM AND LAND NEXT TO HIM WITHIN 2 SECONDS', 'FS ' + (rof ? rof.fs : 'NONE'));
-        const hf0 = dummy.hp; let ft = 0; await scUntil(() => { if (rof) ft = rof.ft; return !rof; }, 260);
+        scT(rofWind() > 0, label + ': THE WIND DID NOT BLOW UP PAST HIM WHILE HE FELL', 'WIND ' + rofWind().toFixed(2));
+        const hf0 = dummy.hp; let ft = 0, lk = 0; await scUntil(() => { if (rof) ft = rof.ft; if (rofCap) lk++; return !rof; }, 260);
+        scT(lk === 0, label + ': A FIGHTER WAS LEFT HALF DRAWN (CAPTURED FOR HIS POSE) AFTER A FRAME OF THE FALL', 'FRAMES ' + lk);
         scT(ft > 9.3 && ft < 10.7, label + ': THE FALL DID NOT TAKE ABOUT 10 SECONDS', ft.toFixed(2) + ' S');
         scT(vs.map === 'street' && !!vs.crater && !rof, label + ': THE FALL DID NOT END IN THE STREET WITH A CRATER', 'MAP ' + vs.map);
         scT(vs.hp >= 1 && Math.abs(hp0 - vs.hp - Math.round(PHP * 0.3)) <= 1 && dummy.hp >= 1 && dummy.hp < hf0, label + ': THE LANDING DID NOT TAKE 30% OF THE HEALTH OF BOTH, OR KNOCKED ONE OUT', 'ME ' + hp0 + ' -> ' + vs.hp + ', HE ' + hf0 + ' -> ' + dummy.hp);

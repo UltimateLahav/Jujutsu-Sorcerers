@@ -47,7 +47,7 @@ function gfxMissing() {      // v1.207 a picture that does not exist (a frame of
 function gfxDI0(img) { if (img == null) { gfxMissing(); return; } return gDI.apply(ctx, arguments); }      // (with no trail and no shadow: the call of the browser, but a picture that is missing is skipped)
 function gfxRecover() {      // v1.207 a frame that threw: every save() it left open is undone (a clip or a shake offset that stayed would freeze or shift the picture for good), the pen is put back and the trail hook is let go. restore() with nothing saved does nothing, so too many is harmless
   try { for (let i = 0; i < 80; i++) ctx.restore(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; if (gBloomOk) ctx.filter = 'none'; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; } catch { /* the canvas is gone: nothing to put back */ }
-  gGhost = false;
+  gGhost = false; if (typeof rofCapStop === 'function') rofCapStop();
 }
 function gfxDI(img) {
   const A = arguments, n = A.length;

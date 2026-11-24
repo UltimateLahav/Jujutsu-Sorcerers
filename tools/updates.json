@@ -1,5 +1,16 @@
 [
  {
+  "v": "1.222",
+  "t": "BETTER FALLING POSES: THEY LEAN, KICK AND STREAM IN THE WIND",
+  "n": [
+   "Every fighter now has a real falling pose, made from his own picture so it matches how he looks everywhere else in the game. While you fall from the roof or out of a window, your fighter leans back into the wind, his legs kick about his hips, and a faint speed trail streams up behind him. The faster you fall, the stronger the pose. It works for all eight fighters: Gojo, Yuji, Verity, the Cartoon Cat, Freddy, Sukuna, Ryu and Iron Man.",
+   "The hair, the coats and the Cat's tail now blow upwards in the fall, and they stay on the tilted body instead of floating beside it.",
+   "The enemy gets the same poses when he jumps after you, when he falls past you, and when he hangs on the building next to you. While you hang from a slab you dangle and sway a little.",
+   "When a fighter strikes, blocks, dashes or is hit in the fall, the pose fades out so the move looks the way it always does, then it comes back.",
+   "Still not in the Wi-Fi fight. Nothing new was drawn by hand: the poses are made live from the existing pictures. Tested with automatic runs, not on a real phone."
+  ]
+ },
+ {
   "v": "1.221",
   "t": "FALLING OUT OF A WINDOW, A BETTER LOOKING BUILDING AND A BETTER ROOF AND FALL",
   "n": [

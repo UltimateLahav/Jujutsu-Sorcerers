@@ -14,7 +14,7 @@ const rofHang = () => !!rof && (rof.ph === 'cling' || rof.ph === 'climb' || rof.
 const rofFight = () => !!rof && (rof.fs === 'with' || rof.fs === 'melee');
 const rofWin = () => twFloorData(rof.slab).outer[rof.side];      // (the glass of the floor you are at, on the side you fell from (the roof: the right end): the window you break)
 const rofWindK = () => rof && rof.ph === 'fall' ? 1 + 3 * Math.min(1, rof.v / ROF_VM) : 1;      // (the wind sound: louder the faster you fall, see sfx.windPush)
-const rofNew = (now, o) => Object.assign({ ph: 'roof', at: now, ft: 0, s: 50, s0: 50, v0: 0.45, v: 0, slab: 0, L: 0, fs: 'away', pend: '', fAt: 0, foeFl: 0, inAt: 0, inFl: 0, join: 0, amb: 0, pj: [], doorAt: -1, sd: false, sd2: false, leap: null, br: null, brT: 1, bt: 0, ct: 0, gripAt: 0, swAt: 0, swP: 6, px: 0, gv: 0, gat: 0, fAt2: 0, side: 1, jat: -1e9 }, o);      // (every field of the state, so the roof and a window can both begin one)
+const rofNew = (now, o) => Object.assign({ ph: 'roof', at: now, ft: 0, s: 50, s0: 50, v0: 0.45, v: 0, slab: 0, L: 0, fs: 'away', pend: '', fAt: 0, foeFl: 0, inAt: 0, inFl: 0, join: 0, amb: 0, pj: [], doorAt: -1, sd: false, sd2: false, leap: null, br: null, brT: 1, bt: 0, ct: 0, gripAt: 0, swAt: 0, swP: 6, px: 0, gv: 0, gat: 0, fAt2: 0, side: 1, jat: -1e9, psMe: 1, psFoe: 1, actUntil: 0 }, o);      // (every field of the state, so the roof and a window can both begin one)
 const rofYo = () => -(rof.L - rof.s) * ROF.FL;      // (how far the slab you are at is above the line you stand on: 0 on the balcony, 78 px while you hang)
 
 // ---------------------------------------------------------------- the enemy
@@ -150,7 +150,9 @@ function rofLand(now) {      // the street: the crater, 30% of the health (never
 function rofTick(now, dt) {      // every frame, before the tower's and the training step
   const r = rof; if (!r || state !== 'play' || !vs || !dummy) return; if (!rofRun()) { if (dummy.ko < 0 && !rofFight()) rofHold(now); return; }
   if (r.ph === 'roof') rofRoof(now); else if (r.ph === 'fall') rofFall(now, dt); else rofHangTick(now, dt);
-  if (rof) { rofFoe(now); rofShots(now); }
+  if (rof) { rofFoe(now); rofShots(now); const d = dummy; if (atkReq || lpReq || dashReq || ceReq || domReq) r.actUntil = now + 550;
+    const busyMe = r.ph === 'fall' && (now < r.actUntil || atkAt >= 0 || (hurtAt >= 0 && now - hurtAt < 700) || blockHeld || !!dash || dgAt >= 0 || teleAt >= 0 || jumpAt >= 0 || stance === 'down' || stance === 'crouch'), busyF = r.ph === 'fall' && d.ko < 0 && ((d.ai !== 'rest' && d.ai !== 'think' && d.ai !== 'walk') || now - d.rxAt < RX_DUR[d.rx]);      // (the pose fades out while a fighter does something: a blow, a block, a dash, a hit; it is the idle and the walk that are posed)
+    r.psMe += ((busyMe ? 0 : 1) - r.psMe) * Math.min(1, dt * 9); r.psFoe += ((busyF ? 0 : 1) - r.psFoe) * Math.min(1, dt * 9); }
 }
 function rofClamp() {      // after the player's movement (drawScene): the walls of the roof, of the fall and of the balcony
   const r = rof, d = dummy; if (!r) return; let lo, hi, flo, fhi;
@@ -224,7 +226,38 @@ function rofRoofTop(now, y, bx) {      // the roof: its surface is at y (the sol
   { const sx = xl + 306; if (sx > -4 && sx < VW + 4) { twR(sx, y - 70, 1, 56, '#aeb5c3'); twR(sx - 3, y - 50, 7, 1, '#aeb5c3'); twR(sx - 1, y - 72, 3, 3, ((now / 600) | 0) & 1 ? '#ff4a3a' : '#6a1a14'); } }      // (the mast with its red lamp)
   for (const fx of [96, 250]) { const sx = xl + fx; if (sx < -34 || sx > VW + 34) continue; twR(sx, y - 46, 1, 32, '#7d8496'); twR(sx - 3, y - 48, 8, 2, '#fff7c0'); ctx.fillStyle = 'rgba(255,247,192,0.07)'; ctx.beginPath(); ctx.moveTo(sx - 2, y - 47); ctx.lineTo(sx + 4, y - 47); ctx.lineTo(sx + 34, y - 8); ctx.lineTo(sx - 30, y - 8); ctx.fill(); }      // (two floodlights with their cones)
 }
-function rofArms(sx, yS) { twR(sx - 6, yS - 2, 4, 3, '#e8c3a0'); twR(sx + 3, yS - 2, 4, 3, '#e8c3a0'); twR(sx - 5, yS + 1, 2, Math.max(0, gy - 50 - yS), '#5f6990'); twR(sx + 4, yS + 1, 2, Math.max(0, gy - 50 - yS), '#5f6990'); }      // (the hands over the edge of the slab, the arms down to the shoulders)
+const ROF_OC = document.createElement('canvas'), ROF_HIP = { yuji: 27, gojo: 27, verity: 30, cat: 29, freddy: 27, cu3: 27, cu4: 24, cu5: 29 };      // (the capture canvas; how high the hips are above the soles, per fighter)
+const ROF_ARM = { yuji: ['#1d2a5c', '#e8b896'], gojo: ['#2a2540', '#f0d2b4'], verity: ['#c9b72f', '#d8c848'], cat: ['#1c1c24', '#ffffff'], freddy: ['#9a2626', '#7a5a3a'], cu3: ['#262640', '#e8b896'], cu4: ['#1c2030', '#e0b090'], cu5: ['#c02828', '#e8c030'] };      // (the sleeve and the hand of each fighter, for the arms that hold the slab)
+let rofCap = null;      // (a capture that is running: what ctx.drawImage was before)
+function rofCapBegin() {      // from here until rofCapEnd every picture drawn goes to ROF_OC (with the transform it was drawn under) instead of the screen, so the whole fighter can be posed; false = nothing to do now
+  if (rofCap || !rof || (rof.ph !== 'fall' && rof.ph !== 'cling' && rof.ph !== 'climb')) return false;
+  const oc = ROF_OC, W = VW + 16, H = VH + 16; if (oc.width !== W || oc.height !== H) { oc.width = W; oc.height = H; } const g = oc.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H); g.imageSmoothingEnabled = false;
+  const has = n => Object.prototype.hasOwnProperty.call(ctx, n), own = has('drawImage'), ownR = has('fillRect'), orig = ctx.drawImage, origR = ctx.fillRect, to = () => { const m = ctx.getTransform(); g.setTransform(m.a, m.b, m.c, m.d, m.e + 8, m.f + 8); g.globalAlpha = ctx.globalAlpha; g.globalCompositeOperation = ctx.globalCompositeOperation; };
+  ctx.drawImage = function (img) { if (img == null) return; to(); return g.drawImage.apply(g, arguments); };
+  ctx.fillRect = function (x, y, w, h) { to(); g.fillStyle = ctx.fillStyle; g.fillRect(x, y, w, h); };      // (the dots of his hair and his coat go with his picture, so they stay on him when he is tilted)
+  rofCap = { own, ownR, orig, origR }; return true;
+}
+function rofCapStop() { if (!rofCap) return; if (rofCap.own) ctx.drawImage = rofCap.orig; else delete ctx.drawImage; if (rofCap.ownR) ctx.fillRect = rofCap.origR; else delete ctx.fillRect; rofCap = null; }
+function rofWind() { const r = rof; return r && r.ph === 'fall' ? Math.min(1, 1.6 * r.v / ROF_VM) : 0; }      // (how hard the wind blows up past a falling fighter, 0 to 1: the hair and the coat stream up, see clStep)
+function rofCapEnd(now, sx) {      // (the player's scenes call it after his picture and his cloth) the captured picture, posed
+  if (!rofCap) return; rofCapStop(); const r = rof; if (!r) return;
+  rofRig(now, sx, 1, r.ph === 'fall' ? 'fall' : 'hang', r.psMe, ROF_HIP[vs.me] || 27, 0);      // (his picture always faces right, whichever side the enemy is on)
+}
+function rofRig(now, sx, face, mode, ps, hip, dy) {      // the captured picture of a fighter, posed with his own pixels: falling = the legs kick about the hips, the body leans back and sways, afterimages stream up from him; hanging = the legs dangle and swing a little
+  const oc = ROF_OC, W = oc.width, H = oc.height, hy = gy + 2 - hip, t = now / 1000, fall = mode === 'fall', k = fall && rof ? Math.min(1, rof.v / ROF_VM) : 0;
+  const lean = ps * face * (fall ? -(0.16 + 0.16 * k) + 0.04 * Math.sin(t * 4.3) : 0.025 * Math.sin(t * 1.9)), leg = ps * face * (fall ? (0.28 + 0.14 * k) * Math.sin(t * (6.5 + 4 * k)) : 0.13 * Math.sin(t * 2.3));
+  const part = (oy, a, legs) => {
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha *= a; ctx.translate(0, (dy || 0) + oy); ctx.translate(sx, hy); ctx.rotate(lean); ctx.translate(-sx, -hy);
+    if (legs) {
+      ctx.save(); ctx.translate(sx, hy); ctx.rotate(leg); ctx.translate(-sx, -hy); ctx.drawImage(oc, 0, hy + 7, W, H - hy - 7, -8, hy - 1, W, H - hy - 7); ctx.restore();      // (the legs, swung about the hip)
+      ctx.drawImage(oc, 0, 0, W, hy + 10, -8, -8, W, hy + 10);      // (the body above them, over the join)
+    } else ctx.drawImage(oc, -8, -8);      // (an afterimage: one faint picture, leaning)
+    ctx.restore();
+  };
+  if (fall && k > 0.15 && ps > 0.2) for (let i = 3; i >= 1; i--) part(-Math.round(5 * i * (0.5 + k)), 0.12 / i * ps + 0.02, false);      // (the afterimages the speed leaves above him)
+  part(0, 1, true);
+}
+function rofArms(sx, yS, who) { const c = ROF_ARM[who] || ['#5f6990', '#e8c3a0']; twR(sx - 6, yS - 2, 4, 3, c[1]); twR(sx + 3, yS - 2, 4, 3, c[1]); twR(sx - 5, yS + 1, 2, Math.max(0, gy - 50 - yS), c[0]); twR(sx + 4, yS + 1, 2, Math.max(0, gy - 50 - yS), c[0]); }      // (the hands over the edge of the slab, the arms down to the shoulders)
 function rofFacade(now, r, bx, s) {      // the building: a wall with a corner pilaster at the left of the face, at every level a slab with a balcony, a wall under the windows, a lintel with wall lamps and the windows themselves; levels are floors above the street
   const FL = ROF.FL, y0 = gy + 2, y50 = Math.round(y0 - (50 - s) * FL), q = twQ(), fast = r.ph === 'fall' ? r.v / ROF_VM : 0, hang = r.ph === 'cling' || r.ph === 'climb' || r.ph === 'balcony', sd = r.side;
   if (y50 < VH + 4) { const h = VH + 16 - y50; twR(-8, y50, bx + 8, h, '#1b2438'); twR(bx - 9, y50, 6, h, '#2a3858'); twR(bx - 9, y50, 1, h, '#4a5a86'); twR(bx - 4, y50, 1, h, '#141c32'); twR(bx - 3, y50, 3, h, '#6e7aa0'); twR(bx - 1, y50, 1, h, '#b6c2e2'); }
@@ -248,18 +281,23 @@ function rofFacade(now, r, bx, s) {      // the building: a wall with a corner p
   if (y50 < VH + 4 && y50 > -90) { rofRoofTop(now, y50, bx); for (let x = bx - 30; x > 0; x -= 26) twR(x, y50 + 11, 2, VH, '#222c45'); }      // (L 50 is the roof itself)
 }
 function rofBack(now) {
-  const r = rof, bx = Math.round(VW / 2 + ROF.RW - wx), s = r.s, fall = r.ph === 'fall' || (r.ph === 'cling' && r.br); rofSky(now, Math.max(0, Math.min(1, 1 - s / 50)), !fall);
+  rofCapStop(); const r = rof, bx = Math.round(VW / 2 + ROF.RW - wx), s = r.s, fall = r.ph === 'fall' || (r.ph === 'cling' && r.br); rofSky(now, Math.max(0, Math.min(1, 1 - s / 50)), !fall);
   if (fall) rofLines(now, r.v / ROF_VM); else rofCity(now, gy + 30 - Math.round(24 * Math.min(1, s / 50)));
   rofFacade(now, r, bx, s); if (fall) rofVeil(now, s);
-  if (r.ph === 'cling' || r.ph === 'climb') { const yS = Math.round(gy + 2 + rofYo()); if (yS < gy - 52) rofArms(Math.round(VW / 2), yS); }
+  if (r.ph === 'cling' || r.ph === 'climb') { const yS = Math.round(gy + 2 + rofYo()); if (yS < gy - 52) rofArms(Math.round(VW / 2), yS, vs.me); }
   if (r.ph === 'fall') { const tl = rofTLand(r.s0, r.v0) - r.ft; if (tl < 0.6) rofStreet(Math.max(0, tl / 0.6)); }
 }
-function rofFoeFx(now, draw) {      // (drawFoes asks) the enemy when he is not in the fight (or has just dived in): false = draw him as usual
+function rofFoeFx(now, draw) {      // (drawFoes asks) the enemy when he is not in the fight, or is in the fall (posed): false = draw him as usual
   const r = rof, d = dummy; if (!r || !d || d.ko >= 0) return false;
-  if (rofFight()) { const k = (now - r.jat) / 320; if (r.fs !== 'with' || k >= 1 || k < 0) return false; ctx.save(); ctx.translate(0, -Math.round(110 * (1 - k) * (1 - k))); draw(); ctx.restore(); return true; }      // (he dives in from above: the first 0.3 s)
+  const hip = ROF_HIP[vs.foe] || 27;
+  if (rofFight()) {
+    if (r.ph !== 'fall' || r.fs !== 'with') return false;      // (on the roof and on the balcony he is drawn as usual)
+    const k = (now - r.jat) / 320, dy = k >= 0 && k < 1 ? -Math.round(110 * (1 - k) * (1 - k)) : 0, on = rofCapBegin();      // (he dives in from above: the first 0.3 s)
+    draw(); if (on) { rofCapStop(); rofRig(now, Math.round(VW / 2 + d.x - wx), wx >= d.x ? 1 : -1, 'fall', r.psFoe, hip, dy); } return true;
+  }
   const gx = d.x, ga = d.airH, cx = VW / 2, st = r.fs; d.airH = 0;
-  if (st === 'past') { const ts = (now - r.gat) / 1000, T = r.brT, dy = Math.round(r.gv * ROF.FL * (ts < T ? ts * ts / (2 * T) : T / 2 + ts - T)); if (dy < VH + 70) { ctx.save(); ctx.translate(0, dy); d.x = r.px; draw(); ctx.restore(); } }
-  else if (st === 'latch') { const yS = Math.round(gy + 2 + rofYo()); if (yS < gy - 52) rofArms(Math.round(cx + ROF.RW + 24 - wx), yS); d.x = ROF.RW + 24; draw(); }
+  if (st === 'past') { const ts = (now - r.gat) / 1000, T = r.brT, dy = Math.round(r.gv * ROF.FL * (ts < T ? ts * ts / (2 * T) : T / 2 + ts - T)); if (dy < VH + 70) { d.x = r.px; const on = rofCapBegin(); draw(); if (on) { rofCapStop(); rofRig(now, Math.round(cx + d.x - wx), wx >= d.x ? 1 : -1, 'fall', 1, hip, dy); } } }
+  else if (st === 'latch') { const yS = Math.round(gy + 2 + rofYo()); if (yS < gy - 52) rofArms(Math.round(cx + ROF.RW + 24 - wx), yS, vs.foe); d.x = ROF.RW + 24; const on = rofCapBegin(); draw(); if (on) { rofCapStop(); rofRig(now, Math.round(cx + d.x - wx), -1, 'hang', 1, hip, 0); } }
   else if (st === 'above' || st === 'inside') {
     const yo = Math.round(rofYo()), bx = Math.round(cx + ROF.RW - wx), yl = gy + 2 + yo; ctx.save();
     if (st === 'inside') { ctx.beginPath(); ctx.rect(bx - 56, yl - 64, 54, 62); ctx.clip(); ctx.globalAlpha = rofWin().broken ? 1 : 0.7; }
