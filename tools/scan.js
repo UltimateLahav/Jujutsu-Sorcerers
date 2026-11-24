@@ -929,14 +929,14 @@ async function scCityWindow(who, side) {      // a match that begins in the skys
   if (!(await scIntro())) { show('title'); return false; }
   const T = vs.tw, F = twFloorData(T.fMe), s = side === 'me' ? 1 : 0; F.outer[s].broken = true;
   if (side === 'me') wx = s ? F.W + 12 : -12; else { dummy.x = s ? F.W + 12 : -12; T.dx = wx; }
-  scT(await scUntil(() => !twOn(), 160), label + ': THE FALL DID NOT END IN THE STREET', 'FLOOR ' + T.fMe + ', SLIDE ' + !!T.slide + ', AWAY ' + T.away);
+  scT(await scUntil(() => !twOn() && !rof, 330), label + ': THE FALL DID NOT END IN THE STREET', 'FLOOR ' + T.fMe + ', SLIDE ' + !!T.slide + ', AWAY ' + T.away);
   if (twOn()) { show('title'); return true; }
   scT(vs.map === 'street' && Math.abs(wx - ctLand(s)) < 6, label + ': HE LANDED IN THE WRONG PLACE', 'WX ' + Math.round(wx) + ', WANTED ' + ctLand(s));
   scT((await scUntil(() => !T.away && dummy.ko < 0, 220)) && Number.isFinite(dummy.x) && Math.abs(dummy.x - wx) < 600, label + ': THE ENEMY IS NOT IN THE STREET WITH HIM', 'AWAY ' + T.away + ', VIA ' + T.via + ', FOE FLOOR ' + T.fFoe);
   scCheck(); show('title'); return true;
 }
 async function scCity() {
-  SC.sec = 'CITY'; scCov('CITY', 0, 6); SC.plan = 6 * 220; SC.done = 0; const keep = twPick;
+  SC.sec = 'CITY'; scCov('CITY', 0, 6); SC.plan = 6 * 330; SC.done = 0; const keep = twPick;
   try {
     for (const who of ['gojo', 'cu5']) {
       if (!(await scCityDoors(who))) return; scCov('CITY', 1, 0);
@@ -948,13 +948,22 @@ async function scCity() {
 
 // ---------------------------------------------------------------- THE ROOF (v1.220, tools/roof.js): the stairs up from the top floor, the jump over the wall at the end of the roof, 50 floors in about 10 s with the enemy next to him, a slab that is caught, the climb, the glass that must be broken, the way back in; and a throw that knocks him off: the fall ends in the street with a crater and a health that is never gone
 async function scRoof() {
-  SC.sec = 'ROOF'; scCov('ROOF', 0, 3); SC.plan = 3 * 500; SC.done = 0; const keep = twPick, rnd0 = Math.random; twPick = 1;
+  SC.sec = 'ROOF'; scCov('ROOF', 0, 4); SC.plan = 4 * 500; SC.done = 0; const keep = twPick, rnd0 = Math.random; twPick = 1;
   try {
-    for (const mode of ['FALL', 'CLING', 'AMBUSH']) {
-      const label = 'THE ROOF, ' + mode; SC.say = label; Object.assign(TR, { beh: 0, ehp: 0, php: 1, pce: 0 }); Math.random = () => mode === 'FALL' ? 0.1 : 0.99;
+    for (const mode of ['FALL', 'CLING', 'AMBUSH', 'WINDOW']) {
+      const label = 'THE ROOF, ' + mode; SC.say = label; Object.assign(TR, { beh: 0, ehp: 0, php: 1, pce: 0 }); Math.random = () => mode === 'FALL' || mode === 'WINDOW' ? 0.1 : 0.99;
       try { startPractice('gojo', 'cat'); } catch (e) { scErr(e, label + ' START'); continue; }
       if (state !== 'play' || !twOn()) { scNote('fail', 'THE SKYSCRAPER DID NOT START: ' + label, 'STATE ' + state); show('title'); continue; }
       if (!(await scIntro())) { show('title'); return; }
+      if (mode === 'WINDOW') {      // (v1.221 out of a window = the same long fall: the left glass of floor 50 breaks and he is outside; the enemy jumps after him; the crater at the left landing place)
+        const F = twFloorData(vs.tw.fMe), hw0 = vs.hp; F.outer[0].broken = true; wx = -12; dummy.x = F.W - 60; await scUntil(() => !!rof, 30);
+        scT(!!rof && rof.ph === 'fall' && rof.side === 0 && !vs.tw.slide, label + ': OUT OF A WINDOW DID NOT BEGIN THE LONG FALL', 'ROOF ' + (rof ? rof.ph + ' ' + rof.side : 'NONE') + ', SLIDE ' + !!vs.tw.slide);
+        if (!rof || rof.ph !== 'fall') { show('title'); continue; }
+        await scFrames(16); scT(!!rof && rof.fs === 'with' && Math.abs(dummy.x - wx) < 120, label + ': THE ENEMY DID NOT JUMP AFTER HIM OUT OF THE WINDOW', 'FS ' + (rof ? rof.fs : 'NONE'));
+        let ft = 0; await scUntil(() => { if (rof) ft = rof.ft; return !rof; }, 300); scT(ft > 9.2 && ft < 10.4, label + ': THE FALL FROM FLOOR 50 DID NOT TAKE ABOUT 10 SECONDS', ft.toFixed(2) + ' S');
+        scT(vs.map === 'street' && !!vs.crater && Math.abs(wx - ctLand(0)) < 6 && hw0 - vs.hp === Math.round(PHP * 0.3), label + ': THE WINDOW FALL DID NOT END AT THE LEFT LANDING PLACE WITH A CRATER AND 30%', 'MAP ' + vs.map + ', WX ' + Math.round(wx) + ', HP ' + hw0 + ' -> ' + vs.hp);
+        scCheck(); scCov('ROOF', 1, 0); show('title'); continue;
+      }
       const T = vs.tw, st = twFloorData(TW_N).doors.find(q => q.k === 'stairs'); wx = st.x; dummy.x = wx + 90; T.px = wx; T.dx = dummy.x; twTravel(1, st, pnow());
       scT(!!rof && rof.ph === 'roof' && !twOn(), label + ': THE STAIRS UP FROM THE TOP FLOOR DID NOT LEAD TO THE ROOF', 'ROOF ' + (rof ? rof.ph : 'NONE'));
       if (!rof) { show('title'); continue; }

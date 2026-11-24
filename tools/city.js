@@ -35,12 +35,7 @@ function ctTick(now, dt) {
 function ctGoOut(now, how, side) {      // you leave the building: how 'door' = through the front door of the lobby, 'glass' = through the glass of any floor (from above the camera falls with you, floor after floor, and ends in the street)
   const T = vs.tw, d = dummy, f = T.fMe; if (T.cab || T.slide || !(f >= 1) || !d) return;
   const lx = how === 'door' ? CITY.door + CITY.out : ctLand(side), foeHere = d.ko < 0 && !T.away && T.fFoe === f; T.q.length = 0;
-  if (how === 'glass' && f > 1) {
-    const nn = f - 1, dm = Math.max(1, Math.round(PHP * Math.min(0.30, 0.03 * nn))); twHurtMe(dm, now, true); T.lastFallX = null;
-    twSlideStart(now, f, 0, wx, 'fall', foeHere ? d.x : null); T.slide.street = { x: lx, how, side, foeHere, land: ['FALL', nn, dm] };
-    if (foeHere) { T.away = true; d.twAway = true; T.awayX = d.x; T.via = 'street'; }      // (he stays up there, in sight while the camera falls: twAwayStep waits; ctSwitchOut says when he comes)
-    return;
-  }
+  if (how === 'glass' && f > 1) { rofWindow(now, f, side); return; }      // (v1.221 out of a window: the same long fall as from the roof, from that floor, see tools/roof.js)
   ctSwitchOut(now, lx, how, side, foeHere);
 }
 function ctArrive(now, s) { const q = s.street; ctSwitchOut(now, q.x, q.how, q.side, q.foeHere); if (q.land) twLand(now, q.land[0], q.land[1], q.land[2]); }      // (the camera has fallen to the street: you are in it)

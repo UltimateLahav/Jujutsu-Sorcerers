@@ -1,5 +1,17 @@
 [
  {
+  "v": "1.221",
+  "t": "FALLING OUT OF A WINDOW, A BETTER LOOKING BUILDING AND A BETTER ROOF AND FALL",
+  "n": [
+   "Falling out of a window now does the same thing as jumping off the roof. When you are thrown through the glass of any floor above the ground floor (or walk out through a broken window), you fall the rest of the way with the action lines, the building rushing past on the left, the enemy jumping after you inside 2 seconds, the chance to grab a floor and climb back in, and the crater at the bottom. A fall from a lower floor is shorter and costs 3% of your health for every floor (at most 30%, never a K.O.). A window at the left end of a floor works too: you land at the left place in the street, and you climb back in at the left end. If the enemy was thrown out first, he is already waiting in the street when you land.",
+   "The building outside looks much better. It has a stone base, a glass tower and a brighter penthouse, a lit column at the corner, and at every floor a slab with a glass railing and a window. Behind the glass there are real rooms: lit ones with the tower's own furniture (lamps, plants, shelves, server racks, vending machines, water coolers), curtains and flickering screens, and dark ones. Some balconies have a planter or an air unit, there are lamps on the wall, and every tenth floor is a band of louvers with a glowing neon strip. Around it is a night sky with a moon, drifting clouds, twinkling stars, and three layers of towers with lit windows and blinking red lamps.",
+   "The fall is better too: the action lines come in two layers (bright near ones and dim far ones), you fall through clouds at floors 44, 31, 19 and 9, the wind streaks past the fighters, the edges of the screen darken as you speed up, and the building itself streaks. The street that comes up at the bottom has a sidewalk, lane marks and a street lamp. An enemy who jumps after you dives in from above. The landing has a second shock ring, more rubble and dust and a short slow-motion beat; a short slow-motion beat also marks the jump off the roof and the glass breaking when you go out of a window.",
+   "The roof is nicer: a helipad with its H, two floodlights with their light cones, hazard stripes and a warning lamp on the low wall you jump over, an air unit with a fan, a water tank, and the mast with its red lamp.",
+   "Small things: CROUCH while you hang lets go of the building on purpose. You hear what the enemy throws or shoots when it leaves his hand, a hit flashes the screen, and bits of the slab fall from where you hold on. An enemy who was hanging beside you, standing over you or fighting you at your window stays up there in the room if you fall, and comes for you again from there.",
+   "Still not in the Wi-Fi fight. Same fighters with their own pictures, nothing new was drawn for them. Tested with automatic runs, not on a real phone."
+  ]
+ },
+ {
   "v": "1.220",
   "t": "THE ROOF, A 10-SECOND FALL, HANGING ON THE BUILDING AND THE CRATER",
   "n": [
