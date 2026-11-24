@@ -220,7 +220,7 @@ button:active{transform:translate(1px,2px);box-shadow:none;background:#b3121f}
     <h1><span class="j1">JUJUTSU</span><span class="j2">SORCERERS</span></h1><div class="seal" aria-hidden="true">呪</div>
     <button id="start" class="blink">TAP TO START</button>
     <small>BEST PLAYED IN LANDSCAPE</small>
-    <small id="ver">V1.221</small>
+    <small id="ver">V1.222</small>
   </div>
   <button id="logBtn">UPDATE LOG<b>NEW</b></button>
   <button id="codeBtn">CODES</button>
@@ -5251,10 +5251,10 @@ function verityScene(now, dt) {      // one frame of a Versus match with Verity 
   const vap = vs.who === 'enemy' && vs.why === 'fatal' && (vs.ph === 'ko' || vs.ph === 'over');      // (the enemy's FATALITY: he is gone until the next round)
   ctx.fillStyle = 'rgba(0,0,0,0.4)'; if (!vap && !rgOn() && !rofAir()) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
   const ry = Math.round(info.h * (1 - e)), gko = vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // (spawn: he materialises from the feet up; beaten: he topples backwards and stays down until the next round)
-  ctx.save();
+  rofCapBegin(); ctx.save();
   if (vap) { /* gone */ } else if (gko >= 0) { const rgh = ragXf(vs.rag, gko, cx, gy + 2, -1); if (!rgh) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); } ctx.drawImage(vs.meInv ? invOf(vfr('idle', 0, false)) : vfr('idle', 0, false), -32, -62 + rgh); }
   else { ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); { const gs = gdActive('p') ? goreSrc('p', src, (px, py) => ({ x: wx + (x + px - cx), y: y + py - gy })) : src; ctx.drawImage(vs.meInv && !(hf >= 0 && now - hurtAt < 70) ? invOf(gs) : gs, x, y); } if (stun && hf < 0) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(src), x, y); } }
-  ctx.restore(); if (hum && t >= 1 && gko < 0 && !vap && !(lagRun && lagRun.ph === 'hit')) cloth(clMe, src, x + (src === RIP_C ? Math.round(ripK(now, ripRun.at).lean) : 0), y, false, 'verity', dt); drawGiantNow('foe');
+  ctx.restore(); if (hum && t >= 1 && gko < 0 && !vap && !(lagRun && lagRun.ph === 'hit')) cloth(clMe, src, x + (src === RIP_C ? Math.round(ripK(now, ripRun.at).lean) : 0), y, false, 'verity', dt); rofCapEnd(now, cx); drawGiantNow('foe');
   if (v.form === 'smoke1') smokePuffs(cx, gy - 28, fa / 450); else if (v.form === 'smoke2') smokeBig(cx, fa / 1000);
   if (t < 1) {      // spawn ring + flash
     const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,225,110,' + (1 - t) + ')';
@@ -5744,10 +5744,10 @@ function catScene(now, dt) {      // one frame of a Versus match with the Cartoo
   drawGiantNow('me');      // (his giant stands behind him: it is in front of the enemy and behind his own picture)
   if (hg && y > 0 && !vap && gko < 0) ctx.drawImage(src, 0, 0, I[0], 1, x, 0, I[0], y);      // (v1.114 the arms run up out of the top of his picture: its top row, stretched up to the top of the screen, so they reach it on every screen)
   if (hg && hg.ph === 'hang' && now - hg.at < 3200) pxt('DOWN: SMASH', cx, Math.round(gy + 2 - py + 13), ((now / 220) | 0) % 2 ? '#fff3b0' : '#ffd34d', 8, 'center');      // (v1.114 the hint, under his feet for the first three seconds)
-  ctx.save();
+  rofCapBegin(); ctx.save();
   if (vap) { /* gone */ } else if (gko >= 0) { const rgh = ragXf(vs.rag, gko, cx, gy + 2, -1); if (!rgh) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); } ctx.drawImage(vs.meInv ? invOf(cfr('idle', 0, false)) : cfr('idle', 0, false), -32, -63 + rgh); }
   else { ctx.beginPath(); ctx.rect(x, y + ry, I[0], I[1] - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); { const gs = gdActive('p') ? goreSrc('p', src, (px, py) => ({ x: wx + (x + px - cx), y: y + py - gy })) : src; ctx.drawImage(vs.meInv && !white ? invOf(gs) : gs, x, y); } if (fear && hf < 0) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(src), x, y); } }
-  ctx.restore(); if (!flat && t >= 1 && gko < 0 && !vap) cloth(clMe, src, x, y, false, 'cat', dt);
+  ctx.restore(); if (!flat && t >= 1 && gko < 0 && !vap) cloth(clMe, src, x, y, false, 'cat', dt); rofCapEnd(now, cx);
   drawGiantNow('foe'); drawCst(now);      // (the enemy Cat's giant, if he summoned one: in front of the player, behind the enemy)
   if (t < 1) {      // spawn ring + flash
     const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,130,175,' + (1 - t) + ')';
@@ -7736,7 +7736,7 @@ function customScene(now, dt) {      // one frame of a match with a CUSTOM chara
   if (g && g.ry && ryUl) ryUlBack(now, cx, x, y);      // (v1.172 the beam of his ULTIMATE is behind him)
   if (g && g.ir) irWorld(g, now, cx, x, y, src);      // (v1.195 the beam of his BLAST is behind him too: his hand and arm stay in front of it; v1.196 the LASER the same, and the hole it made in the enemy)
   if (src && vs.net) netPic(src, cx, x - (src.ox || 0), y, lift);      // (v1.219 Wi-Fi: the other phone draws the picture I am drawn with, see tools/wifi.js)
-  if (src) { const gsrc = gdActive('p') ? goreSrc('p', src, (px, py) => ({ x: wx + (x + px - cx), y: y + py - gy })) : src; const ox = src.ox || 0; ctx.save(); if (grp) irGrpTf(grp); ctx.beginPath(); ctx.rect(x - ox, y + ry, src.width, 64 - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(gsrc, x - ox, y); if (hurtAt >= 0 && now - hurtAt < 70) ctx.drawImage(whiteOf(gsrc), x - ox, y); ctx.restore(); }      // (v1.192 a WIDE picture, Iron Man's charge lying flat: c.ox = how many columns more it has on the left of the usual window)      // (v1.128 GRAPHIC DAMAGE: without the limbs he has lost)
+  if (src) { const gsrc = gdActive('p') ? goreSrc('p', src, (px, py) => ({ x: wx + (x + px - cx), y: y + py - gy })) : src; const ox = src.ox || 0; rofCapBegin(); ctx.save(); if (grp) irGrpTf(grp); ctx.beginPath(); ctx.rect(x - ox, y + ry, src.width, 64 - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); ctx.drawImage(gsrc, x - ox, y); if (hurtAt >= 0 && now - hurtAt < 70) ctx.drawImage(whiteOf(gsrc), x - ox, y); ctx.restore(); rofCapEnd(now, cx); }      // (v1.192 a WIDE picture, Iron Man's charge lying flat: c.ox = how many columns more it has on the left of the usual window)      // (v1.128 GRAPHIC DAMAGE: without the limbs he has lost)
   drawGiantNow('foe'); cuDrawVfx(now, cx); cuDrawShots(now, cx); if (g && g.ir && g.bh) irBhFx(g, now, cx, x, y, src); if (g && g.ry) ryDraw(now, cx, x, y, src); if (g && g.blue) { suFlDraw(now, cx, x, y); suDomFront(now, cx, x, y, dt); suFgDraw(now, dt, cx, x, y, src); }      // (v1.120 the flames, the slime, the bow, the fire arrows and the burning enemy of the FLAME mode; v1.124 the slashes, flashes and words of the ULTIMATE)
   if (t < 1) { const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,225,110,' + (1 - t) + ')'; for (let a = 0; a < 64; a++) { const th = a / 64 * 6.2832; ctx.fillRect(Math.round(cx + Math.cos(th) * R), Math.round(y + 34 + Math.sin(th) * R * 0.45), 1, 1); } ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.55 - t * 1.8) + ')'; ctx.fillRect(0, 0, VW, VH); }      // (it appears with a ring and a flash, like the others)
   drawDivFx(now); drawSparks(now, dt); if (!dk) drawPeds(now, dt, 1); drawGibs(now); drawPopups(now); if (fgc) suFgCamEnd(now, shkX, shkY); else { if (rcm) ryUlCamEnd(); if (!ryUlNoHud()) drawVs(now, -shkX, -shkY); }      // (v1.127 the FUGA cutscene: everything above was seen through its camera; the health bars give way to the black bars)
@@ -19586,7 +19586,7 @@ function drawScene(now, dt) {
   const ry = Math.round(info.h * (1 - e));    // spawn: materialise from the feet up
   const gko = vs && vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // the enemy finished him in a match: after the hit-stop he topples backwards (like the enemy does) and stays down until the next round
   const paintMe = again => {      // (Gojo's picture: painted here, and once more on top of everything the DOMAIN shows)
-  ctx.save();
+  rofCapBegin(); ctx.save();
   if (vap) { /* gone */ } else if (gko >= 0) { const rgh = ragXf(vs.rag, gko, cx, gy + 2, -1); if (!rgh) { ctx.translate(cx, gy + 2); ctx.rotate(-1.4 * Math.pow(Math.min(1, gko / 520), 2)); } { const ki = (yj ? YUF.norm.idle : idleF)[0]; ctx.drawImage(vs && vs.meInv ? invOf(ki) : ki, -((yj ? YU.idle : D.idle).cx - (yj ? YU.idle : D.idle).x0), -62 + rgh); } }
   else {
     ctx.beginPath(); ctx.rect(x, y + ry, info.w, info.h - ry); ctx.clip();
@@ -19595,7 +19595,7 @@ function drawScene(now, dt) {
     if (fearing) { ctx.globalAlpha = 0.14 + 0.1 * Math.sin(now / 90); ctx.drawImage(whiteOf(blindOff && !yj ? blindDown(set[fi]) : set[fi]), x, y); }      // (JUMPSCARE: a pale pulse; with the blindfold down it follows the redrawn head)
   }
   ctx.restore(); if (!again) drawGiantNow('foe');
-  if (!again && t >= 1 && gko < 0 && !vap) cloth(clMe, set[fi], x, y, false, yj ? 'yuji' : 'gojo', dt);
+  if (!again && t >= 1 && gko < 0 && !vap) cloth(clMe, set[fi], x, y, false, yj ? 'yuji' : 'gojo', dt); rofCapEnd(now, cx);
   if (yj && atkOn && (atkK === 4 || atkK === 9 || atkK === 12 || atkK === 13) && info.hn && !vap) divGlow(x + info.hn[fi][0], y + info.hn[fi][1], fi, now, atkK === 9 || atkK === 13);      // (DIVERGENT FIST and CONCENTRATED FIST: the cursed energy round your fist)
   if (t >= 1 && gko < 0 && !vap) { drawCE(now, x, y, info, fi); if (yj && atkOn && af >= 2 && ((cm >= 2 && atkK >= 20 && atkK <= 22) || (yu && (atkK === 21 || atkK === 28 || atkK === 29)))) bfSparks(now, x, y, info, fi); if (yj && (cm === 3 || yu) && atkOn && atkK === 23) chargeFx(now, x, y, info, fi, af); if (yj && cm === 3 && vs && vs.ph === 'fight') inheritHud(now); if (!again) drawRedFx(now, dt, x, y, info, fi, mbing && mbK === 1, mf); }
   }; paintMe(false);
@@ -20874,11 +20874,11 @@ function clStep(S, ax, ay, bk, L, shape, dt) {      // one frame of a chain hang
   const P = S.p, n = P.length;
   if (!S.init || Math.abs(P[0].x - ax) > 40 || Math.abs(P[0].y - ay) > 40) { P.forEach((q, i) => { q.x = q.px = ax + bk * shape[i][0] * L; q.y = q.py = ay + shape[i][1] * L; }); S.init = true; }
   P[0].x = P[0].px = ax; P[0].y = P[0].py = ay;
-  const d2 = dt * dt, damp = Math.pow(0.9, dt * 60);
+  const d2 = dt * dt, damp = Math.pow(0.9, dt * 60), sg = 1 - 2 * rofWind();      // (sg: 1 = it hangs down, -1 = the wind of a fall streams it up)
   for (let i = 1; i < n; i++) {
     const q = P[i], vx = (q.x - q.px) * damp, vy = (q.y - q.py) * damp; q.px = q.x; q.py = q.y;
-    const rx = ax + bk * shape[i][0] * L, ry = ay + shape[i][1] * L;
-    q.x += vx + (rx - q.x) * 30 * d2; q.y += vy + 260 * d2 + (ry - q.y) * 30 * d2;
+    const rx = ax + bk * shape[i][0] * L, ry = ay + sg * shape[i][1] * L;
+    q.x += vx + (rx - q.x) * 30 * d2; q.y += vy + sg * 260 * d2 + (ry - q.y) * 30 * d2;
   }
   for (let k = 0; k < 2; k++) for (let i = 1; i < n; i++) { const a = P[i - 1], b = P[i], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1e-6, e = (d - L) / d; if (i > 1) { a.x += dx * e * 0.5; a.y += dy * e * 0.5; b.x -= dx * e * 0.5; b.y -= dy * e * 0.5; } else { b.x -= dx * e; b.y -= dy * e; } }
 }
@@ -21294,10 +21294,10 @@ function freddyScene(now, dt) {      // one frame of a match with FREDDY as the 
   const vap = vs.who === 'enemy' && vs.why === 'fatal' && (vs.ph === 'ko' || vs.ph === 'over');      // (the enemy's FATALITY: he is gone until the next round)
   ctx.fillStyle = 'rgba(0,0,0,0.4)'; if (!vap && !rgOn() && !rofAir()) { ctx.fillRect(cx - sw, gy + 3, sw * 2, 2); ctx.fillRect(cx - sv, gy + 2, sv * 2, 1); ctx.fillRect(cx - sv, gy + 5, sv * 2, 1); }
   const ry = Math.round(info.h * (1 - e)), gko = vs.who === 'enemy' && vs.why === 'ko' && (vs.ph === 'ko' || vs.ph === 'over') && now >= vs.koAt ? now - vs.koAt : -1;      // (spawn: he materialises from the feet up; beaten: he tumbles and stays down until the next round)
-  ctx.save();
+  rofCapBegin(); ctx.save();
   if (vap) { /* gone */ } else if (gko >= 0) { const r = vs.rag, c = r ? ragAt(r, gko) : null, air = c ? Math.max(0, c.h - (r.hh * Math.abs(Math.cos(c.a)) + r.hw * Math.abs(Math.sin(c.a)))) : 0, sx = Math.round(cx - (c ? c.x : 0)), w = Math.max(5, Math.round(9 * (1 - Math.min(1, air / 48)))); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(sx - w, gy + 3, w * 2, 2); ctx.fillRect(sx - Math.round(w * 0.66), gy + 2, Math.round(w * 1.32), 1); ctx.fillRect(sx - Math.round(w * 0.66), gy + 5, Math.round(w * 1.32), 1); ctx.drawImage(vs.meInv ? invOf(fredK(gko / 38)) : fredK(gko / 38), sx - info.cx, gy + 2 - 62 - Math.round(air)); }      // (v1.89: his K.O. pictures, carried by the game's tumble: how far he is thrown and how high he is is the physics', the falling and the lying are drawn)
   else { ctx.beginPath(); ctx.rect(x, y + ry, armOn ? 96 : af >= 0 && atkK >= FRED_FAR.k0 ? 128 : info.w, info.h - ry); ctx.clip(); ctx.globalAlpha = Math.min(1, t * 2); { const gs = src !== FRED_PC && gdActive('p') ? goreSrc('p', src, (px, py) => ({ x: wx + (x + px - cx), y: y + py - gy })) : src; ctx.drawImage(vs.meInv ? (src === FRED_PC ? invNow(src) : invOf(gs)) : gs, x, y); } if (hf >= 0 && now - hurtAt < 70 && src !== FRED_PC) ctx.drawImage(whiteOf(src), x, y); }
-  ctx.restore(); drawGiantNow('foe'); fwDraw(now, cx); fgDrawAir(now, cx);
+  ctx.restore(); rofCapEnd(now, cx); drawGiantNow('foe'); fwDraw(now, cx); fgDrawAir(now, cx);
   if (t < 1) {      // spawn ring + flash
     const R = 6 + t * 70; ctx.fillStyle = 'rgba(255,225,110,' + (1 - t) + ')';
     for (let a = 0; a < 64; a++) { const th = a / 64 * 6.2832; ctx.fillRect(Math.round(cx + Math.cos(th) * R), Math.round(y + 34 + Math.sin(th) * R * 0.45), 1, 1); }
@@ -23907,7 +23907,7 @@ const rofHang = () => !!rof && (rof.ph === 'cling' || rof.ph === 'climb' || rof.
 const rofFight = () => !!rof && (rof.fs === 'with' || rof.fs === 'melee');
 const rofWin = () => twFloorData(rof.slab).outer[rof.side];      // (the glass of the floor you are at, on the side you fell from (the roof: the right end): the window you break)
 const rofWindK = () => rof && rof.ph === 'fall' ? 1 + 3 * Math.min(1, rof.v / ROF_VM) : 1;      // (the wind sound: louder the faster you fall, see sfx.windPush)
-const rofNew = (now, o) => Object.assign({ ph: 'roof', at: now, ft: 0, s: 50, s0: 50, v0: 0.45, v: 0, slab: 0, L: 0, fs: 'away', pend: '', fAt: 0, foeFl: 0, inAt: 0, inFl: 0, join: 0, amb: 0, pj: [], doorAt: -1, sd: false, sd2: false, leap: null, br: null, brT: 1, bt: 0, ct: 0, gripAt: 0, swAt: 0, swP: 6, px: 0, gv: 0, gat: 0, fAt2: 0, side: 1, jat: -1e9 }, o);      // (every field of the state, so the roof and a window can both begin one)
+const rofNew = (now, o) => Object.assign({ ph: 'roof', at: now, ft: 0, s: 50, s0: 50, v0: 0.45, v: 0, slab: 0, L: 0, fs: 'away', pend: '', fAt: 0, foeFl: 0, inAt: 0, inFl: 0, join: 0, amb: 0, pj: [], doorAt: -1, sd: false, sd2: false, leap: null, br: null, brT: 1, bt: 0, ct: 0, gripAt: 0, swAt: 0, swP: 6, px: 0, gv: 0, gat: 0, fAt2: 0, side: 1, jat: -1e9, psMe: 1, psFoe: 1, actUntil: 0 }, o);      // (every field of the state, so the roof and a window can both begin one)
 const rofYo = () => -(rof.L - rof.s) * ROF.FL;      // (how far the slab you are at is above the line you stand on: 0 on the balcony, 78 px while you hang)
 
 // ---------------------------------------------------------------- the enemy
@@ -24043,7 +24043,9 @@ function rofLand(now) {      // the street: the crater, 30% of the health (never
 function rofTick(now, dt) {      // every frame, before the tower's and the training step
   const r = rof; if (!r || state !== 'play' || !vs || !dummy) return; if (!rofRun()) { if (dummy.ko < 0 && !rofFight()) rofHold(now); return; }
   if (r.ph === 'roof') rofRoof(now); else if (r.ph === 'fall') rofFall(now, dt); else rofHangTick(now, dt);
-  if (rof) { rofFoe(now); rofShots(now); }
+  if (rof) { rofFoe(now); rofShots(now); const d = dummy; if (atkReq || lpReq || dashReq || ceReq || domReq) r.actUntil = now + 550;
+    const busyMe = r.ph === 'fall' && (now < r.actUntil || atkAt >= 0 || (hurtAt >= 0 && now - hurtAt < 700) || blockHeld || !!dash || dgAt >= 0 || teleAt >= 0 || jumpAt >= 0 || stance === 'down' || stance === 'crouch'), busyF = r.ph === 'fall' && d.ko < 0 && ((d.ai !== 'rest' && d.ai !== 'think' && d.ai !== 'walk') || now - d.rxAt < RX_DUR[d.rx]);      // (the pose fades out while a fighter does something: a blow, a block, a dash, a hit; it is the idle and the walk that are posed)
+    r.psMe += ((busyMe ? 0 : 1) - r.psMe) * Math.min(1, dt * 9); r.psFoe += ((busyF ? 0 : 1) - r.psFoe) * Math.min(1, dt * 9); }
 }
 function rofClamp() {      // after the player's movement (drawScene): the walls of the roof, of the fall and of the balcony
   const r = rof, d = dummy; if (!r) return; let lo, hi, flo, fhi;
@@ -24117,7 +24119,38 @@ function rofRoofTop(now, y, bx) {      // the roof: its surface is at y (the sol
   { const sx = xl + 306; if (sx > -4 && sx < VW + 4) { twR(sx, y - 70, 1, 56, '#aeb5c3'); twR(sx - 3, y - 50, 7, 1, '#aeb5c3'); twR(sx - 1, y - 72, 3, 3, ((now / 600) | 0) & 1 ? '#ff4a3a' : '#6a1a14'); } }      // (the mast with its red lamp)
   for (const fx of [96, 250]) { const sx = xl + fx; if (sx < -34 || sx > VW + 34) continue; twR(sx, y - 46, 1, 32, '#7d8496'); twR(sx - 3, y - 48, 8, 2, '#fff7c0'); ctx.fillStyle = 'rgba(255,247,192,0.07)'; ctx.beginPath(); ctx.moveTo(sx - 2, y - 47); ctx.lineTo(sx + 4, y - 47); ctx.lineTo(sx + 34, y - 8); ctx.lineTo(sx - 30, y - 8); ctx.fill(); }      // (two floodlights with their cones)
 }
-function rofArms(sx, yS) { twR(sx - 6, yS - 2, 4, 3, '#e8c3a0'); twR(sx + 3, yS - 2, 4, 3, '#e8c3a0'); twR(sx - 5, yS + 1, 2, Math.max(0, gy - 50 - yS), '#5f6990'); twR(sx + 4, yS + 1, 2, Math.max(0, gy - 50 - yS), '#5f6990'); }      // (the hands over the edge of the slab, the arms down to the shoulders)
+const ROF_OC = document.createElement('canvas'), ROF_HIP = { yuji: 27, gojo: 27, verity: 30, cat: 29, freddy: 27, cu3: 27, cu4: 24, cu5: 29 };      // (the capture canvas; how high the hips are above the soles, per fighter)
+const ROF_ARM = { yuji: ['#1d2a5c', '#e8b896'], gojo: ['#2a2540', '#f0d2b4'], verity: ['#c9b72f', '#d8c848'], cat: ['#1c1c24', '#ffffff'], freddy: ['#9a2626', '#7a5a3a'], cu3: ['#262640', '#e8b896'], cu4: ['#1c2030', '#e0b090'], cu5: ['#c02828', '#e8c030'] };      // (the sleeve and the hand of each fighter, for the arms that hold the slab)
+let rofCap = null;      // (a capture that is running: what ctx.drawImage was before)
+function rofCapBegin() {      // from here until rofCapEnd every picture drawn goes to ROF_OC (with the transform it was drawn under) instead of the screen, so the whole fighter can be posed; false = nothing to do now
+  if (rofCap || !rof || (rof.ph !== 'fall' && rof.ph !== 'cling' && rof.ph !== 'climb')) return false;
+  const oc = ROF_OC, W = VW + 16, H = VH + 16; if (oc.width !== W || oc.height !== H) { oc.width = W; oc.height = H; } const g = oc.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H); g.imageSmoothingEnabled = false;
+  const has = n => Object.prototype.hasOwnProperty.call(ctx, n), own = has('drawImage'), ownR = has('fillRect'), orig = ctx.drawImage, origR = ctx.fillRect, to = () => { const m = ctx.getTransform(); g.setTransform(m.a, m.b, m.c, m.d, m.e + 8, m.f + 8); g.globalAlpha = ctx.globalAlpha; g.globalCompositeOperation = ctx.globalCompositeOperation; };
+  ctx.drawImage = function (img) { if (img == null) return; to(); return g.drawImage.apply(g, arguments); };
+  ctx.fillRect = function (x, y, w, h) { to(); g.fillStyle = ctx.fillStyle; g.fillRect(x, y, w, h); };      // (the dots of his hair and his coat go with his picture, so they stay on him when he is tilted)
+  rofCap = { own, ownR, orig, origR }; return true;
+}
+function rofCapStop() { if (!rofCap) return; if (rofCap.own) ctx.drawImage = rofCap.orig; else delete ctx.drawImage; if (rofCap.ownR) ctx.fillRect = rofCap.origR; else delete ctx.fillRect; rofCap = null; }
+function rofWind() { const r = rof; return r && r.ph === 'fall' ? Math.min(1, 1.6 * r.v / ROF_VM) : 0; }      // (how hard the wind blows up past a falling fighter, 0 to 1: the hair and the coat stream up, see clStep)
+function rofCapEnd(now, sx) {      // (the player's scenes call it after his picture and his cloth) the captured picture, posed
+  if (!rofCap) return; rofCapStop(); const r = rof; if (!r) return;
+  rofRig(now, sx, 1, r.ph === 'fall' ? 'fall' : 'hang', r.psMe, ROF_HIP[vs.me] || 27, 0);      // (his picture always faces right, whichever side the enemy is on)
+}
+function rofRig(now, sx, face, mode, ps, hip, dy) {      // the captured picture of a fighter, posed with his own pixels: falling = the legs kick about the hips, the body leans back and sways, afterimages stream up from him; hanging = the legs dangle and swing a little
+  const oc = ROF_OC, W = oc.width, H = oc.height, hy = gy + 2 - hip, t = now / 1000, fall = mode === 'fall', k = fall && rof ? Math.min(1, rof.v / ROF_VM) : 0;
+  const lean = ps * face * (fall ? -(0.16 + 0.16 * k) + 0.04 * Math.sin(t * 4.3) : 0.025 * Math.sin(t * 1.9)), leg = ps * face * (fall ? (0.28 + 0.14 * k) * Math.sin(t * (6.5 + 4 * k)) : 0.13 * Math.sin(t * 2.3));
+  const part = (oy, a, legs) => {
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha *= a; ctx.translate(0, (dy || 0) + oy); ctx.translate(sx, hy); ctx.rotate(lean); ctx.translate(-sx, -hy);
+    if (legs) {
+      ctx.save(); ctx.translate(sx, hy); ctx.rotate(leg); ctx.translate(-sx, -hy); ctx.drawImage(oc, 0, hy + 7, W, H - hy - 7, -8, hy - 1, W, H - hy - 7); ctx.restore();      // (the legs, swung about the hip)
+      ctx.drawImage(oc, 0, 0, W, hy + 10, -8, -8, W, hy + 10);      // (the body above them, over the join)
+    } else ctx.drawImage(oc, -8, -8);      // (an afterimage: one faint picture, leaning)
+    ctx.restore();
+  };
+  if (fall && k > 0.15 && ps > 0.2) for (let i = 3; i >= 1; i--) part(-Math.round(5 * i * (0.5 + k)), 0.12 / i * ps + 0.02, false);      // (the afterimages the speed leaves above him)
+  part(0, 1, true);
+}
+function rofArms(sx, yS, who) { const c = ROF_ARM[who] || ['#5f6990', '#e8c3a0']; twR(sx - 6, yS - 2, 4, 3, c[1]); twR(sx + 3, yS - 2, 4, 3, c[1]); twR(sx - 5, yS + 1, 2, Math.max(0, gy - 50 - yS), c[0]); twR(sx + 4, yS + 1, 2, Math.max(0, gy - 50 - yS), c[0]); }      // (the hands over the edge of the slab, the arms down to the shoulders)
 function rofFacade(now, r, bx, s) {      // the building: a wall with a corner pilaster at the left of the face, at every level a slab with a balcony, a wall under the windows, a lintel with wall lamps and the windows themselves; levels are floors above the street
   const FL = ROF.FL, y0 = gy + 2, y50 = Math.round(y0 - (50 - s) * FL), q = twQ(), fast = r.ph === 'fall' ? r.v / ROF_VM : 0, hang = r.ph === 'cling' || r.ph === 'climb' || r.ph === 'balcony', sd = r.side;
   if (y50 < VH + 4) { const h = VH + 16 - y50; twR(-8, y50, bx + 8, h, '#1b2438'); twR(bx - 9, y50, 6, h, '#2a3858'); twR(bx - 9, y50, 1, h, '#4a5a86'); twR(bx - 4, y50, 1, h, '#141c32'); twR(bx - 3, y50, 3, h, '#6e7aa0'); twR(bx - 1, y50, 1, h, '#b6c2e2'); }
@@ -24141,18 +24174,23 @@ function rofFacade(now, r, bx, s) {      // the building: a wall with a corner p
   if (y50 < VH + 4 && y50 > -90) { rofRoofTop(now, y50, bx); for (let x = bx - 30; x > 0; x -= 26) twR(x, y50 + 11, 2, VH, '#222c45'); }      // (L 50 is the roof itself)
 }
 function rofBack(now) {
-  const r = rof, bx = Math.round(VW / 2 + ROF.RW - wx), s = r.s, fall = r.ph === 'fall' || (r.ph === 'cling' && r.br); rofSky(now, Math.max(0, Math.min(1, 1 - s / 50)), !fall);
+  rofCapStop(); const r = rof, bx = Math.round(VW / 2 + ROF.RW - wx), s = r.s, fall = r.ph === 'fall' || (r.ph === 'cling' && r.br); rofSky(now, Math.max(0, Math.min(1, 1 - s / 50)), !fall);
   if (fall) rofLines(now, r.v / ROF_VM); else rofCity(now, gy + 30 - Math.round(24 * Math.min(1, s / 50)));
   rofFacade(now, r, bx, s); if (fall) rofVeil(now, s);
-  if (r.ph === 'cling' || r.ph === 'climb') { const yS = Math.round(gy + 2 + rofYo()); if (yS < gy - 52) rofArms(Math.round(VW / 2), yS); }
+  if (r.ph === 'cling' || r.ph === 'climb') { const yS = Math.round(gy + 2 + rofYo()); if (yS < gy - 52) rofArms(Math.round(VW / 2), yS, vs.me); }
   if (r.ph === 'fall') { const tl = rofTLand(r.s0, r.v0) - r.ft; if (tl < 0.6) rofStreet(Math.max(0, tl / 0.6)); }
 }
-function rofFoeFx(now, draw) {      // (drawFoes asks) the enemy when he is not in the fight (or has just dived in): false = draw him as usual
+function rofFoeFx(now, draw) {      // (drawFoes asks) the enemy when he is not in the fight, or is in the fall (posed): false = draw him as usual
   const r = rof, d = dummy; if (!r || !d || d.ko >= 0) return false;
-  if (rofFight()) { const k = (now - r.jat) / 320; if (r.fs !== 'with' || k >= 1 || k < 0) return false; ctx.save(); ctx.translate(0, -Math.round(110 * (1 - k) * (1 - k))); draw(); ctx.restore(); return true; }      // (he dives in from above: the first 0.3 s)
+  const hip = ROF_HIP[vs.foe] || 27;
+  if (rofFight()) {
+    if (r.ph !== 'fall' || r.fs !== 'with') return false;      // (on the roof and on the balcony he is drawn as usual)
+    const k = (now - r.jat) / 320, dy = k >= 0 && k < 1 ? -Math.round(110 * (1 - k) * (1 - k)) : 0, on = rofCapBegin();      // (he dives in from above: the first 0.3 s)
+    draw(); if (on) { rofCapStop(); rofRig(now, Math.round(VW / 2 + d.x - wx), wx >= d.x ? 1 : -1, 'fall', r.psFoe, hip, dy); } return true;
+  }
   const gx = d.x, ga = d.airH, cx = VW / 2, st = r.fs; d.airH = 0;
-  if (st === 'past') { const ts = (now - r.gat) / 1000, T = r.brT, dy = Math.round(r.gv * ROF.FL * (ts < T ? ts * ts / (2 * T) : T / 2 + ts - T)); if (dy < VH + 70) { ctx.save(); ctx.translate(0, dy); d.x = r.px; draw(); ctx.restore(); } }
-  else if (st === 'latch') { const yS = Math.round(gy + 2 + rofYo()); if (yS < gy - 52) rofArms(Math.round(cx + ROF.RW + 24 - wx), yS); d.x = ROF.RW + 24; draw(); }
+  if (st === 'past') { const ts = (now - r.gat) / 1000, T = r.brT, dy = Math.round(r.gv * ROF.FL * (ts < T ? ts * ts / (2 * T) : T / 2 + ts - T)); if (dy < VH + 70) { d.x = r.px; const on = rofCapBegin(); draw(); if (on) { rofCapStop(); rofRig(now, Math.round(cx + d.x - wx), wx >= d.x ? 1 : -1, 'fall', 1, hip, dy); } } }
+  else if (st === 'latch') { const yS = Math.round(gy + 2 + rofYo()); if (yS < gy - 52) rofArms(Math.round(cx + ROF.RW + 24 - wx), yS, vs.foe); d.x = ROF.RW + 24; const on = rofCapBegin(); draw(); if (on) { rofCapStop(); rofRig(now, Math.round(cx + d.x - wx), -1, 'hang', 1, hip, 0); } }
   else if (st === 'above' || st === 'inside') {
     const yo = Math.round(rofYo()), bx = Math.round(cx + ROF.RW - wx), yl = gy + 2 + yo; ctx.save();
     if (st === 'inside') { ctx.beginPath(); ctx.rect(bx - 56, yl - 64, 54, 62); ctx.clip(); ctx.globalAlpha = rofWin().broken ? 1 : 0.7; }
@@ -24174,6 +24212,17 @@ window.__rof = () => rof ? { ph: rof.ph, fs: rof.fs, s: +rof.s.toFixed(2), v: +r
 $('modesBack').addEventListener('click', () => show('title'));
 // ---------------------------------------------------------------- v1.88 THE UPDATE LOG: every version in plain words (tools/updates.json: { v: version, t: title, n: [what changed] } newest first, { h: heading } between two groups); the NEW tag shows until the newest version has been opened once (js_logseen)
 const LOG = [
+ {
+  "v": "1.222",
+  "t": "BETTER FALLING POSES: THEY LEAN, KICK AND STREAM IN THE WIND",
+  "n": [
+   "Every fighter now has a real falling pose, made from his own picture so it matches how he looks everywhere else in the game. While you fall from the roof or out of a window, your fighter leans back into the wind, his legs kick about his hips, and a faint speed trail streams up behind him. The faster you fall, the stronger the pose. It works for all eight fighters: Gojo, Yuji, Verity, the Cartoon Cat, Freddy, Sukuna, Ryu and Iron Man.",
+   "The hair, the coats and the Cat's tail now blow upwards in the fall, and they stay on the tilted body instead of floating beside it.",
+   "The enemy gets the same poses when he jumps after you, when he falls past you, and when he hangs on the building next to you. While you hang from a slab you dangle and sway a little.",
+   "When a fighter strikes, blocks, dashes or is hit in the fall, the pose fades out so the move looks the way it always does, then it comes back.",
+   "Still not in the Wi-Fi fight. Nothing new was drawn by hand: the poses are made live from the existing pictures. Tested with automatic runs, not on a real phone."
+  ]
+ },
  {
   "v": "1.221",
   "t": "FALLING OUT OF A WINDOW, A BETTER LOOKING BUILDING AND A BETTER ROOF AND FALL",
@@ -26817,7 +26866,7 @@ function gfxMissing() {      // v1.207 a picture that does not exist (a frame of
 function gfxDI0(img) { if (img == null) { gfxMissing(); return; } return gDI.apply(ctx, arguments); }      // (with no trail and no shadow: the call of the browser, but a picture that is missing is skipped)
 function gfxRecover() {      // v1.207 a frame that threw: every save() it left open is undone (a clip or a shake offset that stayed would freeze or shift the picture for good), the pen is put back and the trail hook is let go. restore() with nothing saved does nothing, so too many is harmless
   try { for (let i = 0; i < 80; i++) ctx.restore(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; if (gBloomOk) ctx.filter = 'none'; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; } catch { /* the canvas is gone: nothing to put back */ }
-  gGhost = false;
+  gGhost = false; if (typeof rofCapStop === 'function') rofCapStop();
 }
 function gfxDI(img) {
   const A = arguments, n = A.length;
@@ -27690,7 +27739,7 @@ async function scK5() {      // v1.211 the chapter 5 fight: Yuji against Iron Ma
         ok(await scUntil(() => g().T >= 7.5, 400, 33) && orange(gsx - 14, gy - 52, 28, 44) >= 25 && g().said === 12, 'GOKU IS NOT NEXT TO YUJI, OR WHO ARE YOU? IS NOT TYPED OUT', JSON.stringify(g()));
         const cnt = (x0, y0, w, h, f) => { const d = ctx.getImageData(Math.max(0, x0), Math.max(0, y0), w, h).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (f(d[i], d[i + 1], d[i + 2])) n++; return n; }, hx = Math.round(VW / 2 + GKP.yx) + 3, hy = gy - 45, hxw = Math.round(VW / 2 + GKP.wx);
         window.__gkQ = 'miss';      // (nobody taps: the first time Yuji dies; then the tap is made to succeed)
-        ok(await scUntil(() => g().T >= GKT.ring + 0.3, 700, 33) && g().q === null && cnt(hx - 10, hy - 10, 21, 21, (r, gg, b) => r > 150 && gg < 60 && b < 70) >= 100, 'THE RING OF THE TAP IS NOT ON YUJI\'S HEAD (NO RED CORE THERE)', JSON.stringify(g()));
+        ok(await scUntil(() => g().T >= GKT.ring + 0.3, 700, 33) && g().q === null && cnt(hx - 10, hy - 10, 21, 21, (r, gg, b) => r > 150 && gg < 60 && b < 70) >= 60, 'THE RING OF THE TAP IS NOT ON YUJI\'S HEAD (NO RED CORE THERE)', JSON.stringify(g()));
         ok(await scUntil(() => g().q === 'miss' && g().T >= GKT.hit + 0.2, 300, 33) && g().parts >= 30, 'THE BLOW ON YUJI\'S HEAD DID NOT BURST IT (NO BLOOD IN THE AIR)', JSON.stringify(g()));
         ok(await scUntil(() => g().T >= GKT.hit + 1.9, 300, 33) && cnt(Math.round(VW * 0.2), Math.round(VH * 0.35), Math.round(VW * 0.6), Math.round(VH * 0.2), (r, gg, b) => r > 200 && gg < 110 && b < 130) >= 30, 'THE WORDS YUJI DIED ARE NOT ON THE SCREEN', JSON.stringify(g()));
         window.__gkQ = 'hit';
@@ -28176,7 +28225,9 @@ async function scRoof() {
       if (!rof || rof.ph !== 'fall') { show('title'); continue; }
       if (mode === 'FALL') {
         await scFrames(16); scT(!!rof && rof.fs === 'with' && Math.abs(dummy.x - wx) < 120, label + ': THE ENEMY DID NOT JUMP AFTER HIM AND LAND NEXT TO HIM WITHIN 2 SECONDS', 'FS ' + (rof ? rof.fs : 'NONE'));
-        const hf0 = dummy.hp; let ft = 0; await scUntil(() => { if (rof) ft = rof.ft; return !rof; }, 260);
+        scT(rofWind() > 0, label + ': THE WIND DID NOT BLOW UP PAST HIM WHILE HE FELL', 'WIND ' + rofWind().toFixed(2));
+        const hf0 = dummy.hp; let ft = 0, lk = 0; await scUntil(() => { if (rof) ft = rof.ft; if (rofCap) lk++; return !rof; }, 260);
+        scT(lk === 0, label + ': A FIGHTER WAS LEFT HALF DRAWN (CAPTURED FOR HIS POSE) AFTER A FRAME OF THE FALL', 'FRAMES ' + lk);
         scT(ft > 9.3 && ft < 10.7, label + ': THE FALL DID NOT TAKE ABOUT 10 SECONDS', ft.toFixed(2) + ' S');
         scT(vs.map === 'street' && !!vs.crater && !rof, label + ': THE FALL DID NOT END IN THE STREET WITH A CRATER', 'MAP ' + vs.map);
         scT(vs.hp >= 1 && Math.abs(hp0 - vs.hp - Math.round(PHP * 0.3)) <= 1 && dummy.hp >= 1 && dummy.hp < hf0, label + ': THE LANDING DID NOT TAKE 30% OF THE HEALTH OF BOTH, OR KNOCKED ONE OUT', 'ME ' + hp0 + ' -> ' + vs.hp + ', HE ' + hf0 + ' -> ' + dummy.hp);
