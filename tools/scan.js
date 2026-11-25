@@ -387,7 +387,8 @@ async function scClash() {
     twPick = 1; if (await room('cu5', 'cu4', 'IN THE SKYSCRAPER')) {
       try { dummy.chain = 99; irUlTry(pnow()); } catch (e) { scErr(e, 'SKYSCRAPER'); } await scFrames(14, null, 50); try { dummy.chain = 99; cuenStart(16, pnow(), 'beam'); } catch (e) { scErr(e, 'SKYSCRAPER'); }
       ok(!!bcl, 'THE CLASH DID NOT START IN THE SKYSCRAPER', ''); if (bcl) bcl.force = { win: 'foe', kill: false };
-      const ended = bcl ? await scUntil(() => !bcl, 700, 50) : false; ok(ended, 'THE CLASH IN THE SKYSCRAPER DID NOT END', ''); ok(state === 'play' && vs.ph === 'fight', 'THE FIGHT DID NOT GO ON AFTER THE CLASH IN THE SKYSCRAPER', 'PHASE ' + (vs && vs.ph)); scCheck(); show('title');
+      const ended = bcl ? await scUntil(() => !bcl, 700, 50) : false; if (!ended && stop()) { show('title'); return; }      // (v1.223 the section's time is up in the middle of the last clash: that is no failure of the game; it had 4 seconds, which a slower phone, or the settings of the V1.207 report, used up: now 6)
+      ok(ended, 'THE CLASH IN THE SKYSCRAPER DID NOT END', ''); ok(state === 'play' && vs.ph === 'fight', 'THE FIGHT DID NOT GO ON AFTER THE CLASH IN THE SKYSCRAPER', 'PHASE ' + (vs && vs.ph)); scCheck(); show('title');
     } else if (stop()) return;
   } finally { Object.assign(TR, tr0); twPick = tw0; SET.gore = gore0; bcl = null; bclGone = false; bclTapOff(); }
 }
@@ -1044,7 +1045,7 @@ async function scTicks() {      // v1.201 ONE TICK EFFECT AT A TIME (a bleed, a 
   } finally { twPick = keep; }
 }
 
-const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['ADMIN', 16, scAdmin], ['CANVAS', 6, scCanvas], ['CLASH', 4, scClash], ['ACHIEVEMENTS', 12, scAch], ['CH 5 FIGHT', 14, scK5], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['ROOF', 8, scRoof], ['TICKS', 6, scTicks], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
+const SC_SEC = [['DATA', 3, async () => { SC.sec = 'DATA'; scData(); await scFrames(1); }], ['MENUS', 15, scMenus], ['FIGHTERS', 30, scFighters], ['MOVES', 40, scMoves], ['ADMIN', 16, scAdmin], ['CANVAS', 6, scCanvas], ['CLASH', 6, scClash], ['ACHIEVEMENTS', 12, scAch], ['CH 5 FIGHT', 14, scK5], ['CUTSCENES', 40, scCuts], ['STORY', 45, scStory], ['SKYSCRAPER', 14, scTower], ['CITY', 10, scCity], ['ROOF', 8, scRoof], ['TICKS', 6, scTicks], ['MORE FIGHTS', 0, scMore]];      // [name, seconds it may take at most (the last one takes what is left of the minute)]
 const scEl = document.createElement('section'); scEl.id = 'scan'; scEl.className = 'screen';
 scEl.innerHTML = '<h2>SCANNING THE GAME</h2><div id="scBar"><i id="scFill"></i></div><small id="scTxt"></small><small id="scLive"></small><small>YOUR SAVES ARE SAFE: THEY WERE COPIED FIRST AND ARE PUT BACK WHEN THE SCAN IS OVER.</small><button id="scCancel">CANCEL</button>';
 document.body.appendChild(scEl);
