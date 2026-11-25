@@ -39,6 +39,7 @@ class Pose:
         s.tail = [0.0, 0.0]    # the two ends of the sash: px
         s.tongue = 0.0  # the tongue of the belly mouth: how far it comes out (px)
         s.blink = 0
+        s.bend = False  # the legs drawn as two bones with a knee (the crouch and the jump), not as the V8 trousers bent a little (the standing and the walk)
         for a, v in k.items(): setattr(s, a, v)
 
 def render(P):
@@ -82,7 +83,10 @@ def render(P):
         for t in band_t:
             i = min(len(tp) - 2, int(t * (len(tp) - 1))); f = t * (len(tp) - 1) - i
             p = (tp[i][0] + (tp[i + 1][0] - tp[i][0]) * f, tp[i][1] + (tp[i + 1][1] - tp[i][1]) * f)
-            mark(I_(S.seg(p[0] - 8, p[1], p[0] + 8, p[1], bw, bw), m))
+            if P.bend:      # (a band goes across the arm, whichever way the arm points)
+                ax, ay = tp[i + 1][0] - tp[i][0], tp[i + 1][1] - tp[i][1]; al = math.hypot(ax, ay) or 1.0; nx, ny = -ay / al * 8, ax / al * 8
+                mark(I_(S.seg(p[0] - nx, p[1] - ny, p[0] + nx, p[1] + ny, bw, bw), m))
+            else: mark(I_(S.seg(p[0] - 8, p[1], p[0] + 8, p[1], bw, bw), m))
         hx_, hy_ = tf(hand[0], hand[1]); part(S.ell(hx_, hy_, hand[2], hand[3]), rp, R=2.2, amb=.1)
         return m, tf
     # ---- the legs: the V8 trousers bent along a knee (two bones), the foot on the ankle
@@ -110,16 +114,24 @@ def render(P):
         part(S.poly([R(*p) for p in base]), rp, R=2)
         for (qx, qy, c) in ((13, -3, '#2a1a26'), (13, -1, '#2a1a26'), (9, -.5, '#a46c60'), (7, -.5, '#a46c60')):
             rx_, ry_ = R(x0 + qx, FY + qy + dy); px(int(round(rx_)), int(round(ry_)), c)
+    def leg_bent(i, rp, ph):      # a leg of two bones (hip - knee - ankle): the trouser tube, then the cuff on the lower bone
+        H0, A0, H1, K1, A1 = leg_geom(i)
+        m = S.chain([H1, K1, A1], 3.55, 3.9); part(m, rp, R=3.2, amb=.12, bump=folds(min(H1[0], K1[0], A1[0]) + ph, ph))
+        dx, dy = A1[0] - K1[0], A1[1] - K1[1]; L = math.hypot(dx, dy) or 1.0; d = (dx / L, dy / L); n = (d[1], -d[0])
+        q = lambda a, w: (A1[0] + d[0] * a + n[0] * w, A1[1] + d[1] * a + n[1] * w)
+        part(S.poly([q(-5.0, 4.3), q(.5, 4.3), q(.5, -4.3), q(-5.0, -4.3)]), PURP, R=2)
     # 1. the far pair of arms
     arm([(52, 47), (55.5, 57), (58, 68)], 2.7, 2.0, (58.5, 71.5, 2.2, 2.9), SKIN_F, P.arm[1])
     arm([(38.5, 39), (35.5, 51), (33, 62)], 3.4, 2.4, (32.5, 65.5, 2.5, 3.2), SKIN_F, P.arm[0])
     # 2. the hakama: the back leg, the front leg, the cuffs, the feet
     foot(0, SKIN_F); foot(1, SKIN)
-    f0, _, _ = leg_tf(0); f1, _, _ = leg_tf(1)
-    part(S.poly([f0(*p) for p in [(38.5, 66), (45.5, 66), (44.5, 92), (43, 95.5), (36, 95.5), (37, 91)]]), NAVY_F, R=3.2, amb=.12, bump=folds(38.5 + P.leg[0] * .5, .4))
-    part(S.poly([f1(*p) for p in [(44.5, 66), (51.5, 66), (52.5, 91), (53.5, 95.5), (46.5, 95.5), (47, 91)]]), NAVY, R=3.2, amb=.12, bump=folds(44.5 + P.leg[1] * .5, 1.6))
-    part(S.poly([f0(*p) for p in [(36, 91.5), (44.5, 91.5), (44.5, 96), (35.5, 96)]]), PURP, R=2)
-    part(S.poly([f1(*p) for p in [(46.5, 91.5), (53.5, 91.5), (54, 96), (46, 96)]]), PURP, R=2)
+    if P.bend: leg_bent(0, NAVY_F, .4); leg_bent(1, NAVY, 1.6)
+    else:
+        f0, _, _ = leg_tf(0); f1, _, _ = leg_tf(1)
+        part(S.poly([f0(*p) for p in [(38.5, 66), (45.5, 66), (44.5, 92), (43, 95.5), (36, 95.5), (37, 91)]]), NAVY_F, R=3.2, amb=.12, bump=folds(38.5 + P.leg[0] * .5, .4))
+        part(S.poly([f1(*p) for p in [(44.5, 66), (51.5, 66), (52.5, 91), (53.5, 95.5), (46.5, 95.5), (47, 91)]]), NAVY, R=3.2, amb=.12, bump=folds(44.5 + P.leg[1] * .5, 1.6))
+        part(S.poly([f0(*p) for p in [(36, 91.5), (44.5, 91.5), (44.5, 96), (35.5, 96)]]), PURP, R=2)
+        part(S.poly([f1(*p) for p in [(46.5, 91.5), (53.5, 91.5), (54, 96), (46, 96)]]), PURP, R=2)
     # 3. neck and torso
     part(mpoly([(42, 28), (49.5, 28), (51, 36), (40, 36)]), SKIN, R=3.5, amb=.15)
     torso = mpoly([(39, 35.5), (45, 34), (50, 35.5), (54, 39), (55.5, 44), (55, 49), (53.5, 55), (51, 61), (50.5, 65), (39.5, 65), (37.5, 59), (35.5, 51), (35.5, 43), (37, 38)])
@@ -225,12 +237,88 @@ def walk(k, back=False):
              arm=[7 * math.cos(ph - 0.5), 6 * math.cos(ph - 1.0), -7 * math.cos(ph - 0.5), -6 * math.cos(ph - 1.0)])
     return head(P)
 
+# ---- v1.224 THE CROUCH AND THE JUMP: key poses (every number as in Pose); the pictures between two key poses are mixes of them
+def bp(**k): P = Pose(**k); P.bend = True; return P
+def mixp(a, b, t):
+    P = Pose(); P.bend = True
+    for k, va in vars(a).items():
+        if k in ('hdx', 'hdy', 'bend'): continue
+        vb = getattr(b, k)
+        if isinstance(va, list): setattr(P, k, [x + (y - x) * t for x, y in zip(va, vb)])
+        elif isinstance(va, bool): setattr(P, k, va if t < .5 else vb)
+        else: setattr(P, k, va + (vb - va) * t)
+    return P
+def ez(t): return t * t * (3 - 2 * t)
+CR_SINK, CR_LEAN, CR_LEG = 14.0, 5.0, [3.0, 4.0]      # the crouch: the hips 14 rows lower, the shoulders 5 forward, the feet a little apart
+K_STAND = bp()
+K_CROUCH = bp(sink=CR_SINK, lean=CR_LEAN, leg=list(CR_LEG), arm=[8, 6, 14, 10])
+def row_cr():      # standing -> crouched (the game plays the same pictures backwards to stand up)
+    return [head(mixp(K_STAND, K_CROUCH, ez(t))) for t in (0.2, 0.45, 0.7, 0.88, 1.0)]
+NCI = 12
+def row_ci():      # the crouch, held: a breath, the hair and the sash sway, he blinks once
+    out = []
+    for k in range(NCI):
+        u = k / NCI; b = 0.5 - 0.5 * math.cos(2 * math.pi * u)
+        P = bp(sink=CR_SINK + 0.35 * math.sin(2 * math.pi * u), lean=CR_LEAN + 0.4 * b, by=0.8 * b, leg=list(CR_LEG), sway=0.6 * math.sin(2 * math.pi * (u - 0.12)),
+               tail=[1.0 * math.sin(2 * math.pi * (u - 0.1)), 1.0 * math.sin(2 * math.pi * (u - 0.22))],
+               arm=[8 + 1.0 * math.sin(2 * math.pi * (u - 0.05)), 6 + 0.9 * math.sin(2 * math.pi * (u - 0.15)), 14 + 1.2 * math.sin(2 * math.pi * (u - 0.1)), 10 + 1.0 * math.sin(2 * math.pi * (u - 0.2))])
+        P.blink = 1 if k == 9 else 0; out.append(head(P))
+    return out
+CW_S = 0.425      # the crouch walk takes the stride of the walk, a little less than half as long (about 1.7 px of floor a picture)
+def row_cwk():      # crouched, creeping: the same cycle as the walk with short steps; walking back plays it backwards
+    out = []
+    for k in range(8):
+        dn, ln, an = foot_at(k); df, lf, af = foot_at((k + 4) % 8); ph = 2 * math.pi * k / 8
+        P = bp(sink=CR_SINK + [0.7, 0.2, 0.2, 0.7][k % 4], lean=CR_LEAN + 1.0, leg=[CR_LEG[0] + df * CW_S, CR_LEG[1] + dn * CW_S], lift=[lf * 0.6, ln * 0.6], ang=[af * .5, an * .5],
+               sway=0.5 + 0.3 * math.sin(2 * ph - 0.8), tail=[-1.0 + 1.0 * math.sin(ph + 0.6), -1.3 + 1.0 * math.sin(ph + 1.1)],
+               arm=[8 + 4 * math.cos(ph - 0.5), 6 + 3.5 * math.cos(ph - 1.0), 14 - 4 * math.cos(ph - 0.5), 10 - 3.5 * math.cos(ph - 1.0)])
+        out.append(head(P))
+    return out
+# the standing jump, 15 pictures: the push-off (3), the flight (9), the landing (3)
+JUMP = [
+    dict(sink=4, lean=2, leg=[1, 1.5], arm=[3, 3, 6, 5]),
+    dict(sink=11, lean=4.5, leg=[3, 4], arm=[-10, -8, -16, -12]),
+    dict(sink=15, lean=6.5, leg=[3, 4], arm=[-22, -18, -30, -26]),
+    dict(sink=0, lean=2, lift=[2.5, 3], ang=[25, 28], leg=[0.5, 1], arm=[10, 14, 24, 18], sway=0.6, tail=[-1, -1.5]),
+    dict(sink=0, lean=1.5, lift=[5, 6], ang=[18, 22], leg=[0.5, 1.5], arm=[16, 22, 34, 26], sway=0.8, tail=[-1.5, -2]),
+    dict(sink=0, lean=1, lift=[9, 11], ang=[10, 14], leg=[1, 3], arm=[20, 28, 42, 32], sway=1.0, tail=[-1.5, -2]),
+    dict(sink=0, lean=1, lift=[13, 15], leg=[2, 5], arm=[18, 26, 38, 30], sway=1.0, tail=[1.5, 2]),
+    dict(sink=0, lean=1, lift=[14, 16], leg=[2, 5], arm=[14, 22, 34, 26], sway=1.0, tail=[2, 2.5]),
+    dict(sink=0, lean=1, lift=[12, 14], leg=[2, 4], arm=[16, 24, 36, 28], sway=1.0, tail=[2, 2.5]),
+    dict(sink=0, lean=1, lift=[8, 9.5], ang=[-8, -10], leg=[1, 3], arm=[22, 30, 44, 34], sway=1.0, tail=[2.5, 3]),
+    dict(sink=0, lean=1, lift=[4, 5], ang=[-12, -14], leg=[0, 2], arm=[26, 34, 48, 38], sway=1.0, tail=[2.5, 3]),
+    dict(sink=2, lean=1.5, lift=[1, 2], ang=[-6, -8], leg=[0, 1.5], arm=[18, 24, 36, 28], sway=0.5, tail=[1.5, 2]),
+    dict(sink=9, lean=4, leg=[2, 3], arm=[12, 14, 22, 18], sway=0.3),
+    dict(sink=14, lean=6, leg=[3, 4], arm=[8, 6, 14, 10]),
+    dict(sink=5, lean=2.5, leg=[1, 1.5], arm=[3, 3, 6, 5]),
+]
+def row_jump(): return [head(bp(**d)) for d in JUMP]
+# crouch -> jump, 5 pictures: deeper (the coil, the arms back), the drive up, the stretch on the toes, the first rise
+CJ = [
+    dict(sink=16, lean=7, leg=[3, 4], arm=[-12, -10, -18, -14]),
+    dict(sink=18, lean=8.5, leg=[3, 4], arm=[-24, -20, -32, -28]),
+    dict(sink=9, lean=4, leg=[2, 3], lift=[0, 0.5], arm=[8, 10, 18, 14], sway=0.3),
+    dict(sink=0, lean=2, lift=[2.5, 3], ang=[26, 28], leg=[0.5, 1], arm=[10, 14, 24, 18], sway=0.6, tail=[-1, -1.5]),
+    dict(sink=0, lean=1.5, lift=[5, 6], ang=[18, 22], leg=[0.5, 1.5], arm=[16, 22, 34, 26], sway=0.8, tail=[-1.5, -2]),
+]
+def row_cj(): return [head(bp(**d)) for d in CJ]
+# jump -> crouch, 5 pictures: the touch-down, the landing sinks deeper than the crouch, then settles into it
+JC = [
+    dict(sink=9, lean=4, leg=[2, 3], arm=[18, 20, 30, 24], sway=0.5),
+    dict(sink=17, lean=8, leg=[3, 4], arm=[10, 8, 16, 12], sway=0.2),
+    dict(sink=19, lean=9, leg=[3, 4], arm=[6, 4, 10, 8]),
+    dict(sink=16.5, lean=6.5, leg=[3, 4], arm=[7, 5, 12, 9]),
+    dict(sink=CR_SINK, lean=CR_LEAN, leg=list(CR_LEG), arm=[8, 6, 14, 10]),
+]
+def row_jc(): return [head(bp(**d)) for d in JC]
+
 if __name__ == '__main__':
     out = sys.argv[1] if len(sys.argv) > 1 else HERE
-    rows = {'idle': [idle(k) for k in range(NI)], 'walk': [walk(k) for k in range(8)], 'wbk': [walk(k, True) for k in range(8)]}
+    rows = {'idle': [idle(k) for k in range(NI)], 'walk': [walk(k) for k in range(8)], 'wbk': [walk(k, True) for k in range(8)], 'cr': row_cr(), 'ci': row_ci(), 'cwk': row_cwk(), 'jump': row_jump(), 'cj': row_cj(), 'jc': row_jc()}
+    ROWS = ('idle', 'walk', 'wbk', 'cr', 'ci', 'cwk', 'jump', 'cj', 'jc')
     pics = {n: [crop(render(P)) for P in ps] for n, ps in rows.items()}
-    sheet = Image.new('RGBA', (NI * CW, 3 * CH), (0, 0, 0, 0))
-    for r, n in enumerate(('idle', 'walk', 'wbk')):
+    sheet = Image.new('RGBA', (NI * CW, len(ROWS) * CH), (0, 0, 0, 0))
+    for r, n in enumerate(ROWS):
         for i, p in enumerate(pics[n]): sheet.alpha_composite(p, (i * CW, r * CH))
     sheet.save(out + '/heian_sheet.png', optimize=True)
     def view(frames, name, cols, K=5):
@@ -239,5 +327,6 @@ if __name__ == '__main__':
         for i, f in enumerate(fr):
             c = Image.new('RGBA', (w, h), (36, 20, 32, 255)); c.alpha_composite(f); im.alpha_composite(c, ((i % cols) * w, (i // cols) * h))
         im.resize((im.width * K, im.height * K), Image.NEAREST).convert('RGB').save(out + '/' + name)
-    if len(sys.argv) > 1: view(pics['idle'], 'v_idle.png', 7); view(pics['walk'], 'v_walk.png', 8, 5); view(pics['wbk'], 'v_wbk.png', 8, 5)      # (the contact sheets only when a folder is given)
+    if len(sys.argv) > 1:      # (the contact sheets only when a folder is given)
+        for n, c in (('idle', 7), ('walk', 8), ('wbk', 8), ('cr', 5), ('ci', 6), ('cwk', 8), ('jump', 8), ('cj', 5), ('jc', 5)): view(pics[n], 'v_' + n + '.png', c, 5)
     print('saved', out + '/heian_sheet.png')

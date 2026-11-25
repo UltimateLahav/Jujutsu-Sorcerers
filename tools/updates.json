@@ -1,5 +1,16 @@
 [
  {
+  "v": "1.224",
+  "t": "HEIAN SUKUNA CROUCHES AND JUMPS",
+  "n": [
+   "Heian Sukuna can now crouch and jump in TRAINING, with the same controls as the others: push the stick down to crouch (or tap the down key, S or C, and tap again to stand up), push the stick up to jump (or W, the up arrow or Space).",
+   "Six new animations: going down into the crouch (the same pictures backwards to stand up), a crouch that breathes and blinks, a slow crouch walk (he can creep forward and back while crouched), the jump (a push-off, a tucked flight and a heavy landing), a spring from the crouch into a higher jump, and a landing that settles into the crouch.",
+   "He jumps straight up and down: you cannot steer him in the air. Hold DOWN (the stick down, or tap the crouch key in the air) as he comes back to the floor and he lands into a crouch. Jump from a crouch and he springs higher (about 50 pixels instead of 38).",
+   "He is taller than the room above his head on the screen, so during a jump the camera follows him up: his head never leaves the screen, the ground drops away under him and the health bars stay where they are. While he is crouched his body is lower, so the enemy's blows aim at where he really is.",
+   "Still TRAINING only, and still no attacks, block or dash. Tested with automatic runs, not on a real phone."
+  ]
+ },
+ {
   "v": "1.223",
   "t": "HEIAN SUKUNA IN TRAINING: HE STANDS AND WALKS",
   "n": [
