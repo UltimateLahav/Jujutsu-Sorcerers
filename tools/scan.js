@@ -98,7 +98,7 @@ function scData() {
   SC.say = 'THE SAVES';
   try { const c = bkMake(); scT(!!bkRead(c), 'THE SAVE CODE DOES NOT READ BACK', ''); } catch (e) { scErr(e, 'SAVE CODE'); }
   const sv = loadSaves(); scT(Array.isArray(sv) && sv.length === 3, 'SAVE SLOTS', ''); scT(Number.isFinite(PROG.m) && PROG.m >= 0, 'MONEY IS NOT A NUMBER', String(PROG.m));
-  for (const w of SC_WHO.concat('cu5')) scT(!!document.querySelector('#fsGrid .fst[data-who="' + w + '"]'), 'NO FIGHTER FACE FOR ' + w, '');      // (v1.180 the faces of the fighter screen)
+  for (const w of SC_WHO.concat('cu5', 'cu6')) scT(!!document.querySelector('#fsGrid .fst[data-who="' + w + '"]'), 'NO FIGHTER FACE FOR ' + w, '');      // (v1.180 the faces of the fighter screen)
   SC.say = 'THE CODE AGAINST THE PAGE';      // the page's own text: every call that names a page element by its id is for a thing that is in the page, every call that plays a sound names one that exists
   try {
     const src = [...document.scripts].reduce((a, b) => b.textContent.length > a.textContent.length ? b : a).textContent, miss = new Set(), re = /\$\('([A-Za-z][\w-]*)'\)/g; let m, n = 0;
@@ -191,8 +191,10 @@ async function scRound(r) {      // one round of random fights: every fighter in
   return true;
 }
 async function scFighters() {
-  SC.sec = 'FIGHTERS'; scCov('FIGHTERS', 0, SC_WHO.length + 3); SC.plan = (SC_WHO.length + 3) * 280; SC.done = 0; if (!(await scRound(0))) return;
+  SC.sec = 'FIGHTERS'; scCov('FIGHTERS', 0, SC_WHO.length + 4); SC.plan = (SC_WHO.length + 4) * 280; SC.done = 0; if (!(await scRound(0))) return;
   if (!(await scSeg('IRON MAN IN FREE PLAY', () => { SET.gore = 0; Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0 }); startPractice('cu5', 'gojo'); }, 100, 77))) return;      // (v1.190 Iron Man: walks and jumps in Training, nothing else; the enemy fights back and his health is normal, so he is hit and knocked out too)
+  scCov('FIGHTERS', 1, 0);
+  if (!(await scSeg('HEIAN SUKUNA IN FREE PLAY', () => { SET.gore = 0; Object.assign(TR, { beh: 1, ehp: 0, php: 1, pce: 0 }); startPractice('cu6', 'gojo'); }, 100, 80))) return;      // (v1.223 Heian Sukuna: stands and walks in Training, nothing else; the enemy fights back and his health is normal, so he is hit and knocked out too)
   scCov('FIGHTERS', 1, 0);
   if (!(await scSeg('IRON MAN AS THE ENEMY IN FREE PLAY', () => { SET.gore = 1; Object.assign(TR, { beh: 1, ehp: 0, php: 0, pce: 0 }); startPractice('gojo', 'cu5'); }, 100, 78))) return;      // (v1.208 the enemy Iron Man fights back: his chain, his bolts, his uppercut, his UNIBEAM)
   scCov('FIGHTERS', 1, 0);

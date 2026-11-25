@@ -224,6 +224,6 @@ function cuenWorld(now, dt) {
 const CUV = {};
 function cuVictim(n) {
   if (CUV[n]) return CUV[n]; const g = CU_GAME[n]; if (!g || !g.frames.length) return victimKit(Array.from({ length: 15 }, () => EMPTY), Array.from({ length: 10 }, () => Array.from({ length: 15 }, () => EMPTY)), () => CUEN_INFO);
-  const rx = Array.from({ length: 10 }, (_, k) => { const f = g.hus && g.hus[k] ? g.hus[k].f : g.hu; return Array.from({ length: 15 }, (_, i) => f.length ? f[Math.min(f.length - 1, Math.floor(i * f.length / 15))] : g.frames[i % g.frames.length]); });
-  return CUV[n] = victimKit(g.frames.slice(0, 15), rx, () => CUEN_INFO);
+  const rx = Array.from({ length: 10 }, (_, k) => { const f = g.hus && g.hus[k] ? g.hus[k].f : g.hu; return Array.from({ length: 15 }, (_, i) => f.length ? f[Math.min(f.length - 1, Math.floor(i * f.length / 15))] : (g.vic || g.frames)[i % (g.vic || g.frames).length]); });
+  return CUV[n] = victimKit((g.vic || g.frames).slice(0, 15), rx, () => CUEN_INFO);      // (v1.223 g.vic: Heian Sukuna's smaller 64 x 64 pictures, the scenes of a victim are drawn for that size)
 }

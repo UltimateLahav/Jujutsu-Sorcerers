@@ -8,24 +8,26 @@ const SEL = {      // the seven fighters: short name, panel name, a tag, three s
   cat: { nm: 'CAT', full: 'CARTOON<br>CAT', tag: 'CURSED SPIRIT', mv: ['CARTOON ATTACK', 'GIANT KICK', 'ARM HANG'], col: [200, 204, 216], face: [19, 0] },
   freddy: { nm: 'FREDDY', full: 'FREDDY<br>KRUEGER', tag: 'CURSED SPIRIT', mv: ['PIERCE', 'BOILING WATER', 'DREAM'], col: [70, 196, 106], face: [21, 1] },
   cu3: { nm: 'SUKUNA', full: 'SUKUNA', tag: 'KING OF CURSES', mv: ['DISMANTLE', 'CLEAVE MODE', 'MALEVOLENT SHRINE'], col: [255, 58, 74], face: [21, 1] },
-  cu5: { nm: 'IRON MAN', full: 'IRON<br>MAN', tag: 'TONY STARK', mv: ['4-HIT COMBO', 'ROCKET UPPERCUT', 'DOWNSLAM', 'LOW JABS', 'CHARGE PUNCH', 'BACKFLIP', 'REPULSOR MODE', 'BEAR HUG / BLAST', 'UNIBEAM', 'FATALITY'], col: [196, 32, 44], face: [20, 0] } };      // (v1.190 Iron Man: TRAINING only for now; v1.191 his moves; v1.192 crouch + ATTACK, dash + ATTACK and a double dash back; v1.193 the MODE button: REPULSOR; v1.203 the ULTIMATE: UNIBEAM)
-const SEL_ROWS = [['gojo', 'yuji', 'cu4', 'cu5'], ['verity', 'cat', 'freddy', 'cu3']], FS_ORDER = [].concat(...SEL_ROWS), FACE = 28;      // 4 on top, 4 below (the humans first; v1.190 Iron Man is the fourth on top)
+  cu5: { nm: 'IRON MAN', full: 'IRON<br>MAN', tag: 'TONY STARK', mv: ['4-HIT COMBO', 'ROCKET UPPERCUT', 'DOWNSLAM', 'LOW JABS', 'CHARGE PUNCH', 'BACKFLIP', 'REPULSOR MODE', 'BEAR HUG / BLAST', 'UNIBEAM', 'FATALITY'], col: [196, 32, 44], face: [20, 0] },
+  cu6: { nm: 'HEIAN SUKUNA', full: 'HEIAN<br>SUKUNA', tag: 'KING OF CURSES', mv: ['WALK FORWARD', 'WALK BACK', 'STAND STILL'], col: [150, 110, 230], face: [15, 3] } };      // (v1.223 Heian Sukuna: TRAINING only, he walks and stands, nothing else yet; his face is in columns 17 - 41 of his 64 x 100 pictures. v1.190 Iron Man: TRAINING only for now; v1.191 his moves; v1.192 crouch + ATTACK, dash + ATTACK and a double dash back; v1.193 the MODE button: REPULSOR; v1.203 the ULTIMATE: UNIBEAM)
+const SEL_ROWS = [['gojo', 'yuji', 'cu4', 'cu5'], ['verity', 'cat', 'freddy', 'cu3', 'cu6']], FS_ORDER = [].concat(...SEL_ROWS), FACE = 28;      // 4 on top, 5 below (the humans first; v1.190 Iron Man is the fourth on top; v1.223 Heian Sukuna is the last one below)
 const selRgb = (c, a) => 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')';
 const fsPic = (who, now, inv) => {      // the idle picture of any of the seven (a canvas), or null while a fighter's pictures are not cut yet
   if (who.slice(0, 2) === 'cu') { const c = cuIdleCv(who, now); return c ? (inv ? invOf(c) : c) : null; }      // (v1.190 Sukuna and Ryu: the "(INV.)" one is a copy in the inverted colours, like the other five; it was the normal picture before)
   const f = lanIdlePic(who, now, inv); return f && f.width ? f : null;
 };
-const fsHot = who => who === 'gojo' ? D.idle.cx - D.idle.x0 : who === 'yuji' ? YU.idle.cx - YU.idle.x0 : 32, fsTop = who => who === 'gojo' ? D.idle.top || 0 : who === 'yuji' ? YU.idle.top || 0 : 0;      // (where his middle is in his picture, and how many rows of head room it has: the same numbers the fight uses)
+const fsHot = who => who === 'gojo' ? D.idle.cx - D.idle.x0 : who === 'yuji' ? YU.idle.cx - YU.idle.x0 : 32, fsTop = who => who === 'gojo' ? D.idle.top || 0 : who === 'yuji' ? YU.idle.top || 0 : who === 'cu6' ? 36 : 0;      // (where his middle is in his picture, and how many rows of head room it has: the same numbers the fight uses)
 // ---- who may be picked where. mode: 'train' | 'battle' | 'wifi'; side 0 = you, 1 = the enemy. '' = free, else the reason the face is greyed
 const FS_KEY = { cu4: 'ryu', cu5: 'iron' };      // (v1.215 the name of Ryu and of Iron Man in the shop)
 function fsWhy(mode, side, who) {
   if (mode === 'wifi') return LAN_FIGHTERS.includes(who) ? '' : 'NOT ONLINE';
   if (mode === 'train') return side === 0 ? (who === 'cu3' && !suHas() ? 'LOCKED' : '') : TRF.includes(who) ? '' : 'NOT AS ENEMY';      // (Sukuna is bought for $3000; the training enemy is Gojo, Yuji, Verity or the Cat, see TRF)
+  if (who === 'cu6') return 'TRAINING ONLY';      // (v1.223 Heian Sukuna walks and stands and nothing else: he is in TRAINING as your fighter, in no fight against anyone)
   if (who === 'cu3') return !suHas() ? 'LOCKED' : '';      // (v1.189 Sukuna and Ryu fight in Battle too, on both sides; Sukuna is bought for $3000)
   return who !== 'gojo' && !owns(FS_KEY[who] || who) ? 'LOCKED' : '';      // (bought on the SKILLS page, like before; v1.215 Freddy, Ryu and Iron Man are bought there too, on both sides, and free in TRAINING)
 }
-const FS_BADGE = { 'LOCKED': 'LOCKED', 'NOT AS ENEMY': 'NOT AS<br>ENEMY', 'NOT ONLINE': 'NOT<br>ONLINE' };
-const fsHintText = (who, why) => why === 'LOCKED' ? (who === 'cu3' ? 'SUKUNA IS LOCKED: BUY HIM FOR $3000 IN SKILLS > CHARACTERS' : SEL[who].nm + ' IS LOCKED: BUY HIM IN SKILLS > CHARACTERS') : why === 'NOT AS ENEMY' ? SEL[who].nm + ' CANNOT BE THE ENEMY YET' : SEL[who].nm + ' IS NOT IN WI-FI FIGHTS YET';
+const FS_BADGE = { 'LOCKED': 'LOCKED', 'NOT AS ENEMY': 'NOT AS<br>ENEMY', 'NOT ONLINE': 'NOT<br>ONLINE', 'TRAINING ONLY': 'TRAINING<br>ONLY' };
+const fsHintText = (who, why) => why === 'LOCKED' ? (who === 'cu3' ? 'SUKUNA IS LOCKED: BUY HIM FOR $3000 IN SKILLS > CHARACTERS' : SEL[who].nm + ' IS LOCKED: BUY HIM IN SKILLS > CHARACTERS') : why === 'NOT AS ENEMY' ? SEL[who].nm + ' CANNOT BE THE ENEMY YET' : why === 'TRAINING ONLY' ? SEL[who].nm + ' IS IN TRAINING ONLY FOR NOW' : SEL[who].nm + ' IS NOT IN WI-FI FIGHTS YET';
 let fsMsgAt = 0;
 function fsSay(el, text) { el.textContent = text; fsMsgAt = performance.now() + 2800; el.dataset.on = '1'; }      // a short line under the faces (why a face is greyed), gone after a moment
 function fsSayTick(el) { if (el.dataset.on && performance.now() > fsMsgAt) { el.dataset.on = ''; if (el.dataset.def) el.textContent = el.dataset.def; else el.innerHTML = '&nbsp;'; } }      // (back to its own line: the Wi-Fi screen keeps "more online moves come ..." there)
@@ -66,9 +68,9 @@ function fsPanelSet(p, who, o) {      // o: { tag (instead of his own), moves (i
   p.el.classList.toggle('empty', !s); p.el.classList.toggle('act', !!o.act); p.el.classList.toggle('ready', !!o.ready);
 }
 function fsPanelDraw(p, now, inv) {      // his idle animation, as big as the panel allows (the picture is as wide as the fighter's own pictures)
-  const pic = p.who ? fsPic(p.who, now, !!inv) : null, w = pic ? pic.width : 64, g = p.cv.getContext('2d');
-  if (p.cv.width !== w) p.cv.width = w;
-  g.clearRect(0, 0, p.cv.width, 64); if (pic) g.drawImage(pic, 0, 0);
+  const pic = p.who ? fsPic(p.who, now, !!inv) : null, w = pic ? pic.width : 64, h = pic && p.who === HE_WHO ? HE_H : 64, g = p.cv.getContext('2d');      // (v1.223 Heian Sukuna's pictures are 100 rows high: the big picture is as high as the others on the screen, with finer pixels)
+  if (p.cv.width !== w) p.cv.width = w; if (p.cv.height !== h) p.cv.height = h;
+  g.clearRect(0, 0, p.cv.width, h); if (pic) g.drawImage(pic, 0, 0);
 }
 // ---- the picks that are remembered (js_fsv), and the state of the TRAINING / BATTLE fighter screen
 const FSV = { train: { me: 'gojo', foe: 'gojo' }, battle: { me: 'gojo', foe: 'gojo' } };

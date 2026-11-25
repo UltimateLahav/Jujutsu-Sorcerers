@@ -1,5 +1,15 @@
 [
  {
+  "v": "1.223",
+  "t": "HEIAN SUKUNA IN TRAINING: HE STANDS AND WALKS",
+  "n": [
+   "Heian Sukuna is now a fighter you can play in TRAINING. Open BATTLES > TRAINING and pick him: he is the last face of the second row, next to Sukuna. He is the tall four-armed Sukuna from the picture series, 96 pixels tall (about a head taller than the others), with the mouth on his belly and the tattoos, drawn in the style of the game.",
+   "For now he can do three things: stand still, walk forward and walk back. Every button is hidden except the stick, because he has no attacks, jump, crouch, block or dash yet.",
+   "Two new animations. Standing, he breathes, his hair and the ends of his sash sway, the tongue of his belly mouth flicks out now and then and he blinks once in a while. Walking, his feet stay planted on the floor as he steps (forward is a little faster than back), his arms swing and his hair and sash trail behind him.",
+   "TRAINING only for now: he cannot be the enemy, he is not in BATTLE and he is not in the Wi-Fi fights yet. The enemy fights him like anyone else, but no fatality is made for his size yet, so none is done to him. Tested with automatic runs, not on a real phone."
+  ]
+ },
+ {
   "v": "1.222",
   "t": "BETTER FALLING POSES: THEY LEAN, KICK AND STREAM IN THE WIND",
   "n": [
